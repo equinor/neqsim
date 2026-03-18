@@ -2477,8 +2477,19 @@ public abstract class Component implements ComponentInterface {
       return numberOfMolesInPhase * 3600.0 / 1000.0;
     } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
       return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, tonnes/year, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, "
+              + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
+              + "kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, "
+              + "barrel/day, bbl/day");
     }
   }
 
@@ -2505,8 +2516,18 @@ public abstract class Component implements ComponentInterface {
       return numberOfMoles * 3600.0 / 1000.0;
     } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
       return numberOfMoles * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, "
+              + "kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
+              + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 

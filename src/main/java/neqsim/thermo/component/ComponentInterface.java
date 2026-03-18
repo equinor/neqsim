@@ -157,7 +157,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, tonnes/year, m3/sec, m3/min, m3/hr,
    *        mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min,
-   *        kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day
+   *        kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr,
+   *        barrel/day, bbl/day
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -167,7 +168,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, mole/sec, mol/sec, mole/min,
    *        mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
-   *        kmole/day, kmol/day
+   *        kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day
    * @return total flow rate in specified unit
    */
   public double getTotalFlowRate(String flowunit);
