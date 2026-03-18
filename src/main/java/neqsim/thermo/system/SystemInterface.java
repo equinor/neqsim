@@ -2526,8 +2526,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param componentFlowRates an array of type double
-   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "kmol/sec",
-   *        "kmol/hr", "mol/hr", "kg/hr", "kg/sec", "kmol/day"
+   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "mole/sec",
+   *        "kmol/sec", "kmole/sec", "kmol/hr", "kmole/hr", "mol/hr", "mole/hr", "mol/min",
+   *        "mole/min", "kg/hr", "kg/sec", "kmol/day", "kmole/day" (case-insensitive)
    */
   public void setComponentFlowRates(double[] componentFlowRates, String unit);
 

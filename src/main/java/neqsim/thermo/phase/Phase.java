@@ -3008,14 +3008,19 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature
           / ThermodynamicConstantsInterface.atm / 1.0e6;
-    } else if (flowunit.equals("lbmole/hr")) {
-      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.205;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.20462262;
     } else if (flowunit.equals("lb/hr")) {
-      return numberOfMolesInPhase * getMolarMass() * 60.0 * 2.20462262;
-    } else if (flowunit.equals("barrel/day")) {
-      return numberOfMolesInPhase * getMolarMass() * 60.0 * 2.20462262 * 0.068;
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, m3/sec, m3/min, m3/hr, ft3/sec, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, "
+              + "mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, "
+              + "kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, "
+              + "lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 

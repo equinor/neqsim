@@ -146,6 +146,81 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void setFlowRateLbPerHrTest() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    // Set 1 kg/hr, then read back as lb/hr
+    fluid.setTotalFlowRate(1.0, "kg/hr");
+    double kgPerHr = fluid.getFlowRate("kg/hr");
+    double lbPerHr = fluid.getFlowRate("lb/hr");
+    // 1 kg = 2.20462262 lb
+    assertEquals(kgPerHr * 2.20462262, lbPerHr, 1e-6);
+
+    // Set lb/hr, verify round-trip
+    fluid.setTotalFlowRate(100.0, "lb/hr");
+    assertEquals(100.0, fluid.getFlowRate("lb/hr"), 1e-3);
+    assertEquals(100.0 / 2.20462262, fluid.getFlowRate("kg/hr"), 1e-3);
+  }
+
+  @Test
+  void setFlowRateLbmolePerHrTest() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    // Set 1 kmole/hr, then read back as lbmole/hr
+    fluid.setTotalFlowRate(1.0, "kmole/hr");
+    double kmolePerHr = fluid.getFlowRate("kmole/hr");
+    double lbmolePerHr = fluid.getFlowRate("lbmole/hr");
+    // 1 kmol = 2.20462262 lbmol
+    assertEquals(kmolePerHr * 2.20462262, lbmolePerHr, 1e-6);
+
+    // Set lbmole/hr, verify round-trip
+    fluid.setTotalFlowRate(10.0, "lbmole/hr");
+    assertEquals(10.0, fluid.getFlowRate("lbmole/hr"), 1e-3);
+  }
+
+  @Test
+  void setFlowRateBarrelPerDayTest() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    // Set barrel/day, verify round-trip
+    fluid.setTotalFlowRate(1000.0, "barrel/day");
+    assertEquals(1000.0, fluid.getFlowRate("barrel/day"), 1e-1);
+
+    // bbl/day alias should give same result
+    assertEquals(fluid.getFlowRate("barrel/day"), fluid.getFlowRate("bbl/day"), 1e-10);
+
+    // Set via bbl/day alias
+    fluid.setTotalFlowRate(500.0, "bbl/day");
+    assertEquals(500.0, fluid.getFlowRate("bbl/day"), 1e-1);
+  }
+
+  @Test
+  void setComponentFlowRatesMoleHrSpellingTest() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+    fluid.addComponent("methane", 0.5);
+    fluid.addComponent("ethane", 0.5);
+    fluid.setMixingRule("classic");
+
+    // Use "mole/hr" spelling (should work via case-insensitive match)
+    fluid.setComponentFlowRates(new double[] {3600.0, 7200.0}, "mole/hr");
+    assertEquals(1.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(), 1e-6);
+    assertEquals(2.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(), 1e-6);
+
+    // Use "kmole/hr" spelling
+    fluid.setComponentFlowRates(new double[] {1.0, 2.0}, "kmole/hr");
+    assertEquals(1000.0 / 3600.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(),
+        1e-6);
+    assertEquals(2000.0 / 3600.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(),
+        1e-6);
+  }
+
+  @Test
   void testWeightBasedComposition() {
     SystemInterface weightSystem = new SystemSrkEos(298.0, 50.0);
     weightSystem.addComponent("methane", 1.0);

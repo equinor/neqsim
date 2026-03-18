@@ -2540,14 +2540,19 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * 3600.0 / 1000.0;
     } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 / 1000.0;
-    } else if (flowunit.equals("lbmole/hr")) {
-      return totalNumberOfMoles * 3600.0 / 1000.0 * 2.205;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return totalNumberOfMoles * 3600.0 / 1000.0 * 2.20462262;
     } else if (flowunit.equals("lb/hr")) {
-      return totalNumberOfMoles * getMolarMass() * 60.0 * 2.20462262;
-    } else if (flowunit.equals("barrel/day")) {
-      return totalNumberOfMoles * getMolarMass() * 60.0 * 2.20462262 * 0.068;
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, kg/day, m3/sec, m3/min, m3/hr, idSm3/hr, gallons/min, Sm3/sec, Sm3/hr, "
+              + "Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, "
+              + "mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
+              + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 
@@ -5106,21 +5111,31 @@ public abstract class SystemThermo implements SystemInterface {
 
     switch (u) {
       case "mol/sec":
+      case "mole/sec":
         System.arraycopy(componentFlowRates, 0, molarFlows, 0, componentFlowRates.length);
         break;
       case "kmol/sec":
+      case "kmole/sec":
         for (int i = 0; i < componentFlowRates.length; i++) {
           molarFlows[i] = componentFlowRates[i] * 1_000.0;
         }
         break;
       case "kmol/hr":
+      case "kmole/hr":
         for (int i = 0; i < componentFlowRates.length; i++) {
           molarFlows[i] = componentFlowRates[i] * 1_000.0 / 3600.0;
         }
         break;
       case "mol/hr":
+      case "mole/hr":
         for (int i = 0; i < componentFlowRates.length; i++) {
           molarFlows[i] = componentFlowRates[i] / 3600.0;
+        }
+        break;
+      case "mol/min":
+      case "mole/min":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] / 60.0;
         }
         break;
       case "kg/hr":
@@ -5134,12 +5149,16 @@ public abstract class SystemThermo implements SystemInterface {
         }
         break;
       case "kmol/day":
+      case "kmole/day":
         for (int i = 0; i < componentFlowRates.length; i++) {
           molarFlows[i] = componentFlowRates[i] * 1_000.0 / 86400.0;
         }
         break;
       default:
-        throw new IllegalArgumentException("Unsupported unit: " + unit);
+        throw new IllegalArgumentException(
+            "Unsupported unit: " + unit + ". Supported units: mol/sec, mole/sec, kmol/sec, "
+                + "kmole/sec, kmol/hr, kmole/hr, mol/hr, mole/hr, mol/min, mole/min, "
+                + "kg/hr, kg/sec, kmol/day, kmole/day");
     }
 
     setEmptyFluid();
