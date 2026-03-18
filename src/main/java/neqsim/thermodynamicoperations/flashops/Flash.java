@@ -109,8 +109,8 @@ public abstract class Flash extends BaseOperation {
    * converge to trivial solutions).
    *
    * <p>
-   * Only runs when Wilson K-values indicate near-critical conditions (trial sums close to 1.0),
-   * avoiding false positives in clearly non-critical systems.
+   * When called due to trivial solution detection (both tm ≈ 0), all filtering gates are bypassed
+   * since the standard analysis was inconclusive.
    *
    * @return true if instability was found (K-values on system are updated)
    */
@@ -119,12 +119,18 @@ public abstract class Flash extends BaseOperation {
     double tempK = system.getTemperature();
     double presBar = system.getPressure();
 
-    // Check if near-critical: near the cricondenbar, Wilson K ≈ 1 for all
-    // components, and the sum(z*K) ≈ 1 (near bubble point) or sum(z/K) ≈ 1
-    // (near dew point). Only retry at moderate-to-high pressures where
-    // near-critical VLE issues occur.
-    if (presBar < 50.0) {
-      return false;
+    // Check if original stability analysis returned trivial solutions (both tm ≈ 0).
+    // In that case, bypass all pre-screening gates — we have no information about
+    // stability and must try harder.
+    boolean trivialSolution = (Math.abs(tm[0]) < 1e-12 && Math.abs(tm[1]) < 1e-12);
+
+    // Pre-screening: only apply gates when NOT called due to trivial solution.
+    // For trivial solutions, always run the full retry.
+    if (!trivialSolution) {
+      // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
+      if (presBar < 50.0) {
+        return false;
+      }
     }
     double sumwVapor = 0.0;
     double sumwLiquid = 0.0;
@@ -146,12 +152,12 @@ public abstract class Flash extends BaseOperation {
     }
     // Only retry when Wilson K sums indicate proximity to a phase boundary.
     // At the bubble point sum(z*K)=1; at the dew point sum(z/K)=1.
-    // Use range [0.7, 2.4] to catch near-cricondenbar (sumw ≈ 0.7-1.8)
-    // while excluding supercritical single-component systems (e.g. CO2 at
-    // 100 bar, 298K gives sumwVapor ≈ 0.65) and well-separated phases.
-    boolean nearBubblePoint = (sumwVapor > 0.7 && sumwVapor < 2.4);
-    boolean nearDewPoint = (sumwLiquid > 0.7 && sumwLiquid < 2.4);
-    if (!nearBubblePoint && !nearDewPoint) {
+    // Use range [0.3, 5.0] to catch both near-cricondenbar (sumw ≈ 0.7-1.8)
+    // and high-T dew points where K-values are large (sumwLiquid ≈ 0.3-0.7).
+    // Bypass this filter for trivial solutions.
+    boolean nearBubblePoint = (sumwVapor > 0.3 && sumwVapor < 5.0);
+    boolean nearDewPoint = (sumwLiquid > 0.3 && sumwLiquid < 5.0);
+    if (!trivialSolution && !nearBubblePoint && !nearDewPoint) {
       return false;
     }
     // Skip retry for near-pure component systems: for a single component,
@@ -169,7 +175,7 @@ public abstract class Flash extends BaseOperation {
       }
     }
     boolean wilsonKNearUnity = maxLnK < 0.5;
-    if (sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity) {
+    if (sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity && !trivialSolution) {
       return false;
     }
 
@@ -190,11 +196,16 @@ public abstract class Flash extends BaseOperation {
     // When Wilson K ≈ 1 for all components (near-critical), simple amplification
     // of ln(K) ≈ 0 produces trivial initial guesses. In this case, use
     // heavy/light component weighting to generate non-trivial trial compositions.
-    boolean useCompositionPerturbation = wilsonKNearUnity;
+    // Also use perturbation trials when the standard analysis found trivial solutions,
+    // since the standard Wilson K trials already failed.
+    // Always enable for multicomponent systems (>3 components) to catch
+    // high-T dew-point boundary misses.
+    boolean useCompositionPerturbation = wilsonKNearUnity || trivialSolution || numComp > 3;
 
     // Number of trials: 2 standard (amplified K vapor/liquid) + 2 perturbation
-    // (heavy-enriched / light-enriched) when near-critical
-    int numTrials = useCompositionPerturbation ? 4 : 2;
+    // (heavy-enriched / light-enriched) when near-critical or trivial
+    // + 1 near-pure heaviest component trial for dew-point detection
+    int numTrials = useCompositionPerturbation ? 5 : 2;
 
     for (int trial = 0; trial < numTrials; trial++) {
       double[] Wi = new double[numComp];
@@ -231,7 +242,7 @@ public abstract class Flash extends BaseOperation {
           oldlogw[i] = logWi[i];
           sumwTrial += Wi[i];
         }
-      } else {
+      } else if (trial <= 3) {
         // Composition-perturbation trials for near-critical systems.
         // Trial 2: heavy-enriched (weight by Tc — higher Tc components get more)
         // Trial 3: light-enriched (weight by 1/Tc — lower Tc components get more)
@@ -263,6 +274,36 @@ public abstract class Flash extends BaseOperation {
           } else {
             // Light-enriched: boost components with low Tc (vapor-like)
             Wi[i] = zi * Math.pow(1.0 / (tcNorm + 0.01), 3.0);
+          }
+          logWi[i] = Math.log(Wi[i]);
+          oldlogw[i] = logWi[i];
+          sumwTrial += Wi[i];
+        }
+      } else {
+        // Trial 4: near-pure heaviest component trial.
+        // At high-T dew points, the incipient liquid phase is dominated by the
+        // heaviest component. This trial catches those cases.
+        int heaviestIdx = 0;
+        double heaviestTc = 0.0;
+        for (int i = 0; i < numComp; i++) {
+          double zi = testSystem.getPhase(0).getComponent(i).getz();
+          if (zi < 1e-100) {
+            continue;
+          }
+          double tc = testSystem.getPhase(0).getComponent(i).getTC();
+          if (tc > heaviestTc) {
+            heaviestTc = tc;
+            heaviestIdx = i;
+          }
+        }
+        for (int i = 0; i < numComp; i++) {
+          double zi = testSystem.getPhase(0).getComponent(i).getz();
+          if (zi < 1e-100 || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+            Wi[i] = 1e-50;
+          } else if (i == heaviestIdx) {
+            Wi[i] = 1.0;
+          } else {
+            Wi[i] = 1e-6;
           }
           logWi[i] = Math.log(Wi[i]);
           oldlogw[i] = logWi[i];
@@ -710,14 +751,11 @@ public abstract class Flash extends BaseOperation {
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
         || system.getPhase(0).getNumberOfComponents() == 1) {
-      // Standard analysis declares stable. Try amplified K-value trials with a
-      // separate clone to catch near-critical instability that the standard
-      // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).
-      // Skip when both tm values are well above zero (clearly stable).
+      // Standard analysis declares stable. Run amplified K-value trials as a
+      // secondary guard to catch boundary instability that the standard
+      // two-trial analysis can miss.
       boolean retryFoundInstability = false;
-      if (tm[0] < 0.5 || tm[1] < 0.5) {
-        retryFoundInstability = amplifiedKStabilityRetry();
-      }
+      retryFoundInstability = amplifiedKStabilityRetry();
       if (retryFoundInstability) {
         // Retry found instability — set up the system for two-phase flash
         RachfordRice rachfordRice = new RachfordRice();
