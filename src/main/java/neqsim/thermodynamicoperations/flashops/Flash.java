@@ -121,7 +121,19 @@ public abstract class Flash extends BaseOperation {
 
     // Detect trivial solution: standard analysis set tm ≈ 0 instead of finding
     // a meaningful stationary point. Bypass all pre-screening gates in this case.
-    boolean trivialSolution = (Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12);
+    // Exception: nearly-pure systems (max z > 0.999) legitimately have tm ≈ 0
+    // because a single dominant component is genuinely stable — not a trivial
+    // convergence failure — so skip the bypass for those systems.
+    double maxZ = 0.0;
+    for (int i = 0; i < numComp; i++) {
+      double zi = system.getPhase(0).getComponent(i).getz();
+      if (zi > maxZ) {
+        maxZ = zi;
+      }
+    }
+    boolean nearlyPure = maxZ > 0.999;
+    boolean trivialSolution =
+        !nearlyPure && ((Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12));
 
     // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
     // Near-critical instability misses only happen near the cricondenbar/cricondentherm
