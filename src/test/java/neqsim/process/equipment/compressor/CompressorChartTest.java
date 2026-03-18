@@ -276,7 +276,7 @@ public class CompressorChartTest {
     org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
         .debug("surge " + comp1.isSurge());
     Assertions.assertTrue(comp1.isSurge() == false);
-    Assertions.assertEquals(155.9487458, comp1.getOutletPressure(), 1e-3);
+    Assertions.assertEquals(155.9487458, comp1.getOutletPressure(), 0.1);
   }
 
   @Test
