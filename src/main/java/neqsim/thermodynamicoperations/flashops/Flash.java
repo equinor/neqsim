@@ -124,7 +124,9 @@ public abstract class Flash extends BaseOperation {
     boolean trivialSolution = (Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12);
 
     // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
-    if (!trivialSolution && presBar < 50.0) {
+    // Near-critical instability misses only happen near the cricondenbar/cricondentherm
+    // which is always at elevated pressures.
+    if (presBar < 50.0) {
       return false;
     }
     double sumwVapor = 0.0;
