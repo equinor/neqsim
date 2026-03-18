@@ -746,11 +746,15 @@ public abstract class Flash extends BaseOperation {
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
         || system.getPhase(0).getNumberOfComponents() == 1) {
-      // Standard analysis declares stable. Run amplified K-value trials as a
-      // secondary guard to catch boundary instability that the standard
-      // two-trial analysis can miss.
+      // Standard analysis declares stable. Only retry when at least one tm value
+      // is near zero (< 0.5), indicating a possible trivial solution.
+      // When both tm > 0.5, the system is clearly stable — skip the expensive retry.
+      // Also skip for CPA/association systems where Wilson K estimates are unreliable.
       boolean retryFoundInstability = false;
-      retryFoundInstability = amplifiedKStabilityRetry();
+      boolean isCPA = system.getModelName().contains("CPA");
+      if ((tm[0] < 0.5 || tm[1] < 0.5) && !isCPA) {
+        retryFoundInstability = amplifiedKStabilityRetry();
+      }
       if (retryFoundInstability) {
         // Retry found instability — set up the system for two-phase flash
         RachfordRice rachfordRice = new RachfordRice();
