@@ -69,6 +69,18 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     if (name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI")
         || name.equals("mol")) {
       factor = 1.0;
+    } else if (name.equals("mole/min") || name.equals("mol/min")) {
+      factor = 1.0 / 60.0;
+    } else if (name.equals("mole/hr") || name.equals("mol/hr")) {
+      factor = 1.0 / 3600.0;
+    } else if (name.equals("kmole/sec") || name.equals("kmol/sec")) {
+      factor = 1000.0;
+    } else if (name.equals("kmole/min") || name.equals("kmol/min")) {
+      factor = 1000.0 / 60.0;
+    } else if (name.equals("kmole/hr") || name.equals("kmol/hr")) {
+      factor = 1000.0 / 3600.0;
+    } else if (name.equals("kmole/day") || name.equals("kmol/day")) {
+      factor = 1000.0 / (3600.0 * 24.0);
     } else if (name.equals("Nlitre/min")) {
       factor = 1.0 / 60.0 * mol_m3 / 1000.0;
     } else if (name.equals("Nlitre/sec")) {

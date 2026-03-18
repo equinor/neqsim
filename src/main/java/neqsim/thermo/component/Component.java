@@ -2463,12 +2463,20 @@ public abstract class Component implements ComponentInterface {
       return getVoli() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMolesInPhase;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMolesInPhase * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMolesInPhase * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMolesInPhase / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMolesInPhase * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
@@ -2483,12 +2491,20 @@ public abstract class Component implements ComponentInterface {
       return numberOfMoles * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMoles * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMoles;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMoles * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMoles * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMoles / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMoles * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMoles * 3600.0 * 24.0 / 1000.0;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }

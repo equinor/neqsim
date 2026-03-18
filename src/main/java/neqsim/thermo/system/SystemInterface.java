@@ -1816,8 +1816,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * <p>
    * Returns the pH calculated from H3O+ activity in the aqueous phase if one exists. Returns
-   * {@link Double#NaN} if no aqueous phase is present. Delegates to
-   * {@link PhaseInterface#getpH()}.
+   * {@link Double#NaN} if no aqueous phase is present. Delegates to {@link PhaseInterface#getpH()}.
    * </p>
    *
    * @return pH of the aqueous phase, or NaN if no aqueous phase exists
@@ -2783,8 +2782,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param flowRate a double
-   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
-   *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
+   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr,
+   *        kg/day, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr,
+   *        kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day,
+   *        Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, idSm3/sec, idSm3/hr, idSm3/day
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 

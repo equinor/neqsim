@@ -2978,12 +2978,20 @@ public abstract class Phase implements PhaseInterface {
     } else if (flowunit.equals("ft3/sec")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * Math.pow(3.2808399, 3);
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMolesInPhase;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMolesInPhase * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMolesInPhase * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMolesInPhase / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMolesInPhase * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
     } else if (flowunit.equals("Sm3/sec")) {
       return numberOfMolesInPhase * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature

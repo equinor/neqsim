@@ -105,6 +105,47 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void setFlowRateMolePerHrTest() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+    fluid.addComponent("ethane", 0.5);
+    fluid.addComponent("propane", 0.5);
+    fluid.setMixingRule("classic");
+
+    // Set flow rate using mole/hr
+    fluid.setTotalFlowRate(3600.0, "mole/hr");
+    double molarFlowMoleSec = fluid.getFlowRate("mole/sec");
+    assertEquals(1.0, molarFlowMoleSec, 1e-6);
+    double molarFlowMoleHr = fluid.getFlowRate("mole/hr");
+    assertEquals(3600.0, molarFlowMoleHr, 1e-3);
+
+    // Set flow rate using mol/hr (short alias)
+    fluid.setTotalFlowRate(7200.0, "mol/hr");
+    assertEquals(2.0, fluid.getFlowRate("mol/sec"), 1e-6);
+    assertEquals(7200.0, fluid.getFlowRate("mol/hr"), 1e-3);
+  }
+
+  @Test
+  void setFlowRateKmolePerHrTest() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+    fluid.addComponent("ethane", 0.5);
+    fluid.addComponent("propane", 0.5);
+    fluid.setMixingRule("classic");
+
+    // Set flow rate using kmole/hr
+    fluid.setTotalFlowRate(1.0, "kmole/hr");
+    double molarFlowMoleSec = fluid.getFlowRate("mole/sec");
+    // 1 kmole/hr = 1000 mol / 3600 sec = 0.27778 mol/sec
+    assertEquals(1000.0 / 3600.0, molarFlowMoleSec, 1e-6);
+    double molarFlowKmoleHr = fluid.getFlowRate("kmole/hr");
+    assertEquals(1.0, molarFlowKmoleHr, 1e-6);
+
+    // Set flow rate using kmol/hr (short alias)
+    fluid.setTotalFlowRate(2.0, "kmol/hr");
+    assertEquals(2.0, fluid.getFlowRate("kmol/hr"), 1e-6);
+    assertEquals(2000.0 / 3600.0, fluid.getFlowRate("mol/sec"), 1e-6);
+  }
+
+  @Test
   void testWeightBasedComposition() {
     SystemInterface weightSystem = new SystemSrkEos(298.0, 50.0);
     weightSystem.addComponent("methane", 1.0);
@@ -114,10 +155,10 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     double[] weightComposition = weightSystem.getWeightBasedComposition();
 
     double mixtureMolarMass = weightSystem.getMolarMass();
-    double expectedFirst = weightSystem.getPhase(0).getComponent(0).getMolarMass() * 0.25
-        / mixtureMolarMass;
-    double expectedSecond = weightSystem.getPhase(0).getComponent(1).getMolarMass() * 0.75
-        / mixtureMolarMass;
+    double expectedFirst =
+        weightSystem.getPhase(0).getComponent(0).getMolarMass() * 0.25 / mixtureMolarMass;
+    double expectedSecond =
+        weightSystem.getPhase(0).getComponent(1).getMolarMass() * 0.75 / mixtureMolarMass;
 
     assertEquals(expectedFirst, weightComposition[0]);
     assertEquals(expectedSecond, weightComposition[1]);

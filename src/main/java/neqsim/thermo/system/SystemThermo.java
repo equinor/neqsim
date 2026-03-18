@@ -2526,12 +2526,20 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature
           / ThermodynamicConstantsInterface.atm / 1.0e6;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return totalNumberOfMoles;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return totalNumberOfMoles * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return totalNumberOfMoles * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return totalNumberOfMoles / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return totalNumberOfMoles * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return totalNumberOfMoles * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return totalNumberOfMoles * 3600.0 * 24.0 / 1000.0;
     } else if (flowunit.equals("lbmole/hr")) {
       return totalNumberOfMoles * 3600.0 / 1000.0 * 2.205;
     } else if (flowunit.equals("lb/hr")) {
