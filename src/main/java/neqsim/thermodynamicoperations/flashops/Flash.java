@@ -109,8 +109,8 @@ public abstract class Flash extends BaseOperation {
    * converge to trivial solutions).
    *
    * <p>
-   * When called due to trivial solution detection (both tm ≈ 0), all filtering gates are bypassed
-   * since the standard analysis was inconclusive.
+   * Only runs when Wilson K-values indicate near-critical conditions (trial sums close to 1.0),
+   * avoiding false positives in clearly non-critical systems.
    *
    * @return true if instability was found (K-values on system are updated)
    */
@@ -119,15 +119,13 @@ public abstract class Flash extends BaseOperation {
     double tempK = system.getTemperature();
     double presBar = system.getPressure();
 
+    // Detect trivial solution: standard analysis set tm ≈ 0 instead of finding
+    // a meaningful stationary point. Bypass all pre-screening gates in this case.
     boolean trivialSolution = (Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12);
 
-    // Pre-screening: only apply gates when NOT called due to trivial solution.
-    // For trivial solutions, always run the full retry.
-    if (!trivialSolution) {
-      // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
-      if (presBar < 50.0) {
-        return false;
-      }
+    // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
+    if (!trivialSolution && presBar < 50.0) {
+      return false;
     }
     double sumwVapor = 0.0;
     double sumwLiquid = 0.0;
@@ -149,11 +147,11 @@ public abstract class Flash extends BaseOperation {
     }
     // Only retry when Wilson K sums indicate proximity to a phase boundary.
     // At the bubble point sum(z*K)=1; at the dew point sum(z/K)=1.
-    // Use range [0.3, 5.0] to catch both near-cricondenbar (sumw ≈ 0.7-1.8)
-    // and high-T dew points where K-values are large (sumwLiquid ≈ 0.3-0.7).
-    // Bypass this filter for trivial solutions.
-    boolean nearBubblePoint = (sumwVapor > 0.3 && sumwVapor < 5.0);
-    boolean nearDewPoint = (sumwLiquid > 0.3 && sumwLiquid < 5.0);
+    // Use range [0.7, 2.4] to catch near-cricondenbar (sumw ≈ 0.7-1.8)
+    // while excluding supercritical single-component systems (e.g. CO2 at
+    // 100 bar, 298K gives sumwVapor ≈ 0.65) and well-separated phases.
+    boolean nearBubblePoint = (sumwVapor > 0.7 && sumwVapor < 2.4);
+    boolean nearDewPoint = (sumwLiquid > 0.7 && sumwLiquid < 2.4);
     if (!trivialSolution && !nearBubblePoint && !nearDewPoint) {
       return false;
     }
@@ -172,7 +170,7 @@ public abstract class Flash extends BaseOperation {
       }
     }
     boolean wilsonKNearUnity = maxLnK < 0.5;
-    if (sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity && !trivialSolution) {
+    if (!trivialSolution && sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity) {
       return false;
     }
 
@@ -193,14 +191,10 @@ public abstract class Flash extends BaseOperation {
     // When Wilson K ≈ 1 for all components (near-critical), simple amplification
     // of ln(K) ≈ 0 produces trivial initial guesses. In this case, use
     // heavy/light component weighting to generate non-trivial trial compositions.
-    // Also use perturbation trials when the standard analysis found trivial solutions,
-    // since the standard Wilson K trials already failed.
-    // Always enable for multicomponent systems (>3 components) to catch
-    // high-T dew-point boundary misses.
-    boolean useCompositionPerturbation = wilsonKNearUnity || trivialSolution || numComp > 3;
+    boolean useCompositionPerturbation = wilsonKNearUnity || trivialSolution;
 
     // Number of trials: 2 standard (amplified K vapor/liquid) + 2 perturbation
-    // (heavy-enriched / light-enriched) when near-critical or trivial
+    // (heavy-enriched / light-enriched) when near-critical or trivial solution
     // + 1 near-pure heaviest component trial for dew-point detection
     int numTrials = useCompositionPerturbation ? 5 : 2;
 
@@ -277,9 +271,7 @@ public abstract class Flash extends BaseOperation {
           sumwTrial += Wi[i];
         }
       } else {
-        // Trial 4: near-pure heaviest component trial.
-        // At high-T dew points, the incipient liquid phase is dominated by the
-        // heaviest component. This trial catches those cases.
+        // Trial 4: near-pure heaviest component trial for dew-point detection.
         int heaviestIdx = 0;
         double heaviestTc = 0.0;
         for (int i = 0; i < numComp; i++) {
@@ -294,8 +286,8 @@ public abstract class Flash extends BaseOperation {
           }
         }
         for (int i = 0; i < numComp; i++) {
-          double zi = testSystem.getPhase(0).getComponent(i).getz();
-          if (zi < 1e-100 || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          if (testSystem.getPhase(0).getComponent(i).getz() < 1e-100
+              || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
             Wi[i] = 1e-50;
           } else if (i == heaviestIdx) {
             Wi[i] = 1.0;
@@ -746,13 +738,12 @@ public abstract class Flash extends BaseOperation {
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
         || system.getPhase(0).getNumberOfComponents() == 1) {
-      // Standard analysis declares stable. Only retry when at least one tm value
-      // is near zero (< 0.5), indicating a possible trivial solution.
-      // When both tm > 0.5, the system is clearly stable — skip the expensive retry.
-      // Also skip for CPA/association systems where Wilson K estimates are unreliable.
+      // Standard analysis declares stable. Try amplified K-value trials with a
+      // separate clone to catch near-critical instability that the standard
+      // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).
+      // Skip when both tm values are well above zero (clearly stable).
       boolean retryFoundInstability = false;
-      boolean isCPA = system.getModelName().contains("CPA");
-      if ((tm[0] < 0.5 || tm[1] < 0.5) && !isCPA) {
+      if ((tm[0] < 0.5 || tm[1] < 0.5) && !system.getModelName().contains("CPA")) {
         retryFoundInstability = amplifiedKStabilityRetry();
       }
       if (retryFoundInstability) {
