@@ -434,6 +434,91 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Look up a measurement device by its instrument tag. Tags are assigned via
+   * {@link MeasurementDeviceInterface#setTag(String)} and typically correspond to plant historian
+   * signal identifiers (e.g. "PT-101", "TT-201").
+   *
+   * @param tag the instrument tag to search for
+   * @return the matching device, or {@code null} if no device carries the given tag
+   */
+  public MeasurementDeviceInterface getMeasurementDeviceByTag(String tag) {
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      if (tag.equals(measurementDevices.get(i).getTag())) {
+        return measurementDevices.get(i);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns all measurement devices that have the specified
+   * {@link neqsim.process.measurementdevice.InstrumentTagRole}.
+   *
+   * @param role the tag role to filter on
+   * @return unmodifiable list of matching devices (may be empty)
+   */
+  public List<MeasurementDeviceInterface> getMeasurementDevicesByRole(
+      neqsim.process.measurementdevice.InstrumentTagRole role) {
+    List<MeasurementDeviceInterface> result = new ArrayList<MeasurementDeviceInterface>();
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      if (measurementDevices.get(i).getTagRole() == role) {
+        result.add(measurementDevices.get(i));
+      }
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  /**
+   * Sets field data values on measurement devices identified by their instrument tags. Devices with
+   * role {@link neqsim.process.measurementdevice.InstrumentTagRole#INPUT INPUT} will push the
+   * values into the model via {@link MeasurementDeviceInterface#applyFieldValue()}.
+   *
+   * @param fieldData map of instrument tag to field value
+   */
+  public void setFieldData(Map<String, Double> fieldData) {
+    for (Map.Entry<String, Double> entry : fieldData.entrySet()) {
+      MeasurementDeviceInterface device = getMeasurementDeviceByTag(entry.getKey());
+      if (device != null) {
+        device.setFieldValue(entry.getValue());
+      }
+    }
+  }
+
+  /**
+   * Applies field values from all {@link neqsim.process.measurementdevice.InstrumentTagRole#INPUT
+   * INPUT} instruments to their connected streams or equipment. Call this before running the
+   * process to push field boundary conditions into the model.
+   */
+  public void applyFieldInputs() {
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      MeasurementDeviceInterface device = measurementDevices.get(i);
+      if (device.getTagRole() == neqsim.process.measurementdevice.InstrumentTagRole.INPUT
+          && device.hasFieldValue()) {
+        device.applyFieldValue();
+      }
+    }
+  }
+
+  /**
+   * Returns a map of instrument tag to deviation (model minus field) for all
+   * {@link neqsim.process.measurementdevice.InstrumentTagRole#BENCHMARK BENCHMARK} instruments that
+   * have field data. Useful for model validation and parameter optimisation.
+   *
+   * @return map of tag to deviation value
+   */
+  public Map<String, Double> getBenchmarkDeviations() {
+    Map<String, Double> deviations = new HashMap<String, Double>();
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      MeasurementDeviceInterface device = measurementDevices.get(i);
+      if (device.getTagRole() == neqsim.process.measurementdevice.InstrumentTagRole.BENCHMARK
+          && device.hasFieldValue()) {
+        deviations.put(device.getTag(), device.getDeviation());
+      }
+    }
+    return deviations;
+  }
+
+  /**
    * <p>
    * getUnitNumber.
    * </p>
@@ -2074,6 +2159,9 @@ public class ProcessSystem extends SimulationBaseClass {
 
     setTimeStep(dt);
     increaseTime(dt);
+
+    // Apply field data from INPUT instruments before running the model
+    applyFieldInputs();
 
     // Track mass before transient step
     if (enableMassBalanceTracking) {
