@@ -170,7 +170,7 @@ public abstract class Flash extends BaseOperation {
       }
     }
     boolean wilsonKNearUnity = maxLnK < 0.5;
-    if (!trivialSolution && sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity) {
+    if (sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity) {
       return false;
     }
 
