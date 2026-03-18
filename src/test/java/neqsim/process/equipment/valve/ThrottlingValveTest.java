@@ -583,6 +583,7 @@ public class ThrottlingValveTest {
     valve2.getMechanicalDesign().getValveSizingMethod().setxT(0.75);
     valve2.setPercentValveOpening(100);
     valve2.setOutletPressure(25.0);
+    stream2.run();
     valve2.run();
     valve2.calcKv();
     double cv2 = valve2.getCv();
