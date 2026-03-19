@@ -13,7 +13,7 @@ public enum EquipmentEnum {
   SetPoint, FlowRateAdjuster, Calculator, Expander, SimpleTEGAbsorber, Tank, ComponentSplitter,
   ReservoirCVDsim, ReservoirDiffLibsim, VirtualStream, ReservoirTPsim, SimpleReservoir, Manifold,
   Flare, FlareStack, FuelCell, CO2Electrolyzer, Electrolyzer, WindTurbine, BatteryStorage,
-  SolarPanel;
+  SolarPanel, WindFarm, OffshoreEnergySystem, AmmoniaSynthesisReactor, SubseaPowerCable;
 
   /** {@inheritDoc} */
   @Override

@@ -31,6 +31,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   private static final double SECONDS_PER_HOUR = 3600.0;
   private static final int MAX_BISECTION_ITERATIONS = 100;
   private static final double MAX_VALVE_OPENING_PERCENTAGE = 100.0;
+  /** Standard temperature for IEC 60534 gas volumetric flow [K]. */
+  static final double T_STD = 273.15;
+  /** Standard pressure for IEC 60534 gas volumetric flow [kPa]. */
+  static final double P_STD_KPA = 101.325;
 
   double xT = 0.137;
   boolean allowChoked = true;
@@ -149,10 +153,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       Kv = flowM3hr / Math.sqrt(deltaP / density);
     } else {
       // Simplified gas formula based on IEC 60534:
-      // Kv = Q / (N9 * P1 * Y) * sqrt(M * T * Z / x)
-      // N9 = 24.6 for actual flow in m3/h, P in kPa, T in K
-      double N9 = 24.6; // IEC 60534 constant for actual m3/h, P in kPa, T in K
-      // Use actual volumetric flow at inlet conditions (same as IEC 60534)
+      // Kv = Q_std / (N9 * P1 * Y) * sqrt(M * T * Z / x)
+      // N9 = 24.6 for standard flow in m3/h, P in kPa, T in K
+      double N9 = 24.6; // IEC 60534 constant for standard m3/h, P in kPa, T in K
       double flowM3sec = fluid.getFlowRate("m3/sec");
       double flowM3hr = flowM3sec * 3600.0;
       double T = fluid.getTemperature(); // Kelvin
@@ -168,6 +171,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       double Fgamma = gamma / 1.40;
       double xChoked = Fgamma * xT;
 
+      // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+      double flowM3hr_std = flowM3hr * (P1_kPa / P_STD_KPA) * (T_STD / T) / Z;
+
       // Check for choked flow
       boolean choked = x >= xChoked;
       double xEffective = x;
@@ -178,12 +184,12 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       // Expansion factor Y (simplified)
       double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
-      // Gas Kv formula (IEC 60534 simplified)
+      // Gas Kv formula (IEC 60534 simplified) using standard volumetric flow
       // For choked flow, use xT*Fgamma instead of x
       if (choked && allowChoked) {
-        Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+        Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-        Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+        Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
       }
     }
 
@@ -260,7 +266,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
         denominator = Math.sqrt(MW * T * Z / x);
       }
 
-      double flow_m3_hr = actualKv * N9 * P1_kPa * Y / denominator;
+      // IEC 60534 formula yields standard volumetric flow [m3/h at 273.15 K, 101.325 kPa]
+      double flow_m3_hr_std = actualKv * N9 * P1_kPa * Y / denominator;
+      // Convert standard volumetric flow back to actual volumetric flow at (P1, T, Z)
+      double flow_m3_hr = flow_m3_hr_std * (P_STD_KPA / P1_kPa) * (T / T_STD) * Z;
       flow_m3_s = flow_m3_hr / 3600.0;
     }
 
@@ -369,6 +378,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       double Fgamma = gamma / 1.40;
       double Q_m3_hr = Q_m3_s * 3600.0;
 
+      // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+      double P1_kPa = P1 * 100.0;
+      double Q_m3_hr_std = Q_m3_hr * (P1_kPa / P_STD_KPA) * (T_STD / T) / Z;
+
       // Bisection search for P2
       double P2_low = 0.1; // bara
       double P2_high = P1 - 0.001; // Just below P1
@@ -379,8 +392,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       for (int i = 0; i < maxIter; i++) {
         P2_mid = (P2_low + P2_high) / 2.0;
 
-        // Calculate Kv at this P2 using IEC 60534 formula
-        double P1_kPa = P1 * 100.0;
+        // Calculate Kv at this P2 using IEC 60534 formula with standard flow
         double P2_kPa = P2_mid * 100.0;
         double dP_kPa = P1_kPa - P2_kPa;
         double x = dP_kPa / P1_kPa;
@@ -392,9 +404,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
         double calcKv;
         if (choked && allowChoked) {
-          calcKv = Q_m3_hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+          calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
         } else {
-          calcKv = Q_m3_hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+          calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
         }
 
         if (Math.abs(calcKv - KvAdjusted) / KvAdjusted < tolerance) {
