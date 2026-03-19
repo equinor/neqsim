@@ -246,6 +246,33 @@ valve.setPercentValveOpening(50.0)  # % open
 process.add(valve)
 ```
 
+### Valve Sizing (Cv Calculation)
+
+Calculate the required Cv/Kv for a gas control valve:
+
+```python
+valve = ThrottlingValve("PCV-100", inlet_stream)
+valve.setOutletPressure(25.0)
+valve.setPercentValveOpening(100)
+
+# Select sizing standard: "default", "IEC 60534", "IEC 60534 full", "prod choke"
+mech_design = valve.getMechanicalDesign()
+mech_design.setValveSizingStandard("IEC 60534")
+
+# Configure valve-specific parameters
+mech_design.getValveSizingMethod().setxT(0.75)  # Pressure drop ratio factor
+
+process.add(valve)
+process.run()
+
+valve.calcKv()
+print(f"Cv = {valve.getCv():.2f}")
+print(f"Kv = {valve.getKv():.2f}")
+```
+
+See [Valve Mechanical Design](../process/ValveMechanicalDesign.md) for full details
+on available sizing standards, parameters, and formulas.
+
 ---
 
 ## Flowsheet Building
