@@ -556,15 +556,13 @@ public abstract class SystemThermo implements SystemInterface {
       phaseArray[3].setPressure(phaseArray[0].getPressure());
       phaseArray[3].setType(PhaseType.SOLID);
       for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
+        double moles = Math.max(0.0, getPhase(0).getComponent(i).getNumberOfmoles());
         if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-          phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-              getPhase(0).getComponent(i).getNumberOfmoles(), i);
+          phaseArray[3].addComponent("default", moles, moles, i);
           phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
           phaseArray[3].getComponent(i).setIsTBPfraction(true);
         } else {
-          phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
-              getPhase(0).getComponent(i).getNumberOfmoles(),
-              getPhase(0).getComponent(i).getNumberOfmoles(), i);
+          phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
         }
       }
       ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
@@ -575,15 +573,13 @@ public abstract class SystemThermo implements SystemInterface {
     phaseArray[4].setPressure(phaseArray[0].getPressure());
     phaseArray[4].setType(PhaseType.HYDRATE);
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
+      double moles = Math.max(0.0, getPhase(0).getComponent(i).getNumberOfmoles());
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[4].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[4].addComponent("default", moles, moles, i);
         phaseArray[4].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
         phaseArray[4].getComponent(i).setIsTBPfraction(true);
       } else {
-        phaseArray[4].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[4].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
       }
     }
     ((PhaseHydrate) phaseArray[4]).setSolidRefFluidPhase(phaseArray[0]);
@@ -836,15 +832,12 @@ public abstract class SystemThermo implements SystemInterface {
     phaseArray[5].setPressure(phaseArray[0].getPressure());
     phaseArray[5].setType(PhaseType.WAX);
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
+      double moles = Math.max(0.0, getPhase(0).getComponent(i).getNumberOfmoles());
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
         phaseArray[5].getComponent(i).setIsPlusFraction(true);
       } else {
-        phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
       }
     }
     ((PhaseSolid) phaseArray[5]).setSolidRefFluidPhase(phaseArray[0]);
@@ -864,15 +857,13 @@ public abstract class SystemThermo implements SystemInterface {
     phaseArray[3].setTemperature(phaseArray[0].getTemperature());
     phaseArray[3].setPressure(phaseArray[0].getPressure());
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
+      double moles = Math.max(0.0, getPhase(0).getComponent(i).getNumberOfmoles());
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[3].addComponent("default", moles, moles, i);
         phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
         phaseArray[3].getComponent(i).setIsPlusFraction(true);
       } else {
-        phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
       }
     }
     ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
