@@ -95,6 +95,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private boolean isDewPhase = true;
   /** Starting component index for Wilson estimate. */
   private int speceq = 0;
+  /** True once K-values have diverged sufficiently after a CP (for multiple CP detection). */
+  private boolean kValuesDivergedAfterCP = false;
 
   // --- Results: dynamic storage ---
   private ArrayList<Double> dewPointTemperatures = new ArrayList<Double>();
@@ -135,6 +137,9 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private double[] cricondenThermYFirst = new double[100];
   private double[] cricondenBarXFirst = new double[100];
   private double[] cricondenBarYFirst = new double[100];
+
+  // --- Critical points (supports multiple CPs for complex mixtures) ---
+  private ArrayList<double[]> criticalPoints = new ArrayList<double[]>();
 
   // --- Quality line data (keyed by "qualityT_0.5", "qualityP_0.5", etc.) ---
   private Map<String, double[]> qualityLineData = new HashMap<String, double[]>();
@@ -219,6 +224,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
         phaseFraction = 1.0 - phaseFraction;
         bubblePointFirst = !bubblePointFirst;
         isDewPhase = false;
+        kValuesDivergedAfterCP = false;
 
         // Reset K-values using Wilson correlation
         resetKValuesWithWilson();
@@ -337,6 +343,31 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
             nonLinSolver.etterCP = true;
             isDewPhase = !isDewPhase;
             nonLinSolver.calcCrit();
+            criticalPoints.add(new double[] {system.getTC(), system.getPC()});
+            kValuesDivergedAfterCP = false;
+          }
+        } else {
+          // Track K-value divergence after CP: K-values must move significantly
+          // away from 1 before we allow re-detection. This prevents false triggers
+          // when K-values linger near 1 just past the first CP, or naturally
+          // approach 1 at low pressures at the tail end of the envelope.
+          if (!kValuesDivergedAfterCP) {
+            if (Kvallc < 0.5 || Kvalhc > 2.0) {
+              kValuesDivergedAfterCP = true;
+            }
+          } else {
+            // K-values have diverged strongly and are now re-converging — second CP.
+            // Additional safety guards: must be far enough from first CP (>50 steps)
+            // and at pressure above 5 bar (not at the tail end of the envelope).
+            if (Kvallc < 1.05 && Kvalhc > 0.95 && (np - nonLinSolver.npCrit) > 50
+                && currentP > 5.0) {
+              nonLinSolver.npCrit = np;
+              system.invertPhaseTypes();
+              isDewPhase = !isDewPhase;
+              nonLinSolver.calcCrit();
+              criticalPoints.add(new double[] {system.getTC(), system.getPC()});
+              kValuesDivergedAfterCP = false;
+            }
           }
         }
 
@@ -444,6 +475,17 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    */
   public boolean isEnvelopeClosed() {
     return dewTempArray.length >= 3 && bubTempArray.length >= 3;
+  }
+
+  /**
+   * Returns the number of critical points detected on the phase envelope. Typical mixtures have
+   * exactly one critical point. Highly asymmetric mixtures (e.g., CH4 + nC16+, CO2 + heavy
+   * hydrocarbons) may exhibit two or more critical points where the K-values converge to unity.
+   *
+   * @return number of detected critical points (0 if none detected)
+   */
+  public int getNumberOfCriticalPoints() {
+    return criticalPoints.size();
   }
 
   /**
@@ -1048,9 +1090,21 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       return null;
     }
     if (name.equals("criticalPoint1")) {
+      if (!criticalPoints.isEmpty()) {
+        return criticalPoints.get(0);
+      }
       return new double[] {system.getTC(), system.getPC()};
     }
     if (name.equals("criticalPoint2")) {
+      if (criticalPoints.size() >= 2) {
+        return criticalPoints.get(1);
+      }
+      return new double[] {0, 0};
+    }
+    if (name.equals("criticalPoint3")) {
+      if (criticalPoints.size() >= 3) {
+        return criticalPoints.get(2);
+      }
       return new double[] {0, 0};
     }
     // Quality line keys: qualityT_X, qualityP_X, qualityVolFrac_X, qualityMassFrac_X
