@@ -368,7 +368,13 @@ public class GERG2008H2 extends GERG2008 {
    *
    * <p>
    * This method recalculates gvij, gtij, bvij, btij for hydrogen pairs using the same formulas as
-   * in the parent SetupGERG method.
+   * in the parent SetupGERG method. It also transforms the departure function coefficients
+   * (cijk, eijk, gijk) for models 8 (N2-H2) and 9 (CO2-H2) using the paper's beta_k values.
+   * </p>
+   *
+   * <p>
+   * The transformation from paper notation (eta, epsilon, beta, gamma) to code notation
+   * (c, e, g) is: c = -eta, e = 2*eta*epsilon - beta, g = -eta*epsilon^2 + beta*gamma.
    * </p>
    */
   private void recalculateBinaryParameters() {

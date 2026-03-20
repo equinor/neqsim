@@ -67,6 +67,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemper
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenBarFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenThermFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.HPTphaseEnvelope;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew3;
@@ -2055,6 +2056,52 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Calculates a PT phase envelope using the unified Michelsen continuation method.
+   *
+   * <p>
+   * This is the recommended method for phase envelope calculations. It uses a single robust
+   * algorithm with non-recursive restart, dynamic storage, and automatic branch switching.
+   * </p>
+   */
+  public void calcPTphaseEnvelopeMichelsen() {
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    getOperation().run();
+  }
+
+  /**
+   * Calculates a PT phase envelope using the unified Michelsen continuation method.
+   *
+   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
+   */
+  public void calcPTphaseEnvelopeMichelsen(boolean bubfirst) {
+    double phasefraction = 1.0 - 1e-10;
+    if (bubfirst) {
+      phasefraction = 1.0e-10;
+    }
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
+    if (!isRunAsThread()) {
+      getOperation().run();
+    } else {
+      run();
+    }
+  }
+
+  /**
+   * Calculates a PT phase envelope using the unified Michelsen continuation method.
+   *
+   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
+   * @param lowPres starting low pressure in bara
+   */
+  public void calcPTphaseEnvelopeMichelsen(boolean bubfirst, double lowPres) {
+    double phasefraction = 1.0 - 1e-10;
+    if (bubfirst) {
+      phasefraction = 1.0e-10;
+    }
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, bubfirst);
+    getOperation().run();
+  }
+
+  /**
    * <p>
    * OLGApropTable.
    * </p>
@@ -2580,7 +2627,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
    * double onsetP = ops.asphalteneOnsetPressure();
