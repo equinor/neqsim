@@ -16,10 +16,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design class for mercury removal guard beds.
  *
  * <p>
- * Sizes the pressure vessel (shell, heads, nozzles, internals) for a fixed-bed
- * mercury
- * chemisorption unit based on ASME Section VIII Division 1 or equivalent codes.
- * Includes weight
+ * Sizes the pressure vessel (shell, heads, nozzles, internals) for a fixed-bed mercury
+ * chemisorption unit based on ASME Section VIII Division 1 or equivalent codes. Includes weight
  * breakdown, footprint estimation, and cost estimation.
  * </p>
  *
@@ -112,16 +110,11 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
     double dryWeight = emptyVesselWeight + internalsWeight + externalNozzlesWeight;
     double totalSkidWeight = dryWeight + pipingWeight + structuralWeight + electricalWeight;
 
-    // Footprint
-    double moduleWidth = innerDiameter * 2.0;
-    double moduleLength = innerDiameter * 2.5;
-    double moduleHeight = tantanLength + 1.0;
 
     // Set results on base class
     setOuterDiameter(innerDiameter + 2.0 * wallThickness / 1000.0);
     setInnerDiameter(innerDiameter);
     setWallThickness(wallThickness);
-    tantanLength = tantanLength;
 
     setWeigthVesselShell(emptyVesselWeight);
     setWeigthInternals(internalsWeight);
@@ -130,6 +123,11 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
     setWeightStructualSteel(structuralWeight);
     setWeightElectroInstrument(electricalWeight);
     setWeightTotal(totalSkidWeight);
+
+    // Footprint
+    double moduleWidth = innerDiameter * 2.0;
+    double moduleLength = innerDiameter * 2.5;
+    double moduleHeight = tantanLength + 1.0;
 
     setModuleWidth(moduleWidth);
     setModuleLength(moduleLength);
@@ -153,7 +151,8 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
 
     // Sorbent charge
     Map<String, Object> sorbent = new LinkedHashMap<String, Object>();
-    sorbent.put("item", "Sorbent Charge (" + ((MercuryRemovalBed) getProcessEquipment()).getSorbentType() + ")");
+    sorbent.put("item",
+        "Sorbent Charge (" + ((MercuryRemovalBed) getProcessEquipment()).getSorbentType() + ")");
     sorbent.put("material", ((MercuryRemovalBed) getProcessEquipment()).getSorbentType());
     sorbent.put("weight_kg", sorbentChargeWeight);
     bom.add(sorbent);
