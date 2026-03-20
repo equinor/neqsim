@@ -396,12 +396,25 @@ public class GERG2008H2 extends GERG2008 {
       btij[i][j] = Math.pow(btijOrig, 2);
     }
 
-    // Apply transformations for the new departure function models
+    // Apply transformations for the new departure function models.
+    // The bijk array holds the beta_k values from the paper (Beckmüller et al. 2022).
+    // For polynomial terms (k=1..kpolij): beta_k = 0
+    // For exponential terms (k=kpolij+1..kpolij+kexpij): beta_k from paper tables
     double[][] bijk = new double[MaxMdl + 1][MaxTrmM + 1];
+
+    // Set beta_k values for N2-H2 (Model 8) exponential terms from paper Table 6
+    for (int k = kpolij[MODEL_H2_N2] + 1; k <= kpolij[MODEL_H2_N2]
+        + kexpij[MODEL_H2_N2]; ++k) {
+      bijk[MODEL_H2_N2][k] = 0.5;
+    }
+    // Set beta_k values for CO2-H2 (Model 9) exponential terms from paper Table 7
+    for (int k = kpolij[MODEL_H2_CO2] + 1; k <= kpolij[MODEL_H2_CO2]
+        + kexpij[MODEL_H2_CO2]; ++k) {
+      bijk[MODEL_H2_CO2][k] = 0.5;
+    }
 
     // Process model 8 (N2-H2)
     for (int k = 1; k <= kpolij[MODEL_H2_N2] + kexpij[MODEL_H2_N2]; ++k) {
-      bijk[MODEL_H2_N2][k] = 0; // These are already 0 from initialization
       double origCijk = cijk[MODEL_H2_N2][k];
       double origEijk = eijk[MODEL_H2_N2][k];
       double origGijk = gijk[MODEL_H2_N2][k];
@@ -413,7 +426,6 @@ public class GERG2008H2 extends GERG2008 {
 
     // Process model 9 (CO2-H2)
     for (int k = 1; k <= kpolij[MODEL_H2_CO2] + kexpij[MODEL_H2_CO2]; ++k) {
-      bijk[MODEL_H2_CO2][k] = 0;
       double origCijk = cijk[MODEL_H2_CO2][k];
       double origEijk = eijk[MODEL_H2_CO2][k];
       double origGijk = gijk[MODEL_H2_CO2][k];
