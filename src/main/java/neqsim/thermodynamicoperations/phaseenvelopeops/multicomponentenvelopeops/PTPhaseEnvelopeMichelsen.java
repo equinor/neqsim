@@ -19,6 +19,8 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -72,6 +74,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private static final double FIRST_POINT_STEP = 2.0;
   /** Maximum envelope points per branch to prevent infinite loops. */
   private static final int MAX_ENVELOPE_ITERATIONS = 9980;
+  /** Maximum points per quality line. */
+  private static final int MAX_QUALITY_LINE_POINTS = 5000;
 
   // --- Configuration ---
   private double maxPressure = 1000.0;
@@ -130,6 +134,11 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private double[] cricondenThermYFirst = new double[100];
   private double[] cricondenBarXFirst = new double[100];
   private double[] cricondenBarYFirst = new double[100];
+
+  // --- Quality line data (keyed by "qualityT_0.5", "qualityP_0.5", etc.) ---
+  private Map<String, double[]> qualityLineData = new HashMap<String, double[]>();
+  /** Traced quality line beta values. */
+  private double[] qualityBetaValues = new double[0];
 
   /**
    * Default constructor.
@@ -424,6 +433,287 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
     // Convert ArrayLists to output arrays
     buildOutputArrays();
+  }
+
+  /**
+   * Check whether the phase envelope is closed, meaning both dew and bubble branches have been
+   * successfully traced with at least 3 points each.
+   *
+   * @return true if both branches have at least 3 points
+   */
+  public boolean isEnvelopeClosed() {
+    return dewTempArray.length >= 3 && bubTempArray.length >= 3;
+  }
+
+  /**
+   * Trace quality lines (constant vapor fraction curves) inside the two-phase region. Each quality
+   * line is traced using the same continuation method as the phase boundary, but with a fixed molar
+   * vapor fraction beta. At each point, the volume fraction and mass fraction are also computed.
+   *
+   * <p>
+   * Results are stored internally and accessible via {@link #get(String)} with keys:
+   * </p>
+   * <ul>
+   * <li>{@code "qualityT_X"} - temperatures (K) along quality line at molar fraction X</li>
+   * <li>{@code "qualityP_X"} - pressures (bara) along quality line at molar fraction X</li>
+   * <li>{@code "qualityVolFrac_X"} - volume vapor fractions along the line</li>
+   * <li>{@code "qualityMassFrac_X"} - mass vapor fractions along the line</li>
+   * </ul>
+   *
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive)
+   */
+  public void calcQualityLines(double[] betaValues) {
+    this.qualityBetaValues = betaValues.clone();
+    double maxEnvelopeP = Math.max(cricondenBar[1], 1.0);
+
+    for (double beta : betaValues) {
+      if (beta <= 0.0 || beta >= 1.0) {
+        continue;
+      }
+
+      SystemInterface clonedSystem = system.clone();
+
+      // Estimate initial temperature at low pressure for this beta
+      double temp = tempKWilsonForSystem(clonedSystem, beta, lowPres);
+      if (Double.isNaN(temp)) {
+        continue;
+      }
+      clonedSystem.setTemperature(temp);
+      clonedSystem.setPressure(lowPres);
+
+      // Converge first point using saturation flash
+      ThermodynamicOperations flashOps = new ThermodynamicOperations(clonedSystem);
+      boolean converged = false;
+      for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
+        try {
+          double tempAttempt = temp + attempt * FIRST_POINT_STEP;
+          clonedSystem.setTemperature(tempAttempt);
+          if (beta < 0.5) {
+            flashOps.bubblePointTemperatureFlash();
+          } else {
+            flashOps.dewPointTemperatureFlash();
+          }
+        } catch (Exception ex) {
+          continue;
+        }
+        double tempNy = clonedSystem.getTemperature();
+        if (!Double.isNaN(tempNy)) {
+          temp = tempNy;
+          converged = true;
+          break;
+        }
+      }
+      if (!converged) {
+        logger.debug("Could not converge first quality line point for beta={}", beta);
+        continue;
+      }
+
+      clonedSystem.setBeta(beta);
+      clonedSystem.setPressure(lowPres);
+      clonedSystem.setTemperature(temp);
+
+      SysNewtonRhapsonPhaseEnvelope solver = new SysNewtonRhapsonPhaseEnvelope(clonedSystem, 2,
+          clonedSystem.getPhase(0).getNumberOfComponents());
+      solver.dTmax = this.dTmax;
+      solver.dPmax = this.dPmax;
+      solver.setu();
+
+      ArrayList<Double> qTemps = new ArrayList<Double>();
+      ArrayList<Double> qPress = new ArrayList<Double>();
+      ArrayList<Double> qVolFracs = new ArrayList<Double>();
+      ArrayList<Double> qMassFracs = new ArrayList<Double>();
+
+      boolean pastPeak = false;
+      double peakP = 0.0;
+
+      for (int np = 1; np < MAX_QUALITY_LINE_POINTS; np++) {
+        try {
+          solver.calcInc(np);
+          solver.solve(np);
+        } catch (Exception e) {
+          break;
+        }
+
+        double currentT = clonedSystem.getTemperature();
+        double currentP = clonedSystem.getPressure();
+
+        if (Double.isNaN(currentT) || Double.isNaN(currentP) || currentT < 1e-6
+            || currentP < 1e-6) {
+          break;
+        }
+
+        // Track pressure peak for exit criteria
+        if (currentP > peakP) {
+          peakP = currentP;
+        } else {
+          pastPeak = true;
+        }
+
+        // Exit if pressure exceeds envelope maximum
+        if (currentP > maxEnvelopeP * 1.05) {
+          break;
+        }
+        // Exit if pressure drops below minimum after passing peak
+        if (pastPeak && currentP < minPressure) {
+          break;
+        }
+
+        qTemps.add(currentT);
+        qPress.add(currentP);
+
+        // Compute volume fraction: betaV = beta * Vm_vap / (beta * Vm_vap + (1-beta) * Vm_liq)
+        double mwVap = clonedSystem.getPhase(0).getMolarMass();
+        double mwLiq = clonedSystem.getPhase(1).getMolarMass();
+        double densVap = clonedSystem.getPhase(0).getDensity();
+        double densLiq = clonedSystem.getPhase(1).getDensity();
+
+        double volFrac = 0.5;
+        if (densVap > 1e-10 && densLiq > 1e-10) {
+          double vmVap = mwVap / densVap;
+          double vmLiq = mwLiq / densLiq;
+          volFrac = beta * vmVap / (beta * vmVap + (1.0 - beta) * vmLiq);
+        }
+        qVolFracs.add(volFrac);
+
+        // Compute mass fraction: betaW = beta * Mw_vap / (beta * Mw_vap + (1-beta) * Mw_liq)
+        double massFrac = beta * mwVap / (beta * mwVap + (1.0 - beta) * mwLiq);
+        qMassFracs.add(massFrac);
+      }
+
+      if (!qTemps.isEmpty()) {
+        String betaKey = formatBetaKey(beta);
+        qualityLineData.put("qualityT_" + betaKey, toDoubleArray(qTemps));
+        qualityLineData.put("qualityP_" + betaKey, toDoubleArray(qPress));
+        qualityLineData.put("qualityVolFrac_" + betaKey, toDoubleArray(qVolFracs));
+        qualityLineData.put("qualityMassFrac_" + betaKey, toDoubleArray(qMassFracs));
+      }
+    }
+  }
+
+  /**
+   * Format a beta value as a clean string key (e.g. 0.5 becomes "0.5", 0.25 becomes "0.25").
+   *
+   * @param beta the molar vapor fraction
+   * @return formatted string key
+   */
+  private String formatBetaKey(double beta) {
+    if (beta == (int) beta) {
+      return String.valueOf((int) beta);
+    }
+    String s = String.valueOf(beta);
+    // Remove trailing zeros but keep at least one decimal
+    while (s.endsWith("0") && !s.endsWith(".0")) {
+      s = s.substring(0, s.length() - 1);
+    }
+    return s;
+  }
+
+  /**
+   * Estimate the initial temperature using Wilson correlation for a given system.
+   *
+   * @param sys the thermodynamic system to use
+   * @param beta overall vapor fraction
+   * @param pressure pressure in bara
+   * @return estimated temperature in Kelvin
+   */
+  private double tempKWilsonForSystem(SystemInterface sys, double beta, double pressure) {
+    int numberOfComponents = sys.getPhase(0).getNumberOfComponents();
+    int lcIdx = 0;
+    int hcIdx = 0;
+    double minTc = 1e10;
+    double maxTc = 0;
+
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (sys.getPhase(0).getComponent(i).getTC() > maxTc) {
+        maxTc = sys.getPhase(0).getComponent(i).getTC();
+        hcIdx = i;
+      }
+      if (sys.getPhase(0).getComponent(i).getTC() < minTc) {
+        minTc = sys.getPhase(0).getComponent(i).getTC();
+        lcIdx = i;
+      }
+    }
+
+    int refIdx = beta <= 0.5 ? lcIdx : hcIdx;
+    double refTc = sys.getPhase(0).getComponent(refIdx).getTC();
+    double refPc = sys.getPhase(0).getComponent(refIdx).getPC();
+    double refAc = sys.getPhase(0).getComponent(refIdx).getAcentricFactor();
+
+    double lnPr = Math.log(pressure / refPc);
+    double tEst = refTc * WILSON_CONST * (1 + refAc) / (WILSON_CONST * (1 + refAc) - lnPr);
+    double tOld = 0;
+
+    try {
+      double[] kw = new double[numberOfComponents];
+      for (int iter = 0; iter < MAX_WILSON_ITERATIONS; iter++) {
+        double f = 0;
+        double df = 0;
+        for (int j = 0; j < numberOfComponents; j++) {
+          kw[j] = sys.getPhase(0).getComponent(j).getPC() / pressure
+              * Math.exp(WILSON_CONST * (1.0 + sys.getPhase(0).getComponent(j).getAcentricFactor())
+                  * (1.0 - sys.getPhase(0).getComponent(j).getTC() / tEst));
+        }
+        for (int j = 0; j < numberOfComponents; j++) {
+          double zj = sys.getPhase(0).getComponent(j).getz();
+          double tc = sys.getPhase(0).getComponent(j).getTC();
+          double ac = sys.getPhase(0).getComponent(j).getAcentricFactor();
+          if (beta < 0.5) {
+            f += zj * kw[j];
+            df += zj * kw[j] * WILSON_CONST * (1 + ac) * tc / (tEst * tEst);
+          } else {
+            f += zj / kw[j];
+            df -= zj / kw[j] * WILSON_CONST * (1 + ac) * tc / (tEst * tEst);
+          }
+        }
+        f -= 1.0;
+        if (Math.abs(f / df) > 0.1 * tEst) {
+          tEst -= 0.001 * f / df;
+        } else {
+          tEst -= f / df;
+        }
+        if (Math.abs(tEst - tOld) < 1e-5) {
+          return tEst;
+        }
+        tOld = tEst;
+      }
+    } catch (Exception ex) {
+      lnPr = Math.log(pressure / refPc);
+      tEst = refTc * WILSON_CONST * (1 + refAc) / (WILSON_CONST * (1 + refAc) - lnPr);
+    }
+
+    if (Double.isNaN(tEst) || Double.isInfinite(tEst)) {
+      tEst = refTc * WILSON_CONST * (1 + refAc)
+          / (WILSON_CONST * (1 + refAc) - Math.log(pressure / refPc));
+    }
+    return tEst;
+  }
+
+  /**
+   * Get the list of quality line beta values that were traced.
+   *
+   * @return array of molar vapor fraction values
+   */
+  public double[] getQualityBetaValues() {
+    return qualityBetaValues;
+  }
+
+  /**
+   * Get data for a specific quality line.
+   *
+   * @param beta the molar vapor fraction of the quality line
+   * @return array of [temperatures(K), pressures(bara), volumeFractions, massFractions], or null if
+   *         not traced
+   */
+  public double[][] getQualityLine(double beta) {
+    String key = formatBetaKey(beta);
+    double[] qT = qualityLineData.get("qualityT_" + key);
+    double[] qP = qualityLineData.get("qualityP_" + key);
+    double[] qV = qualityLineData.get("qualityVolFrac_" + key);
+    double[] qM = qualityLineData.get("qualityMassFrac_" + key);
+    if (qT == null) {
+      return null;
+    }
+    return new double[][] {qT, qP, qV, qM};
   }
 
   /**
@@ -748,11 +1038,19 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     if (name.equals("cricondenbarY")) {
       return cricondenBarY;
     }
+    if (name.equals("dewT2") || name.equals("dewP2") || name.equals("bubT2")
+        || name.equals("bubP2")) {
+      return new double[0];
+    }
     if (name.equals("criticalPoint1")) {
       return new double[] {system.getTC(), system.getPC()};
     }
     if (name.equals("criticalPoint2")) {
       return new double[] {0, 0};
+    }
+    // Quality line keys: qualityT_X, qualityP_X, qualityVolFrac_X, qualityMassFrac_X
+    if (name.startsWith("quality")) {
+      return qualityLineData.get(name);
     }
     return null;
   }

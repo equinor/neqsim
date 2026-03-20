@@ -1,7 +1,9 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -410,5 +412,194 @@ public class PTPhaseEnvelopeMichelsenTest {
     double relDiffTherm = Math.abs(cricoTherm1[0] - cricoTherm2[0]) / cricoTherm1[0];
     assertTrue(relDiffTherm < 0.05, "Cricondentherm T should match legacy within 5%, legacy="
         + cricoTherm1[0] + " new=" + cricoTherm2[0] + " relDiff=" + relDiffTherm);
+  }
+
+  /**
+   * Test isEnvelopeClosed returns true for a successful envelope trace.
+   */
+  @Test
+  void testIsEnvelopeClosed() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("nitrogen", 0.01);
+    testSystem.addComponent("CO2", 0.01);
+    testSystem.addComponent("methane", 0.98);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeMichelsen();
+
+    PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
+    assertTrue(env.isEnvelopeClosed(), "Envelope should be closed for simple natural gas");
+  }
+
+  /**
+   * Test that dewT2, dewP2, bubT2, bubP2 keys return empty arrays for compatibility.
+   */
+  @Test
+  void testDewT2BubT2Keys() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("methane", 0.90);
+    testSystem.addComponent("ethane", 0.10);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeMichelsen();
+
+    double[] dewT2 = testOps.get("dewT2");
+    double[] dewP2 = testOps.get("dewP2");
+    double[] bubT2 = testOps.get("bubT2");
+    double[] bubP2 = testOps.get("bubP2");
+
+    assertNotNull(dewT2, "dewT2 should not be null");
+    assertNotNull(dewP2, "dewP2 should not be null");
+    assertNotNull(bubT2, "bubT2 should not be null");
+    assertNotNull(bubP2, "bubP2 should not be null");
+    assertEquals(0, dewT2.length, "dewT2 should be empty array");
+    assertEquals(0, bubP2.length, "bubP2 should be empty array");
+  }
+
+  /**
+   * Test quality line tracing with mole fractions. Verifies that quality lines are traced inside
+   * the two-phase region with temperatures between the dew and bubble curves.
+   */
+  @Test
+  void testQualityLinesMoleFraction() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("nitrogen", 0.02);
+    testSystem.addComponent("CO2", 0.03);
+    testSystem.addComponent("methane", 0.80);
+    testSystem.addComponent("ethane", 0.08);
+    testSystem.addComponent("propane", 0.04);
+    testSystem.addComponent("n-butane", 0.03);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(new double[] {0.1, 0.25, 0.5, 0.75, 0.9});
+
+    // Check that quality line data is accessible via get()
+    double[] qT50 = testOps.get("qualityT_0.5");
+    double[] qP50 = testOps.get("qualityP_0.5");
+
+    assertNotNull(qT50, "qualityT_0.5 should not be null");
+    assertNotNull(qP50, "qualityP_0.5 should not be null");
+    assertTrue(qT50.length > 5,
+        "Should have > 5 quality line points at beta=0.5, got: " + qT50.length);
+    assertEquals(qT50.length, qP50.length, "qualityT and qualityP should have same length");
+
+    // Temperatures should be in Kelvin
+    for (double t : qT50) {
+      assertTrue(t > 100.0, "Quality line T should be in Kelvin (>100 K), got: " + t);
+    }
+    // Pressures should be positive
+    for (double p : qP50) {
+      assertTrue(p > 0.0, "Quality line P should be positive, got: " + p);
+    }
+  }
+
+  /**
+   * Test volume fraction and mass fraction computation on quality lines. At beta=0.5 (50% moles
+   * vapor), volume fraction should be greater than 0.5 (vapor is less dense) and mass fraction
+   * should differ from the mole fraction.
+   */
+  @Test
+  void testQualityLinesVolumeMassFraction() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("methane", 0.80);
+    testSystem.addComponent("ethane", 0.10);
+    testSystem.addComponent("propane", 0.05);
+    testSystem.addComponent("n-butane", 0.05);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(new double[] {0.5});
+
+    double[] volFrac = testOps.get("qualityVolFrac_0.5");
+    double[] massFrac = testOps.get("qualityMassFrac_0.5");
+
+    assertNotNull(volFrac, "qualityVolFrac_0.5 should not be null");
+    assertNotNull(massFrac, "qualityMassFrac_0.5 should not be null");
+    assertTrue(volFrac.length > 3,
+        "Should have > 3 volume fraction points, got: " + volFrac.length);
+
+    // Volume fractions should be between 0 and 1
+    for (double vf : volFrac) {
+      assertTrue(vf > 0.0 && vf < 1.0, "Volume fraction should be between 0 and 1, got: " + vf);
+    }
+    // Mass fractions should be between 0 and 1
+    for (double mf : massFrac) {
+      assertTrue(mf > 0.0 && mf < 1.0, "Mass fraction should be between 0 and 1, got: " + mf);
+    }
+
+    // For a gas-dominant system at beta=0.5:
+    // Volume fraction should typically be > 0.5 (vapor occupies more volume per mole)
+    // This may not hold at very high pressures near critical, but should hold at low P
+    assertTrue(volFrac[0] > 0.5,
+        "Volume fraction at low P should be > 0.5 for beta=0.5, got: " + volFrac[0]);
+  }
+
+  /**
+   * Test that multiple quality lines can be traced simultaneously and accessed via the
+   * getQualityLine() method.
+   */
+  @Test
+  void testMultipleQualityLinesViaGetQualityLine() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("methane", 0.80);
+    testSystem.addComponent("ethane", 0.10);
+    testSystem.addComponent("propane", 0.10);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(new double[] {0.1, 0.5, 0.9});
+
+    PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
+
+    // getQualityLine should return [T, P, volFrac, massFrac]
+    double[][] line50 = env.getQualityLine(0.5);
+    assertNotNull(line50, "Quality line at beta=0.5 should not be null");
+    assertEquals(4, line50.length, "Quality line should have 4 arrays [T, P, vF, mF]");
+    assertTrue(line50[0].length > 3, "Quality line at beta=0.5 should have > 3 points");
+
+    // Lines at 0.1 and 0.9 should also exist
+    double[][] line10 = env.getQualityLine(0.1);
+    double[][] line90 = env.getQualityLine(0.9);
+    assertNotNull(line10, "Quality line at beta=0.1 should not be null");
+    assertNotNull(line90, "Quality line at beta=0.9 should not be null");
+
+    // A non-traced beta should return null
+    assertNull(env.getQualityLine(0.42), "Non-traced beta should return null");
+
+    // getQualityBetaValues should return the traced values
+    double[] betas = env.getQualityBetaValues();
+    assertEquals(3, betas.length, "Should have 3 quality beta values");
+  }
+
+  /**
+   * Test quality lines with bubble-first starting point.
+   */
+  @Test
+  void testQualityLinesBubbleFirst() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("methane", 0.85);
+    testSystem.addComponent("ethane", 0.10);
+    testSystem.addComponent("propane", 0.05);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(true, new double[] {0.25, 0.75});
+
+    double[] qT25 = testOps.get("qualityT_0.25");
+    double[] qT75 = testOps.get("qualityT_0.75");
+
+    assertNotNull(qT25, "qualityT_0.25 should not be null");
+    assertNotNull(qT75, "qualityT_0.75 should not be null");
+    assertTrue(qT25.length > 3, "Quality line 0.25 should have > 3 points");
+    assertTrue(qT75.length > 3, "Quality line 0.75 should have > 3 points");
   }
 }

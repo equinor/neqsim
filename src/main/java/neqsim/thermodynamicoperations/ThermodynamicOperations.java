@@ -2098,7 +2098,47 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       phasefraction = 1.0e-10;
     }
     operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, bubfirst);
-    getOperation().run();
+    if (!isRunAsThread()) {
+      getOperation().run();
+    } else {
+      run();
+    }
+  }
+
+  /**
+   * Calculates a PT phase envelope with quality lines using the unified Michelsen continuation
+   * method. Quality lines are curves of constant molar vapor fraction inside the two-phase region.
+   * At each point on a quality line, the corresponding volume fraction and mass fraction are also
+   * computed.
+   *
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive), e.g.
+   *        {0.1, 0.25, 0.5, 0.75, 0.9}
+   */
+  public void calcPTphaseEnvelopeMichelsenWithQualityLines(double[] betaValues) {
+    PTPhaseEnvelopeMichelsen envOp =
+        new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    envOp.run();
+    envOp.calcQualityLines(betaValues);
+    operation = envOp;
+  }
+
+  /**
+   * Calculates a PT phase envelope with quality lines using the unified Michelsen continuation
+   * method.
+   *
+   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive)
+   */
+  public void calcPTphaseEnvelopeMichelsenWithQualityLines(boolean bubfirst, double[] betaValues) {
+    double phasefraction = 1.0 - 1e-10;
+    if (bubfirst) {
+      phasefraction = 1.0e-10;
+    }
+    PTPhaseEnvelopeMichelsen envOp =
+        new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
+    envOp.run();
+    envOp.calcQualityLines(betaValues);
+    operation = envOp;
   }
 
   /**
