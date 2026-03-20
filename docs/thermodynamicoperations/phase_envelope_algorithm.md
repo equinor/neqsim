@@ -5,7 +5,7 @@ description: "Detailed mathematical and algorithmic documentation for the PT pha
 
 # Phase Envelope Algorithm
 
-NeqSim traces the PT phase envelope using Michelsen's continuation method (Michelsen & Mollerup, *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd ed., 2007). This document describes the mathematical formulation, the Newton-Raphson solver, critical point detection, quality line tracing, and the adaptive step-size control implemented in `PTPhaseEnvelope` and `SysNewtonRhapsonPhaseEnvelope`.
+NeqSim traces the PT phase envelope using Michelsen's continuation method (Michelsen & Mollerup, *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd ed., 2007). This document describes the mathematical formulation, the Newton-Raphson solver, critical point detection, quality line tracing, and the adaptive step-size control implemented in `PTPhaseEnvelopeMichelsen` and `SysNewtonRhapsonPhaseEnvelope`.
 
 ## 1. Problem Formulation
 
@@ -178,7 +178,7 @@ $$
 \Delta s_{\text{bt}} = \Delta s \cdot 0.5^k, \quad k = 1, 2, \dots, 15
 $$
 
-After 15 failed backtrack attempts, a `RuntimeException` signals failure to `PTPhaseEnvelope`, which then either terminates the current tracing pass or starts a second pass from the opposite end.
+After 15 failed backtrack attempts, a `RuntimeException` signals failure to `PTPhaseEnvelopeMichelsen`, which then either terminates the current tracing pass or starts a second pass from the opposite end.
 
 ## 5. Two-Pass Envelope Tracing
 
@@ -309,7 +309,7 @@ Both include the phase compositions $\mathbf{x}$ and $\mathbf{y}$ at the extremu
 
 | Class | Responsibility |
 |-------|---------------|
-| `PTPhaseEnvelope` | Orchestration: two-pass tracing, point storage, critical/cricondenbar/cricondentherm tracking, quality line management, data access via `get()` |
+| `PTPhaseEnvelopeMichelsen` | Orchestration: two-pass tracing, point storage, critical/cricondenbar/cricondentherm tracking, quality line management, data access via `get()` |
 | `SysNewtonRhapsonPhaseEnvelope` | Newton-Raphson solver: Jacobian assembly, sensitivity vector, specification variable selection, polynomial extrapolation, step-size control, critical point refinement |
 | `ThermodynamicOperations` | Public API: `calcPTphaseEnvelope()` variants and `calcPTphaseEnvelopeWithQualityLines()` |
 

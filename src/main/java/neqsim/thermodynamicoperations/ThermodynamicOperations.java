@@ -2005,11 +2005,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
-   * calcPTphaseEnvelopeNew.
-   * </p>
-   */
-  /**
    * Calculates a PT phase envelope.
    *
    * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the

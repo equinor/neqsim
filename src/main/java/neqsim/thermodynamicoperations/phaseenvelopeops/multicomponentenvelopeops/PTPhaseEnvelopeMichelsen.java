@@ -2,8 +2,9 @@
  * PTPhaseEnvelopeMichelsen.java
  *
  * Unified phase envelope calculation using the Michelsen continuation method. Replaces the
- * fragmented implementations (PTphaseEnvelope, PTphaseEnvelopeMay, PTphaseEnvelopeNew,
- * PTphaseEnvelopeNew2, PTphaseEnvelopeNew3) with a single robust algorithm.
+ * fragmented implementations (PTphaseEnvelope1, PTphaseEnvelopeMay, PTphaseEnvelopeNew,
+ * PTphaseEnvelopeNew2) with a single robust algorithm. Note: PTphaseEnvelopeNew3 (grid-based) and
+ * PTphaseEnvelope (base class for CricondenBarFlash/CricondenThermFlash) are retained separately.
  *
  * Algorithm: Michelsen (1980) natural parameter continuation with: - 3rd-order polynomial predictor
  * through last 4 converged points - Adaptive step size control based on Newton iteration count -
