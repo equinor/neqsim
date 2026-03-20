@@ -35,7 +35,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewP = testOps.get("dewP");
     double[] dewT = testOps.get("dewT");
@@ -82,7 +82,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewT = testOps.get("dewT");
     double[] bubT = testOps.get("bubT");
@@ -128,7 +128,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen(true);
+    testOps.calcPTphaseEnvelope(true);
 
     double[] dewT = testOps.get("dewT");
     double[] bubT = testOps.get("bubT");
@@ -157,7 +157,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-    assertDoesNotThrow(() -> testOps.calcPTphaseEnvelopeMichelsen());
+    assertDoesNotThrow(() -> testOps.calcPTphaseEnvelope());
   }
 
   /**
@@ -189,7 +189,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewT = testOps.get("dewT");
     double[] bubT = testOps.get("bubT");
@@ -227,7 +227,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(fluid);
     testOps.TPflash();
 
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewT = testOps.get("dewT");
     double[] bubT = testOps.get("bubT");
@@ -255,7 +255,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen(false, 0.5);
+    testOps.calcPTphaseEnvelope(false, 0.5);
 
     double[] dewP = testOps.get("dewP");
     assertNotNull(dewP, "dewP should not be null");
@@ -275,7 +275,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     // All standard keys should return non-null
     String[] keys = {"dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens",
@@ -298,7 +298,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewT = testOps.get("dewT");
     assertTrue(dewT.length > 0, "Should have at least one dew point");
@@ -320,7 +320,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewP = testOps.get("dewP");
     assertTrue(dewP.length > 0, "Should have at least one dew point");
@@ -343,7 +343,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] cricondenthermX = testOps.get("cricondenthermX");
     double[] cricondenthermY = testOps.get("cricondenthermY");
@@ -362,56 +362,37 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Compare Michelsen and legacy (New2) implementations on the same system. Both should produce
-   * similar cricondenbar and cricondentherm values.
+   * Test that calcPTphaseEnvelope produces physically valid cricondenbar and cricondentherm for a
+   * 9-component natural gas.
    */
   @Test
-  void testConsistencyWithLegacy() {
-    // Run with legacy implementation
-    neqsim.thermo.system.SystemInterface system1 =
+  void testCricondenbarAndCricondentherm() {
+    neqsim.thermo.system.SystemInterface system =
         new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
-    system1.addComponent("nitrogen", 0.88);
-    system1.addComponent("CO2", 5.7);
-    system1.addComponent("methane", 86.89);
-    system1.addComponent("ethane", 3.59);
-    system1.addComponent("propane", 1.25);
-    system1.addComponent("i-butane", 0.19);
-    system1.addComponent("n-butane", 0.35);
-    system1.addComponent("i-pentane", 0.12);
-    system1.addComponent("n-pentane", 0.12);
-    system1.setMixingRule("classic");
-    ThermodynamicOperations ops1 = new ThermodynamicOperations(system1);
-    ops1.calcPTphaseEnvelope2();
-    double[] cricoBar1 = ops1.get("cricondenbar");
-    double[] cricoTherm1 = ops1.get("cricondentherm");
+    system.addComponent("nitrogen", 0.88);
+    system.addComponent("CO2", 5.7);
+    system.addComponent("methane", 86.89);
+    system.addComponent("ethane", 3.59);
+    system.addComponent("propane", 1.25);
+    system.addComponent("i-butane", 0.19);
+    system.addComponent("n-butane", 0.35);
+    system.addComponent("i-pentane", 0.12);
+    system.addComponent("n-pentane", 0.12);
+    system.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.calcPTphaseEnvelope();
+    double[] cricoBar = ops.get("cricondenbar");
+    double[] cricoTherm = ops.get("cricondentherm");
 
-    // Run with Michelsen implementation
-    neqsim.thermo.system.SystemInterface system2 =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
-    system2.addComponent("nitrogen", 0.88);
-    system2.addComponent("CO2", 5.7);
-    system2.addComponent("methane", 86.89);
-    system2.addComponent("ethane", 3.59);
-    system2.addComponent("propane", 1.25);
-    system2.addComponent("i-butane", 0.19);
-    system2.addComponent("n-butane", 0.35);
-    system2.addComponent("i-pentane", 0.12);
-    system2.addComponent("n-pentane", 0.12);
-    system2.setMixingRule("classic");
-    ThermodynamicOperations ops2 = new ThermodynamicOperations(system2);
-    ops2.calcPTphaseEnvelopeMichelsen();
-    double[] cricoBar2 = ops2.get("cricondenbar");
-    double[] cricoTherm2 = ops2.get("cricondentherm");
+    // Cricondenbar pressure should be in a reasonable range for this gas (~60-90 bar)
+    assertNotNull(cricoBar, "cricondenbar should not be null");
+    assertTrue(cricoBar[1] > 40.0, "Cricondenbar P should be > 40 bar, got: " + cricoBar[1]);
+    assertTrue(cricoBar[1] < 200.0, "Cricondenbar P should be < 200 bar, got: " + cricoBar[1]);
 
-    // Cricondenbar should match within 5%
-    double relDiffBar = Math.abs(cricoBar1[1] - cricoBar2[1]) / cricoBar1[1];
-    assertTrue(relDiffBar < 0.05, "Cricondenbar P should match legacy within 5%, legacy="
-        + cricoBar1[1] + " new=" + cricoBar2[1] + " relDiff=" + relDiffBar);
-
-    // Cricondentherm should match within 5%
-    double relDiffTherm = Math.abs(cricoTherm1[0] - cricoTherm2[0]) / cricoTherm1[0];
-    assertTrue(relDiffTherm < 0.05, "Cricondentherm T should match legacy within 5%, legacy="
-        + cricoTherm1[0] + " new=" + cricoTherm2[0] + " relDiff=" + relDiffTherm);
+    // Cricondentherm temperature should be reasonable (~260-300 K)
+    assertNotNull(cricoTherm, "cricondentherm should not be null");
+    assertTrue(cricoTherm[0] > 200.0, "Cricondentherm T should be > 200 K, got: " + cricoTherm[0]);
+    assertTrue(cricoTherm[0] < 400.0, "Cricondentherm T should be < 400 K, got: " + cricoTherm[0]);
   }
 
   /**
@@ -427,7 +408,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
     assertTrue(env.isEnvelopeClosed(), "Envelope should be closed for simple natural gas");
@@ -445,7 +426,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsen();
+    testOps.calcPTphaseEnvelope();
 
     double[] dewT2 = testOps.get("dewT2");
     double[] dewP2 = testOps.get("dewP2");
@@ -477,7 +458,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(new double[] {0.1, 0.25, 0.5, 0.75, 0.9});
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.25, 0.5, 0.75, 0.9});
 
     // Check that quality line data is accessible via get()
     double[] qT50 = testOps.get("qualityT_0.5");
@@ -515,7 +496,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(new double[] {0.5});
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.5});
 
     double[] volFrac = testOps.get("qualityVolFrac_0.5");
     double[] massFrac = testOps.get("qualityMassFrac_0.5");
@@ -555,7 +536,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(new double[] {0.1, 0.5, 0.9});
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.5, 0.9});
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
 
@@ -592,7 +573,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeMichelsenWithQualityLines(true, new double[] {0.25, 0.75});
+    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] {0.25, 0.75});
 
     double[] qT25 = testOps.get("qualityT_0.25");
     double[] qT75 = testOps.get("qualityT_0.75");

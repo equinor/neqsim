@@ -68,8 +68,6 @@ import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenThermFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.HPTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen;
-import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
-import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew3;
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterKeywordFormat;
@@ -1936,9 +1934,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void calcPTphaseEnvelope() {
-    operation = new PTphaseEnvelope(system, fileName, (1.0 - 1e-10), 1.0, false);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
     getOperation().run();
   }
 
@@ -1955,11 +1951,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
-
-    // thisThread = new Thread(operation);
-    // thisThread.start();
-    getOperation().run();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, bubfirst);
+    if (!isRunAsThread()) {
+      getOperation().run();
+    } else {
+      run();
+    }
   }
 
   /**
@@ -1970,9 +1967,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param lowPres a double
    */
   public void calcPTphaseEnvelope(double lowPres) {
-    operation = new PTphaseEnvelope(system, fileName, 1e-10, lowPres, true);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, 1e-10, lowPres, true);
     getOperation().run();
   }
 
@@ -1988,10 +1983,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new PTphaseEnvelope(system, fileName, phasefraction, 1.0, bubfirst);
-
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
@@ -2008,10 +2000,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param phasefraction a double
    */
   public void calcPTphaseEnvelope(double lowPres, double phasefraction) {
-    operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, true);
-
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, true);
     getOperation().run();
   }
 
@@ -2020,26 +2009,31 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcPTphaseEnvelopeNew.
    * </p>
    */
+  /**
+   * Calculates a PT phase envelope.
+   *
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the
+   *             standard phase envelope calculation.
+   */
+  @Deprecated
   public void calcPTphaseEnvelope2() {
-    operation = new PTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
-    getOperation().run();
+    calcPTphaseEnvelope();
   }
 
   /**
-   * <p>
-   * calcPTphaseEnvelopeNew.
-   * </p>
+   * Calculates a PT phase envelope.
+   *
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the
+   *             standard phase envelope calculation.
    */
+  @Deprecated
   public void calcPTphaseEnvelopeNew() {
-    // double phasefraction = 1.0 - 1e-10;
-    // operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
-    getOperation().run();
+    calcPTphaseEnvelope();
   }
 
   /**
-   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3.
+   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3. This grid-based method evaluates
+   * the phase state at each point in a P-T grid, rather than tracing the boundary.
    *
    * @param minPressure minimum pressure (bar)
    * @param maxPressure maximum pressure (bar)
@@ -2056,65 +2050,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Calculates a PT phase envelope using the unified Michelsen continuation method.
-   *
-   * <p>
-   * This is the recommended method for phase envelope calculations. It uses a single robust
-   * algorithm with non-recursive restart, dynamic storage, and automatic branch switching.
-   * </p>
-   */
-  public void calcPTphaseEnvelopeMichelsen() {
-    operation = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
-    getOperation().run();
-  }
-
-  /**
-   * Calculates a PT phase envelope using the unified Michelsen continuation method.
-   *
-   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
-   */
-  public void calcPTphaseEnvelopeMichelsen(boolean bubfirst) {
-    double phasefraction = 1.0 - 1e-10;
-    if (bubfirst) {
-      phasefraction = 1.0e-10;
-    }
-    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
-    if (!isRunAsThread()) {
-      getOperation().run();
-    } else {
-      run();
-    }
-  }
-
-  /**
-   * Calculates a PT phase envelope using the unified Michelsen continuation method.
-   *
-   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
-   * @param lowPres starting low pressure in bara
-   */
-  public void calcPTphaseEnvelopeMichelsen(boolean bubfirst, double lowPres) {
-    double phasefraction = 1.0 - 1e-10;
-    if (bubfirst) {
-      phasefraction = 1.0e-10;
-    }
-    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, bubfirst);
-    if (!isRunAsThread()) {
-      getOperation().run();
-    } else {
-      run();
-    }
-  }
-
-  /**
-   * Calculates a PT phase envelope with quality lines using the unified Michelsen continuation
-   * method. Quality lines are curves of constant molar vapor fraction inside the two-phase region.
-   * At each point on a quality line, the corresponding volume fraction and mass fraction are also
-   * computed.
+   * Calculates a PT phase envelope with quality lines. Quality lines are curves of constant molar
+   * vapor fraction inside the two-phase region. At each point on a quality line, the corresponding
+   * volume fraction and mass fraction are also computed.
    *
    * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive), e.g.
    *        {0.1, 0.25, 0.5, 0.75, 0.9}
    */
-  public void calcPTphaseEnvelopeMichelsenWithQualityLines(double[] betaValues) {
+  public void calcPTphaseEnvelopeWithQualityLines(double[] betaValues) {
     PTPhaseEnvelopeMichelsen envOp =
         new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
     envOp.run();
@@ -2123,13 +2066,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Calculates a PT phase envelope with quality lines using the unified Michelsen continuation
-   * method.
+   * Calculates a PT phase envelope with quality lines.
    *
    * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
    * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive)
    */
-  public void calcPTphaseEnvelopeMichelsenWithQualityLines(boolean bubfirst, double[] betaValues) {
+  public void calcPTphaseEnvelopeWithQualityLines(boolean bubfirst, double[] betaValues) {
     double phasefraction = 1.0 - 1e-10;
     if (bubfirst) {
       phasefraction = 1.0e-10;
