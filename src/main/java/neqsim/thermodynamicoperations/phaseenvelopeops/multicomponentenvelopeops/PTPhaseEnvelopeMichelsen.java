@@ -1040,7 +1040,11 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     }
     if (name.equals("dewT2") || name.equals("dewP2") || name.equals("bubT2")
         || name.equals("bubP2")) {
-      return new double[0];
+      // Return null to match legacy PTphaseEnvelope behavior when no second pass exists.
+      // The Michelsen method merges all points into dewT/dewP/bubT/bubP, so separate
+      // "pass 2" arrays are not applicable. Returning null ensures downstream consumers
+      // (e.g., NeqSimAPI's SPhaseopt.calculate_cricondenbar) correctly fall back to dewP.
+      return null;
     }
     if (name.equals("criticalPoint1")) {
       return new double[] {system.getTC(), system.getPC()};

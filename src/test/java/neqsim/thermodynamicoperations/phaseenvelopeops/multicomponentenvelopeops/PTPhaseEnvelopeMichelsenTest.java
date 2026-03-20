@@ -415,7 +415,9 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Test that dewT2, dewP2, bubT2, bubP2 keys return empty arrays for compatibility.
+   * Test that dewT2, dewP2, bubT2, bubP2 keys return null for compatibility. The Michelsen method
+   * merges all points into dewT/dewP/bubT/bubP, so separate pass-2 arrays are not applicable.
+   * Returning null matches legacy PTphaseEnvelope behavior when no second pass exists.
    */
   @Test
   void testDewT2BubT2Keys() {
@@ -433,12 +435,10 @@ public class PTPhaseEnvelopeMichelsenTest {
     double[] bubT2 = testOps.get("bubT2");
     double[] bubP2 = testOps.get("bubP2");
 
-    assertNotNull(dewT2, "dewT2 should not be null");
-    assertNotNull(dewP2, "dewP2 should not be null");
-    assertNotNull(bubT2, "bubT2 should not be null");
-    assertNotNull(bubP2, "bubP2 should not be null");
-    assertEquals(0, dewT2.length, "dewT2 should be empty array");
-    assertEquals(0, bubP2.length, "bubP2 should be empty array");
+    assertNull(dewT2, "dewT2 should be null (no second pass in Michelsen)");
+    assertNull(dewP2, "dewP2 should be null (no second pass in Michelsen)");
+    assertNull(bubT2, "bubT2 should be null (no second pass in Michelsen)");
+    assertNull(bubP2, "bubP2 should be null (no second pass in Michelsen)");
   }
 
   /**
