@@ -2079,6 +2079,30 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Calculates a PT phase envelope and performs stability analysis along the envelope to detect
+   * three-phase (VLLE) regions. At sampled points on the traced boundary, a multi-phase TP flash
+   * checks if the equilibrium produces more than two phases.
+   *
+   * <p>
+   * Results are accessible via {@code get("threePhaseT")} and {@code get("threePhaseP")} which
+   * return the temperatures and pressures of points where 3+ phases were detected. An empty array
+   * means no three-phase regions were found along the envelope.
+   * </p>
+   *
+   * <p>
+   * Reference: Cismondi &amp; Michelsen, "Global calculation of phase equilibrium", Fluid Phase
+   * Equilibria, 259, 228-234 (2007).
+   * </p>
+   */
+  public void calcPTphaseEnvelopeWithStabilityAnalysis() {
+    PTPhaseEnvelopeMichelsen envOp =
+        new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    envOp.run();
+    envOp.checkStabilityAlongEnvelope();
+    operation = envOp;
+  }
+
+  /**
    * <p>
    * OLGApropTable.
    * </p>

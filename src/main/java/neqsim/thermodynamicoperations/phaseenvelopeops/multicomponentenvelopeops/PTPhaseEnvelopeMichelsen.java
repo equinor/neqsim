@@ -146,6 +146,12 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   /** Traced quality line beta values. */
   private double[] qualityBetaValues = new double[0];
 
+  // --- Three-phase stability analysis results ---
+  /** Temperatures of envelope points where 3+ phases detected. */
+  private double[] threePhaseRegionT = new double[0];
+  /** Pressures of envelope points where 3+ phases detected. */
+  private double[] threePhaseRegionP = new double[0];
+
   /**
    * Default constructor.
    */
@@ -760,6 +766,103 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   }
 
   /**
+   * Perform stability analysis along the traced phase envelope to detect potential three-phase
+   * (VLLE) regions. At each sampled point on the envelope, a multi-phase TP flash is performed with
+   * the system's overall composition z to check if more than two equilibrium phases exist.
+   *
+   * <p>
+   * This is a post-processing step that should be called after the envelope has been traced (after
+   * {@link #run()}). It detects three-phase regions such as:
+   * </p>
+   * <ul>
+   * <li>Vapor-liquid-liquid equilibrium (VLLE) — common in water + hydrocarbon or CO2 systems</li>
+   * <li>Systems approaching liquid-liquid boundaries embedded within the VLE region</li>
+   * </ul>
+   *
+   * <p>
+   * Results are accessible via {@link #get(String)} with keys {@code "threePhaseT"} and
+   * {@code "threePhaseP"}, or via {@link #getThreePhaseRegionT()} and
+   * {@link #getThreePhaseRegionP()}.
+   * </p>
+   *
+   * <p>
+   * Reference: Cismondi &amp; Michelsen, "Global calculation of phase equilibrium", Fluid Phase
+   * Equilibria, 259, 228-234 (2007).
+   * </p>
+   */
+  public void checkStabilityAlongEnvelope() {
+    ArrayList<Double> threePhaseTemps = new ArrayList<Double>();
+    ArrayList<Double> threePhasePress = new ArrayList<Double>();
+
+    // Sample up to 100 points from each branch to keep computation tractable
+    int dewStep = Math.max(1, dewTempArray.length / 50);
+    int bubStep = Math.max(1, bubTempArray.length / 50);
+
+    // Check dew curve points
+    for (int i = 0; i < dewTempArray.length; i += dewStep) {
+      int phases = checkPhaseCount(dewTempArray[i], dewPresArray[i]);
+      if (phases > 2) {
+        threePhaseTemps.add(dewTempArray[i]);
+        threePhasePress.add(dewPresArray[i]);
+      }
+    }
+
+    // Check bubble curve points
+    for (int i = 0; i < bubTempArray.length; i += bubStep) {
+      int phases = checkPhaseCount(bubTempArray[i], bubPresArray[i]);
+      if (phases > 2) {
+        threePhaseTemps.add(bubTempArray[i]);
+        threePhasePress.add(bubPresArray[i]);
+      }
+    }
+
+    threePhaseRegionT = toDoubleArray(threePhaseTemps);
+    threePhaseRegionP = toDoubleArray(threePhasePress);
+  }
+
+  /**
+   * Check how many equilibrium phases exist at a given (T, P) for the system's overall composition.
+   * Uses a multi-phase TP flash with stability analysis enabled.
+   *
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bara
+   * @return number of equilibrium phases (1, 2, or 3+), or -1 if the flash failed
+   */
+  public int checkPhaseCount(double temperature, double pressure) {
+    try {
+      SystemInterface testSys = system.clone();
+      testSys.setTemperature(temperature);
+      testSys.setPressure(pressure);
+      testSys.setMultiPhaseCheck(true);
+      ThermodynamicOperations testOps = new ThermodynamicOperations(testSys);
+      testOps.TPflash();
+      return testSys.getNumberOfPhases();
+    } catch (Exception e) {
+      return -1;
+    }
+  }
+
+  /**
+   * Get temperatures of envelope points where three or more phases were detected. Requires
+   * {@link #checkStabilityAlongEnvelope()} to have been called first.
+   *
+   * @return array of temperatures (K) at three-phase points, empty if none found
+   */
+  public double[] getThreePhaseRegionT() {
+    return threePhaseRegionT;
+  }
+
+  /**
+   * Get pressures of envelope points where three or more phases were detected. Requires
+   * {@link #checkStabilityAlongEnvelope()} to have been called first.
+   *
+   * @return array of pressures (bara) at three-phase points, empty if none found
+   */
+  public double[] getThreePhaseRegionP() {
+    return threePhaseRegionP;
+  }
+
+  /**
    * Reset K-values on the system using the Wilson correlation at the configured low pressure.
    * Called before the restart pass to ensure fresh initial estimates after a crash.
    */
@@ -1110,6 +1213,13 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     // Quality line keys: qualityT_X, qualityP_X, qualityVolFrac_X, qualityMassFrac_X
     if (name.startsWith("quality")) {
       return qualityLineData.get(name);
+    }
+    // Three-phase stability analysis results
+    if (name.equals("threePhaseT")) {
+      return threePhaseRegionT;
+    }
+    if (name.equals("threePhaseP")) {
+      return threePhaseRegionP;
     }
     return null;
   }

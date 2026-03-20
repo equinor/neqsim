@@ -507,18 +507,31 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
+   * Calculate the critical point using polynomial interpolation followed by Newton refinement on
+   * the augmented criticality system. The specification equation is replaced with the criticality
+   * constraint sum(ln Ki)^2 = 0 (all K-values equal to unity at the critical point).
+   *
    * <p>
-   * calcCrit.
+   * Step 1: Cubic polynomial interpolation at s=0 gives an initial estimate (existing Michelsen
+   * approach). Step 2: Newton iterations on the augmented system [fugacity equations; material
+   * balance; sum(ln Ki)^2 = 0] refine the estimate to higher precision.
+   * </p>
+   *
+   * <p>
+   * Reference: Cismondi &amp; Michelsen, "Global calculation of phase equilibrium", Fluid Phase
+   * Equilibria, 259, 228-234 (2007).
    * </p>
    */
   public void calcCrit() {
-    // calculates the critical point based on interpolation polynomials
+    // Save all state that will be modified during refinement
     Matrix aa = a.copy();
     Matrix ss = s.copy();
     Matrix xx = Xgij.copy();
     Matrix uu = u.copy();
+    int savedSpeceq = speceq;
+    double savedSpecVal = specVal;
 
-    // Here we calcualte the estimate of the next point from the polynomial.
+    // Step 1: Polynomial interpolation at s = 0 (K-values = 1)
     for (int i = 0; i < 4; i++) {
       a.set(i, 0, 1.0);
       a.set(i, 1, s.get(0, i));
@@ -526,8 +539,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       a.set(i, 3, a.get(i, 2) * s.get(0, i));
     }
 
-    double sny;
-    sny = 0.;
+    double sny = 0.0;
     try {
       for (int j = 0; j < neq; j++) {
         xg = Xgij.getMatrix(j, j, 0, 3);
@@ -543,13 +555,120 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       logger.error(ex.getMessage(), ex);
     }
 
-    system.setTC(Math.exp(u.get(numberOfComponents, 0)));
-    system.setPC(Math.exp(u.get(numberOfComponents + 1, 0)));
+    // Store polynomial estimate as baseline
+    double bestTC = Math.exp(u.get(numberOfComponents, 0));
+    double bestPC = Math.exp(u.get(numberOfComponents + 1, 0));
+    double bestSumLnK2 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      bestSumLnK2 += u.get(i, 0) * u.get(i, 0);
+    }
 
+    // Step 2: Newton refinement on augmented system (multicomponent only).
+    // For pure components (nc == 1), the criticality row [2*ln(K1), 0, 0] becomes
+    // nearly zero at the CP, making the Jacobian singular. Skip Newton for nc == 1.
+    if (numberOfComponents > 1) {
+      double polyTC = bestTC;
+      double polyPC = bestPC;
+      try {
+        for (int critIter = 0; critIter < 10; critIter++) {
+          // Update system state from current u
+          for (int i = 0; i < numberOfComponents; i++) {
+            system.getPhase(0).getComponent(i).setK(Math.exp(u.get(i, 0)));
+            system.getPhase(1).getComponent(i).setK(Math.exp(u.get(i, 0)));
+          }
+          system.setTemperature(Math.exp(u.get(numberOfComponents, 0)));
+          system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0)));
+          calc_x_y();
+          system.calc_x_y();
+          system.init(3);
+
+          // Build residual vector
+          for (int i = 0; i < numberOfComponents; i++) {
+            fvec.set(i, 0,
+                u.get(i, 0) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient()
+                    - system.getPhase(1).getComponent(i).getLogFugacityCoefficient());
+          }
+          fvec.set(numberOfComponents, 0, sumy - sumx);
+
+          double sumLnK2 = 0.0;
+          for (int i = 0; i < numberOfComponents; i++) {
+            sumLnK2 += u.get(i, 0) * u.get(i, 0);
+          }
+          fvec.set(numberOfComponents + 1, 0, sumLnK2);
+
+          // Check convergence
+          if (fvec.norm2() < 1e-10) {
+            bestTC = Math.exp(u.get(numberOfComponents, 0));
+            bestPC = Math.exp(u.get(numberOfComponents + 1, 0));
+            break;
+          }
+
+          // Build Jacobian: standard rows + criticality gradient row
+          setJac();
+          // Override last row: d(sum(ln Ki)^2)/d(ln Kj) = 2*ln(Kj)
+          for (int j = 0; j < numberOfComponents; j++) {
+            Jac.set(numberOfComponents + 1, j, 2.0 * u.get(j, 0));
+          }
+          Jac.set(numberOfComponents + 1, numberOfComponents, 0.0);
+          Jac.set(numberOfComponents + 1, numberOfComponents + 1, 0.0);
+
+          // Solve Newton step
+          Matrix dx = Jac.solve(fvec);
+
+          // Guard against divergence: per-component check prevents large jumps
+          // that could satisfy sum(ln Ki)^2 while moving T/P far from the true CP
+          if (Double.isNaN(dx.norm2())) {
+            break;
+          }
+          boolean anyComponentTooLarge = false;
+          for (int j = 0; j < neq; j++) {
+            if (Math.abs(dx.get(j, 0)) > 0.5) {
+              anyComponentTooLarge = true;
+              break;
+            }
+          }
+          if (anyComponentTooLarge) {
+            break;
+          }
+
+          u.minusEquals(dx);
+
+          // Track best estimate: accept only if closer to criticality AND
+          // T/P remain within 10% of the polynomial estimate (sanity check)
+          double newSumLnK2 = 0.0;
+          for (int i = 0; i < numberOfComponents; i++) {
+            newSumLnK2 += u.get(i, 0) * u.get(i, 0);
+          }
+          double newTC = Math.exp(u.get(numberOfComponents, 0));
+          double newPC = Math.exp(u.get(numberOfComponents + 1, 0));
+          double tDeviation = Math.abs(newTC - polyTC) / polyTC;
+          double pDeviation = Math.abs(newPC - polyPC) / polyPC;
+
+          if (newSumLnK2 < bestSumLnK2 && tDeviation < 0.10 && pDeviation < 0.20) {
+            bestTC = newTC;
+            bestPC = newPC;
+            bestSumLnK2 = newSumLnK2;
+          }
+
+          if (dx.norm2() < 1e-10) {
+            break;
+          }
+        }
+      } catch (Exception ex) {
+        logger.debug("CP Newton refinement failed, using polynomial estimate");
+      }
+    }
+
+    system.setTC(bestTC);
+    system.setPC(bestPC);
+
+    // Restore all state
     a = aa.copy();
     s = ss.copy();
     Xgij = xx.copy();
     u = uu.copy();
+    speceq = savedSpeceq;
+    specVal = savedSpecVal;
   }
 
   /**
@@ -579,18 +698,26 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
+   * Solves for a single phase envelope point using damped Newton-Raphson iteration with
+   * backtracking. Convergence is declared when the correction norm falls below 1e-5. Backtracking
+   * reduces the arc-length step and re-predicts when the correction norm increases (divergence
+   * safeguard). Maximum 50 local iterations per solve call prevent infinite loops in pathological
+   * cases (e.g., near-singular Jacobians at critical points).
+   *
    * <p>
-   * solve.
+   * Reference: Michelsen &amp; Mollerup (2007), Ch. 12, "Thermodynamic Models: Fundamentals &amp;
+   * Computational Aspects", 2nd ed.
    * </p>
    *
-   * @param np a int
+   * @param np the point number along the envelope
    */
   public void solve(int np) {
-    // this method actually solves the phase evnelope point
     Matrix dx;
     double dxOldNorm = 1e10;
+    int localIter = 0;
 
     do {
+      localIter++;
       iter++;
       init();
       setfvec();
@@ -607,7 +734,6 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           u.set(numberOfComponents + 1, 0, ds);
         }
         // if the norm is NAN reduce step and try again
-        // logger.info("Double.isNaN(dx.norm2())........");
         iter2++;
         u = uold.copy();
         ds *= 0.3;
@@ -625,7 +751,6 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         }
         // if the norm does not reduce there is a danger of entering trivial solution
         // reduce step and try again to avoid it
-        // logger.info("dxOldNorm < dx.norm2()");
         iter2++;
         u = uold.copy();
         ds *= 0.3;
@@ -639,7 +764,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         norm = dx.norm2();
         dxOldNorm = norm;
       }
-    } while (norm > 1.e-5);
+    } while (norm > 1.e-5 && localIter < 50);
 
     init();
 
