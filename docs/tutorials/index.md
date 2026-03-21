@@ -25,6 +25,7 @@ Get up and running fast:
 | Guide | Time | Platform |
 |-------|------|----------|
 | **[Solve an Engineering Task](solve-engineering-task)** | **15-60 min** | **Any (VS Code, Codex, manual)** |
+| **[Introduction to Agentic Engineering](../integration/ai_agentic_programming_intro)** | **20 min** | **VS Code + Copilot** |
 | [Java Quickstart](../quickstart/java-quickstart) | 10 min | Java/Maven |
 | [Python Quickstart](../quickstart/python-quickstart) | 5 min | Python/pip |
 | [Colab Quickstart](../quickstart/colab-quickstart) | 1 min | Browser |
