@@ -341,10 +341,19 @@ Your deliverable is a populated task folder under `task_solve/`.
    incorporate these directly into the task spec. If not specified, select appropriate
    standards based on the task type and engineering domain.
 
-6. **Gather background knowledge** for the task:
+6. **Auto-search for similar past solutions (MANDATORY):**
+   Before writing any new code, search for related prior work:
+   - **Semantic search** `task_solve/` folder for keywords from the current task
+   - **Keyword search** `docs/development/TASK_LOG.md` for task type, equipment, fluid, standards
+   - **Search** `docs/development/CODE_PATTERNS.md` for relevant patterns
+   - **Search** `src/test/java/neqsim/` for existing tests covering similar equipment/fluids
+   - **Search** `examples/notebooks/` for related notebooks
+   - If a similar task was solved before, **start from that solution** — adapt rather than rebuild
+   - Document what prior work was found (or not found) in `notes.md`
+
+6b. **Gather background knowledge** for the task:
    - Search the NeqSim codebase for existing classes/methods relevant to the task
-   - Search `docs/development/TASK_LOG.md` for similar past tasks
-   - Search `docs/development/CODE_PATTERNS.md` for relevant patterns
+   - Check `CHANGELOG_AGENT_NOTES.md` for any recent API changes affecting this task
    - Use web search if available for engineering reference data
 
 7. **Write comprehensive research notes** to `step1_scope_and_research/notes.md`.
@@ -412,7 +421,21 @@ condensed analysis section in notes and proceed.
     Justify the chosen approach with engineering reasoning.
 
     #### 7b.3 — NeqSim Capability Assessment
-    Systematically evaluate what NeqSim can do for this task:
+
+    **Option A (recommended for Standard/Comprehensive):** Invoke the capability
+    scout agent to perform a systematic assessment:
+    ```
+    @capability.scout [paste the task description here]
+    ```
+    The scout returns a structured Capability Assessment Report covering:
+    - Full capability requirements matrix with NeqSim coverage status
+    - NIPs for every ❌ Missing or ⚠️ Partial gap
+    - Recommended skills to load
+    - Recommended agent pipeline for the task
+    - Implementation priority order
+
+    **Option B (for Quick/simple tasks):** Manually assess by checking the
+    `neqsim-capability-map` skill and searching the codebase:
 
     | Capability Needed | NeqSim Class/Method | Status | Gap Description |
     |-------------------|---------------------|--------|------------------|
@@ -869,6 +892,23 @@ For Screening mode, proceed without holding.
 
 **If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
 incomplete or unvalidated results.
+
+### Cross-Discipline Consistency Check (multi-agent / Type G tasks)
+
+When a task involves multiple disciplines (e.g., process + mechanical + flow assurance),
+verify consistency across all sub-analyses before proceeding:
+
+- [ ] **Phase consistency:** If thermo model says 2 phases, all downstream equipment must handle 2 phases
+- [ ] **Temperature consistency:** Outlet T from one unit matches inlet T of the next (within 0.1 C)
+- [ ] **Pressure consistency:** Outlet P from one unit matches inlet P of the next
+- [ ] **Flow rate consistency:** Mass balance across all connection points (within 0.1%)
+- [ ] **Composition consistency:** Same fluid composition used across all notebooks/analyses
+- [ ] **Design conditions consistency:** Mechanical design pressure/temperature envelopes cover all process scenarios
+- [ ] **Standards consistency:** No contradictory requirements from different standards
+- [ ] **Unit consistency:** All sub-analyses use the same unit system (SI, not mixed with Imperial)
+
+If any inconsistency is found, resolve it before proceeding. Document the check
+in `step2_analysis/notes.md` under a "Cross-Discipline Consistency" heading.
 
 ### Step 15c: Independent Check (Design/Development mode)
 
@@ -1423,6 +1463,7 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 9. **Save figures.** All plots go to `figures/` as PNG for reports. **NEVER use `os.getcwd()` or `pathlib.Path.cwd()` to resolve figure paths** — VS Code notebooks set cwd to the workspace root, not the notebook directory. Always use the absolute path pattern from the notebook template.
 10. **Write all notes.** Research notes, analysis document, AND validation notes must be populated — not left as templates.
 11. **API verification.** If unsure about a NeqSim method, search the Java source to confirm it exists. Do NOT guess method names.
+12. **Doc code verification.** When producing code that will appear in documentation or examples, write a JUnit test (append to `DocExamplesCompilationTest.java`) that exercises every API call shown, and run it to confirm it passes. See `neqsim-api-patterns` skill.
 12. **Verify every formula against domain standards.** Do not assume a formula from memory is correct — look up the governing equation in the applicable standard or textbook. Common errors: cascaded vs independent tax bases, missing terms (uplift, depreciation), wrong operator precedence in compound expressions. After implementing, verify with a manual hand-calculation for at least one data point.
 13. **Use NeqSim Java classes for cost/design — never flat estimates.** When CAPEX or mechanical design values are needed, search for existing classes in `neqsim.process.mechanicaldesign` (e.g., `SubseaCostEstimator`, `SURFCostEstimator`, `PipeMechanicalDesignCalculator`). Use component-level estimates, not a single lump-sum number. If a needed class doesn't exist, implement it with proper JavaDoc and unit tests before using it in notebooks.
 14. **Cross-check results against industry benchmarks.** Every key output should be sanity-checked: typical SURF costs are 40-60% of total field development CAPEX; Norwegian petroleum tax is ~78% marginal; subsea tree costs are $5-15M; pipeline costs for NCS are $1,500-5,000/m. If results diverge significantly from benchmarks, investigate before accepting.

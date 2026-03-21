@@ -409,6 +409,25 @@ NORSOK D-010 (design factors, barriers), API RP 90 (annular pressure).
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Past solved tasks (search before starting) |
 | `.github/agents/solve.task.agent.md` | Detailed agent instructions |
+| `.github/agents/router.agent.md` | Request routing and multi-agent composition |
+| `.github/agents/capability.scout.agent.md` | Capability assessment, gap analysis, implementation planning |
+| `CHANGELOG_AGENT_NOTES.md` | API changes agents need to know about |
+
+## Skills Reference
+
+Skills are reusable knowledge packages loaded automatically by agents:
+
+| Skill | Purpose |
+|-------|---------|
+| `neqsim-api-patterns` | EOS selection, fluid creation, flash, equipment patterns |
+| `neqsim-java8-rules` | Forbidden Java 9+ features, replacement patterns |
+| `neqsim-notebook-patterns` | Jupyter notebook structure, visualization, performance estimation |
+| `neqsim-troubleshooting` | Recovery strategies for convergence failures, zero values, phase issues |
+| `neqsim-input-validation` | Pre-simulation checks (T, P, composition, component names) |
+| `neqsim-regression-baselines` | Baseline management for preventing accuracy drift |
+| `neqsim-agent-handoff` | Structured schemas for multi-agent result passing |
+| `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
+| `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |
 
 ## API Verification (Mandatory)
 
@@ -417,6 +436,23 @@ Before using any NeqSim class in examples or notebooks:
 2. Read constructor and method signatures
 3. Use only methods that actually exist with correct parameter types
 4. Do NOT assume convenience overloads — check first
+
+## Documentation Code Verification (Mandatory)
+
+Every code example in documentation, tutorials, or cookbooks MUST be verified by a runnable test:
+
+1. **Write a JUnit test** that calls every API method shown in the doc
+   - Append to `src/test/java/neqsim/DocExamplesCompilationTest.java`
+   - Or create a dedicated test in the appropriate package
+2. **Run the test** and confirm it passes before finalizing the doc
+3. **Common bugs caught by this process**:
+   - Plus fraction names with `+` character (use `"C20"` not `"C20+"`)
+   - Calling `characterisePlusFraction()` before `setMixingRule()`
+   - Wrong method names (`getUnitOperation()` vs `getUnit()`)
+   - Wrong parameter types (`int` given where `double` expected)
+   - Risk threshold descriptions inconsistent with source logic
+
+This policy applies to ALL agents that produce code for documentation.
 
 ## Documentation
 

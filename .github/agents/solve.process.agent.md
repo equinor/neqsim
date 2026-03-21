@@ -98,6 +98,7 @@ Key points:
 6. **Units matter.** Kelvin for constructors, unit strings for setters. Document units in output.
 7. **No hardcoded paths.** The notebook must work from any directory (devtools handles path resolution; Colab uses pip).
 8. **API verification.** If unsure about a method, search the Java source to confirm it exists. Do NOT guess method names.
+9. **Doc code verification.** When producing code that will appear in documentation or examples, write a JUnit test (append to `DocExamplesCompilationTest.java`) that exercises every API call shown, and run it to confirm it passes.
 
 ---
 

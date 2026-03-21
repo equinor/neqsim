@@ -111,6 +111,31 @@ When creating example files or documentation that references existing classes:
    - Assuming convenience overloads like `addAsset(name, value1, value2, value3)` when API is `addAsset(id, name, value)`
    - Using descriptive names as IDs when API distinguishes between `id` and `name` parameters
 
+## Documentation Code Verification (MANDATORY)
+
+**Every code example in documentation MUST be verified by a runnable test.**
+
+When writing documentation that includes Java or Python code examples:
+
+1. **Write a JUnit 5 test** that exercises every API call shown in the documentation.
+   - Append to `src/test/java/neqsim/DocExamplesCompilationTest.java` for general utilities.
+   - Or create a dedicated test in the appropriate package directory.
+   - The test must instantiate classes, call all documented methods, and assert results are non-null/valid.
+
+2. **Run the test** and confirm all assertions pass before finalizing documentation.
+
+3. **Keep tests in sync** — when documentation changes, update the corresponding test.
+
+4. **For Python examples**: verify the equivalent Java API calls work (Python examples call
+   the same Java methods via jpype). If the Java test passes, the Python example will work.
+
+5. **Common doc-code bugs to catch with tests**:
+   - Plus fraction names with `+` character (`"C20+"` crashes — use `"C20"`)
+   - Wrong method names (`getUnitOperation()` vs `getUnit()`)
+   - Wrong parameter types (`int` vs `double`)
+   - Calling characterization before setting mixing rule
+   - Wrong risk threshold descriptions not matching source logic
+
 ---
 
 - **Mission Focus**: NeqSim is a Java toolkit for thermodynamics and process simulation; changes usually affect physical property models (`src/main/java/neqsim/thermo`) or process equipment (`src/main/java/neqsim/process`).
@@ -245,6 +270,11 @@ Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
 - **Java 8 Features**: All new code must be Java 8 compatible; use streams, lambdas, and `Optional` where they enhance readability. NEVER use `String.repeat()` - use `StringUtils.repeat()` from Apache Commons. NEVER use `var`, `List.of()`, `Map.of()`, text blocks, or any Java 9+ syntax. See the critical Java 8 Compatibility section at the top of this document for complete list.
 - **Validation Framework**: Use `SimulationValidator.validate(object)` before running simulations to catch configuration errors early. When extending equipment, override `validateSetup()` to add custom validation. See `neqsim.util.validation` package and docs/integration/ai_validation_framework.md.
 - **AI-Friendly Error Handling**: Exceptions in `neqsim.util.exception` provide `getRemediation()` hints. When adding new errors, include actionable fix suggestions that AI agents can parse.
+- **Troubleshooting**: When simulations fail (flash non-convergence, zero properties, recycle divergence), consult the `neqsim-troubleshooting` skill for ranked recovery strategies before retrying blindly.
+- **Input Validation**: Before creating NeqSim objects, validate inputs using the `neqsim-input-validation` skill — catches physically impossible temperatures, pressures, compositions, and wrong component names.
+- **Regression Baselines**: When modifying solver logic or property correlations, capture baseline values FIRST using the `neqsim-regression-baselines` skill. This prevents silent accuracy drift.
+- **API Changelog**: Check `CHANGELOG_AGENT_NOTES.md` in the repo root for recent API changes, new classes, deprecated methods, and known method name corrections.
+- **Capability Assessment**: Before starting complex engineering tasks, use the `@capability.scout` agent or the `neqsim-capability-map` skill to identify what NeqSim can do, find gaps, and plan implementations.
 - **Auto-Validation for New Equipment**: When creating a new class that extends `ProcessEquipmentBaseClass`, ALWAYS generate a `validateSetup()` method that checks: (1) required input streams are connected, (2) required parameters are set and within valid ranges, (3) return `ValidationResult` with remediation hints for each issue.
 - **Auto-Annotation for Public Methods**: When adding new public methods to core classes (SystemInterface, ProcessEquipmentInterface), consider adding `@AIExposable` annotation with description, category, example, and `@AIParameter` annotations documenting valid ranges/options.
 - **Jupyter Notebook Examples**: When creating Jupyter notebook examples, ensure they run end-to-end and reflect the latest API changes; place them in the `notebooks/` directory and link to them from the main documentation. Follow the neqsim-python direct Java API bindings as shown at https://github.com/equinor/neqsim-python?tab=readme-ov-file#4-direct-java-access-full-control

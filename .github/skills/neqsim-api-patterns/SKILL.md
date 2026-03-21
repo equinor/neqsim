@@ -43,7 +43,7 @@ fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);   // name, moleFrac, MW_kg
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addPlusFraction("C20+", 0.02, 350.0 / 1000, 0.88);
 fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
-fluid.getCharacterization().characterise();
+fluid.getCharacterization().characterisePlusFraction();
 ```
 
 ## Flash Calculations and Property Retrieval
@@ -186,3 +186,17 @@ process.run();  // Run ONCE after adding all equipment
 - Connect equipment via outlet streams — don't create separate streams
 - Add equipment to `ProcessSystem` in topological order
 - Call `process.run()` only ONCE after building the entire flowsheet
+
+## Documentation Code Verification
+
+When writing code examples for documentation (markdown guides, cookbook recipes, tutorials):
+
+1. **Read the source class first** — verify every method signature, constructor, inner class
+2. **Write a JUnit test** that calls every documented API method (append to `DocExamplesCompilationTest.java`)
+3. **Run the test** and confirm it passes before publishing the doc
+4. **Common pitfalls**:
+   - Plus fraction names: use `"C20"` not `"C20+"` (the `+` character breaks parsing)
+   - Set mixing rule BEFORE calling `characterisePlusFraction()`
+   - `getUnit("name")` not `getUnitOperation("name")`
+   - `setDepreciationYears` takes `double`, not `int`
+   - Risk thresholds: always read source for actual comparison logic (subcooling direction, enum ordering)

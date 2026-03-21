@@ -56,9 +56,40 @@ description: Concise description with searchable keywords. Include key terms use
 - Use pure markdown OR pure HTML, not both
 - Always include blank lines before/after tables and lists
 
-## Code Examples in Docs
-- Python: use `from neqsim import jneqsim` gateway (see `neqsim-notebook-patterns` skill)
-- Java: Java 8 compatible (see `neqsim-java8-rules` skill)
-- Always verify API exists before writing examples — read the actual class source
-- All code examples must be tested to make sure they work in a real example (eg. by running tests)
+## Code Examples in Docs — MANDATORY VERIFICATION
+
+Every code example in documentation MUST be verified to actually compile and run.
+Do NOT write code examples based on assumptions — always read the source class first.
+
+### Verification Workflow (MANDATORY)
+
+1. **Read the source class** before writing any example:
+   - Use `file_search` to find the class
+   - Read constructor signatures, method names, parameter types, return types
+   - Check inner classes and enums for exact names and fields
+
+2. **Write a JUnit test** that exercises every API call shown in the doc:
+   - Place in `src/test/java/neqsim/DocExamplesCompilationTest.java` (append to existing)
+   - Or create a dedicated test like `src/test/java/neqsim/<package>/DocExampleTest.java`
+   - Test must instantiate the class, call every method shown in the doc, and assert non-null/positive results
+   - Test name should reference the doc section: `testFluidBuilderFluentAPI`, `testPinchAnalyzerDoc`
+
+3. **Run the test** and confirm it passes before finalizing the documentation
+
+4. **Common mistakes to catch**:
+   - Method names that don't exist (e.g., `getUnitOperation()` when actual is `getUnit()`)
+   - Wrong parameter types (e.g., `int` when method takes `double`)
+   - Plus fraction names with `+` character (use `"C20"` not `"C20+"`)
+   - Missing imports or wrong inner class paths
+   - Assuming convenience overloads that don't exist
+   - Wrong risk threshold descriptions (always read the source for actual logic)
+
+### Language-Specific Rules
+- **Python**: use `from neqsim import jneqsim` gateway (see `neqsim-notebook-patterns` skill)
+- **Java**: Java 8 compatible (see `neqsim-java8-rules` skill)
 - See `neqsim-api-patterns` skill for common code recipes
+
+### Reference Test
+The file `src/test/java/neqsim/DocExamplesCompilationTest.java` contains tests for all
+engineering utility doc examples. When adding new documentation with code examples,
+add corresponding tests to this file or a similar dedicated test class.

@@ -193,6 +193,69 @@ fluid.setMultiPhaseCheck(True)
 stream.setFlowRate(50000.0, "kg/hr")
 ```
 
+## Performance Estimation and Optimization
+
+### Simulation Time Estimates
+
+Use these estimates to warn users about long-running operations and to decide
+whether Monte Carlo should use full NeqSim simulations or simplified models:
+
+| Operation | Typical Time | Notes |
+|-----------|-------------|-------|
+| Single TPflash (3-5 components) | < 0.01 s | Negligible |
+| Single TPflash (15+ components, CPA) | 0.05-0.2 s | CPA adds association iterations |
+| ProcessSystem with 5-10 units | 0.5-5 s | Depends on recycles and adjusters |
+| ProcessSystem with 20+ units + recycles | 5-30 s | Complex flowsheets need multiple iterations |
+| Phase envelope calculation | 2-10 s | Many flash points along the boundary |
+| Hydrate equilibrium temperature | 1-3 s | Iterative solid-fluid equilibrium |
+| Distillation column (10 stages) | 5-20 s | Inside-out solver faster than standard |
+| Pipeline (PipeBeggsAndBrills, 50 km) | 2-10 s | Segmented calculation along length |
+| Monte Carlo N=200 with process sim | 5-15 min | 200 x 2-5 s per run |
+| Monte Carlo N=1000 with process sim | 30-60 min | Consider caching or simplified model |
+| Monte Carlo N=1000 with TPflash only | 1-5 min | Fast if no process equipment |
+
+### When to Warn the User
+
+If estimated total simulation time exceeds 10 minutes, inform the user:
+```python
+estimated_time_min = N_simulations * time_per_sim_s / 60.0
+if estimated_time_min > 10:
+    print(f"⚠️ Estimated run time: {estimated_time_min:.0f} minutes ({N_simulations} simulations)")
+    print("Consider reducing N or caching intermediate results.")
+```
+
+### Optimization Strategies for Monte Carlo
+
+1. **Cache expensive NeqSim results** that don't change between iterations:
+   ```python
+   # Compute base process simulation once
+   process.run()
+   base_power_kW = comp.getPower("kW")
+   base_flow = stream.getFlowRate("kg/hr")
+
+   # In Monte Carlo loop, only re-run what changes
+   for i in range(N):
+       gas_price = np.random.triangular(0.8, 1.5, 2.5)
+       npv = calculate_npv(base_flow, gas_price, capex_multiplier)
+   ```
+
+2. **Classify parameters for tornado analysis**:
+   - **Economic parameters** (gas price, discount rate, CAPEX multiplier): reuse base production profile, recalculate cash flow only — instant
+   - **Technical parameters** (composition, pressure, temperature): require NeqSim re-run — slow
+
+3. **Reduce component count** for screening-level Monte Carlo:
+   ```python
+   # Instead of 15-component fluid, use 5-component lumped version
+   fluid = SystemSrkEos(273.15 + 25.0, 60.0)
+   fluid.addComponent("methane", 0.85)
+   fluid.addComponent("ethane", 0.10)
+   fluid.addComponent("propane", 0.05)
+   # Skip C4+, N2, CO2 for screening
+   ```
+
+4. **Use parallel-safe patterns** (when running outside Jupyter):
+   Each NeqSim fluid/process should be independent — clone fluids before branching.
+
 ## Notebook Placement
 
 - General examples: `examples/notebooks/`
