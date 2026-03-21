@@ -24,6 +24,9 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [ai_validation_framework.md](ai_validation_framework) | **AI-friendly validation framework with structured error handling** |
 | [ai_platform_integration.md](ai_platform_integration) | AI platform integration guide |
 | [ml_integration.md](ml_integration) | Machine learning integration |
+| [ai_agentic_programming_intro.md](ai_agentic_programming_intro) | **Introduction to agentic engineering with NeqSim — concepts, architecture, getting started** |
+| [ai_agents_reference.md](ai_agents_reference) | **Complete catalog of all 14 AI agents and 9 skills** |
+| [ai_workflow_examples.md](ai_workflow_examples) | **Step-by-step walkthroughs of agent-driven engineering workflows** |
 
 ### Control Systems
 
