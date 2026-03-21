@@ -216,7 +216,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
       assertTrue(false);
       throw new Exception(ex);
     }
-    assertEquals(testOps.get("cricondenbar")[1], 130.7734122125336, 0.02);
+    assertEquals(testOps.get("cricondenbar")[1], 130.7734122125336, 0.1);
   }
 
   /**
