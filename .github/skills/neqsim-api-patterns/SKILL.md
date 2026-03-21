@@ -187,6 +187,60 @@ process.run();  // Run ONCE after adding all equipment
 - Add equipment to `ProcessSystem` in topological order
 - Call `process.run()` only ONCE after building the entire flowsheet
 
+## Design Feasibility Reports
+
+After running equipment in a process simulation, generate a feasibility report to answer:
+"Is this machine realistic to build? What will it cost? Who can supply it?"
+
+### Compressor Feasibility
+
+```java
+// After process.run():
+CompressorDesignFeasibilityReport report =
+    new CompressorDesignFeasibilityReport(compressor);
+report.setDriverType("gas-turbine");
+report.setCompressorType("centrifugal");
+report.setAnnualOperatingHours(8000);
+report.generateReport();
+
+String verdict = report.getVerdict();  // FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE
+String json = report.toJson();         // Full JSON with mech design, cost, suppliers, curves
+List<SupplierMatch> suppliers = report.getMatchingSuppliers();
+
+// Apply generated performance curves back to compressor
+report.applyChartToCompressor();
+```
+
+### Heat Exchanger / Cooler / Heater Feasibility
+
+```java
+// After process.run():
+HeatExchangerDesignFeasibilityReport hxReport =
+    new HeatExchangerDesignFeasibilityReport(heatExchanger);
+hxReport.setExchangerType("shell-and-tube");
+hxReport.setDesignStandard("TEMA-R");
+hxReport.setAnnualOperatingHours(8000);
+hxReport.generateReport();
+
+String verdict = hxReport.getVerdict();
+String json = hxReport.toJson();
+List<HXSupplierMatch> suppliers = hxReport.getMatchingSuppliers();
+```
+
+**Key points:**
+- Equipment must have been `run()` before generating the report
+- Verdicts: `FEASIBLE`, `FEASIBLE_WITH_WARNINGS`, `NOT_FEASIBLE`
+- Issues have severity: `BLOCKER` (not feasible), `WARNING` (review), `INFO` (note)
+- Supplier matching uses built-in OEM databases (`CompressorSuppliers.csv`, `HeatExchangerSuppliers.csv`)
+- Reports include: operating point, mechanical design, cost estimation, supplier list, issues
+- For compressors: also generates performance curves from templates
+
+**When to run feasibility checks:**
+- Any task involving equipment sizing or selection
+- Process design tasks where cost or buildability matters
+- Field development or FEED-level studies
+- When the user asks "is this realistic?", "can this be built?", "what will it cost?"
+
 ## Documentation Code Verification
 
 When writing code examples for documentation (markdown guides, cookbook recipes, tutorials):

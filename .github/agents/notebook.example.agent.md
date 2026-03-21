@@ -30,6 +30,7 @@ NEVER use raw `jpype` imports or `jpype.startJVM()` for new notebooks.
 4. **Process/Model Building** (Code+Markdown) — Build the flowsheet or model step by step, with explanatory markdown between code cells
 5. **Run Simulation** (Code) — Single `process.run()` or equivalent
 6. **Results Extraction** (Code) — Extract key results into Python variables, display as formatted table with units (use pandas DataFrame or formatted print)
+6b. **Equipment Feasibility** (Code, optional) — For notebooks with compressors or heat exchangers, add a cell running the Design Feasibility Report (see `neqsim-api-patterns` skill). Show verdict, matching suppliers, and cost estimate.
 7. **Visualization** (Code) — **MANDATORY: At least 2-3 matplotlib figures** showing key relationships. Save all figures as PNG. Include axis labels with units, titles, legends, and grids. Common plots: property profiles, composition charts, sensitivity curves, equipment performance, bar charts for comparisons
 8. **Summary & Next Steps** (Markdown) — Key takeaways and links to related examples
 

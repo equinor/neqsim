@@ -60,6 +60,24 @@ Import only the classes actually needed for this notebook.
 - Include mass/energy balance check
 - **MANDATORY**: Create a summary results table with ALL key outputs and units
 
+### Equipment Feasibility Cell — Design Check (code, when applicable)
+- **For simulations with compressors, heat exchangers, coolers, or heaters:**
+  run a Design Feasibility Report to check if equipment can actually be built
+- Use `CompressorDesignFeasibilityReport` or `HeatExchangerDesignFeasibilityReport`
+- Print verdict (FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE)
+- Show matching suppliers and cost estimate
+- Example:
+  ```python
+  CompressorFeasibility = jneqsim.process.mechanicaldesign.compressor.CompressorDesignFeasibilityReport
+  report = CompressorFeasibility(comp)
+  report.setDriverType("electric-motor")
+  report.setCompressorType("centrifugal")
+  report.generateReport()
+  print(f"Verdict: {report.getVerdict()}")
+  print(f"Matching suppliers: {report.getMatchingSuppliers().size()}")
+  import json; print(json.dumps(json.loads(report.toJson()), indent=2))
+  ```
+
 ### Visualization Cell — Plots (code)
 - **MANDATORY: Every notebook MUST include at least 2-3 matplotlib figures**
 - Use `matplotlib` for charts with professional styling

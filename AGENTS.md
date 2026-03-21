@@ -393,6 +393,37 @@ String json = design.toJson();
 **Standards:** API 5CT/ISO 11960 (casing grades), API Bull 5C3 (burst/collapse/tension),
 NORSOK D-010 (design factors, barriers), API RP 90 (annular pressure).
 
+### Equipment design feasibility reports
+
+After running compressors or heat exchangers in a process simulation, generate
+a feasibility report to check if equipment is realistic to build and operate:
+
+```java
+// Compressor feasibility
+CompressorDesignFeasibilityReport report =
+    new CompressorDesignFeasibilityReport(compressor);
+report.setDriverType("gas-turbine");
+report.setCompressorType("centrifugal");
+report.setAnnualOperatingHours(8000);
+report.generateReport();
+
+String verdict = report.getVerdict();  // FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE
+String json = report.toJson();         // Full JSON: mech design, cost, suppliers, curves
+report.applyChartToCompressor();       // Apply generated performance curves
+
+// Heat exchanger feasibility
+HeatExchangerDesignFeasibilityReport hxReport =
+    new HeatExchangerDesignFeasibilityReport(heatExchanger);
+hxReport.setExchangerType("shell-and-tube");
+hxReport.setDesignStandard("TEMA-R");
+hxReport.generateReport();
+String hxVerdict = hxReport.getVerdict();
+```
+
+Reports include: mechanical design, cost estimation (CAPEX + OPEX + lifecycle),
+supplier matching (15 compressor OEMs, 14 HX suppliers), feasibility issues
+with severity (BLOCKER/WARNING/INFO), and compressor curve generation.
+
 ## Key Paths
 
 | Path | Purpose |

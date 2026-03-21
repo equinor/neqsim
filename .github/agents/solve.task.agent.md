@@ -562,6 +562,42 @@ condensed analysis section in notes and proceed.
 
 10. **Run every cell** using notebook tools. Fix errors immediately.
 
+10b. **Equipment feasibility checks** — for any task involving compressors,
+    heat exchangers, coolers, or heaters, run a Design Feasibility Report after
+    the process simulation:
+
+    ```python
+    # Compressor feasibility
+    CompressorFeasibility = jneqsim.process.mechanicaldesign.compressor.CompressorDesignFeasibilityReport
+    report = CompressorFeasibility(compressor)
+    report.setDriverType("gas-turbine")
+    report.setCompressorType("centrifugal")
+    report.generateReport()
+    print("Verdict:", report.getVerdict())
+    # Add to results.json:
+    import json
+    feasibility = json.loads(report.toJson())
+    results["equipment_feasibility"] = {
+        "compressor": {"verdict": feasibility["verdict"],
+                       "suppliers": feasibility.get("numberOfMatchingSuppliers", 0)}
+    }
+
+    # Heat exchanger / cooler / heater feasibility
+    HXFeasibility = jneqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport
+    hx_report = HXFeasibility(heat_exchanger)
+    hx_report.setExchangerType("shell-and-tube")
+    hx_report.generateReport()
+    print("HX Verdict:", hx_report.getVerdict())
+    ```
+
+    Feasibility reports provide:
+    - Mechanical design validation (is the machine buildable?)
+    - Cost estimation (CAPEX, OPEX, 10-year lifecycle)
+    - Supplier matching (which OEMs can provide this equipment?)
+    - Issues and warnings (what design limits are exceeded?)
+
+    Include feasibility verdicts in the analysis discussion and results.json.
+
 11. **Validate results** — check all of these against the acceptance criteria in task_spec.md:
     - Are temperatures, pressures, and densities in physically reasonable ranges?
     - Does mass balance close (within tolerance from task spec)?

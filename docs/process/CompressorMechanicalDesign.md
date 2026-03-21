@@ -257,6 +257,7 @@ double sealGas = comp.getSealGasConsumption(); // Nm³/hr
 - `CompressorMechanicalLosses` - Seal gas and bearing loss calculations
 - `CompressorChart` - Performance curve handling
 - `CompressorCostEstimate` - Cost estimation based on mechanical design
+- `CompressorDesignFeasibilityReport` - Unified feasibility assessment combining mechanical design, cost, supplier matching, and curve generation (see [Compressor Design Feasibility Report](compressor_design_feasibility.md))
 
 ## References
 

@@ -290,6 +290,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
 | `HeatExchangerMechanicalDesign` | HX mechanical design | `process.mechanicaldesign.heatexchanger` |
+| `CompressorDesignFeasibilityReport` | Compressor feasibility (design + cost + suppliers + curves) | `process.mechanicaldesign.compressor` |
+| `HeatExchangerDesignFeasibilityReport` | HX/cooler/heater feasibility (design + cost + suppliers) | `process.mechanicaldesign.heatexchanger` |
 | `WellMechanicalDesign` | Well casing design | `process.mechanicaldesign.subsea` |
 | `WellDesignCalculator` | API 5C3 calculations | `process.mechanicaldesign.subsea` |
 | `WellCostEstimator` | Well cost estimation | `process.mechanicaldesign.subsea` |
