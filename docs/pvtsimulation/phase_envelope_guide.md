@@ -41,16 +41,19 @@ NeqSim uses a **continuation method** (Newton-Raphson based) to trace the phase 
 
 5. **Automatic Restart**: If the algorithm fails before completing, it automatically restarts from the opposite end to capture the full envelope
 
+6. **Cricondenbar/Cricondentherm Refinement**: After tracing, the discrete maximum-pressure and maximum-temperature estimates are refined using the Michelsen simultaneous Newton method (see [Direct Cricondenbar and Cricondentherm Refinement](#direct-cricondenbar-and-cricondentherm-refinement))
+
 ### Data Structure
 
-The envelope data is stored in a `points2` array with multiple branches:
+The Michelsen continuation method traces the envelope as two logical branches separated by the critical point:
 
-| Index | Description |
-|-------|-------------|
-| `points2[0]`, `points2[1]` | First branch T/P (start to critical point) |
-| `points2[2]`, `points2[3]` | Second branch T/P (critical point to end) |
-| `points2[4]`, `points2[5]` | Third branch T/P (if restarted from other side) |
-| `points2[6]`, `points2[7]` | Fourth branch T/P (if restarted from other side) |
+| Branch | Keys | Description |
+|--------|------|-------------|
+| Dew curve | `dewT`, `dewP` | Temperatures/pressures along the dew point curve |
+| Bubble curve | `bubT`, `bubP` | Temperatures/pressures along the bubble point curve |
+| Critical | `criticalPoint1` | `[T(K), P(bara)]` where K-values converge to 1 |
+| Cricondenbar | `cricondenbar` | `[T(K), P(bara)]` at maximum pressure |
+| Cricondentherm | `cricondentherm` | `[T(K), P(bara)]` at maximum temperature |
 
 ---
 
@@ -94,11 +97,11 @@ double criticalT = criticalPoint[0];
 double criticalP = criticalPoint[1];
 
 System.out.println("=== Phase Envelope Results ===");
-System.out.printf("Cricondenbar: %.2f bara at %.1f °C%n", 
+System.out.printf("Cricondenbar: %.2f bara at %.1f °C%n",
     cricondenbarP, cricondenbarT - 273.15);
-System.out.printf("Cricondentherm: %.1f °C at %.2f bara%n", 
+System.out.printf("Cricondentherm: %.1f °C at %.2f bara%n",
     criconderthermT - 273.15, criconderthermP);
-System.out.printf("Critical point: %.1f °C, %.2f bara%n", 
+System.out.printf("Critical point: %.1f °C, %.2f bara%n",
     criticalT - 273.15, criticalP);
 
 // Get all envelope data for plotting (2D array)
@@ -177,10 +180,10 @@ Use `ops.get(key)` to retrieve specific envelope data:
 | `"dewP"` | `double[]` | Dew point pressures (bara) - first branch |
 | `"bubT"` | `double[]` | Bubble point temperatures (K) - second branch |
 | `"bubP"` | `double[]` | Bubble point pressures (bara) - second branch |
-| `"dewT2"` | `double[]` | Dew temperatures if restarted from other side |
-| `"dewP2"` | `double[]` | Dew pressures if restarted from other side |
-| `"bubT2"` | `double[]` | Bubble temperatures if restarted from other side |
-| `"bubP2"` | `double[]` | Bubble pressures if restarted from other side |
+| `"dewT2"` | `null` | Legacy key, returns `null` (Michelsen merges all dew data into `dewT`) |
+| `"dewP2"` | `null` | Legacy key, returns `null` (Michelsen merges all dew data into `dewP`) |
+| `"bubT2"` | `null` | Legacy key, returns `null` (Michelsen merges all bubble data into `bubT`) |
+| `"bubP2"` | `null` | Legacy key, returns `null` (Michelsen merges all bubble data into `bubP`) |
 | `"cricondenbar"` | `double[]` | [T(K), P(bara)] at maximum pressure |
 | `"cricondentherm"` | `double[]` | [T(K), P(bara)] at maximum temperature |
 | `"criticalPoint1"` | `double[]` | [Tc(K), Pc(bara)] critical point |
@@ -359,7 +362,7 @@ for (double q : qualities) {
     ThermodynamicOperations opsQ = new ThermodynamicOperations(fluid.clone());
     // lowPres=1.0, phaseFraction=q
     opsQ.calcPTphaseEnvelope(1.0, q);
-    
+
     double[][] qualityLine = opsQ.getData();
     System.out.printf("Quality %.0f%% vapor - %d points%n", q * 100, qualityLine[0].length);
 }
@@ -500,11 +503,11 @@ for (double t : pipelineT) {
     fluid.setTemperature(t + 273.15);
     fluid.setPressure(pipelineP);
     ops.TPflash();
-    
+
     int nPhases = fluid.getNumberOfPhases();
     String status = (nPhases == 1) ? "Single phase ✅" : "Two phase ⚠️";
     double liquidFrac = (nPhases > 1) ? fluid.getBeta(1) : 0.0;
-    
+
     System.out.printf("T=%3.0f°C: %s (liquid frac: %.3f)%n", t, status, liquidFrac);
 }
 ```
@@ -516,7 +519,7 @@ for (double t : pipelineT) {
 | Issue | Possible Cause | Solution |
 |-------|----------------|----------|
 | Envelope doesn't close | Algorithm failed before reaching critical point | Try starting from the other side with `calcPTphaseEnvelope(true)` |
-| Missing branch | Algorithm restarted from other side | Check `dewT2`/`bubT2` arrays for additional data |
+| Missing branch | Algorithm failed before completing | Try starting from the other side with `calcPTphaseEnvelope(true)` or adjust starting pressure |
 | Cricondentherm too high | Heavy components or characterization | Review plus fraction properties |
 | No dew point found | Fluid too light (dry gas) | Normal for methane-rich gas |
 | Calculation fails | Near-critical region or bad initial guess | Try different starting pressure with `calcPTphaseEnvelope(true, 0.5)` |
@@ -524,7 +527,7 @@ for (double t : pipelineT) {
 
 ### Understanding Algorithm Behavior
 
-The algorithm may produce data in multiple branches:
+The Michelsen continuation method traces the envelope through the critical point, producing two branches:
 
 ```java
 ops.calcPTphaseEnvelope();
@@ -532,23 +535,87 @@ ops.calcPTphaseEnvelope();
 // Check what data is available
 double[] dewT = ops.get("dewT");
 double[] bubT = ops.get("bubT");
-double[] dewT2 = ops.get("dewT2");  // May be empty if no restart
-double[] bubT2 = ops.get("bubT2");
+double[] cricondenbar = ops.get("cricondenbar");
+double[] criticalPoint = ops.get("criticalPoint1");
 
-System.out.println("First branch (dew): " + (dewT != null ? dewT.length : 0) + " points");
-System.out.println("Second branch (bub): " + (bubT != null ? bubT.length : 0) + " points");
-System.out.println("Third branch (dew2): " + (dewT2 != null ? dewT2.length : 0) + " points");
-System.out.println("Fourth branch (bub2): " + (bubT2 != null ? bubT2.length : 0) + " points");
+System.out.println("Dew curve: " + (dewT != null ? dewT.length : 0) + " points");
+System.out.println("Bubble curve: " + (bubT != null ? bubT.length : 0) + " points");
+System.out.println("Cricondenbar: " + cricondenbar[1] + " bara");
+System.out.println("Critical point: " + criticalPoint[0] + " K, " + criticalPoint[1] + " bara");
 ```
 
-### Alternative: calcPTphaseEnvelope2
+### Quality Lines
 
-For difficult fluids, try the alternative algorithm:
+For constant vapor fraction curves inside the two-phase region:
 
 ```java
-// Uses PTphaseEnvelopeNew2 implementation
-ops.calcPTphaseEnvelope2();
+// Calculate envelope with quality lines at specified vapor fractions
+double[] betaValues = {0.1, 0.25, 0.5, 0.75, 0.9};
+ops.calcPTphaseEnvelopeWithQualityLines(betaValues);
+
+// Access quality line data
+double[] qualT = ops.get("qualityT_0.5");      // Temperatures at 50% vapor
+double[] qualP = ops.get("qualityP_0.5");      // Pressures at 50% vapor
+double[] volFrac = ops.get("qualityVolFrac_0.5");   // Volume fractions
+double[] massFrac = ops.get("qualityMassFrac_0.5"); // Mass fractions
 ```
+
+---
+
+## Direct Cricondenbar and Cricondentherm Refinement
+
+The phase envelope tracer finds the cricondenbar and cricondentherm as discrete maximum-pressure and maximum-temperature points on the traced curve. For high-precision applications, these estimates can be refined to machine precision using thethe Michelsen simultaneous Newton method.
+
+### How It Works
+
+Instead of the envelope tracer's discrete tracking (which is limited by the step size between traced points), the refinement solves a full $(n_c + 2)$-dimensional Newton system simultaneously:
+
+- **Unknowns**: $\ln K_1, \dots, \ln K_{n_c}, \ln T, \ln P$
+- **Equations**: $n_c$ equilibrium equations (fugacity equality), 1 Rachford-Rice summation, and 1 extremum specification
+
+The extremum specification differs for each type:
+
+| Extremum | Condition | Specification Equation |
+|----------|-----------|----------------------|
+| **Cricondenbar** | $dT/dP = 0$ | $S_P = \sum_i s_i \cdot T(\partial \ln \hat{\varphi}_i^V/\partial T - \partial \ln \hat{\varphi}_i^L/\partial T) = 0$ |
+| **Cricondentherm** | $dP/dT = 0$ | $S_T = \sum_i s_i \cdot P(\partial \ln \hat{\varphi}_i^V/\partial P - \partial \ln \hat{\varphi}_i^L/\partial P) = 0$ |
+
+where $s_i = (y_i - x_i) / \|\mathbf{y} - \mathbf{x}\|$ is a normalized composition direction vector.
+
+### Convergence
+
+The simultaneous Newton system provides **quadratic convergence**, typically reaching $\|\mathbf{g}\|_2 < 10^{-10}$ in 3-8 iterations from the discrete envelope estimate. Key features:
+
+- Analytical Jacobian using fugacity coefficient derivatives from `system.init(3)`
+- Damped Newton steps to handle large initial corrections
+- Gaussian elimination with partial pivoting (no external matrix library)
+- Graceful fallback to the discrete estimate if Newton does not converge
+
+### Usage (Java)
+
+The refinement is invoked through `calcCricoP()` and `calcCricoT()`:
+
+```java
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.calcPTphaseEnvelope();
+
+// Get refined cricondenbar [T(K), P(bara)]
+double[] cricondenbar = ops.get("cricondenbar");
+System.out.printf("Cricondenbar: %.4f bara at %.2f K%n", cricondenbar[1], cricondenbar[0]);
+
+// Get refined cricondentherm [T(K), P(bara)]
+double[] cricondentherm = ops.get("cricondentherm");
+System.out.printf("Cricondentherm: %.2f K at %.4f bara%n", cricondentherm[0], cricondentherm[1]);
+```
+
+### Implementation Classes
+
+| Class | Purpose |
+|-------|---------|
+| `CricondenBarFlash` | Michelsen $(n_c+2)$ Newton refinement for maximum pressure ($S_P = 0$) |
+| `CricondenThermFlash` | Michelsen $(n_c+2)$ Newton refinement for maximum temperature ($S_T = 0$) |
+
+For the full mathematical formulation, see the [Phase Envelope Algorithm](../thermodynamicoperations/phase_envelope_algorithm#11-direct-cricondenbar-and-cricondentherm-refinement) documentation.
 
 ---
 
@@ -563,7 +630,17 @@ ops.calcPTphaseEnvelope2();
 | `calcPTphaseEnvelope(double lowPres)` | Custom starting pressure |
 | `calcPTphaseEnvelope(boolean bubbleFirst, double lowPres)` | Both options |
 | `calcPTphaseEnvelope(double lowPres, double phaseFraction)` | Quality lines (0=bubble, 1=dew) |
-| `calcPTphaseEnvelope2()` | Alternative algorithm (PTphaseEnvelopeNew2) |
+| `calcPTphaseEnvelopeWithQualityLines(double[] betaValues)` | Envelope + quality lines at specified vapor fractions |
+| `calcPTphaseEnvelopeWithQualityLines(boolean bubFirst, double[] betaValues)` | With start side control |
+| `calcPTphaseEnvelope2()` | **Deprecated** — delegates to `calcPTphaseEnvelope()` |
+| `calcPTphaseEnvelopeNew()` | **Deprecated** — delegates to `calcPTphaseEnvelope()` |
+
+### Direct Refinement Methods
+
+| Method | Description |
+|--------|-------------|
+| `calcCricoP(...)` | Refine cricondenbar using Michelsen simultaneous Newton ($S_P = 0$) |
+| `calcCricoT(...)` | Refine cricondentherm using Michelsen simultaneous Newton ($S_T = 0$) |
 
 ---
 

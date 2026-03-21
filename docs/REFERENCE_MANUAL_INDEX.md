@@ -167,6 +167,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Flash Equations     | [docs/wiki/flash_equations_and_tests.md](wiki/flash_equations_and_tests)                       | Flash equations and testing     |
 | Thermo Operations   | [docs/thermo/thermodynamic_operations.md](thermo/thermodynamic_operations)                     | Thermodynamic operations        |
 | TP Flash Algorithm  | [docs/thermodynamicoperations/TPflash_algorithm.md](thermodynamicoperations/TPflash_algorithm) | TP flash algorithm details      |
+| Phase Envelope Algorithm | [docs/thermodynamicoperations/phase_envelope_algorithm.md](thermodynamicoperations/phase_envelope_algorithm) | Michelsen continuation method, cricondenbar/cricondentherm Newton refinement, critical point detection |
 | Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/)                             | Thermodynamic operations module |
 
 ### Chapter 8: Fluid Characterization
