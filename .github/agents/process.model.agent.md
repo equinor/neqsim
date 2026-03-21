@@ -44,3 +44,6 @@ When the simulation code will be included in documentation or examples:
 1. Write a JUnit test that exercises every API call shown (append to `DocExamplesCompilationTest.java`)
 2. Run the test to confirm it passes
 3. See `neqsim-api-patterns` skill for common pitfalls (plus fraction names, mixing rule order, etc.)
+4. See `neqsim-input-validation` skill to pre-check equipment inputs (pressure ratios, temperatures, flow rates)
+5. See `neqsim-troubleshooting` skill when process simulation fails to converge or gives unexpected results
+6. See `neqsim-regression-baselines` skill when modifying equipment calculations — capture baselines first

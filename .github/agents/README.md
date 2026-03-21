@@ -14,6 +14,22 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ## Available Agents
 
+### Routing & Help
+
+| Agent | Command | Purpose |
+|-------|---------|----------|
+| **neqsim.help** | `@neqsim.help <description>` | **Routes requests** to the right specialist agent. Use when unsure which agent to pick. |
+| **capability.scout** | `@capability.scout <description>` | **Assesses capabilities** needed for a task, checks NeqSim coverage, identifies gaps, plans implementations, recommends skills. |
+
+**Examples:**
+```
+@neqsim.help I need to size a pipeline and check for hydrates
+@capability.scout Can NeqSim handle acid gas injection with H2S corrosion and well design?
+@capability.scout TEG dehydration with BTEX emissions and cost estimation
+```
+
+---
+
 ### Task Solving & Workflows
 
 | Agent | Command | Purpose |
@@ -183,6 +199,30 @@ Each agent is a specialized prompt that:
 | **Process** | Build complete flowsheets, run simulations, size equipment | Real-time process control (use NeqSim-Live) |
 | **PVT** | All standard lab tests, parameter fitting | Non-standard experiments (add to NeqSim first) |
 | **Standards** | Calculations per ISO/API/NORSOK | Legal interpretation of standards |
+
+---
+
+## Skills Reference
+
+Skills are reusable knowledge packages that agents load automatically when relevant.
+They contain verified patterns, rules, and domain knowledge.
+
+| Skill | When Loaded | Purpose |
+|-------|------------|----------|
+| `neqsim-api-patterns` | Writing Java/Python code using NeqSim | EOS selection, fluid creation, flash, property access, equipment patterns |
+| `neqsim-java8-rules` | Writing or reviewing any Java code | Forbidden Java 9+ features, replacement patterns, JavaDoc requirements |
+| `neqsim-notebook-patterns` | Creating Jupyter notebooks | Dual-boot setup, class imports, notebook structure, visualization, performance estimation |
+| `neqsim-troubleshooting` | Simulation fails or produces unexpected results | Flash non-convergence, recycle divergence, zero values, phase ID issues |
+| `neqsim-input-validation` | Setting up simulations | Pre-simulation checks for T, P, composition, component names, EOS selection |
+| `neqsim-regression-baselines` | Modifying solver logic or correlations | Creating baseline fixtures, regression tests, detecting accuracy drift |
+| `neqsim-agent-handoff` | Multi-agent pipelines | Structured schemas for passing results between agents |
+| `neqsim-physics-explanations` | Explaining results or adding educational context | Plain-language explanations of thermodynamic and process phenomena |
+| `neqsim-capability-map` | Checking what NeqSim can do, planning implementations | Structured inventory of all NeqSim capabilities by discipline |
+
+### API Changelog
+
+See `CHANGELOG_AGENT_NOTES.md` in the repo root for recent API changes,
+new classes, deprecated methods, and migration guidance.
 | **Mechanical** | Design per codes, material selection, cost | Detailed FEA or stress analysis |
 
 ---

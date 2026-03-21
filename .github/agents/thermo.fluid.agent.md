@@ -66,6 +66,9 @@ Then read properties:
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives
 - API patterns: See `neqsim-api-patterns` skill for EOS selection, fluid creation, flash, and property retrieval
+- Input validation: See `neqsim-input-validation` skill to validate T, P, composition, and component names before creating fluids
+- Troubleshooting: See `neqsim-troubleshooting` skill when flash fails, produces zero values, or gives unexpected phase behavior
+- Physics explanations: See `neqsim-physics-explanations` skill for plain-language explanations of EOS selection, phase behavior, and property phenomena
 
 ## API Verification
 ALWAYS read actual class source files to verify method signatures exist before calling them.

@@ -341,10 +341,19 @@ Your deliverable is a populated task folder under `task_solve/`.
    incorporate these directly into the task spec. If not specified, select appropriate
    standards based on the task type and engineering domain.
 
-6. **Gather background knowledge** for the task:
+6. **Auto-search for similar past solutions (MANDATORY):**
+   Before writing any new code, search for related prior work:
+   - **Semantic search** `task_solve/` folder for keywords from the current task
+   - **Keyword search** `docs/development/TASK_LOG.md` for task type, equipment, fluid, standards
+   - **Search** `docs/development/CODE_PATTERNS.md` for relevant patterns
+   - **Search** `src/test/java/neqsim/` for existing tests covering similar equipment/fluids
+   - **Search** `examples/notebooks/` for related notebooks
+   - If a similar task was solved before, **start from that solution** — adapt rather than rebuild
+   - Document what prior work was found (or not found) in `notes.md`
+
+6b. **Gather background knowledge** for the task:
    - Search the NeqSim codebase for existing classes/methods relevant to the task
-   - Search `docs/development/TASK_LOG.md` for similar past tasks
-   - Search `docs/development/CODE_PATTERNS.md` for relevant patterns
+   - Check `CHANGELOG_AGENT_NOTES.md` for any recent API changes affecting this task
    - Use web search if available for engineering reference data
 
 7. **Write comprehensive research notes** to `step1_scope_and_research/notes.md`.
@@ -412,7 +421,21 @@ condensed analysis section in notes and proceed.
     Justify the chosen approach with engineering reasoning.
 
     #### 7b.3 — NeqSim Capability Assessment
-    Systematically evaluate what NeqSim can do for this task:
+
+    **Option A (recommended for Standard/Comprehensive):** Invoke the capability
+    scout agent to perform a systematic assessment:
+    ```
+    @capability.scout [paste the task description here]
+    ```
+    The scout returns a structured Capability Assessment Report covering:
+    - Full capability requirements matrix with NeqSim coverage status
+    - NIPs for every ❌ Missing or ⚠️ Partial gap
+    - Recommended skills to load
+    - Recommended agent pipeline for the task
+    - Implementation priority order
+
+    **Option B (for Quick/simple tasks):** Manually assess by checking the
+    `neqsim-capability-map` skill and searching the codebase:
 
     | Capability Needed | NeqSim Class/Method | Status | Gap Description |
     |-------------------|---------------------|--------|------------------|
@@ -869,6 +892,23 @@ For Screening mode, proceed without holding.
 
 **If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
 incomplete or unvalidated results.
+
+### Cross-Discipline Consistency Check (multi-agent / Type G tasks)
+
+When a task involves multiple disciplines (e.g., process + mechanical + flow assurance),
+verify consistency across all sub-analyses before proceeding:
+
+- [ ] **Phase consistency:** If thermo model says 2 phases, all downstream equipment must handle 2 phases
+- [ ] **Temperature consistency:** Outlet T from one unit matches inlet T of the next (within 0.1 C)
+- [ ] **Pressure consistency:** Outlet P from one unit matches inlet P of the next
+- [ ] **Flow rate consistency:** Mass balance across all connection points (within 0.1%)
+- [ ] **Composition consistency:** Same fluid composition used across all notebooks/analyses
+- [ ] **Design conditions consistency:** Mechanical design pressure/temperature envelopes cover all process scenarios
+- [ ] **Standards consistency:** No contradictory requirements from different standards
+- [ ] **Unit consistency:** All sub-analyses use the same unit system (SI, not mixed with Imperial)
+
+If any inconsistency is found, resolve it before proceeding. Document the check
+in `step2_analysis/notes.md` under a "Cross-Discipline Consistency" heading.
 
 ### Step 15c: Independent Check (Design/Development mode)
 
