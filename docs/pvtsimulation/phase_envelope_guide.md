@@ -41,6 +41,8 @@ NeqSim uses a **continuation method** (Newton-Raphson based) to trace the phase 
 
 5. **Automatic Restart**: If the algorithm fails before completing, it automatically restarts from the opposite end to capture the full envelope
 
+6. **Cricondenbar/Cricondentherm Refinement**: After tracing, the discrete maximum-pressure and maximum-temperature estimates are refined using the Michelsen simultaneous Newton method (see [Direct Cricondenbar and Cricondentherm Refinement](#direct-cricondenbar-and-cricondentherm-refinement))
+
 ### Data Structure
 
 The Michelsen continuation method traces the envelope as two logical branches separated by the critical point:
@@ -560,6 +562,63 @@ double[] massFrac = ops.get("qualityMassFrac_0.5"); // Mass fractions
 
 ---
 
+## Direct Cricondenbar and Cricondentherm Refinement
+
+The phase envelope tracer finds the cricondenbar and cricondentherm as discrete maximum-pressure and maximum-temperature points on the traced curve. For high-precision applications, these estimates can be refined to machine precision using thethe Michelsen simultaneous Newton method.
+
+### How It Works
+
+Instead of the envelope tracer's discrete tracking (which is limited by the step size between traced points), the refinement solves a full $(n_c + 2)$-dimensional Newton system simultaneously:
+
+- **Unknowns**: $\ln K_1, \dots, \ln K_{n_c}, \ln T, \ln P$
+- **Equations**: $n_c$ equilibrium equations (fugacity equality), 1 Rachford-Rice summation, and 1 extremum specification
+
+The extremum specification differs for each type:
+
+| Extremum | Condition | Specification Equation |
+|----------|-----------|----------------------|
+| **Cricondenbar** | $dT/dP = 0$ | $S_P = \sum_i s_i \cdot T(\partial \ln \hat{\varphi}_i^V/\partial T - \partial \ln \hat{\varphi}_i^L/\partial T) = 0$ |
+| **Cricondentherm** | $dP/dT = 0$ | $S_T = \sum_i s_i \cdot P(\partial \ln \hat{\varphi}_i^V/\partial P - \partial \ln \hat{\varphi}_i^L/\partial P) = 0$ |
+
+where $s_i = (y_i - x_i) / \|\mathbf{y} - \mathbf{x}\|$ is a normalized composition direction vector.
+
+### Convergence
+
+The simultaneous Newton system provides **quadratic convergence**, typically reaching $\|\mathbf{g}\|_2 < 10^{-10}$ in 3-8 iterations from the discrete envelope estimate. Key features:
+
+- Analytical Jacobian using fugacity coefficient derivatives from `system.init(3)`
+- Damped Newton steps to handle large initial corrections
+- Gaussian elimination with partial pivoting (no external matrix library)
+- Graceful fallback to the discrete estimate if Newton does not converge
+
+### Usage (Java)
+
+The refinement is invoked through `calcCricoP()` and `calcCricoT()`:
+
+```java
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.calcPTphaseEnvelope();
+
+// Get refined cricondenbar [T(K), P(bara)]
+double[] cricondenbar = ops.get("cricondenbar");
+System.out.printf("Cricondenbar: %.4f bara at %.2f K%n", cricondenbar[1], cricondenbar[0]);
+
+// Get refined cricondentherm [T(K), P(bara)]
+double[] cricondentherm = ops.get("cricondentherm");
+System.out.printf("Cricondentherm: %.2f K at %.4f bara%n", cricondentherm[0], cricondentherm[1]);
+```
+
+### Implementation Classes
+
+| Class | Purpose |
+|-------|---------|
+| `CricondenBarFlash` | Michelsen $(n_c+2)$ Newton refinement for maximum pressure ($S_P = 0$) |
+| `CricondenThermFlash` | Michelsen $(n_c+2)$ Newton refinement for maximum temperature ($S_T = 0$) |
+
+For the full mathematical formulation, see the [Phase Envelope Algorithm](../thermodynamicoperations/phase_envelope_algorithm#11-direct-cricondenbar-and-cricondentherm-refinement) documentation.
+
+---
+
 ## API Reference Summary
 
 ### calcPTphaseEnvelope Overloads
@@ -575,6 +634,13 @@ double[] massFrac = ops.get("qualityMassFrac_0.5"); // Mass fractions
 | `calcPTphaseEnvelopeWithQualityLines(boolean bubFirst, double[] betaValues)` | With start side control |
 | `calcPTphaseEnvelope2()` | **Deprecated** — delegates to `calcPTphaseEnvelope()` |
 | `calcPTphaseEnvelopeNew()` | **Deprecated** — delegates to `calcPTphaseEnvelope()` |
+
+### Direct Refinement Methods
+
+| Method | Description |
+|--------|-------------|
+| `calcCricoP(...)` | Refine cricondenbar using Michelsen simultaneous Newton ($S_P = 0$) |
+| `calcCricoT(...)` | Refine cricondentherm using Michelsen simultaneous Newton ($S_T = 0$) |
 
 ---
 
