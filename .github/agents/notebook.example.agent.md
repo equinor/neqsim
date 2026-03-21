@@ -56,3 +56,11 @@ See `neqsim-notebook-patterns` skill for the complete list of class import paths
 
 ## Place notebooks in `examples/notebooks/`
 After creating, update `docs/examples/index.md` if documenting it.
+
+## Code Verification (MANDATORY)
+Every code snippet in the notebook must be verified against actual NeqSim source:
+1. **Read the source class** before using any API — verify method names, parameter types, constructors
+2. If the notebook is also used as documentation, add a JUnit test to `DocExamplesCompilationTest.java`
+   that exercises the same Java API calls
+3. Run the test to confirm all calls work before finalising the notebook
+4. See `neqsim-api-patterns` skill § "Documentation Code Verification" for common pitfalls

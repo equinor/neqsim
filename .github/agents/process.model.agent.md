@@ -38,3 +38,9 @@ Separators, ThreePhaseSeparators, Compressors, Expanders, Pumps, Heaters, Cooler
 
 ## API Verification
 ALWAYS read the actual class source to verify method signatures before using them. Do NOT assume API patterns — check constructors, method names, and parameter types.
+
+## Code Verification for Documentation
+When the simulation code will be included in documentation or examples:
+1. Write a JUnit test that exercises every API call shown (append to `DocExamplesCompilationTest.java`)
+2. Run the test to confirm it passes
+3. See `neqsim-api-patterns` skill for common pitfalls (plus fraction names, mixing rule order, etc.)

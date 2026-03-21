@@ -34,7 +34,7 @@ fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 // ... up to C20+
 fluid.addPlusFraction("C20+", 0.02, 350.0 / 1000, 0.88);
 fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
-fluid.getCharacterization().characterise();
+fluid.getCharacterization().characterisePlusFraction();
 ```
 
 ## Flash Calculations
@@ -69,3 +69,7 @@ Then read properties:
 
 ## API Verification
 ALWAYS read actual class source files to verify method signatures exist before calling them.
+
+When producing code that will appear in documentation or examples, write a JUnit test that
+exercises every API call shown. Append to `DocExamplesCompilationTest.java` and run the test
+to confirm it passes. See `neqsim-api-patterns` skill § "Documentation Code Verification".

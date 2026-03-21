@@ -59,7 +59,7 @@ PVT simulations support regression against experimental data using Levenberg-Mar
 Always characterize C7+ properly:
 - Use `addTBPfraction()` for each carbon number fraction
 - Use `addPlusFraction()` for the heavy end
-- Call `getCharacterization().characterise()` before running PVT
+- Call `getCharacterization().characterisePlusFraction()` before running PVT
 
 ## Flow Assurance
 `neqsim.pvtsimulation.flowassurance` includes asphaltene screening:
@@ -69,3 +69,8 @@ Always characterize C7+ properly:
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+
+## Code Verification for Documentation
+When producing code that will appear in documentation or examples, write a JUnit test
+that exercises every API call shown (append to `DocExamplesCompilationTest.java`) and
+run it to confirm it passes. Always read actual source classes before referencing them in docs.

@@ -79,3 +79,8 @@ fluid.setMixingRule("classic");
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+
+## Code Verification for Documentation
+When producing code that will appear in documentation or examples, write a JUnit test
+that exercises every API call shown (append to `DocExamplesCompilationTest.java`) and
+run it to confirm it passes. Always read actual source classes before referencing them in docs.

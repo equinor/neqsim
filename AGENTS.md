@@ -418,6 +418,23 @@ Before using any NeqSim class in examples or notebooks:
 3. Use only methods that actually exist with correct parameter types
 4. Do NOT assume convenience overloads — check first
 
+## Documentation Code Verification (Mandatory)
+
+Every code example in documentation, tutorials, or cookbooks MUST be verified by a runnable test:
+
+1. **Write a JUnit test** that calls every API method shown in the doc
+   - Append to `src/test/java/neqsim/DocExamplesCompilationTest.java`
+   - Or create a dedicated test in the appropriate package
+2. **Run the test** and confirm it passes before finalizing the doc
+3. **Common bugs caught by this process**:
+   - Plus fraction names with `+` character (use `"C20"` not `"C20+"`)
+   - Calling `characterisePlusFraction()` before `setMixingRule()`
+   - Wrong method names (`getUnitOperation()` vs `getUnit()`)
+   - Wrong parameter types (`int` given where `double` expected)
+   - Risk threshold descriptions inconsistent with source logic
+
+This policy applies to ALL agents that produce code for documentation.
+
 ## Documentation
 
 All classes and methods need complete JavaDoc (class description, `@param`,

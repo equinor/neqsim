@@ -111,6 +111,31 @@ When creating example files or documentation that references existing classes:
    - Assuming convenience overloads like `addAsset(name, value1, value2, value3)` when API is `addAsset(id, name, value)`
    - Using descriptive names as IDs when API distinguishes between `id` and `name` parameters
 
+## Documentation Code Verification (MANDATORY)
+
+**Every code example in documentation MUST be verified by a runnable test.**
+
+When writing documentation that includes Java or Python code examples:
+
+1. **Write a JUnit 5 test** that exercises every API call shown in the documentation.
+   - Append to `src/test/java/neqsim/DocExamplesCompilationTest.java` for general utilities.
+   - Or create a dedicated test in the appropriate package directory.
+   - The test must instantiate classes, call all documented methods, and assert results are non-null/valid.
+
+2. **Run the test** and confirm all assertions pass before finalizing documentation.
+
+3. **Keep tests in sync** — when documentation changes, update the corresponding test.
+
+4. **For Python examples**: verify the equivalent Java API calls work (Python examples call
+   the same Java methods via jpype). If the Java test passes, the Python example will work.
+
+5. **Common doc-code bugs to catch with tests**:
+   - Plus fraction names with `+` character (`"C20+"` crashes — use `"C20"`)
+   - Wrong method names (`getUnitOperation()` vs `getUnit()`)
+   - Wrong parameter types (`int` vs `double`)
+   - Calling characterization before setting mixing rule
+   - Wrong risk threshold descriptions not matching source logic
+
 ---
 
 - **Mission Focus**: NeqSim is a Java toolkit for thermodynamics and process simulation; changes usually affect physical property models (`src/main/java/neqsim/thermo`) or process equipment (`src/main/java/neqsim/process`).
