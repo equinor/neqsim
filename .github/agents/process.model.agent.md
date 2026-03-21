@@ -47,3 +47,7 @@ When the simulation code will be included in documentation or examples:
 4. See `neqsim-input-validation` skill to pre-check equipment inputs (pressure ratios, temperatures, flow rates)
 5. See `neqsim-troubleshooting` skill when process simulation fails to converge or gives unexpected results
 6. See `neqsim-regression-baselines` skill when modifying equipment calculations — capture baselines first
+7. **Equipment feasibility:** After running compressors or heat exchangers, use the Design Feasibility Report classes to validate that equipment can actually be built. See `neqsim-api-patterns` skill for the feasibility report patterns:
+   - `CompressorDesignFeasibilityReport` — combines API 617 mechanical design, cost estimation, supplier matching, and performance curve generation
+   - `HeatExchangerDesignFeasibilityReport` — combines TEMA/ASME mechanical design, cost estimation, and supplier matching
+   - These report FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE verdicts and produce JSON reports with full design data

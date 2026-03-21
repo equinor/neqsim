@@ -15,6 +15,7 @@ Analyze the request and match it to one or more agents:
 |-------------------|--------------|---------------------|
 | Density, viscosity, phase envelope, EOS, fluid properties | `@thermo.fluid` | — |
 | Separator, compressor, heat exchanger, flowsheet, process train | `@process.model` | `@thermo.fluid` if complex fluid |
+| "Realistic", "feasible", "can this be built", "what will it cost", equipment selection | `@mechanical.design` | `@process.model` for operating conditions |
 | CME, CVD, differential liberation, swelling test, saturation pressure | `@pvt.simulation` | — |
 | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop | `@flow.assurance` | `@thermo.fluid` if CPA needed |
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA | `@gas.quality` | — |
@@ -35,6 +36,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 1: Process + Mechanical Design
 **Trigger:** "design", "size", "wall thickness" combined with process description
 **Pipeline:** `@process.model` (get operating conditions) then `@mechanical.design` (size equipment)
+
+### Pattern 1b: Process + Feasibility Check
+**Trigger:** "is this realistic", "can this be built", "feasibility", "supplier", "cost estimate" combined with compressor or heat exchanger
+**Pipeline:** `@process.model` (run simulation) then `@mechanical.design` (generate feasibility report with `CompressorDesignFeasibilityReport` or `HeatExchangerDesignFeasibilityReport`)
 
 ### Pattern 2: Process + Flow Assurance
 **Trigger:** "pipeline" + "hydrate" or "wax" or "corrosion"

@@ -280,6 +280,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors)                         | Compressor models, drivers, speed-dependent power |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves)             | Compressor performance curves                     |
 | Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign)               | Compressor mechanical design                      |
+| Compressor Feasibility | [docs/process/compressor_design_feasibility.md](process/compressor_design_feasibility) | Feasibility report: mechanical, cost, suppliers, curves |
 | Pumps             | [docs/process/equipment/pumps.md](process/equipment/pumps)                                     | Pump models                                       |
 | Pump Guide        | [docs/wiki/pump_usage_guide.md](wiki/pump_usage_guide)                                         | Pump usage guide                                  |
 | Pump Theory       | [docs/wiki/pump_theory_and_implementation.md](wiki/pump_theory_and_implementation)             | Pump theory                                       |
