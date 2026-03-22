@@ -80,6 +80,15 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Gets the inlet stream.
+   *
+   * @return inlet stream
+   */
+  public StreamInterface getInletStream() {
+    return inletStream;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>retentateStream</code>.
    * </p>
@@ -97,6 +106,15 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    */
   public void setMembraneArea(double area) {
     this.membraneArea = Math.max(0.0, area);
+  }
+
+  /**
+   * Gets the membrane area.
+   *
+   * @return membrane area in m^2
+   */
+  public double getMembraneArea() {
+    return membraneArea;
   }
 
   /**

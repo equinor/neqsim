@@ -298,6 +298,27 @@ transport properties (viscosity, thermal conductivity, density).
 | `SURFCostEstimator` | Subsea CAPEX | `process.mechanicaldesign.subsea` |
 | `SubseaCostEstimator` | Regional cost factors | `process.mechanicaldesign.subsea` |
 | `FieldDevelopmentDesignOrchestrator` | Full field design | `process.mechanicaldesign` |
+| `MotorMechanicalDesign` | Motor foundation, vibration, cooling, bearings, noise, enclosure | `process.mechanicaldesign.motor` |
+| `EquipmentDesignReport` | Combined mech + elec + motor design report with verdict | `process.mechanicaldesign` |
+
+### Electrical Design
+
+| Class | Purpose | Package |
+|-------|---------|---------|
+| `ElectricalDesign` | Base class — sizes motor, VFD, cables, switchgear | `process.electricaldesign` |
+| `ElectricalMotor` | AC induction motor model (IEC 60034, IEEE 841) | `process.electricaldesign.components` |
+| `VariableFrequencyDrive` | VFD with topology, harmonics, efficiency | `process.electricaldesign.components` |
+| `ElectricalCable` | Cable sizing with derating (IEC 60502) | `process.electricaldesign.components` |
+| `Transformer` | Power transformer model (IEC 60076) | `process.electricaldesign.components` |
+| `Switchgear` | MCC / switchgear bucket (IEC 61439) | `process.electricaldesign.components` |
+| `HazardousAreaClassification` | Zone / Ex marking (IEC 60079) | `process.electricaldesign.components` |
+| `CompressorElectricalDesign` | Compressor-specific with auxiliary loads | `process.electricaldesign.compressor` |
+| `PumpElectricalDesign` | Pump-specific design | `process.electricaldesign.pump` |
+| `SeparatorElectricalDesign` | Separator auxiliary loads | `process.electricaldesign.separator` |
+| `HeatExchangerElectricalDesign` | Electric heater / air cooler / S&T detection | `process.electricaldesign.heatexchanger` |
+| `PipelineElectricalDesign` | Heat tracing, cathodic protection | `process.electricaldesign.pipeline` |
+| `SystemElectricalDesign` | Plant-wide load aggregation, transformer sizing | `process.electricaldesign.system` |
+| `ElectricalLoadList` | Load list with demand/diversity factors | `process.electricaldesign.loadanalysis` |
 
 ---
 
@@ -435,3 +456,11 @@ transport properties (viscosity, thermal conductivity, density).
 | Scale prediction? | ❌ | Not available |
 | Detailed HX design? | ❌ | Use duty + LMTD |
 | Full reservoir sim? | ❌ | `SimpleReservoir` only |
+| Motor sizing? | ✅ | `ElectricalMotor.sizeMotor()` |
+| Motor foundation design? | ✅ | `MotorMechanicalDesign` |
+| Motor vibration check? | ✅ | `MotorMechanicalDesign.getVibrationZone()` |
+| Electrical load list? | ✅ | `ElectricalLoadList` |
+| Combined design report? | ✅ | `EquipmentDesignReport` |
+| VFD selection? | ✅ | `VariableFrequencyDrive` |
+| Cable sizing? | ✅ | `ElectricalCable` |
+| Hazardous area classification? | ✅ | `HazardousAreaClassification` |

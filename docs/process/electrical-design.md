@@ -759,3 +759,80 @@ System.out.println("Plant load:      " + sysDesign.getTotalPlantLoadKW() + " kW"
 System.out.println("Main transformer: " + sysDesign.getMainTransformerKVA() + " kVA");
 System.out.println("Emergency gen:   " + sysDesign.getEmergencyGeneratorKVA() + " kVA");
 ```
+
+---
+
+## 11. Motor Mechanical Design Integration
+
+The electrical design package sizes motor and cable from an electrical perspective.
+`MotorMechanicalDesign` complements this by computing the physical and mechanical
+aspects of the selected motor:
+
+| Aspect | Electrical Design | Motor Mechanical Design |
+|:---|:---|:---|
+| Motor sizing | Rated power, voltage, efficiency class | Weight, frame dimensions, cooling |
+| Drive selection | VFD topology, harmonics, cable sizing | VFD derating notes, bearing currents |
+| Environment | Hazardous area zone, Ex marking | IP rating, enclosure type, NORSOK noise |
+| Structural | — | Foundation mass, bolt pattern, vibration zone |
+| Reliability | — | Bearing L10 life, lubrication interval |
+
+### Linking Electrical and Mechanical Motor Design
+
+`MotorMechanicalDesign` can take its inputs directly from a completed
+`ElectricalDesign`, avoiding manual re-entry of motor parameters:
+
+```java
+// After running electrical design
+ElectricalDesign elecDesign = compressor.getElectricalDesign();
+elecDesign.calcDesign();
+
+// Create motor mechanical design from electrical results
+MotorMechanicalDesign motorDesign = new MotorMechanicalDesign(compressor);
+motorDesign.setFromElectricalDesign(elecDesign);
+motorDesign.calcDesign();
+
+// Motor physical properties
+System.out.println("Weight: " + motorDesign.getMotorWeightKg() + " kg");
+System.out.println("Foundation: " + motorDesign.getFoundationType());
+System.out.println("Vibration zone: " + motorDesign.getVibrationZone());
+System.out.println("Noise: " + motorDesign.getSoundPressureLevelAt1mDbA() + " dB(A)");
+System.out.println("Bearing L10: " + motorDesign.getBearingL10LifeHours() + " hours");
+```
+
+See the [Motor Mechanical Design Guide](motor-mechanical-design.md) for full
+API reference and design calculation details.
+
+---
+
+## 12. Combined Equipment Design Report
+
+`EquipmentDesignReport` aggregates mechanical design, electrical design, and
+motor mechanical design into a single report with an overall feasibility verdict:
+
+```java
+EquipmentDesignReport report = new EquipmentDesignReport(compressor);
+report.setHazardousZone(1);
+report.setAmbientTemperatureC(45.0);
+report.generateReport();
+
+String verdict = report.getVerdict();      // FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE
+String json = report.toJson();             // Full combined JSON report
+Map<String, Object> loadEntry = report.toLoadListEntry();  // For electrical load list
+```
+
+The report runs all three design layers in sequence and collects any issues:
+
+1. **Mechanical design** — wall thickness, weight, materials (from equipment-specific `MechanicalDesign`)
+2. **Electrical design** — motor, cable, VFD, switchgear, hazardous area (from `ElectricalDesign`)
+3. **Motor mechanical design** — foundation, vibration, cooling, bearings, noise (from `MotorMechanicalDesign`)
+
+See the [Motor Mechanical Design Guide — Combined Report](motor-mechanical-design.md#combined-equipment-design-report)
+for JSON output structure and full configuration options.
+
+---
+
+## Related Documentation
+
+- [Motor Mechanical Design Guide](motor-mechanical-design.md) — foundation, vibration, cooling, bearings, noise, enclosure standards
+- [Mechanical Design Framework](mechanical_design.md) — base mechanical design architecture and class hierarchy
+- [Electrical Design Proposal](../development/ELECTRICAL_DESIGN_PROPOSAL.md) — original architecture blueprint
