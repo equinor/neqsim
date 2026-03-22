@@ -52,6 +52,13 @@ MechanicalDesign (base class)
 └── WellMechanicalDesign           → NORSOK D-010 / API 5CT / API Bull 5C3
     ├── WellDesignCalculator (casing burst, collapse, tension)
     └── WellCostEstimator (drilling, completion, wellhead costs)
+
+MotorMechanicalDesign (standalone)  → IEC 60034, IEEE 841, ISO 10816-3, ISO 281, NORSOK S-002
+  └── Foundation, vibration, cooling, bearings, noise, enclosure, derating
+
+EquipmentDesignReport (aggregator)
+  └── Combines MechanicalDesign + ElectricalDesign + MotorMechanicalDesign
+      with feasibility verdict (FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE)
 ```
 
 ### Pipeline Mechanical Design Features
@@ -380,7 +387,7 @@ For equipment-specific data, use the typed response:
 
 ```java
 // Compressor-specific response
-CompressorMechanicalDesignResponse response = 
+CompressorMechanicalDesignResponse response =
     (CompressorMechanicalDesignResponse) compressor.getMechanicalDesign().getResponse();
 
 int stages = response.getNumberOfStages();
@@ -390,7 +397,7 @@ double driverPower = response.getDriverPower();             // kW
 double tripSpeed = response.getTripSpeed();                 // rpm
 
 // Valve-specific response
-ValveMechanicalDesignResponse valveResponse = 
+ValveMechanicalDesignResponse valveResponse =
     (ValveMechanicalDesignResponse) valve.getMechanicalDesign().getResponse();
 
 int ansiClass = valveResponse.getAnsiPressureClass();
@@ -519,7 +526,7 @@ if (!result.isValid()) {
 // Compressor validation
 CompressorMechanicalDesign.CompressorValidationResult result = compDesign.validateDesign();
 
-// Pump validation  
+// Pump validation
 PumpMechanicalDesign.PumpValidationResult result = pumpDesign.validateDesign();
 
 // Heat exchanger validation
@@ -536,7 +543,7 @@ SeparatorMechanicalDesign sepDesign = (SeparatorMechanicalDesign) separator.getM
 // Validate gas velocity
 boolean gasVelOk = sepDesign.validateGasVelocity(actualVelocity);  // m/s
 
-// Validate liquid velocity  
+// Validate liquid velocity
 boolean liqVelOk = sepDesign.validateLiquidVelocity(actualVelocity);  // m/s
 
 // Validate retention time (isOil = true for oil, false for water)
@@ -575,7 +582,7 @@ boolean npshOk = pumpDesign.validateNpshMargin(npshAvailable, npshRequired);
 // Validate operating in Preferred Operating Region
 boolean porOk = pumpDesign.validateOperatingInPOR(operatingFlow, bepFlow);
 
-// Validate operating in Allowable Operating Region  
+// Validate operating in Allowable Operating Region
 boolean aorOk = pumpDesign.validateOperatingInAOR(operatingFlow, bepFlow);
 
 // Validate suction specific speed
@@ -630,7 +637,7 @@ for (String issue : result.getIssues()) {
 ### Separators (API 12J / ASME VIII / NORSOK P-001)
 
 ```java
-SeparatorMechanicalDesign sepDesign = 
+SeparatorMechanicalDesign sepDesign =
     (SeparatorMechanicalDesign) separator.getMechanicalDesign();
 
 // Key parameters
@@ -655,7 +662,7 @@ Design calculations include:
 ### Compressors (API 617)
 
 ```java
-CompressorMechanicalDesign compDesign = 
+CompressorMechanicalDesign compDesign =
     (CompressorMechanicalDesign) compressor.getMechanicalDesign();
 
 // Key parameters
@@ -687,7 +694,7 @@ Design calculations include:
 ### Pumps (API 610)
 
 ```java
-PumpMechanicalDesign pumpDesign = 
+PumpMechanicalDesign pumpDesign =
     (PumpMechanicalDesign) pump.getMechanicalDesign();
 
 // Key parameters
@@ -718,7 +725,7 @@ Design calculations include:
 ### Valves (IEC 60534)
 
 ```java
-ValveMechanicalDesign valveDesign = 
+ValveMechanicalDesign valveDesign =
     (ValveMechanicalDesign) valve.getMechanicalDesign();
 
 // Key parameters
@@ -738,7 +745,7 @@ Design calculations include:
 ### Heat Exchangers (TEMA)
 
 ```java
-HeatExchangerMechanicalDesign hxDesign = 
+HeatExchangerMechanicalDesign hxDesign =
     (HeatExchangerMechanicalDesign) heatExchanger.getMechanicalDesign();
 
 // Key parameters
@@ -747,7 +754,7 @@ double uValue = hxDesign.getOverallHeatTransferCoefficient(); // W/m²K
 int tubeCount = hxDesign.getTubeCount();
 double shellDiameter = hxDesign.getShellDiameter();        // mm
 
-// Process design parameters  
+// Process design parameters
 double shellFouling = hxDesign.getFoulingResistanceShellHC();  // m²K/W
 double tubeFouling = hxDesign.getFoulingResistanceTubeHC();    // m²K/W
 double maxTubeVel = hxDesign.getMaxTubeVelocity();             // m/s
@@ -918,7 +925,7 @@ String json = sysMecDesign.toJson();
 Files.write(Paths.get("mechanical_design.json"), json.getBytes());
 
 // 6. Access specific equipment details
-CompressorMechanicalDesignResponse compResponse = 
+CompressorMechanicalDesignResponse compResponse =
     (CompressorMechanicalDesignResponse) compressor.getMechanicalDesign().getResponse();
 System.out.println("Compressor stages: " + compResponse.getNumberOfStages());
 System.out.println("Driver power: " + compResponse.getDriverPower() + " kW");

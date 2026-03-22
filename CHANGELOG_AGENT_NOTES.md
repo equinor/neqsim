@@ -9,6 +9,63 @@
 
 ---
 
+## 2026-03-22 — Motor Mechanical Design and Combined Equipment Design Report
+
+### New Classes
+
+- **`MotorMechanicalDesign`** (`process.mechanicaldesign.motor`) — Physical/mechanical design of electric motors:
+  - Foundation loads (static + dynamic) and mass per IEEE 841 (3:1 ratio)
+  - Cooling classification per IEC 60034-6 (IC411/IC611/IC81W)
+  - Bearing selection and L10 life per ISO 281 (ball vs roller, lubrication)
+  - Vibration limits per IEC 60034-14 Grade A and ISO 10816-3 zone classification
+  - Noise assessment per IEC 60034-9 and NORSOK S-002 (83 dB(A) at 1m)
+  - Enclosure/IP rating per IEC 60034-5, Ex marking per IEC 60079 (Zone 0/1/2)
+  - Environmental derating per IEC 60034-1 (altitude: 1%/100m above 1000m; temperature: 2.5%/°C above 40°C)
+  - Motor weight and dimensional estimation
+  - Constructors: `MotorMechanicalDesign(double shaftPowerKW)`, `MotorMechanicalDesign(ElectricalDesign)`
+
+- **`EquipmentDesignReport`** (`process.mechanicaldesign`) — Combined design report for any process equipment:
+  - Orchestrates mechanical design + electrical design + motor mechanical design
+  - Produces FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE verdict
+  - Checks: motor undersizing, excessive derating, noise exceedance, low bearing life
+  - `toJson()` — comprehensive JSON with all three design disciplines
+  - `toLoadListEntry()` — summary for electrical load list integration
+  - Works with any `ProcessEquipmentInterface` (compressor, pump, separator, etc.)
+
+### Key API Methods
+
+```java
+// Motor mechanical design — standalone
+MotorMechanicalDesign motorDesign = new MotorMechanicalDesign(250.0);
+motorDesign.setPoles(4);
+motorDesign.setAmbientTemperatureC(45.0);
+motorDesign.setAltitudeM(500.0);
+motorDesign.setHazardousZone(1);
+motorDesign.calcDesign();
+motorDesign.toJson();
+
+// Combined report — from any equipment
+EquipmentDesignReport report = new EquipmentDesignReport(compressor);
+report.setUseVFD(true);
+report.setRatedVoltageV(6600);
+report.setHazardousZone(1);
+report.generateReport();
+report.getVerdict();   // "FEASIBLE" / "FEASIBLE_WITH_WARNINGS" / "NOT_FEASIBLE"
+report.toJson();
+```
+
+### Bug Fix
+- Fixed IP rating override in Zone 0 hazardous areas — IEEE 841 IP55 minimum no longer overrides Zone 0 IP66 requirement
+
+### Test Coverage
+- 22 new tests in `MotorMechanicalDesignTest`: standalone design, small/large motors, altitude/temperature derating, hazardous area enclosure, vibration zones, NORSOK noise compliance, bearing L10 life, VFD notes, applied standards, compressor integration, JSON/Map output, combined reports
+
+### Documentation
+- New doc: `docs/process/motor-mechanical-design.md`
+- Updated: `REFERENCE_MANUAL_INDEX.md`, capability map, `mechanical_design.md`, `electrical-design.md`
+
+---
+
 ## 2026-03-22 — Heat Exchanger Mechanical Design Standards Expansion
 
 ### New Data Files

@@ -753,6 +753,21 @@ print(ed.toJson())
 | 4.5 | Integration with cost estimation framework | Planned |
 | 4.6 | Subsea power distribution (power umbilicals, step-out distance) | Planned |
 
+### Phase 5 — Motor Mechanical Design & Combined Reports ✅ IMPLEMENTED
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 5.1 | `MotorMechanicalDesign` — physical motor design (weight, dimensions, cooling, foundation, vibration, bearings, noise, enclosure) per IEC 60034 / ISO 10816-3 / ISO 281 / NORSOK S-002 | ✅ Done |
+| 5.2 | `setFromElectricalDesign()` — link motor mechanical to electrical design results | ✅ Done |
+| 5.3 | Altitude and temperature derating per IEC 60034-1 | ✅ Done |
+| 5.4 | Foundation design (concrete block / steel skid) with bolt pattern | ✅ Done |
+| 5.5 | Vibration assessment per ISO 10816-3 (zones A/B/C/D) | ✅ Done |
+| 5.6 | NORSOK S-002 noise assessment (85 dB(A) at 1 m limit) | ✅ Done |
+| 5.7 | Bearing L10 life per ISO 281 | ✅ Done |
+| 5.8 | `EquipmentDesignReport` — combined mechanical + electrical + motor design report with FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE verdict | ✅ Done |
+| 5.9 | `toLoadListEntry()` — electrical load list integration from combined report | ✅ Done |
+| 5.10 | Unit tests (22 tests covering all Phase 5 features) | ✅ Done |
+
 ---
 
 ## 12. Relationship to Existing Code
@@ -786,7 +801,15 @@ Process Equipment (Compressor)
 │
 ├── MechanicalDesign → wall thickness, materials, weights, vessel design
 │
-└── ElectricalDesign → motor, VFD, cables, switchgear, load list
+├── ElectricalDesign → motor, VFD, cables, switchgear, load list
+│
+├── MotorMechanicalDesign → motor weight, foundation, vibration, bearings,
+│                           cooling, noise, enclosure (IEC 60034 / ISO 10816-3)
+│
+└── EquipmentDesignReport → combined report with FEASIBLE verdict
+        ├── runs MechanicalDesign.calcDesign()
+        ├── runs ElectricalDesign.calcDesign()
+        └── runs MotorMechanicalDesign.calcDesign()
 ```
 
 The `calcDesign()` methods can reference each other if needed:

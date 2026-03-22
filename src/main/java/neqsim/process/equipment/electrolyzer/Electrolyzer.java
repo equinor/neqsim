@@ -89,6 +89,24 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Gets the cell voltage.
+   *
+   * @return cell voltage in V
+   */
+  public double getCellVoltage() {
+    return cellVoltage;
+  }
+
+  /**
+   * Sets the cell voltage.
+   *
+   * @param cellVoltage cell voltage in V
+   */
+  public void setCellVoltage(double cellVoltage) {
+    this.cellVoltage = cellVoltage;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>oxygenOutStream</code>.
    * </p>
