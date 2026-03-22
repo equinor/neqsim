@@ -9,6 +9,54 @@
 
 ---
 
+## 2026-03-22 — Heat Exchanger Mechanical Design Standards Expansion
+
+### New Data Files
+- **`HeatExchangerTubeMaterials.csv`** — 22 material grades for tubes and shells with
+  SMYS, SMTS, allowable stress, thermal conductivity, NACE compliance, and temperature limits.
+  Covers SA-179, SA-213 (T11/T22/TP304/304L/316/316L/321), duplex/super-duplex, Cu-Ni,
+  titanium, Inconel, Hastelloy, Incoloy, and shell plate materials.
+
+### Standards Database Additions
+| Standard | Equipment Types | New Entries |
+|----------|----------------|-------------|
+| API-660 9th Ed | HeatExchanger | 21 entries (design margins, velocity limits, hydro test, joint efficiency, vibration) |
+| API-661 7th Ed | HeatExchanger/Cooler | 9 entries (air cooler fins, face velocity, fan efficiency) |
+| API-662 1st Ed | HeatExchanger | 10 entries (plate HX gasketed/welded pressure/temp limits) |
+| NORSOK-P-002 Rev 5 | HeatExchanger/Cooler/Heater | 14 entries (duty/area/pressure margins, velocity limits) |
+| NORSOK-M-001 Rev 6 | HeatExchanger/Cooler/Heater | 7 entries (min/max design temp, hardness, H2S limits) |
+| ASME VIII Div.1 | HeatExchanger | 19 entries (UG-27, UHX-13, UG-37, UG-99, allowable stresses, joint efficiencies, flange ratings) |
+| ISO-16812 | HeatExchanger | 12 entries (velocity, fouling resistance, baffle cut range) |
+| ISO-15547 | HeatExchanger | 3 entries (plate-fin aluminium HX) |
+| EN-13445 | HeatExchanger | 3 entries (pressure, joint efficiency, corrosion allowance) |
+| PD-5500 | HeatExchanger | 3 entries (pressure, joint efficiency, corrosion allowance) |
+
+### `ShellAndTubeDesignCalculator` Expanded
+| New Capability | Standard | Method |
+|----------------|----------|--------|
+| Tubesheet thickness per UHX-13 | ASME VIII | `calculateTubesheetThicknessUHX()` |
+| Nozzle reinforcement per UG-37 | ASME VIII | `calculateNozzleReinforcement()` |
+| MAWP back-calculation per UG-27 | ASME VIII | `calculateMAWP()` |
+| Hydrostatic test pressure per UG-99 | ASME VIII | `calculateHydroTestPressure()` |
+| Material property lookup from DB | HeatExchangerTubeMaterials | `loadMaterialProperties()` |
+| NACE MR0175 sour service assessment | NACE MR0175 / NORSOK M-001 | `performNACEAssessment()` |
+| Shell/tube material grade tracking | — | `setShellMaterialGrade()`, `setTubeMaterialGrade()` |
+
+### `HeatExchangerMechanicalDesign` Integration
+- New fields: `shellMaterialGrade`, `tubeMaterialGrade`, `h2sPartialPressure`,
+  `sourServiceAssessment`, `shellJointEfficiency`
+- `calcDesign()` now runs `ShellAndTubeDesignCalculator` with ASME VIII and NACE
+- `getShellAndTubeCalculator()` provides access to detailed calculator results
+- `HeatExchangerMechanicalDesignResponse` updated with MAWP, hydro test, NACE fields
+
+### Migration Notes
+- Existing `calcDesign()` calls work unchanged — new calculator runs automatically
+- To access ASME/NACE results: `design.getShellAndTubeCalculator().getMawpShellSide()`
+- For sour service: set `design.setSourServiceAssessment(true)` and `setH2sPartialPressure(pp)`
+- Material grades default to SA-516-70 (shell) and SA-179 (tubes) if not set
+
+---
+
 ## 2026-03-22 — Compressor Casing Mechanical Design (API 617 / ASME VIII)
 
 ### New Class

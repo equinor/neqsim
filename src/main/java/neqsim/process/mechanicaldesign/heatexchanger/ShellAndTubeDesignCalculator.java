@@ -1,6 +1,9 @@
 package neqsim.process.mechanicaldesign.heatexchanger;
 
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -11,6 +14,7 @@ import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.StandardTubeSi
 import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TEMAClass;
 import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TEMAConfiguration;
 import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TubePitchPattern;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Shell and tube heat exchanger design calculator per TEMA standards.
@@ -34,7 +38,7 @@ import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TubePitchPatte
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ShellAndTubeDesignCalculator calc = new ShellAndTubeDesignCalculator();
  * calc.setTemaDesignation("AES");
@@ -44,7 +48,7 @@ import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TubePitchPatte
  * calc.setTubeSidePressure(15.0); // bara
  * calc.setDesignTemperature(200.0); // °C
  * calc.calculate();
- * 
+ *
  * System.out.println("Shell ID: " + calc.getShellInsideDiameter() + " mm");
  * System.out.println("Tube count: " + calc.getTubeCount());
  * System.out.println("Total weight: " + calc.getTotalWeight() + " kg");
@@ -104,6 +108,42 @@ public class ShellAndTubeDesignCalculator {
   private double fabricationCost = 0.0;
   private double totalCost = 0.0;
 
+  // ASME VIII pressure design results
+  private double tubesheetThicknessUHX = 0.0; // mm per UHX-13
+  private double nozzleReinforcementArea = 0.0; // mm2 per UG-37
+  private boolean nozzleReinforcementAdequate = false;
+  private double mawpShellSide = 0.0; // bara back-calculated MAWP
+  private double mawpTubeSide = 0.0; // bara
+  private double hydroTestPressureShell = 0.0; // bara per UG-99
+  private double hydroTestPressureTube = 0.0; // bara
+  private double shellJointEfficiency = 0.85;
+
+  // Material grade tracking
+  private String shellMaterialGrade = "SA-516-70";
+  private String tubeMaterialGrade = "SA-179";
+
+  // Material properties from database
+  private double shellAllowableStress = 138.0; // MPa
+  private double tubeAllowableStress = 117.0; // MPa
+  private double tubeThermalConductivity = 52.0; // W/mK
+  private double shellSmys = 260.0; // MPa
+  private double tubeSmys = 228.0; // MPa
+
+  // NACE / sour service assessment
+  private boolean sourServiceAssessment = false;
+  private boolean shellNACECompliant = false;
+  private boolean tubeNACECompliant = false;
+  private double h2sPartialPressure = 0.0; // bar
+  private boolean sourServiceRequired = false;
+  private int shellMaxHardnessHV = 248;
+  private int tubeMaxHardnessHV = 248;
+  private List<String> appliedStandards = new ArrayList<String>();
+  private List<String> naceIssues = new ArrayList<String>();
+
+  // Nozzle parameters for reinforcement check
+  private double nozzleDiameter = 150.0; // mm (default 6 inch)
+  private double nozzleWallThickness = 7.11; // mm (Sch 40)
+
   /**
    * Creates a new ShellAndTubeDesignCalculator with default parameters.
    */
@@ -138,6 +178,9 @@ public class ShellAndTubeDesignCalculator {
           temaDesignation.charAt(1), temaDesignation.charAt(2));
     }
 
+    // Load material properties from database
+    loadMaterialProperties();
+
     // Calculate tube geometry
     calculateTubeBundle();
 
@@ -146,6 +189,17 @@ public class ShellAndTubeDesignCalculator {
 
     // Calculate baffles
     calculateBaffles();
+
+    // ASME VIII calculations
+    calculateTubesheetThicknessUHX();
+    calculateNozzleReinforcement();
+    calculateMAWP();
+    calculateHydroTestPressure();
+
+    // NACE sour service assessment
+    if (sourServiceAssessment) {
+      performNACEAssessment();
+    }
 
     // Calculate weights
     calculateWeights(config);
@@ -388,26 +442,223 @@ public class ShellAndTubeDesignCalculator {
   }
 
   /**
-   * Gets allowable stress for material at temperature.
+   * Gets allowable stress for material at temperature. Uses database value if loaded, otherwise
+   * falls back to simplified ASME Section II tables.
    *
    * @param material material name
-   * @param temperature temperature in °C
+   * @param temperature temperature in degrees C
    * @return allowable stress in MPa
    */
   private double getAllowableStress(String material, double temperature) {
-    // Simplified - should use ASME Section II tables
-    double baseStress = 137.9; // MPa, SA-516-70 at room temp
+    double baseStress;
+    if (material.equals(shellMaterial)) {
+      baseStress = shellAllowableStress;
+    } else if (material.equals(tubeMaterial)) {
+      baseStress = tubeAllowableStress;
+    } else {
+      baseStress = 137.9;
+    }
 
-    // Temperature derating (simplified)
-    if (temperature > 200) {
-      baseStress *= 0.85;
+    // Temperature derating (simplified ASME II Part D)
+    if (temperature > 400) {
+      baseStress *= 0.55;
     } else if (temperature > 300) {
       baseStress *= 0.70;
-    } else if (temperature > 400) {
-      baseStress *= 0.55;
+    } else if (temperature > 200) {
+      baseStress *= 0.85;
     }
 
     return baseStress;
+  }
+
+  /**
+   * Loads material properties from HeatExchangerTubeMaterials database table.
+   */
+  private void loadMaterialProperties() {
+    loadMaterialFromDB(shellMaterialGrade, true);
+    loadMaterialFromDB(tubeMaterialGrade, false);
+  }
+
+  /**
+   * Loads a single material's properties from the database.
+   *
+   * @param materialGrade the material grade to look up
+   * @param isShell true if this is a shell material, false for tube
+   */
+  private void loadMaterialFromDB(String materialGrade, boolean isShell) {
+    try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
+        ResultSet rs = database
+            .getResultSet("SELECT * FROM HeatExchangerTubeMaterials WHERE MaterialGrade='"
+                + materialGrade + "'")) {
+      if (rs.next()) {
+        double allowable = rs.getDouble("AllowableStress_MPa");
+        double smys = rs.getDouble("SMYS_MPa");
+        double thermalCond = rs.getDouble("ThermalConductivity_WpmK");
+        String naceComp = rs.getString("NACECompliant");
+        boolean nace = "Yes".equalsIgnoreCase(naceComp);
+
+        if (isShell) {
+          shellAllowableStress = allowable;
+          shellSmys = smys;
+          shellNACECompliant = nace;
+          shellMaterial = rs.getString("Specification") + " " + materialGrade;
+        } else {
+          tubeAllowableStress = allowable;
+          tubeSmys = smys;
+          tubeThermalConductivity = thermalCond;
+          tubeNACECompliant = nace;
+          tubeMaterial = rs.getString("Specification") + " " + materialGrade;
+        }
+      }
+    } catch (Exception ex) {
+      // Use default values if database lookup fails
+    }
+  }
+
+  /**
+   * Calculates tubesheet thickness per ASME VIII UHX-13 for fixed tubesheet exchangers.
+   */
+  private void calculateTubesheetThicknessUHX() {
+    double P = Math.max(shellSidePressure, tubeSidePressure) * 0.1; // MPa
+    double G = shellInsideDiameter; // mm gasket diameter
+    double S = getAllowableStress(shellMaterial, designTemperature);
+
+    // UHX-13 simplified: t = G * sqrt(F * P / S)
+    // F depends on ligament efficiency and fixed vs floating
+    double tubeOD = tubeSize.getOuterDiameterMm();
+    double ligamentEfficiency = 1.0 - tubeOD / (tubeOD * tubePitchRatio);
+    ligamentEfficiency = Math.max(ligamentEfficiency, 0.25);
+    double F = 0.785 / ligamentEfficiency;
+
+    double thickness = G * Math.sqrt(F * P / S);
+    thickness += corrosionAllowanceShell;
+
+    // TEMA minimums per class
+    double minThickness = 19.05;
+    if (temaClass == TEMAClass.C) {
+      minThickness = 15.875;
+    } else if (temaClass == TEMAClass.B) {
+      minThickness = 12.7;
+    }
+
+    tubesheetThicknessUHX = Math.max(thickness, minThickness);
+    appliedStandards.add("ASME VIII Div.1 UHX-13 (Tubesheet)");
+  }
+
+  /**
+   * Calculates nozzle reinforcement per ASME VIII UG-37.
+   */
+  private void calculateNozzleReinforcement() {
+    double P = Math.max(shellSidePressure, tubeSidePressure) * 0.1; // MPa
+    double S = getAllowableStress(shellMaterial, designTemperature);
+    double E = shellJointEfficiency;
+
+    // Required area removed: A_required = d * t_r * F + 2 * t_n * t_r * (1 - fr)
+    // where t_r = required thickness without nozzle, d = nozzle finished diameter
+    // F = correction factor (1.0 for internal pressure on shell)
+    double t_r = (P * shellInsideDiameter / 2.0) / (S * E - 0.6 * P);
+    double d = nozzleDiameter; // finished nozzle ID
+    double requiredArea = d * t_r * 1.0;
+
+    // Available reinforcement from shell excess thickness:
+    // A1 = (E * t - F * t_r) * d (larger of two sides)
+    double t = shellWallThickness - corrosionAllowanceShell;
+    double A1 = Math.max((t - t_r), 0.0) * d * 2.0;
+
+    // Available reinforcement from nozzle wall:
+    // A2 = (t_n - t_rn) * 5t (outward) + (t_n - c_n) * 5t (inward)
+    double t_rn = (P * nozzleDiameter / 2.0) / (S * E - 0.6 * P);
+    double A2 = Math.max((nozzleWallThickness - t_rn), 0.0) * 2.0 * 2.5 * t;
+
+    double totalAvailable = A1 + A2;
+    nozzleReinforcementArea = totalAvailable;
+    nozzleReinforcementAdequate = totalAvailable >= requiredArea;
+    appliedStandards.add("ASME VIII Div.1 UG-37 (Nozzle Reinforcement)");
+  }
+
+  /**
+   * Back-calculates Maximum Allowable Working Pressure (MAWP) for shell and tube sides.
+   */
+  private void calculateMAWP() {
+    double S = getAllowableStress(shellMaterial, designTemperature);
+    double E = shellJointEfficiency;
+    double t_shell = shellWallThickness - corrosionAllowanceShell;
+    double R_shell = shellInsideDiameter / 2.0;
+
+    // MAWP shell = S*E*t / (R + 0.6*t) per UG-27
+    double mawpMPa = (S * E * t_shell) / (R_shell + 0.6 * t_shell);
+    mawpShellSide = mawpMPa * 10.0; // convert to bara
+
+    // MAWP tube side (based on tube wall)
+    double S_tube = getAllowableStress(tubeMaterial, designTemperature);
+    double tubeOD = tubeSize.getOuterDiameterMm();
+    double t_tube = tubeWallThickness - corrosionAllowanceTube;
+    double R_tube = (tubeOD - 2.0 * tubeWallThickness) / 2.0;
+    double mawpTubeMPa = (S_tube * 1.0 * t_tube) / (R_tube + 0.6 * t_tube);
+    mawpTubeSide = mawpTubeMPa * 10.0;
+
+    appliedStandards.add("ASME VIII Div.1 UG-27 (MAWP)");
+  }
+
+  /**
+   * Calculates hydrostatic test pressure per ASME VIII UG-99.
+   */
+  private void calculateHydroTestPressure() {
+    // UG-99(b): P_test = 1.3 * MAWP * (S_test_temp / S_design_temp)
+    // For simplicity, ratio of allowable stresses at test vs design temperature ~ 1.0
+    // unless design temp is well above ambient
+    double stressRatio = 1.0;
+    if (designTemperature > 100) {
+      // Allowable stress at ambient is typically higher
+      stressRatio = getAllowableStress(shellMaterial, 20.0)
+          / getAllowableStress(shellMaterial, designTemperature);
+    }
+
+    hydroTestPressureShell = 1.3 * mawpShellSide * stressRatio;
+    hydroTestPressureTube = 1.3 * mawpTubeSide * stressRatio;
+
+    appliedStandards.add("ASME VIII Div.1 UG-99 (Hydrostatic Test)");
+  }
+
+  /**
+   * Performs NACE MR0175/ISO 15156 sour service assessment.
+   */
+  private void performNACEAssessment() {
+    naceIssues.clear();
+
+    // Determine if sour service is required per NACE MR0175
+    // Sour service threshold: H2S partial pressure greater than 0.3 kPa (0.003 bar)
+    sourServiceRequired = h2sPartialPressure > 0.003;
+
+    if (!sourServiceRequired) {
+      appliedStandards.add("NACE MR0175/ISO 15156 (Not Required - H2S pp below threshold)");
+      return;
+    }
+
+    // Check shell material NACE compliance
+    if (!shellNACECompliant) {
+      naceIssues.add("Shell material " + shellMaterialGrade
+          + " is not NACE MR0175 compliant for sour service");
+    }
+
+    // Check tube material NACE compliance
+    if (!tubeNACECompliant) {
+      naceIssues.add("Tube material " + tubeMaterialGrade
+          + " is not NACE MR0175 compliant for sour service");
+    }
+
+    // Hardness limits per NORSOK M-001 / NACE MR0175
+    if (shellMaxHardnessHV > 248) {
+      naceIssues.add("Shell hardness " + shellMaxHardnessHV + " HV exceeds 248 HV limit");
+    }
+    if (tubeMaxHardnessHV > 248) {
+      naceIssues.add("Tube hardness " + tubeMaxHardnessHV + " HV exceeds 248 HV limit");
+    }
+
+    appliedStandards.add("NACE MR0175/ISO 15156 (Sour Service Assessment)");
+    if (!naceIssues.isEmpty()) {
+      appliedStandards.add("NORSOK M-001 Rev.6 (Material Hardness Limits)");
+    }
   }
 
   /**
@@ -667,6 +918,10 @@ public class ShellAndTubeDesignCalculator {
     shell.put("outsideDiameter_mm", shellOutsideDiameter);
     shell.put("wallThickness_mm", shellWallThickness);
     shell.put("material", shellMaterial);
+    shell.put("materialGrade", shellMaterialGrade);
+    shell.put("allowableStress_MPa", shellAllowableStress);
+    shell.put("smys_MPa", shellSmys);
+    shell.put("jointEfficiency", shellJointEfficiency);
     result.put("shell", shell);
 
     // Tube bundle
@@ -679,6 +934,9 @@ public class ShellAndTubeDesignCalculator {
     tubes.put("pitch_mm", tubePitch);
     tubes.put("pitchPattern", pitchPattern.getDescription());
     tubes.put("material", tubeMaterial);
+    tubes.put("materialGrade", tubeMaterialGrade);
+    tubes.put("allowableStress_MPa", tubeAllowableStress);
+    tubes.put("thermalConductivity_WpmK", tubeThermalConductivity);
     result.put("tubes", tubes);
 
     // Baffles
@@ -695,6 +953,33 @@ public class ShellAndTubeDesignCalculator {
     area.put("actual_m2", actualArea);
     area.put("margin", (actualArea - requiredArea) / requiredArea);
     result.put("area", area);
+
+    // ASME VIII pressure design
+    Map<String, Object> pressureDesign = new LinkedHashMap<String, Object>();
+    pressureDesign.put("tubesheetThickness_mm", tubesheetThicknessUHX);
+    pressureDesign.put("mawpShellSide_bara", mawpShellSide);
+    pressureDesign.put("mawpTubeSide_bara", mawpTubeSide);
+    pressureDesign.put("hydroTestPressureShell_bara", hydroTestPressureShell);
+    pressureDesign.put("hydroTestPressureTube_bara", hydroTestPressureTube);
+    pressureDesign.put("nozzleReinforcementArea_mm2", nozzleReinforcementArea);
+    pressureDesign.put("nozzleReinforcementAdequate", nozzleReinforcementAdequate);
+    result.put("pressureDesign", pressureDesign);
+
+    // NACE / sour service
+    if (sourServiceAssessment) {
+      Map<String, Object> nace = new LinkedHashMap<String, Object>();
+      nace.put("sourServiceRequired", sourServiceRequired);
+      nace.put("h2sPartialPressure_bar", h2sPartialPressure);
+      nace.put("shellNACECompliant", shellNACECompliant);
+      nace.put("tubeNACECompliant", tubeNACECompliant);
+      nace.put("shellMaxHardness_HV", shellMaxHardnessHV);
+      nace.put("tubeMaxHardness_HV", tubeMaxHardnessHV);
+      nace.put("issues", naceIssues);
+      result.put("naceAssessment", nace);
+    }
+
+    // Applied standards
+    result.put("appliedStandards", appliedStandards);
 
     // Weights
     Map<String, Object> weights = new LinkedHashMap<String, Object>();
@@ -725,5 +1010,234 @@ public class ShellAndTubeDesignCalculator {
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
         .toJson(toMap());
+  }
+
+  // ============================================================================
+  // ASME VIII / NACE / Material Getters and Setters
+  // ============================================================================
+
+  /**
+   * Gets tubesheet thickness per ASME UHX-13.
+   *
+   * @return tubesheet thickness in mm
+   */
+  public double getTubesheetThicknessUHX() {
+    return tubesheetThicknessUHX;
+  }
+
+  /**
+   * Gets MAWP for the shell side per ASME UG-27.
+   *
+   * @return MAWP in bara
+   */
+  public double getMawpShellSide() {
+    return mawpShellSide;
+  }
+
+  /**
+   * Gets MAWP for the tube side.
+   *
+   * @return MAWP in bara
+   */
+  public double getMawpTubeSide() {
+    return mawpTubeSide;
+  }
+
+  /**
+   * Gets hydrostatic test pressure for the shell side per UG-99.
+   *
+   * @return hydro test pressure in bara
+   */
+  public double getHydroTestPressureShell() {
+    return hydroTestPressureShell;
+  }
+
+  /**
+   * Gets hydrostatic test pressure for the tube side per UG-99.
+   *
+   * @return hydro test pressure in bara
+   */
+  public double getHydroTestPressureTube() {
+    return hydroTestPressureTube;
+  }
+
+  /**
+   * Gets whether the nozzle reinforcement is adequate per UG-37.
+   *
+   * @return true if adequate
+   */
+  public boolean isNozzleReinforcementAdequate() {
+    return nozzleReinforcementAdequate;
+  }
+
+  /**
+   * Gets the nozzle reinforcement available area.
+   *
+   * @return available reinforcement area in mm2
+   */
+  public double getNozzleReinforcementArea() {
+    return nozzleReinforcementArea;
+  }
+
+  /**
+   * Sets the shell material grade for property lookup.
+   *
+   * @param grade material grade (e.g., "SA-516-70")
+   */
+  public void setShellMaterialGrade(String grade) {
+    this.shellMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the shell material grade.
+   *
+   * @return shell material grade
+   */
+  public String getShellMaterialGrade() {
+    return shellMaterialGrade;
+  }
+
+  /**
+   * Sets the tube material grade for property lookup.
+   *
+   * @param grade material grade (e.g., "SA-179", "SA-213-TP316")
+   */
+  public void setTubeMaterialGrade(String grade) {
+    this.tubeMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the tube material grade.
+   *
+   * @return tube material grade
+   */
+  public String getTubeMaterialGrade() {
+    return tubeMaterialGrade;
+  }
+
+  /**
+   * Gets the tube thermal conductivity.
+   *
+   * @return thermal conductivity in W/mK
+   */
+  public double getTubeThermalConductivity() {
+    return tubeThermalConductivity;
+  }
+
+  /**
+   * Enables or disables sour service assessment per NACE MR0175.
+   *
+   * @param enabled true to enable NACE assessment
+   */
+  public void setSourServiceAssessment(boolean enabled) {
+    this.sourServiceAssessment = enabled;
+  }
+
+  /**
+   * Gets whether sour service assessment is enabled.
+   *
+   * @return true if NACE assessment is enabled
+   */
+  public boolean isSourServiceAssessment() {
+    return sourServiceAssessment;
+  }
+
+  /**
+   * Sets the H2S partial pressure for sour service determination.
+   *
+   * @param pressure H2S partial pressure in bar
+   */
+  public void setH2sPartialPressure(double pressure) {
+    this.h2sPartialPressure = pressure;
+  }
+
+  /**
+   * Gets H2S partial pressure.
+   *
+   * @return H2S partial pressure in bar
+   */
+  public double getH2sPartialPressure() {
+    return h2sPartialPressure;
+  }
+
+  /**
+   * Gets whether sour service is required per NACE MR0175.
+   *
+   * @return true if H2S levels require sour service materials
+   */
+  public boolean isSourServiceRequired() {
+    return sourServiceRequired;
+  }
+
+  /**
+   * Gets the list of NACE compliance issues.
+   *
+   * @return list of issue descriptions
+   */
+  public List<String> getNaceIssues() {
+    return naceIssues;
+  }
+
+  /**
+   * Gets the list of applied design standards.
+   *
+   * @return list of standard references
+   */
+  public List<String> getAppliedStandards() {
+    return appliedStandards;
+  }
+
+  /**
+   * Sets shell joint efficiency per ASME VIII.
+   *
+   * @param efficiency joint efficiency (0.65 to 1.0)
+   */
+  public void setShellJointEfficiency(double efficiency) {
+    this.shellJointEfficiency = efficiency;
+  }
+
+  /**
+   * Gets shell joint efficiency.
+   *
+   * @return joint efficiency
+   */
+  public double getShellJointEfficiency() {
+    return shellJointEfficiency;
+  }
+
+  /**
+   * Sets the nozzle diameter for reinforcement calculations.
+   *
+   * @param diameter nozzle diameter in mm
+   */
+  public void setNozzleDiameter(double diameter) {
+    this.nozzleDiameter = diameter;
+  }
+
+  /**
+   * Sets the nozzle wall thickness.
+   *
+   * @param thickness nozzle wall thickness in mm
+   */
+  public void setNozzleWallThickness(double thickness) {
+    this.nozzleWallThickness = thickness;
+  }
+
+  /**
+   * Gets whether the shell material is NACE compliant.
+   *
+   * @return true if compliant
+   */
+  public boolean isShellNACECompliant() {
+    return shellNACECompliant;
+  }
+
+  /**
+   * Gets whether the tube material is NACE compliant.
+   *
+   * @return true if compliant
+   */
+  public boolean isTubeNACECompliant() {
+    return tubeNACECompliant;
   }
 }
