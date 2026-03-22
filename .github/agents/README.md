@@ -152,6 +152,22 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ---
 
+### Plant Data & Digital Twins
+
+| Agent | Command | Purpose |
+|-------|---------|--------|
+| **plant.data** | `@plant.data <description>` | Connect NeqSim models to plant historian data (PI/IP.21) via tagreader |
+
+**Examples:**
+```
+@plant.data Connect compressor model to PI historian tags
+@plant.data Compare separator simulation to plant data
+@plant.data Build a digital twin loop for a gas compression train
+@plant.data Read Troll A compressor data from Aspen IP.21
+```
+
+---
+
 ### Testing & Examples
 
 | Agent | Command | Purpose |

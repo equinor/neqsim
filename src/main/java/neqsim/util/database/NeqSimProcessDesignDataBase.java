@@ -91,6 +91,8 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
       updateTable("Packing");
       updateTable("MaterialPipeProperties");
       updateTable("MaterialPlateProperties");
+      updateTable("CompressorCasingMaterials");
+      updateTable("HeatExchangerTubeMaterials");
       updateTable("Fittings");
 
       // Design standards tables - loaded from standards subdirectory
