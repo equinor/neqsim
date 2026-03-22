@@ -167,6 +167,37 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
   private double fouledOverallHeatTransferCoeff;
 
   // ============================================================================
+  // ASME VIII and NACE Parameters
+  // ============================================================================
+
+  /** Shell material grade from HeatExchangerTubeMaterials. */
+  private String shellMaterialGrade;
+
+  /** Tube material grade from HeatExchangerTubeMaterials. */
+  private String tubeMaterialGrade;
+
+  /** MAWP shell side [bara] per ASME UG-27. */
+  private double mawpShellSide;
+
+  /** MAWP tube side [bara] per ASME UG-27. */
+  private double mawpTubeSide;
+
+  /** Hydro test pressure shell [bara] per ASME UG-99. */
+  private double hydroTestPressureShell;
+
+  /** Hydro test pressure tube [bara] per ASME UG-99. */
+  private double hydroTestPressureTube;
+
+  /** NACE MR0175 sour service required flag. */
+  private boolean sourServiceRequired;
+
+  /** Shell NACE MR0175 compliant. */
+  private boolean shellNACECompliant;
+
+  /** Tube NACE MR0175 compliant. */
+  private boolean tubeNACECompliant;
+
+  // ============================================================================
   // Constructors
   // ============================================================================
 
@@ -213,6 +244,22 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
     this.maxTubeLength = mecDesign.getMaxTubeLengthM();
     // Default to false - can be determined based on design conditions
     this.vibrationAnalysisRequired = false;
+
+    // Populate material and NACE fields
+    this.shellMaterialGrade = mecDesign.getShellMaterialGrade();
+    this.tubeMaterialGrade = mecDesign.getTubeMaterialGrade();
+    this.sourServiceRequired = mecDesign.isSourServiceAssessment();
+
+    // Populate ASME VIII results from calculator
+    ShellAndTubeDesignCalculator calc = mecDesign.getShellAndTubeCalculator();
+    if (calc != null) {
+      this.mawpShellSide = calc.getMawpShellSide();
+      this.mawpTubeSide = calc.getMawpTubeSide();
+      this.hydroTestPressureShell = calc.getHydroTestPressureShell();
+      this.hydroTestPressureTube = calc.getHydroTestPressureTube();
+      this.shellNACECompliant = calc.isShellNACECompliant();
+      this.tubeNACECompliant = calc.isTubeNACECompliant();
+    }
   }
 
   // ============================================================================
@@ -597,5 +644,81 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
 
   public void setFouledOverallHeatTransferCoeff(double fouledOverallHeatTransferCoeff) {
     this.fouledOverallHeatTransferCoeff = fouledOverallHeatTransferCoeff;
+  }
+
+  // ============================================================================
+  // ASME VIII and NACE Getters and Setters
+  // ============================================================================
+
+  public String getShellMaterialGrade() {
+    return shellMaterialGrade;
+  }
+
+  public void setShellMaterialGrade(String shellMaterialGrade) {
+    this.shellMaterialGrade = shellMaterialGrade;
+  }
+
+  public String getTubeMaterialGrade() {
+    return tubeMaterialGrade;
+  }
+
+  public void setTubeMaterialGrade(String tubeMaterialGrade) {
+    this.tubeMaterialGrade = tubeMaterialGrade;
+  }
+
+  public double getMawpShellSide() {
+    return mawpShellSide;
+  }
+
+  public void setMawpShellSide(double mawpShellSide) {
+    this.mawpShellSide = mawpShellSide;
+  }
+
+  public double getMawpTubeSide() {
+    return mawpTubeSide;
+  }
+
+  public void setMawpTubeSide(double mawpTubeSide) {
+    this.mawpTubeSide = mawpTubeSide;
+  }
+
+  public double getHydroTestPressureShell() {
+    return hydroTestPressureShell;
+  }
+
+  public void setHydroTestPressureShell(double hydroTestPressureShell) {
+    this.hydroTestPressureShell = hydroTestPressureShell;
+  }
+
+  public double getHydroTestPressureTube() {
+    return hydroTestPressureTube;
+  }
+
+  public void setHydroTestPressureTube(double hydroTestPressureTube) {
+    this.hydroTestPressureTube = hydroTestPressureTube;
+  }
+
+  public boolean isSourServiceRequired() {
+    return sourServiceRequired;
+  }
+
+  public void setSourServiceRequired(boolean sourServiceRequired) {
+    this.sourServiceRequired = sourServiceRequired;
+  }
+
+  public boolean isShellNACECompliant() {
+    return shellNACECompliant;
+  }
+
+  public void setShellNACECompliant(boolean shellNACECompliant) {
+    this.shellNACECompliant = shellNACECompliant;
+  }
+
+  public boolean isTubeNACECompliant() {
+    return tubeNACECompliant;
+  }
+
+  public void setTubeNACECompliant(boolean tubeNACECompliant) {
+    this.tubeNACECompliant = tubeNACECompliant;
   }
 }

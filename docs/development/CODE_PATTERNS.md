@@ -228,6 +228,46 @@ double power = comp.getPower("kW");
 double outletT = comp.getOutletStream().getTemperature("C");
 ```
 
+### Compressor Casing Mechanical Design (API 617 / ASME VIII)
+
+```java
+// Via CompressorMechanicalDesign (after process run)
+Compressor comp = new Compressor("K-100", gasStream);
+comp.setOutletPressure(120.0, "bara");
+comp.setIsentropicEfficiency(0.75);
+process.add(comp);
+process.run();
+
+comp.initMechanicalDesign();
+CompressorMechanicalDesign design =
+    (CompressorMechanicalDesign) comp.getMechanicalDesign();
+design.setCasingMaterialGrade("SA-516-70");
+design.setCasingCorrosionAllowanceMm(3.0);
+// For sour service:
+// design.setH2sPartialPressureKPa(0.5);
+design.calcDesign();
+
+CompressorCasingDesignCalculator casing = design.getCasingDesignCalculator();
+double wallMm = casing.getRequiredWallThicknessMm();
+double mawpBarg = casing.getMawpBarg();
+String flangeClass = casing.getSelectedFlangeClass();
+boolean naceOk = casing.isNaceCompliant();
+String json = casing.toJson();
+```
+
+```java
+// Standalone calculator (without process simulation)
+CompressorCasingDesignCalculator calc = new CompressorCasingDesignCalculator();
+calc.setDesignPressureBarg(135.0);
+calc.setDesignTemperatureC(200.0);
+calc.setInnerDiameterMm(800.0);
+calc.setMaterialGrade("F316L");
+calc.setCorrosionAllowanceMm(1.5);
+calc.setJointEfficiency(0.85);
+calc.setCasingType("horizontally-split");
+calc.calculate();
+```
+
 ### Cooler / Heater
 
 ```java
