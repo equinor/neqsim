@@ -927,6 +927,40 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               + " iterations. Using best estimate speed: " + currentSpeed);
           setSpeed(currentSpeed);
         }
+
+        // Anti-surge check after speed solver convergence
+        if (getAntiSurge().isActive()) {
+          double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
+          double z_inlet = thermoSystem.getZ();
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            double[] gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+            actualFlowRate *= gergProps[1] / z_inlet;
+          }
+          if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            double[] leachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
+            actualFlowRate *= leachmanProps[1] / z_inlet;
+          }
+          if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            double[] vegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
+            actualFlowRate *= vegaProps[1] / z_inlet;
+          }
+          surgeCheck = isSurge(polytropicHead, actualFlowRate);
+          if (surgeCheck) {
+            logger.info("Anti-surge activated in speed-solve mode. Surge flow: "
+                + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead)
+                + " Am3/hr, actual flow: " + actualFlowRate + " m3/hr");
+            thermoSystem.setTotalFlowRate(
+                getAntiSurge().getSurgeControlFactor()
+                    * getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead),
+                "Am3/hr");
+            thermoSystem.init(3);
+            fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
+            getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
+            // Recompute dH with the updated flow
+            dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
+                / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
+          }
+        }
       } else {
         do {
           double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
@@ -1311,6 +1345,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     }
 
     setCalculationIdentifier(id);
+
+    // Evaluate capacity constraints after run and log warnings for violated constraints
+    evaluateCapacityConstraints();
   }
 
   private boolean useEnergyEfficiencyChart() {
@@ -4292,6 +4329,44 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       }
     }
     return false;
+  }
+
+  /**
+   * Evaluates all capacity constraints and logs warnings for any violations or near-limit
+   * conditions detected after a compressor run.
+   *
+   * <p>
+   * This method is called automatically at the end of {@link #run(UUID)}. It iterates through all
+   * registered constraints, updates their current values via the value suppliers, and logs
+   * appropriate warnings. Violations at CRITICAL or HARD severity are logged as errors; SOFT and
+   * ADVISORY violations as warnings. Near-limit conditions (within warning threshold) are logged as
+   * info.
+   * </p>
+   */
+  protected void evaluateCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      CapacityConstraint constraint = entry.getValue();
+      if (!constraint.isEnabled()) {
+        continue;
+      }
+      if (constraint.isViolated()) {
+        CapacityConstraint.ConstraintSeverity severity = constraint.getSeverity();
+        String msg = getName() + ": capacity constraint '" + entry.getKey() + "' violated - "
+            + String.format("%.1f%% utilization (limit: %.1f %s)",
+                constraint.getUtilization() * 100.0, constraint.getDesignValue(),
+                constraint.getUnit());
+        if (severity == CapacityConstraint.ConstraintSeverity.CRITICAL
+            || severity == CapacityConstraint.ConstraintSeverity.HARD) {
+          logger.error(msg);
+        } else {
+          logger.warn(msg);
+        }
+      } else if (constraint.isNearLimit()) {
+        logger.info(getName() + ": capacity constraint '" + entry.getKey() + "' near limit - "
+            + String.format("%.1f%% utilization", constraint.getUtilization() * 100.0));
+      }
+    }
   }
 
   /** {@inheritDoc} */
