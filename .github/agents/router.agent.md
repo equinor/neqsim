@@ -21,6 +21,7 @@ Analyze the request and match it to one or more agents:
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA | `@gas.quality` | — |
 | Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions |
 | Blowdown, depressurization, PSV, relief valve, fire case, source term | `@safety.depressuring` | — |
+| Plant data, historian, tagreader, PI, IP.21, digital twin, live model, compare model to plant | `@plant.data` | `@process.model` for building the simulation |
 | JUnit test, unit test, regression test | `@neqsim.test` | — |
 | Jupyter notebook, example, demonstration | `@notebook.example` | — |
 | Documentation, guide, tutorial, cookbook, markdown | `@documentation` | — |
@@ -48,6 +49,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 3: Process + Safety
 **Trigger:** "blowdown" or "depressurization" + equipment description
 **Pipeline:** `@process.model` (establish steady-state) then `@safety.depressuring` (run transient)
+
+### Pattern 3b: Process + Plant Data (Digital Twin)
+**Trigger:** "plant data", "historian", "tagreader", "PI", "IP.21", "digital twin", "live model", "compare to plant"
+**Pipeline:** `@process.model` (build simulation) then `@plant.data` (connect to historian and compare)
 
 ### Pattern 4: Full Study
 **Trigger:** "study", "field development", "design basis", "FEED", "concept selection"

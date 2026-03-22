@@ -9,6 +9,55 @@
 
 ---
 
+## 2026-03-22 — Compressor Casing Mechanical Design (API 617 / ASME VIII)
+
+### New Class
+- **`CompressorCasingDesignCalculator`** — Standalone calculator for compressor casing
+  pressure containment design per API 617 and ASME Section VIII Div. 1.
+
+### Capabilities Added
+| Feature | Standard |
+|---------|----------|
+| Casing wall thickness (UG-27 formula) | ASME VIII Div. 1 |
+| Material selection with SMYS/SMTS (9 grades) | ASME II Part D |
+| Temperature derating of allowable stress | ASME II Part D Table 1A |
+| Nozzle load analysis (force/moment scaling) | API 617 Table 3 |
+| Flange rating verification with temp derating | ASME B16.5 / B16.47 |
+| Hydrostatic test pressure | ASME VIII UG-99 |
+| Corrosion allowance integration | API 617 |
+| NACE MR0175 / ISO 15156 sour service check | NACE MR0175 |
+| Thermal growth & differential expansion | API 617 |
+| Split-line bolt sizing (horizontally-split) | API 617 |
+| Barrel casing outer/inner/end-cover sizing | ASME VIII UG-34 |
+| MAWP back-calculation | ASME VIII |
+| Automatic material recommendation | — |
+
+### Integration
+- `CompressorMechanicalDesign.calcDesign()` now automatically runs the casing
+  calculator after process sizing and populates
+  `getCasingDesignCalculator()` with results.
+- New configuration methods on `CompressorMechanicalDesign`:
+  `setCasingMaterialGrade(String)`, `setCasingCorrosionAllowanceMm(double)`,
+  `setH2sPartialPressureKPa(double)`.
+- `CompressorMechanicalDesignResponse` includes full casing design data in
+  the `casingDesign` section of JSON output.
+
+### New Data Files
+| File | Content |
+|------|---------|
+| `designdata/CompressorCasingMaterials.csv` | 20 material grades with mechanical properties |
+| `designdata/standards/api_standards.csv` | +22 API-617 compressor entries |
+| `designdata/standards/asme_standards.csv` | +18 ASME VIII / B16.5 compressor entries |
+
+### Agent Migration
+- When writing compressor casing design code, use `CompressorCasingDesignCalculator`
+  directly or via `comp.getMechanicalDesign().getCasingDesignCalculator()`.
+- For sour service: set `design.setNaceCompliance(true)` and
+  `design.setH2sPartialPressureKPa(value)` before calling `calcDesign()`.
+- For automatic material selection: call `casingCalc.recommendMaterial()`.
+
+---
+
 ## 2026-03-21 — Capability Scout Agent and Capability Map Skill
 
 ### New Agent
