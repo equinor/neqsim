@@ -67,6 +67,21 @@ Ranked recovery strategies for common failure modes. Try steps in order — stop
 | 2 | For CO2-rich systems near critical, check actual density — phase label may be misleading | CO2 near Tc=304K and Pc=74bar has ambiguous phase identity |
 | 3 | Use `fluid.getPhase(0)` / `getPhase(1)` instead of `getPhase("gas")` if labels are unreliable | Phase index is always consistent even if label is wrong |
 | 4 | Run `ops.calcPTphaseEnvelope()` to visualize phase boundaries | Shows whether operating point is in 1-phase or 2-phase region |
+| 5 | For CO2 injection wells, use `CO2FlowCorrections.isDensePhase(system)` to check T/Tc and P/Pc | Distinguishes dense phase from conventional gas/liquid |
+| 6 | For CO2-rich streams, use `CO2FlowCorrections.getReducedTemperature(system)` and `getReducedPressure(system)` | Quantifies proximity to critical point |
+
+## CO2 Injection Well Issues
+
+**Symptom:** CO2 wellbore model gives unexpected phase splits or impurity enrichment.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Check if formation temperature gradient is set on `PipeBeggsAndBrills`: `pipe.setFormationTemperatureGradient(topC, gradientK, "C")` | Without this, pipe uses constant ambient temperature — misses geothermal heating |
+| 2 | Use `CO2FlowCorrections.isCO2DominatedFluid(system)` to verify fluid is >50 mol% CO2 | CO2 correction factors only apply to CO2-dominated systems |
+| 3 | After shutdown, use `TransientWellbore.runShutdownSimulation()` to model cooling transient — don't assume instantaneous equilibration | Wellbore cools exponentially over hours to formation temperature |
+| 4 | Attach `ImpurityMonitor` to streams to track light gas enrichment (H2, N2, Ar) in gas phase | Enrichment factors of 5-15x can occur during phase splits |
+| 5 | Set `setMultiPhaseCheck(true)` on CO2 fluids with impurities | CO2+H2+N2 mixtures can form unexpected two-phase regions |
+| 6 | For wellbore elevation, use negative values for downward flow: `pipe.setElevation(-1300.0)` | Sign convention: negative elevation = flow goes downward |
 
 ## Distillation Column Non-Convergence
 

@@ -30,7 +30,7 @@ Convert an engineering process description into working, runnable code. Produce 
 - Clone fluids with `system.clone()` before branching to avoid shared-state bugs
 
 ## Equipment Library
-Separators, ThreePhaseSeparators, Compressors, Expanders, Pumps, Heaters, Coolers, HeatExchangers, ThrottlingValves, Mixers, Splitters, AdiabaticPipe, PipeBeggsAndBrills, DistillationColumn, Absorbers, Ejectors, Reactors, Membranes, Electrolyzers, Flares, Filters.
+Separators, ThreePhaseSeparators, Compressors, Expanders, Pumps, Heaters, Coolers, HeatExchangers, ThrottlingValves, Mixers, Splitters, AdiabaticPipe, PipeBeggsAndBrills (with formation temperature gradient), DistillationColumn, Absorbers, Ejectors, Reactors, Membranes, Electrolyzers, Flares, Filters, CO2InjectionWellAnalyzer, TransientWellbore, ImpurityMonitor.
 
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill
