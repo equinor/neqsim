@@ -307,21 +307,46 @@ class FLNGprocessSimulationTest {
     System.out.println("Hot out T: " + String.format("%.1f", hotOutTemp) + " C");
     System.out.println("Cold out T: " + String.format("%.1f", coldOutTemp) + " C");
 
-    // Composite curves should be populated
+    // Composite curves should be populated (now rigorous flash-based)
     double[][] hotCurve = mche.getHotCompositeCurve();
     double[][] coldCurve = mche.getColdCompositeCurve();
     assertNotNull(hotCurve, "Hot composite curve should be computed");
     assertNotNull(coldCurve, "Cold composite curve should be computed");
-    assertTrue(hotCurve.length > 0, "Hot composite curve should have data points");
-    assertTrue(coldCurve.length > 0, "Cold composite curve should have data points");
+    assertEquals(11, hotCurve.length, "Hot curve should have numberOfZones+1 points");
+    assertEquals(11, coldCurve.length, "Cold curve should have numberOfZones+1 points");
+    // Cold end (index 0) duty should be zero
+    assertEquals(0.0, hotCurve[0][0], 1e-6, "Hot curve cold-end duty should be 0");
+    assertEquals(0.0, coldCurve[0][0], 1e-6, "Cold curve cold-end duty should be 0");
 
     // UA per zone should be populated
     double[] uaZones = mche.getUAPerZone();
     assertNotNull(uaZones, "UA per zone should be computed");
+    assertEquals(10, uaZones.length, "UA array length should match numberOfZones");
 
     // MITA per zone
     double[] mitaZones = mche.getMITAPerZone();
     assertNotNull(mitaZones, "MITA per zone should be computed");
+    assertEquals(10, mitaZones.length, "MITA array length should match numberOfZones");
+
+    // Exergy analysis (Priority 3): second-law efficiency should be between 0 and 1
+    double etaII = mche.getSecondLawEfficiency();
+    System.out.println("Second-law efficiency: " + String.format("%.1f", etaII * 100.0) + " %");
+    assertTrue(etaII > 0.0, "Second-law efficiency should be positive, got: " + etaII);
+    assertTrue(etaII <= 1.0, "Second-law efficiency should be <= 1.0, got: " + etaII);
+
+    // Total exergy destruction should be positive
+    double exDest = mche.getTotalExergyDestruction();
+    System.out.println("Total exergy destruction: " + String.format("%.1f", exDest) + " kW");
+    assertTrue(exDest > 0.0, "Exergy destruction should be positive, got: " + exDest);
+
+    // Per-zone exergy destruction array
+    double[] exZone = mche.getExergyDestructionPerZone();
+    assertNotNull(exZone, "Per-zone exergy should be computed");
+    assertEquals(10, exZone.length, "Exergy array length should match numberOfZones");
+
+    // MITA zone index should be valid
+    int mitaIdx = mche.getMITAZoneIndex();
+    assertTrue(mitaIdx >= 0 && mitaIdx < 10, "MITA zone index should be valid");
   }
 
   /**
