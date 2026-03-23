@@ -241,6 +241,77 @@ List<HXSupplierMatch> suppliers = hxReport.getMatchingSuppliers();
 - Field development or FEED-level studies
 - When the user asks "is this realistic?", "can this be built?", "what will it cost?"
 
+## CO2 Injection Well Analysis
+
+Full-stack safety analysis for CO2 injection wells covering steady-state flow,
+phase boundary mapping, impurity enrichment, shutdown transients, and flow corrections.
+
+### CO2InjectionWellAnalyzer (High-Level Orchestrator)
+
+```java
+CO2InjectionWellAnalyzer analyzer = new CO2InjectionWellAnalyzer("InjectionWell-1");
+analyzer.setFluid(co2Fluid);
+analyzer.setWellGeometry(1300.0, 0.1571, 5e-5);      // depth_m, tubingID_m, roughness_m
+analyzer.setOperatingConditions(90.0, 25.0, 150000.0); // WHP_bara, WHT_C, flow_kg/hr
+analyzer.setFormationTemperature(4.0, 43.0);            // top_C, bottom_C
+analyzer.addTrackedComponent("hydrogen", 0.10);         // name, alarm mol fraction
+analyzer.addTrackedComponent("nitrogen", 0.05);
+analyzer.runFullAnalysis();
+
+boolean safe = analyzer.isSafeToOperate();
+Map<String, Object> results = analyzer.getResults();
+```
+
+### ImpurityMonitor (Measurement Device)
+
+```java
+ImpurityMonitor monitor = new ImpurityMonitor("H2-Monitor", stream);
+monitor.addTrackedComponent("hydrogen", 0.10);   // alarm at 10 mol%
+monitor.setPrimaryComponent("hydrogen");
+
+// After process.run():
+double gasH2 = monitor.getGasPhaseMoleFraction("hydrogen");
+double enrichment = monitor.getEnrichmentFactor("hydrogen"); // y_gas / z_feed
+boolean alarm = monitor.isAlarmExceeded("hydrogen");
+Map<String, Map<String, Double>> report = monitor.getFullReport();
+```
+
+### TransientWellbore (Shutdown Cooling)
+
+```java
+TransientWellbore wellbore = new TransientWellbore("Shutdown", stream);
+wellbore.setWellDepth(1300.0);
+wellbore.setTubingDiameter(0.1571);
+wellbore.setFormationTemperature(273.15 + 4.0, 273.15 + 43.0);
+wellbore.setShutdownCoolingRate(6.0);   // tau = 6 hours
+wellbore.setNumberOfSegments(10);
+
+wellbore.runShutdownSimulation(48.0, 1.0);  // 48 hours, 1-hour steps
+List<TransientSnapshot> snaps = wellbore.getSnapshots();
+double maxH2 = wellbore.getMaxGasPhaseConcentration("hydrogen");
+```
+
+### PipeBeggsAndBrills (Formation Temperature Gradient)
+
+```java
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Wellbore", feed);
+pipe.setLength(1300.0);
+pipe.setElevation(-1300.0);    // downward
+pipe.setDiameter(0.1571);
+pipe.setFormationTemperatureGradient(4.0, -0.03, "C"); // 4°C top, -30°C/km (increases with depth)
+pipe.run();
+```
+
+### CO2FlowCorrections (Static Utility)
+
+```java
+boolean co2Dominant = CO2FlowCorrections.isCO2DominatedFluid(system);      // > 50 mol% CO2
+double holdupCorr = CO2FlowCorrections.getLiquidHoldupCorrectionFactor(system);  // 0.70–0.85
+double frictionCorr = CO2FlowCorrections.getFrictionCorrectionFactor(system);    // 0.85–0.95
+boolean dense = CO2FlowCorrections.isDensePhase(system);
+double Tr = CO2FlowCorrections.getReducedTemperature(system);
+```
+
 ## Documentation Code Verification
 
 When writing code examples for documentation (markdown guides, cookbook recipes, tutorials):

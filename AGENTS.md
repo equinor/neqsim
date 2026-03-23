@@ -424,6 +424,56 @@ Reports include: mechanical design, cost estimation (CAPEX + OPEX + lifecycle),
 supplier matching (15 compressor OEMs, 14 HX suppliers), feasibility issues
 with severity (BLOCKER/WARNING/INFO), and compressor curve generation.
 
+### CO2 injection well analysis
+
+Full-stack safety analysis for CO2 injection wells — steady-state flow, phase
+boundary mapping, impurity enrichment, shutdown transients, and flow corrections:
+
+```java
+// High-level analyzer
+CO2InjectionWellAnalyzer analyzer = new CO2InjectionWellAnalyzer("InjWell-1");
+analyzer.setFluid(co2Fluid);
+analyzer.setWellGeometry(1300.0, 0.1571, 5e-5);
+analyzer.setOperatingConditions(90.0, 25.0, 150000.0);
+analyzer.setFormationTemperature(4.0, 43.0);
+analyzer.addTrackedComponent("hydrogen", 0.10);
+analyzer.runFullAnalysis();
+boolean safe = analyzer.isSafeToOperate();
+
+// Impurity monitoring
+ImpurityMonitor monitor = new ImpurityMonitor("H2-Mon", stream);
+monitor.addTrackedComponent("hydrogen", 0.10);
+double enrichment = monitor.getEnrichmentFactor("hydrogen");
+
+// Formation temperature gradient on PipeBeggsAndBrills
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Wellbore", feed);
+pipe.setFormationTemperatureGradient(4.0, -0.03, "C");
+
+// Shutdown transient
+TransientWellbore wellbore = new TransientWellbore("Shutdown", stream);
+wellbore.setWellDepth(1300.0);
+wellbore.setFormationTemperature(277.15, 316.15);
+wellbore.setShutdownCoolingRate(6.0);
+wellbore.runShutdownSimulation(48.0, 1.0);
+
+// CO2 flow corrections (static utility)
+boolean dense = CO2FlowCorrections.isDensePhase(system);
+double holdupCorr = CO2FlowCorrections.getLiquidHoldupCorrectionFactor(system);
+```
+
+**Classes:** `CO2InjectionWellAnalyzer`, `TransientWellbore`, `CO2FlowCorrections`
+in `process.equipment.pipeline`; `ImpurityMonitor` in `process.measurementdevice`.
+
+### Python (Jupyter) — CO2 well analysis
+
+```python
+import jpype
+CO2InjectionWellAnalyzer = jpype.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
+TransientWellbore = jpype.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
+CO2FlowCorrections = jpype.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
+ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
+```
+
 ## Key Paths
 
 | Path | Purpose |
@@ -434,6 +484,8 @@ with severity (BLOCKER/WARNING/INFO), and compressor curve generation.
 | `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
 | `src/main/java/neqsim/process/equipment/subsea/` | SubseaWell, SubseaTree equipment |
+| `src/main/java/neqsim/process/equipment/pipeline/` | Pipe flow, CO2InjectionWellAnalyzer, TransientWellbore, CO2FlowCorrections |
+| `src/main/java/neqsim/process/measurementdevice/` | ImpurityMonitor, stream measurement devices |
 | `examples/notebooks/` | Jupyter notebook examples |
 | `devtools/new_task.py` | Task-solving script |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
