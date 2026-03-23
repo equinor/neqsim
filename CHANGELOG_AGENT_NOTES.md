@@ -9,6 +9,57 @@
 
 ---
 
+## 2026-03-23 — CO2 Injection Well Analysis Module (NIP-1 to NIP-6)
+
+### New Classes
+
+- **`CO2InjectionWellAnalyzer`** (`process.equipment.pipeline`) — High-level safety orchestrator for CO2 injection wells:
+  - Steady-state wellbore flow via PipeBeggsAndBrills
+  - Phase boundary scanning (P-T space flash grid)
+  - Impurity enrichment mapping in two-phase region
+  - Shutdown safety assessment at various trapped WHPs
+  - Returns `isSafeToOperate()` boolean and comprehensive `getResults()` map
+  - API: `setFluid()`, `setWellGeometry()`, `setOperatingConditions()`, `setFormationTemperature()`, `addTrackedComponent()`, `runFullAnalysis()`
+
+- **`ImpurityMonitor`** (`process.measurementdevice`) — Phase-partitioned composition tracking device:
+  - Extends `StreamMeasurementDeviceBaseClass`
+  - Tracks gas/liquid/bulk mole fractions and enrichment factors (K-values = y/z)
+  - Configurable alarm thresholds per component
+  - API: `addTrackedComponent(name, alarmThreshold)`, `getGasPhaseMoleFraction()`, `getEnrichmentFactor()`, `isAlarmExceeded()`, `getFullReport()`
+
+- **`TransientWellbore`** (`process.equipment.pipeline`) — Shutdown cooling transient model:
+  - Extends `Pipeline`
+  - Exponential temperature decay toward formation temperature (geothermal gradient)
+  - Vertical segmentation with TP flash at each depth and time step
+  - Tracks phase evolution and impurity enrichment over time
+  - Inner class `TransientSnapshot` stores per-timestep depth profiles
+  - API: `setWellDepth()`, `setFormationTemperature(topK, bottomK)`, `setShutdownCoolingRate(tau_hr)`, `runShutdownSimulation(hours, dt)`
+
+- **`CO2FlowCorrections`** (`process.equipment.pipeline`) — Static utility for CO2-specific flow corrections:
+  - `isCO2DominatedFluid()` — checks >50 mol% CO2
+  - `getLiquidHoldupCorrectionFactor()` — returns 0.70-0.85 based on reduced temperature
+  - `getFrictionCorrectionFactor()` — returns 0.85-0.95
+  - `estimateCO2SurfaceTension()` — Sugden correlation
+  - `isDensePhase()`, `getReducedTemperature()`, `getReducedPressure()`
+
+### Modified Classes
+
+- **`PipeBeggsAndBrills`** — Added formation temperature gradient support (NIP-1):
+  - New method: `setFormationTemperatureGradient(double inletTemp, double gradient, String unit)`
+  - Enables depth-dependent heat transfer with geothermal gradient
+  - Sign convention: negative gradient = temperature increases with depth
+
+### Test Coverage
+
+- 19 tests in `CO2InjectionNIPsTest.java` covering all NIP classes
+
+### Documentation
+
+- New doc: `docs/process/co2_injection_well_analysis.md`
+- Updated: `REFERENCE_MANUAL_INDEX.md`, `docs/process/README.md`
+
+---
+
 ## 2026-03-22 — Motor Mechanical Design and Combined Equipment Design Report
 
 ### New Classes
