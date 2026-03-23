@@ -1006,6 +1006,25 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   }
 
   /**
+   * Generate a complete design feasibility report for this BAHX.
+   *
+   * <p>
+   * The report includes mechanical design (ASME VIII Div.1, ALPEMA), cost estimation (CAPEX, OPEX),
+   * supplier matching, and feasibility checks (temperature, pressure, mercury, freeze-out, thermal
+   * stress, MITA, exergy efficiency).
+   * </p>
+   *
+   * @return the feasibility report with verdict, issues, suppliers, cost, and mechanical design
+   */
+  public neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport generateFeasibilityReport() {
+    neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport report =
+        new neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport(
+            this);
+    report.generateReport();
+    return report;
+  }
+
+  /**
    * Get the hot-side zone temperature profile in deg C (P9).
    *
    * @return array of temperatures per zone boundary, from cold end to hot end
