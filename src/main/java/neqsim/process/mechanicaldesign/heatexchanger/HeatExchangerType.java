@@ -17,7 +17,10 @@ public enum HeatExchangerType {
   AIR_COOLER("Air cooled", 90.0, 12.0, new AirCoolerGeometry()),
 
   /** Double-pipe exchanger suitable for smaller duties. */
-  DOUBLE_PIPE("Double pipe", 350.0, 8.0, new DoublePipeGeometry());
+  DOUBLE_PIPE("Double pipe", 350.0, 8.0, new DoublePipeGeometry()),
+
+  /** Plate-fin / brazed aluminium heat exchanger (BAHX) for cryogenic service. */
+  PLATE_FIN("Plate-fin (BAHX)", 600.0, 1.5, new PlateFinGeometry());
 
   private final String displayName;
   private final double typicalOverallHeatTransferCoefficient;
@@ -84,8 +87,8 @@ public enum HeatExchangerType {
       double moduleHeight = shellOuterDiameter + 0.8;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea)
-          .requiredUA(requiredUA).overallHeatTransferCoefficient(type
-              .getTypicalOverallHeatTransferCoefficient())
+          .requiredUA(requiredUA)
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
           .approachTemperature(approachTemperature).tubeCount(tubeCount).tubePasses(tubePasses)
           .innerDiameter(shellInnerDiameter).outerDiameter(shellOuterDiameter)
           .wallThickness(SHELL_WALL_THICKNESS).estimatedLength(tubeLength)
@@ -115,8 +118,8 @@ public enum HeatExchangerType {
       double outerDiameter = equivalentDiameter + 2.0 * wallThickness;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea)
-          .requiredUA(requiredUA).overallHeatTransferCoefficient(type
-              .getTypicalOverallHeatTransferCoefficient())
+          .requiredUA(requiredUA)
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
           .approachTemperature(approachTemperature).tubeCount(plateCount).tubePasses(platePairs)
           .innerDiameter(equivalentDiameter).outerDiameter(outerDiameter)
           .wallThickness(wallThickness).estimatedLength(stackLength)
@@ -144,8 +147,8 @@ public enum HeatExchangerType {
       double outerDiameter = equivalentDiameter + 2.0 * wallThickness;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea)
-          .requiredUA(requiredUA).overallHeatTransferCoefficient(type
-              .getTypicalOverallHeatTransferCoefficient())
+          .requiredUA(requiredUA)
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
           .approachTemperature(approachTemperature).tubeCount(0).tubePasses(0)
           .innerDiameter(equivalentDiameter).outerDiameter(outerDiameter)
           .wallThickness(wallThickness).estimatedLength(moduleLength)
@@ -179,13 +182,57 @@ public enum HeatExchangerType {
       double moduleHeight = outerDiameter + 0.6;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea)
-          .requiredUA(requiredUA).overallHeatTransferCoefficient(type
-              .getTypicalOverallHeatTransferCoefficient())
+          .requiredUA(requiredUA)
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
           .approachTemperature(approachTemperature).tubeCount(tubeCount).tubePasses(tubePasses)
           .innerDiameter(innerDiameter).outerDiameter(outerDiameter)
           .wallThickness(PIPE_WALL_THICKNESS).estimatedLength(pipeLength)
           .estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
           .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
+    }
+  }
+
+  /**
+   * Geometry model for plate-fin / brazed aluminium heat exchangers (BAHX).
+   *
+   * <p>
+   * Sizes a BAHX core from required heat transfer area using typical offset-strip fin geometry.
+   * Aluminium 3003-H14 construction with brazed joints. The aspect ratio follows standard BAHX
+   * practice of approximately 6:1:1 (L:W:H).
+   * </p>
+   */
+  private static final class PlateFinGeometry implements GeometryModel {
+    private static final double AL_DENSITY = 2730.0; // kg/m^3
+    private static final double METAL_FRACTION = 0.30;
+    private static final double SURFACE_AREA_DENSITY = 1000.0; // m^2/m^3 typical BAHX
+    private static final double ASPECT_RATIO = 6.0; // L:W:H ~ 6:1:1
+    private static final double PLATE_WALL_THICKNESS = 0.0016; // m (1.6 mm parting sheet)
+
+    @Override
+    public HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger,
+        double requiredArea, double requiredUA, double approachTemperature) {
+      double coreVolume = requiredArea / SURFACE_AREA_DENSITY;
+      double wh = Math.pow(coreVolume / ASPECT_RATIO, 1.0 / 3.0);
+      double coreLength = ASPECT_RATIO * wh;
+      double coreWidth = wh;
+      double coreHeight = wh;
+
+      double estimatedWeight = coreVolume * METAL_FRACTION * AL_DENSITY;
+      double estimatedPressureDrop = 0.03 * coreLength; // bar, qualitative proxy
+
+      double moduleLength = coreLength + 2.0; // headers + nozzles
+      double moduleWidth = coreWidth + 0.8;
+      double moduleHeight = coreHeight + 0.5;
+
+      return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea)
+          .requiredUA(requiredUA)
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
+          .approachTemperature(approachTemperature).tubeCount(0).tubePasses(0)
+          .innerDiameter(coreWidth).outerDiameter(coreWidth + 2.0 * PLATE_WALL_THICKNESS)
+          .wallThickness(PLATE_WALL_THICKNESS).estimatedLength(coreLength)
+          .estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
+          .finSurfaceArea(requiredArea).moduleLength(moduleLength).moduleWidth(moduleWidth)
+          .moduleHeight(moduleHeight).build();
     }
   }
 }

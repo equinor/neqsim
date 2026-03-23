@@ -3,9 +3,14 @@ package neqsim.process.equipment.heatexchanger;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import neqsim.process.costestimation.heatexchanger.BAHXCostEstimator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.heatexchanger.BAHXMechanicalDesign;
+import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -578,5 +583,263 @@ class LNGHeatExchangerTest {
     System.out
         .println("  Thermal mass: " + String.format("%.0f", hx.getCoreThermalMass()) + " kJ/K");
     System.out.println("  Cool-down steps: " + transientPts.size());
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // BAHX Mechanical Design
+  // ══════════════════════════════════════════════════════════════════
+
+  @Test
+  void testBAHXMechanicalDesign() {
+    Stream hotStream = createHotStream();
+    Stream coldStream = createColdStream();
+
+    LNGHeatExchanger hx = new LNGHeatExchanger("MCHE-mechdesign");
+    hx.addInStream(hotStream);
+    hx.addInStream(coldStream);
+    hx.setNumberOfZones(10);
+    hx.setExchangerType("BAHX");
+
+    // Set fin geometry and core for sizing
+    LNGHeatExchanger.FinGeometry fin = new LNGHeatExchanger.FinGeometry();
+    hx.setStreamFinGeometry(0, fin);
+    hx.setStreamFinGeometry(1, fin);
+
+    LNGHeatExchanger.CoreGeometry core = new LNGHeatExchanger.CoreGeometry();
+    core.setLength(6.0);
+    core.setWidth(1.2);
+    core.setHeight(1.2);
+    hx.setCoreGeometry(core);
+
+    runHX(hx, hotStream, coldStream);
+
+    // Create mechanical design
+    BAHXMechanicalDesign mechDesign = new BAHXMechanicalDesign(hx);
+    mechDesign.setMaxOperationPressure(50.0);
+    mechDesign.setMaxOperationTemperature(273.15 + 30.0);
+    mechDesign.calcDesign();
+
+    // Wall thicknesses should be positive
+    assertTrue(mechDesign.getRequiredPartingSheetThicknessMm() > 0.0,
+        "Parting sheet thickness should be positive");
+    assertTrue(mechDesign.getRequiredHeaderThicknessMm() > 0.0,
+        "Header thickness should be positive");
+    assertTrue(mechDesign.getRequiredNozzleThicknessMm() > 0.0,
+        "Nozzle thickness should be positive");
+
+    // Weights should be positive
+    assertTrue(mechDesign.getCoreWeightKg() > 0.0,
+        "Core weight should be positive, got: " + mechDesign.getCoreWeightKg());
+    assertTrue(mechDesign.getWeightTotal() > 0.0,
+        "Total weight should be positive, got: " + mechDesign.getWeightTotal());
+    assertTrue(mechDesign.getWeightTotal() > mechDesign.getCoreWeightKg(),
+        "Total weight should exceed core weight");
+
+    // Core dimensions from LNGHeatExchanger
+    assertTrue(mechDesign.getCoreLengthM() > 0.0,
+        "Core length should be positive, got: " + mechDesign.getCoreLengthM());
+
+    // Heat transfer area should be positive
+    assertTrue(mechDesign.getHeatTransferAreaM2() > 0.0,
+        "HT area should be positive, got: " + mechDesign.getHeatTransferAreaM2());
+
+    // Material grades
+    assertEquals("3003-H14", mechDesign.getCoreMaterialGrade());
+    assertEquals("5083", mechDesign.getHeaderMaterialGrade());
+
+    // JSON output
+    String json = mechDesign.toJson();
+    assertNotNull(json);
+    assertFalse(json.isEmpty());
+    assertTrue(json.contains("designBasis"));
+    assertTrue(json.contains("wallThickness"));
+    assertTrue(json.contains("weights"));
+
+    System.out.println("BAHX Mechanical Design:");
+    System.out.println("  Parting sheet: "
+        + String.format("%.2f mm", mechDesign.getRequiredPartingSheetThicknessMm()));
+    System.out.println(
+        "  Header: " + String.format("%.2f mm", mechDesign.getRequiredHeaderThicknessMm()));
+    System.out.println("  Core weight: " + String.format("%.0f kg", mechDesign.getCoreWeightKg()));
+    System.out.println("  Total weight: " + String.format("%.0f kg", mechDesign.getWeightTotal()));
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // BAHX Cost Estimation
+  // ══════════════════════════════════════════════════════════════════
+
+  @Test
+  void testBAHXCostEstimation() {
+    Stream hotStream = createHotStream();
+    Stream coldStream = createColdStream();
+
+    LNGHeatExchanger hx = new LNGHeatExchanger("MCHE-cost");
+    hx.addInStream(hotStream);
+    hx.addInStream(coldStream);
+    hx.setNumberOfZones(10);
+    hx.setExchangerType("BAHX");
+
+    LNGHeatExchanger.CoreGeometry core = new LNGHeatExchanger.CoreGeometry();
+    core.setLength(6.0);
+    core.setWidth(1.2);
+    core.setHeight(1.2);
+    hx.setCoreGeometry(core);
+
+    runHX(hx, hotStream, coldStream);
+
+    // Build mechanical design first (cost depends on it)
+    BAHXMechanicalDesign mechDesign = new BAHXMechanicalDesign(hx);
+    mechDesign.setMaxOperationPressure(50.0);
+    mechDesign.setMaxOperationTemperature(273.15 + 30.0);
+    mechDesign.calcDesign();
+
+    // Create cost estimator
+    BAHXCostEstimator costEstimator = new BAHXCostEstimator(mechDesign);
+
+    double equipmentCost = costEstimator.getEquipmentCostUSD();
+    assertTrue(equipmentCost > 0.0, "Equipment cost should be positive, got: " + equipmentCost);
+
+    double installedCost = costEstimator.getInstalledCostUSD();
+    assertTrue(installedCost > equipmentCost, "Installed cost should exceed equipment cost");
+
+    // Specific cost typical range for BAHX: $200-3000/m2
+    double specificCost = costEstimator.getSpecificCostPerM2();
+    assertTrue(specificCost > 50.0 && specificCost < 10000.0,
+        "Specific cost should be in reasonable range, got: " + specificCost + " $/m2");
+
+    // Annual maintenance
+    double maintenance = costEstimator.getAnnualMaintenanceCostUSD();
+    assertTrue(maintenance > 0.0, "Maintenance cost should be positive");
+    assertTrue(maintenance < equipmentCost,
+        "Annual maintenance should be less than full equipment cost");
+
+    // Cost breakdown
+    Map<String, Object> breakdown = costEstimator.getCostBreakdown();
+    assertNotNull(breakdown);
+    assertFalse(breakdown.isEmpty());
+
+    System.out.println("BAHX Cost Estimation:");
+    System.out.println("  Equipment cost: $" + String.format("%,.0f", equipmentCost));
+    System.out.println("  Installed cost: $" + String.format("%,.0f", installedCost));
+    System.out.println("  Specific cost: $" + String.format("%.0f /m2", specificCost));
+    System.out.println("  Annual maintenance: $" + String.format("%,.0f", maintenance));
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // Design Feasibility Report
+  // ══════════════════════════════════════════════════════════════════
+
+  @Test
+  void testDesignFeasibilityReport() {
+    Stream hotStream = createHotStream();
+    Stream coldStream = createColdStream();
+
+    LNGHeatExchanger hx = new LNGHeatExchanger("MCHE-feasibility");
+    hx.addInStream(hotStream);
+    hx.addInStream(coldStream);
+    hx.setNumberOfZones(10);
+    hx.setExchangerType("BAHX");
+
+    LNGHeatExchanger.FinGeometry fin = new LNGHeatExchanger.FinGeometry();
+    hx.setStreamFinGeometry(0, fin);
+    hx.setStreamFinGeometry(1, fin);
+
+    LNGHeatExchanger.CoreGeometry core = new LNGHeatExchanger.CoreGeometry();
+    core.setLength(6.0);
+    core.setWidth(1.2);
+    core.setHeight(1.2);
+    hx.setCoreGeometry(core);
+    hx.setMaxAllowableThermalGradient(5.0);
+
+    runHX(hx, hotStream, coldStream);
+
+    // Run mercury assessment (safe level)
+    hx.assessMercuryRisk(5.0);
+
+    // Generate feasibility report
+    HeatExchangerDesignFeasibilityReport report = new HeatExchangerDesignFeasibilityReport(hx);
+    report.setDesignStandard("ALPEMA / ASME VIII Div.1");
+    report.setAnnualOperatingHours(8400);
+    report.generateReport();
+
+    // Verdict
+    String verdict = report.getVerdict();
+    assertNotNull(verdict, "Verdict should not be null");
+    assertTrue("FEASIBLE".equals(verdict) || "FEASIBLE_WITH_WARNINGS".equals(verdict)
+        || "NOT_FEASIBLE".equals(verdict), "Verdict should be a valid value, got: " + verdict);
+
+    // Costs should be computed
+    double pec = report.getPurchasedEquipmentCostUSD();
+    assertTrue(pec > 0.0, "PEC should be positive, got: " + pec);
+
+    double installed = report.getInstalledCostUSD();
+    assertTrue(installed > pec, "Installed cost should exceed PEC");
+
+    // Mechanical design should exist
+    MechanicalDesign mechDesign = report.getMechanicalDesign();
+    assertNotNull(mechDesign, "Mechanical design should be created");
+    assertTrue(mechDesign instanceof BAHXMechanicalDesign,
+        "Should create BAHXMechanicalDesign for LNG exchanger");
+
+    // Issues list
+    List<HeatExchangerDesignFeasibilityReport.FeasibilityIssue> issues = report.getIssues();
+    assertNotNull(issues, "Issues list should not be null");
+
+    // Supplier matching
+    int supplierCount = report.getNumberOfMatchingSuppliers();
+    assertTrue(supplierCount >= 0, "Supplier count should be non-negative");
+
+    // JSON output
+    String json = report.toJson();
+    assertNotNull(json);
+    assertFalse(json.isEmpty());
+    assertTrue(json.contains("verdict"));
+    assertTrue(json.contains("operatingPoint"));
+    assertTrue(json.contains("costEstimation"));
+
+    System.out.println("Feasibility Report:");
+    System.out.println("  Verdict: " + verdict);
+    System.out.println("  PEC: $" + String.format("%,.0f", pec));
+    System.out.println("  Installed: $" + String.format("%,.0f", installed));
+    System.out.println("  Matching suppliers: " + supplierCount);
+    System.out.println("  Issues: " + issues.size());
+    for (HeatExchangerDesignFeasibilityReport.FeasibilityIssue issue : issues) {
+      System.out.println("    [" + issue.getSeverity() + "] " + issue.getMessage());
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // Convenience method on LNGHeatExchanger
+  // ══════════════════════════════════════════════════════════════════
+
+  @Test
+  void testGenerateFeasibilityReportConvenience() {
+    Stream hotStream = createHotStream();
+    Stream coldStream = createColdStream();
+
+    LNGHeatExchanger hx = new LNGHeatExchanger("MCHE-conv");
+    hx.addInStream(hotStream);
+    hx.addInStream(coldStream);
+    hx.setNumberOfZones(10);
+    hx.setExchangerType("BAHX");
+
+    LNGHeatExchanger.CoreGeometry core = new LNGHeatExchanger.CoreGeometry();
+    core.setLength(6.0);
+    core.setWidth(1.2);
+    core.setHeight(1.2);
+    hx.setCoreGeometry(core);
+
+    runHX(hx, hotStream, coldStream);
+
+    // Use convenience method
+    HeatExchangerDesignFeasibilityReport report = hx.generateFeasibilityReport();
+    assertNotNull(report, "Convenience method should return non-null report");
+
+    String verdict = report.getVerdict();
+    assertNotNull(verdict);
+    assertTrue(report.getPurchasedEquipmentCostUSD() > 0.0,
+        "Cost should be positive from convenience method");
+
+    System.out.println("Convenience report verdict: " + verdict);
   }
 }
