@@ -8,7 +8,7 @@ description: "Structured inventory of NeqSim's capabilities by engineering disci
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-03-21
+**Last updated:** 2026-03-23
 
 ---
 
@@ -166,12 +166,15 @@ transport properties (viscosity, thermal conductivity, density).
 | `Splitter` | Stream splitting | `process.equipment.splitter` |
 | `ComponentSplitter` | Component-based split | `process.equipment.splitter` |
 
-### Pipelines
+### Pipelines & CO2 Well Analysis
 
 | Class | Type | Package |
 |-------|------|---------|
 | `AdiabaticPipe` | Adiabatic pipe flow | `process.equipment.pipeline` |
-| `PipeBeggsAndBrills` | Beggs & Brill correlation | `process.equipment.pipeline` |
+| `PipeBeggsAndBrills` | Beggs & Brill correlation (+ formation temperature gradient) | `process.equipment.pipeline` |
+| `CO2InjectionWellAnalyzer` | CO2 injection well safety analysis | `process.equipment.pipeline` |
+| `TransientWellbore` | Shutdown cooling / depressurization transient | `process.equipment.pipeline` |
+| `CO2FlowCorrections` | CO2-specific two-phase flow corrections (static utility) | `process.equipment.pipeline` |
 | `OnePhasePipeFlowNode` | Single-phase pipe | `fluidmechanics` |
 | `TwoPhasePipeFlowNode` | Two-phase pipe | `fluidmechanics` |
 
@@ -186,7 +189,11 @@ transport properties (viscosity, thermal conductivity, density).
 | `FurnaceBurner` | Combustion | `process.equipment.reactor` |
 | `SulfurDepositionAnalyser` | S8 deposition analysis | `process.equipment.reactor` |
 | `AmmoniaSynthesisReactor` | NH3 synthesis | `process.equipment.reactor` |
+### Measurement Devices
 
+| Class | Type | Package |
+|-------|------|---------|
+| `ImpurityMonitor` | Phase-partitioned impurity tracker with alarms | `process.measurementdevice` |
 ### Pumps
 
 | Class | Type | Package |
@@ -456,6 +463,11 @@ transport properties (viscosity, thermal conductivity, density).
 | Scale prediction? | ❌ | Not available |
 | Detailed HX design? | ❌ | Use duty + LMTD |
 | Full reservoir sim? | ❌ | `SimpleReservoir` only |
+| CO2 injection well analysis? | ✅ | `CO2InjectionWellAnalyzer` |
+| CO2 wellbore shutdown transient? | ✅ | `TransientWellbore` |
+| CO2 flow corrections? | ✅ | `CO2FlowCorrections` |
+| Impurity monitoring? | ✅ | `ImpurityMonitor` |
+| Formation temperature gradient? | ✅ | `PipeBeggsAndBrills.setFormationTemperatureGradient()` |
 | Motor sizing? | ✅ | `ElectricalMotor.sizeMotor()` |
 | Motor foundation design? | ✅ | `MotorMechanicalDesign` |
 | Motor vibration check? | ✅ | `MotorMechanicalDesign.getVibrationZone()` |

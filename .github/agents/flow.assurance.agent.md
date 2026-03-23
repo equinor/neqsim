@@ -78,6 +78,57 @@ For pipelines with heat transfer to surroundings:
 - Calculate arrival temperature
 - Determine insulation requirements
 
+## CO2 Injection Well Analysis
+
+Full-stack safety analysis for CO2 injection wells, covering steady-state flow,
+phase boundary mapping, impurity enrichment, and shutdown transients.
+
+### High-Level Analyzer
+```java
+CO2InjectionWellAnalyzer analyzer = new CO2InjectionWellAnalyzer("InjWell-1");
+analyzer.setFluid(co2Fluid);
+analyzer.setWellGeometry(1300.0, 0.1571, 5e-5);
+analyzer.setOperatingConditions(90.0, 25.0, 150000.0);
+analyzer.setFormationTemperature(4.0, 43.0);
+analyzer.addTrackedComponent("hydrogen", 0.10);
+analyzer.runFullAnalysis();
+boolean safe = analyzer.isSafeToOperate();
+```
+
+### Formation Temperature Gradient
+```java
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Wellbore", feed);
+pipe.setLength(1300.0);
+pipe.setElevation(-1300.0);
+pipe.setFormationTemperatureGradient(4.0, -0.03, "C"); // top=4°C, gradient increases with depth
+```
+
+### Impurity Monitoring
+```java
+ImpurityMonitor monitor = new ImpurityMonitor("H2-Mon", stream);
+monitor.addTrackedComponent("hydrogen", 0.10);
+double enrichment = monitor.getEnrichmentFactor("hydrogen"); // y_gas / z_feed
+```
+
+### Shutdown Transient
+```java
+TransientWellbore wellbore = new TransientWellbore("Shutdown", stream);
+wellbore.setWellDepth(1300.0);
+wellbore.setFormationTemperature(277.15, 316.15);
+wellbore.setShutdownCoolingRate(6.0);
+wellbore.runShutdownSimulation(48.0, 1.0);
+```
+
+### CO2 Flow Corrections
+```java
+double holdupCorr = CO2FlowCorrections.getLiquidHoldupCorrectionFactor(system); // 0.70-0.85
+double frictionCorr = CO2FlowCorrections.getFrictionCorrectionFactor(system);   // 0.85-0.95
+boolean densePhase = CO2FlowCorrections.isDensePhase(system);
+```
+
+**Classes:** `CO2InjectionWellAnalyzer`, `TransientWellbore`, `CO2FlowCorrections`
+in `process.equipment.pipeline`; `ImpurityMonitor` in `process.measurementdevice`.
+
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage

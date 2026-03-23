@@ -97,6 +97,23 @@ jneqsim.process.equipment.util.Adjuster
 # ns.DistillationColumn = ns.JClass("neqsim.process.equipment.distillation.DistillationColumn")
 ```
 
+### Loading Custom / NIP Classes via jpype.JClass
+
+Some newer classes (CO2 injection well analysis, impurity monitoring, transient
+wellbore) are not exposed through the `jneqsim` gateway. Load them with `jpype.JClass()`:
+
+```python
+import jpype
+
+# CO2 injection well analysis classes
+CO2InjectionWellAnalyzer = jpype.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
+TransientWellbore = jpype.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
+CO2FlowCorrections = jpype.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
+ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
+```
+
+In **devtools mode**, use `ns.JClass()` instead of `jpype.JClass()`.
+
 ## Notebook Structure (Follow This Order)
 
 1. **Title + Introduction** (Markdown) — What the notebook demonstrates. ASCII flow diagram if process simulation. Colab badge.

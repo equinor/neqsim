@@ -1157,6 +1157,12 @@ DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn
 # WellCostEstimator = jpype.JClass("neqsim.process.mechanicaldesign.subsea.WellCostEstimator")
 # WellMechanicalDesign = jpype.JClass("neqsim.process.mechanicaldesign.subsea.WellMechanicalDesign")
 
+# CO2 injection well analysis (use jpype.JClass for these)
+# CO2InjectionWellAnalyzer = jpype.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
+# TransientWellbore = jpype.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
+# CO2FlowCorrections = jpype.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
+# ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
+
 # Subsea equipment
 SubseaWell = jneqsim.process.equipment.subsea.SubseaWell
 ```
