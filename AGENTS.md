@@ -494,6 +494,10 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `.github/agents/solve.task.agent.md` | Detailed agent instructions |
 | `.github/agents/router.agent.md` | Request routing and multi-agent composition |
 | `.github/agents/capability.scout.agent.md` | Capability assessment, gap analysis, implementation planning |
+| `.github/agents/field.development.agent.md` | Field development studies, concept selection, economics |
+| `src/main/java/neqsim/process/fielddevelopment/` | Field development workflows, economics, screening |
+| `src/main/java/neqsim/process/util/fielddevelopment/` | Production profiles, scheduling, DCF calculator |
+| `docs/fielddevelopment/` | Field development documentation |
 | `CHANGELOG_AGENT_NOTES.md` | API changes agents need to know about |
 
 ## Skills Reference
@@ -511,6 +515,10 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-agent-handoff` | Structured schemas for multi-agent result passing |
 | `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
 | `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |
+| `neqsim-field-development` | Field development workflows, concept selection, lifecycle management |
+| `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation |
+| `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost, tieback analysis |
+| `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
 
 ## API Verification (Mandatory)
 

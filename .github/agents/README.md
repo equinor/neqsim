@@ -46,6 +46,23 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ---
 
+### Field Development
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **field.development** | `@field.development <description>` | Full field development studies — concept screening, tieback analysis, production forecasting, NPV/IRR economics, subsea design, well planning, risk assessment |
+
+**Examples:**
+```
+@field.development Evaluate subsea tieback vs FPSO for 100 MMboe gas condensate at 350m water depth
+@field.development Production forecast and NPV for 4-well subsea development on Norwegian NCS
+@field.development Screen tieback options for satellite gas field 25 km from host platform
+@field.development Concept selection for deepwater oil development in 800m water depth
+@field.development Late-life IOR screening for mature oil field with 60% water cut
+```
+
+---
+
 ### Thermodynamics & Fluids
 
 | Agent | Command | Purpose |

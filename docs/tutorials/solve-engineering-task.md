@@ -486,7 +486,7 @@ git push -u origin task/hydrate-formation
 ## Further Reading
 
 - [Introduction to Agentic Engineering](../integration/ai_agentic_programming_intro) — What agentic programming is and how NeqSim uses it
-- [Agents and Skills Reference](../integration/ai_agents_reference) — Complete catalog of all 14 agents and 9 skills
+- [Agents and Skills Reference](../integration/ai_agents_reference) — Complete catalog of all 16 agents and 14 skills
 - [Agentic Workflow Examples](../integration/ai_workflow_examples) — Step-by-step walkthroughs from simple to complex
 - [Code Patterns](../development/CODE_PATTERNS) — Copy-paste code starters for common tasks
 - [Task Log](../development/TASK_LOG) — Search past solved tasks before starting

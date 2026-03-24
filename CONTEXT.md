@@ -63,8 +63,8 @@ src/test/java/neqsim/   Mirrors production structure. JUnit 5. Extend NeqSimTest
 src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
-.github/agents/          13 Copilot Chat agents (router, thermo, process, test, PVT, ...)
-.github/skills/          9 reusable knowledge packages (API, Java8, notebooks, troubleshooting, capability-map, ...)
+.github/agents/          16 Copilot Chat agents (router, thermo, process, field development, test, PVT, ...)
+.github/skills/          14 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, ...)
 devtools/                neqsim_dev_setup.py for Jupyter development
 ```
 
@@ -262,7 +262,7 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | Check gas quality | `src/main/java/neqsim/standards/gasquality/` |
 | See a working example | `examples/notebooks/` or `src/test/java/neqsim/process/` |
 | Read documentation | `docs/wiki/` (60+ topics) or `docs/REFERENCE_MANUAL_INDEX.md` |
-| Use an AI agent | `.github/agents/` (14 specialist agents), start with `@neqsim.help` or `@capability.scout` |
+| Use an AI agent | `.github/agents/` (16 specialist agents), start with `@neqsim.help` or `@capability.scout` or `@field.development` |
 | Check API changes | `CHANGELOG_AGENT_NOTES.md` |
 | Set up Jupyter dev | `devtools/neqsim_dev_setup.py` |
 | Find design data | `src/main/resources/designdata/` |

@@ -381,6 +381,44 @@ Result: GAS MEETS EN 16726 H-GAS SPECIFICATION ✅
 
 ---
 
+## Example 8: Field Development Concept Selection
+
+**Difficulty:** Advanced | **Agent:** `@field.development` | **Time:** 30-60 minutes
+
+### The Prompt
+
+```
+@field.development Evaluate two development concepts for a 25 km subsea
+tieback of a lean gas field (85% methane, 8% ethane, 4% propane, 2% CO2,
+1% N2) at 350 m water depth:
+- Concept A: Direct tieback to existing host platform (20-inch pipeline)
+- Concept B: Subsea compression with 16-inch pipeline
+Resource estimate: 15 GSm3 (P50). Norwegian NCS fiscal regime.
+Gas price 2.0 NOK/Sm³. Discount rate 8%.
+```
+
+### What the Agent Does
+
+1. Creates task folder via `devtools/new_task.py`
+2. Loads skills: `neqsim-field-development`, `neqsim-field-economics`,
+   `neqsim-subsea-and-wells`, `neqsim-production-optimization`
+3. Builds both concepts using `FieldDevelopmentWorkflow` with `ConceptDefinition`
+4. Runs pipeline hydraulics for each concept (`PipeBeggsAndBrills`)
+5. Estimates SURF CAPEX using `SURFCostEstimator` (regional factor: Norway)
+6. Generates production profiles with `ProductionProfileGenerator`
+7. Runs NPV analysis with `NorwegianTaxModel` (78% marginal tax rate)
+8. Performs Monte Carlo uncertainty analysis (N=200) varying GIP, gas price,
+   CAPEX multiplier
+9. Compares concepts via `BatchConceptRunner` and ranks by NPV, IRR, payback
+10. Generates Word + HTML report with figures
+
+### Key Output
+
+A concept comparison table with NPV (P10/P50/P90), IRR, breakeven price,
+CAPEX breakdown, and a recommendation with risk assessment.
+
+---
+
 ## Patterns for Effective Prompts
 
 ### Be Specific About Conditions
