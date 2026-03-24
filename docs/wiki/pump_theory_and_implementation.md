@@ -100,6 +100,26 @@ System.out.println("Power: " + pump.getPower("kW") + " kW");
 System.out.println("Outlet T: " + pump.getOutletTemperature() + " K");
 ```
 
+### Fixed Outlet Temperature Mode
+
+When `setOutletTemperature` is called, the pump bypasses the isentropic or pump-curve
+calculation and instead performs a **TP flash** at the target temperature and outlet pressure.
+Pump power is back-calculated from the enthalpy difference.
+
+Supported units: `"K"` (Kelvin), `"C"` (Celsius), `"F"` (Fahrenheit), `"R"` (Rankine).
+
+```java
+Pump pump = new Pump("PlantPump", feedStream);
+pump.setOutletPressure(10.0, "bara");
+pump.setOutletTemperature(35.0, "C"); // set discharge temperature with unit
+pump.run();
+
+double power = pump.getPower("kW"); // back-calculated
+```
+
+> The legacy method `setOutTemperature(double)` (Kelvin only) is deprecated.
+> Use `setOutletTemperature(double)` or `setOutletTemperature(double, String)`.
+
 ### Using Pump Curves
 
 ```java

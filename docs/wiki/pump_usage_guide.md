@@ -26,6 +26,22 @@ double power = pump.getPower("kW");
 double outletTemp = pump.getOutletStream().getTemperature("C");
 ```
 
+### Pump with Specified Outlet Temperature
+
+When the discharge temperature is known (e.g. from plant data), use `setOutletTemperature`
+to have the pump perform a TP flash and back-calculate the power:
+
+```java
+Pump pump = new Pump("Pump2", feed);
+pump.setOutletPressure(10.0, "bara");
+pump.setOutletTemperature(35.0, "C"); // supports "K", "C", "F", "R"
+pump.run();
+
+double power = pump.getPower("kW"); // back-calculated from enthalpy difference
+```
+
+> **Note:** `setOutTemperature(double)` is deprecated — use `setOutletTemperature` instead.
+
 ---
 
 ## Using Pump Curves
