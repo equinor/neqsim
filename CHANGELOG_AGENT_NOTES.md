@@ -9,6 +9,38 @@
 
 ---
 
+## 2026-03-24 — Field Development Agent and Skills
+
+### New Agent
+
+- **`@field.development`** (`.github/agents/field.development.agent.md`) — Expert agent for oil & gas field development workflows: concept selection, subsea tieback, production forecasting, and project economics (NPV/IRR). Orchestrates concept screening through final investment decision.
+
+### New Skills (4)
+
+- **`neqsim-field-development`** — Field development lifecycle (DG1→Operations), concept selection, reservoir/well/facility API patterns
+- **`neqsim-field-economics`** — NPV, IRR, cash flow engines, Norwegian NCS and UK UKCS tax models, cost estimation
+- **`neqsim-subsea-and-wells`** — Subsea equipment APIs, well casing design (API 5C3/NORSOK D-010), SURF cost estimation, tieback analysis
+- **`neqsim-production-optimization`** — Decline curves, bottleneck analysis, gas lift optimization, IOR/EOR screening, emissions tracking
+
+### Updated Files
+
+- `AGENTS.md` — Added field development paths and skills references
+- `CONTEXT.md` — Updated agent/skill counts (16 agents, 14 skills)
+- `.github/agents/router.agent.md` — Added field development routing
+- `.github/agents/README.md` — Added field development section
+- `.github/agents/solve.task.agent.md` — Added `@field.development` to delegation table
+- `docs/integration/ai_agents_reference.md` — Added agent entry, 4 skill entries, updated cross-reference tables
+- `docs/integration/ai_agentic_programming_intro.md` — Updated count and added agent to catalog
+- `docs/integration/ai_workflow_examples.md` — Added Example 8: Field Development Concept Selection
+- `docs/fielddevelopment/README.md` — Added AI Agent & Skills section
+- `docs/REFERENCE_MANUAL_INDEX.md` — Updated description
+
+### Migration
+
+No code changes needed. Use `@field.development` for field development tasks that were previously handled by `@solve.task`.
+
+---
+
 ## 2026-03-23 — CO2 Injection Well Analysis Module (NIP-1 to NIP-6)
 
 ### New Classes

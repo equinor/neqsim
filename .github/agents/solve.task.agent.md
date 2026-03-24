@@ -1275,6 +1275,7 @@ For complex sub-tasks within your workflow, you may delegate to specialist agent
 | Mechanical design | `@mechanical.design` | Wall thickness, vessel sizing |
 | Flow assurance | `@flow.assurance` | Hydrate curves, wax, corrosion |
 | Safety | `@safety.depressuring` | Blowdown, PSV sizing |
+| Field development | `@field.development` | Concept selection, subsea tieback, NPV/IRR, production forecasting |
 
 You don't have to delegate — you can handle everything yourself. But for deep
 specialist work, the dedicated agents have more detailed instructions.

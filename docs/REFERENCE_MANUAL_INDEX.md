@@ -763,7 +763,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ML Surrogate         | [docs/process/ml/README.md](process/ml/)                                                 | ML surrogate models     |
 | Integration Overview | [docs/integration/README.md](integration/)                                               | Integration module      |
 | **Agentic Engineering Introduction** | [docs/integration/ai_agentic_programming_intro.md](integration/ai_agentic_programming_intro) | **NEW: Comprehensive introduction to AI agent-assisted engineering with NeqSim** |
-| **Agents & Skills Reference** | [docs/integration/ai_agents_reference.md](integration/ai_agents_reference) | **NEW: Complete catalog of all 14 agents and 9 skills with commands and examples** |
+| **Agents & Skills Reference** | [docs/integration/ai_agents_reference.md](integration/ai_agents_reference) | **Complete catalog of all 16 agents and 14 skills with commands and examples** |
 | **Agentic Workflow Examples** | [docs/integration/ai_workflow_examples.md](integration/ai_workflow_examples) | **NEW: Step-by-step walkthroughs of agent-driven engineering workflows** |
 
 ### Chapter 43: Sustainability & Emissions

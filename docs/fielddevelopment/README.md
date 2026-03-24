@@ -237,3 +237,19 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 - [Thermodynamic Models](../thermo/thermodynamic_models)
 - [Economics Module](../process/economics/)
 - [Reference Manual Index](../REFERENCE_MANUAL_INDEX)
+
+---
+
+## AI Agent & Skills
+
+Use `@field.development` in VS Code Copilot Chat for AI-assisted field development workflows.
+This agent automatically loads the following skills:
+
+| Skill | Scope |
+|-------|-------|
+| `neqsim-field-development` | Lifecycle workflows, concept selection, reservoir/well/facility APIs |
+| `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation |
+| `neqsim-subsea-and-wells` | Subsea systems, casing design (API 5C3), SURF costs, tieback analysis |
+| `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, IOR/EOR screening |
+
+See [AI Agents Reference](../integration/ai_agents_reference) for the full catalog.

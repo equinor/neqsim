@@ -25,7 +25,8 @@ Analyze the request and match it to one or more agents:
 | JUnit test, unit test, regression test | `@neqsim.test` | — |
 | Jupyter notebook, example, demonstration | `@notebook.example` | — |
 | Documentation, guide, tutorial, cookbook, markdown | `@documentation` | — |
-| Field development, NPV, economics, concept selection, multi-discipline | `@solve.task` | Multiple specialists as needed |
+| Field development, NPV, economics, concept selection, multi-discipline | `@field.development` | `@solve.task` for formal report, specialists as needed |
+| Tieback analysis, subsea design, SURF cost, well planning, production forecast | `@field.development` | `@mechanical.design` for detailed equipment |
 | Quick process sim, working notebook fast | `@solve.process` | — |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability.scout` | — |
 | Complex multi-discipline task needing pre-assessment | `@capability.scout` | then specialist agents |

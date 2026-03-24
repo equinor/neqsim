@@ -178,7 +178,7 @@ calls this engine.
 
 ## 4. The Agent Catalog
 
-NeqSim provides 14 specialist agents organized by function.
+NeqSim provides 16 specialist agents organized by function.
 
 ### Routing and Discovery
 
@@ -208,6 +208,7 @@ design) and composes a multi-agent pipeline.
 | **Gas Quality** | `@gas.quality` | ISO 6976, EN 16726, Wobbe index, custody transfer |
 | **Mechanical Design** | `@mechanical.design` | Wall thickness, material selection, cost estimation per ASME/DNV/API |
 | **Safety** | `@safety.depressuring` | Blowdown, PSV sizing, fire case, source term generation |
+| **Field Development** | `@field.development` | Concept selection, subsea tieback, economics (NPV/IRR), production forecasting |
 
 ### Workflow and Productivity
 
@@ -250,6 +251,10 @@ Skills encode the lessons learned from hundreds of simulations.
 | **neqsim-agent-handoff** | Structured schemas for passing data between agents | Multi-agent pipelines |
 | **neqsim-notebook-patterns** | Jupyter notebook structure, import patterns, visualization rules | Creating notebooks |
 | **neqsim-java8-rules** | Forbidden Java 9+ features and replacement patterns | Writing any Java code |
+| **neqsim-field-development** | Field development lifecycle, concept selection, reservoir/well/facility workflows | Field development studies |
+| **neqsim-field-economics** | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation | Project economics |
+| **neqsim-subsea-and-wells** | Subsea systems, well design (API 5C3), SURF costs, tieback analysis | Subsea/well engineering |
+| **neqsim-production-optimization** | Decline curves, bottleneck analysis, gas lift, IOR/EOR screening | Production optimization |
 
 ### How Skills Are Used
 

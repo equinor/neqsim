@@ -1,6 +1,6 @@
 ---
 title: "NeqSim AI Agents and Skills Reference"
-description: "Complete reference catalog of all 14 AI agents and 9 skills in the NeqSim ecosystem. Includes agent commands, descriptions, example prompts, skill summaries, and cross-reference tables showing which skills each agent uses."
+description: "Complete reference catalog of all 16 AI agents and 14 skills in the NeqSim ecosystem. Includes agent commands, descriptions, example prompts, skill summaries, and cross-reference tables showing which skills each agent uses."
 ---
 
 # NeqSim AI Agents and Skills Reference
@@ -323,7 +323,7 @@ full 3-step workflow.
 |-------|-------|
 | **Path** | `.github/skills/neqsim-api-patterns/SKILL.md` |
 | **Scope** | Code recipes for all common NeqSim operations |
-| **Used by** | All 13 specialist agents |
+| **Used by** | All 16 specialist agents |
 
 **Contains:**
 - EOS selection guide (SRK, PR, CPA, GERG — when to use each)
@@ -341,7 +341,7 @@ full 3-step workflow.
 |-------|-------|
 | **Path** | `.github/skills/neqsim-java8-rules/SKILL.md` |
 | **Scope** | Forbidden Java 9+ features and their Java 8 replacements |
-| **Used by** | All agents producing Java code (12 of 14) |
+| **Used by** | All agents producing Java code (14 of 16) |
 
 **Key rules:**
 - No `var` — use explicit types
@@ -475,26 +475,113 @@ fails try the next, and so on.
 
 ---
 
+### neqsim-field-development
+
+| Field | Value |
+|-------|-------|
+| **Path** | `.github/skills/neqsim-field-development/SKILL.md` |
+| **Scope** | Field development workflows, concept selection, lifecycle management |
+| **Used by** | `@field.development`, `@solve.task`, `@capability.scout` |
+
+**Contains:**
+- Field development lifecycle (DG1 through Operations)
+- FieldDevelopmentWorkflow orchestrator usage
+- Concept definition and BatchConceptRunner comparison
+- Reservoir material balance and well performance (IPR/VLP)
+- Production forecasting and scheduling
+- Facility design integration (FacilityBuilder)
+- Subsea tieback analysis (TiebackAnalyzer)
+- Complete class-to-package map for all field development classes
+
+---
+
+### neqsim-field-economics
+
+| Field | Value |
+|-------|-------|
+| **Path** | `.github/skills/neqsim-field-economics/SKILL.md` |
+| **Scope** | NPV, IRR, cash flow, tax regimes, cost estimation |
+| **Used by** | `@field.development`, `@solve.task` |
+
+**Contains:**
+- Economics workflow (volumetrics → profile → revenue → cash flow → NPV)
+- CAPEX/OPEX estimation patterns and typical ranges
+- CashFlowEngine and DCFCalculator usage
+- Norwegian NCS tax (22% corporate + 56% special = 78% marginal rate)
+- UK UKCS tax (30% RFCT + 10% SC = 40%)
+- Generic configurable tax model
+- Sensitivity and Monte Carlo analysis
+- Breakeven analysis and decommissioning cost
+- Common economic pitfalls (double-counting, wrong timing, etc.)
+
+---
+
+### neqsim-subsea-and-wells
+
+| Field | Value |
+|-------|-------|
+| **Path** | `.github/skills/neqsim-subsea-and-wells/SKILL.md` |
+| **Scope** | Subsea production systems, well design, SURF cost, tieback analysis |
+| **Used by** | `@field.development`, `@mechanical.design`, `@capability.scout` |
+
+**Contains:**
+- SubseaWell casing design (API 5C3 / NORSOK D-010)
+- API 5CT casing grades and SMYS values
+- SURFCostEstimator with regional factors
+- TiebackAnalyzer workflow
+- SubseaProductionSystem configuration
+- Pipeline sizing (PipeBeggsAndBrills, mechanical design)
+- Artificial lift screening (ESP, gas lift, rod pump)
+- Gas lift optimization (single-well and multi-well)
+- Design standards reference (API, DNV, NORSOK, ASME)
+
+---
+
+### neqsim-production-optimization
+
+| Field | Value |
+|-------|-------|
+| **Path** | `.github/skills/neqsim-production-optimization/SKILL.md` |
+| **Scope** | Production optimization, bottleneck analysis, decline modeling, IOR/EOR |
+| **Used by** | `@field.development`, `@solve.task` |
+
+**Contains:**
+- Decline curve types (exponential, hyperbolic, harmonic)
+- ProductionProfile and ProductionProfileGenerator
+- FieldProductionScheduler with drill schedule and facility constraints
+- BottleneckAnalyzer and FacilityCapacity
+- ProductionAllocator for multi-field systems
+- NetworkSolver for multi-well gathering
+- Gas lift optimization (GasLiftCalculator, GasLiftOptimizer)
+- ScenarioAnalyzer for multi-scenario comparison
+- IOR/EOR screening criteria
+- Emissions tracking (EmissionsTracker, DetailedEmissionsCalculator)
+- Energy efficiency (EnergyEfficiencyCalculator)
+- Late life and decommissioning options
+
+---
+
 ## Cross-Reference Tables
 
 ### Agent-to-Skills Matrix
 
-| Agent | api-patterns | java8 | notebook | input-val | troubleshoot | cap-map | physics | regression | handoff |
-|-------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `@neqsim.help` | | | | X | | | | | |
-| `@capability.scout` | X | X | X | X | X | X | X | X | X |
-| `@thermo.fluid` | X | X | | X | X | | X | | |
-| `@process.model` | X | X | | X | X | | | X | |
-| `@pvt.simulation` | X | X | | | | | | | |
-| `@flow.assurance` | X | X | | | | | | | |
-| `@gas.quality` | X | X | | | | | | | |
-| `@mechanical.design` | X | X | | | | | | | |
-| `@safety.depressuring` | X | X | | | | | | | |
-| `@solve.task` | X | | X | | | X | | | |
-| `@solve.process` | X | | X | | | | | | |
-| `@notebook.example` | X | | X | | | | | | |
-| `@neqsim.test` | X | X | | | | | | | |
-| `@documentation` | X | X | X | | | | | | |
+| Agent | api-pat | java8 | notebook | input-val | trouble | cap-map | physics | regress | handoff | field-dev | field-econ | subsea-wells | prod-opt |
+|-------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `@neqsim.help` | | | | X | | | | | | | | | |
+| `@capability.scout` | X | X | X | X | X | X | X | X | X | X | | X | |
+| `@thermo.fluid` | X | X | | X | X | | X | | | | | | |
+| `@process.model` | X | X | | X | X | | | X | | | | | |
+| `@pvt.simulation` | X | X | | | | | | | | | | | |
+| `@flow.assurance` | X | X | | | | | | | | | | | |
+| `@gas.quality` | X | X | | | | | | | | | | | |
+| `@mechanical.design` | X | X | | | | | | | | | | X | |
+| `@safety.depressuring` | X | X | | | | | | | | | | | |
+| `@field.development` | X | | X | X | | | | | | X | X | X | X |
+| `@solve.task` | X | | X | | | X | | | | X | X | | |
+| `@solve.process` | X | | X | | | | | | | | | | |
+| `@notebook.example` | X | | X | | | | | | | | | | |
+| `@neqsim.test` | X | X | | | | | | | | | | | |
+| `@documentation` | X | X | X | | | | | | | | | | |
 
 ### Task Type to Agent Mapping
 
@@ -509,6 +596,10 @@ fails try the next, and so on.
 | Gas quality check | `@gas.quality` | — |
 | Equipment sizing | `@mechanical.design` | `@process.model` |
 | PSV / blowdown | `@safety.depressuring` | `@process.model` |
+| Field development / concept selection | `@field.development` | `@process.model`, `@mechanical.design` |
+| Tieback analysis / subsea design | `@field.development` | `@flow.assurance`, `@mechanical.design` |
+| Production forecasting / optimization | `@field.development` | `@process.model` |
+| Project economics (NPV / IRR) | `@field.development` | `@solve.task` |
 | Full engineering study | `@solve.task` | All specialists |
 | Quick notebook | `@solve.process` | — |
 | Capability check | `@capability.scout` | — |
