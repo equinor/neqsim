@@ -28,11 +28,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Centrifugal pump simulation model for process systems.
  *
  * <p>
- * This class simulates a centrifugal pump using either:
+ * This class simulates a centrifugal pump using one of three modes:
  * </p>
  * <ul>
  * <li>Isentropic compression with specified outlet pressure and efficiency</li>
  * <li>Manufacturer pump curves via {@link PumpChart} for realistic performance</li>
+ * <li>Fixed outlet temperature mode using {@link #setOutletTemperature(double, String)}</li>
  * </ul>
  *
  * <h2>Key Features</h2>
@@ -43,6 +44,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * test fluid</li>
  * <li><b>NPSH Monitoring:</b> Cavitation detection based on available vs required NPSH</li>
  * <li><b>Operating Status:</b> Surge, stonewall, and efficiency monitoring</li>
+ * <li><b>Outlet Temperature Mode:</b> When outlet temperature is set, the pump performs a TP flash
+ * at the specified temperature and outlet pressure. Power is back-calculated from the enthalpy
+ * difference. This is useful when discharge conditions are known from plant data.</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -53,6 +57,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * pump.setOutletPressure(10.0, "bara");
  * pump.setIsentropicEfficiency(0.75);
  * pump.run();
+ *
+ * // With fixed outlet temperature (useful for plant data matching)
+ * Pump pump2 = new Pump("PlantPump", feedStream);
+ * pump2.setOutletPressure(10.0, "bara");
+ * pump2.setOutletTemperature(35.0, "C");
+ * pump2.run();
+ * double power = pump2.getPower("kW"); // back-calculated
  *
  * // With manufacturer pump curves
  * double[] speed = {1000.0, 1500.0};
@@ -533,8 +544,12 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
+   * Set the outlet temperature of the pump in Kelvin.
+   *
    * <p>
-   * Set the outlet temperature of the pump.
+   * When set, the pump skips the isentropic or pump-curve calculation and instead performs a TP
+   * flash at this temperature and the outlet pressure. Power is back-calculated from the enthalpy
+   * difference between inlet and outlet.
    * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
@@ -546,12 +561,17 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the pump with unit specification.
+   *
+   * <p>
+   * When set, the pump skips the isentropic or pump-curve calculation and instead performs a TP
+   * flash at this temperature and the outlet pressure. Power is back-calculated from the enthalpy
+   * difference between inlet and outlet. Supported units: "K" (Kelvin), "C" (Celsius), "F"
+   * (Fahrenheit), "R" (Rankine).
    * </p>
    *
    * @param temperature outlet temperature value
-   * @param unit temperature unit (e.g., "K", "C", "R", "F")
+   * @param unit temperature unit ("K", "C", "F", or "R"), case-insensitive
    */
   @Override
   public void setOutletTemperature(double temperature, String unit) {
