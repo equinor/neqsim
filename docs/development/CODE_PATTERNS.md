@@ -339,6 +339,50 @@ pipe.setPipeWallRoughness(5e-5); // meters
 double outP = pipe.getOutletStream().getPressure("bara");
 ```
 
+### Two-Fluid Pipe (Transient Multiphase)
+
+```java
+TwoFluidPipe pipe = new TwoFluidPipe("Flowline", feedStream);
+pipe.setLength(5000);            // meters
+pipe.setDiameter(0.3);           // meters
+pipe.setNumberOfSections(100);   // computational cells
+pipe.setRoughness(4.5e-5);       // wall roughness (m)
+
+// Steady-state initialization
+pipe.run();
+
+// Transient simulation
+UUID simId = UUID.randomUUID();
+for (int step = 0; step < 600; step++) {
+    pipe.runTransient(0.5, simId);  // 0.5 s time step
+}
+
+// Results
+double[] pressures = pipe.getPressureProfile();
+double[] holdups = pipe.getLiquidHoldupProfile();
+double inventory = pipe.getLiquidInventory("m3");
+```
+
+### Two-Fluid Pipe Benchmark (Cross-Validate vs Beggs & Brill)
+
+```java
+// Compare TwoFluidPipe pressure drop against PipeBeggsAndBrills
+PipeBeggsAndBrills bbPipe = new PipeBeggsAndBrills("BB", feedStream);
+bbPipe.setLength(5000); bbPipe.setDiameter(0.3);
+bbPipe.setAngle(0); bbPipe.setPipeWallRoughness(4.5e-5);
+
+TwoFluidPipe tfPipe = new TwoFluidPipe("TF", feedStream);
+tfPipe.setLength(5000); tfPipe.setDiameter(0.3);
+tfPipe.setNumberOfSections(50); tfPipe.setRoughness(4.5e-5);
+
+// Run both
+bbPipe.run(); tfPipe.run();
+double dpBB = feedStream.getPressure() - bbPipe.getOutletStream().getPressure();
+double dpTF = feedStream.getPressure() - tfPipe.getOutletStream().getPressure();
+double ratio = dpTF / dpBB;
+// Expect ratio 0.8–1.3 for engineering accuracy
+```
+
 ---
 
 ## Stream Introspection

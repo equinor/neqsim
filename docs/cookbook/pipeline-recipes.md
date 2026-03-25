@@ -284,6 +284,35 @@ print(f"Outlet pressure: {pipe.getOutletStream().getPressure():.2f} bara")
 | Heat transfer | `setHeatTransferCoefficient(U)` | Overall U-value (W/m²K) |
 | Ambient temp | `setSurfaceTemperature(T, unit)` | External temperature |
 
+### Cross-Validate TwoFluidPipe vs Beggs & Brill
+
+Compare pressure drops between the two models to build confidence:
+
+```python
+PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
+TwoFluidPipe = jneqsim.process.equipment.pipeline.TwoFluidPipe
+
+# Run both models on the same feed
+bb = PipeBeggsAndBrills("BB", inlet)
+bb.setLength(5000); bb.setDiameter(0.3)
+bb.setAngle(0); bb.setPipeWallRoughness(4.5e-5)
+bb.run()
+
+tf = TwoFluidPipe("TF", inlet)
+tf.setLength(5000); tf.setDiameter(0.3)
+tf.setNumberOfSections(50); tf.setRoughness(4.5e-5)
+tf.run()
+
+dp_bb = inlet.getPressure() - bb.getOutletStream().getPressure()
+dp_tf = inlet.getPressure() - tf.getOutletStream().getPressure()
+print(f"BB dP: {dp_bb:.3f} bar, TF dP: {dp_tf:.3f} bar, ratio: {dp_tf/dp_bb:.2f}")
+# Expect ratio 0.8-1.3 for typical two-phase horizontal flow
+```
+
+> **Note:** For single-phase gas, the ratio should be ~0.98 (excellent agreement).
+> For two-phase flow, agreement varies with gas fraction — ratios of 0.8–1.3 are
+> within typical engineering accuracy for different multiphase correlations.
+
 ---
 
 ## Three-Phase Flow and Slug Tracking
