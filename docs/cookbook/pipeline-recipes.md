@@ -103,6 +103,39 @@ process.run()
 # holdups = pipe.getLiquidHoldupProfile()
 ```
 
+### Two-Fluid Model with Advanced Features
+
+```python
+TwoFluidPipe = jneqsim.process.equipment.pipeline.TwoFluidPipe
+
+pipe = TwoFluidPipe("Flowline", inlet_stream)
+pipe.setLength(20000)
+pipe.setDiameter(0.25)
+pipe.setNumberOfSections(100)
+
+# Enable virtual mass force for slug dynamics (Drew & Lahey 1987)
+pipe.getEquations().setEnableVirtualMassForce(True)
+pipe.getEquations().setVirtualMassCoefficient(0.5)  # Default for spheres
+pipe.getEquations().setTimestep(0.1)  # Required for dv/dt calculation
+
+# Add local loss coefficients (fittings, bends)
+pipe.addLocalLoss("Tee junction", 0.9)
+pipe.addLocalLoss("Check valve", 2.0)
+pipe.setNumberOf90DegreeBends(4)   # K=0.3 each
+pipe.setNumberOf45DegreeBends(2)   # K=0.16 each
+pipe.setInletLossCoefficient(0.5)  # Sharp entrance
+pipe.setOutletLossCoefficient(1.0) # Exit to tank
+
+process.add(pipe)
+process.run()
+
+# Pressure drop breakdown
+dp_friction = pipe.getPressureDrop()
+dp_local = pipe.calculateLocalLossPressureDrop()
+dp_total = pipe.getTotalPressureDrop()
+print(pipe.getLocalLossSummary())
+```
+
 ---
 
 ## Drift-Flux Model

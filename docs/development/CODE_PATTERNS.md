@@ -383,6 +383,65 @@ double ratio = dpTF / dpBB;
 // Expect ratio 0.8–1.3 for engineering accuracy
 ```
 
+### Two-Fluid Pipe with Virtual Mass Force
+
+```java
+// Enable virtual mass force for improved slug dynamics and pressure surge prediction
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+
+// Enable virtual mass force (Drew & Lahey 1987)
+pipe.getEquations().setEnableVirtualMassForce(true);
+pipe.getEquations().setVirtualMassCoefficient(0.5);  // Default for spheres
+pipe.getEquations().setTimestep(0.1);  // Required for dv/dt calculation
+
+pipe.run();
+```
+
+### Two-Fluid Pipe with Junction/Bend Losses
+
+```java
+// Add local loss coefficients for fittings
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+
+// Add named K-factor losses
+pipe.addLocalLoss("Tee junction", 0.9);
+pipe.addLocalLoss("Gate valve", 0.17);
+pipe.addLocalLoss("Check valve", 2.0);
+
+// Use convenience methods for standard bends
+pipe.setNumberOf90DegreeBends(4);   // K=0.3 each
+pipe.setNumberOf45DegreeBends(2);   // K=0.16 each
+pipe.setInletLossCoefficient(0.5);  // Sharp entrance
+pipe.setOutletLossCoefficient(1.0); // Exit to tank
+
+pipe.run();
+
+// Get pressure drop breakdown
+double dpFriction = pipe.getPressureDrop();
+double dpLocal = pipe.calculateLocalLossPressureDrop();
+double dpTotal = pipe.getTotalPressureDrop();
+System.out.println(pipe.getLocalLossSummary());
+```
+
+### Interfacial Friction Correlations
+
+```java
+// Use Hart correlation for oil-gas stratified wavy flow
+double fi = InterfacialFriction.calcHartCorrelation(
+    liquidHoldup, diameter, gasVelocity, liquidVelocity);
+
+// Use Andreussi-Persen (OLGA-style) with inclination
+double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
+    liquidHoldup, diameter, gasVelocity, liquidVelocity,
+    gasDensity, liquidDensity, surfaceTension, inclinationRadians);
+```
+
 ---
 
 ## Stream Introspection

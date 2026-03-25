@@ -337,6 +337,8 @@ Positive interfacial shear acts to accelerate the liquid and decelerate the gas 
 |-------------|-------------|-----------|--------------|
 | **Stratified Smooth** | Taitel-Dukler | (1976) | Treats interface as smooth wall; Blasius for turbulent: `f = 0.079/Re^0.25` |
 | **Stratified Wavy** | Andritsos-Hanratty | (1987) | Wave roughness enhancement: `f_i = f_smooth × (1 + 15√(h_L/D) × (v_G/v_G,t - 1))` |
+| **Stratified Wavy** | Hart et al. | (1989) | Oil-gas systems: `f_i = 0.0142 + 22 × (h_L/D)^1.5 × ((v_G - v_L)/v_G)^0.9` |
+| **Stratified** | Andreussi-Persen | (1987) | OLGA-style with inclination effects and Froude number correction |
 | **Annular** | Wallis | (1969) | Film-core interaction: `f_i = f_G × (1 + 300δ/D)` where δ is film thickness |
 | **Slug** | Oliemans | (1986) | Bubble swarm approach with Ishii-Zuber drag coefficient |
 | **Bubble/Dispersed** | Schiller-Naumann | - | Drag on individual bubbles: `C_D = (24/Re_b) × (1 + 0.15 × Re_b^0.687)` for Re < 1000 |
@@ -414,6 +416,43 @@ else:
 f_i = C_D × d_b / (4 × D)
 ```
 
+#### Hart et al. (1989) Correlation
+
+For stratified wavy flow in oil-gas systems with emphasis on holdup dependency:
+
+```java
+double fi = InterfacialFriction.calcHartCorrelation(
+    liquidHoldup, diameter, gasVelocity, liquidVelocity);
+```
+
+The correlation:
+
+$$
+f_i = 0.0142 + 22.0 \cdot \left(\frac{h_L}{D}\right)^{1.5} \cdot \left(\frac{v_G - v_L}{v_G}\right)^{0.9}
+$$
+
+Where:
+- `h_L/D` = liquid level / diameter ratio (from holdup)
+- `v_G - v_L` = slip velocity
+- Valid for stratified wavy flow with significant liquid holdup
+
+#### Andreussi-Persen (1987) OLGA-Style Correlation
+
+Includes inclination effects and Froude number-based wave transition:
+
+```java
+double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
+    liquidHoldup, diameter, gasVelocity, liquidVelocity,
+    gasDensity, liquidDensity, surfaceTension, inclinationAngleRadians);
+```
+
+Key features:
+- Critical gas velocity threshold for wave formation
+- Froude number correction for wave height
+- Inclination angle effects (0° = horizontal, positive = uphill)
+- Asymptotic limits for smooth and wavy stratified flow
+- Used as the default in OLGA for stratified flow regimes
+
 #### Usage Example
 
 ```java
@@ -449,6 +488,130 @@ Fr = |v_rel| / √(g × D × |ρ_2 - ρ_1| / ρ_1)
 // Simplified correlation
 f_i = 0.01 × (1 + 10 × Fr²)    // capped at 0.1
 ```
+
+## Virtual Mass Force
+
+The virtual mass (added mass) force accounts for the inertia of the displaced phase during rapid accelerations. This is important for slug flow dynamics, pressure surges, and transient simulations with fast-changing velocities.
+
+### Physical Basis
+
+When a gas bubble accelerates through liquid, it must also accelerate a portion of the surrounding liquid. This "added mass" effect creates an additional force proportional to the relative acceleration:
+
+$$
+F_{vm} = C_{vm} \cdot \alpha_G \cdot \rho_L \cdot \left(\frac{dv_G}{dt} - \frac{dv_L}{dt}\right)
+$$
+
+Where:
+- `C_vm` = virtual mass coefficient (0.5 for spheres, default)
+- `α_G` = gas holdup
+- `ρ_L` = liquid density
+- `dv_G/dt - dv_L/dt` = relative acceleration between phases
+
+### Enabling Virtual Mass Force
+
+```java
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", inlet);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+
+// Enable virtual mass force
+pipe.getEquations().setEnableVirtualMassForce(true);
+pipe.getEquations().setVirtualMassCoefficient(0.5);  // Default: 0.5
+pipe.getEquations().setTimestep(0.1);  // Required for dv/dt calculation
+
+pipe.run();
+```
+
+### Impact on Momentum Equations
+
+The virtual mass force appears as source terms in the phase momentum equations:
+
+- **Gas momentum:** `+F_vm` (accelerates gas when liquid decelerates)
+- **Liquid momentum:** `-F_vm` (decelerates liquid when gas accelerates)
+
+This coupling improves:
+- Pressure surge prediction during slug passage (±10-20% more accurate)
+- Transient response during flow rate changes
+- Wave speed calculation for fast transients
+
+### Reference
+
+Drew, D.A. and Lahey, R.T. (1987). "The Virtual Mass and Lift Force on a Sphere in Rotating and Straining Inviscid Flow", Int. J. Multiphase Flow, 13(1), 113-121.
+
+## Junction and Bend Losses (Local Losses)
+
+The TwoFluidPipe model supports local (minor) loss coefficients for fittings, bends, valves, and other flow obstructions. These are added to the friction pressure drop to give total pressure loss.
+
+### Pressure Drop Calculation
+
+Local losses follow the standard K-factor formulation:
+
+$$
+\Delta P_{local} = \sum K_i \cdot \frac{1}{2} \rho_{mix} v_{mix}^2
+$$
+
+Where:
+- `K_i` = loss coefficient for fitting i
+- `ρ_mix` = mixture density
+- `v_mix` = mixture velocity
+
+### Adding Local Losses
+
+```java
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", inlet);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+
+// Add individual K-factor losses
+pipe.addLocalLoss("Tee junction", 0.9);
+pipe.addLocalLoss("90° elbow 1", 0.3);
+pipe.addLocalLoss("90° elbow 2", 0.3);
+pipe.addLocalLoss("Gate valve (full open)", 0.17);
+pipe.addLocalLoss("Check valve", 2.0);
+
+// Or use convenience methods for standard bends
+pipe.setNumberOf90DegreeBends(4);   // Each K=0.3
+pipe.setNumberOf45DegreeBends(2);   // Each K=0.16
+pipe.setInletLossCoefficient(0.5);  // Sharp entrance
+pipe.setOutletLossCoefficient(1.0); // Exit to tank
+
+pipe.run();
+
+// Get pressure drop breakdown
+double dpFriction = pipe.getPressureDrop();  // Friction only
+double dpLocal = pipe.calculateLocalLossPressureDrop();  // Local losses
+double dpTotal = pipe.getTotalPressureDrop();  // Combined
+
+// Get summary of all losses
+System.out.println(pipe.getLocalLossSummary());
+```
+
+### Standard K-Factors (Idelchik, 1986)
+
+| Fitting Type | K-factor | Notes |
+|--------------|----------|-------|
+| **90° standard elbow** | 0.30 | Long radius |
+| **90° short radius elbow** | 0.90 | Tight bend |
+| **45° elbow** | 0.16 | Standard |
+| **Tee (flow-through)** | 0.20 | Straight-through |
+| **Tee (branch flow)** | 0.90 | Into/out of branch |
+| **180° return bend** | 2.20 | U-turn |
+| **Gate valve (full open)** | 0.17 | Fully open |
+| **Gate valve (half open)** | 4.5 | Partially open |
+| **Globe valve (full open)** | 6.0-10.0 | High resistance |
+| **Ball valve (full open)** | 0.05 | Very low resistance |
+| **Check valve (swing)** | 2.0 | Prevents backflow |
+| **Sharp entrance** | 0.50 | Flush inlet |
+| **Rounded entrance** | 0.04 | r/D > 0.15 |
+| **Exit to tank** | 1.00 | All velocity head lost |
+| **Sudden expansion** | (1 - A₁/A₂)² | Area ratio dependent |
+| **Sudden contraction** | 0.5 × (1 - A₂/A₁) | Area ratio dependent |
+
+### Reference
+
+Idelchik, I.E. (1986). "Handbook of Hydraulic Resistance", 2nd Ed., Hemisphere Publishing.
 
 This simplified approach is justified because:
 - Oil-water density differences are much smaller than gas-liquid (~1.0-1.2 vs 100-1000)
@@ -1193,6 +1356,10 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 2. Taitel, Y. and Dukler, A.E. (1976) - "A Model for Predicting Flow Regime Transitions in Horizontal and Near Horizontal Gas-Liquid Flow", AIChE Journal
 3. Issa, R.I. and Kempf, M.H.W. (2003) - "Simulation of Slug Flow in Horizontal and Nearly Horizontal Pipes with the Two-Fluid Model", Int. J. Multiphase Flow
 4. Liou, M.S. (1996) - "A Sequel to AUSM: AUSM+", J. Computational Physics
+5. Drew, D.A. and Lahey, R.T. (1987) - "The Virtual Mass and Lift Force on a Sphere in Rotating and Straining Inviscid Flow", Int. J. Multiphase Flow, 13(1), 113-121
+6. Hart, J., Hamersma, P.J., and Fortuin, J.M.H. (1989) - "Correlations Predicting Frictional Pressure Drop and Liquid Holdup during Horizontal Gas-Liquid Pipe Flow with a Small Liquid Holdup", Int. J. Multiphase Flow, 15(6), 947-964
+7. Andreussi, P. and Persen, L.N. (1987) - "Stratified Gas-Liquid Flow in Downwardly Inclined Pipes", Int. J. Multiphase Flow, 13(4), 565-575
+8. Idelchik, I.E. (1986) - "Handbook of Hydraulic Resistance", 2nd Ed., Hemisphere Publishing
 
 ## Test Coverage
 
