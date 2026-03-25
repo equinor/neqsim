@@ -5268,4 +5268,413 @@ public class TwoFluidPipe extends Pipeline {
     }
     return idx * dx;
   }
+
+  // ============ Flow Analysis Methods ============
+
+  /**
+   * Get average liquid holdup in the pipe.
+   *
+   * @return Volume-weighted average liquid holdup (fraction 0-1)
+   */
+  public double getAverageLiquidHoldup() {
+    if (sections == null || sections.length == 0) {
+      return 0;
+    }
+    double totalHoldupVolume = 0;
+    double totalVolume = 0;
+
+    for (TwoFluidSection sec : sections) {
+      double V = sec.getArea() * sec.getLength();
+      totalHoldupVolume += sec.getLiquidHoldup() * V;
+      totalVolume += V;
+    }
+    return totalVolume > 0 ? totalHoldupVolume / totalVolume : 0;
+  }
+
+  /**
+   * Get dominant flow regime in the pipe.
+   *
+   * <p>
+   * Returns the most common flow regime across all sections.
+   * </p>
+   *
+   * @return Name of dominant flow regime
+   */
+  public String getDominantFlowRegime() {
+    if (sections == null || sections.length == 0) {
+      return "Unknown";
+    }
+
+    java.util.Map<String, Integer> regimeCounts = new java.util.HashMap<>();
+    for (TwoFluidSection sec : sections) {
+      neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime regime =
+          sec.getFlowRegime();
+      if (regime != null) {
+        String regimeName = regime.name();
+        regimeCounts.merge(regimeName, 1, Integer::sum);
+      }
+    }
+
+    if (regimeCounts.isEmpty()) {
+      return "Unknown";
+    }
+
+    return regimeCounts.entrySet().stream().max(java.util.Map.Entry.comparingByValue())
+        .map(java.util.Map.Entry::getKey).orElse("Unknown");
+  }
+
+  /**
+   * Get average superficial gas velocity in the pipe.
+   *
+   * @return Average superficial gas velocity [m/s]
+   */
+  public double getAverageSuperficialGasVelocity() {
+    if (sections == null || sections.length == 0) {
+      return 0;
+    }
+    double total = 0;
+    for (TwoFluidSection sec : sections) {
+      total += sec.getSuperficialGasVelocity();
+    }
+    return total / sections.length;
+  }
+
+  /**
+   * Get average superficial liquid velocity in the pipe.
+   *
+   * @return Average superficial liquid velocity [m/s]
+   */
+  public double getAverageSuperficialLiquidVelocity() {
+    if (sections == null || sections.length == 0) {
+      return 0;
+    }
+    double total = 0;
+    for (TwoFluidSection sec : sections) {
+      total += sec.getSuperficialLiquidVelocity();
+    }
+    return total / sections.length;
+  }
+
+  /**
+   * Get inlet pressure.
+   *
+   * @return Inlet pressure [bara]
+   */
+  public double getInletPressure() {
+    if (sections == null || sections.length == 0) {
+      return getInletStream().getPressure("bara");
+    }
+    return sections[0].getPressure() / 1e5; // Pa to bara
+  }
+
+  /**
+   * Get outlet pressure.
+   *
+   * @return Outlet pressure [bara]
+   */
+  public double getOutletPressure() {
+    if (sections == null || sections.length == 0) {
+      if (outletPressure > 0) {
+        return outletPressure;
+      }
+      return getInletStream().getPressure("bara");
+    }
+    return sections[sections.length - 1].getPressure() / 1e5; // Pa to bara
+  }
+
+  // ============ API 14E Erosional Velocity Methods ============
+
+  /**
+   * Calculate erosional velocity per API RP 14E.
+   *
+   * <p>
+   * The API 14E erosional velocity is given by:
+   * </p>
+   *
+   * $$V_e = \frac{C}{\sqrt{\rho_{mix}}}$$
+   *
+   * <p>
+   * where:
+   * </p>
+   * <ul>
+   * <li>$V_e$ = Erosional velocity (m/s)</li>
+   * <li>$C$ = Empirical constant (typically 100-150 for continuous service)</li>
+   * <li>$\rho_{mix}$ = Average mixture density (kg/m³)</li>
+   * </ul>
+   *
+   * <h2>C-Factor Guidelines (API RP 14E)</h2>
+   * <table>
+   * <caption>API 14E C-factor recommendations</caption>
+   * <tr>
+   * <th>Service</th>
+   * <th>C-factor (SI)</th>
+   * </tr>
+   * <tr>
+   * <td>Continuous service</td>
+   * <td>100-122</td>
+   * </tr>
+   * <tr>
+   * <td>Intermittent service</td>
+   * <td>122-183</td>
+   * </tr>
+   * <tr>
+   * <td>Clean, non-corrosive service</td>
+   * <td>122-152</td>
+   * </tr>
+   * <tr>
+   * <td>Corrosive service (CO2, H2S)</td>
+   * <td>75-100</td>
+   * </tr>
+   * </table>
+   *
+   * <p>
+   * Reference: API RP 14E (2007), "Recommended Practice for Design and Installation of Offshore
+   * Production Platform Piping Systems", Section 2.5.
+   * </p>
+   *
+   * @param cFactor API 14E C-factor constant (SI units: m/s * sqrt(kg/m³))
+   * @return Erosional velocity in m/s
+   */
+  public double getErosionalVelocity(double cFactor) {
+    double rhoMix = getAverageMixtureDensity();
+    if (rhoMix <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return cFactor / Math.sqrt(rhoMix);
+  }
+
+  /**
+   * Calculate erosional velocity using default C-factor of 122.
+   *
+   * <p>
+   * The default C-factor of 122 (SI) corresponds to the commonly used value for continuous service
+   * in non-corrosive conditions.
+   * </p>
+   *
+   * @return Erosional velocity in m/s
+   */
+  public double getErosionalVelocity() {
+    return getErosionalVelocity(122.0);
+  }
+
+  /**
+   * Get average mixture density in the pipe.
+   *
+   * <p>
+   * Calculates volume-weighted average density from all pipe sections.
+   * </p>
+   *
+   * @return Average mixture density in kg/m³
+   */
+  public double getAverageMixtureDensity() {
+    if (sections == null || sections.length == 0) {
+      return 0;
+    }
+    double totalMass = 0;
+    double totalVolume = 0;
+
+    for (TwoFluidSection sec : sections) {
+      double A = sec.getArea();
+      double L = sec.getLength();
+      double V = A * L;
+
+      double alphaG = sec.getGasHoldup();
+      double alphaL = sec.getLiquidHoldup();
+      double rhoG = sec.getGasDensity();
+      double rhoL = sec.getLiquidDensity();
+
+      // Handle zero density values with defaults
+      if (rhoG <= 0) {
+        rhoG = 1.0;
+      }
+      if (rhoL <= 0) {
+        rhoL = 700.0;
+      }
+
+      double rhoMixSection = alphaG * rhoG + alphaL * rhoL;
+      totalMass += rhoMixSection * V;
+      totalVolume += V;
+    }
+
+    return totalVolume > 0 ? totalMass / totalVolume : 0;
+  }
+
+  /**
+   * Get maximum mixture velocity in the pipe.
+   *
+   * <p>
+   * Scans all sections to find the highest mixture velocity, which occurs where velocity is
+   * maximum.
+   * </p>
+   *
+   * @return Maximum mixture velocity in m/s
+   */
+  public double getMaxMixtureVelocity() {
+    if (sections == null || sections.length == 0) {
+      return 0;
+    }
+    double maxVmix = 0;
+
+    for (TwoFluidSection sec : sections) {
+      double alphaG = sec.getGasHoldup();
+      double alphaL = sec.getLiquidHoldup();
+      double vG = sec.getGasVelocity();
+      double vL = sec.getLiquidVelocity();
+
+      // Mixture velocity weighted by volume fraction
+      double vMix = alphaG * vG + alphaL * vL;
+      maxVmix = Math.max(maxVmix, Math.abs(vMix));
+    }
+    return maxVmix;
+  }
+
+  /**
+   * Check if mixture velocity exceeds erosional limit.
+   *
+   * @param cFactor API 14E C-factor constant (SI units)
+   * @return true if maximum velocity exceeds erosional limit
+   */
+  public boolean isVelocityAboveErosionalLimit(double cFactor) {
+    double vE = getErosionalVelocity(cFactor);
+    double vMax = getMaxMixtureVelocity();
+    return vMax > vE;
+  }
+
+  /**
+   * Check if mixture velocity exceeds erosional limit using default C-factor.
+   *
+   * @return true if maximum velocity exceeds erosional limit (C=122)
+   */
+  public boolean isVelocityAboveErosionalLimit() {
+    return isVelocityAboveErosionalLimit(122.0);
+  }
+
+  /**
+   * Get erosional velocity margin.
+   *
+   * <p>
+   * Calculates the ratio of actual maximum velocity to erosional velocity. Values greater than 1.0
+   * indicate erosion risk.
+   * </p>
+   *
+   * @param cFactor API 14E C-factor constant (SI units)
+   * @return Velocity margin (V_max / V_erosional). Values &gt; 1.0 indicate erosion risk.
+   */
+  public double getErosionalVelocityMargin(double cFactor) {
+    double vE = getErosionalVelocity(cFactor);
+    if (vE <= 0 || Double.isInfinite(vE)) {
+      return 0;
+    }
+    return getMaxMixtureVelocity() / vE;
+  }
+
+  /**
+   * Get erosion risk assessment.
+   *
+   * <p>
+   * Returns a summary of erosion risk based on API 14E criteria.
+   * </p>
+   *
+   * @param cFactor API 14E C-factor constant
+   * @return Erosion risk assessment string
+   */
+  public String getErosionRiskAssessment(double cFactor) {
+    double vE = getErosionalVelocity(cFactor);
+    double vMax = getMaxMixtureVelocity();
+    double margin = getErosionalVelocityMargin(cFactor);
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== API 14E Erosion Assessment ===\n");
+    sb.append(String.format("C-factor: %.0f (SI units)\n", cFactor));
+    sb.append(String.format("Average mixture density: %.2f kg/m³\n", getAverageMixtureDensity()));
+    sb.append(String.format("Erosional velocity (V_e): %.2f m/s\n", vE));
+    sb.append(String.format("Maximum mixture velocity: %.2f m/s\n", vMax));
+    sb.append(String.format("Velocity margin (V_max/V_e): %.2f\n", margin));
+
+    if (margin < 0.7) {
+      sb.append("Status: LOW RISK - Velocity well below erosional limit\n");
+    } else if (margin < 0.9) {
+      sb.append("Status: MEDIUM RISK - Approaching erosional limit\n");
+    } else if (margin < 1.0) {
+      sb.append("Status: HIGH RISK - Near erosional limit, monitor closely\n");
+    } else {
+      sb.append("Status: EXCEEDS LIMIT - Erosion damage likely, reduce velocity\n");
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Get flow quality analysis summary for comparison with literature data.
+   *
+   * <p>
+   * Returns key dimensionless parameters used in published two-phase flow correlations.
+   * </p>
+   *
+   * @return Flow analysis summary with dimensionless parameters
+   */
+  public String getFlowAnalysisSummary() {
+    if (sections == null || sections.length == 0) {
+      return "No data - run simulation first";
+    }
+
+    TwoFluidSection midSection = sections[sections.length / 2];
+    double vSL = midSection.getSuperficialLiquidVelocity();
+    double vSG = midSection.getSuperficialGasVelocity();
+    double vMix = vSL + vSG;
+    double lambdaL = vMix > 0 ? vSL / vMix : 0;
+    double alphaL = midSection.getLiquidHoldup();
+    double rhoL = midSection.getLiquidDensity();
+    double rhoG = midSection.getGasDensity();
+    double rhoMix = alphaL * rhoL + (1 - alphaL) * rhoG;
+    double muL = midSection.getLiquidViscosity();
+    double sigma = midSection.getSurfaceTension();
+
+    // Froude number
+    double Fr = vMix * vMix / (9.81 * diameter);
+
+    // Weber number
+    double We = rhoMix * vMix * vMix * diameter / sigma;
+
+    // Liquid Reynolds number
+    double ReL = rhoL * vSL * diameter / muL;
+
+    // Superficial gas Reynolds
+    double muG = midSection.getGasViscosity();
+    double ReG = rhoG * vSG * diameter / muG;
+
+    // Slip ratio
+    double vG = midSection.getGasVelocity();
+    double vL = midSection.getLiquidVelocity();
+    double slip = vL > 0 ? vG / vL : 1.0;
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Two-Phase Flow Analysis (Mid-Pipe) ===\n");
+    sb.append(String.format("Flow regime: %s\n", midSection.getFlowRegime()));
+    sb.append("\n--- Velocities ---\n");
+    sb.append(String.format("Superficial gas velocity (v_SG): %.3f m/s\n", vSG));
+    sb.append(String.format("Superficial liquid velocity (v_SL): %.3f m/s\n", vSL));
+    sb.append(String.format("Mixture velocity: %.3f m/s\n", vMix));
+    sb.append(String.format("Actual gas velocity: %.3f m/s\n", vG));
+    sb.append(String.format("Actual liquid velocity: %.3f m/s\n", vL));
+
+    sb.append("\n--- Holdup ---\n");
+    sb.append(String.format("No-slip holdup (λ_L): %.4f\n", lambdaL));
+    sb.append(String.format("Actual liquid holdup (H_L): %.4f\n", alphaL));
+    sb.append(String.format("Slip ratio (v_G/v_L): %.3f\n", slip));
+
+    sb.append("\n--- Dimensionless Parameters (Literature Comparison) ---\n");
+    sb.append(String.format("Froude number (Fr): %.3f\n", Fr));
+    sb.append(String.format("Weber number (We): %.1f\n", We));
+    sb.append(String.format("Liquid Reynolds (Re_SL): %.0f\n", ReL));
+    sb.append(String.format("Gas Reynolds (Re_SG): %.0f\n", ReG));
+
+    sb.append("\n--- Properties ---\n");
+    sb.append(String.format("Gas density: %.2f kg/m³\n", rhoG));
+    sb.append(String.format("Liquid density: %.2f kg/m³\n", rhoL));
+    sb.append(String.format("Mixture density: %.2f kg/m³\n", rhoMix));
+    sb.append(String.format("Surface tension: %.4f N/m\n", sigma));
+
+    return sb.toString();
+  }
 }
