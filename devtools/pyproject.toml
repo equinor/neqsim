@@ -7,7 +7,7 @@ name = "neqsim-dev-setup"
 version = "0.1.0"
 description = "JVM bootstrap helpers for NeqSim Jupyter development notebooks"
 requires-python = ">=3.8"
-dependencies = ["jpype1"]
+dependencies = ["jpype1", "python-docx"]
 
 [tool.setuptools]
 py-modules = ["neqsim_dev_setup"]
