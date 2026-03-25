@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection;
 import neqsim.process.equipment.stream.Stream;
@@ -11,26 +12,27 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test for TwoFluidPipe condensation behavior.
- * 
+ *
  * <p>
  * This test verifies that as temperature drops along a pipeline (due to heat transfer to cold
  * seawater), the liquid holdup should INCREASE due to condensation of heavier hydrocarbons and
  * water from the gas phase.
  * </p>
- * 
+ *
  * <p>
  * The test compares TwoFluidPipe against PipeBeggsAndBrills to ensure both models show the expected
  * condensation-driven holdup increase along the pipeline length.
  * </p>
- * 
+ *
  * @author ESOL
  * @version 1.0
  */
+@Tag("slow")
 public class TwoFluidPipeCondensationTest {
 
   /**
    * Create wet natural gas feed fluid.
-   * 
+   *
    * @return Configured fluid system
    */
   private SystemInterface createFeedFluid() {
@@ -58,7 +60,7 @@ public class TwoFluidPipeCondensationTest {
 
   /**
    * Test that condensation causes liquid holdup to increase along the pipeline.
-   * 
+   *
    * <p>
    * Pipeline conditions: 70km, 900mm diameter, 30 MSm³/day, heat transfer to 5°C seawater.
    * </p>
