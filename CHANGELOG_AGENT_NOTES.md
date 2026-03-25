@@ -9,6 +9,91 @@
 
 ---
 
+## 2026-03-25 — TwoFluidPipe Boundary Condition API
+
+### New API
+
+Added public setters for configuring inlet and outlet boundary conditions during
+transient `TwoFluidPipe` simulations. Includes CLOSED BC for shut-in/surge scenarios.
+
+### New Methods
+
+```java
+// Set boundary condition types
+pipe.setInletBoundaryCondition(BoundaryCondition.STREAM_CONNECTED);  // default
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+pipe.setInletBoundaryCondition(BoundaryCondition.CLOSED);            // NEW: blocked
+pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE); // default
+pipe.setOutletBoundaryCondition(BoundaryCondition.CLOSED);            // NEW: blocked
+
+// Query boundary condition types
+BoundaryCondition inletBC = pipe.getInletBoundaryCondition();
+BoundaryCondition outletBC = pipe.getOutletBoundaryCondition();
+
+// Set explicit values for CONSTANT_FLOW / CONSTANT_PRESSURE BCs
+pipe.setInletMassFlow(50.0);             // kg/s
+pipe.setInletMassFlow(180000, "kg/hr");  // with unit
+pipe.setInletPressure(60.0, "bara");     // with unit
+
+// Convenience methods for shut-in scenarios
+pipe.closeOutlet();                       // Set outlet BC to CLOSED
+pipe.openOutlet();                        // Restore to CONSTANT_PRESSURE
+pipe.openOutlet(30.0, "bara");            // Open with specified pressure
+pipe.closeInlet();                        // Set inlet BC to CLOSED
+pipe.openInlet();                         // Restore to STREAM_CONNECTED
+boolean closed = pipe.isOutletClosed();   // Check if outlet is blocked
+boolean closed = pipe.isInletClosed();    // Check if inlet is blocked
+```
+
+### Boundary Condition Types
+
+| Type | Description |
+|------|-------------|
+| `STREAM_CONNECTED` | Flow rate, T, composition from connected stream (default inlet) |
+| `CONSTANT_FLOW` | Fixed mass flow via `setInletMassFlow()` |
+| `CONSTANT_PRESSURE` | Fixed pressure (default outlet, optional inlet) |
+| `CLOSED` | Zero velocity (blocked/shut-in) — pressure floats |
+
+### Common Configurations
+
+| Config | Inlet BC | Outlet BC | Inlet P | Flow |
+|--------|----------|-----------|---------|------|
+| Default | STREAM_CONNECTED | CONSTANT_PRESSURE | Computed | From stream |
+| Explicit flow | CONSTANT_FLOW | CONSTANT_PRESSURE | Computed | Fixed |
+| Both P fixed | CONSTANT_PRESSURE | CONSTANT_PRESSURE | Fixed | Computed |
+| Shut-in | STREAM_CONNECTED | CLOSED | Computed | From stream |
+| Blowdown | CLOSED | CONSTANT_PRESSURE | Floats | Zero |
+| Blocked pipe | CLOSED | CLOSED | Floats | Zero |
+
+### Python Usage
+
+```python
+TwoFluidPipe = jneqsim.process.equipment.pipeline.TwoFluidPipe
+BoundaryCondition = TwoFluidPipe.BoundaryCondition
+
+pipe = TwoFluidPipe("Pipeline", feed)
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW)
+pipe.setInletMassFlow(50.0)
+pipe.setOutletPressure(30.0, "bara")
+
+# Shut-in scenario
+pipe.closeOutlet()
+for t in range(60):
+    pipe.runTransient(1.0)
+pipe.openOutlet(30.0, "bara")  # Reopen
+```
+
+### Documentation
+
+- Updated [Pipeline Recipes](docs/cookbook/pipeline-recipes.md) with Boundary Conditions section
+
+### Migration
+
+No breaking changes. Existing code using default BCs continues to work unchanged.
+
+---
+
 ## 2026-06-18 — TwoFluidPipe Transient & Pressure Gradient Improvements
 
 ### Bug Fixes

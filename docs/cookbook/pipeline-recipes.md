@@ -15,6 +15,7 @@ Copy-paste solutions for pipeline calculations and multiphase flow.
 - [Dynamic Flow Simulation](#dynamic-flow-simulation)
 - [Three-Phase Flow and Slug Tracking](#three-phase-flow-and-slug-tracking)
 - [Advanced Pipeline Profiles](#advanced-pipeline-profiles)
+- [Boundary Conditions](#boundary-conditions)
 - [Heat Transfer](#heat-transfer)
 - [Terrain Effects](#terrain-effects)
 - [Flow Regimes](#flow-regimes)
@@ -614,6 +615,209 @@ print(f"At topside: {section3.getOutletStream().getPressure():.2f} bara")
 | Multi-leg | `setNumberOfLegs()`, `setLegPositions()` | Variable geometry |
 | Pipe sections | Chain multiple pipes | Different diameters/materials |
 | Grid resolution | `setNumberOfSections(n)` | Fine vs coarse simulation |
+
+---
+
+## Boundary Conditions
+
+For transient `TwoFluidPipe` simulations, you can configure inlet and outlet boundary conditions to control how the solver handles flow rate and pressure.
+
+### Boundary Condition Types
+
+| Type | Description |
+|------|-------------|
+| `STREAM_CONNECTED` | Use properties from connected inlet stream (default for inlet) |
+| `CONSTANT_FLOW` | Fixed mass flow rate (set via `setInletMassFlow()`) |
+| `CONSTANT_PRESSURE` | Fixed pressure (default for outlet) |
+| `CLOSED` | Zero flow velocity (blocked/shut-in) — pressure floats |
+
+### Default Behavior
+
+By default, `TwoFluidPipe` uses:
+- **Inlet**: `STREAM_CONNECTED` — flow rate, temperature, and composition from the inlet stream
+- **Outlet**: `CONSTANT_PRESSURE` — fixed outlet pressure
+
+During transient simulation, the inlet pressure is computed from momentum balance (backward marching from the outlet boundary), while the inlet flow rate is fixed.
+
+### Setting Boundary Conditions
+
+```python
+TwoFluidPipe = jneqsim.process.equipment.pipeline.TwoFluidPipe
+BoundaryCondition = TwoFluidPipe.BoundaryCondition
+
+pipe = TwoFluidPipe("Pipeline", inlet_stream)
+pipe.setLength(10000)
+pipe.setDiameter(0.25)
+pipe.setNumberOfSections(50)
+
+# Set outlet pressure (required for transient)
+pipe.setOutletPressure(30.0, "bara")
+
+# Option 1: Default - use stream flow rate
+pipe.setInletBoundaryCondition(BoundaryCondition.STREAM_CONNECTED)
+
+# Option 2: Explicit mass flow (independent of stream)
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW)
+pipe.setInletMassFlow(50.0)            # kg/s
+pipe.setInletMassFlow(180000, "kg/hr") # or with unit
+
+# Option 3: Fixed inlet pressure (flow computed from momentum)
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE)
+pipe.setInletPressure(60.0, "bara")
+
+# Query current BC types
+inlet_bc = pipe.getInletBoundaryCondition()
+outlet_bc = pipe.getOutletBoundaryCondition()
+```
+
+### Transient Simulation with Changing Flow Rate
+
+```python
+import uuid
+
+# Configure pipe with explicit flow BC
+pipe = TwoFluidPipe("Flowline", inlet_stream)
+pipe.setLength(10000)
+pipe.setDiameter(0.25)
+pipe.setNumberOfSections(50)
+
+# Use constant flow BC so we can change flow directly
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW)
+pipe.setInletMassFlow(20.0)  # Initial 20 kg/s
+pipe.setOutletPressure(30.0, "bara")
+
+# Initialize
+pipe.run()
+
+# Transient loop with flow ramp-up
+run_id = str(uuid.uuid4())
+for t in range(120):  # 2 minutes
+    # Ramp flow from 20 to 50 kg/s over first 60s
+    if t < 60:
+        new_flow = 20.0 + (t / 60.0) * 30.0
+        pipe.setInletMassFlow(new_flow)
+
+    pipe.runTransient(1.0, run_id)  # 1s timestep
+
+    # Monitor inlet pressure (computed by solver)
+    pressures = pipe.getPressureProfile()
+    inlet_P = pressures[0] / 1e5  # Pa to bara
+    print(f"t={t}s, flow={new_flow:.1f} kg/s, inlet P={inlet_P:.2f} bara")
+```
+
+### Fixed Pressure at Both Ends
+
+For scenarios where both inlet and outlet pressures are known (e.g., connecting to a reservoir and topside), set both as constant pressure:
+
+```python
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE)
+pipe.setInletPressure(65.0, "bara")   # Wellhead pressure
+pipe.setOutletPressure(30.0, "bara")  # Receiving pressure
+
+# Flow rate is computed from the pressure differential
+pipe.run()
+
+# Check computed flow rate
+area = 3.14159 * pipe.getDiameter()**2 / 4
+mass_flux = pipe.getSections()[0].getGasMassPerLength() * pipe.getSections()[0].getGasVelocity()
+print(f"Computed inlet mass flux: {mass_flux * area:.2f} kg/s")
+```
+
+### Boundary Condition Summary Table
+
+| Configuration | Inlet BC | Outlet BC | Flow | Inlet P | Outlet P |
+|--------------|----------|-----------|------|---------|----------|
+| Default | STREAM_CONNECTED | CONSTANT_PRESSURE | From stream | Computed | Fixed |
+| Explicit flow | CONSTANT_FLOW | CONSTANT_PRESSURE | Fixed | Computed | Fixed |
+| Both P fixed | CONSTANT_PRESSURE | CONSTANT_PRESSURE | Computed | Fixed | Fixed |
+| Shut-in outlet | STREAM_CONNECTED | CLOSED | From stream | Computed | Floats |
+| Blowdown | CLOSED | CONSTANT_PRESSURE | Zero | Floats | Fixed |
+| Blocked pipe | CLOSED | CLOSED | Zero | Floats | Floats |
+
+> **Note:** The most common setup for production pipelines is `STREAM_CONNECTED` inlet with `CONSTANT_PRESSURE` outlet, where the inlet stream defines the flow rate and the outlet represents the receiving facility pressure.
+
+### Shut-In and Surge Scenarios
+
+Use the `CLOSED` boundary condition or convenience methods for shut-in and pressure surge analysis:
+
+```python
+import uuid
+
+pipe = TwoFluidPipe("Pipeline", inlet_stream)
+pipe.setLength(10000)
+pipe.setDiameter(0.25)
+pipe.setNumberOfSections(100)
+pipe.setOutletPressure(30.0, "bara")
+
+# Initialize with normal flow
+pipe.run()
+initial_P_inlet = pipe.getPressureProfile()[0] / 1e5
+print(f"Initial inlet pressure: {initial_P_inlet:.2f} bara")
+
+# --- Shut-in scenario: close outlet valve ---
+pipe.closeOutlet()  # Convenience method (or: BoundaryCondition.CLOSED)
+
+run_id = str(uuid.uuid4())
+for t in range(60):  # 1 minute transient
+    pipe.runTransient(1.0, run_id)
+
+    if t % 10 == 0:
+        pressures = pipe.getPressureProfile()
+        P_inlet = pressures[0] / 1e5
+        P_outlet = pressures[-1] / 1e5
+        print(f"t={t}s: inlet P={P_inlet:.2f} bara, outlet P={P_outlet:.2f} bara")
+
+# --- Reopen outlet ---
+pipe.openOutlet(30.0, "bara")
+
+# Continue transient to observe pressure recovery
+for t in range(60, 120):
+    pipe.runTransient(1.0, run_id)
+```
+
+### Blowdown / Depressurization
+
+Close inlet, leave outlet open for blowdown simulation:
+
+```python
+pipe = TwoFluidPipe("Pipeline", inlet_stream)
+pipe.setLength(5000)
+pipe.setDiameter(0.3)
+pipe.setNumberOfSections(50)
+
+# Initialize packed pipe at high pressure
+pipe.setInletPressure(100.0, "bara")
+pipe.setOutletPressure(100.0, "bara")
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE)
+pipe.run()
+
+# Blowdown: close inlet, open outlet to atmosphere
+pipe.closeInlet()
+pipe.openOutlet(1.0, "bara")  # Vent to atmospheric
+
+# Monitor depressurization
+run_id = str(uuid.uuid4())
+for t in range(300):  # 5 minutes
+    pipe.runTransient(1.0, run_id)
+
+    if t % 30 == 0:
+        pressures = pipe.getPressureProfile()
+        avg_P = sum(pressures) / len(pressures) / 1e5
+        inventory = pipe.getLiquidInventory("m3")
+        print(f"t={t}s: avg P={avg_P:.2f} bara, liquid={inventory:.3f} m³")
+```
+
+### Convenience Methods
+
+| Method | Description |
+|--------|-------------|
+| `closeOutlet()` | Set outlet BC to CLOSED (zero velocity) |
+| `openOutlet()` | Restore outlet to CONSTANT_PRESSURE (uses last set pressure) |
+| `openOutlet(P, unit)` | Open outlet with specified pressure |
+| `closeInlet()` | Set inlet BC to CLOSED (zero velocity) |
+| `openInlet()` | Restore inlet to STREAM_CONNECTED |
+| `isOutletClosed()` | Returns true if outlet BC is CLOSED |
+| `isInletClosed()` | Returns true if inlet BC is CLOSED |
 
 ---
 
