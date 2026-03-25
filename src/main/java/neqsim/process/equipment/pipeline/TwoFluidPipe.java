@@ -40,7 +40,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create two-phase fluid
  * SystemInterface fluid = new SystemSrkEos(300, 50);
@@ -504,6 +504,9 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Current step count. */
   private int currentStep = 0;
+
+  /** Flag indicating transient mode (inlet P is free, not fixed from stream). */
+  private boolean isTransientMode = false;
 
   // ============ Results storage ============
 
@@ -1075,6 +1078,11 @@ public class TwoFluidPipe extends Pipeline {
     // Final accumulation zone identification after convergence
     if (enableTerrainTracking && accumulationTracker != null) {
       accumulationTracker.identifyAccumulationZones(sections);
+    }
+
+    // Update outlet pressure from converged profile (if not user-specified)
+    if (!outletPressureSet) {
+      outletPressure = sections[numberOfSections - 1].getPressure();
     }
 
     // Store initial profiles
@@ -2650,44 +2658,71 @@ public class TwoFluidPipe extends Pipeline {
     double vG = sec.getGasVelocity();
     double vL = sec.getLiquidVelocity();
 
-    // Mixture density
+    // Mixture density (holdup-weighted for friction and gravity)
     double rhoMix = alphaG * rhoG + alphaL * rhoL;
 
-    // Mixture velocity and viscosity
+    // Mixture velocity (total volumetric flux J = U_SG + U_SL)
     double vMix = alphaG * vG + alphaL * vL;
-    double muMix = alphaG * sec.getGasViscosity() + alphaL * sec.getLiquidViscosity();
 
-    // Reynolds number
-    double Re = rhoMix * Math.abs(vMix) * diameter / muMix;
+    // Quality (vapor mass fraction of flow)
+    double gGas = alphaG * rhoG * Math.abs(vG);
+    double gLiq = alphaL * rhoL * Math.abs(vL);
+    double gTotal = gGas + gLiq;
+    double x = (gTotal > 1e-10) ? gGas / gTotal : 1.0;
 
-    // Calculate Darcy friction factor using Haaland equation (same as other pipe models)
-    double f_Darcy;
-    double relativeRoughness = roughness / diameter;
-
-    if (Re < 1e-10) {
-      f_Darcy = 0;
-    } else if (Re < 2300) {
-      // Laminar flow
-      f_Darcy = 64.0 / Re;
-    } else if (Re < 4000) {
-      // Transition region - interpolate
-      double fLaminar = 64.0 / 2300.0;
-      double fTurbulent = Math.pow(
-          1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughness / 3.7, 1.11))), 2.0);
-      f_Darcy = fLaminar + (fTurbulent - fLaminar) * (Re - 2300.0) / 1700.0;
+    // McAdams two-phase viscosity: 1/muTP = x/muG + (1-x)/muL
+    // This quality-based harmonic averaging is more physical than holdup-weighted
+    // for separated flows where gas and liquid have different velocities
+    double muG = sec.getGasViscosity();
+    double muL = sec.getLiquidViscosity();
+    double muTP;
+    if (muG > 1e-20 && muL > 1e-20 && x > 0.001 && x < 0.999) {
+      muTP = 1.0 / (x / muG + (1.0 - x) / muL);
     } else {
-      // Turbulent flow - Haaland equation
-      f_Darcy = Math
-          .pow(1.0 / (-1.8 * Math.log10(6.9 / Re + Math.pow(relativeRoughness / 3.7, 1.11))), 2.0);
+      muTP = alphaG * muG + alphaL * muL;
     }
 
+    // Calculate Darcy friction factor using Haaland equation
+    double fTP = calcDarcyFrictionFactor(rhoMix, Math.abs(vMix), diameter, muTP);
+
     // Darcy-Weisbach: dP/dx = f * rho * v^2 / (2 * D)
-    double dPdx_fric = f_Darcy * rhoMix * vMix * Math.abs(vMix) / (2.0 * diameter);
+    double dPdx_fric = fTP * rhoMix * vMix * Math.abs(vMix) / (2.0 * diameter);
 
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
 
     return dPdx_fric + dPdx_grav;
+  }
+
+  /**
+   * Calculate Darcy friction factor using the Haaland equation.
+   *
+   * @param rho fluid density (kg/m3)
+   * @param velocity flow velocity (m/s)
+   * @param D pipe diameter (m)
+   * @param mu dynamic viscosity (Pa.s)
+   * @return Darcy friction factor
+   */
+  private double calcDarcyFrictionFactor(double rho, double velocity, double D, double mu) {
+    if (velocity < 1e-10 || mu < 1e-20) {
+      return 0.0;
+    }
+    double Re = rho * velocity * D / mu;
+    double relativeRoughness = roughness / D;
+
+    if (Re < 1e-10) {
+      return 0.0;
+    } else if (Re < 2300) {
+      return 64.0 / Re;
+    } else if (Re < 4000) {
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent = Math.pow(
+          1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughness / 3.7, 1.11))), 2.0);
+      return fLaminar + (fTurbulent - fLaminar) * (Re - 2300.0) / 1700.0;
+    } else {
+      return Math.pow(1.0 / (-1.8 * Math.log10(6.9 / Re + Math.pow(relativeRoughness / 3.7, 1.11))),
+          2.0);
+    }
   }
 
   /**
@@ -2874,6 +2909,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public void runTransient(double dt, UUID id) {
+    isTransientMode = true;
     // Calculate stable time step
     double dtStable = calcStableTimeStep();
     double dtActual = Math.min(dt, dtStable);
@@ -2908,9 +2944,10 @@ public class TwoFluidPipe extends Pipeline {
 
       equations.applyState(sections, U_new);
 
-      // 5. Apply pressure gradient (semi-implicit for stability)
-      double[][] dUdt = equations.calcRHS(sections, dx);
-      equations.applyPressureGradient(sections, dUdt, dx);
+      // 5. Reconstruct pressure profile from evolved state
+      // The conservative variables (mass, momentum) have evolved but pressure
+      // must be reconstructed. March from outlet (fixed P BC) backward.
+      reconstructPressureProfile();
 
       // 6. Apply boundary conditions
       applyBoundaryConditions();
@@ -2988,7 +3025,7 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Validate and correct state vector to prevent numerical instabilities.
-   * 
+   *
    * @param U_new New state to validate
    * @param U_prev Previous state for fallback
    */
@@ -3216,15 +3253,55 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Reconstruct pressure profile from the evolved conservative variables.
+   *
+   * <p>
+   * After mass and momentum are updated by the time integrator, the pressure at each section must
+   * be recomputed. Uses backward marching from the outlet boundary condition (fixed pressure) to
+   * reconstruct pressures from local momentum balance.
+   * </p>
+   */
+  private void reconstructPressureProfile() {
+    if (sections == null || numberOfSections < 2) {
+      return;
+    }
+
+    // Start from outlet with known pressure (BC)
+    sections[numberOfSections - 1].setPressure(outletPressure);
+
+    // March backward from outlet to inlet
+    for (int i = numberOfSections - 2; i >= 0; i--) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection downstream = sections[i + 1];
+
+      // Local pressure gradient from current section properties
+      double dPdx = estimatePressureGradient(sec);
+
+      // P_upstream = P_downstream + dPdx * dx (pressure increases going upstream)
+      double P_new = downstream.getPressure() + dPdx * dx;
+
+      // Ensure physically reasonable bound
+      P_new = Math.max(1e5, P_new); // Minimum 1 bar
+
+      sec.setPressure(P_new);
+    }
+  }
+
+  /**
    * Apply boundary conditions.
    */
   private void applyBoundaryConditions() {
     // Inlet boundary
     TwoFluidSection inlet = sections[0];
     if (inletBCType == BoundaryCondition.STREAM_CONNECTED) {
-      // Use inlet stream properties - maintain pressure, temperature
+      // Use inlet stream properties for flow rate and composition
+      // NOTE: Inlet PRESSURE is NOT set from stream during transient.
+      // It comes from reconstructPressureProfile (backward march from outlet BC).
+      // Only the steady-state solver sets inlet P from stream.
       SystemInterface inFluid = getInletStream().getFluid();
-      inlet.setPressure(inFluid.getPressure("Pa"));
+      if (!isTransientMode) {
+        inlet.setPressure(inFluid.getPressure("Pa"));
+      }
       inlet.setTemperature(inFluid.getTemperature("K"));
 
       // Calculate target mass flow rates from inlet stream
@@ -3430,7 +3507,7 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Get total liquid inventory in the pipe.
-   * 
+   *
    * <p>
    * Calculates inventory from conservative mass per length, converted to volume using local liquid
    * density. This ensures consistency with the solver's mass tracking.
