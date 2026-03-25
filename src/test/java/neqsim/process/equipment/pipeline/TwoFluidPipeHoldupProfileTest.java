@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -9,26 +10,27 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Test to verify that TwoFluidPipe liquid holdup profile trends correctly.
- * 
+ *
  * <p>
  * For horizontal gas-dominated pipelines, as gas expands (due to pressure drop), the gas velocity
  * increases. This causes HIGHER slip between gas and liquid phases, resulting in liquid
  * accumulating (higher holdup) toward the outlet.
  * </p>
- * 
+ *
  * <p>
  * Expected behavior: Liquid holdup should INCREASE from inlet to outlet (similar to Beggs &
  * Brills).
  * </p>
- * 
+ *
  * @author ASMF
  * @version 1.0
  */
+@Tag("slow")
 public class TwoFluidPipeHoldupProfileTest {
 
   /**
    * Test that liquid holdup increases along a horizontal pipeline.
-   * 
+   *
    * <p>
    * Physical reasoning: As gas expands (pressure drops), gas velocity increases while liquid
    * velocity stays relatively constant. The increasing velocity slip causes liquid to accumulate.
@@ -127,7 +129,7 @@ public class TwoFluidPipeHoldupProfileTest {
 
   /**
    * Test comparison with Beggs & Brills correlation.
-   * 
+   *
    * <p>
    * Both TwoFluidPipe and PipeBeggsAndBrills should show similar holdup trends for the same
    * conditions.
@@ -254,7 +256,7 @@ public class TwoFluidPipeHoldupProfileTest {
 
   /**
    * Test using exact notebook fluid composition.
-   * 
+   *
    * <p>
    * This test replicates the Python notebook scenario exactly: Rich gas condensate with water, 70
    * km × 900 mm pipeline, 30 MSm³/day flow, 80 bara outlet pressure.
