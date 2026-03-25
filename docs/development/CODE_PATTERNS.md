@@ -442,6 +442,77 @@ double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
     gasDensity, liquidDensity, surfaceTension, inclinationRadians);
 ```
 
+### Transient Boundary Conditions
+
+```java
+// Configure boundary conditions for transient two-fluid simulation
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(10000);
+pipe.setDiameter(0.25);
+pipe.setNumberOfSections(50);
+
+// Default: flow from stream, fixed outlet pressure
+pipe.setOutletPressure(30.0, "bara");
+
+// Option 1: Explicit mass flow (decoupled from stream)
+pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+pipe.setInletMassFlow(50.0);  // kg/s
+// or with unit: pipe.setInletMassFlow(180000, "kg/hr");
+
+// Option 2: Fixed pressures at both ends (flow computed)
+pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+pipe.setInletPressure(60.0, "bara");
+pipe.setOutletPressure(30.0, "bara");
+
+// Query current BC types
+TwoFluidPipe.BoundaryCondition inletBC = pipe.getInletBoundaryCondition();
+TwoFluidPipe.BoundaryCondition outletBC = pipe.getOutletBoundaryCondition();
+
+// Initialize and run transient
+pipe.run();
+for (int t = 0; t < 120; t++) {
+    // Can change flow rate during simulation
+    if (t == 60) {
+        pipe.setInletMassFlow(75.0);  // Step increase at 60s
+    }
+    pipe.runTransient(1.0);
+}
+```
+
+### Shut-In and Surge Scenarios
+
+```java
+// Close outlet for shut-in / pressure surge analysis
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(10000);
+pipe.setDiameter(0.25);
+pipe.setNumberOfSections(100);
+pipe.setOutletPressure(30.0, "bara");
+pipe.run();
+
+// Shut-in: close outlet valve
+pipe.closeOutlet();  // Sets BC to CLOSED (zero velocity, pressure floats)
+
+for (int t = 0; t < 60; t++) {
+    pipe.runTransient(1.0);
+    double[] pressures = pipe.getPressureProfile();
+    System.out.printf("t=%ds: inlet=%.2f bara, outlet=%.2f bara%n",
+        t, pressures[0]/1e5, pressures[pressures.length-1]/1e5);
+}
+
+// Reopen outlet
+pipe.openOutlet(30.0, "bara");  // Opens with specified back-pressure
+
+// Blowdown: close inlet, open outlet
+pipe.closeInlet();
+pipe.openOutlet(1.0, "bara");  // Vent to atmospheric
+
+// Check closure state
+if (pipe.isOutletClosed()) {
+    System.out.println("Outlet is blocked");
+}
+```
+
 ---
 
 ## Stream Introspection

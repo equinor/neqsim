@@ -179,7 +179,9 @@ public class TwoFluidPipe extends Pipeline {
     /** Constant mass flow. */
     CONSTANT_FLOW,
     /** Connected to stream. */
-    STREAM_CONNECTED
+    STREAM_CONNECTED,
+    /** Closed (no flow - blocked/shut-in). */
+    CLOSED
   }
 
   /** Inlet boundary condition type. */
@@ -193,6 +195,18 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Flag indicating if outlet pressure was explicitly set. */
   private boolean outletPressureSet = false;
+
+  /** Inlet pressure (Pa) - used when inletBCType is CONSTANT_PRESSURE. */
+  private double inletPressure;
+
+  /** Flag indicating if inlet pressure was explicitly set. */
+  private boolean inletPressureSet = false;
+
+  /** Inlet mass flow (kg/s) - used when inletBCType is CONSTANT_FLOW. */
+  private double inletMassFlow;
+
+  /** Flag indicating if inlet mass flow was explicitly set. */
+  private boolean inletMassFlowSet = false;
 
   // ============ Settings ============
 
@@ -3292,8 +3306,16 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * After mass and momentum are updated by the time integrator, the pressure at each section must
-   * be recomputed. Uses backward marching from the outlet boundary condition (fixed pressure) to
-   * reconstruct pressures from local momentum balance.
+   * be recomputed. The method handles different boundary condition types:
+   * </p>
+   * <ul>
+   * <li>CONSTANT_PRESSURE: Fixed pressure (Dirichlet BC) - backward march from outlet</li>
+   * <li>CLOSED: Zero gradient (Neumann BC, dp/dx = 0) - pressure floats based on interior</li>
+   * </ul>
+   *
+   * <p>
+   * When both boundaries are CLOSED, pressure evolves from the interior state without external
+   * forcing, allowing the system to reach true equilibrium.
    * </p>
    */
   private void reconstructPressureProfile() {
@@ -3301,25 +3323,116 @@ public class TwoFluidPipe extends Pipeline {
       return;
     }
 
-    // Start from outlet with known pressure (BC)
-    sections[numberOfSections - 1].setPressure(outletPressure);
+    // Handle different boundary condition combinations
+    boolean outletClosed = (outletBCType == BoundaryCondition.CLOSED);
+    boolean inletClosed = (inletBCType == BoundaryCondition.CLOSED);
 
-    // March backward from outlet to inlet
-    for (int i = numberOfSections - 2; i >= 0; i--) {
+    if (outletClosed && inletClosed) {
+      // BOTH ENDS CLOSED: True closed system
+      // Pressure evolves from interior dynamics only (no external forcing)
+      // Use momentum-based pressure reconstruction from interior reference
+      reconstructPressureClosedSystem();
+    } else if (outletClosed) {
+      // OUTLET CLOSED: Use Neumann BC (dp/dx = 0) at outlet
+      // Pressure at outlet equals interior cell adjacent to it
+      // March forward from inlet (if constant flow/pressure) or use interior reference
+      reconstructPressureOutletClosed();
+    } else {
+      // OUTLET OPEN (constant pressure): Standard backward march
+      // Start from outlet with known pressure (Dirichlet BC)
+      sections[numberOfSections - 1].setPressure(outletPressure);
+
+      // March backward from outlet to inlet
+      for (int i = numberOfSections - 2; i >= 0; i--) {
+        TwoFluidSection sec = sections[i];
+        TwoFluidSection downstream = sections[i + 1];
+
+        // Local pressure gradient from current section properties
+        double dPdx = estimatePressureGradient(sec);
+
+        // P_upstream = P_downstream + dPdx * dx (pressure increases going upstream)
+        double P_new = downstream.getPressure() + dPdx * dx;
+
+        // Ensure physically reasonable bound
+        P_new = Math.max(1e5, P_new); // Minimum 1 bar
+
+        sec.setPressure(P_new);
+      }
+    }
+
+    // Apply Neumann BC at inlet if CLOSED (after reconstruction)
+    if (inletClosed && !outletClosed) {
+      // Inlet pressure = adjacent interior cell (dp/dx = 0)
+      sections[0].setPressure(sections[1].getPressure());
+    }
+  }
+
+  /**
+   * Reconstruct pressure for fully closed system (both ends CLOSED).
+   *
+   * <p>
+   * In a closed system, there is no external pressure reference. The simplest stable approach is to
+   * NOT modify interior pressures (let them evolve naturally from the transient momentum
+   * equations), and ONLY apply Neumann BC at the boundaries.
+   * </p>
+   *
+   * <p>
+   * The key insight: the time integrator has already evolved the conservative variables (mass,
+   * momentum) consistently. We should not fight that by imposing additional pressure changes.
+   * Instead, we just ensure the boundaries have zero pressure gradient.
+   * </p>
+   */
+  private void reconstructPressureClosedSystem() {
+    // Do NOT modify interior pressures - they evolve naturally from momentum balance
+    // Only apply Neumann BC at boundaries (dp/dx = 0)
+
+    // Outlet: P_outlet = P_interior (copy from adjacent interior cell)
+    sections[numberOfSections - 1].setPressure(sections[numberOfSections - 2].getPressure());
+
+    // Inlet: P_inlet = P_interior (copy from adjacent interior cell)
+    sections[0].setPressure(sections[1].getPressure());
+  }
+
+  /**
+   * Reconstruct pressure when outlet is CLOSED (Neumann BC at outlet).
+   *
+   * <p>
+   * Use forward marching from inlet reference, then apply Neumann BC at outlet.
+   * </p>
+   */
+  private void reconstructPressureOutletClosed() {
+    // Get inlet reference pressure
+    double P_inlet;
+    if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
+      P_inlet = inletPressure;
+    } else if (inletBCType == BoundaryCondition.STREAM_CONNECTED) {
+      P_inlet = getInletStream().getFluid().getPressure("Pa");
+    } else {
+      // Use current inlet section pressure as reference
+      P_inlet = sections[0].getPressure();
+    }
+
+    sections[0].setPressure(P_inlet);
+
+    // March forward from inlet to outlet
+    for (int i = 1; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      TwoFluidSection downstream = sections[i + 1];
+      TwoFluidSection upstream = sections[i - 1];
 
-      // Local pressure gradient from current section properties
-      double dPdx = estimatePressureGradient(sec);
+      // Local pressure gradient from upstream section
+      double dPdx = estimatePressureGradient(upstream);
 
-      // P_upstream = P_downstream + dPdx * dx (pressure increases going upstream)
-      double P_new = downstream.getPressure() + dPdx * dx;
+      // P_downstream = P_upstream - dPdx * dx (pressure decreases going downstream)
+      double P_new = upstream.getPressure() - dPdx * dx;
 
       // Ensure physically reasonable bound
       P_new = Math.max(1e5, P_new); // Minimum 1 bar
 
       sec.setPressure(P_new);
     }
+
+    // Apply Neumann BC at outlet: P_outlet = P_interior (dp/dx = 0)
+    sections[numberOfSections - 1].setPressure(sections[numberOfSections - 2].getPressure());
   }
 
   /**
@@ -3458,12 +3571,108 @@ public class TwoFluidPipe extends Pipeline {
       inlet.setOilMomentumPerLength(inlet.getOilMassPerLength() * inlet.getOilVelocity());
       inlet.setWaterMomentumPerLength(inlet.getWaterMassPerLength() * inlet.getWaterVelocity());
       inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * inlet.getLiquidVelocity());
+    } else if (inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet) {
+      // Use explicit mass flow value (temperature/composition still from inlet stream)
+      SystemInterface inFluid = getInletStream().getFluid();
+      inlet.setTemperature(inFluid.getTemperature("K"));
+
+      double massFlow = inletMassFlow; // Explicit mass flow BC
+      double area = Math.PI * diameter * diameter / 4.0;
+
+      // Get phase mass fractions from inlet stream
+      double gasMassFraction = 0.8;
+      double oilMassFraction = 0.1;
+      double waterMassFraction = 0.1;
+
+      int numPhases = inFluid.getNumberOfPhases();
+      if (numPhases >= 2) {
+        double massTotal = inFluid.getFlowRate("kg/sec");
+        if (massTotal > 0) {
+          if (inFluid.hasPhaseType("gas")) {
+            gasMassFraction = inFluid.getPhase("gas").getFlowRate("kg/sec") / massTotal;
+          }
+          if (inFluid.hasPhaseType("oil")) {
+            oilMassFraction = inFluid.getPhase("oil").getFlowRate("kg/sec") / massTotal;
+          } else {
+            oilMassFraction = 0;
+          }
+          if (inFluid.hasPhaseType("aqueous")) {
+            waterMassFraction = inFluid.getPhase("aqueous").getFlowRate("kg/sec") / massTotal;
+          } else {
+            waterMassFraction = 0;
+          }
+        }
+      }
+
+      double mDotGas = massFlow * gasMassFraction;
+      double mDotLiq = massFlow * (oilMassFraction + waterMassFraction);
+
+      // Update densities from inlet fluid
+      double rhoG = inlet.getGasDensity();
+      if (inFluid.hasPhaseType("gas")) {
+        rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
+        inlet.setGasDensity(rhoG);
+      }
+      if (inFluid.hasPhaseType("oil")) {
+        inlet.setOilDensity(inFluid.getPhase("oil").getDensity("kg/m3"));
+        inlet.setLiquidDensity(inFluid.getPhase("oil").getDensity("kg/m3"));
+      }
+
+      double alphaG = inlet.getGasHoldup();
+      double alphaL = inlet.getLiquidHoldup();
+
+      // Calculate velocities to achieve target mass flow
+      double vG = 10.0;
+      double vL = 2.0;
+      if (alphaG > 0.001 && rhoG > 0.1 && area > 0) {
+        vG = mDotGas / (alphaG * rhoG * area);
+        vG = Math.min(vG, 100.0);
+      }
+      if (alphaL > 0.001 && area > 0) {
+        double rhoL = inlet.getLiquidDensity() > 100 ? inlet.getLiquidDensity() : 700.0;
+        vL = mDotLiq / (alphaL * rhoL * area);
+        vL = Math.min(vL, 50.0);
+      }
+
+      inlet.setGasVelocity(vG);
+      inlet.setLiquidVelocity(vL);
+      inlet.setOilVelocity(vL);
+      inlet.setWaterVelocity(vL);
+
+      inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * vG);
+      inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * vL);
+    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
+      // Fix inlet pressure (transient: flow rate computed from momentum balance)
+      inlet.setPressure(inletPressure);
+      inlet.setTemperature(getInletStream().getFluid().getTemperature("K"));
+    } else if (inletBCType == BoundaryCondition.CLOSED) {
+      // Zero velocity at inlet (blocked/no inflow condition)
+      // Pressure floats based on mass loss through outlet
+      inlet.setGasVelocity(0.0);
+      inlet.setLiquidVelocity(0.0);
+      inlet.setOilVelocity(0.0);
+      inlet.setWaterVelocity(0.0);
+      inlet.setGasMomentumPerLength(0.0);
+      inlet.setLiquidMomentumPerLength(0.0);
+      inlet.setOilMomentumPerLength(0.0);
+      inlet.setWaterMomentumPerLength(0.0);
     }
 
     // Outlet boundary
     TwoFluidSection outlet = sections[numberOfSections - 1];
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
       outlet.setPressure(outletPressure);
+    } else if (outletBCType == BoundaryCondition.CLOSED) {
+      // Zero velocity at outlet (blocked/shut-in condition)
+      // Pressure floats based on mass accumulation
+      outlet.setGasVelocity(0.0);
+      outlet.setLiquidVelocity(0.0);
+      outlet.setOilVelocity(0.0);
+      outlet.setWaterVelocity(0.0);
+      outlet.setGasMomentumPerLength(0.0);
+      outlet.setLiquidMomentumPerLength(0.0);
+      outlet.setOilMomentumPerLength(0.0);
+      outlet.setWaterMomentumPerLength(0.0);
     }
   }
 
@@ -4158,6 +4367,125 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Set inlet boundary condition type.
+   *
+   * <p>
+   * Options:
+   * <ul>
+   * <li>STREAM_CONNECTED (default): Flow rate, temperature, composition from inlet stream</li>
+   * <li>CONSTANT_FLOW: Use explicit mass flow set via setInletMassFlow()</li>
+   * <li>CONSTANT_PRESSURE: Use explicit pressure set via setInletPressure()</li>
+   * </ul>
+   *
+   * @param bcType the inlet boundary condition type
+   */
+  public void setInletBoundaryCondition(BoundaryCondition bcType) {
+    this.inletBCType = bcType;
+  }
+
+  /**
+   * Set outlet boundary condition type.
+   *
+   * <p>
+   * Options:
+   * <ul>
+   * <li>CONSTANT_PRESSURE (default): Fixed pressure at outlet</li>
+   * <li>CONSTANT_FLOW: Fixed mass flow at outlet (requires inlet pressure BC)</li>
+   * <li>STREAM_CONNECTED: Pressure from downstream equipment</li>
+   * <li>CLOSED: Zero flow velocity (blocked/shut-in) - pressure floats</li>
+   * </ul>
+   *
+   * @param bcType the outlet boundary condition type
+   */
+  public void setOutletBoundaryCondition(BoundaryCondition bcType) {
+    this.outletBCType = bcType;
+  }
+
+  /**
+   * Get inlet boundary condition type.
+   *
+   * @return the inlet boundary condition type
+   */
+  public BoundaryCondition getInletBoundaryCondition() {
+    return inletBCType;
+  }
+
+  /**
+   * Get outlet boundary condition type.
+   *
+   * @return the outlet boundary condition type
+   */
+  public BoundaryCondition getOutletBoundaryCondition() {
+    return outletBCType;
+  }
+
+  /**
+   * Set inlet mass flow for CONSTANT_FLOW boundary condition.
+   *
+   * @param massFlow Mass flow rate (kg/s)
+   */
+  public void setInletMassFlow(double massFlow) {
+    this.inletMassFlow = massFlow;
+    this.inletMassFlowSet = true;
+  }
+
+  /**
+   * Set inlet mass flow with unit for CONSTANT_FLOW boundary condition.
+   *
+   * @param massFlow Mass flow rate value
+   * @param unit Unit ("kg/s", "kg/hr", "kg/sec", "ton/hr")
+   */
+  public void setInletMassFlow(double massFlow, String unit) {
+    double mDot;
+    switch (unit.toLowerCase()) {
+      case "kg/hr":
+        mDot = massFlow / 3600.0;
+        break;
+      case "ton/hr":
+        mDot = massFlow * 1000.0 / 3600.0;
+        break;
+      default:
+        mDot = massFlow;
+    }
+    setInletMassFlow(mDot);
+  }
+
+  /**
+   * Set inlet pressure for CONSTANT_PRESSURE boundary condition.
+   *
+   * @param pressure Pressure (Pa)
+   */
+  public void setInletPressure(double pressure) {
+    this.inletPressure = pressure;
+    this.inletPressureSet = true;
+  }
+
+  /**
+   * Set inlet pressure with unit.
+   *
+   * @param pressure Pressure value
+   * @param unit Pressure unit ("Pa", "bara", "barg", "psia")
+   */
+  public void setInletPressure(double pressure, String unit) {
+    double P_pa;
+    switch (unit.toLowerCase()) {
+      case "bara":
+      case "bar":
+        P_pa = pressure * 1e5;
+        break;
+      case "barg":
+        P_pa = (pressure + 1.01325) * 1e5;
+        break;
+      case "psia":
+        P_pa = pressure * 6894.76;
+        break;
+      default:
+        P_pa = pressure;
+    }
+    setInletPressure(P_pa);
+  }
+
+  /**
    * Set outlet pressure with unit.
    *
    * @param pressure Pressure value
@@ -4180,6 +4508,93 @@ public class TwoFluidPipe extends Pipeline {
         P_pa = pressure;
     }
     setOutletPressure(P_pa);
+  }
+
+  /**
+   * Close the pipe outlet (blocked/shut-in condition).
+   *
+   * <p>
+   * Sets outlet boundary condition to CLOSED, meaning zero flow velocity at outlet. Pressure will
+   * build up during transient simulation as mass accumulates in the pipe. Useful for:
+   * <ul>
+   * <li>Shut-in scenario analysis</li>
+   * <li>Pressure surge/water hammer studies</li>
+   * <li>Line packing simulations</li>
+   * <li>Emergency shutdown modeling</li>
+   * </ul>
+   */
+  public void closeOutlet() {
+    this.outletBCType = BoundaryCondition.CLOSED;
+  }
+
+  /**
+   * Open the pipe outlet with constant pressure boundary condition.
+   *
+   * <p>
+   * Restores outlet to CONSTANT_PRESSURE boundary condition. The outlet pressure is set to the
+   * value previously set via setOutletPressure(), or defaults to 1 bara if not set.
+   */
+  public void openOutlet() {
+    this.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+    if (!outletPressureSet) {
+      this.outletPressure = 1e5; // Default to 1 bara
+    }
+  }
+
+  /**
+   * Open the pipe outlet with specified pressure.
+   *
+   * @param pressure Outlet pressure value
+   * @param unit Pressure unit ("Pa", "bara", "barg", "psia")
+   */
+  public void openOutlet(double pressure, String unit) {
+    setOutletPressure(pressure, unit);
+    this.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+  }
+
+  /**
+   * Close the pipe inlet (blocked/no inflow condition).
+   *
+   * <p>
+   * Sets inlet boundary condition to CLOSED, meaning zero flow velocity at inlet. Pressure will
+   * decrease during transient simulation as mass leaves the pipe. Useful for:
+   * <ul>
+   * <li>Blowdown simulation</li>
+   * <li>Depressurization studies</li>
+   * <li>Emergency shutdown with upstream closure</li>
+   * </ul>
+   */
+  public void closeInlet() {
+    this.inletBCType = BoundaryCondition.CLOSED;
+  }
+
+  /**
+   * Open the pipe inlet with stream-connected boundary condition.
+   *
+   * <p>
+   * Restores inlet to STREAM_CONNECTED boundary condition, using flow rate, temperature, and
+   * composition from the connected inlet stream.
+   */
+  public void openInlet() {
+    this.inletBCType = BoundaryCondition.STREAM_CONNECTED;
+  }
+
+  /**
+   * Check if outlet is closed.
+   *
+   * @return true if outlet boundary condition is CLOSED
+   */
+  public boolean isOutletClosed() {
+    return outletBCType == BoundaryCondition.CLOSED;
+  }
+
+  /**
+   * Check if inlet is closed.
+   *
+   * @return true if inlet boundary condition is CLOSED
+   */
+  public boolean isInletClosed() {
+    return inletBCType == BoundaryCondition.CLOSED;
   }
 
   /**
