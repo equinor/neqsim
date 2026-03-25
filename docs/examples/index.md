@@ -39,6 +39,7 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
 | **ReadingFluidProperties** | See notebook for details | [Markdown](ReadingFluidProperties.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb) |
 | **TVP RVP Study** | See notebook for details | [Markdown](TVP_RVP_Study.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb) |
 | **TwoFluidPipe Tutorial** | See notebook for details | [Markdown](TwoFluidPipe_Tutorial.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TwoFluidPipe_Tutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/TwoFluidPipe_Tutorial.ipynb) |
+| **TwoFluidPipe Comprehensive Tutorial** | Complete guide: steady-state, transient, three-phase (gas-oil-water), terrain effects, heat transfer, Beggs-Brill validation, slug tracking | [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/TwoFluidPipeMultiphaseFlowTutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/examples/notebooks/TwoFluidPipeMultiphaseFlowTutorial.ipynb) |
 
 ## Java Examples
 

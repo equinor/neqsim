@@ -21,6 +21,7 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 | Document | Description |
 |----------|-------------|
 | [Beggs & Brill Correlation](beggs_and_brill_correlation) | Multiphase flow correlation theory and usage |
+| [Two-Fluid Transient Model](two_fluid_model) | 7-equation two-fluid model with slug tracking, virtual mass, and local losses |
 | [Friction Factor Models](friction_factor_models) | Haaland, Colebrook-White, laminar/turbulent |
 | [Heat Transfer](pipeline_heat_transfer) | Non-adiabatic operation, cooling, Gnielinski |
 | [Transient Simulation](pipeline_transient_simulation) | Dynamic simulation, slow wave propagation |
@@ -36,10 +37,11 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 │  Single-Phase Gas         →  AdiabaticPipe                     │
 │  Single-Phase Liquid      →  PipeBeggsAndBrills                │
 │  Two-Phase (Gas-Liquid)   →  PipeBeggsAndBrills                │
-│  Three-Phase (G-O-W)      →  PipeBeggsAndBrills                │
+│  Three-Phase (G-O-W)      →  PipeBeggsAndBrills / TwoFluidPipe │
 │  With Elevation           →  PipeBeggsAndBrills                │
 │  With Heat Transfer       →  PipeBeggsAndBrills                │
 │  Slow Transient/Dynamic   →  PipeBeggsAndBrills                │
+│  Detailed Transient       →  TwoFluidPipe (slug, terrain)      │
 │  Water Hammer/Fast Trans. →  WaterHammerPipe                   │
 │  Quick Estimate           →  AdiabaticTwoPhasePipe             │
 │                                                                 │

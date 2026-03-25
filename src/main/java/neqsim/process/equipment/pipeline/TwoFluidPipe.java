@@ -247,6 +247,41 @@ public class TwoFluidPipe extends Pipeline {
   /** Wax appearance temperature (K). */
   private double waxAppearanceTemperature = 0.0;
 
+  // ============ Junction/Bend Loss Coefficients ============
+
+  /**
+   * K-factors for local losses (bends, valves, fittings) at specific positions. Key = position (m),
+   * Value = K-factor (dimensionless loss coefficient).
+   */
+  private java.util.Map<Double, Double> localLossKFactors = new java.util.HashMap<>();
+
+  /**
+   * Total equivalent length of fittings (m). Used when individual positions are not specified. The
+   * equivalent length is added to the total pipe length for friction calculation.
+   */
+  private double equivalentLengthFittings = 0.0;
+
+  /**
+   * Number of 90-degree bends. K-factor = 0.3-0.5 per bend typically.
+   */
+  private int numberOf90DegreeBends = 0;
+
+  /**
+   * Number of 45-degree bends. K-factor = 0.15-0.25 per bend typically.
+   */
+  private int numberOf45DegreeBends = 0;
+
+  /**
+   * Inlet loss coefficient. K-factor for inlet effects (sharp-edge inlet K ~ 0.5, bell-mouth K ~
+   * 0.05).
+   */
+  private double inletLossCoefficient = 0.0;
+
+  /**
+   * Outlet loss coefficient. K-factor for outlet effects (sudden expansion K ~ 1.0).
+   */
+  private double outletLossCoefficient = 0.0;
+
   /** Sections flagged for hydrate risk. */
   private boolean[] hydrateRiskSections = null;
 
@@ -5675,6 +5710,234 @@ public class TwoFluidPipe extends Pipeline {
     sb.append(String.format("Mixture density: %.2f kg/m³\n", rhoMix));
     sb.append(String.format("Surface tension: %.4f N/m\n", sigma));
 
+    return sb.toString();
+  }
+
+  // ============ Junction/Bend Loss Methods ============
+
+  /**
+   * Add a local loss (K-factor) at a specific pipe position.
+   *
+   * <p>
+   * K-factors represent minor losses from fittings, valves, and bends. The pressure drop is: ΔP = K
+   * × 0.5 × ρ × v²
+   * </p>
+   *
+   * <p>
+   * Typical K-factor values:
+   * </p>
+   * <table>
+   * <caption>Typical K-factor values for pipe fittings</caption>
+   * <tr>
+   * <th>Fitting</th>
+   * <th>K-factor</th>
+   * </tr>
+   * <tr>
+   * <td>90° elbow (standard)</td>
+   * <td>0.30</td>
+   * </tr>
+   * <tr>
+   * <td>90° elbow (long radius)</td>
+   * <td>0.20</td>
+   * </tr>
+   * <tr>
+   * <td>45° elbow</td>
+   * <td>0.17</td>
+   * </tr>
+   * <tr>
+   * <td>Tee (straight through)</td>
+   * <td>0.20</td>
+   * </tr>
+   * <tr>
+   * <td>Tee (branch)</td>
+   * <td>1.00</td>
+   * </tr>
+   * <tr>
+   * <td>Gate valve (fully open)</td>
+   * <td>0.10</td>
+   * </tr>
+   * <tr>
+   * <td>Ball valve (fully open)</td>
+   * <td>0.05</td>
+   * </tr>
+   * <tr>
+   * <td>Check valve (swing)</td>
+   * <td>2.00</td>
+   * </tr>
+   * <tr>
+   * <td>Sudden expansion</td>
+   * <td>1.00</td>
+   * </tr>
+   * <tr>
+   * <td>Sudden contraction</td>
+   * <td>0.50</td>
+   * </tr>
+   * </table>
+   *
+   * @param position Distance from inlet (m)
+   * @param kFactor Loss coefficient (dimensionless)
+   */
+  public void addLocalLoss(double position, double kFactor) {
+    if (position >= 0 && position <= length && kFactor >= 0) {
+      localLossKFactors.put(position, kFactor);
+    }
+  }
+
+  /**
+   * Clear all local losses.
+   */
+  public void clearLocalLosses() {
+    localLossKFactors.clear();
+  }
+
+  /**
+   * Get local loss K-factor at a specific position.
+   *
+   * @param position Distance from inlet (m)
+   * @return K-factor at that position, or 0 if none defined
+   */
+  public double getLocalLossKFactor(double position) {
+    Double k = localLossKFactors.get(position);
+    return (k != null) ? k : 0.0;
+  }
+
+  /**
+   * Get total of all local loss K-factors.
+   *
+   * @return Sum of all K-factors
+   */
+  public double getTotalLocalLossKFactors() {
+    double total = 0;
+    for (Double k : localLossKFactors.values()) {
+      total += k;
+    }
+    // Add entrance/exit losses
+    total += inletLossCoefficient;
+    total += outletLossCoefficient;
+    // Add bend losses
+    total += numberOf90DegreeBends * 0.30; // Standard K for 90° bend
+    total += numberOf45DegreeBends * 0.17; // Standard K for 45° bend
+    return total;
+  }
+
+  /**
+   * Set number of 90-degree bends in the pipe.
+   *
+   * @param count Number of 90° bends
+   */
+  public void setNumberOf90DegreeBends(int count) {
+    this.numberOf90DegreeBends = Math.max(0, count);
+  }
+
+  /**
+   * Set number of 45-degree bends in the pipe.
+   *
+   * @param count Number of 45° bends
+   */
+  public void setNumberOf45DegreeBends(int count) {
+    this.numberOf45DegreeBends = Math.max(0, count);
+  }
+
+  /**
+   * Set inlet loss coefficient.
+   *
+   * @param kFactor Inlet K-factor (sharp-edge ~ 0.5, bell-mouth ~ 0.05)
+   */
+  public void setInletLossCoefficient(double kFactor) {
+    this.inletLossCoefficient = Math.max(0, kFactor);
+  }
+
+  /**
+   * Set outlet loss coefficient.
+   *
+   * @param kFactor Outlet K-factor (sudden expansion ~ 1.0)
+   */
+  public void setOutletLossCoefficient(double kFactor) {
+    this.outletLossCoefficient = Math.max(0, kFactor);
+  }
+
+  /**
+   * Set equivalent length of fittings.
+   *
+   * <p>
+   * Alternative to specifying K-factors: add equivalent pipe length that produces the same friction
+   * loss as the fittings.
+   * </p>
+   *
+   * @param equivalentLength Equivalent length in meters
+   */
+  public void setEquivalentLengthFittings(double equivalentLength) {
+    this.equivalentLengthFittings = Math.max(0, equivalentLength);
+  }
+
+  /**
+   * Get equivalent length of fittings.
+   *
+   * @return Equivalent length in meters
+   */
+  public double getEquivalentLengthFittings() {
+    return equivalentLengthFittings;
+  }
+
+  /**
+   * Calculate total pressure drop from local losses.
+   *
+   * <p>
+   * Uses the formula: ΔP = Σ(K × 0.5 × ρ_mix × v_mix²)
+   * </p>
+   *
+   * @return Total pressure drop from fittings/bends in Pa
+   */
+  public double calculateLocalLossPressureDrop() {
+    double totalK = getTotalLocalLossKFactors();
+    if (totalK <= 0 || sections == null || sections.length == 0) {
+      return 0;
+    }
+
+    // Use average conditions in pipe
+    double rhoMix = getAverageMixtureDensity();
+    double vMix = getMaxMixtureVelocity();
+
+    // ΔP = K × 0.5 × ρ × v²
+    return totalK * 0.5 * rhoMix * vMix * vMix;
+  }
+
+  /**
+   * Calculate total pressure drop including local losses.
+   *
+   * @return Total pressure drop (friction + gravity + local losses) in bar
+   */
+  public double getTotalPressureDrop() {
+    double pIn = getInletPressure();
+    double pOut = getOutletPressure();
+    double frictionAndGravityDrop = pIn - pOut; // bar
+
+    // Add local losses
+    double localLossDrop = calculateLocalLossPressureDrop() / 1e5; // Pa to bar
+
+    return frictionAndGravityDrop + localLossDrop;
+  }
+
+  /**
+   * Get a summary of local losses.
+   *
+   * @return Summary string of all local losses
+   */
+  public String getLocalLossSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Local Loss Summary ===\n");
+    sb.append(String.format("90° bends: %d (K = %.2f each)\n", numberOf90DegreeBends, 0.30));
+    sb.append(String.format("45° bends: %d (K = %.2f each)\n", numberOf45DegreeBends, 0.17));
+    sb.append(String.format("Inlet K-factor: %.3f\n", inletLossCoefficient));
+    sb.append(String.format("Outlet K-factor: %.3f\n", outletLossCoefficient));
+    sb.append(String.format("Custom K-factors: %d locations\n", localLossKFactors.size()));
+    for (java.util.Map.Entry<Double, Double> entry : localLossKFactors.entrySet()) {
+      sb.append(String.format("  Position %.1f m: K = %.3f\n", entry.getKey(), entry.getValue()));
+    }
+    sb.append(String.format("Equivalent length: %.1f m\n", equivalentLengthFittings));
+    sb.append(String.format("Total K-factor: %.3f\n", getTotalLocalLossKFactors()));
+    sb.append(String.format("Local loss pressure drop: %.3f bar\n",
+        calculateLocalLossPressureDrop() / 1e5));
     return sb.toString();
   }
 }
