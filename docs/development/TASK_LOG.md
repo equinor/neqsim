@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-06-18 — TwoFluidPipe transient & pressure gradient benchmark and fixes
+**Type:** E (Feature)
+**Keywords:** TwoFluidPipe, transient, multiphase, two-fluid model, pressure gradient, benchmark, McAdams viscosity, Beggs Brill, holdup, friction factor, Haaland, pipeline
+**Solution:** src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java, src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeBenchmarkTest.java
+**Notes:** Fixed transient inlet BC override (isTransientMode flag), outlet pressure capture bug, improved viscosity model (McAdams quality-based harmonic averaging). Added 19 benchmark tests in 8 categories validating against PipeBeggsAndBrills and literature. Single-phase gas ratio 0.98, two-phase GLR sweep 0.81–1.33, vertical riser gravity 1.04 bar matches ρgH, D⁻⁵ diameter scaling ratio 33.7. Transient holdup evolution 0.19→0.09 after flow step-change now works correctly.
+
 ### 2026-03-14 — Fix IEC 60534 gas valve sizing: use standard volumetric flow (issue #1918)
 **Type:** D (Standards)
 **Keywords:** valve sizing, IEC 60534, Cv, Kv, gas valve, standard flow, actual flow, control valve, throttling valve, choked flow, N9

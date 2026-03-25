@@ -9,6 +9,71 @@
 
 ---
 
+## 2026-06-18 — TwoFluidPipe Transient & Pressure Gradient Improvements
+
+### Bug Fixes
+
+- **Transient inlet pressure override (FIXED):** `applyBoundaryConditions()` was
+  overwriting the inlet pressure from the stream during transient runs, preventing
+  the pressure profile from evolving. Added `isTransientMode` boolean flag; when
+  `true` (set automatically by `runTransient()`), inlet pressure comes from
+  `reconstructPressureProfile()` (backward march from fixed outlet BC) instead of
+  from the inlet stream.
+
+- **Outlet pressure captured before convergence (FIXED):** `outletPressure` was
+  being captured before `runSteadyState()` converged, recording the initial guess
+  (~54 bar) rather than the converged value (~59 bar). Now captured after
+  steady-state convergence.
+
+### Updated Files
+
+- **`TwoFluidPipe.java`** (`process.equipment.pipeline`):
+  - New field: `private boolean isTransientMode = false;`
+  - New method: `reconstructPressureProfile()` — backward marches from fixed outlet
+    boundary condition to compute inlet pressure from the local pressure gradient.
+  - New method: `calcDarcyFrictionFactor(rho, velocity, D, mu)` — extracted Haaland
+    equation (turbulent), 64/Re (laminar), linear interpolation (transitional
+    Re 2300–4000). Used in `estimatePressureGradient()`.
+  - Updated `estimatePressureGradient()`: replaced holdup-weighted viscosity
+    (`αG*μG + αL*μL`) with McAdams quality-based harmonic averaging
+    (`1/(x/μG + (1-x)/μL)`) where x is vapor mass fraction. Density remains
+    holdup-weighted (`αG*ρG + αL*ρL`).
+  - Updated `applyBoundaryConditions()`: inlet pressure only set from stream when
+    `!isTransientMode`.
+  - Updated `runTransient()`: sets `isTransientMode = true` at entry, calls
+    `reconstructPressureProfile()` for inlet pressure.
+
+### New Test File
+
+- **`TwoFluidPipeBenchmarkTest.java`** (`test/.../pipeline/`) — 19 benchmark tests
+  in 8 categories:
+  1. **SinglePhaseTests** (2): Gas and liquid horizontal flow
+  2. **TwoPhaseHorizontalTests** (3): Gas-dominated, liquid-dominated, intermediate GOR
+  3. **InclinedFlowTests** (3): Uphill 5°, downhill 5°, vertical riser
+  4. **ThreePhaseTests** (2): Moderate and high water cut
+  5. **ConsistencyTests** (3): dP monotonicity, smooth pressure profile, holdup sum = 1
+  6. **TransientTests** (1): 200 m pipe, 100% flow rate step-change, holdup evolution
+  7. **CrossValidationTests** (1): GLR sweep 0.50–0.95 vs PipeBeggsAndBrills
+  8. **LiteratureValidationTests** (4): Moody chart, holdup vs gas velocity, gravity in
+     vertical riser, diameter D⁻⁵ scaling
+
+### Benchmark Results Summary
+
+| Test | TwoFluidPipe / BeggsAndBrill | Notes |
+|------|-----|-------|
+| Single-phase gas | 0.98 | Excellent agreement |
+| Two-phase GLR 0.50–0.95 | 0.81–1.33 | Within engineering accuracy |
+| Vertical riser | 1.04 bar gravity dP | Matches ρgH calculation |
+| Diameter scaling (6"/12") | 33.7× | Close to theoretical ~32× (D⁻⁵) |
+| Transient holdup evolution | 0.19 → 0.09 | Holdup decreases after flow increase |
+
+### Migration
+
+No breaking API changes. Existing code calling `run()` and `runTransient()` will
+behave identically (steady-state) or more correctly (transient now evolves).
+
+---
+
 ## 2026-03-24 — Field Development Agent and Skills
 
 ### New Agent

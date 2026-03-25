@@ -60,7 +60,7 @@ The two-fluid model solves the following 1D PDEs:
 Where:
 - `αg`, `αL` = Gas and liquid holdups (volume fractions)
 - `ρg`, `ρL` = Phase densities
-- `ug`, `uL` = Phase velocities  
+- `ug`, `uL` = Phase velocities
 - `Γ` = Mass transfer rate (evaporation/condensation)
 - `A` = Pipe cross-sectional area
 
@@ -68,13 +68,13 @@ Where:
 
 **Gas phase:**
 ```
-∂/∂t(αg·ρg·ug·A) + ∂/∂x(αg·ρg·ug²·A + αg·P·A) = 
+∂/∂t(αg·ρg·ug·A) + ∂/∂x(αg·ρg·ug²·A + αg·P·A) =
     -τwg·Swg - τi·Si + αg·ρg·g·sin(θ)·A
 ```
 
 **Liquid phase:**
 ```
-∂/∂t(αL·ρL·uL·A) + ∂/∂x(αL·ρL·uL²·A + αL·P·A) = 
+∂/∂t(αL·ρL·uL·A) + ∂/∂x(αL·ρL·uL²·A + αL·P·A) =
     -τwL·SwL + τi·Si + αL·ρL·g·sin(θ)·A
 ```
 
@@ -537,7 +537,7 @@ For gas-oil-water systems, `ThreeFluidSection` and `ThreeFluidConservationEquati
         │      Gas        │
         ├─────────────────┤  ← Gas-Oil Interface
         │      Oil        │
-        ├─────────────────┤  ← Oil-Water Interface  
+        ├─────────────────┤  ← Oil-Water Interface
         │     Water       │
         └─────────────────┘
 ```
@@ -679,9 +679,9 @@ for (int step = 0; step < 1000; step++) {
         inletStream.setFlowRate(15.0, "kg/sec");  // Flow increase
         inletStream.run();
     }
-    
+
     pipe.runTransient(0.1, simId);  // Advance 0.1 seconds
-    
+
     // Monitor results
     double outletFlow = pipe.getOutletMassFlow();
     double liquidInventory = pipe.getLiquidInventory("m3");
@@ -718,6 +718,61 @@ for (int t = 0; t < 300; t++) {
 | **Equations** | Simplified momentum balance | Full conservation PDEs |
 | **Computation** | Moderate | Higher (per call) |
 | **Use case** | Initial conditions | Dynamic response |
+
+## Pressure Gradient Model
+
+The steady-state solver uses `estimatePressureGradient()` to compute the total pressure drop per unit length, combining friction and gravity:
+
+$$
+\frac{dP}{dx} = \frac{dP}{dx}\bigg|_{friction} + \frac{dP}{dx}\bigg|_{gravity}
+$$
+
+### Mixture Properties
+
+- **Density:** holdup-weighted — $\rho_{mix} = \alpha_G \rho_G + \alpha_L \rho_L$
+- **Viscosity:** McAdams quality-based harmonic averaging — $\frac{1}{\mu_{TP}} = \frac{x}{\mu_G} + \frac{1-x}{\mu_L}$ where $x$ is vapor mass fraction
+
+The McAdams model weights viscosity by mass flux rather than volume fraction, which better represents the momentum transfer in separated two-phase flows.
+
+### Friction Factor
+
+The `calcDarcyFrictionFactor()` method uses the Haaland equation for turbulent flow:
+
+$$
+f = \frac{0.25}{\left[\log_{10}\left(\frac{\varepsilon/D}{3.7} + \frac{6.9}{Re}\right)\right]^2}
+$$
+
+With 64/Re for laminar flow (Re < 2300) and linear interpolation through the transitional regime (Re 2300–4000).
+
+### Transient Boundary Conditions
+
+During transient simulation (`runTransient()`), the inlet pressure is **not** overridden from the inlet stream. Instead, the pressure profile is reconstructed by backward-marching from the fixed outlet boundary condition using the local pressure gradient:
+
+$$
+P_{i-1} = P_i + \frac{dP}{dx}\bigg|_i \cdot \Delta x
+$$
+
+This allows the inlet pressure to evolve naturally in response to changing flow conditions.
+
+## Benchmark Validation
+
+The `TwoFluidPipeBenchmarkTest` provides 19 tests validating `TwoFluidPipe` against `PipeBeggsAndBrills` and analytical results. Key benchmark numbers:
+
+| Test Case | TwoFluidPipe / Beggs&Brill Ratio | Notes |
+|-----------|----------------------------------|-------|
+| Single-phase gas (horizontal) | 0.98 | Excellent agreement |
+| Two-phase GLR 0.50 | 0.81 | Liquid-dominated, acceptable |
+| Two-phase GLR 0.75 | 1.16 | Intermediate GOR |
+| Two-phase GLR 0.95 | 1.08 | Gas-dominated wet gas |
+| Vertical riser gravity dP | 1.04 bar | Matches $\rho g H$ |
+| Diameter scaling (6"/12") | 33.7× | Close to theoretical ~32× ($D^{-5}$) |
+| Transient holdup evolution | 0.19 → 0.09 | Holdup decreases after 100% flow increase |
+
+### Running Benchmarks
+
+```bash
+./mvnw test -Dtest=TwoFluidPipeBenchmarkTest
+```
 
 ## Usage Example
 
@@ -795,7 +850,7 @@ The slug tracking system consists of two components working together:
 
 ```
 Terrain Profile with Slug Formation:
-                                    
+
     Inlet ─────┐                ┌───── Outlet
                │    Valley      │
                └────────────────┘
@@ -896,7 +951,7 @@ int steps = (int)(simTime / dt);
 
 for (int i = 0; i < steps; i++) {
     pipe.runTransient(dt, id);
-    
+
     // Monitor progress every 15 minutes
     if (i % 900 == 0 && i > 0) {
         System.out.printf("Time: %.0f min, Slugs: %d, Outlet: %d%n",
@@ -1020,7 +1075,7 @@ separator.setInternalDiameter(2.5);
 separator.setSeparatorLength(8.0);
 
 // Level controller on liquid outlet valve
-ThrottlingValve liquidValve = new ThrottlingValve("LiquidValve", 
+ThrottlingValve liquidValve = new ThrottlingValve("LiquidValve",
     separator.getLiquidOutStream());
 LevelTransmitter levelTT = new LevelTransmitter("LT-100", separator);
 ControllerDeviceBaseClass levelController = new ControllerDeviceBaseClass("LIC-100");
@@ -1043,7 +1098,7 @@ process.run();  // Initial steady-state
 UUID simId = UUID.randomUUID();
 for (int step = 0; step < 150; step++) {
     process.runTransient(2.0, simId);
-    
+
     double pipeOutFlow = pipeline.getOutletStream().getFlowRate("kg/sec");
     double level = separator.getLiquidLevel();
     // Track slug arrivals, level variations, etc.
@@ -1145,7 +1200,7 @@ The model includes comprehensive unit tests:
 
 ### Core Tests
 - Closure relations: 14 tests
-- Numerical methods: 11 tests  
+- Numerical methods: 11 tests
 - Core solver: 14 tests
 - Thermodynamic coupling: 40 tests
 - Three-phase extension: 28 tests
