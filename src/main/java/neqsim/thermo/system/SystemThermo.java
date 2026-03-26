@@ -1208,6 +1208,8 @@ public abstract class SystemThermo implements SystemInterface {
       this.setMixingRule(2);
     } else if (modelName.equals("Electrolyte-ScRK-EOS")) {
       this.setMixingRule(4);
+    } else if (modelName.equals("Kent Eisenberg-model")) {
+      this.setMixingRule(4);
     } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS")) {
       this.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else if (modelName.equals("GERG-water-EOS")) {
