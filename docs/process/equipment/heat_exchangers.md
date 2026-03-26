@@ -13,6 +13,11 @@ Documentation for heat transfer equipment in NeqSim process simulation.
 - [Usage Examples](#usage-examples)
 - [Heat Exchanger Networks](#heat-exchanger-networks)
 
+> **Thermal-Hydraulic Design:** For detailed tube-side/shell-side HTC calculations,
+> pressure drops, LMTD correction factors, Bell-Delaware method, vibration screening,
+> and rating mode, see the
+> [Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design).
+
 ---
 
 ## Overview

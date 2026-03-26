@@ -11,6 +11,10 @@ import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
+import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
+import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
+import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
@@ -509,5 +513,316 @@ public class DocExamplesCompilationTest {
     assertNotNull(json);
     assertTrue(cwFlow > 0);
     assertTrue(pumpPower > 0);
+  }
+
+  // ===========================================================================
+  // Thermal-Hydraulic Design Documentation Examples
+  // (from docs/process/mechanical_design/thermal_hydraulic_design.md)
+  // ===========================================================================
+
+  /**
+   * Standalone ThermalDesignCalculator example from Quick Start section.
+   */
+  @Test
+  public void testThermalDesignCalculatorStandaloneDoc() {
+    ThermalDesignCalculator calc = new ThermalDesignCalculator();
+
+    // Geometry: 3/4" tubes, 500mm shell
+    calc.setTubeODm(0.01905);
+    calc.setTubeIDm(0.01483);
+    calc.setTubeLengthm(6.096);
+    calc.setTubeCount(100);
+    calc.setTubePasses(2);
+    calc.setTubePitchm(0.02381);
+    calc.setTriangularPitch(true);
+    calc.setShellIDm(0.5);
+    calc.setBaffleSpacingm(0.2);
+    calc.setBaffleCount(10);
+    calc.setBaffleCut(0.25);
+
+    // Tube side: cooling water
+    calc.setTubeSideFluid(998.0, 0.001, 4180.0, 0.60, 5.0, true);
+
+    // Shell side: process gas
+    calc.setShellSideFluid(50.0, 1.5e-5, 2200.0, 0.03, 3.0);
+
+    // Fouling resistances (m2*K/W)
+    calc.setFoulingTube(0.00018);
+    calc.setFoulingShell(0.00035);
+
+    calc.calculate();
+
+    assertTrue(calc.getTubeSideHTC() > 0, "Tube-side HTC should be positive");
+    assertTrue(calc.getShellSideHTC() > 0, "Shell-side HTC should be positive");
+    assertTrue(calc.getOverallU() > 0, "Overall U should be positive");
+    assertTrue(calc.getTubeSidePressureDropBar() > 0, "Tube-side dP should be positive");
+    assertTrue(calc.getShellSidePressureDropBar() > 0, "Shell-side dP should be positive");
+  }
+
+  /**
+   * Bell-Delaware method direct usage from documentation.
+   */
+  @Test
+  public void testBellDelawareDirectUsageDoc() {
+    double de = BellDelawareMethod.calcShellEquivDiameter(0.01905, 0.02381, true);
+    assertTrue(de > 0, "Shell equivalent diameter should be positive");
+
+    double aCross = BellDelawareMethod.calcCrossflowArea(0.5, 0.2, 0.01905, 0.02381);
+    assertTrue(aCross > 0, "Crossflow area should be positive");
+
+    double hKern = BellDelawareMethod.calcKernShellSideHTC(50.0, de, 1.5e-5, 2200.0, 0.03, 1.5e-5);
+    assertTrue(hKern > 0, "Kern shell-side HTC should be positive");
+
+    double Jc = BellDelawareMethod.calcJc(0.25);
+    assertTrue(Jc > 0 && Jc < 2.0, "Jc should be in reasonable range");
+
+    double Jl = BellDelawareMethod.calcJl(0.0004, 0.003, aCross, 100, 0.01905, 0.2);
+    assertTrue(Jl > 0 && Jl <= 1.0, "Jl should be between 0 and 1");
+
+    double Jb = BellDelawareMethod.calcJb(0.005, aCross, true, 2, 15);
+    assertTrue(Jb > 0 && Jb <= 1.0, "Jb should be between 0 and 1");
+
+    double Js = BellDelawareMethod.calcJs(0.2, 0.25, 0.25, 10);
+    assertTrue(Js > 0, "Js should be positive");
+
+    double Jr = BellDelawareMethod.calcJr(20000.0, 15);
+    assertTrue(Jr > 0, "Jr should be positive");
+  }
+
+  /**
+   * LMTD correction factor usage from documentation.
+   */
+  @Test
+  public void testLMTDCorrectionFactorDoc() {
+    double Ft = LMTDcorrectionFactor.calcFt1ShellPass(150.0, 90.0, 30.0, 80.0);
+    assertTrue(Ft > 0.0 && Ft <= 1.0, "Ft for 1 shell pass should be between 0 and 1");
+
+    double R = LMTDcorrectionFactor.calcR(150.0, 90.0, 30.0, 80.0);
+    assertTrue(R > 0, "R should be positive");
+
+    double P = LMTDcorrectionFactor.calcP(150.0, 90.0, 30.0, 80.0);
+    assertTrue(P > 0 && P < 1.0, "P should be between 0 and 1");
+
+    double Ft2 = LMTDcorrectionFactor.calcFt(150.0, 90.0, 30.0, 80.0, 2);
+    assertTrue(Ft2 >= Ft, "2 shell passes should give Ft >= 1 shell pass");
+
+    int passes = LMTDcorrectionFactor.requiredShellPasses(200.0, 50.0, 30.0, 170.0);
+    assertTrue(passes >= 1, "Should need at least 1 shell pass");
+  }
+
+  /**
+   * Vibration screening complete example from documentation.
+   */
+  @Test
+  public void testVibrationScreeningDoc() {
+    VibrationAnalysis.VibrationResult result = VibrationAnalysis.performScreening(0.01905, // tube
+                                                                                           // OD (m)
+        0.01483, // tube ID (m)
+        0.4, // unsupported span (m)
+        0.02381, // tube pitch (m)
+        200e9, // Young's modulus (Pa) - carbon steel
+        7800.0, // tube material density (kg/m3)
+        2.0, // shell-side crossflow velocity (m/s)
+        50.0, // shell fluid density (kg/m3)
+        800.0, // tube fluid density (kg/m3)
+        0.5, // shell ID (m)
+        340.0, // sonic velocity in shell fluid (m/s)
+        0.03, // damping ratio
+        true); // triangular pitch
+
+    assertNotNull(result, "Vibration result should not be null");
+    assertNotNull(result.getSummary(), "Summary should not be null");
+    assertTrue(result.naturalFrequencyHz > 0, "Natural frequency should be positive");
+    assertTrue(result.vortexSheddingFrequencyHz > 0, "Vortex shedding freq should be positive");
+  }
+
+  /**
+   * Individual vibration calculations from documentation.
+   */
+  @Test
+  public void testVibrationIndividualCalcsDoc() {
+    double fn = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.4, 200e9, 7800.0, 800.0,
+        50.0, "pinned");
+    assertTrue(fn > 0, "Natural frequency should be positive");
+
+    double fvs = VibrationAnalysis.calcVortexSheddingFrequency(2.0, 0.01905, 0.02381);
+    assertTrue(fvs > 0, "Vortex shedding frequency should be positive");
+
+    double vCrit =
+        VibrationAnalysis.calcCriticalVelocityConnors(fn, 0.01905, 0.03, 1.5, 50.0, true);
+    assertTrue(vCrit > 0, "Critical velocity should be positive");
+
+    double fac = VibrationAnalysis.calcAcousticFrequency(0.5, 340.0, 1);
+    assertTrue(fac > 0, "Acoustic frequency should be positive");
+  }
+
+  /**
+   * Zone-by-zone analysis from documentation.
+   */
+  @Test
+  public void testZoneByZoneAnalysisDoc() {
+    ThermalDesignCalculator calc = new ThermalDesignCalculator();
+    // Configure geometry
+    calc.setTubeODm(0.01905);
+    calc.setTubeIDm(0.01483);
+    calc.setTubeLengthm(6.096);
+    calc.setTubeCount(100);
+    calc.setTubePasses(2);
+    calc.setTubePitchm(0.02381);
+    calc.setTriangularPitch(true);
+    calc.setShellIDm(0.5);
+    calc.setBaffleSpacingm(0.2);
+    calc.setBaffleCount(10);
+    calc.setBaffleCut(0.25);
+
+    ThermalDesignCalculator.ZoneDefinition zone1 = new ThermalDesignCalculator.ZoneDefinition();
+    zone1.zoneName = "desuperheating";
+    zone1.dutyFraction = 0.15;
+    zone1.totalDuty = 150000.0;
+    zone1.lmtd = 40.0;
+    zone1.tubeDensity = 5.0;
+    zone1.tubeViscosity = 1.2e-5;
+    zone1.tubeCp = 2100.0;
+    zone1.tubeConductivity = 0.025;
+    zone1.shellDensity = 998.0;
+    zone1.shellViscosity = 0.001;
+    zone1.shellCp = 4180.0;
+    zone1.shellConductivity = 0.60;
+
+    ThermalDesignCalculator.ZoneDefinition[] zones =
+        new ThermalDesignCalculator.ZoneDefinition[] {zone1};
+
+    ThermalDesignCalculator.ZoneResult[] results = calc.calculateZones(zones);
+    assertNotNull(results, "Zone results should not be null");
+    assertEquals(1, results.length, "Should have 1 zone result");
+    ThermalDesignCalculator.ZoneResult zr = results[0];
+    assertEquals("desuperheating", zr.zoneName);
+    assertTrue(zr.overallU > 0, "Zone overall U should be positive");
+    assertTrue(zr.requiredArea > 0, "Zone required area should be positive");
+  }
+
+  /**
+   * Bell-Delaware shell-side method selection from documentation.
+   */
+  @Test
+  public void testShellSideMethodSelectionDoc() {
+    ThermalDesignCalculator calc = new ThermalDesignCalculator();
+
+    calc.setTubeODm(0.01905);
+    calc.setTubeIDm(0.01483);
+    calc.setTubeLengthm(6.096);
+    calc.setTubeCount(100);
+    calc.setTubePasses(2);
+    calc.setTubePitchm(0.02381);
+    calc.setTriangularPitch(true);
+    calc.setShellIDm(0.5);
+    calc.setBaffleSpacingm(0.2);
+    calc.setBaffleCount(10);
+    calc.setBaffleCut(0.25);
+    calc.setTubeSideFluid(998.0, 0.001, 4180.0, 0.60, 5.0, true);
+    calc.setShellSideFluid(50.0, 1.5e-5, 2200.0, 0.03, 3.0);
+
+    // Test Kern method (default)
+    calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.KERN);
+    calc.calculate();
+    double uKern = calc.getOverallU();
+    assertTrue(uKern > 0, "Kern overall U should be positive");
+
+    // Test Bell-Delaware method
+    calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
+    calc.calculate();
+    double uBD = calc.getOverallU();
+    assertTrue(uBD > 0, "Bell-Delaware overall U should be positive");
+  }
+
+  /**
+   * Full mechanical design integration from documentation.
+   */
+  @Test
+  public void testFullMechanicalDesignIntegrationDoc() {
+    neqsim.thermo.system.SystemSrkEos fluid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 60.0, 20.0);
+    fluid.addComponent("methane", 120.0);
+    fluid.addComponent("ethane", 120.0);
+    fluid.addComponent("n-heptane", 3.0);
+    fluid.createDatabase(true);
+    fluid.setMixingRule(2);
+
+    Stream hot = new Stream("hot", fluid);
+    hot.setTemperature(100.0, "C");
+    hot.setFlowRate(1000.0, "kg/hr");
+
+    Stream cold = new Stream("cold", (neqsim.thermo.system.SystemInterface) fluid.clone());
+    cold.setTemperature(20.0, "C");
+    cold.setFlowRate(310.0, "kg/hr");
+
+    neqsim.process.equipment.heatexchanger.HeatExchanger hx =
+        new neqsim.process.equipment.heatexchanger.HeatExchanger("E-100", hot, cold);
+    hx.setUAvalue(1000.0);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(hot);
+    ps.add(cold);
+    ps.add(hx);
+    ps.run();
+
+    hx.initMechanicalDesign();
+    neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign design =
+        hx.getMechanicalDesign();
+    design.calcDesign();
+
+    assertNotNull(design.getSelectedType(), "Selected type should not be null");
+    assertNotNull(design.getSelectedSizingResult(), "Sizing result should not be null");
+    assertTrue(design.getSelectedSizingResult().getRequiredArea() > 0,
+        "Required area should be positive");
+    assertTrue(design.getWeightTotal() > 0, "Weight should be positive");
+  }
+
+  /**
+   * Rating mode in process simulation from documentation.
+   */
+  @Test
+  public void testRatingModeDocExample() {
+    neqsim.thermo.system.SystemSrkEos hotFluid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 100.0, 20.0);
+    hotFluid.addComponent("methane", 0.85);
+    hotFluid.addComponent("ethane", 0.10);
+    hotFluid.addComponent("propane", 0.05);
+    hotFluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("hot", hotFluid);
+    hotStream.setTemperature(100.0, "C");
+    hotStream.setFlowRate(1000.0, "kg/hr");
+
+    Stream coldStream = new Stream("cold", (neqsim.thermo.system.SystemInterface) hotFluid.clone());
+    coldStream.setTemperature(20.0, "C");
+    coldStream.setFlowRate(500.0, "kg/hr");
+
+    neqsim.process.equipment.heatexchanger.HeatExchanger hx =
+        new neqsim.process.equipment.heatexchanger.HeatExchanger("E-100", hotStream, coldStream);
+
+    ThermalDesignCalculator ratingCalc = new ThermalDesignCalculator();
+    ratingCalc.setTubeODm(0.01905);
+    ratingCalc.setTubeIDm(0.01483);
+    ratingCalc.setTubeLengthm(6.096);
+    ratingCalc.setTubeCount(100);
+    ratingCalc.setTubePasses(2);
+    ratingCalc.setTubePitchm(0.02381);
+    ratingCalc.setTriangularPitch(true);
+    ratingCalc.setShellIDm(0.5);
+    ratingCalc.setBaffleSpacingm(0.2);
+    ratingCalc.setBaffleCount(10);
+
+    hx.setRatingCalculator(ratingCalc);
+    hx.setRatingArea(50.0);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(hotStream);
+    ps.add(coldStream);
+    ps.add(hx);
+    ps.run();
+
+    double computedU = hx.getRatingU();
+    assertTrue(computedU >= 0, "Computed U from rating mode should be non-negative");
   }
 }

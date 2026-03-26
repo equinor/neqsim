@@ -981,6 +981,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Document                | Path                                                                                                   | Description                                                 |
 | ----------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide) | **NEW** TEMA shell and tube heat exchanger design standards |
+| **Thermal-Hydraulic Design** | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design) | **NEW** Tube/shell HTC (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops, LMTD correction, vibration screening, rating mode |
 
 ### Appendix H: Cookbook (Quick Recipes)
 
