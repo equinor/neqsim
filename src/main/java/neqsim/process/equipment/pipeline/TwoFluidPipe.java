@@ -645,6 +645,10 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
+    // Disable multiPhaseCheck for internal pipe flashes - the inlet stream
+    // already established the correct phases. Stability analysis with CPA
+    // is extremely expensive and not needed for property updates along the pipe.
+    referenceFluid.setMultiPhaseCheck(false);
 
     // Calculate inlet phase properties - initialize with defaults
     double rhoG = 1.0, rhoL = 800.0, muG = 1e-5, muL = 1e-3;
@@ -1103,10 +1107,12 @@ public class TwoFluidPipe extends Pipeline {
         updateTemperatureProfile(massFlow, area);
       }
 
-      // Update thermodynamics on EVERY iteration to capture phase changes (condensation)
-      // MUST be after P/T updates so flash uses fresh values
-      // This is critical for systems where liquid condenses along the pipeline
-      if (referenceFluid != null) {
+      // Update thermodynamics once after initial pressure/holdup stabilization
+      // Flash calculations (especially CPA) are very expensive, so only update
+      // once near the start and once at convergence, not every iteration.
+      // For systems where condensation tracking is important, the transient loop
+      // handles ongoing updates via thermodynamicUpdateInterval.
+      if (referenceFluid != null && iter == 5) {
         updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
       }
 
@@ -2966,6 +2972,7 @@ public class TwoFluidPipe extends Pipeline {
     // Number of sub-steps (use more sub-steps for stability)
     int subSteps = (int) Math.ceil(dt / dtActual);
     subSteps = Math.max(subSteps, 2); // At least 2 sub-steps for stability
+    subSteps = Math.min(subSteps, 10000); // Safety cap to prevent runaway loops
     dtActual = dt / subSteps;
 
     for (int step = 0; step < subSteps; step++) {
