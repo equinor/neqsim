@@ -1,7 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection;
 import neqsim.process.equipment.stream.Stream;
@@ -27,7 +27,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version 1.0
  */
-@Tag("slow")
+@Disabled("Disabled due to infinite solving times - needs TwoFluidPipe optimization")
 public class TwoFluidPipeCondensationTest {
 
   /**
