@@ -65,3 +65,42 @@ Every code snippet in the notebook must be verified against actual NeqSim source
    that exercises the same Java API calls
 3. Run the test to confirm all calls work before finalising the notebook
 4. See `neqsim-api-patterns` skill § "Documentation Code Verification" for common pitfalls
+
+## Notebook Execution (MANDATORY — NON-NEGOTIABLE)
+
+**After creating a notebook, you MUST execute every code cell sequentially and verify each passes.**
+A notebook is NOT complete until all cells have been run successfully. Never deliver notebooks
+with cells in "not executed" state.
+
+### Execution Workflow (EVERY STEP REQUIRED)
+
+1. **Build and deploy the latest JAR** if using new/modified Java classes:
+   ```bash
+   ./mvnw package -DskipTests -Dmaven.javadoc.skip=true  # Linux/Mac
+   mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"  # Windows
+   ```
+   Then copy the JAR to the Python neqsim package's `lib/java11/` directory.
+
+2. **Configure the notebook kernel** using `configure_notebook` (or equivalent tool)
+
+3. **Run every code cell in order** — start with cell 1 (imports), then cell 2, etc.
+   - Use the `run_notebook_cell` tool for each code cell
+   - Wait for each cell to complete before proceeding to the next
+
+4. **If any cell fails**, fix it immediately:
+   - Read the error message carefully
+   - Check the Java source for correct method signatures
+   - Common fixes: add unit string argument, use correct getter name, cast types explicitly
+   - Re-run the fixed cell before continuing
+
+5. **Common runtime errors and fixes**:
+   - `AttributeError: object has no attribute 'methodName'` — method doesn't exist; read Java source
+   - `TypeError: No matching overloads found` — wrong arguments; check Java method signature
+   - `getColumnDiameter()` → `getInternalDiameter()` — use inherited method names, not assumed ones
+   - `getFanStaticPressure()` → `getFanStaticPressure(double flow)` — some getters require arguments
+   - `setDesignAmbientTemperature(15.0)` → `setDesignAmbientTemperature(15.0, "C")` — unit strings required
+
+6. **Final verification**: After all cells pass, review outputs for reasonable values
+   - Temperatures in expected ranges, pressures positive, flows non-zero
+   - Plots render correctly with labels and units
+   - JSON reports parse without errors

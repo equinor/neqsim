@@ -25,6 +25,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -426,6 +427,28 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       conversionFactor = 1.0 / 1.0e3;
     }
     return conversionFactor * getPower();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(
+              out.getFlowRate(flowUnit), flowUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(
+              out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature",
+          ProcessEquipmentInterface.createStateEntry(
+              out.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    state.put("power",
+        ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    return state;
   }
 
   /**

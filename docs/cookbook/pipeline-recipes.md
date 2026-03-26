@@ -114,14 +114,10 @@ pipe.setLength(20000)
 pipe.setDiameter(0.25)
 pipe.setNumberOfSections(100)
 
-# Enable virtual mass force for slug dynamics (Drew & Lahey 1987)
-pipe.getEquations().setEnableVirtualMassForce(True)
-pipe.getEquations().setVirtualMassCoefficient(0.5)  # Default for spheres
-pipe.getEquations().setTimestep(0.1)  # Required for dv/dt calculation
-
 # Add local loss coefficients (fittings, bends)
-pipe.addLocalLoss("Tee junction", 0.9)
-pipe.addLocalLoss("Check valve", 2.0)
+# addLocalLoss(position_m, kFactor)
+pipe.addLocalLoss(5000.0, 0.9)   # K=0.9 at 5000m (tee junction)
+pipe.addLocalLoss(15000.0, 2.0)  # K=2.0 at 15000m (check valve)
 pipe.setNumberOf90DegreeBends(4)   # K=0.3 each
 pipe.setNumberOf45DegreeBends(2)   # K=0.16 each
 pipe.setInletLossCoefficient(0.5)  # Sharp entrance
@@ -717,10 +713,9 @@ pipe.setOutletPressure(30.0, "bara")  # Receiving pressure
 # Flow rate is computed from the pressure differential
 pipe.run()
 
-# Check computed flow rate
-area = 3.14159 * pipe.getDiameter()**2 / 4
-mass_flux = pipe.getSections()[0].getGasMassPerLength() * pipe.getSections()[0].getGasVelocity()
-print(f"Computed inlet mass flux: {mass_flux * area:.2f} kg/s")
+# Check computed flow rate from outlet stream
+outlet = pipe.getOutletStream()
+print(f"Computed outlet mass flow: {outlet.getFlowRate('kg/sec'):.2f} kg/s")
 ```
 
 ### Boundary Condition Summary Table

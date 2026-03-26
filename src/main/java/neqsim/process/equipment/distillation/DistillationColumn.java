@@ -18,6 +18,7 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
 import neqsim.process.util.monitor.DistillationColumnResponse;
@@ -110,6 +111,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** Mechanical design for the distillation column. */
   private DistillationColumnMechanicalDesign mechanicalDesign;
+
+  /** Column specification for the top (condenser) end. */
+  private ColumnSpecification topSpecification;
+  /** Column specification for the bottom (reboiler) end. */
+  private ColumnSpecification bottomSpecification;
 
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
@@ -404,6 +410,64 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public void run(UUID id) {
     assignUnassignedFeeds();
+    applyDirectSpecifications();
+
+    boolean needsOuterLoop = needsSpecificationAdjustment();
+    if (needsOuterLoop) {
+      solveWithSpecifications(id);
+    } else {
+      solveInner(id);
+    }
+  }
+
+  /**
+   * Apply specifications that can be set directly without an outer adjustment loop. REFLUX_RATIO
+   * specs are set directly on the condenser or reboiler.
+   */
+  private void applyDirectSpecifications() {
+    if (topSpecification != null
+        && topSpecification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
+        && hasCondenser) {
+      getCondenser().setRefluxRatio(topSpecification.getTargetValue());
+    }
+    if (bottomSpecification != null
+        && bottomSpecification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
+        && hasReboiler) {
+      getReboiler().setRefluxRatio(bottomSpecification.getTargetValue());
+    }
+  }
+
+  /**
+   * Check whether an outer adjustment loop is needed for the active specifications.
+   *
+   * @return true if at least one specification requires iterative adjustment
+   */
+  private boolean needsSpecificationAdjustment() {
+    return needsAdjustment(topSpecification) || needsAdjustment(bottomSpecification);
+  }
+
+  /**
+   * Check whether a single specification requires an outer adjustment loop.
+   *
+   * @param spec the specification to check (may be null)
+   * @return true if this specification needs outer-loop adjustment
+   */
+  private boolean needsAdjustment(ColumnSpecification spec) {
+    if (spec == null) {
+      return false;
+    }
+    ColumnSpecification.SpecificationType type = spec.getType();
+    return type == ColumnSpecification.SpecificationType.PRODUCT_PURITY
+        || type == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY
+        || type == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE;
+  }
+
+  /**
+   * Run the inner column solver (without specification adjustment).
+   *
+   * @param id calculation identifier
+   */
+  private void solveInner(UUID id) {
     switch (solverType) {
       case DAMPED_SUBSTITUTION:
         solveSequential(id, relaxationFactor);
@@ -423,6 +487,224 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         solveSequential(id, 1.0);
         break;
     }
+  }
+
+  /**
+   * Solve the column with an outer loop that adjusts condenser/reboiler temperatures to satisfy
+   * product specifications. Uses a secant method for each specification that requires adjustment.
+   *
+   * @param id calculation identifier
+   */
+  private void solveWithSpecifications(UUID id) {
+    boolean adjustTop = needsAdjustment(topSpecification) && hasCondenser;
+    boolean adjustBottom = needsAdjustment(bottomSpecification) && hasReboiler;
+
+    int maxOuterIter = 20;
+    if (adjustTop && topSpecification != null) {
+      maxOuterIter = Math.max(maxOuterIter, topSpecification.getMaxIterations());
+    }
+    if (adjustBottom && bottomSpecification != null) {
+      maxOuterIter = Math.max(maxOuterIter, bottomSpecification.getMaxIterations());
+    }
+
+    double topTol = adjustTop ? topSpecification.getTolerance() : 1.0e-4;
+    double bottomTol = adjustBottom ? bottomSpecification.getTolerance() : 1.0e-4;
+
+    // Initialize temperature bounds from feed conditions
+    double feedTemp = estimateFeedTemperature();
+
+    // Initial guesses for temperatures to adjust
+    double topTemp = hasCondenser && getCondenser().isSetOutTemperature()
+        ? getCondenser().getOutTemperature()
+        : feedTemp - 20.0;
+    double bottomTemp = hasReboiler && getReboiler().isSetOutTemperature()
+        ? getReboiler().getOutTemperature()
+        : feedTemp + 20.0;
+
+    // Secant method state for top
+    double topTemp0 = topTemp;
+    double topTemp1 = topTemp - 5.0;
+    double topErr0 = Double.NaN;
+    double topErr1 = Double.NaN;
+
+    // Secant method state for bottom
+    double bottomTemp0 = bottomTemp;
+    double bottomTemp1 = bottomTemp + 5.0;
+    double bottomErr0 = Double.NaN;
+    double bottomErr1 = Double.NaN;
+
+    for (int outerIter = 0; outerIter < maxOuterIter; outerIter++) {
+      // Set current guess temperatures
+      if (adjustTop) {
+        double currentTopTemp = (outerIter == 0) ? topTemp0 : topTemp1;
+        getCondenser().setOutTemperature(currentTopTemp);
+      }
+      if (adjustBottom) {
+        double currentBottomTemp = (outerIter == 0) ? bottomTemp0 : bottomTemp1;
+        getReboiler().setOutTemperature(currentBottomTemp);
+      }
+
+      // Reset initialization flag for new temperature guesses
+      setDoInitializion(true);
+
+      // Solve the column with current settings
+      solveInner(id);
+
+      if (!solved()) {
+        logger.warn("Inner solver did not converge in outer iteration {}", outerIter);
+        // Try to continue with reduced step
+      }
+
+      // Evaluate specification errors
+      double topError = adjustTop ? evaluateSpecError(topSpecification) : 0.0;
+      double bottomError = adjustBottom ? evaluateSpecError(bottomSpecification) : 0.0;
+
+      logger.info(
+          "Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}",
+          outerIter, topError, bottomError,
+          adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
+          adjustBottom ? (outerIter == 0 ? bottomTemp0 : bottomTemp1) : 0.0);
+
+      // Check convergence
+      boolean topConverged = !adjustTop || Math.abs(topError) < topTol;
+      boolean bottomConverged = !adjustBottom || Math.abs(bottomError) < bottomTol;
+
+      if (topConverged && bottomConverged) {
+        break;
+      }
+
+      // Update secant method for top temperature
+      if (adjustTop && !topConverged) {
+        if (outerIter == 0) {
+          topErr0 = topError;
+        } else {
+          topErr1 = topError;
+          double newTopTemp = secantStep(topTemp0, topTemp1, topErr0, topErr1, feedTemp);
+          topTemp0 = topTemp1;
+          topErr0 = topErr1;
+          topTemp1 = newTopTemp;
+        }
+      }
+
+      // Update secant method for bottom temperature
+      if (adjustBottom && !bottomConverged) {
+        if (outerIter == 0) {
+          bottomErr0 = bottomError;
+        } else {
+          bottomErr1 = bottomError;
+          double newBottomTemp = secantStep(bottomTemp0, bottomTemp1, bottomErr0, bottomErr1,
+              feedTemp);
+          bottomTemp0 = bottomTemp1;
+          bottomErr0 = bottomErr1;
+          bottomTemp1 = newBottomTemp;
+        }
+      }
+    }
+  }
+
+  /**
+   * Compute the secant method step for temperature adjustment, with safeguards.
+   *
+   * @param t0 previous temperature
+   * @param t1 current temperature
+   * @param f0 spec error at t0
+   * @param f1 spec error at t1
+   * @param feedTemp reference feed temperature for bounding
+   * @return the next temperature guess
+   */
+  private double secantStep(double t0, double t1, double f0, double f1, double feedTemp) {
+    double denom = f1 - f0;
+    double tNew;
+    if (Math.abs(denom) < 1.0e-15) {
+      // Secant denominator too small — perturb
+      tNew = t1 + 2.0;
+    } else {
+      tNew = t1 - f1 * (t1 - t0) / denom;
+    }
+    // Limit the step to avoid unreasonable temperature jumps
+    double maxStep = 50.0;
+    if (tNew - t1 > maxStep) {
+      tNew = t1 + maxStep;
+    } else if (tNew - t1 < -maxStep) {
+      tNew = t1 - maxStep;
+    }
+    // Keep temperature physically reasonable (above 100 K, below 1000 K)
+    tNew = Math.max(100.0, Math.min(1000.0, tNew));
+    return tNew;
+  }
+
+  /**
+   * Evaluate how far the current column solution is from satisfying a specification.
+   *
+   * @param spec the column specification to evaluate
+   * @return the error (current value minus target value); zero when satisfied
+   */
+  private double evaluateSpecError(ColumnSpecification spec) {
+    if (spec == null) {
+      return 0.0;
+    }
+
+    StreamInterface productStream;
+    if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP) {
+      productStream = gasOutStream;
+    } else {
+      productStream = liquidOutStream;
+    }
+
+    switch (spec.getType()) {
+      case PRODUCT_PURITY: {
+        double currentPurity = productStream.getFluid().getComponent(
+            spec.getComponentName()).getz();
+        return currentPurity - spec.getTargetValue();
+      }
+      case COMPONENT_RECOVERY: {
+        double productCompFlow = productStream.getFluid().getComponent(
+            spec.getComponentName()).getTotalFlowRate("mol/hr");
+        double totalFeedCompFlow = getTotalFeedComponentFlow(spec.getComponentName());
+        double recovery = (totalFeedCompFlow > 1.0e-12)
+            ? productCompFlow / totalFeedCompFlow : 0.0;
+        return recovery - spec.getTargetValue();
+      }
+      case PRODUCT_FLOW_RATE: {
+        double currentFlow = productStream.getFluid().getFlowRate("mol/hr");
+        return currentFlow - spec.getTargetValue();
+      }
+      default:
+        return 0.0;
+    }
+  }
+
+  /**
+   * Calculate the total feed flow of a named component across all feed streams.
+   *
+   * @param componentName the component name
+   * @return total molar flow in mol/hr
+   */
+  private double getTotalFeedComponentFlow(String componentName) {
+    double total = 0.0;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      for (StreamInterface feed : feeds) {
+        total += feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Estimate a representative feed temperature from the assigned feed streams.
+   *
+   * @return average feed temperature in Kelvin
+   */
+  private double estimateFeedTemperature() {
+    double sumTemp = 0.0;
+    int count = 0;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      for (StreamInterface feed : feeds) {
+        sumTemp += feed.getTemperature("K");
+        count++;
+      }
+    }
+    return count > 0 ? sumTemp / count : 300.0;
   }
 
   private void assignUnassignedFeeds() {
@@ -1348,6 +1630,164 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Sets a column specification for the top (condenser) end.
+   *
+   * <p>
+   * This replaces the condenser temperature or reflux ratio as the top degree of freedom.
+   * The column solver will adjust the condenser temperature to satisfy this specification.
+   * </p>
+   *
+   * @param spec the column specification for the top product
+   */
+  public void setTopSpecification(ColumnSpecification spec) {
+    if (spec != null
+        && spec.getLocation() != ColumnSpecification.ProductLocation.TOP) {
+      throw new IllegalArgumentException(
+          "Top specification must have ProductLocation.TOP, got: " + spec.getLocation());
+    }
+    this.topSpecification = spec;
+  }
+
+  /**
+   * Sets a column specification for the bottom (reboiler) end.
+   *
+   * <p>
+   * This replaces the reboiler temperature or boilup ratio as the bottom degree of freedom.
+   * The column solver will adjust the reboiler temperature to satisfy this specification.
+   * </p>
+   *
+   * @param spec the column specification for the bottom product
+   */
+  public void setBottomSpecification(ColumnSpecification spec) {
+    if (spec != null
+        && spec.getLocation() != ColumnSpecification.ProductLocation.BOTTOM) {
+      throw new IllegalArgumentException(
+          "Bottom specification must have ProductLocation.BOTTOM, got: " + spec.getLocation());
+    }
+    this.bottomSpecification = spec;
+  }
+
+  /**
+   * Returns the current top (condenser) specification, or null if none is set.
+   *
+   * @return the top specification
+   */
+  public ColumnSpecification getTopSpecification() {
+    return topSpecification;
+  }
+
+  /**
+   * Returns the current bottom (reboiler) specification, or null if none is set.
+   *
+   * @return the bottom specification
+   */
+  public ColumnSpecification getBottomSpecification() {
+    return bottomSpecification;
+  }
+
+  /**
+   * Convenience method to specify the top product purity.
+   *
+   * @param componentName the component whose mole fraction in the distillate is specified
+   * @param targetMoleFraction the target mole fraction (0 to 1)
+   */
+  public void setTopProductPurity(String componentName, double targetMoleFraction) {
+    setTopSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.TOP,
+        targetMoleFraction, componentName));
+  }
+
+  /**
+   * Convenience method to specify the bottom product purity.
+   *
+   * @param componentName the component whose mole fraction in the bottoms is specified
+   * @param targetMoleFraction the target mole fraction (0 to 1)
+   */
+  public void setBottomProductPurity(String componentName, double targetMoleFraction) {
+    setBottomSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.BOTTOM,
+        targetMoleFraction, componentName));
+  }
+
+  /**
+   * Convenience method to specify the condenser reflux ratio (L/D).
+   *
+   * @param refluxRatio the reflux ratio
+   */
+  public void setCondenserRefluxRatio(double refluxRatio) {
+    setTopSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.REFLUX_RATIO,
+        ColumnSpecification.ProductLocation.TOP,
+        refluxRatio));
+  }
+
+  /**
+   * Convenience method to specify the reboiler boilup ratio (V/B).
+   *
+   * @param boilupRatio the boilup ratio
+   */
+  public void setReboilerBoilupRatio(double boilupRatio) {
+    setBottomSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.REFLUX_RATIO,
+        ColumnSpecification.ProductLocation.BOTTOM,
+        boilupRatio));
+  }
+
+  /**
+   * Convenience method to specify the component recovery in the top product.
+   *
+   * @param componentName the component name
+   * @param recovery fraction of the component recovered in the top product (0 to 1)
+   */
+  public void setTopComponentRecovery(String componentName, double recovery) {
+    setTopSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+        ColumnSpecification.ProductLocation.TOP,
+        recovery, componentName));
+  }
+
+  /**
+   * Convenience method to specify the component recovery in the bottom product.
+   *
+   * @param componentName the component name
+   * @param recovery fraction of the component recovered in the bottom product (0 to 1)
+   */
+  public void setBottomComponentRecovery(String componentName, double recovery) {
+    setBottomSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+        ColumnSpecification.ProductLocation.BOTTOM,
+        recovery, componentName));
+  }
+
+  /**
+   * Convenience method to specify the top product flow rate.
+   *
+   * @param flowRate the product flow rate
+   * @param unit the unit (e.g. "mol/hr", "kg/hr")
+   */
+  public void setTopProductFlowRate(double flowRate, String unit) {
+    setTopSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+        ColumnSpecification.ProductLocation.TOP,
+        flowRate));
+  }
+
+  /**
+   * Convenience method to specify the bottom product flow rate.
+   *
+   * @param flowRate the product flow rate
+   * @param unit the unit (e.g. "mol/hr", "kg/hr")
+   */
+  public void setBottomProductFlowRate(double flowRate, String unit) {
+    setBottomSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+        ColumnSpecification.ProductLocation.BOTTOM,
+        flowRate));
+  }
+
+  /**
    * <p>
    * setTopPressure.
    * </p>
@@ -1512,6 +1952,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
     return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
         * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
+  }
+
+  /**
+   * Create and run a column internals designer for this column.
+   *
+   * <p>
+   * Evaluates hydraulics on every tray (flooding, weeping, entrainment, downcomer backup, pressure
+   * drop, efficiency) and sizes the column diameter from the controlling tray.
+   * </p>
+   *
+   * @param internalsType tray type ("sieve", "valve", "bubble-cap") or "packed"
+   * @return a fully evaluated {@link ColumnInternalsDesigner} with per-tray results
+   */
+  public ColumnInternalsDesigner calcColumnInternals(String internalsType) {
+    ColumnInternalsDesigner designer = new ColumnInternalsDesigner(this);
+    designer.setInternalsType(internalsType);
+    designer.calculate();
+    return designer;
+  }
+
+  /**
+   * Create and run a column internals designer for this column with default sieve trays.
+   *
+   * @return a fully evaluated {@link ColumnInternalsDesigner} with per-tray results
+   */
+  public ColumnInternalsDesigner calcColumnInternals() {
+    return calcColumnInternals("sieve");
   }
 
   /**
@@ -2143,7 +2610,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * DistillationColumn column = DistillationColumn.builder("Deethanizer").numberOfTrays(15)
    *     .withCondenser().withReboiler().topPressure(25.0, "bara").bottomPressure(26.0, "bara")
@@ -2186,6 +2653,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     private double internalDiameter = 1.0;
     private boolean doMultiPhaseCheck = true;
     private List<FeedStreamConfig> feedStreams = new ArrayList<FeedStreamConfig>();
+    private ColumnSpecification topSpec;
+    private ColumnSpecification bottomSpec;
 
     /** Feed stream configuration holder. */
     private static class FeedStreamConfig {
@@ -2446,6 +2915,58 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     /**
+     * Sets the top (condenser) column specification.
+     *
+     * @param spec the column specification for the top product
+     * @return this builder for chaining
+     */
+    public Builder topSpecification(ColumnSpecification spec) {
+      this.topSpec = spec;
+      return this;
+    }
+
+    /**
+     * Sets the bottom (reboiler) column specification.
+     *
+     * @param spec the column specification for the bottom product
+     * @return this builder for chaining
+     */
+    public Builder bottomSpecification(ColumnSpecification spec) {
+      this.bottomSpec = spec;
+      return this;
+    }
+
+    /**
+     * Sets a top product purity specification.
+     *
+     * @param componentName the component name
+     * @param targetMoleFraction the target mole fraction (0 to 1)
+     * @return this builder for chaining
+     */
+    public Builder topProductPurity(String componentName, double targetMoleFraction) {
+      this.topSpec = new ColumnSpecification(
+          ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+          ColumnSpecification.ProductLocation.TOP,
+          targetMoleFraction, componentName);
+      return this;
+    }
+
+    /**
+     * Sets a bottom product purity specification.
+     *
+     * @param componentName the component name
+     * @param targetMoleFraction the target mole fraction (0 to 1)
+     * @return this builder for chaining
+     */
+    public Builder bottomProductPurity(String componentName, double targetMoleFraction) {
+      this.bottomSpec = new ColumnSpecification(
+          ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+          ColumnSpecification.ProductLocation.BOTTOM,
+          targetMoleFraction, componentName);
+      return this;
+    }
+
+    /**
      * Builds and returns the configured DistillationColumn.
      *
      * @return the constructed DistillationColumn
@@ -2475,6 +2996,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Set physical properties
       column.setInternalDiameter(internalDiameter);
       column.setMultiPhaseCheck(doMultiPhaseCheck);
+
+      // Set column specifications
+      if (topSpec != null) {
+        column.setTopSpecification(topSpec);
+      }
+      if (bottomSpec != null) {
+        column.setBottomSpecification(bottomSpec);
+      }
 
       // Add feed streams
       for (FeedStreamConfig feedConfig : feedStreams) {

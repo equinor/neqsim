@@ -60,8 +60,9 @@ description: Concise description with searchable keywords. Include key terms use
 
 Every code example in documentation MUST be verified to actually compile and run.
 Do NOT write code examples based on assumptions — always read the source class first.
+**Documentation is NOT complete until the verification test has been executed and passes.**
 
-### Verification Workflow (MANDATORY)
+### Verification Workflow (MANDATORY — EVERY STEP REQUIRED)
 
 1. **Read the source class** before writing any example:
    - Use `file_search` to find the class
@@ -74,7 +75,11 @@ Do NOT write code examples based on assumptions — always read the source class
    - Test must instantiate the class, call every method shown in the doc, and assert non-null/positive results
    - Test name should reference the doc section: `testFluidBuilderFluentAPI`, `testPinchAnalyzerDoc`
 
-3. **Run the test** and confirm it passes before finalizing the documentation
+3. **Run the test** and confirm it passes before finalizing the documentation:
+   - Use `./mvnw test -Dtest=DocExamplesCompilationTest` (or the specific test class)
+   - **If the test fails, fix the documentation code — do NOT finalize with broken examples**
+   - This step is NON-NEGOTIABLE — never skip it, even for "simple" examples
+   - Show the test output to confirm all assertions passed
 
 4. **Common mistakes to catch**:
    - Method names that don't exist (e.g., `getUnitOperation()` when actual is `getUnit()`)
@@ -83,6 +88,8 @@ Do NOT write code examples based on assumptions — always read the source class
    - Missing imports or wrong inner class paths
    - Assuming convenience overloads that don't exist
    - Wrong risk threshold descriptions (always read the source for actual logic)
+   - Methods requiring unit strings (e.g., `setDesignAmbientTemperature(15.0, "C")` not `setDesignAmbientTemperature(15.0)`)
+   - Getter methods requiring arguments (e.g., `getFanStaticPressure(flow)` not `getFanStaticPressure()`)
 
 ### Language-Specific Rules
 - **Python**: use `from neqsim import jneqsim` gateway (see `neqsim-notebook-patterns` skill)

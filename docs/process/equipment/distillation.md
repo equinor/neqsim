@@ -13,6 +13,7 @@ Documentation for distillation column equipment in NeqSim process simulation.
 - [Configuration](#configuration)
 - [Builder Pattern](#builder-pattern)
 - [Solver Options](#solver-options)
+- [Column Specifications](#column-specifications)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -96,6 +97,10 @@ column.run();
 | `internalDiameter(double)` | Column internal diameter (meters) |
 | `multiPhaseCheck(boolean)` | Enable/disable multi-phase check |
 | `addFeedStream(Stream, int)` | Add feed stream to specified tray |
+| `topSpecification(ColumnSpecification)` | Set top product specification |
+| `bottomSpecification(ColumnSpecification)` | Set bottom product specification |
+| `topProductPurity(String, double)` | Shortcut: top product purity for named component |
+| `bottomProductPurity(String, double)` | Shortcut: bottom product purity for named component |
 | `build()` | Build the configured column |
 
 ---
@@ -186,6 +191,110 @@ column.setReboilerDuty(6000000.0);  // W
 // Boilup ratio
 column.setBoilupRatio(2.5);
 ```
+
+---
+
+## Column Specifications
+
+NeqSim supports flexible column specifications through the `ColumnSpecification` class.
+Instead of specifying condenser/reboiler temperatures or duties directly, you can
+specify desired product quality targets and NeqSim will adjust operating conditions
+automatically using a secant-method outer loop.
+
+### Specification Types
+
+| Type | Description | Example |
+|------|------------|--------|
+| `PRODUCT_PURITY` | Mole-fraction purity of a component in a product stream | 95 mol% ethane overhead |
+| `REFLUX_RATIO` | Condenser reflux ratio (L/D) | Reflux ratio of 3.5 |
+| `COMPONENT_RECOVERY` | Fraction of feed component recovered in a product (0–1) | 99% ethane recovery overhead |
+| `PRODUCT_FLOW_RATE` | Total molar flow rate of a product stream (kmol/h) | 100 kmol/h overhead |
+| `DUTY` | Condenser or reboiler duty (W) | Reboiler duty 5 MW |
+
+### Product Purity Specification
+
+```java
+// Specify top and bottom product purities
+column.setTopProductPurity("ethane", 0.95);      // 95 mol% ethane overhead
+column.setBottomProductPurity("propane", 0.98);   // 98 mol% propane in bottoms
+column.run();  // Outer loop adjusts condenser/reboiler temperatures
+```
+
+### Component Recovery Specification
+
+```java
+// Recover 99% of feed ethane in the overhead product
+column.setTopComponentRecovery("ethane", 0.99);
+column.run();
+```
+
+### Reflux and Boilup Ratio
+
+```java
+// Set reflux ratio (applied directly, no outer loop needed)
+column.setCondenserRefluxRatio(3.5);
+
+// Set boilup ratio
+column.setReboilerBoilupRatio(2.0);
+column.run();
+```
+
+### Product Flow Rate Specification
+
+```java
+// Set overhead flow rate target
+column.setTopProductFlowRate(100.0);   // kmol/h
+column.run();
+```
+
+### Using ColumnSpecification Directly
+
+```java
+import neqsim.process.equipment.distillation.ColumnSpecification;
+import neqsim.process.equipment.distillation.ColumnSpecification.SpecificationType;
+import neqsim.process.equipment.distillation.ColumnSpecification.ProductLocation;
+
+// Create a custom specification
+ColumnSpecification topSpec = new ColumnSpecification(
+    SpecificationType.PRODUCT_PURITY,
+    ProductLocation.TOP,
+    0.95,        // target value
+    "ethane"     // component name
+);
+topSpec.setTolerance(1e-3);      // convergence tolerance
+topSpec.setMaxIterations(30);    // max outer-loop iterations
+
+column.setTopSpecification(topSpec);
+column.run();
+```
+
+### Builder Pattern with Specifications
+
+```java
+DistillationColumn column = DistillationColumn.builder("Deethanizer")
+    .numberOfTrays(25)
+    .withCondenserAndReboiler()
+    .topPressure(25.0, "bara")
+    .insideOut()
+    .addFeedStream(feed, 12)
+    .topProductPurity("ethane", 0.95)
+    .bottomProductPurity("propane", 0.98)
+    .build();
+column.run();
+```
+
+### How It Works
+
+For **direct specifications** (reflux ratio, duty), the values are applied on
+the condenser or reboiler before the inner column solver runs.
+
+For **iterative specifications** (product purity, component recovery, product
+flow rate), NeqSim wraps the inner solver in a secant-method outer loop that:
+
+1. Runs the column with initial temperature guesses
+2. Evaluates the specification error (current − target)
+3. Adjusts condenser or reboiler temperature using the secant update
+4. Repeats until the error is within tolerance (default 1e-4)
 
 ---
 
@@ -309,12 +418,12 @@ Stream c3plusProduct = deethanizer.getLiquidOutStream();
 
 System.out.println("Ethane product:");
 System.out.println("  Flow: " + ethaneProduct.getFlowRate("kg/hr") + " kg/hr");
-System.out.println("  C2 purity: " + 
+System.out.println("  C2 purity: " +
     ethaneProduct.getFluid().getComponent("ethane").getx() * 100 + " mol%");
 
 System.out.println("C3+ product:");
 System.out.println("  Flow: " + c3plusProduct.getFlowRate("kg/hr") + " kg/hr");
-System.out.println("  C2 content: " + 
+System.out.println("  C2 content: " +
     c3plusProduct.getFluid().getComponent("ethane").getx() * 100 + " mol%");
 ```
 

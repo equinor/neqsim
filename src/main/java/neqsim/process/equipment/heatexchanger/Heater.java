@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.design.AutoSizeable;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -451,6 +452,24 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     // Use PowerUnit for conversion
     neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(energyInput, "W");
     return powerUnit.getValue(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+    }
+    state.put("duty", ProcessEquipmentInterface.createStateEntry(getDuty("kW"), "kW"));
+    return state;
   }
 
   /**

@@ -114,6 +114,7 @@ When creating example files or documentation that references existing classes:
 ## Documentation Code Verification (MANDATORY)
 
 **Every code example in documentation MUST be verified by a runnable test.**
+**Documentation is NOT complete until the test has been executed and passes.**
 
 When writing documentation that includes Java or Python code examples:
 
@@ -123,6 +124,9 @@ When writing documentation that includes Java or Python code examples:
    - The test must instantiate classes, call all documented methods, and assert results are non-null/valid.
 
 2. **Run the test** and confirm all assertions pass before finalizing documentation.
+   - Use `./mvnw test -Dtest=DocExamplesCompilationTest` (or the specific test class).
+   - **If the test fails, fix the documentation code — do NOT finalize with broken examples.**
+   - This step is NON-NEGOTIABLE — never skip it, even for "simple" examples.
 
 3. **Keep tests in sync** — when documentation changes, update the corresponding test.
 
@@ -135,6 +139,8 @@ When writing documentation that includes Java or Python code examples:
    - Wrong parameter types (`int` vs `double`)
    - Calling characterization before setting mixing rule
    - Wrong risk threshold descriptions not matching source logic
+   - Methods requiring unit strings (e.g., `setDesignAmbientTemperature(15.0, "C")` not `setDesignAmbientTemperature(15.0)`)
+   - Getter methods requiring arguments (e.g., `getFanStaticPressure(flow)` not `getFanStaticPressure()`)
 
 ---
 
@@ -1009,6 +1015,9 @@ String jsonReport = design.toJson();
 
 ## Jupyter Notebook Creation Guidelines (MANDATORY)
 
+**Every notebook MUST be executed cell-by-cell after creation to verify it runs without errors.**
+Notebooks that have not been run are NOT considered complete.
+
 When creating Jupyter notebooks for NeqSim examples, follow these critical patterns:
 
 ### Import Pattern (USE THIS EXACT PATTERN)
@@ -1217,6 +1226,28 @@ cooler.getDuty()                # Cooling duty (positive = heat removed)
      engineering implication (what it means for design), and recommendation
      (specific action). Populate `figure_discussion` in results.json.
 8. **Tips/Next steps** - Summary and links to related examples
+
+### Notebook Execution Verification (MANDATORY)
+
+**After creating a notebook, you MUST execute every code cell sequentially and verify each passes.**
+
+Workflow:
+1. **Build and deploy the latest JAR** before running notebooks that use new/modified classes:
+   ```powershell
+   .\mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"
+   Copy-Item -Path "target\neqsim-*.jar" -Destination "<python-env>\neqsim\lib\java11\" -Force
+   ```
+2. **Configure the notebook kernel** (use `configure_notebook` or equivalent)
+3. **Run every code cell in order** — cell 1 first, then cell 2, etc.
+4. **If any cell fails**, fix the code in that cell and re-run it before continuing
+5. **Common runtime errors to watch for**:
+   - `AttributeError: object has no attribute 'methodName'` — method doesn't exist on that class; read the Java source to find the correct method name
+   - `TypeError: No matching overloads found` — wrong number/types of arguments; check the Java method signature (e.g., method requires unit string `"C"` or a `double` argument)
+   - `getColumnDiameter()` vs `getInternalDiameter()` — use inherited method names, not assumed ones
+   - `getFanStaticPressure()` vs `getFanStaticPressure(double flow)` — some getters require arguments
+6. **A notebook is NOT complete until all cells execute without errors**
+   - Do not deliver notebooks with cells in "not executed" state
+   - Do not skip execution because "the code looks correct"
 
 ### Type Conversion for Java
 

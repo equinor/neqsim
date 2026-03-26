@@ -14,6 +14,7 @@ description: "Copy-paste code patterns for every common NeqSim task. Covers flui
 - [Reading Properties](#reading-properties)
 - [Oil Characterization](#oil-characterization)
 - [Process Equipment](#process-equipment)
+- [Distillation Column](#distillation-column-temperature-specs)
 - [Stream Introspection](#stream-introspection)
 - [Named Controllers and Connections](#named-controllers-and-connections)
 - [Complete Process Flowsheet](#complete-process-flowsheet)
@@ -511,6 +512,59 @@ pipe.openOutlet(1.0, "bara");  // Vent to atmospheric
 if (pipe.isOutletClosed()) {
     System.out.println("Outlet is blocked");
 }
+```
+
+### Distillation Column (Temperature Specs)
+
+```java
+DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setCondenserTemperature(-10.0, "C");
+column.setReboilerTemperature(100.0, "C");
+column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+column.run();
+
+Stream overhead = column.getGasOutStream();
+Stream bottoms = column.getLiquidOutStream();
+```
+
+### Distillation Column (Product Purity Specs)
+
+```java
+// ColumnSpecification auto-adjusts condenser/reboiler T via secant outer loop
+DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setTopProductPurity("ethane", 0.95);       // 95 mol% ethane overhead
+column.setBottomProductPurity("propane", 0.98);    // 98 mol% propane bottoms
+column.run();
+```
+
+### Distillation Column (Component Recovery Spec)
+
+```java
+DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setTopComponentRecovery("ethane", 0.99);    // 99% ethane recovery overhead
+column.setReboilerTemperature(100.0, "C");         // Fix reboiler, adjust condenser
+column.run();
+```
+
+### Distillation Column (Builder with Specs)
+
+```java
+DistillationColumn column = DistillationColumn.builder("Deethanizer")
+    .numberOfTrays(25)
+    .withCondenserAndReboiler()
+    .topPressure(25.0, "bara")
+    .insideOut()
+    .addFeedStream(feed, 12)
+    .topProductPurity("ethane", 0.95)
+    .bottomProductPurity("propane", 0.98)
+    .build();
+column.run();
 ```
 
 ---

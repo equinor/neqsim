@@ -3,7 +3,9 @@ package neqsim.process.equipment;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
@@ -542,5 +544,124 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
       return errors.get(0);
     }
     return "Unknown operating envelope violation";
+  }
+
+  // ============================================================
+  // Unified outlet property access
+  // ============================================================
+
+  /**
+   * Returns the temperature of the primary outlet stream in the specified unit.
+   *
+   * <p>
+   * Works uniformly across all equipment types by using {@link #getOutletStreams()}.
+   * For equipment with multiple outlets (e.g., separators), returns the first outlet's temperature.
+   * </p>
+   *
+   * @param unit temperature unit, e.g. "C", "K"
+   * @return outlet temperature in specified unit, or {@link Double#NaN} if no outlet streams
+   */
+  public default double getOutletTemperature(String unit) {
+    List<StreamInterface> outlets = getOutletStreams();
+    if (outlets.isEmpty()) {
+      return Double.NaN;
+    }
+    return outlets.get(0).getTemperature(unit);
+  }
+
+  /**
+   * Returns the pressure of the primary outlet stream in the specified unit.
+   *
+   * <p>
+   * Works uniformly across all equipment types by using {@link #getOutletStreams()}.
+   * For equipment with multiple outlets, returns the first outlet's pressure.
+   * </p>
+   *
+   * @param unit pressure unit, e.g. "bara", "barg", "Pa"
+   * @return outlet pressure in specified unit, or {@link Double#NaN} if no outlet streams
+   */
+  public default double getOutletPressure(String unit) {
+    List<StreamInterface> outlets = getOutletStreams();
+    if (outlets.isEmpty()) {
+      return Double.NaN;
+    }
+    return outlets.get(0).getPressure(unit);
+  }
+
+  /**
+   * Returns the total flow rate across all outlet streams in the specified unit.
+   *
+   * <p>
+   * For single-outlet equipment (compressor, heater, valve), returns the outlet flow rate.
+   * For multi-outlet equipment (separator), returns the sum of all outlet flow rates.
+   * </p>
+   *
+   * @param unit flow unit, e.g. "kg/hr", "Sm3/hr", "m3/hr"
+   * @return total outlet flow rate in specified unit, or {@link Double#NaN} if no outlet streams
+   */
+  public default double getOutletFlowRate(String unit) {
+    List<StreamInterface> outlets = getOutletStreams();
+    if (outlets.isEmpty()) {
+      return Double.NaN;
+    }
+    double total = 0.0;
+    for (StreamInterface s : outlets) {
+      total += s.getFlowRate(unit);
+    }
+    return total;
+  }
+
+  // ============================================================
+  // Equipment state as Map (for Python/JSON integration)
+  // ============================================================
+
+  /**
+   * Returns a map of key equipment properties with values and units.
+   *
+   * <p>
+   * Provides a unified way to access equipment state without knowing the specific equipment type.
+   * Each entry in the outer map has a property name (e.g. "temperature", "pressure").
+   * Each inner map contains "value" (Double) and "unit" (String).
+   * </p>
+   *
+   * <p>
+   * The default implementation uses {@link #getOutletStreams()} to report outlet conditions.
+   * Subclasses override this to add equipment-specific properties (e.g., valve opening,
+   * compressor power, separator liquid levels).
+   * </p>
+   *
+   * @param temperatureUnit temperature unit (e.g. "C")
+   * @param pressureUnit pressure unit (e.g. "bara")
+   * @param flowUnit flow unit (e.g. "kg/hr")
+   * @return map of property name to value/unit maps
+   */
+  public default Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    List<StreamInterface> outlets = getOutletStreams();
+    if (!outlets.isEmpty()) {
+      StreamInterface primary = outlets.get(0);
+      state.put("temperature", createStateEntry(primary.getTemperature(temperatureUnit),
+          temperatureUnit));
+      state.put("pressure",
+          createStateEntry(primary.getPressure(pressureUnit), pressureUnit));
+      state.put("flow",
+          createStateEntry(primary.getFlowRate(flowUnit), flowUnit));
+    }
+    return state;
+  }
+
+  /**
+   * Helper to create a state entry map with value and unit.
+   *
+   * @param value the numeric value
+   * @param unit the unit string
+   * @return map with "value" and "unit" keys
+   */
+  static Map<String, Object> createStateEntry(double value, String unit) {
+    Map<String, Object> entry = new LinkedHashMap<String, Object>();
+    entry.put("value", value);
+    entry.put("unit", unit);
+    return entry;
   }
 }
