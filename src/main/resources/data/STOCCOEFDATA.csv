@@ -132,8 +132,6 @@
 245,49,"methanecombustion","oxygen",-2
 246,49,"methanecombustion","CO2",1
 247,49,"methanecombustion","water",2
-<<<<<<< HEAD
-=======
 250,50,"MEAprot","MEA+",-1
 251,50,"MEAprot","water",-1
 252,50,"MEAprot","MEA",1
@@ -152,4 +150,3 @@
 282,53,"DEAcarbamate","water",-1
 283,53,"DEAcarbamate","DEACOO-",1
 284,53,"DEAcarbamate","H3O+",1
->>>>>>> 208f9a89bbd68e695250f23b2caff47bc554f244
