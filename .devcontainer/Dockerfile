@@ -3,7 +3,7 @@
 # Python 3.12 is added via devcontainer features for Jupyter notebook development.
 
 ARG VARIANT="11"
-FROM mcr.microsoft.com/devcontainers/java:1-${VARIANT}-bookworm
+FROM mcr.microsoft.com/devcontainers/java:1-${VARIANT}
 
 # Install Maven via SDKMAN
 ARG INSTALL_MAVEN="false"
@@ -18,7 +18,8 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn.list.sa
     && apt-get -y install --no-install-recommends \
         graphviz \
         fonts-liberation \
+        curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set JAVA_HOME for consistent tooling
-ENV JAVA_HOME=/usr/lib/jvm/msopenjdk-current/
+# Set JAVA_HOME for consistent tooling (use symlink that the devcontainer image provides)
+ENV JAVA_HOME=/usr/lib/jvm/msopenjdk-current

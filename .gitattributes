@@ -1,0 +1,31 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts must always have LF line endings (critical for Codespaces/Linux)
+*.sh text eol=lf
+mvnw text eol=lf
+
+# Windows batch files must have CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+mvnw.cmd text eol=crlf
+
+# Maven wrapper properties
+.mvn/wrapper/maven-wrapper.properties text eol=lf
+
+# Java source files
+*.java text diff=java
+*.properties text
+*.xml text
+*.csv text
+*.json text
+*.md text
+
+# Binary files
+*.jar binary
+*.class binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary

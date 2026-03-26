@@ -7,7 +7,7 @@
 		"args": {
 			"VARIANT": "11",
 			"INSTALL_MAVEN": "true",
-			"MAVEN_VERSION": "3.9.8"
+			"MAVEN_VERSION": "3.9.12"
 		}
 	},
 	// Add Python 3.12 for Jupyter notebook development with neqsim-python
@@ -21,7 +21,7 @@
 		}
 	},
 	// Run after container creation: install neqsim-python and dev tools
-	"postCreateCommand": "pip install --user neqsim matplotlib pandas numpy python-docx && ./mvnw dependency:resolve",
+	"postCreateCommand": "pip install --user neqsim matplotlib pandas numpy python-docx || true && chmod +x ./mvnw && ./mvnw dependency:resolve",
 	"customizations": {
 		"vscode": {
 			"settings": {
