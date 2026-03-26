@@ -4,6 +4,8 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -13,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
@@ -197,6 +200,24 @@ public class Pump extends TwoPortEquipment
   public double getPower(String unit) {
     neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(dH, "W");
     return powerUnit.getValue(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    return state;
   }
 
   /**

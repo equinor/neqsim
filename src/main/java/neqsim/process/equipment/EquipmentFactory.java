@@ -104,7 +104,8 @@ public final class EquipmentFactory {
    * @param equipmentType {@link EquipmentEnum}
    * @return the created equipment
    */
-  public static ProcessEquipmentInterface createEquipment(String name, EquipmentEnum equipmentType) {
+  public static ProcessEquipmentInterface createEquipment(String name,
+      EquipmentEnum equipmentType) {
     Objects.requireNonNull(equipmentType, "equipmentType");
 
     switch (equipmentType) {
@@ -194,8 +195,7 @@ public final class EquipmentFactory {
       case SubseaPowerCable:
         return new SubseaPowerCable(name);
       default:
-        throw new IllegalArgumentException(
-            "Unsupported equipment type: " + equipmentType.name());
+        throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType.name());
     }
   }
 
@@ -245,5 +245,165 @@ public final class EquipmentFactory {
       throw new IllegalArgumentException("ReservoirTPsim requires a reservoir fluid");
     }
     return new ReservoirTPsim(name, reservoirFluid);
+  }
+
+  // ============================================================
+  // Convenience factory methods (eliminate Python wrapper boilerplate)
+  // ============================================================
+
+  /**
+   * Creates a configured Stream with flow, pressure, and temperature.
+   *
+   * @param name stream name
+   * @param fluid thermodynamic system
+   * @param flowRate mass flow rate
+   * @param flowUnit flow unit, e.g. "kg/hr"
+   * @param pressure stream pressure
+   * @param pressureUnit pressure unit, e.g. "bara"
+   * @param temperature stream temperature
+   * @param temperatureUnit temperature unit, e.g. "C"
+   * @return configured Stream
+   */
+  public static Stream createStream(String name, SystemInterface fluid, double flowRate,
+      String flowUnit, double pressure, String pressureUnit, double temperature,
+      String temperatureUnit) {
+    Stream stream = new Stream(name, fluid);
+    stream.setFlowRate(flowRate, flowUnit);
+    stream.setPressure(pressure, pressureUnit);
+    stream.setTemperature(temperature, temperatureUnit);
+    return stream;
+  }
+
+  /**
+   * Creates a Compressor with outlet pressure and isentropic efficiency.
+   *
+   * @param name compressor name
+   * @param inletStream inlet stream
+   * @param outletPressure discharge pressure in bara
+   * @param isentropicEfficiency isentropic efficiency (0.0 to 1.0)
+   * @return configured Compressor
+   */
+  public static Compressor createCompressor(String name, StreamInterface inletStream,
+      double outletPressure, double isentropicEfficiency) {
+    Compressor compressor = new Compressor(name, inletStream);
+    compressor.setOutletPressure(outletPressure);
+    compressor.setIsentropicEfficiency(isentropicEfficiency);
+    return compressor;
+  }
+
+  /**
+   * Creates a Cooler with specified outlet temperature.
+   *
+   * @param name cooler name
+   * @param inletStream inlet stream
+   * @param outletTemperature desired outlet temperature
+   * @param temperatureUnit temperature unit, e.g. "C"
+   * @return configured Cooler
+   */
+  public static Cooler createCooler(String name, StreamInterface inletStream,
+      double outletTemperature, String temperatureUnit) {
+    Cooler cooler = new Cooler(name, inletStream);
+    cooler.setOutTemperature(outletTemperature, temperatureUnit);
+    return cooler;
+  }
+
+  /**
+   * Creates a Heater with specified outlet temperature.
+   *
+   * @param name heater name
+   * @param inletStream inlet stream
+   * @param outletTemperature desired outlet temperature
+   * @param temperatureUnit temperature unit, e.g. "C"
+   * @return configured Heater
+   */
+  public static Heater createHeater(String name, StreamInterface inletStream,
+      double outletTemperature, String temperatureUnit) {
+    Heater heater = new Heater(name, inletStream);
+    heater.setOutTemperature(outletTemperature, temperatureUnit);
+    return heater;
+  }
+
+  /**
+   * Creates a ThrottlingValve with outlet pressure and valve opening.
+   *
+   * @param name valve name
+   * @param inletStream inlet stream
+   * @param outletPressure downstream pressure in bara
+   * @param percentValveOpening valve opening percentage (0-100)
+   * @return configured ThrottlingValve
+   */
+  public static ThrottlingValve createValve(String name, StreamInterface inletStream,
+      double outletPressure, double percentValveOpening) {
+    ThrottlingValve valve = new ThrottlingValve(name, inletStream);
+    valve.setOutletPressure(outletPressure);
+    valve.setPercentValveOpening(percentValveOpening);
+    return valve;
+  }
+
+  /**
+   * Creates a Pump with specified outlet pressure.
+   *
+   * @param name pump name
+   * @param inletStream inlet stream
+   * @param outletPressure discharge pressure in bara
+   * @return configured Pump
+   */
+  public static Pump createPump(String name, StreamInterface inletStream, double outletPressure) {
+    Pump pump = new Pump(name, inletStream);
+    pump.setOutletPressure(outletPressure);
+    return pump;
+  }
+
+  /**
+   * Creates a Separator from an inlet stream.
+   *
+   * @param name separator name
+   * @param inletStream inlet stream
+   * @return configured Separator
+   */
+  public static Separator createSeparator(String name, StreamInterface inletStream) {
+    return new Separator(name, inletStream);
+  }
+
+  /**
+   * Creates a ThreePhaseSeparator from an inlet stream.
+   *
+   * @param name separator name
+   * @param inletStream inlet stream
+   * @return configured ThreePhaseSeparator
+   */
+  public static ThreePhaseSeparator createThreePhaseSeparator(String name,
+      StreamInterface inletStream) {
+    return new ThreePhaseSeparator(name, inletStream);
+  }
+
+  /**
+   * Creates a Mixer with multiple inlet streams.
+   *
+   * @param name mixer name
+   * @param inletStreams inlet streams to combine
+   * @return configured Mixer
+   */
+  public static Mixer createMixer(String name, StreamInterface... inletStreams) {
+    Mixer mixer = new Mixer(name);
+    for (StreamInterface s : inletStreams) {
+      mixer.addStream(s);
+    }
+    return mixer;
+  }
+
+  /**
+   * Creates an Expander with specified outlet pressure.
+   *
+   * @param name expander name
+   * @param inletStream inlet stream
+   * @param outletPressure discharge pressure in bara
+   * @return configured Expander
+   */
+  public static Expander createExpander(String name, StreamInterface inletStream,
+      double outletPressure) {
+    Expander expander = new Expander(name, inletStream);
+    expander.setOutletPressure(outletPressure);
+    return expander;
   }
 }

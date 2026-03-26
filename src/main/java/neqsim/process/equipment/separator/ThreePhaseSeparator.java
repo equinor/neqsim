@@ -2,12 +2,15 @@ package neqsim.process.equipment.separator;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.SeparatorResponse;
@@ -179,6 +182,37 @@ public class ThreePhaseSeparator extends Separator {
       outlets.add(waterOutStream);
     }
     return Collections.unmodifiableList(outlets);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    if (gasOutStream != null) {
+      state.put("gas flow",
+          ProcessEquipmentInterface.createStateEntry(
+              gasOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (liquidOutStream != null) {
+      state.put("oil flow",
+          ProcessEquipmentInterface.createStateEntry(
+              liquidOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (waterOutStream != null) {
+      state.put("water flow",
+          ProcessEquipmentInterface.createStateEntry(
+              waterOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (gasOutStream != null) {
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(
+              gasOutStream.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature",
+          ProcessEquipmentInterface.createStateEntry(
+              gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    return state;
   }
 
   /**

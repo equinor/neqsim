@@ -9,6 +9,244 @@
 
 ---
 
+## 2026-03-27 — Distillation Column Internals, Air Cooler, PVF Flash, Amine Framework
+
+### New Classes — Distillation Internals
+
+- **`PackedColumn`** (`process.equipment.distillation`) — Extends `DistillationColumn`
+  for packed absorption/distillation columns (absorbers, strippers, contactors).
+  Wraps rigorous VLE column solver and adds packing-specific functionality:
+  - HETP calculation from packed bed height
+  - Packing hydraulics via `PackingHydraulicsCalculator`
+  - Built-in presets (Pall Ring, Mellapak, IMTP, etc.)
+  - API: `setPackedHeight()`, `setPackingType()`, `setStructuredPacking()`,
+    `addSolventStream()`, `getHETP()`, `getPercentFlood()`, `toJson()`
+
+- **`ShortcutDistillationColumn`** (`process.equipment.distillation`) — Rapid conceptual
+  design using Fenske-Underwood-Gilliland (FUG) method:
+  - Fenske: minimum stages from relative volatility
+  - Underwood: minimum reflux ratio
+  - Gilliland: actual stages (Molokanov correlation)
+  - Kirkbride: optimal feed tray location
+  - API: `setLightKey()`, `setHeavyKey()`, `setLightKeyRecoveryDistillate()`,
+    `setRefluxRatioMultiplier()`, `getMinimumNumberOfStages()`,
+    `getActualRefluxRatio()`, `getResultsJson()`
+
+- **`ColumnInternalsDesigner`** (`process.equipment.distillation.internals`) — High-level
+  internals sizing facade. Evaluates hydraulic performance on every tray of a converged
+  `DistillationColumn`, identifies controlling tray, sizes column diameter.
+  Supports tray (sieve, valve, bubble-cap) and packed modes.
+  API: `calculate()`, `getRequiredDiameter()`, `isDesignOk()`, `toJson()`
+
+- **`TrayHydraulicsCalculator`** (`process.equipment.distillation.internals`) — Per-tray
+  hydraulic evaluation for sieve, valve, and bubble-cap trays. Correlations: Fair
+  (flooding, entrainment), Sinnott (weeping), Francis weir (downcomer backup),
+  O'Connell (tray efficiency). References: Kister (1992), Ludwig (2001), Sinnott (2005).
+
+- **`PackingHydraulicsCalculator`** (`process.equipment.distillation.internals`) — Packing
+  hydraulics engine with Eckert GPDC (flooding), Leva (pressure drop), Onda 1968
+  (mass transfer coefficients), HTU/HETP. Built-in presets for 10 random packings
+  and 7 structured packings (Mellapak 125Y–500Y, Flexipac 1Y–3Y).
+
+### New Class — AirCooler Rewrite
+
+- **`AirCooler`** (`process.equipment.heatexchanger`) — Complete rewrite from simple
+  air flow calculator to full API 661 thermal design model (~960 lines):
+  - Briggs-Young fin-tube correlation for air-side HTC
+  - Schmidt annular fin efficiency
+  - Robinson-Briggs air-side pressure drop
+  - LMTD with F-correction for cross-flow
+  - Fan model with cubic polynomial fan curve (dP vs Q)
+  - Ambient temperature correction (ITD ratio method)
+  - Bundle sizing (tubes per row, total tubes, face area, fin area)
+  - Comprehensive `toJson()` report
+  - API: `setDesignAmbientTemperature(T, "C")`, `setNumberOfTubeRows()`,
+    `setTubeLength()`, `getFanPower("kW")`, `getOverallU()`, `toJson()`
+
+### New Class — PVF Flash
+
+- **`PVFflash`** (`thermodynamicoperations.flashops`) — Pressure-Vapor Fraction flash.
+  Given P + target vapor fraction β → find temperature. Uses Illinois method
+  (accelerated regula falsi). Integrated into `ThermodynamicOperations` via
+  `ops.PVFflash(beta)`. β=0.0 → bubble point, β=1.0 → dew point.
+
+### New Classes — Amine Framework
+
+- **`AmineSystem`** (`thermo.util.amines`) — Convenience wrapper for creating
+  electrolyte-CPA amine systems. Supports MEA, DEA, MDEA, aMDEA. Auto-configures
+  species (neutral + ionic + carbamate), mixing rules, reactions, physical properties.
+  - Enum: `AmineType` (`MEA`, `DEA`, `MDEA`, `AMDEA`)
+  - API: `new AmineSystem(AmineType, T_K, P_bara, amineMolFraction, co2Loading)`,
+    `getSystem()`, `getAmineType()`
+
+- **`AmineViscosity`** (`physicalproperties.methods.liquidphysicalproperties.viscosity`) —
+  Correlations for CO₂-loaded amine solution viscosity:
+  - Weiland et al. (1998) for MEA, DEA, aMDEA
+  - Teng et al. (1994) for MDEA
+  - Auto-detects amine type from fluid composition
+
+### Updated Classes
+
+- **`DistillationColumn`** — Column specification framework with `ColumnSpecification`,
+  secant-method outer adjustment loop (+531 lines)
+
+- **`ProcessSystem`** — Three new UniSim/HYSYS-style stream summary methods:
+  - `getStreamSummaryTable()` — formatted text table with T, P, flow, composition
+  - `getStreamSummaryJson()` — JSON output for programmatic access
+  - `getAllStreams()` — collects all unique `StreamInterface` objects
+
+- **`ThermodynamicOperations`** — Added `PVFflash(double vaporFraction)` entry point
+
+- **`ThermalDesignCalculator`** — Added `toJson()` method for JSON reporting
+
+### New Database Entries
+
+- **COMP.csv**: MEA+ (ID 1259, charge=+1) and MEACOO- (ID 1260, charge=-1)
+- **REACTIONDATA.csv**: MEA/DEA equilibrium reactions (Austgen 1989)
+- **STOCCOEFDATA.csv**: Updated stoichiometric coefficients for amine reactions
+
+### Usage Examples
+
+```java
+// Packed column absorber
+PackedColumn absorber = new PackedColumn("CO2 Absorber", 10, feed);
+absorber.setPackedHeight(15.0);
+absorber.setPackingType("Mellapak 250Y");
+absorber.setStructuredPacking(true);
+absorber.addSolventStream(leanAmine, 1);
+absorber.run();
+
+// Shortcut design
+ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn("Deprop", feed);
+shortcut.setLightKey("propane");
+shortcut.setHeavyKey("n-butane");
+shortcut.setLightKeyRecoveryDistillate(0.98);
+shortcut.setHeavyKeyRecoveryDistillate(0.02);
+shortcut.run();
+
+// Air cooler
+AirCooler cooler = new AirCooler("Gas Cooler", hotStream);
+cooler.setOutTemperature(40.0, "C");
+cooler.setDesignAmbientTemperature(15.0, "C");
+cooler.run();
+double fanPower = cooler.getFanPower("kW");
+
+// PVF flash
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.PVFflash(0.5);  // Find T where β = 0.5
+
+// Amine system
+AmineSystem amine = new AmineSystem(AmineSystem.AmineType.MEA,
+    273.15 + 40.0, 1.0, 0.30, 0.40);
+SystemInterface fluid = amine.getSystem();
+
+// Stream summary
+process.run();
+System.out.println(process.getStreamSummaryTable());
+String json = process.getStreamSummaryJson();
+```
+
+### New Tests
+
+| Test | Methods |
+|------|---------|
+| `PackedColumnTest` | 4 tests: basic absorber, setters/getters, condenser/reboiler, JSON |
+| `ShortcutDistillationColumnTest` | 3 tests: deethanizer, depropanizer, JSON |
+| `ColumnInternalsDesignerTest` | 4 tests: sieve tray, convenience, packed, structured |
+| `PackingHydraulicsCalculatorTest` | 6 tests: Pall Ring, structured, diameter, presets, mass transfer, dP |
+| `TrayHydraulicsCalculatorTest` | 6 tests: sieve, diameter, valve, liquid rate, weeping, O'Connell |
+| `ProcessSystemStreamSummaryTest` | 3 tests: text table, JSON, getAllStreams |
+| `PVFflashTest` | 4 tests: mid-fraction, bubble point, dew point, consistency |
+| `AirCoolerTest` | 14 new tests: LMTD, U, fin efficiency, fan, bundle, ITD, JSON |
+| `ColumnSpecificationTest` | Column spec purity/recovery/flow rate tests |
+
+### New Documentation
+
+- `docs/development/NEQSIM_VS_UNISIM_COMPARISON.md` — NeqSim vs UniSim feature comparison
+- `docs/process/process-simulation-enhancements.md` — User guide for all new capabilities
+- `examples/notebooks/air_cooler_and_packed_column.ipynb` — Jupyter notebook example
+
+### Agents/Skills to Update
+
+- `neqsim-capability-map` — Add PackedColumn, ShortcutDistillationColumn, ColumnInternalsDesigner,
+  TrayHydraulicsCalculator, PackingHydraulicsCalculator, PVFflash, AmineSystem, AirCooler
+- `neqsim-api-patterns` — Add packed column, shortcut distillation, air cooler, PVF flash,
+  amine system, stream summary patterns
+- `CONTEXT.md` — Add distillation internals, amine framework to repo map
+- `docs/development/CODE_PATTERNS.md` — Add packed column, shortcut, air cooler, amine patterns
+
+---
+
+## 2026-03-27 — Column Specification Flexibility
+
+### New Classes
+
+- **`ColumnSpecification`** (`process.equipment.distillation`) — Represents one
+  degree-of-freedom specification for a distillation column. Five specification
+  types via `SpecificationType` enum:
+  - `PRODUCT_PURITY` — mole-fraction purity target for a product stream
+  - `REFLUX_RATIO` — condenser reflux ratio (L/D)
+  - `COMPONENT_RECOVERY` — fractional recovery of a named component (0–1)
+  - `PRODUCT_FLOW_RATE` — molar flow rate target (kmol/h)
+  - `DUTY` — condenser or reboiler duty (W)
+  - `ProductLocation` enum: `TOP`, `BOTTOM`
+  - Configurable tolerance (default 1e-4) and max iterations (default 20)
+  - Full input validation, serializable
+
+### Updated Classes
+
+- **`DistillationColumn`** — Integrated `ColumnSpecification` support:
+  - New convenience methods: `setTopProductPurity(component, target)`,
+    `setBottomProductPurity(component, target)`, `setCondenserRefluxRatio(ratio)`,
+    `setReboilerBoilupRatio(ratio)`, `setTopComponentRecovery(component, fraction)`,
+    `setBottomComponentRecovery(component, fraction)`, `setTopProductFlowRate(rate)`,
+    `setBottomProductFlowRate(rate)`, `getTopSpecification()`, `getBottomSpecification()`
+  - Outer secant-method adjustment loop (`solveWithSpecifications()`) iterates
+    condenser/reboiler temperatures to satisfy purity, recovery, or flow-rate specs.
+    Safeguards: max step 50 K, temperature bounds 100–1000 K.
+  - Direct-set specs (reflux ratio, duty) applied before inner solve without outer loop.
+  - Builder pattern extended: `topSpecification()`, `bottomSpecification()`,
+    `topProductPurity()`, `bottomProductPurity()` methods.
+
+### Usage
+
+```java
+// Product purity specification
+DistillationColumn column = new DistillationColumn("T-100", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setTopProductPurity("ethane", 0.95);      // 95 mol% ethane overhead
+column.setBottomProductPurity("propane", 0.98);   // 98 mol% propane bottoms
+column.run();
+
+// Component recovery specification
+column.setTopComponentRecovery("ethane", 0.99);   // 99% ethane recovery overhead
+column.run();
+
+// Reflux ratio specification (applied directly, no outer loop)
+column.setCondenserRefluxRatio(3.5);
+column.run();
+
+// Builder pattern with specs
+DistillationColumn col = DistillationColumn.builder()
+    .name("Deethanizer")
+    .numberOfTrays(25)
+    .hasCondenser(true)
+    .hasReboiler(true)
+    .topPressure(25.0)
+    .topProductPurity("ethane", 0.95)
+    .bottomProductPurity("propane", 0.98)
+    .build();
+```
+
+### Agents/Skills to Update
+
+- `neqsim-api-patterns` — Add column specification pattern
+- `docs/process/equipment/distillation.md` — Add Column Specifications section
+- `docs/development/CODE_PATTERNS.md` — Add distillation specification pattern
+
+---
+
 ## 2026-03-26 — Heat Exchanger Thermal-Hydraulic Design Toolkit
 
 ### New Classes

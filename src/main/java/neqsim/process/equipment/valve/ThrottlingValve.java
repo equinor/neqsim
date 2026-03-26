@@ -1,11 +1,13 @@
 package neqsim.process.equipment.valve;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
@@ -699,6 +701,28 @@ public class ThrottlingValve extends TwoPortEquipment
   @Override
   public double getPercentValveOpening() {
     return percentValveOpening;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    state.put("percent_opening",
+        ProcessEquipmentInterface.createStateEntry(percentValveOpening, "%"));
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("temperature",
+          ProcessEquipmentInterface.createStateEntry(
+              out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(
+              out.getPressure(pressureUnit), pressureUnit));
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(
+              out.getFlowRate(flowUnit), flowUnit));
+    }
+    return state;
   }
 
   /** {@inheritDoc} */

@@ -22,6 +22,7 @@ import neqsim.thermodynamicoperations.flashops.PHflash;
 import neqsim.thermodynamicoperations.flashops.PHflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PHsolidFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlash;
+import neqsim.thermodynamicoperations.flashops.PVFflash;
 import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
 import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
 import neqsim.thermodynamicoperations.flashops.PSFlashVega;
@@ -581,6 +582,34 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void PHflash2(double Hspec, int type) {
     operation = new PHflash(system, Hspec, type);
     getOperation().run();
+  }
+
+  /**
+   * Perform a Pressure-Vapor Fraction flash to find the temperature at which the system achieves
+   * the specified molar vapor fraction at the current pressure.
+   *
+   * <p>
+   * This is commonly used in process design to specify a desired quality. A vapor fraction of 0.0
+   * is the bubble point and 1.0 is the dew point.
+   * </p>
+   *
+   * @param vaporFraction target molar vapor fraction (0.0 to 1.0)
+   */
+  public void PVFflash(double vaporFraction) {
+    operation = new PVFflash(system, vaporFraction);
+    getOperation().run();
+  }
+
+  /**
+   * Perform a Pressure-Vapor Fraction flash at a specified pressure with the given vapor fraction.
+   *
+   * @param vaporFraction target molar vapor fraction (0.0 to 1.0)
+   * @param pressure the pressure value
+   * @param pressureUnit the unit of pressure (e.g., "bara", "barg", "Pa", "MPa")
+   */
+  public void PVFflash(double vaporFraction, double pressure, String pressureUnit) {
+    system.setPressure(pressure, pressureUnit);
+    PVFflash(vaporFraction);
   }
 
   /**

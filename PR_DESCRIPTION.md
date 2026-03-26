@@ -529,3 +529,333 @@ FieldDevelopmentNPVTest:     4 passed, 0 failed
 | API 5CT / ISO 11960 | Casing grade SMYS and SMTS values |
 | API TR 5C3 Table D.1 | Temperature derating factors (100-300°C) |
 | Norwegian NCS fiscal regime | 22% corporate + 56% petroleum tax in `CashFlowEngine` |
+
+---
+
+## New: Distillation & Column Internals Toolkit
+
+Seven new classes providing rigorous distillation column design — from shortcut methods through tray/packing hydraulics to automated internals sizing.
+
+### `ShortcutDistillationColumn` — Fenske-Underwood-Gilliland Method
+
+Rapid conceptual design using the classic FUG equations:
+- **Fenske:** Minimum stages from relative volatility and key component recoveries
+- **Underwood:** Minimum reflux ratio from root-finding on the Underwood equation
+- **Gilliland:** Actual stages from reflux ratio multiplier (Molokanov correlation)
+- **Kirkbride:** Optimal feed tray location
+
+```java
+ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn("Depropanizer", feed);
+shortcut.setLightKey("propane");
+shortcut.setHeavyKey("n-butane");
+shortcut.setLightKeyRecoveryDistillate(0.98);
+shortcut.setHeavyKeyRecoveryDistillate(0.02);
+shortcut.setRefluxRatioMultiplier(1.3);
+shortcut.setCondenserPressure(15.0, "bara");
+shortcut.setReboilerPressure(16.0, "bara");
+shortcut.run();
+int nMin = shortcut.getMinimumNumberOfStages();
+double rMin = shortcut.getMinimumRefluxRatio();
+int nActual = shortcut.getActualNumberOfStages();
+String json = shortcut.getResultsJson();
+```
+
+### `PackedColumn` — Packed Absorption/Distillation Column
+
+Extends `DistillationColumn` to model packed columns (absorbers, strippers, contactors). Adds packing-specific functionality:
+- HETP calculation from packed bed height to determine theoretical stages
+- Packing hydraulics via `PackingHydraulicsCalculator` (flooding, pressure drop, mass transfer)
+- Built-in packing presets (Pall Ring, Mellapak, IMTP, etc.)
+
+```java
+PackedColumn absorber = new PackedColumn("CO2 Absorber", 10, feed);
+absorber.setPackedHeight(15.0);
+absorber.setPackingType("Mellapak 250Y");
+absorber.setStructuredPacking(true);
+absorber.addSolventStream(leanAmine, 1);
+absorber.run();
+double hetp = absorber.getHETP();
+double floodPct = absorber.getPercentFlood();
+```
+
+### `ColumnSpecification` — Column Degree-of-Freedom Framework
+
+Typed specification for distillation column DOFs with outer secant/bisection adjustment loop:
+- `SpecificationType` enum: `PRODUCT_PURITY`, `REFLUX_RATIO`, `COMPONENT_RECOVERY`, `PRODUCT_FLOW_RATE`, `DUTY`
+- `ProductLocation` enum: `TOP`, `BOTTOM`
+
+```java
+ColumnSpecification topSpec = new ColumnSpecification(
+    ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+    ColumnSpecification.ProductLocation.TOP,
+    0.95, "methane");
+column.setTopSpecification(topSpec);
+column.setBottomSpecification(new ColumnSpecification(
+    ColumnSpecification.SpecificationType.REFLUX_RATIO,
+    ColumnSpecification.ProductLocation.TOP, 3.0));
+column.run();
+```
+
+### `TrayHydraulicsCalculator` — Tray Hydraulics Engine
+
+Per-tray hydraulic evaluation for sieve, valve, and bubble-cap trays:
+
+| Check | Correlation/Reference |
+|-------|----------------------|
+| Flooding | Fair (Souders-Brown + FLV correction) |
+| Weeping | Sinnott (minimum hole velocity) |
+| Entrainment | Fair entrainment correlation |
+| Downcomer backup | Francis weir formula |
+| Pressure drop | Dry tray (orifice) + liquid head + residual head |
+| Tray efficiency | O'Connell correlation (α × μ) |
+| Turndown | Min/design vapor ratio |
+
+**References:** Kister (1992), Ludwig (2001), Fair (1961), Sinnott (2005).
+
+### `PackingHydraulicsCalculator` — Packing Hydraulics Engine
+
+Industry-standard correlations for packed columns:
+
+| Correlation | Purpose |
+|-------------|---------|
+| Eckert GPDC | Flooding velocity |
+| Leva | Wet packing pressure drop |
+| Onda (1968) | Gas/liquid mass transfer coefficients, wetted area |
+| HTU/HETP | From two-resistance model |
+
+Built-in presets for 10 random packings (Pall Ring, Raschig Ring, IMTP, Berl Saddle) and
+7 structured packings (Mellapak 125Y–500Y, Flexipac 1Y–3Y). Auto-sizes column diameter
+to standard vessel sizes.
+
+### `ColumnInternalsDesigner` — Internals Sizing Facade
+
+Evaluates hydraulic performance on every tray of a converged `DistillationColumn`:
+- Identifies controlling tray (highest loading), sizes column diameter
+- Supports both tray and packed modes
+- Produces comprehensive JSON reports with per-tray profiles
+
+```java
+DistillationColumn column = new DistillationColumn("Depropanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.run();
+ColumnInternalsDesigner designer = new ColumnInternalsDesigner(column);
+designer.setTrayType("sieve");
+designer.setTraySpacing(0.61);
+designer.calculate();
+double diameter = designer.getRequiredDiameter();
+boolean ok = designer.isDesignOk();
+String json = designer.toJson();
+```
+
+---
+
+## New: Air Cooler — Full API 661 Thermal Design
+
+Complete rewrite of `AirCooler` from a simple air flow calculator to a **full API 661 thermal design model** (~960 lines):
+
+- **Briggs-Young** fin-tube correlation for air-side HTC
+- **Schmidt** annular fin efficiency calculation
+- **Robinson-Briggs** air-side pressure drop
+- **LMTD** with F-correction for cross-flow (Bowman-Mueller-Nagle)
+- **Fan model** with cubic polynomial fan curve (dP vs Q)
+- **Ambient temperature correction** (ITD ratio method)
+- **Bundle sizing** (tubes per row, total tubes, face area, fin area)
+- Default geometry per API 661 (25.4 mm tube OD, 15.875 mm fin height, 2.5 mm fin pitch, 4 rows, 12 m tubes)
+
+```java
+AirCooler cooler = new AirCooler("Process Cooler", hotStream);
+cooler.setOutTemperature(40.0, "C");
+cooler.setDesignAmbientTemperature(15.0, "C");
+cooler.setNumberOfTubeRows(4);
+cooler.setTubeLength(12.0);
+cooler.run();
+double duty = cooler.getDuty();
+double fanPower = cooler.getFanPower("kW");
+double uOverall = cooler.getOverallU();
+String json = cooler.toJson();
+```
+
+---
+
+## New: PVF Flash — Pressure-Vapor Fraction Flash
+
+New flash specification: given pressure + target vapor fraction → find temperature. Uses Illinois method (accelerated regula falsi) for robustness.
+
+```java
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.PVFflash(0.5);  // Find T where β = 0.5
+// β=0.0 → bubble point temperature
+// β=1.0 → dew point temperature
+```
+
+---
+
+## New: Amine System Framework
+
+### `AmineSystem` — Convenience Wrapper for Amine Thermodynamics
+
+Simplified API for creating rigorous electrolyte-CPA amine systems. Replaces the simplistic Kent-Eisenberg approach:
+
+| Amine | Neutral | Protonated | Carbamate | Max Loading |
+|-------|---------|------------|-----------|-------------|
+| MEA | MEA | MEA+ | MEACOO- | 0.5 |
+| DEA | DEA | DEA+ | DEACOO- | 0.5 |
+| MDEA | MDEA | MDEA+ | (none) | 1.0 |
+| aMDEA | MDEA, Piperazine | MDEA+, Piperazine+ | PZCOO- | 1.0 |
+
+```java
+AmineSystem amineSystem = new AmineSystem(
+    AmineSystem.AmineType.MEA,
+    273.15 + 40.0, 1.0,  // T [K], P [bara]
+    0.30,                 // 30 wt% amine
+    0.40);                // CO2 loading (mol CO2 / mol amine)
+SystemInterface fluid = amineSystem.getSystem();
+```
+
+### `AmineViscosity` — Loaded Amine Solution Viscosity
+
+Correlations for CO₂-loaded amine solutions:
+- **Weiland et al. (1998)** for MEA, DEA, aMDEA
+- **Teng et al. (1994)** for MDEA
+- Auto-detects amine type from fluid composition
+
+### New Database Entries
+
+| Component | ID | Description |
+|-----------|----|-------------|
+| MEA+ | 1259 | Protonated monoethanolamine ion (charge=+1) |
+| MEACOO- | 1260 | MEA carbamate ion (charge=-1, with CPA parameters) |
+
+Updated `REACTIONDATA.csv` and `STOCCOEFDATA.csv` with MEA/DEA equilibrium reactions (Austgen 1989).
+
+---
+
+## New: ProcessSystem Stream Summary
+
+Three new methods on `ProcessSystem` — brings UniSim/HYSYS-style "Workbook" functionality to NeqSim:
+
+```java
+ProcessSystem process = new ProcessSystem();
+// ... add equipment ...
+process.run();
+
+// Formatted text table (like UniSim Workbook)
+System.out.println(process.getStreamSummaryTable());
+
+// JSON output for programmatic access
+String json = process.getStreamSummaryJson();
+
+// Get all streams
+List<StreamInterface> streams = process.getAllStreams();
+```
+
+Output includes: T(°C), P(bara), total flow (mol/hr, kg/hr), vapor fraction, molar mass, and component mole fractions for all streams in the flowsheet.
+
+---
+
+## New: NeqSim vs UniSim Comparison Document
+
+Feature-by-feature comparison of NeqSim vs Honeywell UniSim Design across 12 dimensions (thermodynamics, distillation, dynamics, safety, cost estimation, etc.) — see `docs/development/NEQSIM_VS_UNISIM_COMPARISON.md`.
+
+---
+
+## New: Process Simulation Enhancements Guide
+
+Comprehensive user guide for all new capabilities: Air Cooler, Packed Column, Tray Hydraulics, Packing Hydraulics, Column Internals Designer, Shortcut Distillation, PVF Flash + Stream Summary — see `docs/process/process-simulation-enhancements.md`.
+
+---
+
+## New: Jupyter Notebook — Air Cooler & Packed Column
+
+`examples/notebooks/air_cooler_and_packed_column.ipynb` — demonstrates:
+- Part 1: Air Cooler setup, thermal design results, fan power
+- Part 2: Packed Column (absorber/contactor) with HETP-based staging and packing hydraulics
+
+---
+
+## Updated Test Coverage
+
+| Test File | Tests | Status |
+|-----------|-------|--------|
+| `PackedColumnTest` | 4 tests (basic absorber, setters/getters, condenser/reboiler, JSON) | New |
+| `ShortcutDistillationColumnTest` | 3 tests (deethanizer, depropanizer, JSON) | New |
+| `ColumnInternalsDesignerTest` | 4 tests (sieve tray, convenience, packed, structured) | New |
+| `PackingHydraulicsCalculatorTest` | 6 tests (Pall Ring, structured, diameter, presets, mass transfer, dP) | New |
+| `TrayHydraulicsCalculatorTest` | 6 tests (sieve, diameter, valve, liquid rate, weeping, O'Connell) | New |
+| `ProcessSystemStreamSummaryTest` | 3 tests (text table, JSON, getAllStreams) | New |
+| `PVFflashTest` | 4 tests (mid-fraction, bubble point, dew point, consistency) | New |
+| `AirCoolerTest` | 14 new tests (LMTD, U, fin efficiency, fan, bundle, ITD, JSON) | Expanded |
+| `ColumnSpecificationTest` | Column spec purity/recovery/flow rate tests | New |
+| `DocExamplesCompilationTest` | 3 new tests (thermal design JSON, interfacial friction) | Expanded |
+
+## Updated Files Summary
+
+| File | Status | Description |
+|------|--------|-------------|
+| **Java Source — New Classes** | | |
+| `.../distillation/PackedColumn.java` | **New** | Packed absorption/distillation column (~436 lines) |
+| `.../distillation/ShortcutDistillationColumn.java` | **New** | FUG shortcut method (~774 lines) |
+| `.../distillation/ColumnSpecification.java` | **New** | Column DOF specification framework |
+| `.../distillation/internals/ColumnInternalsDesigner.java` | **New** | Internals sizing facade (~719 lines) |
+| `.../distillation/internals/PackingHydraulicsCalculator.java` | **New** | Packing hydraulics engine (~1032 lines) |
+| `.../distillation/internals/TrayHydraulicsCalculator.java` | **New** | Tray hydraulics engine (~1057 lines) |
+| `.../flashops/PVFflash.java` | **New** | PVF flash calculation (~231 lines) |
+| **Java Source — Major Updates** | | |
+| `.../heatexchanger/AirCooler.java` | **Major rewrite** | Full API 661 thermal design (~960 lines added) |
+| `.../distillation/DistillationColumn.java` | **Modified** | Column specification framework (+531 lines) |
+| `.../processmodel/ProcessSystem.java` | **Modified** | Stream summary methods (+187 lines) |
+| `.../amines/AmineSystem.java` | **New/Modified** | Amine system convenience wrapper (+327 lines) |
+| `.../viscosity/AmineViscosity.java` | **Modified** | Loaded amine viscosity correlations |
+| `.../heatexchanger/ThermalDesignCalculator.java` | **Modified** | Added `toJson()` method |
+| `.../ThermodynamicOperations.java` | **Modified** | Added `PVFflash()` entry point |
+| **Tests** | | |
+| `.../distillation/PackedColumnTest.java` | **New** | 4 tests |
+| `.../distillation/ShortcutDistillationColumnTest.java` | **New** | 3 tests |
+| `.../distillation/ColumnSpecificationTest.java` | **New** | Column spec tests |
+| `.../internals/ColumnInternalsDesignerTest.java` | **New** | 4 tests |
+| `.../internals/PackingHydraulicsCalculatorTest.java` | **New** | 6 tests |
+| `.../internals/TrayHydraulicsCalculatorTest.java` | **New** | 6 tests |
+| `.../processmodel/ProcessSystemStreamSummaryTest.java` | **New** | 3 tests |
+| `.../flashops/PVFflashTest.java` | **New** | 4 tests |
+| `.../heatexchanger/AirCoolerTest.java` | **Expanded** | +14 new tests |
+| `.../DocExamplesCompilationTest.java` | **Expanded** | +3 new tests |
+| **Resources** | | |
+| `src/main/resources/data/COMP.csv` | **Modified** | Added MEA+, MEACOO- ionic species |
+| `src/main/resources/data/REACTIONDATA.csv` | **Modified** | Added MEA/DEA equilibrium reactions |
+| `src/main/resources/data/STOCCOEFDATA.csv` | **Modified** | Updated stoichiometric coefficients |
+| **Documentation** | | |
+| `docs/development/NEQSIM_VS_UNISIM_COMPARISON.md` | **New** | NeqSim vs UniSim comparison (~553 lines) |
+| `docs/process/process-simulation-enhancements.md` | **New** | Enhancements user guide (~507 lines) |
+| `docs/REFERENCE_MANUAL_INDEX.md` | **Modified** | Added new entries |
+| `docs/cookbook/pipeline-recipes.md` | **Modified** | Minor updates |
+| `docs/wiki/pump_theory_and_implementation.md` | **Modified** | Minor updates |
+| `docs/wiki/two_fluid_model.md` | **Modified** | Minor updates |
+| **Examples** | | |
+| `examples/notebooks/air_cooler_and_packed_column.ipynb` | **New** | Air cooler + packed column notebook |
+| **Agent Instructions** | | |
+| `.github/agents/documentation.agent.md` | **Modified** | Minor updates |
+| `.github/agents/notebook.example.agent.md` | **Modified** | Minor updates |
+| `.github/copilot-instructions.md` | **Modified** | Added amine system patterns |
+| `AGENTS.md` | **Modified** | Added amine system + column internals references |
+
+## Updated Standards Compliance
+
+| Standard | Implementation |
+|----------|---------------|
+| NORSOK D-010 Table 18 | VME design factor >= 1.25 in `WellDesignCalculator` |
+| API 5CT / ISO 11960 | Casing grade SMYS and SMTS values |
+| API TR 5C3 Table D.1 | Temperature derating factors (100-300°C) |
+| Norwegian NCS fiscal regime | 22% corporate + 56% petroleum tax in `CashFlowEngine` |
+| API 661 | Air cooler thermal design (Briggs-Young, Robinson-Briggs, Schmidt fin efficiency) |
+| TEMA RCB-4.6 | Vibration screening (existing — VibrationAnalysis) |
+| Fair (1961) | Tray flooding (Souders-Brown) and entrainment correlations |
+| Kister (1992) | Tray hydraulics reference design practices |
+| Sinnott (2005) | Weeping check, tray pressure drop |
+| O'Connell (1946) | Tray efficiency correlation |
+| Eckert GPDC | Packed column flooding and capacity limits |
+| Onda (1968) | Gas/liquid mass transfer coefficients for packed columns |
+| Leva | Wet packing pressure drop |
+| Fenske-Underwood-Gilliland | Shortcut distillation column design |
+| Weiland et al. (1998) | Loaded amine solution viscosity (MEA, DEA, aMDEA) |
+| Teng et al. (1994) | MDEA solution viscosity |
+| Austgen (1989) | MEA/DEA reaction equilibrium constants |
