@@ -144,6 +144,38 @@ public class ShellAndTubeDesignCalculator {
   private double nozzleDiameter = 150.0; // mm (default 6 inch)
   private double nozzleWallThickness = 7.11; // mm (Sch 40)
 
+  // ============================================================================
+  // Thermal-hydraulic design (optional - if fluid properties are supplied)
+  // ============================================================================
+  private ThermalDesignCalculator thermalCalculator;
+  private boolean hasThermalData = false;
+
+  // Tube-side fluid properties
+  private double tubeSideDensity = 0.0; // kg/m3
+  private double tubeSideViscosity = 0.0; // Pa*s
+  private double tubeSideCp = 0.0; // J/(kg*K)
+  private double tubeSideConductivity = 0.0; // W/(m*K)
+  private double tubeSideMassFlowRate = 0.0; // kg/s
+  private boolean tubeSideHeating = true;
+
+  // Shell-side fluid properties
+  private double shellSideDensity = 0.0; // kg/m3
+  private double shellSideViscosity = 0.0; // Pa*s
+  private double shellSideCp = 0.0; // J/(kg*K)
+  private double shellSideConductivity = 0.0; // W/(m*K)
+  private double shellSideMassFlowRate = 0.0; // kg/s
+
+  // Fouling resistances (m2*K/W per TEMA)
+  private double foulingTube = 0.000176;
+  private double foulingShell = 0.000176;
+
+  // Shell-side method
+  private ThermalDesignCalculator.ShellSideMethod shellSideMethod =
+      ThermalDesignCalculator.ShellSideMethod.KERN;
+
+  // Vibration screening results
+  private VibrationAnalysis.VibrationResult vibrationResult;
+
   /**
    * Creates a new ShellAndTubeDesignCalculator with default parameters.
    */
@@ -199,6 +231,11 @@ public class ShellAndTubeDesignCalculator {
     // NACE sour service assessment
     if (sourServiceAssessment) {
       performNACEAssessment();
+    }
+
+    // Thermal-hydraulic calculations if fluid properties are available
+    if (hasThermalData) {
+      calculateThermalHydraulic();
     }
 
     // Calculate weights
@@ -487,8 +524,8 @@ public class ShellAndTubeDesignCalculator {
    */
   private void loadMaterialFromDB(String materialGrade, boolean isShell) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet rs = database
-            .getResultSet("SELECT * FROM HeatExchangerTubeMaterials WHERE MaterialGrade='"
+        ResultSet rs =
+            database.getResultSet("SELECT * FROM HeatExchangerTubeMaterials WHERE MaterialGrade='"
                 + materialGrade + "'")) {
       if (rs.next()) {
         double allowable = rs.getDouble("AllowableStress_MPa");
@@ -643,8 +680,8 @@ public class ShellAndTubeDesignCalculator {
 
     // Check tube material NACE compliance
     if (!tubeNACECompliant) {
-      naceIssues.add("Tube material " + tubeMaterialGrade
-          + " is not NACE MR0175 compliant for sour service");
+      naceIssues.add(
+          "Tube material " + tubeMaterialGrade + " is not NACE MR0175 compliant for sour service");
     }
 
     // Hardness limits per NORSOK M-001 / NACE MR0175
@@ -698,6 +735,196 @@ public class ShellAndTubeDesignCalculator {
       }
     }
     return standardThicknesses[standardThicknesses.length - 1];
+  }
+
+  /**
+   * Performs thermal-hydraulic calculations using the ThermalDesignCalculator. Requires fluid
+   * properties to have been set via setTubeSideFluidProperties and setShellSideFluidProperties.
+   */
+  private void calculateThermalHydraulic() {
+    thermalCalculator = new ThermalDesignCalculator();
+
+    // Transfer geometry to thermal calculator (convert mm to m)
+    double tubeOD = tubeSize.getOuterDiameterMm();
+    double tubeID = tubeOD - 2.0 * tubeWallThickness;
+    thermalCalculator.setTubeODm(tubeOD / 1000.0);
+    thermalCalculator.setTubeIDm(tubeID / 1000.0);
+    thermalCalculator.setTubeLengthm(tubeLength / 1000.0);
+    thermalCalculator.setTubeCount(tubeCount);
+    thermalCalculator.setTubePasses(tubePasses);
+    thermalCalculator.setTubePitchm(tubePitch / 1000.0);
+    thermalCalculator.setTriangularPitch(pitchPattern == TubePitchPattern.TRIANGULAR_30
+        || pitchPattern == TubePitchPattern.TRIANGULAR_60);
+    thermalCalculator.setShellIDm(shellInsideDiameter / 1000.0);
+    thermalCalculator.setBaffleSpacingm(baffleSpacing / 1000.0);
+    thermalCalculator.setBaffleCount(baffleCount);
+    thermalCalculator.setBaffleCut(baffleCut);
+    thermalCalculator.setTubeWallConductivity(tubeThermalConductivity);
+
+    // Transfer fluid properties
+    thermalCalculator.setTubeSideFluid(tubeSideDensity, tubeSideViscosity, tubeSideCp,
+        tubeSideConductivity, tubeSideMassFlowRate, tubeSideHeating);
+    thermalCalculator.setShellSideFluid(shellSideDensity, shellSideViscosity, shellSideCp,
+        shellSideConductivity, shellSideMassFlowRate);
+
+    // Transfer fouling
+    thermalCalculator.setFoulingTube(foulingTube);
+    thermalCalculator.setFoulingShell(foulingShell);
+
+    // Set method
+    thermalCalculator.setShellSideMethod(shellSideMethod);
+
+    // Run thermal calculations
+    thermalCalculator.calculate();
+
+    appliedStandards.add("Gnielinski correlation (Tube-side HTC)");
+    if (shellSideMethod == ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE) {
+      appliedStandards.add("Bell-Delaware method (Shell-side HTC)");
+    } else {
+      appliedStandards.add("Kern method (Shell-side HTC)");
+    }
+
+    // Vibration screening if shell-side gas/liquid properties available
+    if (shellSideDensity > 0) {
+      performVibrationScreening();
+    }
+  }
+
+  /**
+   * Performs flow-induced vibration screening per TEMA RCB-4.6.
+   */
+  private void performVibrationScreening() {
+    double tubeOD = tubeSize.getOuterDiameterMm() / 1000.0;
+    double tubeID = (tubeSize.getOuterDiameterMm() - 2.0 * tubeWallThickness) / 1000.0;
+    double span = baffleSpacing / 1000.0;
+
+    // Default material properties for carbon steel tubes
+    double youngsModulus = 200e9; // Pa (200 GPa)
+    double tubeMaterialDensity = 7850.0; // kg/m3
+
+    // Estimate crossflow velocity
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellInsideDiameter / 1000.0,
+        baffleSpacing / 1000.0, tubeOD, tubePitch / 1000.0);
+    double crossflowVelocity =
+        (crossflowArea > 0) ? shellSideMassFlowRate / (shellSideDensity * crossflowArea) : 0.0;
+
+    // Estimate sonic velocity (rough estimate for natural gas / steam)
+    double sonicVelocity = Math.sqrt(1.4 * 8314.0 * 300.0 / 29.0); // ~ 347 m/s for air-like gas
+
+    // Damping ratio: higher in liquid, lower in gas
+    double dampingRatio = (shellSideDensity > 100) ? 0.03 : 0.01;
+
+    vibrationResult = VibrationAnalysis.performScreening(tubeOD, tubeID, span, tubePitch / 1000.0,
+        youngsModulus, tubeMaterialDensity, crossflowVelocity, shellSideDensity, tubeSideDensity,
+        shellInsideDiameter / 1000.0, sonicVelocity, dampingRatio,
+        pitchPattern == TubePitchPattern.TRIANGULAR_30
+            || pitchPattern == TubePitchPattern.TRIANGULAR_60);
+
+    if (vibrationResult != null && !vibrationResult.passed) {
+      appliedStandards.add("TEMA RCB-4.6 (Vibration Screening - FAIL)");
+    } else {
+      appliedStandards.add("TEMA RCB-4.6 (Vibration Screening - PASS)");
+    }
+  }
+
+  // ============================================================================
+  // Fluid property setters for thermal-hydraulic calculations
+  // ============================================================================
+
+  /**
+   * Sets tube-side fluid properties for thermal-hydraulic calculations.
+   *
+   * @param density density (kg/m3)
+   * @param viscosity dynamic viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
+   * @param conductivity thermal conductivity (W/(m*K))
+   * @param massFlowRate mass flow rate (kg/s)
+   * @param heating true if fluid is being heated
+   */
+  public void setTubeSideFluidProperties(double density, double viscosity, double cp,
+      double conductivity, double massFlowRate, boolean heating) {
+    this.tubeSideDensity = density;
+    this.tubeSideViscosity = viscosity;
+    this.tubeSideCp = cp;
+    this.tubeSideConductivity = conductivity;
+    this.tubeSideMassFlowRate = massFlowRate;
+    this.tubeSideHeating = heating;
+    this.hasThermalData = density > 0 && viscosity > 0;
+  }
+
+  /**
+   * Sets shell-side fluid properties for thermal-hydraulic calculations.
+   *
+   * @param density density (kg/m3)
+   * @param viscosity dynamic viscosity (Pa*s)
+   * @param cp heat capacity (J/(kg*K))
+   * @param conductivity thermal conductivity (W/(m*K))
+   * @param massFlowRate mass flow rate (kg/s)
+   */
+  public void setShellSideFluidProperties(double density, double viscosity, double cp,
+      double conductivity, double massFlowRate) {
+    this.shellSideDensity = density;
+    this.shellSideViscosity = viscosity;
+    this.shellSideCp = cp;
+    this.shellSideConductivity = conductivity;
+    this.shellSideMassFlowRate = massFlowRate;
+    if (density > 0 && viscosity > 0) {
+      this.hasThermalData = true;
+    }
+  }
+
+  /**
+   * Sets tube-side fouling resistance.
+   *
+   * @param fouling fouling resistance (m2*K/W)
+   */
+  public void setFoulingTube(double fouling) {
+    this.foulingTube = fouling;
+  }
+
+  /**
+   * Sets shell-side fouling resistance.
+   *
+   * @param fouling fouling resistance (m2*K/W)
+   */
+  public void setFoulingShell(double fouling) {
+    this.foulingShell = fouling;
+  }
+
+  /**
+   * Sets the shell-side thermal analysis method (Kern or Bell-Delaware).
+   *
+   * @param method analysis method
+   */
+  public void setShellSideMethod(ThermalDesignCalculator.ShellSideMethod method) {
+    this.shellSideMethod = method;
+  }
+
+  /**
+   * Gets the thermal design calculator, available after calculate() when fluid properties are set.
+   *
+   * @return thermal calculator, or null if no thermal data provided
+   */
+  public ThermalDesignCalculator getThermalCalculator() {
+    return thermalCalculator;
+  }
+
+  /**
+   * Gets the vibration screening result, available after calculate() when fluid properties are set.
+   *
+   * @return vibration result, or null if screening was not performed
+   */
+  public VibrationAnalysis.VibrationResult getVibrationResult() {
+    return vibrationResult;
+  }
+
+  /**
+   * Checks whether thermal-hydraulic data is available.
+   *
+   * @return true if fluid property data has been supplied
+   */
+  public boolean hasThermalData() {
+    return hasThermalData;
   }
 
   // Getters and Setters
@@ -980,6 +1207,28 @@ public class ShellAndTubeDesignCalculator {
 
     // Applied standards
     result.put("appliedStandards", appliedStandards);
+
+    // Thermal-hydraulic results (if fluid properties were supplied)
+    if (thermalCalculator != null) {
+      result.put("thermalDesign", thermalCalculator.toMap());
+    }
+
+    // Vibration screening results
+    if (vibrationResult != null) {
+      Map<String, Object> vibration = new LinkedHashMap<String, Object>();
+      vibration.put("passed", vibrationResult.passed);
+      vibration.put("naturalFrequency_Hz", vibrationResult.naturalFrequencyHz);
+      vibration.put("vortexSheddingFrequency_Hz", vibrationResult.vortexSheddingFrequencyHz);
+      vibration.put("vortexSheddingRatio", vibrationResult.vortexSheddingRatio);
+      vibration.put("vortexSheddingCritical", vibrationResult.vortexSheddingCritical);
+      vibration.put("criticalVelocity_mps", vibrationResult.criticalVelocityMs);
+      vibration.put("velocityRatio", vibrationResult.velocityRatio);
+      vibration.put("fluidElasticCritical", vibrationResult.fluidElasticCritical);
+      vibration.put("acousticFrequency_Hz", vibrationResult.acousticFrequencyHz);
+      vibration.put("acousticRatio", vibrationResult.acousticRatio);
+      vibration.put("acousticCritical", vibrationResult.acousticCritical);
+      result.put("vibrationScreening", vibration);
+    }
 
     // Weights
     Map<String, Object> weights = new LinkedHashMap<String, Object>();

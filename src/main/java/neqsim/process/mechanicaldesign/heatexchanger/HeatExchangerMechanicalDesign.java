@@ -1078,8 +1078,72 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     shellAndTubeCalculator.setSourServiceAssessment(sourServiceAssessment);
     shellAndTubeCalculator.setH2sPartialPressure(h2sPartialPressure);
 
+    // Transfer fluid properties from streams for thermal-hydraulic calculation
+    transferFluidProperties(equipment);
+
+    // Transfer fouling resistances
+    shellAndTubeCalculator.setFoulingTube(foulingResistanceTubeHC);
+    shellAndTubeCalculator.setFoulingShell(foulingResistanceShellHC);
+
     // Run the full calculation
     shellAndTubeCalculator.calculate();
+  }
+
+  /**
+   * Extracts fluid properties from the heat exchanger streams and passes them to the
+   * ShellAndTubeDesignCalculator for thermal-hydraulic analysis.
+   *
+   * @param equipment the process equipment
+   */
+  private void transferFluidProperties(ProcessEquipmentInterface equipment) {
+    if (!(equipment instanceof HeatExchanger)) {
+      return;
+    }
+
+    HeatExchanger hx = (HeatExchanger) equipment;
+
+    // Stream 0 = tube side (process), Stream 1 = shell side (utility)
+    try {
+      neqsim.process.equipment.stream.StreamInterface tubeStream = hx.getInStream(0);
+      if (tubeStream != null && tubeStream.getThermoSystem() != null) {
+        neqsim.thermo.system.SystemInterface tubeFluid = tubeStream.getThermoSystem();
+        tubeFluid.initProperties();
+        double density = tubeFluid.getDensity("kg/m3");
+        double viscosity = tubeFluid.getViscosity("kg/msec");
+        double cp = tubeFluid.getCp("J/kgK");
+        double conductivity = tubeFluid.getThermalConductivity("W/mK");
+        double massFlow = tubeFluid.getFlowRate("kg/sec");
+        boolean heating = false;
+        if (hx.getOutStream(0) != null) {
+          heating = hx.getOutStream(0).getTemperature() > tubeStream.getTemperature();
+        }
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setTubeSideFluidProperties(density, viscosity, cp, conductivity,
+              massFlow, heating);
+        }
+      }
+    } catch (Exception ex) {
+      // Fluid property extraction can fail for unconfigured streams
+    }
+
+    try {
+      neqsim.process.equipment.stream.StreamInterface shellStream = hx.getInStream(1);
+      if (shellStream != null && shellStream.getThermoSystem() != null) {
+        neqsim.thermo.system.SystemInterface shellFluid = shellStream.getThermoSystem();
+        shellFluid.initProperties();
+        double density = shellFluid.getDensity("kg/m3");
+        double viscosity = shellFluid.getViscosity("kg/msec");
+        double cp = shellFluid.getCp("J/kgK");
+        double conductivity = shellFluid.getThermalConductivity("W/mK");
+        double massFlow = shellFluid.getFlowRate("kg/sec");
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setShellSideFluidProperties(density, viscosity, cp, conductivity,
+              massFlow);
+        }
+      }
+    } catch (Exception ex) {
+      // Fluid property extraction can fail for unconfigured streams
+    }
   }
 
   /**

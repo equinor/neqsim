@@ -35,6 +35,21 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /**
+   * Design mode for the heat exchanger.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public enum DesignMode {
+    /** Sizing mode: given UA, compute outlet temperatures (default). */
+    SIZING,
+    /**
+     * Rating mode: compute UA from geometry and fluid properties, then find outlet temperatures.
+     */
+    RATING
+  }
+
   boolean setTemperature = false;
   StreamInterface[] outStream = new Stream[2];
   StreamInterface[] inStream = new Stream[2];
@@ -56,6 +71,21 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   private String flowArrangement = "concentric tube counterflow";
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
+
+  /** Design mode: SIZING (default, uses user-supplied UA) or RATING (calculates UA). */
+  private DesignMode designMode = DesignMode.SIZING;
+
+  /** Tube-side shell-and-tube geometry for rating mode. */
+  private transient neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator ratingCalculator;
+
+  /** Number of shell passes for LMTD correction (1 = TEMA E, 2 = TEMA F). */
+  private int shellPasses = 1;
+
+  /** Calculated overall U value from rating mode (W/(m2*K)). */
+  private double ratingU = 0.0;
+
+  /** Heat transfer area used in rating mode (m2). */
+  private double ratingArea = 0.0;
 
   // ============ Capacity Constraint Fields ============
   /** Design duty in Watts for capacity constraint. */
@@ -427,6 +457,17 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
       double dEntalphy = outStream[streamToSet].getThermoSystem().getEnthalpy()
           - inStream[streamToSet].getThermoSystem().getEnthalpy();
+
+      // Rating mode: compute UA from correlations instead of using user-supplied value
+      if (designMode == DesignMode.RATING && ratingCalculator != null && ratingArea > 0) {
+        updateRatingCalculatorFromStreams();
+        ratingCalculator.calculate();
+        ratingU = ratingCalculator.getOverallU();
+        if (ratingU > 0) {
+          UAvalue = ratingU * ratingArea;
+        }
+      }
+
       NTU = UAvalue / Cmin;
 
       thermalEffectiveness = calcThermalEffectivenes(NTU, Cr);
@@ -683,6 +724,132 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    */
   public void setFlowArrangement(String flowArrangement) {
     this.flowArrangement = flowArrangement;
+  }
+
+  /**
+   * Gets the design mode.
+   *
+   * @return SIZING or RATING
+   */
+  public DesignMode getDesignMode() {
+    return designMode;
+  }
+
+  /**
+   * Updates the rating calculator with current stream fluid properties. Extracts density,
+   * viscosity, Cp, and thermal conductivity from both inlet streams.
+   */
+  private void updateRatingCalculatorFromStreams() {
+    if (ratingCalculator == null) {
+      return;
+    }
+
+    // Tube-side properties from stream 0 (process side)
+    try {
+      SystemInterface tubeFluid = inStream[0].getThermoSystem();
+      tubeFluid.initProperties();
+      double tubeDensity = tubeFluid.getDensity("kg/m3");
+      double tubeViscosity = tubeFluid.getViscosity("kg/msec");
+      double tubeCp = tubeFluid.getCp("J/kgK");
+      double tubeConductivity = tubeFluid.getThermalConductivity("W/mK");
+      double tubeMassFlow = tubeFluid.getFlowRate("kg/sec");
+      boolean heating = outStream[0].getTemperature() > inStream[0].getTemperature();
+      ratingCalculator.setTubeSideFluid(tubeDensity, tubeViscosity, tubeCp, tubeConductivity,
+          tubeMassFlow, heating);
+    } catch (Exception ex) {
+      // Use defaults if property extraction fails
+    }
+
+    // Shell-side properties from stream 1 (utility side)
+    try {
+      SystemInterface shellFluid = inStream[1].getThermoSystem();
+      shellFluid.initProperties();
+      double shellDensity = shellFluid.getDensity("kg/m3");
+      double shellViscosity = shellFluid.getViscosity("kg/msec");
+      double shellCp = shellFluid.getCp("J/kgK");
+      double shellConductivity = shellFluid.getThermalConductivity("W/mK");
+      double shellMassFlow = shellFluid.getFlowRate("kg/sec");
+      ratingCalculator.setShellSideFluid(shellDensity, shellViscosity, shellCp, shellConductivity,
+          shellMassFlow);
+    } catch (Exception ex) {
+      // Use defaults if property extraction fails
+    }
+  }
+
+  /**
+   * Sets the design mode. In RATING mode, the exchanger computes UA from geometry and fluid
+   * properties instead of using a user-supplied value.
+   *
+   * @param mode SIZING or RATING
+   */
+  public void setDesignMode(DesignMode mode) {
+    this.designMode = mode;
+  }
+
+  /**
+   * Gets the ThermalDesignCalculator used in rating mode.
+   *
+   * @return rating calculator, or null if not in rating mode or not yet run
+   */
+  public neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator getRatingCalculator() {
+    return ratingCalculator;
+  }
+
+  /**
+   * Sets the ThermalDesignCalculator for rating mode. The caller should configure the calculator
+   * with geometry and fluid properties before calling run().
+   *
+   * @param calculator configured thermal design calculator
+   */
+  public void setRatingCalculator(
+      neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator calculator) {
+    this.ratingCalculator = calculator;
+    this.designMode = DesignMode.RATING;
+  }
+
+  /**
+   * Sets the heat transfer area for rating mode.
+   *
+   * @param area heat transfer area (m2)
+   */
+  public void setRatingArea(double area) {
+    this.ratingArea = area;
+  }
+
+  /**
+   * Gets the heat transfer area used in rating mode.
+   *
+   * @return area (m2)
+   */
+  public double getRatingArea() {
+    return ratingArea;
+  }
+
+  /**
+   * Gets the overall U value computed from rating mode correlations.
+   *
+   * @return overall U (W/(m2*K)), or 0 if not in rating mode
+   */
+  public double getRatingU() {
+    return ratingU;
+  }
+
+  /**
+   * Sets the number of shell passes for LMTD correction factor calculation.
+   *
+   * @param shellPasses number of shell passes (1, 2, 3, ...)
+   */
+  public void setShellPasses(int shellPasses) {
+    this.shellPasses = shellPasses;
+  }
+
+  /**
+   * Gets the number of shell passes.
+   *
+   * @return number of shell passes
+   */
+  public int getShellPasses() {
+    return shellPasses;
   }
 
   /**
@@ -956,7 +1123,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotFeed).coldStream(coldFeed)
    *     .UAvalue(5000.0).flowArrangement("counterflow").build();
