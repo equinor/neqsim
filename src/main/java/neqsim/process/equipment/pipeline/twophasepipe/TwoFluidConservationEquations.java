@@ -110,7 +110,7 @@ public class TwoFluidConservationEquations implements Serializable {
    * and Lahey, R.T. (1987), "The virtual mass and lift force on a sphere in rotating and straining
    * inviscid flow", Int. J. Multiphase Flow.
    */
-  private boolean enableVirtualMassForce = true;
+  private boolean enableVirtualMassForce = false;
 
   /**
    * Virtual mass coefficient. For spherical bubbles/droplets, C_vm = 0.5 (theoretical). Values
