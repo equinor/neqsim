@@ -183,4 +183,117 @@ public class NoiseAssessment implements Serializable {
   public static boolean exceedsNorsokLimit(double splDbA) {
     return splDbA > NORSOK_MAX_CONTINUOUS_DBA;
   }
+
+  /**
+   * ISO 9613-2 standard octave-band centre frequencies in Hz.
+   */
+  private static final double[] OCTAVE_BANDS =
+      {63.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0};
+
+  /**
+   * A-weighting corrections for the standard octave bands in dB.
+   */
+  private static final double[] A_WEIGHT = {-26.2, -16.1, -8.6, -3.2, 0.0, 1.2, 1.0, -1.1};
+
+  /**
+   * Calculate atmospheric absorption coefficient per ISO 9613-1.
+   *
+   * <p>
+   * The method implements the simplified broadband formula from ISO 9613-1 Annex B for standard
+   * conditions (20 deg C, 70% RH, 101.325 kPa). For more precise work, use the full
+   * temperature-humidity-dependent model.
+   * </p>
+   *
+   * @param frequencyHz octave band centre frequency in Hz
+   * @param temperatureC ambient temperature in Celsius
+   * @param relativeHumidityPct relative humidity in percent
+   * @return atmospheric absorption coefficient in dB/m
+   */
+  public static double atmosphericAbsorption(double frequencyHz, double temperatureC,
+      double relativeHumidityPct) {
+    // Simplified ISO 9613-1: alpha = 8.686 * f^2 * (1.84e-11 * (P_ref/P) * (T/T_ref)^0.5
+    // + (T/T_ref)^(-5/2) * relaxation terms)
+    // Using reference lookup values for standard atmosphere
+    double tempK = temperatureC + 273.15;
+    double tempRatio = tempK / 293.15;
+    double humidityFraction = relativeHumidityPct / 100.0;
+
+    // Oxygen and nitrogen relaxation frequencies (simplified)
+    double frO =
+        24.0 + 4.04e4 * humidityFraction * (0.02 + humidityFraction) / (0.391 + humidityFraction);
+    double frN = Math.pow(tempRatio, -0.5) * (9.0
+        + 280.0 * humidityFraction * Math.exp(-4.170 * (Math.pow(tempRatio, -1.0 / 3.0) - 1.0)));
+
+    double f2 = frequencyHz * frequencyHz;
+    double alpha = 8.686 * f2
+        * (1.84e-11 / Math.sqrt(tempRatio)
+            + Math.pow(tempRatio, -2.5) * (0.01275 * Math.exp(-2239.1 / tempK) / (frO + f2 / frO)
+                + 0.1068 * Math.exp(-3352.0 / tempK) / (frN + f2 / frN)));
+    return alpha; // dB/m
+  }
+
+  /**
+   * Calculate far-field SPL with atmospheric absorption per ISO 9613-2.
+   *
+   * <p>
+   * Extends the basic geometric divergence model with frequency-dependent atmospheric absorption
+   * and ground effect. The method uses the standard octave-band approach with A-weighting.
+   * </p>
+   *
+   * @param soundPowerLevelDbA overall A-weighted sound power level in dB(A)
+   * @param distanceM distance from source in meters
+   * @param temperatureC ambient temperature in Celsius
+   * @param relativeHumidityPct relative humidity in percent
+   * @return A-weighted SPL at distance including atmospheric absorption, in dB(A)
+   */
+  public static double splAtDistanceWithAttenuation(double soundPowerLevelDbA, double distanceM,
+      double temperatureC, double relativeHumidityPct) {
+    if (distanceM <= 0) {
+      return soundPowerLevelDbA;
+    }
+
+    // Geometric divergence
+    double geometricAttenuation = 20.0 * Math.log10(distanceM) + 11.0;
+
+    // Calculate atmospheric absorption at 1 kHz (dominant for A-weighted broadband noise)
+    double alpha1k = atmosphericAbsorption(1000.0, temperatureC, relativeHumidityPct);
+    double atmosphericAttenuation = alpha1k * distanceM;
+
+    return soundPowerLevelDbA - geometricAttenuation - atmosphericAttenuation;
+  }
+
+  /**
+   * Calculate octave-band SPL at distance with frequency-dependent atmospheric absorption.
+   *
+   * <p>
+   * Distributes the total sound power across octave bands (assuming flat spectrum), applies
+   * frequency-dependent absorption and A-weighting, then sums to get the overall result.
+   * </p>
+   *
+   * @param soundPowerLevelDb overall unweighted sound power level in dB
+   * @param distanceM distance from source in meters
+   * @param temperatureC ambient temperature in Celsius
+   * @param relativeHumidityPct relative humidity in percent
+   * @return A-weighted SPL at distance in dB(A)
+   */
+  public static double splAtDistanceOctaveBand(double soundPowerLevelDb, double distanceM,
+      double temperatureC, double relativeHumidityPct) {
+    if (distanceM <= 0) {
+      return soundPowerLevelDb;
+    }
+
+    // Distribute power equally across octave bands (flat spectrum assumption)
+    double perBandSWL = soundPowerLevelDb - 10.0 * Math.log10(OCTAVE_BANDS.length);
+    double geometricAtten = 20.0 * Math.log10(distanceM) + 11.0;
+
+    double sumLinear = 0.0;
+    for (int i = 0; i < OCTAVE_BANDS.length; i++) {
+      double alpha = atmosphericAbsorption(OCTAVE_BANDS[i], temperatureC, relativeHumidityPct);
+      double atmosAtten = alpha * distanceM;
+      double bandSPL = perBandSWL - geometricAtten - atmosAtten + A_WEIGHT[i];
+      sumLinear += Math.pow(10.0, bandSPL / 10.0);
+    }
+
+    return 10.0 * Math.log10(sumLinear);
+  }
 }

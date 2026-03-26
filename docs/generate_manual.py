@@ -40,35 +40,35 @@ GITHUB_PAGES_SCRIPT = """
 // Converts .md links to open on GitHub where they render correctly
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
-    
+
     // GitHub repository info
     var githubBase = 'https://github.com/equinor/neqsim/blob/master/docs/';
-    
+
     // Handle all clicks on links
     document.addEventListener('click', function(e) {
         var target = e.target.closest('a');
         if (!target) return;
-        
+
         var href = target.getAttribute('href');
         if (!href) return;
-        
+
         // Only handle relative .md links
         if (href.endsWith('.md') && !href.startsWith('http')) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             // Resolve relative paths (remove ../ and get clean path)
             var resolvedPath = href;
             if (href.startsWith('../')) {
                 resolvedPath = href.replace(/^(\\.\\.\\/)+/, '');
             }
-            
+
             // Always open on GitHub - this guarantees the markdown renders correctly
             window.open(githubBase + resolvedPath, '_blank');
             return false;
         }
     }, true); // Use capture phase to intercept before default behavior
-    
+
     // Add visual indicator for .md links
     var links = document.querySelectorAll('a[href$=".md"]');
     links.forEach(function(link) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             link.title = 'Opens on GitHub';
         }
     });
-    
+
     console.log('NeqSim link handler loaded. Found ' + links.length + ' .md links.');
 });
 </script>
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 CSS_STYLE = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Code+Pro:wght@400;500&display=swap');
-    
+
     :root {
         --primary-color: #0066cc;
         --secondary-color: #004a94;
@@ -97,11 +97,11 @@ CSS_STYLE = """
         --border-color: #e0e0e0;
         --code-bg: #f8f9fa;
     }
-    
+
     * {
         box-sizing: border-box;
     }
-    
+
     body {
         font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         line-height: 1.7;
@@ -111,7 +111,7 @@ CSS_STYLE = """
         padding: 40px 60px;
         background: white;
     }
-    
+
     /* Cover Page */
     .cover-page {
         text-align: center;
@@ -123,7 +123,7 @@ CSS_STYLE = """
         justify-content: center;
         border-bottom: 4px solid var(--primary-color);
     }
-    
+
     .cover-page h1 {
         font-size: 3.5em;
         font-weight: 700;
@@ -131,55 +131,55 @@ CSS_STYLE = """
         margin-bottom: 20px;
         letter-spacing: -1px;
     }
-    
+
     .cover-page .subtitle {
         font-size: 1.5em;
         color: #666;
         margin-bottom: 60px;
     }
-    
+
     .cover-page .version {
         font-size: 1.2em;
         color: #888;
         margin-top: 40px;
     }
-    
+
     .cover-page .logo {
         font-size: 4em;
         margin-bottom: 30px;
     }
-    
+
     /* Table of Contents */
     .toc {
         page-break-after: always;
         padding: 40px 0;
     }
-    
+
     .toc h2 {
         color: var(--primary-color);
         border-bottom: 3px solid var(--primary-color);
         padding-bottom: 10px;
     }
-    
+
     .toc ul {
         list-style: none;
         padding: 0;
     }
-    
+
     .toc li {
         padding: 8px 0;
         border-bottom: 1px dotted var(--border-color);
     }
-    
+
     .toc a {
         color: var(--text-color);
         text-decoration: none;
     }
-    
+
     .toc a:hover {
         color: var(--primary-color);
     }
-    
+
     /* Headings */
     h1 {
         font-size: 2.5em;
@@ -191,7 +191,7 @@ CSS_STYLE = """
         border-bottom: 3px solid var(--primary-color);
         padding-bottom: 15px;
     }
-    
+
     h2 {
         font-size: 1.8em;
         font-weight: 600;
@@ -202,7 +202,7 @@ CSS_STYLE = """
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
     }
-    
+
     h3 {
         font-size: 1.4em;
         font-weight: 600;
@@ -211,7 +211,7 @@ CSS_STYLE = """
         margin-bottom: 12px;
         page-break-after: avoid;
     }
-    
+
     h4 {
         font-size: 1.2em;
         font-weight: 600;
@@ -219,23 +219,23 @@ CSS_STYLE = """
         margin-top: 25px;
         margin-bottom: 10px;
     }
-    
+
     /* Paragraphs and text */
     p {
         margin: 15px 0;
         text-align: justify;
     }
-    
+
     /* Links */
     a {
         color: var(--primary-color);
         text-decoration: none;
     }
-    
+
     a:hover {
         text-decoration: underline;
     }
-    
+
     /* Code blocks */
     pre {
         background: var(--code-bg);
@@ -250,7 +250,7 @@ CSS_STYLE = """
         margin: 20px 0;
         page-break-inside: avoid;
     }
-    
+
     code {
         font-family: 'Source Code Pro', 'Consolas', 'Monaco', monospace;
         background: var(--code-bg);
@@ -258,12 +258,12 @@ CSS_STYLE = """
         border-radius: 3px;
         font-size: 0.9em;
     }
-    
+
     pre code {
         background: none;
         padding: 0;
     }
-    
+
     /* Tables */
     table {
         width: 100%;
@@ -272,7 +272,7 @@ CSS_STYLE = """
         font-size: 0.95em;
         page-break-inside: avoid;
     }
-    
+
     th {
         background: var(--primary-color);
         color: white;
@@ -280,30 +280,30 @@ CSS_STYLE = """
         padding: 14px 12px;
         text-align: left;
     }
-    
+
     td {
         padding: 12px;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     tr:nth-child(even) {
         background: var(--light-gray);
     }
-    
+
     tr:hover {
         background: #e8f4fc;
     }
-    
+
     /* Lists */
     ul, ol {
         margin: 15px 0;
         padding-left: 30px;
     }
-    
+
     li {
         margin: 8px 0;
     }
-    
+
     /* Blockquotes */
     blockquote {
         border-left: 4px solid var(--accent-color);
@@ -313,7 +313,7 @@ CSS_STYLE = """
         font-style: italic;
         color: #555;
     }
-    
+
     /* Horizontal rules */
     hr {
         border: none;
@@ -321,13 +321,13 @@ CSS_STYLE = """
         background: linear-gradient(to right, var(--primary-color), var(--accent-color));
         margin: 50px 0;
     }
-    
+
     /* Section dividers */
     .section-divider {
         page-break-before: always;
         padding-top: 30px;
     }
-    
+
     /* Chapter headers */
     .chapter-header {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -337,14 +337,14 @@ CSS_STYLE = """
         text-align: center;
         page-break-before: always;
     }
-    
+
     .chapter-header h1 {
         color: white;
         border: none;
         margin: 0;
         padding: 0;
     }
-    
+
     /* Info boxes */
     .note {
         background: #e7f3ff;
@@ -353,7 +353,7 @@ CSS_STYLE = """
         margin: 20px 0;
         border-radius: 0 4px 4px 0;
     }
-    
+
     .warning {
         background: #fff3cd;
         border-left: 4px solid #ffc107;
@@ -361,27 +361,27 @@ CSS_STYLE = """
         margin: 20px 0;
         border-radius: 0 4px 4px 0;
     }
-    
+
     /* Print styles */
     @media print {
         body {
             padding: 20px 40px;
         }
-        
+
         pre {
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-        
+
         a {
             color: var(--text-color);
         }
-        
+
         .no-print {
             display: none;
         }
     }
-    
+
     /* Page numbers (for PDF) */
     @page {
         margin: 2cm;
@@ -410,10 +410,10 @@ def process_markdown(content, base_path=None):
     """Process markdown content and fix relative links."""
     if content is None:
         return ""
-    
+
     # Remove the first H1 heading if present (we'll add chapter headers)
     # content = re.sub(r'^# .+\n', '', content, count=1)
-    
+
     return content
 
 
@@ -425,7 +425,7 @@ def create_cover_page(title, subtitle, version):
         <h1>{title}</h1>
         <p class="subtitle">{subtitle}</p>
         <p class="version">Version {version}</p>
-        <p class="version">Generated: February 2026</p>
+        <p class="version">Generated: March 2026</p>
     </div>
     """
 
@@ -433,11 +433,11 @@ def create_cover_page(title, subtitle, version):
 def create_toc(sections):
     """Generate table of contents."""
     toc_html = '<div class="toc"><h2>Table of Contents</h2><ul>'
-    
+
     for i, (title, _) in enumerate(sections, 1):
         anchor = title.lower().replace(' ', '-').replace('&', 'and')
         toc_html += f'<li><strong>{i}.</strong> <a href="#{anchor}">{title}</a></li>'
-    
+
     toc_html += '</ul></div>'
     return toc_html
 
@@ -459,7 +459,7 @@ def markdown_to_html(md_content):
 
 def generate_manual(sections, title, subtitle, version, output_file):
     """Generate the complete HTML manual."""
-    
+
     # Start building HTML
     html_parts = [
         '<!DOCTYPE html>',
@@ -474,7 +474,7 @@ def generate_manual(sections, title, subtitle, version, output_file):
         create_cover_page(title, subtitle, version),
         create_toc(sections)
     ]
-    
+
     # Add each section
     for section_title, content in sections:
         anchor = section_title.lower().replace(' ', '-').replace('&', 'and')
@@ -482,18 +482,18 @@ def generate_manual(sections, title, subtitle, version, output_file):
         html_parts.append(f'<div class="chapter-header"><h1>{section_title}</h1></div>')
         html_parts.append(markdown_to_html(content))
         html_parts.append('</div>')
-    
+
     # Add GitHub Pages link handler script before closing body
     html_parts.append(GITHUB_PAGES_SCRIPT)
     html_parts.extend(['</body>', '</html>'])
-    
+
     # Write output
     output_path = OUTPUT_DIR / output_file
     OUTPUT_DIR.mkdir(exist_ok=True)
-    
+
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(html_parts))
-    
+
     print(f"Generated: {output_path}")
     return output_path
 
@@ -618,6 +618,7 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 16: Heat Transfer Equipment": [
             ("Heat Exchangers", "process/equipment/heat_exchangers.md"),
+            ("Thermal-Hydraulic Design", "process/mechanical_design/thermal_hydraulic_design.md"),
             ("Air Cooler", "wiki/air_cooler.md"),
             ("Water Cooler", "wiki/water_cooler.md"),
             ("Steam Heater", "wiki/steam_heater.md"),
@@ -726,6 +727,7 @@ FULL_MANUAL_STRUCTURE = {
         "Chapter 27: Two-Phase & Multiphase Flow": [
             ("Two-Phase Model", "fluidmechanics/TwoPhasePipeFlowModel.md"),
             ("Two-Fluid Model", "wiki/two_fluid_model.md"),
+            ("Pipeline Recipes", "cookbook/pipeline-recipes.md"),
             ("Multiphase Transient", "wiki/multiphase_transient_model.md"),
             ("Transient Pipe Wiki", "wiki/transient_multiphase_pipe.md"),
             ("Development Plan", "fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md"),
@@ -907,7 +909,15 @@ FULL_MANUAL_STRUCTURE = {
             ("Flash Tests", "wiki/flash_equations_and_tests.md"),
             ("Safety Tests", "safety/integration_safety_chain_tests.md"),
         ],
-        "Chapter 52: Process Logic Framework": [
+        "Chapter 52: Cookbook Recipes": [
+            ("Cookbook Index", "cookbook/index.md"),
+            ("Thermodynamics Recipes", "cookbook/thermodynamics-recipes.md"),
+            ("Process Recipes", "cookbook/process-recipes.md"),
+            ("Pipeline Recipes", "cookbook/pipeline-recipes.md"),
+            ("Unit Conversion Recipes", "cookbook/unit-conversion-recipes.md"),
+            ("Adsorption Recipes", "cookbook/adsorption-recipes.md"),
+        ],
+        "Chapter 53: Process Logic Framework": [
             ("Simulation Overview", "simulation/README.md"),
             ("Process Logic", "simulation/process_logic_framework.md"),
             ("Advanced Logic", "simulation/advanced_process_logic.md"),
@@ -932,18 +942,18 @@ def load_all_sections():
     sections = []
     file_count = 0
     missing_count = 0
-    
+
     for part_name, chapters in FULL_MANUAL_STRUCTURE.items():
         print(f"\n{part_name}")
-        
+
         for chapter_name, documents in chapters.items():
             print(f"  {chapter_name}")
             chapter_content = []
-            
+
             for doc_title, doc_path in documents:
                 full_path = DOCS_DIR / doc_path
                 content = read_markdown_file(full_path)
-                
+
                 if content:
                     # Add sub-section header
                     chapter_content.append(f"\n\n## {doc_title}\n\n")
@@ -953,33 +963,33 @@ def load_all_sections():
                 else:
                     missing_count += 1
                     print(f"    ✗ {doc_title} (missing)")
-            
+
             if chapter_content:
                 combined_content = "\n".join(chapter_content)
                 sections.append((chapter_name, combined_content))
-    
+
     print(f"\n{'='*40}")
     print(f"Loaded: {file_count} files")
     print(f"Missing: {missing_count} files")
-    
+
     return sections
 
 
 def main():
     """Main function to generate the full reference manual."""
-    
+
     print("=" * 60)
     print("  NeqSim Reference Manual Generator")
     print("  Full Manual with Equation Support")
     print("=" * 60)
-    
+
     # Load all sections
     sections = load_all_sections()
-    
+
     if not sections:
         print("Error: No content found!")
         return
-    
+
     # Generate the complete manual
     output_file = generate_manual(
         sections=sections,
@@ -988,7 +998,7 @@ def main():
         version="3.4.0",
         output_file="neqsim_reference_manual.html"
     )
-    
+
     print(f"\n{'='*60}")
     print(f"SUCCESS! Full reference manual generated.")
     print(f"Output: {output_file}")

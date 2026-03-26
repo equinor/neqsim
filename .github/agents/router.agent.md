@@ -30,6 +30,7 @@ Analyze the request and match it to one or more agents:
 | Quick process sim, working notebook fast | `@solve.process` | — |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability.scout` | — |
 | Complex multi-discipline task needing pre-assessment | `@capability.scout` | then specialist agents |
+| Engineering deliverables, PFD, alarm schedule, spare parts, thermal utilities, noise assessment, study class A/B deliverables | `@engineering.deliverables` | `@process.model` for process system, `@field.development` for full study |
 
 ## Multi-Agent Composition Rules
 
@@ -42,6 +43,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 1b: Process + Feasibility Check
 **Trigger:** "is this realistic", "can this be built", "feasibility", "supplier", "cost estimate" combined with compressor or heat exchanger
 **Pipeline:** `@process.model` (run simulation) then `@mechanical.design` (generate feasibility report with `CompressorDesignFeasibilityReport` or `HeatExchangerDesignFeasibilityReport`)
+
+### Pattern 1c: Process + Engineering Deliverables
+**Trigger:** "deliverables", "study class A", "study class B", "PFD", "alarm schedule", "spare parts", "thermal utilities", "noise assessment" combined with process description
+**Pipeline:** `@process.model` (build and run process) then `@engineering.deliverables` (generate deliverables package with `EngineeringDeliverablesPackage` and `StudyClass`)
 
 ### Pattern 2: Process + Flow Assurance
 **Trigger:** "pipeline" + "hydrate" or "wax" or "corrosion"

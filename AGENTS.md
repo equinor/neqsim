@@ -483,9 +483,11 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
 | `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
+| `src/main/java/neqsim/process/mechanicaldesign/` | Engineering deliverables (StudyClass, InstrumentScheduleGenerator, etc.) |
+| `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` | HX thermal-hydraulic design (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
 | `src/main/java/neqsim/process/equipment/subsea/` | SubseaWell, SubseaTree equipment |
-| `src/main/java/neqsim/process/equipment/pipeline/` | Pipe flow, CO2InjectionWellAnalyzer, TransientWellbore, CO2FlowCorrections |
-| `src/main/java/neqsim/process/measurementdevice/` | ImpurityMonitor, stream measurement devices |
+| `src/main/java/neqsim/process/equipment/pipeline/` | Pipe flow, TwoFluidPipe, CO2InjectionWellAnalyzer, TransientWellbore |
+| `src/main/java/neqsim/process/measurementdevice/` | Transmitters (PT, TT, LT, FT), AlarmConfig, ImpurityMonitor |
 | `examples/notebooks/` | Jupyter notebook examples |
 | `devtools/new_task.py` | Task-solving script |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
@@ -495,6 +497,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `.github/agents/router.agent.md` | Request routing and multi-agent composition |
 | `.github/agents/capability.scout.agent.md` | Capability assessment, gap analysis, implementation planning |
 | `.github/agents/field.development.agent.md` | Field development studies, concept selection, economics |
+| `.github/agents/engineering.deliverables.agent.md` | Engineering deliverables (PFD, instruments, fire, noise, etc.) |
 | `src/main/java/neqsim/process/fielddevelopment/` | Field development workflows, economics, screening |
 | `src/main/java/neqsim/process/util/fielddevelopment/` | Production profiles, scheduling, DCF calculator |
 | `docs/fielddevelopment/` | Field development documentation |

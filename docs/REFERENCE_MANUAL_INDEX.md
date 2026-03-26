@@ -300,6 +300,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Steam Heater                    | [docs/wiki/steam_heater.md](wiki/steam_heater)                                                       | Steam heater models                                                                                                 |
 | **Water Cooler & Reboiler**     | [docs/process/equipment/water_cooler_reboiler.md](process/equipment/water_cooler_reboiler)           | **WaterCooler (IAPWS), ReBoiler for distillation**                                                                  |
 | Mechanical Design               | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design)               | HX mechanical design                                                                                                |
+| **Thermal-Hydraulic Design**    | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design) | **Shell-and-tube thermal design: Gnielinski, Kern, Bell-Delaware, LMTD correction, vibration screening, zone analysis** |
 
 ### Chapter 17: Valves & Flow Control
 
