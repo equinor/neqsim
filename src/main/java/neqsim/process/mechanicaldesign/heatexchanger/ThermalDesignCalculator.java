@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.heatexchanger;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.fluidmechanics.flownode.HeatTransferCoefficientCalculator;
 
 /**
@@ -564,6 +565,16 @@ public class ThermalDesignCalculator {
     result.put("overallHeatTransfer", overall);
 
     return result;
+  }
+
+  /**
+   * Converts all computed results to a JSON string.
+   *
+   * @return JSON string with pretty printing
+   */
+  public String toJson() {
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(toMap());
   }
 
   // ============================================================================

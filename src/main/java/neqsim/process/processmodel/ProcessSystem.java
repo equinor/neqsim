@@ -2444,6 +2444,193 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns a consolidated formatted stream summary table showing key properties for all streams in
+   * this process system. Similar to the Workbook/Stream Summary in commercial process simulators.
+   *
+   * <p>
+   * The table includes: stream name, temperature (C), pressure (bara), total molar flow (kmole/hr),
+   * mass flow (kg/hr), vapor fraction, molar mass (kg/kmol), and mole fraction of each component.
+   * </p>
+   *
+   * @return formatted string table of all stream properties
+   */
+  public String getStreamSummaryTable() {
+    List<StreamInterface> streams = getAllStreams();
+    if (streams.isEmpty()) {
+      return "No streams found in process system.\n";
+    }
+
+    // Collect component names from the first stream
+    SystemInterface firstFluid = streams.get(0).getFluid();
+    int numComponents = firstFluid.getNumberOfComponents();
+    List<String> componentNames = new ArrayList<>();
+    for (int i = 0; i < numComponents; i++) {
+      componentNames.add(firstFluid.getPhase(0).getComponent(i).getComponentName());
+    }
+
+    // Define rows
+    List<String> rowLabels = new ArrayList<>();
+    rowLabels.add("Temperature [C]");
+    rowLabels.add("Pressure [bara]");
+    rowLabels.add("Total Flow [kg/hr]");
+    rowLabels.add("Total Flow [kmole/hr]");
+    rowLabels.add("Vapor Fraction [mole]");
+    rowLabels.add("Molar Mass [kg/kmol]");
+    rowLabels.add("--- Mole Fractions ---");
+    for (String compName : componentNames) {
+      rowLabels.add(compName);
+    }
+
+    // Determine column width
+    int labelWidth = 0;
+    for (String label : rowLabels) {
+      labelWidth = Math.max(labelWidth, label.length());
+    }
+    labelWidth = Math.max(labelWidth, 22);
+    int colWidth = 0;
+    for (StreamInterface stream : streams) {
+      colWidth = Math.max(colWidth, stream.getName().length());
+    }
+    colWidth = Math.max(colWidth, 14);
+
+    StringBuilder sb = new StringBuilder();
+
+    // Header row
+    sb.append(String.format("%-" + labelWidth + "s", ""));
+    for (StreamInterface stream : streams) {
+      sb.append(String.format("  %" + colWidth + "s", stream.getName()));
+    }
+    sb.append("\n");
+
+    // Separator line
+    int totalWidth = labelWidth + streams.size() * (colWidth + 2);
+    for (int i = 0; i < totalWidth; i++) {
+      sb.append("-");
+    }
+    sb.append("\n");
+
+    // Data rows
+    for (int row = 0; row < rowLabels.size(); row++) {
+      String label = rowLabels.get(row);
+      sb.append(String.format("%-" + labelWidth + "s", label));
+
+      if (label.startsWith("---")) {
+        // Section header - no data
+        sb.append("\n");
+        continue;
+      }
+
+      for (StreamInterface stream : streams) {
+        SystemInterface fluid = stream.getFluid();
+        String value;
+
+        if (row == 0) {
+          // Temperature in C
+          value = String.format("%.2f", fluid.getTemperature("C"));
+        } else if (row == 1) {
+          // Pressure in bara
+          value = String.format("%.4f", fluid.getPressure("bara"));
+        } else if (row == 2) {
+          // Mass flow kg/hr
+          value = String.format("%.2f", stream.getFlowRate("kg/hr"));
+        } else if (row == 3) {
+          // Molar flow kmole/hr
+          value = String.format("%.4f", fluid.getTotalNumberOfMoles() * 3600.0);
+        } else if (row == 4) {
+          // Vapor fraction
+          if (fluid.getNumberOfPhases() > 1) {
+            value = String.format("%.6f", fluid.getBeta());
+          } else {
+            if (fluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+              value = "1.000000";
+            } else {
+              value = "0.000000";
+            }
+          }
+        } else if (row == 5) {
+          // Molar mass kg/kmol
+          value = String.format("%.4f", fluid.getMolarMass() * 1000.0);
+        } else {
+          // Component mole fractions (row >= 7, component index = row - 7)
+          int compIdx = row - 7;
+          if (compIdx >= 0 && compIdx < fluid.getPhase(0).getNumberOfComponents()) {
+            value = String.format("%.6f", fluid.getPhase(0).getComponent(compIdx).getz());
+          } else {
+            value = "---";
+          }
+        }
+
+        sb.append(String.format("  %" + colWidth + "s", value));
+      }
+      sb.append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Returns a consolidated stream summary as a JSON string. Each stream is a key in the JSON object
+   * containing temperature, pressure, flow rates, vapor fraction, molar mass, and composition.
+   *
+   * @return JSON string with stream summary data
+   */
+  public String getStreamSummaryJson() {
+    List<StreamInterface> streams = getAllStreams();
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+
+    for (StreamInterface stream : streams) {
+      SystemInterface fluid = stream.getFluid();
+      com.google.gson.JsonObject streamObj = new com.google.gson.JsonObject();
+
+      streamObj.addProperty("temperature_C", fluid.getTemperature("C"));
+      streamObj.addProperty("pressure_bara", fluid.getPressure("bara"));
+      streamObj.addProperty("massFlow_kg_hr", stream.getFlowRate("kg/hr"));
+      streamObj.addProperty("molarFlow_kmole_hr", fluid.getTotalNumberOfMoles() * 3600.0);
+
+      if (fluid.getNumberOfPhases() > 1) {
+        streamObj.addProperty("vaporFraction", fluid.getBeta());
+      } else {
+        if (fluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+          streamObj.addProperty("vaporFraction", 1.0);
+        } else {
+          streamObj.addProperty("vaporFraction", 0.0);
+        }
+      }
+
+      streamObj.addProperty("molarMass_kg_kmol", fluid.getMolarMass() * 1000.0);
+
+      // Composition
+      com.google.gson.JsonObject compObj = new com.google.gson.JsonObject();
+      for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
+        compObj.addProperty(fluid.getPhase(0).getComponent(i).getComponentName(),
+            fluid.getPhase(0).getComponent(i).getz());
+      }
+      streamObj.add("composition_mole", compObj);
+
+      root.add(stream.getName(), streamObj);
+    }
+
+    return new com.google.gson.GsonBuilder().setPrettyPrinting()
+        .serializeSpecialFloatingPointValues().create().toJson(root);
+  }
+
+  /**
+   * Returns a list of all streams in this process system. Collects all inlet and outlet streams
+   * from all equipment, removing duplicates.
+   *
+   * @return list of unique streams in the process
+   */
+  public List<StreamInterface> getAllStreams() {
+    java.util.LinkedHashSet<StreamInterface> streamSet = new java.util.LinkedHashSet<>();
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof StreamInterface) {
+        streamSet.add((StreamInterface) unit);
+      }
+    }
+    return new ArrayList<>(streamSet);
+  }
+
+  /**
    * <p>
    * printLogFile.
    * </p>

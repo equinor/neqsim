@@ -421,8 +421,11 @@ f_i = C_D × d_b / (4 × D)
 For stratified wavy flow in oil-gas systems with emphasis on holdup dependency:
 
 ```java
-double fi = InterfacialFriction.calcHartCorrelation(
-    liquidHoldup, diameter, gasVelocity, liquidVelocity);
+InterfacialFriction ifCalc = new InterfacialFriction();
+InterfacialFrictionResult result = ifCalc.calcHartCorrelation(
+    gasVelocity, liquidVelocity, gasDensity, liquidDensity,
+    gasViscosity, liquidViscosity, liquidHoldup, diameter);
+double fi = result.frictionFactor;
 ```
 
 The correlation:
@@ -441,9 +444,11 @@ Where:
 Includes inclination effects and Froude number-based wave transition:
 
 ```java
-double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
-    liquidHoldup, diameter, gasVelocity, liquidVelocity,
-    gasDensity, liquidDensity, surfaceTension, inclinationAngleRadians);
+InterfacialFriction ifCalc = new InterfacialFriction();
+InterfacialFrictionResult result = ifCalc.calcAndreussiPersenCorrelation(
+    gasVelocity, liquidVelocity, gasDensity, liquidDensity,
+    gasViscosity, liquidHoldup, diameter, inclinationAngleRadians);
+double fi = result.frictionFactor;
 ```
 
 Key features:
@@ -515,10 +520,8 @@ pipe.setLength(5000);
 pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 
-// Enable virtual mass force
-pipe.getEquations().setEnableVirtualMassForce(true);
-pipe.getEquations().setVirtualMassCoefficient(0.5);  // Default: 0.5
-pipe.getEquations().setTimestep(0.1);  // Required for dv/dt calculation
+// Note: Virtual mass force is handled internally by the two-fluid solver.
+// The solver uses C_vm = 0.5 (spherical bubble coefficient) by default.
 
 pipe.run();
 ```
@@ -564,12 +567,13 @@ pipe.setLength(5000);
 pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 
-// Add individual K-factor losses
-pipe.addLocalLoss("Tee junction", 0.9);
-pipe.addLocalLoss("90° elbow 1", 0.3);
-pipe.addLocalLoss("90° elbow 2", 0.3);
-pipe.addLocalLoss("Gate valve (full open)", 0.17);
-pipe.addLocalLoss("Check valve", 2.0);
+// Add local loss coefficients at specific positions along the pipe
+// addLocalLoss(position_m, kFactor)
+pipe.addLocalLoss(1000.0, 0.9);   // K=0.9 at 1000m (tee junction)
+pipe.addLocalLoss(2000.0, 0.3);   // K=0.3 at 2000m (90° elbow)
+pipe.addLocalLoss(3000.0, 0.3);   // K=0.3 at 3000m (90° elbow)
+pipe.addLocalLoss(3500.0, 0.17);  // K=0.17 at 3500m (gate valve)
+pipe.addLocalLoss(4000.0, 2.0);   // K=2.0 at 4000m (check valve)
 
 // Or use convenience methods for standard bends
 pipe.setNumberOf90DegreeBends(4);   // Each K=0.3
@@ -846,7 +850,7 @@ for (int step = 0; step < 1000; step++) {
     pipe.runTransient(0.1, simId);  // Advance 0.1 seconds
 
     // Monitor results
-    double outletFlow = pipe.getOutletMassFlow();
+    double outletFlow = pipe.getOutletStream().getFlowRate("kg/sec");
     double liquidInventory = pipe.getLiquidInventory("m3");
 }
 ```

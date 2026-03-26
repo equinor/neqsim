@@ -539,14 +539,43 @@ Every code example in documentation, tutorials, or cookbooks MUST be verified by
    - Append to `src/test/java/neqsim/DocExamplesCompilationTest.java`
    - Or create a dedicated test in the appropriate package
 2. **Run the test** and confirm it passes before finalizing the doc
+   - Use `./mvnw test -Dtest=DocExamplesCompilationTest` (or the specific test class)
+   - **If the test fails, fix the documentation code — do NOT finalize with broken examples**
+   - This step is NON-NEGOTIABLE — never skip it, even for "simple" examples
 3. **Common bugs caught by this process**:
    - Plus fraction names with `+` character (use `"C20"` not `"C20+"`)
    - Calling `characterisePlusFraction()` before `setMixingRule()`
    - Wrong method names (`getUnitOperation()` vs `getUnit()`)
    - Wrong parameter types (`int` given where `double` expected)
    - Risk threshold descriptions inconsistent with source logic
+   - Methods requiring unit strings (e.g., `setDesignAmbientTemperature(15.0, "C")` not `setDesignAmbientTemperature(15.0)`)
+   - Getter methods requiring arguments (e.g., `getFanStaticPressure(flow)` not `getFanStaticPressure()`)
 
 This policy applies to ALL agents that produce code for documentation.
+
+## Notebook Execution Verification (Mandatory)
+
+**Every Jupyter notebook MUST be executed cell-by-cell after creation and all cells must pass.**
+Notebooks that have not been run are NOT considered complete.
+
+Workflow:
+1. **Build and deploy the latest JAR** before running notebooks that use new/modified classes:
+   ```bash
+   ./mvnw package -DskipTests -Dmaven.javadoc.skip=true  # Linux/Mac
+   mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"  # Windows
+   # Copy JAR to Python neqsim package lib/java11/ directory
+   ```
+2. **Configure the notebook kernel** and start it
+3. **Run every code cell in order** — cell 1 first, then cell 2, etc.
+4. **If any cell fails**, fix the code in that cell and re-run before continuing
+5. **Common runtime errors**:
+   - `AttributeError` — method doesn't exist; read the Java source for correct name
+   - `TypeError: No matching overloads` — wrong arguments; check Java method signature
+   - Inherited methods (e.g., `getInternalDiameter()` not `getColumnDiameter()`)
+   - Getters requiring arguments (e.g., `getFanStaticPressure(double)`)
+6. **A notebook is NOT complete until all cells execute without errors**
+
+This policy applies to ALL agents that produce Jupyter notebooks.
 
 ## Documentation
 

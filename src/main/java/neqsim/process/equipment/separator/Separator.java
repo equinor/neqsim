@@ -29,6 +29,7 @@ import neqsim.process.equipment.separator.sectiontype.NozzleSection;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
 import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
@@ -411,6 +412,32 @@ public class Separator extends ProcessEquipmentBaseClass
       outlets.add(liquidOutStream);
     }
     return Collections.unmodifiableList(outlets);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    if (gasOutStream != null) {
+      state.put("gas flow",
+          ProcessEquipmentInterface.createStateEntry(
+              gasOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (liquidOutStream != null) {
+      state.put("liquid flow",
+          ProcessEquipmentInterface.createStateEntry(
+              liquidOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (gasOutStream != null) {
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(
+              gasOutStream.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature",
+          ProcessEquipmentInterface.createStateEntry(
+              gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    return state;
   }
 
   /** {@inheritDoc} */

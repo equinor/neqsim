@@ -403,11 +403,6 @@ pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
 pump.getPumpChart().setReferenceViscosity(1.0);       // Chart measured with water (1 cSt)
 pump.getPumpChart().setUseViscosityCorrection(true);  // Enable correction
 
-// Set pump parameters
-pump.getPumpChart().setReferenceFlow(100.0);          // BEP flow (m³/hr)
-pump.getPumpChart().setReferenceHead(100.0);          // BEP head (meters)
-pump.getPumpChart().setReferenceSpeed(1500.0);        // Reference speed (rpm)
-
 pump.run();
 
 // Check applied corrections
@@ -539,7 +534,7 @@ esp.run()
 # Monitor performance
 print(f"Inlet GVF: {esp.getGasVoidFraction()*100:.1f}%")
 print(f"Head degradation factor: {esp.getHeadDegradationFactor():.3f}")
-print(f"Effective head: {esp.calculateTotalHead():.1f} m")
+print(f"Effective head: {esp.getHeadPerStage() * esp.getNumberOfStages() * esp.getHeadDegradationFactor():.1f} m")
 print(f"Is surging: {esp.isSurging()}")
 ```
 
@@ -557,7 +552,6 @@ print(f"Is surging: {esp.isSurging()}")
 | `getHeadDegradationFactor()` | Get head degradation (0-1) |
 | `isSurging()` | Check if pump is surging |
 | `isGasLocked()` | Check if pump has lost prime |
-| `calculateTotalHead()` | Get total developed head |
 
 ---
 

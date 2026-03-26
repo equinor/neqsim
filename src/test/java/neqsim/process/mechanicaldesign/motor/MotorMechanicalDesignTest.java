@@ -249,7 +249,7 @@ public class MotorMechanicalDesignTest {
     compressor.setOutletPressure(50.0);
     compressor.run();
 
-    ElectricalDesign elecDesign = compressor.getElectricalDesign();
+    ElectricalDesign elecDesign = (ElectricalDesign) compressor.getElectricalDesign();
     elecDesign.calcDesign();
 
     MotorMechanicalDesign motorDesign = new MotorMechanicalDesign(elecDesign);

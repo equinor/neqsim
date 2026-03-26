@@ -15,6 +15,8 @@ import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
@@ -824,5 +826,81 @@ public class DocExamplesCompilationTest {
 
     double computedU = hx.getRatingU();
     assertTrue(computedU >= 0, "Computed U from rating mode should be non-negative");
+  }
+
+  /**
+   * ThermalDesignCalculator.toJson() as referenced in CHANGELOG, PR_DESCRIPTION, and
+   * neqsim-api-patterns SKILL.md documentation.
+   */
+  @Test
+  public void testThermalDesignCalculatorToJsonDoc() {
+    ThermalDesignCalculator calc = new ThermalDesignCalculator();
+    calc.setTubeODm(0.01905);
+    calc.setTubeIDm(0.01483);
+    calc.setTubeLengthm(6.096);
+    calc.setTubeCount(100);
+    calc.setTubePasses(2);
+    calc.setTubePitchm(0.02381);
+    calc.setTriangularPitch(true);
+    calc.setShellIDm(0.489);
+    calc.setBaffleSpacingm(0.15);
+    calc.setBaffleCount(30);
+    calc.setBaffleCut(0.25);
+    calc.setTubeSideFluid(995.0, 0.0008, 4180.0, 0.62, 5.0, true);
+    calc.setShellSideFluid(820.0, 0.003, 2200.0, 0.13, 8.0);
+    calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
+    calc.calculate();
+
+    String json = calc.toJson();
+    assertNotNull(json, "toJson() should not return null");
+    assertFalse(json.isEmpty(), "toJson() should not return empty string");
+    assertTrue(json.contains("overallU_Wpm2K"), "JSON should contain overallU_Wpm2K");
+    assertTrue(json.contains("bellDelawareCorrections"),
+        "JSON should contain Bell-Delaware corrections");
+
+    Map<String, Object> map = calc.toMap();
+    assertNotNull(map, "toMap() should not return null");
+    assertTrue(map.containsKey("tubeSide"), "Map should contain tubeSide");
+    assertTrue(map.containsKey("shellSide"), "Map should contain shellSide");
+    assertTrue(map.containsKey("overallHeatTransfer"), "Map should contain overallHeatTransfer");
+  }
+
+  /**
+   * InterfacialFriction Hart correlation as corrected in two_fluid_model.md — instance method with
+   * 8 parameters returning InterfacialFrictionResult.
+   */
+  @Test
+  public void testInterfacialFrictionHartCorrelationDoc() {
+    InterfacialFriction ifCalc = new InterfacialFriction();
+    InterfacialFrictionResult result = ifCalc.calcHartCorrelation(10.0, // gasVelocity m/s
+        0.5, // liquidVelocity m/s
+        50.0, // gasDensity kg/m3
+        800.0, // liquidDensity kg/m3
+        1.5e-5, // gasViscosity Pa.s
+        0.001, // liquidViscosity Pa.s
+        0.3, // liquidHoldup
+        0.3); // diameter m
+    assertNotNull(result, "Hart correlation result should not be null");
+    assertTrue(result.frictionFactor >= 0, "Friction factor should be non-negative");
+  }
+
+  /**
+   * InterfacialFriction Andreussi-Persen correlation as corrected in two_fluid_model.md — instance
+   * method with 8 parameters returning InterfacialFrictionResult.
+   */
+  @Test
+  public void testInterfacialFrictionAndreussiPersenDoc() {
+    InterfacialFriction ifCalc = new InterfacialFriction();
+    InterfacialFrictionResult result = ifCalc.calcAndreussiPersenCorrelation(10.0, // gasVelocity
+                                                                                   // m/s
+        0.5, // liquidVelocity m/s
+        50.0, // gasDensity kg/m3
+        800.0, // liquidDensity kg/m3
+        1.5e-5, // gasViscosity Pa.s
+        0.3, // liquidHoldup
+        0.3, // diameter m
+        0.0); // inclination radians (horizontal)
+    assertNotNull(result, "Andreussi-Persen result should not be null");
+    assertTrue(result.frictionFactor >= 0, "Friction factor should be non-negative");
   }
 }
