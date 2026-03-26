@@ -192,6 +192,30 @@ For Conceptual+ studies, also produce:
 9. **Risk register** with mitigation measures
 10. **Flow assurance screening** results
 
+For FEED+ studies (Class A), also produce the **engineering deliverables package**:
+11. **Process flow diagram** (Graphviz DOT via `ProcessFlowDiagramExporter`)
+12. **Thermal utility summary** (cooling water, steam, fuel gas via `ThermalUtilitySummary`)
+13. **Alarm/trip schedule** (IEC 61511 / NORSOK I-001 via `AlarmTripScheduleGenerator`)
+14. **Spare parts inventory** (rotating + static equipment via `SparePartsInventory`)
+15. **Fire scenario assessment** (jet fire, BLEVE, pool fire via `FireProtectionDesign`)
+16. **Noise assessment** (ISO 9613, NORSOK S-002 via `NoiseAssessment`)
+17. **Instrument schedule** (ISA-5.1 tagged instruments with live device bridge via `InstrumentScheduleGenerator`)
+
+Use `EngineeringDeliverablesPackage` and `StudyClass` to generate these automatically:
+```java
+// In orchestrator workflow
+orchestrator.setStudyClass(StudyClass.CLASS_A);  // or CLASS_B, CLASS_C
+orchestrator.runCompleteDesignWorkflow();
+EngineeringDeliverablesPackage pkg = orchestrator.getEngineeringDeliverables();
+String fullJson = pkg.toJson();
+```
+
+| Study Class | Deliverables |
+|-------------|-------------|
+| **CLASS_A** (FEED/Detail) | PFD + Thermal Utilities + Alarm/Trip + Spare Parts + Fire Scenarios + Noise + Instrument Schedule |
+| **CLASS_B** (Concept/Pre-FEED) | PFD + Thermal Utilities + Fire Scenarios + Instrument Schedule |
+| **CLASS_C** (Screening) | PFD only |
+
 ---
 
 ## Decision Criteria for Concept Selection
@@ -298,6 +322,20 @@ conditions, constraints) using the structured handoff format from the
 | `ArtificialLiftScreener` | Artificial lift method selection |
 | `GasLiftOptimizer` | Multi-well gas lift allocation |
 | `DecommissioningEstimator` | ABEX cost estimation |
+
+### Engineering Deliverables
+
+| Class | Purpose |
+|-------|---------|
+| `StudyClass` | Enum (CLASS_A, CLASS_B, CLASS_C) defining required deliverables per study tier |
+| `EngineeringDeliverablesPackage` | Orchestrates generation of all deliverables for a study class |
+| `ThermalUtilitySummary` | Cooling water, LP/MP/HP steam, fuel gas, instrument air aggregation |
+| `ProcessFlowDiagramExporter` | Graphviz DOT export of ProcessSystem topology |
+| `AlarmTripScheduleGenerator` | Alarm/trip setpoints per IEC 61511 / NORSOK I-001 |
+| `SparePartsInventory` | Recommended spare parts by equipment type with lead times |
+| `FireProtectionDesign` | Jet fire, BLEVE, pool fire scenario assessment |
+| `NoiseAssessment` | Equipment noise + ISO 9613-2 atmospheric attenuation |
+| `InstrumentScheduleGenerator` | ISA-5.1 tagged instrument schedule with live MeasurementDevice bridge |
 
 ---
 

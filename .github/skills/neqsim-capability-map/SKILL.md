@@ -172,9 +172,11 @@ transport properties (viscosity, thermal conductivity, density).
 |-------|------|---------|
 | `AdiabaticPipe` | Adiabatic pipe flow | `process.equipment.pipeline` |
 | `PipeBeggsAndBrills` | Beggs & Brill correlation (+ formation temperature gradient) | `process.equipment.pipeline` |
+| `TwoFluidPipe` | Transient two-fluid multiphase model (OLGA-like) with 7 conservation equations, AUSM+, boundary conditions | `process.equipment.pipeline` |
 | `CO2InjectionWellAnalyzer` | CO2 injection well safety analysis | `process.equipment.pipeline` |
 | `TransientWellbore` | Shutdown cooling / depressurization transient | `process.equipment.pipeline` |
 | `CO2FlowCorrections` | CO2-specific two-phase flow corrections (static utility) | `process.equipment.pipeline` |
+| `InterfacialFriction` | Interfacial friction closures (Taitel-Dukler, Andritsos-Hanratty, Wallis, Oliemans) | `process.equipment.pipeline.twophasepipe.closure` |
 | `OnePhasePipeFlowNode` | Single-phase pipe | `fluidmechanics` |
 | `TwoPhasePipeFlowNode` | Two-phase pipe | `fluidmechanics` |
 
@@ -189,11 +191,27 @@ transport properties (viscosity, thermal conductivity, density).
 | `FurnaceBurner` | Combustion | `process.equipment.reactor` |
 | `SulfurDepositionAnalyser` | S8 deposition analysis | `process.equipment.reactor` |
 | `AmmoniaSynthesisReactor` | NH3 synthesis | `process.equipment.reactor` |
-### Measurement Devices
+### Measurement Devices & Instrumentation
 
 | Class | Type | Package |
 |-------|------|---------|
 | `ImpurityMonitor` | Phase-partitioned impurity tracker with alarms | `process.measurementdevice` |
+| `PressureTransmitter` | Pressure measurement (PT) | `process.measurementdevice` |
+| `TemperatureTransmitter` | Temperature measurement (TT) | `process.measurementdevice` |
+| `LevelTransmitter` | Level measurement (LT) | `process.measurementdevice` |
+| `VolumeFlowTransmitter` | Volume flow measurement (FT) | `process.measurementdevice` |
+| `MassFlowTransmitter` | Mass flow measurement | `process.measurementdevice` |
+| `WaterDewPointAnalyser` | Water dew point measurement | `process.measurementdevice` |
+| `HydrocarbonDewPointAnalyser` | HC dew point measurement | `process.measurementdevice` |
+| `WaterContentAnalyser` | Water content measurement | `process.measurementdevice` |
+| `CO2waterAnalyser` | CO2 in water measurement | `process.measurementdevice` |
+| `AlarmConfig` | Alarm HH/H/L/LL thresholds per IEC 61511 | `process.measurementdevice` |
+| `AlarmState` | Current alarm state tracking | `process.measurementdevice` |
+| `ProcessAlarmManager` | System-wide alarm management | `process.measurementdevice` |
+| `InstrumentTagRole` | Tag role classification (INPUT/BENCHMARK/VIRTUAL) | `process.measurementdevice` |
+| `ControllerDeviceBaseClass` | PID controller base | `process.equipment.controller` |
+| `DynamicProcessHelper` | Auto-instruments and controls a ProcessSystem | `process.equipment.util` |
+
 ### Pumps
 
 | Class | Type | Package |
@@ -296,9 +314,14 @@ transport properties (viscosity, thermal conductivity, density).
 | `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
-| `HeatExchangerMechanicalDesign` | HX mechanical design | `process.mechanicaldesign.heatexchanger` |
+| `HeatExchangerMechanicalDesign` | HX mechanical design with auto-selection (min area/weight/dP) | `process.mechanicaldesign.heatexchanger` |
 | `CompressorDesignFeasibilityReport` | Compressor feasibility (design + cost + suppliers + curves) | `process.mechanicaldesign.compressor` |
 | `HeatExchangerDesignFeasibilityReport` | HX/cooler/heater feasibility (design + cost + suppliers) | `process.mechanicaldesign.heatexchanger` |
+| `ThermalDesignCalculator` | Tube/shell-side HTCs, overall U, pressure drops, zone analysis | `process.mechanicaldesign.heatexchanger` |
+| `BellDelawareMethod` | Bell-Delaware shell-side HTC & dP with J-factor corrections | `process.mechanicaldesign.heatexchanger` |
+| `LMTDcorrectionFactor` | LMTD F_t for multi-pass configurations (Bowman-Mueller-Nagle) | `process.mechanicaldesign.heatexchanger` |
+| `VibrationAnalysis` | Flow-induced vibration screening per TEMA RCB-4.6 | `process.mechanicaldesign.heatexchanger` |
+| `ShellAndTubeDesignCalculator` | Full TEMA-based S&T design with ASME VIII, NACE, thermal, cost | `process.mechanicaldesign.heatexchanger` |
 | `WellMechanicalDesign` | Well casing design | `process.mechanicaldesign.subsea` |
 | `WellDesignCalculator` | API 5C3 calculations | `process.mechanicaldesign.subsea` |
 | `WellCostEstimator` | Well cost estimation | `process.mechanicaldesign.subsea` |
@@ -307,6 +330,20 @@ transport properties (viscosity, thermal conductivity, density).
 | `FieldDevelopmentDesignOrchestrator` | Full field design | `process.mechanicaldesign` |
 | `MotorMechanicalDesign` | Motor foundation, vibration, cooling, bearings, noise, enclosure | `process.mechanicaldesign.motor` |
 | `EquipmentDesignReport` | Combined mech + elec + motor design report with verdict | `process.mechanicaldesign` |
+
+### Engineering Deliverables
+
+| Class | Purpose | Package |
+|-------|---------|---------|
+| `StudyClass` | Enum (CLASS_A/CLASS_B/CLASS_C) defining required deliverables per study tier | `process.mechanicaldesign` |
+| `EngineeringDeliverablesPackage` | Orchestrates generation of all deliverables for a study class | `process.mechanicaldesign` |
+| `ProcessFlowDiagramExporter` | Graphviz DOT export of ProcessSystem topology | `process.processmodel` |
+| `ThermalUtilitySummary` | Cooling water, LP/MP/HP steam, fuel gas, instrument air | `process.mechanicaldesign` |
+| `AlarmTripScheduleGenerator` | Alarm/trip setpoints per IEC 61511 / NORSOK I-001 | `process.mechanicaldesign` |
+| `InstrumentScheduleGenerator` | ISA-5.1 tagged instrument schedule with live MeasurementDevice bridge | `process.mechanicaldesign` |
+| `SparePartsInventory` | Recommended spare parts by equipment type with lead times | `process.mechanicaldesign` |
+| `FireProtectionDesign` | Jet fire, BLEVE, pool fire scenario assessment (API 521) | `process.mechanicaldesign.designstandards` |
+| `NoiseAssessment` | Equipment noise + ISO 9613-2 atmospheric attenuation | `process.mechanicaldesign.designstandards` |
 
 ### Electrical Design
 
@@ -388,10 +425,10 @@ transport properties (viscosity, thermal conductivity, density).
 | **Asphaltene modeling** | Limited asphaltene precipitation | Use PC-SAFT with tuned parameters |
 | **Scale prediction** | No mineral scale model | External tool (ScaleChem) |
 | **Erosion modeling** | No erosion rate calculation | API RP 14E velocity check only |
-| **Detailed heat exchanger design** | No TEMA-level design | Duty + LMTD approach only |
+| **Detailed heat exchanger design** | TEMA-level design with Bell-Delaware, vibration, ASME VIII | Full thermal-hydraulic + mechanical via `ShellAndTubeDesignCalculator` |
 | **Dynamic simulation** | Limited transient capability | `runTransient()` on ProcessSystem |
 | **Reservoir coupling** | Simple reservoir only | No full reservoir simulator |
-| **Control system simulation** | Basic PID controllers | No advanced control |
+| **Control system simulation** | PID controllers + AlarmConfig + InstrumentScheduleGenerator + DynamicProcessHelper | No DCS/SIS emulation |
 | **Amine sweetening** | Basic Kent-Eisenberg / DM | No rate-based amine model |
 | **Membrane separation** | Basic membrane model | No detailed permeation |
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |

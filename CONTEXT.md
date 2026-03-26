@@ -48,6 +48,12 @@ src/main/java/neqsim/
     subsea/              WellMechanicalDesign, WellDesignCalculator,
                          WellCostEstimator, SURFCostEstimator,
                          SubseaCostEstimator (mechanical design & cost)
+    heatexchanger/       ShellAndTubeDesignCalculator, ThermalDesignCalculator,
+                         BellDelawareMethod, LMTDcorrectionFactor,
+                         VibrationAnalysis (TEMA + ASME VIII + thermal-hydraulic)
+    (root)               StudyClass, EngineeringDeliverablesPackage,
+                         InstrumentScheduleGenerator, ThermalUtilitySummary,
+                         AlarmTripScheduleGenerator, SparePartsInventory
   process/processmodel/  ProcessSystem — the flowsheet orchestrator
                          ProcessConnection — typed connection metadata (MATERIAL/ENERGY/SIGNAL)
     dexpi/               DEXPI P&ID import/export/round-trip, topology resolver,
@@ -262,12 +268,14 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | Check gas quality | `src/main/java/neqsim/standards/gasquality/` |
 | See a working example | `examples/notebooks/` or `src/test/java/neqsim/process/` |
 | Read documentation | `docs/wiki/` (60+ topics) or `docs/REFERENCE_MANUAL_INDEX.md` |
-| Use an AI agent | `.github/agents/` (16 specialist agents), start with `@neqsim.help` or `@capability.scout` or `@field.development` |
+| Use an AI agent | `.github/agents/` (17 specialist agents), start with `@neqsim.help` or `@capability.scout` or `@field.development` |
 | Check API changes | `CHANGELOG_AGENT_NOTES.md` |
 | Set up Jupyter dev | `devtools/neqsim_dev_setup.py` |
 | Find design data | `src/main/resources/designdata/` |
 | Well design & cost | `src/main/java/neqsim/process/mechanicaldesign/subsea/` |
 | SURF cost estimation | `src/main/java/neqsim/process/mechanicaldesign/subsea/SURFCostEstimator.java` |
+| Engineering deliverables | `src/main/java/neqsim/process/mechanicaldesign/` (StudyClass, InstrumentScheduleGenerator, etc.) |
+| HX thermal-hydraulic design | `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
 | Component database | `src/main/resources/` |
 
 ## Key Constraints

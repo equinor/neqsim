@@ -265,6 +265,164 @@ surf.setNumberOfJumpers(6);
 double totalUSD = surf.calculate();
 ```
 
+---
+
+## New: Heat Exchanger Thermal-Hydraulic Design Toolkit
+
+Five new classes in `neqsim.process.mechanicaldesign.heatexchanger` provide TEMA-level
+shell-and-tube heat exchanger design with rigorous thermal-hydraulic calculations:
+
+### `ThermalDesignCalculator`
+
+Central calculator for tube-side and shell-side heat transfer coefficients, overall U,
+pressure drops, and zone-by-zone analysis. Supports Gnielinski (tube-side) and Kern or
+Bell-Delaware (shell-side) methods.
+
+```java
+ThermalDesignCalculator calc = new ThermalDesignCalculator();
+calc.setTubeODm(0.01905);
+calc.setTubeLengthm(6.0);
+calc.setTubeCount(200);
+calc.setTubeSideFluid(995.0, 0.0008, 4180.0, 0.62, 5.0, true);
+calc.setShellSideFluid(820.0, 0.003, 2200.0, 0.13, 8.0);
+calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
+calc.calculate();
+String json = calc.toJson();
+```
+
+### `BellDelawareMethod`
+
+Industry-standard Bell-Delaware method for shell-side HTC and pressure drop with
+J-factor correction factors (Jc, Jl, Jb, Js, Jr) and Zhukauskas correlation for tube banks:
+```
+h_shell = h_ideal × Jc × Jl × Jb × Js × Jr
+```
+
+### `LMTDcorrectionFactor`
+
+LMTD correction factor (F_t) for multi-pass configurations using Bowman-Mueller-Nagle (1940).
+Supports 1-N shell passes, calculates R and P, recommends minimum shell passes needed.
+
+### `VibrationAnalysis`
+
+Flow-induced vibration screening per TEMA RCB-4.6 evaluating:
+- Vortex shedding (Von Karman, Strouhal = 0.22)
+- Fluid-elastic instability (Connors criterion, safety factor 0.5)
+- Acoustic resonance (shell mode frequencies)
+
+Returns `VibrationResult` with pass/fail and diagnostic ratios.
+
+### `ShellAndTubeDesignCalculator` (Major Expansion)
+
+Now includes ASME VIII Div.1 pressure design (UHX-13 tubesheet, UG-27 MAWP, UG-37
+nozzle reinforcement, UG-99 hydro test), NACE MR0175/ISO 15156 sour service assessment,
+thermal-hydraulic integration, weight/cost estimation, and Bill of Materials.
+
+### `HeatExchangerMechanicalDesign` (Enhanced)
+
+Auto-selects exchanger type (shell-and-tube, plate, air-cooled) based on configurable
+criteria (`MIN_AREA`, `MIN_WEIGHT`, `MIN_PRESSURE_DROP`). Full TEMA class (R/C/B),
+shell types (E-X), fouling, velocity limits, materials, and NACE support.
+
+**Standards:** TEMA R/C/B, ASME VIII Div.1, NACE MR0175/ISO 15156, Bell-Delaware, Gnielinski, Connors.
+
+---
+
+## New: TwoFluidPipe Enhancements
+
+### Boundary Condition API
+
+New public setters for inlet/outlet boundary conditions during transient simulation:
+
+```java
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+pipe.setOutletBoundaryCondition(BoundaryCondition.CLOSED);  // shut-in scenario
+pipe.closeOutlet();   // convenience
+pipe.openOutlet(30.0, "bara");
+```
+
+Types: `STREAM_CONNECTED` (default inlet), `CONSTANT_FLOW`, `CONSTANT_PRESSURE`, `CLOSED`.
+
+### Three-Phase Conservation Equations
+
+`TwoFluidConservationEquations` extended to 7 equations for gas-oil-water with separate
+oil and water momentum using AUSM+ flux scheme and MUSCL reconstruction.
+
+### `InterfacialFriction` (New Closure Class)
+
+Flow regime-dependent interfacial friction correlations:
+- Stratified smooth: Taitel-Dukler (1976)
+- Stratified wavy: Andritsos-Hanratty (1987)
+- Annular: Wallis (1969)
+- Slug: Oliemans (1986)
+
+### Additional TwoFluidPipe Features
+
+- Elevation profile: `setElevationProfile(double[])`
+- Temperature profile output: `getTemperatureProfile("C")` or `getTemperatureProfile()` (K)
+- Liquid inventory: `getLiquidInventory("m3")` or `getLiquidInventory("kg")`
+- Cooldown time: `calculateCooldownTime(targetTemp, "C")`
+
+---
+
+## New: Pump Enhancements
+
+- **Pump curve support** with affinity law scaling for different speeds
+- **Cavitation detection** (NPSH available vs required)
+- **Operating status monitoring** (surge, stonewall, efficiency)
+- **Outlet temperature mode** for plant data matching
+
+---
+
+## Engineering Deliverables Updates
+
+### `InstrumentScheduleGenerator` (New)
+
+ISA-5.1 tagged instrument schedule generator bridging engineering deliverables and
+dynamic simulation. Tags: PT-100+, TT-200+, LT-300+, FT-400+. Creates real
+`MeasurementDeviceInterface` objects with `AlarmConfig` (HH/H/L/LL) and SIL ratings.
+
+### `StudyClass` (Updated)
+
+Added `INSTRUMENT_SCHEDULE` to `DeliverableType` enum:
+- CLASS_A: 7 deliverables (was 6)
+- CLASS_B: 4 deliverables (was 3)
+
+---
+
+## Documentation & Agent Updates
+
+| File | Change |
+|------|--------|
+| `docs/process/mechanical_design/thermal_hydraulic_design.md` | **New** — 400+ line guide for HX thermal-hydraulic design |
+| `docs/wiki/two_fluid_model.md` | **Updated** — Boundary conditions, three-phase, InterfacialFriction, AUSM+ |
+| `docs/cookbook/pipeline-recipes.md` | **New** — 770+ line cookbook with TwoFluidPipe recipes |
+| `docs/process/equipment/heat_exchangers.md` | **Updated** — Added thermal design section with class table |
+| `docs/wiki/heat_exchanger_mechanical_design.md` | **Updated** — Cross-reference to thermal design guide |
+| `docs/wiki/pump_theory_and_implementation.md` | **Updated** — Pump curve and cavitation theory |
+| `.github/skills/neqsim-capability-map/SKILL.md` | **Updated** — Added 11 new classes, updated gaps |
+| `.github/skills/neqsim-api-patterns/SKILL.md` | **Updated** — HX thermal design + engineering deliverables patterns |
+| `.github/agents/engineering.deliverables.agent.md` | **Updated** — Instrument schedule as 7th deliverable |
+| `.github/agents/field.development.agent.md` | **Updated** — Item 17, updated class map |
+| `CHANGELOG_AGENT_NOTES.md` | **Updated** — Two new entries (HX thermal design + instrument schedule) |
+| `CONTEXT.md` | **Updated** — HX thermal design in repo map + key locations |
+| `AGENTS.md` | **Updated** — HX thermal design + TwoFluidPipe in key paths |
+| `docs/REFERENCE_MANUAL_INDEX.md` | **Updated** — Added thermal_hydraulic_design.md entry |
+
+## Test Coverage
+
+| Test File | Tests | Status |
+|-----------|-------|--------|
+| `ThermalDesignCalculatorTest` | Bell-Delaware, LMTD, vibration, zone analysis | New |
+| `TwoFluidPipeBenchmarkTest` | Beggs-Brill, Taitel-Dukler, Mukherjee-Brill | New (@Disabled — needs optimization) |
+| `TwoFluidPipeBoundaryConditionTest` | BC types, shut-in, pressure buildup | New (@Disabled) |
+| `TwoFluidPipeLiteratureValidationTest` | Literature validation against correlations | New (@Disabled) |
+| `DocExamplesCompilationTest` | Documentation code examples compile and run | New |
+| `PumpTest` | Pump curve, cavitation, outlet temperature mode | New |
+| `InstrumentScheduleGeneratorTest` | 31 tests — ISA tags, live devices, SIL, JSON | Previously added |
+| `EngineeringDeliverablesPackageTest` | Updated counts for CLASS_A (7), CLASS_B (4) | Updated |
+```
+
 **Tests:** 6 tests in `SURFCostEstimatorTest.java` — NCS tieback, JSON output, cost breakdown, region adjustment, currency conversion, recalculate.
 
 ### Enhanced: `WellDesignCalculator` — VME + Temperature Derating

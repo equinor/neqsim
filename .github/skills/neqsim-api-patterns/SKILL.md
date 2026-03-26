@@ -241,6 +241,84 @@ List<HXSupplierMatch> suppliers = hxReport.getMatchingSuppliers();
 - Field development or FEED-level studies
 - When the user asks "is this realistic?", "can this be built?", "what will it cost?"
 
+## Heat Exchanger Thermal-Hydraulic Design
+
+TEMA-level shell-and-tube thermal design with tube/shell-side HTCs, pressure drops,
+LMTD correction, vibration screening, and full mechanical design.
+
+### Standalone Thermal Calculation
+
+```java
+ThermalDesignCalculator calc = new ThermalDesignCalculator();
+calc.setTubeODm(0.01905);    // 3/4" OD
+calc.setTubeIDm(0.01483);
+calc.setTubeLengthm(6.0);
+calc.setTubeCount(200);
+calc.setTubePasses(2);
+calc.setTubePitchm(0.0254);
+calc.setTriangularPitch(true);
+calc.setShellIDm(0.489);
+calc.setBaffleSpacingm(0.15);
+calc.setBaffleCount(30);
+calc.setBaffleCut(0.25);
+
+// Tube-side fluid (density, viscosity, cp, conductivity, massFlow, isHeating)
+calc.setTubeSideFluid(995.0, 0.0008, 4180.0, 0.62, 5.0, true);
+// Shell-side fluid
+calc.setShellSideFluid(820.0, 0.003, 2200.0, 0.13, 8.0);
+
+calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
+calc.calculate();
+String json = calc.toJson();  // Full results: U, dP, HTCs, zone analysis
+```
+
+### LMTD Correction Factor
+
+```java
+double ft = LMTDcorrectionFactor.calcFt(tHotIn, tHotOut, tColdIn, tColdOut, 1);  // 1 shell pass
+int minShells = LMTDcorrectionFactor.requiredShellPasses(tHotIn, tHotOut, tColdIn, tColdOut);
+// MIN_ACCEPTABLE_FT = 0.75
+```
+
+### Vibration Screening
+
+```java
+VibrationAnalysis.VibrationResult vib = VibrationAnalysis.performScreening(
+    tubeOD, tubeID, unsupportedSpan, tubeMaterialE, tubeDensity,
+    fluidDensityTube, fluidDensityShell, "fixed-fixed",
+    crossflowVelocity, tubePitch, true, shellID, sonicVelocity);
+if (!vib.passed) {
+    // Check vib.vortexSheddingCritical, vib.fluidElasticCritical, vib.acousticCritical
+}
+```
+
+### Full Shell-and-Tube Mechanical + Thermal Design
+
+```java
+ShellAndTubeDesignCalculator stCalc = new ShellAndTubeDesignCalculator();
+stCalc.setTemaDesignation("AES");
+stCalc.setTemaClass(TEMAClass.R);
+stCalc.setRequiredArea(50.0);           // m²
+stCalc.setShellSidePressure(30.0);      // bara
+stCalc.setTubeSidePressure(10.0);       // bara
+stCalc.setDesignTemperature(200.0);     // °C
+stCalc.setShellMaterialGrade("SA-516-70");
+stCalc.setTubeMaterialGrade("SA-179");
+stCalc.setSourServiceAssessment(true);
+stCalc.setH2sPartialPressure(0.01);     // bar
+
+// Provide fluid properties for thermal + vibration analysis
+stCalc.setTubeSideFluidProperties(995.0, 0.0008, 4180.0, 0.62, 5.0, true);
+stCalc.setShellSideFluidProperties(820.0, 0.003, 2200.0, 0.13, 8.0);
+stCalc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
+
+stCalc.calculate();  // Runs mechanical + thermal + vibration
+String json = stCalc.toJson();  // MAWP, wall thickness, U, dP, vibration, cost, BOM
+```
+
+**Standards:** TEMA R/C/B, ASME VIII Div.1 (UHX-13, UG-27, UG-37, UG-99),
+NACE MR0175/ISO 15156, Bell-Delaware, Gnielinski, Von Karman, Connors criterion.
+
 ## CO2 Injection Well Analysis
 
 Full-stack safety analysis for CO2 injection wells covering steady-state flow,
@@ -311,6 +389,62 @@ double frictionCorr = CO2FlowCorrections.getFrictionCorrectionFactor(system);   
 boolean dense = CO2FlowCorrections.isDensePhase(system);
 double Tr = CO2FlowCorrections.getReducedTemperature(system);
 ```
+
+## Engineering Deliverables
+
+Generate study-class-appropriate engineering documents from a converged ProcessSystem.
+
+### StudyClass and Package
+
+```java
+// Standalone — generates all deliverables for the selected study class
+EngineeringDeliverablesPackage pkg =
+    new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+pkg.generate();
+String json = pkg.toJson();
+
+// Through orchestrator
+orchestrator.setStudyClass(StudyClass.CLASS_A);
+orchestrator.runCompleteDesignWorkflow();
+EngineeringDeliverablesPackage pkg = orchestrator.getEngineeringDeliverables();
+```
+
+| Study Class | Deliverables |
+|-------------|-------------|
+| **CLASS_A** (FEED/Detail) | PFD, Thermal Utilities, Alarm/Trip, Spare Parts, Fire Scenarios, Noise, Instrument Schedule |
+| **CLASS_B** (Concept/Pre-FEED) | PFD, Thermal Utilities, Fire Scenarios, Instrument Schedule |
+| **CLASS_C** (Screening) | PFD only |
+
+### Instrument Schedule Generator (with Live Device Bridge)
+
+Creates ISA-5.1 tagged instruments and optionally registers real `MeasurementDeviceInterface`
+objects on the ProcessSystem for dynamic simulation:
+
+```java
+InstrumentScheduleGenerator instrGen = new InstrumentScheduleGenerator(process);
+instrGen.setRegisterOnProcess(true);  // bridge: creates live MeasurementDevice objects
+instrGen.generate();
+
+// Query instruments
+List<InstrumentScheduleGenerator.InstrumentEntry> all = instrGen.getEntries();
+List<InstrumentScheduleGenerator.InstrumentEntry> pts =
+    instrGen.getEntriesByType(InstrumentScheduleGenerator.MeasuredVariable.PRESSURE);
+
+// Each entry has: tag, equipmentName, service, measuredVariable, rangeMin/Max, unit,
+//                 alarmHH/H/L/LL, silRating, liveDevice (if registerOnProcess=true)
+for (InstrumentScheduleGenerator.InstrumentEntry e : all) {
+    System.out.println(e.getTag() + " " + e.getEquipmentName()
+        + " SIL=" + e.getSilRating());
+    if (e.getLiveDevice() != null) {
+        // Real MeasurementDevice registered on ProcessSystem
+        System.out.println("  Live: " + e.getLiveDevice().getMeasuredValue());
+    }
+}
+
+String instrJson = instrGen.toJson();
+```
+
+Tag numbering convention: PT-100+, TT-200+, LT-300+, FT-400+ (ISA-5.1).
 
 ## Documentation Code Verification
 

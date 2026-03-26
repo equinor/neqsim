@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.mechanicaldesign.StudyClass.DeliverableType;
 import neqsim.process.mechanicaldesign.torg.TechnicalRequirementsDocument;
 import neqsim.process.mechanicaldesign.torg.TorgDataSource;
 import neqsim.process.mechanicaldesign.torg.TorgManager;
@@ -31,7 +32,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create process system
@@ -99,6 +100,12 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
 
   /** Unique run identifier. */
   private UUID runId;
+
+  /** Study class for engineering deliverables (null = no deliverables). */
+  private StudyClass studyClass;
+
+  /** Generated engineering deliverables package. */
+  private EngineeringDeliverablesPackage deliverablesPackage;
 
   /**
    * Represents a single workflow step.
@@ -457,10 +464,15 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       return false;
     }
 
-    // Step 5: Validate design
+    // Step 5: Generate engineering deliverables
+    if (studyClass != null) {
+      generateEngineeringDeliverables();
+    }
+
+    // Step 6: Validate design
     validateDesign();
 
-    // Step 6: Generate summary
+    // Step 7: Generate summary
     generateResultsSummary();
 
     logger.info("Design workflow completed for project {} (Run: {})", projectId, runId);
@@ -568,6 +580,36 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
           "Mechanical design calculation failed: " + e.getMessage(),
           "Check equipment configuration and input parameters");
       return false;
+    }
+  }
+
+  /**
+   * Generate engineering deliverables package.
+   */
+  private void generateEngineeringDeliverables() {
+    WorkflowStep step = new WorkflowStep("Generate Engineering Deliverables");
+    workflowHistory.add(step);
+
+    try {
+      deliverablesPackage = new EngineeringDeliverablesPackage(processSystem, studyClass);
+      deliverablesPackage.generate();
+
+      int success = deliverablesPackage.getSuccessCount();
+      int total = deliverablesPackage.getStatusMap().size();
+      step.complete(deliverablesPackage.isComplete(),
+          String.format("Generated %d/%d deliverables for %s", success, total, studyClass));
+
+      // Record any failures as validation warnings
+      for (DeliverableType failed : deliverablesPackage.getFailedDeliverables()) {
+        validationResult.addWarning("Deliverables", failed.getDisplayName(),
+            "Failed to generate: " + deliverablesPackage.getStatusMap().get(failed).getMessage(),
+            "Check process system setup and re-run");
+      }
+    } catch (Exception e) {
+      step.complete(false, "Deliverable generation failed: " + e.getMessage());
+      logger.error("Deliverable generation failed", e);
+      validationResult.addWarning("Deliverables", "EngineeringDeliverablesPackage",
+          "Deliverable generation failed: " + e.getMessage(), "Check process system configuration");
     }
   }
 
@@ -797,6 +839,41 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
   }
 
   /**
+   * Set the study class for engineering deliverables generation.
+   *
+   * <p>
+   * When set, the workflow will generate the deliverables package appropriate for the study class
+   * (Class A = full set, Class B = reduced set, Class C = minimal). Set to {@code null} to skip
+   * deliverable generation.
+   * </p>
+   *
+   * @param studyClass the study class, or null to skip deliverable generation
+   * @return this instance for chaining
+   */
+  public FieldDevelopmentDesignOrchestrator setStudyClass(StudyClass studyClass) {
+    this.studyClass = studyClass;
+    return this;
+  }
+
+  /**
+   * Get the configured study class.
+   *
+   * @return study class or null if not set
+   */
+  public StudyClass getStudyClass() {
+    return studyClass;
+  }
+
+  /**
+   * Get the generated engineering deliverables package.
+   *
+   * @return deliverables package or null if not generated
+   */
+  public EngineeringDeliverablesPackage getEngineeringDeliverables() {
+    return deliverablesPackage;
+  }
+
+  /**
    * Generate a design report.
    *
    * @return formatted design report
@@ -884,6 +961,25 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
             report.append(String.format("  Fix: %s\n", msg.getRemediation()));
           }
         }
+      }
+      report.append("\n");
+    }
+
+    // Engineering Deliverables Summary
+    if (deliverablesPackage != null && deliverablesPackage.isGenerated()) {
+      report.append("ENGINEERING DELIVERABLES\n");
+      report.append(singleLine).append("\n");
+      report.append(String.format("Study Class:   %s\n", studyClass.getDisplayName()));
+      report.append(String.format("Generated:     %d/%d deliverables\n",
+          deliverablesPackage.getSuccessCount(), deliverablesPackage.getStatusMap().size()));
+      report.append(String.format("Status:        %s\n",
+          deliverablesPackage.isComplete() ? "COMPLETE" : "INCOMPLETE"));
+      report.append("\n");
+      for (Map.Entry<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> entry : deliverablesPackage
+          .getStatusMap().entrySet()) {
+        String dStatus = entry.getValue().isSuccess() ? "OK" : "FAIL";
+        report.append(String.format("  %s %-30s %5d ms\n", dStatus, entry.getKey().getDisplayName(),
+            entry.getValue().getDurationMs()));
       }
       report.append("\n");
     }

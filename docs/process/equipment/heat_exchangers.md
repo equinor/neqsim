@@ -251,6 +251,31 @@ System.out.println("Trim cooler duty: " + trimDuty + " MW");
 HeatExchanger hx = new HeatExchanger("E-400", hotIn, coldIn);
 hx.setUAvalue(ua);
 hx.run();
+```
+
+### Thermal-Hydraulic Design (Shell-and-Tube)
+
+For rigorous tube-side and shell-side heat transfer coefficient calculations,
+pressure drops, LMTD correction factors, Bell-Delaware method, flow-induced
+vibration screening, and TEMA-level mechanical design, see the dedicated guide:
+
+> **[Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design)**
+
+Key classes in `neqsim.process.mechanicaldesign.heatexchanger`:
+
+| Class | Purpose |
+|-------|---------|
+| `ThermalDesignCalculator` | Tube/shell-side HTCs (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops |
+| `BellDelawareMethod` | Shell-side HTC with J-factor corrections (Jc, Jl, Jb, Js, Jr) |
+| `LMTDcorrectionFactor` | F_t for multi-pass configurations (Bowman-Mueller-Nagle 1940) |
+| `VibrationAnalysis` | Vortex shedding, fluid-elastic instability, acoustic resonance per TEMA RCB-4.6 |
+| `ShellAndTubeDesignCalculator` | Full TEMA + ASME VIII Div.1 design with NACE sour service, cost, BOM |
+
+### Mechanical Design
+
+For equipment sizing (area, weight, type selection), see:
+
+> **[Heat Exchanger Mechanical Design](../../wiki/heat_exchanger_mechanical_design)**
 
 double LMTD = hx.getLMTD();
 double duty = hx.getDuty();

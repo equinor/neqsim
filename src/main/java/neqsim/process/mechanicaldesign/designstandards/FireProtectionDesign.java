@@ -1,6 +1,11 @@
 package neqsim.process.mechanicaldesign.designstandards;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * Fire protection design utilities per NORSOK S-001 and API 2510 / API 521.
@@ -240,5 +245,227 @@ public class FireProtectionDesign implements Serializable {
       double heatOfCombustionKJKg, double combustionEfficiency) {
     double area = Math.PI * poolDiameterM * poolDiameterM / 4.0;
     return massBurningRateKgM2s * area * heatOfCombustionKJKg * combustionEfficiency;
+  }
+
+  /**
+   * Calculate jet fire flame length using the Chamberlain model.
+   *
+   * <p>
+   * L = 0.08 * (Q_total)^0.4, where Q is the total heat release rate in kW. The 0.08 coefficient
+   * and 0.4 exponent give flame lengths consistent with Shell FRED predictions for gaseous releases
+   * up to about 50 kg/s.
+   * </p>
+   *
+   * @param massReleaseKgS release rate in kg/s
+   * @param heatOfCombustionKJKg lower heating value in kJ/kg
+   * @return jet fire flame length in meters
+   */
+  public static double jetFireFlameLength(double massReleaseKgS, double heatOfCombustionKJKg) {
+    double hrrKW = massReleaseKgS * heatOfCombustionKJKg;
+    if (hrrKW <= 0) {
+      return 0.0;
+    }
+    return 0.08 * Math.pow(hrrKW, 0.4);
+  }
+
+  /**
+   * Calculate BLEVE fireball diameter using CCPS correlation.
+   *
+   * <p>
+   * D = 5.8 * M^(1/3), where M is the flammable liquid mass in kg.
+   * </p>
+   *
+   * @param flammableMassKg total flammable liquid mass in the vessel in kg
+   * @return fireball diameter in meters
+   */
+  public static double bleveFireballDiameter(double flammableMassKg) {
+    if (flammableMassKg <= 0) {
+      return 0.0;
+    }
+    return 5.8 * Math.pow(flammableMassKg, 1.0 / 3.0);
+  }
+
+  /**
+   * Calculate BLEVE fireball duration using CCPS correlation.
+   *
+   * <p>
+   * t = 0.45 * M^(1/3), where M is the flammable mass in kg.
+   * </p>
+   *
+   * @param flammableMassKg total flammable liquid mass in kg
+   * @return fireball duration in seconds
+   */
+  public static double bleveFireballDuration(double flammableMassKg) {
+    if (flammableMassKg <= 0) {
+      return 0.0;
+    }
+    return 0.45 * Math.pow(flammableMassKg, 1.0 / 3.0);
+  }
+
+  /**
+   * Calculate BLEVE peak overpressure using TNT-equivalence method.
+   *
+   * <p>
+   * Converts stored energy to TNT equivalent and looks up scaled overpressure. A simplified Hopkin
+   * diagram is implemented via the Sachs-Glasstone model.
+   * </p>
+   *
+   * @param pressureBara vessel failure pressure in bara
+   * @param volumeM3 vessel volume in m3
+   * @param distanceM distance from vessel in meters
+   * @return estimated peak overpressure in kPa
+   */
+  public static double bleveOverpressure(double pressureBara, double volumeM3, double distanceM) {
+    if (distanceM <= 0) {
+      return Double.MAX_VALUE;
+    }
+    // Brode equation for burst energy: E = (P - P_atm) * V / (gamma - 1)
+    double gamma = 1.4;
+    double pressurePa = (pressureBara - 1.01325) * 1e5;
+    double energyJ = pressurePa * volumeM3 / (gamma - 1.0);
+
+    // TNT equivalent: 1 kg TNT = 4.68 MJ
+    double tntMassKg = energyJ / 4.68e6;
+    if (tntMassKg <= 0) {
+      return 0.0;
+    }
+
+    // Scaled distance Z = R / W^(1/3)
+    double scaledDistance = distanceM / Math.pow(tntMassKg, 1.0 / 3.0);
+
+    // Sachs-Glasstone simplified lookup: p_peak = 1772 / Z^3 + 114 / Z^(3/2)
+    double overpressurePsi =
+        1772.0 / Math.pow(scaledDistance, 3.0) + 114.0 / Math.pow(scaledDistance, 1.5);
+    return overpressurePsi * 6.895; // convert to kPa
+  }
+
+  /**
+   * Execute a comprehensive fire scenario assessment for a single equipment item.
+   *
+   * <p>
+   * Calculates pool fire, jet fire, and BLEVE impacts based on equipment parameters.
+   * </p>
+   *
+   * @param equipmentName equipment tag name
+   * @param inventoryKg hydrocarbon inventory in kg
+   * @param operatingPressureBara operating pressure in bara
+   * @param vesselVolumeM3 vessel volume in m3 (0 if pipe/compact)
+   * @param poolDiameterM estimated pool diameter in meters
+   * @param releaseRateKgS leak rate in kg/s for jet fire
+   * @param heatingValueKJKg lower heating value in kJ/kg
+   * @param massBurningRateKgM2s pool fire burning rate in kg/(m2*s), typically 0.055
+   * @return fire scenario assessment result
+   */
+  public static FireScenarioResult assessFireScenarios(String equipmentName, double inventoryKg,
+      double operatingPressureBara, double vesselVolumeM3, double poolDiameterM,
+      double releaseRateKgS, double heatingValueKJKg, double massBurningRateKgM2s) {
+    FireScenarioResult result = new FireScenarioResult(equipmentName);
+
+    // Pool fire
+    double poolHRR =
+        poolFireHeatRelease(poolDiameterM, massBurningRateKgM2s, heatingValueKJKg, 0.85);
+    double poolSafeDist = safeDistance(poolHRR, 0.2, 4.7);
+    result.poolFireHeatReleaseKW = poolHRR;
+    result.poolFireSafeDistanceM = poolSafeDist;
+
+    // Jet fire
+    double jetLength = jetFireFlameLength(releaseRateKgS, heatingValueKJKg);
+    double jetHRR = releaseRateKgS * heatingValueKJKg;
+    double jetSafeDist = safeDistance(jetHRR, 0.25, 4.7);
+    result.jetFireFlameLengthM = jetLength;
+    result.jetFireSafeDistanceM = jetSafeDist;
+
+    // BLEVE (only if vessel with liquid inventory)
+    if (vesselVolumeM3 > 0 && inventoryKg > 0) {
+      result.bleveFireballDiameterM = bleveFireballDiameter(inventoryKg);
+      result.bleveFireballDurationS = bleveFireballDuration(inventoryKg);
+      result.bleveOverpressureAt50mKPa =
+          bleveOverpressure(operatingPressureBara, vesselVolumeM3, 50.0);
+    }
+
+    return result;
+  }
+
+  /**
+   * Holds results from a comprehensive fire scenario assessment.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  public static class FireScenarioResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    /** Equipment name. */
+    public String equipmentName;
+
+    /** Pool fire heat release rate in kW. */
+    public double poolFireHeatReleaseKW;
+    /** Pool fire safe distance to 4.7 kW/m2 escape threshold in meters. */
+    public double poolFireSafeDistanceM;
+
+    /** Jet fire flame length in meters. */
+    public double jetFireFlameLengthM;
+    /** Jet fire safe distance to 4.7 kW/m2 threshold in meters. */
+    public double jetFireSafeDistanceM;
+
+    /** BLEVE fireball diameter in meters. */
+    public double bleveFireballDiameterM;
+    /** BLEVE fireball duration in seconds. */
+    public double bleveFireballDurationS;
+    /** BLEVE overpressure at 50 m distance in kPa. */
+    public double bleveOverpressureAt50mKPa;
+
+    /**
+     * Creates a fire scenario result for the named equipment.
+     *
+     * @param equipmentName equipment tag name
+     */
+    public FireScenarioResult(String equipmentName) {
+      this.equipmentName = equipmentName;
+    }
+
+    /**
+     * Exports the fire scenario result to JSON.
+     *
+     * @return JSON string
+     */
+    public String toJson() {
+      JsonObject obj = new JsonObject();
+      obj.addProperty("equipment", equipmentName);
+
+      JsonObject pool = new JsonObject();
+      pool.addProperty("heatReleaseKW", poolFireHeatReleaseKW);
+      pool.addProperty("safeDistanceM", poolFireSafeDistanceM);
+      obj.add("poolFire", pool);
+
+      JsonObject jet = new JsonObject();
+      jet.addProperty("flameLengthM", jetFireFlameLengthM);
+      jet.addProperty("safeDistanceM", jetFireSafeDistanceM);
+      obj.add("jetFire", jet);
+
+      JsonObject bleve = new JsonObject();
+      bleve.addProperty("fireballDiameterM", bleveFireballDiameterM);
+      bleve.addProperty("fireballDurationS", bleveFireballDurationS);
+      bleve.addProperty("overpressureAt50mKPa", bleveOverpressureAt50mKPa);
+      obj.add("bleve", bleve);
+
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+          .toJson(obj);
+    }
+  }
+
+  /**
+   * Run fire scenario assessment for a list of equipment and return combined JSON report.
+   *
+   * @param scenarios list of fire scenario results
+   * @return JSON array string with all scenario results
+   */
+  public static String fireScenarioReport(List<FireScenarioResult> scenarios) {
+    JsonArray arr = new JsonArray();
+    for (FireScenarioResult s : scenarios) {
+      arr.add(com.google.gson.JsonParser.parseString(s.toJson()));
+    }
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(arr);
   }
 }

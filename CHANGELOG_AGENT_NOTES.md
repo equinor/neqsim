@@ -9,6 +9,167 @@
 
 ---
 
+## 2026-03-26 — Heat Exchanger Thermal-Hydraulic Design Toolkit
+
+### New Classes
+
+- **`ThermalDesignCalculator`** (`process.mechanicaldesign.heatexchanger`) — Central
+  calculator for tube-side and shell-side heat transfer coefficients, overall U,
+  pressure drops, and zone-by-zone analysis. Supports Gnielinski (tube-side) and
+  Kern or Bell-Delaware (shell-side) methods.
+  - Inner enum: `ShellSideMethod` (`KERN`, `BELL_DELAWARE`)
+
+- **`BellDelawareMethod`** (`process.mechanicaldesign.heatexchanger`) — Static utility
+  for industry-standard Bell-Delaware shell-side HTC and pressure drop with J-factor
+  correction factors (Jc, Jl, Jb, Js, Jr) and Zhukauskas correlation for tube banks.
+
+- **`VibrationAnalysis`** (`process.mechanicaldesign.heatexchanger`) — Flow-induced
+  vibration screening per TEMA RCB-4.6. Evaluates vortex shedding (Von Karman),
+  fluid-elastic instability (Connors), and acoustic resonance.
+  - Inner class: `VibrationResult` with pass/fail, natural frequency, critical velocity
+
+- **`LMTDcorrectionFactor`** (`process.mechanicaldesign.heatexchanger`) — LMTD correction
+  factor F_t for multi-pass configurations using Bowman-Mueller-Nagle (1940) method.
+  Supports 1-N shell passes, calculates R and P parameters, recommends minimum shell
+  passes needed.
+
+- **`InterfacialFriction`** (`process.equipment.pipeline.twophasepipe.closure`) —
+  Interfacial friction correlations for two-fluid pipe model. Flow regime-dependent:
+  Taitel-Dukler (stratified smooth), Andritsos-Hanratty (stratified wavy), Wallis
+  (annular), Oliemans (slug).
+  - Inner class: `InterfacialFrictionResult` with shear, friction factor, slip velocity
+
+### Updated Classes
+
+- **`ShellAndTubeDesignCalculator`** — Major expansion: now includes ASME VIII Div.1
+  pressure design (UHX-13 tubesheet, UG-27 MAWP, UG-37 nozzle reinforcement, UG-99
+  hydro test), NACE MR0175/ISO 15156 sour service assessment, thermal-hydraulic
+  integration (auto-runs `ThermalDesignCalculator` + `VibrationAnalysis` when fluid
+  properties are provided), weight/cost estimation with Bill of Materials.
+
+- **`HeatExchangerMechanicalDesign`** — New high-level orchestrator auto-selecting
+  exchanger type (shell-and-tube, plate, air-cooled) based on configurable criteria
+  (`MIN_AREA`, `MIN_WEIGHT`, `MIN_PRESSURE_DROP`). Handles TEMA class (R/C/B),
+  shell types (E/F/G/H/J/K/X), fouling resistances, velocity limits, materials,
+  and NACE sour service.
+
+- **`HeatExchanger`** — Added `getRatingCalculator()` returning `ThermalDesignCalculator`
+  for rating mode. Added `getThermalEffectiveness()` and `calcThermalEffectivenes(NTU, Cr)`.
+
+- **`TwoFluidPipe`** — Enhanced with boundary condition API (STREAM_CONNECTED,
+  CONSTANT_FLOW, CONSTANT_PRESSURE, CLOSED), elevation profile support, temperature
+  profile output (K and °C), liquid inventory calculation, cooldown time estimation.
+
+- **`TwoFluidConservationEquations`** — Extended to 7 conservation equations for
+  three-phase (gas/oil/water) with separate oil and water momentum. Uses AUSM+ flux
+  scheme and MUSCL reconstruction.
+
+- **`Pump`** — Added pump curve support with affinity law scaling, cavitation detection
+  (NPSH available vs required), operating status monitoring, outlet temperature mode.
+
+### Usage
+
+```java
+// Standalone thermal design
+ThermalDesignCalculator calc = new ThermalDesignCalculator();
+calc.setTubeODm(0.01905);
+calc.setTubeIDm(0.01483);
+calc.setTubeLengthm(6.0);
+calc.setTubeCount(200);
+calc.setTubePasses(2);
+calc.setTubePitchm(0.0254);
+calc.setTriangularPitch(true);
+calc.setShellIDm(0.489);
+calc.setBaffleSpacingm(0.15);
+calc.setBaffleCount(30);
+calc.setBaffleCut(0.25);
+calc.setTubeSideFluid(995.0, 0.0008, 4180.0, 0.62, 5.0, true);
+calc.setShellSideFluid(820.0, 0.003, 2200.0, 0.13, 8.0);
+calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
+calc.calculate();
+String json = calc.toJson();
+
+// Vibration screening
+VibrationAnalysis.VibrationResult result = VibrationAnalysis.performScreening(
+    tubeOD, tubeID, unsupportedSpan, tubeMaterialE, tubeDensity,
+    fluidDensityTube, fluidDensityShell, endCondition,
+    crossflowVelocity, tubePitch, triangularPitch, shellID, sonicVelocity
+);
+boolean safe = result.passed;
+
+// LMTD correction factor
+double ft = LMTDcorrectionFactor.calcFt(tHotIn, tHotOut, tColdIn, tColdOut, shellPasses);
+int minShells = LMTDcorrectionFactor.requiredShellPasses(tHotIn, tHotOut, tColdIn, tColdOut);
+
+// Full mechanical design with thermal-hydraulic
+ShellAndTubeDesignCalculator stCalc = new ShellAndTubeDesignCalculator();
+stCalc.setTubeSideFluidProperties(density, viscosity, cp, k, massFlow, isHeating);
+stCalc.setShellSideFluidProperties(density, viscosity, cp, k, massFlow);
+stCalc.calculate();  // runs mech + thermal + vibration
+String report = stCalc.toJson();
+```
+
+### Agents/Skills to Update
+
+- `neqsim-capability-map` — Add ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis, LMTDcorrectionFactor, InterfacialFriction
+- `neqsim-api-patterns` — Add HX thermal design pattern
+- `CONTEXT.md` — Add HX thermal design to repo map
+- `docs/REFERENCE_MANUAL_INDEX.md` — Add thermal_hydraulic_design.md entry
+
+---
+
+## 2026-03-26 — InstrumentScheduleGenerator and Updated Engineering Deliverables
+
+### New Classes
+
+- **`InstrumentScheduleGenerator`** (`process.mechanicaldesign`) — ISA-5.1 tagged
+  instrument schedule generator that bridges engineering deliverables and dynamic
+  simulation. Walks a `ProcessSystem`, creates `MeasurementDeviceInterface` objects
+  (PT, TT, LT, FT) with `AlarmConfig` (HH/H/L/LL thresholds) and SIL ratings.
+  With `setRegisterOnProcess(true)`, live devices are registered on the ProcessSystem.
+
+### Updated Classes
+
+- **`StudyClass`** — Added `INSTRUMENT_SCHEDULE` to `DeliverableType` enum.
+  CLASS_A now produces 7 deliverables (was 6), CLASS_B produces 4 (was 3).
+- **`EngineeringDeliverablesPackage`** — Added `generateInstrumentSchedule()` and
+  `getInstrumentSchedule()`. The `INSTRUMENT_SCHEDULE` case is handled in `generate()`.
+
+### StudyClass Deliverable Counts (IMPORTANT for tests)
+
+| Study Class | Count | Deliverables |
+|-------------|-------|-------------|
+| CLASS_A | 7 | PFD, Thermal, Alarm/Trip, Spares, Fire, Noise, Instrument Schedule |
+| CLASS_B | 4 | PFD, Thermal, Fire, Instrument Schedule |
+| CLASS_C | 1 | PFD |
+
+### Usage
+
+```java
+InstrumentScheduleGenerator gen = new InstrumentScheduleGenerator(process);
+gen.setRegisterOnProcess(true);  // creates live MeasurementDevice objects
+gen.generate();
+List<InstrumentScheduleGenerator.InstrumentEntry> entries = gen.getEntries();
+String json = gen.toJson();
+
+// Through package
+EngineeringDeliverablesPackage pkg =
+    new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
+pkg.generate();  // includes instrument schedule
+InstrumentScheduleGenerator instrSchedule = pkg.getInstrumentSchedule();
+```
+
+### Agents/Skills Updated
+
+- `neqsim-capability-map` SKILL — Expanded Measurement Devices table, added Engineering Deliverables subsection
+- `neqsim-api-patterns` SKILL — Added Engineering Deliverables section with instrument schedule pattern
+- `engineering.deliverables.agent.md` — Added instrument schedule deliverable section and code examples
+- `field.development.agent.md` — Added item 17 (instrument schedule), updated StudyClass table and class map
+- `AGENTS.md` — Updated key paths table
+- `CONTEXT.md` — Updated repo map and key locations table
+
+---
+
 ## 2026-03-25 — TwoFluidPipe Boundary Condition API
 
 ### New API
