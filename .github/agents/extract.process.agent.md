@@ -281,9 +281,10 @@ State these limitations to the user when relevant:
 - **Recycles require hybrid approach** — use JSON for the main process, then Python code to add clone streams, pumps, and `Recycle` objects. See Skill Section 18 for the pattern.
 - **Large processes** — facilities with > 15 units or multiple plant areas MUST use Architecture B (pre-built modules) or C (ProcessModule composition), which require Python code instead of JSON.
 - **Pre-built modules** — 10 modules available: SeparationTrainModule, GlycolDehydrationlModule, CO2RemovalModule, AdsorptionDehydrationlModule, DPCUModule, PropaneCoolingModule, MEGReclaimerModule, MixerGasProcessingModule, WellFluidModule. Each has fixed port names — see Skill Section 16.
-- **Distillation columns** — not yet supported in the JSON builder
+- **Distillation columns** — supported in the JSON builder with `numberOfTrays`, `hasReboiler`, and `hasCondenser` properties. Feed is wired via the `inlet` field. Advanced column settings require Python code
 - **Compressor curves** — auto-generated via `CompressorChartGenerator` or loaded from JSON via `loadCompressorChartFromJsonString()`, but requires hybrid Python code (not expressible in JSON builder). See Skill Section 20
 - **Anti-surge loops** — require hybrid approach with Splitter + Calculator + ThrottlingValve + Recycle topology. See Skill Section 20
 - **Heat exchanger UA** — specified by outlet temperature, not UA or LMTD
-- **Multi-inlet equipment** — Mixer supports multiple inlets via `"inlets": ["stream1", "stream2"]` (plural key with array). Do NOT use `"inlet"` with an array value — it will fail
+- **Multi-inlet equipment** — Mixer and HeatExchanger support multiple inlets via `"inlets": ["stream1", "stream2"]` (plural key with array). Do NOT use `"inlet"` with an array value — it will fail
+- **Tolerant error handling** — The JSON builder is tolerant: stream wiring failures become warnings (not errors), and partially-built processes are still returned. Always check `result.hasWarnings()` alongside `result.isSuccess()`
 - **Image/PFD extraction** — requires the user to describe the diagram; vision-based extraction is not yet implemented

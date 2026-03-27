@@ -104,30 +104,55 @@ ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
 ```
 
-For large models, build manually with proper naming:
+For large models (e.g., Grane platform with 180+ units), the JSON builder uses
+tolerant error handling — operations that cannot be wired are removed with
+warnings, and the resulting process is returned in a partially-built state:
+
 ```python
-# Create process system with the UniSim case name
-process = ProcessSystem(model.file_name.replace('.usc', ''))
+result = ProcessSystem.fromJson(json.dumps(neqsim_json))
 
-# Create fluid from mapped composition
-fluid = jneqsim.thermo.system.SystemPrEos(ref_temp_K, ref_P_bara)
-for comp_name, frac in composition.items():
-    fluid.addComponent(comp_name, frac)
-fluid.setMixingRule("classic")
+# Check result status
+print(f"Success: {result.isSuccess()}")
+print(f"Warnings: {result.hasWarnings()}")
 
-# Build each equipment following topological order
-# ... (use converter's sorted operations)
+if result.hasWarnings():
+    for w in result.getWarnings():
+        print(f"  [{w.getCode()}] {w.getMessage()}")
+
+if not result.isError():
+    process = result.getProcessSystem()
+    process.run()
+    print(json.loads(str(process.getReport_json())))
 ```
+
+**Tolerant error handling means:** stream wiring failures (e.g., upstream unit
+was skipped) produce warnings instead of errors. Equipment that cannot be wired
+is removed from the process. `process.run()` exceptions are caught as warnings.
+This allows partial models to be built and validated even when some operations
+cannot be mapped.
 
 ### Step 6: Verify Results (MANDATORY)
 
 **Every conversion MUST be verified against the UniSim stream data.**
 
+For models built from JSON, identify which streams were successfully created:
 ```python
+# After process.run(), compare only streams that exist in NeqSim
 comparator = UniSimComparator(model, neqsim_process)
 comparisons = comparator.compare_streams()
 comparator.print_report(comparisons)
 ```
+
+For models built via `to_python()`:
+```python
+# The generated Python script includes all streams
+# Run the script, then compare manually or load as a module
+```
+
+**Note on partial models:** Large UniSim models (100+ operations) rarely convert
+100% — some operations are skipped (Set, Adjust, Spreadsheet, custom sub-flowsheets).
+Report both the match rate (e.g., "67/181 units built") and the stream comparison
+for the successfully-built equipment.
 
 Expected acceptable deviations:
 - Temperature: < 3 °C

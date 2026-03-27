@@ -194,6 +194,14 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 | `spreadsheetop` | — (skipped) | Spreadsheet calculator |
 | `templateop` | — (sub-flowsheet) | Sub-flowsheet template |
 | `absorberop` | `Absorber` | Absorption column |
+| `reactorop` | — (skipped) | Generic reactor |
+| `pfreactorop` | — (skipped) | Plug flow reactor |
+| `cstrop` | — (skipped) | Continuous stirred tank reactor |
+| `convreactorop` | — (skipped) | Conversion reactor |
+| `eqreactorop` | — (skipped) | Equilibrium reactor |
+| `gibbsreactorop` | — (skipped) | Gibbs reactor |
+| `pidfbcontrolop` | — (skipped) | PID feedback controller |
+| `surgecontroller` | — (skipped) | Surge controller |
 
 ### Operations Skipped in Conversion
 
@@ -202,6 +210,8 @@ These UniSim operation types have no direct NeqSim equivalent and are skipped:
 - `setop` — Variable set/propagation
 - `spreadsheetop` — Calculation spreadsheets
 - `templateop` — Mapped to sub-flowsheets, handled separately
+- `reactorop` / `pfreactorop` / `cstrop` / `convreactorop` / `eqreactorop` / `gibbsreactorop` — Reactor types (no generic JSON mapping)
+- `pidfbcontrolop` / `surgecontroller` — Control logic (not modeled in steady-state)
 
 ---
 
@@ -236,6 +246,17 @@ UniSim component names to NeqSim database names:
 | `Argon` | `argon` |
 | `Helium` | `helium` |
 | `nC11`–`nC24` | `nC11`–`nC24` |
+| `Benzene` | `benzene` |
+| `Toluene` | `toluene` |
+| `E-Benzene` | `ethylbenzene` |
+| `m-Xylene` | `m-Xylene` |
+| `o-Xylene` | `o-Xylene` |
+| `p-Xylene` | `p-Xylene` |
+| `COS` | `COS` |
+| `Ethylene` | `ethylene` |
+| `Propylene` | `propylene` |
+| `1-Butene` | `1-butene` |
+| `c-Hexane` | `c-hexane` |
 
 ### Hypothetical Components
 
@@ -263,6 +284,7 @@ These require C7+ characterization in NeqSim. Strategies:
 | `ASME Steam` | `SRK` | `classic` (water only) |
 | `Lee-Kesler-Plocker` | `SRK` | `classic` (approx) |
 | `NRTL` | `SRK` | `classic` (approx) |
+| `MBWR` | `BWRS` | (built-in) |
 
 ---
 
@@ -293,6 +315,16 @@ import json
 from neqsim import jneqsim
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
+
+# Check for partial success (tolerant error handling)
+if result.hasWarnings():
+    print(f"Warnings: {len(list(result.getWarnings()))}")
+    for w in result.getWarnings():
+        print(f"  [{w.getCode()}] {w.getMessage()}")
+
+if not result.isError():
+    process = result.getProcessSystem()
+    print(f"Units built: {process.size()}")
 ```
 
 ### Generate Python Code (Human-Readable Alternative)
@@ -301,16 +333,34 @@ Instead of JSON, generate a standalone Python script with explicit `jneqsim` API
 
 ```python
 converter = UniSimToNeqSim(model)
-python_code = converter.to_python()
+python_code = converter.to_python(include_subflowsheets=True)
 
 # Save to file
 with open("process.py", "w") as f:
     f.write(python_code)
+print(f"Generated {len(python_code.splitlines())} lines of Python")
 ```
 
-The generated script includes imports, fluid/EOS setup, feed streams with T/P/flow,
-equipment in topological order wired through outlet stream references, and `process.run()`.
-Ideal for code review, manual editing, and learning the NeqSim API mapping.
+The generated script is a **complete, runnable Python file** that includes:
+1. All `jneqsim` imports (thermo systems, equipment classes)
+2. Fluid/EOS definition with mapped composition and mixing rule
+3. Feed streams created with temperature, pressure, and flow rate from UniSim
+4. All equipment in **topological order** (upstream before downstream)
+5. Equipment properties set via `jneqsim` API calls (efficiency, outlet pressure, etc.)
+6. Stream wiring through outlet stream references (e.g., `separator.getGasOutStream()`)
+7. Sub-flowsheet operations (if `include_subflowsheets=True`)
+8. `process.run()` call at the end
+
+The generated code uses **direct NeqSim Java API calls** — no JSON intermediate.
+Equipment that cannot be mapped (reactors, controllers, spreadsheets) is commented
+out with a skip reason. This output is ideal for:
+- **Code review** — every connection is visible and auditable
+- **Manual editing** — users can modify equipment parameters, add controllers
+- **Learning** — shows the exact NeqSim API mapping for each UniSim operation
+
+**Example for the Grane platform model:** `to_python()` generates ~850 lines
+covering ~180 operations including Splitters, ThreePhaseSeparators, Compressors,
+Coolers, Mixers, ThrottlingValves, and sub-flowsheet equipment.
 
 ### For Complex Models (Sub-Flowsheets → ProcessModule)
 

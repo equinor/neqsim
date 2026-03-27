@@ -164,6 +164,9 @@ Use the **longest matching keyword** to avoid false matches.
 | solar panel, PV panel | `SolarPanel` |
 | battery storage, battery, BESS | `BatteryStorage` |
 | ammonia reactor, Haber-Bosch reactor, ammonia synthesis | `AmmoniaSynthesisReactor` |
+| distillation column, fractionation column, distillation tower, deethanizer, demethanizer, depropanizer, debutanizer, stripper column, stabilizer column | `DistillationColumn` |
+| pipe, pipe segment, pipeline, flowline, adiabatic pipe | `AdiabaticPipe` |
+| stream saturator, saturator, water saturator | `StreamSaturatorUtil` |
 
 ---
 
@@ -189,8 +192,13 @@ Equipment is connected via dot-notation references in the `inlet` field.
 | `Pump` | `"Pump.outlet"` | Outlet stream |
 | `Expander` | `"Expander.outlet"` | Outlet stream |
 | `Mixer` | `"Mixer.outlet"` | Outlet stream |
-| `Splitter` | `"Splitter.outlet"` | Outlet stream |
+| `Splitter` | `"Splitter.outlet"` | Outlet stream (first split) |
+| `Splitter` | `"Splitter.split0"` | Split port 0 |
+| `Splitter` | `"Splitter.split1"` | Split port 1 |
+| `Splitter` | `"Splitter.splitN"` | Split port N (zero-indexed) |
 | `HeatExchanger` | `"HX.outlet"` | Outlet stream |
+| `DistillationColumn` | `"Column.gasOut"` | Gas (overhead) outlet |
+| `DistillationColumn` | `"Column.liquidOut"` | Liquid (bottoms) outlet |
 | `Tank` | `"Tank.outlet"` | Outlet stream |
 
 ### Wiring Rules
@@ -250,6 +258,9 @@ Equipment is connected via dot-notation references in the `inlet` field.
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `outTemperature` | number (K) | — | Outlet temperature in Kelvin |
+| `outletTemperature` | `[number, "unit"]` | — | Outlet temperature with unit (e.g., `[25.0, "C"]`) |
+
+**Property Unit Arrays:** Equipment properties can be specified with units using the `[value, "unit"]` array format. This applies to any property that accepts a unit string, such as `outletTemperature`, `flowRate`, etc. The JSON builder uses Java reflection to find matching setter methods.
 
 ### ThrottlingValve
 
@@ -273,6 +284,33 @@ No required properties. Operates at inlet conditions.
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `splitNumber` | integer | — | Number of outlet streams |
+| `splitFactors` | `[number, ...]` | — | Split factors per outlet (e.g., `[0.5, 0.5]`) |
+
+### DistillationColumn
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `numberOfTrays` | integer | 10 | Number of theoretical trays |
+| `hasReboiler` | boolean | true | Whether column has a reboiler |
+| `hasCondenser` | boolean | true | Whether column has a condenser |
+
+### HeatExchanger (Multi-Inlet)
+
+`HeatExchanger` supports two inlets (hot and cold side):
+
+```json
+{"type": "HeatExchanger", "name": "gas-gas HX",
+ "inlets": ["hot stream", "cold stream"]}
+```
+
+The first inlet becomes the feed stream; the second is set via `setFeedStream(1, stream)`.
+
+### AdiabaticPipe
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `length` | number (m) | — | Pipe length in meters |
+| `diameter` | number (m) | — | Pipe inner diameter in meters |
 
 ---
 
@@ -1029,6 +1067,25 @@ If `ProcessSystem.fromJsonAndRun()` returns errors, interpret them:
 | `UNKNOWN_MODEL` | Unrecognized EOS model | Use: SRK, PR, CPA, GERG2008, PCSAFT, UMRPRU |
 | `UNIT_ERROR` | Equipment creation failed | Check property values and types |
 | `SIMULATION_ERROR` | Runtime failure during `process.run()` | Check pressure/temperature ranges, compositions |
+
+### Tolerant Error Handling
+
+The JSON builder uses **tolerant** error handling for stream wiring: when a stream
+reference cannot be resolved (e.g., the upstream unit was skipped), the equipment
+is removed from the process rather than failing the entire build. These show up as
+warnings (not errors) in `SimulationResult`. Similarly, if `process.run()` throws
+an exception, it is caught and returned as a warning — the process is still returned
+in its partially-run state.
+
+This means `result.isSuccess()` can be `true` even when `result.hasWarnings()` is
+also `true`. Always check warnings to identify any equipment that was skipped:
+
+```python
+result = ProcessSystem.fromJson(json_str)
+if result.hasWarnings():
+    for w in result.getWarnings():
+        print(f"WARNING [{w.getCode()}]: {w.getMessage()}")
+```
 
 ---
 
