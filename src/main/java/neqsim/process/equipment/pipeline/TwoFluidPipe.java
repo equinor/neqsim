@@ -5853,7 +5853,7 @@ public class TwoFluidPipe extends Pipeline {
    * <li>$\rho_{mix}$ = Average mixture density (kg/m³)</li>
    * </ul>
    *
-   * <h2>C-Factor Guidelines (API RP 14E)</h2>
+   * <h4>C-Factor Guidelines (API RP 14E)</h4>
    * <table>
    * <caption>API 14E C-factor recommendations</caption>
    * <tr>
