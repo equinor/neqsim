@@ -552,7 +552,7 @@ public class NeqSimDataBase
       updateTable("MBWR32param");
       updateTable("COMPSALT");
       updateTable("PIPEDATA");
-      updateTable("reactiondatakenteisenberg");
+      updateTable("REACTIONDATAKENTEISENBERG");
 
       // TODO: missing tables: ionicData,
       // purecomponentvapourpressures,
