@@ -234,14 +234,18 @@ public class JsonProcessBuilder {
     if (autoRun) {
       try {
         process.run();
-        String report = process.getReport_json();
-        return SimulationResult.success(process, report, warnings);
       } catch (Exception e) {
-        errors.add(new SimulationResult.ErrorDetail("SIMULATION_ERROR",
-            "Simulation failed: " + e.getMessage(), null,
-            "Check equipment configuration and fluid definitions"));
-        return SimulationResult.failure(process, errors, warnings);
+        warnings.add(
+            "process.run() threw: " + e.getMessage() + " — partial results may still be available");
       }
+      // Report generation can also fail if some units have corrupted state
+      String report = null;
+      try {
+        report = process.getReport_json();
+      } catch (Exception e) {
+        warnings.add("Report generation failed: " + e.getMessage());
+      }
+      return SimulationResult.success(process, report, warnings);
     }
 
     return SimulationResult.success(process, null, warnings);
