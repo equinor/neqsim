@@ -30,6 +30,15 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   protected double oldInletFlowRate = 0.0;
 
   /**
+   * Constructor for StreamSaturatorUtil with name only.
+   *
+   * @param name name of unit operation
+   */
+  public StreamSaturatorUtil(String name) {
+    super(name);
+  }
+
+  /**
    * Constructor for StreamSaturatorUtil.
    *
    * @param name name of unit opeation
