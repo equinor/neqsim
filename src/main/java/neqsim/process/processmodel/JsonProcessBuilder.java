@@ -218,7 +218,7 @@ public class JsonProcessBuilder {
     // stream had no ThermoSystem at wiring time) will crash in mixStream().
     List<String> toRemove = new ArrayList<>();
     for (ProcessEquipmentInterface eq : process.getUnitOperations()) {
-      if (eq instanceof Mixer && eq.getOutletStream() == null) {
+      if (eq instanceof Mixer && ((Mixer) eq).getOutletStream() == null) {
         toRemove.add(eq.getName());
       }
     }
