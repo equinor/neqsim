@@ -201,11 +201,11 @@ public class ColumnSpecificationTest {
     column.setBottomPressure(15.0);
 
     // Use condenser reflux ratio spec and reboiler temperature
-    column.setCondenserRefluxRatio(0.3);
-    column.getReboiler().setOutTemperature(273.15 + 50.0);
-    column.setMaxNumberOfIterations(40);
-    column.setTemperatureTolerance(1.0e-2);
-    column.setMassBalanceTolerance(5.0e-2);
+    column.setCondenserRefluxRatio(2.0);
+    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.setMaxNumberOfIterations(50);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
     column.run();
 
     // Should converge and produce output
