@@ -16,6 +16,7 @@ import com.google.gson.JsonParser;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -179,13 +180,34 @@ public class JsonProcessBuilder {
       }
     }
 
-    // Report any remaining unwired units as errors
+    // Report any remaining unwired units as warnings (not hard errors).
+    // Missing references are common in complex models with sub-flowsheets
+    // or skipped operation types — allow partial success.
+    // Also remove completely unwired non-Stream units from the process
+    // to prevent NPEs during simulation (e.g. Mixer with zero inlets).
     for (String name : unwired) {
       JsonObject unitDef = unitDefMap.get(name);
       if (unitDef != null) {
-        wireUnit(name, unitDef); // Will add error details
+        reportUnwiredUnit(name, unitDef);
+        // Remove the unit from the process so it doesn't crash during run()
+        process.removeUnit(name);
+        namedEquipment.remove(name);
       }
     }
+
+    // Only fail on critical errors (MISSING_PROCESS, MISSING_TYPE, JSON_PARSE_ERROR).
+    // Wiring and unit-creation issues are downgraded to warnings for partial success.
+    List<SimulationResult.ErrorDetail> criticalErrors = new ArrayList<>();
+    for (SimulationResult.ErrorDetail err : errors) {
+      String code = err.getCode();
+      if ("STREAM_NOT_FOUND".equals(code) || "UNIT_ERROR".equals(code)) {
+        warnings.add("[" + code + "] " + err.getMessage());
+      } else {
+        criticalErrors.add(err);
+      }
+    }
+    errors.clear();
+    errors.addAll(criticalErrors);
 
     if (!errors.isEmpty()) {
       return SimulationResult.failure(process, errors, warnings);
@@ -313,6 +335,8 @@ public class JsonProcessBuilder {
 
       if ("Stream".equalsIgnoreCase(type)) {
         equipment = createStream(name, unitDef, defaultFluid);
+      } else if ("DistillationColumn".equalsIgnoreCase(type) || "Column".equalsIgnoreCase(type)) {
+        equipment = createDistillationColumn(name, unitDef);
       } else {
         equipment = EquipmentFactory.createEquipment(name, type);
       }
@@ -349,6 +373,63 @@ public class JsonProcessBuilder {
       errors.add(new SimulationResult.ErrorDetail("UNIT_ERROR",
           "Failed to create unit '" + name + "' (type: " + type + "): " + e.getMessage(), name,
           "Check the unit definition and ensure all required fields are present"));
+    }
+  }
+
+  /**
+   * Creates a DistillationColumn from its JSON definition, extracting tray count and
+   * condenser/reboiler flags from properties.
+   *
+   * @param name the column name
+   * @param unitDef the JSON definition
+   * @return the created DistillationColumn
+   */
+  private ProcessEquipmentInterface createDistillationColumn(String name, JsonObject unitDef) {
+    int numberOfTrays = 5;
+    boolean hasReboiler = true;
+    boolean hasCondenser = true;
+
+    if (unitDef.has("properties")) {
+      JsonObject props = unitDef.getAsJsonObject("properties");
+      if (props.has("numberOfTrays")) {
+        numberOfTrays = props.get("numberOfTrays").getAsInt();
+      }
+      if (props.has("hasReboiler")) {
+        hasReboiler = props.get("hasReboiler").getAsBoolean();
+      }
+      if (props.has("hasCondenser")) {
+        hasCondenser = props.get("hasCondenser").getAsBoolean();
+      }
+    }
+
+    return new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
+  }
+
+  /**
+   * Reports an unwired unit as a warning (not a hard error). Extracts reference details so the user
+   * knows which connections could not be resolved.
+   *
+   * @param name the unit name
+   * @param unitDef the JSON definition
+   */
+  private void reportUnwiredUnit(String name, JsonObject unitDef) {
+    if (unitDef.has("inlets")) {
+      JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
+      for (JsonElement inletElem : inletsArr) {
+        String inletRef = inletElem.getAsString();
+        StreamInterface stream = resolveStreamReference(inletRef);
+        if (stream == null) {
+          warnings.add("Unresolved inlet '" + inletRef + "' for unit '" + name
+              + "' (source may be in sub-flowsheet or skipped operation)");
+        }
+      }
+    } else if (unitDef.has("inlet")) {
+      String inletRef = unitDef.get("inlet").getAsString();
+      StreamInterface stream = resolveStreamReference(inletRef);
+      if (stream == null) {
+        warnings.add("Unresolved inlet '" + inletRef + "' for unit '" + name
+            + "' (source may be in sub-flowsheet or skipped operation)");
+      }
     }
   }
 
@@ -669,6 +750,13 @@ public class JsonProcessBuilder {
    * @param stream the inlet stream
    */
   private void wireInletStream(ProcessEquipmentInterface equipment, StreamInterface stream) {
+    // Special handling for DistillationColumn — uses addFeedStream, not setInletStream
+    if (equipment instanceof DistillationColumn) {
+      DistillationColumn column = (DistillationColumn) equipment;
+      column.addFeedStream(stream);
+      return;
+    }
+
     try {
       java.lang.reflect.Method setInlet =
           equipment.getClass().getMethod("setInletStream", StreamInterface.class);
@@ -680,8 +768,15 @@ public class JsonProcessBuilder {
             equipment.getClass().getMethod("addStream", StreamInterface.class);
         addStream.invoke(equipment, stream);
       } catch (Exception ex) {
-        warnings.add("Cannot set inlet stream on " + equipment.getName()
-            + ": no setInletStream or addStream method");
+        // Try addFeedStream for column-like equipment
+        try {
+          java.lang.reflect.Method addFeed =
+              equipment.getClass().getMethod("addFeedStream", StreamInterface.class);
+          addFeed.invoke(equipment, stream);
+        } catch (Exception ex2) {
+          warnings.add("Cannot set inlet stream on " + equipment.getName()
+              + ": no setInletStream, addStream, or addFeedStream method");
+        }
       }
     } catch (Exception e) {
       warnings.add("Error wiring inlet to " + equipment.getName() + ": " + e.getMessage());
