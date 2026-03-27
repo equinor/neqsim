@@ -213,7 +213,23 @@ public class JsonProcessBuilder {
       return SimulationResult.failure(process, errors, warnings);
     }
 
-    // Step 3: Optionally run
+    // Step 3: Pre-run safety — remove equipment that would NPE during simulation.
+    // Mixers whose mixedStream was not initialised (e.g. because the first inlet
+    // stream had no ThermoSystem at wiring time) will crash in mixStream().
+    List<String> toRemove = new ArrayList<>();
+    for (ProcessEquipmentInterface eq : process.getUnitOperations()) {
+      if (eq instanceof Mixer && eq.getOutletStream() == null) {
+        toRemove.add(eq.getName());
+      }
+    }
+    for (String removeName : toRemove) {
+      warnings.add("Removed Mixer '" + removeName
+          + "' — outlet stream was null (inlet stream not initialised)");
+      process.removeUnit(removeName);
+      namedEquipment.remove(removeName);
+    }
+
+    // Step 4: Optionally run
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {
       try {
