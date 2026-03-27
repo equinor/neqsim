@@ -297,19 +297,6 @@ public class JsonProcessBuilder {
   private ProcessEquipmentInterface createAndWireUnit(ProcessSystem process, String type,
       String name, JsonObject unitDef, SystemInterface defaultFluid) {
 
-    // Resolve inlet stream reference
-    StreamInterface inletStream = null;
-    if (unitDef.has("inlet")) {
-      String inletRef = unitDef.get("inlet").getAsString();
-      inletStream = resolveStreamReference(inletRef);
-      if (inletStream == null) {
-        errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
-            "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
-            "Ensure the referenced unit exists and was defined before this unit"));
-        return null;
-      }
-    }
-
     // Handle Stream type specially - it needs a fluid
     if ("Stream".equalsIgnoreCase(type)) {
       return createStream(name, unitDef, defaultFluid);
@@ -318,8 +305,30 @@ public class JsonProcessBuilder {
     // Create equipment via factory
     ProcessEquipmentInterface equipment = EquipmentFactory.createEquipment(name, type);
 
-    // Wire inlet stream
-    if (inletStream != null) {
+    // Handle multiple inlets (e.g., Mixer with "inlets" array)
+    if (unitDef.has("inlets")) {
+      JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
+      for (JsonElement inletElem : inletsArr) {
+        String inletRef = inletElem.getAsString();
+        StreamInterface stream = resolveStreamReference(inletRef);
+        if (stream == null) {
+          errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+              "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+              "Ensure the referenced unit exists and was defined before this unit"));
+        } else {
+          wireInletStream(equipment, stream);
+        }
+      }
+    } else if (unitDef.has("inlet")) {
+      // Single inlet
+      String inletRef = unitDef.get("inlet").getAsString();
+      StreamInterface inletStream = resolveStreamReference(inletRef);
+      if (inletStream == null) {
+        errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+            "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+            "Ensure the referenced unit exists and was defined before this unit"));
+        return null;
+      }
       wireInletStream(equipment, inletStream);
     }
 
@@ -416,6 +425,16 @@ public class JsonProcessBuilder {
           return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
         case "outlet":
         default:
+          // Handle indexed split streams: "split0", "split1", etc.
+          if (port.startsWith("split") && port.length() > 5) {
+            try {
+              int idx = Integer.parseInt(port.substring(5));
+              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
+                  .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       }
     } catch (NoSuchMethodException e) {

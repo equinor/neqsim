@@ -498,6 +498,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `.github/agents/capability.scout.agent.md` | Capability assessment, gap analysis, implementation planning |
 | `.github/agents/field.development.agent.md` | Field development studies, concept selection, economics |
 | `.github/agents/engineering.deliverables.agent.md` | Engineering deliverables (PFD, instruments, fire, noise, etc.) |
+| `.github/agents/extract.process.agent.md` | Extract process info from documents → NeqSim JSON / ProcessModule → simulation |
 | `src/main/java/neqsim/process/fielddevelopment/` | Field development workflows, economics, screening |
 | `src/main/java/neqsim/process/util/fielddevelopment/` | Production profiles, scheduling, DCF calculator |
 | `docs/fielddevelopment/` | Field development documentation |
@@ -522,6 +523,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation |
 | `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost, tieback analysis |
 | `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
+| `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
 
 ## API Verification (Mandatory)
 

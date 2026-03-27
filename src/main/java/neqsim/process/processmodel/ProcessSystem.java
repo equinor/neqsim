@@ -3691,6 +3691,16 @@ public class ProcessSystem extends SimulationBaseClass {
           return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
         case "outlet":
         default:
+          // Handle indexed split streams: "split0", "split1", etc.
+          if (port.startsWith("split") && port.length() > 5) {
+            try {
+              int idx = Integer.parseInt(port.substring(5));
+              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
+                  .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       }
     } catch (NoSuchMethodException e) {
