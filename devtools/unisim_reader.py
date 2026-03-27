@@ -511,7 +511,7 @@ class UniSimReader:
           - Tee/Splitter: FeedStream / Products[]
           - Separator/FlashTank: Feeds[] / VapourProduct, LiquidProduct
           - ThreePhaseSep: Feeds[] / VapourProduct, LiquidProduct, WaterProduct
-          - HeatExchanger: has ShellSide/TubeSide sub-objects
+          - HeatExchanger: ShellSide/TubeSide sub-objects
         """
         op_data = UniSimOperation(
             name=self._safe_get(op, 'name', '<unnamed>'),
@@ -519,6 +519,11 @@ class UniSimReader:
         )
 
         type_lower = op_data.type_name.lower()
+
+        # ---- Special handling for HeatExchanger ----
+        if 'heatex' in type_lower:
+            self._extract_heatexchanger(op, op_data)
+            return op_data
 
         # ---- FEEDS ----
         # 1) Try Feeds[] array (mixers, separators, multi-feed ops)
@@ -675,6 +680,63 @@ class UniSimReader:
             props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW') if hasattr(op, 'DutyValue') else None
 
         return op_data
+
+    def _extract_heatexchanger(self, op, op_data: UniSimOperation):
+        """Extract HeatExchanger-specific connections and properties.
+
+        UniSim heat exchangers use ShellSide/TubeSide sub-objects with
+        Feed/Product streams, not the standard Feeds[]/Products[] pattern.
+        """
+        # Try multiple COM property patterns for HX feed/product extraction
+        feed_attrs = [
+            ('ShellSideFeed', 'ShellSideProduct'),
+            ('TubeSideFeed', 'TubeSideProduct'),
+        ]
+
+        # Pattern 1: ShellSideFeed/TubeSideFeed (some UniSim versions)
+        for feed_attr, prod_attr in feed_attrs:
+            try:
+                feed_stream = getattr(op, feed_attr)
+                if feed_stream is not None:
+                    name = self._safe_get(feed_stream, 'name', None)
+                    if name:
+                        op_data.feeds.append(name)
+            except Exception:
+                pass
+            try:
+                prod_stream = getattr(op, prod_attr)
+                if prod_stream is not None:
+                    name = self._safe_get(prod_stream, 'name', None)
+                    if name:
+                        op_data.products.append(name)
+            except Exception:
+                pass
+
+        # Pattern 2: Feeds[]/Products[] generic arrays
+        if not op_data.feeds:
+            try:
+                n = op.Feeds.Count
+                for i in range(n):
+                    name = self._safe_get(op.Feeds.Item(i), 'name', f'feed_{i}')
+                    op_data.feeds.append(name)
+            except Exception:
+                pass
+
+        if not op_data.products:
+            try:
+                n = op.Products.Count
+                for i in range(n):
+                    name = self._safe_get(op.Products.Item(i), 'name', f'prod_{i}')
+                    op_data.products.append(name)
+            except Exception:
+                pass
+
+        # Properties
+        props = op_data.properties
+        try:
+            props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW')
+        except Exception:
+            pass
 
     @staticmethod
     def _safe_get(obj, attr, default="<unavailable>"):
@@ -840,15 +902,23 @@ class UniSimToNeqSim:
 
         Performs topological sort to ensure equipment is defined
         in dependency order (feeds before consumers).
+        Flattens sub-flowsheets into the main process.
         """
         if not flowsheet:
             return []
 
-        # Build stream→operation connectivity map
+        # Collect ALL operations and streams (including sub-flowsheets)
+        all_operations = list(flowsheet.operations)
+        all_streams = list(flowsheet.material_streams)
+        for sf in flowsheet.sub_flowsheets:
+            all_operations.extend(sf.operations)
+            all_streams.extend(sf.material_streams)
+
+        # Build stream→operation connectivity map across all flowsheets
         stream_producer = {}  # stream_name → (operation_name, port)
         stream_consumer = {}  # stream_name → [(operation_name, port)]
 
-        for op in flowsheet.operations:
+        for op in all_operations:
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
             for s in op.feeds:
@@ -858,7 +928,7 @@ class UniSimToNeqSim:
 
         # Find feed streams (produced by no operation → external feeds)
         external_feeds = set()
-        for op in flowsheet.operations:
+        for op in all_operations:
             for s in op.feeds:
                 if s not in stream_producer:
                     external_feeds.add(s)
@@ -866,10 +936,12 @@ class UniSimToNeqSim:
         # Build the process array
         process = []
 
+        # Helper: find stream data by name across all flowsheets
+        stream_by_name = {s.name: s for s in all_streams}
+
         # Add external feed streams first
         for feed_name in sorted(external_feeds):
-            # Find the stream data
-            stream_data = self._find_stream_by_name(flowsheet, feed_name)
+            stream_data = stream_by_name.get(feed_name)
             entry = {'type': 'Stream', 'name': feed_name}
             if stream_data:
                 props = {}
@@ -883,10 +955,10 @@ class UniSimToNeqSim:
                     entry['properties'] = props
             process.append(entry)
 
-        # Topological sort of operations
-        sorted_ops = self._topological_sort(flowsheet.operations, stream_producer)
+        # Topological sort of ALL operations (main + sub-flowsheets)
+        sorted_ops = self._topological_sort(all_operations, stream_producer)
 
-        # Convert each operation
+        # Convert each operation (sub-flowsheet template ops are skipped in _convert_operation)
         for op in sorted_ops:
             entry = self._convert_operation(op, stream_producer, flowsheet)
             if entry:
@@ -920,8 +992,8 @@ class UniSimToNeqSim:
 
         # Wire inlet(s)
         if op.feeds:
-            # For mixers, we need multiple inlets
-            if neqsim_type == 'Mixer':
+            # For multi-inlet equipment (Mixer, HeatExchanger), use inlets array
+            if neqsim_type in ('Mixer', 'HeatExchanger') and len(op.feeds) >= 2:
                 entry['inlets'] = []
                 for feed_name in op.feeds:
                     inlet_ref = self._resolve_inlet_ref(feed_name, stream_producer)
