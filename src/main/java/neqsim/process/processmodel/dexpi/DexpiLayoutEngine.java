@@ -1287,6 +1287,7 @@ final class DexpiLayoutEngine {
    * @param drawingNumber the drawing number
    * @param revision the revision
    * @param date the date string
+   * @param sheetWidth the width of the drawing sheet in layout units
    */
   private static void appendTitleBlock(Document document, Element drawing, String drawingName,
       String drawingNumber, String revision, String date, double sheetWidth) {
