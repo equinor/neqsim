@@ -183,8 +183,12 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public void setName(String name) {
     super.setName(name);
-    outStream[0].setName(name + "_Sout1");
-    outStream[1].setName(name + "_Sout2");
+    if (outStream[0] != null) {
+      outStream[0].setName(name + "_Sout1");
+    }
+    if (outStream[1] != null) {
+      outStream[1].setName(name + "_Sout2");
+    }
   }
 
   /** {@inheritDoc} */

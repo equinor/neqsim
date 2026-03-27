@@ -4,6 +4,7 @@ import java.util.Objects;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.electrolyzer.CO2Electrolyzer;
 import neqsim.process.equipment.electrolyzer.Electrolyzer;
@@ -22,6 +23,9 @@ import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
 import neqsim.process.equipment.subsea.SubseaPowerCable;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
@@ -91,6 +95,19 @@ public final class EquipmentFactory {
       case "subseapowercable":
       case "powercable":
         return createEquipment(name, EquipmentEnum.SubseaPowerCable);
+      case "adiabaticpipe":
+      case "pipe":
+      case "pipeline":
+        return createEquipment(name, EquipmentEnum.AdiabaticPipe);
+      case "pipebeggsandbrills":
+      case "beggsandbrills":
+        return createEquipment(name, EquipmentEnum.PipeBeggsAndBrills);
+      case "streamsaturatorutil":
+      case "saturator":
+        return createEquipment(name, EquipmentEnum.StreamSaturatorUtil);
+      case "distillationcolumn":
+      case "column":
+        return createEquipment(name, EquipmentEnum.DistillationColumn);
       default:
         EquipmentEnum enumType = resolveEquipmentEnum(equipmentType);
         return createEquipment(name, enumType);
@@ -194,6 +211,14 @@ public final class EquipmentFactory {
         return new AmmoniaSynthesisReactor(name);
       case SubseaPowerCable:
         return new SubseaPowerCable(name);
+      case AdiabaticPipe:
+        return new AdiabaticPipe(name);
+      case PipeBeggsAndBrills:
+        return new PipeBeggsAndBrills(name);
+      case StreamSaturatorUtil:
+        return new StreamSaturatorUtil(name);
+      case DistillationColumn:
+        return new DistillationColumn(name, 5, true, true);
       default:
         throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType.name());
     }
