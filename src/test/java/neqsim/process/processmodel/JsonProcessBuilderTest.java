@@ -160,8 +160,10 @@ class JsonProcessBuilderTest {
         + "}";
 
     SimulationResult result = new JsonProcessBuilder().build(json);
-    assertTrue(result.isError());
-    assertEquals("STREAM_NOT_FOUND", result.getErrors().get(0).getCode());
+    // Invalid inlet refs are now warnings (partial success) rather than hard errors,
+    // to allow complex models with sub-flowsheets to build partially.
+    assertTrue(result.isSuccess());
+    assertFalse(result.getWarnings().isEmpty());
   }
 
   @Test
