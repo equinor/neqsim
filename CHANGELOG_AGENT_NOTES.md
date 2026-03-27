@@ -9,6 +9,44 @@
 
 ---
 
+## 2026-03-27 — UniSimToNeqSim Python Code Generation
+
+### New Method — `to_python()` on `UniSimToNeqSim`
+
+- **`UniSimToNeqSim.to_python(include_subflowsheets=True)`** generates a self-contained,
+  **human-readable Python script** that recreates the entire UniSim process using
+  explicit `jneqsim` API calls — instead of the opaque JSON intermediate format.
+- The generated script includes: all imports, fluid/EOS definition with components,
+  feed streams with T/P/flow, every equipment item in topological order wired through
+  outlet stream references (`getGasOutStream()`, `getLiquidOutStream()`,
+  `getSplitStream(int)`, `getOutletStream()`), and `process.run()`.
+- Handles all supported equipment types: Separator, ThreePhaseSeparator, Mixer,
+  Splitter, Compressor, ThrottlingValve, Cooler, Heater, HeatExchanger, Pump,
+  Expander, AdiabaticPipe, Recycle, DistillationColumn, StreamSaturatorUtil.
+- Sanitizes variable names (spaces, hyphens, special chars → underscores; numeric
+  prefixes get `_` prefix; uniqueness guaranteed).
+- Located in `devtools/unisim_reader.py`.
+
+**Usage:**
+```python
+from devtools.unisim_reader import UniSimReader, UniSimToNeqSim
+
+reader = UniSimReader(visible=False)
+model = reader.read(r"path\to\file.usc")
+reader.close()
+
+converter = UniSimToNeqSim(model)
+python_code = converter.to_python()
+
+with open("my_process.py", "w") as f:
+    f.write(python_code)
+```
+
+**Agents/skills updated:** `unisim.reader.agent.md`, `neqsim-unisim-reader/SKILL.md`,
+`PR_DESCRIPTION_PROCESS_EXTRACTION.md`, `devtools/README.md`.
+
+---
+
 ## 2026-03-27 — Distillation Column Internals, Air Cooler, PVF Flash, Amine Framework
 
 ### New Classes — Distillation Internals

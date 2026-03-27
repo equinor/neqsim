@@ -365,6 +365,34 @@ fluid.addComponent("methane", 0.85)
 fluid.setMixingRule("classic")
 ```
 
+### Build process from JSON
+
+```java
+// Static convenience methods on ProcessSystem
+SimulationResult result = ProcessSystem.fromJsonAndRun(jsonString);
+if (result.isSuccess()) {
+    ProcessSystem process = result.getProcessSystem();
+    // Access equipment by name:
+    process.getUnit("HP Separator");
+    // Access streams by dot-notation:
+    process.resolveStreamReference("HP Separator.gasOut");
+}
+// Tolerant: wiring failures become warnings, not errors
+for (ErrorDetail w : result.getWarnings()) {
+    System.out.println(w.getCode() + ": " + w.getMessage());
+}
+```
+
+```python
+# Python equivalent
+import json
+from neqsim import jneqsim
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
+if not result.isError():
+    process = result.getProcessSystem()
+```
+
 ### Subsea well design (mechanical design + cost)
 
 ```java
@@ -481,7 +509,8 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/` | Main source (thermo, process, pvt, standards) |
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
 | `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
-| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface |
+| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
+| `devtools/unisim_reader.py` | UniSim COM reader → NeqSim JSON/Python (UniSimReader, UniSimToNeqSim, UniSimComparator) |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
 | `src/main/java/neqsim/process/mechanicaldesign/` | Engineering deliverables (StudyClass, InstrumentScheduleGenerator, etc.) |
 | `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` | HX thermal-hydraulic design (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
