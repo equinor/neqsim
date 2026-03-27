@@ -68,6 +68,7 @@ For **hypothetical components** (names ending with `*`):
 
 ### Step 4: Convert to NeqSim
 
+**Option A — JSON (for automated pipeline):**
 ```python
 converter = UniSimToNeqSim(model)
 neqsim_json = converter.to_json()
@@ -78,6 +79,21 @@ print(json.dumps(neqsim_json, indent=2))
 print("\nWarnings:", converter.warnings)
 print("Assumptions:", converter.assumptions)
 ```
+
+**Option B — Python code (for human review and editing):**
+```python
+converter = UniSimToNeqSim(model)
+python_code = converter.to_python()
+
+# Save as a standalone, runnable script
+with open("process.py", "w") as f:
+    f.write(python_code)
+print(f"Generated {len(python_code.splitlines())} lines of Python")
+```
+
+The generated Python script uses explicit `jneqsim` API calls — every stream,
+equipment item, and connection is visible and editable. This is ideal when the
+user wants to inspect, modify, or learn from the converted process.
 
 ### Step 5: Build and Run NeqSim Model
 

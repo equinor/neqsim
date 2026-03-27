@@ -22,7 +22,7 @@ The `devtools/unisim_reader.py` module provides three main classes:
 | Class | Purpose |
 |-------|---------|
 | `UniSimReader` | Opens .usc files via COM, extracts all data |
-| `UniSimToNeqSim` | Converts extracted model to NeqSim JSON builder format |
+| `UniSimToNeqSim` | Converts extracted model to NeqSim JSON builder format or standalone Python code |
 | `UniSimComparator` | Compares UniSim vs NeqSim results for verification |
 
 ---
@@ -294,6 +294,23 @@ from neqsim import jneqsim
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
 ```
+
+### Generate Python Code (Human-Readable Alternative)
+
+Instead of JSON, generate a standalone Python script with explicit `jneqsim` API calls:
+
+```python
+converter = UniSimToNeqSim(model)
+python_code = converter.to_python()
+
+# Save to file
+with open("process.py", "w") as f:
+    f.write(python_code)
+```
+
+The generated script includes imports, fluid/EOS setup, feed streams with T/P/flow,
+equipment in topological order wired through outlet stream references, and `process.run()`.
+Ideal for code review, manual editing, and learning the NeqSim API mapping.
 
 ### For Complex Models (Sub-Flowsheets → ProcessModule)
 
