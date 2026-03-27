@@ -25,45 +25,39 @@ public class ColumnSpecificationTest {
   @Test
   public void testSpecificationValidation() {
     // Valid product purity spec
-    ColumnSpecification spec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        ColumnSpecification.ProductLocation.TOP,
-        0.95, "methane");
+    ColumnSpecification spec =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.TOP, 0.95, "methane");
     assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY, spec.getType());
     assertEquals(ColumnSpecification.ProductLocation.TOP, spec.getLocation());
     assertEquals(0.95, spec.getTargetValue(), 1e-10);
     assertEquals("methane", spec.getComponentName());
 
     // Valid reflux ratio (no component needed)
-    ColumnSpecification refluxSpec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.TOP,
-        3.0);
+    ColumnSpecification refluxSpec =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.TOP, 3.0);
     assertEquals(3.0, refluxSpec.getTargetValue(), 1e-10);
 
     // Purity spec without component name should throw
-    assertThrows(IllegalArgumentException.class, () -> new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        ColumnSpecification.ProductLocation.TOP,
-        0.95));
+    assertThrows(IllegalArgumentException.class,
+        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.TOP, 0.95));
 
     // Component recovery without component name should throw
-    assertThrows(IllegalArgumentException.class, () -> new ColumnSpecification(
-        ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-        ColumnSpecification.ProductLocation.BOTTOM,
-        0.8));
+    assertThrows(IllegalArgumentException.class,
+        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+            ColumnSpecification.ProductLocation.BOTTOM, 0.8));
 
     // Purity out of range should throw
-    assertThrows(IllegalArgumentException.class, () -> new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        ColumnSpecification.ProductLocation.TOP,
-        1.5, "methane"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.TOP, 1.5, "methane"));
 
     // Negative reflux ratio should throw
-    assertThrows(IllegalArgumentException.class, () -> new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.TOP,
-        -1.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.TOP, -1.0));
   }
 
   /**
@@ -71,10 +65,9 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void testSpecificationSettings() {
-    ColumnSpecification spec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.TOP,
-        2.0);
+    ColumnSpecification spec =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.TOP, 2.0);
     assertEquals(1.0e-4, spec.getTolerance(), 1e-10);
     assertEquals(20, spec.getMaxIterations());
 
@@ -93,10 +86,9 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void testToString() {
-    ColumnSpecification spec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        ColumnSpecification.ProductLocation.TOP,
-        0.9, "propane");
+    ColumnSpecification spec =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.TOP, 0.9, "propane");
     String str = spec.toString();
     assertTrue(str.contains("PRODUCT_PURITY"));
     assertTrue(str.contains("TOP"));
@@ -163,20 +155,16 @@ public class ColumnSpecificationTest {
     DistillationColumn column = new DistillationColumn("TestCol", 3, true, true);
 
     // Setting a BOTTOM spec as top should throw
-    ColumnSpecification bottomSpec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.BOTTOM,
-        2.0);
-    assertThrows(IllegalArgumentException.class,
-        () -> column.setTopSpecification(bottomSpec));
+    ColumnSpecification bottomSpec =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.BOTTOM, 2.0);
+    assertThrows(IllegalArgumentException.class, () -> column.setTopSpecification(bottomSpec));
 
     // Setting a TOP spec as bottom should throw
-    ColumnSpecification topSpec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.TOP,
-        2.0);
-    assertThrows(IllegalArgumentException.class,
-        () -> column.setBottomSpecification(topSpec));
+    ColumnSpecification topSpec =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.TOP, 2.0);
+    assertThrows(IllegalArgumentException.class, () -> column.setBottomSpecification(topSpec));
   }
 
   /**
@@ -185,24 +173,24 @@ public class ColumnSpecificationTest {
    */
   @Test
   public void testRefluxRatioSpec() {
-    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 25.0, 15.0);
-    testSystem.addComponent("methane", 0.4);
-    testSystem.addComponent("ethane", 0.3);
-    testSystem.addComponent("propane", 0.3);
+    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 50.0, 10.0);
+    testSystem.addComponent("propane", 0.5);
+    testSystem.addComponent("n-butane", 0.5);
     testSystem.setMixingRule("classic");
 
     Stream feed = new Stream("feed", testSystem);
-    feed.setFlowRate(100.0, "kg/hr");
+    feed.setFlowRate(1000.0, "kg/hr");
     feed.run();
 
     DistillationColumn column = new DistillationColumn("TestCol", 5, true, true);
     column.addFeedStream(feed, 3);
-    column.setTopPressure(15.0);
-    column.setBottomPressure(15.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
 
     // Use condenser reflux ratio spec and reboiler temperature
     column.setCondenserRefluxRatio(2.0);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutTemperature(273.15 + 75.0);
     column.setMaxNumberOfIterations(50);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(1.0e-1);
@@ -280,18 +268,13 @@ public class ColumnSpecificationTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = DistillationColumn.builder("TestCol")
-        .numberOfTrays(5)
-        .withCondenserAndReboiler()
-        .topPressure(15.0, "bara")
-        .bottomPressure(15.0, "bara")
+    DistillationColumn column = DistillationColumn.builder("TestCol").numberOfTrays(5)
+        .withCondenserAndReboiler().topPressure(15.0, "bara").bottomPressure(15.0, "bara")
         .topProductPurity("methane", 0.80)
-        .bottomSpecification(new ColumnSpecification(
-            ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.BOTTOM,
-            0.5))
-        .addFeedStream(feed, 3)
-        .build();
+        .bottomSpecification(
+            new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+                ColumnSpecification.ProductLocation.BOTTOM, 0.5))
+        .addFeedStream(feed, 3).build();
 
     assertNotNull(column.getTopSpecification());
     assertEquals(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
