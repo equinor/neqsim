@@ -17,6 +17,7 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pump.Pump;
@@ -25,6 +26,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -129,7 +131,7 @@ public class JsonProcessBuilder {
       }
     }
 
-    // Step 2: Build process units
+    // Step 2: Build process units (two-pass for recycle loops)
     if (!root.has("process")) {
       errors.add(
           new SimulationResult.ErrorDetail("MISSING_PROCESS", "JSON must contain a 'process' array",
@@ -138,13 +140,55 @@ public class JsonProcessBuilder {
     }
 
     JsonArray processArray = root.getAsJsonArray("process");
+
+    // Pass 1: Create all equipment objects (no wiring yet)
+    List<JsonObject> unitDefs = new ArrayList<>();
     for (int i = 0; i < processArray.size(); i++) {
       JsonObject unitDef = processArray.get(i).getAsJsonObject();
-      buildUnit(process, unitDef, defaultFluid, i);
+      unitDefs.add(unitDef);
+      createUnit(process, unitDef, defaultFluid, i);
+    }
+
+    // Pass 2: Wire inlet connections iteratively (handles forward references).
+    // Some references resolve only after upstream units are wired, so iterate
+    // until all are resolved or no progress is made.
+    java.util.Set<String> unwired = new java.util.LinkedHashSet<>();
+    Map<String, JsonObject> unitDefMap = new LinkedHashMap<>();
+    for (int i = 0; i < unitDefs.size(); i++) {
+      JsonObject unitDef = unitDefs.get(i);
+      String type = unitDef.has("type") ? unitDef.get("type").getAsString() : "";
+      String name = unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (i + 1);
+      unitDefMap.put(name, unitDef);
+      if (needsWiring(unitDef)) {
+        unwired.add(name);
+      }
+    }
+
+    int maxIterations = unwired.size() + 1;
+    for (int iter = 0; iter < maxIterations && !unwired.isEmpty(); iter++) {
+      java.util.Set<String> wiredThisRound = new java.util.LinkedHashSet<>();
+      for (String name : unwired) {
+        JsonObject unitDef = unitDefMap.get(name);
+        if (unitDef != null && tryWireUnit(name, unitDef)) {
+          wiredThisRound.add(name);
+        }
+      }
+      unwired.removeAll(wiredThisRound);
+      if (wiredThisRound.isEmpty()) {
+        break; // No progress — remaining refs cannot be resolved
+      }
+    }
+
+    // Report any remaining unwired units as errors
+    for (String name : unwired) {
+      JsonObject unitDef = unitDefMap.get(name);
+      if (unitDef != null) {
+        wireUnit(name, unitDef); // Will add error details
+      }
     }
 
     if (!errors.isEmpty()) {
-      return SimulationResult.failure(errors, warnings);
+      return SimulationResult.failure(process, errors, warnings);
     }
 
     // Step 3: Optionally run
@@ -244,14 +288,14 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Builds a single process unit from its JSON definition and adds it to the process.
+   * Pass 1: Creates a unit (no wiring) and registers it.
    *
-   * @param process the process system to add the unit to
-   * @param unitDef the JSON object defining the unit
-   * @param defaultFluid the default fluid to use for streams
-   * @param index the unit index (for error reporting)
+   * @param process the process system
+   * @param unitDef the JSON definition
+   * @param defaultFluid the default fluid
+   * @param index the unit index
    */
-  private void buildUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid,
+  private void createUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid,
       int index) {
     if (!unitDef.has("type")) {
       errors.add(new SimulationResult.ErrorDetail("MISSING_TYPE",
@@ -265,12 +309,36 @@ public class JsonProcessBuilder {
         unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
 
     try {
-      ProcessEquipmentInterface equipment =
-          createAndWireUnit(process, type, name, unitDef, defaultFluid);
+      ProcessEquipmentInterface equipment;
+
+      if ("Stream".equalsIgnoreCase(type)) {
+        equipment = createStream(name, unitDef, defaultFluid);
+      } else {
+        equipment = EquipmentFactory.createEquipment(name, type);
+      }
 
       if (equipment != null) {
-        // Apply properties
-        if (unitDef.has("properties")) {
+        // Special handling for Splitter: set split number before wiring
+        // so that setInletStream creates the right number of split streams
+        if (equipment instanceof Splitter && unitDef.has("properties")) {
+          JsonObject props = unitDef.getAsJsonObject("properties");
+          if (props.has("splitFactors")) {
+            int nSplits = props.getAsJsonArray("splitFactors").size();
+            ((Splitter) equipment).setSplitNumber(nSplits);
+          }
+        }
+
+        // Special handling for Recycle: create a guess stream so downstream
+        // units can reference RCY.outlet before the Recycle is wired
+        if (equipment instanceof Recycle && defaultFluid != null) {
+          StreamInterface guessStream = new Stream(name + "_guess", defaultFluid.clone());
+          ((Recycle) equipment).setOutletStream(guessStream);
+        }
+
+        // Apply properties only for Streams (they don't need wiring).
+        // Non-stream properties (e.g. outletPressure) are applied after wiring
+        // because they may reference the outlet stream which needs an inlet first.
+        if ("Stream".equalsIgnoreCase(type) && unitDef.has("properties")) {
           applyProperties(equipment, unitDef.getAsJsonObject("properties"));
         }
 
@@ -282,6 +350,151 @@ public class JsonProcessBuilder {
           "Failed to create unit '" + name + "' (type: " + type + "): " + e.getMessage(), name,
           "Check the unit definition and ensure all required fields are present"));
     }
+  }
+
+  /**
+   * Pass 2: Wires inlet connections for a unit (all units now exist).
+   *
+   * @param name the unit name
+   * @param unitDef the JSON definition
+   */
+  private void wireUnit(String name, JsonObject unitDef) {
+    ProcessEquipmentInterface equipment = namedEquipment.get(name);
+    if (equipment == null || equipment instanceof StreamInterface) {
+      return; // Streams don't need wiring
+    }
+
+    // Handle multiple inlets (e.g., Mixer)
+    if (unitDef.has("inlets")) {
+      JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
+      for (JsonElement inletElem : inletsArr) {
+        String inletRef = inletElem.getAsString();
+        StreamInterface stream = resolveStreamReference(inletRef);
+        if (stream == null) {
+          errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+              "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+              "Ensure the referenced unit exists and was defined before this unit"));
+        } else {
+          wireInletStream(equipment, stream);
+        }
+      }
+    } else if (unitDef.has("inlet")) {
+      // Single inlet
+      String inletRef = unitDef.get("inlet").getAsString();
+      StreamInterface inletStream = resolveStreamReference(inletRef);
+      if (inletStream == null) {
+        errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+            "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+            "Ensure the referenced unit exists"));
+      } else {
+        wireInletStream(equipment, inletStream);
+      }
+    }
+  }
+
+  /**
+   * Checks whether a unit definition needs inlet wiring.
+   *
+   * @param unitDef the JSON definition
+   * @return true if the unit has inlet references that need to be resolved
+   */
+  private boolean needsWiring(JsonObject unitDef) {
+    String type = unitDef.has("type") ? unitDef.get("type").getAsString() : "";
+    if ("Stream".equalsIgnoreCase(type)) {
+      return false;
+    }
+    return unitDef.has("inlet") || unitDef.has("inlets");
+  }
+
+  /**
+   * Attempts to wire all inlet references for a unit. Returns true only if ALL references resolve
+   * successfully, allowing downstream units to use this unit's outlets. Does not add error details
+   * on failure (those are added by the fallback wireUnit call).
+   *
+   * @param name the unit name
+   * @param unitDef the JSON definition
+   * @return true if all inlet references resolved and were wired
+   */
+  private boolean tryWireUnit(String name, JsonObject unitDef) {
+    ProcessEquipmentInterface equipment = namedEquipment.get(name);
+    if (equipment == null) {
+      return false;
+    }
+
+    if (unitDef.has("inlets")) {
+      JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
+      List<StreamInterface> resolved = new ArrayList<>();
+      boolean allResolved = true;
+      for (JsonElement inletElem : inletsArr) {
+        StreamInterface stream = resolveStreamReference(inletElem.getAsString());
+        if (stream == null) {
+          allResolved = false;
+        } else {
+          resolved.add(stream);
+        }
+      }
+      // For Mixer: wire whatever inlets we have (partial is OK)
+      // For HeatExchanger: need both sides
+      if (equipment instanceof Mixer && !resolved.isEmpty()) {
+        for (StreamInterface stream : resolved) {
+          wireInletStream(equipment, stream);
+        }
+        if (!allResolved) {
+          warnings.add("Mixer '" + name + "' wired with " + resolved.size() + " of "
+              + inletsArr.size() + " inlets (some not found)");
+        }
+      } else if (equipment instanceof HeatExchanger && resolved.size() == 2) {
+        ((HeatExchanger) equipment).setFeedStream(0, resolved.get(0));
+        ((HeatExchanger) equipment).setFeedStream(1, resolved.get(1));
+      } else if (allResolved) {
+        for (StreamInterface stream : resolved) {
+          wireInletStream(equipment, stream);
+        }
+      } else {
+        return false; // Not all resolved yet
+      }
+    } else if (unitDef.has("inlet")) {
+      StreamInterface stream = resolveStreamReference(unitDef.get("inlet").getAsString());
+      if (stream == null) {
+        return false;
+      }
+      wireInletStream(equipment, stream);
+    }
+
+    // Apply all properties AFTER wiring (outlet stream now exists)
+    if (unitDef.has("properties")) {
+      JsonObject props = unitDef.getAsJsonObject("properties");
+      // Handle split factors specially (Splitter needs inlet stream first)
+      if (equipment instanceof Splitter && props.has("splitFactors")) {
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((Splitter) equipment).setSplitFactors(splitFact);
+      }
+      applyProperties(equipment, props);
+    }
+
+    return true;
+  }
+
+  /**
+   * Builds a single process unit from its JSON definition and adds it to the process.
+   *
+   * @param process the process system to add the unit to
+   * @param unitDef the JSON object defining the unit
+   * @param defaultFluid the default fluid to use for streams
+   * @param index the unit index (for error reporting)
+   * @deprecated Use createUnit + wireUnit two-pass approach instead
+   */
+  private void buildUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid,
+      int index) {
+    createUnit(process, unitDef, defaultFluid, index);
+    String type = unitDef.has("type") ? unitDef.get("type").getAsString() : "";
+    String name =
+        unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
+    wireUnit(name, unitDef);
   }
 
   /**
@@ -438,15 +651,13 @@ public class JsonProcessBuilder {
           return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       }
     } catch (NoSuchMethodException e) {
-      // Fallback: try getOutStream, then getOutletStream
+      // Fallback: try getOutStream
       try {
         return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
       } catch (Exception ex) {
-        warnings.add("Could not resolve port '" + port + "' on unit '" + unitName + "'");
         return null;
       }
     } catch (Exception e) {
-      warnings.add("Error resolving stream '" + ref + "': " + e.getMessage());
       return null;
     }
   }
