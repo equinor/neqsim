@@ -1428,6 +1428,341 @@ class UniSimToNeqSim:
         return lines
 
     # -----------------------------------------------------------------
+    # Process-aware documentation generators
+    # -----------------------------------------------------------------
+
+    def _gen_process_narrative(self, topo: dict) -> str:
+        """Generate a plain-language narrative describing the complete process.
+
+        Returns a multi-paragraph text explaining what the plant does,
+        the fluid composition, key operating conditions, and the process
+        sequence from feed to product.
+        """
+        fluid = topo['fluid']
+        flowsheet = topo['flowsheet']
+        pp_name = (self.model.fluid_packages[0].property_package
+                   if self.model.fluid_packages else 'unknown')
+
+        # Classify the fluid
+        comps = fluid.get('components', {})
+        comp_list = list(comps.keys())
+        comp_fracs = list(comps.values())
+        dominant = comp_list[comp_fracs.index(max(comp_fracs))] if comp_fracs else 'unknown'
+        has_water = any(c in ('water', 'H2O') for c in comp_list)
+        has_co2 = 'CO2' in comp_list
+        has_h2s = any(c in ('H2S', 'h2s') for c in comp_list)
+        n_heavy = sum(1 for c in comp_list
+                      if c.startswith(('n-', 'i-')) or c in ('propane', 'n-butane',
+                      'i-butane', 'n-pentane', 'i-pentane', 'n-hexane', 'n-heptane',
+                      'n-octane', 'n-nonane', 'n-decane'))
+        fluid_type = 'gas'
+        if n_heavy >= 4 or dominant in ('n-heptane', 'n-octane', 'n-decane'):
+            fluid_type = 'oil/condensate'
+        elif n_heavy >= 2:
+            fluid_type = 'rich gas'
+
+        # Classify equipment sequence
+        eq_types = []
+        for op in topo['sorted_ops']:
+            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            if nt and nt not in self.SKIPPED_NEQSIM_TYPES:
+                eq_types.append(nt)
+
+        has_compression = 'Compressor' in eq_types
+        has_separation = any(t in ('Separator', 'ThreePhaseSeparator') for t in eq_types)
+        has_cooling = 'Cooler' in eq_types
+        has_heating = 'Heater' in eq_types
+        has_expansion = any(t in ('Expander', 'ThrottlingValve') for t in eq_types)
+        has_distillation = 'DistillationColumn' in eq_types
+
+        # Describe feeds
+        feed_descs = []
+        for fn in sorted(topo['external_feeds']):
+            sd = topo['stream_by_name'].get(fn)
+            parts = [f'"{fn}"']
+            if sd and sd.temperature_C is not None:
+                parts.append(f'{sd.temperature_C:.0f} °C')
+            if sd and sd.pressure_bara is not None:
+                parts.append(f'{sd.pressure_bara:.0f} bara')
+            if sd and sd.mass_flow_kgh and sd.mass_flow_kgh > 0:
+                parts.append(f'{sd.mass_flow_kgh:.0f} kg/hr')
+            feed_descs.append(', '.join(parts))
+
+        # Build the narrative
+        paras = []
+
+        # Paragraph 1: What this model is
+        paras.append(
+            f'This process model was converted from a UniSim Design simulation '
+            f'("{self.model.file_name}") using the {pp_name} property package, '
+            f'mapped to the NeqSim **{fluid["model"]}** equation of state.  '
+            f'The fluid is a **{fluid_type}** mixture with {len(comp_list)} '
+            f'components (dominant: {dominant}'
+            + (f', contains CO2' if has_co2 else '')
+            + (f', contains H2S' if has_h2s else '')
+            + (f', contains water' if has_water else '')
+            + ').'
+        )
+
+        # Paragraph 2: Feed conditions
+        if feed_descs:
+            if len(feed_descs) == 1:
+                paras.append(f'The single feed stream ({feed_descs[0]}) enters '
+                             f'the process and passes through {len(eq_types)} '
+                             f'unit operations.')
+            else:
+                paras.append(
+                    f'The process has {len(feed_descs)} feed streams: '
+                    + '; '.join(feed_descs)
+                    + f'.  These pass through {len(eq_types)} unit operations.'
+                )
+
+        # Paragraph 3: Process description based on equipment sequence
+        process_steps = []
+        if has_cooling:
+            n_cool = eq_types.count('Cooler')
+            process_steps.append(f'cooling ({n_cool} cooler{"s" if n_cool > 1 else ""})')
+        if has_heating:
+            n_heat = eq_types.count('Heater')
+            process_steps.append(f'heating ({n_heat} heater{"s" if n_heat > 1 else ""})')
+        if has_separation:
+            sep_types = [t for t in eq_types
+                         if t in ('Separator', 'ThreePhaseSeparator')]
+            process_steps.append(f'phase separation ({len(sep_types)} stage'
+                                 f'{"s" if len(sep_types) > 1 else ""})')
+        if has_compression:
+            n_comp = eq_types.count('Compressor')
+            process_steps.append(f'gas compression ({n_comp} stage'
+                                 f'{"s" if n_comp > 1 else ""})')
+        if has_expansion:
+            process_steps.append('pressure letdown / expansion')
+        if has_distillation:
+            process_steps.append('distillation')
+        if process_steps:
+            paras.append(
+                'The process involves: ' + ', '.join(process_steps) + '.'
+            )
+
+        # Paragraph 4: Step-by-step sequence
+        step_sentences = []
+        for op in topo['sorted_ops']:
+            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            if nt is None or nt in self.SKIPPED_NEQSIM_TYPES:
+                continue
+            step_sentences.append(self._describe_equipment_in_context(op, topo))
+        if step_sentences:
+            paras.append(
+                '**Step-by-step:** '
+                + '  \n'.join(f'{i+1}. {s}' for i, s in enumerate(step_sentences))
+            )
+
+        return '\n\n'.join(paras)
+
+    def _describe_equipment_in_context(self, op: 'UniSimOperation',
+                                       topo: dict) -> str:
+        """Generate a context-aware description for a single equipment item.
+
+        Unlike the static EQUIPMENT_DESCRIPTIONS, this uses actual operating
+        conditions (inlet/outlet T, P, efficiency) to produce a description
+        specific to this equipment in this process.
+        """
+        neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name, op.type_name)
+        props = op.properties
+        stream_by_name = topo['stream_by_name']
+        flowsheet = topo['flowsheet']
+
+        # Gather inlet/outlet stream data
+        inlet_sd = stream_by_name.get(op.feeds[0]) if op.feeds else None
+        outlet_sd = stream_by_name.get(op.products[0]) if op.products else None
+
+        t_in = f'{inlet_sd.temperature_C:.0f} °C' if inlet_sd and inlet_sd.temperature_C is not None else None
+        p_in = f'{inlet_sd.pressure_bara:.0f} bara' if inlet_sd and inlet_sd.pressure_bara is not None else None
+        t_out = f'{outlet_sd.temperature_C:.0f} °C' if outlet_sd and outlet_sd.temperature_C is not None else None
+        p_out = f'{outlet_sd.pressure_bara:.0f} bara' if outlet_sd and outlet_sd.pressure_bara is not None else None
+
+        # Temperature from properties
+        prop_t_out = props.get('outlet_temperature_C')
+        if prop_t_out is not None and t_out is None:
+            t_out = f'{prop_t_out:.0f} °C'
+        prop_p_out = props.get('outlet_pressure_bara')
+        if prop_p_out is not None and p_out is None:
+            p_out = f'{prop_p_out:.0f} bara'
+
+        if neqsim_type == 'Cooler':
+            if t_in and t_out:
+                return (f'**{op.name}** cools the gas from {t_in} down to '
+                        f'{t_out} to condense heavier components and '
+                        f'reduce the downstream temperature.')
+            elif t_out:
+                return f'**{op.name}** cools the stream to {t_out}.'
+            return f'**{op.name}** removes heat from the process stream.'
+
+        elif neqsim_type == 'Heater':
+            if t_in and t_out:
+                return (f'**{op.name}** heats the stream from {t_in} to '
+                        f'{t_out}.')
+            elif t_out:
+                return f'**{op.name}** heats the stream to {t_out}.'
+            return f'**{op.name}** adds heat to the process stream.'
+
+        elif neqsim_type == 'Separator':
+            if p_in:
+                return (f'**{op.name}** (two-phase separator at {p_in}) '
+                        f'flashes the cooled stream into gas and liquid '
+                        f'fractions by gravity settling.')
+            return (f'**{op.name}** separates the inlet into gas and liquid '
+                    f'phases.')
+
+        elif neqsim_type == 'ThreePhaseSeparator':
+            if p_in:
+                return (f'**{op.name}** (three-phase separator at {p_in}) '
+                        f'separates the inlet into gas, oil, and produced '
+                        f'water by gravity and residence time.')
+            return (f'**{op.name}** separates the inlet into gas, oil, '
+                    f'and water phases.')
+
+        elif neqsim_type == 'Compressor':
+            eff = props.get('adiabatic_efficiency')
+            eff_str = f' at {eff*100:.0f}% isentropic efficiency' if eff and 0 < eff < 1 else ''
+            if p_in and p_out:
+                return (f'**{op.name}** compresses gas from {p_in} to '
+                        f'{p_out}{eff_str}.  The discharge temperature '
+                        f'rises due to the work of compression.')
+            elif p_out:
+                return f'**{op.name}** raises gas pressure to {p_out}{eff_str}.'
+            return f'**{op.name}** compresses the gas stream{eff_str}.'
+
+        elif neqsim_type == 'ThrottlingValve':
+            if p_in and p_out:
+                return (f'**{op.name}** reduces pressure from {p_in} to '
+                        f'{p_out} by isenthalpic (Joule-Thomson) expansion.  '
+                        f'The temperature drops due to the JT effect.')
+            elif p_out:
+                return f'**{op.name}** letdown valve to {p_out}.'
+            return f'**{op.name}** reduces pressure by throttling.'
+
+        elif neqsim_type == 'Mixer':
+            n_in = len(op.feeds)
+            return (f'**{op.name}** combines {n_in} inlet streams into a '
+                    f'single mixed outlet at the lowest inlet pressure.')
+
+        elif neqsim_type == 'Splitter':
+            n_out = len(op.products)
+            return (f'**{op.name}** splits one stream into {n_out} outlets '
+                    f'with the same composition and conditions.')
+
+        elif neqsim_type == 'Pump':
+            if p_out:
+                return f'**{op.name}** pumps liquid to {p_out}.'
+            return f'**{op.name}** increases liquid pressure.'
+
+        elif neqsim_type == 'HeatExchanger':
+            return (f'**{op.name}** transfers heat between two process streams '
+                    f'(cross-exchange for energy recovery).')
+
+        elif neqsim_type == 'Expander':
+            if p_in and p_out:
+                return (f'**{op.name}** expands gas from {p_in} to {p_out}, '
+                        f'extracting work and cooling the stream significantly.')
+            return f'**{op.name}** expands gas to recover work.'
+
+        elif neqsim_type == 'Recycle':
+            return (f'**{op.name}** converges a recycle tear stream so that '
+                    f'upstream and downstream conditions are consistent.')
+
+        elif neqsim_type == 'AdiabaticPipe':
+            return (f'**{op.name}** models pressure drop and heat loss along '
+                    f'the pipeline segment.')
+
+        elif neqsim_type == 'DistillationColumn':
+            return (f'**{op.name}** separates components by boiling-point '
+                    f'differences across multiple stages.')
+
+        return f'**{op.name}** ({neqsim_type})'
+
+    def _gen_mermaid_flowchart(self, topo: dict) -> str:
+        """Generate a Mermaid flowchart of the process topology.
+
+        Returns a string like::
+
+            ```mermaid
+            graph LR
+                Feed_Gas["Feed Gas"] --> Inlet_Cooler["Inlet Cooler<br/>Cooler"]
+                ...
+            ```
+        """
+        lines = ['```mermaid', 'graph LR']
+        var_names = {}
+        used_vars = set()
+
+        # Style definitions
+        lines.append('    classDef feed fill:#4fc3f7,stroke:#0288d1,color:#000')
+        lines.append('    classDef sep fill:#81c784,stroke:#388e3c,color:#000')
+        lines.append('    classDef comp fill:#ffb74d,stroke:#f57c00,color:#000')
+        lines.append('    classDef cool fill:#90caf9,stroke:#1565c0,color:#000')
+        lines.append('    classDef heat fill:#ef9a9a,stroke:#c62828,color:#000')
+        lines.append('    classDef valve fill:#ce93d8,stroke:#7b1fa2,color:#000')
+        lines.append('    classDef default fill:#e0e0e0,stroke:#616161,color:#000')
+
+        # Build node IDs
+        for fn in sorted(topo['external_feeds']):
+            v = self._unique_var(fn, var_names, used_vars)
+
+        for op in topo['sorted_ops']:
+            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            if nt and nt not in self.SKIPPED_NEQSIM_TYPES:
+                self._unique_var(op.name, var_names, used_vars)
+
+        # Feed nodes
+        for fn in sorted(topo['external_feeds']):
+            v = var_names[fn]
+            sd = topo['stream_by_name'].get(fn)
+            label = fn
+            if sd and sd.temperature_C is not None and sd.pressure_bara is not None:
+                label += f'<br/>{sd.temperature_C:.0f}°C, {sd.pressure_bara:.0f} bara'
+            lines.append(f'    {v}["{label}"]:::feed')
+
+        # Equipment nodes + edges
+        style_map = {
+            'Separator': 'sep', 'ThreePhaseSeparator': 'sep',
+            'Compressor': 'comp', 'Cooler': 'cool', 'Heater': 'heat',
+            'ThrottlingValve': 'valve', 'Expander': 'valve',
+        }
+        for op in topo['sorted_ops']:
+            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            if nt is None or nt in self.SKIPPED_NEQSIM_TYPES:
+                continue
+            v = var_names.get(op.name, self._to_pyvar(op.name))
+            style = style_map.get(nt, 'default')
+
+            # Node label with key parameter
+            label = op.name
+            props = op.properties
+            if nt == 'Cooler' and props.get('outlet_temperature_C') is not None:
+                label += f'<br/>→ {props["outlet_temperature_C"]:.0f}°C'
+            elif nt == 'Heater' and props.get('outlet_temperature_C') is not None:
+                label += f'<br/>→ {props["outlet_temperature_C"]:.0f}°C'
+            elif nt == 'Compressor' and props.get('outlet_pressure_bara') is not None:
+                label += f'<br/>→ {props["outlet_pressure_bara"]:.0f} bara'
+            elif nt == 'ThrottlingValve' and props.get('outlet_pressure_bara') is not None:
+                label += f'<br/>→ {props["outlet_pressure_bara"]:.0f} bara'
+            lines.append(f'    {v}["{label}"]:::{style}')
+
+            # Edges from feeds
+            for f_name in op.feeds:
+                ref = self._resolve_inlet_ref(f_name, topo['stream_producer'])
+                if '.' in ref:
+                    parent = ref.rsplit('.', 1)[0]
+                    src_v = var_names.get(parent, self._to_pyvar(parent))
+                else:
+                    src_v = var_names.get(ref, self._to_pyvar(ref))
+                if src_v:
+                    lines.append(f'    {src_v} --> {v}')
+
+        lines.append('```')
+        return '\n'.join(lines)
+
+    # -----------------------------------------------------------------
     # Python code generation
     # -----------------------------------------------------------------
 
@@ -1459,6 +1794,15 @@ class UniSimToNeqSim:
         if self.model.fluid_packages:
             _a(f'Property package: {self.model.fluid_packages[0].property_package}')
         _a(f'Generated by: UniSimToNeqSim.to_python()')
+        _a('')
+        # Embed process narrative in the docstring
+        narrative = self._gen_process_narrative(topo)
+        for para in narrative.split('\n\n'):
+            # Strip markdown bold for plain-text comments
+            clean = para.replace('**', '')
+            for nline in clean.split('\n'):
+                _a(nline)
+            _a('')
         _a('"""')
         _a('')
         _a('from neqsim import jneqsim')
@@ -1491,8 +1835,15 @@ class UniSimToNeqSim:
         lines.extend(self._gen_feed_lines(topo))
 
         # --- equipment in topological order ---
-        _a('# --- Equipment ---')
+        _a('# --- Equipment (topological order: upstream before downstream) ---')
         for op in topo['sorted_ops']:
+            # Add context-aware comment before each equipment block
+            neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            if neqsim_type and neqsim_type not in self.SKIPPED_NEQSIM_TYPES:
+                desc = self._describe_equipment_in_context(op, topo)
+                # Strip markdown bold for plain-text comment
+                desc_clean = desc.replace('**', '')
+                _a(f'# {desc_clean}')
             eq_lines = self._gen_equipment_lines(op, topo)
             if eq_lines:
                 lines.extend(eq_lines)
@@ -1629,6 +1980,13 @@ class UniSimToNeqSim:
                          f'{len(flowsheet.sub_flowsheets)} |\n')
         _md(overview)
 
+        # ---- Cell: Process Overview (narrative + flow diagram) ----
+        narrative = self._gen_process_narrative(topo)
+        _md(f'## Process Overview\n\n{narrative}')
+
+        mermaid = self._gen_mermaid_flowchart(topo)
+        _md(f'### Process Flow Diagram\n\n{mermaid}')
+
         # ---- Cell 2: Setup imports ----
         _md('## Setup\n\n'
             'Import NeqSim via the `jneqsim` gateway and define the '
@@ -1684,8 +2042,9 @@ class UniSimToNeqSim:
             neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
             if neqsim_type is None or neqsim_type in self.SKIPPED_NEQSIM_TYPES:
                 continue  # skip silently in notebook
-            desc = self.EQUIPMENT_DESCRIPTIONS.get(neqsim_type, neqsim_type)
-            _md(f'**{op.name}** ({neqsim_type})\n\n{desc}')
+            # Use context-aware description instead of static generic text
+            desc = self._describe_equipment_in_context(op, topo)
+            _md(f'{desc}')
             eq_lines = self._gen_equipment_lines(op, topo)
             if eq_lines:
                 _code(eq_lines)

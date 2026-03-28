@@ -362,6 +362,76 @@ out with a skip reason. This output is ideal for:
 covering ~180 operations including Splitters, ThreePhaseSeparators, Compressors,
 Coolers, Mixers, ThrottlingValves, and sub-flowsheet equipment.
 
+### Generate Jupyter Notebook (Interactive Version)
+
+The notebook uses the **exact same shared code generators** as `to_python()` —
+so the resulting process logic is always identical — but wraps equipment in
+separate cells with markdown explanations (descriptions, feed tables, model
+overview):
+
+```python
+converter = UniSimToNeqSim(model)
+converter.save_notebook("process.ipynb")
+```
+
+Or get the raw dict (nbformat v4):
+```python
+nb_dict = converter.to_notebook(include_subflowsheets=True)
+```
+
+The notebook contains:
+1. **Title & overview table** — components, operations, feed count, EOS
+2. **Setup cell** — `from neqsim import jneqsim` + class aliases
+3. **Fluid markdown + code** — composition table and fluid creation
+4. **Feed streams markdown + code** — T/P/flow table and stream creation
+5. **Equipment cells** — one markdown description + one code cell per unit
+6. **Run cell** — `process.run()`
+7. **Results cell** — prints T, P for every unit operation
+8. **Warnings cell** — any conversion assumptions or skipped items
+
+### Generate EOT / ProcessPilot Simulator
+
+Generate a `BaseSimulator` subclass for the ProcessPilot-NeqSimInterface
+framework (reinforcement learning / optimization):
+
+```python
+converter = UniSimToNeqSim(model)
+converter.save_eot_simulator("my_simulator.py", class_name="MySimulator")
+```
+
+The generated code:
+- Subclasses `eot.simulators.base_simulator.BaseSimulator`
+- Uses `eot.components` factory functions (`get_stream`, `get_compressor`, etc.)
+- Implements `build_process()` with all equipment
+- Reports `name` property from the UniSim file name
+- Falls back to raw `jneqsim` calls for equipment not covered by EOT factories
+
+**EOT demo notebook** — shows how to instantiate, run, and step the simulator:
+```python
+nb = converter.to_eot_notebook(class_name="MySimulator")
+import json
+with open("eot_demo.ipynb", "w") as f:
+    json.dump(nb, f, indent=1)
+```
+
+### Code Sharing Architecture
+
+The `to_python()`, `to_notebook()`, and `to_eot_simulator()` methods all share
+the same internal code generators:
+
+| Shared Method | Purpose |
+|--------------|---------|
+| `_prepare_topology()` | Topological sort, variable naming, stream resolution |
+| `_gen_fluid_lines()` | Fluid creation code (EOS, components, mixing rule) |
+| `_gen_feed_lines()` | Feed stream setup (T, P, flow, `process.add()`) |
+| `_gen_equipment_lines()` | Per-equipment code (properties, wiring, `process.add()`) |
+| `_to_pyvar()` | Convert arbitrary name to valid Python identifier |
+| `_unique_var()` | Assign unique variable name avoiding collisions |
+| `_outlet_ref()` | Resolve dot-notation outlet references |
+
+This ensures that **Python scripts, notebooks, and EOT simulators always
+produce the same process logic** — only the wrapping differs.
+
 ### For Complex Models (Sub-Flowsheets → ProcessModule)
 
 Large UniSim models with sub-flowsheets should be decomposed:
@@ -494,11 +564,26 @@ python devtools/unisim_reader.py path/to/file.usc --summary
 # Output NeqSim JSON
 python devtools/unisim_reader.py path/to/file.usc --json
 
+# Generate standalone Python script
+python devtools/unisim_reader.py path/to/file.usc --python process.py
+
+# Generate Jupyter notebook
+python devtools/unisim_reader.py path/to/file.usc --notebook process.ipynb
+
+# Generate EOT / ProcessPilot simulator
+python devtools/unisim_reader.py path/to/file.usc --eot my_sim.py --eot-class MySimulator
+
+# Generate EOT demo notebook
+python devtools/unisim_reader.py path/to/file.usc --eot-notebook eot_demo.ipynb
+
 # Save full extracted model
 python devtools/unisim_reader.py path/to/file.usc --save extracted.json
 
 # Fast extraction (topology only, no stream properties)
 python devtools/unisim_reader.py path/to/file.usc --no-streams --summary
+
+# Combined: Python + notebook + EOT in one command
+python devtools/unisim_reader.py path/to/file.usc --python p.py --notebook n.ipynb --eot s.py
 ```
 
 ---
