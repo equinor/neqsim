@@ -1,265 +1,265 @@
 ---
 title: Reactors
-description: Documentation for chemical reactor equipment in NeqSim.
+description: "Documentation for chemical reactor equipment in NeqSim: plug flow reactor (PFR), stirred tank reactor (CSTR), Gibbs equilibrium reactor, stoichiometric reactor, ammonia synthesis reactor, sulfur deposition analyser, and bio-processing reactors."
 ---
 
 # Reactors
 
-Documentation for chemical reactor equipment in NeqSim.
+NeqSim provides a family of reactor models for gas-phase kinetics, chemical equilibrium,
+stoichiometric conversion, catalytic reactions, and bio-processing. All reactors live in the
+`neqsim.process.equipment.reactor` package and integrate with `ProcessSystem` flowsheets.
 
 ## Table of Contents
+
 - [Overview](#overview)
-- [Reactor Types](#reactor-types)
-- [CSTR](#cstr)
-- [PFR](#pfr)
-- [Equilibrium Reactor](#equilibrium-reactor)
+- [Reactor Selection Guide](#reactor-selection-guide)
+- [Plug Flow Reactor (PFR)](#plug-flow-reactor-pfr)
+- [Stirred Tank Reactor (CSTR)](#stirred-tank-reactor-cstr)
 - [Gibbs Reactor](#gibbs-reactor)
-- [Examples](#examples)
+- [Stoichiometric Reactor](#stoichiometric-reactor)
+- [Ammonia Synthesis Reactor](#ammonia-synthesis-reactor)
+- [Sulfur Deposition Analyser](#sulfur-deposition-analyser)
+- [Furnace Burner](#furnace-burner)
+- [Bio-Processing Reactors](#bio-processing-reactors)
+- [Related Documentation](#related-documentation)
 
 ---
 
 ## Overview
 
-**Location:** `neqsim.process.equipment.reactor`
+**Package:** `neqsim.process.equipment.reactor`
 
-**Classes:**
-| Class                | Description                       |
-| -------------------- | --------------------------------- |
-| `Reactor`            | Base reactor class                |
-| `CSTRReactor`        | Continuous stirred tank reactor   |
-| `PFRReactor`         | Plug flow reactor                 |
-| `EquilibriumReactor` | Chemical equilibrium reactor      |
-| `GibbsReactor`       | Gibbs energy minimization reactor |
-
----
-
-## Reactor Types
-
-### Selection Guide
-
-| Reactor     | When to Use                                      |
-| ----------- | ------------------------------------------------ |
-| CSTR        | Liquid-phase reactions, good mixing              |
-| PFR         | Gas-phase reactions, no back-mixing              |
-| Equilibrium | Fast reactions at equilibrium                    |
-| Gibbs       | Complex equilibrium without specifying reactions |
+| Class | Description |
+|-------|-------------|
+| `PlugFlowReactor` | Tubular reactor with ODE-based kinetics, catalyst bed, pressure drop |
+| `KineticReaction` | Rate expression (power-law, LHHW, reversible Arrhenius) |
+| `CatalystBed` | Packed bed properties, Ergun pressure drop, Thiele modulus |
+| `ReactorAxialProfile` | Axial position profiles with interpolation and export |
+| `StirredTankReactor` | Continuous stirred tank reactor (CSTR) |
+| `GibbsReactor` | Gibbs free energy minimization for equilibrium |
+| `GibbsReactorCO2` | Gibbs reactor variant specialized for CO2 reactions |
+| `StoichiometricReaction` | Fixed-conversion stoichiometric reactor |
+| `AmmoniaSynthesisReactor` | Specialized reactor for ammonia synthesis |
+| `SulfurDepositionAnalyser` | Sulfur solubility, deposition onset, corrosion assessment |
+| `FurnaceBurner` | Fired heater / furnace burner |
+| `Fermenter` | Fermentation reactor for bio-processing |
+| `EnzymeTreatment` | Enzyme-based treatment reactor |
 
 ---
 
-## CSTR
+## Reactor Selection Guide
 
-Continuous Stirred Tank Reactor with perfect mixing.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.reactor.CSTRReactor;
-
-CSTRReactor cstr = new CSTRReactor("R-100", feedStream);
-cstr.setVolume(10.0, "m3");
-cstr.setTemperature(400.0, "K");
-cstr.run();
-```
-
-### With Reaction
-
-```java
-// Define reaction: A + B → C
-cstr.addReaction("component_A", -1);  // reactant
-cstr.addReaction("component_B", -1);  // reactant
-cstr.addReaction("component_C", 1);   // product
-
-// Reaction rate constant
-cstr.setRateConstant(0.1, "1/s");
-
-cstr.run();
-```
-
-### Residence Time
-
-$$\tau = \frac{V}{\dot{Q}}$$
-
-Where:
-- $\tau$ = residence time
-- $V$ = reactor volume
-- $\dot{Q}$ = volumetric flow rate
+| Reactor | When to Use |
+|---------|-------------|
+| `PlugFlowReactor` | Gas-phase catalytic or homogeneous reactions with axial gradients |
+| `StirredTankReactor` | Liquid-phase reactions, good mixing, residence time calculations |
+| `GibbsReactor` | Complex equilibrium without specifying reaction stoichiometry |
+| `StoichiometricReaction` | Known fixed conversion, simple material balance |
+| `AmmoniaSynthesisReactor` | Haber-Bosch ammonia synthesis modeling |
+| `SulfurDepositionAnalyser` | Sulfur precipitation, H2S reactions, corrosion assessment |
 
 ---
 
-## PFR
+## Plug Flow Reactor (PFR)
 
-Plug Flow Reactor with no back-mixing.
+The `PlugFlowReactor` is the most comprehensive reactor in NeqSim. It solves coupled ODEs
+for species molar flows, temperature, and pressure as a function of axial position.
 
-### Basic Usage
+**Key features:**
+- Power-law, LHHW, and reversible equilibrium kinetics
+- Adiabatic, isothermal, and coolant heat exchange modes
+- Ergun equation pressure drop for packed catalyst beds
+- Euler and RK4 integration methods
+- Multi-tube reactor geometry
+- Full thermodynamic coupling via NeqSim EOS
+
+### Quick Example
 
 ```java
-import neqsim.process.equipment.reactor.PFRReactor;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.reactor.PlugFlowReactor;
+import neqsim.process.equipment.reactor.KineticReaction;
+import neqsim.process.equipment.reactor.CatalystBed;
 
-PFRReactor pfr = new PFRReactor("R-100", feedStream);
-pfr.setLength(10.0, "m");
-pfr.setDiameter(0.5, "m");
+// Feed gas
+SystemSrkEos gas = new SystemSrkEos(273.15 + 300.0, 20.0);
+gas.addComponent("methane", 0.90);
+gas.addComponent("ethane", 0.10);
+gas.setMixingRule("classic");
+
+Stream feed = new Stream("Feed", gas);
+feed.setFlowRate(10.0, "mole/sec");
+feed.run();
+
+// Reaction: methane -> ethane (illustrative)
+KineticReaction rxn = new KineticReaction("A to B");
+rxn.addReactant("methane", 1.0, 1.0);
+rxn.addProduct("ethane", 1.0);
+rxn.setPreExponentialFactor(1.0e4);
+rxn.setActivationEnergy(50000.0);
+rxn.setHeatOfReaction(-50000.0);
+
+// Catalyst
+CatalystBed catalyst = new CatalystBed(3.0, 0.40, 800.0);
+
+// Reactor
+PlugFlowReactor pfr = new PlugFlowReactor("PFR-1", feed);
+pfr.addReaction(rxn);
+pfr.setCatalystBed(catalyst);
+pfr.setLength(5.0, "m");
+pfr.setDiameter(0.10, "m");
+pfr.setEnergyMode(PlugFlowReactor.EnergyMode.ADIABATIC);
+pfr.setNumberOfSteps(100);
+pfr.setKeyComponent("methane");
 pfr.run();
+
+System.out.println("Conversion: " + pfr.getConversion());
+System.out.println("Outlet T: " + (pfr.getOutletTemperature() - 273.15) + " C");
+System.out.println("Pressure drop: " + pfr.getPressureDrop() + " bar");
 ```
 
-### With Kinetics
-
-```java
-// Set reaction kinetics
-pfr.setReaction(reaction);
-pfr.setNumberOfReactorSegments(100);
-pfr.run();
-```
+> **Full documentation:** See the [Plug Flow Reactor Guide](plug_flow_reactor.md) for
+> governing equations, all kinetic models, LHHW setup, coolant mode, multi-tube reactors,
+> Python usage, and the complete API reference.
 
 ---
 
-## Equilibrium Reactor
+## Stirred Tank Reactor (CSTR)
 
-For reactions at chemical equilibrium.
-
-### Basic Usage
+The `StirredTankReactor` models a continuous stirred tank reactor with perfect mixing.
 
 ```java
-import neqsim.process.equipment.reactor.EquilibriumReactor;
+import neqsim.process.equipment.reactor.StirredTankReactor;
 
-EquilibriumReactor eqReactor = new EquilibriumReactor("R-100", feedStream);
-eqReactor.setTemperature(500.0, "K");
-eqReactor.setPressure(10.0, "bara");
-eqReactor.run();
-```
-
-### Reaction Definition
-
-```java
-// Water-gas shift: CO + H2O ⇌ CO2 + H2
-eqReactor.addReaction("CO", -1);
-eqReactor.addReaction("H2O", -1);
-eqReactor.addReaction("CO2", 1);
-eqReactor.addReaction("H2", 1);
-
-// Equilibrium constant
-eqReactor.setEquilibriumConstant(Keq);
+StirredTankReactor cstr = new StirredTankReactor("R-100", feedStream);
+cstr.run();
 ```
 
 ---
 
 ## Gibbs Reactor
 
-Minimize Gibbs free energy to find equilibrium composition.
-
-### Basic Usage
+Minimizes Gibbs free energy to find equilibrium composition without requiring explicit reaction
+stoichiometry. Uses Newton-Raphson iteration with element balance constraints.
 
 ```java
 import neqsim.process.equipment.reactor.GibbsReactor;
 
-GibbsReactor gibbs = new GibbsReactor("R-100", feedStream);
-gibbs.setTemperature(1000.0, "K");
-gibbs.setPressure(10.0, "bara");
-gibbs.run();
+// Feed must include all possible product species (even at zero mole fraction)
+SystemSrkEos gas = new SystemSrkEos(273.15 + 800.0, 20.0);
+gas.addComponent("methane", 1.0);
+gas.addComponent("water", 3.0);
+gas.addComponent("CO", 1.0e-10);
+gas.addComponent("CO2", 1.0e-10);
+gas.addComponent("hydrogen", 1.0e-10);
+gas.setMixingRule("classic");
 
-// Get equilibrium composition
-Stream outlet = gibbs.getOutletStream();
+Stream feed = new Stream("Feed", gas);
+feed.setFlowRate(100.0, "kmol/hr");
+feed.run();
+
+GibbsReactor gibbs = new GibbsReactor("SMR Reactor", feed);
+gibbs.run();
 ```
 
-### Constrained Minimization
+Key methods:
+- `setComponentAsInert(String name)` — mark a component as non-reactive
+- `hasConverged()` — check convergence status
+- `getActualIterations()` — iteration count
+- `getEnthalpyOfReactions()` — heat released/absorbed
+
+---
+
+## Stoichiometric Reactor
+
+Fixed-conversion reactor based on specified stoichiometry.
 
 ```java
-// Specify which elements to balance
-gibbs.setElementBalanceCheck(true);
+import neqsim.process.equipment.reactor.StoichiometricReaction;
 
-// Specify inert components
-gibbs.setInertComponent("N2", true);
+StoichiometricReaction stoich = new StoichiometricReaction("R-Stoich", feedStream);
+stoich.run();
 ```
 
 ---
 
-## Examples
+## Ammonia Synthesis Reactor
 
-### Example 1: Simple CSTR
+Specialized reactor for the Haber-Bosch process (N2 + 3 H2 &#8652; 2 NH3).
 
 ```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.reactor.CSTRReactor;
+import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
 
-// Feed with reactants
-SystemSrkEos feed = new SystemSrkEos(350.0, 5.0);
-feed.addComponent("methanol", 0.5);
-feed.addComponent("water", 0.5);
-feed.setMixingRule("classic");
-
-Stream feedStream = new Stream("Feed", feed);
-feedStream.setFlowRate(1000.0, "kg/hr");
-feedStream.run();
-
-// Reactor
-CSTRReactor reactor = new CSTRReactor("R-100", feedStream);
-reactor.setVolume(5.0, "m3");
-reactor.run();
-
-double residenceTime = reactor.getResidenceTime("min");
-System.out.println("Residence time: " + residenceTime + " min");
+AmmoniaSynthesisReactor nh3 = new AmmoniaSynthesisReactor("NH3-Reactor", feedStream);
+nh3.run();
 ```
 
-### Example 2: Steam Methane Reforming (Gibbs)
+---
+
+## Sulfur Deposition Analyser
+
+Analyses sulfur solubility, deposition onset temperature, chemical equilibrium of H2S/O2
+reactions, corrosion (FeS formation), and blockage risk. Performs temperature sweep analysis.
 
 ```java
-// SMR: CH4 + H2O ⇌ CO + 3H2
-SystemSrkEos feed = new SystemSrkEos(700.0, 20.0);
-feed.addComponent("methane", 1.0);
-feed.addComponent("water", 3.0);  // Steam to carbon ratio = 3
-feed.setMixingRule("classic");
+import neqsim.process.equipment.reactor.SulfurDepositionAnalyser;
 
-// Add possible products
-feed.addComponent("CO", 0.0);
-feed.addComponent("CO2", 0.0);
-feed.addComponent("hydrogen", 0.0);
+SulfurDepositionAnalyser analyser = new SulfurDepositionAnalyser("S-Analyser", feedStream);
+analyser.setTemperatureSweepRange(0.0, 200.0, 5.0);
+analyser.setRunChemicalEquilibrium(true);
+analyser.setRunSolidFlash(true);
+analyser.setRunCorrosionAssessment(true);
+analyser.run();
 
-Stream feedStream = new Stream("SMR Feed", feed);
-feedStream.setFlowRate(100.0, "kmol/hr");
-feedStream.run();
-
-// Gibbs reactor for equilibrium
-GibbsReactor smr = new GibbsReactor("SMR Reactor", feedStream);
-smr.setTemperature(1100.0, "K");
-smr.setPressure(20.0, "bara");
-smr.run();
-
-// Results
-Stream product = smr.getOutletStream();
-System.out.println("H2 mole fraction: " + product.getFluid().getMoleFraction("hydrogen"));
-System.out.println("CO mole fraction: " + product.getFluid().getMoleFraction("CO"));
-System.out.println("CH4 conversion: " +
-    (1 - product.getFluid().getMoleFraction("methane") /
-     feedStream.getFluid().getMoleFraction("methane")) * 100 + " %");
+double onset = analyser.getSulfurDepositionOnsetTemperature();
+String json = analyser.getResultsAsJson();
 ```
 
-### Example 3: Ammonia Synthesis
+---
+
+## Furnace Burner
+
+Models a fired heater / furnace burner for high-temperature heating.
 
 ```java
-// N2 + 3H2 ⇌ 2NH3
-SystemSrkEos synthGas = new SystemSrkEos(700.0, 200.0);
-synthGas.addComponent("nitrogen", 1.0);
-synthGas.addComponent("hydrogen", 3.0);
-synthGas.addComponent("ammonia", 0.0);
-synthGas.setMixingRule("classic");
+import neqsim.process.equipment.reactor.FurnaceBurner;
 
-Stream feed = new Stream("Syngas", synthGas);
-feed.setFlowRate(1000.0, "kmol/hr");
-feed.run();
+FurnaceBurner burner = new FurnaceBurner("Furnace", feedStream);
+burner.run();
+```
 
-EquilibriumReactor ammoniaReactor = new EquilibriumReactor("Ammonia Reactor", feed);
-ammoniaReactor.setTemperature(700.0, "K");
-ammoniaReactor.setPressure(200.0, "bara");
-ammoniaReactor.run();
+---
 
-double nh3Prod = ammoniaReactor.getOutletStream().getFluid().getMoleFraction("ammonia");
-System.out.println("Ammonia mole fraction: " + nh3Prod);
+## Bio-Processing Reactors
+
+### Fermenter
+
+Models a biological fermentation reactor.
+
+```java
+import neqsim.process.equipment.reactor.Fermenter;
+
+Fermenter fermenter = new Fermenter("BioReactor", feedStream);
+fermenter.run();
+```
+
+### Enzyme Treatment
+
+Models an enzyme-based treatment step.
+
+```java
+import neqsim.process.equipment.reactor.EnzymeTreatment;
+
+EnzymeTreatment enzyme = new EnzymeTreatment("EnzymeUnit", feedStream);
+enzyme.run();
 ```
 
 ---
 
 ## Related Documentation
 
-- [Equipment Index](index.md) - All equipment
-- [Chemical Reactions](../../chemicalreactions/) - Reaction modeling
-- [Heat Exchangers](heat_exchangers) - Reactor heat exchange
+- [Plug Flow Reactor Guide](plug_flow_reactor.md) — Comprehensive PFR documentation with equations, kinetics, and examples
+- [PFR Implementation Plan](../PLUG_FLOW_REACTOR_IMPLEMENTATION_PLAN.md) — Design decisions and commercial comparison
+- [Equipment Index](index.md) — All NeqSim equipment types
+- [Chemical Reactions](../../chemicalreactions/) — Reaction modeling background

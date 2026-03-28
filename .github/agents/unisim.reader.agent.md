@@ -95,6 +95,64 @@ The generated Python script uses explicit `jneqsim` API calls — every stream,
 equipment item, and connection is visible and editable. This is ideal when the
 user wants to inspect, modify, or learn from the converted process.
 
+**Option C — Jupyter notebook (for interactive exploration):**
+```python
+converter = UniSimToNeqSim(model)
+converter.save_notebook("process.ipynb")
+```
+
+The notebook wraps the same code from `to_python()` in separate cells with
+markdown documentation — equipment descriptions, feed stream tables, and an
+overview of the model. Both `to_python()` and `to_notebook()` share the same
+code generators, so functionality is always identical.
+
+**Option D — EOT / ProcessPilot simulator (for RL / optimisation):**
+```python
+converter = UniSimToNeqSim(model)
+converter.save_eot_simulator("my_simulator.py", class_name="MySimulator")
+```
+
+Generates a `BaseSimulator` subclass using `eot.components` factory functions
+(`get_stream`, `get_compressor`, `get_valve`, …). The generated class can be
+used directly in the ProcessPilot-NeqSimInterface framework for reinforcement
+learning or optimization workflows.
+
+**Option E — EOT demo notebook (for ProcessPilot exploration):**
+```python
+converter = UniSimToNeqSim(model)
+nb = converter.to_eot_notebook(class_name="MySimulator")
+import json
+with open("eot_demo.ipynb", "w") as f:
+    json.dump(nb, f, indent=1)
+```
+
+### CLI Usage
+
+All output modes are also available from the command line:
+
+```bash
+# Summary only
+python devtools/unisim_reader.py model.usc
+
+# JSON output to stdout
+python devtools/unisim_reader.py model.usc --json
+
+# Standalone Python script
+python devtools/unisim_reader.py model.usc --python process.py
+
+# Jupyter notebook
+python devtools/unisim_reader.py model.usc --notebook process.ipynb
+
+# EOT simulator module
+python devtools/unisim_reader.py model.usc --eot my_sim.py --eot-class MySimulator
+
+# EOT demo notebook
+python devtools/unisim_reader.py model.usc --eot-notebook eot_demo.ipynb
+
+# All at once
+python devtools/unisim_reader.py model.usc --python p.py --notebook n.ipynb --eot s.py
+```
+
 ### Step 5: Build and Run NeqSim Model
 
 For small/medium models:
