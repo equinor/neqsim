@@ -1042,11 +1042,7 @@ class UniSimToNeqSim:
             return None
 
         # Skip utility/control operations that don't have NeqSim equivalents
-        if neqsim_type in ('Spreadsheet', 'SubFlowsheet',
-                           'PIDController', 'SurgeController',
-                           'StreamSaturatorUtil', 'BalanceOp', 'LogicalOp',
-                           'ColumnInternalsturatorUtil', 'BalanceOp', 'LogicalOp',
-                           'ColumnInternals'):
+        if neqsim_type in ('SurgeController', 'ColumnInternals'):
             return None
 
         entry = {
@@ -1402,15 +1398,14 @@ class UniSimToNeqSim:
     # ---- shared code-line generators ----
 
     SKIPPED_NEQSIM_TYPES = frozenset((
-        'Spreadsheet', 'SubFlowsheet',
-        'PIDController', 'SurgeController',
-        'StreamSaturatorUtil', 'BalanceOp', 'LogicalOp', 'ColumnInternals',
+        'SurgeController', 'ColumnInternals',
     ))
 
     NEQSIM_IMPORTS = (
         'SystemSrkEos = jneqsim.thermo.system.SystemSrkEos',
         'SystemPrEos  = jneqsim.thermo.system.SystemPrEos',
         'ProcessSystem = jneqsim.process.processmodel.ProcessSystem',
+        'ProcessModule = jneqsim.process.processmodel.ProcessModule',
         'Stream = jneqsim.process.equipment.stream.Stream',
         'Separator = jneqsim.process.equipment.separator.Separator',
         'ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator',
@@ -1426,6 +1421,8 @@ class UniSimToNeqSim:
         'Recycle = jneqsim.process.equipment.util.Recycle',
         'Adjuster = jneqsim.process.equipment.util.Adjuster',
         'SetPoint = jneqsim.process.equipment.util.SetPoint',
+        'StreamSaturatorUtil = jneqsim.process.equipment.util.StreamSaturatorUtil',
+        'SpreadsheetBlock = jneqsim.process.equipment.util.SpreadsheetBlock',
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
         'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
         'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
@@ -1592,12 +1589,56 @@ class UniSimToNeqSim:
             if inlet_refs:
                 lines.append(f'{v}.setInletStream({_ref(inlet_refs[0])})')
 
+        elif neqsim_type == 'StreamSaturatorUtil':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            lines.append(
+                f'{v} = StreamSaturatorUtil("{op.name}", {ref_expr})')
+
+        elif neqsim_type == 'Spreadsheet':
+            lines.append(f'{v} = SpreadsheetBlock("{op.name}")')
+            lines.append(
+                f'# TODO: configure spreadsheet cells — '
+                f'use addStreamImportCell() / addFormulaCell() / '
+                f'addExportCell()')
+
+        elif neqsim_type == 'SubFlowsheet':
+            lines.append(f'{v} = ProcessModule("{op.name}")')
+            lines.append(
+                f'# TODO: build nested ProcessSystem(s) and add with '
+                f'{v}.add(innerProcess)')
+
+        elif neqsim_type == 'BalanceOp':
+            lines.append(f'{v} = Adjuster("{op.name}")')
+            lines.append(
+                f'# TODO: configure balance adjuster — '
+                f'set target and adjusted variables')
+
+        elif neqsim_type == 'PIDController':
+            lines.append(
+                f'# PID controller "{op.name}" — attach to equipment with '
+                f'equipment.addController("{op.name}", controller)')
+            lines.append(
+                f'# TODO: create ControllerDeviceBaseClass and configure '
+                f'Kp, Ti, Td, setpoint')
+
+        elif neqsim_type == 'LogicalOp':
+            lines.append(
+                f'# Logical operation "{op.name}" — uses LogicBlock '
+                f'controller device')
+            lines.append(
+                f'# TODO: create LogicBlock with appropriate operator '
+                f'(AND/OR/NOT) and connect inputs')
+
         else:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             lines.append(f'{v} = {neqsim_type}("{op.name}", {ref_expr})')
 
         self._gen_properties(lines, v, neqsim_type, op, flowsheet)
-        lines.append(f'process.add({v})')
+
+        # PIDController and LogicalOp are controller devices, not standalone
+        # equipment — they produce only TODO comments, no process.add()
+        if neqsim_type not in ('PIDController', 'LogicalOp'):
+            lines.append(f'process.add({v})')
         return lines
 
     def _detect_column_config(self, op: 'UniSimOperation',
