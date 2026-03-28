@@ -189,22 +189,46 @@ class UniSimReader:
         'heatexop': 'HeatExchanger',
         'recycle': 'Recycle',
         'adjust': 'Adjuster',
-        'setop': 'Set',
+        'setop': 'SetPoint',
         'pipeseg': 'AdiabaticPipe',
         'fractop': 'DistillationColumn',
         'saturateop': 'StreamSaturatorUtil',
         'spreadsheetop': 'Spreadsheet',
         'templateop': 'SubFlowsheet',
         'absorberop': 'Absorber',
-        'reactorop': 'Reactor',
-        'pfreactorop': 'Reactor',
-        'cstrop': 'Reactor',
-        'convreactorop': 'Reactor',
-        'eqreactorop': 'Reactor',
-        'gibbsreactorop': 'Reactor',
+        # Reactor subtypes — map to specific NeqSim reactor classes
+        'reactorop': 'GibbsReactor',
+        'pfreactorop': 'PlugFlowReactor',
+        'cstrop': 'StirredTankReactor',
+        'convreactorop': 'GibbsReactor',
+        'conversionreactorop': 'GibbsReactor',
+        'eqreactorop': 'GibbsReactor',
+        'gibbsreactorop': 'GibbsReactor',
+        'equilibriumreactorop': 'GibbsReactor',
+        'kineticreactorop': 'PlugFlowReactor',
+        # Controllers / utilities
         'pidfbcontrolop': 'PIDController',
         'surgecontroller': 'SurgeController',
+        # Column types
+        'distillation': 'DistillationColumn',
+        'absorber': 'Absorber',
+        'columnop': 'DistillationColumn',
+        'reboiledabsorber': 'DistillationColumn',
+        # Column internals (sub-parts, not standalone)
+        'partialcondenser': 'ColumnInternals',
+        'totalcondenser': 'ColumnInternals',
+        'condenser3op': 'ColumnInternals',
+        'traysection': 'ColumnInternals',
+        'bpreboiler': 'ColumnInternals',
+        # Utility / logic ops
+        'balanceop': 'BalanceOp',
+        'logicalop': 'LogicalOp',
+        'selectop': 'LogicalOp',
     }
+
+    # Set of all reactor NeqSim types (for generic handling)
+    REACTOR_TYPES = frozenset(('GibbsReactor', 'PlugFlowReactor',
+                               'StirredTankReactor'))
 
     # UniSim component name → NeqSim component name mapping
     COMPONENT_NAME_MAP = {
@@ -259,11 +283,25 @@ class UniSimReader:
         'SO2': 'SO2',
         'NH3': 'ammonia',
         'Ammonia': 'ammonia',
+        'DEAmine': 'DEA',
+        'MEAmine': 'MEA',
+        'MDEAmine': 'MDEA',
         'Benzene': 'benzene',
         'Toluene': 'toluene',
         'Cyclohexane': 'cyclohexane',
         'CO': 'CO',
         'CarbonMonoxide': 'CO',
+        'Propene': 'propylene',
+        'Propylene': 'propylene',
+        'Ethylene': 'ethylene',
+        'Ethene': 'ethylene',
+        '1-Butene': '1-butene',
+        'cis-2-Butene': 'c2-butene',
+        'trans-2-Butene': 't2-butene',
+        'Isobutene': 'isobutene',
+        'AceticAcid': 'acetic acid',
+        'Acetic Acid': 'acetic acid',
+        '12C3Oxide': 'propylene-oxide',
         'nC13': 'nC13',
         'nC14': 'nC14',
         'nC15': 'nC15',
@@ -290,6 +328,21 @@ class UniSimReader:
         'MBWR': 'SRK',  # fallback
         'Lee-Kesler-Plocker': 'SRK',  # fallback
         'NRTL': 'SRK',  # approx
+        'Glycol Package': 'CPA',
+        'COMPropertyPkg': 'SRK',  # COM extension; fallback
+        'DBR Amine Package': 'SRK',  # DBR amine; fallback
+        'OLI': 'SRK',  # electrolyte; fallback
+        'Sour PR': 'PR',
+        'SourPR': 'PR',
+        'Sour SRK': 'SRK',
+        'Zudkevitch Joffee': 'SRK',  # fallback
+        'Kabadi Danner': 'SRK',  # fallback
+        'UNIQUAC': 'SRK',  # activity model; fallback
+        'UNIQUAC - Ideal': 'SRK',  # activity model; fallback
+        'Wilson': 'SRK',  # activity model; fallback
+        'Antoine': 'SRK',  # fallback
+        'Chao Seader': 'SRK',  # fallback
+        'Grayson Streed': 'SRK',  # fallback
     }
 
     def __init__(self, visible: bool = False):
@@ -850,7 +903,16 @@ class UniSimToNeqSim:
                     'mixingRule': 'classic', 'components': {'methane': 1.0}}
 
         fp = self.model.fluid_packages[0]
-        eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(fp.property_package, 'SRK')
+        eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(fp.property_package)
+        if eos is None:
+            # Try partial/prefix match (e.g. "DBR Amine Package (v2011.1)")
+            pp_lower = fp.property_package.lower()
+            for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
+                if key.lower() in pp_lower or pp_lower.startswith(key.lower()):
+                    eos = val
+                    break
+            if eos is None:
+                eos = 'SRK'
         if eos == 'SRK' and fp.property_package not in ('SRK', 'Soave-Redlich-Kwong'):
             self._assumptions.append(
                 f"Mapped '{fp.property_package}' → SRK (closest NeqSim equivalent)")
@@ -979,10 +1041,12 @@ class UniSimToNeqSim:
                 f"Unsupported operation type '{op.type_name}': '{op.name}' — skipped")
             return None
 
-        # Skip utility/control operations that don't map to physical equipment
-        if neqsim_type in ('Adjuster', 'Set', 'Spreadsheet', 'SubFlowsheet',
-                           'PIDController', 'SurgeController', 'Reactor',
-                           'Absorber'):
+        # Skip utility/control operations that don't have NeqSim equivalents
+        if neqsim_type in ('Spreadsheet', 'SubFlowsheet',
+                           'PIDController', 'SurgeController',
+                           'StreamSaturatorUtil', 'BalanceOp', 'LogicalOp',
+                           'ColumnInternalsturatorUtil', 'BalanceOp', 'LogicalOp',
+                           'ColumnInternals'):
             return None
 
         entry = {
@@ -1107,6 +1171,26 @@ class UniSimToNeqSim:
                             idx = op.products.index(stream_name)
                             return f"{producer_name}.split{idx}"
                         return f"{producer_name}.split0"
+                    elif neqsim_type == 'DistillationColumn':
+                        # Column products: first = overhead/gas, last = bottoms
+                        if len(op.products) > 0 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            if idx == 0:
+                                return f"{producer_name}.gasOut"
+                            else:
+                                return f"{producer_name}.liquidOut"
+                        return f"{producer_name}.gasOut"
+                    elif neqsim_type == 'Absorber':
+                        # Absorber: first product = gas out, second = liquid out
+                        if len(op.products) > 0 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            if idx == 0:
+                                return f"{producer_name}.gasOut"
+                            else:
+                                return f"{producer_name}.liquidOut"
+                        return f"{producer_name}.gasOut"
+                    elif neqsim_type in UniSimReader.REACTOR_TYPES:
+                        return f"{producer_name}.outlet"
                     return f"{producer_name}.outlet"
             return stream_name  # External feed
         else:
@@ -1318,8 +1402,9 @@ class UniSimToNeqSim:
     # ---- shared code-line generators ----
 
     SKIPPED_NEQSIM_TYPES = frozenset((
-        'Adjuster', 'Set', 'Spreadsheet', 'SubFlowsheet',
-        'PIDController', 'SurgeController', 'Reactor', 'Absorber',
+        'Spreadsheet', 'SubFlowsheet',
+        'PIDController', 'SurgeController',
+        'StreamSaturatorUtil', 'BalanceOp', 'LogicalOp', 'ColumnInternals',
     ))
 
     NEQSIM_IMPORTS = (
@@ -1337,8 +1422,16 @@ class UniSimToNeqSim:
         'Heater = jneqsim.process.equipment.heatexchanger.Heater',
         'HeatExchanger = jneqsim.process.equipment.heatexchanger.HeatExchanger',
         'Pump = jneqsim.process.equipment.pump.Pump',
+        'Expander = jneqsim.process.equipment.expander.Expander',
         'Recycle = jneqsim.process.equipment.util.Recycle',
+        'Adjuster = jneqsim.process.equipment.util.Adjuster',
+        'SetPoint = jneqsim.process.equipment.util.SetPoint',
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
+        'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
+        'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
+        'GibbsReactor = jneqsim.process.equipment.reactor.GibbsReactor',
+        'PlugFlowReactor = jneqsim.process.equipment.reactor.PlugFlowReactor',
+        'StirredTankReactor = jneqsim.process.equipment.reactor.StirredTankReactor',
     )
 
     def _gen_fluid_lines(self, fluid: dict, eos_class: str) -> List[str]:
@@ -1400,25 +1493,105 @@ class UniSimToNeqSim:
             lines.append(f'{v} = Mixer("{op.name}")')
             for ref in inlet_refs:
                 lines.append(f'{v}.addStream({_ref(ref)})')
+
         elif neqsim_type == 'HeatExchanger' and len(inlet_refs) >= 2:
             lines.append(f'{v} = HeatExchanger("{op.name}")')
             lines.append(f'{v}.setFeedStream(0, {_ref(inlet_refs[0])})')
             lines.append(f'{v}.setFeedStream(1, {_ref(inlet_refs[1])})')
+
         elif neqsim_type == 'Splitter':
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             n_splits = len(op.products) if op.products else 2
             lines.append(f'{v} = Splitter("{op.name}", {ref_expr}, {n_splits})')
+
         elif neqsim_type == 'DistillationColumn':
-            n_trays = op.properties.get('numberOfTrays', 5)
-            lines.append(f'# DistillationColumn: {op.name}')
-            lines.append('from neqsim.process.equipment.distillation import DistillationColumn as DC')
-            lines.append(f'{v} = DC("{op.name}", {n_trays}, True, True)')
+            # Detect column internals from sub-flowsheet to determine
+            # whether it has a condenser and/or reboiler
+            has_condenser, has_reboiler, n_trays = self._detect_column_config(
+                op, topo)
+            n_trays = op.properties.get('numberOfTrays', n_trays)
+            lines.append(
+                f'{v} = DistillationColumn("{op.name}", {n_trays}, '
+                f'{has_reboiler}, {has_condenser})')
             if inlet_refs:
-                lines.append(f'{v}.addFeedStream({_ref(inlet_refs[0])})')
+                feed_tray = max(1, n_trays // 2)
+                lines.append(
+                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, {feed_tray})')
+                for extra in inlet_refs[1:]:
+                    lines.append(f'{v}.addFeedStream({_ref(extra)}, 1)')
+            else:
+                lines.append(
+                    f'# TODO: connect feed stream(s) to {op.name} — '
+                    f'feeds: {op.feeds}')
+
+        elif neqsim_type == 'Absorber':
+            # Absorber = column without condenser/reboiler for gas-liquid contacting
+            n_stages = op.properties.get('numberOfStages',
+                                         op.properties.get('numberOfTrays', 5))
+            if len(inlet_refs) >= 2:
+                # Two-feed absorber: gas enters bottom, liquid enters top
+                lines.append(
+                    f'{v} = DistillationColumn("{op.name}", {n_stages}, '
+                    f'False, False)')
+                lines.append(
+                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, {n_stages})')
+                lines.append(
+                    f'{v}.addFeedStream({_ref(inlet_refs[1])}, 1)')
+            elif len(inlet_refs) == 1:
+                lines.append(
+                    f'{v} = DistillationColumn("{op.name}", {n_stages}, '
+                    f'False, False)')
+                lines.append(
+                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, 1)')
+                lines.append(
+                    f'# TODO: absorber needs a second feed stream '
+                    f'(solvent) — feeds: {op.feeds}')
+            else:
+                lines.append(
+                    f'{v} = DistillationColumn("{op.name}", {n_stages}, '
+                    f'False, False)')
+                lines.append(
+                    f'# TODO: connect feed streams to absorber — '
+                    f'feeds: {op.feeds}')
+
+        elif neqsim_type == 'GibbsReactor':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            lines.append(f'{v} = GibbsReactor("{op.name}", {ref_expr})')
+
+        elif neqsim_type == 'PlugFlowReactor':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            lines.append(f'{v} = PlugFlowReactor("{op.name}", {ref_expr})')
+            # Set reactor dimensions if available
+            if op.properties.get('length_m'):
+                lines.append(
+                    f'{v}.setLength({op.properties["length_m"]}, "m")')
+            if op.properties.get('diameter_m'):
+                lines.append(
+                    f'{v}.setDiameter({op.properties["diameter_m"]}, "m")')
+
+        elif neqsim_type == 'StirredTankReactor':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            lines.append(
+                f'{v} = StirredTankReactor("{op.name}", {ref_expr})')
+            if op.properties.get('volume_m3'):
+                lines.append(
+                    f'{v}.setVesselVolume({op.properties["volume_m3"]})')
+
+        elif neqsim_type == 'Adjuster':
+            lines.append(f'{v} = Adjuster("{op.name}")')
+            lines.append(
+                f'# TODO: configure adjuster target/adjusted variables')
+
+        elif neqsim_type == 'SetPoint':
+            lines.append(f'{v} = SetPoint("{op.name}")')
+            lines.append(
+                f'# TODO: configure setpoint source and target variables')
+
         elif neqsim_type == 'Recycle':
             lines.append(f'{v} = Recycle("{op.name}")')
             if inlet_refs:
                 lines.append(f'{v}.setInletStream({_ref(inlet_refs[0])})')
+
         else:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             lines.append(f'{v} = {neqsim_type}("{op.name}", {ref_expr})')
@@ -1426,6 +1599,49 @@ class UniSimToNeqSim:
         self._gen_properties(lines, v, neqsim_type, op, flowsheet)
         lines.append(f'process.add({v})')
         return lines
+
+    def _detect_column_config(self, op: 'UniSimOperation',
+                              topo: dict) -> tuple:
+        """Detect condenser/reboiler presence and tray count from sub-flowsheet.
+
+        Examines the column's sub-flowsheet operations (traysection,
+        partialcondenser, totalcondenser, bpreboiler, condenser3op) to
+        determine the column configuration.
+
+        Returns:
+            (has_condenser, has_reboiler, n_trays)
+        """
+        has_condenser = True  # defaults
+        has_reboiler = True
+        n_trays = 5
+
+        # Find the sub-flowsheet that belongs to this column
+        if not topo.get('flowsheet'):
+            return has_condenser, has_reboiler, n_trays
+
+        for sf in topo['flowsheet'].sub_flowsheets:
+            # Match sub-flowsheet by checking if column's products appear in it
+            sf_stream_names = {s.name for s in sf.material_streams}
+            if not op.products:
+                continue
+            if any(p in sf_stream_names for p in op.products):
+                # Found the column's sub-flowsheet
+                sf_types = {sop.type_name.lower() for sop in sf.operations}
+                has_condenser = any(
+                    t in sf_types for t in (
+                        'partialcondenser', 'totalcondenser', 'condenser3op'))
+                has_reboiler = 'bpreboiler' in sf_types
+                # Count tray sections
+                for sop in sf.operations:
+                    if sop.type_name.lower() == 'traysection':
+                        # Try to get number of trays from tray section
+                        n = sop.properties.get('numberOfTrays', 5)
+                        if isinstance(n, (int, float)) and n > 1:
+                            n_trays = int(n)
+                        break
+                break
+
+        return has_condenser, has_reboiler, n_trays
 
     # -----------------------------------------------------------------
     # Process-aware documentation generators
@@ -1538,6 +1754,13 @@ class UniSimToNeqSim:
             process_steps.append('pressure letdown / expansion')
         if has_distillation:
             process_steps.append('distillation')
+        has_absorption = 'Absorber' in eq_types
+        if has_absorption:
+            process_steps.append('absorption')
+        n_rx = sum(1 for t in eq_types if t in UniSimReader.REACTOR_TYPES)
+        if n_rx > 0:
+            process_steps.append(f'chemical reaction ({n_rx} reactor'
+                                 f'{"s" if n_rx > 1 else ""})')
         if process_steps:
             paras.append(
                 'The process involves: ' + ', '.join(process_steps) + '.'
@@ -1678,6 +1901,34 @@ class UniSimToNeqSim:
             return (f'**{op.name}** separates components by boiling-point '
                     f'differences across multiple stages.')
 
+        elif neqsim_type == 'Absorber':
+            n_in = len(op.feeds)
+            if n_in >= 2:
+                return (f'**{op.name}** contacts gas with a liquid solvent '
+                        f'to remove target components (e.g. CO2, H2S, water).')
+            return (f'**{op.name}** absorbs selected components from the '
+                    f'gas stream using a packed or trayed column.')
+
+        elif neqsim_type == 'GibbsReactor':
+            return (f'**{op.name}** models chemical equilibrium by '
+                    f'minimizing Gibbs free energy at the given T and P.')
+
+        elif neqsim_type == 'PlugFlowReactor':
+            return (f'**{op.name}** models a plug-flow reactor with '
+                    f'kinetic reactions along its length.')
+
+        elif neqsim_type == 'StirredTankReactor':
+            return (f'**{op.name}** models a continuously-stirred tank '
+                    f'reactor at steady state.')
+
+        elif neqsim_type == 'Adjuster':
+            return (f'**{op.name}** iterates to adjust one process variable '
+                    f'until a target specification is met.')
+
+        elif neqsim_type == 'SetPoint':
+            return (f'**{op.name}** sets a process variable on one unit '
+                    f'equal to a variable from another unit.')
+
         return f'**{op.name}** ({neqsim_type})'
 
     def _gen_mermaid_flowchart(self, topo: dict) -> str:
@@ -1703,6 +1954,9 @@ class UniSimToNeqSim:
         lines.append('    classDef heat fill:#ef9a9a,stroke:#c62828,color:#000')
         lines.append('    classDef valve fill:#ce93d8,stroke:#7b1fa2,color:#000')
         lines.append('    classDef default fill:#e0e0e0,stroke:#616161,color:#000')
+        lines.append('    classDef reactor fill:#fff176,stroke:#f9a825,color:#000')
+        lines.append('    classDef absorber fill:#a5d6a7,stroke:#2e7d32,color:#000')
+        lines.append('    classDef column fill:#b39ddb,stroke:#512da8,color:#000')
 
         # Build node IDs
         for fn in sorted(topo['external_feeds']):
@@ -1727,6 +1981,10 @@ class UniSimToNeqSim:
             'Separator': 'sep', 'ThreePhaseSeparator': 'sep',
             'Compressor': 'comp', 'Cooler': 'cool', 'Heater': 'heat',
             'ThrottlingValve': 'valve', 'Expander': 'valve',
+            'GibbsReactor': 'reactor', 'PlugFlowReactor': 'reactor',
+            'StirredTankReactor': 'reactor',
+            'Absorber': 'absorber',
+            'DistillationColumn': 'column',
         }
         for op in topo['sorted_ops']:
             nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
