@@ -291,8 +291,8 @@ class UniSimReader:
         'Cyclohexane': 'cyclohexane',
         'CO': 'CO',
         'CarbonMonoxide': 'CO',
-        'Propene': 'propylene',
-        'Propylene': 'propylene',
+        'Propene': 'propene',
+        'Propylene': 'propene',
         'Ethylene': 'ethylene',
         'Ethene': 'ethylene',
         '1-Butene': '1-butene',
@@ -301,7 +301,7 @@ class UniSimReader:
         'Isobutene': 'isobutene',
         'AceticAcid': 'acetic acid',
         'Acetic Acid': 'acetic acid',
-        '12C3Oxide': 'propylene-oxide',
+        '12C3Oxide': None,  # propylene oxide — not in NeqSim database
         'nC13': 'nC13',
         'nC14': 'nC14',
         'nC15': 'nC15',
@@ -541,7 +541,7 @@ class UniSimReader:
 
         # Composition
         try:
-            fracs = ms.ComponentMolarFraction.GetValues()
+            fracs = ms.ComponentMolarFraction.Values
             if fracs and comp_names:
                 sd.composition = {}
                 for k, name in enumerate(comp_names):
@@ -731,6 +731,134 @@ class UniSimReader:
 
         elif 'heatex' in type_name:
             props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW') if hasattr(op, 'DutyValue') else None
+
+        elif type_name in ('adjust', 'balanceop'):
+            # Adjuster / Balance op: extract target and adjusted variable info
+            try:
+                props['target_variable'] = str(op.TargetVariable.GetValue())
+            except Exception:
+                pass
+            try:
+                props['adjusted_variable'] = str(op.AdjustVariable.GetValue()) if hasattr(op, 'AdjustVariable') else None
+            except Exception:
+                pass
+            try:
+                props['target_value'] = float(op.TargetValue.GetValue())
+            except Exception:
+                pass
+            try:
+                props['tolerance'] = float(op.Tolerance.GetValue())
+            except Exception:
+                pass
+            try:
+                props['step_size'] = float(op.StepSize.GetValue())
+            except Exception:
+                pass
+            # Try to get target/adjusted object names
+            try:
+                props['target_object_name'] = str(op.TargetObject.name)
+            except Exception:
+                pass
+            try:
+                props['adjusted_object_name'] = str(op.AdjustObject.name) if hasattr(op, 'AdjustObject') else None
+            except Exception:
+                pass
+
+        elif type_name == 'setop':
+            # Set operation: extract source and target references
+            try:
+                props['source_object_name'] = str(op.SourceObject.name) if hasattr(op, 'SourceObject') else None
+            except Exception:
+                pass
+            try:
+                props['source_variable'] = str(op.SourceVariable.GetValue()) if hasattr(op, 'SourceVariable') else None
+            except Exception:
+                pass
+            try:
+                props['target_object_name'] = str(op.TargetObject.name) if hasattr(op, 'TargetObject') else None
+            except Exception:
+                pass
+            try:
+                props['target_variable'] = str(op.TargetVariable.GetValue()) if hasattr(op, 'TargetVariable') else None
+            except Exception:
+                pass
+
+        elif type_name == 'pidfbcontrolop':
+            # PID controller: extract tuning parameters
+            try:
+                props['kp'] = float(op.Gain.GetValue()) if hasattr(op, 'Gain') else None
+            except Exception:
+                pass
+            try:
+                props['ti'] = float(op.IntegralTime.GetValue()) if hasattr(op, 'IntegralTime') else None
+            except Exception:
+                pass
+            try:
+                props['td'] = float(op.DerivativeTime.GetValue()) if hasattr(op, 'DerivativeTime') else None
+            except Exception:
+                pass
+            try:
+                props['setpoint'] = float(op.SPValue.GetValue()) if hasattr(op, 'SPValue') else None
+            except Exception:
+                pass
+            try:
+                props['pv_object_name'] = str(op.PVSource.name) if hasattr(op, 'PVSource') else None
+            except Exception:
+                pass
+            try:
+                props['op_object_name'] = str(op.OPTarget.name) if hasattr(op, 'OPTarget') else None
+            except Exception:
+                pass
+            try:
+                props['is_reverse'] = bool(op.ReverseActing) if hasattr(op, 'ReverseActing') else None
+            except Exception:
+                pass
+            try:
+                props['op_min'] = float(op.OPLow.GetValue()) if hasattr(op, 'OPLow') else None
+                props['op_max'] = float(op.OPHigh.GetValue()) if hasattr(op, 'OPHigh') else None
+            except Exception:
+                pass
+
+        elif type_name in ('reactorop', 'gibbsreactorop', 'equilibriumreactorop',
+                           'eqreactorop', 'convreactorop', 'conversionreactorop'):
+            # Reactor: try to extract volume/dimensions
+            try:
+                props['volume_m3'] = self._safe_getval(op.Volume, 'm3') if hasattr(op, 'Volume') else None
+            except Exception:
+                pass
+            try:
+                props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW') if hasattr(op, 'DutyValue') else None
+            except Exception:
+                pass
+
+        elif type_name in ('pfreactorop', 'kineticreactorop'):
+            # Plug-flow reactor: extract length and diameter
+            try:
+                props['length_m'] = self._safe_getval(op.Length, 'm') if hasattr(op, 'Length') else None
+            except Exception:
+                pass
+            try:
+                props['diameter_m'] = self._safe_getval(op.Diameter, 'm') if hasattr(op, 'Diameter') else None
+            except Exception:
+                pass
+            try:
+                props['volume_m3'] = self._safe_getval(op.Volume, 'm3') if hasattr(op, 'Volume') else None
+            except Exception:
+                pass
+
+        elif type_name == 'cstrop':
+            # CSTR: extract volume
+            try:
+                props['volume_m3'] = self._safe_getval(op.Volume, 'm3') if hasattr(op, 'Volume') else None
+            except Exception:
+                pass
+
+        elif type_name == 'logicalop' or type_name == 'selectop':
+            # Logical operation: try to extract operator type
+            try:
+                props['logic_type'] = str(op.LogicType) if hasattr(op, 'LogicType') else None
+            except Exception:
+                pass
 
         return op_data
 
@@ -947,7 +1075,7 @@ class UniSimToNeqSim:
         if total > 0 and abs(total - 1.0) > 0.001:
             composition = {k: v / total for k, v in composition.items()}
 
-        mixing_rule = '10' if eos == 'CPA' else 'classic'
+        mixing_rule = 'classic'
         has_water = 'water' in composition
 
         return {
@@ -1248,7 +1376,11 @@ class UniSimToNeqSim:
         """Map a UniSim component name to NeqSim name."""
         # Direct mapping
         if unisim_name in UniSimReader.COMPONENT_NAME_MAP:
-            return UniSimReader.COMPONENT_NAME_MAP[unisim_name]
+            mapped = UniSimReader.COMPONENT_NAME_MAP[unisim_name]
+            if mapped is None:
+                self._warnings.append(
+                    f"Component '{unisim_name}' has no NeqSim equivalent — skipped")
+            return mapped
 
         # Hypothetical components (ending with *)
         if unisim_name.endswith('*'):
@@ -1576,13 +1708,74 @@ class UniSimToNeqSim:
 
         elif neqsim_type == 'Adjuster':
             lines.append(f'{v} = Adjuster("{op.name}")')
-            lines.append(
-                f'# TODO: configure adjuster target/adjusted variables')
+            # Configure adjusted variable (the variable being changed)
+            adj_obj = op.properties.get('adjusted_object_name')
+            adj_var = op.properties.get('adjusted_variable')
+            if adj_obj and adj_var:
+                adj_obj_var = var_names.get(adj_obj, self._to_pyvar(adj_obj))
+                lines.append(
+                    f'{v}.setAdjustedVariable({adj_obj_var}, "{adj_var}")')
+            elif adj_obj:
+                adj_obj_var = var_names.get(adj_obj, self._to_pyvar(adj_obj))
+                lines.append(f'{v}.setAdjustedVariable({adj_obj_var})')
+            else:
+                lines.append(
+                    f'# TODO: set adjusted variable — '
+                    f'e.g. {v}.setAdjustedVariable(equipment, "pressure")')
+            # Configure target variable (the specification to meet)
+            tgt_obj = op.properties.get('target_object_name')
+            tgt_var = op.properties.get('target_variable')
+            tgt_val = op.properties.get('target_value')
+            if tgt_obj and tgt_var and tgt_val is not None:
+                tgt_obj_var = var_names.get(tgt_obj, self._to_pyvar(tgt_obj))
+                lines.append(
+                    f'{v}.setTargetVariable({tgt_obj_var}, "{tgt_var}", '
+                    f'{tgt_val}, "")')
+            elif tgt_obj and tgt_var:
+                tgt_obj_var = var_names.get(tgt_obj, self._to_pyvar(tgt_obj))
+                lines.append(
+                    f'{v}.setTargetVariable({tgt_obj_var}, "{tgt_var}")')
+            elif tgt_obj:
+                tgt_obj_var = var_names.get(tgt_obj, self._to_pyvar(tgt_obj))
+                lines.append(f'{v}.setTargetVariable({tgt_obj_var})')
+            else:
+                lines.append(
+                    f'# TODO: set target variable — '
+                    f'e.g. {v}.setTargetVariable(equipment, "pressure", '
+                    f'50.0, "bara")')
+            tol = op.properties.get('tolerance')
+            if tol is not None:
+                lines.append(f'{v}.setTolerance({tol})')
 
         elif neqsim_type == 'SetPoint':
             lines.append(f'{v} = SetPoint("{op.name}")')
-            lines.append(
-                f'# TODO: configure setpoint source and target variables')
+            src_obj = op.properties.get('source_object_name')
+            src_var = op.properties.get('source_variable')
+            tgt_obj = op.properties.get('target_object_name')
+            tgt_var = op.properties.get('target_variable')
+            if src_obj:
+                src_obj_var = var_names.get(src_obj, self._to_pyvar(src_obj))
+                if src_var:
+                    lines.append(
+                        f'{v}.setSourceVariable({src_obj_var}, "{src_var}")')
+                else:
+                    lines.append(f'{v}.setSourceVariable({src_obj_var})')
+            else:
+                lines.append(
+                    f'# TODO: set source — '
+                    f'e.g. {v}.setSourceVariable(sourceEquipment)')
+            if tgt_obj:
+                tgt_obj_var = var_names.get(tgt_obj, self._to_pyvar(tgt_obj))
+                if tgt_var:
+                    lines.append(
+                        f'{v}.setTargetVariable({tgt_obj_var}, "{tgt_var}")')
+                else:
+                    lines.append(f'{v}.setTargetVariable({tgt_obj_var})')
+            else:
+                lines.append(
+                    f'# TODO: set target — '
+                    f'e.g. {v}.setTargetVariable(targetEquipment, '
+                    f'"pressure")')
 
         elif neqsim_type == 'Recycle':
             lines.append(f'{v} = Recycle("{op.name}")')
@@ -1596,38 +1789,121 @@ class UniSimToNeqSim:
 
         elif neqsim_type == 'Spreadsheet':
             lines.append(f'{v} = SpreadsheetBlock("{op.name}")')
+            # Wire inlet stream imports if available
+            if inlet_refs:
+                ref_expr = _ref(inlet_refs[0])
+                lines.append(
+                    f'# Spreadsheet inlet: {ref_expr} — '
+                    f'add import cells for stream properties:')
+                lines.append(
+                    f'# {v}.addStreamImportCell("T_in", {ref_expr}, '
+                    f'lambda s: float(s.getTemperature("C")))')
+                lines.append(
+                    f'# {v}.addStreamImportCell("P_in", {ref_expr}, '
+                    f'lambda s: float(s.getPressure("bara")))')
+            else:
+                lines.append(
+                    f'# Configure spreadsheet cells:')
+                lines.append(
+                    f'# {v}.addStreamImportCell("T", stream, '
+                    f'lambda s: float(s.getTemperature("C")))')
             lines.append(
-                f'# TODO: configure spreadsheet cells — '
-                f'use addStreamImportCell() / addFormulaCell() / '
-                f'addExportCell()')
+                f'# {v}.addFormulaCell("result", '
+                f'lambda cells: cells["T_in"] * 1.0)')
 
         elif neqsim_type == 'SubFlowsheet':
-            lines.append(f'{v} = ProcessModule("{op.name}")')
-            lines.append(
-                f'# TODO: build nested ProcessSystem(s) and add with '
-                f'{v}.add(innerProcess)')
+            # Generate nested ProcessSystem from sub-flowsheet data
+            sf_data = self._find_sub_flowsheet_for_op(op, topo)
+            if sf_data and sf_data.operations:
+                lines.append(f'{v} = ProcessModule("{op.name}")')
+                lines.append(f'{v}_process = ProcessSystem("{op.name}_inner")')
+                # Generate equipment lines for the sub-flowsheet
+                sf_topo = self._build_sub_topo(sf_data, topo)
+                for sf_op in sf_topo['sorted_ops']:
+                    sf_lines = self._gen_equipment_lines(sf_op, sf_topo)
+                    if sf_lines:
+                        # Redirect process.add() to sub-process
+                        for sl in sf_lines:
+                            if sl.startswith('process.add('):
+                                lines.append(
+                                    sl.replace('process.add(',
+                                               f'{v}_process.add('))
+                            else:
+                                lines.append(sl)
+                lines.append(f'{v}.add({v}_process)')
+            else:
+                lines.append(f'{v} = ProcessModule("{op.name}")')
+                lines.append(
+                    f'# Sub-flowsheet "{op.name}" has no extractable '
+                    f'operations — add nested ProcessSystem manually')
 
         elif neqsim_type == 'BalanceOp':
             lines.append(f'{v} = Adjuster("{op.name}")')
-            lines.append(
-                f'# TODO: configure balance adjuster — '
-                f'set target and adjusted variables')
+            # Use same logic as Adjuster with extracted properties
+            adj_obj = op.properties.get('adjusted_object_name')
+            tgt_obj = op.properties.get('target_object_name')
+            tgt_var = op.properties.get('target_variable')
+            tgt_val = op.properties.get('target_value')
+            if adj_obj:
+                adj_obj_var = var_names.get(adj_obj, self._to_pyvar(adj_obj))
+                lines.append(f'{v}.setAdjustedVariable({adj_obj_var})')
+            if tgt_obj and tgt_var and tgt_val is not None:
+                tgt_obj_var = var_names.get(tgt_obj, self._to_pyvar(tgt_obj))
+                lines.append(
+                    f'{v}.setTargetVariable({tgt_obj_var}, "{tgt_var}", '
+                    f'{tgt_val}, "")')
+            elif tgt_obj:
+                tgt_obj_var = var_names.get(tgt_obj, self._to_pyvar(tgt_obj))
+                lines.append(f'{v}.setTargetVariable({tgt_obj_var})')
+            if not adj_obj and not tgt_obj:
+                lines.append(
+                    f'# Balance op — configure adjusted and target '
+                    f'variables for mass/energy balance')
 
         elif neqsim_type == 'PIDController':
+            # Generate PID controller creation and equipment attachment
+            kp = op.properties.get('kp')
+            ti = op.properties.get('ti')
+            td = op.properties.get('td')
+            sp = op.properties.get('setpoint')
+            pv_obj = op.properties.get('pv_object_name')
+            op_obj = op.properties.get('op_object_name')
+            is_rev = op.properties.get('is_reverse')
+            op_min = op.properties.get('op_min')
+            op_max = op.properties.get('op_max')
+
+            ctrl_var = self._to_pyvar(f'ctrl_{op.name}')
             lines.append(
-                f'# PID controller "{op.name}" — attach to equipment with '
-                f'equipment.addController("{op.name}", controller)')
-            lines.append(
-                f'# TODO: create ControllerDeviceBaseClass and configure '
-                f'Kp, Ti, Td, setpoint')
+                f'{ctrl_var} = jneqsim.process.controllerdevice'
+                f'.ControllerDeviceBaseClass("{op.name}")')
+            if kp is not None and ti is not None and td is not None:
+                lines.append(
+                    f'{ctrl_var}.setControllerParameters({kp}, {ti}, {td})')
+            if sp is not None:
+                lines.append(
+                    f'{ctrl_var}.setControllerSetPoint({sp})')
+            if is_rev:
+                lines.append(f'{ctrl_var}.setReverseActing(True)')
+            if op_min is not None and op_max is not None:
+                lines.append(
+                    f'{ctrl_var}.setOutputLimits({op_min}, {op_max})')
+            if pv_obj:
+                pv_var = var_names.get(pv_obj, self._to_pyvar(pv_obj))
+                lines.append(
+                    f'{pv_var}.addController("{op.name}", {ctrl_var})')
+            elif op_obj:
+                op_var = var_names.get(op_obj, self._to_pyvar(op_obj))
+                lines.append(
+                    f'{op_var}.addController("{op.name}", {ctrl_var})')
+            else:
+                lines.append(
+                    f'# TODO: attach {ctrl_var} to the controlled '
+                    f'equipment via .addController()')
 
         elif neqsim_type == 'LogicalOp':
             lines.append(
-                f'# Logical operation "{op.name}" — uses LogicBlock '
-                f'controller device')
-            lines.append(
-                f'# TODO: create LogicBlock with appropriate operator '
-                f'(AND/OR/NOT) and connect inputs')
+                f'# LogicalOp "{op.name}" — logic operations are not '
+                f'directly modeled in NeqSim; implement via Python logic')
 
         else:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
@@ -1640,6 +1916,74 @@ class UniSimToNeqSim:
         if neqsim_type not in ('PIDController', 'LogicalOp'):
             lines.append(f'process.add({v})')
         return lines
+
+    def _find_sub_flowsheet_for_op(self, op: 'UniSimOperation',
+                                    topo: dict) -> 'Optional[UniSimFlowsheet]':
+        """Find the sub-flowsheet belonging to a template/sub-flowsheet op.
+
+        Matches by checking if the operation's product streams appear in
+        any sub-flowsheet, or by name match.
+        """
+        if not topo.get('flowsheet') or not topo['flowsheet'].sub_flowsheets:
+            return None
+
+        for sf in topo['flowsheet'].sub_flowsheets:
+            # Match by name
+            if sf.name and sf.name == op.name:
+                return sf
+            # Match by stream overlap — op's products appear in sub-flowsheet
+            if op.products:
+                sf_stream_names = {s.name for s in sf.material_streams}
+                if any(p in sf_stream_names for p in op.products):
+                    return sf
+            # Match by feed overlap
+            if op.feeds:
+                sf_stream_names = {s.name for s in sf.material_streams}
+                if any(f in sf_stream_names for f in op.feeds):
+                    return sf
+        return None
+
+    def _build_sub_topo(self, sf: 'UniSimFlowsheet',
+                        parent_topo: dict) -> dict:
+        """Build a mini-topology dict for a sub-flowsheet.
+
+        Reuses the parent topology's fluid, var_names, and used_vars so
+        that variable names don't collide between parent and child.
+        """
+        stream_producer: dict = {}
+        for op in sf.operations:
+            for s in op.products:
+                stream_producer[s] = (op.name, 'outlet')
+        # Also include parent stream_producer for cross-flowsheet refs
+        for k, v in parent_topo['stream_producer'].items():
+            if k not in stream_producer:
+                stream_producer[k] = v
+
+        external_feeds: set = set()
+        for op in sf.operations:
+            for s in op.feeds:
+                if s not in stream_producer:
+                    external_feeds.add(s)
+
+        stream_by_name = dict(parent_topo['stream_by_name'])
+        for s in sf.material_streams:
+            stream_by_name[s.name] = s
+
+        sorted_ops = self._topological_sort(sf.operations, stream_producer)
+
+        return dict(
+            fluid=parent_topo['fluid'],
+            eos_class=parent_topo['eos_class'],
+            flowsheet=sf,
+            all_ops=sf.operations,
+            all_streams=sf.material_streams,
+            stream_producer=stream_producer,
+            external_feeds=external_feeds,
+            stream_by_name=stream_by_name,
+            sorted_ops=sorted_ops,
+            var_names=parent_topo['var_names'],
+            used_vars=parent_topo['used_vars'],
+        )
 
     def _detect_column_config(self, op: 'UniSimOperation',
                               topo: dict) -> tuple:
@@ -1954,10 +2298,6 @@ class UniSimToNeqSim:
             return (f'**{op.name}** models chemical equilibrium by '
                     f'minimizing Gibbs free energy at the given T and P.')
 
-        elif neqsim_type == 'PlugFlowReactor':
-            return (f'**{op.name}** models a plug-flow reactor with '
-                    f'kinetic reactions along its length.')
-
         elif neqsim_type == 'StirredTankReactor':
             return (f'**{op.name}** models a continuously-stirred tank '
                     f'reactor at steady state.')
@@ -1994,8 +2334,6 @@ class UniSimToNeqSim:
             return (f'**{op.name}** sets a process variable on one unit '
                     f'equal to a variable from another unit.')
 
-        lines.append('    classDef utility fill:#b0bec5,stroke:#455a64,color:#000')
-        lines.append('    classDef controller fill:#ffcc80,stroke:#ef6c00,color:#000')
         return f'**{op.name}** ({neqsim_type})'
 
     def _gen_mermaid_flowchart(self, topo: dict) -> str:
@@ -2022,6 +2360,8 @@ class UniSimToNeqSim:
         lines.append('    classDef valve fill:#ce93d8,stroke:#7b1fa2,color:#000')
         lines.append('    classDef default fill:#e0e0e0,stroke:#616161,color:#000')
         lines.append('    classDef reactor fill:#fff176,stroke:#f9a825,color:#000')
+        lines.append('    classDef utility fill:#b0bec5,stroke:#455a64,color:#000')
+        lines.append('    classDef controller fill:#ffcc80,stroke:#ef6c00,color:#000')
         lines.append('    classDef absorber fill:#a5d6a7,stroke:#2e7d32,color:#000')
         lines.append('    classDef column fill:#b39ddb,stroke:#512da8,color:#000')
 
@@ -2052,6 +2392,10 @@ class UniSimToNeqSim:
             'StirredTankReactor': 'reactor',
             'Absorber': 'absorber',
             'DistillationColumn': 'column',
+            'StreamSaturatorUtil': 'utility', 'Spreadsheet': 'utility',
+            'SubFlowsheet': 'utility', 'BalanceOp': 'utility',
+            'PIDController': 'controller', 'LogicalOp': 'controller',
+            'Adjuster': 'utility', 'SetPoint': 'utility',
         }
         for op in topo['sorted_ops']:
             nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
