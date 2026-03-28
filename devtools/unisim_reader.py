@@ -1966,10 +1966,36 @@ class UniSimToNeqSim:
             return (f'**{op.name}** iterates to adjust one process variable '
                     f'until a target specification is met.')
 
+        elif neqsim_type == 'StreamSaturatorUtil':
+            return (f'**{op.name}** saturates the stream with water vapour '
+                    f'(or another phase) at its current conditions.')
+
+        elif neqsim_type == 'Spreadsheet':
+            return (f'**{op.name}** performs user-defined calculations via '
+                    f'imported stream variables and formula cells.')
+
+        elif neqsim_type == 'SubFlowsheet':
+            return (f'**{op.name}** encapsulates a nested sub-process that '
+                    f'runs as an independent module within the main flowsheet.')
+
+        elif neqsim_type == 'BalanceOp':
+            return (f'**{op.name}** adjusts a process variable to satisfy '
+                    f'a mass or energy balance constraint.')
+
+        elif neqsim_type == 'PIDController':
+            return (f'**{op.name}** is a PID controller that regulates '
+                    f'a process variable by adjusting a manipulated variable.')
+
+        elif neqsim_type == 'LogicalOp':
+            return (f'**{op.name}** evaluates a logical condition '
+                    f'(AND/OR/NOT) on process signals.')
+
         elif neqsim_type == 'SetPoint':
             return (f'**{op.name}** sets a process variable on one unit '
                     f'equal to a variable from another unit.')
 
+        lines.append('    classDef utility fill:#b0bec5,stroke:#455a64,color:#000')
+        lines.append('    classDef controller fill:#ffcc80,stroke:#ef6c00,color:#000')
         return f'**{op.name}** ({neqsim_type})'
 
     def _gen_mermaid_flowchart(self, topo: dict) -> str:
