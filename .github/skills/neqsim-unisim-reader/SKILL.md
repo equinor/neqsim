@@ -757,6 +757,20 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
     the UniSim model has efficiency data; defaults to 75% isentropic
 14. **Spreadsheet operations** — produce a skip comment; no calculation logic transferred
 15. **Logical / balance operations** — produce skip comments
+16. **DistillationColumn solver divergence** — NeqSim's sequential-substitution and
+    inside-out column solvers diverge for C3/C4-rich (NGL-range) feeds at low
+    pressure. Feeds with < 30% methane and significant C3+ fractions will not
+    converge. Lighter feeds (e.g. deethanizer with 51% CH4) converge reliably.
+    Build the column **outside** the `ProcessSystem` to avoid re-run divergence.
+    See the TUTOR1 notebook for a worked example.
+17. **HeatExchanger pressure drops** — NeqSim `HeatExchanger` does not model
+    pressure drops; outlet pressures equal inlet pressures. UniSim models
+    typically include 0.5–1.0 bar pressure drop per side. This causes small
+    temperature deviations in downstream equipment.
+18. **HeatExchanger UA tuning** — The `HeatExchanger.setUAvalue()` parameter
+    must be tuned to match UniSim's heat duty. Counter-current heat balance
+    differences between UniSim and NeqSim typically produce 1–2°C deviation
+    on outlet temperatures.
 
 ---
 
@@ -888,3 +902,42 @@ class UniSimModel:
 | Separator downstream wrong phase | Generic fwd ref placeholder used | Ensure `_register_fwd_placeholders` ran |
 | Recycle not converging | Too many forward references | Try multiple `process.run()` calls or tune placeholders |
 | `AttributeError` on COM property | Operation type doesn't have that property | Wrap in try/except or check `TypeName` |
+| Column diverges / mass runaway | C3/C4-rich feed at low P | Known solver limitation; build column outside ProcessSystem; use flash separation as fallback |
+| HX outlet T differs 1–2°C | UA mismatch or no ΔP modeled | Tune UA value; add note that NeqSim HX has no pressure drop |
+| SalesGas T off by 5°C | Propagated HX deviation | CoolGas deviation amplified through counter-current HX; adjust UA |
+
+---
+
+## 13. Verified Reference Cases
+
+| Case | File | Components | Operations | Converged | Notes |
+|------|------|-----------|------------|-----------|-------|
+| TUTOR1 | `TUTOR1.usc` | 7 (N₂, CO₂, C₁–nC₄) | 13 | 11/13 streams | DePropanizer column diverges; upstream matches within 1°C. Notebook: `examples/notebooks/tutor1_gas_processing.ipynb` |
+
+### TUTOR1 Lessons Learned
+
+The TUTOR1 gas processing tutorial was the first end-to-end verified conversion.
+Key findings that apply to any UniSim conversion:
+
+1. **Recycle loops converge well**: The Gas/Gas HX ↔ LTS recycle loop converged
+   in 3 iterations using placeholder streams seeded from UniSim data.
+
+2. **HeatExchanger UA tuning**: Setting `UA = 35000 W/K` produced CoolGas ≈ 5.5°C
+   vs UniSim's 6.6°C. The deviation propagates to SalesGas (15°C vs 10°C). The
+   UA value needs case-by-case tuning against UniSim's heat duty.
+
+3. **Column solver limitation**: The DePropanizer (7 components, 24% CH4,
+   27% C₂, 24% C₃, 24% C₄ at 14 bara) diverged with all three solver types
+   (DIRECT_SUBSTITUTION, INSIDE_OUT, DAMPED_SUBSTITUTION) and multiple
+   configurations (1–5 trays). This is a known NeqSim limitation for NGL-range
+   feeds. **Workaround**: Build the column outside the ProcessSystem to avoid
+   re-run divergence affecting upstream convergence.
+
+4. **Pressure drops not modeled**: UniSim's Gas/Gas HX has ~0.7 bar ΔP per side;
+   NeqSim passes pressure through unchanged. This is cosmetic for most
+   comparisons but compounds through multi-stage processes.
+
+5. **DewPoint and Balance operations**: UniSim's DewPoint (balance op) and
+   ADJ-1 (adjuster) are not needed for mass balance; safe to skip.
+
+6. **Heating Value spreadsheet**: Property-only calculations; safe to skip.
