@@ -179,6 +179,139 @@ process.add(cooler);
 process.run();  // Run ONCE after adding all equipment
 ```
 
+For multi-area plants, use `ProcessModel` to combine multiple `ProcessSystem` instances (see below).
+
+## ProcessModel — Combining Multiple Process Areas (MANDATORY for Large Plants)
+
+For large process plants (platforms, refineries, gas plants), split the model into
+separate `ProcessSystem` objects per process area, then combine them into a single
+`ProcessModel`. **NEVER try to add a ProcessModule or ProcessSystem to another
+ProcessSystem** — use `ProcessModel` as the top-level container.
+
+### Architecture Pattern (from Oseberg/Snorre field models)
+
+```
+ProcessModel ("Grane Platform")              ← TOP-LEVEL CONTAINER
+  ├── ProcessSystem ("well process")          ← Well feed & manifold
+  ├── ProcessSystem ("separation train A")    ← HP/LP separation
+  ├── ProcessSystem ("separation train B")    ← HP/LP separation
+  ├── ProcessSystem ("TEX process A")         ← Turbo-expander
+  ├── ProcessSystem ("TEX process B")         ← Turbo-expander
+  ├── ProcessSystem ("export compressor A")   ← Gas compression
+  ├── ProcessSystem ("export gas")            ← Gas export pipeline
+  └── ProcessSystem ("export oil")            ← Oil export
+```
+
+### Java Example
+
+```java
+// Each area is its own ProcessSystem
+ProcessSystem wellProcess = new ProcessSystem();
+wellProcess.add(wellFeed);
+wellProcess.add(manifold);
+wellProcess.add(splitter);
+
+ProcessSystem separationA = new ProcessSystem();
+separationA.add(new Heater("HP heater", splitter.getSplitStream(0)));
+separationA.add(new ThreePhaseSeparator("1st stage", ...));
+// ... more equipment
+
+ProcessSystem compressionA = new ProcessSystem();
+compressionA.add(new Compressor("export comp",
+    separationA.getUnit("gas mixer").getOutletStream()));  // cross-ref
+
+// Combine into ProcessModel
+ProcessModel plant = new ProcessModel();
+plant.add("well process", wellProcess);
+plant.add("separation train A", separationA);
+plant.add("export compressor A", compressionA);
+plant.run();  // Iterates until all converge
+
+// Access equipment by process area
+plant.get("separation train A").getUnit("1st stage separator");
+
+// Convergence info
+System.out.println(plant.getConvergenceSummary());
+System.out.println(plant.getMassBalanceReport());
+```
+
+### Python Example (Recommended Pattern)
+
+The Oseberg model uses **functions** that return ProcessSystem objects:
+
+```python
+def create_well_feed_model(inp):
+    well_process = neqsim.process.processmodel.ProcessSystem()
+    feed = Stream("feed", fluid)
+    feed.setFlowRate(inp.flow_rate, "kg/hr")
+    well_process.add(feed)
+    splitter = Splitter("manifold", feed)
+    splitter.setSplitFactors([0.5, 0.5])
+    well_process.add(splitter)
+    return well_process
+
+def create_separation_process(inp, feed_stream):
+    sep_process = neqsim.process.processmodel.ProcessSystem()
+    separator = ThreePhaseSeparator("1st stage", feed_stream)  # cross-ref!
+    sep_process.add(separator)
+    # ... more equipment
+    return sep_process
+
+# Build and run each area
+well_model = create_well_feed_model(params)
+well_model.run()
+
+sep_train_A = create_separation_process(params,
+    well_model.getUnit("manifold").getSplitStream(0))  # cross-system stream
+sep_train_A.run()
+
+# Combine into ProcessModel
+ProcessModel = jneqsim.process.processmodel.ProcessModel
+plant = ProcessModel()
+plant.add("well process", well_model)
+plant.add("separation train A", sep_train_A)
+plant.run()  # Iterates until convergence
+
+print(plant.getConvergenceSummary())
+print(plant.getMassBalanceReport())
+```
+
+### ProcessModel Key Features
+
+| Feature | Method |
+|---------|--------|
+| Add named sub-process | `add("name", processSystem)` |
+| Get sub-process | `get("name")` |
+| Remove sub-process | `remove("name")` |
+| Run all (iterates to convergence) | `run()` |
+| Run single step | `runStep()` |
+| Run in background thread | `runAsTask()` returns `Future` |
+| Check convergence | `isModelConverged()`, `getConvergenceSummary()` |
+| Mass balance report | `getMassBalanceReport()`, `getFailedMassBalanceReport()` |
+| Validation | `validateSetup()`, `validateAll()`, `getValidationReport()` |
+| Execution analysis | `getExecutionPartitionInfo()` |
+| Set convergence tolerance | `setTolerance(1e-4)` or individual `setFlowTolerance()` etc. |
+| Save/load model | `saveToNeqsim("file.neqsim")`, `loadFromNeqsim("file.neqsim")` |
+| JSON report | `getReport_json()` |
+
+### Cross-System Stream Sharing
+
+Streams cross sub-system boundaries by **direct object reference**:
+- Equipment in System B takes an outlet stream from System A as a constructor argument
+- `ProcessModel.run()` executes systems in insertion order
+- System A populates its outlet streams BEFORE System B reads from them
+- **Order of `add()` calls matters** — add upstream systems first
+
+### ProcessModel vs ProcessModule vs ProcessSystem
+
+| Class | Purpose | Use When |
+|-------|---------|----------|
+| `ProcessSystem` | Single process area with equipment | Always — the basic building block |
+| `ProcessModel` | **Named** collection of ProcessSystems with convergence tracking | Multi-area plants (platforms, gas plants) |
+| `ProcessModule` | Legacy container for ProcessSystems | Backward compatibility only — prefer ProcessModel |
+
+**NEVER** add a `ProcessModule` or `ProcessModel` to a `ProcessSystem` — it will throw `TypeError`.
+
 ## Key Rules
 
 - **Clone fluids** before branching: `fluid.clone()` to avoid shared-state bugs
@@ -186,6 +319,7 @@ process.run();  // Run ONCE after adding all equipment
 - Connect equipment via outlet streams — don't create separate streams
 - Add equipment to `ProcessSystem` in topological order
 - Call `process.run()` only ONCE after building the entire flowsheet
+- **For multi-area plants**: use `ProcessModel` to combine `ProcessSystem` objects — never nest them
 
 ## Design Feasibility Reports
 
