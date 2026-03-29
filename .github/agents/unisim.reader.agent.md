@@ -1,7 +1,7 @@
 ---
 name: read unisim to neqsim
-description: Reads Honeywell UniSim Design / Aspen HYSYS .usc simulation files via COM automation and converts them to running NeqSim ProcessSystem or ProcessModule models. Extracts fluid packages, components, operations, streams, sub-flowsheets, and topology. Verifies converted models by comparing UniSim vs NeqSim stream results (temperature, pressure, flow, density).
-argument-hint: Provide the path to a .usc file — e.g., "read C:\Models\GasPlant.usc and build a NeqSim model", "convert all UniSim cases in C:\Cases\ to NeqSim", "compare UniSim and NeqSim results for the Grane model".
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (45+ types including reactors, columns, controllers), streams, sub-flowsheets, and topology. Handles recycle loops with port-specific forward reference placeholders. Generates Python scripts, Jupyter notebooks, EOT simulators, and JSON. Verifies converted models by comparing UniSim vs NeqSim stream results."
+argument-hint: "Provide the path to a .usc file — e.g., \"read C:\\Models\\GasPlant.usc and build a NeqSim model\", \"convert all UniSim cases in C:\\Cases\\ to NeqSim\", \"compare UniSim and NeqSim results for the Grane model\"."
 ---
 
 You are a **UniSim-to-NeqSim conversion agent** that reads Honeywell UniSim Design
@@ -286,6 +286,46 @@ with UniSimReader(visible=False) as reader:
 6. **Preserve UniSim equipment names** — use the same names in NeqSim for traceability
 7. **Preserve sub-flowsheet structure** — map to ProcessModule when appropriate
 8. **Handle hypothetical components** explicitly — document the strategy used
+
+---
+
+## Important Implementation Notes (Lessons Learned)
+
+### Forward Reference Placeholders for Separators
+
+When a separator is in a recycle loop (referenced before it is created),
+the converter creates **port-specific** placeholder streams — one for each
+outlet (gasOut, liquidOut for Separator; gasOut, oilOut, waterOut for
+ThreePhaseSeparator). This prevents downstream equipment from receiving
+the wrong phase. After the separator is created, auto-Recycle objects wire
+the actual outlets back to the placeholders.
+
+**If you modify `_register_fwd_placeholders` or `_outlet_ref`**, always verify
+that port-specific keys (`V-100.liquidOut`) are checked before generic keys
+(`V-100`) in `fwd_ref_vars`.
+
+### Compressor Efficiency
+
+UniSim COM sometimes returns `None` for `op.AdiabaticEfficiency` even when
+the model has an efficiency set. The code defaults to 75% isentropic with a
+warning comment. Without this default, NeqSim uses 100% isentropic, producing
+unrealistically low outlet temperatures (observed: -24.9°C deviation).
+
+### Recycle Convergence Limitations
+
+Models with many forward references (5+) may not converge on the first
+`process.run()`. The placeholder initial values (from UniSim stream data)
+may not be close enough. Possible mitigation:
+- Call `process.run()` multiple times
+- Manually adjust placeholder T/P/flow values closer to expected
+- Split model into sub-ProcessSystems with fewer internal recycles
+
+### Code Sharing Architecture
+
+`to_python()`, `to_notebook()`, and `to_eot_simulator()` all share the same
+internal code generators (`_gen_fluid_lines`, `_gen_feed_lines`,
+`_gen_equipment_lines`, `_gen_properties`). If you fix a bug in one, the
+fix applies to all three output modes. This is by design.
 
 ---
 

@@ -172,6 +172,8 @@ app.Quit()
 
 UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types:
 
+### Core Process Equipment
+
 | UniSim TypeName | NeqSim Type | Description |
 |-----------------|-------------|-------------|
 | `valveop` | `ThrottlingValve` | Pressure letdown valve, choke |
@@ -185,33 +187,65 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 | `pumpop` | `Pump` | Liquid pump |
 | `expandop` | `Expander` | Turboexpander |
 | `heatexop` | `HeatExchanger` | Shell-and-tube / plate HX |
-| `recycle` | `Recycle` | Recycle convergence block |
-| `adjust` | `Adjuster` | Adjust/controller (skipped in NeqSim) |
-| `setop` | `Set` | Set variable (skipped in NeqSim) |
 | `pipeseg` | `AdiabaticPipe` | Pipe segment |
-| `fractop` | `DistillationColumn` | Fractionation column |
+| `recycle` | `Recycle` | Recycle convergence block |
+| `adjust` | `Adjuster` | Process variable adjuster |
+| `setop` | `SetPoint` | Set variable/propagation |
 | `saturateop` | `StreamSaturatorUtil` | Stream saturator |
-| `spreadsheetop` | — (skipped) | Spreadsheet calculator |
-| `templateop` | — (sub-flowsheet) | Sub-flowsheet template |
+| `spreadsheetop` | `Spreadsheet` | Spreadsheet calculator (skipped in code gen) |
+| `templateop` | `SubFlowsheet` | Sub-flowsheet template |
+
+### Columns & Absorbers
+
+| UniSim TypeName | NeqSim Type | Description |
+|-----------------|-------------|-------------|
+| `fractop` | `DistillationColumn` | Fractionation column |
+| `distillation` | `DistillationColumn` | Distillation column |
+| `columnop` | `DistillationColumn` | Generic column |
+| `reboiledabsorber` | `DistillationColumn` | Reboiled absorber |
 | `absorberop` | `Absorber` | Absorption column |
-| `reactorop` | — (skipped) | Generic reactor |
-| `pfreactorop` | — (skipped) | Plug flow reactor |
-| `cstrop` | — (skipped) | Continuous stirred tank reactor |
-| `convreactorop` | — (skipped) | Conversion reactor |
-| `eqreactorop` | — (skipped) | Equilibrium reactor |
-| `gibbsreactorop` | — (skipped) | Gibbs reactor |
-| `pidfbcontrolop` | — (skipped) | PID feedback controller |
-| `surgecontroller` | — (skipped) | Surge controller |
+| `absorber` | `Absorber` | Absorber (alternate name) |
 
-### Operations Skipped in Conversion
+### Column Internals (Sub-parts, Not Standalone)
 
-These UniSim operation types have no direct NeqSim equivalent and are skipped:
-- `adjust` — NeqSim uses `Adjuster` but wiring differs
-- `setop` — Variable set/propagation
-- `spreadsheetop` — Calculation spreadsheets
-- `templateop` — Mapped to sub-flowsheets, handled separately
-- `reactorop` / `pfreactorop` / `cstrop` / `convreactorop` / `eqreactorop` / `gibbsreactorop` — Reactor types (no generic JSON mapping)
-- `pidfbcontrolop` / `surgecontroller` — Control logic (not modeled in steady-state)
+| UniSim TypeName | NeqSim Type | Description |
+|-----------------|-------------|-------------|
+| `partialcondenser` | `ColumnInternals` | Partial condenser (skipped) |
+| `totalcondenser` | `ColumnInternals` | Total condenser (skipped) |
+| `condenser3op` | `ColumnInternals` | Three-outlet condenser (skipped) |
+| `traysection` | `ColumnInternals` | Tray section (skipped) |
+| `bpreboiler` | `ColumnInternals` | Reboiler (skipped) |
+
+### Reactors
+
+| UniSim TypeName | NeqSim Type | Description |
+|-----------------|-------------|-------------|
+| `reactorop` | `GibbsReactor` | Generic reactor → Gibbs |
+| `gibbsreactorop` | `GibbsReactor` | Gibbs reactor |
+| `eqreactorop` | `GibbsReactor` | Equilibrium reactor → Gibbs |
+| `equilibriumreactorop` | `GibbsReactor` | Equilibrium reactor (alternate) |
+| `convreactorop` | `GibbsReactor` | Conversion reactor → Gibbs |
+| `conversionreactorop` | `GibbsReactor` | Conversion reactor (alternate) |
+| `pfreactorop` | `PlugFlowReactor` | Plug flow reactor |
+| `kineticreactorop` | `PlugFlowReactor` | Kinetic reactor → PFR |
+| `cstrop` | `StirredTankReactor` | CSTR |
+
+### Controllers & Logic
+
+| UniSim TypeName | NeqSim Type | Description |
+|-----------------|-------------|-------------|
+| `pidfbcontrolop` | `PIDController` | PID feedback controller |
+| `surgecontroller` | `SurgeController` | Surge controller (skipped) |
+| `balanceop` | `BalanceOp` | Balance utility |
+| `logicalop` | `LogicalOp` | Logic operation (skipped) |
+| `selectop` | `LogicalOp` | Selector (skipped) |
+
+### Operations Always Skipped in Code Generation
+
+The following `SKIPPED_NEQSIM_TYPES` are recognized but produce only
+comment lines — they have no standalone NeqSim representation:
+- `SurgeController` — Compressor surge control logic
+- `ColumnInternals` — Sub-parts of column operations (condenser, reboiler, tray sections)
 
 ---
 
@@ -253,10 +287,26 @@ UniSim component names to NeqSim database names:
 | `o-Xylene` | `o-Xylene` |
 | `p-Xylene` | `p-Xylene` |
 | `COS` | `COS` |
-| `Ethylene` | `ethylene` |
-| `Propylene` | `propylene` |
+| `SO2` | `SO2` |
+| `NH3` / `Ammonia` | `ammonia` |
+| `Ethylene` / `Ethene` | `ethylene` |
+| `Propylene` / `Propene` | `propene` |
 | `1-Butene` | `1-butene` |
+| `cis-2-Butene` | `c2-butene` |
+| `trans-2-Butene` | `t2-butene` |
+| `Isobutene` | `isobutene` |
+| `Cyclohexane` | `cyclohexane` |
+| `CO` / `CarbonMonoxide` | `CO` |
+| `DEAmine` | `DEA` |
+| `MEAmine` | `MEA` |
+| `MDEAmine` | `MDEA` |
+| `AceticAcid` | `acetic acid` |
+| `Ethanol` | `ethanol` |
 | `c-Hexane` | `c-hexane` |
+
+**Alternate aliases**: The map also includes short-form aliases like `C1`→methane, `C2`→ethane, `N2`→nitrogen, `H2`→hydrogen, `O2`→oxygen, `Ar`→argon, `He`→helium, `iC4`→i-butane, `nC4`→n-butane, `iC5`→i-pentane, `nC5`→n-pentane, `nC6`→n-hexane, etc.
+
+**Unmapped components**: `12C3Oxide` (propylene oxide) maps to `None` — it is not in the NeqSim database and will be skipped with a warning.
 
 ### Hypothetical Components
 
@@ -273,18 +323,40 @@ These require C7+ characterization in NeqSim. Strategies:
 
 ## 4. Property Package Mapping
 
-| UniSim Property Package | NeqSim EOS Model | Mixing Rule |
-|-------------------------|------------------|-------------|
-| `Peng-Robinson` | `PR` | `classic` |
-| `Peng-Robinson - LK` | `PR` | `classic` |
-| `SRK` | `SRK` | `classic` |
-| `Soave-Redlich-Kwong` | `SRK` | `classic` |
-| `CPA` / `CPA-SRK` | `CPA` | `10` |
-| `GERG 2008` | `GERG2008` | (built-in) |
-| `ASME Steam` | `SRK` | `classic` (water only) |
-| `Lee-Kesler-Plocker` | `SRK` | `classic` (approx) |
-| `NRTL` | `SRK` | `classic` (approx) |
-| `MBWR` | `BWRS` | (built-in) |
+The code variable is `PROPERTY_PACKAGE_MAP` (not EOS_MAP). It maps UniSim
+property package names (including common spelling variants) to NeqSim EOS
+model strings:
+
+### Primary Mappings
+
+| UniSim Property Package | NeqSim EOS Model | Mixing Rule | Notes |
+|-------------------------|------------------|-------------|-------|
+| `Peng-Robinson` / `PengRobinson` / `Peng Robinson` | `PR` | `classic` | |
+| `Peng-Robinson - LK` / `Peng Robinson - LK` | `PR` | `classic` | |
+| `SRK` / `Soave-Redlich-Kwong` | `SRK` | `classic` | |
+| `CPA` / `CPA-SRK` | `CPA` | `10` | For polar systems (water, glycols, amines) |
+| `Glycol Package` | `CPA` | `10` | Maps to CPA for MEG/TEG |
+| `GERG 2008` | `GERG2008` | (built-in) | Natural gas |
+| `Sour PR` / `SourPR` | `PR` | `classic` | H2S/CO2 systems |
+| `Sour SRK` | `SRK` | `classic` | H2S/CO2 systems |
+
+### Fallback Mappings (Approximated as SRK)
+
+These UniSim packages have no direct NeqSim equivalent and fall back to `SRK`:
+
+| UniSim Property Package | NeqSim Fallback | Notes |
+|-------------------------|-----------------|-------|
+| `ASME Steam` | `SRK` | Water only |
+| `MBWR` | `SRK` | NeqSim has BWRS but limited components |
+| `Lee-Kesler-Plocker` | `SRK` | No LKP model |
+| `NRTL` / `UNIQUAC` / `UNIQUAC - Ideal` / `Wilson` | `SRK` | Activity models |
+| `Zudkevitch Joffee` / `Kabadi Danner` | `SRK` | Specialized EOS |
+| `Antoine` / `Chao Seader` / `Grayson Streed` | `SRK` | Legacy correlations |
+| `DBR Amine Package` | `SRK` | DBR proprietary |
+| `OLI` | `SRK` | Electrolyte package |
+| `COMPropertyPkg` | `SRK` | COM extension package |
+
+A warning is logged when a fallback mapping is used.
 
 ---
 
@@ -508,6 +580,80 @@ The converter reconstructs the process topology:
 | Valve | output | `"Valve.outlet"` |
 | Mixer | output | `"Mixer.outlet"` |
 
+### Forward Reference Handling (Recycle Loops)
+
+When the topological sort detects cycles (equipment B referenced before it is
+defined because B depends on equipment A which depends on B), the converter
+creates **forward reference placeholders** — temporary Stream objects that
+stand in for the not-yet-created equipment outlets.
+
+#### How It Works
+
+1. **Cycle detection** (`_prepare_topology`): Operations in a cycle are
+   identified. The back-edge producers become forward references stored in
+   `topo['fwd_ref_placeholders']`.
+
+2. **Placeholder registration** (`_register_fwd_placeholders`): For each
+   forward-referenced producer, a `_fwd_XXX` variable is created. For
+   multi-outlet equipment (Separator, ThreePhaseSeparator), **port-specific
+   placeholders** are also created:
+
+   | Equipment | Placeholders Created |
+   |-----------|---------------------|
+   | `V-100` (Separator) | `_fwd_V_100` (generic), `_fwd_V_100_gasOut`, `_fwd_V_100_liquidOut` |
+   | `S-200` (ThreePhaseSeparator) | `_fwd_S_200` (generic), `_fwd_S_200_gasOut`, `_fwd_S_200_oilOut`, `_fwd_S_200_waterOut` |
+   | `K-100` (Compressor) | `_fwd_K_100` (generic only) |
+
+3. **Placeholder stream creation** (in `to_python` / `to_notebook` /
+   `to_eot_simulator`): Each placeholder is created as a `Stream` with
+   temperature, pressure, and flow rate from the UniSim stream data for
+   that product outlet. Port-specific placeholders use the stream data for
+   each individual outlet.
+
+4. **Outlet resolution** (`_outlet_ref`): When downstream equipment
+   references a forward-referenced separator's liquid outlet (e.g.
+   `"V-100.liquidOut"`), the resolver first checks for a port-specific key
+   (`V-100.liquidOut`) in `fwd_ref_vars` before falling back to the
+   generic placeholder.
+
+5. **Auto-Recycle wiring** (`_gen_equipment_lines`): After the actual
+   separator is created and added to the process, Recycle objects are
+   automatically generated to wire each actual outlet back to its
+   forward reference placeholder:
+
+   ```python
+   # Auto-recycle: wire V-100 gasOut back to forward ref placeholder
+   _rcy_V_100_gasOut = Recycle("V-100_gasOut_loop")
+   _rcy_V_100_gasOut.addStream(V_100.getGasOutStream())
+   _rcy_V_100_gasOut.setOutletStream(_fwd_V_100_gasOut)
+   process.add(_rcy_V_100_gasOut)
+   ```
+
+#### Why Port-Specific Placeholders Matter
+
+Without port-specific placeholders, a valve downstream of a separator's
+liquid outlet would incorrectly receive the combined feed placeholder
+(with gas + liquid flow). This caused 500%+ flow deviations in early
+versions. Port-specific placeholders ensure each downstream unit gets
+the correct phase with approximately correct T, P, and flow.
+
+#### Compressor Efficiency Defaults
+
+When compressor efficiency is not available from the UniSim COM extraction
+(returns `None`), the code applies these rules:
+
+1. If the extracted value is > 1.0, it's treated as a percentage and
+   converted to a fraction (e.g., 75 → 0.75)
+2. If adiabatic efficiency is available (0 < eff ≤ 1), it's set via
+   `setIsentropicEfficiency()`
+3. If only polytropic efficiency is available, it's set via
+   `setPolytropicEfficiency()` + `setUsePolytropicCalc(True)`
+4. If **neither** efficiency is available, a 75% isentropic default is
+   applied with a warning comment in the generated code
+
+This matters because NeqSim defaults to 100% isentropic efficiency,
+which produces unrealistically low outlet temperatures.
+
 ---
 
 ## 8. Handling Sub-Flowsheets
@@ -584,6 +730,9 @@ python devtools/unisim_reader.py path/to/file.usc --no-streams --summary
 
 # Combined: Python + notebook + EOT in one command
 python devtools/unisim_reader.py path/to/file.usc --python p.py --notebook n.ipynb --eot s.py
+
+# Show UniSim GUI window during extraction (useful for debugging)
+python devtools/unisim_reader.py path/to/file.usc --visible --summary
 ```
 
 ---
@@ -595,14 +744,135 @@ python devtools/unisim_reader.py path/to/file.usc --python p.py --notebook n.ipy
 3. **Tuned BIPs** — UniSim's tuned binary interaction parameters not extracted
 4. **Column internals** — distillation column tray/packing details not fully mapped
 5. **Dynamic models** — only steady-state data extracted
-6. **Control logic** — PID controllers, logic blocks not converted
+6. **Control logic** — PID controllers produce TODO comments, not functional controllers
 7. **Custom correlations** — UniSim's user-defined correlations not transferred
 8. **Performance curves** — compressor/pump performance maps not extracted
 9. **Multiple fluid packages** — only the first fluid package used for composition
+10. **Absorber columns** — single-feed only; multi-feed absorbers show a TODO
+11. **SetPoint / Adjuster wiring** — generates skeleton code but wiring is often incomplete
+12. **Recycle convergence** — heavily circular models (5+ forward references) may
+    not converge with placeholder initial values; multiple `process.run()` calls
+    or manual tuning may be needed
+13. **Compressor efficiency** — COM extraction sometimes returns `None` even when
+    the UniSim model has efficiency data; defaults to 75% isentropic
+14. **Spreadsheet operations** — produce a skip comment; no calculation logic transferred
+15. **Logical / balance operations** — produce skip comments
 
 ---
 
-## 11. Troubleshooting
+## 11. Data Class Reference
+
+The extracted UniSim model uses these Python dataclasses:
+
+### UniSimComponent
+
+```python
+@dataclass
+class UniSimComponent:
+    name: str             # e.g. "Methane", "CO2", "C7 GRAND*"
+    index: int            # Position in fluid package component list
+    is_hypothetical: bool # True if name ends with '*'
+```
+
+### UniSimFluidPackage
+
+```python
+@dataclass
+class UniSimFluidPackage:
+    name: str              # e.g. "Basis-1"
+    property_package: str  # e.g. "Peng-Robinson", "SRK", "CPA"
+    components: List[UniSimComponent]
+
+    @property
+    def component_names(self) -> List[str]: ...
+```
+
+### UniSimStreamData
+
+```python
+@dataclass
+class UniSimStreamData:
+    name: str
+    temperature_C: Optional[float]      # Celsius
+    pressure_bara: Optional[float]       # bara
+    mass_flow_kgh: Optional[float]       # kg/h
+    molar_flow_kgmolh: Optional[float]  # kgmol/h
+    vapour_fraction: Optional[float]     # 0-1
+    mass_density_kgm3: Optional[float]   # kg/m3
+    molecular_weight: Optional[float]    # g/mol
+    enthalpy_kJkg: Optional[float]       # kJ/kg
+    composition: Optional[Dict[str, float]]  # component_name -> mole fraction
+    n_phases: Optional[int]
+    viscosity_cP: Optional[float]
+    thermal_conductivity: Optional[float]
+    specific_heat_kJkgC: Optional[float]
+```
+
+### UniSimEnergyStream
+
+```python
+@dataclass
+class UniSimEnergyStream:
+    name: str
+    heat_flow_kW: Optional[float]  # kW
+```
+
+### UniSimOperation
+
+```python
+@dataclass
+class UniSimOperation:
+    name: str                              # Equipment name e.g. "K-100"
+    type_name: str                         # UniSim internal type e.g. "compressor"
+    feeds: List[str]                       # Feed stream names
+    products: List[str]                    # Product stream names
+    energy_feeds: List[str]                # Energy feed stream names
+    energy_products: List[str]             # Energy product stream names
+    properties: Dict[str, Any]             # Type-specific extracted properties
+```
+
+Common `properties` keys by operation type:
+
+| Operation | Property Keys |
+|-----------|--------------|
+| Compressor | `outlet_pressure_bara`, `adiabatic_efficiency`, `polytropic_efficiency` |
+| Valve | `outlet_pressure_bara` |
+| Cooler / Heater | `outlet_temperature_C`, `duty_kW` |
+| HeatExchanger | `UA`, `duty_kW` |
+| Pipe | `length_m`, `diameter_m`, `roughness_m` |
+| Pump | `outlet_pressure_bara`, `efficiency` |
+
+### UniSimFlowsheet
+
+```python
+@dataclass
+class UniSimFlowsheet:
+    name: str
+    material_streams: List[UniSimStreamData]
+    energy_streams: List[UniSimEnergyStream]
+    operations: List[UniSimOperation]
+    sub_flowsheets: List['UniSimFlowsheet']  # Recursive
+```
+
+### UniSimModel
+
+```python
+@dataclass
+class UniSimModel:
+    file_path: str
+    file_name: str
+    fluid_packages: List[UniSimFluidPackage]
+    flowsheet: Optional[UniSimFlowsheet]
+
+    def summary(self) -> str: ...          # Human-readable overview
+    def all_operations(self) -> List[UniSimOperation]: ...  # Flat list incl. sub-FS
+    def all_streams(self) -> List[UniSimStreamData]: ...    # Flat list incl. sub-FS
+    def to_dict(self) -> Dict: ...         # JSON-serializable
+```
+
+---
+
+## 12. Troubleshooting
 
 | Issue | Cause | Fix |
 |-------|-------|-----|
@@ -613,3 +883,8 @@ python devtools/unisim_reader.py path/to/file.usc --python p.py --notebook n.ipy
 | Wrong component count | Multiple fluid packages | Check which FP the stream uses |
 | Missing operations | Sub-flowsheet not recursed | Use `model.all_operations()` |
 | Composition doesn't sum to 1 | Hypothetical components excluded | Re-normalize after filtering |
+| Compressor outlet T too low | Efficiency = 100% (ideal) | Check for missing efficiency; defaults to 75% |
+| Valve flow deviation 500%+ | Wrong forward ref placeholder | Port-specific placeholders now fix this |
+| Separator downstream wrong phase | Generic fwd ref placeholder used | Ensure `_register_fwd_placeholders` ran |
+| Recycle not converging | Too many forward references | Try multiple `process.run()` calls or tune placeholders |
+| `AttributeError` on COM property | Operation type doesn't have that property | Wrap in try/except or check `TypeName` |
