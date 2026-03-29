@@ -156,6 +156,7 @@ When writing documentation that includes Java or Python code examples:
 - **Streams & Cloning**: Instantiate feeds with `Stream`/`StreamInterface`, call `setFlowRate`, `setTemperature`, `setPressure`, then `run()`; clone fluids (`system.clone()`) before branching to avoid shared state between trays or unit operations.
 - **Distillation Column**: `DistillationColumn` provides sequential, damped, and inside-out solvers; maintain solver metrics (`lastIterationCount`, `lastMassResidual`, `lastEnergyResidual`) and feed-tray bookkeeping when altering column logic to keep tests like `insideOutSolverMatchesStandardOnDeethanizerCase` green.
 - **ProcessSystem Utilities**: Use `ProcessSystem.add(unit)` to build flowsheets, `run()`/`run(UUID)` for execution, `copy()` when duplicating equipment, `connect()` for explicit connections, and `getAllElements()` to query all equipment, controllers, and measurements; modules can self-initialize through `ModuleInterface`—respect these hooks if you add packaged subsystems.
+- **ProcessModel for Multi-Area Plants (MANDATORY)**: For large plants (platforms, gas plants), split into separate `ProcessSystem` objects per process area then combine with `ProcessModel`. Use `plant.add("area name", processSystem)` to register named areas, `plant.run()` iterates until convergence, `plant.get("area name")` retrieves sub-processes, and `plant.getConvergenceSummary()` reports status. See the Oseberg and Snorre field models for the canonical pattern: each area is a Python function returning a `ProcessSystem`, cross-system streams are shared by object reference, and all systems are composed into a `ProcessModel` at the end. **NEVER** add a `ProcessModule` or `ProcessModel` to a `ProcessSystem` — it will throw TypeError.
 - **Data & Resources**: Component metadata lives under `src/main/resources`; heavy datasets (e.g., `neqsim_component_names.txt`) must remain synchronized with thermodynamic model expectations before publishing new components.
 - **Logging & Diagnostics**: log4j2 powers runtime logging; tests often assert solver convergence instead of inspecting logs, so prefer returning residuals over printing when adding instrumentation.
 - **Build & Test Workflow**: Use `./mvnw install` for a full build (Windows: `mvnw.cmd install`); run the entire suite with `./mvnw test` and checkstyle/spotbugs/pmd with `./mvnw checkstyle:check spotbugs:check pmd:check`.
@@ -1030,6 +1031,7 @@ from neqsim import jneqsim
 # Import commonly used Java classes through the jneqsim gateway
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+ProcessModel = jneqsim.process.processmodel.ProcessModel  # for multi-area plants
 Stream = jneqsim.process.equipment.stream.Stream
 Separator = jneqsim.process.equipment.separator.Separator
 Compressor = jneqsim.process.equipment.compressor.Compressor
@@ -1147,6 +1149,7 @@ Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 HeatExchanger = jneqsim.process.equipment.heatexchanger.HeatExchanger
 Mixer = jneqsim.process.equipment.mixer.Mixer
 Splitter = jneqsim.process.equipment.splitter.Splitter
+ComponentSplitter = jneqsim.process.equipment.splitter.ComponentSplitter
 ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
 Recycle = jneqsim.process.equipment.util.Recycle
 Adjuster = jneqsim.process.equipment.util.Adjuster
@@ -1157,6 +1160,13 @@ PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
 
 # Distillation
 DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn
+
+# TEG / Glycol contactor — model as ComponentSplitter (water removal)
+# Pattern from Oseberg model: water is always the last component
+# water_dehydration = ComponentSplitter("dehyd", wet_gas_stream)
+# complen = wet_gas_stream.getFluid().getNumberOfComponents()
+# water_dehydration.setSplitFactors([1.0] * (complen - 1) + [0.0])
+# getSplitStream(0) = dry gas, getSplitStream(1) = removed water
 
 # Mechanical design and cost estimation
 # Use jpype.JClass() for classes not exposed through jneqsim gateway:

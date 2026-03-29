@@ -203,8 +203,17 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 | `distillation` | `DistillationColumn` | Distillation column |
 | `columnop` | `DistillationColumn` | Generic column |
 | `reboiledabsorber` | `DistillationColumn` | Reboiled absorber |
-| `absorberop` | `Absorber` | Absorption column |
-| `absorber` | `Absorber` | Absorber (alternate name) |
+| `absorberop` | `Absorber` | Absorption column (see glycol note below) |
+| `absorber` | `Absorber` | Absorber (see glycol note below) |
+
+> **Glycol/TEG Contactor Rule**: When an Absorber operation has a name
+> containing "glyc", "teg", or "dehydrat" (case-insensitive), the code
+> generator produces a `ComponentSplitter` instead of a `DistillationColumn`.
+> This removes water from the gas stream using the Oseberg pattern:
+> `setSplitFactors([1.0] * (N-1) + [0.0])` where water is the last component.
+> Stream 0 = dry gas, stream 1 = removed water. Port resolution uses
+> `split0`/`split1` instead of `gasOut`/`liquidOut`. Non-glycol absorbers
+> still use `DistillationColumn`.
 
 ### Column Internals (Sub-parts, Not Standalone)
 
@@ -637,6 +646,37 @@ liquid outlet would incorrectly receive the combined feed placeholder
 versions. Port-specific placeholders ensure each downstream unit gets
 the correct phase with approximately correct T, P, and flow.
 
+#### HeatExchanger Outlet Port Resolution
+
+HeatExchanger has two feed/product sides indexed 0 (Shell) and 1 (Tube).
+The converter maps downstream references to `getOutStream(int(0))` or
+`getOutStream(int(1))` based on the product's position in the products
+list (set by `_extract_heatexchanger`: ShellSideProduct = index 0,
+TubeSideProduct = index 1).
+
+Port naming convention: `hx0` and `hx1` (analogous to `gasOut`/`liquidOut`
+for separators). Forward-reference placeholders are created per-side when
+a HeatExchanger is in a recycle loop.
+
+**Generated code example:**
+
+```python
+E_100 = HeatExchanger("E-100")
+E_100.setFeedStream(0, shell_feed)   # Shell side
+E_100.setFeedStream(1, tube_feed)    # Tube side
+process.add(E_100)
+
+# Downstream: Cooler on shell product (index 0)
+C_100 = Cooler("C-100", E_100.getOutStream(int(0)))
+
+# Downstream: Valve on tube product (index 1)
+VLV_100 = ThrottlingValve("VLV-100", E_100.getOutStream(int(1)))
+```
+
+**Important:** Do NOT use `getOutletStream()` for HeatExchanger — it only
+returns one side. Always use `getOutStream(int(index))` for explicit
+side selection.
+
 #### Compressor Efficiency Defaults
 
 When compressor efficiency is not available from the UniSim COM extraction
@@ -748,7 +788,9 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
 7. **Custom correlations** — UniSim's user-defined correlations not transferred
 8. **Performance curves** — compressor/pump performance maps not extracted
 9. **Multiple fluid packages** — only the first fluid package used for composition
-10. **Absorber columns** — single-feed only; multi-feed absorbers show a TODO
+10. **Absorber columns** — single-feed only; multi-feed absorbers show a TODO.
+    Glycol/TEG contactors (name contains "glyc", "teg", or "dehydrat") are
+    modeled as `ComponentSplitter` for water removal instead of `DistillationColumn`
 11. **SetPoint / Adjuster wiring** — generates skeleton code but wiring is often incomplete
 12. **Recycle convergence** — heavily circular models (5+ forward references) may
     not converge with placeholder initial values; multiple `process.run()` calls

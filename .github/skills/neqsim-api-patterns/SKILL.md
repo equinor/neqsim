@@ -130,6 +130,37 @@ Stream out = cooler.getOutletStream();
 // After run: cooler.getDuty() — Watts
 ```
 
+### HeatExchanger (Two-Sided)
+
+`HeatExchanger` has two feed/outlet sides indexed 0 and 1. Use
+`setFeedStream(int, StreamInterface)` to connect both sides and
+`getOutStream(int)` to retrieve the outlet for each side.
+
+**IMPORTANT:** Do NOT use `getOutletStream()` when you need a specific
+side — it only returns side 0. Always use `getOutStream(int)`.
+
+```java
+HeatExchanger hx = new HeatExchanger("E-100");
+hx.setFeedStream(0, shellSideFeed);   // side 0 = shell
+hx.setFeedStream(1, tubeSideFeed);    // side 1 = tube
+// Optional: hx.setUAvalue(35000.0);  // W/K
+
+// After run: retrieve each side's outlet
+Stream shellOut = (Stream) hx.getOutStream(0);
+Stream tubeOut  = (Stream) hx.getOutStream(1);
+double duty = hx.getDuty();  // Watts
+```
+
+```python
+# Python
+hx = HeatExchanger("E-100")
+hx.setFeedStream(0, shell_feed)
+hx.setFeedStream(1, tube_feed)
+# Downstream connections:
+cooler = Cooler("C-100", hx.getOutStream(int(0)))   # shell side out
+valve  = ThrottlingValve("VLV-100", hx.getOutStream(int(1)))  # tube side out
+```
+
 ### Valve
 
 ```java
@@ -146,6 +177,43 @@ mixer.addStream(stream1);
 mixer.addStream(stream2);
 Stream out = mixer.getOutletStream();
 ```
+
+### ComponentSplitter (TEG / Glycol Contactor — Water Removal)
+
+Used to model TEG dehydration contactors as simple water-removal units.
+Splits a stream per-component: `splitFactor[k] = 1.0` keeps the component in
+stream 0 (dry gas), `0.0` removes it to stream 1 (water).
+
+**Pattern from Oseberg model**: water is always the last component added,
+so use `[1.0] * (N-1) + [0.0]` to remove only water.
+
+```java
+// Java
+ComponentSplitter dehydrator = new ComponentSplitter("TEG contactor", wetGasStream);
+int nComp = wetGasStream.getFluid().getNumberOfComponents();
+double[] sf = new double[nComp];
+Arrays.fill(sf, 1.0);
+sf[nComp - 1] = 0.0;  // last component = water
+dehydrator.setSplitFactors(sf);
+// After run:
+Stream dryGas = dehydrator.getSplitStream(0);   // all components except water
+Stream water  = dehydrator.getSplitStream(1);   // removed water
+```
+
+```python
+# Python (from Oseberg reference notebook)
+water_dehydration = neqsim.process.equipment.splitter.ComponentSplitter(
+    "dehyd", wet_gas_stream)
+complen = wet_gas_stream.getFluid().getNumberOfComponents()
+water_dehydration.setSplitFactors([1.0] * (complen - 1) + [0.0])
+water_dehydration.run()
+dry_gas = water_dehydration.getSplitStream(0)
+```
+
+> **When to use**: Any absorber with a glycol-related name ("glyc", "teg",
+> "dehydrat") should be modeled as a ComponentSplitter rather than a
+> DistillationColumn. This avoids solver convergence issues and is the
+> pattern used in all production Oseberg/Sture models.
 
 ### Pipeline
 

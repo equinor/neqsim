@@ -6,6 +6,8 @@
 
 package neqsim.process.equipment.heatexchanger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.ml.StateVector;
@@ -201,6 +203,38 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public StreamInterface getOutStream(int i) {
     return outStream[i];
+  }
+
+  /**
+   * Returns the first outlet stream (side 0) of the heat exchanger.
+   *
+   * <p>
+   * HeatExchanger has two outlet streams corresponding to the two feed sides. This method returns
+   * the outlet for feed side 0. Use {@link #getOutStream(int)} to access a specific side.
+   * </p>
+   *
+   * @return the outlet stream for feed side 0
+   */
+  @Override
+  public StreamInterface getOutletStream() {
+    return outStream[0];
+  }
+
+  /**
+   * Returns both outlet streams of the heat exchanger.
+   *
+   * @return a list containing both outlet streams (side 0 and side 1)
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>();
+    if (outStream[0] != null) {
+      outlets.add(outStream[0]);
+    }
+    if (outStream[1] != null) {
+      outlets.add(outStream[1]);
+    }
+    return outlets;
   }
 
   /**

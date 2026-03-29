@@ -1305,7 +1305,17 @@ class UniSimToNeqSim:
                                 return f"{producer_name}.liquidOut"
                         return f"{producer_name}.gasOut"
                     elif neqsim_type == 'Absorber':
-                        # Absorber: first product = gas out, second = liquid out
+                        # Detect glycol/TEG contactor → ComponentSplitter
+                        _name_lower = op.name.lower()
+                        _is_glycol = any(kw in _name_lower for kw in
+                                         ('glyc', 'teg', 'dehydrat'))
+                        if _is_glycol:
+                            # ComponentSplitter: split0 = dry gas, split1 = water
+                            if len(op.products) > 0 and stream_name in op.products:
+                                idx = op.products.index(stream_name)
+                                return f"{producer_name}.split{idx}"
+                            return f"{producer_name}.split0"
+                        # Regular absorber: first product = gas out, second = liquid out
                         if len(op.products) > 0 and stream_name in op.products:
                             idx = op.products.index(stream_name)
                             if idx == 0:
@@ -1313,6 +1323,11 @@ class UniSimToNeqSim:
                             else:
                                 return f"{producer_name}.liquidOut"
                         return f"{producer_name}.gasOut"
+                    elif neqsim_type == 'HeatExchanger':
+                        if len(op.products) > 0 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            return f"{producer_name}.hx{idx}"
+                        return f"{producer_name}.hx0"
                     elif neqsim_type in UniSimReader.REACTOR_TYPES:
                         return f"{producer_name}.outlet"
                     return f"{producer_name}.outlet"
@@ -1557,6 +1572,8 @@ class UniSimToNeqSim:
                     ports = ['gasOut', 'liquidOut']
                 elif n_type == 'ThreePhaseSeparator' and len(op.products or []) >= 3:
                     ports = ['gasOut', 'oilOut', 'waterOut']
+                elif n_type == 'HeatExchanger' and len(op.products or []) >= 2:
+                    ports = ['hx0', 'hx1']
                 else:
                     ports = []
                 for port in ports:
@@ -1592,6 +1609,9 @@ class UniSimToNeqSim:
         if port.startswith('split'):
             idx = port.replace('split', '') or '0'
             return f'{pvar}.getSplitStream(int({idx}))'
+        if port.startswith('hx'):
+            idx = port.replace('hx', '') or '0'
+            return f'{pvar}.getOutStream(int({idx}))'
         method = port_methods.get(port, 'getOutletStream()')
         return f'{pvar}.{method}'
 
@@ -1626,6 +1646,7 @@ class UniSimToNeqSim:
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
         'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
         'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
+        'ComponentSplitter = jneqsim.process.equipment.splitter.ComponentSplitter',
         'GibbsReactor = jneqsim.process.equipment.reactor.GibbsReactor',
         'PlugFlowReactor = jneqsim.process.equipment.reactor.PlugFlowReactor',
         'StirredTankReactor = jneqsim.process.equipment.reactor.StirredTankReactor',
@@ -1723,10 +1744,24 @@ class UniSimToNeqSim:
                     f'feeds: {op.feeds}')
 
         elif neqsim_type == 'Absorber':
-            # Absorber = column without condenser/reboiler for gas-liquid contacting
-            n_stages = op.properties.get('numberOfStages',
-                                         op.properties.get('numberOfTrays', 5))
-            if len(inlet_refs) >= 2:
+            # Detect glycol/TEG contactor by name — use ComponentSplitter
+            _name_lower = op.name.lower()
+            _is_glycol = any(kw in _name_lower for kw in
+                             ('glyc', 'teg', 'dehydrat'))
+            if _is_glycol:
+                # TEG contactor: model as ComponentSplitter removing water
+                # Pattern from Oseberg model: water is always last component
+                ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+                lines.append(
+                    f'{v} = ComponentSplitter("{op.name}", {ref_expr})')
+                lines.append(
+                    f'_complen = {ref_expr}.getFluid()'
+                    f'.getNumberOfComponents()')
+                lines.append(
+                    f'{v}.setSplitFactors([1.0] * (_complen - 1) + [0.0])')
+            elif len(inlet_refs) >= 2:
+                n_stages = op.properties.get('numberOfStages',
+                                             op.properties.get('numberOfTrays', 5))
                 # Two-feed absorber: gas enters bottom, liquid enters top
                 lines.append(
                     f'{v} = DistillationColumn("{op.name}", {n_stages}, '
@@ -1736,6 +1771,8 @@ class UniSimToNeqSim:
                 lines.append(
                     f'{v}.addFeedStream({_ref(inlet_refs[1])}, 1)')
             elif len(inlet_refs) == 1:
+                n_stages = op.properties.get('numberOfStages',
+                                             op.properties.get('numberOfTrays', 5))
                 lines.append(
                     f'{v} = DistillationColumn("{op.name}", {n_stages}, '
                     f'False, False)')
@@ -1745,6 +1782,8 @@ class UniSimToNeqSim:
                     f'# TODO: absorber needs a second feed stream '
                     f'(solvent) — feeds: {op.feeds}')
             else:
+                n_stages = op.properties.get('numberOfStages',
+                                             op.properties.get('numberOfTrays', 5))
                 lines.append(
                     f'{v} = DistillationColumn("{op.name}", {n_stages}, '
                     f'False, False)')
@@ -1993,16 +2032,19 @@ class UniSimToNeqSim:
         if neqsim_type not in ('PIDController', 'LogicalOp', 'SubFlowsheet'):
             lines.append(f'process.add({v})')
 
-        # Wire actual separator/3-phase outlets back to forward ref placeholders
-        if neqsim_type in ('Separator', 'ThreePhaseSeparator'):
+        # Wire actual separator/3-phase/HX outlets back to forward ref placeholders
+        if neqsim_type in ('Separator', 'ThreePhaseSeparator', 'HeatExchanger'):
             fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
             if neqsim_type == 'Separator':
                 port_info = [('gasOut', 'getGasOutStream()'),
                              ('liquidOut', 'getLiquidOutStream()')]
-            else:
+            elif neqsim_type == 'ThreePhaseSeparator':
                 port_info = [('gasOut', 'getGasOutStream()'),
                              ('oilOut', 'getOilOutStream()'),
                              ('waterOut', 'getWaterOutStream()')]
+            else:  # HeatExchanger
+                port_info = [('hx0', 'getOutStream(int(0))'),
+                             ('hx1', 'getOutStream(int(1))')]
             for port_name, port_method in port_info:
                 port_key = f'{op.name}.{port_name}'
                 if port_key in fwd_ref_vars_map:
@@ -2632,6 +2674,9 @@ class UniSimToNeqSim:
                 elif (n_type == 'ThreePhaseSeparator'
                       and op_ and len(op_.products or []) >= 3):
                     ports = ['gasOut', 'oilOut', 'waterOut']
+                elif (n_type == 'HeatExchanger'
+                      and op_ and len(op_.products or []) >= 2):
+                    ports = ['hx0', 'hx1']
                 else:
                     ports = []
                 if ports:
@@ -2946,6 +2991,9 @@ class UniSimToNeqSim:
                 elif (n_type == 'ThreePhaseSeparator'
                       and op_ and len(op_.products or []) >= 3):
                     ports = ['gasOut', 'oilOut', 'waterOut']
+                elif (n_type == 'HeatExchanger'
+                      and op_ and len(op_.products or []) >= 2):
+                    ports = ['hx0', 'hx1']
                 else:
                     ports = []
                 if ports:
@@ -3293,6 +3341,9 @@ class UniSimToNeqSim:
                 elif (n_type == 'ThreePhaseSeparator'
                       and op_ and len(op_.products or []) >= 3):
                     ports = ['gasOut', 'oilOut', 'waterOut']
+                elif (n_type == 'HeatExchanger'
+                      and op_ and len(op_.products or []) >= 2):
+                    ports = ['hx0', 'hx1']
                 else:
                     ports = []
                 if ports:

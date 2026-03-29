@@ -291,18 +291,26 @@ with UniSimReader(visible=False) as reader:
 
 ## Important Implementation Notes (Lessons Learned)
 
-### Forward Reference Placeholders for Separators
+### Forward Reference Placeholders for Separators and HeatExchangers
 
-When a separator is in a recycle loop (referenced before it is created),
-the converter creates **port-specific** placeholder streams — one for each
-outlet (gasOut, liquidOut for Separator; gasOut, oilOut, waterOut for
-ThreePhaseSeparator). This prevents downstream equipment from receiving
-the wrong phase. After the separator is created, auto-Recycle objects wire
-the actual outlets back to the placeholders.
+When a separator or HeatExchanger is in a recycle loop (referenced before it
+is created), the converter creates **port-specific** placeholder streams — one
+for each outlet:
+- **Separator**: `gasOut`, `liquidOut`
+- **ThreePhaseSeparator**: `gasOut`, `oilOut`, `waterOut`
+- **HeatExchanger**: `hx0` (shell side), `hx1` (tube side)
+
+This prevents downstream equipment from receiving the wrong phase/side.
+After the equipment is created, auto-Recycle objects wire the actual outlets
+back to the placeholders.
+
+**HeatExchanger outlet API**: Use `getOutStream(int(0))` for shell-side outlet
+and `getOutStream(int(1))` for tube-side outlet. Do NOT use `getOutletStream()`
+when a specific side is needed — it only returns side 0.
 
 **If you modify `_register_fwd_placeholders` or `_outlet_ref`**, always verify
-that port-specific keys (`V-100.liquidOut`) are checked before generic keys
-(`V-100`) in `fwd_ref_vars`.
+that port-specific keys (`V-100.liquidOut`, `E-100.hx1`) are checked before
+generic keys (`V-100`, `E-100`) in `fwd_ref_vars`.
 
 ### Compressor Efficiency
 
