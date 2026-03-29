@@ -317,50 +317,6 @@ process.add(sep);
 process.run();
 ```
 
-### Multi-area plants with ProcessModel
-
-For large plants (platforms, gas plants), split into separate `ProcessSystem`
-objects per process area, then combine with `ProcessModel`:
-
-```java
-// Each area is its own ProcessSystem
-ProcessSystem wellProcess = new ProcessSystem();
-wellProcess.add(feed);
-wellProcess.add(manifold);
-
-ProcessSystem separationA = new ProcessSystem();
-separationA.add(new Separator("HP sep", manifold.getSplitStream(0)));
-
-// Combine with named entries
-ProcessModel plant = new ProcessModel();
-plant.add("well process", wellProcess);
-plant.add("separation A", separationA);
-plant.run();  // Iterates until convergence
-
-plant.get("separation A").getUnit("HP sep");
-System.out.println(plant.getConvergenceSummary());
-```
-
-Python (from Oseberg/Snorre field models):
-```python
-ProcessModel = jneqsim.process.processmodel.ProcessModel
-
-# Functions return ProcessSystem objects
-well_model = create_well_feed_model(params)
-well_model.run()
-sep_A = create_separation_process(params, well_model.getUnit("manifold").getSplitStream(0))
-sep_A.run()
-
-# Combine all areas
-plant = ProcessModel()
-plant.add("well process", well_model)
-plant.add("separation A", sep_A)
-plant.run()
-print(plant.getConvergenceSummary())
-```
-
-**NEVER** add `ProcessModule`/`ProcessModel` to a `ProcessSystem` — it throws TypeError.
-
 ### Stream introspection
 
 Every `ProcessEquipmentInterface` exposes its connected streams:
@@ -553,7 +509,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/` | Main source (thermo, process, pvt, standards) |
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
 | `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
-| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessModel, ProcessModule, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
+| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
 | `devtools/unisim_reader.py` | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ op types, port-specific forward refs, auto-recycle wiring. Verified with TUTOR1.usc (11/13 streams match). |
 | `devtools/test_unisim_outputs.py` | 14 tests for all UniSim converter output modes (no COM needed — synthetic models) |
 | `examples/notebooks/tutor1_gas_processing.ipynb` | End-to-end UniSim→NeqSim verification: TUTOR1 gas processing (7 comp, PR EOS, 13 ops). Reference for conversion workflows. |
