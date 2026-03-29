@@ -93,6 +93,10 @@ jneqsim.process.equipment.expander.Expander
 jneqsim.process.equipment.util.Recycle
 jneqsim.process.equipment.util.Adjuster
 
+# Multi-area plant management
+jneqsim.process.processmodel.ProcessModel    # Named collection of ProcessSystems
+jneqsim.process.processmodel.ProcessModule   # Legacy — prefer ProcessModel
+
 # Load additional classes via JClass (devtools) or full path (pip)
 # ns.DistillationColumn = ns.JClass("neqsim.process.equipment.distillation.DistillationColumn")
 ```
@@ -147,6 +151,71 @@ Common plot types:
 - Phase envelopes (T vs P with boundaries)
 - Cost breakdowns (bar charts)
 - Tornado diagrams (sensitivity ranking)
+
+## Multi-Area Plant Architecture (ProcessModel)
+
+For large plants (platforms, gas plants, refineries), split into separate `ProcessSystem`
+objects per process area and combine with `ProcessModel`. This is the pattern used in
+production models for Oseberg, Snorre, and Grane.
+
+### Pattern: Functions Returning ProcessSystem
+
+```python
+ProcessModel = jneqsim.process.processmodel.ProcessModel
+
+def create_well_feed_model(inp):
+    """Each area is a function returning a ProcessSystem."""
+    well_process = jneqsim.process.processmodel.ProcessSystem()
+    feed = Stream("feed", fluid)
+    feed.setFlowRate(inp.flow_rate, "kg/hr")
+    well_process.add(feed)
+    manifold = Splitter("manifold", feed)
+    manifold.setSplitFactors([0.5, 0.5])
+    well_process.add(manifold)
+    return well_process
+
+def create_separation_process(inp, feed_stream):
+    sep_process = jneqsim.process.processmodel.ProcessSystem()
+    separator = ThreePhaseSeparator("1st stage", feed_stream)
+    sep_process.add(separator)
+    # ... more equipment
+    return sep_process
+
+# Build each area (run individually to populate outlet streams)
+well_model = create_well_feed_model(params)
+well_model.run()
+
+# Cross-system streams: outlet of one system feeds constructor of next
+sep_train_A = create_separation_process(params,
+    well_model.getUnit("manifold").getSplitStream(0))
+sep_train_A.run()
+
+sep_train_B = create_separation_process(params,
+    well_model.getUnit("manifold").getSplitStream(1))
+sep_train_B.run()
+
+# Combine all into ProcessModel with named entries
+plant = ProcessModel()
+plant.add("well process", well_model)
+plant.add("separation train A", sep_train_A)
+plant.add("separation train B", sep_train_B)
+plant.run()  # Iterates all systems until convergence
+
+# Access results by area name
+print(plant.getConvergenceSummary())
+print(plant.getMassBalanceReport())
+sep_A = plant.get("separation train A")
+print(sep_A.getUnit("1st stage").getGasOutStream().getFlowRate("MSm3/day"))
+```
+
+### Key Rules for Multi-Area Models
+
+- **Order matters**: `add()` upstream systems first — they run in insertion order
+- **Cross-system streams**: Pass outlet stream of System A as constructor arg to System B
+- **Run each area first**: Call `.run()` on each ProcessSystem before combining (populates streams)
+- **NEVER** add ProcessModule/ProcessModel to a ProcessSystem — it will throw TypeError
+- **Use `getUnit("name")`** to access equipment across systems
+- **ProcessModel.run()** iterates all systems and checks convergence
 
 ## Getting Results from NeqSim
 

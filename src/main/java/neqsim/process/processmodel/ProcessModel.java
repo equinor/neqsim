@@ -271,6 +271,34 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Returns the names of all process systems in insertion order.
+   *
+   * @return a {@link java.util.List} of process system names
+   */
+  public List<String> getProcessSystemNames() {
+    return new ArrayList<>(processes.keySet());
+  }
+
+  /**
+   * Returns the number of process systems in this model.
+   *
+   * @return the number of process systems
+   */
+  public int size() {
+    return processes.size();
+  }
+
+  /**
+   * Checks whether a process system with the given name exists.
+   *
+   * @param name the name to look up
+   * @return true if a process system with that name exists
+   */
+  public boolean has(String name) {
+    return processes.containsKey(name);
+  }
+
+  /**
    * Removes a process by its name.
    *
    * @param name a {@link java.lang.String} object

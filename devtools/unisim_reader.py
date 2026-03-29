@@ -1605,7 +1605,7 @@ class UniSimToNeqSim:
         'SystemSrkEos = jneqsim.thermo.system.SystemSrkEos',
         'SystemPrEos  = jneqsim.thermo.system.SystemPrEos',
         'ProcessSystem = jneqsim.process.processmodel.ProcessSystem',
-        'ProcessModule = jneqsim.process.processmodel.ProcessModule',
+        'ProcessModel = jneqsim.process.processmodel.ProcessModel',
         'Stream = jneqsim.process.equipment.stream.Stream',
         'Separator = jneqsim.process.equipment.separator.Separator',
         'ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator',
@@ -1886,11 +1886,11 @@ class UniSimToNeqSim:
                 f'lambda cells: cells["T_in"] * 1.0)')
 
         elif neqsim_type == 'SubFlowsheet':
-            # Generate nested ProcessSystem from sub-flowsheet data
+            # Generate a separate ProcessSystem for the sub-flowsheet.
+            # These are later composed into a ProcessModel in to_notebook().
             sf_data = self._find_sub_flowsheet_for_op(op, topo)
             if sf_data and sf_data.operations:
-                lines.append(f'{v} = ProcessModule("{op.name}")')
-                lines.append(f'{v}_process = ProcessSystem("{op.name}_inner")')
+                lines.append(f'{v} = ProcessSystem("{op.name}")')
                 # Generate equipment lines for the sub-flowsheet
                 sf_topo = self._build_sub_topo(sf_data, topo)
                 for sf_op in sf_topo['sorted_ops']:
@@ -1901,15 +1901,14 @@ class UniSimToNeqSim:
                             if sl.startswith('process.add('):
                                 lines.append(
                                     sl.replace('process.add(',
-                                               f'{v}_process.add('))
+                                               f'{v}.add('))
                             else:
                                 lines.append(sl)
-                lines.append(f'{v}.add({v}_process)')
             else:
-                lines.append(f'{v} = ProcessModule("{op.name}")')
+                lines.append(f'{v} = ProcessSystem("{op.name}")')
                 lines.append(
                     f'# Sub-flowsheet "{op.name}" has no extractable '
-                    f'operations — add nested ProcessSystem manually')
+                    f'operations — add equipment manually')
 
         elif neqsim_type == 'BalanceOp':
             lines.append(f'{v} = Adjuster("{op.name}")')
@@ -1986,8 +1985,12 @@ class UniSimToNeqSim:
         self._gen_properties(lines, v, neqsim_type, op, flowsheet)
 
         # PIDController and LogicalOp are controller devices, not standalone
-        # equipment — they produce only TODO comments, no process.add()
-        if neqsim_type not in ('PIDController', 'LogicalOp'):
+        # equipment — they produce only TODO comments, no process.add().
+        # SubFlowsheet generates its own ProcessSystem — do NOT add it to
+        # the parent ProcessSystem (ProcessSystem cannot contain another
+        # ProcessSystem). Sub-flowsheet ProcessSystems are combined via
+        # ProcessModel in to_notebook().
+        if neqsim_type not in ('PIDController', 'LogicalOp', 'SubFlowsheet'):
             lines.append(f'process.add({v})')
 
         # Wire actual separator/3-phase outlets back to forward ref placeholders
@@ -2680,6 +2683,7 @@ class UniSimToNeqSim:
 
         # --- equipment in topological order ---
         _a('# --- Equipment (topological order: upstream before downstream) ---')
+        sub_flowsheet_vars = []  # Track sub-flowsheet ProcessSystem vars
         for op in topo['sorted_ops']:
             # Add context-aware comment before each equipment block
             neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
@@ -2692,22 +2696,60 @@ class UniSimToNeqSim:
             if eq_lines:
                 lines.extend(eq_lines)
                 _a('')
+            # Collect sub-flowsheet variable names for ProcessModel
+            if neqsim_type == 'SubFlowsheet':
+                v = topo['var_names'].get(op.name, self._to_pyvar(op.name))
+                sub_flowsheet_vars.append((op.name, v))
+
+        # --- compose with ProcessModel if sub-flowsheets exist ---
+        has_sub_flowsheets = bool(sub_flowsheet_vars)
+        if has_sub_flowsheets:
+            _a('# ============================================================')
+            _a('# Compose process areas into ProcessModel')
+            _a('# ============================================================')
+            _a('plant = ProcessModel()')
+            _a('plant.add("Main", process)')
+            for sf_name, sf_var in sub_flowsheet_vars:
+                _a(f'plant.add("{sf_name}", {sf_var})')
+            _a('')
 
         # --- run ---
         _a('# ============================================================')
         _a('# Run simulation')
         _a('# ============================================================')
-        _a('process.run()')
-        _a('')
-        _a('# Print key stream results')
-        _a('for i in range(int(process.getUnitOperations().size())):')
-        _a('    u = process.getUnitOperations().get(i)')
-        _a('    try:')
-        _a('        T = float(u.getTemperature()) - 273.15')
-        _a('        P = float(u.getPressure())')
-        _a('        print(f"  {str(u.getName()):40s}  T={T:8.1f} °C   P={P:8.2f} bara")')
-        _a('    except Exception:')
-        _a('        pass')
+        if has_sub_flowsheets:
+            _a('plant.run()')
+            _a('print(plant.getConvergenceSummary())')
+            _a('')
+            _a('# Print key stream results per process area')
+            _a('for area_name in ["Main"'
+               + ''.join(f', "{sf_name}"'
+                         for sf_name, _ in sub_flowsheet_vars)
+               + ']:')
+            _a('    area = plant.get(area_name)')
+            _a('    print(f"\\n=== {area_name} ===")')
+            _a('    for i in range(int(area.getUnitOperations().size())):')
+            _a('        u = area.getUnitOperations().get(i)')
+            _a('        try:')
+            _a('            T = float(u.getTemperature()) - 273.15')
+            _a('            P = float(u.getPressure())')
+            _a('            print(f"  {str(u.getName()):40s}  '
+               'T={T:8.1f} °C   P={P:8.2f} bara")')
+            _a('        except Exception:')
+            _a('            pass')
+        else:
+            _a('process.run()')
+            _a('')
+            _a('# Print key stream results')
+            _a('for i in range(int(process.getUnitOperations().size())):')
+            _a('    u = process.getUnitOperations().get(i)')
+            _a('    try:')
+            _a('        T = float(u.getTemperature()) - 273.15')
+            _a('        P = float(u.getPressure())')
+            _a('        print(f"  {str(u.getName()):40s}  T={T:8.1f} °C   '
+               'P={P:8.2f} bara")')
+            _a('    except Exception:')
+            _a('        pass')
 
         return '\n'.join(lines)
 
@@ -2961,6 +3003,7 @@ class UniSimToNeqSim:
 
         # ---- Cells 8..N: Equipment ----
         _md('### Equipment')
+        sub_flowsheet_vars = []  # Track sub-flowsheet ProcessSystem vars
         for op in topo['sorted_ops']:
             neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
             if neqsim_type is None or neqsim_type in self.SKIPPED_NEQSIM_TYPES:
@@ -2971,26 +3014,74 @@ class UniSimToNeqSim:
             eq_lines = self._gen_equipment_lines(op, topo)
             if eq_lines:
                 _code(eq_lines)
+            # Collect sub-flowsheet variable names for ProcessModel
+            if neqsim_type == 'SubFlowsheet':
+                var_names = topo['var_names']
+                v = var_names.get(op.name, self._to_pyvar(op.name))
+                sub_flowsheet_vars.append((op.name, v))
+
+        # ---- Compose with ProcessModel if sub-flowsheets exist ----
+        has_sub_flowsheets = bool(sub_flowsheet_vars)
+        if has_sub_flowsheets:
+            _md('## Compose Process Areas\n\n'
+                'Combine the main process and sub-flowsheet ProcessSystems '
+                'into a `ProcessModel` for coordinated execution.')
+            compose_lines = [
+                'plant = ProcessModel()',
+                'plant.add("Main", process)',
+            ]
+            for sf_name, sf_var in sub_flowsheet_vars:
+                compose_lines.append(
+                    f'plant.add("{sf_name}", {sf_var})')
+            _code(compose_lines)
 
         # ---- Run cell ----
         _md('## Run Simulation')
-        _code(['process.run()'])
+        if has_sub_flowsheets:
+            _code(['plant.run()',
+                    'print(plant.getConvergenceSummary())'])
+        else:
+            _code(['process.run()'])
 
         # ---- Results cell ----
         _md('## Results\n\n'
             'Print temperature, pressure and flow for every unit operation.')
-        results_code = [
-            'print(f"{\'Unit\':40s}  {\'T (°C)\':>10s}  {\'P (bara)\':>10s}")',
-            'print("-" * 65)',
-            'for i in range(int(process.getUnitOperations().size())):',
-            '    u = process.getUnitOperations().get(i)',
-            '    try:',
-            '        T = float(u.getTemperature()) - 273.15',
-            '        P = float(u.getPressure())',
-            '        print(f"  {str(u.getName()):40s}  {T:8.1f}    {P:8.2f}")',
-            '    except Exception:',
-            '        pass',
-        ]
+        if has_sub_flowsheets:
+            results_code = [
+                'for area_name in ["Main"'
+                + ''.join(f', "{sf_name}"'
+                          for sf_name, _ in sub_flowsheet_vars)
+                + ']:',
+                '    area = plant.get(area_name)',
+                '    print(f"\\n=== {area_name} ===")',
+                '    print(f"{\'Unit\':40s}  {\'T (°C)\':>10s}  '
+                '{\'P (bara)\':>10s}")',
+                '    print("-" * 65)',
+                '    for i in range(int(area.getUnitOperations().size())):',
+                '        u = area.getUnitOperations().get(i)',
+                '        try:',
+                '            T = float(u.getTemperature()) - 273.15',
+                '            P = float(u.getPressure())',
+                '            print(f"  {str(u.getName()):40s}  '
+                '{T:8.1f}    {P:8.2f}")',
+                '        except Exception:',
+                '            pass',
+            ]
+        else:
+            results_code = [
+                'print(f"{\'Unit\':40s}  {\'T (°C)\':>10s}  '
+                '{\'P (bara)\':>10s}")',
+                'print("-" * 65)',
+                'for i in range(int(process.getUnitOperations().size())):',
+                '    u = process.getUnitOperations().get(i)',
+                '    try:',
+                '        T = float(u.getTemperature()) - 273.15',
+                '        P = float(u.getPressure())',
+                '        print(f"  {str(u.getName()):40s}  '
+                '{T:8.1f}    {P:8.2f}")',
+                '    except Exception:',
+                '        pass',
+            ]
         _code(results_code)
 
         # ---- Warnings cell (if any) ----
