@@ -3701,13 +3701,31 @@ public class ProcessSystem extends SimulationBaseClass {
               // fall through to default outlet
             }
           }
+          // Handle HeatExchanger which uses getOutStream(int) instead of getOutletStream()
+          if (unit instanceof HeatExchanger) {
+            return ((HeatExchanger) unit).getOutStream(0);
+          }
           return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       }
     } catch (NoSuchMethodException e) {
+      // Fallback chain: getOutStream(int) -> getOutletStreams().get(0) -> getOutStream()
       try {
-        return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
-      } catch (Exception ex) {
-        return null;
+        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class)
+            .invoke(unit, 0);
+      } catch (Exception ex2) {
+        try {
+          List<StreamInterface> outlets = unit.getOutletStreams();
+          if (outlets != null && !outlets.isEmpty()) {
+            return outlets.get(0);
+          }
+        } catch (Exception ex3) {
+          // ignore
+        }
+        try {
+          return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+        } catch (Exception ex4) {
+          return null;
+        }
       }
     } catch (Exception e) {
       return null;
