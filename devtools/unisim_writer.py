@@ -128,6 +128,23 @@ NEQSIM_TO_UNISIM_COMPONENT = {
     'c-hexane': 'c-Hexane',
 }
 
+# Approximate molar mass (g/mol) for common components, used to convert
+# mass flow (kg/h) to molar flow (kgmole/s) for the UniSim COM feed spec.
+_COMPONENT_MW = {
+    'nitrogen': 28.014, 'CO2': 44.010, 'methane': 16.043,
+    'ethane': 30.070, 'propane': 44.096, 'i-butane': 58.123,
+    'n-butane': 58.123, 'i-pentane': 72.150, 'n-pentane': 72.150,
+    'n-hexane': 86.177, 'n-heptane': 100.204, 'n-octane': 114.231,
+    'n-nonane': 128.258, 'nC10': 142.285, 'water': 18.015,
+    'hydrogen': 2.016, 'H2S': 34.081, 'oxygen': 31.998,
+    'argon': 39.948, 'helium': 4.003, 'CO': 28.010,
+    'methanol': 32.042, 'ethanol': 46.069, 'benzene': 78.114,
+    'toluene': 92.141, 'cyclohexane': 84.161, 'MEG': 62.068,
+    'TEG': 150.174, 'DEG': 106.120, 'ammonia': 17.031,
+    'SO2': 64.066, 'COS': 60.075, 'ethylene': 28.054,
+    'propene': 42.081,
+}
+
 # NeqSim EOS model name -> UniSim property package name
 NEQSIM_TO_UNISIM_PROPERTY_PACKAGE = {
     'SRK': 'SRK',
@@ -587,6 +604,22 @@ class UniSimWriter:
             return value
         return None  # unknown unit — skip Calculate fallback
 
+    @staticmethod
+    def _estimate_molar_mass(fluid: 'ParsedFluid') -> Optional[float]:
+        """Estimate mixture molar mass (g/mol) from composition.
+
+        Returns None if any component MW is unknown.
+        """
+        if not fluid or not fluid.components:
+            return None
+        mw_mix = 0.0
+        for comp, frac in fluid.components.items():
+            mw = _COMPONENT_MW.get(comp)
+            if mw is None:
+                return None  # unknown component — can't compute
+            mw_mix += frac * mw
+        return mw_mix if mw_mix > 0 else None
+
     def close(self):
         """Close UniSim application."""
         if self._app is not None:
@@ -654,30 +687,48 @@ class UniSimWriter:
             except Exception as e:
                 self._warnings.append("Could not re-enable solver: %s" % e)
 
-        # Re-set feed stream flow rates (needs solver active + composition)
+        # Re-set feed stream flow rates via MolarFlow.Calculate.
+        # MolarFlow (internal unit: kgmole/s) is the most reliable way
+        # to set flow in UniSim COM — MassFlow.Calculate persists on the
+        # feed but doesn't propagate to downstream equipment.
         for ps in systems:
+            mw = self._estimate_molar_mass(ps.fluid)
             for feed in ps.feed_streams:
                 if feed.flow_rate_kghr is not None:
                     ms = self._stream_objects.get(feed.name)
-                    if ms is not None:
+                    if ms is None:
+                        continue
+                    # Try MolarFlow first (converts kg/h -> kgmole/s)
+                    flow_set = False
+                    if mw and mw > 0:
+                        kgmol_s = feed.flow_rate_kghr / 3600.0 / mw
+                        try:
+                            ms.MolarFlow.Calculate(kgmol_s)
+                            flow_set = True
+                            time.sleep(self.COM_DELAY_MEDIUM)
+                            logger.info(
+                                "Set flow on %s: %.0f kg/h "
+                                "(%.3f kgmol/s, MW=%.1f)",
+                                feed.name, feed.flow_rate_kghr,
+                                kgmol_s, mw)
+                        except Exception:
+                            pass
+                    # Fallback: MassFlow
+                    if not flow_set:
                         if not self._set_variable(
                                 ms.MassFlow, feed.flow_rate_kghr,
                                 'kg/h', f"{feed.name}.F"):
                             self._warnings.append(
-                                f"Could not re-set flow on '{feed.name}'")
-                        else:
-                            time.sleep(self.COM_DELAY_MEDIUM)
-                            logger.info("Re-set flow on %s: %.0f kg/h",
-                                       feed.name, feed.flow_rate_kghr)
+                                f"Could not set flow on '{feed.name}'")
 
         # Save if requested
         if save_path:
             abs_path = os.path.abspath(save_path)
             try:
                 self._case.SaveAs(abs_path)
-            except Exception:
-                self._case.Save(abs_path)
-            logger.info(f"Saved UniSim case to: {abs_path}")
+                logger.info("Saved UniSim case: %s", abs_path)
+            except Exception as e:
+                self._warnings.append(f"Could not save: {e}")
 
         return self._case
 
