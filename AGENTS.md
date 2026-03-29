@@ -510,7 +510,8 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
 | `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
 | `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
-| `devtools/unisim_reader.py` | UniSim COM reader → NeqSim JSON/Python (UniSimReader, UniSimToNeqSim, UniSimComparator) |
+| `devtools/unisim_reader.py` | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ op types, port-specific forward refs, auto-recycle wiring. |
+| `devtools/test_unisim_outputs.py` | 14 tests for all UniSim converter output modes (no COM needed — synthetic models) |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
 | `src/main/java/neqsim/process/mechanicaldesign/` | Engineering deliverables (StudyClass, InstrumentScheduleGenerator, etc.) |
 | `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` | HX thermal-hydraulic design (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
@@ -553,6 +554,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost, tieback analysis |
 | `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
 | `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
+| `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification |
 
 ## API Verification (Mandatory)
 
