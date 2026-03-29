@@ -1530,10 +1530,15 @@ class UniSimToNeqSim:
 
         For each producer name in fwd_ref_placeholders, create a ``_fwd_XXX``
         variable name and register it in var_names / used_vars / fwd_ref_vars.
+        For multi-outlet equipment (Separator, ThreePhaseSeparator), also
+        create port-specific placeholder vars so that downstream equipment
+        can reference the correct outlet (gasOut vs liquidOut).
         This must be called before any code generation that uses _outlet_ref.
         """
         used_vars = topo['used_vars']
         fwd_ref_vars = topo['fwd_ref_vars']
+        sorted_ops = topo.get('sorted_ops', [])
+        op_by_name = {op.name: op for op in sorted_ops}
         for prod_name in sorted(topo['fwd_ref_placeholders']):
             if prod_name in fwd_ref_vars:
                 continue  # already registered
@@ -1544,6 +1549,20 @@ class UniSimToNeqSim:
             pv = f'_fwd_{pv}'
             used_vars.add(pv)
             fwd_ref_vars[prod_name] = pv
+            # Create port-specific placeholders for multi-outlet equipment
+            op = op_by_name.get(prod_name)
+            if op:
+                n_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+                if n_type == 'Separator' and len(op.products or []) >= 2:
+                    ports = ['gasOut', 'liquidOut']
+                elif n_type == 'ThreePhaseSeparator' and len(op.products or []) >= 3:
+                    ports = ['gasOut', 'oilOut', 'waterOut']
+                else:
+                    ports = []
+                for port in ports:
+                    port_var = f'{pv}_{port}'
+                    used_vars.add(port_var)
+                    fwd_ref_vars[f'{prod_name}.{port}'] = port_var
 
     @staticmethod
     def _outlet_ref(ref: str, var_names: dict, fwd_ref_vars: dict = None) -> str:
@@ -1555,9 +1574,12 @@ class UniSimToNeqSim:
         if '.' not in ref:
             return var_names.get(ref, UniSimToNeqSim._to_pyvar(ref))
         parent, port = ref.rsplit('.', 1)
-        # If this parent is a forward-reference placeholder, return
-        # the placeholder stream directly (it's a Stream, not equipment)
+        # If this parent is a forward-reference placeholder, check for
+        # a port-specific placeholder first (e.g. separator gasOut/liquidOut)
         if fwd_ref_vars and parent in fwd_ref_vars:
+            port_key = f'{parent}.{port}'
+            if port_key in fwd_ref_vars:
+                return fwd_ref_vars[port_key]
             return fwd_ref_vars[parent]
         pvar = var_names.get(parent, UniSimToNeqSim._to_pyvar(parent))
         port_methods = {
@@ -1967,6 +1989,33 @@ class UniSimToNeqSim:
         # equipment — they produce only TODO comments, no process.add()
         if neqsim_type not in ('PIDController', 'LogicalOp'):
             lines.append(f'process.add({v})')
+
+        # Wire actual separator/3-phase outlets back to forward ref placeholders
+        if neqsim_type in ('Separator', 'ThreePhaseSeparator'):
+            fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
+            if neqsim_type == 'Separator':
+                port_info = [('gasOut', 'getGasOutStream()'),
+                             ('liquidOut', 'getLiquidOutStream()')]
+            else:
+                port_info = [('gasOut', 'getGasOutStream()'),
+                             ('oilOut', 'getOilOutStream()'),
+                             ('waterOut', 'getWaterOutStream()')]
+            for port_name, port_method in port_info:
+                port_key = f'{op.name}.{port_name}'
+                if port_key in fwd_ref_vars_map:
+                    port_pv = fwd_ref_vars_map[port_key]
+                    rcy_var = f'_rcy_{v}_{port_name}'
+                    lines.append(
+                        f'# Auto-recycle: wire {op.name} {port_name} '
+                        f'back to forward ref placeholder')
+                    lines.append(
+                        f'{rcy_var} = Recycle("{op.name}_{port_name}_loop")')
+                    lines.append(
+                        f'{rcy_var}.addStream({v}.{port_method})')
+                    lines.append(
+                        f'{rcy_var}.setOutletStream({port_pv})')
+                    lines.append(f'process.add({rcy_var})')
+
         return lines
 
     def _find_sub_flowsheet_for_op(self, op: 'UniSimOperation',
@@ -2564,21 +2613,68 @@ class UniSimToNeqSim:
             _a('# --- Placeholder streams for forward references (recycle loops) ---')
             self._register_fwd_placeholders(topo)
             stream_by_name = topo.get('stream_by_name', {})
+            fwd_ref_vars = topo['fwd_ref_vars']
             for prod_name in sorted(fwd_ref_placeholders):
-                placeholder_var = topo['fwd_ref_vars'][prod_name]
-                sd = None
-                for op_ in topo['sorted_ops']:
-                    if op_.name == prod_name and op_.products:
-                        sd = stream_by_name.get(op_.products[0])
+                placeholder_var = fwd_ref_vars[prod_name]
+                op_ = None
+                for o_ in topo['sorted_ops']:
+                    if o_.name == prod_name:
+                        op_ = o_
                         break
-                _a(f'# Forward reference placeholder for "{prod_name}" (in a recycle loop)')
-                _a(f'{placeholder_var} = Stream("{prod_name} (placeholder)", fluid.clone())')
+                n_type = UniSimReader.OPERATION_TYPE_MAP.get(
+                    op_.type_name) if op_ else None
+                # Determine port-specific placeholders for multi-outlet equipment
+                if n_type == 'Separator' and op_ and len(op_.products or []) >= 2:
+                    ports = ['gasOut', 'liquidOut']
+                elif (n_type == 'ThreePhaseSeparator'
+                      and op_ and len(op_.products or []) >= 3):
+                    ports = ['gasOut', 'oilOut', 'waterOut']
+                else:
+                    ports = []
+                if ports:
+                    for idx, port in enumerate(ports):
+                        port_key = f'{prod_name}.{port}'
+                        port_pv = fwd_ref_vars.get(port_key)
+                        if not port_pv:
+                            continue
+                        sd = (stream_by_name.get(op_.products[idx])
+                              if op_ and idx < len(op_.products) else None)
+                        _a(f'# Forward reference placeholder for '
+                           f'"{prod_name}" {port}')
+                        _a(f'{port_pv} = Stream("{prod_name} {port} '
+                           f'(placeholder)", fluid.clone())')
+                        if sd and sd.temperature_C is not None:
+                            _a(f'{port_pv}.setTemperature('
+                               f'{sd.temperature_C}, "C")')
+                        if sd and sd.pressure_bara is not None:
+                            _a(f'{port_pv}.setPressure('
+                               f'{sd.pressure_bara}, "bara")')
+                        if (sd and sd.mass_flow_kgh is not None
+                                and sd.mass_flow_kgh > 0):
+                            _a(f'{port_pv}.setFlowRate('
+                               f'{sd.mass_flow_kgh}, "kg/hr")')
+                        _a(f'process.add({port_pv})')
+                    # Also create default placeholder (first product)
+                    sd = (stream_by_name.get(op_.products[0])
+                          if op_ and op_.products else None)
+                else:
+                    sd = None
+                    if op_ and op_.products:
+                        sd = stream_by_name.get(op_.products[0])
+                _a(f'# Forward reference placeholder for "{prod_name}" '
+                   f'(in a recycle loop)')
+                _a(f'{placeholder_var} = Stream("{prod_name} (placeholder)",'
+                   f' fluid.clone())')
                 if sd and sd.temperature_C is not None:
-                    _a(f'{placeholder_var}.setTemperature({sd.temperature_C}, "C")')
+                    _a(f'{placeholder_var}.setTemperature('
+                       f'{sd.temperature_C}, "C")')
                 if sd and sd.pressure_bara is not None:
-                    _a(f'{placeholder_var}.setPressure({sd.pressure_bara}, "bara")')
-                if sd and sd.mass_flow_kgh is not None and sd.mass_flow_kgh > 0:
-                    _a(f'{placeholder_var}.setFlowRate({sd.mass_flow_kgh}, "kg/hr")')
+                    _a(f'{placeholder_var}.setPressure('
+                       f'{sd.pressure_bara}, "bara")')
+                if (sd and sd.mass_flow_kgh is not None
+                        and sd.mass_flow_kgh > 0):
+                    _a(f'{placeholder_var}.setFlowRate('
+                       f'{sd.mass_flow_kgh}, "kg/hr")')
                 _a(f'process.add({placeholder_var})')
                 _a('')
 
@@ -2792,15 +2888,61 @@ class UniSimToNeqSim:
             placeholder_lines = [
                 '# Placeholder streams for forward references (recycle loops)']
             stream_by_name = topo.get('stream_by_name', {})
+            fwd_ref_vars = topo['fwd_ref_vars']
             for prod_name in sorted(fwd_ref_placeholders):
-                pv = topo['fwd_ref_vars'][prod_name]
-                sd = None
-                for op_ in topo['sorted_ops']:
-                    if op_.name == prod_name and op_.products:
-                        sd = stream_by_name.get(op_.products[0])
+                pv = fwd_ref_vars[prod_name]
+                op_ = None
+                for o_ in topo['sorted_ops']:
+                    if o_.name == prod_name:
+                        op_ = o_
                         break
+                n_type = UniSimReader.OPERATION_TYPE_MAP.get(
+                    op_.type_name) if op_ else None
+                if (n_type == 'Separator'
+                        and op_ and len(op_.products or []) >= 2):
+                    ports = ['gasOut', 'liquidOut']
+                elif (n_type == 'ThreePhaseSeparator'
+                      and op_ and len(op_.products or []) >= 3):
+                    ports = ['gasOut', 'oilOut', 'waterOut']
+                else:
+                    ports = []
+                if ports:
+                    for idx, port in enumerate(ports):
+                        port_key = f'{prod_name}.{port}'
+                        port_pv = fwd_ref_vars.get(port_key)
+                        if not port_pv:
+                            continue
+                        sd = (stream_by_name.get(op_.products[idx])
+                              if op_ and idx < len(op_.products) else None)
+                        placeholder_lines.append(
+                            f'# Forward ref: "{prod_name}" {port}')
+                        placeholder_lines.append(
+                            f'{port_pv} = Stream("{prod_name} {port} '
+                            f'(placeholder)", fluid.clone())')
+                        if sd and sd.temperature_C is not None:
+                            placeholder_lines.append(
+                                f'{port_pv}.setTemperature('
+                                f'{sd.temperature_C}, "C")')
+                        if sd and sd.pressure_bara is not None:
+                            placeholder_lines.append(
+                                f'{port_pv}.setPressure('
+                                f'{sd.pressure_bara}, "bara")')
+                        if (sd and sd.mass_flow_kgh is not None
+                                and sd.mass_flow_kgh > 0):
+                            placeholder_lines.append(
+                                f'{port_pv}.setFlowRate('
+                                f'{sd.mass_flow_kgh}, "kg/hr")')
+                        placeholder_lines.append(
+                            f'process.add({port_pv})')
+                    sd = (stream_by_name.get(op_.products[0])
+                          if op_ and op_.products else None)
+                else:
+                    sd = None
+                    if op_ and op_.products:
+                        sd = stream_by_name.get(op_.products[0])
                 placeholder_lines.append(
-                    f'{pv} = Stream("{prod_name} (placeholder)", fluid.clone())')
+                    f'{pv} = Stream("{prod_name} (placeholder)", '
+                    f'fluid.clone())')
                 if sd and sd.temperature_C is not None:
                     placeholder_lines.append(
                         f'{pv}.setTemperature({sd.temperature_C}, "C")')
@@ -3044,18 +3186,61 @@ class UniSimToNeqSim:
         if fwd_ref_placeholders:
             self._register_fwd_placeholders(topo)
             _a(f'{indent}# --- Placeholder streams for recycle forward references ---')
+            fwd_ref_vars = topo['fwd_ref_vars']
             for prod_name in sorted(fwd_ref_placeholders):
-                pv = topo['fwd_ref_vars'][prod_name]
-                sd = None
-                for op_ in topo['sorted_ops']:
-                    if op_.name == prod_name and op_.products:
-                        sd = stream_by_name.get(op_.products[0])
+                pv = fwd_ref_vars[prod_name]
+                op_ = None
+                for o_ in topo['sorted_ops']:
+                    if o_.name == prod_name:
+                        op_ = o_
                         break
-                t_val = f'{sd.temperature_C}' if sd and sd.temperature_C is not None else '15.0'
-                p_val = f'{sd.pressure_bara}' if sd and sd.pressure_bara is not None else '1.0'
-                fl_val = f'{sd.mass_flow_kgh}' if sd and sd.mass_flow_kgh and sd.mass_flow_kgh > 0 else '1000.0'
-                _a(f'{indent}{pv} = get_stream("{prod_name} (placeholder)", fluid, '
-                   f'flow_rate={fl_val}, pressure={p_val}, temperature={t_val})')
+                n_type = UniSimReader.OPERATION_TYPE_MAP.get(
+                    op_.type_name) if op_ else None
+                if (n_type == 'Separator'
+                        and op_ and len(op_.products or []) >= 2):
+                    ports = ['gasOut', 'liquidOut']
+                elif (n_type == 'ThreePhaseSeparator'
+                      and op_ and len(op_.products or []) >= 3):
+                    ports = ['gasOut', 'oilOut', 'waterOut']
+                else:
+                    ports = []
+                if ports:
+                    for idx, port in enumerate(ports):
+                        port_key = f'{prod_name}.{port}'
+                        port_pv = fwd_ref_vars.get(port_key)
+                        if not port_pv:
+                            continue
+                        sd = (stream_by_name.get(op_.products[idx])
+                              if op_ and idx < len(op_.products) else None)
+                        t_val = (f'{sd.temperature_C}'
+                                 if sd and sd.temperature_C is not None
+                                 else '15.0')
+                        p_val = (f'{sd.pressure_bara}'
+                                 if sd and sd.pressure_bara is not None
+                                 else '1.0')
+                        fl_val = (f'{sd.mass_flow_kgh}'
+                                  if sd and sd.mass_flow_kgh
+                                  and sd.mass_flow_kgh > 0 else '1000.0')
+                        _a(f'{indent}{port_pv} = get_stream('
+                           f'"{prod_name} {port} (placeholder)", fluid, '
+                           f'flow_rate={fl_val}, pressure={p_val}, '
+                           f'temperature={t_val})')
+                    sd = (stream_by_name.get(op_.products[0])
+                          if op_ and op_.products else None)
+                else:
+                    sd = None
+                    if op_ and op_.products:
+                        sd = stream_by_name.get(op_.products[0])
+                t_val = (f'{sd.temperature_C}'
+                         if sd and sd.temperature_C is not None else '15.0')
+                p_val = (f'{sd.pressure_bara}'
+                         if sd and sd.pressure_bara is not None else '1.0')
+                fl_val = (f'{sd.mass_flow_kgh}'
+                          if sd and sd.mass_flow_kgh
+                          and sd.mass_flow_kgh > 0 else '1000.0')
+                _a(f'{indent}{pv} = get_stream("{prod_name} (placeholder)",'
+                   f' fluid, flow_rate={fl_val}, pressure={p_val}, '
+                   f'temperature={t_val})')
             _a('')
 
         # ---- equipment ----
@@ -3283,12 +3468,21 @@ class UniSimToNeqSim:
             if p_out:
                 lines.append(f'{var}.setOutletPressure({p_out})')
             eff = op.properties.get('adiabatic_efficiency')
+            if eff is not None and eff > 1:
+                eff = eff / 100.0  # convert percentage to fraction
+            poly = op.properties.get('polytropic_efficiency')
+            if poly is not None and poly > 1:
+                poly = poly / 100.0  # convert percentage to fraction
             if eff and 0 < eff <= 1:
                 lines.append(f'{var}.setIsentropicEfficiency({eff})')
-            poly = op.properties.get('polytropic_efficiency')
-            if poly and 0 < poly <= 1:
+            elif poly and 0 < poly <= 1:
                 lines.append(f'{var}.setPolytropicEfficiency({poly})')
                 lines.append(f'{var}.setUsePolytropicCalc(True)')
+            else:
+                # No efficiency extracted — use engineering default
+                lines.append(f'{var}.setIsentropicEfficiency(0.75)')
+                lines.append(f'# WARNING: compressor efficiency not available '
+                             f'from source model — using 75% default')
 
         elif neqsim_type == 'ThrottlingValve':
             p_out = op.properties.get('outlet_pressure_bara')
@@ -3371,9 +3565,10 @@ class UniSimComparator:
 
         # Get NeqSim equipment and their outlet streams
         try:
-            n_units = self.neqsim_process.size()
+            ops = self.neqsim_process.getUnitOperations()
+            n_units = int(ops.size())
             for i in range(n_units):
-                unit = self.neqsim_process.getUnit(i)
+                unit = ops.get(i)
                 unit_name = str(unit.getName())
 
                 # Check if this unit name matches a UniSim stream
