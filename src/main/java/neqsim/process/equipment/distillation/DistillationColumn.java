@@ -115,6 +115,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private transient boolean hasBeenSolvedBefore = false;
 
+  /**
+   * Total feed flow (kg/hr) recorded at the end of the previous solve. Used to detect whether the
+   * column needs to re-solve or can reuse the previous result.
+   */
+  private transient double lastTotalFeedFlow = -1.0;
+
   /** Mechanical design for the distillation column. */
   private DistillationColumnMechanicalDesign mechanicalDesign;
 
@@ -961,7 +967,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double relaxation =
         Math.max(minSequentialRelaxation, Math.min(maxAdaptiveRelaxation, initialRelaxation));
 
-    trays.get(firstFeedTrayNumber).run(id);
+    // Run the feed tray to establish initial conditions.
+    // On re-runs this is skipped because the tray already holds a valid state
+    // from the previous solve; running it unrelaxed would perturb the state
+    // and can trigger divergence.
+    if (!hasBeenSolvedBefore) {
+      trays.get(firstFeedTrayNumber).run(id);
+    }
 
     // Compute total feed flow for divergence detection.
     double totalFeedFlow = 0.0;
@@ -973,16 +985,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double divergenceThreshold = Math.max(totalFeedFlow * 50.0, 1.0e3);
     boolean divergenceRecoveryApplied = false;
 
-    // On re-runs, seed previous-stream arrays from the current tray state so that
+    // Snapshot tray state before iterations as a safe recovery point.
+    StreamInterface[] snapshotGasStreams = new StreamInterface[numberOfTrays];
+    StreamInterface[] snapshotLiquidStreams = new StreamInterface[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      snapshotGasStreams[i] = trays.get(i).getGasOutStream().clone();
+      snapshotGasStreams[i].run();
+      snapshotLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+      snapshotLiquidStreams[i].run();
+    }
+
+    // On re-runs, seed previous-stream arrays from the snapshot so that
     // relaxation-based damping is active from the very first iteration.
     if (hasBeenSolvedBefore) {
       for (int i = 0; i < numberOfTrays; i++) {
-        previousGasStreams[i] = trays.get(i).getGasOutStream().clone();
+        previousGasStreams[i] = snapshotGasStreams[i].clone();
         previousGasStreams[i].run();
-        previousLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+        previousLiquidStreams[i] = snapshotLiquidStreams[i].clone();
         previousLiquidStreams[i].run();
       }
-      relaxation = Math.min(relaxation, 0.75);
     }
 
     int baseIterationLimit = computeIterationLimit();
@@ -1087,8 +1108,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       previousCombinedResidual = combinedResidual;
 
       // Divergence recovery: if flows have grown far beyond the total feed,
-      // the sequential iteration is unstable. Seed the previous-stream arrays
-      // from the current (init-based) tray state and drop to minimum relaxation
+      // the sequential iteration is unstable. Restore previous-stream arrays
+      // from the pre-iteration snapshot and drop to minimum relaxation
       // so that subsequent iterations are heavily damped. This is a one-shot
       // recovery that does not fire when the column is already converging.
       if (!divergenceRecoveryApplied && iter <= 10) {
@@ -1102,16 +1123,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         if (maxTrayFlow > divergenceThreshold) {
           relaxation = minSequentialRelaxation;
           for (int i = 0; i < numberOfTrays; i++) {
-            previousGasStreams[i] = trays.get(i).getGasOutStream().clone();
+            previousGasStreams[i] = snapshotGasStreams[i].clone();
             previousGasStreams[i].run();
-            previousLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+            previousLiquidStreams[i] = snapshotLiquidStreams[i].clone();
             previousLiquidStreams[i].run();
           }
           divergenceRecoveryApplied = true;
           previousCombinedResidual = Double.POSITIVE_INFINITY;
           logger.info(
               "Divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
-                  + "Seeding previous streams and reducing relaxation to {}.",
+                  + "Restoring from snapshot and reducing relaxation to {}.",
               iter, maxTrayFlow, divergenceThreshold, relaxation);
         }
       }
@@ -1122,6 +1143,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
         if (currentLiquidStreams[i] != null) {
           previousLiquidStreams[i] = currentLiquidStreams[i];
+        }
+      }
+
+      // Absolute flow magnitude check: if tray flows are vastly larger than
+      // the total feed, the solver has diverged beyond recovery. Break early
+      // and report a large mass residual so callers can detect the failure.
+      if (divergenceRecoveryApplied && iter > 15) {
+        double maxFlow = 0.0;
+        for (int i = 0; i < numberOfTrays; i++) {
+          maxFlow =
+              Math.max(maxFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
+          maxFlow =
+              Math.max(maxFlow, Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
+        }
+        if (maxFlow > 1000.0 * totalFeedFlow) {
+          logger.warn("Column solver diverged: maxTrayFlow={} exceeds 1000x totalFeed={}. "
+              + "Terminating at iteration {}.", maxFlow, totalFeedFlow, iter);
+          massErr = maxFlow / Math.max(1.0, totalFeedFlow);
+          break;
         }
       }
 
@@ -1167,6 +1207,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastEnergyResidual = energyErr;
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     hasBeenSolvedBefore = true;
+    lastTotalFeedFlow = totalFeedFlow;
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
@@ -1289,7 +1330,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     double relaxation = Math.max(minInsideOutRelaxation, Math.min(maxAdaptiveRelaxation, 0.8));
 
-    trays.get(firstFeedTrayNumber).run(id);
+    if (!hasBeenSolvedBefore) {
+      trays.get(firstFeedTrayNumber).run(id);
+    }
 
     // Compute total feed flow for divergence detection.
     double totalFeedFlowIO = 0.0;
@@ -1301,16 +1344,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double divergenceThresholdIO = Math.max(totalFeedFlowIO * 50.0, 1.0e3);
     boolean divergenceRecoveryAppliedIO = false;
 
-    // On re-runs, seed previous-stream arrays from the current tray state so that
-    // relaxation-based damping is active from the very first iteration.
+    // Snapshot tray state before iterations as a safe recovery point.
+    StreamInterface[] snapshotGasStreamsIO = new StreamInterface[numberOfTrays];
+    StreamInterface[] snapshotLiquidStreamsIO = new StreamInterface[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      snapshotGasStreamsIO[i] = trays.get(i).getGasOutStream().clone();
+      snapshotGasStreamsIO[i].run();
+      snapshotLiquidStreamsIO[i] = trays.get(i).getLiquidOutStream().clone();
+      snapshotLiquidStreamsIO[i].run();
+    }
+
+    // On re-runs, seed previous-stream arrays from the snapshot.
     if (hasBeenSolvedBefore) {
       for (int i = 0; i < numberOfTrays; i++) {
-        previousGasStreams[i] = trays.get(i).getGasOutStream().clone();
+        previousGasStreams[i] = snapshotGasStreamsIO[i].clone();
         previousGasStreams[i].run();
-        previousLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+        previousLiquidStreams[i] = snapshotLiquidStreamsIO[i].clone();
         previousLiquidStreams[i].run();
       }
-      relaxation = Math.min(relaxation, 0.75);
     }
 
     int baseIterationLimit = computeIterationLimit();
@@ -1423,16 +1474,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         if (maxTrayFlow > divergenceThresholdIO) {
           relaxation = minInsideOutRelaxation;
           for (int i = 0; i < numberOfTrays; i++) {
-            previousGasStreams[i] = trays.get(i).getGasOutStream().clone();
+            previousGasStreams[i] = snapshotGasStreamsIO[i].clone();
             previousGasStreams[i].run();
-            previousLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+            previousLiquidStreams[i] = snapshotLiquidStreamsIO[i].clone();
             previousLiquidStreams[i].run();
           }
           divergenceRecoveryAppliedIO = true;
           previousCombinedResidual = Double.POSITIVE_INFINITY;
           logger.info(
               "inside-out divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
-                  + "Seeding previous streams and reducing relaxation to {}.",
+                  + "Restoring from snapshot and reducing relaxation to {}.",
               iter, maxTrayFlow, divergenceThresholdIO, relaxation);
         }
       }
@@ -1443,6 +1494,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
         if (currentLiquidStreams[i] != null) {
           previousLiquidStreams[i] = currentLiquidStreams[i];
+        }
+      }
+
+      // Absolute flow magnitude check (same as solveSequential).
+      if (divergenceRecoveryAppliedIO && iter > 15) {
+        double maxFlow = 0.0;
+        for (int i = 0; i < numberOfTrays; i++) {
+          maxFlow =
+              Math.max(maxFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
+          maxFlow =
+              Math.max(maxFlow, Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
+        }
+        if (maxFlow > 1000.0 * totalFeedFlowIO) {
+          logger.warn("Inside-out solver diverged: maxTrayFlow={} exceeds 1000x totalFeed={}. "
+              + "Terminating at iteration {}.", maxFlow, totalFeedFlowIO, iter);
+          massErr = maxFlow / Math.max(1.0, totalFeedFlowIO);
+          break;
         }
       }
 
@@ -1634,6 +1702,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastEnergyResidual = energyErr;
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     hasBeenSolvedBefore = true;
+    lastTotalFeedFlow = totalFeedFlowIO;
 
     gasOutStream
         .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
