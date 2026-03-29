@@ -158,8 +158,10 @@ def neqsim_classes(ns):
         "neqsim.thermodynamicoperations.ThermodynamicOperations"
     )
 
-    # Process
+    # Process model
     ns.ProcessSystem = JClass("neqsim.process.processmodel.ProcessSystem")
+    ns.ProcessModel = JClass("neqsim.process.processmodel.ProcessModel")
+    ns.ProcessModule = JClass("neqsim.process.processmodel.ProcessModule")
     ns.Stream = JClass("neqsim.process.equipment.stream.Stream")
     ns.Separator = JClass("neqsim.process.equipment.separator.Separator")
     ns.ThreePhaseSeparator = JClass(
@@ -187,6 +189,25 @@ def neqsim_classes(ns):
     )
     ns.Recycle = JClass("neqsim.process.equipment.util.Recycle")
     ns.Adjuster = JClass("neqsim.process.equipment.util.Adjuster")
+    ns.SetPoint = JClass("neqsim.process.equipment.util.SetPoint")
+    ns.SpreadsheetBlock = JClass("neqsim.process.equipment.util.SpreadsheetBlock")
+    ns.Expander = JClass("neqsim.process.equipment.expander.Expander")
+    ns.DistillationColumn = JClass(
+        "neqsim.process.equipment.distillation.DistillationColumn"
+    )
+    ns.SimpleAbsorber = JClass(
+        "neqsim.process.equipment.absorber.SimpleAbsorber"
+    )
+    ns.ComponentSplitter = JClass(
+        "neqsim.process.equipment.splitter.ComponentSplitter"
+    )
+    ns.GibbsReactor = JClass("neqsim.process.equipment.reactor.GibbsReactor")
+    ns.PlugFlowReactor = JClass(
+        "neqsim.process.equipment.reactor.PlugFlowReactor"
+    )
+    ns.StirredTankReactor = JClass(
+        "neqsim.process.equipment.reactor.StirredTankReactor"
+    )
 
     print("All NeqSim classes imported OK")
     return ns
