@@ -557,4 +557,70 @@ public class DistillationColumnTest {
     column.run();
     assertTrue(column.solved());
   }
+
+  /**
+   * Regression test: column with feed below the top tray converges and stays stable across
+   * multiple runs. Prior to fix, columns with a rectifying section (trays above feed) would diverge
+   * because the sequential solver's first iteration produced unbounded internal L/V flows.
+   */
+  @Test
+  public void multipleProcessSystemRunsDoNotDiverge() {
+    // Use configuration similar to deethanizerTest but with condenser and feed on tray 3
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(216, 30.00);
+    fluid.addComponent("nitrogen", 1.67366E-3);
+    fluid.addComponent("CO2", 1.06819E-4);
+    fluid.addComponent("methane", 5.14168E-1);
+    fluid.addComponent("ethane", 1.92528E-1);
+    fluid.addComponent("propane", 1.70001E-1);
+    fluid.addComponent("i-butane", 3.14561E-2);
+    fluid.addComponent("n-butane", 5.58678E-2);
+    fluid.addComponent("i-pentane", 1.29573E-2);
+    fluid.addComponent("n-pentane", 1.23719E-2);
+    fluid.addComponent("n-hexane", 5.12878E-3);
+    fluid.addComponent("n-heptane", 1.0E-2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("DePropanizer", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.getReboiler().setOutTemperature(273.15 + 105.0);
+    column.getCondenser().setOutTemperature(273.15 + -30.0);
+    column.getCondenser().setTotalCondenser(false);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
+    column.setMaxNumberOfIterations(100);
+
+    // First run via direct call
+    column.run();
+
+    double ovhdFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double btmsFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double totalOut = ovhdFlow + btmsFlow;
+    double feedFlow = feed.getFlowRate("kg/hr");
+
+    assertTrue(Double.isFinite(ovhdFlow), "Overhead flow must be finite, was " + ovhdFlow);
+    assertTrue(Double.isFinite(btmsFlow), "Bottoms flow must be finite, was " + btmsFlow);
+
+    double massBalanceError = Math.abs(totalOut - feedFlow) / feedFlow * 100.0;
+    assertTrue(massBalanceError < 5.0,
+        "Run1 mass balance error " + massBalanceError + "% exceeds 5% limit. "
+            + "Feed=" + feedFlow + " Ovhd=" + ovhdFlow + " Btms=" + btmsFlow);
+
+    // Second direct run should stay converged
+    column.run();
+    double ovhd2 = column.getGasOutStream().getFlowRate("kg/hr");
+    double btms2 = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double total2 = ovhd2 + btms2;
+    double massBalanceError2 = Math.abs(total2 - feedFlow) / feedFlow * 100.0;
+    assertTrue(massBalanceError2 < 5.0,
+        "Run2 mass balance error " + massBalanceError2 + "% exceeds 5% limit. "
+            + "Feed=" + feedFlow + " Ovhd=" + ovhd2 + " Btms=" + btms2);
+  }
 }
