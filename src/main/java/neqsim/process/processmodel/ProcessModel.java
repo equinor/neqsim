@@ -945,6 +945,133 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Exports this ProcessModel to a JSON string containing all named process areas.
+   *
+   * <p>
+   * The exported JSON has a top-level "areas" object where each key is the process area name and
+   * each value is a JSON object in the {@link JsonProcessBuilder} schema (with "fluid" and
+   * "process" sections). This format can be used to reconstruct the model or to export individual
+   * areas to external simulators (e.g., UniSim Design via COM automation).
+   * </p>
+   *
+   * <p>
+   * Example output:
+   *
+   * <pre>{@code
+   * {
+   *   "areas": {
+   *     "separation": { "fluid": {...}, "process": [...] },
+   *     "compression": { "fluid": {...}, "process": [...] }
+   *   }
+   * }
+   * }</pre>
+   *
+   * @return JSON string representing all process areas
+   * @see JsonProcessExporter
+   * @see ProcessSystem#toJson()
+   */
+  public String toJson() {
+    return toJson(true);
+  }
+
+  /**
+   * Exports this ProcessModel to a JSON string.
+   *
+   * @param prettyPrint whether to format the JSON with indentation
+   * @return JSON string representing all process areas
+   */
+  public String toJson(boolean prettyPrint) {
+    JsonProcessExporter exporter = new JsonProcessExporter();
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    com.google.gson.JsonObject areas = new com.google.gson.JsonObject();
+
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      com.google.gson.JsonObject areaJson = exporter.toJsonObject(entry.getValue());
+      areas.add(entry.getKey(), areaJson);
+    }
+    root.add("areas", areas);
+
+    com.google.gson.Gson gson;
+    if (prettyPrint) {
+      gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
+          .serializeSpecialFloatingPointValues().create();
+    } else {
+      gson = new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create();
+    }
+    return gson.toJson(root);
+  }
+
+  /**
+   * Builds a ProcessModel from a JSON string containing named process areas.
+   *
+   * <p>
+   * Expected JSON format:
+   *
+   * <pre>{@code
+   * {
+   *   "areas": {
+   *     "separation": { "fluid": {...}, "process": [...] },
+   *     "compression": { "fluid": {...}, "process": [...] }
+   *   }
+   * }
+   * }</pre>
+   *
+   * <p>
+   * Each area is built independently using {@link JsonProcessBuilder}. If any area fails to build,
+   * it is skipped and a warning is logged.
+   * </p>
+   *
+   * @param json the JSON string with the "areas" structure
+   * @return the built ProcessModel (not yet run)
+   * @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key
+   * @see #toJson()
+   */
+  public static ProcessModel fromJson(String json) {
+    if (json == null || json.trim().isEmpty()) {
+      throw new IllegalArgumentException("JSON input is null or empty");
+    }
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    if (!root.has("areas")) {
+      throw new IllegalArgumentException(
+          "JSON must have an 'areas' object with named process systems");
+    }
+
+    ProcessModel model = new ProcessModel();
+    com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
+
+    for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
+      String areaName = entry.getKey();
+      String areaJson = entry.getValue().toString();
+      SimulationResult result = new JsonProcessBuilder().build(areaJson);
+      if (result.isSuccess()) {
+        model.add(areaName, result.getProcessSystem());
+      } else {
+        logger.warn("Failed to build area '{}': {}", areaName, result);
+      }
+    }
+    return model;
+  }
+
+  /**
+   * Builds and immediately runs a ProcessModel from a JSON string.
+   *
+   * <p>
+   * Convenience method that combines {@link #fromJson(String)} and {@link #run()} in a single
+   * call. This is the round-trip counterpart to {@link #toJson()}.
+   * </p>
+   *
+   * @param json the JSON string with the "areas" structure
+   * @return the built and executed ProcessModel
+   * @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key
+   */
+  public static ProcessModel fromJsonAndRun(String json) {
+    ProcessModel model = fromJson(json);
+    model.run();
+    return model;
+  }
+
+  /**
    * Validates the setup of all processes in this model.
    *
    * <p>

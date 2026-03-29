@@ -1,103 +1,226 @@
-# Add AI-Supported Task-Solving Workflow with Field Development Extensions
+# JSON Process Export/Import & UniSim Interoperability
 
 ## Summary
 
-Introduces a structured 3-step workflow called **"AI-Supported Task Solving While Developing"** that lets users solve advanced engineering tasks **while simultaneously improving and extending the NeqSim toolbox itself**. This PR also demonstrates the workflow in action — solving a field development NPV task revealed missing capabilities, which were then added as new Java classes and tests.
+Adds a **complete JSON round-trip** for NeqSim process models — any `ProcessSystem` or `ProcessModel` can be exported to JSON with `toJson()`, stored/transferred, and rebuilt with `fromJson()`. This enables **interoperability with external simulators** (e.g., Honeywell UniSim Design via COM automation) using JSON as the universal exchange format.
 
-The workflow **adapts to any scale** — from a quick property lookup (one notebook cell, done in minutes) to a comprehensive Class A field development study (multiple discipline-specific notebooks, full standards compliance, navigable HTML report). The agent decides the depth based on your request: simple question → quick answer; multi-standard engineering study → comprehensive deliverable set.
-
-The key insight: every real engineering task — hydrate prediction for a new field, sizing a CO2 compression train, designing a subsea pipeline — pushes NeqSim into new territory. When the existing API doesn't cover the task, the workflow guides users to **add the missing capability** (a new method, a new equipment model, a better correlation) right there in the same session. The task gets solved, and NeqSim gets better for the next person.
-
-This turns task-solving from a one-off activity into a **development flywheel**: tasks drive new features, new features enable harder tasks, and everything is logged and reusable.
+Also adds a comprehensive **UniSim-to-NeqSim converter** (`unisim_reader.py`) that reads `.usc` files via COM automation and generates executable NeqSim Python notebooks, plus new **reactor equipment** (PlugFlowReactor, CatalystBed, KineticReaction) and DistillationColumn enhancements.
 
 ## What's New
 
-### `@solve.task` — The Default Entry Point
+### 1. JSON Process Exporter (`JsonProcessExporter.java`) — NEW
 
-Open VS Code Copilot Chat and type:
+Serializes a `ProcessSystem` to the JSON schema consumed by `JsonProcessBuilder`, enabling full round-trip:
 
-```
-@solve.task JT cooling for rich gas at 100 bara
-```
+```java
+// Export
+String json = process.toJson();
 
-The agent handles the full 3-step workflow end-to-end:
-1. Creates the `task_solve/` folder via `new_task.py`
-2. Fills in the **task specification** (standards, methods, deliverables, acceptance criteria)
-3. Researches the topic (searches codebase, web, past tasks)
-4. Builds and runs a Jupyter notebook with NeqSim simulation
-5. Validates results against acceptance criteria (iteration is implicit)
-6. Generates Word + HTML reports with actual findings
-7. Flags API gaps — and those gaps become development tasks
-
-The agent delegates to specialist agents (`@thermo.fluid`, `@solve.process`, etc.) for complex sub-tasks. This is how advanced tasks get solved **while** the toolbox improves.
-
-> **Manual alternative:** `python devtools/new_task.py "your task"` creates the folder with templates for a step-by-step approach.
-
-### `devtools/new_task.py` — Self-bootstrapping task creation script
-
-A single Python script (tracked in git, zero external dependencies) that:
-
-- **Auto-creates** the `task_solve/` workspace on first run (no manual setup needed)
-- **Generates** a new task folder from a built-in template with one command
-- **Embeds all templates** as string constants — the script is the single source of truth
-
-```powershell
-python devtools/new_task.py "JT cooling for rich gas" --type A
-python devtools/new_task.py "TEG dehydration sizing" --type B --author "Your Name"
-python devtools/new_task.py "field development concept" --type G  # multi-discipline workflow
-python devtools/new_task.py --setup    # just create workspace, no task
-python devtools/new_task.py --list     # list existing tasks
+// Round-trip
+ProcessSystem rebuilt = ProcessSystem.fromJsonAndRun(json).getProcessSystem();
 ```
 
-### The 3-Step Workflow
+**Supported equipment types:** Stream, Separator, ThreePhaseSeparator, Compressor, Expander, ThrottlingValve, Heater, Cooler, HeatExchanger, Mixer, Splitter, Pump, Recycle, Adjuster, AdiabaticPipe.
+
+**Key design:**
+- Two-phase export: (1) build stream reference map using IdentityHashMap, (2) serialize units in topological order
+- Port-specific stream references: `"HP Sep.gasOut"`, `"HP Sep.liquidOut"`, `"splitter.split0"`
+- Equipment properties exported per type: outletPressure, polytropicEfficiency, splitFactors, outletTemperature, pressureDrop, length, diameter
+
+### 2. ProcessSystem.toJson() / fromJson() — NEW
+
+Convenience methods on `ProcessSystem`:
+
+```java
+// Export to JSON
+String json = process.toJson();
+
+// Build from JSON (tolerant — missing refs become warnings)
+SimulationResult result = ProcessSystem.fromJson(json);
+
+// Build and run in one call
+SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+```
+
+### 3. ProcessModel.toJson() / fromJson() — NEW
+
+Multi-area plant export/import for `ProcessModel` (named collection of `ProcessSystem` objects):
+
+```java
+// Export multi-area plant
+ProcessModel plant = new ProcessModel();
+plant.add("separation", separationProcess);
+plant.add("compression", compressionProcess);
+String json = plant.toJson();
+
+// Round-trip
+ProcessModel rebuilt = ProcessModel.fromJson(json);
+rebuilt.run();
+
+// Or build-and-run in one call
+ProcessModel rebuilt = ProcessModel.fromJsonAndRun(json);
+```
+
+**JSON schema:**
+```json
+{
+  "areas": {
+    "separation": { "fluid": {...}, "process": [...] },
+    "compression": { "fluid": {...}, "process": [...] }
+  }
+}
+```
+
+### 4. UniSim Reader (`devtools/unisim_reader.py`) — MAJOR UPDATE
+
+Reads Honeywell UniSim Design `.usc` files via COM automation and generates executable NeqSim Python code:
+
+- **45+ operation type mappings** (separators, compressors, heat exchangers, reactors, columns, valves, mixers, splitters, etc.)
+- **Component name mapping** (UniSim ↔ NeqSim name resolution)
+- **Property package mapping** (Peng-Robinson, SRK, CPA, etc.)
+- **Topology reconstruction** with port-specific forward reference placeholders for recycle loops
+- **Sub-flowsheet handling** (nested operations within flowsheets)
+- **Multiple output formats:** Python script, Jupyter notebook, JSON, EOT simulator
+
+### 5. Grane Platform Notebook (`examples/notebooks/grane_platform_process.ipynb`) — NEW
+
+A 300-cell production notebook demonstrating the full UniSim → NeqSim workflow on the **Grane GEE 2030** platform model:
+
+- 14 components, 149 operations, 205 streams, 5 sub-flowsheets
+- 4 named process areas via `ProcessModel` (Main, Grane LP, Grane HP, DPC UNIT)
+- Recycle convergence with Wegstein acceleration
+- Comprehensive stream-by-stream comparison against UniSim reference data
+- `toJson()` export of the full multi-area plant
+
+### 6. Reactor Equipment — NEW
+
+| Class | Description |
+|-------|-------------|
+| `PlugFlowReactor` | Steady-state tubular reactor with axial temperature/conversion profiles |
+| `CatalystBed` | Fixed-bed catalyst layer with pressure drop and deactivation models |
+| `KineticReaction` | First-order/second-order kinetic rate law with Arrhenius temperature dependence |
+| `ReactorAxialProfile` | Records axial position, temperature, conversion, pressure along reactor length |
+
+### 7. DistillationColumn Enhancements
+
+- New convergence diagnostics: `getLastIterationCount()`, `getLastMassResidual()`, `getLastEnergyResidual()`
+- Column-specific heat duty tracking per tray
+- Builder pattern for convenient column creation
+
+### 8. Test Coverage
+
+| Test Class | Tests | Coverage |
+|-----------|-------|----------|
+| `JsonProcessExporterTest` | 9 | Export, round-trip, splitter, cooler, ProcessModel |
+| `PlugFlowReactorTest` | 8 | Adiabatic, isothermal, catalyst, profiles |
+| `CatalystBedTest` | 6 | Pressure drop, deactivation, multi-bed |
+| `KineticReactionTest` | 5 | First/second order, Arrhenius, reversible |
+| `DistillationColumnTest` | 2 | Inside-out solver, convergence metrics |
+| `test_unisim_outputs.py` | 14 | UniSim converter all output modes |
+| `test_unisim_writer.py` | 23 | UniSim writer parsing, mappings, validation |
+
+## Architecture
 
 ```
- STEP 1                    STEP 2                    STEP 3
- Scope & Research          Analysis & Evaluation     Report
+┌──────────────────────────────────┐
+│         ProcessModel             │  plant.toJson()  ──────┐
+│  ┌──────────┐  ┌──────────┐     │                        │
+│  │ ProcessA  │  │ ProcessB │     │                        ▼
+│  │ .toJson() │  │ .toJson()│     │          ┌─────────────────────┐
+│  └──────────┘  └──────────┘     │          │  JSON                │
+│          │            │          │          │  {"areas": {         │
+│          ▼            ▼          │          │    "A": {fluid,proc} │
+│  JsonProcessExporter             │          │    "B": {fluid,proc} │
+└──────────────────────────────────┘          │  }}                  │
+                                              └─────────────────────┘
+                                                        │
+                                              ProcessModel.fromJson()
+                                                        │
+                                                        ▼
+┌──────────────────────────────────┐          ┌─────────────────────┐
+│     JsonProcessBuilder           │◄─────────│  Per-area build     │
+│  (2-pass: create → wire)         │          │  via JsonProcessBuilder
+│  resolveStreamReference()        │          └─────────────────────┘
+│  "HP Sep.gasOut" → stream obj    │
+└──────────────────────────────────┘
 
- Define standards,         Build simulation,         Word + HTML
- methods, deliverables     run, validate, iterate    deliverables
-
- + task_spec.md            NeqSim API +              python-docx
- + literature review       GitHub Copilot            + HTML template
+UniSim .usc ──COM──▶ unisim_reader.py ──▶ Python notebook ──▶ ProcessModel
+                                            ▲                      │
+                                            │                      │ .toJson()
+                                            │                      ▼
+                                         fromJson() ◄──── JSON file
+                                                            │
+                                               unisim_writer.py ──COM──▶ UniSim .usc
 ```
 
-Each task folder gets:
-- **step1_scope_and_research/** — `task_spec.md` (standards, methods, deliverables, acceptance criteria) + `notes.md` (literature review)
-- **step2_analysis/** — simulation code (notebooks / Java tests) + validation notes
-- **step3_report/** — `generate_report.py` that produces both Word (.docx) and HTML reports
-- **figures/** — saved plots for embedding in reports
+## Files Changed
 
-### Task Specification — Guiding the Analysis
+### New Java Classes
+- `src/main/java/neqsim/process/processmodel/JsonProcessExporter.java`
+- `src/main/java/neqsim/process/equipment/reactor/PlugFlowReactor.java`
+- `src/main/java/neqsim/process/equipment/reactor/CatalystBed.java`
+- `src/main/java/neqsim/process/equipment/reactor/KineticReaction.java`
+- `src/main/java/neqsim/process/equipment/reactor/ReactorAxialProfile.java`
 
-The `task_spec.md` file in Step 1 is the **scope document** that governs everything in Step 2. It defines:
+### Modified Java Classes
+- `ProcessSystem.java` — added `toJson()`
+- `ProcessModel.java` — added `toJson()`, `fromJson()`, `fromJsonAndRun()`
+- `JsonProcessBuilder.java` — improved wiring with iterative forward-reference resolution
+- `DistillationColumn.java` — convergence diagnostics, builder pattern
+- `HeatExchanger.java` — additional outlet stream accessors
+- `Adjuster.java` — improved error reporting
 
-| Section | Purpose | Example |
-|---------|---------|---------|
-| **Applicable Standards** | Which codes/standards govern the work | NORSOK P-001, DNV-OS-F101, ISO 6976, Equinor TR1414 |
-| **Calculation Methods** | Which EOS, correlations, models to use | SRK-CPA for polar systems, Beggs & Brill for pipe flow |
-| **Required Deliverables** | What the output must include | Phase envelopes, sizing calcs, sensitivity plots, VFP tables |
-| **Acceptance Criteria** | What "good enough" means | Mass balance < 0.1%, design factor 0.72 per DNV |
-| **Operating Envelope** | Range of conditions to cover | 50-150 bara, 5-80°C, 10k-100k kg/hr |
+### New Test Classes
+- `JsonProcessExporterTest.java` (9 tests)
+- `PlugFlowReactorTest.java` (8 tests)
+- `CatalystBedTest.java` (6 tests)
+- `KineticReactionTest.java` (5 tests)
 
-This means users (or the AI agent) can specify upfront: "use NORSOK P-001, calculate per ISO 6976, deliver a phase envelope + sizing report, and accept if mass balance < 0.1%".
+### New Notebooks
+- `examples/notebooks/grane_platform_process.ipynb` — Grane platform UniSim import
+- `examples/notebooks/neqsim_json_roundtrip.ipynb` — JSON export/import demo
 
-### Merged Analysis & Evaluation
+### 9. UniSim Writer (`devtools/unisim_writer.py`) — NEW
 
-The old Steps 2 (Analysis) and 3 (Evaluation) are merged into a single Step 2 (Analysis & Evaluation). Iteration is implicit — you build, run, validate, and refine in one natural loop without needing a separate "evaluation step". Validation notes live alongside the simulation code in `step2_analysis/notes.md`.
+The **reverse** of `unisim_reader.py` — takes NeqSim JSON and creates a UniSim Design `.usc` file via COM automation:
 
-### Adaptive Complexity — One Workflow, Any Scale
+```python
+from devtools.unisim_writer import UniSimWriter
 
-The same `@solve.task` command handles everything from quick lookups to Class A studies. The agent auto-detects the task scale based on user request:
+# From a JSON string (ProcessSystem or ProcessModel)
+writer = UniSimWriter(visible=True)
+writer.build_from_json(json_str, save_path="output.usc")
+writer.close()
 
-| Scale | When Used | Depth |
-|-------|-----------|-------|
-| **Quick** | Simple question, single property, one condition | Minimal task_spec, few cells, brief summary |
-| **Standard** | Process simulation, single-discipline design, PVT study | Full task_spec, complete notebook, Word + HTML reports |
-| **Comprehensive** | Multiple standards, multi-discipline, "Class A", "design basis" | Detailed task_spec with all standards, multiple numbered notebooks, full HTML with navigation |
+# From a live NeqSim ProcessSystem
+writer.build_from_process_system(process, save_path="output.usc")
 
-Users control depth through their request — mentioning standards, deliverables, and acceptance criteria naturally increases analysis depth. Compare:
-- "density of CO2 at 200 bar" → Quick
+# Validate without UniSim installed
+from devtools.unisim_writer import validate_json_for_unisim
+result = validate_json_for_unisim(json_str)
+print(result['valid'], result['warnings'])
+```
+
+**Features:**
+- Parses both single-area (`ProcessSystem.toJson()`) and multi-area (`ProcessModel.toJson()`) JSON
+- Reverse mapping dictionaries: NeqSim components → UniSim names, EOS → property packages, equipment types → UniSim operation types
+- Topology resolution: dot-notation inlet references resolved to internal stream names
+- Equipment wiring: feeds/products connected using type-specific COM patterns (Feeds[], FeedStream, VapourProduct, etc.)
+- Equipment properties: outlet pressure, temperature, efficiency, split factors
+- Standalone validation function (no COM needed) to pre-check JSON compatibility
+- CLI: `python unisim_writer.py input.json -o output.usc --validate-only`
+- 23 unit tests covering parsing, mappings, connectivity, and validation
+
+### Python / DevTools
+- `devtools/unisim_reader.py` — UniSim COM reader (+2582 lines)
+- `devtools/unisim_writer.py` — UniSim COM writer (NeqSim JSON → .usc) — **NEW**
+- `devtools/test_unisim_outputs.py` — 14 converter tests (reader)
+- `devtools/test_unisim_writer.py` — 23 writer tests — **NEW**
+
+### Documentation
+- `docs/process/equipment/plug_flow_reactor.md` — PlugFlowReactor guide
+- `docs/process/equipment/reactors.md` — updated reactor overview
+- Updated `AGENTS.md`, `REFERENCE_MANUAL_INDEX.md`, skill files
 - "TEG dehydration for 50 MMSCFD per NORSOK P-001" → Standard
 - "field development concept selection per NORSOK, DNV-OS-F101, with cost ranking" → Comprehensive
 

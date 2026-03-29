@@ -3619,6 +3619,23 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Exports this ProcessSystem to the JSON schema consumed by {@link JsonProcessBuilder}.
+   *
+   * <p>
+   * The exported JSON is round-trippable: the output can be fed back into {@link #fromJson(String)}
+   * to reconstruct an equivalent ProcessSystem. This enables exporting NeqSim process models to
+   * external simulators (e.g., UniSim Design via COM automation).
+   * </p>
+   *
+   * @return JSON string representing this process system
+   * @see JsonProcessExporter
+   * @see JsonProcessBuilder
+   */
+  public String toJson() {
+    return new JsonProcessExporter().toJson(this);
+  }
+
+  /**
    * Builds and immediately runs a ProcessSystem from a JSON definition.
    *
    * <p>
@@ -3710,8 +3727,8 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException e) {
       // Fallback chain: getOutStream(int) -> getOutletStreams().get(0) -> getOutStream()
       try {
-        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class)
-            .invoke(unit, 0);
+        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class).invoke(unit,
+            0);
       } catch (Exception ex2) {
         try {
           List<StreamInterface> outlets = unit.getOutletStreams();
