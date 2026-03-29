@@ -1473,12 +1473,29 @@ class UniSimToNeqSim:
         stream_by_name = {s.name: s for s in all_streams}
         sorted_ops = self._topological_sort(all_operations, stream_producer)
 
+        # --- detect forward references (cycles in recycle loops) ---
+        defined_ops: set = set(external_feeds)  # feeds are "defined" before equipment
+        fwd_ref_placeholders: set = set()
+        for op in sorted_ops:
+            n_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            if n_type is None or n_type in self.SKIPPED_NEQSIM_TYPES:
+                defined_ops.add(op.name)
+                continue
+            for feed_stream in (op.feeds or []):
+                if feed_stream in stream_producer:
+                    producer_name, _ = stream_producer[feed_stream]
+                    if producer_name not in defined_ops:
+                        fwd_ref_placeholders.add(producer_name)
+            defined_ops.add(op.name)
+
         return dict(
             fluid=fluid, eos_class=eos_class, flowsheet=flowsheet,
             all_ops=all_operations, all_streams=all_streams,
             stream_producer=stream_producer, external_feeds=external_feeds,
             stream_by_name=stream_by_name, sorted_ops=sorted_ops,
             var_names={}, used_vars=set(),
+            fwd_ref_placeholders=fwd_ref_placeholders,
+            fwd_ref_vars={},
         )
 
     # ---- variable-name helpers (static, used by all code-gen paths) ----
@@ -1508,11 +1525,40 @@ class UniSimToNeqSim:
         return v
 
     @staticmethod
-    def _outlet_ref(ref: str, var_names: dict) -> str:
-        """Resolve a dot-notation ref like ``"Sep.gasOut"`` to a Python expression."""
+    def _register_fwd_placeholders(topo: dict) -> None:
+        """Populate ``topo['fwd_ref_vars']`` from ``topo['fwd_ref_placeholders']``.
+
+        For each producer name in fwd_ref_placeholders, create a ``_fwd_XXX``
+        variable name and register it in var_names / used_vars / fwd_ref_vars.
+        This must be called before any code generation that uses _outlet_ref.
+        """
+        used_vars = topo['used_vars']
+        fwd_ref_vars = topo['fwd_ref_vars']
+        for prod_name in sorted(topo['fwd_ref_placeholders']):
+            if prod_name in fwd_ref_vars:
+                continue  # already registered
+            pv = prod_name.replace(' ', '_').replace('-', '_')
+            pv = ''.join(c if (c.isalnum() or c == '_') else '_' for c in pv)
+            if pv and pv[0].isdigit():
+                pv = '_' + pv
+            pv = f'_fwd_{pv}'
+            used_vars.add(pv)
+            fwd_ref_vars[prod_name] = pv
+
+    @staticmethod
+    def _outlet_ref(ref: str, var_names: dict, fwd_ref_vars: dict = None) -> str:
+        """Resolve a dot-notation ref like ``"Sep.gasOut"`` to a Python expression.
+
+        If *fwd_ref_vars* maps a parent name to a placeholder variable,
+        the placeholder stream is returned directly (no method call needed).
+        """
         if '.' not in ref:
             return var_names.get(ref, UniSimToNeqSim._to_pyvar(ref))
         parent, port = ref.rsplit('.', 1)
+        # If this parent is a forward-reference placeholder, return
+        # the placeholder stream directly (it's a Stream, not equipment)
+        if fwd_ref_vars and parent in fwd_ref_vars:
+            return fwd_ref_vars[parent]
         pvar = var_names.get(parent, UniSimToNeqSim._to_pyvar(parent))
         port_methods = {
             'gasOut': 'getGasOutStream()',
@@ -1616,7 +1662,8 @@ class UniSimToNeqSim:
             for f in op.feeds:
                 inlet_refs.append(self._resolve_inlet_ref(f, stream_producer))
 
-        _ref = lambda ref: self._outlet_ref(ref, var_names)
+        fwd_ref_vars = topo.get('fwd_ref_vars', {})
+        _ref = lambda ref: self._outlet_ref(ref, var_names, fwd_ref_vars)
 
         if neqsim_type == 'Mixer':
             lines.append(f'{v} = Mixer("{op.name}")')
@@ -1780,7 +1827,12 @@ class UniSimToNeqSim:
         elif neqsim_type == 'Recycle':
             lines.append(f'{v} = Recycle("{op.name}")')
             if inlet_refs:
-                lines.append(f'{v}.setInletStream({_ref(inlet_refs[0])})')
+                lines.append(f'{v}.addStream({_ref(inlet_refs[0])})')
+            # Wire outlet to the forward-reference placeholder if one exists
+            fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
+            if op.name in fwd_ref_vars_map:
+                pv = fwd_ref_vars_map[op.name]
+                lines.append(f'{v}.setOutletStream({pv})')
 
         elif neqsim_type == 'StreamSaturatorUtil':
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
@@ -2503,6 +2555,33 @@ class UniSimToNeqSim:
         _a('# --- Feed streams ---')
         lines.extend(self._gen_feed_lines(topo))
 
+        # --- create placeholder streams for forward references (recycle loops) ---
+        var_names = topo['var_names']
+        used_vars = topo['used_vars']
+        fwd_ref_placeholders = topo['fwd_ref_placeholders']
+
+        if fwd_ref_placeholders:
+            _a('# --- Placeholder streams for forward references (recycle loops) ---')
+            self._register_fwd_placeholders(topo)
+            stream_by_name = topo.get('stream_by_name', {})
+            for prod_name in sorted(fwd_ref_placeholders):
+                placeholder_var = topo['fwd_ref_vars'][prod_name]
+                sd = None
+                for op_ in topo['sorted_ops']:
+                    if op_.name == prod_name and op_.products:
+                        sd = stream_by_name.get(op_.products[0])
+                        break
+                _a(f'# Forward reference placeholder for "{prod_name}" (in a recycle loop)')
+                _a(f'{placeholder_var} = Stream("{prod_name} (placeholder)", fluid.clone())')
+                if sd and sd.temperature_C is not None:
+                    _a(f'{placeholder_var}.setTemperature({sd.temperature_C}, "C")')
+                if sd and sd.pressure_bara is not None:
+                    _a(f'{placeholder_var}.setPressure({sd.pressure_bara}, "bara")')
+                if sd and sd.mass_flow_kgh is not None and sd.mass_flow_kgh > 0:
+                    _a(f'{placeholder_var}.setFlowRate({sd.mass_flow_kgh}, "kg/hr")')
+                _a(f'process.add({placeholder_var})')
+                _a('')
+
         # --- equipment in topological order ---
         _a('# --- Equipment (topological order: upstream before downstream) ---')
         for op in topo['sorted_ops']:
@@ -2704,6 +2783,39 @@ class UniSimToNeqSim:
 
         # ---- Cell 7: Feed stream code ----
         _code(self._gen_feed_lines(topo))
+
+        # ---- Forward reference placeholders for recycle loops ----
+        fwd_ref_placeholders = topo['fwd_ref_placeholders']
+
+        if fwd_ref_placeholders:
+            self._register_fwd_placeholders(topo)
+            placeholder_lines = [
+                '# Placeholder streams for forward references (recycle loops)']
+            stream_by_name = topo.get('stream_by_name', {})
+            for prod_name in sorted(fwd_ref_placeholders):
+                pv = topo['fwd_ref_vars'][prod_name]
+                sd = None
+                for op_ in topo['sorted_ops']:
+                    if op_.name == prod_name and op_.products:
+                        sd = stream_by_name.get(op_.products[0])
+                        break
+                placeholder_lines.append(
+                    f'{pv} = Stream("{prod_name} (placeholder)", fluid.clone())')
+                if sd and sd.temperature_C is not None:
+                    placeholder_lines.append(
+                        f'{pv}.setTemperature({sd.temperature_C}, "C")')
+                if sd and sd.pressure_bara is not None:
+                    placeholder_lines.append(
+                        f'{pv}.setPressure({sd.pressure_bara}, "bara")')
+                if sd and sd.mass_flow_kgh is not None and sd.mass_flow_kgh > 0:
+                    placeholder_lines.append(
+                        f'{pv}.setFlowRate({sd.mass_flow_kgh}, "kg/hr")')
+                placeholder_lines.append(f'process.add({pv})')
+                placeholder_lines.append('')
+            _md('### Recycle Placeholders\n\n'
+                'These placeholder streams provide initial values for '
+                'forward references in recycle loops.')
+            _code(placeholder_lines)
 
         # ---- Cells 8..N: Equipment ----
         _md('### Equipment')
@@ -2927,6 +3039,25 @@ class UniSimToNeqSim:
                f'flow_rate={fl_val}, pressure={p_val}, temperature={t_val})')
             _a('')
 
+        # ---- forward reference placeholders for recycle loops ----
+        fwd_ref_placeholders = topo['fwd_ref_placeholders']
+        if fwd_ref_placeholders:
+            self._register_fwd_placeholders(topo)
+            _a(f'{indent}# --- Placeholder streams for recycle forward references ---')
+            for prod_name in sorted(fwd_ref_placeholders):
+                pv = topo['fwd_ref_vars'][prod_name]
+                sd = None
+                for op_ in topo['sorted_ops']:
+                    if op_.name == prod_name and op_.products:
+                        sd = stream_by_name.get(op_.products[0])
+                        break
+                t_val = f'{sd.temperature_C}' if sd and sd.temperature_C is not None else '15.0'
+                p_val = f'{sd.pressure_bara}' if sd and sd.pressure_bara is not None else '1.0'
+                fl_val = f'{sd.mass_flow_kgh}' if sd and sd.mass_flow_kgh and sd.mass_flow_kgh > 0 else '1000.0'
+                _a(f'{indent}{pv} = get_stream("{prod_name} (placeholder)", fluid, '
+                   f'flow_rate={fl_val}, pressure={p_val}, temperature={t_val})')
+            _a('')
+
         # ---- equipment ----
         for op in topo['sorted_ops']:
             neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
@@ -2944,7 +3075,8 @@ class UniSimToNeqSim:
                     inlet_refs.append(
                         self._resolve_inlet_ref(f_name, topo['stream_producer']))
 
-            _ref = lambda r: self._outlet_ref(r, var_names)
+            fwd_ref_vars = topo.get('fwd_ref_vars', {})
+            _ref = lambda r: self._outlet_ref(r, var_names, fwd_ref_vars)
 
             if factory and neqsim_type == 'Compressor':
                 ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
