@@ -109,6 +109,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean enforceEnergyBalanceTolerance = false;
   private boolean doMultiPhaseCheck = true;
 
+  /**
+   * Flag tracking whether the column has been solved at least once. Used to seed the sequential
+   * solver with the previous tray state on re-runs, preventing divergence from an unrelaxed start.
+   */
+  private transient boolean hasBeenSolvedBefore = false;
+
   /** Mechanical design for the distillation column. */
   private DistillationColumnMechanicalDesign mechanicalDesign;
 
@@ -514,12 +520,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double feedTemp = estimateFeedTemperature();
 
     // Initial guesses for temperatures to adjust
-    double topTemp = hasCondenser && getCondenser().isSetOutTemperature()
-        ? getCondenser().getOutTemperature()
-        : feedTemp - 20.0;
-    double bottomTemp = hasReboiler && getReboiler().isSetOutTemperature()
-        ? getReboiler().getOutTemperature()
-        : feedTemp + 20.0;
+    double topTemp =
+        hasCondenser && getCondenser().isSetOutTemperature() ? getCondenser().getOutTemperature()
+            : feedTemp - 20.0;
+    double bottomTemp =
+        hasReboiler && getReboiler().isSetOutTemperature() ? getReboiler().getOutTemperature()
+            : feedTemp + 20.0;
 
     // Secant method state for top
     double topTemp0 = topTemp;
@@ -559,10 +565,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double topError = adjustTop ? evaluateSpecError(topSpecification) : 0.0;
       double bottomError = adjustBottom ? evaluateSpecError(bottomSpecification) : 0.0;
 
-      logger.info(
-          "Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}",
-          outerIter, topError, bottomError,
-          adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
+      logger.info("Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}", outerIter,
+          topError, bottomError, adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
           adjustBottom ? (outerIter == 0 ? bottomTemp0 : bottomTemp1) : 0.0);
 
       // Check convergence
@@ -592,8 +596,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           bottomErr0 = bottomError;
         } else {
           bottomErr1 = bottomError;
-          double newBottomTemp = secantStep(bottomTemp0, bottomTemp1, bottomErr0, bottomErr1,
-              feedTemp);
+          double newBottomTemp =
+              secantStep(bottomTemp0, bottomTemp1, bottomErr0, bottomErr1, feedTemp);
           bottomTemp0 = bottomTemp1;
           bottomErr0 = bottomErr1;
           bottomTemp1 = newBottomTemp;
@@ -653,16 +657,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     switch (spec.getType()) {
       case PRODUCT_PURITY: {
-        double currentPurity = productStream.getFluid().getComponent(
-            spec.getComponentName()).getz();
+        double currentPurity =
+            productStream.getFluid().getComponent(spec.getComponentName()).getz();
         return currentPurity - spec.getTargetValue();
       }
       case COMPONENT_RECOVERY: {
-        double productCompFlow = productStream.getFluid().getComponent(
-            spec.getComponentName()).getTotalFlowRate("mol/hr");
+        double productCompFlow = productStream.getFluid().getComponent(spec.getComponentName())
+            .getTotalFlowRate("mol/hr");
         double totalFeedCompFlow = getTotalFeedComponentFlow(spec.getComponentName());
-        double recovery = (totalFeedCompFlow > 1.0e-12)
-            ? productCompFlow / totalFeedCompFlow : 0.0;
+        double recovery = (totalFeedCompFlow > 1.0e-12) ? productCompFlow / totalFeedCompFlow : 0.0;
         return recovery - spec.getTargetValue();
       }
       case PRODUCT_FLOW_RATE: {
@@ -970,6 +973,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double divergenceThreshold = Math.max(totalFeedFlow * 50.0, 1.0e3);
     boolean divergenceRecoveryApplied = false;
 
+    // On re-runs, seed previous-stream arrays from the current tray state so that
+    // relaxation-based damping is active from the very first iteration.
+    if (hasBeenSolvedBefore) {
+      for (int i = 0; i < numberOfTrays; i++) {
+        previousGasStreams[i] = trays.get(i).getGasOutStream().clone();
+        previousGasStreams[i].run();
+        previousLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+        previousLiquidStreams[i].run();
+      }
+      relaxation = Math.min(relaxation, 0.75);
+    }
+
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
@@ -1072,15 +1087,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       previousCombinedResidual = combinedResidual;
 
       // Divergence recovery: if flows have grown far beyond the total feed,
-      // the sequential iteration is unstable.  Seed the previous-stream arrays
+      // the sequential iteration is unstable. Seed the previous-stream arrays
       // from the current (init-based) tray state and drop to minimum relaxation
-      // so that subsequent iterations are heavily damped.  This is a one-shot
+      // so that subsequent iterations are heavily damped. This is a one-shot
       // recovery that does not fire when the column is already converging.
-      if (!divergenceRecoveryApplied && iter <= 3) {
+      if (!divergenceRecoveryApplied && iter <= 10) {
         double maxTrayFlow = 0.0;
         for (int i = 0; i < numberOfTrays; i++) {
-          maxTrayFlow = Math.max(maxTrayFlow,
-              Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
+          maxTrayFlow =
+              Math.max(maxTrayFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
           maxTrayFlow = Math.max(maxTrayFlow,
               Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
         }
@@ -1094,8 +1109,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           }
           divergenceRecoveryApplied = true;
           previousCombinedResidual = Double.POSITIVE_INFINITY;
-          logger.info("Divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
-              + "Seeding previous streams and reducing relaxation to {}.",
+          logger.info(
+              "Divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
+                  + "Seeding previous streams and reducing relaxation to {}.",
               iter, maxTrayFlow, divergenceThreshold, relaxation);
         }
       }
@@ -1150,6 +1166,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastMassResidual = massErr;
     lastEnergyResidual = energyErr;
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    hasBeenSolvedBefore = true;
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
@@ -1284,6 +1301,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double divergenceThresholdIO = Math.max(totalFeedFlowIO * 50.0, 1.0e3);
     boolean divergenceRecoveryAppliedIO = false;
 
+    // On re-runs, seed previous-stream arrays from the current tray state so that
+    // relaxation-based damping is active from the very first iteration.
+    if (hasBeenSolvedBefore) {
+      for (int i = 0; i < numberOfTrays; i++) {
+        previousGasStreams[i] = trays.get(i).getGasOutStream().clone();
+        previousGasStreams[i].run();
+        previousLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
+        previousLiquidStreams[i].run();
+      }
+      relaxation = Math.min(relaxation, 0.75);
+    }
+
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
@@ -1383,11 +1412,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       previousCombinedResidual = combinedResidual;
 
       // Divergence recovery (same logic as solveSequential).
-      if (!divergenceRecoveryAppliedIO && iter <= 3) {
+      if (!divergenceRecoveryAppliedIO && iter <= 10) {
         double maxTrayFlow = 0.0;
         for (int i = 0; i < numberOfTrays; i++) {
-          maxTrayFlow = Math.max(maxTrayFlow,
-              Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
+          maxTrayFlow =
+              Math.max(maxTrayFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
           maxTrayFlow = Math.max(maxTrayFlow,
               Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
         }
@@ -1401,8 +1430,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           }
           divergenceRecoveryAppliedIO = true;
           previousCombinedResidual = Double.POSITIVE_INFINITY;
-          logger.info("inside-out divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
-              + "Seeding previous streams and reducing relaxation to {}.",
+          logger.info(
+              "inside-out divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
+                  + "Seeding previous streams and reducing relaxation to {}.",
               iter, maxTrayFlow, divergenceThresholdIO, relaxation);
         }
       }
@@ -1603,6 +1633,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastMassResidual = massErr;
     lastEnergyResidual = energyErr;
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    hasBeenSolvedBefore = true;
 
     gasOutStream
         .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
@@ -1707,15 +1738,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Sets a column specification for the top (condenser) end.
    *
    * <p>
-   * This replaces the condenser temperature or reflux ratio as the top degree of freedom.
-   * The column solver will adjust the condenser temperature to satisfy this specification.
+   * This replaces the condenser temperature or reflux ratio as the top degree of freedom. The
+   * column solver will adjust the condenser temperature to satisfy this specification.
    * </p>
    *
    * @param spec the column specification for the top product
    */
   public void setTopSpecification(ColumnSpecification spec) {
-    if (spec != null
-        && spec.getLocation() != ColumnSpecification.ProductLocation.TOP) {
+    if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.TOP) {
       throw new IllegalArgumentException(
           "Top specification must have ProductLocation.TOP, got: " + spec.getLocation());
     }
@@ -1726,15 +1756,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Sets a column specification for the bottom (reboiler) end.
    *
    * <p>
-   * This replaces the reboiler temperature or boilup ratio as the bottom degree of freedom.
-   * The column solver will adjust the reboiler temperature to satisfy this specification.
+   * This replaces the reboiler temperature or boilup ratio as the bottom degree of freedom. The
+   * column solver will adjust the reboiler temperature to satisfy this specification.
    * </p>
    *
    * @param spec the column specification for the bottom product
    */
   public void setBottomSpecification(ColumnSpecification spec) {
-    if (spec != null
-        && spec.getLocation() != ColumnSpecification.ProductLocation.BOTTOM) {
+    if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.BOTTOM) {
       throw new IllegalArgumentException(
           "Bottom specification must have ProductLocation.BOTTOM, got: " + spec.getLocation());
     }
@@ -1766,10 +1795,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param targetMoleFraction the target mole fraction (0 to 1)
    */
   public void setTopProductPurity(String componentName, double targetMoleFraction) {
-    setTopSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        ColumnSpecification.ProductLocation.TOP,
-        targetMoleFraction, componentName));
+    setTopSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.TOP, targetMoleFraction, componentName));
   }
 
   /**
@@ -1779,10 +1807,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param targetMoleFraction the target mole fraction (0 to 1)
    */
   public void setBottomProductPurity(String componentName, double targetMoleFraction) {
-    setBottomSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-        ColumnSpecification.ProductLocation.BOTTOM,
-        targetMoleFraction, componentName));
+    setBottomSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.BOTTOM, targetMoleFraction, componentName));
   }
 
   /**
@@ -1791,10 +1818,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param refluxRatio the reflux ratio
    */
   public void setCondenserRefluxRatio(double refluxRatio) {
-    setTopSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.TOP,
-        refluxRatio));
+    setTopSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+        ColumnSpecification.ProductLocation.TOP, refluxRatio));
   }
 
   /**
@@ -1803,10 +1828,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param boilupRatio the boilup ratio
    */
   public void setReboilerBoilupRatio(double boilupRatio) {
-    setBottomSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.BOTTOM,
-        boilupRatio));
+    setBottomSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.BOTTOM, boilupRatio));
   }
 
   /**
@@ -1816,10 +1840,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param recovery fraction of the component recovered in the top product (0 to 1)
    */
   public void setTopComponentRecovery(String componentName, double recovery) {
-    setTopSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-        ColumnSpecification.ProductLocation.TOP,
-        recovery, componentName));
+    setTopSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+            ColumnSpecification.ProductLocation.TOP, recovery, componentName));
   }
 
   /**
@@ -1829,10 +1852,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param recovery fraction of the component recovered in the bottom product (0 to 1)
    */
   public void setBottomComponentRecovery(String componentName, double recovery) {
-    setBottomSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-        ColumnSpecification.ProductLocation.BOTTOM,
-        recovery, componentName));
+    setBottomSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+            ColumnSpecification.ProductLocation.BOTTOM, recovery, componentName));
   }
 
   /**
@@ -1842,10 +1864,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param unit the unit (e.g. "mol/hr", "kg/hr")
    */
   public void setTopProductFlowRate(double flowRate, String unit) {
-    setTopSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        ColumnSpecification.ProductLocation.TOP,
-        flowRate));
+    setTopSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+            ColumnSpecification.ProductLocation.TOP, flowRate));
   }
 
   /**
@@ -1855,10 +1876,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param unit the unit (e.g. "mol/hr", "kg/hr")
    */
   public void setBottomProductFlowRate(double flowRate, String unit) {
-    setBottomSpecification(new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        ColumnSpecification.ProductLocation.BOTTOM,
-        flowRate));
+    setBottomSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+            ColumnSpecification.ProductLocation.BOTTOM, flowRate));
   }
 
   /**
@@ -3018,10 +3038,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @return this builder for chaining
      */
     public Builder topProductPurity(String componentName, double targetMoleFraction) {
-      this.topSpec = new ColumnSpecification(
-          ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-          ColumnSpecification.ProductLocation.TOP,
-          targetMoleFraction, componentName);
+      this.topSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+          ColumnSpecification.ProductLocation.TOP, targetMoleFraction, componentName);
       return this;
     }
 
@@ -3033,10 +3051,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @return this builder for chaining
      */
     public Builder bottomProductPurity(String componentName, double targetMoleFraction) {
-      this.bottomSpec = new ColumnSpecification(
-          ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-          ColumnSpecification.ProductLocation.BOTTOM,
-          targetMoleFraction, componentName);
+      this.bottomSpec =
+          new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+              ColumnSpecification.ProductLocation.BOTTOM, targetMoleFraction, componentName);
       return this;
     }
 
