@@ -1696,13 +1696,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
+    double totalFeedFlowBroyden = 0.0;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      for (StreamInterface f : feeds) {
+        totalFeedFlowBroyden += Math.abs(f.getFlowRate("kg/hr"));
+      }
+    }
+
     lastIterationCount = iter;
     lastTemperatureResidual = err;
     lastMassResidual = massErr;
     lastEnergyResidual = energyErr;
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = totalFeedFlowIO;
+    lastTotalFeedFlow = totalFeedFlowBroyden;
 
     gasOutStream
         .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());

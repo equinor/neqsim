@@ -338,3 +338,58 @@ fix applies to all three output modes. This is by design.
 | Empty compositions | Stream not solved | Open in UniSim GUI, run solver first |
 | Large deviations | Missing hypo components | Check if pseudo-components dominate |
 | Memory error | Too many files open | Close cases between reads |
+
+---
+
+## Verified Reference Case: TUTOR1
+
+The `TUTOR1.usc` UniSim tutorial has been fully converted and verified. Use it
+as a reference pattern for any conversion workflow:
+
+- **Notebook**: `examples/notebooks/tutor1_gas_processing.ipynb`
+- **Components**: 7 (N₂, CO₂, C₁–nC₄), Peng-Robinson EOS
+- **Operations**: Mixer → Separator → Gas/Gas HX → Chiller → LTS → DePropanizer
+- **Result**: 11/13 streams match within 1°C and 2% flow. DePropanizer column
+  does not converge (known NeqSim limitation for NGL-rich feeds).
+
+### Key Patterns from TUTOR1
+
+1. **Recycle loop handling**: Create a placeholder stream for the LTS gas
+   outlet, build all upstream equipment, wire the actual outlet back via
+   a `Recycle` block. Converges in 3 iterations.
+
+2. **HeatExchanger**: Use `setUAvalue()` (e.g., 35000 W/K) and
+   `setGuessOutTemperature()`. NeqSim HX does NOT model pressure drops —
+   expect 1–2°C outlet temperature deviation vs UniSim.
+
+3. **DistillationColumn limitation**: The sequential-substitution and
+   inside-out solvers diverge for C3/C4-rich feeds (< 30% methane) at low
+   pressure. All three solver types and 1–5 tray configurations were tested.
+   **Workaround**: Build the column **outside** the ProcessSystem to prevent
+   re-run divergence from affecting upstream convergence. Report column
+   streams as "N/C" (Not Converged) in comparison tables.
+
+4. **Skippable operations**: DewPoint (balance op), Adjuster (ADJ-1), and
+   Heating Value (spreadsheet) are not needed for mass balance comparison.
+
+---
+
+## DistillationColumn Solver Warnings
+
+When converting UniSim models containing distillation columns:
+
+- **Lighter feeds (> 50% methane, deethanizer-type)**: NeqSim column solver
+  converges reliably. Use `DIRECT_SUBSTITUTION` or `INSIDE_OUT` solver type.
+
+- **Heavier feeds (< 30% methane, depropanizer/debutanizer-type)**: Column
+  solver will likely diverge. Document as a known limitation.
+
+- **Re-run divergence**: If a column is inside a `ProcessSystem` with a
+  recycle loop, the column may converge on the first `process.run()` but
+  diverge on subsequent runs. Build the column outside the process system
+  and feed it the converged upstream stream.
+
+- **Mass residual metric**: The column's `lastMassResidual` reports relative
+  per-tray balance but may not detect absolute flow runaway. An absolute flow
+  magnitude check (flows > 1000× feed) is implemented but heavily diverged
+  columns may still report misleading residuals.
