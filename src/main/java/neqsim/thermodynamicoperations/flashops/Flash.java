@@ -166,7 +166,13 @@ public abstract class Flash extends BaseOperation {
     // 100 bar, 298K gives sumwVapor ≈ 0.65) and well-separated phases.
     boolean nearBubblePoint = (sumwVapor > 0.7 && sumwVapor < 2.4);
     boolean nearDewPoint = (sumwLiquid > 0.7 && sumwLiquid < 2.4);
-    if (!trivialSolution && !nearBubblePoint && !nearDewPoint) {
+    // Also retry when standard stability analysis produced marginal tm values
+    // (|tm| < 0.1). This catches cases where Wilson K sums are outside [0.7, 2.4]
+    // due to highly asymmetric K-values (e.g. methane/n-heptane) but the stability
+    // result is genuinely uncertain. Wilson K is only an approximation — the actual
+    // EOS K-values can differ significantly for asymmetric systems.
+    boolean tmNearZero = (Math.abs(tm[0]) < 0.1 || Math.abs(tm[1]) < 0.1);
+    if (!trivialSolution && !nearBubblePoint && !nearDewPoint && !tmNearZero) {
       return false;
     }
     // Skip retry for near-pure component systems: for a single component,
