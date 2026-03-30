@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png" alt="NeqSim Logo" width="120">
-</p>
-
-<h1 align="center">NeqSim</h1>
+<h1>
+  <img src="https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png" alt="NeqSim Logo" width="48" valign="middle">&nbsp;NeqSim
+</h1>
 
 <p align="center">
   <strong>Open-source process engineering toolkit — thermodynamics, process simulation, and AI-assisted design in one library.</strong>
