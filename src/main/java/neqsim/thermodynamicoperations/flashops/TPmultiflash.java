@@ -373,17 +373,18 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // O2: Early exit — if all K ≈ 1.0 the system is near/above critical → trivially stable
-    if (maxAbsLogK < 0.01) {
-      system.normalizeBeta();
-      return;
-    }
+    // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
+    // Only skip Wilson K-based trials; still fall through to pure-component trials
+    // which use independent initial guesses not affected by K ≈ 1.
+    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
 
     // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
     // Liquid-like trial runs first because most multi-phase systems have liquid-driven
     // instability (water dropout, heavy end fallout). Heavy components have K << 1,
     // so z/K heavily enriches them, creating a trial similar to pure-component heavy trials.
-    for (int trial = 0; trial < 2; trial++) {
+    // Skip when all Wilson K ≈ 1 (near-critical) — these trials produce trivial initial
+    // guesses. The pure-component trials below still run and provide independent checks.
+    for (int trial = 0; !skipWilsonKTrials && trial < 2; trial++) {
       // Initialize trial composition from Wilson K
       for (int i = 0; i < numComp; i++) {
         if (validComp[i]) {

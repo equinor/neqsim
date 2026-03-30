@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -245,5 +246,74 @@ class TPFlashTest {
     testOps.TPflash();
     assertEquals(2, testSystem.getNumberOfPhases());
     // testSystem.prettyPrint();
+  }
+
+  /**
+   * Test that sequential TPflash calls on a methane/n-heptane binary produce spatially consistent
+   * phase identification near the phase boundary. This targets the region around 350-450 K and
+   * 100-250 bara where the stability analysis can produce sporadic wrong results due to marginal
+   * tangent plane distance values and stale K-value propagation between grid points.
+   *
+   * <p>
+   * The test scans a strip of T,P conditions across the phase boundary and verifies that the phase
+   * count transitions monotonically (no isolated single-point flips). A single isolated flip in a
+   * sequence of otherwise consistent results indicates a stability analysis failure.
+   * </p>
+   */
+  @Test
+  void testMethaneHeptanePhaseBoundaryConsistency() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(298.15, 50.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("n-heptane", 30.0);
+    fluid.setMixingRule("classic");
+    fluid.getPhase(0).getMixingRule().setBinaryInteractionParameter(0, 1, 0.05);
+    fluid.getPhase(1).getMixingRule().setBinaryInteractionParameter(0, 1, 0.05);
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Scan temperature at fixed pressure 150 bara — crosses the phase boundary
+    double pressure = 150.0;
+    fluid.setPressure(pressure, "bara");
+    int nPoints = 80;
+    int[] phaseCount = new int[nPoints];
+    for (int j = 0; j < nPoints; j++) {
+      double temp = 250.0 + j * 3.0; // 250 to 487 K
+      fluid.setTemperature(temp, "K");
+      ops.TPflash();
+      phaseCount[j] = fluid.getNumberOfPhases();
+    }
+
+    // Count isolated flips: a point where phase count differs from BOTH neighbors
+    int isolatedFlips = 0;
+    for (int j = 1; j < nPoints - 1; j++) {
+      if (phaseCount[j] != phaseCount[j - 1] && phaseCount[j] != phaseCount[j + 1]) {
+        isolatedFlips++;
+      }
+    }
+
+    // Allow at most 1 isolated flip (the exact boundary point can be ambiguous)
+    assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P="
+        + pressure + " bara — stability analysis is inconsistent near boundary");
+
+    // Scan temperature at fixed pressure 200 bara
+    pressure = 200.0;
+    fluid.setPressure(pressure, "bara");
+    for (int j = 0; j < nPoints; j++) {
+      double temp = 250.0 + j * 3.0;
+      fluid.setTemperature(temp, "K");
+      ops.TPflash();
+      phaseCount[j] = fluid.getNumberOfPhases();
+    }
+
+    isolatedFlips = 0;
+    for (int j = 1; j < nPoints - 1; j++) {
+      if (phaseCount[j] != phaseCount[j - 1] && phaseCount[j] != phaseCount[j + 1]) {
+        isolatedFlips++;
+      }
+    }
+
+    assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P="
+        + pressure + " bara — stability analysis is inconsistent near boundary");
   }
 }
