@@ -53,9 +53,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   private static final double MAX_RELATIVE_STEP = 0.5;
   private boolean activateWhenLess = false;
   private boolean active = true;
-  private Function<ProcessEquipmentInterface, Double> targetValueCalculator;
-  private Function<ProcessEquipmentInterface, Double> adjustedValueGetter;
-  private BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
+  private transient Function<ProcessEquipmentInterface, Double> targetValueCalculator;
+  private transient Function<ProcessEquipmentInterface, Double> adjustedValueGetter;
+  private transient BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
 
   /**
    * <p>
@@ -159,8 +159,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    */
-  public void setTargetVariable(ProcessEquipmentInterface targetEquipment,
-      String targetVariable) {
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
   }

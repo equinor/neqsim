@@ -10,12 +10,12 @@ import neqsim.util.annotation.AISchemaDiscovery;
 
 /**
  * AI Integration Helper for NeqSim.
- * 
+ *
  * <p>
  * This class provides a unified entry point for AI/ML agents to interact with NeqSim, combining
  * validation, schema discovery, and RL environment access.
  * </p>
- * 
+ *
  * <h2>Features:</h2>
  * <ul>
  * <li>Pre-run validation to catch errors before simulation</li>
@@ -23,29 +23,29 @@ import neqsim.util.annotation.AISchemaDiscovery;
  * <li>RL environment creation with built-in constraint validation</li>
  * <li>Safe execution wrappers that return structured results</li>
  * </ul>
- * 
+ *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create AI helper
  * AIIntegrationHelper helper = AIIntegrationHelper.forProcess(process);
- * 
+ *
  * // Get API documentation for AI agent
  * String apiDocs = helper.getAPIDocumentation();
- * 
+ *
  * // Validate before running
  * if (helper.isReady()) {
  *   helper.safeRun();
  * } else {
  *   System.out.println(helper.getValidationReport());
  * }
- * 
+ *
  * // Create RL environment
  * RLEnvironment env = helper.createRLEnvironment();
  * }
  * </pre>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -54,11 +54,11 @@ public class AIIntegrationHelper implements Serializable {
 
   private final ProcessSystem process;
   private final AISchemaDiscovery schemaDiscovery;
-  private ValidationResult lastValidation;
+  private transient ValidationResult lastValidation;
 
   /**
    * Create helper for a ProcessSystem.
-   * 
+   *
    * @param process process system to wrap
    * @return AI integration helper
    */
@@ -71,7 +71,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Constructor.
-   * 
+   *
    * @param process process system to manage
    */
   private AIIntegrationHelper(ProcessSystem process) {
@@ -82,7 +82,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Validate the process system.
-   * 
+   *
    * @return validation result
    */
   @AIExposable(description = "Validate the process system before running", category = "validation",
@@ -94,7 +94,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Check if the process is ready to run.
-   * 
+   *
    * @return true if ready (no critical/major issues)
    */
   @AIExposable(description = "Check if the process is ready to run without errors",
@@ -109,7 +109,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Get a human-readable validation report.
-   * 
+   *
    * @return validation report with issues and remediation hints
    */
   @AIExposable(description = "Get a human-readable validation report", category = "validation",
@@ -123,7 +123,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Get structured issues for AI parsing.
-   * 
+   *
    * @return array of issues as structured text
    */
   @AIExposable(description = "Get structured validation issues for AI parsing",
@@ -139,7 +139,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Safely run the process with validation.
-   * 
+   *
    * @return execution result with success/failure info
    */
   @AIExposable(description = "Run the process simulation with pre-validation",
@@ -165,7 +165,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Get API documentation for the process components.
-   * 
+   *
    * @return formatted API documentation
    */
   @AIExposable(description = "Get API documentation for AI agent consumption",
@@ -177,11 +177,11 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Create an RL environment for the process.
-   * 
+   *
    * <p>
    * The RL environment includes built-in validation constraints.
    * </p>
-   * 
+   *
    * @return configured RL environment
    */
   @AIExposable(description = "Create an RL training environment for the process", category = "ml",
@@ -192,7 +192,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Validate a specific equipment piece.
-   * 
+   *
    * @param equipment equipment to validate
    * @return validation result
    */
@@ -205,7 +205,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Validate a thermodynamic system.
-   * 
+   *
    * @param system thermodynamic system to validate
    * @return validation result
    */
@@ -218,7 +218,7 @@ public class AIIntegrationHelper implements Serializable {
 
   /**
    * Get the underlying process system.
-   * 
+   *
    * @return process system
    */
   public ProcessSystem getProcess() {
@@ -238,7 +238,7 @@ public class AIIntegrationHelper implements Serializable {
 
     private final Status status;
     private final String message;
-    private final ValidationResult validation;
+    private final transient ValidationResult validation;
     private final Exception exception;
 
     private ExecutionResult(Status status, String message, ValidationResult validation,
@@ -339,7 +339,7 @@ public class AIIntegrationHelper implements Serializable {
 
     /**
      * Get a structured report for AI consumption.
-     * 
+     *
      * @return formatted report
      */
     public String toAIReport() {

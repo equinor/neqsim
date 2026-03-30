@@ -24,7 +24,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   StreamInterface stream = null;
   private double impellerOuterDiameter = 0.3;
 
-  java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
+  transient java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
 
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.

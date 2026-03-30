@@ -25,8 +25,8 @@ public class PhaseLeachmanEos extends PhaseEos {
   double CvLeachman = 0.0;
   double internalEnery = 0.0;
   double JTcoef = 0.0;
-  doubleW[] a0 = null;
-  doubleW[][] ar = null;
+  transient doubleW[] a0 = null;
+  transient doubleW[][] ar = null;
   double kappa = 0.0;
   double W = 0.0;
 

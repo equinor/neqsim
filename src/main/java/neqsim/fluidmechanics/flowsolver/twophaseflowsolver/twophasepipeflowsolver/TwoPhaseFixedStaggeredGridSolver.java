@@ -123,7 +123,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   private SolverType solverTypeEnum = SolverType.DEFAULT;
 
   /** Mass transfer configuration for advanced settings. */
-  private MassTransferConfig massTransferConfig = new MassTransferConfig();
+  private transient MassTransferConfig massTransferConfig = new MassTransferConfig();
 
   /** Track phases that have disappeared during simulation. */
   private boolean[] phasePresent = {true, true, true};
@@ -1326,7 +1326,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * <p>
    * setEnergyMatrixTDMA.
    * </p>
-   * 
+   *
    * <p>
    * This method implements the energy conservation equation for two-phase pipe flow. The energy
    * equation includes:

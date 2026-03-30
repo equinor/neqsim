@@ -39,8 +39,8 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
    * <p>

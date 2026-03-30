@@ -28,8 +28,8 @@ public class PhaseAmmoniaEos extends PhaseEos {
   private double JTcoef;
   private double kappa;
   private double W;
-  private doubleW[] a0;
-  private doubleW[][] ar;
+  private transient doubleW[] a0;
+  private transient doubleW[][] ar;
 
   /**
    * <p>

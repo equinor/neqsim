@@ -89,7 +89,7 @@ public class SulfurFilter extends Filter {
   private SulfurFilterMechanicalDesign sulfurFilterMechanicalDesign;
 
   /** Nucleation model for particle size prediction. */
-  private ClassicalNucleationTheory nucleationModel;
+  private transient ClassicalNucleationTheory nucleationModel;
 
   /**
    * Residence time in the supersaturated zone (seconds). Used for particle size prediction. Default

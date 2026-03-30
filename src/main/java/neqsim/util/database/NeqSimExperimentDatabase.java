@@ -59,8 +59,8 @@ public class NeqSimExperimentDatabase
   public static String connectionString =
       "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
    * <p>
