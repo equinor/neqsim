@@ -76,8 +76,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
         molecularWeight, k, kd, kb, kw);
   }
 
-  private double calcLiquidOrificeArea(double massFlow, double relievingPressure, double backPressure,
-      double density, double kd, double kb, double kw) {
+  private double calcLiquidOrificeArea(double massFlow, double relievingPressure,
+      double backPressure, double density, double kd, double kb, double kw) {
     double deltaP = Math.max(relievingPressure - backPressure, 1.0);
     double denominator = kd * kb * kw * Math.sqrt(2.0 * density * deltaP);
     return massFlow / denominator;
@@ -104,8 +104,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
 
     for (RelievingScenario scenario : valve.getRelievingScenarios()) {
       SizingContext context = buildContext(valve, scenario);
-      SafetyValveSizingStrategy strategy = strategies
-          .getOrDefault(scenario.getFluidService(), strategies.get(FluidService.GAS));
+      SafetyValveSizingStrategy strategy =
+          strategies.getOrDefault(scenario.getFluidService(), strategies.get(FluidService.GAS));
       double area = strategy.calculateOrificeArea(context);
       boolean isActive = scenario.getName().equals(activeScenarioName)
           || (activeScenarioName == null && newResults.isEmpty());
@@ -130,8 +130,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     if (maxScenario != null) {
       SafetyValveScenarioResult controlling = newResults.get(maxScenario);
       if (controlling != null) {
-        newResults.put(maxScenario,
-            controlling.markControlling(true));
+        newResults.put(maxScenario, controlling.markControlling(true));
       }
     }
 
@@ -187,8 +186,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private SizingContext buildContext(SafetyValve valve, RelievingScenario scenario) {
-    StreamInterface stream = Optional.ofNullable(scenario.getRelievingStream())
-        .orElse(valve.getInletStream());
+    StreamInterface stream =
+        Optional.ofNullable(scenario.getRelievingStream()).orElse(valve.getInletStream());
     if (stream == null) {
       throw new IllegalStateException("Safety valve requires a stream for sizing calculations");
     }
@@ -207,8 +206,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     double overpressureMarginPa = relievingPressurePa - setPressurePa;
     double backPressurePa = scenario.getBackPressure() * 1.0e5;
 
-    double kd = scenario.getDischargeCoefficient()
-        .orElseGet(() -> defaultDischargeCoefficient(scenario));
+    double kd =
+        scenario.getDischargeCoefficient().orElseGet(() -> defaultDischargeCoefficient(scenario));
     double kb = scenario.getBackPressureCorrection().orElse(1.0);
     double kw = scenario.getInstallationCorrection().orElse(1.0);
 

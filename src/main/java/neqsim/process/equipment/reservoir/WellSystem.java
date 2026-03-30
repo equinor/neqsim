@@ -30,7 +30,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Architecture Overview</h2>
- * 
+ *
  * <pre>
  * ┌─────────────┐    ┌──────────┐    ┌─────────────────┐    ┌───────┐    ┌────────┐
  * │  Reservoir  │───►│ WellFlow │───►│TubingPerformance│───►│ Choke │───►│ Output │
@@ -40,7 +40,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <h2>Usage Example 1 - Basic Well Setup</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir fluid at reservoir conditions
  * SystemInterface resFluid = new SystemSrkEos(373.15, 250.0);
@@ -80,7 +80,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Usage Example 2 - Lift Curve Generation for Reservoir Simulator</h2>
- * 
+ *
  * <pre>{@code
  * // Setup well as above, then generate lift curves
  * double[] whPressures = {30, 40, 50, 60, 70}; // bara
@@ -94,7 +94,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Usage Example 3 - Multi-Layer Commingled Well</h2>
- * 
+ *
  * <pre>{@code
  * WellSystem multilayerWell = new WellSystem("Commingled-1");
  *
@@ -116,7 +116,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Integration with SimpleReservoir</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir
  * SimpleReservoir reservoir = new SimpleReservoir("Field Reservoir");
@@ -305,7 +305,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Constructor for WellSystem with inlet stream.
-   * 
+   *
    * <p>
    * This constructor allows WellSystem to be created like other process equipment, making it
    * compatible with ProcessSystem sequential building.
@@ -345,7 +345,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Set the inlet stream (alias for setReservoirStream for ProcessSystem compatibility).
-   * 
+   *
    * <p>
    * This method allows WellSystem to be used in a ProcessSystem like other equipment.
    * </p>
@@ -425,7 +425,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Set backpressure equation parameters with non-Darcy term.
-   * 
+   *
    * <p>
    * Equation: Pr² - Pwf² = a·q + b·q² where b captures turbulence.
    * </p>
@@ -503,7 +503,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Set the VLP solver mode.
-   * 
+   *
    * <p>
    * Available modes:
    * <ul>
@@ -643,7 +643,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Solves for the operating point where IPR and VLP intersect at the specified wellhead pressure
    * constraint.

@@ -9,12 +9,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Push Button instrument for manual activation of equipment (e.g., ESD blowdown valves) and process
  * logic sequences.
- * 
+ *
  * <p>
  * A push button is a simple binary instrument that can be in one of two states: pushed (active) or
  * not pushed (inactive). It is typically used to manually trigger emergency shutdown (ESD) systems,
  * blowdown valves, or other safety-critical equipment.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -25,25 +25,25 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Measured value: 1.0 when pushed, 0.0 when not pushed</li>
  * <li>Supports alarm configuration for activation logging</li>
  * </ul>
- * 
+ *
  * <p>
  * Typical usage with blowdown valve:
- * 
+ *
  * <pre>
  * // Create blowdown valve
  * BlowdownValve bdValve = new BlowdownValve("BD-101", blowdownStream);
- * 
+ *
  * // Create push button linked to BD valve
  * PushButton esdButton = new PushButton("ESD-PB-101", bdValve);
- * 
+ *
  * // In emergency situation, operator pushes button
  * esdButton.push(); // Activates linked BD valve
- * 
+ *
  * // Check button state
  * if (esdButton.isPushed()) {
  *   System.out.println("ESD button is pushed - blowdown active");
  * }
- * 
+ *
  * // After emergency is resolved, reset button
  * esdButton.reset(); // Does NOT reset the BD valve - requires separate reset
  * </pre>
@@ -91,7 +91,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
 
   /**
    * Links this push button to a blowdown valve.
-   * 
+   *
    * <p>
    * When the button is pushed, it will automatically activate the linked blowdown valve (if
    * autoActivateValve is true).
@@ -114,7 +114,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
 
   /**
    * Links this push button to a process logic sequence.
-   * 
+   *
    * <p>
    * When the button is pushed, all linked logic sequences will be activated. This allows a single
    * button to trigger complex multi-step operations like ESD sequences, startup procedures, etc.
@@ -139,7 +139,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
 
   /**
    * Pushes the button, activating it.
-   * 
+   *
    * <p>
    * If a blowdown valve is linked and auto-activation is enabled, this will also activate the
    * valve. Additionally, all linked process logic sequences will be activated.
@@ -161,7 +161,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
 
   /**
    * Resets the button to inactive (not pushed) state.
-   * 
+   *
    * <p>
    * Note: This does NOT reset the linked blowdown valve. The valve must be reset separately for
    * safety reasons - button reset only indicates operator acknowledgment, not system reset.
@@ -200,7 +200,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
 
   /**
    * Gets the measured value of the push button.
-   * 
+   *
    * <p>
    * Returns 1.0 if button is pushed (active), 0.0 if not pushed (inactive).
    * </p>
@@ -214,7 +214,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
 
   /**
    * Gets the measured value in the specified unit.
-   * 
+   *
    * <p>
    * Push button only supports "binary" unit. Returns 1.0 if pushed, 0.0 if not pushed.
    * </p>

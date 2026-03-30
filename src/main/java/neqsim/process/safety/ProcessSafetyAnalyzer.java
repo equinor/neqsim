@@ -25,7 +25,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
   private final DisposalNetwork disposalNetwork = new DisposalNetwork();
   private final List<ProcessSafetyLoadCase> loadCases = new ArrayList<>();
   private final ProcessSystem baseProcessSystem;
-  private final ProcessSafetyResultRepository resultRepository;
+  private final transient ProcessSafetyResultRepository resultRepository;
 
   public ProcessSafetyAnalyzer() {
     this(null, null);

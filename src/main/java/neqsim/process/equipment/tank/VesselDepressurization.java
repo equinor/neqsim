@@ -127,10 +127,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     /** Filling (pressurization). */
     FILLING,
     /**
-     * Idle (no flow). The vessel holds its contents with zero mass flow while still
-     * exchanging heat with the ambient environment. Use this mode to simulate
-     * transport or storage phases where the tank is disconnected from supply and
-     * delivery lines.
+     * Idle (no flow). The vessel holds its contents with zero mass flow while still exchanging heat
+     * with the ambient environment. Use this mode to simulate transport or storage phases where the
+     * tank is disconnected from supply and delivery lines.
      */
     IDLE
   }
@@ -147,10 +146,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
      * Stefan-Boltzmann radiation model applied to outer wall boundary.
      *
      * <p>
-     * Net fire flux as function of outer wall temperature:
-     * q_fire = absorptivity * flameEmissivity * sigma * T_flame^4
-     *        + fireConvectionCoeff * (T_flame - T_wall)
-     *        - surfaceEmissivity * sigma * T_wall^4
+     * Net fire flux as function of outer wall temperature: q_fire = absorptivity * flameEmissivity
+     * * sigma * T_flame^4 + fireConvectionCoeff * (T_flame - T_wall) - surfaceEmissivity * sigma *
+     * T_wall^4
      * </p>
      */
     STEFAN_BOLTZMANN
@@ -985,8 +983,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets a preset fire type with standard parameters.
    *
    * <p>
-   * Automatically configures the Stefan-Boltzmann fire model with industry-standard parameters
-   * and calculates the flame temperature from the incident heat flux.
+   * Automatically configures the Stefan-Boltzmann fire model with industry-standard parameters and
+   * calculates the flame temperature from the incident heat flux.
    * </p>
    *
    * @param type Preset fire type (SCANDPOWER_JET, SCANDPOWER_POOL, API_JET, API_POOL)
@@ -1083,15 +1081,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Calculates the net fire heat flux at the outer wall surface using the Stefan-Boltzmann model.
    *
    * <p>
-   * The net heat flux is:
-   * q_fire = alpha_s * epsilon_f * sigma * T_f^4
-   *        + h_f * (T_f - T_wall)
-   *        - epsilon_s * sigma * T_wall^4
+   * The net heat flux is: q_fire = alpha_s * epsilon_f * sigma * T_f^4 + h_f * (T_f - T_wall) -
+   * epsilon_s * sigma * T_wall^4
    * </p>
    *
    * <p>
-   * This models the combined radiation from the fire (absorbed by the wall), convection from
-   * the fire, and re-radiation from the hot wall surface back to the surroundings.
+   * This models the combined radiation from the fire (absorbed by the wall), convection from the
+   * fire, and re-radiation from the hot wall surface back to the surroundings.
    * </p>
    *
    * @param outerWallTemperatureK Outer wall surface temperature [K]
@@ -1104,8 +1100,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double radiationIn =
         surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(flameTemperature, 4);
     double convectionIn = fireConvectionCoeff * (flameTemperature - outerWallTemperatureK);
-    double reRadiation =
-        surfaceEmissivity * STEFAN_BOLTZMANN * Math.pow(outerWallTemperatureK, 4);
+    double reRadiation = surfaceEmissivity * STEFAN_BOLTZMANN * Math.pow(outerWallTemperatureK, 4);
     return radiationIn + convectionIn - reRadiation;
   }
 
@@ -1113,21 +1108,17 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Calculates the flame temperature from the incident heat flux.
    *
    * <p>
-   * Uses Newton-Raphson iteration to solve:
-   * q_incident = alpha_s * epsilon_f * sigma * T_f^4 + h_f * (T_f - T_ref)
-   * for T_f, where T_ref is the ambient temperature.
+   * Uses Newton-Raphson iteration to solve: q_incident = alpha_s * epsilon_f * sigma * T_f^4 + h_f
+   * * (T_f - T_ref) for T_f, where T_ref is the ambient temperature.
    * </p>
    */
   private void calculateFlameTemperature() {
     double Tref = ambientTemperature;
     double Tf = 900.0; // Initial guess [K]
     for (int iter = 0; iter < 100; iter++) {
-      double f =
-          surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 4)
-          + fireConvectionCoeff * (Tf - Tref)
-          - incidentHeatFlux;
-      double df =
-          4.0 * surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 3)
+      double f = surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 4)
+          + fireConvectionCoeff * (Tf - Tref) - incidentHeatFlux;
+      double df = 4.0 * surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 3)
           + fireConvectionCoeff;
       double dT = f / df;
       Tf -= dT;

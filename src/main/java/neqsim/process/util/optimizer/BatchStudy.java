@@ -57,7 +57,7 @@ public class BatchStudy implements Serializable {
   private final ProcessSystem baseCase;
   private final List<ParameterVariation> variations;
   private final Map<String, ObjectiveDefinition> objectives;
-  private final Map<String, Function<ProcessSystem, Double>> objectiveExtractors;
+  private final transient Map<String, Function<ProcessSystem, Double>> objectiveExtractors;
   private int parallelism;
   private String studyName;
   private boolean stopOnFailure = false;

@@ -33,7 +33,7 @@ public final class ProcessSafetyScenario implements Serializable {
   private final List<String> blockedOutletUnits;
   private final List<String> utilityLossUnits;
   private final Map<String, Double> controllerSetPointOverrides;
-  private final Map<String, Consumer<ProcessEquipmentInterface>> customManipulators;
+  private final transient Map<String, Consumer<ProcessEquipmentInterface>> customManipulators;
 
   private ProcessSafetyScenario(Builder builder) {
     this.name = builder.name;
