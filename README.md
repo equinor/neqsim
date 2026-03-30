@@ -1,5 +1,5 @@
 <h1>
-  <img src="https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png" alt="NeqSim Logo" width="48" valign="middle">&nbsp;NeqSim
+  <img src="https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png" alt="NeqSim Logo" width="80" valign="middle">&nbsp;NeqSim
 </h1>
 
 <p align="center">
