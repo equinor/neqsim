@@ -60,6 +60,7 @@ nbdist/
 #Visual studio
 .vs/
 .vscode/
+!.vscode/mcp.json
 
 # git merge files
 *.orig
