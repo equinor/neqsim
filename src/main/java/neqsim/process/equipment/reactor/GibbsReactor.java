@@ -1490,6 +1490,9 @@ public class GibbsReactor extends TwoPortEquipment {
       totalMoles += moles;
     }
 
+    // Initialize thermodynamic properties once (fugacity coefficient derivatives)
+    system.init(3);
+
     // Fill Jacobian matrix
     for (int i = 0; i < numComponents; i++) {
       String compI = variableComponents.get(i);
@@ -1501,21 +1504,18 @@ public class GibbsReactor extends TwoPortEquipment {
           : MIN_MOLES;
       double niForJacobian = Math.max(ni, MIN_JACOBIAN_MOLES); // Use minimum of 1e-6 for Jacobian
                                                                // calculation
-      system.init(3);
       for (int j = 0; j < numComponents; j++) {
         String compJ = variableComponents.get(j);
         int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
-        // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total) + dfugdn
+        // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total + d(ln phi_i)/dn_i)
+        // Off-diagonal: ∂f_i/∂n_j = RT * (-1/n_total + d(ln phi_i)/dn_j)
+        double dfugdn = (globalIdx >= 0 && globalJ >= 0)
+            ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
+            : 0.0;
         if (i == j) {
-          double dfugdn = (globalIdx >= 0 && globalJ >= 0)
-              ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
-              : 0.0;
           jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles + dfugdn);
         } else {
-          double dfugdn = (globalIdx >= 0 && globalJ >= 0)
-              ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
-              : 0.0;
-          jacobianMatrix[i][j] = -RT / totalMoles + dfugdn;
+          jacobianMatrix[i][j] = RT * (-1.0 / totalMoles + dfugdn);
         }
       }
 
@@ -1545,6 +1545,21 @@ public class GibbsReactor extends TwoPortEquipment {
       // Derivatives with respect to Lagrange multipliers are zero
       for (int k = 0; k < numActiveElements; k++) {
         jacobianMatrix[numComponents + i][numComponents + k] = 0.0;
+      }
+    }
+
+    // Transform to log-mole variables (Gordon-McBride / NASA CEA approach).
+    // Scale each species column j by n_j so the Newton correction becomes
+    // delta(ln n_j) instead of delta(n_j). This removes the 1/n_i singularity
+    // on the diagonal, greatly improving conditioning for trace species.
+    for (int j = 0; j < numComponents; j++) {
+      String compJ = variableComponents.get(j);
+      int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
+      double nj =
+          (globalJ >= 0 && globalJ < outlet_mole.size()) ? outlet_mole.get(globalJ) : MIN_MOLES;
+      nj = Math.max(nj, MIN_JACOBIAN_MOLES);
+      for (int row = 0; row < totalVars; row++) {
+        jacobianMatrix[row][j] *= nj;
       }
     }
 
@@ -1910,10 +1925,10 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Perform a Newton-Raphson iteration update. Updates outlet compositions with damping factor and
-   * Lagrange multipliers directly.
+   * Lagrange multipliers with the same damping for consistency.
    *
    * @param deltaX The delta vector from Newton-Raphson iteration
-   * @param alphaComposition Damping factor for composition updates (e.g., 0.0001)
+   * @param alphaComposition Damping factor for composition updates (e.g., 0.01)
    * @return True if update was successful, false otherwise
    */
   public boolean performIterationUpdate(double[] deltaX, double alphaComposition) {
@@ -1933,15 +1948,12 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     // Update outlet compositions with damping factor
-    // System.out.println("\n=== Updating Outlet Compositions ===");
     deltaNorm = 0.0;
     for (int i = 0; i < numComponents; i++) {
       String compName = variableComponents.get(i);
-      // Only update if component is in the Gibbs database
       if (componentMap.get(compName.toLowerCase()) == null) {
         continue;
       }
-      // Find global index in processedComponents/outlet_mole
       int globalIdx = processedComponentIndexMap.getOrDefault(compName, -1);
       if (globalIdx < 0 || globalIdx >= outlet_mole.size()) {
         continue;
@@ -1950,7 +1962,6 @@ public class GibbsReactor extends TwoPortEquipment {
       double deltaComposition = deltaX[i];
       double newValue = oldValue + deltaComposition * alphaComposition;
 
-      // Ensure non-negative values and minimum concentration
       newValue = Math.max(newValue, 1e-15);
 
       outlet_mole.set(globalIdx, newValue);
@@ -1959,20 +1970,16 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     deltaNorm = Math.sqrt(deltaNorm);
 
-    // Update Lagrange multipliers directly (no damping)
-    // System.out.println("\n=== Updating Lagrange Multipliers ===");
+    // Update Lagrange multipliers with same damping for primal-dual consistency.
+    // Using full Newton step on lambda while damping compositions causes oscillation.
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElementIndices.get(i);
       double oldValue = lambda[elementIndex];
       double deltaLambda = deltaX[numComponents + i];
-      double newValue = oldValue + deltaLambda;
+      double newValue = oldValue + deltaLambda * alphaComposition;
 
       lambda[elementIndex] = newValue;
-
-      // System.out.printf(" λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
-      // oldValue, newValue, deltaLambda);
     }
-    deltaNorm = Math.sqrt(deltaNorm);
 
     // Show mass balance for each element
     // System.out.println("\n=== Mass Balance (element-wise, OUT - IN) ===");
@@ -2213,7 +2220,8 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
 
-      // Calculate F vector norm for convergence check
+      // Calculate full residual vector norm for monitoring
+      // Includes both stationarity conditions (chemical potential) and element balance constraints
       Map<String, Double> fValues = getObjectiveFunctionValues();
       double fNorm = 0.0;
       for (Double value : fValues.values()) {
@@ -2281,15 +2289,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       // Check convergence (require minimum 100 iterations)
-      if ((deltaXNorm < convergenceTolerance && iteration >= 100) || iteration == maxIterations) {// ||
-                                                                                                  // (dG
-                                                                                                  // >
-                                                                                                  // 0
-                                                                                                  // &&
-                                                                                                  // iteration
-                                                                                                  // >=
-                                                                                                  // 100))
-                                                                                                  // {
+      if ((deltaXNorm < convergenceTolerance && iteration >= 100) || iteration == maxIterations) {
         logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached")
             + " at iteration " + iteration + " with delta norm = " + deltaXNorm);
         converged = deltaXNorm < convergenceTolerance;
