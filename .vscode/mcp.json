@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "java",
+      "args": [
+        "-jar",
+        "${workspaceFolder}/neqsim-mcp-server/target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
+      ]
+    }
+  }
+}
