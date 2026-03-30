@@ -393,46 +393,222 @@ A typical interaction follows this flow:
 5. INTERPRETATION → LLM reads JSON response, presents results in natural language
 ```
 
-### Example Conversation
+### Chat Example 1: Gas Density Lookup
 
-**User:** "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35 °C?"
+> **User:** What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35 °C?
 
-**LLM internally calls `runFlash`:**
+The LLM calls `runFlash` behind the scenes:
 
 ```json
 {
   "components": "{\"methane\": 0.90, \"ethane\": 0.10}",
-  "temperature": 35.0,
-  "temperatureUnit": "C",
-  "pressure": 80.0,
-  "pressureUnit": "bara",
-  "eos": "SRK",
-  "flashType": "TP"
+  "temperature": 35.0, "temperatureUnit": "C",
+  "pressure": 80.0, "pressureUnit": "bara",
+  "eos": "SRK", "flashType": "TP"
 }
 ```
 
-**LLM responds:** "The gas density is approximately 62.3 kg/m3 at 80 bara and 35 °C
-(SRK equation of state, single gas phase, Z-factor = 0.88)."
+> **Assistant:** The gas density is **62.3 kg/m3** at 80 bara and 35 °C.
+>
+> | Property | Value | Unit |
+> |---|---|---|
+> | Density | 62.3 | kg/m3 |
+> | Z-factor | 0.88 | — |
+> | Viscosity | 1.3 × 10⁻⁵ | Pa·s |
+> | Thermal conductivity | 0.042 | W/(m·K) |
+> | Cp | 2580 | J/(kg·K) |
+>
+> The fluid is single-phase gas at these conditions (SRK equation of state).
 
-### Example: Dew Point Calculation
+---
 
-**User:** "What is the dew point of this gas at 50 bara? Composition: 85% methane,
-10% ethane, 5% propane."
+### Chat Example 2: Dew Point Temperature
 
-**LLM internally calls `runFlash` with `flashType: "dewPointT"`:**
+> **User:** What is the dew point of this gas at 50 bara?
+> Composition: 85% methane, 10% ethane, 5% propane.
+
+The LLM calls `runFlash` with `flashType: "dewPointT"`:
+
+```json
+{
+  "components": "{\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}",
+  "temperature": 25.0, "temperatureUnit": "C",
+  "pressure": 50.0, "pressureUnit": "bara",
+  "eos": "SRK", "flashType": "dewPointT"
+}
+```
 
 The converged dew point temperature is in `fluid.conditions.overall.temperature` (Kelvin).
-Convert to Celsius by subtracting 273.15.
 
-**LLM responds:** "The dew point temperature is approximately 8.2 °C at 50 bara."
+> **Assistant:** The **dew point temperature is 8.2 °C** at 50 bara (SRK EOS).
+>
+> Below this temperature, liquid will start condensing from the gas. This is
+> important for pipeline design — if the gas cools below 8 °C at 50 bara,
+> you will get two-phase flow.
+>
+> Want me to check the bubble point or calculate properties at a different pressure?
 
-### Example: Process Simulation
+---
 
-**User:** "Simulate feed gas at 50 bara going through a separator, then compress
-the gas outlet to 120 bara."
+### Chat Example 3: Component Lookup
 
-**LLM calls `getExample("process", "compression-with-cooling")` to get the template,
-modifies it, then calls `runProcess`.**
+> **User:** Does NeqSim have data for butane? What's the exact name I should use?
+
+The LLM calls `searchComponents` with `query: "butane"`:
+
+> **Assistant:** NeqSim has these butane-related components:
+>
+> | Component | Description |
+> |---|---|
+> | `n-butane` | Normal butane (C4H10) |
+> | `i-butane` | Isobutane (C4H10) |
+>
+> Use `n-butane` for normal butane and `i-butane` for isobutane in your
+> compositions. Note: `nC4` or `isobutane` won't work — the exact names above
+> are what NeqSim expects.
+
+---
+
+### Chat Example 4: Process Simulation
+
+> **User:** Simulate a gas separation process: feed gas at 50 bara and 25 °C
+> goes into a separator, then compress the gas to 120 bara. Use 80% methane,
+> 10% ethane, 5% propane, 5% n-butane. Flow rate is 50000 kg/hr.
+
+The LLM first calls `getExample("process", "compression-with-cooling")` to learn the
+format, then constructs and calls `runProcess`:
+
+```json
+{
+  "fluid": {
+    "model": "SRK",
+    "temperature": 298.15,
+    "pressure": 50.0,
+    "mixingRule": "classic",
+    "components": {
+      "methane": 0.80,
+      "ethane": 0.10,
+      "propane": 0.05,
+      "n-butane": 0.05
+    }
+  },
+  "process": [
+    { "type": "Stream", "name": "feed",
+      "properties": { "flowRate": [50000.0, "kg/hr"] } },
+    { "type": "Separator", "name": "HP Sep", "inlet": "feed" },
+    { "type": "Compressor", "name": "Gas Compressor",
+      "inlet": "HP Sep.gasOut",
+      "properties": { "outletPressure": [120.0, "bara"] } }
+  ]
+}
+```
+
+> **Assistant:** Here are the simulation results:
+>
+> **Separator (HP Sep) at 50 bara, 25 °C:**
+>
+> | Stream | Flow Rate (kg/hr) | Temperature (°C) | Pressure (bara) |
+> |---|---|---|---|
+> | Feed | 50,000 | 25.0 | 50.0 |
+> | Gas out | 47,800 | 25.0 | 50.0 |
+> | Liquid out | 2,200 | 25.0 | 50.0 |
+>
+> About 4.4% of the feed condenses as liquid (mostly heavier components).
+>
+> **Compressor (Gas Compressor):**
+>
+> | Property | Value | Unit |
+> |---|---|---|
+> | Outlet pressure | 120.0 | bara |
+> | Outlet temperature | ~105 | °C |
+> | Power consumption | ~1,850 | kW |
+>
+> The discharge temperature is quite high — you may want to add an aftercooler.
+> Want me to add a cooler after the compressor?
+
+---
+
+### Chat Example 5: Input Validation
+
+> **User:** Check this flash input for errors:
+> ```json
+> {"model": "SRK", "components": {"metane": 0.85, "ethane": 0.15},
+>  "temperature": {"value": 25, "unit": "C"},
+>  "pressure": {"value": 50, "unit": "bara"}, "flashType": "TP"}
+> ```
+
+The LLM calls `validateInput`:
+
+> **Assistant:** I found one error in your input:
+>
+> | Severity | Issue | Fix |
+> |---|---|---|
+> | ❌ Error | `metane` is not a known component | Did you mean **methane**? |
+>
+> Fix the component name from `"metane"` to `"methane"` and it will work.
+
+---
+
+### Chat Example 6: Multi-Step Engineering Workflow
+
+> **User:** I have a rich gas coming from a well at 150 bara and 80 °C. Composition:
+> 70% methane, 12% ethane, 8% propane, 5% n-butane, 3% n-pentane, 2% CO2.
+> I need to know: (1) how many phases at wellhead conditions, (2) the dew point
+> at 80 bara (export pipeline pressure), and (3) what happens after cooling to 20 °C
+> in a separator at 80 bara.
+
+> **Assistant:** I'll answer all three questions using NeqSim. Let me run the calculations...
+>
+> **1. Phase check at wellhead (150 bara, 80 °C):**
+>
+> Single gas phase. The fluid is above its dew point at these conditions.
+>
+> **2. Dew point at 80 bara (export pipeline):**
+>
+> The **dew point temperature is 42.5 °C** at 80 bara. If the pipeline operates
+> below 42.5 °C, liquid will condense. Since export pipelines on the seabed can
+> reach 4-10 °C, you will definitely have two-phase flow.
+>
+> **3. Separation at 80 bara, 20 °C:**
+>
+> | Stream | Flow Rate | Methane (mol%) | C3+ (mol%) |
+> |---|---|---|---|
+> | Gas out | 87% of feed | 78.5% | 8.2% |
+> | Liquid out | 13% of feed | 25.1% | 52.3% |
+>
+> About 13% of the feed condenses as NGL-rich liquid. The liquid contains
+> most of the propane, butane, and pentane — this could be valuable as a
+> separate NGL product.
+>
+> Would you like me to add a second-stage separator or check hydrate
+> formation temperatures?
+
+---
+
+### Chat Example 7: CPA Equation of State for Water Systems
+
+> **User:** I need to check how much water dissolves in natural gas at 100 bara and 40 °C.
+> Gas is 95% methane, 5% CO2. Use CPA since there's water.
+
+The LLM uses `eos: "CPA"` which is the correct choice for associating fluids:
+
+> **Assistant:** Using the CPA (Cubic Plus Association) equation of state, which properly
+> models water's hydrogen bonding behavior:
+>
+> **At 100 bara, 40 °C (95% CH4, 5% CO2, saturated with water):**
+>
+> | Property | Value | Unit |
+> |---|---|---|
+> | Water content in gas | ~850 | ppm (molar) |
+> | Water content in gas | ~0.55 | g/Sm3 |
+> | Number of phases | 2 | gas + aqueous |
+>
+> The gas is saturated with about 850 ppm water at these conditions. For a typical
+> pipeline spec of 50 mg/Sm3, you would need a dehydration unit (TEG or molecular
+> sieves) to remove most of this water.
+>
+> CPA is the right EOS choice here — SRK or PR would significantly underpredict
+> the water content in the gas phase.
 
 ---
 
