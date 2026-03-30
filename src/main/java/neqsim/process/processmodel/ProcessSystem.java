@@ -423,12 +423,18 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public boolean replaceUnit(String name, ProcessEquipmentInterface newObject) {
     try {
-      ProcessEquipmentInterface unit = getUnit(name);
-      unit = newObject;
+      for (int i = 0; i < unitOperations.size(); i++) {
+        if (unitOperations.get(i).getName().equals(name)) {
+          unitOperations.set(i, newObject);
+          return true;
+        }
+      }
+      logger.error("Unit operation with name '" + name + "' not found for replacement");
+      return false;
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
-    return true;
+    return false;
   }
 
   /**
