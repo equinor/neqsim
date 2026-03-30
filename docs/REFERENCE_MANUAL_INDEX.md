@@ -244,6 +244,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Graph Simulation      | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation)                                     | Graph-based simulation    |
 | Diagram Export        | [docs/process/processmodel/diagram_export.md](process/processmodel/diagram_export)                                         | PFD diagram export        |
 | DEXPI Architecture    | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | DEXPI integration         |
+| Simulation Hooks      | [docs/process/simulation-hooks-and-events.md](process/simulation-hooks-and-events)                                         | Lifecycle hooks, ProcessEventBus, auto-validation for ProcessSystem and ProcessModel |
 
 ### Chapter 13: Streams & Mixers
 

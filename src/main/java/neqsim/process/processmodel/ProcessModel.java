@@ -12,6 +12,8 @@ import java.util.concurrent.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.event.ProcessEvent;
+import neqsim.process.util.event.ProcessEventBus;
 import neqsim.process.util.report.Report;
 import neqsim.util.validation.ValidationResult;
 
@@ -37,6 +39,120 @@ public class ProcessModel implements Runnable, Serializable {
   private boolean runStep = false;
   private int maxIterations = 50;
   private boolean useOptimizedExecution = true;
+
+  /**
+   * Transient listener for model-level progress callbacks. Marked transient to avoid serialization
+   * issues.
+   */
+  private transient ModelProgressListener progressListener = null;
+
+  /**
+   * When true, lifecycle events are published to the ProcessEventBus singleton during model
+   * execution. Default is false for zero overhead when not needed.
+   */
+  private boolean publishEvents = false;
+
+  /**
+   * When true, validateSetup() is called on each ProcessSystem before the first iteration.
+   * Validation warnings are logged but do not abort execution.
+   */
+  private boolean autoValidate = false;
+
+  /**
+   * Interface for monitoring ProcessModel execution progress. Implementations receive callbacks at
+   * the model level: before/after each process area runs, before/after each outer iteration, and
+   * when the model starts/completes.
+   *
+   * <p>
+   * Designed for integration with:
+   * <ul>
+   * <li>Jupyter notebooks for monitoring multi-area convergence</li>
+   * <li>Digital twin dashboards for plant-wide status</li>
+   * <li>Debugging tools for inter-process convergence analysis</li>
+   * </ul>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public interface ModelProgressListener {
+    /**
+     * Called after a process area completes a single execution pass.
+     *
+     * @param areaName the name of the process area
+     * @param process the ProcessSystem that completed
+     * @param areaIndex zero-based index of the area in execution order
+     * @param totalAreas total number of process areas
+     * @param iterationNumber current outer iteration number (starts at 1)
+     */
+    void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
+        int totalAreas, int iterationNumber);
+
+    /**
+     * Called before a process area is executed.
+     *
+     * @param areaName the name of the process area about to run
+     * @param process the ProcessSystem about to run
+     * @param areaIndex zero-based index of the area
+     * @param totalAreas total number of process areas
+     * @param iterationNumber current outer iteration number (starts at 1)
+     */
+    default void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
+        int totalAreas, int iterationNumber) {
+      // Default does nothing
+    }
+
+    /**
+     * Called when an outer iteration of the model completes.
+     *
+     * @param iterationNumber the iteration that just completed (starts at 1)
+     * @param converged true if the model has converged
+     * @param maxError maximum relative error across all variables
+     */
+    default void onIterationComplete(int iterationNumber, boolean converged, double maxError) {
+      // Default does nothing
+    }
+
+    /**
+     * Called at the start of each outer iteration, before any areas are run.
+     *
+     * @param iterationNumber the iteration about to start (starts at 1)
+     */
+    default void onBeforeIteration(int iterationNumber) {
+      // Default does nothing
+    }
+
+    /**
+     * Called once when the model begins execution.
+     *
+     * @param totalAreas total number of process areas
+     */
+    default void onModelStart(int totalAreas) {
+      // Default does nothing
+    }
+
+    /**
+     * Called once when the model finishes execution.
+     *
+     * @param totalIterations total number of iterations performed
+     * @param converged true if the model converged
+     */
+    default void onModelComplete(int totalIterations, boolean converged) {
+      // Default does nothing
+    }
+
+    /**
+     * Called if a process area encounters an error during execution.
+     *
+     * @param areaName name of the area that failed
+     * @param process the ProcessSystem that failed
+     * @param exception the exception that was thrown
+     * @return true to continue with next area, false to abort
+     */
+    default boolean onProcessAreaError(String areaName, ProcessSystem process,
+        Exception exception) {
+      return false;
+    }
+  }
 
   // Convergence tolerances (relative errors)
   private double flowTolerance = 1e-4;
@@ -239,6 +355,63 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Set a listener to receive progress updates during model execution.
+   *
+   * @param listener the progress listener, or null to disable callbacks
+   */
+  public void setProgressListener(ModelProgressListener listener) {
+    this.progressListener = listener;
+  }
+
+  /**
+   * Get the current model progress listener.
+   *
+   * @return the current listener, or null if none is set
+   */
+  public ModelProgressListener getProgressListener() {
+    return this.progressListener;
+  }
+
+  /**
+   * Enables or disables event publishing to the ProcessEventBus singleton. When enabled, lifecycle
+   * events (model start/complete, area errors, convergence) are published during execution.
+   *
+   * @param publish true to enable event publishing, false to disable (default)
+   */
+  public void setPublishEvents(boolean publish) {
+    this.publishEvents = publish;
+  }
+
+  /**
+   * Returns whether event publishing is enabled.
+   *
+   * @return true if events are published to ProcessEventBus during model execution
+   */
+  public boolean isPublishEvents() {
+    return this.publishEvents;
+  }
+
+  /**
+   * Enables or disables automatic validation of each ProcessSystem before the first iteration. When
+   * enabled, validateSetup() is called on each ProcessSystem. Validation failures are logged as
+   * warnings but do not abort execution.
+   *
+   * @param validate true to enable auto-validation, false to disable (default)
+   */
+  public void setAutoValidate(boolean validate) {
+    this.autoValidate = validate;
+  }
+
+  /**
+   * Returns whether auto-validation is enabled.
+   *
+   * @return true if process systems are validated before model runs
+   */
+  public boolean isAutoValidate() {
+    return this.autoValidate;
+  }
+
+  /**
    * Adds a process to the model.
    *
    * @param name a {@link java.lang.String} object
@@ -324,20 +497,44 @@ public class ProcessModel implements Runnable, Serializable {
    */
   @Override
   public void run() {
+    int totalAreas = processes.size();
+
+    // Publish model-start event and notify listener
+    notifyModelStart(totalAreas);
+    publishModelEvent(ProcessEvent.EventType.INFO,
+        "ProcessModel starting with " + totalAreas + " process areas", ProcessEvent.Severity.INFO);
+
+    // Auto-validate all ProcessSystems before first iteration
+    if (autoValidate) {
+      runModelAutoValidation();
+    }
+
     if (runStep) {
       // Step mode: just run each process once in step mode
-      for (ProcessSystem process : processes.values()) {
+      int areaIdx = 0;
+      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
         try {
           if (Thread.currentThread().isInterrupted()) {
             logger.debug("Thread was interrupted, exiting run()...");
             return;
           }
-          process.run_step();
+          notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas, 1);
+          entry.getValue().run_step();
+          notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas, 1);
         } catch (Exception e) {
-          System.err.println("Error running process step: " + e.getMessage());
-          e.printStackTrace();
+          logger.error("Error running process step: " + e.getMessage(), e);
+          publishModelEvent(ProcessEvent.EventType.ERROR,
+              "Error in process area '" + entry.getKey() + "': " + e.getMessage(),
+              ProcessEvent.Severity.ERROR);
+          if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
+            break;
+          }
         }
+        areaIdx++;
       }
+      notifyModelComplete(1, true);
+      publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE,
+          "ProcessModel step mode completed", ProcessEvent.Severity.INFO);
     } else {
       // Reset convergence tracking
       lastIterationCount = 0;
@@ -351,8 +548,11 @@ public class ProcessModel implements Runnable, Serializable {
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
+        // Notify before-iteration
+        notifyBeforeIteration(iterations + 1);
+
         // Run all processes - use parallel execution for independent systems
-        runAllProcesses();
+        runAllProcessesWithHooks(iterations + 1);
         iterations++;
 
         // Capture current stream states and calculate errors
@@ -374,8 +574,14 @@ public class ProcessModel implements Runnable, Serializable {
               + allProcessesSolved + ", valuesConverged=" + valuesConverged);
         }
 
+        double maxError = getError();
+
+        // Notify iteration complete
+        boolean iterConverged = allProcessesSolved && valuesConverged && iterations > 1;
+        notifyIterationComplete(iterations, iterConverged, maxError);
+
         // Converged if all processes solved AND values are not changing
-        if (allProcessesSolved && valuesConverged && iterations > 1) {
+        if (iterConverged) {
           modelConverged = true;
           logger.debug("ProcessModel converged after " + iterations + " iterations");
           break;
@@ -390,7 +596,17 @@ public class ProcessModel implements Runnable, Serializable {
         logger.warn("ProcessModel reached max iterations (" + maxIterations
             + ") without full convergence. Flow error: " + lastMaxFlowError + ", Temp error: "
             + lastMaxTemperatureError);
+        publishModelEvent(
+            ProcessEvent.EventType.WARNING, "ProcessModel did not converge after " + maxIterations
+                + " iterations. Max error: " + String.format("%.2e", getError()),
+            ProcessEvent.Severity.WARNING);
       }
+
+      notifyModelComplete(lastIterationCount, modelConverged);
+      publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE,
+          "ProcessModel completed: " + (modelConverged ? "CONVERGED" : "NOT CONVERGED") + " after "
+              + lastIterationCount + " iterations",
+          ProcessEvent.Severity.INFO);
     }
   }
 
@@ -451,6 +667,47 @@ public class ProcessModel implements Runnable, Serializable {
       }
     } catch (Exception e) {
       logger.error("Error running process " + process.getName() + ": " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Runs all ProcessSystems with listener hooks, firing before/after area callbacks sequentially.
+   * For dependent processes (shared streams), runs sequentially with hooks. For independent
+   * processes without a listener, delegates to the parallel strategy.
+   *
+   * @param iterationNumber current outer iteration number (starts at 1)
+   */
+  private void runAllProcessesWithHooks(int iterationNumber) {
+    int totalAreas = processes.size();
+
+    // If no listener is attached, delegate to the original method for parallel optimization
+    if (progressListener == null && !publishEvents) {
+      runAllProcesses();
+      return;
+    }
+
+    // With hooks, iterate sequentially so before/after callbacks fire in order
+    int areaIdx = 0;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      if (Thread.currentThread().isInterrupted()) {
+        return;
+      }
+      String areaName = entry.getKey();
+      ProcessSystem process = entry.getValue();
+
+      notifyBeforeProcessArea(areaName, process, areaIdx, totalAreas, iterationNumber);
+      try {
+        runSingleProcess(process);
+        notifyProcessAreaComplete(areaName, process, areaIdx, totalAreas, iterationNumber);
+      } catch (Exception e) {
+        publishModelEvent(ProcessEvent.EventType.ERROR,
+            "Error in process area '" + areaName + "': " + e.getMessage(),
+            ProcessEvent.Severity.ERROR);
+        if (!notifyProcessAreaError(areaName, process, e)) {
+          break;
+        }
+      }
+      areaIdx++;
     }
   }
 
@@ -947,28 +1204,18 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Exports this ProcessModel to a JSON string containing all named process areas.
    *
-   * <p>
-   * The exported JSON has a top-level "areas" object where each key is the process area name and
-   * each value is a JSON object in the {@link JsonProcessBuilder} schema (with "fluid" and
+   * <p> The exported JSON has a top-level "areas" object where each key is the process area name
+   * and each value is a JSON object in the {@link JsonProcessBuilder} schema (with "fluid" and
    * "process" sections). This format can be used to reconstruct the model or to export individual
-   * areas to external simulators (e.g., UniSim Design via COM automation).
-   * </p>
+   * areas to external simulators (e.g., UniSim Design via COM automation). </p>
    *
-   * <p>
-   * Example output:
+   * <p> Example output:
    *
-   * <pre>{@code
-   * {
-   *   "areas": {
-   *     "separation": { "fluid": {...}, "process": [...] },
-   *     "compression": { "fluid": {...}, "process": [...] }
-   *   }
-   * }
-   * }</pre>
+   * <pre>{@code { "areas": { "separation": { "fluid": {...}, "process": [...] }, "compression": {
+   * "fluid": {...}, "process": [...] } } } }</pre>
    *
-   * @return JSON string representing all process areas
-   * @see JsonProcessExporter
-   * @see ProcessSystem#toJson()
+   * @return JSON string representing all process areas @see JsonProcessExporter @see
+   * ProcessSystem#toJson()
    */
   public String toJson() {
     return toJson(true);
@@ -1004,27 +1251,17 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Builds a ProcessModel from a JSON string containing named process areas.
    *
-   * <p>
-   * Expected JSON format:
+   * <p> Expected JSON format:
    *
-   * <pre>{@code
-   * {
-   *   "areas": {
-   *     "separation": { "fluid": {...}, "process": [...] },
-   *     "compression": { "fluid": {...}, "process": [...] }
-   *   }
-   * }
-   * }</pre>
+   * <pre>{@code { "areas": { "separation": { "fluid": {...}, "process": [...] }, "compression": {
+   * "fluid": {...}, "process": [...] } } } }</pre>
    *
-   * <p>
-   * Each area is built independently using {@link JsonProcessBuilder}. If any area fails to build,
-   * it is skipped and a warning is logged.
-   * </p>
+   * <p> Each area is built independently using {@link JsonProcessBuilder}. If any area fails to
+   * build, it is skipped and a warning is logged. </p>
    *
-   * @param json the JSON string with the "areas" structure
-   * @return the built ProcessModel (not yet run)
-   * @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key
-   * @see #toJson()
+   * @param json the JSON string with the "areas" structure @return the built ProcessModel (not yet
+   * run) @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key @see
+   * #toJson()
    */
   public static ProcessModel fromJson(String json) {
     if (json == null || json.trim().isEmpty()) {
@@ -1057,8 +1294,8 @@ public class ProcessModel implements Runnable, Serializable {
    * Builds and immediately runs a ProcessModel from a JSON string.
    *
    * <p>
-   * Convenience method that combines {@link #fromJson(String)} and {@link #run()} in a single
-   * call. This is the round-trip counterpart to {@link #toJson()}.
+   * Convenience method that combines {@link #fromJson(String)} and {@link #run()} in a single call.
+   * This is the round-trip counterpart to {@link #toJson()}.
    * </p>
    *
    * @param json the JSON string with the "areas" structure
@@ -1517,5 +1754,181 @@ public class ProcessModel implements Runnable, Serializable {
       count += processSystem.setCapacityAnalysisEnabled(enabled);
     }
     return count;
+  }
+
+  // ============ PRIVATE HOOK / EVENT HELPER METHODS ============
+
+  /**
+   * Notify the listener that the model is starting.
+   *
+   * @param totalAreas total number of process areas
+   */
+  private void notifyModelStart(int totalAreas) {
+    if (progressListener != null) {
+      try {
+        progressListener.onModelStart(totalAreas);
+      } catch (Exception ex) {
+        logger.warn("ModelProgressListener threw exception in onModelStart: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the listener that the model has completed.
+   *
+   * @param totalIterations total iterations performed
+   * @param converged whether the model converged
+   */
+  private void notifyModelComplete(int totalIterations, boolean converged) {
+    if (progressListener != null) {
+      try {
+        progressListener.onModelComplete(totalIterations, converged);
+      } catch (Exception ex) {
+        logger.warn("ModelProgressListener threw exception in onModelComplete: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the listener that an iteration is about to start.
+   *
+   * @param iterationNumber the iteration about to start
+   */
+  private void notifyBeforeIteration(int iterationNumber) {
+    if (progressListener != null) {
+      try {
+        progressListener.onBeforeIteration(iterationNumber);
+      } catch (Exception ex) {
+        logger
+            .warn("ModelProgressListener threw exception in onBeforeIteration: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the listener that an iteration has completed.
+   *
+   * @param iterationNumber the iteration that completed
+   * @param converged whether convergence was achieved
+   * @param maxError maximum relative error across all variables
+   */
+  private void notifyIterationComplete(int iterationNumber, boolean converged, double maxError) {
+    if (progressListener != null) {
+      try {
+        progressListener.onIterationComplete(iterationNumber, converged, maxError);
+      } catch (Exception ex) {
+        logger.warn(
+            "ModelProgressListener threw exception in onIterationComplete: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the listener that a process area is about to run.
+   *
+   * @param areaName name of the area
+   * @param process the ProcessSystem
+   * @param areaIndex area index
+   * @param totalAreas total number of areas
+   * @param iterationNumber current iteration
+   */
+  private void notifyBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
+      int totalAreas, int iterationNumber) {
+    if (progressListener != null) {
+      try {
+        progressListener.onBeforeProcessArea(areaName, process, areaIndex, totalAreas,
+            iterationNumber);
+      } catch (Exception ex) {
+        logger.warn(
+            "ModelProgressListener threw exception in onBeforeProcessArea: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the listener that a process area has completed.
+   *
+   * @param areaName name of the area
+   * @param process the ProcessSystem
+   * @param areaIndex area index
+   * @param totalAreas total number of areas
+   * @param iterationNumber current iteration
+   */
+  private void notifyProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
+      int totalAreas, int iterationNumber) {
+    if (progressListener != null) {
+      try {
+        progressListener.onProcessAreaComplete(areaName, process, areaIndex, totalAreas,
+            iterationNumber);
+      } catch (Exception ex) {
+        logger.warn(
+            "ModelProgressListener threw exception in onProcessAreaComplete: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the listener that a process area encountered an error.
+   *
+   * @param areaName name of the failed area
+   * @param process the ProcessSystem that failed
+   * @param exception the exception
+   * @return true to continue execution, false to abort
+   */
+  private boolean notifyProcessAreaError(String areaName, ProcessSystem process,
+      Exception exception) {
+    if (progressListener != null) {
+      try {
+        return progressListener.onProcessAreaError(areaName, process, exception);
+      } catch (Exception ex) {
+        logger.warn(
+            "ModelProgressListener threw exception in onProcessAreaError: " + ex.getMessage());
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Publish a model-level event to the ProcessEventBus if event publishing is enabled.
+   *
+   * @param type the event type
+   * @param description event description
+   * @param severity event severity
+   */
+  private void publishModelEvent(ProcessEvent.EventType type, String description,
+      ProcessEvent.Severity severity) {
+    if (publishEvents) {
+      try {
+        ProcessEvent event = new ProcessEvent(ProcessEvent.generateId(), type, "ProcessModel",
+            description, severity);
+        ProcessEventBus.getInstance().publish(event);
+      } catch (Exception ex) {
+        logger.warn("Failed to publish ProcessModel event: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Run auto-validation on all ProcessSystems. Called once before the first iteration when
+   * autoValidate is enabled. Validation failures are logged as warnings.
+   */
+  private void runModelAutoValidation() {
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String areaName = entry.getKey();
+      ProcessSystem process = entry.getValue();
+      try {
+        ValidationResult result = process.validateSetup();
+        if (result != null && !result.isValid()) {
+          logger.warn("Validation warning for area '" + areaName + "': " + result);
+          if (publishEvents) {
+            publishModelEvent(ProcessEvent.EventType.WARNING,
+                "Validation warning for area '" + areaName + "': " + result.toString(),
+                ProcessEvent.Severity.WARNING);
+          }
+        }
+      } catch (Exception ex) {
+        logger.debug("Could not validate area '" + areaName + "': " + ex.getMessage());
+      }
+    }
   }
 }

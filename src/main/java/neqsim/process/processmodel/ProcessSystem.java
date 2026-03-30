@@ -52,6 +52,8 @@ import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
 import neqsim.process.processmodel.graph.ProcessNode;
+import neqsim.process.util.event.ProcessEvent;
+import neqsim.process.util.event.ProcessEventBus;
 import neqsim.process.util.report.Report;
 import neqsim.process.util.optimizer.FlowRateOptimizer;
 import neqsim.process.util.optimizer.ProcessOptimizationEngine;
@@ -133,6 +135,18 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient SimulationProgressListener progressListener = null;
 
   /**
+   * When true, lifecycle events are published to the ProcessEventBus singleton during simulation.
+   * Default is false for zero overhead when not needed. Enable via setPublishEvents(true).
+   */
+  private boolean publishEvents = false;
+
+  /**
+   * When true, validateSetup() is auto-invoked on each equipment unit before the first iteration.
+   * Validation warnings are logged but do not abort execution. Enable via setAutoValidate(true).
+   */
+  private boolean autoValidate = false;
+
+  /**
    * Interface for monitoring simulation progress during execution. Implementations receive
    * callbacks after each unit operation completes, enabling real-time visualization, progress
    * tracking, and early termination detection.
@@ -182,6 +196,49 @@ public class ProcessSystem extends SimulationBaseClass {
      */
     default boolean onUnitError(ProcessEquipmentInterface unit, Exception exception) {
       return false; // Default: abort on error
+    }
+
+    /**
+     * Called before each unit operation is executed. Useful for state inspection, cache warming, or
+     * injecting external data before a unit runs.
+     *
+     * @param unit the unit about to be executed
+     * @param unitIndex zero-based index of the unit in execution order
+     * @param totalUnits total number of unit operations
+     * @param iterationNumber current iteration number (starts at 1)
+     */
+    default void onBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
+        int iterationNumber) {
+      // Default implementation does nothing
+    }
+
+    /**
+     * Called at the start of each iteration before any units are executed. Useful for resetting
+     * state, applying external data, or logging iteration starts.
+     *
+     * @param iterationNumber the iteration about to start (starts at 1)
+     */
+    default void onBeforeIteration(int iterationNumber) {
+      // Default implementation does nothing
+    }
+
+    /**
+     * Called once when the simulation begins, before the first iteration.
+     *
+     * @param totalUnits total number of unit operations in the system
+     */
+    default void onSimulationStart(int totalUnits) {
+      // Default implementation does nothing
+    }
+
+    /**
+     * Called once when the simulation ends, after all iterations complete.
+     *
+     * @param totalIterations total number of iterations performed
+     * @param converged true if the simulation converged
+     */
+    default void onSimulationComplete(int totalIterations, boolean converged) {
+      // Default implementation does nothing
     }
   }
 
@@ -1407,6 +1464,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
+    // Publish simulation start event
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
+        "Parallel simulation started with " + unitOperations.size() + " units",
+        ProcessEvent.Severity.INFO));
+
+    // Auto-validate equipment setup before first run
+    if (autoValidate) {
+      runAutoValidation(unitOperations);
+    }
+
     // Build and cache the parallel execution plan (grouped nodes per level)
     if (cachedParallelPlan == null) {
       ProcessGraph graph = buildGraph();
@@ -1506,6 +1573,11 @@ public class ProcessSystem extends SimulationBaseClass {
       unit.setCalculationIdentifier(id);
     }
     setCalculationIdentifier(id);
+
+    // Publish simulation complete event
+    publishEvent(
+        new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
+            getName(), "Parallel simulation completed", ProcessEvent.Severity.INFO));
   }
 
   /**
@@ -1736,6 +1808,16 @@ public class ProcessSystem extends SimulationBaseClass {
       executionOrder = unitOperations;
     }
 
+    // Publish simulation start event
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
+        "Sequential simulation started with " + executionOrder.size() + " units",
+        ProcessEvent.Severity.INFO));
+
+    // Auto-validate equipment setup before first run
+    if (autoValidate) {
+      runAutoValidation(executionOrder);
+    }
+
     // Run setters first to set conditions
     for (int i = 0; i < executionOrder.size(); i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
@@ -1745,7 +1827,6 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     boolean hasRecycle = false;
-    // boolean hasAdjuster = false;
 
     // Initializing recycle controller
     recycleController.clear();
@@ -1754,9 +1835,6 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit instanceof Recycle) {
         hasRecycle = true;
         recycleController.addRecycle((Recycle) unit);
-      }
-      if (unit instanceof Adjuster) {
-        // hasAdjuster = true;
       }
     }
     recycleController.init();
@@ -1778,17 +1856,16 @@ public class ProcessSystem extends SimulationBaseClass {
               unit.run(id);
             }
           } catch (Exception ex) {
-            // String error = ex.getMessage();
             logger.error("error running unit uperation " + unit.getName() + " " + ex.getMessage(),
                 ex);
-            ex.printStackTrace();
+            publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR,
+                unit.getName(), "Unit error: " + ex.getMessage(), ProcessEvent.Severity.ERROR));
           }
         }
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
             unit.run(id);
           } catch (Exception ex) {
-            // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
           }
         }
@@ -1801,7 +1878,6 @@ public class ProcessSystem extends SimulationBaseClass {
         recycleController.nextPriorityLevel();
       } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
         recycleController.resetPriorityLevel();
-        // isConverged=true;
       }
 
       for (int i = 0; i < executionOrder.size(); i++) {
@@ -1813,20 +1889,14 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
-
-      /*
-       * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
-       *
-       * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
-       * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
-       * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
-       * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
-       * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getUnit(); }
-       */
     } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
         && !Thread.currentThread().isInterrupted());
+
+    // Publish simulation complete event
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(),
+        ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+        "Sequential simulation completed after " + iter + " iterations, converged=" + isConverged,
+        isConverged ? ProcessEvent.Severity.INFO : ProcessEvent.Severity.WARNING));
 
     for (int i = 0; i < executionOrder.size(); i++) {
       executionOrder.get(i).setCalculationIdentifier(id);
@@ -1887,6 +1957,46 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public SimulationProgressListener getProgressListener() {
     return this.progressListener;
+  }
+
+  /**
+   * Enables or disables event publishing to the ProcessEventBus singleton. When enabled, lifecycle
+   * events (simulation start/complete, unit errors, threshold crossings) are published to the event
+   * bus during steady-state and transient execution.
+   *
+   * @param publish true to enable event publishing, false to disable (default)
+   */
+  public void setPublishEvents(boolean publish) {
+    this.publishEvents = publish;
+  }
+
+  /**
+   * Returns whether event publishing is enabled.
+   *
+   * @return true if events are published to ProcessEventBus during simulation
+   */
+  public boolean isPublishEvents() {
+    return this.publishEvents;
+  }
+
+  /**
+   * Enables or disables automatic equipment validation before the first simulation iteration. When
+   * enabled, validateSetup() is called on each equipment unit before the first run. Validation
+   * failures are logged as warnings but do not abort execution.
+   *
+   * @param validate true to enable auto-validation, false to disable (default)
+   */
+  public void setAutoValidate(boolean validate) {
+    this.autoValidate = validate;
+  }
+
+  /**
+   * Returns whether auto-validation is enabled.
+   *
+   * @return true if equipment setup is validated before simulation runs
+   */
+  public boolean isAutoValidate() {
+    return this.autoValidate;
   }
 
   /**
@@ -1970,6 +2080,16 @@ public class ProcessSystem extends SimulationBaseClass {
 
     int totalUnits = executionOrder.size();
 
+    // Notify simulation start
+    notifySimulationStart(totalUnits);
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
+        "Simulation started with " + totalUnits + " units", ProcessEvent.Severity.INFO));
+
+    // Auto-validate equipment setup before first run
+    if (autoValidate) {
+      runAutoValidation(executionOrder);
+    }
+
     // Run setters first
     for (int i = 0; i < totalUnits; i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
@@ -1998,6 +2118,11 @@ public class ProcessSystem extends SimulationBaseClass {
       iter++;
       isConverged = true;
 
+      // Notify before-iteration
+      notifyBeforeIteration(iter);
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE,
+          getName(), "Starting iteration " + iter, ProcessEvent.Severity.DEBUG));
+
       for (int i = 0; i < totalUnits; i++) {
         ProcessEquipmentInterface unit = executionOrder.get(i);
 
@@ -2010,12 +2135,15 @@ public class ProcessSystem extends SimulationBaseClass {
         if (!(unit instanceof Recycle)) {
           try {
             if (iter == 1 || unit.needRecalculation()) {
+              notifyBeforeUnit(unit, i, totalUnits, iter);
               unit.run(id);
             }
             notifyUnitComplete(unit, i, totalUnits, iter);
           } catch (Exception ex) {
             logger.error("Error running unit operation " + unit.getName() + " " + ex.getMessage(),
                 ex);
+            publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR,
+                unit.getName(), "Unit error: " + ex.getMessage(), ProcessEvent.Severity.ERROR));
             if (!notifyUnitError(unit, ex)) {
               // Listener requested abort
               return;
@@ -2025,6 +2153,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
+            notifyBeforeUnit(unit, i, totalUnits, iter);
             unit.run(id);
             notifyUnitComplete(unit, i, totalUnits, iter);
           } catch (Exception ex) {
@@ -2063,6 +2192,13 @@ public class ProcessSystem extends SimulationBaseClass {
 
     } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
         && !Thread.currentThread().isInterrupted());
+
+    // Notify simulation complete
+    notifySimulationComplete(iter, isConverged);
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(),
+        ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+        "Simulation completed after " + iter + " iterations, converged=" + isConverged,
+        isConverged ? ProcessEvent.Severity.INFO : ProcessEvent.Severity.WARNING));
 
     for (int i = 0; i < totalUnits; i++) {
       executionOrder.get(i).setCalculationIdentifier(id);
@@ -2125,6 +2261,111 @@ public class ProcessSystem extends SimulationBaseClass {
     return false; // Default: abort on error
   }
 
+  /**
+   * Notify the progress listener that a unit operation is about to start.
+   *
+   * @param unit the unit about to run
+   * @param unitIndex index of the unit
+   * @param totalUnits total number of units
+   * @param iterationNumber current iteration
+   */
+  private void notifyBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
+      int iterationNumber) {
+    if (progressListener != null) {
+      try {
+        progressListener.onBeforeUnit(unit, unitIndex, totalUnits, iterationNumber);
+      } catch (Exception ex) {
+        logger.warn("Progress listener threw exception in onBeforeUnit: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the progress listener that an iteration is about to start.
+   *
+   * @param iterationNumber the iteration about to start
+   */
+  private void notifyBeforeIteration(int iterationNumber) {
+    if (progressListener != null) {
+      try {
+        progressListener.onBeforeIteration(iterationNumber);
+      } catch (Exception ex) {
+        logger.warn("Progress listener threw exception in onBeforeIteration: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the progress listener that the simulation is starting.
+   *
+   * @param totalUnits total number of unit operations
+   */
+  private void notifySimulationStart(int totalUnits) {
+    if (progressListener != null) {
+      try {
+        progressListener.onSimulationStart(totalUnits);
+      } catch (Exception ex) {
+        logger.warn("Progress listener threw exception in onSimulationStart: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the progress listener that the simulation has completed.
+   *
+   * @param totalIterations total number of iterations executed
+   * @param converged whether the simulation converged
+   */
+  private void notifySimulationComplete(int totalIterations, boolean converged) {
+    if (progressListener != null) {
+      try {
+        progressListener.onSimulationComplete(totalIterations, converged);
+      } catch (Exception ex) {
+        logger
+            .warn("Progress listener threw exception in onSimulationComplete: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Publish a process event to the event bus if event publishing is enabled.
+   *
+   * @param event the event to publish
+   */
+  private void publishEvent(ProcessEvent event) {
+    if (publishEvents && event != null) {
+      try {
+        ProcessEventBus.getInstance().publish(event);
+      } catch (Exception ex) {
+        logger.warn("Failed to publish process event: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Run auto-validation on all equipment units. Called once before the first iteration when
+   * autoValidate is enabled.
+   *
+   * @param executionOrder the list of units to validate
+   */
+  private void runAutoValidation(List<ProcessEquipmentInterface> executionOrder) {
+    for (int i = 0; i < executionOrder.size(); i++) {
+      ProcessEquipmentInterface unit = executionOrder.get(i);
+      try {
+        neqsim.util.validation.ValidationResult result = unit.validateSetup();
+        if (result != null && !result.isValid()) {
+          logger.warn("Validation warning for " + unit.getName() + ": " + result);
+          if (publishEvents) {
+            publishEvent(ProcessEvent.warning(unit.getName(),
+                "Setup validation failed: " + result.toString()));
+          }
+        }
+      } catch (Exception ex) {
+        logger.debug("Could not validate " + unit.getName() + ": " + ex.getMessage());
+      }
+    }
+  }
+
   /*
    * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
    *
@@ -2150,6 +2391,13 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public synchronized void runTransient(double dt, UUID id) {
     ensureInitialStateSnapshot();
+
+    // Publish pre-timestep event
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE,
+        getName(), "Transient timestep " + timeStepNumber + " starting at t="
+            + String.format("%.3f", time) + " s, dt=" + String.format("%.4f", dt) + " s",
+        ProcessEvent.Severity.DEBUG));
+
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
       if (unit instanceof Setter) {
@@ -2171,6 +2419,8 @@ public class ProcessSystem extends SimulationBaseClass {
         if (massBalanceError > massBalanceErrorThreshold) {
           logger.warn("Mass balance error: " + String.format("%.3f", massBalanceError)
               + "% (threshold: " + massBalanceErrorThreshold + "%) at time " + time + " s");
+          publishEvent(ProcessEvent.thresholdCrossed(getName(), "massBalanceError",
+              massBalanceError, massBalanceErrorThreshold, true));
         }
       }
       previousTotalMass = currentMass;
@@ -2191,6 +2441,11 @@ public class ProcessSystem extends SimulationBaseClass {
         ctrl.runTransient(ctrl.getResponse(), dt, id);
       }
     }
+
+    // Publish post-controller, pre-measurement event
+    publishEvent(
+        new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+            "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
 
     timeStepNumber++;
     String[] row = new String[1 + 3 * measurementDevices.size()];
