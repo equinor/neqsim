@@ -24,7 +24,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Build process

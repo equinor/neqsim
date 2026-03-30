@@ -30,7 +30,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem baseCase = new ProcessSystem();
  * // ... configure base case ...
