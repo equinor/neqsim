@@ -1,5 +1,6 @@
 package neqsim.process.logic;
 
+import java.io.Serializable;
 import java.util.List;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
@@ -24,7 +25,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * @author ESOL
  * @version 1.0
  */
-public interface ProcessLogic {
+public interface ProcessLogic extends Serializable {
 
   /**
    * Gets the name of this logic sequence.
