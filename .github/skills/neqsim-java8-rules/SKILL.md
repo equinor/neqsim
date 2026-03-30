@@ -79,3 +79,37 @@ All classes and methods (public, protected, AND private) require complete JavaDo
 ./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
 ./mvnw javadoc:javadoc                    # verify JavaDoc
 ```
+
+## Serialization — SE_BAD_FIELD Rule (MANDATORY)
+
+SpotBugs enforces that all instance fields in `Serializable` classes are either
+serializable themselves or marked `transient`. This applies to any class extending
+`ProcessEquipmentBaseClass`, `MeasurementDeviceBaseClass`, `MechanicalDesign`,
+thermo phase classes, or any other `Serializable` class.
+
+### When to use `transient`
+
+Mark a field `transient` when its type does NOT implement `Serializable`:
+- Functional interfaces: `Function`, `BiConsumer`, `Consumer`, `Supplier`
+- JDBC: `Connection`, `Statement`, `ResultSet`
+- Threads: `Thread`, `ExecutorService`
+- Apache Commons Math: `BicubicInterpolator`, `BicubicInterpolatingFunction`, `LinearInterpolator`
+- Inner classes that don't implement `Serializable` (e.g., `NetworkNode`, `GibbsComponent`)
+- External library types not designed for serialization
+
+### Correct modifier order
+
+```java
+// private fields
+private transient MyType field;
+private final transient List<NonSerializableInner> items = new ArrayList<>();
+
+// package-private fields
+transient SomeType field;
+```
+
+### Verify with SpotBugs
+
+```bash
+./mvnw spotbugs:check 2>&1 | Select-String "SE_BAD_FIELD"  # should return empty
+```
