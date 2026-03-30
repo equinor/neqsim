@@ -9,6 +9,53 @@
 
 ---
 
+## 2026-03-30 — Serialization Cleanup & ProcessLogic Extends Serializable
+
+### Breaking Change — `ProcessLogic` now extends `Serializable`
+
+- **`ProcessLogic`** (`process.logic.ProcessLogic`) now extends `java.io.Serializable`.
+  This was required to eliminate the last SpotBugs SE_BAD_FIELD warning caused by
+  a compiler-generated synthetic field in `AlarmActionHandler`'s anonymous inner class
+  that captured a `ProcessLogic` reference.
+- Any class implementing `ProcessLogic` is now implicitly `Serializable`.
+- Non-serializable fields in `ProcessLogic` implementations (`ESDLogic`, `HIPPSLogic`,
+  `ShutdownLogic`, `StartupLogic`, `SafetyInstrumentedFunction`) have been marked
+  `transient`.
+
+### Serialization Audit — 56 SE_BAD_FIELD Warnings Fixed
+
+All SpotBugs SE_BAD_FIELD warnings have been resolved by adding `transient` to
+non-serializable fields across 40+ classes. Categories fixed:
+
+- **Thermo phases**: `doubleW[]`, `doubleW[][]`, GERG EOS objects in phase classes
+- **Database classes**: JDBC `Connection` and `Statement` fields (6 database classes)
+- **Process equipment**: Inner class types (`NetworkNode`, `GibbsComponent`,
+  `ReservoirLayer`, `ValveSkid`, `UmbilicalElement`, `TransientWallHeatTransfer`, etc.)
+- **Functional interfaces**: `Function`, `BiConsumer`, `Consumer` fields in
+  `Adjuster`, `SetPoint`, `Calculator`, `SpreadsheetBlock`, `EquipmentStateAdapter`,
+  `BatchStudy`, `SensitivityAnalysis`, `ProcessSafetyScenario`
+- **Util/optimizer**: `ProductionOptimizer`, `ProcessLinearizer`, `ProgressCallback`
+- **Mechanical design**: `SubseaCostEstimator`, `ShellAndTubeDesignCalculator`,
+  `TorgManager`, `MechanicalDesignDataSource`
+- **Standards**: Apache Commons Math interpolators in `Standard_ISO6578`
+- **Core**: `Thread` in `ThermodynamicOperations`, `BicubicInterpolator` in
+  `OLGApropertyTableGeneratorWater`
+
+**Pattern for new code:** When adding fields to any class that extends
+`ProcessEquipmentBaseClass`, `MeasurementDeviceBaseClass`, `MechanicalDesign`,
+or any other `Serializable` class, mark non-serializable fields `transient`:
+
+```java
+// Correct modifier order:
+private transient MyNonSerializableType field;
+private final transient List<NonSerializableInner> items = new ArrayList<>();
+transient SomeType packagePrivateField;  // package-private
+```
+
+**Agents/skills updated:** `neqsim-java8-rules/SKILL.md`, `copilot-instructions.md`.
+
+---
+
 ## 2026-03-27 — UniSimToNeqSim Python Code Generation
 
 ### New Method — `to_python()` on `UniSimToNeqSim`
