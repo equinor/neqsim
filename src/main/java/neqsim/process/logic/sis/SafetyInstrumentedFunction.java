@@ -8,7 +8,7 @@ import neqsim.process.logic.ProcessLogic;
 
 /**
  * Safety Instrumented Function (SIF) implementing fire and gas detection with voting logic.
- * 
+ *
  * <p>
  * A SIF is a safety function designed to prevent or mitigate hazardous events. It consists of:
  * <ul>
@@ -16,7 +16,7 @@ import neqsim.process.logic.ProcessLogic;
  * <li>Logic solver (voting and logic)</li>
  * <li>Final elements (valves, alarms, etc.)</li>
  * </ul>
- * 
+ *
  * <p>
  * This implementation follows IEC 61511 principles:
  * <ul>
@@ -26,23 +26,23 @@ import neqsim.process.logic.ProcessLogic;
  * <li>Manual override capability</li>
  * <li>Reset permissives</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Create fire detection SIF with 2oo3 voting
  * SafetyInstrumentedFunction fireSIF =
  *     new SafetyInstrumentedFunction("Fire Detection SIF", VotingLogic.TWO_OUT_OF_THREE);
- * 
+ *
  * // Add detectors
  * fireSIF.addDetector(new Detector("FD-101", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
  * fireSIF.addDetector(new Detector("FD-102", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
  * fireSIF.addDetector(new Detector("FD-103", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
- * 
+ *
  * // Link to ESD logic
  * fireSIF.linkToLogic(esdLogic);
- * 
+ *
  * // In simulation loop:
  * fireSIF.update(temp1, temp2, temp3); // Update detector values
  * if (fireSIF.isTripped()) {
@@ -56,7 +56,7 @@ import neqsim.process.logic.ProcessLogic;
 public class SafetyInstrumentedFunction implements ProcessLogic {
   private final String name;
   private final VotingLogic votingLogic;
-  private final List<Detector> detectors = new ArrayList<>();
+  private final transient List<Detector> detectors = new ArrayList<>();
   private final List<ProcessLogic> linkedLogics = new ArrayList<>();
 
   private LogicState state = LogicState.IDLE;
@@ -78,7 +78,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
 
   /**
    * Adds a detector to this SIF.
-   * 
+   *
    * <p>
    * The number of detectors added must match the voting logic total sensors requirement.
    * </p>
@@ -178,7 +178,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
 
   /**
    * Manually overrides the SIF (for testing or bypass).
-   * 
+   *
    * <p>
    * Override should be used with extreme caution and typically requires management approval.
    * </p>
@@ -196,7 +196,7 @@ public class SafetyInstrumentedFunction implements ProcessLogic {
 
   /**
    * Resets the SIF after trip conditions have cleared.
-   * 
+   *
    * <p>
    * Reset requires all detectors to be in non-trip condition.
    * </p>

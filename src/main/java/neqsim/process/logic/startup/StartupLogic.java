@@ -10,11 +10,11 @@ import neqsim.process.logic.ProcessLogic;
 
 /**
  * Startup logic with permissive checks and sequential action execution.
- * 
+ *
  * <p>
  * Startup sequences verify that required conditions (permissives) are met before proceeding with
  * equipment startup. This follows industry best practices for safe process startup.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -24,23 +24,23 @@ import neqsim.process.logic.ProcessLogic;
  * <li>Configurable timeout for permissive waiting</li>
  * <li>Detailed status reporting</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * StartupLogic startup = new StartupLogic("Compressor Startup");
- * 
+ *
  * // Add permissives (must all be true before starting)
  * startup.addPermissive(new TemperatureCondition(cooler, 50.0, "&lt;")); // Cooled
  * startup.addPermissive(new PressureCondition(suction, 3.0, "&gt;")); // Min pressure
  * startup.addPermissive(new TimerCondition(60.0)); // Min 60s warm-up
- * 
+ *
  * // Add startup actions
  * startup.addAction(new OpenValveAction(suctionValve), 0.0); // Immediate
  * startup.addAction(new StartPumpAction(lubePump), 2.0); // After 2s
  * startup.addAction(new StartCompressorAction(compressor), 10.0); // After 10s
- * 
+ *
  * // In control loop
  * startup.activate();
  * while (!startup.isComplete()) {
@@ -53,8 +53,8 @@ import neqsim.process.logic.ProcessLogic;
  */
 public class StartupLogic implements ProcessLogic {
   private final String name;
-  private final List<LogicCondition> permissives = new ArrayList<>();
-  private final List<ActionWithDelay> actions = new ArrayList<>();
+  private final transient List<LogicCondition> permissives = new ArrayList<>();
+  private final transient List<ActionWithDelay> actions = new ArrayList<>();
 
   private LogicState state = LogicState.IDLE;
   private int currentActionIndex = 0;
@@ -77,7 +77,7 @@ public class StartupLogic implements ProcessLogic {
 
   /**
    * Adds a permissive condition that must be met before startup can proceed.
-   * 
+   *
    * <p>
    * All permissives must be true simultaneously before the first action executes.
    * </p>

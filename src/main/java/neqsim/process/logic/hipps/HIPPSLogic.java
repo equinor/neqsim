@@ -66,7 +66,7 @@ import neqsim.process.logic.sis.VotingLogic;
 public class HIPPSLogic implements ProcessLogic {
   private final String name;
   private final VotingLogic votingLogic;
-  private final List<Detector> pressureSensors = new ArrayList<>();
+  private final transient List<Detector> pressureSensors = new ArrayList<>();
 
   private ThrottlingValve isolationValve;
   private ProcessLogic escalationLogic; // ESD logic to activate if pressure remains high
