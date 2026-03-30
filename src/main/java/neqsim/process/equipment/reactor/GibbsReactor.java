@@ -375,8 +375,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
   private String method = "DirectGibbsMinimization";
   private boolean useAllDatabaseSpecies = false;
-  private List<GibbsComponent> gibbsDatabase = new ArrayList<>();
-  private Map<String, GibbsComponent> componentMap = new HashMap<>();
+  private transient List<GibbsComponent> gibbsDatabase = new ArrayList<>();
+  private transient Map<String, GibbsComponent> componentMap = new HashMap<>();
 
   // Results from the last calculation
   private double[] lambda = new double[7]; // O, N, C, H, S, Ar, Z

@@ -169,9 +169,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       new ArrayList<>(Arrays.asList(HeatExchangerType.values()));
   private SelectionCriterion selectionCriterion = SelectionCriterion.MIN_AREA;
   private HeatExchangerType manualSelection;
-  private List<HeatExchangerSizingResult> sizingResults = new ArrayList<>();
-  private HeatExchangerSizingResult selectedSizingResult;
-  private ShellAndTubeDesignCalculator shellAndTubeCalculator;
+  private transient List<HeatExchangerSizingResult> sizingResults = new ArrayList<>();
+  private transient HeatExchangerSizingResult selectedSizingResult;
+  private transient ShellAndTubeDesignCalculator shellAndTubeCalculator;
 
   /**
    * Constructor for HeatExchangerMechanicalDesign.

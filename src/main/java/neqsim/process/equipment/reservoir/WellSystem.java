@@ -258,7 +258,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   private StreamInterface inletStream; // Alias for reservoirStream for ProcessSystem compatibility
 
   // Multi-layer support
-  private List<ReservoirLayer> layers = new ArrayList<>();
+  private transient List<ReservoirLayer> layers = new ArrayList<>();
   private boolean isMultiLayer = false;
 
   // IPR configuration

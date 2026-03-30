@@ -218,7 +218,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
 
   // ============ Valve Skids ============
   /** Valve skids for each slot. */
-  private List<ValveSkid> valveSkids = new ArrayList<ValveSkid>();
+  private transient List<ValveSkid> valveSkids = new ArrayList<ValveSkid>();
 
   /** Map of well names to slot numbers. */
   private Map<String, Integer> wellSlotMap = new HashMap<String, Integer>();

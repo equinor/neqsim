@@ -222,7 +222,7 @@ public class MechanicalDesign implements java.io.Serializable {
   private double pressureMarginFactor = 0.1;
   private DesignLimitData designLimitData = DesignLimitData.EMPTY;
   private MechanicalDesignMarginResult lastMarginResult = MechanicalDesignMarginResult.EMPTY;
-  private List<MechanicalDesignDataSource> designDataSources = new ArrayList<>();
+  private transient List<MechanicalDesignDataSource> designDataSources = new ArrayList<>();
   public double innerDiameter = 0.0;
   public double outerDiameter = 0.0;
   /** Wall thickness in mm. */

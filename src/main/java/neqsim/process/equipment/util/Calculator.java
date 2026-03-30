@@ -26,7 +26,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
-  private BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
+  private transient BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
   private Runnable simpleCalculationMethod;
   String type = "sumTEG";
 

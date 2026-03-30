@@ -149,8 +149,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     }
   }
 
-  private final Map<String, ManifoldNode> manifolds = new HashMap<>();
-  private final List<PipelineSegment> allPipelines = new ArrayList<>();
+  private final transient Map<String, ManifoldNode> manifolds = new HashMap<>();
+  private final transient List<PipelineSegment> allPipelines = new ArrayList<>();
   private final List<StreamInterface> feedStreams = new ArrayList<>();
   private String terminalManifoldName;
   private boolean compositionalTracking = true;
