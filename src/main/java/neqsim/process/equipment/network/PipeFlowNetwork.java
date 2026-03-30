@@ -30,7 +30,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * outlet&lt;/li&gt; &lt;/ul&gt;
  *
  * &lt;h2&gt;Example Usage&lt;/h2&gt;
- * 
+ *
  * &lt;pre&gt;{@code
  * // Create feeds
  * Stream feed1 = new Stream("feed1", gas1);

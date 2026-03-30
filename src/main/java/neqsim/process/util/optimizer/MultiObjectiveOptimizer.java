@@ -67,13 +67,13 @@ public class MultiObjectiveOptimizer implements Serializable {
   private static final int MAX_OBJECTIVES_EFFICIENT = 5;
 
   /** Inner single-objective optimizer. */
-  private final ProductionOptimizer singleObjectiveOptimizer;
+  private final transient ProductionOptimizer singleObjectiveOptimizer;
 
   /** Whether to include infeasible solutions in the front. */
   private boolean includeInfeasible = false;
 
   /** Callback for progress reporting. */
-  private ProgressCallback progressCallback;
+  private transient ProgressCallback progressCallback;
 
   /**
    * Progress callback interface.

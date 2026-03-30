@@ -29,7 +29,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * sheet.addStreamImportCell("T_out", product, s -&gt; s.getTemperature("C"));
  * sheet.addStreamImportCell("mdot", feed, s -&gt; s.getFlowRate("kg/hr"));
  * sheet.addFormulaCell("deltaT", cells -&gt; cells.get("T_out") - cells.get("T_in"));
- * sheet.addFormulaCell("duty_kW", cells -&gt; cells.get("mdot") * 4.18 * cells.get("deltaT") / 3600.0);
+ * sheet.addFormulaCell("duty_kW",
+ *     cells -&gt; cells.get("mdot") * 4.18 * cells.get("deltaT") / 3600.0);
  * sheet.addExportCell("duty_kW", cooler, (eq, val) -&gt; ((Cooler) eq).setEnergyInput(val));
  * </pre>
  *
@@ -108,7 +109,8 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * reference any previously defined cell (import, constant, or earlier formula cells).
    *
    * @param cellName unique name for this cell
-   * @param formula function that takes the map of current cell values and returns the computed value
+   * @param formula function that takes the map of current cell values and returns the computed
+   *        value
    */
   public void addFormulaCell(String cellName, Function<Map<String, Double>, Double> formula) {
     if (cellName == null || cellName.trim().isEmpty()) {

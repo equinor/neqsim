@@ -37,7 +37,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * The reactor minimizes the objective function:
  * </p>
- * 
+ *
  * <pre>
  * G = Σ nᵢ(μᵢ⁰ + RT ln(φᵢyᵢP)) - Σ λⱼ(Σ aᵢⱼnᵢ - bⱼ)
  * </pre>
@@ -48,7 +48,7 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * GibbsReactor reactor = new GibbsReactor("reactor", inletStream);
  * reactor.setEnergyMode(EnergyMode.ISOTHERMAL);

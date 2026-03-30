@@ -52,7 +52,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create a simple ring main network
@@ -60,10 +60,10 @@ import neqsim.thermo.system.SystemInterface;
  * gas.addComponent("methane", 0.9);
  * gas.addComponent("ethane", 0.1);
  * gas.setMixingRule("classic");
- * 
+ *
  * LoopedPipeNetwork network = new LoopedPipeNetwork("ring main");
  * network.setFluidTemplate(gas);
- * 
+ *
  * // Add nodes
  * network.addSourceNode("supply", 50.0, 1000.0); // 50 bar, 1000 kg/hr
  * network.addJunctionNode("A");
@@ -71,7 +71,7 @@ import neqsim.thermo.system.SystemInterface;
  * network.addJunctionNode("C");
  * network.addSinkNode("customer1", 100.0); // 100 kg/hr demand
  * network.addSinkNode("customer2", 200.0);
- * 
+ *
  * // Connect with pipes (creates loops)
  * network.addPipe("supply", "A", "pipe1", 1000.0, 0.3);
  * network.addPipe("A", "B", "pipe2", 500.0, 0.2);
@@ -79,12 +79,12 @@ import neqsim.thermo.system.SystemInterface;
  * network.addPipe("C", "A", "pipe4", 500.0, 0.2); // Creates a loop
  * network.addPipe("B", "customer1", "pipe5", 200.0, 0.15);
  * network.addPipe("C", "customer2", "pipe6", 200.0, 0.15);
- * 
+ *
  * // Solve using Hardy Cross
  * network.setSolverType(SolverType.HARDY_CROSS);
  * network.setTolerance(1e-6);
  * network.run();
- * 
+ *
  * // Get results
  * System.out.println("Converged in " + network.getIterationCount() + " iterations");
  * for (String pipeName : network.getPipeNames()) {

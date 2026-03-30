@@ -78,7 +78,7 @@ public class SensitivityAnalysis implements Serializable {
   private double currentValue;
 
   /** Named output extractors. */
-  private final Map<String, Function<ProcessSystem, Double>> outputExtractors =
+  private final transient Map<String, Function<ProcessSystem, Double>> outputExtractors =
       new LinkedHashMap<>();
 
   /**

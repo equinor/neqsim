@@ -827,7 +827,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * equipment.getMechanicalDesign().setDesignStandard(StandardType.ASME_VIII_DIV1);
    * equipment.getMechanicalDesign().setDesignStandard(StandardType.NORSOK_P_001);
@@ -1578,7 +1578,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * <p>
    * Usage example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * MechanicalDesign mecDesign = separator.getMechanicalDesign();
@@ -1633,7 +1633,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * <p>
    * Usage example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * MechanicalDesign mecDesign = separator.getMechanicalDesign();

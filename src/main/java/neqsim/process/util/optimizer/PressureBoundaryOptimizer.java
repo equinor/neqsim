@@ -285,7 +285,7 @@ public class PressureBoundaryOptimizer implements Serializable {
   private final ProcessSystem process;
   private final StreamInterface feedStream;
   private final StreamInterface outletStream;
-  private ProductionOptimizer productionOptimizer;
+  private transient ProductionOptimizer productionOptimizer;
 
   // Configuration
   private double minFlowRate = 0.001; // kg/hr

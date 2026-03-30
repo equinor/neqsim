@@ -37,7 +37,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example 1 - Basic Gas Well</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir stream at reservoir conditions
  * Stream reservoirStream = new Stream("reservoir", reservoirFluid);
@@ -54,7 +54,7 @@ import neqsim.thermo.system.SystemInterface;
  * }</pre>
  *
  * <h2>Usage Example 2 - Vogel IPR for Oil Well</h2>
- * 
+ *
  * <pre>{@code
  * WellFlow oilWell = new WellFlow("oil producer");
  * oilWell.setInletStream(reservoirStream);
@@ -66,7 +66,7 @@ import neqsim.thermo.system.SystemInterface;
  * }</pre>
  *
  * <h2>Usage Example 3 - Multi-Layer Commingled Well</h2>
- * 
+ *
  * <pre>{@code
  * WellFlow commingledWell = new WellFlow("commingled producer");
  * commingledWell.setInletStream(mainReservoirStream);
@@ -86,7 +86,7 @@ import neqsim.thermo.system.SystemInterface;
  * }</pre>
  *
  * <h2>Integration with Process Simulation</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir
  * SimpleReservoir reservoir = new SimpleReservoir("Field");
@@ -208,7 +208,7 @@ public class WellFlow extends TwoPortEquipment {
 
   /**
    * Add a reservoir layer for commingled production.
-   * 
+   *
    * <p>
    * Multiple layers can contribute to the total well flow. Each layer has its own reservoir
    * pressure and productivity index. The flow from each layer is calculated based on the common
@@ -381,7 +381,7 @@ public class WellFlow extends TwoPortEquipment {
 
   /**
    * Run multi-layer commingled production calculation.
-   * 
+   *
    * <p>
    * For commingled wells, the flow from each layer is calculated based on the common bottom-hole
    * pressure. The total flow is the sum of individual layer contributions.
@@ -660,7 +660,7 @@ public class WellFlow extends TwoPortEquipment {
    * <p>
    * Example CSV format:
    * </p>
-   * 
+   *
    * <pre>
    * Pwf(bara),Rate(MSm3/day)
    * 50,5.2

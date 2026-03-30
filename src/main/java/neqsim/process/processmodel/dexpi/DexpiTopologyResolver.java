@@ -146,7 +146,7 @@ public final class DexpiTopologyResolver {
     private final List<String> orderedEquipmentIds;
     private final List<TopologyEdge> edges;
     private final Map<String, String> nozzleToEquipment;
-    private final Map<String, Element> equipmentElements;
+    private final transient Map<String, Element> equipmentElements;
 
     /**
      * Creates a new resolved topology.
