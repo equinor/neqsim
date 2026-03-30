@@ -161,7 +161,12 @@ public class ProcessEvent implements Serializable {
     return event;
   }
 
-  private static String generateId() {
+  /**
+   * Generates a unique event ID.
+   *
+   * @return unique event identifier string
+   */
+  public static String generateId() {
     return "EVT-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 1000);
   }
 
