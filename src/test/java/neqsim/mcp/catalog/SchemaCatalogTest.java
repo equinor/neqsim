@@ -1,0 +1,154 @@
+package neqsim.mcp.catalog;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Tests for {@link SchemaCatalog}.
+ *
+ * @author Even Solbraa
+ * @version 1.0
+ */
+class SchemaCatalogTest {
+
+  @Test
+  void testFlashInputSchema_isValidJson() {
+    String schema = SchemaCatalog.flashInputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("FlashInput", root.get("title").getAsString());
+    assertEquals("object", root.get("type").getAsString());
+    assertTrue(root.has("properties"));
+
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("model"));
+    assertTrue(props.has("temperature"));
+    assertTrue(props.has("pressure"));
+    assertTrue(props.has("flashType"));
+    assertTrue(props.has("components"));
+    assertTrue(props.has("mixingRule"));
+  }
+
+  @Test
+  void testFlashOutputSchema_isValidJson() {
+    String schema = SchemaCatalog.flashOutputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("FlashOutput", root.get("title").getAsString());
+    assertTrue(root.has("properties"));
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("status"));
+    assertTrue(props.has("flash"));
+    assertTrue(props.has("fluid"));
+  }
+
+  @Test
+  void testProcessInputSchema_isValidJson() {
+    String schema = SchemaCatalog.processInputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("ProcessInput", root.get("title").getAsString());
+    assertTrue(root.has("properties"));
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("fluid"));
+    assertTrue(props.has("process"));
+  }
+
+  @Test
+  void testProcessOutputSchema_isValidJson() {
+    String schema = SchemaCatalog.processOutputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("ProcessOutput", root.get("title").getAsString());
+    assertTrue(root.has("properties"));
+  }
+
+  @Test
+  void testValidateInputSchema_isValidJson() {
+    String schema = SchemaCatalog.validateInputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("ValidateInput", root.get("title").getAsString());
+  }
+
+  @Test
+  void testValidateOutputSchema_isValidJson() {
+    String schema = SchemaCatalog.validateOutputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("ValidateOutput", root.get("title").getAsString());
+    assertTrue(root.has("properties"));
+
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("valid"));
+    assertTrue(props.has("issues"));
+  }
+
+  @Test
+  void testComponentSearchOutputSchema_isValidJson() {
+    String schema = SchemaCatalog.componentSearchOutputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("ComponentSearchOutput", root.get("title").getAsString());
+    assertTrue(root.has("properties"));
+  }
+
+  @Test
+  void testGetToolNames() {
+    List<String> tools = SchemaCatalog.getToolNames();
+
+    assertEquals(4, tools.size());
+    assertTrue(tools.contains("run_flash"));
+    assertTrue(tools.contains("run_process"));
+    assertTrue(tools.contains("validate_input"));
+    assertTrue(tools.contains("list_components"));
+  }
+
+  @Test
+  void testGetSchema_flash() {
+    String input = SchemaCatalog.getSchema("run_flash", "input");
+    assertNotNull(input);
+    assertTrue(input.contains("FlashInput"));
+
+    String output = SchemaCatalog.getSchema("run_flash", "output");
+    assertNotNull(output);
+    assertTrue(output.contains("FlashOutput"));
+  }
+
+  @Test
+  void testGetSchema_process() {
+    String input = SchemaCatalog.getSchema("run_process", "input");
+    assertNotNull(input);
+
+    String output = SchemaCatalog.getSchema("run_process", "output");
+    assertNotNull(output);
+  }
+
+  @Test
+  void testGetSchema_unknown() {
+    String result = SchemaCatalog.getSchema("unknown_tool", "input");
+    assertNull(result);
+  }
+
+  @Test
+  void testGetCatalogJson() {
+    String json = SchemaCatalog.getCatalogJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+    assertTrue(root.has("run_flash"));
+    assertTrue(root.has("run_process"));
+    assertTrue(root.has("validate_input"));
+    assertTrue(root.has("list_components"));
+
+    // Each tool should have input and output URIs
+    JsonObject flash = root.getAsJsonObject("run_flash");
+    assertTrue(flash.get("inputSchemaUri").getAsString().contains("run_flash"));
+    assertTrue(flash.get("outputSchemaUri").getAsString().contains("run_flash"));
+  }
+}
