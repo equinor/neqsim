@@ -75,13 +75,10 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   public InterfaceProperties clone() {
     InterfaceProperties clonedSystem = null;
     try {
-      // clonedSystem = (InterfaceProperties) suclone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      clonedSystem = (InterfaceProperties) super.clone();
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for InterfaceProperties", ex);
     }
-    // clonedSystem.system = system;
     return clonedSystem;
   }
 

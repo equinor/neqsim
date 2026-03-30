@@ -97,8 +97,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
 
     try {
       properties = (PhysicalProperties) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for PhysicalProperties", ex);
     }
     properties.densityCalc = densityCalc.clone();
     properties.diffusivityCalc = diffusivityCalc.clone();

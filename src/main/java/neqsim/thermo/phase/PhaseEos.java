@@ -45,7 +45,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   /** {@inheritDoc} */
   @Override
   public synchronized PhaseEos clone() {
-    PhaseEos clonedPhase = (PhaseEos) super.clone();
+    PhaseEos clonedPhase = null;
+    try {
+      clonedPhase = (PhaseEos) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
+    }
 
     // Note: This is a shallow copy for mixSelect and mixRule.
     // The cloned phase shares the same mixing rule handler as the original.
