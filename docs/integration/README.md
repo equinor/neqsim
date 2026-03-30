@@ -48,6 +48,13 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 |----------|-------------|
 | [web_api_json_process_builder.md](web_api_json_process_builder) | **JSON Process Builder, structured error responses, stream wiring API, and session management for online simulators** |
 
+### MCP / Model Context Protocol
+
+| Document | Description |
+|----------|-------------|
+| [mcp_neqsim_core_layer.md](mcp_neqsim_core_layer) | **MCP core layer — FlashRunner, ProcessRunner, Validator, ComponentQuery, typed models, example/schema catalogs** |
+| [mcp_server_guide.md](mcp_server_guide) | **NeqSim MCP Server — Quarkus-based server for VS Code Copilot, Claude Desktop, and other LLM clients** |
+
 ### P&ID and Design
 
 | Document | Description |
