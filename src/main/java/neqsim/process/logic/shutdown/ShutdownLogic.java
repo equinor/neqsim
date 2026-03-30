@@ -9,11 +9,11 @@ import neqsim.process.logic.ProcessLogic;
 
 /**
  * Shutdown logic with controlled ramp-down of equipment.
- * 
+ *
  * <p>
  * Shutdown sequences gradually reduce equipment operation to prevent thermal shock, pressure
  * surges, or other process upsets. This follows industry best practices for safe process shutdown.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -23,14 +23,14 @@ import neqsim.process.logic.ProcessLogic;
  * <li>Configurable ramp rates</li>
  * <li>Emergency vs. controlled shutdown modes</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * ShutdownLogic shutdown = new ShutdownLogic("Reactor Shutdown");
  * shutdown.setRampDownTime(600.0); // 10 minutes normal shutdown
- * 
+ *
  * // Add shutdown actions in sequence
  * shutdown.addAction(new ReduceFeedAction(feedValve, 50.0), 0.0); // Reduce to 50%
  * shutdown.addAction(new ReduceFeedAction(feedValve, 0.0), 60.0); // Close after 60s
@@ -38,13 +38,13 @@ import neqsim.process.logic.ProcessLogic;
  * shutdown.addAction(new ActivateCoolingAction(cooler), 180.0); // Start cooling
  * shutdown.addAction(new WaitForTempAction(reactor, 50.0), 300.0); // Wait to cool
  * shutdown.addAction(new StopAgitatorAction(agitator), 600.0); // Finally stop mixing
- * 
+ *
  * // Controlled shutdown
  * shutdown.activate();
  * while (!shutdown.isComplete()) {
  *   shutdown.execute(timeStep);
  * }
- * 
+ *
  * // Emergency shutdown (faster)
  * shutdown.setEmergencyMode(true);
  * shutdown.activate();
@@ -55,7 +55,7 @@ import neqsim.process.logic.ProcessLogic;
  */
 public class ShutdownLogic implements ProcessLogic {
   private final String name;
-  private final List<ActionWithDelay> actions = new ArrayList<>();
+  private final transient List<ActionWithDelay> actions = new ArrayList<>();
 
   private LogicState state = LogicState.IDLE;
   private int currentActionIndex = 0;

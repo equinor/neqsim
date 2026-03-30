@@ -9,20 +9,20 @@ import neqsim.process.logic.ProcessLogic;
 
 /**
  * Simplified ESD (Emergency Shutdown) logic implementation.
- * 
+ *
  * <p>
  * This class manages a sequence of actions that should be executed when an ESD is triggered. The
  * actions are executed in order with configurable delays between steps.
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * ESDLogic esdLogic = new ESDLogic("ESD Level 1");
  * esdLogic.addAction(new TripValveAction(esdValve), 0.0); // Immediate
  * esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5); // After 0.5s
  * esdLogic.addAction(new SetSplitterAction(splitter, new double[] {0.0, 1.0}), 0.5);
- * 
+ *
  * // In simulation loop:
  * esdLogic.activate(); // Trigger ESD
  * while (!esdLogic.isComplete()) {
@@ -37,7 +37,7 @@ import neqsim.process.logic.ProcessLogic;
 public class ESDLogic implements ProcessLogic {
   private final String name;
   private LogicState state = LogicState.IDLE;
-  private final List<ActionWithDelay> actions = new ArrayList<>();
+  private final transient List<ActionWithDelay> actions = new ArrayList<>();
   private int currentActionIndex = 0;
   private double elapsedTime = 0.0;
   private double currentDelay = 0.0;
