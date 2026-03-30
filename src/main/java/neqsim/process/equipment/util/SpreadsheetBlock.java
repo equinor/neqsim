@@ -227,7 +227,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
   private static class ImportCellFromStream implements CellDefinition {
     private static final long serialVersionUID = 1L;
     private final StreamInterface stream;
-    private final Function<StreamInterface, Double> reader;
+    private final transient Function<StreamInterface, Double> reader;
 
     ImportCellFromStream(StreamInterface stream, Function<StreamInterface, Double> reader) {
       this.stream = stream;
@@ -246,7 +246,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
   private static class ImportCellFromEquipment implements CellDefinition {
     private static final long serialVersionUID = 1L;
     private final ProcessEquipmentInterface equipment;
-    private final Function<ProcessEquipmentInterface, Double> reader;
+    private final transient Function<ProcessEquipmentInterface, Double> reader;
 
     ImportCellFromEquipment(ProcessEquipmentInterface equipment,
         Function<ProcessEquipmentInterface, Double> reader) {
@@ -282,7 +282,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    */
   private static class FormulaCell implements CellDefinition {
     private static final long serialVersionUID = 1L;
-    private final Function<Map<String, Double>, Double> formula;
+    private final transient Function<Map<String, Double>, Double> formula;
 
     FormulaCell(Function<Map<String, Double>, Double> formula) {
       this.formula = formula;

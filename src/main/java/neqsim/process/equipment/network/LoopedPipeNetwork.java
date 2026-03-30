@@ -459,8 +459,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   // Network topology
-  private final Map<String, NetworkNode> nodes = new HashMap<>();
-  private final Map<String, NetworkPipe> pipes = new HashMap<>();
+  private final transient Map<String, NetworkNode> nodes = new HashMap<>();
+  private final transient Map<String, NetworkPipe> pipes = new HashMap<>();
   private final List<String> pipeNames = new ArrayList<>();
 
   // Solver settings

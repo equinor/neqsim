@@ -69,7 +69,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
 
   // ============ Cost Estimation ============
   /** Cost estimator instance. */
-  private SubseaCostEstimator costEstimator;
+  private transient SubseaCostEstimator costEstimator;
 
   /** Total project cost in USD. */
   private double totalCostUSD = 0.0;

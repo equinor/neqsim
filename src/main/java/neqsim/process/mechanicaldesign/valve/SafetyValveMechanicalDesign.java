@@ -25,7 +25,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   private double controllingOrificeArea = 0.0;
   private String controllingScenarioName;
   private final Map<FluidService, SafetyValveSizingStrategy> strategies;
-  private Map<String, SafetyValveScenarioResult> scenarioResults = new LinkedHashMap<>();
+  private transient Map<String, SafetyValveScenarioResult> scenarioResults = new LinkedHashMap<>();
 
   /**
    * <p>

@@ -46,7 +46,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   private double flowCoefficient = 1.0;
   private double calibrationFactor = 1.0;
 
-  private List<WellTestData> calibrationHistory = new ArrayList<>();
+  private transient List<WellTestData> calibrationHistory = new ArrayList<>();
   private Instant lastCalibration;
 
   private VFMResult lastResult;

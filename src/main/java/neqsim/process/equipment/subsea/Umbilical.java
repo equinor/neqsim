@@ -244,7 +244,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
 
   // ============ Functional Elements ============
   /** List of umbilical elements. */
-  private List<UmbilicalElement> elements = new ArrayList<UmbilicalElement>();
+  private transient List<UmbilicalElement> elements = new ArrayList<UmbilicalElement>();
 
   /** Number of hydraulic lines. */
   private int hydraulicLineCount = 0;

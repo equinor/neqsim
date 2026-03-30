@@ -160,7 +160,7 @@ public class WellFlow extends TwoPortEquipment {
   double[] inflowTableRate = new double[0];
 
   // Multi-layer support
-  private List<ReservoirLayer> layers = new ArrayList<>();
+  private transient List<ReservoirLayer> layers = new ArrayList<>();
   private boolean isMultiLayer = false;
 
   /**

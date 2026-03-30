@@ -83,7 +83,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
   private final List<DesignCase> designCases = new ArrayList<DesignCase>();
 
   /** TORG manager for standards management. */
-  private final TorgManager torgManager = new TorgManager();
+  private final transient TorgManager torgManager = new TorgManager();
 
   /** System mechanical design instance. */
   private SystemMechanicalDesign systemMechanicalDesign;

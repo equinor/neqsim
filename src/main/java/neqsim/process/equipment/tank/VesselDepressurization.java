@@ -383,7 +383,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private SystemInterface thermoSystem;
   private StreamInterface outletStream;
   private double wallTemperature;
-  private TransientWallHeatTransfer wallModel;
+  private transient TransientWallHeatTransfer wallModel;
   private double currentTime = 0.0;
 
   // Two-phase modeling support
@@ -392,8 +392,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private double initialBeta = 1.0; // Initial vapor fraction from feed stream
   private double gasWallTemperature;
   private double liquidWallTemperature;
-  private TransientWallHeatTransfer gasWallModel;
-  private TransientWallHeatTransfer liquidWallModel;
+  private transient TransientWallHeatTransfer gasWallModel;
+  private transient TransientWallHeatTransfer liquidWallModel;
   private double liquidVolumeFraction = 0.0;
 
   // History for output

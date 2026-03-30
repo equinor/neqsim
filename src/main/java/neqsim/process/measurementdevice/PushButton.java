@@ -65,7 +65,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
   private boolean autoActivateValve = true;
 
   /** List of process logic sequences linked to this button. */
-  private List<ProcessLogic> linkedLogics = new ArrayList<>();
+  private transient List<ProcessLogic> linkedLogics = new ArrayList<>();
 
   /**
    * Constructor for PushButton.

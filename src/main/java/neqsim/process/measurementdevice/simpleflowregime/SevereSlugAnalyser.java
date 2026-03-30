@@ -25,8 +25,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SevereSlugAnalyser.class);
 
-  FluidSevereSlug fluidSevereS;
-  Pipe pipe;
+  transient FluidSevereSlug fluidSevereS;
+  transient Pipe pipe;
   SevereSlugAnalyser severeSlug;
   Stream streamS;
 
