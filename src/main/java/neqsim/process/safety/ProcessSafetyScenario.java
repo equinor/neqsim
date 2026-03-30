@@ -21,9 +21,11 @@ import neqsim.process.processmodel.ProcessSystem;
 /**
  * Immutable description of a process safety scenario.
  *
- * <p>The scenario captures a set of perturbations such as blocked outlets or loss of utilities
- * along with optional custom manipulators. The perturbations are applied to a scenario specific
- * copy of a {@link ProcessSystem} prior to execution.</p>
+ * <p>
+ * The scenario captures a set of perturbations such as blocked outlets or loss of utilities along
+ * with optional custom manipulators. The perturbations are applied to a scenario specific copy of a
+ * {@link ProcessSystem} prior to execution.
+ * </p>
  */
 public final class ProcessSafetyScenario implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -37,11 +39,13 @@ public final class ProcessSafetyScenario implements Serializable {
 
   private ProcessSafetyScenario(Builder builder) {
     this.name = builder.name;
-    this.blockedOutletUnits = Collections.unmodifiableList(new ArrayList<>(builder.blockedOutletUnits));
+    this.blockedOutletUnits =
+        Collections.unmodifiableList(new ArrayList<>(builder.blockedOutletUnits));
     this.utilityLossUnits = Collections.unmodifiableList(new ArrayList<>(builder.utilityLossUnits));
     this.controllerSetPointOverrides =
         Collections.unmodifiableMap(new LinkedHashMap<>(builder.controllerSetPointOverrides));
-    this.customManipulators = Collections.unmodifiableMap(new LinkedHashMap<>(builder.customManipulators));
+    this.customManipulators =
+        Collections.unmodifiableMap(new LinkedHashMap<>(builder.customManipulators));
   }
 
   public String getName() {
@@ -75,7 +79,8 @@ public final class ProcessSafetyScenario implements Serializable {
     for (String unitName : blockedOutletUnits) {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to block outlet for unit '{}' because it was not found in scenario '{}'.",
+        logger.warn(
+            "Unable to block outlet for unit '{}' because it was not found in scenario '{}'.",
             unitName, name);
         continue;
       }
@@ -88,7 +93,8 @@ public final class ProcessSafetyScenario implements Serializable {
     for (String unitName : utilityLossUnits) {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to mark utility loss for unit '{}' because it was not found in scenario '{}'.",
+        logger.warn(
+            "Unable to mark utility loss for unit '{}' because it was not found in scenario '{}'.",
             unitName, name);
         continue;
       }
@@ -101,8 +107,10 @@ public final class ProcessSafetyScenario implements Serializable {
     controllerSetPointOverrides.forEach((unitName, setPoint) -> {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to override controller set point for unit '{}' in scenario '{}' because the"
-            + " unit was not found.", unitName, name);
+        logger.warn(
+            "Unable to override controller set point for unit '{}' in scenario '{}' because the"
+                + " unit was not found.",
+            unitName, name);
         return;
       }
       ControllerDeviceInterface controller = unit.getController();
@@ -116,8 +124,10 @@ public final class ProcessSafetyScenario implements Serializable {
     customManipulators.forEach((unitName, manipulator) -> {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to apply custom manipulator for unit '{}' in scenario '{}' because the unit"
-            + " was not found.", unitName, name);
+        logger.warn(
+            "Unable to apply custom manipulator for unit '{}' in scenario '{}' because the unit"
+                + " was not found.",
+            unitName, name);
         return;
       }
       manipulator.accept(unit);
@@ -198,7 +208,8 @@ public final class ProcessSafetyScenario implements Serializable {
       return this;
     }
 
-    public Builder customManipulator(String unitName, Consumer<ProcessEquipmentInterface> manipulator) {
+    public Builder customManipulator(String unitName,
+        Consumer<ProcessEquipmentInterface> manipulator) {
       Objects.requireNonNull(unitName, "unitName");
       Objects.requireNonNull(manipulator, "manipulator");
       customManipulators.put(unitName, manipulator);

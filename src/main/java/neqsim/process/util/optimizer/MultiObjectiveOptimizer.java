@@ -31,14 +31,14 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>{@code
  * List<ObjectiveFunction> objectives =
  *     Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT, StandardObjective.MINIMIZE_POWER);
- * 
+ *
  * MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
  * ParetoFront front = moo.optimizeWeightedSum(process, feedStream, objectives, baseConfig, 20);
- * 
+ *
  * ParetoSolution knee = front.findKneePoint();
  * System.out.println("Best trade-off: " + knee);
  * }</pre>

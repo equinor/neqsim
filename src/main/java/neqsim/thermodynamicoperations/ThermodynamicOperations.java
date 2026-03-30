@@ -91,7 +91,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
 
-  private Thread thermoOperationThread = new Thread();
+  private transient Thread thermoOperationThread = new Thread();
   private OperationInterface operation = null;
 
   SystemInterface system = null;

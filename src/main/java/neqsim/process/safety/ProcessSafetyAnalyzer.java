@@ -74,8 +74,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     return summary;
   }
 
-  public List<ProcessSafetyAnalysisSummary> analyze(
-      Collection<ProcessSafetyScenario> scenarios) {
+  public List<ProcessSafetyAnalysisSummary> analyze(Collection<ProcessSafetyScenario> scenarios) {
     Objects.requireNonNull(scenarios, "scenarios");
     List<ProcessSafetyAnalysisSummary> summaries = new ArrayList<>();
     for (ProcessSafetyScenario scenario : scenarios) {
@@ -124,9 +123,9 @@ public class ProcessSafetyAnalyzer implements Serializable {
           new ProcessSafetyAnalysisSummary.UnitKpiSnapshot(massBalance, pressure, temperature));
     }
 
-    String conditionReport = conditionMessages.values().stream()
-        .filter(message -> message != null && !message.isEmpty())
-        .collect(Collectors.joining(System.lineSeparator()));
+    String conditionReport =
+        conditionMessages.values().stream().filter(message -> message != null && !message.isEmpty())
+            .collect(Collectors.joining(System.lineSeparator()));
 
     return new ProcessSafetyAnalysisSummary(scenario.getName(), affectedUnits, conditionReport,
         conditionMessages, unitKpis);

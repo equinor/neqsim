@@ -64,7 +64,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </ul>
  *
  * <h2>Example 1: Simple Pipeline Process</h2>
- * 
+ *
  * <pre>
  * // Create a simple pipeline process
  * SystemInterface gas = new SystemSrkEos(288.15, 80.0);
@@ -95,7 +95,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </pre>
  *
  * <h2>Example 2: Gas Compression System</h2>
- * 
+ *
  * <pre>
  * // Create compression system
  * SystemInterface gas = new SystemSrkEos(288.15, 50.0);
@@ -139,7 +139,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </pre>
  *
  * <h2>Example 3: Generate Eclipse VFP Table</h2>
- * 
+ *
  * <pre>
  * // Create optimizer (assuming process is already set up)
  * PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(process, "Feed", "Export");
@@ -164,7 +164,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </pre>
  *
  * <h2>Example 4: Capacity Curve at Fixed Inlet Pressure</h2>
- * 
+ *
  * <pre>
  * // Generate capacity curve showing max flow vs outlet pressure
  * double inletPressure = 70.0;
@@ -180,7 +180,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </pre>
  *
  * <h2>Example 5: Minimum Power Optimization</h2>
- * 
+ *
  * <pre>
  * // Find operating point that minimizes power while achieving target flow
  * double targetFlow = 50000.0; // kg/hr
@@ -347,8 +347,10 @@ public class PressureBoundaryOptimizer implements Serializable {
    * constraints, and equipment utilization limits already defined.
    * </p>
    *
-   * <p><strong>Example</strong></p>
-   * 
+   * <p>
+   * <strong>Example</strong>
+   * </p>
+   *
    * <pre>
    * // Configure production optimizer with custom settings
    * ProductionOptimizer prodOpt = new ProductionOptimizer();
@@ -892,7 +894,9 @@ public class PressureBoundaryOptimizer implements Serializable {
    * network models.
    * </p>
    *
-   * <p><strong>Table Structure</strong></p>
+   * <p>
+   * <strong>Table Structure</strong>
+   * </p>
    * <p>
    * The table is organized as a 2D matrix where:
    * </p>
@@ -910,14 +914,18 @@ public class PressureBoundaryOptimizer implements Serializable {
    * <li><b>Bottleneck matrix</b> - Name of limiting equipment at each point</li>
    * </ul>
    *
-   * <p><strong>Eclipse VFP Format</strong></p>
+   * <p>
+   * <strong>Eclipse VFP Format</strong>
+   * </p>
    * <p>
    * The {@link #toEclipseFormat()} method generates output compatible with Eclipse VFPPROD keyword.
    * Infeasible points are marked with "1*" (Eclipse default value marker).
    * </p>
    *
-   * <p><strong>Example Usage</strong></p>
-   * 
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
+   *
    * <pre>
    * // Generate table
    * LiftCurveTable table = optimizer.generateLiftCurveTable(new double[] {50.0, 60.0, 70.0}, // inlet
