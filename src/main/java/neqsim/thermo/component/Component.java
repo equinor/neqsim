@@ -521,8 +521,8 @@ public abstract class Component implements ComponentInterface {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for Component", ex);
     }
 
     return clonedComponent;

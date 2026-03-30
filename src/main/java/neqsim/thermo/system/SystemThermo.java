@@ -959,11 +959,12 @@ public abstract class SystemThermo implements SystemInterface {
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
       // sammenligne med API-standard for tetthet - og sette Penloux dt
     } catch (RuntimeException ex) {
-      // todo: Should not swallow notimplementedexception
-      /*
-       * if (ex.getCause().getClass().equals(NotImplementedException.class)) { throw ex; }
-       */
-      logger.error(ex.getMessage());
+      // Re-throw NotImplementedException instead of swallowing it
+      if (ex instanceof UnsupportedOperationException
+          || ex.getClass().getSimpleName().contains("NotImplemented")) {
+        throw ex;
+      }
+      logger.error(ex.getMessage(), ex);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -1396,8 +1397,8 @@ public abstract class SystemThermo implements SystemInterface {
       clonedSystem = (SystemThermo) super.clone();
       // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
       // chemicalReactionOperations.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for SystemThermo", ex);
     }
 
     clonedSystem.beta = beta.clone();

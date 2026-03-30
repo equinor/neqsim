@@ -1,6 +1,8 @@
 package neqsim.util.unit;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>
@@ -25,13 +27,13 @@ public class Units {
   }
 
   /** Constant <code>activeUnits</code> */
-  public static volatile HashMap<String, UnitDescription> activeUnits = new HashMap<>();
+  public static volatile Map<String, UnitDescription> activeUnits = new ConcurrentHashMap<>();
   /** Constant <code>defaultUnits</code> */
-  public static HashMap<String, UnitDescription> defaultUnits = new HashMap<>();
+  public static Map<String, UnitDescription> defaultUnits = new ConcurrentHashMap<>();
   /** Constant <code>metricUnits</code> */
-  public static HashMap<String, UnitDescription> metricUnits = new HashMap<>();
-  private static HashMap<String, UnitDescription> siUnits = new HashMap<>();
-  private static HashMap<String, UnitDescription> fieldUnits = new HashMap<>();
+  public static Map<String, UnitDescription> metricUnits = new ConcurrentHashMap<>();
+  private static Map<String, UnitDescription> siUnits = new ConcurrentHashMap<>();
+  private static Map<String, UnitDescription> fieldUnits = new ConcurrentHashMap<>();
 
   private static String[] pressureUnits =
       new String[] {"Pa", "bara", "barg", "psi", "psig", "psia"};
@@ -119,7 +121,7 @@ public class Units {
     if (activeUnits.size() == 0) {
       new Units();
     }
-    activeUnits = new HashMap<>(siUnits);
+    activeUnits = new ConcurrentHashMap<>(siUnits);
   }
 
   /**
@@ -131,7 +133,7 @@ public class Units {
     if (activeUnits.size() == 0) {
       new Units();
     }
-    activeUnits = new HashMap<>(fieldUnits);
+    activeUnits = new ConcurrentHashMap<>(fieldUnits);
   }
 
   /**
@@ -143,7 +145,7 @@ public class Units {
     if (activeUnits.size() == 0) {
       new Units();
     }
-    activeUnits = new HashMap<>(metricUnits);
+    activeUnits = new ConcurrentHashMap<>(metricUnits);
   }
 
   /**
@@ -155,7 +157,7 @@ public class Units {
     if (activeUnits.size() == 0) {
       new Units();
     }
-    activeUnits = new HashMap<>(defaultUnits); // Reassign with a copy
+    activeUnits = new ConcurrentHashMap<>(defaultUnits); // Reassign with a copy
   }
 
   /**

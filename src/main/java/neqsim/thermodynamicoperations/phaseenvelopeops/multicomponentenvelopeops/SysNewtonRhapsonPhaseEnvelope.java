@@ -728,8 +728,8 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
       if (Double.isNaN(dx.norm2()) || Double.isInfinite(dx.norm2())) {
         if (iter2 >= 15) {
-          // deliberate crush
-          ds = 0. / 0.;
+          // Signal non-convergence with NaN
+          ds = Double.NaN;
           u.set(numberOfComponents, 0, ds);
           u.set(numberOfComponents + 1, 0, ds);
         }
@@ -744,8 +744,8 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           uolder = uold.copy();
         }
         if (iter2 >= 15) {
-          // deliberate crush
-          ds = 0. / 0.;
+          // Signal non-convergence with NaN
+          ds = Double.NaN;
           u.set(numberOfComponents, 0, ds);
           u.set(numberOfComponents + 1, 0, ds);
         }

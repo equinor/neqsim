@@ -114,8 +114,8 @@ public abstract class Phase implements PhaseInterface {
 
     try {
       clonedPhase = (Phase) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for Phase", ex);
     }
 
     clonedPhase.componentArray = this.componentArray.clone();
@@ -2315,17 +2315,12 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public ComponentInterface getComponent(String name) {
-    try {
-      for (int i = 0; i < numberOfComponents; i++) {
-        if (componentArray[i].getName().equals(name)) {
-          return componentArray[i];
-        }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (componentArray[i].getName().equals(name)) {
+        return componentArray[i];
       }
-      logger.error("could not find component " + name + ", returning null");
-      throw new Exception("component not in fluid... " + name);
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
     }
+    logger.error("could not find component " + name + " in fluid, returning null");
     return null;
   }
 

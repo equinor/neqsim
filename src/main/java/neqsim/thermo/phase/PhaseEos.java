@@ -48,8 +48,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     PhaseEos clonedPhase = null;
     try {
       clonedPhase = (PhaseEos) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for PhaseEos", ex);
     }
 
     // Note: This is a shallow copy for mixSelect and mixRule.
