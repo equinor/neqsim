@@ -2417,6 +2417,23 @@ public class TPmultiflash extends TPflash {
         run();
       }
 
+      // After phase removal or recursive re-run, betas may not sum to 1.0 because
+      // removePhaseKeepTotalComposition does not renormalize. When betas are not
+      // normalized, Gibbs energy and compositions are inconsistent.
+      // Fix: normalize betas, then re-solve to update compositions via Rachford-Rice.
+      if (system.getNumberOfPhases() > 1) {
+        double betaSum = 0.0;
+        for (int i = 0; i < system.getNumberOfPhases(); i++) {
+          betaSum += system.getBeta(i);
+        }
+        if (Math.abs(betaSum - 1.0) > 1e-8) {
+          system.normalizeBeta();
+          system.init(1);
+          setDoubleArrays();
+          solveBeta();
+        }
+      }
+
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */

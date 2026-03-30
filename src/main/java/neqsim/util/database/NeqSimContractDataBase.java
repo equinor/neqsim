@@ -33,8 +33,8 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
   private static volatile boolean h2IsInitialized = false;
   private static volatile boolean h2IsInitalizing = false;
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
    * <p>
