@@ -266,8 +266,10 @@ class TPFlashTest {
     fluid.addComponent("methane", 70.0);
     fluid.addComponent("n-heptane", 30.0);
     fluid.setMixingRule("classic");
-    fluid.getPhase(0).getMixingRule().setBinaryInteractionParameter(0, 1, 0.05);
-    fluid.getPhase(1).getMixingRule().setBinaryInteractionParameter(0, 1, 0.05);
+    ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+        1, 0.05);
+    ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+        1, 0.05);
     fluid.setMultiPhaseCheck(true);
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
