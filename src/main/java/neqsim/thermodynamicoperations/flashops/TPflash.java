@@ -128,15 +128,7 @@ public class TPflash extends Flash {
       prod2 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
     }
 
-    if (prod2 < 1e-20) {
-      return;
-    }
-
     double lambda = prod1 / prod2;
-
-    if (lambda <= 0.0 || lambda >= 1.0) {
-      return;
-    }
 
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       // lnK[i] = lnK[i] + lambda*lambda*oldoldDeltalnK[i]/(1.0-lambda); // byttet +
