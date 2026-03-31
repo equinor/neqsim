@@ -636,13 +636,7 @@ public abstract class Flash extends BaseOperation {
 
           Matrix dx = df.solve(f).times(-1.0);
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            // Guard against overshooting: clamp (alpha + dx)/2 to a minimum positive
-            // value to prevent Wi from becoming numerically zero or negative.
-            double halfStep = (alpha[i] + dx.get(i, 0)) / 2.0;
-            if (halfStep < 1e-20) {
-              halfStep = 1e-20;
-            }
-            Wi[j][i] = halfStep * halfStep;
+            Wi[j][i] = Math.pow((alpha[i] + dx.get(i, 0)) / 2.0, 2.0);
             logWi[i] = Math.log(Wi[j][i]);
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
@@ -738,11 +732,11 @@ public abstract class Flash extends BaseOperation {
    *
    * <p>
    * The standard {@link #stabilityAnalysis()} uses Wilson K-value based initial guesses, which
-   * assume gas-liquid equilibrium (GLE). At temperatures well below the critical temperature
-   * of the lightest component, Wilson K-values converge to values less than 1 for all components,
-   * making them ineffective for detecting LLE. This method complements the standard analysis
-   * by initializing trial phases as nearly-pure heaviest and lightest components, which is the
-   * same approach used by {@link TPmultiflash}.
+   * assume gas-liquid equilibrium (GLE). At temperatures well below the critical temperature of the
+   * lightest component, Wilson K-values converge to values less than 1 for all components, making
+   * them ineffective for detecting LLE. This method complements the standard analysis by
+   * initializing trial phases as nearly-pure heaviest and lightest components, which is the same
+   * approach used by {@link TPmultiflash}.
    * </p>
    *
    * @return true if LLE instability was detected and K-values have been set on the system
@@ -783,8 +777,8 @@ public abstract class Flash extends BaseOperation {
     }
 
     // Try heaviest and lightest components as pure trial phases (like TPmultiflash)
-    int[] trialComponents = (heavyComp == lightComp) ? new int[] {heavyComp}
-        : new int[] {heavyComp, lightComp};
+    int[] trialComponents =
+        (heavyComp == lightComp) ? new int[] {heavyComp} : new int[] {heavyComp, lightComp};
     for (int ti = 0; ti < trialComponents.length; ti++) {
       int jc = trialComponents[ti];
 
@@ -824,12 +818,10 @@ public abstract class Flash extends BaseOperation {
 
         // Standard SSI step
         for (int ic = 0; ic < numComp; ic++) {
-          if (clonedSystem.getPhase(0).getComponent(ic).getz() > 1e-100
-              && !Double.isInfinite(clonedSystem.getPhase(trialPhaseIdx).getComponent(ic)
-                  .getLogFugacityCoefficient())) {
+          if (clonedSystem.getPhase(0).getComponent(ic).getz() > 1e-100 && !Double.isInfinite(
+              clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).getLogFugacityCoefficient())) {
             logWi[ic] = d[ic]
-                - clonedSystem.getPhase(trialPhaseIdx).getComponent(ic)
-                    .getLogFugacityCoefficient();
+                - clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).getLogFugacityCoefficient();
           }
         }
 
