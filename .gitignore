@@ -79,9 +79,7 @@ neqsim.iml
 test_*.ser
 
 # Paper lab — generated paper drafts (keep on disk, not in repo)
-neqsim-paperlab/papers/
 # Allow gibbs_minimization_2026 as example
-!neqsim-paperlab/papers/gibbs_minimization_2026/
 
 .dccache
 
@@ -113,5 +111,3 @@ devtools/neqsim_dev_setup.egg-info/top_level.txt
 devtools/neqsim_dev_setup.egg-info/requires.txt
 devtools/neqsim_dev_setup.egg-info/SOURCES.txt
 
-# Paper content (local only, not tracked in git)
-neqsim-paperlab/papers/
