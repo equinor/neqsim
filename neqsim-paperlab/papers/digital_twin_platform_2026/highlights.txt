@@ -1,0 +1,5 @@
+- Open-source thermodynamic library enables physics-based digital twins for oil and gas
+- Five execution strategies support steady-state and dynamic transient simulation modes
+- Tag-based historian integration enables automated model-plant data synchronization
+- Cloud deployment architecture bridges offline engineering with live online operations
+- AI-augmented workflows with LLM agents accelerate digital twin development

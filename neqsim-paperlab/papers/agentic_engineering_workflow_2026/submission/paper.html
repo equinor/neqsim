@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agentic Engineering: A Multi-Agent LLM Framework for Solving Chemical Engineering Tasks with Open-Source Thermodynamic Software</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '$', right: '$', display: false}
+    ]
+  })"></script>
+<style>
+  body { max-width: 900px; margin: 40px auto; font-family: 'Georgia', serif;
+         line-height: 1.7; color: #333; padding: 0 20px; }
+  h1 { font-size: 1.8em; border-bottom: 2px solid #2196F3; padding-bottom: 10px; }
+  h2 { font-size: 1.4em; color: #1565C0; margin-top: 2em; }
+  h3 { font-size: 1.15em; color: #1976D2; }
+  table { border-collapse: collapse; margin: 1em auto; font-size: 0.95em; }
+  th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: left; }
+  th { background: #E3F2FD; font-weight: 600; }
+  tr:nth-child(even) { background: #FAFAFA; }
+  code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+  pre { background: #263238; color: #eee; padding: 16px; border-radius: 6px;
+        overflow-x: auto; font-size: 0.88em; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  img { max-width: 100%; display: block; margin: 1em auto; }
+  .fig-container { text-align: center; margin: 2em 0; }
+  .fig-caption { font-style: italic; color: #666; margin-top: 0.5em; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
+  strong { color: #1565C0; }
+  a.cite { color: #1565C0; text-decoration: none; font-weight: 600; }
+  a.cite:hover { text-decoration: underline; }
+  .cite-unknown { color: red; }
+  ol.references { font-size: 0.92em; line-height: 1.6; }
+  ol.references li { margin-bottom: 4px; }
+  .references .ref-entry { font-size: 0.92em; line-height: 1.6; margin-bottom: 4px;
+                            padding-left: 2em; text-indent: -2em; }
+</style>
+</head>
+<body>
+
+<p>
+<h1>Agentic Engineering: A Multi-Agent LLM Framework for Solving Chemical Engineering Tasks with Open-Source Thermodynamic Software</h1>
+</p>
+<p>
+<h2>Highlights</h2>
+</p>
+<p>
+<li>A multi-agent LLM framework couples AI reasoning with rigorous thermodynamic simulation</li>
+<li>Three-stage workflow (scope, analysis, reporting) embeds validation at every gate</li>
+<li>Eight real-world case studies span six engineering disciplines with validated results</li>
+<li>Specialized agents decompose complex tasks into verifiable computational subtasks</li>
+<li>Open-source architecture promotes reproducibility and continuous library improvement</li>
+</p>
+<p>
+<h2>Abstract</h2>
+</p>
+<p>
+Solving chemical engineering tasks traditionally requires deep domain expertise, proficiency with specialized simulation software, and significant manual effort to translate problem statements into validated computational results. We present an agentic engineering framework that couples multiple specialized large language model (LLM) agents with an open-source thermodynamic and process simulation library to automate this workflow end-to-end. The framework implements a structured three-stage pipeline — scope and research, analysis and evaluation, and report generation — in which each stage is mediated by domain-specific AI agents that have access to verified computational tools through a tool-augmented architecture. We demonstrate the approach across eight real-world engineering case studies spanning cryogenics, field development economics, flow assurance, equipment design, well safety, and process model conversion. All cases produced validated engineering deliverables including Jupyter notebooks with executable simulations, Monte Carlo uncertainty analyses, benchmark validations against reference data, and formatted technical reports. The framework achieves mass and energy balance closures below 0.02%, benchmark deviations within accepted engineering accuracy, and comprehensive uncertainty quantification with P10/P50/P90 estimates. We discuss architectural requirements for reliable AI-assisted engineering, the role of human oversight, and implications for engineering productivity. The framework and all case study materials are available as open-source software.
+</p>
+<p>
+<h2>Keywords</h2>
+</p>
+<p>
+agentic AI; large language models; process simulation; thermodynamic modeling; engineering workflow automation; open-source software
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>1. Introduction</h2>
+</p>
+<p>
+<h3>1.1 Background</h3>
+</p>
+<p>
+Process systems engineering (PSE) encompasses the systematic methods for designing, analyzing, and operating chemical processes (<a href="#ref-Pistikopoulos2021" class="cite">Pistikopoulos et al., 2021</a>). At its computational core, PSE relies on thermodynamic models — equations of state, activity coefficient models, and transport property correlations — to predict the physical behavior of multicomponent mixtures under industrial conditions (<a href="#ref-Michelsen2007" class="cite">Michelsen and Mollerup, 2007</a>). These models are implemented in process simulation software that enables engineers to evaluate equipment performance, optimize operating conditions, and ensure safe operations (<a href="#ref-SeiderLewinWidagdo2009" class="cite">Seider et al., 2017</a>).
+</p>
+<p>
+Despite decades of software development, a persistent bottleneck remains: the translation of an engineering problem statement into a validated computational result requires expert knowledge of both the physical domain and the simulation tool's API. An engineer tasked with evaluating compressed natural gas (CNG) tank filling temperatures must understand Joule–Thomson effects, transient heat transfer, equation-of-state selection, and the specific syntax of their chosen simulator (<a href="#ref-SeiderLewinWidagdo2009" class="cite">Seider et al., 2017</a>). This knowledge barrier limits the accessibility of rigorous thermodynamic calculations and creates a dependency on specialist expertise that is increasingly scarce in the industry (<a href="#ref-Venkatasubramanian2019" class="cite">Venkatasubramanian, 2019</a>).
+</p>
+<p>
+Recent advances in large language models (LLMs) have demonstrated remarkable capabilities in natural language understanding, code generation, and multi-step reasoning (<a href="#ref-Brown2020" class="cite">Brown et al., 2020</a>; <a href="#ref-OpenAI2023" class="cite">{OpenAI, 2023</a>). These capabilities have catalyzed interest in applying LLMs to scientific computing and engineering workflows, where they can serve as intelligent intermediaries between human intent and computational execution (<a href="#ref-Schweidtmann2021" class="cite">Schweidtmann et al., 2021</a>; <a href="#ref-Woo2025" class="cite">Woo et al., 2025</a>). The emerging paradigm of "agentic AI" — systems in which LLMs operate as autonomous agents equipped with tools, memory, and planning capabilities — offers a particularly promising approach for engineering task automation (<a href="#ref-Ferrag2025" class="cite">Ferrag et al., 2025</a>; <a href="#ref-AbouAli2025" class="cite">Abou Ali et al., 2025</a>).
+</p>
+<p>
+<h3>1.2 Prior work</h3>
+</p>
+<p>
+The intersection of LLMs and chemical engineering has attracted growing attention. Tsai et al. (<a href="#ref-Tsai2023" class="cite">Tsai et al., 2023</a>) explored the use of LLMs in chemical engineering education, demonstrating their ability to formulate and solve core course problems. Khoo et al. (<a href="#ref-Khoo2025" class="cite">Khoo et al., 2025</a>) provided a comparative review of LLMs in engineering with emphasis on chemical engineering applications, identifying capabilities in process design support and reaction optimization.
+</p>
+<p>
+More directly relevant to process simulation, Du and Yang (<a href="#ref-Du2025" class="cite">Du and Yang, 2025</a>) analyzed the potential and challenges of LLM agent systems in chemical process simulation, identifying the gap between theoretical models and industrial application. Tian et al. (<a href="#ref-Tian2026" class="cite">Tian et al., 2026</a>) proposed a multi-agent LLM workflow for automated chemical process design, converting textual process descriptions into simulation configurations. Liang et al. (<a href="#ref-Liang2026" class="cite">Liang et al., 2026</a>) developed an LLM agent for user-friendly chemical process simulations, highlighting how such systems can make commercial simulators more accessible. Schäfer et al. (<a href="#ref-Schafer2026" class="cite">Sch{\"a, 2026</a>) demonstrated that GitHub Copilot can perform autonomous model-based process design in flowsheet simulations, though limited to simplified models and pre-defined thermodynamic packages.
+</p>
+<p>
+In the broader engineering context, Lee et al. (<a href="#ref-Lee2024" class="cite">Lee et al., 2024</a>) developed GIPHT, a process design improvement generation system using LLM prompt engineering. Liu et al. (<a href="#ref-Liu2024" class="cite">Liu et al., 2024</a>) proposed an automated simulation research workflow through LLM prompt engineering design for molecular dynamics simulations. Gudipati (<a href="#ref-Gudipati2025" class="cite">Gudipati, 2025</a>) presented a tool-guided approach to achieving precision in engineering numerical operations using agentic AI in the petroleum industry.
+</p>
+<p>
+On the agentic AI side, comprehensive surveys by Ferrag et al. (<a href="#ref-Ferrag2025" class="cite">Ferrag et al., 2025</a>), Abou Ali et al. (<a href="#ref-AbouAli2025" class="cite">Abou Ali et al., 2025</a>), and Gridach et al. (<a href="#ref-Gridach2025" class="cite">Gridach et al., 2025</a>) have mapped the landscape of autonomous AI agents. Jiang et al. (<a href="#ref-Jiang2025" class="cite">Jiang et al., 2025</a>) identified Intelligent Design 4.0 as a paradigm shift enabled by foundation model-based agentic AI. Maldonado-Romo et al. (<a href="#ref-MaldonadoRomo2026" class="cite">Maldonado-Romo et al., 2026</a>) presented a collaborative engineering design framework enabled by agentic AI for sustainable design optimization.
+</p>
+<p>
+For tool-augmented LLMs specifically, the ReAct framework (<a href="#ref-Yao2023" class="cite">Yao et al., 2023</a>) established the pattern of synergizing reasoning and acting in language models, while Toolformer (<a href="#ref-Schick2024" class="cite">Schick et al., 2024</a>) showed that language models can learn to invoke external tools autonomously. Retrieval-augmented generation (RAG) (<a href="#ref-Lewis2020" class="cite">Lewis et al., 2020</a>) provided mechanisms for grounding LLM outputs in retrieved factual knowledge.
+</p>
+<p>
+Regarding AI in open-source scientific computing, Ylihurula et al. (<a href="#ref-Ylihurula2024" class="cite">Ylihurula et al., 2024</a>) studied software development for scientific computing using AI code generation, finding that GitHub Copilot accelerated development but required careful verification. Dhruv and Dubey (<a href="#ref-Dhruv2025" class="cite">Dhruv and Dubey, 2025</a>) explored leveraging LLMs for code translation and development in high-performance scientific computing. Song et al. (<a href="#ref-Song2024" class="cite">Song et al., 2024</a>) and Yeverechyahu et al. (<a href="#ref-Yeverechyahu2024" class="cite">Yeverechyahu and Mayya, 2024</a>) investigated the broader impact of generative AI on open-source software development.
+</p>
+<p>
+<h3>1.3 Gap and contributions</h3>
+</p>
+<p>
+While the cited works have demonstrated individual aspects of AI-assisted engineering — LLM-driven process design (<a href="#ref-Tian2026" class="cite">Tian et al., 2026</a>), agent-based simulation access (<a href="#ref-Liang2026" class="cite">Liang et al., 2026</a>), code generation for scientific computing (<a href="#ref-Ylihurula2024" class="cite">Ylihurula et al., 2024</a>) — no existing framework integrates all of these capabilities into a structured, validated, end-to-end engineering workflow that spans from natural language task definition through rigorous thermodynamic simulation to formatted engineering deliverables. Furthermore, most prior work focuses on commercial simulation tools with proprietary APIs, creating reproducibility barriers.
+</p>
+<p>
+The specific gaps we address are:
+</p>
+<p>
+1. <strong>Integration gap</strong>: Existing approaches treat LLM interaction, computational simulation, and engineering validation as separate concerns. No framework demonstrates how these components can be orchestrated by a multi-agent system into a coherent engineering workflow.
+</p>
+<p>
+2. <strong>Validation gap</strong>: Most LLM-for-simulation works report qualitative success (e.g., "the model was built correctly") without systematic validation against reference data, uncertainty quantification, or engineering acceptance criteria.
+</p>
+<p>
+3. <strong>Reproducibility gap</strong>: Reliance on commercial simulators prevents independent verification. An open-source foundation enables full reproducibility and community-driven improvement.
+</p>
+<p>
+4. <strong>Breadth gap</strong>: Case studies in the literature typically demonstrate a single engineering discipline. The generality of an agentic framework across diverse engineering tasks (thermodynamics, process design, economics, safety, mechanical design) has not been demonstrated.
+</p>
+<p>
+This paper makes the following contributions:
+</p>
+<p>
+1. We present a structured multi-agent framework architecture for solving chemical engineering tasks, detailing the agent roles, information flow, validation gates, and tool-augmented computational pipeline (Section 3).
+</p>
+<p>
+2. We describe the implementation of this framework using an open-source thermodynamic library as the computational backend, with specialized agents for task planning, literature research, simulation, validation, and report generation (Section 4).
+</p>
+<p>
+3. We demonstrate the framework across eight real-world engineering case studies spanning six distinct disciplines, with systematic validation against reference data (Section 5).
+</p>
+<p>
+4. We analyze the framework's effectiveness, discuss the role of human oversight, identify failure modes and limitations, and outline implications for engineering practice (Section 6).
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>2. Related Work</h2>
+</p>
+<p>
+<h3>2.1 Process simulation and engineering workflows</h3>
+</p>
+<p>
+Chemical process simulation has been a cornerstone of process systems engineering since the 1960s (<a href="#ref-Grossmann2005" class="cite">Grossmann and Westerberg, 2000</a>). Modern commercial simulators such as Aspen Plus, Aspen HYSYS, and PRO/II provide graphical interfaces for building flowsheets, but require significant expertise to configure thermodynamic models, convergence parameters, and unit operation specifications correctly (<a href="#ref-SeiderLewinWidagdo2009" class="cite">Seider et al., 2017</a>). The engineering workflow typically follows a sequential pattern: problem definition, model selection, simulation construction, execution, validation, sensitivity analysis, and reporting — each step requiring specialized domain knowledge.
+</p>
+<p>
+Open-source alternatives have emerged to lower the barrier to entry and promote reproducibility. Libraries such as DWSIM, COCO/COFE, and the thermodynamic library used in this work provide programmatic APIs that enable simulation construction through code rather than graphical interfaces. This programmatic approach, while less intuitive for novice users, creates an opportunity for AI-assisted automation because the entire simulation can be expressed as executable code.
+</p>
+<p>
+<h3>2.2 LLM agents for scientific computing</h3>
+</p>
+<p>
+The emergence of tool-augmented LLMs has enabled a new class of AI systems that can reason about tasks and execute actions through external tools (<a href="#ref-Yao2023" class="cite">Yao et al., 2023</a>; <a href="#ref-Schick2024" class="cite">Schick et al., 2024</a>). In scientific computing, this translates to AI agents that can write and execute simulation code, interpret results, and iterate on solutions.
+</p>
+<p>
+The ReAct paradigm (<a href="#ref-Yao2023" class="cite">Yao et al., 2023</a>) — interleaving reasoning traces and tool-use actions — is particularly relevant for engineering tasks where the agent must plan a solution approach, execute computational steps, evaluate intermediate results, and adjust the strategy based on outcomes. RAG techniques (<a href="#ref-Lewis2020" class="cite">Lewis et al., 2020</a>) further enhance these agents by providing access to domain-specific knowledge bases, technical standards, and prior solved examples.
+</p>
+<p>
+Recent work has begun applying these capabilities to chemical engineering specifically. Tian et al. (<a href="#ref-Tian2026" class="cite">Tian et al., 2026</a>) demonstrated a multi-agent workflow for converting textual process descriptions into Aspen Plus simulation configurations, achieving competitive results compared to human experts on standardized test cases. Du and Yang (<a href="#ref-Du2025" class="cite">Du and Yang, 2025</a>) provided a forward-looking analysis of agent-based chemical process simulation, identifying challenges including unstable software interfaces, limited dynamic modeling, and the gap between simplified models and industrial complexity. Schäfer et al. (<a href="#ref-Schafer2026" class="cite">Sch{\"a, 2026</a>) demonstrated that an agentic AI using GitHub Copilot and an open-source flowsheet simulator can build process models autonomously, though they noted limitations to simplified process models and pre-defined thermodynamic packages.
+</p>
+<p>
+<h3>2.3 Multi-agent architectures</h3>
+</p>
+<p>
+Multi-agent systems, where multiple specialized AI agents collaborate to solve complex tasks, have shown advantages over monolithic single-agent approaches (<a href="#ref-Ferrag2025" class="cite">Ferrag et al., 2025</a>; <a href="#ref-AbouAli2025" class="cite">Abou Ali et al., 2025</a>). Each agent can be optimized for a specific subtask (e.g., literature review, code generation, validation) while a coordination mechanism ensures information flow and quality control.
+</p>
+<p>
+In engineering contexts, Abbas and Wahab (<a href="#ref-Abbas2024" class="cite">Abbas and Wahab, 2024</a>) showed that multi-agent LLMs can optimize engineering workflows in agile development. The Intelligent Design 4.0 paradigm (<a href="#ref-Jiang2025" class="cite">Jiang et al., 2025</a>) envisions agentic AI coordinating multiple design tools and knowledge sources autonomously. These multi-agent frameworks align well with the inherently multi-disciplinary nature of engineering tasks, where thermodynamic analysis, mechanical design, economic evaluation, and safety assessment must be coordinated.
+</p>
+<p>
+<h3>2.4 Position of this work</h3>
+</p>
+<p>
+Our work differs from prior approaches in several key respects. Unlike Tian et al. (<a href="#ref-Tian2026" class="cite">Tian et al., 2026</a>) and Schäfer et al. (<a href="#ref-Schafer2026" class="cite">Sch{\"a, 2026</a>), who focus on flowsheet construction, we address the complete engineering workflow from problem definition through validated deliverables. Unlike approaches based on commercial simulators (<a href="#ref-Du2025" class="cite">Du and Yang, 2025</a>; <a href="#ref-Liang2026" class="cite">Liang et al., 2026</a>), our framework builds on open-source software, enabling full reproducibility and community-driven improvement of both the computational tools and the AI agents. Unlike single-discipline demonstrations, we show that the same architectural framework generalizes across six engineering disciplines. And unlike works that report qualitative success, we provide systematic validation with quantitative metrics for every case study.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>3. Methods: Framework Architecture</h2>
+</p>
+<p>
+<h3>3.1 Overview</h3>
+</p>
+<p>
+The agentic engineering framework implements a three-stage pipeline that mirrors established engineering practice while embedding AI assistance at every step:
+</p>
+<p>
+<strong>Stage 1 — Scope and Research</strong>: The problem is defined, relevant standards identified, applicable calculation methods selected, and background literature assembled.
+</p>
+<p>
+<strong>Stage 2 — Analysis and Evaluation</strong>: Computational simulations are constructed, executed, validated against reference data, and refined through iterative cycles.
+</p>
+<p>
+<strong>Stage 3 — Report Generation</strong>: Results are synthesized into formatted engineering deliverables (reports, figures, tables) following industry or academic conventions.
+</p>
+<p>
+Each stage produces structured artifacts that serve as inputs to the next stage, creating a traceable chain from problem definition to final deliverables.
+</p>
+<p>
+<h3>3.2 Agent roles</h3>
+</p>
+<p>
+The framework employs multiple specialized agents (Table 1), each with defined responsibilities, tool access, and output formats. This specialization follows the principle that narrow, well-defined agent roles produce more reliable outputs than monolithic agents attempting to handle all aspects of a complex task (<a href="#ref-Ferrag2025" class="cite">Ferrag et al., 2025</a>).
+</p>
+<p>
+<strong>Table 1.</strong> Agent roles in the agentic engineering framework.
+</p>
+<p>
+<table>
+<tr><th>Agent</th><th>Role</th><th>Key Tools</th><th>Outputs</th></tr>
+<tr><td>-------</td><td>------</td><td>-----------</td><td>---------</td></tr>
+<tr><td>Router</td><td>Classifies incoming tasks, selects appropriate specialist agents</td><td>Task taxonomy, capability map</td><td>Agent routing decision</td></tr>
+<tr><td>Task Planner</td><td>Decomposes task into steps, defines acceptance criteria</td><td>Codebase search, standards database</td><td>Task specification, work plan</td></tr>
+<tr><td>Researcher</td><td>Gathers domain knowledge, literature, standards requirements</td><td>Web search, document retrieval, RAG</td><td>Research notes, reference list</td></tr>
+<tr><td>Simulator</td><td>Constructs and executes thermodynamic/process simulations</td><td>Thermodynamic library API, code execution</td><td>Jupyter notebooks with results</td></tr>
+<tr><td>Validator</td><td>Checks results against reference data and acceptance criteria</td><td>Statistical tools, benchmark databases</td><td>Validation report, pass/fail</td></tr>
+<tr><td>Reporter</td><td>Synthesizes results into formatted deliverables</td><td>Document generation, figure creation</td><td>Reports (HTML, Word, PDF)</td></tr>
+<tr><td>Capability Scout</td><td>Assesses whether required computational capabilities exist</td><td>Codebase analysis, API inventory</td><td>Gap assessment, implementation plan</td></tr>
+</table>
+</p>
+<p>
+<h3>3.3 Information flow and validation gates</h3>
+</p>
+<p>
+Information flows through the framework via structured artifacts. A critical design decision is the placement of validation gates between stages:
+</p>
+<p>
+<strong>Gate 1 (Scope → Analysis)</strong>: Verifies that the task specification is complete, the required computational capabilities exist in the library, and the acceptance criteria are testable.
+</p>
+<p>
+<strong>Gate 2 (Analysis → Reporting)</strong>: Verifies that simulation results satisfy mass/energy balance constraints, benchmark deviations are within tolerance, and uncertainty has been quantified.
+</p>
+<p>
+These gates prevent error propagation — a simulation built on an incomplete understanding of the problem (failing Gate 1) will not proceed to analysis, and results that fail validation (failing Gate 2) will not be reported as final.
+</p>
+<p>
+<h3>3.4 Tool-augmented computation</h3>
+</p>
+<p>
+A distinguishing feature of this framework is that LLM agents do not perform thermodynamic calculations themselves. Instead, they compose and execute code that invokes a rigorous computational library. This separation of concerns addresses the well-documented limitation of LLMs in numerical computation (<a href="#ref-Gudipati2025" class="cite">Gudipati, 2025</a>) while leveraging their strengths in natural language understanding, code generation, and multi-step planning.
+</p>
+<p>
+The computational tools available to agents include:
+</p>
+<p>
+<li><strong>Thermodynamic systems</strong>: Equation-of-state implementations (SRK (<a href="#ref-Soave1972" class="cite">Soave, 1972</a>), PR (<a href="#ref-Peng1976" class="cite">Peng and Robinson, 1976</a>), CPA (<a href="#ref-Kontogeorgis1996" class="cite">Kontogeorgis et al., 1996</a>), GERG-2008) with mixing rules and component databases for 150+ pure components.</li>
+<li><strong>Flash calculations</strong>: Two-phase and multiphase flash (TP, PH, PS, TV) with stability analysis, supporting up to 100 components.</li>
+<li><strong>Process equipment</strong>: 33 equipment packages including separators, compressors, heat exchangers, valves, distillation columns, pipelines, and reactors.</li>
+<li><strong>Multiphase pipe flow</strong>: Beggs and Brill (<a href="#ref-BeggsBrill1973" class="cite">Beggs and Brill, 1973</a>) and other correlations for pressure drop, holdup, and flow regime prediction in wells and pipelines.</li>
+<li><strong>Mechanical design</strong>: Equipment sizing per ASME, API, DNV, ISO, and NORSOK standards, with cost estimation.</li>
+<li><strong>Field development economics</strong>: NPV/IRR calculations, tax regime modeling (Norwegian NCS, UK), Monte Carlo uncertainty analysis.</li>
+<li><strong>Standards compliance</strong>: Gas quality calculations per ISO 6976, AGA, GPA, and European standards.</li>
+</p>
+<p>
+Each tool invocation returns structured results that agents can interpret, validate, and use as inputs for subsequent calculations.
+</p>
+<p>
+<h3>3.5 Memory and knowledge management</h3>
+</p>
+<p>
+The framework implements a three-tier memory system:
+</p>
+<p>
+1. <strong>Session memory</strong>: Stores task-specific context, intermediate results, and in-progress notes within a single task session.
+2. <strong>Repository memory</strong>: Captures verified facts about the computational library's capabilities, API patterns, and known limitations — persisting across tasks within the same codebase.
+3. <strong>Task log</strong>: Records every solved task with keywords, solution approach, and key results, enabling future agents to find and build on prior work.
+</p>
+<p>
+This memory architecture addresses the ephemeral nature of LLM interactions by creating persistent, searchable knowledge that improves over time. When a new task arrives, agents can search the task log for similar prior work, avoiding redundant effort and benefiting from lessons learned.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>4. Implementation</h2>
+</p>
+<p>
+<h3>4.1 Computational backend</h3>
+</p>
+<p>
+The computational backend is an open-source Java library for thermodynamic fluid properties and process simulation, developed at the Norwegian University of Science and Technology (NTNU) and maintained by Equinor (<a href="#ref-neqsim2024" class="cite">Solbraa, 2024</a>). The library provides:
+</p>
+<p>
+<li>60+ equation-of-state implementations for gas, liquid, and solid phases</li>
+<li>Rigorous flash algorithms (successive substitution, Newton–Raphson, and hybrid methods)</li>
+<li>Complete physical property package (density, viscosity, thermal conductivity, surface tension, heat capacity)</li>
+<li>Process flowsheet simulation with equipment interconnection, recycle convergence, and adjuster loops</li>
+<li>Mechanical design calculations with industry standards compliance</li>
+</p>
+<p>
+The library is accessed from Python through a Java bridge (JPype), enabling Jupyter notebooks to call Java methods directly. This architecture gives agents access to the full computational power of a compiled, numerically rigorous library while working in the interactive, documentation-friendly environment of Jupyter.
+</p>
+<p>
+<h3>4.2 Agent implementation</h3>
+</p>
+<p>
+Agents are implemented as LLM prompt configurations with defined tool access permissions. Each agent configuration specifies:
+</p>
+<p>
+<li><strong>System prompt</strong>: Describes the agent's role, domain expertise, and behavioral constraints</li>
+<li><strong>Tool permissions</strong>: Lists which computational tools the agent can invoke</li>
+<li><strong>Output format</strong>: Defines the structure of the agent's outputs (JSON, Markdown, notebooks)</li>
+<li><strong>Validation rules</strong>: Specifies self-checks the agent must perform before producing outputs</li>
+</p>
+<p>
+The agent system uses a routing architecture where an incoming engineering task is first analyzed by a router agent that classifies the task type (thermodynamic property, process simulation, PVT study, field development, etc.) and dispatches it to the appropriate specialist agent or multi-agent pipeline.
+</p>
+<p>
+<h3>4.3 Three-stage workflow implementation</h3>
+</p>
+<p>
+<strong>Stage 1</strong> is implemented as a task folder creation step that generates a standardized directory structure:
+</p>
+<p>
+<pre><code>task_solve/YYYY-MM-DD_task_name/
+├── step1_scope_and_research/
+│   ├── task_spec.md          (acceptance criteria, standards, methods)
+│   └── notes.md              (literature review, reference data)
+├── step2_analysis/
+│   └── *.ipynb               (Jupyter notebooks with simulations)
+├── step3_report/
+│   └── generate_report.py    (report generation script)
+├── figures/                   (saved plots)
+└── results.json              (structured results for report generation)
+</code></pre>
+</p>
+<p>
+<strong>Stage 2</strong> produces Jupyter notebooks that follow a standardized pattern: fluid creation, process construction, simulation execution, result extraction, validation, and visualization. Each notebook saves a <code>results.json</code> file containing key results, validation metrics, uncertainty estimates, and figure captions — creating a machine-readable interface between the simulation and the reporting stage.
+</p>
+<p>
+<strong>Stage 3</strong> reads <code>results.json</code> and the task specification to auto-generate formatted engineering reports in HTML and Word formats, including styled tables, numbered figures with captions, benchmark validation tables with pass/fail color coding, uncertainty analysis sections (P10/P50/P90), and risk evaluation matrices.
+</p>
+<p>
+<h3>4.4 Validation mechanisms</h3>
+</p>
+<p>
+The framework implements multiple validation layers:
+</p>
+<p>
+1. <strong>Input validation</strong>: Physical bounds checking on temperatures, pressures, compositions, and component names before simulation construction.
+2. <strong>Computational validation</strong>: Mass and energy balance closure checks after each process simulation.
+3. <strong>Benchmark validation</strong>: Comparison against independent reference data (NIST, published experimental data, analytical solutions, or industry benchmarks).
+4. <strong>Uncertainty quantification</strong>: Monte Carlo simulation (N ≥ 200 with full process simulation, N ≥ 1000 with simplified models) producing P10/P50/P90 estimates and tornado sensitivity diagrams.
+5. <strong>Risk evaluation</strong>: Formal risk register with ISO 31000-style risk matrix classification.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>5. Case Studies</h2>
+</p>
+<p>
+We demonstrate the framework across eight engineering tasks that were solved during a three-week period (March 7–27, 2026). These tasks were not contrived demonstrations — they represent actual engineering questions encountered in industrial practice. Table 2 summarizes the case studies.
+</p>
+<p>
+<strong>Table 2.</strong> Summary of case studies solved with the agentic engineering framework.
+</p>
+<p>
+<table>
+<tr><th>#</th><th>Task</th><th>Discipline</th><th>EOS</th><th>Key Deliverables</th></tr>
+<tr><td>---</td><td>------</td><td>-----------</td><td>-----</td><td>-----------------</td></tr>
+<tr><td>1</td><td>CNG tank filling temperature</td><td>Cryogenics</td><td>SRK</td><td>Transient simulation, NIST benchmark, MC uncertainty (N=200)</td></tr>
+<tr><td>2</td><td>Subsea tieback NPV</td><td>Field Development</td><td>SRK</td><td>NPV analysis, Norwegian NCS tax, SURF CAPEX, MC (N=200)</td></tr>
+<tr><td>3</td><td>Sulfur deposition in letdown</td><td>Flow Assurance</td><td>SRK</td><td>Deposition risk map, corrosion model, 21 figures</td></tr>
+<tr><td>4</td><td>Turboexpander modification</td><td>Equipment Design</td><td>SRK</td><td>Performance degradation analysis, 7 modification scenarios</td></tr>
+<tr><td>5</td><td>Composite CNG tank thermal</td><td>Cryogenics</td><td>SRK</td><td>Composite vs steel comparison, ISO 11119 compliance</td></tr>
+<tr><td>6</td><td>CO₂ injection H₂ accumulation</td><td>Well Safety</td><td>SRK/PR/GERG</td><td>Multi-EOS validation, H₂ enrichment, ISO 31000 risk matrix</td></tr>
+<tr><td>7</td><td>Snøhvit probabilistic NPV</td><td>Field Economics</td><td>—</td><td>5000-sample MC, Spearman sensitivity, Value of Information</td></tr>
+<tr><td>8</td><td>Kristin process model conversion</td><td>Model Conversion</td><td>PR</td><td>Full process reconstruction, mass balance < 0.015%</td></tr>
+</table>
+</p>
+<p>
+<h3>5.1 Case Study 1: CNG tank filling and emptying</h3>
+</p>
+<p>
+<strong>Problem</strong>: Determine the gas temperature evolution during rapid filling and slow emptying of a 300-bar CNG tank, accounting for Joule–Thomson heating and transient wall heat transfer.
+</p>
+<p>
+<strong>Agent workflow</strong>: The task planner identified this as a transient thermodynamic problem requiring SRK equation of state, vessel depressurization equipment, and natural convection heat transfer. The researcher agent gathered reference data from NIST for methane properties and identified ISO 11119 and UN ECE R110 as applicable standards. The simulator agent constructed a Jupyter notebook implementing a transient filling model with wall thermal mass effects (Biot number analysis confirming non-lumped behavior, Bi = 1.16 for steel).
+</p>
+<p>
+<strong>Key results</strong>: Peak gas temperature during filling reached 89°C at 300 bar, approaching the 85°C regulatory limit. The Biot number analysis revealed that wall thermal modeling is essential — a lumped model underpredicts peak temperature by 12°C. Benchmark validation against NIST methane data showed deviations below 0.3% for density and enthalpy. Monte Carlo analysis (N = 200) with ±10% variation in heat transfer coefficient and tank geometry produced P10/P50/P90 temperature estimates of 82/89/94°C.
+</p>
+<p>
+<h3>5.2 Case Study 2: Subsea tieback NPV analysis</h3>
+</p>
+<p>
+<strong>Problem</strong>: Evaluate the economic viability of a subsea gas field tieback to an existing platform under Norwegian Continental Shelf (NCS) fiscal conditions.
+</p>
+<p>
+<strong>Agent workflow</strong>: The field development agent orchestrated multiple sub-agents: a reservoir simulation agent (using simplified reservoir model with production decline), a pipeline agent (Beggs and Brill multiphase flow), a cost estimation agent (SURF cost estimator with breakdown by trees, manifolds, umbilicals, flowlines), and an economics agent (Norwegian NCS tax model with 22% corporate tax + 56% petroleum tax).
+</p>
+<p>
+<strong>Key results</strong>: Base case NPV of 4,310 MNOK, with SURF CAPEX of 6,332 MNOK. Monte Carlo analysis (N = 200 with full process simulation) identified gas price as the dominant uncertainty (Spearman ρ = 0.75), with P10/P50/P90 NPV estimates of −1,500/4,310/8,200 MNOK. Probability of negative NPV was 10.5%.
+</p>
+<p>
+<h3>5.3 Case Study 3: Sulfur deposition in letdown valves</h3>
+</p>
+<p>
+<strong>Problem</strong>: Assess the risk of elemental sulfur (S₈) deposition during pressure letdown of sour gas from reservoir conditions (350 bar) to process pressure (70 bar), and evaluate associated corrosion mechanisms.
+</p>
+<p>
+<strong>Agent workflow</strong>: The flow assurance agent identified this as a coupled thermodynamic-corrosion problem requiring solid-phase flash calculations (TPSolid flash for S₈ desublimation) and corrosion rate modeling (de Waard–Milliams for CO₂, Smith–de Waard for H₂S). The researcher identified the empirical heuristic "5°C per 10 bar" as an operational benchmark for Joule–Thomson cooling.
+</p>
+<p>
+<strong>Key results</strong>: S₈ desublimation onset identified at 187 bar/12°C, with maximum deposition risk in the 150–100 bar range. The JT cooling heuristic was validated within 8% for the specific gas composition. Corrosion rate mapping identified three distinct zones: CO₂-dominated (> 100 bar), mixed (100–50 bar), and H₂S-dominated (< 50 bar) with FeS scale morphology transitions. Twenty-one figures with mechanism discussions were produced, each linking observations to physical mechanisms and engineering recommendations.
+</p>
+<p>
+<h3>5.4 Case Study 4: Turboexpander modification evaluation</h3>
+</p>
+<p>
+<strong>Problem</strong>: Evaluate the performance of an existing turboexpander under projected future operating conditions with 10% efficiency degradation, and compare seven modification scenarios through 2035.
+</p>
+<p>
+<strong>Agent workflow</strong>: The equipment design agent performed detailed mechanical analysis including shaft speeds, critical speed margins, torque limits, and bucket stress calculations. Performance curves were generated for baseline and degraded conditions. Seven scenarios (rebundle, upgraded internals, variable-speed drive, hybrid configuration, etc.) were evaluated on performance, cost, and risk metrics.
+</p>
+<p>
+<strong>Key results</strong>: The analysis identified that a rebundle with upgraded blade metallurgy (Scenario 3) provided the best combination of performance recovery (94% of original efficiency) and project NPV. Hydrate safety analysis confirmed adequate margin at the turboexpander outlet for all scenarios. Transient startup/shutdown analysis identified vibration risks at 0.7× and 1.3× critical speed, recommending runup rate limits.
+</p>
+<p>
+<h3>5.5 Case Study 5: Composite CNG tank thermal analysis</h3>
+</p>
+<p>
+<strong>Problem</strong>: Compare thermal behavior of composite (k = 0.6 W/m·K) versus steel (k = 45 W/m·K) CNG tanks during filling to 300 bar, assessing compliance with ISO 11119 and UN ECE R110.
+</p>
+<p>
+<strong>Agent workflow</strong>: Building on Case Study 1, the simulator agent extended the transient model to compare two wall materials. Biot number analysis (Bi_composite = 2.0 vs Bi_steel = 1.16) confirmed that the composite tank has stronger thermal gradients, making wall modeling even more critical.
+</p>
+<p>
+<strong>Key results</strong>: Composite tanks reach 7°C higher peak gas temperature than steel tanks due to thermal insulation effect, increasing the risk of exceeding the 85°C regulatory limit. Sensitivity analysis identified inlet gas temperature and flow rate as the two dominant parameters. Results informed the design recommendation to pre-cool gas below 25°C for composite tank filling.
+</p>
+<p>
+<h3>5.6 Case Study 6: CO₂ injection well hydrogen accumulation</h3>
+</p>
+<p>
+<strong>Problem</strong>: Assess the safety implications of hydrogen impurity accumulation in CO₂ injection wells at the Smeaheia CCS project, where the injected CO₂ contains trace hydrogen from upstream processes.
+</p>
+<p>
+<strong>Agent workflow</strong>: This was the most complex task in our demonstration, requiring the capability scout agent to first assess computational readiness. Four independent equation-of-state models (SRK, PR, GERG-2008, GERG-2008-H₂) were employed for cross-validation. The well safety agent coordinated phase envelope calculations, K-value analysis, wellbore pressure-temperature profiles, depressurization transients, and impurity monitoring.
+</p>
+<p>
+<strong>Key results</strong>: Hydrogen enrichment factor up to 11.6× was predicted at steady state due to preferential partitioning between CO₂-rich and hydrogen-rich phases. Phase envelope mapping identified a two-phase region in the wellbore at shutdown conditions. Cross-validation across four EOS models confirmed qualitative consistency, with GERG-2008-H₂ recommended for quantitative work. A formal ISO 31000 risk matrix classified hydrogen accumulation as "High" risk requiring mitigation (continuous monitoring, blowdown procedures). Seventeen figures documented phase behavior, enrichment profiles, and risk analysis.
+</p>
+<p>
+<h3>5.7 Case Study 7: Snøhvit probabilistic NPV</h3>
+</p>
+<p>
+<strong>Problem</strong>: Perform probabilistic NPV analysis for the Snøhvit LNG field development, incorporating parameter uncertainty and value-of-information assessment.
+</p>
+<p>
+<strong>Agent workflow</strong>: The economics agent implemented a 5000-sample Monte Carlo analysis using an analytical NPV model. Spearman rank correlation identified the dominant uncertainty drivers. A value-of-information (VoI) framework assessed whether additional data gathering would change the investment decision.
+</p>
+<p>
+<strong>Key results</strong>: P90/P50/P10 NPV estimates of −1,505/135/1,866 MUSD, with gas price (ρ = 0.75) dominating uncertainty. The VoI analysis concluded "DO NOT DRILL" under the base assumptions, demonstrating the framework's ability to deliver decision support beyond simple simulation results.
+</p>
+<p>
+<h3>5.8 Case Study 8: Kristin process model conversion</h3>
+</p>
+<p>
+<strong>Problem</strong>: Reconstruct the Kristin gas condensate processing facility in the open-source library from an existing proprietary simulator (ProcessPilot) model.
+</p>
+<p>
+<strong>Agent workflow</strong>: The process extraction agent parsed the existing model's operating data, fluid composition (11-component gas condensate with TBP C7+ characterization), and equipment specifications. It then reconstructed the three-stage separation train, five-compressor recompression system, and export compression as an open-source process model with recycle loops and thermal integration.
+</p>
+<p>
+<strong>Key results</strong>: The reconstructed model achieved mass balance closure below 0.015% and matched the origial model's key stream properties (temperature, pressure, flow rate, composition) within engineering accuracy. This case study demonstrated the framework's ability to migrate proprietary simulation assets to open-source platforms.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>6. Results and Discussion</h2>
+</p>
+<p>
+<h3>6.1 Framework effectiveness</h3>
+</p>
+<p>
+All eight case studies produced complete engineering deliverables with validated results (Table 3). The framework demonstrated generality across engineering disciplines that traditionally require different specialist expertise and different simulation tools.
+</p>
+<p>
+<strong>Table 3.</strong> Validation metrics across case studies.
+</p>
+<p>
+<table>
+<tr><th>Case</th><th>Mass Balance Error</th><th>Benchmark Deviation</th><th>MC Samples</th><th>P50 Result</th><th>Deliverables</th></tr>
+<tr><td>------</td><td>-------------------</td><td>--------------------:</td><td>----------:</td><td>-----------</td><td>:------------:</td></tr>
+<tr><td>1</td><td>< 0.01%</td><td>< 0.3% vs NIST</td><td>200</td><td>89°C peak temp</td><td>Notebook, report, 8 figs</td></tr>
+<tr><td>2</td><td>< 0.02%</td><td>N/A (design case)</td><td>200</td><td>4,310 MNOK NPV</td><td>Notebook, report, 12 figs</td></tr>
+<tr><td>3</td><td>< 0.01%</td><td>8% vs JT heuristic</td><td>—</td><td>S₈ onset at 187 bar</td><td>Notebook, report, 21 figs</td></tr>
+<tr><td>4</td><td>< 0.01%</td><td>N/A (projection)</td><td>—</td><td>94% eff. recovery</td><td>Report, 15 figs</td></tr>
+<tr><td>5</td><td>< 0.01%</td><td>< 0.3% vs NIST</td><td>200</td><td>96°C composite peak</td><td>Notebook, report, 5 figs</td></tr>
+<tr><td>6</td><td>< 0.01%</td><td>Cross-EOS consistent</td><td>—</td><td>11.6× H₂ enrichment</td><td>Notebook, report, 17 figs</td></tr>
+<tr><td>7</td><td>N/A (economic)</td><td>VBA model verified</td><td>5000</td><td>135 MUSD NPV</td><td>Notebook, report, 10 figs</td></tr>
+<tr><td>8</td><td>< 0.015%</td><td>< 1% vs original</td><td>—</td><td>Full model match</td><td>Notebook, report, 8 figs</td></tr>
+</table>
+</p>
+<p>
+The consistent achievement of mass balance closures below 0.02% reflects the advantage of using a rigorous computational library rather than simplified correlations. The benchmark validation confirms that the AI agents are invoking the computational tools correctly and interpreting the results accurately.
+</p>
+<p>
+<h3>6.2 Architectural insights</h3>
+</p>
+<p>
+The case studies revealed several architectural principles essential for reliable AI-assisted engineering:
+</p>
+<p>
+<strong>Principle 1: Separation of reasoning and computation.</strong> The framework's reliability stems from a clear separation between the LLM (which reasons about the problem, selects methods, and composes code) and the computational library (which performs thermodynamic calculations with numerical rigor). This separation addresses the fundamental limitation of LLMs in numerical computation while leveraging their strengths in natural language understanding and code generation.
+</p>
+<p>
+<strong>Principle 2: Structured validation at every stage.</strong> The three-stage pipeline with explicit validation gates prevents error propagation. In Case Study 6, the capability scout identified the need for GERG-2008-H₂ before proceeding, which would not have been identified without the structured capability assessment.
+</p>
+<p>
+<strong>Principle 3: Agent specialization over generalization.</strong> Specialized agents (field development, flow assurance, well safety) consistently produced more accurate and complete results than would be achievable with a general-purpose agent, because each specialist agent has domain-specific knowledge encoded in its prompt configuration and has access to purpose-built computational tools.
+</p>
+<p>
+<strong>Principle 4: Persistent memory enables cumulative learning.</strong> Case Study 5 built directly on Case Study 1, reusing the transient tank model with extended wall material comparison. The task log and repository memory enabled this continuity without re-deriving the approach from scratch.
+</p>
+<p>
+<h3>6.3 Role of human oversight</h3>
+</p>
+<p>
+Despite the automated nature of the framework, human oversight remains essential at several points:
+</p>
+<p>
+1. <strong>Problem formulation</strong>: The initial task description requires human judgment about what engineering question to ask and what level of fidelity is appropriate.
+2. <strong>Validation interpretation</strong>: While the framework automates numerical validation checks, interpreting whether results are physically reasonable requires engineering judgment. In Case Study 3, the sulfur deposition onset temperature required domain expert confirmation that the thermodynamic model's solid-phase predictions were appropriate for the specific gas composition.
+3. <strong>Decision-making</strong>: The framework provides engineering analysis; the decision to proceed with a design or investment remains with the responsible engineer. Case Study 7 produced a "DO NOT DRILL" recommendation, but this output is decision support, not a decision.
+4. <strong>Quality assurance</strong>: Before any results leave the framework as deliverables, a human engineer should review the key assumptions, model choices, and conclusions.
+</p>
+<p>
+This human-in-the-loop pattern is consistent with emerging best practices for AI in safety-critical engineering domains (<a href="#ref-Hughes2025" class="cite">Hughes et al., 2025</a>). The framework augments engineering capability rather than replacing engineering judgment.
+</p>
+<p>
+<h3>6.4 Comparison with traditional workflows</h3>
+</p>
+<p>
+The traditional engineering workflow for a task such as Case Study 2 (subsea tieback NPV) would involve:
+</p>
+<p>
+1. Reservoir engineer estimating production profiles (days to weeks)
+2. Process engineer building a simulation model (days)
+3. Pipeline/flow assurance engineer sizing the tieback (days)
+4. Cost engineer estimating CAPEX and OPEX (days)
+5. Economics team running NPV analysis (days)
+6. Separate Monte Carlo uncertainty analysis (days)
+7. Report compilation and review (days)
+</p>
+<p>
+The total elapsed time is typically weeks to months, requiring coordination among multiple specialists. In the agentic framework, Case Study 2 was completed within a single working session, with the agents coordinating the multi-disciplinary analysis automatically. The resulting deliverables included all components that the traditional workflow would produce — production profiles, pipeline sizing, cost estimation, tax modeling, NPV analysis, Monte Carlo uncertainty, and formatted report — with systematic validation at each step.
+</p>
+<p>
+We emphasize that this comparison should be interpreted with appropriate caveats. The agentic framework benefits from pre-existing computational tools, pre-configured agent specializations, and a well-structured task-solving workflow. A fair comparison would also account for the significant upfront investment in building the framework, computational library, and agent configurations. However, once this infrastructure exists, the marginal cost of solving additional tasks is dramatically lower than the traditional approach.
+</p>
+<p>
+<h3>6.5 Failure modes and limitations</h3>
+</p>
+<p>
+The framework is not without limitations:
+</p>
+<p>
+<strong>Computational boundary</strong>: The agents can only invoke capabilities that exist in the computational library. Case Study 6 required cross-validation across four EOS models, which was possible because all four were implemented. A task requiring a model not in the library (e.g., SAFT-VR Mie for complex molecules) would require library extension before the agents could proceed.
+</p>
+<p>
+<strong>LLM hallucination risk</strong>: LLMs can generate plausible-sounding but incorrect code, particularly for unusual API patterns or edge cases. The validation gates mitigate this risk, but cannot eliminate it entirely. In practice, we observed that agent errors were caught before producing incorrect deliverables in all case studies.
+</p>
+<p>
+<strong>Scalability</strong>: Very large process models (e.g., the Kristin model in Case Study 8 with recycle loops and 11 components) approach the limits of what can be reliably constructed in a single agent interaction. The framework handles this through iterative refinement, but extremely complex flowsheets may require multiple sessions.
+</p>
+<p>
+<strong>Reproducibility of agent reasoning</strong>: While the computational results are deterministic (same inputs produce same outputs from the thermodynamic library), the agent's reasoning path may vary between invocations due to the stochastic nature of LLM inference. The structured output format and validation gates ensure that the final results are consistent even when the reasoning path varies.
+</p>
+<p>
+<h3>6.6 Implications for engineering practice</h3>
+</p>
+<p>
+The demonstrated framework has several implications for how chemical engineering tasks are solved:
+</p>
+<p>
+<strong>Democratization of specialist expertise</strong>: Tasks that traditionally required narrow specialist knowledge (e.g., sulfur deposition risk assessment, multi-EOS phase behavior analysis) become accessible to engineers with general process engineering backgrounds, because the agents encode specialist knowledge in their configurations.
+</p>
+<p>
+<strong>Knowledge preservation</strong>: The task log and memory system create a searchable archive of solved problems with full traceability from problem statement through methodology to results. This addresses the common industry challenge of knowledge loss when experienced engineers retire or change roles.
+</p>
+<p>
+<strong>Continuous improvement of computational tools</strong>: The framework creates a feedback loop where task-solving activities identify gaps in the computational library, leading to library improvements that benefit future tasks. Several case studies in our demonstration triggered library enhancements (e.g., improved transient wall heat transfer model, CO₂-H₂ phase behavior with GERG-2008-H₂).
+</p>
+<p>
+<strong>Reproducibility and auditability</strong>: Every calculation is recorded in an executable notebook with full provenance. Unlike spreadsheet-based engineering calculations that can be difficult to audit, the notebook format enables complete reproduction and independent verification of all results.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>7. Conclusions</h2>
+</p>
+<p>
+We have presented an agentic engineering framework that combines multi-agent LLM orchestration with rigorous open-source thermodynamic simulation to solve diverse chemical engineering tasks end-to-end. The key findings are:
+</p>
+<p>
+1. A structured three-stage workflow (scope/research, analysis/evaluation, reporting) with validation gates at each transition provides the engineering rigor needed for reliable AI-assisted computation.
+</p>
+<p>
+2. Separation of LLM reasoning from numerical computation — where agents compose and validate code that invokes a rigorous thermodynamic library — addresses the fundamental limitation of LLMs in numerical calculation while leveraging their strengths in problem decomposition and code generation.
+</p>
+<p>
+3. The framework generalized across eight real-world case studies spanning six engineering disciplines (cryogenics, field development, flow assurance, equipment design, well safety, model conversion), consistently producing validated results with mass balance closures below 0.02% and benchmark deviations within engineering accuracy.
+</p>
+<p>
+4. Agent specialization, persistent memory, and structured output formats are essential architectural components. General-purpose agents are insufficient for the precision required in engineering calculations.
+</p>
+<p>
+5. Human oversight remains essential for problem formulation, validation interpretation, and decision-making. The framework augments engineering capability rather than replacing engineering judgment.
+</p>
+<p>
+6. The open-source foundation enables full reproducibility, community-driven improvement, and elimination of vendor lock-in that limits alternative approaches based on commercial simulators.
+</p>
+<p>
+Future work will focus on extending the framework to dynamic simulation, incorporating machine learning for rapid property estimation, and developing formal verification methods for AI-generated engineering calculations.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>Acknowledgements</h2>
+</p>
+<p>
+The computational library is developed as an open-source project (https://github.com/equinor/neqsim), with contributions from NTNU and Equinor. We thank the broader open-source community for contributions to the thermodynamic models and process equipment implementations.
+</p>
+<p>
+<h2>CRediT Author Contributions</h2>
+</p>
+<p>
+<strong>Even Solbraa</strong>: Conceptualization, Methodology, Software, Investigation, Writing – original draft, Writing – review & editing.
+</p>
+<p>
+<h2>Declaration of Competing Interest</h2>
+</p>
+<p>
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+</p>
+<p>
+<h2>Data Availability</h2>
+</p>
+<p>
+Source code, agent configurations, case study notebooks, and all result files are available at https://github.com/equinor/neqsim under the Apache-2.0 license.
+</p>
+<p>
+<hr>
+
+</p>
+
+<h2>References</h2>
+<div class="references">
+<p id="ref-Abbas2024" class="ref-entry">Abbas, G. and Wahab, A., 2024. AI.</p>
+<p id="ref-AbouAli2025" class="ref-entry">Abou Ali, M. and Dornaika, F. and Charafeddine, J., 2025. Agentic AI. <em>Artif. Intell. Rev.</em>.</p>
+<p id="ref-BeggsBrill1973" class="ref-entry">Beggs, H. D. and Brill, J. P., 1973. A study of two-phase flow in inclined pipes. <em>J. Pet. Technol.</em> 25, 607--617.</p>
+<p id="ref-Brown2020" class="ref-entry">Brown, T. B. and Mann, B. and Ryder, N. and Subbiah, M. and Kaplan, J. and Dhariwal, P. and Neelakantan, A. and Shyam, P. and Sastry, G. and Askell, A. and others, 2020. Language models are few-shot learners. <em>Advances in Neural Information Processing Systems</em> 33, 1877--1901.</p>
+<p id="ref-Dhruv2025" class="ref-entry">Dhruv, A. and Dubey, A., 2025. Leveraging large language models for code translation and software development in scientific computing. <em>Proceedings of the Platform for Advanced Scientific Computing Conference</em>.</p>
+<p id="ref-Du2025" class="ref-entry">Du, W. and Yang, S., 2025. The potential and challenges of large language model agent systems in chemical process simulation: from automated modeling to intelligent design. <em>Front. Chem. Sci. Eng.</em>.</p>
+<p id="ref-Ferrag2025" class="ref-entry">Ferrag, M. A. and Tihanyi, N. and Debbah, M., 2025. From LLM. <em>arXiv preprint arXiv:2504.19678</em>.</p>
+<p id="ref-Gridach2025" class="ref-entry">Gridach, M. and Nanavati, J. and Abidine, K. Z. E. and Mendes, L., 2025. Agentic AI. <em>arXiv preprint arXiv:2503.08979</em>.</p>
+<p id="ref-Grossmann2005" class="ref-entry">Grossmann, I. E. and Westerberg, A. W., 2000. Research challenges in process systems engineering. <em>AIChE J.</em> 46, 1700--1703.</p>
+<p id="ref-Gudipati2025" class="ref-entry">Gudipati, M. R., 2025. Agentic AI. <em>Abu Dhabi International Petroleum Exhibition and Conference</em>.</p>
+<p id="ref-Hughes2025" class="ref-entry">Hughes, L. and Dwivedi, Y. K. and Malik, T., 2025. AI. <em>J. Comput. Inf. Syst.</em>.</p>
+<p id="ref-Jiang2025" class="ref-entry">Jiang, S. and Xie, M. and Chen, F. Y. and Ma, J., 2025. Intelligent Design 4.0: Paradigm Evolution Toward the Agentic Artificial Intelligence Era. <em>J. Comput. Inf. Sci. Eng.</em> 25, 120808.</p>
+<p id="ref-Khoo2025" class="ref-entry">Khoo, T. L. and Lee, T. S. and Bee, S. T. and Ma, C. and Zhang, Y. Y., 2025. A comparative review of large language models in engineering with emphasis on chemical engineering applications. <em>Processes</em> 13, 2680.</p>
+<p id="ref-Kontogeorgis1996" class="ref-entry">Kontogeorgis, G. M. and Voutsas, E. C. and Yakoumis, I. V. and Tassios, D. P., 1996. An equation of state for associating fluids. <em>Ind. Eng. Chem. Res.</em> 35, 4310--4318.</p>
+<p id="ref-Lee2024" class="ref-entry">Lee, D. and Lee, J. and Shin, D., 2024. GPT. <em>Korean J. Chem. Eng.</em>.</p>
+<p id="ref-Lewis2020" class="ref-entry">Lewis, P. and Perez, E. and Piktus, A. and Petroni, F. and Karpukhin, V. and Goyal, N. and K\"u, 2020. Retrieval-Augmented Generation for Knowledge-Intensive NLP. <em>Advances in Neural Information Processing Systems</em> 33, 9459--9474.</p>
+<p id="ref-Liang2026" class="ref-entry">Liang, J. and Groll, N. and Sin, G., 2026. Large Language Model Agent for User-friendly Chemical Process Simulations. <em>arXiv preprint arXiv:2601.11650</em>.</p>
+<p id="ref-Liu2024" class="ref-entry">Liu, Z. and Chai, Y. and Li, J., 2024. Toward automated simulation research workflow through LLM. <em>J. Chem. Inf. Model.</em>.</p>
+<p id="ref-MaldonadoRomo2026" class="ref-entry">Maldonado-Romo, J. and Bradley, R. and Anthony, B., 2026. A collaborative and sustainable engineering design framework enabled by agentic AI. <em>J. Sustain. Dev. Energy Water Environ. Syst.</em>.</p>
+<p id="ref-Michelsen2007" class="ref-entry">Michelsen, M. L. and Mollerup, J. M., 2007. Thermodynamic Models: Fundamentals and Computational Aspects.</p>
+<p id="ref-Peng1976" class="ref-entry">Peng, D.-Y. and Robinson, D. B., 1976. A new two-constant equation of state. <em>Ind. Eng. Chem. Fundam.</em> 15, 59--64.</p>
+<p id="ref-Pistikopoulos2021" class="ref-entry">Pistikopoulos, E. N. and Barbosa-Povoa, A. and Lee, J. H. and Misener, R. and Mitsos, A. and Reklaitis, G. V. and Venkatasubramanian, V. and You, F. and Gani, R., 2021. Process systems engineering -- The generation next?. <em>Comput. Chem. Eng.</em> 147, 107252.</p>
+<p id="ref-Schick2024" class="ref-entry">Schick, T. and Dwivedi-Yu, J. and Dess\`i, 2024. Toolformer: Language Models Can Teach Themselves to Use Tools. <em>Advances in Neural Information Processing Systems</em> 36.</p>
+<p id="ref-Schweidtmann2021" class="ref-entry">Schweidtmann, A. M. and Esche, E. and Fischer, A. and Kloft, M. and Repke, J.-U. and Sager, S. and Mitsos, A., 2021. Machine learning in chemical engineering: A perspective. <em>Chem. Ing. Tech.</em> 93, 2029--2039.</p>
+<p id="ref-Schafer2026" class="ref-entry">Sch\"a, 2026. Context is all you need: Towards autonomous model-based process design using agentic AI. <em>arXiv preprint arXiv:2603.12813</em>.</p>
+<p id="ref-SeiderLewinWidagdo2009" class="ref-entry">Seider, W. D. and Lewin, D. R. and Seader, J. D. and Widagdo, S. and Gani, R. and Ng, K. M., 2017. Product and Process Design Principles: Synthesis, Analysis, and Design.</p>
+<p id="ref-Soave1972" class="ref-entry">Soave, G., 1972. Equilibrium constants from a modified Redlich-Kwong. <em>Chem. Eng. Sci.</em> 27, 1197--1203.</p>
+<p id="ref-neqsim2024" class="ref-entry">Solbraa, Even, 2024. NeqSim.</p>
+<p id="ref-Song2024" class="ref-entry">Song, F. and Agarwal, A. and Wen, W., 2024. The impact of generative AI. <em>arXiv preprint arXiv:2410.02091</em>.</p>
+<p id="ref-Tian2026" class="ref-entry">Tian, X. and Du, W. and Yang, S. and Hu, H. and Xin, H. and Qu, S., 2026. From Text to Simulation: A Multi-Agent LLM. <em>arXiv preprint arXiv:2601.06776</em>.</p>
+<p id="ref-Tsai2023" class="ref-entry">Tsai, M. L. and Ong, C. W. and Chen, C. L., 2023. Exploring the use of large language models (LLMs. <em>Educ. Chem. Eng.</em>.</p>
+<p id="ref-Venkatasubramanian2019" class="ref-entry">Venkatasubramanian, V., 2019. The promise of artificial intelligence in chemical engineering: Is it here, finally?. <em>AIChE J.</em> 65, 466--478.</p>
+<p id="ref-Woo2025" class="ref-entry">Woo, T. Y. and Kim, S. Y. and Tariq, S. and Heo, S. K. and Yoo, C. K., 2025. Leveraging Generative AI. <em>Korean J. Chem. Eng.</em>.</p>
+<p id="ref-Yao2023" class="ref-entry">Yao, S. and Zhao, J. and Yu, D. and Du, N. and Shafran, I. and Narasimhan, K. and Cao, Y., 2023. ReAct. <em>International Conference on Learning Representations</em>.</p>
+<p id="ref-Yeverechyahu2024" class="ref-entry">Yeverechyahu, D. and Mayya, R., 2024. The impact of large language models on open-source innovation: Evidence from GitHub Copilot. <em>arXiv preprint arXiv:2409.08379</em>.</p>
+<p id="ref-Ylihurula2024" class="ref-entry">Ylihurula, A. and Niinimäki, V. and Paavilainen, M., 2024. Software development for scientific computing using AI.</p>
+<p id="ref-OpenAI2023" class="ref-entry">OpenAI, 2023. GPT-4. <em>arXiv preprint arXiv:2303.08774</em>.</p>
+</div>
+
+
+</body>
+</html>

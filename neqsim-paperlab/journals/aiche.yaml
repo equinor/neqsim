@@ -1,0 +1,125 @@
+# AIChE Journal — Journal Profile
+# Wiley — ISSN: 0001-1541 (print), 1547-5905 (online)
+# https://aiche.onlinelibrary.wiley.com/journal/15475905
+
+journal_name: "AIChE Journal"
+journal_abbrev: "AIChE J."
+publisher: "Wiley (on behalf of the American Institute of Chemical Engineers)"
+issn: "0001-1541"
+eissn: "1547-5905"
+url: "https://aiche.onlinelibrary.wiley.com/journal/15475905"
+submit_url: "https://mc.manuscriptcentral.com/aic"
+impact_factor: 3.5
+citescore: 6.2
+scope: >
+  Flagship journal of AIChE covering all areas of chemical engineering:
+  transport phenomena, reaction engineering, separations, thermodynamics,
+  process systems engineering, bioengineering, materials, energy, and
+  environmental engineering. Emphasizes fundamental contributions with
+  practical significance.
+
+# Structure
+abstract_words_max: 200
+keywords_min: 3
+keywords_max: 6
+section_order:
+  - Abstract
+  - Keywords
+  - Introduction
+  - Theory / Mathematical Framework
+  - Methods / Experimental
+  - Results and Discussion
+  - Conclusions
+  - Acknowledgements
+  - Notation / Nomenclature
+  - Literature Cited
+  - Appendices
+  - Supporting Information
+
+# Formatting
+latex_class: "custom"  # Wiley provides custom LaTeX template
+latex_template: "wiley-article"  # Wiley's generic article template
+reference_style: "numbered"
+citation_style: "numbered"  # Numbered in square brackets: [1], [2], [3-5]
+figure_formats:
+  - "tiff"
+  - "eps"
+  - "pdf"
+  - "png"
+  - "jpeg"
+figure_dpi_min: 300
+figure_width_single_column_cm: 8.5
+figure_width_double_column_cm: 17.5
+table_style: "wiley_standard"  # Three-line tables encouraged
+equation_numbering: "sequential"
+line_numbering_required: true
+double_spacing_required: true
+
+# Requirements
+highlights_required: false
+graphical_abstract_required: false  # Optional but encouraged
+toc_entry_required: false
+cover_letter_required: true
+conflict_of_interest_required: true
+data_availability_required: true  # Data availability statement required
+credit_statement_required: false  # Author contributions encouraged but not CRediT-mandated
+orcid_required: false  # Encouraged for corresponding author
+nomenclature_section: "recommended"  # Standard notation list encouraged
+supporting_information_encouraged: true
+
+# Page/Content Limits
+pages_max: null  # No strict limit for Research Articles
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "6000-10000"
+
+# Submission Types
+paper_types:
+  - "Research Article"
+  - "Review Article"
+  - "Perspective"
+  - "Rapid Communication"  # Short, high-impact findings (~3000 words)
+  - "Correspondence"
+
+# Peer Review
+peer_review_model: "single_anonymous"  # Reviewers anonymous, authors known
+
+# Reference Format Examples
+# Numbered in order of appearance, square brackets in text
+# Journal: Author AB, Author CD. Title of article. J Abbrev. Year;Vol:Pages.
+# Book: Author AB. Title of Book. City: Publisher; Year.
+# Example:
+#   1. Peng D-Y, Robinson DB. A new two-constant equation of state.
+#      Ind Eng Chem Fundam. 1976;15:59-64.
+#   2. Prausnitz JM, Lichtenthaler RN, de Azevedo EG. Molecular Thermodynamics
+#      of Fluid-Phase Equilibria. 3rd ed. Upper Saddle River, NJ: Prentice Hall; 1999.
+
+# Typical Topics for Flash Algorithm / Thermo Papers
+relevant_topics:
+  - "Thermodynamics and phase equilibria"
+  - "Process systems engineering"
+  - "Numerical methods for chemical engineering"
+  - "Equation of state development"
+  - "Flash calculations and stability analysis"
+  - "Transport phenomena"
+  - "Reaction engineering"
+  - "Separations engineering"
+  - "Energy systems"
+
+# Distinctive Features
+distinctive_features:
+  - "Flagship AIChE journal — high prestige in chemical engineering"
+  - "Strong emphasis on fundamental contributions with practical impact"
+  - "Notation/Nomenclature section is common for theory-heavy papers"
+  - "Rapid Communications for urgent, short findings"
+  - "Annual AIChE meeting highlight papers"
+
+# Key Wiley/AIChE Policies
+policies:
+  ai_disclosure: "Must disclose AI tools used; AI cannot be listed as author"
+  preprints: "Authors may post preprints; Wiley's preprint policy applies"
+  data_sharing: "Data availability statement required; deposit encouraged"
+  color_figures: "Free for online; modest charges may apply for print"
+  open_access_apc: "~USD 4,500 for OnlineOpen; check institutional agreements"
+  similarity_screening: "Manuscripts screened via iThenticate/Crossref"
