@@ -885,6 +885,15 @@ public abstract class SystemThermo implements SystemInterface {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "molarMass", "is negative."));
     }
+    // Auto-convert density from kg/m3 to g/cm3 (= specific gravity) if needed.
+    // No petroleum fraction has SG > 10, so values above that threshold are
+    // assumed to be in kg/m3 (common user mistake, see issue #1980).
+    if (density > 10.0) {
+      logger.warn("addTBPfraction: density value {} for '{}' appears to be in kg/m3. "
+          + "Converting to g/cm3 (specific gravity) by dividing by 1000. "
+          + "Expected range: 0.65-1.1 g/cm3.", density, componentName);
+      density = density / 1000.0;
+    }
 
     SystemInterface refSystem = null;
     double TC = 0.0;
@@ -1029,14 +1038,20 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
       double density, double criticalTemperature, double criticalPressure, double acentricFactor) {
-    if (density < 0.0 || molarMass < 0.0) {
+    if (density < 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "density", "is negative."));
     }
-
-    if (density < 0.0 || molarMass < 0.0) {
+    if (molarMass < 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "molarMass", "is negative."));
+    }
+    // Auto-convert density from kg/m3 to g/cm3 (= specific gravity) if needed.
+    if (density > 10.0) {
+      logger.warn("addTBPfraction: density value {} for '{}' appears to be in kg/m3. "
+          + "Converting to g/cm3 (specific gravity) by dividing by 1000. "
+          + "Expected range: 0.65-1.1 g/cm3.", density, componentName);
+      density = density / 1000.0;
     }
 
     SystemInterface refSystem = null;
