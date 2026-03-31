@@ -1,6 +1,7 @@
 ---
 title: Separator Equipment
 description: "Documentation for separator equipment in NeqSim process simulation including two-phase separators, three-phase separators, gas scrubbers, entrainment specification, and design constraints."
+keywords: "separator, two-phase, three-phase, gas-oil-water, test separator, scrubber, knockout drum, flash drum, liquid level, entrainment"
 ---
 
 # Separator Equipment
@@ -86,7 +87,7 @@ Stream dryGas = scrubber.getGasOutStream();
 Stream condensate = scrubber.getLiquidOutStream();
 ```
 
-> **Note:** Gas scrubbers automatically use K-value only constraints (`useGasScrubberConstraints()`). 
+> **Note:** Gas scrubbers automatically use K-value only constraints (`useGasScrubberConstraints()`).
 > This is appropriate since scrubbers focus on gas-phase separation efficiency rather than liquid retention time.
 
 ---
@@ -436,7 +437,7 @@ Liquid levels are defined as percentages of internal diameter (ID). The mechanic
 // Configure liquid levels (percentage of internal diameter)
 SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
 design.setHHLLFraction(0.75);  // 75% of ID
-design.setHLLFraction(0.70);   // 70% of ID  
+design.setHLLFraction(0.70);   // 70% of ID
 design.setNLLFraction(0.50);   // 50% of ID
 design.setLLLFraction(0.30);   // 30% of ID
 design.setLLLLFraction(0.25);  // 25% of ID
@@ -608,7 +609,7 @@ separator.run();
 
 // Calculate performance parameters
 double kValue = separator.calcKValueAtHLL();           // m/s
-double dropletSize = separator.calcDropletCutSizeAtHLL(); // µm  
+double dropletSize = separator.calcDropletCutSizeAtHLL(); // µm
 double momentum = separator.calcInletMomentumFlux();   // Pa
 double oilRetention = separator.calcOilRetentionTime();    // min
 double waterRetention = separator.calcWaterRetentionTime(); // min
@@ -712,7 +713,7 @@ For fine-grained control over individual constraints:
 ```java
 // Disable specific constraints
 separator.useAllConstraints();  // Start with all
-CapacityConstraint momentumConstraint = 
+CapacityConstraint momentumConstraint =
     separator.getConstraints().get(StandardConstraintType.SEPARATOR_INLET_MOMENTUM);
 momentumConstraint.setEnabled(false);  // Disable momentum check
 
@@ -758,7 +759,7 @@ separator.setLiquidLevel(0.5);  // 50% level
 // Run transient
 for (int i = 0; i < 100; i++) {
     separator.runTransient();
-    
+
     double level = separator.getLiquidLevel();
     double pressure = separator.getPressure();
 }
@@ -871,7 +872,7 @@ Map<StandardConstraintType, CapacityConstraint> constraints = separator.getConst
 for (Map.Entry<StandardConstraintType, CapacityConstraint> entry : constraints.entrySet()) {
     CapacityConstraint c = entry.getValue();
     if (c.isEnabled()) {
-        System.out.printf("%s: %.1f%% utilization%n", 
+        System.out.printf("%s: %.1f%% utilization%n",
             entry.getKey(), c.getUtilizationPercentage());
     }
 }
@@ -891,7 +892,7 @@ for (Map.Entry<StandardConstraintType, CapacityConstraint> entry : constraints.e
 StandardConstraintType bottleneck = null;
 double maxUtilization = 0;
 
-for (Map.Entry<StandardConstraintType, CapacityConstraint> entry : 
+for (Map.Entry<StandardConstraintType, CapacityConstraint> entry :
         separator.getConstraints().entrySet()) {
     CapacityConstraint c = entry.getValue();
     if (c.isEnabled() && c.getUtilizationPercentage() > maxUtilization) {

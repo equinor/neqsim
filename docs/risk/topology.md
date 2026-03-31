@@ -2,6 +2,7 @@
 layout: default
 title: Process Topology
 parent: Risk Framework
+description: "Process topology analysis for risk assessment. Map equipment connections, identify critical paths, single points of failure, and system-level dependencies from NeqSim process models."
 ---
 
 # Process Topology Analysis
@@ -300,20 +301,20 @@ Output:
 digraph ProcessTopology {
     rankdir=LR;
     node [shape=box];
-    
+
     // Nodes
     "Well Feed" [label="Well Feed\n(Stream)"];
     "HP Separator" [label="HP Separator\n(Separator)\n1775-VG-23001"];
     "Compressor Train A" [label="Compressor Train A\n(Compressor)\n1775-KA-23011A"];
     "Compressor Train B" [label="Compressor Train B\n(Compressor)\n1775-KA-23011B"];
-    
+
     // Edges
     "Well Feed" -> "HP Separator";
     "HP Separator" -> "Compressor Train A";
     "HP Separator" -> "Compressor Train B";
     "Compressor Train A" -> "Aftercooler A";
     "Compressor Train B" -> "Aftercooler B";
-    
+
     // Parallel grouping
     subgraph cluster_0 {
         label="Parallel: Compressors";

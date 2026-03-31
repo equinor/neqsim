@@ -1,6 +1,7 @@
 ---
 title: Distillation Equipment
 description: Documentation for distillation column equipment in NeqSim process simulation.
+keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, fractionation, NGL, inside-out solver"
 ---
 
 # Distillation Equipment

@@ -1,6 +1,7 @@
 ---
 title: "Web API Integration: JSON Process Builder and Session Management"
 description: "Guide to building and running NeqSim process simulations from JSON definitions, structured error responses, equipment wiring API, and multi-user session management. Covers JsonProcessBuilder, SimulationResult, ProcessSimulationSession, and Python integration via JPype."
+keywords: "JSON, API, web service, REST, JSON process builder, session, Python, JPype, simulation result, remote, process builder"
 ---
 
 # Web API Integration: JSON Process Builder and Session Management

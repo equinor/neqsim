@@ -1,6 +1,7 @@
 ---
 title: ProcessSystem Class
 description: Documentation for the ProcessSystem class in NeqSim.
+keywords: "ProcessSystem, flowsheet, process model, run, add equipment, recycle, adjuster, simulation, process train"
 ---
 
 # ProcessSystem Class

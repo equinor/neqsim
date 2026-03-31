@@ -47,7 +47,7 @@
         performSearch();
       }
     });
-    
+
     // iOS-friendly touch handling - close results when tapping outside
     document.addEventListener('click', handleOutsideClick);
     document.addEventListener('touchend', handleOutsideClick);
@@ -87,7 +87,7 @@
   function loadSearchIndex() {
     var baseUrl = document.querySelector('meta[name="baseurl"]');
     var base = baseUrl ? baseUrl.content : '/neqsim';
-    
+
     fetch(base + '/search-index.json')
       .then(function(response) {
         if (!response.ok) throw new Error('Search index not found');
@@ -108,15 +108,15 @@
       this.ref('url');
       this.field('title', { boost: 10 });
       this.field('description', { boost: 5 });
+      this.field('keywords', { boost: 8 });
       this.field('content');
-      this.field('tags', { boost: 3 });
 
       // Remove stemmer from both pipelines so exact words are matched.
       // Without this, the index stores unstemmed tokens while the search
       // pipeline stems query terms, causing mismatches (e.g. "valve" -> "valv").
       this.pipeline.remove(lunr.stemmer);
       this.searchPipeline.remove(lunr.stemmer);
-      
+
       var self = this;
       data.forEach(function(doc) {
         self.add(doc);
@@ -126,7 +126,7 @@
 
   function performSearch() {
     var query = searchInput.value.trim();
-    
+
     if (!query || !searchIndex) {
       hideResults();
       return;
@@ -138,17 +138,41 @@
     }
 
     try {
-      // Try exact match first, then fuzzy
+      // Try exact match first
       var results = searchIndex.search(query);
-      
-      // If no results, try with wildcards
+
+      // If no results, try with wildcards on each term
       if (results.length === 0) {
-        results = searchIndex.search(query + '*');
+        var wildcardQuery = query.split(/\s+/).map(function(term) {
+          return term + '*';
+        }).join(' ');
+        results = searchIndex.search(wildcardQuery);
       }
-      
-      // If still no results, try fuzzy matching
+
+      // If still no results, try fuzzy matching (~1 edit distance per term)
       if (results.length === 0) {
-        results = searchIndex.search(query + '~1');
+        var fuzzyQuery = query.split(/\s+/).map(function(term) {
+          return term + '~1';
+        }).join(' ');
+        results = searchIndex.search(fuzzyQuery);
+      }
+
+      // If multi-word query still has no results, try OR logic (any term matches)
+      if (results.length === 0 && query.indexOf(' ') !== -1) {
+        var terms = query.split(/\s+/);
+        var allResults = {};
+        terms.forEach(function(term) {
+          try {
+            var termResults = searchIndex.search(term + '*');
+            termResults.forEach(function(r) {
+              if (!allResults[r.ref] || allResults[r.ref].score < r.score) {
+                allResults[r.ref] = r;
+              }
+            });
+          } catch (ignored) {}
+        });
+        results = Object.keys(allResults).map(function(key) { return allResults[key]; });
+        results.sort(function(a, b) { return b.score - a.score; });
       }
 
       displayResults(results, query);
@@ -172,10 +196,10 @@
     }
 
     var html = '<ul class="search-results-list">';
-    
-    // Limit to top 10 results
-    var topResults = results.slice(0, 10);
-    
+
+    // Limit to top 20 results
+    var topResults = results.slice(0, 20);
+
     topResults.forEach(function(result, index) {
       var doc = searchData.find(function(d) { return d.url === result.ref; });
       if (!doc) return;
@@ -183,10 +207,10 @@
       var title = doc.title || 'Untitled';
       var description = doc.description || '';
       var content = doc.content || '';
-      
+
       // Create snippet with highlighted terms
       var snippet = createSnippet(content, query);
-      
+
       html += '<li class="search-result-item" data-index="' + index + '">';
       html += '<a href="' + doc.url + '">';
       html += '<div class="search-result-title">' + highlightTerms(escapeHtml(title), query) + '</div>';
@@ -200,24 +224,24 @@
       html += '</a>';
       html += '</li>';
     });
-    
+
     html += '</ul>';
-    
-    if (results.length > 10) {
-      html += '<div class="search-more-results">' + (results.length - 10) + ' more results...</div>';
+
+    if (results.length > 20) {
+      html += '<div class="search-more-results">' + (results.length - 20) + ' more results...</div>';
     }
-    
+
     searchResults.innerHTML = html;
     showResults();
   }
 
   function createSnippet(content, query) {
     if (!content) return '';
-    
+
     var words = query.toLowerCase().split(/\s+/);
     var contentLower = content.toLowerCase();
     var snippetLength = 150;
-    
+
     // Find first occurrence of any search term
     var firstIndex = -1;
     for (var i = 0; i < words.length; i++) {
@@ -226,31 +250,31 @@
         firstIndex = idx;
       }
     }
-    
+
     if (firstIndex === -1) {
       return content.substring(0, snippetLength) + '...';
     }
-    
+
     // Extract snippet around the match
     var start = Math.max(0, firstIndex - 50);
     var end = Math.min(content.length, firstIndex + snippetLength);
-    
+
     var snippet = '';
     if (start > 0) snippet += '...';
     snippet += content.substring(start, end);
     if (end < content.length) snippet += '...';
-    
+
     return highlightTerms(escapeHtml(snippet), query);
   }
 
   function highlightTerms(text, query) {
     var words = query.split(/\s+/).filter(function(w) { return w.length > 1; });
-    
+
     words.forEach(function(word) {
       var regex = new RegExp('(' + escapeRegex(word) + ')', 'gi');
       text = text.replace(regex, '<mark>$1</mark>');
     });
-    
+
     return text;
   }
 
@@ -268,7 +292,7 @@
     if (searchResults.innerHTML) {
       searchResults.classList.add('visible');
       if (searchOverlay) searchOverlay.classList.add('visible');
-      
+
       // iOS Safari fix: force repaint for position:fixed elements
       if (isIOS) {
         searchResults.style.transform = 'translateZ(0)';
@@ -279,7 +303,7 @@
   function hideResults() {
     searchResults.classList.remove('visible');
     if (searchOverlay) searchOverlay.classList.remove('visible');
-    
+
     // iOS Safari: blur input to hide keyboard when closing results
     if (isIOS && document.activeElement === searchInput) {
       // Don't blur on iOS - let user control keyboard

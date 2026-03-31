@@ -1,6 +1,7 @@
 ---
 title: Reading Fluid Properties in NeqSim
 description: Comprehensive guide to calculating and reading thermodynamic and physical properties from fluids, phases, and components. Covers init levels, TPflash, density, enthalpy, viscosity, units, volume translation, and JSON reports.
+keywords: "fluid properties, density, viscosity, enthalpy, entropy, Cp, thermal conductivity, compressibility, Z factor, molar mass, initProperties, getPhase, getDensity"
 ---
 
 # Reading Fluid Properties in NeqSim

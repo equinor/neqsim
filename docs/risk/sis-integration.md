@@ -2,6 +2,7 @@
 layout: default
 title: SIS Integration
 parent: Risk Framework
+description: "Safety Instrumented System (SIS) integration with NeqSim process simulation. SIL verification, proof test intervals, common cause failures, and IEC 61508/61511 compliance."
 ---
 
 # P2: Safety Instrumented System (SIS) Integration
@@ -121,21 +122,21 @@ model.addSIF(sif);
 ```java
 LOPAResult lopa = model.performLOPA();
 
-System.out.println("Initiating Event Frequency: " + 
+System.out.println("Initiating Event Frequency: " +
     lopa.getInitiatingEventFrequency() + " /year");
 
 System.out.println("\nProtection Layers:");
 for (LOPAResult.ProtectionLayer layer : lopa.getProtectionLayers()) {
-    System.out.println("  " + layer.getName() + 
-        ": PFD=" + layer.getPFD() + 
+    System.out.println("  " + layer.getName() +
+        ": PFD=" + layer.getPFD() +
         ", RRF=" + layer.getRiskReductionFactor());
 }
 
-System.out.println("\nMitigated Frequency: " + 
+System.out.println("\nMitigated Frequency: " +
     lopa.getMitigatedFrequency() + " /year");
-System.out.println("Target Frequency: " + 
+System.out.println("Target Frequency: " +
     lopa.getTargetFrequency() + " /year");
-System.out.println("LOPA Status: " + 
+System.out.println("LOPA Status: " +
     (lopa.isAcceptable() ? "PASS" : "FAIL"));
 
 // Required SIF performance
@@ -162,7 +163,7 @@ Where:
 ```java
 // Define SIF requirements
 SafetyInstrumentedFunction sif = new SafetyInstrumentedFunction(
-    "SIF-101", 
+    "SIF-101",
     "Compressor High Vibration Shutdown"
 );
 sif.setSILTarget(2);
@@ -174,9 +175,9 @@ for (String arch : architectures) {
     sif.setSensorPFD(0.02);
     sif.setLogicSolverPFD(0.001);
     sif.setFinalElementPFD(0.03);
-    
+
     int achieved = sif.getAchievedSIL();
-    System.out.println(arch + ": Achieved SIL " + achieved + 
+    System.out.println(arch + ": Achieved SIL " + achieved +
         (achieved >= 2 ? " ✓" : " ✗"));
 }
 ```
@@ -209,7 +210,7 @@ model.addSIF(sif);
 
 // Run LOPA
 LOPAResult result = model.performLOPA();
-System.out.println("Final mitigated frequency: " + 
+System.out.println("Final mitigated frequency: " +
     result.getMitigatedFrequency() + " /year");
 ```
 
@@ -231,8 +232,8 @@ for (SafetyInstrumentedFunction sif : sifs) {
     platform.addSIF(sif);
     SILVerificationResult result = sif.verifySIL();
     String status = result.isVerified() ? "✓" : "✗";
-    System.out.println(status + " " + sif.getSifId() + 
-        ": Target SIL " + sif.getSILTarget() + 
+    System.out.println(status + " " + sif.getSifId() +
+        ": Target SIL " + sif.getSILTarget() +
         ", Achieved SIL " + result.getAchievedSIL());
 }
 ```

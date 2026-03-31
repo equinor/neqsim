@@ -1,3 +1,9 @@
+---
+title: "AI Extraction Skill: Unstructured Documents to NeqSim JSON Process Model"
+description: "Feature proposal for an AI skill and agent that extracts process data from unstructured documents (text, PFDs, data sheets) and converts them into NeqSim JSON format for simulation."
+keywords: "extraction, JSON, process model, AI skill, PFD, data sheet, unstructured documents"
+---
+
 # Feature: AI Extraction Skill — Unstructured Documents → NeqSim JSON Process Model
 
 ## Summary

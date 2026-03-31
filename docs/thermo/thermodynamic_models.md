@@ -1,6 +1,7 @@
 ---
 title: "Thermodynamic Models in NeqSim"
 description: "This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are cla..."
+keywords: "thermodynamic model, SRK, Peng-Robinson, CPA, GERG-2008, EOS-CG, UMR-PRU, electrolyte, cubic EOS, activity coefficient, NRTL, UNIFAC"
 ---
 
 # Thermodynamic Models in NeqSim
@@ -246,8 +247,8 @@ These models provide superior accuracy for density, speed of sound, and heat cap
 
 ### 5.2 GERG-2008
 
-**Standard:** ISO 20765-2  
-**Application:** Natural gas custody transfer, fiscal metering  
+**Standard:** ISO 20765-2
+**Application:** Natural gas custody transfer, fiscal metering
 **Accuracy:** ±0.1% in density for typical natural gas
 
 **Supported Components (21):**
@@ -289,7 +290,7 @@ ops.TPflash();
 
 ### 5.4 EOS-CG
 
-**Application:** Carbon Capture and Storage (CCS), combustion gases  
+**Application:** Carbon Capture and Storage (CCS), combustion gases
 **Extension:** Includes SO2, NO, NO2, HCl, Cl2, COS in addition to GERG-2008 components
 
 ```java
@@ -625,13 +626,13 @@ The `autoSelectModel()` method follows this decision tree:
 public SystemInterface autoSelectModel() {
     if (hasComponent("MDEA") && hasComponent("water") && hasComponent("CO2")) {
         return setModel("Electrolyte-ScRK-EOS");  // Amine systems
-    } 
-    else if (hasComponent("water") || hasComponent("methanol") || 
-             hasComponent("MEG") || hasComponent("TEG") || 
+    }
+    else if (hasComponent("water") || hasComponent("methanol") ||
+             hasComponent("MEG") || hasComponent("TEG") ||
              hasComponent("ethanol") || hasComponent("DEG")) {
-        if (hasComponent("Na+") || hasComponent("K+") || 
-            hasComponent("Br-") || hasComponent("Mg++") || 
-            hasComponent("Cl-") || hasComponent("Ca++") || 
+        if (hasComponent("Na+") || hasComponent("K+") ||
+            hasComponent("Br-") || hasComponent("Mg++") ||
+            hasComponent("Cl-") || hasComponent("Ca++") ||
             hasComponent("Fe++") || hasComponent("SO4--")) {
             return setModel("Electrolyte-CPA-EOS-statoil");  // Electrolytes
         } else {

@@ -1,6 +1,7 @@
 ---
 layout: default
 title: NeqSim Documentation
+description: "NeqSim documentation home page. Navigate to thermodynamics, process simulation, PVT analysis, physical properties, standards, field development, safety, and risk modules."
 ---
 
 # NeqSim Documentation

@@ -2,6 +2,7 @@
 layout: default
 title: Reliability Data Guide
 parent: Risk Framework
+description: "Guide to reliability data sources and usage in NeqSim. Covers OREDA, PDS handbook, OGP data, failure rate databases, and data quality assessment for risk analysis."
 ---
 
 # Equipment Reliability Data Guide
@@ -340,10 +341,10 @@ public class OREDADataImporter {
     // Loading methods
     void loadFromCSV(String filepath);
     void loadFromResource(String resourcePath);
-    void addEquipmentData(String type, String class, String mode, 
+    void addEquipmentData(String type, String class, String mode,
                          double rate, double mtbf, double mttr,
                          String source, String confidence);
-    
+
     // Query methods
     double getFailureRate(String type, String equipClass, String mode);
     double getMTBF(String type, String equipClass, String mode);
@@ -351,7 +352,7 @@ public class OREDADataImporter {
     String getDataSource(String type, String equipClass, String mode);
     String getConfidence(String type, String equipClass, String mode);
     EquipmentReliabilityData getEquipmentData(String type, String equipClass);
-    
+
     // Listing methods
     List<String> getEquipmentTypes();
     List<String> getEquipmentClasses(String type);

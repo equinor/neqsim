@@ -1,6 +1,7 @@
 ---
 title: "Dynamic Simulation with DynamicProcessHelper"
 description: "Guide to converting steady-state NeqSim process simulations into dynamic simulations with auto-generated transmitters, PID controllers, and transient execution. Covers DynamicProcessHelper, PID tuning, flow and temperature control loops."
+keywords: "dynamic simulation, transient, PID controller, control loop, transmitter, DynamicProcessHelper, time stepping, runTransient"
 ---
 
 # Dynamic Simulation with DynamicProcessHelper

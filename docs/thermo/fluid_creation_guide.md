@@ -1,6 +1,7 @@
 ---
 title: "Creating Fluids in NeqSim"
 description: "This guide provides comprehensive documentation on how to create and configure thermodynamic fluids in NeqSim, including available equations of state, mixing rules, and best practices."
+keywords: "fluid, create fluid, SystemSrkEos, SystemPrEos, SystemSrkCPAstatoil, addComponent, mixing rule, equation of state, EOS, natural gas, oil, water, composition"
 ---
 
 # Creating Fluids in NeqSim
@@ -490,7 +491,7 @@ public class NaturalGasExample {
     public static void main(String[] args) {
         // Create SRK fluid at pipeline conditions
         SystemInterface gas = new SystemSrkEos(283.15, 70.0);
-        
+
         // Typical natural gas composition
         gas.addComponent("nitrogen", 0.02);
         gas.addComponent("CO2", 0.01);
@@ -501,14 +502,14 @@ public class NaturalGasExample {
         gas.addComponent("n-butane", 0.01);
         gas.addComponent("i-pentane", 0.005);
         gas.addComponent("n-pentane", 0.005);
-        
+
         gas.setMixingRule("classic");
-        
+
         // Flash calculation
         ThermodynamicOperations ops = new ThermodynamicOperations(gas);
         ops.TPflash();
         gas.initProperties();
-        
+
         // Display results
         System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m3");
         System.out.println("Z-factor: " + gas.getZ());
@@ -528,18 +529,18 @@ public class WaterHydrocarbonExample {
     public static void main(String[] args) {
         // CPA for associating systems
         SystemInterface fluid = new SystemSrkCPAstatoil(323.15, 50.0);
-        
+
         fluid.addComponent("methane", 0.70);
         fluid.addComponent("ethane", 0.10);
         fluid.addComponent("propane", 0.05);
         fluid.addComponent("water", 0.10);
         fluid.addComponent("MEG", 0.05);
-        
+
         fluid.setMixingRule(10);  // Temperature and composition dependent CPA
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
-        
+
         System.out.println("Number of phases: " + fluid.getNumberOfPhases());
         fluid.prettyPrint();
     }
@@ -557,18 +558,18 @@ public class FiscalMeteringExample {
     public static void main(String[] args) {
         // GERG-2008 for custody transfer accuracy
         SystemInterface gas = new SystemGERG2008Eos(288.15, 40.0);
-        
+
         gas.addComponent("methane", 0.92);
         gas.addComponent("ethane", 0.04);
         gas.addComponent("propane", 0.02);
         gas.addComponent("nitrogen", 0.01);
         gas.addComponent("CO2", 0.01);
-        
+
         gas.createDatabase(true);
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(gas);
         ops.TPflash();
-        
+
         // GERG-specific high-accuracy density
         double gergDensity = gas.getPhase(0).getDensity_GERG2008();
         System.out.println("GERG-2008 Density: " + gergDensity + " kg/m3");
@@ -587,7 +588,7 @@ public class OilCharacterizationExample {
     public static void main(String[] args) {
         SystemInterface oil = new SystemPrEos(350.0, 150.0);
         oil.createDatabase(true);
-        
+
         // Light ends
         oil.addComponent("nitrogen", 0.005);
         oil.addComponent("CO2", 0.02);
@@ -599,22 +600,22 @@ public class OilCharacterizationExample {
         oil.addComponent("i-pentane", 0.02);
         oil.addComponent("n-pentane", 0.02);
         oil.addComponent("n-hexane", 0.03);
-        
+
         // TBP fractions (moles, MW g/mol, density g/cm3)
         oil.addTBPfraction("C7", 0.05, 96.0, 0.738);
         oil.addTBPfraction("C8", 0.04, 107.0, 0.765);
         oil.addTBPfraction("C9", 0.03, 121.0, 0.781);
         oil.addTBPfraction("C10", 0.02, 134.0, 0.792);
-        
+
         // Plus fraction
         oil.addPlusFraction("C11+", 0.18, 250.0, 0.85);
-        
+
         oil.setMixingRule("classic");
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(oil);
         ops.TPflash();
         oil.initProperties();
-        
+
         oil.prettyPrint();
     }
 }

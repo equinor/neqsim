@@ -2,6 +2,7 @@
 layout: default
 title: Equipment Failure Modeling
 parent: Risk Framework
+description: "Equipment failure modeling using MTBF, MTTR, failure rates, and Weibull distributions. Covers compressors, pumps, heat exchangers, separators, and valves."
 ---
 
 # Equipment Failure Modeling

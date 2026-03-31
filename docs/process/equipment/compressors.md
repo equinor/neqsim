@@ -1,6 +1,7 @@
 ---
 title: Compressor Equipment
 description: Documentation for compression equipment in NeqSim process simulation.
+keywords: "compressor, compression, polytropic, isentropic, compressor curve, anti-surge, surge, centrifugal, reciprocating, power, head, efficiency"
 ---
 
 # Compressor Equipment
@@ -17,8 +18,8 @@ Documentation for compression equipment in NeqSim process simulation.
 - [Mechanical Losses and Seal Gas](#mechanical-losses-and-seal-gas)
 - [Usage Examples](#usage-examples)
 
-> **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves, 
-> including multi-speed vs single-speed handling, surge curves, and stone wall curves, 
+> **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves,
+> including multi-speed vs single-speed handling, surge curves, and stone wall curves,
 > see [Compressor Curves and Performance Maps](compressor_curves).
 
 ---
@@ -304,11 +305,11 @@ for (int i = 0; i < 3; i++) {
     comp.setPolytropicEfficiency(0.78);
     comp.setUsePolytropicCalc(true);
     process.add(comp);
-    
+
     Cooler cooler = new Cooler("E-10" + (i+1), comp.getOutletStream());
     cooler.setOutTemperature(40.0, "C");
     process.add(cooler);
-    
+
     currentStream = cooler.getOutletStream();
 }
 
@@ -372,7 +373,7 @@ comp.run();
 | LNG/refrigeration | `REFRIGERATION` |
 | General purpose | `CENTRIFUGAL_STANDARD` |
 
-> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves#automatic-curve-generation) 
+> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves#automatic-curve-generation)
 > for complete API reference, advanced corrections, and examples.
 
 ---
@@ -670,7 +671,7 @@ losses.setSealType(CompressorMechanicalLosses.SealType.OIL_FILM);        // Lega
 ```java
 // Individual seal gas flows
 double primaryLeak = losses.calculatePrimarySealLeakage();    // Nm³/hr
-double secondaryLeak = losses.calculateSecondarySealLeakage(); // Nm³/hr  
+double secondaryLeak = losses.calculateSecondarySealLeakage(); // Nm³/hr
 double bufferGas = losses.calculateBufferGasFlow();           // Nm³/hr
 double separationGas = losses.calculateSeparationGasFlow();   // Nm³/hr
 
@@ -715,7 +716,7 @@ losses.setNumberOfSeals(2);  // Typically 2 for single-shaft
 losses.setSealGasSupplyPressure(105.0);  // bara
 losses.setSealGasSupplyTemperature(40.0);  // °C
 
-// Bearing configuration  
+// Bearing configuration
 losses.setBearingType(CompressorMechanicalLosses.BearingType.TILTING_PAD);
 losses.setNumberOfRadialBearings(2);
 

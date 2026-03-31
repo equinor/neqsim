@@ -1,6 +1,7 @@
 ---
 title: "UniSim Design to NeqSim Conversion Guide"
 description: "Complete guide for converting Honeywell UniSim Design (.usc) process models to NeqSim ProcessSystem simulations and exporting NeqSim models back to UniSim. Covers COM automation, component mapping, EOS mapping, topology reconstruction, verification, and troubleshooting."
+keywords: "UniSim, HYSYS, Aspen HYSYS, converter, conversion, COM, usc file, process model import, process model export, UniSim to NeqSim, NeqSim to UniSim, model migration"
 ---
 
 # UniSim Design to NeqSim Conversion Guide

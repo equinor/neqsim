@@ -1,6 +1,7 @@
 ---
 title: Valve Equipment
 description: Documentation for valve equipment in NeqSim process simulation.
+keywords: "valve, throttling valve, control valve, JT valve, Joule-Thomson, Cv, pressure drop, valve sizing, choke, relief valve, PSV"
 ---
 
 # Valve Equipment

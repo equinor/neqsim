@@ -1,6 +1,7 @@
 ---
 title: "CO2 Injection Well Analysis Module"
 description: "Classes for CO2 injection well safety analysis: wellbore flow simulation with formation temperature gradients, impurity monitoring, shutdown transient simulation, CO2-specific flow corrections, and integrated safety assessment."
+keywords: "CO2, CCS, carbon capture, injection well, wellbore, impurity, hydrogen, transient, shutdown, safety, dense phase, supercritical"
 ---
 
 # CO2 Injection Well Analysis Module

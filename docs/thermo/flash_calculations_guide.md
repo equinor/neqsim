@@ -1,6 +1,7 @@
 ---
 title: "Flash Calculations Guide"
 description: "This guide provides comprehensive documentation of flash calculations available in NeqSim via the `ThermodynamicOperations` class. Flash calculations determine the equilibrium state of a thermodynamic..."
+keywords: "flash, TPflash, PHflash, PSflash, TVflash, dew point, bubble point, phase envelope, cricondenbar, cricondentherm, VLE, phase equilibrium, ThermodynamicOperations"
 ---
 
 # Flash Calculations Guide
@@ -561,22 +562,22 @@ All Q-function flashes follow a similar pattern:
 public double solveQ() {
     do {
         system.init(3);  // Calculate derivatives
-        
+
         double residual = system.getEnthalpy() - Hspec;
-        
+
         // Analytical derivative: (dH/dP)_T = V - T*(dV/dT)_P
         double V = system.getVolume();
         double T = system.getTemperature();
         double dVdT = -system.getdVdTpn();  // Note sign convention
         double dHdP = (V - T * dVdT) * 1e5;  // Convert to J/bar
-        
+
         // Newton step with damping
         double deltaP = -factor * residual / dHdP;
-        
+
         nyPres = oldPres + deltaP;
         system.setPressure(nyPres);
         tpFlash.run();
-        
+
     } while (error > tolerance && iterations < maxIter);
 }
 ```

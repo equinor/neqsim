@@ -2,6 +2,7 @@
 layout: default
 title: STID Tagging
 parent: Risk Framework
+description: "STID tagging and equipment identification for NeqSim process systems. Standard tag numbering, equipment classification, and integration with risk and reliability tracking."
 ---
 
 # STID & Functional Location Tagging
@@ -269,7 +270,7 @@ System.out.println(StringUtils.repeat("─", 70));
 for (Map.Entry<String, EquipmentNode> entry : topology.getNodes().entrySet()) {
     EquipmentNode node = entry.getValue();
     FunctionalLocation loc = node.getFunctionalLocation();
-    
+
     if (loc != null) {
         System.out.printf("%-20s │ %-15s │ %s%n",
             loc.getFullTag(),

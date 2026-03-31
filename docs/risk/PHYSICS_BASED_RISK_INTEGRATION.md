@@ -2,6 +2,7 @@
 layout: default
 title: Physics-Based Risk Integration
 parent: Risk Framework
+description: "Integration of physics-based process simulation with probabilistic risk analysis. Combines NeqSim thermodynamic and process models with reliability and consequence modeling."
 ---
 
 # Physics-Based Risk Integration in NeqSim

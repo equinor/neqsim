@@ -2,6 +2,7 @@
 layout: default
 title: Dependency Analysis
 parent: Risk Framework
+description: "System dependency and common cause failure analysis for process plants. Identify cascading failures, shared vulnerabilities, and critical single points of failure."
 ---
 
 # Dependency Analysis
@@ -78,21 +79,21 @@ public class DependencyResult {
     // What failed
     String getFailedEquipment();
     FunctionalLocation getFailedLocation();
-    
+
     // Impact
     List<String> getDirectlyAffected();      // Immediate downstream
     List<String> getIndirectlyAffected();    // Cascade effects
     double getTotalProductionLoss();          // % production lost
-    
+
     // Criticality changes
     Map<String, Double> getIncreasedCriticality();  // Equipment → new criticality
-    
+
     // Equipment to watch
     List<String> getEquipmentToWatch();
-    
+
     // Cross-installation
     List<CrossInstallationDependency> getCrossInstallationEffects();
-    
+
     // Export
     String toJson();
 }
@@ -121,13 +122,13 @@ Equipment to monitor when Compressor A shows weakness:
 
   Compressor B
     Reason: Parallel train - will carry additional load (100% → 200% of normal)
-    
+
   Aftercooler A
     Reason: Directly downstream - reduced flow will affect heat transfer
-    
+
   HP Separator
     Reason: Upstream - may need operating point adjustment
-    
+
   Export Pipeline
     Reason: Downstream - reduced pressure and flow
 ```
@@ -156,8 +157,8 @@ DependencyResult result = deps.analyzeFailure("Compressor A");
 System.out.println("Increased Criticality:");
 for (Map.Entry<String, Double> entry : result.getIncreasedCriticality().entrySet()) {
     String status = entry.getValue() > 0.9 ? "⚠️ CRITICAL" : "";
-    System.out.printf("  %s: %.2f %s%n", 
-        entry.getKey(), 
+    System.out.printf("  %s: %.2f %s%n",
+        entry.getKey(),
         entry.getValue(),
         status);
 }
@@ -190,7 +191,7 @@ Where $n$ = total trains, $f$ = failed trains.
 // Gullfaks C exports gas that feeds Åsgard A
 deps.addCrossInstallationDependency(
     "Export Compressor",        // Source equipment
-    "Åsgard Inlet Separator",   // Target equipment  
+    "Åsgard Inlet Separator",   // Target equipment
     "Åsgard A",                 // Target installation
     "gas_export"                // Dependency type
 );
@@ -218,7 +219,7 @@ DependencyResult result = deps.analyzeFailure("Export Compressor");
 
 System.out.println("Cross-Installation Effects:");
 for (CrossInstallationDependency effect : result.getCrossInstallationEffects()) {
-    System.out.printf("  %s → %s%n", 
+    System.out.printf("  %s → %s%n",
         effect.getSourceInstallation(),
         effect.getTargetInstallation());
     System.out.printf("    Target equipment: %s%n", effect.getTargetEquipment());
@@ -291,7 +292,7 @@ Map<String, Double> cascadeTiming = deps.getCascadeTiming("HP Separator");
 
 System.out.println("Cascade Timing:");
 for (Map.Entry<String, Double> entry : cascadeTiming.entrySet()) {
-    System.out.printf("  %s: +%.0f minutes%n", 
+    System.out.printf("  %s: +%.0f minutes%n",
         entry.getKey(), entry.getValue());
 }
 ```

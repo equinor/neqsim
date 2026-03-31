@@ -2,6 +2,7 @@
 layout: default
 title: Advanced Risk Framework
 parent: Risk Framework
+description: "Advanced risk and reliability framework documentation. Equipment reliability, system availability, barrier management, and quantitative risk assessment for oil and gas facilities."
 ---
 
 # NeqSim Advanced Risk Framework

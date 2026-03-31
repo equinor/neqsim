@@ -1,6 +1,7 @@
 ---
 title: "DEXPI P&ID Import, Export and Visualization"
 description: "Complete DEXPI integration for NeqSim — import P&ID XML into runnable process models, export professional P&ID drawings with ISO 10628 symbols, auto-layout, instruments, mechanical design data, and configurable visualization."
+keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML export, ISO 10628, process flow diagram, PFD, visualization"
 ---
 
 # DEXPI P&ID Import, Export and Visualization

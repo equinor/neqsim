@@ -2,6 +2,7 @@
 layout: default
 title: Production Impact Analysis
 parent: Risk Framework
+description: "Production impact analysis from equipment failures. Calculate deferred production, revenue loss, and optimal spare parts strategies using process simulation."
 ---
 
 # Production Impact Analysis
@@ -73,7 +74,7 @@ Map<String, Double> criticality = analyzer.rankEquipmentByCriticality();
 System.out.println("Equipment Criticality Ranking:");
 for (Map.Entry<String, Double> entry : criticality.entrySet()) {
     String status = entry.getValue() > 80 ? "⚠️ CRITICAL" : "";
-    System.out.printf("  %s: %.1f%% %s%n", 
+    System.out.printf("  %s: %.1f%% %s%n",
         entry.getKey(), entry.getValue(), status);
 }
 ```
@@ -102,18 +103,18 @@ public class ProductionImpactResult {
     double getDegradedProduction();    // kg/hr after failure
     double getProductionLoss();        // kg/hr lost
     double getPercentLoss();           // 0-100%
-    
+
     // Economic metrics
     double getRevenueImpact();         // $/hr
     double getEstimatedDailyCost();    // $/day
-    
+
     // Affected equipment
     List<String> getAffectedEquipment();
     List<String> getCascadeEffects();
-    
+
     // Quality impacts (if applicable)
     Map<String, Double> getQualityChanges();
-    
+
     // Bottleneck analysis
     String getNewBottleneck();
     double getBottleneckCapacity();
@@ -213,7 +214,7 @@ double[] capacities = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5};
 for (double cap : capacities) {
     EquipmentFailureMode mode = EquipmentFailureMode.degraded("HP Compressor", cap);
     ProductionImpactResult result = analyzer.analyzeFailureImpact(mode);
-    System.out.printf("Capacity %.0f%%: Production loss %.1f%%%n", 
+    System.out.printf("Capacity %.0f%%: Production loss %.1f%%%n",
         cap * 100, result.getPercentLoss());
 }
 ```
@@ -340,10 +341,10 @@ RiskMatrix matrix = new RiskMatrix(process);
 for (String equipment : analyzer.getAllEquipment()) {
     EquipmentFailureMode failure = EquipmentFailureMode.trip(equipment);
     ProductionImpactResult impact = analyzer.analyzeFailureImpact(failure);
-    
-    ConsequenceCategory consequence = 
+
+    ConsequenceCategory consequence =
         ConsequenceCategory.fromProductionLoss(impact.getPercentLoss());
-    
+
     // Add to risk matrix
     matrix.addRiskItem(equipment, probability, consequence, impact.getRevenueImpact());
 }
