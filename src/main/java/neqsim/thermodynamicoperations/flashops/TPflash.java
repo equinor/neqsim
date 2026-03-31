@@ -26,8 +26,6 @@ public class TPflash extends Flash {
   SystemInterface clonedSystem;
   double presdiff = 1.0;
   private final RachfordRice rachfordRice = new RachfordRice();
-  /** Dominant eigenvalue estimate from DEM, used for adaptive SSI-to-Newton switch. */
-  private double lastDEMLambda = 0.0;
 
   /**
    * <p>
@@ -98,7 +96,7 @@ public class TPflash extends Flash {
     double oldBeta = system.getBeta();
 
     try {
-      // system.setBeta(rachfordRice.calcBetaS(system));
+
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
@@ -145,7 +143,6 @@ public class TPflash extends Flash {
 
     // Standard DEM eigenvalue estimate (always computed for tracking)
     double lambda = (b22 > 1e-30) ? b12 / b22 : 0.0;
-    lastDEMLambda = lambda;
 
     // Try GDEM-2: solve 2x2 system for mu1, mu2
     double det = b11 * b22 - b12 * b12;
@@ -184,14 +181,10 @@ public class TPflash extends Flash {
           || system.getBeta() < phaseFractionMinimumLimit) {
         system.setBeta(oldBeta);
       }
-      // logger.info("temperature " + system.getTemperature() + " pressure " +
-      // system.getPressure());
       logger.error(ex.getMessage(), ex);
     }
-
     system.calc_x_y();
     system.init(1);
-    // sucsSubs();
   }
 
   /**
@@ -268,7 +261,6 @@ public class TPflash extends Flash {
     } else {
       minGibbsPhase = 1;
     }
-    // logger.debug("minimum gibbs phase " + minGibbsPhase);
     minimumGibbsEnergy = system.getPhase(minGibbsPhase).getGibbsEnergy();
 
     if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
@@ -346,7 +338,6 @@ public class TPflash extends Flash {
       }
     }
 
-    // System.out.println("beta " + system.getBeta());
     int totiter = 0;
     double tpdx = 1.0;
     double tpdy = 1.0;
@@ -414,7 +405,6 @@ public class TPflash extends Flash {
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
       if (system.checkStability() && stabilityCheck()) {
         if (system.doMultiPhaseCheck()) {
-          // logger.info("one phase flash is stable - checking multiphase flash....");
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
           operation.run();
         }
@@ -471,7 +461,6 @@ public class TPflash extends Flash {
     int accelerateInterval = 5;
     // Newton limit: number of SS iterations before switching to Newton-Raphson.
     int newtonLimit = 12;
-    lastDEMLambda = 0.0;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;
@@ -514,17 +503,12 @@ public class TPflash extends Flash {
             && !system.isChemicalSystem() && timeFromLastGibbsFail > 1) {
           resetK();
           timeFromLastGibbsFail = 0;
-          // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /
-          // Math.abs(gibbsEnergyOld));
-          // setNewK();
-          // logger.info("reset K..");
         } else {
           timeFromLastGibbsFail++;
           setNewK();
         }
-        // logger.info("iterations " + iterations + " error " + deviation);
       } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
-      // logger.info("iterations " + iterations + " error " + deviation);
+
       if (system.isChemicalSystem()) {
         oldChemDiff = chemdev;
         chemdev = 0.0;
@@ -546,7 +530,6 @@ public class TPflash extends Flash {
         }
         diffChem = Math.abs(oldChemDiff - chemdev);
       }
-      // logger.info("chemdev: " + chemdev + " iter: " + totiter);
       totiter++;
     } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300)
         || (system.isChemicalSystem() && totiter < 2));
@@ -649,7 +632,6 @@ public class TPflash extends Flash {
         system.removePhase(i);
       }
     }
-    // system.initPhysicalProperties("density");
     system.orderByDensity();
     try {
       system.init(1);

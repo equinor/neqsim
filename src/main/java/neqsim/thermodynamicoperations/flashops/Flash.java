@@ -94,9 +94,6 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      // logger.info("Lowest Gibbs energy phase determined: Phase {}",
-      // lowestGibbsEnergyPhase);
-
       findLowestGibbsPhaseIsChecked = true;
     }
     return lowestGibbsEnergyPhase;
@@ -537,7 +534,6 @@ public abstract class Flash extends BaseOperation {
           * clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
     }
 
-    // for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
     for (int j = start; j >= end; j = j + mult) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
         Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
@@ -607,7 +603,7 @@ public abstract class Flash extends BaseOperation {
               acceleration = false;
             }
           } else {
-            // succsessive substitution
+            // successive substitution
             for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
               logWi[i] =
                   d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient();
@@ -634,8 +630,7 @@ public abstract class Flash extends BaseOperation {
             for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                  * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k)); // *
-                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                  * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));
             }
           }
 
@@ -652,11 +647,8 @@ public abstract class Flash extends BaseOperation {
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
 
-          // logger.info("err newton " + error[j]);
         }
 
-        // logger.info("norm f " + f.norm1());
-        // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
           sumw[j] += Wi[j][i];
@@ -666,17 +658,10 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
-        // iterations
-        // + " phase " + j);
-        // logger.info("error " + error[j]);
         olderror = error[j];
       } while ((f.norm1() > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
           || (iterations % accelerateInterval) == 0 || iterations < 3);
-      // (error[j]<oldErr && oldErr<oldOldErr) &&
-      // logger.info("err " + error[j]);
-      // logger.info("iterations " + iterations);
-      // logger.info("f.norm1() " + f.norm1());
+
       if (iterations >= maxiterations) {
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
             maxiterations);
@@ -737,7 +722,7 @@ public abstract class Flash extends BaseOperation {
           system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
               / clonedSystem.getPhase(1).getComponent(i).getx());
         } else {
-          logger.info("error in stability anlysis");
+          logger.info("error in stability analysis");
           system.init(0);
         }
 
@@ -746,9 +731,6 @@ public abstract class Flash extends BaseOperation {
         }
       }
     }
-
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
   }
 
   /**
@@ -1047,7 +1029,6 @@ public abstract class Flash extends BaseOperation {
       system.setNumberOfPhases(system.getNumberOfPhases() + 1);
       system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
     }
-    // logger.info("numb " + system.getNumberOfPhases());
     system.init(1);
 
     for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
