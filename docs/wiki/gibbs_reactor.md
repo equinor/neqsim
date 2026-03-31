@@ -96,6 +96,10 @@ reactor.setEnergyMode("adiabatic");
 | Max Iterations | `setMaxIterations(int)` | 5000 | Maximum Newton-Raphson iterations |
 | Convergence Tolerance | `setConvergenceTolerance(double)` | 1e-3 | Convergence criterion for delta norm |
 | Damping Factor | `setDampingComposition(double)` | 0.05 | Step size for composition updates |
+| Min Iterations | `setMinIterations(int)` | 100 | Minimum iterations before convergence check |
+| Adaptive Step Size | `setUseAdaptiveStepSize(boolean)` | false | NASA CEA-style adaptive step limiting |
+| Armijo Line Search | `setUseArmijoLineSearch(boolean)` | false | Backtracking line search for guaranteed descent |
+| Regularization | `setUseRegularization(boolean)` | false | Tikhonov regularization for ill-conditioned systems |
 
 ```java
 reactor.setMaxIterations(10000);
@@ -157,7 +161,7 @@ double powerKW = reactor.getPower("kW");
 ```java
 // Check mass balance closure
 double massError = reactor.getMassBalanceError();  // Percentage error
-boolean balanced = reactor.getMassBalanceConverged();  // True if error < 0.1%
+boolean balanced = reactor.getMassBalanceConverged();  // True if error < 0.001%
 
 // Element-wise balance
 double[] elementIn = reactor.getElementMoleBalanceIn();
@@ -212,6 +216,33 @@ For stiff systems:
 reactor.setDampingComposition(0.0001);  // Very small steps
 reactor.setMaxIterations(50000);        // Allow more iterations
 reactor.setConvergenceTolerance(1e-4);  // Relax tolerance slightly
+```
+
+For ill-conditioned systems, enable Tikhonov regularization:
+```java
+reactor.setUseRegularization(true);
+reactor.setRegularizationThreshold(1e10);  // Condition number trigger
+reactor.setRegularizationTau(1e-6);        // Regularization scale
+```
+
+For guaranteed monotonic descent, enable the Armijo backtracking line search:
+```java
+reactor.setUseArmijoLineSearch(true);
+// Optional tuning:
+reactor.setArmijoC1(1e-4);          // Sufficient decrease constant
+reactor.setArmijoRho(0.5);           // Step contraction factor
+reactor.setArmijoMaxBacktracks(20);  // Max backtracks per iteration
+```
+
+### Convergence History
+
+For diagnosing solver behavior, the reactor records iteration-level histories:
+
+```java
+List<Double> gibbsHistory = reactor.getGibbsEnergyHistory();           // Should decrease
+List<Double> condHistory = reactor.getConditionNumberHistory();         // Monitor stability
+List<Double> stepHistory = reactor.getStepSizeHistory();                // Track step control
+List<Double> balanceHistory = reactor.getElementBalanceErrorHistory();  // Constraint check
 ```
 
 ## Gibbs Database

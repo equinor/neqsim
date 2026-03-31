@@ -205,6 +205,8 @@ reactor.setEnergyMode("adiabatic");
 | `setDampingComposition(double alpha)` | 0.05 | Step size damping factor $\alpha$ for composition updates |
 | `setMinIterations(int n)` | 100 | Minimum iterations before convergence is checked |
 | `setUseAdaptiveStepSize(boolean)` | false | Enable NASA CEA-style adaptive step sizing |
+| `setUseArmijoLineSearch(boolean)` | false | Enable Armijo backtracking line search |
+| `setUseRegularization(boolean)` | false | Enable Tikhonov regularization for ill-conditioned Jacobians |
 
 **Guidance for choosing $\alpha$:**
 - `0.001`–`0.01`: Very conservative, for stiff acid gas systems or near-pure compositions
@@ -225,6 +227,50 @@ This allows larger steps when safe and smaller steps near steep gradients, typic
 #### Minimum Iterations
 
 The solver requires at least `minIterations` iterations before declaring convergence, even if $\lVert\Delta\mathbf{x}\rVert < \text{tol}$. This prevents premature termination in adiabatic mode where the temperature update lags behind composition convergence. The default of 100 is conservative; for simple isothermal cases, `setMinIterations(3)` combined with adaptive step sizing can reduce total iterations from hundreds to tens.
+
+#### Armijo Backtracking Line Search
+
+When enabled (`setUseArmijoLineSearch(true)`), the solver performs a backtracking line search after each Newton step to ensure the Gibbs energy decreases sufficiently — the Armijo (sufficient decrease) condition:
+
+$$
+G(\mathbf{n} + \alpha \Delta\mathbf{n}) \leq G(\mathbf{n}) + c_1 \alpha \nabla G^T \Delta\mathbf{n}
+$$
+
+If the condition is not met, the step size $\alpha$ is reduced by the contraction factor $\rho$ and retried.
+
+| Parameter | Method | Default | Description |
+|-----------|--------|---------|-------------|
+| Sufficient decrease | `setArmijoC1(double)` | 1e-4 | Armijo constant $c_1$ |
+| Contraction factor | `setArmijoRho(double)` | 0.5 | Step size reduction per backtrack |
+| Max backtracks | `setArmijoMaxBacktracks(int)` | 20 | Maximum number of backtracking steps |
+
+```java
+reactor.setUseArmijoLineSearch(true);
+reactor.setArmijoC1(1e-4);          // default
+reactor.setArmijoRho(0.5);           // default
+reactor.setArmijoMaxBacktracks(20);  // default
+```
+
+#### Tikhonov Regularization
+
+When enabled (`setUseRegularization(true)`), the solver regularizes the Hessian block of the Jacobian when its condition number exceeds a threshold:
+
+$$
+\tilde{H} = H + \tau I, \quad \tau = \tau_0 \cdot \max_i |H_{ii}|
+$$
+
+This is applied only when $\kappa(H) > \kappa_{\max}$, making it a Levenberg-Marquardt-type modification that interpolates between the Newton direction and steepest descent.
+
+| Parameter | Method | Default | Description |
+|-----------|--------|---------|-------------|
+| Condition threshold | `setRegularizationThreshold(double)` | 1e10 | $\kappa_{\max}$: trigger regularization when condition number exceeds this |
+| Regularization scale | `setRegularizationTau(double)` | 1e-6 | $\tau_0$: scaling factor for the regularization term |
+
+```java
+reactor.setUseRegularization(true);
+reactor.setRegularizationThreshold(1e10);  // default
+reactor.setRegularizationTau(1e-6);        // default
+```
 
 #### Species Management
 
@@ -303,7 +349,27 @@ List<String> colLabels = reactor.getJacobianColLabels();  // e.g., ["n_H2S", "n_
 boolean valid = reactor.verifyJacobianInverse();       // J * J^-1 ≈ I?
 ```
 
-### 3.8 Advanced — Objective Function Inspection
+### 3.8 Advanced — Convergence History
+
+When Armijo or regularization is enabled, diagnostic histories are recorded at each iteration. These are also available with the baseline solver for monitoring convergence behavior:
+
+```java
+// Gibbs energy at each iteration — should decrease monotonically
+List<Double> gibbsHistory = reactor.getGibbsEnergyHistory();
+
+// Condition number at each iteration — monitors numerical stability
+List<Double> condHistory = reactor.getConditionNumberHistory();
+
+// Step size at each iteration — tracks damping/Armijo behavior
+List<Double> stepHistory = reactor.getStepSizeHistory();
+
+// Element balance error at each iteration — monitors constraint satisfaction
+List<Double> balanceHistory = reactor.getElementBalanceErrorHistory();
+```
+
+These histories enable post-hoc analysis of convergence difficulties and can be plotted to diagnose solver behavior.
+
+### 3.9 Advanced — Objective Function Inspection
 
 ```java
 // Get the residual vector F (should be ≈0 at equilibrium)
@@ -314,7 +380,7 @@ double[] minVec = reactor.getObjectiveMinimizationVector();
 List<String> minLabels = reactor.getObjectiveMinimizationVectorLabels();
 ```
 
-### 3.9 Mixture Thermodynamic Properties
+### 3.10 Mixture Thermodynamic Properties
 
 ```java
 double H = reactor.getMixtureEnthalpy();           // H(T) in kJ using Gibbs database
@@ -360,7 +426,7 @@ Each internal `GibbsReactor` is created with:
 
 | Parameter | Value |
 |-----------|-------|
-| Damping ($\alpha$) | 0.03 |
+| Damping ($\alpha$) | 0.01 |
 | Max iterations | 15000 |
 | Convergence tolerance | 1e-3 |
 | Energy mode | Isothermal |
