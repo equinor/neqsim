@@ -78,6 +78,11 @@ neqsim.iml
 # Test output - Serialized files
 test_*.ser
 
+# Paper lab — generated paper drafts (keep on disk, not in repo)
+neqsim-paperlab/papers/
+# Allow gibbs_minimization_2026 as example
+!neqsim-paperlab/papers/gibbs_minimization_2026/
+
 .dccache
 
 #Intellij IDEA
