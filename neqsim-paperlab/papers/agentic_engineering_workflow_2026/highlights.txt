@@ -1,5 +1,0 @@
-Multi-agent LLM framework couples AI with thermodynamic simulation
-Three-stage workflow embeds validation gates for engineering rigor
-Eight case studies span six disciplines with validated results
-Separation of reasoning and computation ensures numerical accuracy
-Open-source foundation enables full reproducibility
