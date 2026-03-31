@@ -79,7 +79,13 @@ neqsim.iml
 test_*.ser
 
 # Paper lab — generated paper drafts (keep on disk, not in repo)
-# Allow gibbs_minimization_2026 as example
+# Only gibbs_minimization_2026 and tpflash_algorithms_2026 are tracked
+neqsim-paperlab/papers/agentic_engineering_workflow_2026/
+neqsim-paperlab/papers/ai_pro_significance_2026/
+neqsim-paperlab/papers/digital_twin_platform_2026/
+neqsim-paperlab/papers/neqsim_ai_pro_roadmap_2026/
+# Temp Word lock files
+~$*.docx
 
 .dccache
 
