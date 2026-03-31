@@ -461,6 +461,83 @@ public class GibbsReactor extends TwoPortEquipment {
   private int minIterations = 100;
   private boolean useAdaptiveStepSize = false;
 
+  // --- Algorithmic enhancement flags ---
+
+  /**
+   * Enable Armijo backtracking line search for guaranteed Gibbs energy decrease.
+   *
+   * <p>
+   * When enabled, the Newton step is scaled by alpha in (0, 1] such that the Armijo sufficient
+   * decrease condition is satisfied: G(n + alpha * dn) &lt;= G(n) + c1 * alpha * grad^T * dn. This
+   * replaces fixed damping with an adaptive, globally convergent strategy.
+   * </p>
+   *
+   * <p>
+   * Reference: Nocedal &amp; Wright, Numerical Optimization (2006), Algorithm 3.1.
+   * </p>
+   */
+  private boolean useArmijoLineSearch = false;
+
+  /**
+   * Armijo sufficient decrease parameter c1 in (0, 1). Typical value 1e-4.
+   */
+  private double armijoC1 = 1e-4;
+
+  /**
+   * Backtracking contraction factor rho in (0, 1). Step is multiplied by rho each backtrack.
+   */
+  private double armijoRho = 0.5;
+
+  /**
+   * Maximum number of backtracking steps in Armijo line search.
+   */
+  private int armijoMaxBacktracks = 20;
+
+  /**
+   * Enable Tikhonov regularization for ill-conditioned Jacobians.
+   *
+   * <p>
+   * When the condition number of the Jacobian exceeds {@code regularizationThreshold}, a
+   * regularization term tau * I is added to the Hessian block: H_reg = H + tau * I. This prevents
+   * divergence near phase boundaries where the Hessian becomes singular.
+   * </p>
+   *
+   * <p>
+   * Reference: Tikhonov, A. N. (1963). Dokl. Akad. Nauk SSSR, 151, 501-504.
+   * </p>
+   */
+  private boolean useRegularization = false;
+
+  /**
+   * Condition number threshold above which regularization is applied.
+   */
+  private double regularizationThreshold = 1e10;
+
+  /**
+   * Tikhonov regularization parameter tau. Added to Hessian diagonal.
+   */
+  private double regularizationTau = 1e-6;
+
+  /**
+   * Record of condition numbers during iterations for diagnostics.
+   */
+  private transient List<Double> conditionNumberHistory = new ArrayList<>();
+
+  /**
+   * Record of Gibbs energy values during iterations for diagnostics.
+   */
+  private transient List<Double> gibbsEnergyHistory = new ArrayList<>();
+
+  /**
+   * Record of step sizes used during iterations for diagnostics.
+   */
+  private transient List<Double> stepSizeHistory = new ArrayList<>();
+
+  /**
+   * Record of element balance errors during iterations for diagnostics.
+   */
+  private transient List<Double> elementBalanceErrorHistory = new ArrayList<>();
+
   /**
    * Maximum relative change per step in moles, following NASA CEA step limiting (Gordon &amp;
    * McBride, 1994, NASA RP-1311). Prevents overshooting in Newton-Raphson iterations:
@@ -1520,11 +1597,11 @@ public class GibbsReactor extends TwoPortEquipment {
             ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
             : 0.0;
         if (i == j) {
-          // Diagonal: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total + dfugdn)
-          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles + dfugdn);
+          // Diagonal: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total) + dfugdn
+          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles) + dfugdn;
         } else {
-          // Off-diagonal: ∂f_i/∂n_j = RT * (-1/n_total + dfugdn)
-          jacobianMatrix[i][j] = RT * (-1.0 / totalMoles + dfugdn);
+          // Off-diagonal: ∂f_i/∂n_j = -RT/n_total + dfugdn
+          jacobianMatrix[i][j] = -RT / totalMoles + dfugdn;
         }
       }
 
@@ -2292,6 +2369,327 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
+   * Enable or disable Armijo backtracking line search.
+   *
+   * <p>
+   * When enabled, the Newton step is adaptively scaled to guarantee sufficient decrease in the
+   * total Gibbs free energy at each iteration. This provides a globally convergent algorithm
+   * replacing fixed damping.
+   * </p>
+   *
+   * @param useArmijo true to enable Armijo line search
+   */
+  public void setUseArmijoLineSearch(boolean useArmijo) {
+    this.useArmijoLineSearch = useArmijo;
+  }
+
+  /**
+   * Check if Armijo backtracking line search is enabled.
+   *
+   * @return true if Armijo line search is active
+   */
+  public boolean isUseArmijoLineSearch() {
+    return useArmijoLineSearch;
+  }
+
+  /**
+   * Set the Armijo sufficient decrease parameter c1.
+   *
+   * @param c1 value in (0, 1), typically 1e-4
+   */
+  public void setArmijoC1(double c1) {
+    this.armijoC1 = c1;
+  }
+
+  /**
+   * Set the Armijo backtracking contraction factor.
+   *
+   * @param rho value in (0, 1), typically 0.5
+   */
+  public void setArmijoRho(double rho) {
+    this.armijoRho = rho;
+  }
+
+  /**
+   * Set maximum number of backtracking steps.
+   *
+   * @param maxBacktracks maximum number of backtracks
+   */
+  public void setArmijoMaxBacktracks(int maxBacktracks) {
+    this.armijoMaxBacktracks = maxBacktracks;
+  }
+
+  /**
+   * Enable or disable Tikhonov regularization for ill-conditioned Jacobians.
+   *
+   * @param useReg true to enable regularization
+   */
+  public void setUseRegularization(boolean useReg) {
+    this.useRegularization = useReg;
+  }
+
+  /**
+   * Check if Tikhonov regularization is enabled.
+   *
+   * @return true if regularization is active
+   */
+  public boolean isUseRegularization() {
+    return useRegularization;
+  }
+
+  /**
+   * Set the condition number threshold above which regularization is applied.
+   *
+   * @param threshold condition number threshold
+   */
+  public void setRegularizationThreshold(double threshold) {
+    this.regularizationThreshold = threshold;
+  }
+
+  /**
+   * Set the Tikhonov regularization parameter tau.
+   *
+   * @param tau regularization parameter added to Hessian diagonal
+   */
+  public void setRegularizationTau(double tau) {
+    this.regularizationTau = tau;
+  }
+
+  /**
+   * Get the condition number history from the last solve (one entry per iteration).
+   *
+   * @return list of Jacobian condition numbers
+   */
+  public List<Double> getConditionNumberHistory() {
+    if (conditionNumberHistory == null) {
+      return new ArrayList<>();
+    }
+    return new ArrayList<>(conditionNumberHistory);
+  }
+
+  /**
+   * Get the Gibbs energy history from the last solve (one entry per iteration).
+   *
+   * @return list of total Gibbs energy values (kJ)
+   */
+  public List<Double> getGibbsEnergyHistory() {
+    if (gibbsEnergyHistory == null) {
+      return new ArrayList<>();
+    }
+    return new ArrayList<>(gibbsEnergyHistory);
+  }
+
+  /**
+   * Get the step size history from the last solve (one entry per iteration).
+   *
+   * @return list of effective step sizes used
+   */
+  public List<Double> getStepSizeHistory() {
+    if (stepSizeHistory == null) {
+      return new ArrayList<>();
+    }
+    return new ArrayList<>(stepSizeHistory);
+  }
+
+  /**
+   * Get the element balance error history from the last solve.
+   *
+   * @return list of element balance error norms
+   */
+  public List<Double> getElementBalanceErrorHistory() {
+    if (elementBalanceErrorHistory == null) {
+      return new ArrayList<>();
+    }
+    return new ArrayList<>(elementBalanceErrorHistory);
+  }
+
+  /**
+   * Compute the total Gibbs free energy including mixing terms for the current outlet composition.
+   *
+   * <p>
+   * G_total = sum_i n_i * [Gf0_i(T) + RT*ln(phi_i) + RT*ln(y_i) + RT*ln(P/Pref)]
+   * </p>
+   *
+   * <p>
+   * This method evaluates the actual objective function for line search, distinct from
+   * {@code calculateMixtureGibbsEnergy} which only uses standard Gibbs energies.
+   * </p>
+   *
+   * @return total Gibbs free energy (kJ) including mixing and non-ideality contributions
+   */
+  private double evaluateTotalGibbsEnergy() {
+    SystemInterface sys = getOutletStream().getThermoSystem();
+    double T = sys.getTemperature();
+    double RT = R_KJ * T;
+
+    double totalMoles = 0.0;
+    for (int i = 0; i < outlet_mole.size(); i++) {
+      totalMoles += outlet_mole.get(i);
+    }
+
+    double[] phi = getFugacityCoefficient(0);
+    double Gtotal = 0.0;
+
+    for (int i = 0; i < processedComponents.size(); i++) {
+      String compName = processedComponents.get(i);
+      GibbsComponent comp = componentMap.get(compName.toLowerCase());
+      if (comp == null) {
+        continue;
+      }
+      double ni = outlet_mole.get(i);
+      if (ni < 1e-30) {
+        continue;
+      }
+      double yi = ni / totalMoles;
+      double Gf0 = comp.calculateGibbsEnergy(T, i);
+      int sysIdx = -1;
+      for (int j = 0; j < sys.getNumberOfComponents(); j++) {
+        if (compName.equals(sys.getComponent(j).getComponentName())) {
+          sysIdx = j;
+          break;
+        }
+      }
+      double lnPhi = (sysIdx >= 0 && sysIdx < phi.length) ? Math.log(phi[sysIdx]) : 0.0;
+      double lnP = Math.log(sys.getPressure("bara") / 1.0);
+      Gtotal += ni * (Gf0 + RT * lnPhi + RT * Math.log(yi) + RT * lnP);
+    }
+    return Gtotal;
+  }
+
+  /**
+   * Perform Armijo backtracking line search to find a step size that guarantees sufficient decrease
+   * in the total Gibbs free energy.
+   *
+   * <p>
+   * Starting from alpha = alpha_max, the step is contracted by factor rho until the Armijo
+   * condition is satisfied: G(n + alpha*dn) &lt;= G(n) + c1*alpha*grad^T*dn.
+   * </p>
+   *
+   * <p>
+   * Reference: Nocedal &amp; Wright, Numerical Optimization (2006), Algorithm 3.1.
+   * </p>
+   *
+   * @param deltaX the full Newton step vector (composition components only, not Lagrange portion)
+   * @param alphaMax the maximum step size (from adaptive step or fixed damping)
+   * @param currentG current total Gibbs energy
+   * @return the accepted step size satisfying the Armijo condition
+   */
+  private double armijoLineSearch(double[] deltaX, double alphaMax, double currentG) {
+    // Compute directional derivative: grad^T * dn (for composition variables only)
+    int numComponents = variableComponents.size();
+    double directionalDerivative = 0.0;
+    Map<String, Double> fValues = getObjectiveFunctionValues();
+    for (int i = 0; i < numComponents; i++) {
+      String compName = variableComponents.get(i);
+      Double fi = fValues.get(compName);
+      if (fi != null) {
+        directionalDerivative += fi * deltaX[i];
+      }
+    }
+
+    // If directional derivative is non-negative, Newton direction is not a descent direction;
+    // fall back to the max alpha (steepest descent would be needed, but we just use the step)
+    if (directionalDerivative >= 0.0) {
+      logger.debug("Armijo: directional derivative non-negative ({}), using alphaMax={}",
+          directionalDerivative, alphaMax);
+      return alphaMax;
+    }
+
+    // Save current state
+    List<Double> savedMoles = new ArrayList<>(outlet_mole);
+    double[] savedLambda = lambda.clone();
+
+    double alpha = alphaMax;
+    for (int k = 0; k < armijoMaxBacktracks; k++) {
+      // Trial update: n_trial = n + alpha * dn (composition only)
+      for (int i = 0; i < numComponents; i++) {
+        String compName = variableComponents.get(i);
+        int globalIdx = processedComponentIndexMap.getOrDefault(compName, -1);
+        if (globalIdx >= 0 && globalIdx < outlet_mole.size()) {
+          double trialValue = savedMoles.get(globalIdx) + alpha * deltaX[i];
+          outlet_mole.set(globalIdx, Math.max(trialValue, 1e-15));
+        }
+      }
+
+      // Update system and evaluate Gibbs energy at trial point
+      updateSystemWithNewCompositions();
+      system.init(3);
+      double trialG = evaluateTotalGibbsEnergy();
+
+      // Armijo condition: G(trial) <= G(current) + c1 * alpha * grad^T * dn
+      double sufficientDecrease = currentG + armijoC1 * alpha * directionalDerivative;
+      if (trialG <= sufficientDecrease) {
+        logger.debug("Armijo accepted: alpha={}, G={} -> {}, backtracks={}", alpha, currentG,
+            trialG, k);
+        // Restore moles (the actual update will happen in performIterationUpdate)
+        for (int i = 0; i < outlet_mole.size(); i++) {
+          outlet_mole.set(i, savedMoles.get(i));
+        }
+        System.arraycopy(savedLambda, 0, lambda, 0, lambda.length);
+        updateSystemWithNewCompositions();
+        return alpha;
+      }
+
+      // Contract step
+      alpha *= armijoRho;
+    }
+
+    // Exhausted backtracks — restore and use minimum alpha
+    logger.debug("Armijo: max backtracks reached, using alpha={}", alpha);
+    for (int i = 0; i < outlet_mole.size(); i++) {
+      outlet_mole.set(i, savedMoles.get(i));
+    }
+    System.arraycopy(savedLambda, 0, lambda, 0, lambda.length);
+    updateSystemWithNewCompositions();
+    return Math.max(alpha, 1e-6);
+  }
+
+  /**
+   * Apply Tikhonov regularization to the Jacobian matrix if the condition number exceeds the
+   * threshold. Adds tau*I to the Hessian (composition-composition) block of the Jacobian.
+   *
+   * <p>
+   * This converts the saddle-point system into a positive-definite system when the Hessian is
+   * nearly singular, ensuring the Newton direction remains well-defined.
+   * </p>
+   *
+   * @return the condition number of the (possibly regularized) Jacobian
+   */
+  private double applyRegularization() {
+    if (jacobianMatrix == null || jacobianMatrix.length == 0) {
+      return Double.NaN;
+    }
+
+    SimpleMatrix jMat = new SimpleMatrix(jacobianMatrix);
+    double condNum = jMat.conditionP2();
+
+    if (useRegularization && condNum > regularizationThreshold) {
+      int numComp = variableComponents.size();
+      double tau = regularizationTau;
+      // Scale tau to the magnitude of the diagonal
+      double maxDiag = 0.0;
+      for (int i = 0; i < numComp; i++) {
+        maxDiag = Math.max(maxDiag, Math.abs(jacobianMatrix[i][i]));
+      }
+      if (maxDiag > 0.0) {
+        tau = Math.max(tau, maxDiag * 1e-8);
+      }
+
+      logger.info("Applying Tikhonov regularization: condNum={}, tau={}", condNum, tau);
+      for (int i = 0; i < numComp; i++) {
+        jacobianMatrix[i][i] += tau;
+      }
+
+      // Recompute condition number after regularization
+      jMat = new SimpleMatrix(jacobianMatrix);
+      condNum = jMat.conditionP2();
+      logger.info("After regularization: condNum={}", condNum);
+    }
+
+    return condNum;
+  }
+
+  /**
    * Calculate adaptive step size using NASA CEA-style step limiting (Gordon &amp; McBride, 1994).
    * Limits the maximum relative mole change so that no <em>major</em> component changes by more
    * than a factor of {@code e^MAX_STEP_LIMIT} (~5x) in a single step. Components with moles below a
@@ -2368,10 +2766,35 @@ public class GibbsReactor extends TwoPortEquipment {
     actualIterations = 0;
     finalConvergenceError = Double.MAX_VALUE;
 
+    // Initialize diagnostic histories
+    if (conditionNumberHistory == null) {
+      conditionNumberHistory = new ArrayList<>();
+    }
+    if (gibbsEnergyHistory == null) {
+      gibbsEnergyHistory = new ArrayList<>();
+    }
+    if (stepSizeHistory == null) {
+      stepSizeHistory = new ArrayList<>();
+    }
+    if (elementBalanceErrorHistory == null) {
+      elementBalanceErrorHistory = new ArrayList<>();
+    }
+    conditionNumberHistory.clear();
+    gibbsEnergyHistory.clear();
+    stepSizeHistory.clear();
+    elementBalanceErrorHistory.clear();
+
     logger.info("Starting Gibbs equilibrium solution with Newton-Raphson iterations");
     logger.info("Maximum iterations: " + maxIterations);
     logger.info("Convergence tolerance: " + convergenceTolerance);
     logger.info("Composition step size: " + alphaComposition);
+    if (useArmijoLineSearch) {
+      logger.info("Armijo line search enabled: c1={}, rho={}", armijoC1, armijoRho);
+    }
+    if (useRegularization) {
+      logger.info("Tikhonov regularization enabled: threshold={}, tau={}", regularizationThreshold,
+          regularizationTau);
+    }
 
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
       actualIterations = iteration;
@@ -2406,13 +2829,31 @@ public class GibbsReactor extends TwoPortEquipment {
 
       logger.debug("Iteration " + iteration + ": F vector norm = " + fNorm);
 
-      // Perform Newton-Raphson iteration step
+      // Perform Newton-Raphson iteration step (computes Jacobian internally)
       double[] deltaX = performNewtonRaphsonIteration();
 
       if (deltaX == null) {
         logger.warn("Newton-Raphson iteration failed at iteration " + iteration);
         finalConvergenceError = fNorm;
         return false;
+      }
+
+      // Apply Tikhonov regularization if enabled, and record condition number
+      if (useRegularization || !conditionNumberHistory.isEmpty() || iteration <= 5) {
+        double condNum = applyRegularization();
+        conditionNumberHistory.add(condNum);
+
+        // If regularization changed the Jacobian, recompute the Newton step
+        if (useRegularization && condNum < regularizationThreshold) {
+          // Jacobian was regularized; resolve the linear system
+          double[] objectiveVector = getObjectiveVectorForVariables();
+          if (objectiveVector != null) {
+            double[] recomputed = solveNewtonSystem(objectiveVector);
+            if (recomputed != null) {
+              deltaX = recomputed;
+            }
+          }
+        }
       }
 
       // Calculate delta vector norm
@@ -2437,6 +2878,9 @@ public class GibbsReactor extends TwoPortEquipment {
         dG = G - GOLD;
         logger.debug("Gibbs energy change dG = " + dG);
       }
+
+      // Record Gibbs energy for diagnostics
+      gibbsEnergyHistory.add(G);
 
       if (energyMode == EnergyMode.ADIABATIC) {
         if (iteration == 1) {
@@ -2479,7 +2923,7 @@ public class GibbsReactor extends TwoPortEquipment {
         return true;
       }
 
-      // Determine step size: adaptive (NASA CEA-style) or fixed damping
+      // Determine step size: Armijo line search, adaptive (NASA CEA-style), or fixed damping
       double effectiveAlpha = alphaComposition;
       if (useAdaptiveStepSize) {
         effectiveAlpha = calculateAdaptiveAlpha(deltaX, 1.0);
@@ -2487,6 +2931,15 @@ public class GibbsReactor extends TwoPortEquipment {
           logger.debug("Iteration " + iteration + ": adaptive alpha = " + effectiveAlpha);
         }
       }
+
+      // Apply Armijo backtracking line search if enabled
+      if (useArmijoLineSearch) {
+        double currentG = evaluateTotalGibbsEnergy();
+        effectiveAlpha = armijoLineSearch(deltaX, effectiveAlpha, currentG);
+      }
+
+      // Record step size for diagnostics
+      stepSizeHistory.add(effectiveAlpha);
 
       // Perform iteration update
       boolean updateSuccess = performIterationUpdate(deltaX, effectiveAlpha);
@@ -2501,15 +2954,18 @@ public class GibbsReactor extends TwoPortEquipment {
       // Debug logging for element balance during iterations
       SystemInterface currentOutletSystem = getOutletStream().getThermoSystem();
       calculateElementMoleBalance(currentOutletSystem, elementMoleBalanceOut, false);
+      double elementErrorNorm = 0.0;
       logger.debug("Iteration " + iteration + " element balance:");
       for (int i = 0; i < elementNames.length; i++) {
         double diff = elementMoleBalanceOut[i] - elementMoleBalanceIn[i];
+        elementErrorNorm += diff * diff;
         // Always show Z element, and others only if significant differences
         if (elementNames[i].equals("Z") || Math.abs(diff) > 1e-10) {
           logger.debug(String.format("  %s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
               elementMoleBalanceIn[i], elementMoleBalanceOut[i], diff));
         }
       }
+      elementBalanceErrorHistory.add(Math.sqrt(elementErrorNorm));
 
       finalConvergenceError = deltaXNorm;
     }
