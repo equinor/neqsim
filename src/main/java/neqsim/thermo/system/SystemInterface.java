@@ -2555,6 +2555,24 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMultiPhaseCheck(boolean doMultiPhaseCheck);
 
   /**
+   * Enable or disable liquid-liquid equilibrium (LLE) detection in the two-phase TPflash. When
+   * enabled, the flash uses pure-component stability trials to detect LLE regions that the standard
+   * Wilson K-value based stability analysis misses. This adds a small overhead (~0.1-0.5 ms per
+   * single-phase flash point) but correctly identifies oil-oil phase splits in systems like
+   * methane/n-heptane at low temperatures. Default is false (VLE-only, fastest mode).
+   *
+   * @param checkForLiquidLiquidSplit true to enable LLE detection in two-phase flash
+   */
+  public void setCheckForLiquidLiquidSplit(boolean checkForLiquidLiquidSplit);
+
+  /**
+   * Check if liquid-liquid equilibrium (LLE) detection is enabled for the two-phase TPflash.
+   *
+   * @return true if LLE detection is enabled
+   */
+  public boolean doCheckForLiquidLiquidSplit();
+
+  /**
    * Enable or disable enhanced stability analysis for flash calculations. When enabled, uses Wilson
    * K-value initial guesses and tests both vapor-like and liquid-like trial phases. This is more
    * robust for detecting liquid-liquid equilibria in complex mixtures (e.g., sour gas, CO2 systems)

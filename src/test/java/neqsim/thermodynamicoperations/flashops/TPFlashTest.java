@@ -318,4 +318,385 @@ class TPFlashTest {
     assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P="
         + pressure + " bara — stability analysis is inconsistent near boundary");
   }
+  /**
+   * Sweeps temperature at multiple pressures for the methane/n-heptane binary (70/30 mol%),
+   * kij=0.05, using 2-phase TPflash (no multiPhaseCheck). Verifies phase diagram is smooth
+   * (no spurious dots/flips).
+   */
+  @Test
+  void testTwoPhaseFlashMethaneHeptanePhaseDiagram() {
+    double[] testPressures = {10.0, 50.0, 100.0, 200.0};
+    int nPoints = 40;
+
+    for (double pressure : testPressures) {
+      System.out.println("\n--- P = " + pressure + " bar ---");
+      int[] phaseCount = new int[nPoints];
+      for (int j = 0; j < nPoints; j++) {
+        double temp = 100.0 + j * 10.0;
+        neqsim.thermo.system.SystemInterface fluid =
+            new neqsim.thermo.system.SystemPrEos(temp, pressure);
+        fluid.addComponent("methane", 70.0);
+        fluid.addComponent("n-heptane", 30.0);
+        fluid.setMixingRule("classic");
+        ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(
+            0, 1, 0.05);
+        ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(
+            0, 1, 0.05);
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ops.TPflash();
+        phaseCount[j] = fluid.getNumberOfPhases();
+        System.out.println("T=" + String.format("%.0f", temp) + " K, nPhases=" + phaseCount[j]
+            + ", beta=" + String.format("%.4f", fluid.getBeta()));
+      }
+      // Check for isolated flips
+      int flips = 0;
+      for (int j = 1; j < nPoints - 1; j++) {
+        if (phaseCount[j] != phaseCount[j - 1] && phaseCount[j] != phaseCount[j + 1]) {
+          flips++;
+        }
+      }
+      assertTrue(flips <= 1,
+          "Too many isolated flips (" + flips + ") at P=" + pressure + " bar");
+    }
+  }
+
+  /**
+   * Compares 2-phase flash vs multiphase flash for the methane/n-heptane binary with kij=0.05.
+   * Both should produce the same number of phases and similar beta values at every grid point.
+   */
+  @Test
+  void testTwoPhaseVsMultiphaseFlashConsistency() {
+    double[] testPressures = {10.0, 50.0, 100.0, 200.0};
+    int nPoints = 40;
+    int mismatches = 0;
+
+    for (double pressure : testPressures) {
+      System.out.println("\n--- P = " + pressure + " bar ---");
+      for (int j = 0; j < nPoints; j++) {
+        double temp = 100.0 + j * 10.0;
+
+        // 2-phase flash
+        neqsim.thermo.system.SystemInterface fluid2p =
+            new neqsim.thermo.system.SystemPrEos(temp, pressure);
+        fluid2p.addComponent("methane", 70.0);
+        fluid2p.addComponent("n-heptane", 30.0);
+        fluid2p.setMixingRule("classic");
+        fluid2p.setCheckForLiquidLiquidSplit(true);
+        ((EosMixingRulesInterface) fluid2p.getPhase(0).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        ((EosMixingRulesInterface) fluid2p.getPhase(1).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        ThermodynamicOperations ops2p = new ThermodynamicOperations(fluid2p);
+        ops2p.TPflash();
+
+        // multiphase flash
+        neqsim.thermo.system.SystemInterface fluidMp =
+            new neqsim.thermo.system.SystemPrEos(temp, pressure);
+        fluidMp.addComponent("methane", 70.0);
+        fluidMp.addComponent("n-heptane", 30.0);
+        fluidMp.setMixingRule("classic");
+        ((EosMixingRulesInterface) fluidMp.getPhase(0).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        ((EosMixingRulesInterface) fluidMp.getPhase(1).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        fluidMp.setMultiPhaseCheck(true);
+        ThermodynamicOperations opsMp = new ThermodynamicOperations(fluidMp);
+        opsMp.TPflash();
+
+        boolean match = fluid2p.getNumberOfPhases() == fluidMp.getNumberOfPhases();
+        if (!match) {
+          mismatches++;
+          System.out.println("T=" + String.format("%.0f", temp) + " K: 2p="
+              + fluid2p.getNumberOfPhases() + " phases, multi=" + fluidMp.getNumberOfPhases()
+              + " phases <<< MISMATCH");
+          System.out.println("  2-phase Gibbs=" + fluid2p.getGibbsEnergy());
+          System.out.println("  multi   Gibbs=" + fluidMp.getGibbsEnergy());
+        }
+      }
+    }
+    System.out
+        .println("Total mismatches: " + mismatches + " / " + (testPressures.length * nPoints));
+    assertTrue(mismatches <= 2, "Too many mismatches (" + mismatches
+        + ") between 2-phase and multiphase flash for binary system");
+  }
+
+  /**
+   * Checks that 2-phase flash and multiphase flash produce consistent phase type labels (gas,
+   * gas+oil, oil+oil, oil) for the methane/n-heptane binary, covering the full phase diagram
+   * including the low-temperature oil-oil region (T < 170 K).
+   */
+  @Test
+  void testPhaseTypeLabelConsistency() {
+    double[] testPressures = {10.0, 50.0, 100.0, 200.0, 350.0, 500.0};
+    int nPoints = 50;
+    int typeMismatches = 0;
+    int phaseCountMismatches = 0;
+
+    for (double pressure : testPressures) {
+      System.out.println("\n--- P = " + pressure + " bar ---");
+      for (int j = 0; j < nPoints; j++) {
+        // Cover 100 K to 500 K to include the Oil-Oil region
+        double temp = 100.0 + j * 8.0;
+
+        // 2-phase flash
+        neqsim.thermo.system.SystemInterface f2 =
+            new neqsim.thermo.system.SystemPrEos(temp, pressure);
+        f2.addComponent("methane", 70.0);
+        f2.addComponent("n-heptane", 30.0);
+        f2.setMixingRule("classic");
+        f2.setCheckForLiquidLiquidSplit(true);
+        ((EosMixingRulesInterface) f2.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+            1, 0.05);
+        ((EosMixingRulesInterface) f2.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+            1, 0.05);
+        ThermodynamicOperations o2 = new ThermodynamicOperations(f2);
+        o2.TPflash();
+
+        // multiphase flash
+        neqsim.thermo.system.SystemInterface fm =
+            new neqsim.thermo.system.SystemPrEos(temp, pressure);
+        fm.addComponent("methane", 70.0);
+        fm.addComponent("n-heptane", 30.0);
+        fm.setMixingRule("classic");
+        ((EosMixingRulesInterface) fm.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+            1, 0.05);
+        ((EosMixingRulesInterface) fm.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+            1, 0.05);
+        fm.setMultiPhaseCheck(true);
+        ThermodynamicOperations om = new ThermodynamicOperations(fm);
+        om.TPflash();
+
+        // Build label strings
+        String label2p = buildPhaseLabel(f2);
+        String labelMp = buildPhaseLabel(fm);
+
+        boolean typeMatch = label2p.equals(labelMp);
+        boolean phaseMatch = f2.getNumberOfPhases() == fm.getNumberOfPhases();
+
+        // Print all two-phase points and any mismatches
+        if (f2.getNumberOfPhases() > 1 || fm.getNumberOfPhases() > 1 || !typeMatch) {
+          System.out.println("T=" + String.format("%.0f", temp) + " K: 2p=" + label2p + " (beta="
+              + String.format("%.4f", f2.getBeta()) + ") multi=" + labelMp + " (beta="
+              + String.format("%.4f", fm.getBeta()) + ")" + (!typeMatch ? " <<< TYPE MISMATCH" : "")
+              + (!phaseMatch ? " <<< PHASE COUNT MISMATCH" : ""));
+        }
+
+        if (!typeMatch) {
+          typeMismatches++;
+        }
+        if (!phaseMatch) {
+          phaseCountMismatches++;
+        }
+      }
+    }
+    System.out.println(
+        "\nType label mismatches: " + typeMismatches + " / " + (testPressures.length * nPoints));
+    System.out.println("Phase count mismatches: " + phaseCountMismatches + " / "
+        + (testPressures.length * nPoints));
+    assertTrue(typeMismatches <= 2,
+        "Too many phase type label mismatches (" + typeMismatches + ")");
+  }
+
+  private String buildPhaseLabel(neqsim.thermo.system.SystemInterface sys) {
+    if (sys.getNumberOfPhases() == 1) {
+      return sys.getPhase(0).getPhaseTypeName();
+    }
+    String p0 = sys.getPhase(0).getPhaseTypeName();
+    String p1 = sys.getPhase(1).getPhaseTypeName();
+    return p0 + "+" + p1;
+  }
+
+  /**
+   * Print V/b ratios for both phases at low temperatures to understand the gas vs oil
+   * classification boundary. The threshold is V/b = 1.75.
+   */
+  @Test
+  void testVoverBAtLowTemperatures() {
+    double[] pressures = {10.0, 30.0, 50.0, 100.0};
+    System.out.println("=== V/b ratios at low temperatures (threshold: V/b = 1.75) ===");
+    for (double p : pressures) {
+      System.out.println("\n--- P = " + p + " bar ---");
+      for (double t = 110.0; t <= 210.0; t += 10.0) {
+        neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(t, p);
+        fluid.addComponent("methane", 70.0);
+        fluid.addComponent("n-heptane", 30.0);
+        fluid.setMixingRule("classic");
+        ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        fluid.setMultiPhaseCheck(true);
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ops.TPflash();
+
+        if (fluid.getNumberOfPhases() == 2) {
+          // Use getVolume()/getB() as PhaseEos.init() does
+          double vb0 = fluid.getPhase(0).getVolume() / fluid.getPhase(0).getB();
+          double vb1 = fluid.getPhase(1).getVolume() / fluid.getPhase(1).getB();
+          String type0 = fluid.getPhase(0).getPhaseTypeName();
+          String type1 = fluid.getPhase(1).getPhaseTypeName();
+          double dens0 = fluid.getPhase(0).getDensity("kg/m3");
+          double dens1 = fluid.getPhase(1).getDensity("kg/m3");
+          System.out.println(
+              String.format("T=%.0f K: ph0=%s V/b=%.4f d=%.1f | ph1=%s V/b=%.4f d=%.1f | beta=%.4f",
+                  t, type0, vb0, dens0, type1, vb1, dens1, fluid.getBeta()));
+        } else {
+          double vb0 = fluid.getPhase(0).getVolume() / fluid.getPhase(0).getB();
+          System.out.println(String.format("T=%.0f K: single phase = %s V/b=%.4f", t,
+              fluid.getPhase(0).getPhaseTypeName(), vb0));
+        }
+      }
+    }
+  }
+
+  /**
+   * Benchmark: compare TPflash performance for three modes:
+   * 1) VLE-only (default, no LLE check) - fastest
+   * 2) VLE+LLE (setCheckForLiquidLiquidSplit=true) - detects oil-oil splits
+   * 3) Multiphase (setMultiPhaseCheck=true) - full multi-phase via TPmultiflash
+   *
+   * Tests both binary (methane/n-heptane) and multicomponent (10 comp) systems.
+   */
+  @Test
+  void benchmarkTPflashPerformance() {
+    int nPoints = 50;
+    double[] pressures = {10.0, 50.0, 200.0};
+    String[] modeNames = {"VLE-only", "VLE+LLE", "Multiphase"};
+
+    // Warm up JIT with all three modes
+    for (int w = 0; w < 30; w++) {
+      neqsim.thermo.system.SystemInterface wf =
+          new neqsim.thermo.system.SystemPrEos(273.15, 50.0);
+      wf.addComponent("methane", 70.0);
+      wf.addComponent("n-heptane", 30.0);
+      wf.setMixingRule("classic");
+      ((EosMixingRulesInterface) wf.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+          1, 0.05);
+      ((EosMixingRulesInterface) wf.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+          1, 0.05);
+      if (w % 3 == 1) {
+        wf.setCheckForLiquidLiquidSplit(true);
+      }
+      if (w % 3 == 2) {
+        wf.setMultiPhaseCheck(true);
+      }
+      ThermodynamicOperations wo = new ThermodynamicOperations(wf);
+      wo.TPflash();
+    }
+
+    System.out.println("\n=== Binary (C1/nC7) TPflash Performance Benchmark ===");
+    System.out.println(String.format("%-12s %-10s %8s %8s %8s   %s",
+        "Mode", "Pressure", "avg(ms)", "min(ms)", "max(ms)", "1ph / 2ph"));
+    System.out.println(
+        "--------------------------------------------------------------");
+
+    for (int mode = 0; mode < 3; mode++) {
+      for (double pressure : pressures) {
+        long totalNs = 0;
+        long maxNs = 0;
+        long minNs = Long.MAX_VALUE;
+        int singlePhaseCount = 0;
+        int twoPhaseCount = 0;
+
+        for (int j = 0; j < nPoints; j++) {
+          double temp = 100.0 + j * 8.0;
+
+          neqsim.thermo.system.SystemInterface fluid =
+              new neqsim.thermo.system.SystemPrEos(temp, pressure);
+          fluid.addComponent("methane", 70.0);
+          fluid.addComponent("n-heptane", 30.0);
+          fluid.setMixingRule("classic");
+          ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule())
+              .setBinaryInteractionParameter(0, 1, 0.05);
+          ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule())
+              .setBinaryInteractionParameter(0, 1, 0.05);
+
+          if (mode == 1) {
+            fluid.setCheckForLiquidLiquidSplit(true);
+          } else if (mode == 2) {
+            fluid.setMultiPhaseCheck(true);
+          }
+
+          ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+          long t0 = System.nanoTime();
+          ops.TPflash();
+          long dt = System.nanoTime() - t0;
+
+          totalNs += dt;
+          if (dt > maxNs) {
+            maxNs = dt;
+          }
+          if (dt < minNs) {
+            minNs = dt;
+          }
+          if (fluid.getNumberOfPhases() == 1) {
+            singlePhaseCount++;
+          } else {
+            twoPhaseCount++;
+          }
+        }
+        double avgMs = totalNs / (double) nPoints / 1e6;
+        System.out.println(String.format("%-12s P=%3.0f bar  %8.2f %8.2f %8.2f   %d / %d",
+            modeNames[mode], pressure, avgMs, minNs / 1e6, maxNs / 1e6,
+            singlePhaseCount, twoPhaseCount));
+      }
+    }
+
+    // Also benchmark a multicomponent system (10 comp natural gas)
+    System.out.println("\n=== Multicomponent (10 comp) TPflash Performance ===");
+    System.out.println(String.format("%-12s %-10s %8s   %s",
+        "Mode", "Pressure", "avg(ms)", "1ph / 2ph"));
+    System.out.println(
+        "----------------------------------------------");
+
+    double[] mcPressures = {10.0, 50.0, 150.0};
+    int mcPoints = 30;
+    for (int mode = 0; mode < 3; mode++) {
+      for (double pressure : mcPressures) {
+        long totalNs = 0;
+        int singlePhaseCount = 0;
+        int twoPhaseCount = 0;
+
+        for (int j = 0; j < mcPoints; j++) {
+          double temp = 200.0 + j * 10.0;
+          neqsim.thermo.system.SystemInterface fluid =
+              new neqsim.thermo.system.SystemPrEos(temp, pressure);
+          fluid.addComponent("nitrogen", 1.0);
+          fluid.addComponent("methane", 85.0);
+          fluid.addComponent("ethane", 5.0);
+          fluid.addComponent("propane", 3.0);
+          fluid.addComponent("i-butane", 1.0);
+          fluid.addComponent("n-butane", 1.5);
+          fluid.addComponent("i-pentane", 0.5);
+          fluid.addComponent("n-pentane", 0.5);
+          fluid.addComponent("n-hexane", 0.3);
+          fluid.addComponent("nC10", 0.2);
+          fluid.setMixingRule("classic");
+
+          if (mode == 1) {
+            fluid.setCheckForLiquidLiquidSplit(true);
+          } else if (mode == 2) {
+            fluid.setMultiPhaseCheck(true);
+          }
+
+          ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+          long t0 = System.nanoTime();
+          ops.TPflash();
+          long dt = System.nanoTime() - t0;
+          totalNs += dt;
+          if (fluid.getNumberOfPhases() == 1) {
+            singlePhaseCount++;
+          } else {
+            twoPhaseCount++;
+          }
+        }
+        double avgMs = totalNs / (double) mcPoints / 1e6;
+        System.out.println(String.format("%-12s P=%3.0f bar  %8.2f   %d / %d",
+            modeNames[mode], pressure, avgMs, singlePhaseCount, twoPhaseCount));
+      }
+    }
+    // No assertions - this is a diagnostic test
+  }
 }

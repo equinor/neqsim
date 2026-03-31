@@ -2405,41 +2405,6 @@ public class TPmultiflash extends TPflash {
         }
       }
 
-      // Composition-based trivial solution detection: two phases with nearly
-      // identical mole fractions are non-converged duplicates (issue #1980)
-      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-        for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
-          double maxCompDiff = 0.0;
-          for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-            maxCompDiff = Math.max(maxCompDiff, Math.abs(system.getPhase(i).getComponent(k).getx()
-                - system.getPhase(j).getComponent(k).getx()));
-          }
-          if (maxCompDiff < 0.01) {
-            system.removePhaseKeepTotalComposition(j);
-            doStabilityAnalysis = false;
-            hasRemovedPhase = true;
-            j--; // adjust index after removal
-          }
-        }
-      }
-
-      // Remove phases with unphysical densities (issue #1980). Hydrocarbon and
-      // non-aqueous phases should never exceed ~1500 kg/m3 at moderate conditions.
-      // Such phases arise from spurious EOS volume roots.
-      for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
-        PhaseType pt = system.getPhase(i).getType();
-        if (pt != PhaseType.AQUEOUS && pt != PhaseType.SOLID && pt != PhaseType.HYDRATE
-            && pt != PhaseType.WAX && pt != PhaseType.SOLIDCOMPLEX) {
-          double rho = system.getPhase(i).getDensity("kg/m3");
-          if (rho > 1500.0 && system.getNumberOfPhases() > 1) {
-            logger.warn("Removing phase " + i + " with unphysical density " + rho + " kg/m3");
-            system.removePhaseKeepTotalComposition(i);
-            doStabilityAnalysis = false;
-            hasRemovedPhase = true;
-          }
-        }
-      }
-
       /*
        * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
        * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 &&

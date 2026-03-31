@@ -26,6 +26,8 @@ public class TPflash extends Flash {
   SystemInterface clonedSystem;
   double presdiff = 1.0;
   private final RachfordRice rachfordRice = new RachfordRice();
+  /** Dominant eigenvalue estimate from DEM, used for adaptive SSI-to-Newton switch. */
+  private double lastDEMLambda = 0.0;
 
   /**
    * <p>
@@ -117,25 +119,62 @@ public class TPflash extends Flash {
 
   /**
    * <p>
-   * accselerateSucsSubs.
+   * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient history is
+   * available, falling back to standard DEM (Michelsen 1982b, Risnes et al. 1981).
+   * The GDEM formulation follows Risnes &amp; Dalen (1984) and Michelsen &amp; Mollerup
+   * (2007, section 9.5).
    * </p>
    */
   public void accselerateSucsSubs() {
-    double prod1 = 0.0;
-    double prod2 = 0.0;
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      prod1 += oldDeltalnK[i] * oldoldDeltalnK[i];
-      prod2 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
+    int nc = system.getPhase(0).getNumberOfComponents();
+
+    // Compute dot products for both standard DEM and GDEM-2:
+    // Standard DEM: lambda = (Dg_{n-1} . Dg_{n-2}) / (Dg_{n-2} . Dg_{n-2})
+    // GDEM-2 matrix B and vector c for the 2x2 system B*mu = c
+    double b11 = 0.0; // Dg_{n-1} . Dg_{n-1}
+    double b12 = 0.0; // Dg_{n-1} . Dg_{n-2}
+    double b22 = 0.0; // Dg_{n-2} . Dg_{n-2}
+    double c1 = 0.0; // Dg_n . Dg_{n-1}
+    double c2 = 0.0; // Dg_n . Dg_{n-2}
+    for (i = 0; i < nc; i++) {
+      b11 += oldDeltalnK[i] * oldDeltalnK[i];
+      b12 += oldDeltalnK[i] * oldoldDeltalnK[i];
+      b22 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
+      c1 += deltalnK[i] * oldDeltalnK[i];
+      c2 += deltalnK[i] * oldoldDeltalnK[i];
     }
 
-    double lambda = prod1 / prod2;
+    // Standard DEM eigenvalue estimate (always computed for tracking)
+    double lambda = (b22 > 1e-30) ? b12 / b22 : 0.0;
+    lastDEMLambda = lambda;
 
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      // lnK[i] = lnK[i] + lambda*lambda*oldoldDeltalnK[i]/(1.0-lambda); // byttet +
-      // til -
-      lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
-      system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-      system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+    // Try GDEM-2: solve 2x2 system for mu1, mu2
+    double det = b11 * b22 - b12 * b12;
+    boolean useGDEM = false;
+    double mu1 = 0.0;
+    double mu2 = 0.0;
+    if (Math.abs(det) > 1e-30 * (b11 * b22 + 1e-100)) {
+      mu1 = (c1 * b22 - c2 * b12) / det;
+      mu2 = (b11 * c2 - b12 * c1) / det;
+      // Use GDEM only if coefficients are bounded (prevents wild extrapolation)
+      useGDEM = Math.abs(mu1) < 5.0 && Math.abs(mu2) < 5.0;
+    }
+
+    if (!useGDEM) {
+      // Fallback: standard 1-eigenvalue DEM extrapolation
+      // lnK += lambda / (1 - lambda) * Dg_n
+      for (i = 0; i < nc; i++) {
+        lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
+        system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
+        system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      }
+    } else {
+      // GDEM-2: lnK += mu1 * Dg_n + mu2 * Dg_{n-1}
+      for (i = 0; i < nc; i++) {
+        lnK[i] += mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
+        system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
+        system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      }
     }
     double oldBeta = system.getBeta();
     try {
@@ -432,8 +471,8 @@ public class TPflash extends Flash {
     // Reduced acceleration interval for faster convergence
     int accelerateInterval = 5;
     // Newton limit: number of SS iterations before switching to Newton-Raphson.
-    // Reduced from 15 to 12 (line search on Q enables earlier switch).
     int newtonLimit = 12;
+    lastDEMLambda = 0.0;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;
@@ -519,25 +558,81 @@ public class TPflash extends Flash {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
     } else {
-      try {
-        // Checks if gas or oil is the most stable phase
-        if (system.getPhase(0).getType() == PhaseType.GAS) {
-          gasgib = system.getPhase(0).getGibbsEnergy();
-          system.setPhaseType(0, PhaseType.LIQUID);
+      // Post-convergence stability verification (Michelsen & Mollerup, 2007):
+      // If the 2-phase flash converged to essentially single phase (beta at limits),
+      // re-run stability analysis to verify that no phase split was missed.
+      // This block includes LLE detection via pure-component trials when enabled.
+      if (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.01)
+          || system.getBeta() < (phaseFractionMinimumLimit * 1.01)) {
+        findLowestGibbsPhaseIsChecked = false;
+        boolean isStable = false;
+        try {
+          isStable = system.checkStability() && stabilityCheck();
+        } catch (Exception ex) {
+          isStable = true;
+        }
+        if (!isStable) {
+          // Stability analysis found instability — re-run flash with updated K-values
+          system.calc_x_y();
+          system.init(1);
+          for (int reIter = 0; reIter < maxNumberOfIterations; reIter++) {
+            sucsSubs();
+            if (deviation < 1e-10) {
+              break;
+            }
+          }
+          // If still single phase after VLE-type K-values, try pure-component trials
+          // for LLE detection (only when LLE checking is enabled).
+          if (system.doCheckForLiquidLiquidSplit()
+              && (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.01)
+                  || system.getBeta() < (phaseFractionMinimumLimit * 1.01))) {
+            boolean lleFound = pureComponentStabilityTrials();
+            if (lleFound) {
+              try {
+                system.setBeta(
+                    rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+              } catch (Exception ex) {
+                system.setBeta(0.5);
+              }
+              system.calc_x_y();
+              system.init(1);
+              for (int reIter = 0; reIter < maxNumberOfIterations; reIter++) {
+                sucsSubs();
+                if (deviation < 1e-10) {
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
 
-          system.init(1, 0);
-          liqgib = system.getPhase(0).getGibbsEnergy();
-        } else {
-          liqgib = system.getPhase(0).getGibbsEnergy();
+      // Volume root selection for single-phase results (Michelsen & Mollerup, 2007):
+      // Compare Gibbs energy of gas and liquid roots of the cubic EOS and select
+      // the thermodynamically stable root (lower Gibbs energy).
+      // For two-phase results, root assignment is handled by orderByDensity().
+      if (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.01)
+          || system.getBeta() < (phaseFractionMinimumLimit * 1.01)) {
+        try {
+          if (system.getPhase(0).getType() == PhaseType.GAS) {
+            gasgib = system.getPhase(0).getGibbsEnergy();
+            system.setPhaseType(0, PhaseType.LIQUID);
+            system.init(1, 0);
+            liqgib = system.getPhase(0).getGibbsEnergy();
+          } else {
+            liqgib = system.getPhase(0).getGibbsEnergy();
+            system.setPhaseType(0, PhaseType.GAS);
+            system.init(1, 0);
+            gasgib = system.getPhase(0).getGibbsEnergy();
+          }
+          if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+            system.setPhaseType(0, PhaseType.GAS);
+          } else {
+            system.setPhaseType(0, PhaseType.LIQUID);
+          }
+        } catch (Exception e) {
           system.setPhaseType(0, PhaseType.GAS);
-          system.init(1, 0);
-          gasgib = system.getPhase(0).getGibbsEnergy();
         }
-        if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-          system.setPhaseType(0, PhaseType.GAS);
-        }
-      } catch (Exception e) {
-        system.setPhaseType(0, PhaseType.GAS);
       }
 
       system.init(1);

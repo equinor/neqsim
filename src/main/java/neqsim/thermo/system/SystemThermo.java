@@ -120,6 +120,7 @@ public abstract class SystemThermo implements SystemInterface {
 
   protected boolean multiPhaseCheck = false;
   protected boolean enhancedMultiPhaseCheck = false;
+  protected boolean checkForLiquidLiquidSplit = false;
   private boolean multiphaseWaxCheck = false;
 
   // todo: replace numberOfComponents with length of componentNames.
@@ -1888,6 +1889,12 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public boolean doMultiPhaseCheck() {
     return multiPhaseCheck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean doCheckForLiquidLiquidSplit() {
+    return checkForLiquidLiquidSplit;
   }
 
   /** {@inheritDoc} */
@@ -5261,6 +5268,12 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     this.multiPhaseCheck = multiPhaseCheck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCheckForLiquidLiquidSplit(boolean checkForLiquidLiquidSplit) {
+    this.checkForLiquidLiquidSplit = checkForLiquidLiquidSplit;
   }
 
   /** {@inheritDoc} */
