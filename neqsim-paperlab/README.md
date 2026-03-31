@@ -1,4 +1,4 @@
-# NeqSim PaperLab — Scientific Paper Production System
+# NeqSim PaperLab
 
 A structured, agent-driven workflow for producing rigorous scientific papers
 using NeqSim as the computational engine.
