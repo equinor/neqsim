@@ -345,10 +345,15 @@ def render_html(paper_dir):
     body = re.sub(r'^---$', '<hr>', body, flags=re.MULTILINE)
 
     # Inline markdown images: ![alt](src) -> <img>
-    body = re.sub(
-        r'!\[([^\]]*)\]\(([^)]+)\)',
-        r'<div class="fig-container"><img src="\2" alt="\1"></div>',
-        body)
+    # Fix paths: paper.md uses "figures/..." but HTML goes to submission/,
+    # so we need "../figures/..." for correct relative resolution.
+    def _fix_img_path(m):
+        alt = m.group(1)
+        src = m.group(2)
+        if src.startswith("figures/"):
+            src = "../" + src
+        return f'<div class="fig-container"><img src="{src}" alt="{alt}"></div>'
+    body = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', _fix_img_path, body)
 
     # Tables
     def _html_table(match):
@@ -372,26 +377,8 @@ def render_html(paper_dir):
 
     body = re.sub(r'\n\n+', '\n</p>\n<p>\n', body)
 
-    # Build figures section
-    if figures:
-        fig_html = '\n<div style="background: #E3F2FD; padding: 20px; border-radius: 8px; margin: 2em 0;">\n'
-        fig_html += '<h2 style="margin-top: 0;">Figures</h2>\n'
-        for i, fp in enumerate(figures, 1):
-            cap = captions.get(fp.name, f"Fig. {i}.")
-            rel = "../figures/" + fp.name
-            fig_html += f'<div class="fig-container">\n'
-            fig_html += f'<img src="{rel}" alt="Fig. {i}">\n'
-            fig_html += f'<p class="fig-caption">Fig. {i}. {cap}</p>\n'
-            fig_html += '</div>\n'
-        fig_html += '</div>\n'
-        # Insert before Conclusions
-        for sec in sections:
-            if "conclusion" in sec["title"].lower():
-                marker = "<h2>{}</h2>".format(
-                    re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', sec["title"])
-                )
-                body = body.replace(marker, fig_html + marker, 1)
-                break
+    # Figures are already rendered inline where they appear in the text.
+    # No separate appendix section needed.
 
     html.append("<p>\n" + body + "\n</p>")
     html.append(ref_list_html)
@@ -616,12 +603,17 @@ def render_word(paper_dir):
                 else:
                     _add_block(block)
 
+    fig_counter = [0]
+
     def _add_block(block):
         """Add a single block (table, code, list, or paragraph)."""
         # Inline markdown image: ![alt](figures/path.png)
-        img_match = re.match(r'^!\[([^\]]*)\]\(([^)]+)\)$', block.strip())
+        # May be followed by a caption line like: *Figure 6.* Caption text here
+        img_match = re.match(r'^!\[([^\]]*)\]\(([^)]+)\)', block.strip())
         if img_match:
+            fig_counter[0] += 1
             img_path = paper_dir / img_match.group(2)
+            alt_text = img_match.group(1)
             if img_path.exists():
                 try:
                     doc.add_picture(str(img_path), width=Inches(5.5))
@@ -631,6 +623,31 @@ def render_word(paper_dir):
                     doc.add_paragraph(f"[Image: {img_match.group(2)} — {e}]")
             else:
                 doc.add_paragraph(f"[Image not found: {img_match.group(2)}]")
+            # Extract caption from remaining text after the image markdown
+            remaining = block[img_match.end():].strip()
+            caption = alt_text
+            # Match *Figure N.* Caption text  OR  *Figure N. Caption text*
+            cap_match = re.match(r'^\*Figure\s+\d+[.:]\*\s*(.+)', remaining, re.DOTALL)
+            if not cap_match:
+                cap_match = re.match(r'^\*(?:Figure\s+\d+[.:]\s*)?(.+)\*$', remaining, re.DOTALL)
+            if cap_match:
+                caption = cap_match.group(1).strip()
+            # Add numbered figure caption
+            cap_p = doc.add_paragraph()
+            cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            cap_p.paragraph_format.space_after = Pt(12)
+            run = cap_p.add_run(f"Figure {fig_counter[0]}. ")
+            run.bold = True
+            run.font.size = Pt(9)
+            run.font.name = 'Arial'
+            run = cap_p.add_run(caption)
+            run.font.size = Pt(9)
+            run.font.name = 'Arial'
+            return
+
+        # Standalone italic figure caption (already handled above with image)
+        stripped = block.strip()
+        if stripped.startswith('*') and 'Figure' in stripped and re.match(r'^\*Figure\s+\d+', stripped):
             return
 
         # Table block

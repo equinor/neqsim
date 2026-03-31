@@ -738,12 +738,16 @@ class WordRenderer:
             alt_text = img_match.group(1)
             img_rel = img_match.group(2)
             img_path = self.paper_dir / img_rel
-            # Check if there's a following italic caption line
+            # Check if there's a following caption line
             remaining = block[img_match.end():].strip()
             caption = alt_text
-            cap_match = re.match(r'^\*(?:Figure\s+\d+[.:]\s*)?(.+)\*$', remaining)
+            # Match *Figure N.* Caption text  (partial italic prefix)
+            cap_match = re.match(r'^\*Figure\s+\d+[.:]\*\s*(.+)', remaining, re.DOTALL)
+            if not cap_match:
+                # Match *Figure N. Caption text*  (all italic)
+                cap_match = re.match(r'^\*(?:Figure\s+\d+[.:]\s*)?(.+)\*$', remaining, re.DOTALL)
             if cap_match:
-                caption = cap_match.group(1)
+                caption = cap_match.group(1).strip()
             self.add_figure(str(img_path), caption)
             return
 
@@ -801,7 +805,7 @@ class WordRenderer:
 
         # Standalone italic figure caption line (skip - handled by image parser)
         stripped = block.strip()
-        if stripped.startswith('*') and stripped.endswith('*') and 'Figure' in stripped:
+        if stripped.startswith('*') and 'Figure' in stripped and re.match(r'^\*Figure\s+\d+', stripped):
             return
 
         # Regular paragraph
