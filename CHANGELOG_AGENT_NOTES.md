@@ -9,9 +9,17 @@
 
 ---
 
-## 2026-03-31 — GibbsReactor Solver Performance Improvements
+## 2026-03-31 — GibbsReactor Jacobian Fix & Solver Performance Improvements
 
-### New Features — LU Solve, Adaptive Step Sizing, Configurable Min Iterations
+### Bug Fix — RT-Corrected Off-Diagonal Jacobian (Always On)
+
+The off-diagonal entries of the Newton-Raphson Jacobian were missing an `RT`
+factor. The corrected formula `RT * (-1/n_total + d ln(φ)/dn)` is now the only
+code path — the legacy formula has been removed. This fixes convergence issues
+for adiabatic and mixed-phase equilibrium. No user action needed (previously
+required `setUseConsistentOffDiagonal(true)` which is now a deprecated no-op).
+
+### Performance Improvements
 
 Four algorithmic improvements to the Newton-Raphson solver in `GibbsReactor`:
 
@@ -43,9 +51,17 @@ Four algorithmic improvements to the Newton-Raphson solver in `GibbsReactor`:
 | `setUseAdaptiveStepSize(boolean)` | false | Enable adaptive step sizing |
 | `isUseAdaptiveStepSize()` | — | Check if adaptive step sizing is active |
 
+### Deprecated Methods on `GibbsReactor`
+
+| Method | Notes |
+|--------|-------|
+| `setUseConsistentOffDiagonal(boolean)` | No-op. RT correction is always active. |
+| `isUseConsistentOffDiagonal()` | Always returns `true`. |
+
 ### Migration Notes
 
 - **No breaking changes** — all defaults preserved, existing code runs identically.
+- `setUseConsistentOffDiagonal(true)` calls still compile but are no-ops.
 - To opt into faster convergence for isothermal systems:
   ```java
   reactor.setUseAdaptiveStepSize(true);
