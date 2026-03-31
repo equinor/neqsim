@@ -1,0 +1,92 @@
+# Fluid Phase Equilibria — Journal Profile
+# Elsevier — ISSN: 0378-3812
+# https://www.sciencedirect.com/journal/fluid-phase-equilibria
+
+journal_name: "Fluid Phase Equilibria"
+journal_abbrev: "Fluid Phase Equilib."
+publisher: "Elsevier"
+issn: "0378-3812"
+url: "https://www.sciencedirect.com/journal/fluid-phase-equilibria"
+scope: >
+  Experimental and theoretical studies of equilibrium and transport properties
+  of fluids and fluid mixtures. Covers equations of state, molecular simulation,
+  phase equilibria, thermodynamic modeling, and industrial applications.
+
+# Structure
+abstract_words_max: 200
+keywords_min: 3
+keywords_max: 6
+section_order:
+  - Abstract
+  - Keywords
+  - Highlights
+  - Introduction
+  - Theory / Mathematical Framework
+  - Methods / Algorithm Description
+  - Results and Discussion
+  - Conclusions
+  - Nomenclature
+  - Acknowledgements
+  - CRediT Author Contributions
+  - Declaration of Competing Interest
+  - Data Availability
+  - References
+  - Appendices
+
+# Formatting
+latex_class: "elsarticle"
+latex_options: "review,3p"
+reference_style: "elsarticle-num"
+citation_style: "numbered"  # [1], [2], etc.
+figure_formats:
+  - "pdf"
+  - "eps"
+  - "tif"
+  - "png"
+figure_dpi_min: 300
+table_style: "three-line"  # booktabs: toprule, midrule, bottomrule
+equation_numbering: "sequential"
+line_numbering_required: true
+double_spacing_required: true
+
+# Requirements
+highlights_required: true
+highlights_max: 5
+highlights_min: 3
+highlights_max_chars_each: 85
+graphical_abstract_required: false
+cover_letter_required: true
+conflict_of_interest_required: true
+data_availability_required: true
+credit_statement_required: true
+nomenclature_section: "recommended"
+
+# Page/Content Limits
+pages_max: null  # No strict limit, but 25-30 pages typical for full papers
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "6000-10000"
+
+# Submission Types
+paper_types:
+  - "Full-length article"
+  - "Short communication"
+  - "Review article"
+
+# Typical Topics for Flash Algorithm Papers
+relevant_topics:
+  - "Phase equilibrium calculations"
+  - "Flash algorithm convergence"
+  - "Equation of state computations"
+  - "Stability analysis"
+  - "Thermodynamic model evaluation"
+  - "Process simulation methods"
+
+# Suggested Reviewers Fields
+reviewer_expertise:
+  - "Flash calculations and phase equilibrium algorithms"
+  - "Equation of state modeling"
+  - "Process simulation and thermodynamics"
+  - "Numerical methods for chemical engineering"
+  - "Computational thermodynamics"

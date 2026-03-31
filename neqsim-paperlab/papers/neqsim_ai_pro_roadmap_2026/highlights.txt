@@ -1,0 +1,5 @@
+Open-source process simulator capabilities mapped to AI-integration requirements
+Surrogate equipment interface enables hybrid physics-AI process simulation
+Gymnasium-compatible wrapper design for RL-based production optimization
+Equipment utilization framework provides structured bottleneck metrics for RL rewards
+MCP server enables direct LLM-to-simulation coupling for agentic workflows

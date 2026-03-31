@@ -1,0 +1,61 @@
+# Computers & Chemical Engineering — Journal Profile
+# Elsevier — ISSN: 0098-1354
+
+journal_name: "Computers & Chemical Engineering"
+journal_abbrev: "Comput. Chem. Eng."
+publisher: "Elsevier"
+issn: "0098-1354"
+url: "https://www.sciencedirect.com/journal/computers-and-chemical-engineering"
+scope: >
+  Application of computing and systems technology to chemical engineering
+  problems. Covers process simulation, optimization, control, AI/ML in
+  chemical engineering, and computational methods.
+
+abstract_words_max: 200
+keywords_min: 3
+keywords_max: 6
+section_order:
+  - Abstract
+  - Keywords
+  - Highlights
+  - Introduction
+  - Problem Formulation
+  - Solution Method
+  - Computational Results
+  - Conclusions
+  - Acknowledgements
+  - CRediT Author Contributions
+  - Declaration of Competing Interest
+  - Data Availability
+  - References
+  - Appendices
+
+latex_class: "elsarticle"
+latex_options: "review,3p"
+reference_style: "elsarticle-harv"
+citation_style: "authoryear"
+figure_formats: ["pdf", "eps", "tif", "png"]
+figure_dpi_min: 300
+table_style: "three-line"
+equation_numbering: "sequential"
+line_numbering_required: true
+double_spacing_required: true
+
+highlights_required: true
+highlights_max: 5
+highlights_min: 3
+highlights_max_chars_each: 85
+graphical_abstract_required: false
+cover_letter_required: true
+conflict_of_interest_required: true
+data_availability_required: true
+credit_statement_required: true
+
+word_count_typical: "6000-12000"
+
+relevant_topics:
+  - "Algorithm development for process simulation"
+  - "Numerical methods in chemical engineering"
+  - "Computational efficiency of thermodynamic calculations"
+  - "Open-source simulation tools"
+  - "AI-assisted process simulation"

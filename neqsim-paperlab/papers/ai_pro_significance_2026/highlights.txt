@@ -1,0 +1,5 @@
+- Integrated AI surrogates across reservoir, flow, and process domains enable real-time optimization
+- Open-source simulation tools provide reproducible foundation for AI-driven digital twins
+- Equipment utilization metrics from coupled models reveal true system bottlenecks
+- Research-based teaching integrates AI methods directly into engineering curricula
+- Industry-academia collaboration on NCS mature assets accelerates competence development

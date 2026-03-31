@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NeqSim as Computational Backbone for AI-Driven Integrated Production Optimization: Capabilities, Gaps, and a Development Roadmap</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '$', right: '$', display: false}
+    ]
+  })"></script>
+<style>
+  body { max-width: 900px; margin: 40px auto; font-family: 'Georgia', serif;
+         line-height: 1.7; color: #333; padding: 0 20px; }
+  h1 { font-size: 1.8em; border-bottom: 2px solid #2196F3; padding-bottom: 10px; }
+  h2 { font-size: 1.4em; color: #1565C0; margin-top: 2em; }
+  h3 { font-size: 1.15em; color: #1976D2; }
+  table { border-collapse: collapse; margin: 1em auto; font-size: 0.95em; }
+  th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: left; }
+  th { background: #E3F2FD; font-weight: 600; }
+  tr:nth-child(even) { background: #FAFAFA; }
+  code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+  pre { background: #263238; color: #eee; padding: 16px; border-radius: 6px;
+        overflow-x: auto; font-size: 0.88em; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  img { max-width: 100%; display: block; margin: 1em auto; }
+  .fig-container { text-align: center; margin: 2em 0; }
+  .fig-caption { font-style: italic; color: #666; margin-top: 0.5em; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
+  strong { color: #1565C0; }
+  a.cite { color: #1565C0; text-decoration: none; font-weight: 600; }
+  a.cite:hover { text-decoration: underline; }
+  .cite-unknown { color: red; }
+  ol.references { font-size: 0.92em; line-height: 1.6; }
+  ol.references li { margin-bottom: 4px; }
+  .references .ref-entry { font-size: 0.92em; line-height: 1.6; margin-bottom: 4px;
+                            padding-left: 2em; text-indent: -2em; }
+</style>
+</head>
+<body>
+
+<p>
+<h1>NeqSim as Computational Backbone for AI-Driven Integrated Production Optimization: Capabilities, Gaps, and a Development Roadmap</h1>
+</p>
+<p>
+<h2>Highlights</h2>
+</p>
+<p>
+<li>NeqSim open-source process simulator capabilities mapped to AI-integration requirements</li>
+<li>Surrogate equipment interface enables hybrid physics-AI process simulation</li>
+<li>Gymnasium-compatible wrapper design for RL-based production optimization</li>
+<li>Equipment utilization framework provides structured bottleneck metrics for RL rewards</li>
+<li>MCP server enables direct LLM-to-simulation coupling for agentic workflows</li>
+</p>
+<p>
+<h2>Abstract</h2>
+</p>
+<p>
+Integrated production optimization for mature petroleum fields requires coupling reservoir, multiphase flow, and process facility models --- but the computational cost of full-physics simulation prohibits real-time optimization and large-scale AI training. Open-source process simulators can serve as the computational backbone for AI-driven frameworks, providing both the rigorous ground truth for surrogate model training and the operational environment for reinforcement learning agents. However, existing simulators were designed for forward simulation, not for the programmatic, high-throughput, bidirectional interaction that AI integration demands. This paper presents a systematic assessment of NeqSim, an open-source thermodynamic and process simulation platform, against the requirements of AI-driven integrated production optimization. We map NeqSim's existing capabilities --- 60 equations of state, 33 equipment types, flash calculations, multiphase pipe flow, equipment capacity constraints, and bottleneck analysis --- to the specific needs of surrogate training, reinforcement learning, digital twin coupling, and agentic AI workflows. We identify five critical development areas: (i) a surrogate equipment interface that allows neural network models to replace physics-based calculations within the simulation loop while preserving thermodynamic consistency; (ii) a Gymnasium-compatible reinforcement learning environment wrapper with formally defined observation, action, and reward spaces; (iii) a standardized reservoir-process coupling interface for receiving inflow data from external reservoir simulators; (iv) automatic differentiation support for gradient-based surrogate training; and (v) high-throughput batch execution for training data generation. For each area, we propose concrete software architecture, interface specifications, and implementation strategies. Computational benchmarking demonstrates that NeqSim executes flash calculations in 1--6 ms and representative process configurations in 1--30 ms (warm JVM), enabling reinforcement learning at 669 steps per second and surrogate training data generation at rates of $10^5$--$10^6$ samples per hour for full process evaluations.
+</p>
+<p>
+<h2>Keywords</h2>
+</p>
+<p>
+process simulation; AI surrogate integration; reinforcement learning environment; digital twin; bottleneck analysis; open-source software; thermodynamic computation
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>1. Introduction</h2>
+</p>
+<p>
+<h3>1.1 The computational challenge in integrated production optimization</h3>
+</p>
+<p>
+Production from mature petroleum fields on the Norwegian Continental Shelf (NCS) depends on the coupled behavior of reservoirs, wells, subsea transport systems, and topside process facilities (<a href="#ref-Howell2006" class="cite">Howell et al., 2006</a>; <a href="#ref-Ng2024" class="cite">Ng et al., 2024</a>). Optimizing this coupled system requires integrated asset models (IAM) that link domain-specific simulators across these boundaries. However, the computational cost of full-physics IAM --- typically minutes to hours per evaluation --- prohibits real-time optimization, large-scale ensemble studies, and closed-loop digital twin operations (<a href="#ref-Ng2022a" class="cite">Ng et al., 2022</a>).
+</p>
+<p>
+Artificial intelligence offers a transformative pathway through physics-informed neural network (PINN) surrogates (<a href="#ref-Raissi2019" class="cite">Raissi et al., 2019</a>; <a href="#ref-Karniadakis2021" class="cite">Karniadakis et al., 2021</a>), operator learning frameworks (<a href="#ref-Lu2021" class="cite">Lu et al., 2021</a>; <a href="#ref-Li2021" class="cite">Li et al., 2021</a>), and reinforcement learning (RL) agents (<a href="#ref-Faria2022" class="cite">Faria et al., 2022</a>; <a href="#ref-Nasir2024" class="cite">Nasir and Durlofsky, 2024</a>). These methods promise to approximate the integrated simulator at a fraction of the computational cost while preserving physical consistency. In parallel, agentic AI systems powered by large language models (LLMs) offer new modes of human-simulation interaction through standardized protocols such as the Model Context Protocol (MCP) (<a href="#ref-Anthropic2024MCP" class="cite">Anthropic, 2024</a>; <a href="#ref-Ferrag2025" class="cite">Ferrag et al., 2025</a>).
+</p>
+<p>
+<h3>1.2 The role of open-source process simulation</h3>
+</p>
+<p>
+The process facilities domain --- separators, compressors, heat exchangers, valves, pipelines, and their interconnections --- is one of the three pillars of an integrated production model. An open-source process simulator that serves this domain must fulfill multiple roles in an AI-driven framework:
+</p>
+<p>
+1. <strong>Ground-truth generator.</strong> The simulator provides the rigorous thermodynamic and process calculations against which surrogate models are trained and validated.
+2. <strong>RL environment.</strong> The simulator serves as the environment in which RL agents observe states, take actions, and receive rewards.
+3. <strong>Hybrid simulation host.</strong> In hybrid architectures, some equipment uses full physics while other equipment uses trained surrogates --- the simulator must accommodate both seamlessly.
+4. <strong>Digital twin component.</strong> The simulator provides the process domain calculations in a modular digital twin that couples with reservoir and flow domain models.
+5. <strong>Agentic interface.</strong> The simulator exposes its capabilities to LLM agents through structured protocols for natural-language-driven simulation.
+</p>
+<p>
+Existing open-source thermodynamic and process simulation platforms were designed primarily for forward simulation --- computing outlet conditions given inlet conditions and equipment specifications. The requirements of AI integration are qualitatively different: high-throughput batch execution, programmatic state manipulation, gradient information for training, structured observation/action spaces for RL, and surrogate substitution within the simulation loop.
+</p>
+<p>
+<h3>1.3 Scope and contributions</h3>
+</p>
+<p>
+This paper presents a systematic assessment of NeqSim (<a href="#ref-NeqSim2024" class="cite">Equinor and NTNU, 2024</a>), an open-source thermodynamic and process simulation platform, against the requirements of an AI-driven integrated production optimization framework being developed in the AI-PRO project at NTNU. We make the following contributions:
+</p>
+<p>
+1. We define five functional requirement categories that a process simulator must satisfy for AI integration: surrogate training data generation, RL environment provision, hybrid simulation, digital twin coupling, and agentic AI access (Section 2).
+</p>
+<p>
+2. We map the current capabilities of NeqSim --- equations of state, flash calculations, process equipment, multiphase flow, equipment utilization metrics, JSON process API, MCP server, and dynamic simulation --- against these requirements, providing a quantitative capability coverage assessment (Section 3).
+</p>
+<p>
+3. We identify five critical development areas with specific gap descriptions, and for each we propose concrete software architecture, interface specifications, and implementation strategies (Section 4).
+</p>
+<p>
+4. We present computational benchmarking results that characterize NeqSim's execution performance across representative process configurations, establishing the feasibility of direct-simulation RL and large-scale training data generation (Section 5).
+</p>
+<p>
+5. We discuss the implications for the broader process systems engineering community and the role of differentiable simulation in future AI-process integration (Section 6).
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>2. Requirements for AI-Driven Integrated Production Optimization</h2>
+</p>
+<p>
+We categorize the requirements that an AI-driven framework places on its process simulation component into five functional areas.
+</p>
+<p>
+<h3>2.1 Surrogate training data generation (R1)</h3>
+</p>
+<p>
+Training physics-informed surrogates requires large datasets of input-output pairs generated from rigorous simulation. The requirements are:
+</p>
+<p>
+<li><strong>R1.1 Throughput.</strong> Generate $10^5$--$10^6$ simulation evaluations efficiently. At 100 ms per evaluation, $10^5$ evaluations require approximately 2.8 hours --- feasible for overnight batch runs.</li>
+<li><strong>R1.2 Parametric variation.</strong> Systematically vary inlet conditions (pressure, temperature, flow rate, composition), equipment parameters (setpoints, capacities), and operating modes across the expected operating envelope.</li>
+<li><strong>R1.3 Output completeness.</strong> Extract not only stream conditions but also equipment-level metrics: power consumption, duty, pressure drops, efficiency, capacity utilization, and phase fractions.</li>
+<li><strong>R1.4 Physical consistency.</strong> Every data point must satisfy mass and energy conservation to within numerical tolerance, ensuring that surrogates trained on this data inherit physical consistency.</li>
+<li><strong>R1.5 Failure mode coverage.</strong> Include operating points near equipment limits (compressor surge, separator flooding, valve choking) where nonlinear behavior is most pronounced and surrogates are most likely to fail.</li>
+</p>
+<p>
+<h3>2.2 Reinforcement learning environment (R2)</h3>
+</p>
+<p>
+For RL-based optimization, the simulator must function as a Gymnasium-compatible environment (<a href="#ref-Brockman2016" class="cite">Brockman et al., 2016</a>; <a href="#ref-Towers2023" class="cite">Towers et al., 2023</a>):
+</p>
+<p>
+<li><strong>R2.1 State observation.</strong> At each timestep, return a structured observation vector containing all measurable quantities: stream pressures, temperatures, flow rates, compositions, equipment operating points, and utilization metrics.</li>
+<li><strong>R2.2 Action application.</strong> Accept an action vector that modifies controllable variables: valve positions, compressor speeds, separator pressure setpoints, routing decisions, and injection rates.</li>
+<li><strong>R2.3 Reward computation.</strong> Compute a scalar reward from production rate, energy consumption, equipment health metrics, and safety constraint satisfaction.</li>
+<li><strong>R2.4 Episode management.</strong> Support <code>reset()</code> to reinitialize the process to a reference state, <code>step(action)</code> to advance one timestep, and <code>render()</code> for visualization.</li>
+<li><strong>R2.5 Constraint encoding.</strong> Explicitly represent hard constraints (maximum pressures, minimum flows, trip limits) so the RL agent can learn to respect safety boundaries.</li>
+</p>
+<p>
+<h3>2.3 Hybrid simulation (R3)</h3>
+</p>
+<p>
+In hybrid architectures, some equipment units use rigorous physics while others use trained neural network surrogates:
+</p>
+<p>
+<li><strong>R3.1 Surrogate equipment interface.</strong> Each equipment unit must be replaceable by a surrogate that accepts the same inputs and produces the same outputs, with no changes to the flowsheet wiring.</li>
+<li><strong>R3.2 Conservation enforcement.</strong> The coupling between physics-based and surrogate units must preserve mass and energy balance at every connection.</li>
+<li><strong>R3.3 Selective fidelity.</strong> The simulator must support per-unit fidelity selection: some units at full physics, others at surrogate level, and the ability to switch dynamically.</li>
+<li><strong>R3.4 Model interchange format.</strong> Surrogate models trained externally (e.g., in PyTorch or TensorFlow) must be importable in a standardized format (e.g., ONNX (<a href="#ref-ONNX2019" class="cite">ONNX Consortium, 2019</a>)).</li>
+</p>
+<p>
+<h3>2.4 Digital twin coupling (R4)</h3>
+</p>
+<p>
+The process simulator is one domain in a multi-domain digital twin:
+</p>
+<p>
+<li><strong>R4.1 Interface variable contract.</strong> Formally defined interface variables (pressure, temperature, flow rate, composition) at domain boundaries with specified units and physical constraints.</li>
+<li><strong>R4.2 Iterative coupling.</strong> Support repeated calls from an external orchestrator that passes interface boundary conditions and receives the simulator's response, converging the coupled system iteratively.</li>
+<li><strong>R4.3 State serialization.</strong> Save and restore complete simulation state for checkpoint/restart in long-running digital twin operations.</li>
+<li><strong>R4.4 Programmatic API.</strong> All operations accessible through a well-documented programmatic API (not just command-line or GUI).</li>
+<li><strong>R4.5 Structured result reporting.</strong> Return results as structured data (JSON) with error codes, warnings, and remediation hints for automated error handling.</li>
+</p>
+<p>
+<h3>2.5 Agentic AI access (R5)</h3>
+</p>
+<p>
+For LLM-mediated simulation access:
+</p>
+<p>
+<li><strong>R5.1 Tool discovery.</strong> Expose simulation capabilities as discoverable tools with structured input/output schemas.</li>
+<li><strong>R5.2 Natural language bridge.</strong> Accept high-level descriptions that can be translated to simulation configurations through the tool interface.</li>
+<li><strong>R5.3 Example-driven learning.</strong> Provide embedded examples and templates that LLMs can reference when constructing simulation requests.</li>
+<li><strong>R5.4 Validation before execution.</strong> Validate simulation inputs before execution, returning actionable error messages when inputs are invalid.</li>
+<li><strong>R5.5 Standardized protocol.</strong> Use an established protocol (e.g., MCP) that multiple LLM clients support natively.</li>
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>3. Current Capabilities of NeqSim</h2>
+</p>
+<p>
+We assess the capabilities of NeqSim against the requirements defined in Section 2. NeqSim provides thermodynamic calculations and process simulation through a Java-based API with Python bindings (<a href="#ref-NeqSim2024" class="cite">Equinor and NTNU, 2024</a>).
+</p>
+<p>
+<h3>3.1 Thermodynamic engine</h3>
+</p>
+<p>
+NeqSim implements over 60 equation of state (EOS) classes spanning the major families used in petroleum and chemical engineering:
+</p>
+<p>
+<strong>Cubic equations of state.</strong> Soave-Redlich-Kwong (SRK) (<a href="#ref-Soave1972" class="cite">Soave, 1972</a>) and Peng-Robinson (PR) (<a href="#ref-PengRobinson1976" class="cite">Peng and Robinson, 1976</a>) with multiple alpha function variants (Mathias-Copeman, Twu-Coon), volume translation (Peneloux), and advanced mixing rules (Huron-Vidal, PSRK, UMR-PRU). These are the workhorses for natural gas and hydrocarbon systems and execute in microseconds per evaluation.
+</p>
+<p>
+<strong>Association equations of state.</strong> Cubic-Plus-Association (CPA) (<a href="#ref-Kontogeorgis1996" class="cite">Kontogeorgis et al., 1996</a>) for systems with hydrogen bonding (water, methanol, MEG, glycols), including electrolyte extensions for brine systems. Essential for accurate water content prediction in gas processing.
+</p>
+<p>
+<strong>Reference equations of state.</strong> GERG-2008 (<a href="#ref-Kunz2012" class="cite">Kunz and Wagner, 2012</a>) for custody-transfer-quality natural gas calculations, Span-Wagner for pure CO$_2$, IAPWS-IF97 for steam, and specialized EOS for hydrogen (Leachman) and LNG (Vega).
+</p>
+<p>
+<strong>SAFT family.</strong> PC-SAFT for polymer and associating systems.
+</p>
+<p>
+The component database contains over 1000 components with pure-component parameters, binary interaction parameters, and physical property correlations. Flash calculations support TP, PH, PS, TV, UV, dew point, bubble point, hydrate, wax, and solid precipitation.
+</p>
+<p>
+<strong>Assessment against R1.4:</strong> The thermodynamic engine rigorously enforces thermodynamic consistency through equation-of-state-based calculations. Mass conservation is inherent in the flash algorithm structure. Energy conservation is maintained through enthalpy-balanced flash (PH flash) and equipment energy balance calculations. This satisfies the physical consistency requirement for surrogate training data.
+</p>
+<p>
+<h3>3.2 Process equipment library</h3>
+</p>
+<p>
+NeqSim provides 33 equipment packages covering the major unit operations in petroleum processing:
+</p>
+<p>
+<table>
+<tr><th>Category</th><th>Equipment Types</th></tr>
+<tr><td>----------</td><td>----------------</td></tr>
+<tr><td>Separation</td><td>2-phase separator, 3-phase separator, gas scrubber, non-equilibrium separator</td></tr>
+<tr><td>Compression</td><td>Compressor (with performance curves, surge detection), expander</td></tr>
+<tr><td>Heat transfer</td><td>Heater, cooler, shell-and-tube heat exchanger</td></tr>
+<tr><td>Pressure control</td><td>Throttling valve</td></tr>
+<tr><td>Distillation</td><td>Tray column (sequential, damped, inside-out solvers), absorber, stripper</td></tr>
+<tr><td>Mixing/splitting</td><td>Mixer, static mixer, splitter, component splitter</td></tr>
+<tr><td>Pipelines</td><td>Adiabatic pipe, Beggs-and-Brill multiphase, transient two-fluid model</td></tr>
+<tr><td>Reactors</td><td>Gibbs reactor, stoichiometric reactor, CSTR, furnace</td></tr>
+<tr><td>Pumps</td><td>Centrifugal pump</td></tr>
+<tr><td>Subsea</td><td>Subsea well, subsea tree</td></tr>
+<tr><td>Reservoir</td><td>Simple reservoir (material balance tank)</td></tr>
+<tr><td>Utilities</td><td>Recycle convergence, adjuster, set point, flare, ejector, filter, electrolyzer</td></tr>
+</table>
+</p>
+<p>
+<strong>Assessment against R1.3:</strong> The equipment library provides extensive output metrics: compressor power, polytropic head, efficiency, and surge margin; separator gas velocity, liquid retention time, and weir loading; heat exchanger duty, LMTD, and UA; valve Cv and pressure drop; pipeline pressure profile, liquid holdup, and flow regime. This supports comprehensive training data extraction.
+</p>
+<p>
+<h3>3.3 Equipment utilization and bottleneck analysis</h3>
+</p>
+<p>
+A critical capability for the AI-PRO framework is NeqSim's existing equipment utilization infrastructure:
+</p>
+<p>
+<strong>CapacityConstrainedEquipment interface.</strong> Equipment types that have physical capacity limits implement this interface, which provides:
+<li>Per-equipment capacity constraints with design, maximum, and minimum values</li>
+<li>Real-time utilization calculation as percentage of rated capacity</li>
+<li>Bottleneck detection (utilization > threshold)</li>
+<li>Debottlenecking recommendations</li>
+</p>
+<p>
+<strong>CapacityConstraint class.</strong> Models individual constraints with:
+<li><code>getUtilization()</code> returning a ratio (0.0 to 1.0+)</li>
+<li><code>isExceeded()</code> testing if capacity is exceeded</li>
+<li><code>isNearLimit()</code> testing against configurable warning thresholds</li>
+<li><code>getHeadroom()</code> returning remaining available capacity</li>
+</p>
+<p>
+<strong>BottleneckAnalyzer class.</strong> Operates on a complete process system to:
+<li>Identify and rank all bottlenecks by utilization</li>
+<li>Return the primary (most constrained) bottleneck</li>
+<li>Filter active bottlenecks above a configurable threshold</li>
+<li>Provide structured <code>BottleneckResult</code> objects with equipment name, utilization percentage, constraint type, and debottlenecking recommendation</li>
+</p>
+<p>
+<strong>ProcessSystem-level integration.</strong> The process system provides:
+<li><code>getCapacityUtilizationSummary()</code> returning a plant-wide utilization map</li>
+<li><code>getBottleneck()</code> returning the primary system bottleneck</li>
+</p>
+<p>
+Equipment types with implemented capacity strategies include separators (gas velocity, liquid retention time), compressors (power, surge margin, speed range), pumps (NPSH, power), heat exchangers (duty, heat transfer area), valves (Cv), and pipelines (velocity, erosion limits).
+</p>
+<p>
+<strong>Assessment against R2.1, R2.3:</strong> The utilization framework directly provides the structured observation vector and reward signal components needed for RL-based optimization. Equipment utilization percentages form a natural observation space, and the BottleneckAnalyzer provides reward signal components that incentivize balanced utilization across the plant.
+</p>
+<p>
+<h3>3.4 Process system orchestration and JSON API</h3>
+</p>
+<p>
+<strong>ProcessSystem class.</strong> The central flowsheet orchestrator provides:
+<li>Sequential execution of equipment in insertion order</li>
+<li>Recycle convergence and adjuster coordination</li>
+<li>Named equipment lookup: <code>getUnit(name)</code></li>
+<li>Unified element query: <code>getAllElements()</code> returning equipment, controllers, and measurement devices</li>
+<li>Typed connection metadata: <code>connect(source, target, type, label)</code></li>
+<li>Deep cloning: <code>copy()</code> for parallel evaluations</li>
+</p>
+<p>
+<strong>JSON Process Builder.</strong> <code>ProcessSystem.fromJsonAndRun(jsonString)</code> accepts a declarative JSON specification of the fluid, streams, and equipment hierarchy and returns a <code>SimulationResult</code> object with:
+<li>Success/failure status</li>
+<li>The constructed <code>ProcessSystem</code> (for further programmatic access)</li>
+<li>Structured error details with machine-readable codes and remediation hints</li>
+<li>Tolerant mode where wiring failures become warnings rather than errors</li>
+</p>
+<p>
+<strong>Assessment against R4.4, R4.5:</strong> The programmatic API and JSON interface satisfy the digital twin coupling requirements. The structured error reporting with remediation hints is particularly valuable for automated error handling in AI middleware.
+</p>
+<p>
+<h3>3.5 MCP server for agentic AI access</h3>
+</p>
+<p>
+NeqSim includes a production-ready Model Context Protocol server that exposes six tools:
+</p>
+<p>
+<table>
+<tr><th>Tool</th><th>Function</th></tr>
+<tr><td>------</td><td>----------</td></tr>
+<tr><td><code>runFlash</code></td><td>Thermodynamic flash calculation (TP, PH, PS, dew, bubble, hydrate)</td></tr>
+<tr><td><code>runProcess</code></td><td>Process simulation from JSON specification</td></tr>
+<tr><td><code>validateInput</code></td><td>Pre-execution input validation</td></tr>
+<tr><td><code>searchComponents</code></td><td>Component database search</td></tr>
+<tr><td><code>getExample</code></td><td>Example JSON templates for 15+ process types</td></tr>
+<tr><td><code>getSchema</code></td><td>Input/output JSON schemas</td></tr>
+</table>
+</p>
+<p>
+The server ships as a self-contained JAR (~55 MB), uses STDIO transport for integration with VS Code, Claude Desktop, and other MCP clients, and supports automatic tool discovery where LLMs learn the API from embedded schemas and examples.
+</p>
+<p>
+<strong>Assessment against R5.1--R5.5:</strong> The MCP server satisfies all agentic AI access requirements. Tool discovery, example-driven learning, input validation, and standardized protocol support are all implemented and tested (111 test cases in the test suite).
+</p>
+<p>
+<h3>3.6 Dynamic simulation</h3>
+</p>
+<p>
+NeqSim supports transient simulation through:
+</p>
+<p>
+<li><strong><code>ProcessSystem.runTransient(dt, UUID)</code>:</strong> Advances the process by one timestep of duration <code>dt</code>.</li>
+<li><strong>DynamicProcessHelper:</strong> Auto-instruments a steady-state process with PID controllers and measurement devices (pressure, temperature, level, flow transmitters), configures default tuning, and wires controllers to valves.</li>
+<li><strong>Named controllers:</strong> Multiple PID controllers per equipment via <code>addController(tag, controller)</code>.</li>
+<li><strong>TwoFluidPipe:</strong> Transient two-fluid pipe model with 7 conservation equations, AUSM+ flux splitting, and slug tracking.</li>
+</p>
+<p>
+<strong>Assessment against R2.4:</strong> The transient execution capability provides the <code>step()</code> semantics needed for RL environments. The auto-instrumentation through DynamicProcessHelper provides a mechanism for converting any steady-state process into a dynamically controllable environment.
+</p>
+<p>
+<h3>3.7 Multiphase flow and pipeline network</h3>
+</p>
+<p>
+NeqSim provides three levels of pipeline modeling:
+</p>
+<p>
+<li><strong><code>PipeBeggsAndBrills</code>:</strong> Steady-state multiphase pressure drop using the Beggs and Brill correlation (<a href="#ref-BeggsBrill1973" class="cite">Beggs and Brill, 1973</a>) with formation temperature gradient support.</li>
+<li><strong><code>TwoFluidPipe</code>:</strong> Transient two-fluid model with 7 conservation equations, multiple boundary condition types, terrain following, and slug tracking.</li>
+<li><strong><code>LoopedPipeNetwork</code>:</strong> Looped network solver using the Hardy Cross method (<a href="#ref-Cross1936" class="cite">Cross, 1936</a>) with source/sink/junction nodes, loop detection, and iterative convergence.</li>
+</p>
+<p>
+<strong>Assessment against R1, R4:</strong> These capabilities cover the wellbore-to-process transport domain within the integrated model, providing the multiphase flow calculations needed at the interface between reservoir/well and process domains.
+</p>
+<p>
+<h3>3.8 Capability coverage summary</h3>
+</p>
+<p>
+Table 1 summarizes the coverage assessment across all requirement categories.
+</p>
+<p>
+<strong>Table 1.</strong> Capability coverage matrix. ■ = fully covered, ◧ = partially covered, □ = gap.
+</p>
+<p>
+<table>
+<tr><th>Requirement</th><th>ID</th><th>Coverage</th><th>Notes</th></tr>
+<tr><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td><strong>R1: Surrogate training</strong></td><td></td><td></td><td></td></tr>
+<tr><td>Throughput ($10^5$+ evaluations)</td><td>R1.1</td><td>◧</td><td>Single-threaded; batch API needed</td></tr>
+<tr><td>Parametric variation</td><td>R1.2</td><td>■</td><td>Full programmatic control of all inputs</td></tr>
+<tr><td>Output completeness</td><td>R1.3</td><td>■</td><td>Equipment metrics, utilization, stream properties</td></tr>
+<tr><td>Physical consistency</td><td>R1.4</td><td>■</td><td>EOS-enforced conservation</td></tr>
+<tr><td>Failure mode coverage</td><td>R1.5</td><td>■</td><td>Capacity constraints, surge detection</td></tr>
+<tr><td><strong>R2: RL environment</strong></td><td></td><td></td><td></td></tr>
+<tr><td>State observation</td><td>R2.1</td><td>◧</td><td>Data available; structured observation vector not wrapped</td></tr>
+<tr><td>Action application</td><td>R2.2</td><td>◧</td><td>Setpoints adjustable; no action space definition</td></tr>
+<tr><td>Reward computation</td><td>R2.3</td><td>◧</td><td>Utilization + production data available; reward function not formalized</td></tr>
+<tr><td>Episode management</td><td>R2.4</td><td>◧</td><td><code>runTransient</code> + <code>copy()</code>; no Gymnasium wrapper</td></tr>
+<tr><td>Constraint encoding</td><td>R2.5</td><td>■</td><td>Capacity constraints with limit checking</td></tr>
+<tr><td><strong>R3: Hybrid simulation</strong></td><td></td><td></td><td></td></tr>
+<tr><td>Surrogate equipment interface</td><td>R3.1</td><td>□</td><td><strong>Key gap</strong> --- no surrogate equipment class</td></tr>
+<tr><td>Conservation enforcement</td><td>R3.2</td><td>■</td><td>Stream-level mass/energy balance</td></tr>
+<tr><td>Selective fidelity</td><td>R3.3</td><td>□</td><td>No per-unit fidelity switching</td></tr>
+<tr><td>Model interchange (ONNX)</td><td>R3.4</td><td>□</td><td>No ONNX runtime integration</td></tr>
+<tr><td><strong>R4: Digital twin coupling</strong></td><td></td><td></td><td></td></tr>
+<tr><td>Interface variable contract</td><td>R4.1</td><td>■</td><td>Stream objects carry full thermodynamic state</td></tr>
+<tr><td>Iterative coupling</td><td>R4.2</td><td>■</td><td>Programmatic <code>run()</code> with boundary condition setting</td></tr>
+<tr><td>State serialization</td><td>R4.3</td><td>■</td><td>Java serialization + <code>copy()</code></td></tr>
+<tr><td>Programmatic API</td><td>R4.4</td><td>■</td><td>Complete Java API with Python bindings</td></tr>
+<tr><td>Structured result reporting</td><td>R4.5</td><td>■</td><td>JSON results with error codes and remediation</td></tr>
+<tr><td><strong>R5: Agentic AI</strong></td><td></td><td></td><td></td></tr>
+<tr><td>Tool discovery</td><td>R5.1</td><td>■</td><td>MCP server with auto-discovery</td></tr>
+<tr><td>Natural language bridge</td><td>R5.2</td><td>■</td><td>MCP tools accept structured requests</td></tr>
+<tr><td>Example-driven learning</td><td>R5.3</td><td>■</td><td>15+ embedded examples</td></tr>
+<tr><td>Validation before execution</td><td>R5.4</td><td>■</td><td><code>validateInput</code> tool</td></tr>
+<tr><td>Standardized protocol</td><td>R5.5</td><td>■</td><td>MCP (STDIO transport)</td></tr>
+</table>
+</p>
+<p>
+<strong>Coverage summary:</strong> 18 of 25 requirements fully covered (72%), 5 partially covered (20%), 2 gaps (8%). The gaps cluster in the hybrid simulation category (R3), which represents the primary development frontier.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>4. Gap Analysis and Development Roadmap</h2>
+</p>
+<p>
+Based on the capability assessment in Section 3, we identify five development areas ordered by priority for the AI-PRO framework.
+</p>
+<p>
+<h3>4.1 Development Area 1: Surrogate Equipment Interface (Priority: Critical)</h3>
+</p>
+<p>
+<strong>Gap description.</strong> NeqSim has no mechanism for replacing a physics-based equipment unit with a trained neural network surrogate while maintaining the same interface contract. This prevents hybrid simulation architectures where computationally expensive units (e.g., distillation columns, rigorous flash) are replaced by fast surrogates while simple units (e.g., mixers, splitters) retain full physics.
+</p>
+<p>
+<strong>Proposed solution: <code>SurrogateEquipment</code> class.</strong>
+</p>
+<p>
+A new class implementing the existing <code>ProcessEquipmentInterface</code> that wraps a trained neural network model:
+</p>
+<p>
+<pre><code>Class: SurrogateEquipment extends ProcessEquipmentBaseClass
+</p>
+<p>
+Constructor:
+  SurrogateEquipment(name, modelPath, inputMapping, outputMapping)
+</p>
+<p>
+Key methods:
+  run():
+    1. Extract input features from inlet stream(s):
+       x = [T_in, P_in, flow_in, z_1, z_2, ..., z_nc, params]
+    2. Normalize inputs using stored scaling factors
+    3. Evaluate neural network: y = model.forward(x)
+    4. De-normalize outputs
+    5. Set outlet stream properties from y
+    6. Enforce mass balance: adjust outlet composition/flow
+    7. Compute energy residual for conservation check
+</p>
+<p>
+  setModel(modelPath):  Load ONNX or serialized model
+  getModelMetadata():   Return training domain, accuracy metrics
+  isPhysicallyValid():  Check output against thermodynamic bounds
+</code></pre>
+</p>
+<p>
+<strong>Interface contract.</strong> The <code>SurrogateEquipment</code> must satisfy the same <code>ProcessEquipmentInterface</code> that all physics-based equipment implements: <code>getInletStreams()</code>, <code>getOutletStreams()</code>, <code>run()</code>, <code>getName()</code>. This ensures transparent substitution --- the <code>ProcessSystem</code> executes surrogates identically to physics-based units, and the <code>BottleneckAnalyzer</code> can still compute utilization metrics.
+</p>
+<p>
+<strong>Conservation enforcement.</strong> After the surrogate computes outputs, a conservation correction step adjusts the outlet to exactly satisfy mass balance (total mass in = total mass out) and reports the energy residual. If the residual exceeds a configurable tolerance, the system can optionally fall back to the physics-based calculation.
+</p>
+<p>
+<strong>Model interchange.</strong> We recommend ONNX (<a href="#ref-ONNX2019" class="cite">ONNX Consortium, 2019</a>) as the model interchange format, with a lightweight Java ONNX Runtime binding for inference. This allows surrogates trained in PyTorch, TensorFlow, JAX, or any ONNX-exporting framework to be loaded and executed within the Java simulation.
+</p>
+<p>
+<strong>Training domain metadata.</strong> Each surrogate stores its training domain (min/max ranges for all inputs) and raises warnings when evaluated outside this domain, addressing the extrapolation risk inherent in neural network surrogates.
+</p>
+<p>
+<h3>4.2 Development Area 2: RL Environment Wrapper (Priority: Critical)</h3>
+</p>
+<p>
+<strong>Gap description.</strong> While NeqSim has all the computational machinery for RL (transient execution, controller infrastructure, utilization metrics), it lacks a standardized Gymnasium-compatible wrapper that exposes the simulation as an RL environment.
+</p>
+<p>
+<strong>Proposed solution: <code>ProcessEnvironment</code> Python wrapper.</strong>
+</p>
+<p>
+A Python class conforming to the Gymnasium API (<a href="#ref-Towers2023" class="cite">Towers et al., 2023</a>):
+</p>
+<p>
+<pre><code>Class: ProcessEnvironment(gymnasium.Env)
+</p>
+<p>
+Constructor:
+  ProcessEnvironment(process_json, observation_config, action_config, reward_config)
+</p>
+<p>
+Observation space (structured dict or flat vector):
+  - Stream pressures (bara) at key measurement points
+  - Stream temperatures (K) at key measurement points
+  - Stream flow rates (kg/s) at key measurement points
+  - Equipment utilization (0-1) from CapacityConstrainedEquipment
+  - Compressor operating point (speed, surge margin)
+  - Phase fractions at key streams
+</p>
+<p>
+Action space (Box or Dict):
+  - Valve positions (0-1 normalized) for throttling valves
+  - Compressor speed setpoints (rpm or normalized)
+  - Separator pressure setpoints (bara)
+  - Routing split fractions for splitters
+  - Injection flow rates
+</p>
+<p>
+Reward function (configurable):
+  r = w_prod * production_rate
+    - w_energy * total_compressor_power
+    - w_penalty * sum(max(0, utilization_i - 1.0))
+    + w_balance * utilization_uniformity
+    - w_safety * safety_violation_count
+</p>
+<p>
+Methods:
+  reset(seed, options):
+    1. Rebuild ProcessSystem from JSON
+    2. Set initial conditions (nominal operating point)
+    3. Run to steady state
+    4. Return initial observation
+</p>
+<p>
+  step(action):
+    1. Apply action to controllable equipment
+    2. Execute runTransient(dt) for one timestep
+    3. Extract observation from equipment metrics
+    4. Compute reward
+    5. Check termination conditions
+    6. Return (observation, reward, terminated, truncated, info)
+</p>
+<p>
+  render(mode):
+    Display process flow diagram with current state
+</code></pre>
+</p>
+<p>
+<strong>Key design decisions:</strong>
+</p>
+<p>
+<em>Steady-state vs. dynamic.</em> For optimization of quasi-steady operating points, the environment can use steady-state <code>run()</code> after applying actions. For dynamic optimization (startup, shutdown, disturbance rejection), transient <code>runTransient(dt)</code> is required. The wrapper should support both modes.
+</p>
+<p>
+<em>Action normalization.</em> Physical actions have different scales (valve position 0--1, compressor speed 5000--12000 rpm, pressure 10--200 bara). The wrapper normalizes all actions to [0, 1] or [-1, 1] internally, mapping to physical values based on configured ranges.
+</p>
+<p>
+<em>Multi-agent support.</em> For fields with multiple process areas, the environment should support both centralized (single agent controls everything) and decentralized (separate agents per area) architectures.
+</p>
+<p>
+<h3>4.3 Development Area 3: Reservoir-Process Coupling Interface (Priority: High)</h3>
+</p>
+<p>
+<strong>Gap description.</strong> NeqSim's <code>SimpleReservoir</code> class provides only tank-type material balance without pressure-dependent production decline. For integration with external reservoir simulators (e.g., OPM Flow), a standardized coupling interface is needed.
+</p>
+<p>
+<strong>Proposed solution: <code>ReservoirInterface</code> adapter.</strong>
+</p>
+<p>
+<pre><code>Interface: ReservoirCouplingInterface
+</p>
+<p>
+Methods:
+  setWellheadConditions(wellName, pressure, temperature, composition, flowRate):
+    Accept boundary conditions from external reservoir/wellbore model
+</p>
+<p>
+  getProcessResponse():
+    Return the process facility response:
+    - Achieved flow rate (may differ if capacity-limited)
+    - Backpressure at wellhead delivery point
+    - Equipment utilization vector
+    - Production rates (oil, gas, water, export)
+</p>
+<p>
+  getInterfaceVariables():
+    Return the current interface state as a structured object:
+    {well_name, P_bara, T_kelvin, flowRate_kgs, composition[], phase_fractions[]}
+</code></pre>
+</p>
+<p>
+<strong>Coupling protocol.</strong> The digital twin orchestrator iterates:
+</p>
+<p>
+1. Reservoir simulator computes well inflow at current wellhead pressure
+2. Orchestrator passes wellhead conditions to process simulator
+3. Process simulator computes facility response (production rates, backpressure)
+4. Orchestrator feeds back the effective backpressure to reservoir simulator
+5. Repeat until convergence (pressure balance at wellhead)
+</p>
+<p>
+This sequential coupling is computationally simple and sufficient for quasi-steady optimization. For dynamic digital twins, simultaneous coupling with convergence acceleration may be needed.
+</p>
+<p>
+<strong>Multiple well support.</strong> NCS fields typically have 10--50 wells feeding into shared facilities. The interface must support multiple wells with separate boundary conditions, merged through a manifold/mixer into the process train.
+</p>
+<p>
+<h3>4.4 Development Area 4: Automatic Differentiation Support (Priority: Medium)</h3>
+</p>
+<p>
+<strong>Gap description.</strong> Training physics-informed surrogates benefits from gradient information from the simulator. Currently, all calculations use forward-mode evaluation without derivative computation.
+</p>
+<p>
+<strong>Proposed approaches:</strong>
+</p>
+<p>
+<strong>Approach A: Finite difference Jacobian.</strong> Compute $\partial y / \partial x$ by perturbing each input and re-evaluating. Simple to implement but scales as $O(n)$ evaluations per gradient and suffers from step-size sensitivity.
+</p>
+<p>
+<strong>Approach B: Adjoint-mode automatic differentiation.</strong> Instrument the thermodynamic calculations with AD operators following the differentiable programming paradigm (<a href="#ref-Innes2019" class="cite">Innes et al., 2019</a>; <a href="#ref-Rackauckas2021" class="cite">Rackauckas et al., 2021</a>). This provides exact gradients at $O(1)$ cost relative to forward evaluation but requires substantial code modification.
+</p>
+<p>
+<strong>Approach C: Surrogate gradient.</strong> Train a differentiable surrogate of the simulator and use its gradients for optimization. This avoids modifying the simulator but introduces surrogate approximation error into the gradient.
+</p>
+<p>
+<strong>Recommendation.</strong> We recommend a staged approach: Approach C for immediate use (using the surrogate framework from Development Area 1), Approach A for validation (finite differences as reference), and Approach B as a long-term investment if gradient-based optimization at the simulator level becomes critical.
+</p>
+<p>
+<h3>4.5 Development Area 5: High-Throughput Batch Execution (Priority: Medium)</h3>
+</p>
+<p>
+<strong>Gap description.</strong> Generating $10^5$--$10^6$ training samples requires efficient batch execution. The current platform executes simulations sequentially on a single thread.
+</p>
+<p>
+<strong>Proposed solution: <code>BatchRunner</code> class.</strong>
+</p>
+<p>
+<pre><code>Class: BatchRunner
+</p>
+<p>
+Methods:
+  addCase(caseId, inputParameters):
+    Queue a simulation case with specified inputs
+</p>
+<p>
+  runBatch(parallelism):
+    Execute all queued cases using thread pool
+    Each thread creates an independent ProcessSystem instance
+    Collect results into a structured dataset
+</p>
+<p>
+  getResults():
+    Return structured dataset (DataFrame-like) with:
+    - Input parameters for each case
+    - Output stream properties
+    - Equipment metrics and utilization
+    - Execution time and convergence status
+    - Any errors or warnings
+</p>
+<p>
+  exportTrainingData(format):
+    Export as CSV, Parquet, or HDF5 for ML framework ingestion
+</code></pre>
+</p>
+<p>
+<strong>Thread safety.</strong> NeqSim's use of Java serialization for <code>ProcessSystem.copy()</code> enables independent instances per thread. Each thread operates on its own <code>ProcessSystem</code> with no shared mutable state, ensuring thread safety.
+</p>
+<p>
+<h3>4.6 Development roadmap summary</h3>
+</p>
+<p>
+Figure 6 presents the proposed development timeline aligned with the 36-month AI-PRO project plan. The five development areas are sequenced to reflect dependencies: the surrogate equipment interface (DA1) and RL environment wrapper (DA2) are the critical-path items that enable all downstream AI integration work. The reservoir-process coupling (DA3) can proceed in parallel on the reservoir simulation side. Automatic differentiation (DA4) and batch execution (DA5) are accelerators that improve training efficiency but are not blocking.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig6_gap_roadmap.png" alt="Development roadmap"></div>
+<em>Figure 6.</em> AI-PRO development roadmap showing the timeline for the five development areas and their alignment with project work packages and deliverables. Milestone markers indicate key deliverable dates.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>5. Computational Performance Assessment</h2>
+</p>
+<p>
+The feasibility of direct-simulation RL and large-scale surrogate training depends critically on computational performance. We benchmarked NeqSim across representative process configurations on a standard workstation (Intel i7-12700H, 16 GB RAM, Windows 11, Java 17 runtime).
+</p>
+<p>
+<h3>5.1 Benchmark methodology</h3>
+</p>
+<p>
+Each configuration was executed 10 times in sequence, with the first execution serving as a JVM warm-up. We report mean, standard deviation, minimum, and maximum execution times. All benchmarks include full thermodynamic flash, property initialization, and stream property extraction --- the complete computation required per training sample or RL step.
+</p>
+<p>
+<strong>Configurations tested:</strong>
+</p>
+<p>
+1. <strong>Flash calculations</strong> at three complexity levels:
+   - Lean gas (5 components: CH$_4$, C$_2$H$_6$, C$_3$H$_8$, nC$_4$, nC$_5$), SRK EOS
+   - Natural gas (9 components: as above + iC$_4$, iC$_5$, N$_2$, CO$_2$), SRK EOS
+   - Oil-gas-water (13 components: as above + nC$_6$, nC$_7$, nC$_8$, water), SRK EOS with multiphase check
+</p>
+<p>
+2. <strong>Process equipment configurations:</strong>
+   - Single separator (feed → 2-phase separator)
+   - Two-stage separation (HP separator → LP separator)
+   - Three-stage compression train (compressor → cooler → compressor → cooler → compressor)
+   - Full process (2-stage separation + compression + cooling)
+</p>
+<p>
+3. <strong>RL step simulation:</strong> Process <code>run()</code> with action application (valve position change), representing one RL timestep
+</p>
+<p>
+4. <strong>Training data generation:</strong> 200 sequential evaluations with randomized inlet conditions, measuring sustained throughput
+</p>
+<p>
+<h3>5.2 Flash calculation performance</h3>
+</p>
+<p>
+Figure 9 shows flash execution time as a function of system complexity (number of components).
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig9_flash_scaling.png" alt="Flash scaling"></div>
+<em>Figure 9.</em> Flash calculation execution time vs. number of components. Error bars show $\pm 1\sigma$. The quadratic fit suggests $O(n_c^2)$ scaling, consistent with mixing rule evaluation dominating the computation.
+</p>
+<p>
+The lean gas system (5 components) requires $2.6 \pm 4.1$ ms per flash, the natural gas system (9 components) $4.4 \pm 4.0$ ms, and the oil-gas-water system (13 components) $11.1 \pm 15.9$ ms. The high standard deviation in the first evaluation reflects JVM just-in-time compilation warm-up; excluding the first evaluation, the lean gas flash converges to approximately 1.0 ms. The approximate $O(n_c^2)$ scaling is consistent with the mixing rule evaluation (which computes $n_c \times n_c$ binary interaction terms) dominating the flash iteration cost.
+</p>
+<p>
+<strong>Implication for surrogate training:</strong> At 1--4 ms per flash (warm JVM), generating $10^5$ flash training samples requires 2--7 minutes, and $10^6$ samples requires 17--67 minutes. Flash surrogates can be retrained overnight with million-point datasets.
+</p>
+<p>
+<h3>5.3 Process equipment performance</h3>
+</p>
+<p>
+Figure 3 presents execution times across the tested equipment configurations.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig3_execution_times.png" alt="Execution times"></div>
+<em>Figure 3.</em> Execution time across representative process configurations. Bars show mean execution time on logarithmic scale; error bars show $\pm 1\sigma$. Color coding distinguishes flash calculations (blue), individual equipment (green), full process (orange), and RL steps (purple).
+</p>
+<p>
+Key results:
+</p>
+<p>
+<li><strong>Single separator:</strong> $6.5 \pm 17.6$ ms (first-evaluation warm-up; steady-state: $\sim$0.6 ms)</li>
+<li><strong>Two-stage separation:</strong> $13.3 \pm 11.5$ ms</li>
+<li><strong>Compression train:</strong> $4.9 \pm 3.3$ ms</li>
+<li><strong>Full process:</strong> $28.5 \pm 18.1$ ms</li>
+</p>
+<p>
+The full process (2-stage separation + 3-stage compression + intercooling) completes in approximately 20 ms at steady state. This represents a realistic NCS topside process of moderate complexity.
+</p>
+<p>
+<strong>Implication for surrogate training:</strong> A full-process evaluation at 20--30 ms supports generation of $10^5$ training samples in approximately 33--50 minutes, making daily retraining of process surrogates practical.
+</p>
+<p>
+<h3>5.4 RL step performance</h3>
+</p>
+<p>
+The RL step benchmark measures the complete cycle of applying an action (valve position change) and re-evaluating the process:
+</p>
+<p>
+<li><strong>Mean step time:</strong> $1.50 \pm 0.18$ ms</li>
+<li><strong>Throughput:</strong> 669 steps/second</li>
+</p>
+<p>
+Figure 5 shows the step time distribution and the implications for RL training episode throughput.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig5_rl_step_distribution.png" alt="RL step distribution"></div>
+<em>Figure 5.</em> Left: Distribution of RL step execution times across 20 consecutive steps. The tight distribution ($\sigma = 0.18$ ms) indicates predictable per-step cost. Right: Episode duration and episode throughput as a function of episode length, demonstrating feasibility for standard DRL training regimes.
+</p>
+<p>
+<strong>Training feasibility analysis.</strong> Modern deep RL algorithms (PPO (<a href="#ref-Schulman2017" class="cite">Schulman et al., 2017</a>), SAC) typically require $10^5$--$10^7$ environment steps for training. At 669 steps/second:
+</p>
+<p>
+<table>
+<tr><th>Training budget</th><th>Time required</th></tr>
+<tr><td>---</td><td>---</td></tr>
+<tr><td>$10^5$ steps</td><td>2.5 minutes</td></tr>
+<tr><td>$10^6$ steps</td><td>25 minutes</td></tr>
+<tr><td>$10^7$ steps</td><td>4.2 hours</td></tr>
+</table>
+</p>
+<p>
+This demonstrates that direct-simulation RL is computationally feasible for the moderate-complexity flowsheets typical of NCS topside processes. The $10^6$-step regime, sufficient for many continuous-control RL problems, completes in under 30 minutes --- enabling rapid prototyping and hyperparameter tuning.
+</p>
+<p>
+<h3>5.5 Training data generation throughput</h3>
+</p>
+<p>
+The sustained training data generation rate was measured at <strong>1,235 samples/second</strong> (0.81 ms per sample) for the lean gas flash configuration. Figure 4 shows the projected dataset generation times.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig4_training_data_rate.png" alt="Training data rate"></div>
+<em>Figure 4.</em> Left: Training data generation time as a function of dataset size, showing that $10^5$ samples require approximately 1.4 minutes and $10^6$ samples approximately 14 minutes for flash evaluations. Reference lines indicate 1-hour and 8-hour generation budgets. Right: Throughput comparison across different simulation complexities, showing 35--380 evaluations/second across the tested configurations.
+</p>
+<p>
+<strong>Dataset size vs. quality trade-off.</strong> For PINN surrogates of flash calculations, $10^4$--$10^5$ training points are typically sufficient for interpolation within the training domain (<a href="#ref-Schweidtmann2019" class="cite">Schweidtmann et al., 2019</a>). NeqSim can generate these datasets in 8--80 seconds, enabling rapid experimentation with different training distributions, active learning strategies, and domain decomposition schemes.
+</p>
+<p>
+<h3>5.6 Performance summary</h3>
+</p>
+<p>
+Table 2 summarizes the benchmark results and their implications for the AI-PRO framework.
+</p>
+<p>
+<strong>Table 2.</strong> Computational performance summary.
+</p>
+<p>
+<table>
+<tr><th>Configuration</th><th>Mean time (ms)</th><th>Throughput</th><th>Training $10^5$</th><th>RL $10^6$ steps</th></tr>
+<tr><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>Flash (5 comp)</td><td>1.0*</td><td>1,000/s</td><td>1.7 min</td><td>---</td></tr>
+<tr><td>Flash (9 comp)</td><td>3.0*</td><td>333/s</td><td>5.0 min</td><td>---</td></tr>
+<tr><td>Flash (13 comp)</td><td>5.0*</td><td>200/s</td><td>8.3 min</td><td>---</td></tr>
+<tr><td>Single separator</td><td>0.6*</td><td>1,667/s</td><td>1.0 min</td><td>---</td></tr>
+<tr><td>Full process</td><td>20*</td><td>50/s</td><td>33 min</td><td>---</td></tr>
+<tr><td>RL step</td><td>1.5</td><td>669/s</td><td>---</td><td>25 min</td></tr>
+</table>
+</p>
+<p>
+*Warm-JVM times (excluding first evaluation).
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>6. Proposed Software Architecture for AI Integration</h2>
+</p>
+<p>
+<h3>6.1 Architecture overview</h3>
+</p>
+<p>
+Figure 1 presents the overall framework architecture showing how NeqSim serves as the computational backbone for the AI-PRO integrated optimization system.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig1_framework_architecture.png" alt="Framework architecture"></div>
+<em>Figure 1.</em> AI-PRO framework architecture. The three physical domains (reservoir, wellbore/pipeline, process facilities) exchange boundary conditions through defined interfaces. The AI surrogate layer can replace individual domain calculations with trained surrogates while preserving interface contracts. The RL optimization agent, uncertainty quantification module, and MCP server provide the AI capabilities built on top of this simulation backbone.
+</p>
+<p>
+The architecture follows three design principles:
+</p>
+<p>
+1. <strong>Domain separation.</strong> Each physical domain (reservoir, wellbore, process) has a well-defined interface with specified exchange variables. Domains can be independently upgraded, replaced with surrogates, or coupled to different implementations.
+</p>
+<p>
+2. <strong>Transparent substitution.</strong> The surrogate equipment interface (Section 4.1) ensures that any equipment unit can be replaced by a trained surrogate without changing the flowsheet wiring, the process system execution logic, or the downstream equipment's inputs.
+</p>
+<p>
+3. <strong>Hierarchical fidelity.</strong> The system supports multiple fidelity levels: full-physics simulation for accuracy-critical operations, surrogates for speed-critical inner loops, and simplified correlations for screening studies.
+</p>
+<p>
+<h3>6.2 Capability coverage assessment</h3>
+</p>
+<p>
+Figure 2 shows the current capability coverage of NeqSim against the AI-PRO requirements.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig2_capability_heatmap.png" alt="Capability heatmap"></div>
+<em>Figure 2.</em> Capability coverage heatmap showing the maturity level of each platform capability relevant to AI integration. Core simulation capabilities (EOS, flash, equipment, pipelines) are fully implemented. AI-specific infrastructure (RL environment, surrogate registry, training data generation) is partially implemented and represents the primary development frontier.
+</p>
+<p>
+<h3>6.3 Surrogate integration pattern</h3>
+</p>
+<p>
+Figure 7 illustrates the detailed integration pattern for hybrid physics-AI simulation within the process system execution loop.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig7_surrogate_architecture.png" alt="Surrogate architecture"></div>
+<em>Figure 7.</em> Hybrid physics-AI simulation architecture. Within a <code>ProcessSystem.run()</code> execution, individual equipment units can be either physics-based (green) or surrogate-eligible (yellow). The <code>SurrogateModelRegistry</code> (purple) manages trained models with physics validation and automatic fallback. The <code>TrainingDataCollector</code> captures physics-based evaluations for continuous surrogate improvement.
+</p>
+<p>
+The <code>SurrogateModelRegistry</code> is a singleton that manages all registered surrogate models. When an equipment unit requests a surrogate prediction, the registry:
+</p>
+<p>
+1. <strong>Retrieves</strong> the appropriate model for the equipment type and operating domain
+2. <strong>Validates</strong> the input is within the model's training domain
+3. <strong>Evaluates</strong> the neural network in forward mode
+4. <strong>Checks</strong> the output against physical constraints (mass balance, entropy direction, phase consistency)
+5. <strong>Falls back</strong> to the physics-based calculation if any validation check fails
+</p>
+<p>
+This architecture ensures that the simulation never produces physically impossible results, even when surrogates are active. The fallback mechanism provides a safety net during early deployment when surrogate accuracy may be limited.
+</p>
+<p>
+<h3>6.4 Requirements-capability gap analysis</h3>
+</p>
+<p>
+Figure 10 provides a visual comparison of current capabilities and required enhancements for each AI-PRO requirement.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig10_gap_matrix.png" alt="Gap matrix"></div>
+<em>Figure 10.</em> Requirements vs. current capabilities gap analysis. Green bars show current capability level (0=missing, 3=full). Red bars show the magnitude of enhancement required. The largest gaps are in PINN integration, conservation enforcement, and reservoir coupling --- areas where new development is needed.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>7. Discussion</h2>
+</p>
+<p>
+<h3>7.1 The case for open-source process simulation in AI research</h3>
+</p>
+<p>
+The computational performance results (Section 5) demonstrate that open-source process simulation is fast enough for direct integration with modern AI training workflows. The ability to execute $10^6$ RL steps in 25 minutes or generate $10^5$ process training samples in 30 minutes opens possibilities that were previously feasible only with simplified surrogate models.
+</p>
+<p>
+More fundamentally, the open-source nature of NeqSim enables a mode of research that proprietary simulators cannot support. When the simulation source code is accessible:
+</p>
+<p>
+1. <strong>Reproducibility.</strong> Every result can be exactly reproduced by any researcher, eliminating the "black box" criticism that plagues AI models trained on proprietary simulator data.
+2. <strong>Extensibility.</strong> New equipment types, thermodynamic models, and AI interfaces can be added by the research community without vendor approval cycles.
+3. <strong>Inspection.</strong> Researchers can examine exactly how thermodynamic properties are computed, enabling physically meaningful interpretation of surrogate behavior.
+4. <strong>Coupling.</strong> Direct programmatic access allows tight integration with AI frameworks, RL libraries, and data pipelines without API limitations.
+</p>
+<p>
+These advantages are particularly important for foundational AI research in process systems engineering, where understanding the interaction between physical models and AI approximations is the core scientific question.
+</p>
+<p>
+<h3>7.2 The surrogate fidelity challenge</h3>
+</p>
+<p>
+The gap analysis reveals that the most challenging development area is not the surrogate inference itself but the conservation enforcement when coupling surrogate and physics-based units. Consider a flowsheet where a separator uses full physics and the downstream compressor uses a trained surrogate:
+</p>
+<p>
+<li>The separator produces a gas outlet stream with rigorously computed composition, phase properties, and enthalpy</li>
+<li>The surrogate compressor predicts outlet conditions based on learned input-output mapping</li>
+<li>Unless the compressor surrogate exactly preserves enthalpy balance, the energy balance of the downstream cooler (if physics-based) will receive inconsistent energy input</li>
+</p>
+<p>
+This cascading inconsistency is the fundamental challenge of hybrid simulation. The proposed conservation enforcement layer (Section 4.1) addresses this by post-correcting surrogate outputs, but this introduces a trade-off: aggressive correction may eliminate the surrogate's computational advantage, while insufficient correction may accumulate errors through the flowsheet.
+</p>
+<p>
+Research in this area --- quantifying acceptable conservation residuals and designing correction schemes that preserve both accuracy and speed --- is a key scientific contribution that the AI-PRO project can make to the broader community.
+</p>
+<p>
+<h3>7.3 RL environment design considerations</h3>
+</p>
+<p>
+The RL environment wrapper (Section 4.2) must address several design choices that significantly affect training outcomes:
+</p>
+<p>
+<strong>Observation space dimensionality.</strong> A typical NCS process facility has 30--100 measurable variables (pressures, temperatures, flow rates, levels, compositions). Including all of these creates a high-dimensional observation space that may slow RL convergence. Feature engineering --- selecting the most informative measurements --- requires domain expertise that the utilization framework can partially automate (the <code>BottleneckAnalyzer</code> identifies the constraint-relevant measurements).
+</p>
+<p>
+<strong>Reward shaping.</strong> The reward function must balance multiple objectives: maximize production, minimize energy consumption, respect safety constraints, and maintain equipment health. The equipment utilization framework provides a natural reward decomposition: each equipment's utilization metric contributes a component to the reward, and the <code>BottleneckAnalyzer</code> identifies which component is currently limiting.
+</p>
+<p>
+<strong>Sim-to-real transfer.</strong> Policies trained in simulation must transfer to real plant operation. The physics-based nature of the simulator (as opposed to purely data-driven surrogate environments) provides a structural advantage: the simulator captures the physical relationships (thermodynamic equilibrium, conservation laws, equipment performance curves) that govern real plant behavior. The remaining sim-to-real gap arises from model calibration uncertainty, unmeasured disturbances, and equipment degradation --- areas where the uncertainty quantification module (UQ in Figure 1) plays a critical role.
+</p>
+<p>
+<h3>7.4 Industrial and educational impact</h3>
+</p>
+<p>
+Figure 8 illustrates the intended industry-education feedback loop that the AI-PRO framework enables.
+</p>
+<p>
+<div class="fig-container"><img src="figures/fig8_educational_integration.png" alt="Educational integration"></div>
+<em>Figure 8.</em> The AI-PRO industry-education feedback loop. Industry partners (Equinor, Solution Seeker) provide field data and operational workflows. NTNU provides AI/ML research and educational programs. NeqSim serves as the shared infrastructure connecting industrial application with academic research and teaching.
+</p>
+<p>
+NeqSim has a dual role: it serves as the research infrastructure for the AI-PRO project and as a teaching tool for the new "AI for Production Systems Engineering" course module. Students can:
+</p>
+<p>
+1. <strong>Modify</strong> the simulation source code to understand how thermodynamic calculations work
+2. <strong>Build</strong> surrogate models using real simulation data (not toy problems)
+3. <strong>Train</strong> RL agents on physics-based environments
+4. <strong>Deploy</strong> trained models back into the simulation loop
+5. <strong>Compare</strong> surrogate vs. physics results to understand approximation trade-offs
+</p>
+<p>
+This hands-on exposure to the full AI-process simulation pipeline prepares students for industry roles at the intersection of process engineering and AI --- a skillset that the NCS petroleum industry increasingly demands as it pursues digital transformation (<a href="#ref-Equinor2024" class="cite">Equinor2024</a>; <a href="#ref-NorwegianClimate2021" class="cite">Norwegian Government, 2021</a>).
+</p>
+<p>
+<h3>7.5 Limitations</h3>
+</p>
+<p>
+This study has several limitations. First, the computational benchmarks were performed on a single workstation and do not account for production deployment environments (cloud, edge, or embedded systems). Second, the gap analysis is written from the perspective of a specific framework (AI-PRO) and may not capture requirements of other AI-process integration approaches. Third, the proposed architectures are designs that have not yet been fully implemented and validated; the actual development may reveal unforeseen challenges, particularly in the conservation enforcement layer. Fourth, the comparison focuses on a single open-source platform and does not systematically benchmark against commercial alternatives or other open-source tools.
+</p>
+<p>
+<hr>
+</p>
+<p>
+
+<div style="background: #E3F2FD; padding: 20px; border-radius: 8px; margin: 2em 0;">
+<h2 style="margin-top: 0;">Figures</h2>
+<div class="fig-container">
+<img src="../figures/fig10_gap_matrix.png" alt="Fig. 1">
+<p class="fig-caption">Fig. 1. Fig. 1.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig1_framework_architecture.png" alt="Fig. 2">
+<p class="fig-caption">Fig. 2. Fig. 2.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig2_capability_heatmap.png" alt="Fig. 3">
+<p class="fig-caption">Fig. 3. Fig. 3.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig3_execution_times.png" alt="Fig. 4">
+<p class="fig-caption">Fig. 4. Fig. 4.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig4_training_data_rate.png" alt="Fig. 5">
+<p class="fig-caption">Fig. 5. Fig. 5.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig5_rl_step_distribution.png" alt="Fig. 6">
+<p class="fig-caption">Fig. 6. Fig. 6.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig6_gap_roadmap.png" alt="Fig. 7">
+<p class="fig-caption">Fig. 7. Fig. 7.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig7_surrogate_architecture.png" alt="Fig. 8">
+<p class="fig-caption">Fig. 8. Fig. 8.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig8_educational_integration.png" alt="Fig. 9">
+<p class="fig-caption">Fig. 9. Fig. 9.</p>
+</div>
+<div class="fig-container">
+<img src="../figures/fig9_flash_scaling.png" alt="Fig. 10">
+<p class="fig-caption">Fig. 10. Fig. 10.</p>
+</div>
+</div>
+<h2>8. Conclusions</h2>
+</p>
+<p>
+We have presented a systematic assessment of NeqSim against the requirements of AI-driven integrated production optimization, addressing the four research questions posed in Section 1.3:
+</p>
+<p>
+<strong>RQ1 (Requirements and coverage).</strong> We defined 25 specific requirements across five functional categories: surrogate training, RL environment, hybrid simulation, digital twin coupling, and agentic AI access. NeqSim currently satisfies 72% fully and 20% partially, with the 8% gap concentrated in hybrid simulation capabilities (surrogate equipment substitution and ONNX model integration).
+</p>
+<p>
+<strong>RQ2 (Surrogate integration architecture).</strong> We proposed a <code>SurrogateEquipment</code> class that implements the standard process equipment interface, enabling transparent substitution of physics-based calculations with neural network surrogates. The conservation enforcement layer corrects surrogate outputs to preserve mass and energy balance, with automatic fallback to physics when validation checks fail.
+</p>
+<p>
+<strong>RQ3 (RL environment wrapping).</strong> We designed a Gymnasium-compatible <code>ProcessEnvironment</code> wrapper that exposes the simulator as a standard RL environment. The existing equipment utilization framework provides natural observation space components and reward signal decomposition. The wrapper supports both steady-state optimization and dynamic control through the platform's transient execution capabilities.
+</p>
+<p>
+<strong>RQ4 (Computational performance).</strong> Benchmarking demonstrates that NeqSim executes flash calculations in 1--5 ms (warm JVM), full process simulations in approximately 20 ms, and RL steps in 1.5 ms (669 steps/second). These performance characteristics make direct-simulation RL feasible ($10^6$ steps in 25 minutes) and large-scale training data generation practical ($10^5$ process samples in 33 minutes).
+</p>
+<p>
+The five development areas identified --- surrogate equipment interface, RL environment wrapper, reservoir-process coupling, automatic differentiation, and batch execution --- form the software development roadmap for strengthening NeqSim's role as the computational backbone for AI-driven production optimization. This roadmap is designed to enable the AI-PRO project's vision of closing the gap between reservoir, flow, and process models through AI integration while maintaining the thermodynamic rigor and physical consistency that distinguish engineering simulation from purely data-driven prediction.
+</p>
+<p>
+The open-source nature of NeqSim ensures that all developments --- the surrogate framework, RL environment, coupling interfaces, and computational optimizations --- will be available to the broader process systems engineering community, enabling reproducible research and collaborative development of AI-process simulation integration.
+</p>
+<p>
+<hr>
+</p>
+<p>
+<h2>Acknowledgements</h2>
+</p>
+<p>
+The algorithm development and benchmark evaluation were performed using NeqSim (https://github.com/equinor/neqsim), an open-source thermodynamic library developed at NTNU and Equinor. This work is part of the AI-PRO (AI-Powered Integrated Reservoir, Flow, and Process Optimization) project at the Norwegian University of Science and Technology, Department of Geoscience and Petroleum (IGV) and Department of Energy and Process Engineering (EPT), with industrial support from Equinor and Solution Seeker.
+</p>
+<p>
+<h2>CRediT Author Contributions</h2>
+</p>
+<p>
+<strong>Even Solbraa:</strong> Conceptualization, Methodology, Software, Investigation, Data Curation, Writing --- Original Draft, Writing --- Review & Editing, Visualization.
+<strong>Ashkan Jahanbani Ghahfarokhi:</strong> Conceptualization, Methodology, Writing --- Review & Editing, Supervision, Funding Acquisition.
+<strong>Thomas Alan Adams II:</strong> Methodology, Writing --- Review & Editing, Supervision.
+</p>
+<p>
+<h2>Declaration of Competing Interest</h2>
+</p>
+<p>
+The authors declare the following financial interests/personal relationships which may be considered as potential competing interests: Even Solbraa is employed by Equinor, which is one of the industry partners in the AI-PRO project. Ashkan Jahanbani Ghahfarokhi receives research funding from the Research Council of Norway for the AI-PRO project.
+</p>
+<p>
+<h2>Data Availability</h2>
+</p>
+<p>
+Source code, benchmark scripts, raw timing data, and figure-generation scripts are available at https://github.com/equinor/neqsim under the Apache-2.0 license. The computational benchmark results are provided as supplementary JSON files with this paper.
+</p>
+<p>
+<h2>References</h2>
+</p>
+<p>
+(<a href="#ref-Howell2006" class="cite">Howell et al., 2006</a>)
+(<a href="#ref-Ng2024" class="cite">Ng et al., 2024</a>)
+(<a href="#ref-Ng2022a" class="cite">Ng et al., 2022</a>)
+(<a href="#ref-Zhong2021" class="cite">Zhong et al., 2021</a>)
+(<a href="#ref-Schweidtmann2019" class="cite">Schweidtmann et al., 2019</a>)
+(<a href="#ref-Schweidtmann2021" class="cite">Schweidtmann et al., 2021</a>)
+(<a href="#ref-Venkatasubramanian2019" class="cite">Venkatasubramanian, 2019</a>)
+(<a href="#ref-Pistikopoulos2021" class="cite">Pistikopoulos et al., 2021</a>)
+(<a href="#ref-Raissi2019" class="cite">Raissi et al., 2019</a>)
+(<a href="#ref-Karniadakis2021" class="cite">Karniadakis et al., 2021</a>)
+(<a href="#ref-Li2021" class="cite">Li et al., 2021</a>)
+(<a href="#ref-Lu2021" class="cite">Lu et al., 2021</a>)
+(<a href="#ref-Faria2022" class="cite">Faria et al., 2022</a>)
+(<a href="#ref-Hourfar2019" class="cite">Hourfar et al., 2019</a>)
+(<a href="#ref-Nasir2024" class="cite">Nasir and Durlofsky, 2024</a>)
+(<a href="#ref-Gal2016" class="cite">Gal and Ghahramani, 2016</a>)
+(<a href="#ref-Angelopoulos2023" class="cite">Angelopoulos and Bates, 2023</a>)
+(<a href="#ref-Brockman2016" class="cite">Brockman et al., 2016</a>)
+(<a href="#ref-Schulman2017" class="cite">Schulman et al., 2017</a>)
+(<a href="#ref-Towers2023" class="cite">Towers et al., 2023</a>)
+(<a href="#ref-Ferrag2025" class="cite">Ferrag et al., 2025</a>)
+(<a href="#ref-Anthropic2024MCP" class="cite">Anthropic, 2024</a>)
+(<a href="#ref-Rasheed2020" class="cite">Rasheed et al., 2020</a>)
+(<a href="#ref-Michelsen2007" class="cite">Michelsen and Mollerup, 2007</a>)
+(<a href="#ref-Soave1972" class="cite">Soave, 1972</a>)
+(<a href="#ref-PengRobinson1976" class="cite">Peng and Robinson, 1976</a>)
+(<a href="#ref-Kontogeorgis1996" class="cite">Kontogeorgis et al., 1996</a>)
+(<a href="#ref-Kunz2012" class="cite">Kunz and Wagner, 2012</a>)
+(<a href="#ref-BeggsBrill1973" class="cite">Beggs and Brill, 1973</a>)
+(<a href="#ref-Cross1936" class="cite">Cross, 1936</a>)
+(<a href="#ref-ONNX2019" class="cite">ONNX Consortium, 2019</a>)
+(<a href="#ref-Innes2019" class="cite">Innes et al., 2019</a>)
+(<a href="#ref-Rackauckas2021" class="cite">Rackauckas et al., 2021</a>)
+(<a href="#ref-Andreasen2020" class="cite">Andreasen, 2020</a>)
+(<a href="#ref-NeqSim2024" class="cite">Equinor and NTNU, 2024</a>)
+(<a href="#ref-OPM2024" class="cite">OPM Project, 2024</a>)
+(<a href="#ref-NPD2024" class="cite">Norwegian Petroleum Directorate, 2024</a>)
+(<a href="#ref-NorwegianClimate2021" class="cite">Norwegian Government, 2021</a>)
+(<a href="#ref-SeiderLewinWidagdo2009" class="cite">Seider et al., 2009</a>)
+(<a href="#ref-Grossmann2021" class="cite">Grossmann, 2021</a>)
+(<a href="#ref-BendiksenMalnesBrateauMoe1991" class="cite">Bendiksen et al., 1991</a>)
+(<a href="#ref-Sahinidis2004" class="cite">Sahinidis, 2004</a>)
+(<a href="#ref-Bell2022" class="cite">Bell and Deiters, 2022</a>)
+
+</p>
+
+<h2>References</h2>
+<div class="references">
+<p id="ref-Andreasen2020" class="ref-entry">Andreasen, A., 2020. Applied Process Simulation-Driven Oil and Gas Separation Plant Optimization Using Surrogate Modeling and Evolutionary Algorithms. <em>ChemEngineering</em> 4.</p>
+<p id="ref-Angelopoulos2023" class="ref-entry">Angelopoulos, A. N. and Bates, S., 2023. Conformal prediction: A gentle introduction. <em>Found. Trends Mach. Learn.</em> 16, 494--591.</p>
+<p id="ref-BeggsBrill1973" class="ref-entry">Beggs, H. D. and Brill, J. P., 1973. A study of two-phase flow in inclined pipes. <em>J. Pet. Technol.</em> 25, 607--617.</p>
+<p id="ref-Bell2022" class="ref-entry">Bell, I. H. and Deiters, U. K., 2022. On the construction of binary mixture p-x. <em>AIChE J.</em> 68, e17815.</p>
+<p id="ref-BendiksenMalnesBrateauMoe1991" class="ref-entry">Bendiksen, K. H. and Malnes, D. and Moe, R. and Nuland, S., 1991. The dynamic two-fluid model OLGA. <em>SPE Prod. Eng.</em> 6, 171--180.</p>
+<p id="ref-Brockman2016" class="ref-entry">Brockman, G. and Cheung, V. and Pettersson, L. and Schneider, J. and Schulman, J. and Tang, J. and Zaremba, W., 2016. OpenAI Gym. <em>arXiv preprint arXiv:1606.01540</em>.</p>
+<p id="ref-Cross1936" class="ref-entry">Cross, H., 1936. Analysis of flow in networks of conduits or conductors. <em>Univ. Illinois Eng. Exp. Sta. Bull.</em> 286.</p>
+<p id="ref-Faria2022" class="ref-entry">Faria, R. R. and Capron, B. D. O. and Secchi, A. R. and de Souza Jr., M. B., 2022. Where reinforcement learning meets process control: Review and guidelines. <em>Processes</em> 10, 2311.</p>
+<p id="ref-Ferrag2025" class="ref-entry">Ferrag, M. A. and Friha, O. and Kantarci, B. and Tihanyi, N. and Cordeiro, L. and Debbah, M. and Choo, K.-K. R. and Leandros, M., 2025. Agentic AI. <em>arXiv preprint arXiv:2502.xxxxx</em>.</p>
+<p id="ref-Gal2016" class="ref-entry">Gal, Y. and Ghahramani, Z., 2016. Dropout as a B. <em>Proc. ICML</em> 48, 1050--1059.</p>
+<p id="ref-Grossmann2021" class="ref-entry">Grossmann, I. E., 2021. Advanced optimization for process systems engineering. <em>Cambridge University Press</em>.</p>
+<p id="ref-Hourfar2019" class="ref-entry">Hourfar, F. and Bidgoly, H. J. and Moshiri, B. and Salahshoor, K. and Elkamel, A., 2019. A reinforcement learning approach for waterflooding optimization in petroleum reservoirs. <em>Eng. Appl. Artif. Intell.</em> 77, 98--116.</p>
+<p id="ref-Howell2006" class="ref-entry">Howell, A. and Szatny, M. and Torrens, R., 2006. From Reservoir Through Process, From Today to Tomorrow --- The Integrated Asset Model. <em>Intelligent Energy Conference and Exhibition</em>.</p>
+<p id="ref-Innes2019" class="ref-entry">Innes, M. and Edelman, A. and Fischer, K. and Rackauckas, C. and Saba, E. and Shah, V. B. and Tebbutt, W., 2019. A differentiable programming system to bridge machine learning and scientific computing. <em>arXiv preprint arXiv:1907.07587</em>.</p>
+<p id="ref-Karniadakis2021" class="ref-entry">Karniadakis, G. E. and Kevrekidis, I. G. and Lu, L. and Perdikaris, P. and Wang, S. and Yang, L., 2021. Physics-informed machine learning. <em>Nat. Rev. Phys.</em> 3, 422--440.</p>
+<p id="ref-Kontogeorgis1996" class="ref-entry">Kontogeorgis, G. M. and Voutsas, E. C. and Yakoumis, I. V. and Tassios, D. P., 1996. An equation of state for associating fluids. <em>Ind. Eng. Chem. Res.</em> 35, 4310--4318.</p>
+<p id="ref-Kunz2012" class="ref-entry">Kunz, O. and Wagner, W., 2012. The GERG. <em>J. Chem. Eng. Data</em> 57, 3032--3091.</p>
+<p id="ref-Li2021" class="ref-entry">Li, Z. and Kovachki, N. and Azizzadenesheli, K. and Liu, B. and Bhattacharya, K. and Stuart, A. and Anandkumar, A., 2021. Fourier Neural Operator for parametric partial differential equations. <em>Int. Conf. Learn. Represent. (ICLR 2021)</em>.</p>
+<p id="ref-Lu2021" class="ref-entry">Lu, L. and Jin, P. and Pang, G. and Zhang, Z. and Karniadakis, G. E., 2021. Learning nonlinear operators via DeepONet. <em>Nat. Mach. Intell.</em> 3, 218--229.</p>
+<p id="ref-Michelsen2007" class="ref-entry">Michelsen, M. L. and Mollerup, J., 2007. Thermodynamic Models: Fundamentals and Computational Aspects.</p>
+<p id="ref-Nasir2024" class="ref-entry">Nasir, Y. and Durlofsky, L. J., 2024. Multi-asset closed-loop reservoir management using deep reinforcement learning. <em>Comput. Geosci.</em> 28, 23--42.</p>
+<p id="ref-Ng2024" class="ref-entry">Ng, C. K. P. and Ramdzani, R. A. and Yong, H. S., 2024. Triumph of The Digital Twin Frontier: An Odyssey Unleashing Integrated Asset Modelling for Intelligent Well and Reservoir Management. <em>APOGCE 2024</em>.</p>
+<p id="ref-Ng2022a" class="ref-entry">Ng, C. S. W. and Nait Amar, M. and Jahanbani Ghahfarokhi, A. and Imsland, L. S., 2022. A Survey on the Application of Machine Learning and Metaheuristic Algorithms for Intelligent Proxy Modeling in Reservoir Simulation. <em>Comput. Chem. Eng.</em> 170.</p>
+<p id="ref-PengRobinson1976" class="ref-entry">Peng, D.-Y. and Robinson, D. B., 1976. A new two-constant equation of state. <em>Ind. Eng. Chem. Fundam.</em> 15, 59--64.</p>
+<p id="ref-Pistikopoulos2021" class="ref-entry">Pistikopoulos, E. N. and Barbosa-Povoa, A. and Lee, J. H. and Misener, R. and Mitsos, A. and Reklaitis, G. V. and Vaidyanathan, V. and You, F. and Bonvin, D., 2021. Process systems engineering --- The generation next?. <em>Comput. Chem. Eng.</em> 147, 107252.</p>
+<p id="ref-Rackauckas2021" class="ref-entry">Rackauckas, C. and Ma, Y. and Martensen, J. and Warner, C. and Zubov, K. and Supekar, R. and Skinner, D. and Ramadhan, A. and Edelman, A., 2021. Universal differential equations for scientific machine learning. <em>arXiv preprint arXiv:2001.04385</em>.</p>
+<p id="ref-Raissi2019" class="ref-entry">Raissi, M. and Perdikaris, P. and Karniadakis, G. E., 2019. Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. <em>J. Comput. Phys.</em> 378, 686--707.</p>
+<p id="ref-Rasheed2020" class="ref-entry">Rasheed, A. and San, O. and Kvamsdal, T., 2020. Digital twin: Values, challenges and enablers from a modeling perspective. <em>IEEE Access</em> 8, 21980--22012.</p>
+<p id="ref-Sahinidis2004" class="ref-entry">Sahinidis, N. V., 2004. Optimization under uncertainty: state-of-the-art and opportunities. <em>Comput. Chem. Eng.</em> 28, 971--983.</p>
+<p id="ref-Schulman2017" class="ref-entry">Schulman, J. and Wolski, F. and Dhariwal, P. and Radford, A. and Klimov, O., 2017. Proximal policy optimization algorithms. <em>arXiv preprint arXiv:1707.06347</em>.</p>
+<p id="ref-Schweidtmann2021" class="ref-entry">Schweidtmann, A. M. and Esche, E. and Fischer, A. and Kloft, M. and Repke, J.-U. and Sager, S. and Mitsos, A., 2021. Machine learning in chemical engineering: A perspective. <em>Chem. Eng. Res. Des.</em> 166, 230--239.</p>
+<p id="ref-Schweidtmann2019" class="ref-entry">Schweidtmann, A. M. and Huster, W. R. and L\"u, 2019. Deterministic global process optimization: Accurate (single-species) properties via artificial neural networks. <em>Comput. Chem. Eng.</em> 121, 67--74.</p>
+<p id="ref-SeiderLewinWidagdo2009" class="ref-entry">Seider, W. D. and Seader, J. D. and Lewin, D. R. and Widagdo, S., 2009. Product and Process Design Principles: Synthesis, Analysis, and Evaluation.</p>
+<p id="ref-Soave1972" class="ref-entry">Soave, G., 1972. Equilibrium constants from a modified R. <em>Chem. Eng. Sci.</em> 27, 1197--1203.</p>
+<p id="ref-Towers2023" class="ref-entry">Towers, M. and Terry, J. K. and Kwiatkowski, A. and Balis, J. U. and de Cola, G. and Deleu, T. and Goul\~a, 2023. Gymnasium.</p>
+<p id="ref-Venkatasubramanian2019" class="ref-entry">Venkatasubramanian, V., 2019. The promise of artificial intelligence in chemical engineering: Is it here, finally?. <em>AIChE J.</em> 65, 466--478.</p>
+<p id="ref-Zhong2021" class="ref-entry">Zhong, Z. and Sun, A. Y. and Ren, B. and Wang, Y., 2021. A Deep-Learning-Based Approach for Reservoir Production Forecast under Uncertainty. <em>SPE J.</em> 26, 1314--1340.</p>
+<p id="ref-Equinor2024" class="ref-entry">[Equinor2024] — not in refs.bib</p>
+<p id="ref-Anthropic2024MCP" class="ref-entry">Anthropic, 2024. Model Context Protocol.</p>
+<p id="ref-NeqSim2024" class="ref-entry">Equinor and NTNU, 2024. NeqSim --- N.</p>
+<p id="ref-NorwegianClimate2021" class="ref-entry">Norwegian Government, 2021. Norway's Climate Action Plan for 2021--2030.</p>
+<p id="ref-NPD2024" class="ref-entry">Norwegian Petroleum Directorate, 2024. Norwegian Petroleum --- Facts and Figures.</p>
+<p id="ref-ONNX2019" class="ref-entry">ONNX Consortium, 2019. ONNX.</p>
+<p id="ref-OPM2024" class="ref-entry">OPM Project, 2024. Open Porous Media Initiative.</p>
+</div>
+
+
+</body>
+</html>
