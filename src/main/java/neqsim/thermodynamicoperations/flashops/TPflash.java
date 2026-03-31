@@ -119,10 +119,9 @@ public class TPflash extends Flash {
 
   /**
    * <p>
-   * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient history is
-   * available, falling back to standard DEM (Michelsen 1982b, Risnes et al. 1981).
-   * The GDEM formulation follows Risnes &amp; Dalen (1984) and Michelsen &amp; Mollerup
-   * (2007, section 9.5).
+   * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient history is available,
+   * falling back to standard DEM (Michelsen 1982b, Risnes et al. 1981). The GDEM formulation
+   * follows Risnes &amp; Dalen (1984) and Michelsen &amp; Mollerup (2007, section 9.5).
    * </p>
    */
   public void accselerateSucsSubs() {
@@ -589,8 +588,7 @@ public class TPflash extends Flash {
             boolean lleFound = pureComponentStabilityTrials();
             if (lleFound) {
               try {
-                system.setBeta(
-                    rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+                system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
               } catch (Exception ex) {
                 system.setBeta(0.5);
               }
