@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -315,5 +316,109 @@ public class SystemUMRPRUMCEosMatlabTest {
     double dewT = gasFluid.getTemperature() - 273.15;
     System.out.println("Dew point temperature (UMR-PRU): " + dewT + " C");
     assertTrue(dewT > -50 && dewT < 50, "Dew point should be in reasonable range, got: " + dewT);
+  }
+
+  /**
+   * Reproduces GitHub issue #1980: UMR-PRU with TBP pseudo-components produces three oil phases
+   * with unphysical densities (530, 1142, 3481 kg/m3) instead of the expected gas + oil split. SRK
+   * handles this composition correctly. The fix detects composition-based trivial solutions and
+   * removes phases with unphysical densities.
+   *
+   * @see <a href="https://github.com/equinor/neqsim/issues/1980">Issue #1980</a>
+   */
+  @Test
+  void testUMRPRUWithTBPPseudoComponents_Issue1980() {
+    double T_K = 273.15 + 26.85;
+    double P_bara = 28.53;
+
+    SystemInterface fluid = new SystemUMRPRUMCEos(T_K, P_bara);
+    fluid.addComponent("nitrogen", 0.0096);
+    fluid.addComponent("CO2", 0.0352);
+    fluid.addComponent("methane", 0.1863);
+    fluid.addComponent("ethane", 0.0750);
+    fluid.addComponent("propane", 0.1504);
+    fluid.addComponent("i-butane", 0.0354);
+    fluid.addComponent("n-butane", 0.1086);
+    fluid.addComponent("i-pentane", 0.0497);
+    fluid.addComponent("n-pentane", 0.0549);
+    fluid.addComponent("n-hexane", 0.0359);
+    fluid.addTBPfraction("C7", 0.0509, 95.0 / 1000.0, 0.738);
+    fluid.addTBPfraction("C8", 0.0553, 107.0 / 1000.0, 0.765);
+    fluid.addTBPfraction("C9", 0.0420, 120.0 / 1000.0, 0.781);
+    fluid.addTBPfraction("C10", 0.0360, 134.0 / 1000.0, 0.792);
+    fluid.addTBPfraction("C11", 0.0278, 147.0 / 1000.0, 0.796);
+    fluid.addTBPfraction("C12", 0.0237, 161.0 / 1000.0, 0.810);
+    fluid.addTBPfraction("C13", 0.0233, 175.0 / 1000.0, 0.825);
+
+    fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initProperties();
+
+    // Should have exactly 2 phases (gas + oil), not 3 spurious oil phases
+    assertEquals(2, fluid.getNumberOfPhases(),
+        "Should have 2 phases (gas + oil), got " + fluid.getNumberOfPhases());
+
+    // Must find a gas phase — SRK does, UMR-PRU previously did not
+    assertTrue(fluid.hasPhaseType("gas"), "UMR-PRU should identify a gas phase");
+
+    // No phase should exceed 1000 kg/m3 for this hydrocarbon mixture
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      double rho = fluid.getPhase(i).getDensity("kg/m3");
+      assertTrue(rho < 1000.0, "Phase " + i + " (" + fluid.getPhase(i).getType() + ") density "
+          + rho + " kg/m3 is unphysical");
+    }
+  }
+
+  /**
+   * Test that addTBPfraction auto-converts density from kg/m3 to g/cm3 when values above 10 are
+   * passed. This reproduces the exact user mistake from issue #1980, where density was given in
+   * kg/m3 (e.g. 738.0) instead of g/cm3 (0.738).
+   *
+   * @see <a href="https://github.com/equinor/neqsim/issues/1980">Issue #1980</a>
+   */
+  @Test
+  void testTBPDensityAutoConversion_Issue1980() {
+    double T_K = 273.15 + 26.85;
+    double P_bara = 28.53;
+
+    // Fluid with density in g/cm3 (correct usage)
+    SystemInterface fluidCorrect = new SystemSrkEos(T_K, P_bara);
+    fluidCorrect.addComponent("methane", 0.50);
+    fluidCorrect.addComponent("n-hexane", 0.20);
+    fluidCorrect.addTBPfraction("C7", 0.15, 95.0 / 1000.0, 0.738);
+    fluidCorrect.addTBPfraction("C10", 0.15, 134.0 / 1000.0, 0.792);
+    fluidCorrect.setMixingRule("classic");
+
+    // Fluid with density in kg/m3 (common mistake — should auto-convert)
+    SystemInterface fluidKgm3 = new SystemSrkEos(T_K, P_bara);
+    fluidKgm3.addComponent("methane", 0.50);
+    fluidKgm3.addComponent("n-hexane", 0.20);
+    fluidKgm3.addTBPfraction("C7", 0.15, 95.0 / 1000.0, 738.0);
+    fluidKgm3.addTBPfraction("C10", 0.15, 134.0 / 1000.0, 792.0);
+    fluidKgm3.setMixingRule("classic");
+
+    // Both fluids should produce identical critical temperatures for the TBP fractions
+    ThermodynamicOperations opsCorrect = new ThermodynamicOperations(fluidCorrect);
+    opsCorrect.TPflash();
+    fluidCorrect.initProperties();
+
+    ThermodynamicOperations opsKgm3 = new ThermodynamicOperations(fluidKgm3);
+    opsKgm3.TPflash();
+    fluidKgm3.initProperties();
+
+    // Same number of phases
+    assertEquals(fluidCorrect.getNumberOfPhases(), fluidKgm3.getNumberOfPhases(),
+        "Auto-converted fluid should have same number of phases");
+
+    // Phase densities should match closely (within 1%)
+    for (int i = 0; i < fluidCorrect.getNumberOfPhases(); i++) {
+      double rhoCorrect = fluidCorrect.getPhase(i).getDensity("kg/m3");
+      double rhoKgm3 = fluidKgm3.getPhase(i).getDensity("kg/m3");
+      assertEquals(rhoCorrect, rhoKgm3, rhoCorrect * 0.01,
+          "Phase " + i + " density should match after auto-conversion");
+    }
   }
 }
