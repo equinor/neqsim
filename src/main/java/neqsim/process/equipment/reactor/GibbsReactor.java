@@ -458,7 +458,6 @@ public class GibbsReactor extends TwoPortEquipment {
   private int actualIterations = 0;
   private boolean converged = false;
   private double finalConvergenceError = 0.0;
-  private boolean useConsistentOffDiagonal = false;
   private int minIterations = 100;
   private boolean useAdaptiveStepSize = false;
 
@@ -1523,12 +1522,9 @@ public class GibbsReactor extends TwoPortEquipment {
         if (i == j) {
           // Diagonal: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total + dfugdn)
           jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles + dfugdn);
-        } else if (useConsistentOffDiagonal) {
-          // Consistent off-diagonal: ∂f_i/∂n_j = RT * (-1/n_total + dfugdn)
-          jacobianMatrix[i][j] = RT * (-1.0 / totalMoles + dfugdn);
         } else {
-          // Legacy off-diagonal (dfugdn not scaled by RT)
-          jacobianMatrix[i][j] = -RT / totalMoles + dfugdn;
+          // Off-diagonal: ∂f_i/∂n_j = RT * (-1/n_total + dfugdn)
+          jacobianMatrix[i][j] = RT * (-1.0 / totalMoles + dfugdn);
         }
       }
 
@@ -1558,22 +1554,6 @@ public class GibbsReactor extends TwoPortEquipment {
       // Derivatives with respect to Lagrange multipliers are zero
       for (int k = 0; k < numActiveElements; k++) {
         jacobianMatrix[numComponents + i][numComponents + k] = 0.0;
-      }
-    }
-
-    // When using the consistent off-diagonal, apply log-mole column scaling.
-    // Scaling column j by n_j converts the Newton variable from Δn_j to Δ(ln n_j),
-    // which improves conditioning for trace species (removes 1/n_i singularity).
-    if (useConsistentOffDiagonal) {
-      for (int j = 0; j < numComponents; j++) {
-        String compJ = variableComponents.get(j);
-        int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
-        double nj =
-            (globalJ >= 0 && globalJ < outlet_mole.size()) ? outlet_mole.get(globalJ) : MIN_MOLES;
-        nj = Math.max(nj, MIN_JACOBIAN_MOLES);
-        for (int row = 0; row < totalVars; row++) {
-          jacobianMatrix[row][j] *= nj;
-        }
       }
     }
 
@@ -2034,14 +2014,14 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     deltaNorm = Math.sqrt(deltaNorm);
 
-    // Update Lagrange multipliers. When the consistent off-diagonal formulation is active,
-    // damp lambda with the same factor as compositions for primal-dual consistency.
-    double alphaLambda = useConsistentOffDiagonal ? alphaComposition : 1.0;
+    // Update Lagrange multipliers with full Newton step.
+    // The RT-corrected Jacobian produces well-scaled multiplier steps,
+    // so no damping is needed.
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElementIndices.get(i);
       double oldValue = lambda[elementIndex];
       double deltaLambda = deltaX[numComponents + i];
-      double newValue = oldValue + deltaLambda * alphaLambda;
+      double newValue = oldValue + deltaLambda;
 
       lambda[elementIndex] = newValue;
     }
@@ -2217,24 +2197,28 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Enable the mathematically consistent off-diagonal Jacobian formulation. When true, the
-   * off-diagonal elements use {@code RT * (-1/N + dfugdn)} instead of the legacy
-   * {@code -RT/N + dfugdn}. The consistent formulation improves convergence for some systems (e.g.,
-   * acid gas equilibria) but may require smaller damping factors for adiabatic mode.
+   * Enable the mathematically consistent off-diagonal Jacobian formulation. This is now always
+   * enabled (the RT-corrected formulation is the only implementation). This method is retained for
+   * backward compatibility but has no effect.
    *
-   * @param useConsistent true to use the consistent formulation
+   * @param useConsistent ignored — consistent formulation is always active
+   * @deprecated The consistent off-diagonal formulation is now always enabled. This setter is a
+   *             no-op.
    */
+  @Deprecated
   public void setUseConsistentOffDiagonal(boolean useConsistent) {
-    this.useConsistentOffDiagonal = useConsistent;
+    // No-op: consistent formulation is now always enabled
   }
 
   /**
-   * Check if the consistent off-diagonal Jacobian formulation is enabled.
+   * Check if the consistent off-diagonal Jacobian formulation is enabled. Always returns true.
    *
-   * @return true if consistent formulation is active
+   * @return always true
+   * @deprecated The consistent off-diagonal formulation is now always enabled.
    */
+  @Deprecated
   public boolean isUseConsistentOffDiagonal() {
-    return useConsistentOffDiagonal;
+    return true;
   }
 
   /**

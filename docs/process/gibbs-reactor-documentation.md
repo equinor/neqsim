@@ -237,17 +237,11 @@ reactor.setComponentAsInert("CO2");
 reactor.setUseAllDatabaseSpecies(true);  // default: false
 ```
 
-#### Consistent Jacobian (Opt-In)
+#### Jacobian Formulation
 
-```java
-// Enable the RT-consistent off-diagonal + log-mole scaling + lambda damping
-reactor.setUseConsistentOffDiagonal(true);  // default: false
-
-// Query state
-boolean isConsistent = reactor.isUseConsistentOffDiagonal();
-```
-
-**When to enable:** Use for multi-stage acid gas systems, or any system where trace species (< 1 ppm) coexist with major components. Not needed for simple combustion or ammonia synthesis.
+The off-diagonal Jacobian elements always use the thermodynamically correct formulation
+with the `RT` factor: `∂gᵢ/∂nⱼ = RT·(-1/N + dfugdn)`. The legacy `setUseConsistentOffDiagonal()`
+API is deprecated — the correct formulation is always enabled.
 
 ### 3.3 Running the Reactor
 
@@ -374,7 +368,7 @@ Each internal `GibbsReactor` is created with:
 
 **Default inert components:** CO, COS, CO₂, ammonia, hydrogen, N₂O₃, nitrogen, N₂H₄, N₂O
 
-The two-stage pathway additionally enables `useConsistentOffDiagonal(true)` on both the H₂S and SO₂ reactors.
+The two-stage pathway uses the RT-corrected Jacobian (now always enabled) on both the H₂S and SO₂ reactors.
 
 ### 4.6 Limitations
 
@@ -523,8 +517,8 @@ double so2_ppm = outlet.getComponent("SO2").getz() * 1e6;
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | Oscillating residuals, never converges | Damping too large | Reduce `setDampingComposition()` (try 0.001) |
-| Very slow convergence (> 10000 iter) | Damping too small or stiff system | Enable `setUseAdaptiveStepSize(true)` with `setMinIterations(3)` for isothermal, or increase damping and enable `setUseConsistentOffDiagonal(true)` |
-| `null` outlet from `GibbsReactorCO2` | Two-stage pathway diverged | Already fixed with consistent Jacobian; check that inlet has expected components |
+| Very slow convergence (> 10000 iter) | Damping too small or stiff system | Enable `setUseAdaptiveStepSize(true)` with `setMinIterations(3)` for isothermal, or increase damping |
+| `null` outlet from `GibbsReactorCO2` | Two-stage pathway diverged | RT-corrected Jacobian is now always on; check that inlet has expected components |
 | Mass balance error > 0.1% | Premature convergence | Decrease `setConvergenceTolerance()` (try 1e-6) |
 | Converges but takes 100+ iterations for simple system | `minIterations` too high | Set `setMinIterations(3)` + `setUseAdaptiveStepSize(true)` |
 
