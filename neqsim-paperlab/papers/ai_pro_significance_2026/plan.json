@@ -1,0 +1,66 @@
+{
+  "title": "AI-Powered Integrated Production Optimization: Industrial Significance and Educational Impact for Process Systems Engineering",
+  "target_journal": "computers_chem_eng",
+  "paper_type": "application",
+  "created": "2026-03-31T00:00:00",
+  "status": "drafting",
+  "novelty_statement": "This paper provides the first comprehensive analysis of how AI-driven integrated asset modelling frameworks simultaneously advance industrial production optimization on mature petroleum fields and transform engineering education through research-based teaching, using the AI-PRO project at NTNU as a concrete case study.",
+  "research_questions": [
+    {
+      "id": "RQ1",
+      "question": "What are the key industrial challenges in integrated production optimization on the NCS that necessitate AI-driven approaches?",
+      "method": "Analysis of current IAM limitations, computational bottlenecks, and operational gaps based on literature and industry practice",
+      "acceptance_criterion": "Clear identification of at least 5 distinct industrial challenges with supporting evidence"
+    },
+    {
+      "id": "RQ2",
+      "question": "How can open-source simulation tools (NeqSim, OPM) be coupled with AI surrogates to create an operationally deployable integrated production optimization framework?",
+      "method": "Architectural analysis and design of modular digital twin coupling strategy",
+      "acceptance_criterion": "Complete framework architecture with defined interfaces and data flows"
+    },
+    {
+      "id": "RQ3",
+      "question": "What is the educational value of embedding AI-driven production optimization research into engineering curricula at NTNU?",
+      "method": "Curriculum mapping, course integration analysis, and comparison with international best practices",
+      "acceptance_criterion": "Concrete curriculum proposals with learning outcomes and assessment strategies"
+    },
+    {
+      "id": "RQ4",
+      "question": "How does the dual industrial-educational mission of AI-PRO create synergies that amplify impact in both domains?",
+      "method": "Analysis of feedback loops between industry case studies and student projects",
+      "acceptance_criterion": "Identification of at least 3 concrete synergy mechanisms"
+    }
+  ],
+  "authors": [
+    {"name": "Even Solbraa", "affiliation": "NTNU / Equinor", "role": "corresponding"},
+    {"name": "Ashkan Jahanbani Ghahfarokhi", "affiliation": "NTNU IGV", "role": "co-author"},
+    {"name": "Thomas Alan Adams II", "affiliation": "NTNU EPT", "role": "co-author"}
+  ],
+  "keywords": [
+    "integrated asset modelling",
+    "physics-informed neural networks",
+    "production optimization",
+    "engineering education",
+    "open-source simulation",
+    "digital twin"
+  ],
+  "manuscript_outline": {
+    "sections": [
+      "Abstract",
+      "Keywords",
+      "Highlights",
+      "Introduction",
+      "Industrial Context and Challenges",
+      "The AI-PRO Framework",
+      "Educational Integration",
+      "Synergies Between Industry and Education",
+      "Discussion",
+      "Conclusions",
+      "Acknowledgements",
+      "CRediT Author Contributions",
+      "Declaration of Competing Interest",
+      "Data Availability",
+      "References"
+    ]
+  }
+}

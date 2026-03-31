@@ -1,0 +1,85 @@
+# Revision Workflow
+# Handles peer review revision rounds
+
+workflow_name: "revise_paper"
+version: "1.0"
+description: "Process reviewer comments and produce revised manuscript"
+
+stages:
+
+  - name: "parse_comments"
+    agent: "reviewer_response"
+    description: "Parse and classify reviewer comments"
+    inputs:
+      - reviewer_comments.md  # Raw reviewer comments pasted in
+      - paper.md              # Current manuscript
+    outputs:
+      - revision_N/parsed_comments.json
+    validation:
+      - All comments categorized (major/minor/editorial)
+      - All comments mapped to manuscript sections
+
+  - name: "triage"
+    agent: "reviewer_response"
+    description: "Decide which comments need new experiments"
+    inputs:
+      - revision_N/parsed_comments.json
+      - approved_claims.json
+    outputs:
+      - revision_N/response_plan.json
+    validation:
+      - Each comment has an action (revise/experiment/explain/acknowledge)
+    gate: "human_approval"  # Author reviews response plan
+
+  - name: "new_experiments"
+    agent: "benchmark"
+    description: "Run additional experiments if needed"
+    condition: "response_plan has experiments_needed = true"
+    inputs:
+      - revision_N/response_plan.json
+      - benchmark_config.json
+    outputs:
+      - revision_N/new_results/
+    validation:
+      - New results pass validation agent
+
+  - name: "revise_manuscript"
+    agent: "scientific_writer"
+    description: "Apply revisions to manuscript"
+    inputs:
+      - paper.md
+      - revision_N/response_plan.json
+      - revision_N/new_results/  # if any
+      - approved_claims.json     # updated if new experiments
+    outputs:
+      - revision_N/paper_rN.md
+      - revision_N/claims_manifest_rN.json
+    validation:
+      - All changes tracked
+      - No new unlinked claims
+
+  - name: "draft_response"
+    agent: "reviewer_response"
+    description: "Write response-to-reviewers letter"
+    inputs:
+      - revision_N/parsed_comments.json
+      - revision_N/paper_rN.md
+      - revision_N/response_plan.json
+    outputs:
+      - revision_N/response_to_reviewers.md
+      - revision_N/revision_changelog.json
+    validation:
+      - Every comment addressed
+      - Changes clearly described with section references
+
+  - name: "reformat"
+    agent: "journal_formatter"
+    description: "Reformat revised manuscript"
+    inputs:
+      - revision_N/paper_rN.md
+      - journal profile
+    outputs:
+      - revision_N/submission/paper_rN.tex
+      - revision_N/submission/paper_rN.pdf
+      - revision_N/submission/response_to_reviewers.pdf
+    gate: "human_approval"

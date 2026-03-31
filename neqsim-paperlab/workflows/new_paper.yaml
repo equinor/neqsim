@@ -1,0 +1,238 @@
+# New Paper Workflow
+# Stages executed sequentially; each stage produces artifacts for the next.
+# Supports four paper types — stages are conditional on paper_type.
+#
+# Paper types:
+#   comparative     — A-vs-B algorithm comparison (baseline vs candidate)
+#   characterization — Systematic evaluation of an existing algorithm/model
+#   method          — New formulation, derivation, or mathematical framework
+#   application     — Engineering case study using established tools
+#
+# Stages marked [SKIP:<types>] are skipped for those paper types.
+
+workflow_name: "new_paper"
+version: "2.0"
+description: "Create a scientific paper from idea to submission package"
+
+stages:
+
+  # ------------------------------------------------------------------
+  # Stage 1: Plan
+  # ------------------------------------------------------------------
+  - name: "plan"
+    agent: "planner"
+    description: "Turn idea into structured research plan"
+    inputs:
+      - topic: "from user"
+      - journal: "from user"
+      - novelty_angle: "from user"
+      - paper_type: "from user (comparative|characterization|method|application)"
+    outputs:
+      - plan.json           # must include paper_type field
+      - outline.md
+      - benchmark_config.json
+    validation:
+      - plan.json exists and has research_questions and paper_type
+      - benchmark_config.json has at least 3 test categories
+      - All proposed components are in NeqSim database
+
+  # ------------------------------------------------------------------
+  # Stage 2: Literature
+  # ------------------------------------------------------------------
+  - name: "literature"
+    agent: "literature_reviewer"
+    description: "Map prior work and identify gap"
+    inputs:
+      - plan.json
+    outputs:
+      # Full outputs for comparative/method papers:
+      - literature_map.md         # [OPTIONAL for characterization/application]
+      - gap_statement.md          # [OPTIONAL for characterization/application]
+      - related_work_table.csv    # [OPTIONAL for characterization/application]
+      - refs.bib                  # Always required
+    validation:
+      - refs.bib has at least 10 references
+      - BibTeX is syntactically correct
+      # For comparative/method papers:
+      - gap_statement.md is specific and falsifiable (if produced)
+
+  # ------------------------------------------------------------------
+  # Stage 3: Algorithm Analysis  [SKIP: application]
+  # ------------------------------------------------------------------
+  - name: "algorithm_analysis"
+    agent: "algorithm_engineer"
+    skip_for: ["application"]
+    description: "Analyze implementation — propose improvements (comparative/method) or document behavior (characterization)"
+    inputs:
+      - plan.json
+      - literature_map.md  # or refs.bib if literature_map not produced
+    outputs:
+      - algorithm/analysis.md
+      - algorithm/improvements.json   # [OPTIONAL for characterization — may be empty]
+      - algorithm/implementation_notes.md
+    validation:
+      # comparative/method: at least one improvement proposed
+      # characterization: analysis.md documents algorithm behavior and edge cases
+      - analysis.md describes the algorithm under study
+
+  # ------------------------------------------------------------------
+  # Stage 4: Implementation  [SKIP: characterization, application]
+  # ------------------------------------------------------------------
+  - name: "implementation"
+    agent: "algorithm_engineer"
+    skip_for: ["characterization", "application"]
+    description: "Implement proposed changes on a feature branch"
+    inputs:
+      - algorithm/improvements.json
+    outputs:
+      - Git branch with changes
+      - New/modified Java files
+      - JUnit tests for changes
+    validation:
+      - All existing tests still pass
+      - New tests pass
+      - Code compiles with Java 8
+    gate: "manual_review"  # Human must approve before proceeding
+
+  # ------------------------------------------------------------------
+  # Stage 5: Benchmark
+  # ------------------------------------------------------------------
+  # Unified benchmark stage. Mode depends on paper_type:
+  #   comparative:     Run baseline + candidate, paired comparison
+  #   characterization: Run single algorithm across broad condition matrix
+  #   method:          Run new method vs reference implementations
+  #   application:     Run case study scenarios
+  - name: "benchmark"
+    agent: "benchmark"
+    description: "Run computational experiments per benchmark_config"
+    inputs:
+      - benchmark_config.json
+      - plan.json                       # for paper_type
+      - Git branch from implementation  # [only for comparative/method]
+    outputs:
+      - results/raw/results.jsonl       # all raw data in one file
+      - results/summary.json
+      - results/failures.json
+      - results/benchmark_metadata.json
+      # comparative papers also produce:
+      - results/raw/baseline_results.jsonl   # [comparative only]
+      - results/raw/candidate_results.jsonl  # [comparative only]
+    validation:
+      - At least 200 cases completed (500+ for comparative)
+      - Summary statistics are reasonable
+      - Metadata includes git commit and hardware info
+
+  # ------------------------------------------------------------------
+  # Stage 6: Cross-validation (recommended for all types)
+  # ------------------------------------------------------------------
+  - name: "cross_validation"
+    agent: "benchmark"
+    description: "Re-run key cases with different EOS, settings, or reference data for robustness"
+    inputs:
+      - benchmark_config.json
+      - results/summary.json
+    outputs:
+      - results/cross_validation.json
+      - figures/cross_validation/
+    validation:
+      - At least 2 cross-validation dimensions tested
+      - Deviations documented and explained
+
+  # ------------------------------------------------------------------
+  # Stage 7: Validation
+  # ------------------------------------------------------------------
+  - name: "validation"
+    agent: "validation"
+    description: "Validate results and approve claims"
+    inputs:
+      - results/summary.json
+      - results/raw/results.jsonl
+      - results/cross_validation.json
+    outputs:
+      - approved_claims.json    # [comparative: formal claim pipeline]
+      - validation_report.md
+      - results.json            # [characterization: direct results summary]
+      - figures/validation/
+    validation:
+      # Adapts by paper_type:
+      # comparative:     Every claim has statistical test, p < 0.05
+      # characterization: Coverage completeness, consistency checks, reference comparisons
+      # method:          Mathematical correctness, boundary case coverage
+      # application:     Results plausibility, mass/energy balance closure
+      - Threats to validity documented
+
+  # ------------------------------------------------------------------
+  # Stage 8: Write
+  # ------------------------------------------------------------------
+  - name: "write"
+    agent: "scientific_writer"
+    description: "Draft complete manuscript"
+    inputs:
+      - plan.json
+      - refs.bib
+      - algorithm/analysis.md           # [if produced]
+      - algorithm/implementation_notes.md  # [if produced]
+      - approved_claims.json            # [comparative/method]
+      - results.json                    # [characterization/application]
+      - validation_report.md
+      - results.json                    # [characterization/application]
+      - validation_report.md
+      - results/
+      - refs.bib
+    outputs:
+      - paper.md
+      - claims_manifest.json  # [comparative: full tracing; others: summary only]
+    validation:
+      - All sections present per journal profile
+      - No unlinked quantitative claims
+      - Abstract within word limit
+      # comparative: claims_manifest.json has zero unlinked_claims
+      # characterization/application: results.json key_results are referenced in text
+
+  # ------------------------------------------------------------------
+  # Stage 9: Format
+  # ------------------------------------------------------------------
+  - name: "format"
+    agent: "journal_formatter"
+    description: "Apply journal formatting and generate submission package"
+    inputs:
+      - paper.md
+      - journal profile YAML
+      - figures/
+      - refs.bib
+    outputs:
+      - submission/paper.tex
+      - submission/paper.pdf
+      - submission/cover_letter.md
+      - submission/highlights.txt
+      - submission/submission_checklist.md
+    validation:
+      - All checklist items PASS
+      - PDF renders correctly
+      - All figures included
+      - "Figure/table format validation PASS (paperflow.py validate-figures)"
+      - Figure DPI meets journal minimum (typically 300)
+      - All figure files use allowed formats (e.g. pdf, eps, tif, png)
+      - All figures referenced in manuscript text
+      - Figure numbering is sequential with no gaps
+      - All tables have captions and consistent column counts
+      - Table numbering is sequential
+      - Highlights within character limit (85 chars per journal)
+
+  # ------------------------------------------------------------------
+  # Stage 10: Audit
+  # ------------------------------------------------------------------
+  - name: "audit"
+    agent: "validation"
+    description: "Final reproducibility and completeness check"
+    inputs:
+      - All artifacts
+    outputs:
+      - audit_report.md
+    validation:
+      - Every figure regenerable from raw data
+      # comparative: every claim traceable to approved_claims.json
+      # characterization: every key result traceable to results.json/results.jsonl
+      - Git commit hashes match benchmark metadata
+      - Random seeds documented (if applicable)
+    gate: "human_approval"  # Final sign-off before submission
