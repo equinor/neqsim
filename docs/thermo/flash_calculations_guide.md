@@ -13,6 +13,14 @@ This guide provides comprehensive documentation of flash calculations available 
 - [Basic Usage](#basic-usage)
 - [Flash Types](#flash-types)
   - [TP Flash (Temperature-Pressure)](#tp-flash-temperature-pressure)
+    - [Algorithm Overview](#algorithm-overview)
+    - [Rachford-Rice Equation](#rachford-rice-equation)
+    - [Successive Substitution](#successive-substitution)
+    - [GDEM-2 Acceleration](#gdem-2-acceleration)
+    - [Newton-Raphson Solver](#newton-raphson-solver)
+    - [Stability Analysis](#stability-analysis)
+    - [Phase Detection Configuration](#phase-detection-configuration-systeminterface-methods)
+    - [Convergence Parameters](#convergence-parameters)
   - [PH Flash (Pressure-Enthalpy)](#ph-flash-pressure-enthalpy)
   - [PS Flash (Pressure-Entropy)](#ps-flash-pressure-entropy)
   - [PU Flash (Pressure-Internal Energy)](#pu-flash-pressure-internal-energy)
@@ -97,7 +105,7 @@ System.out.println("Pressure: " + fluid.getPressure("bara") + " bara");
 
 ### TP Flash (Temperature-Pressure)
 
-The most common flash type. Given temperature and pressure, find phase split and compositions. NeqSim implements the classical Michelsen flash algorithm with stability analysis.
+The most common flash type. Given temperature and pressure, find phase split and compositions.
 
 **Method signatures:**
 ```java
@@ -127,44 +135,183 @@ fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
 
-#### Multi-Phase Checking
+#### Algorithm Overview
 
-By default, NeqSim checks for two-phase (gas-liquid) equilibrium. For systems that may form multiple liquid phases (VLLE, LLE), enable multi-phase checking:
+The TPflash implements the classical Michelsen (1982) algorithm with a hybrid successive-substitution / Newton-Raphson solver and tangent-plane-distance (TPD) stability analysis. The algorithm proceeds through five phases:
+
+```
+TPflash.run()
+│
+├── 1. Initialization
+│   ├── findLowestGibbsEnergyPhase()
+│   ├── Store reference chemical potentials: d_i = ln(z_i) + ln(φ_i)
+│   └── Wilson K-values → Rachford-Rice → initial β
+│
+├── 2. Initial successive substitution (3 iterations)
+│   ├── If Wilson K gives β at limits → reset β = 0.5
+│   └── Check if 2-phase Gibbs energy < single-phase minimum
+│
+├── 3. Stability testing (if no clear 2-phase split found)
+│   ├── Tangent plane distance (TPD) for both phases
+│   ├── stabilityAnalysis() — SS + DEM + Newton on TPD
+│   ├── amplifiedKStabilityRetry() — near-critical VLE fallback
+│   ├── pureComponentStabilityTrials() — LLE fallback
+│   │   (only when setCheckForLiquidLiquidSplit(true))
+│   ├── If stable → single phase, return
+│   └── If unstable → update K-values, continue
+│
+├── 4. Main convergence loop (hybrid solver)
+│   ├── Iterations 1–11: SS + GDEM-2 acceleration every 5th step
+│   ├── Iterations 12+: Newton-Raphson (SysNewtonRhapsonTPflash)
+│   ├── Gibbs energy guard: resetK() if G increases
+│   └── Chemical equilibrium outer loop (if reactive system)
+│
+└── 5. Post-processing
+    ├── If doMultiPhaseCheck() → TPmultiflash.run()
+    ├── Post-convergence stability verification if β at limits
+    │   └── Includes pureComponentStabilityTrials() for LLE
+    ├── Volume root selection (gas vs liquid Gibbs)
+    ├── Remove trivial phases (β < phaseFractionMinimumLimit)
+    └── orderByDensity() + final init
+```
+
+#### Rachford-Rice Equation
+
+The vapor fraction $\beta$ is found by solving the Rachford-Rice equation:
+
+$$\sum_i \frac{z_i (K_i - 1)}{1 + \beta(K_i - 1)} = 0$$
+
+Two solver methods are available, switchable via `RachfordRice.setMethod()`:
+
+| Method | Reference | Description |
+|--------|-----------|-------------|
+| `"Michelsen2001"` | Michelsen & Mollerup (2001) | Newton-Raphson with Whitson-Torp bounds |
+| `"Nielsen2023"` (default) | Nielsen & Lia (2023) | Round-off robust reformulation |
+
+Initial K-values come from the Wilson correlation:
+
+$$K_i = \frac{P_{c,i}}{P} \exp\left[5.373(1+\omega_i)\left(1-\frac{T_{c,i}}{T}\right)\right]$$
+
+#### Successive Substitution
+
+Each successive substitution step updates K-values from fugacity coefficients:
+
+$$K_i = \frac{\hat{\phi}_i^{\text{liquid}}}{\hat{\phi}_i^{\text{vapor}}}$$
+
+then solves the Rachford-Rice equation for $\beta$, updates compositions via `calc_x_y()`, and re-initializes the thermodynamic model.
+
+#### GDEM-2 Acceleration
+
+After the initial iterations, the General Dominant Eigenvalue Method with 2 eigenvalues (Risnes & Dalen, 1984; Michelsen & Mollerup, 2007, §9.5) accelerates convergence. It solves the 2×2 system:
+
+$$\begin{bmatrix} b_{11} & b_{12} \\ b_{12} & b_{22} \end{bmatrix} \begin{bmatrix} \mu_1 \\ \mu_2 \end{bmatrix} = \begin{bmatrix} c_1 \\ c_2 \end{bmatrix}$$
+
+where $b_{ij} = \Delta g_{n-i} \cdot \Delta g_{n-j}$ and $c_i = \Delta g_n \cdot \Delta g_{n-i}$, then extrapolates:
+
+$$\ln K_i^{\text{new}} = \ln K_i + \mu_1 \Delta g_n[i] + \mu_2 \Delta g_{n-1}[i]$$
+
+Falls back to standard 1-eigenvalue DEM (Michelsen, 1982b) when $|\mu_1| > 5$ or $|\mu_2| > 5$.
+
+#### Newton-Raphson Solver
+
+After 12 successive substitution iterations (configurable via `newtonLimit`), the solver switches to a second-order Newton method (`SysNewtonRhapsonTPflash`) using Michelsen's $u$-variable formulation:
+
+- **Variables**: $u_i = \beta \cdot y_i$
+- **Residual**: $g_i = \ln(\hat{f}_i^{\text{gas}}) - \ln(\hat{f}_i^{\text{liq}})$
+- **Jacobian**: Hessian of the reduced Gibbs energy $Q$ with Levenberg-Marquardt regularization ($\lambda = 10^{-8}$)
+- **Line search**: Armijo backtracking on $Q$ with $c_1 = 10^{-4}$, max 8 backtrack steps
+- **Linear algebra**: EJML pre-allocated dense LU solver
+
+#### Stability Analysis
+
+Michelsen's tangent plane distance (TPD) criterion determines if a single-phase solution is thermodynamically stable. A phase is unstable if:
+
+$$\text{tm} = 1 - \sum_i W_i < \text{tmLimit}$$
+
+where $W_i$ satisfies $\ln W_i + \ln \hat{\phi}_i^{\text{trial}} = \ln z_i + \ln \hat{\phi}_i^{\text{ref}}$ and tmLimit = $-10^{-8}$.
+
+The analysis uses:
+- **Successive substitution** with **DEM acceleration** (Risnes et al., 1981) on $\ln W$ variables
+- **Two initial trials**: vapor-like ($W_i = z_i K_i$) and liquid-like ($W_i = z_i / K_i$)
+- **Second-order Newton** (alpha-substitution $\alpha_i = 2\sqrt{W_i}$) in the last 10 iterations
+- **Trivial solution detection**: cosine similarity > 0.9999 between trial and feed
+- **Amplified K-value retry** for near-critical VLE (amplification factor 2.5–4.0×)
+- **Pure-component LLE trials** (heaviest/lightest component) when `setCheckForLiquidLiquidSplit(true)` is enabled
+
+#### Phase Detection Configuration (`SystemInterface` Methods)
+
+NeqSim provides three `SystemInterface` methods that control how aggressively the TPflash searches for phase splits. These operate independently and are additive — each enables a different detection strategy:
+
+| Method | Default | What it enables |
+|--------|---------|-----------------|
+| `setMultiPhaseCheck(true)` | `false` | Delegates to `TPmultiflash` for 3+ phases (gas + multiple liquids). Heavy computation. |
+| `setCheckForLiquidLiquidSplit(true)` | `false` | Adds **pure-component stability trials** inside the two-phase flash to detect LLE. Lightweight (~0.1–0.5 ms overhead). |
+| `setEnhancedMultiPhaseCheck(true)` | `false` | Activates enhanced stability analysis in `TPmultiflash` with acentric-factor perturbation trials. Requires `setMultiPhaseCheck(true)`. |
+
+##### `setCheckForLiquidLiquidSplit(boolean)` — LLE detection in the two-phase flash
+
+This is the recommended option when you suspect a **liquid-liquid split** but do not need full three-phase (VLLE) flash. It works within the standard two-phase `TPflash` without invoking `TPmultiflash`, keeping computational cost low.
+
+The standard stability analysis uses Wilson K-value initial guesses, which assume gas-liquid equilibrium. At temperatures well below the critical temperature of the lightest component, Wilson K-values converge close to 1 for all components, making them ineffective for detecting LLE. When this flag is enabled, the flash supplements the standard analysis with **pure-component stability trials**: trial phases initialized as nearly-pure heaviest and lightest components, solved with successive substitution + DEM acceleration, with the trial phase forced to the liquid root of the cubic EOS.
+
+The pure-component trials are invoked at two points in the algorithm:
+1. **During initial stability check** (Phase 3 above) — if the standard analysis declares stable but `doCheckForLiquidLiquidSplit()` is true
+2. **During post-convergence verification** (Phase 5) — if the converged two-phase flash pushed $\beta$ to the limits (effectively single phase)
+
+```java
+// Detect liquid-liquid split (e.g., methane/n-heptane at low T)
+SystemInterface fluid = new SystemSrkEos(200.0, 50.0);
+fluid.addComponent("methane", 0.5);
+fluid.addComponent("n-heptane", 0.5);
+fluid.setMixingRule("classic");
+
+// Enable LLE detection in two-phase flash (lightweight)
+fluid.setCheckForLiquidLiquidSplit(true);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initProperties();
+
+System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+System.out.println("Beta (phase 0): " + fluid.getBeta(0));
+// Correctly finds two liquid phases instead of a single liquid
+```
+
+**When to use `setCheckForLiquidLiquidSplit(true)`:**
+- Binary or multicomponent systems with large molecular weight differences (e.g., methane + heavy hydrocarbons)
+- Temperatures well below the critical temperature of the lightest component
+- LLE phase envelope calculations where the two-phase flash must track both liquid phases
+- Any system where the standard flash returns a single liquid phase but you expect two liquids
+
+##### `setMultiPhaseCheck(boolean)` — Full multi-phase flash (3+ phases)
+
+Delegates post-convergence processing to `TPmultiflash`, which can detect gas + multiple liquid phases (e.g., gas-oil-aqueous). This is the most thorough but computationally expensive option:
 
 ```java
 fluid.setMultiPhaseCheck(true);
 ops.TPflash();
-// Will detect gas + multiple liquid phases (e.g., oil, aqueous)
+// Will detect gas + multiple liquid phases (e.g., gas-oil-aqueous)
 ```
 
-#### Enhanced Stability Analysis
+##### `setEnhancedMultiPhaseCheck(boolean)` — Enhanced stability in multi-phase flash
 
-For complex mixtures where standard stability analysis may miss additional phases (e.g., sour gas with CO₂/H₂S, LLE systems), enable enhanced stability analysis:
+Activates enhanced stability analysis within `TPmultiflash`. Requires `setMultiPhaseCheck(true)`. Uses three trial types per reference phase:
+1. **Vapor-like** ($W_i = K_i$) — standard VLE gas detection
+2. **Liquid-like** ($W_i = 1/K_i$) — standard VLE liquid detection
+3. **LLE trial** ($W_i = z_i \cdot f(\omega_i)$) — acentric factor-based perturbation for polarity-driven splits
+
+Also tests stability **against all existing phases** (not just the reference phase) and uses Wegstein acceleration.
 
 ```java
-fluid.setMultiPhaseCheck(true);
-fluid.setEnhancedMultiPhaseCheck(true);  // Enable enhanced phase detection
-ops.TPflash();
-```
-
-The enhanced stability analysis:
-- Uses **Wilson K-value initial guesses** for robust vapor-liquid detection
-- Tests **both vapor-like and liquid-like trial phases** to find LLE
-- Uses **acentric factor-based perturbation** to detect liquid-liquid splits driven by polarity differences
-- Tests stability **against all existing phases**, not just the reference phase
-- Includes **Wegstein acceleration** for faster convergence
-
-**Example - Sour Gas Three-Phase Detection:**
-```java
-// Sour gas mixture: methane/CO2/H2S at low temperature
-SystemInterface sourGas = new SystemPrEos(210.0, 55.0);  // ~-63°C, 55 bar
+// Full three-phase detection for sour gas
+SystemInterface sourGas = new SystemPrEos(210.0, 55.0);
 sourGas.addComponent("methane", 49.88);
 sourGas.addComponent("CO2", 9.87);
 sourGas.addComponent("H2S", 40.22);
 
 sourGas.setMixingRule("classic");
 sourGas.setMultiPhaseCheck(true);
-sourGas.setEnhancedMultiPhaseCheck(true);  // Critical for finding 3 phases
+sourGas.setEnhancedMultiPhaseCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(sourGas);
 ops.TPflash();
@@ -174,14 +321,38 @@ System.out.println("Number of phases: " + sourGas.getNumberOfPhases());
 // May find: vapor + CO2-rich liquid + H2S-rich liquid
 ```
 
-**When to use enhanced stability analysis:**
-- Sour gas systems (methane/CO₂/H₂S mixtures)
-- CO₂ injection/sequestration systems
-- Systems with polar/non-polar liquid-liquid equilibria
-- Near-critical conditions where phase detection is difficult
-- Any system where standard flash misses expected phases
+##### When to use which method
 
-**Note:** Enhanced stability analysis adds computational overhead. For simple VLE systems, the standard analysis is sufficient.
+| Scenario | Recommended method |
+|----------|--------------------|
+| Simple VLE (gas-liquid) | None (default) |
+| Binary LLE (e.g., methane/n-heptane) | `setCheckForLiquidLiquidSplit(true)` |
+| Oil + water systems | `setMultiPhaseCheck(true)` |
+| Sour gas / CO₂ VLLE | `setMultiPhaseCheck(true)` + `setEnhancedMultiPhaseCheck(true)` |
+| Phase envelope sweeps needing LLE | `setCheckForLiquidLiquidSplit(true)` |
+| Near-critical conditions | `setMultiPhaseCheck(true)` + `setEnhancedMultiPhaseCheck(true)` |
+
+**Note:** `setCheckForLiquidLiquidSplit(true)` adds minimal overhead and can be safely left on for systems where LLE is possible. `setMultiPhaseCheck(true)` and `setEnhancedMultiPhaseCheck(true)` add significant computational cost and should only be enabled when three or more phases are expected.
+
+#### Convergence Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `maxNumberOfIterations` | 50 | Max iterations per inner convergence loop |
+| `accelerateInterval` | 5 | GDEM-2 acceleration frequency |
+| `newtonLimit` | 12 | SS iterations before switching to Newton |
+| `tmLimit` | $-10^{-8}$ | Tangent plane distance threshold for instability |
+| `phaseFractionMinimumLimit` | $10^{-12}$ | Minimum phase fraction before phase removal |
+| Gibbs energy guard cooldown | 6 iterations | Wait time after Gibbs increase before allowing acceleration |
+
+#### References
+
+- Michelsen, M.L. (1982a). "The isothermal flash problem. Part I. Stability." *Fluid Phase Equilibria*, 9, 1-19.
+- Michelsen, M.L. (1982b). "The isothermal flash problem. Part II. Phase-split calculation." *Fluid Phase Equilibria*, 9, 21-40.
+- Michelsen, M.L. & Mollerup, J.M. (2007). *Thermodynamic Models: Fundamentals & Computational Aspects.* Tie-Line Publications.
+- Risnes, R. & Dalen, V. (1984). "Equilibrium calculations for coexisting liquid phases." *SPE Journal*, 24, 87-95.
+- Risnes, R., Dalen, V. & Jensen, J.I. (1981). "Phase equilibrium calculations in the near-critical region." *Proc. European Symposium on EOR*, Bournemouth.
+- Nielsen, R.F. & Lia, T. (2023). "A numerically robust Rachford-Rice solver." *J. Comp. Physics*.
 
 ---
 
