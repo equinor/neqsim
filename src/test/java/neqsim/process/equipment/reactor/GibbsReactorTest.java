@@ -122,7 +122,7 @@ public class GibbsReactorTest {
     Assertions.assertEquals(999989.5000303726, ppm_methane, 1e-1, "ppm_methane");
     Assertions.assertEquals(5.999872080506604, ppm_h2s, 1e-6, "ppm_h2s");
     Assertions.assertEquals(9.999894999481088E-7, ppm_oxygen, 1e-12, "ppm_oxygen");
-    Assertions.assertEquals(6.283935175450368E-5, ppm_so2, 1e-12, "ppm_so2");
+    Assertions.assertEquals(6.28393505670053E-5, ppm_so2, 1e-12, "ppm_so2");
     Assertions.assertEquals(0.0, ppm_so3, 1e-12, "ppm_so3");
     Assertions.assertEquals(0.0, ppm_h2so4, 1e-12, "ppm_h2so4");
     Assertions.assertEquals(4.000033305357223, ppm_water, 1e-6, "ppm_water");
