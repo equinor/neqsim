@@ -214,7 +214,6 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
    */
   private GibbsReactor createH2SReactor(StreamInterface inlet, double no2ppm) {
     GibbsReactor reactor = createConfiguredReactor("H2S Oxidation Reactor", inlet);
-    reactor.setUseConsistentOffDiagonal(true);
 
     // Additional inerts for H2S oxidation stage
     reactor.setComponentAsInert("sulfuric acid");
@@ -243,7 +242,6 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
    */
   private GibbsReactor createSO2Reactor(StreamInterface h2sOutlet) {
     GibbsReactor reactor = createConfiguredReactor("SO2 Processing Reactor", h2sOutlet);
-    reactor.setUseConsistentOffDiagonal(true);
 
     // Configure based on remaining oxygen content
     double outletOxygenFraction = getComponentMoleFraction(h2sOutlet, "oxygen");
