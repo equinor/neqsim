@@ -75,6 +75,9 @@ neqsim.fluidmechanics.util.timeseries
 neqsim.integration
 neqsim.mathlib.generalmath
 neqsim.mathlib.nonlinearsolver
+neqsim.mcp.catalog
+neqsim.mcp.model
+neqsim.mcp.runners
 neqsim.physicalproperties
 neqsim.physicalproperties.interfaceproperties
 neqsim.physicalproperties.interfaceproperties.solidadsorption
@@ -153,6 +156,7 @@ neqsim.process.equipment.compressor
 neqsim.process.equipment.compressor.driver
 neqsim.process.equipment.diffpressure
 neqsim.process.equipment.distillation
+neqsim.process.equipment.distillation.internals
 neqsim.process.equipment.ejector
 neqsim.process.equipment.electrolyzer
 neqsim.process.equipment.expander
@@ -225,13 +229,19 @@ neqsim.process.mechanicaldesign.data
 neqsim.process.mechanicaldesign.designstandards
 neqsim.process.mechanicaldesign.distillation
 neqsim.process.mechanicaldesign.ejector
+neqsim.process.mechanicaldesign.electrolyzer
 neqsim.process.mechanicaldesign.expander
 neqsim.process.mechanicaldesign.filter
+neqsim.process.mechanicaldesign.flare
 neqsim.process.mechanicaldesign.heatexchanger
 neqsim.process.mechanicaldesign.manifold
+neqsim.process.mechanicaldesign.membrane
 neqsim.process.mechanicaldesign.mixer
+neqsim.process.mechanicaldesign.motor
 neqsim.process.mechanicaldesign.pipeline
+neqsim.process.mechanicaldesign.powergeneration
 neqsim.process.mechanicaldesign.pump
+neqsim.process.mechanicaldesign.reactor
 neqsim.process.mechanicaldesign.separator
 neqsim.process.mechanicaldesign.separator.sectiontype
 neqsim.process.mechanicaldesign.splitter
@@ -275,6 +285,7 @@ neqsim.process.util.example
 neqsim.process.util.export
 neqsim.process.util.fielddevelopment
 neqsim.process.util.fire
+neqsim.process.util.heatintegration
 neqsim.process.util.monitor
 neqsim.process.util.optimizer
 neqsim.process.util.reconciliation
@@ -316,6 +327,7 @@ neqsim.thermo.mixingrule
 neqsim.thermo.phase
 neqsim.thermo.system
 neqsim.thermo.util
+neqsim.thermo.util.amines
 neqsim.thermo.util.benchmark
 neqsim.thermo.util.constants
 neqsim.thermo.util.derivatives
