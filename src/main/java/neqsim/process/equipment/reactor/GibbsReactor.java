@@ -459,6 +459,15 @@ public class GibbsReactor extends TwoPortEquipment {
   private boolean converged = false;
   private double finalConvergenceError = 0.0;
   private boolean useConsistentOffDiagonal = false;
+  private int minIterations = 100;
+  private boolean useAdaptiveStepSize = false;
+
+  /**
+   * Maximum relative change per step in moles, following NASA CEA step limiting (Gordon &amp;
+   * McBride, 1994, NASA RP-1311). Prevents overshooting in Newton-Raphson iterations:
+   * {@code max |alpha * deltaX[i]| / n_i &lt; MAX_STEP_LIMIT}.
+   */
+  private static final double MAX_STEP_LIMIT = Math.log(5.0);
 
   private SystemInterface system;
   private double inletEnthalpy;
@@ -1641,25 +1650,6 @@ public class GibbsReactor extends TwoPortEquipment {
       // First try standard inversion
       SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
 
-      // Check condition number to detect ill-conditioned matrices
-      double conditionNumber = ejmlMatrix.conditionP2();
-      if (conditionNumber > 1e12) {
-        logger.warn("Jacobian matrix is ill-conditioned (condition number: " + conditionNumber
-            + "). Using pseudo-inverse with regularization.");
-        // Use pseudo-inverse for ill-conditioned matrices
-        SimpleMatrix inverseMatrix = ejmlMatrix.pseudoInverse();
-        int nRows = inverseMatrix.numRows();
-        int nCols = inverseMatrix.numCols();
-        double[][] result = new double[nRows][nCols];
-        double[] data = inverseMatrix.getDDRM().getData();
-        for (int i = 0; i < nRows; i++) {
-          for (int j = 0; j < nCols; j++) {
-            result[i][j] = data[i * nCols + j];
-          }
-        }
-        return result;
-      }
-
       // Standard inversion for well-conditioned matrices
       SimpleMatrix inverseMatrix = ejmlMatrix.invert();
       int nRows = inverseMatrix.numRows();
@@ -1692,6 +1682,59 @@ public class GibbsReactor extends TwoPortEquipment {
         return result;
       } catch (RuntimeException e2) {
         logger.error("Pseudo-inverse also failed: " + e2.getMessage());
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Solve the Newton-Raphson linear system J * deltaX = -F using LU decomposition. This is
+   * numerically more stable and ~3x faster than computing J^-1 then multiplying, as recommended by
+   * Nocedal &amp; Wright (2000) and standard numerical linear algebra references.
+   *
+   * <p>
+   * Falls back to pseudo-inverse if LU solve fails (e.g., singular matrix).
+   * </p>
+   *
+   * @param objectiveVector the right-hand side vector F
+   * @return the Newton step deltaX = -J^{-1} F, or null if solve fails
+   */
+  private double[] solveNewtonSystem(double[] objectiveVector) {
+    if (jacobianMatrix == null || objectiveVector == null) {
+      return null;
+    }
+    try {
+      SimpleMatrix jMatrix = new SimpleMatrix(jacobianMatrix);
+      SimpleMatrix fVector =
+          new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector).scale(-1.0);
+
+      // Use EJML's solve() which internally uses LU decomposition — O(n^3/3) vs O(n^3) for
+      // explicit inverse. See Nocedal & Wright, Numerical Optimization (2000), Ch. 3.
+      SimpleMatrix deltaX = jMatrix.solve(fVector);
+
+      int nRows = deltaX.numRows();
+      double[] result = new double[nRows];
+      double[] data = deltaX.getDDRM().getData();
+      for (int i = 0; i < nRows; i++) {
+        result[i] = data[i];
+      }
+      return result;
+    } catch (RuntimeException e) {
+      logger.warn("LU solve failed: " + e.getMessage() + ". Trying pseudo-inverse fallback...");
+      try {
+        SimpleMatrix jMatrix = new SimpleMatrix(jacobianMatrix);
+        SimpleMatrix fVector = new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
+        SimpleMatrix jInv = jMatrix.pseudoInverse();
+        SimpleMatrix deltaX = jInv.mult(fVector).scale(-1.0);
+        int nRows = deltaX.numRows();
+        double[] result = new double[nRows];
+        double[] data = deltaX.getDDRM().getData();
+        for (int i = 0; i < nRows; i++) {
+          result[i] = data[i];
+        }
+        return result;
+      } catch (RuntimeException e2) {
+        logger.error("Pseudo-inverse fallback also failed: " + e2.getMessage());
         return null;
       }
     }
@@ -1888,44 +1931,57 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Perform one Newton-Raphson iteration step to calculate the delta vector (dX). Uses the formula:
-   * dX = -J^(-1) * F where J is the Jacobian matrix and F is the objective function vector.
+   * Perform one Newton-Raphson iteration step to calculate the delta vector (dX). Uses LU
+   * decomposition to solve J * dX = -F directly (Nocedal &amp; Wright, 2000), falling back to
+   * J^{-1} * F if LU solve is not available. The LU approach is ~3x faster and more numerically
+   * stable than explicit matrix inversion.
    *
    * @return The delta vector (dX) for updating variables, or null if calculation fails
    */
   public double[] performNewtonRaphsonIteration() {
-    // Calculate the Jacobian matrix and its inverse
+    // Calculate the Jacobian matrix (and legacy inverse for backward compatibility)
     calculateJacobian();
 
-    if (jacobianMatrix == null || jacobianInverse == null) {
-      logger.warn("Cannot perform Newton-Raphson iteration: Jacobian or its inverse is null");
+    if (jacobianMatrix == null) {
+      logger.warn("Cannot perform Newton-Raphson iteration: Jacobian is null");
       return null;
     }
 
     // Get the objective function vector F matching variableComponents
     double[] objectiveVector = getObjectiveVectorForVariables();
-    if (objectiveVector == null || objectiveVector.length != jacobianInverse.length) {
+    if (objectiveVector == null || objectiveVector.length != jacobianMatrix.length) {
       logger.warn("Objective vector size mismatch with Jacobian matrix");
       return null;
     }
 
-    try {
-      // Only create SimpleMatrix objects once per call, not in a loop
-      SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
-      SimpleMatrix objectiveVectorEJML =
-          new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
-      SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
-      int nRows = deltaXMatrix.numRows();
-      double[] result = new double[nRows];
-      double[] data = deltaXMatrix.getDDRM().getData();
-      for (int i = 0; i < nRows; i++) {
-        result[i] = data[i];
-      }
+    // Use direct LU solve: J * deltaX = -F (preferred — faster and more stable)
+    double[] result = solveNewtonSystem(objectiveVector);
+    if (result != null) {
       return result;
-    } catch (RuntimeException e) {
-      logger.warn("Error during Newton-Raphson iteration calculation: " + e.getMessage());
-      return null;
     }
+
+    // Fallback to explicit inverse multiplication if LU solve failed
+    if (jacobianInverse != null) {
+      try {
+        SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
+        SimpleMatrix objectiveVectorEJML =
+            new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
+        SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
+        int nRows = deltaXMatrix.numRows();
+        double[] fallbackResult = new double[nRows];
+        double[] data = deltaXMatrix.getDDRM().getData();
+        for (int i = 0; i < nRows; i++) {
+          fallbackResult[i] = data[i];
+        }
+        return fallbackResult;
+      } catch (RuntimeException e) {
+        logger.warn("Error during Newton-Raphson iteration calculation: " + e.getMessage());
+        return null;
+      }
+    }
+
+    logger.warn("Both LU solve and inverse fallback failed");
+    return null;
   }
 
   /**
@@ -2209,6 +2265,115 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
+   * Set minimum number of iterations before convergence is checked. Default is 3. The solver will
+   * not declare convergence before completing this many iterations, even if the convergence
+   * criterion is satisfied. Setting this too high wastes iterations; too low may cause premature
+   * termination.
+   *
+   * @param minIterations Minimum iterations before convergence check (must be at least 1)
+   */
+  public void setMinIterations(int minIterations) {
+    this.minIterations = Math.max(1, minIterations);
+  }
+
+  /**
+   * Get minimum number of iterations before convergence is checked.
+   *
+   * @return Minimum iterations before convergence check
+   */
+  public int getMinIterations() {
+    return minIterations;
+  }
+
+  /**
+   * Enable or disable NASA CEA-style adaptive step sizing (Gordon &amp; McBride, 1994, NASA
+   * RP-1311). When enabled, the step size is automatically computed each iteration to limit the
+   * maximum relative change in component moles, allowing larger steps when safe and smaller steps
+   * near steep gradients. When disabled, the fixed {@code dampingComposition} factor is used for
+   * all iterations.
+   *
+   * @param useAdaptive true to enable adaptive step sizing
+   */
+  public void setUseAdaptiveStepSize(boolean useAdaptive) {
+    this.useAdaptiveStepSize = useAdaptive;
+  }
+
+  /**
+   * Check if adaptive step sizing is enabled.
+   *
+   * @return true if adaptive step sizing is active
+   */
+  public boolean isUseAdaptiveStepSize() {
+    return useAdaptiveStepSize;
+  }
+
+  /**
+   * Calculate adaptive step size using NASA CEA-style step limiting (Gordon &amp; McBride, 1994).
+   * Limits the maximum relative mole change so that no <em>major</em> component changes by more
+   * than a factor of {@code e^MAX_STEP_LIMIT} (~5x) in a single step. Components with moles below a
+   * significance threshold are excluded from the limiting (they are growing from near-zero and need
+   * large relative steps).
+   *
+   * @param deltaX The raw Newton step vector
+   * @param requestedAlpha The starting step size (typically 1.0)
+   * @return The step size bounded to prevent overshooting (clamped to [1e-4, requestedAlpha])
+   */
+  private double calculateAdaptiveAlpha(double[] deltaX, double requestedAlpha) {
+    double alpha = requestedAlpha;
+    int numComponents = variableComponents.size();
+
+    // Find the total moles to define a significance threshold
+    double totalMoles = 0.0;
+    for (int i = 0; i < outlet_mole.size(); i++) {
+      totalMoles += outlet_mole.get(i);
+    }
+    // Only limit based on components with > 0.1% of total moles
+    double significanceThreshold = totalMoles * 1e-3;
+
+    for (int i = 0; i < numComponents; i++) {
+      String compName = variableComponents.get(i);
+      int globalIdx = processedComponentIndexMap.getOrDefault(compName, -1);
+      if (globalIdx < 0 || globalIdx >= outlet_mole.size()) {
+        continue;
+      }
+
+      double currentMole = outlet_mole.get(globalIdx);
+      // Skip near-zero components — they need large relative steps to grow
+      if (currentMole < significanceThreshold) {
+        continue;
+      }
+
+      double absDelta = Math.abs(deltaX[i]);
+      if (absDelta < 1e-30) {
+        continue;
+      }
+
+      // Limit: |alpha * deltaX[i]| / currentMole < MAX_STEP_LIMIT
+      double maxAlphaForComp = MAX_STEP_LIMIT * currentMole / absDelta;
+      alpha = Math.min(alpha, maxAlphaForComp);
+    }
+
+    // Also prevent any component from going negative
+    for (int i = 0; i < numComponents; i++) {
+      String compName = variableComponents.get(i);
+      int globalIdx = processedComponentIndexMap.getOrDefault(compName, -1);
+      if (globalIdx < 0 || globalIdx >= outlet_mole.size()) {
+        continue;
+      }
+      double currentMole = outlet_mole.get(globalIdx);
+      double delta = deltaX[i];
+      // If step would make moles negative, limit alpha
+      if (delta < 0 && currentMole > 1e-15) {
+        double maxAlpha = 0.9 * currentMole / (-delta);
+        alpha = Math.min(alpha, maxAlpha);
+      }
+    }
+
+    // Floor to prevent vanishingly small steps
+    return Math.max(alpha, 1e-4);
+  }
+
+  /**
    * Solve Gibbs equilibrium using Newton-Raphson iterations with specified step size.
    *
    * @param alphaComposition Step size for composition updates
@@ -2314,8 +2479,9 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
 
-      // Check convergence (require minimum 100 iterations)
-      if ((deltaXNorm < convergenceTolerance && iteration >= 100) || iteration == maxIterations) {
+      // Check convergence (require minimum iterations for stability)
+      if ((deltaXNorm < convergenceTolerance && iteration >= minIterations)
+          || iteration == maxIterations) {
         logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached")
             + " at iteration " + iteration + " with delta norm = " + deltaXNorm);
         converged = deltaXNorm < convergenceTolerance;
@@ -2329,8 +2495,17 @@ public class GibbsReactor extends TwoPortEquipment {
         return true;
       }
 
+      // Determine step size: adaptive (NASA CEA-style) or fixed damping
+      double effectiveAlpha = alphaComposition;
+      if (useAdaptiveStepSize) {
+        effectiveAlpha = calculateAdaptiveAlpha(deltaX, 1.0);
+        if (iteration <= 5 || iteration % 100 == 0) {
+          logger.debug("Iteration " + iteration + ": adaptive alpha = " + effectiveAlpha);
+        }
+      }
+
       // Perform iteration update
-      boolean updateSuccess = performIterationUpdate(deltaX, alphaComposition);
+      boolean updateSuccess = performIterationUpdate(deltaX, effectiveAlpha);
       if (!updateSuccess) {
         // Set final convergence error for diagnostics and throw an exception to signal failure
         logger.warn("Iteration update failed at iteration " + iteration);

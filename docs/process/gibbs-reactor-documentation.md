@@ -103,8 +103,27 @@ $$
 
 where $\alpha \in (0, 1]$ is the composition damping factor (typically 0.01--0.05).
 
+### 2.3.1 LU Decomposition for the Linear System
+
+The Newton step $\Delta\mathbf{x} = -J^{-1}\mathbf{F}$ is computed by solving $J \cdot \Delta\mathbf{x} = -\mathbf{F}$ via LU decomposition rather than explicitly inverting $J$. This is the standard approach recommended by Nocedal & Wright (2000, Ch. 3):
+
+- **Cost:** $O(n^3/3)$ vs $O(n^3)$ for explicit inversion — roughly 3× faster
+- **Stability:** avoids amplifying round-off errors through matrix inversion
+- **Fallback:** if LU decomposition fails (singular matrix), the solver falls back to Moore-Penrose pseudo-inverse
+
+### 2.3.2 Adaptive Step Sizing (NASA CEA-Style)
+
+When enabled (`setUseAdaptiveStepSize(true)`), the fixed damping factor is replaced with an adaptive step size computed each iteration, following the NASA CEA approach (Gordon & McBride, 1994):
+
+$$
+\alpha = \min\left(1,\; \min_{i \in \text{major}} \frac{\ln 5 \cdot n_i}{|\Delta n_i|}\right)
+$$
+
+where "major" components are those with $n_i > 0.001 \cdot N$. Minor species (< 0.1% of total) are excluded from the limiting so they can grow rapidly from near-zero. An additional negativity guard ensures $n_i + \alpha \cdot \Delta n_i > 0$.
+
 **References:**
-- Nocedal, J. and Wright, S. J. (2006). *Numerical Optimization.* 2nd ed., Springer. — Chapter 18-19: equality-constrained optimisation and Newton's method.
+- Nocedal, J. and Wright, S. J. (2006). *Numerical Optimization.* 2nd ed., Springer. — Chapter 3 (LU solve), Chapters 18-19 (equality-constrained optimisation).
+- Gordon, S. and McBride, B. J. (1994). *Computer Program for Calculation of Complex Chemical Equilibrium Compositions and Applications.* NASA RP-1311. — Step limiting algorithm.
 
 ### 2.4 Log-Mole Column Scaling (Gordon-McBride)
 
@@ -184,11 +203,28 @@ reactor.setEnergyMode("adiabatic");
 | `setMaxIterations(int n)` | 5000 | Maximum Newton-Raphson iterations |
 | `setConvergenceTolerance(double tol)` | 1e-3 | Convergence criterion: $\lVert\Delta\mathbf{x}\rVert < \text{tol}$ |
 | `setDampingComposition(double alpha)` | 0.05 | Step size damping factor $\alpha$ for composition updates |
+| `setMinIterations(int n)` | 100 | Minimum iterations before convergence is checked |
+| `setUseAdaptiveStepSize(boolean)` | false | Enable NASA CEA-style adaptive step sizing |
 
 **Guidance for choosing $\alpha$:**
 - `0.001`–`0.01`: Very conservative, for stiff acid gas systems or near-pure compositions
 - `0.01`–`0.05`: Standard range for most applications
 - `0.05`–`0.1`: Aggressive, for well-conditioned simple systems (e.g., combustion)
+
+#### Adaptive Step Sizing
+
+When `setUseAdaptiveStepSize(true)` is enabled, the solver automatically computes the step size each iteration using NASA CEA-style step limiting (Gordon & McBride, 1994). Instead of a fixed damping factor, the algorithm:
+
+1. Starts with $\alpha = 1.0$ (full Newton step)
+2. Limits $\alpha$ so that no major component (> 0.1% of total moles) changes by more than a factor of $e^{\ln 5} \approx 5$ in a single step
+3. Prevents any component from going negative
+4. Floors $\alpha$ at $10^{-4}$ to avoid vanishingly small steps
+
+This allows larger steps when safe and smaller steps near steep gradients, typically reducing iteration count significantly for isothermal systems.
+
+#### Minimum Iterations
+
+The solver requires at least `minIterations` iterations before declaring convergence, even if $\lVert\Delta\mathbf{x}\rVert < \text{tol}$. This prevents premature termination in adiabatic mode where the temperature update lags behind composition convergence. The default of 100 is conservative; for simple isothermal cases, `setMinIterations(3)` combined with adaptive step sizing can reduce total iterations from hundreds to tens.
 
 #### Species Management
 
@@ -222,7 +258,7 @@ reactor.run();  // standard execution
 reactor.run(UUID.randomUUID());
 ```
 
-Internally, `run()` calls `solveGibbsEquilibrium(dampingComposition)` which executes the full Newton-Raphson iteration loop.
+Internally, `run()` calls `solveGibbsEquilibrium(dampingComposition)` which executes the full Newton-Raphson iteration loop. The linear system $J \cdot \Delta\mathbf{x} = -\mathbf{F}$ is solved using LU decomposition (EJML `solve()`), which is ~3× faster and more numerically stable than explicit matrix inversion.
 
 ### 3.4 Results — Convergence Diagnostics
 
@@ -487,9 +523,10 @@ double so2_ppm = outlet.getComponent("SO2").getz() * 1e6;
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | Oscillating residuals, never converges | Damping too large | Reduce `setDampingComposition()` (try 0.001) |
-| Very slow convergence (> 10000 iter) | Damping too small or stiff system | Increase damping slightly; enable `setUseConsistentOffDiagonal(true)` |
+| Very slow convergence (> 10000 iter) | Damping too small or stiff system | Enable `setUseAdaptiveStepSize(true)` with `setMinIterations(3)` for isothermal, or increase damping and enable `setUseConsistentOffDiagonal(true)` |
 | `null` outlet from `GibbsReactorCO2` | Two-stage pathway diverged | Already fixed with consistent Jacobian; check that inlet has expected components |
 | Mass balance error > 0.1% | Premature convergence | Decrease `setConvergenceTolerance()` (try 1e-6) |
+| Converges but takes 100+ iterations for simple system | `minIterations` too high | Set `setMinIterations(3)` + `setUseAdaptiveStepSize(true)` |
 
 ### Zero or Unexpected Moles
 

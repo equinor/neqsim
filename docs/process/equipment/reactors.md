@@ -165,9 +165,16 @@ gibbs.run();
 
 Key methods:
 - `setComponentAsInert(String name)` — mark a component as non-reactive
+- `setDampingComposition(double alpha)` — step size damping (default 0.05)
+- `setUseAdaptiveStepSize(boolean)` — enable NASA CEA-style adaptive step sizing
+- `setMinIterations(int n)` — minimum iterations before convergence check (default 100)
+- `setUseConsistentOffDiagonal(boolean)` — improved Jacobian for acid gas systems
 - `hasConverged()` — check convergence status
 - `getActualIterations()` — iteration count
 - `getEnthalpyOfReactions()` — heat released/absorbed
+
+See [GibbsReactor Reference Documentation](../gibbs-reactor-documentation.md) for the full
+mathematical foundation, algorithm details, and usage examples.
 
 ---
 
