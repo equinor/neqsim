@@ -69,9 +69,10 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GibbsReactor extends TwoPortEquipment {
   /**
-   * Get the absolute mass balance error (difference between inlet and outlet) in kg/sec.
+   * Get the relative mass balance error as a percentage. Computed as
+   * {@code 100 * |massIn - massOut| / massIn}.
    *
-   * @return absolute difference in total mass flow rate (kg/sec)
+   * @return relative mass balance error in percent (e.g., 0.001 means 0.001%)
    */
   public double getMassBalanceError() {
     try {
@@ -85,7 +86,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Returns true if the absolute mass balance error is less than 1e-3 kg/sec.
+   * Returns true if the relative mass balance error is less than 0.001%.
    *
    * @return true if mass balance is converged, false otherwise
    */
