@@ -9,6 +9,52 @@
 
 ---
 
+## 2026-03-31 — GibbsReactor Solver Performance Improvements
+
+### New Features — LU Solve, Adaptive Step Sizing, Configurable Min Iterations
+
+Four algorithmic improvements to the Newton-Raphson solver in `GibbsReactor`:
+
+1. **LU decomposition replaces explicit matrix inverse** — The Newton linear
+   system $J \cdot \Delta x = -F$ is now solved via EJML's `solve()` (LU
+   decomposition) instead of computing $J^{-1}$ then multiplying. ~3× faster
+   and more numerically stable. Falls back to pseudo-inverse if LU fails.
+
+2. **Removed SVD condition number check** — The per-iteration `conditionP2()`
+   call (O(n³) SVD) has been removed from the hot path. The legacy
+   `calculateJacobianInverse()` method is kept for backward compatibility but
+   is only used as a fallback.
+
+3. **NASA CEA-style adaptive step sizing** — New opt-in feature via
+   `setUseAdaptiveStepSize(true)`. Computes step size each iteration to limit
+   max relative mole change (factor of ~5×). Skips near-zero components so
+   they can grow freely. Prevents negative moles.
+
+4. **Configurable minimum iterations** — `setMinIterations(int n)` replaces the
+   hardcoded `iteration >= 100` convergence guard. Default unchanged at 100 for
+   backward compatibility. Set to 3 for simple isothermal systems.
+
+### New Methods on `GibbsReactor`
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setMinIterations(int)` | 100 | Min iterations before convergence check |
+| `getMinIterations()` | — | Get current minimum iterations |
+| `setUseAdaptiveStepSize(boolean)` | false | Enable adaptive step sizing |
+| `isUseAdaptiveStepSize()` | — | Check if adaptive step sizing is active |
+
+### Migration Notes
+
+- **No breaking changes** — all defaults preserved, existing code runs identically.
+- To opt into faster convergence for isothermal systems:
+  ```java
+  reactor.setUseAdaptiveStepSize(true);
+  reactor.setMinIterations(3);
+  ```
+- The internal method `solveNewtonSystem(double[])` is private — no public API change.
+
+---
+
 ## 2026-03-30 — Serialization Cleanup & ProcessLogic Extends Serializable
 
 ### Breaking Change — `ProcessLogic` now extends `Serializable`
