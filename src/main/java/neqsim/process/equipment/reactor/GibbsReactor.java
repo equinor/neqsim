@@ -2249,8 +2249,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Set minimum number of iterations before convergence is checked. Default is 3. The solver will
-   * not declare convergence before completing this many iterations, even if the convergence
+   * Set minimum number of iterations before convergence is checked. Default is 100. The solver
+   * will not declare convergence before completing this many iterations, even if the convergence
    * criterion is satisfied. Setting this too high wastes iterations; too low may cause premature
    * termination.
    *
