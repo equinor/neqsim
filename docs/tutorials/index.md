@@ -40,6 +40,7 @@ Complete walkthroughs for common applications:
 | **[Gas-Oil Separation Plant (GOSP)](gosp_tutorial)** | Multi-stage separation with compression | Intermediate |
 | **[PVT Lab Test Simulations](../pvtsimulation/pvt_lab_tests)** | CCE, CVD, DL, separator tests | Intermediate |
 | **[Flow Assurance Overview](../pvtsimulation/flow_assurance_overview)** | Hydrates, wax, asphaltenes screening | Intermediate |
+| **[UniSim/HYSYS to NeqSim Conversion](../process/unisim-to-neqsim-conversion)** | Convert UniSim `.usc` models to NeqSim | Intermediate |
 
 ## Video Tutorials
 

@@ -46,6 +46,7 @@ This documentation is organized into the following sections:
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
+| [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim and export back to UniSim |
 
 ### Process Design Guide
 
