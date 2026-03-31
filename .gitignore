@@ -107,3 +107,6 @@ devtools/neqsim_dev_setup.egg-info/dependency_links.txt
 devtools/neqsim_dev_setup.egg-info/top_level.txt
 devtools/neqsim_dev_setup.egg-info/requires.txt
 devtools/neqsim_dev_setup.egg-info/SOURCES.txt
+
+# Paper content (local only, not tracked in git)
+neqsim-paperlab/papers/
