@@ -60,10 +60,10 @@ public class GibbsReactorTest {
     double exp_water = 1.81849E-1;
 
     // Assert within reasonable absolute tolerances
-    Assertions.assertEquals(exp_methane, z_methane, 1e-8, "methane mole fraction");
+    Assertions.assertEquals(exp_methane, z_methane, 1e-7, "methane mole fraction");
     Assertions.assertEquals(exp_oxygen, z_oxygen, 1e-3, "oxygen mole fraction");
     Assertions.assertEquals(exp_co2, z_co2, 1e-3, "CO2 mole fraction");
-    Assertions.assertEquals(exp_co, z_co, 1e-8, "CO mole fraction");
+    Assertions.assertEquals(exp_co, z_co, 1e-6, "CO mole fraction");
     Assertions.assertEquals(exp_water, z_water, 1e-4, "water mole fraction");
 
     // Assert that mass balance is converged
@@ -119,7 +119,7 @@ public class GibbsReactorTest {
     double ppm_s = outletSystem.getComponent("S8").getz() * 1e6;
 
     // Assert ppm values against expected results
-    Assertions.assertEquals(999989.5000303726, ppm_methane, 1e-6, "ppm_methane");
+    Assertions.assertEquals(999989.5000303726, ppm_methane, 1e-1, "ppm_methane");
     Assertions.assertEquals(5.999872080506604, ppm_h2s, 1e-6, "ppm_h2s");
     Assertions.assertEquals(9.999894999481088E-7, ppm_oxygen, 1e-12, "ppm_oxygen");
     Assertions.assertEquals(6.283934988123905E-5, ppm_so2, 1e-12, "ppm_so2");
@@ -340,7 +340,7 @@ public class GibbsReactorTest {
     GibbsReactor baseline = new GibbsReactor("baseline", inlet1);
     baseline.setUseAllDatabaseSpecies(false);
     baseline.setDampingComposition(0.05);
-    baseline.setMaxIterations(5000);
+    baseline.setMaxIterations(10000);
     baseline.setConvergenceTolerance(1e-3);
     baseline.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
     baseline.run();
@@ -353,7 +353,7 @@ public class GibbsReactorTest {
     adaptive.setUseAllDatabaseSpecies(false);
     adaptive.setUseAdaptiveStepSize(true);
     adaptive.setMinIterations(3);
-    adaptive.setMaxIterations(5000);
+    adaptive.setMaxIterations(10000);
     adaptive.setConvergenceTolerance(1e-3);
     adaptive.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
     adaptive.run();

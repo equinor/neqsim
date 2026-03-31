@@ -168,7 +168,6 @@ Key methods:
 - `setDampingComposition(double alpha)` — step size damping (default 0.05)
 - `setUseAdaptiveStepSize(boolean)` — enable NASA CEA-style adaptive step sizing
 - `setMinIterations(int n)` — minimum iterations before convergence check (default 100)
-- `setUseConsistentOffDiagonal(boolean)` — improved Jacobian for acid gas systems
 - `hasConverged()` — check convergence status
 - `getActualIterations()` — iteration count
 - `getEnthalpyOfReactions()` — heat released/absorbed
