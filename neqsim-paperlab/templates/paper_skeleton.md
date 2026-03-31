@@ -1,17 +1,8 @@
 # {{TITLE}}
 
 <!-- Target Journal: {{JOURNAL}} -->
-<!-- Paper Type: {{PAPER_TYPE}} -->
 <!-- Generated: {{DATE}} -->
 <!-- Status: DRAFT -->
-
-<!--
-  Paper types and their section structure:
-  - comparative:      Algorithm A vs B — standard sections below
-  - characterization: Systematic evaluation of existing algorithm — skip §3.2 "Proposed improvement"
-  - method:           New formulation — expand §2 "Mathematical Framework", skip §4.3 "Statistical testing"
-  - application:      Case study — expand §5 "Results", minimal §2 and §3
--->
 
 ## Highlights
 
@@ -26,7 +17,7 @@ State the problem, approach, key results, and significance.
 
 ## Keywords
 
-TODO; comma-separated; 4–6 keywords relevant to the study
+TODO; thermodynamic flash; successive substitution; Newton-Raphson; vapor-liquid equilibrium; natural gas
 
 ---
 
@@ -34,16 +25,16 @@ TODO; comma-separated; 4–6 keywords relevant to the study
 
 ### 1.1 Background
 
-TODO: Describe the problem domain and its importance.
-
-<!-- comparative: Frame as "existing methods have limitation X" -->
-<!-- characterization: Frame as "method X is widely used but lacks systematic evaluation" -->
-<!-- method: Frame as "current formulations miss aspect Y" -->
-<!-- application: Frame as "this engineering problem requires coupled simulation" -->
+TODO: The isothermal flash problem — thermodynamic equilibrium at fixed T and P — is a
+fundamental computation in process simulation, reservoir engineering, and pipeline flow
+assurance. The Rachford-Rice equation [Claim C_RR] governs phase-split determination,
+while Michelsen's framework [Claim C_Mich] established the two-stage approach of
+stability analysis followed by phase split.
 
 ### 1.2 Prior work
 
-TODO: Survey of existing approaches and key references. Identify the gap.
+TODO: Survey of existing approaches — successive substitution (SS), Newton-Raphson (NR),
+direct substitution, and hybrid methods. Cite benchmark studies. Identify gap.
 
 ### 1.3 Contributions
 
@@ -56,46 +47,60 @@ TODO: State the specific contributions of this paper:
 
 ## 2. Mathematical Framework
 
-### 2.1 Governing equations
+### 2.1 Phase equilibrium conditions
 
-TODO: State the mathematical problem being solved.
+The condition for vapor–liquid equilibrium at temperature $T$ and pressure $P$
+requires equal fugacities for each component $i$:
 
-<!-- Flash papers: Phase equilibrium, Rachford-Rice, fugacity -->
-<!-- Reactor papers: Gibbs energy minimization, element balance, chemical potential -->
-<!-- PVT papers: Property correlations, mixing rules, departure functions -->
+$$
+f_i^L(T, P, \mathbf{x}) = f_i^V(T, P, \mathbf{y})
+$$
 
-### 2.2 Equation of state / thermodynamic model
+where $\mathbf{x}$ and $\mathbf{y}$ are liquid and vapor mole fraction vectors.
 
-TODO: Describe the EOS or model used.
+### 2.2 Equation of state
 
-### 2.3 Solution method
+Cubic equations of state express fugacity through:
 
-TODO: Describe the numerical method.
+$$
+\ln \hat\phi_i = \frac{1}{RT} \int_V^\infty \left[ \left(\frac{\partial P}{\partial n_i}\right)_{T,V,n_{j\neq i}} - \frac{RT}{V} \right] dV - \ln Z
+$$
 
-<!-- comparative: Describe both baseline and candidate -->
-<!-- characterization: Describe the single method under study in detail -->
-<!-- method: This is the core section — full derivation here -->
+### 2.3 Rachford-Rice equation
+
+The phase fraction $\beta$ satisfies:
+
+$$
+g(\beta) = \sum_{i=1}^{N_c} \frac{z_i (K_i - 1)}{1 + \beta(K_i - 1)} = 0
+$$
+
+### 2.4 Successive substitution
+
+K-factors are updated iteratively:
+
+$$
+K_i^{(n+1)} = \frac{\hat\phi_i^L(\mathbf{x}^{(n)})}{\hat\phi_i^V(\mathbf{y}^{(n)})}
+$$
+
+### 2.5 Newton-Raphson formulation
+
+TODO: Describe the u-variable formulation used in NeqSim.
 
 ---
 
 ## 3. Algorithm Description
 
-### 3.1 Current algorithm
+### 3.1 Baseline algorithm
 
-TODO: Describe the algorithm as implemented.
-
-<!-- characterization: This is the main content — pseudocode, decision logic, parameters -->
-<!-- comparative: Brief baseline description -->
+TODO: Describe NeqSim's current TPflash implementation.
 
 ### 3.2 Proposed improvement
 
-<!-- [SKIP for characterization and application papers] -->
-
-TODO: Detail the algorithmic modification (comparative/method papers only).
+TODO: Detail the algorithmic modification.
 
 ### 3.3 Implementation
 
-TODO: Pseudocode and implementation details.
+TODO: Pseudocode of modified algorithm.
 
 ---
 
@@ -105,60 +110,44 @@ TODO: Pseudocode and implementation details.
 
 TODO: Describe the benchmark configuration.
 
-<!-- Use paper-type appropriate table: -->
-<!-- Flash:   Fluid families × T × P ranges -->
-<!-- Reactor: Reaction systems × T × P × feed compositions -->
-<!-- PVT:     Fluid types × property ranges × measurement types -->
-
-| Category | Description | Conditions | Cases |
-|:---------|:------------|:-----------|------:|
-| TODO     | TODO        | TODO       | TODO  |
+| Fluid family | Components | $T$ range (K) | $P$ range (bar) | Cases |
+|:---|:---|---:|---:|---:|
+| Lean gas | CH₄/C₂/C₃/N₂/CO₂ | 200–400 | 1–200 | 500 |
+| Rich gas | CH₄–C₅/N₂/CO₂ | 220–450 | 5–300 | 500 |
+| Gas condensate | CH₄–C₁₀/N₂/CO₂ | 250–500 | 10–500 | 500 |
 
 ### 4.2 Performance metrics
 
 | Metric | Definition | Unit |
-|:-------|:-----------|:-----|
-| TODO   | TODO       | TODO |
+|:---|:---|:---|
+| Convergence rate | fraction of cases reaching tol < 10⁻¹⁰ | % |
+| Iteration count | SS + NR iterations to convergence | — |
+| CPU time | wall-clock per flash | ms |
+| Residual norm | $\|\ln\phi^L - \ln\phi^V\|_2$ | — |
 
 ### 4.3 Statistical testing
 
-<!-- [SKIP for characterization — use coverage completeness instead] -->
-<!-- [SKIP for application — use engineering validation instead] -->
-
-TODO: Describe the statistical tests for paired comparison (comparative papers).
-
-### 4.4 Cross-validation
-
-TODO: Describe cross-validation approach (different EOS, reference data, etc.).
+TODO: Describe the Wilcoxon signed-rank test for paired comparison.
 
 ---
 
 ## 5. Results and Discussion
 
-### 5.1 Overview
+### 5.1 Convergence rate comparison
 
-TODO: Summary of aggregate results.
+TODO: Overall convergence rates by fluid family. [Claim C1]
 
-<!-- characterization: Present behavior maps, convergence profiles, property accuracy -->
-<!-- comparative: Present paired comparison results with statistical significance -->
-<!-- method: Present mathematical properties (convergence order, stability proofs) -->
-<!-- application: Present engineering results with uncertainty -->
+### 5.2 Iteration count reduction
 
-### 5.2 [Topic-specific subsection]
+TODO: Distribution of iteration counts. [Claim C2]
 
-TODO: Detailed results.
+### 5.3 Timing comparison
 
-### 5.3 [Topic-specific subsection]
+TODO: CPU time comparison. [Claim C3]
 
-TODO: Detailed results.
+### 5.4 Near-critical behavior
 
-### 5.4 Edge cases and failure modes
-
-TODO: Document where the method struggles. This is mandatory.
-
-### 5.5 Cross-validation results
-
-TODO: Results from cross-validation (different EOS, reference comparison, etc.).
+TODO: Performance near critical points. [Claim C4]
 
 ### 5.5 Robustness analysis
 
