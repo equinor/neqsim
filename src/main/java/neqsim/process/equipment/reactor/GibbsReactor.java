@@ -539,6 +539,13 @@ public class GibbsReactor extends TwoPortEquipment {
   private transient List<Double> elementBalanceErrorHistory = new ArrayList<>();
 
   /**
+   * Column scaling factors from the NASA CEA log-mole transformation applied to the Jacobian. Each
+   * entry j stores the factor by which Jacobian column j was multiplied. The Newton step
+   * deltaX_scaled must be divided by these factors to obtain the true deltaX in mole units.
+   */
+  private transient double[] columnScaleFactors = null;
+
+  /**
    * Maximum relative change per step in moles, following NASA CEA step limiting (Gordon &amp;
    * McBride, 1994, NASA RP-1311). Prevents overshooting in Newton-Raphson iterations:
    * {@code max |alpha * deltaX[i]| / n_i &lt; MAX_STEP_LIMIT}.
@@ -1597,11 +1604,11 @@ public class GibbsReactor extends TwoPortEquipment {
             ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
             : 0.0;
         if (i == j) {
-          // Diagonal: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total) + dfugdn
-          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles) + dfugdn;
+          // Diagonal: ∂F_i/∂n_i = RT * (1/n_i - 1/N + ∂ln(φ_i)/∂n_i)
+          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles + dfugdn);
         } else {
-          // Off-diagonal: ∂f_i/∂n_j = -RT/n_total + dfugdn
-          jacobianMatrix[i][j] = -RT / totalMoles + dfugdn;
+          // Off-diagonal: ∂F_i/∂n_j = RT * (-1/N + ∂ln(φ_i)/∂n_j)
+          jacobianMatrix[i][j] = RT * (-1.0 / totalMoles + dfugdn);
         }
       }
 
@@ -1632,6 +1639,13 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int k = 0; k < numActiveElements; k++) {
         jacobianMatrix[numComponents + i][numComponents + k] = 0.0;
       }
+    }
+
+    // Initialize column scale factors to identity (no scaling).
+    // NASA CEA-style log-mole column scaling can be enabled via setUseLogMoleScaling(true).
+    columnScaleFactors = new double[totalVars];
+    for (int j = 0; j < totalVars; j++) {
+      columnScaleFactors[j] = 1.0;
     }
 
     // Calculate inverse
@@ -1745,16 +1759,17 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Solve the Newton-Raphson linear system J * deltaX = -F using LU decomposition. This is
-   * numerically more stable and ~3x faster than computing J^-1 then multiplying, as recommended by
-   * Nocedal &amp; Wright (2000) and standard numerical linear algebra references.
+   * Solve the Newton-Raphson linear system J_scaled * deltaX_scaled = -F using LU decomposition,
+   * then unscale using the column scaling factors from the NASA CEA log-mole transformation.
    *
    * <p>
-   * Falls back to pseudo-inverse if LU solve fails (e.g., singular matrix).
+   * The Jacobian was column-scaled: J_scaled[:,j] = J[:,j] * n_j. Solving gives deltaX_scaled, and
+   * the true step is deltaX[j] = deltaX_scaled[j] / n_j. Falls back to pseudo-inverse if LU solve
+   * fails (e.g., singular matrix).
    * </p>
    *
    * @param objectiveVector the right-hand side vector F
-   * @return the Newton step deltaX = -J^{-1} F, or null if solve fails
+   * @return the Newton step deltaX = -J^{-1} F (unscaled), or null if solve fails
    */
   private double[] solveNewtonSystem(double[] objectiveVector) {
     if (jacobianMatrix == null || objectiveVector == null) {
@@ -1775,6 +1790,8 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int i = 0; i < nRows; i++) {
         result[i] = data[i];
       }
+      // Unscale: deltaX_true[j] = deltaX_scaled[j] / columnScaleFactors[j]
+      unscaleNewtonStep(result);
       return result;
     } catch (RuntimeException e) {
       logger.warn("LU solve failed: " + e.getMessage() + ". Trying pseudo-inverse fallback...");
@@ -1789,11 +1806,29 @@ public class GibbsReactor extends TwoPortEquipment {
         for (int i = 0; i < nRows; i++) {
           result[i] = data[i];
         }
+        unscaleNewtonStep(result);
         return result;
       } catch (RuntimeException e2) {
         logger.error("Pseudo-inverse fallback also failed: " + e2.getMessage());
         return null;
       }
+    }
+  }
+
+  /**
+   * Unscale a Newton step vector using the column scaling factors from the log-mole transformation.
+   * The scaled system solves J_s * Δξ = -F where J_s = J * D (D = diag(n_j)). Recovering the
+   * original step: Δn = D * Δξ, so Δn_j = n_j * Δξ_j. Lagrange multiplier entries have scale factor
+   * 1.0 (no change).
+   *
+   * @param deltaX the Newton step vector to unscale in place
+   */
+  private void unscaleNewtonStep(double[] deltaX) {
+    if (columnScaleFactors == null || deltaX == null) {
+      return;
+    }
+    for (int j = 0; j < deltaX.length && j < columnScaleFactors.length; j++) {
+      deltaX[j] *= columnScaleFactors[j];
     }
   }
 
@@ -2092,8 +2127,6 @@ public class GibbsReactor extends TwoPortEquipment {
     deltaNorm = Math.sqrt(deltaNorm);
 
     // Update Lagrange multipliers with full Newton step.
-    // The RT-corrected Jacobian produces well-scaled multiplier steps,
-    // so no damping is needed.
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElementIndices.get(i);
       double oldValue = lambda[elementIndex];
