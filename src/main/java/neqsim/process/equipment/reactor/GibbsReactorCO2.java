@@ -56,7 +56,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   private static final double PPM_THRESHOLD = 0.01;
 
   /** Default damping factor for composition updates during iteration. */
-  private static final double DEFAULT_DAMPING = 0.03;
+  private static final double DEFAULT_DAMPING = 0.01;
 
   /** Default maximum number of iterations for convergence. */
   private static final int DEFAULT_MAX_ITERATIONS = 15000;
