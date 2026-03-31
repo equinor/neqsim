@@ -458,6 +458,7 @@ public class GibbsReactor extends TwoPortEquipment {
   private int actualIterations = 0;
   private boolean converged = false;
   private double finalConvergenceError = 0.0;
+  private boolean useConsistentOffDiagonal = false;
 
   private SystemInterface system;
   private double inletEnthalpy;
@@ -1490,7 +1491,7 @@ public class GibbsReactor extends TwoPortEquipment {
       totalMoles += moles;
     }
 
-    // Initialize thermodynamic properties once (fugacity coefficient derivatives)
+    // Initialize thermodynamic properties (fugacity coefficient derivatives)
     system.init(3);
 
     // Fill Jacobian matrix
@@ -1507,15 +1508,18 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int j = 0; j < numComponents; j++) {
         String compJ = variableComponents.get(j);
         int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
-        // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total + d(ln phi_i)/dn_i)
-        // Off-diagonal: ∂f_i/∂n_j = RT * (-1/n_total + d(ln phi_i)/dn_j)
         double dfugdn = (globalIdx >= 0 && globalJ >= 0)
             ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
             : 0.0;
         if (i == j) {
+          // Diagonal: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total + dfugdn)
           jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles + dfugdn);
-        } else {
+        } else if (useConsistentOffDiagonal) {
+          // Consistent off-diagonal: ∂f_i/∂n_j = RT * (-1/n_total + dfugdn)
           jacobianMatrix[i][j] = RT * (-1.0 / totalMoles + dfugdn);
+        } else {
+          // Legacy off-diagonal (dfugdn not scaled by RT)
+          jacobianMatrix[i][j] = -RT / totalMoles + dfugdn;
         }
       }
 
@@ -1548,18 +1552,19 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-    // Transform to log-mole variables (Gordon-McBride / NASA CEA approach).
-    // Scale each species column j by n_j so the Newton correction becomes
-    // delta(ln n_j) instead of delta(n_j). This removes the 1/n_i singularity
-    // on the diagonal, greatly improving conditioning for trace species.
-    for (int j = 0; j < numComponents; j++) {
-      String compJ = variableComponents.get(j);
-      int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
-      double nj =
-          (globalJ >= 0 && globalJ < outlet_mole.size()) ? outlet_mole.get(globalJ) : MIN_MOLES;
-      nj = Math.max(nj, MIN_JACOBIAN_MOLES);
-      for (int row = 0; row < totalVars; row++) {
-        jacobianMatrix[row][j] *= nj;
+    // When using the consistent off-diagonal, apply log-mole column scaling.
+    // Scaling column j by n_j converts the Newton variable from Δn_j to Δ(ln n_j),
+    // which improves conditioning for trace species (removes 1/n_i singularity).
+    if (useConsistentOffDiagonal) {
+      for (int j = 0; j < numComponents; j++) {
+        String compJ = variableComponents.get(j);
+        int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
+        double nj =
+            (globalJ >= 0 && globalJ < outlet_mole.size()) ? outlet_mole.get(globalJ) : MIN_MOLES;
+        nj = Math.max(nj, MIN_JACOBIAN_MOLES);
+        for (int row = 0; row < totalVars; row++) {
+          jacobianMatrix[row][j] *= nj;
+        }
       }
     }
 
@@ -1925,10 +1930,10 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Perform a Newton-Raphson iteration update. Updates outlet compositions with damping factor and
-   * Lagrange multipliers with the same damping for consistency.
+   * Lagrange multipliers directly.
    *
    * @param deltaX The delta vector from Newton-Raphson iteration
-   * @param alphaComposition Damping factor for composition updates (e.g., 0.01)
+   * @param alphaComposition Damping factor for composition updates (e.g., 0.0001)
    * @return True if update was successful, false otherwise
    */
   public boolean performIterationUpdate(double[] deltaX, double alphaComposition) {
@@ -1951,9 +1956,11 @@ public class GibbsReactor extends TwoPortEquipment {
     deltaNorm = 0.0;
     for (int i = 0; i < numComponents; i++) {
       String compName = variableComponents.get(i);
+      // Only update if component is in the Gibbs database
       if (componentMap.get(compName.toLowerCase()) == null) {
         continue;
       }
+      // Find global index in processedComponents/outlet_mole
       int globalIdx = processedComponentIndexMap.getOrDefault(compName, -1);
       if (globalIdx < 0 || globalIdx >= outlet_mole.size()) {
         continue;
@@ -1962,6 +1969,7 @@ public class GibbsReactor extends TwoPortEquipment {
       double deltaComposition = deltaX[i];
       double newValue = oldValue + deltaComposition * alphaComposition;
 
+      // Ensure non-negative values and minimum concentration
       newValue = Math.max(newValue, 1e-15);
 
       outlet_mole.set(globalIdx, newValue);
@@ -1970,20 +1978,18 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     deltaNorm = Math.sqrt(deltaNorm);
 
-    // Update Lagrange multipliers with same damping for primal-dual consistency.
-    // Using full Newton step on lambda while damping compositions causes oscillation.
+    // Update Lagrange multipliers. When the consistent off-diagonal formulation is active,
+    // damp lambda with the same factor as compositions for primal-dual consistency.
+    double alphaLambda = useConsistentOffDiagonal ? alphaComposition : 1.0;
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElementIndices.get(i);
       double oldValue = lambda[elementIndex];
       double deltaLambda = deltaX[numComponents + i];
-      double newValue = oldValue + deltaLambda * alphaComposition;
+      double newValue = oldValue + deltaLambda * alphaLambda;
 
       lambda[elementIndex] = newValue;
     }
-
-    // Show mass balance for each element
-    // System.out.println("\n=== Mass Balance (element-wise, OUT - IN) ===");
-    // for (int i = 0; i < elementNames.length; i++) {
+    deltaNorm = Math.sqrt(deltaNorm);
     // System.out.printf(" %s: %12.6e\n", elementNames[i], elementMoleBalanceDiff[i]);
     // }
 
@@ -2155,6 +2161,27 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
+   * Enable the mathematically consistent off-diagonal Jacobian formulation. When true, the
+   * off-diagonal elements use {@code RT * (-1/N + dfugdn)} instead of the legacy
+   * {@code -RT/N + dfugdn}. The consistent formulation improves convergence for some systems (e.g.,
+   * acid gas equilibria) but may require smaller damping factors for adiabatic mode.
+   *
+   * @param useConsistent true to use the consistent formulation
+   */
+  public void setUseConsistentOffDiagonal(boolean useConsistent) {
+    this.useConsistentOffDiagonal = useConsistent;
+  }
+
+  /**
+   * Check if the consistent off-diagonal Jacobian formulation is enabled.
+   *
+   * @return true if consistent formulation is active
+   */
+  public boolean isUseConsistentOffDiagonal() {
+    return useConsistentOffDiagonal;
+  }
+
+  /**
    * Get actual number of iterations performed.
    *
    * @return Actual iterations performed
@@ -2220,8 +2247,7 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
 
-      // Calculate full residual vector norm for monitoring
-      // Includes both stationarity conditions (chemical potential) and element balance constraints
+      // Calculate F vector norm for convergence check
       Map<String, Double> fValues = getObjectiveFunctionValues();
       double fNorm = 0.0;
       for (Double value : fValues.values()) {
