@@ -1509,7 +1509,6 @@ public class TPmultiflash extends TPflash {
     // run() uses stabilityAnalysis3(), so this keeps runtime behavior while reducing
     // maintenance divergence between duplicate legacy implementations.
     stabilityAnalysis3();
-    return;
 
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
     double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
