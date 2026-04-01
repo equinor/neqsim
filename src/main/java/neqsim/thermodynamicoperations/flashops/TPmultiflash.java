@@ -2379,9 +2379,11 @@ public class TPmultiflash extends TPflash {
       }
 
       // Composition-based trivial solution detection: two phases with nearly
-      // identical mole fractions are non-converged duplicates (issue #1980)
-      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-        for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+      // identical mole fractions are non-converged duplicates (issue #1980).
+      // Remove at most one duplicate per pass to preserve phase count for recovery.
+      boolean compTrivialRemoved = false;
+      for (int i = 0; i < system.getNumberOfPhases() - 1 && !compTrivialRemoved; i++) {
+        for (int j = i + 1; j < system.getNumberOfPhases() && !compTrivialRemoved; j++) {
           double maxCompDiff = 0.0;
           for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
             maxCompDiff = Math.max(maxCompDiff, Math.abs(system.getPhase(i).getComponent(k).getx()
@@ -2391,7 +2393,7 @@ public class TPmultiflash extends TPflash {
             system.removePhaseKeepTotalComposition(j);
             doStabilityAnalysis = false;
             hasRemovedPhase = true;
-            j--; // adjust index after removal
+            compTrivialRemoved = true;
           }
         }
       }
