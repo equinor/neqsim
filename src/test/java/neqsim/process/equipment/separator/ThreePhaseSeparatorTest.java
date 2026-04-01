@@ -1013,13 +1013,15 @@ class ThreePhaseSeparatorTest {
       oilLevelIntegral += oilLevelError * timeStep;
       pressureIntegral += pressureError * timeStep;
 
-      // Calculate PID outputs (reverse acting for levels, direct acting for pressure)
+      // Calculate PID outputs (reverse acting for levels, reverse acting for pressure)
+      // For levels: high level -> open valve more (drain faster)
+      // For pressure: high pressure -> open gas valve more (vent faster)
       waterValveOpening = 100.0
           - (waterLevelKp * waterLevelError + waterLevelKp / waterLevelTi * waterLevelIntegral);
       oilValveOpening =
           100.0 - (oilLevelKp * oilLevelError + oilLevelKp / oilLevelTi * oilLevelIntegral);
       gasValveOpening =
-          50.0 + (pressureKp * pressureError + pressureKp / pressureTi * pressureIntegral);
+          50.0 - (pressureKp * pressureError + pressureKp / pressureTi * pressureIntegral);
 
       // Limit outputs to 0-100%
       waterValveOpening = Math.max(0.0, Math.min(100.0, waterValveOpening));
