@@ -1968,6 +1968,7 @@ public abstract class Phase implements PhaseInterface {
       case "kg/mol":
         conversionFactor = 1.0;
         break;
+      case "g/mol":
       case "gr/mol":
         conversionFactor = 1000.0;
         break;
