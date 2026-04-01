@@ -1053,7 +1053,9 @@ public abstract class Component implements ComponentInterface {
       case "kg/mol":
         conversionFactor = 1.0;
         break;
+      case "g/mol":
       case "gr/mol":
+      case "kg/kmol":
         conversionFactor = 1000.0;
         break;
       case "lbm/lbmol":

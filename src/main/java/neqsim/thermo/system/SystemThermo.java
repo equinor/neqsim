@@ -2907,6 +2907,7 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "g/mol":
       case "gr/mol":
+      case "kg/kmol":
         conversionFactor = 1000.0;
         break;
       case "lbm/lbmol":
