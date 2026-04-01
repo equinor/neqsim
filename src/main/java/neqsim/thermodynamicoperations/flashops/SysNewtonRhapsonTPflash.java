@@ -116,18 +116,25 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   public void setJac() {
     double dij;
     double tempJ;
-    double invBeta = 1.0 / system.getBeta();
-    double invOneMinusBeta = 1.0 / (1.0 - system.getBeta());
+    double beta = Math.max(1.0e-12, Math.min(1.0 - 1.0e-12, system.getBeta()));
+    double invBeta = 1.0 / beta;
+    double invOneMinusBeta = 1.0 / (1.0 - beta);
     for (int i = 0; i < numberOfComponents; i++) {
-      double invYi = 1.0 / system.getPhase(0).getComponent(i).getx();
-      double invXi = 1.0 / system.getPhase(1).getComponent(i).getx();
+      double yi = Math.max(1.0e-20, system.getPhase(0).getComponent(i).getx());
+      double xi = Math.max(1.0e-20, system.getPhase(1).getComponent(i).getx());
+      double invYi = 1.0 / yi;
+      double invXi = 1.0 / xi;
       for (int j = 0; j < numberOfComponents; j++) {
         dij = i == j ? 1.0 : 0.0;
         tempJ = invBeta * (dij * invYi - 1.0 + system.getPhase(0).getComponent(i).getdfugdx(j))
             + invOneMinusBeta
                 * (dij * invXi - 1.0 + system.getPhase(1).getComponent(i).getdfugdx(j));
+        if (!Double.isFinite(tempJ)) {
+          tempJ = 0.0;
+        }
         jacMatrix.set(i, j, tempJ);
       }
+      jacMatrix.add(i, i, 1.0e-12);
     }
   }
 

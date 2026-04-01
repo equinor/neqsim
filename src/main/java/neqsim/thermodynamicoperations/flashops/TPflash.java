@@ -479,8 +479,9 @@ public class TPflash extends Flash {
           } else {
             sucsSubs();
           }
-        } else if (iterations >= newtonLimit && Math
-            .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
+        } else if (iterations >= newtonLimit
+            && (!system.doEnhancedMultiPhaseCheck() || deviation < 0.05) && Math
+                .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
           if (iterations == newtonLimit) {
             secondOrderSolver = new SysNewtonRhapsonTPflash(system, 2,
                 system.getPhases()[0].getNumberOfComponents());
@@ -564,8 +565,10 @@ public class TPflash extends Flash {
             }
           }
           // If still single phase after VLE-type K-values, try pure-component trials
-          // for LLE detection (only when LLE checking is enabled).
-          if (system.doCheckForLiquidLiquidSplit()
+          // for LLE detection when LLE checking is enabled or auto-detected.
+          boolean doLLESupplementaryCheck =
+              system.doCheckForLiquidLiquidSplit() || shouldRunAutomaticLLECheck();
+          if (doLLESupplementaryCheck
               && (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.01)
                   || system.getBeta() < (phaseFractionMinimumLimit * 1.01))) {
             boolean lleFound = pureComponentStabilityTrials();

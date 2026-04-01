@@ -132,12 +132,6 @@ public abstract class Flash extends BaseOperation {
     boolean trivialSolution =
         !nearlyPure && ((Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12));
 
-    // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
-    // Near-critical instability misses only happen near the cricondenbar/cricondentherm
-    // which is always at elevated pressures.
-    if (presBar < 50.0) {
-      return false;
-    }
     double sumwVapor = 0.0;
     double sumwLiquid = 0.0;
     double[] wilsonK = new double[numComp];
@@ -354,12 +348,13 @@ public abstract class Flash extends BaseOperation {
           Wi[i] = safeExp(logWi[i]);
         }
 
+        double[] curDelta = new double[numComp];
+        for (int i = 0; i < numComp; i++) {
+          curDelta[i] = logWi[i] - oldlogw[i];
+        }
+
         // DEM acceleration every accelInterval steps
         if (iter % accelInterval == 0 && fNorm < fNormOld && iter > accelInterval) {
-          double[] curDelta = new double[numComp];
-          for (int i = 0; i < numComp; i++) {
-            curDelta[i] = logWi[i] - oldlogw[i];
-          }
           double dot1 = 0.0;
           double dot2 = 0.0;
           for (int i = 0; i < numComp; i++) {
@@ -378,10 +373,11 @@ public abstract class Flash extends BaseOperation {
           }
         }
 
-        // Track step delta for next acceleration
+        // Track SSI step delta for next acceleration.
+        // Use the raw curDelta history term, not the accelerated correction.
         for (int i = 0; i < numComp; i++) {
-          prevDelta[i] = logWi[i] - oldlogw[i];
-          err += Math.abs(prevDelta[i]);
+          prevDelta[i] = curDelta[i];
+          err += Math.abs(curDelta[i]);
         }
 
         sumwTrial = 0.0;
@@ -628,7 +624,10 @@ public abstract class Flash extends BaseOperation {
             f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
             for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
-              double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
+              // Adaptive second-order damping: use unit diagonal near convergence,
+              // and add limited damping only when residuals are still large.
+              double diagDamping = (error[j] > 1.0e-2) ? 0.5 : 0.0;
+              double kronDelt = (i == k) ? (1.0 + diagDamping) : 0.0;
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                   * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));
             }
@@ -674,27 +673,31 @@ public abstract class Flash extends BaseOperation {
       }
     }
 
-    // Improved trivial solution detection using cosine similarity
-    // A trivial solution has compositions nearly identical to feed
-    // Note: This uses the field 'j' (= 0), not the loop variable.
-    // Since clonedSystem IS minimumGibbsEnergySystem (same reference),
-    // getPhase(0) compares phase-0 against itself → always cosine ≈ 1.0.
-    // This effectively disables K-value setting from stabilityAnalysis();
-    // instability detection relies on post-convergence stabilityCheck()
-    // fallbacks (amplifiedKStabilityRetry, pureComponentStabilityTrials).
-    double dotProduct = 0.0;
-    double normW = 0.0;
-    double normFeed = 0.0;
-    for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-      double xTrial = clonedSystem.getPhase(j).getComponent(i).getx();
-      double xFeed = minimumGibbsEnergySystem.getPhase(0).getComponent(i).getx();
-      dotProduct += xTrial * xFeed;
-      normW += xTrial * xTrial;
-      normFeed += xFeed * xFeed;
-    }
-    double cosineSimilarity = dotProduct / (Math.sqrt(normW) * Math.sqrt(normFeed) + 1e-100);
-    // If cosine similarity > 0.9999, compositions are nearly identical (trivial solution)
-    if (cosineSimilarity > 0.9999) {
+    // Improved trivial solution detection using cosine similarity.
+    // Use strict compatibility gating: enable non-trivial filtering for enhanced/LLE-auto
+    // contexts, keep legacy tm-reset behavior for baseline default mode.
+    boolean useNonTrivialFiltering = system.doEnhancedMultiPhaseCheck()
+        || system.doCheckForLiquidLiquidSplit() || shouldRunAutomaticLLECheck();
+    if (useNonTrivialFiltering) {
+      for (int trialPhase = 0; trialPhase < 2; trialPhase++) {
+        double dotProduct = 0.0;
+        double normW = 0.0;
+        double normFeed = 0.0;
+        for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+          double xTrial = x[trialPhase][i];
+          double xFeed =
+              minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponent(i).getx();
+          dotProduct += xTrial * xFeed;
+          normW += xTrial * xTrial;
+          normFeed += xFeed * xFeed;
+        }
+        double cosineSimilarity = dotProduct / (Math.sqrt(normW) * Math.sqrt(normFeed) + 1e-100);
+        // If cosine similarity > 0.9999, compositions are nearly identical (trivial solution).
+        if (cosineSimilarity > 0.9999) {
+          tm[trialPhase] = 0.0;
+        }
+      }
+    } else {
       tm[0] = 0.0;
       tm[1] = 0.0;
     }
@@ -922,6 +925,33 @@ public abstract class Flash extends BaseOperation {
   }
 
   /**
+   * Determine whether automatic LLE supplementary stability checks should be enabled.
+   *
+   * <p>
+   * Automatic checks are enabled for systems where LLE/VLLE is common even if users have not
+   * explicitly turned on {@code setCheckForLiquidLiquidSplit(true)}.
+   * </p>
+   *
+   * @return true if automatic LLE checks should run
+   */
+  protected boolean shouldRunAutomaticLLECheck() {
+    if (system == null || system.getPhase(0).getNumberOfComponents() <= 1) {
+      return false;
+    }
+    String modelName = system.getModelName() == null ? "" : system.getModelName();
+    String lowerModelName = modelName.toLowerCase();
+    if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")) {
+      return true;
+    }
+    // Keep water-triggered automatic LLE checks compatibility-safe by requiring either
+    // enhanced mode or explicit user opt-in for LLE checks.
+    if (system.hasComponent("water")) {
+      return system.doEnhancedMultiPhaseCheck() || system.doCheckForLiquidLiquidSplit();
+    }
+    return system.isChemicalSystem() && system.doEnhancedMultiPhaseCheck();
+  }
+
+  /**
    * <p>
    * stabilityCheck.
    * </p>
@@ -942,12 +972,16 @@ public abstract class Flash extends BaseOperation {
         || system.getPhase(0).getNumberOfComponents() == 1) {
       // Standard analysis declares stable. Try supplementary stability trials.
       boolean retryFoundInstability = false;
+      boolean ambiguousStability = Math.abs(tm[0]) < 5e-2 || Math.abs(tm[1]) < 5e-2;
+      boolean doLLESupplementaryCheck =
+          system.doCheckForLiquidLiquidSplit() || shouldRunAutomaticLLECheck();
       // Amplified K-value trials catch near-critical VLE instability (near cricondenbar)
-      if ((tm[0] < 0.5 || tm[1] < 0.5) && !system.getModelName().contains("CPA")) {
+      if ((tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability)
+          && !system.getModelName().contains("CPA")) {
         retryFoundInstability = amplifiedKStabilityRetry();
       }
       // Pure-component trials catch LLE instability (Wilson K fails at T << Tc)
-      if (!retryFoundInstability && system.doCheckForLiquidLiquidSplit()) {
+      if (!retryFoundInstability && doLLESupplementaryCheck) {
         retryFoundInstability = pureComponentStabilityTrials();
       }
       if (retryFoundInstability) {
