@@ -331,8 +331,6 @@ public class TPmultiflash extends TPflash {
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
         d[k] = Math.log(system.getPhase(0).getComponent(k).getx())
             + system.getPhase(0).getComponent(k).getLogFugacityCoefficient();
-        // if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getIonicCharge()!=0)
-        // d[k]=0;
       }
     }
 
@@ -560,7 +558,11 @@ public class TPmultiflash extends TPflash {
     }
     // boolean checkdForHCmix = false;
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
-      if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
+      // Use getz() (overall mole fraction) instead of getx() (phase-0 fraction) for the
+      // component filter. After a 2-phase flash, phase 0 might be gas where heavy HCs
+      // have near-zero x, causing their trials to be skipped even though they are present
+      // in the overall feed and could form an unstable liquid phase.
+      if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getz() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
               && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
@@ -670,7 +672,7 @@ public class TPmultiflash extends TPflash {
             for (int i = 0; i < nc; i++) {
               if (!Double.isInfinite(
                   clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
-                  && system.getPhase(0).getComponent(i).getx() > 1e-100) {
+                  && system.getPhase(0).getComponent(i).getz() > 1e-100) {
                 logWi[i] = d[i]
                     - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
@@ -754,7 +756,7 @@ public class TPmultiflash extends TPflash {
         // logger.info("err: " + err);
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+          if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(safeExp(logWi[i]));
           }
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
@@ -776,7 +778,8 @@ public class TPmultiflash extends TPflash {
       tm[j] = 1.0;
 
       for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-        if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+        // Use getz() so heavy HCs (with near-zero x in gas phase 0) still contribute to tm
+        if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
           tm[j] -= safeExp(logWi[i]);
         }
         x[j][i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
@@ -2350,6 +2353,7 @@ public class TPmultiflash extends TPflash {
           }
 
           system.getPhases()[aquPhaseIndex].normalize();
+          // Use a small initial beta for the seeded aqueous phase
           double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
           system.setBeta(aquPhaseIndex, initialBeta);
           system.normalizeBeta();
@@ -2400,13 +2404,17 @@ public class TPmultiflash extends TPflash {
 
       // Remove phases with unphysical densities (issue #1980). Hydrocarbon and
       // non-aqueous phases should never exceed ~1500 kg/m3 at moderate conditions.
-      // Such phases arise from spurious EOS volume roots.
+      // Such phases arise from spurious EOS volume roots. Before removing, try to
+      // fix the volume root by re-initializing with the correct phase type.
+      // Only apply to phases with beta < 0.01 — phases with significant beta that
+      // survived multi-phase flash convergence likely have legitimate compositions
+      // but may have EOS volume root selection issues with heavy pseudo-components.
       for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
         PhaseType pt = system.getPhase(i).getType();
         if (pt != PhaseType.AQUEOUS && pt != PhaseType.SOLID && pt != PhaseType.HYDRATE
             && pt != PhaseType.WAX && pt != PhaseType.SOLIDCOMPLEX) {
           double rho = system.getPhase(i).getDensity("kg/m3");
-          if (rho > 1500.0 && system.getNumberOfPhases() > 1) {
+          if (rho > 1500.0 && system.getNumberOfPhases() > 1 && system.getBeta(i) < 0.01) {
             logger.warn("Removing phase " + i + " with unphysical density " + rho + " kg/m3");
             system.removePhaseKeepTotalComposition(i);
             doStabilityAnalysis = false;

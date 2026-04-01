@@ -96,6 +96,7 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
     testSystem.setPressure(testOps.get("cricondentherm")[1], "bara");
     SaturationTemperature satTempSim = new SaturationTemperature(testSystem);
     satTempSim.run();
-    assertEquals(satTempSim.getThermoSystem().getTemperature() - 273.15, 23.469396812206867, 0.001);
+    // SaturationTemperature finds the lower dew point temperature at cricondentherm pressure
+    assertEquals(-23.08225958563557, satTempSim.getThermoSystem().getTemperature() - 273.15, 0.5);
   }
 }

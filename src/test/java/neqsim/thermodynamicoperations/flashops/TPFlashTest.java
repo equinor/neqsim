@@ -98,7 +98,6 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
     testSystem5.initProperties();
-    // testSystem5.prettyPrint();
     double beta = testSystem5.getBeta();
     // Updated expected value due to thermodynamic model changes
     assertEquals(0.10377442547868508, beta, 1e-4);
@@ -318,10 +317,11 @@ class TPFlashTest {
     assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P="
         + pressure + " bara — stability analysis is inconsistent near boundary");
   }
+
   /**
    * Sweeps temperature at multiple pressures for the methane/n-heptane binary (70/30 mol%),
-   * kij=0.05, using 2-phase TPflash (no multiPhaseCheck). Verifies phase diagram is smooth
-   * (no spurious dots/flips).
+   * kij=0.05, using 2-phase TPflash (no multiPhaseCheck). Verifies phase diagram is smooth (no
+   * spurious dots/flips).
    */
   @Test
   void testTwoPhaseFlashMethaneHeptanePhaseDiagram() {
@@ -338,10 +338,10 @@ class TPFlashTest {
         fluid.addComponent("methane", 70.0);
         fluid.addComponent("n-heptane", 30.0);
         fluid.setMixingRule("classic");
-        ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(
-            0, 1, 0.05);
-        ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(
-            0, 1, 0.05);
+        ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
+        ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule())
+            .setBinaryInteractionParameter(0, 1, 0.05);
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
         phaseCount[j] = fluid.getNumberOfPhases();
@@ -355,14 +355,13 @@ class TPFlashTest {
           flips++;
         }
       }
-      assertTrue(flips <= 1,
-          "Too many isolated flips (" + flips + ") at P=" + pressure + " bar");
+      assertTrue(flips <= 1, "Too many isolated flips (" + flips + ") at P=" + pressure + " bar");
     }
   }
 
   /**
-   * Compares 2-phase flash vs multiphase flash for the methane/n-heptane binary with kij=0.05.
-   * Both should produce the same number of phases and similar beta values at every grid point.
+   * Compares 2-phase flash vs multiphase flash for the methane/n-heptane binary with kij=0.05. Both
+   * should produce the same number of phases and similar beta values at every grid point.
    */
   @Test
   void testTwoPhaseVsMultiphaseFlashConsistency() {
@@ -406,9 +405,9 @@ class TPFlashTest {
         boolean match = fluid2p.getNumberOfPhases() == fluidMp.getNumberOfPhases();
         if (!match) {
           mismatches++;
-          System.out.println("T=" + String.format("%.0f", temp) + " K: 2p="
-              + fluid2p.getNumberOfPhases() + " phases, multi=" + fluidMp.getNumberOfPhases()
-              + " phases <<< MISMATCH");
+          System.out
+              .println("T=" + String.format("%.0f", temp) + " K: 2p=" + fluid2p.getNumberOfPhases()
+                  + " phases, multi=" + fluidMp.getNumberOfPhases() + " phases <<< MISMATCH");
           System.out.println("  2-phase Gibbs=" + fluid2p.getGibbsEnergy());
           System.out.println("  multi   Gibbs=" + fluidMp.getGibbsEnergy());
         }
@@ -550,10 +549,9 @@ class TPFlashTest {
   }
 
   /**
-   * Benchmark: compare TPflash performance for three modes:
-   * 1) VLE-only (default, no LLE check) - fastest
-   * 2) VLE+LLE (setCheckForLiquidLiquidSplit=true) - detects oil-oil splits
-   * 3) Multiphase (setMultiPhaseCheck=true) - full multi-phase via TPmultiflash
+   * Benchmark: compare TPflash performance for three modes: 1) VLE-only (default, no LLE check) -
+   * fastest 2) VLE+LLE (setCheckForLiquidLiquidSplit=true) - detects oil-oil splits 3) Multiphase
+   * (setMultiPhaseCheck=true) - full multi-phase via TPmultiflash
    *
    * Tests both binary (methane/n-heptane) and multicomponent (10 comp) systems.
    */
@@ -565,15 +563,14 @@ class TPFlashTest {
 
     // Warm up JIT with all three modes
     for (int w = 0; w < 30; w++) {
-      neqsim.thermo.system.SystemInterface wf =
-          new neqsim.thermo.system.SystemPrEos(273.15, 50.0);
+      neqsim.thermo.system.SystemInterface wf = new neqsim.thermo.system.SystemPrEos(273.15, 50.0);
       wf.addComponent("methane", 70.0);
       wf.addComponent("n-heptane", 30.0);
       wf.setMixingRule("classic");
-      ((EosMixingRulesInterface) wf.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
-          1, 0.05);
-      ((EosMixingRulesInterface) wf.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
-          1, 0.05);
+      ((EosMixingRulesInterface) wf.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1,
+          0.05);
+      ((EosMixingRulesInterface) wf.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1,
+          0.05);
       if (w % 3 == 1) {
         wf.setCheckForLiquidLiquidSplit(true);
       }
@@ -585,10 +582,9 @@ class TPFlashTest {
     }
 
     System.out.println("\n=== Binary (C1/nC7) TPflash Performance Benchmark ===");
-    System.out.println(String.format("%-12s %-10s %8s %8s %8s   %s",
-        "Mode", "Pressure", "avg(ms)", "min(ms)", "max(ms)", "1ph / 2ph"));
-    System.out.println(
-        "--------------------------------------------------------------");
+    System.out.println(String.format("%-12s %-10s %8s %8s %8s   %s", "Mode", "Pressure", "avg(ms)",
+        "min(ms)", "max(ms)", "1ph / 2ph"));
+    System.out.println("--------------------------------------------------------------");
 
     for (int mode = 0; mode < 3; mode++) {
       for (double pressure : pressures) {
@@ -637,18 +633,17 @@ class TPFlashTest {
           }
         }
         double avgMs = totalNs / (double) nPoints / 1e6;
-        System.out.println(String.format("%-12s P=%3.0f bar  %8.2f %8.2f %8.2f   %d / %d",
-            modeNames[mode], pressure, avgMs, minNs / 1e6, maxNs / 1e6,
-            singlePhaseCount, twoPhaseCount));
+        System.out.println(
+            String.format("%-12s P=%3.0f bar  %8.2f %8.2f %8.2f   %d / %d", modeNames[mode],
+                pressure, avgMs, minNs / 1e6, maxNs / 1e6, singlePhaseCount, twoPhaseCount));
       }
     }
 
     // Also benchmark a multicomponent system (10 comp natural gas)
     System.out.println("\n=== Multicomponent (10 comp) TPflash Performance ===");
-    System.out.println(String.format("%-12s %-10s %8s   %s",
-        "Mode", "Pressure", "avg(ms)", "1ph / 2ph"));
-    System.out.println(
-        "----------------------------------------------");
+    System.out
+        .println(String.format("%-12s %-10s %8s   %s", "Mode", "Pressure", "avg(ms)", "1ph / 2ph"));
+    System.out.println("----------------------------------------------");
 
     double[] mcPressures = {10.0, 50.0, 150.0};
     int mcPoints = 30;
@@ -693,8 +688,8 @@ class TPFlashTest {
           }
         }
         double avgMs = totalNs / (double) mcPoints / 1e6;
-        System.out.println(String.format("%-12s P=%3.0f bar  %8.2f   %d / %d",
-            modeNames[mode], pressure, avgMs, singlePhaseCount, twoPhaseCount));
+        System.out.println(String.format("%-12s P=%3.0f bar  %8.2f   %d / %d", modeNames[mode],
+            pressure, avgMs, singlePhaseCount, twoPhaseCount));
       }
     }
     // No assertions - this is a diagnostic test
