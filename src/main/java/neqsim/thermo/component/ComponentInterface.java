@@ -1282,15 +1282,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * Get molar mass of component.
    *
+   * <p>
+   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or
+   * use {@link #getMolarMass(String)} with unit "g/mol".
+   * </p>
+   *
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
 
   /**
-   * Get molar mass of component.
+   * Get molar mass of component in the specified unit.
    *
-   * @param unit a String
-   * @return molar mass in unit kg/mol
+   * @param unit Supported units are kg/mol, g/mol, gr/mol, kg/kmol, lbm/lbmol
+   * @return molar mass in specified unit
    */
   public double getMolarMass(String unit);
 
