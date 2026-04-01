@@ -43,6 +43,7 @@ public class TPmultiflash extends TPflash {
   boolean secondTime = false;
   boolean aqueousPhaseSeedAttempted = false;
   boolean postFlashStabilityChecked = false;
+  private int rerunDepth = 0;
 
   double[] multTerm;
   double[] multTerm2;
@@ -242,9 +243,23 @@ public class TPmultiflash extends TPflash {
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
-        break;
+        if (system.doEnhancedMultiPhaseCheck()) {
+          for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
+            Qmatrix[kk][kk] += 1.0e-2;
+          }
+          dQdBM = new SimpleMatrix(Qmatrix);
+          try {
+            ans = dQdBM.solve(dQM).transpose();
+          } catch (Exception ex2) {
+            logger.error(ex2.getMessage());
+            break;
+          }
+        } else {
+          logger.error(ex.getMessage());
+          break;
+        }
       }
+
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -274,6 +289,22 @@ public class TPmultiflash extends TPflash {
     } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
+  }
+
+  /**
+   * Execute a bounded recursive rerun request to avoid unbounded recursion in difficult cases.
+   */
+  private void requestBoundedRerun() {
+    if (rerunDepth >= 4) {
+      logger.warn("TPmultiflash rerun depth limit reached, skipping additional rerun");
+      return;
+    }
+    rerunDepth++;
+    try {
+      run();
+    } finally {
+      rerunDepth--;
+    }
   }
 
   /** {@inheritDoc} */
@@ -2215,7 +2246,6 @@ public class TPmultiflash extends TPflash {
       double chemdev = 0;
       int iterOut = 0;
       double maxerr = 1e-12;
-
       do {
         iterOut++;
         if (system.isChemicalSystem() && system.hasPhaseType(PhaseType.AQUEOUS)) {
@@ -2286,7 +2316,7 @@ public class TPmultiflash extends TPflash {
           // Found a third phase - re-run the flash calculation
           multiPhaseTest = true;
           doStabilityAnalysis = false;
-          run();
+          requestBoundedRerun();
         }
       }
 
@@ -2419,7 +2449,7 @@ public class TPmultiflash extends TPflash {
       if (hasRemovedPhase && !secondTime) {
         secondTime = true;
         stabilityAnalysis3();
-        run();
+        requestBoundedRerun();
       }
 
       /*

@@ -160,4 +160,30 @@ class TPmultiflashTest {
     // may not predict it for all parameter combinations, but we verify no crashes
     assertTrue(threePhaseCount >= 0, "Scan completed without errors");
   }
+
+  /**
+   * Repeatedly flashes near a multiphase boundary to verify bounded rerun orchestration remains
+   * stable and does not recurse indefinitely.
+   */
+  @Test
+  void testRepeatedMultiphaseBoundaryFlashesAreStable() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(205.0, 55.0);
+    fluid.addComponent("methane", 55.0);
+    fluid.addComponent("CO2", 15.0);
+    fluid.addComponent("H2S", 25.0);
+    fluid.addComponent("n-butane", 3.0);
+    fluid.addComponent("n-pentane", 2.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    fluid.setEnhancedMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    for (int i = 0; i < 40; i++) {
+      fluid.setTemperature(198.0 + 0.8 * i);
+      fluid.setPressure(40.0 + 0.6 * i);
+      ops.TPflash();
+      assertTrue(fluid.getNumberOfPhases() >= 1 && fluid.getNumberOfPhases() <= 3,
+          "Unexpected phase count during repeated multiphase flashing at step " + i);
+    }
+  }
 }

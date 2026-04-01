@@ -1,6 +1,9 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseType;
@@ -26,6 +29,25 @@ public class TPflash extends Flash {
   SystemInterface clonedSystem;
   double presdiff = 1.0;
   private final RachfordRice rachfordRice = new RachfordRice();
+  private static final Map<SystemInterface, WarmStartState> warmStartCache =
+      Collections.synchronizedMap(new WeakHashMap<SystemInterface, WarmStartState>());
+
+  private static class WarmStartState {
+    SystemInterface owner;
+    double temperature;
+    double pressure;
+    double beta;
+    double[] lnK;
+
+    WarmStartState(SystemInterface owner, double temperature, double pressure, double beta,
+        double[] lnK) {
+      this.owner = owner;
+      this.temperature = temperature;
+      this.pressure = pressure;
+      this.beta = beta;
+      this.lnK = lnK;
+    }
+  }
 
   /**
    * <p>
@@ -227,6 +249,68 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Apply cached K-values and beta for nearby TP states on the same system instance.
+   */
+  private void applyWarmStartIfAvailable() {
+    if (system == null || system.getMaxNumberOfPhases() < 2) {
+      return;
+    }
+    WarmStartState state = warmStartCache.get(system);
+    if (state == null || state.lnK == null
+        || state.lnK.length != system.getPhase(0).getNumberOfComponents()) {
+      return;
+    }
+    if (state.owner != system) {
+      return;
+    }
+    double dT = Math.abs(system.getTemperature() - state.temperature);
+    double dP = Math.abs(system.getPressure() - state.pressure);
+    double pScale = Math.max(Math.abs(state.pressure), 1.0);
+    if (dT > 20.0 || dP / pScale > 0.3) {
+      return;
+    }
+
+    for (int ic = 0; ic < state.lnK.length; ic++) {
+      double ki = safeExp(state.lnK[ic]);
+      if (!Double.isFinite(ki) || ki < 1e-30) {
+        continue;
+      }
+      system.getPhase(0).getComponent(ic).setK(ki);
+      system.getPhase(1).getComponent(ic).setK(ki);
+    }
+    if (Double.isFinite(state.beta) && state.beta > phaseFractionMinimumLimit
+        && state.beta < 1.0 - phaseFractionMinimumLimit) {
+      system.setBeta(state.beta);
+    }
+    try {
+      system.calc_x_y();
+      system.init(1);
+    } catch (Exception ex) {
+      logger.debug("Warm-start apply failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Store the converged K-values and beta to warm-start future nearby flashes.
+   */
+  private void storeWarmStartState() {
+    if (system == null || system.getMaxNumberOfPhases() < 2) {
+      return;
+    }
+    int nc = system.getPhase(0).getNumberOfComponents();
+    double[] lnKState = new double[nc];
+    for (int ic = 0; ic < nc; ic++) {
+      double ki = system.getPhase(0).getComponent(ic).getK();
+      if (!Double.isFinite(ki) || ki <= 0.0) {
+        ki = 1.0;
+      }
+      lnKState[ic] = Math.log(ki);
+    }
+    warmStartCache.put(system, new WarmStartState(system, system.getTemperature(),
+        system.getPressure(), system.getBeta(), lnKState));
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
@@ -253,6 +337,7 @@ public class TPflash extends Flash {
 
     system.init(0);
     system.init(1);
+    applyWarmStartIfAvailable();
 
     if ((system.getPhase(0).getGibbsEnergy()
         * (1.0 - Math.signum(system.getPhase(0).getGibbsEnergy()) * 1e-8)) < system.getPhase(1)
@@ -459,7 +544,6 @@ public class TPflash extends Flash {
 
     // Reduced acceleration interval for faster convergence
     int accelerateInterval = 5;
-    // Newton limit: number of SS iterations before switching to Newton-Raphson.
     int newtonLimit = 12;
     int timeFromLastGibbsFail = 0;
 
@@ -471,18 +555,34 @@ public class TPflash extends Flash {
       do {
         iterations++;
 
-        if (iterations < newtonLimit || system.isChemicalSystem()
+        int activeNewtonLimit = newtonLimit;
+        int activeAccelerateInterval = accelerateInterval;
+        if (system.doEnhancedMultiPhaseCheck()) {
+          if (deviation < 5e-4) {
+            activeNewtonLimit = 8;
+            activeAccelerateInterval = 3;
+          } else if (deviation < 5e-3) {
+            activeNewtonLimit = 10;
+            activeAccelerateInterval = 4;
+          }
+          if (system.getBeta() < 5.0 * phaseFractionMinimumLimit
+              || system.getBeta() > 1.0 - 5.0 * phaseFractionMinimumLimit) {
+            activeNewtonLimit = Math.max(activeNewtonLimit, 14);
+          }
+        }
+
+        if (iterations < activeNewtonLimit || system.isChemicalSystem()
             || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (timeFromLastGibbsFail > 6 && (iterations % accelerateInterval) == 0
+          if (timeFromLastGibbsFail > 6 && (iterations % activeAccelerateInterval) == 0
               && !(system.isChemicalSystem() || system.doSolidPhaseCheck())) {
             accselerateSucsSubs();
           } else {
             sucsSubs();
           }
-        } else if (iterations >= newtonLimit
+        } else if (iterations >= activeNewtonLimit
             && (!system.doEnhancedMultiPhaseCheck() || deviation < 0.05) && Math
                 .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
-          if (iterations == newtonLimit) {
+          if (iterations == activeNewtonLimit || secondOrderSolver == null) {
             secondOrderSolver = new SysNewtonRhapsonTPflash(system, 2,
                 system.getPhases()[0].getNumberOfComponents());
           }
@@ -658,6 +758,7 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
+    storeWarmStartState();
   }
 
   /** {@inheritDoc} */

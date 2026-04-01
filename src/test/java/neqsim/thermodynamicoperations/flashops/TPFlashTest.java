@@ -694,4 +694,53 @@ class TPFlashTest {
     }
     // No assertions - this is a diagnostic test
   }
+
+  /**
+   * Verifies that TPflash warm-starting across nearby states does not change physical results
+   * compared with independent fresh solves at each state.
+   */
+  @Test
+  void testWarmStartConsistencyAcrossNearbyStates() {
+    neqsim.thermo.system.SystemInterface seqFluid =
+        new neqsim.thermo.system.SystemPrEos(273.15 + 15.0, 80.0);
+    seqFluid.addComponent("nitrogen", 1.0);
+    seqFluid.addComponent("methane", 82.0);
+    seqFluid.addComponent("ethane", 8.0);
+    seqFluid.addComponent("propane", 4.0);
+    seqFluid.addComponent("i-butane", 1.5);
+    seqFluid.addComponent("n-butane", 1.5);
+    seqFluid.addComponent("n-pentane", 1.0);
+    seqFluid.addComponent("n-hexane", 1.0);
+    seqFluid.setMixingRule("classic");
+
+    ThermodynamicOperations seqOps = new ThermodynamicOperations(seqFluid);
+
+    for (int idx = 0; idx < 12; idx++) {
+      double tempK = 273.15 + 15.0 + idx * 1.2;
+      double presBar = 80.0 + idx * 2.0;
+
+      seqFluid.setTemperature(tempK);
+      seqFluid.setPressure(presBar);
+      seqOps.TPflash();
+
+      neqsim.thermo.system.SystemInterface refFluid =
+          new neqsim.thermo.system.SystemPrEos(tempK, presBar);
+      refFluid.addComponent("nitrogen", 1.0);
+      refFluid.addComponent("methane", 82.0);
+      refFluid.addComponent("ethane", 8.0);
+      refFluid.addComponent("propane", 4.0);
+      refFluid.addComponent("i-butane", 1.5);
+      refFluid.addComponent("n-butane", 1.5);
+      refFluid.addComponent("n-pentane", 1.0);
+      refFluid.addComponent("n-hexane", 1.0);
+      refFluid.setMixingRule("classic");
+      ThermodynamicOperations refOps = new ThermodynamicOperations(refFluid);
+      refOps.TPflash();
+
+      assertEquals(refFluid.getNumberOfPhases(), seqFluid.getNumberOfPhases(),
+          "Warm-started and fresh flashes must give the same phase count at idx=" + idx);
+      assertEquals(refFluid.getBeta(), seqFluid.getBeta(), 2.0e-3,
+          "Warm-started and fresh flashes must give similar beta at idx=" + idx);
+    }
+  }
 }

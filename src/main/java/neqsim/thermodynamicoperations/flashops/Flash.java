@@ -6,6 +6,8 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
@@ -779,11 +781,30 @@ public abstract class Flash extends BaseOperation {
       }
     }
 
-    // Try heaviest and lightest components as pure trial phases (like TPmultiflash)
-    int[] trialComponents =
-        (heavyComp == lightComp) ? new int[] {heavyComp} : new int[] {heavyComp, lightComp};
-    for (int ti = 0; ti < trialComponents.length; ti++) {
-      int jc = trialComponents[ti];
+    LinkedHashSet<Integer> trialSet = new LinkedHashSet<Integer>();
+    if (heavyComp >= 0) {
+      trialSet.add(Integer.valueOf(heavyComp));
+    }
+    if (lightComp >= 0) {
+      trialSet.add(Integer.valueOf(lightComp));
+    }
+    if (system.doEnhancedMultiPhaseCheck() || system.doCheckForLiquidLiquidSplit()) {
+      int dominantComp = -1;
+      double dominantZ = -1.0;
+      for (int ic = 0; ic < numComp; ic++) {
+        double zi = clonedSystem.getPhase(0).getComponent(ic).getz();
+        if (zi > dominantZ) {
+          dominantZ = zi;
+          dominantComp = ic;
+        }
+      }
+      if (dominantComp >= 0) {
+        trialSet.add(Integer.valueOf(dominantComp));
+      }
+    }
+    ArrayList<Integer> trialComponents = new ArrayList<Integer>(trialSet);
+    for (int ti = 0; ti < trialComponents.size(); ti++) {
+      int jc = trialComponents.get(ti).intValue();
 
       // Set trial phase to nearly pure component jc
       double[] logWi = new double[numComp];
@@ -948,6 +969,7 @@ public abstract class Flash extends BaseOperation {
     if (system.hasComponent("water")) {
       return system.doEnhancedMultiPhaseCheck() || system.doCheckForLiquidLiquidSplit();
     }
+
     return system.isChemicalSystem() && system.doEnhancedMultiPhaseCheck();
   }
 
