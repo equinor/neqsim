@@ -1651,14 +1651,19 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Get molar mass of phase.
    *
+   * <p>
+   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or
+   * use {@link #getMolarMass(String)} with unit "g/mol".
+   * </p>
+   *
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
 
   /**
-   * Get molar mass of a fluid phase.
+   * Get molar mass of a fluid phase in the specified unit.
    *
-   * @param unit Supported units are kg/mol, gr/mol
+   * @param unit Supported units are kg/mol, g/mol, gr/mol, lbm/lbmol
    * @return molar mass in specified unit
    */
   public double getMolarMass(String unit);
