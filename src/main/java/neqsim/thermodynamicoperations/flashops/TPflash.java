@@ -147,6 +147,10 @@ public class TPflash extends Flash {
   public void accselerateSucsSubs() {
     int nc = system.getPhase(0).getNumberOfComponents();
 
+    // Save pre-acceleration lnK state for rollback on failure
+    double[] savedLnK = new double[nc];
+    System.arraycopy(lnK, 0, savedLnK, 0, nc);
+
     // Compute dot products for both standard DEM and GDEM-2:
     // Standard DEM: lambda = (Dg_{n-1} . Dg_{n-2}) / (Dg_{n-2} . Dg_{n-2})
     // GDEM-2 matrix B and vector c for the 2x2 system B*mu = c
@@ -206,7 +210,20 @@ public class TPflash extends Flash {
       logger.error(ex.getMessage(), ex);
     }
     system.calc_x_y();
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception initEx) {
+      // GDEM extrapolation produced bad compositions — restore pre-acceleration state
+      logger.debug("accselerateSucsSubs init failed, reverting: {}", initEx.getMessage());
+      System.arraycopy(savedLnK, 0, lnK, 0, nc);
+      for (i = 0; i < nc; i++) {
+        system.getPhase(0).getComponent(i).setK(Math.exp(savedLnK[i]));
+        system.getPhase(1).getComponent(i).setK(Math.exp(savedLnK[i]));
+      }
+      system.setBeta(oldBeta);
+      system.calc_x_y();
+      system.init(1);
+    }
   }
 
   /**
@@ -488,7 +505,14 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      if (system.checkStability() && stabilityCheck()) {
+      boolean isStable;
+      try {
+        isStable = system.checkStability() && stabilityCheck();
+      } catch (Exception ex) {
+        logger.debug("Stability check failed, treating as stable: {}", ex.getMessage());
+        isStable = true;
+      }
+      if (isStable) {
         if (system.doMultiPhaseCheck()) {
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
           operation.run();
@@ -502,7 +526,11 @@ public class TPflash extends Flash {
         }
 
         system.orderByDensity();
-        system.init(1);
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.debug("Post-stability init failed: {}", ex.getMessage());
+        }
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {

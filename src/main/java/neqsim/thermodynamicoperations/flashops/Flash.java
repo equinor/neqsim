@@ -331,7 +331,11 @@ public abstract class Flash extends BaseOperation {
         err = 0.0;
         System.arraycopy(logWi, 0, oldlogw, 0, numComp);
 
-        testSystem.init(1, 1);
+        try {
+          testSystem.init(1, 1);
+        } catch (Exception ex) {
+          break; // NaN or other error in molar volume — abandon this trial
+        }
         fNormOld = fNorm;
         for (int i = 0; i < numComp; i++) {
           f.set(i, 0, Math.sqrt(Wi[i]) * (Math.log(Wi[i])
@@ -560,8 +564,8 @@ public abstract class Flash extends BaseOperation {
           try {
             clonedSystem.init(1, j);
           } catch (Exception e) {
-            logger.error(e.toString());
-            throw e;
+            logger.debug("Stability analysis init(1) failed: {}", e.getMessage());
+            break;
           }
           fNormOld = fNorm;
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -617,7 +621,12 @@ public abstract class Flash extends BaseOperation {
             secondOrderStabilityAnalysis = true;
           }
 
-          clonedSystem.init(3, j);
+          try {
+            clonedSystem.init(3, j);
+          } catch (Exception e) {
+            logger.debug("Stability analysis init(3) failed: {}", e.getMessage());
+            break;
+          }
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }

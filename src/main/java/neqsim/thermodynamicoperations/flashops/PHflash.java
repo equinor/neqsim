@@ -119,7 +119,15 @@ public class PHflash extends Flash {
         system.setTemperature(minTemperature + 0.1);
       }
       tpFlash.run();
-      system.init(2);
+      try {
+        system.init(2);
+      } catch (Exception ex) {
+        logger.debug("PHflash init(2) failed at T={}: {}", system.getTemperature(),
+            ex.getMessage());
+        nyTemp = oldTemp + 0.1;
+        correctFactor = false;
+        continue;
+      }
       errorOld = error;
       error = calcdQdT();
 
