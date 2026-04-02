@@ -1516,6 +1516,22 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getCriticalVolume();
 
   /**
+   * Get the COSTALD characteristic volume V* in cm3/mol. If zero, the critical volume should be
+   * used as fallback.
+   *
+   * @return COSTALD characteristic volume V* in cm3/mol
+   */
+  public double getCostaldCharacteristicVolume();
+
+  /**
+   * Set the COSTALD characteristic volume V* in cm3/mol. Set to 0 to use critical volume as
+   * fallback.
+   *
+   * @param costaldCharacteristicVolume COSTALD characteristic volume V* in cm3/mol
+   */
+  public void setCostaldCharacteristicVolume(double costaldCharacteristicVolume);
+
+  /**
    * <p>
    * getRacketZ.
    * </p>

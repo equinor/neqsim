@@ -15,6 +15,21 @@ permalink: /search-index.json
   {%- assign title = doc.title | default: doc.name | default: doc.url -%}
   {%- assign description = doc.description | default: '' -%}
   {%- assign keywords = doc.keywords | default: '' -%}
+  {%- comment -%}Auto-extract heading text so every page is searchable by its sections{%- endcomment -%}
+  {%- assign headings = '' -%}
+  {%- assign h_parts = doc.content | split: '</h' -%}
+  {%- for part in h_parts -%}
+    {%- if part contains '<h' -%}
+      {%- assign after_open = part | split: '>' -%}
+      {%- if after_open.size > 1 -%}
+        {%- assign h_text = after_open | last | strip_html | strip | normalize_whitespace -%}
+        {%- unless h_text == '' -%}
+          {%- assign headings = headings | append: ' ' | append: h_text -%}
+        {%- endunless -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- assign headings = headings | strip -%}
   {%- assign url_parts = doc.url | split: '/' -%}
   {%- if url_parts.size > 1 -%}
     {%- assign section = url_parts[1] -%}
@@ -26,6 +41,7 @@ permalink: /search-index.json
     "title": {{ title | jsonify }},
     "description": {{ description | jsonify }},
     "keywords": {{ keywords | jsonify }},
+    "headings": {{ headings | jsonify }},
     "section": {{ section | jsonify }},
     "content": {{ content_text | jsonify }}
   }{%- unless forloop.last -%},{%- endunless -%}
