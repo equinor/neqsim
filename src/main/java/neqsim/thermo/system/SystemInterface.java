@@ -2720,6 +2720,41 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Set the liquid density model for all liquid phases. Must be called after
+   * {@code initPhysicalProperties()} or {@code initProperties()}.
+   *
+   * <p>
+   * Supported models:
+   * </p>
+   * <ul>
+   * <li>"COSTALD" or "Costald" - Hankinson-Thomson COSTALD method</li>
+   * <li>"Peneloux" - Peneloux volume shift (default EOS correction)</li>
+   * </ul>
+   *
+   * @param model density model name, e.g. "COSTALD" or "Peneloux"
+   */
+  public default void setLiquidDensityModel(String model) {
+    String modelName;
+    if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
+      modelName = "Costald";
+    } else if ("Peneloux".equalsIgnoreCase(model)) {
+      modelName = "Peneloux volume shift";
+    } else {
+      modelName = model;
+    }
+
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      neqsim.thermo.phase.PhaseType pt = getPhase(i).getType();
+      if (pt == neqsim.thermo.phase.PhaseType.LIQUID || pt == neqsim.thermo.phase.PhaseType.OIL
+          || pt == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        if (getPhase(i).getPhysicalProperties() != null) {
+          getPhase(i).getPhysicalProperties().setDensityModel(modelName);
+        }
+      }
+    }
+  }
+
+  /**
    * method to set the pressure of a fluid (same pressure for all phases).
    *
    * @param pres pressure in unit bara (absolute pressure in bar)

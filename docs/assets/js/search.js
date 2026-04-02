@@ -51,7 +51,11 @@
     'dexpi': ['pfd', 'pid', 'topology', 'proteus', 'xml'],
     'fluid': ['thermo', 'system', 'mixture', 'composition'],
     'mixing rule': ['classic', 'huron vidal', 'mixing'],
-    'density': ['specific gravity', 'molar volume'],
+    'density': ['specific gravity', 'molar volume', 'costald', 'peneloux', 'rackett', 'volume translation'],
+    'costald': ['density', 'liquid density', 'hankinson', 'thomson', 'characteristic volume'],
+    'liquid density': ['costald', 'density', 'peneloux', 'rackett', 'specific gravity'],
+    'peneloux': ['density', 'volume translation', 'volume shift'],
+    'volume translation': ['peneloux', 'density', 'volume shift'],
     'viscosity': ['transport property', 'dynamic viscosity'],
     'thermal conductivity': ['transport property', 'heat transfer'],
     'enthalpy': ['energy', 'heat capacity', 'cp'],
@@ -242,6 +246,7 @@
       this.field('title', { boost: 10 });
       this.field('description', { boost: 5 });
       this.field('keywords', { boost: 8 });
+      this.field('headings', { boost: 6 });
       this.field('content');
 
       this.pipeline.remove(lunr.stemmer);

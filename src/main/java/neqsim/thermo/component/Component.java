@@ -105,6 +105,7 @@ public abstract class Component implements ComponentInterface {
   protected double debyeDipoleMoment = 0;
   protected double viscosityCorrectionFactor = 0;
   protected double criticalVolume = 0;
+  private double costaldCharacteristicVolume = 0.0;
   protected double racketZ = 0;
   protected double gibbsEnergyOfFormation = 0;
   protected double criticalViscosity = 0.0;
@@ -2086,6 +2087,18 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setCriticalVolume(double criticalVolume) {
     this.criticalVolume = criticalVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCostaldCharacteristicVolume() {
+    return costaldCharacteristicVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCostaldCharacteristicVolume(double costaldCharacteristicVolume) {
+    this.costaldCharacteristicVolume = costaldCharacteristicVolume;
   }
 
   /** {@inheritDoc} */
