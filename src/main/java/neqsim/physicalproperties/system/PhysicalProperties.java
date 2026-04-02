@@ -178,6 +178,13 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
           new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density(this);
     } else if ("Costald".equals(model)) {
       densityCalc = new Costald(this);
+    } else if ("Costald polar".equals(model)) {
+      Costald costald = new Costald(this);
+      costald.setUsePolarCorrection(true);
+      densityCalc = costald;
+    } else if ("Rackett".equals(model)) {
+      densityCalc =
+          new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Rackett(this);
     }
   }
 
