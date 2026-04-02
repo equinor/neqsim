@@ -822,6 +822,41 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getDensity(String unit);
 
   /**
+   * Calculates density at specified reference conditions without modifying the current fluid state.
+   *
+   * <p>
+   * This method clones the fluid, performs a TP flash at the reference conditions, initializes
+   * physical properties, and returns the density. The original fluid is not modified.
+   * </p>
+   *
+   * <p>
+   * Common reference conditions:
+   * </p>
+   * <ul>
+   * <li>Standard: 15 deg C, 1.01325 bara (ISO 5024)</li>
+   * <li>Normal: 0 deg C, 1.01325 bara</li>
+   * <li>API 60F: 15.56 deg C, 1.01325 bara</li>
+   * </ul>
+   *
+   * @param refTemperature reference temperature
+   * @param tempUnit temperature unit, e.g. "C" or "K"
+   * @param refPressure reference pressure
+   * @param pressUnit pressure unit, e.g. "bara" or "atm"
+   * @return density at reference conditions in kg/m3
+   */
+  public default double getDensityAtReferenceConditions(double refTemperature, String tempUnit,
+      double refPressure, String pressUnit) {
+    SystemInterface refFluid = clone();
+    refFluid.setTemperature(refTemperature, tempUnit);
+    refFluid.setPressure(refPressure, pressUnit);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(refFluid);
+    ops.TPflash();
+    refFluid.initProperties();
+    return refFluid.getDensity("kg/m3");
+  }
+
+  /**
    * <p>
    * getdVdPtn.
    * </p>
@@ -2728,15 +2763,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    * <ul>
    * <li>"COSTALD" or "Costald" - Hankinson-Thomson COSTALD method</li>
+   * <li>"COSTALD-polar" or "NASTALD" - COSTALD with NBS polar correction (Thomson et al. 1982)</li>
+   * <li>"Rackett" - Spencer-Danner modified Rackett equation</li>
    * <li>"Peneloux" - Peneloux volume shift (default EOS correction)</li>
    * </ul>
    *
-   * @param model density model name, e.g. "COSTALD" or "Peneloux"
+   * @param model density model name, e.g. "COSTALD", "Rackett", or "Peneloux"
    */
   public default void setLiquidDensityModel(String model) {
     String modelName;
     if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
       modelName = "Costald";
+    } else if ("COSTALD-polar".equalsIgnoreCase(model) || "NASTALD".equalsIgnoreCase(model)
+        || "Costald polar".equalsIgnoreCase(model)) {
+      modelName = "Costald polar";
+    } else if ("Rackett".equalsIgnoreCase(model)) {
+      modelName = "Rackett";
     } else if ("Peneloux".equalsIgnoreCase(model)) {
       modelName = "Peneloux volume shift";
     } else {
@@ -2747,6 +2789,60 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       neqsim.thermo.phase.PhaseType pt = getPhase(i).getType();
       if (pt == neqsim.thermo.phase.PhaseType.LIQUID || pt == neqsim.thermo.phase.PhaseType.OIL
           || pt == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        if (getPhase(i).getPhysicalProperties() != null) {
+          getPhase(i).getPhysicalProperties().setDensityModel(modelName);
+        }
+      }
+    }
+  }
+
+  /**
+   * Sets the liquid density model for a specific phase type only.
+   *
+   * <p>
+   * This allows using different density models for different liquid phases. For example, COSTALD
+   * for the oil phase and the default Peneloux for the aqueous phase.
+   * </p>
+   *
+   * <p>
+   * Supported model names:
+   * </p>
+   * <ul>
+   * <li>"COSTALD" - Hankinson-Thomson COSTALD method</li>
+   * <li>"COSTALD-polar" or "NASTALD" - COSTALD with NBS polar correction</li>
+   * <li>"Rackett" - Spencer-Danner modified Rackett equation</li>
+   * <li>"Peneloux" - Peneloux volume shift (default EOS correction)</li>
+   * </ul>
+   *
+   * @param model density model name
+   * @param phaseTypeName phase type to apply to: "oil", "aqueous", or "liquid"
+   */
+  public default void setLiquidDensityModel(String model, String phaseTypeName) {
+    String modelName;
+    if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
+      modelName = "Costald";
+    } else if ("COSTALD-polar".equalsIgnoreCase(model) || "NASTALD".equalsIgnoreCase(model)
+        || "Costald polar".equalsIgnoreCase(model)) {
+      modelName = "Costald polar";
+    } else if ("Rackett".equalsIgnoreCase(model)) {
+      modelName = "Rackett";
+    } else if ("Peneloux".equalsIgnoreCase(model)) {
+      modelName = "Peneloux volume shift";
+    } else {
+      modelName = model;
+    }
+
+    neqsim.thermo.phase.PhaseType targetType;
+    if ("oil".equalsIgnoreCase(phaseTypeName)) {
+      targetType = neqsim.thermo.phase.PhaseType.OIL;
+    } else if ("aqueous".equalsIgnoreCase(phaseTypeName)) {
+      targetType = neqsim.thermo.phase.PhaseType.AQUEOUS;
+    } else {
+      targetType = neqsim.thermo.phase.PhaseType.LIQUID;
+    }
+
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      if (getPhase(i).getType() == targetType) {
         if (getPhase(i).getPhysicalProperties() != null) {
           getPhase(i).getPhysicalProperties().setDensityModel(modelName);
         }

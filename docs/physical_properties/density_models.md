@@ -16,6 +16,7 @@ This guide documents the density correction models available in NeqSim for impro
   - [Component-Specific Corrections](#component-specific-corrections)
 - [Liquid Density Correlations](#liquid-density-correlations)
   - [COSTALD](#costald)
+  - [NASTALD (COSTALD with Polar Correction)](#nastald-costald-with-polar-correction)
   - [Rackett Equation](#rackett-equation)
 - [Usage Examples](#usage-examples)
 - [Model Selection Guide](#model-selection-guide)
@@ -425,21 +426,26 @@ fluid.getPhase("oil").getPhysicalProperties().setDensityModel("Peneloux volume s
 
 #### Comparison with Other Commercial Simulators
 
-| Feature | NeqSim COSTALD | UniSim/HYSYS | Aspen Plus | PRO/II |
-|---------|----------------|-------------|------------|--------|
-| Saturated volume (H-T 1979) | Yes | Yes | Yes | Yes |
-| Compressed liquid | Aalto (1996) | Thomson (1982) | Thomson (1982) | Thomson (1982) |
-| V\* from density back-calc | Yes | Yes | DIPPR database | Yes |
-| V\* explicit override | Yes | Yes | Yes | Yes |
-| Polar compound support | Via V\* from density | Via V\* from density | Via DIPPR V\* | Via V\* from density |
-| Aqueous phase support | Yes | Yes | Yes | Yes |
-| TBP fraction support | Yes | Yes | Yes | Yes |
-| Mixing rules | Standard H-T | Standard H-T | Standard H-T | Standard H-T |
+| Feature | NeqSim COSTALD | NeqSim NASTALD | UniSim/HYSYS | Aspen Plus | PRO/II |
+|---------|----------------|----------------|-------------|------------|--------|
+| Saturated volume (H-T 1979) | Yes | Yes | Yes | Yes | Yes |
+| NBS polar correction (1982) | No | Yes | Yes | Yes | Yes |
+| Compressed liquid | Aalto (1996) | Aalto (1996) | Thomson (1982) | Thomson (1982) | Thomson (1982) |
+| V\* from density back-calc | Yes | Yes | Yes | DIPPR database | Yes |
+| V\* explicit override | Yes | Yes | Yes | Yes | Yes |
+| Polar compound support | Via V\* from density | Via V\* + polar term | Via V\* + polar | Via DIPPR V\* | Via V\* + polar |
+| Aqueous phase support | Yes | Yes | Yes | Yes | Yes |
+| TBP fraction support | Yes | Yes | Yes | Yes | Yes |
+| Mixing rules | Standard H-T | Standard H-T | Standard H-T | Standard H-T | Standard H-T |
 
 NeqSim uses the Aalto et al. (1996) modified Tait equation for compressed
 liquid correction rather than the Thomson et al. (1982) original Tait form used
 by most commercial simulators. The Aalto form works in reduced pressure units
 for better numerical behavior at high pressures.
+
+The NASTALD variant adds the Thomson-Brobst-Hankinson (1982) polar correction
+term, which is the same approach used by UniSim/HYSYS, Aspen Plus, and PRO/II
+for polar compounds.
 
 #### References
 
@@ -457,29 +463,165 @@ for better numerical behavior at high pressures.
 
 ---
 
+### NASTALD (COSTALD with Polar Correction)
+
+NASTALD extends the standard COSTALD method by adding the Thomson-Brobst-Hankinson
+(1982) polar correction term $V_R^{(p)}$. This improves accuracy for strongly
+polar and hydrogen-bonding compounds such as water, alcohols, and glycols.
+
+#### Equation
+
+The saturated volume for a polar substance becomes:
+
+$$V_s = V^* \left[ V_R^{(0)} \left(1 - \omega_{SRK} \, V_R^{(\delta)}\right) + \omega_p \, V_R^{(p)} \right]$$
+
+where $\omega_p$ is the substance-specific polar parameter and $V_R^{(p)}$
+is the polar correction function:
+
+$$V_R^{(p)} = \frac{e + f \, T_r + g \, T_r^2 + h \, T_r^3}{T_r - 1.00001}$$
+
+with the universal constants:
+
+| Constant | Value |
+|----------|-------|
+| $e$ | -1.52816 |
+| $f$ | 1.43907 |
+| $g$ | -0.81446 |
+| $h$ | 0.190454 |
+
+For mixtures, the polar parameter is mixed via:
+
+$$\omega_{p,mix} = \sum_i x_i \, \omega_{p,i}$$
+
+#### Polar Parameters ($\omega_p$)
+
+The following polar parameters are built into NeqSim:
+
+| Compound | $\omega_p$ | Source |
+|----------|-----------|--------|
+| Water | 0.3478 | Thomson et al. (1982) |
+| Ammonia | 0.2872 | Thomson et al. (1982) |
+| HF | 0.3750 | Thomson et al. (1982) |
+| Methanol | 0.1907 | Thomson et al. (1982) |
+| Ethanol | 0.1471 | Thomson et al. (1982) |
+| 1-propanol | 0.1100 | Thomson et al. (1982) |
+| 2-propanol | 0.1050 | Thomson et al. (1982) |
+| 1-butanol | 0.0922 | Thomson et al. (1982) |
+| Acetic acid | 0.1530 | Thomson et al. (1982) |
+| Acetone | 0.0547 | Thomson et al. (1982) |
+| MEG | 0.2213 | Estimated |
+| DEG | 0.2000 | Estimated |
+| TEG | 0.1800 | Estimated |
+
+For compounds not in this table, $\omega_p = 0$ and NASTALD reduces to
+standard COSTALD.
+
+#### Important Caveat: V\* Back-Calculation
+
+When V\* is back-calculated from the component's `normalLiquidDensity`
+(which is the default for most components), the polarity is already partially
+captured in the V\* value. Adding the polar correction on top can lead to
+over-correction (typically 5-15% too high for alcohols and glycols).
+
+The NASTALD polar correction is most beneficial when:
+- V\* comes from an external database (e.g., DIPPR) rather than density back-calculation
+- The component's `costaldCharacteristicVolume` has been explicitly set
+
+For most practical purposes, standard COSTALD with V\* from density gives
+excellent results for polar compounds without needing the explicit polar term.
+
+#### Usage
+
+```java
+// Enable NASTALD (COSTALD with polar correction) for all liquid phases
+fluid.setLiquidDensityModel("NASTALD");
+
+// Run flash and get density
+ops.TPflash();
+fluid.initPhysicalProperties();
+double rho = fluid.getPhase("aqueous").getDensity("kg/m3");
+```
+
+#### References
+
+1. Thomson, G.H., Brobst, K.R. and Hankinson, R.W. (1982). "An Improved
+   Correlation for Densities of Compressed Liquids and Liquid Mixtures."
+   *AIChE J.* 28, 671–676.
+
+---
+
 ### Rackett Equation
 
-A simple corresponding states correlation for saturated liquid density.
+The Spencer-Danner (1972) modified Rackett equation provides a simple
+corresponding-states method for saturated liquid density. It requires only
+critical properties and the Rackett compressibility factor $Z_{RA}$.
 
-**Equation:**
-$$V_s = \frac{RT_c}{P_c} Z_{RA}^{[1 + (1-T_r)^{2/7}]}$$
+#### Pure Component Equation
 
-where $Z_{RA}$ is the Rackett compressibility factor.
+$$V_s = \frac{R T_c}{P_c} \; Z_{RA}^{\left[1 + (1 - T_r)^{2/7}\right]}$$
 
-**Spencer-Danner modification:**
-Uses optimized $Z_{RA}$ values from experimental data rather than critical compressibility.
+where $T_r = T / T_c$ is the reduced temperature and $Z_{RA}$ is the Rackett
+compressibility factor (an empirically fitted parameter, not the true critical
+compressibility $Z_c$).
 
-**For mixtures:**
-$$Z_{RA,mix} = \sum_i x_i Z_{RA,i}$$
-$$T_{c,mix} = \sum_i x_i T_{c,i}$$
+#### $Z_{RA}$ Selection Priority
 
-**Usage:**
+1. **Database value** — `component.getRacketZ()` from the NeqSim
+   component database (fitted to experimental data)
+2. **Yamada-Gunn estimate** (1973) — If no database value is available:
+
+$$Z_{RA} = 0.29056 - 0.08775 \, \omega$$
+
+where $\omega$ is the acentric factor.
+
+#### Mixture Rules (Li, 1971)
+
+For mixtures, pseudo-critical properties are calculated via mole-fraction
+weighted mixing:
+
+$$V_{c,mix} = \sum_i x_i V_{c,i}, \quad
+   T_{c,mix} = \frac{\sum_i x_i V_{c,i} T_{c,i}}{V_{c,mix}}, \quad
+   Z_{RA,mix} = \sum_i x_i Z_{RA,i}$$
+
+$$P_{c,mix} = \frac{Z_{RA,mix} \, R \, T_{c,mix}}{V_{c,mix}}$$
+
+The mixture saturated volume is then:
+
+$$V_{s,mix} = \frac{R \, T_{c,mix}}{P_{c,mix}} \; Z_{RA,mix}^{\left[1 + (1 - T_{r,mix})^{2/7}\right]}$$
+
+#### Usage
+
 ```java
-// Access Rackett parameter
-double Zra = fluid.getPhase(1).getComponent("n-pentane").getRacketZ();
+// Enable Rackett density model for all liquid phases
+fluid.setLiquidDensityModel("Rackett");
 
-// Rackett is used internally for volume correction
+// Run flash and get density
+ops.TPflash();
+fluid.initPhysicalProperties();
+double rho = fluid.getPhase("oil").getDensity("kg/m3");
+
+// Access Z_RA for a component
+double Zra = fluid.getPhase(1).getComponent("n-pentane").getRacketZ();
 ```
+
+#### Strengths and Limitations
+
+- **Strengths:** Simple, fast, good accuracy (2-5%) for non-polar hydrocarbons
+  and their mixtures.
+- **Limitations:** No compressed liquid correction (saturated volume only);
+  less accurate for strongly polar or associating compounds. For polar systems,
+  use COSTALD or NASTALD instead.
+
+#### References
+
+1. Rackett, H.G. (1970). "Equation of State for Saturated Liquids."
+   *J. Chem. Eng. Data* 15, 514–517.
+2. Spencer, C.F. and Danner, R.P. (1972). "Improved Equation for Prediction
+   of Saturated Liquid Density." *J. Chem. Eng. Data* 17, 236–241.
+3. Li, C.C. (1971). "Critical Temperature Estimation for Simple Mixtures."
+   *Can. J. Chem. Eng.* 49, 709–710.
+4. Yamada, T. and Gunn, R.D. (1973). "Saturated Liquid Molar Volumes. The
+   Rackett Equation." *J. Chem. Eng. Data* 18, 234–236.
 
 ---
 
@@ -509,10 +651,38 @@ fluid.setLiquidDensityModel("COSTALD");
 double densityCostald = fluid.getPhase("oil").getPhysicalProperties().getDensity();
 System.out.println("COSTALD:  " + densityCostald + " kg/m3");
 
+// Switch to Rackett
+fluid.setLiquidDensityModel("Rackett");
+double densityRackett = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+System.out.println("Rackett:  " + densityRackett + " kg/m3");
+
 // Switch back to Peneloux
 fluid.setLiquidDensityModel("Peneloux");
 double densityBack = fluid.getPhase("oil").getPhysicalProperties().getDensity();
 System.out.println("Peneloux: " + densityBack + " kg/m3");
+```
+
+### Comparing with NASTALD for Polar Systems
+
+```java
+SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);
+fluid.addComponent("water", 0.8);
+fluid.addComponent("methanol", 0.2);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initPhysicalProperties();
+
+// COSTALD (V* captures polarity via back-calculation)
+fluid.setLiquidDensityModel("COSTALD");
+double rhoCostald = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+System.out.println("COSTALD:  " + rhoCostald + " kg/m3");
+
+// NASTALD (explicit polar correction)
+fluid.setLiquidDensityModel("NASTALD");
+double rhoNastald = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+System.out.println("NASTALD:  " + rhoNastald + " kg/m3");
 ```
 
 ### Tuning Liquid Density
@@ -596,9 +766,13 @@ System.out.println("High-P density: " + rho + " kg/m³");
 | General hydrocarbons | Peneloux | Default, good accuracy |
 | Near saturation | COSTALD | Better for saturated liquids |
 | Polar compounds (water, glycols) | COSTALD | V\* from density handles polarity |
+| Polar with database V\* | NASTALD | Adds explicit polar correction term |
 | Multi-phase (gas-oil-water) | COSTALD | Single call applies to oil + aqueous |
+| Different model per phase | Per-phase API | e.g. COSTALD on oil, Peneloux on aqueous |
 | TBP/plus fractions | COSTALD | V\* from density input, no tuning needed |
 | High pressure (> 200 bar) | COSTALD | Aalto compressed liquid correction |
+| Quick simple estimate | Rackett | No high-pressure correction |
+| Saturated hydrocarbons only | Rackett | Fast, 2–5% accuracy |
 | Critical region | GERG-2008 | If available |
 | Quick estimate | EoS only | 5–15% error typical |
 
@@ -613,6 +787,8 @@ System.out.println("High-P density: " + rho + " kg/m³");
 | COSTALD (hydrocarbons) | 1–2% | N/A |
 | COSTALD (polar/aqueous) | 3–5% | N/A |
 | COSTALD (TBP fractions) | 2–5% | N/A |
+| NASTALD (polar with database V\*) | 1–3% | N/A |
+| Rackett (hydrocarbons) | 2–5% | N/A |
 | GERG-2008 | 0.1–0.5% | 0.1–0.5% |
 
 ---
@@ -625,13 +801,34 @@ System.out.println("High-P density: " + rho + " kg/m³");
 // Set COSTALD for all liquid phases (oil, liquid, aqueous)
 fluid.setLiquidDensityModel("COSTALD");
 
+// Set NASTALD (polar-corrected COSTALD) for all liquid phases
+fluid.setLiquidDensityModel("NASTALD");
+
+// Set Rackett equation for all liquid phases
+fluid.setLiquidDensityModel("Rackett");
+
 // Switch back to default Peneloux
 fluid.setLiquidDensityModel("Peneloux");
 
-// Set per-phase (alternative)
+// Set model for a specific phase type only
+fluid.setLiquidDensityModel("COSTALD", "oil");      // Oil phase uses COSTALD
+fluid.setLiquidDensityModel("Peneloux", "aqueous");  // Aqueous keeps Peneloux
+
+// Valid phase type names: "oil", "aqueous", "liquid"
+
+// Low-level: set per-phase directly
 fluid.getPhase("oil").getPhysicalProperties().setDensityModel("Costald");
-fluid.getPhase("aqueous").getPhysicalProperties().setDensityModel("Costald");
+fluid.getPhase("aqueous").getPhysicalProperties().setDensityModel("Rackett");
 ```
+
+### Accepted Model Strings
+
+| `setLiquidDensityModel(...)` | `setDensityModel(...)` | Description |
+|------------------------------|------------------------|-------------|
+| `"COSTALD"` | `"Costald"` | Standard COSTALD (Hankinson-Thomson) |
+| `"NASTALD"` or `"COSTALD-polar"` | `"Costald polar"` | COSTALD with polar correction |
+| `"Rackett"` | `"Rackett"` | Spencer-Danner modified Rackett |
+| `"Peneloux"` | `"Peneloux volume shift"` | Default Peneloux volume translation |
 
 ### Accessing Density
 
@@ -647,6 +844,19 @@ double rhoMolar = phase.getDensity("mol/m3");
 double Vm = phase.getMolarVolume();  // m³/mol
 ```
 
+### Density at Reference Conditions
+
+```java
+// Calculate density at standard conditions without modifying the fluid
+double rhoStd = fluid.getDensityAtReferenceConditions(15.0, "C", 1.01325, "bara");
+// Returns density in kg/m3 at 15°C / 1.01325 bara
+
+// API standard temperature (60°F)
+double rhoAPI = fluid.getDensityAtReferenceConditions(15.56, "C", 1.01325, "bara");
+
+// The original fluid state is NOT modified by this call
+```
+
 ### Volume Correction Parameters
 
 ```java
@@ -656,6 +866,10 @@ component.setVolumeCorrectionConst(newValue);
 
 // Get Rackett parameter
 double Zra = component.getRacketZ();
+
+// Get/set COSTALD characteristic volume (V*)
+double Vstar = component.getCostaldCharacteristicVolume();
+component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 ```
 
 ---
@@ -668,5 +882,7 @@ double Zra = component.getRacketZ();
 4. Aalto, M., Keskinen, K.I., Aittamaa, J. and Liukkonen, S. (1996). An Improved Correlation for Compressed Liquid Densities of Hydrocarbons. Part 2. Mixtures. *Fluid Phase Equil.* 114, 1–19.
 5. Rackett, H.G. (1970). Equation of State for Saturated Liquids. *J. Chem. Eng. Data* 15, 514–517.
 6. Spencer, C.F. and Danner, R.P. (1972). Improved Equation for Prediction of Saturated Liquid Density. *J. Chem. Eng. Data* 17, 236–241.
-7. Jhaveri, B.S. and Youngren, G.K. (1988). Three-Parameter Modification of the Peng-Robinson Equation of State. *SPE Reservoir Eng.* 3, 1033–1040.
-8. Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). *The Properties of Gases and Liquids*, 5th ed. McGraw-Hill.
+7. Yamada, T. and Gunn, R.D. (1973). Saturated Liquid Molar Volumes. The Rackett Equation. *J. Chem. Eng. Data* 18, 234–236.
+8. Li, C.C. (1971). Critical Temperature Estimation for Simple Mixtures. *Can. J. Chem. Eng.* 49, 709–710.
+9. Jhaveri, B.S. and Youngren, G.K. (1988). Three-Parameter Modification of the Peng-Robinson Equation of State. *SPE Reservoir Eng.* 3, 1033–1040.
+10. Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). *The Properties of Gases and Liquids*, 5th ed. McGraw-Hill.

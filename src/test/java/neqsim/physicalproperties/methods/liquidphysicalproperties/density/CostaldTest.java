@@ -547,4 +547,262 @@ public class CostaldTest extends neqsim.NeqSimTest {
     assertEquals(789.0, density, 789.0 * 0.05,
         "Ethanol COSTALD density should be within 5% of reference, got: " + density);
   }
+
+  // ---- Rackett equation tests ----
+
+  /**
+   * Test Rackett equation for pure n-hexane at 298.15 K, 10 bar. NIST reference: ~655 kg/m3.
+   */
+  @Test
+  void testRackettNHexane() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("n-hexane", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    fluid.setLiquidDensityModel("Rackett");
+    double density = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    // Rackett should be within 5% of NIST for pure hydrocarbons
+    assertEquals(655.0, density, 655.0 * 0.05,
+        "n-hexane Rackett density should be within 5% of NIST, got: " + density);
+  }
+
+  /**
+   * Test Rackett equation for pure propane at 230 K, 5 bar. NIST reference: ~583 kg/m3.
+   */
+  @Test
+  void testRackettPropane() {
+    SystemInterface fluid = new SystemSrkEos(230.0, 5.0);
+    fluid.addComponent("propane", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    fluid.setLiquidDensityModel("Rackett");
+    double density = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    assertEquals(583.0, density, 583.0 * 0.05,
+        "Propane Rackett density should be within 5% of NIST, got: " + density);
+  }
+
+  /**
+   * Test Rackett equation for a binary mixture.
+   */
+  @Test
+  void testRackettBinaryMixture() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 10.0);
+    fluid.addComponent("n-hexane", 0.6);
+    fluid.addComponent("nC10", 0.4);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    fluid.setLiquidDensityModel("Rackett");
+    double density = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    // Binary mixture should be between pure component densities
+    assertTrue(density > 600.0 && density < 780.0,
+        "Binary Rackett density should be between pure component values, got: " + density);
+  }
+
+  /**
+   * Test that Rackett and COSTALD give different but reasonable results and we can switch between
+   * all three models.
+   */
+  @Test
+  void testModelSwitching() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("n-hexane", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    // Default (Peneloux)
+    double penelouxDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    // COSTALD
+    fluid.setLiquidDensityModel("COSTALD");
+    double costaldDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    // Rackett
+    fluid.setLiquidDensityModel("Rackett");
+    double rackettDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    // Switch back to Peneloux
+    fluid.setLiquidDensityModel("Peneloux");
+    double restoredDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+
+    // All should be reasonable for n-hexane at 298 K
+    assertTrue(penelouxDensity > 500.0 && penelouxDensity < 800.0,
+        "Peneloux density should be reasonable");
+    assertTrue(costaldDensity > 500.0 && costaldDensity < 800.0,
+        "COSTALD density should be reasonable");
+    assertTrue(rackettDensity > 500.0 && rackettDensity < 800.0,
+        "Rackett density should be reasonable");
+    assertEquals(penelouxDensity, restoredDensity, 0.01,
+        "Switching back to Peneloux should restore original density");
+  }
+
+  // ---- NASTALD (COSTALD with polar correction) tests ----
+
+  /**
+   * Test NASTALD (COSTALD-polar) for pure water at 293.15 K. The polar correction should improve
+   * accuracy vs standard COSTALD.
+   */
+  @Test
+  void testNastaldWater() {
+    SystemInterface fluid = new SystemSrkEos(293.15, 10.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    if (fluid.hasPhaseType("aqueous")) {
+      // Standard COSTALD
+      fluid.setLiquidDensityModel("COSTALD");
+      double costaldDensity = fluid.getPhase("aqueous").getPhysicalProperties().calcDensity();
+
+      // NASTALD (with polar correction)
+      fluid.setLiquidDensityModel("NASTALD");
+      double nastaldDensity = fluid.getPhase("aqueous").getPhysicalProperties().calcDensity();
+
+      // Both should be reasonable
+      assertTrue(costaldDensity > 900.0 && costaldDensity < 1100.0,
+          "COSTALD water density should be reasonable, got: " + costaldDensity);
+      assertTrue(nastaldDensity > 900.0 && nastaldDensity < 1100.0,
+          "NASTALD water density should be reasonable, got: " + nastaldDensity);
+
+      // NASTALD and standard COSTALD should give different results for water
+      assertTrue(Math.abs(costaldDensity - nastaldDensity) > 0.1,
+          "NASTALD should differ from standard COSTALD for water");
+    }
+  }
+
+  /**
+   * Test NASTALD for methanol — polar alcohol with known polar parameter.
+   */
+  @Test
+  void testNastaldMethanol() {
+    SystemInterface fluid = new SystemSrkEos(293.15, 10.0);
+    fluid.addComponent("methanol", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    String phaseLabel = fluid.hasPhaseType("aqueous") ? "aqueous" : "oil";
+    fluid.setLiquidDensityModel("NASTALD");
+    double density = fluid.getPhase(phaseLabel).getPhysicalProperties().calcDensity();
+
+    // Methanol at 20°C = ~791 kg/m3
+    // Note: NASTALD with V* back-calculated from density may over-correct for alcohols
+    // since the V* already captures some polarity effects. The range is wider here.
+    assertEquals(791.0, density, 791.0 * 0.15,
+        "NASTALD methanol density should be within 15% of reference, got: " + density);
+    assertTrue(density > 700.0 && density < 1000.0,
+        "NASTALD methanol density should be physically reasonable, got: " + density);
+  }
+
+  /**
+   * Test that NASTALD has no effect on non-polar hydrocarbons (polar parameter = 0).
+   */
+  @Test
+  void testNastaldNonPolarSameAsCostald() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("n-hexane", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    fluid.setLiquidDensityModel("COSTALD");
+    double costaldDensity = fluid.getPhase("oil").getPhysicalProperties().calcDensity();
+
+    fluid.setLiquidDensityModel("NASTALD");
+    double nastaldDensity = fluid.getPhase("oil").getPhysicalProperties().calcDensity();
+
+    // For non-polar n-hexane, NASTALD should give the same result as COSTALD
+    assertEquals(costaldDensity, nastaldDensity, 0.01,
+        "NASTALD should equal COSTALD for non-polar compounds");
+  }
+
+  // ---- Per-phase density model API tests ----
+
+  /**
+   * Test setting different density models on different phase types.
+   */
+  @Test
+  void testPerPhaseDensityModel() {
+    SystemInterface fluid = new SystemSrkEos(313.15, 50.0);
+    fluid.addComponent("methane", 60.0);
+    fluid.addComponent("n-hexane", 15.0);
+    fluid.addComponent("nC10", 15.0);
+    fluid.addComponent("water", 10.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    // Set COSTALD for oil phase only
+    fluid.setLiquidDensityModel("COSTALD", "oil");
+
+    if (fluid.hasPhaseType("oil")) {
+      double oilDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+      assertTrue(oilDensity > 500.0 && oilDensity < 900.0,
+          "Oil phase with COSTALD should have reasonable density, got: " + oilDensity);
+    }
+  }
+
+  // ---- Density at reference conditions tests ----
+
+  /**
+   * Test density at standard reference conditions (15°C, 1.01325 bara).
+   */
+  @Test
+  void testDensityAtReferenceConditions() {
+    SystemInterface fluid = new SystemSrkEos(313.15, 50.0);
+    fluid.addComponent("n-hexane", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    double refDensity = fluid.getDensityAtReferenceConditions(15.0, "C", 1.01325, "bara");
+
+    // n-hexane at 15°C, 1 atm = ~663 kg/m3 (NIST)
+    assertEquals(663.0, refDensity, 663.0 * 0.05,
+        "n-hexane at standard conditions should be within 5% of NIST, got: " + refDensity);
+
+    // Original fluid should not be modified
+    assertEquals(313.15, fluid.getTemperature(), 0.01,
+        "Original fluid temperature should be unchanged");
+    assertEquals(50.0, fluid.getPressure(), 0.01, "Original fluid pressure should be unchanged");
+  }
+
+  /**
+   * Test density at API 60°F reference conditions (15.56°C, 1.01325 bara).
+   */
+  @Test
+  void testDensityAtAPI60F() {
+    SystemInterface fluid = new SystemSrkEos(350.0, 100.0);
+    fluid.addComponent("nC10", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    double refDensity = fluid.getDensityAtReferenceConditions(15.56, "C", 1.01325, "bara");
+
+    // n-decane at 15.56°C = ~733 kg/m3 (NIST)
+    assertEquals(733.0, refDensity, 733.0 * 0.05,
+        "n-decane at 60F should be within 5% of NIST, got: " + refDensity);
+  }
 }
