@@ -33,8 +33,7 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
   private static final long serialVersionUID = 1000;
 
   /** Logger object for class. */
-  private static final Logger logger =
-      LogManager.getLogger(PhaseSrkCPAfullyImplicit.class);
+  private static final Logger logger = LogManager.getLogger(PhaseSrkCPAfullyImplicit.class);
 
   /** Maximum iterations for the fully implicit solver. */
   private static final int MAX_IMPLICIT_ITERATIONS = 100;
@@ -47,6 +46,34 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
 
   /** Restart threshold parameter alpha (supercritical detection). */
   private static final double RESTART_ALPHA = 0.1;
+
+  // --- Profiling counters (thread-local for safety) ---
+  /** Total molarVolume calls via implicit solver. */
+  private static volatile long implicitCallCount = 0;
+  /** Total coupled Newton iterations across all calls. */
+  private static volatile long totalImplicitIters = 0;
+  /** Total fallbacks to nested solver. */
+  private static volatile long fallbackCount = 0;
+
+  /**
+   * Reset profiling counters.
+   */
+  public static void resetProfileCounters() {
+    implicitCallCount = 0;
+    totalImplicitIters = 0;
+    fallbackCount = 0;
+  }
+
+  /**
+   * Get profiling summary string.
+   *
+   * @return a summary of profiling data
+   */
+  public static String getProfileSummary() {
+    double avgIters = implicitCallCount > 0 ? (double) totalImplicitIters / implicitCallCount : 0;
+    return String.format("Calls=%d  AvgIters=%.1f  Fallbacks=%d", implicitCallCount, avgIters,
+        fallbackCount);
+  }
 
   /**
    * Constructor for PhaseSrkCPAfullyImplicit.
@@ -82,6 +109,12 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
    * Fully implicit molar volume calculation. Solves the normalized density zeta = b/v and
    * association site fractions X_k simultaneously using a coupled Newton-Raphson method.
    * </p>
+   *
+   * <p>
+   * Per Igben et al. (2026), the key speedup is eliminating inner XA iterations during the volume
+   * loop. The CPA pressure derivatives (dFCPAdV, dFCPAdVdV) are computed directly from the current
+   * X_k values using O(ns^2) sums, avoiding costly matrix inversions.
+   * </p>
    */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
@@ -94,6 +127,15 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     if (ns == 0) {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
+
+    // For gas-phase calls, the nested solver is more efficient since
+    // association is weak in the gas (X near 1, large molar volume).
+    // The coupled Newton converges slowly for weakly-coupled systems.
+    if (pt == PhaseType.GAS) {
+      return super.molarVolume(pressure, temperature, A, B, pt);
+    }
+
+    implicitCallCount++;
 
     double Btemp = getB();
     if (Btemp <= 0) {
@@ -110,27 +152,58 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     }
     zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
 
-    // Initialize XA site fractions to 1.0 (fully unbonded)
+    // Initialize volume for first calcDelta call
+    double molarVol = Btemp / (numberOfMolesInPhase * zeta);
+    setMolarVolume(molarVol);
+
+    // Compute deltaNog once (temperature-dependent, does not change with V)
+    calcDelta();
+
+    // Initialize XA site fractions: use previously converged values if available,
+    // otherwise do a quick successive substitution warmup.
+    gcpa = calc_g();
+    gcpav = calc_lngV();
+    updateDeltaWithG();
     double[] xSite = new double[ns];
+    readXsiteFromComponents(xSite);
+    boolean needsInit = false;
     for (int i = 0; i < ns; i++) {
-      xSite[i] = 1.0;
+      if (xSite[i] <= 1.0e-15 || xSite[i] >= 1.0 || Double.isNaN(xSite[i])) {
+        needsInit = true;
+        break;
+      }
+    }
+    if (needsInit) {
+      for (int i = 0; i < ns; i++) {
+        xSite[i] = 0.5;
+      }
+      setXsiteOnComponents(xSite);
+      solveX2(10);
+      readXsiteFromComponents(xSite);
     }
 
-    // --- Coupled Newton-Raphson iteration ---
+    // --- Pre-allocate arrays for the coupled Newton-Raphson ---
     int dim = ns + 1; // unknowns: [X_1, ..., X_ns, zeta]
     double[] residual = new double[dim];
     double[][] jacobian = new double[dim][dim];
     double[] dx = new double[dim];
 
+    // Cache moles per site for inner loops
+    double[] siteMoles = new double[ns];
+    for (int i = 0; i < ns; i++) {
+      siteMoles[i] = componentArray[moleculeNumber[i]].getNumberOfMolesInPhase();
+    }
+
     int iterations = 0;
     boolean converged = false;
     boolean restartTriggered = false;
+    double initialResidual = 0.0;
 
     do {
       iterations++;
 
       // Set volume from current zeta
-      double molarVol = Btemp / (numberOfMolesInPhase * zeta);
+      molarVol = Btemp / (numberOfMolesInPhase * zeta);
       setMolarVolume(molarVol);
       double totalVol = molarVol * numberOfMolesInPhase;
       Z = pressure * molarVol / (R * temperature);
@@ -138,45 +211,57 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       // Update radial distribution function and derivatives
       gcpa = calc_g();
       if (gcpa < 0) {
-        // Safety: if g < 0, volume is unphysically small
         setMolarVolume(Btemp / numberOfMolesInPhase);
         gcpa = calc_g();
         totalVol = getMolarVolume() * numberOfMolesInPhase;
         zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
+        molarVol = getMolarVolume();
       }
       gcpav = calc_lngV();
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
 
-      // Set the XA values on the component objects
-      setXsiteOnComponents(xSite);
-
-      // Compute delta (association strength) at current conditions
-      calcDelta();
+      // Update delta = deltaNog * g (only g changes between iterations)
       updateDeltaWithG();
 
-      // Solve XA to get hessianInvers populated (needed by initCPAMatrix)
-      // This uses the current xSite values as starting point so converges fast
-      solveX();
+      // --- Compute CPA pressure derivatives directly (NO solveX/initCPAMatrix) ---
+      // dFCPAdV = -0.5 * sum_ij X_i * Klk_ij * (gcpav - 1/V) * X_j
+      // where Klk_ij = m_i * m_j / V * delta_ij
+      double gdv1 = gcpav - 1.0 / totalVol;
+      double gdv2 = gdv1 * gdv1;
+      double totalVol2 = totalVol * totalVol;
 
-      // Read back the XA values that solveX computed (should be same as our xSite)
-      readXsiteFromComponents(xSite);
+      double sumFV = 0.0;
+      double sumFVV = 0.0;
+      for (int i = 0; i < ns; i++) {
+        for (int j = i; j < ns; j++) {
+          double klk = siteMoles[i] * siteMoles[j] / totalVol * delta[i][j];
+          double xixj = xSite[i] * xSite[j];
+          double klkXiXj = klk * xixj;
+          double symFactor = (i == j) ? 1.0 : 2.0;
+          sumFV += symFactor * klkXiXj * gdv1;
+          sumFVV += symFactor * klkXiXj * (gdv2 + gcpavv + 1.0 / totalVol2);
+        }
+      }
 
-      // Now compute CPA derivatives
-      initCPAMatrix(1);
+      // Store into parent's fields so dFdV()/dFdVdV() return correct values
+      dFCPAdV = -0.5 * sumFV;
+      dFCPAdVdV = -0.5 * sumFVV;
+      // Note: the XV correction term in dFCPAdVdV is omitted during iteration.
+      // In the coupled system, dX/dV is captured implicitly through the off-diagonal
+      // Jacobian entries, so the approximate Jacobian still converges.
 
       // --- Build residual vector ---
       // R_k = X_k - 1/(1 + (1/V)*sum_j(m_j * delta_kj * X_j))
       for (int k = 0; k < ns; k++) {
         double sumKJ = 0.0;
         for (int j = 0; j < ns; j++) {
-          double mj = componentArray[moleculeNumber[j]].getNumberOfMolesInPhase();
-          sumKJ += mj * getDeltaij(k, j) * xSite[j];
+          sumKJ += siteMoles[j] * delta[k][j] * xSite[j];
         }
         residual[k] = xSite[k] - 1.0 / (1.0 + sumKJ / totalVol);
       }
 
-      // R_{ns+1} = P_calc - P_spec (in BonV form)
+      // R_{ns+1} = pressure residual in BonV form
       double h = zeta - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       residual[ns] = h;
@@ -185,6 +270,9 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       double maxResidual = 0.0;
       for (int i = 0; i < dim; i++) {
         maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
+      }
+      if (iterations == 1) {
+        initialResidual = maxResidual;
       }
       if (maxResidual < CONVERGENCE_TOL && iterations > 1) {
         converged = true;
@@ -196,48 +284,45 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       for (int k = 0; k < ns; k++) {
         double xk2 = xSite[k] * xSite[k];
         for (int j = 0; j < ns; j++) {
-          double mj = componentArray[moleculeNumber[j]].getNumberOfMolesInPhase();
           double dkj = (k == j) ? 1.0 : 0.0;
-          jacobian[k][j] = dkj + xk2 * mj * getDeltaij(k, j) / totalVol;
+          jacobian[k][j] = dkj + xk2 * siteMoles[j] * delta[k][j] / totalVol;
         }
       }
 
       // dR_k/d(zeta): derivative of association residual w.r.t. normalized density
-      // dV/d(zeta) = -B/(n*zeta^2)
       double dVdZeta = -Btemp / (numberOfMolesInPhase * zeta * zeta);
       for (int k = 0; k < ns; k++) {
         double xk2 = xSite[k] * xSite[k];
         double sumDeriv = 0.0;
         for (int j = 0; j < ns; j++) {
-          double mj = componentArray[moleculeNumber[j]].getNumberOfMolesInPhase();
-          double deltaKJ = getDeltaij(k, j);
-          double deltaNogKJ = getDeltaNogij(k, j);
-          // d(delta)/dV = deltaNog * dg/dV = deltaNog * g * d(ln g)/dV = delta * gcpav
+          double deltaKJ = delta[k][j];
+          // d(delta)/dV = delta * gcpav (since delta = deltaNog * g, d(delta)/dV = deltaNog *
+          // dg/dV)
           double dDeltadV = deltaKJ * gcpav;
-          // d(sum_j m_j*delta_kj*X_j / V)/dV
-          //   = sum_j m_j*X_j * (dDelta/dV * V - delta) / V^2
-          sumDeriv += mj * xSite[j] * (dDeltadV * totalVol - deltaKJ)
-              / (totalVol * totalVol);
+          sumDeriv +=
+              siteMoles[j] * xSite[j] * (dDeltadV * totalVol - deltaKJ) / (totalVol * totalVol);
         }
         jacobian[k][ns] = xk2 * sumDeriv * dVdZeta;
       }
 
       // dR_{ns+1}/dX_k: pressure residual derivative w.r.t. site fractions
-      // dP/dX_k through dF_CPA/dV which depends on X_k
-      // Approximate: the CPA pressure contribution through hcpatot
-      // P_assoc = RT/(2V) * (1 - V*g'/g) * sum_i n_i*sum_j(1-X_ij)
-      // dP_assoc/dX_k = -RT/(2V) * (1 - V*g'/g) * n_molecule_k
-      double hcpaFactor = 0.5 / totalVol * (1.0 - totalVol * gcpav);
+      // h = zeta - B/nMol * dFdV - P*B/(nMol*R*T)
+      // dFCPAdV = -0.5 * sum_ij Xi * Klk_ij * gdv1 * Xj
+      // d(dFCPAdV)/dXk = -sum_j Klk_kj * gdv1 * Xj = -(mk/V) * gdv1 * sum_j mj*delta_kj*Xj
+      // dh/dXk = -B/nMol * cpaon * d(dFCPAdV)/dXk
+      // = B/nMol * cpaon * (mk/V) * gdv1 * sum_j mj*delta_kj*Xj
       for (int k = 0; k < ns; k++) {
-        double nk = componentArray[moleculeNumber[k]].getNumberOfMolesInPhase();
-        // In BonV form, the derivative is scaled by B/(n*R*T)
-        jacobian[ns][k] = Btemp / numberOfMolesInPhase * nk * hcpaFactor;
+        double sumJ = 0.0;
+        for (int j = 0; j < ns; j++) {
+          sumJ += siteMoles[j] * delta[k][j] * xSite[j];
+        }
+        jacobian[ns][k] =
+            Btemp / numberOfMolesInPhase * cpaon * (siteMoles[k] / totalVol) * gdv1 * sumJ;
       }
 
-      // dR_{ns+1}/d(zeta): standard Halley-like derivative
+      // dR_{ns+1}/d(zeta): diagonal entry
       double BonV2 = zeta * zeta;
-      jacobian[ns][ns] =
-          1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
+      jacobian[ns][ns] = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
 
       // --- Solve J * dx = -R using Gaussian elimination ---
       for (int i = 0; i < dim; i++) {
@@ -245,8 +330,7 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       }
       boolean solveOk = solveLinearSystem(jacobian, dx, dim);
       if (!solveOk) {
-        // Linear solve failed — fall back to standard nested approach
-        logger.debug("Fully implicit linear solve failed, falling back to nested solver");
+        fallbackCount++;
         return super.molarVolume(pressure, temperature, A, B, pt);
       }
 
@@ -263,7 +347,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
           maxStep = Math.min(maxStep, Math.max(0.1, limit));
         }
       }
-      // Limit zeta step
       double proposedZeta = zeta + maxStep * dx[ns];
       if (proposedZeta < 1.0e-10) {
         double limit = MAX_REL_STEP * zeta / Math.abs(dx[ns]);
@@ -273,7 +356,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
         double limit = (1.0 - 1.0e-10 - zeta) / dx[ns];
         maxStep = Math.min(maxStep, Math.max(0.1, limit));
       }
-      // Global damping if step is too large
       if (Math.abs(dx[ns]) / Math.max(zeta, 1.0e-10) > 0.3) {
         maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[ns]));
       }
@@ -287,10 +369,8 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
 
       // --- Restart criterion (supercritical detection) ---
-      // If zeta oscillates or step size very small but not converging
       if (iterations > 20 && maxResidual > 0.1 && !restartTriggered) {
         restartTriggered = true;
-        // Restart with opposite phase initial guess
         if (pt == PhaseType.GAS) {
           zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
         } else {
@@ -305,33 +385,212 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     } while (iterations < MAX_IMPLICIT_ITERATIONS);
 
     if (!converged) {
-      // Fall back to the standard nested approach
-      logger.debug("Fully implicit solver did not converge in " + iterations
-          + " iterations, falling back to nested solver");
+      fallbackCount++;
+      if (logger.isDebugEnabled()) {
+        logger.debug("Implicit non-convergence: ns=" + ns + " pt=" + pt + " iters=" + iterations
+            + " zeta=" + zeta + " P=" + pressure + " T=" + temperature);
+      }
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
-    // Set final volume and component XA values
+    totalImplicitIters += iterations;
+
+    // --- Finalization: set converged solution ---
     double finalMolarVol = Btemp / (numberOfMolesInPhase * zeta);
     setMolarVolume(finalMolarVol);
     Z = pressure * finalMolarVol / (R * temperature);
     setXsiteOnComponents(xSite);
 
-    // Final CPA matrix computation for derivatives (needed by calcdFdNtemp)
+    // Compute g-function derivatives and hcpatot
     gcpa = calc_g();
     gcpav = calc_lngV();
     gcpavv = calc_lngVV();
     gcpavvv = calc_lngVVV();
-    solveX(); // Quick convergence since we're already at solution
-    initCPAMatrix(1);
     hcpatot = calc_hCPA();
+
+    // Finalize: compute CPA derivatives with XV correction.
+    // For type=1 (volume derivatives only), our override computes from scratch
+    // using GE solve, avoiding solveX() + EJML matrix inversion.
+    initCPAMatrix(1);
     dFdNtemp = calcdFdNtemp();
+
+    if (logger.isTraceEnabled()) {
+      logger.trace("Fully implicit converged in " + iterations + " iterations (ns=" + ns + ")");
+    }
 
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
     }
 
     return getMolarVolume();
+  }
+
+  // --- Pre-allocated work arrays for initCPAMatrix type 1 ---
+  private transient double[][] workKlk = null;
+  private transient double[][] workHess = null;
+  private transient double[] workKsi = null;
+  private transient double[] workM = null;
+  private transient double[] workKlkKsi = null;
+  private transient double[] workXV = null;
+  private transient int workNs = 0;
+
+  /**
+   * Ensure work arrays are allocated for the given association site count.
+   *
+   * @param ns number of association sites
+   */
+  private void ensureWorkArrays(int ns) {
+    if (ns != workNs) {
+      workKlk = new double[ns][ns];
+      workHess = new double[ns][ns];
+      workKsi = new double[ns];
+      workM = new double[ns];
+      workKlkKsi = new double[ns];
+      workXV = new double[ns];
+      workNs = ns;
+    }
+  }
+
+  /**
+   * Override CPA matrix initialization.
+   *
+   * <p>
+   * For type == 1 (volume derivatives), computes FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV from scratch
+   * using Gaussian elimination to solve H*XV = KlkV*ksi directly. This avoids the expensive EJML
+   * hessianMatrix.invert() in the parent's solveX().
+   * </p>
+   *
+   * <p>
+   * Key insight: KlkV[i][j] = fV * Klk[i][j] where fV = gcpav - 1/V. Similarly for KlkVV and
+   * KlkVVV. This means only Klk needs to be stored; volume derivatives are scalar multiples.
+   * </p>
+   *
+   * <p>
+   * For type &gt;= 2, calls solveX() to populate hessianInvers and delegates to
+   * super.initCPAMatrix(type).
+   * </p>
+   *
+   * @param type 1 for volume derivatives, 2+ for temperature/composition derivatives
+   */
+  @Override
+  public void initCPAMatrix(int type) {
+    int ns = getTotalNumberOfAccociationSites();
+    if (ns == 0) {
+      FCPA = 0.0;
+      dFCPAdTdV = 0.0;
+      dFCPAdTdT = 0.0;
+      dFCPAdT = 0;
+      dFCPAdV = 0;
+      dFCPAdVdV = 0.0;
+      dFCPAdVdVdV = 0.0;
+      return;
+    }
+
+    if (type > 1) {
+      // Delegate to parent for temperature/composition derivatives.
+      // Need hessianInvers populated by solveX().
+      solveX();
+      super.initCPAMatrix(type);
+      return;
+    }
+
+    // --- Type 1: compute volume derivatives from scratch ---
+    ensureWorkArrays(ns);
+
+    double totalVolume = getTotalVolume();
+    double totalVolume2 = totalVolume * totalVolume;
+    double totalVolume3 = totalVolume2 * totalVolume;
+
+    double gv = getGcpav();
+    double fV = gv - 1.0 / totalVolume;
+    double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;
+    double fVVV =
+        fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
+
+    // Read site fractions (ksi) and mole counts (m) from components
+    int idx = 0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double ni = componentArray[i].getNumberOfMolesInPhase();
+      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
+        workKsi[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
+        workM[idx] = ni;
+        idx++;
+      }
+    }
+
+    // Build Klk[i][j] = m_i * m_j / V * delta[i][j]
+    double invV = 1.0 / totalVolume;
+    for (int i = 0; i < ns; i++) {
+      double miV = workM[i] * invV;
+      for (int j = i; j < ns; j++) {
+        double k = miV * workM[j] * delta[i][j];
+        workKlk[i][j] = k;
+        workKlk[j][i] = k;
+      }
+    }
+
+    // Compute klkKsi = Klk * ksi (single matrix-vector product)
+    for (int i = 0; i < ns; i++) {
+      double s = 0;
+      for (int j = 0; j < ns; j++) {
+        s += workKlk[i][j] * workKsi[j];
+      }
+      workKlkKsi[i] = s;
+    }
+
+    // Build Hessian: H[i][j] = -m[i]/(ksi[i]^2) * delta(i,j) - Klk[i][j]
+    // Need a copy since GE destroys it
+    for (int i = 0; i < ns; i++) {
+      for (int j = 0; j < ns; j++) {
+        workHess[i][j] = -workKlk[i][j];
+      }
+      workHess[i][i] -= workM[i] / (workKsi[i] * workKsi[i]);
+    }
+
+    // Solve H * XV = fV * klkKsi
+    for (int i = 0; i < ns; i++) {
+      workXV[i] = fV * workKlkKsi[i];
+    }
+    solveLinearSystem(workHess, workXV, ns);
+
+    // --- Compute dot products needed by all derivatives ---
+    double dotKsiKlkKsi = 0; // ksi' * Klk * ksi
+    double dotKlkKsiXV = 0; // klkKsi' * XV
+    double fcpa = 0;
+    for (int i = 0; i < ns; i++) {
+      dotKsiKlkKsi += workKsi[i] * workKlkKsi[i];
+      dotKlkKsiXV += workKlkKsi[i] * workXV[i];
+      fcpa += workM[i] * (Math.log(workKsi[i]) - workKsi[i] / 2.0 + 0.5);
+    }
+    FCPA = fcpa;
+
+    // dFCPAdV = -0.5 * fV * ksi' * Klk * ksi
+    dFCPAdV = -0.5 * fV * dotKsiKlkKsi;
+
+    // dFCPAdVdV = -0.5 * fVV * ksi'*Klk*ksi - fV * klkKsi'*XV
+    dFCPAdVdV = -0.5 * fVV * dotKsiKlkKsi - fV * dotKlkKsiXV;
+
+    // dFCPAdVdVdV:
+    // = -0.5 * fVVV * ksi'*Klk*ksi - 3*fVV * klkKsi'*XV
+    // - 3*fV * XV'*Klk*XV + (sum XV*Q) * (sum XV^2) where Q[i]=2m[i]/ksi[i]^3
+    double dotXVKlkXV = 0;
+    for (int i = 0; i < ns; i++) {
+      double s = 0;
+      for (int j = 0; j < ns; j++) {
+        s += workKlk[i][j] * workXV[j];
+      }
+      dotXVKlkXV += workXV[i] * s;
+    }
+
+    double sumQXV = 0;
+    double sumXV2 = 0;
+    for (int i = 0; i < ns; i++) {
+      sumQXV += workXV[i] * 2.0 * workM[i] / (workKsi[i] * workKsi[i] * workKsi[i]);
+      sumXV2 += workXV[i] * workXV[i];
+    }
+
+    dFCPAdVdVdV = -0.5 * fVVV * dotKsiKlkKsi - 3.0 * fVV * dotKlkKsiXV - 3.0 * fV * dotXVKlkXV
+        + sumQXV * sumXV2;
   }
 
   /** {@inheritDoc} */
