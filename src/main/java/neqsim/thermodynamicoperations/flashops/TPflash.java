@@ -485,8 +485,6 @@ public class TPflash extends Flash {
 
     // Reduced acceleration interval for faster convergence
     int accelerateInterval = 5;
-    // Newton limit: number of SS iterations before switching to Newton-Raphson.
-    // Reduced from 15 to 12 (line search on Q enables earlier switch).
     int newtonLimit = 12;
     int timeFromLastGibbsFail = 0;
 
@@ -498,17 +496,34 @@ public class TPflash extends Flash {
       do {
         iterations++;
 
-        if (iterations < newtonLimit || system.isChemicalSystem()
+        int activeNewtonLimit = newtonLimit;
+        int activeAccelerateInterval = accelerateInterval;
+        if (system.doEnhancedMultiPhaseCheck()) {
+          if (deviation < 5e-4) {
+            activeNewtonLimit = 8;
+            activeAccelerateInterval = 3;
+          } else if (deviation < 5e-3) {
+            activeNewtonLimit = 10;
+            activeAccelerateInterval = 4;
+          }
+          if (system.getBeta() < 5.0 * phaseFractionMinimumLimit
+              || system.getBeta() > 1.0 - 5.0 * phaseFractionMinimumLimit) {
+            activeNewtonLimit = Math.max(activeNewtonLimit, 14);
+          }
+        }
+
+        if (iterations < activeNewtonLimit || system.isChemicalSystem()
             || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (timeFromLastGibbsFail > 6 && (iterations % accelerateInterval) == 0
+          if (timeFromLastGibbsFail > 6 && (iterations % activeAccelerateInterval) == 0
               && !(system.isChemicalSystem() || system.doSolidPhaseCheck())) {
             accselerateSucsSubs();
           } else {
             sucsSubs();
           }
-        } else if (iterations >= newtonLimit && Math
-            .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
-          if (iterations == newtonLimit) {
+        } else if (iterations >= activeNewtonLimit
+            && (!system.doEnhancedMultiPhaseCheck() || deviation < 0.05) && Math
+                .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
+          if (iterations == activeNewtonLimit || secondOrderSolver == null) {
             secondOrderSolver = new SysNewtonRhapsonTPflash(system, 2,
                 system.getPhases()[0].getNumberOfComponents());
           }
@@ -530,17 +545,12 @@ public class TPflash extends Flash {
             && !system.isChemicalSystem() && timeFromLastGibbsFail > 1) {
           resetK();
           timeFromLastGibbsFail = 0;
-          // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /
-          // Math.abs(gibbsEnergyOld));
-          // setNewK();
-          // logger.info("reset K..");
         } else {
           timeFromLastGibbsFail++;
           setNewK();
         }
-        // logger.info("iterations " + iterations + " error " + deviation);
       } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
-      // logger.info("iterations " + iterations + " error " + deviation);
+
       if (system.isChemicalSystem()) {
         oldChemDiff = chemdev;
         chemdev = 0.0;
