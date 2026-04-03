@@ -18,7 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
 
   /** Number of TP flash repetitions for timing. */
-  private static final int N_REPS = 5;
+  private static final int N_REPS = 10;
 
   // ------- Accuracy tests -------
 
@@ -130,10 +130,9 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     System.out.println("\n====================================================================");
     System.out.println("  CPA Fully Implicit vs Standard Nested — Detailed Benchmark");
     System.out.println("====================================================================");
-    System.out.println(String.format("%-45s %8s %8s %6s %6s", "Case", "Std(ms)", "Impl(ms)",
-        "Ratio", "Phases"));
     System.out.println(
-        "--------------------------------------------------------------------");
+        String.format("%-45s %8s %8s %6s %6s", "Case", "Std(ms)", "Impl(ms)", "Ratio", "Phases"));
+    System.out.println("--------------------------------------------------------------------");
 
     // Case 1: Pure water sweep
     benchmarkCase("Pure water (T sweep)", new CaseBuilder() {
@@ -228,8 +227,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
       }
     }, generateTP(273.15 + 0, 15, 60.0, 30));
 
-    System.out.println(
-        "====================================================================\n");
+    System.out.println("====================================================================\n");
 
     assertTrue(true, "Benchmark completed");
   }
@@ -275,8 +273,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
 
       assertEquals(densStd, densImpl, Math.max(Math.abs(densStd) * 0.02, 0.01),
           phName + " density mismatch");
-      assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * 0.02, 1e-6),
-          phName + " Z mismatch");
+      assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * 0.02, 1e-6), phName + " Z mismatch");
     }
     System.out.println("----------------------------------------------------------------\n");
   }
@@ -306,12 +303,17 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
   }
 
   private void benchmarkCase(String label, CaseBuilder builder, double[][] tp) {
-    // Warm up
-    for (int i = 0; i < 1; i++) {
-      SystemInterface warmup = new SystemSrkCPAstatoil(tp[0][0], tp[0][1]);
-      builder.configure(warmup, 0);
-      ThermodynamicOperations ops = new ThermodynamicOperations(warmup);
-      ops.TPflash();
+    // Warm up both solvers for JIT compilation
+    for (int i = 0; i < 2; i++) {
+      SystemInterface warmupStd = new SystemSrkCPAstatoil(tp[0][0], tp[0][1]);
+      builder.configure(warmupStd, 0);
+      ThermodynamicOperations opsStd = new ThermodynamicOperations(warmupStd);
+      opsStd.TPflash();
+
+      SystemInterface warmupImpl = new SystemSrkCPAstatoilFullyImplicit(tp[0][0], tp[0][1]);
+      builder.configure(warmupImpl, 0);
+      ThermodynamicOperations opsImpl = new ThermodynamicOperations(warmupImpl);
+      opsImpl.TPflash();
     }
 
     int nPhases = -1;
@@ -340,8 +342,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
         timeImpl / 1_000_000, ratio, nPhases));
   }
 
-  private CompareResult compareFlash(double T, double P, boolean gas, boolean oil,
-      boolean meg) {
+  private CompareResult compareFlash(double T, double P, boolean gas, boolean oil, boolean meg) {
     SystemInterface standard = createMultiComp(new SystemSrkCPAstatoil(T, P), gas, oil, meg);
     SystemInterface implicit =
         createMultiComp(new SystemSrkCPAstatoilFullyImplicit(T, P), gas, oil, meg);
@@ -420,7 +421,8 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
 
   private void printResult(String label, CompareResult r) {
     double errDens =
-        Math.abs(r.densStdPh0) > 1e-6 ? Math.abs(r.densStdPh0 - r.densImplPh0) / r.densStdPh0 * 100 : 0;
+        Math.abs(r.densStdPh0) > 1e-6 ? Math.abs(r.densStdPh0 - r.densImplPh0) / r.densStdPh0 * 100
+            : 0;
     double errZ =
         Math.abs(r.zStdPh0) > 1e-6 ? Math.abs(r.zStdPh0 - r.zImplPh0) / r.zStdPh0 * 100 : 0;
     System.out.println(String.format("  %-40s phases=%d/%d  dens_err=%.4f%%  Z_err=%.4f%%", label,
@@ -429,8 +431,8 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
 
   private void printProp(String phase, String prop, double std, double impl) {
     double err = Math.abs(std) > 1e-10 ? Math.abs(std - impl) / std * 100.0 : 0.0;
-    System.out.println(
-        String.format("%-12s %-10s %15.6f %15.6f %7.4f%%", phase, prop, std, impl, err));
+    System.out
+        .println(String.format("%-12s %-10s %15.6f %15.6f %7.4f%%", phase, prop, std, impl, err));
   }
 
   private void assertMatch(CompareResult r, double relTol) {
