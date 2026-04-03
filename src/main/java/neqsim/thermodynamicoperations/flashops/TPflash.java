@@ -96,7 +96,7 @@ public class TPflash extends Flash {
     double oldBeta = system.getBeta();
 
     try {
-      // system.setBeta(rachfordRice.calcBetaS(system));
+
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
@@ -117,25 +117,59 @@ public class TPflash extends Flash {
 
   /**
    * <p>
-   * accselerateSucsSubs.
+   * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient history is available,
+   * falling back to standard DEM (Michelsen 1982b, Risnes et al. 1981). The GDEM formulation
+   * follows Risnes &amp; Dalen (1984) and Michelsen &amp; Mollerup (2007, section 9.5).
    * </p>
    */
   public void accselerateSucsSubs() {
-    double prod1 = 0.0;
-    double prod2 = 0.0;
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      prod1 += oldDeltalnK[i] * oldoldDeltalnK[i];
-      prod2 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
+    int nc = system.getPhase(0).getNumberOfComponents();
+
+    // Save pre-acceleration lnK state for rollback on failure
+    double[] savedLnK = new double[nc];
+    System.arraycopy(lnK, 0, savedLnK, 0, nc);
+
+    // Compute dot products for both standard DEM and GDEM-2
+    double b11 = 0.0;
+    double b12 = 0.0;
+    double b22 = 0.0;
+    double c1 = 0.0;
+    double c2 = 0.0;
+    for (i = 0; i < nc; i++) {
+      b11 += oldDeltalnK[i] * oldDeltalnK[i];
+      b12 += oldDeltalnK[i] * oldoldDeltalnK[i];
+      b22 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
+      c1 += deltalnK[i] * oldDeltalnK[i];
+      c2 += deltalnK[i] * oldoldDeltalnK[i];
     }
 
-    double lambda = prod1 / prod2;
+    // Standard DEM eigenvalue estimate
+    double lambda = (b22 > 1e-30) ? b12 / b22 : 0.0;
 
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      // lnK[i] = lnK[i] + lambda*lambda*oldoldDeltalnK[i]/(1.0-lambda); // byttet +
-      // til -
-      lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
-      system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-      system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+    // Try GDEM-2: solve 2x2 system for mu1, mu2
+    double det = b11 * b22 - b12 * b12;
+    boolean useGDEM = false;
+    double mu1 = 0.0;
+    double mu2 = 0.0;
+    if (Math.abs(det) > 1e-30 * (b11 * b22 + 1e-100)) {
+      mu1 = (c1 * b22 - c2 * b12) / det;
+      mu2 = (b11 * c2 - b12 * c1) / det;
+      // Use GDEM-2 only when eigenvalue estimates indicate smooth, contractive convergence
+      useGDEM = mu1 > 0 && mu2 > 0 && mu1 < 1.5 && mu2 < 1.5;
+    }
+
+    if (!useGDEM) {
+      for (i = 0; i < nc; i++) {
+        lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
+        system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
+        system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      }
+    } else {
+      for (i = 0; i < nc; i++) {
+        lnK[i] += mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
+        system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
+        system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      }
     }
     double oldBeta = system.getBeta();
     try {
@@ -146,14 +180,23 @@ public class TPflash extends Flash {
           || system.getBeta() < phaseFractionMinimumLimit) {
         system.setBeta(oldBeta);
       }
-      // logger.info("temperature " + system.getTemperature() + " pressure " +
-      // system.getPressure());
       logger.error(ex.getMessage(), ex);
     }
-
     system.calc_x_y();
-    system.init(1);
-    // sucsSubs();
+    try {
+      system.init(1);
+    } catch (Exception initEx) {
+      // GDEM extrapolation produced bad compositions - restore pre-acceleration state
+      logger.debug("accselerateSucsSubs init failed, reverting: {}", initEx.getMessage());
+      System.arraycopy(savedLnK, 0, lnK, 0, nc);
+      for (i = 0; i < nc; i++) {
+        system.getPhase(0).getComponent(i).setK(Math.exp(savedLnK[i]));
+        system.getPhase(1).getComponent(i).setK(Math.exp(savedLnK[i]));
+      }
+      system.setBeta(oldBeta);
+      system.calc_x_y();
+      system.init(1);
+    }
   }
 
   /**
