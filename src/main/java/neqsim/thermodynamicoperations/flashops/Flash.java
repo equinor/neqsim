@@ -6,6 +6,8 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
@@ -94,9 +96,6 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      // logger.info("Lowest Gibbs energy phase determined: Phase {}",
-      // lowestGibbsEnergyPhase);
-
       findLowestGibbsPhaseIsChecked = true;
     }
     return lowestGibbsEnergyPhase;
@@ -136,11 +135,10 @@ public abstract class Flash extends BaseOperation {
         !nearlyPure && ((Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12));
 
     // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
-    // Near-critical instability misses only happen near the cricondenbar/cricondentherm
-    // which is always at elevated pressures.
-    if (presBar < 50.0) {
+    if (system.getPressure() < 50.0) {
       return false;
     }
+
     double sumwVapor = 0.0;
     double sumwLiquid = 0.0;
     double[] wilsonK = new double[numComp];
@@ -338,7 +336,11 @@ public abstract class Flash extends BaseOperation {
         err = 0.0;
         System.arraycopy(logWi, 0, oldlogw, 0, numComp);
 
-        testSystem.init(1, 1);
+        try {
+          testSystem.init(1, 1);
+        } catch (Exception ex) {
+          break; // NaN or other error in molar volume — abandon this trial
+        }
         fNormOld = fNorm;
         for (int i = 0; i < numComp; i++) {
           f.set(i, 0, Math.sqrt(Wi[i]) * (Math.log(Wi[i])
@@ -357,12 +359,13 @@ public abstract class Flash extends BaseOperation {
           Wi[i] = safeExp(logWi[i]);
         }
 
+        double[] curDelta = new double[numComp];
+        for (int i = 0; i < numComp; i++) {
+          curDelta[i] = logWi[i] - oldlogw[i];
+        }
+
         // DEM acceleration every accelInterval steps
         if (iter % accelInterval == 0 && fNorm < fNormOld && iter > accelInterval) {
-          double[] curDelta = new double[numComp];
-          for (int i = 0; i < numComp; i++) {
-            curDelta[i] = logWi[i] - oldlogw[i];
-          }
           double dot1 = 0.0;
           double dot2 = 0.0;
           for (int i = 0; i < numComp; i++) {
@@ -381,10 +384,10 @@ public abstract class Flash extends BaseOperation {
           }
         }
 
-        // Track step delta for next acceleration
+        // Track SSI step delta for next acceleration (use raw, not accelerated)
         for (int i = 0; i < numComp; i++) {
-          prevDelta[i] = logWi[i] - oldlogw[i];
-          err += Math.abs(prevDelta[i]);
+          prevDelta[i] = curDelta[i];
+          err += Math.abs(curDelta[i]);
         }
 
         sumwTrial = 0.0;
@@ -566,8 +569,8 @@ public abstract class Flash extends BaseOperation {
           try {
             clonedSystem.init(1, j);
           } catch (Exception e) {
-            logger.error(e.toString());
-            throw e;
+            logger.debug("Stability analysis init(1) failed: {}", e.getMessage());
+            break;
           }
           fNormOld = fNorm;
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -607,7 +610,7 @@ public abstract class Flash extends BaseOperation {
               acceleration = false;
             }
           } else {
-            // succsessive substitution
+            // successive substitution
             for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
               logWi[i] =
                   d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient();
@@ -623,7 +626,12 @@ public abstract class Flash extends BaseOperation {
             secondOrderStabilityAnalysis = true;
           }
 
-          clonedSystem.init(3, j);
+          try {
+            clonedSystem.init(3, j);
+          } catch (Exception e) {
+            logger.debug("Stability analysis init(3) failed: {}", e.getMessage());
+            break;
+          }
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
@@ -632,10 +640,9 @@ public abstract class Flash extends BaseOperation {
             f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
             for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
-              double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
+              double kronDelt = (i == k) ? 1.5 : 0.0;
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                  * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k)); // *
-                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                  * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));
             }
           }
 
@@ -646,11 +653,8 @@ public abstract class Flash extends BaseOperation {
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
 
-          // logger.info("err newton " + error[j]);
         }
 
-        // logger.info("norm f " + f.norm1());
-        // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
           sumw[j] += Wi[j][i];
@@ -660,17 +664,10 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
-        // iterations
-        // + " phase " + j);
-        // logger.info("error " + error[j]);
         olderror = error[j];
       } while ((f.norm1() > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
           || (iterations % accelerateInterval) == 0 || iterations < 3);
-      // (error[j]<oldErr && oldErr<oldOldErr) &&
-      // logger.info("err " + error[j]);
-      // logger.info("iterations " + iterations);
-      // logger.info("f.norm1() " + f.norm1());
+
       if (iterations >= maxiterations) {
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
             maxiterations);
@@ -689,21 +686,31 @@ public abstract class Flash extends BaseOperation {
       }
     }
 
-    // Improved trivial solution detection using cosine similarity
-    // A trivial solution has compositions nearly identical to feed
-    double dotProduct = 0.0;
-    double normW = 0.0;
-    double normFeed = 0.0;
-    for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-      double xTrial = clonedSystem.getPhase(j).getComponent(i).getx();
-      double xFeed = minimumGibbsEnergySystem.getPhase(0).getComponent(i).getx();
-      dotProduct += xTrial * xFeed;
-      normW += xTrial * xTrial;
-      normFeed += xFeed * xFeed;
-    }
-    double cosineSimilarity = dotProduct / (Math.sqrt(normW) * Math.sqrt(normFeed) + 1e-100);
-    // If cosine similarity > 0.9999, compositions are nearly identical (trivial solution)
-    if (cosineSimilarity > 0.9999) {
+    // Improved trivial solution detection using cosine similarity.
+    // Use strict compatibility gating: enable non-trivial filtering for enhanced/LLE-auto
+    // contexts, keep legacy tm-reset behavior for baseline default mode.
+    boolean useNonTrivialFiltering = system.doEnhancedMultiPhaseCheck()
+        || shouldRunAutomaticLLECheck();
+    if (useNonTrivialFiltering) {
+      for (int trialPhase = 0; trialPhase < 2; trialPhase++) {
+        double dotProduct = 0.0;
+        double normW = 0.0;
+        double normFeed = 0.0;
+        for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+          double xTrial = x[trialPhase][i];
+          double xFeed =
+              minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponent(i).getx();
+          dotProduct += xTrial * xFeed;
+          normW += xTrial * xTrial;
+          normFeed += xFeed * xFeed;
+        }
+        double cosineSimilarity = dotProduct / (Math.sqrt(normW) * Math.sqrt(normFeed) + 1e-100);
+        // If cosine similarity > 0.9999, compositions are nearly identical (trivial solution).
+        if (cosineSimilarity > 0.9999) {
+          tm[trialPhase] = 0.0;
+        }
+      }
+    } else {
       tm[0] = 0.0;
       tm[1] = 0.0;
     }
@@ -725,7 +732,7 @@ public abstract class Flash extends BaseOperation {
           system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
               / clonedSystem.getPhase(1).getComponent(i).getx());
         } else {
-          logger.info("error in stability anlysis");
+          logger.info("error in stability analysis");
           system.init(0);
         }
 
@@ -734,9 +741,249 @@ public abstract class Flash extends BaseOperation {
         }
       }
     }
+  }
 
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
+  /**
+   * Tries pure-component trial phases to detect liquid-liquid equilibrium (LLE) instability.
+   *
+   * <p>
+   * The standard {@link #stabilityAnalysis()} uses Wilson K-value based initial guesses, which
+   * assume gas-liquid equilibrium (GLE). At temperatures well below the critical temperature of the
+   * lightest component, Wilson K-values converge to values less than 1 for all components, making
+   * them ineffective for detecting LLE. This method complements the standard analysis by
+   * initializing trial phases as nearly-pure heaviest and lightest components, which is the same
+   * approach used by {@link TPmultiflash}.
+   * </p>
+   *
+   * @return true if LLE instability was detected and K-values have been set on the system
+   */
+  protected boolean pureComponentStabilityTrials() {
+    int numComp = system.getPhase(0).getNumberOfComponents();
+    if (numComp <= 1) {
+      return false;
+    }
+
+    // Reference chemical potentials from the lowest Gibbs energy phase
+    double[] d = new double[numComp];
+    for (int ic = 0; ic < numComp; ic++) {
+      d[ic] = minGibsPhaseLogZ[ic] + minGibsLogFugCoef[ic];
+    }
+
+    SystemInterface clonedSystem = minimumGibbsEnergySystem;
+    int trialPhaseIdx = 1; // Use phase index 1 for trial composition
+
+    // Find the heaviest and lightest hydrocarbon components for targeted trials
+    double mMax = 0.0;
+    double mMin = 1e10;
+    int heavyComp = -1;
+    int lightComp = -1;
+    for (int ic = 0; ic < numComp; ic++) {
+      if (clonedSystem.getPhase(0).getComponent(ic).getz() < 1e-50) {
+        continue;
+      }
+      double mw = clonedSystem.getPhase(0).getComponent(ic).getMolarMass();
+      if (mw > mMax) {
+        mMax = mw;
+        heavyComp = ic;
+      }
+      if (mw < mMin) {
+        mMin = mw;
+        lightComp = ic;
+      }
+    }
+
+    LinkedHashSet<Integer> trialSet = new LinkedHashSet<Integer>();
+    if (heavyComp >= 0) {
+      trialSet.add(Integer.valueOf(heavyComp));
+    }
+    if (lightComp >= 0) {
+      trialSet.add(Integer.valueOf(lightComp));
+    }
+    if (system.doEnhancedMultiPhaseCheck()) {
+      int dominantComp = -1;
+      double dominantZ = -1.0;
+      for (int ic = 0; ic < numComp; ic++) {
+        double zi = clonedSystem.getPhase(0).getComponent(ic).getz();
+        if (zi > dominantZ) {
+          dominantZ = zi;
+          dominantComp = ic;
+        }
+      }
+      if (dominantComp >= 0) {
+        trialSet.add(Integer.valueOf(dominantComp));
+      }
+    }
+    ArrayList<Integer> trialComponents = new ArrayList<Integer>(trialSet);
+    for (int ti = 0; ti < trialComponents.size(); ti++) {
+      int jc = trialComponents.get(ti).intValue();
+
+      // Set trial phase to nearly pure component jc
+      double[] logWi = new double[numComp];
+      for (int ic = 0; ic < numComp; ic++) {
+        double nomb = (ic == jc) ? 1.0 : 1.0e-12;
+        if (clonedSystem.getPhase(0).getComponent(ic).getz() < 1e-100) {
+          nomb = 0.0;
+        }
+        logWi[ic] = (nomb > 1e-100) ? Math.log(nomb) : -10000.0;
+        clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).setx(nomb > 0 ? nomb : 1e-50);
+      }
+
+      // Ensure the trial phase uses the liquid root of the cubic EOS.
+      clonedSystem.setPhaseType(trialPhaseIdx, PhaseType.LIQUID);
+
+      // Successive substitution iteration with DEM acceleration
+      int maxIter = 80;
+      int accelInterval = 5;
+      double err = 1.0e10;
+      boolean converged = false;
+      double[] oldLogWi = new double[numComp];
+      double[] prevDelta = new double[numComp];
+      for (int iter = 0; iter < maxIter; iter++) {
+        double errOld = err;
+        err = 0.0;
+        System.arraycopy(logWi, 0, oldLogWi, 0, numComp);
+
+        try {
+          clonedSystem.init(1, trialPhaseIdx);
+        } catch (Exception ex) {
+          break;
+        }
+
+        // Standard SSI step
+        for (int ic = 0; ic < numComp; ic++) {
+          if (clonedSystem.getPhase(0).getComponent(ic).getz() > 1e-100
+              && !Double.isInfinite(clonedSystem.getPhase(trialPhaseIdx).getComponent(ic)
+                  .getLogFugacityCoefficient())) {
+            logWi[ic] = d[ic]
+                - clonedSystem.getPhase(trialPhaseIdx).getComponent(ic)
+                    .getLogFugacityCoefficient();
+          }
+        }
+
+        // DEM acceleration (Michelsen 1982b) every accelInterval steps
+        if (iter > 0 && iter % accelInterval == 0 && err < errOld) {
+          double dot1 = 0.0;
+          double dot2 = 0.0;
+          for (int ic = 0; ic < numComp; ic++) {
+            double curDelta = logWi[ic] - oldLogWi[ic];
+            dot1 += curDelta * prevDelta[ic];
+            dot2 += prevDelta[ic] * prevDelta[ic];
+          }
+          if (dot2 > 1e-20) {
+            double lambda = dot1 / dot2;
+            if (lambda > 0.0 && lambda < 1.0) {
+              double accelFactor = lambda / (1.0 - lambda);
+              for (int ic = 0; ic < numComp; ic++) {
+                logWi[ic] += accelFactor * (logWi[ic] - oldLogWi[ic]);
+              }
+            }
+          }
+        }
+
+        // Track step delta for next acceleration
+        for (int ic = 0; ic < numComp; ic++) {
+          prevDelta[ic] = logWi[ic] - oldLogWi[ic];
+          err += Math.abs(prevDelta[ic]);
+        }
+
+        // Update trial phase composition
+        double sumW = 0.0;
+        for (int ic = 0; ic < numComp; ic++) {
+          double wi = safeExp(logWi[ic]);
+          sumW += wi;
+        }
+        for (int ic = 0; ic < numComp; ic++) {
+          double wi = safeExp(logWi[ic]);
+          clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).setx(wi / sumW);
+        }
+
+        if (err < 1e-9) {
+          converged = true;
+          break;
+        }
+        if (iter > 10 && err > errOld * 2.0) {
+          break; // diverging badly
+        }
+        // Early termination: clearly stable (sum(Wi) well below 1)
+        if (iter > 5 && sumW < 0.8) {
+          break;
+        }
+      }
+
+      if (!converged) {
+        logger.debug("Pure-component trial (comp {}) did not converge after {} iterations", jc,
+            maxIter);
+        continue;
+      }
+
+      // Calculate tangent plane distance
+      double tmVal = 1.0;
+      for (int ic = 0; ic < numComp; ic++) {
+        if (clonedSystem.getPhase(0).getComponent(ic).getz() > 1e-100) {
+          tmVal -= safeExp(logWi[ic]);
+        }
+      }
+
+      // Check trivial solution using L1-norm (same approach as TPmultiflash)
+      double xL1Diff = 0.0;
+      for (int ic = 0; ic < numComp; ic++) {
+        double xTrial = clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).getx();
+        double xFeed = clonedSystem.getPhase(0).getComponent(ic).getx();
+        xL1Diff += Math.abs(xTrial - xFeed);
+      }
+      if (xL1Diff < 1e-4) {
+        continue; // trivial solution
+      }
+
+      if (tmVal < tmLimit) {
+        // Instability detected - set K-values from trial composition
+        logger.debug("LLE instability detected via pure-component trial (comp {})", jc);
+        for (int ic = 0; ic < numComp; ic++) {
+          double xTrial = clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).getx();
+          double xFeed = clonedSystem.getPhase(0).getComponent(ic).getx();
+          double kVal = (xFeed > 1e-100 && xTrial > 1e-100) ? xFeed / xTrial : 1.0;
+          system.getPhase(0).getComponent(ic).setK(kVal);
+          system.getPhase(1).getComponent(ic).setK(kVal);
+        }
+        return true;
+      } else {
+        logger.debug("Pure-component trial (comp {}) converged: tmVal={}, xL1Diff={}", jc, tmVal,
+            xL1Diff);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Determine whether automatic LLE supplementary stability checks should be enabled.
+   *
+   * <p>
+   * Automatic checks are enabled for systems where LLE/VLLE is common even if users have not
+   * explicitly turned on {@code setMultiPhaseCheck(true)}.
+   * </p>
+   *
+   * @return true if automatic LLE checks should run
+   */
+  protected boolean shouldRunAutomaticLLECheck() {
+    if (system == null || system.getPhase(0).getNumberOfComponents() <= 1) {
+      return false;
+    }
+    // If the user explicitly disabled multi-phase check, respect that
+    if (!system.doMultiPhaseCheck() && !system.doEnhancedMultiPhaseCheck()) {
+      return false;
+    }
+    String modelName = system.getModelName() == null ? "" : system.getModelName();
+    String lowerModelName = modelName.toLowerCase();
+    if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")) {
+      return true;
+    }
+    // Keep water-triggered automatic LLE checks compatibility-safe by requiring either
+    // enhanced mode or explicit user opt-in for LLE checks.
+    if (system.hasComponent("water")) {
+      return system.doEnhancedMultiPhaseCheck();
+    }
+
+    return system.isChemicalSystem() && system.doEnhancedMultiPhaseCheck();
   }
 
   /**
@@ -758,16 +1005,21 @@ public abstract class Flash extends BaseOperation {
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
         || system.getPhase(0).getNumberOfComponents() == 1) {
-      // Standard analysis declares stable. Try amplified K-value trials with a
-      // separate clone to catch near-critical instability that the standard
-      // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).
-      // Skip when both tm values are well above zero (clearly stable).
+      // Standard analysis declares stable. Try supplementary stability trials.
       boolean retryFoundInstability = false;
-      if ((tm[0] < 0.5 || tm[1] < 0.5) && !system.getModelName().contains("CPA")) {
+      boolean ambiguousStability = Math.abs(tm[0]) < 5e-2 || Math.abs(tm[1]) < 5e-2;
+      boolean doLLESupplementaryCheck = shouldRunAutomaticLLECheck();
+      // Amplified K-value trials catch near-critical VLE instability (near cricondenbar)
+      if ((tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability)
+          && !system.getModelName().contains("CPA")) {
         retryFoundInstability = amplifiedKStabilityRetry();
       }
+      // Pure-component trials catch LLE instability (Wilson K fails at T << Tc)
+      if (!retryFoundInstability && doLLESupplementaryCheck) {
+        retryFoundInstability = pureComponentStabilityTrials();
+      }
       if (retryFoundInstability) {
-        // Retry found instability — set up the system for two-phase flash
+        // Supplementary trial found instability - calculate beta and init for two-phase
         RachfordRice rachfordRice = new RachfordRice();
         try {
           system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
@@ -837,7 +1089,6 @@ public abstract class Flash extends BaseOperation {
       system.setNumberOfPhases(system.getNumberOfPhases() + 1);
       system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
     }
-    // logger.info("numb " + system.getNumberOfPhases());
     system.init(1);
 
     for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
