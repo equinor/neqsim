@@ -583,25 +583,55 @@ public class TPflash extends Flash {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
     } else {
-      try {
-        // Checks if gas or oil is the most stable phase
-        if (system.getPhase(0).getType() == PhaseType.GAS) {
-          gasgib = system.getPhase(0).getGibbsEnergy();
-          system.setPhaseType(0, PhaseType.LIQUID);
+      // Post-convergence stability verification (Michelsen & Mollerup, 2007):
+      // If the 2-phase flash converged to essentially single phase (beta at limits),
+      // re-run stability analysis to verify that no phase split was missed.
+      if (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.01)
+          || system.getBeta() < (phaseFractionMinimumLimit * 1.01)) {
+        findLowestGibbsPhaseIsChecked = false;
+        boolean isStable = false;
+        try {
+          isStable = system.checkStability() && stabilityCheck();
+        } catch (Exception ex) {
+          isStable = true;
+        }
+        if (!isStable) {
+          // Stability analysis found instability — re-run flash with updated K-values
+          system.calc_x_y();
+          system.init(1);
+          for (int reIter = 0; reIter < maxNumberOfIterations; reIter++) {
+            sucsSubs();
+            if (deviation < 1e-10) {
+              break;
+            }
+          }
+        }
+      }
 
-          system.init(1, 0);
-          liqgib = system.getPhase(0).getGibbsEnergy();
-        } else {
-          liqgib = system.getPhase(0).getGibbsEnergy();
+      // Volume root selection for single-phase results:
+      // Compare Gibbs energy of gas and liquid roots and select the stable root.
+      if (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.01)
+          || system.getBeta() < (phaseFractionMinimumLimit * 1.01)) {
+        try {
+          if (system.getPhase(0).getType() == PhaseType.GAS) {
+            gasgib = system.getPhase(0).getGibbsEnergy();
+            system.setPhaseType(0, PhaseType.LIQUID);
+            system.init(1, 0);
+            liqgib = system.getPhase(0).getGibbsEnergy();
+          } else {
+            liqgib = system.getPhase(0).getGibbsEnergy();
+            system.setPhaseType(0, PhaseType.GAS);
+            system.init(1, 0);
+            gasgib = system.getPhase(0).getGibbsEnergy();
+          }
+          if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+            system.setPhaseType(0, PhaseType.GAS);
+          } else {
+            system.setPhaseType(0, PhaseType.LIQUID);
+          }
+        } catch (Exception e) {
           system.setPhaseType(0, PhaseType.GAS);
-          system.init(1, 0);
-          gasgib = system.getPhase(0).getGibbsEnergy();
         }
-        if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-          system.setPhaseType(0, PhaseType.GAS);
-        }
-      } catch (Exception e) {
-        system.setPhaseType(0, PhaseType.GAS);
       }
 
       system.init(1);
@@ -620,7 +650,6 @@ public class TPflash extends Flash {
         system.removePhase(i);
       }
     }
-    // system.initPhysicalProperties("density");
     system.orderByDensity();
     try {
       system.init(1);
