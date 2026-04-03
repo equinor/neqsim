@@ -968,13 +968,10 @@ public abstract class Flash extends BaseOperation {
     if (system == null || system.getPhase(0).getNumberOfComponents() <= 1) {
       return false;
     }
-<<<<<<< HEAD
     // If the user explicitly disabled multi-phase check, respect that
     if (!system.doMultiPhaseCheck() && !system.doEnhancedMultiPhaseCheck()) {
       return false;
     }
-=======
->>>>>>> 98e3157d6e2f738d72fb6e678aa2953a9bccf92a
     String modelName = system.getModelName() == null ? "" : system.getModelName();
     String lowerModelName = modelName.toLowerCase();
     if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")) {
