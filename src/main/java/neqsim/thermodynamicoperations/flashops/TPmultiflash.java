@@ -43,7 +43,6 @@ public class TPmultiflash extends TPflash {
   boolean secondTime = false;
   boolean aqueousPhaseSeedAttempted = false;
   boolean postFlashStabilityChecked = false;
-  private int rerunDepth = 0;
 
   double[] multTerm;
   double[] multTerm2;
@@ -200,17 +199,7 @@ public class TPmultiflash extends TPflash {
                   * system.getPhase(i).getComponent(k).getFugacityCoefficient());
         }
         if (i == j) {
-          double reg = 1.0e-3;
-          if (system.doEnhancedMultiPhaseCheck()) {
-            double absDiag = Math.abs(Qmatrix[i][j]);
-            double beta = Math.abs(system.getPhase(i).getBeta());
-            // Keep strong regularization for near-singular small-beta phases,
-            // but reduce bias in well-conditioned enhanced-mode cases.
-            if (beta > 1.0e-8 && absDiag > 1.0e-8) {
-              reg = Math.max(1.0e-12, absDiag * 1.0e-8);
-            }
-          }
-          Qmatrix[i][j] += reg;
+          Qmatrix[i][j] += 1.0e-3;
         }
       }
     }
@@ -228,7 +217,6 @@ public class TPmultiflash extends TPflash {
     SimpleMatrix betaMatrix = new SimpleMatrix(1, system.getNumberOfPhases());
     SimpleMatrix ans = null;
     double err = 1.0;
-    double gradResidual = 1.0;
     int iter = 1;
     do {
       iter++;
@@ -238,28 +226,13 @@ public class TPmultiflash extends TPflash {
 
       calcQ();
       SimpleMatrix dQM = new SimpleMatrix(dQdbeta);
-      gradResidual = dQM.normF();
       SimpleMatrix dQdBM = new SimpleMatrix(Qmatrix);
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
-        if (system.doEnhancedMultiPhaseCheck()) {
-          for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
-            Qmatrix[kk][kk] += 1.0e-2;
-          }
-          dQdBM = new SimpleMatrix(Qmatrix);
-          try {
-            ans = dQdBM.solve(dQM).transpose();
-          } catch (Exception ex2) {
-            logger.error(ex2.getMessage());
-            break;
-          }
-        } else {
-          logger.error(ex.getMessage());
-          break;
-        }
+        logger.error(ex.getMessage());
+        break;
       }
-
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -286,25 +259,9 @@ public class TPmultiflash extends TPflash {
       setXY();
       system.init(1);
       err = ans.normF();
-    } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
+    } while ((err > 1e-12 && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
-  }
-
-  /**
-   * Execute a bounded recursive rerun request to avoid unbounded recursion in difficult cases.
-   */
-  private void requestBoundedRerun() {
-    if (rerunDepth >= 4) {
-      logger.warn("TPmultiflash rerun depth limit reached, skipping additional rerun");
-      return;
-    }
-    rerunDepth++;
-    try {
-      run();
-    } finally {
-      rerunDepth--;
-    }
   }
 
   /** {@inheritDoc} */
@@ -713,7 +670,7 @@ public class TPmultiflash extends TPflash {
             for (int i = 0; i < nc; i++) {
               if (!Double.isInfinite(
                   clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
-                  && system.getPhase(0).getComponent(i).getz() > 1e-100) {
+                  && system.getPhase(0).getComponent(i).getx() > 1e-100) {
                 logWi[i] = d[i]
                     - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
@@ -797,7 +754,7 @@ public class TPmultiflash extends TPflash {
         // logger.info("err: " + err);
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
+          if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(safeExp(logWi[i]));
           }
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
@@ -819,8 +776,7 @@ public class TPmultiflash extends TPflash {
       tm[j] = 1.0;
 
       for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-        // Use getz() so heavy HCs (with near-zero x in gas phase 0) still contribute to tm
-        if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
+        if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
           tm[j] -= safeExp(logWi[i]);
         }
         x[j][i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
@@ -991,11 +947,14 @@ public class TPmultiflash extends TPflash {
             logWi[j] = -logWilsonK[j];
             Wi[j] = Math.exp(logWi[j]);
           } else {
-            // LLE trial (trialType == 0): perturb based on hydrocarbon vs non-HC nature
-            // Non-HCs (water, CO2, H2S, MEG) are enriched; HCs are depleted in the
-            // polar-rich trial phase — physically correct for aqueous LLE detection.
+            // LLE trial (trialType == 0): perturb based on polarity/activity
+            // Use component properties to create polar vs non-polar split
+            // Components with high acentric factor or polar nature go one way
+            double omega = system.getPhase(0).getComponent(j).getAcentricFactor();
             double z = system.getPhase(0).getComponent(j).getz();
-            double perturbFactor = system.getPhase(0).getComponent(j).isHydrocarbon() ? 0.5 : 2.0;
+            // Alternate enrichment based on acentric factor (proxy for polarity)
+            // Higher omega -> more polar/associating -> enrich in one liquid phase
+            double perturbFactor = (omega > 0.15) ? 2.0 : 0.5;
             Wi[j] = z * perturbFactor;
             logWi[j] = Math.log(Math.max(Wi[j], 1e-100));
           }
@@ -1003,14 +962,6 @@ public class TPmultiflash extends TPflash {
           oldoldlogw[j] = logWi[j];
           deltalogWi[j] = 0.0;
           oldDeltalogWi[j] = 0.0;
-        }
-
-        // Force correct EOS root for the trial phase type before evaluating fugacities.
-        // Without this, a clone inheriting a GAS phase type would pick the vapor root
-        // even for liquid-like and LLE trials, giving wrong fugacity coefficients.
-        if (clonedSystem.isPhase(1)) {
-          PhaseType trialPhaseType = (trialType == 1) ? PhaseType.GAS : PhaseType.LIQUID;
-          clonedSystem.setPhaseType(1, trialPhaseType);
         }
 
         // Set initial trial phase composition
@@ -1391,6 +1342,10 @@ public class TPmultiflash extends TPflash {
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
+          // ,
+          // system.getPhases()[0].getNumberOfComponents());
+          // secondOrderStabilityAnalysis = true;
+          // }
 
           for (int i = 0; i < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
@@ -1407,12 +1362,16 @@ public class TPmultiflash extends TPflash {
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                 df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                     * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
+                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
                 df.set(i, k, 0);
+                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               }
             }
           }
 
+          // f.print(10, 10);
+          // df.print(10, 10);
           SimpleMatrix dx = null;
           try {
             // Check if the determinant is close to zero
@@ -1448,6 +1407,8 @@ public class TPmultiflash extends TPflash {
             }
           }
 
+          // dx.print(10, 10);
+
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             double alphaNew = alpha[i] + dx.get(i, 0);
             Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
@@ -1460,6 +1421,8 @@ public class TPmultiflash extends TPflash {
             }
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
+
+          // logger.info("err newton " + err);
         }
         // logger.info("err: " + err);
         sumw[j] = 0;
@@ -2338,7 +2301,7 @@ public class TPmultiflash extends TPflash {
           // Found a third phase - re-run the flash calculation
           multiPhaseTest = true;
           doStabilityAnalysis = false;
-          requestBoundedRerun();
+          run();
         }
       }
 
@@ -2450,7 +2413,7 @@ public class TPmultiflash extends TPflash {
       if (hasRemovedPhase && !secondTime) {
         secondTime = true;
         stabilityAnalysis3();
-        requestBoundedRerun();
+        run();
       }
 
       /*

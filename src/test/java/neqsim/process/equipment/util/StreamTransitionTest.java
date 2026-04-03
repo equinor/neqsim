@@ -140,7 +140,7 @@ public class StreamTransitionTest {
       String componentName = inSystem.getComponent(i).getName();
       if (outSystem.getPhase(0).hasComponent(componentName)) {
         assertEquals(inSystem.getComponent(i).getNumberOfmoles(),
-            outSystem.getComponent(componentName).getNumberOfmoles(), 1e-10,
+            outSystem.getComponent(componentName).getNumberOfmoles(),
             "Moles of " + componentName + " should match between systems");
       }
     }

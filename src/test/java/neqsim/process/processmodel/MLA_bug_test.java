@@ -333,10 +333,10 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
 
     assertEquals(-19.1886678,
         p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-1);
-    assertEquals(203.08,
+    assertEquals(203.02433149,
         ((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler())
             .getDuty() / 1e3,
-        0.2);
+        5e-2);
   }
 
   @Test
