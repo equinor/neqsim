@@ -40,7 +40,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   double dFCPAdVdV = 0.0;
   double dFCPAdVdVdV = 0.0;
   double gcpav = 0.0;
-  protected double[] dFdNtemp = {0, 0};
+  private double[] dFdNtemp = {0, 0};
   int cpaon = 1;
   int oldTotalNumberOfAccociationSites = 0;
   int totalNumberOfAccociationSites = 0;
@@ -51,8 +51,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   int[] moleculeNumber = null;
   int[] assSiteNumber = null;
   private double[][] gvector = null;
-  protected double[][] delta = null;
-  protected double[][] deltaNog = null;
+  private double[][] delta = null;
+  private double[][] deltaNog = null;
   private double[][] deltadT = null;
   private double[][] deltadTdT = null;
   double[][][] Klkni = null;
@@ -679,7 +679,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    *
    * @return double[]
    */
-  protected double[] calcdFdNtemp() {
+  private double[] calcdFdNtemp() {
     double tot1 = 0.0;
     double tot2 = 0.0;
     double tot3 = 0.0;
