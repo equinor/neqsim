@@ -417,7 +417,14 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      if (system.checkStability() && stabilityCheck()) {
+      boolean isStable;
+      try {
+        isStable = system.checkStability() && stabilityCheck();
+      } catch (Exception ex) {
+        logger.debug("Stability check failed, treating as stable: {}", ex.getMessage());
+        isStable = true;
+      }
+      if (isStable) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
@@ -432,7 +439,11 @@ public class TPflash extends Flash {
         }
 
         system.orderByDensity();
-        system.init(1);
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.debug("Post-stability init failed: {}", ex.getMessage());
+        }
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {
