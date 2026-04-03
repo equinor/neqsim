@@ -689,8 +689,8 @@ public abstract class Flash extends BaseOperation {
     // Improved trivial solution detection using cosine similarity.
     // Use strict compatibility gating: enable non-trivial filtering for enhanced/LLE-auto
     // contexts, keep legacy tm-reset behavior for baseline default mode.
-    boolean useNonTrivialFiltering = system.doEnhancedMultiPhaseCheck()
-        || shouldRunAutomaticLLECheck();
+    boolean useNonTrivialFiltering =
+        system.doEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
     if (useNonTrivialFiltering) {
       for (int trialPhase = 0; trialPhase < 2; trialPhase++) {
         double dotProduct = 0.0;
@@ -851,12 +851,10 @@ public abstract class Flash extends BaseOperation {
 
         // Standard SSI step
         for (int ic = 0; ic < numComp; ic++) {
-          if (clonedSystem.getPhase(0).getComponent(ic).getz() > 1e-100
-              && !Double.isInfinite(clonedSystem.getPhase(trialPhaseIdx).getComponent(ic)
-                  .getLogFugacityCoefficient())) {
+          if (clonedSystem.getPhase(0).getComponent(ic).getz() > 1e-100 && !Double.isInfinite(
+              clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).getLogFugacityCoefficient())) {
             logWi[ic] = d[ic]
-                - clonedSystem.getPhase(trialPhaseIdx).getComponent(ic)
-                    .getLogFugacityCoefficient();
+                - clonedSystem.getPhase(trialPhaseIdx).getComponent(ic).getLogFugacityCoefficient();
           }
         }
 
