@@ -13,6 +13,13 @@ This guide provides comprehensive documentation of flash calculations available 
 - [Basic Usage](#basic-usage)
 - [Flash Types](#flash-types)
   - [TP Flash (Temperature-Pressure)](#tp-flash-temperature-pressure)
+- [Phase Equilibrium Modes (VLE, LLE, VLLE)](#phase-equilibrium-modes-vle-lle-vlle)
+  - [VLE — Vapor-Liquid Equilibrium (Default)](#vle--vapor-liquid-equilibrium-default)
+  - [LLE — Liquid-Liquid Equilibrium](#lle--liquid-liquid-equilibrium)
+  - [VLLE — Vapor-Liquid-Liquid Equilibrium](#vlle--vapor-liquid-liquid-equilibrium)
+  - [Automatic LLE Detection](#automatic-lle-detection)
+  - [Quick Reference Table](#quick-reference-table)
+- [Other Flash Types](#other-flash-types)
   - [PH Flash (Pressure-Enthalpy)](#ph-flash-pressure-enthalpy)
   - [PS Flash (Pressure-Entropy)](#ps-flash-pressure-entropy)
   - [PU Flash (Pressure-Internal Energy)](#pu-flash-pressure-internal-energy)
@@ -127,63 +134,219 @@ fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
 
-#### Multi-Phase Checking
+---
 
-By default, NeqSim checks for two-phase (gas-liquid) equilibrium. For systems that may form multiple liquid phases (VLLE, LLE), enable multi-phase checking:
+## Phase Equilibrium Modes (VLE, LLE, VLLE)
+
+NeqSim supports three phase equilibrium modes with increasing computational cost. The mode is controlled by two flags on the fluid (`SystemInterface`) **before** running any flash calculation.
+
+| Mode | Method Calls | Phases Detected | Cost |
+|------|-------------|-----------------|------|
+| **VLE** (default) | *(none — default)* | Gas + one liquid | Low |
+| **LLE / VLLE** | `setMultiPhaseCheck(true)` | Gas + multiple liquids | Medium |
+| **Enhanced VLLE** | `setEnhancedMultiPhaseCheck(true)` | Robust multi-phase detection | Higher |
+
+### VLE — Vapor-Liquid Equilibrium (Default)
+
+The default mode solves a two-phase (vapor-liquid) flash using the Michelsen algorithm with Wilson K-value initialization, successive substitution, and second-order Newton refinement.
 
 ```java
-fluid.setMultiPhaseCheck(true);
+// VLE is the default — no extra flags needed
+SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("n-heptane", 0.1);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
-// Will detect gas + multiple liquid phases (e.g., oil, aqueous)
+fluid.initProperties();
+
+System.out.println("Phases: " + fluid.getNumberOfPhases());      // 1 or 2
+System.out.println("Vapor fraction: " + fluid.getBeta());         // Molar vapor fraction
+System.out.println("Phase types: " + fluid.getPhaseTypeName(0));  // "gas" or "oil"
 ```
 
-#### Enhanced Stability Analysis
+```python
+# Python equivalent
+from neqsim import jneqsim
 
-For complex mixtures where standard stability analysis may miss additional phases (e.g., sour gas with CO₂/H₂S, LLE systems), enable enhanced stability analysis:
+fluid = jneqsim.thermo.system.SystemSrkEos(300.0, 50.0)
+fluid.addComponent("methane", 0.9)
+fluid.addComponent("n-heptane", 0.1)
+fluid.setMixingRule("classic")
 
-```java
-fluid.setMultiPhaseCheck(true);
-fluid.setEnhancedMultiPhaseCheck(true);  // Enable enhanced phase detection
-ops.TPflash();
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+print(f"Phases: {fluid.getNumberOfPhases()}")
+print(f"Vapor fraction: {fluid.getBeta():.4f}")
 ```
 
-The enhanced stability analysis:
-- Uses **Wilson K-value initial guesses** for robust vapor-liquid detection
-- Tests **both vapor-like and liquid-like trial phases** to find LLE
-- Uses **acentric factor-based perturbation** to detect liquid-liquid splits driven by polarity differences
-- Tests stability **against all existing phases**, not just the reference phase
-- Includes **Wegstein acceleration** for faster convergence
+**When to use:** Simple hydrocarbon systems (gas processing, compression, pipelines) where at most one liquid phase forms.
 
-**Example - Sour Gas Three-Phase Detection:**
+### LLE — Liquid-Liquid Equilibrium
+
+For systems that can form two immiscible liquid phases (e.g., oil + water, glycol + hydrocarbon), enable multi-phase checking. This runs `TPmultiflash` after the initial two-phase flash to detect additional liquid phases.
+
 ```java
-// Sour gas mixture: methane/CO2/H2S at low temperature
-SystemInterface sourGas = new SystemPrEos(210.0, 55.0);  // ~-63°C, 55 bar
-sourGas.addComponent("methane", 49.88);
-sourGas.addComponent("CO2", 9.87);
-sourGas.addComponent("H2S", 40.22);
+SystemInterface fluid = new SystemSrkCPAstatoil(303.15, 50.0);
+fluid.addComponent("methane", 0.7);
+fluid.addComponent("n-heptane", 0.2);
+fluid.addComponent("water", 0.1);
+fluid.setMixingRule(10);  // CPA mixing rule for water association
+fluid.setMultiPhaseCheck(true);  // Enable LLE / VLLE detection
 
-sourGas.setMixingRule("classic");
-sourGas.setMultiPhaseCheck(true);
-sourGas.setEnhancedMultiPhaseCheck(true);  // Critical for finding 3 phases
-
-ThermodynamicOperations ops = new ThermodynamicOperations(sourGas);
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
-sourGas.initProperties();
+fluid.initProperties();
 
-System.out.println("Number of phases: " + sourGas.getNumberOfPhases());
+System.out.println("Phases: " + fluid.getNumberOfPhases());  // Typically 3 (gas + oil + aqueous)
+
+// Access individual phases
+if (fluid.hasPhaseType("gas")) {
+    System.out.println("Gas density: " + fluid.getPhase("gas").getDensity("kg/m3"));
+}
+if (fluid.hasPhaseType("oil")) {
+    System.out.println("Oil density: " + fluid.getPhase("oil").getDensity("kg/m3"));
+}
+if (fluid.hasPhaseType("aqueous")) {
+    System.out.println("Water density: " + fluid.getPhase("aqueous").getDensity("kg/m3"));
+}
+```
+
+```python
+# Python equivalent
+fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(303.15, 50.0)
+fluid.addComponent("methane", 0.7)
+fluid.addComponent("n-heptane", 0.2)
+fluid.addComponent("water", 0.1)
+fluid.setMixingRule(10)
+fluid.setMultiPhaseCheck(True)  # Enable LLE / VLLE detection
+
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+print(f"Phases: {fluid.getNumberOfPhases()}")
+for i in range(fluid.getNumberOfPhases()):
+    phase = fluid.getPhase(i)
+    print(f"  Phase {i}: {fluid.getPhaseTypeName(i)}, "
+          f"density = {phase.getDensity('kg/m3'):.1f} kg/m3")
+```
+
+**How it works internally:**
+1. `TPflash` first solves the standard two-phase problem
+2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
+3. `TPmultiflash` performs additional stability analysis against all existing phases and adds/removes phases until Gibbs energy is minimized
+
+**When to use:** Any system containing water + hydrocarbons, glycol systems, methanol injection, or other mixtures where two liquid phases can coexist.
+
+### VLLE — Vapor-Liquid-Liquid Equilibrium
+
+For robust three-phase detection in complex systems (sour gas, CO₂-rich streams, near-critical conditions), use enhanced multi-phase checking. This activates additional supplementary stability trials:
+
+- **Amplified K-value trials** — catch near-critical VLE instability near the cricondenbar where standard Wilson K-values converge to trivial solutions
+- **Pure-component stability trials** — catch LLE instability at temperatures well below the lightest component's critical temperature, where Wilson K-values are ineffective
+- **Cosine-similarity trivial-solution filtering** — rejects spurious two-phase results where both phases have nearly identical composition
+
+```java
+// Sour gas system with potential three-phase split
+SystemInterface fluid = new SystemPrEos(210.0, 55.0);  // -63°C, 55 bara
+fluid.addComponent("methane", 49.88);
+fluid.addComponent("CO2", 9.87);
+fluid.addComponent("H2S", 40.22);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+fluid.setEnhancedMultiPhaseCheck(true);  // Enhanced stability trials
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initProperties();
+
+System.out.println("Phases: " + fluid.getNumberOfPhases());
 // May find: vapor + CO2-rich liquid + H2S-rich liquid
+for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+    System.out.println("Phase " + i + ": " + fluid.getPhaseTypeName(i)
+        + ", beta=" + fluid.getBeta(i));
+}
 ```
 
-**When to use enhanced stability analysis:**
-- Sour gas systems (methane/CO₂/H₂S mixtures)
-- CO₂ injection/sequestration systems
-- Systems with polar/non-polar liquid-liquid equilibria
-- Near-critical conditions where phase detection is difficult
-- Any system where standard flash misses expected phases
+```python
+# Python equivalent
+fluid = jneqsim.thermo.system.SystemPrEos(210.0, 55.0)
+fluid.addComponent("methane", 49.88)
+fluid.addComponent("CO2", 9.87)
+fluid.addComponent("H2S", 40.22)
+fluid.setMixingRule("classic")
+fluid.setMultiPhaseCheck(True)
+fluid.setEnhancedMultiPhaseCheck(True)
 
-**Note:** Enhanced stability analysis adds computational overhead. For simple VLE systems, the standard analysis is sufficient.
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+print(f"Phases: {fluid.getNumberOfPhases()}")
+for i in range(fluid.getNumberOfPhases()):
+    print(f"  Phase {i}: {fluid.getPhaseTypeName(i)}, beta={fluid.getBeta(i):.4f}")
+```
+
+**Note:** `setEnhancedMultiPhaseCheck(true)` implicitly calls `setMultiPhaseCheck(true)`, so you do not need to set both.
+
+**When to use:**
+- Sour gas (methane/CO₂/H₂S) at low temperatures
+- CO₂ injection and sequestration systems
+- Near-critical conditions where phase detection is difficult
+- Any system where the standard flash misses expected phases
+
+### Automatic LLE Detection
+
+For certain equation-of-state models, NeqSim automatically enables supplementary LLE stability checks even without `setEnhancedMultiPhaseCheck(true)`, provided `setMultiPhaseCheck(true)` is set:
+
+| Model Type | Auto LLE | Condition |
+|------------|----------|----------|
+| **CPA** (e.g., `SystemSrkCPAstatoil`) | Yes | Always, when `setMultiPhaseCheck(true)` |
+| **Electrolyte** models | Yes | Always, when `setMultiPhaseCheck(true)` |
+| **Water-containing** (any EoS) | Only with enhanced | `setEnhancedMultiPhaseCheck(true)` |
+| **Chemical reaction** systems | Only with enhanced | `setEnhancedMultiPhaseCheck(true)` |
+| **Standard cubic** (SRK, PR) | No | Use `setMultiPhaseCheck(true)` for `TPmultiflash` |
+
+This means CPA models (commonly used for water + hydrocarbon systems) automatically get robust LLE detection when multi-phase check is enabled — no need for `setEnhancedMultiPhaseCheck(true)`.
+
+```java
+// CPA model: automatic LLE detection with just setMultiPhaseCheck
+SystemInterface fluid = new SystemSrkCPAstatoil(303.15, 50.0);
+fluid.addComponent("methane", 0.7);
+fluid.addComponent("MEG", 0.3);
+fluid.setMixingRule(10);
+fluid.setMultiPhaseCheck(true);  // Sufficient for CPA — auto LLE kicks in
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initProperties();
+// LLE between MEG-rich and hydrocarbon-rich phases detected automatically
+```
+
+### Quick Reference Table
+
+| Scenario | `setMultiPhaseCheck` | `setEnhancedMultiPhaseCheck` | EoS |
+|----------|---------------------|------------------------------|-----|
+| Dry gas compression | — | — | SRK/PR |
+| Gas + condensate | — | — | SRK/PR |
+| Gas + water (simple) | `true` | — | CPA |
+| Oil + water separation | `true` | — | CPA |
+| TEG dehydration | `true` | — | CPA |
+| Sour gas (CO₂/H₂S) | `true` | `true` | PR |
+| CO₂ injection/CCS | `true` | `true` | CPA or PR |
+| Near-critical fluids | `true` | `true` | SRK/PR |
+| Methanol injection | `true` | — | CPA |
+| Electrolyte systems | `true` | — | Electrolyte CPA |
+
+**Performance tip:** Only enable multi-phase checking when needed. Each additional stability trial adds computational cost — roughly 2-3x for `setMultiPhaseCheck(true)` and 3-5x for `setEnhancedMultiPhaseCheck(true)` compared to the default VLE flash.
 
 ---
+
+## Other Flash Types
 
 ### PH Flash (Pressure-Enthalpy)
 
