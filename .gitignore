@@ -82,6 +82,7 @@ test_*.ser
 neqsim-paperlab/papers/*/
 !neqsim-paperlab/papers/gibbs_minimization_2026/
 !neqsim-paperlab/papers/tpflash_algorithms_2026/
+!neqsim-paperlab/papers/implicit_cpa_performance_2026/
 # Temp Word lock files
 ~$*.docx
 

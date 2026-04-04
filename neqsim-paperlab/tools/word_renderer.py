@@ -178,6 +178,72 @@ def resolve_citations(text, cite_map):
     return re.sub(r'\\cite\{([^}]+)\}', _repl, text)
 
 
+def _extract_comment(text, key):
+    """Extract a metadata value from an HTML comment like <!-- Key: value -->.
+
+    Returns None if the key is not found.
+    """
+    m = re.search(r'<!--\s*' + re.escape(key) + r'\s*:\s*(.+?)\s*-->', text, re.IGNORECASE)
+    return m.group(1).strip() if m else None
+
+
+def clean_bibtex_latex(text):
+    """Strip LaTeX markup from BibTeX field values to produce plain Unicode."""
+    # Accented characters: {\o} -> ø, \"{u} -> ü, etc.
+    _accent_map = {
+        '`': '\u0300', "'": '\u0301', '^': '\u0302', '"': '\u0308',
+        '~': '\u0303', '=': '\u0304', '.': '\u0307', 'u': '\u0306',
+        'v': '\u030C', 'H': '\u030B', 'c': '\u0327', 'd': '\u0323',
+        'b': '\u0332', 'r': '\u030A', 'k': '\u0328',
+    }
+    _special_map = {
+        'o': 'ø', 'O': 'Ø', 'l': 'ł', 'L': 'Ł',
+        'aa': 'å', 'AA': 'Å', 'ae': 'æ', 'AE': 'Æ',
+        'oe': 'œ', 'OE': 'Œ', 'ss': 'ß', 'i': 'ı', 'j': 'ȷ',
+    }
+    # \"{u} or {\"{u}} or {\"u} patterns
+    def _repl_accent(m):
+        cmd = m.group(1)
+        char = m.group(2)
+        if cmd in _accent_map:
+            import unicodedata
+            return unicodedata.normalize('NFC', char + _accent_map[cmd])
+        return char
+    # Handle: \cmd{char}  e.g. \"{u}
+    text = re.sub(r'\\([`\'^"~=.ubvHcdrk])\{(\w)\}', _repl_accent, text)
+    # Handle: {\cmd char}  e.g. {\"u}
+    text = re.sub(r'\{\\([`\'^"~=.ubvHcdrk])(\w)\}', _repl_accent, text)
+    # Special letters: {\o} or \o{}
+    for ltx, uni in _special_map.items():
+        text = text.replace('{\\' + ltx + '}', uni)
+        text = text.replace('\\' + ltx + '{}', uni)
+        text = text.replace('\\' + ltx + ' ', uni + ' ')
+    # Strip remaining protective braces: {CPA} -> CPA, {D}oes -> Does
+    text = re.sub(r'\{([^{}]*)\}', r'\1', text)
+    # Strip any remaining lone backslashes before letters (e.g. \& -> &)
+    text = re.sub(r'\\([&%#_])', r'\1', text)
+    return text
+
+
+def _extract_brace_value(text, start):
+    """Extract a brace-balanced value starting at the opening '{' at position *start*.
+
+    Returns (value_content, end_pos) where end_pos is the index after the closing '}'.
+    """
+    depth = 0
+    i = start
+    while i < len(text):
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start + 1:i], i + 1
+        i += 1
+    # Unmatched — return to end
+    return text[start + 1:], len(text)
+
+
 def parse_bibtex_entries(refs_bib_path):
     """Parse refs.bib into a list of (key, type, fields) tuples."""
     if not Path(refs_bib_path).exists():
@@ -185,9 +251,13 @@ def parse_bibtex_entries(refs_bib_path):
     text = Path(refs_bib_path).read_text(encoding="utf-8")
     entries = []
     for match in re.finditer(r'@(\w+)\{(\w+),\s*(.*?)\n\}', text, flags=re.DOTALL):
+        body = match.group(3)
         fields = {}
-        for fm in re.finditer(r'(\w+)\s*=\s*\{(.*?)\}', match.group(3), flags=re.DOTALL):
-            fields[fm.group(1).lower()] = fm.group(2).strip()
+        # Match field_name = { ... } with brace balancing
+        for fm in re.finditer(r'(\w+)\s*=\s*\{', body):
+            field_name = fm.group(1).lower()
+            value, _ = _extract_brace_value(body, fm.end() - 1)
+            fields[field_name] = clean_bibtex_latex(value.strip())
         entries.append((match.group(2), match.group(1), fields))
     entries.sort(key=lambda x: x[0].lower())
     return entries
@@ -575,6 +645,11 @@ class WordRenderer:
             run = p.add_run(f"[Missing figure: {img_path}]")
             run.font.color.rgb = RGBColor(0xFF, 0, 0)
 
+        # Strip any existing "Fig. N." or "Figure N." prefix from caption text
+        # to avoid duplication with the auto-generated prefix below.
+        caption_text = re.sub(
+            r'^(?:Fig\.|Figure)\s*\d+\s*[.:]\s*', '', caption_text).strip()
+
         # Caption paragraph
         cap_p = self.doc.add_paragraph()
         cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -593,8 +668,32 @@ class WordRenderer:
 
     # ─── References ──────────────────────────────────────────────────
 
-    def add_reference_list(self):
-        """Generate formatted reference list from refs.bib."""
+    def add_reference_list(self, md_content=None):
+        """Generate formatted reference list.
+
+        If md_content contains pre-numbered references (e.g. [1] Author...),
+        use those directly to preserve the paper.md ordering. Otherwise
+        fall back to generating from refs.bib (alphabetical order).
+        """
+        # Check if paper.md already has numbered references
+        if md_content:
+            ref_lines = [l.strip() for l in md_content.split('\n') if l.strip()]
+            numbered = [l for l in ref_lines if re.match(r'^\[\d+\]', l)]
+            if len(numbered) >= 3:  # at least 3 numbered refs → use paper.md order
+                for ref_text in numbered:
+                    p = self.doc.add_paragraph()
+                    p.paragraph_format.left_indent = Inches(0.4)
+                    p.paragraph_format.first_line_indent = Inches(-0.4)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+                    self.render_rich_text(p, ref_text)
+                    for r in p.runs:
+                        r.font.size = Pt(self.get("font_size_ref"))
+                        if r.font.name is None:
+                            r.font.name = self.get("font_body")
+                return
+
+        # Fallback: generate from refs.bib (alphabetical order)
         entries = parse_bibtex_entries(self.refs_file)
         for idx, (key, etype, fields) in enumerate(entries):
             num = idx + 1
@@ -637,8 +736,15 @@ class WordRenderer:
 
     # ─── Section Heading Helpers ─────────────────────────────────────
 
-    def add_title(self, title_text):
-        """Add centered paper title."""
+    def add_title(self, title_text, md_content=""):
+        """Add centered paper title, author, and affiliation.
+
+        Author metadata is extracted from HTML comments in paper.md:
+          <!-- Author: Name -->
+          <!-- Affiliation: Dept, Institution, City, Country -->
+          <!-- Email: user@example.com -->
+        Falls back to placeholders if not found.
+        """
         p = self.doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(36)
@@ -650,21 +756,37 @@ class WordRenderer:
         r, g, b = self.get("heading_color")
         run.font.color.rgb = RGBColor(r, g, b)
 
-        # Author placeholder
+        # Extract author metadata from HTML comments
+        author = _extract_comment(md_content, "Author") or "[Author Name]"
+        affiliation = _extract_comment(md_content, "Affiliation") or "[Department, Institution, City, Country]"
+        email = _extract_comment(md_content, "Email")
+
+        # Author name
         p = self.doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_after = Pt(6)
-        run = p.add_run('[Author Name]')
+        run = p.add_run(author)
         run.font.size = Pt(12)
         run.font.name = self.get("font_heading")
 
+        # Affiliation
         p = self.doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_after = Pt(24)
-        run = p.add_run('[Department, Institution, City, Country]')
+        p.paragraph_format.space_after = Pt(2) if email else Pt(24)
+        run = p.add_run(affiliation)
         run.font.size = Pt(10)
         run.font.name = self.get("font_heading")
         run.italic = True
+
+        # Email (if present)
+        if email:
+            p = self.doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_after = Pt(24)
+            run = p.add_run(email)
+            run.font.size = Pt(10)
+            run.font.name = self.get("font_heading")
+            run.italic = True
 
     def add_section_heading(self, text, level=2):
         """Add a section or subsection heading."""
@@ -732,8 +854,8 @@ class WordRenderer:
                 self.add_table(all_lines)
                 return
 
-        # Image
-        img_match = re.match(r'^!\[([^\]]*)\]\(([^)]+)\)', block.strip())
+        # Image — use .*? instead of [^\]]* to allow ] inside alt text (e.g. citations [10])
+        img_match = re.match(r'^!\[(.*?)\]\(([^)]+)\)', block.strip())
         if img_match:
             alt_text = img_match.group(1)
             img_rel = img_match.group(2)
@@ -824,9 +946,8 @@ class WordRenderer:
 
         Returns the Document object. Call .save() on it or use render_word_document().
         """
-        paper_md = strip_comments(
-            (self.paper_dir / "paper.md").read_text(encoding="utf-8")
-        )
+        raw_md = (self.paper_dir / "paper.md").read_text(encoding="utf-8")
+        paper_md = strip_comments(raw_md)
         sections = parse_sections(paper_md)
 
         self._setup_document()
@@ -837,7 +958,7 @@ class WordRenderer:
             if sec["level"] == 1:
                 title = sec["title"]
                 break
-        self.add_title(title)
+        self.add_title(title, md_content=raw_md)
 
         # Categorize front matter sections
         skip_titles = {"highlights", "abstract", "keywords", "keyword", "references"}
@@ -920,8 +1041,11 @@ class WordRenderer:
         for sec in sections:
             if sec["title"].lower() == "references":
                 self.add_section_heading("References", level=2)
+                md_content = sec.get("content", "")
                 if self.refs_file.exists():
-                    self.add_reference_list()
+                    self.add_reference_list(md_content=md_content)
+                elif md_content.strip():
+                    self.add_reference_list(md_content=md_content)
                 break
 
         return self.doc
@@ -972,7 +1096,127 @@ def render_word_document(paper_dir, journal_profile=None, output_dir=None):
 
     print(f"  Output: {out_path}")
     print(f"  Size:   {out_path.stat().st_size / 1024:.0f} KB")
+
+    # Post-render validation
+    issues = validate_word_output(out_path, paper_dir, journal_profile)
+    if issues:
+        print("\n  ⚠ POST-RENDER VALIDATION ISSUES:")
+        for issue in issues:
+            print(f"    [{issue['severity']}] {issue['message']}")
+    else:
+        print("  ✓ Post-render validation: all checks passed")
+
     return out_path
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Post-Render Validation
+# ═══════════════════════════════════════════════════════════════════════════
+
+def validate_word_output(docx_path, paper_dir, journal_profile=None):
+    """Validate the generated Word document against the source paper.md.
+
+    Catches common rendering bugs:
+    - Missing figures (images in paper.md not embedded in docx)
+    - Reference count mismatch
+    - Duplicate figure captions
+    - Missing equations (display $$ blocks)
+
+    Returns a list of issue dicts with 'severity' and 'message'.
+    """
+    issues = []
+    paper_dir = Path(paper_dir)
+    docx_path = Path(docx_path)
+
+    # Read source paper.md
+    paper_md = (paper_dir / "paper.md").read_text(encoding="utf-8")
+
+    # --- Check 1: Figure count ---
+    # Count image references in paper.md
+    md_images = re.findall(r'!\[.*?\]\([^)]+\)', paper_md)
+    md_fig_count = len(md_images)
+
+    # Count images embedded in the docx
+    try:
+        doc = Document(str(docx_path))
+        docx_img_count = sum(
+            1 for rel in doc.part.rels.values()
+            if "image" in rel.reltype
+        )
+    except Exception:
+        docx_img_count = -1
+
+    if docx_img_count >= 0 and docx_img_count != md_fig_count:
+        issues.append({
+            "severity": "ERROR",
+            "message": f"Figure count mismatch: paper.md has {md_fig_count} images, "
+                       f"docx has {docx_img_count} embedded images",
+        })
+    elif docx_img_count >= 0:
+        issues.append({
+            "severity": "INFO",
+            "message": f"Figures OK: {docx_img_count}/{md_fig_count} images embedded",
+        })
+
+    # --- Check 2: Reference count ---
+    # Count refs in paper.md (numbered [N] pattern)
+    md_refs = re.findall(r'^\s*\[\d+\]', paper_md, flags=re.MULTILINE)
+    refs_bib = paper_dir / "refs.bib"
+    if refs_bib.exists():
+        bib_text = refs_bib.read_text(encoding="utf-8")
+        bib_entries = re.findall(r'@\w+\{', bib_text)
+        bib_count = len(bib_entries)
+    else:
+        bib_count = 0
+
+    expected_refs = len(md_refs) if md_refs else bib_count
+    if expected_refs > 0:
+        # Count [N] patterns in docx text
+        docx_text = "\n".join(p.text for p in doc.paragraphs)
+        docx_ref_lines = re.findall(r'^\s*\[\d+\]', docx_text, flags=re.MULTILINE)
+        if len(docx_ref_lines) != expected_refs:
+            issues.append({
+                "severity": "WARN",
+                "message": f"Reference count: expected {expected_refs}, "
+                           f"found {len(docx_ref_lines)} in docx",
+            })
+
+    # --- Check 3: Duplicate figure captions ---
+    fig_caps = re.findall(r'Figure\s+(\d+)\.', docx_text)
+    seen = set()
+    for num in fig_caps:
+        if num in seen:
+            issues.append({
+                "severity": "ERROR",
+                "message": f"Duplicate figure caption: 'Figure {num}.' appears more than once",
+            })
+        seen.add(num)
+
+    # --- Check 4: Display equations ---
+    md_display_eqs = len(re.findall(r'\$\$.*?\$\$', paper_md, flags=re.DOTALL))
+    if md_display_eqs > 0:
+        # Check for OMML elements in docx XML
+        omml_count = 0
+        for p in doc.paragraphs:
+            for child in p._element:
+                if child.tag.endswith('}oMath') or child.tag.endswith('}oMathPara'):
+                    omml_count += 1
+        # Also count Unicode equation paragraphs (fallback rendering)
+        unicode_eq_count = sum(
+            1 for p in doc.paragraphs
+            if any(c in p.text for c in '\u03b1\u03b2\u03b3\u03b4\u2211\u220f')
+            and len(p.text) < 200
+        )
+        total_eqs = omml_count + unicode_eq_count
+        if total_eqs == 0:
+            issues.append({
+                "severity": "WARN",
+                "message": f"paper.md has {md_display_eqs} display equations "
+                           f"but no OMML/equation elements detected in docx",
+            })
+
+    # Filter out INFO-level for return (keep only WARN and ERROR)
+    return [i for i in issues if i["severity"] != "INFO"]
 
 
 if __name__ == '__main__':

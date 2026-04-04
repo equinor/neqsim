@@ -56,7 +56,7 @@ Each journal has a YAML profile in `journals/`. Currently supported:
                      country={Norway}}
 
 \begin{abstract}
-% Max 200 words for FPE
+% Check journal profile for abstract word limit (FPE: 250 words)
 \end{abstract}
 
 \begin{keyword}
