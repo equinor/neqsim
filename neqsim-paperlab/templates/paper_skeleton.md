@@ -12,7 +12,7 @@
 
 ## Abstract
 
-TODO: Write a structured abstract (max 200 words for FPE).
+TODO: Write a structured abstract (check journal profile for word limit).
 State the problem, approach, key results, and significance.
 
 ## Keywords

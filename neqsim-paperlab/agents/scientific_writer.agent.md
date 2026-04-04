@@ -246,6 +246,32 @@ The `unlinked_claims` list MUST be empty before submission.
 - Include grid lines for readability
 - Reference figures by number in the text
 
+## Figure Quality Standards (Lessons from CPA Paper)
+
+Follow the `generate_publication_figures` skill for all figure creation:
+
+- **Serif fonts**: Use Times New Roman, not matplotlib defaults
+- **Compact sizes**: 3.5×2.8 in (single-column), 7.0×3.5 in (double-column)
+- **Log scale**: When data range exceeds 10× (e.g., speedup factors, timing)
+- **Short system IDs**: Use A1, B1, C1 in figures — full names go in a table
+- **Manual annotation offsets**: For scatter plots with clustered points
+- **No contour lines on noisy data**: Use pcolormesh instead
+- **No rotated bar labels**: Keep rotation ≤ 30° or use short IDs
+
+## Reference Management Rules
+
+- Use numbered references `[1]`, `[2]`, ... in `paper.md` for explicit ordering
+- The Word renderer respects paper.md reference order when pre-numbered
+- Cross-check: every `[N]` in body text must match the correct entry in References
+- If using `\cite{key}` format, maintain consistent `refs.bib` alphabetical order
+- After major edits, re-verify reference numbering matches citations in text
+
+## Abstract Word Limit
+
+Do NOT hardcode "max 200 words". Check the journal profile YAML file
+(`journals/*.yaml`, field `abstract_words_max`) for the correct limit.
+FPE allows 250 words, CACE allows 250 words.
+
 ## Output Location
 
 All files go to `papers/<paper_slug>/`:

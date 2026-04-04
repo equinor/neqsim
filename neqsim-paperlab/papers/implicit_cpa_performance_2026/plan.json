@@ -1,0 +1,85 @@
+{
+  "title": "A Fully Implicit Newton-Raphson Algorithm for the CPA Equation of State: Coupled Volume and Association in a Single System",
+  "target_journal": "fluid_phase_equilibria",
+  "created": "2026-04-03T23:23:28",
+  "status": "draft_complete",
+  "novelty_statement": "Extension of the fully implicit CPA molar volume algorithm to industrial multicomponent systems (up to 10 components, 8 association sites) with comprehensive benchmarks showing 2-33x speedup and zero accuracy loss. Hand-optimized Gaussian elimination removes external library dependency.",
+  "research_questions": [
+    {
+      "id": "RQ1",
+      "question": "Does the fully implicit CPA approach maintain its performance advantage for industrial multicomponent systems?",
+      "hypothesis": "Yes, speedup should scale with the fraction of associating components and number of sites",
+      "method": "Benchmark 10 fluid systems spanning 1-10 components with 4-8 sites",
+      "acceptance_criterion": "Speedup > 1.0x for all systems, > 2x for majority"
+    },
+    {
+      "id": "RQ2",
+      "question": "What is the accuracy penalty of the fully implicit approach?",
+      "hypothesis": "Zero accuracy loss since both approaches solve the same equations",
+      "method": "Compare molar volume/density at each T,P grid point",
+      "acceptance_criterion": "Max relative error < 0.001%"
+    },
+    {
+      "id": "RQ3",
+      "question": "What system characteristics drive the speedup magnitude?",
+      "hypothesis": "Association site count and fraction of associating components",
+      "method": "Correlate speedup with n_s and component composition",
+      "acceptance_criterion": "Clear trend identifiable in scatter plots"
+    }
+  ],
+  "benchmark_design": {
+    "algorithms": ["standard_nested_CPA", "fully_implicit_CPA"],
+    "eos_models": ["SRK-CPA"],
+    "fluid_systems": [
+      {"id": "A1", "name": "Pure water", "nc": 1, "ns": 4, "category": "paper"},
+      {"id": "A2a", "name": "Water-Methanol 50/50", "nc": 2, "ns": 6, "category": "paper"},
+      {"id": "A2b", "name": "Water-Methanol 80/20", "nc": 2, "ns": 6, "category": "paper"},
+      {"id": "A3", "name": "Water-Ethanol-Acetic Acid", "nc": 3, "ns": 8, "category": "paper"},
+      {"id": "B1", "name": "Natural gas + Water", "nc": 5, "ns": 4, "category": "industrial"},
+      {"id": "B2", "name": "NatGas + Water + MEG", "nc": 6, "ns": 8, "category": "industrial"},
+      {"id": "B3", "name": "Gas condensate + Water", "nc": 8, "ns": 4, "category": "industrial"},
+      {"id": "B4", "name": "Oil+Gas+Water+MEG", "nc": 10, "ns": 8, "category": "industrial"},
+      {"id": "B5", "name": "CO2 + Water", "nc": 2, "ns": 4, "category": "industrial"},
+      {"id": "B6", "name": "MEG + Water", "nc": 2, "ns": 8, "category": "industrial"}
+    ],
+    "pressure_range_bara": [0.5, 500],
+    "temperature_range_K": [263, 500],
+    "grid_sizes": {"paper": "10x10", "industrial": "6x6"},
+    "timing_protocol": {"warmup": 2, "repetitions": 3, "statistic": "median"},
+    "metrics": ["ratio", "speedup", "max_density_error", "phase_match"]
+  },
+  "manuscript_outline": {
+    "sections": [
+      "Highlights",
+      "Abstract",
+      "Keywords",
+      "1. Introduction",
+      "2. Mathematical Framework",
+      "3. Algorithm Description",
+      "4. Benchmark Design",
+      "5. Results and Discussion",
+      "6. Conclusions",
+      "Acknowledgements",
+      "Data Availability",
+      "References"
+    ],
+    "key_figures": [
+      "fig1_speedup_bar.pdf — Speedup factor bar chart",
+      "fig2_heatmap_water.pdf — T-P heatmap for pure water",
+      "fig3_heatmap_oil_gas.pdf — T-P heatmap for oil+gas+water+MEG",
+      "fig4_speedup_vs_sites.pdf — Speedup vs association sites",
+      "fig5_ratio_distribution.pdf — Boxplot of timing ratios",
+      "fig6_speedup_vs_ncomp.pdf — Speedup vs number of components"
+    ],
+    "key_tables": [
+      "Table 1: Fluid systems",
+      "Table 2: Benchmark results"
+    ]
+  },
+  "workflow_log": [
+    {"stage": "plan", "status": "created", "date": "2026-04-03"},
+    {"stage": "benchmark", "status": "complete", "date": "2026-04-04", "notes": "All 10 systems benchmarked, results in benchmark_raw.json"},
+    {"stage": "figures", "status": "complete", "date": "2026-04-04", "notes": "6 figures + LaTeX table generated"},
+    {"stage": "manuscript", "status": "draft_complete", "date": "2026-04-04", "notes": "Full manuscript in paper.md"}
+  ]
+}

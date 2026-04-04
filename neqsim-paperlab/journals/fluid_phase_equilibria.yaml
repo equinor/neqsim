@@ -13,9 +13,9 @@ scope: >
   phase equilibria, thermodynamic modeling, and industrial applications.
 
 # Structure
-abstract_words_max: 200
-keywords_min: 3
-keywords_max: 6
+abstract_words_max: 250
+keywords_min: 1
+keywords_max: 7
 section_order:
   - Abstract
   - Keywords

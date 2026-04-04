@@ -72,7 +72,7 @@ should be able reproduce the work in any language or framework.
 - [ ] Names the algorithm/method, not the software
 - [ ] Contains the scientific contribution (e.g., "Consistent Jacobian", "Adaptive Step Sizing")
 
-### Abstract (max 200 words)
+### Abstract (check journal profile for word limit; FPE: 250, CACE: 250)
 - [ ] States the problem in algorithm terms
 - [ ] Describes the method contribution
 - [ ] Reports quantitative results (convergence %, timing, accuracy)
@@ -353,6 +353,95 @@ Key considerations for reactor papers:
 - Report element balance closure (should be < 1e-10 relative)
 - Analyze conditioning of the Jacobian matrix (log10 condition number)
 - Include adiabatic vs isothermal comparison
+
+---
+
+## Lessons Learned — Implicit CPA Paper (2026)
+
+These lessons were captured from the second paper produced with PaperLab
+(fully implicit CPA EOS, targeting Fluid Phase Equilibria). Apply them to
+all future papers.
+
+### 8. Reference ordering: paper.md is the source of truth
+
+When `paper.md` contains manually numbered references (`[1]`, `[2]`, ...),
+those MUST be rendered in the Word document in that exact order. The
+`word_renderer.py` now detects pre-numbered refs and uses them directly,
+bypassing alphabetical `refs.bib` sorting. Always use numbered references
+in `paper.md` for control over citation order.
+
+**Rule:** If you cite `[10]` in the text, ensure reference `[10]` in the
+References section is the correct one. Cross-check after every major edit.
+
+### 9. Image regex must handle brackets in alt text
+
+Alt text like `![Fig. 1 comparison [10]](figures/fig1.png)` contains a `]`
+character. The word renderer's regex must use `.*?` (lazy match) not `[^\]]*`
+(character class that breaks on `]`). This was a silent bug that dropped
+figures from the Word output.
+
+### 10. Figure captions: avoid double-numbering
+
+If `paper.md` already uses `**Fig. 1.** Caption text`, the word renderer
+must strip that prefix before adding its own `Figure 1.` prefix. The
+renderer now handles this automatically.
+
+**Rule in paper.md:** Use plain caption text after the image tag. Let the
+renderer handle numbering. Or use `**Fig. N.**` consistently and trust the
+deduplication.
+
+### 11. BibTeX special characters need Unicode conversion
+
+BibTeX files contain LaTeX markup (`{\o}`, `{\"u}`, `{CPA}`). The
+`clean_bibtex_latex()` function converts these to Unicode for Word rendering.
+Always verify author names with accented characters render correctly.
+
+### 12. Figure quality: serif fonts, compact sizes, log scales
+
+Publication figures must use:
+- **Serif fonts** (Times New Roman) — not the matplotlib default sans-serif
+- **Compact sizes**: 3.5×2.8 in (single column), 7.0×3.5 in (double column)
+- **Log scale** when data range exceeds 10×
+- **Short system IDs** (A1, B1, C1) instead of full system names as labels
+- **Manual annotation offsets** for scatter plots with clustered points
+
+See the `generate_publication_figures` skill for copy-paste templates.
+
+### 13. Post-render validation catches silent failures
+
+The word renderer now includes `validate_word_output()` that checks:
+- Figure count (paper.md vs docx embedded images)
+- Reference count consistency
+- Duplicate figure captions
+- Display equation presence
+
+Always check the validation output after rendering.
+
+### 14. Journal profile accuracy matters
+
+The FPE journal profile had wrong limits (abstract 200 → 250/words,
+keywords 3–6 → 1–7). Always validate journal profiles against the actual
+"Guide for Authors" page before submission. Keep journal YAML profiles
+updated when guidelines change.
+
+### 15. Compliance checker section matching must be flexible
+
+The required section check uses keyword matching (`method*`, `result*`).
+Papers may use alternative headings like "Algorithm Description" instead
+of "Methods". The checker should match a broader set of synonyms.
+
+### 16. Design figures FIRST, write around them
+
+From both papers: figures drove the Results narrative. Plan all figures
+before writing prose. Each figure should map to a Results subsection.
+The `02_generate_figures.py` script should be the first deliverable
+after `01_run_benchmark.py`.
+
+### 17. Word audit scripts are essential
+
+Python scripts that inspect the final `.docx` (count images, check reference
+ordering, verify OMML equations) caught bugs that visual inspection missed.
+The `validate_word_output()` function automates this.
 - Test with trace species (< 1e-8 mole fraction) to stress the solver
 - Report Lagrange multiplier convergence alongside composition
 

@@ -936,14 +936,18 @@ def check_compliance(paper_dir, journal_profile):
         })
 
     # Keywords
+    kw_min = journal_profile.get("keywords_min", 1)
     kw_max = journal_profile.get("keywords_max", 6)
     for sec in sections:
         if "keyword" in sec["title"].lower():
             keywords = [k.strip() for k in sec["content"].split(",") if k.strip()]
+            status = "PASS"
+            if len(keywords) < kw_min or len(keywords) > kw_max:
+                status = "FAIL"
             checks.append({
                 "check": "Keywords count",
-                "status": "PASS" if len(keywords) <= kw_max else "FAIL",
-                "detail": f"{len(keywords)}/{kw_max} keywords",
+                "status": status,
+                "detail": f"{len(keywords)} keywords (allowed: {kw_min}–{kw_max})",
             })
             break
 
@@ -955,14 +959,26 @@ def check_compliance(paper_dir, journal_profile):
             "status": "PASS" if has_highlights else "FAIL",
         })
 
-    # Required sections
-    required_words = ["introduction", "method", "result", "conclusion"]
+    # Required sections — use synonym groups for flexible matching
+    section_synonyms = {
+        "introduction": ["introduction", "background"],
+        "method": ["method", "algorithm", "mathematical framework",
+                   "theory", "formulation", "approach", "methodology"],
+        "result": ["result", "discussion", "findings", "analysis",
+                   "evaluation", "benchmark"],
+        "conclusion": ["conclusion", "summary", "concluding remarks"],
+    }
     section_titles_lower = [s["title"].lower() for s in sections]
-    for req in required_words:
-        found = any(req in t for t in section_titles_lower)
+    for group_name, synonyms in section_synonyms.items():
+        found = any(
+            syn in t
+            for t in section_titles_lower
+            for syn in synonyms
+        )
         checks.append({
-            "check": f"Section '{req}*' present",
+            "check": f"Section '{group_name}*' present",
             "status": "PASS" if found else "FAIL",
+            "detail": f"Matched: {', '.join(synonyms)}" if not found else None,
         })
 
     # References file

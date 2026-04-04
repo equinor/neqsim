@@ -249,3 +249,37 @@ After generating `paper.docx`, verify:
 - [ ] Citations resolve to `[N]` (no `?key` markers)
 - [ ] Page numbers appear in footer
 - [ ] Double spacing applied (if journal requires it)
+
+## Word Renderer Known Issues & Guards
+
+The word_renderer now includes automatic post-render validation
+(`validate_word_output()`), but be aware of these past issues:
+
+### Reference Ordering
+When `paper.md` has pre-numbered references (`[1]`, `[2]`, ...), the renderer
+uses those directly instead of sorting from `refs.bib`. This preserves
+intentional citation ordering. If references appear out of order in the docx,
+check whether `paper.md` has numbered refs.
+
+### Image Alt Text with Brackets
+Image lines like `![Caption [10]](path.png)` caused image drops because the
+regex broke on `]` inside alt text. This is now fixed (uses `.*?` lazy match).
+If figures are missing from docx, check the post-render validation output.
+
+### Figure Caption Deduplication
+If `paper.md` captions use `**Fig. 1.** Text`, the renderer strips this prefix
+before adding its own `Figure 1.` numbering. If you see `Figure 1. Fig. 1.` in
+the docx, the stripping regex may have failed — report as a bug.
+
+### BibTeX Unicode Conversion
+Author names with accents (`{\"o}`, `{\o}`) are converted to Unicode (ö, ø).
+If garbled characters appear in the reference list, check `clean_bibtex_latex()`
+handles the specific LaTeX accent command.
+
+### Post-Render Validation
+After every `render_word_document()`, the tool automatically validates:
+- Figure count (paper.md images vs docx embedded images)
+- Reference count consistency
+- Duplicate figure captions
+- Display equation presence
+Check the console output for `[ERROR]` or `[WARN]` lines.
