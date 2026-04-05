@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -80,6 +81,7 @@ public class ProcessSystemState implements Serializable {
   private String createdBy;
   private ModelMetadata metadata;
   private List<EquipmentState> equipmentStates;
+  private Map<String, StreamState> streamStates;
   private List<ConnectionState> connectionStates;
   private Map<String, Object> customProperties;
   private String checksum;
@@ -91,6 +93,7 @@ public class ProcessSystemState implements Serializable {
     this.createdAt = Instant.now();
     this.lastModifiedAt = Instant.now();
     this.equipmentStates = new ArrayList<>();
+    this.streamStates = new LinkedHashMap<>();
     this.connectionStates = new ArrayList<>();
     this.customProperties = new HashMap<>();
     this.metadata = new ModelMetadata();
@@ -112,6 +115,13 @@ public class ProcessSystemState implements Serializable {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       EquipmentState eqState = EquipmentState.fromEquipment(equipment);
       state.equipmentStates.add(eqState);
+
+      // Also capture as StreamState if it is a stream
+      if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+        neqsim.process.equipment.stream.StreamInterface stream =
+            (neqsim.process.equipment.stream.StreamInterface) equipment;
+        state.streamStates.put(stream.getName(), StreamState.fromStream(stream));
+      }
     }
 
     // Capture stream connections
@@ -657,6 +667,15 @@ public class ProcessSystemState implements Serializable {
   }
 
   /**
+   * Gets the stream states captured from Stream equipment.
+   *
+   * @return map of stream name to StreamState
+   */
+  public Map<String, StreamState> getStreamStates() {
+    return streamStates;
+  }
+
+  /**
    * Gets the connection states capturing stream topology.
    *
    * @return list of connection states
@@ -865,12 +884,40 @@ public class ProcessSystemState implements Serializable {
       return type;
     }
 
+    /**
+     * Gets the equipment type. Alias for {@link #getType()}.
+     *
+     * @return the equipment type string
+     */
+    public String getEquipmentType() {
+      return type;
+    }
+
     public Map<String, Double> getNumericProperties() {
       return numericProperties;
     }
 
     public Map<String, String> getStringProperties() {
       return stringProperties;
+    }
+
+    /**
+     * Gets all parameters as a combined map. Numeric properties are converted to String values and
+     * merged with string properties.
+     *
+     * @return combined map of all equipment parameters
+     */
+    public Map<String, String> getParameters() {
+      Map<String, String> params = new HashMap<>();
+      if (stringProperties != null) {
+        params.putAll(stringProperties);
+      }
+      if (numericProperties != null) {
+        for (Map.Entry<String, Double> entry : numericProperties.entrySet()) {
+          params.put(entry.getKey(), String.valueOf(entry.getValue()));
+        }
+      }
+      return params;
     }
 
     public FluidState getFluidState() {
@@ -936,6 +983,81 @@ public class ProcessSystemState implements Serializable {
 
     public String getThermoModelClass() {
       return thermoModelClass;
+    }
+  }
+
+  /**
+   * Represents the state of a process stream with key thermodynamic properties.
+   */
+  public static class StreamState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private double temperature; // K
+    private double pressure; // bara
+    private double molarFlowRate; // mole/sec
+    private Map<String, Double> composition; // mole fractions
+
+    /**
+     * Default constructor.
+     */
+    public StreamState() {
+      this.composition = new HashMap<>();
+    }
+
+    /**
+     * Creates a StreamState from a StreamInterface.
+     *
+     * @param stream the stream to capture
+     * @return a new StreamState
+     */
+    public static StreamState fromStream(neqsim.process.equipment.stream.StreamInterface stream) {
+      StreamState state = new StreamState();
+      state.temperature = stream.getTemperature();
+      state.pressure = stream.getPressure();
+      state.molarFlowRate = stream.getFlowRate("mole/sec");
+      SystemInterface fluid = stream.getFluid();
+      if (fluid != null) {
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          state.composition.put(fluid.getComponent(i).getName(), fluid.getComponent(i).getz());
+        }
+      }
+      return state;
+    }
+
+    /**
+     * Gets the stream temperature in Kelvin.
+     *
+     * @return temperature in K
+     */
+    public double getTemperature() {
+      return temperature;
+    }
+
+    /**
+     * Gets the stream pressure in bara.
+     *
+     * @return pressure in bara
+     */
+    public double getPressure() {
+      return pressure;
+    }
+
+    /**
+     * Gets the molar flow rate in mole/sec.
+     *
+     * @return molar flow rate
+     */
+    public double getMolarFlowRate() {
+      return molarFlowRate;
+    }
+
+    /**
+     * Gets the stream composition (mole fractions).
+     *
+     * @return composition map of component name to mole fraction
+     */
+    public Map<String, Double> getComposition() {
+      return composition;
     }
   }
 
