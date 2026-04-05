@@ -58,6 +58,15 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private boolean autoValidate = false;
 
+  /** Whether automatic checkpointing is enabled during model execution. */
+  private boolean checkpointEnabled = false;
+
+  /** Number of iterations between automatic checkpoints. */
+  private int checkpointInterval = 10;
+
+  /** File path for saving checkpoint files. */
+  private String checkpointPath = null;
+
   /**
    * Interface for monitoring ProcessModel execution progress. Implementations receive callbacks at
    * the model level: before/after each process area runs, before/after each outer iteration, and
@@ -1936,6 +1945,62 @@ public class ProcessModel implements Runnable, Serializable {
         logger.debug("Could not validate area '" + areaName + "': " + ex.getMessage());
       }
     }
+  }
+
+  // ========================== Checkpointing ==========================
+
+  /**
+   * Checks if automatic checkpointing is enabled.
+   *
+   * @return true if checkpointing is enabled
+   */
+  public boolean isCheckpointEnabled() {
+    return checkpointEnabled;
+  }
+
+  /**
+   * Sets whether automatic checkpointing is enabled during model execution.
+   *
+   * @param checkpointEnabled true to enable checkpointing
+   */
+  public void setCheckpointEnabled(boolean checkpointEnabled) {
+    this.checkpointEnabled = checkpointEnabled;
+  }
+
+  /**
+   * Gets the checkpoint interval (number of iterations between checkpoints).
+   *
+   * @return the checkpoint interval
+   */
+  public int getCheckpointInterval() {
+    return checkpointInterval;
+  }
+
+  /**
+   * Sets the checkpoint interval.
+   *
+   * @param checkpointInterval number of iterations between automatic checkpoints
+   */
+  public void setCheckpointInterval(int checkpointInterval) {
+    this.checkpointInterval = checkpointInterval;
+  }
+
+  /**
+   * Gets the file path for checkpoint files.
+   *
+   * @return the checkpoint file path, or null if not set
+   */
+  public String getCheckpointPath() {
+    return checkpointPath;
+  }
+
+  /**
+   * Sets the file path for saving checkpoint files.
+   *
+   * @param checkpointPath the file path for checkpoint files
+   */
+  public void setCheckpointPath(String checkpointPath) {
+    this.checkpointPath = checkpointPath;
   }
 
   // ========================== Automation API ==========================
