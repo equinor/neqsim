@@ -619,6 +619,93 @@ print(f"At topside: {section3.getOutletStream().getPressure():.2f} bara")
 | Multi-leg | `setNumberOfLegs()`, `setLegPositions()` | Variable geometry |
 | Pipe sections | Chain multiple pipes | Different diameters/materials |
 | Grid resolution | `setNumberOfSections(n)` | Fine vs coarse simulation |
+| Non-uniform mesh | `generateRefinedMesh(n, factor)` | Finer cells at risers/gradients |
+| Manual mesh | `setSectionLengths(double[])` | Full control over each cell |
+
+### Non-Uniform Mesh (TwoFluidPipe)
+
+Commercial simulators (OLGA, LedaFlow) use **static non-uniform meshes** to place finer
+cells where gradients are steepest — typically at risers, terrain undulations, and wellheads.
+NeqSim supports this via two approaches:
+
+#### Automatic Refinement (recommended)
+
+`generateRefinedMesh(baseSections, refinementFactor)` analyses the elevation profile and
+creates shorter cells where the gradient is steepest with longer cells where the pipe is flat.
+
+```python
+pipe = TwoFluidPipe("Flowline-Riser", feed)
+pipe.setLength(5400.0)
+pipe.setDiameter(0.2032)
+
+# Set elevation profile FIRST
+elevation = [...]  # must be set before generateRefinedMesh
+pipe.setElevationProfile(elevation)
+
+# Generate refined mesh: 100 base sections, 4x refinement at steep sections
+pipe.generateRefinedMesh(100, 4.0)
+
+# Inspect resulting mesh
+lengths = list(pipe.getSectionLengths())
+print(f"dx range: [{min(lengths):.1f}, {max(lengths):.1f}] m")
+# e.g. Flowline cells ~68 m, Riser cells ~17 m (3.9x ratio)
+```
+
+The `refinementFactor` controls the ratio between coarsest and finest cells (clamped to 1.5–10).
+
+#### Manual Section Lengths
+
+For full control, provide exact lengths for every section:
+
+```python
+pipe = TwoFluidPipe("Custom Mesh", feed)
+pipe.setLength(1000.0)
+pipe.setDiameter(0.3)
+
+# Fine at ends, coarse in middle — lengths must sum to total length
+lengths = [50, 50, 100, 150, 200, 150, 100, 100, 50, 50]
+pipe.setSectionLengths(lengths)
+```
+
+#### CFL Note
+
+With explicit time integration (RK4), the global timestep is governed by the **smallest cell**:
+$\Delta t = \text{CFL} \cdot dx_{\min} / c_{\max}$. Finer riser cells improve accuracy but
+reduce the CFL timestep proportionally. For a 4x refinement ratio, expect ~4x more sub-steps
+per macro timestep.
+
+### Adaptive Timestepping (TwoFluidPipe)
+
+OLGA-style adaptive timestepping provides robustness for challenging geometries (risers, S-bends):
+
+```python
+pipe = TwoFluidPipe("Subsea Line", feed)
+pipe.setLength(5400.0)
+pipe.setNumberOfSections(100)
+pipe.setElevationProfile(elevation)
+
+# Enable adaptive timestepping
+pipe.setEnableAdaptiveTimestepping(True)
+pipe.setAdaptiveMaxPressure(200.0)  # bar — reject step if exceeded
+
+# Run transient
+import java.util.UUID as UUID
+run_id = UUID.randomUUID()
+for step in range(n_steps):
+    pipe.runTransient(dt, run_id)
+    dt_factor = pipe.getAdaptiveDtFactor()  # 1.0 = full CFL, <1 = reduced
+```
+
+| Parameter | Method | Default | Description |
+|-----------|--------|---------|-------------|
+| Enable | `setEnableAdaptiveTimestepping(bool)` | `False` | Turn on/off |
+| Pressure ceiling | `setAdaptiveMaxPressure(bar)` | 1000 | Reject step if any section exceeds |
+| Monitor | `getAdaptiveDtFactor()` | — | Current dt multiplier (1.0 = full CFL) |
+| Check | `isAdaptiveTimesteppingEnabled()` | — | Query state |
+
+The algorithm: (1) per-step CFL recompute from current velocities, (2) NaN/negative mass
+detection with state rollback, (3) pressure/velocity ceiling checks, (4) gradual dt recovery
+(x1.02 growth per stable step back to 1.0).
 
 ---
 
@@ -1010,6 +1097,24 @@ A comprehensive reference for the TwoFluidPipe model covering all flow types, bo
 | `getFlowRegimeProfile()` | - | Flow regime per section |
 | `getPositionProfile()` | m | Section positions |
 | `getWallTemperatureProfile()` | K | Wall temperature |
+
+### Mesh Configuration
+
+| Method | Description |
+|--------|-------------|
+| `setNumberOfSections(int)` | Uniform mesh with N equal-length sections |
+| `setSectionLengths(double[])` | Non-uniform mesh with explicit per-section lengths |
+| `generateRefinedMesh(int baseSections, double refinementFactor)` | Auto-refine based on elevation gradient |
+| `getSectionLengths()` | Returns per-section lengths (null if uniform) |
+
+### Adaptive Timestepping
+
+| Method | Description |
+|--------|-------------|
+| `setEnableAdaptiveTimestepping(boolean)` | Enable/disable OLGA-style adaptive dt |
+| `setAdaptiveMaxPressure(double)` | Pressure ceiling (bar) — reject step if exceeded |
+| `getAdaptiveDtFactor()` | Current dt multiplier (1.0 = full CFL) |
+| `isAdaptiveTimesteppingEnabled()` | Query state |
 
 ### Steady-State Solver Tuning
 
