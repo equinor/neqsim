@@ -551,6 +551,7 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMRMC");
       updateTable("MBWR32param");
       updateTable("COMPSALT");
+      updateTable("PitzerParameters");
       updateTable("PIPEDATA");
       updateTable("REACTIONDATAKENTEISENBERG");
 
