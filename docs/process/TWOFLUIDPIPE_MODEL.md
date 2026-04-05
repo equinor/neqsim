@@ -208,7 +208,7 @@ pipe.setWallThickness(0.015);
 pipe.setSurfaceTemperature(4.0, "C"); // Cold seabed
 
 // Configure with 50mm PU foam + 40mm concrete
-pipe.configureSubseaThermalModel(0.050, 0.040, 
+pipe.configureSubseaThermalModel(0.050, 0.040,
     RadialThermalLayer.MaterialType.PU_FOAM);
 
 // Set hydrate formation temperature
@@ -254,8 +254,67 @@ System.out.println(pipe.getThermalSummary());
 | Cooldown calculation | Lumped capacitance | MultilayerThermalCalculator |
 | Hydrate/wax risk | Temperature tracking | Section-by-section monitoring |
 | **Numerical Methods** |
-| Time stepping | CFL-based | Fixed step with sub-cycling |
-| Spatial discretization | Finite volume | Upwind scheme |
+| Time stepping | CFL-based | RK4 (default), IMEX, adaptive dt |
+| Spatial discretization | Finite volume | AUSM+ flux splitting, MUSCL reconstruction |
+| Mesh | Uniform or non-uniform | `generateRefinedMesh()` or `setSectionLengths()` |
+
+## Spatial Discretization
+
+### Uniform Mesh (default)
+
+`setNumberOfSections(N)` creates N equal-length cells: $dx = L / N$.
+
+### Non-Uniform Mesh
+
+Two approaches for variable cell sizes along the pipe:
+
+**Automatic refinement** — `generateRefinedMesh(baseSections, refinementFactor)` analyses
+the elevation profile and creates shorter cells where the elevation gradient is steepest
+(risers, S-bends) and longer cells where the pipe is flat (flowlines):
+
+$$
+\text{density}_i = 1 + (\text{factor} - 1) \cdot \frac{|\nabla z|_i}{\max |\nabla z|}
+$$
+
+Section lengths are inversely proportional to density, then normalized to sum to $L$.
+The `refinementFactor` (clamped to 1.5–10) controls the coarsest/finest cell ratio.
+
+**Manual** — `setSectionLengths(double[])` sets explicit per-section lengths (must sum to
+total pipe length, minimum 2 sections).
+
+All finite-volume calculations use per-section lengths:
+
+| Component | Non-uniform treatment |
+|-----------|-----------------------|
+| AUSM+ flux assembly | $-\frac{1}{dx_i}(F_{i+1/2} - F_{i-1/2})$ |
+| Pressure gradient | Non-uniform central difference: $dx_c = \frac{1}{2} dx_{i-1} + dx_i + \frac{1}{2} dx_{i+1}$ |
+| CFL timestep | $\Delta t = \min_i \left( \text{CFL} \cdot dx_i / c_i \right)$ |
+| Temperature updates | Per-section exponential decay and advection |
+| Pressure reconstruction | Forward/backward march with per-section $dx$ |
+
+## Time Integration
+
+### Methods
+
+| Method | CFL constraint | Description |
+|--------|---------------|-------------|
+| `RK4` (default) | Acoustic ($c + v$) | Classical 4th-order Runge-Kutta. Stable for all geometries. |
+| `SSP_RK3` | Acoustic | Strong Stability Preserving RK3 |
+| `RK2` | Acoustic | Heun's method (2nd order) |
+| `EULER` | Acoustic | Forward Euler (1st order) |
+| `IMEX_PRESSURE_CORRECTION` | Convective only | Semi-implicit; ~10x larger dt. Not recommended for vertical risers. |
+
+### Adaptive Timestepping
+
+OLGA-style adaptive timestepping provides robustness for challenging geometries. Enable via
+`setEnableAdaptiveTimestepping(true)`.
+
+Algorithm per macro-step:
+1. **CFL recompute** from current velocities (not fixed at initialization)
+2. **Pre-check**: reject if NaN or negative mass detected; rollback state, halve `dtFactor`
+3. **Post-check**: reject if pressure exceeds ceiling or velocities exceed 500 m/s
+4. **Recovery**: after each stable step, `dtFactor` grows by x1.02 back toward 1.0
+5. **Floor**: `dtFactor` cannot go below 0.001 to prevent stalling
 
 ## Validation Status
 

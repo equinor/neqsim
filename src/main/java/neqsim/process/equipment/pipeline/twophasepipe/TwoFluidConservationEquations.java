@@ -148,7 +148,8 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    *
    * @param sections Array of pipe sections with current state
-   * @param dx Cell size (m)
+   * @param dx Cell size (m) — used as uniform dx; for non-uniform mesh each section's own length is
+   *        used via {@code sections[i].getLength()}
    * @return Time derivatives [nCells][NUM_EQUATIONS]
    */
   public double[][] calcRHS(TwoFluidSection[] sections, double dx) {
@@ -164,7 +165,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // Calculate source terms for each cell
     double[][] sources = calcSourceTerms(sections);
 
-    // Assemble RHS: dU/dt = -1/dx * (F_{i+1/2} - F_{i-1/2}) + S
+    // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
     // Boundary treatment:
     // - For inlet cell (i=0): Use inlet flux from cell 0 state (inlet stream sets this state)
@@ -190,8 +191,11 @@ public class TwoFluidConservationEquations implements Serializable {
         fluxRight = fluxes[i];
       }
 
+      // Use per-section length for non-uniform mesh
+      double secDx = sections[i].getLength();
+
       for (int j = 0; j < NUM_EQUATIONS; j++) {
-        dUdt[i][j] = -1.0 / dx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
+        dUdt[i][j] = -1.0 / secDx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
       }
     }
 
@@ -898,7 +902,7 @@ public class TwoFluidConservationEquations implements Serializable {
    *
    * @param sections Pipe sections
    * @param dUdt Current RHS values to modify
-   * @param dx Cell size
+   * @param dx Cell size (used for uniform mesh; per-section length used when available)
    */
   public void applyPressureGradient(TwoFluidSection[] sections, double[][] dUdt, double dx) {
     int nCells = sections.length;
@@ -906,14 +910,19 @@ public class TwoFluidConservationEquations implements Serializable {
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
 
-      // Central difference for pressure gradient
+      // Central difference for pressure gradient using per-section lengths
       double dPdx;
       if (i == 0) {
-        dPdx = (sections[1].getPressure() - sections[0].getPressure()) / dx;
+        double dxFwd = 0.5 * (sections[0].getLength() + sections[1].getLength());
+        dPdx = (sections[1].getPressure() - sections[0].getPressure()) / dxFwd;
       } else if (i == nCells - 1) {
-        dPdx = (sections[nCells - 1].getPressure() - sections[nCells - 2].getPressure()) / dx;
+        double dxBwd = 0.5 * (sections[nCells - 2].getLength() + sections[nCells - 1].getLength());
+        dPdx = (sections[nCells - 1].getPressure() - sections[nCells - 2].getPressure()) / dxBwd;
       } else {
-        dPdx = (sections[i + 1].getPressure() - sections[i - 1].getPressure()) / (2 * dx);
+        // Distance from center of cell i-1 to center of cell i+1
+        double dxCentral = 0.5 * sections[i - 1].getLength() + sections[i].getLength()
+            + 0.5 * sections[i + 1].getLength();
+        dPdx = (sections[i + 1].getPressure() - sections[i - 1].getPressure()) / dxCentral;
       }
 
       double A = sec.getArea();
