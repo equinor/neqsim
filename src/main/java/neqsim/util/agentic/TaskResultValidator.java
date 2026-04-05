@@ -117,12 +117,22 @@ public final class TaskResultValidator implements Serializable {
 
     // Validate key_results
     if (root.has("key_results")) {
-      validateKeyResults(root.getAsJsonObject("key_results"), report);
+      JsonElement krElem = root.get("key_results");
+      if (krElem.isJsonObject()) {
+        validateKeyResults(krElem.getAsJsonObject(), report);
+      } else {
+        report.addError("key_results", "'key_results' must be a JSON object");
+      }
     }
 
     // Validate validation section
     if (root.has("validation")) {
-      validateValidationSection(root.getAsJsonObject("validation"), report);
+      JsonElement valElem = root.get("validation");
+      if (valElem.isJsonObject()) {
+        validateValidationSection(valElem.getAsJsonObject(), report);
+      } else {
+        report.addError("validation", "'validation' must be a JSON object");
+      }
     }
 
     // Validate approach

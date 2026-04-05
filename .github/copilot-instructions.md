@@ -1185,6 +1185,19 @@ DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn
 
 # Subsea equipment
 SubseaWell = jneqsim.process.equipment.subsea.SubseaWell
+
+# Power generation
+GasTurbine = jneqsim.process.equipment.powergeneration.GasTurbine
+SteamTurbine = jneqsim.process.equipment.powergeneration.SteamTurbine
+HRSG = jneqsim.process.equipment.powergeneration.HRSG
+CombinedCycleSystem = jneqsim.process.equipment.powergeneration.CombinedCycleSystem
+
+# Heat integration (pinch analysis)
+PinchAnalysis = jneqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis
+
+# Agentic QA classes (use jpype.JClass for these)
+# SimulationQualityGate = jpype.JClass("neqsim.util.agentic.SimulationQualityGate")
+# TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
 ```
 
 ### Getting Results

@@ -159,8 +159,8 @@ public class AgentBenchmarkSuite implements Serializable {
         double actual = submittedResults.get(id);
         double expected = problem.getExpectedValue();
         double tolerance = problem.getTolerancePct();
-        double deviationPct =
-            expected != 0.0 ? Math.abs((actual - expected) / expected) * 100.0 : Math.abs(actual);
+        double deviationPct = expected != 0.0 ? Math.abs((actual - expected) / expected) * 100.0
+            : (actual == 0.0 ? 0.0 : 100.0);
 
         boolean pass = deviationPct <= tolerance;
         String verdict = pass ? "PASS" : "FAIL";

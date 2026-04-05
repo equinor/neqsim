@@ -304,6 +304,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Water Cooler & Reboiler**     | [docs/process/equipment/water_cooler_reboiler.md](process/equipment/water_cooler_reboiler)           | **WaterCooler (IAPWS), ReBoiler for distillation**                                                                  |
 | Mechanical Design               | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design)               | HX mechanical design                                                                                                |
 | **Thermal-Hydraulic Design**    | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design) | **Shell-and-tube thermal design: Gnielinski, Kern, Bell-Delaware, LMTD correction, vibration screening, zone analysis** |
+| **Heat Integration (Pinch Analysis)** | [docs/process/equipment/heat_integration.md](process/equipment/heat_integration) | **PinchAnalysis class: Linnhoff method, composite curves, grand composite curve, minimum utility targeting, HeatStream model** |
 
 ### Chapter 17: Valves & Flow Control
 
@@ -333,7 +334,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Adsorbers (SimpleAdsorber)     | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers)                         | Simplified gas absorption with MDEA                                                                                |
 | **Adsorption Bed (Transient)** | [docs/process/equipment/adsorption_bed.md](process/equipment/adsorption_bed)               | **Fixed-bed adsorption with LDF mass transfer, MTZ, PSA/TSA cycles**                                               |
 | **Mercury Removal Guard Bed**  | [docs/process/mercury_removal.md](process/mercury_removal)                                 | **Chemisorption (PuraSpec), transient bed loading, breakthrough, degradation, mechanical design, cost estimation** |
-| Power Generation               | [docs/process/equipment/power_generation.md](process/equipment/power_generation)           | Gas turbines, fuel cells, renewables                                                                               |
+| Power Generation               | [docs/process/equipment/power_generation.md](process/equipment/power_generation)           | **GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem, FuelCell, renewables (SolarPanel, WindTurbine, WindFarm)** |
 | Diff. Pressure                 | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure) | Orifice plates, flow measurement                                                                                   |
 | Manifolds                      | [docs/process/equipment/manifolds.md](process/equipment/manifolds)                         | Multi-stream routing                                                                                               |
 | **Battery Storage**            | [docs/process/equipment/battery_storage.md](process/equipment/battery_storage)             | **Energy storage systems, charge/discharge cycles, grid integration**                                              |
@@ -773,6 +774,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Agentic Engineering Introduction** | [docs/integration/ai_agentic_programming_intro.md](integration/ai_agentic_programming_intro) | **NEW: Comprehensive introduction to AI agent-assisted engineering with NeqSim** |
 | **Agents & Skills Reference** | [docs/integration/ai_agents_reference.md](integration/ai_agents_reference) | **Complete catalog of all 16 agents and 14 skills with commands and examples** |
 | **Agentic Workflow Examples** | [docs/integration/ai_workflow_examples.md](integration/ai_workflow_examples) | **NEW: Step-by-step walkthroughs of agent-driven engineering workflows** |
+| **Agentic Java Classes** | [docs/integration/ai_agentic_classes.md](integration/ai_agentic_classes) | **TaskResultValidator, SimulationQualityGate, AgentSession, AgentFeedbackCollector — Java infrastructure for AI-driven simulation QA** |
 
 ### Chapter 43: Sustainability & Emissions
 

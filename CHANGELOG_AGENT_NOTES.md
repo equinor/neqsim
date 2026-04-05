@@ -9,6 +9,69 @@
 
 ---
 
+## 2026-04-05 — Heat Integration, Power Generation, Agentic QA Gate
+
+### New Java Classes
+
+| Class | Package | Description |
+|-------|---------|-------------|
+| `PinchAnalysis` | `process.equipment.heatexchanger.heatintegration` | Linnhoff pinch analysis: composite curves, grand composite curve, minimum hot/cold utility targeting, pinch temperature. Accepts hot/cold `HeatStream` objects with MCp and temperature range. |
+| `HeatStream` | `process.equipment.heatexchanger.heatintegration` | Data model for hot/cold process streams. Auto-classifies HOT/COLD from supply vs target temperature. Celsius convenience API, Kelvin internal storage. |
+| `SteamTurbine` | `process.equipment.powergeneration` | Isentropic steam expansion with configurable efficiency. PS/PH flash for outlet conditions. `getPower("kW")` API. |
+| `HRSG` | `process.equipment.powergeneration` | Heat Recovery Steam Generator. Takes hot gas exhaust, calculates steam production rate at specified pressure/temperature using approach temperature and effectiveness. |
+| `CombinedCycleSystem` | `process.equipment.powergeneration` | Integrates GasTurbine + HRSG + SteamTurbine. `getTotalPower("MW")`, `getOverallEfficiency()`, `toJson()`. |
+| `SimulationQualityGate` | `util.agentic` | Automated QA gate for ProcessSystem validation: physical bounds (T > 0 K, P > 0), stream consistency (no NaN/Inf), composition normalization. Returns JSON report with issues, severity, and remediation hints. |
+
+### New Skills (5)
+
+`neqsim-eos-regression`, `neqsim-reaction-engineering`, `neqsim-dynamic-simulation`,
+`neqsim-distillation-design`, `neqsim-electrolyte-systems`.
+
+### New Agents (3)
+
+`reaction.engineering`, `control.system`, `emissions.environmental`.
+
+### Usage — PinchAnalysis
+
+```java
+PinchAnalysis pinch = new PinchAnalysis(10.0); // deltaT_min = 10 C
+pinch.addHotStream("H1", 180, 80, 30);   // 180→80 C, MCp=30 kW/K
+pinch.addColdStream("C1", 30, 140, 20);  // 30→140 C, MCp=20 kW/K
+pinch.run();
+double Qh = pinch.getMinimumHeatingUtility();  // kW
+double Qc = pinch.getMinimumCoolingUtility();   // kW
+double Tpinch = pinch.getPinchTemperatureC();   // °C
+String json = pinch.toJson();
+```
+
+### Usage — SimulationQualityGate
+
+```java
+ProcessSystem process = new ProcessSystem();
+// ... build and run process ...
+process.run();
+SimulationQualityGate gate = new SimulationQualityGate(process);
+gate.validate();
+if (!gate.isPassed()) {
+    System.out.println(gate.toJson());
+}
+```
+
+### Usage — CombinedCycleSystem
+
+```java
+CombinedCycleSystem cc = new CombinedCycleSystem("CC-1", fuelGasStream);
+cc.setCombustionPressure(15.0);
+cc.setSteamPressure(40.0);
+cc.setSteamTemperature(400.0, "C");
+cc.setSteamTurbineEfficiency(0.85);
+cc.run();
+double totalMW = cc.getTotalPower("MW");
+double efficiency = cc.getOverallEfficiency();
+```
+
+---
+
 ## 2026-03-31 — GibbsReactor Jacobian Fix & Solver Performance Improvements
 
 ### Bug Fix — RT-Corrected Off-Diagonal Jacobian (Always On)
