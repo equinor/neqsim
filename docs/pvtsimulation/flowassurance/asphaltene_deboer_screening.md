@@ -51,7 +51,7 @@ The correlation uses empirical boundaries:
 | **Moderate Problem** | Moderate risk | $f_2(\rho) < \Delta P < f_3(\rho)$ |
 | **Severe Problem** | High risk | $\Delta P > f_3(\rho)$ |
 
-Where $f_i(\rho)$ are linear functions of density.
+Where $f_i(\rho)$ are quadratic functions of density: $\Delta P = a \rho^2 + b \rho + c$.
 
 ### Physical Interpretation
 
