@@ -84,7 +84,7 @@ The Quiñones-Cisneros and Firoozabadi (2000) friction theory relates viscosity 
 $$\eta = \eta_0 + \kappa_a P_a + \kappa_{aa} P_a^2 + \kappa_r P_r + \kappa_{rr} P_r^2$$
 
 where:
-- $\eta_0$ is the dilute gas viscosity (Chung correlation)
+- $\eta_0$ is the dilute gas viscosity (Chung low-density term + Wilke mixture rule)
 - $P_a$ is the attractive pressure from EoS
 - $P_r$ is the repulsive pressure from EoS
 - $\kappa$ are friction coefficients (EoS-dependent)
@@ -97,6 +97,12 @@ where:
 - When using SRK or PR EoS
 
 **Automatic EoS detection:** The method automatically selects SRK or PR constants based on the phase type.
+
+**Implementation notes in NeqSim (2026 update):**
+- SRK and PR friction constants are selected automatically.
+- The dilute-gas baseline now uses **Wilke mixing**, which is the standard state-of-practice for mixture dilute viscosities.
+- The Chung correction factor $F_c$ includes acentric factor, dipole moment, and component viscosity correction term to better handle polar species.
+- If friction theory is called for a non-EoS phase, NeqSim falls back to total pressure as repulsive contribution and zero attractive contribution, with a warning in logs.
 
 **Usage:**
 ```java
