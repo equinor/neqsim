@@ -13,16 +13,16 @@ This document summarizes the validation of NeqSim's asphaltene models against pu
 
 ### Primary References
 
-1. **De Boer, R.B., et al. (1995)**  
-   "Screening of Crude Oils for Asphalt Precipitation: Theory, Practice, and the Selection of Inhibitors."  
+1. **De Boer, R.B., et al. (1995)**
+   "Screening of Crude Oils for Asphalt Precipitation: Theory, Practice, and the Selection of Inhibitors."
    SPE Production & Facilities, 10(1), 55-61. **SPE-24987-PA**
 
-2. **Akbarzadeh, K., et al. (2007)**  
-   "Asphaltenes—Problematic but Rich in Potential."  
+2. **Akbarzadeh, K., et al. (2007)**
+   "Asphaltenes—Problematic but Rich in Potential."
    Oilfield Review, 19(2), 22-43.
 
-3. **Hammami, A., et al. (2000)**  
-   "Asphaltene Precipitation from Live Oils: An Experimental Investigation of Onset Conditions and Reversibility."  
+3. **Hammami, A., et al. (2000)**
+   "Asphaltene Precipitation from Live Oils: An Experimental Investigation of Onset Conditions and Reversibility."
    Energy & Fuels, 14(1), 14-18.
 
 ## De Boer Screening Validation
@@ -200,6 +200,39 @@ Just Above (ΔP = 10 bar):
 
 ✅ **Verified:** Minimal risk at/near bubble point
 
+## Flory-Huggins Onset Pressure Validation
+
+### Physics-Based Calibration Results
+
+The `FloryHugginsAsphalteneModel` with `calibrateCorrelation()` was validated against 7 published onset pressure cases. The calibration uses the critical Flory-Huggins interaction parameter $\chi_c$ to set the solubility parameter correlation coefficient $A$ from first principles.
+
+### Literature Comparison (7 Cases)
+
+| Case | Source | Predicted [bar] | Measured [bar] | Error [%] |
+|------|--------|-----------------|----------------|-----------|
+| Hirschberg (1984) | SPE-11202 | 284 | 360 | 21.0 |
+| De Boer (1995) | SPE-24987 | 501 | 580 | 13.7 |
+| Jamaluddin (2002) | SPE-74393 | 198 | 310 | 36.2 |
+| Hammami (2000) | Energy Fuels | 239 | 347 | 31.1 |
+| Hassi-Messaoud | Field data | 387 | 430 | 9.9 |
+| Burke (1990) | SPE | Not detected | 276 | — |
+| Akbarzadeh (2005) | SPE | Not detected | 200 | — |
+
+### Summary Statistics (5 Detected Cases)
+
+| Metric | Value |
+|--------|-------|
+| Cases detected | 5 / 7 (71%) |
+| AAD | 84 bar |
+| AARD | 22.4% |
+| Bias | Consistently under-predicts |
+
+**Key Findings:**
+- The calibrated FH model detects onset in 5 of 7 cases
+- Best performance for light oils with high undersaturation (Hassi-Messaoud: 9.9% error)
+- Under-prediction bias complements De Boer's over-prediction tendency
+- Burke and Akbarzadeh cases not detected due to low API gravity / high asphaltene content
+
 ## CPA Validation
 
 ### Phase Behavior Validation
@@ -267,7 +300,9 @@ mvn test -Dtest="AsphalteneOnsetFittingTest"
    - Decreasing risk with density
    - Minimal risk at bubble point conditions
 
-6. **Recommendation**: Use De Boer for initial screening. For detailed onset pressure predictions, tune CPA model to experimental AOP data using `AsphalteneOnsetFitting`.
+6. **Flory-Huggins with Calibration**: With `calibrateCorrelation()`, achieves 71% detection rate and 22.4% AARD on literature cases. Under-prediction bias complements De Boer's conservative tendency.
+
+7. **Recommendation**: Use De Boer for initial screening. Use calibrated Flory-Huggins for mechanistic onset pressure estimates. For detailed predictions, tune CPA model to experimental AOP data using `AsphalteneOnsetFitting`.
 
 ## References
 
