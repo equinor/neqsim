@@ -44,6 +44,22 @@ jobs:
         run: |
           pip install requests
 
+      - name: Restore previous scan hash
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/scan_hash
+          key: research-scan-hash
+
+      - name: Prepare scan output directory
+        run: |
+          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
+          mkdir -p "$SCAN_DIR"
+          # Copy cached hash into output dir so daily_scan.py can read it
+          if [ -f /tmp/scan_hash/.last_scan_hash ]; then
+            cp /tmp/scan_hash/.last_scan_hash "$SCAN_DIR/.last_scan_hash"
+          fi
+
       - name: Run research scanner
         id: scan
         env:
@@ -60,10 +76,11 @@ jobs:
             --top ${{ inputs.top_n || '15' }} \
             $FORCE_FLAG
 
-      - name: Check if PR should be created
+      - name: Read scan results
         id: check
         run: |
-          PR_META="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/.pr_metadata.json"
+          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
+          PR_META="$SCAN_DIR/.pr_metadata.json"
           if [ -f "$PR_META" ]; then
             CHANGED=$(python3 -c "import json; print(json.load(open('$PR_META'))['changed'])")
             TITLE=$(python3 -c "import json; print(json.load(open('$PR_META'))['title'])")
@@ -73,19 +90,37 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Persist scan hash to cache
+        if: always()
+        run: |
+          mkdir -p /tmp/scan_hash
+          HASH_FILE="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/.last_scan_hash"
+          if [ -f "$HASH_FILE" ]; then
+            cp "$HASH_FILE" /tmp/scan_hash/.last_scan_hash
+          fi
+
+      - name: Remove temp files before PR creation
+        if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
+        run: |
+          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
+          rm -f "$SCAN_DIR/.pr_metadata.json"
+          rm -f "$SCAN_DIR/.last_scan_hash"
+
       - name: Create Pull Request
         if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "research-scan: update paper opportunities"
+          base: master
           branch: research-scan/daily
           delete-branch: true
           title: ${{ steps.check.outputs.title }}
           body-path: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/scout_report.md
+          add-paths: |
+            neqsim-paperlab/papers/_research_scan/opportunities.json
+            neqsim-paperlab/papers/_research_scan/scout_report.md
           labels: |
             paperlab
             research-scan
             automated
-          reviewers: |
-            equinor/neqsim-maintainers
