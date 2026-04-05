@@ -3,6 +3,10 @@
 This guide walks through a complete paper production cycle using the `tpflash_algorithms_2026`
 paper as a worked example. Every step is reproducible from a clean checkout.
 
+**Key idea:** Every paper produced through PaperLab directly improves the NeqSim
+codebase. Benchmarks become permanent tests. Validations calibrate models.
+Algorithm improvements are committed as Java code. The paper is the documentation.
+
 ## Prerequisites
 
 NeqSim is loaded from the **local build** via `devtools/neqsim_dev_setup.py`.
@@ -19,6 +23,24 @@ pip install -r requirements.txt
 
 After editing Java code, recompile with `mvnw.cmd compile` and the next
 Python run will pick up the changes automatically.
+
+## Step 0: Discover Paper Opportunities (Optional but Recommended)
+
+Before choosing a topic, scan the NeqSim codebase for what's most worth publishing:
+
+```bash
+python paperflow.py scan                    # quick scan (last 180 days)
+python paperflow.py scan --literature -v    # with Semantic Scholar novelty check
+python paperflow.py scan --top 5            # show only top 5
+```
+
+This analyzes git history, test coverage, code complexity, and (optionally)
+literature gaps to produce a ranked list of paper opportunities. Each entry
+shows what **NeqSim improvement** the paper would drive — a paper that doesn't
+improve the codebase is not a PaperLab paper.
+
+Results are saved to `papers/_research_scan/opportunities.json` for agent
+consumption. The planner agent can directly use the handoff format.
 
 ## Step 1: Create a Paper Project
 
@@ -277,14 +299,16 @@ Each `iterate` run:
 
 For agent-assisted writing, the agents in `agents/` work with the CLI:
 
-1. `@planner` — Creates plan.json from a topic description
-2. `@literature-reviewer` — Builds refs.bib and literature_map.md
-3. `@benchmark` — Designs and runs experiments
-4. `@scientific-writer` — Drafts sections from artifacts
-5. `@reviewer-response` — Processes reviewer comments
+1. `@research-scout` — Scans NeqSim for paper opportunities that drive code improvement
+2. `@planner` — Creates plan.json from a topic description
+3. `@literature-reviewer` — Builds refs.bib and literature_map.md
+4. `@benchmark` — Designs and runs experiments
+5. `@scientific-writer` — Drafts sections from artifacts
+6. `@reviewer-response` — Processes reviewer comments
 
 The CLI handles the mechanical parts (formatting, auditing, iteration checks).
-The agents handle the creative parts (writing, analysis, literature synthesis).
+The agents handle the creative parts (discovery, writing, analysis, literature synthesis).
+All work feeds back into the NeqSim Java codebase.
 
 ## Full Command Reference
 

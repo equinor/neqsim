@@ -1,6 +1,35 @@
 # Paper Writing Guidelines — Algorithm-First Scientific Papers
 
-## Core Principle
+## Foundational Principle: Papers Improve NeqSim
+
+**PaperLab papers are not just about algorithms — they are the mechanism through
+which NeqSim's codebase is developed, validated, and improved.**
+
+Every paper produced through PaperLab must leave the NeqSim repository measurably
+better than before. The paper process drives:
+
+| What the paper does | What NeqSim gains |
+|--------------------|-------------------|
+| Benchmarks an algorithm across 1000+ cases | New test suite permanently in `src/test/` |
+| Validates against experimental data | Calibrated model with known accuracy bounds |
+| Compares methods (A vs B) | Performance-optimized implementation |
+| Applies to an engineering problem | Documented, tested workflow |
+| Responds to reviewer critique | Bug fixes, edge-case handling, robustness |
+
+Before starting a paper, answer: **"What will be committed to the NeqSim repo when
+this paper is accepted?"** If the answer is "nothing," the paper is out of scope.
+
+### NeqSim Improvement Checklist (per paper)
+
+- [ ] At least one new or improved Java class in `src/main/java/neqsim/`
+- [ ] New JUnit tests validating the paper's claims in `src/test/java/neqsim/`
+- [ ] Benchmark data stored as test fixtures in `src/test/resources/` or `examples/`
+- [ ] Updated JavaDoc on modified classes
+- [ ] Entry in `docs/development/TASK_LOG.md`
+
+---
+
+## Core Writing Principle
 
 **Papers are about algorithms, methods, and scientific contributions — not about NeqSim as a software product.**
 
@@ -164,6 +193,79 @@ python paperflow.py format papers/my_paper/ --journal fluid_phase_equilibria
 
 Validation results show `[OK]`, `[!!]` (fail), or `[??]` (warning) for each check.
 Fix all `[!!]` items before submission. Review `[??]` warnings and address if possible.
+
+---
+
+## Prose Quality Checks
+
+Before submission, analyze your manuscript's writing quality:
+
+```bash
+python paperflow.py check-prose papers/my_paper/
+```
+
+This scores the manuscript on four dimensions (0-100 each):
+
+| Dimension | What it checks | Target |
+|-----------|---------------|--------|
+| **Readability** | Flesch-Kincaid grade level | ≤14 (journal-level) |
+| **Sentence structure** | Sentences over 35 words | <10% long sentences |
+| **Active voice** | Passive constructions detected | <25% passive |
+| **Conciseness** | Hedging words, wordy phrases | Minimal hedging |
+
+Common issues flagged:
+
+- **Passive voice**: "was measured by" → "we measured" / "the sensor measured"
+- **Hedging**: "somewhat", "perhaps", "seems to" — be assertive with evidence
+- **Wordy phrases**: "in order to" → "to"; "due to the fact that" → "because"
+- **Long sentences**: Split sentences over 35 words into two
+
+---
+
+## Bibliography Validation
+
+Validate `refs.bib` completeness and consistency with the manuscript:
+
+```bash
+python paperflow.py validate-bib papers/my_paper/
+```
+
+Checks include:
+- Required fields present for each entry type (title, author, year, journal)
+- No duplicate BibTeX keys
+- All `\cite{key}` references in `paper.md` have matching entries in `refs.bib`
+- All `refs.bib` entries are cited in the manuscript (no orphan references)
+
+---
+
+## Citation Discovery
+
+Find highly-cited papers you may have missed:
+
+```bash
+python paperflow.py suggest-refs papers/my_paper/ --max 10
+```
+
+This extracts search terms from your `plan.json` (title, research questions) and
+`paper.md` (abstract, keywords), queries Semantic Scholar for papers with 10+
+citations, and excludes papers already in `refs.bib`. Copy-paste BibTeX entries
+are provided for each suggestion.
+
+---
+
+## Revision Diff Report
+
+After revising, generate a visual comparison between manuscript versions:
+
+```bash
+python paperflow.py diff papers/my_paper/
+```
+
+Produces a color-coded HTML report showing line-level additions, deletions,
+section changes, and word count statistics. Useful for:
+- Reviewer response letters: showing exactly what changed
+- Self-review: verifying revision completeness
+- Co-author review: quick visual summary of edits
 
 ---
 

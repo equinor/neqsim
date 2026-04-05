@@ -293,3 +293,27 @@ render_word_document("papers/my_paper/", output_dir="output/")
 - No automatic cross-references (`\ref{fig:X}` not resolved)
 - BibTeX parsing is regex-based (covers standard entry types)
 - Complex nested LaTeX (e.g., `\frac{\frac{a}{b}}{c}`) may need manual cleanup
+
+## Pre-Submission Quality Tools
+
+Run these CLI commands **before** generating submission files:
+
+```bash
+# Validate figures meet journal requirements (DPI, format, size)
+python paperflow.py validate-figures papers/<slug>/ --journal <journal_name>
+
+# Validate bibliography completeness and cross-references
+python paperflow.py validate-bib papers/<slug>/
+
+# Check prose readability, passive voice, hedging language
+python paperflow.py check-prose papers/<slug>/
+
+# Discover missing highly-cited references
+python paperflow.py suggest-refs papers/<slug>/ --max 10
+
+# After revision: generate visual diff for reviewer response
+python paperflow.py diff papers/<slug>/
+```
+
+All `[!!]` (fail) items from `validate-figures` and `validate-bib` must be
+resolved before formatting. `check-prose` and `suggest-refs` are advisory.
