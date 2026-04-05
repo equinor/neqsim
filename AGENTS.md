@@ -547,6 +547,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-troubleshooting` | Recovery strategies for convergence failures, zero values, phase issues |
 | `neqsim-input-validation` | Pre-simulation checks (T, P, composition, component names) |
 | `neqsim-regression-baselines` | Baseline management for preventing accuracy drift |
+| `neqsim-standards-lookup` | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking in results.json |
 | `neqsim-agent-handoff` | Structured schemas for multi-agent result passing |
 | `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
 | `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |

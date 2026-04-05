@@ -92,6 +92,28 @@ For each capability, classify as:
 | ❌ **Missing** | Not in NeqSim at all | Write NIP, estimate effort |
 | 🚫 **Out of scope** | Not appropriate for NeqSim | Use external tool or manual calc |
 
+### Step 4b: Build the Standards Requirements Matrix (MANDATORY)
+
+For every equipment type and engineering discipline identified in Step 1, map
+the applicable industry standards using `designdata/standards/standards_index.csv`.
+Load the `neqsim-standards-lookup` skill for the full equipment-to-standards mapping.
+
+```markdown
+| Equipment / Discipline | Applicable Standards | NeqSim CSV Source | Coverage |
+|------------------------|---------------------|-------------------|----------|
+| Separator sizing | NORSOK P-001, API 12J | norsok_standards.csv, api_standards.csv | ✅ |
+| Pipeline wall thickness | DNV-ST-F101, ASME B31.4 | dnv_iso_en_standards.csv, asme_standards.csv | ✅ |
+| Compressor design | API 617 | api_standards.csv | ✅ |
+| Risk assessment | ISO 31000, NORSOK Z-013 | (Java classes) | ✅ |
+| SIL verification | IEC 61508, IEC 61511 | (Java classes) | ✅ |
+```
+
+For each standard, note:
+- Whether NeqSim has design limits in its CSV database
+- Whether a Java class implements the standard's calculation
+- Whether clause-level traceability is available
+- Any gaps requiring manual checking or external tools
+
 ### Step 5: Generate the Implementation Plan
 
 For each ❌ Missing or ⚠️ Partial capability:
@@ -142,6 +164,7 @@ Based on the task requirements, recommend which existing skills should be loaded
 | Skill | Load When |
 |-------|-----------|
 | `neqsim-api-patterns` | Always — provides code recipes |
+| `neqsim-standards-lookup` | Always — maps equipment to applicable standards |
 | `neqsim-input-validation` | When creating fluids or equipment |
 | `neqsim-troubleshooting` | When running simulations that may fail |
 | `neqsim-physics-explanations` | When results need interpretation |
