@@ -5980,4 +5980,66 @@ public class ProcessSystem extends SimulationBaseClass {
     systemDesign.calcDesign();
     return systemDesign;
   }
+
+  // ========================== Automation API ==========================
+
+  /**
+   * Returns an automation facade for this process system. The facade provides a stable,
+   * string-addressable API for scripts and AI agents to interact with the simulation without
+   * navigating Java object hierarchies.
+   *
+   * @return a {@link neqsim.process.automation.ProcessAutomation} facade
+   */
+  public neqsim.process.automation.ProcessAutomation getAutomation() {
+    return new neqsim.process.automation.ProcessAutomation(this);
+  }
+
+  /**
+   * Returns the names of all unit operations in this process system. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getUnitList()}.
+   *
+   * @return unmodifiable list of unit operation names
+   */
+  public List<String> getUnitNames() {
+    return getAutomation().getUnitList();
+  }
+
+  /**
+   * Returns all available variables for the named unit operation. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getVariableList(String)}.
+   *
+   * @param unitName the name of the unit operation
+   * @return list of variable descriptors
+   * @throws IllegalArgumentException if the unit is not found
+   */
+  public List<neqsim.process.automation.SimulationVariable> getVariableList(String unitName) {
+    return getAutomation().getVariableList(unitName);
+  }
+
+  /**
+   * Reads the current value of a simulation variable by its dot-notation address. Convenience
+   * delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getVariableValue(String, String)}.
+   *
+   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
+   * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr"
+   * @return the variable value in the requested unit
+   * @throws IllegalArgumentException if the address cannot be resolved
+   */
+  public double getVariableValue(String address, String unitOfMeasure) {
+    return getAutomation().getVariableValue(address, unitOfMeasure);
+  }
+
+  /**
+   * Sets the value of a simulation input variable. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#setVariableValue(String, double, String)}.
+   *
+   * @param address the dot-notation address, e.g. "Compressor.outletPressure"
+   * @param value the value to set
+   * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C"
+   * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
+   */
+  public void setVariableValue(String address, double value, String unitOfMeasure) {
+    getAutomation().setVariableValue(address, value, unitOfMeasure);
+  }
 }
