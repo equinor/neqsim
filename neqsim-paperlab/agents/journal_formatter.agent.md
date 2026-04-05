@@ -186,6 +186,34 @@ Sincerely,
 - DO ensure references are in the correct format
 - DO flag any compliance issues that cannot be auto-fixed
 
+## Tool Integration — Pre-Formatting Validation
+
+Before formatting, run these validation commands and fix all issues:
+
+### Figure Validation (MANDATORY before formatting)
+
+```bash
+python paperflow.py validate-figures papers/<paper_slug>/ --journal <journal_name>
+```
+
+All figure DPI, format, size, and color-mode checks must pass.
+
+### Bibliography Validation (MANDATORY before formatting)
+
+```bash
+python paperflow.py validate-bib papers/<paper_slug>/
+```
+
+All entries must be complete and cross-referenced with `paper.md`.
+
+### Prose Quality Check (recommended)
+
+```bash
+python paperflow.py check-prose papers/<paper_slug>/
+```
+
+Flag any readability or writing issues to the author before final formatting.
+
 ## Output Location
 
 All files go to `papers/<paper_slug>/submission/`:

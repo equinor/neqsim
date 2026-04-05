@@ -1,9 +1,36 @@
 # NeqSim PaperLab
 
-A structured, iterative workflow for producing rigorous scientific papers
-using NeqSim as the computational engine. Combines CLI automation (benchmarks,
-formatting, auditing, quality checks) with agent-assisted writing for a
-human-in-the-loop paper production process.
+**PaperLab drives NeqSim development through scientific publication.** Every paper
+produced here directly improves NeqSim's codebase — new algorithms are implemented,
+existing models are validated and refined, test coverage is expanded, and
+documentation is hardened. The publication process is the mechanism that turns
+research ideas into production-quality code.
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌──────────────────┐
+│  Identify gap   │ --> │  Implement in   │ --> │  Validate via    │
+│  in NeqSim      │     │  NeqSim Java    │     │  benchmarks &    │
+│  (scan command) │     │  codebase       │     │  paper writing   │
+└─────────────────┘     └─────────────────┘     └──────────────────┘
+       ^                                               │
+       │         Paper accepted = code merged           │
+       └───────────────────────────────────────────────┘
+```
+
+### Why This Matters
+
+| Traditional approach | PaperLab approach |
+|---------------------|-------------------|
+| Write code, then write paper describing it | Paper requirements **drive** what code gets written |
+| Code quality varies | Peer review forces rigorous validation |
+| Tests are afterthoughts | Benchmarks **are** the paper's results |
+| Documentation lags behind | Paper **is** the documentation |
+
+Every benchmark run in PaperLab exercises the NeqSim Java code. Every validation
+against literature data catches bugs. Every reviewer comment improves both the
+paper and the underlying implementation. The `scan` command finds where NeqSim
+has novel capabilities that deserve publication — and where the codebase needs
+improvement to become publishable.
 
 ## Setup
 
@@ -12,21 +39,25 @@ cd neqsim-paperlab
 pip install -r requirements.txt
 ```
 
-## The Core Loop: Edit → Iterate → Fix
+## The Core Loop: Code → Paper → Better Code
 
-PaperLab is designed for **iterative refinement** between human and machine.
-The `iterate` command is the heartbeat:
+PaperLab is designed for **iterative refinement** where editing the paper and
+improving the NeqSim codebase happen together. The `iterate` command is the
+heartbeat:
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐
 │ Edit paper   │ --> │  iterate     │ --> │ Fix issues   │
-│ (human or    │     │  (quality    │     │ (human or    │
-│  agent)      │     │   checks)    │     │  agent)      │
+│ AND improve  │     │  (quality    │     │ in paper AND │
+│  NeqSim code │     │   checks)    │     │  NeqSim code │
 └─────────────┘     └──────────────┘     └─────────────┘
        ^                                        │
        └────────────────────────────────────────┘
                    Repeat until 100%
 ```
+
+After editing Java code, recompile with `mvnw.cmd compile` and the next
+Python/benchmark run picks up changes automatically — no reinstall needed.
 
 ```bash
 # Check manuscript quality — run after every editing session
@@ -45,15 +76,35 @@ python paperflow.py iterate papers/my_paper/ --check all
 ## Architecture
 
 ```
-User idea  →  Planner  →  Literature  →  Algorithm  →  Benchmark  →  Validation  →  Writer  →  Formatter
-                 ↑                           ↑              ↑                            ↑
-            paper_type                  NeqSim Java     cross-val                  claims OR
-            routing                     (via tools)     (EOS/ref)                  results.json
+                          ┌──────────────────────────────────────────────────────┐
+                          │              NeqSim Java Codebase                    │
+                          │  (thermo, process, PVT, standards, mech. design)    │
+                          └──────────┬───────────────────────┬──────────────────┘
+                                     │ scan                  ↑ code improvements
+                                     ↓                       │
+Scout  →  Planner  →  Literature  →  Algorithm  →  Benchmark  →  Validation  →  Writer  →  Formatter
+  ↑          ↑                          ↑             ↑                             ↑
+scan      paper_type               NeqSim Java     cross-val                   claims OR
+command   routing                  (via tools)     (EOS/ref)                   results.json
 ```
 
-**Key principle:** Paper-writing agents never invent results. Every quantitative
-claim must trace to a NeqSim tool output, a stored benchmark result, or a cited
-reference.
+**Key principles:**
+- Paper-writing agents never invent results. Every quantitative claim traces to
+  a NeqSim tool output, a stored benchmark result, or a cited reference.
+- Every paper improves NeqSim. The Algorithm Engineer agent proposes Java code
+  changes; benchmarks exercise the codebase; validation catches bugs; the
+  finished paper becomes documentation for the improved code.
+
+### How Papers Drive NeqSim Development
+
+| Paper Stage | NeqSim Improvement |
+|-------------|-------------------|
+| **Scan** (discover opportunities) | Identifies untested code, missing validations, novel but undocumented features |
+| **Plan** (design study) | Defines what NeqSim needs to compute — gaps become implementation tickets |
+| **Algorithm** (propose improvements) | New Java classes, solver improvements, bug fixes written into `src/main/java/` |
+| **Benchmark** (run experiments) | Exercises NeqSim at scale — catches edge cases and performance issues |
+| **Validation** (verify claims) | Compares NeqSim output to literature/experiments — calibrates model accuracy |
+| **Paper accepted** | Validated code is merged; the paper serves as permanent documentation |
 
 ### Paper Types
 
@@ -69,6 +120,10 @@ The framework supports four paper types, each with adapted stage routing:
 ## Quick Start
 
 ```bash
+# 0. Discover paper opportunities — find what's worth publishing
+python paperflow.py scan                    # scan NeqSim for opportunities
+python paperflow.py scan --literature -v    # with Semantic Scholar + details
+
 # 1. Create a new paper project (specify paper_type!)
 python paperflow.py new "Reactive Gibbs Convergence" \
     --journal fluid_phase_equilibria \
@@ -133,6 +188,7 @@ neqsim-paperlab/
 │   ├── iecr.yaml
 │   └── aiche.yaml
 ├── agents/                       # Agent definitions (VS Code Copilot)
+│   ├── research_scout.agent.md
 │   ├── planner.agent.md
 │   ├── literature_reviewer.agent.md
 │   ├── algorithm_engineer.agent.md
@@ -158,6 +214,8 @@ neqsim-paperlab/
 │   ├── prose_quality.py            # Readability scoring, passive voice, hedging (textstat)
 │   ├── citation_discovery.py       # Suggest missing refs via Semantic Scholar API
 │   ├── revision_diff.py            # Visual HTML diff between manuscript revisions
+│   ├── research_scanner.py         # Codebase paper opportunity scanner
+│   ├── daily_scan.py               # CI script for automated daily scan + PR
 │   ├── paper_renderer.py           # LaTeX rendering
 │   ├── word_renderer.py            # Word/OMML rendering
 │   ├── claim_tracer.py             # Evidence audit (all paper types)
@@ -189,6 +247,7 @@ neqsim-paperlab/
 | Agent | Purpose | Input | Output |
 |-------|---------|-------|--------|
 | **Planner** | Turns idea → research plan | Topic, journal, angle | plan.json, outline |
+| **Research Scout** | Discovers paper opportunities in codebase | NeqSim repo, git history | opportunities.json, scout_report.md |
 | **Literature Reviewer** | Builds technical context | Topic, keywords | literature_map.md, gap_statement |
 | **Algorithm Engineer** | Proposes code changes | NeqSim source, plan | Pseudocode, impl tickets |
 | **Benchmark** | Runs experiment suites | Config, algorithm version | Results, metrics, failures |
@@ -201,6 +260,7 @@ neqsim-paperlab/
 
 | Command | Description | Key Flags |
 |---------|-------------|-----------|
+| `scan` | Discover paper opportunities in NeqSim codebase | `--since`, `--top`, `--literature`, `--verbose` |
 | `new` | Create paper project from template | `--journal`, `--topic` |
 | `benchmark` | Run NeqSim benchmark suite | |
 | `figures` | Generate figures (auto-runs generate_figures.py) | |
@@ -216,6 +276,36 @@ neqsim-paperlab/
 | `diff` | Visual diff between manuscript revisions | `--revision`, `--old`, `--new` |
 | `revise` | Create revision workspace from reviewer comments | `--comments` (path to comments file) |
 | `status` | Show project completion status | |
+
+## Automated Daily Scan (CI/CD)
+
+The research scanner runs automatically every day via GitHub Actions and opens
+a PR when new paper opportunities are found.
+
+**How it works:**
+
+1. `.github/workflows/research-scan.yml` triggers daily at 06:00 UTC
+2. `neqsim-paperlab/tools/daily_scan.py` runs the scanner on the full repo
+3. Results are written to `papers/_research_scan/` (JSON + markdown report)
+4. If opportunities changed since the last scan, a PR is created on branch
+   `research-scan/daily` with the full `scout_report.md` as the PR body
+
+**Manual trigger:**
+
+```bash
+# From GitHub: Actions → Daily Research Scan → Run workflow
+# Or use the gh CLI:
+gh workflow run research-scan.yml -f force_pr=true -f since_days=90
+```
+
+**What the PR contains:**
+
+- `scout_report.md` — Ranked list of paper opportunities with details
+- `opportunities.json` — Machine-readable results for further processing
+
+**Change detection:** A content hash tracks whether opportunities changed
+between scans. PRs are only created when new or modified opportunities appear
+(or when `force_pr=true` is set).
 
 ## Skills
 

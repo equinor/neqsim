@@ -1,0 +1,91 @@
+name: Daily Research Scan
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_pr:
+        description: 'Create PR even if no changes detected'
+        required: false
+        default: 'false'
+        type: boolean
+      since_days:
+        description: 'Look-back window in days'
+        required: false
+        default: '180'
+        type: string
+      top_n:
+        description: 'Max opportunities to report'
+        required: false
+        default: '15'
+        type: string
+
+jobs:
+  scan:
+    name: Scan NeqSim for paper opportunities
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Full history needed for git log analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Run research scanner
+        id: scan
+        env:
+          NEQSIM_REPO_ROOT: ${{ github.workspace }}
+          SCAN_OUTPUT_DIR: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan
+        run: |
+          cd ${{ github.workspace }}
+          FORCE_FLAG=""
+          if [ "${{ inputs.force_pr }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          python neqsim-paperlab/tools/daily_scan.py \
+            --since ${{ inputs.since_days || '180' }} \
+            --top ${{ inputs.top_n || '15' }} \
+            $FORCE_FLAG
+
+      - name: Check if PR should be created
+        id: check
+        run: |
+          PR_META="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/.pr_metadata.json"
+          if [ -f "$PR_META" ]; then
+            CHANGED=$(python3 -c "import json; print(json.load(open('$PR_META'))['changed'])")
+            TITLE=$(python3 -c "import json; print(json.load(open('$PR_META'))['title'])")
+            echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+            echo "title=$TITLE" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "research-scan: update paper opportunities"
+          branch: research-scan/daily
+          delete-branch: true
+          title: ${{ steps.check.outputs.title }}
+          body-path: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/scout_report.md
+          labels: |
+            paperlab
+            research-scan
+            automated
+          reviewers: |
+            equinor/neqsim-maintainers

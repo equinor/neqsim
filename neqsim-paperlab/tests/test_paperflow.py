@@ -869,3 +869,433 @@ class TestDiffCLI:
         paperflow.cmd_diff(Args())
         output = capsys.readouterr().out
         assert "REVISION DIFF" in output
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Research Scanner
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestResearchScanner:
+    """Tests for the research_scanner tool."""
+
+    def test_classify_domain_thermo(self):
+        """Classify a thermo file to the correct domain."""
+        from research_scanner import _classify_domain
+        domain = _classify_domain("src/main/java/neqsim/thermo/system/SystemSrkEos.java")
+        assert domain == "Thermodynamic Models"
+
+    def test_classify_domain_pipeline(self):
+        """Classify a pipeline file to the correct domain."""
+        from research_scanner import _classify_domain
+        domain = _classify_domain("src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java")
+        assert domain == "Multiphase Pipeline Flow"
+
+    def test_classify_domain_unknown(self):
+        """Unknown paths get General domain."""
+        from research_scanner import _classify_domain
+        domain = _classify_domain("src/main/java/neqsim/util/SomeThing.java")
+        assert domain == "General"
+
+    def test_classify_paper_type_method(self):
+        """Classify as method paper when method keywords dominate."""
+        from research_scanner import _classify_paper_type
+        ptype = _classify_paper_type(
+            "GibbsSolver",
+            ["Fix Newton convergence", "Add adaptive algorithm stepping"],
+        )
+        assert ptype == "method"
+
+    def test_classify_paper_type_application(self):
+        """Classify as application paper when application keywords dominate."""
+        from research_scanner import _classify_paper_type
+        ptype = _classify_paper_type(
+            "PipelineCostReport",
+            ["Add pipeline cost estimation", "Subsea field design report"],
+        )
+        assert ptype == "application"
+
+    def test_generate_title(self):
+        """Title generation produces readable titles."""
+        from research_scanner import _generate_title
+        title = _generate_title("GibbsReactor", "Chemical Reaction Equilibria", "method")
+        assert "Gibbs" in title
+        assert "Chemical Reaction" in title
+
+    def test_novelty_score_range(self):
+        """Novelty score stays in 0-100 range."""
+        from research_scanner import _compute_novelty_score
+        score = _compute_novelty_score(
+            "TestClass", "Thermodynamic Models",
+            line_count=600, has_test=True, recent_commits=8,
+            literature_hits=0,
+        )
+        assert 0 <= score <= 100
+        assert score >= 50  # should be high for tested, active, no literature
+
+    def test_novelty_score_low_for_trivial(self):
+        """Trivial classes get low novelty scores."""
+        from research_scanner import _compute_novelty_score
+        score = _compute_novelty_score(
+            "TinyClass", "General",
+            line_count=20, has_test=False, recent_commits=0,
+            literature_hits=10,
+        )
+        assert score < 30
+
+    def test_estimate_effort(self):
+        """Effort estimation returns valid levels."""
+        from research_scanner import _estimate_effort
+        assert _estimate_effort(200, True, 3) == "low"
+        assert _estimate_effort(600, True, 1) == "medium"
+        assert _estimate_effort(1200, False, 0) == "high"
+        assert _estimate_effort(2000, False, 0) == "very_high"
+
+    def test_effort_weeks_mapping(self):
+        """Effort weeks mapping returns expected values."""
+        from research_scanner import _effort_weeks
+        assert _effort_weeks("low") == 4
+        assert _effort_weeks("medium") == 8
+        assert _effort_weeks("high") == 12
+        assert _effort_weeks("very_high") == 16
+
+    def test_infer_code_improvement_untested(self):
+        """Untested classes get test coverage recommendation."""
+        from research_scanner import _infer_code_improvement
+        cls_info = {
+            "class_name": "BigSolver",
+            "has_test": False,
+            "recent_commits": 3,
+            "line_count": 600,
+            "domain": "Thermodynamic Models",
+        }
+        improvements = _infer_code_improvement(cls_info, "method")
+        assert any("test" in imp.lower() for imp in improvements)
+        assert any("calibrate" in imp.lower() or "validate" in imp.lower()
+                    for imp in improvements)
+
+    def test_infer_code_improvement_always_nonempty(self):
+        """Every opportunity gets at least one improvement suggestion."""
+        from research_scanner import _infer_code_improvement
+        for ptype in ("method", "comparative", "characterization", "application"):
+            cls_info = {
+                "class_name": "X",
+                "has_test": True,
+                "recent_commits": 0,
+                "line_count": 100,
+                "domain": "General",
+            }
+            improvements = _infer_code_improvement(cls_info, ptype)
+            assert len(improvements) >= 1, f"No improvements for {ptype}"
+
+    def test_opportunity_has_neqsim_improvement(self):
+        """Each opportunity in scan output has neqsim_improvement field."""
+        from research_scanner import scan_opportunities
+        repo_root = str(PAPERLAB_ROOT.parent)
+        report = scan_opportunities(
+            repo_root, since_days=365, top_n=3, check_literature=False,
+        )
+        for opp in report["opportunities"]:
+            assert "neqsim_improvement" in opp, "Missing neqsim_improvement"
+            assert isinstance(opp["neqsim_improvement"], list)
+            assert len(opp["neqsim_improvement"]) >= 1
+
+    def test_count_class_lines(self, tmp_path):
+        """Line counting skips blanks and comments."""
+        from research_scanner import _count_class_lines
+        java_file = tmp_path / "Test.java"
+        java_file.write_text(
+            "package test;\n"
+            "\n"
+            "// A comment line\n"
+            "public class Test {\n"
+            "    public void run() {}\n"
+            "}\n"
+        )
+        count = _count_class_lines(str(java_file))
+        assert count == 4  # package, class decl, method, closing brace
+
+    def test_extract_class_summary(self, tmp_path):
+        """Extracts class name and method count."""
+        from research_scanner import _extract_class_summary
+        java_file = tmp_path / "MyClass.java"
+        java_file.write_text(
+            "public class MyClass {\n"
+            "    public void method1() {}\n"
+            "    public int method2() { return 0; }\n"
+            "    private void helper() {}\n"
+            "}\n"
+        )
+        name, methods = _extract_class_summary(str(java_file))
+        assert name == "MyClass"
+        assert methods >= 2  # at least 2 public methods
+
+    def test_scan_on_real_repo(self):
+        """Full scan runs against the actual NeqSim repo without error."""
+        from research_scanner import scan_opportunities
+        repo_root = str(PAPERLAB_ROOT.parent)
+        report = scan_opportunities(
+            repo_root, since_days=30, top_n=5, check_literature=False,
+        )
+        assert "metadata" in report
+        assert "summary" in report
+        assert "opportunities" in report
+        assert isinstance(report["opportunities"], list)
+        assert report["metadata"]["total_classes_scanned"] > 0
+
+    def test_scan_report_structure(self):
+        """Scan report has all required fields."""
+        from research_scanner import scan_opportunities
+        repo_root = str(PAPERLAB_ROOT.parent)
+        report = scan_opportunities(
+            repo_root, since_days=30, top_n=3, check_literature=False,
+        )
+        meta = report["metadata"]
+        assert "scan_date" in meta
+        assert "total_classes_scanned" in meta
+        assert "tested_classes" in meta
+
+        summary = report["summary"]
+        assert "total_opportunities" in summary
+        assert "by_domain" in summary
+        assert "by_paper_type" in summary
+
+    def test_opportunity_fields(self):
+        """Each opportunity has required fields."""
+        from research_scanner import scan_opportunities
+        repo_root = str(PAPERLAB_ROOT.parent)
+        report = scan_opportunities(
+            repo_root, since_days=365, top_n=3, check_literature=False,
+        )
+        if report["opportunities"]:
+            opp = report["opportunities"][0]
+            assert "title" in opp
+            assert "class_name" in opp
+            assert "domain" in opp
+            assert "paper_type" in opp
+            assert opp["paper_type"] in ("method", "comparative", "characterization", "application")
+            assert "score" in opp
+            assert 0 <= opp["score"] <= 100
+            assert "readiness" in opp
+            assert opp["readiness"] in ("ready", "needs_validation", "needs_development")
+            assert "effort" in opp
+            assert "suggested_journals" in opp
+            assert "evidence" in opp
+            assert "source_path" in opp
+
+    def test_print_scan_report_runs(self, capsys):
+        """Pretty-printer does not crash."""
+        from research_scanner import print_scan_report
+        report = {
+            "metadata": {
+                "scan_date": "2026-07-03",
+                "total_classes_scanned": 100,
+                "classes_with_recent_changes": 30,
+                "tested_classes": 50,
+                "literature_checked": False,
+            },
+            "summary": {
+                "total_opportunities": 2,
+                "ready_count": 1,
+                "by_domain": {"Thermodynamic Models": 1, "PVT & Reservoir Fluids": 1},
+                "by_paper_type": {"method": 1, "characterization": 1},
+            },
+            "opportunities": [
+                {
+                    "title": "Test Opportunity Alpha",
+                    "class_name": "AlphaClass",
+                    "domain": "Thermodynamic Models",
+                    "paper_type": "method",
+                    "score": 85,
+                    "readiness": "ready",
+                    "effort": "medium",
+                    "effort_weeks": 8,
+                    "suggested_journals": ["fluid_phase_equilibria"],
+                    "evidence": {
+                        "line_count": 500, "method_count": 12,
+                        "has_test": True, "recent_commits": 5,
+                        "recent_insertions": 200, "last_changed": "2026-06-01",
+                        "authors": ["Dev"],
+                    },
+                    "source_path": "src/main/java/neqsim/thermo/AlphaClass.java",
+                    "commit_highlights": ["Fix convergence"],
+                },
+            ],
+        }
+        print_scan_report(report)
+        output = capsys.readouterr().out
+        assert "Research Opportunity Scanner" in output
+        assert "Alpha" in output
+
+
+class TestScanCLI:
+    """Test the scan CLI command integration."""
+
+    def test_scan_command_runs(self, capsys):
+        """scan command runs against real repo."""
+        import paperflow
+
+        class Args:
+            since = 30
+            top = 3
+            literature = False
+            verbose = False
+            output = None
+            repo = str(PAPERLAB_ROOT.parent)
+
+        paperflow.cmd_scan(Args())
+        output = capsys.readouterr().out
+        assert "Research Opportunity Scanner" in output
+
+
+class TestMarkdownReport:
+    """Test the markdown report generator."""
+
+    def test_generate_markdown_report_empty(self):
+        """Empty report produces valid markdown."""
+        from research_scanner import generate_markdown_report
+        report = {
+            "metadata": {
+                "scan_date": "2026-01-15",
+                "total_classes_scanned": 0,
+                "classes_with_recent_changes": 0,
+                "tested_classes": 0,
+                "literature_checked": False,
+            },
+            "summary": {
+                "total_opportunities": 0,
+                "ready_count": 0,
+                "top_score": 0,
+                "by_domain": {},
+                "by_paper_type": {},
+            },
+            "opportunities": [],
+        }
+        md = generate_markdown_report(report)
+        assert "# NeqSim Research Opportunity Report" in md
+        assert "No opportunities found" in md
+
+    def test_generate_markdown_report_with_opportunities(self):
+        """Report with opportunities has table and detail sections."""
+        from research_scanner import generate_markdown_report
+        report = {
+            "metadata": {
+                "scan_date": "2026-01-15",
+                "total_classes_scanned": 100,
+                "classes_with_recent_changes": 10,
+                "tested_classes": 50,
+                "literature_checked": False,
+            },
+            "summary": {
+                "total_opportunities": 1,
+                "ready_count": 1,
+                "top_score": 75,
+                "by_domain": {"Thermodynamic Models": 1},
+                "by_paper_type": {"method": 1},
+            },
+            "opportunities": [{
+                "title": "A Novel Flash Approach for Thermo",
+                "class_name": "FlashCalculator",
+                "domain": "Thermodynamic Models",
+                "paper_type": "method",
+                "score": 75,
+                "readiness": "ready",
+                "effort": "medium",
+                "effort_weeks": 8,
+                "suggested_journals": ["fluid_phase_equilibria"],
+                "neqsim_improvement": ["Improve solver implementation"],
+                "evidence": {
+                    "line_count": 400,
+                    "method_count": 12,
+                    "has_test": True,
+                    "recent_commits": 5,
+                    "recent_insertions": 200,
+                    "last_changed": "2026-01-10",
+                    "authors": ["dev"],
+                },
+                "source_path": "src/main/java/neqsim/thermo/FlashCalculator.java",
+                "commit_highlights": ["Improve convergence"],
+            }],
+        }
+        md = generate_markdown_report(report)
+        assert "## Top Opportunities" in md
+        assert "## Detailed Descriptions" in md
+        assert "FlashCalculator" in md
+        assert "Improve solver implementation" in md
+        assert "## Domain Breakdown" in md
+
+    def test_markdown_report_is_valid_markdown(self):
+        """Report contains proper markdown table delimiters."""
+        from research_scanner import generate_markdown_report
+        report = {
+            "metadata": {
+                "scan_date": "2026-01-15",
+                "total_classes_scanned": 10,
+                "classes_with_recent_changes": 2,
+                "tested_classes": 5,
+                "literature_checked": False,
+            },
+            "summary": {
+                "total_opportunities": 1,
+                "ready_count": 0,
+                "top_score": 40,
+                "by_domain": {"General": 1},
+                "by_paper_type": {"application": 1},
+            },
+            "opportunities": [{
+                "title": "Test Title",
+                "class_name": "TestClass",
+                "domain": "General",
+                "paper_type": "application",
+                "score": 40,
+                "readiness": "needs_validation",
+                "effort": "low",
+                "effort_weeks": 4,
+                "suggested_journals": ["computers_chem_eng"],
+                "neqsim_improvement": ["Add tests"],
+                "evidence": {
+                    "line_count": 100,
+                    "method_count": 5,
+                    "has_test": False,
+                    "recent_commits": 1,
+                    "recent_insertions": 50,
+                    "last_changed": "2026-01-01",
+                    "authors": [],
+                },
+                "source_path": "src/main/java/neqsim/TestClass.java",
+                "commit_highlights": [],
+            }],
+        }
+        md = generate_markdown_report(report)
+        # Check table separators exist
+        assert "|---|" in md
+        assert "| # | Score" in md
+
+
+class TestDailyScan:
+    """Test the daily_scan CI helper."""
+
+    def test_content_hash_deterministic(self):
+        """Same opportunities produce same hash."""
+        sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+        from daily_scan import _content_hash
+        report = {"opportunities": [
+            {"class_name": "A", "score": 50, "readiness": "ready"},
+            {"class_name": "B", "score": 30, "readiness": "needs_validation"},
+        ]}
+        h1 = _content_hash(report)
+        h2 = _content_hash(report)
+        assert h1 == h2
+        assert len(h1) == 16
+
+    def test_content_hash_changes_with_score(self):
+        """Score change produces different hash."""
+        from daily_scan import _content_hash
+        r1 = {"opportunities": [{"class_name": "A", "score": 50, "readiness": "ready"}]}
+        r2 = {"opportunities": [{"class_name": "A", "score": 60, "readiness": "ready"}]}
+        assert _content_hash(r1) != _content_hash(r2)
+
+    def test_content_hash_empty(self):
+        """Empty opportunities list still produces a hash."""
+        from daily_scan import _content_hash
+        h = _content_hash({"opportunities": []})
+        assert len(h) == 16

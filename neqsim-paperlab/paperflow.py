@@ -1112,6 +1112,35 @@ def cmd_diff(args):
     print_diff_summary(report)
 
 
+def cmd_scan(args):
+    """Scan the NeqSim codebase for scientific paper opportunities."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from research_scanner import scan_opportunities, print_scan_report
+
+    # Resolve repo root: two levels up from paperlab
+    repo_root = args.repo or str(PAPERLAB_ROOT.parent)
+
+    report = scan_opportunities(
+        repo_root,
+        since_days=args.since,
+        top_n=args.top,
+        check_literature=args.literature,
+    )
+
+    print_scan_report(report, verbose=args.verbose)
+
+    # Optionally save to file
+    output_path = args.output
+    if not output_path:
+        scan_dir = PAPERS_DIR / "_research_scan"
+        scan_dir.mkdir(parents=True, exist_ok=True)
+        output_path = str(scan_dir / "opportunities.json")
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, default=str)
+    print(f"\n  Saved to: {output_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="paperflow — NeqSim scientific paper production",
@@ -1209,6 +1238,20 @@ Examples:
     p_diff.add_argument("--old", help="Explicit path to old version")
     p_diff.add_argument("--new", help="Explicit path to new version")
 
+    # scan — discover paper opportunities in the NeqSim codebase
+    p_scan = subparsers.add_parser("scan",
+                                    help="Scan NeqSim codebase for paper opportunities")
+    p_scan.add_argument("--since", type=int, default=180,
+                        help="Look-back window in days (default: 180)")
+    p_scan.add_argument("--top", type=int, default=15,
+                        help="Max opportunities to show (default: 15)")
+    p_scan.add_argument("--literature", action="store_true",
+                        help="Cross-check Semantic Scholar for novelty")
+    p_scan.add_argument("--verbose", "-v", action="store_true",
+                        help="Show detailed info for each opportunity")
+    p_scan.add_argument("--output", help="Custom output path for opportunities.json")
+    p_scan.add_argument("--repo", help="Path to NeqSim repo root (default: auto-detect)")
+
     args = parser.parse_args()
 
     if args.command == "new":
@@ -1241,6 +1284,8 @@ Examples:
         cmd_suggest_refs(args)
     elif args.command == "diff":
         cmd_diff(args)
+    elif args.command == "scan":
+        cmd_scan(args)
     else:
         parser.print_help()
 

@@ -116,6 +116,30 @@ All files go to `papers/<paper_slug>/`:
 - `related_work_table.csv`
 - `refs.bib`
 
+## Tool Integration
+
+### Citation Discovery (after building initial refs.bib)
+
+After building the initial reference list, run the citation discovery tool to
+find highly-cited papers you may have missed:
+
+```bash
+python paperflow.py suggest-refs papers/<paper_slug>/ --max 15
+```
+
+This queries Semantic Scholar using your plan.json title and research questions.
+Review the suggestions and add relevant entries to `refs.bib`.
+
+### Bibliography Validation (before handing off to writer)
+
+Before passing `refs.bib` to the scientific writer, validate it:
+
+```bash
+python paperflow.py validate-bib papers/<paper_slug>/
+```
+
+Fix any missing fields (title, author, year, journal) or duplicate keys.
+
 ## Quality Checklist
 
 - [ ] At least 20 relevant references identified

@@ -282,6 +282,31 @@ Before finalizing any figure:
 - [ ] **Inward tick marks**: Cleaner look, standard for Elsevier
 - [ ] **Short IDs for many points**: Use A1/B1/C1 with caption legend
 
+### Automated Validation
+
+After generating all figures, run the figure validator:
+
+```bash
+python paperflow.py validate-figures papers/<paper_slug>/ --journal <journal_name>
+```
+
+This checks DPI, file format, minimum dimensions, and color mode against
+the journal profile. Fix all `[!!]` items before submission.
+
+### Alternative: Use `figure_style.py` Helper
+
+Instead of manual rcParams setup, you can use the `tools/figure_style.py`
+module which wraps SciencePlots with journal presets:
+
+```python
+from tools.figure_style import apply_style, save_fig, PALETTE, FIG_SINGLE
+
+apply_style("elsevier")                    # or "ieee", "nature", "acs"
+fig, ax = plt.subplots(figsize=FIG_SINGLE) # 3.5 × 2.8 inches
+ax.plot(x, y, color=PALETTE[0])
+save_fig(fig, "figures/fig01_results.png", dpi=300)
+```
+
 ## Common Mistakes Caught from CPA Paper
 
 1. **Rotated bar labels**: Never rotate > 30°. Use short IDs instead.
