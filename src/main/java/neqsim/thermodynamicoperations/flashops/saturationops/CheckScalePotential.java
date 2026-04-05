@@ -90,6 +90,14 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
             + Double.parseDouble(dataSet.getString("Kspwater5")) / (temperatureK * temperatureK);
         ksp = Math.exp(lnKsp);
 
+        // Read molar volume change for pressure correction (cm³/mol)
+        double vDelta = 0.0;
+        try {
+          vDelta = Double.parseDouble(dataSet.getString("Vdelta"));
+        } catch (Exception ex2) {
+          vDelta = 0.0;
+        }
+
         if (saltName.equals("NaCl")) {
           // NaCl Ksp correlation using temperature in Kelvin
           // Fitted to CRC Handbook solubility data assuming γ± ≈ 1 at saturation:
@@ -107,13 +115,11 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
           ksp = Math.pow(10.0, log10Ksp);
         }
         if (saltName.equals("FeCO3")) {
-          // FeCO3 (siderite) Ksp correlation
-          // Literature value at 25°C: Ksp = 3.13e-11 (log10 = -10.50)
-          // Temperature dependence based on Greenberg & Tomson (1992)
-          // Using simple form: log10(Ksp) = A/T + B + C*log10(T)
-          // Fitted to give Ksp = 3.13e-11 at 25°C
-          // For siderite, Ksp decreases with temperature
-          double log10Ksp = -10.50; // Constant at 25°C value for now
+          // FeCO3 (siderite) Ksp correlation from Greenberg & Tomson (1992)
+          // log10(Ksp) = -59.3498 - 0.041377*T + 2.1963/T + 24.5724*log10(T) + 2.518e-5*T^2
+          // T in Kelvin. At 25°C (298.15 K): gives log10Ksp ≈ -10.89
+          double log10Ksp = -59.3498 - 0.041377 * temperatureK + 2.1963 / temperatureK
+              + 24.5724 * Math.log10(temperatureK) + 2.518e-5 * temperatureK * temperatureK;
           ksp = Math.pow(10.0, log10Ksp);
         }
         if (saltName.equals("FeS")) {
@@ -124,6 +130,16 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
                   * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
 
           ksp *= h3ox;
+        }
+
+        // Pressure correction: ln(Ksp(P)/Ksp(P0)) = -ΔV°*(P-P0)/(R*T)
+        // ΔV° in cm³/mol, P in bara, R = 83.1446 cm³·bar/(mol·K)
+        double pressureBara = system.getPhase(phaseNumber).getPressure();
+        if (Math.abs(vDelta) > 1e-10 && pressureBara > 1.013) {
+          double R_cm3bar = 83.1446; // cm³·bar/(mol·K)
+          double deltaPbar = pressureBara - 1.01325;
+          double lnCorrection = -vDelta * deltaPbar / (R_cm3bar * temperatureK);
+          ksp *= Math.exp(lnCorrection);
         }
 
         if (system.getPhase(phaseNumber).hasComponent(name1)

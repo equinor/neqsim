@@ -1,5 +1,7 @@
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGePitzer;
@@ -15,10 +17,24 @@ import neqsim.util.exception.TooManyIterationsException;
 public class PhasePitzer extends PhaseGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(PhasePitzer.class);
 
   private double[][] beta0;
   private double[][] beta1;
   private double[][] cphi;
+
+  /** T-dependent coefficients for beta0: beta0(T) = beta0_25 + beta0_T1/T + beta0_T2*T. */
+  private double[][] beta0T1;
+  private double[][] beta0T2;
+  /** T-dependent coefficients for beta1. */
+  private double[][] beta1T1;
+  private double[][] beta1T2;
+  /** T-dependent coefficients for Cphi. */
+  private double[][] cphiT1;
+  private double[][] cphiT2;
+  /** Whether parameters have been loaded from database. */
+  private boolean parametersLoaded = false;
 
   /** Constructor for PhasePitzer. */
   public PhasePitzer() {
@@ -28,6 +44,12 @@ public class PhasePitzer extends PhaseGE {
     beta0 = new double[max][max];
     beta1 = new double[max][max];
     cphi = new double[max][max];
+    beta0T1 = new double[max][max];
+    beta0T2 = new double[max][max];
+    beta1T1 = new double[max][max];
+    beta1T2 = new double[max][max];
+    cphiT1 = new double[max][max];
+    cphiT2 = new double[max][max];
   }
 
   /** {@inheritDoc} */
@@ -89,6 +111,131 @@ public class PhasePitzer extends PhaseGE {
     beta1[j][i] = b1;
     cphi[i][j] = c;
     cphi[j][i] = c;
+  }
+
+  /**
+   * Loads Pitzer binary parameters from the PitzerParameters database table.
+   *
+   * <p>
+   * Matches ion names to components present in this phase and sets beta0, beta1, Cphi and their
+   * temperature-dependent coefficients.
+   * </p>
+   */
+  public void loadParametersFromDatabase() {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
+      while (dataSet.next()) {
+        String ion1Name = dataSet.getString("ion1").trim();
+        String ion2Name = dataSet.getString("ion2").trim();
+
+        int idx1 = -1;
+        int idx2 = -1;
+        for (int k = 0; k < numberOfComponents; k++) {
+          String compName = getComponent(k).getComponentName();
+          if (compName.equals(ion1Name)) {
+            idx1 = k;
+          }
+          if (compName.equals(ion2Name)) {
+            idx2 = k;
+          }
+        }
+        if (idx1 < 0 || idx2 < 0) {
+          continue;
+        }
+
+        double b0 = dataSet.getDouble("beta0_25");
+        double b1 = dataSet.getDouble("beta1_25");
+        double cp = dataSet.getDouble("Cphi_25");
+        setBinaryParameters(idx1, idx2, b0, b1, cp);
+
+        double b0t1 = dataSet.getDouble("beta0_T1");
+        double b0t2 = dataSet.getDouble("beta0_T2");
+        double b1t1 = dataSet.getDouble("beta1_T1");
+        double b1t2 = dataSet.getDouble("beta1_T2");
+        double ct1 = dataSet.getDouble("Cphi_T1");
+        double ct2 = dataSet.getDouble("Cphi_T2");
+
+        beta0T1[idx1][idx2] = b0t1;
+        beta0T1[idx2][idx1] = b0t1;
+        beta0T2[idx1][idx2] = b0t2;
+        beta0T2[idx2][idx1] = b0t2;
+        beta1T1[idx1][idx2] = b1t1;
+        beta1T1[idx2][idx1] = b1t1;
+        beta1T2[idx1][idx2] = b1t2;
+        beta1T2[idx2][idx1] = b1t2;
+        cphiT1[idx1][idx2] = ct1;
+        cphiT1[idx2][idx1] = ct1;
+        cphiT2[idx1][idx2] = ct2;
+        cphiT2[idx2][idx1] = ct2;
+      }
+      parametersLoaded = true;
+    } catch (Exception ex) {
+      logger.error("Failed to load Pitzer parameters from database", ex);
+    }
+  }
+
+  /**
+   * Get T-dependent beta0 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param TK temperature in Kelvin
+   * @return beta0 at temperature T
+   */
+  public double getBeta0ij(int i, int j, double TK) {
+    double b0_25 = beta0[i][j];
+    double t1 = beta0T1[i][j];
+    double t2 = beta0T2[i][j];
+    if (Math.abs(t1) < 1e-20 && Math.abs(t2) < 1e-20) {
+      return b0_25;
+    }
+    // beta0(T) = beta0_25 + t1*(1/T - 1/298.15) + t2*(T - 298.15)
+    return b0_25 + t1 * (1.0 / TK - 1.0 / 298.15) + t2 * (TK - 298.15);
+  }
+
+  /**
+   * Get T-dependent beta1 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param TK temperature in Kelvin
+   * @return beta1 at temperature T
+   */
+  public double getBeta1ij(int i, int j, double TK) {
+    double b1_25 = beta1[i][j];
+    double t1 = beta1T1[i][j];
+    double t2 = beta1T2[i][j];
+    if (Math.abs(t1) < 1e-20 && Math.abs(t2) < 1e-20) {
+      return b1_25;
+    }
+    return b1_25 + t1 * (1.0 / TK - 1.0 / 298.15) + t2 * (TK - 298.15);
+  }
+
+  /**
+   * Get T-dependent Cphi parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param TK temperature in Kelvin
+   * @return Cphi at temperature T
+   */
+  public double getCphiij(int i, int j, double TK) {
+    double c_25 = cphi[i][j];
+    double t1 = cphiT1[i][j];
+    double t2 = cphiT2[i][j];
+    if (Math.abs(t1) < 1e-20 && Math.abs(t2) < 1e-20) {
+      return c_25;
+    }
+    return c_25 + t1 * (1.0 / TK - 1.0 / 298.15) + t2 * (TK - 298.15);
+  }
+
+  /**
+   * Returns whether parameters have been loaded from database.
+   *
+   * @return true if loaded
+   */
+  public boolean isParametersLoaded() {
+    return parametersLoaded;
   }
 
   /**
