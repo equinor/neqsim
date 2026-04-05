@@ -93,10 +93,20 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   boolean useIonDielectricDecrement = false;
   /**
+   * Fraction of the ion dielectric decrement applied to the Born solvation term (0.0 to 1.0).
+   * Controls how much of the solution dielectric constant (vs pure-water) is used in the Born term.
+   * At 0.0, Born uses pure-water eps (original behavior). At 1.0, Born uses full solution eps.
+   * Intermediate values provide a damped coupling that avoids numerical instability at high
+   * molality while capturing the concentration-dependent solvation physics needed for the
+   * gamma-plus upturn. Default 1.0 (full coupling). Optimize together with Born radii for best
+   * accuracy.
+   */
+  double bornDecrementFraction = 0.884;
+  /**
    * Dielectric constant used in the Born solvation term and its derivatives. When
-   * {@code useIonDielectricDecrement = false}, equals pure-solvent dielectric constant (no
-   * volume/composition dependence). When true, equals solution dielectric constant (Maribo-Mogensen
-   * 2014) providing concentration-dependent Born solvation.
+   * {@code useIonDielectricDecrement = false}, equals pure-solvent dielectric constant. When true,
+   * equals an interpolation between pure-solvent and solution dielectric constant controlled by
+   * {@code bornDecrementFraction}: eps_Born = eps_w + fraction * (eps_sol - eps_w).
    */
   double bornDiElectricConstant = 0.0;
   double bornDiElectricConstantdT = 0.0;
@@ -195,14 +205,20 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     diElectricConstantdV = calcDiElectricConstantdV(temperature);
     diElectricConstantdVdV = calcDiElectricConstantdVdV(temperature);
     diElectricConstantdTdV = calcDiElectricConstantdTdV(temperature);
-    // Set Born-term dielectric: solution eps (with decrement) or pure-solvent eps (CM)
+    // Set Born-term dielectric: interpolated eps when decrement active, pure-solvent eps otherwise
     if (useIonDielectricDecrement) {
-      bornDiElectricConstant = diElectricConstant;
-      bornDiElectricConstantdT = diElectricConstantdT;
-      bornDiElectricConstantdTdT = diElectricConstantdTdT;
-      bornDiElectricConstantdV = diElectricConstantdV;
-      bornDiElectricConstantdVdV = diElectricConstantdVdV;
-      bornDiElectricConstantdTdV = diElectricConstantdTdV;
+      bornDiElectricConstant = solventDiElectricConstant
+          + bornDecrementFraction * (diElectricConstant - solventDiElectricConstant);
+      bornDiElectricConstantdT = solventDiElectricConstantdT
+          + bornDecrementFraction * (diElectricConstantdT - solventDiElectricConstantdT);
+      bornDiElectricConstantdTdT = solventDiElectricConstantdTdT
+          + bornDecrementFraction * (diElectricConstantdTdT - solventDiElectricConstantdTdT);
+      // Volume derivatives set to zero — standard approximation that avoids
+      // numerical instability from the strong Born-volume coupling through eps(V).
+      // The composition-dependent Born solvation is captured through dFBorn/dN.
+      bornDiElectricConstantdV = 0.0;
+      bornDiElectricConstantdVdV = 0.0;
+      bornDiElectricConstantdTdV = 0.0;
     } else {
       bornDiElectricConstant = solventDiElectricConstant;
       bornDiElectricConstantdT = solventDiElectricConstantdT;
@@ -432,6 +448,28 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public void setUseIonDielectricDecrement(boolean use) {
     this.useIonDielectricDecrement = use;
+  }
+
+  /**
+   * Get the fraction of dielectric decrement applied to the Born solvation term. Controls the
+   * interpolation between pure-solvent dielectric constant (0.0) and full solution dielectric
+   * constant (1.0) in the Born term.
+   *
+   * @return the Born decrement fraction (0.0 to 1.0)
+   */
+  public double getBornDecrementFraction() {
+    return bornDecrementFraction;
+  }
+
+  /**
+   * Set the fraction of dielectric decrement applied to the Born solvation term. At 0.0, Born uses
+   * pure-water eps (original behavior). At 1.0, Born uses full solution eps. Intermediate values
+   * provide damped coupling. Optimize together with Born radii for best accuracy.
+   *
+   * @param fraction the Born decrement fraction (0.0 to 1.0)
+   */
+  public void setBornDecrementFraction(double fraction) {
+    this.bornDecrementFraction = fraction;
   }
 
   /**

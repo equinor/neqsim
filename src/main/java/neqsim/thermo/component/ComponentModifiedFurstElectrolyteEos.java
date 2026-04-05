@@ -227,11 +227,12 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     if (getLennardJonesMolecularDiameter() > 0) {
       XBorni = ionicCharge * ionicCharge / (getLennardJonesMolecularDiameter() * 1e-10);
     }
-    // Set Born-term dielectric derivatives: use solution-eps when decrement is active
+    // Set Born-term dielectric derivatives: interpolated when decrement active
     if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      borndiElectricdn = diElectricdn;
-      borndiElectricdndT = diElectricdndT;
-      borndiElectricdndV = diElectricdndV;
+      double frac = ((PhaseModifiedFurstElectrolyteEos) phase).getBornDecrementFraction();
+      borndiElectricdn = solventdiElectricdn + frac * (diElectricdn - solventdiElectricdn);
+      borndiElectricdndT = solventdiElectricdndT + frac * (diElectricdndT - solventdiElectricdndT);
+      borndiElectricdndV = frac * diElectricdndV;
     } else {
       borndiElectricdn = solventdiElectricdn;
       borndiElectricdndT = solventdiElectricdndT;
@@ -968,10 +969,13 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double calcBorndiElectricdndn(int j, PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
+    double solvent = calcSolventdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
     if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      return calcdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
+      double frac = ((PhaseModifiedFurstElectrolyteEos) phase).getBornDecrementFraction();
+      double solution = calcdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
+      return solvent + frac * (solution - solvent);
     }
-    return calcSolventdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
+    return solvent;
   }
 
   /**
