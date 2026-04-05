@@ -2,6 +2,9 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator.StratifiedGeometry;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterResult;
 
 /**
  * Extended pipe section state for the two-fluid model.
@@ -160,6 +163,17 @@ public class TwoFluidSection extends PipeSection {
 
   // ============ Geometry calculator ============
   private transient GeometryCalculator geometryCalc;
+
+  // ============ Oil-water flow regime detection ============
+
+  /** Oil-water interfacial tension (N/m). Defaults to typical crude-water value. */
+  private double oilWaterInterfacialTension = 0.025;
+
+  /** Oil-water flow regime detector (shared, transient). */
+  private transient OilWaterFlowRegimeDetector oilWaterDetector;
+
+  /** Current oil-water flow regime result (null until first detection). */
+  private transient OilWaterResult oilWaterResult;
 
   /**
    * Default constructor.
@@ -520,36 +534,43 @@ public class TwoFluidSection extends PipeSection {
    * Calculate effective liquid properties for three-phase flow.
    *
    * <p>
-   * Combines oil and water properties using volume-weighted averages. Uses local water cut which
-   * may vary along the pipeline.
+   * Uses the OilWaterFlowRegimeDetector to determine the oil-water configuration (stratified,
+   * dispersed O/W, dispersed W/O, dual dispersion) and calculates effective viscosity accordingly.
+   * Falls back to volume-weighted averages if detector cannot be used.
    * </p>
    */
   public void updateThreePhaseProperties() {
     if (waterCut > 0 && waterCut < 1 && waterDensity > 0 && oilDensity > 0) {
-      // Volume-weighted density
+      // Volume-weighted density (always valid regardless of regime)
       double rhoL = oilFractionInLiquid * oilDensity + waterCut * waterDensity;
       setLiquidDensity(rhoL);
 
-      // Viscosity - use Brinkman equation for emulsions
-      double muL;
+      // Use flow regime detector for physics-based viscosity and continuous phase
       if (oilViscosity > 0 && waterViscosity > 0) {
-        if (oilFractionInLiquid > 0.5) {
-          // Oil continuous
-          muL = oilViscosity * Math.pow(1.0 - waterCut, -2.5);
-        } else {
-          // Water continuous
-          muL = waterViscosity * Math.pow(1.0 - oilFractionInLiquid, -2.5);
+        double muL;
+        double vMix = getLiquidVelocity();
+
+        if (oilWaterDetector == null) {
+          oilWaterDetector = new OilWaterFlowRegimeDetector();
         }
+
+        oilWaterResult =
+            oilWaterDetector.detect(waterCut, vMix, oilDensity, waterDensity, oilViscosity,
+                waterViscosity, oilWaterInterfacialTension, getDiameter(), getInclination());
+
+        muL = oilWaterResult.effectiveViscosity;
         setLiquidViscosity(muL);
       }
     } else if (waterCut >= 1.0 && waterDensity > 0 && waterViscosity > 0) {
       // Pure water
       setLiquidDensity(waterDensity);
       setLiquidViscosity(waterViscosity);
+      oilWaterResult = null;
     } else if (waterCut <= 0 && oilDensity > 0 && oilViscosity > 0) {
       // Pure oil
       setLiquidDensity(oilDensity);
       setLiquidViscosity(oilViscosity);
+      oilWaterResult = null;
     }
   }
 
@@ -647,9 +668,15 @@ public class TwoFluidSection extends PipeSection {
    * Calculate the oil-water interfacial shear stress.
    *
    * <p>
-   * Models the shear between oil and water phases when they flow at different velocities. Uses a
-   * simplified model based on relative velocity and Stokes settling.
+   * Models the shear between oil and water phases when they flow at different velocities. The
+   * friction factor depends on the oil-water flow regime detected by the
+   * {@link OilWaterFlowRegimeDetector}:
    * </p>
+   * <ul>
+   * <li>Stratified: higher friction due to wavy interface (f_ow = 0.02)</li>
+   * <li>Dispersed: lower friction, dominated by emulsion viscosity (f_ow = 0.005)</li>
+   * <li>Dual dispersion / transition: intermediate friction (f_ow = 0.015)</li>
+   * </ul>
    *
    * @return Oil-water interfacial shear stress (Pa), positive when oil flows faster than water
    */
@@ -667,19 +694,37 @@ public class TwoFluidSection extends PipeSection {
       return 0.0;
     }
 
-    // Friction factor for oil-water interface (simplified)
-    // Higher for stratified flow, lower for dispersed
-    double f_ow = 0.01;
-    if (waterHoldup > 0.1 && oilHoldup > 0.1) {
-      // Stratified regime - higher friction
-      f_ow = 0.02;
+    // Regime-dependent friction factor
+    double f_ow;
+    if (oilWaterResult != null) {
+      switch (oilWaterResult.regime) {
+        case STRATIFIED:
+        case STRATIFIED_WITH_MIXING:
+          f_ow = 0.02;
+          break;
+        case DISPERSED_OIL_IN_WATER:
+        case DISPERSED_WATER_IN_OIL:
+          f_ow = 0.005;
+          break;
+        case DUAL_DISPERSION:
+          f_ow = 0.015;
+          break;
+        default:
+          f_ow = 0.01;
+          break;
+      }
+    } else {
+      // Fallback when no regime detection available
+      f_ow = 0.01;
+      if (waterHoldup > 0.1 && oilHoldup > 0.1) {
+        f_ow = 0.02;
+      }
     }
 
     // Average density at interface
     double rhoAvg = 0.5 * (oilDensity + waterDensity);
 
     // Interfacial shear stress (Pa)
-    // tau_ow = f_ow * rho * |deltaV| * deltaV / 2
     double tau_ow = f_ow * rhoAvg * Math.abs(deltaV) * deltaV / 2.0;
 
     return tau_ow;
@@ -832,7 +877,7 @@ public class TwoFluidSection extends PipeSection {
 
   /**
    * Override getLiquidHoldup to return the total liquid holdup (oil + water).
-   * 
+   *
    * <p>
    * In TwoFluidSection, the oil and water holdups are tracked separately. This override ensures
    * that getLiquidHoldup() returns their sum for consistent behavior with LiquidAccumulationTracker
@@ -854,7 +899,7 @@ public class TwoFluidSection extends PipeSection {
 
   /**
    * Override setLiquidHoldup to also update oil and water holdups proportionally.
-   * 
+   *
    * <p>
    * When the liquid holdup is changed (e.g., by LiquidAccumulationTracker), the oil and water
    * holdups must be updated to maintain their relative proportions within the liquid phase.
@@ -1018,6 +1063,85 @@ public class TwoFluidSection extends PipeSection {
     TwoFluidSection copy = (TwoFluidSection) super.clone();
     // Deep copy transient fields
     copy.geometryCalc = null; // Will be recreated on demand
+    copy.oilWaterDetector = null; // Will be recreated on demand
+    copy.oilWaterResult = null; // Will be recomputed
     return copy;
+  }
+
+  // ============ Oil-water flow regime getters/setters ============
+
+  /**
+   * Get the oil-water interfacial tension.
+   *
+   * @return oil-water interfacial tension (N/m)
+   */
+  public double getOilWaterInterfacialTension() {
+    return oilWaterInterfacialTension;
+  }
+
+  /**
+   * Set the oil-water interfacial tension.
+   *
+   * @param sigma oil-water interfacial tension (N/m)
+   */
+  public void setOilWaterInterfacialTension(double sigma) {
+    this.oilWaterInterfacialTension = sigma;
+  }
+
+  /**
+   * Get the current oil-water flow regime.
+   *
+   * @return the detected oil-water flow regime, or null if not yet computed
+   */
+  public OilWaterFlowRegime getOilWaterFlowRegime() {
+    return oilWaterResult != null ? oilWaterResult.regime : null;
+  }
+
+  /**
+   * Get the full oil-water detection result including effective viscosity, inversion point, etc.
+   *
+   * @return the oil-water detection result, or null if not yet computed
+   */
+  public OilWaterResult getOilWaterResult() {
+    return oilWaterResult;
+  }
+
+  /**
+   * Check if water wets the pipe wall at this section (corrosion concern).
+   *
+   * @return true if water is expected to wet the pipe wall
+   */
+  public boolean isWaterWetting() {
+    return oilWaterResult != null ? oilWaterResult.waterWetting : (waterCut > 0.5);
+  }
+
+  /**
+   * Check if there is risk of water dropout at this section.
+   *
+   * @return true if water dropout risk is detected
+   */
+  public boolean isWaterDropoutRisk() {
+    return oilWaterResult != null ? oilWaterResult.waterDropoutRisk : false;
+  }
+
+  /**
+   * Get the OilWaterFlowRegimeDetector used by this section. Creates one lazily if needed.
+   *
+   * @return the oil-water flow regime detector
+   */
+  public OilWaterFlowRegimeDetector getOilWaterDetector() {
+    if (oilWaterDetector == null) {
+      oilWaterDetector = new OilWaterFlowRegimeDetector();
+    }
+    return oilWaterDetector;
+  }
+
+  /**
+   * Set a custom OilWaterFlowRegimeDetector (e.g., with tuned Hinze/inversion parameters).
+   *
+   * @param detector the oil-water flow regime detector to use
+   */
+  public void setOilWaterDetector(OilWaterFlowRegimeDetector detector) {
+    this.oilWaterDetector = detector;
   }
 }

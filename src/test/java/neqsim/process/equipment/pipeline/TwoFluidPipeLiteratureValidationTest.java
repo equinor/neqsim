@@ -3,7 +3,6 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -27,7 +26,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  * @version 1.0
  */
-@Disabled("Disabled due to infinite solving times - needs TwoFluidPipe optimization")
 public class TwoFluidPipeLiteratureValidationTest {
 
   private static SystemInterface gasOilFluid;
