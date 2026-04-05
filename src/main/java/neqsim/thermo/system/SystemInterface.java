@@ -2614,6 +2614,26 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck);
 
   /**
+   * Sets the wax thermodynamic model to use. Must be called before
+   * {@link #addSolidComplexPhase(String)} to take effect.
+   *
+   * <p>
+   * Available models:
+   * </p>
+   * <ul>
+   * <li>"Pedersen" (default) - Clausius-Clapeyron with heat capacity correction</li>
+   * <li>"Won" - Won activity coefficient model (1986, 1989)</li>
+   * <li>"Wilson" - Wilson local-composition model</li>
+   * <li>"Coutinho" - Predictive UNIQUAC solid-solution model (1998)</li>
+   * </ul>
+   *
+   * @param modelName the wax model name
+   */
+  public default void setWaxModelType(String modelName) {
+    // Default no-op for backward compatibility
+  }
+
+  /**
    * <p>
    * Setter for property <code>numberOfPhases</code>.
    * </p>
