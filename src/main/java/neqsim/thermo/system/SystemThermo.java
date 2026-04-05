@@ -121,6 +121,7 @@ public abstract class SystemThermo implements SystemInterface {
   protected boolean multiPhaseCheck = false;
   protected boolean enhancedMultiPhaseCheck = false;
   private boolean multiphaseWaxCheck = false;
+  private String waxModelTypeName = "Pedersen";
 
   // todo: replace numberOfComponents with length of componentNames.
   protected int numberOfComponents = 0;
@@ -823,7 +824,9 @@ public abstract class SystemThermo implements SystemInterface {
     }
     addHydratePhase();
     if (type.equalsIgnoreCase("wax")) {
-      phaseArray[5] = new PhaseWax();
+      PhaseWax waxPhase = new PhaseWax();
+      waxPhase.setWaxComponentModel(waxModelTypeName);
+      phaseArray[5] = waxPhase;
     } else {
       phaseArray[5] = new PhaseSolidComplex();
     }
@@ -5284,6 +5287,16 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck) {
     this.multiphaseWaxCheck = multiphaseWaxCheck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setWaxModelType(String modelName) {
+    this.waxModelTypeName = modelName;
+    // If wax phase already exists, update it
+    if (phaseArray[5] instanceof PhaseWax) {
+      ((PhaseWax) phaseArray[5]).setWaxComponentModel(modelName);
+    }
   }
 
   /** {@inheritDoc} */
