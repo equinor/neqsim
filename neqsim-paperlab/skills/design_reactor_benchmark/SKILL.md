@@ -172,7 +172,8 @@ Output `benchmark_config.json`:
 ## Python Execution Pattern for Reactor Benchmarks
 
 ```python
-from neqsim import jneqsim
+from tools.neqsim_bootstrap import get_jneqsim
+jneqsim = get_jneqsim()
 
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem

@@ -73,7 +73,8 @@ def generate_all_cases(config):
 
 ```python
 import time
-from neqsim import jneqsim
+from tools.neqsim_bootstrap import get_jneqsim
+jneqsim = get_jneqsim()
 
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 SystemPrEos = jneqsim.thermo.system.SystemPrEos

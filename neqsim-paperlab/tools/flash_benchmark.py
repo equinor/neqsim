@@ -179,7 +179,8 @@ def run_benchmark(config, algorithm_name, results_dir, progress_interval=50):
     Returns:
         Summary dict
     """
-    from neqsim import jneqsim
+    from tools.neqsim_bootstrap import get_jneqsim
+    jneqsim = get_jneqsim()
 
     cases = generate_cases(config)
     eos_name = config["eos_models"][0]

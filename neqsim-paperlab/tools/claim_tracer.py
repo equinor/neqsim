@@ -2,6 +2,10 @@
 Claim Tracer — Ensures every quantitative claim in a manuscript is backed
 by evidence from benchmark results and approved by the validation agent.
 
+Supports two evidence models:
+  - Comparative papers: formal [Claim Cx] references -> approved_claims.json
+  - Characterization/method/application papers: results.json key_results tracing
+
 Usage:
     python claim_tracer.py audit papers/tpflash_algorithms_2026/
     python claim_tracer.py report papers/tpflash_algorithms_2026/
@@ -25,6 +29,16 @@ class Claim:
     unit: Optional[str]
     linked_evidence: Optional[str]
     status: str  # LINKED, UNLINKED, REJECTED
+
+
+def detect_paper_type(paper_dir):
+    """Detect paper type from plan.json."""
+    plan_file = Path(paper_dir) / "plan.json"
+    if plan_file.exists():
+        with open(plan_file) as f:
+            plan = json.load(f)
+        return plan.get("paper_type", "characterization")
+    return "characterization"
 
 
 def extract_numbers_from_text(text):
@@ -59,6 +73,10 @@ def find_claim_references(text):
 def audit_manuscript(paper_dir):
     """Audit a manuscript for unsupported claims.
 
+    Adapts evidence checking based on paper type:
+    - comparative: requires [Claim Cx] -> approved_claims.json
+    - characterization/method/application: checks results.json traceability
+
     Args:
         paper_dir: Path to the paper directory
 
@@ -66,6 +84,7 @@ def audit_manuscript(paper_dir):
         Audit report dict
     """
     paper_dir = Path(paper_dir)
+    paper_type = detect_paper_type(paper_dir)
 
     # Load manuscript
     paper_file = paper_dir / "paper.md"
@@ -92,47 +111,108 @@ def audit_manuscript(paper_dir):
             for claim in data.get("claims", []):
                 manifest_claims[claim["claim_id"]] = claim
 
+    # Load results.json for non-comparative papers
+    results = {}
+    results_file = paper_dir / "results.json"
+    if results_file.exists():
+        with open(results_file) as f:
+            results = json.load(f)
+
     # Find all numbers in manuscript
     numbers_found = extract_numbers_from_text(paper_text)
 
     # Find all claim references
     claim_refs = find_claim_references(paper_text)
 
-    # Check each referenced claim is approved
     issues = []
-    for ref in claim_refs:
-        if ref not in approved_claims:
-            issues.append({
-                "type": "UNLINKED_CLAIM",
-                "severity": "HIGH",
-                "claim_id": ref,
-                "message": f"Claim {ref} referenced in text but not in approved_claims.json",
-            })
-        elif approved_claims[ref].get("status") == "REJECTED":
-            issues.append({
-                "type": "REJECTED_CLAIM_USED",
-                "severity": "CRITICAL",
-                "claim_id": ref,
-                "message": f"Claim {ref} was REJECTED but is still in the manuscript",
-            })
-        elif approved_claims[ref].get("status") == "INSUFFICIENT_EVIDENCE":
-            issues.append({
-                "type": "INSUFFICIENT_CLAIM_USED",
-                "severity": "HIGH",
-                "claim_id": ref,
-                "message": f"Claim {ref} has INSUFFICIENT_EVIDENCE but is in the manuscript",
-            })
 
-    # Check for numbers not linked to any claim
-    # This is heuristic — not every number needs a claim reference,
-    # but numbers in Results/Discussion sections should
-    sections_needing_claims = ["results", "discussion", "abstract"]
-    for section in sections_needing_claims:
-        # Simple section detection
+    # ── Comparative papers: formal claim pipeline ──
+    if paper_type == "comparative":
+        for ref in claim_refs:
+            if ref not in approved_claims:
+                issues.append({
+                    "type": "UNLINKED_CLAIM",
+                    "severity": "HIGH",
+                    "claim_id": ref,
+                    "message": f"Claim {ref} referenced in text but not in approved_claims.json",
+                })
+            elif approved_claims[ref].get("status") == "REJECTED":
+                issues.append({
+                    "type": "REJECTED_CLAIM_USED",
+                    "severity": "CRITICAL",
+                    "claim_id": ref,
+                    "message": f"Claim {ref} was REJECTED but is still in the manuscript",
+                })
+            elif approved_claims[ref].get("status") == "INSUFFICIENT_EVIDENCE":
+                issues.append({
+                    "type": "INSUFFICIENT_CLAIM_USED",
+                    "severity": "HIGH",
+                    "claim_id": ref,
+                    "message": f"Claim {ref} has INSUFFICIENT_EVIDENCE but is in the manuscript",
+                })
+
+        # Check approved claims not referenced
+        for claim_id, claim in approved_claims.items():
+            if claim.get("status") == "APPROVED" and claim_id not in claim_refs:
+                issues.append({
+                    "type": "UNUSED_APPROVED_CLAIM",
+                    "severity": "LOW",
+                    "claim_id": claim_id,
+                    "message": f"Claim {claim_id} is APPROVED but not referenced in manuscript",
+                })
+
+    # ── Characterization/method/application: results.json traceability ──
+    else:
+        key_results = results.get("key_results", {})
+
+        if not key_results:
+            issues.append({
+                "type": "NO_RESULTS",
+                "severity": "HIGH",
+                "message": "No results.json key_results found — cannot verify claims",
+            })
+        else:
+            # Check that key numerical results appear in the text
+            results_traced = 0
+            results_missing = []
+            for key, val in key_results.items():
+                val_str = str(val)
+                # Check if the value appears anywhere in the manuscript
+                if val_str in paper_text:
+                    results_traced += 1
+                else:
+                    results_missing.append(f"{key}={val}")
+
+            if results_missing:
+                issues.append({
+                    "type": "UNTRACED_RESULTS",
+                    "severity": "MEDIUM",
+                    "message": (
+                        f"{len(results_missing)}/{len(key_results)} key results not "
+                        f"found in manuscript text: {', '.join(results_missing[:5])}"
+                    ),
+                })
+
+        # Check figures are referenced
+        fig_captions = results.get("figure_captions", {})
+        if fig_captions:
+            fig_refs = re.findall(r'[Ff]ig(?:ure)?\.?\s*(\d+)', paper_text)
+            fig_nums = set(int(n) for n in fig_refs)
+            for i, fname in enumerate(fig_captions, 1):
+                if i not in fig_nums:
+                    issues.append({
+                        "type": "UNREFERENCED_FIGURE",
+                        "severity": "MEDIUM",
+                        "message": f"Figure {i} ({fname}) not referenced in text",
+                    })
+
+    # ── Common checks for all paper types ──
+    # Check for numbers in results/discussion without any evidence link
+    sections_needing_evidence = ["results", "discussion", "abstract"]
+    for section in sections_needing_evidence:
         section_pattern = rf'##\s*\d*\.?\d*\s*{section}'
         section_match = re.search(section_pattern, paper_text, re.IGNORECASE)
         if section_match:
-            # Find next section header
             next_section = re.search(r'\n##\s', paper_text[section_match.end():])
             end = section_match.end() + next_section.start() if next_section else len(paper_text)
             section_text = paper_text[section_match.start():end]
@@ -140,7 +220,7 @@ def audit_manuscript(paper_dir):
             section_numbers = extract_numbers_from_text(section_text)
             section_refs = find_claim_references(section_text)
 
-            if section_numbers and not section_refs:
+            if paper_type == "comparative" and section_numbers and not section_refs:
                 issues.append({
                     "type": "UNLINKED_NUMBERS",
                     "severity": "MEDIUM",
@@ -149,25 +229,18 @@ def audit_manuscript(paper_dir):
                         f"Section '{section}' contains {len(section_numbers)} "
                         f"quantitative statements but no [Claim Cx] references"
                     ),
-                    "numbers": section_numbers[:5],  # First 5 examples
+                    "numbers": section_numbers[:5],
                 })
-
-    # Check approved claims that are NOT referenced in the manuscript
-    for claim_id, claim in approved_claims.items():
-        if claim.get("status") == "APPROVED" and claim_id not in claim_refs:
-            issues.append({
-                "type": "UNUSED_APPROVED_CLAIM",
-                "severity": "LOW",
-                "claim_id": claim_id,
-                "message": f"Claim {claim_id} is APPROVED but not referenced in manuscript",
-            })
 
     report = {
         "paper_dir": str(paper_dir),
+        "paper_type": paper_type,
+        "evidence_model": "formal_claims" if paper_type == "comparative" else "results_tracing",
         "manuscript_exists": True,
         "approved_claims_count": len(approved_claims),
         "claim_references_in_text": len(claim_refs),
         "unique_claims_referenced": len(set(claim_refs)),
+        "results_json_keys": len(results.get("key_results", {})),
         "numbers_in_text": len(numbers_found),
         "issues": issues,
         "issues_by_severity": {

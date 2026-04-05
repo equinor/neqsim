@@ -1,7 +1,46 @@
 # NeqSim PaperLab
 
-A structured, agent-driven workflow for producing rigorous scientific papers
-using NeqSim as the computational engine.
+A structured, iterative workflow for producing rigorous scientific papers
+using NeqSim as the computational engine. Combines CLI automation (benchmarks,
+formatting, auditing, quality checks) with agent-assisted writing for a
+human-in-the-loop paper production process.
+
+## Setup
+
+```bash
+cd neqsim-paperlab
+pip install -r requirements.txt
+```
+
+## The Core Loop: Edit → Iterate → Fix
+
+PaperLab is designed for **iterative refinement** between human and machine.
+The `iterate` command is the heartbeat:
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│ Edit paper   │ --> │  iterate     │ --> │ Fix issues   │
+│ (human or    │     │  (quality    │     │ (human or    │
+│  agent)      │     │   checks)    │     │  agent)      │
+└─────────────┘     └──────────────┘     └─────────────┘
+       ^                                        │
+       └────────────────────────────────────────┘
+                   Repeat until 100%
+```
+
+```bash
+# Check manuscript quality — run after every editing session
+python paperflow.py iterate papers/my_paper/ --check all
+
+# Available check categories:
+#   all         — everything below
+#   structure   — section presence (Abstract, Intro, Conclusions, etc.)
+#   completeness — TODO placeholders, highlights count/length
+#   evidence    — results traceability, figure references, claim linking
+#   writing     — abstract word count, software-centric language
+```
+
+**See [WALKTHROUGH.md](WALKTHROUGH.md) for a complete end-to-end example.**
 
 ## Architecture
 
@@ -33,23 +72,49 @@ The framework supports four paper types, each with adapted stage routing:
 # 1. Create a new paper project (specify paper_type!)
 python paperflow.py new "Reactive Gibbs Convergence" \
     --journal fluid_phase_equilibria \
-    --topic gibbs_reactor \
-    --paper_type characterization
+    --topic gibbs_reactor
 
-# 2. Run the benchmark suite
+# 2. Edit plan.json — fill in research questions, benchmark design, paper_type
+
+# 3. Run the benchmark suite
 python paperflow.py benchmark papers/gibbs_reactor_2026/
 
-# 3. Generate figures and tables
+# 4. Generate figures (auto-runs generate_figures.py if present)
 python paperflow.py figures papers/gibbs_reactor_2026/
 
-# 4. Draft the manuscript
+# 5. Generate a manuscript draft from plan + results
 python paperflow.py draft papers/gibbs_reactor_2026/
 
-# 5. Format for target journal
-python paperflow.py format papers/gibbs_reactor_2026/
+# 6. Iterative refinement — run after every edit
+python paperflow.py iterate papers/gibbs_reactor_2026/
 
-# 6. Audit reproducibility
+# 7. Audit reproducibility and claim tracing
 python paperflow.py audit papers/gibbs_reactor_2026/
+
+# 8. Format for target journal
+python paperflow.py format papers/gibbs_reactor_2026/ --journal fluid_phase_equilibria
+
+# 9. Handle reviewer comments (after submission)
+python paperflow.py revise papers/gibbs_reactor_2026/ --comments reviewer_comments.md
+
+# 10. Validate figures and bibliography
+python paperflow.py validate-figures papers/gibbs_reactor_2026/ --journal fluid_phase_equilibria
+python paperflow.py validate-bib papers/gibbs_reactor_2026/
+
+# 11. Check prose quality (readability, passive voice, hedging)
+python paperflow.py check-prose papers/gibbs_reactor_2026/
+
+# 12. Discover missing references via Semantic Scholar
+python paperflow.py suggest-refs papers/gibbs_reactor_2026/
+
+# 13. Render all submission formats at once
+python paperflow.py render papers/gibbs_reactor_2026/
+
+# 14. After revision: generate visual diff report
+python paperflow.py diff papers/gibbs_reactor_2026/
+
+# 15. Check project status at any time
+python paperflow.py status papers/gibbs_reactor_2026/
 ```
 
 ## Directory Structure
@@ -57,9 +122,16 @@ python paperflow.py audit papers/gibbs_reactor_2026/
 ```
 neqsim-paperlab/
 ├── README.md                     # This file
-├── paperflow.py                  # CLI orchestrator
-├── journals/                     # Journal profile configs
-│   └── fluid_phase_equilibria.yaml
+├── WALKTHROUGH.md                # End-to-end worked example (12 steps)
+├── PAPER_WRITING_GUIDELINES.md   # Mandatory scientific writing rules
+├── paperflow.py                  # CLI orchestrator (new, draft, iterate, revise, ...)
+├── requirements.txt              # Python dependencies
+├── journals/                     # Journal profile configs (YAML)
+│   ├── fluid_phase_equilibria.yaml
+│   ├── computers_chem_eng.yaml
+│   ├── chem_eng_sci.yaml
+│   ├── iecr.yaml
+│   └── aiche.yaml
 ├── agents/                       # Agent definitions (VS Code Copilot)
 │   ├── planner.agent.md
 │   ├── literature_reviewer.agent.md
@@ -67,19 +139,33 @@ neqsim-paperlab/
 │   ├── benchmark.agent.md
 │   ├── validation.agent.md
 │   ├── scientific_writer.agent.md
-│   └── journal_formatter.agent.md
+│   ├── journal_formatter.agent.md
+│   └── reviewer_response.agent.md
 ├── skills/                       # Reusable scientific procedures
 │   ├── design_flash_benchmark/SKILL.md
 │   ├── run_flash_experiments/SKILL.md
 │   ├── analyze_convergence/SKILL.md
 │   ├── write_methods_section/SKILL.md
 │   └── journal_formatting/SKILL.md
-├── tools/                        # Python wrappers for NeqSim
+├── tools/                        # Python tooling
 │   ├── __init__.py
-│   ├── neqsim_scientific_tools.py
-│   ├── flash_benchmark.py
-│   ├── paper_renderer.py
-│   └── claim_tracer.py
+│   ├── neqsim_bootstrap.py         # NeqSim JVM bootstrap (local build)
+│   ├── neqsim_scientific_tools.py  # NeqSim/jpype wrappers
+│   ├── flash_benchmark.py          # Flash benchmark runner
+│   ├── figure_style.py             # SciencePlots journal presets & palettes
+│   ├── figure_validator.py         # Figure DPI/format/size validation (Pillow)
+│   ├── bib_validator.py            # Bibliography validation (bibtexparser)
+│   ├── prose_quality.py            # Readability scoring, passive voice, hedging (textstat)
+│   ├── citation_discovery.py       # Suggest missing refs via Semantic Scholar API
+│   ├── revision_diff.py            # Visual HTML diff between manuscript revisions
+│   ├── paper_renderer.py           # LaTeX rendering
+│   ├── word_renderer.py            # Word/OMML rendering
+│   ├── claim_tracer.py             # Evidence audit (all paper types)
+│   ├── render_html.py              # HTML render (legacy, tpflash-specific)
+│   ├── render_html_generic.py      # HTML render (generic, any paper)
+│   └── render_all.py               # Multi-format render dispatcher
+├── tests/                        # Pytest test suite
+│   └── test_paperflow.py
 ├── workflows/                    # Workflow definitions
 │   ├── new_paper.yaml
 │   └── revise_paper.yaml
@@ -89,13 +175,13 @@ neqsim-paperlab/
 │   └── response_to_reviewers.md
 └── papers/                       # Paper projects (one folder per paper)
     └── tpflash_algorithms_2026/
-        ├── plan.json
-        ├── paper.md
-        ├── refs.bib
-        ├── claims_manifest.json
-        ├── figures/
-        ├── tables/
-        └── results/
+        ├── plan.json               # Research plan + questions
+        ├── paper.md                # Manuscript (markdown)
+        ├── results.json            # Benchmark results + key findings
+        ├── refs.bib                # BibTeX references
+        ├── iteration_feedback.json # Latest quality assessment
+        ├── figures/                # Generated plots (PNG)
+        └── tables/                 # Generated data tables
 ```
 
 ## Agents
@@ -109,6 +195,27 @@ neqsim-paperlab/
 | **Validation** | Decides if claims hold | Results from benchmark | approved_claims.json |
 | **Scientific Writer** | Drafts manuscript | All artifacts | paper.md |
 | **Journal Formatter** | Adapts to journal rules | paper.md, journal profile | paper.tex / paper.docx |
+| **Reviewer Response** | Handles peer review | Reviewer comments | Response letter, revision plan |
+
+## CLI Commands
+
+| Command | Description | Key Flags |
+|---------|-------------|-----------|
+| `new` | Create paper project from template | `--journal`, `--topic` |
+| `benchmark` | Run NeqSim benchmark suite | |
+| `figures` | Generate figures (auto-runs generate_figures.py) | |
+| `draft` | Generate paper.md from plan + results | `--force` (overwrite existing) |
+| `iterate` | Interactive quality check with scoring | `--check` (category: structure, completeness, evidence, writing) |
+| `audit` | Trace claims to evidence artifacts | |
+| `format` | Apply journal formatting rules | `--journal` |
+| `render` | Render to all formats (HTML, LaTeX, Word) | `--journal` (optional) |
+| `validate-figures` | Check figure DPI, format, size, color | `--journal` |
+| `validate-bib` | Check refs.bib completeness and cross-refs | |
+| `check-prose` | Readability scoring, passive voice, hedging | |
+| `suggest-refs` | Suggest missing references (Semantic Scholar) | `--max` (max suggestions) |
+| `diff` | Visual diff between manuscript revisions | `--revision`, `--old`, `--new` |
+| `revise` | Create revision workspace from reviewer comments | `--comments` (path to comments file) |
+| `status` | Show project completion status | |
 
 ## Skills
 
@@ -160,17 +267,39 @@ neqsim-paperlab/
 ## Governance Rules
 
 1. **No unsupported claims**: Every quantitative statement must link to a result artifact
+   - *Comparative papers*: formal `[Claim Cx]` → `approved_claims.json` pipeline
+   - *Other paper types*: results.json key tracing + figure reference validation
 2. **Reproducibility**: Every figure/table must be regenerable from stored data
-3. **Claim tracing**: `claims_manifest.json` maps each claim to its evidence
+3. **Claim tracing**: `claim_tracer.py` audits all paper types with type-appropriate logic
 4. **Version control**: Algorithm changes on named branches
-5. **Validation gates**: Claims must pass statistical validation before entering manuscript
+5. **Validation gates**: Claims must pass validation before entering manuscript
+6. **Iterative quality**: Use `paperflow.py iterate` after *every* editing session
 
 ## Integration with NeqSim
 
-Tools communicate with NeqSim through:
-- **Python wrappers** (`tools/neqsim_scientific_tools.py`) using neqsim-python
+NeqSim is **always** loaded from the local build via `devtools/neqsim_dev_setup.py`.
+This means any Java code change is picked up immediately after `mvnw compile` —
+no pip install needed.
+
+All tools go through `tools/neqsim_bootstrap.py`:
+```python
+from tools.neqsim_bootstrap import get_jneqsim
+jneqsim = get_jneqsim()
+fluid = jneqsim.thermo.system.SystemSrkEos(298.15, 50.0)
+```
+
+Communication paths:
+- **Python wrappers** (`tools/neqsim_scientific_tools.py`) via bootstrap → jpype
 - **MCP server** (`neqsim-mcp-server/`) for agent tool calls
 - **Direct Java** via jpype for performance-critical benchmarks
+
+## Running Tests
+
+```bash
+cd neqsim-paperlab
+pip install -r requirements.txt
+python -m pytest tests/ -v
+```
 
 ## Adding a New Journal
 
