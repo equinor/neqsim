@@ -92,10 +92,10 @@ class NeqSimFlashTool:
         self._initialized = False
 
     def _ensure_initialized(self):
-        """Lazy initialization of NeqSim."""
+        """Lazy initialization of NeqSim via local devtools build."""
         if not self._initialized:
-            from neqsim import jneqsim
-            self._jneqsim = jneqsim
+            from tools.neqsim_bootstrap import get_jneqsim
+            self._jneqsim = get_jneqsim()
             self._initialized = True
 
     def _create_fluid(self, components, T_K, P_bara, eos="SRK"):
@@ -300,8 +300,8 @@ class NeqSimProcessTool:
 
     def _ensure_initialized(self):
         if not self._initialized:
-            from neqsim import jneqsim
-            self._jneqsim = jneqsim
+            from tools.neqsim_bootstrap import get_jneqsim
+            self._jneqsim = get_jneqsim()
             self._initialized = True
 
     def run_separation(self, components, T_K, P_bara, flow_rate_kg_hr,

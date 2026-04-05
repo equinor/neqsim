@@ -1,0 +1,28 @@
+# PaperLab Python dependencies
+# NOTE: NeqSim is loaded from the local build via devtools/neqsim_dev_setup.py
+# Do NOT install neqsim via pip — the local JAR is always used instead.
+jpype1>=1.4
+
+# --- Data handling & numerics ---
+numpy>=1.21
+scipy>=1.7
+pandas>=1.4
+
+# --- Figures (journal-quality) ---
+matplotlib>=3.5
+SciencePlots>=2.0              # journal-ready matplotlib styles (science, nature, ieee, elsevier, etc.)
+Pillow>=9.0                    # image DPI validation, format conversion per journal requirements
+
+# --- Document rendering ---
+python-docx>=0.8.11            # Word (.docx) output
+latex2mathml>=3.0              # LaTeX -> MathML -> OMML equation pipeline
+lxml>=4.9                      # XML manipulation for OMML equations
+Jinja2>=3.1                    # HTML report templating
+pyyaml>=6.0                    # journal profile configs
+
+# --- Bibliography ---
+bibtexparser>=1.4              # parse/validate refs.bib programmatically
+
+# --- Prose quality & discovery ---
+textstat>=0.7                  # readability metrics (Flesch-Kincaid, Gunning fog, ARI)
+requests>=2.28                 # Semantic Scholar API for citation discovery
