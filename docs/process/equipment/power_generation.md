@@ -1,15 +1,18 @@
 ---
 title: Power Generation Equipment
-description: Documentation for power generation equipment in NeqSim, including gas turbines, fuel cells, wind turbines, and solar panels.
+description: "Documentation for power generation equipment in NeqSim: gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels."
 ---
 
 # Power Generation Equipment
 
-Documentation for power generation equipment in NeqSim, including gas turbines, fuel cells, wind turbines, and solar panels.
+Documentation for power generation equipment in NeqSim, including gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels.
 
 ## Table of Contents
 - [Overview](#overview)
 - [Gas Turbine](#gas-turbine)
+- [Steam Turbine](#steam-turbine)
+- [HRSG](#hrsg)
+- [Combined Cycle System](#combined-cycle-system)
 - [Fuel Cell](#fuel-cell)
 - [Wind Turbine](#wind-turbine)
 - [Solar Panel](#solar-panel)
@@ -28,6 +31,9 @@ The power generation package provides equipment models for converting chemical a
 | Equipment | Energy Source | Output |
 |-----------|---------------|--------|
 | `GasTurbine` | Fuel gas combustion | Electricity + heat |
+| `SteamTurbine` | High-pressure steam | Electricity |
+| `HRSG` | Gas turbine exhaust | Steam |
+| `CombinedCycleSystem` | Fuel gas (GT + HRSG + ST) | Electricity (high efficiency) |
 | `FuelCell` | Hydrogen + oxygen | Electricity + water |
 | `WindTurbine` | Wind | Electricity |
 | `SolarPanel` | Solar radiation | Electricity |
@@ -90,8 +96,7 @@ fuelStream.setFlowRate(1000.0, "kg/hr");
 
 // Create gas turbine
 GasTurbine turbine = new GasTurbine("Power Turbine", fuelStream);
-turbine.setCombustionPressure(15.0);  // bara
-turbine.setAirGasRatio(3.0);
+turbine.combustionpressure = 15.0;  // bara (public field)
 
 // Run simulation
 turbine.run();
@@ -99,14 +104,192 @@ turbine.run();
 // Results
 System.out.println("Net power: " + turbine.getPower() / 1e6 + " MW");
 System.out.println("Heat output: " + turbine.getHeat() / 1e6 + " MW");
-System.out.println("Thermal efficiency: " + turbine.getEfficiency() * 100 + "%");
+System.out.println("Ideal air/fuel ratio: " + turbine.calcIdealAirFuelRatio());
+```
+
+---
+
+## Steam Turbine
+
+The `SteamTurbine` class models isentropic expansion of high-pressure steam to produce power. Outlet conditions are computed via PS-flash (isentropic) followed by PH-flash (actual) using the specified isentropic efficiency.
+
+### Class Hierarchy
+
+```
+TwoPortEquipment
+└── SteamTurbine
+```
+
+### Constructor
+
+```java
+import neqsim.process.equipment.powergeneration.SteamTurbine;
+
+// Basic constructor
+SteamTurbine st = new SteamTurbine("ST-100");
+
+// Constructor with inlet steam stream
+SteamTurbine st = new SteamTurbine("ST-100", steamStream);
+```
+
+### Key Properties
+
+| Property | Setter | Default | Unit |
+|----------|--------|---------|------|
+| `outletPressure` | `setOutletPressure(p)` / `setOutletPressure(p, "bara")` | 1.01325 | bara |
+| `isentropicEfficiency` | `setIsentropicEfficiency(e)` | 0.85 | 0-1 |
+| `numberOfStages` | `setNumberOfStages(n)` | 1 | - |
+| `power` | (result) | - | W |
+
+### Example Usage
+
+```java
+import neqsim.process.equipment.powergeneration.SteamTurbine;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create superheated steam
+SystemInterface steam = new SystemSrkEos(273.15 + 450.0, 40.0);
+steam.addComponent("water", 1.0);
+steam.setMixingRule("classic");
+
+Stream steamFeed = new Stream("HP Steam", steam);
+steamFeed.setFlowRate(50000.0, "kg/hr");
+
+// Create steam turbine
+SteamTurbine turbine = new SteamTurbine("ST-100", steamFeed);
+turbine.setOutletPressure(0.05, "bara");
+turbine.setIsentropicEfficiency(0.88);
+turbine.run();
+
+System.out.println("Power output: " + turbine.getPower("MW") + " MW");
+```
+
+---
+
+## HRSG
+
+The `HRSG` (Heat Recovery Steam Generator) class models counter-current heat exchange between hot gas turbine exhaust and a water/steam loop. It calculates the heat transferred and the steam production rate for given steam conditions.
+
+### Class Hierarchy
+
+```
+TwoPortEquipment
+└── HRSG
+```
+
+### Constructor
+
+```java
+import neqsim.process.equipment.powergeneration.HRSG;
+
+// Basic constructor
+HRSG hrsg = new HRSG("HRSG-1");
+
+// Constructor with hot gas inlet (gas turbine exhaust)
+HRSG hrsg = new HRSG("HRSG-1", gasTurbineExhaust);
+```
+
+### Key Properties
+
+| Property | Setter | Default | Unit |
+|----------|--------|---------|------|
+| `steamPressure` | `setSteamPressure(p)` | 40.0 | bara |
+| `steamTemperature` | `setSteamTemperature(t)` / `setSteamTemperature(t, "C")` | 400 C | K |
+| `feedWaterTemperature` | `setFeedWaterTemperature(t)` / `setFeedWaterTemperature(t, "C")` | 60 C | K |
+| `approachTemperature` | `setApproachTemperature(dT)` | 15.0 | K |
+| `effectiveness` | `setEffectiveness(e)` | 0.85 | 0-1 |
+
+### Results
+
+| Method | Returns | Unit |
+|--------|---------|------|
+| `getHeatTransferred()` / `getHeatTransferred("MW")` | Heat to steam | W / MW |
+| `getSteamFlowRate()` / `getSteamFlowRate("kg/hr")` | Steam production | kg/s / kg/hr |
+| `getGasOutletTemperature()` | Gas stack temperature | K |
+
+### Example Usage
+
+```java
+HRSG hrsg = new HRSG("HRSG-1", turbine.getOutletStream());
+hrsg.setSteamPressure(40.0);
+hrsg.setSteamTemperature(400.0, "C");
+hrsg.setApproachTemperature(15.0);
+hrsg.run();
+
+System.out.println("Heat recovered: " + hrsg.getHeatTransferred("MW") + " MW");
+System.out.println("Steam production: " + hrsg.getSteamFlowRate("kg/hr") + " kg/hr");
+```
+
+---
+
+## Combined Cycle System
+
+The `CombinedCycleSystem` class integrates a `GasTurbine`, `HRSG`, and `SteamTurbine` into a single equipment unit. It models the full gas turbine combined cycle (GTCC) workflow:
+
+1. Fuel gas combustion in the gas turbine
+2. Exhaust heat recovery in the HRSG to produce steam
+3. Steam expansion through the steam turbine
+
+### Class Hierarchy
+
+```
+TwoPortEquipment
+└── CombinedCycleSystem  (composes GasTurbine + HRSG + SteamTurbine)
+```
+
+### Constructor
+
+```java
+import neqsim.process.equipment.powergeneration.CombinedCycleSystem;
+
+CombinedCycleSystem cc = new CombinedCycleSystem("CC-Plant");
+CombinedCycleSystem cc = new CombinedCycleSystem("CC-Plant", fuelGasStream);
+```
+
+### Key Properties
+
+| Property | Setter | Default | Unit |
+|----------|--------|---------|------|
+| `combustionPressure` | `combustionpressure` (public field) | 2.5 | bara |
+| `steamPressure` | `setSteamPressure(p)` | 40.0 | bara |
+| `steamTemperature` | `setSteamTemperature(t, "C")` | 400.0 | C |
+| `steamTurbineEfficiency` | `setSteamTurbineEfficiency(e)` | 0.85 | 0-1 |
+| `steamCondensorPressure` | `setSteamCondensorPressure(p)` | 0.05 | bara |
+| `hrsgApproachTemperature` | `setHrsgApproachTemperature(dT)` | 15.0 | K |
+| `hrsgEffectiveness` | `setHrsgEffectiveness(e)` | 0.85 | 0-1 |
+
+### Results
+
+| Method | Returns | Unit |
+|--------|---------|------|
+| `getTotalPower()` / `getTotalPower("MW")` | Combined GT + ST power | W / MW |
+| `getGasTurbinePower()` | GT contribution | W |
+| `getSteamTurbinePower()` | ST contribution | W |
+| `getOverallEfficiency()` | LHV thermal efficiency | 0-1 |
+| `getFuelEnergyInput()` | Fuel energy (LHV) | W |
+| `toJson()` | Full results JSON | String |
+
+### Example Usage
+
+```java
+CombinedCycleSystem cc = new CombinedCycleSystem("CC-1", fuelStream);
+cc.setCombustionPressure(15.0);
+cc.setSteamPressure(40.0);
+cc.setSteamTemperature(400.0, "C");
+cc.setSteamTurbineEfficiency(0.85);
+cc.run();
+
+System.out.println("Total power: " + cc.getTotalPower("MW") + " MW");
+System.out.println("GT power: " + cc.getGasTurbinePower() / 1e6 + " MW");
+System.out.println("ST power: " + cc.getSteamTurbinePower() / 1e6 + " MW");
+System.out.println("Efficiency: " + cc.getOverallEfficiency() * 100 + "%");
+System.out.println(cc.toJson());
 ```
 
 ---
 
 ## Fuel Cell
-
-The `FuelCell` class models a hydrogen fuel cell that converts hydrogen and oxygen to electricity and water.
 
 ### Class Hierarchy
 
@@ -183,9 +366,9 @@ The `WindTurbine` class models wind power generation based on wind speed and tur
 import neqsim.process.equipment.powergeneration.WindTurbine;
 
 WindTurbine turbine = new WindTurbine("WT-01");
-turbine.setWindSpeed(12.0);        // m/s
-turbine.setRotorDiameter(120.0);   // m
-turbine.setEfficiency(0.45);
+turbine.setWindSpeed(12.0);          // m/s
+turbine.setRotorArea(11310.0);       // m² (e.g. pi * 60² for 120m diameter)
+turbine.setPowerCoefficient(0.45);   // Betz limit max ~0.593
 ```
 
 ### Key Properties
@@ -193,8 +376,9 @@ turbine.setEfficiency(0.45);
 | Property | Description | Unit |
 |----------|-------------|------|
 | `windSpeed` | Wind velocity | m/s |
-| `rotorDiameter` | Rotor diameter | m |
-| `efficiency` | Power coefficient | 0-0.593 (Betz limit) |
+| `rotorArea` | Rotor swept area | m² |
+| `powerCoefficient` | Aerodynamic efficiency (Cp) | 0-0.593 (Betz limit) |
+| `airDensity` | Air density | kg/m³ |
 | `power` | Electrical power output | W |
 
 ---
@@ -210,7 +394,7 @@ import neqsim.process.equipment.powergeneration.SolarPanel;
 
 SolarPanel panel = new SolarPanel("PV-Array");
 panel.setPanelArea(1000.0);        // m²
-panel.setSolarIrradiance(800.0);   // W/m²
+panel.setIrradiance(800.0);        // W/m²
 panel.setEfficiency(0.20);
 ```
 
@@ -219,7 +403,7 @@ panel.setEfficiency(0.20);
 | Property | Description | Unit |
 |----------|-------------|------|
 | `panelArea` | Total panel area | m² |
-| `solarIrradiance` | Solar radiation | W/m² |
+| `irradiance` | Solar radiation | W/m² |
 | `efficiency` | Panel efficiency | 0-1 |
 | `power` | Electrical power output | W |
 
@@ -237,19 +421,25 @@ The `BatteryStorage` class models electrical energy storage systems.
 import neqsim.process.equipment.battery.BatteryStorage;
 
 BatteryStorage battery = new BatteryStorage("BESS-01");
-battery.setCapacity(100.0);          // MWh
-battery.setMaxPower(25.0);           // MW
-battery.setRoundTripEfficiency(0.90);
+battery.setCapacity(3.6e11);         // Joules (= 100 MWh)
+// Note: charge/discharge efficiencies are internal (default 0.95 each)
 ```
 
 ### Key Properties
 
 | Property | Description | Unit |
 |----------|-------------|------|
-| `capacity` | Total energy capacity | MWh |
-| `maxPower` | Maximum charge/discharge rate | MW |
-| `roundTripEfficiency` | Charge-discharge efficiency | 0-1 |
-| `stateOfCharge` | Current energy level | 0-1 |
+| `capacity` | Total energy capacity | J |
+| `stateOfCharge` | Current energy level | J |
+| `stateOfChargeFraction` | SOC as fraction | 0-1 |
+
+### Operations
+
+```java
+battery.charge(25e6, 2.0);         // charge at 25 MW for 2 hours
+double delivered = battery.discharge(25e6, 1.0);  // discharge at 25 MW for 1 hour
+double soc = battery.getStateOfChargeFraction();   // 0-1
+```
 
 ---
 
@@ -260,7 +450,7 @@ battery.setRoundTripEfficiency(0.90);
 ```java
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.powergeneration.GasTurbine;
-import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.powergeneration.HRSG;
 
 ProcessSystem chpSystem = new ProcessSystem("CHP Plant");
 
@@ -271,12 +461,14 @@ chpSystem.add(fuelGas);
 
 // Gas turbine
 GasTurbine turbine = new GasTurbine("GT", fuelGas);
-turbine.setCombustionPressure(12.0);
+turbine.combustionpressure = 12.0;
 chpSystem.add(turbine);
 
-// Heat recovery steam generator (simplified)
-Heater hrsg = new Heater("HRSG", turbine.getExhaustStream());
-hrsg.setOutTemperature(150.0, "C");
+// Heat recovery steam generator
+HRSG hrsg = new HRSG("HRSG", turbine.getOutletStream());
+hrsg.setSteamPressure(20.0);
+hrsg.setSteamTemperature(250.0, "C");
+hrsg.setApproachTemperature(15.0);
 chpSystem.add(hrsg);
 
 // Run
@@ -284,7 +476,7 @@ chpSystem.run();
 
 // Calculate efficiency
 double electricalPower = turbine.getPower();
-double thermalPower = hrsg.getDuty();
+double thermalPower = hrsg.getHeatTransferred();
 double fuelInput = fuelGas.getFlowRate("kg/hr") * 50e6 / 3600;  // LHV ~ 50 MJ/kg
 
 double electricalEff = electricalPower / fuelInput;
@@ -292,6 +484,26 @@ double totalEff = (electricalPower + thermalPower) / fuelInput;
 
 System.out.println("Electrical efficiency: " + electricalEff * 100 + "%");
 System.out.println("Total CHP efficiency: " + totalEff * 100 + "%");
+System.out.println("Steam production: " + hrsg.getSteamFlowRate("kg/hr") + " kg/hr");
+```
+
+### Combined Cycle Power Plant
+
+```java
+import neqsim.process.equipment.powergeneration.CombinedCycleSystem;
+
+// One-call combined cycle with internal GT + HRSG + ST
+CombinedCycleSystem ccPlant = new CombinedCycleSystem("GTCC", fuelGasStream);
+ccPlant.setCombustionPressure(15.0);
+ccPlant.setSteamPressure(40.0);
+ccPlant.setSteamTemperature(400.0, "C");
+ccPlant.setSteamTurbineEfficiency(0.85);
+ccPlant.run();
+
+System.out.println("Total power: " + ccPlant.getTotalPower("MW") + " MW");
+System.out.println("GT power: " + ccPlant.getGasTurbinePower() / 1e6 + " MW");
+System.out.println("ST power: " + ccPlant.getSteamTurbinePower() / 1e6 + " MW");
+System.out.println("Overall efficiency: " + ccPlant.getOverallEfficiency() * 100 + "%");
 ```
 
 ### Hybrid Renewable System
@@ -300,16 +512,15 @@ System.out.println("Total CHP efficiency: " + totalEff * 100 + "%");
 // Solar + Wind + Battery system
 SolarPanel solar = new SolarPanel("PV");
 solar.setPanelArea(5000.0);
-solar.setSolarIrradiance(600.0);
+solar.setIrradiance(600.0);
 solar.setEfficiency(0.18);
 
 WindTurbine wind = new WindTurbine("Wind");
 wind.setWindSpeed(8.0);
-wind.setRotorDiameter(80.0);
+wind.setRotorArea(5027.0);  // ~80m diameter
 
 BatteryStorage battery = new BatteryStorage("Battery");
-battery.setCapacity(10.0);  // MWh
-battery.setMaxPower(5.0);   // MW
+battery.setCapacity(3.6e10);  // 10 MWh in Joules
 
 // Calculate total renewable generation
 solar.run();
@@ -323,6 +534,7 @@ System.out.println("Total renewable power: " + totalGeneration / 1e6 + " MW");
 
 ## Related Documentation
 
+- [Heat Integration (Pinch Analysis)](heat_integration) - Minimum utility targeting
 - [Electrolyzers](electrolyzers) - Hydrogen production
 - [Compressors](compressors) - Gas compression
 - [Heat Exchangers](heat_exchangers) - Heat recovery

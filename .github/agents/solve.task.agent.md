@@ -765,6 +765,37 @@ condensed analysis section in notes and proceed.
         json.dump(results, f, indent=2)
     ```
 
+15a. **Validate results.json with TaskResultValidator (MANDATORY quality gate).**
+  Add a cell immediately after saving results.json. This calls the Java validator
+  programmatically to catch schema errors before proceeding to report generation.
+
+    ```python
+    # ── Programmatic quality gate: validate results.json ──
+    import jpype
+    TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+
+    with open(str(TASK_DIR / "results.json"), "r") as f:
+        json_str = f.read()
+
+    report = TaskResultValidator.validate(json_str)
+    print(f"Valid: {report.isValid()}  |  Errors: {report.getErrorCount()}  |  Warnings: {report.getWarningCount()}")
+
+    if not report.isValid():
+        print("\n❌ ERRORS (must fix before proceeding to report):")
+        for err in report.getErrors():
+            print(f"  [{err.field}] {err.message}")
+
+    if report.getWarningCount() > 0:
+        print("\n⚠️ WARNINGS (fix for Standard/Comprehensive tasks):")
+        for warn in report.getWarnings():
+            print(f"  [{warn.field}] {warn.message}")
+
+    assert report.isValid(), "results.json failed validation — fix errors above before proceeding"
+    ```
+
+  **If validation fails:** Fix the results.json contents in the cell above and re-run
+  both cells. Do NOT proceed to Step 3 (report generation) with a failing validation.
+
 ### Uncertainty & Risk Analysis (conditional)
 
 15b. Create a dedicated uncertainty/risk notebook for workflow, economics,

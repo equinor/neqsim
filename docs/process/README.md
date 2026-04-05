@@ -186,6 +186,8 @@ This documentation is organized into the following sections:
 | Subsea Boosters | [subsea_boosters.md](equipment/subsea_boosters) | SubseaBooster, multiphase pumps |
 | Umbilicals | [umbilicals.md](equipment/umbilicals) | Umbilical systems |
 | Battery Storage | [battery_storage.md](equipment/battery_storage) | BatteryStorage |
+| **Heat Integration** | [heat_integration.md](equipment/heat_integration) | PinchAnalysis, HeatStream |
+| **Power Generation** | [power_generation.md](equipment/power_generation) | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem, FuelCell, WindTurbine, SolarPanel |
 | Failure Modes | [failure_modes.md](equipment/failure_modes) | EquipmentFailureMode, reliability |
 | Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters) | Mixer, Splitter |
 | Utility | [util/](equipment/util/) | Adjuster, Recycle, Calculator |

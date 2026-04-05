@@ -40,6 +40,8 @@ src/main/java/neqsim/
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
     well/ reservoir/ membrane/ ejector/ filter/ flare/
     subsea/              SubseaWell, SubseaTree (subsea equipment)
+    heatexchanger/heatintegration/  PinchAnalysis, HeatStream (Linnhoff method)
+    powergeneration/     GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem
     MultiPortEquipment   Abstract base for multi-inlet/outlet equipment
   process/               ProcessElementInterface — unified marker for all elements
   process/controllerdevice/  ControllerDeviceInterface (extends ProcessElementInterface)
@@ -64,13 +66,14 @@ src/main/java/neqsim/
   chemicalreactions/     Reaction equilibrium/kinetics
   statistics/            Parameter fitting, Monte Carlo
   util/                  Validation, exceptions, named interfaces
+  util/agentic/          TaskResultValidator, SimulationQualityGate, AgentSession
 
 src/test/java/neqsim/   Mirrors production structure. JUnit 5. Extend NeqSimTest.
 src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
-.github/agents/          16 Copilot Chat agents (router, thermo, process, field development, test, PVT, ...)
-.github/skills/          14 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, ...)
+.github/agents/          19 Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
+.github/skills/          19 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
 devtools/                neqsim_dev_setup.py for Jupyter development
 ```
 
@@ -245,6 +248,8 @@ System.out.println(design.toJson());
 | Pump | `pump` | `Pump` |
 | Valve | `valve` | `ThrottlingValve` |
 | Heat exchanger | `heatexchanger` | `Cooler`, `Heater`, `HeatExchanger` |
+| Heat integration | `heatexchanger.heatintegration` | `PinchAnalysis`, `HeatStream` |
+| Power generation | `powergeneration` | `GasTurbine`, `SteamTurbine`, `HRSG`, `CombinedCycleSystem` |
 | Pipeline | `pipeline` | `AdiabaticPipe`, `PipeBeggsAndBrills` |
 | Mixer | `mixer` | `Mixer` |
 | Splitter | `splitter` | `Splitter` |
@@ -276,6 +281,9 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | SURF cost estimation | `src/main/java/neqsim/process/mechanicaldesign/subsea/SURFCostEstimator.java` |
 | Engineering deliverables | `src/main/java/neqsim/process/mechanicaldesign/` (StudyClass, InstrumentScheduleGenerator, etc.) |
 | HX thermal-hydraulic design | `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
+| Heat integration / pinch analysis | `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` (PinchAnalysis, HeatStream) |
+| Power generation (combined cycle) | `src/main/java/neqsim/process/equipment/powergeneration/` (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
+| Agentic QA & validation | `src/main/java/neqsim/util/agentic/` (TaskResultValidator, SimulationQualityGate, AgentSession) |
 | Component database | `src/main/resources/` |
 
 ## Key Constraints
