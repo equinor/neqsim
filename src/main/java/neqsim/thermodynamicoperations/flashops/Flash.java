@@ -972,7 +972,8 @@ public abstract class Flash extends BaseOperation {
     }
     String modelName = system.getModelName() == null ? "" : system.getModelName();
     String lowerModelName = modelName.toLowerCase();
-    if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")) {
+    if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")
+        || lowerModelName.contains("pitzer")) {
       return true;
     }
     // Keep water-triggered automatic LLE checks compatibility-safe by requiring either
