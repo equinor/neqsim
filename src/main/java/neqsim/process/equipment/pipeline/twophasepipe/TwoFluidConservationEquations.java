@@ -630,10 +630,37 @@ public class TwoFluidConservationEquations implements Serializable {
         double F_wO = F_wL * oilHoldupFrac;
         double F_wW = F_wL * waterHoldupFrac;
 
-        // Gas-liquid interfacial force partitioned to the dominant liquid phase
-        // (Gas interacts primarily with oil on top for stratified oil-water flow)
-        double F_iO = F_iL * 0.8; // Oil gets most of gas-liquid interface
-        double F_iW = F_iL * 0.2;
+        // Gas-liquid interfacial force partitioned based on oil-water flow regime.
+        // In stratified oil-water: gas sits on top of oil, so oil gets most interface force.
+        // In dispersed W/O: oil (continuous) gets all gas-liquid interface force.
+        // In dispersed O/W: water (continuous) gets most gas-liquid interface force.
+        double oilInterfaceFrac = 0.8; // Default: oil gets most of gas-liquid interface
+        if (sec.getOilWaterResult() != null) {
+          switch (sec.getOilWaterResult().regime) {
+            case DISPERSED_OIL_IN_WATER:
+              // Water is continuous; gas interacts mainly with water
+              oilInterfaceFrac = 0.2;
+              break;
+            case DISPERSED_WATER_IN_OIL:
+              // Oil is continuous; gas interacts mainly with oil
+              oilInterfaceFrac = 0.9;
+              break;
+            case DUAL_DISPERSION:
+              // Both present; split by holdup fraction
+              oilInterfaceFrac = oilHoldupFrac;
+              break;
+            case STRATIFIED:
+            case STRATIFIED_WITH_MIXING:
+              // Stratified: gas on top of oil, oil gets most interface
+              oilInterfaceFrac = 0.85;
+              break;
+            default:
+              oilInterfaceFrac = 0.8;
+              break;
+          }
+        }
+        double F_iO = F_iL * oilInterfaceFrac;
+        double F_iW = F_iL * (1.0 - oilInterfaceFrac);
 
         // Oil-water interfacial shear (from TwoFluidSection calculation)
         double tau_ow = sec.calcOilWaterInterfacialShear();

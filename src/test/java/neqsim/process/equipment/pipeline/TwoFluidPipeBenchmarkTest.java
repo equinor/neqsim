@@ -2,7 +2,6 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  * @version 1.0
  */
-@Disabled("Disabled due to infinite solving times - needs TwoFluidPipe optimization")
 public class TwoFluidPipeBenchmarkTest {
 
   // --- Tolerances ---

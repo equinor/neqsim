@@ -93,15 +93,23 @@ pipe = TwoFluidPipe("Flowline", inlet_stream)
 pipe.setLength(20000)
 pipe.setDiameter(0.25)
 pipe.setNumberOfSections(100)   # Computational cells
-pipe.setOuterTemperatures([278.15])  # 5°C ambient (array)
+
+# Heat transfer
+pipe.setSurfaceTemperature(5.0, "C")        # 5°C ambient
+pipe.setHeatTransferCoefficient(25.0)       # W/(m²·K)
+
+# Flat elevation profile (horizontal pipe)
+elevations = [0.0] * 100
+pipe.setElevationProfile(elevations)
 
 process.add(pipe)
 process.run()
 
 # Get detailed profiles
-# positions = pipe.getPositions()
-# pressures = pipe.getPressureProfile()
-# holdups = pipe.getLiquidHoldupProfile()
+positions = pipe.getPositionProfile()       # Section positions (m)
+pressures = pipe.getPressureProfile()       # Pa
+holdups = pipe.getLiquidHoldupProfile()      # Liquid fraction
+temps = pipe.getTemperatureProfile("C")     # °C
 ```
 
 ### Two-Fluid Model with Advanced Features
@@ -915,13 +923,128 @@ pipe.setLength(5000)
 pipe.setDiameter(0.15)
 pipe.setNumberOfSections(200)
 
+# Enable slug tracking (Lagrangian OLGA-style)
+pipe.setEnableSlugTracking(True)
+pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
+
+# Configure Lagrangian tracker for terrain and hydrodynamic slugs
+pipe.configureLagrangianSlugTracking(True, True, True)
+
 process.add(pipe)
 process.run()
 
 # Check for slugging conditions
-# liquid_holdup = pipe.getAverageLiquidHoldup()
-# superficial_gas_vel = pipe.getSuperficialGasVelocity()
-# superficial_liq_vel = pipe.getSuperficialLiquidVelocity()
+print(pipe.getFlowAnalysisSummary())
+
+# Get slug statistics via JSON
+print(pipe.getSlugTrackingStatisticsJson())
+
+# Or use the slug summary
+print(pipe.getSlugStatisticsSummary())
+```
+
+---
+
+## TwoFluidPipe Complete API Reference
+
+A comprehensive reference for the TwoFluidPipe model covering all flow types, boundary conditions, time integration, and advanced features.
+
+### Enumerations
+
+#### BoundaryCondition
+
+| Value | Description |
+|-------|-------------|
+| `STREAM_CONNECTED` | Use properties from connected inlet stream (default inlet) |
+| `CONSTANT_FLOW` | Fixed mass flow rate (set via `setInletMassFlow()`) |
+| `CONSTANT_PRESSURE` | Fixed pressure (default outlet) |
+| `CLOSED` | No flow — blocked/shut-in; pressure floats |
+| `CHARACTERISTIC` | Riemann invariant-based, reduces spurious wave reflections |
+
+#### SlugTrackingMode
+
+| Value | Description |
+|-------|-------------|
+| `LAGRANGIAN` | Full Lagrangian tracking (OLGA-style) — **default** |
+| `SIMPLIFIED` | Simplified slug unit model |
+| `DISABLED` | No slug tracking |
+
+#### TimeIntegrator.Method
+
+| Value | Description |
+|-------|-------------|
+| `EULER` | First-order forward Euler |
+| `RK2` | Second-order (Heun) |
+| `RK4` | Classical 4th-order Runge-Kutta — **default** |
+| `SSP_RK3` | Strong Stability Preserving RK3 |
+| `IMEX_PRESSURE_CORRECTION` | Implicit-explicit; allows 10-100× larger dt |
+
+#### InsulationType
+
+| Value | U-Value (W/m²K) |
+|-------|-----------------|
+| `NONE` | 150.0 |
+| `UNINSULATED_SUBSEA` | 25.0 |
+| `PU_FOAM` | 10.0 |
+| `MULTI_LAYER` | 5.0 |
+| `PIPE_IN_PIPE` | 2.0 |
+| `VIT` | 0.5 |
+| `BURIED_ONSHORE` | 3.0 |
+| `EXPOSED_ONSHORE` | 75.0 |
+
+### Profile Getters
+
+| Method | Unit | Description |
+|--------|------|-------------|
+| `getPressureProfile()` | Pa | Pressure at each section |
+| `getTemperatureProfile("C")` | °C | Temperature, unit = "K", "C", or "F" |
+| `getLiquidHoldupProfile()` | - | Total liquid holdup fraction |
+| `getWaterHoldupProfile()` | - | Water holdup fraction |
+| `getOilHoldupProfile()` | - | Oil holdup fraction |
+| `getWaterCutProfile()` | - | Water in liquid ratio |
+| `getGasVelocityProfile()` | m/s | Gas velocity |
+| `getLiquidVelocityProfile()` | m/s | Liquid velocity |
+| `getOilVelocityProfile()` | m/s | Oil velocity |
+| `getWaterVelocityProfile()` | m/s | Water velocity |
+| `getOilWaterSlipProfile()` | - | Oil-water slip ratio |
+| `getFlowRegimeProfile()` | - | Flow regime per section |
+| `getPositionProfile()` | m | Section positions |
+| `getWallTemperatureProfile()` | K | Wall temperature |
+
+### Steady-State Solver Tuning
+
+| Parameter | Setter | Default | Description |
+|-----------|--------|---------|-------------|
+| Under-relaxation | `setSteadyStateUnderRelaxation(double)` | 0.5 | Update damping (0 to 1) |
+| Flash interval | `setSteadyStateFlashInterval(int)` | 3 | Flash thermodynamics every N iterations |
+| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 30 s | Timeout for SS solver |
+
+### Flow Assurance
+
+```python
+# Set hydrate/wax appearance temperatures
+pipe.setHydrateFormationTemperature(18.0, "C")
+pipe.setWaxAppearanceTemperature(35.0, "C")
+
+pipe.run()
+
+# Check risk
+print(f"Hydrate risk: {pipe.hasHydrateRisk()}")
+print(f"Wax risk: {pipe.hasWaxRisk()}")
+print(f"Distance to hydrate risk: {pipe.getDistanceToHydrateRisk():.0f} m")
+print(f"Hydrate cooldown time: {pipe.calculateHydrateCooldownTime():.1f} hours")
+print(pipe.getThermalSummary())
+```
+
+### Erosion Assessment (API 14E)
+
+```python
+pipe.run()
+
+# Check erosional velocity
+print(f"Erosional velocity: {pipe.getErosionalVelocity():.2f} m/s")
+print(f"Above erosional limit: {pipe.isVelocityAboveErosionalLimit()}")
+print(pipe.getErosionRiskAssessment(100.0))  # C-factor = 100
 ```
 
 ---
