@@ -1,7 +1,7 @@
 name: Daily Research Scan
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  issues: write
 
 on:
   schedule:
@@ -9,8 +9,8 @@ on:
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
-      force_pr:
-        description: 'Create PR even if no changes detected'
+      force:
+        description: 'Create issue even if no changes detected'
         required: false
         default: 'false'
         type: boolean
@@ -55,7 +55,6 @@ jobs:
         run: |
           SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
           mkdir -p "$SCAN_DIR"
-          # Copy cached hash into output dir so daily_scan.py can read it
           if [ -f /tmp/scan_hash/.last_scan_hash ]; then
             cp /tmp/scan_hash/.last_scan_hash "$SCAN_DIR/.last_scan_hash"
           fi
@@ -68,7 +67,7 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           FORCE_FLAG=""
-          if [ "${{ inputs.force_pr }}" = "true" ]; then
+          if [ "${{ inputs.force }}" = "true" ]; then
             FORCE_FLAG="--force"
           fi
           python neqsim-paperlab/tools/daily_scan.py \
@@ -84,8 +83,15 @@ jobs:
           if [ -f "$PR_META" ]; then
             CHANGED=$(python3 -c "import json; print(json.load(open('$PR_META'))['changed'])")
             TITLE=$(python3 -c "import json; print(json.load(open('$PR_META'))['title'])")
-            echo "changed=$CHANGED" >> $GITHUB_OUTPUT
-            echo "title=$TITLE" >> $GITHUB_OUTPUT
+            BODY=$(cat "$SCAN_DIR/scout_report.md")
+            # Write multi-line body to GITHUB_OUTPUT
+            {
+              echo "changed=$CHANGED"
+              echo "title=$TITLE"
+              echo "body<<SCAN_EOF"
+              echo "$BODY"
+              echo "SCAN_EOF"
+            } >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
@@ -99,28 +105,15 @@ jobs:
             cp "$HASH_FILE" /tmp/scan_hash/.last_scan_hash
           fi
 
-      - name: Remove temp files before PR creation
+      - name: Create Issue
         if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
-        run: |
-          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
-          rm -f "$SCAN_DIR/.pr_metadata.json"
-          rm -f "$SCAN_DIR/.last_scan_hash"
-
-      - name: Create Pull Request
-        if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: actions/github-script@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "research-scan: update paper opportunities"
-          base: master
-          branch: research-scan/daily
-          delete-branch: true
-          title: ${{ steps.check.outputs.title }}
-          body-path: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/scout_report.md
-          add-paths: |
-            neqsim-paperlab/papers/_research_scan/opportunities.json
-            neqsim-paperlab/papers/_research_scan/scout_report.md
-          labels: |
-            paperlab
-            research-scan
-            automated
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `${{ steps.check.outputs.title }}`,
+              body: `${{ steps.check.outputs.body }}`,
+              labels: ['paperlab', 'research-scan', 'automated']
+            });

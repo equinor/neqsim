@@ -215,7 +215,7 @@ neqsim-paperlab/
 │   ├── citation_discovery.py       # Suggest missing refs via Semantic Scholar API
 │   ├── revision_diff.py            # Visual HTML diff between manuscript revisions
 │   ├── research_scanner.py         # Codebase paper opportunity scanner
-│   ├── daily_scan.py               # CI script for automated daily scan + PR
+│   ├── daily_scan.py               # CI script for automated daily scan + issue
 │   ├── paper_renderer.py           # LaTeX rendering
 │   ├── word_renderer.py            # Word/OMML rendering
 │   ├── claim_tracer.py             # Evidence audit (all paper types)
@@ -280,32 +280,32 @@ neqsim-paperlab/
 ## Automated Daily Scan (CI/CD)
 
 The research scanner runs automatically every day via GitHub Actions and opens
-a PR when new paper opportunities are found.
+a GitHub Issue suggesting new paper opportunities when changes are detected.
 
 **How it works:**
 
 1. `.github/workflows/research-scan.yml` triggers daily at 06:00 UTC
 2. `neqsim-paperlab/tools/daily_scan.py` runs the scanner on the full repo
-3. Results are written to `papers/_research_scan/` (JSON + markdown report)
-4. If opportunities changed since the last scan, a PR is created on branch
-   `research-scan/daily` with the full `scout_report.md` as the PR body
+3. If opportunities changed since the last scan, a GitHub Issue is created
+   with the full `scout_report.md` as the issue body
 
 **Manual trigger:**
 
 ```bash
 # From GitHub: Actions → Daily Research Scan → Run workflow
 # Or use the gh CLI:
-gh workflow run research-scan.yml -f force_pr=true -f since_days=90
+gh workflow run research-scan.yml -f force=true -f since_days=90
 ```
 
-**What the PR contains:**
+**What the issue contains:**
 
-- `scout_report.md` — Ranked list of paper opportunities with details
-- `opportunities.json` — Machine-readable results for further processing
+- Ranked table of paper opportunities with scores and readiness
+- Detailed cards per opportunity with NeqSim code improvements
+- Domain and paper-type breakdowns
 
 **Change detection:** A content hash tracks whether opportunities changed
-between scans. PRs are only created when new or modified opportunities appear
-(or when `force_pr=true` is set).
+between scans. Issues are only created when new or modified opportunities
+appear (or when `force=true` is set).
 
 ## Skills
 

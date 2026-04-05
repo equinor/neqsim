@@ -5,7 +5,7 @@ This script:
 1. Runs the research scanner on the NeqSim repository.
 2. Generates ``scout_report.md`` and ``opportunities.json``.
 3. Checks if opportunities changed since the last scan.
-4. Exits with code 0 (no changes) or writes a PR body for the CI to pick up.
+4. If changed, the GitHub Action creates an issue with the scout report.
 
 Usage (from repo root)::
 
@@ -99,7 +99,7 @@ def main():
     # Write new hash
     hash_path.write_text(new_hash)
 
-    # Write PR metadata for the GitHub Action to consume
+    # Write metadata for the GitHub Action to consume
     n_opps = report["summary"]["total_opportunities"]
     n_ready = report["summary"]["ready_count"]
     top_score = report["summary"]["top_score"]
@@ -107,35 +107,11 @@ def main():
     pr_title = (f"research-scan: {n_opps} paper opportunities found "
                 f"({n_ready} ready, top score {top_score})")
 
-    pr_body = (
-        f"## Automated Research Scan\n\n"
-        f"The daily research scanner found **{n_opps}** paper opportunities "
-        f"in the NeqSim codebase.\n\n"
-        f"- **Ready to write:** {n_ready}\n"
-        f"- **Top score:** {top_score}/100\n"
-        f"- **Scan window:** last {args.since} days\n\n"
-        f"### What's inside\n\n"
-        f"- `neqsim-paperlab/papers/_research_scan/scout_report.md` — "
-        f"Full ranked report with details\n"
-        f"- `neqsim-paperlab/papers/_research_scan/opportunities.json` — "
-        f"Machine-readable results\n\n"
-        f"### Next steps\n\n"
-        f"1. Review the top opportunities in `scout_report.md`\n"
-        f"2. Pick a topic and run "
-        f"`python paperflow.py new \"Paper Title\" --journal <journal>`\n"
-        f"3. The paper-writing workflow will improve NeqSim code along the way\n\n"
-        f"---\n"
-        f"*This PR was created automatically by the "
-        f"[neqsim-paperlab research scanner]"
-        f"(neqsim-paperlab/README.md).*"
-    )
-
-    # Write PR metadata as files the Action can read
+    # Write metadata as files the Action can read
     pr_meta_path = output_dir / ".pr_metadata.json"
     with open(str(pr_meta_path), "w", encoding="utf-8") as f:
         json.dump({
             "title": pr_title,
-            "body": pr_body,
             "changed": changed,
             "hash": new_hash,
             "opportunities": n_opps,
@@ -145,19 +121,16 @@ def main():
 
     if changed:
         print(f"\nOpportunities changed (hash {old_hash[:8] or 'none'}→{new_hash[:8]})")
-        print(f"PR title: {pr_title}")
+        print(f"Issue title: {pr_title}")
     else:
-        print(f"\nNo changes detected (hash={new_hash[:8]}). Skipping PR.")
+        print(f"\nNo changes detected (hash={new_hash[:8]}). Skipping issue.")
 
-    # Exit codes: 0 = changed (create PR), 1 = no changes (skip PR)
-    # Reversed from usual convention so the Action can use 'if: success()'
-    # Actually, let's use env file approach instead
-    # Write to GITHUB_OUTPUT if available
+    # Write to GITHUB_OUTPUT if available (for the Actions workflow)
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a") as f:
             f.write(f"changed={'true' if changed else 'false'}\n")
-            f.write(f"pr_title={pr_title}\n")
+            f.write(f"title={pr_title}\n")
             f.write(f"opportunities={n_opps}\n")
 
     return 0
