@@ -50,9 +50,64 @@ documenting which standards were checked and their compliance status.
 ## Equipment Library
 Separators, ThreePhaseSeparators, Compressors, Expanders, Pumps, Heaters, Coolers, HeatExchangers, ThrottlingValves, Mixers, Splitters, AdiabaticPipe, PipeBeggsAndBrills (with formation temperature gradient), DistillationColumn, Absorbers, Ejectors, Reactors, Membranes, Electrolyzers, Flares, Filters, CO2InjectionWellAnalyzer, TransientWellbore, ImpurityMonitor.
 
+## Distillation Column Setup
+For distillation columns, load the `neqsim-distillation-design` skill for solver selection,
+feed tray optimization, internals sizing, and convergence guidance.
+
+```java
+DistillationColumn column = new DistillationColumn("Deethanizer", 15, true, true);
+column.addFeedStream(feedStream, 7);  // feed at tray 7
+column.getReboiler().setRefluxRatio(3.0);
+column.getCondenser().setRefluxRatio(1.5);
+column.setTopPressure(25.0);
+column.setBottomPressure(26.0);
+
+// Solver selection — use INSIDE_OUT for better convergence on most columns
+column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+column.run();
+```
+
+## Power Generation Equipment
+For gas turbines, steam turbines, HRSG, and combined cycles:
+
+```java
+GasTurbine gt = new GasTurbine("GT", fuelGasStream, airStream);
+gt.setIsentropicEfficiency(0.88);
+gt.setCompressorPressureRatio(18.0);
+gt.run();
+double power = gt.getPower("MW");
+double efficiency = gt.getThermalEfficiency();
+
+// Heat Recovery Steam Generator
+HRSG hrsg = new HRSG("HRSG", gt.getExhaustStream(), waterStream);
+hrsg.run();
+
+// Steam turbine
+SteamTurbine st = new SteamTurbine("ST", hrsg.getSteamOutStream());
+st.setOutletPressure(0.1);  // condenser pressure in bara
+st.run();
+```
+
+## Heat Integration (Pinch Analysis)
+For heat exchanger network design:
+
+```java
+PinchAnalysis pinch = new PinchAnalysis("HeatIntegration");
+pinch.addHotStream(new HeatStream("hot1", 200.0, 80.0, 500.0));  // Tin, Tout (C), duty (kW)
+pinch.addColdStream(new HeatStream("cold1", 30.0, 150.0, 400.0));
+pinch.setMinApproachTemperature(10.0);
+pinch.run();
+double minHotUtility = pinch.getMinHotUtility();
+double minColdUtility = pinch.getMinColdUtility();
+```
+
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+- Distillation design: See `neqsim-distillation-design` skill for column setup and solver selection
+- Standards: See `neqsim-standards-lookup` skill for equipment design standards
+- Dynamic simulation: See `neqsim-dynamic-simulation` skill for transient analysis
+- Troubleshooting: See `neqsim-troubleshooting` skill for convergence recovery
 
 ## API Verification
 ALWAYS read the actual class source to verify method signatures before using them. Do NOT assume API patterns — check constructors, method names, and parameter types.
