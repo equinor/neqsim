@@ -38,7 +38,7 @@ import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create analyzer
@@ -317,6 +317,11 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Applies a failure mode to equipment in the process.
+   *
+   * @param process the process system containing the equipment
+   * @param equipmentName the name of the equipment to fail
+   * @param failureMode the failure mode to apply
+   * @param result the result object to populate with failure details
    */
   private void applyFailure(ProcessSystem process, String equipmentName,
       EquipmentFailureMode failureMode, ProductionImpactResult result) {

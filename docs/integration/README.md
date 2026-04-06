@@ -52,6 +52,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
+| [mcp_getting_started.md](mcp_getting_started) | **Getting Started — 5-minute guide to connecting any LLM to NeqSim via MCP** |
 | [mcp_neqsim_core_layer.md](mcp_neqsim_core_layer) | **MCP core layer — FlashRunner, ProcessRunner, Validator, ComponentQuery, typed models, example/schema catalogs** |
 | [mcp_server_guide.md](mcp_server_guide) | **NeqSim MCP Server — Quarkus-based server for VS Code Copilot, Claude Desktop, and other LLM clients** |
 

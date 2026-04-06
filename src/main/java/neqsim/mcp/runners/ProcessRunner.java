@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ProcessResult;
+import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 
@@ -56,9 +57,29 @@ public class ProcessRunner {
           "Provide a valid JSON process definition with 'fluid' and 'process' blocks");
     }
 
+    long startTime = System.currentTimeMillis();
     try {
       SimulationResult result = ProcessSystem.fromJsonAndRun(json);
-      return result.toJson();
+      String simJson = result.toJson();
+
+      // Inject provenance into the response
+      String model = extractModel(json);
+      String mixingRule = extractMixingRule(json);
+      int equipCount = extractEquipmentCount(json);
+      ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
+      provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      provenance.setConverged(!result.isError());
+
+      if (!result.isError()) {
+        provenance.addValidationPassed("Process simulation completed");
+      }
+      for (String warning : result.getWarnings()) {
+        provenance.addLimitation("Warning: " + warning);
+      }
+
+      JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
+      simObj.add("provenance", GSON.toJsonTree(provenance));
+      return GSON.toJson(simObj);
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
           "Check the JSON definition. Use Validator.validate() first to catch common issues.");
@@ -83,6 +104,8 @@ public class ProcessRunner {
           "Provide a valid JSON process definition with 'fluid' and 'process' blocks");
     }
 
+    long startTime = System.currentTimeMillis();
+
     // Pre-validate
     String validationJson = Validator.validate(json);
     JsonObject validation = JsonParser.parseString(validationJson).getAsJsonObject();
@@ -101,15 +124,33 @@ public class ProcessRunner {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(json);
       String simJson = simResult.toJson();
 
+      // Inject provenance
+      String model = extractModel(json);
+      String mixingRule = extractMixingRule(json);
+      int equipCount = extractEquipmentCount(json);
+      ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
+      provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      provenance.setConverged(!simResult.isError());
+      provenance.addValidationPassed("Pre-flight validation passed");
+
+      if (!simResult.isError()) {
+        provenance.addValidationPassed("Process simulation completed");
+      }
+
+      JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
+      simObj.add("provenance", GSON.toJsonTree(provenance));
+
       // If there were validation warnings, merge them
       JsonArray valIssues = validation.getAsJsonArray("issues");
       if (valIssues != null && valIssues.size() > 0) {
-        JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
         simObj.add("validationIssues", valIssues);
-        return GSON.toJson(simObj);
+        for (int i = 0; i < valIssues.size(); i++) {
+          provenance.addLimitation(
+              "Validation warning: " + valIssues.get(i).getAsJsonObject().get("message"));
+        }
       }
 
-      return simJson;
+      return GSON.toJson(simObj);
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
           "Check the JSON definition. Validation passed but simulation threw an exception.");
@@ -163,6 +204,60 @@ public class ProcessRunner {
       return ApiEnvelope.error("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
           "Check the JSON definition. Use Validator.validate() first to catch common issues.");
     }
+  }
+
+  /**
+   * Extracts the EOS model name from the input JSON.
+   *
+   * @param json the input JSON string
+   * @return the model name, or "SRK" as default
+   */
+  private static String extractModel(String json) {
+    try {
+      JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("fluid") && root.getAsJsonObject("fluid").has("model")) {
+        return root.getAsJsonObject("fluid").get("model").getAsString();
+      }
+    } catch (Exception ignored) {
+    }
+    return "SRK";
+  }
+
+  /**
+   * Extracts the mixing rule from the input JSON.
+   *
+   * @param json the input JSON string
+   * @return the mixing rule, or "classic" as default
+   */
+  private static String extractMixingRule(String json) {
+    try {
+      JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("fluid") && root.getAsJsonObject("fluid").has("mixingRule")) {
+        return root.getAsJsonObject("fluid").get("mixingRule").getAsString();
+      }
+    } catch (Exception ignored) {
+    }
+    return "classic";
+  }
+
+  /**
+   * Counts the number of equipment entries in the process definition.
+   *
+   * @param json the input JSON string
+   * @return the equipment count, or 0 if not parseable
+   */
+  private static int extractEquipmentCount(String json) {
+    try {
+      JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("process") && root.get("process").isJsonArray()) {
+        return root.getAsJsonArray("process").size();
+      }
+      if (root.has("equipment") && root.get("equipment").isJsonArray()) {
+        return root.getAsJsonArray("equipment").size();
+      }
+    } catch (Exception ignored) {
+    }
+    return 0;
   }
 
   /**

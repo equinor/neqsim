@@ -180,6 +180,21 @@ emissions_inventory = {
     },
     "venting": {
         "cold_vent": {"ch4_tpa": cv_ch4},
+    }
+}
+```
+
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill for forbidden features
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+- Standards: See `neqsim-standards-lookup` skill for environmental regulations
+- Power generation: See `neqsim-power-generation` skill for gas turbine fuel consumption
+- CCS/hydrogen: See `neqsim-ccs-hydrogen` skill for CO2 capture chain
+- Field economics: See `neqsim-field-economics` skill for CO2 tax and carbon pricing
+
+## API Verification
+ALWAYS read the actual class source to verify method signatures before using them.
+Do NOT assume API patterns — check constructors, method names, and parameter types.
         "tank_breathing": {"voc_tpa": tb_voc},
     },
     "total_co2e_tpa": total_co2e,

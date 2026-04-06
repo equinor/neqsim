@@ -148,8 +148,14 @@ boolean densePhase = CO2FlowCorrections.isDensePhase(system);
 in `process.equipment.pipeline`; `ImpurityMonitor` in `process.measurementdevice`.
 
 ## Shared Skills
-- Java 8 rules: See `neqsim-java8-rules` skill
+- Flow assurance: See `neqsim-flow-assurance` skill for comprehensive hydrate/wax/corrosion/hydraulics patterns
+- CCS/hydrogen: See `neqsim-ccs-hydrogen` skill for CO2 pipeline and injection well patterns
+- Java 8 rules: See `neqsim-java8-rules` skill for forbidden features
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+- Standards: See `neqsim-standards-lookup` skill for pipeline/corrosion standards database
+- Electrolyte systems: See `neqsim-electrolyte-systems` skill for scale and brine chemistry
+- Input validation: See `neqsim-input-validation` skill for pre-simulation checks
+- Troubleshooting: See `neqsim-troubleshooting` skill for flash convergence recovery
 
 ## Code Verification for Documentation
 When producing code that will appear in documentation or examples, write a JUnit test

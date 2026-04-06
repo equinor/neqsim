@@ -148,6 +148,85 @@ public final class ExampleCatalog {
         + "}";
   }
 
+  // ========== Batch Examples ==========
+
+  /**
+   * Returns a batch temperature sweep example with 3 cases.
+   *
+   * @return JSON string for BatchRunner.run()
+   */
+  public static String batchTemperatureSweep() {
+    return "{\n" + "  \"model\": \"SRK\",\n" + "  \"components\": {\n" + "    \"methane\": 0.85,\n"
+        + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05\n" + "  },\n"
+        + "  \"mixingRule\": \"classic\",\n" + "  \"flashType\": \"TP\",\n" + "  \"cases\": [\n"
+        + "    {\"temperature\": {\"value\": -20.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}},\n"
+        + "    {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}},\n"
+        + "    {\"temperature\": {\"value\": 80.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}\n"
+        + "  ]\n" + "}";
+  }
+
+  /**
+   * Returns a batch pressure sweep example with 4 cases.
+   *
+   * @return JSON string for BatchRunner.run()
+   */
+  public static String batchPressureSweep() {
+    return "{\n" + "  \"model\": \"PR\",\n" + "  \"components\": {\n" + "    \"methane\": 0.70,\n"
+        + "    \"ethane\": 0.15,\n" + "    \"propane\": 0.10,\n" + "    \"n-butane\": 0.05\n"
+        + "  },\n" + "  \"mixingRule\": \"classic\",\n" + "  \"flashType\": \"TP\",\n"
+        + "  \"cases\": [\n"
+        + "    {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 10.0, \"unit\": \"bara\"}},\n"
+        + "    {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 30.0, \"unit\": \"bara\"}},\n"
+        + "    {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 60.0, \"unit\": \"bara\"}},\n"
+        + "    {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, \"pressure\": {\"value\": 100.0, \"unit\": \"bara\"}}\n"
+        + "  ]\n" + "}";
+  }
+
+  // ========== Property Table Examples ==========
+
+  /**
+   * Returns a property table temperature sweep example.
+   *
+   * @return JSON string for PropertyTableRunner.run()
+   */
+  public static String propertyTableTemperatureSweep() {
+    return "{\n" + "  \"model\": \"SRK\",\n" + "  \"components\": {\n" + "    \"methane\": 0.85,\n"
+        + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05\n" + "  },\n"
+        + "  \"mixingRule\": \"classic\",\n" + "  \"sweep\": \"temperature\",\n"
+        + "  \"sweepFrom\": {\"value\": -40.0, \"unit\": \"C\"},\n"
+        + "  \"sweepTo\": {\"value\": 80.0, \"unit\": \"C\"},\n" + "  \"points\": 13,\n"
+        + "  \"fixedPressure\": {\"value\": 50.0, \"unit\": \"bara\"},\n"
+        + "  \"properties\": [\"density\", \"viscosity\", \"Cp\", \"Z\", \"enthalpy\"]\n" + "}";
+  }
+
+  /**
+   * Returns a property table pressure sweep example.
+   *
+   * @return JSON string for PropertyTableRunner.run()
+   */
+  public static String propertyTablePressureSweep() {
+    return "{\n" + "  \"model\": \"SRK\",\n" + "  \"components\": {\n" + "    \"methane\": 0.90,\n"
+        + "    \"ethane\": 0.07,\n" + "    \"propane\": 0.03\n" + "  },\n"
+        + "  \"mixingRule\": \"classic\",\n" + "  \"sweep\": \"pressure\",\n"
+        + "  \"sweepFrom\": {\"value\": 10.0, \"unit\": \"bara\"},\n"
+        + "  \"sweepTo\": {\"value\": 150.0, \"unit\": \"bara\"},\n" + "  \"points\": 15,\n"
+        + "  \"fixedTemperature\": {\"value\": 25.0, \"unit\": \"C\"},\n"
+        + "  \"properties\": [\"density\", \"Z\", \"molarMass\", \"soundSpeed\"]\n" + "}";
+  }
+
+  // ========== Phase Envelope Examples ==========
+
+  /**
+   * Returns a phase envelope example for a natural gas.
+   *
+   * @return JSON string for PhaseEnvelopeRunner.run()
+   */
+  public static String phaseEnvelopeNaturalGas() {
+    return "{\n" + "  \"model\": \"SRK\",\n" + "  \"components\": {\n" + "    \"methane\": 0.80,\n"
+        + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05,\n" + "    \"n-butane\": 0.03,\n"
+        + "    \"n-pentane\": 0.02\n" + "  },\n" + "  \"mixingRule\": \"classic\"\n" + "}";
+  }
+
   // ========== Validation Examples ==========
 
   /**
@@ -170,7 +249,8 @@ public final class ExampleCatalog {
    * @return unmodifiable list of category names
    */
   public static List<String> getCategories() {
-    return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation"));
+    return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation", "batch",
+        "property-table", "phase-envelope"));
   }
 
   /**
@@ -187,6 +267,12 @@ public final class ExampleCatalog {
       return Arrays.asList("simple-separation", "compression-with-cooling");
     } else if ("validation".equals(category)) {
       return Arrays.asList("error-flash");
+    } else if ("batch".equals(category)) {
+      return Arrays.asList("temperature-sweep", "pressure-sweep");
+    } else if ("property-table".equals(category)) {
+      return Arrays.asList("temperature-sweep", "pressure-sweep");
+    } else if ("phase-envelope".equals(category)) {
+      return Arrays.asList("natural-gas");
     }
     return Collections.emptyList();
   }
@@ -226,6 +312,24 @@ public final class ExampleCatalog {
       if ("error-flash".equals(name)) {
         return validationErrorFlash();
       }
+    } else if ("batch".equals(category)) {
+      if ("temperature-sweep".equals(name)) {
+        return batchTemperatureSweep();
+      }
+      if ("pressure-sweep".equals(name)) {
+        return batchPressureSweep();
+      }
+    } else if ("property-table".equals(category)) {
+      if ("temperature-sweep".equals(name)) {
+        return propertyTableTemperatureSweep();
+      }
+      if ("pressure-sweep".equals(name)) {
+        return propertyTablePressureSweep();
+      }
+    } else if ("phase-envelope".equals(category)) {
+      if ("natural-gas".equals(name)) {
+        return phaseEnvelopeNaturalGas();
+      }
     }
     return null;
   }
@@ -258,6 +362,27 @@ public final class ExampleCatalog {
     validationExamples.put("error-flash",
         "Flash input with known errors (unknown model, misspelled component)");
     catalog.put("validation", validationExamples);
+
+    // Batch examples
+    Map<String, String> batchExamples = new LinkedHashMap<String, String>();
+    batchExamples.put("temperature-sweep",
+        "Batch of 3 TP flashes at different temperatures (SRK, 3-component gas)");
+    batchExamples.put("pressure-sweep",
+        "Batch of 4 TP flashes at different pressures (PR, 4-component gas)");
+    catalog.put("batch", batchExamples);
+
+    // Property table examples
+    Map<String, String> propTableExamples = new LinkedHashMap<String, String>();
+    propTableExamples.put("temperature-sweep",
+        "Temperature sweep from -40 to 80 C at 50 bara (density, viscosity, Cp, Z, enthalpy)");
+    propTableExamples.put("pressure-sweep",
+        "Pressure sweep from 10 to 150 bara at 25 C (density, Z, molarMass, soundSpeed)");
+    catalog.put("property-table", propTableExamples);
+
+    // Phase envelope examples
+    Map<String, String> envelopeExamples = new LinkedHashMap<String, String>();
+    envelopeExamples.put("natural-gas", "Phase envelope for a 5-component natural gas (SRK)");
+    catalog.put("phase-envelope", envelopeExamples);
 
     return GSON.toJson(catalog);
   }

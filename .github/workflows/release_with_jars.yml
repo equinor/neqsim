@@ -3,7 +3,7 @@ permissions:
   contents: read
 
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -16,35 +16,35 @@ jobs:
   get_versions:
     name: Get version numbers from pom-files
     runs-on: ubuntu-latest
-    
+
     outputs:
       version_8: ${{ steps.java-8-fix.outputs.version }}
       version: ${{ steps.java.outputs.version }}
-    
+
     steps:
     - name: Check out neqsim java project
       uses: actions/checkout@v6
     - name: Get version number for pomJava8.xml
       id: java-8
       uses: JActions/maven-version@v1.2.0
-      with: 
-        pom: ./pomJava8.xml 
+      with:
+        pom: ./pomJava8.xml
     - name: Get version number for pom.xml
       id: java
       uses: JActions/maven-version@v1.2.0
-      with: 
+      with:
         pom: ./pom.xml
     - name: Fix java 8 version number
       id: java-8-fix
       run: echo "version=$(echo ${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")" >> $GITHUB_OUTPUT
-  
+
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
-    
+
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
-       
+
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
@@ -62,14 +62,14 @@ jobs:
         with:
           name: jarfiles-java8
           path: staging
-        
+
   compile_java_11:
     name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 11
     needs: get_versions
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
@@ -94,7 +94,7 @@ jobs:
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
@@ -115,13 +115,42 @@ jobs:
           name: jarfiles-java21
           path: staging
 
+  compile_mcp_server:
+    name: Build MCP Server (Java 17)
+    needs: get_versions
+
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out neqsim java project
+        uses: actions/checkout@v6
+      - name: Set up JDK 17 environment
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+      - name: Install NeqSim core to local Maven repo
+        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true
+      - name: Build MCP server uber-jar
+        run: |
+          NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
+      - name: Copy jar file to staging
+        run: mkdir staging && cp neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar staging/
+      - uses: actions/upload-artifact@v7
+        with:
+          name: jarfiles-mcp-server
+          path: staging
+
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: [get_versions, compile_java_8, compile_java_11, compile_java_21]
-    
+    needs: [get_versions, compile_java_8, compile_java_11, compile_java_21, compile_mcp_server]
+
     steps:
       - name: Download java 8 jar files
         uses: actions/download-artifact@v8
@@ -135,14 +164,18 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: jarfiles-java21
-        
+      - name: Download MCP server jar
+        uses: actions/download-artifact@v8
+        with:
+          name: jarfiles-mcp-server
+
       - name: Create release v${{ needs.get_versions.outputs.version_8 }}
         uses: ncipollo/release-action@v1.21.0
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
-          tag: v${{ needs.get_versions.outputs.version_8 }} 
+          tag: v${{ needs.get_versions.outputs.version_8 }}
           draft: true
-          generateReleaseNotes: true          
+          generateReleaseNotes: true
           skipIfReleaseExists: true
           artifacts: "*.jar"
           artifactContentType: application/java-archive
