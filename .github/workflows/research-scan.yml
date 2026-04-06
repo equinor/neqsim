@@ -1,0 +1,116 @@
+name: Daily Research Scan
+permissions:
+  contents: read
+  issues: write
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Create issue even if no changes detected'
+        required: false
+        default: 'false'
+        type: boolean
+      since_days:
+        description: 'Look-back window in days'
+        required: false
+        default: '180'
+        type: string
+      top_n:
+        description: 'Max opportunities to report'
+        required: false
+        default: '15'
+        type: string
+
+jobs:
+  scan:
+    name: Scan NeqSim for paper opportunities
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Full history needed for git log analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Restore previous scan hash
+        id: cache
+        uses: actions/cache@v5
+        with:
+          path: /tmp/scan_hash
+          key: research-scan-hash
+
+      - name: Prepare scan output directory
+        run: |
+          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
+          mkdir -p "$SCAN_DIR"
+          if [ -f /tmp/scan_hash/.last_scan_hash ]; then
+            cp /tmp/scan_hash/.last_scan_hash "$SCAN_DIR/.last_scan_hash"
+          fi
+
+      - name: Run research scanner
+        id: scan
+        env:
+          NEQSIM_REPO_ROOT: ${{ github.workspace }}
+          SCAN_OUTPUT_DIR: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan
+        run: |
+          cd ${{ github.workspace }}
+          FORCE_FLAG=""
+          if [ "${{ inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          python neqsim-paperlab/tools/daily_scan.py \
+            --since ${{ inputs.since_days || '180' }} \
+            --top ${{ inputs.top_n || '15' }} \
+            $FORCE_FLAG
+
+      - name: Read scan results
+        id: check
+        run: |
+          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
+          PR_META="$SCAN_DIR/.pr_metadata.json"
+          if [ -f "$PR_META" ]; then
+            CHANGED=$(python3 -c "import json; print(json.load(open('$PR_META'))['changed'])")
+            TITLE=$(python3 -c "import json; print(json.load(open('$PR_META'))['title'])")
+            echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+            echo "title=$TITLE" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Persist scan hash to cache
+        if: always()
+        run: |
+          mkdir -p /tmp/scan_hash
+          HASH_FILE="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/.last_scan_hash"
+          if [ -f "$HASH_FILE" ]; then
+            cp "$HASH_FILE" /tmp/scan_hash/.last_scan_hash
+          fi
+
+      - name: Create Issue
+        if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/scout_report.md';
+            const body = fs.readFileSync(reportPath, 'utf8');
+            const title = '${{ steps.check.outputs.title }}';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['paperlab', 'research-scan', 'automated']
+            });

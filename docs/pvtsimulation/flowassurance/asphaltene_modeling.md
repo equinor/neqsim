@@ -155,7 +155,7 @@ import neqsim.thermo.phase.PhaseType;
 // Check for asphaltene precipitation
 if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
     PhaseInterface asphaltene = fluid.getPhaseOfType("asphaltene");
-    
+
     // Access asphaltene phase properties
     double density = asphaltene.getDensity("kg/m3");        // ~1150 kg/m³
     double Cp = asphaltene.getCp("kJ/kgK");                 // ~0.9 kJ/kgK
@@ -339,9 +339,239 @@ Based on the Pedersen correlations, asphaltene components show these typical pro
 - May require different tuning than CPA models
 - L-L split detection depends on flash algorithm convergence
 
-### 4. Combined Approach
+### 4. Flory-Huggins Regular Solution Model
 
-Use De Boer for initial screening, then CPA or Pedersen method for detailed analysis of flagged cases. See [Method Comparison](asphaltene_method_comparison).
+The Flory-Huggins model treats the oil as a solvent and asphaltenes as a dissolved
+polymer, predicting precipitation from the mismatch in solubility parameters. This
+is one of the most widely used approaches in the petroleum industry (Hirschberg et al., 1984).
+
+**Key equation:**
+
+$$\ln(\phi_a) + \left(1 - \frac{V_a}{V_L}\right)(1 - \phi_a) + \chi (1 - \phi_a)^2 = 0$$
+
+Where the Flory-Huggins interaction parameter is:
+
+$$\chi = \frac{V_a}{RT}(\delta_a - \delta_L)^2$$
+
+**Advantages:**
+- Predicts onset pressure from first principles
+- Can be configured from API gravity or SARA fractions
+- Produces precipitation curves (wt% vs pressure)
+- Moderate computational cost
+
+**Limitations:**
+- Regular solution approximation (no association)
+- Default Lian et al. (1994) solubility parameter coefficients fail for live oils — use `calibrateCorrelation()` (see below)
+- Requires tuning for specific oil types
+
+#### Basic Usage
+
+```java
+import neqsim.pvtsimulation.flowassurance.FloryHugginsAsphalteneModel;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create a fluid system
+SystemSrkEos fluid = new SystemSrkEos(373.15, 350.0);
+fluid.addComponent("methane", 0.40);
+fluid.addComponent("n-heptane", 0.50);
+fluid.addComponent("nC20", 0.10);
+fluid.setMixingRule("classic");
+
+// Create FH model
+FloryHugginsAsphalteneModel fh =
+    new FloryHugginsAsphalteneModel(fluid, 373.15);
+
+// Configure from API gravity (sets MW, solubility parameter, density, molar volume)
+fh.configureFromAPIGravity(30.0);
+
+// IMPORTANT: Calibrate the A coefficient using physics-based approach
+// This uses the Flory-Huggins critical chi condition to set A from first principles
+fh.calibrateCorrelation(373.15);
+
+// Calculate onset pressure
+double onsetP = fh.calculateOnsetPressure(373.15, 500.0, 50.0);
+System.out.println("FH Onset Pressure: " + onsetP + " bar");
+```
+
+#### API Gravity Configuration
+
+The `configureFromAPIGravity()` method uses continuous correlations to set
+asphaltene MW, solubility parameter, and molar volume:
+
+| API Gravity | Asphaltene MW (g/mol) | Solubility Parameter (MPa$^{0.5}$) |
+|-------------|----------------------|-------------------------------------|
+| 20 (heavy)  | ~2000                | ~20.2                               |
+| 30 (medium) | ~1000                | ~20.8                               |
+| 35 (light)  | ~750                 | ~21.1                               |
+| 40 (light)  | ~550                 | ~21.4                               |
+
+#### SARA Configuration
+
+```java
+// Refine FH model with SARA data (after API configuration)
+fh.configureFromSARA(0.45, 0.30, 0.15, 0.10);
+// R/A ratio > 1.5 indicates good peptization
+// Very high saturate fraction (>75% of sat+aro) worsens solvency
+```
+
+#### Physics-Based Calibration (`calibrateCorrelation`)
+
+The default Lian et al. (1994) correlation coefficients ($A = 0.017347$, $B = 2.904$) were determined from dead oil measurements and produce liquid solubility parameters ($\delta_L \approx 13$–$15$ MPa$^{0.5}$) far below typical asphaltene values ($\delta_A \approx 19$–$23$ MPa$^{0.5}$) for live reservoir oils. This causes the model to trivially predict onset at the reservoir pressure itself.
+
+The `calibrateCorrelation()` method resolves this by using the Flory-Huggins critical interaction parameter $\chi_c$ to set the $A$ coefficient from first principles:
+
+1. Flashes the fluid at reservoir P/T to get actual oil density and liquid molar volume $V_L$
+2. Computes $\chi_c = r(1 + 1/\sqrt{r})^2 / 2$ from the volume ratio $r = V_a / V_L$
+3. Converts to a critical solubility parameter gap $\Delta\delta_c$
+4. Sets $A$ so that $(\delta_A - \delta_L)$ is 0.35 MPa$^{0.5}$ below the critical gap at reservoir conditions
+
+```java
+// After configureFromAPIGravity or manual parameter setup:
+fh.calibrateCorrelation(373.15);  // Pass reservoir temperature in Kelvin
+
+// The calibrated A coefficient now gives realistic onset predictions
+double onset = fh.calculateOnsetPressure(373.15, 500.0, 50.0);
+// Returns onset between bubble point and reservoir pressure
+```
+
+**When to use calibrateCorrelation:**
+- Always for live reservoir oil onset predictions
+- After `configureFromAPIGravity()` and/or `configureFromSARA()`
+- Not needed for dead oil dilution titration modeling (default coefficients are adequate)
+
+#### Precipitation Curves
+
+```java
+// Generate precipitation curve (wt% precipitated vs pressure)
+double[][] curve = fh.generatePrecipitationCurve(373.15, 500.0, 50.0, 50);
+// curve[0] = pressures (bar), curve[1] = precipitated fraction
+```
+
+### 5. Refractive Index Screening
+
+The refractive index (RI) method assesses asphaltene stability based on the
+difference between the crude oil RI and RI at the flocculation onset (Buckley et al., 1998).
+
+```java
+import neqsim.pvtsimulation.flowassurance.RefractiveIndexAsphalteneScreening;
+
+// From measured RI values
+RefractiveIndexAsphalteneScreening riScreen =
+    new RefractiveIndexAsphalteneScreening(1.505, 1.490);
+RefractiveIndexAsphalteneScreening.RIStability stability =
+    riScreen.evaluateStability();
+double margin = riScreen.getRIStabilityMargin();
+
+// Or estimate RI from density
+riScreen.estimateRIFromDensity(750.0);  // kg/m3
+```
+
+**Stability classification:**
+
+| RI Margin (RI_oil - RI_onset) | Stability |
+|-------------------------------|-----------|
+| > 0.03                        | Very Stable |
+| 0.02 - 0.03                   | Stable |
+| 0.01 - 0.02                   | Marginal |
+| 0 - 0.01                      | Unstable |
+| < 0                           | Highly Unstable |
+
+### 6. Multi-Method Benchmark Framework
+
+The `AsphalteneMultiMethodBenchmark` class provides a unified framework for
+comparing all five prediction methods side-by-side:
+
+```java
+import neqsim.pvtsimulation.flowassurance.AsphalteneMultiMethodBenchmark;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create systems
+SystemSrkCPAstatoil cpaFluid = new SystemSrkCPAstatoil(373.15, 350.0);
+cpaFluid.addComponent("methane", 0.40);
+cpaFluid.addComponent("n-heptane", 0.50);
+cpaFluid.addComponent("asphaltene", 0.10);
+cpaFluid.setMixingRule("classic");
+
+SystemSrkEos cubicFluid = new SystemSrkEos(373.15, 350.0);
+cubicFluid.addComponent("methane", 0.40);
+cubicFluid.addComponent("n-heptane", 0.50);
+cubicFluid.addComponent("nC20", 0.10);
+cubicFluid.setMixingRule("classic");
+
+// Create benchmark
+AsphalteneMultiMethodBenchmark benchmark =
+    new AsphalteneMultiMethodBenchmark(cpaFluid, cubicFluid, 350.0, 373.15);
+benchmark.setSARAFractions(0.45, 0.30, 0.15, 0.10);
+benchmark.setAPIGravity(30.0);
+benchmark.setInSituDensity(750.0);
+
+// Run all methods
+benchmark.runAllMethods();
+
+// Access individual results
+AsphalteneMultiMethodBenchmark.MethodResult fhResult =
+    benchmark.getMethodResult("FloryHuggins");
+double fhOnset = fhResult.onsetPressure;
+String fhRisk = fhResult.riskLevel;
+
+// Get complete JSON report
+String json = benchmark.toJSON();
+```
+
+#### Built-in Literature Cases
+
+The benchmark includes 7 literature validation cases:
+
+```java
+List<AsphalteneMultiMethodBenchmark.LiteratureCase> cases =
+    benchmark.getLiteratureCases();
+for (AsphalteneMultiMethodBenchmark.LiteratureCase lc : cases) {
+    System.out.println(lc.label + ": P_onset=" + lc.measuredOnsetPressure + " bar");
+}
+```
+
+#### Error Statistics
+
+```java
+// Get error statistics for a method across all literature cases
+Map<String, Double> stats = benchmark.getErrorStatistics();
+// Returns: AAD, AARD_pct, RMSD, maxError, bias
+```
+
+### 7. Improved Pedersen Method (kij Tuning)
+
+The Pedersen cubic EOS approach has been improved with:
+
+- **Kesler-Lee/Edmister acentric factor** correlation (replacing the original linear)
+- **MW-scaled binary interaction parameters** (kij) between asphaltene and oil components
+- **Proper component addition** via `addAsphalteneToSystem()`
+
+```java
+import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
+
+PedersenAsphalteneCharacterization pedersen =
+    new PedersenAsphalteneCharacterization();
+pedersen.setAsphalteneMW(1200.0);
+pedersen.setAsphalteneDensity(1.15);
+
+// Add asphaltene to system
+pedersen.addAsphalteneToSystem(cubicFluid, 0.01);
+cubicFluid.setMixingRule("classic");
+cubicFluid.init(0);
+
+// Apply MW-scaled kij (1.5x for methane, 1.2x for ethane/propane, 0.5x for heavy)
+pedersen.applyAsphalteneKij(cubicFluid, 0.08);
+
+// Find onset pressure via pressure sweep
+double onset = pedersen.calculateOnsetPressure(cubicFluid, 500.0, 50.0);
+```
+
+### 8. Combined Approach
+
+Use De Boer for initial screening, then CPA, Flory-Huggins, or Pedersen for
+detailed analysis of flagged cases. The `AsphalteneMultiMethodBenchmark` provides
+all methods in a single API. See [Method Comparison](asphaltene_method_comparison).
 
 ## Best Practices
 
@@ -438,3 +668,11 @@ Use De Boer for initial screening, then CPA or Pedersen method for detailed anal
 9. Pedersen, K.S., Christensen, P.L. (2007). "Phase Behavior of Petroleum Reservoir Fluids." CRC Press.
 
 10. Pedersen, K.S., Fredenslund, A., Thomassen, P. (1989). "Properties of Oils and Natural Gases." Gulf Publishing.
+
+11. Hirschberg, A., de Jong, L.N.J., Schipper, B.A., Meijer, J.G. (1984). "Influence of Temperature and Pressure on Asphaltene Flocculation." SPE Journal, 24(3), 283-293.
+
+12. Buckley, J.S., Hirasaki, G.J., Liu, Y., Von Drasek, S., Wang, J.X., Gill, B.S. (1998). "Asphaltene Precipitation and Solvent Properties of Crude Oils." Petroleum Science and Technology, 16(3-4), 251-285.
+
+13. Akbarzadeh, K., Alboudwarej, H., Svrcek, W.Y., Yarranton, H.W. (2005). "A generalized regular solution model for asphaltene precipitation from n-alkane diluted heavy oils and bitumens." Fluid Phase Equilibria, 232, 159-170.
+
+14. Kesler, M.G., Lee, B.I. (1976). "Improve Prediction of Enthalpy of Fractions." Hydrocarbon Processing, 55(3), 153-158.

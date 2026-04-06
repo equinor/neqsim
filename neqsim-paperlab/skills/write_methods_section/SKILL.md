@@ -226,3 +226,17 @@ Use consistent notation throughout:
 - Use `\ln` not `log` for natural logarithm
 - Number all equations that are referenced in text
 - Use `\text{TPD}` not `TPD` in math mode
+
+## Writing Quality Check
+
+After drafting the Methods section, run the prose quality tool:
+
+```bash
+python paperflow.py check-prose papers/<paper_slug>/
+```
+
+The Methods section often has the highest Flesch-Kincaid grade due to technical
+terminology, which is expected. Focus on:
+- Splitting sentences over 35 words (common around equation descriptions)
+- Reducing unnecessary passive voice ("was calculated" → "we calculated")
+- Cutting hedging language — Methods should be precise and definitive

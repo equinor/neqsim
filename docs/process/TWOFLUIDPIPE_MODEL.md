@@ -54,7 +54,9 @@ Separate momentum equations for each phase:
 
 ## Flow Regime Detection
 
-The flow regime detector uses Taitel-Dukler transitions:
+### Gas-Liquid Flow Regimes
+
+The gas-liquid flow regime detector uses Taitel-Dukler transitions:
 
 | Regime | Detection Criteria | Status |
 |--------|-------------------|--------|
@@ -64,6 +66,55 @@ The flow regime detector uses Taitel-Dukler transitions:
 | ANNULAR | Weber number > 30 | ✅ |
 | CHURN | Transition between slug and annular | ✅ |
 | BUBBLE | High liquid fraction, low gas velocity | ✅ |
+
+### Oil-Water Flow Regime Detection
+
+For three-phase (gas-oil-water) simulations the `OilWaterFlowRegimeDetector` classifies the
+liquid-phase configuration at every pipe section. This is critical for corrosion prediction
+(water wetting), effective viscosity calculation, and water dropout risk assessment.
+
+Based on Trallero (1995), Brauner (2003), and Angeli & Hewitt (2000):
+
+| Regime | Condition | Description |
+|--------|-----------|-------------|
+| `STRATIFIED` | $v_m < 0.1\,v_{crit}$ | Separate oil and water layers |
+| `STRATIFIED_WITH_MIXING` | $0.1\,v_{crit} < v_m < 0.5\,v_{crit}$ | Stratified with interfacial mixing zone |
+| `DISPERSED_OIL_IN_WATER` | $v_m > v_{crit}$ and $w_c > w_{inv}$ | Oil droplets in continuous water |
+| `DISPERSED_WATER_IN_OIL` | $v_m > v_{crit}$ and $w_c < w_{inv}$ | Water droplets in continuous oil |
+| `DUAL_DISPERSION` | $v_m \approx v_{crit}$ and $w_c \approx w_{inv}$ | Both O/W and W/O regions coexist |
+| `ANNULAR` | High velocity, large density difference | Oil core with water annulus or vice versa |
+| `SINGLE_PHASE` | $w_c < 0.005$ or $w_c > 0.995$ | Only oil or only water present |
+
+Key calculations:
+
+- **Phase inversion** (Decarre & Fabre, 1997): water fraction at which continuous phase switches
+- **Critical dispersion velocity** (Brauner, 2003): minimum velocity for full turbulent dispersion
+- **Maximum droplet diameter** (Hinze, 1955): $d_{max} = \text{We}_{crit}^{3/5} \sigma^{3/5} / (\rho_c^{3/5} \epsilon^{2/5})$
+- **Effective emulsion viscosity**: Brinkman correlation for the dispersed/continuous mixture
+- **Water dropout risk**: flags sections where water may separate and accumulate
+
+#### Per-Section Access
+
+Each `TwoFluidSection` exposes the oil-water results:
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getOilWaterFlowRegime()` | `OilWaterFlowRegime` | Detected regime for this section |
+| `getOilWaterResult()` | `OilWaterResult` | Full result (regime, viscosity, inversion, droplet size, etc.) |
+| `isWaterWetting()` | `boolean` | True if water wets the pipe wall (corrosion risk) |
+| `isWaterDropoutRisk()` | `boolean` | True if water may separate and accumulate |
+| `getOilWaterInterfacialTension()` | `double` | Oil-water IFT (N/m) |
+| `setOilWaterInterfacialTension(double)` | — | Override IFT (default: 0.03 N/m) |
+| `getOilWaterDetector()` | `OilWaterFlowRegimeDetector` | Access the detector for tuning |
+| `setOilWaterDetector(...)` | — | Set custom detector instance |
+
+#### Tuning the Detector
+
+```java
+OilWaterFlowRegimeDetector detector = section.getOilWaterDetector();
+detector.setCriticalWeber(1.17);   // Hinze criterion (default 1.17)
+detector.setInversionConstant(0.5); // Decarre-Fabre constant (default 0.5)
+```
 
 ## Holdup Correlations
 
@@ -208,7 +259,7 @@ pipe.setWallThickness(0.015);
 pipe.setSurfaceTemperature(4.0, "C"); // Cold seabed
 
 // Configure with 50mm PU foam + 40mm concrete
-pipe.configureSubseaThermalModel(0.050, 0.040, 
+pipe.configureSubseaThermalModel(0.050, 0.040,
     RadialThermalLayer.MaterialType.PU_FOAM);
 
 // Set hydrate formation temperature
@@ -245,6 +296,12 @@ System.out.println(pipe.getThermalSummary());
 | Annular holdup | Film model | Ishii-Mishima entrainment |
 | Slug holdup | Empirical correlation | Dukler correlation |
 | Interfacial friction | Flow-regime specific | Multiple correlations |
+| **Oil-Water Models** |
+| Oil-water flow regime | OilWaterFlowRegimeDetector | Trallero/Brauner/Angeli classification |
+| Phase inversion | Decarre-Fabre (1997) | Viscosity/density-ratio model |
+| Emulsion viscosity | Brinkman correlation | Continuous/dispersed mixture |
+| Water wetting | Per-section detection | Corrosion risk indicator |
+| Water dropout | Velocity/holdup criterion | Accumulation risk flag |
 | **Terrain Effects** |
 | Low point accumulation | Froude criterion | Fr < 0.5 triggers accumulation |
 | Riser base slugging | Pots criterion | πSS > 1.0 indicates severe slugging |
@@ -254,8 +311,92 @@ System.out.println(pipe.getThermalSummary());
 | Cooldown calculation | Lumped capacitance | MultilayerThermalCalculator |
 | Hydrate/wax risk | Temperature tracking | Section-by-section monitoring |
 | **Numerical Methods** |
-| Time stepping | CFL-based | Fixed step with sub-cycling |
-| Spatial discretization | Finite volume | Upwind scheme |
+| Time stepping | CFL-based | RK4 (default), IMEX, adaptive dt |
+| Spatial discretization | Finite volume | AUSM+ flux splitting, MUSCL reconstruction |
+| Mesh | Uniform or non-uniform | `generateRefinedMesh()` or `setSectionLengths()` |
+
+## Spatial Discretization
+
+### Uniform Mesh (default)
+
+`setNumberOfSections(N)` creates N equal-length cells: $dx = L / N$.
+
+### Non-Uniform Mesh
+
+Two approaches for variable cell sizes along the pipe:
+
+**Automatic refinement** — `generateRefinedMesh(baseSections, refinementFactor)` analyses
+the elevation profile and creates shorter cells where the elevation gradient is steepest
+(risers, S-bends) and longer cells where the pipe is flat (flowlines):
+
+$$
+\text{density}_i = 1 + (\text{factor} - 1) \cdot \frac{|\nabla z|_i}{\max |\nabla z|}
+$$
+
+Section lengths are inversely proportional to density, then normalized to sum to $L$.
+The `refinementFactor` (clamped to 1.5–10) controls the coarsest/finest cell ratio.
+
+**Manual** — `setSectionLengths(double[])` sets explicit per-section lengths (must sum to
+total pipe length, minimum 2 sections).
+
+All finite-volume calculations use per-section lengths:
+
+| Component | Non-uniform treatment |
+|-----------|-----------------------|
+| AUSM+ flux assembly | $-\frac{1}{dx_i}(F_{i+1/2} - F_{i-1/2})$ |
+| Pressure gradient | Non-uniform central difference: $dx_c = \frac{1}{2} dx_{i-1} + dx_i + \frac{1}{2} dx_{i+1}$ |
+| CFL timestep | $\Delta t = \min_i \left( \text{CFL} \cdot dx_i / c_i \right)$ |
+| Temperature updates | Per-section exponential decay and advection |
+| Pressure reconstruction | Forward/backward march with per-section $dx$ |
+
+## Time Integration
+
+### Methods
+
+Select the time integration method via `setTimeIntegrationMethod(TimeIntegrator.Method)`:
+
+| Method | CFL constraint | Description |
+|--------|---------------|-------------|
+| `RK4` (default) | Acoustic ($c + v$) | Classical 4th-order Runge-Kutta. Stable for all geometries. |
+| `SSP_RK3` | Acoustic | Strong Stability Preserving RK3 |
+| `RK2` | Acoustic | Heun's method (2nd order) |
+| `EULER` | Acoustic | Forward Euler (1st order) |
+| `IMEX_PRESSURE_CORRECTION` | Convective only | Semi-implicit; ~10x larger dt. Not recommended for vertical risers. |
+
+```java
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.RK4);       // default
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION); // semi-implicit
+TimeIntegrator.Method current = pipe.getTimeIntegrationMethod(); // query
+```
+
+### Adaptive Timestepping
+
+OLGA-style adaptive timestepping provides robustness for challenging geometries. Enable via
+`setEnableAdaptiveTimestepping(true)`.
+
+Algorithm per macro-step:
+1. **CFL recompute** from current velocities (not fixed at initialization)
+2. **Pre-check**: reject if NaN or negative mass detected; rollback state, halve `dtFactor`
+3. **Post-check**: reject if pressure exceeds ceiling or velocities exceed 500 m/s
+4. **Recovery**: after each stable step, `dtFactor` grows by x1.02 back toward 1.0
+5. **Floor**: `dtFactor` cannot go below 0.001 to prevent stalling
+
+### Steady-State Solver Tuning
+
+The initial steady-state solve iterates between the transient solver and thermodynamic flashes
+until convergence. Three parameters control this:
+
+| Parameter | Setter | Default | Description |
+|-----------|--------|---------|-------------|
+| Under-relaxation | `setSteadyStateUnderRelaxation(double)` | 0.5 | Update damping factor (0–1); lower = more damping, more stable |
+| Flash interval | `setSteadyStateFlashInterval(int)` | 3 | Re-flash thermodynamics every N iterations; higher = faster but less accurate |
+| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 30 s | Timeout for the SS solver; prevents runaway iterations |
+
+```java
+pipe.setSteadyStateUnderRelaxation(0.3);   // More conservative damping
+pipe.setSteadyStateFlashInterval(5);       // Flash every 5th iteration
+pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
+```
 
 ## Validation Status
 

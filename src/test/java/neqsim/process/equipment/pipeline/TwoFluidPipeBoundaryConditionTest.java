@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition;
@@ -31,7 +30,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  * @version 1.0
  */
-@Disabled("Disabled due to infinite solving times - needs TwoFluidPipe optimization")
 class TwoFluidPipeBoundaryConditionTest {
   private static final int NUM_SECTIONS = 10;
   private static final double PIPE_LENGTH = 1000.0; // 1 km

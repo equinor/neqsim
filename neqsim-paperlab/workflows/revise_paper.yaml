@@ -51,12 +51,29 @@ stages:
       - revision_N/response_plan.json
       - revision_N/new_results/  # if any
       - approved_claims.json     # updated if new experiments
+    tools:
+      - "paperflow.py check-prose — verify writing quality after revisions"
+      - "paperflow.py suggest-refs — find references requested by reviewers"
     outputs:
       - revision_N/paper_rN.md
       - revision_N/claims_manifest_rN.json
     validation:
       - All changes tracked
       - No new unlinked claims
+      - check-prose overall score >= 50
+
+  - name: "generate_diff"
+    agent: "reviewer_response"
+    description: "Generate visual diff between baseline and revised manuscript"
+    inputs:
+      - revision_N/paper_r<N-1>_baseline.md
+      - paper.md
+    tools:
+      - "paperflow.py diff — generate HTML diff report"
+    outputs:
+      - revision_N/diff_r<N-1>_vs_paper.html
+    validation:
+      - HTML diff report exists and is non-empty
 
   - name: "draft_response"
     agent: "reviewer_response"
@@ -78,6 +95,9 @@ stages:
     inputs:
       - revision_N/paper_rN.md
       - journal profile
+    tools:
+      - "paperflow.py validate-figures — check updated figures"
+      - "paperflow.py validate-bib — check updated bibliography"
     outputs:
       - revision_N/submission/paper_rN.tex
       - revision_N/submission/paper_rN.pdf

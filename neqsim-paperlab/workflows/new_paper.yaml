@@ -50,9 +50,13 @@ stages:
       - gap_statement.md          # [OPTIONAL for characterization/application]
       - related_work_table.csv    # [OPTIONAL for characterization/application]
       - refs.bib                  # Always required
+    tools:
+      - "paperflow.py suggest-refs — discover missing highly-cited references"
+      - "paperflow.py validate-bib — check refs.bib completeness"
     validation:
       - refs.bib has at least 10 references
       - BibTeX is syntactically correct
+      - validate-bib passes with no FAIL items
       # For comparative/method papers:
       - gap_statement.md is specific and falsifiable (if produced)
 
@@ -182,10 +186,15 @@ stages:
     outputs:
       - paper.md
       - claims_manifest.json  # [comparative: full tracing; others: summary only]
+    tools:
+      - "paperflow.py check-prose — prose quality scoring after drafting"
+      - "paperflow.py suggest-refs — discover missing references"
+      - "paperflow.py validate-bib — check bibliography completeness"
     validation:
       - All sections present per journal profile
       - No unlinked quantitative claims
       - Abstract within word limit
+      - check-prose overall score >= 50
       # comparative: claims_manifest.json has zero unlinked_claims
       # characterization/application: results.json key_results are referenced in text
 
@@ -200,6 +209,10 @@ stages:
       - journal profile YAML
       - figures/
       - refs.bib
+    tools:
+      - "paperflow.py validate-figures — check figure DPI, format, size, color"
+      - "paperflow.py validate-bib — check bibliography completeness"
+      - "paperflow.py check-prose — final prose quality verification"
     outputs:
       - submission/paper.tex
       - submission/paper.pdf
@@ -210,7 +223,8 @@ stages:
       - All checklist items PASS
       - PDF renders correctly
       - All figures included
-      - "Figure/table format validation PASS (paperflow.py validate-figures)"
+      - validate-figures passes with no FAIL items
+      - validate-bib passes with no FAIL items
       - Figure DPI meets journal minimum (typically 300)
       - All figure files use allowed formats (e.g. pdf, eps, tif, png)
       - All figures referenced in manuscript text

@@ -174,13 +174,13 @@ import neqsim.process.processmodel.ProcessSystem;
 try {
     // Load from .neqsim file
     Object loaded = NeqSimXtream.openNeqsim("my_process.neqsim");
-    
+
     if (loaded instanceof ProcessSystem) {
         ProcessSystem process = (ProcessSystem) loaded;
-        
+
         // Run the restored process
         process.run();
-        
+
         System.out.println("Process loaded: " + process.getName());
         System.out.println("Number of units: " + process.getUnitOperations().size());
     }
@@ -340,7 +340,7 @@ ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
 
 // View captured connections
 for (ProcessSystemState.ConnectionState conn : state.getConnectionStates()) {
-    System.out.println(conn.getSourceEquipmentName() + "." + conn.getSourcePortName() 
+    System.out.println(conn.getSourceEquipmentName() + "." + conn.getSourcePortName()
         + " -> " + conn.getTargetEquipmentName() + "." + conn.getTargetPortName());
 }
 // Example output: separator.gasOutStream -> compressor.inlet
@@ -463,7 +463,7 @@ ProcessModelState state = model.exportState();
 
 // View inter-process connections
 for (ProcessModelState.InterProcessConnection conn : state.getInterProcessConnections()) {
-    System.out.println(conn.getSourceProcess() + "/" + conn.getStreamName() 
+    System.out.println(conn.getSourceProcess() + "/" + conn.getStreamName()
         + " -> " + conn.getTargetProcess() + ":" + conn.getTargetPort());
 }
 // Example output: upstream/gas_export -> downstream:inlet
@@ -710,7 +710,7 @@ feed.setTemperature(30.0, 'C')
 feed.setPressure(50.0, 'bara')
 
 # Load process from JSON configuration
-process = ProcessBuilder.from_json('process_config.json', 
+process = ProcessBuilder.from_json('process_config.json',
                                    fluids={'feed': feed}).run()
 
 # Get results as JSON
@@ -865,7 +865,7 @@ The serialized object references a class that doesn't exist in the current NeqSi
 
 Complex processes with many components can create large files.
 
-**Solution:** 
+**Solution:**
 - Use compressed `.neqsim` format
 - Consider saving only the process state (JSON) instead of the full object
 
@@ -958,16 +958,28 @@ System.out.println("First 1000 chars: " + xml.substring(0, Math.min(1000, xml.le
 | `fromProcessModel(ProcessModel)` | Create state snapshot (static) |
 | `saveToFile(String)` | Save as JSON (or .gz for compressed) |
 | `loadFromFile(String)` | Load JSON (static) |
+| `saveToCompressedFile(String)` | Save as GZIP-compressed file |
+| `loadFromCompressedFile(String)` | Load compressed file (static) |
 | `toProcessModel()` | Reconstruct ProcessModel from state |
 | `validate()` | Validate state, returns ValidationResult |
+| `toJson()` / `fromJson(String)` | JSON string conversion |
+| `toJson(SerializationOptions)` | JSON with formatting options |
+| `toCompressedBytes()` | GZIP-compressed byte array |
+| `fromCompressedBytes(byte[])` | Load from compressed bytes (static) |
+| `compare(old, new)` | Compare two states, returns ModelDiff (static) |
+| `migrate(state, version)` | Migrate state to target schema (static) |
 | `getProcessStates()` | Get map of ProcessSystemStates |
 | `getInterProcessConnections()` | Get inter-process connections |
+| `addInterProcessConnection(InterProcessConnection)` | Add manual inter-process connection |
+| `getConnectionsTo(String)` | Get connections targeting a process |
 | `getExecutionConfig()` | Get execution configuration |
 | `getProcessCount()` | Get number of ProcessSystems |
 | `setVersion(String)` | Set version metadata |
 | `setDescription(String)` | Set description metadata |
 | `setCreatedBy(String)` | Set creator metadata |
 | `setCustomProperty(String, Object)` | Set custom property |
+| `getCustomProperty(String)` | Get single custom property |
+| `getCustomProperties()` | Get all custom properties map |
 
 ### Python Functions
 
@@ -995,6 +1007,8 @@ System.out.println("First 1000 chars: " + xml.substring(0, Math.min(1000, xml.le
 
 ## See Also
 
+- [Process Model Lifecycle Management](../process/lifecycle/process_model_lifecycle) - State management, versioning, and lifecycle tracking
+- [Process Automation API](process_automation) - String-addressable automation for reading/writing simulation variables
 - [NeqSim Java Documentation](https://equinor.github.io/neqsim/)
 - [NeqSim Python Documentation](https://github.com/equinor/neqsim-python)
 - [XStream Library](https://x-stream.github.io/)

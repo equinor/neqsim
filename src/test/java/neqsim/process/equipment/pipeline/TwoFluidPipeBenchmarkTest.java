@@ -2,7 +2,6 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  * @version 1.0
  */
-@Disabled("Disabled due to infinite solving times - needs TwoFluidPipe optimization")
 public class TwoFluidPipeBenchmarkTest {
 
   // --- Tolerances ---
@@ -1436,6 +1434,149 @@ public class TwoFluidPipeBenchmarkTest {
       // compressibility effects reduce the exponent for gas flow)
       assertTrue(ratio_6to12 > 3.0,
           "6\"/12\" pressure drop ratio should be > 3.0, got " + ratio_6to12);
+    }
+  }
+
+  // ==================== NON-UNIFORM MESH ====================
+  /**
+   * Tests for non-uniform mesh (variable section lengths) support.
+   */
+  @Nested
+  @DisplayName("9. Non-Uniform Mesh")
+  class NonUniformMeshTests {
+
+    /**
+     * Verify that setSectionLengths creates sections with correct lengths.
+     */
+    @Test
+    @DisplayName("Section lengths stored correctly")
+    void testSectionLengthsStored() {
+      SystemInterface gas = new SystemSrkEos(273.15 + 15, 80.0);
+      gas.addComponent("methane", 0.9);
+      gas.addComponent("ethane", 0.1);
+      gas.setMixingRule("classic");
+
+      Stream inlet = new Stream("feed", gas);
+      inlet.setFlowRate(50000.0, "kg/hr");
+
+      TwoFluidPipe pipe = new TwoFluidPipe("test", inlet);
+      pipe.setLength(1000.0);
+      pipe.setDiameter(0.3);
+      double[] lengths = {50, 50, 100, 200, 200, 200, 100, 50, 50};
+      pipe.setSectionLengths(lengths);
+
+      assertEquals(9, pipe.getNumberOfSections());
+      double[] retrieved = pipe.getSectionLengths();
+      assertEquals(lengths.length, retrieved.length);
+      for (int i = 0; i < lengths.length; i++) {
+        assertEquals(lengths[i], retrieved[i], 1e-10);
+      }
+    }
+
+    /**
+     * Test that non-uniform mesh gives same pressure drop as uniform mesh for horizontal pipe. A
+     * flat horizontal pipe should give nearly the same results regardless of mesh distribution.
+     */
+    @Test
+    @DisplayName("Non-uniform mesh matches uniform for horizontal pipe")
+    void testNonUniformMatchesUniformHorizontal() {
+      SystemInterface gas = new SystemSrkEos(273.15 + 15, 80.0);
+      gas.addComponent("methane", 0.9);
+      gas.addComponent("ethane", 0.1);
+      gas.setMixingRule("classic");
+
+      // Uniform mesh
+      Stream inlet1 = new Stream("feed1", gas);
+      inlet1.setFlowRate(50000.0, "kg/hr");
+      TwoFluidPipe uniform = new TwoFluidPipe("uniform", inlet1);
+      uniform.setLength(1000.0);
+      uniform.setDiameter(0.3);
+      uniform.setNumberOfSections(10);
+
+      ProcessSystem proc1 = new ProcessSystem();
+      proc1.add(inlet1);
+      proc1.add(uniform);
+      proc1.run();
+      double dpUniform = inlet1.getPressure("bara") - uniform.getOutletStream().getPressure("bara");
+
+      // Non-uniform mesh: fine at ends, coarse in middle
+      Stream inlet2 = new Stream("feed2", gas);
+      inlet2.setFlowRate(50000.0, "kg/hr");
+      TwoFluidPipe nonuniform = new TwoFluidPipe("nonuniform", inlet2);
+      nonuniform.setLength(1000.0);
+      nonuniform.setDiameter(0.3);
+      double[] lengths = {50, 50, 100, 150, 200, 150, 100, 100, 50, 50};
+      nonuniform.setSectionLengths(lengths);
+
+      ProcessSystem proc2 = new ProcessSystem();
+      proc2.add(inlet2);
+      proc2.add(nonuniform);
+      proc2.run();
+      double dpNonUniform =
+          inlet2.getPressure("bara") - nonuniform.getOutletStream().getPressure("bara");
+
+      // Should be within 20% for a horizontal pipe with same total length
+      double relDiff = Math.abs(dpNonUniform - dpUniform) / Math.max(dpUniform, 0.01);
+      assertTrue(relDiff < 0.20,
+          "Non-uniform and uniform mesh should agree within 20% for horizontal pipe. "
+              + "Uniform dP=" + dpUniform + " bar, Non-uniform dP=" + dpNonUniform + " bar");
+      assertTrue(dpUniform > 0 && dpNonUniform > 0, "Both should have positive pressure drop");
+    }
+
+    /**
+     * Test that generateRefinedMesh produces valid section lengths.
+     */
+    @Test
+    @DisplayName("generateRefinedMesh produces valid lengths")
+    void testGenerateRefinedMesh() {
+      SystemInterface gas = new SystemSrkEos(273.15 + 15, 80.0);
+      gas.addComponent("methane", 0.9);
+      gas.addComponent("ethane", 0.1);
+      gas.setMixingRule("classic");
+
+      Stream inlet = new Stream("feed", gas);
+      inlet.setFlowRate(50000.0, "kg/hr");
+
+      TwoFluidPipe pipe = new TwoFluidPipe("test", inlet);
+      pipe.setLength(5000.0);
+      pipe.setDiameter(0.3);
+
+      // Create elevation with a riser at the end
+      double[] elev = new double[50];
+      for (int i = 0; i < 40; i++) {
+        elev[i] = 0; // flat flowline
+      }
+      for (int i = 40; i < 50; i++) {
+        elev[i] = (i - 40) * 20.0; // 200m riser over last 1000m
+      }
+      pipe.setElevationProfile(elev);
+      pipe.generateRefinedMesh(50, 4.0);
+
+      double[] lengths = pipe.getSectionLengths();
+      assertTrue(lengths != null, "Should have non-uniform lengths");
+      assertEquals(50, lengths.length, "Should have 50 sections");
+
+      // Sum should equal total length
+      double sum = 0;
+      for (double l : lengths) {
+        sum += l;
+        assertTrue(l > 0, "All section lengths must be positive");
+      }
+      assertEquals(5000.0, sum, 0.01, "Lengths must sum to total pipe length");
+
+      // Riser sections (last 10) should be shorter than flat sections (first 40)
+      double avgFlat = 0;
+      for (int i = 0; i < 40; i++) {
+        avgFlat += lengths[i];
+      }
+      avgFlat /= 40;
+      double avgRiser = 0;
+      for (int i = 40; i < 50; i++) {
+        avgRiser += lengths[i];
+      }
+      avgRiser /= 10;
+      assertTrue(avgRiser < avgFlat, "Riser sections should be shorter than flat sections. "
+          + "Avg flat=" + avgFlat + "m, Avg riser=" + avgRiser + "m");
     }
   }
 }

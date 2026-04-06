@@ -277,3 +277,37 @@ FPE allows 250 words, CACE allows 250 words.
 All files go to `papers/<paper_slug>/`:
 - `paper.md`
 - `claims_manifest.json`
+
+## Tool Integration — Quality Checks
+
+After drafting or editing the manuscript, run these quality tools:
+
+### Prose Quality (run after every major edit)
+
+```bash
+python paperflow.py check-prose papers/<paper_slug>/
+```
+
+Use the report to improve writing before handing off to the formatter:
+- **Readability score < 60**: Simplify sentence structure, reduce jargon
+- **Passive voice > 25%**: Rewrite passive constructions to active voice
+- **Hedging count > 10**: Replace hedges with evidence-backed assertions
+- **Long sentences > 10%**: Split sentences over 35 words
+
+### Bibliography Validation (before submission)
+
+```bash
+python paperflow.py validate-bib papers/<paper_slug>/
+```
+
+Fix any missing fields, duplicate keys, or uncited references before formatting.
+
+### Citation Discovery (during literature integration)
+
+```bash
+python paperflow.py suggest-refs papers/<paper_slug>/
+```
+
+After writing the Introduction and Related Work, run this to find highly-cited
+papers that may be missing from `refs.bib`. Review suggestions and add relevant
+entries.

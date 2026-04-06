@@ -93,15 +93,23 @@ pipe = TwoFluidPipe("Flowline", inlet_stream)
 pipe.setLength(20000)
 pipe.setDiameter(0.25)
 pipe.setNumberOfSections(100)   # Computational cells
-pipe.setOuterTemperatures([278.15])  # 5°C ambient (array)
+
+# Heat transfer
+pipe.setSurfaceTemperature(5.0, "C")        # 5°C ambient
+pipe.setHeatTransferCoefficient(25.0)       # W/(m²·K)
+
+# Flat elevation profile (horizontal pipe)
+elevations = [0.0] * 100
+pipe.setElevationProfile(elevations)
 
 process.add(pipe)
 process.run()
 
 # Get detailed profiles
-# positions = pipe.getPositions()
-# pressures = pipe.getPressureProfile()
-# holdups = pipe.getLiquidHoldupProfile()
+positions = pipe.getPositionProfile()       # Section positions (m)
+pressures = pipe.getPressureProfile()       # Pa
+holdups = pipe.getLiquidHoldupProfile()      # Liquid fraction
+temps = pipe.getTemperatureProfile("C")     # °C
 ```
 
 ### Two-Fluid Model with Advanced Features
@@ -611,6 +619,93 @@ print(f"At topside: {section3.getOutletStream().getPressure():.2f} bara")
 | Multi-leg | `setNumberOfLegs()`, `setLegPositions()` | Variable geometry |
 | Pipe sections | Chain multiple pipes | Different diameters/materials |
 | Grid resolution | `setNumberOfSections(n)` | Fine vs coarse simulation |
+| Non-uniform mesh | `generateRefinedMesh(n, factor)` | Finer cells at risers/gradients |
+| Manual mesh | `setSectionLengths(double[])` | Full control over each cell |
+
+### Non-Uniform Mesh (TwoFluidPipe)
+
+Commercial simulators (OLGA, LedaFlow) use **static non-uniform meshes** to place finer
+cells where gradients are steepest — typically at risers, terrain undulations, and wellheads.
+NeqSim supports this via two approaches:
+
+#### Automatic Refinement (recommended)
+
+`generateRefinedMesh(baseSections, refinementFactor)` analyses the elevation profile and
+creates shorter cells where the gradient is steepest with longer cells where the pipe is flat.
+
+```python
+pipe = TwoFluidPipe("Flowline-Riser", feed)
+pipe.setLength(5400.0)
+pipe.setDiameter(0.2032)
+
+# Set elevation profile FIRST
+elevation = [...]  # must be set before generateRefinedMesh
+pipe.setElevationProfile(elevation)
+
+# Generate refined mesh: 100 base sections, 4x refinement at steep sections
+pipe.generateRefinedMesh(100, 4.0)
+
+# Inspect resulting mesh
+lengths = list(pipe.getSectionLengths())
+print(f"dx range: [{min(lengths):.1f}, {max(lengths):.1f}] m")
+# e.g. Flowline cells ~68 m, Riser cells ~17 m (3.9x ratio)
+```
+
+The `refinementFactor` controls the ratio between coarsest and finest cells (clamped to 1.5–10).
+
+#### Manual Section Lengths
+
+For full control, provide exact lengths for every section:
+
+```python
+pipe = TwoFluidPipe("Custom Mesh", feed)
+pipe.setLength(1000.0)
+pipe.setDiameter(0.3)
+
+# Fine at ends, coarse in middle — lengths must sum to total length
+lengths = [50, 50, 100, 150, 200, 150, 100, 100, 50, 50]
+pipe.setSectionLengths(lengths)
+```
+
+#### CFL Note
+
+With explicit time integration (RK4), the global timestep is governed by the **smallest cell**:
+$\Delta t = \text{CFL} \cdot dx_{\min} / c_{\max}$. Finer riser cells improve accuracy but
+reduce the CFL timestep proportionally. For a 4x refinement ratio, expect ~4x more sub-steps
+per macro timestep.
+
+### Adaptive Timestepping (TwoFluidPipe)
+
+OLGA-style adaptive timestepping provides robustness for challenging geometries (risers, S-bends):
+
+```python
+pipe = TwoFluidPipe("Subsea Line", feed)
+pipe.setLength(5400.0)
+pipe.setNumberOfSections(100)
+pipe.setElevationProfile(elevation)
+
+# Enable adaptive timestepping
+pipe.setEnableAdaptiveTimestepping(True)
+pipe.setAdaptiveMaxPressure(200.0)  # bar — reject step if exceeded
+
+# Run transient
+import java.util.UUID as UUID
+run_id = UUID.randomUUID()
+for step in range(n_steps):
+    pipe.runTransient(dt, run_id)
+    dt_factor = pipe.getAdaptiveDtFactor()  # 1.0 = full CFL, <1 = reduced
+```
+
+| Parameter | Method | Default | Description |
+|-----------|--------|---------|-------------|
+| Enable | `setEnableAdaptiveTimestepping(bool)` | `False` | Turn on/off |
+| Pressure ceiling | `setAdaptiveMaxPressure(bar)` | 1000 | Reject step if any section exceeds |
+| Monitor | `getAdaptiveDtFactor()` | — | Current dt multiplier (1.0 = full CFL) |
+| Check | `isAdaptiveTimesteppingEnabled()` | — | Query state |
+
+The algorithm: (1) per-step CFL recompute from current velocities, (2) NaN/negative mass
+detection with state rollback, (3) pressure/velocity ceiling checks, (4) gradual dt recovery
+(x1.02 growth per stable step back to 1.0).
 
 ---
 
@@ -915,13 +1010,206 @@ pipe.setLength(5000)
 pipe.setDiameter(0.15)
 pipe.setNumberOfSections(200)
 
+# Enable slug tracking (Lagrangian OLGA-style)
+pipe.setEnableSlugTracking(True)
+pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
+
+# Configure Lagrangian tracker for terrain and hydrodynamic slugs
+pipe.configureLagrangianSlugTracking(True, True, True)
+
 process.add(pipe)
 process.run()
 
 # Check for slugging conditions
-# liquid_holdup = pipe.getAverageLiquidHoldup()
-# superficial_gas_vel = pipe.getSuperficialGasVelocity()
-# superficial_liq_vel = pipe.getSuperficialLiquidVelocity()
+print(pipe.getFlowAnalysisSummary())
+
+# Get slug statistics via JSON
+print(pipe.getSlugTrackingStatisticsJson())
+
+# Or use the slug summary
+print(pipe.getSlugStatisticsSummary())
+```
+
+---
+
+## TwoFluidPipe Complete API Reference
+
+A comprehensive reference for the TwoFluidPipe model covering all flow types, boundary conditions, time integration, and advanced features.
+
+### Enumerations
+
+#### BoundaryCondition
+
+| Value | Description |
+|-------|-------------|
+| `STREAM_CONNECTED` | Use properties from connected inlet stream (default inlet) |
+| `CONSTANT_FLOW` | Fixed mass flow rate (set via `setInletMassFlow()`) |
+| `CONSTANT_PRESSURE` | Fixed pressure (default outlet) |
+| `CLOSED` | No flow — blocked/shut-in; pressure floats |
+| `CHARACTERISTIC` | Riemann invariant-based, reduces spurious wave reflections |
+
+#### SlugTrackingMode
+
+| Value | Description |
+|-------|-------------|
+| `LAGRANGIAN` | Full Lagrangian tracking (OLGA-style) — **default** |
+| `SIMPLIFIED` | Simplified slug unit model |
+| `DISABLED` | No slug tracking |
+
+#### TimeIntegrator.Method
+
+| Value | Description |
+|-------|-------------|
+| `EULER` | First-order forward Euler |
+| `RK2` | Second-order (Heun) |
+| `RK4` | Classical 4th-order Runge-Kutta — **default** |
+| `SSP_RK3` | Strong Stability Preserving RK3 |
+| `IMEX_PRESSURE_CORRECTION` | Implicit-explicit; allows 10-100× larger dt |
+
+#### InsulationType
+
+| Value | U-Value (W/m²K) |
+|-------|-----------------|
+| `NONE` | 150.0 |
+| `UNINSULATED_SUBSEA` | 25.0 |
+| `PU_FOAM` | 10.0 |
+| `MULTI_LAYER` | 5.0 |
+| `PIPE_IN_PIPE` | 2.0 |
+| `VIT` | 0.5 |
+| `BURIED_ONSHORE` | 3.0 |
+| `EXPOSED_ONSHORE` | 75.0 |
+
+### Profile Getters
+
+| Method | Unit | Description |
+|--------|------|-------------|
+| `getPressureProfile()` | Pa | Pressure at each section |
+| `getTemperatureProfile("C")` | °C | Temperature, unit = "K", "C", or "F" |
+| `getLiquidHoldupProfile()` | - | Total liquid holdup fraction |
+| `getWaterHoldupProfile()` | - | Water holdup fraction |
+| `getOilHoldupProfile()` | - | Oil holdup fraction |
+| `getWaterCutProfile()` | - | Water in liquid ratio |
+| `getGasVelocityProfile()` | m/s | Gas velocity |
+| `getLiquidVelocityProfile()` | m/s | Liquid velocity |
+| `getOilVelocityProfile()` | m/s | Oil velocity |
+| `getWaterVelocityProfile()` | m/s | Water velocity |
+| `getOilWaterSlipProfile()` | - | Oil-water slip ratio |
+| `getFlowRegimeProfile()` | - | Flow regime per section |
+| `getPositionProfile()` | m | Section positions |
+| `getWallTemperatureProfile()` | K | Wall temperature |
+
+### Mesh Configuration
+
+| Method | Description |
+|--------|-------------|
+| `setNumberOfSections(int)` | Uniform mesh with N equal-length sections |
+| `setSectionLengths(double[])` | Non-uniform mesh with explicit per-section lengths |
+| `generateRefinedMesh(int baseSections, double refinementFactor)` | Auto-refine based on elevation gradient |
+| `getSectionLengths()` | Returns per-section lengths (null if uniform) |
+
+### Adaptive Timestepping
+
+| Method | Description |
+|--------|-------------|
+| `setEnableAdaptiveTimestepping(boolean)` | Enable/disable OLGA-style adaptive dt |
+| `setAdaptiveMaxPressure(double)` | Pressure ceiling (bar) — reject step if exceeded |
+| `getAdaptiveDtFactor()` | Current dt multiplier (1.0 = full CFL) |
+| `isAdaptiveTimesteppingEnabled()` | Query state |
+
+### Time Integration Method
+
+| Method | Description |
+|--------|-------------|
+| `setTimeIntegrationMethod(TimeIntegrator.Method)` | Select time integrator (RK4, SSP_RK3, RK2, EULER, IMEX_PRESSURE_CORRECTION) |
+| `getTimeIntegrationMethod()` | Returns current time integration method |
+
+### Oil-Water Flow Regime (Three-Phase)
+
+Per-section oil-water classification is available via `TwoFluidSection` for three-phase
+(gas-oil-water) simulations. The `OilWaterFlowRegimeDetector` runs automatically when
+an aqueous phase is present.
+
+| Method (on TwoFluidSection) | Returns | Description |
+|-----------------------------|---------|-------------|
+| `getOilWaterFlowRegime()` | `OilWaterFlowRegime` | Detected regime (STRATIFIED, DISPERSED_OIL_IN_WATER, etc.) |
+| `getOilWaterResult()` | `OilWaterResult` | Full result: regime, viscosity, inversion point, droplet size |
+| `isWaterWetting()` | `boolean` | True if water wets the pipe wall (corrosion indicator) |
+| `isWaterDropoutRisk()` | `boolean` | True if water may separate and accumulate |
+| `getOilWaterInterfacialTension()` | `double` | Oil-water IFT in N/m |
+| `setOilWaterInterfacialTension(double)` | — | Override default IFT (0.03 N/m) |
+| `getOilWaterDetector()` | `OilWaterFlowRegimeDetector` | Access detector for tuning |
+| `setOilWaterDetector(...)` | — | Set custom detector instance |
+
+**OilWaterFlowRegimeDetector tuning:**
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setCriticalWeber(double)` | 1.17 | Hinze critical Weber number for droplet breakup |
+| `getCriticalWeber()` | — | Query current value |
+| `setInversionConstant(double)` | 0.5 | Decarre-Fabre phase inversion constant |
+| `getInversionConstant()` | — | Query current value |
+
+**Standalone usage** (outside TwoFluidPipe):
+
+```python
+import jpype
+OilWaterFlowRegimeDetector = jpype.JClass(
+    "neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector")
+
+detector = OilWaterFlowRegimeDetector()
+result = detector.detect(
+    0.30,     # waterCut (volume fraction)
+    2.0,      # mixtureVelocity (m/s)
+    800.0,    # rhoOil (kg/m3)
+    1025.0,   # rhoWater (kg/m3)
+    0.005,    # muOil (Pa.s)
+    0.001,    # muWater (Pa.s)
+    0.03,     # sigmaOW (N/m)
+    0.25,     # pipeDiameter (m)
+    0.0       # inclination (radians)
+)
+
+print(f"Regime: {result.regime}")
+print(f"Water wetting: {result.waterWetting}")
+print(f"Effective viscosity: {result.effectiveViscosity:.4f} Pa.s")
+print(f"Inversion water fraction: {result.inversionWaterFraction:.3f}")
+print(f"Water dropout risk: {result.waterDropoutRisk}")
+```
+
+### Steady-State Solver Tuning
+
+| Parameter | Setter | Default | Description |
+|-----------|--------|---------|-------------|
+| Under-relaxation | `setSteadyStateUnderRelaxation(double)` | 0.5 | Update damping (0 to 1) |
+| Flash interval | `setSteadyStateFlashInterval(int)` | 3 | Flash thermodynamics every N iterations |
+| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 30 s | Timeout for SS solver |
+
+### Flow Assurance
+
+```python
+# Set hydrate/wax appearance temperatures
+pipe.setHydrateFormationTemperature(18.0, "C")
+pipe.setWaxAppearanceTemperature(35.0, "C")
+
+pipe.run()
+
+# Check risk
+print(f"Hydrate risk: {pipe.hasHydrateRisk()}")
+print(f"Wax risk: {pipe.hasWaxRisk()}")
+print(f"Distance to hydrate risk: {pipe.getDistanceToHydrateRisk():.0f} m")
+print(f"Hydrate cooldown time: {pipe.calculateHydrateCooldownTime():.1f} hours")
+print(pipe.getThermalSummary())
+```
+
+### Erosion Assessment (API 14E)
+
+```python
+pipe.run()
+
+# Check erosional velocity
+print(f"Erosional velocity: {pipe.getErosionalVelocity():.2f} m/s")
+print(f"Above erosional limit: {pipe.isVelocityAboveErosionalLimit()}")
+print(pipe.getErosionRiskAssessment(100.0))  # C-factor = 100
 ```
 
 ---

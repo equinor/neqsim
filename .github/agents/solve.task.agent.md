@@ -319,13 +319,26 @@ Your deliverable is a populated task folder under `task_solve/`.
    - **Design conditions**: Summary table of design P, T, flow rate with units
 
    **Core sections (all modes):**
-   - **Applicable standards**: Which codes, standards, and company TRs govern this
-     task (NORSOK, ISO, DNV, API, ASME, company TR documents)
+   - **Applicable standards** (MANDATORY — see below): Which codes, standards, and
+     company TRs govern this task (NORSOK, ISO, DNV, API, ASME, company TR documents).
+     Load the `neqsim-standards-lookup` skill for equipment-to-standards mapping.
    - **Calculation methods/models**: Which EOS, correlations, pipe flow models to use
    - **Required deliverables**: What the final output must include
    - **Acceptance criteria**: Mass balance tolerance, design factors, safety margins
    - **Operating envelope**: Range of conditions to cover (P, T, flow, composition)
    - **Input data**: Reference fluid compositions, operating conditions, equipment data
+
+   **Standards identification (MANDATORY — proportional to scale):**
+
+   | Scale | Standards Requirement |
+   |-------|---------------------|
+   | Quick | 1-line note: "Per [STANDARD]" or "N/A — property lookup" |
+   | Standard | Table listing each applicable standard with scope |
+   | Comprehensive | Full table with clause numbers, design values, limits, compliance evidence |
+
+   Use the equipment-to-standards mapping from `neqsim-standards-lookup` skill to
+   automatically identify standards based on the equipment types in the simulation.
+   Query `designdata/standards/standards_index.csv` for the mapping.
 
    **Scope limitations** (Design/Development mode):
    - **In scope**: What this analysis covers
@@ -739,10 +752,49 @@ condensed analysis section in notes and proceed.
     # results["benchmark_validation"] = {"benchmark_source": "...", ...}
     # results["uncertainty"] = {"method": "...", "p10": ..., ...}
     # results["risk_evaluation"] = {"risks": [...], ...}
+    #
+    # TIER 2b — Standards compliance (MANDATORY for Standard/Comprehensive)
+    # Load neqsim-standards-lookup skill for equipment-to-standards mapping.
+    # results["standards_applied"] = [
+    #     {"code": "NORSOK P-001 Rev 5", "scope": "Separator sizing",
+    #      "status": "PASS", "design_value": 0.13,
+    #      "limit": "0.12-0.15 m/s", "unit": "m/s", "clause": "Table A-1"},
+    # ]
     results_path = str(TASK_DIR / "results.json")
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
     ```
+
+15a. **Validate results.json with TaskResultValidator (MANDATORY quality gate).**
+  Add a cell immediately after saving results.json. This calls the Java validator
+  programmatically to catch schema errors before proceeding to report generation.
+
+    ```python
+    # ── Programmatic quality gate: validate results.json ──
+    import jpype
+    TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+
+    with open(str(TASK_DIR / "results.json"), "r") as f:
+        json_str = f.read()
+
+    report = TaskResultValidator.validate(json_str)
+    print(f"Valid: {report.isValid()}  |  Errors: {report.getErrorCount()}  |  Warnings: {report.getWarningCount()}")
+
+    if not report.isValid():
+        print("\n❌ ERRORS (must fix before proceeding to report):")
+        for err in report.getErrors():
+            print(f"  [{err.field}] {err.message}")
+
+    if report.getWarningCount() > 0:
+        print("\n⚠️ WARNINGS (fix for Standard/Comprehensive tasks):")
+        for warn in report.getWarnings():
+            print(f"  [{warn.field}] {warn.message}")
+
+    assert report.isValid(), "results.json failed validation — fix errors above before proceeding"
+    ```
+
+  **If validation fails:** Fix the results.json contents in the cell above and re-run
+  both cells. Do NOT proceed to Step 3 (report generation) with a failing validation.
 
 ### Uncertainty & Risk Analysis (conditional)
 
@@ -909,6 +961,7 @@ For Screening mode, proceed without holding.
 - [ ] Results table printed in notebook with units
 - [ ] Some form of validation evidence documented (benchmark, hand calc, sanity check)
 - [ ] Key assumptions listed in results.json `assumptions` array
+- [ ] `standards_applied` populated (at minimum 1-line "Per [STANDARD]" for Quick; full table for Standard/Comprehensive)
 
 **Additional checks (Design / Development mode):**
 
@@ -922,6 +975,7 @@ For Screening mode, proceed without holding.
 - [ ] Numbers consistent across notebooks (re-run all after parameter changes)
 - [ ] Engineering insight questions answered in notebook and/or results.json
 - [ ] Discussion cells for decision-critical figures
+- [ ] `standards_applied` entries include clause numbers and design values vs limits
 - [ ] `figure_discussion` populated for discussed figures
 - [ ] `design_recommendations` traceable to figure discussions
 - [ ] Material NeqSim gaps documented (NIPs or notes)

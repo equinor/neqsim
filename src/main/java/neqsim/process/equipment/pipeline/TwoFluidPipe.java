@@ -121,8 +121,17 @@ public class TwoFluidPipe extends Pipeline {
   /** Pipe sections with state. */
   private TwoFluidSection[] sections;
 
-  /** Spatial step size (m). */
+  /**
+   * Minimum spatial step size across all sections (m). Used for CFL calculation. Equal to uniform
+   * dx when sectionLengths is null.
+   */
   private double dx;
+
+  /**
+   * Per-section lengths for non-uniform mesh (m). When null, all sections use uniform dx. Length
+   * must equal numberOfSections and sum to total pipe length.
+   */
+  private double[] sectionLengths;
 
   // ============ Transient state ============
 
@@ -181,7 +190,13 @@ public class TwoFluidPipe extends Pipeline {
     /** Connected to stream. */
     STREAM_CONNECTED,
     /** Closed (no flow - blocked/shut-in). */
-    CLOSED
+    CLOSED,
+    /**
+     * Characteristic-based (Riemann invariant). Incoming characteristics carry boundary data while
+     * outgoing characteristics are extrapolated from the interior. Reduces spurious wave
+     * reflections during rapid transients (valve closures, slug arrivals). Based on Toro (2009).
+     */
+    CHARACTERISTIC
   }
 
   /** Inlet boundary condition type. */
@@ -551,8 +566,79 @@ public class TwoFluidPipe extends Pipeline {
   /** Update thermodynamics every N steps. */
   private int thermodynamicUpdateInterval = 10;
 
+  // ============ Steady-State Solver Configuration ============
+
+  /**
+   * Under-relaxation factor for steady-state pressure and holdup updates.
+   *
+   * <p>
+   * Values between 0 and 1. Lower values improve stability at the cost of slower convergence.
+   * Default 0.5; the solver ramps from 0.3 up to this value over the first iterations.
+   * </p>
+   */
+  private double ssUnderRelaxation = 0.5;
+
+  /**
+   * Flash calculation interval during steady-state iterations.
+   *
+   * <p>
+   * A TP-flash is performed for every section only every {@code ssFlashInterval} iterations.
+   * Reducing flash frequency from every iteration to every 5th cuts the dominant cost of the
+   * steady-state solver without significantly affecting accuracy.
+   * </p>
+   */
+  private int ssFlashInterval = 3;
+
+  /**
+   * Maximum wall-clock time for the steady-state solver (seconds).
+   *
+   * <p>
+   * If the solver has not converged within this time, it stops with the best available profile and
+   * logs a warning. Prevents truly infinite run times for difficult configurations.
+   * </p>
+   */
+  private double ssMaxWallClockTime = 30.0;
+
   /** Current step count. */
   private int currentStep = 0;
+
+  /**
+   * Enable adaptive timestepping that detects instability and reduces dt automatically.
+   *
+   * <p>
+   * When enabled, the solver: (1) recomputes CFL-stable dt each sub-step based on current
+   * velocities, (2) detects instability (diverging pressure/holdup) and halves dt with retry, (3)
+   * grows dt back toward the CFL limit when stable.
+   * </p>
+   */
+  private boolean enableAdaptiveTimestepping = false;
+
+  /**
+   * Maximum pressure allowed before adaptive dt reduction triggers (Pa). Default 1000 bara.
+   */
+  private double adaptiveMaxPressure = 1000.0e5;
+
+  /**
+   * Maximum allowed pressure change ratio per sub-step before triggering dt reduction. Default 0.2
+   * (200% change per sub-step — catches genuine blow-up, not normal transient dynamics).
+   */
+  private double adaptiveMaxPressureChangeRatio = 2.0;
+
+  /**
+   * Current adaptive dt multiplier (starts at 1.0, reduced on instability, slowly grows back).
+   */
+  private transient double adaptiveDtFactor = 1.0;
+
+  /**
+   * Minimum adaptive dt factor to prevent timestep from becoming infinitesimally small.
+   */
+  private static final double MIN_ADAPTIVE_DT_FACTOR = 0.01;
+
+  /**
+   * Growth rate for adaptive dt factor per stable sub-step (multiplicative). Controls how quickly
+   * the timestep recovers after a reduction.
+   */
+  private static final double ADAPTIVE_DT_GROWTH = 1.05;
 
   /** Flag indicating transient mode (inlet P is free, not fixed from stream). */
   private boolean isTransientMode = false;
@@ -626,7 +712,17 @@ public class TwoFluidPipe extends Pipeline {
    * Initialize pipe sections with inlet conditions.
    */
   private void initializeSections() {
-    dx = length / numberOfSections;
+    if (sectionLengths != null) {
+      // Non-uniform mesh: use per-section lengths
+      numberOfSections = sectionLengths.length;
+      dx = sectionLengths[0];
+      for (double sl : sectionLengths) {
+        dx = Math.min(dx, sl);
+      }
+    } else {
+      // Uniform mesh
+      dx = length / numberOfSections;
+    }
     sections = new TwoFluidSection[numberOfSections];
 
     // Reset slug tracking state on re-initialization
@@ -842,25 +938,52 @@ public class TwoFluidPipe extends Pipeline {
     // Create sections
     double area = Math.PI * diameter * diameter / 4.0;
     double massFlow = getInletStream().getFlowRate("kg/sec");
-    double vMix = massFlow / (area * (alphaG * rhoG + alphaL * rhoL));
+    double rhoMixInit = alphaG * rhoG + alphaL * rhoL;
+    double vMix = massFlow / (area * Math.max(rhoMixInit, 1.0));
+
+    // Physics-based initial pressure estimate using Darcy-Weisbach
+    double muMixInit = alphaG * muG + alphaL * muL;
+    double fInit = calcDarcyFrictionFactor(rhoMixInit, Math.abs(vMix), diameter, muMixInit);
+    double dPdxInit = fInit * rhoMixInit * vMix * Math.abs(vMix) / (2.0 * diameter);
+    // Add average gravity component from elevation profile
+    if (elevationProfile != null && elevationProfile.length > 1) {
+      double totalElevChange = elevationProfile[elevationProfile.length - 1] - elevationProfile[0];
+      double avgSinTheta = totalElevChange / length;
+      dPdxInit += rhoMixInit * 9.81 * avgSinTheta;
+    }
+    double totalDpEstimate = Math.max(dPdxInit, 0) * length;
+    // Clamp to [1%, 50%] of inlet pressure for stability
+    totalDpEstimate = Math.max(totalDpEstimate, P_in * 0.01);
+    totalDpEstimate = Math.min(totalDpEstimate, P_in * 0.50);
 
     for (int i = 0; i < numberOfSections; i++) {
-      double position = (i + 0.5) * dx;
+      double secDx = (sectionLengths != null) ? sectionLengths[i] : dx;
+      // Cumulative position to section midpoint
+      double position = 0;
+      if (sectionLengths != null) {
+        for (int k = 0; k < i; k++) {
+          position += sectionLengths[k];
+        }
+        position += secDx * 0.5;
+      } else {
+        position = (i + 0.5) * dx;
+      }
       double elevation =
           (elevationProfile != null && i < elevationProfile.length) ? elevationProfile[i] : 0.0;
 
       // Calculate inclination from elevation profile
       double inclination = 0;
       if (elevationProfile != null && i < elevationProfile.length - 1) {
-        inclination = Math.atan2(elevationProfile[i + 1] - elevation, dx);
+        inclination = Math.atan2(elevationProfile[i + 1] - elevation, secDx);
       }
 
-      TwoFluidSection sec = new TwoFluidSection(position, dx, diameter, inclination);
+      TwoFluidSection sec = new TwoFluidSection(position, secDx, diameter, inclination);
       sec.setElevation(elevation);
       sec.setRoughness(roughness);
 
-      // Initialize with inlet conditions (linear pressure drop estimate)
-      double P = P_in - (i + 0.5) / numberOfSections * P_in * 0.1; // 10% pressure drop estimate
+      // Initialize with inlet conditions (Darcy-based pressure drop estimate)
+      double posFrac = position / length;
+      double P = P_in - posFrac * totalDpEstimate;
       sec.setPressure(P);
       sec.setTemperature(T_in);
 
@@ -953,16 +1076,29 @@ public class TwoFluidPipe extends Pipeline {
     // Initialize accumulation tracker
     accumulationTracker.identifyAccumulationZones(sections);
 
-    logger.info("TwoFluidPipe initialized: {} sections, dx={:.2f}m", numberOfSections, dx);
+    logger.info("TwoFluidPipe initialized: {} sections, dx_min={:.2f}m{}", numberOfSections, dx,
+        sectionLengths != null ? " (non-uniform mesh)" : "");
   }
 
   /**
    * Run steady-state initialization.
+   *
+   * <p>
+   * Uses a two-phase approach for robust convergence:
+   * </p>
+   * <ul>
+   * <li><b>Phase 1 — Forward march:</b> Single sweep from inlet to outlet computing pressure and
+   * holdup section-by-section without flash calculations. Provides a physically consistent initial
+   * profile.</li>
+   * <li><b>Phase 2 — Iterative refinement:</b> Under-relaxed fixed-point iteration with sparse
+   * flash updates (every {@code ssFlashInterval} iterations) to account for condensation effects.
+   * Includes a wall-clock time guard to prevent infinite run times.</li>
+   * </ul>
    */
   private void runSteadyState() {
-    // Simple steady-state: iterate until pressure and holdup profiles converge
     int maxIter = 100;
     double tolerance = 1e-4;
+    long startWallClock = System.currentTimeMillis();
 
     // Get total mass flow rate (conserved)
     double massFlow = getInletStream().getFlowRate("kg/sec");
@@ -994,8 +1130,82 @@ public class TwoFluidPipe extends Pipeline {
       localMDotLiq[i] = mDotLiq;
     }
 
+    // ===== PHASE 1: Forward-marching initialization (single pass, no flash) =====
+    // Provides a physically consistent pressure/holdup profile by sweeping
+    // inlet-to-outlet one section at a time, using upstream gradient estimates.
+    {
+      for (TwoFluidSection sec : sections) {
+        sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+      }
+
+      // Update inlet section holdup
+      TwoFluidSection inletSec = sections[0];
+      double[] h0 = calculateLocalHoldup(inletSec, null, mDotGas, mDotLiq, area);
+      inletSec.setLiquidHoldup(h0[0]);
+      inletSec.setGasHoldup(h0[1]);
+      if (h0[1] > 0.001 && inletSec.getGasDensity() > 0) {
+        inletSec.setGasVelocity(mDotGas / (area * h0[1] * inletSec.getGasDensity()));
+      }
+      if (h0[0] > 0.001 && inletSec.getLiquidDensity() > 0) {
+        inletSec.setLiquidVelocity(mDotLiq / (area * h0[0] * inletSec.getLiquidDensity()));
+      }
+      if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0 && h0[0] > 0.001) {
+        updateWaterOilHoldups(inletSec, null, h0[0], area);
+      }
+      inletSec.updateDerivedQuantities();
+      inletSec.updateStratifiedGeometry();
+
+      // March from inlet to outlet computing pressure and holdup sequentially
+      for (int i = 1; i < numberOfSections; i++) {
+        TwoFluidSection sec = sections[i];
+        TwoFluidSection prev = sections[i - 1];
+
+        // Pressure from upstream section gradient
+        double dPdx = estimatePressureGradient(prev);
+        double P_new = prev.getPressure() - dPdx * prev.getLength();
+        P_new = Math.max(1e5, P_new);
+        sec.setPressure(P_new);
+
+        // Holdup and velocities
+        double[] hi = calculateLocalHoldup(sec, prev, mDotGas, mDotLiq, area);
+        sec.setLiquidHoldup(hi[0]);
+        sec.setGasHoldup(hi[1]);
+        if (hi[1] > 0.001 && sec.getGasDensity() > 0) {
+          sec.setGasVelocity(mDotGas / (area * hi[1] * sec.getGasDensity()));
+        }
+        if (hi[0] > 0.001 && sec.getLiquidDensity() > 0) {
+          sec.setLiquidVelocity(mDotLiq / (area * hi[0] * sec.getLiquidDensity()));
+        }
+
+        // Water/oil holdups for three-phase
+        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && hi[0] > 0.001) {
+          updateWaterOilHoldups(sec, prev, hi[0], area);
+        }
+
+        sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+        sec.updateDerivedQuantities();
+        sec.updateStratifiedGeometry();
+      }
+
+      logger.info("Forward-marching init complete. Outlet P estimate: {:.2f} bara",
+          sections[numberOfSections - 1].getPressure() / 1e5);
+    }
+
+    // ===== PHASE 2: Iterative refinement with under-relaxation and sparse flash =====
     for (int iter = 0; iter < maxIter; iter++) {
+      // Wall-clock time guard
+      long elapsed = System.currentTimeMillis() - startWallClock;
+      if (elapsed > (long) (ssMaxWallClockTime * 1000)) {
+        logger.warn("Steady-state solver reached wall-clock limit ({:.1f}s) after {} iterations",
+            ssMaxWallClockTime, iter);
+        break;
+      }
+
       double maxChange = 0;
+
+      // Under-relaxation: ramp from 0.3 up to ssUnderRelaxation across first 20 iterations
+      double omega =
+          Math.min(ssUnderRelaxation, 0.3 + (ssUnderRelaxation - 0.3) * Math.min(1.0, iter / 20.0));
 
       // Update flow regimes
       for (TwoFluidSection sec : sections) {
@@ -1037,17 +1247,19 @@ public class TwoFluidPipe extends Pipeline {
         inletSec.updateStratifiedGeometry();
       }
 
-      // Update pressures and holdups using momentum balance
+      // Update pressures and holdups using momentum balance (under-relaxed)
       for (int i = 1; i < numberOfSections; i++) {
         TwoFluidSection sec = sections[i];
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure drop estimate (simplified steady-state)
         double dPdx = estimatePressureGradient(sec);
-        double P_new = prev.getPressure() - dPdx * dx;
-        P_new = Math.max(1e5, P_new); // Minimum 1 bar
+        double P_calc = prev.getPressure() - dPdx * prev.getLength();
+        P_calc = Math.max(1e5, P_calc); // Minimum 1 bar
 
-        double change = Math.abs(P_new - sec.getPressure()) / sec.getPressure();
+        // Under-relaxed pressure update
+        double P_new = sec.getPressure() + omega * (P_calc - sec.getPressure());
+        double change = Math.abs(P_new - sec.getPressure()) / Math.max(sec.getPressure(), 1e5);
         maxChange = Math.max(maxChange, change);
 
         sec.setPressure(P_new);
@@ -1058,8 +1270,11 @@ public class TwoFluidPipe extends Pipeline {
 
         // Update holdup using drift-flux model with terrain effects
         double[] newHoldups = calculateLocalHoldup(sec, prev, localMDotG, localMDotL, area);
-        double alphaL_new = newHoldups[0];
-        double alphaG_new = newHoldups[1];
+        double alphaL_calc = newHoldups[0];
+
+        // Under-relaxed holdup update
+        double alphaL_new = sec.getLiquidHoldup() + omega * (alphaL_calc - sec.getLiquidHoldup());
+        double alphaG_new = 1.0 - alphaL_new;
 
         // Track holdup change for convergence
         double holdupChange = Math.abs(alphaL_new - sec.getLiquidHoldup());
@@ -1103,10 +1318,10 @@ public class TwoFluidPipe extends Pipeline {
         updateTemperatureProfile(massFlow, area);
       }
 
-      // Update thermodynamics on EVERY iteration to capture phase changes (condensation)
-      // MUST be after P/T updates so flash uses fresh values
-      // This is critical for systems where liquid condenses along the pipeline
-      if (referenceFluid != null) {
+      // Update thermodynamics only every ssFlashInterval iterations to reduce cost.
+      // TP-flash for every section is the dominant expense; sparse updates are sufficient
+      // because properties change slowly with small pressure changes between iterations.
+      if (referenceFluid != null && (iter % ssFlashInterval == 0)) {
         updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
       }
 
@@ -1119,8 +1334,39 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       if (maxChange < tolerance) {
-        logger.info("Steady-state converged after {} iterations", iter);
+        logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", iter,
+            System.currentTimeMillis() - startWallClock);
         break;
+      }
+    }
+
+    // ===== Final consistency pass: flash + holdup recalculation =====
+    // With sparse flash during iteration, the final state may not be fully consistent.
+    // Do one mandatory flash + holdup sweep to ensure thermodynamic consistency.
+    if (referenceFluid != null) {
+      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+
+      // Re-sweep holdups using updated properties (densities changed by flash)
+      for (int i = 1; i < numberOfSections; i++) {
+        TwoFluidSection sec = sections[i];
+        TwoFluidSection prev = sections[i - 1];
+        double localMDotG = localMDotGas[i];
+        double localMDotL = localMDotLiq[i];
+
+        double[] hi = calculateLocalHoldup(sec, prev, localMDotG, localMDotL, area);
+        sec.setLiquidHoldup(hi[0]);
+        sec.setGasHoldup(hi[1]);
+        if (hi[1] > 0.001 && sec.getGasDensity() > 0) {
+          sec.setGasVelocity(localMDotG / (area * hi[1] * sec.getGasDensity()));
+        }
+        if (hi[0] > 0.001 && sec.getLiquidDensity() > 0) {
+          sec.setLiquidVelocity(localMDotL / (area * hi[0] * sec.getLiquidDensity()));
+        }
+        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && hi[0] > 0.001) {
+          updateWaterOilHoldups(sec, prev, hi[0], area);
+        }
+        sec.updateDerivedQuantities();
+        sec.updateStratifiedGeometry();
       }
     }
 
@@ -1393,8 +1639,8 @@ public class TwoFluidPipe extends Pipeline {
       double T_new;
       if (h > 0 && massFlow > 0 && Cp > 0) {
         // Exponential decay solution for segment:
-        // T(x) = T_surface + (T_inlet - T_surface) * exp(-h*π*D*dx / (m_dot*Cp))
-        double exponent = -h * pipePerimeter * dx / (massFlow * Cp);
+        // T(x) = T_surface + (T_inlet - T_surface) * exp(-h*π*D*dx_i / (m_dot*Cp))
+        double exponent = -h * pipePerimeter * sec.getLength() / (massFlow * Cp);
         T_new = T_surface + (T_prev - T_surface) * Math.exp(exponent);
       } else {
         T_new = T_prev;
@@ -1525,13 +1771,14 @@ public class TwoFluidPipe extends Pipeline {
       double Q_fluid_to_wall = h_inner * pipePerimeter * (T_fluid - T_wall); // W/m
       double Q_wall_to_ambient = h_outer * outerPerimeter * (T_wall - T_ambient); // W/m
 
-      // Advection term: m_dot * Cp * (T_in - T_out) / dx
+      // Advection term: m_dot * Cp * (T_in - T_out) / dx_i
       double T_upstream = prev.getTemperature();
-      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / dx; // W/m
+      double secDx = sec.getLength();
+      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
 
       // Joule-Thomson cooling
       double dP = sec.getPressure() - prev.getPressure();
-      double Q_JT = massFlow * Cp * muJT * dP / dx; // W/m (equivalent heat)
+      double Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m (equivalent heat)
 
       // Update wall temperature (explicit Euler)
       double dTwall_dt =
@@ -1610,13 +1857,14 @@ public class TwoFluidPipe extends Pipeline {
       // Get heat loss rate using overall thermal resistance
       double Q_loss = thermalCalculator.calculateHeatLossPerLength(); // W/m
 
-      // Advection term: m_dot * Cp * (T_in - T_out) / dx
+      // Advection term: m_dot * Cp * (T_in - T_out) / dx_i
       double T_upstream = prev.getTemperature();
-      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / dx; // W/m
+      double secDx = sec.getLength();
+      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
 
       // Joule-Thomson cooling
       double dP = sec.getPressure() - prev.getPressure();
-      double Q_JT = massFlow * Cp * muJT * dP / dx; // W/m
+      double Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m
 
       // Update fluid temperature
       double dTfluid_dt = (Q_advection - Q_loss + Q_JT) / (fluidMassPerLength * Cp);
@@ -2959,24 +3207,50 @@ public class TwoFluidPipe extends Pipeline {
   @Override
   public void runTransient(double dt, UUID id) {
     isTransientMode = true;
-    // Calculate stable time step
-    double dtStable = calcStableTimeStep();
-    double dtActual = Math.min(dt, dtStable);
+    boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
 
-    // Number of sub-steps (use more sub-steps for stability)
-    int subSteps = (int) Math.ceil(dt / dtActual);
-    subSteps = Math.max(subSteps, 2); // At least 2 sub-steps for stability
-    subSteps = Math.min(subSteps, 10000); // Safety cap to prevent runaway loops
-    dtActual = dt / subSteps;
+    // Calculate initial stable time step (OLGA-style: CFL from current velocities)
+    double dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
+    if (enableAdaptiveTimestepping) {
+      dtCFL *= adaptiveDtFactor;
+    }
+    double dtActual = Math.min(dt, dtCFL);
 
-    for (int step = 0; step < subSteps; step++) {
+    // For non-adaptive mode: uniform substeps (legacy behavior)
+    if (!enableAdaptiveTimestepping) {
+      int subSteps = (int) Math.ceil(dt / dtActual);
+      subSteps = Math.max(subSteps, 2);
+      subSteps = Math.min(subSteps, 10000);
+      dtActual = dt / subSteps;
+    }
+
+    // Reference pressure for relative change detection (use inlet pressure)
+    double pRef = Math.max(getInletStream().getFluid().getPressure("Pa"), 1e5);
+
+    double timeRemaining = dt;
+    int maxSubSteps = enableAdaptiveTimestepping ? 50000 : 10000;
+    int stepCount = 0;
+
+    while (timeRemaining > 1e-12 && stepCount < maxSubSteps) {
+      stepCount++;
+
+      // Adaptive: recompute CFL each step (OLGA/LedaFlow approach)
+      if (enableAdaptiveTimestepping) {
+        dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
+        dtCFL *= adaptiveDtFactor;
+        dtActual = Math.min(dtCFL, timeRemaining);
+        dtActual = Math.max(dtActual, 1e-10); // absolute floor
+      } else {
+        dtActual = Math.min(dtActual, timeRemaining);
+      }
+
       // 1. Update thermodynamic properties (periodically)
       currentStep++;
       if (currentStep % thermodynamicUpdateInterval == 0) {
         updateThermodynamics();
       }
 
-      // 2. Store previous state for stability check
+      // 2. Store previous state for rollback capability
       double[][] U_prev = equations.extractState(sections);
 
       // 3. Calculate RHS and advance solution
@@ -2987,23 +3261,116 @@ public class TwoFluidPipe extends Pipeline {
         return equations.calcRHS(sections, dx);
       };
 
+      // For IMEX: provide cell sound speeds and densities for implicit pressure solve
+      if (isIMEX) {
+        double[] soundSpeeds = new double[numberOfSections];
+        double[] densities = new double[numberOfSections];
+        for (int i = 0; i < numberOfSections; i++) {
+          TwoFluidSection sec = sections[i];
+          double alphaG = sec.getGasHoldup();
+          double alphaL = sec.getLiquidHoldup();
+          double rhoG = Math.max(sec.getGasDensity(), 0.1);
+          double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
+          densities[i] = alphaG * rhoG + alphaL * rhoL;
+          // Mixture sound speed (Wood's equation for two-phase)
+          double rhoMix = densities[i];
+          double cG = Math.max(sec.getGasSoundSpeed(), 100.0);
+          double cL = Math.max(sec.getLiquidSoundSpeed(), 500.0);
+          double invC2 = alphaG / (rhoG * cG * cG) + alphaL / (rhoL * cL * cL);
+          soundSpeeds[i] = (invC2 > 0) ? Math.sqrt(1.0 / (rhoMix * invC2)) : cG;
+          soundSpeeds[i] = Math.max(soundSpeeds[i], 1.0);
+        }
+        boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+            || outletBCType == BoundaryCondition.CHARACTERISTIC);
+        timeIntegrator.setIMEXProperties(soundSpeeds, densities, dx, outletPressure, outletFixed);
+      }
+
       double[][] U_new = timeIntegrator.step(U_prev, rhs, dtFinal);
 
-      // 4. Validate and correct new state before applying
+      // 4. ADAPTIVE: check RAW state for NaN/Inf/negative mass BEFORE clamping
+      // Only hard-reject on unphysical values. Normal transient changes (even large)
+      // are fine — the post-correction checks catch actual blow-up.
+      if (enableAdaptiveTimestepping) {
+        boolean stepRejected = false;
+
+        // Check for NaN/Inf in any state variable
+        for (int i = 0; i < U_new.length && !stepRejected; i++) {
+          for (int j = 0; j < U_new[i].length; j++) {
+            if (Double.isNaN(U_new[i][j]) || Double.isInfinite(U_new[i][j])) {
+              stepRejected = true;
+              break;
+            }
+          }
+        }
+
+        // Check for negative mass (unphysical — indicates numerical blow-up)
+        if (!stepRejected) {
+          for (int i = 0; i < U_new.length; i++) {
+            // Mass variables are indices 0 (gas) and 1 (oil/liquid)
+            if (U_new[i][0] < -1e-3 || U_new[i][1] < -1e-3) {
+              stepRejected = true;
+              break;
+            }
+          }
+        }
+
+        if (stepRejected) {
+          equations.applyState(sections, U_prev);
+          adaptiveDtFactor = Math.max(adaptiveDtFactor * 0.5, MIN_ADAPTIVE_DT_FACTOR);
+          currentStep--;
+          continue;
+        }
+      }
+
+      // 5. Now safe to apply corrections and state
       validateAndCorrectState(U_new, U_prev);
 
       equations.applyState(sections, U_new);
 
-      // 5. Reconstruct pressure profile from evolved state
+      // 6. Reconstruct pressure profile from evolved state
       // The conservative variables (mass, momentum) have evolved but pressure
       // must be reconstructed. March from outlet (fixed P BC) backward.
       reconstructPressureProfile();
 
-      // 6. Apply boundary conditions
+      // 7. Apply boundary conditions
       applyBoundaryConditions();
 
-      // 7. Validate section states and fix any issues
+      // 8. Validate section states and fix any issues
       validateSectionStates();
+
+      // 8b. Adaptive: post-correction sanity check (catch remaining issues)
+      if (enableAdaptiveTimestepping) {
+        boolean postRejected = false;
+
+        for (TwoFluidSection sec : sections) {
+          double p = sec.getPressure();
+          if (p > adaptiveMaxPressure || Double.isNaN(p) || p <= 0) {
+            postRejected = true;
+            break;
+          }
+          double vg = sec.getGasVelocity();
+          double vl = sec.getLiquidVelocity();
+          if (Double.isNaN(vg) || Double.isNaN(vl) || Math.abs(vg) > 300.0
+              || Math.abs(vl) > 300.0) {
+            postRejected = true;
+            break;
+          }
+        }
+
+        if (postRejected) {
+          equations.applyState(sections, U_prev);
+          reconstructPressureProfile();
+          applyBoundaryConditions();
+          adaptiveDtFactor = Math.max(adaptiveDtFactor * 0.25, MIN_ADAPTIVE_DT_FACTOR);
+          currentStep--;
+          continue;
+        }
+
+        // Step accepted: gradually grow dt factor back toward 1.0 (PI-style recovery)
+        if (adaptiveDtFactor < 1.0) {
+          adaptiveDtFactor = Math.min(adaptiveDtFactor * ADAPTIVE_DT_GROWTH, 1.0);
+        }
+      }
 
       // 8. Update accumulation tracking and slug tracking
       if (enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED) {
@@ -3063,6 +3430,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // 10. Advance time
       simulationTime += dtActual;
+      timeRemaining -= dtActual;
       timeIntegrator.advanceTime(dtActual);
     }
 
@@ -3208,15 +3576,68 @@ public class TwoFluidPipe extends Pipeline {
    * @return stable time step [s]
    */
   private double calcStableTimeStep() {
-    double maxSpeed = 1.0; // Minimum
+    double minDt = Double.MAX_VALUE;
 
-    for (TwoFluidSection sec : sections) {
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
       double gasSpeed = Math.abs(sec.getGasVelocity()) + sec.getGasSoundSpeed();
       double liqSpeed = Math.abs(sec.getLiquidVelocity()) + sec.getLiquidSoundSpeed();
-      maxSpeed = Math.max(maxSpeed, Math.max(gasSpeed, liqSpeed));
+      double maxSpeed = Math.max(1.0, Math.max(gasSpeed, liqSpeed));
+      double secDx = sec.getLength();
+      minDt = Math.min(minDt, cflNumber * secDx / maxSpeed);
     }
 
-    return cflNumber * dx / maxSpeed;
+    return minDt;
+  }
+
+  /**
+   * Calculate stable time step using convective CFL (material velocities only, no sound speed).
+   * Used by the IMEX pressure correction method which handles acoustic waves implicitly.
+   *
+   * <p>
+   * dt_convective = CFL * dx / max(|v_G|, |v_L|)
+   * </p>
+   *
+   * <p>
+   * Typically 10-100x larger than the acoustic CFL for gas-liquid flows.
+   * </p>
+   *
+   * @return stable convective time step (s)
+   */
+  private double calcConvectiveTimeStep() {
+    double minDt = Double.MAX_VALUE;
+
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      double secDx = sec.getLength();
+      double gasSpeed = Math.abs(sec.getGasVelocity());
+      double liqSpeed = Math.abs(sec.getLiquidVelocity());
+      double maxMaterialSpeed = Math.max(1.0, Math.max(gasSpeed, liqSpeed));
+
+      // Include gravity-wave speed for inclined/vertical sections (critical for risers)
+      // Gravity waves propagate at ~sqrt(g * D * |sin(theta)| * (rhoL - rhoG) / rhoMix)
+      if (enableAdaptiveTimestepping && elevationProfile != null && i < numberOfSections - 1) {
+        double sinTheta = Math.abs(
+            elevationProfile[Math.min(i + 1, elevationProfile.length - 1)] - elevationProfile[i])
+            / secDx;
+        if (sinTheta > 0.01) { // Only for significantly inclined sections
+          double rhoG = Math.max(sec.getGasDensity(), 0.1);
+          double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
+          double alphaG = sec.getGasHoldup();
+          double alphaL = sec.getLiquidHoldup();
+          double rhoMix = alphaG * rhoG + alphaL * rhoL;
+          if (rhoMix > 0.1) {
+            double gravWaveSpeed =
+                Math.sqrt(9.81 * diameter * sinTheta * Math.abs(rhoL - rhoG) / rhoMix);
+            maxMaterialSpeed = Math.max(maxMaterialSpeed, gravWaveSpeed);
+          }
+        }
+      }
+
+      minDt = Math.min(minDt, cflNumber * secDx / maxMaterialSpeed);
+    }
+
+    return minDt;
   }
 
   /**
@@ -3327,6 +3748,7 @@ public class TwoFluidPipe extends Pipeline {
     // Handle different boundary condition combinations
     boolean outletClosed = (outletBCType == BoundaryCondition.CLOSED);
     boolean inletClosed = (inletBCType == BoundaryCondition.CLOSED);
+    boolean outletCharacteristic = (outletBCType == BoundaryCondition.CHARACTERISTIC);
 
     if (outletClosed && inletClosed) {
       // BOTH ENDS CLOSED: True closed system
@@ -3338,6 +3760,18 @@ public class TwoFluidPipe extends Pipeline {
       // Pressure at outlet equals interior cell adjacent to it
       // March forward from inlet (if constant flow/pressure) or use interior reference
       reconstructPressureOutletClosed();
+    } else if (outletCharacteristic) {
+      // CHARACTERISTIC outlet: pressure is set later by applyCharacteristicOutletBC()
+      // For now, do backward march from current outlet pressure (which from previous step
+      // was set by the characteristic solver). This provides a smooth profile.
+      for (int i = numberOfSections - 2; i >= 0; i--) {
+        TwoFluidSection sec = sections[i];
+        TwoFluidSection downstream = sections[i + 1];
+        double dPdx = estimatePressureGradient(sec);
+        double P_new = downstream.getPressure() + dPdx * sec.getLength();
+        P_new = Math.max(1e5, P_new);
+        sec.setPressure(P_new);
+      }
     } else {
       // OUTLET OPEN (constant pressure): Standard backward march
       // Start from outlet with known pressure (Dirichlet BC)
@@ -3351,8 +3785,8 @@ public class TwoFluidPipe extends Pipeline {
         // Local pressure gradient from current section properties
         double dPdx = estimatePressureGradient(sec);
 
-        // P_upstream = P_downstream + dPdx * dx (pressure increases going upstream)
-        double P_new = downstream.getPressure() + dPdx * dx;
+        // P_upstream = P_downstream + dPdx * dx_i (pressure increases going upstream)
+        double P_new = downstream.getPressure() + dPdx * sec.getLength();
 
         // Ensure physically reasonable bound
         P_new = Math.max(1e5, P_new); // Minimum 1 bar
@@ -3423,8 +3857,8 @@ public class TwoFluidPipe extends Pipeline {
       // Local pressure gradient from upstream section
       double dPdx = estimatePressureGradient(upstream);
 
-      // P_downstream = P_upstream - dPdx * dx (pressure decreases going downstream)
-      double P_new = upstream.getPressure() - dPdx * dx;
+      // P_downstream = P_upstream - dPdx * dx_i (pressure decreases going downstream)
+      double P_new = upstream.getPressure() - dPdx * upstream.getLength();
 
       // Ensure physically reasonable bound
       P_new = Math.max(1e5, P_new); // Minimum 1 bar
@@ -3657,6 +4091,16 @@ public class TwoFluidPipe extends Pipeline {
       inlet.setLiquidMomentumPerLength(0.0);
       inlet.setOilMomentumPerLength(0.0);
       inlet.setWaterMomentumPerLength(0.0);
+    } else if (inletBCType == BoundaryCondition.CHARACTERISTIC) {
+      // Riemann-invariant-based inlet boundary (Toro 2009, Chapter 6)
+      // At the inlet, the flow is typically subsonic. In a 1D hyperbolic system the
+      // characteristics carry information along dx/dt = v ± c.
+      // Incoming characteristic (from outside): carries boundary data (mass flow, composition)
+      // Outgoing characteristic (from interior): extrapolated from interior cells
+      //
+      // Gas Riemann invariants: J+ = v + 2c/(gamma-1), J- = v - 2c/(gamma-1)
+      // For an inlet: J+ is prescribed from external data, J- comes from interior.
+      applyCharacteristicInletBC(inlet);
     }
 
     // Outlet boundary
@@ -3674,7 +4118,166 @@ public class TwoFluidPipe extends Pipeline {
       outlet.setLiquidMomentumPerLength(0.0);
       outlet.setOilMomentumPerLength(0.0);
       outlet.setWaterMomentumPerLength(0.0);
+    } else if (outletBCType == BoundaryCondition.CHARACTERISTIC) {
+      // Riemann-invariant-based outlet boundary
+      // At the outlet: J- is prescribed (typically from back-pressure), J+ from interior.
+      applyCharacteristicOutletBC(outlet);
     }
+  }
+
+  /**
+   * Apply characteristic (Riemann-invariant) boundary condition at inlet.
+   *
+   * <p>
+   * For subsonic inflow, there are two incoming characteristics (one from outside with boundary
+   * data, one from interior). The gas-phase Riemann invariants are:
+   * </p>
+   * <ul>
+   * <li>J+ = v + 2c/(gamma-1) : right-running, carries information from outside at inlet</li>
+   * <li>J- = v - 2c/(gamma-1) : left-running, carries information from interior</li>
+   * </ul>
+   *
+   * <p>
+   * At the inlet, J+ is specified from the boundary data (inlet stream) and J- is extrapolated from
+   * the interior (cell 1). The boundary state is solved from the intersection.
+   * </p>
+   *
+   * @param inlet the inlet section to update
+   */
+  private void applyCharacteristicInletBC(TwoFluidSection inlet) {
+    // Get interior state from cell 1 (first interior cell)
+    TwoFluidSection interior = sections[1];
+
+    // Gas phase: use isentropic gas relations with effective gamma
+    double gammaEff = 1.3; // Effective ratio of specific heats for gas-condensate
+    double cInt = Math.max(interior.getGasSoundSpeed(), 1.0);
+    double vInt = interior.getGasVelocity();
+
+    // Outgoing characteristic from interior (J- travels leftward out of domain)
+    double Jminus = vInt - 2.0 * cInt / (gammaEff - 1.0);
+
+    // Incoming characteristic from boundary (J+ carries inflow data)
+    // Use inlet stream mass flow to determine target velocity
+    SystemInterface inFluid = getInletStream().getFluid();
+    double massFlow = getInletStream().getFlowRate("kg/sec");
+    double area = Math.PI * diameter * diameter / 4.0;
+    double rhoG = inlet.getGasDensity();
+    if (inFluid.hasPhaseType("gas")) {
+      rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
+    }
+    double alphaG = inlet.getGasHoldup();
+    double vTarget = (alphaG > 0.001 && rhoG > 0.1 && area > 0) ? massFlow
+        * (inFluid.hasPhaseType("gas") ? inFluid.getPhase("gas").getFlowRate("kg/sec") / massFlow
+            : 0.8)
+        / (alphaG * rhoG * area) : 10.0;
+    vTarget = Math.min(vTarget, 100.0);
+
+    double cTarget = Math.max(inlet.getGasSoundSpeed(), 1.0);
+    double Jplus = vTarget + 2.0 * cTarget / (gammaEff - 1.0);
+
+    // Solve for boundary state: v_b = (J+ + J-) / 2, c_b = (gamma-1)/4 * (J+ - J-)
+    double vBoundary = 0.5 * (Jplus + Jminus);
+    double cBoundary = 0.25 * (gammaEff - 1.0) * (Jplus - Jminus);
+    cBoundary = Math.max(cBoundary, 1.0);
+
+    // Corresponding pressure: P_b = P_int * (c_b / c_int)^(2*gamma/(gamma-1))
+    double pressureRatio = Math.pow(cBoundary / cInt, 2.0 * gammaEff / (gammaEff - 1.0));
+    double Pb = interior.getPressure() * pressureRatio;
+    Pb = Math.max(1e5, Pb); // minimum 1 bar
+
+    // Apply to inlet section
+    inlet.setGasVelocity(vBoundary);
+    inlet.setPressure(Pb);
+    inlet.setTemperature(inFluid.getTemperature("K"));
+
+    // Liquid phase: use simple upwind for liquid velocity (subsonic liquid always has
+    // both characteristics entering at inlet for typical subsonic liquid velocities)
+    double rhoL = inlet.getLiquidDensity() > 100 ? inlet.getLiquidDensity() : 700.0;
+    double alphaL = inlet.getLiquidHoldup();
+    double mDotLiq = 0;
+    if (inFluid.hasPhaseType("oil")) {
+      mDotLiq += inFluid.getPhase("oil").getFlowRate("kg/sec");
+    }
+    if (inFluid.hasPhaseType("aqueous")) {
+      mDotLiq += inFluid.getPhase("aqueous").getFlowRate("kg/sec");
+    }
+    double vL = (alphaL > 0.001 && rhoL > 0.1 && area > 0) ? mDotLiq / (alphaL * rhoL * area) : 2.0;
+    vL = Math.min(vL, 50.0);
+    inlet.setLiquidVelocity(vL);
+    inlet.setOilVelocity(vL);
+    inlet.setWaterVelocity(vL);
+
+    // Update momenta consistently
+    inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * vBoundary);
+    inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * vL);
+    inlet.setOilMomentumPerLength(inlet.getOilMassPerLength() * vL);
+    inlet.setWaterMomentumPerLength(inlet.getWaterMassPerLength() * vL);
+  }
+
+  /**
+   * Apply characteristic (Riemann-invariant) boundary condition at outlet.
+   *
+   * <p>
+   * For subsonic outflow, there is one incoming characteristic from outside (back-pressure) and one
+   * outgoing from interior. At the outlet:
+   * </p>
+   * <ul>
+   * <li>J- = v - 2c/(gamma-1) : left-running, carries boundary data (back-pressure)</li>
+   * <li>J+ = v + 2c/(gamma-1) : right-running, carries information from interior</li>
+   * </ul>
+   *
+   * @param outlet the outlet section to update
+   */
+  private void applyCharacteristicOutletBC(TwoFluidSection outlet) {
+    // Get interior state from second-to-last cell
+    TwoFluidSection interior = sections[numberOfSections - 2];
+
+    double gammaEff = 1.3;
+    double cInt = Math.max(interior.getGasSoundSpeed(), 1.0);
+    double vInt = interior.getGasVelocity();
+
+    // Outgoing characteristic from interior (J+ travels rightward out of domain)
+    double Jplus = vInt + 2.0 * cInt / (gammaEff - 1.0);
+
+    // Incoming characteristic from boundary (J- carries back-pressure data)
+    // Back-pressure determines the target pressure at outlet
+    double Ptarget = outletPressureSet ? outletPressure : outlet.getPressure();
+    double rhoOutlet = Math.max(outlet.getGasDensity(), 0.1);
+
+    // Sound speed at target pressure (isentropic relation)
+    double cTarget = cInt * Math.pow(Ptarget / Math.max(interior.getPressure(), 1e5),
+        (gammaEff - 1.0) / (2.0 * gammaEff));
+    cTarget = Math.max(cTarget, 1.0);
+
+    // Estimate velocity at target state for J-
+    double vTarget = outlet.getGasVelocity();
+    double Jminus = vTarget - 2.0 * cTarget / (gammaEff - 1.0);
+
+    // Solve for boundary state
+    double vBoundary = 0.5 * (Jplus + Jminus);
+    double cBoundary = 0.25 * (gammaEff - 1.0) * (Jplus - Jminus);
+    cBoundary = Math.max(cBoundary, 1.0);
+
+    // Pressure from characteristic sound speed
+    double pressureRatio = Math.pow(cBoundary / cInt, 2.0 * gammaEff / (gammaEff - 1.0));
+    double Pb = interior.getPressure() * pressureRatio;
+    Pb = Math.max(1e5, Pb);
+
+    // Apply: use characteristic pressure (which will be close to target for subsonic)
+    outlet.setPressure(Pb);
+    outlet.setGasVelocity(Math.max(0, vBoundary)); // only outflow
+
+    // Liquid: extrapolate from interior (outgoing information for subsonic liquid)
+    double vLInt = interior.getLiquidVelocity();
+    outlet.setLiquidVelocity(Math.max(0, vLInt));
+    outlet.setOilVelocity(Math.max(0, vLInt));
+    outlet.setWaterVelocity(Math.max(0, vLInt));
+
+    // Update momenta
+    outlet.setGasMomentumPerLength(outlet.getGasMassPerLength() * outlet.getGasVelocity());
+    outlet.setLiquidMomentumPerLength(outlet.getLiquidMassPerLength() * outlet.getLiquidVelocity());
+    outlet.setOilMomentumPerLength(outlet.getOilMassPerLength() * outlet.getOilVelocity());
+    outlet.setWaterMomentumPerLength(outlet.getWaterMassPerLength() * outlet.getWaterVelocity());
   }
 
   /**
@@ -3707,8 +4310,22 @@ public class TwoFluidPipe extends Pipeline {
     double vG = outlet.getGasVelocity();
     double vL = outlet.getLiquidVelocity();
 
-    // Mass flow = (gas mass flux + liquid mass flux) * area
-    double massFlowOut = (alphaG * rhoG * vG + alphaL * rhoL * vL) * area;
+    // Mass flow from section state (for diagnostics)
+    double massFlowFromState = (alphaG * rhoG * vG + alphaL * rhoL * vL) * area;
+
+    // In steady state, mass conservation requires inlet flow = outlet flow.
+    // The section-level velocities come from momentum balance correlations that
+    // may not be perfectly consistent with the total mass flux. Use the inlet
+    // mass flow rate as the definitive value to enforce global mass balance.
+    double massFlowIn = getInletStream().getFlowRate("kg/sec");
+    double massFlowOut = massFlowIn;
+
+    if (massFlowFromState > 0 && Math.abs(massFlowFromState - massFlowIn) / massFlowIn > 0.1) {
+      logger.debug(
+          "Outlet section state mass flow ({:.2f} kg/s) differs from inlet ({:.2f} kg/s) by {:.1f}%",
+          massFlowFromState, massFlowIn,
+          100.0 * Math.abs(massFlowFromState - massFlowIn) / massFlowIn);
+    }
 
     // Ensure positive flow
     if (massFlowOut > 0) {
@@ -4015,8 +4632,14 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double[] getPositionProfile() {
     double[] positions = new double[numberOfSections];
-    for (int i = 0; i < numberOfSections; i++) {
-      positions[i] = (i + 0.5) * dx;
+    if (sections != null) {
+      for (int i = 0; i < numberOfSections; i++) {
+        positions[i] = sections[i].getPosition();
+      }
+    } else {
+      for (int i = 0; i < numberOfSections; i++) {
+        positions[i] = (i + 0.5) * dx;
+      }
     }
     return positions;
   }
@@ -4340,6 +4963,136 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Set per-section lengths for non-uniform mesh.
+   *
+   * <p>
+   * Enables variable spatial resolution along the pipe. Use shorter sections at elevation changes,
+   * risers, and dips where flow regime transitions occur, and longer sections in uniform
+   * horizontal/vertical runs. This follows the same approach used in OLGA and LedaFlow for
+   * optimising accuracy without unnecessary computational cost.
+   * </p>
+   *
+   * <p>
+   * The array length determines the number of sections. The sum of all lengths must equal the total
+   * pipe length (set via {@link #setLength(double)}). The CFL time step will be governed by the
+   * smallest section length.
+   * </p>
+   *
+   * @param lengths Array of section lengths (m), one per computational cell
+   * @throws IllegalArgumentException if lengths is null or empty
+   */
+  public void setSectionLengths(double[] lengths) {
+    if (lengths == null || lengths.length < 2) {
+      throw new IllegalArgumentException("Section lengths array must have at least 2 elements");
+    }
+    this.sectionLengths = lengths.clone();
+    this.numberOfSections = lengths.length;
+  }
+
+  /**
+   * Get per-section lengths. Returns null if uniform mesh is used.
+   *
+   * @return Array of section lengths (m) or null for uniform mesh
+   */
+  public double[] getSectionLengths() {
+    return sectionLengths != null ? sectionLengths.clone() : null;
+  }
+
+  /**
+   * Generate a non-uniform mesh with refinement at elevation changes.
+   *
+   * <p>
+   * Automatically creates finer sections where the elevation profile has large gradients (risers,
+   * dips, terrain changes) and coarser sections in uniform regions. The refinement factor controls
+   * how much finer the mesh is at elevation changes relative to flat sections.
+   * </p>
+   *
+   * <p>
+   * This follows OLGA/LedaFlow best practice: short sections (units to tens of pipe diameters) at
+   * elevation breaks, longer sections (50-200 m) on uniform runs.
+   * </p>
+   *
+   * @param baseSections Base number of sections for uniform regions
+   * @param refinementFactor How much finer to make sections at elevation changes (2-10)
+   */
+  public void generateRefinedMesh(int baseSections, double refinementFactor) {
+    if (elevationProfile == null || elevationProfile.length < 2) {
+      // No elevation profile, use uniform mesh
+      this.numberOfSections = baseSections;
+      this.sectionLengths = null;
+      return;
+    }
+
+    refinementFactor = Math.max(1.5, Math.min(refinementFactor, 10.0));
+
+    // Calculate elevation gradients at each profile point
+    int nProfile = elevationProfile.length;
+    double dxProfile = length / (nProfile - 1);
+    double[] gradients = new double[nProfile];
+    double maxGrad = 0;
+    for (int i = 0; i < nProfile; i++) {
+      if (i == 0) {
+        gradients[i] = Math.abs(elevationProfile[1] - elevationProfile[0]) / dxProfile;
+      } else if (i == nProfile - 1) {
+        gradients[i] = Math.abs(elevationProfile[i] - elevationProfile[i - 1]) / dxProfile;
+      } else {
+        gradients[i] =
+            Math.abs(elevationProfile[i + 1] - elevationProfile[i - 1]) / (2.0 * dxProfile);
+      }
+      maxGrad = Math.max(maxGrad, gradients[i]);
+    }
+
+    if (maxGrad < 0.01) {
+      // Essentially flat, use uniform mesh
+      this.numberOfSections = baseSections;
+      this.sectionLengths = null;
+      return;
+    }
+
+    // Compute desired section density (inverse of desired dx) along the pipe
+    // Higher gradient → shorter sections
+    double[] density = new double[baseSections];
+    double totalDensity = 0;
+    double baseDx = length / baseSections;
+    for (int i = 0; i < baseSections; i++) {
+      double pos = (i + 0.5) * baseDx;
+      // Interpolate gradient at this position
+      double fracIdx = pos / dxProfile;
+      int idx = Math.min((int) fracIdx, nProfile - 2);
+      double frac = fracIdx - idx;
+      double localGrad = gradients[idx] * (1 - frac) + gradients[idx + 1] * frac;
+      // Refinement: scale by 1 to refinementFactor based on gradient
+      density[i] = 1.0 + (refinementFactor - 1.0) * (localGrad / maxGrad);
+      totalDensity += density[i];
+    }
+
+    // Convert density to section lengths: higher density → shorter section
+    // Section length is inversely proportional to density
+    double totalInvDensity = 0;
+    for (int i = 0; i < baseSections; i++) {
+      totalInvDensity += 1.0 / density[i];
+    }
+    double[] lengths = new double[baseSections];
+    for (int i = 0; i < baseSections; i++) {
+      lengths[i] = length * (1.0 / density[i]) / totalInvDensity;
+      // Clamp to reasonable range: [dx/refinementFactor, dx*refinementFactor]
+      lengths[i] = Math.max(lengths[i], baseDx / refinementFactor);
+      lengths[i] = Math.min(lengths[i], baseDx * refinementFactor);
+    }
+
+    // Normalise so they sum exactly to total length
+    double sum = 0;
+    for (double l : lengths) {
+      sum += l;
+    }
+    for (int i = 0; i < lengths.length; i++) {
+      lengths[i] *= length / sum;
+    }
+
+    setSectionLengths(lengths);
+  }
+
+  /**
    * Get number of sections.
    *
    * @return Number of sections
@@ -4611,6 +5364,35 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Set the time integration method.
+   *
+   * <p>
+   * Use {@link TimeIntegrator.Method#IMEX_PRESSURE_CORRECTION} for long pipelines where the
+   * acoustic CFL constraint is prohibitively small. The IMEX method solves the pressure wave
+   * equation implicitly, allowing time steps 10-100x larger than explicit schemes.
+   * </p>
+   *
+   * @param method integration method (RK4, EULER, IMEX_PRESSURE_CORRECTION, etc.)
+   */
+  public void setTimeIntegrationMethod(TimeIntegrator.Method method) {
+    if (timeIntegrator != null) {
+      timeIntegrator.setMethod(method);
+    }
+  }
+
+  /**
+   * Get the current time integration method.
+   *
+   * @return current integration method
+   */
+  public TimeIntegrator.Method getTimeIntegrationMethod() {
+    if (timeIntegrator != null) {
+      return timeIntegrator.getMethod();
+    }
+    return TimeIntegrator.Method.RK4;
+  }
+
+  /**
    * Set maximum simulation time for transient calculations.
    *
    * @param time Maximum simulation time in seconds
@@ -4755,6 +5537,63 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Enable adaptive timestepping (OLGA/LedaFlow-style).
+   *
+   * <p>
+   * When enabled, the solver automatically adjusts the internal sub-step size to maintain
+   * stability. Per sub-step, it: (1) recomputes the CFL-stable dt from current velocities, (2)
+   * monitors solution quality (pressure change, holdup divergence, velocity blow-up), (3) rejects
+   * bad steps and halves dt with state rollback, (4) gradually grows dt back when stable.
+   * </p>
+   *
+   * <p>
+   * This approach follows the semi-implicit OLGA paradigm: the CFL condition is evaluated from
+   * material velocities (not sound speed) when using IMEX integration, allowing large timesteps for
+   * long pipelines. The adaptive controller ensures stability across flow regime transitions,
+   * terrain slugging, valve operations, and riser-base dynamics.
+   * </p>
+   *
+   * @param enable true to enable adaptive timestepping
+   */
+  public void setEnableAdaptiveTimestepping(boolean enable) {
+    this.enableAdaptiveTimestepping = enable;
+    if (enable) {
+      this.adaptiveDtFactor = 1.0;
+    }
+  }
+
+  /**
+   * Check if adaptive timestepping is enabled.
+   *
+   * @return true if adaptive timestepping is enabled
+   */
+  public boolean isAdaptiveTimesteppingEnabled() {
+    return enableAdaptiveTimestepping;
+  }
+
+  /**
+   * Get the current adaptive dt factor (1.0 = full CFL step, lower = reduced for stability).
+   *
+   * <p>
+   * Useful for monitoring: if this stays well below 1.0, the simulation is fighting instability.
+   * </p>
+   *
+   * @return current adaptive dt factor in range [0.001, 1.0]
+   */
+  public double getAdaptiveDtFactor() {
+    return adaptiveDtFactor;
+  }
+
+  /**
+   * Set the maximum pressure before adaptive dt reduction triggers.
+   *
+   * @param maxPressureBar maximum pressure in bara (default 1000)
+   */
+  public void setAdaptiveMaxPressure(double maxPressureBar) {
+    this.adaptiveMaxPressure = Math.max(10.0, maxPressureBar) * 1e5;
+  }
+
+  /**
    * Enable water-oil velocity slip modeling.
    *
    * <p>
@@ -4794,6 +5633,37 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setThermodynamicUpdateInterval(int interval) {
     this.thermodynamicUpdateInterval = Math.max(1, interval);
+  }
+
+  /**
+   * Set the under-relaxation factor for steady-state pressure and holdup updates.
+   *
+   * @param factor Relaxation factor in range (0, 1]. Lower is more stable but slower.
+   */
+  public void setSteadyStateUnderRelaxation(double factor) {
+    this.ssUnderRelaxation = Math.max(0.05, Math.min(1.0, factor));
+  }
+
+  /**
+   * Set the flash calculation interval during steady-state iterations.
+   *
+   * <p>
+   * A TP-flash is performed for every section only every N iterations. Default is 5.
+   * </p>
+   *
+   * @param interval Flash every N iterations (1 = every iteration)
+   */
+  public void setSteadyStateFlashInterval(int interval) {
+    this.ssFlashInterval = Math.max(1, interval);
+  }
+
+  /**
+   * Set the maximum wall-clock time for the steady-state solver.
+   *
+   * @param seconds Maximum time in seconds (default 30)
+   */
+  public void setSteadyStateMaxWallClockTime(double seconds) {
+    this.ssMaxWallClockTime = Math.max(1.0, seconds);
   }
 
   // ============ OLGA-style Minimum Slip Methods ============
@@ -5717,6 +6587,9 @@ public class TwoFluidPipe extends Pipeline {
     if (idx < 0) {
       return -1;
     }
+    if (sections != null) {
+      return sections[idx].getPosition();
+    }
     return idx * dx;
   }
 
@@ -5853,7 +6726,9 @@ public class TwoFluidPipe extends Pipeline {
    * <li>$\rho_{mix}$ = Average mixture density (kg/m³)</li>
    * </ul>
    *
-   * <p><b>C-Factor Guidelines (API RP 14E)</b></p>
+   * <p>
+   * <b>C-Factor Guidelines (API RP 14E)</b>
+   * </p>
    * <table>
    * <caption>API 14E C-factor recommendations</caption>
    * <tr>

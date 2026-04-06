@@ -148,7 +148,8 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    *
    * @param sections Array of pipe sections with current state
-   * @param dx Cell size (m)
+   * @param dx Cell size (m) — used as uniform dx; for non-uniform mesh each section's own length is
+   *        used via {@code sections[i].getLength()}
    * @return Time derivatives [nCells][NUM_EQUATIONS]
    */
   public double[][] calcRHS(TwoFluidSection[] sections, double dx) {
@@ -164,7 +165,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // Calculate source terms for each cell
     double[][] sources = calcSourceTerms(sections);
 
-    // Assemble RHS: dU/dt = -1/dx * (F_{i+1/2} - F_{i-1/2}) + S
+    // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
     // Boundary treatment:
     // - For inlet cell (i=0): Use inlet flux from cell 0 state (inlet stream sets this state)
@@ -190,8 +191,11 @@ public class TwoFluidConservationEquations implements Serializable {
         fluxRight = fluxes[i];
       }
 
+      // Use per-section length for non-uniform mesh
+      double secDx = sections[i].getLength();
+
       for (int j = 0; j < NUM_EQUATIONS; j++) {
-        dUdt[i][j] = -1.0 / dx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
+        dUdt[i][j] = -1.0 / secDx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
       }
     }
 
@@ -630,10 +634,37 @@ public class TwoFluidConservationEquations implements Serializable {
         double F_wO = F_wL * oilHoldupFrac;
         double F_wW = F_wL * waterHoldupFrac;
 
-        // Gas-liquid interfacial force partitioned to the dominant liquid phase
-        // (Gas interacts primarily with oil on top for stratified oil-water flow)
-        double F_iO = F_iL * 0.8; // Oil gets most of gas-liquid interface
-        double F_iW = F_iL * 0.2;
+        // Gas-liquid interfacial force partitioned based on oil-water flow regime.
+        // In stratified oil-water: gas sits on top of oil, so oil gets most interface force.
+        // In dispersed W/O: oil (continuous) gets all gas-liquid interface force.
+        // In dispersed O/W: water (continuous) gets most gas-liquid interface force.
+        double oilInterfaceFrac = 0.8; // Default: oil gets most of gas-liquid interface
+        if (sec.getOilWaterResult() != null) {
+          switch (sec.getOilWaterResult().regime) {
+            case DISPERSED_OIL_IN_WATER:
+              // Water is continuous; gas interacts mainly with water
+              oilInterfaceFrac = 0.2;
+              break;
+            case DISPERSED_WATER_IN_OIL:
+              // Oil is continuous; gas interacts mainly with oil
+              oilInterfaceFrac = 0.9;
+              break;
+            case DUAL_DISPERSION:
+              // Both present; split by holdup fraction
+              oilInterfaceFrac = oilHoldupFrac;
+              break;
+            case STRATIFIED:
+            case STRATIFIED_WITH_MIXING:
+              // Stratified: gas on top of oil, oil gets most interface
+              oilInterfaceFrac = 0.85;
+              break;
+            default:
+              oilInterfaceFrac = 0.8;
+              break;
+          }
+        }
+        double F_iO = F_iL * oilInterfaceFrac;
+        double F_iW = F_iL * (1.0 - oilInterfaceFrac);
 
         // Oil-water interfacial shear (from TwoFluidSection calculation)
         double tau_ow = sec.calcOilWaterInterfacialShear();
@@ -871,7 +902,7 @@ public class TwoFluidConservationEquations implements Serializable {
    *
    * @param sections Pipe sections
    * @param dUdt Current RHS values to modify
-   * @param dx Cell size
+   * @param dx Cell size (used for uniform mesh; per-section length used when available)
    */
   public void applyPressureGradient(TwoFluidSection[] sections, double[][] dUdt, double dx) {
     int nCells = sections.length;
@@ -879,14 +910,19 @@ public class TwoFluidConservationEquations implements Serializable {
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
 
-      // Central difference for pressure gradient
+      // Central difference for pressure gradient using per-section lengths
       double dPdx;
       if (i == 0) {
-        dPdx = (sections[1].getPressure() - sections[0].getPressure()) / dx;
+        double dxFwd = 0.5 * (sections[0].getLength() + sections[1].getLength());
+        dPdx = (sections[1].getPressure() - sections[0].getPressure()) / dxFwd;
       } else if (i == nCells - 1) {
-        dPdx = (sections[nCells - 1].getPressure() - sections[nCells - 2].getPressure()) / dx;
+        double dxBwd = 0.5 * (sections[nCells - 2].getLength() + sections[nCells - 1].getLength());
+        dPdx = (sections[nCells - 1].getPressure() - sections[nCells - 2].getPressure()) / dxBwd;
       } else {
-        dPdx = (sections[i + 1].getPressure() - sections[i - 1].getPressure()) / (2 * dx);
+        // Distance from center of cell i-1 to center of cell i+1
+        double dxCentral = 0.5 * sections[i - 1].getLength() + sections[i].getLength()
+            + 0.5 * sections[i + 1].getLength();
+        dPdx = (sections[i + 1].getPressure() - sections[i - 1].getPressure()) / dxCentral;
       }
 
       double A = sec.getArea();

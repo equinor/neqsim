@@ -117,7 +117,8 @@ For each family generate cases by:
 ### Python Orchestrator (recommended)
 
 ```python
-from neqsim import jneqsim
+from tools.neqsim_bootstrap import get_jneqsim
+jneqsim = get_jneqsim()
 import json, time
 
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos

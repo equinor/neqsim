@@ -266,6 +266,43 @@ with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
 ```
 
+## Validate results.json (MANDATORY for Task-Solving Notebooks)
+
+After saving results.json, run the Java `TaskResultValidator` to catch schema errors
+before report generation. This is a programmatic quality gate — do NOT proceed to
+Step 3 if validation fails.
+
+```python
+# ── Programmatic quality gate ──
+import jpype
+TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+
+with open(str(TASK_DIR / "results.json"), "r") as f:
+    json_str = f.read()
+
+report = TaskResultValidator.validate(json_str)
+print(f"Valid: {report.isValid()}  |  Errors: {report.getErrorCount()}  |  Warnings: {report.getWarningCount()}")
+
+if not report.isValid():
+    print("\n❌ ERRORS (must fix before proceeding to report):")
+    for err in report.getErrors():
+        print(f"  [{err.field}] {err.message}")
+
+if report.getWarningCount() > 0:
+    print("\n⚠️ WARNINGS (fix for Standard/Comprehensive tasks):")
+    for warn in report.getWarnings():
+        print(f"  [{warn.field}] {warn.message}")
+
+assert report.isValid(), "results.json failed validation — fix errors above"
+```
+
+The validator checks:
+- **Required keys**: `key_results`, `validation`, `approach`, `conclusions`
+- **Recommended keys**: `figure_captions`, `figure_discussion`, `equations`, `tables`, `references`, `uncertainty`, `risk_evaluation`, `standards_applied`
+- **Uncertainty section**: Monte Carlo N ≥ 200, P10/P50/P90 present
+- **Risk evaluation**: Risk register with id, description, risk_level
+- **Standards applied**: Array entries with code, scope, status (PASS/FAIL/INFO/N/A)
+
 ## Type Conversion Tips
 
 ```python

@@ -211,6 +211,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
 | **Flow Assurance Overview**      | [docs/pvtsimulation/flow_assurance_overview.md](pvtsimulation/flow_assurance_overview)                             | **Integrated guide: hydrates, wax, asphaltenes, scale screening** |
 | **Mineral Scale Formation**      | [docs/pvtsimulation/mineral_scale_formation.md](pvtsimulation/mineral_scale_formation)                             | **Carbonate/sulfate scale, seawater mixing, SR calculations**     |
+| **Scale Prediction API**         | [docs/pvtsimulation/scale_prediction_api.md](pvtsimulation/scale_prediction_api)                                   | **API reference: empirical vs EOS, solid solution, compatibility** |
 | **pH Stabilization & Corrosion** | [docs/pvtsimulation/ph_stabilization_corrosion.md](pvtsimulation/ph_stabilization_corrosion)                       | **Corrosion control, FeCO3 layer, Electrolyte CPA EoS**           |
 | Hydrate Models                   | [docs/thermo/hydrate_models.md](thermo/hydrate_models)                                                             | Hydrate equilibrium models                                        |
 | Hydrate Flash                    | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations)       | Hydrate flash operations                                          |
@@ -304,6 +305,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Water Cooler & Reboiler**     | [docs/process/equipment/water_cooler_reboiler.md](process/equipment/water_cooler_reboiler)           | **WaterCooler (IAPWS), ReBoiler for distillation**                                                                  |
 | Mechanical Design               | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design)               | HX mechanical design                                                                                                |
 | **Thermal-Hydraulic Design**    | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design) | **Shell-and-tube thermal design: Gnielinski, Kern, Bell-Delaware, LMTD correction, vibration screening, zone analysis** |
+| **Heat Integration (Pinch Analysis)** | [docs/process/equipment/heat_integration.md](process/equipment/heat_integration) | **PinchAnalysis class: Linnhoff method, composite curves, grand composite curve, minimum utility targeting, HeatStream model** |
 
 ### Chapter 17: Valves & Flow Control
 
@@ -333,7 +335,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Adsorbers (SimpleAdsorber)     | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers)                         | Simplified gas absorption with MDEA                                                                                |
 | **Adsorption Bed (Transient)** | [docs/process/equipment/adsorption_bed.md](process/equipment/adsorption_bed)               | **Fixed-bed adsorption with LDF mass transfer, MTZ, PSA/TSA cycles**                                               |
 | **Mercury Removal Guard Bed**  | [docs/process/mercury_removal.md](process/mercury_removal)                                 | **Chemisorption (PuraSpec), transient bed loading, breakthrough, degradation, mechanical design, cost estimation** |
-| Power Generation               | [docs/process/equipment/power_generation.md](process/equipment/power_generation)           | Gas turbines, fuel cells, renewables                                                                               |
+| Power Generation               | [docs/process/equipment/power_generation.md](process/equipment/power_generation)           | **GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem, FuelCell, renewables (SolarPanel, WindTurbine, WindFarm)** |
 | Diff. Pressure                 | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure) | Orifice plates, flow measurement                                                                                   |
 | Manifolds                      | [docs/process/equipment/manifolds.md](process/equipment/manifolds)                         | Multi-stream routing                                                                                               |
 | **Battery Storage**            | [docs/process/equipment/battery_storage.md](process/equipment/battery_storage)             | **Energy storage systems, charge/discharge cycles, grid integration**                                              |
@@ -498,6 +500,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | ----------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Process Serialization   | [docs/simulation/process_serialization.md](simulation/process_serialization)                   | Save/load process models                                             |
 | Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
+| Process Automation API  | [docs/simulation/process_automation.md](simulation/process_automation)                         | String-addressable API for reading/writing simulation variables       |
 
 ---
 
@@ -712,6 +715,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Method Comparison                  | [docs/pvtsimulation/flowassurance/asphaltene_method_comparison.md](pvtsimulation/flowassurance/asphaltene_method_comparison)     | Method comparison                                                                                  |
 | Parameter Fitting                  | [docs/pvtsimulation/flowassurance/asphaltene_parameter_fitting.md](pvtsimulation/flowassurance/asphaltene_parameter_fitting)     | Parameter fitting                                                                                  |
 | Validation                         | [docs/pvtsimulation/flowassurance/asphaltene_validation.md](pvtsimulation/flowassurance/asphaltene_validation)                   | Validation                                                                                         |
+| **Asphaltene Stability Notebook**  | [examples/notebooks/AsphalteneStabilityAnalysis.ipynb](../examples/notebooks/AsphalteneStabilityAnalysis.ipynb)                  | **Jupyter notebook: 6-method asphaltene prediction (De Boer, FH, CPA, Pedersen, RI, benchmark), literature validation (7 cases), parity plot** |
 | **Flow Assurance Screening Tools** | [docs/pvtsimulation/flowassurance/flow_assurance_screening_tools.md](pvtsimulation/flowassurance/flow_assurance_screening_tools) | **Pipeline cooldown, CO2 corrosion (de Waard-Milliams), scale prediction, wax curve monotonicity** |
 | **Erosion Prediction**             | [docs/pvtsimulation/flowassurance/erosion_prediction.md](pvtsimulation/flowassurance/erosion_prediction)                         | **API RP 14E erosional velocity, DNV RP O501 sand erosion, risk assessment**                       |
 | **Emulsion Viscosity**             | [docs/pvtsimulation/flowassurance/emulsion_viscosity_calculator.md](pvtsimulation/flowassurance/emulsion_viscosity_calculator)   | **Einstein, Taylor, Brinkman, Pal-Rhodes, Woelflin, Richardson models, phase inversion**           |
@@ -773,6 +777,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Agentic Engineering Introduction** | [docs/integration/ai_agentic_programming_intro.md](integration/ai_agentic_programming_intro) | **NEW: Comprehensive introduction to AI agent-assisted engineering with NeqSim** |
 | **Agents & Skills Reference** | [docs/integration/ai_agents_reference.md](integration/ai_agents_reference) | **Complete catalog of all 16 agents and 14 skills with commands and examples** |
 | **Agentic Workflow Examples** | [docs/integration/ai_workflow_examples.md](integration/ai_workflow_examples) | **NEW: Step-by-step walkthroughs of agent-driven engineering workflows** |
+| **Agentic Java Classes** | [docs/integration/ai_agentic_classes.md](integration/ai_agentic_classes) | **TaskResultValidator, SimulationQualityGate, AgentSession, AgentFeedbackCollector — Java infrastructure for AI-driven simulation QA** |
 
 ### Chapter 43: Sustainability & Emissions
 

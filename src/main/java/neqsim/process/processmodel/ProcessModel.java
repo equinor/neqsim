@@ -58,6 +58,15 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private boolean autoValidate = false;
 
+  /** Whether automatic checkpointing is enabled during model execution. */
+  private boolean checkpointEnabled = false;
+
+  /** Number of iterations between automatic checkpoints. */
+  private int checkpointInterval = 10;
+
+  /** File path for saving checkpoint files. */
+  private String checkpointPath = null;
+
   /**
    * Interface for monitoring ProcessModel execution progress. Implementations receive callbacks at
    * the model level: before/after each process area runs, before/after each outer iteration, and
@@ -1204,18 +1213,21 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Exports this ProcessModel to a JSON string containing all named process areas.
    *
-   * <p> The exported JSON has a top-level "areas" object where each key is the process area name
-   * and each value is a JSON object in the {@link JsonProcessBuilder} schema (with "fluid" and
+   * <p>
+   * The exported JSON has a top-level "areas" object where each key is the process area name and
+   * each value is a JSON object in the {@link JsonProcessBuilder} schema (with "fluid" and
    * "process" sections). This format can be used to reconstruct the model or to export individual
-   * areas to external simulators (e.g., UniSim Design via COM automation). </p>
+   * areas to external simulators (e.g., UniSim Design via COM automation).
+   * </p>
    *
-   * <p> Example output:
+   * <p>
+   * Example output:
    *
    * <pre>{@code { "areas": { "separation": { "fluid": {...}, "process": [...] }, "compression": {
    * "fluid": {...}, "process": [...] } } } }</pre>
    *
    * @return JSON string representing all process areas @see JsonProcessExporter @see
-   * ProcessSystem#toJson()
+   *         ProcessSystem#toJson()
    */
   public String toJson() {
     return toJson(true);
@@ -1251,17 +1263,20 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Builds a ProcessModel from a JSON string containing named process areas.
    *
-   * <p> Expected JSON format:
+   * <p>
+   * Expected JSON format:
    *
    * <pre>{@code { "areas": { "separation": { "fluid": {...}, "process": [...] }, "compression": {
    * "fluid": {...}, "process": [...] } } } }</pre>
    *
-   * <p> Each area is built independently using {@link JsonProcessBuilder}. If any area fails to
-   * build, it is skipped and a warning is logged. </p>
+   * <p>
+   * Each area is built independently using {@link JsonProcessBuilder}. If any area fails to build,
+   * it is skipped and a warning is logged.
+   * </p>
    *
    * @param json the JSON string with the "areas" structure @return the built ProcessModel (not yet
-   * run) @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key @see
-   * #toJson()
+   *        run) @throws IllegalArgumentException if JSON is null, empty, or missing the "areas"
+   *        key @see #toJson()
    */
   public static ProcessModel fromJson(String json) {
     if (json == null || json.trim().isEmpty()) {
@@ -1930,5 +1945,148 @@ public class ProcessModel implements Runnable, Serializable {
         logger.debug("Could not validate area '" + areaName + "': " + ex.getMessage());
       }
     }
+  }
+
+  // ========================== Checkpointing ==========================
+
+  /**
+   * Checks if automatic checkpointing is enabled.
+   *
+   * @return true if checkpointing is enabled
+   */
+  public boolean isCheckpointEnabled() {
+    return checkpointEnabled;
+  }
+
+  /**
+   * Sets whether automatic checkpointing is enabled during model execution.
+   *
+   * @param checkpointEnabled true to enable checkpointing
+   */
+  public void setCheckpointEnabled(boolean checkpointEnabled) {
+    this.checkpointEnabled = checkpointEnabled;
+  }
+
+  /**
+   * Gets the checkpoint interval (number of iterations between checkpoints).
+   *
+   * @return the checkpoint interval
+   */
+  public int getCheckpointInterval() {
+    return checkpointInterval;
+  }
+
+  /**
+   * Sets the checkpoint interval.
+   *
+   * @param checkpointInterval number of iterations between automatic checkpoints
+   */
+  public void setCheckpointInterval(int checkpointInterval) {
+    this.checkpointInterval = checkpointInterval;
+  }
+
+  /**
+   * Gets the file path for checkpoint files.
+   *
+   * @return the checkpoint file path, or null if not set
+   */
+  public String getCheckpointPath() {
+    return checkpointPath;
+  }
+
+  /**
+   * Sets the file path for saving checkpoint files.
+   *
+   * @param checkpointPath the file path for checkpoint files
+   */
+  public void setCheckpointPath(String checkpointPath) {
+    this.checkpointPath = checkpointPath;
+  }
+
+  // ========================== Automation API ==========================
+
+  /**
+   * Returns an automation facade for this process model. The facade provides a stable,
+   * string-addressable API for scripts and AI agents to interact with all process areas using
+   * area-qualified addresses like {@code "AreaName::UnitName.property"}.
+   *
+   * @return a {@link neqsim.process.automation.ProcessAutomation} facade
+   */
+  public neqsim.process.automation.ProcessAutomation getAutomation() {
+    return new neqsim.process.automation.ProcessAutomation(this);
+  }
+
+  /**
+   * Returns the names of all unit operations across all process areas. Names are area-qualified in
+   * the format {@code "AreaName::UnitName"}. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getUnitList()}.
+   *
+   * @return unmodifiable list of area-qualified unit operation names
+   */
+  public List<String> getUnitNames() {
+    return getAutomation().getUnitList();
+  }
+
+  /**
+   * Returns the names of all process areas. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getAreaList()}.
+   *
+   * @return unmodifiable list of area names
+   */
+  public List<String> getAreaNames() {
+    return getAutomation().getAreaList();
+  }
+
+  /**
+   * Returns the names of unit operations in a specific process area. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getUnitList(String)}.
+   *
+   * @param areaName the name of the process area
+   * @return unmodifiable list of unit operation names
+   * @throws IllegalArgumentException if the area is not found
+   */
+  public List<String> getUnitNames(String areaName) {
+    return getAutomation().getUnitList(areaName);
+  }
+
+  /**
+   * Returns all available variables for the named unit operation. The {@code unitName} may be
+   * area-qualified: {@code "AreaName::UnitName"}. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getVariableList(String)}.
+   *
+   * @param unitName the name of the unit operation, optionally area-qualified
+   * @return list of variable descriptors
+   * @throws IllegalArgumentException if the unit is not found
+   */
+  public List<neqsim.process.automation.SimulationVariable> getVariableList(String unitName) {
+    return getAutomation().getVariableList(unitName);
+  }
+
+  /**
+   * Reads the current value of a simulation variable by its address. The address should be
+   * area-qualified: {@code "AreaName::unitName.property"}. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#getVariableValue(String, String)}.
+   *
+   * @param address the area-qualified address, e.g. "Separation::HP Sep.gasOutStream.temperature"
+   * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr"
+   * @return the variable value in the requested unit
+   * @throws IllegalArgumentException if the address cannot be resolved
+   */
+  public double getVariableValue(String address, String unitOfMeasure) {
+    return getAutomation().getVariableValue(address, unitOfMeasure);
+  }
+
+  /**
+   * Sets the value of a simulation input variable. The address should be area-qualified:
+   * {@code "AreaName::Compressor.outletPressure"}. Convenience delegate for
+   * {@link neqsim.process.automation.ProcessAutomation#setVariableValue(String, double, String)}.
+   *
+   * @param address the area-qualified address, e.g. "Compression::Compressor.outletPressure"
+   * @param value the value to set
+   * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C"
+   * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
+   */
+  public void setVariableValue(String address, double value, String unitOfMeasure) {
+    getAutomation().setVariableValue(address, value, unitOfMeasure);
   }
 }

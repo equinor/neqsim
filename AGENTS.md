@@ -267,6 +267,28 @@ results = {
 }
 with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
+
+# ── Programmatic quality gate: validate results.json ──
+import jpype
+TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+
+with open(str(TASK_DIR / "results.json"), "r") as f:
+    json_str = f.read()
+
+report = TaskResultValidator.validate(json_str)
+print(f"Valid: {report.isValid()}  |  Errors: {report.getErrorCount()}  |  Warnings: {report.getWarningCount()}")
+
+if not report.isValid():
+    print("\n❌ ERRORS (must fix before proceeding to report):")
+    for err in report.getErrors():
+        print(f"  [{err.field}] {err.message}")
+
+if report.getWarningCount() > 0:
+    print("\n⚠️ WARNINGS (fix for Standard/Comprehensive tasks):")
+    for warn in report.getWarnings():
+        print(f"  [{warn.field}] {warn.message}")
+
+assert report.isValid(), "results.json failed validation — fix errors above"
 ```
 
 The report generator auto-reads this file to populate Results and Validation sections.
@@ -534,6 +556,12 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/process/util/fielddevelopment/` | Production profiles, scheduling, DCF calculator |
 | `docs/fielddevelopment/` | Field development documentation |
 | `CHANGELOG_AGENT_NOTES.md` | API changes agents need to know about |
+| `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` | Pinch analysis (PinchAnalysis, HeatStream) for heat integration |
+| `src/main/java/neqsim/process/equipment/powergeneration/` | Power generation (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
+| `src/main/java/neqsim/util/agentic/` | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession) |
+| `.github/agents/reaction.engineering.agent.md` | Reaction engineering systems design |
+| `.github/agents/control.system.agent.md` | Control system and instrumentation design |
+| `.github/agents/emissions.environmental.agent.md` | Emissions calculation and environmental compliance |
 
 ## Skills Reference
 
@@ -547,6 +575,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-troubleshooting` | Recovery strategies for convergence failures, zero values, phase issues |
 | `neqsim-input-validation` | Pre-simulation checks (T, P, composition, component names) |
 | `neqsim-regression-baselines` | Baseline management for preventing accuracy drift |
+| `neqsim-standards-lookup` | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking in results.json |
 | `neqsim-agent-handoff` | Structured schemas for multi-agent result passing |
 | `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
 | `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |
@@ -556,6 +585,11 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
 | `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
 | `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, and HeatExchanger UA tuning notes. |
+| `neqsim-eos-regression` | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization, scipy optimization |
+| `neqsim-reaction-engineering` | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed |
+| `neqsim-dynamic-simulation` | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization |
+| `neqsim-distillation-design` | Distillation column design — solver selection, feed tray rules, convergence, internals sizing |
+| `neqsim-electrolyte-systems` | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection |
 
 ## API Verification (Mandatory)
 
