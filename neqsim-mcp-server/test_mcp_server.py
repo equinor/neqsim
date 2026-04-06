@@ -180,8 +180,13 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("6 tools registered", len(tools) == 6, f"got {len(tools)}")
-    for name in ["runFlash", "runProcess", "validateInput", "searchComponents", "getExample", "getSchema"]:
+    check("19 tools registered", len(tools) == 19, f"got {len(tools)}: {tool_names}")
+    for name in ["runFlash", "runProcess", "validateInput", "searchComponents",
+                  "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
+                  "getCapabilities", "runBatch", "listSimulationUnits",
+                  "listUnitVariables", "getSimulationVariable", "setSimulationVariable",
+                  "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
+                  "getAutomationLearningReport"]:
         check(f"tool '{name}'", name in tool_names)
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
@@ -251,6 +256,45 @@ def test_examples_and_schemas():
 
     r = call_tool("getSchema", {"toolName": "run_process", "schemaType": "input"})
     check("process input schema", "properties" in r)
+
+    # Batch schemas
+    r = call_tool("getSchema", {"toolName": "run_batch", "schemaType": "input"})
+    check("batch input schema", "properties" in r)
+    r = call_tool("getSchema", {"toolName": "run_batch", "schemaType": "output"})
+    check("batch output schema", "properties" in r)
+
+    # Property table schemas
+    r = call_tool("getSchema", {"toolName": "get_property_table", "schemaType": "input"})
+    check("prop table input schema", "properties" in r)
+    r = call_tool("getSchema", {"toolName": "get_property_table", "schemaType": "output"})
+    check("prop table output schema", "properties" in r)
+
+    # Phase envelope schemas
+    r = call_tool("getSchema", {"toolName": "get_phase_envelope", "schemaType": "input"})
+    check("phase env input schema", "properties" in r)
+    r = call_tool("getSchema", {"toolName": "get_phase_envelope", "schemaType": "output"})
+    check("phase env output schema", "properties" in r)
+
+    # Capabilities schema (output only)
+    r = call_tool("getSchema", {"toolName": "get_capabilities", "schemaType": "output"})
+    check("capabilities output schema", "properties" in r)
+
+    # New example categories
+    r = call_tool("getExample", {"category": "batch", "name": "temperature-sweep"})
+    check("batch temp-sweep example has components", "components" in r)
+    check("batch temp-sweep example has cases", "cases" in r)
+
+    r = call_tool("getExample", {"category": "batch", "name": "pressure-sweep"})
+    check("batch press-sweep example has cases", "cases" in r)
+
+    r = call_tool("getExample", {"category": "property-table", "name": "temperature-sweep"})
+    check("prop-table temp-sweep has sweep", "sweep" in r)
+
+    r = call_tool("getExample", {"category": "property-table", "name": "pressure-sweep"})
+    check("prop-table press-sweep has sweep", "sweep" in r)
+
+    r = call_tool("getExample", {"category": "phase-envelope", "name": "natural-gas"})
+    check("phase-env example has components", "components" in r)
 
 
 # ---------------------------------------------------------------------------
@@ -964,6 +1008,201 @@ def test_run_all_process_examples():
               result.get("message", ""))
 
 
+# ---------------------------------------------------------------------------
+# BATCH CALCULATION TESTS
+# ---------------------------------------------------------------------------
+
+def test_batch_temperature_sweep():
+    """Run a batch of 3 TP flashes at different temperatures."""
+    print("\n=== Batch: Temperature Sweep ===")
+
+    r = call_tool("runBatch", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.10, "propane": 0.05}),
+        "eos": "SRK",
+        "flashType": "TP",
+        "cases": json.dumps([
+            {"temperature": {"value": -20.0, "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}},
+            {"temperature": {"value": 80.0, "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}},
+        ]),
+    })
+    check("batch status=success", r.get("status") == "success", r.get("message", ""))
+    summary = r.get("summary", {})
+    check("batch totalCases=3", summary.get("totalCases") == 3)
+    check("batch succeeded=3", summary.get("succeeded") == 3)
+    check("batch failed=0", summary.get("failed") == 0)
+    results = r.get("results", [])
+    check("batch 3 results", len(results) == 3, f"got {len(results)}")
+    for i, res in enumerate(results):
+        check(f"batch case[{i}] status=success", res.get("status") == "success")
+
+
+def test_batch_pressure_sweep():
+    """Run a batch of 4 TP flashes at different pressures."""
+    print("\n=== Batch: Pressure Sweep ===")
+
+    r = call_tool("runBatch", {
+        "components": json.dumps({"methane": 0.70, "ethane": 0.15, "propane": 0.10, "n-butane": 0.05}),
+        "eos": "PR",
+        "flashType": "TP",
+        "cases": json.dumps([
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 10.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 30.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 60.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 100.0, "unit": "bara"}},
+        ]),
+    })
+    check("batch PR status=success", r.get("status") == "success", r.get("message", ""))
+    summary = r.get("summary", {})
+    check("batch PR totalCases=4", summary.get("totalCases") == 4)
+    check("batch PR succeeded=4", summary.get("succeeded") == 4)
+
+
+def test_batch_example_from_catalog():
+    """Run the batch temperature-sweep example from the catalog."""
+    print("\n=== Batch: Run Catalog Example ===")
+
+    example = call_tool("getExample", {"category": "batch", "name": "temperature-sweep"})
+    check("batch example retrieved", "cases" in example)
+
+    r = call_tool("runBatch", {
+        "components": json.dumps(example.get("components", {})),
+        "eos": example.get("model", "SRK"),
+        "flashType": example.get("flashType", "TP"),
+        "cases": json.dumps(example.get("cases", [])),
+    })
+    check("batch example runs", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# PROPERTY TABLE TESTS
+# ---------------------------------------------------------------------------
+
+def test_property_table_temperature_sweep():
+    """Sweep temperature from -20 to 60 C at 50 bara."""
+    print("\n=== Property Table: Temperature Sweep ===")
+
+    r = call_tool("getPropertyTable", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.10, "propane": 0.05}),
+        "sweep": "temperature",
+        "sweepFrom": -20.0,
+        "sweepFromUnit": "C",
+        "sweepTo": 60.0,
+        "sweepToUnit": "C",
+        "fixedValue": 50.0,
+        "fixedUnit": "bara",
+        "points": 9,
+        "eos": "SRK",
+    })
+    check("prop table status=success", r.get("status") == "success", r.get("message", ""))
+    table = r.get("table", [])
+    check("prop table has rows", len(table) >= 9, f"got {len(table)} rows")
+    # Verify first row has expected properties
+    if table:
+        first_row = table[0]
+        check("row has temperature", "temperature_C" in first_row or "temperature" in first_row)
+        check("row has density", "density" in first_row)
+
+
+def test_property_table_pressure_sweep():
+    """Sweep pressure from 10 to 100 bara at 25 C."""
+    print("\n=== Property Table: Pressure Sweep ===")
+
+    r = call_tool("getPropertyTable", {
+        "components": json.dumps({"methane": 0.90, "ethane": 0.07, "propane": 0.03}),
+        "sweep": "pressure",
+        "sweepFrom": 10.0,
+        "sweepFromUnit": "bara",
+        "sweepTo": 100.0,
+        "sweepToUnit": "bara",
+        "fixedValue": 25.0,
+        "fixedUnit": "C",
+        "points": 10,
+        "eos": "SRK",
+    })
+    check("prop table P status=success", r.get("status") == "success", r.get("message", ""))
+    table = r.get("table", [])
+    check("prop table P has rows", len(table) >= 10, f"got {len(table)} rows")
+
+
+def test_property_table_example_from_catalog():
+    """Run the property table temperature-sweep example from the catalog."""
+    print("\n=== Property Table: Run Catalog Example ===")
+
+    example = call_tool("getExample", {"category": "property-table", "name": "temperature-sweep"})
+    check("prop table example retrieved", "sweep" in example)
+
+    r = call_tool("getPropertyTable", {
+        "components": json.dumps(example.get("components", {})),
+        "sweep": example.get("sweep", "temperature"),
+        "sweepFrom": example["sweepFrom"]["value"],
+        "sweepFromUnit": example["sweepFrom"]["unit"],
+        "sweepTo": example["sweepTo"]["value"],
+        "sweepToUnit": example["sweepTo"]["unit"],
+        "fixedValue": example["fixedPressure"]["value"],
+        "fixedUnit": example["fixedPressure"]["unit"],
+        "points": example.get("points", 13),
+        "eos": example.get("model", "SRK"),
+    })
+    check("prop table example runs", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# PHASE ENVELOPE TESTS
+# ---------------------------------------------------------------------------
+
+def test_phase_envelope_natural_gas():
+    """Calculate phase envelope for a 5-component natural gas."""
+    print("\n=== Phase Envelope: Natural Gas ===")
+
+    r = call_tool("getPhaseEnvelope", {
+        "components": json.dumps({
+            "methane": 0.80,
+            "ethane": 0.10,
+            "propane": 0.05,
+            "n-butane": 0.03,
+            "n-pentane": 0.02,
+        }),
+        "eos": "SRK",
+    })
+    check("phase env status=success", r.get("status") == "success", r.get("message", ""))
+    envelope = r.get("envelope", [])
+    check("phase env has points", len(envelope) > 5, f"got {len(envelope)} points")
+    if envelope:
+        pt = envelope[0]
+        check("env point has T", "temperature_K" in pt)
+        check("env point has P", "pressure_bara" in pt)
+
+
+def test_phase_envelope_example_from_catalog():
+    """Run the phase envelope natural-gas example from the catalog."""
+    print("\n=== Phase Envelope: Run Catalog Example ===")
+
+    example = call_tool("getExample", {"category": "phase-envelope", "name": "natural-gas"})
+    check("phase env example has components", "components" in example)
+
+    r = call_tool("getPhaseEnvelope", {
+        "components": json.dumps(example.get("components", {})),
+        "eos": example.get("model", "SRK"),
+    })
+    check("phase env example runs", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# CAPABILITIES TESTS
+# ---------------------------------------------------------------------------
+
+def test_capabilities():
+    """Test the capabilities discovery tool."""
+    print("\n=== Capabilities Discovery ===")
+
+    r = call_tool("getCapabilities", {})
+    check("capabilities status=success", r.get("status") == "success", r.get("message", ""))
+    check("capabilities has engine", r.get("engine") == "NeqSim")
+    check("capabilities has thermo models", "thermodynamicModels" in r)
+    check("capabilities has equipment", "processEquipment" in r)
+
+
 # ===========================================================================
 # MAIN
 # ===========================================================================
@@ -1036,6 +1275,23 @@ if __name__ == "__main__":
         # Run all catalog examples
         test_run_all_flash_examples()
         test_run_all_process_examples()
+
+        # Batch calculations
+        test_batch_temperature_sweep()
+        test_batch_pressure_sweep()
+        test_batch_example_from_catalog()
+
+        # Property table
+        test_property_table_temperature_sweep()
+        test_property_table_pressure_sweep()
+        test_property_table_example_from_catalog()
+
+        # Phase envelope
+        test_phase_envelope_natural_gas()
+        test_phase_envelope_example_from_catalog()
+
+        # Capabilities
+        test_capabilities()
 
     finally:
         stop_server()
