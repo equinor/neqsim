@@ -9,10 +9,9 @@ on:
     branches:
       - master
       - main
+      - release/*
     paths:
-      - 'neqsim-mcp-server/**'
-      - 'src/main/java/neqsim/mcp/**'
-      - 'pom.xml'
+      - 'pom*.xml'
 
 jobs:
   build_mcp_server:
