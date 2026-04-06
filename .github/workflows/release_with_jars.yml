@@ -134,7 +134,9 @@ jobs:
       - name: Install NeqSim core to local Maven repo
         run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true
       - name: Build MCP server uber-jar
-        run: cd neqsim-mcp-server && mvn -B package -DskipTests -Dmaven.javadoc.skip=true
+        run: |
+          NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
       - name: Copy jar file to staging
         run: mkdir staging && cp neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar staging/
       - uses: actions/upload-artifact@v7
