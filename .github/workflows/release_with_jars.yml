@@ -137,8 +137,16 @@ jobs:
         run: |
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
-      - name: Copy jar file to staging
-        run: mkdir staging && cp neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar staging/
+      - name: Rename and checksum MCP jar
+        run: |
+          VERSION=${{ needs.get_versions.outputs.version }}
+          mkdir staging
+          # Rename to clearly versioned name
+          cp neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar "staging/neqsim-mcp-server-${VERSION}-runner.jar"
+          # Generate per-file SHA-256 checksum
+          cd staging
+          sha256sum "neqsim-mcp-server-${VERSION}-runner.jar" > "neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+          cat "neqsim-mcp-server-${VERSION}-runner.jar.sha256"
       - uses: actions/upload-artifact@v7
         with:
           name: jarfiles-mcp-server
@@ -177,5 +185,51 @@ jobs:
           draft: true
           generateReleaseNotes: true
           skipIfReleaseExists: true
-          artifacts: "*.jar"
+          artifacts: "*.jar,*.sha256"
           artifactContentType: application/java-archive
+          body: |
+            ## MCP Server for LLMs
+
+            Give any MCP-compatible LLM (VS Code Copilot, Claude Desktop, Cursor) rigorous thermodynamic and process simulation capabilities.
+
+            ### Quick install (jar — requires Java 17+)
+
+            ```bash
+            VERSION=${{ needs.get_versions.outputs.version }}
+            curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
+            curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+            sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
+            ```
+
+            ### Quick install (Docker — no Java needed)
+
+            ```bash
+            docker pull ghcr.io/equinor/neqsim-mcp-server:${{ needs.get_versions.outputs.version }}
+            ```
+
+            ### Connect to Claude Desktop
+
+            ```json
+            {
+              "mcpServers": {
+                "neqsim": {
+                  "command": "java",
+                  "args": ["-jar", "/path/to/neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar"]
+                }
+              }
+            }
+            ```
+
+            See [MCP Server README](https://github.com/equinor/neqsim/tree/master/neqsim-mcp-server#readme) for VS Code Copilot, Cursor, and Docker configs.
+
+            ---
+
+            ## NeqSim Core Library
+
+            | Asset | Java | Description |
+            |-------|------|-------------|
+            | `neqsim-${{ needs.get_versions.outputs.version }}-Java8.jar` | 8 | Core library (Python neqsim-python compatibility) |
+            | `neqsim-${{ needs.get_versions.outputs.version }}.jar` | 11 | Core library (default) |
+            | `neqsim-${{ needs.get_versions.outputs.version }}-Java21.jar` | 21 | Core library (latest JDK) |
+            | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar` | 17+ | **MCP Server** — connect LLMs to NeqSim |
+            | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar.sha256` | — | SHA-256 checksum for MCP server |

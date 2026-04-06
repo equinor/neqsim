@@ -309,6 +309,18 @@ LLMs are excellent at engineering reasoning but hallucinate physics. NeqSim is e
 
 The [NeqSim MCP Server](neqsim-mcp-server/) lets **any MCP-compatible client** (VS Code Copilot, Claude Desktop, Cursor, etc.) run real calculations:
 
+**Install in seconds** — pick jar or Docker:
+
+```bash
+# Jar (requires Java 17+) — replace VERSION with the latest release, e.g. 3.7.0
+curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
+
+# Docker (no Java needed)
+docker pull ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+Then point your LLM client at `java -jar neqsim-mcp-server-*.jar` or `docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest`. See [full setup guide](neqsim-mcp-server/#install-from-github-release-3-steps).
+
 | Ask the LLM | What happens | MCP Tool |
 |---|---|---|
 | *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | Flash calculation via NeqSim | `runFlash` |

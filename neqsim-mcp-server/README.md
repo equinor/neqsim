@@ -9,6 +9,191 @@ oil & gas thermodynamics.
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
 (STDIO transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
+---
+
+## Install from GitHub Release (3 steps)
+
+Pick **jar** or **Docker** — both are first-class paths.
+
+<table>
+<tr>
+<th width="50%">Option A — Jar (requires Java 17+)</th>
+<th width="50%">Option B — Docker (no Java needed)</th>
+</tr>
+<tr><td>
+
+**1. Download the jar + checksum**
+
+```bash
+# Replace VERSION with the latest release (e.g. 3.7.0)
+VERSION=3.7.0
+curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
+curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+```
+
+**2. Verify integrity**
+
+```bash
+sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
+```
+
+**3. Connect to your LLM** (see config snippets below)
+
+```
+java -jar neqsim-mcp-server-3.7.0-runner.jar
+```
+
+</td><td>
+
+**1. Pull the image**
+
+```bash
+docker pull ghcr.io/equinor/neqsim-mcp-server:latest
+# or pin a version:
+docker pull ghcr.io/equinor/neqsim-mcp-server:3.7.0
+```
+
+**2. Smoke-test**
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+**3. Connect to your LLM** (see config snippets below)
+
+```
+docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+</td></tr>
+</table>
+
+> **Find the latest release:** [github.com/equinor/neqsim/releases](https://github.com/equinor/neqsim/releases)
+> — look for the assets named **`neqsim-mcp-server-*-runner.jar`** and **`neqsim-mcp-server-*-runner.jar.sha256`**.
+
+<details>
+<summary><strong>Install Java 17+ (if using the jar path)</strong></summary>
+
+| OS | Command |
+|----|---------|
+| **macOS** | `brew install openjdk@17` |
+| **Linux (Ubuntu/Debian)** | `sudo apt install openjdk-17-jdk` |
+| **Windows** | `winget install EclipseAdoptium.Temurin.17.JDK` |
+
+Verify: `java -version` should show 17 or higher.
+</details>
+
+---
+
+## Connect to Your LLM
+
+### Claude Desktop
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+<table>
+<tr>
+<th width="50%">Jar</th>
+<th width="50%">Docker</th>
+</tr>
+<tr><td>
+
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/neqsim-mcp-server-3.7.0-runner.jar"
+      ]
+    }
+  }
+}
+```
+
+</td><td>
+
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "ghcr.io/equinor/neqsim-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+</td></tr>
+</table>
+
+Restart Claude Desktop.
+
+### VS Code Copilot
+
+Add to `.vscode/mcp.json`:
+
+<table>
+<tr>
+<th width="50%">Jar</th>
+<th width="50%">Docker</th>
+</tr>
+<tr><td>
+
+```json
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/neqsim-mcp-server-3.7.0-runner.jar"
+      ]
+    }
+  }
+}
+```
+
+</td><td>
+
+```json
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "ghcr.io/equinor/neqsim-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+</td></tr>
+</table>
+
+Restart VS Code.
+
+### Cursor / Other MCP Clients
+
+Any MCP STDIO client works. Point it at one of:
+
+```bash
+java -jar /path/to/neqsim-mcp-server-3.7.0-runner.jar          # jar
+docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
+```
+
+---
+
 ## What Can an LLM Do With This?
 
 | Capability | Example Prompt | Tool |
@@ -38,126 +223,7 @@ limitations, convergence status) for trust assessment.
 
 ---
 
-## Quick Start (5 minutes)
-
-The fastest way to get NeqSim running with your LLM. No cloning, no Maven, no build step.
-
-### 1. Install Java 17+
-
-<details>
-<summary><strong>macOS</strong></summary>
-
-```bash
-brew install openjdk@17
-```
-</details>
-
-<details>
-<summary><strong>Linux (Ubuntu/Debian)</strong></summary>
-
-```bash
-sudo apt install openjdk-17-jdk
-```
-</details>
-
-<details>
-<summary><strong>Windows</strong></summary>
-
-Download from [Adoptium](https://adoptium.net/temurin/releases/?version=17) and run the installer.
-Or with winget:
-```powershell
-winget install EclipseAdoptium.Temurin.17.JDK
-```
-</details>
-
-Verify: `java -version` should show 17 or higher.
-
-### 2. Download the server
-
-Download `neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` from the
-[latest release](https://github.com/equinor/neqsim/releases).
-
-**Or use Docker** (no Java install needed):
-```bash
-docker pull ghcr.io/equinor/neqsim-mcp-server:latest
-```
-
-### 3. Connect to your LLM
-
-<details>
-<summary><strong>Claude Desktop</strong></summary>
-
-Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
-`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
-
-```json
-{
-  "mcpServers": {
-    "neqsim": {
-      "command": "java",
-      "args": ["-jar", "/path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"]
-    }
-  }
-}
-```
-
-With Docker:
-```json
-{
-  "mcpServers": {
-    "neqsim": {
-      "command": "docker",
-      "args": ["run", "-i", "--rm", "ghcr.io/equinor/neqsim-mcp-server:latest"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop.
-</details>
-
-<details>
-<summary><strong>VS Code Copilot</strong></summary>
-
-Add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
-    "neqsim": {
-      "type": "stdio",
-      "command": "java",
-      "args": ["-jar", "/path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"]
-    }
-  }
-}
-```
-
-Restart VS Code.
-</details>
-
-<details>
-<summary><strong>Cursor / Other MCP Clients</strong></summary>
-
-Any MCP STDIO client works. Point it at:
-```
-java -jar /path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
-```
-</details>
-
-### 4. Ask a question
-
-Try any of these:
-
-> "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
-
-> "Plot the phase envelope for 85% methane, 10% ethane, 5% propane"
-
-> "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
-
-The LLM discovers NeqSim's tools automatically and calls them to compute rigorous answers — no coding needed.
-
-### Example conversation
+## Hero Demo: Example Conversation
 
 **You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
 
@@ -166,6 +232,16 @@ The LLM discovers NeqSim's tools automatically and calls them to compute rigorou
 **LLM responds:** "The dew point temperature is -42.3°C at 50 bara (SRK equation of state, converged in 12 iterations). Below this temperature, liquid will begin to condense."
 
 Every response includes **provenance**: which EOS model was used, whether the calculation converged, and what limitations apply.
+
+**Try these:**
+
+> "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
+
+> "Plot the phase envelope for 85% methane, 10% ethane, 5% propane"
+
+> "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
+
+The LLM discovers NeqSim's tools automatically and calls them to compute rigorous answers — no coding needed.
 
 ---
 
@@ -230,60 +306,17 @@ npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNA
 
 ## Connecting to LLM Clients (Developer Build)
 
-> **Using a prebuilt jar or Docker?** See the [Quick Start](#quick-start-5-minutes)
-> section above for connection instructions.
-
-The instructions below are for connecting with a **locally built** uber-jar.
-
-### VS Code Copilot
+> **Using a prebuilt jar or Docker?** See the [Install from GitHub Release](#install-from-github-release-3-steps)
+> and [Connect to Your LLM](#connect-to-your-llm) sections above.
 
 The workspace already includes `.vscode/mcp.json`. After building the uber-jar,
 restart VS Code and Copilot will discover the NeqSim tools automatically.
 
-To configure manually, add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
-    "neqsim": {
-      "type": "stdio",
-      "command": "java",
-      "args": [
-        "-jar",
-        "${workspaceFolder}/neqsim-mcp-server/target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
-      ]
-    }
-  }
-}
-```
-
-### Claude Desktop (developer path)
-
-Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
-`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
-
-```json
-{
-  "mcpServers": {
-    "neqsim": {
-      "command": "java",
-      "args": [
-        "-jar",
-        "/absolute/path/to/neqsim-mcp-server/target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
-      ]
-    }
-  }
-}
-```
-
-Restart Claude Desktop to activate.
-
-### Cursor / Other MCP Clients
-
-Any client that supports MCP STDIO transport can connect. Point it at:
+For other clients, use the same config snippets from [Connect to Your LLM](#connect-to-your-llm),
+replacing the jar path with your local build output:
 
 ```
-java -jar /path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
+target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
 ```
 
 ---
