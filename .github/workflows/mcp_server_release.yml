@@ -81,10 +81,10 @@ jobs:
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
 
-      - name: Get version tag
+      - name: Get version tag (use neqsim core version to match jar releases)
         id: version
         run: |
-          VERSION=$(mvn -f neqsim-mcp-server/pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "tag=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
