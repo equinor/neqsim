@@ -11,17 +11,30 @@ Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/d
 
 ## What Can an LLM Do With This?
 
-| Capability | Example Prompt |
-|---|---|
-| **Flash calculations** | "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?" |
-| **Phase equilibrium** | "How many phases exist for this rich gas at 0 °C and 100 bara?" |
-| **Physical properties** | "Get the density, viscosity, and thermal conductivity of natural gas at 25 °C, 80 bara" |
-| **Process simulation** | "Simulate a gas going through a separator then a compressor to 120 bara" |
-| **Input validation** | "Check if my process JSON is valid before running it" |
-| **Component lookup** | "What components does NeqSim have that contain 'butane'?" |
+| Capability | Example Prompt | Tool |
+|---|---|---|
+| **Flash calculations** | "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?" | `runFlash` |
+| **Batch sensitivity** | "How does density change from 0 to 50 °C at 80 bara? Give me 10 data points." | `runBatch` |
+| **Property table** | "Get density, viscosity, Cp, and Z-factor from 10 to 100 bara at 25 °C" | `getPropertyTable` |
+| **Phase envelope** | "Plot the phase envelope for this natural gas composition" | `getPhaseEnvelope` |
+| **Process simulation** | "Simulate a gas going through a separator then a compressor to 120 bara" | `runProcess` |
+| **Input validation** | "Check if my process JSON is valid before running it" | `validateInput` |
+| **Component lookup** | "What components does NeqSim have that contain 'butane'?" | `searchComponents` |
+| **Capabilities** | "What can NeqSim calculate? Which EOS models are available?" | `getCapabilities` |
+
+### Quick Path vs Full Simulation
+
+| Need | Tool | Flowsheet Required? |
+|---|---|---|
+| Single property lookup | `runFlash` | No |
+| Multi-point sweep | `runBatch` or `getPropertyTable` | No |
+| Phase boundary | `getPhaseEnvelope` | No |
+| Multi-equipment process | `runProcess` | Yes (JSON definition) |
 
 The LLM discovers the tools automatically via MCP, reads the embedded examples
 and schemas to learn the JSON format, then calls the tools to compute answers.
+Every response includes **provenance metadata** (EOS model, assumptions,
+limitations, convergence status) for trust assessment.
 
 ---
 
@@ -419,8 +432,9 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds 6 tools. It reads
-   the descriptions to understand what each tool does.
+1. **Discovery** — The LLM calls `tools/list` and finds the available tools. It reads
+   the descriptions to understand what each tool does. Or it calls `getCapabilities`
+   for a structured manifest of all NeqSim capabilities.
 
 2. **Learning the format** — The LLM calls `getExample` or `getSchema` to see
    the expected JSON format for the tool it wants to use.
@@ -461,13 +475,18 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.11.0
 ├── test_mcp_server.py                     # 111-check comprehensive test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 6 @Tool-annotated MCP tools
+    ├── NeqSimTools.java                   # @Tool-annotated MCP tools (flash, batch, process, etc.)
     └── NeqSimResources.java               # 2 @Resource + 2 @ResourceTemplate
 
 Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 ├── runners/
 │   ├── FlashRunner.java                   # Flash calculations (9 flash types × 6 EOS)
+│   ├── BatchRunner.java                   # Multi-point batch flash (sensitivity studies)
+│   ├── PropertyTableRunner.java           # Property table sweep (T or P)
+│   ├── PhaseEnvelopeRunner.java           # PT phase envelope calculation
 │   ├── ProcessRunner.java                 # Process simulation via JsonProcessBuilder
+│   ├── AutomationRunner.java              # String-addressable variable access
+│   ├── CapabilitiesRunner.java            # Capabilities discovery manifest
 │   ├── Validator.java                     # Pre-flight input validation (12+ check types)
 │   └── ComponentQuery.java                # Component database search & fuzzy matching
 ├── model/
@@ -476,7 +495,8 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   ├── FlashResult.java                   # Typed flash output
 │   ├── ProcessResult.java                 # Typed process output
 │   ├── ValueWithUnit.java                 # Numeric value with unit string
-│   └── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
+│   ├── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
+│   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
     ├── ExampleCatalog.java                # 8 ready-to-use examples (flash + process)
     └── SchemaCatalog.java                 # JSON Schema definitions (4 tools × in/out)

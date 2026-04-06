@@ -261,11 +261,22 @@ LLMs are excellent at engineering reasoning but hallucinate physics. NeqSim is e
 
 The [NeqSim MCP Server](neqsim-mcp-server/) lets **any MCP-compatible client** (VS Code Copilot, Claude Desktop, Cursor, etc.) run real calculations:
 
-| Ask the LLM | What happens |
-|---|---|
-| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | Flash calculation via NeqSim |
-| *"Get density, viscosity, and thermal conductivity at 25°C, 80 bara"* | Physical property lookup |
-| *"Simulate gas through a separator then compressor to 120 bara"* | Full process simulation |
+| Ask the LLM | What happens | MCP Tool |
+|---|---|---|
+| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | Flash calculation via NeqSim | `runFlash` |
+| *"How does density change from 0 to 50 °C at 80 bara?"* | Multi-point sensitivity sweep | `runBatch` |
+| *"Get density, viscosity, and Cp from 10 to 100 bara"* | Property table across a range | `getPropertyTable` |
+| *"Phase envelope for this natural gas"* | Bubble/dew point curve | `getPhaseEnvelope` |
+| *"Simulate gas through a separator then compressor to 120 bara"* | Full process simulation | `runProcess` |
+| *"What can NeqSim calculate?"* | Capabilities discovery | `getCapabilities` |
+
+**Quick path (no flowsheet needed):** For single properties, sensitivity studies, and
+phase boundaries, use `runFlash`, `runBatch`, `getPropertyTable`, or `getPhaseEnvelope`.
+These return results directly with provenance metadata (EOS model, assumptions, limitations).
+
+**Full simulation path:** For multi-equipment flowsheets, use `runProcess` with a JSON
+process definition. See the [MCP Server docs](neqsim-mcp-server/) or the
+[getting-started tutorial](docs/integration/mcp_getting_started.md).
 
 ### AI task-solving workflow
 

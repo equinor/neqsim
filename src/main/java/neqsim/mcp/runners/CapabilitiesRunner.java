@@ -116,9 +116,10 @@ public class CapabilitiesRunner {
     JsonObject modes = new JsonObject();
     modes.add("available",
         toJsonArray(Arrays.asList("runFlash — Single flash calculation (9 flash types x 6 EOS)",
+            "runBatch — Multiple flash calculations in one call (sensitivity studies)",
             "runProcess — Full process simulation from JSON",
-            "getPropertyTable — Sweep T or P and get property table (NEW)",
-            "getPhaseEnvelope — Calculate PT phase envelope (NEW)",
+            "getPropertyTable — Sweep T or P and get property table",
+            "getPhaseEnvelope — Calculate PT phase envelope",
             "searchComponents — Component database search",
             "validateInput — Pre-flight input validation",
             "getCapabilities — This tool (discovery)")));
