@@ -7,6 +7,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseElectrolyteCPAMM;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.util.constants.IonParametersMM;
@@ -102,6 +103,13 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       this.bornRadius = ionData.getBornRadius();
       this.hasMMParameters = true;
 
+      // Ions do not participate in hydrogen-bond association; disable CPA for ions.
+      // The CPA association equilibrium should only involve self-associating molecules
+      // (water, alcohols). Without this, adding ions reduces the water mole fraction,
+      // which changes water's association equilibrium and creates an unphysical penalty
+      // of ~-1.5 in ln(gamma_pm) at 1 molal.
+      this.cpaon = 0;
+
       // Override Lennard-Jones diameter if we have better data
       if (ionData.sigma > 0) {
         this.setLennardJonesMolecularDiameter(ionData.sigma);
@@ -128,6 +136,30 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
         }
       }
     }
+  }
+
+  /**
+   * Stored log fugacity coefficient to avoid exp/log round-trip precision loss. For electrolyte
+   * systems, dF/dN can be O(-800) for divalent ions, making Math.exp() underflow to 0 and
+   * Math.log(0) return -Infinity. This field stores the raw value directly.
+   */
+  private double storedLogFugCoeff = 0.0;
+
+  /** {@inheritDoc} */
+  @Override
+  public double fugcoef(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    double pressure = phase.getPressure();
+    storedLogFugCoeff = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math
+        .log(pressure * phase.getMolarVolume() / (ThermodynamicConstantsInterface.R * temperature));
+    fugacityCoefficient = Math.exp(storedLogFugCoeff);
+    return fugacityCoefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLogFugacityCoefficient() {
+    return storedLogFugCoeff;
   }
 
   /** {@inheritDoc} */
@@ -296,7 +328,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFDebyeHuckeldN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isDebyeHuckelOn()) {
       return 0.0;
     }
 
@@ -311,21 +343,28 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double z = getIonicCharge();
     double eps = mmPhase.getMixturePermittivity();
 
-    // F^DH = -κ³V/(12π N_A) (extensive form, dimensionless)
-    // ∂F^DH/∂κ = -3κ²V/(12π N_A)
-    // ∂F^DH/∂V = -κ³/(12π N_A)
-    double factor = 1.0 / (12.0 * Math.PI * N_A);
-    double dFdkappa = -3.0 * kappa * kappa * V * factor;
-    double dFdV = -kappa * kappa * kappa * factor;
+    // Extended DH screening factor and correction
+    double tauDH = mmPhase.getTauDH();
+    double tauDHp = mmPhase.getTauDHprime();
+    double dMean = mmPhase.getMeanIonDiameter();
 
-    // κ² = (e²N_A)/(ε₀εk_BT) * (1/V) * Σ(n_j z_j²)
-    // Let S = Σ(n_j z_j²), C = (e²N_A)/(ε₀εk_BT)
-    // κ² = C * S / V
-    // ∂κ²/∂n_i = C * z_i² / V - C * S * (∂V/∂n_i) / V²
-    // At constant T, P: ∂V/∂n_i ≈ Vm (partial molar volume, using ideal approximation)
+    // DHLL partials: F = -κ³V/(12πN_A)
+    // ∂F/∂κ|_V = -3κ²V/(12πN_A)
+    // ∂F/∂V|_κ = -κ³/(12πN_A)
+    double factor = 1.0 / (12.0 * Math.PI * N_A);
+    double dFdkappa_DHLL = -3.0 * kappa * kappa * V * factor;
+    double dFdV_DHLL = -kappa * kappa * kappa * factor;
+    double F_DHLL = -kappa * kappa * kappa * V * factor;
+
+    // Extended DH partials:
+    // ∂F_ext/∂κ|_V = ∂F_DHLL/∂κ × τ + F_DHLL × τ'(χ) × d
+    // ∂F_ext/∂V|_κ = ∂F_DHLL/∂V × τ
+    double dFdkappa = dFdkappa_DHLL * tauDH + F_DHLL * tauDHp * dMean;
+    double dFdV = dFdV_DHLL * tauDH;
+
+    // κ² = C × S / V where C = e²N_A/(ε₀εk_BT), S = Σ(n_j z_j²)
     double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
 
-    // Calculate S = Σ(n_j z_j²)
     double S = 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       double zj = phase.getComponent(j).getIonicCharge();
@@ -334,17 +373,14 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       }
     }
 
-    // ∂κ²/∂n_i = C/V * (z_i² - S*Vm/V) = C/V * (z_i² - κ²V/(C*Vm) * Vm/V)
-    // Simplify: ∂κ²/∂n_i = C*z_i²/V - κ²*Vm/V² = C*z_i²/V - κ²/(nT*Vm)
+    // ∂κ²/∂n_i = C z_i²/V - κ² Vm/V
     double dkappa2dni = C * z * z / V - kappa * kappa * Vm / V;
-
-    // ∂κ/∂n_i = ∂κ²/∂n_i / (2κ)
     double dkappaDni = dkappa2dni / (2.0 * kappa);
 
-    // ∂V/∂n_i = Vm (at constant T, P, assuming ideal mixing for volume)
+    // ∂V/∂n_i = Vm
     double dVdni = Vm;
 
-    // dF^DH/dn_i = ∂F/∂κ * ∂κ/∂n_i + ∂F/∂V * ∂V/∂n_i
+    // dF^DH_ext/dn_i = ∂F_ext/∂κ × ∂κ/∂n_i + ∂F_ext/∂V × ∂V/∂n_i
     return dFdkappa * dkappaDni + dFdV * dVdni;
   }
 
@@ -368,7 +404,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFBorndN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isBornOn()) {
       return 0.0;
     }
 
@@ -408,7 +444,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFDebyeHuckeldNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isDebyeHuckelOn()) {
       return 0.0;
     }
 
@@ -440,7 +476,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFBorndNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isBornOn()) {
       return 0.0;
     }
 
@@ -492,7 +528,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFDebyeHuckeldNdV(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isDebyeHuckelOn()) {
       return 0.0;
     }
 
@@ -500,6 +536,8 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
+
+    double tauDH = mmPhase.getTauDH();
 
     double Vm = phase.getMolarVolume() * 1e-5;
     double nT = phase.getNumberOfMolesInPhase();
@@ -518,20 +556,17 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     // d²κ/(dn_i dV) = d/dV[C * z_i² / (2κV)]
     double d2kappaDniDV = 0.0;
     if (z != 0 && kappa > 1e-30) {
-      // = -C*z²/(2κV²) - C*z²*dκ/dV/(2κ²V) = -C*z²/(2κV²) + C*z²/(4κ²V²)
       d2kappaDniDV = -C * z * z / (2.0 * kappa * V * V) + C * z * z / (4.0 * kappa * kappa * V * V);
     }
 
-    // F^DH = -κ³V/(12πRT*N_A) (extensive)
-    // dF/dn_i = -3κ²V/(12πRT*N_A) * dκ/dn_i
-    // d²F/(dn_i dV) = -3/(12πRT*N_A) * [2κ*dκ/dV*V*dκ/dn_i + κ²*dκ/dn_i + κ²*V*d²κ/(dn_i dV)]
+    // Extended DH: multiply DHLL terms by tauDH
     double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A);
 
     double term1 = -3.0 * 2.0 * kappa * dkappadV * V * factor * dkappaDni;
     double term2 = -3.0 * kappa * kappa * factor * dkappaDni;
     double term3 = -3.0 * kappa * kappa * V * factor * d2kappaDniDV;
 
-    return 1e-5 * (term1 + term2 + term3); // Scale factor for V in m³
+    return 1e-5 * (term1 + term2 + term3) * tauDH;
   }
 
   /**
@@ -546,6 +581,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFBorndNdV(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     // Born term has no direct volume dependence in the MM formulation
+    PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
+    if (mmPhase == null || !mmPhase.isBornOn()) {
+      return 0.0;
+    }
     return 0.0;
   }
 
@@ -562,7 +601,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFDebyeHuckeldNdN(int j, PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isDebyeHuckelOn()) {
       return 0.0;
     }
 
@@ -570,6 +609,8 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
+
+    double tauDH = mmPhase.getTauDH();
 
     double Vm = phase.getMolarVolume() * 1e-5;
     double nT = phase.getNumberOfMolesInPhase();
@@ -590,12 +631,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       d2kappaDniDnj = -C * zi * zi * dkappaDnj / (2.0 * kappa * kappa * V);
     }
 
-    // F^DH = -κ³V/(12πRT*N_A) (extensive form)
-    // dF/dn_i = -3κ²V/(12πRT*N_A) * dκ/dn_i
-    // d²F/(dn_i dn_j) = -V/(12πRT*N_A) * (6κ * dκ/dn_i * dκ/dn_j + 3κ² * d²κ/(dn_i dn_j))
+    // Extended DH: multiply DHLL terms by tauDH
     double factor = V / (12.0 * Math.PI * R * temperature * N_A);
 
-    return -factor * (6.0 * kappa * dkappaDni * dkappaDnj + 3.0 * kappa * kappa * d2kappaDniDnj);
+    return -factor * (6.0 * kappa * dkappaDni * dkappaDnj + 3.0 * kappa * kappa * d2kappaDniDnj)
+        * tauDH;
   }
 
   /**
@@ -615,7 +655,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFBorndNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
+    if (mmPhase == null || !mmPhase.isBornOn()) {
       return 0.0;
     }
 
@@ -664,25 +704,55 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     return term1 + term2 + term3 + term4;
   }
 
-  // ==================== Short-Range Ion-Solvent Methods ====================
+  // ==================== Short-Range Ion-Solvent Methods (Furst FSR2 Framework)
+  // ====================
+
+  /** Wi = dW/dn_i from the electrolyte mixing rule. */
+  private double srWi = 0.0;
+  /** WiT = d²W/(dn_i dT) from the electrolyte mixing rule. */
+  private double srWiT = 0.0;
+  /** epsi = d(eps)/dn_i = packing fraction composition derivative. */
+  private double srEpsi = 0.0;
+  /** epsiV = d²(eps)/(dn_i dV). */
+  private double srEpsiV = 0.0;
 
   /**
-   * Short-range ion-solvent contribution to dF/dN_i.
+   * Initialize short-range parameters for this component from the electrolyte mixing rule.
    *
-   * <p>
-   * F^SR = W / (R * T) where W = Σ_i Σ_j (n_i * n_j * wij * R / V)
-   * </p>
+   * @param phase the MM phase
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
+   * @param numberOfComponents number of components
+   */
+  private void initSRParameters(PhaseElectrolyteCPAMM phase, double temperature, double pressure,
+      int numberOfComponents) {
+    if (!phase.isShortRangeOn()) {
+      return;
+    }
+    srWi = phase.calcWi(getComponentNumber(), temperature, pressure, numberOfComponents);
+    srWiT = phase.calcWiT(getComponentNumber(), temperature, pressure, numberOfComponents);
+
+    // epsi = dEps/dn_i = N_A * pi/6 * sigma_i³ / V
+    double V = phase.getMolarVolume() * 1e-5 * phase.getNumberOfMolesInPhase();
+    if (V > 1e-30) {
+      double sigma = getLennardJonesMolecularDiameter() * 1e-10; // m
+      srEpsi = N_A * Math.PI / 6.0 * sigma * sigma * sigma / V;
+      srEpsiV = -srEpsi / V;
+    }
+  }
+
+  /**
+   * Short-range ion-solvent contribution to dF/dN_i using the Furst FSR2 framework.
    *
-   * <p>
-   * For component k: dF^SR/dn_k = Σ_j (n_j * wij[k][j] + n_j * wij[j][k]) / (T * V) The wij mixing
-   * rule parameters are obtained from the phase's initMixingRuleWij().
-   * </p>
+   * <pre>
+   * dFSR2/dn_i = FSR2eps * epsi + FSR2W * Wi
+   * </pre>
    *
    * @param phase the phase
    * @param numberOfComponents number of components
    * @param temperature temperature in K
    * @param pressure pressure in bar
-   * @return dF^SR/dn_i contribution
+   * @return dF_SR/dn_i contribution
    */
   public double dFShortRangedN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
@@ -690,63 +760,31 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (mmPhase == null || !mmPhase.isShortRangeOn()) {
       return 0.0;
     }
-
-    // New formula: F^SR = W / (nT * T * (1-η))
-    // dF/dn_k = (1/(nT*T*(1-η))) * [2*Σ_j(n_j*w_kj) - W/nT + W/(1-η) * dη/dn_k]
-    double nT = phase.getNumberOfMolesInPhase();
+    // MM formula: F_SR = W / (nT * T * (1-η))
+    // dF_SR/dn_i = Wi / (nT * T * (1-η)) - F_SR / nT
+    // ≈ Wi / (nT * T) - F_SR / nT (η correction negligible for dilute)
+    double nT = mmPhase.getNumberOfMolesInPhase();
     if (nT < 1e-30) {
       return 0.0;
     }
-
-    double eta = mmPhase.getPackingFraction();
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 1e-10) {
-      oneMinusEta = 1e-10;
-    }
-
-    int k = getComponentNumber();
-
-    // Calculate W = Σ_i Σ_j n_i n_j w_ij
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = phase.getComponent(i).getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        double nj = phase.getComponent(j).getNumberOfMolesInPhase();
-        W += ni * nj * mmPhase.getWij(i, j);
-      }
-    }
-
-    // Calculate dW/dn_k = 2 * Σ_j n_j w_kj
-    double dWdnk = 0.0;
-    for (int j = 0; j < numberOfComponents; j++) {
-      double nj = phase.getComponent(j).getNumberOfMolesInPhase();
-      dWdnk += nj * mmPhase.getWij(k, j);
-    }
-    dWdnk *= 2.0;
-
-    // Calculate dη/dn_k = (πN_A/6V) * σ_k³
-    double sigma = getLennardJonesMolecularDiameter() * 1e-10; // convert Å to m
-    double V = phase.getMolarVolume() * 1e-5 * nT; // m³
-    double dEtadnk =
-        (Math.PI * neqsim.thermo.ThermodynamicConstantsInterface.avagadroNumber / (6 * V)) * sigma
-            * sigma * sigma;
-
-    double prefactor = 1.0 / (nT * temperature * oneMinusEta);
-
-    // dF/dn_k = prefactor * [dW/dn_k - W/nT + W * dη/dn_k / (1-η)]
-    double result = prefactor * (dWdnk - W / nT + W * dEtadnk / oneMinusEta);
-
-    return result;
+    double Wi = mmPhase.calcMMWi(getComponentNumber());
+    double fSR = mmPhase.FShortRange();
+    double oneMinusEps = Math.max(1.0 - mmPhase.getPackingFraction(), 0.01);
+    return Wi / (nT * temperature * oneMinusEps) - fSR / nT;
   }
 
   /**
-   * Temperature derivative of short-range contribution to dF/dN_i using wij mixing rule.
+   * Temperature derivative of MM short-range contribution to dF/dN_i.
+   *
+   * <p>
+   * d²F_SR/(dn_i dT) = WiT/(nT*T*(1-η)) - Wi/(nT*T²*(1-η)) - dFSRdT/nT
+   * </p>
    *
    * @param phase the phase
    * @param numberOfComponents number of components
    * @param temperature temperature in K
    * @param pressure pressure in bar
-   * @return d²F^SR/(dn_i dT) contribution
+   * @return d²F_SR/(dn_i dT) contribution
    */
   public double dFShortRangedNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
@@ -754,43 +792,26 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (mmPhase == null || !mmPhase.isShortRangeOn()) {
       return 0.0;
     }
-
-    double Vm = phase.getMolarVolume() * 1e-5; // m³/mol
-    double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT;
-    if (V < 1e-30) {
+    double nT = mmPhase.getNumberOfMolesInPhase();
+    if (nT < 1e-30) {
       return 0.0;
     }
-
-    int k = getComponentNumber();
-    double sum = 0.0;
-
-    // Sum over all components using wij/wijT mixing rule parameters
-    for (int j = 0; j < numberOfComponents; j++) {
-      double nj = phase.getComponent(j).getNumberOfMolesInPhase();
-      double wkj = mmPhase.getWij(k, j);
-      double wjk = mmPhase.getWij(j, k);
-      double wkjT = mmPhase.getWijT(k, j);
-      double wjkT = mmPhase.getWijT(j, k);
-      if (wkj != 0.0 || wjk != 0.0 || wkjT != 0.0 || wjkT != 0.0) {
-        // d/dT[w/(TV)] = wT/(TV) - w/(T²V)
-        double w = wkj + wjk;
-        double wT = wkjT + wjkT;
-        sum += nj * (wT / (temperature * V) - w / (temperature * temperature * V));
-      }
-    }
-
-    return sum;
+    double Wi = mmPhase.calcMMWi(getComponentNumber());
+    double WiT = mmPhase.calcMMWiT(getComponentNumber());
+    double oneMinusEps = Math.max(1.0 - mmPhase.getPackingFraction(), 0.01);
+    double denom = nT * temperature * oneMinusEps;
+    return (WiT - Wi / temperature) / denom - mmPhase.dFShortRangedT() / nT;
   }
 
   /**
-   * Volume derivative of short-range contribution to dF/dN_i using wij mixing rule.
+   * Volume derivative of MM short-range contribution to dF/dN_i. Approximately zero for dilute
+   * electrolyte solutions where the packing fraction η is small.
    *
    * @param phase the phase
    * @param numberOfComponents number of components
    * @param temperature temperature in K
    * @param pressure pressure in bar
-   * @return d²F^SR/(dn_i dV) contribution
+   * @return d²F_SR/(dn_i dV) contribution
    */
   public double dFShortRangedNdV(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
@@ -798,40 +819,23 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (mmPhase == null || !mmPhase.isShortRangeOn()) {
       return 0.0;
     }
-
-    double Vm = phase.getMolarVolume() * 1e-5; // m³/mol
-    double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT;
-    if (V < 1e-30) {
-      return 0.0;
-    }
-
-    int k = getComponentNumber();
-    double sum = 0.0;
-
-    // Sum over all components using wij mixing rule parameters
-    for (int j = 0; j < numberOfComponents; j++) {
-      double nj = phase.getComponent(j).getNumberOfMolesInPhase();
-      double wkj = mmPhase.getWij(k, j);
-      double wjk = mmPhase.getWij(j, k);
-      if (wkj != 0.0 || wjk != 0.0) {
-        // d/dV[w/(TV)] = -w/(TV²)
-        sum += nj * (-(wkj + wjk) / (temperature * V * V)) * 1e-5;
-      }
-    }
-
-    return sum;
+    // For dilute solutions, η << 1 and the V-dependence is negligible
+    return 0.0;
   }
 
   /**
-   * Composition derivative of short-range contribution to dF/dN_i using wij mixing rule.
+   * Composition derivative of MM short-range contribution to dF/dN_i.
+   *
+   * <p>
+   * d²F_SR/(dn_i dn_j) = 2*wij[i][j]/(nT*T*(1-η)) - (Wi + Wj)/(nT²*T*(1-η)) + 2*F_SR/nT²
+   * </p>
    *
    * @param j index of second component
    * @param phase the phase
    * @param numberOfComponents number of components
    * @param temperature temperature in K
    * @param pressure pressure in bar
-   * @return d²F^SR/(dn_i dn_j) contribution
+   * @return d²F_SR/(dn_i dn_j) contribution
    */
   public double dFShortRangedNdN(int j, PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
@@ -839,23 +843,18 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (mmPhase == null || !mmPhase.isShortRangeOn()) {
       return 0.0;
     }
-
-    double Vm = phase.getMolarVolume() * 1e-5; // m³/mol
-    double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT;
-    if (V < 1e-30) {
+    double nT = mmPhase.getNumberOfMolesInPhase();
+    if (nT < 1e-30) {
       return 0.0;
     }
-
-    int k = getComponentNumber();
-    // d²F/(dn_k dn_j) = (wij[k][j] + wij[j][k]) / (T * V)
-    double wkj = mmPhase.getWij(k, j);
-    double wjk = mmPhase.getWij(j, k);
-    if (wkj == 0.0 && wjk == 0.0) {
-      return 0.0;
-    }
-
-    return (wkj + wjk) / (temperature * V);
+    double Wi = mmPhase.calcMMWi(getComponentNumber());
+    double Wj = mmPhase.calcMMWi(j);
+    double wijIJ = mmPhase.getWij(getComponentNumber(), j);
+    double fSR = mmPhase.FShortRange();
+    double oneMinusEps = Math.max(1.0 - mmPhase.getPackingFraction(), 0.01);
+    double nT2 = nT * nT;
+    double denom = nT * temperature * oneMinusEps;
+    return 2.0 * wijIJ / denom - (Wi + Wj) / (nT2 * temperature * oneMinusEps) + 2.0 * fSR / nT2;
   }
 
   // ==================== Override dFdN Methods ====================
@@ -880,6 +879,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       double pressure) {
     double dFdNdT = super.dFdNdT(phase, numberOfComponents, temperature, pressure);
 
+    // For ions (cpaon=0), the parent class still adds CPA to dFdNdT — remove it
+    if (cpaon == 0 && ((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
+      dFdNdT -= dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
+    }
+
     // Add electrolyte contributions
     dFdNdT += dFDebyeHuckeldNdT(phase, numberOfComponents, temperature, pressure);
     dFdNdT += dFBorndNdT(phase, numberOfComponents, temperature, pressure);
@@ -894,6 +898,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       double pressure) {
     double dFdNdV = super.dFdNdV(phase, numberOfComponents, temperature, pressure);
 
+    // For ions (cpaon=0), the parent class still adds CPA to dFdNdV — remove it
+    if (cpaon == 0 && ((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
+      dFdNdV -= dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
+    }
+
     // Add electrolyte contributions
     dFdNdV += dFDebyeHuckeldNdV(phase, numberOfComponents, temperature, pressure);
     dFdNdV += dFBorndNdV(phase, numberOfComponents, temperature, pressure);
@@ -907,6 +916,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     double dFdNdN = super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
+
+    // For ions (cpaon=0), the parent class still adds CPA to dFdNdN — remove it
+    if (cpaon == 0 && ((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
+      dFdNdN -= dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
+    }
 
     // Add electrolyte contributions
     dFdNdN += dFDebyeHuckeldNdN(j, phase, numberOfComponents, temperature, pressure);
