@@ -180,3 +180,91 @@ When receiving a handoff, verify consistency:
 | Phase consistency | If source says 2 phases, receiving agent should see 2 phases |
 
 If a consistency check fails, alert the user before proceeding.
+
+## Schema 6: Lifecycle State Handoff
+
+Use when passing a complete simulation state between agents — e.g., from a process
+simulation agent to a mechanical design agent, or between task iterations.
+
+```json
+{
+  "schema": "neqsim-lifecycle-state",
+  "version": "1.0",
+  "handoff": {
+    "source_agent": "make a neqsim process simulation",
+    "target_agent": "run neqsim mechanical design",
+    "state_type": "ProcessSystemState | ProcessModelState",
+    "state_name": "Gas Processing Base Case",
+    "state_version": "1.0.0",
+    "state_json": "<serialized JSON from ProcessSystemState.toJson()>",
+    "compressed_bytes_base64": "<optional: base64-encoded compressed bytes for large states>",
+    "validation": {
+      "is_valid": true,
+      "checksum": "abc123..."
+    },
+    "context": {
+      "description": "HP/LP separation train for 50 MMSCFD wet gas",
+      "key_results": {
+        "gas_export_rate_MSm3_day": 1.2,
+        "liquid_rate_m3_hr": 45.0
+      }
+    },
+    "assumptions": [
+      "SRK EOS with classic mixing rule",
+      "Steady-state operation at plateau rate"
+    ]
+  }
+}
+```
+
+### Lifecycle State Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| state_type | string | Yes | `ProcessSystemState` (single area) or `ProcessModelState` (multi-area) |
+| state_name | string | Yes | Human-readable name for the state |
+| state_version | string | Yes | Semver version string |
+| state_json | string | Yes | Serialized JSON from `state.toJson()` |
+| compressed_bytes_base64 | string | No | Base64-encoded compressed bytes for large states |
+| validation.is_valid | boolean | Yes | Result of `state.validate().isValid()` |
+| validation.checksum | string | No | Integrity checksum from the state object |
+| context.description | string | Yes | What the process does |
+| context.key_results | object | No | Summary of important results |
+
+### Creating a Lifecycle State Handoff
+
+```java
+// Source agent creates the state
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing Base Case");
+state.setVersion("1.0.0");
+String stateJson = state.toJson();
+boolean isValid = state.validate().isValid();
+
+// For large states, use compressed bytes
+byte[] compressed = state.toCompressedBytes();
+String base64 = java.util.Base64.getEncoder().encodeToString(compressed);
+```
+
+### Consuming a Lifecycle State Handoff
+
+```java
+// Target agent loads the state
+ProcessSystemState loaded = ProcessSystemState.fromJson(handoff.state_json);
+ProcessSystemState.ValidationResult result = loaded.validate();
+assert result.isValid();
+
+// For multi-area states
+ProcessModelState modelState = ProcessModelState.fromJson(handoff.state_json);
+```
+
+### Version Comparison Across Handoffs
+
+When multiple agents produce states at different design iterations, compare them:
+
+```java
+ProcessModelState v1 = ProcessModelState.fromJson(handoff1.state_json);
+ProcessModelState v2 = ProcessModelState.fromJson(handoff2.state_json);
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+// diff.getModifiedParameters(), diff.getAddedEquipment(), diff.getRemovedEquipment()
+```

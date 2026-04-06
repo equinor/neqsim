@@ -361,6 +361,8 @@ print(plant.getMassBalanceReport())
 | Set convergence tolerance | `setTolerance(1e-4)` or individual `setFlowTolerance()` etc. |
 | Save/load model | `saveToNeqsim("file.neqsim")`, `loadFromNeqsim("file.neqsim")` |
 | JSON report | `getReport_json()` |
+| Automation facade | `getAutomation()` returns `ProcessAutomation` (string-addressable variables) |
+| Lifecycle state | `ProcessModelState.fromProcessModel(plant)`, `.saveToFile()`, `.compare(v1, v2)` |
 
 ### Cross-System Stream Sharing
 
@@ -388,6 +390,68 @@ Streams cross sub-system boundaries by **direct object reference**:
 - Add equipment to `ProcessSystem` in topological order
 - Call `process.run()` only ONCE after building the entire flowsheet
 - **For multi-area plants**: use `ProcessModel` to combine `ProcessSystem` objects — never nest them
+
+## Automation API (String-Addressable Variables)
+
+Use `ProcessAutomation` for agent-friendly variable access — no Java class navigation needed.
+
+### Setup and Discovery
+
+```java
+ProcessAutomation auto = process.getAutomation();   // or plant.getAutomation()
+List<String> units = auto.getUnitList();             // ["Feed Gas", "HP Sep", ...]
+List<SimulationVariable> vars = auto.getVariableList("HP Sep");
+// Each variable: address, name, type (INPUT/OUTPUT), defaultUnit, description
+String eqType = auto.getEquipmentType("HP Sep");     // "Separator"
+```
+
+### Read / Write Variables
+
+```java
+// Read with unit conversion (dot-notation addressing)
+double temp = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C");
+double flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr");
+
+// Write INPUT variables, then re-run
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
+process.run();
+```
+
+### Multi-Area Addressing
+
+```java
+ProcessAutomation plantAuto = plant.getAutomation();
+List<String> areas = plantAuto.getAreaList();
+// Area-qualified: "Area::Unit.property"
+double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+```
+
+## Lifecycle State (Save / Restore / Compare)
+
+JSON snapshots for reproducibility and version tracking.
+
+```java
+// Save
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing"); state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");
+
+// Load and validate
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
+assert loaded.validate().isValid();
+
+// Multi-area
+ProcessModelState ms = ProcessModelState.fromProcessModel(plant);
+ms.saveToFile("plant_v1.json");
+
+// Version diff
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+// diff.getModifiedParameters(), diff.getAddedEquipment(), diff.getRemovedEquipment()
+
+// Compressed bytes for API transfer
+byte[] bytes = ms.toCompressedBytes();
+ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
+```
 
 ## Design Feasibility Reports
 
