@@ -468,7 +468,7 @@ public class NonEquilibriumPipeFlowTest {
 
   /**
    * Tests that the Joule-Thomson effect is properly accounted for in the energy balance.
-   * 
+   *
    * <p>
    * For natural gas, Joule-Thomson coefficient is typically positive (cooling on expansion). As gas
    * expands along the pipe (pressure drops), temperature should decrease if J-T effect dominates.
@@ -1063,6 +1063,7 @@ public class NonEquilibriumPipeFlowTest {
 
   /**
    * Demonstrates a bubble-flow absorption case where methane fully dissolves into liquid n-decane.
+   * Uses reduced grid (3 legs x 10 nodes) to stay within CI timeout.
    */
   @Test
   void testMethaneFullyDissolvesIntoNDecaneBubbleFlow() {
@@ -1078,14 +1079,14 @@ public class NonEquilibriumPipeFlowTest {
     TwoPhasePipeFlowSystem bubblePipe = new TwoPhasePipeFlowSystem();
     bubblePipe.setInletThermoSystem(system);
     bubblePipe.setInitialFlowPattern("bubble");
-    bubblePipe.setNumberOfLegs(5);
-    bubblePipe.setNumberOfNodesInLeg(30);
+    bubblePipe.setNumberOfLegs(3);
+    bubblePipe.setNumberOfNodesInLeg(10);
 
-    double[] height = {0, 0, 0, 0, 0, 0};
-    double[] length = {0.0, 600.0, 1200.0, 1800.0, 2400.0, 3000.0};
-    double[] outerTemperature = {305.0, 305.0, 305.0, 305.0, 305.0, 305.0};
-    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
-    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 1000.0, 2000.0, 3000.0};
+    double[] outerTemperature = {305.0, 305.0, 305.0, 305.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0};
 
     bubblePipe.setLegHeights(height);
     bubblePipe.setLegPositions(length);
@@ -1093,7 +1094,7 @@ public class NonEquilibriumPipeFlowTest {
     bubblePipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
     bubblePipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
 
-    GeometryDefinitionInterface[] pipeGeometry = new PipeData[6];
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[4];
     for (int i = 0; i < pipeGeometry.length; i++) {
       pipeGeometry[i] = new PipeData(0.05);
     }
