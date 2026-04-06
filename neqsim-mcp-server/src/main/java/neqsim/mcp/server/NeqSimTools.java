@@ -11,6 +11,7 @@ import neqsim.mcp.runners.ComponentQuery;
 import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.Validator;
+import neqsim.mcp.runners.AutomationRunner;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
@@ -182,6 +183,191 @@ public class NeqSimTools {
       return schema;
     }
     return errorJson("Schema not found: " + toolName + "/" + schemaType);
+  }
+
+  /**
+   * List all equipment units in a process simulation with their types.
+   *
+   * @param processJson complete process definition as JSON
+   * @return JSON string with list of unit names and equipment types
+   */
+  @Tool(description = "Run a process simulation and list all addressable equipment units. "
+      + "Returns unit names and types for use with listUnitVariables, "
+      + "getSimulationVariable, and setSimulationVariable tools.")
+  public String listSimulationUnits(
+      @ToolArg(description = "Complete process definition as JSON string. "
+          + "Same format as runProcess.") String processJson) {
+    try {
+      return AutomationRunner.listUnits(processJson);
+    } catch (Exception e) {
+      return errorJson("Failed to list units: " + e.getMessage());
+    }
+  }
+
+  /**
+   * List all readable/writable variables for a specific equipment unit.
+   *
+   * @param processJson complete process definition as JSON
+   * @param unitName the equipment unit name to query
+   * @return JSON string with list of variables and their metadata
+   */
+  @Tool(description = "Run a process simulation and list all variables for a specific "
+      + "equipment unit. Each variable has an address (for reading/writing), type "
+      + "(INPUT = writable, OUTPUT = read-only), default unit, and description. "
+      + "Use listSimulationUnits first to discover available unit names.")
+  public String listUnitVariables(
+      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Equipment unit name to list variables for, "
+          + "e.g. 'HP Separator', 'Compressor Stage 1'. "
+          + "Use listSimulationUnits to find valid names.") String unitName) {
+    try {
+      return AutomationRunner.listVariables(processJson, unitName);
+    } catch (Exception e) {
+      return errorJson("Failed to list variables: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Read a specific simulation variable value by dot-notation address.
+   *
+   * @param processJson complete process definition as JSON
+   * @param address dot-notation variable address
+   * @param unit desired unit of measurement
+   * @return JSON string with the variable value
+   */
+  @Tool(description = "Run a process simulation and read a specific variable value "
+      + "using dot-notation addressing. Example addresses: "
+      + "'HP Sep.gasOutStream.temperature', 'Compressor.power', "
+      + "'Feed.flowRate'. Use listUnitVariables to discover valid addresses.")
+  public String getSimulationVariable(
+      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Dot-notation variable address, e.g. "
+          + "'HP Sep.gasOutStream.temperature' or 'Compressor.power'. "
+          + "Use listUnitVariables to find valid addresses.") String address,
+      @ToolArg(description = "Desired unit of measurement: "
+          + "Temperature: C, K, F | Pressure: bara, barg, Pa, kPa, MPa, psi | "
+          + "Flow: kg/hr, m3/hr, MSm3/day | Power: kW, MW, hp") String unit) {
+    try {
+      return AutomationRunner.getVariable(processJson, address, unit);
+    } catch (Exception e) {
+      return errorJson("Failed to get variable: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Modify a simulation variable and re-run the process.
+   *
+   * @param processJson complete process definition as JSON
+   * @param address dot-notation variable address to modify
+   * @param value new value to set
+   * @param unit unit of the value
+   * @return JSON string with updated simulation results
+   */
+  @Tool(description = "Run a process, modify an INPUT variable, re-run, and return "
+      + "updated results. Use this for sensitivity analysis or optimization. "
+      + "Only INPUT-type variables can be modified (use listUnitVariables to check). "
+      + "Example: change compressor outlet pressure and see effect on power.")
+  public String setSimulationVariable(
+      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Dot-notation address of the INPUT variable to modify, "
+          + "e.g. 'Compressor.outletPressure'.") String address,
+      @ToolArg(description = "New value for the variable.") double value,
+      @ToolArg(description = "Unit of measurement for the value, "
+          + "e.g. 'C', 'bara', 'kg/hr'.") String unit) {
+    try {
+      return AutomationRunner.setVariableAndRun(processJson, address, value, unit);
+    } catch (Exception e) {
+      return errorJson("Failed to set variable: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Save a process simulation state as a lifecycle snapshot.
+   *
+   * @param processJson complete process definition as JSON
+   * @param stateName name for the snapshot
+   * @param stateVersion version string
+   * @return JSON string with the serialized state
+   */
+  @Tool(description = "Run a process simulation and save its complete state as a "
+      + "JSON lifecycle snapshot. Use for reproducibility, version tracking, "
+      + "and comparing design iterations. The returned state can be passed to "
+      + "compareSimulationStates to find differences between versions.")
+  public String saveSimulationState(
+      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Name for the state snapshot, "
+          + "e.g. 'Gas Processing Base Case'.") String stateName,
+      @ToolArg(description = "Version string, e.g. '1.0.0'.") String stateVersion) {
+    try {
+      return AutomationRunner.saveState(processJson, stateName, stateVersion);
+    } catch (Exception e) {
+      return errorJson("Failed to save state: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Compare two simulation state snapshots and return differences.
+   *
+   * @param stateJson1 first state JSON from saveSimulationState
+   * @param stateJson2 second state JSON from saveSimulationState
+   * @return JSON string with differences between the two states
+   */
+  @Tool(description = "Compare two simulation state snapshots and return the differences. "
+      + "Shows modified parameters, added/removed equipment, and changed stream conditions. "
+      + "Use after saveSimulationState to track design changes between iterations.")
+  public String compareSimulationStates(
+      @ToolArg(description = "First state JSON (from saveSimulationState 'state' field)") String stateJson1,
+      @ToolArg(description = "Second state JSON (from saveSimulationState 'state' field)") String stateJson2) {
+    try {
+      return AutomationRunner.compareStates(stateJson1, stateJson2);
+    } catch (Exception e) {
+      return errorJson("Failed to compare states: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Diagnose a failed automation operation and get suggestions for fixing it. Call this when
+   * getSimulationVariable or setSimulationVariable returns an error to get actionable
+   * remediation hints including fuzzy name matches and auto-corrections.
+   *
+   * @param processJson process definition as JSON
+   * @param failedAddress the address that failed
+   * @param operation the operation that failed
+   * @return JSON diagnostic result with suggestions
+   */
+  @Tool(description = "Diagnose a failed automation operation and get suggestions for fixing it. "
+      + "Call this when getSimulationVariable or setSimulationVariable returns an error. "
+      + "Returns fuzzy name matches, auto-corrections, and actionable remediation hints. "
+      + "Use this tool to self-correct and retry with the corrected address.")
+  public String diagnoseAutomation(
+      @ToolArg(description = "Process definition as JSON string") String processJson,
+      @ToolArg(description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
+      @ToolArg(description = "The operation that failed: 'get', 'set', or 'list'") String operation) {
+    try {
+      return AutomationRunner.diagnose(processJson, failedAddress, operation);
+    } catch (Exception e) {
+      return errorJson("Failed to diagnose: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Get the automation learning report showing operation history, success rates, error patterns,
+   * and learned corrections.
+   *
+   * @param processJson process definition as JSON
+   * @return JSON learning report
+   */
+  @Tool(description = "Get the automation learning report showing operation history statistics, "
+      + "success rates, error patterns, learned auto-corrections, and recommendations. "
+      + "Use this after multiple automation operations to understand what went wrong "
+      + "and improve future calls.")
+  public String getAutomationLearningReport(
+      @ToolArg(description = "Process definition as JSON string") String processJson) {
+    try {
+      return AutomationRunner.getLearningReport(processJson);
+    } catch (Exception e) {
+      return errorJson("Failed to get learning report: " + e.getMessage());
+    }
   }
 
   private static String errorJson(String message) {

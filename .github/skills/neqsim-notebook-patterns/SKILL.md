@@ -237,6 +237,73 @@ fluid.getPhase("gas").getViscosity("kg/msec")
 fluid.getPhase("gas").getThermalConductivity("W/mK")
 ```
 
+## Automation API (String-Addressable Variables)
+
+Use `ProcessAutomation` for agent-friendly access to simulation variables — avoids
+navigating Java class hierarchies. Preferred when programmatically exploring or
+modifying process simulations in notebooks.
+
+```python
+# Get automation facade
+auto = process.getAutomation()
+
+# Discover equipment
+units = list(auto.getUnitList())         # ["Feed Gas", "HP Sep", "Compressor", ...]
+eq_type = auto.getEquipmentType("HP Sep")  # "Separator"
+
+# List variables for an equipment unit
+vars_list = list(auto.getVariableList("HP Sep"))
+for v in vars_list:
+    print(f"{v.getAddress()} [{v.getType()}] ({v.getDefaultUnit()}) — {v.getDescription()}")
+
+# Read values with unit conversion (dot-notation address)
+temp = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C")
+flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr")
+
+# Write INPUT variables and re-run
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara")
+process.run()  # propagate changes
+
+# Multi-area plant
+plant_auto = plant.getAutomation()
+areas = list(plant_auto.getAreaList())  # ["Separation", "Compression"]
+t = plant_auto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C")
+```
+
+## Lifecycle State (Save / Restore / Compare)
+
+JSON snapshots for reproducibility and version comparison in notebooks:
+
+```python
+import jpype
+ProcessSystemState = jpype.JClass("neqsim.process.processmodel.lifecycle.ProcessSystemState")
+ProcessModelState = jpype.JClass("neqsim.process.processmodel.lifecycle.ProcessModelState")
+
+# Save state
+state = ProcessSystemState.fromProcessSystem(process)
+state.setName("Gas Processing")
+state.setVersion("1.0.0")
+state.saveToFile("model_v1.json")
+
+# Load and validate
+loaded = ProcessSystemState.loadFromFile("model_v1.json")
+result = loaded.validate()
+print(f"Valid: {result.isValid()}")
+
+# Multi-area model state
+model_state = ProcessModelState.fromProcessModel(plant)
+model_state.setVersion("1.0.0")
+model_state.saveToFile("plant_v1.json")
+
+# Compare two versions
+v1 = ProcessModelState.fromProcessModel(plant)  # before changes
+# ... make changes ...
+v2 = ProcessModelState.fromProcessModel(plant)  # after changes
+diff = ProcessModelState.compare(v1, v2)
+if diff.hasChanges():
+    print("Modified parameters:", list(diff.getModifiedParameters()))
+```
+
 ## results.json Template (for Task-Solving Notebooks)
 
 ```python

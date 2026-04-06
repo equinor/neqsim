@@ -378,6 +378,103 @@ and measurement devices. Query all elements at once:
 List<ProcessElementInterface> all = process.getAllElements();
 ```
 
+### Automation API (PREFERRED for agents)
+
+String-addressable variable access without navigating Java internals.
+Use `ProcessAutomation` for reading/writing simulation variables:
+
+```java
+// Get the automation facade (convenience method on ProcessSystem)
+ProcessAutomation auto = process.getAutomation();
+
+// Discover units and variables
+List<String> units = auto.getUnitList();                    // ["Feed Gas", "HP Sep", ...]
+List<SimulationVariable> vars = auto.getVariableList("HP Sep"); // all variables with type/unit/description
+String eqType = auto.getEquipmentType("HP Sep");            // "Separator"
+
+// Read values with unit conversion
+double t = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C");
+double p = auto.getVariableValue("HP Sep.pressure", "bara");
+double flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr");
+
+// Write inputs (only INPUT-type variables) and re-run
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
+process.run();  // propagate changes
+```
+
+For multi-area `ProcessModel`:
+
+```java
+ProcessAutomation plantAuto = plant.getAutomation();
+List<String> areas = plantAuto.getAreaList();  // ["Separation", "Compression"]
+// Area-qualified addresses
+double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bara");
+plant.run();
+```
+
+### Self-healing automation (PREFERRED for agents)
+
+The automation API includes self-diagnosis and auto-correction. When an address
+is wrong, use the safe accessors for automatic fuzzy matching and recovery:
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+// Safe get — returns JSON with value on success, or diagnostics on failure
+String result = auto.getVariableValueSafe("hp separator.temperature", "C");
+// Returns: {"status":"auto_corrected","originalAddress":"hp separator.temperature",
+//           "correctedAddress":"HP Sep.temperature","value":25.0,"unit":"C",...}
+
+// Safe set — validates physical bounds + fuzzy address matching
+String setResult = auto.setVariableValueSafe("Compressor.outletPressure", 150.0, "bara");
+
+// Access diagnostics for learning and insights
+AutomationDiagnostics diag = auto.getDiagnostics();
+String report = diag.getLearningReport();  // operation stats, error patterns, corrections
+```
+
+Key capabilities:
+- **Fuzzy name matching** — finds closest unit/property when exact match fails
+- **Auto-correction** — fixes case, whitespace, partial names, typos (edit distance ≤ 2)
+- **Learned corrections** — remembers past corrections for instant reuse
+- **Physical bounds** — validates temperature, pressure, efficiency ranges before setting
+- **Operation tracking** — tracks success/failure rates and generates recommendations
+
+### Lifecycle state: save, restore, compare
+
+Portable, Git-diffable JSON snapshots for reproducibility and version tracking:
+
+```java
+// Save a ProcessSystem snapshot
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing");
+state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");                    // human-readable JSON
+state.saveToCompressedFile("model_v1.json.gz");       // smaller for archival
+
+// Load and validate
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
+ProcessSystemState.ValidationResult result = loaded.validate();
+assert result.isValid();
+
+// Multi-area ProcessModel state
+ProcessModelState modelState = ProcessModelState.fromProcessModel(plant);
+modelState.setVersion("1.0.0");
+modelState.saveToFile("plant_v1.json");
+
+// Version comparison (design reviews, change tracking)
+ProcessModelState v2 = ProcessModelState.fromProcessModel(plant);
+v2.setVersion("2.0");
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+assert diff.hasChanges();
+// diff.getModifiedParameters(), diff.getAddedEquipment(), diff.getRemovedEquipment()
+
+// Compressed bytes for network/API transfer (no disk I/O)
+byte[] bytes = modelState.toCompressedBytes();
+ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
+```
+
 ### Python (Jupyter) fluid
 
 ```python
@@ -532,6 +629,8 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
 | `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
 | `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
+| `src/main/java/neqsim/process/automation/` | ProcessAutomation (string-addressable variable API), AutomationDiagnostics (fuzzy matching, auto-correction, physical validation, learning), SimulationVariable (INPUT/OUTPUT descriptor) |
+| `src/main/java/neqsim/process/processmodel/lifecycle/` | ProcessSystemState, ProcessModelState — JSON lifecycle snapshots, version comparison, compressed transfer |
 | `devtools/unisim_reader.py` | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ op types, port-specific forward refs, auto-recycle wiring. Verified with TUTOR1.usc (11/13 streams match). |
 | `devtools/test_unisim_outputs.py` | 14 tests for all UniSim converter output modes (no COM needed — synthetic models) |
 | `examples/notebooks/tutor1_gas_processing.ipynb` | End-to-end UniSim→NeqSim verification: TUTOR1 gas processing (7 comp, PR EOS, 13 ops). Reference for conversion workflows. |
@@ -576,7 +675,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-input-validation` | Pre-simulation checks (T, P, composition, component names) |
 | `neqsim-regression-baselines` | Baseline management for preventing accuracy drift |
 | `neqsim-standards-lookup` | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking in results.json |
-| `neqsim-agent-handoff` | Structured schemas for multi-agent result passing |
+| `neqsim-agent-handoff` | Structured schemas for multi-agent result passing (includes lifecycle state handoff) |
 | `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
 | `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |
 | `neqsim-field-development` | Field development workflows, concept selection, lifecycle management |
