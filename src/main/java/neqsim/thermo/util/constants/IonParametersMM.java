@@ -118,24 +118,36 @@ public final class IonParametersMM {
 
     // Divalent cations - Maribo-Mogensen Table 6.11
     ION_DATA.put("Mg2+", new IonData(2.100, 2800.0, -40.0, 2));
+    ION_DATA.put("Mg++", new IonData(2.100, 2800.0, -40.0, 2)); // NeqSim alias
     ION_DATA.put("Ca2+", new IonData(2.374, 3768.0, -33.13, 2));
+    ION_DATA.put("Ca++", new IonData(2.374, 3768.0, -33.13, 2)); // NeqSim alias
     ION_DATA.put("Sr2+", new IonData(2.680, 4200.0, -28.0, 2));
+    ION_DATA.put("Sr++", new IonData(2.680, 4200.0, -28.0, 2)); // NeqSim alias
     ION_DATA.put("Ba2+", new IonData(2.920, 4800.0, -25.0, 2));
+    ION_DATA.put("Ba++", new IonData(2.920, 4800.0, -25.0, 2)); // NeqSim alias
     ION_DATA.put("Fe2+", new IonData(2.280, 3200.0, -35.0, 2)); // Ferrous
+    ION_DATA.put("Fe++", new IonData(2.280, 3200.0, -35.0, 2)); // NeqSim alias
     ION_DATA.put("Zn2+", new IonData(2.200, 3400.0, -36.0, 2)); // Zinc
+    ION_DATA.put("Zn++", new IonData(2.200, 3400.0, -36.0, 2)); // NeqSim alias
 
     // Divalent anions
     ION_DATA.put("SO4-2", new IonData(3.800, -4500.0, 8.0, -2));
     ION_DATA.put("SO42-", new IonData(3.800, -4500.0, 8.0, -2)); // Alternative name
+    ION_DATA.put("SO4--", new IonData(3.800, -4500.0, 8.0, -2)); // NeqSim alias
     ION_DATA.put("CO3-2", new IonData(3.600, -5000.0, 9.0, -2));
     ION_DATA.put("CO32-", new IonData(3.600, -5000.0, 9.0, -2)); // Alternative name
+    ION_DATA.put("CO3--", new IonData(3.600, -5000.0, 9.0, -2)); // NeqSim alias
     ION_DATA.put("S2-", new IonData(3.500, -5200.0, 9.5, -2)); // Sulfide
+    ION_DATA.put("S--", new IonData(3.500, -5200.0, 9.5, -2)); // NeqSim alias
 
     // Trivalent ions
     ION_DATA.put("Fe3+", new IonData(2.000, 5500.0, -50.0, 3)); // Ferric
+    ION_DATA.put("Fe+++", new IonData(2.000, 5500.0, -50.0, 3)); // NeqSim alias
     ION_DATA.put("Al3+", new IonData(1.800, 6000.0, -55.0, 3)); // Aluminum
+    ION_DATA.put("Al+++", new IonData(1.800, 6000.0, -55.0, 3)); // NeqSim alias
     ION_DATA.put("PO4-3", new IonData(4.000, -6500.0, 12.0, -3)); // Phosphate
     ION_DATA.put("PO43-", new IonData(4.000, -6500.0, 12.0, -3)); // Alternative
+    ION_DATA.put("PO4---", new IonData(4.000, -6500.0, 12.0, -3)); // NeqSim alias
 
     // ===========================================================================
     // Solvent-specific ion interaction parameters (Maribo-Mogensen Table 6.12)
@@ -156,7 +168,9 @@ public final class IonParametersMM {
     SOLVENT_SPECIFIC_DATA.put("K+-MEG", new SolventInteractionData(1500.0, -9.0));
     SOLVENT_SPECIFIC_DATA.put("Li+-MEG", new SolventInteractionData(-800.0, -10.0));
     SOLVENT_SPECIFIC_DATA.put("Ca2+-MEG", new SolventInteractionData(4500.0, -40.0));
+    SOLVENT_SPECIFIC_DATA.put("Ca++-MEG", new SolventInteractionData(4500.0, -40.0));
     SOLVENT_SPECIFIC_DATA.put("Mg2+-MEG", new SolventInteractionData(3500.0, -45.0));
+    SOLVENT_SPECIFIC_DATA.put("Mg++-MEG", new SolventInteractionData(3500.0, -45.0));
     SOLVENT_SPECIFIC_DATA.put("Cl--MEG", new SolventInteractionData(-1600.0, 5.0));
     SOLVENT_SPECIFIC_DATA.put("Br--MEG", new SolventInteractionData(-1200.0, 4.0));
     SOLVENT_SPECIFIC_DATA.put("HCO3--MEG", new SolventInteractionData(-1300.0, 4.5));
