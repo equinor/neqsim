@@ -94,6 +94,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Getting Started | [docs/wiki/getting_started.md](wiki/getting_started)                                               | Installation and first steps  |
 | GitHub Setup    | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github) | NeqSim and GitHub setup       |
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                                 | Development environment setup |
+| Productization Roadmap | [docs/development/PRODUCTIZATION_ROADMAP.md](development/PRODUCTIZATION_ROADMAP)              | Adoption, trust, contributor scaling plan |
+| Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index)                                                    | Validation against NIST and published data |
 
 ### Chapter 5: Quick Start Examples
 
