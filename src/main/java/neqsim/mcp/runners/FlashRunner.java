@@ -15,6 +15,7 @@ import com.google.gson.JsonParser;
 import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.FlashRequest;
 import neqsim.mcp.model.FlashResult;
+import neqsim.mcp.model.ResultProvenance;
 import neqsim.mcp.model.ValueWithUnit;
 import neqsim.process.util.monitor.FluidResponse;
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -96,6 +97,7 @@ public class FlashRunner {
           "Ensure the JSON is well-formed");
     }
 
+    long startTime = System.currentTimeMillis();
     List<String> warnings = new ArrayList<>();
 
     // --- Parse model ---
@@ -308,6 +310,13 @@ public class FlashRunner {
       // Fluid data
       result.add("fluid", JsonParser.parseString(fluidJson));
 
+      // Provenance (trust metadata)
+      ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
+      provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      provenance.addValidationPassed("component_names_verified");
+      provenance.addValidationPassed("flash_converged");
+      result.add("provenance", GSON.toJsonTree(provenance));
+
       // Warnings
       if (!warnings.isEmpty()) {
         JsonArray warnArray = new JsonArray();
@@ -421,8 +430,7 @@ public class FlashRunner {
    * @return the created fluid system
    * @throws IllegalArgumentException if model is not recognized
    */
-  private static SystemInterface createFluid(String model, double temperatureK,
-      double pressureBara) {
+  static SystemInterface createFluid(String model, double temperatureK, double pressureBara) {
     switch (model) {
       case "SRK":
         return new SystemSrkEos(temperatureK, pressureBara);
