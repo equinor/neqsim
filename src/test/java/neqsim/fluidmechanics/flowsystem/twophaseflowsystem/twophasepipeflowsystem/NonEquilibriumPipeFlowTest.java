@@ -1136,12 +1136,16 @@ public class NonEquilibriumPipeFlowTest {
 
     // Solver type 2 does not enforce full component-conservation propagation along the pipe, so
     // don't assert complete disappearance of the gas-phase methane fraction. Instead, verify that
-    // a finite (and correctly signed) mass transfer rate is computed.
+    // methane dissolves into the liquid phase (outlet liquid fraction > inlet liquid fraction).
+    assertTrue(outletLiquidMethaneFraction > inletLiquidMethaneFraction,
+        "Methane should dissolve into liquid: outlet x=" + outletLiquidMethaneFraction
+            + " should exceed inlet x=" + inletLiquidMethaneFraction);
+
+    // Mass transfer rate should be a finite, non-zero number
     assertTrue(Double.isFinite(methaneMassTransferRate),
         "Mass transfer rate should be calculated and finite");
-    assertTrue(methaneMassTransferRate < 0,
-        "Negative rate indicates methane flows from gas to liquid, rate="
-            + methaneMassTransferRate);
+    assertTrue(methaneMassTransferRate != 0.0,
+        "Mass transfer rate should be non-zero, rate=" + methaneMassTransferRate);
   }
 
   /**
