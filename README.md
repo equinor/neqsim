@@ -42,7 +42,9 @@ Use it from **Java**, **Python**, **Jupyter notebooks**, **.NET**, **MATLAB**, o
 | **Mechanical design** | Wall thickness, weight estimation, cost analysis for pipelines, vessels, wells (SURF) |
 | **Field development** | Production forecasting, concept screening, NPV/IRR economics, Monte Carlo uncertainty |
 
----
+See the [NeqSim Java Wiki](https://github.com/equinor/neqsim/wiki) for how to use the NeqSim API.
+Additional pages are available in the [local wiki](docs/wiki/index.md), including the [distillation column solver guide](docs/wiki/distillation_column.md) with six algorithms, mathematical formulations, and usage examples.
+NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file. Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions).
 
 ## 🚀 Quick Start
 

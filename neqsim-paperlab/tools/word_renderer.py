@@ -86,6 +86,8 @@ def _init_omml():
 def latex_to_omml(latex_str):
     """Convert LaTeX math string to OMML XML element for Word.
 
+    Always returns an ``<m:oMath>`` element suitable for inline use.
+    The XSLT may wrap it in ``<m:oMathPara>``; this function unwraps it.
     Returns None if the pipeline is unavailable or conversion fails.
     """
     if not _init_omml():
@@ -94,7 +96,15 @@ def latex_to_omml(latex_str):
         mathml = latex2mathml.converter.convert(latex_str)
         tree = etree.fromstring(mathml.encode('utf-8'))
         omml = _omml_transform(tree)
-        return omml.getroot()
+        root = omml.getroot()
+        # Always return <m:oMath> so it works inline inside <w:p>.
+        # The XSLT sometimes produces <m:oMathPara> wrapping — unwrap it.
+        ns = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+        if root.tag == '{%s}oMathPara' % ns:
+            oMath = root.find('{%s}oMath' % ns)
+            if oMath is not None:
+                return oMath
+        return root
     except Exception:
         return None
 
@@ -430,59 +440,75 @@ class WordRenderer:
 
     # ─── Inline Text Rendering ────────────────────────────────────────
 
+    @staticmethod
+    def _safe_text(text):
+        """Strip characters that are illegal in XML 1.0 (control chars except tab/LF/CR)."""
+        return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+
+    # Tokenizer regex: matches tokens in priority order.
+    # Inline math $...$ is matched FIRST so that * inside math (e.g. K^*)
+    # is never consumed by the bold/italic patterns.
+    _TOKEN_RE = re.compile(
+        r'(\$(?!\$).+?\$(?!\$))'    # group 1: inline math  $...$
+        r'|(\*\*.+?\*\*)'           # group 2: bold         **...**
+        r'|(\*(?!\*).+?\*(?!\*))'   # group 3: italic       *...*
+        r'|(`[^`]+`)'               # group 4: code         `...`
+    )
+
     def render_rich_text(self, paragraph, text, bold_all=False):
         """Render text with inline $math$, **bold**, *italic*, `code` into paragraph.
 
-        Uses native OMML for inline math when available, Unicode fallback otherwise.
+        Uses a single-pass tokenizer so that ``*`` inside ``$math$`` is never
+        misinterpreted as markdown bold or italic.
         """
         # Resolve citations first
         text = resolve_citations(text, self.cite_map)
-        # Join continuation lines
+        # Join continuation lines (single newline → space)
         text = re.sub(r'\n(?!\n)', ' ', text)
 
-        # Split by inline math $...$
-        parts = re.split(r'(?<!\$)(\$(?!\$).+?\$(?!\$))', text)
+        pos = 0
+        for m in self._TOKEN_RE.finditer(text):
+            # Plain text before this token
+            if m.start() > pos:
+                plain = self._safe_text(text[pos:m.start()])
+                if plain:
+                    run = paragraph.add_run(plain)
+                    if bold_all:
+                        run.bold = True
 
-        for part in parts:
-            if not part:
-                continue
-
-            # Inline math
-            if part.startswith('$') and part.endswith('$') and not part.startswith('$$'):
-                latex = part[1:-1]
+            if m.group(1):       # inline math $...$
+                latex = m.group(1)[1:-1]
                 omml = latex_to_omml(latex) if self.has_omml else None
                 if omml is not None:
                     paragraph._element.append(omml)
                 else:
-                    # Unicode fallback
-                    math_text = latex_to_unicode(latex)
+                    math_text = self._safe_text(latex_to_unicode(latex))
                     run = paragraph.add_run(math_text)
                     run.italic = True
                     run.font.name = self.get("font_math")
-                continue
-
-            # Formatted text: **bold**, *italic*, `code`, plain
-            segments = re.split(r'(\*\*.*?\*\*|\*.*?\*|`[^`]+`)', part)
-            for seg in segments:
-                if not seg:
-                    continue
-                if seg.startswith('**') and seg.endswith('**'):
-                    run = paragraph.add_run(seg[2:-2])
+            elif m.group(2):     # bold **...**
+                run = paragraph.add_run(self._safe_text(m.group(2)[2:-2]))
+                run.bold = True
+            elif m.group(3):     # italic *...*
+                run = paragraph.add_run(self._safe_text(m.group(3)[1:-1]))
+                run.italic = True
+            elif m.group(4):     # code `...`
+                run = paragraph.add_run(self._safe_text(m.group(4)[1:-1]))
+                run.font.name = self.get("font_code")
+                run.font.size = Pt(self.get("font_size_body") - 1)
+                run.font.color.rgb = RGBColor(0x33, 0x33, 0x99)
+                if bold_all:
                     run.bold = True
-                elif seg.startswith('*') and seg.endswith('*'):
-                    run = paragraph.add_run(seg[1:-1])
-                    run.italic = True
-                elif seg.startswith('`') and seg.endswith('`'):
-                    run = paragraph.add_run(seg[1:-1])
-                    run.font.name = self.get("font_code")
-                    run.font.size = Pt(self.get("font_size_body") - 1)
-                    run.font.color.rgb = RGBColor(0x33, 0x33, 0x99)
-                    if bold_all:
-                        run.bold = True
-                else:
-                    run = paragraph.add_run(seg)
-                    if bold_all:
-                        run.bold = True
+
+            pos = m.end()
+
+        # Remaining plain text after last token
+        if pos < len(text):
+            plain = self._safe_text(text[pos:])
+            if plain:
+                run = paragraph.add_run(plain)
+                if bold_all:
+                    run.bold = True
 
     # ─── Display Equations ────────────────────────────────────────────
 
@@ -498,7 +524,7 @@ class WordRenderer:
         if omml is not None:
             p._element.append(omml)
         else:
-            cleaned = latex_to_unicode(latex_str)
+            cleaned = self._safe_text(latex_to_unicode(latex_str))
             run = p.add_run(cleaned)
             run.italic = True
             run.font.name = self.get("font_math")
@@ -622,7 +648,7 @@ class WordRenderer:
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
             p.paragraph_format.line_spacing = 1.0
-            run = p.add_run(line if line else ' ')
+            run = p.add_run(self._safe_text(line) if line else ' ')
             run.font.name = self.get("font_code")
             run.font.size = Pt(self.get("font_size_code"))
 
@@ -730,7 +756,7 @@ class WordRenderer:
             p.paragraph_format.first_line_indent = Inches(-0.4)
             p.paragraph_format.space_after = Pt(2)
             p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-            run = p.add_run(ref_text)
+            run = p.add_run(self._safe_text(ref_text))
             run.font.size = Pt(self.get("font_size_ref"))
             run.font.name = self.get("font_body")
 

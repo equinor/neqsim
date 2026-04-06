@@ -323,9 +323,9 @@ public class DistillationColumnTest {
   public void relaxedToleranceDefaultsCanBeAdjusted() {
     DistillationColumn column = new DistillationColumn("tolerance defaults", 1, true, true);
 
-    assertEquals(5.0e-3, column.getTemperatureTolerance(), 1.0e-12);
-    assertEquals(2.0e-2, column.getMassBalanceTolerance(), 1.0e-12);
-    assertEquals(2.0e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
+    assertEquals(4.0e-3, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(1.6e-2, column.getMassBalanceTolerance(), 1.0e-12);
+    assertEquals(1.6e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
 
     column.setTemperatureTolerance(1.0e-2);
     column.setMassBalanceTolerance(3.5e-2);
@@ -559,15 +559,14 @@ public class DistillationColumnTest {
   }
 
   /**
-   * Regression test: column with feed below the top tray converges and stays stable across
-   * multiple runs. Prior to fix, columns with a rectifying section (trays above feed) would diverge
-   * because the sequential solver's first iteration produced unbounded internal L/V flows.
+   * Regression test: column with feed below the top tray converges and stays stable across multiple
+   * runs. Prior to fix, columns with a rectifying section (trays above feed) would diverge because
+   * the sequential solver's first iteration produced unbounded internal L/V flows.
    */
   @Test
   public void multipleProcessSystemRunsDoNotDiverge() {
     // Use configuration similar to deethanizerTest but with condenser and feed on tray 3
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(216, 30.00);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(216, 30.00);
     fluid.addComponent("nitrogen", 1.67366E-3);
     fluid.addComponent("CO2", 1.06819E-4);
     fluid.addComponent("methane", 5.14168E-1);
@@ -609,9 +608,8 @@ public class DistillationColumnTest {
     assertTrue(Double.isFinite(btmsFlow), "Bottoms flow must be finite, was " + btmsFlow);
 
     double massBalanceError = Math.abs(totalOut - feedFlow) / feedFlow * 100.0;
-    assertTrue(massBalanceError < 5.0,
-        "Run1 mass balance error " + massBalanceError + "% exceeds 5% limit. "
-            + "Feed=" + feedFlow + " Ovhd=" + ovhdFlow + " Btms=" + btmsFlow);
+    assertTrue(massBalanceError < 5.0, "Run1 mass balance error " + massBalanceError
+        + "% exceeds 5% limit. " + "Feed=" + feedFlow + " Ovhd=" + ovhdFlow + " Btms=" + btmsFlow);
 
     // Second direct run should stay converged
     column.run();
@@ -619,8 +617,7 @@ public class DistillationColumnTest {
     double btms2 = column.getLiquidOutStream().getFlowRate("kg/hr");
     double total2 = ovhd2 + btms2;
     double massBalanceError2 = Math.abs(total2 - feedFlow) / feedFlow * 100.0;
-    assertTrue(massBalanceError2 < 5.0,
-        "Run2 mass balance error " + massBalanceError2 + "% exceeds 5% limit. "
-            + "Feed=" + feedFlow + " Ovhd=" + ovhd2 + " Btms=" + btms2);
+    assertTrue(massBalanceError2 < 5.0, "Run2 mass balance error " + massBalanceError2
+        + "% exceeds 5% limit. " + "Feed=" + feedFlow + " Ovhd=" + ovhd2 + " Btms=" + btms2);
   }
 }

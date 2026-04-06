@@ -27,6 +27,11 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
   private double trayPressure = -1.0;
 
+  /** Cached gas out stream, invalidated when run() is called. */
+  private transient StreamInterface cachedGasOutStream = null;
+  /** Cached liquid out stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidOutStream = null;
+
   /**
    * <p>
    * Constructor for SimpleTray.
@@ -119,6 +124,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    cachedGasOutStream = null;
+    cachedLiquidOutStream = null;
     double enthalpy = 0.0;
     // double flowRate = ((Stream)
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
@@ -199,6 +206,35 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
+   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's
+   * thermo system compositions externally (e.g. Murphree efficiency correction).
+   */
+  public void invalidateOutStreamCache() {
+    cachedGasOutStream = null;
+    cachedLiquidOutStream = null;
+  }
+
+  /**
+   * Set a pre-built gas out stream (e.g. Murphree-corrected) to be returned by
+   * {@link #getGasOutStream()} instead of the equilibrium result.
+   *
+   * @param stream the corrected gas stream
+   */
+  public void setCachedGasOutStream(StreamInterface stream) {
+    this.cachedGasOutStream = stream;
+  }
+
+  /**
+   * Set a pre-built liquid out stream (e.g. Murphree-corrected) to be returned by
+   * {@link #getLiquidOutStream()} instead of the equilibrium result.
+   *
+   * @param stream the corrected liquid stream
+   */
+  public void setCachedLiquidOutStream(StreamInterface stream) {
+    this.cachedLiquidOutStream = stream;
+  }
+
+  /**
    * <p>
    * getGasOutStream.
    * </p>
@@ -206,7 +242,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getGasOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    if (cachedGasOutStream == null) {
+      cachedGasOutStream = new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    }
+    return cachedGasOutStream;
   }
 
   /**
@@ -217,7 +256,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getLiquidOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    if (cachedLiquidOutStream == null) {
+      cachedLiquidOutStream = new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    }
+    return cachedLiquidOutStream;
   }
 
   /** {@inheritDoc} */
