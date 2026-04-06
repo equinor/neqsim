@@ -103,11 +103,15 @@ class SchemaCatalogTest {
   void testGetToolNames() {
     List<String> tools = SchemaCatalog.getToolNames();
 
-    assertEquals(4, tools.size());
+    assertEquals(8, tools.size());
     assertTrue(tools.contains("run_flash"));
     assertTrue(tools.contains("run_process"));
     assertTrue(tools.contains("validate_input"));
     assertTrue(tools.contains("list_components"));
+    assertTrue(tools.contains("run_batch"));
+    assertTrue(tools.contains("get_property_table"));
+    assertTrue(tools.contains("get_phase_envelope"));
+    assertTrue(tools.contains("get_capabilities"));
   }
 
   @Test
@@ -145,10 +149,55 @@ class SchemaCatalogTest {
     assertTrue(root.has("run_process"));
     assertTrue(root.has("validate_input"));
     assertTrue(root.has("list_components"));
+    assertTrue(root.has("run_batch"));
+    assertTrue(root.has("get_property_table"));
+    assertTrue(root.has("get_phase_envelope"));
+    assertTrue(root.has("get_capabilities"));
 
     // Each tool should have input and output URIs
     JsonObject flash = root.getAsJsonObject("run_flash");
     assertTrue(flash.get("inputSchemaUri").getAsString().contains("run_flash"));
     assertTrue(flash.get("outputSchemaUri").getAsString().contains("run_flash"));
+  }
+
+  @Test
+  void testBatchSchemas() {
+    String input = SchemaCatalog.getSchema("run_batch", "input");
+    assertNotNull(input);
+    assertTrue(input.contains("BatchInput"));
+
+    String output = SchemaCatalog.getSchema("run_batch", "output");
+    assertNotNull(output);
+    assertTrue(output.contains("BatchOutput"));
+  }
+
+  @Test
+  void testPropertyTableSchemas() {
+    String input = SchemaCatalog.getSchema("get_property_table", "input");
+    assertNotNull(input);
+    assertTrue(input.contains("PropertyTableInput"));
+
+    String output = SchemaCatalog.getSchema("get_property_table", "output");
+    assertNotNull(output);
+    assertTrue(output.contains("PropertyTableOutput"));
+  }
+
+  @Test
+  void testPhaseEnvelopeSchemas() {
+    String input = SchemaCatalog.getSchema("get_phase_envelope", "input");
+    assertNotNull(input);
+    assertTrue(input.contains("PhaseEnvelopeInput"));
+
+    String output = SchemaCatalog.getSchema("get_phase_envelope", "output");
+    assertNotNull(output);
+    assertTrue(output.contains("PhaseEnvelopeOutput"));
+  }
+
+  @Test
+  void testCapabilitiesSchema() {
+    assertNull(SchemaCatalog.getSchema("get_capabilities", "input"));
+    String output = SchemaCatalog.getSchema("get_capabilities", "output");
+    assertNotNull(output);
+    assertTrue(output.contains("CapabilitiesOutput"));
   }
 }

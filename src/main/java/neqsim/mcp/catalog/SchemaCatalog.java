@@ -354,6 +354,325 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  // ========== Batch Schemas ==========
+
+  /**
+   * Returns the JSON Schema for batch calculation input.
+   *
+   * @return JSON Schema string
+   */
+  public static String batchInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "BatchInput");
+    schema.put("description", "Input for batch flash calculations (run_batch tool). "
+        + "Shares a base fluid; each case can override T, P, components, or flashType.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("model", enumProp("Thermodynamic model",
+        Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU")));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Base component-to-mole-fraction map");
+    Map<String, Object> addProps = new LinkedHashMap<String, Object>();
+    addProps.put("type", "number");
+    addProps.put("minimum", 0);
+    components.put("additionalProperties", addProps);
+    properties.put("components", components);
+
+    properties.put("mixingRule", stringProp("Mixing rule (default: classic)"));
+    properties.put("flashType", enumProp("Default flash type for all cases", Arrays.asList("TP",
+        "PH", "PS", "TV", "dewPointT", "dewPointP", "bubblePointT", "bubblePointP", "hydrateTP")));
+
+    Map<String, Object> cases = new LinkedHashMap<String, Object>();
+    cases.put("type", "array");
+    cases.put("description",
+        "Array of case objects (max 500). Each can have temperature, pressure, components, flashType.");
+    Map<String, Object> caseItem = new LinkedHashMap<String, Object>();
+    caseItem.put("type", "object");
+    Map<String, Object> caseProps = new LinkedHashMap<String, Object>();
+    caseProps.put("temperature", valueWithUnitSchema("Temperature override", "Temperature unit",
+        Arrays.asList("K", "C", "F", "R"), "K"));
+    caseProps.put("pressure", valueWithUnitSchema("Pressure override", "Pressure unit",
+        Arrays.asList("bara", "barg", "Pa", "kPa", "MPa", "psi", "atm"), "bara"));
+    caseItem.put("properties", caseProps);
+    cases.put("items", caseItem);
+    Map<String, Object> casesConstraint = new LinkedHashMap<String, Object>();
+    casesConstraint.put("maxItems", 500);
+    cases.putAll(casesConstraint);
+    properties.put("cases", cases);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("components", "cases"));
+
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for batch calculation output.
+   *
+   * @return JSON Schema string
+   */
+  public static String batchOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "BatchOutput");
+    schema.put("description", "Output of batch flash calculations (run_batch tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status",
+        enumProp("Overall batch status", Arrays.asList("success", "partial", "error")));
+
+    Map<String, Object> summary = new LinkedHashMap<String, Object>();
+    summary.put("type", "object");
+    summary.put("description", "Batch summary with counts and timing");
+    Map<String, Object> summaryProps = new LinkedHashMap<String, Object>();
+    summaryProps.put("totalCases", intProp("Total cases submitted"));
+    summaryProps.put("succeeded", intProp("Cases that succeeded"));
+    summaryProps.put("failed", intProp("Cases that failed"));
+    summaryProps.put("elapsedMs", intProp("Total elapsed time in milliseconds"));
+    summary.put("properties", summaryProps);
+    properties.put("summary", summary);
+
+    Map<String, Object> results = new LinkedHashMap<String, Object>();
+    results.put("type", "array");
+    results.put("description", "Per-case results in same order as input cases");
+    Map<String, Object> resultItem = new LinkedHashMap<String, Object>();
+    resultItem.put("type", "object");
+    results.put("items", resultItem);
+    properties.put("results", results);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("status", "summary", "results"));
+
+    return GSON.toJson(schema);
+  }
+
+  // ========== Property Table Schemas ==========
+
+  /**
+   * Returns the JSON Schema for property table input.
+   *
+   * @return JSON Schema string
+   */
+  public static String propertyTableInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "PropertyTableInput");
+    schema.put("description", "Input for property table sweep (get_property_table tool). "
+        + "Sweeps temperature or pressure and returns properties at each point.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("model", enumProp("Thermodynamic model",
+        Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU")));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Component-to-mole-fraction map");
+    Map<String, Object> addPropsT = new LinkedHashMap<String, Object>();
+    addPropsT.put("type", "number");
+    addPropsT.put("minimum", 0);
+    components.put("additionalProperties", addPropsT);
+    properties.put("components", components);
+
+    properties.put("mixingRule", stringProp("Mixing rule (default: classic)"));
+    properties.put("sweep",
+        enumProp("Variable to sweep", Arrays.asList("temperature", "pressure")));
+    properties.put("sweepFrom", valueWithUnitSchema("Start of sweep range", "Unit",
+        Arrays.asList("K", "C", "F", "bara", "barg", "Pa", "kPa", "MPa", "psi"), "C"));
+    properties.put("sweepTo", valueWithUnitSchema("End of sweep range", "Unit",
+        Arrays.asList("K", "C", "F", "bara", "barg", "Pa", "kPa", "MPa", "psi"), "C"));
+
+    Map<String, Object> pts = new LinkedHashMap<String, Object>();
+    pts.put("type", "integer");
+    pts.put("description", "Number of data points (2-200, default 20)");
+    pts.put("minimum", 2);
+    pts.put("maximum", 200);
+    pts.put("default", 20);
+    properties.put("points", pts);
+
+    properties.put("fixedPressure",
+        valueWithUnitSchema("Fixed pressure (when sweeping temperature)", "Pressure unit",
+            Arrays.asList("bara", "barg", "Pa", "kPa", "MPa", "psi"), "bara"));
+    properties.put("fixedTemperature",
+        valueWithUnitSchema("Fixed temperature (when sweeping pressure)", "Temperature unit",
+            Arrays.asList("K", "C", "F"), "C"));
+
+    Map<String, Object> propsArray = new LinkedHashMap<String, Object>();
+    propsArray.put("type", "array");
+    Map<String, Object> propsItems = new LinkedHashMap<String, Object>();
+    propsItems.put("type", "string");
+    propsItems.put("enum",
+        Arrays.asList("density", "viscosity", "Cp", "Cv", "Z", "enthalpy", "entropy",
+            "thermalConductivity", "molarMass", "soundSpeed", "jouleThomsonCoefficient",
+            "numberOfPhases"));
+    propsArray.put("items", propsItems);
+    propsArray.put("description", "Properties to include in table (default: all available)");
+    properties.put("properties", propsArray);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("components", "sweep"));
+
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for property table output.
+   *
+   * @return JSON Schema string
+   */
+  public static String propertyTableOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "PropertyTableOutput");
+    schema.put("description", "Output of property table sweep (get_property_table tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("model", stringProp("Thermodynamic model used"));
+    properties.put("sweep", stringProp("Variable swept (temperature or pressure)"));
+
+    Map<String, Object> table = new LinkedHashMap<String, Object>();
+    table.put("type", "array");
+    table.put("description",
+        "Array of data rows, one per sweep point, each containing requested properties");
+    Map<String, Object> rowItem = new LinkedHashMap<String, Object>();
+    rowItem.put("type", "object");
+    table.put("items", rowItem);
+    properties.put("table", table);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("status", "table"));
+
+    return GSON.toJson(schema);
+  }
+
+  // ========== Phase Envelope Schemas ==========
+
+  /**
+   * Returns the JSON Schema for phase envelope input.
+   *
+   * @return JSON Schema string
+   */
+  public static String phaseEnvelopeInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "PhaseEnvelopeInput");
+    schema.put("description", "Input for phase envelope calculation (get_phase_envelope tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("model", enumProp("Thermodynamic model",
+        Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU")));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Component-to-mole-fraction map");
+    Map<String, Object> addPropsE = new LinkedHashMap<String, Object>();
+    addPropsE.put("type", "number");
+    addPropsE.put("minimum", 0);
+    components.put("additionalProperties", addPropsE);
+    properties.put("components", components);
+
+    properties.put("mixingRule", stringProp("Mixing rule (default: classic)"));
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("components"));
+
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for phase envelope output.
+   *
+   * @return JSON Schema string
+   */
+  public static String phaseEnvelopeOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "PhaseEnvelopeOutput");
+    schema.put("description", "Output of phase envelope calculation (get_phase_envelope tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+
+    Map<String, Object> envelope = new LinkedHashMap<String, Object>();
+    envelope.put("type", "array");
+    envelope.put("description",
+        "Array of {temperature_K, pressure_bara, type} points along the phase boundary");
+    Map<String, Object> envItem = new LinkedHashMap<String, Object>();
+    envItem.put("type", "object");
+    Map<String, Object> envProps = new LinkedHashMap<String, Object>();
+    envProps.put("temperature_K", new LinkedHashMap<String, Object>() {
+      {
+        put("type", "number");
+      }
+    });
+    envProps.put("pressure_bara", new LinkedHashMap<String, Object>() {
+      {
+        put("type", "number");
+      }
+    });
+    envProps.put("type", stringProp("Point type: bubblePoint or dewPoint"));
+    envItem.put("properties", envProps);
+    envelope.put("items", envItem);
+    properties.put("envelope", envelope);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("status", "envelope"));
+
+    return GSON.toJson(schema);
+  }
+
+  // ========== Capabilities Schema ==========
+
+  /**
+   * Returns the JSON Schema for capabilities output.
+   *
+   * @return JSON Schema string
+   */
+  public static String capabilitiesOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "CapabilitiesOutput");
+    schema.put("description", "Output of capabilities discovery (get_capabilities tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", stringProp("Result status"));
+    properties.put("engine", stringProp("Engine name (NeqSim)"));
+    properties.put("description", stringProp("Engine description"));
+
+    Map<String, Object> thermo = new LinkedHashMap<String, Object>();
+    thermo.put("type", "object");
+    thermo.put("description", "Thermodynamic models and flash types supported");
+    properties.put("thermodynamicModels", thermo);
+
+    Map<String, Object> equipment = new LinkedHashMap<String, Object>();
+    equipment.put("type", "object");
+    equipment.put("description", "Process equipment types supported");
+    properties.put("processEquipment", equipment);
+
+    Map<String, Object> domains = new LinkedHashMap<String, Object>();
+    domains.put("type", "array");
+    domains.put("description", "Engineering domains covered");
+    Map<String, Object> domainItem = new LinkedHashMap<String, Object>();
+    domainItem.put("type", "string");
+    domains.put("items", domainItem);
+    properties.put("engineeringDomains", domains);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -363,7 +682,8 @@ public final class SchemaCatalog {
    */
   public static List<String> getToolNames() {
     return Collections.unmodifiableList(
-        Arrays.asList("run_flash", "run_process", "validate_input", "list_components"));
+        Arrays.asList("run_flash", "run_process", "validate_input", "list_components", "run_batch",
+            "get_property_table", "get_phase_envelope", "get_capabilities"));
   }
 
   /**
@@ -382,6 +702,14 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? validateInputSchema() : validateOutputSchema();
     } else if ("list_components".equals(toolName)) {
       return "output".equals(schemaType) ? componentSearchOutputSchema() : null;
+    } else if ("run_batch".equals(toolName)) {
+      return "input".equals(schemaType) ? batchInputSchema() : batchOutputSchema();
+    } else if ("get_property_table".equals(toolName)) {
+      return "input".equals(schemaType) ? propertyTableInputSchema() : propertyTableOutputSchema();
+    } else if ("get_phase_envelope".equals(toolName)) {
+      return "input".equals(schemaType) ? phaseEnvelopeInputSchema() : phaseEnvelopeOutputSchema();
+    } else if ("get_capabilities".equals(toolName)) {
+      return "output".equals(schemaType) ? capabilitiesOutputSchema() : null;
     }
     return null;
   }

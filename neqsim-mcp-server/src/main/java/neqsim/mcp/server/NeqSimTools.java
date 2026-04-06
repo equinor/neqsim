@@ -156,7 +156,9 @@ public class NeqSimTools {
   @Tool(description = "Get an example JSON template for NeqSim tools. "
       + "Categories: flash (tp-simple-gas, tp-two-phase, dew-point-t, "
       + "bubble-point-p, cpa-with-water), process (simple-separation, "
-      + "compression-with-cooling), validation (error-flash).")
+      + "compression-with-cooling), validation (error-flash), "
+      + "batch (temperature-sweep, pressure-sweep), "
+      + "property-table (temperature-sweep, pressure-sweep), " + "phase-envelope (natural-gas).")
   public String getExample(
       @ToolArg(description = "Example category: flash, process, or validation") String category,
       @ToolArg(
@@ -177,10 +179,12 @@ public class NeqSimTools {
    * @return JSON schema string
    */
   @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. "
-      + "Tools: run_flash, run_process, validate_input, search_components. "
+      + "Tools: run_flash, run_process, validate_input, list_components, "
+      + "run_batch, get_property_table, get_phase_envelope, get_capabilities. "
       + "Types: input, output.")
-  public String getSchema(@ToolArg(
-      description = "Tool name: run_flash, run_process, validate_input, or search_components") String toolName,
+  public String getSchema(
+      @ToolArg(description = "Tool name: run_flash, run_process, validate_input, list_components, "
+          + "run_batch, get_property_table, get_phase_envelope, or get_capabilities") String toolName,
       @ToolArg(description = "Schema type: input or output") String schemaType) {
     String schema = SchemaCatalog.getSchema(toolName, schemaType);
     if (schema != null) {
