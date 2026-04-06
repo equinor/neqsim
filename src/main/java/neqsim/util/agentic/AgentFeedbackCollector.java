@@ -206,6 +206,8 @@ public class AgentFeedbackCollector implements Serializable {
     report.put("averageSimulationSuccessRate", getAverageSimulationSuccessRate());
     report.put("failureCategories", getFailureCategoryCounts());
     report.put("discoveredAPIGaps", discoveredGaps.size());
+    report.put("remediationRecommendations", generateRemediations());
+    report.put("learningTrend", computeLearningTrend());
 
     // Per-agent breakdown
     Map<String, Map<String, Object>> agentBreakdown =
@@ -228,6 +230,214 @@ public class AgentFeedbackCollector implements Serializable {
     Gson gson =
         new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(report);
+  }
+
+  /**
+   * Generate automated remediation recommendations based on recurring failure patterns.
+   *
+   * <p>
+   * Analyzes failure frequency by category and agent, and returns prioritized, actionable
+   * recommendations. This is the core of the cross-session learning loop described in the
+   * framework: failures drive recommendations, which in turn drive framework improvements.
+   * </p>
+   *
+   * @return list of remediation recommendation maps, each with "priority", "category",
+   *         "recommendation", "affectedAgent", and "frequency"
+   */
+  public List<Map<String, Object>> generateRemediations() {
+    List<Map<String, Object>> remediations = new ArrayList<Map<String, Object>>();
+
+    if (sessions.isEmpty()) {
+      return remediations;
+    }
+
+    // Count failures per (agent, category) pair
+    Map<String, Map<String, Integer>> agentFailures =
+        new LinkedHashMap<String, Map<String, Integer>>();
+    for (SessionSummary s : sessions) {
+      if (s.outcome == AgentSession.Outcome.FAILED && s.failureCategory != null) {
+        Map<String, Integer> catMap = agentFailures.get(s.agentName);
+        if (catMap == null) {
+          catMap = new LinkedHashMap<String, Integer>();
+          agentFailures.put(s.agentName, catMap);
+        }
+        Integer prev = catMap.get(s.failureCategory);
+        catMap.put(s.failureCategory, prev != null ? prev + 1 : 1);
+      }
+    }
+
+    // Generate recommendations for each recurring failure pattern
+    for (Map.Entry<String, Map<String, Integer>> agentEntry : agentFailures.entrySet()) {
+      String agent = agentEntry.getKey();
+      for (Map.Entry<String, Integer> catEntry : agentEntry.getValue().entrySet()) {
+        String category = catEntry.getKey();
+        int count = catEntry.getValue();
+
+        // Only recommend for patterns that occur more than once
+        if (count < 2) {
+          continue;
+        }
+
+        Map<String, Object> rec = new LinkedHashMap<String, Object>();
+        rec.put("affectedAgent", agent);
+        rec.put("category", category);
+        rec.put("frequency", count);
+        rec.put("priority", count >= 5 ? "critical" : count >= 3 ? "high" : "medium");
+        rec.put("recommendation", getRemediationText(category, agent, count));
+        remediations.add(rec);
+      }
+    }
+
+    // Sort by frequency descending
+    Collections.sort(remediations, new java.util.Comparator<Map<String, Object>>() {
+      @Override
+      public int compare(Map<String, Object> a, Map<String, Object> b) {
+        return ((Integer) b.get("frequency")).compareTo((Integer) a.get("frequency"));
+      }
+    });
+
+    return remediations;
+  }
+
+  /**
+   * Compute a learning trend showing success rate over sliding windows.
+   *
+   * <p>
+   * Divides sessions into windows of 10 and computes the success rate in each window. An increasing
+   * trend indicates that the framework is improving over time through accumulated knowledge (skill
+   * updates, API gap fixes, new error-handling patterns).
+   * </p>
+   *
+   * @return list of maps with "window", "sessions", "successRate" keys, one per window
+   */
+  public List<Map<String, Object>> computeLearningTrend() {
+    List<Map<String, Object>> trend = new ArrayList<Map<String, Object>>();
+    int windowSize = 10;
+
+    if (sessions.size() < windowSize) {
+      // Not enough data for trend analysis — return single window
+      if (!sessions.isEmpty()) {
+        Map<String, Object> window = new LinkedHashMap<String, Object>();
+        window.put("window", 1);
+        window.put("sessions", sessions.size());
+        window.put("successRate", getOverallSuccessRate());
+        trend.add(window);
+      }
+      return trend;
+    }
+
+    int windowCount = 0;
+    for (int start = 0; start < sessions.size(); start += windowSize) {
+      int end = Math.min(start + windowSize, sessions.size());
+      int successes = 0;
+      int total = end - start;
+
+      for (int i = start; i < end; i++) {
+        SessionSummary s = sessions.get(i);
+        if (s.outcome == AgentSession.Outcome.SUCCESS
+            || s.outcome == AgentSession.Outcome.PARTIAL) {
+          successes++;
+        }
+      }
+
+      windowCount++;
+      Map<String, Object> window = new LinkedHashMap<String, Object>();
+      window.put("window", windowCount);
+      window.put("sessions", total);
+      window.put("successRate", total > 0 ? (double) successes / total : 0.0);
+      trend.add(window);
+    }
+
+    return trend;
+  }
+
+  /**
+   * Identify the most impactful API gap to fix next.
+   *
+   * <p>
+   * Cross-references discovered API gaps with failure frequency to determine which missing
+   * capability would fix the most failures if implemented. This drives the development flywheel
+   * described in the framework: Gap discovery leads to targeted implementation.
+   * </p>
+   *
+   * @return the highest-impact API gap, or null if none recorded
+   */
+  public APIGap getMostImpactfulGap() {
+    if (discoveredGaps.isEmpty()) {
+      return null;
+    }
+
+    // Count MISSING_API failures
+    int missingApiCount = 0;
+    for (SessionSummary s : sessions) {
+      if (s.failureCategory != null && s.failureCategory.equals("MISSING_API")) {
+        missingApiCount++;
+      }
+    }
+
+    // If no missing API failures, return the highest-priority gap
+    if (missingApiCount == 0) {
+      APIGap best = discoveredGaps.get(0);
+      for (APIGap gap : discoveredGaps) {
+        if ("critical".equals(gap.priority)) {
+          return gap;
+        }
+        if ("important".equals(gap.priority) && !"critical".equals(best.priority)) {
+          best = gap;
+        }
+      }
+      return best;
+    }
+
+    // Return the most recent critical gap (most likely to be causing current failures)
+    APIGap best = null;
+    for (APIGap gap : discoveredGaps) {
+      if ("critical".equals(gap.priority)) {
+        if (best == null || gap.discoveredAt > best.discoveredAt) {
+          best = gap;
+        }
+      }
+    }
+    return best != null ? best : discoveredGaps.get(discoveredGaps.size() - 1);
+  }
+
+  /**
+   * Get remediation text for a failure category.
+   *
+   * @param category the failure category name
+   * @param agent the affected agent name
+   * @param count how many times this failure occurred
+   * @return human-readable remediation recommendation
+   */
+  private String getRemediationText(String category, String agent, int count) {
+    if ("CONVERGENCE".equals(category)) {
+      return "Agent '" + agent + "' has " + count
+          + " convergence failures. Load the troubleshooting skill and apply "
+          + "ranked recovery strategies: (1) tighten recycle tolerance, (2) adjust "
+          + "initial estimates, (3) switch solver type, (4) simplify fluid model.";
+    }
+    if ("MISSING_API".equals(category)) {
+      return "Agent '" + agent + "' encountered " + count
+          + " missing API errors. Review discovered API gaps and implement "
+          + "the missing classes/methods. Check CHANGELOG_AGENT_NOTES.md for recent changes.";
+    }
+    if ("INVALID_INPUT".equals(category)) {
+      return "Agent '" + agent + "' received " + count
+          + " invalid inputs. Add stricter input validation in the agent's "
+          + "scope phase. Load the input-validation skill for pre-simulation checks.";
+    }
+    if ("CODE_ERROR".equals(category)) {
+      return "Agent '" + agent + "' has " + count
+          + " code errors. Review Java 8 compatibility rules and ensure all "
+          + "generated code compiles. Check for null pointer issues in fluid initialization.";
+    }
+    if ("TIMEOUT".equals(category)) {
+      return "Agent '" + agent + "' has " + count
+          + " timeouts. Reduce simulation complexity, use simpler EOS for initial "
+          + "estimates, or increase time limits for complex multi-recycle flowsheets.";
+    }
+    return "Agent '" + agent + "' has " + count + " failures in category " + category
+        + ". Review session logs for root cause.";
   }
 
   /**

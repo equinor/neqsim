@@ -321,3 +321,185 @@ save_fig(fig, "figures/fig01_results.png", dpi=300)
    x-value, automated label placement fails. Use manual offsets dict.
 7. **Missing parity/reference lines**: Always add y=1 line on speedup plots,
    parity line on comparison plots.
+
+---
+
+## Conceptual / Architectural Diagrams
+
+For framework papers, method papers, and system architecture descriptions,
+you need **conceptual diagrams** (layered architectures, workflow arrows,
+feedback loops) — not data plots. Use `matplotlib.patches` and
+`matplotlib.text` for full control over layout, styling, and publication
+quality.
+
+### Why matplotlib for conceptual diagrams?
+
+- **300 DPI + PDF vector output** — meets all journal requirements
+- **Exact font control** — matches paper body (Times New Roman, 9pt)
+- **Reproducible** — script regenerates identical figure after revisions
+- **No external tools** — no Visio/PowerPoint/draw.io screenshots
+- **Consistent palette** — same colors as data plots in the same paper
+
+### Pattern 7: Layered Architecture Diagram (Stacked Boxes)
+
+Use for showing system layers, software stacks, or hierarchical structures.
+
+```python
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from tools.figure_style import apply_style, save_fig, PALETTE, FIG_DOUBLE
+
+apply_style("elsevier")
+
+fig, ax = plt.subplots(figsize=FIG_DOUBLE)
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 8)
+ax.axis("off")
+
+# Define layers bottom-to-top: (y_center, height, label, color)
+layers = [
+    (0.5, 0.8, "Layer 1: Foundation", PALETTE[0]),
+    (1.5, 0.8, "Layer 2: Core", PALETTE[1]),
+    (2.5, 0.8, "Layer 3: Services", PALETTE[2]),
+    (3.5, 0.8, "Layer 4: Application", PALETTE[3]),
+]
+
+for y, h, label, color in layers:
+    rect = mpatches.FancyBboxPatch(
+        (1.0, y), 8.0, h,
+        boxstyle="round,pad=0.1",
+        facecolor=color, edgecolor="black", linewidth=0.6, alpha=0.25
+    )
+    ax.add_patch(rect)
+    ax.text(5.0, y + h / 2, label, ha="center", va="center",
+            fontsize=9, fontweight="bold")
+
+# Add upward arrows between layers
+for i in range(len(layers) - 1):
+    y_from = layers[i][0] + layers[i][1]
+    y_to = layers[i + 1][0]
+    ax.annotate("", xy=(5.0, y_to), xytext=(5.0, y_from),
+                arrowprops=dict(arrowstyle="->", color="black", lw=0.8))
+
+save_fig(fig, "fig_architecture.png", dpi=300, formats=["pdf"])
+```
+
+**Key rules for architecture diagrams:**
+- Use `FancyBboxPatch` with `boxstyle="round,pad=0.1"` for rounded corners
+- Keep alpha=0.2–0.3 so text overlaid on boxes remains readable
+- Use consistent left/right margin (x=1.0 to x=9.0 in a 0–10 coordinate space)
+- Add `description` text in smaller font (7pt) below the layer label
+- Arrows connect layers with `annotate()` using `arrowstyle="->"`
+
+### Pattern 8: Workflow / Pipeline Diagram (Horizontal Boxes + Arrows)
+
+Use for showing sequential steps, pipelines, or phase progressions.
+
+```python
+fig, ax = plt.subplots(figsize=FIG_DOUBLE)
+ax.set_xlim(0, 14)
+ax.set_ylim(0, 3)
+ax.axis("off")
+
+phases = ["Scope", "Research", "Analysis", "Validation", "Reporting"]
+colors = [PALETTE[i] for i in range(len(phases))]
+box_w, box_h = 2.0, 1.6
+gap = 0.4
+x_start = 0.5
+
+for i, (phase, color) in enumerate(zip(phases, colors)):
+    x = x_start + i * (box_w + gap)
+    y = 0.7
+    rect = mpatches.FancyBboxPatch(
+        (x, y), box_w, box_h,
+        boxstyle="round,pad=0.15",
+        facecolor=color, edgecolor="black", linewidth=0.6, alpha=0.25
+    )
+    ax.add_patch(rect)
+    ax.text(x + box_w / 2, y + box_h / 2 + 0.15, f"Phase {i+1}",
+            ha="center", va="center", fontsize=7, color="grey")
+    ax.text(x + box_w / 2, y + box_h / 2 - 0.15, phase,
+            ha="center", va="center", fontsize=9, fontweight="bold")
+
+    # Arrow to next box
+    if i < len(phases) - 1:
+        ax.annotate("", xy=(x + box_w + gap * 0.1, y + box_h / 2),
+                    xytext=(x + box_w - 0.05, y + box_h / 2),
+                    arrowprops=dict(arrowstyle="->", color="black", lw=0.8))
+
+save_fig(fig, "fig_workflow.png", dpi=300, formats=["pdf"])
+```
+
+### Pattern 9: Feedback Loop / Cycle Diagram
+
+Use for digital twin loops, control loops, or iterative processes.
+
+```python
+import numpy as np
+
+fig, ax = plt.subplots(figsize=FIG_DOUBLE)
+ax.set_xlim(-4, 4)
+ax.set_ylim(-3, 3)
+ax.set_aspect("equal")
+ax.axis("off")
+
+# Place nodes in a circle
+labels = ["Plant", "Historian", "Agent", "Simulator", "Optimizer"]
+n = len(labels)
+radius = 2.2
+angles = np.linspace(np.pi / 2, np.pi / 2 + 2 * np.pi, n, endpoint=False)
+
+positions = [(radius * np.cos(a), radius * np.sin(a)) for a in angles]
+
+for (x, y), label, color in zip(positions, labels, PALETTE):
+    rect = mpatches.FancyBboxPatch(
+        (x - 0.7, y - 0.35), 1.4, 0.7,
+        boxstyle="round,pad=0.1",
+        facecolor=color, alpha=0.25, edgecolor="black", linewidth=0.6
+    )
+    ax.add_patch(rect)
+    ax.text(x, y, label, ha="center", va="center", fontsize=8, fontweight="bold")
+
+# Draw curved arrows between consecutive nodes
+for i in range(n):
+    j = (i + 1) % n
+    x1, y1 = positions[i]
+    x2, y2 = positions[j]
+    ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle="->", color="black", lw=0.8,
+                                connectionstyle="arc3,rad=0.15"))
+
+save_fig(fig, "fig_loop.png", dpi=300, formats=["pdf"])
+```
+
+### Pattern 10: Combined Mermaid + matplotlib
+
+For rapid prototyping, use Mermaid for the initial layout concept, then
+implement the final version in matplotlib for publication quality.
+
+**Step 1 — Mermaid prototype** (use `renderMermaidDiagram` tool in VS Code):
+```mermaid
+graph TD
+    A[Plant Data] --> B[Agent]
+    B --> C[Simulator]
+    C --> D[Quality Gate]
+    D --> E[Report]
+    D -->|fail| B
+```
+
+**Step 2 — Implement in matplotlib** using Pattern 7/8/9 above.
+- Mermaid rendered PNG is NOT suitable for journal submission
+  (wrong fonts, cannot control DPI reliably, no serif fonts)
+- Use it only as a visual guide for the matplotlib implementation
+
+### Checklist for Conceptual Diagrams
+
+- [ ] **Same font as paper body** — serif (Times New Roman) via `apply_style`
+- [ ] **Color matches data figures** — use same PALETTE throughout paper
+- [ ] **Low alpha on boxes** (0.2–0.3) — text must be readable over fill
+- [ ] **Black thin borders** — `edgecolor="black", linewidth=0.6`
+- [ ] **Rounded corners** — `boxstyle="round,pad=0.1"` more professional
+- [ ] **Compact layout** — use `FIG_DOUBLE` (7.0 × 3.5) max
+- [ ] **Short labels in diagram** — long descriptions go in caption or paper text
+- [ ] **Arrows meaningful** — every arrow represents a clear data flow or dependency
+- [ ] **Both PNG + PDF** — `save_fig(fig, name, formats=["pdf"])`
