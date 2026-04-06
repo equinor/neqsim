@@ -38,7 +38,142 @@ limitations, convergence status) for trust assessment.
 
 ---
 
-## Prerequisites
+## Quick Start (5 minutes)
+
+The fastest way to get NeqSim running with your LLM. No cloning, no Maven, no build step.
+
+### 1. Install Java 17+
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+```bash
+brew install openjdk@17
+```
+</details>
+
+<details>
+<summary><strong>Linux (Ubuntu/Debian)</strong></summary>
+
+```bash
+sudo apt install openjdk-17-jdk
+```
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+Download from [Adoptium](https://adoptium.net/temurin/releases/?version=17) and run the installer.
+Or with winget:
+```powershell
+winget install EclipseAdoptium.Temurin.17.JDK
+```
+</details>
+
+Verify: `java -version` should show 17 or higher.
+
+### 2. Download the server
+
+Download `neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` from the
+[latest release](https://github.com/equinor/neqsim/releases).
+
+**Or use Docker** (no Java install needed):
+```bash
+docker pull ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+### 3. Connect to your LLM
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "command": "java",
+      "args": ["-jar", "/path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"]
+    }
+  }
+}
+```
+
+With Docker:
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "ghcr.io/equinor/neqsim-mcp-server:latest"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop.
+</details>
+
+<details>
+<summary><strong>VS Code Copilot</strong></summary>
+
+Add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "java",
+      "args": ["-jar", "/path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"]
+    }
+  }
+}
+```
+
+Restart VS Code.
+</details>
+
+<details>
+<summary><strong>Cursor / Other MCP Clients</strong></summary>
+
+Any MCP STDIO client works. Point it at:
+```
+java -jar /path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
+```
+</details>
+
+### 4. Ask a question
+
+Try any of these:
+
+> "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
+
+> "Plot the phase envelope for 85% methane, 10% ethane, 5% propane"
+
+> "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
+
+The LLM discovers NeqSim's tools automatically and calls them to compute rigorous answers — no coding needed.
+
+### Example conversation
+
+**You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
+
+**LLM** *(internally calls `runFlash` with `flashType: "dewPointT"`)*
+
+**LLM responds:** "The dew point temperature is -42.3°C at 50 bara (SRK equation of state, converged in 12 iterations). Below this temperature, liquid will begin to condense."
+
+Every response includes **provenance**: which EOS model was used, whether the calculation converged, and what limitations apply.
+
+---
+
+## Developer Build (from source)
+
+If you want to build from source (for development or to use the latest unreleased code):
+
+### Prerequisites
 
 | Requirement | Version | Notes |
 |---|---|---|
@@ -46,11 +181,9 @@ limitations, convergence status) for trust assessment.
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
 | NeqSim core | 3.6.1 | Must be installed to local Maven repo first (see below) |
 
-## Quick Start
+### Build steps
 
-### 1. Install NeqSim to Local Maven Repo
-
-From the **parent neqsim directory**:
+**1. Install NeqSim to local Maven repo** (from the parent neqsim directory):
 
 ```bash
 # Linux / macOS
@@ -60,9 +193,7 @@ From the **parent neqsim directory**:
 .\mvnw.cmd install -DskipTests "-Dmaven.javadoc.skip=true"
 ```
 
-This puts `com.equinor.neqsim:neqsim:3.6.1` in your local `~/.m2/repository`.
-
-### 2. Build the MCP Server
+**2. Build the MCP server:**
 
 ```bash
 cd neqsim-mcp-server
@@ -74,41 +205,22 @@ cd neqsim-mcp-server
 ..\mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"
 ```
 
-This produces a single uber-jar:
-`target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
+This produces: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
 
-### 3. Verify the Server Works
-
-**Quick STDIO test** — send an MCP `initialize` request:
+**3. Verify the server works:**
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
   | java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
 ```
 
-Expected response:
-
-```json
-{
-  "jsonrpc": "2.0", "id": 1,
-  "result": {
-    "capabilities": { "resources": {"subscribe": true}, "logging": {}, "tools": {} },
-    "serverInfo": { "name": "neqsim", "version": "1.0.0" },
-    "protocolVersion": "2024-11-05"
-  }
-}
-```
-
-**Comprehensive test suite** — runs 111 checks covering flash calculations,
-process simulations, validation, and error handling:
+**4. Run the comprehensive test suite** (111 checks):
 
 ```bash
 python test_mcp_server.py
 ```
 
-### 4. (Optional) Test with MCP Inspector
-
-If Node.js is installed, use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+**5. (Optional) Test with MCP Inspector:**
 
 ```bash
 npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
@@ -116,7 +228,12 @@ npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNA
 
 ---
 
-## Connecting to LLM Clients
+## Connecting to LLM Clients (Developer Build)
+
+> **Using a prebuilt jar or Docker?** See the [Quick Start](#quick-start-5-minutes)
+> section above for connection instructions.
+
+The instructions below are for connecting with a **locally built** uber-jar.
 
 ### VS Code Copilot
 
@@ -140,7 +257,7 @@ To configure manually, add to `.vscode/mcp.json`:
 }
 ```
 
-### Claude Desktop
+### Claude Desktop (developer path)
 
 Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
 `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
