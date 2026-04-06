@@ -12,6 +12,9 @@ import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.Validator;
 import neqsim.mcp.runners.AutomationRunner;
+import neqsim.mcp.runners.CapabilitiesRunner;
+import neqsim.mcp.runners.PhaseEnvelopeRunner;
+import neqsim.mcp.runners.PropertyTableRunner;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
@@ -315,9 +318,10 @@ public class NeqSimTools {
   @Tool(description = "Compare two simulation state snapshots and return the differences. "
       + "Shows modified parameters, added/removed equipment, and changed stream conditions. "
       + "Use after saveSimulationState to track design changes between iterations.")
-  public String compareSimulationStates(
-      @ToolArg(description = "First state JSON (from saveSimulationState 'state' field)") String stateJson1,
-      @ToolArg(description = "Second state JSON (from saveSimulationState 'state' field)") String stateJson2) {
+  public String compareSimulationStates(@ToolArg(
+      description = "First state JSON (from saveSimulationState 'state' field)") String stateJson1,
+      @ToolArg(
+          description = "Second state JSON (from saveSimulationState 'state' field)") String stateJson2) {
     try {
       return AutomationRunner.compareStates(stateJson1, stateJson2);
     } catch (Exception e) {
@@ -327,8 +331,8 @@ public class NeqSimTools {
 
   /**
    * Diagnose a failed automation operation and get suggestions for fixing it. Call this when
-   * getSimulationVariable or setSimulationVariable returns an error to get actionable
-   * remediation hints including fuzzy name matches and auto-corrections.
+   * getSimulationVariable or setSimulationVariable returns an error to get actionable remediation
+   * hints including fuzzy name matches and auto-corrections.
    *
    * @param processJson process definition as JSON
    * @param failedAddress the address that failed
@@ -341,8 +345,10 @@ public class NeqSimTools {
       + "Use this tool to self-correct and retry with the corrected address.")
   public String diagnoseAutomation(
       @ToolArg(description = "Process definition as JSON string") String processJson,
-      @ToolArg(description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
-      @ToolArg(description = "The operation that failed: 'get', 'set', or 'list'") String operation) {
+      @ToolArg(
+          description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
+      @ToolArg(
+          description = "The operation that failed: 'get', 'set', or 'list'") String operation) {
     try {
       return AutomationRunner.diagnose(processJson, failedAddress, operation);
     } catch (Exception e) {
@@ -367,6 +373,125 @@ public class NeqSimTools {
       return AutomationRunner.getLearningReport(processJson);
     } catch (Exception e) {
       return errorJson("Failed to get learning report: " + e.getMessage());
+    }
+  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Quick engineering calculation tools (no process flowsheet required)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Calculate a property table by sweeping temperature or pressure.
+   *
+   * @param components fluid composition as JSON
+   * @param sweep sweep variable (temperature or pressure)
+   * @param sweepFrom start value
+   * @param sweepFromUnit unit for start value
+   * @param sweepTo end value
+   * @param sweepToUnit unit for end value
+   * @param fixedValue the fixed condition value
+   * @param fixedUnit the fixed condition unit
+   * @param points number of data points
+   * @param eos equation of state
+   * @return JSON property table
+   */
+  @Tool(description = "Calculate a table of thermodynamic properties by sweeping temperature "
+      + "or pressure over a range. Returns density, viscosity, Cp, Z-factor, enthalpy, "
+      + "and more at each point. This is the 'quick engineering answer' tool — no process "
+      + "flowsheet needed. Includes provenance metadata for trust assessment.")
+  public String getPropertyTable(
+      @ToolArg(description = "Fluid composition as JSON object mapping component names "
+          + "to mole fractions, e.g. {\"methane\": 0.85, \"ethane\": 0.10}") String components,
+      @ToolArg(description = "Variable to sweep: 'temperature' (vary T at fixed P) "
+          + "or 'pressure' (vary P at fixed T)") String sweep,
+      @ToolArg(description = "Start of sweep range (number)") double sweepFrom,
+      @ToolArg(description = "Unit for start value: C, K, F (temperature) "
+          + "or bara, barg, Pa, kPa, MPa, psi (pressure)") String sweepFromUnit,
+      @ToolArg(description = "End of sweep range (number)") double sweepTo,
+      @ToolArg(description = "Unit for end value (same type as sweepFromUnit)") String sweepToUnit,
+      @ToolArg(description = "Fixed condition value: pressure if sweeping temperature, "
+          + "or temperature if sweeping pressure") double fixedValue,
+      @ToolArg(description = "Unit for fixed condition: bara/barg/Pa/kPa/MPa/psi "
+          + "(if fixed pressure) or C/K/F (if fixed temperature)") String fixedUnit,
+      @ToolArg(description = "Number of data points (2-200, default 20)") int points,
+      @ToolArg(description = "Equation of state: SRK, PR, CPA, GERG2008, "
+          + "PCSAFT, UMRPRU") String eos) {
+    try {
+      com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+      json.add("components", com.google.gson.JsonParser.parseString(components));
+      json.addProperty("model", eos);
+      json.addProperty("sweep", sweep);
+
+      com.google.gson.JsonObject from = new com.google.gson.JsonObject();
+      from.addProperty("value", sweepFrom);
+      from.addProperty("unit", sweepFromUnit);
+      json.add("sweepFrom", from);
+
+      com.google.gson.JsonObject to = new com.google.gson.JsonObject();
+      to.addProperty("value", sweepTo);
+      to.addProperty("unit", sweepToUnit);
+      json.add("sweepTo", to);
+
+      json.addProperty("points", points);
+
+      if ("temperature".equalsIgnoreCase(sweep)) {
+        com.google.gson.JsonObject fixedP = new com.google.gson.JsonObject();
+        fixedP.addProperty("value", fixedValue);
+        fixedP.addProperty("unit", fixedUnit);
+        json.add("fixedPressure", fixedP);
+      } else {
+        com.google.gson.JsonObject fixedT = new com.google.gson.JsonObject();
+        fixedT.addProperty("value", fixedValue);
+        fixedT.addProperty("unit", fixedUnit);
+        json.add("fixedTemperature", fixedT);
+      }
+
+      return PropertyTableRunner.run(json.toString());
+    } catch (Exception e) {
+      return errorJson("Property table calculation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Calculate the PT phase envelope for a fluid mixture.
+   *
+   * @param components fluid composition as JSON
+   * @param eos equation of state
+   * @return JSON with phase envelope data
+   */
+  @Tool(description = "Calculate the PT phase envelope (bubble/dew point curves) for a "
+      + "fluid mixture. Returns pressure-temperature points along the phase boundary, "
+      + "plus cricondenbar and cricondentherm if available. Essential for flow assurance "
+      + "and pipeline design. Includes provenance metadata.")
+  public String getPhaseEnvelope(
+      @ToolArg(description = "Fluid composition as JSON object mapping component names "
+          + "to mole fractions, e.g. {\"methane\": 0.85, \"ethane\": 0.10}") String components,
+      @ToolArg(description = "Equation of state: SRK, PR, CPA, GERG2008, "
+          + "PCSAFT, UMRPRU") String eos) {
+    try {
+      com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+      json.add("components", com.google.gson.JsonParser.parseString(components));
+      json.addProperty("model", eos);
+      return PhaseEnvelopeRunner.run(json.toString());
+    } catch (Exception e) {
+      return errorJson("Phase envelope calculation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Discover NeqSim capabilities, supported models, equipment types, and calculation modes.
+   *
+   * @return JSON capabilities manifest
+   */
+  @Tool(description = "Discover what NeqSim can calculate. Returns a structured manifest "
+      + "of supported thermodynamic models, flash types, equipment types, engineering domains, "
+      + "and calculation modes. Call this first to understand available capabilities "
+      + "before deciding which tool to use. Also describes the trust model and provenance "
+      + "metadata included in every response.")
+  public String getCapabilities() {
+    try {
+      return CapabilitiesRunner.getCapabilities();
+    } catch (Exception e) {
+      return errorJson("Failed to get capabilities: " + e.getMessage());
     }
   }
 
