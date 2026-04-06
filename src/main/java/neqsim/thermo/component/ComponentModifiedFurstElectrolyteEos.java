@@ -49,12 +49,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 
   double bornterm = 0;
 
-  /**
-   * Ion-specific dielectric decrement coefficient (L/mol). Negative values decrease the dielectric
-   * constant. Zero for non-ionic components.
-   */
-  double dielectricDecrement = 0.0;
-
   double alphai = 0.0;
 
   double alphaiT = 0.0;
@@ -70,15 +64,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
   double lrOn = 1.0;
 
   double bornOn = 1.0;
-
-  /**
-   * Composition derivative of the dielectric constant used in the Born term. When decrement is
-   * active, equals the solution-ε derivative (non-zero for ions). When CM, equals the solvent-ε
-   * derivative (zero for ions).
-   */
-  double borndiElectricdn = 0.0;
-  double borndiElectricdndT = 0.0;
-  double borndiElectricdndV = 0.0;
 
   /**
    * <p>
@@ -108,8 +93,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     lennardJonesMolecularDiameter =
         ionicCharge != 0 ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10
             : lennardJonesMolecularDiameter;
-    dielectricDecrement =
-        neqsim.thermo.util.constants.FurstElectrolyteConstants.getIonDielectricDecrement(name);
   }
 
   /**
@@ -227,17 +210,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     if (getLennardJonesMolecularDiameter() > 0) {
       XBorni = ionicCharge * ionicCharge / (getLennardJonesMolecularDiameter() * 1e-10);
     }
-    // Set Born-term dielectric derivatives: interpolated when decrement active
-    if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      double frac = ((PhaseModifiedFurstElectrolyteEos) phase).getBornDecrementFraction();
-      borndiElectricdn = solventdiElectricdn + frac * (diElectricdn - solventdiElectricdn);
-      borndiElectricdndT = solventdiElectricdndT + frac * (diElectricdndT - solventdiElectricdndT);
-      borndiElectricdndV = frac * diElectricdndV;
-    } else {
-      borndiElectricdn = solventdiElectricdn;
-      borndiElectricdndT = solventdiElectricdndT;
-      borndiElectricdndV = 0.0;
-    }
     super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
   }
 
@@ -307,8 +279,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
       double pressure) {
     return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
         + sr2On * dFSR2dNdV(phase, numberOfComponents, temperature, pressure)
-        + lrOn * dFLRdNdV(phase, numberOfComponents, temperature, pressure)
-        + bornOn * dFBorndNdV(phase, numberOfComponents, temperature, pressure);
+        + lrOn * dFLRdNdV(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
@@ -518,9 +489,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 
   /**
    * <p>
-   * calcdiElectricdn. Composition derivative of the mixture dielectric constant using the linear
-   * decrement model: eps = eps_w + sum(delta_i * c_i). For ions: d(eps)/dn_i = delta_i / V_L. For
-   * solvents: d(eps)/dn_i = d(eps_w)/dn_i.
+   * calcdiElectricdn.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -531,17 +500,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double calcdiElectricdn(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      if (ionicCharge != 0) {
-        double volumeL = phase.getMolarVolume() * phase.getNumberOfMolesInPhase() / 100.0;
-        if (volumeL < 1e-30) {
-          return 0.0;
-        }
-        return dielectricDecrement / volumeL;
-      }
-      return getSolventDiElectricConstantdn();
-    }
-    // Original Clausius-Mossotti model
     double X = (1.0 - ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic())
         / (1.0 + ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0);
     double Y = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant() - 1.0;
@@ -553,8 +511,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 
   /**
    * <p>
-   * calcdiElectricdndV. Mixed composition-volume derivative of the mixture dielectric constant. For
-   * ions: d2(eps)/(dn_i * dVhat) = -delta_i / (100 * Vhat^2). For solvents: 0.
+   * calcdiElectricdndV.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -565,17 +522,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double calcdiElectricdndV(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      if (ionicCharge != 0) {
-        double vHat = phase.getMolarVolume() * 1e-5 * phase.getNumberOfMolesInPhase();
-        if (Math.abs(vHat) < 1e-30) {
-          return 0.0;
-        }
-        return -dielectricDecrement / (1000.0 * vHat * vHat);
-      }
-      return 0.0;
-    }
-    // Original Clausius-Mossotti model
     double dXdf = ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonicdV() * -3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 2.0);
     double dYdf = getSolventDiElectricConstantdn();
@@ -589,9 +535,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 
   /**
    * <p>
-   * calcdiElectricdndn. Second composition derivative of the mixture dielectric constant. The
-   * linear ion decrement has no cross terms (d2/dn_i dn_j = 0). Only the solvent mixing rule
-   * contributes.
+   * calcdiElectricdndn.
    * </p>
    *
    * @param j a int
@@ -603,10 +547,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double calcdiElectricdndn(int j, PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      return calcSolventdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
-    }
-    // Original Clausius-Mossotti model
     double dYdf = ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
         .getComponent(j)).getSolventDiElectricConstantdn();
     double dXdfdfj = getEpsIonici() * -3.0 / 2.0
@@ -631,8 +571,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 
   /**
    * <p>
-   * calcdiElectricdndT. Mixed composition-temperature derivative of the mixture dielectric
-   * constant. For ions: 0 (decrement doesn't depend on T). For solvents: d2(eps_w)/(dn_i * dT).
+   * calcdiElectricdndT.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -643,13 +582,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double calcdiElectricdndT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      if (ionicCharge != 0) {
-        return 0.0;
-      }
-      return solventdiElectricdndT;
-    }
-    // Original Clausius-Mossotti model
     double X = (1.0 - ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic())
         / (1.0 + ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0);
     double Y = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstantdT();
@@ -876,7 +808,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
   public double dFBorndN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     return ((PhaseModifiedFurstElectrolyteEos) phase).FBornX() * getXBorni()
-        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornD() * borndiElectricdn;
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornD() * solventdiElectricdn;
   }
 
   /**
@@ -892,10 +824,13 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double dFBorndNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    PhaseModifiedFurstElectrolyteEos p = (PhaseModifiedFurstElectrolyteEos) phase;
-    return (p.FBornTX() * XBorni + p.FBornDX() * XBorni * p.getBornDiElectricConstantdT())
-        + p.FBornTD() * borndiElectricdn + p.FBornD() * borndiElectricdndT
-        + p.FBornDD() * borndiElectricdn * p.getBornDiElectricConstantdT();
+    return (((PhaseModifiedFurstElectrolyteEos) phase).FBornTX() * XBorni
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornDX() * XBorni
+            * ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstantdT())
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornTD() * getSolventDiElectricConstantdn()
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornD() * solventdiElectricdndT
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornDD() * getSolventDiElectricConstantdn()
+            * ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstantdT();
   }
 
   /**
@@ -912,14 +847,17 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double dFBorndNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    PhaseModifiedFurstElectrolyteEos p = (PhaseModifiedFurstElectrolyteEos) phase;
-    ComponentModifiedFurstElectrolyteEos compJ =
-        (ComponentModifiedFurstElectrolyteEos) p.getComponent(j);
-    double borndiElectricdnJ = compJ.borndiElectricdn;
-    return p.FBornDD() * borndiElectricdn * borndiElectricdnJ
-        + p.FBornDX() * XBorni * borndiElectricdnJ
-        + p.FBornDX() * borndiElectricdn * compJ.getXBorni()
-        + p.FBornD() * calcBorndiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
+    return ((PhaseModifiedFurstElectrolyteEos) phase).FBornDD() * solventdiElectricdn
+        * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
+            .getComponent(j)).getSolventDiElectricConstantdn()
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornDX() * XBorni
+            * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
+                .getComponent(j)).getSolventDiElectricConstantdn()
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornDX() * solventdiElectricdn
+            * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
+                .getComponent(j)).getXBorni()
+        + ((PhaseModifiedFurstElectrolyteEos) phase).FBornD()
+            * calcSolventdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
   }
 
   /**
@@ -931,51 +869,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double getIonicCoVolume() {
     return ionicCoVolume;
-  }
-
-  /**
-   * <p>
-   * dFBorndNdV. Mixed composition-volume derivative of Born term. Non-zero when decrement model is
-   * active (Born uses solution dielectric).
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @return a double
-   */
-  public double dFBorndNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
-    PhaseModifiedFurstElectrolyteEos p = (PhaseModifiedFurstElectrolyteEos) phase;
-    return p.FBornDX() * XBorni * p.getBornDiElectricConstantdV()
-        + p.FBornDD() * borndiElectricdn * p.getBornDiElectricConstantdV()
-        + p.FBornD() * borndiElectricdndV;
-  }
-
-  /**
-   * <p>
-   * calcBorndiElectricdndn. Second composition derivative of dielectric constant used in Born term.
-   * When decrement is active, uses solution-eps derivative (calcdiElectricdndn). When CM, uses
-   * solvent-eps derivative (calcSolventdiElectricdndn).
-   * </p>
-   *
-   * @param j a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @return a double
-   */
-  public double calcBorndiElectricdndn(int j, PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure) {
-    double solvent = calcSolventdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
-    if (((PhaseModifiedFurstElectrolyteEos) phase).isUseIonDielectricDecrement()) {
-      double frac = ((PhaseModifiedFurstElectrolyteEos) phase).getBornDecrementFraction();
-      double solution = calcdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
-      return solvent + frac * (solution - solvent);
-    }
-    return solvent;
   }
 
   /**
@@ -1064,14 +957,5 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
    */
   public double getXBorni() {
     return XBorni;
-  }
-
-  /**
-   * Get the ion-specific dielectric decrement coefficient.
-   *
-   * @return delta_i in L/mol (negative for ions, 0 for solvents)
-   */
-  public double getDielectricDecrement() {
-    return dielectricDecrement;
   }
 }

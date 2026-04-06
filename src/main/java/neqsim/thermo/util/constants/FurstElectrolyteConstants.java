@@ -6,9 +6,6 @@
 
 package neqsim.thermo.util.constants;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * <p>
  * FurstElectrolyteConstants class.
@@ -20,70 +17,6 @@ import java.util.Map;
 public final class FurstElectrolyteConstants implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-
-  /**
-   * Ion-specific dielectric decrement coefficients (L/mol).
-   *
-   * <p>
-   * Linear decrement model: eps(c) = eps_w(T) + sum(delta_i * c_i) where c_i is the molar
-   * concentration of ion i and delta_i is the decrement coefficient (negative values decrease the
-   * dielectric constant).
-   * </p>
-   *
-   * <p>
-   * Values from Buchner et al. (1999) J. Phys. Chem. A 103, 1-9; Hasted et al. (1948) J. Chem.
-   * Phys. 16, 1; Marcus (2009) Chem. Rev. 109, 1346-1370.
-   * </p>
-   */
-  private static final Map<String, Double> dielectricDecrementMap;
-
-  static {
-    dielectricDecrementMap = new HashMap<String, Double>();
-    // Alkali cations
-    dielectricDecrementMap.put("Li+", -5.5);
-    dielectricDecrementMap.put("Na+", -8.0);
-    dielectricDecrementMap.put("K+", -7.0);
-    dielectricDecrementMap.put("Rb+", -6.0);
-    dielectricDecrementMap.put("Cs+", -5.0);
-    dielectricDecrementMap.put("H3O+", -5.0);
-    // Alkaline earth cations
-    dielectricDecrementMap.put("Ca++", -26.0);
-    dielectricDecrementMap.put("Mg++", -28.0);
-    dielectricDecrementMap.put("Ba++", -16.0);
-    dielectricDecrementMap.put("Sr++", -19.0);
-    // Transition metal cations
-    dielectricDecrementMap.put("Fe++", -20.0);
-    dielectricDecrementMap.put("Fe+++", -30.0);
-    dielectricDecrementMap.put("Mn++", -20.0);
-    dielectricDecrementMap.put("Zn++", -22.0);
-    dielectricDecrementMap.put("Cu++", -22.0);
-    // Halide anions
-    dielectricDecrementMap.put("Cl-", -3.0);
-    dielectricDecrementMap.put("Br-", -4.0);
-    dielectricDecrementMap.put("I-", -7.0);
-    dielectricDecrementMap.put("F-", -5.0);
-    // Other anions
-    dielectricDecrementMap.put("OH-", -6.0);
-    dielectricDecrementMap.put("SO4--", -4.0);
-    dielectricDecrementMap.put("HSO4-", -3.0);
-    dielectricDecrementMap.put("HCO3-", -4.0);
-    dielectricDecrementMap.put("CO3--", -6.0);
-    dielectricDecrementMap.put("NO3-", -2.0);
-    dielectricDecrementMap.put("HS-", -3.0);
-    dielectricDecrementMap.put("S--", -5.0);
-  }
-
-  /**
-   * Get the dielectric decrement coefficient for an ion.
-   *
-   * @param ionName the NeqSim component name of the ion (e.g. "Na+", "Cl-", "Ca++")
-   * @return the decrement coefficient delta_i in L/mol (negative). Returns 0.0 for non-ionic
-   *         components or unknown ions.
-   */
-  public static double getIonDielectricDecrement(String ionName) {
-    Double val = dielectricDecrementMap.get(ionName);
-    return val != null ? val.doubleValue() : 0.0;
-  }
 
   // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,
   // -25.314e-6, -0.05813e-6, -44.383e-6};
