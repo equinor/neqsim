@@ -1076,6 +1076,8 @@ public class ProductionProfile implements Serializable {
 
   /**
    * Gets the name of the current facility bottleneck.
+   *
+   * @return the bottleneck equipment name, or null if no facility or bottleneck
    */
   private String getFacilityBottleneckName() {
     if (facility == null) {

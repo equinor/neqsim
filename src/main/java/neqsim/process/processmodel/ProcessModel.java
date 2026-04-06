@@ -1274,9 +1274,10 @@ public class ProcessModel implements Runnable, Serializable {
    * it is skipped and a warning is logged.
    * </p>
    *
-   * @param json the JSON string with the "areas" structure @return the built ProcessModel (not yet
-   *        run) @throws IllegalArgumentException if JSON is null, empty, or missing the "areas"
-   *        key @see #toJson()
+   * @param json the JSON string with the "areas" structure
+   * @return the built ProcessModel (not yet run)
+   * @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key
+   * @see #toJson()
    */
   public static ProcessModel fromJson(String json) {
     if (json == null || json.trim().isEmpty()) {

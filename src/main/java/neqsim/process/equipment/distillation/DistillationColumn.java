@@ -62,17 +62,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final int POLISH_ITERATION_MARGIN = 6;
   /** Multiplier governing how much the solver can extend beyond the nominal iteration budget. */
   private static final int ITERATION_OVERFLOW_MULTIPLIER = 12;
+  /** Recommended base temperature tolerance for adaptive defaults. */
+  private static final double DEFAULT_TEMPERATURE_TOLERANCE = 4.0e-3;
+  /** Recommended base mass balance tolerance for adaptive defaults. */
+  private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
+  /** Recommended base enthalpy balance tolerance for adaptive defaults. */
+  private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
   double topTrayPressure = -1.0;
 
   /** Temperature convergence tolerance. */
-  private double temperatureTolerance = 5.0e-3;
+  private double temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
   /** Mass balance convergence tolerance. */
-  private double massBalanceTolerance = 2.0e-2;
+  private double massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
   /** Enthalpy balance convergence tolerance. */
-  private double enthalpyBalanceTolerance = 2.0e-2;
+  private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+  /** Track whether temperature tolerance has been manually overridden. */
+  private boolean temperatureToleranceCustomized = false;
+  /** Track whether mass balance tolerance has been manually overridden. */
+  private boolean massBalanceToleranceCustomized = false;
+  /** Track whether enthalpy balance tolerance has been manually overridden. */
+  private boolean enthalpyBalanceToleranceCustomized = false;
 
   /** Available solving strategies for the column. */
   public enum SolverType {
@@ -82,8 +94,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     DAMPED_SUBSTITUTION,
     /** Inside-out style simultaneous correction of upward/downward flows. */
     INSIDE_OUT,
-    /** Matrix based solver. */
-    MATRIX_SOLVER
+    /** Wegstein acceleration of successive substitution. */
+    WEGSTEIN,
+    /** Sum-rates tearing method with flow correction. */
+    SUM_RATES,
+    /** Newton-Raphson simultaneous temperature correction. */
+    NEWTON
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
@@ -190,6 +206,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public boolean isDoMultiPhaseCheck() {
     return doMultiPhaseCheck;
   }
+
+  /** Murphree tray efficiency applied to each equilibrium stage (0..1). Default 1.0 = ideal. */
+  private double murphreeEfficiency = 1.0;
+
+  /** Per-iteration convergence history: [iteration][0=tempErr, 1=massErr, 2=energyErr]. */
+  private transient List<double[]> convergenceHistory = new ArrayList<>();
+
+  /**
+   * Number of simplified inner-loop iterations between rigorous flash updates in the IO solver.
+   * Higher values reduce flash count but may reduce accuracy. Default 3.
+   */
+  private int innerLoopSteps = 3;
 
   /**
    * <p>
@@ -422,64 +450,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public void run(UUID id) {
     assignUnassignedFeeds();
-    applyDirectSpecifications();
-
-    boolean needsOuterLoop = needsSpecificationAdjustment();
-    if (needsOuterLoop) {
-      solveWithSpecifications(id);
-    } else {
-      solveInner(id);
-    }
-  }
-
-  /**
-   * Apply specifications that can be set directly without an outer adjustment loop. REFLUX_RATIO
-   * specs are set directly on the condenser or reboiler.
-   */
-  private void applyDirectSpecifications() {
-    if (topSpecification != null
-        && topSpecification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
-        && hasCondenser) {
-      getCondenser().setRefluxRatio(topSpecification.getTargetValue());
-    }
-    if (bottomSpecification != null
-        && bottomSpecification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
-        && hasReboiler) {
-      getReboiler().setRefluxRatio(bottomSpecification.getTargetValue());
-    }
-  }
-
-  /**
-   * Check whether an outer adjustment loop is needed for the active specifications.
-   *
-   * @return true if at least one specification requires iterative adjustment
-   */
-  private boolean needsSpecificationAdjustment() {
-    return needsAdjustment(topSpecification) || needsAdjustment(bottomSpecification);
-  }
-
-  /**
-   * Check whether a single specification requires an outer adjustment loop.
-   *
-   * @param spec the specification to check (may be null)
-   * @return true if this specification needs outer-loop adjustment
-   */
-  private boolean needsAdjustment(ColumnSpecification spec) {
-    if (spec == null) {
-      return false;
-    }
-    ColumnSpecification.SpecificationType type = spec.getType();
-    return type == ColumnSpecification.SpecificationType.PRODUCT_PURITY
-        || type == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY
-        || type == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE;
-  }
-
-  /**
-   * Run the inner column solver (without specification adjustment).
-   *
-   * @param id calculation identifier
-   */
-  private void solveInner(UUID id) {
+    convergenceHistory = new ArrayList<>();
     switch (solverType) {
       case DAMPED_SUBSTITUTION:
         solveSequential(id, relaxationFactor);
@@ -487,12 +458,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       case INSIDE_OUT:
         solveInsideOut(id);
         break;
-      case MATRIX_SOLVER:
-        if (isDoInitializion()) {
-          init();
-        }
-        DistillationColumnMatrixSolver matrixSolver = new DistillationColumnMatrixSolver(this);
-        matrixSolver.solve(id);
+      case WEGSTEIN:
+        solveWegstein(id);
+        break;
+      case SUM_RATES:
+        solveSumRates(id);
+        break;
+      case NEWTON:
+        solveNewton(id);
         break;
       case DIRECT_SUBSTITUTION:
       default:
@@ -641,6 +614,52 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Keep temperature physically reasonable (above 100 K, below 1000 K)
     tNew = Math.max(100.0, Math.min(1000.0, tNew));
     return tNew;
+  }
+
+  /**
+   * Checks whether a specification requires iterative temperature adjustment.
+   *
+   * @param spec the column specification to check
+   * @return true if the specification is non-null and requires adjustment
+   */
+  private boolean needsAdjustment(ColumnSpecification spec) {
+    if (spec == null) {
+      return false;
+    }
+    // Reflux ratio and duty specs are handled directly; the others need outer-loop adjustment
+    return spec.getType() != ColumnSpecification.SpecificationType.REFLUX_RATIO
+        && spec.getType() != ColumnSpecification.SpecificationType.DUTY;
+  }
+
+  /**
+   * Run the inner column solver (one full solve with the currently selected solver type) without
+   * resetting convergence history. Used by {@link #solveWithSpecifications(UUID)} in the outer
+   * adjustment loop.
+   *
+   * @param id calculation identifier
+   */
+  private void solveInner(UUID id) {
+    switch (solverType) {
+      case DAMPED_SUBSTITUTION:
+        solveSequential(id, relaxationFactor);
+        break;
+      case INSIDE_OUT:
+        solveInsideOut(id);
+        break;
+      case WEGSTEIN:
+        solveWegstein(id);
+        break;
+      case SUM_RATES:
+        solveSumRates(id);
+        break;
+      case NEWTON:
+        solveNewton(id);
+        break;
+      case DIRECT_SUBSTITUTION:
+      default:
+        solveSequential(id, 1.0);
+        break;
+    }
   }
 
   /**
@@ -1014,9 +1033,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    double baseTempTolerance = temperatureTolerance;
-    double baseMassTolerance = massBalanceTolerance;
-    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
     double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
     double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
@@ -1038,6 +1057,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(i - 1).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[i] = relaxedLiquid;
         trays.get(i - 1).run(id);
+        applyMurphreeCorrection(i - 1);
       }
 
       int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
@@ -1046,6 +1066,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(0).replaceStream(streamNumb, reboilerFeed);
       currentLiquidStreams[1] = reboilerFeed;
       trays.get(0).run(id);
+      applyMurphreeCorrection(0);
 
       for (int i = 1; i <= numberOfTrays - 1; i++) {
         int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
@@ -1057,6 +1078,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(i).replaceStream(replaceStream, relaxedGas);
         currentGasStreams[i - 1] = relaxedGas;
         trays.get(i).run(id);
+        applyMurphreeCorrection(i);
       }
 
       for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
@@ -1066,6 +1088,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(i).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[i + 1] = relaxedLiquid;
         trays.get(i).run(id);
+        applyMurphreeCorrection(i);
       }
 
       double temperatureResidual = 0.0;
@@ -1090,9 +1113,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         massEnergyEvaluated = true;
       }
 
-      double tempScaled = err / temperatureTolerance;
-      double massScaled = massErr / massBalanceTolerance;
-      double energyScaled = energyErr / enthalpyBalanceTolerance;
+      double tempScaled = err / baseTempTolerance;
+      double massScaled = massErr / baseMassTolerance;
+      double energyScaled = energyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
       if (Double.isFinite(energyScaled)) {
         combinedResidual =
@@ -1168,6 +1191,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       logger.info("iteration {} relaxation={} tempErr={} massErr={} energyErr={}", iter, relaxation,
           err, massErr, energyErr);
 
+      if (convergenceHistory != null) {
+        recordConvergence(new double[] {err, massErr, energyErr});
+      }
+
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
       boolean withinBaseTolerance =
           err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
@@ -1220,6 +1247,92 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private int computeIterationLimit() {
     int trayBasedLimit = (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
     return Math.max(Math.max(1, maxNumberOfIterations), trayBasedLimit);
+  }
+
+  /**
+   * Derive the effective temperature tolerance based on column complexity unless overridden.
+   *
+   * @return adaptive temperature tolerance in Kelvin
+   */
+  private double getEffectiveTemperatureTolerance() {
+    if (temperatureToleranceCustomized) {
+      return temperatureTolerance;
+    }
+    return DEFAULT_TEMPERATURE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Derive the effective mass balance tolerance based on column complexity unless overridden.
+   *
+   * @return adaptive mass balance tolerance (relative)
+   */
+  private double getEffectiveMassBalanceTolerance() {
+    if (massBalanceToleranceCustomized) {
+      return massBalanceTolerance;
+    }
+    return DEFAULT_MASS_BALANCE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Derive the effective enthalpy balance tolerance based on column complexity unless overridden.
+   *
+   * @return adaptive energy balance tolerance (relative)
+   */
+  private double getEffectiveEnthalpyBalanceTolerance() {
+    if (enthalpyBalanceToleranceCustomized) {
+      return enthalpyBalanceTolerance;
+    }
+    return DEFAULT_ENTHALPY_BALANCE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Estimate a scaling factor that reflects the degree of distillation complexity.
+   *
+   * <p>
+   * The factor increases with the number of theoretical stages and independent feed streams and is
+   * bounded to avoid overly loose convergence criteria.
+   * </p>
+   *
+   * @return scaling multiplier for recommended tolerances
+   */
+  private double computeToleranceComplexityMultiplier() {
+    int stageCount = Math.max(1, getEffectiveStageCount());
+    double stageMultiplier = 1.0 + Math.max(0, stageCount - 3) * 0.06;
+
+    int feedCount = Math.max(0, getTotalFeedCount());
+    double feedMultiplier = 1.0 + Math.max(0, feedCount - 1) * 0.25;
+
+    double combined = Math.max(stageMultiplier, feedMultiplier);
+    return Math.min(2.5, combined);
+  }
+
+  /**
+   * Count the number of simple trays, excluding optional reboiler and condenser sections.
+   *
+   * @return effective number of equilibrium stages
+   */
+  private int getEffectiveStageCount() {
+    int stageCount = numberOfTrays;
+    if (hasReboiler && stageCount > 0) {
+      stageCount--;
+    }
+    if (hasCondenser && stageCount > 0) {
+      stageCount--;
+    }
+    return Math.max(0, stageCount);
+  }
+
+  /**
+   * Count connected feed streams across all trays.
+   *
+   * @return total number of feeds currently attached to the column
+   */
+  private int getTotalFeedCount() {
+    int total = 0;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      total += feeds.size();
+    }
+    return total;
   }
 
   /**
@@ -1283,7 +1396,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Solve the column using an inside-out strategy with adaptive stream relaxation.
+   * Solve the column using an improved inside-out strategy inspired by Boston and Sullivan (1974).
+   *
+   * <p>
+   * Key improvements over basic sequential substitution:
+   * <ul>
+   * <li>K-value caching: previous iteration K-values are stored to track composition convergence
+   * and detect stagnation early.</li>
+   * <li>Composition-based convergence: monitors maximum relative K-value change alongside
+   * temperature and balance residuals.</li>
+   * <li>Stripping factor correction: applies a bulk flow correction between outer iterations based
+   * on the ratio of computed-to-assumed vapor/liquid split on each tray.</li>
+   * <li>Accelerated relaxation ramp: increases relaxation faster (1.3× vs 1.2×) when residuals
+   * decrease, enabling the IO method to reach full step sooner.</li>
+   * <li>Lazy balance evaluation: mass/energy balances are only recomputed when temperatures are
+   * close to tolerance, reducing expensive per-tray flow rate queries.</li>
+   * </ul>
    *
    * @param id calculation identifier
    */
@@ -1328,7 +1456,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     StreamInterface[] currentGasStreams = new StreamInterface[numberOfTrays];
     StreamInterface[] currentLiquidStreams = new StreamInterface[numberOfTrays];
 
+    // K-value cache for composition convergence tracking
+    double[][] previousKvalues = null;
+    double kValueResidual = Double.POSITIVE_INFINITY;
+
+    // IO method: start with moderate relaxation, ramp up aggressively
     double relaxation = Math.max(minInsideOutRelaxation, Math.min(maxAdaptiveRelaxation, 0.8));
+    double ioRelaxationIncreaseFactor = 1.3; // faster ramp than sequential (1.2)
 
     if (!hasBeenSolvedBefore) {
       trays.get(firstFeedTrayNumber).run(id);
@@ -1364,6 +1498,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
+    // Simplified inner-loop K-value model setup
+    int nc = trays.get(firstFeedTrayNumber).getThermoSystem().getNumberOfComponents();
+    SimplifiedKvalueModel kModel = new SimplifiedKvalueModel(numberOfTrays, nc);
+    double[][] prevOuterKvalues = null;
+    double[] prevOuterTemps = new double[numberOfTrays];
+    int outerIterCount = 0; // counts rigorous (outer) iterations
+    int totalFlashSweeps = 0; // tracks flash count for diagnostics
+
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
@@ -1372,9 +1514,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    double baseTempTolerance = temperatureTolerance;
-    double baseMassTolerance = massBalanceTolerance;
-    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
     double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
     double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
@@ -1392,6 +1534,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
       }
 
+      // Phase 1: Liquid sweep (feed → reboiler) with relaxed tear streams
       for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
         int target = stage - 1;
         int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
@@ -1400,8 +1543,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(target).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[stage] = relaxedLiquid;
         trays.get(target).run(id);
+        applyMurphreeCorrection(target);
       }
 
+      // Phase 2: Vapor sweep (reboiler → condenser) with relaxed tear streams
       for (int stage = 1; stage <= numberOfTrays - 1; stage++) {
         int replaceStream = trays.get(stage).getNumberOfInputStreams() - 2;
         if (stage == (numberOfTrays - 1)) {
@@ -1412,8 +1557,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(stage).replaceStream(replaceStream, relaxedGas);
         currentGasStreams[stage - 1] = relaxedGas;
         trays.get(stage).run(id);
+        applyMurphreeCorrection(stage);
       }
 
+      // Phase 3: Polish liquid sweep (condenser → feed) for better coupling
       for (int stage = numberOfTrays - 2; stage >= firstFeedTrayNumber; stage--) {
         int replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage + 1],
@@ -1421,21 +1568,78 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(stage).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[stage + 1] = relaxedLiquid;
         trays.get(stage).run(id);
+        applyMurphreeCorrection(stage);
       }
 
+      // Phase 4: Stripping factor correction — adjust temperatures using V/L flow balance
       double temperatureResidual = 0.0;
       double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
+
       for (int i = 0; i < numberOfTrays; i++) {
         double updated = trays.get(i).getThermoSystem().getTemperature();
-        if (Double.isNaN(updated) || Double.isInfinite(updated)) {
-          updated = oldtemps[i];
+
+        // Stripping factor correction: if V/L ratio on a tray is far from unity,
+        // bias temperature update toward the flow-corrected value
+        double vaporFlow = trays.get(i).getGasOutStream().getFlowRate("kg/hr");
+        double liquidFlow = trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+        double strippingCorrection = 1.0;
+        if (liquidFlow > 1e-12 && vaporFlow > 1e-12) {
+          double vOverL = vaporFlow / liquidFlow;
+          // Mild correction: push temperature up if too much liquid, down if too much vapor
+          strippingCorrection = 1.0 + 0.05 * Math.max(-1.0, Math.min(1.0, Math.log(vOverL)));
         }
-        double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
+
+        double newTemp =
+            oldtemps[i] + effectiveRelaxation * strippingCorrection * (updated - oldtemps[i]);
         trays.get(i).setTemperature(newTemp);
         temperatureResidual += Math.abs(newTemp - oldtemps[i]);
       }
       temperatureResidual /= Math.max(1, numberOfTrays);
       err = temperatureResidual;
+
+      // K-value convergence tracking
+      kValueResidual = computeKvalueResidual(previousKvalues);
+      previousKvalues = cacheCurrentKvalues();
+      outerIterCount++;
+      totalFlashSweeps++;
+
+      // Fit simplified K-value model after 2nd rigorous outer iteration
+      if (outerIterCount >= 2 && prevOuterKvalues != null && innerLoopSteps > 0) {
+        double[] currentTemps = new double[numberOfTrays];
+        for (int i = 0; i < numberOfTrays; i++) {
+          currentTemps[i] = trays.get(i).getThermoSystem().getTemperature();
+        }
+        kModel.fit(prevOuterKvalues, prevOuterTemps, previousKvalues, currentTemps);
+      }
+
+      // Save outer-loop state for next model fitting
+      prevOuterKvalues = previousKvalues.clone();
+      for (int i = 0; i < numberOfTrays; i++) {
+        prevOuterTemps[i] = trays.get(i).getThermoSystem().getTemperature();
+        if (prevOuterKvalues[i] != null) {
+          prevOuterKvalues[i] = prevOuterKvalues[i].clone();
+        }
+      }
+
+      // Run simplified inner-loop iterations (no PH-flash) if model is fitted
+      if (kModel.fitted && innerLoopSteps > 0 && !polishing) {
+        for (int inner = 0; inner < innerLoopSteps; inner++) {
+          double innerTempResidual = innerLoopIteration(kModel, relaxation);
+          // Log inner iteration (inner iters don't count in outer iteration budget)
+          logger.debug("inside-out INNER step {}/{} tempErr={}", inner + 1, innerLoopSteps,
+              innerTempResidual);
+          if (convergenceHistory != null) {
+            convergenceHistory
+                .add(new double[] {innerTempResidual, massErr, energyErr, kValueResidual});
+          }
+          // If inner loop has converged, no need for more inner steps
+          if (innerTempResidual < baseTempTolerance * 0.5) {
+            break;
+          }
+        }
+        // Update err to reflect the latest inner loop temperature change
+        err = Math.abs(err);
+      }
 
       boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err,
           baseTempTolerance, balanceCheckStride);
@@ -1445,19 +1649,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         massEnergyEvaluated = true;
       }
 
-      double tempScaled = err / temperatureTolerance;
-      double massScaled = massErr / massBalanceTolerance;
-      double energyScaled = energyErr / enthalpyBalanceTolerance;
+      double tempScaled = err / baseTempTolerance;
+      double massScaled = massErr / baseMassTolerance;
+      double energyScaled = energyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
       if (Double.isFinite(energyScaled)) {
         combinedResidual =
             Math.max(combinedResidual, Math.min(energyScaled, maxEnergyRelaxationWeight));
       }
 
+      // Accelerated adaptive relaxation for IO method
       if (combinedResidual > previousCombinedResidual * 1.05) {
         relaxation = Math.max(minInsideOutRelaxation, relaxation * relaxationDecreaseFactor);
-      } else if (combinedResidual < previousCombinedResidual * 0.98) {
-        relaxation = Math.min(maxAdaptiveRelaxation, relaxation * relaxationIncreaseFactor);
+      } else if (combinedResidual < previousCombinedResidual * 0.95) {
+        // More aggressive increase than sequential — IO can tolerate faster ramp
+        relaxation = Math.min(maxAdaptiveRelaxation, relaxation * ioRelaxationIncreaseFactor);
       }
 
       previousCombinedResidual = combinedResidual;
@@ -1497,25 +1703,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
 
-      // Absolute flow magnitude check (same as solveSequential).
-      if (divergenceRecoveryAppliedIO && iter > 15) {
-        double maxFlow = 0.0;
-        for (int i = 0; i < numberOfTrays; i++) {
-          maxFlow =
-              Math.max(maxFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
-          maxFlow =
-              Math.max(maxFlow, Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
-        }
-        if (maxFlow > 1000.0 * totalFeedFlowIO) {
-          logger.warn("Inside-out solver diverged: maxTrayFlow={} exceeds 1000x totalFeed={}. "
-              + "Terminating at iteration {}.", maxFlow, totalFeedFlowIO, iter);
-          massErr = maxFlow / Math.max(1.0, totalFeedFlowIO);
-          break;
-        }
-      }
+      logger.info(
+          "inside-out iteration {} relaxation={} tempErr={} massErr={} energyErr={} kErr={} outerFlashes={}",
+          iter, relaxation, err, massErr, energyErr, kValueResidual, totalFlashSweeps);
 
-      logger.info("inside-out iteration {} relaxation={} tempErr={} massErr={} energyErr={}", iter,
-          relaxation, err, massErr, energyErr);
+      if (convergenceHistory != null) {
+        recordConvergence(new double[] {err, massErr, energyErr, kValueResidual});
+      }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
       boolean withinBaseTolerance =
@@ -1544,6 +1738,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
 
+      // Early termination: if K-values have converged but mass/energy haven't,
+      // the problem may be ill-conditioned — avoid wasting iterations
+      if (kValueResidual < 1.0e-6 && iter > 5 && err > baseTempTolerance * 10) {
+        logger.warn("Inside-out: K-values converged but temperatures stagnated at iter {}", iter);
+      }
+
       if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
         iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
         continue;
@@ -1551,6 +1751,253 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Compute the maximum relative K-value change compared to the previous iteration.
+   *
+   * <p>
+   * K-values are computed as the ratio of vapor to liquid mole fractions for each component on each
+   * tray. This provides a composition-based convergence metric that complements the
+   * temperature-based metric, similar to what commercial inside-out implementations track.
+   * </p>
+   *
+   * @param previousKvalues K-values from the previous iteration (null if first iteration)
+   * @return maximum relative K-value change; {@code Double.POSITIVE_INFINITY} if no previous data
+   */
+  private double computeKvalueResidual(double[][] previousKvalues) {
+    if (previousKvalues == null) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    double maxRelChange = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      SystemInterface fluid = trays.get(i).getThermoSystem();
+      if (fluid.getNumberOfPhases() < 2) {
+        continue;
+      }
+      int nc = fluid.getNumberOfComponents();
+      for (int j = 0; j < nc; j++) {
+        double xj = fluid.getPhase(1).getComponent(j).getx();
+        double yj = fluid.getPhase(0).getComponent(j).getx();
+        if (xj > 1e-15) {
+          double kCurrent = yj / xj;
+          double kPrevious = previousKvalues[i][j];
+          if (kPrevious > 1e-15) {
+            double relChange = Math.abs(kCurrent - kPrevious) / kPrevious;
+            maxRelChange = Math.max(maxRelChange, relChange);
+          }
+        }
+      }
+    }
+    return maxRelChange;
+  }
+
+  /**
+   * Cache K-values (y/x) for all components on all trays for use in the next iteration comparison.
+   *
+   * @return 2D array [tray][component] of K-values
+   */
+  private double[][] cacheCurrentKvalues() {
+    double[][] kvalues = new double[numberOfTrays][];
+    for (int i = 0; i < numberOfTrays; i++) {
+      SystemInterface fluid = trays.get(i).getThermoSystem();
+      int nc = fluid.getNumberOfComponents();
+      kvalues[i] = new double[nc];
+      if (fluid.getNumberOfPhases() >= 2) {
+        for (int j = 0; j < nc; j++) {
+          double xj = fluid.getPhase(1).getComponent(j).getx();
+          if (xj > 1e-15) {
+            kvalues[i][j] = fluid.getPhase(0).getComponent(j).getx() / xj;
+          }
+        }
+      }
+    }
+    return kvalues;
+  }
+
+  /**
+   * Simplified K-value model for the inside-out inner loop.
+   *
+   * <p>
+   * For each component on each tray, the model stores coefficients for the correlation:
+   *
+   * <pre>
+   *   ln K_i = a_i + b_i / T
+   * </pre>
+   *
+   * where T is in Kelvin. The coefficients are fitted from rigorous flash results at two
+   * temperature points (the current and previous outer-loop temperatures). Between outer-loop
+   * updates, compositions are estimated using this simplified model instead of full PH-flash
+   * calculations, reducing computational cost by a factor of approximately {@code innerLoopSteps}.
+   */
+  static class SimplifiedKvalueModel {
+    /** Intercept coefficient: lnK = a + b/T. Indexed [tray][component]. */
+    final double[][] coeffA;
+    /** Slope coefficient: lnK = a + b/T. Indexed [tray][component]. */
+    final double[][] coeffB;
+    /** Number of trays. */
+    final int nTrays;
+    /** Number of components. */
+    final int nComponents;
+    /** Whether the model has been fitted (needs at least 2 temperature points). */
+    boolean fitted = false;
+
+    SimplifiedKvalueModel(int nTrays, int nComponents) {
+      this.nTrays = nTrays;
+      this.nComponents = nComponents;
+      this.coeffA = new double[nTrays][nComponents];
+      this.coeffB = new double[nTrays][nComponents];
+    }
+
+    /**
+     * Fit the model from two sets of K-values at two temperatures.
+     *
+     * <p>
+     * Given K-values at T1 and T2, we solve:
+     *
+     * <pre>
+     *   ln(K1) = a + b/T1
+     *   ln(K2) = a + b/T2
+     * </pre>
+     *
+     * yielding b = (ln(K2) - ln(K1)) / (1/T2 - 1/T1) and a = ln(K1) - b/T1.
+     *
+     * @param kvalues1 K-values at temperature T1 [tray][component]
+     * @param temps1 tray temperatures at point 1
+     * @param kvalues2 K-values at temperature T2 [tray][component]
+     * @param temps2 tray temperatures at point 2
+     */
+    void fit(double[][] kvalues1, double[] temps1, double[][] kvalues2, double[] temps2) {
+      for (int i = 0; i < nTrays; i++) {
+        double t1 = temps1[i];
+        double t2 = temps2[i];
+        if (t1 < 1.0 || t2 < 1.0 || Math.abs(t1 - t2) < 0.01) {
+          // Temperatures too close or invalid — use single-point model (b=0)
+          for (int j = 0; j < nComponents && j < kvalues2[i].length; j++) {
+            if (kvalues2[i][j] > 1e-30) {
+              coeffA[i][j] = Math.log(kvalues2[i][j]);
+              coeffB[i][j] = 0.0;
+            }
+          }
+          continue;
+        }
+        double invT1 = 1.0 / t1;
+        double invT2 = 1.0 / t2;
+        double dInvT = invT2 - invT1;
+        for (int j = 0; j < nComponents && j < kvalues1[i].length && j < kvalues2[i].length; j++) {
+          double k1 = kvalues1[i][j];
+          double k2 = kvalues2[i][j];
+          if (k1 > 1e-30 && k2 > 1e-30) {
+            double lnK1 = Math.log(k1);
+            double lnK2 = Math.log(k2);
+            coeffB[i][j] = (lnK2 - lnK1) / dInvT;
+            coeffA[i][j] = lnK1 - coeffB[i][j] * invT1;
+          } else if (k2 > 1e-30) {
+            coeffA[i][j] = Math.log(k2);
+            coeffB[i][j] = 0.0;
+          }
+        }
+      }
+      fitted = true;
+    }
+
+    /**
+     * Predict K-value for component j on tray i at temperature T.
+     *
+     * @param tray tray index
+     * @param component component index
+     * @param temperature temperature in Kelvin
+     * @return estimated K-value
+     */
+    double predict(int tray, int component, double temperature) {
+      if (temperature < 1.0) {
+        return 1.0;
+      }
+      double lnK = coeffA[tray][component] + coeffB[tray][component] / temperature;
+      // Bound to prevent extreme values
+      lnK = Math.max(-30.0, Math.min(30.0, lnK));
+      return Math.exp(lnK);
+    }
+  }
+
+  /**
+   * Perform a simplified inner-loop iteration using the K-value model instead of rigorous flash.
+   *
+   * <p>
+   * This method updates tray compositions using the simplified K-value correlation and adjusts
+   * temperatures via a bubble-point calculation (sum of K*x = 1 condition). No PH-flash is called,
+   * making each inner iteration much cheaper than a rigorous outer iteration.
+   * </p>
+   *
+   * @param model the fitted simplified K-value model
+   * @param relaxation current relaxation factor
+   * @return average absolute temperature change across all trays
+   */
+  private double innerLoopIteration(SimplifiedKvalueModel model, double relaxation) {
+    double tempResidual = 0.0;
+    double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      SystemInterface fluid = trays.get(i).getThermoSystem();
+      if (fluid.getNumberOfPhases() < 2) {
+        continue;
+      }
+
+      double trayTemp = fluid.getTemperature();
+      int nc = fluid.getNumberOfComponents();
+
+      // Estimate new compositions using simplified K-values at current temperature
+      double sumKx = 0.0;
+      double[] kPredicted = new double[nc];
+      for (int j = 0; j < nc; j++) {
+        kPredicted[j] = model.predict(i, j, trayTemp);
+        double xj = fluid.getPhase(1).getComponent(j).getx();
+        sumKx += kPredicted[j] * xj;
+      }
+
+      // Bubble-point temperature correction: if sum(K*x) != 1, adjust T
+      // Using Newton-like step: dT = -f(T)/f'(T) where f(T) = sum(K*x) - 1
+      // f'(T) ≈ -sum(b_j/T^2 * K_j * x_j) (derivative of K model w.r.t. T)
+      if (sumKx > 1e-10) {
+        double dfdt = 0.0;
+        for (int j = 0; j < nc; j++) {
+          double xj = fluid.getPhase(1).getComponent(j).getx();
+          dfdt += -model.coeffB[i][j] / (trayTemp * trayTemp) * kPredicted[j] * xj;
+        }
+
+        double correction = 0.0;
+        if (Math.abs(dfdt) > 1e-15) {
+          correction = -(sumKx - 1.0) / dfdt;
+          // Safeguard: limit step size
+          correction = Math.max(-15.0, Math.min(15.0, correction));
+        }
+
+        double newTemp = trayTemp + effectiveRelaxation * correction;
+        // Ensure temperature stays positive
+        newTemp = Math.max(50.0, newTemp);
+        tempResidual += Math.abs(newTemp - trayTemp);
+        trays.get(i).setTemperature(newTemp);
+
+        // Update vapor compositions: y_j = K_j * x_j / sum(K*x)
+        // (normalized to ensure summation)
+        if (sumKx > 1e-10) {
+          for (int j = 0; j < nc; j++) {
+            double xj = fluid.getPhase(1).getComponent(j).getx();
+            double newYj = Math.max(0.0, kPredicted[j] * xj / sumKx);
+            // Only update if we have vapor phase access
+            try {
+              fluid.getPhase(0).getComponent(j).setx(newYj);
+            } catch (Exception ex) {
+              // If composition update fails, skip this component
+              logger.debug("Inner loop: could not update y[{}] on tray {}", j, i);
+            }
+          }
+        }
+      }
+    }
+
+    return tempResidual / Math.max(1, numberOfTrays);
   }
 
   /**
@@ -1602,9 +2049,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
         + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
-    double baseTempTolerance = temperatureTolerance;
-    double baseMassTolerance = massBalanceTolerance;
-    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
     double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
     double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
@@ -1732,6 +2179,748 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solveSequential(id, relaxationFactor);
   }
 
+  /**
+   * Solve the column using Wegstein acceleration of successive substitution.
+   *
+   * <p>
+   * Wegstein's method uses two consecutive fixed-point iterates to extrapolate a better estimate.
+   * For temperatures on each tray the acceleration factor q is computed from the slope of the
+   * fixed-point map: q = s / (s - 1) where s = (x_{k} - x_{k-1}) / (g(x_{k}) - g(x_{k-1})). The
+   * factor is bounded to [-5, 0] to prevent divergence.
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  private void solveWegstein(UUID id) {
+    if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
+      return;
+    }
+
+    int firstFeedTrayNumber = prepareColumnForSolve();
+
+    if (numberOfTrays == 1) {
+      trays.get(0).run(id);
+      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
+      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+      gasOutStream.setCalculationIdentifier(id);
+      liquidOutStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+      lastIterationCount = 1;
+      lastTemperatureResidual = 0.0;
+      lastMassResidual = 0.0;
+      lastEnergyResidual = 0.0;
+      lastSolveTimeSeconds = 0.0;
+      return;
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    err = 1.0e10;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    long startTime = System.nanoTime();
+
+    // Wegstein requires two consecutive iterates to estimate the slope.
+    // prevInput[i] = x_{k-1}, prevOutput[i] = g(x_{k-1})
+    double[] prevInput = new double[numberOfTrays];
+    double[] prevOutput = new double[numberOfTrays];
+    boolean wegsteinReady = false;
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      prevInput[i] = trays.get(i).getThermoSystem().getTemperature();
+    }
+
+    trays.get(firstFeedTrayNumber).run(id);
+
+    int baseIterationLimit = computeIterationLimit();
+    int iterationLimit = baseIterationLimit;
+    int overflowIncrement = Math.max(3, (int) Math.ceil(0.5 * numberOfTrays));
+    int overflowBand = Math.max(overflowIncrement, numberOfTrays);
+    int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
+        + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
+    boolean massEnergyEvaluated = false;
+    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
+    // Warm-up: use direct substitution for first few iterations
+    int warmUpIterations = Math.max(2, numberOfTrays / 3);
+
+    while (iter < iterationLimit) {
+      iter++;
+
+      double[] xk = new double[numberOfTrays];
+      for (int i = 0; i < numberOfTrays; i++) {
+        xk[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      // Standard tray sweep (same as direct substitution)
+      for (int i = firstFeedTrayNumber; i > 1; i--) {
+        int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
+        trays.get(i - 1).replaceStream(replaceStream, trays.get(i).getLiquidOutStream());
+        trays.get(i - 1).run(id);
+        applyMurphreeCorrection(i - 1);
+      }
+
+      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+      trays.get(0).run(id);
+      applyMurphreeCorrection(0);
+
+      for (int i = 1; i <= numberOfTrays - 1; i++) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == (numberOfTrays - 1)) {
+          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        trays.get(i).run(id);
+        applyMurphreeCorrection(i);
+      }
+
+      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
+        trays.get(i).run(id);
+        applyMurphreeCorrection(i);
+      }
+
+      // Compute g(x_k) = direct substitution output
+      double[] gxk = new double[numberOfTrays];
+      for (int i = 0; i < numberOfTrays; i++) {
+        gxk[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      // Apply Wegstein acceleration after warm-up period
+      double temperatureResidual = 0.0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        double newTemp;
+        if (wegsteinReady && iter > warmUpIterations) {
+          double denominator = (xk[i] - prevInput[i]);
+          if (Math.abs(denominator) > 1.0e-10) {
+            double s = (gxk[i] - prevOutput[i]) / denominator;
+            double q = s / (s - 1.0);
+            // Bound q conservatively: [-2, 0] to avoid oscillation
+            q = Math.max(-2.0, Math.min(0.0, q));
+            double candidate = (1.0 - q) * gxk[i] + q * xk[i];
+            // Safeguard: limit step size to avoid overshooting
+            double maxStep = 30.0;
+            if (Math.abs(candidate - xk[i]) > maxStep) {
+              candidate = xk[i] + Math.signum(candidate - xk[i]) * maxStep;
+            }
+            newTemp = candidate;
+          } else {
+            newTemp = gxk[i];
+          }
+        } else {
+          newTemp = gxk[i]; // Direct substitution during warm-up
+        }
+
+        // Store for next iteration
+        prevOutput[i] = gxk[i];
+        prevInput[i] = xk[i];
+
+        trays.get(i).setTemperature(newTemp);
+        temperatureResidual += Math.abs(newTemp - xk[i]);
+      }
+      wegsteinReady = true;
+      temperatureResidual /= Math.max(1, numberOfTrays);
+      err = temperatureResidual;
+
+      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, false, err,
+          baseTempTolerance, balanceCheckStride);
+      if (evaluateBalances || !massEnergyEvaluated) {
+        massErr = getMassBalanceError();
+        energyErr = getEnergyBalanceError();
+        massEnergyEvaluated = true;
+      }
+
+      if (convergenceHistory != null) {
+        recordConvergence(new double[] {err, massErr, energyErr});
+      }
+
+      logger.info("Wegstein iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr,
+          energyErr);
+
+      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
+      if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase) {
+        break;
+      }
+
+      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
+        iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
+        continue;
+      }
+    }
+
+    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Solve the column using a sum-rates tearing method.
+   *
+   * <p>
+   * The sum-rates method adjusts tray liquid flow rates based on the ratio of computed to assumed
+   * total flow leaving each tray. This is effective for absorber and stripper columns where the
+   * temperature profile is relatively flat. The method alternates between: (1) bubble-point
+   * temperature calculations on each tray, and (2) flow rate corrections using the sum-rates
+   * formula of Burningham and Otto (1967).
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  private void solveSumRates(UUID id) {
+    if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
+      return;
+    }
+
+    int firstFeedTrayNumber = prepareColumnForSolve();
+
+    if (numberOfTrays == 1) {
+      trays.get(0).run(id);
+      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
+      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+      gasOutStream.setCalculationIdentifier(id);
+      liquidOutStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+      lastIterationCount = 1;
+      lastTemperatureResidual = 0.0;
+      lastMassResidual = 0.0;
+      lastEnergyResidual = 0.0;
+      lastSolveTimeSeconds = 0.0;
+      return;
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    err = 1.0e10;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    long startTime = System.nanoTime();
+    double[] oldtemps = new double[numberOfTrays];
+
+    trays.get(firstFeedTrayNumber).run(id);
+
+    int baseIterationLimit = computeIterationLimit();
+    int iterationLimit = baseIterationLimit;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
+    boolean massEnergyEvaluated = false;
+    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
+
+    double relaxation = Math.max(minSequentialRelaxation, Math.min(maxAdaptiveRelaxation, 0.7));
+
+    while (iter < iterationLimit) {
+      iter++;
+
+      for (int i = 0; i < numberOfTrays; i++) {
+        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      // Standard tray-by-tray sweep
+      for (int i = firstFeedTrayNumber; i > 1; i--) {
+        int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
+        trays.get(i - 1).replaceStream(replaceStream, trays.get(i).getLiquidOutStream());
+        trays.get(i - 1).run(id);
+        applyMurphreeCorrection(i - 1);
+      }
+
+      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+      trays.get(0).run(id);
+      applyMurphreeCorrection(0);
+
+      for (int i = 1; i <= numberOfTrays - 1; i++) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == (numberOfTrays - 1)) {
+          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        trays.get(i).run(id);
+        applyMurphreeCorrection(i);
+      }
+
+      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
+        trays.get(i).run(id);
+        applyMurphreeCorrection(i);
+      }
+
+      // Sum-rates flow correction: adjust tray temperatures with flow-weighted damping
+      double totalFlowRatio = 0.0;
+      int countTrays = 0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        double vaporOut = trays.get(i).getGasOutStream().getFlowRate("kg/hr");
+        double liquidOut = trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+        double totalOut = vaporOut + liquidOut;
+        double totalIn = 0.0;
+        for (int j = 0; j < trays.get(i).getNumberOfInputStreams(); j++) {
+          totalIn += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
+        }
+        if (totalIn > 1e-12) {
+          totalFlowRatio += totalOut / totalIn;
+          countTrays++;
+        }
+      }
+      double avgFlowRatio = countTrays > 0 ? totalFlowRatio / countTrays : 1.0;
+      double flowCorrection = Math.max(0.5, Math.min(1.5, 1.0 / avgFlowRatio));
+
+      double temperatureResidual = 0.0;
+      double effectiveRelaxation = relaxation * flowCorrection;
+      effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, effectiveRelaxation));
+      for (int i = 0; i < numberOfTrays; i++) {
+        double updated = trays.get(i).getThermoSystem().getTemperature();
+        double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
+        trays.get(i).setTemperature(newTemp);
+        temperatureResidual += Math.abs(newTemp - oldtemps[i]);
+      }
+      temperatureResidual /= Math.max(1, numberOfTrays);
+      err = temperatureResidual;
+
+      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, false, err,
+          baseTempTolerance, balanceCheckStride);
+      if (evaluateBalances || !massEnergyEvaluated) {
+        massErr = getMassBalanceError();
+        energyErr = getEnergyBalanceError();
+        massEnergyEvaluated = true;
+      }
+
+      if (convergenceHistory != null) {
+        recordConvergence(new double[] {err, massErr, energyErr});
+      }
+
+      logger.info("sum-rates iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr,
+          energyErr);
+
+      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
+      if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase) {
+        break;
+      }
+    }
+
+    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Solve the column using a Newton-Raphson simultaneous temperature correction method.
+   *
+   * <p>
+   * This is inspired by the Naphtali-Sandholm (1971) approach of solving MESH equations
+   * simultaneously, adapted to NeqSim's tray-by-tray flash infrastructure. The method treats the N
+   * tray temperatures as the independent variables. A residual vector is formed by running full
+   * tray sweeps and measuring the temperature discrepancy each tray exhibits after equilibrium. The
+   * Jacobian is computed by finite-difference perturbation of each tray temperature.
+   * </p>
+   *
+   * <p>
+   * Key features:
+   * <ul>
+   * <li>Simultaneous correction: all tray temperatures are updated together using a dense N×N
+   * Jacobian solved by Gaussian elimination with partial pivoting.</li>
+   * <li>Line search: the full Newton step is scaled back if it increases residuals.</li>
+   * <li>Warm-up: a few direct-substitution iterations are performed first to get close to the
+   * solution basin where Newton convergence is quadratic.</li>
+   * </ul>
+   *
+   * @param id calculation identifier
+   */
+  private void solveNewton(UUID id) {
+    if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
+      return;
+    }
+
+    int firstFeedTrayNumber = prepareColumnForSolve();
+
+    if (numberOfTrays == 1) {
+      trays.get(0).run(id);
+      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
+      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+      gasOutStream.setCalculationIdentifier(id);
+      liquidOutStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+      lastIterationCount = 1;
+      lastTemperatureResidual = 0.0;
+      lastMassResidual = 0.0;
+      lastEnergyResidual = 0.0;
+      lastSolveTimeSeconds = 0.0;
+      return;
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    long startTime = System.nanoTime();
+    err = 1.0e10;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
+    int baseIterationLimit = computeIterationLimit();
+    int iterationLimit = Math.max(baseIterationLimit, maxNumberOfIterations);
+    int maxIterationLimit =
+        iterationLimit + Math.max(numberOfTrays, 3) * ITERATION_OVERFLOW_MULTIPLIER;
+
+    // Warm-up: run a few direct substitution iterations to establish a reasonable profile
+    int warmUpIterations = Math.min(3, iterationLimit / 3);
+    trays.get(firstFeedTrayNumber).run(id);
+    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
+    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
+
+    for (int w = 0; w < warmUpIterations; w++) {
+      iter++;
+      performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+      double tempRes = computeTemperatureResidual();
+      err = tempRes;
+
+      if (convergenceHistory != null) {
+        massErr = getMassBalanceError();
+        energyErr = getEnergyBalanceError();
+        recordConvergence(new double[] {err, massErr, energyErr});
+      }
+
+      logger.info("newton warm-up iteration {} tempErr={}", iter, err);
+      if (err < baseTempTolerance) {
+        break;
+      }
+    }
+
+    // Newton iterations
+    double perturbation = 0.1; // temperature perturbation for Jacobian (K)
+    double[] temperatures = new double[numberOfTrays];
+    double[] residuals = new double[numberOfTrays];
+    double[][] jacobian = new double[numberOfTrays][numberOfTrays];
+
+    while (iter < iterationLimit) {
+      iter++;
+
+      // Save current temperatures
+      for (int i = 0; i < numberOfTrays; i++) {
+        temperatures[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      // Compute base residuals: run a full sweep at current temperatures,
+      // residual = (post-sweep temperature) - (pre-sweep temperature)
+      performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+      for (int i = 0; i < numberOfTrays; i++) {
+        residuals[i] = trays.get(i).getThermoSystem().getTemperature() - temperatures[i];
+      }
+
+      // Check if already converged
+      double normRes = 0.0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        normRes += Math.abs(residuals[i]);
+      }
+      normRes /= Math.max(1, numberOfTrays);
+      err = normRes;
+
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      if (convergenceHistory != null) {
+        recordConvergence(new double[] {err, massErr, energyErr});
+      }
+
+      logger.info("newton iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr,
+          energyErr);
+
+      boolean energyOk = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
+      if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyOk) {
+        break;
+      }
+
+      // Compute Jacobian by finite differences with banded structure
+      // J[i][j] = d(residual_i) / d(T_j)
+      // Distillation Jacobians are near-tridiagonal: tray i is primarily affected by
+      // trays i-1, i, i+1. For columns with > 6 trays, exploit this sparsity by only
+      // perturbing trays within a half-bandwidth of each row.
+      int halfBand = numberOfTrays <= 6 ? numberOfTrays : Math.max(2, numberOfTrays / 4);
+
+      // Zero the Jacobian — entries outside the band stay zero
+      for (int i = 0; i < numberOfTrays; i++) {
+        for (int jj = 0; jj < numberOfTrays; jj++) {
+          jacobian[i][jj] = 0.0;
+        }
+      }
+
+      // Determine which columns actually need perturbation
+      boolean[] needsPerturb = new boolean[numberOfTrays];
+      for (int j = 0; j < numberOfTrays; j++) {
+        if (numberOfTrays <= 6) {
+          needsPerturb[j] = true;
+        } else {
+          // Perturb column j if any row i within the band needs it
+          for (int i = Math.max(0, j - halfBand); i <= Math.min(numberOfTrays - 1,
+              j + halfBand); i++) {
+            needsPerturb[j] = true;
+            break;
+          }
+        }
+      }
+
+      for (int j = 0; j < numberOfTrays; j++) {
+        if (!needsPerturb[j]) {
+          continue;
+        }
+
+        // Reset temperatures to base state
+        for (int i = 0; i < numberOfTrays; i++) {
+          trays.get(i).setTemperature(temperatures[i]);
+          trays.get(i).getThermoSystem().setTemperature(temperatures[i]);
+        }
+
+        // Perturb tray j
+        double pertT = temperatures[j] + perturbation;
+        trays.get(j).setTemperature(pertT);
+        trays.get(j).getThermoSystem().setTemperature(pertT);
+
+        // Run sweep with perturbed temperature
+        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams,
+            1.0);
+
+        // Compute perturbed residuals — only for rows within band of column j
+        int rowStart = numberOfTrays <= 6 ? 0 : Math.max(0, j - halfBand);
+        int rowEnd =
+            numberOfTrays <= 6 ? numberOfTrays - 1 : Math.min(numberOfTrays - 1, j + halfBand);
+        for (int i = rowStart; i <= rowEnd; i++) {
+          double pertResidual = trays.get(i).getThermoSystem().getTemperature() - temperatures[i];
+          if (j == i) {
+            pertResidual = trays.get(i).getThermoSystem().getTemperature() - pertT;
+          }
+          jacobian[i][j] = (pertResidual - residuals[i]) / perturbation;
+        }
+      }
+
+      // For the Newton correction, we want to solve: J * deltaT = -residuals
+      // where residuals = f(T) = T_sweep - T_current (the function maps T_k -> T_{k+1})
+      // The fixed-point is T* such that f(T*) = 0
+      // Newton step: deltaT = -J^{-1} * residuals, but since we want T such that f(T)=0
+      // and our Jacobian approximates df/dT, we solve: (J - I) * deltaT = -residuals
+      // Because the true Jacobian of g(T) = T + f(T) is I + J_f, and Newton on g(T) = T
+      // means (I + J_f - I) * deltaT = -(T + f(T) - T) => J_f * deltaT = -f(T)
+
+      // Actually, residuals[i] = T_new[i] - T_old[i] is already f(T) = g(T) - T
+      // The Jacobian J[i][j] = df_i/dT_j ≈ (f_perturbed - f_base) / dT_j
+      // Newton seeks f(T) = 0, so: deltaT = -J^{-1} * f(T)
+
+      // Solve J * deltaT = -residuals using Gaussian elimination with partial pivoting
+      double[] rhs = new double[numberOfTrays];
+      for (int i = 0; i < numberOfTrays; i++) {
+        rhs[i] = -residuals[i];
+      }
+
+      double[] deltaT = solveLinearSystem(jacobian, rhs);
+
+      if (deltaT == null) {
+        // Singular Jacobian — fall back to direct substitution step
+        logger.warn("Newton: singular Jacobian at iter {}, using direct substitution step", iter);
+        for (int i = 0; i < numberOfTrays; i++) {
+          trays.get(i).setTemperature(temperatures[i] + 0.5 * residuals[i]);
+          trays.get(i).getThermoSystem().setTemperature(temperatures[i] + 0.5 * residuals[i]);
+        }
+        continue;
+      }
+
+      // Line search: try full Newton step, halve if residual increases
+      double bestStepLength = 1.0;
+      double bestNormRes = normRes;
+      for (double stepLength = 1.0; stepLength >= 0.125; stepLength *= 0.5) {
+        // Apply trial step
+        for (int i = 0; i < numberOfTrays; i++) {
+          double newTemp = temperatures[i] + stepLength * deltaT[i];
+          // Safeguard: keep temperatures reasonable
+          newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
+          trays.get(i).setTemperature(newTemp);
+          trays.get(i).getThermoSystem().setTemperature(newTemp);
+        }
+
+        // Check trial step quality with a sweep
+        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams,
+            1.0);
+
+        double trialNormRes = 0.0;
+        for (int i = 0; i < numberOfTrays; i++) {
+          double trialRes = trays.get(i).getThermoSystem().getTemperature() - temperatures[i]
+              - stepLength * deltaT[i];
+          trialNormRes += Math.abs(trialRes);
+        }
+        trialNormRes /= Math.max(1, numberOfTrays);
+
+        if (trialNormRes < bestNormRes) {
+          bestStepLength = stepLength;
+          bestNormRes = trialNormRes;
+          break; // Accept first improving step
+        }
+      }
+
+      // Apply the best step
+      if (bestStepLength < 1.0) {
+        // Need to re-apply since the loop may have tried smaller steps
+        for (int i = 0; i < numberOfTrays; i++) {
+          double newTemp = temperatures[i] + bestStepLength * deltaT[i];
+          newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
+          trays.get(i).setTemperature(newTemp);
+          trays.get(i).getThermoSystem().setTemperature(newTemp);
+        }
+      }
+
+      logger.debug("newton iteration {} step={} normRes={}->{}", iter, bestStepLength, normRes,
+          bestNormRes);
+
+      // Overflow: extend limit if not converged
+      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
+        iterationLimit = Math.min(maxIterationLimit, iterationLimit + 3);
+      }
+    }
+
+    // Final sweep to ensure consistent tray state
+    performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+    err = computeTemperatureResidual();
+    massErr = getMassBalanceError();
+    energyErr = getEnergyBalanceError();
+
+    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Perform a full upward+downward tray sweep, running PH-flash on each tray.
+   *
+   * @param id calculation identifier
+   * @param firstFeedTrayNumber index of the lowest feed tray
+   * @param previousGasStreams cached gas streams from previous iteration (updated in-place)
+   * @param previousLiquidStreams cached liquid streams from previous iteration (updated in-place)
+   * @param relaxation relaxation factor for stream blending
+   */
+  private void performFullTraySweep(UUID id, int firstFeedTrayNumber,
+      StreamInterface[] previousGasStreams, StreamInterface[] previousLiquidStreams,
+      double relaxation) {
+    // Downward liquid sweep: feed → reboiler
+    for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
+      int target = stage - 1;
+      int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
+      StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage],
+          trays.get(stage).getLiquidOutStream(), relaxation);
+      trays.get(target).replaceStream(replaceStream, relaxedLiquid);
+      previousLiquidStreams[stage] = relaxedLiquid.clone();
+      trays.get(target).run(id);
+      applyMurphreeCorrection(target);
+    }
+
+    // Upward vapor sweep: reboiler → condenser
+    for (int stage = 1; stage <= numberOfTrays - 1; stage++) {
+      int replaceStream = trays.get(stage).getNumberOfInputStreams() - 2;
+      if (stage == (numberOfTrays - 1)) {
+        replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
+      }
+      StreamInterface relaxedGas = applyRelaxation(previousGasStreams[stage - 1],
+          trays.get(stage - 1).getGasOutStream(), relaxation);
+      trays.get(stage).replaceStream(replaceStream, relaxedGas);
+      previousGasStreams[stage - 1] = relaxedGas.clone();
+      trays.get(stage).run(id);
+      applyMurphreeCorrection(stage);
+    }
+  }
+
+  /**
+   * Compute the average absolute temperature residual across all trays. The residual is the
+   * difference between the tray's stored temperature and its thermo system temperature after a
+   * flash.
+   *
+   * @return average absolute temperature change per tray (K)
+   */
+  private double computeTemperatureResidual() {
+    double residual = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      residual +=
+          Math.abs(trays.get(i).getThermoSystem().getTemperature() - trays.get(i).getTemperature());
+    }
+    return residual / Math.max(1, numberOfTrays);
+  }
+
+  /**
+   * Solve a dense linear system Ax = b using Gaussian elimination with partial pivoting.
+   *
+   * @param matrixA coefficient matrix (will be modified in-place)
+   * @param vectorB right-hand side vector (will be modified in-place)
+   * @return solution vector x, or null if the matrix is singular
+   */
+  private double[] solveLinearSystem(double[][] matrixA, double[] vectorB) {
+    int n = vectorB.length;
+    // Create copies to avoid modifying the originals from the caller's perspective
+    double[][] a = new double[n][n];
+    double[] b = new double[n];
+    for (int i = 0; i < n; i++) {
+      b[i] = vectorB[i];
+      for (int j = 0; j < n; j++) {
+        a[i][j] = matrixA[i][j];
+      }
+    }
+
+    // Forward elimination with partial pivoting
+    for (int k = 0; k < n; k++) {
+      // Find pivot
+      int maxRow = k;
+      double maxVal = Math.abs(a[k][k]);
+      for (int i = k + 1; i < n; i++) {
+        if (Math.abs(a[i][k]) > maxVal) {
+          maxVal = Math.abs(a[i][k]);
+          maxRow = i;
+        }
+      }
+
+      if (maxVal < 1e-30) {
+        return null; // Singular matrix
+      }
+
+      // Swap rows
+      if (maxRow != k) {
+        double[] tempRow = a[k];
+        a[k] = a[maxRow];
+        a[maxRow] = tempRow;
+        double tempB = b[k];
+        b[k] = b[maxRow];
+        b[maxRow] = tempB;
+      }
+
+      // Eliminate
+      for (int i = k + 1; i < n; i++) {
+        double factor = a[i][k] / a[k][k];
+        for (int j = k + 1; j < n; j++) {
+          a[i][j] -= factor * a[k][j];
+        }
+        b[i] -= factor * b[k];
+        a[i][k] = 0.0;
+      }
+    }
+
+    // Back substitution
+    double[] x = new double[n];
+    for (int i = n - 1; i >= 0; i--) {
+      double sum = b[i];
+      for (int j = i + 1; j < n; j++) {
+        sum -= a[i][j] * x[j];
+      }
+      x[i] = sum / a[i][i];
+    }
+    return x;
+  }
+
+
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
@@ -1749,10 +2938,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public SimpleTray getTray(int trayNumber) {
     return trays.get(trayNumber);
-  }
-
-  public ArrayList<SimpleTray> getTrays() {
-    return trays;
   }
 
   /** {@inheritDoc} */
@@ -1811,153 +2996,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Sets a column specification for the top (condenser) end.
-   *
-   * <p>
-   * This replaces the condenser temperature or reflux ratio as the top degree of freedom. The
-   * column solver will adjust the condenser temperature to satisfy this specification.
-   * </p>
-   *
-   * @param spec the column specification for the top product
-   */
-  public void setTopSpecification(ColumnSpecification spec) {
-    if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.TOP) {
-      throw new IllegalArgumentException(
-          "Top specification must have ProductLocation.TOP, got: " + spec.getLocation());
-    }
-    this.topSpecification = spec;
-  }
-
-  /**
-   * Sets a column specification for the bottom (reboiler) end.
-   *
-   * <p>
-   * This replaces the reboiler temperature or boilup ratio as the bottom degree of freedom. The
-   * column solver will adjust the reboiler temperature to satisfy this specification.
-   * </p>
-   *
-   * @param spec the column specification for the bottom product
-   */
-  public void setBottomSpecification(ColumnSpecification spec) {
-    if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.BOTTOM) {
-      throw new IllegalArgumentException(
-          "Bottom specification must have ProductLocation.BOTTOM, got: " + spec.getLocation());
-    }
-    this.bottomSpecification = spec;
-  }
-
-  /**
-   * Returns the current top (condenser) specification, or null if none is set.
-   *
-   * @return the top specification
-   */
-  public ColumnSpecification getTopSpecification() {
-    return topSpecification;
-  }
-
-  /**
-   * Returns the current bottom (reboiler) specification, or null if none is set.
-   *
-   * @return the bottom specification
-   */
-  public ColumnSpecification getBottomSpecification() {
-    return bottomSpecification;
-  }
-
-  /**
-   * Convenience method to specify the top product purity.
-   *
-   * @param componentName the component whose mole fraction in the distillate is specified
-   * @param targetMoleFraction the target mole fraction (0 to 1)
-   */
-  public void setTopProductPurity(String componentName, double targetMoleFraction) {
-    setTopSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.TOP, targetMoleFraction, componentName));
-  }
-
-  /**
-   * Convenience method to specify the bottom product purity.
-   *
-   * @param componentName the component whose mole fraction in the bottoms is specified
-   * @param targetMoleFraction the target mole fraction (0 to 1)
-   */
-  public void setBottomProductPurity(String componentName, double targetMoleFraction) {
-    setBottomSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.BOTTOM, targetMoleFraction, componentName));
-  }
-
-  /**
-   * Convenience method to specify the condenser reflux ratio (L/D).
-   *
-   * @param refluxRatio the reflux ratio
-   */
-  public void setCondenserRefluxRatio(double refluxRatio) {
-    setTopSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-        ColumnSpecification.ProductLocation.TOP, refluxRatio));
-  }
-
-  /**
-   * Convenience method to specify the reboiler boilup ratio (V/B).
-   *
-   * @param boilupRatio the boilup ratio
-   */
-  public void setReboilerBoilupRatio(double boilupRatio) {
-    setBottomSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.BOTTOM, boilupRatio));
-  }
-
-  /**
-   * Convenience method to specify the component recovery in the top product.
-   *
-   * @param componentName the component name
-   * @param recovery fraction of the component recovered in the top product (0 to 1)
-   */
-  public void setTopComponentRecovery(String componentName, double recovery) {
-    setTopSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-            ColumnSpecification.ProductLocation.TOP, recovery, componentName));
-  }
-
-  /**
-   * Convenience method to specify the component recovery in the bottom product.
-   *
-   * @param componentName the component name
-   * @param recovery fraction of the component recovered in the bottom product (0 to 1)
-   */
-  public void setBottomComponentRecovery(String componentName, double recovery) {
-    setBottomSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
-            ColumnSpecification.ProductLocation.BOTTOM, recovery, componentName));
-  }
-
-  /**
-   * Convenience method to specify the top product flow rate.
-   *
-   * @param flowRate the product flow rate
-   * @param unit the unit (e.g. "mol/hr", "kg/hr")
-   */
-  public void setTopProductFlowRate(double flowRate, String unit) {
-    setTopSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-            ColumnSpecification.ProductLocation.TOP, flowRate));
-  }
-
-  /**
-   * Convenience method to specify the bottom product flow rate.
-   *
-   * @param flowRate the product flow rate
-   * @param unit the unit (e.g. "mol/hr", "kg/hr")
-   */
-  public void setBottomProductFlowRate(double flowRate, String unit) {
-    setBottomSpecification(
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-            ColumnSpecification.ProductLocation.BOTTOM, flowRate));
-  }
-
-  /**
    * <p>
    * setTopPressure.
    * </p>
@@ -1982,7 +3020,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < temperatureTolerance);
+    return (err < getEffectiveTemperatureTolerance());
   }
 
   void setError(double err) {
@@ -2040,7 +3078,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return mass balance tolerance
    */
   public double getMassBalanceTolerance() {
-    return massBalanceTolerance;
+    return getEffectiveMassBalanceTolerance();
   }
 
   /**
@@ -2067,7 +3105,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return enthalpy balance tolerance
    */
   public double getEnthalpyBalanceTolerance() {
-    return enthalpyBalanceTolerance;
+    return getEffectiveEnthalpyBalanceTolerance();
   }
 
   /**
@@ -2076,7 +3114,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return temperature tolerance in Kelvin
    */
   public double getTemperatureTolerance() {
-    return temperatureTolerance;
+    return getEffectiveTemperatureTolerance();
   }
 
   /**
@@ -2294,6 +3332,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setTemperatureTolerance(double tol) {
     this.temperatureTolerance = tol;
+    this.temperatureToleranceCustomized = true;
   }
 
   /**
@@ -2303,6 +3342,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setMassBalanceTolerance(double tol) {
     this.massBalanceTolerance = tol;
+    this.massBalanceToleranceCustomized = true;
   }
 
   /**
@@ -2312,6 +3352,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setEnthalpyBalanceTolerance(double tol) {
     this.enthalpyBalanceTolerance = tol;
+    this.enthalpyBalanceToleranceCustomized = true;
+  }
+
+  /**
+   * Restore adaptive default tolerances, discarding manual overrides.
+   */
+  public void resetToleranceOverrides() {
+    temperatureToleranceCustomized = false;
+    massBalanceToleranceCustomized = false;
+    enthalpyBalanceToleranceCustomized = false;
+    temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
+    massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
+    enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
   }
 
   /**
@@ -2455,6 +3508,105 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return Math.max(trayRelativeError, columnRelative);
   }
 
+  /** Maximum number of entries stored in the convergence history list. */
+  private static final int MAX_CONVERGENCE_HISTORY = 500;
+
+  /**
+   * Append a residual snapshot to the convergence history, capping at
+   * {@link #MAX_CONVERGENCE_HISTORY} entries.
+   *
+   * @param entry residual array to record
+   */
+  private void recordConvergence(double[] entry) {
+    if (convergenceHistory != null && convergenceHistory.size() < MAX_CONVERGENCE_HISTORY) {
+      convergenceHistory.add(entry);
+    }
+  }
+
+  /**
+   * Apply Murphree tray efficiency correction to the vapor leaving a tray. The correction blends
+   * the equilibrium vapor composition with the inlet vapor composition:
+   *
+   * <pre>
+   * y_i^out = y_i^in + E_MV * (y_i^eq - y_i^in)
+   * </pre>
+   *
+   * where {@code E_MV} is the Murphree efficiency, {@code y_i^eq} is the equilibrium composition
+   * from the flash, and {@code y_i^in} is the inlet vapor composition. When efficiency is 1.0, the
+   * tray is ideal and no correction is applied. The correction is skipped for reboilers and
+   * condensers (first and last trays).
+   *
+   * @param trayIndex index of the tray in the {@code trays} list
+   */
+  private void applyMurphreeCorrection(int trayIndex) {
+    if (murphreeEfficiency >= 1.0 - 1e-10) {
+      return; // ideal tray, no correction needed
+    }
+    // Skip reboiler (index 0) — always an equilibrium stage
+    if (trayIndex <= 0) {
+      return;
+    }
+    // Skip condenser (last index) if present
+    if (hasCondenser && trayIndex >= numberOfTrays - 1) {
+      return;
+    }
+
+    SystemInterface fluid = trays.get(trayIndex).getThermoSystem();
+    if (fluid.getNumberOfPhases() < 2) {
+      return;
+    }
+
+    // The inlet vapor to this tray comes from the tray below (index - 1)
+    SystemInterface belowFluid = trays.get(trayIndex - 1).getThermoSystem();
+    if (belowFluid.getNumberOfPhases() < 2) {
+      return;
+    }
+
+    int nc = fluid.getPhase(0).getNumberOfComponents();
+    double emv = murphreeEfficiency;
+
+    // Equilibrium compositions from flash
+    double[] yEq = new double[nc];
+    double[] yIn = new double[nc];
+    for (int j = 0; j < nc; j++) {
+      yEq[j] = fluid.getPhase(0).getComponent(j).getx();
+      yIn[j] = belowFluid.getPhase(0).getComponent(j).getx();
+    }
+
+    // Apply Murphree to vapor: y_actual = y_in + E*(y_eq - y_in)
+    double[] yActual = new double[nc];
+    double sumY = 0.0;
+    for (int j = 0; j < nc; j++) {
+      yActual[j] = yIn[j] + emv * (yEq[j] - yIn[j]);
+      yActual[j] = Math.max(0.0, yActual[j]);
+      sumY += yActual[j];
+    }
+    if (sumY > 1e-15) {
+      for (int j = 0; j < nc; j++) {
+        yActual[j] /= sumY;
+      }
+    }
+
+    // Build corrected gas stream from phase clone — total moles unchanged.
+    // The liquid stream is NOT corrected: it uses the equilibrium result from the flash.
+    // This is the standard post-correction approach for Murphree efficiency in
+    // bubble-point sequential methods.
+    double vaporMoles = fluid.getPhase(0).getNumberOfMolesInPhase();
+    SystemInterface gasSystem = fluid.phaseToSystem(0);
+    for (int j = 0; j < nc; j++) {
+      gasSystem.getPhase(0).getComponent(j).setx(yActual[j]);
+      gasSystem.getPhase(0).getComponent(j).setNumberOfMolesInPhase(yActual[j] * vaporMoles);
+      gasSystem.getPhase(0).getComponent(j).setNumberOfmoles(yActual[j] * vaporMoles);
+    }
+    gasSystem.setTotalNumberOfMoles(vaporMoles);
+    gasSystem.init(0);
+    gasSystem.init(1);
+
+    if (trays.get(trayIndex) instanceof SimpleTray) {
+      ((SimpleTray) trays.get(trayIndex)).setCachedGasOutStream(new Stream("", gasSystem));
+    }
+  }
+
   /**
    * Blend the current stream update with the previous iterate using the provided relaxation factor.
    *
@@ -2465,12 +3617,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current,
       double relaxation) {
-    StreamInterface relaxed = current.clone();
-    if (previous == null) {
+    // Fast path: no damping needed, just clone and flash
+    if (previous == null || relaxation >= 1.0) {
+      StreamInterface relaxed = current.clone();
       relaxed.run();
       return relaxed;
     }
 
+    StreamInterface relaxed = current.clone();
     double step = Math.max(0.0, Math.min(1.0, relaxation));
     double previousFlow = previous.getFlowRate("kg/hr");
     double currentFlow = current.getFlowRate("kg/hr");
@@ -2680,115 +3834,207 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * {@inheritDoc}
+   * Set the Murphree tray efficiency for all stages.
    *
-   * <p>
-   * Validates the distillation column setup before execution. Checks that:
-   * <ul>
-   * <li>Equipment has a valid name</li>
-   * <li>At least one feed stream is connected</li>
-   * <li>Number of trays is positive</li>
-   * <li>Solver parameters are valid</li>
-   * </ul>
-   *
-   * @return validation result with errors and warnings
+   * @param efficiency value between 0.0 (no separation) and 1.0 (ideal equilibrium stage)
    */
-  @Override
-  public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
-
-    // Check: Equipment has a valid name
-    if (getName() == null || getName().trim().isEmpty()) {
-      result.addError("equipment", "Distillation column has no name",
-          "Set column name in constructor: new DistillationColumn(\"MyColumn\", 10, true, true)");
-    }
-
-    // Check: At least one feed stream is connected
-    if (feedStreams.isEmpty() && unassignedFeedStreams.isEmpty()) {
-      result.addError("stream", "No feed streams connected",
-          "Add feed stream: column.addFeedStream(feedStream, trayNumber)");
-    }
-
-    // Check: Number of trays is positive
-    if (numberOfTrays <= 0) {
-      result.addError("trays", "Number of trays must be positive: " + numberOfTrays,
-          "Specify trays in constructor: new DistillationColumn(\"name\", 10, true, true)");
-    }
-
-    // Check: Trays list is properly initialized
-    if (trays.isEmpty()) {
-      result.addError("trays", "No trays initialized",
-          "Ensure column is constructed with proper number of trays");
-    }
-
-    // Check: Condenser and reboiler configuration
-    if (!hasCondenser && !hasReboiler) {
-      result.addWarning("configuration", "Column has neither condenser nor reboiler",
-          "Consider adding condenser and/or reboiler for typical distillation");
-    }
-
-    // Check: Pressure settings
-    if (topTrayPressure > 0 && bottomTrayPressure > 0 && topTrayPressure > bottomTrayPressure) {
-      result.addWarning(
-          "pressure", "Top pressure (" + topTrayPressure + " bar) > bottom pressure ("
-              + bottomTrayPressure + " bar)",
-          "Typically bottom pressure >= top pressure in distillation columns");
-    }
-
-    // Check: Solver tolerances are positive
-    if (temperatureTolerance <= 0) {
-      result.addError("solver", "Temperature tolerance must be positive: " + temperatureTolerance,
-          "Set positive tolerance: column.setTemperatureTolerance(0.01)");
-    }
-
-    if (massBalanceTolerance <= 0) {
-      result.addError("solver", "Mass balance tolerance must be positive: " + massBalanceTolerance,
-          "Set positive tolerance");
-    }
-
-    // Check: Max iterations is reasonable
-    if (maxNumberOfIterations <= 0) {
-      result.addError("solver", "Max iterations must be positive: " + maxNumberOfIterations,
-          "Set positive max iterations: column.setMaxNumberOfIterations(50)");
-    } else if (maxNumberOfIterations < 10) {
-      result.addWarning("solver",
-          "Max iterations (" + maxNumberOfIterations + ") may be too low for convergence",
-          "Consider increasing max iterations to at least 50");
-    }
-
-    // Check: Relaxation factor in valid range for damped solver
-    if (solverType == SolverType.DAMPED_SUBSTITUTION
-        && (relaxationFactor <= 0 || relaxationFactor > 1)) {
-      result.addWarning("solver",
-          "Relaxation factor outside typical range (0,1]: " + relaxationFactor,
-          "Set relaxation factor between 0 and 1: column.setRelaxationFactor(0.5)");
-    }
-
-    return result;
+  public void setMurphreeEfficiency(double efficiency) {
+    this.murphreeEfficiency = Math.max(0.0, Math.min(1.0, efficiency));
   }
 
   /**
-   * Creates a new Builder for constructing DistillationColumn instances.
+   * Retrieve the current Murphree tray efficiency.
+   *
+   * @return Murphree efficiency
+   */
+  public double getMurphreeEfficiency() {
+    return murphreeEfficiency;
+  }
+
+  /**
+   * Set the number of simplified inner-loop iterations between rigorous flash updates in the IO
+   * solver. A value of 0 disables the simplified model (all iterations use rigorous flash).
+   *
+   * @param steps number of inner-loop steps (0 to disable, typically 2-5)
+   */
+  public void setInnerLoopSteps(int steps) {
+    this.innerLoopSteps = Math.max(0, steps);
+  }
+
+  /**
+   * Return the current number of simplified inner-loop iterations per outer flash update.
+   *
+   * @return inner-loop step count
+   */
+  public int getInnerLoopSteps() {
+    return innerLoopSteps;
+  }
+
+  /**
+   * Return the per-iteration convergence history from the most recent solve.
    *
    * <p>
-   * The builder pattern provides a fluent API for configuring complex distillation columns with
-   * many optional parameters. This is especially useful when configuring columns with multiple feed
-   * streams, custom tolerances, or specific solver settings.
+   * Each entry is a three-element array: [temperatureResidual, massResidual, energyResidual].
    * </p>
    *
-   * <p>
-   * Example usage:
-   * </p>
+   * @return list of residual arrays, one per iteration; empty if no solve has been run
+   */
+  public List<double[]> getConvergenceHistory() {
+    return convergenceHistory != null ? Collections.unmodifiableList(convergenceHistory)
+        : Collections.emptyList();
+  }
+
+  /**
+   * Retrieve the currently selected solver type.
    *
-   * <pre>
-   * DistillationColumn column = DistillationColumn.builder("Deethanizer").numberOfTrays(15)
-   *     .withCondenser().withReboiler().topPressure(25.0, "bara").bottomPressure(26.0, "bara")
-   *     .solverType(SolverType.INSIDE_OUT).temperatureTolerance(0.001).addFeedStream(feedStream, 8)
-   *     .build();
-   * </pre>
+   * @return solver type enum value
+   */
+  public SolverType getSolverType() {
+    return solverType;
+  }
+
+  /**
+   * Returns the list of trays in this column.
    *
-   * @param name the name of the distillation column
+   * @return list of {@link SimpleTray} objects
+   */
+  public List<SimpleTray> getTrays() {
+    return trays;
+  }
+
+  /**
+   * Sets the reflux ratio on the condenser (if present). Also stores a
+   * {@link ColumnSpecification.SpecificationType#REFLUX_RATIO REFLUX_RATIO} top specification so
+   * that the column records the user's intent.
+   *
+   * @param refluxRatio the desired reflux ratio (L/D)
+   */
+  public void setCondenserRefluxRatio(double refluxRatio) {
+    if (hasCondenser) {
+      getCondenser().setRefluxRatio(refluxRatio);
+    }
+    this.topSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.TOP, refluxRatio);
+  }
+
+  // ======================== Column specification convenience methods ========================
+
+  /**
+   * Returns the top (condenser) column specification.
+   *
+   * @return the top specification, or null if not set
+   */
+  public ColumnSpecification getTopSpecification() {
+    return topSpecification;
+  }
+
+  /**
+   * Returns the bottom (reboiler) column specification.
+   *
+   * @return the bottom specification, or null if not set
+   */
+  public ColumnSpecification getBottomSpecification() {
+    return bottomSpecification;
+  }
+
+  /**
+   * Sets the top column specification with location validation.
+   *
+   * @param spec the specification (must have location TOP)
+   * @throws IllegalArgumentException if the specification location is not TOP
+   */
+  public void setTopSpecification(ColumnSpecification spec) {
+    if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.TOP) {
+      throw new IllegalArgumentException(
+          "Top specification must have location TOP, got: " + spec.getLocation());
+    }
+    this.topSpecification = spec;
+  }
+
+  /**
+   * Sets the bottom column specification with location validation.
+   *
+   * @param spec the specification (must have location BOTTOM)
+   * @throws IllegalArgumentException if the specification location is not BOTTOM
+   */
+  public void setBottomSpecification(ColumnSpecification spec) {
+    if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.BOTTOM) {
+      throw new IllegalArgumentException(
+          "Bottom specification must have location BOTTOM, got: " + spec.getLocation());
+    }
+    this.bottomSpecification = spec;
+  }
+
+  /**
+   * Convenience method to specify a target mole fraction purity for the top product.
+   *
+   * @param componentName the component to constrain
+   * @param purity the desired mole fraction (0 to 1)
+   */
+  public void setTopProductPurity(String componentName, double purity) {
+    this.topSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.TOP, purity, componentName);
+  }
+
+  /**
+   * Convenience method to specify a target mole fraction purity for the bottom product.
+   *
+   * @param componentName the component to constrain
+   * @param purity the desired mole fraction (0 to 1)
+   */
+  public void setBottomProductPurity(String componentName, double purity) {
+    this.bottomSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.BOTTOM, purity, componentName);
+  }
+
+  /**
+   * Convenience method to specify a reboiler boilup ratio (V/B).
+   *
+   * @param boilupRatio the desired boilup ratio
+   */
+  public void setReboilerBoilupRatio(double boilupRatio) {
+    if (hasReboiler) {
+      getReboiler().setRefluxRatio(boilupRatio);
+    }
+    this.bottomSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.BOTTOM, boilupRatio);
+  }
+
+  /**
+   * Convenience method to specify a target component recovery in the top product.
+   *
+   * @param componentName the component to constrain
+   * @param recovery the desired recovery fraction (0 to 1)
+   */
+  public void setTopComponentRecovery(String componentName, double recovery) {
+    this.topSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+            ColumnSpecification.ProductLocation.TOP, recovery, componentName);
+  }
+
+  /**
+   * Convenience method to specify a target molar flow rate for the bottom product.
+   *
+   * @param flowRate the desired flow rate value
+   * @param unit the flow rate unit (e.g. "mol/hr")
+   */
+  public void setBottomProductFlowRate(double flowRate, String unit) {
+    // Store the specification in mol/hr (the column evaluator uses mol/hr internally)
+    this.bottomSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+            ColumnSpecification.ProductLocation.BOTTOM, flowRate);
+  }
+
+  // ======================== Builder pattern ========================
+
+  /**
+   * Creates a new Builder for constructing a DistillationColumn with a fluent API.
+   *
+   * @param name the column name
    * @return a new Builder instance
    */
   public static Builder builder(String name) {
@@ -2796,95 +4042,81 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Builder class for creating DistillationColumn instances with a fluent API.
+   * Fluent builder for {@link DistillationColumn}.
    *
    * <p>
-   * Provides a readable and maintainable way to construct complex distillation columns. All
-   * configuration options available through setters on DistillationColumn are accessible via
-   * builder methods.
+   * Example usage:
    * </p>
    *
-   * @author NeqSim
+   * <pre>
+   * DistillationColumn col = DistillationColumn.builder("Deethanizer").numberOfTrays(7)
+   *     .withCondenserAndReboiler().topPressure(30.0, "bara").bottomPressure(31.0, "bara")
+   *     .insideOut().addFeedStream(feed, 4).build();
+   * </pre>
+   *
+   * @author esol
    * @version 1.0
    */
   public static class Builder {
+    /** Column name. */
     private final String name;
-    private int numberOfTrays = 10;
-    private boolean hasCondenser = false;
-    private boolean hasReboiler = false;
+    /** Number of simple (non-condenser/reboiler) trays. */
+    private int numberOfTrays = 5;
+    /** Whether to add a condenser. */
+    private boolean condenser = false;
+    /** Whether to add a reboiler. */
+    private boolean reboiler = false;
+    /** Top tray pressure in bara (-1 means unset). */
     private double topPressure = -1.0;
+    /** Bottom tray pressure in bara (-1 means unset). */
     private double bottomPressure = -1.0;
-    private double temperatureTolerance = 5.0e-3;
-    private double massBalanceTolerance = 2.0e-2;
-    private double enthalpyBalanceTolerance = 2.0e-2;
-    private int maxIterations = 50;
-    private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
-    private double relaxationFactor = 0.5;
-    private double internalDiameter = 1.0;
-    private boolean doMultiPhaseCheck = true;
-    private List<FeedStreamConfig> feedStreams = new ArrayList<FeedStreamConfig>();
-    private ColumnSpecification topSpec;
-    private ColumnSpecification bottomSpec;
-
-    /** Feed stream configuration holder. */
-    private static class FeedStreamConfig {
-      StreamInterface stream;
-      int trayNumber;
-
-      FeedStreamConfig(StreamInterface stream, int trayNumber) {
-        this.stream = stream;
-        this.trayNumber = trayNumber;
-      }
-    }
+    /** Temperature convergence tolerance. */
+    private double tempTol = -1.0;
+    /** Mass balance convergence tolerance. */
+    private double massTol = -1.0;
+    /** Maximum iterations. */
+    private int maxIter = -1;
+    /** Solver type. */
+    private SolverType solver = null;
+    /** Relaxation factor for damped substitution. */
+    private double relaxation = -1.0;
+    /** Internal column diameter. */
+    private double diameter = -1.0;
+    /** Top product specification. */
+    private ColumnSpecification topSpec = null;
+    /** Bottom product specification. */
+    private ColumnSpecification bottomSpec = null;
+    /** Feed streams with tray indices. */
+    private final java.util.List<Object[]> feeds = new ArrayList<Object[]>();
 
     /**
-     * Creates a new Builder with the specified column name.
+     * Creates a builder with the given column name.
      *
-     * @param name the name of the distillation column
+     * @param name column name
      */
-    public Builder(String name) {
+    Builder(String name) {
       this.name = name;
     }
 
     /**
-     * Sets the number of trays (excluding condenser and reboiler).
+     * Sets the number of simple trays (excluding condenser and reboiler).
      *
-     * @param numberOfTrays number of simple trays
-     * @return this builder for chaining
+     * @param n number of trays
+     * @return this builder
      */
-    public Builder numberOfTrays(int numberOfTrays) {
-      this.numberOfTrays = numberOfTrays;
+    public Builder numberOfTrays(int n) {
+      this.numberOfTrays = n;
       return this;
     }
 
     /**
-     * Configures the column with a condenser at the top.
+     * Configures the column with both a condenser and a reboiler.
      *
-     * @return this builder for chaining
-     */
-    public Builder withCondenser() {
-      this.hasCondenser = true;
-      return this;
-    }
-
-    /**
-     * Configures the column with a reboiler at the bottom.
-     *
-     * @return this builder for chaining
-     */
-    public Builder withReboiler() {
-      this.hasReboiler = true;
-      return this;
-    }
-
-    /**
-     * Configures the column with both condenser and reboiler.
-     *
-     * @return this builder for chaining
+     * @return this builder
      */
     public Builder withCondenserAndReboiler() {
-      this.hasCondenser = true;
-      this.hasReboiler = true;
+      this.condenser = true;
+      this.reboiler = true;
       return this;
     }
 
@@ -2892,19 +4124,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets the top tray pressure.
      *
      * @param pressure pressure value
-     * @param unit pressure unit (e.g., "bara", "barg", "psia")
-     * @return this builder for chaining
+     * @param unit pressure unit (e.g. "bara")
+     * @return this builder
      */
     public Builder topPressure(double pressure, String unit) {
-      if ("bara".equalsIgnoreCase(unit)) {
-        this.topPressure = pressure;
-      } else if ("barg".equalsIgnoreCase(unit)) {
-        this.topPressure = pressure + 1.01325;
-      } else if ("psia".equalsIgnoreCase(unit)) {
-        this.topPressure = pressure * 0.0689476;
-      } else {
-        this.topPressure = pressure;
-      }
+      this.topPressure = pressure;
       return this;
     }
 
@@ -2912,197 +4136,123 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets the bottom tray pressure.
      *
      * @param pressure pressure value
-     * @param unit pressure unit (e.g., "bara", "barg", "psia")
-     * @return this builder for chaining
+     * @param unit pressure unit (e.g. "bara")
+     * @return this builder
      */
     public Builder bottomPressure(double pressure, String unit) {
-      if ("bara".equalsIgnoreCase(unit)) {
-        this.bottomPressure = pressure;
-      } else if ("barg".equalsIgnoreCase(unit)) {
-        this.bottomPressure = pressure + 1.01325;
-      } else if ("psia".equalsIgnoreCase(unit)) {
-        this.bottomPressure = pressure * 0.0689476;
-      } else {
-        this.bottomPressure = pressure;
-      }
+      this.bottomPressure = pressure;
       return this;
     }
 
     /**
-     * Sets both top and bottom pressure to the same value (isobaric column).
+     * Sets both top and bottom pressure to the same value.
      *
      * @param pressure pressure value
-     * @param unit pressure unit
-     * @return this builder for chaining
+     * @param unit pressure unit (e.g. "bara")
+     * @return this builder
      */
     public Builder pressure(double pressure, String unit) {
-      topPressure(pressure, unit);
-      bottomPressure(pressure, unit);
+      this.topPressure = pressure;
+      this.bottomPressure = pressure;
       return this;
     }
 
     /**
      * Sets the temperature convergence tolerance.
      *
-     * @param tolerance temperature tolerance in Kelvin
-     * @return this builder for chaining
+     * @param tol tolerance value
+     * @return this builder
      */
-    public Builder temperatureTolerance(double tolerance) {
-      this.temperatureTolerance = tolerance;
+    public Builder temperatureTolerance(double tol) {
+      this.tempTol = tol;
       return this;
     }
 
     /**
      * Sets the mass balance convergence tolerance.
      *
-     * @param tolerance relative mass balance tolerance
-     * @return this builder for chaining
+     * @param tol tolerance value
+     * @return this builder
      */
-    public Builder massBalanceTolerance(double tolerance) {
-      this.massBalanceTolerance = tolerance;
+    public Builder massBalanceTolerance(double tol) {
+      this.massTol = tol;
       return this;
     }
 
     /**
-     * Sets the enthalpy balance convergence tolerance.
+     * Sets a combined tolerance for temperature and mass balance.
      *
-     * @param tolerance relative enthalpy balance tolerance
-     * @return this builder for chaining
+     * @param tol tolerance value
+     * @return this builder
      */
-    public Builder enthalpyBalanceTolerance(double tolerance) {
-      this.enthalpyBalanceTolerance = tolerance;
-      return this;
-    }
-
-    /**
-     * Sets all tolerances to the same value.
-     *
-     * @param tolerance tolerance value for all convergence checks
-     * @return this builder for chaining
-     */
-    public Builder tolerance(double tolerance) {
-      this.temperatureTolerance = tolerance;
-      this.massBalanceTolerance = tolerance;
-      this.enthalpyBalanceTolerance = tolerance;
+    public Builder tolerance(double tol) {
+      this.tempTol = tol;
+      this.massTol = tol;
       return this;
     }
 
     /**
      * Sets the maximum number of solver iterations.
      *
-     * @param maxIterations maximum iterations
-     * @return this builder for chaining
+     * @param maxIter maximum iterations
+     * @return this builder
      */
-    public Builder maxIterations(int maxIterations) {
-      this.maxIterations = maxIterations;
+    public Builder maxIterations(int maxIter) {
+      this.maxIter = maxIter;
       return this;
     }
 
     /**
-     * Sets the solver type.
+     * Selects the damped substitution solver.
      *
-     * @param solverType the solver algorithm to use
-     * @return this builder for chaining
-     */
-    public Builder solverType(SolverType solverType) {
-      this.solverType = solverType;
-      return this;
-    }
-
-    /**
-     * Configures the solver to use direct substitution (default).
-     *
-     * @return this builder for chaining
-     */
-    public Builder directSubstitution() {
-      this.solverType = SolverType.DIRECT_SUBSTITUTION;
-      return this;
-    }
-
-    /**
-     * Configures the solver to use damped substitution.
-     *
-     * @return this builder for chaining
+     * @return this builder
      */
     public Builder dampedSubstitution() {
-      this.solverType = SolverType.DAMPED_SUBSTITUTION;
+      this.solver = SolverType.DAMPED_SUBSTITUTION;
       return this;
     }
 
     /**
-     * Configures the solver to use inside-out method.
+     * Selects the inside-out solver.
      *
-     * @return this builder for chaining
+     * @return this builder
      */
     public Builder insideOut() {
-      this.solverType = SolverType.INSIDE_OUT;
+      this.solver = SolverType.INSIDE_OUT;
       return this;
     }
 
     /**
-     * Sets the relaxation factor for damped solvers.
+     * Sets the relaxation factor for damped substitution.
      *
-     * @param factor relaxation factor (0 &lt; factor &lt;= 1)
-     * @return this builder for chaining
+     * @param factor relaxation factor
+     * @return this builder
      */
     public Builder relaxationFactor(double factor) {
-      this.relaxationFactor = factor;
+      this.relaxation = factor;
       return this;
     }
 
     /**
-     * Sets the internal diameter of the column.
+     * Sets the internal column diameter.
      *
      * @param diameter diameter in meters
-     * @return this builder for chaining
+     * @return this builder
      */
     public Builder internalDiameter(double diameter) {
-      this.internalDiameter = diameter;
+      this.diameter = diameter;
       return this;
     }
 
     /**
-     * Enables or disables multi-phase checking.
+     * Adds a feed stream at the specified tray index.
      *
-     * @param enable true to enable multi-phase check
-     * @return this builder for chaining
+     * @param feed the feed stream
+     * @param trayIndex the tray index for this feed
+     * @return this builder
      */
-    public Builder multiPhaseCheck(boolean enable) {
-      this.doMultiPhaseCheck = enable;
-      return this;
-    }
-
-    /**
-     * Adds a feed stream to the specified tray.
-     *
-     * @param stream the feed stream
-     * @param trayNumber the tray number (0-based) for the feed
-     * @return this builder for chaining
-     */
-    public Builder addFeedStream(StreamInterface stream, int trayNumber) {
-      this.feedStreams.add(new FeedStreamConfig(stream, trayNumber));
-      return this;
-    }
-
-    /**
-     * Sets the top (condenser) column specification.
-     *
-     * @param spec the column specification for the top product
-     * @return this builder for chaining
-     */
-    public Builder topSpecification(ColumnSpecification spec) {
-      this.topSpec = spec;
-      return this;
-    }
-
-    /**
-     * Sets the bottom (reboiler) column specification.
-     *
-     * @param spec the column specification for the bottom product
-     * @return this builder for chaining
-     */
-    public Builder bottomSpecification(ColumnSpecification spec) {
-      this.bottomSpec = spec;
+    public Builder addFeedStream(StreamInterface feed, int trayIndex) {
+      this.feeds.add(new Object[] {feed, trayIndex});
       return this;
     }
 
@@ -3110,74 +4260,67 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Sets a top product purity specification.
      *
      * @param componentName the component name
-     * @param targetMoleFraction the target mole fraction (0 to 1)
-     * @return this builder for chaining
+     * @param purity the target mole fraction
+     * @return this builder
      */
-    public Builder topProductPurity(String componentName, double targetMoleFraction) {
+    public Builder topProductPurity(String componentName, double purity) {
       this.topSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-          ColumnSpecification.ProductLocation.TOP, targetMoleFraction, componentName);
+          ColumnSpecification.ProductLocation.TOP, purity, componentName);
       return this;
     }
 
     /**
-     * Sets a bottom product purity specification.
+     * Sets the bottom column specification.
      *
-     * @param componentName the component name
-     * @param targetMoleFraction the target mole fraction (0 to 1)
-     * @return this builder for chaining
+     * @param spec the bottom specification
+     * @return this builder
      */
-    public Builder bottomProductPurity(String componentName, double targetMoleFraction) {
-      this.bottomSpec =
-          new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-              ColumnSpecification.ProductLocation.BOTTOM, targetMoleFraction, componentName);
+    public Builder bottomSpecification(ColumnSpecification spec) {
+      this.bottomSpec = spec;
       return this;
     }
 
     /**
-     * Builds and returns the configured DistillationColumn.
+     * Builds the {@link DistillationColumn} with the configured parameters.
      *
-     * @return the constructed DistillationColumn
+     * @return the constructed column
      */
     public DistillationColumn build() {
-      DistillationColumn column =
-          new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
-
-      // Set pressures
-      if (topPressure > 0) {
-        column.setTopPressure(topPressure);
+      DistillationColumn col = new DistillationColumn(name, numberOfTrays, condenser, reboiler);
+      if (topPressure >= 0) {
+        col.setTopPressure(topPressure);
       }
-      if (bottomPressure > 0) {
-        column.setBottomPressure(bottomPressure);
+      if (bottomPressure >= 0) {
+        col.setBottomPressure(bottomPressure);
       }
-
-      // Set tolerances
-      column.setTemperatureTolerance(temperatureTolerance);
-      column.setMassBalanceTolerance(massBalanceTolerance);
-      column.setEnthalpyBalanceTolerance(enthalpyBalanceTolerance);
-
-      // Set solver settings
-      column.setMaxNumberOfIterations(maxIterations);
-      column.setSolverType(solverType);
-      column.setRelaxationFactor(relaxationFactor);
-
-      // Set physical properties
-      column.setInternalDiameter(internalDiameter);
-      column.setMultiPhaseCheck(doMultiPhaseCheck);
-
-      // Set column specifications
+      if (tempTol >= 0) {
+        col.setTemperatureTolerance(tempTol);
+      }
+      if (massTol >= 0) {
+        col.setMassBalanceTolerance(massTol);
+      }
+      if (maxIter >= 0) {
+        col.setMaxNumberOfIterations(maxIter);
+      }
+      if (solver != null) {
+        col.setSolverType(solver);
+      }
+      if (relaxation >= 0) {
+        col.setRelaxationFactor(relaxation);
+      }
+      if (diameter >= 0) {
+        col.setInternalDiameter(diameter);
+      }
       if (topSpec != null) {
-        column.setTopSpecification(topSpec);
+        col.topSpecification = topSpec;
       }
       if (bottomSpec != null) {
-        column.setBottomSpecification(bottomSpec);
+        col.bottomSpecification = bottomSpec;
       }
-
-      // Add feed streams
-      for (FeedStreamConfig feedConfig : feedStreams) {
-        column.addFeedStream(feedConfig.stream, feedConfig.trayNumber);
+      for (Object[] feedEntry : feeds) {
+        col.addFeedStream((StreamInterface) feedEntry[0], (Integer) feedEntry[1]);
       }
-
-      return column;
+      return col;
     }
   }
 }

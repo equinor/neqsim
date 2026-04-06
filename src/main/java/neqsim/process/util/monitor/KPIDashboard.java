@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * Dashboard for comparing KPIs across multiple scenarios.
- * 
+ *
  * <p>
  * Provides visual comparison of scenario performance metrics, rankings, and recommendations for
  * process safety system optimization.
@@ -386,6 +386,9 @@ public class KPIDashboard {
 
   /**
    * Finds the best performing scenario based on a scoring function.
+   *
+   * @param scoreFunction the function to compute a score for each scenario
+   * @return the name of the best scenario with its score
    */
   private String findBestScenario(java.util.function.Function<ScenarioKPI, Double> scoreFunction) {
     String best = scenarioOrder.get(0);
@@ -404,6 +407,9 @@ public class KPIDashboard {
 
   /**
    * Gets a visual indicator for a score.
+   *
+   * @param score the score value
+   * @return a visual indicator character
    */
   private String getScoreIndicator(double score) {
     if (score >= 90.0)

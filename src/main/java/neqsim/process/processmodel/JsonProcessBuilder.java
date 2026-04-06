@@ -589,6 +589,7 @@ public class JsonProcessBuilder {
    * @param index the unit index (for error reporting)
    * @deprecated Use createUnit + wireUnit two-pass approach instead
    */
+  @Deprecated
   private void buildUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid,
       int index) {
     createUnit(process, unitDef, defaultFluid, index);
@@ -758,8 +759,8 @@ public class JsonProcessBuilder {
     } catch (NoSuchMethodException e) {
       // Fallback chain: getOutStream(int) -> getOutletStreams().get(0) -> getOutStream()
       try {
-        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class)
-            .invoke(unit, 0);
+        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class).invoke(unit,
+            0);
       } catch (Exception ex2) {
         try {
           List<StreamInterface> outlets = unit.getOutletStreams();
