@@ -12,6 +12,7 @@ import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.Validator;
 import neqsim.mcp.runners.AutomationRunner;
+import neqsim.mcp.runners.BatchRunner;
 import neqsim.mcp.runners.CapabilitiesRunner;
 import neqsim.mcp.runners.PhaseEnvelopeRunner;
 import neqsim.mcp.runners.PropertyTableRunner;
@@ -492,6 +493,49 @@ public class NeqSimTools {
       return CapabilitiesRunner.getCapabilities();
     } catch (Exception e) {
       return errorJson("Failed to get capabilities: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a batch of flash calculations in a single call.
+   *
+   * @param components base fluid composition as JSON
+   * @param eos equation of state
+   * @param flashType flash type for all cases (can be overridden per case)
+   * @param cases JSON array of case specifications
+   * @return JSON string with batch results
+   */
+  @Tool(description = "Run multiple flash calculations in a single call for sensitivity "
+      + "studies and parameter sweeps. Define a base fluid, then provide an array of cases "
+      + "each varying temperature, pressure, or composition. Much more efficient than "
+      + "calling runFlash repeatedly. Returns per-case results with a summary. "
+      + "Max 500 cases per batch.")
+  public String runBatch(
+      @ToolArg(description = "Base fluid composition as JSON object mapping component names "
+          + "to mole fractions, e.g. {\"methane\": 0.85, \"ethane\": 0.10}. "
+          + "Individual cases can override components.") String components,
+      @ToolArg(description = "Equation of state: SRK, PR, CPA, GERG2008, "
+          + "PCSAFT, UMRPRU") String eos,
+      @ToolArg(description = "Flash type for all cases (unless overridden per case): "
+          + "TP, PH, PS, TV, dewPointT, dewPointP, bubblePointT, bubblePointP, "
+          + "hydrateTP") String flashType,
+      @ToolArg(description = "JSON array of case objects. Each case can have: "
+          + "'temperature' (e.g. {\"value\": 25.0, \"unit\": \"C\"}), "
+          + "'pressure' (e.g. {\"value\": 50.0, \"unit\": \"bara\"}), "
+          + "'components' (override), 'flashType' (override). "
+          + "Example: [{\"temperature\": {\"value\": 0, \"unit\": \"C\"}, "
+          + "\"pressure\": {\"value\": 50, \"unit\": \"bara\"}}, "
+          + "{\"temperature\": {\"value\": 25, \"unit\": \"C\"}, "
+          + "\"pressure\": {\"value\": 50, \"unit\": \"bara\"}}]") String cases) {
+    try {
+      com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+      json.add("components", com.google.gson.JsonParser.parseString(components));
+      json.addProperty("model", eos);
+      json.addProperty("flashType", flashType);
+      json.add("cases", com.google.gson.JsonParser.parseString(cases));
+      return BatchRunner.run(json.toString());
+    } catch (Exception e) {
+      return errorJson("Batch calculation failed: " + e.getMessage());
     }
   }
 

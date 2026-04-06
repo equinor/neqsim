@@ -166,6 +166,29 @@ public class ResultProvenance {
   }
 
   /**
+   * Creates a provenance for a batch calculation.
+   *
+   * @param model the EOS model name
+   * @param totalCases the total number of cases in the batch
+   * @param succeededCases the number of cases that succeeded
+   * @return the configured provenance
+   */
+  public static ResultProvenance forBatch(String model, int totalCases, int succeededCases) {
+    ResultProvenance p = new ResultProvenance();
+    p.thermodynamicModel = model;
+    p.calculationType =
+        "batch flash calculation (" + totalCases + " cases, " + succeededCases + " succeeded)";
+    p.mixingRule = "classic";
+    p.addAssumption("Each case is an independent flash calculation");
+    p.addAssumption("Cases share the base fluid definition unless overridden");
+    if (succeededCases < totalCases) {
+      p.addLimitation((totalCases - succeededCases) + " of " + totalCases
+          + " cases failed — check individual" + " case results");
+    }
+    return p;
+  }
+
+  /**
    * Adds an assumption to the provenance.
    *
    * @param assumption the assumption description
