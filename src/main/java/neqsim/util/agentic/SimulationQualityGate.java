@@ -94,6 +94,8 @@ public class SimulationQualityGate implements Serializable {
     issues.clear();
     passed = true;
 
+    checkMassBalance();
+    checkEnergyBalance();
     checkPhysicalBounds();
     checkStreamConsistency();
     checkCompositionNormalization();
@@ -103,6 +105,181 @@ public class SimulationQualityGate implements Serializable {
       if (issue.severity == Severity.ERROR) {
         passed = false;
         break;
+      }
+    }
+  }
+
+  /**
+   * Check overall mass balance closure across the process.
+   *
+   * <p>
+   * Compares total inlet mass flow to total outlet mass flow. Uses the first and last equipment in
+   * the process to identify boundary streams. Tolerance is configurable via
+   * {@link #setMassBalanceTolerance(double)}.
+   * </p>
+   */
+  private void checkMassBalance() {
+    List<ProcessEquipmentInterface> units = process.getUnitOperations();
+    if (units == null || units.size() < 2) {
+      return;
+    }
+
+    double totalInletMass = 0.0;
+    double totalOutletMass = 0.0;
+
+    // Sum inlet mass flow from the first unit (feed streams)
+    ProcessEquipmentInterface firstUnit = units.get(0);
+    if (firstUnit != null) {
+      List<StreamInterface> inlets = firstUnit.getInletStreams();
+      if (inlets != null) {
+        for (StreamInterface stream : inlets) {
+          if (stream != null && stream.getThermoSystem() != null) {
+            double flow = stream.getThermoSystem().getFlowRate("kg/sec");
+            if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
+              totalInletMass += flow;
+            }
+          }
+        }
+      }
+    }
+
+    // Sum outlet mass flow from the last unit (product streams)
+    ProcessEquipmentInterface lastUnit = units.get(units.size() - 1);
+    if (lastUnit != null) {
+      List<StreamInterface> outlets = lastUnit.getOutletStreams();
+      if (outlets != null) {
+        for (StreamInterface stream : outlets) {
+          if (stream != null && stream.getThermoSystem() != null) {
+            double flow = stream.getThermoSystem().getFlowRate("kg/sec");
+            if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
+              totalOutletMass += flow;
+            }
+          }
+        }
+      }
+    }
+
+    // Also check intermediate streams that exit the process boundary (e.g., separator liquid out)
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface unit = units.get(i);
+      if (unit == null || unit == lastUnit) {
+        continue;
+      }
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets == null) {
+        continue;
+      }
+      for (StreamInterface stream : outlets) {
+        if (stream == null || stream.getThermoSystem() == null) {
+          continue;
+        }
+        // Check if this outlet stream is consumed by a downstream unit
+        boolean isConsumed = false;
+        for (int j = i + 1; j < units.size(); j++) {
+          ProcessEquipmentInterface downstream = units.get(j);
+          if (downstream == null) {
+            continue;
+          }
+          List<StreamInterface> downInlets = downstream.getInletStreams();
+          if (downInlets != null && downInlets.contains(stream)) {
+            isConsumed = true;
+            break;
+          }
+        }
+        if (!isConsumed) {
+          double flow = stream.getThermoSystem().getFlowRate("kg/sec");
+          if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0) {
+            totalOutletMass += flow;
+          }
+        }
+      }
+    }
+
+    if (totalInletMass > 0.0 && totalOutletMass > 0.0) {
+      double relativeError = Math.abs(totalInletMass - totalOutletMass) / totalInletMass;
+      if (relativeError > massBalanceTolerance) {
+        addIssue(Severity.ERROR, "mass_balance",
+            String.format(
+                "Mass balance not closed: inlet=%.4f kg/s, outlet=%.4f kg/s, error=%.4f%%",
+                totalInletMass, totalOutletMass, relativeError * 100.0),
+            "Check for leaks in the flowsheet — missing outlet streams or disconnected equipment");
+      } else {
+        addIssue(Severity.INFO, "mass_balance",
+            String.format("Mass balance closed: error=%.6f%% (tolerance=%.2f%%)",
+                relativeError * 100.0, massBalanceTolerance * 100.0),
+            "No action needed");
+      }
+    }
+  }
+
+  /**
+   * Check overall energy balance closure across the process.
+   *
+   * <p>
+   * Compares total inlet enthalpy flow to total outlet enthalpy flow plus external duties.
+   * Tolerance is configurable via {@link #setEnergyBalanceTolerance(double)}.
+   * </p>
+   */
+  private void checkEnergyBalance() {
+    List<ProcessEquipmentInterface> units = process.getUnitOperations();
+    if (units == null || units.size() < 2) {
+      return;
+    }
+
+    double totalInletEnthalpy = 0.0;
+    double totalOutletEnthalpy = 0.0;
+    boolean hasValidEnthalpy = false;
+
+    // Sum inlet enthalpy from feed streams
+    ProcessEquipmentInterface firstUnit = units.get(0);
+    if (firstUnit != null) {
+      List<StreamInterface> inlets = firstUnit.getInletStreams();
+      if (inlets != null) {
+        for (StreamInterface stream : inlets) {
+          if (stream != null && stream.getThermoSystem() != null) {
+            double h = stream.getThermoSystem().getEnthalpy();
+            if (!Double.isNaN(h) && !Double.isInfinite(h)) {
+              totalInletEnthalpy += h;
+              hasValidEnthalpy = true;
+            }
+          }
+        }
+      }
+    }
+
+    // Sum outlet enthalpy from all boundary streams
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == null) {
+        continue;
+      }
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets == null) {
+        continue;
+      }
+      for (StreamInterface stream : outlets) {
+        if (stream == null || stream.getThermoSystem() == null) {
+          continue;
+        }
+        double h = stream.getThermoSystem().getEnthalpy();
+        if (!Double.isNaN(h) && !Double.isInfinite(h)) {
+          totalOutletEnthalpy += h;
+        }
+      }
+    }
+
+    if (hasValidEnthalpy && totalInletEnthalpy != 0.0) {
+      double relativeError =
+          Math.abs(totalInletEnthalpy - totalOutletEnthalpy) / Math.abs(totalInletEnthalpy);
+      if (relativeError > energyBalanceTolerance) {
+        addIssue(Severity.WARNING, "energy_balance",
+            String.format("Energy balance deviation: inlet=%.2f W, outlet=%.2f W, error=%.2f%%",
+                totalInletEnthalpy, totalOutletEnthalpy, relativeError * 100.0),
+            "Check heat exchanger duties, compressor work, and external energy sources/sinks");
+      } else {
+        addIssue(Severity.INFO, "energy_balance",
+            String.format("Energy balance acceptable: error=%.4f%% (tolerance=%.2f%%)",
+                relativeError * 100.0, energyBalanceTolerance * 100.0),
+            "No action needed");
       }
     }
   }
