@@ -661,6 +661,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `.github/agents/reaction.engineering.agent.md` | Reaction engineering systems design |
 | `.github/agents/control.system.agent.md` | Control system and instrumentation design |
 | `.github/agents/emissions.environmental.agent.md` | Emissions calculation and environmental compliance |
+| `.github/agents/ccs.hydrogen.agent.md` | CCS value chain and hydrogen systems (CO2 transport, injection, H2 blending) |
 
 ## Skills Reference
 
@@ -689,6 +690,9 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-dynamic-simulation` | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization |
 | `neqsim-distillation-design` | Distillation column design — solver selection, feed tray rules, convergence, internals sizing |
 | `neqsim-electrolyte-systems` | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection |
+| `neqsim-flow-assurance` | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing |
+| `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
+| `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
 
 ## API Verification (Mandatory)
 

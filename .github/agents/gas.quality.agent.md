@@ -66,6 +66,121 @@ double relDensity = iso6976.getValue("RelativeDensity");
 ## Oil Quality Standards
 `neqsim.standards.oilquality` — for liquid hydrocarbon specifications.
 
+## Sales Gas Specification Compliance
+
+### European H-Gas (EN 16726)
+
+```java
+// Check compliance with EN 16726 H-gas specification
+Standard_EN16726 en16726 = new Standard_EN16726(gas);
+en16726.calculate();
+
+// Typical H-gas limits:
+// Wobbe index: 46.1 - 56.5 MJ/m³
+// H2: < 0.1 mol% (varies by country; up to 10% in some countries)
+// CO2: < 2.5 mol%
+// O2: < 0.001 mol% (transmission) / 0.01 mol% (distribution)
+// H2S: < 5 mg/m³
+// Total sulfur: < 30 mg/m³
+```
+
+### CNG Quality (ISO 15403)
+
+```java
+Standard_ISO15403 cng = new Standard_ISO15403(gas);
+cng.calculate();
+// Checks methane number, Wobbe index for CNG vehicles
+```
+
+### Hydrogen Fuel Quality (ISO 14687)
+
+```java
+Standard_ISO14687 h2Quality = new Standard_ISO14687(gas);
+h2Quality.calculate();
+// Checks purity requirements for fuel cell applications
+```
+
+### LNG Custody Transfer (ISO 6578)
+
+```java
+Standard_ISO6578 lngTransfer = new Standard_ISO6578(lngFluid);
+lngTransfer.calculate();
+// Calorific value, density at LNG conditions
+// Custody transfer calculation for commercial settlement
+```
+
+## Multi-Standard Comparison
+
+```java
+// Compare same gas against multiple standards
+Standard_ISO6976 iso6976 = new Standard_ISO6976(gas);
+iso6976.calculate();
+double gvcISO = iso6976.getValue("SuperiorCalorificValue");
+
+Standard_GPA2145 gpa = new Standard_GPA2145(gas);
+gpa.calculate();
+// Compare GPA vs ISO values for same gas — differences due to reference conditions
+```
+
+## Hydrogen Blending Impact
+
+```java
+// Check how H2 blending affects gas quality parameters
+double[] h2Fractions = {0.0, 0.05, 0.10, 0.15, 0.20};
+for (double h2 : h2Fractions) {
+    SystemInterface blendedGas = new SystemSrkEos(288.15, 1.01325);
+    blendedGas.addComponent("hydrogen", h2);
+    blendedGas.addComponent("methane", 0.90 * (1.0 - h2));
+    blendedGas.addComponent("ethane", 0.05 * (1.0 - h2));
+    blendedGas.addComponent("propane", 0.03 * (1.0 - h2));
+    blendedGas.addComponent("nitrogen", 0.02 * (1.0 - h2));
+    blendedGas.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(blendedGas);
+    ops.TPflash();
+    blendedGas.initProperties();
+
+    Standard_ISO6976 iso = new Standard_ISO6976(blendedGas);
+    iso.calculate();
+    double wobbe = iso.getValue("SuperiorWobbeIndex");
+    double gcv = iso.getValue("SuperiorCalorificValue");
+    // Track Wobbe and GCV vs H2 fraction
+}
+```
+
+## Flow Measurement (AGA)
+
+```java
+// AGA 3 — Orifice metering
+Standard_AGA3 aga3 = new Standard_AGA3(gas);
+aga3.calculate();
+// Orifice plate sizing, flow coefficient, expansion factor
+
+// AGA 7 — Turbine meter
+Standard_AGA7 aga7 = new Standard_AGA7(gas);
+aga7.calculate();
+// Turbine meter flow measurement calculations
+```
+
+## Compression Factor (ISO 12213)
+
+```java
+Standard_ISO12213 iso12213 = new Standard_ISO12213(gas);
+iso12213.calculate();
+double z = iso12213.getValue("CompressionFactor");
+// More accurate Z than generic EOS for fiscal metering
+```
+
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill for forbidden features
+- API patterns: See `neqsim-api-patterns` skill for fluid creation
+- CCS/hydrogen: See `neqsim-ccs-hydrogen` skill for H2 blending analysis
+- Standards: See `neqsim-standards-lookup` skill for standards database
+
+## API Verification
+ALWAYS read the actual class source to verify method signatures before using them.
+Do NOT assume API patterns — check constructors, method names, and parameter types.
+
 ## Sales Contract
 `neqsim.standards.salescontract` — for gas sales agreement compliance.
 
