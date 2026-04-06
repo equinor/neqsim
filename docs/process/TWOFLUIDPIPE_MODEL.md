@@ -54,7 +54,9 @@ Separate momentum equations for each phase:
 
 ## Flow Regime Detection
 
-The flow regime detector uses Taitel-Dukler transitions:
+### Gas-Liquid Flow Regimes
+
+The gas-liquid flow regime detector uses Taitel-Dukler transitions:
 
 | Regime | Detection Criteria | Status |
 |--------|-------------------|--------|
@@ -64,6 +66,55 @@ The flow regime detector uses Taitel-Dukler transitions:
 | ANNULAR | Weber number > 30 | ✅ |
 | CHURN | Transition between slug and annular | ✅ |
 | BUBBLE | High liquid fraction, low gas velocity | ✅ |
+
+### Oil-Water Flow Regime Detection
+
+For three-phase (gas-oil-water) simulations the `OilWaterFlowRegimeDetector` classifies the
+liquid-phase configuration at every pipe section. This is critical for corrosion prediction
+(water wetting), effective viscosity calculation, and water dropout risk assessment.
+
+Based on Trallero (1995), Brauner (2003), and Angeli & Hewitt (2000):
+
+| Regime | Condition | Description |
+|--------|-----------|-------------|
+| `STRATIFIED` | $v_m < 0.1\,v_{crit}$ | Separate oil and water layers |
+| `STRATIFIED_WITH_MIXING` | $0.1\,v_{crit} < v_m < 0.5\,v_{crit}$ | Stratified with interfacial mixing zone |
+| `DISPERSED_OIL_IN_WATER` | $v_m > v_{crit}$ and $w_c > w_{inv}$ | Oil droplets in continuous water |
+| `DISPERSED_WATER_IN_OIL` | $v_m > v_{crit}$ and $w_c < w_{inv}$ | Water droplets in continuous oil |
+| `DUAL_DISPERSION` | $v_m \approx v_{crit}$ and $w_c \approx w_{inv}$ | Both O/W and W/O regions coexist |
+| `ANNULAR` | High velocity, large density difference | Oil core with water annulus or vice versa |
+| `SINGLE_PHASE` | $w_c < 0.005$ or $w_c > 0.995$ | Only oil or only water present |
+
+Key calculations:
+
+- **Phase inversion** (Decarre & Fabre, 1997): water fraction at which continuous phase switches
+- **Critical dispersion velocity** (Brauner, 2003): minimum velocity for full turbulent dispersion
+- **Maximum droplet diameter** (Hinze, 1955): $d_{max} = \text{We}_{crit}^{3/5} \sigma^{3/5} / (\rho_c^{3/5} \epsilon^{2/5})$
+- **Effective emulsion viscosity**: Brinkman correlation for the dispersed/continuous mixture
+- **Water dropout risk**: flags sections where water may separate and accumulate
+
+#### Per-Section Access
+
+Each `TwoFluidSection` exposes the oil-water results:
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getOilWaterFlowRegime()` | `OilWaterFlowRegime` | Detected regime for this section |
+| `getOilWaterResult()` | `OilWaterResult` | Full result (regime, viscosity, inversion, droplet size, etc.) |
+| `isWaterWetting()` | `boolean` | True if water wets the pipe wall (corrosion risk) |
+| `isWaterDropoutRisk()` | `boolean` | True if water may separate and accumulate |
+| `getOilWaterInterfacialTension()` | `double` | Oil-water IFT (N/m) |
+| `setOilWaterInterfacialTension(double)` | — | Override IFT (default: 0.03 N/m) |
+| `getOilWaterDetector()` | `OilWaterFlowRegimeDetector` | Access the detector for tuning |
+| `setOilWaterDetector(...)` | — | Set custom detector instance |
+
+#### Tuning the Detector
+
+```java
+OilWaterFlowRegimeDetector detector = section.getOilWaterDetector();
+detector.setCriticalWeber(1.17);   // Hinze criterion (default 1.17)
+detector.setInversionConstant(0.5); // Decarre-Fabre constant (default 0.5)
+```
 
 ## Holdup Correlations
 
@@ -245,6 +296,12 @@ System.out.println(pipe.getThermalSummary());
 | Annular holdup | Film model | Ishii-Mishima entrainment |
 | Slug holdup | Empirical correlation | Dukler correlation |
 | Interfacial friction | Flow-regime specific | Multiple correlations |
+| **Oil-Water Models** |
+| Oil-water flow regime | OilWaterFlowRegimeDetector | Trallero/Brauner/Angeli classification |
+| Phase inversion | Decarre-Fabre (1997) | Viscosity/density-ratio model |
+| Emulsion viscosity | Brinkman correlation | Continuous/dispersed mixture |
+| Water wetting | Per-section detection | Corrosion risk indicator |
+| Water dropout | Velocity/holdup criterion | Accumulation risk flag |
 | **Terrain Effects** |
 | Low point accumulation | Froude criterion | Fr < 0.5 triggers accumulation |
 | Riser base slugging | Pots criterion | πSS > 1.0 indicates severe slugging |
@@ -296,6 +353,8 @@ All finite-volume calculations use per-section lengths:
 
 ### Methods
 
+Select the time integration method via `setTimeIntegrationMethod(TimeIntegrator.Method)`:
+
 | Method | CFL constraint | Description |
 |--------|---------------|-------------|
 | `RK4` (default) | Acoustic ($c + v$) | Classical 4th-order Runge-Kutta. Stable for all geometries. |
@@ -303,6 +362,12 @@ All finite-volume calculations use per-section lengths:
 | `RK2` | Acoustic | Heun's method (2nd order) |
 | `EULER` | Acoustic | Forward Euler (1st order) |
 | `IMEX_PRESSURE_CORRECTION` | Convective only | Semi-implicit; ~10x larger dt. Not recommended for vertical risers. |
+
+```java
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.RK4);       // default
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION); // semi-implicit
+TimeIntegrator.Method current = pipe.getTimeIntegrationMethod(); // query
+```
 
 ### Adaptive Timestepping
 
@@ -315,6 +380,23 @@ Algorithm per macro-step:
 3. **Post-check**: reject if pressure exceeds ceiling or velocities exceed 500 m/s
 4. **Recovery**: after each stable step, `dtFactor` grows by x1.02 back toward 1.0
 5. **Floor**: `dtFactor` cannot go below 0.001 to prevent stalling
+
+### Steady-State Solver Tuning
+
+The initial steady-state solve iterates between the transient solver and thermodynamic flashes
+until convergence. Three parameters control this:
+
+| Parameter | Setter | Default | Description |
+|-----------|--------|---------|-------------|
+| Under-relaxation | `setSteadyStateUnderRelaxation(double)` | 0.5 | Update damping factor (0–1); lower = more damping, more stable |
+| Flash interval | `setSteadyStateFlashInterval(int)` | 3 | Re-flash thermodynamics every N iterations; higher = faster but less accurate |
+| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 30 s | Timeout for the SS solver; prevents runaway iterations |
+
+```java
+pipe.setSteadyStateUnderRelaxation(0.3);   // More conservative damping
+pipe.setSteadyStateFlashInterval(5);       // Flash every 5th iteration
+pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
+```
 
 ## Validation Status
 

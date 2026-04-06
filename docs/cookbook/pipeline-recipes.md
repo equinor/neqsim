@@ -1116,6 +1116,66 @@ A comprehensive reference for the TwoFluidPipe model covering all flow types, bo
 | `getAdaptiveDtFactor()` | Current dt multiplier (1.0 = full CFL) |
 | `isAdaptiveTimesteppingEnabled()` | Query state |
 
+### Time Integration Method
+
+| Method | Description |
+|--------|-------------|
+| `setTimeIntegrationMethod(TimeIntegrator.Method)` | Select time integrator (RK4, SSP_RK3, RK2, EULER, IMEX_PRESSURE_CORRECTION) |
+| `getTimeIntegrationMethod()` | Returns current time integration method |
+
+### Oil-Water Flow Regime (Three-Phase)
+
+Per-section oil-water classification is available via `TwoFluidSection` for three-phase
+(gas-oil-water) simulations. The `OilWaterFlowRegimeDetector` runs automatically when
+an aqueous phase is present.
+
+| Method (on TwoFluidSection) | Returns | Description |
+|-----------------------------|---------|-------------|
+| `getOilWaterFlowRegime()` | `OilWaterFlowRegime` | Detected regime (STRATIFIED, DISPERSED_OIL_IN_WATER, etc.) |
+| `getOilWaterResult()` | `OilWaterResult` | Full result: regime, viscosity, inversion point, droplet size |
+| `isWaterWetting()` | `boolean` | True if water wets the pipe wall (corrosion indicator) |
+| `isWaterDropoutRisk()` | `boolean` | True if water may separate and accumulate |
+| `getOilWaterInterfacialTension()` | `double` | Oil-water IFT in N/m |
+| `setOilWaterInterfacialTension(double)` | — | Override default IFT (0.03 N/m) |
+| `getOilWaterDetector()` | `OilWaterFlowRegimeDetector` | Access detector for tuning |
+| `setOilWaterDetector(...)` | — | Set custom detector instance |
+
+**OilWaterFlowRegimeDetector tuning:**
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setCriticalWeber(double)` | 1.17 | Hinze critical Weber number for droplet breakup |
+| `getCriticalWeber()` | — | Query current value |
+| `setInversionConstant(double)` | 0.5 | Decarre-Fabre phase inversion constant |
+| `getInversionConstant()` | — | Query current value |
+
+**Standalone usage** (outside TwoFluidPipe):
+
+```python
+import jpype
+OilWaterFlowRegimeDetector = jpype.JClass(
+    "neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector")
+
+detector = OilWaterFlowRegimeDetector()
+result = detector.detect(
+    0.30,     # waterCut (volume fraction)
+    2.0,      # mixtureVelocity (m/s)
+    800.0,    # rhoOil (kg/m3)
+    1025.0,   # rhoWater (kg/m3)
+    0.005,    # muOil (Pa.s)
+    0.001,    # muWater (Pa.s)
+    0.03,     # sigmaOW (N/m)
+    0.25,     # pipeDiameter (m)
+    0.0       # inclination (radians)
+)
+
+print(f"Regime: {result.regime}")
+print(f"Water wetting: {result.waterWetting}")
+print(f"Effective viscosity: {result.effectiveViscosity:.4f} Pa.s")
+print(f"Inversion water fraction: {result.inversionWaterFraction:.3f}")
+print(f"Water dropout risk: {result.waterDropoutRisk}")
+```
+
 ### Steady-State Solver Tuning
 
 | Parameter | Setter | Default | Description |
