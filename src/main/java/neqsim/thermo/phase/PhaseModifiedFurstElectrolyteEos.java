@@ -85,35 +85,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   double diElectricConstantdTdT = 0.0;
   double diElectricConstantdTdV = 0;
   neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
-  double dielectricDecrementSum = 0.0;
-  /**
-   * Flag to enable ion-specific linear dielectric decrement model (Maribo-Mogensen et al. 2014).
-   * When false (default), the original Clausius-Mossotti model is used. Set to true when model
-   * parameters have been re-fitted for the decrement model.
-   */
-  boolean useIonDielectricDecrement = false;
-  /**
-   * Fraction of the ion dielectric decrement applied to the Born solvation term (0.0 to 1.0).
-   * Controls how much of the solution dielectric constant (vs pure-water) is used in the Born term.
-   * At 0.0, Born uses pure-water eps (original behavior). At 1.0, Born uses full solution eps.
-   * Intermediate values provide a damped coupling that avoids numerical instability at high
-   * molality while capturing the concentration-dependent solvation physics needed for the
-   * gamma-plus upturn. Default 1.0 (full coupling). Optimize together with Born radii for best
-   * accuracy.
-   */
-  double bornDecrementFraction = 0.884;
-  /**
-   * Dielectric constant used in the Born solvation term and its derivatives. When
-   * {@code useIonDielectricDecrement = false}, equals pure-solvent dielectric constant. When true,
-   * equals an interpolation between pure-solvent and solution dielectric constant controlled by
-   * {@code bornDecrementFraction}: eps_Born = eps_w + fraction * (eps_sol - eps_w).
-   */
-  double bornDiElectricConstant = 0.0;
-  double bornDiElectricConstantdT = 0.0;
-  double bornDiElectricConstantdTdT = 0.0;
-  double bornDiElectricConstantdV = 0.0;
-  double bornDiElectricConstantdVdV = 0.0;
-  double bornDiElectricConstantdTdV = 0.0;
   double sr2On = 1.0;
   double lrOn = 1.0;
   double bornOn = 1.0;
@@ -197,36 +168,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     solventDiElectricConstantdT = calcSolventDiElectricConstantdT(temperature);
     solventDiElectricConstantdTdT = calcSolventDiElectricConstantdTdT(temperature);
 
-    dielectricDecrementSum = useIonDielectricDecrement ? calcDielectricDecrementSum() : 0.0;
-
     diElectricConstant = calcDiElectricConstant(temperature);
     diElectricConstantdT = calcDiElectricConstantdT(temperature);
     diElectricConstantdTdT = calcDiElectricConstantdTdT(temperature);
     diElectricConstantdV = calcDiElectricConstantdV(temperature);
     diElectricConstantdVdV = calcDiElectricConstantdVdV(temperature);
     diElectricConstantdTdV = calcDiElectricConstantdTdV(temperature);
-    // Set Born-term dielectric: interpolated eps when decrement active, pure-solvent eps otherwise
-    if (useIonDielectricDecrement) {
-      bornDiElectricConstant = solventDiElectricConstant
-          + bornDecrementFraction * (diElectricConstant - solventDiElectricConstant);
-      bornDiElectricConstantdT = solventDiElectricConstantdT
-          + bornDecrementFraction * (diElectricConstantdT - solventDiElectricConstantdT);
-      bornDiElectricConstantdTdT = solventDiElectricConstantdTdT
-          + bornDecrementFraction * (diElectricConstantdTdT - solventDiElectricConstantdTdT);
-      // Volume derivatives set to zero — standard approximation that avoids
-      // numerical instability from the strong Born-volume coupling through eps(V).
-      // The composition-dependent Born solvation is captured through dFBorn/dN.
-      bornDiElectricConstantdV = 0.0;
-      bornDiElectricConstantdVdV = 0.0;
-      bornDiElectricConstantdTdV = 0.0;
-    } else {
-      bornDiElectricConstant = solventDiElectricConstant;
-      bornDiElectricConstantdT = solventDiElectricConstantdT;
-      bornDiElectricConstantdTdT = solventDiElectricConstantdTdT;
-      bornDiElectricConstantdV = 0.0;
-      bornDiElectricConstantdVdV = 0.0;
-      bornDiElectricConstantdTdV = 0.0;
-    }
     alphaLR2 = electronCharge * electronCharge * avagadroNumber
         / (vacumPermittivity * diElectricConstant * R * temperature);
     alphaLRdT = -electronCharge * electronCharge * avagadroNumber
@@ -431,48 +378,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   }
 
   /**
-   * Check if the ion-specific linear dielectric decrement model is enabled.
-   *
-   * @return true if the decrement model is active
-   */
-  public boolean isUseIonDielectricDecrement() {
-    return useIonDielectricDecrement;
-  }
-
-  /**
-   * Enable or disable the ion-specific linear dielectric decrement model (Maribo-Mogensen 2014).
-   * When enabled, the dielectric constant accounts for ion hydration shell effects. Note: model
-   * parameters (Born radii, SR2 kij) may need re-fitting when this is toggled.
-   *
-   * @param use true to enable the decrement model
-   */
-  public void setUseIonDielectricDecrement(boolean use) {
-    this.useIonDielectricDecrement = use;
-  }
-
-  /**
-   * Get the fraction of dielectric decrement applied to the Born solvation term. Controls the
-   * interpolation between pure-solvent dielectric constant (0.0) and full solution dielectric
-   * constant (1.0) in the Born term.
-   *
-   * @return the Born decrement fraction (0.0 to 1.0)
-   */
-  public double getBornDecrementFraction() {
-    return bornDecrementFraction;
-  }
-
-  /**
-   * Set the fraction of dielectric decrement applied to the Born solvation term. At 0.0, Born uses
-   * pure-water eps (original behavior). At 1.0, Born uses full solution eps. Intermediate values
-   * provide damped coupling. Optimize together with Born radii for best accuracy.
-   *
-   * @param fraction the Born decrement fraction (0.0 to 1.0)
-   */
-  public void setBornDecrementFraction(double fraction) {
-    this.bornDecrementFraction = fraction;
-  }
-
-  /**
    * <p>
    * calcSolventDiElectricConstantdT.
    * </p>
@@ -609,25 +514,25 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    return super.dFdTdV() + dFSR2dTdV() * sr2On + dFLRdTdV() * lrOn + dFBorndTdV() * bornOn;
+    return super.dFdTdV() + dFSR2dTdV() * sr2On + dFLRdTdV() * lrOn;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
-    return super.dFdV() + dFSR2dV() * sr2On + dFLRdV() * lrOn + dFBorndV() * bornOn;
+    return super.dFdV() + dFSR2dV() * sr2On + dFLRdV() * lrOn;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    return super.dFdVdV() + dFSR2dVdV() * sr2On + dFLRdVdV() * lrOn + dFBorndVdV() * bornOn;
+    return super.dFdVdV() + dFSR2dVdV() * sr2On + dFLRdVdV() * lrOn;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdVdV() {
-    return super.dFdVdVdV() + dFSR2dVdVdV() * sr2On + dFLRdVdVdV() * lrOn + dFBorndVdVdV() * bornOn;
+    return super.dFdVdVdV() + dFSR2dVdVdV() * sr2On + dFLRdVdVdV() * lrOn;
   }
 
   /** {@inheritDoc} */
@@ -985,34 +890,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double calcDiElectricConstant(double temperature) {
-    if (useIonDielectricDecrement) {
-      // Linear ion-specific dielectric decrement model (Maribo-Mogensen et al. 2014)
-      // epsilon = epsilon_w(T) + sum(delta_i * c_i)
-      double vHat = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
-      double volumeL = 1000.0 * vHat;
-      double eps_calc = getSolventDiElectricConstant() + dielectricDecrementSum / volumeL;
-      return Math.max(eps_calc, 2.0);
-    }
-    // Original Clausius-Mossotti model
     return 1.0 + (getSolventDiElectricConstant() - 1.0) * (1.0 - getEpsIonic())
         / (1.0 + getEpsIonic() / 2.0);
-  }
-
-  /**
-   * Calculates the sum of ion-specific dielectric decrements: S = sum(delta_i * n_i) for all ionic
-   * components. Used by the linear decrement model (Maribo-Mogensen et al. 2014).
-   *
-   * @return sum of delta_i * n_i over all ions
-   */
-  public double calcDielectricDecrementSum() {
-    double sum = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getIonicCharge() != 0) {
-        sum += componentArray[i].getNumberOfMolesInPhase()
-            * ((ComponentModifiedFurstElectrolyteEos) componentArray[i]).getDielectricDecrement();
-      }
-    }
-    return sum;
   }
 
   /**
@@ -1024,11 +903,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcDiElectricConstantdV(double temperature) {
-    if (useIonDielectricDecrement) {
-      double vHat = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
-      return -dielectricDecrementSum / (1000.0 * vHat * vHat);
-    }
     double X = (1.0 - getEpsIonic()) / (1.0 + getEpsIonic() / 2.0);
+    // double Y= getSolventDiElectricConstant(); 10-2002
     double Y = getSolventDiElectricConstant() - 1.0;
     double dXdf = getEpsIonicdV() * -3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 2.0);
     double dYdf = 0;
@@ -1044,33 +920,25 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcDiElectricConstantdVdV(double temperature) {
-    if (useIonDielectricDecrement) {
-      double vHat = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
-      return 2.0 * dielectricDecrementSum / (1000.0 * vHat * vHat * vHat);
-    }
     double Y = getSolventDiElectricConstant() - 1.0;
     double dXdf = getEpsIonicdVdV() * -3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 2.0)
         + getEpsIonicdV() * getEpsIonicdV() * 3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 3.0);
-    return Y * dXdf;
+    return Y * dXdf; // + Y*dXdf;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcDiElectricConstantdT(double temperature) {
-    if (useIonDielectricDecrement) {
-      return getSolventDiElectricConstantdT();
-    }
     double X = (1.0 - getEpsIonic()) / (1.0 + getEpsIonic() / 2.0);
+    double Y = getSolventDiElectricConstant() - 1.0;
+    double dXdf = 0;
     double dYdf = getSolventDiElectricConstantdT();
-    return dYdf * X;
+    return dYdf * X + Y * dXdf;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcDiElectricConstantdTdT(double temperature) {
-    if (useIonDielectricDecrement) {
-      return getSolventDiElectricConstantdTdT();
-    }
     return getSolventDiElectricConstantdTdT() * (1.0 - epsIonic) / (1.0 + epsIonic / 2.0);
   }
 
@@ -1083,9 +951,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcDiElectricConstantdTdV(double temperature) {
-    if (useIonDielectricDecrement) {
-      return 0.0;
-    }
     double Y = getSolventDiElectricConstantdT();
     double dXdf = getEpsIonicdV() * -3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 2.0);
     return Y * dXdf;
@@ -1746,7 +1611,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBorn() {
     return (avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature))
-        * (1.0 / getBornDiElectricConstant() - 1.0) * bornX;
+        * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
   }
 
   /**
@@ -1757,7 +1622,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFBorndT() {
-    return (FBornT() + FBornD() * bornDiElectricConstantdT);
+    return (FBornT() + FBornD() * solventDiElectricConstantdT);
   }
 
   /**
@@ -1768,7 +1633,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFBorndTdT() {
-    return (FBornTT() + FBornTD() * bornDiElectricConstantdT);
+    return (FBornTT() + FBornTD() * solventDiElectricConstantdT);
   }
 
   // first order derivatives
@@ -1782,7 +1647,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBornT() {
     return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature * temperature))
-        * (1.0 / getBornDiElectricConstant() - 1.0) * bornX;
+        * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
   }
 
   /**
@@ -1795,7 +1660,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBornX() {
     return (avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature))
-        * (1.0 / getBornDiElectricConstant() - 1.0);
+        * (1.0 / getSolventDiElectricConstant() - 1.0);
   }
 
   /**
@@ -1808,7 +1673,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBornD() {
     return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature)) * 1.0
-        / Math.pow(getBornDiElectricConstant(), 2.0) * bornX;
+        / Math.pow(getSolventDiElectricConstant(), 2.0) * bornX;
   }
 
   // second order derivatives
@@ -1824,7 +1689,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     return 2.0
         * (avagadroNumber * electronCharge * electronCharge
             / (4.0 * pi * vacumPermittivity * R * temperature * temperature * temperature))
-        * (1.0 / getBornDiElectricConstant() - 1.0) * bornX;
+        * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
   }
 
   /**
@@ -1837,7 +1702,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBornTD() {
     return (avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature * temperature)) * 1.0
-        / Math.pow(getBornDiElectricConstant(), 2.0) * bornX;
+        / Math.pow(getSolventDiElectricConstant(), 2.0) * bornX;
   }
 
   /**
@@ -1850,7 +1715,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBornTX() {
     return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature * temperature))
-        * (1.0 / getBornDiElectricConstant() - 1.0);
+        * (1.0 / getSolventDiElectricConstant() - 1.0);
   }
 
   /**
@@ -1864,7 +1729,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     return 2.0
         * (avagadroNumber * electronCharge * electronCharge
             / (4.0 * pi * vacumPermittivity * R * temperature))
-        * 1.0 / Math.pow(getBornDiElectricConstant(), 3.0) * bornX;
+        * 1.0 / Math.pow(getSolventDiElectricConstant(), 3.0) * bornX;
   }
 
   /**
@@ -1877,7 +1742,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double FBornDX() {
     return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature)) * 1.0
-        / Math.pow(getBornDiElectricConstant(), 2.0);
+        / Math.pow(getSolventDiElectricConstant(), 2.0);
   }
 
   /**
@@ -1889,103 +1754,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public double FBornXX() {
     return 0.0;
-  }
-
-  /**
-   * <p>
-   * dFBorndV. Volume derivative of Born term. Non-zero only when useIonDielectricDecrement is true
-   * because the solution dielectric constant depends on volume through concentration.
-   * </p>
-   *
-   * @return a double
-   */
-  public double dFBorndV() {
-    return FBornD() * bornDiElectricConstantdV;
-  }
-
-  /**
-   * <p>
-   * dFBorndVdV. Second volume derivative of Born term.
-   * </p>
-   *
-   * @return a double
-   */
-  public double dFBorndVdV() {
-    return FBornDD() * bornDiElectricConstantdV * bornDiElectricConstantdV
-        + FBornD() * bornDiElectricConstantdVdV;
-  }
-
-  /**
-   * <p>
-   * dFBorndVdVdV. Third volume derivative of Born term.
-   * </p>
-   *
-   * @return a double
-   */
-  public double dFBorndVdVdV() {
-    if (!useIonDielectricDecrement) {
-      return 0.0;
-    }
-    // FBornDDD = -6 * C / eps^4 * bornX
-    double fBornDDD = -6.0
-        * (avagadroNumber * electronCharge * electronCharge
-            / (4.0 * pi * vacumPermittivity * R * temperature))
-        / Math.pow(getBornDiElectricConstant(), 4.0) * bornX;
-    double dV = bornDiElectricConstantdV;
-    double dVV = bornDiElectricConstantdVdV;
-    // d3eps/dV3 for linear decrement: eps = epsw + S/(1000*Vhat)
-    // d3/dV3[S/(1000*V)] = -6S/(1000*V^4) ... but we approximate via finite diffs
-    // For the decrement model: d3eps/dV3 = 6*S/(1000*Vhat^4) where Vhat = Vm*1e-5*n
-    double vHat = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
-    double d3epsdV3 =
-        (vHat > 1e-20) ? 6.0 * dielectricDecrementSum / (1000.0 * Math.pow(vHat, 4.0)) : 0.0;
-    return fBornDDD * dV * dV * dV + 3.0 * FBornDD() * dV * dVV + FBornD() * d3epsdV3;
-  }
-
-  /**
-   * <p>
-   * dFBorndTdV. Mixed temperature-volume derivative of Born term.
-   * </p>
-   *
-   * @return a double
-   */
-  public double dFBorndTdV() {
-    return FBornTD() * bornDiElectricConstantdV;
-  }
-
-  /**
-   * <p>
-   * getBornDiElectricConstant. Returns the dielectric constant used in the Born solvation term.
-   * When the decrement model is active, uses the solution dielectric constant (composition and
-   * volume dependent). Otherwise uses the pure-solvent dielectric constant.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getBornDiElectricConstant() {
-    return bornDiElectricConstant;
-  }
-
-  /**
-   * <p>
-   * getBornDiElectricConstantdT. Temperature derivative of the Born dielectric constant.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getBornDiElectricConstantdT() {
-    return bornDiElectricConstantdT;
-  }
-
-  /**
-   * <p>
-   * getBornDiElectricConstantdV. Volume derivative of the Born dielectric constant.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getBornDiElectricConstantdV() {
-    return bornDiElectricConstantdV;
   }
 
   /**
