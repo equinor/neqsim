@@ -4029,6 +4029,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             ColumnSpecification.ProductLocation.BOTTOM, flowRate);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().isEmpty()) {
+      result.addError("equipment", "Equipment has no name", "Set equipment name in constructor");
+    }
+
+    // Check: Column must have at least one feed stream
+    if (feedStreams.isEmpty() && unassignedFeedStreams.isEmpty()) {
+      result.addError("feedStreams", "Distillation column has no feed streams",
+          "Use addFeedStream(stream, trayNumber) to add at least one feed stream");
+    }
+
+    // Warn if column has neither condenser nor reboiler
+    if (!hasCondenser && !hasReboiler) {
+      result.addWarning("condenserReboiler",
+          "Column has neither condenser nor reboiler — acting as a simple stripping/absorption column",
+          "Use constructor with hasCondenser=true and/or hasReboiler=true if separation is needed");
+    }
+
+    return result;
+  }
+
   // ======================== Builder pattern ========================
 
   /**
