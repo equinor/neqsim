@@ -118,8 +118,32 @@ def extract_pdf(filepath):
     return {"pages": pages, "tables": tables}
 ```
 
+**Extracting figures and diagrams from PDFs (PREFERRED):**
+
+Use `devtools/pdf_to_figures.py` to convert PDF pages to PNG images for visual
+analysis by AI tools (`view_image`). This is the fastest way to inspect
+engineering drawings, P&IDs, charts, tables, and compressor maps:
+
+```python
+# CLI — convert all PDFs in the references folder
+python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+
+# CLI — specific pages only (1-indexed)
+python devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
+
+# Python / Notebook — programmatic use
+from devtools.pdf_to_figures import pdf_to_pngs, pdf_folder_to_pngs
+
+pngs = pdf_to_pngs("references/compressor_sketch.pdf", outdir="figures/")
+all_pngs = pdf_folder_to_pngs("step1_scope_and_research/references/", outdir="figures/")
+```
+
+Then use `view_image` on the extracted PNGs to read diagrams, extract data from
+charts, identify equipment layouts, and analyze engineering drawings. Requires `pymupdf`.
+
 **Handling scanned PDFs:**
 - If `extract_text()` returns empty, the PDF is likely scanned/image-based
+- First try `pdf_to_figures.py` to render pages as images, then use `view_image` for AI reading
 - Use OCR as fallback: `pytesseract` + `pdf2image`
 - Flag to user: "This appears to be a scanned document. OCR extraction may have errors."
 
@@ -989,7 +1013,7 @@ pandas>=1.5.0         # Tabular data handling
 
 Optional (for advanced scenarios):
 ```
-pymupdf>=1.22.0       # Fast PDF text extraction (fitz)
+pymupdf>=1.22.0       # PREFERRED for PDF figure extraction (devtools/pdf_to_figures.py uses this)
 pytesseract>=0.3.10   # OCR for scanned PDFs
 pdf2image>=1.16.0     # Convert PDF pages to images for OCR
 tabula-py>=2.7.0      # Alternative PDF table extraction (Java-based)

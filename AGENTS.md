@@ -54,6 +54,11 @@ workspace root.
    - Fill `step1_scope_and_research/task_spec.md` (standards, methods, deliverables, acceptance criteria)
    - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
    - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
+   - **Extract figures from PDFs** using `devtools/pdf_to_figures.py`:
+     ```bash
+     python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+     ```
+     Then view extracted pages with `view_image` to read diagrams, P&IDs, charts, and tables.
    - Summarise each document's key contributions in `notes.md` under "Literature & Reference Documents"
 
    **Step 1.5 — Deep Analysis & Solution Design (MANDATORY for Standard/Comprehensive)**
@@ -640,6 +645,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/process/measurementdevice/` | Transmitters (PT, TT, LT, FT), AlarmConfig, ImpurityMonitor |
 | `examples/notebooks/` | Jupyter notebook examples |
 | `devtools/new_task.py` | Task-solving script |
+| `devtools/pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`. |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Past solved tasks (search before starting) |

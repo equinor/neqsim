@@ -54,7 +54,13 @@ functions, component name mapping, validation rules, and output schemas.
 
 Use the appropriate format handler from the skill:
 
-- **PDF** → `pdfplumber` for tables, `extract_text()` for narrative sections
+- **PDF** → First use `devtools/pdf_to_figures.py` to extract pages as PNG images for
+  visual analysis (`view_image`), then use `pdfplumber` for tables and `extract_text()` for narrative.
+  For engineering drawings, P&IDs, and charts, the image-based approach is often more effective:
+  ```bash
+  python devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/
+  # Then: view_image on each PNG to read diagrams, tables, charts
+  ```
 - **Word (.docx)** → `python-docx` for paragraphs and tables
 - **Excel (.xlsx)** → `openpyxl` / `pandas` for sheet data
 - **CSV** → `pandas` for tabular data

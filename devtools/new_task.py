@@ -261,7 +261,11 @@ Use **either** Google NotebookLM or Copilot — or both:
 **Option B: GitHub Copilot in VS Code** (best for code-adjacent research)
 - Open Copilot Chat and ask research questions directly
 - Copilot can search the web, read repo docs, and summarise findings
-- For PDFs, extract key sections as text or summarise them in `notes.md`
+- For PDFs, extract pages as images using `devtools/pdf_to_figures.py`:
+  ```bash
+  python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+  ```
+  Then use `view_image` on the extracted PNGs to read diagrams, charts, and tables
 
 **Copilot research workflow:**
 
@@ -729,16 +733,24 @@ Place literature papers, standards documents, and other reference material here.
 
 ## How the AI uses these files
 
-1. **Google NotebookLM (recommended for PDFs):** Upload the PDFs from this
+1. **PDF figure extraction (PREFERRED for visual content):** Use `devtools/pdf_to_figures.py`
+   to convert PDF pages to PNG images, then use `view_image` to analyze engineering
+   drawings, P&IDs, charts, data tables, and compressor maps:
+   ```bash
+   python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+   ```
+   This is the fastest way to make PDF content available for AI analysis.
+
+2. **Google NotebookLM (recommended for deep literature review):** Upload the PDFs from this
    folder to NotebookLM. It can read, cross-reference, and cite multiple
    documents at once. Ask it targeted questions and paste the answers into
    `notes.md`.
 
-2. **VS Code Copilot Chat:** Copilot can read text-based files (`.txt`, `.md`,
-   `.csv`) placed here. For PDFs, extract key sections as text or summarise
-   them in `notes.md` so the AI can reference the content.
+3. **VS Code Copilot Chat:** Copilot can read text-based files (`.txt`, `.md`,
+   `.csv`) placed here. For PDFs, first extract pages as images using
+   `pdf_to_figures.py`, then use `view_image` to read the content.
 
-3. **Manual notes:** Read the papers yourself and capture key equations,
+4. **Manual notes:** Read the papers yourself and capture key equations,
    data points, and design rules in `notes.md` under the "Literature &
    Reference Documents" section.
 

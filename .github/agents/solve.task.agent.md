@@ -368,6 +368,13 @@ Your deliverable is a populated task folder under `task_solve/`.
    - Search the NeqSim codebase for existing classes/methods relevant to the task
    - Check `CHANGELOG_AGENT_NOTES.md` for any recent API changes affecting this task
    - Use web search if available for engineering reference data
+   - **Extract figures from reference PDFs** placed in `step1_scope_and_research/references/`:
+     ```bash
+     python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+     ```
+     Then use `view_image` on extracted PNGs to read engineering drawings, P&IDs,
+     charts, data tables, and compressor maps. This makes PDF content available
+     for AI analysis (diagram digitization, data extraction, layout understanding).
 
 7. **Write comprehensive research notes** to `step1_scope_and_research/notes.md`.
    These notes must be **substantive** — not a skeleton template.

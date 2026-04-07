@@ -9,5 +9,8 @@ description = "JVM bootstrap helpers for NeqSim Jupyter development notebooks"
 requires-python = ">=3.8"
 dependencies = ["jpype1"]
 
+[project.optional-dependencies]
+pdf = ["pymupdf>=1.22.0"]
+
 [tool.setuptools]
 py-modules = ["neqsim_dev_setup"]

@@ -141,6 +141,14 @@ For Quick tasks, proceed directly with reasonable assumptions.
 python devtools/new_task.py "field development title" --type F --author "Field Development Agent"
 ```
 
+If the user provides reference documents (PVT reports, design basis, field data):
+```bash
+# Extract figures/pages from reference PDFs for AI analysis
+python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+```
+Then use `view_image` on extracted PNGs to read reservoir data, fluid analysis
+results, cost estimates, and infrastructure layouts from the source documents.
+
 ### Step 3: Execute the Field Development Study
 
 Follow this progression based on the study phase:

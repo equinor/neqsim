@@ -56,6 +56,7 @@ for a full explanation of the architecture and internals.
 | `unisim_reader.py` | UniSim/HYSYS .usc COM reader → NeqSim Python/notebook/EOT/JSON. 45+ op types, port-specific forward refs, auto-recycle wiring. |
 | `test_unisim_outputs.py` | 14 pytest tests for all UniSim converter output modes (no COM needed) |
 | `explore_unisim_com.py` | Diagnostic: dump UniSim COM object model from any .usc file |
+| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf` (`pip install pymupdf`). |
 
 ## Solving Engineering Tasks
 

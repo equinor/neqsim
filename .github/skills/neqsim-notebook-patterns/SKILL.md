@@ -152,6 +152,37 @@ Common plot types:
 - Cost breakdowns (bar charts)
 - Tornado diagrams (sensitivity ranking)
 
+### Including Extracted PDF Figures in Notebooks
+
+When reference documents (papers, standards, data sheets) are available as PDFs,
+extract their pages as PNG images for inclusion in the analysis:
+
+```python
+# In a notebook cell — extract specific pages from a reference PDF
+import subprocess
+subprocess.run([
+    "python", "../../devtools/pdf_to_figures.py",
+    "../step1_scope_and_research/references/compressor_datasheet.pdf",
+    "--pages", "3", "5",
+    "--outdir", "../figures/"
+], check=True)
+```
+
+Or use the Python API directly:
+```python
+from devtools.pdf_to_figures import pdf_to_pngs
+pngs = pdf_to_pngs(
+    "../step1_scope_and_research/references/compressor_datasheet.pdf",
+    outdir="../figures/", pages=[3, 5]
+)
+```
+
+This is useful for:
+- Embedding reference diagrams alongside simulation results for comparison
+- Digitizing data from charts to validate NeqSim predictions
+- Including vendor performance curves in design feasibility notebooks
+- Documenting the source drawings/P&IDs that drove the simulation setup
+
 ## Multi-Area Plant Architecture (ProcessModel)
 
 For large plants (platforms, gas plants, refineries), split into separate `ProcessSystem`

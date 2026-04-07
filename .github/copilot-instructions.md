@@ -1326,6 +1326,14 @@ docs, or the workspace root.
 2. Search `docs/development/TASK_LOG.md` for similar past tasks
 3. Classify the task (Type A–G, see `docs/development/TASK_SOLVING_GUIDE.md`)
 4. Find the closest existing code (test, notebook, or source file)
+5. **Extract figures from reference PDFs** if the user provides literature papers,
+   standards, data sheets, or drawings in `step1_scope_and_research/references/`:
+   ```bash
+   python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+   ```
+   Then use `view_image` on extracted PNGs to read engineering drawings, P&IDs,
+   charts, data tables, and equipment specifications. This makes PDF content
+   available for analysis in engineering studies.
 
 ### While Working
 
