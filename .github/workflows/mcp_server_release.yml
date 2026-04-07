@@ -12,11 +12,16 @@ on:
       - release/*
     paths:
       - 'pom*.xml'
+      - 'neqsim-mcp-server/**'
 
 jobs:
   build_mcp_server:
     name: Build MCP Server uber-jar
     runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.mcp_version.outputs.version }}
+      neqsim_version: ${{ steps.mcp_version.outputs.neqsim_version }}
 
     steps:
       - name: Check out repository
@@ -45,11 +50,13 @@ jobs:
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "neqsim_version=$NEQSIM_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Generate SHA-256 checksum
+      - name: Rename and checksum MCP jar
         run: |
+          NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           cd neqsim-mcp-server/target
-          sha256sum neqsim-mcp-server-*-runner.jar > neqsim-mcp-server-sha256.txt
-          cat neqsim-mcp-server-sha256.txt
+          cp neqsim-mcp-server-*-runner.jar "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar"
+          sha256sum "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar" > "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar.sha256"
+          cat "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar.sha256"
 
       - name: Upload MCP server jar
         uses: actions/upload-artifact@v7
@@ -57,7 +64,7 @@ jobs:
           name: neqsim-mcp-server
           path: |
             neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar
-            neqsim-mcp-server/target/neqsim-mcp-server-sha256.txt
+            neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar.sha256
 
   build_docker:
     name: Build & push Docker image
