@@ -660,6 +660,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `.github/agents/control.system.agent.md` | Control system and instrumentation design |
 | `.github/agents/emissions.environmental.agent.md` | Emissions calculation and environmental compliance |
 | `.github/agents/ccs.hydrogen.agent.md` | CCS value chain and hydrogen systems (CO2 transport, injection, H2 blending) |
+| `.github/agents/technical.reader.agent.md` | Read technical documents (PDF, Word, Excel) — extract equipment data, compositions, requirements, stream tables |
 
 ## Skills Reference
 
@@ -691,6 +692,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-flow-assurance` | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing |
 | `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
 | `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
+| `neqsim-technical-document-reading` | Read technical documents (PDF, Word, Excel) — equipment data sheets, design basis, TRs, stream tables, well tests, inspection reports, material certs. Unit normalization, component name mapping, quality scoring. |
 
 ## API Verification (Mandatory)
 
