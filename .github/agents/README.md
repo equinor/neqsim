@@ -200,6 +200,23 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ---
 
+### Technical Document Reading
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **technical.reader** | `@technical.reader <description>` | Extract structured engineering data from PDFs, Word docs, Excel files (data sheets, design basis, TRs, stream tables, inspection reports) |
+
+**Examples:**
+```
+@technical.reader Read this design basis PDF and extract feed gas composition
+@technical.reader Parse the equipment data sheet for separator V-100
+@technical.reader Extract stream table from the heat & mass balance Excel
+@technical.reader Pull requirements from this technical requirement document
+@technical.reader Extract wall thickness data from the inspection report
+```
+
+---
+
 ### Documentation
 
 | Agent | Command | Purpose |
@@ -232,6 +249,7 @@ Each agent is a specialized prompt that:
 | **Process** | Build complete flowsheets, run simulations, size equipment | Real-time process control (use NeqSim-Live) |
 | **PVT** | All standard lab tests, parameter fitting | Non-standard experiments (add to NeqSim first) |
 | **Standards** | Calculations per ISO/API/NORSOK | Legal interpretation of standards |
+| **Document Reading** | Extract data from PDF, Word, Excel (data sheets, TRs, stream tables, inspection reports) | OCR of scanned diagrams, reading proprietary CAD formats |
 
 ---
 
@@ -251,6 +269,7 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-agent-handoff` | Multi-agent pipelines | Structured schemas for passing results between agents |
 | `neqsim-physics-explanations` | Explaining results or adding educational context | Plain-language explanations of thermodynamic and process phenomena |
 | `neqsim-capability-map` | Checking what NeqSim can do, planning implementations | Structured inventory of all NeqSim capabilities by discipline |
+| `neqsim-technical-document-reading` | Reading technical documents (PDF, Word, Excel) | Extraction patterns, unit normalization, component mapping, quality scoring |
 
 ### API Changelog
 
