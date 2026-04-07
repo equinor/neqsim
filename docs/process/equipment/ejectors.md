@@ -1,6 +1,6 @@
 ---
 title: Ejector Equipment
-description: Documentation for ejector equipment in NeqSim process simulation.
+description: "Documentation for ejector equipment in NeqSim process simulation, including Transvac-style vendor parameters (entrainment ratio, compression ratio, critical back pressure, area ratio, Mach numbers)."
 ---
 
 # Ejector Equipment
@@ -12,6 +12,8 @@ Documentation for ejector equipment in NeqSim process simulation.
 - [Ejector Class](#ejector-class)
 - [Operating Principles](#operating-principles)
 - [Design Parameters](#design-parameters)
+- [Transvac-Style Vendor Parameters](#transvac-style-vendor-parameters)
+- [Performance Curves](#performance-curves)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -24,13 +26,17 @@ Documentation for ejector equipment in NeqSim process simulation.
 | Class | Description |
 |-------|-------------|
 | `Ejector` | Steam/gas ejector for compression |
-| `EjectorDesignResult` | Design calculation results |
+| `EjectorDesignResult` | Design calculation results (immutable) |
 
 Ejectors use the kinetic energy of a high-pressure motive stream to entrain and compress a low-pressure suction stream. Common applications include:
 - Vapor recovery systems
 - Vacuum generation
-- Flare gas recovery
+- Flare gas recovery (Transvac, Croll Reynolds)
 - LP gas compression without rotating equipment
+
+The NeqSim ejector model supports both constant-pressure mixing (CPM) and constant-area
+mixing (CAM) approaches, and calculates Transvac-style vendor parameters including
+entrainment ratio, compression ratio, critical back pressure, area ratio, and Mach numbers.
 
 ---
 
@@ -238,7 +244,96 @@ ejector2.run();
 
 ---
 
+## Transvac-Style Vendor Parameters
+
+After calling `ejector.run()`, the following vendor-style parameters are available.
+These correspond directly to the parameters used in Transvac, Croll Reynolds, and
+Schutte & Koerting ejector datasheets and performance curves.
+
+### Key Parameters
+
+| Parameter | Method | Description |
+|-----------|--------|-------------|
+| Entrainment Ratio (ER) | `getEntrainmentRatio()` | Suction mass flow / motive mass flow |
+| Compression Ratio (CR) | `getCompressionRatio()` | Discharge pressure / suction pressure |
+| Expansion Ratio | `getExpansionRatio()` | Motive pressure / discharge pressure |
+| Critical Back Pressure | `getCriticalBackPressure()` | Max discharge pressure before breakdown (bara) |
+| Area Ratio | `getAreaRatio()` | Mixing area / motive nozzle throat area |
+| Motive Nozzle Mach | `getMotiveNozzleMach()` | Mach number at motive nozzle exit |
+| Suction Mach | `getSuctionMach()` | Mach number of suction flow at mixing entrance |
+| Mixing Mach | `getMixingMach()` | Mach number of mixed flow in mixing section |
+| Motive Choked | `isMotiveChoked()` | Whether motive nozzle flow is sonic |
+| Suction Choked | `isSuctionChoked()` | Whether suction flow is sonic |
+| In Breakdown | `isInBreakdown()` | Whether discharge exceeds critical back pressure |
+
+### Efficiency Settings
+
+Three independent efficiencies control the ejector model:
+
+```java
+ejector.setEfficiencyIsentropic(0.75);     // Motive nozzle isentropic efficiency (0.7-0.9)
+ejector.setSuctionNozzleEfficiency(0.90);  // Suction nozzle efficiency (0.85-0.95)
+ejector.setMixingEfficiency(0.85);         // Mixing section momentum transfer (0.80-0.95)
+ejector.setDiffuserEfficiency(0.80);       // Diffuser pressure recovery (0.7-0.85)
+```
+
+### Critical Back Pressure
+
+The critical back pressure (CBP) is the most important parameter in ejector specification.
+It represents the maximum discharge pressure at which the ejector maintains stable
+entrainment. The CBP is calculated from the stagnation (total) enthalpy of the mixed
+flow and the diffuser efficiency using a rigorous thermodynamic flash.
+
+```java
+ejector.run();
+double cbp = ejector.getCriticalBackPressure();  // bara
+boolean stable = !ejector.isInBreakdown();
+
+if (ejector.isInBreakdown()) {
+    System.out.println("WARNING: Operating beyond critical back pressure!");
+    System.out.println("Reduce discharge pressure below " + cbp + " bara");
+}
+```
+
+### Example: Reading All Vendor Parameters
+
+```java
+ejector.run();
+
+System.out.println("Entrainment Ratio: " + ejector.getEntrainmentRatio());
+System.out.println("Compression Ratio: " + ejector.getCompressionRatio());
+System.out.println("Expansion Ratio:   " + ejector.getExpansionRatio());
+System.out.println("Critical Back P:   " + ejector.getCriticalBackPressure() + " bara");
+System.out.println("Area Ratio:        " + ejector.getAreaRatio());
+System.out.println("Motive Mach:       " + ejector.getMotiveNozzleMach());
+System.out.println("Suction Mach:      " + ejector.getSuctionMach());
+System.out.println("Mixing Mach:       " + ejector.getMixingMach());
+System.out.println("Motive Choked:     " + ejector.isMotiveChoked());
+System.out.println("Suction Choked:    " + ejector.isSuctionChoked());
+System.out.println("In Breakdown:      " + ejector.isInBreakdown());
+```
+
+---
+
 ## Performance Curves
+
+### Generate Performance Curve
+
+The `generatePerformanceCurve()` method produces Transvac-style performance data showing
+how entrainment ratio varies with discharge pressure at constant motive and suction conditions:
+
+```java
+// Generate a performance curve with 10 points from 1.5 to 5.0 bara discharge
+List<double[]> curve = ejector.generatePerformanceCurve(1.5, 5.0, 10);
+
+for (double[] point : curve) {
+    double dischargePressure = point[0];
+    double entrainmentRatio = point[1];
+    double compressionRatio = point[2];
+    System.out.printf("Pd=%.2f bara, ER=%.3f, CR=%.2f%n",
+        dischargePressure, entrainmentRatio, compressionRatio);
+}
+```
 
 ### Entrainment vs Compression Ratio
 
@@ -251,7 +346,7 @@ for (double Ps : suctionPressures) {
     suctionStream.setPressure(Ps, "bara");
     suctionStream.run();
     ejector.run();
-    
+
     double compressionRatio = ejector.getMixedStream().getPressure("bara") / Ps;
     System.out.println("Suction P: " + Ps + " bara, CR: " + compressionRatio);
 }
