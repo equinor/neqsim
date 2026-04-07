@@ -91,7 +91,7 @@ public class DistillationSolverBenchmarkTest {
     // Print solver timing summary
     System.out.printf("%n%-25s %6s %10s %10s %10s%n", "Solver", "Iters", "Time(s)", "GasFlow",
         "LiqFlow");
-    System.out.println("-".repeat(65));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 65));
     for (int i = 0; i < solvers.length; i++) {
       System.out.printf("%-25s %6d %10.3f %10.2f %10.2f%n", solvers[i].name(), iterations[i],
           times[i], gasFlows[i], liquidFlows[i]);
