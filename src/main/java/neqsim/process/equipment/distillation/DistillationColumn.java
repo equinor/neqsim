@@ -3806,6 +3806,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** {@inheritDoc} */
   @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Equipment has no name", "Set equipment name in constructor");
+    }
+
+    if (feedStreams.isEmpty() && unassignedFeedStreams.isEmpty()) {
+      result.addError("stream", "No feed stream connected to distillation column",
+          "Add a feed stream: column.addFeedStream(stream, feedTrayNumber)");
+    }
+
+    if (!hasCondenser && !hasReboiler) {
+      result.addWarning("configuration",
+          "Column has neither condenser nor reboiler — acting as a stripper/absorber",
+          "Set hasCondenser=true and/or hasReboiler=true in constructor if separation is needed");
+    }
+
+    return result;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(new DistillationColumnResponse(this));
