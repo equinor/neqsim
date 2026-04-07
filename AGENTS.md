@@ -699,7 +699,6 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
 | `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
 | `neqsim-technical-document-reading` | Read technical documents and engineering images — PDF/Word/Excel extraction, P&ID topology, vendor datasheet parsing, image analysis with view_image, performance map digitization, figure discussion generation |
-| `neqsim-technical-document-reading` | Read technical documents (PDF, Word, Excel) — equipment data sheets, design basis, TRs, stream tables, well tests, inspection reports, material certs. Unit normalization, component name mapping, quality scoring. |
 
 ## API Verification (Mandatory)
 
