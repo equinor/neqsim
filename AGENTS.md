@@ -100,11 +100,9 @@ workspace root.
 
    **Step 3 — Report**
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
-   - Run `python step3_report/generate_report.py` to produce Word + HTML
-   - Add `--paper` to also generate a scientific paper: `Paper.docx` + `Paper.html`
-   - Use `--paper-only` to generate only the paper (skips technical report)
-   - For the paper, configure `PAPER_TITLE`, `PAPER_AUTHORS`, `PAPER_KEYWORDS`,
-     and `PAPER_SECTIONS` in `generate_report.py`
+   - Run `python step3_report/generate_report.py` to produce a professional
+     engineering report (Report.docx + Report.html)
+   - Scientific papers (`--paper`) are only generated when explicitly requested
    - **Important:** The template now has built-in styled formatting for
      Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections
      (color-coded risk badges, P10/P50/P90 tables, tornado tables, benchmark

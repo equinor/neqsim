@@ -1067,38 +1067,19 @@ Document the independent check in `step2_analysis/notes.md` under a
     | # | Assumption | Impact | Confidence | Replace With |
     Each assumption is numbered and traceable to the results it affects.
 
-    For the **scientific paper**, the discussion content appears inline within
-    the "Results and Discussion" section (Section 3), combining figures with
-    their interpretations in academic format.
-
     **Stale numbers trap:** MANUAL_SECTIONS text (executive_summary, conclusions)
     contains hardcoded numbers. When design parameters change (dimensions, flow rates),
     you MUST update these strings to match the latest results. Where possible, let
     conclusions come from `results.json["conclusions"]` instead of hardcoding.
 
-17. **Run the report generator** to produce both Word and HTML:
+17. **Run the report generator** to produce the engineering report (Word + HTML):
     ```
     Run in terminal: python step3_report/generate_report.py
     ```
-    To also generate a scientific paper (academic format):
-    ```
-    Run in terminal: python step3_report/generate_report.py --paper
-    ```
-    Or to generate only the scientific paper:
-    ```
-    Run in terminal: python step3_report/generate_report.py --paper-only
-    ```
-
-    **Scientific paper output** (`Paper.docx` and `Paper.html`):
-    - Standard engineering paper structure: Abstract, Introduction, Methodology,
-      Results & Discussion (with Validation and Benchmark sub-sections),
-      Uncertainty Analysis, Risk Assessment, Conclusions, References
-    - Configure in `generate_report.py`: set `PAPER_TITLE`, `PAPER_AUTHORS`,
-      `PAPER_KEYWORDS`, and fill in `PAPER_SECTIONS` (abstract, introduction,
-      methodology) for best results
-    - The paper auto-populates from the same `results.json` data as the report
-    - Academic formatting: Times New Roman, numbered sections, right-aligned
-      equation numbers, centered figures with captions, hanging-indent references
+    This is the **default and preferred output** — an engineering technical report.
+    Only generate a scientific paper if the user explicitly requests it
+    (`--paper` or `--paper-only`). The default workflow produces Report.docx
+    and Report.html only.
 
     **Styled section formatting** (built into the template):
     - Risk Assessment: summary card with color-coded badges (High=red,
@@ -1515,8 +1496,7 @@ template (Section 2, step 15, Tier 2).
 #### In the Report
 
 The report generator auto-renders `figure_discussion` entries as a structured
-"Discussion" section between Results and Validation. The paper generator
-includes the same discussion inline within "Results and Discussion".
+"Discussion" section between Results and Validation.
 
 #### Quality Check (Design / Development mode)
 
@@ -1621,16 +1601,17 @@ L1. **The `generate_report.py` template now includes built-in styled formatting*
    add custom rendering logic per task — just populate the results.json correctly.
    The formatters produce color-coded risk badges, P10/P50/P90 tables, tornado
    tables, and PASS/FAIL benchmark tables in all four outputs (Report.docx,
-   Report.html, Paper.docx, Paper.html).
+   Report.html — and Paper.docx/Paper.html when `--paper` is used).
 
 L2. **Four layers must stay synchronised for every report section:**
    - `build_sections()` — defines the section with heading, content, and flags
    - `build_word_report()` — renders Word-specific content (tables, figures)
    - `build_html_report()` — renders HTML-specific content (styled tables, base64 images)
-   - `build_paper_docx()` / `build_paper_html()` — paper equivalents
-   The template has all four pre-wired for standard section types. Only add
+   - `build_paper_docx()` / `build_paper_html()` — paper equivalents (only used with `--paper`)
+   The template has these pre-wired for standard section types. Only add
    custom handling if you need task-specific rendering beyond the built-in formatters.
    If any one layer is missing, that section will render as plain text or be blank.
+   **Default output is report only** — do not generate papers unless the user asks.
 
 L3. **Hardcoded numbers in MANUAL_SECTIONS go stale.** When equipment dimensions,
    flow rates, or other design parameters change during iterative design, the

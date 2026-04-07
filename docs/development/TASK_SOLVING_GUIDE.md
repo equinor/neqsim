@@ -670,13 +670,11 @@ into reports and ensures the report always reflects the latest simulation run.
    with open(os.path.join(os.path.dirname(os.getcwd()), "results.json"), "w") as f:
        json.dump(results, f, indent=2)
    ```
-4. Run `python step3_report/generate_report.py` — the Results, Validation, and
-   Scope sections auto-populate from `results.json` and `task_spec.md`
-5. To also generate a scientific paper: `python step3_report/generate_report.py --paper`
-   - Produces `Paper.docx` and `Paper.html` in academic format
-   - Configure `PAPER_TITLE`, `PAPER_AUTHORS`, `PAPER_KEYWORDS`, and `PAPER_SECTIONS`
-     in `generate_report.py` for best results
-   - Use `--paper-only` to skip the technical report and generate only the paper
+4. Run `python step3_report/generate_report.py` — produces a professional engineering
+   report (Report.docx + Report.html). The Results, Validation, and Scope sections
+   auto-populate from `results.json` and `task_spec.md`
+5. Scientific papers are only generated when explicitly requested:
+   `python step3_report/generate_report.py --paper` (adds Paper.docx + Paper.html)
 6. **Built-in styled formatting:** The template automatically renders these sections
    when the corresponding keys exist in `results.json`:
    - **Benchmark Validation** (`benchmark_validation`): PASS/FAIL table with color coding
@@ -1230,8 +1228,8 @@ coding agent that can read files and run commands can follow the same workflow.
 | `python devtools/new_task.py` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
 | Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
-| `python generate_report.py` | Produces Word + HTML | Any terminal |
-| `python generate_report.py --paper` | Also produces Paper.docx + Paper.html | Any terminal |
+| `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
+| `python generate_report.py --paper` | Also produces Paper.docx + Paper.html (only when requested) | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
 
 ### What's VS Code Copilot-Specific (Optional Convenience)
