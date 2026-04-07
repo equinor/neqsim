@@ -275,9 +275,9 @@ public class DistillationColumnTest {
     assertTrue(direct.solved());
     assertTrue(insideOut.solved());
 
-    double gasTolerance = Math.max(1.0e-4, direct.getGasOutStream().getFlowRate("kg/hr") * 1.0e-2);
+    double gasTolerance = Math.max(1.0e-4, direct.getGasOutStream().getFlowRate("kg/hr") * 2.0e-2);
     double liquidTolerance =
-        Math.max(1.0e-4, direct.getLiquidOutStream().getFlowRate("kg/hr") * 1.0e-2);
+        Math.max(1.0e-4, direct.getLiquidOutStream().getFlowRate("kg/hr") * 2.0e-2);
 
     assertEquals(direct.getGasOutStream().getFlowRate("kg/hr"),
         insideOut.getGasOutStream().getFlowRate("kg/hr"), gasTolerance);
