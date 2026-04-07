@@ -376,6 +376,37 @@ Your deliverable is a populated task folder under `task_solve/`.
      charts, data tables, and compressor maps. This makes PDF content available
      for AI analysis (diagram digitization, data extraction, layout understanding).
 
+   - **Structured image analysis workflow** (for vendor drawings, P&IDs, datasheets):
+     When reference documents contain engineering drawings or visual data, use the
+     `neqsim-technical-document-reading` skill Section 3.7 patterns:
+
+     1. **P&IDs** → Extract equipment tags, valve tags, instrument tags, piping
+        sizes/classes, line numbers, and connection topology using the
+        `PID_EXTRACTION` format. This provides the flowsheet topology that
+        informs the NeqSim `ProcessSystem` model.
+
+     2. **Vendor API datasheets** (e.g., API 692 seal datasheets, API 617
+        compressor datasheets) → Extract operating conditions, design data,
+        performance parameters, and material specs using the
+        `VENDOR_DATASHEET_EXTRACTION` format. These values become simulation
+        inputs and validation targets.
+
+     3. **Mechanical arrangement drawings** → Extract dimensions, nozzle
+        schedules, standpipe geometry (lengths, bore sizes, volumes), piping
+        run lengths using `MECHANICAL_ARRANGEMENT_EXTRACTION` format. Physical
+        dimensions feed into volume calculations, heat transfer models, and
+        residence time estimates.
+
+     4. **Performance maps / phase envelopes** → Digitize key points (rated
+        point, surge line, cricondentherm, operating envelope boundaries)
+        using `PERFORMANCE_MAP_EXTRACTION` or `PHASE_ENVELOPE_EXTRACTION`
+        format. These validate simulation results against vendor/design data.
+
+     5. **Generate figure discussions** — for each image analyzed that informs
+        the engineering analysis, produce a figure discussion block (observation,
+        mechanism, implication, recommendation) and include it in
+        `results.json["figure_discussion"]` for the report.
+
 7. **Write comprehensive research notes** to `step1_scope_and_research/notes.md`.
    These notes must be **substantive** — not a skeleton template.
    The depth should be proportional to the task mode.
@@ -1318,6 +1349,7 @@ For complex sub-tasks within your workflow, you may delegate to specialist agent
 | Flow assurance | `@flow.assurance` | Hydrate curves, wax, corrosion |
 | Safety | `@safety.depressuring` | Blowdown, PSV sizing |
 | Field development | `@field.development` | Concept selection, subsea tieback, NPV/IRR, production forecasting |
+| Document / image reading | `@read technical documents` | Extract data from PDFs, vendor datasheets, P&IDs, mechanical drawings, performance maps, API datasheets |
 
 You don't have to delegate — you can handle everything yourself. But for deep
 specialist work, the dedicated agents have more detailed instructions.

@@ -1,6 +1,6 @@
 ---
 name: neqsim-technical-document-reading
-description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV). USE WHEN: a user provides engineering documents — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, unit normalization, data quality scoring, and output formats."
+description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV) and engineering images/drawings (P&IDs, vendor datasheets, mechanical arrangements, performance maps). USE WHEN: a user provides engineering documents or images — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards, vendor drawings, compressor maps, phase envelopes — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, image/figure analysis with view_image, unit normalization, data quality scoring, and output formats."
 ---
 
 # Technical Document Reading Skill
@@ -40,6 +40,11 @@ When a document is provided, classify it first:
 | **Standards Document** | ISO/API/ASME/DNV/NORSOK header, normative references | Design formulas, factors, limits, test requirements |
 | **Vendor Quotation** | Equipment specs, pricing, delivery, performance curves | Performance data, dimensions, weight, cost |
 | **Operating Procedure** | Step-by-step instructions, setpoints, alarm limits | Operating envelope, control setpoints, trip values |
+| **Engineering Drawing (P&ID)** | Piping & instrumentation diagram — lines, valves, instruments, tags visually laid out | Equipment topology, valve tags, instrument tags, line sizes, piping class, connection types |
+| **Mechanical Arrangement Drawing** | GA/section/plan views with dimensions, elevations, nozzle locations | Physical dimensions, elevations, nozzle orientations, piping run lengths, standpipe geometry |
+| **Vendor API Datasheet (image)** | API 610/614/617/692 format data sheets rendered as images in PDFs | Seal type, operating conditions, leakage rates, gas supply requirements, material specs |
+| **Performance Map / Curve** | Compressor maps, pump curves, phase envelopes, operating windows | Head vs flow, efficiency, surge line, operating point, cricondentherm/bar |
+| **Process Flow Diagram (image)** | Visual PFD with equipment symbols, stream arrows, T/P/flow annotations | Equipment sequence, stream conditions, control valves, key operating parameters |
 
 ### Auto-Detection Heuristics
 
@@ -78,6 +83,26 @@ DOCUMENT_SIGNATURES = {
     "piping_spec": [
         r"(?i)piping\s+class", r"(?i)material\s+class",
         r"(?i)line\s+class", r"(?i)pressure\s+rating"
+    ],
+    "engineering_drawing_pid": [
+        r"(?i)piping\s+.*instrument.*diagram", r"(?i)P&ID",
+        r"(?i)P\s*&\s*I\s*D", r"(?i)instrument\s+diagram"
+    ],
+    "mechanical_arrangement": [
+        r"(?i)general\s+arrangement", r"(?i)GA\s+drawing",
+        r"(?i)section\s+view", r"(?i)plan\s+view",
+        r"(?i)mechanical\s+arrangement", r"(?i)elevation\s+view"
+    ],
+    "vendor_api_datasheet_image": [
+        r"(?i)API\s+6[19][0247]", r"(?i)dry\s+gas\s+seal",
+        r"(?i)seal\s+gas", r"(?i)vendor\s+data\s*sheet",
+        r"(?i)mechanical\s+seal", r"(?i)compressor\s+data\s*sheet"
+    ],
+    "performance_map": [
+        r"(?i)performance\s+(map|curve)", r"(?i)compressor\s+map",
+        r"(?i)pump\s+curve", r"(?i)phase\s+envelope",
+        r"(?i)head\s+vs\s+flow", r"(?i)surge\s+line",
+        r"(?i)operating\s+point", r"(?i)cricondentherm"
     ],
 }
 ```
@@ -641,6 +666,296 @@ def extract_thickness_data(table):
             result.append(entry)
     return result
 ```
+
+### 3.7 Image and Figure Analysis (Engineering Drawings, P&IDs, Performance Maps)
+
+Many engineering documents contain critical data embedded in **images** rather than
+text — P&IDs, mechanical arrangement drawings, vendor datasheets rendered as scanned
+PDFs, compressor performance maps, and phase envelopes. Use the `view_image` tool
+for multimodal analysis of these visual documents.
+
+#### 3.7.1 Workflow: Image-Based Document Analysis
+
+```
+PDF/Image Document → pdf_to_figures.py → PNG pages → view_image → Structured Data
+```
+
+**Step 1: Convert PDF pages to images**
+
+```bash
+# Single file
+python devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/ --dpi 200
+
+# Specific pages
+python devtools/pdf_to_figures.py document.pdf --outdir figures/ --pages 1,3,5
+
+# Batch (all PDFs in a folder)
+python devtools/pdf_to_figures.py references/ --outdir figures/
+```
+
+**Step 2: View and analyze each page with `view_image`**
+
+Use `view_image` on each extracted PNG. For each image, systematically extract:
+
+1. **Title block** — document number, revision, title, date, originator
+2. **Equipment tags** — vessel tags (V-xxx), pump tags (P-xxx), compressor tags (BCL-xxx)
+3. **Instrument tags** — transmitters (PT-, TT-, LT-, FT-), valves (XV-, PV-, LV-)
+4. **Piping information** — line sizes, piping class, connection types (flanged, welded)
+5. **Operating conditions** — T, P, flow annotations on streams
+6. **Notes and legends** — design notes, material callouts, hold/revision clouds
+7. **Dimensional data** — lengths, diameters, elevations (for GA drawings)
+
+**Step 3: Structure the extracted data**
+
+Convert visual observations into the standard extraction result JSON format
+(Section 6.1), adding an `image_analysis` block.
+
+#### 3.7.2 Engineering Drawing Types and Extraction Patterns
+
+| Drawing Type | What to Look For | Key Data to Extract |
+|-------------|-----------------|---------------------|
+| **P&ID (Piping & Instrumentation)** | Equipment symbols, instrument bubbles, line numbers, valve symbols, piping class annotations | Equipment tags + types, valve tags + types (gate/globe/ball/check), instrument tags + functions, line numbers + sizes + ratings, control loops, interlock references |
+| **Mechanical Arrangement (GA)** | Plan/section/elevation views, dimension lines, nozzle positions, structural supports | Overall dimensions (L×W×H), nozzle sizes + orientations, standpipe lengths + bore sizes, access platform locations, foundation bolt patterns |
+| **Vendor API Datasheet (image)** | API format tables (610/614/617/692), operating conditions, seal/bearing details | Design T/P, seal type, shaft speed, gas supply requirements, leakage rates, material specs, utility requirements |
+| **Compressor/Pump Performance Map** | Head vs flow curves, efficiency lines, surge line, stonewall, rated point marker | Rated head/flow/power, surge point, maximum continuous speed, efficiency at rated/off-design, operating window boundaries |
+| **Phase Envelope** | Bubble/dew point curves, cricondentherm, cricondenbar, operating path markers, quality lines | Cricondentherm (°C), cricondenbar (bara), critical point (T,P), operating point position relative to envelope, two-phase region extent |
+| **Process Flow Diagram (PFD)** | Equipment blocks, stream arrows, T/P/flow labels, utility connections | Equipment sequence, stream T/P/flow, utility duties, recycle loops, control valve locations |
+| **Seal Gas / Utility Piping Schematic** | Small-bore piping, filters, orifices, check valves, vent/drain connections | Flow path topology, pipe sizes (often 3/8"–1"), filter positions, orifice sizes, vent/drain locations, instrumentation (dP transmitters, pressure gauges) |
+
+#### 3.7.3 P&ID Data Extraction Pattern
+
+When reading a P&ID image with `view_image`, extract data in this structured format:
+
+```python
+PID_EXTRACTION = {
+    "document": {
+        "drawing_number": "SOK-xxxxxx",
+        "revision": "C2",
+        "title": "Oil/Seal Gas Piping — Compressor BCL-304/D",
+        "area": "26",
+        "unit": "GIC Compressor"
+    },
+    "equipment": [
+        {"tag": "BCL-304/D", "type": "Centrifugal Compressor", "service": "Gas Injection"},
+        {"tag": "FLT-26110", "type": "Coalescing Filter", "service": "Seal Gas Supply"},
+    ],
+    "valves": [
+        {"tag": "VB26-0130", "type": "Ball Valve", "size_inch": 0.75,
+         "class": "2500 RTJ", "service": "Seal Gas Supply Isolation"},
+        {"tag": "XV-S26102.05", "type": "Shutdown Valve",
+         "service": "Primary Seal Gas", "normally": "open"},
+    ],
+    "instruments": [
+        {"tag": "PT-S26102.03", "type": "Pressure Transmitter",
+         "service": "Seal Gas Supply Pressure", "range": "0-200 barg"},
+        {"tag": "TP-S26102.11", "type": "Temperature Point",
+         "service": "Primary Vent Temperature"},
+        {"tag": "FT-S26102.01", "type": "Flow Transmitter",
+         "service": "Seal Gas Flow"},
+    ],
+    "piping": [
+        {"line_number": "26-G1H-001", "size_inch": 0.75,
+         "piping_class": "G1H", "rating": "2500#",
+         "from": "FLT-26110", "to": "BCL-304/D NDE Seal"},
+    ],
+    "connections": [
+        {"from": "FLT-26110.outlet", "to": "BCL-304/D.seal_gas_inlet",
+         "type": "seal_gas_supply"},
+        {"from": "BCL-304/D.primary_vent", "to": "VB26-0180",
+         "type": "seal_vent", "destination": "Flare/Vent"},
+    ]
+}
+```
+
+#### 3.7.4 Vendor API Datasheet Image Extraction
+
+For vendor datasheets rendered as images (common for API 692 seal datasheets,
+API 617 compressor datasheets):
+
+```python
+VENDOR_DATASHEET_EXTRACTION = {
+    "equipment_tag": "BCL-304/D",
+    "vendor": "John Crane / Flowserve / EagleBurgmann",
+    "api_standard": "API 692",
+    "data_sections": {
+        "operating_conditions": {
+            "suction_pressure_barg": 125.0,
+            "discharge_pressure_barg": 190.0,
+            "seal_gas_supply_pressure_barg": 155.0,
+            "operating_temperature_C": 45.0,
+            "shaft_speed_rpm": 11000,
+        },
+        "seal_data": {
+            "seal_type": "Tandem dry gas seal",
+            "seal_arrangement": "API Plan 74 (primary) + API Plan 76 (secondary)",
+            "primary_leakage_nm3hr": 12.0,
+            "secondary_leakage_nm3hr": 2.0,
+            "buffer_gas": "Nitrogen",
+        },
+        "gas_supply": {
+            "required_flow_nm3hr": 25.0,
+            "required_pressure_above_ref_barg": 3.5,
+            "filtration_micron": 3,
+            "gas_temperature_range_C": [-10, 60],
+        },
+        "materials": {
+            "face_material": "Silicon Carbide",
+            "seat_material": "Carbon",
+            "o_ring_material": "Viton / FFKM",
+            "spring_material": "Inconel 718",
+        }
+    }
+}
+```
+
+#### 3.7.5 Performance Map / Phase Envelope Extraction
+
+When analyzing compressor maps or phase envelopes from images:
+
+```python
+PERFORMANCE_MAP_EXTRACTION = {
+    "chart_type": "compressor_map",  # or "phase_envelope", "pump_curve"
+    "axes": {
+        "x": {"label": "Inlet Volume Flow", "unit": "m3/hr"},
+        "y": {"label": "Polytropic Head", "unit": "kJ/kg"}
+    },
+    "rated_point": {
+        "flow": 5000, "head": 85.0, "efficiency_pct": 82.0, "speed_rpm": 11000
+    },
+    "surge_point": {
+        "flow": 3200, "head": 92.0
+    },
+    "curves": [
+        {"speed_rpm": 11000, "points": [
+            {"flow": 3200, "head": 92.0},
+            {"flow": 4000, "head": 89.0},
+            {"flow": 5000, "head": 85.0},
+            {"flow": 6000, "head": 78.0},
+        ]},
+    ],
+    "operating_window": {
+        "min_flow": 3500, "max_flow": 5800,
+        "min_head": 70.0, "max_head": 95.0
+    }
+}
+
+PHASE_ENVELOPE_EXTRACTION = {
+    "chart_type": "phase_envelope",
+    "axes": {
+        "x": {"label": "Temperature", "unit": "C"},
+        "y": {"label": "Pressure", "unit": "bar"}
+    },
+    "critical_point": {"temperature_C": -82.0, "pressure_bar": 46.0},
+    "cricondentherm": {"temperature_C": -5.4, "pressure_bar": 38.0},
+    "cricondenbar": {"temperature_C": -25.0, "pressure_bar": 55.0},
+    "key_points": [
+        {"label": "Operating Point", "temperature_C": 25.0, "pressure_bar": 45.0,
+         "phase_region": "single_phase_gas"},
+        {"label": "JT Outlet", "temperature_C": -20.0, "pressure_bar": 3.0,
+         "phase_region": "single_phase_gas"},
+    ],
+    "retrograde_region": {
+        "temperature_range_C": [-40, -5],
+        "pressure_range_bar": [30, 55],
+        "max_liquid_fraction_pct": 8.0
+    }
+}
+```
+
+#### 3.7.6 Mechanical Arrangement Drawing Extraction
+
+For GA drawings showing physical layout and dimensions:
+
+```python
+MECHANICAL_ARRANGEMENT_EXTRACTION = {
+    "drawing_type": "mechanical_arrangement",
+    "equipment_tag": "BCL-304",
+    "views": ["plan", "section_A-A", "elevation_north"],
+    "overall_dimensions": {
+        "length_mm": 4500,
+        "width_mm": 2800,
+        "height_mm": 3200
+    },
+    "nozzles": [
+        {"tag": "N1", "service": "Suction", "size_inch": 16,
+         "orientation": "horizontal", "elevation_mm": 1500},
+        {"tag": "N2", "service": "Discharge", "size_inch": 12,
+         "orientation": "horizontal", "elevation_mm": 1500},
+        {"tag": "N5", "service": "Seal Gas Supply", "size_inch": 0.75,
+         "orientation": "radial", "elevation_mm": 1800},
+    ],
+    "standpipes_and_drains": [
+        {"service": "Primary Vent Drain", "od_inch": 1.5, "id_mm": 38,
+         "length_m": 1.5, "volume_liters": 1.70,
+         "orientation": "vertical_down", "low_point_elevation_mm": 200},
+    ],
+    "piping_runs": [
+        {"from": "BCL-304.N5", "to": "FLT-26110", "pipe_size_inch": 0.75,
+         "material": "SS316", "approx_length_m": 8.0}
+    ]
+}
+```
+
+#### 3.7.7 Figure Discussion Generation Pattern
+
+After extracting data from engineering figures during a task analysis, generate
+discussion blocks for the report. Each figure discussion follows this template:
+
+```python
+FIGURE_DISCUSSION_TEMPLATE = {
+    "figure": "filename.png",
+    "title": "Descriptive Title of the Figure",
+    "observation": "What the figure shows, with specific numbers and features identified.",
+    "mechanism": "The underlying physical or engineering reason for what is observed.",
+    "implication": "What this means for the design, operation, or safety assessment.",
+    "recommendation": "Specific actionable engineering recommendation based on this figure.",
+    "linked_results": ["key_result_1", "key_result_2"],
+    "insight_question_ref": "Q3"
+}
+```
+
+**When to generate figure discussions:**
+
+| Figure Source | When Discussion is Needed |
+|--------------|--------------------------|
+| Simulation output plot (T/P profiles, phase envelopes) | Always for decision-critical figures; proportional for others |
+| Vendor datasheet image | When extracted data influences design decisions |
+| P&ID image | When topology reveals flow paths critical to the analysis |
+| Mechanical drawing | When dimensions affect calculations (e.g., standpipe volumes) |
+| Performance map | When operating point proximity to limits is relevant |
+| Benchmark comparison plot | Always — explains deviations |
+
+#### 3.7.8 Best Practices for Image Analysis
+
+1. **Always use `pdf_to_figures.py` first** — render PDF pages to PNG at 200+ DPI
+   before attempting to read visual content. Direct text extraction misses drawings.
+
+2. **Systematic scanning** — when viewing a P&ID or drawing with `view_image`,
+   scan systematically: title block → equipment → instruments → piping → notes.
+   Don't try to extract everything in one pass.
+
+3. **Cross-reference text and images** — use text-extracted data (tables, narrative)
+   to validate what you see in images. If a table says "3/4 inch" but the drawing
+   annotation reads "1 inch", flag the conflict.
+
+4. **Dimensional extraction from drawings** — when reading dimensions, note:
+   - Whether dimensions are NTS (Not To Scale) — most engineering drawings are
+   - Units (mm vs inches vs feet) — check the drawing notes/title block
+   - Reference datums — dimensions are relative; identify the reference points
+
+5. **Performance map reading** — when digitizing curves from performance maps:
+   - Read axis scales carefully (linear vs log, units)
+   - Identify the rated/design point (usually marked with a symbol)
+   - Read at least 4-5 points per curve for reasonable interpolation
+   - Note surge/stonewall lines as system limits
+
+6. **Scanned/low-resolution images** — if image quality is poor:
+   - Report which values are uncertain due to readability
+   - Assign lower confidence scores to those extractions
+   - Suggest re-scanning at higher resolution if values are critical
+
+7. **Multi-page drawings** — large P&IDs often span multiple sheets (1/3, 2/3, 3/3).
+   Track which equipment appears on which sheet and merge topology across sheets.
 
 ---
 
