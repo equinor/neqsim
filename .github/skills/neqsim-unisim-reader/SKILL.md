@@ -166,6 +166,124 @@ app.Quit()
 - Property values accessed via `.GetValue(unit_string)`
 - Composition accessed via `.GetValues()` returning a sequence
 
+### 1.1 Extracting Binary Interaction Parameters (BIPs / kij)
+
+UniSim stores the full BIP (kij) matrix on the PropertyPackage object. The
+correct COM access pattern is:
+
+```python
+fp = case.Flowsheet.FluidPackage
+pp = fp.PropertyPackage
+
+kij_obj = pp.Kij          # Returns CDispatch (RealFlexVariable)
+raw = kij_obj.Values      # Returns tuple-of-tuples (n×n matrix)
+
+# IMPORTANT: The .Values property returns the full symmetric matrix.
+# Diagonal values are -32767.0 (sentinel for "self-interaction").
+# Replace with 0.0 when parsing.
+n = fp.Components.Count
+comp_names = [fp.Components.Item(i).Name for i in range(n)]
+
+bic = []
+for i in range(n):
+    row = []
+    for j in range(n):
+        val = float(raw[i][j])
+        if abs(val + 32767.0) < 1.0:  # diagonal sentinel
+            val = 0.0
+        row.append(val)
+    bic.append(row)
+```
+
+**Key discoveries:**
+- `pp.Kij` returns a `CDispatch` (UniSim RealFlexVariable), NOT a Python-iterable
+- `kij_obj.Values` is the correct access pattern — returns tuple-of-tuples
+- `kij_obj.GetValues()` fails with "Invalid number of parameters"
+- `kij_obj.__call__(i,j)` fails with "Does not support a collection"
+- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation-based
+  BIPs are stored internally, not as user-defined parameters)
+- The matrix is symmetric: `kij[i][j] == kij[j][i]`
+- For PR-LK, BIPs are generated from the Lee-Kesler correlation — they are
+  non-zero even if never explicitly tuned by the user
+
+**Common BIP patterns (PR-LK, hydrocarbon system):**
+- H2O–HC: +0.48 to +0.50 (strong positive interaction)
+- H2O–N2: -2.24 (strong negative)
+- H2O–CO2: -0.56
+- CO2–C1: +0.105
+- N2–C1: +0.025
+- HC–HC (light–heavy): small values, typically < 0.01
+
+### 1.2 Extracting Component Thermodynamic Properties
+
+For pseudo-components and library components, extract critical properties
+and other thermodynamic data:
+
+```python
+fp = case.Flowsheet.FluidPackage
+pp = fp.PropertyPackage
+
+n = fp.Components.Count
+for i in range(n):
+    comp = fp.Components.Item(i)
+    name = comp.Name
+    mw = comp.MolecularWeight.GetValue()
+    tc = comp.CriticalTemperature.GetValue("C")   # °C
+    pc = comp.CriticalPressure.GetValue("bar")     # bar
+    nbp = comp.NormalBoilingPt.GetValue("C")       # °C
+    vc = comp.CriticalVolume.GetValue("m3/kgmole") # m3/kmol
+    # Acentric factor — not directly available via .AcentricFactor
+    # Use Edmister correlation: w = (3/7) * log10(Pc/1.01325) / (Tc/Tbp - 1) - 1
+```
+
+**Notes:**
+- Acentric factor is NOT directly accessible via COM for all property packages.
+  `comp.AcentricFactor` may not exist. Use the Edmister correlation as fallback.
+- Parachor can sometimes be read via `pp.Parachor.Values` (same pattern as Kij).
+- Volume shift: `pp.VolumShift.Values` (note the UniSim spelling: "VolumShift",
+  not "VolumeShift").
+
+### 1.3 Generating E300 Fluid Files from UniSim Data
+
+To create an Eclipse E300-format fluid file from UniSim-extracted properties
+for loading into NeqSim via `EclipseFluidReadWrite.read()`:
+
+**Required E300 sections** (NeqSim reader will crash without these):
+- `CNAMES` — component names
+- `TCRIT` — critical temperatures (K)
+- `PCRIT` — critical pressures (atm)
+- `ACF` — acentric factors
+- `MW` — molecular weights (g/mol)
+- `TBOIL` — normal boiling points (K)
+- `VCRIT` — critical volumes (m3/kg-mol)
+- `PARACHOR` — parachor values (if unknown: `4.0 * MW^0.77`)
+- `SSHIFT` — volume shift parameters (can be all zeros)
+- `BIC` — binary interaction coefficients (lower triangular)
+- `ZI` — mole fractions
+
+**CRITICAL**: If the BIC section is omitted, NeqSim's `EclipseFluidReadWrite`
+will crash with a NullPointerException. Always include BIC, even if all zeros.
+
+**NeqSim E300 component name mapping:**
+| E300 Name | NeqSim Maps To |
+|-----------|---------------|
+| `C1` | `methane` |
+| `C2` | `ethane` |
+| `C3` | `propane` |
+| `iC4` | `i-butane` |
+| `C4` | `n-butane` |
+| `iC5` | `i-pentane` |
+| `C5` | `n-pentane` |
+| `C6` | `n-hexane` |
+| `N2` | `nitrogen` |
+| `CO2` | `CO2` |
+| `H2O` | `water` |
+| All others | TBP pseudo-fraction (via `addTBPfraction()`) |
+
+**Note:** Aromatics (Benzene, Toluene, E-Benzene, m-Xylene, etc.) are NOT in
+NeqSim's E300 recognized name map — they will be treated as TBP pseudo-fractions
+with estimated density.
+
 ---
 
 ## 2. Operation Type Mapping
@@ -557,7 +675,9 @@ comparator.print_report(comparisons)
 ### Factors Causing Deviations
 
 1. **EOS differences**: UniSim PR-LK vs NeqSim PR — different alpha functions
-2. **BIP (binary interaction parameters)**: UniSim may use tuned BIPs
+2. **BIP (binary interaction parameters)**: UniSim uses PR-LK correlation BIPs.
+   Extract via `pp.Kij.Values` (Section 1.1) and include in E300 BIC section.
+   Without correct BIPs, vapour fraction can differ by 5%+ and oil MW by 100%+.
 3. **Hypothetical components**: Pseudo-component property estimation differs
 4. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim
 5. **Transport properties**: Different correlations for viscosity, thermal conductivity
@@ -781,7 +901,9 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
 
 1. **Windows only** — COM automation requires Windows + UniSim installed
 2. **Hypothetical components** — pseudo-components need manual C7+ characterization
-3. **Tuned BIPs** — UniSim's tuned binary interaction parameters not extracted
+3. **Tuned BIPs** — Extractable via `pp.Kij.Values` (see Section 1.1). The
+   `unisim_reader.py` does not yet automate this, but manual extraction is
+   straightforward. The returned matrix uses -32767.0 as a diagonal sentinel.
 4. **Column internals** — distillation column tray/packing details not fully mapped
 5. **Dynamic models** — only steady-state data extracted
 6. **Control logic** — PID controllers produce TODO comments, not functional controllers

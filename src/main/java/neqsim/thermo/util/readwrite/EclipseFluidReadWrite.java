@@ -409,6 +409,12 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
+      if (kij == null) {
+        kij = new Double[names.size()][names.size()];
+        for (Double[] row : kij) {
+          Arrays.fill(row, 0.0);
+        }
+      }
       for (int i = 0; i < names.size(); i++) {
         for (int j = i; j < names.size(); j++) {
           for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
@@ -920,6 +926,12 @@ public class EclipseFluidReadWrite {
       // We end up with N * nFluids total components in the fluid
       // Suppose we want to replicate the same kij block for each fluid
       // and across the same fluid. Typically you'd do:
+      if (kij == null) {
+        kij = new Double[nCompsPerFluid][nCompsPerFluid];
+        for (Double[] row : kij) {
+          Arrays.fill(row, 0.0);
+        }
+      }
       for (int i = 0; i < nCompsPerFluid * nFluids; i++) {
         // figure out which base component i corresponds to
         // and which fluid-block it belongs to
