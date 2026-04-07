@@ -9,6 +9,83 @@
 
 ---
 
+## 2026-07-06 — JT Expansion: Use ThrottlingValve, Not PHflash
+
+### Critical Agent Guidance
+
+When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
+`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on Bacalhau seal gas
+(90→48 bar):
+
+| Method | Temperature (°C) | UniSim Reference | Error |
+|--------|-----------------|------------------|-------|
+| `ThrottlingValve` in ProcessSystem | 16.44 | 18.17 | -1.73°C |
+| Manual `PHflash(H/n)` on clone | 33.05 | 18.17 | +14.88°C |
+
+The manual PHflash approach fails because `getEnthalpy('J')` returns total system enthalpy
+while `PHflash(double)` expects a specific enthalpy convention (per mole at the system's
+reference state). The ThrottlingValve handles the enthalpy bookkeeping internally.
+
+**Pattern:**
+```java
+// CORRECT: Use process-level valve
+ProcessSystem proc = new ProcessSystem();
+Stream sg = new Stream("SG", fluid.clone());
+proc.add(sg);
+ThrottlingValve jt = new ThrottlingValve("JT", sg);
+jt.setOutletPressure(48.0);
+proc.add(jt);
+proc.run();
+double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperature
+
+// WRONG: Manual PHflash — gives incorrect JT temperature
+// SystemInterface clone = fluid.clone();
+// clone.setPressure(48.0);
+// new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
+```
+
+### Bacalhau Model Extension
+
+Extended the NeqSim Bacalhau FPSO replication to include:
+- LP/MP gas recompression + mixing with HP gas
+- Gas cooling (24HA101, 75°C→36°C) + flash drum (24VG101)
+- Seal gas takeoff (5.4% split)
+- 2-stage export compression (26KA101: 86→259 bar, 26KA102: 258→554 bar)
+- Seal gas JT expansion curve showing 1.35% max condensation at 30 bar
+
+Compressor discharge temperature comparison:
+- 26KA101: NeqSim 126.7°C vs UniSim 117.8°C (75% η_is assumed)
+- 26KA102: NeqSim 85.9°C vs UniSim 83.6°C
+- Suggests UniSim uses ~83-85% isentropic efficiency
+
+---
+
+## 2026-07-05 — EclipseFluidReadWrite Null BIC Fix, UniSim BIP Extraction
+
+### Bug Fix
+
+| Class | Issue | Fix |
+|-------|-------|-----|
+| `EclipseFluidReadWrite` | `NullPointerException` when E300 file has no BIC section — `kij` array stays `null` | Both `read()` methods now initialize `kij` to zero matrix if BIC section is missing. E300 files without BIC load correctly (all BIPs default to 0.0). |
+
+### Impact on Agents
+
+- **E300 file loading**: Previously required a BIC section or the reader crashed. Now optional (defaults to zero BIPs). However, agents should always include BIC in generated E300 files for accurate results.
+- **UniSim → E300 workflow**: BIPs can now be extracted from UniSim via `pp.Kij.Values` (tuple-of-tuples). See `neqsim-unisim-reader` skill Section 1.1 for the COM access pattern.
+
+### Key Discovery
+
+UniSim COM BIP extraction pattern:
+```python
+kij_obj = pp.Kij          # CDispatch (RealFlexVariable)
+raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
+# Diagonal sentinel = -32767.0, replace with 0.0
+```
+- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
+- `kij_obj.GetValues()` fails — use `.Values` property instead
+
+---
+
 ## 2026-04-05 — Heat Integration, Power Generation, Agentic QA Gate
 
 ### New Java Classes

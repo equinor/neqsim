@@ -57,6 +57,32 @@ Ranked recovery strategies for common failure modes. Try steps in order — stop
 | 4 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
 | 5 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
 
+## Wrong JT / Isenthalpic Expansion Temperature
+
+**Symptom:** Manual `PHflash()` on a cloned fluid gives wrong temperature after pressure reduction (Joule-Thomson expansion). Tested: 14.9°C error vs 1.7°C with correct method.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | **Use `ThrottlingValve` in a `ProcessSystem`** instead of manual `PHflash()` | The valve handles enthalpy bookkeeping correctly; manual `PHflash(H/n)` uses inconsistent enthalpy reference |
+| 2 | Build a mini ProcessSystem: `Stream → ThrottlingValve → run()` | Only 4 lines of code, always gives correct JT temperature |
+| 3 | If you must use PHflash, call it as `ops.PHflash(fluid.getEnthalpy())` without dividing by moles | PHflash expects the total system enthalpy at the reference state, not per-mole |
+| 4 | Cross-check: compare valve result with `ops.PHflash()` — if they differ by >2°C, the PHflash call is wrong | ThrottlingValve is the ground truth for isenthalpic expansion |
+
+**Correct pattern (Python):**
+```python
+proc = ProcessSystem()
+feed = Stream('SG', fluid.clone())
+feed.setFlowRate(flow, 'kg/hr')
+feed.setTemperature(T, 'C')
+feed.setPressure(P_in, 'bara')
+proc.add(feed)
+valve = ThrottlingValve('JT', feed)
+valve.setOutletPressure(P_out)
+proc.add(valve)
+proc.run()
+T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperature
+```
+
 ## Phase Identification Issues
 
 **Symptom:** Phase labeled "gas" but behavior is liquid-like, or vice versa.

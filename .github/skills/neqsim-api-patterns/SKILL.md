@@ -46,6 +46,38 @@ fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
 fluid.getCharacterization().characterisePlusFraction();
 ```
 
+## Loading Fluids from E300 Files
+
+NeqSim can read Eclipse E300-format fluid files with full component properties
+and binary interaction parameters:
+
+```java
+// Load fluid from E300 file (returns SystemInterface with PR-EOS)
+SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300");
+// Returns a PR-EOS fluid with all components, properties, and BIPs set
+```
+
+**Required E300 sections**: `CNAMES`, `TCRIT`, `PCRIT`, `ACF`, `MW`, `TBOIL`,
+`VCRIT`, `PARACHOR`, `SSHIFT`, `BIC`, `ZI`.
+
+**CRITICAL**: The `BIC` section must ALWAYS be present. If omitted, NeqSim
+defaults to zero BIPs (no crash, but results may differ significantly from the
+source simulator). The `PARACHOR` section is also required — estimate unknown
+values with `4.0 * MW^0.77`.
+
+**Component name mapping**: `C1`→methane, `C2`→ethane, `C3`→propane,
+`iC4`→i-butane, `C4`→n-butane, `iC5`→i-pentane, `C5`→n-pentane,
+`C6`→n-hexane, `N2`→nitrogen, `CO2`→CO2, `H2O`→water. All other names are
+treated as TBP pseudo-fractions via `addTBPfraction()` — including aromatics
+(Benzene, Toluene, etc.).
+
+```python
+# Python usage
+from neqsim import jneqsim
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+fluid = EclipseFluidReadWrite.read("path/to/fluid.e300")
+```
+
 ## Flash Calculations and Property Retrieval
 
 ```java
@@ -161,12 +193,32 @@ cooler = Cooler("C-100", hx.getOutStream(int(0)))   # shell side out
 valve  = ThrottlingValve("VLV-100", hx.getOutStream(int(1)))  # tube side out
 ```
 
-### Valve
+### Valve (JT / Isenthalpic Expansion)
 
 ```java
 ThrottlingValve valve = new ThrottlingValve("JT Valve", stream);
 valve.setOutletPressure(20.0);
 Stream out = valve.getOutletStream();
+```
+
+**CRITICAL:** Always use `ThrottlingValve` inside a `ProcessSystem` for Joule-Thomson
+cooling calculations. Manual `PHflash()` on a cloned fluid gives wrong JT temperatures
+(tested: 14.9°C error vs 1.7°C with ThrottlingValve). The valve handles the isenthalpic
+enthalpy bookkeeping internally.
+
+```python
+# Python — Correct JT expansion pattern
+proc = ProcessSystem()
+feed = Stream('SG', fluid.clone())
+feed.setFlowRate(flow, 'kg/hr')
+feed.setTemperature(T_in, 'C')
+feed.setPressure(P_in, 'bara')
+proc.add(feed)
+valve = ThrottlingValve('JT', feed)
+valve.setOutletPressure(P_out)
+proc.add(valve)
+proc.run()
+T_jt = float(valve.getOutletStream().getTemperature('C'))
 ```
 
 ### Mixer
