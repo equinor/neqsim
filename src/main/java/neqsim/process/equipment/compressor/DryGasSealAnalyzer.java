@@ -1196,29 +1196,67 @@ public class DryGasSealAnalyzer {
   private Map<String, Object> runGCUSizing() {
     Map<String, Object> result = new LinkedHashMap<>();
 
-    // Step 1: Find dew point at seal gas supply pressure
+    // Step 1: Find the maximum dew point temperature across all pressures (cricondentherm).
+    // If the supply pressure is above the cricondenbar, the dew point at supply pressure
+    // does not exist. The GCU must operate at a pressure where condensation can occur.
     double supplyPressure = sealCavityPressureBara;
+    double maxDewPointC = -273.15;
+    double maxDewPointPBara = primaryVentPressureBara;
 
     try {
-      SystemInterface dewFluid = sealGas.clone();
-      dewFluid.setPressure(supplyPressure);
-      dewFluid.setTemperature(273.15 + 0.0);
+      // Search for cricondentherm by sweeping pressures
+      double pSearchMin = primaryVentPressureBara + 1.0;
+      double pSearchMax = Math.min(supplyPressure, 350.0);
+      int nSearch = 30;
+      double dpSearch = (pSearchMax - pSearchMin) / nSearch;
 
-      ThermodynamicOperations dewOps = new ThermodynamicOperations(dewFluid);
-      dewOps.dewPointTemperatureFlash();
-      double dewPointC = dewFluid.getTemperature("C");
+      for (int i = 0; i <= nSearch; i++) {
+        double pSearch = pSearchMin + i * dpSearch;
+        try {
+          SystemInterface dewSweep = sealGas.clone();
+          dewSweep.setPressure(pSearch);
+          dewSweep.setTemperature(273.15 + 0.0);
+          ThermodynamicOperations dewSweepOps = new ThermodynamicOperations(dewSweep);
+          dewSweepOps.dewPointTemperatureFlash();
+          double dewTempC = dewSweep.getTemperature("C");
+          if (dewTempC > maxDewPointC) {
+            maxDewPointC = dewTempC;
+            maxDewPointPBara = pSearch;
+          }
+        } catch (Exception dewEx) {
+          // Dew point calc can fail near or above cricondenbar — skip
+        }
+      }
+    } catch (Exception sweepEx) {
+      logger.warn("GCU dew point sweep failed: {}", sweepEx.getMessage());
+    }
 
-      result.put("supply_pressure_bara", supplyPressure);
-      result.put("dew_point_at_supply_C", dewPointC);
+    // If no dew point was found anywhere, no condensation risk — no GCU needed
+    if (maxDewPointC < -250.0) {
+      result.put("gcu_required", false);
+      result.put("reason", "No dew point found in operating pressure range");
+      return result;
+    }
 
-      // Step 2: Cooling target = dew point - subcool margin
+    // Use the cricondentherm pressure as the GCU operating pressure
+    double gcuOperatingPressure = maxDewPointPBara;
+    double dewPointC = maxDewPointC;
+
+    result.put("supply_pressure_bara", supplyPressure);
+    result.put("cricondentherm_C", dewPointC);
+    result.put("cricondentherm_pressure_bara", gcuOperatingPressure);
+    result.put("dew_point_at_supply_C", dewPointC);
+
+    try {
+      // Step 2: Cooling target = cricondentherm dew point - subcool margin
       double coolingTargetC = dewPointC - gcuSubcoolMarginK;
       result.put("gcu_cooling_target_C", coolingTargetC);
 
       // Step 3: Calculate cooling duty (enthalpy difference)
+      // GCU operates at the pressure where max dew point occurs
       SystemInterface hotFluid = sealGas.clone();
       hotFluid.setTemperature(sealCavityTemperatureK);
-      hotFluid.setPressure(supplyPressure);
+      hotFluid.setPressure(gcuOperatingPressure);
       ThermodynamicOperations hotOps = new ThermodynamicOperations(hotFluid);
       hotOps.TPflash();
       hotFluid.initProperties();
@@ -1226,7 +1264,7 @@ public class DryGasSealAnalyzer {
 
       SystemInterface coldFluid = sealGas.clone();
       coldFluid.setTemperature(273.15 + coolingTargetC);
-      coldFluid.setPressure(supplyPressure);
+      coldFluid.setPressure(gcuOperatingPressure);
       coldFluid.setMultiPhaseCheck(true);
       ThermodynamicOperations coldOps = new ThermodynamicOperations(coldFluid);
       coldOps.TPflash();
@@ -1267,7 +1305,7 @@ public class DryGasSealAnalyzer {
       // Step 6: Calculate reheating duty
       SystemInterface separatedGas = sealGas.clone();
       separatedGas.setTemperature(273.15 + coolingTargetC);
-      separatedGas.setPressure(supplyPressure);
+      separatedGas.setPressure(gcuOperatingPressure);
       ThermodynamicOperations sepOps = new ThermodynamicOperations(separatedGas);
       sepOps.TPflash();
       separatedGas.initProperties();
@@ -1275,7 +1313,7 @@ public class DryGasSealAnalyzer {
 
       SystemInterface reheatedGas = sealGas.clone();
       reheatedGas.setTemperature(273.15 + reheatTargetC);
-      reheatedGas.setPressure(supplyPressure);
+      reheatedGas.setPressure(gcuOperatingPressure);
       ThermodynamicOperations reheatOps = new ThermodynamicOperations(reheatedGas);
       reheatOps.TPflash();
       reheatedGas.initProperties();
@@ -1288,7 +1326,10 @@ public class DryGasSealAnalyzer {
 
       // Step 7: Summary
       result.put("total_electrical_kW", (coolingDutyW + reheatDutyW) / 1000.0);
-      result.put("gcu_required", liquidVolPct > 0.0);
+      // GCU is required if the cricondentherm is above ambient (condensation will occur
+      // somewhere in the downstream pressure range) or if liquid was separated
+      boolean gcuRequired = liquidVolPct > 0.0 || dewPointC > (ambientTemperatureK - 273.15);
+      result.put("gcu_required", gcuRequired);
       result.put("gcu_superheat_margin_K", gcuSuperheatMarginK);
       result.put("gcu_subcool_margin_K", gcuSubcoolMarginK);
 
