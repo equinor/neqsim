@@ -34,6 +34,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemPrLeeKeslerEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
@@ -271,7 +272,7 @@ public class JsonProcessBuilder {
       if (fluid == null) {
         errors.add(new SimulationResult.ErrorDetail("UNKNOWN_MODEL",
             "Unknown thermodynamic model: " + model, null,
-            "Use one of: SRK, PR, CPA, GERG2008, PCSAFT, UMRPRU"));
+            "Use one of: SRK, PR, PR_LK, CPA, GERG2008, PCSAFT, UMRPRU"));
         return null;
       }
 
@@ -352,8 +353,8 @@ public class JsonProcessBuilder {
           try {
             fluid.setBinaryInteractionParameter(mapped1, mapped2, kij);
           } catch (Exception ex) {
-            warnings.add("Could not set BIC for " + mapped1 + "/" + mapped2 + ": "
-                + ex.getMessage());
+            warnings
+                .add("Could not set BIC for " + mapped1 + "/" + mapped2 + ": " + ex.getMessage());
           }
         }
       }
@@ -387,6 +388,10 @@ public class JsonProcessBuilder {
         return new SystemSrkEos(temperature, pressure);
       case "PR":
         return new SystemPrEos(temperature, pressure);
+      case "PR_LK":
+      case "PR-LK":
+      case "PRLK":
+        return new SystemPrLeeKeslerEos(temperature, pressure);
       case "CPA":
         return new SystemSrkCPAstatoil(temperature, pressure);
       case "GERG2008":

@@ -261,8 +261,50 @@ for loading into NeqSim via `EclipseFluidReadWrite.read()`:
 - `BIC` — binary interaction coefficients (lower triangular)
 - `ZI` — mole fractions
 
+**Optional E300 sections** (NeqSim supports these):
+- `BICS` — volume-corrected BICs at surface conditions (parsed but same format as BIC)
+- `OMEGAA` — per-component OmegaA override values (one value per line + `/` terminator)
+- `OMEGAB` — per-component OmegaB override values (same format)
+- `SSHIFTS` — volume shift at surface conditions (same format as SSHIFT)
+- `PEDERSEN` — keyword (no values) → activates Pedersen viscosity correlation
+
+**EOS Selection via E300:**
+- `EOS\nSRK /` → `SystemSrkEos`
+- `EOS\nPR /\nPRCORR` → `SystemPrEos1978` (PR1978 correction)
+- `EOS\nPR /\nPRLKCORR` → **`SystemPrLeeKeslerEos`** (PR-LK, PR76 alpha for all ω)
+- `EOS\nPR /` → `SystemPrEos` (base PR)
+
 **CRITICAL**: If the BIC section is omitted, NeqSim's `EclipseFluidReadWrite`
 will crash with a NullPointerException. Always include BIC, even if all zeros.
+
+**Loading with a forced EOS (ignores EOS keyword in file):**
+```python
+from neqsim import jneqsim
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+SystemPrLeeKeslerEos = jneqsim.thermo.system.SystemPrLeeKeslerEos
+
+# Force PR-LK regardless of EOS in file
+fluid = SystemPrLeeKeslerEos(288.15, 1.01325)
+fluid = EclipseFluidReadWrite.read(e300_path, fluid)
+```
+
+**⚠️ CRITICAL WARNING — Water BIPs and OmegaA:**
+
+When water is present, the water–hydrocarbon BIPs (kij) interact dangerously
+with OmegaA. **NEVER mix BIP conventions with OmegaA modifications:**
+
+- Standard E300 BIPs for water–HC are typically **+0.48 to +0.50**
+- PR-LK correlation BIPs for H2O–N2 are typically **−2.24** (negative!)
+- H2O–CO2 is typically **−0.557**, H2O–H2S is typically **−0.390**
+
+These negative BIPs **intentionally** increase cross-attraction and keep water
+in the liquid phase. If you simultaneously set `OMEGAA` for water to a
+non-standard value (e.g., 0.42748), the phase behavior will be wrong —
+HP Separator vapour fraction can jump from 0.41 to 0.81 (catastrophic).
+
+**Rule**: Only use `OMEGAA` for water together with its matched BIP set.
+Default (no OMEGAA section) is safer unless you have a PVTsim-generated file
+that was specifically fitted with both OMEGAA and BICs together.
 
 **NeqSim E300 component name mapping:**
 | E300 Name | NeqSim Maps To |
@@ -674,14 +716,27 @@ comparator.print_report(comparisons)
 
 ### Factors Causing Deviations
 
-1. **EOS differences**: UniSim PR-LK vs NeqSim PR — different alpha functions
-2. **BIP (binary interaction parameters)**: UniSim uses PR-LK correlation BIPs.
-   Extract via `pp.Kij.Values` (Section 1.1) and include in E300 BIC section.
-   Without correct BIPs, vapour fraction can differ by 5%+ and oil MW by 100%+.
-3. **Hypothetical components**: Pseudo-component property estimation differs
-4. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim
-5. **Transport properties**: Different correlations for viscosity, thermal conductivity
-6. **Convergence**: Different solver algorithms, tolerance settings
+1. **EOS differences**: UniSim PR-LK uses PR76 alpha (`m = 0.37464 + 1.54226ω − 0.26992ω²`)
+   for ALL components, including those with ω > 0.49 (where PR78 uses a different cubic).
+   **Fix**: Use `SystemPrLeeKeslerEos` in NeqSim — add `PRLKCORR` line after `EOS PR` in E300 file.
+   This typically reduces vapour-fraction bias from −1.6% to < 0.3%.
+2. **BIP (binary interaction parameters)**: UniSim PR-LK correlation BIPs are non-zero even for
+   pure-prediction (never user-tuned). Extract via `pp.Kij.Values` (Section 1.1) and include in
+   E300 BIC section. Without correct BIPs, vapour fraction can differ by 5%+ and oil MW by 100%+.
+3. **Water BIPs**: PR-LK BIPs for H2O–N2 (≈−2.24), H2O–CO2 (≈−0.557), H2O–H2S (≈−0.390)
+   are **negative** (increase cross-attraction → keep water in liquid). If a file has both
+   water BIPs AND OMEGAA overrides, they must be used as a matched set. Using standard BIPs
+   with modified OmegaA causes catastrophic phase split errors.
+4. **Water distribution (multi-stage)**: In UniSim with recycles, water may split across
+   multiple separators. NeqSim forward-flow models capture water mainly at the first stage.
+   +70% water flow error at secondary stages is structurally expected if recycles are missing.
+5. **Hypothetical components**: Pseudo-component property estimation differs between simulators.
+   Critical properties and acentric factor estimation methods vary.
+6. **Compressor efficiency**: UniSim COM sometimes returns `None` for `AdiabaticEfficiency`.
+   Always check extracted efficiency values; default to 75% isentropic with a warning.
+7. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim.
+8. **Transport properties**: Different viscosity/thermal conductivity correlations.
+9. **Convergence**: Different solver algorithms, tolerance settings, and recycle initialization.
 
 ---
 
