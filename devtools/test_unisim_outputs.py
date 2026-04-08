@@ -56,11 +56,15 @@ def _build_test_model():
                 UniSimStreamData("Scrubber Liq", temperature_C=14.0, pressure_bara=83.0),
                 UniSimStreamData("Compressed Gas", temperature_C=95.0, pressure_bara=150.0),
                 UniSimStreamData("Export Gas", temperature_C=40.0, pressure_bara=149.0),
+                UniSimStreamData("Dry Export Gas", temperature_C=40.0, pressure_bara=148.5),
+                UniSimStreamData("Export Condensate", temperature_C=40.0, pressure_bara=148.5),
+                UniSimStreamData("Recycled Condensate", temperature_C=40.0, pressure_bara=148.5),
+                UniSimStreamData("Mixed Feed", temperature_C=35.0, pressure_bara=85.0),
             ],
             operations=[
                 UniSimOperation(
                     "Inlet Cooler", "coolerop",
-                    feeds=["Feed Gas"], products=["Cooled Feed"],
+                    feeds=["Mixed Feed"], products=["Cooled Feed"],
                     properties={"outlet_temperature_C": 15.0},
                 ),
                 UniSimOperation(
@@ -97,6 +101,23 @@ def _build_test_model():
                     "Aftercooler", "coolerop",
                     feeds=["Compressed Gas"], products=["Export Gas"],
                     properties={"outlet_temperature_C": 40.0},
+                ),
+                # Aftercooler produces condensate that recycles back
+                UniSimOperation(
+                    "Export Flash", "flashtank",
+                    feeds=["Export Gas"],
+                    products=["Dry Export Gas", "Export Condensate"],
+                ),
+                UniSimOperation(
+                    "Condensate Recycle", "recycle",
+                    feeds=["Export Condensate"],
+                    products=["Recycled Condensate"],
+                    properties={"tolerance": 1e-2},
+                ),
+                UniSimOperation(
+                    "Feed Mixer", "mixerop",
+                    feeds=["Feed Gas", "Recycled Condensate"],
+                    products=["Mixed Feed"],
                 ),
             ],
         ),
@@ -299,6 +320,34 @@ def test_to_json():
     assert 'inlet' in comp_entry
     # Should reference Inlet Scrubber's gas port
     assert 'Inlet Scrubber.gasOut' in comp_entry['inlet']
+
+    # --- Recycle loop assertions ---
+
+    # Recycle entry should exist with correct type and tolerance
+    assert types_by_name.get('Condensate Recycle') == 'Recycle', \
+        f"Expected Recycle, got {types_by_name.get('Condensate Recycle')}"
+    rcy_entry = next(e for e in process if e.get('name') == 'Condensate Recycle')
+    assert 'inlet' in rcy_entry
+    # Recycle inlet should reference Export Flash liquid port
+    assert 'Export Flash.liquidOut' in rcy_entry['inlet'], \
+        f"Expected Export Flash.liquidOut, got {rcy_entry['inlet']}"
+    # Recycle should have tolerance property
+    assert 'properties' in rcy_entry
+    assert rcy_entry['properties'].get('tolerance') == 1e-2
+
+    # Feed Mixer should exist and reference both Feed Gas and Recycle outlet
+    mixer_entry = next(e for e in process if e.get('name') == 'Feed Mixer')
+    assert mixer_entry['type'] == 'Mixer'
+    assert 'inlets' in mixer_entry
+    # One inlet should be the external feed, other should be the recycle outlet
+    inlet_refs = mixer_entry['inlets']
+    assert len(inlet_refs) == 2
+    has_recycle_ref = any('Condensate Recycle' in ref for ref in inlet_refs)
+    assert has_recycle_ref, \
+        f"Mixer should reference Condensate Recycle outlet, got: {inlet_refs}"
+
+    # Export Flash should be a Separator (2-phase flashtank)
+    assert types_by_name.get('Export Flash') == 'Separator'
 
     print("  PASS")
     return result

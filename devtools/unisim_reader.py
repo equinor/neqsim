@@ -1417,6 +1417,9 @@ class UniSimToNeqSim:
         elif neqsim_type == 'Splitter':
             if op.products:
                 props['splitNumber'] = len(op.products)
+            split_factors = op.properties.get('split_factors')
+            if split_factors:
+                props['splitFactors'] = split_factors
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):
@@ -1425,6 +1428,39 @@ class UniSimToNeqSim:
                 props['entrainment'] = entrainment_specs
             if op.properties.get('diameter_m'):
                 props['diameter'] = op.properties['diameter_m']
+
+        elif neqsim_type == 'Recycle':
+            tol = op.properties.get('tolerance')
+            if tol is not None:
+                props['tolerance'] = tol
+
+        elif neqsim_type == 'Absorber':
+            # Detect glycol/TEG contactor → emit as ComponentSplitter
+            _name_lower = op.name.lower()
+            _is_glycol = any(kw in _name_lower for kw in
+                             ('glyc', 'teg', 'dehydrat'))
+            if _is_glycol:
+                entry['type'] = 'ComponentSplitter'
+                # Water removal: all components pass except water (last).
+                # Build splitFactors from fluid package component list.
+                n_comp = 0
+                water_idx = -1
+                if self.model.fluid_packages:
+                    fp = self.model.fluid_packages[0]
+                    mapped_names = []
+                    for c in fp.components:
+                        mn = self._map_component_name(c.name)
+                        if mn:
+                            mapped_names.append(mn)
+                    n_comp = len(mapped_names)
+                    for i, mn in enumerate(mapped_names):
+                        if mn == 'water':
+                            water_idx = i
+                            break
+                if n_comp > 0 and water_idx >= 0:
+                    sf = [1.0] * n_comp
+                    sf[water_idx] = 0.0
+                    props['splitFactors'] = sf
 
         if props:
             entry['properties'] = props
