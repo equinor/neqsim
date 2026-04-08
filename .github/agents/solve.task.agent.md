@@ -748,11 +748,32 @@ condensed analysis section in notes and proceed.
 
 10. **Run every cell** using notebook tools. Fix errors immediately.
 
-10a. **Headless execution alternative (long-running or fragile simulations):**
-    If interactive notebook execution is unreliable (JVM crashes, kernel restarts,
-    long Monte Carlo runs, or batch parametric sweeps), use the `neqsim_runner`
-    instead of running cells interactively. This runs each job in an isolated
-    subprocess with automatic retry — no manual kernel restarts needed.
+10a. **Choose execution method — decision rule (MANDATORY):**
+
+    Before executing any notebook, classify the task and pick the method:
+
+    **Use `run_notebook_cell` (interactive)** when ALL of these are true:
+    - Quick or Screening scale (single notebook, no sweeps)
+    - Total expected runtime < 5 minutes
+    - No parametric sweep or Monte Carlo
+    - No previous JVM/kernel crash in this session
+
+    **Use `neqsim_runner` (headless)** when ANY of these are true:
+    - Standard or Comprehensive scale (multi-notebook deliverable)
+    - Parametric sweep with > 3 cases
+    - Monte Carlo with N > 50 iterations
+    - Any notebook expected to run > 5 minutes
+    - A previous cell or notebook failed due to JVM crash, kernel death,
+      or `RuntimeError: JVM cannot be restarted` in this session
+    - Task requires uncertainty analysis or benchmark validation notebooks
+      (these almost always benefit from isolation and retry)
+
+    **Escalation rule:** If you start with interactive cells and hit a JVM
+    crash or kernel death, **immediately switch** to the runner for all
+    remaining notebooks in this task. Do not attempt to restart the kernel
+    and retry interactively — that wastes context window.
+
+    **Runner usage:**
 
     ```python
     # In a notebook cell or standalone script:
@@ -801,16 +822,16 @@ condensed analysis section in notes and proceed.
 
     **When to use the runner vs interactive notebook:**
 
-    | Scenario | Use Runner | Use Notebook |
-    |----------|-----------|--------------|
-    | Monte Carlo (N > 50) | Yes | No |
-    | Parametric sweep (> 5 cases) | Yes | No |
-    | Simulation > 5 min wall time | Yes | No |
-    | JVM crash during execution | Yes (auto-retry) | Must restart manually |
-    | Quick property lookup | No | Yes |
-    | Interactive exploration/debugging | No | Yes |
+    | Signal | → Runner | → Interactive |
+    |--------|----------|---------------|
+    | Task scale | Standard / Comprehensive | Quick / Screening |
+    | Notebooks in task | > 1 | 1 |
+    | Monte Carlo iterations | N > 50 | N ≤ 50 or none |
+    | Parametric sweep cases | > 3 | ≤ 3 or none |
+    | Expected wall time | > 5 min | < 5 min |
+    | Previous JVM crash this session | Always switch | N/A |
+    | Need interactive debugging | No | Yes |
     | Need executed .ipynb with outputs | Yes (mode="execute") | Yes |
-    | Need matplotlib plots inline | No (save to file) | Yes |
 
     The runner writes all outputs to `task_dir/runner_output/`. Use
     `bridge.copy_results_to_task()` to merge back into the task workflow.
