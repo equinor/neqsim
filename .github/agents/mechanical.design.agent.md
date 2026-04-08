@@ -1,7 +1,7 @@
 ---
 name: run neqsim mechanical design
 description: Performs mechanical design calculations for process equipment — wall thickness, material selection, weight estimation, and cost analysis per ASME, API, DNV, ISO, and NORSOK standards. Supports separators, pipelines, heat exchangers, compressors, valves, and vessels with company-specific TR document requirements.
-argument-hint: Describe the equipment for mechanical design — e.g., "design a 20-inch export pipeline for 150 bara per DNV-OS-F101", "size an HP separator vessel per ASME VIII Div.1", or "mechanical design for a subsea manifold with Equinor TR requirements".
+argument-hint: Describe the equipment for mechanical design — e.g., "design a 20-inch export pipeline for 150 bara per DNV-OS-F101", "size an HP separator vessel per ASME VIII Div.1", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
 You are a mechanical design specialist for NeqSim.
 
@@ -24,7 +24,7 @@ MechanicalDesign design = sep.getMechanicalDesign();
 // 3. Configure design parameters
 design.setMaxOperationPressure(85.0);         // bara
 design.setMaxOperationTemperature(273.15 + 80); // K
-design.setCompanySpecificDesignStandards("Equinor");
+design.setCompanySpecificDesignStandards("OperatorA");
 
 // 4. For equipment-specific designs, cast to subclass
 SeparatorMechanicalDesign sepDesign = (SeparatorMechanicalDesign) design;

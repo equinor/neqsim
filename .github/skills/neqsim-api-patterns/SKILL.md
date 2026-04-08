@@ -264,7 +264,7 @@ Used to model TEG dehydration contactors as simple water-removal units.
 Splits a stream per-component: `splitFactor[k] = 1.0` keeps the component in
 stream 0 (dry gas), `0.0` removes it to stream 1 (water).
 
-**Pattern from Oseberg model**: water is always the last component added,
+**TEG dehydration pattern**: water is always the last component added,
 so use `[1.0] * (N-1) + [0.0]` to remove only water.
 
 ```java
@@ -281,7 +281,7 @@ Stream water  = dehydrator.getSplitStream(1);   // removed water
 ```
 
 ```python
-# Python (from Oseberg reference notebook)
+# Python
 water_dehydration = neqsim.process.equipment.splitter.ComponentSplitter(
     "dehyd", wet_gas_stream)
 complen = wet_gas_stream.getFluid().getNumberOfComponents()
@@ -293,7 +293,7 @@ dry_gas = water_dehydration.getSplitStream(0)
 > **When to use**: Any absorber with a glycol-related name ("glyc", "teg",
 > "dehydrat") should be modeled as a ComponentSplitter rather than a
 > DistillationColumn. This avoids solver convergence issues and is the
-> pattern used in all production Oseberg/Sture models.
+> standard pattern for production platform models.
 
 ### Pump
 
@@ -388,10 +388,10 @@ separate `ProcessSystem` objects per process area, then combine them into a sing
 `ProcessModel`. **NEVER try to add a ProcessModule or ProcessSystem to another
 ProcessSystem** — use `ProcessModel` as the top-level container.
 
-### Architecture Pattern (from Oseberg/Snorre field models)
+### Architecture Pattern (from reference platform models)
 
 ```
-ProcessModel ("Grane Platform")              ← TOP-LEVEL CONTAINER
+ProcessModel ("Gas Platform")                ← TOP-LEVEL CONTAINER
   ├── ProcessSystem ("well process")          ← Well feed & manifold
   ├── ProcessSystem ("separation train A")    ← HP/LP separation
   ├── ProcessSystem ("separation train B")    ← HP/LP separation
@@ -437,7 +437,7 @@ System.out.println(plant.getMassBalanceReport());
 
 ### Python Example (Recommended Pattern)
 
-The Oseberg model uses **functions** that return ProcessSystem objects:
+The reference model uses **functions** that return ProcessSystem objects:
 
 ```python
 def create_well_feed_model(inp):

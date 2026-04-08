@@ -156,7 +156,7 @@ When writing documentation that includes Java or Python code examples:
 - **Streams & Cloning**: Instantiate feeds with `Stream`/`StreamInterface`, call `setFlowRate`, `setTemperature`, `setPressure`, then `run()`; clone fluids (`system.clone()`) before branching to avoid shared state between trays or unit operations.
 - **Distillation Column**: `DistillationColumn` provides sequential, damped, and inside-out solvers; maintain solver metrics (`lastIterationCount`, `lastMassResidual`, `lastEnergyResidual`) and feed-tray bookkeeping when altering column logic to keep tests like `insideOutSolverMatchesStandardOnDeethanizerCase` green.
 - **ProcessSystem Utilities**: Use `ProcessSystem.add(unit)` to build flowsheets, `run()`/`run(UUID)` for execution, `copy()` when duplicating equipment, `connect()` for explicit connections, and `getAllElements()` to query all equipment, controllers, and measurements; modules can self-initialize through `ModuleInterface`—respect these hooks if you add packaged subsystems.
-- **ProcessModel for Multi-Area Plants (MANDATORY)**: For large plants (platforms, gas plants), split into separate `ProcessSystem` objects per process area then combine with `ProcessModel`. Use `plant.add("area name", processSystem)` to register named areas, `plant.run()` iterates until convergence, `plant.get("area name")` retrieves sub-processes, and `plant.getConvergenceSummary()` reports status. See the Oseberg and Snorre field models for the canonical pattern: each area is a Python function returning a `ProcessSystem`, cross-system streams are shared by object reference, and all systems are composed into a `ProcessModel` at the end. **NEVER** add a `ProcessModule` or `ProcessModel` to a `ProcessSystem` — it will throw TypeError.
+- **ProcessModel for Multi-Area Plants (MANDATORY)**: For large plants (platforms, gas plants), split into separate `ProcessSystem` objects per process area then combine with `ProcessModel`. Use `plant.add("area name", processSystem)` to register named areas, `plant.run()` iterates until convergence, `plant.get("area name")` retrieves sub-processes, and `plant.getConvergenceSummary()` reports status. See the reference platform models for the canonical pattern: each area is a Python function returning a `ProcessSystem`, cross-system streams are shared by object reference, and all systems are composed into a `ProcessModel` at the end. **NEVER** add a `ProcessModule` or `ProcessModel` to a `ProcessSystem` — it will throw TypeError.
 - **Automation API (PREFERRED for agents)**: Use `ProcessAutomation` for string-addressable variable access instead of navigating Java class hierarchies. Get the facade via `process.getAutomation()` or `plant.getAutomation()`. Discover equipment with `getUnitList()`, list variables with `getVariableList("unitName")` (returns `SimulationVariable` with INPUT/OUTPUT type, address, unit, description), read values with `getVariableValue("Unit.stream.property", "unit")`, write with `setVariableValue("Unit.property", value, "unit")`. For multi-area models, use area-qualified addresses: `"Area::Unit.stream.property"` with `getAreaList()` for discovery.
 - **Self-Healing Automation (PREFERRED for agents)**: Use `getVariableValueSafe()` and `setVariableValueSafe()` instead of direct get/set. These return JSON with the value on success, or diagnostics with suggestions, auto-corrections, and remediation hints on failure. Access `auto.getDiagnostics()` for fuzzy name matching (`autoCorrectName()`), physical bounds validation (`validatePhysicalBounds()`), and operation tracking (`getLearningReport()`). The `AutomationDiagnostics` class learns from past failures — corrections are cached and reused automatically.
 - **Lifecycle State (Save/Restore/Compare)**: Use `ProcessSystemState.fromProcessSystem(process)` and `ProcessModelState.fromProcessModel(plant)` to create portable JSON snapshots. Save with `state.saveToFile("model.json")`, load with `ProcessSystemState.loadFromFile("model.json")`, validate with `state.validate()`. Compare versions with `ProcessModelState.compare(v1, v2)` returning a `ModelDiff` (modified parameters, added/removed equipment). Use `toCompressedBytes()`/`fromCompressedBytes()` for network transfer. All state classes live in `neqsim.process.processmodel.lifecycle`.
@@ -689,11 +689,11 @@ Create entries in `TechnicalRequirements_Process.csv` with TR document reference
 
 ```csv
 Company,EquipmentType,ParameterName,Value,Unit,Standard
-Equinor,Pipeline,DesignFactor,0.72,,TR1414
-Equinor,Pipeline,CorrosionAllowance,3.0,mm,TR1414
-Equinor,Separator,DesignPressureMargin,1.1,,TR2000
-Equinor,Separator,MinWallThickness,6.0,mm,TR2000
-Equinor,HeatExchanger,FoulingFactor,0.0002,m2K/W,TR3100
+OperatorA,Pipeline,DesignFactor,0.72,,TR1414
+OperatorA,Pipeline,CorrosionAllowance,3.0,mm,TR1414
+OperatorA,Separator,DesignPressureMargin,1.1,,TR2000
+OperatorA,Separator,MinWallThickness,6.0,mm,TR2000
+OperatorA,HeatExchanger,FoulingFactor,0.0002,m2K/W,TR3100
 ```
 
 #### TR Document CSV Table (Optional)
@@ -702,11 +702,11 @@ For complex TR requirements, create a dedicated `designdata/tr_documents.csv`:
 
 ```csv
 Company,TRNumber,TRTitle,EquipmentType,ParameterName,Value,Unit,Section,ValidFrom
-Equinor,TR1414,Piping and Pipeline Design,Pipeline,DesignFactor,0.72,,5.2.1,2020-01-01
-Equinor,TR1414,Piping and Pipeline Design,Pipeline,LocationClassDefault,Class 1,,5.2.2,2020-01-01
-Equinor,TR2000,Pressure Vessel Design,Separator,JointEfficiency,0.85,,4.3.1,2019-06-01
-Equinor,TR2000,Pressure Vessel Design,Separator,CorrosionAllowance,3.0,mm,4.4.2,2019-06-01
-Shell,DEP-31.38.01.11,Pressure Vessels,Separator,DesignPressureMargin,1.1,,3.2,2021-01-01
+OperatorA,TR1414,Piping and Pipeline Design,Pipeline,DesignFactor,0.72,,5.2.1,2020-01-01
+OperatorA,TR1414,Piping and Pipeline Design,Pipeline,LocationClassDefault,Class 1,,5.2.2,2020-01-01
+OperatorA,TR2000,Pressure Vessel Design,Separator,JointEfficiency,0.85,,4.3.1,2019-06-01
+OperatorA,TR2000,Pressure Vessel Design,Separator,CorrosionAllowance,3.0,mm,4.4.2,2019-06-01
+OperatorB,DEP-31.38.01.11,Pressure Vessels,Separator,DesignPressureMargin,1.1,,3.2,2021-01-01
 ```
 
 #### DataSource Implementation for TR Documents
@@ -806,13 +806,13 @@ public String toJson() {
 
 | Company | TR Series | Scope |
 |---------|-----------|-------|
-| Equinor | TR1000-series | Process & Safety |
-| Equinor | TR1400-series | Piping & Pipelines |
-| Equinor | TR2000-series | Pressure Vessels |
-| Equinor | TR3000-series | Heat Transfer Equipment |
-| Shell | DEP | Design & Engineering Practice |
-| TotalEnergies | GS EP | General Specifications |
-| BP | GP | Group Practices |
+| OperatorA | TR1000-series | Process & Safety |
+| OperatorA | TR1400-series | Piping & Pipelines |
+| OperatorA | TR2000-series | Pressure Vessels |
+| OperatorA | TR3000-series | Heat Transfer Equipment |
+| OperatorB | DEP | Design & Engineering Practice |
+| OperatorC | GS EP | General Specifications |
+| OperatorD | GP | Group Practices |
 
 ### 9. Cost Estimation and Detailed Design (MANDATORY for Full Design)
 
@@ -920,7 +920,7 @@ design.setMaxOperationPressure(85.0);
 design.setMaxOperationTemperature(273.15 + 80.0);
 design.setMaterialGrade("SA-516-70");
 design.setDesignStandardCode("ASME-VIII-Div1");
-design.setCompanySpecificDesignStandards("Equinor");
+design.setCompanySpecificDesignStandards("OperatorA");
 
 // Calculate and report
 design.readDesignSpecifications();
@@ -1170,7 +1170,7 @@ PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
 DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn
 
 # TEG / Glycol contactor — model as ComponentSplitter (water removal)
-# Pattern from Oseberg model: water is always the last component
+# Pattern for TEG dehydration: water is always the last component
 # water_dehydration = ComponentSplitter("dehyd", wet_gas_stream)
 # complen = wet_gas_stream.getFluid().getNumberOfComponents()
 # water_dehydration.setSplitFactors([1.0] * (complen - 1) + [0.0])

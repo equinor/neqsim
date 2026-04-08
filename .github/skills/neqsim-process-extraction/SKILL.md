@@ -1891,7 +1891,7 @@ chart_json = comp.getCompressorChartAsJson()
 
 ### Anti-Surge Loop Topology
 
-The typical NCS anti-surge pattern (used on platforms like Snorre, Åsgard, etc.):
+The typical NCS anti-surge pattern (used on offshore platforms):
 
 ```
                     ┌──────────────────────────────────────────┐
