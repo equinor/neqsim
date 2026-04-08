@@ -420,7 +420,7 @@ public class ProcessSystemState implements Serializable {
 
   private static Gson createGson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()
-        .registerTypeAdapter(Instant.class, new InstantAdapter()).create();
+        .disableHtmlEscaping().registerTypeAdapter(Instant.class, new InstantAdapter()).create();
   }
 
   /**

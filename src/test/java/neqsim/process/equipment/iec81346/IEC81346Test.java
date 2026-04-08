@@ -761,11 +761,87 @@ class IEC81346Test {
     String json = state.toJson();
     assertTrue(json.contains("iec81346_referenceDesignation"),
         "JSON should contain iec81346_referenceDesignation key");
-    // Gson escapes '=' as '\u003d' by default, so check for both possibilities
-    assertTrue(
-        json.contains("=A1-B1+P1") || json.contains("\\u003dA1-B1+P1")
-            || json.contains("\\u003dA1-B1\\u002bP1"),
-        "JSON should contain the separator designation =A1-B1+P1 (possibly HTML-escaped)");
+    // With disableHtmlEscaping, '=' and '+' are not escaped
+    assertTrue(json.contains("=A1-B1+P1"),
+        "JSON should contain the separator designation =A1-B1+P1");
+  }
+
+  // ============================================================
+  // ReferenceDesignation.parse() round-trip tests
+  // ============================================================
+
+  @Test
+  void testParseFullDesignation() {
+    ReferenceDesignation refDes = ReferenceDesignation.parse("=A1-B1+P1");
+    assertEquals("A1", refDes.getFunctionDesignation());
+    assertEquals("B1", refDes.getProductDesignation());
+    assertEquals("P1", refDes.getLocationDesignation());
+    assertEquals(IEC81346LetterCode.B, refDes.getLetterCode());
+    assertEquals(1, refDes.getSequenceNumber());
+    assertEquals("=A1-B1+P1", refDes.toReferenceDesignationString());
+  }
+
+  @Test
+  void testParsePartialDesignations() {
+    // Product only
+    ReferenceDesignation prodOnly = ReferenceDesignation.parse("-K3");
+    assertEquals("", prodOnly.getFunctionDesignation());
+    assertEquals("K3", prodOnly.getProductDesignation());
+    assertEquals("", prodOnly.getLocationDesignation());
+    assertEquals(IEC81346LetterCode.K, prodOnly.getLetterCode());
+    assertEquals(3, prodOnly.getSequenceNumber());
+
+    // Function + product
+    ReferenceDesignation funcProd = ReferenceDesignation.parse("=A2-B1");
+    assertEquals("A2", funcProd.getFunctionDesignation());
+    assertEquals("B1", funcProd.getProductDesignation());
+    assertEquals("", funcProd.getLocationDesignation());
+
+    // Null/empty
+    ReferenceDesignation empty = ReferenceDesignation.parse(null);
+    assertFalse(empty.isSet());
+    ReferenceDesignation blank = ReferenceDesignation.parse("");
+    assertFalse(blank.isSet());
+  }
+
+  @Test
+  void testParseHierarchicalDesignation() {
+    ReferenceDesignation refDes = ReferenceDesignation.parse("=A1.A2-B3+P1.M1");
+    assertEquals("A1.A2", refDes.getFunctionDesignation());
+    assertEquals("B3", refDes.getProductDesignation());
+    assertEquals("P1.M1", refDes.getLocationDesignation());
+    assertEquals(IEC81346LetterCode.B, refDes.getLetterCode());
+    assertEquals(3, refDes.getSequenceNumber());
+  }
+
+  // ============================================================
+  // Connection auto-enrichment tests
+  // ============================================================
+
+  @Test
+  void testConnectionAutoEnrichment() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    Compressor comp = new Compressor("Comp", sep.getGasOutStream());
+    comp.setOutletPressure(120.0);
+    process.add(comp);
+
+    // Declare an explicit connection before generating designations
+    process.connect("HP Sep", "Comp");
+
+    // Generate designations — should auto-enrich the connection
+    process.generateReferenceDesignations("A1", "P1");
+
+    // Connection should now have ref des from both sides
+    neqsim.process.processmodel.ProcessConnection conn = process.getConnections().get(0);
+    assertEquals("=A1-B1+P1", conn.getSourceReferenceDesignation());
+    assertEquals("=A1-K1+P1", conn.getTargetReferenceDesignation());
   }
 
   // ============================================================
