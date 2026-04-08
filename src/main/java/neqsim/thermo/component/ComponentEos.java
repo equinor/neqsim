@@ -49,6 +49,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double b = 1;
 
+  /** Per-component OmegaA override. NaN means use the EOS default. */
+  protected double omegaAOverride = Double.NaN;
+
   public double m = 0;
 
   public double alpha = 0;
@@ -595,6 +598,35 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public void seta(double a) {
     this.a = a;
+  }
+
+  /**
+   * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to
+   * {@code calca()} (including those triggered by {@code init()}) will use this value instead of
+   * the EOS class default. Use {@code Double.NaN} to revert to the EOS default.
+   *
+   * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
+   */
+  public void setOmegaA(double omegaA) {
+    this.omegaAOverride = omegaA;
+  }
+
+  /**
+   * Returns true when a per-component OmegaA override has been set via {@link #setOmegaA}.
+   *
+   * @return true if an OmegaA override is active
+   */
+  public boolean hasOmegaAOverride() {
+    return !Double.isNaN(omegaAOverride);
+  }
+
+  /**
+   * Returns the active OmegaA value, or {@code Double.NaN} when no override has been set.
+   *
+   * @return active OmegaA override, or NaN
+   */
+  public double getOmegaAOverride() {
+    return omegaAOverride;
   }
 
   /** {@inheritDoc} */

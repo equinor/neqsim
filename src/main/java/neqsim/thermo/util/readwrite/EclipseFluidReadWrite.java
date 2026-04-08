@@ -17,6 +17,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -178,6 +179,8 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       ArrayList<Double> BICS = new ArrayList<Double>();
       ArrayList<Double> LBCCOEF = new ArrayList<Double>();
+      ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
+      ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
       String EOS;
       while ((st = br.readLine()) != null) {
@@ -357,6 +360,34 @@ public class EclipseFluidReadWrite {
             }
           }
         }
+        if (st.trim().equals("OMEGAA")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAA_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAA value: " + e.getMessage());
+            }
+          }
+        }
+        if (st.trim().equals("OMEGAB")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAB_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAB value: " + e.getMessage());
+            }
+          }
+        }
         if (st.trim().equals("LBCCOEF")) {
           String line;
           while ((line = br.readLine()) != null) {
@@ -450,6 +481,19 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
+      // Apply per-component OmegaA overrides when OMEGAA section was present in the file.
+      // setOmegaA() stores the value so calca() uses it in every subsequent init() call.
+      if (!OMEGAA_list.isEmpty()) {
+        for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+          for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
+            neqsim.thermo.component.ComponentEos comp =
+                (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum).getComponent(k);
+            comp.setOmegaA(OMEGAA_list.get(k));
+          }
+        }
+        // Re-init so calca() runs with the new OmegaA values.
+        fluid.init(0);
+      }
       if (kij == null) {
         kij = new Double[names.size()][names.size()];
         for (Double[] row : kij) {
@@ -839,6 +883,34 @@ public class EclipseFluidReadWrite {
             }
           }
         }
+        if (st.trim().equals("OMEGAA")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAA_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAA value: " + e.getMessage());
+            }
+          }
+        }
+        if (st.trim().equals("OMEGAB")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAB_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAB value: " + e.getMessage());
+            }
+          }
+        }
         if (st.trim().equals("BICS")) {
           // Parse BICS the same way as BIC - lower triangular matrix
           st = st.trim();
@@ -963,6 +1035,17 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
+      // Apply per-component OmegaA overrides when OMEGAA section was present.
+      if (!OMEGAA_list.isEmpty()) {
+        for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+          for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
+            neqsim.thermo.component.ComponentEos comp =
+                (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum).getComponent(k);
+            comp.setOmegaA(OMEGAA_list.get(k));
+          }
+        }
+        fluid.init(0);
+      }
 
       int nCompsPerFluid = names.size(); // base number of components
       int nFluids = fluidNames.length; // number of times you replicate
@@ -1315,12 +1398,19 @@ public class EclipseFluidReadWrite {
     }
     writer.write("/\n");
 
-    // OmegaA EOS parameter
+    // OmegaA EOS parameter — use per-component override when available
     writer.write("-- OmegaA\n");
     writer.write("OMEGAA\n");
-    double omegaA = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.45724 : 0.42748;
+    double omegaADefault = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.45724 : 0.42748;
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaA));
+      double omegaAVal = omegaADefault;
+      if (fluid.getComponent(i) instanceof ComponentEos) {
+        ComponentEos ce = (ComponentEos) fluid.getComponent(i);
+        if (ce.hasOmegaAOverride()) {
+          omegaAVal = ce.getOmegaAOverride();
+        }
+      }
+      writer.write(String.format(java.util.Locale.US, "     %.8f\n", omegaAVal));
     }
     writer.write("/\n");
 

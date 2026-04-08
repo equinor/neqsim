@@ -96,6 +96,9 @@ public class ComponentSrk extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double calca() {
+    if (hasOmegaAOverride()) {
+      return omegaAOverride * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+    }
     return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature
         / criticalPressure;
   }
