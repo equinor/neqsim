@@ -19,10 +19,11 @@ public class ComponentPR extends ComponentEos {
    * Constructor for ComponentPR.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component
+   *                     array.
    */
   public ComponentPR(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -36,7 +37,7 @@ public class ComponentPR extends ComponentEos {
     delta2 = 1.0 - Math.sqrt(2.0);
     setAttractiveParameter(new AttractiveTermPr(this));
 
-    double[] surfTensInfluenceParamtemp = {1.3192, 1.6606, 1.1173, 0.8443};
+    double[] surfTensInfluenceParamtemp = { 1.3192, 1.6606, 1.1173, 0.8443 };
     this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
@@ -46,11 +47,11 @@ public class ComponentPR extends ComponentEos {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
   public ComponentPR(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -142,10 +143,8 @@ public class ComponentPR extends ComponentEos {
     if (TR < 0) {
       TR = 0.5;
     }
-    double AA =
-        -1.0e-16 / (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
-    double BB =
-        1.0e-16 / (surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor());
+    double AA = -1.0e-16 / (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
+    double BB = 1.0e-16 / (surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor());
 
     // System.out.println("scale2 " + aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) *
     // (AA * TR + BB));
