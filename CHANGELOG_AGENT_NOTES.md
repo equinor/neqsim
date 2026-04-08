@@ -9,6 +9,61 @@
 
 ---
 
+## 2026-07-07 — Full Bacalhau FPSO Model: Architecture Learnings
+
+### HP Separator Water Routing
+
+When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
+may not produce a separate aqueous phase in UniSim. To match this behavior, use
+`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
+
+```java
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
+Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
+hpLiqRecombine.addStream(hpSep.getOilOutStream());
+hpLiqRecombine.addStream(hpSep.getWaterOutStream());
+// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
+```
+
+### Import Gas Compression Architecture
+
+Large FPSO models use staged import gas compression matching pressure levels:
+- VLP gas (~2 bar) → VRU compressor → ~5 bar → mix with LP gas
+- LP+VRU gas (~5 bar) → 1st import compressor → ~22 bar → mix with MP gas
+- MP+1st import gas (~22 bar) → 2nd import compressor → ~90 bar → mix with HP gas
+
+Each stage has cooler + flash drum before the compressor (removes condensate).
+
+### Pump API
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(6.1);          // bara
+pump.setIsentropicEfficiency(0.75);
+pump.getPower("kW");                  // after run
+```
+
+### ComponentSplitter for TEG Dehydration
+
+```java
+ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
+int nComp = wetGasStream.getFluid().getNumberOfComponents();
+double[] sf = new double[nComp];
+java.util.Arrays.fill(sf, 1.0);
+sf[nComp - 1] = 0.0;  // water is last component
+teg.setSplitFactors(sf);
+// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
+```
+
+### Model Scale: 50+ Equipment Units in Single ProcessSystem
+
+The Bacalhau FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
+covering wellhead → HP/MP/LP/VLP separation → VRU + import gas compression →
+gas cooling + TEG → 2-stage export compression → seal gas JT → oil export.
+Single `ProcessSystem` converges in ~2 seconds without recycles.
+
+---
+
 ## 2026-07-06 — JT Expansion: Use ThrottlingValve, Not PHflash
 
 ### Critical Agent Guidance

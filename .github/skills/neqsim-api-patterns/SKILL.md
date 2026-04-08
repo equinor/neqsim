@@ -267,6 +267,21 @@ dry_gas = water_dehydration.getSplitStream(0)
 > DistillationColumn. This avoids solver convergence issues and is the
 > pattern used in all production Oseberg/Sture models.
 
+### Pump
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(20.0);           // bara
+pump.setIsentropicEfficiency(0.75);     // 0-1
+Stream out = pump.getOutletStream();
+// After run: pump.getPower("kW")
+```
+
+**Three operating modes:**
+1. **Isentropic (default):** PS flash → isentropic enthalpy → divide by efficiency → PH flash
+2. **Fixed outlet temperature:** `pump.setOutletTemperature(40.0, "C")` → back-calculates power
+3. **Pump chart:** `pump.getPumpChart()` → head, efficiency, NPSH curves
+
 ### Pipeline
 
 ```java
@@ -276,13 +291,50 @@ pipe.setDiameter(0.508);   // meters (20 inch)
 Stream out = pipe.getOutletStream();
 ```
 
-### Recycle and Adjuster
+### Recycle (Detailed)
+
+Recycles enable iterative convergence of process loops. The `ProcessSystem`
+automatically detects and iterates recycles up to 100 times.
 
 ```java
-Recycle recycle = new Recycle("Recycle");
-recycle.addStream(outletStream);
-// Add to process after the equipment loop
+// 1. Create placeholder stream with estimated conditions
+Stream placeholder = new Stream("recycle estimate", fluidGuess.clone());
+placeholder.setFlowRate(estimatedFlow, "kg/hr");
+placeholder.setTemperature(estimatedT, "C");
+placeholder.setPressure(estimatedP, "bara");
+process.add(placeholder);
 
+// 2. Build downstream equipment using the placeholder as input
+Mixer mixer = new Mixer("recycle mixer");
+mixer.addStream(mainFeed);
+mixer.addStream(placeholder);       // ← placeholder used here
+process.add(mixer);
+// ... more equipment in the loop ...
+
+// 3. Create Recycle that connects actual outlet back to placeholder
+Recycle recycle = new Recycle("RCY-1");
+recycle.addStream(actualOutletStream);    // downstream end of loop
+recycle.setOutletStream(placeholder);      // connects back to start
+recycle.setTolerance(1e-3);               // tighter than default 1e-2
+process.add(recycle);
+```
+
+**Convergence tuning:**
+```java
+recycle.setFlowTolerance(1e-3);          // flow convergence (default 1e-2)
+recycle.setTemperatureTolerance(1e-3);   // temperature convergence
+recycle.setCompositionTolerance(1e-3);   // composition convergence
+recycle.setPriority(50);                 // lower = solved first (default 100)
+recycle.setAccelerationMethod("Wegstein"); // or "Direct Substitution", "Broyden"
+```
+
+**Priority-based nesting:** Set lower priority numbers on inner recycle loops.
+The `RecycleController` solves lower-priority recycles first, then higher.
+ProcessSystem hard cap: 100 iterations (not user-configurable).
+
+### Adjuster
+
+```java
 Adjuster adjuster = new Adjuster("Adj");
 adjuster.setAdjustedVariable(equipment, "methodName");
 adjuster.setTargetVariable(stream, "methodName", targetValue);

@@ -24,6 +24,7 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -274,7 +275,7 @@ public class JsonProcessBuilder {
         return null;
       }
 
-      // Add components
+      // Add standard database components
       if (fluidDef.has("components")) {
         JsonObject components = fluidDef.getAsJsonObject("components");
         for (Map.Entry<String, JsonElement> comp : components.entrySet()) {
@@ -282,10 +283,80 @@ public class JsonProcessBuilder {
         }
       }
 
+      // Add characterized (TBP/plus) components with full properties
+      if (fluidDef.has("characterizedComponents")) {
+        JsonArray charComps = fluidDef.getAsJsonArray("characterizedComponents");
+        for (int i = 0; i < charComps.size(); i++) {
+          JsonObject cc = charComps.get(i).getAsJsonObject();
+          String compName = cc.get("name").getAsString();
+          double moleFraction = cc.get("moleFraction").getAsDouble();
+          double molarMass = cc.get("molarMass").getAsDouble();
+          double density = cc.get("density").getAsDouble();
+          double tc = cc.get("Tc").getAsDouble();
+          double pc = cc.get("Pc").getAsDouble();
+          double omega = cc.get("acentricFactor").getAsDouble();
+          boolean isPlusFraction =
+              cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
+          if (isPlusFraction) {
+            fluid.addPlusFraction(compName, moleFraction, molarMass, density);
+            int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            fluid.getPhase(0).getComponent(compIdx).setTC(tc);
+            fluid.getPhase(0).getComponent(compIdx).setPC(pc);
+            fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
+            fluid.getPhase(1).getComponent(compIdx).setTC(tc);
+            fluid.getPhase(1).getComponent(compIdx).setPC(pc);
+            fluid.getPhase(1).getComponent(compIdx).setAcentricFactor(omega);
+          } else {
+            fluid.addTBPfraction(compName, moleFraction, molarMass, density);
+            int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            fluid.getPhase(0).getComponent(compIdx).setTC(tc);
+            fluid.getPhase(0).getComponent(compIdx).setPC(pc);
+            fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
+            fluid.getPhase(1).getComponent(compIdx).setTC(tc);
+            fluid.getPhase(1).getComponent(compIdx).setPC(pc);
+            fluid.getPhase(1).getComponent(compIdx).setAcentricFactor(omega);
+          }
+        }
+      }
+
       // Set mixing rule
       String mixingRule =
           fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
       fluid.setMixingRule(mixingRule);
+
+      // Apply binary interaction parameters (BICs)
+      if (fluidDef.has("binaryInteractionParameters")) {
+        // Build a mapping from exported names to actual system names
+        // addTBPfraction appends "_PC" to component names
+        Map<String, String> nameMap = new HashMap<>();
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          String sysName = fluid.getPhase(0).getComponent(i).getComponentName();
+          nameMap.put(sysName, sysName);
+          // Also map the name without _PC suffix
+          if (sysName.endsWith("_PC")) {
+            nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
+          }
+        }
+
+        JsonArray bics = fluidDef.getAsJsonArray("binaryInteractionParameters");
+        for (int i = 0; i < bics.size(); i++) {
+          JsonObject bic = bics.get(i).getAsJsonObject();
+          String comp1 = bic.get("comp1").getAsString();
+          String comp2 = bic.get("comp2").getAsString();
+          double kij = bic.get("kij").getAsDouble();
+          String mapped1 = nameMap.get(comp1);
+          String mapped2 = nameMap.get(comp2);
+          if (mapped1 == null || mapped2 == null) {
+            continue; // Skip silently if component not found
+          }
+          try {
+            fluid.setBinaryInteractionParameter(mapped1, mapped2, kij);
+          } catch (Exception ex) {
+            warnings.add("Could not set BIC for " + mapped1 + "/" + mapped2 + ": "
+                + ex.getMessage());
+          }
+        }
+      }
 
       // Multi-phase check
       if (fluidDef.has("multiPhaseCheck")) {
@@ -574,6 +645,14 @@ public class JsonProcessBuilder {
         }
         ((Splitter) equipment).setSplitFactors(splitFact);
       }
+      if (equipment instanceof ComponentSplitter && props.has("splitFactors")) {
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+      }
       applyProperties(equipment, props);
     }
 
@@ -830,6 +909,10 @@ public class JsonProcessBuilder {
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
+      // splitFactors is handled separately for Splitter and ComponentSplitter
+      if ("splitFactors".equals(propName)) {
+        continue;
+      }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
     }

@@ -19,11 +19,15 @@ import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -162,6 +166,16 @@ public class JsonProcessExporter {
           // no water outlet
         }
       }
+    } else if (unit instanceof ComponentSplitter) {
+      ComponentSplitter compSplitter = (ComponentSplitter) unit;
+      List<StreamInterface> outlets = compSplitter.getOutletStreams();
+      if (outlets != null) {
+        for (int i = 0; i < outlets.size(); i++) {
+          if (outlets.get(i) != null) {
+            streamRefMap.put(outlets.get(i), name + ".split" + i);
+          }
+        }
+      }
     } else if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
       List<StreamInterface> outlets = splitter.getOutletStreams();
@@ -230,8 +244,15 @@ public class JsonProcessExporter {
   /**
    * Exports a fluid (SystemInterface) to a JSON object matching the JsonProcessBuilder schema.
    *
+   * <p>
+   * For characterized (TBP/plus) fractions, exports critical properties (Tc, Pc, acentric factor,
+   * molar mass, density) so the fluid can be reconstructed without the original E300/PVT source
+   * file. Binary interaction parameters (BICs) are exported when any non-zero value is present.
+   * </p>
+   *
    * @param fluid the fluid to export
-   * @return JsonObject with model, temperature, pressure, mixingRule, components
+   * @return JsonObject with model, temperature, pressure, mixingRule, components, and optionally
+   *         characterizedComponents and binaryInteractionParameters
    */
   private JsonObject exportFluid(SystemInterface fluid) {
     JsonObject fluidJson = new JsonObject();
@@ -252,16 +273,89 @@ public class JsonProcessExporter {
       fluidJson.addProperty("multiPhaseCheck", true);
     }
 
-    // Components with mole fractions
+    // Components: separate database components from characterized fractions
     JsonObject components = new JsonObject();
+    JsonArray characterizedComponents = new JsonArray();
+    boolean hasCharacterized = false;
+
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-      String compName = fluid.getPhase(0).getComponent(i).getComponentName();
-      double moleFraction = fluid.getPhase(0).getComponent(i).getz();
-      components.addProperty(compName, moleFraction);
+      ComponentInterface comp = fluid.getPhase(0).getComponent(i);
+      String compName = comp.getComponentName();
+      double moleFraction = comp.getz();
+
+      if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
+        // Characterized fraction — export full properties for reconstruction
+        JsonObject charComp = new JsonObject();
+        charComp.addProperty("name", compName);
+        charComp.addProperty("moleFraction", moleFraction);
+        charComp.addProperty("molarMass", comp.getMolarMass());
+        charComp.addProperty("density", comp.getNormalLiquidDensity());
+        charComp.addProperty("Tc", comp.getTC());
+        charComp.addProperty("Pc", comp.getPC());
+        charComp.addProperty("acentricFactor", comp.getAcentricFactor());
+        if (comp.isIsPlusFraction()) {
+          charComp.addProperty("isPlusFraction", true);
+        }
+        characterizedComponents.add(charComp);
+        hasCharacterized = true;
+      } else {
+        // Standard database component
+        components.addProperty(compName, moleFraction);
+      }
     }
+
     fluidJson.add("components", components);
+    if (hasCharacterized) {
+      fluidJson.add("characterizedComponents", characterizedComponents);
+    }
+
+    // Export BICs (binary interaction parameters) if any non-zero values
+    exportBinaryInteractionParameters(fluidJson, fluid);
 
     return fluidJson;
+  }
+
+  /**
+   * Exports binary interaction parameters (kij) from the fluid's mixing rule. Only exports
+   * non-zero BICs to keep the JSON compact. The builder uses these to override the default
+   * database BICs when reconstructing the fluid.
+   *
+   * @param fluidJson the fluid JSON object to add BICs to
+   * @param fluid the fluid system
+   */
+  private void exportBinaryInteractionParameters(JsonObject fluidJson, SystemInterface fluid) {
+    PhaseInterface phase = fluid.getPhase(0);
+    if (phase == null) {
+      return;
+    }
+
+    Object mixRule = phase.getMixingRule();
+    if (!(mixRule instanceof EosMixingRulesInterface)) {
+      return;
+    }
+
+    EosMixingRulesInterface eosMixRule = (EosMixingRulesInterface) mixRule;
+    int nComp = fluid.getNumberOfComponents();
+    JsonArray bicsArray = new JsonArray();
+    boolean hasNonZero = false;
+
+    for (int i = 0; i < nComp; i++) {
+      for (int j = i + 1; j < nComp; j++) {
+        double kij = eosMixRule.getBinaryInteractionParameter(i, j);
+        if (Math.abs(kij) > 1e-15) {
+          JsonObject bic = new JsonObject();
+          bic.addProperty("comp1", fluid.getPhase(0).getComponent(i).getComponentName());
+          bic.addProperty("comp2", fluid.getPhase(0).getComponent(j).getComponentName());
+          bic.addProperty("kij", kij);
+          bicsArray.add(bic);
+          hasNonZero = true;
+        }
+      }
+    }
+
+    if (hasNonZero) {
+      fluidJson.add("binaryInteractionParameters", bicsArray);
+    }
   }
 
   /**
@@ -317,8 +411,19 @@ public class JsonProcessExporter {
     } else {
       // Single-inlet equipment — resolve inlet stream reference
       List<StreamInterface> inlets = unit.getInletStreams();
+      StreamInterface inlet = null;
       if (inlets != null && !inlets.isEmpty()) {
-        StreamInterface inlet = inlets.get(0);
+        inlet = inlets.get(0);
+      }
+      // Fallback: try reflection for equipment that doesn't override getInletStreams()
+      if (inlet == null) {
+        try {
+          inlet = (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
+        } catch (Exception e) {
+          // no getInletStream method
+        }
+      }
+      if (inlet != null) {
         String ref = streamRefMap.get(inlet);
         if (ref != null) {
           json.addProperty("inlet", ref);
@@ -371,6 +476,9 @@ public class JsonProcessExporter {
     }
     if (unit instanceof Mixer) {
       return "Mixer";
+    }
+    if (unit instanceof ComponentSplitter) {
+      return "ComponentSplitter";
     }
     if (unit instanceof Splitter) {
       return "Splitter";
@@ -525,6 +633,16 @@ public class JsonProcessExporter {
     } else if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
       double[] factors = splitter.getSplitFactors();
+      if (factors != null && factors.length > 0) {
+        JsonArray factorsArr = new JsonArray();
+        for (double f : factors) {
+          factorsArr.add(f);
+        }
+        props.add("splitFactors", factorsArr);
+      }
+    } else if (unit instanceof ComponentSplitter) {
+      ComponentSplitter compSplitter = (ComponentSplitter) unit;
+      double[] factors = compSplitter.getSplitFactors();
       if (factors != null && factors.length > 0) {
         JsonArray factorsArr = new JsonArray();
         for (double f : factors) {
