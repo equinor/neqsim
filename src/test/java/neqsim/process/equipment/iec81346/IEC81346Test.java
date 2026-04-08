@@ -653,4 +653,437 @@ class IEC81346Test {
     assertTrue(str.contains("=A1-B1+P1"));
     assertTrue(str.contains("B"));
   }
+
+  // ============================================================
+  // Improvement #9: fromEquipment uses EQUIPMENT_MAP first
+  // ============================================================
+
+  @Test
+  void testFromEquipmentUsesMapForKnownTypes() {
+    Stream feed = new Stream("feed", gasFluid);
+    Separator sep = new Separator("sep", feed);
+    // Separator maps to B via both EQUIPMENT_MAP and instanceof
+    assertEquals(IEC81346LetterCode.B, IEC81346LetterCode.fromEquipment(sep));
+
+    Compressor comp = new Compressor("comp", feed);
+    assertEquals(IEC81346LetterCode.K, IEC81346LetterCode.fromEquipment(comp));
+  }
+
+  // ============================================================
+  // Improvement #1: ProcessSystem.generateReferenceDesignations
+  // ============================================================
+
+  @Test
+  void testProcessSystemGenerateReferenceDesignations() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    Compressor comp = new Compressor("Comp", sep.getGasOutStream());
+    comp.setOutletPressure(120.0);
+    process.add(comp);
+
+    ReferenceDesignationGenerator gen = process.generateReferenceDesignations("A2", "P1");
+    assertNotNull(gen);
+    assertTrue(gen.isGenerated());
+
+    // Equipment should have designations set
+    assertEquals("=A2-B1+P1", sep.getReferenceDesignationString());
+    assertEquals("=A2-K1+P1", comp.getReferenceDesignationString());
+  }
+
+  // ============================================================
+  // Improvement #2: getUnitByReferenceDesignation
+  // ============================================================
+
+  @Test
+  void testGetUnitByReferenceDesignation() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    Compressor comp = new Compressor("Comp", sep.getGasOutStream());
+    comp.setOutletPressure(120.0);
+    process.add(comp);
+
+    // Generate designations
+    process.generateReferenceDesignations("A1", "");
+
+    ProcessEquipmentInterface found = process.getUnitByReferenceDesignation("=A1-B1");
+    assertNotNull(found);
+    assertEquals("HP Sep", found.getName());
+
+    ProcessEquipmentInterface found2 = process.getUnitByReferenceDesignation("=A1-K1");
+    assertNotNull(found2);
+    assertEquals("Comp", found2.getName());
+
+    assertNull(process.getUnitByReferenceDesignation("=A1-Z99"));
+    assertNull(process.getUnitByReferenceDesignation(null));
+    assertNull(process.getUnitByReferenceDesignation(""));
+  }
+
+  // ============================================================
+  // Improvement #3: Lifecycle state serialization
+  // ============================================================
+
+  @Test
+  void testLifecycleStateCapturesIEC81346() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    // Generate designations
+    process.generateReferenceDesignations("A1", "P1");
+
+    // Verify the designation was set on the separator
+    assertNotNull(sep.getReferenceDesignation());
+    assertTrue(sep.getReferenceDesignation().isSet(),
+        "Separator should have IEC 81346 designation after generate");
+    assertEquals("=A1-B1+P1", sep.getReferenceDesignation().toReferenceDesignationString());
+
+    // Capture state
+    neqsim.process.processmodel.lifecycle.ProcessSystemState state =
+        neqsim.process.processmodel.lifecycle.ProcessSystemState.fromProcessSystem(process);
+    assertNotNull(state);
+
+    String json = state.toJson();
+    assertTrue(json.contains("iec81346_referenceDesignation"),
+        "JSON should contain iec81346_referenceDesignation key");
+    // Gson escapes '=' as '\u003d' by default, so check for both possibilities
+    assertTrue(
+        json.contains("=A1-B1+P1") || json.contains("\\u003dA1-B1+P1")
+            || json.contains("\\u003dA1-B1\\u002bP1"),
+        "JSON should contain the separator designation =A1-B1+P1 (possibly HTML-escaped)");
+  }
+
+  // ============================================================
+  // Improvement #5: ProcessConnection ref des
+  // ============================================================
+
+  @Test
+  void testProcessConnectionRefDesFields() {
+    neqsim.process.processmodel.ProcessConnection conn =
+        new neqsim.process.processmodel.ProcessConnection("Source", "Target");
+
+    assertNull(conn.getSourceReferenceDesignation());
+    assertNull(conn.getTargetReferenceDesignation());
+
+    conn.setSourceReferenceDesignation("=A1-B1");
+    conn.setTargetReferenceDesignation("=A1-K1");
+
+    assertEquals("=A1-B1", conn.getSourceReferenceDesignation());
+    assertEquals("=A1-K1", conn.getTargetReferenceDesignation());
+  }
+
+  // ============================================================
+  // Improvement #6: Controller ref des
+  // ============================================================
+
+  @Test
+  void testControllerDeviceRefDes() {
+    neqsim.process.controllerdevice.ControllerDeviceBaseClass controller =
+        new neqsim.process.controllerdevice.ControllerDeviceBaseClass("PIC-100");
+
+    assertNotNull(controller.getReferenceDesignation());
+    assertFalse(controller.getReferenceDesignation().isSet());
+    assertEquals("", controller.getReferenceDesignationString());
+
+    ReferenceDesignation refDes =
+        new ReferenceDesignation("A1", "S1", "P1", IEC81346LetterCode.S, 1);
+    controller.setReferenceDesignation(refDes);
+
+    assertEquals("=A1-S1+P1", controller.getReferenceDesignationString());
+    assertEquals(IEC81346LetterCode.S, controller.getReferenceDesignation().getLetterCode());
+  }
+
+  // ============================================================
+  // Improvement #8: Hierarchical function designations
+  // ============================================================
+
+  @Test
+  void testHierarchicalFunctionDesignations() {
+    ProcessSystem sep = new ProcessSystem();
+    Stream feed1 = new Stream("Feed1", gasFluid);
+    feed1.setFlowRate(100.0, "kg/hr");
+    sep.add(feed1);
+    Separator hpSep = new Separator("HP Sep", feed1);
+    sep.add(hpSep);
+
+    ProcessSystem comp = new ProcessSystem();
+    Stream feed2 = new Stream("Feed2", gasFluid);
+    feed2.setFlowRate(50.0, "kg/hr");
+    comp.add(feed2);
+    Compressor compressor = new Compressor("Comp", feed2);
+    compressor.setOutletPressure(120.0);
+    comp.add(compressor);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("Separation", sep);
+    plant.add("Compression", comp);
+
+    // Test hierarchical mode
+    ReferenceDesignationGenerator gen = new ReferenceDesignationGenerator(plant);
+    gen.setFunctionPrefix("A1");
+    gen.setUseHierarchicalFunctions(true);
+    gen.generate();
+
+    // Hierarchical: A1.A1 for Separation, A1.A2 for Compression
+    assertEquals("=A1.A1-B1", hpSep.getReferenceDesignationString());
+    assertEquals("=A1.A2-K1", compressor.getReferenceDesignationString());
+  }
+
+  @Test
+  void testFlatFunctionDesignationsDefault() {
+    ProcessSystem sep = new ProcessSystem();
+    Stream feed1 = new Stream("Feed1", gasFluid);
+    feed1.setFlowRate(100.0, "kg/hr");
+    sep.add(feed1);
+    Separator hpSep = new Separator("HP Sep", feed1);
+    sep.add(hpSep);
+
+    ProcessSystem comp = new ProcessSystem();
+    Stream feed2 = new Stream("Feed2", gasFluid);
+    feed2.setFlowRate(50.0, "kg/hr");
+    comp.add(feed2);
+    Compressor compressor = new Compressor("Comp", feed2);
+    compressor.setOutletPressure(120.0);
+    comp.add(compressor);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("Separation", sep);
+    plant.add("Compression", comp);
+
+    // Default flat mode
+    ReferenceDesignationGenerator gen = new ReferenceDesignationGenerator(plant);
+    gen.setFunctionPrefix("A1");
+    gen.generate();
+
+    // Flat: A1 for Separation, A2 for Compression
+    assertEquals("=A1-B1", hpSep.getReferenceDesignationString());
+    assertEquals("=A2-K1", compressor.getReferenceDesignationString());
+  }
+
+  // ============================================================
+  // Improvement #9: No-arg constructor + generate(ProcessSystem)
+  // ============================================================
+
+  @Test
+  void testNoArgConstructorWithDeferredBinding() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("Sep", feed);
+    process.add(sep);
+
+    ReferenceDesignationGenerator gen = new ReferenceDesignationGenerator();
+    gen.setFunctionPrefix("A3");
+    gen.generate(process);
+
+    assertTrue(gen.isGenerated());
+    assertEquals("=A3-B1", sep.getReferenceDesignationString());
+  }
+
+  // ============================================================
+  // Improvement #7: Engineering deliverables includes ref des
+  // ============================================================
+
+  @Test
+  void testEngineeringDeliverablesIncludesRefDesSchedule() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    // Class A should include REFERENCE_DESIGNATION_SCHEDULE
+    neqsim.process.mechanicaldesign.StudyClass classA =
+        neqsim.process.mechanicaldesign.StudyClass.CLASS_A;
+    assertTrue(classA.requires(
+        neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+
+    // Class B should include it too
+    neqsim.process.mechanicaldesign.StudyClass classB =
+        neqsim.process.mechanicaldesign.StudyClass.CLASS_B;
+    assertTrue(classB.requires(
+        neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+
+    // Class C should NOT include it
+    neqsim.process.mechanicaldesign.StudyClass classC =
+        neqsim.process.mechanicaldesign.StudyClass.CLASS_C;
+    assertFalse(classC.requires(
+        neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+  }
+
+  // ============================================================
+  // Improvement #4: ISA-5.1 bridge
+  // ============================================================
+
+  @Test
+  void testISAToIEC81346MapEmpty() {
+    // Without IEC 81346 designations, the map should be empty
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    process.run();
+
+    neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen =
+        new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(process);
+    instrGen.generate();
+
+    Map<String, String> map = instrGen.getISAToIEC81346Map();
+    assertNotNull(map);
+    assertTrue(map.isEmpty()); // No ref des assigned yet
+  }
+
+  @Test
+  void testISAToIEC81346MapPopulated() {
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    Separator sep = new Separator("HP Sep", feed);
+    process.add(sep);
+
+    process.run();
+
+    // Generate IEC 81346 designations
+    process.generateReferenceDesignations("A1", "");
+
+    // Generate instruments
+    neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen =
+        new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(process);
+    instrGen.generate();
+
+    Map<String, String> map = instrGen.getISAToIEC81346Map();
+    assertNotNull(map);
+    // The separator should have instruments mapped to its ref des
+    boolean hasSepMapping = false;
+    for (String refDes : map.values()) {
+      if (refDes.contains("B1")) {
+        hasSepMapping = true;
+        break;
+      }
+    }
+    assertTrue(hasSepMapping, "Expected to find separator ref des in ISA-IEC mapping");
+  }
+
+  // ============================================================
+  // ProcessModel convenience methods
+  // ============================================================
+
+  @Test
+  void testProcessModelGenerateReferenceDesignations() {
+    ProcessSystem area1 = new ProcessSystem();
+    Stream feed1 = new Stream("Feed1", gasFluid);
+    feed1.setFlowRate(100.0, "kg/hr");
+    area1.add(feed1);
+    Separator sep = new Separator("HP Sep", feed1);
+    area1.add(sep);
+
+    ProcessSystem area2 = new ProcessSystem();
+    Stream feed2 = new Stream("Feed2", gasFluid);
+    feed2.setFlowRate(50.0, "kg/hr");
+    area2.add(feed2);
+    Compressor comp = new Compressor("Comp", feed2);
+    comp.setOutletPressure(120.0);
+    area2.add(comp);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("Separation", area1);
+    plant.add("Compression", area2);
+
+    // Single-arg: flat designations
+    ReferenceDesignationGenerator gen = plant.generateReferenceDesignations("G1");
+    assertNotNull(gen);
+    assertTrue(gen.isGenerated());
+    assertEquals("=A1-B1+G1", sep.getReferenceDesignationString());
+    assertEquals("=A2-K1+G1", comp.getReferenceDesignationString());
+  }
+
+  @Test
+  void testProcessModelGenerateReferenceDesignationsHierarchical() {
+    ProcessSystem area1 = new ProcessSystem();
+    Stream feed1 = new Stream("Feed1", gasFluid);
+    feed1.setFlowRate(100.0, "kg/hr");
+    area1.add(feed1);
+    Separator sep = new Separator("HP Sep", feed1);
+    area1.add(sep);
+
+    ProcessSystem area2 = new ProcessSystem();
+    Stream feed2 = new Stream("Feed2", gasFluid);
+    feed2.setFlowRate(50.0, "kg/hr");
+    area2.add(feed2);
+    Compressor comp = new Compressor("Comp", feed2);
+    comp.setOutletPressure(120.0);
+    area2.add(comp);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("Separation", area1);
+    plant.add("Compression", area2);
+
+    // Two-arg: hierarchical designations
+    ReferenceDesignationGenerator gen = plant.generateReferenceDesignations("A1", "P3");
+    assertNotNull(gen);
+    assertTrue(gen.isGenerated());
+    assertEquals("=A1.A1-B1+P3", sep.getReferenceDesignationString());
+    assertEquals("=A1.A2-K1+P3", comp.getReferenceDesignationString());
+  }
+
+  @Test
+  void testProcessModelGetUnitByReferenceDesignation() {
+    ProcessSystem area1 = new ProcessSystem();
+    Stream feed1 = new Stream("Feed1", gasFluid);
+    feed1.setFlowRate(100.0, "kg/hr");
+    area1.add(feed1);
+    Separator sep = new Separator("HP Sep", feed1);
+    area1.add(sep);
+
+    ProcessSystem area2 = new ProcessSystem();
+    Stream feed2 = new Stream("Feed2", gasFluid);
+    feed2.setFlowRate(50.0, "kg/hr");
+    area2.add(feed2);
+    Compressor comp = new Compressor("Comp", feed2);
+    comp.setOutletPressure(120.0);
+    area2.add(comp);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("Separation", area1);
+    plant.add("Compression", area2);
+
+    plant.generateReferenceDesignations("G1");
+
+    // Lookup across areas
+    ProcessEquipmentInterface found = plant.getUnitByReferenceDesignation("=A1-B1+G1");
+    assertNotNull(found);
+    assertEquals("HP Sep", found.getName());
+
+    ProcessEquipmentInterface found2 = plant.getUnitByReferenceDesignation("=A2-K1+G1");
+    assertNotNull(found2);
+    assertEquals("Comp", found2.getName());
+
+    assertNull(plant.getUnitByReferenceDesignation("=A99-Z1"));
+    assertNull(plant.getUnitByReferenceDesignation(null));
+  }
 }

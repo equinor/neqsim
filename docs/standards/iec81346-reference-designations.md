@@ -86,15 +86,29 @@ ProcessModel plant = new ProcessModel();
 plant.add("Separation", separationSystem);
 plant.add("Compression", compressionSystem);
 
+// Option 1: Convenience method — flat function numbering (A1, A2, ...)
+plant.generateReferenceDesignations("P1");
+// Separation area  -> =A1
+// Compression area -> =A2
+// HP Sep in Separation -> =A1-B1+P1
+
+// Option 2: Hierarchical function numbering (A1.A1, A1.A2, ...)
+plant.generateReferenceDesignations("A1", "P1");
+// Separation area  -> =A1.A1
+// Compression area -> =A1.A2
+// HP Sep in Separation -> =A1.A1-B1+P1
+
+// Lookup equipment across all areas by reference designation
+ProcessEquipmentInterface sep = plant.getUnitByReferenceDesignation("=A1-B1+P1");
+```
+
+Alternatively, use the generator directly:
+
+```java
 ReferenceDesignationGenerator gen = new ReferenceDesignationGenerator(plant);
 gen.setLocationPrefix("P1");
+gen.setUseHierarchicalFunctions(true);  // Enable hierarchical mode
 gen.generate();
-
-// Area names become function sub-levels:
-// Separation area  -> =A1 (first area)
-// Compression area -> =A2 (second area)
-// HP Sep in Separation -> =A1-B1+P1
-// 1st Stage Compressor in Compression -> =A2-K1+P1
 ```
 
 ### Python (Jupyter)
@@ -170,11 +184,14 @@ reference designations to all equipment.
 | `setLocationPrefix(String)` | `""` | Location aspect prefix |
 | `setIncludeStreams(boolean)` | `false` | Whether to assign designations to streams |
 | `setIncludeMeasurementDevices(boolean)` | `true` | Whether to assign designations to sensors |
+| `setUseHierarchicalFunctions(boolean)` | `false` | Use hierarchical function levels for ProcessModel areas |
 
 **After calling `generate()`:**
 
 | Method | Returns | Description |
 |--------|---------|-------------|
+| `generate(ProcessSystem)` | `void` | Bind a system and generate designations (late binding) |
+| `generate(ProcessModel)` | `void` | Bind a multi-area model and generate designations (late binding) |
 | `findByName(String)` | `DesignationEntry` | Lookup by equipment name |
 | `findByDesignation(String)` | `DesignationEntry` | Lookup by ref designation string |
 | `findByLetterCode(IEC81346LetterCode)` | `List` | All entries for a given letter code |
@@ -285,6 +302,160 @@ The designations would be:
 | LP Separator | B | 3 | B3 |
 
 Note that each letter code has its own sequence counter.
+
+## Equipment Lookup by Reference Designation
+
+Both `ProcessSystem` and `ProcessModel` support looking up equipment by their
+IEC 81346 reference designation string:
+
+```java
+// Single process system — search within one system
+ProcessEquipmentInterface sep = process.getUnitByReferenceDesignation("=A1-B1+P1");
+// Also works with partial matches:
+ProcessEquipmentInterface sep2 = process.getUnitByReferenceDesignation("-B1");
+
+// Multi-area process model — searches across all areas
+ProcessEquipmentInterface comp = plant.getUnitByReferenceDesignation("=A2-K1+P1");
+```
+
+Returns `null` if no equipment matches the given designation.
+
+## Hierarchical vs. Flat Function Numbering
+
+For multi-area `ProcessModel` plants, the generator supports two function
+numbering modes:
+
+### Flat Mode (Default)
+
+Each area gets a top-level function number (A1, A2, A3, ...):
+
+```
+Separation area:   =A1     ->  HP Sep: =A1-B1+P1
+Compression area:  =A2     ->  Compressor: =A2-K1+P1
+Export area:       =A3     ->  Export valve: =A3-Q1+P1
+```
+
+### Hierarchical Mode
+
+Areas are nested under the function prefix (A1.A1, A1.A2, A1.A3, ...):
+
+```java
+gen.setFunctionPrefix("A1");
+gen.setUseHierarchicalFunctions(true);
+```
+
+```
+Separation area:   =A1.A1  ->  HP Sep: =A1.A1-B1+P1
+Compression area:  =A1.A2  ->  Compressor: =A1.A2-K1+P1
+Export area:       =A1.A3  ->  Export valve: =A1.A3-Q1+P1
+```
+
+Hierarchical mode is useful for nested plant structures where the top-level
+prefix identifies the installation and sub-levels identify process areas.
+
+## Process Connection Designations
+
+`ProcessConnection` objects can carry IEC 81346 designations for both source
+and target equipment. The `ReferenceDesignationGenerator` populates these
+automatically when generating designations for a system with explicit
+connections:
+
+```java
+// Connections carry ref des for interoperability (DEXPI, topology graphs)
+ProcessConnection conn = process.getConnections().get(0);
+String sourceRefDes = conn.getSourceReferenceDesignation();  // e.g. "=A1-B1+P1"
+String targetRefDes = conn.getTargetReferenceDesignation();  // e.g. "=A1-K1+P1"
+
+// Can also be set manually
+conn.setSourceReferenceDesignation("=A1-B1+P1");
+conn.setTargetReferenceDesignation("=A1-K1+P1");
+```
+
+## Controller Designations
+
+Controller devices support IEC 81346 reference designations via the same
+getter/setter pattern as process equipment. Controllers are classified under
+letter code **N** (regulating, controlling, modulating):
+
+```java
+ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PIC-100");
+
+// Assign designation manually
+ReferenceDesignation refDes = new ReferenceDesignation("A1", "N1", "P1",
+    IEC81346LetterCode.N, 1);
+controller.setReferenceDesignation(refDes);
+
+// Retrieve
+String str = controller.getReferenceDesignationString();  // "=A1-N1+P1"
+```
+
+## Lifecycle State Persistence
+
+When creating a `ProcessSystemState` snapshot, IEC 81346 designations are
+**automatically captured** for each equipment. The following properties are
+stored in the equipment state:
+
+| Property Key | Type | Description |
+|-------------|------|-------------|
+| `iec81346_referenceDesignation` | `String` | Full designation, e.g. `"=A1-B1+P1"` |
+| `iec81346_functionDesignation` | `String` | Function aspect, e.g. `"A1"` |
+| `iec81346_productDesignation` | `String` | Product aspect, e.g. `"B1"` |
+| `iec81346_locationDesignation` | `String` | Location aspect, e.g. `"P1"` |
+| `iec81346_letterCode` | `String` | Letter code name, e.g. `"B"` |
+| `iec81346_sequenceNumber` | `Number` | Sequence number, e.g. `1` |
+
+These are persisted in JSON and restored when loading state snapshots, enabling
+version comparison and auditing of reference designation changes.
+
+```java
+// Capture state with IEC 81346 data
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.saveToFile("plant_v1.json");
+
+// Load and inspect IEC 81346 data
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("plant_v1.json");
+// iec81346_* properties available in each EquipmentState's stringProperties
+```
+
+## Engineering Deliverables Integration
+
+The `REFERENCE_DESIGNATION_SCHEDULE` deliverable type produces a complete
+IEC 81346 equipment schedule as part of the engineering deliverables package.
+This deliverable is automatically included for **Class A** and **Class B**
+studies:
+
+```java
+EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(process);
+pkg.setStudyClass(StudyClass.CLASS_A);
+pkg.generate();
+
+// Access the reference designation schedule
+String schedule = pkg.getReferenceDesignationSchedule();
+
+// Generate it independently
+pkg.generateReferenceDesignationSchedule();
+```
+
+The schedule is also included in the `toJson()` output of the deliverables
+package.
+
+## ISA-5.1 to IEC 81346 Cross-Reference
+
+The `InstrumentScheduleGenerator` can produce a mapping between ISA-5.1
+instrument tag numbers and IEC 81346 reference designations when both
+systems are in use:
+
+```java
+InstrumentScheduleGenerator gen = new InstrumentScheduleGenerator(process);
+gen.generate();
+
+// Get cross-reference map: ISA tag -> IEC 81346 designation
+Map<String, String> isaToIec = gen.getISAToIEC81346Map();
+// e.g. {"FT-101": "=A1-S1+P1", "PT-200": "=A1-S2+P1"}
+```
+
+This enables dual-standard compliance — ISA-5.1 for P&ID symbols and IEC 81346
+for plant-wide equipment identification.
 
 ## Related Standards
 
