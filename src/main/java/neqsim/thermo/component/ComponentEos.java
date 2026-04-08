@@ -20,6 +20,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrLeeKesler;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
@@ -219,6 +220,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
     } else if (i == 20) {
       setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
+    } else if (i == 21) {
+      setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
     } else {
       logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
