@@ -601,9 +601,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to {@code calca()}
-   * (including those triggered by {@code init()}) will use this value instead of the EOS class
-   * default. Use {@code Double.NaN} to revert to the EOS default.
+   * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to
+   * {@code calca()} (including those triggered by {@code init()}) will use this value instead of
+   * the EOS class default. Use {@code Double.NaN} to revert to the EOS default.
    *
    * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
    */
