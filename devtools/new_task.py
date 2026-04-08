@@ -762,7 +762,7 @@ Use descriptive filenames that include author/org and year:
 Smith_2019_CNG_Tank_Thermal_Analysis.pdf
 API_521_6th_Ed_Relief_Systems.pdf
 DNV-ST-F101_2021_Submarine_Pipelines.pdf
-Equinor_TR2000_Pressure_Vessel_Design.pdf
+OperatorA_TR2000_Pressure_Vessel_Design.pdf
 Lab_Report_Fluid_Analysis_2024.pdf
 ```
 
@@ -792,7 +792,7 @@ List the codes, standards, and company requirements that govern this task.
 |----------|-------|-----------------|
 | | | |
 
-Examples: NORSOK P-001, ISO 6976, DNV-OS-F101, API 520, ASME B31.3, Equinor TR1414
+Examples: NORSOK P-001, ISO 6976, DNV-OS-F101, API 520, ASME B31.3, Operator TR1414
 
 ## Calculation Methods & Models
 

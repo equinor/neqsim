@@ -1913,7 +1913,7 @@ class UniSimToNeqSim:
                              ('glyc', 'teg', 'dehydrat'))
             if _is_glycol:
                 # TEG contactor: model as ComponentSplitter removing water
-                # Pattern from Oseberg model: water is always last component
+                # TEG dehydration pattern: water is always last component
                 ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
                 lines.append(
                     f'{v} = ComponentSplitter("{op.name}", {ref_expr})')

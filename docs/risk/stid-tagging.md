@@ -119,12 +119,12 @@ NNNNN
 ### Example Breakdown
 
 ```
-1775-KA-23011A
+1003-KA-23011A
 │    │  │││││
 │    │  ││└┴┴── Equipment 011
 │    │  └┴───── System 23 (1st stage separation)
 │    └────────── Compressor
-└─────────────── Gullfaks C
+└─────────────── Platform Alpha-C
 ```
 
 ---
@@ -135,23 +135,23 @@ NNNNN
 
 ```java
 // Parse from full STID tag
-FunctionalLocation loc = new FunctionalLocation("1775-KA-23011A");
+FunctionalLocation loc = new FunctionalLocation("1003-KA-23011A");
 
 // Access components
-String installation = loc.getInstallationCode();     // "1775"
-String installName = loc.getInstallationName();      // "Gullfaks C"
+String installation = loc.getInstallationCode();     // "1003"
+String installName = loc.getInstallationName();      // "Platform Alpha-C"
 String type = loc.getEquipmentTypeCode();            // "KA"
 String typeDesc = loc.getEquipmentTypeDescription(); // "Compressor"
 String seqNum = loc.getSequentialNumber();           // "23011"
 String train = loc.getTrainSuffix();                 // "A"
-String fullTag = loc.getFullTag();                   // "1775-KA-23011A"
+String fullTag = loc.getFullTag();                   // "1003-KA-23011A"
 ```
 
 ### Creating with Builder
 
 ```java
 FunctionalLocation loc = FunctionalLocation.builder()
-    .installation(FunctionalLocation.GULLFAKS_C)
+    .installation(FunctionalLocation.PLATFORM_ALPHA_C)
     .type(FunctionalLocation.TYPE_COMPRESSOR)
     .sequentialNumber("23011")
     .trainSuffix("A")
@@ -164,7 +164,7 @@ FunctionalLocation loc = FunctionalLocation.builder()
 
 ```java
 FunctionalLocation loc = new FunctionalLocation(
-    "1775",   // Installation
+    "1003",   // Installation
     "KA",     // Type
     "23011",  // Sequential number
     "A"       // Train suffix (optional)
@@ -181,24 +181,24 @@ Parallel equipment shares the same base tag with different suffixes:
 
 | Equipment | Tag | Base Tag |
 |-----------|-----|----------|
-| Compressor A | 1775-KA-23011A | 1775-KA-23011 |
-| Compressor B | 1775-KA-23011B | 1775-KA-23011 |
-| Compressor C | 1775-KA-23011C | 1775-KA-23011 |
+| Compressor A | 1003-KA-23011A | 1003-KA-23011 |
+| Compressor B | 1003-KA-23011B | 1003-KA-23011 |
+| Compressor C | 1003-KA-23011C | 1003-KA-23011 |
 
 ### Checking Parallel Relationship
 
 ```java
-FunctionalLocation compA = new FunctionalLocation("1775-KA-23011A");
-FunctionalLocation compB = new FunctionalLocation("1775-KA-23011B");
-FunctionalLocation pump = new FunctionalLocation("1775-PA-24001");
+FunctionalLocation compA = new FunctionalLocation("1003-KA-23011A");
+FunctionalLocation compB = new FunctionalLocation("1003-KA-23011B");
+FunctionalLocation pump = new FunctionalLocation("1003-PA-24001");
 
 // Check if parallel
 compA.isParallelTo(compB);  // true - same base, different suffix
 compA.isParallelTo(pump);   // false - different type and number
 
 // Get base tag for grouping
-String baseA = compA.getBaseTag();  // "1775-KA-23011"
-String baseB = compB.getBaseTag();  // "1775-KA-23011"
+String baseA = compA.getBaseTag();  // "1003-KA-23011"
+String baseB = compB.getBaseTag();  // "1003-KA-23011"
 // Same base tag = parallel trains
 ```
 
@@ -206,8 +206,8 @@ String baseB = compB.getBaseTag();  // "1775-KA-23011"
 
 ```java
 // In topology analyzer
-topology.setFunctionalLocation("Comp A", "1775-KA-23011A");
-topology.setFunctionalLocation("Comp B", "1775-KA-23011B");
+topology.setFunctionalLocation("Comp A", "1003-KA-23011A");
+topology.setFunctionalLocation("Comp B", "1003-KA-23011B");
 
 // Automatic parallel detection based on STID
 List<Set<String>> parallelGroups = topology.getParallelGroupsBySTID();
@@ -220,20 +220,20 @@ List<Set<String>> parallelGroups = topology.getParallelGroupsBySTID();
 ### Same Installation Check
 
 ```java
-FunctionalLocation loc1 = new FunctionalLocation("1775-KA-23011A");
-FunctionalLocation loc2 = new FunctionalLocation("1775-PA-24001");
-FunctionalLocation loc3 = new FunctionalLocation("2540-VG-30001");
+FunctionalLocation loc1 = new FunctionalLocation("1003-KA-23011A");
+FunctionalLocation loc2 = new FunctionalLocation("1003-PA-24001");
+FunctionalLocation loc3 = new FunctionalLocation("2001-VG-30001");
 
-loc1.isSameInstallation(loc2);  // true (both Gullfaks C)
-loc1.isSameInstallation(loc3);  // false (Gullfaks C vs Åsgard A)
+loc1.isSameInstallation(loc2);  // true (both Platform Alpha-C)
+loc1.isSameInstallation(loc3);  // false (Platform Alpha-C vs Platform Beta-A)
 ```
 
 ### Same System Check
 
 ```java
-FunctionalLocation sep = new FunctionalLocation("1775-VG-23001");
-FunctionalLocation comp = new FunctionalLocation("1775-KA-23011A");
-FunctionalLocation pump = new FunctionalLocation("1775-PA-24001");
+FunctionalLocation sep = new FunctionalLocation("1003-VG-23001");
+FunctionalLocation comp = new FunctionalLocation("1003-KA-23011A");
+FunctionalLocation pump = new FunctionalLocation("1003-PA-24001");
 
 sep.isSameSystem(comp);   // true (both system 23)
 sep.isSameSystem(pump);   // false (system 23 vs 24)
@@ -250,13 +250,13 @@ ProcessTopologyAnalyzer topology = new ProcessTopologyAnalyzer(process);
 topology.buildTopology();
 
 // Assign STID tags
-topology.setFunctionalLocation("HP Separator", "1775-VG-23001");
-topology.setFunctionalLocation("Compressor A", "1775-KA-23011A");
-topology.setFunctionalLocation("Compressor B", "1775-KA-23011B");
-topology.setFunctionalLocation("Export Cooler", "1775-WC-29001");
+topology.setFunctionalLocation("HP Separator", "1003-VG-23001");
+topology.setFunctionalLocation("Compressor A", "1003-KA-23011A");
+topology.setFunctionalLocation("Compressor B", "1003-KA-23011B");
+topology.setFunctionalLocation("Export Cooler", "1003-WC-29001");
 
 // Query by STID attributes
-List<String> gullfaksEquip = topology.getEquipmentByInstallation("1775");
+List<String> platformEquip = topology.getEquipmentByInstallation("1003");
 List<String> compressors = topology.getEquipmentByType("KA");
 List<String> system23 = topology.getEquipmentBySystem("23");
 ```
@@ -284,10 +284,10 @@ Output:
 ```
 Equipment with STID Tags:
 ──────────────────────────────────────────────────────────────────────
-1775-VG-23001        │ HP Separator    │ Gullfaks C
-1775-KA-23011A       │ Compressor A    │ Gullfaks C
-1775-KA-23011B       │ Compressor B    │ Gullfaks C
-1775-WC-29001        │ Export Cooler   │ Gullfaks C
+1003-VG-23001        │ HP Separator    │ Platform Alpha-C
+1003-KA-23011A       │ Compressor A    │ Platform Alpha-C
+1003-KA-23011B       │ Compressor B    │ Platform Alpha-C
+1003-WC-29001        │ Export Cooler   │ Platform Alpha-C
 ```
 
 ---
@@ -297,9 +297,9 @@ Equipment with STID Tags:
 ### Defining Cross-Installation Dependencies
 
 ```java
-// Gullfaks C exports gas to Åsgard A
-FunctionalLocation source = new FunctionalLocation("1775-KA-23011A");  // Gullfaks
-FunctionalLocation target = new FunctionalLocation("2540-VG-30001");   // Åsgard
+// Platform Alpha-C exports gas to Platform Beta-A
+FunctionalLocation source = new FunctionalLocation("1003-KA-23011A");  // Alpha
+FunctionalLocation target = new FunctionalLocation("2001-VG-30001");   // Beta
 
 DependencyAnalyzer deps = new DependencyAnalyzer(process, topology);
 deps.addCrossInstallationDependency(source, target, "gas_export", 0.6);
@@ -342,11 +342,11 @@ for (Map.Entry<String, List<String>> entry : byInstallation.entrySet()) {
 
 ```java
 // Check if tag is valid STID format
-boolean isValid = FunctionalLocation.isValidSTID("1775-KA-23011A");  // true
+boolean isValid = FunctionalLocation.isValidSTID("1003-KA-23011A");  // true
 boolean isValid = FunctionalLocation.isValidSTID("invalid-tag");     // false
 
 // Validate tag components
-FunctionalLocation loc = new FunctionalLocation("1775-KA-23011A");
+FunctionalLocation loc = new FunctionalLocation("1003-KA-23011A");
 boolean hasValidInstallation = loc.getInstallationName() != null;    // true
 boolean hasValidType = loc.getEquipmentTypeDescription() != null;    // true
 boolean isParallelUnit = loc.isParallelUnit();                       // true (has suffix)
