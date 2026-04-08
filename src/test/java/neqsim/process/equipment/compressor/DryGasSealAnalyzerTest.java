@@ -16,8 +16,8 @@ import neqsim.thermo.system.SystemPrEos;
  *
  * <p>
  * Validates all six sub-analyses using the Bacalhau GIC seal gas composition and conditions from
- * SOK7305593 (Flowserve API 692 datasheet). Expected results are cross-validated against
- * manual NeqSim TPflash/PHflash calculations performed during the original task.
+ * SOK7305593 (Flowserve API 692 datasheet). Expected results are cross-validated against manual
+ * NeqSim TPflash/PHflash calculations performed during the original task.
  * </p>
  *
  * @author neqsim
