@@ -9,58 +9,61 @@
 
 ---
 
-<<<<<<< HEAD
-## 2026-04-08 — IEC 81346 Reference Designation Support
+## 2026-07-07 — Full Bacalhau FPSO Model: Architecture Learnings
 
-### New Java Package: `neqsim.process.equipment.iec81346`
+### HP Separator Water Routing
 
-| Class | Description |
-|-------|-------------|
-| `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. Now tries `EquipmentEnum.valueOf()` first for faster lookup. |
-| `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. Static `parse(String)` factory for round-tripping. |
-| `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Supports hierarchical (`A1.A1`, `A1.A2`) and flat (`A1`, `A2`) function numbering. No-arg constructor + late binding via `generate(ProcessSystem)` / `generate(ProcessModel)`. |
-
-### Modified Interfaces & Classes
-
-| Class | Change |
-|-------|--------|
-| `ProcessEquipmentInterface` | Added 3 default methods: `getReferenceDesignation()`, `setReferenceDesignation(ReferenceDesignation)`, `getReferenceDesignationString()` |
-| `ProcessEquipmentBaseClass` | Added `referenceDesignation` field and overriding getter/setter |
-| `ProcessSystem` | Added `generateReferenceDesignations(funcPrefix, locPrefix)` convenience method and `getUnitByReferenceDesignation(String)` for lookup by ref des |
-| `ProcessModel` | Added `generateReferenceDesignations(locPrefix)` (flat), `generateReferenceDesignations(funcPrefix, locPrefix)` (hierarchical), and `getUnitByReferenceDesignation(String)` (cross-area lookup) |
-| `ProcessConnection` | Added `sourceReferenceDesignation` and `targetReferenceDesignation` fields with getters/setters |
-| `ControllerDeviceBaseClass` | Added `referenceDesignation` field with getter/setter/`getReferenceDesignationString()` |
-| `ProcessSystemState` | `EquipmentState.fromEquipment()` now captures 6 IEC 81346 properties (`iec81346_referenceDesignation`, `_functionDesignation`, `_productDesignation`, `_locationDesignation`, `_letterCode`, `_sequenceNumber`) |
-| `DexpiXmlWriter` (dexpi package) | Writes 5 IEC 81346 `GenericAttribute` elements per equipment when reference designation is set |
-| `ProcessAutomation` | `findUnit()` now resolves IEC 81346 reference designation addresses (strings starting with `=` or `-`) |
-| `StudyClass` | Added `REFERENCE_DESIGNATION_SCHEDULE` to `DeliverableType` enum (included in CLASS_A and CLASS_B) |
-| `EngineeringDeliverablesPackage` | Added `generateReferenceDesignationSchedule()` method and JSON output for ref des schedule |
-| `InstrumentScheduleGenerator` | Added `getISAToIEC81346Map()` for ISA-5.1 to IEC 81346 cross-reference |
-
-### Usage Pattern
+When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
+may not produce a separate aqueous phase in UniSim. To match this behavior, use
+`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
 
 ```java
-// Single system
-process.generateReferenceDesignations("A1", "P1");
-ProcessEquipmentInterface sep = process.getUnitByReferenceDesignation("=A1-B1+P1");
-
-// Multi-area
-plant.generateReferenceDesignations("P1");  // flat
-plant.generateReferenceDesignations("A1", "P1");  // hierarchical
-ProcessEquipmentInterface comp = plant.getUnitByReferenceDesignation("=A2-K1+P1");
-
-// ProcessAutomation addresses accept IEC 81346 strings
-double temp = auto.getVariableValue("=A1-B1+P1.gasOutStream.temperature", "C");
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
+Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
+hpLiqRecombine.addStream(hpSep.getOilOutStream());
+hpLiqRecombine.addStream(hpSep.getWaterOutStream());
+// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
 ```
 
-### Agent Impact
-- `ProcessAutomation` addresses now accept IEC 81346 strings (`=A1-B1+P1`)
-- DEXPI exports contain IEC 81346 attributes when designations are generated
-- Lifecycle state snapshots preserve IEC 81346 designations for versioning
-- Engineering deliverables include reference designation schedule (Class A/B)
-- ISA-5.1 to IEC 81346 bridging via `InstrumentScheduleGenerator`
-- New documentation: `docs/standards/iec81346-reference-designations.md`
-=======
+### Import Gas Compression Architecture
+
+Large FPSO models use staged import gas compression matching pressure levels:
+- VLP gas (~2 bar) → VRU compressor → ~5 bar → mix with LP gas
+- LP+VRU gas (~5 bar) → 1st import compressor → ~22 bar → mix with MP gas
+- MP+1st import gas (~22 bar) → 2nd import compressor → ~90 bar → mix with HP gas
+
+Each stage has cooler + flash drum before the compressor (removes condensate).
+
+### Pump API
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(6.1);          // bara
+pump.setIsentropicEfficiency(0.75);
+pump.getPower("kW");                  // after run
+```
+
+### ComponentSplitter for TEG Dehydration
+
+```java
+ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
+int nComp = wetGasStream.getFluid().getNumberOfComponents();
+double[] sf = new double[nComp];
+java.util.Arrays.fill(sf, 1.0);
+sf[nComp - 1] = 0.0;  // water is last component
+teg.setSplitFactors(sf);
+// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
+```
+
+### Model Scale: 50+ Equipment Units in Single ProcessSystem
+
+The Bacalhau FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
+covering wellhead → HP/MP/LP/VLP separation → VRU + import gas compression →
+gas cooling + TEG → 2-stage export compression → seal gas JT → oil export.
+Single `ProcessSystem` converges in ~2 seconds without recycles.
+
+---
+
 ## 2026-07-06 — JT Expansion: Use ThrottlingValve, Not PHflash
 
 ### Critical Agent Guidance
@@ -135,7 +138,59 @@ raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
 ```
 - `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
 - `kij_obj.GetValues()` fails — use `.Values` property instead
->>>>>>> bf0cec8f1 (update agents)
+
+---
+
+## 2026-04-08 — IEC 81346 Reference Designation Support
+
+### New Java Package: `neqsim.process.equipment.iec81346`
+
+| Class | Description |
+|-------|-------------|
+| `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. Now tries `EquipmentEnum.valueOf()` first for faster lookup. |
+| `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. Static `parse(String)` factory for round-tripping. |
+| `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Supports hierarchical (`A1.A1`, `A1.A2`) and flat (`A1`, `A2`) function numbering. No-arg constructor + late binding via `generate(ProcessSystem)` / `generate(ProcessModel)`. |
+
+### Modified Interfaces & Classes
+
+| Class | Change |
+|-------|--------|
+| `ProcessEquipmentInterface` | Added 3 default methods: `getReferenceDesignation()`, `setReferenceDesignation(ReferenceDesignation)`, `getReferenceDesignationString()` |
+| `ProcessEquipmentBaseClass` | Added `referenceDesignation` field and overriding getter/setter |
+| `ProcessSystem` | Added `generateReferenceDesignations(funcPrefix, locPrefix)` convenience method and `getUnitByReferenceDesignation(String)` for lookup by ref des |
+| `ProcessModel` | Added `generateReferenceDesignations(locPrefix)` (flat), `generateReferenceDesignations(funcPrefix, locPrefix)` (hierarchical), and `getUnitByReferenceDesignation(String)` (cross-area lookup) |
+| `ProcessConnection` | Added `sourceReferenceDesignation` and `targetReferenceDesignation` fields with getters/setters |
+| `ControllerDeviceBaseClass` | Added `referenceDesignation` field with getter/setter/`getReferenceDesignationString()` |
+| `ProcessSystemState` | `EquipmentState.fromEquipment()` now captures 6 IEC 81346 properties (`iec81346_referenceDesignation`, `_functionDesignation`, `_productDesignation`, `_locationDesignation`, `_letterCode`, `_sequenceNumber`) |
+| `DexpiXmlWriter` (dexpi package) | Writes 5 IEC 81346 `GenericAttribute` elements per equipment when reference designation is set |
+| `ProcessAutomation` | `findUnit()` now resolves IEC 81346 reference designation addresses (strings starting with `=` or `-`) |
+| `StudyClass` | Added `REFERENCE_DESIGNATION_SCHEDULE` to `DeliverableType` enum (included in CLASS_A and CLASS_B) |
+| `EngineeringDeliverablesPackage` | Added `generateReferenceDesignationSchedule()` method and JSON output for ref des schedule |
+| `InstrumentScheduleGenerator` | Added `getISAToIEC81346Map()` for ISA-5.1 to IEC 81346 cross-reference |
+
+### Usage Pattern
+
+```java
+// Single system
+process.generateReferenceDesignations("A1", "P1");
+ProcessEquipmentInterface sep = process.getUnitByReferenceDesignation("=A1-B1+P1");
+
+// Multi-area
+plant.generateReferenceDesignations("P1");  // flat
+plant.generateReferenceDesignations("A1", "P1");  // hierarchical
+ProcessEquipmentInterface comp = plant.getUnitByReferenceDesignation("=A2-K1+P1");
+
+// ProcessAutomation addresses accept IEC 81346 strings
+double temp = auto.getVariableValue("=A1-B1+P1.gasOutStream.temperature", "C");
+```
+
+### Agent Impact
+- `ProcessAutomation` addresses now accept IEC 81346 strings (`=A1-B1+P1`)
+- DEXPI exports contain IEC 81346 attributes when designations are generated
+- Lifecycle state snapshots preserve IEC 81346 designations for versioning
+- Engineering deliverables include reference designation schedule (Class A/B)
+- ISA-5.1 to IEC 81346 bridging via `InstrumentScheduleGenerator`
+- New documentation: `docs/standards/iec81346-reference-designations.md`
 
 ---
 

@@ -1,5 +1,8 @@
 package neqsim.process.equipment.splitter;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,6 +82,15 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Getter for the field <code>splitFactor</code>.
+   *
+   * @return an array of type double with the split factors
+   */
+  public double[] getSplitFactors() {
+    return splitFactor;
+  }
+
+  /**
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
@@ -119,6 +131,24 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    */
   public int getSplitNumber() {
     return splitStream != null ? splitStream.length : splitNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inletStream != null) {
+      return Collections.singletonList(inletStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (splitStream != null) {
+      return Collections.unmodifiableList(Arrays.asList(splitStream));
+    }
+    return Collections.emptyList();
   }
 
   /** {@inheritDoc} */
