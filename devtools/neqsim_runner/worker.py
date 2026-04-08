@@ -91,7 +91,7 @@ class WorkerProcess:
             spec["project_root"] = self.project_root
 
         spec_file = job_dir / "_job_spec.json"
-        with open(spec_file, "w") as f:
+        with open(spec_file, "w", encoding="utf-8") as f:
             json.dump(spec, f, indent=2)
 
         # Store paths on the job
@@ -125,14 +125,24 @@ class WorkerProcess:
         log_stderr = open(job_dir / "stderr.log", "w", encoding="utf-8")
 
         try:
-            self.process = subprocess.Popen(
-                [sys.executable, str(self._bootstrap_file)],
+            # On Windows: CREATE_NEW_PROCESS_GROUP lets taskkill /T work.
+            # On Linux/macOS: start_new_session=True creates a new process
+            # group so os.killpg() can kill the child tree without hitting
+            # the parent (equivalent to setsid).
+            popen_kwargs = dict(
                 env=env,
                 cwd=workdir,
                 stdout=log_stdout,
                 stderr=log_stderr,
-                # Create new process group so we can kill the tree on timeout
-                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
+            )
+            if sys.platform == "win32":
+                popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+            else:
+                popen_kwargs["start_new_session"] = True
+
+            self.process = subprocess.Popen(
+                [sys.executable, str(self._bootstrap_file)],
+                **popen_kwargs,
             )
             self._log_stdout = log_stdout
             self._log_stderr = log_stderr
@@ -187,7 +197,7 @@ class WorkerProcess:
             status_file = Path(self.job.result_path) / "_status.json"
             if status_file.exists():
                 try:
-                    with open(status_file) as f:
+                    with open(status_file, encoding="utf-8") as f:
                         status_data = json.load(f)
                     if "error" in status_data:
                         self.job.error_message = status_data["error"]

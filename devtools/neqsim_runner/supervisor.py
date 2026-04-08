@@ -188,7 +188,7 @@ class Supervisor:
                 if status_file.exists():
                     try:
                         import json
-                        with open(status_file) as f:
+                        with open(status_file, encoding="utf-8") as f:
                             status_data = json.load(f)
                         job.error_message = status_data.get("error", f"Exit code {exit_code}")
                     except Exception:

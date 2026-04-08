@@ -295,7 +295,7 @@ class AgentBridge:
         results_file = Path(job.result_path) / "results.json"
         if not results_file.exists():
             return None
-        with open(results_file, "r") as f:
+        with open(results_file, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def get_logs(self, job_id):
@@ -379,7 +379,7 @@ class AgentBridge:
         if results is None:
             raise RuntimeError(f"No results available for {job_id}")
         dest = self.task_dir / filename
-        with open(dest, "w") as f:
+        with open(dest, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2)
         return str(dest)
 

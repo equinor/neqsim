@@ -12,7 +12,7 @@ def main():
         print("ERROR: NEQSIM_JOB_FILE not set", file=sys.stderr)
         sys.exit(1)
 
-    with open(job_file, "r") as f:
+    with open(job_file, "r", encoding="utf-8") as f:
         job_spec = json.load(f)
 
     script_path = job_spec["script"]
@@ -26,7 +26,7 @@ def main():
                      "It may have been moved or deleted since job submission.")
         print(f"ERROR: {error_msg}", file=sys.stderr)
         os.makedirs(output_dir, exist_ok=True)
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({"status": "failed", "error": error_msg,
                        "timestamp": __import__("datetime").datetime.now(
                            __import__("datetime").timezone.utc).isoformat()}, f, indent=2)
@@ -78,14 +78,14 @@ def main():
             "CHECKPOINT_PATH": checkpoint_path,
         }
 
-        with open(script_path, "r") as f:
+        with open(script_path, "r", encoding="utf-8") as f:
             code = compile(f.read(), script_path, "exec")
             exec(code, script_globals)
 
         print("Job completed successfully")
 
         # Write success marker
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({"status": "success", "timestamp": __import__("datetime").datetime.now(
                 __import__("datetime").timezone.utc).isoformat()}, f)
         sys.exit(0)
@@ -99,7 +99,7 @@ def main():
         print(error_msg, file=sys.stderr)
 
         # Write failure marker
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({
                 "status": "failed",
                 "error": str(e),
