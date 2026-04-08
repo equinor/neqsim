@@ -16,9 +16,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Flash calculations converge and produce physically valid results (VF in [0,1], positive
  * density, positive pressure).</li>
  * <li>For light components (ω ≤ 0.49) PR-LK and PR78 give identical VF (same m-factor).</li>
- * <li>For mixtures containing heavy pseudo-components (ω > 0.49) PR-LK and PR78 differ
- * measurably, because PR-LK applies the PR76 m-factor to all components while PR78 uses a
- * modified polynomial for ω > 0.49.</li>
+ * <li>For mixtures containing heavy pseudo-components (ω > 0.49) PR-LK and PR78 differ measurably,
+ * because PR-LK applies the PR76 m-factor to all components while PR78 uses a modified polynomial
+ * for ω > 0.49.</li>
  * <li>Clone preserves model name.</li>
  * </ol>
  */
@@ -83,8 +83,8 @@ public class SystemPrLeeKeslerEosTest extends neqsim.NeqSimTest {
 
     // PR76 == PR78 for omega < 0.49 -> VF must agree within numerical precision
     assertEquals(vfPr78, vfLk, 1e-6,
-        "PR-LK and PR78 should give identical VF for light components; got LK="
-        + vfLk + " vs PR78=" + vfPr78);
+        "PR-LK and PR78 should give identical VF for light components; got LK=" + vfLk + " vs PR78="
+            + vfPr78);
   }
 
   @Test
@@ -125,8 +125,8 @@ public class SystemPrLeeKeslerEosTest extends neqsim.NeqSimTest {
 
     // PR76 != PR78 for heavy components -> VF must differ by more than numerical noise
     assertTrue(Math.abs(vfLk - vfPr78) > 1e-6,
-        "PR-LK and PR78 should give different VF for heavy components (omega>0.49); got LK="
-        + vfLk + " vs PR78=" + vfPr78);
+        "PR-LK and PR78 should give different VF for heavy components (omega>0.49); got LK=" + vfLk
+            + " vs PR78=" + vfPr78);
   }
 
   @Test
