@@ -2361,6 +2361,19 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Returns the named result array, or the supplied default if the key is not found or the result
+   * is {@code null}. Convenience for Python/JPype consumers where
+   * {@code ops.get("dewT", emptyArray)} mirrors the Python dict {@code .get(key, default)} idiom.
+   *
+   * @param name the result key (e.g. "dewT", "bubP")
+   * @param defaultValue the array to return when the key is absent or maps to {@code null}
+   * @return the result array, or {@code defaultValue} if not found
+   */
+  public double[] get(String name, double[] defaultValue) {
+    return getOperation().get(name, defaultValue);
+  }
+
+  /**
    * <p>
    * Getter for the field <code>operation</code>.
    * </p>
