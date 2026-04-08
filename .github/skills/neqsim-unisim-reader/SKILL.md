@@ -338,7 +338,7 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 |-----------------|-------------|-------------|
 | `valveop` | `ThrottlingValve` | Pressure letdown valve, choke |
 | `sep3op` | `ThreePhaseSeparator` | Three-phase separator |
-| `flashtank` | `Separator` | Two-phase flash drum/separator |
+| `flashtank` | `Separator` / `GasScrubber` | Two-phase separator. Auto-promoted to `ThreePhaseSeparator` if `WaterProduct` connected. Vertical orientation → `GasScrubber`. |
 | `mixerop` | `Mixer` | Stream mixer/junction |
 | `teeop` | `Splitter` | Stream splitter/tee |
 | `compressor` | `Compressor` | Gas compressor |
@@ -868,6 +868,57 @@ When compressor efficiency is not available from the UniSim COM extraction
 
 This matters because NeqSim defaults to 100% isentropic efficiency,
 which produces unrealistically low outlet temperatures.
+
+#### Separator Phase Detection and Entrainment Extraction
+
+The reader now detects 2-phase vs 3-phase separators by two mechanisms:
+
+1. **UniSim TypeName**: `flashtank` → `Separator` (2-phase),
+   `sep3op` → `ThreePhaseSeparator` (3-phase)
+2. **WaterProduct heuristic**: If a `flashtank` has a `WaterProduct`
+   connected, it is automatically promoted to `ThreePhaseSeparator`
+
+#### Orientation Detection (Vertical → GasScrubber)
+
+The reader extracts separator orientation from UniSim COM attributes
+(`Orientation`, `VesselOrientation`, `SeparatorOrientation`). When a
+`flashtank` is detected as **vertical**, the NeqSim type is mapped to
+`GasScrubber` instead of `Separator`.
+
+| UniSim Type | Orientation | NeqSim Type |
+|---|---|---|
+| `flashtank` | horizontal (default) | `Separator` |
+| `flashtank` | vertical | `GasScrubber` |
+| `flashtank` + WaterProduct | any | `ThreePhaseSeparator` |
+| `sep3op` | any | `ThreePhaseSeparator` |
+
+`GasScrubber` extends `Separator` in NeqSim — it is a vertical vessel
+optimised for removing liquid droplets from a gas stream, with K-value
+sizing constraints and a default 10% liquid level.
+
+**Entrainment** is extracted from UniSim COM and mapped to NeqSim
+`setEntrainment()` calls. The reader tries multiple COM attribute names
+for each entrainment direction:
+
+| Entrainment Direction | UniSim COM Attributes (tried in order) | NeqSim `setEntrainment` Args |
+|---|---|---|
+| Liquid in gas (oil carryover) | `LiqCarryOverMolFrac`, `LiqCarryOverFrac`, `LiquidInVapourFraction`, `LiqInVap`, `LiquidCarryover` | `(val, "volume", "product", "oil", "gas")` |
+| Gas in liquid (gas carry-under) | `VapCarryUnderMolFrac`, `VapCarryUnderFrac`, `VapourInLiquidFraction`, `VapInLiq`, `VapourCarryunder` | `(val, "volume", "product", "gas", "liquid")` |
+| Water in oil (3-phase) | `WaterInOilFraction`, `WaterInOil`, `AqInOil`, `AqueousInOilFraction` | `(val, "volume", "product", "aqueous", "oil")` |
+| Oil in water (3-phase) | `OilInWaterFraction`, `OilInWater`, `OilInAq`, `OilInAqueousFraction` | `(val, "volume", "product", "oil", "aqueous")` |
+
+Generated Python code example:
+```python
+# Three-phase separator with entrainment from UniSim
+mp_sep = ThreePhaseSeparator("20VA102", heater_mp.getOutletStream())
+mp_sep.setEntrainment(0.084, "volume", "product", "aqueous", "oil")  # water in oil
+mp_sep.setEntrainment(0.002, "volume", "product", "oil", "aqueous")  # oil in water
+process.add(mp_sep)
+```
+
+**Note:** If the UniSim COM does not expose entrainment attributes (some
+model versions or configurations may not), the extraction silently skips
+them — the separator will use NeqSim defaults (zero entrainment).
 
 ---
 

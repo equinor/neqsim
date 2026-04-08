@@ -33,10 +33,10 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * <strong>Example Usage</strong>
  * </p>
- * 
+ *
  * <pre>
  * EclipseVFPExporter exporter = new EclipseVFPExporter();
- * 
+ *
  * // Configure table
  * exporter.setTableNumber(1);
  * exporter.setDatumDepth(2500.0);
@@ -44,10 +44,10 @@ import org.apache.logging.log4j.Logger;
  * exporter.setTHPs(new double[] {10, 20, 30, 50, 70, 100});
  * exporter.setWaterCuts(new double[] {0, 0.2, 0.5, 0.8});
  * exporter.setGORs(new double[] {50, 100, 200, 500});
- * 
+ *
  * // Generate from lift curve data
  * exporter.setLiftCurveData(liftCurveData);
- * 
+ *
  * // Export
  * exporter.exportVFPPROD("well1_vfp.inc");
  * </pre>
@@ -193,6 +193,9 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes VFPPROD to a writer.
+   *
+   * @param writer the writer to output to
+   * @throws IOException if an I/O error occurs
    */
   private void writeVFPPROD(BufferedWriter writer) throws IOException {
     StringBuilder sb = new StringBuilder();
@@ -206,7 +209,7 @@ public class EclipseVFPExporter implements Serializable {
    * <p>
    * Output format follows Eclipse VFP convention:
    * </p>
-   * 
+   *
    * <pre>
    * VFPPROD
    *   TableNum  DatumDepth  'FlowType'  'WGR'  'OGR'  /
