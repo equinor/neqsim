@@ -10,6 +10,7 @@
 ---
 
 ## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
+<<<<<<< HEAD
 
 ### Vertical Separator → GasScrubber Mapping
 
@@ -167,55 +168,161 @@ raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
 ---
 
 ## 2026-04-08 — IEC 81346 Reference Designation Support
+=======
+>>>>>>> 0a1cdaa75a2293eaa9447f3df1b0ec9460a74c1e
 
-### New Java Package: `neqsim.process.equipment.iec81346`
+### Vertical Separator → GasScrubber Mapping
 
-| Class | Description |
-|-------|-------------|
-| `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. Now tries `EquipmentEnum.valueOf()` first for faster lookup. |
-| `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. Static `parse(String)` factory for round-tripping. |
-| `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Supports hierarchical (`A1.A1`, `A1.A2`) and flat (`A1`, `A2`) function numbering. No-arg constructor + late binding via `generate(ProcessSystem)` / `generate(ProcessModel)`. |
+The UniSim reader (`devtools/unisim_reader.py`) now detects separator orientation.
+Vertical `flashtank` operations are mapped to `GasScrubber` instead of `Separator`.
 
-### Modified Interfaces & Classes
+| UniSim flashtank | NeqSim Type |
+|---|---|
+| horizontal (default) | `Separator` |
+| vertical | `GasScrubber` |
+| has WaterProduct | `ThreePhaseSeparator` |
 
-| Class | Change |
-|-------|--------|
-| `ProcessEquipmentInterface` | Added 3 default methods: `getReferenceDesignation()`, `setReferenceDesignation(ReferenceDesignation)`, `getReferenceDesignationString()` |
-| `ProcessEquipmentBaseClass` | Added `referenceDesignation` field and overriding getter/setter |
-| `ProcessSystem` | Added `generateReferenceDesignations(funcPrefix, locPrefix)` convenience method and `getUnitByReferenceDesignation(String)` for lookup by ref des |
-| `ProcessModel` | Added `generateReferenceDesignations(locPrefix)` (flat), `generateReferenceDesignations(funcPrefix, locPrefix)` (hierarchical), and `getUnitByReferenceDesignation(String)` (cross-area lookup) |
-| `ProcessConnection` | Added `sourceReferenceDesignation` and `targetReferenceDesignation` fields with getters/setters |
-| `ControllerDeviceBaseClass` | Added `referenceDesignation` field with getter/setter/`getReferenceDesignationString()` |
-| `ProcessSystemState` | `EquipmentState.fromEquipment()` now captures 6 IEC 81346 properties (`iec81346_referenceDesignation`, `_functionDesignation`, `_productDesignation`, `_locationDesignation`, `_letterCode`, `_sequenceNumber`) |
-| `DexpiXmlWriter` (dexpi package) | Writes 5 IEC 81346 `GenericAttribute` elements per equipment when reference designation is set |
-| `ProcessAutomation` | `findUnit()` now resolves IEC 81346 reference designation addresses (strings starting with `=` or `-`) |
-| `StudyClass` | Added `REFERENCE_DESIGNATION_SCHEDULE` to `DeliverableType` enum (included in CLASS_A and CLASS_B) |
-| `EngineeringDeliverablesPackage` | Added `generateReferenceDesignationSchedule()` method and JSON output for ref des schedule |
-| `InstrumentScheduleGenerator` | Added `getISAToIEC81346Map()` for ISA-5.1 to IEC 81346 cross-reference |
+`GasScrubber` extends `Separator` — it is a vertical vessel with K-value
+sizing constraints and 10% liquid level. The orientation is detected from
+UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation`).
 
-### Usage Pattern
+### Affected Files
+- `devtools/unisim_reader.py` — `resolve_neqsim_type()` method, orientation extraction
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `AGENTS.md`
+
+---
+
+## 2026-07-07 — Full FPSO Model: Architecture Learnings
+
+### HP Separator Water Routing
+
+When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
+may not produce a separate aqueous phase in UniSim. To match this behavior, use
+`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
 
 ```java
-// Single system
-process.generateReferenceDesignations("A1", "P1");
-ProcessEquipmentInterface sep = process.getUnitByReferenceDesignation("=A1-B1+P1");
-
-// Multi-area
-plant.generateReferenceDesignations("P1");  // flat
-plant.generateReferenceDesignations("A1", "P1");  // hierarchical
-ProcessEquipmentInterface comp = plant.getUnitByReferenceDesignation("=A2-K1+P1");
-
-// ProcessAutomation addresses accept IEC 81346 strings
-double temp = auto.getVariableValue("=A1-B1+P1.gasOutStream.temperature", "C");
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
+Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
+hpLiqRecombine.addStream(hpSep.getOilOutStream());
+hpLiqRecombine.addStream(hpSep.getWaterOutStream());
+// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
 ```
 
-### Agent Impact
-- `ProcessAutomation` addresses now accept IEC 81346 strings (`=A1-B1+P1`)
-- DEXPI exports contain IEC 81346 attributes when designations are generated
-- Lifecycle state snapshots preserve IEC 81346 designations for versioning
-- Engineering deliverables include reference designation schedule (Class A/B)
-- ISA-5.1 to IEC 81346 bridging via `InstrumentScheduleGenerator`
-- New documentation: `docs/standards/iec81346-reference-designations.md`
+### Import Gas Compression Architecture
+
+Large FPSO models use staged import gas compression matching pressure levels:
+- VLP gas (~2 bar) → VRU compressor → ~5 bar → mix with LP gas
+- LP+VRU gas (~5 bar) → 1st import compressor → ~22 bar → mix with MP gas
+- MP+1st import gas (~22 bar) → 2nd import compressor → ~90 bar → mix with HP gas
+
+Each stage has cooler + flash drum before the compressor (removes condensate).
+
+### Pump API
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(6.1);          // bara
+pump.setIsentropicEfficiency(0.75);
+pump.getPower("kW");                  // after run
+```
+
+### ComponentSplitter for TEG Dehydration
+
+```java
+ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
+int nComp = wetGasStream.getFluid().getNumberOfComponents();
+double[] sf = new double[nComp];
+java.util.Arrays.fill(sf, 1.0);
+sf[nComp - 1] = 0.0;  // water is last component
+teg.setSplitFactors(sf);
+// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
+```
+
+### Model Scale: 50+ Equipment Units in Single ProcessSystem
+
+The reference FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
+covering wellhead → HP/MP/LP/VLP separation → VRU + import gas compression →
+gas cooling + TEG → 2-stage export compression → seal gas JT → oil export.
+Single `ProcessSystem` converges in ~2 seconds without recycles.
+
+---
+
+## 2026-07-06 — JT Expansion: Use ThrottlingValve, Not PHflash
+
+### Critical Agent Guidance
+
+When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
+`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on FPSO seal gas
+(90→48 bar):
+
+| Method | Temperature (°C) | UniSim Reference | Error |
+|--------|-----------------|------------------|-------|
+| `ThrottlingValve` in ProcessSystem | 16.44 | 18.17 | -1.73°C |
+| Manual `PHflash(H/n)` on clone | 33.05 | 18.17 | +14.88°C |
+
+The manual PHflash approach fails because `getEnthalpy('J')` returns total system enthalpy
+while `PHflash(double)` expects a specific enthalpy convention (per mole at the system's
+reference state). The ThrottlingValve handles the enthalpy bookkeeping internally.
+
+**Pattern:**
+```java
+// CORRECT: Use process-level valve
+ProcessSystem proc = new ProcessSystem();
+Stream sg = new Stream("SG", fluid.clone());
+proc.add(sg);
+ThrottlingValve jt = new ThrottlingValve("JT", sg);
+jt.setOutletPressure(48.0);
+proc.add(jt);
+proc.run();
+double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperature
+
+// WRONG: Manual PHflash — gives incorrect JT temperature
+// SystemInterface clone = fluid.clone();
+// clone.setPressure(48.0);
+// new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
+```
+
+### FPSO Model Extension
+
+Extended the NeqSim FPSO replication to include:
+- LP/MP gas recompression + mixing with HP gas
+- Gas cooling (24HA101, 75°C→36°C) + flash drum (24VG101)
+- Seal gas takeoff (5.4% split)
+- 2-stage export compression (26KA101: 86→259 bar, 26KA102: 258→554 bar)
+- Seal gas JT expansion curve showing 1.35% max condensation at 30 bar
+
+Compressor discharge temperature comparison:
+- 26KA101: NeqSim 126.7°C vs UniSim 117.8°C (75% η_is assumed)
+- 26KA102: NeqSim 85.9°C vs UniSim 83.6°C
+- Suggests UniSim uses ~83-85% isentropic efficiency
+
+---
+
+## 2026-07-05 — EclipseFluidReadWrite Null BIC Fix, UniSim BIP Extraction
+
+### Bug Fix
+
+| Class | Issue | Fix |
+|-------|-------|-----|
+| `EclipseFluidReadWrite` | `NullPointerException` when E300 file has no BIC section — `kij` array stays `null` | Both `read()` methods now initialize `kij` to zero matrix if BIC section is missing. E300 files without BIC load correctly (all BIPs default to 0.0). |
+
+### Impact on Agents
+
+- **E300 file loading**: Previously required a BIC section or the reader crashed. Now optional (defaults to zero BIPs). However, agents should always include BIC in generated E300 files for accurate results.
+- **UniSim → E300 workflow**: BIPs can now be extracted from UniSim via `pp.Kij.Values` (tuple-of-tuples). See `neqsim-unisim-reader` skill Section 1.1 for the COM access pattern.
+
+### Key Discovery
+
+UniSim COM BIP extraction pattern:
+```python
+kij_obj = pp.Kij          # CDispatch (RealFlexVariable)
+raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
+# Diagonal sentinel = -32767.0, replace with 0.0
+```
+- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
+- `kij_obj.GetValues()` fails — use `.Values` property instead
 
 ---
 
