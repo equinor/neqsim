@@ -15,9 +15,9 @@
 
 | Class | Description |
 |-------|-------------|
-| `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. |
+| `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. Now tries `EquipmentEnum.valueOf()` first for faster lookup. |
 | `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. |
-| `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Configurable function/location prefixes, stream/measurement inclusion. JSON export via `toJson()`. Lookup via `findByName()`, `findByDesignation()`, `findByLetterCode()`. |
+| `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Supports hierarchical (`A1.A1`, `A1.A2`) and flat (`A1`, `A2`) function numbering. No-arg constructor + late binding via `generate(ProcessSystem)` / `generate(ProcessModel)`. |
 
 ### Modified Interfaces & Classes
 
@@ -25,22 +25,39 @@
 |-------|--------|
 | `ProcessEquipmentInterface` | Added 3 default methods: `getReferenceDesignation()`, `setReferenceDesignation(ReferenceDesignation)`, `getReferenceDesignationString()` |
 | `ProcessEquipmentBaseClass` | Added `referenceDesignation` field and overriding getter/setter |
+| `ProcessSystem` | Added `generateReferenceDesignations(funcPrefix, locPrefix)` convenience method and `getUnitByReferenceDesignation(String)` for lookup by ref des |
+| `ProcessModel` | Added `generateReferenceDesignations(locPrefix)` (flat), `generateReferenceDesignations(funcPrefix, locPrefix)` (hierarchical), and `getUnitByReferenceDesignation(String)` (cross-area lookup) |
+| `ProcessConnection` | Added `sourceReferenceDesignation` and `targetReferenceDesignation` fields with getters/setters |
+| `ControllerDeviceBaseClass` | Added `referenceDesignation` field with getter/setter/`getReferenceDesignationString()` |
+| `ProcessSystemState` | `EquipmentState.fromEquipment()` now captures 6 IEC 81346 properties (`iec81346_referenceDesignation`, `_functionDesignation`, `_productDesignation`, `_locationDesignation`, `_letterCode`, `_sequenceNumber`) |
 | `DexpiXmlWriter` (dexpi package) | Writes 5 IEC 81346 `GenericAttribute` elements per equipment when reference designation is set |
 | `ProcessAutomation` | `findUnit()` now resolves IEC 81346 reference designation addresses (strings starting with `=` or `-`) |
+| `StudyClass` | Added `REFERENCE_DESIGNATION_SCHEDULE` to `DeliverableType` enum (included in CLASS_A and CLASS_B) |
+| `EngineeringDeliverablesPackage` | Added `generateReferenceDesignationSchedule()` method and JSON output for ref des schedule |
+| `InstrumentScheduleGenerator` | Added `getISAToIEC81346Map()` for ISA-5.1 to IEC 81346 cross-reference |
 
 ### Usage Pattern
 
 ```java
-ReferenceDesignationGenerator gen = new ReferenceDesignationGenerator(process);
-gen.setFunctionPrefix("A1");
-gen.setLocationPrefix("P1.M1");
-gen.generate();
-// Equipment now addressable as "=A1-B1+P1.M1" via ProcessAutomation
+// Single system
+process.generateReferenceDesignations("A1", "P1");
+ProcessEquipmentInterface sep = process.getUnitByReferenceDesignation("=A1-B1+P1");
+
+// Multi-area
+plant.generateReferenceDesignations("P1");  // flat
+plant.generateReferenceDesignations("A1", "P1");  // hierarchical
+ProcessEquipmentInterface comp = plant.getUnitByReferenceDesignation("=A2-K1+P1");
+
+// ProcessAutomation addresses accept IEC 81346 strings
+double temp = auto.getVariableValue("=A1-B1+P1.gasOutStream.temperature", "C");
 ```
 
 ### Agent Impact
 - `ProcessAutomation` addresses now accept IEC 81346 strings (`=A1-B1+P1`)
 - DEXPI exports contain IEC 81346 attributes when designations are generated
+- Lifecycle state snapshots preserve IEC 81346 designations for versioning
+- Engineering deliverables include reference designation schedule (Class A/B)
+- ISA-5.1 to IEC 81346 bridging via `InstrumentScheduleGenerator`
 - New documentation: `docs/standards/iec81346-reference-designations.md`
 
 ---
