@@ -87,6 +87,9 @@ public class EngineeringDeliverablesPackage implements Serializable {
   /** Instrument schedule generator. */
   private InstrumentScheduleGenerator instrumentSchedule;
 
+  /** IEC 81346 reference designation generator. */
+  private neqsim.process.equipment.iec81346.ReferenceDesignationGenerator referenceDesignationGenerator;
+
   /** Generation status for each deliverable. */
   private final Map<DeliverableType, DeliverableStatus> statusMap =
       new LinkedHashMap<DeliverableType, DeliverableStatus>();
@@ -204,6 +207,9 @@ public class EngineeringDeliverablesPackage implements Serializable {
           case INSTRUMENT_SCHEDULE:
             generateInstrumentSchedule();
             break;
+          case REFERENCE_DESIGNATION_SCHEDULE:
+            generateReferenceDesignationSchedule();
+            break;
           default:
             break;
         }
@@ -320,6 +326,16 @@ public class EngineeringDeliverablesPackage implements Serializable {
   }
 
   /**
+   * Generate IEC 81346 reference designation schedule for all equipment. Auto-assigns functional,
+   * product and location designations.
+   */
+  private void generateReferenceDesignationSchedule() {
+    referenceDesignationGenerator =
+        new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator();
+    referenceDesignationGenerator.generate(processSystem);
+  }
+
+  /**
    * Get the number of successfully generated deliverables.
    *
    * @return count of successful deliverables
@@ -433,6 +449,15 @@ public class EngineeringDeliverablesPackage implements Serializable {
   }
 
   /**
+   * Get the IEC 81346 reference designation generator.
+   *
+   * @return reference designation generator or null if not generated/required
+   */
+  public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator getReferenceDesignationGenerator() {
+    return referenceDesignationGenerator;
+  }
+
+  /**
    * Get the generation status map.
    *
    * @return map of deliverable type to generation status
@@ -503,6 +528,10 @@ public class EngineeringDeliverablesPackage implements Serializable {
     }
     if (instrumentSchedule != null) {
       root.add("instrumentSchedule", JsonParser.parseString(instrumentSchedule.toJson()));
+    }
+    if (referenceDesignationGenerator != null) {
+      root.add("referenceDesignationSchedule",
+          JsonParser.parseString(referenceDesignationGenerator.toJson()));
     }
 
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
