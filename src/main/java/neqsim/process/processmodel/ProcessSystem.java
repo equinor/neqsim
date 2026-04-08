@@ -464,6 +464,54 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Looks up a process equipment unit by its IEC 81346 reference designation string (e.g.
+   * {@code "=A1.B1"}, {@code "-B1"}).
+   *
+   * @param refDesignation the reference designation string to match
+   * @return the matching equipment, or {@code null} if not found
+   */
+  public ProcessEquipmentInterface getUnitByReferenceDesignation(String refDesignation) {
+    if (refDesignation == null || refDesignation.trim().isEmpty()) {
+      return null;
+    }
+    for (int i = 0; i < getUnitOperations().size(); i++) {
+      ProcessEquipmentInterface unit = getUnitOperations().get(i);
+      if (unit instanceof ModuleInterface) {
+        for (int j = 0; j < ((ModuleInterface) unit).getOperations().getUnitOperations()
+            .size(); j++) {
+          ProcessEquipmentInterface inner =
+              ((ModuleInterface) unit).getOperations().getUnitOperations().get(j);
+          if (refDesignation.equals(inner.getReferenceDesignationString())) {
+            return inner;
+          }
+        }
+      } else if (refDesignation.equals(unit.getReferenceDesignationString())) {
+        return unit;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Generates IEC 81346 reference designations for all equipment in this process system. This is a
+   * convenience wrapper around
+   * {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}.
+   *
+   * @param functionPrefix the function-aspect prefix (e.g. "A1" for the first process area)
+   * @param locationPrefix the location-aspect prefix (e.g. "G1" for a specific platform)
+   * @return the generator instance (for further queries such as {@code toJson()})
+   */
+  public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator generateReferenceDesignations(
+      String functionPrefix, String locationPrefix) {
+    neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen =
+        new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator();
+    gen.setFunctionPrefix(functionPrefix);
+    gen.setLocationPrefix(locationPrefix);
+    gen.generate(this);
+    return gen;
+  }
+
+  /**
    * <p>
    * hasUnitName.
    * </p>

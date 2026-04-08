@@ -9,6 +9,42 @@
 
 ---
 
+## 2026-04-08 — IEC 81346 Reference Designation Support
+
+### New Java Package: `neqsim.process.equipment.iec81346`
+
+| Class | Description |
+|-------|-------------|
+| `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. |
+| `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. |
+| `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Configurable function/location prefixes, stream/measurement inclusion. JSON export via `toJson()`. Lookup via `findByName()`, `findByDesignation()`, `findByLetterCode()`. |
+
+### Modified Interfaces & Classes
+
+| Class | Change |
+|-------|--------|
+| `ProcessEquipmentInterface` | Added 3 default methods: `getReferenceDesignation()`, `setReferenceDesignation(ReferenceDesignation)`, `getReferenceDesignationString()` |
+| `ProcessEquipmentBaseClass` | Added `referenceDesignation` field and overriding getter/setter |
+| `DexpiXmlWriter` (dexpi package) | Writes 5 IEC 81346 `GenericAttribute` elements per equipment when reference designation is set |
+| `ProcessAutomation` | `findUnit()` now resolves IEC 81346 reference designation addresses (strings starting with `=` or `-`) |
+
+### Usage Pattern
+
+```java
+ReferenceDesignationGenerator gen = new ReferenceDesignationGenerator(process);
+gen.setFunctionPrefix("A1");
+gen.setLocationPrefix("P1.M1");
+gen.generate();
+// Equipment now addressable as "=A1-B1+P1.M1" via ProcessAutomation
+```
+
+### Agent Impact
+- `ProcessAutomation` addresses now accept IEC 81346 strings (`=A1-B1+P1`)
+- DEXPI exports contain IEC 81346 attributes when designations are generated
+- New documentation: `docs/standards/iec81346-reference-designations.md`
+
+---
+
 ## 2026-04-05 — Heat Integration, Power Generation, Agentic QA Gate
 
 ### New Java Classes

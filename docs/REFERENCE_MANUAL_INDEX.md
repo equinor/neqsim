@@ -747,6 +747,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ASTM D6377                | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp)                     | ASTM D6377 RVP                                     |
 | **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards)       | **ASTM D86, D445, D4052, D4294, D2500, D97, BS&W** |
 | Sales Contracts           | [docs/standards/sales_contracts.md](standards/sales_contracts)                   | Sales contracts                                    |
+| **IEC 81346 Reference Designations** | [docs/standards/iec81346-reference-designations.md](standards/iec81346-reference-designations) | **IEC 81346 structured equipment identification — letter codes, automatic designation generation, DEXPI export, ProcessAutomation integration** |
 
 ---
 

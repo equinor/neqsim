@@ -169,10 +169,9 @@ public class ProcessAutomation {
       if (diag.hasAutoCorrection()) {
         try {
           double value = getVariableValue(diag.getAutoCorrection(), unitOfMeasure);
-          diagnostics.recordFailure("get", address, diag.getCategory(),
-              diag.getAutoCorrection());
-          return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value,
-              unitOfMeasure, diag);
+          diagnostics.recordFailure("get", address, diag.getCategory(), diag.getAutoCorrection());
+          return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value, unitOfMeasure,
+              diag);
         } catch (Exception retryEx) {
           // Auto-correction also failed
         }
@@ -215,10 +214,9 @@ public class ProcessAutomation {
       if (diag.hasAutoCorrection()) {
         try {
           setVariableValue(diag.getAutoCorrection(), value, unitOfMeasure);
-          diagnostics.recordFailure("set", address, diag.getCategory(),
-              diag.getAutoCorrection());
-          return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value,
-              unitOfMeasure, diag);
+          diagnostics.recordFailure("set", address, diag.getCategory(), diag.getAutoCorrection());
+          return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value, unitOfMeasure,
+              diag);
         } catch (Exception retryEx) {
           // Auto-correction also failed
         }
@@ -491,6 +489,14 @@ public class ProcessAutomation {
    * @throws IllegalArgumentException if the unit is not found
    */
   private ProcessEquipmentInterface findUnit(String areaName, String unitName) {
+    // Check if the address is an IEC 81346 reference designation (starts with = or -)
+    if (unitName != null && (unitName.startsWith("=") || unitName.startsWith("-"))) {
+      ProcessEquipmentInterface found = findByReferenceDesignation(areaName, unitName);
+      if (found != null) {
+        return found;
+      }
+    }
+
     if (processModel != null) {
       if (areaName != null) {
         ProcessSystem area = processModel.get(areaName);
@@ -503,9 +509,8 @@ public class ProcessAutomation {
           }
           if (area == null) {
             List<String> suggestions = diagnostics.findClosestNames(areaName, areaNames, 3);
-            throw new IllegalArgumentException(
-                "Area not found: " + areaName + (suggestions.isEmpty() ? ""
-                    : ". Did you mean: " + suggestions + "?"));
+            throw new IllegalArgumentException("Area not found: " + areaName
+                + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
           }
         }
         ProcessEquipmentInterface unit = area.getUnit(unitName);
@@ -518,9 +523,8 @@ public class ProcessAutomation {
           }
           if (unit == null) {
             List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
-            throw new IllegalArgumentException(
-                "Unit not found: " + unitName + " in area " + areaName
-                    + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+            throw new IllegalArgumentException("Unit not found: " + unitName + " in area "
+                + areaName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
           }
         }
         return unit;
@@ -548,9 +552,8 @@ public class ProcessAutomation {
         }
       }
       List<String> suggestions = diagnostics.findClosestNames(unitName, allNames, 3);
-      throw new IllegalArgumentException(
-          "Unit not found in any area: " + unitName
-              + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+      throw new IllegalArgumentException("Unit not found in any area: " + unitName
+          + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
     }
 
     // Single ProcessSystem mode
@@ -564,9 +567,8 @@ public class ProcessAutomation {
       }
       if (unit == null) {
         List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
-        throw new IllegalArgumentException(
-            "Unit not found: " + unitName
-                + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+        throw new IllegalArgumentException("Unit not found: " + unitName
+            + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
       }
     }
     return unit;
@@ -585,6 +587,55 @@ public class ProcessAutomation {
       names.add(u.getName());
     }
     return names;
+  }
+
+  /**
+   * Finds a unit by its IEC 81346 reference designation string.
+   *
+   * <p>
+   * Searches all equipment in the relevant process system(s) for a matching reference designation.
+   * This enables addressing equipment by their IEC 81346 codes, e.g. "=A1-B1" or "-K2".
+   * </p>
+   *
+   * @param areaName the area name to search within (null to search all)
+   * @param refDesString the reference designation string to match
+   * @return the matching equipment, or null if not found
+   */
+  private ProcessEquipmentInterface findByReferenceDesignation(String areaName,
+      String refDesString) {
+    if (processModel != null) {
+      if (areaName != null) {
+        ProcessSystem area = processModel.get(areaName);
+        if (area != null) {
+          return searchByRefDes(area, refDesString);
+        }
+      }
+      for (String name : processModel.getProcessSystemNames()) {
+        ProcessEquipmentInterface found = searchByRefDes(processModel.get(name), refDesString);
+        if (found != null) {
+          return found;
+        }
+      }
+      return null;
+    }
+    return searchByRefDes(processSystem, refDesString);
+  }
+
+  /**
+   * Searches a process system for equipment matching a reference designation string.
+   *
+   * @param ps the process system to search
+   * @param refDesString the reference designation to match
+   * @return the matching equipment, or null if not found
+   */
+  private ProcessEquipmentInterface searchByRefDes(ProcessSystem ps, String refDesString) {
+    for (ProcessEquipmentInterface unit : ps.getUnitOperations()) {
+      String unitRefDes = unit.getReferenceDesignationString();
+      if (unitRefDes != null && !unitRefDes.isEmpty() && unitRefDes.equals(refDesString)) {
+        return unit;
+      }
+    }
+    return null;
   }
 
   /**
@@ -1506,9 +1557,8 @@ public class ProcessAutomation {
     if (unit != null) {
       result.addProperty("unit", unit);
     }
-    result.addProperty("remediation",
-        "Address was auto-corrected from '" + originalAddress + "' to '"
-            + correctedAddress + "'. Use the corrected address in future calls.");
+    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
+        + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
   }
 
@@ -1531,8 +1581,7 @@ public class ProcessAutomation {
       result.addProperty("unit", unit);
     }
     if (warningJson != null) {
-      result.add("warning",
-          com.google.gson.JsonParser.parseString(warningJson).getAsJsonObject());
+      result.add("warning", com.google.gson.JsonParser.parseString(warningJson).getAsJsonObject());
     }
     return result.toString();
   }
@@ -1557,9 +1606,8 @@ public class ProcessAutomation {
     if (unit != null) {
       result.addProperty("unit", unit);
     }
-    result.addProperty("remediation",
-        "Address was auto-corrected from '" + originalAddress + "' to '"
-            + correctedAddress + "'. Use the corrected address in future calls.");
+    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
+        + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
   }
 }
