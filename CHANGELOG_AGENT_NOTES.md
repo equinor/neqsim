@@ -16,7 +16,7 @@
 | Class | Description |
 |-------|-------------|
 | `IEC81346LetterCode` | Enum for IEC 81346-2 letter codes (A–X). Maps all `EquipmentEnum` values and provides `fromEquipment()` for instanceof-based classification. Now tries `EquipmentEnum.valueOf()` first for faster lookup. |
-| `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. |
+| `ReferenceDesignation` | Serializable data class holding three IEC 81346 aspects (function `=`, product `-`, location `+`) plus letter code and sequence number. `toReferenceDesignationString()` composes `"=A1-B1+P1"`. Static `parse(String)` factory for round-tripping. |
 | `ReferenceDesignationGenerator` | Auto-assigns IEC 81346 designations to a `ProcessSystem` or multi-area `ProcessModel`. Supports hierarchical (`A1.A1`, `A1.A2`) and flat (`A1`, `A2`) function numbering. No-arg constructor + late binding via `generate(ProcessSystem)` / `generate(ProcessModel)`. |
 
 ### Modified Interfaces & Classes

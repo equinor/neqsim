@@ -358,6 +358,38 @@ public class ReferenceDesignationGenerator implements Serializable {
     if (includeMeasurementDevices) {
       generateForMeasurementDevices(system, funcPrefix, locPrefix, counters);
     }
+
+    // Enrich explicit connections with reference designations
+    enrichConnections(system);
+  }
+
+  /**
+   * Enriches any explicit {@link neqsim.process.processmodel.ProcessConnection} objects in the
+   * given process system with IEC 81346 reference designation strings. For each connection, the
+   * source and target equipment names are looked up and their reference designation strings are
+   * copied to the connection metadata.
+   *
+   * @param system the process system whose connections should be enriched
+   */
+  private void enrichConnections(ProcessSystem system) {
+    for (neqsim.process.processmodel.ProcessConnection conn : system.getConnections()) {
+      // Resolve source equipment ref des
+      ProcessEquipmentInterface sourceUnit = system.getUnit(conn.getSourceEquipment());
+      if (sourceUnit != null) {
+        String srcRefDes = sourceUnit.getReferenceDesignationString();
+        if (srcRefDes != null && !srcRefDes.isEmpty()) {
+          conn.setSourceReferenceDesignation(srcRefDes);
+        }
+      }
+      // Resolve target equipment ref des
+      ProcessEquipmentInterface targetUnit = system.getUnit(conn.getTargetEquipment());
+      if (targetUnit != null) {
+        String tgtRefDes = targetUnit.getReferenceDesignationString();
+        if (tgtRefDes != null && !tgtRefDes.isEmpty()) {
+          conn.setTargetReferenceDesignation(tgtRefDes);
+        }
+      }
+    }
   }
 
   /**

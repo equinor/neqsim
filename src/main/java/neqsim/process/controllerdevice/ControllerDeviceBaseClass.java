@@ -260,7 +260,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    */
   public void setReferenceDesignation(
       neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
-    this.referenceDesignation = referenceDesignation;
+    this.referenceDesignation = referenceDesignation != null ? referenceDesignation
+        : new neqsim.process.equipment.iec81346.ReferenceDesignation();
   }
 
   /**

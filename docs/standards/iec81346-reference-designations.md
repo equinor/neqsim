@@ -158,12 +158,14 @@ Maps IEC 81346-2 letter codes to NeqSim equipment types.
 
 #### `ReferenceDesignation` (Class)
 
-Holds the three IEC 81346 aspects for one piece of equipment.
+Holds the three IEC 81346 aspects for one piece of equipment. Implements
+`Serializable` for safe inclusion in equipment state snapshots.
 
 **Key methods:**
 
 | Method | Returns | Description |
 |--------|---------|-------------|
+| `parse(String)` | `ReferenceDesignation` | Static factory — parses `"=A1-B1+P1"` back into a ReferenceDesignation |
 | `toReferenceDesignationString()` | `String` | Full designation, e.g. `"=A1-B1+P1"` |
 | `getFormattedFunctionDesignation()` | `String` | Function with prefix, e.g. `"=A1"` |
 | `getFormattedProductDesignation()` | `String` | Product with prefix, e.g. `"-B1"` |
@@ -171,10 +173,26 @@ Holds the three IEC 81346 aspects for one piece of equipment.
 | `getProductCode()` | `String` | Letter code + sequence, e.g. `"B1"` |
 | `isSet()` | `boolean` | True if any aspect is non-empty |
 
+The `parse()` method enables round-tripping from string back to object:
+
+```java
+ReferenceDesignation refDes = ReferenceDesignation.parse("=A1-B1+P1");
+assertEquals("A1", refDes.getFunctionDesignation());
+assertEquals("B1", refDes.getProductDesignation());
+assertEquals("P1", refDes.getLocationDesignation());
+```
+
 #### `ReferenceDesignationGenerator` (Class)
 
 Walks a `ProcessSystem` or `ProcessModel` and automatically assigns IEC 81346
-reference designations to all equipment.
+reference designations to all equipment. Supports three constructor forms:
+
+- `ReferenceDesignationGenerator(ProcessSystem)` — bound to a single system
+- `ReferenceDesignationGenerator(ProcessModel)` — bound to a multi-area model
+- `ReferenceDesignationGenerator()` — no-arg; bind later via `generate(ProcessSystem)` or `generate(ProcessModel)`
+
+After generation, connections with explicit `ProcessConnection` metadata are
+automatically enriched with source/target reference designations.
 
 **Configuration methods:**
 
@@ -232,6 +250,10 @@ automatically includes five `GenericAttribute` elements per equipment:
 
 These attributes are only written when the reference designation is set (i.e.,
 `isSet()` returns true).
+
+> **Note:** The legacy `DexpiXmlWriter` (in `processmodel/`) uses underscored
+> names (e.g., `IEC81346_ReferenceDesignation`). The newer DEXPI 1.3+ writer
+> (in `processmodel/dexpi/`) uses camelCase without underscores.
 
 #### ProcessAutomation API
 
@@ -404,8 +426,10 @@ stored in the equipment state:
 | `iec81346_letterCode` | `String` | Letter code name, e.g. `"B"` |
 | `iec81346_sequenceNumber` | `Number` | Sequence number, e.g. `1` |
 
-These are persisted in JSON and restored when loading state snapshots, enabling
-version comparison and auditing of reference designation changes.
+These properties are only captured when the equipment has a designation set
+(i.e., `getReferenceDesignation().isSet()` returns true). They are persisted in
+JSON and restored when loading state snapshots, enabling version comparison and
+auditing of reference designation changes.
 
 ```java
 // Capture state with IEC 81346 data

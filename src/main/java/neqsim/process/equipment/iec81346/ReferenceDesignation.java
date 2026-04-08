@@ -59,6 +59,98 @@ public class ReferenceDesignation implements Serializable {
   public ReferenceDesignation() {}
 
   /**
+   * Parses an IEC 81346 reference designation string into its three aspects.
+   *
+   * <p>
+   * Accepted formats (order of aspects does not matter):
+   * </p>
+   * <ul>
+   * <li>{@code "=A1-B1+P1"} — all three aspects</li>
+   * <li>{@code "=A1-B1"} — function + product</li>
+   * <li>{@code "-B1+P1"} — product + location</li>
+   * <li>{@code "-B1"} — product only</li>
+   * </ul>
+   *
+   * @param designationString the reference designation string to parse
+   * @return a new {@link ReferenceDesignation} instance, or an empty instance if the input is null
+   *         or empty
+   */
+  public static ReferenceDesignation parse(String designationString) {
+    if (designationString == null || designationString.trim().isEmpty()) {
+      return new ReferenceDesignation();
+    }
+    String s = designationString.trim();
+    String func = "";
+    String prod = "";
+    String loc = "";
+
+    // Extract function aspect (=...)
+    int eqIdx = s.indexOf('=');
+    if (eqIdx >= 0) {
+      int endFunc = findNextAspectStart(s, eqIdx + 1);
+      func = s.substring(eqIdx + 1, endFunc);
+    }
+
+    // Extract product aspect (-...)
+    int dashIdx = s.indexOf('-');
+    if (dashIdx >= 0) {
+      int endProd = findNextAspectStart(s, dashIdx + 1);
+      prod = s.substring(dashIdx + 1, endProd);
+    }
+
+    // Extract location aspect (+...)
+    int plusIdx = s.indexOf('+');
+    if (plusIdx >= 0) {
+      int endLoc = findNextAspectStart(s, plusIdx + 1);
+      loc = s.substring(plusIdx + 1, endLoc);
+    }
+
+    // Try to extract letter code from the product aspect (first letter)
+    IEC81346LetterCode letterCode = IEC81346LetterCode.A;
+    int seqNum = 0;
+    if (!prod.isEmpty()) {
+      char firstChar = Character.toUpperCase(prod.charAt(0));
+      try {
+        letterCode = IEC81346LetterCode.valueOf(String.valueOf(firstChar));
+      } catch (IllegalArgumentException ignored) {
+        // Not a valid letter code — keep default A
+      }
+      // Extract sequence number from remaining digits
+      StringBuilder digits = new StringBuilder();
+      for (int i = 1; i < prod.length(); i++) {
+        if (Character.isDigit(prod.charAt(i))) {
+          digits.append(prod.charAt(i));
+        } else {
+          break;
+        }
+      }
+      if (digits.length() > 0) {
+        seqNum = Integer.parseInt(digits.toString());
+      }
+    }
+
+    return new ReferenceDesignation(func, prod, loc, letterCode, seqNum);
+  }
+
+  /**
+   * Finds the index of the next aspect prefix character ({@code =}, {@code -}, or {@code +}) after
+   * the given start position.
+   *
+   * @param s the string to search
+   * @param from the starting index (exclusive of the current prefix)
+   * @return the index of the next prefix, or the end of string if none found
+   */
+  private static int findNextAspectStart(String s, int from) {
+    for (int i = from; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (c == '=' || c == '-' || c == '+') {
+        return i;
+      }
+    }
+    return s.length();
+  }
+
+  /**
    * Creates a reference designation with the specified aspects and letter code.
    *
    * @param functionDesignation the function aspect (without {@code =} prefix), e.g. "A1.K1"
