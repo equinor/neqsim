@@ -13,10 +13,16 @@ Copy-paste reference for common NeqSim operations. All Java code must be Java 8 
 |-----------|-----------|-------------|
 | Dry/lean gas, simple HC | `SystemSrkEos` | `"classic"` |
 | General hydrocarbons, oil | `SystemPrEos` | `"classic"` |
+| **Matched to commercial simulator PR-LK** | **`SystemPrLeeKeslerEos`** | `"classic"` |
 | Water, MEG, methanol, polar | `SystemSrkCPAstatoil` | `10` (numeric) |
 | Custody transfer, fiscal metering | `SystemGERG2008Eos` | (none needed) |
 | Electrolyte systems | `SystemElectrolyteCPAstatoil` | `10` |
 | Volume-corrected SRK | `SystemSrkEosvolcor` | `"classic"` |
+
+**PR-LK vs PR78**: `SystemPrLeeKeslerEos` uses PR76 alpha for ALL ω:
+`m = 0.37464 + 1.54226ω − 0.26992ω²`. Standard `SystemPrEos1978` uses a modified
+cubic for ω > 0.49. Use PR-LK when matching commercial simulator models that use
+this EOS label.
 
 ## Fluid Creation (Required Sequence)
 
@@ -60,6 +66,18 @@ SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300");
 **Required E300 sections**: `CNAMES`, `TCRIT`, `PCRIT`, `ACF`, `MW`, `TBOIL`,
 `VCRIT`, `PARACHOR`, `SSHIFT`, `BIC`, `ZI`.
 
+**Optional E300 sections** (NeqSim parses and applies these):
+- `OMEGAA` / `OMEGAB` — per-component OmegaA/B overrides (applied after `init(0)`)
+- `BICS` — surface-condition BICs (parsed, same lower-triangular format as `BIC`)
+- `SSHIFTS` — surface-condition volume shift
+- `PEDERSEN` — activates Pedersen viscosity model
+
+**EOS keyword determines fluid class:**
+- `EOS\nSRK /` → `SystemSrkEos`
+- `EOS\nPR /\nPRCORR` → `SystemPrEos1978`
+- `EOS\nPR /\nPRLKCORR` → `SystemPrLeeKeslerEos` ← use for PR-LK matching
+- `EOS\nPR /` → `SystemPrEos`
+
 **CRITICAL**: The `BIC` section must ALWAYS be present. If omitted, NeqSim
 defaults to zero BIPs (no crash, but results may differ significantly from the
 source simulator). The `PARACHOR` section is also required — estimate unknown
@@ -72,10 +90,20 @@ treated as TBP pseudo-fractions via `addTBPfraction()` — including aromatics
 (Benzene, Toluene, etc.).
 
 ```python
-# Python usage
+# Python usage — auto-detects EOS from file
 from neqsim import jneqsim
 EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
 fluid = EclipseFluidReadWrite.read("path/to/fluid.e300")
+
+# Force a specific EOS regardless of what's in the file
+SystemPrLeeKeslerEos = jneqsim.thermo.system.SystemPrLeeKeslerEos
+target_fluid = SystemPrLeeKeslerEos(288.15, 1.01325)
+fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", target_fluid)
+```
+
+**JSON process builder also supports PR-LK** via `"model": "PR_LK"`:
+```json
+{ "fluid": { "model": "PR_LK", "temperature": 288.15, "pressure": 50.0, ... } }
 ```
 
 ## Flash Calculations and Property Retrieval
