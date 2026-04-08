@@ -11,7 +11,7 @@ Opens a .usc file and dumps the full object model to understand:
 Usage:
     python devtools/explore_unisim_com.py <path_to_usc_file>
 
-If no path given, uses a default Grane file.
+If no path given, uses a default example file.
 """
 import sys
 import os
@@ -281,9 +281,8 @@ def main():
     if len(sys.argv) > 1:
         usc_path = sys.argv[1]
     else:
-        usc_path = (r"C:\Users\ESOL\OneDrive - Equinor\Hunting production optimisation"
-                     r" - Case 1 - Oseberg-Grane-Sture\Grane\Unisim files\2025-09-12"
-                     r"\Case02_2031_NorOP_GraneGBE_PF_WithoutCurve.usc")
+        usc_path = (r"C:\Users\ESOL\Models"
+                     r"\example_platform_model.usc")
 
     if not os.path.exists(usc_path):
         print(f"ERROR: File not found: {usc_path}")
