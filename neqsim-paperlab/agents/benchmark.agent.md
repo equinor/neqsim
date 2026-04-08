@@ -114,7 +114,58 @@ For each family generate cases by:
 
 ## Execution Pattern
 
-### Python Orchestrator (recommended)
+### Decision: In-Process vs Distributed
+
+| Criterion | In-Process (`run`) | Distributed (`run-distributed`) |
+|-----------|-------------------|-------------------------------|
+| Case count | < 500 | 500+ |
+| JVM crash risk | Low | High (near-critical, wide-boiling) |
+| Multi-algorithm comparison | Sequential | Parallel (submit both, run all) |
+| Retry on failure | Manual restart | Automatic per chunk |
+| Checkpoint/resume | No | Every 50 cases |
+
+**Decision rule:** Use `run-distributed` when `total_cases > 500` OR the config
+includes `near_critical` or `stress_cases`. Use `run` for quick exploratory runs.
+
+### In-Process Mode (single JVM)
+
+```bash
+python flash_benchmark.py run --config benchmark_config.json --algorithm baseline --output results/
+```
+
+### Distributed Mode (isolated JVM per chunk via neqsim_runner)
+
+```bash
+python flash_benchmark.py run-distributed \
+    --config benchmark_config.json \
+    --algorithm baseline \
+    --output results/ \
+    --chunk-size 200 \
+    --retries 3 \
+    --timeout 3600
+```
+
+Each chunk of 200 cases runs in its own subprocess with its own JVM.
+If a chunk crashes (e.g., JVM segfault on a near-critical case), the runner
+retries it up to 3 times. Results are checkpointed every 50 cases, so a
+retry resumes from the last checkpoint instead of re-running the whole chunk.
+
+Output is identical to in-process mode: merged JSONL, summary JSON, failures JSON.
+
+### From Python (agent workflow)
+
+```python
+# In-process (simple, fast)
+from tools.flash_benchmark import run_benchmark
+summary = run_benchmark(config, "baseline", "results/")
+
+# Distributed (resilient, for large suites)
+from tools.flash_benchmark import run_distributed
+summary = run_distributed(config, "baseline", "results/",
+                          chunk_size=200, max_retries=3)
+```
+
+### Python Orchestrator (custom single-case)
 
 ```python
 from tools.neqsim_bootstrap import get_jneqsim

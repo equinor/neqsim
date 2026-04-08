@@ -731,6 +731,34 @@ public class InstrumentScheduleGenerator implements Serializable {
   }
 
   /**
+   * Produces a cross-reference map between ISA-5.1 instrument tags and IEC 81346 reference
+   * designations. For each instrument entry, the entry's {@code equipmentTag} is matched against
+   * equipment in the process system; if that equipment has an IEC 81346 reference designation
+   * assigned, the mapping is recorded.
+   *
+   * <p>
+   * This is useful for bridging North-American ISA-5.1 tagging (PT-101, TT-201) with IEC 81346
+   * functional designation systems (=A1.B1, =A1.K1).
+   * </p>
+   *
+   * @return a map from ISA-5.1 tag (e.g. "PT-101") to IEC 81346 designation string (e.g. "=A1.B1");
+   *         only entries where the parent equipment has a designation are included
+   */
+  public Map<String, String> getISAToIEC81346Map() {
+    Map<String, String> map = new LinkedHashMap<String, String>();
+    for (InstrumentEntry entry : entries) {
+      ProcessEquipmentInterface equip = processSystem.getUnit(entry.getEquipmentTag());
+      if (equip != null) {
+        String refDes = equip.getReferenceDesignationString();
+        if (refDes != null && !refDes.trim().isEmpty()) {
+          map.put(entry.getTagNumber(), refDes);
+        }
+      }
+    }
+    return Collections.unmodifiableMap(map);
+  }
+
+  /**
    * Represents a single instrument in the instrument schedule.
    *
    * @author esol

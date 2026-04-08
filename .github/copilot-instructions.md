@@ -1325,9 +1325,19 @@ docs, or the workspace root.
 
 1. Read `CONTEXT.md` for orientation (60 seconds)
 2. Search `docs/development/TASK_LOG.md` for similar past tasks
-3. Classify the task (Type A–G, see `docs/development/TASK_SOLVING_GUIDE.md`)
-4. Find the closest existing code (test, notebook, or source file)
-5. **Extract figures from reference PDFs** if the user provides literature papers,
+3. **Check for existing progress** — if a `progress.json` exists in the task folder,
+   read it first and resume from where the previous agent left off:
+   ```python
+   import sys; sys.path.insert(0, "devtools")
+   from neqsim_runner.progress import TaskProgress
+   progress = TaskProgress("task_solve/YYYY-MM-DD_slug")
+   if progress.is_resuming():
+       print(progress.resume_summary())
+       # Follow the next_action instruction — do NOT redo completed milestones
+   ```
+4. Classify the task (Type A–G, see `docs/development/TASK_SOLVING_GUIDE.md`)
+5. Find the closest existing code (test, notebook, or source file)
+6. **Extract figures from reference PDFs** if the user provides literature papers,
    standards, data sheets, or drawings in `step1_scope_and_research/references/`:
    ```bash
    python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
@@ -1341,6 +1351,16 @@ docs, or the workspace root.
 5. Follow patterns from `docs/development/CODE_PATTERNS.md`
 6. Verify using the checklist in `docs/development/TASK_SOLVING_GUIDE.md`
 7. Use the appropriate Copilot Chat agent (see `.github/agents/`)
+7b. **Checkpoint after every major step** to survive context window exhaustion:
+    ```python
+    from neqsim_runner.progress import TaskProgress
+    progress = TaskProgress("task_solve/YYYY-MM-DD_slug")
+    progress.complete_milestone("step2_notebook_executed",
+        summary="Main notebook ran successfully. Key results: ...",
+        outputs=["step2_analysis/01_analysis.ipynb"],
+        decisions={"key_results": {...}})
+    progress.set_next_action("Validate results against benchmarks")
+    ```
 8. **For economic/financial calculations:** Verify every formula against the jurisdiction's actual tax law or financial standard. Test with a manual hand-calculation. Check: independent vs cascaded tax bases, correct CAPEX timing (year-0 only), loss carry-forward, and no double-counting.
 9. **For cost estimation:** Use component-level NeqSim classes (e.g., `SURFCostEstimator`, `SubseaCostEstimator`) instead of flat lump-sum estimates. Break down CAPEX into verifiable subcategories.
 10. **Self-review before delivering:** Re-read all formulas checking for sign errors, double-counting, wrong time indexing, and missing terms. Compare key outputs against industry benchmarks.
