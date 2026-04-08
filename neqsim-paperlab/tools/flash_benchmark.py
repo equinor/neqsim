@@ -5,7 +5,13 @@ Generates test cases, runs baseline/candidate algorithms, and produces
 structured result files for paper-quality benchmarking.
 
 Usage:
+    # In-process (single JVM — good for < 500 cases)
     python flash_benchmark.py run --config benchmark_config.json --algorithm baseline --output results/
+
+    # Distributed via neqsim_runner (isolated JVM per chunk — good for 500+ cases)
+    python flash_benchmark.py run-distributed --config benchmark_config.json --algorithm baseline \
+        --output results/ --chunk-size 200 --retries 3
+
     python flash_benchmark.py generate --config benchmark_config.json --output cases.jsonl
     python flash_benchmark.py summarize --results results/raw/baseline_results.jsonl
 """
@@ -343,6 +349,188 @@ def summarize_results(results_file):
               f"({100*fam_conv/len(fam_records):.1f}%)")
 
 
+# ══════════════════════════════════════════════════════════
+# Distributed execution via neqsim_runner
+# ══════════════════════════════════════════════════════════
+
+def _chunk_list(lst, chunk_size):
+    """Split a list into chunks of at most chunk_size."""
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]
+
+
+def run_distributed(config, algorithm_name, results_dir,
+                    chunk_size=200, max_retries=3, timeout_seconds=3600):
+    """Run benchmark distributed across isolated subprocesses via neqsim_runner.
+
+    Each chunk of cases runs in its own JVM. If a chunk fails (JVM crash,
+    timeout), the runner retries it automatically. Results are merged into
+    the same JSONL + summary format as ``run_benchmark()``.
+
+    Args:
+        config: Benchmark configuration dict.
+        algorithm_name: Name for this algorithm version.
+        results_dir: Output directory (same layout as run_benchmark).
+        chunk_size: Number of cases per subprocess (default 200).
+        max_retries: Retry count per chunk (default 3).
+        timeout_seconds: Timeout per chunk in seconds (default 3600).
+
+    Returns:
+        Summary dict (same schema as run_benchmark).
+    """
+    # Lazy import — only needed for distributed mode
+    try:
+        from neqsim_runner.agent_bridge import AgentBridge
+    except ImportError:
+        print("ERROR: neqsim_runner not installed. Run: pip install -e devtools/")
+        print("Falling back to in-process mode...")
+        return run_benchmark(config, algorithm_name, results_dir)
+
+    cases = generate_cases(config)
+    eos_name = config["eos_models"][0]
+    timing_repeats = config.get("timing_repeats", 3)
+
+    chunks = list(_chunk_list(cases, chunk_size))
+    print(f"Distributed benchmark: {algorithm_name}")
+    print(f"  Total cases: {len(cases)}")
+    print(f"  Chunks: {len(chunks)} (size {chunk_size})")
+    print(f"  Retries per chunk: {max_retries}")
+    print(f"  Timeout per chunk: {timeout_seconds}s")
+    print()
+
+    # Resolve worker script path
+    worker_script = str(Path(__file__).parent / "benchmark_chunk_worker.py")
+
+    # Set up the runner bridge with output under results_dir
+    bridge = AgentBridge(
+        task_dir=Path(results_dir).resolve(),
+        queue_warn=len(chunks) + 10,
+        queue_limit=len(chunks) * 2,
+    )
+
+    # Submit one job per chunk
+    job_ids = []
+    for i, chunk in enumerate(chunks):
+        job_id = bridge.submit_script(
+            script_path=worker_script,
+            args={
+                "cases": chunk,
+                "eos_name": eos_name,
+                "algorithm_name": algorithm_name,
+                "timing_repeats": timing_repeats,
+                "chunk_index": i,
+            },
+            max_retries=max_retries,
+            timeout_seconds=timeout_seconds,
+        )
+        job_ids.append(job_id)
+
+    # Run all chunks (blocking — supervisor handles retry)
+    print(f"Running {len(job_ids)} chunks...")
+    bridge.run_all()
+
+    # Merge results
+    raw_dir = Path(results_dir) / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    merged_file = raw_dir / f"{algorithm_name}_results.jsonl"
+
+    all_records = []
+    n_succeeded = 0
+    n_failed_chunks = 0
+
+    for job_id in job_ids:
+        chunk_result = bridge.get_results(job_id)
+        if chunk_result is None:
+            n_failed_chunks += 1
+            print(f"  WARNING: chunk {job_id} produced no results")
+            continue
+
+        n_succeeded += 1
+        # Read the JSONL file from the chunk output
+        results_file = chunk_result.get("results_file")
+        if results_file and Path(results_file).exists():
+            with open(results_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        all_records.append(json.loads(line))
+
+    # Write merged JSONL
+    with open(merged_file, "w", encoding="utf-8") as f:
+        for record in all_records:
+            f.write(json.dumps(record) + "\n")
+
+    print(f"\nMerged {len(all_records)} results from {n_succeeded} chunks "
+          f"({n_failed_chunks} failed)")
+
+    # Build summary (same schema as run_benchmark)
+    n_total = len(all_records)
+    n_converged = sum(1 for r in all_records if r.get("converged"))
+    all_times = [r["cpu_time_ms"] for r in all_records if r.get("converged")]
+    failures = [r for r in all_records if not r.get("converged")]
+
+    family_stats = {}
+    for r in all_records:
+        fam = r.get("family", "unknown")
+        if fam not in family_stats:
+            family_stats[fam] = {"total": 0, "converged": 0, "times": []}
+        family_stats[fam]["total"] += 1
+        if r.get("converged"):
+            family_stats[fam]["converged"] += 1
+            family_stats[fam]["times"].append(r["cpu_time_ms"])
+
+    by_family = {}
+    for fam, stats in family_stats.items():
+        fam_summary = {
+            "total": stats["total"],
+            "converged": stats["converged"],
+            "convergence_rate_pct": round(
+                100.0 * stats["converged"] / stats["total"], 2
+            ) if stats["total"] > 0 else 0,
+        }
+        if stats["times"]:
+            fam_summary["median_cpu_ms"] = round(
+                statistics.median(stats["times"]), 4
+            )
+        by_family[fam] = fam_summary
+
+    summary = {
+        "algorithm": algorithm_name,
+        "eos": eos_name,
+        "total_cases": n_total,
+        "converged": n_converged,
+        "failed": n_total - n_converged,
+        "convergence_rate_pct": round(100.0 * n_converged / n_total, 2) if n_total > 0 else 0,
+        "median_cpu_ms": round(statistics.median(all_times), 4) if all_times else None,
+        "mean_cpu_ms": round(statistics.mean(all_times), 4) if all_times else None,
+        "by_family": by_family,
+        "execution_mode": "distributed",
+        "n_chunks": len(chunks),
+        "chunk_size": chunk_size,
+        "chunks_succeeded": n_succeeded,
+        "chunks_failed": n_failed_chunks,
+    }
+
+    # Write summary
+    summary_file = Path(results_dir) / f"summary_{algorithm_name}.json"
+    with open(summary_file, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+
+    # Write failures
+    failures_file = Path(results_dir) / f"failures_{algorithm_name}.json"
+    with open(failures_file, "w", encoding="utf-8") as f:
+        json.dump(failures, f, indent=2)
+
+    # Write metadata
+    record_metadata(results_dir)
+
+    print(f"  Convergence: {n_converged}/{n_total} ({summary['convergence_rate_pct']}%)")
+    if summary["median_cpu_ms"]:
+        print(f"  Median time: {summary['median_cpu_ms']} ms")
+    print(f"  Results: {merged_file}")
+
+    return summary
+
+
 def main():
     parser = argparse.ArgumentParser(description="Flash Benchmark Runner")
     subparsers = parser.add_subparsers(dest="command")
@@ -352,11 +540,26 @@ def main():
     gen.add_argument("--config", required=True, help="Benchmark config JSON")
     gen.add_argument("--output", default="cases.jsonl", help="Output JSONL file")
 
-    # Run command
-    run = subparsers.add_parser("run", help="Run benchmark suite")
+    # Run command (in-process, single JVM)
+    run = subparsers.add_parser("run", help="Run benchmark suite (single JVM)")
     run.add_argument("--config", required=True, help="Benchmark config JSON")
     run.add_argument("--algorithm", required=True, help="Algorithm name")
     run.add_argument("--output", default="results/", help="Output directory")
+
+    # Run-distributed command (isolated JVM per chunk via neqsim_runner)
+    dist = subparsers.add_parser(
+        "run-distributed",
+        help="Run benchmark distributed via neqsim_runner (isolated JVM per chunk)"
+    )
+    dist.add_argument("--config", required=True, help="Benchmark config JSON")
+    dist.add_argument("--algorithm", required=True, help="Algorithm name")
+    dist.add_argument("--output", default="results/", help="Output directory")
+    dist.add_argument("--chunk-size", type=int, default=200,
+                      help="Cases per subprocess (default: 200)")
+    dist.add_argument("--retries", type=int, default=3,
+                      help="Retries per chunk (default: 3)")
+    dist.add_argument("--timeout", type=int, default=3600,
+                      help="Timeout per chunk in seconds (default: 3600)")
 
     # Summarize command
     summ = subparsers.add_parser("summarize", help="Summarize results")
@@ -377,6 +580,16 @@ def main():
         with open(args.config) as f:
             config = json.load(f)
         run_benchmark(config, args.algorithm, args.output)
+
+    elif args.command == "run-distributed":
+        with open(args.config) as f:
+            config = json.load(f)
+        run_distributed(
+            config, args.algorithm, args.output,
+            chunk_size=args.chunk_size,
+            max_retries=args.retries,
+            timeout_seconds=args.timeout,
+        )
 
     elif args.command == "summarize":
         summarize_results(args.results)
