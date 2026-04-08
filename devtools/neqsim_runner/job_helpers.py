@@ -84,7 +84,7 @@ def save_checkpoint(data):
     os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
     # Write atomically: write to temp file then rename
     tmp = path + ".tmp"
-    with open(tmp, "w") as f:
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(tmp, path)
 
@@ -102,7 +102,7 @@ def load_checkpoint():
     if not path or not os.path.exists(path):
         return None
     try:
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError):
         return None
@@ -121,7 +121,7 @@ def save_result(data, filename="results.json"):
     """
     output_dir = get_output_dir()
     path = output_dir / filename
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
 

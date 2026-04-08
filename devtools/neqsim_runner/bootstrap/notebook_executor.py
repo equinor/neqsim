@@ -12,7 +12,7 @@ def main():
         print("ERROR: NEQSIM_JOB_FILE not set", file=sys.stderr)
         sys.exit(1)
 
-    with open(job_file, "r") as f:
+    with open(job_file, "r", encoding="utf-8") as f:
         job_spec = json.load(f)
 
     notebook_path = job_spec["script"]
@@ -35,7 +35,7 @@ def main():
         error_msg = (f"Notebook not found: {notebook_path}\n"
                      f"It may have been moved or deleted since job submission.")
         print(f"ERROR: {error_msg}", file=sys.stderr)
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({"status": "failed", "error": error_msg,
                        "timestamp": __import__("datetime").datetime.now(
                            __import__("datetime").timezone.utc).isoformat()}, f, indent=2)
@@ -49,7 +49,7 @@ def main():
         error_msg = ("nbformat and nbconvert are required for notebook execution. "
                      "Install with: pip install nbformat nbconvert")
         print(f"ERROR: {error_msg}", file=sys.stderr)
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({"status": "failed", "error": error_msg,
                        "timestamp": __import__("datetime").datetime.now(
                            __import__("datetime").timezone.utc).isoformat()}, f, indent=2)
@@ -120,7 +120,7 @@ def main():
             print(f"Copied figures from: {figures_dir}")
 
         # Write success marker
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({
                 "status": "success",
                 "executed_notebook": executed_path,
@@ -144,7 +144,7 @@ def main():
         except Exception as save_err:
             print(f"WARNING: Could not save partial notebook: {save_err}", file=sys.stderr)
 
-        with open(os.path.join(output_dir, "_status.json"), "w") as f:
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
             json.dump({
                 "status": "failed",
                 "error": str(e),
