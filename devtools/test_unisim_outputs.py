@@ -119,6 +119,20 @@ def _build_test_model():
                     feeds=["Feed Gas", "Recycled Condensate"],
                     products=["Mixed Feed"],
                 ),
+                # Adjuster: adjust compressor outlet pressure to hit
+                # a target temperature on the export gas stream
+                UniSimOperation(
+                    "Temp Adjuster", "adjust",
+                    feeds=[], products=[],
+                    properties={
+                        "adjusted_object_name": "Export Compressor",
+                        "adjusted_variable": "pressure",
+                        "target_object_name": "Aftercooler",
+                        "target_variable": "temperature",
+                        "target_value": 313.15,
+                        "tolerance": 0.5,
+                    },
+                ),
             ],
         ),
     )
@@ -348,6 +362,24 @@ def test_to_json():
 
     # Export Flash should be a Separator (2-phase flashtank)
     assert types_by_name.get('Export Flash') == 'Separator'
+
+    # --- Adjuster assertions ---
+
+    # Adjuster entry should exist with correct type
+    assert types_by_name.get('Temp Adjuster') == 'Adjuster', \
+        f"Expected Adjuster, got {types_by_name.get('Temp Adjuster')}"
+    adj_entry = next(e for e in process if e.get('name') == 'Temp Adjuster')
+    assert 'properties' in adj_entry
+    adj_props = adj_entry['properties']
+    # Check adjusted variable references
+    assert adj_props.get('adjustedEquipment') == 'Export Compressor'
+    assert adj_props.get('adjustedVariable') == 'pressure'
+    # Check target variable references
+    assert adj_props.get('targetEquipment') == 'Aftercooler'
+    assert adj_props.get('targetVariable') == 'temperature'
+    assert adj_props.get('targetValue') == 313.15
+    # Check tolerance
+    assert adj_props.get('tolerance') == 0.5
 
     print("  PASS")
     return result
