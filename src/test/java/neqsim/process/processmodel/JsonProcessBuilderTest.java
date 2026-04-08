@@ -66,6 +66,28 @@ class JsonProcessBuilderTest {
   }
 
   @Test
+  void testBuildWithWhitespaceAroundStreamReference() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    neqsim.process.equipment.separator.Separator separator =
+        new neqsim.process.equipment.separator.Separator("HP Sep", feed);
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+
+    assertNotNull(process.resolveStreamReference("  feed  "),
+        "resolveStreamReference should trim whitespace for plain stream names");
+    StreamInterface gasOutWithWhitespace = process.resolveStreamReference("  HP Sep. gasOut  ");
+    assertNotNull(gasOutWithWhitespace,
+        "resolveStreamReference should trim whitespace around unit and port tokens");
+  }
+
+  @Test
   void testBuildWithMultipleFluids() {
     String json = "{" + "\"fluids\": {" + "  \"gas\": {" + "    \"model\": \"SRK\","
         + "    \"temperature\": 298.15," + "    \"pressure\": 50.0,"
