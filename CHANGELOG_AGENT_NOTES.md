@@ -9,6 +9,55 @@
 
 ---
 
+## 2026-07-08 — UniSim Reader: Default E300 Fluid Export
+
+### E300 is Now the Default Fluid Transfer Route
+
+When importing fluids from UniSim to NeqSim, the **E300 file route is now the
+default**. `UniSimReader.read(export_e300=True)` (the default) extracts critical
+properties (Tc, Pc, acentric factor, MW, BIPs, volume shifts) from each component
+via COM and writes an E300 file per fluid package.
+
+This preserves all thermodynamic characterization — including hypothetical/pseudo
+components like C7+ fractions — that component name mapping alone cannot capture.
+
+### New Java Overloads
+
+```java
+// Build and run with a pre-built fluid (e.g., from E300 file)
+ProcessSystem.fromJsonAndRun(String json, SystemInterface fluid)
+JsonProcessBuilder.buildAndRun(String json, SystemInterface fluid)
+```
+
+### Python Usage (Automatic)
+
+```python
+reader = UniSimReader()
+model = reader.read(r'C:\path\to\model.usc')  # auto-exports E300 files
+for fp in model.fluid_packages:
+    print(f"  {fp.name}: {fp.e300_file_path}")
+
+converter = UniSimToNeqSim(model)
+result = converter.build_and_run()  # auto-loads E300 fluid
+```
+
+### Python Usage (Manual E300 Loading)
+
+```python
+from neqsim import jneqsim
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
+```
+
+### Affected Files
+- `devtools/unisim_reader.py` — `UniSimComponent` (critical properties), `UniSimFluidPackage` (`write_e300()`, `has_critical_properties`), `_extract_fluid_packages()` (COM property extraction), `_extract_bips()` (new), `read()` (`export_e300` parameter), `_build_fluid_section()` (E300 path in fluid dict), `build_and_run()` (E300 auto-loading)
+- `src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java` — `buildAndRun(String, SystemInterface)`, `buildFromJsonObject(JsonObject, SystemInterface)`
+- `src/main/java/neqsim/process/processmodel/ProcessSystem.java` — `fromJsonAndRun(String, SystemInterface)`
+- `.github/skills/neqsim-unisim-reader/SKILL.md` — E300 section added
+- `AGENTS.md` — Updated descriptions
+
+---
+
 ## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
 <<<<<<< HEAD
 

@@ -3961,6 +3961,26 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Builds and runs a process simulation from a JSON definition using a pre-built fluid.
+   *
+   * <p>
+   * This overload is used when the fluid has been loaded from an external source (e.g., an Eclipse
+   * E300 file via {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite}) and should be used
+   * instead of parsing the fluid section in the JSON. The pre-built fluid preserves all component
+   * critical properties (Tc, Pc, acentric factor, MW, BIPs) for both standard and
+   * hypothetical/pseudo components.
+   * </p>
+   *
+   * @param json the JSON process definition string (the 'fluid' section is ignored)
+   * @param fluid the pre-built thermodynamic system to use
+   * @return a SimulationResult containing the executed process and report, or errors
+   * @see JsonProcessBuilder#buildAndRun(String, SystemInterface)
+   */
+  public static SimulationResult fromJsonAndRun(String json, SystemInterface fluid) {
+    return JsonProcessBuilder.buildAndRun(json, fluid);
+  }
+
+  /**
    * Resolves a named stream reference within this process system.
    *
    * <p>
