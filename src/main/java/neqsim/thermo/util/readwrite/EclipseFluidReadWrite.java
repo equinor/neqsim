@@ -41,8 +41,8 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid        a {@link neqsim.thermo.system.SystemInterface} object
-   * @param inputFile    a {@link java.lang.String} object
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile, String pseudoNameIn) {
@@ -55,7 +55,7 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid     a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile) {
@@ -97,7 +97,7 @@ public class EclipseFluidReadWrite {
    * read.
    * </p>
    *
-   * @param inputFile    a {@link java.lang.String} object
+   * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -107,10 +107,8 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * Read an Eclipse E300 fluid file and load components into the supplied fluid
-   * system, ignoring
-   * the EOS keyword in the file. This allows any NeqSim EOS (e.g.
-   * SystemPrLeeKeslerEos) to be used
+   * Read an Eclipse E300 fluid file and load components into the supplied fluid system, ignoring
+   * the EOS keyword in the file. This allows any NeqSim EOS (e.g. SystemPrLeeKeslerEos) to be used
    * with an E300 composition file that was written for a different EOS.
    *
    * <p>
@@ -122,11 +120,9 @@ public class EclipseFluidReadWrite {
    * EclipseFluidReadWrite.read(e300Path, fluid);
    * </pre>
    *
-   * @param inputFile   a {@link java.lang.String} object — path to the E300 file
-   * @param targetFluid a pre-created {@link neqsim.thermo.system.SystemInterface}
-   *                    to populate
-   * @return the same {@code targetFluid} instance, now populated with components
-   *         and BIPs
+   * @param inputFile a {@link java.lang.String} object — path to the E300 file
+   * @param targetFluid a pre-created {@link neqsim.thermo.system.SystemInterface} to populate
+   * @return the same {@code targetFluid} instance, now populated with components and BIPs
    * @throws java.lang.IllegalArgumentException if the input file cannot be read
    */
   public static SystemInterface read(String inputFile, SystemInterface targetFluid) {
@@ -140,16 +136,27 @@ public class EclipseFluidReadWrite {
    *
    * @param inputFile a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile) {
     return readImpl(inputFile, null);
   }
 
   /**
-   * Internal implementation. If {@code forcedFluid} is non-null it is used as the
-   * target (EOS
+   * Reads a line from the given reader and strips '/' delimiter characters. Returns null if
+   * end-of-stream is reached, preventing NPE from calling replace on a null readLine() result.
+   *
+   * @param br the BufferedReader to read from
+   * @return the line with '/' characters removed, or null at end of stream
+   * @throws IOException if an I/O error occurs
+   */
+  private static String readLineClean(BufferedReader br) throws IOException {
+    String line = br.readLine();
+    return line != null ? line.replace("/", "") : null;
+  }
+
+  /**
+   * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS
    * keyword in file is ignored). Otherwise the EOS keyword drives fluid creation.
    */
   private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid) {
@@ -194,14 +201,22 @@ public class EclipseFluidReadWrite {
 
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
-          EOS = br.readLine().trim().replace("/", "");
+          String eosLine = br.readLine();
+          if (eosLine == null) {
+            break;
+          }
+          EOS = eosLine.trim().replace("/", "");
           if (forcedFluid == null) {
             // Only auto-create the fluid system when no target was forced by the caller.
             if (EOS.contains("SRK")) {
               fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             } else if (EOS.contains("PR")) {
-              String corr = br.readLine().trim().replace("/", "");
+              String corrLine = br.readLine();
+              if (corrLine == null) {
+                break;
+              }
+              String corr = corrLine.trim().replace("/", "");
               if (corr.equals("PRLKCORR")) {
                 fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
                     ThermodynamicConstantsInterface.referencePressure);
@@ -222,104 +237,126 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.trim().equals("CNAMES")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             names.add(st);
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.trim().equals("TCRIT")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TC.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("PCRIT")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PC.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("ACF")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ACF.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("MW")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             MW.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("TBOIL")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TBOIL.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("VCRIT")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             VCRIT.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("SSHIFT")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             SSHIFT.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("PARACHOR")) {
-          st = st.trim();
-          while ((st = br.readLine().trim().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PARACHOR.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("ZI")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ZI.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("BIC")) {
-          st = st.trim();
           int addedComps = 0;
           kij = new Double[names.size()][names.size()];
           for (Double[] row : kij) {
@@ -327,10 +364,9 @@ public class EclipseFluidReadWrite {
           }
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
-          while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
+          while (addedComps < names.size() - 1 && (st = readLineClean(br)) != null) {
             st = st.trim();
-            if (st.startsWith("--") || st.isEmpty() || st.trim().startsWith("/")
-                || st.trim().startsWith(" ")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
 
@@ -350,20 +386,51 @@ public class EclipseFluidReadWrite {
             addedComps++;
             list.clear();
           }
+          if (st == null) {
+            break;
+          }
+        }
+        if (st.trim().equals("PEDERSEN")) {
+          usePedersen = true;
+        }
+        if (st.trim().equals("BICS")) {
+          // Skip BICS section (surface-condition BIPs) - not needed for standard fluid
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+          }
+          if (st == null) {
+            break;
+          }
+        }
+        if (st.trim().equals("ZCRIT")) {
+          // Skip ZCRIT section (critical Z-factors) - informational only
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+          }
+          if (st == null) {
+            break;
+          }
         }
         if (st.trim().equals("SSHIFTS")) {
-          String line;
-          while ((line = br.readLine()) != null) {
-            line = line.trim();
-            st = line.replace("/", "");
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             try {
               SSHIFTS.add(Double.parseDouble(st));
             } catch (NumberFormatException e) {
-              System.out.println("Error parsing double value: " + e.getMessage());
+              logger.debug("Error parsing SSHIFTS value: " + e.getMessage());
             }
+          }
+          if (st == null) {
+            break;
           }
         }
         if (st.trim().equals("OMEGAA")) {
@@ -468,12 +535,18 @@ public class EclipseFluidReadWrite {
           fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
           fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));
           fluid.getPhase(i).getComponent(name).setMolarMass(MW.get(counter) / 1000.0);
-          fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
-          fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
-          fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
-          if (SSHIFTS.size() > 0) {
+          if (TBOIL.size() > counter) {
+            fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
+          }
+          if (VCRIT.size() > counter) {
+            fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
+          }
+          if (PARACHOR.size() > counter) {
+            fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
+          }
+          if (SSHIFTS.size() > counter) {
             fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFTS.get(counter));
-          } else {
+          } else if (SSHIFT.size() > counter) {
             fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
           }
           fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
@@ -494,8 +567,8 @@ public class EclipseFluidReadWrite {
       if (!OMEGAA_list.isEmpty()) {
         for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
           for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
-            neqsim.thermo.component.ComponentEos comp = (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum)
-                .getComponent(k);
+            neqsim.thermo.component.ComponentEos comp =
+                (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum).getComponent(k);
             comp.setOmegaA(OMEGAA_list.get(k));
           }
         }
@@ -544,48 +617,37 @@ public class EclipseFluidReadWrite {
    * Read an Eclipse E300 fluid file and optionally add a water component.
    *
    * <p>
-   * When {@code addWater} is true and the fluid does not already contain water, a
-   * water component
-   * is added with zero mole fraction and binary interaction parameters (kij) of
-   * 0.5 against all
-   * other components. This matches the water parameterization used in
-   * PVTsim-generated E300 files
-   * (e.g., osebergfluid_water.e300). Multi-phase check is also enabled so that an
-   * aqueous phase can
+   * When {@code addWater} is true and the fluid does not already contain water, a water component
+   * is added with zero mole fraction and binary interaction parameters (kij) of 0.5 against all
+   * other components. This matches the water parameterization used in PVTsim-generated E300 files
+   * (e.g., osebergfluid_water.e300). Multi-phase check is also enabled so that an aqueous phase can
    * form.
    * </p>
    *
    * @param inputFile path to the Eclipse E300 fluid file
-   * @param addWater  if true, add a water component with default kij = 0.5
+   * @param addWater if true, add a water component with default kij = 0.5
    * @return a {@link neqsim.thermo.system.SystemInterface} object
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, boolean addWater) {
     return read(inputFile, addWater, 0.5);
   }
 
   /**
-   * Read an Eclipse E300 fluid file and optionally add a water component with a
-   * custom kij value.
+   * Read an Eclipse E300 fluid file and optionally add a water component with a custom kij value.
    *
    * <p>
-   * When {@code addWater} is true and the fluid does not already contain water, a
-   * water component
-   * is added with zero mole fraction and the specified binary interaction
-   * parameter (kij) against
-   * all other components. Multi-phase check is enabled so that an aqueous phase
-   * can form.
+   * When {@code addWater} is true and the fluid does not already contain water, a water component
+   * is added with zero mole fraction and the specified binary interaction parameter (kij) against
+   * all other components. Multi-phase check is enabled so that an aqueous phase can form.
    * </p>
    *
    * @param inputFile path to the Eclipse E300 fluid file
-   * @param addWater  if true, add a water component
-   * @param waterKij  binary interaction parameter between water and all other
-   *                  components (typical
-   *                  value: 0.5)
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components (typical
+   *        value: 0.5)
    * @return a {@link neqsim.thermo.system.SystemInterface} object
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, boolean addWater, double waterKij) {
     SystemInterface fluid = read(inputFile);
@@ -596,33 +658,28 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add
-   * a water component.
+   * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add a water component.
    *
-   * @param inputFile    path to the Eclipse E300 fluid file
+   * @param inputFile path to the Eclipse E300 fluid file
    * @param pseudoNameIn pseudo-name suffix appended to pseudo-component names
-   * @param addWater     if true, add a water component with default kij = 0.5
+   * @param addWater if true, add a water component with default kij = 0.5
    * @return a {@link neqsim.thermo.system.SystemInterface} object
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, String pseudoNameIn, boolean addWater) {
     return read(inputFile, pseudoNameIn, addWater, 0.5);
   }
 
   /**
-   * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add
-   * a water component
+   * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add a water component
    * with a custom kij value.
    *
-   * @param inputFile    path to the Eclipse E300 fluid file
+   * @param inputFile path to the Eclipse E300 fluid file
    * @param pseudoNameIn pseudo-name suffix appended to pseudo-component names
-   * @param addWater     if true, add a water component
-   * @param waterKij     binary interaction parameter between water and all other
-   *                     components
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components
    * @return a {@link neqsim.thermo.system.SystemInterface} object
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, String pseudoNameIn, boolean addWater,
       double waterKij) {
@@ -635,30 +692,23 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * Add a water component to an existing fluid with specified binary interaction
-   * parameters.
+   * Add a water component to an existing fluid with specified binary interaction parameters.
    *
    * <p>
-   * This method adds water as a component with zero mole fraction to a fluid that
-   * was typically
-   * read from an E300 file without water. The water component is added with
-   * standard NeqSim water
-   * properties from the component database, a specified kij value against all
-   * other components
-   * (default: 0.5), a volume correction constant of 0.084004, and a parachor
-   * parameter of 10.0
-   * (matching PVTsim water calibration). Multi-phase check is enabled so that an
-   * aqueous phase can
+   * This method adds water as a component with zero mole fraction to a fluid that was typically
+   * read from an E300 file without water. The water component is added with standard NeqSim water
+   * properties from the component database, a specified kij value against all other components
+   * (default: 0.5), a volume correction constant of 0.084004, and a parachor parameter of 10.0
+   * (matching PVTsim water calibration). Multi-phase check is enabled so that an aqueous phase can
    * be identified.
    * </p>
    * <p>
    * If the fluid already contains a water component, this method does nothing.
    * </p>
    *
-   * @param fluid    the fluid to add water to
-   * @param waterKij binary interaction parameter between water and all other
-   *                 components (typical
-   *                 value: 0.5)
+   * @param fluid the fluid to add water to
+   * @param waterKij binary interaction parameter between water and all other components (typical
+   *        value: 0.5)
    */
   public static void addWaterToFluid(SystemInterface fluid, double waterKij) {
     if (fluid.hasComponent("water")) {
@@ -723,16 +773,12 @@ public class EclipseFluidReadWrite {
    * read.
    * </p>
    *
-   * @param inputFile  a {@link java.lang.String} object representing the path to
-   *                   the input file
-   * @param fluidNames an array of {@link java.lang.String} objects representing
-   *                   the names of the
-   *                   fluids
-   * @return a {@link neqsim.thermo.system.SystemInterface} object representing
-   *         the thermodynamic
+   * @param inputFile a {@link java.lang.String} object representing the path to the input file
+   * @param fluidNames an array of {@link java.lang.String} objects representing the names of the
+   *        fluids
+   * @return a {@link neqsim.thermo.system.SystemInterface} object representing the thermodynamic
    *         system
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, String[] fluidNames) {
     File file = new File(inputFile);
@@ -907,18 +953,19 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.trim().equals("SSHIFTS")) {
-          String line;
-          while ((line = br.readLine()) != null) {
-            line = line.trim();
-            st = line.replace("/", "");
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             try {
               SSHIFTS.add(Double.parseDouble(st));
             } catch (NumberFormatException e) {
-              System.out.println("Error parsing double value: " + e.getMessage());
+              logger.debug("Error parsing SSHIFTS value: " + e.getMessage());
             }
+          }
+          if (st == null) {
+            break;
           }
         }
         if (st.trim().equals("OMEGAA")) {
@@ -1077,8 +1124,8 @@ public class EclipseFluidReadWrite {
       if (!OMEGAA_list.isEmpty()) {
         for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
           for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
-            neqsim.thermo.component.ComponentEos comp = (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum)
-                .getComponent(k);
+            neqsim.thermo.component.ComponentEos comp =
+                (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum).getComponent(k);
             comp.setOmegaA(OMEGAA_list.get(k));
           }
         }
@@ -1153,8 +1200,7 @@ public class EclipseFluidReadWrite {
    *
    * @param inputFile a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
-   * @throws java.lang.IllegalArgumentException if the input file does not exist
-   *                                            or cannot be read
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface readE300File(String inputFile) {
     File file = new File(inputFile);
@@ -1271,16 +1317,13 @@ public class EclipseFluidReadWrite {
    * Write a NeqSim fluid to Eclipse E300 compositional EOS file format.
    *
    * <p>
-   * The exported file contains all EOS parameters needed to recreate the fluid in
-   * Eclipse 300 or
-   * read it back into NeqSim, including: component names, critical properties,
-   * acentric factors,
-   * molecular weights, volume shifts, parachors, mole fractions, and binary
-   * interaction
+   * The exported file contains all EOS parameters needed to recreate the fluid in Eclipse 300 or
+   * read it back into NeqSim, including: component names, critical properties, acentric factors,
+   * molecular weights, volume shifts, parachors, mole fractions, and binary interaction
    * coefficients.
    * </p>
    *
-   * @param fluid      the fluid to export
+   * @param fluid the fluid to export
    * @param outputFile path to output file (e.g., "myfluid.e300")
    * @throws IOException if writing fails
    */
@@ -1291,8 +1334,8 @@ public class EclipseFluidReadWrite {
   /**
    * Write a NeqSim fluid to Eclipse E300 compositional EOS file format.
    *
-   * @param fluid          the fluid to export
-   * @param outputFile     path to output file
+   * @param fluid the fluid to export
+   * @param outputFile path to output file
    * @param reservoirTempC reservoir temperature in Celsius for RTEMP keyword
    * @throws IOException if writing fails
    */
@@ -1304,8 +1347,8 @@ public class EclipseFluidReadWrite {
   /**
    * Write a NeqSim fluid to Eclipse E300 compositional EOS file format.
    *
-   * @param fluid          the fluid to export
-   * @param outputPath     output file path
+   * @param fluid the fluid to export
+   * @param outputPath output file path
    * @param reservoirTempC reservoir temperature in Celsius
    * @throws IOException if writing fails
    */
@@ -1329,7 +1372,7 @@ public class EclipseFluidReadWrite {
   /**
    * Convert a NeqSim fluid to Eclipse E300 format string.
    *
-   * @param fluid          the fluid to export
+   * @param fluid the fluid to export
    * @param reservoirTempC reservoir temperature in Celsius
    * @return E300 format content as string
    */
@@ -1356,15 +1399,16 @@ public class EclipseFluidReadWrite {
   /**
    * Internal method to write E300 content to a Writer.
    *
-   * @param fluid          the fluid to export
-   * @param writer         output writer
+   * @param fluid the fluid to export
+   * @param writer output writer
    * @param reservoirTempC reservoir temperature in Celsius
    * @throws IOException if writing fails
    */
   private static void writeToWriter(SystemInterface fluid, java.io.Writer writer,
       double reservoirTempC) throws IOException {
     int nComps = fluid.getNumberOfComponents();
-    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    String timestamp =
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
     // Header
     writer.write("-- Eclipse 300 Compositional EOS File\n");
@@ -1681,7 +1725,7 @@ public class EclipseFluidReadWrite {
   /**
    * Apply LBC viscosity model with custom parameters to fluid.
    *
-   * @param fluid     the fluid to configure
+   * @param fluid the fluid to configure
    * @param lbcParams array of 5 LBC dense contribution parameters
    */
   private static void applyLBCViscosityModel(SystemInterface fluid, double[] lbcParams) {

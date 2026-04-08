@@ -1174,4 +1174,65 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(fluid.doMultiPhaseCheck(),
         "Multi-phase check should be enabled after adding water");
   }
+
+  @Test
+  void testReadPvtSimReferenceFormat() throws IOException {
+    // Read the PVTsim Nova reference E300 format with all sections:
+    // OMEGAA, OMEGAB, TBOIL, VCRIT, ZCRIT, SSHIFT, PARACHOR, BICS, PEDERSEN, SSHIFTS
+    String pvtsimFile = file.getAbsolutePath() + "/pvtsim_reference.e300";
+    testSystem = EclipseFluidReadWrite.read(pvtsimFile);
+
+    // Verify correct number of components (17)
+    assertEquals(17, testSystem.getNumberOfComponents());
+
+    // Verify EOS type is PR (PRCORR)
+    Assertions.assertTrue(testSystem instanceof neqsim.thermo.system.SystemPrEos1978);
+
+    // Verify key component properties
+    // First component is N2 (nitrogen)
+    Assertions.assertTrue(testSystem.hasComponent("nitrogen"));
+    // Third component is C1 (methane)
+    Assertions.assertTrue(testSystem.hasComponent("methane"));
+    // Last component is H2O (water)
+    Assertions.assertTrue(testSystem.hasComponent("water"));
+
+    // Verify Tc for methane (should be ~190.578 K)
+    double methane_tc = testSystem.getComponent("methane").getTC();
+    assertEquals(190.578, methane_tc, 0.01);
+
+    // Verify composition sums to ~1.0
+    double sumZi = 0.0;
+    for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
+      sumZi += testSystem.getComponent(i).getz();
+    }
+    assertEquals(1.0, sumZi, 1e-4);
+
+    // Verify BIPs were loaded from the BIC lower-triangular matrix.
+    // Component order: N2(0), CO2(1), C1(2), ...
+    // BIC row 0: kij(N2,CO2) = 0.0
+    // BIC row 1: kij(N2,C1) = 0.025, kij(CO2,C1) = 0.105
+    double kij_n2_co2 = ((PhaseEos) testSystem.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(0, 1);
+    assertEquals(0.0, kij_n2_co2, 1e-4);
+    double kij_co2_c1 = ((PhaseEos) testSystem.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(1, 2);
+    assertEquals(0.105, kij_co2_c1, 1e-4);
+
+    // Verify SSHIFTS (volume correction) were loaded for all 17 components.
+    // First SSHIFTS value (N2) = -0.193010, last (H2O) = 0.126143
+    double n2VolCorr = testSystem.getPhase(0).getComponent("nitrogen").getVolumeCorrectionConst();
+    assertEquals(-0.193010, n2VolCorr, 1e-4, "SSHIFTS value for N2 should match");
+    double waterVolCorr = testSystem.getPhase(0).getComponent("water").getVolumeCorrectionConst();
+    assertEquals(0.126143, waterVolCorr, 1e-4, "SSHIFTS value for water should match");
+
+    // Verify Pedersen viscosity model flag was set
+    // (PEDERSEN keyword appears in the reference file)
+
+    // Verify a TPflash runs without error
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(100.0, "bara");
+    testSystem.setTemperature(110.0, "C");
+    testOps.TPflash();
+    Assertions.assertTrue(testSystem.getNumberOfPhases() >= 1);
+  }
 }

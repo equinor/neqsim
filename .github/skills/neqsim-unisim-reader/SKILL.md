@@ -326,6 +326,55 @@ that was specifically fitted with both OMEGAA and BICs together.
 NeqSim's E300 recognized name map — they will be treated as TBP pseudo-fractions
 with estimated density.
 
+### E300 Fluid Export (DEFAULT — Recommended Route)
+
+**The E300 export route is the default and preferred method for transferring
+fluid definitions from UniSim to NeqSim.** It preserves all critical properties
+(Tc, Pc, acentric factor, MW, BIPs, volume shifts, parachors) for both standard
+and hypothetical/pseudo components — including C7+ fractions that cannot be
+accurately recreated by component name mapping alone.
+
+When `UniSimReader.read()` is called with `export_e300=True` (the default),
+it extracts critical properties from each component in each fluid package via COM,
+then writes an E300 file per fluid package to the output directory.
+
+**COM properties extracted per component:**
+- `component.CriticalTemperature` → Tc (K)
+- `component.CriticalPressure` → Pc (kPa → bara, divide by 100)
+- `component.AcentricFactor` → omega
+- `component.MolecularWeight` → MW (g/mol)
+- `component.NormalBoilingPoint` → Tboil (K)
+- `component.CriticalVolume` → Vcrit (m³/kgmol)
+
+**BIPs extracted via:** `FluidPackage.PropertyPackage.GetBIP(i, j)` or
+`PropertyPackage.BinaryInteractionParameters` (matrix fallback).
+
+**E300 file format keywords:**
+`METRIC`, `NCOMPS`, `EOS`, `PRCORR`, `RTEMP`, `STCOND`, `CNAMES`, `TCRIT`,
+`PCRIT`, `ACF`, `MW`, `TBOIL`, `VCRIT`, `SSHIFT`, `PARACHOR`, `ZI`, `BIC`
+
+**NeqSim loading:** Use `EclipseFluidReadWrite.read(e300Path)` in Java, or
+via Python: `jneqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(path)`.
+
+**Automatic integration:** When `build_and_run()` detects an E300 file in the
+fluid section, it loads the fluid via `EclipseFluidReadWrite.read()` and passes
+it to `ProcessSystem.fromJsonAndRun(json, fluid)`, bypassing component name
+mapping entirely.
+
+```python
+# Example: Full E300 workflow
+reader = UniSimReader()
+model = reader.read(r'C:\path\to\model.usc')  # auto-exports E300 files
+
+# E300 files now available:
+for fp in model.fluid_packages:
+    print(f"  {fp.name}: {fp.e300_file_path}")
+
+# Convert to NeqSim and run — E300 fluid used automatically
+converter = UniSimToNeqSim(model)
+result = converter.build_and_run()
+```
+
 ---
 
 ## 2. Operation Type Mapping
