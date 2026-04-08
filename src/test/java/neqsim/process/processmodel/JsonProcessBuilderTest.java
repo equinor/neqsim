@@ -505,4 +505,40 @@ class JsonProcessBuilderTest {
     Stream feed = (Stream) process.getUnit("feed");
     assertTrue(feed.getFlowRate("kg/hr") > 0, "Feed flow should be positive");
   }
+
+  @Test
+  void testBuildWithAdjuster() {
+    // Tests that an Adjuster wires its adjusted/target variables correctly
+    // from JSON properties (no inlet/inlets — references other equipment).
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"sep\","
+        + "   \"inlet\": \"feed\"},"
+        + "  {\"type\": \"Compressor\", \"name\": \"comp\","
+        + "   \"inlet\": \"sep.gasOut\","
+        + "   \"properties\": {\"outletPressure\": 100.0}},"
+        + "  {\"type\": \"Cooler\", \"name\": \"cooler\","
+        + "   \"inlet\": \"comp.outlet\","
+        + "   \"properties\": {\"outTemperature\": 303.15}},"
+        + "  {\"type\": \"Adjuster\", \"name\": \"adj\","
+        + "   \"properties\": {"
+        + "     \"adjustedEquipment\": \"comp\","
+        + "     \"adjustedVariable\": \"pressure\","
+        + "     \"targetEquipment\": \"cooler\","
+        + "     \"targetVariable\": \"temperature\","
+        + "     \"targetValue\": 313.15,"
+        + "     \"tolerance\": 0.5"
+        + "   }}" + "]," + "\"autoRun\": true" + "}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertFalse(result.isError(), "Build+run should not error: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    assertNotNull(process);
+    assertNotNull(process.getUnit("adj"), "Adjuster should exist");
+    assertNotNull(process.getUnit("comp"), "Compressor should exist");
+    assertNotNull(process.getUnit("cooler"), "Cooler should exist");
+  }
 }
