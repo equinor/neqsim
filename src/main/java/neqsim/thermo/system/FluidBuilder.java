@@ -97,7 +97,9 @@ public class FluidBuilder implements Serializable {
     /** SRK with Peneloux volume correction. */
     SRK_PENELOUX,
     /** PR 1978 modification. */
-    PR_1978
+    PR_1978,
+    /** Peng-Robinson with Lee-Kesler alpha function (matches HYSYS/UniSim "Peng-Robinson"). */
+    PR_LK
   }
 
   /**
@@ -297,6 +299,8 @@ public class FluidBuilder implements Serializable {
         return new SystemSrkPenelouxEos(temperatureK, pressureBara);
       case PR_1978:
         return new SystemPrEos1978(temperatureK, pressureBara);
+      case PR_LK:
+        return new SystemPrLeeKeslerEos(temperatureK, pressureBara);
       case SRK:
       default:
         return new SystemSrkEos(temperatureK, pressureBara);
