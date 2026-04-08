@@ -730,6 +730,8 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       ArrayList<Double> BICS = new ArrayList<Double>();
       ArrayList<Double> LBCCOEF = new ArrayList<Double>();
+      ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
+      ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
       String EOS;
       while ((st = br.readLine()) != null) {

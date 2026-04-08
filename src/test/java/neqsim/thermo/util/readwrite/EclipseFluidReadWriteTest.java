@@ -42,7 +42,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String gow = file.getAbsolutePath() + "/gas_oil_water.e300";
 
   /**
-   * 
+   *
    * @Test void testReadBrd() throws IOException { testSystem =
    *       EclipseFluidReadWrite.read(file_brd); double[] molcomp = new double[] {0.000793504,
    *       0.002185115, 0.970279547, 0.020714159, 0.002100576, 0.002181042, 0.000447426,
@@ -51,12 +51,12 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    *       {0.001139104, 0.002173947, 0.969756121, 0.02078901, 0.002092749, 0.002280241,
    *       0.000446227, 0.000499483, 0.000120059, 0.000288996, 0.000226389, 0.000151364,
    *       3.43368E-05, 1.97238E-06, 1.15E-09, 8.71E-13, 3.03E-16, 1.57E-25};
-   * 
+   *
    *       testSystem.setMolarComposition(molcomp);
-   * 
+   *
    *       Stream stream1 = new Stream("Stream1", testSystem); stream1.run(); assertEquals(-4.0,
    *       stream1.CCT("C"), 0.2); }
-   * 
+   *
    *       /** Test method for
    *       {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
    *
@@ -152,7 +152,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     double x_methane_A19 = testSystem.getPhase(1).getComponent("methane_A19").getx();
     assertEquals(0.0, x_methane_A13, 1e-9);
-    assertEquals(0.0046202437, x_methane_A19, 1e-9);
+    assertEquals(0.0046202120219944005, x_methane_A19, 1e-9);
 
     // double[][] interactionParams =
     // ((PhaseEos)
@@ -378,8 +378,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value due to thermodynamic model changes
-    Assertions.assertEquals(-4639.29712, ent, 1e-3);
+    // Updated expected value: OMEGAA from file (0.45724) now applied instead of default
+    // (0.45724333333)
+    Assertions.assertEquals(-4639.239569750378, ent, 1e-3);
 
     // Oil outlet stream is single-phase oil after separation
     Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
