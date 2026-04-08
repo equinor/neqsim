@@ -6,7 +6,7 @@ description: "NeqSim documentation home page. Navigate to thermodynamics, proces
 
 # NeqSim Documentation
 
-**NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation developed by [Equinor](https://www.equinor.com/).
+**NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation developed at [NTNU](https://www.ntnu.edu/).
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>
@@ -258,6 +258,6 @@ print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
 <div class="doc-footer" style="margin-top: 2rem; padding-top: 1.5rem; text-align: center; color: #6a737d;">
-<p>NeqSim is developed and maintained by <a href="https://www.equinor.com/" style="color: #159957;">Equinor</a> and contributors.</p>
+<p>NeqSim is developed and maintained by the <a href="https://github.com/equinor/neqsim" style="color: #159957;">NeqSim community</a> and contributors.</p>
 <p>Licensed under the <a href="https://opensource.org/licenses/Apache-2.0" style="color: #159957;">Apache 2.0 License</a>.</p>
 </div>

@@ -369,7 +369,7 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 > **Glycol/TEG Contactor Rule**: When an Absorber operation has a name
 > containing "glyc", "teg", or "dehydrat" (case-insensitive), the code
 > generator produces a `ComponentSplitter` instead of a `DistillationColumn`.
-> This removes water from the gas stream using the Oseberg pattern:
+> This removes water from the gas stream using the standard pattern:
 > `setSplitFactors([1.0] * (N-1) + [0.0])` where water is the last component.
 > Stream 0 = dry gas, stream 1 = removed water. Port resolution uses
 > `split0`/`split1` instead of `gasOut`/`liquidOut`. Non-glycol absorbers
@@ -599,7 +599,7 @@ out with a skip reason. This output is ideal for:
 - **Manual editing** — users can modify equipment parameters, add controllers
 - **Learning** — shows the exact NeqSim API mapping for each UniSim operation
 
-**Example for the Grane platform model:** `to_python()` generates ~850 lines
+**Example for a large platform model:** `to_python()` generates ~850 lines
 covering ~180 operations including Splitters, ThreePhaseSeparators, Compressors,
 Coolers, Mixers, ThrottlingValves, and sub-flowsheet equipment.
 
@@ -938,13 +938,13 @@ In NeqSim, these map to either:
 | Main + 3+ sub-flowsheets | ProcessModule with separate ProcessSystems |
 | Sub-flowsheet has own fluid package | Must be separate ProcessSystem |
 
-### Example: Grane Model Structure
+### Example: Large Platform Model Structure
 
 ```
 Main Flowsheet (146 operations)
-├── Breidablikk (18 operations) — well stream preparation
-├── Grane_LP (16 operations) — low pressure inlet
-├── Grane_HP (6 operations) — high pressure inlet
+├── Satellite (18 operations) — well stream preparation
+├── LP_Inlet (16 operations) — low pressure inlet
+├── HP_Inlet (6 operations) — high pressure inlet
 ├── TPL1 (6 operations) — test separator
 ├── DPC_UNIT (20 operations) — dew point control
 └── HM (41 operations) — heating medium system
@@ -955,11 +955,11 @@ This would become:
 from neqsim import jneqsim
 ProcessModule = jneqsim.process.processmodel.ProcessModule
 
-module = ProcessModule("Grane")
+module = ProcessModule("Platform")
 module.add(main_process)         # Main separation & compression
-module.add(breidablikk_process)  # Breidablikk wells
-module.add(grane_lp_process)     # LP inlet
-module.add(grane_hp_process)     # HP inlet
+module.add(satellite_process)    # Satellite wells
+module.add(lp_inlet_process)     # LP inlet
+module.add(hp_inlet_process)     # HP inlet
 module.add(dpc_process)          # Dew point control
 # HM (heating medium) typically not modeled in NeqSim
 module.run()

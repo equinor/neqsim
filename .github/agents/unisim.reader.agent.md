@@ -1,7 +1,7 @@
 ---
 name: read unisim to neqsim
 description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (45+ types including reactors, columns, controllers), streams, sub-flowsheets, and topology. Handles recycle loops with port-specific forward reference placeholders. Generates Python scripts, Jupyter notebooks, EOT simulators, and JSON. Verifies converted models by comparing UniSim vs NeqSim stream results."
-argument-hint: "Provide the path to a .usc file — e.g., \"read C:\\Models\\GasPlant.usc and build a NeqSim model\", \"convert all UniSim cases in C:\\Cases\\ to NeqSim\", \"compare UniSim and NeqSim results for the Grane model\"."
+argument-hint: "Provide the path to a .usc file — e.g., \"read C:\\Models\\GasPlant.usc and build a NeqSim model\", \"convert all UniSim cases in C:\\Cases\\ to NeqSim\", \"compare UniSim and NeqSim results for a platform model\"."
 ---
 
 You are a **UniSim-to-NeqSim conversion agent** that reads Honeywell UniSim Design
@@ -162,7 +162,7 @@ ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
 ```
 
-For large models (e.g., Grane platform with 180+ units), the JSON builder uses
+For large models (e.g., a platform with 180+ units), the JSON builder uses
 tolerant error handling — operations that cannot be wired are removed with
 warnings, and the resulting process is returned in a partially-built state:
 

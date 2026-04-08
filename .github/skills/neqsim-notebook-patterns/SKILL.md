@@ -187,7 +187,7 @@ This is useful for:
 
 For large plants (platforms, gas plants, refineries), split into separate `ProcessSystem`
 objects per process area and combine with `ProcessModel`. This is the pattern used in
-production models for Oseberg, Snorre, and Grane.
+production models for large platforms.
 
 ### Pattern: Functions Returning ProcessSystem
 

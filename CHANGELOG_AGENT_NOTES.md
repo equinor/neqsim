@@ -9,7 +9,32 @@
 
 ---
 
-## 2026-07-07 — Full Bacalhau FPSO Model: Architecture Learnings
+## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
+
+### Vertical Separator → GasScrubber Mapping
+
+The UniSim reader (`devtools/unisim_reader.py`) now detects separator orientation.
+Vertical `flashtank` operations are mapped to `GasScrubber` instead of `Separator`.
+
+| UniSim flashtank | NeqSim Type |
+|---|---|
+| horizontal (default) | `Separator` |
+| vertical | `GasScrubber` |
+| has WaterProduct | `ThreePhaseSeparator` |
+
+`GasScrubber` extends `Separator` — it is a vertical vessel with K-value
+sizing constraints and 10% liquid level. The orientation is detected from
+UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation`).
+
+### Affected Files
+- `devtools/unisim_reader.py` — `resolve_neqsim_type()` method, orientation extraction
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `AGENTS.md`
+
+---
+
+## 2026-07-07 — Full FPSO Model: Architecture Learnings
 
 ### HP Separator Water Routing
 
@@ -57,7 +82,7 @@ teg.setSplitFactors(sf);
 
 ### Model Scale: 50+ Equipment Units in Single ProcessSystem
 
-The Bacalhau FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
+The reference FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
 covering wellhead → HP/MP/LP/VLP separation → VRU + import gas compression →
 gas cooling + TEG → 2-stage export compression → seal gas JT → oil export.
 Single `ProcessSystem` converges in ~2 seconds without recycles.
@@ -69,7 +94,7 @@ Single `ProcessSystem` converges in ~2 seconds without recycles.
 ### Critical Agent Guidance
 
 When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
-`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on Bacalhau seal gas
+`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on FPSO seal gas
 (90→48 bar):
 
 | Method | Temperature (°C) | UniSim Reference | Error |
@@ -99,9 +124,9 @@ double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperatu
 // new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
 ```
 
-### Bacalhau Model Extension
+### FPSO Model Extension
 
-Extended the NeqSim Bacalhau FPSO replication to include:
+Extended the NeqSim FPSO replication to include:
 - LP/MP gas recompression + mixing with HP gas
 - Gas cooling (24HA101, 75°C→36°C) + flash drum (24VG101)
 - Seal gas takeoff (5.4% split)

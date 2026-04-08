@@ -27,10 +27,10 @@ PPPP-TT-NNNNN[S]
 
 | Tag | Installation | Type | Number | Train |
 |-----|--------------|------|--------|-------|
-| `1775-KA-23011A` | Gullfaks C | Compressor | 23011 | A |
-| `1775-KA-23011B` | Gullfaks C | Compressor | 23011 | B |
-| `2540-VG-30001` | Åsgard A | Separator | 30001 | - |
-| `1910-PA-12005` | Troll A | Pump | 12005 | - |
+| `1001-KA-23011A` | Platform Alpha | Compressor | 23011 | A |
+| `1001-KA-23011B` | Platform Alpha | Compressor | 23011 | B |
+| `2001-VG-30001` | Platform Beta | Separator | 30001 | - |
+| `3001-PA-12005` | Platform Gamma | Pump | 12005 | - |
 
 ---
 
@@ -40,23 +40,23 @@ PPPP-TT-NNNNN[S]
 
 | Code | Installation | Field | Operator |
 |------|--------------|-------|----------|
-| `1770` | Gullfaks A | Gullfaks | Equinor |
-| `1773` | Gullfaks B | Gullfaks | Equinor |
-| `1775` | Gullfaks C | Gullfaks | Equinor |
-| `2540` | Åsgard A | Åsgard | Equinor |
-| `2541` | Åsgard B | Åsgard | Equinor |
-| `2542` | Åsgard C (FPSO) | Åsgard | Equinor |
-| `1910` | Troll A | Troll | Equinor |
-| `1820` | Oseberg A | Oseberg | Equinor |
-| `6608` | Snorre A | Snorre | Equinor |
+| `1001` | Platform Alpha-A | Field Alpha | OperatorA |
+| `1002` | Platform Alpha-B | Field Alpha | OperatorA |
+| `1003` | Platform Alpha-C | Field Alpha | OperatorA |
+| `2001` | Platform Beta-A | Field Beta | OperatorA |
+| `2002` | Platform Beta-B | Field Beta | OperatorA |
+| `2003` | Platform Beta-C (FPSO) | Field Beta | OperatorA |
+| `3001` | Platform Gamma-A | Field Gamma | OperatorA |
+| `4001` | Platform Delta-A | Field Delta | OperatorA |
+| `5001` | Platform Epsilon-A | Field Epsilon | OperatorA |
 
 ### Using Installation Codes
 
 ```java
 // Predefined constants
-String code = FunctionalLocation.GULLFAKS_C;  // "1775"
-String code = FunctionalLocation.ASGARD_A;    // "2540"
-String code = FunctionalLocation.TROLL_A;     // "1910"
+String code = FunctionalLocation.PLATFORM_ALPHA_C;  // "1003"
+String code = FunctionalLocation.PLATFORM_BETA_A;    // "2001"
+String code = FunctionalLocation.PLATFORM_GAMMA_A;     // "3001"
 ```
 
 ---
