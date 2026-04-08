@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhasePrEos;
  * Quiñones-Cisneros, R., and Firoozabadi, A. (2000). Friction theory for the viscosity of fluids.
  * AIChE Journal, 46(4), 16–23.
  * Chung, T.-H., Ajlan, M., Lee, L. L., and Starling, K. E. (1988). Generalized multiparameter
- * correlation for nonpolar and polar fluid transport properties. Industrial & Engineering Chemistry
+ * correlation for nonpolar and polar fluid transport properties. Industrial &amp; Engineering Chemistry
  * Research, 27(4), 671–679.
  * Wilke, C. R. (1950). A viscosity equation for gas mixtures. The Journal of Chemical Physics,
  * 18(4), 517–519.
