@@ -420,7 +420,7 @@ public class ProcessSystemState implements Serializable {
 
   private static Gson createGson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()
-        .registerTypeAdapter(Instant.class, new InstantAdapter()).create();
+        .disableHtmlEscaping().registerTypeAdapter(Instant.class, new InstantAdapter()).create();
   }
 
   /**
@@ -727,6 +727,21 @@ public class ProcessSystemState implements Serializable {
       EquipmentState state = new EquipmentState();
       state.name = equipment.getName();
       state.type = equipment.getClass().getSimpleName();
+
+      // Capture IEC 81346 reference designation if set
+      neqsim.process.equipment.iec81346.ReferenceDesignation refDes =
+          equipment.getReferenceDesignation();
+      if (refDes != null && refDes.isSet()) {
+        state.stringProperties.put("iec81346_referenceDesignation",
+            refDes.toReferenceDesignationString());
+        state.stringProperties.put("iec81346_functionDesignation", refDes.getFunctionDesignation());
+        state.stringProperties.put("iec81346_productDesignation", refDes.getProductDesignation());
+        state.stringProperties.put("iec81346_locationDesignation", refDes.getLocationDesignation());
+        if (refDes.getLetterCode() != null) {
+          state.stringProperties.put("iec81346_letterCode", refDes.getLetterCode().name());
+        }
+        state.numericProperties.put("iec81346_sequenceNumber", (double) refDes.getSequenceNumber());
+      }
 
       // Capture common properties
       SystemInterface thermo = equipment.getThermoSystem();

@@ -230,6 +230,110 @@ Your deliverable is a populated task folder under `task_solve/`.
 
 ---
 
+## 1.5 ── CONTEXT WINDOW RESILIENCE (checkpoint & resume)
+
+Long-running tasks (Standard and Comprehensive) routinely exhaust the context
+window. When this happens, the agent starts a new conversation with no memory
+of previous work. The **progress checkpoint** system solves this.
+
+### How it works
+
+A `progress.json` file in the task folder records every completed milestone,
+key decisions, derived context, and the next action. The file is updated after
+each significant step. When a fresh agent picks up the task, it reads
+`progress.json` first and knows exactly where to resume.
+
+### MANDATORY: Checkpoint after every milestone
+
+After completing each numbered step in the workflow below, write a checkpoint:
+
+```python
+import sys; sys.path.insert(0, "devtools")
+from neqsim_runner.progress import TaskProgress
+
+progress = TaskProgress("task_solve/YYYY-MM-DD_task_slug")
+
+# After Phase 0 (classification)
+progress.complete_milestone("phase0_classified",
+    summary="Type B (Process), Standard scale. 3-stage compression, SRK EOS.",
+    decisions={"type": "B", "scale": "Standard", "eos": "SRK",
+               "task_title": "3-stage compression from 5 to 150 bara"})
+progress.set_next_action("Write task_spec.md with standards and acceptance criteria")
+
+# After Step 1 (research)
+progress.complete_milestone("step1_research_done",
+    summary="Research complete. Using API 617 for compressor design, "
+            "NORSOK P-001 for process. Feed: rich gas, 85% methane.",
+    outputs=["step1_scope_and_research/task_spec.md",
+             "step1_scope_and_research/notes.md"],
+    decisions={"standards": ["API 617", "NORSOK P-001"],
+               "feed_composition": {"methane": 0.85, "ethane": 0.07,
+                                    "propane": 0.05, "nC4": 0.03}})
+progress.set_next_action("Create main notebook: 01_compression_analysis.ipynb")
+
+# Store expensive-to-derive context
+progress.store_context("api_methods", {
+    "compressor_class": "jneqsim.process.equipment.compressor.Compressor",
+    "power_method": "getPower('kW')",
+    "polytropicEff_method": "getPolytropicEfficiency()",
+})
+```
+
+### MANDATORY: Check for resume on every session start
+
+Before doing ANY work, check if `progress.json` exists. If it does, you are
+**resuming** — do NOT repeat completed steps:
+
+```python
+import sys, os; sys.path.insert(0, "devtools")
+from neqsim_runner.progress import TaskProgress
+
+# Find the most recent task folder
+import glob
+tasks = sorted(glob.glob("task_solve/20*"))
+if tasks:
+    progress = TaskProgress(tasks[-1])
+    if progress.is_resuming():
+        print(progress.resume_summary())
+        # READ THIS OUTPUT. It tells you:
+        # - What has been done
+        # - What decisions were made
+        # - What to do next
+        # DO NOT REDO completed milestones.
+```
+
+### What to store in checkpoints
+
+| Milestone | What to save in `decisions` | What to save in `context` |
+|-----------|---------------------------|--------------------------|
+| phase0_classified | type, scale, eos, task_title | — |
+| step1_spec_written | standards, acceptance_criteria | — |
+| step1_research_done | feed_composition, operating_envelope | api_methods, neqsim_classes_used |
+| step2_notebook_created | notebook_path, simulation_approach | cell_structure, import_patterns |
+| step2_notebook_executed | key_results (T, P, power, etc.) | job_ids, output_paths |
+| step2_validation_done | validation_method, max_deviation | benchmark_data_source |
+| step2_results_saved | results_json_path | figure_list, table_data |
+| step3_report_generated | report_paths | manual_sections_content |
+
+### Resume rules
+
+1. **Read progress.json FIRST.** Before searching files or planning work.
+2. **Trust completed milestones.** Don't re-validate or re-run them unless outputs are missing.
+3. **Re-read decisions.** These were derived with full context — use them, don't re-derive.
+4. **Check context store.** If API method names or class paths were saved, use those directly.
+5. **Check for runner jobs.** If job_ids exist, check their status via the AgentBridge.
+6. **Resume from next_action.** This is the exact instruction the previous agent left for you.
+7. **If outputs are missing** despite milestone being marked done, re-do that milestone.
+
+### Break large tasks into sub-conversations
+
+For Comprehensive tasks (multi-notebook, multi-day), proactively break the work
+into conversation-sized chunks. After Phase 0 + Step 1, checkpoint and tell the
+user: "Step 1 is complete. Please start a new conversation and say
+`@solve.task resume task_solve/YYYY-MM-DD_slug` to continue with Step 2."
+
+---
+
 ## 2 ── WORKFLOW (follow this exactly)
 
 ### Phase 0: Setup — Classify and Scale
@@ -291,6 +395,18 @@ Your deliverable is a populated task folder under `task_solve/`.
    **ALL subsequent files MUST go inside this folder. Do NOT proceed without it.**
 
 4. **Read the generated README** at `task_solve/YYYY-MM-DD_task_slug/README.md` to confirm the folder structure.
+
+   **CHECKPOINT (Phase 0):** After creating the task folder and classifying:
+   ```python
+   import sys; sys.path.insert(0, "devtools")
+   from neqsim_runner.progress import TaskProgress
+   progress = TaskProgress("task_solve/YYYY-MM-DD_task_slug")
+   progress.complete_milestone("phase0_classified",
+       summary="[1 sentence: type, scale, method]",
+       decisions={"type": "X", "scale": "Standard", "eos": "SRK",
+                  "task_title": "..."})
+   progress.set_next_action("Write task_spec.md")
+   ```
 
 ### Phase 1: Scope & Research (Step 1)
 
@@ -522,6 +638,25 @@ condensed analysis section in notes and proceed.
     - Example: "How sensitive is the NPV to gas price vs. CAPEX uncertainty?"
     These questions drive the analysis and ensure the report provides actionable insight.
 
+   **CHECKPOINT (Phase 1 complete):** This is a natural break point. Checkpoint
+   before the context-heavy notebook creation and execution:
+   ```python
+   progress.complete_milestone("step1_research_done",
+       summary="Research complete. [key method, standards, feed comp]",
+       outputs=["step1_scope_and_research/task_spec.md",
+                "step1_scope_and_research/notes.md",
+                "step1_scope_and_research/analysis.md"],
+       decisions={"standards": [...], "feed_composition": {...},
+                  "simulation_approach": "...", "acceptance_criteria": {...}})
+   progress.store_context("neqsim_classes", {
+       "main_class": "full.java.ClassName",
+       "key_methods": ["method1(args)", "method2(args)"],
+   })
+   progress.set_next_action("Create notebook: 01_XXXX.ipynb with [approach]")
+   ```
+   For Comprehensive tasks, consider telling the user: "Step 1 is complete.
+   Start a new conversation with `@solve.task resume task_solve/YYYY-MM-DD_slug`."
+
 ### Phase 2: Analysis & Evaluation (Step 2)
 
 8. **Determine the right approach** (refined from Phase 1.5):
@@ -613,6 +748,96 @@ condensed analysis section in notes and proceed.
 
 10. **Run every cell** using notebook tools. Fix errors immediately.
 
+10a. **Choose execution method — decision rule (MANDATORY):**
+
+    Before executing any notebook, classify the task and pick the method:
+
+    **Use `run_notebook_cell` (interactive)** when ALL of these are true:
+    - Quick or Screening scale (single notebook, no sweeps)
+    - Total expected runtime < 5 minutes
+    - No parametric sweep or Monte Carlo
+    - No previous JVM/kernel crash in this session
+
+    **Use `neqsim_runner` (headless)** when ANY of these are true:
+    - Standard or Comprehensive scale (multi-notebook deliverable)
+    - Parametric sweep with > 3 cases
+    - Monte Carlo with N > 50 iterations
+    - Any notebook expected to run > 5 minutes
+    - A previous cell or notebook failed due to JVM crash, kernel death,
+      or `RuntimeError: JVM cannot be restarted` in this session
+    - Task requires uncertainty analysis or benchmark validation notebooks
+      (these almost always benefit from isolation and retry)
+
+    **Escalation rule:** If you start with interactive cells and hit a JVM
+    crash or kernel death, **immediately switch** to the runner for all
+    remaining notebooks in this task. Do not attempt to restart the kernel
+    and retry interactively — that wastes context window.
+
+    **Runner usage:**
+
+    ```python
+    # In a notebook cell or standalone script:
+    import sys; sys.path.insert(0, str(TASK_DIR.parent.parent / "devtools"))
+    from neqsim_runner.agent_bridge import AgentBridge
+
+    bridge = AgentBridge(task_dir=str(TASK_DIR))
+
+    # Option A: Submit the current notebook as a headless job
+    # Default mode="execute" produces an executed .ipynb with all cell outputs
+    job_id = bridge.submit_notebook(
+        "step2_analysis/01_analysis.ipynb",
+        max_retries=3, timeout_seconds=3600,
+    )
+
+    # Option B: Convert notebook to .py script (lighter, no .ipynb output)
+    job_id = bridge.submit_notebook(
+        "step2_analysis/01_analysis.ipynb",
+        mode="script",
+        max_retries=3, timeout_seconds=3600,
+    )
+
+    # Option C: Submit a standalone simulation script
+    job_id = bridge.submit_script(
+        "step2_analysis/run_simulation.py",
+        args={"pressure": 60.0, "temperature": 25.0},
+    )
+
+    # Option D: Parametric sweep (each case = separate job with retry)
+    cases = [{"pressure": p, "temp": t} for p in [30, 60, 90] for t in [15, 25, 40]]
+    job_ids = bridge.submit_parametric_sweep(
+        "step2_analysis/run_case.py", cases,
+        max_retries=2, timeout_seconds=600,
+    )
+
+    # Run all jobs (supervisor handles retry/recovery automatically)
+    bridge.run_all()
+
+    # Collect results back into results.json
+    bridge.copy_results_to_task(job_id)
+    print(bridge.summary())
+
+    # Get the executed notebook (only for mode="execute")
+    executed_nb = bridge.get_executed_notebook(job_id)
+    ```
+
+    **When to use the runner vs interactive notebook:**
+
+    | Signal | → Runner | → Interactive |
+    |--------|----------|---------------|
+    | Task scale | Standard / Comprehensive | Quick / Screening |
+    | Notebooks in task | > 1 | 1 |
+    | Monte Carlo iterations | N > 50 | N ≤ 50 or none |
+    | Parametric sweep cases | > 3 | ≤ 3 or none |
+    | Expected wall time | > 5 min | < 5 min |
+    | Previous JVM crash this session | Always switch | N/A |
+    | Need interactive debugging | No | Yes |
+    | Need executed .ipynb with outputs | Yes (mode="execute") | Yes |
+
+    The runner writes all outputs to `task_dir/runner_output/`. Use
+    `bridge.copy_results_to_task()` to merge back into the task workflow.
+    When using `mode="execute"`, the original notebook is also updated
+    in place with cell outputs.
+
 10b. **Equipment feasibility checks** — for any task involving compressors,
     heat exchangers, coolers, or heaters, run a Design Feasibility Report after
     the process simulation:
@@ -661,6 +886,16 @@ condensed analysis section in notes and proceed.
     - Adjust fluid composition, EOS, or equipment parameters
     - Rerun the notebook
     - Document the iteration in `step2_analysis/notes.md`
+
+   **CHECKPOINT (Phase 2 core complete):** After notebook is executed and validated:
+   ```python
+   progress.complete_milestone("step2_validation_done",
+       summary="Main notebook executed and validated. [key results summary]",
+       outputs=["step2_analysis/01_XXXX.ipynb", "figures/..."],
+       decisions={"key_results": {"outlet_T_C": -18.5, "power_kW": 3500, ...},
+                  "validation_passed": True, "max_deviation_pct": 2.1})
+   progress.set_next_action("Create benchmark/uncertainty notebooks, save results.json")
+   ```
 
 ### Benchmark Validation (required for Development; recommended for Design when benchmark data exists)
 
@@ -1056,6 +1291,18 @@ principle (analogous to IEC 61508 independent verification):
 
 Document the independent check in `step2_analysis/notes.md` under a
 "Verification" heading. For Screening mode, items 3-4 are sufficient.
+
+   **CHECKPOINT (Phase 2 fully complete):** After all notebooks + results.json:
+   ```python
+   progress.complete_milestone("step2_results_saved",
+       summary="All notebooks executed. results.json saved with key_results, "
+               "validation, uncertainty, risk_evaluation, figure_captions.",
+       outputs=["results.json", "step2_analysis/01_XXXX.ipynb",
+                "step2_analysis/02_benchmark.ipynb"],
+       decisions={"results_json_complete": True,
+                  "figures": ["fig1.png", "fig2.png", "fig3.png"]})
+   progress.set_next_action("Generate Word + HTML report via step3_report/generate_report.py")
+   ```
 
 ### Phase 3: Report (Step 3)
 

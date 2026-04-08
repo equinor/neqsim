@@ -487,6 +487,65 @@ fluid.addComponent("methane", 0.85)
 fluid.setMixingRule("classic")
 ```
 
+### Headless execution (no kernel restarts)
+
+For long-running or fragile simulations, use the neqsim_runner to run each job
+in an isolated subprocess with automatic retry:
+
+```python
+from neqsim_runner.agent_bridge import AgentBridge
+
+bridge = AgentBridge(task_dir="task_solve/2026-04-08_my_task")
+
+# Submit a notebook (default: mode="execute" produces executed .ipynb with outputs)
+job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", max_retries=3)
+
+# Or use mode="script" to convert to .py (lighter, no .ipynb output)
+job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", mode="script")
+
+# Or submit a standalone script
+job_id = bridge.submit_script("run_sim.py", args={"pressure": 60.0})
+
+# Or submit a parametric sweep (each case = own subprocess + JVM)
+cases = [{"pressure": p} for p in [30, 60, 90, 120]]
+job_ids = bridge.submit_parametric_sweep("run_case.py", cases)
+
+# Run all (supervisor handles retry/recovery)
+bridge.run_all()
+
+# Read results
+results = bridge.get_results(job_id)
+bridge.copy_results_to_task(job_id)
+
+# Get the executed notebook (with cell outputs, plots, etc.)
+executed_nb = bridge.get_executed_notebook(job_id)
+```
+
+CLI equivalent: `python -m neqsim_runner go my_sim.py --args '{"pressure": 60}'`
+
+### Task progress checkpoints (survives context exhaustion)
+
+Long-running tasks often exhaust the agent's context window. The progress
+tracker writes a `progress.json` to the task folder after each milestone.
+A fresh agent reads it and resumes where the previous one left off:
+
+```python
+from neqsim_runner.progress import TaskProgress
+
+# Start or resume
+progress = TaskProgress("task_solve/2026-04-08_my_task")
+if progress.is_resuming():
+    print(progress.resume_summary())  # prints what's done + next action
+
+# Checkpoint after each milestone
+progress.complete_milestone("step1_research_done",
+    summary="Research complete. SRK EOS, 3-stage compression.",
+    outputs=["step1_scope_and_research/task_spec.md"],
+    decisions={"eos": "SRK", "scale": "Standard"})
+progress.store_context("feed_composition", {"methane": 0.85, "ethane": 0.07})
+progress.set_next_action("Create notebook: 01_compression.ipynb")
+```
+
 ### Build process from JSON
 
 ```java
@@ -645,6 +704,7 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/process/measurementdevice/` | Transmitters (PT, TT, LT, FT), AlarmConfig, ImpurityMonitor |
 | `examples/notebooks/` | Jupyter notebook examples |
 | `devtools/new_task.py` | Task-solving script |
+| `devtools/neqsim_runner/` | Supervised simulation runner — isolated subprocess per job, auto-retry, checkpoint/resume, SQLite state. Use `AgentBridge` for task-solving integration. |
 | `devtools/pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`. |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
