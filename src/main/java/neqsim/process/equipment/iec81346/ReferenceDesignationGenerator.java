@@ -77,10 +77,10 @@ public class ReferenceDesignationGenerator implements Serializable {
   private static final long serialVersionUID = 1002L;
 
   /** The single process system to generate designations for (null if multi-area). */
-  private final ProcessSystem processSystem;
+  private ProcessSystem processSystem;
 
   /** The multi-area process model to generate designations for (null if single-area). */
-  private final ProcessModel processModel;
+  private ProcessModel processModel;
 
   /** User-defined function prefix (without {@code =}), e.g. "A1". */
   private String functionPrefix = "A1";
@@ -93,6 +93,13 @@ public class ReferenceDesignationGenerator implements Serializable {
 
   /** Whether to assign designations to measurement devices. */
   private boolean includeMeasurementDevices = true;
+
+  /**
+   * Whether to use hierarchical function designations in multi-area models. When true, each area
+   * function prefix is formed by appending to the top-level function prefix with a dot separator
+   * (e.g. "A1.A1", "A1.A2"). When false (default), areas use flat numbering ("A1", "A2").
+   */
+  private boolean useHierarchicalFunctions = false;
 
   /** Whether generation has been run. */
   private boolean generated = false;
@@ -124,6 +131,15 @@ public class ReferenceDesignationGenerator implements Serializable {
     }
     this.processModel = processModel;
     this.processSystem = null;
+  }
+
+  /**
+   * Creates a generator with no bound system. Use with {@link #generate(ProcessSystem)} or
+   * {@link #generate(ProcessModel)} to bind a system at generation time.
+   */
+  public ReferenceDesignationGenerator() {
+    this.processSystem = null;
+    this.processModel = null;
   }
 
   /**
@@ -204,6 +220,26 @@ public class ReferenceDesignationGenerator implements Serializable {
   }
 
   /**
+   * Sets whether to use hierarchical function designations in multi-area models. When true, each
+   * area function prefix is formed by appending to the top-level function prefix with a dot (e.g.
+   * "A1.A1", "A1.A2"). When false (default), areas use flat numbering ("A1", "A2").
+   *
+   * @param useHierarchicalFunctions true for hierarchical, false for flat
+   */
+  public void setUseHierarchicalFunctions(boolean useHierarchicalFunctions) {
+    this.useHierarchicalFunctions = useHierarchicalFunctions;
+  }
+
+  /**
+   * Returns whether hierarchical function designations are used.
+   *
+   * @return true if hierarchical mode is enabled
+   */
+  public boolean isUseHierarchicalFunctions() {
+    return useHierarchicalFunctions;
+  }
+
+  /**
    * Generates IEC 81346 reference designations for all elements.
    *
    * <p>
@@ -222,11 +258,42 @@ public class ReferenceDesignationGenerator implements Serializable {
 
     if (processModel != null) {
       generateForModel();
-    } else {
+    } else if (processSystem != null) {
       generateForSystem(processSystem, functionPrefix, locationPrefix);
+    } else {
+      throw new IllegalStateException(
+          "No process system or model bound. Use generate(ProcessSystem) or generate(ProcessModel).");
     }
 
     generated = true;
+  }
+
+  /**
+   * Binds the given process system and generates designations for it.
+   *
+   * @param system the process system to generate designations for
+   */
+  public void generate(ProcessSystem system) {
+    if (system == null) {
+      throw new IllegalArgumentException("processSystem must not be null");
+    }
+    this.processSystem = system;
+    this.processModel = null;
+    generate();
+  }
+
+  /**
+   * Binds the given process model and generates designations for it.
+   *
+   * @param model the process model to generate designations for
+   */
+  public void generate(ProcessModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException("processModel must not be null");
+    }
+    this.processModel = model;
+    this.processSystem = null;
+    generate();
   }
 
   /**
@@ -242,8 +309,15 @@ public class ReferenceDesignationGenerator implements Serializable {
         continue;
       }
 
-      // Each area gets a function sub-level: A1, A2, A3, ...
-      String areaFunctionPrefix = "A" + areaIndex;
+      // Each area gets a function sub-level
+      String areaFunctionPrefix;
+      if (useHierarchicalFunctions) {
+        // Hierarchical: A1.A1, A1.A2, A1.A3 (nested under top-level functionPrefix)
+        areaFunctionPrefix = functionPrefix + ".A" + areaIndex;
+      } else {
+        // Flat: A1, A2, A3 (default)
+        areaFunctionPrefix = "A" + areaIndex;
+      }
       generateForSystem(areaSystem, areaFunctionPrefix, locationPrefix);
       areaIndex++;
     }

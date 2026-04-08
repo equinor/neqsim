@@ -67,6 +67,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double integralAbsoluteError = 0.0;
   private double lastTimeOutsideBand = 0.0;
   private double settlingTolerance = 0.02;
+  private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation =
+      new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
   /**
    * <p>
@@ -240,6 +242,38 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public void setUnit(String unit) {
     this.unit = unit;
+  }
+
+  /**
+   * Gets the IEC 81346 reference designation for this controller.
+   *
+   * @return the reference designation object
+   */
+  public neqsim.process.equipment.iec81346.ReferenceDesignation getReferenceDesignation() {
+    return referenceDesignation;
+  }
+
+  /**
+   * Sets the IEC 81346 reference designation for this controller.
+   *
+   * @param referenceDesignation the reference designation to set
+   */
+  public void setReferenceDesignation(
+      neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
+    this.referenceDesignation = referenceDesignation;
+  }
+
+  /**
+   * Gets the IEC 81346 reference designation string for this controller. Returns an empty string if
+   * no designation has been set.
+   *
+   * @return the reference designation string (e.g. "=A1.S1")
+   */
+  public String getReferenceDesignationString() {
+    if (referenceDesignation == null) {
+      return "";
+    }
+    return referenceDesignation.toReferenceDesignationString();
   }
 
   /** {@inheritDoc} */
