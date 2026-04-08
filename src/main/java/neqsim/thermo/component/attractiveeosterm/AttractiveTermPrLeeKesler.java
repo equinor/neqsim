@@ -3,21 +3,26 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * Alternative alpha function for the Peng-Robinson EOS using a Soave-form m-factor.
+ * Alternative alpha function for the Peng-Robinson EOS using a Soave-form
+ * m-factor.
  *
  * <p>
- * Uses the Soave (SRK) m-factor correlation applied within the PR EOS framework:
+ * Uses the Soave (SRK) m-factor correlation applied within the PR EOS
+ * framework:
  *
  * <pre>
  *   m = 0.480 + 1.574 \omega - 0.176 \omega^2
  * </pre>
  *
  * <p>
- * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT the standard
+ * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT
+ * the standard
  * PR76 m-factor and NOT the Lee-Kesler BWR enthalpy method.
  * {@link neqsim.thermo.system.SystemPrLeeKeslerEos}
- * uses {@code attractiveTermNumber=1} (standard PR76 alpha), not this class. This class is
- * retained at dispatch index 21 for backward compatibility and research purposes.
+ * uses {@code attractiveTermNumber=1} (standard PR76 alpha), not this class.
+ * This class is
+ * retained at dispatch index 21 for backward compatibility and research
+ * purposes.
  *
  * <p>
  * The alpha function form is:
@@ -35,7 +40,8 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   /**
    * Constructs a Lee-Kesler alpha term for the given PR component.
    *
-   * @param component the EOS component holding critical properties and acentric factor
+   * @param component the EOS component holding critical properties and acentric
+   *                  factor
    */
   public AttractiveTermPrLeeKesler(ComponentEosInterface component) {
     super(component);
@@ -71,10 +77,9 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
-        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = {-0.176, 1.574, (0.480 - this.m)};
+    double[] acentricConstants = { -0.176, 1.574, (0.480 - this.m) };
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));
   }

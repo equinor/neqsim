@@ -13,11 +13,15 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Verifies that:
  * <ol>
  * <li>The model name is set correctly.</li>
- * <li>Flash calculations converge and produce physically valid results (VF in [0,1], positive
+ * <li>Flash calculations converge and produce physically valid results (VF in
+ * [0,1], positive
  * density, positive pressure).</li>
- * <li>For light components (ω ≤ 0.49) PR-LK and PR78 give identical VF (same m-factor).</li>
- * <li>For mixtures containing heavy pseudo-components (ω > 0.49) PR-LK and PR78 differ measurably,
- * because PR-LK applies the PR76 m-factor to all components while PR78 uses a modified polynomial
+ * <li>For light components (ω ≤ 0.49) PR-LK and PR78 give identical VF (same
+ * m-factor).</li>
+ * <li>For mixtures containing heavy pseudo-components (ω > 0.49) PR-LK and PR78
+ * differ measurably,
+ * because PR-LK applies the PR76 m-factor to all components while PR78 uses a
+ * modified polynomial
  * for ω > 0.49.</li>
  * <li>Clone preserves model name.</li>
  * </ol>
@@ -91,7 +95,8 @@ public class SystemPrLeeKeslerEosTest extends neqsim.NeqSimTest {
   @DisplayName("PR-LK differs from PR78 for heavy components (omega > 0.49)")
   public void testVfDifferentFromPr78ForHeavyComponents() {
     // n-undecane has omega ~ 0.539 > 0.49, so PR78 applies modified polynomial
-    // while PR-LK (PR76) still uses the original quadratic -> measurable VF difference
+    // while PR-LK (PR76) still uses the original quadratic -> measurable VF
+    // difference
     double T = 273.15 + 100.0;
     double P = 5.0;
 
@@ -123,7 +128,8 @@ public class SystemPrLeeKeslerEosTest extends neqsim.NeqSimTest {
     assertTrue(vfLk >= 0.0 && vfLk <= 1.0, "PR-LK VF out of range: " + vfLk);
     assertTrue(vfPr78 >= 0.0 && vfPr78 <= 1.0, "PR78 VF out of range: " + vfPr78);
 
-    // PR76 != PR78 for heavy components -> VF must differ by more than numerical noise
+    // PR76 != PR78 for heavy components -> VF must differ by more than numerical
+    // noise
     assertTrue(Math.abs(vfLk - vfPr78) > 1e-6,
         "PR-LK and PR78 should give different VF for heavy components (omega>0.49); got LK=" + vfLk
             + " vs PR78=" + vfPr78);

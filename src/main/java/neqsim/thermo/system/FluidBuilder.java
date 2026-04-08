@@ -12,8 +12,10 @@ import org.apache.logging.log4j.Logger;
  * Fluent builder for creating pre-configured thermodynamic fluid systems.
  *
  * <p>
- * Provides both a fluent builder API for custom fluids and static factory methods for common
- * industry fluid types. All fluids are returned as {@link SystemInterface} with the mixing rule
+ * Provides both a fluent builder API for custom fluids and static factory
+ * methods for common
+ * industry fluid types. All fluids are returned as {@link SystemInterface} with
+ * the mixing rule
  * already set, ready for flash calculations.
  * </p>
  *
@@ -98,7 +100,9 @@ public class FluidBuilder implements Serializable {
     SRK_PENELOUX,
     /** PR 1978 modification. */
     PR_1978,
-    /** Peng-Robinson with PR76 alpha function and Lee-Kesler BWR enthalpy (PR-LK). */
+    /**
+     * Peng-Robinson with PR76 alpha function and Lee-Kesler BWR enthalpy (PR-LK).
+     */
     PR_LK
   }
 
@@ -127,7 +131,7 @@ public class FluidBuilder implements Serializable {
   /**
    * Adds a component with a mole fraction.
    *
-   * @param name component name (e.g., "methane", "CO2")
+   * @param name         component name (e.g., "methane", "CO2")
    * @param moleFraction mole fraction (0 to 1)
    * @return this builder for chaining
    */
@@ -139,10 +143,10 @@ public class FluidBuilder implements Serializable {
   /**
    * Adds a TBP (True Boiling Point) fraction for oil characterization.
    *
-   * @param name fraction name (e.g., "C7", "C8")
-   * @param moleFraction mole fraction
+   * @param name              fraction name (e.g., "C7", "C8")
+   * @param moleFraction      mole fraction
    * @param molarMassKgPerMol molar mass in kg/mol
-   * @param density density in g/cm3
+   * @param density           density in g/cm3
    * @return this builder for chaining
    */
   public FluidBuilder addTBPFraction(String name, double moleFraction, double molarMassKgPerMol,
@@ -154,10 +158,10 @@ public class FluidBuilder implements Serializable {
   /**
    * Adds a plus fraction (e.g., C20+) for oil characterization.
    *
-   * @param name fraction name (e.g., "C20+")
-   * @param moleFraction mole fraction
+   * @param name              fraction name (e.g., "C20+")
+   * @param moleFraction      mole fraction
    * @param molarMassKgPerMol molar mass in kg/mol
-   * @param density density in g/cm3
+   * @param density           density in g/cm3
    * @return this builder for chaining
    */
   public FluidBuilder addPlusFraction(String name, double moleFraction, double molarMassKgPerMol,
@@ -315,7 +319,8 @@ public class FluidBuilder implements Serializable {
    * Creates a lean natural gas (dry gas) with typical North Sea composition.
    *
    * <p>
-   * Composition: CH4 (85%), C2H6 (8%), C3H8 (3%), iC4 (0.5%), nC4 (1%), N2 (1.5%), CO2 (1%). Uses
+   * Composition: CH4 (85%), C2H6 (8%), C3H8 (3%), iC4 (0.5%), nC4 (1%), N2
+   * (1.5%), CO2 (1%). Uses
    * SRK EOS with classic mixing rule.
    * </p>
    *
@@ -334,7 +339,8 @@ public class FluidBuilder implements Serializable {
    * Creates a rich natural gas (wet gas) with heavier components.
    *
    * <p>
-   * Composition: CH4 (72%), C2H6 (10%), C3H8 (6%), iC4 (2%), nC4 (3%), iC5 (1%), nC5 (1%), N2 (1%),
+   * Composition: CH4 (72%), C2H6 (10%), C3H8 (6%), iC4 (2%), nC4 (3%), iC5 (1%),
+   * nC5 (1%), N2 (1%),
    * CO2 (2%), nC6 (1%), nC8 (1%). Uses SRK EOS with classic mixing rule.
    * </p>
    *
@@ -355,7 +361,8 @@ public class FluidBuilder implements Serializable {
    * Creates a typical black oil with C7+ characterization.
    *
    * <p>
-   * Includes light ends plus TBP fractions for C7-C10 and a C20+ plus fraction. Uses PR EOS with
+   * Includes light ends plus TBP fractions for C7-C10 and a C20+ plus fraction.
+   * Uses PR EOS with
    * classic mixing rule and automatic characterization with 6 lumped components.
    * </p>
    *
@@ -380,7 +387,8 @@ public class FluidBuilder implements Serializable {
    * Creates a CO2-rich stream typical for carbon capture and storage (CCS).
    *
    * <p>
-   * Composition: CO2 (95%), N2 (2%), methane (2%), H2S (0.5%), water (0.5%). Uses SRK-CPA EOS
+   * Composition: CO2 (95%), N2 (2%), methane (2%), H2S (0.5%), water (0.5%). Uses
+   * SRK-CPA EOS
    * (mixing rule 10) with multi-phase check to handle water-CO2 phase behavior.
    * </p>
    *
@@ -398,7 +406,8 @@ public class FluidBuilder implements Serializable {
    * Creates an acid gas stream with significant H2S and CO2 content.
    *
    * <p>
-   * Composition: methane (70%), CO2 (10%), H2S (5%), ethane (5%), propane (3%), n-butane (2%),
+   * Composition: methane (70%), CO2 (10%), H2S (5%), ethane (5%), propane (3%),
+   * n-butane (2%),
    * water (2%), nitrogen (3%). Uses SRK-CPA EOS with multi-phase check.
    * </p>
    *
@@ -417,7 +426,8 @@ public class FluidBuilder implements Serializable {
    * Creates a gas condensate fluid.
    *
    * <p>
-   * Composition: CH4 (75%), C2H6 (7%), C3H8 (4%), iC4 (1.5%), nC4 (2%), iC5 (1%), nC5 (1%), nC6
+   * Composition: CH4 (75%), C2H6 (7%), C3H8 (4%), iC4 (1.5%), nC4 (2%), iC5 (1%),
+   * nC5 (1%), nC6
    * (1.5%), plus C7-C10 TBP fractions and C15+ plus fraction. Uses SRK EOS.
    * </p>
    *
@@ -441,7 +451,8 @@ public class FluidBuilder implements Serializable {
    * Creates a dry export gas with simple composition.
    *
    * <p>
-   * Composition: CH4 (92%), C2H6 (4%), C3H8 (1.5%), N2 (1.5%), CO2 (1%). Uses SRK EOS. Suitable for
+   * Composition: CH4 (92%), C2H6 (4%), C3H8 (1.5%), N2 (1.5%), CO2 (1%). Uses SRK
+   * EOS. Suitable for
    * pipeline transport calculations.
    * </p>
    *
@@ -470,7 +481,7 @@ public class FluidBuilder implements Serializable {
     /**
      * Creates a component entry.
      *
-     * @param name component name
+     * @param name         component name
      * @param moleFraction mole fraction
      */
     ComponentEntry(String name, double moleFraction) {
@@ -492,10 +503,10 @@ public class FluidBuilder implements Serializable {
     /**
      * Creates a TBP entry.
      *
-     * @param name fraction name
+     * @param name         fraction name
      * @param moleFraction mole fraction
-     * @param molarMass molar mass in kg/mol
-     * @param density density in g/cm3
+     * @param molarMass    molar mass in kg/mol
+     * @param density      density in g/cm3
      */
     TBPEntry(String name, double moleFraction, double molarMass, double density) {
       this.name = name;
