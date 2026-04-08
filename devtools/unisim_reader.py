@@ -1166,16 +1166,211 @@ class UniSimToNeqSim:
         """Get the JSON as a string ready for ProcessSystem.fromJson()."""
         return json.dumps(self.to_json(), indent=2)
 
-    def build_and_run(self):
-        """Build and run the NeqSim process using jneqsim.
+    def build_and_run(self, verbose: bool = True):
+        """Build and run the NeqSim process from JSON automatically.
+
+        This is the main automation entry point: UniSim model → JSON → NeqSim
+        ProcessSystem (built, wired, run) in one call.
+
+        Args:
+            verbose: If True, prints a summary of the build and run results.
 
         Returns:
-            The ProcessSystem result object.
+            SimulationResult from ProcessSystem.fromJsonAndRun(). Use
+            result.getProcessSystem() to access the running process, and
+            result.isSuccess() / result.getWarnings() for diagnostics.
+
+        Raises:
+            ImportError: If neqsim package is not installed.
         """
         from neqsim import jneqsim
         ProcessSystem = jneqsim.process.processmodel.ProcessSystem
         json_str = self.to_neqsim_json_str()
-        return ProcessSystem.fromJsonAndRun(json_str)
+        result = ProcessSystem.fromJsonAndRun(json_str)
+
+        if verbose:
+            self._print_build_summary(result)
+
+        return result
+
+    def run_and_compare(self, verbose: bool = True):
+        """Build, run, and compare NeqSim results with UniSim reference data.
+
+        Automates the full workflow:
+        1. Converts UniSim model to NeqSim JSON
+        2. Builds and runs the NeqSim ProcessSystem
+        3. Compares stream temperatures, pressures, and flows with UniSim data
+        4. Reports match quality for each comparison point
+
+        Args:
+            verbose: If True, prints detailed comparison results.
+
+        Returns:
+            Dict with keys:
+                'result': SimulationResult from the build
+                'comparison': List of dicts with stream-level comparisons
+                'match_summary': Overall match statistics
+                'warnings': List of converter + build warnings
+        """
+        from neqsim import jneqsim
+        ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+
+        # Step 1: Build and run
+        json_str = self.to_neqsim_json_str()
+        result = ProcessSystem.fromJsonAndRun(json_str)
+
+        if verbose:
+            self._print_build_summary(result)
+
+        # Step 2: Compare with UniSim reference data
+        comparison_points = self.get_comparison_points()
+        comparisons = []
+        n_matched = 0
+        n_total = 0
+
+        if result.isSuccess() or not result.isError():
+            process = result.getProcessSystem()
+            try:
+                auto = process.getAutomation()
+            except Exception:
+                auto = None
+
+            for point in comparison_points:
+                stream_name = point['stream']
+                comp = {'stream': stream_name, 'matched': False, 'details': {}}
+
+                if auto is not None:
+                    try:
+                        # Try to read temperature and pressure from NeqSim
+                        neqsim_T = None
+                        neqsim_P = None
+                        neqsim_flow = None
+                        try:
+                            neqsim_T = float(auto.getVariableValue(
+                                f"{stream_name}.temperature", "C"))
+                        except Exception:
+                            pass
+                        try:
+                            neqsim_P = float(auto.getVariableValue(
+                                f"{stream_name}.pressure", "bara"))
+                        except Exception:
+                            pass
+                        try:
+                            neqsim_flow = float(auto.getVariableValue(
+                                f"{stream_name}.flowRate", "kg/hr"))
+                        except Exception:
+                            pass
+
+                        unisim_T = point.get('temperature_C')
+                        unisim_P = point.get('pressure_bara')
+                        unisim_flow = point.get('mass_flow_kgh')
+
+                        if neqsim_T is not None and unisim_T is not None:
+                            comp['details']['temperature_C'] = {
+                                'unisim': unisim_T,
+                                'neqsim': neqsim_T,
+                                'delta': abs(neqsim_T - unisim_T)
+                            }
+                        if neqsim_P is not None and unisim_P is not None:
+                            comp['details']['pressure_bara'] = {
+                                'unisim': unisim_P,
+                                'neqsim': neqsim_P,
+                                'delta': abs(neqsim_P - unisim_P)
+                            }
+                        if neqsim_flow is not None and unisim_flow is not None:
+                            comp['details']['mass_flow_kgh'] = {
+                                'unisim': unisim_flow,
+                                'neqsim': neqsim_flow,
+                                'delta': abs(neqsim_flow - unisim_flow)
+                            }
+
+                        # Count as matched if any value was compared
+                        if comp['details']:
+                            comp['matched'] = True
+                            n_matched += 1
+                        n_total += 1
+                    except Exception:
+                        n_total += 1
+
+                comparisons.append(comp)
+
+        if verbose and comparisons:
+            self._print_comparison_table(comparisons)
+
+        all_warnings = list(self._warnings) + list(self._assumptions)
+        if result.getWarnings():
+            all_warnings.extend(str(w) for w in result.getWarnings())
+
+        return {
+            'result': result,
+            'comparison': comparisons,
+            'match_summary': {
+                'total_streams': n_total,
+                'matched_streams': n_matched,
+                'match_rate': n_matched / max(n_total, 1),
+            },
+            'warnings': all_warnings,
+        }
+
+    def _print_build_summary(self, result) -> None:
+        """Print a summary of the build/run results."""
+        is_success = bool(result.isSuccess())
+        is_error = bool(result.isError())
+        n_warnings = len(list(result.getWarnings())) if result.getWarnings() else 0
+
+        status = 'SUCCESS' if is_success else ('ERROR' if is_error else 'PARTIAL')
+        print(f"\n{'='*60}")
+        print(f"  UniSim → NeqSim Automatic Build: {status}")
+        print(f"{'='*60}")
+
+        if is_success or not is_error:
+            process = result.getProcessSystem()
+            n_units = len(list(process.getUnitOperations()))
+            print(f"  Equipment units: {n_units}")
+
+        if n_warnings > 0:
+            print(f"  Warnings: {n_warnings}")
+            for w in result.getWarnings():
+                print(f"    - {w}")
+
+        if self._warnings:
+            print(f"  Converter warnings: {len(self._warnings)}")
+            for w in self._warnings:
+                print(f"    - {w}")
+
+        if self._assumptions:
+            print(f"  Assumptions: {len(self._assumptions)}")
+            for a in self._assumptions:
+                print(f"    - {a}")
+
+        print(f"{'='*60}\n")
+
+    def _print_comparison_table(self, comparisons: List[Dict]) -> None:
+        """Print a formatted comparison table."""
+        print(f"\n{'='*80}")
+        print("  Stream Comparison: UniSim vs NeqSim")
+        print(f"{'='*80}")
+        print(f"  {'Stream':<25} {'Property':<15} {'UniSim':>12} {'NeqSim':>12} {'Delta':>10}")
+        print(f"  {'-'*74}")
+        for comp in comparisons:
+            if not comp.get('details'):
+                continue
+            first = True
+            for prop_name, vals in comp['details'].items():
+                label = comp['stream'] if first else ''
+                unit = ''
+                if 'temperature' in prop_name:
+                    unit = ' C'
+                elif 'pressure' in prop_name:
+                    unit = ' bara'
+                elif 'flow' in prop_name:
+                    unit = ' kg/h'
+                print(f"  {label:<25} {prop_name:<15} "
+                      f"{vals['unisim']:>10.2f}{unit} "
+                      f"{vals['neqsim']:>10.2f}{unit} "
+                      f"{vals['delta']:>8.2f}{unit}")
+                first = False
+        print(f"{'='*80}\n")
 
     def _build_fluid_section(self) -> Dict:
         """Build the fluid section from the first fluid package."""
@@ -1461,6 +1656,29 @@ class UniSimToNeqSim:
                     sf = [1.0] * n_comp
                     sf[water_idx] = 0.0
                     props['splitFactors'] = sf
+
+        elif neqsim_type == 'Adjuster':
+            # Adjuster needs: adjustedVariable (equipment+property to change),
+            # targetVariable (equipment+property+value to achieve)
+            adj_obj = op.properties.get('adjusted_object_name')
+            adj_var = op.properties.get('adjusted_variable')
+            if adj_obj and adj_var:
+                props['adjustedEquipment'] = adj_obj
+                props['adjustedVariable'] = adj_var
+            tgt_obj = op.properties.get('target_object_name')
+            tgt_var = op.properties.get('target_variable')
+            tgt_val = op.properties.get('target_value')
+            if tgt_obj and tgt_var:
+                props['targetEquipment'] = tgt_obj
+                props['targetVariable'] = tgt_var
+            if tgt_val is not None:
+                props['targetValue'] = tgt_val
+            tol = op.properties.get('tolerance')
+            if tol is not None:
+                props['tolerance'] = tol
+            step_size = op.properties.get('step_size')
+            if step_size is not None:
+                props['stepSize'] = step_size
 
         if props:
             entry['properties'] = props
