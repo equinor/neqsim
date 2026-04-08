@@ -72,7 +72,8 @@ public class ComponentPR extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double calca() {
-    return .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+    double oa = hasOmegaAOverride() ? omegaAOverride : 0.45724333333;
+    return oa * R * R * criticalTemperature * criticalTemperature / criticalPressure;
   }
 
   /** {@inheritDoc} */
