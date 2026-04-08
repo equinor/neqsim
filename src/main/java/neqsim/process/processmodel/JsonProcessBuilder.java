@@ -28,6 +28,7 @@ import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
@@ -164,6 +165,18 @@ public class JsonProcessBuilder {
       unitDefMap.put(name, unitDef);
       if (needsWiring(unitDef)) {
         unwired.add(name);
+      } else if (!"Stream".equalsIgnoreCase(type) && unitDef.has("properties")) {
+        // Non-stream units without inlet/inlets still need properties applied
+        // (e.g. Adjuster which references other equipment, not streams).
+        ProcessEquipmentInterface eq = namedEquipment.get(name);
+        if (eq != null) {
+          JsonObject props = unitDef.getAsJsonObject("properties");
+          if (eq instanceof Adjuster
+              && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
+            wireAdjuster((Adjuster) eq, props);
+          }
+          applyProperties(eq, props);
+        }
       }
     }
 
@@ -658,6 +671,11 @@ public class JsonProcessBuilder {
         }
         ((ComponentSplitter) equipment).setSplitFactors(splitFact);
       }
+      // Handle Adjuster: wire adjusted/target variables by equipment reference
+      if (equipment instanceof Adjuster
+          && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
+        wireAdjuster((Adjuster) equipment, props);
+      }
       applyProperties(equipment, props);
     }
 
@@ -923,10 +941,13 @@ public class JsonProcessBuilder {
    * @param properties the properties JSON object
    */
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
+    // Properties that are handled by dedicated logic (not generic reflection)
+    java.util.Set<String> handledProps =
+        new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "adjustedEquipment",
+            "adjustedVariable", "targetEquipment", "targetVariable", "targetValue", "stepSize"));
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
-      // splitFactors is handled separately for Splitter and ComponentSplitter
-      if ("splitFactors".equals(propName)) {
+      if (handledProps.contains(propName)) {
         continue;
       }
       // entrainment is handled specially for separators (multi-param setter)
@@ -936,6 +957,69 @@ public class JsonProcessBuilder {
       }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
+    }
+  }
+
+  /**
+   * Wires an Adjuster's adjusted and target variables from JSON properties.
+   *
+   * <p>
+   * The Adjuster modifies one equipment property (adjusted variable) to achieve a target value on
+   * another equipment property (target variable). JSON format:
+   * </p>
+   *
+   * <pre>
+   * "properties": {
+   *   "adjustedEquipment": "Valve-1",
+   *   "adjustedVariable": "pressure",
+   *   "targetEquipment": "Stream-Out",
+   *   "targetVariable": "temperature",
+   *   "targetValue": 298.15,
+   *   "tolerance": 0.01,
+   *   "stepSize": 0.5
+   * }
+   * </pre>
+   *
+   * @param adjuster the adjuster to configure
+   * @param props the properties JSON object
+   */
+  private void wireAdjuster(Adjuster adjuster, JsonObject props) {
+    // Wire adjusted variable (the variable being changed)
+    if (props.has("adjustedEquipment")) {
+      String adjEquipName = props.get("adjustedEquipment").getAsString();
+      ProcessEquipmentInterface adjEquip = namedEquipment.get(adjEquipName);
+      if (adjEquip != null) {
+        if (props.has("adjustedVariable")) {
+          adjuster.setAdjustedVariable(adjEquip, props.get("adjustedVariable").getAsString());
+        } else {
+          adjuster.setAdjustedVariable(adjEquip);
+        }
+      } else {
+        warnings.add("Adjuster '" + adjuster.getName() + "' — adjusted equipment '" + adjEquipName
+            + "' not found");
+      }
+    }
+
+    // Wire target variable (the specification to meet)
+    if (props.has("targetEquipment")) {
+      String tgtEquipName = props.get("targetEquipment").getAsString();
+      ProcessEquipmentInterface tgtEquip = namedEquipment.get(tgtEquipName);
+      if (tgtEquip != null) {
+        String tgtVar =
+            props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
+        double tgtVal = props.has("targetValue") ? props.get("targetValue").getAsDouble() : 0.0;
+        String tgtUnit = props.has("targetUnit") ? props.get("targetUnit").getAsString() : "";
+        if (!tgtVar.isEmpty() && props.has("targetValue")) {
+          adjuster.setTargetVariable(tgtEquip, tgtVar, tgtVal, tgtUnit);
+        } else if (!tgtVar.isEmpty()) {
+          adjuster.setTargetVariable(tgtEquip, tgtVar);
+        } else {
+          adjuster.setTargetVariable(tgtEquip);
+        }
+      } else {
+        warnings.add("Adjuster '" + adjuster.getName() + "' — target equipment '" + tgtEquipName
+            + "' not found");
+      }
     }
   }
 
