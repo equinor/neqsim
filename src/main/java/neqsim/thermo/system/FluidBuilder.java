@@ -98,7 +98,7 @@ public class FluidBuilder implements Serializable {
     SRK_PENELOUX,
     /** PR 1978 modification. */
     PR_1978,
-    /** Peng-Robinson with Lee-Kesler alpha function (matches HYSYS/UniSim "Peng-Robinson"). */
+    /** Peng-Robinson with PR76 alpha function and Lee-Kesler BWR enthalpy (PR-LK). */
     PR_LK
   }
 

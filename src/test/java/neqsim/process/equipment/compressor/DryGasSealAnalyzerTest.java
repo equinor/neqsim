@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemPrEos;
  *
  * <p>
  * Validates all six sub-analyses using the Bacalhau GIC seal gas composition and conditions from
- * SOK7305593 (Flowserve API 692 datasheet). Expected results are cross-validated against UniSim and
+ * SOK7305593 (Flowserve API 692 datasheet). Expected results are cross-validated against
  * manual NeqSim TPflash/PHflash calculations performed during the original task.
  * </p>
  *
@@ -40,7 +40,7 @@ class DryGasSealAnalyzerTest {
     // Peng-Robinson EOS at settleout conditions: 421 barg (422 bara), 44 degC
     sealGas = new SystemPrEos(273.15 + 44.0, 422.0);
 
-    // Bacalhau GIC seal gas composition (from UniSim stream 5000)
+    // Bacalhau GIC seal gas composition (source: project process data)
     sealGas.addComponent("nitrogen", 0.00732);
     sealGas.addComponent("CO2", 0.00087);
     sealGas.addComponent("methane", 0.79966);
@@ -116,7 +116,7 @@ class DryGasSealAnalyzerTest {
 
   /**
    * Tests that the retrograde condensation map identifies two-phase conditions at standstill (25
-   * degC, 50-70 barg) consistent with the original analysis and UniSim validation.
+   * degC, 50-70 barg) consistent with the original analysis and process simulation validation.
    */
   @Test
   void testRetrogradeCondensationMapIdentifiesTwoPhaseZone() {
