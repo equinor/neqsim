@@ -10,6 +10,7 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.electricaldesign.ElectricalDesign;
+import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -554,8 +555,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the temperature of the primary outlet stream in the specified unit.
    *
    * <p>
-   * Works uniformly across all equipment types by using {@link #getOutletStreams()}.
-   * For equipment with multiple outlets (e.g., separators), returns the first outlet's temperature.
+   * Works uniformly across all equipment types by using {@link #getOutletStreams()}. For equipment
+   * with multiple outlets (e.g., separators), returns the first outlet's temperature.
    * </p>
    *
    * @param unit temperature unit, e.g. "C", "K"
@@ -573,8 +574,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the pressure of the primary outlet stream in the specified unit.
    *
    * <p>
-   * Works uniformly across all equipment types by using {@link #getOutletStreams()}.
-   * For equipment with multiple outlets, returns the first outlet's pressure.
+   * Works uniformly across all equipment types by using {@link #getOutletStreams()}. For equipment
+   * with multiple outlets, returns the first outlet's pressure.
    * </p>
    *
    * @param unit pressure unit, e.g. "bara", "barg", "Pa"
@@ -592,8 +593,8 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * Returns the total flow rate across all outlet streams in the specified unit.
    *
    * <p>
-   * For single-outlet equipment (compressor, heater, valve), returns the outlet flow rate.
-   * For multi-outlet equipment (separator), returns the sum of all outlet flow rates.
+   * For single-outlet equipment (compressor, heater, valve), returns the outlet flow rate. For
+   * multi-outlet equipment (separator), returns the sum of all outlet flow rates.
    * </p>
    *
    * @param unit flow unit, e.g. "kg/hr", "Sm3/hr", "m3/hr"
@@ -620,14 +621,14 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    *
    * <p>
    * Provides a unified way to access equipment state without knowing the specific equipment type.
-   * Each entry in the outer map has a property name (e.g. "temperature", "pressure").
-   * Each inner map contains "value" (Double) and "unit" (String).
+   * Each entry in the outer map has a property name (e.g. "temperature", "pressure"). Each inner
+   * map contains "value" (Double) and "unit" (String).
    * </p>
    *
    * <p>
    * The default implementation uses {@link #getOutletStreams()} to report outlet conditions.
-   * Subclasses override this to add equipment-specific properties (e.g., valve opening,
-   * compressor power, separator liquid levels).
+   * Subclasses override this to add equipment-specific properties (e.g., valve opening, compressor
+   * power, separator liquid levels).
    * </p>
    *
    * @param temperatureUnit temperature unit (e.g. "C")
@@ -641,12 +642,10 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     List<StreamInterface> outlets = getOutletStreams();
     if (!outlets.isEmpty()) {
       StreamInterface primary = outlets.get(0);
-      state.put("temperature", createStateEntry(primary.getTemperature(temperatureUnit),
-          temperatureUnit));
-      state.put("pressure",
-          createStateEntry(primary.getPressure(pressureUnit), pressureUnit));
-      state.put("flow",
-          createStateEntry(primary.getFlowRate(flowUnit), flowUnit));
+      state.put("temperature",
+          createStateEntry(primary.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure", createStateEntry(primary.getPressure(pressureUnit), pressureUnit));
+      state.put("flow", createStateEntry(primary.getFlowRate(flowUnit), flowUnit));
     }
     return state;
   }
@@ -663,5 +662,46 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     entry.put("value", value);
     entry.put("unit", unit);
     return entry;
+  }
+
+  // ============================================================
+  // IEC 81346 Reference Designation Support
+  // ============================================================
+
+  /**
+   * Returns the IEC 81346 reference designation for this equipment.
+   *
+   * <p>
+   * The reference designation encodes three aspects per IEC 81346: function (what the system does),
+   * product (what the equipment is), and location (where it is installed).
+   * </p>
+   *
+   * @return the reference designation object, never null
+   */
+  public default ReferenceDesignation getReferenceDesignation() {
+    return new ReferenceDesignation();
+  }
+
+  /**
+   * Sets the IEC 81346 reference designation for this equipment.
+   *
+   * @param referenceDesignation the reference designation to set
+   */
+  public default void setReferenceDesignation(ReferenceDesignation referenceDesignation) {
+    // Default no-op; overridden in ProcessEquipmentBaseClass
+  }
+
+  /**
+   * Returns the full IEC 81346 reference designation string.
+   *
+   * <p>
+   * Convenience method equivalent to
+   * {@code getReferenceDesignation().toReferenceDesignationString()}.
+   * </p>
+   *
+   * @return the formatted reference designation string, e.g. "=A1.K1-B1+P1.M1"
+   */
+  public default String getReferenceDesignationString() {
+    return getReferenceDesignation().toReferenceDesignationString();
   }
 }

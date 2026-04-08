@@ -504,6 +504,9 @@ public final class DexpiXmlWriter {
     genericAttributes.setAttribute("Set", "DexpiAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, unit.getName());
 
+    // Export IEC 81346 reference designation if set
+    appendIEC81346Attributes(document, genericAttributes, unit);
+
     // Export simulation results if the equipment has been run
     appendSimulationResults(document, genericAttributes, unit);
 
@@ -1929,6 +1932,44 @@ public final class DexpiXmlWriter {
       replaced = "ID-" + replaced;
     }
     return replaced;
+  }
+
+  /**
+   * Appends IEC 81346 reference designation attributes to the generic attributes element.
+   *
+   * <p>
+   * If the equipment has an IEC 81346 reference designation set (via
+   * {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}), the following
+   * attributes are added:
+   * </p>
+   * <ul>
+   * <li>{@code IEC81346ReferenceDesignation}: The full reference designation string</li>
+   * <li>{@code IEC81346FunctionDesignation}: The function aspect</li>
+   * <li>{@code IEC81346ProductDesignation}: The product aspect</li>
+   * <li>{@code IEC81346LocationDesignation}: The location aspect</li>
+   * <li>{@code IEC81346LetterCode}: The equipment letter code (e.g. "B", "K", "Q")</li>
+   * </ul>
+   *
+   * @param document the XML document
+   * @param genericAttributes the parent element for generic attributes
+   * @param unit the process equipment
+   */
+  private static void appendIEC81346Attributes(Document document, Element genericAttributes,
+      ProcessEquipmentInterface unit) {
+    neqsim.process.equipment.iec81346.ReferenceDesignation refDes = unit.getReferenceDesignation();
+    if (refDes == null || !refDes.isSet()) {
+      return;
+    }
+    appendGenericAttribute(document, genericAttributes, "IEC81346ReferenceDesignation",
+        refDes.toReferenceDesignationString());
+    appendGenericAttribute(document, genericAttributes, "IEC81346FunctionDesignation",
+        refDes.getFormattedFunctionDesignation());
+    appendGenericAttribute(document, genericAttributes, "IEC81346ProductDesignation",
+        refDes.getFormattedProductDesignation());
+    appendGenericAttribute(document, genericAttributes, "IEC81346LocationDesignation",
+        refDes.getFormattedLocationDesignation());
+    appendGenericAttribute(document, genericAttributes, "IEC81346LetterCode",
+        refDes.getLetterCode().name());
   }
 
   private static String stripHyphens(String value) {
