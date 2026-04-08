@@ -3,23 +3,23 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * Lee-Kesler alpha function for use with the Peng-Robinson EOS.
+ * Alternative alpha function for the Peng-Robinson EOS using a Soave-form m-factor.
  *
  * <p>
- * Uses the Lee-Kesler / Soave m-factor correlation:
+ * Uses the Soave (SRK) m-factor correlation applied within the PR EOS framework:
  *
  * <pre>
  *   m = 0.480 + 1.574 \omega - 0.176 \omega^2
  * </pre>
  *
  * <p>
- * This is the alpha-function formulation used by HYSYS/UniSim "Peng-Robinson" which refers to it as
- * the "Peng-Robinson with Lee-Kesler (PR-LK)" modification. It produces slightly different vapour
- * fractions than the PR1978 alpha function (especially for high acentric-factor pseudo-components),
- * and is the correct choice when comparing against UniSim PR results.
+ * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT the standard
+ * PR76 m-factor and NOT the Lee-Kesler BWR enthalpy method. {@link SystemPrLeeKeslerEos}
+ * uses {@code attractiveTermNumber=1} (standard PR76 alpha), not this class. This class is
+ * retained at dispatch index 21 for backward compatibility and research purposes.
  *
  * <p>
- * The alpha function itself is the standard Soave form:
+ * The alpha function form is:
  *
  * <pre>
  *   \alpha(T) = \left[1 + m \left(1 - \sqrt{T / T_c}\right)\right]^2

@@ -106,6 +106,29 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Read an Eclipse E300 fluid file and load components into the supplied fluid system, ignoring
+   * the EOS keyword in the file. This allows any NeqSim EOS (e.g. SystemPrLeeKeslerEos) to be used
+   * with an E300 composition file that was written for a different EOS.
+   *
+   * <p>
+   * Usage example:
+   * </p>
+   *
+   * <pre>
+   * SystemInterface fluid = new SystemPrLeeKeslerEos(288.15, 1.01325);
+   * EclipseFluidReadWrite.read(e300Path, fluid);
+   * </pre>
+   *
+   * @param inputFile a {@link java.lang.String} object — path to the E300 file
+   * @param targetFluid a pre-created {@link neqsim.thermo.system.SystemInterface} to populate
+   * @return the same {@code targetFluid} instance, now populated with components and BIPs
+   * @throws java.lang.IllegalArgumentException if the input file cannot be read
+   */
+  public static SystemInterface read(String inputFile, SystemInterface targetFluid) {
+    return readImpl(inputFile, targetFluid);
+  }
+
+  /**
    * <p>
    * read.
    * </p>
@@ -115,6 +138,14 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile) {
+    return readImpl(inputFile, null);
+  }
+
+  /**
+   * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS
+   * keyword in file is ignored). Otherwise the EOS keyword drives fluid creation.
+   */
+  private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid) {
     File file = new File(inputFile);
     if (!file.exists()) {
       throw new IllegalArgumentException(
@@ -125,8 +156,9 @@ public class EclipseFluidReadWrite {
           "Eclipse fluid file cannot be read: " + inputFile + ". Check file permissions.");
     }
 
-    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
-        ThermodynamicConstantsInterface.referencePressure);
+    neqsim.thermo.system.SystemInterface fluid = (forcedFluid != null) ? forcedFluid
+        : new neqsim.thermo.system.SystemSrkEos(288.15,
+            ThermodynamicConstantsInterface.referencePressure);
 
     Double[][] kij = null;
     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -154,21 +186,30 @@ public class EclipseFluidReadWrite {
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
           EOS = br.readLine().trim().replace("/", "");
-          if (EOS.contains("SRK")) {
-            fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
-                ThermodynamicConstantsInterface.referencePressure);
-          } else if (EOS.contains("PR")) {
-            String corr = br.readLine().trim().replace("/", "");
-            if (corr.equals("PRCORR")) {
-              fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+          if (forcedFluid == null) {
+            // Only auto-create the fluid system when no target was forced by the caller.
+            if (EOS.contains("SRK")) {
+              fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
+            } else if (EOS.contains("PR")) {
+              String corr = br.readLine().trim().replace("/", "");
+              if (corr.equals("PRLKCORR")) {
+                fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
+                    ThermodynamicConstantsInterface.referencePressure);
+              } else if (corr.equals("PRCORR")) {
+                fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+                    ThermodynamicConstantsInterface.referencePressure);
+              } else {
+                fluid = new neqsim.thermo.system.SystemPrEos(288.15,
+                    ThermodynamicConstantsInterface.referencePressure);
+              }
             } else {
               fluid = new neqsim.thermo.system.SystemPrEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             }
-          } else {
-            fluid = new neqsim.thermo.system.SystemPrEos(288.15,
-                ThermodynamicConstantsInterface.referencePressure);
+          } else if (EOS.contains("PR")) {
+            // Skip the PRCORR / PRLKCORR line so the reader stays in sync.
+            br.readLine();
           }
         }
         if (st.trim().equals("CNAMES")) {
@@ -658,7 +699,10 @@ public class EclipseFluidReadWrite {
                 ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
             String corr = br.readLine().trim().replace("/", "");
-            if (corr.equals("PRCORR")) {
+            if (corr.equals("PRLKCORR")) {
+              fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
+                  ThermodynamicConstantsInterface.referencePressure);
+            } else if (corr.equals("PRCORR")) {
               fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             } else {
@@ -1201,6 +1245,7 @@ public class EclipseFluidReadWrite {
     // Header
     writer.write("-- Eclipse 300 Compositional EOS File\n");
     writer.write("-- Generated by NeqSim on " + timestamp + "\n");
+    writer.write("-- EOS: " + getEOSType(fluid) + "\n");
     writer.write("--\n");
 
     // Units
@@ -1215,10 +1260,14 @@ public class EclipseFluidReadWrite {
     writer.write("-- Equation of state\n");
     writer.write("EOS\n");
     String eosType = getEOSType(fluid);
-    writer.write(eosType + " /\n");
+    // PR-LK is written as "PR" in the EOS line (same family), distinguished by PRLKCORR
+    String eosLine = "PR-LK".equals(eosType) ? "PR" : eosType;
+    writer.write(eosLine + " /\n");
 
-    // PRCORR keyword for Peng-Robinson EOS
-    if ("PR".equals(eosType)) {
+    // Correction keyword for Peng-Robinson variants
+    if ("PR-LK".equals(eosType)) {
+      writer.write("PRLKCORR\n");
+    } else if ("PR".equals(eosType)) {
       writer.write("PRCORR\n");
     }
 
@@ -1269,7 +1318,7 @@ public class EclipseFluidReadWrite {
     // OmegaA EOS parameter
     writer.write("-- OmegaA\n");
     writer.write("OMEGAA\n");
-    double omegaA = "PR".equals(eosType) ? 0.45724 : 0.42748;
+    double omegaA = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.45724 : 0.42748;
     for (int i = 0; i < nComps; i++) {
       writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaA));
     }
@@ -1278,7 +1327,7 @@ public class EclipseFluidReadWrite {
     // OmegaB EOS parameter
     writer.write("-- OmegaB\n");
     writer.write("OMEGAB\n");
-    double omegaB = "PR".equals(eosType) ? 0.07780 : 0.08664;
+    double omegaB = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.07780 : 0.08664;
     for (int i = 0; i < nComps; i++) {
       writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
     }
@@ -1433,6 +1482,8 @@ public class EclipseFluidReadWrite {
     String className = fluid.getClass().getSimpleName().toLowerCase();
     if (className.contains("srk")) {
       return "SRK";
+    } else if (className.contains("leekes") || className.contains("leekesler")) {
+      return "PR-LK";
     } else if (className.contains("pr")) {
       return "PR";
     } else {
