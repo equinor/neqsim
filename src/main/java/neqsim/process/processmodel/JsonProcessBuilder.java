@@ -834,6 +834,17 @@ public class JsonProcessBuilder {
               // fall through to default outlet
             }
           }
+          // Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
+          if (port.startsWith("hx") && port.length() > 2) {
+            try {
+              int idx = Integer.parseInt(port.substring(2));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           // Handle HeatExchanger which uses getOutStream(int) instead of getOutletStream()
           if (unit instanceof HeatExchanger) {
             return ((HeatExchanger) unit).getOutStream(0);
@@ -918,8 +929,51 @@ public class JsonProcessBuilder {
       if ("splitFactors".equals(propName)) {
         continue;
       }
+      // entrainment is handled specially for separators (multi-param setter)
+      if ("entrainment".equals(propName) && equipment instanceof Separator) {
+        applyEntrainment((Separator) equipment, entry.getValue());
+        continue;
+      }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
+    }
+  }
+
+  /**
+   * Applies entrainment specifications to a separator from a JSON array.
+   *
+   * <p>
+   * Each array element is an object with keys: value, specType, specifiedStream, phaseFrom,
+   * phaseTo. These map directly to
+   * {@link Separator#setEntrainment(double, String, String, String, String)}.
+   * </p>
+   *
+   * @param separator the separator to configure
+   * @param entrainmentElement the JSON element (expected to be a JsonArray)
+   */
+  private void applyEntrainment(Separator separator, JsonElement entrainmentElement) {
+    if (!entrainmentElement.isJsonArray()) {
+      warnings.add("Entrainment property on " + separator.getName() + " must be a JSON array");
+      return;
+    }
+    JsonArray specs = entrainmentElement.getAsJsonArray();
+    for (JsonElement specElem : specs) {
+      if (!specElem.isJsonObject()) {
+        continue;
+      }
+      JsonObject spec = specElem.getAsJsonObject();
+      try {
+        double value = spec.get("value").getAsDouble();
+        String specType = spec.has("specType") ? spec.get("specType").getAsString() : "volume";
+        String specifiedStream =
+            spec.has("specifiedStream") ? spec.get("specifiedStream").getAsString() : "product";
+        String phaseFrom = spec.get("phaseFrom").getAsString();
+        String phaseTo = spec.get("phaseTo").getAsString();
+        separator.setEntrainment(value, specType, specifiedStream, phaseFrom, phaseTo);
+      } catch (Exception e) {
+        warnings
+            .add("Error applying entrainment on " + separator.getName() + ": " + e.getMessage());
+      }
     }
   }
 

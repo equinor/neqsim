@@ -424,6 +424,10 @@ public class KPIDashboard {
 
   /**
    * Truncates a string to specified length.
+   *
+   * @param str the string to truncate
+   * @param length the maximum length
+   * @return the truncated string
    */
   private String truncate(String str, int length) {
     if (str.length() <= length) {
@@ -434,6 +438,8 @@ public class KPIDashboard {
 
   /**
    * Gets the number of scenarios in the dashboard.
+   *
+   * @return the number of scenarios
    */
   public int getScenarioCount() {
     return scenarios.size();

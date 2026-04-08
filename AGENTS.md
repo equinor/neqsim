@@ -749,7 +749,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost, tieback analysis |
 | `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
 | `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
-| `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, and HeatExchanger UA tuning notes. |
+| `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, HeatExchanger UA tuning notes, separator 2-phase/3-phase auto-detection (flashtank with WaterProduct promoted to ThreePhaseSeparator), orientation detection (vertical → GasScrubber, horizontal → Separator), and entrainment extraction (liquid carryover, gas carry-under, water-in-oil, oil-in-water). |
 | `neqsim-eos-regression` | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization, scipy optimization |
 | `neqsim-reaction-engineering` | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed |
 | `neqsim-dynamic-simulation` | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization |

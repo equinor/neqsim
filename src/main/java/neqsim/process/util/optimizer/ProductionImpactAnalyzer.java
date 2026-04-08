@@ -502,6 +502,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Finds the current bottleneck in the process.
+   *
+   * @param process the process system to analyze
+   * @return the bottleneck result
    */
   private BottleneckResult findBottleneck(ProcessSystem process) {
     ProcessEquipmentInterface bottleneckEquip = null;

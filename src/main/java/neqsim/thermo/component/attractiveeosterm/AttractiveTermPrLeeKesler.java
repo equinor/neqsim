@@ -13,10 +13,11 @@ import neqsim.thermo.component.ComponentEosInterface;
  * </pre>
  *
  * <p>
- * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT the standard
- * PR76 m-factor and NOT the Lee-Kesler BWR enthalpy method. {@link SystemPrLeeKeslerEos}
- * uses {@code attractiveTermNumber=1} (standard PR76 alpha), not this class. This class is
- * retained at dispatch index 21 for backward compatibility and research purposes.
+ * <b>Note:</b> Despite the class name, this implements the Soave m-factor — NOT the standard PR76
+ * m-factor and NOT the Lee-Kesler BWR enthalpy method.
+ * {@link neqsim.thermo.system.SystemPrLeeKeslerEos} uses {@code attractiveTermNumber=1} (standard
+ * PR76 alpha), not this class. This class is retained at dispatch index 21 for backward
+ * compatibility and research purposes.
  *
  * <p>
  * The alpha function form is:

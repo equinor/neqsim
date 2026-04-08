@@ -286,6 +286,9 @@ with UniSimReader(visible=False) as reader:
 6. **Preserve UniSim equipment names** — use the same names in NeqSim for traceability
 7. **Preserve sub-flowsheet structure** — map to ProcessModule when appropriate
 8. **Handle hypothetical components** explicitly — document the strategy used
+9. **Detect separator type accurately** — a `flashtank` with a `WaterProduct` is auto-promoted to `ThreePhaseSeparator`; a vertical `flashtank` maps to `GasScrubber`
+10. **Extract entrainment settings** — the reader extracts liquid carryover, gas carry-under, water-in-oil, and oil-in-water fractions from UniSim COM and generates `setEntrainment()` calls in the output code
+11. **Detect separator orientation** — vertical separators use `GasScrubber` in NeqSim (extends `Separator` with K-value sizing), horizontal use `Separator`
 
 ---
 
@@ -307,6 +310,38 @@ back to the placeholders.
 **HeatExchanger outlet API**: Use `getOutStream(int(0))` for shell-side outlet
 and `getOutStream(int(1))` for tube-side outlet. Do NOT use `getOutletStream()`
 when a specific side is needed — it only returns side 0.
+
+### Separator Type Detection and Entrainment
+
+The reader distinguishes 2-phase from 3-phase separators using:
+1. **TypeName**: `flashtank` → `Separator`, `sep3op` → `ThreePhaseSeparator`
+2. **WaterProduct heuristic**: A `flashtank` with a connected `WaterProduct`
+   is automatically re-classified as `ThreePhaseSeparator` (sep3op)
+3. **Orientation**: A vertical `flashtank` → `GasScrubber` (extends `Separator`
+   with K-value sizing and 10% liquid level). Horizontal (default) → `Separator`.
+
+| UniSim flashtank | NeqSim Type |
+|---|---|
+| horizontal (default) | `Separator` |
+| vertical | `GasScrubber` |
+| has WaterProduct | `ThreePhaseSeparator` |
+
+Entrainment fractions are extracted from the UniSim COM object by trying
+multiple attribute names (e.g., `LiqCarryOverMolFrac`, `WaterInOilFraction`).
+Extracted values generate `setEntrainment()` calls in the output:
+
+```python
+# Example: 3-phase separator with entrainment from UniSim
+mp_sep = ThreePhaseSeparator("20VA102", feed_stream)
+mp_sep.setEntrainment(0.084, "volume", "product", "aqueous", "oil")
+mp_sep.setEntrainment(0.002, "volume", "product", "oil", "aqueous")
+
+# Example: vertical separator → GasScrubber
+scrubber = GasScrubber("Inlet Scrubber", gas_stream)
+```
+
+If the UniSim model has no entrainment configured, the separator uses
+NeqSim defaults (zero entrainment / perfect separation).
 
 **If you modify `_register_fwd_placeholders` or `_outlet_ref`**, always verify
 that port-specific keys (`V-100.liquidOut`, `E-100.hx1`) are checked before

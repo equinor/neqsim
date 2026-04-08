@@ -433,4 +433,47 @@ class JsonProcessBuilderTest {
     assertNotNull(process.getUnit("cooler"));
     assertNotNull(process.getUnit("lpValve"));
   }
+
+  @Test
+  void testBuildWithGasScrubber() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"GasScrubber\", \"name\": \"scrubber\"," + "   \"inlet\": \"feed\"},"
+        + "  {\"type\": \"Compressor\", \"name\": \"comp\"," + "   \"inlet\": \"scrubber.gasOut\","
+        + "   \"properties\": {\"outletPressure\": 100.0}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    assertNotNull(process.getUnit("scrubber"));
+    assertTrue(
+        process.getUnit("scrubber") instanceof neqsim.process.equipment.separator.GasScrubber);
+    assertNotNull(process.getUnit("comp"));
+  }
+
+  @Test
+  void testBuildWithEntrainment() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"multiPhaseCheck\": true,"
+        + "  \"components\": {\"methane\": 0.70, \"nC10\": 0.20, \"water\": 0.10}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"ThreePhaseSeparator\", \"name\": \"3PS\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {" + "     \"entrainment\": ["
+        + "       {\"value\": 0.05, \"specType\": \"volume\","
+        + "        \"specifiedStream\": \"product\","
+        + "        \"phaseFrom\": \"aqueous\", \"phaseTo\": \"oil\"},"
+        + "       {\"value\": 0.002, \"specType\": \"volume\","
+        + "        \"specifiedStream\": \"product\","
+        + "        \"phaseFrom\": \"oil\", \"phaseTo\": \"aqueous\"}" + "     ]" + "   }}" + "]"
+        + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    assertNotNull(result.getProcessSystem().getUnit("3PS"));
+  }
 }

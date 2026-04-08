@@ -617,7 +617,7 @@ class UniSimReader:
             pass
 
         # 2) Try VapourProduct / LiquidProduct / WaterProduct (separators)
-        if not prods_found and 'flash' in type_lower or 'sep' in type_lower:
+        if not prods_found and ('flash' in type_lower or 'sep' in type_lower):
             for attr in ('VapourProduct', 'LiquidProduct', 'WaterProduct'):
                 try:
                     stream = getattr(op, attr)
@@ -728,6 +728,143 @@ class UniSimReader:
                 props['diameter_m'] = self._safe_getval(op.Diameter, 'm') if hasattr(op, 'Diameter') else None
             except Exception:
                 pass
+
+        elif 'flash' in type_name or 'sep' in type_name:
+            # ---- Separator / Three-Phase Separator properties ----
+            # Detect actual phase count from connected products
+            has_water_product = False
+            try:
+                wp = op.WaterProduct
+                if wp is not None:
+                    wn = self._safe_get(wp, 'name', None)
+                    if wn:
+                        has_water_product = True
+            except Exception:
+                pass
+            props['has_water_product'] = has_water_product
+
+            # If a flashtank has a WaterProduct, it is effectively 3-phase
+            if has_water_product and type_name == 'flashtank':
+                props['detected_three_phase'] = True
+                op_data.type_name = 'sep3op'  # override to 3-phase
+                logger.info(
+                    "Separator '%s' is flashtank with WaterProduct — "
+                    "re-classified as three-phase (sep3op)", op_data.name)
+
+            # Entrainment / carryover fractions
+            # UniSim COM exposes these via various attribute names;
+            # try the most common ones.
+            entrainment_specs = []
+            # --- liquid in vapour (oil carryover in gas) ---
+            for attr_name in ('LiqCarryOverMolFrac', 'LiqCarryOverFrac',
+                              'LiquidInVapourFraction', 'LiqInVap',
+                              'LiquidCarryover'):
+                try:
+                    val = self._safe_getval(getattr(op, attr_name))
+                    if val is not None and val > 0:
+                        entrainment_specs.append({
+                            'value': val, 'specType': 'volume',
+                            'specifiedStream': 'product',
+                            'phaseFrom': 'oil', 'phaseTo': 'gas',
+                            'source_attr': attr_name})
+                        break
+                except Exception:
+                    pass
+            # --- vapour in liquid (gas carry-under in oil) ---
+            for attr_name in ('VapCarryUnderMolFrac', 'VapCarryUnderFrac',
+                              'VapourInLiquidFraction', 'VapInLiq',
+                              'VapourCarryunder'):
+                try:
+                    val = self._safe_getval(getattr(op, attr_name))
+                    if val is not None and val > 0:
+                        entrainment_specs.append({
+                            'value': val, 'specType': 'volume',
+                            'specifiedStream': 'product',
+                            'phaseFrom': 'gas', 'phaseTo': 'liquid',
+                            'source_attr': attr_name})
+                        break
+                except Exception:
+                    pass
+            # --- water in oil (for 3-phase) ---
+            for attr_name in ('WaterInOilFraction', 'WaterInOil',
+                              'AqInOil', 'AqueousInOilFraction'):
+                try:
+                    val = self._safe_getval(getattr(op, attr_name))
+                    if val is not None and val > 0:
+                        entrainment_specs.append({
+                            'value': val, 'specType': 'volume',
+                            'specifiedStream': 'product',
+                            'phaseFrom': 'aqueous', 'phaseTo': 'oil',
+                            'source_attr': attr_name})
+                        break
+                except Exception:
+                    pass
+            # --- oil in water (for 3-phase) ---
+            for attr_name in ('OilInWaterFraction', 'OilInWater',
+                              'OilInAq', 'OilInAqueousFraction'):
+                try:
+                    val = self._safe_getval(getattr(op, attr_name))
+                    if val is not None and val > 0:
+                        entrainment_specs.append({
+                            'value': val, 'specType': 'volume',
+                            'specifiedStream': 'product',
+                            'phaseFrom': 'oil', 'phaseTo': 'aqueous',
+                            'source_attr': attr_name})
+                        break
+                except Exception:
+                    pass
+            if entrainment_specs:
+                props['entrainment'] = entrainment_specs
+                logger.info("Separator '%s': extracted %d entrainment specs",
+                            op_data.name, len(entrainment_specs))
+
+            # Dimensions (if available)
+            try:
+                props['diameter_m'] = self._safe_getval(op.Diameter, 'm')
+            except Exception:
+                pass
+            try:
+                props['length_m'] = self._safe_getval(op.Length, 'm')
+            except Exception:
+                pass
+
+            # Orientation detection (vertical → GasScrubber, horizontal → Separator)
+            orientation = None
+            for attr_name in ('Orientation', 'VesselOrientation',
+                              'SeparatorOrientation'):
+                try:
+                    raw = getattr(op, attr_name)
+                    if raw is not None:
+                        val_str = str(raw).strip().lower()
+                        if 'vert' in val_str:
+                            orientation = 'vertical'
+                        elif 'horiz' in val_str:
+                            orientation = 'horizontal'
+                        elif val_str in ('0', '1'):
+                            # Some UniSim versions: 0=horizontal, 1=vertical
+                            orientation = 'vertical' if val_str == '1' else 'horizontal'
+                        if orientation:
+                            break
+                except Exception:
+                    pass
+            # Fallback: try numeric enum (UniSim R510+)
+            if orientation is None:
+                try:
+                    raw = op.Orientation
+                    ival = int(raw)
+                    orientation = 'vertical' if ival == 1 else 'horizontal'
+                except Exception:
+                    pass
+            if orientation:
+                props['orientation'] = orientation
+                logger.info("Separator '%s': orientation = %s",
+                            op_data.name, orientation)
+                # For 2-phase vertical separators, reclassify to GasScrubber
+                if orientation == 'vertical' and op_data.type_name == 'flashtank':
+                    props['detected_vertical'] = True
+                    logger.info(
+                        "Separator '%s' is vertical flashtank — "
+                        "will map to GasScrubber", op_data.name)
 
         elif 'heatex' in type_name:
             props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW') if hasattr(op, 'DutyValue') else None
@@ -974,6 +1111,23 @@ class UniSimToNeqSim:
     def assumptions(self) -> List[str]:
         return self._assumptions
 
+    @staticmethod
+    def resolve_neqsim_type(op: 'UniSimOperation') -> Optional[str]:
+        """Resolve the NeqSim equipment type for a UniSim operation.
+
+        Applies orientation-based overrides:
+        - Vertical 2-phase flashtank → GasScrubber
+        - Horizontal 2-phase flashtank → Separator (default)
+        - sep3op always → ThreePhaseSeparator (regardless of orientation)
+        """
+        base_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+        if base_type is None:
+            return None
+        # Vertical 2-phase separator → GasScrubber
+        if base_type == 'Separator' and op.properties.get('detected_vertical'):
+            return 'GasScrubber'
+        return base_type
+
     def to_json(self, include_subflowsheets: bool = True) -> Dict:
         """Convert the full model to NeqSim JSON builder format.
 
@@ -1160,8 +1314,7 @@ class UniSimToNeqSim:
                            stream_producer: Dict,
                            flowsheet: UniSimFlowsheet) -> Optional[Dict]:
         """Convert a single UniSim operation to NeqSim JSON format."""
-        neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(
-            op.type_name, None)
+        neqsim_type = self.resolve_neqsim_type(op)
 
         # Skip unsupported types
         if neqsim_type is None:
@@ -1265,6 +1418,14 @@ class UniSimToNeqSim:
             if op.products:
                 props['splitNumber'] = len(op.products)
 
+        elif neqsim_type in ('Separator', 'GasScrubber',
+                             'ThreePhaseSeparator'):
+            entrainment_specs = op.properties.get('entrainment', [])
+            if entrainment_specs:
+                props['entrainment'] = entrainment_specs
+            if op.properties.get('diameter_m'):
+                props['diameter'] = op.properties['diameter_m']
+
         if props:
             entry['properties'] = props
 
@@ -1278,8 +1439,9 @@ class UniSimToNeqSim:
             # Find the producer operation to determine port type
             for op in self.model.all_operations():
                 if op.name == producer_name:
-                    neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
-                    if neqsim_type in ('Separator', 'ThreePhaseSeparator'):
+                    neqsim_type = self.resolve_neqsim_type(op)
+                    if neqsim_type in ('Separator', 'GasScrubber',
+                                       'ThreePhaseSeparator'):
                         # Determine which port this stream comes from
                         if len(op.products) > 0:
                             idx = op.products.index(stream_name) if stream_name in op.products else 0
@@ -1492,7 +1654,7 @@ class UniSimToNeqSim:
         defined_ops: set = set(external_feeds)  # feeds are "defined" before equipment
         fwd_ref_placeholders: set = set()
         for op in sorted_ops:
-            n_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            n_type = self.resolve_neqsim_type(op)
             if n_type is None or n_type in self.SKIPPED_NEQSIM_TYPES:
                 defined_ops.add(op.name)
                 continue
@@ -1567,8 +1729,8 @@ class UniSimToNeqSim:
             # Create port-specific placeholders for multi-outlet equipment
             op = op_by_name.get(prod_name)
             if op:
-                n_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
-                if n_type == 'Separator' and len(op.products or []) >= 2:
+                n_type = UniSimToNeqSim.resolve_neqsim_type(op)
+                if n_type in ('Separator', 'GasScrubber') and len(op.products or []) >= 2:
                     ports = ['gasOut', 'liquidOut']
                 elif n_type == 'ThreePhaseSeparator' and len(op.products or []) >= 3:
                     ports = ['gasOut', 'oilOut', 'waterOut']
@@ -1628,6 +1790,7 @@ class UniSimToNeqSim:
         'ProcessModel = jneqsim.process.processmodel.ProcessModel',
         'Stream = jneqsim.process.equipment.stream.Stream',
         'Separator = jneqsim.process.equipment.separator.Separator',
+        'GasScrubber = jneqsim.process.equipment.separator.GasScrubber',
         'ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator',
         'Mixer = jneqsim.process.equipment.mixer.Mixer',
         'Splitter = jneqsim.process.equipment.splitter.Splitter',
@@ -1686,7 +1849,7 @@ class UniSimToNeqSim:
 
     def _gen_equipment_lines(self, op: 'UniSimOperation', topo: dict) -> Optional[List[str]]:
         """Return code lines for one equipment unit, or None if skipped."""
-        neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+        neqsim_type = self.resolve_neqsim_type(op)
         if neqsim_type is None:
             return [f'# SKIPPED: unsupported type "{op.type_name}": "{op.name}"']
         if neqsim_type in self.SKIPPED_NEQSIM_TYPES:
@@ -2033,9 +2196,10 @@ class UniSimToNeqSim:
             lines.append(f'process.add({v})')
 
         # Wire actual separator/3-phase/HX outlets back to forward ref placeholders
-        if neqsim_type in ('Separator', 'ThreePhaseSeparator', 'HeatExchanger'):
+        if neqsim_type in ('Separator', 'GasScrubber',
+                           'ThreePhaseSeparator', 'HeatExchanger'):
             fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
-            if neqsim_type == 'Separator':
+            if neqsim_type in ('Separator', 'GasScrubber'):
                 port_info = [('gasOut', 'getGasOutStream()'),
                              ('liquidOut', 'getLiquidOutStream()')]
             elif neqsim_type == 'ThreePhaseSeparator':
@@ -2211,12 +2375,13 @@ class UniSimToNeqSim:
         # Classify equipment sequence
         eq_types = []
         for op in topo['sorted_ops']:
-            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            nt = self.resolve_neqsim_type(op)
             if nt and nt not in self.SKIPPED_NEQSIM_TYPES:
                 eq_types.append(nt)
 
         has_compression = 'Compressor' in eq_types
-        has_separation = any(t in ('Separator', 'ThreePhaseSeparator') for t in eq_types)
+        has_separation = any(t in ('Separator', 'GasScrubber',
+                                   'ThreePhaseSeparator') for t in eq_types)
         has_cooling = 'Cooler' in eq_types
         has_heating = 'Heater' in eq_types
         has_expansion = any(t in ('Expander', 'ThrottlingValve') for t in eq_types)
@@ -2274,7 +2439,8 @@ class UniSimToNeqSim:
             process_steps.append(f'heating ({n_heat} heater{"s" if n_heat > 1 else ""})')
         if has_separation:
             sep_types = [t for t in eq_types
-                         if t in ('Separator', 'ThreePhaseSeparator')]
+                         if t in ('Separator', 'GasScrubber',
+                                  'ThreePhaseSeparator')]
             process_steps.append(f'phase separation ({len(sep_types)} stage'
                                  f'{"s" if len(sep_types) > 1 else ""})')
         if has_compression:
@@ -2300,7 +2466,7 @@ class UniSimToNeqSim:
         # Paragraph 4: Step-by-step sequence
         step_sentences = []
         for op in topo['sorted_ops']:
-            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            nt = self.resolve_neqsim_type(op)
             if nt is None or nt in self.SKIPPED_NEQSIM_TYPES:
                 continue
             step_sentences.append(self._describe_equipment_in_context(op, topo))
@@ -2320,7 +2486,7 @@ class UniSimToNeqSim:
         conditions (inlet/outlet T, P, efficiency) to produce a description
         specific to this equipment in this process.
         """
-        neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name, op.type_name)
+        neqsim_type = self.resolve_neqsim_type(op) or op.type_name
         props = op.properties
         stream_by_name = topo['stream_by_name']
         flowsheet = topo['flowsheet']
@@ -2516,7 +2682,7 @@ class UniSimToNeqSim:
             v = self._unique_var(fn, var_names, used_vars)
 
         for op in topo['sorted_ops']:
-            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            nt = self.resolve_neqsim_type(op)
             if nt and nt not in self.SKIPPED_NEQSIM_TYPES:
                 self._unique_var(op.name, var_names, used_vars)
 
@@ -2544,7 +2710,7 @@ class UniSimToNeqSim:
             'Adjuster': 'utility', 'SetPoint': 'utility',
         }
         for op in topo['sorted_ops']:
-            nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            nt = self.resolve_neqsim_type(op)
             if nt is None or nt in self.SKIPPED_NEQSIM_TYPES:
                 continue
             v = var_names.get(op.name, self._to_pyvar(op.name))
@@ -2666,10 +2832,10 @@ class UniSimToNeqSim:
                     if o_.name == prod_name:
                         op_ = o_
                         break
-                n_type = UniSimReader.OPERATION_TYPE_MAP.get(
-                    op_.type_name) if op_ else None
+                n_type = self.resolve_neqsim_type(op_) if op_ else None
                 # Determine port-specific placeholders for multi-outlet equipment
-                if n_type == 'Separator' and op_ and len(op_.products or []) >= 2:
+                if (n_type in ('Separator', 'GasScrubber')
+                        and op_ and len(op_.products or []) >= 2):
                     ports = ['gasOut', 'liquidOut']
                 elif (n_type == 'ThreePhaseSeparator'
                       and op_ and len(op_.products or []) >= 3):
@@ -2731,7 +2897,7 @@ class UniSimToNeqSim:
         sub_flowsheet_vars = []  # Track sub-flowsheet ProcessSystem vars
         for op in topo['sorted_ops']:
             # Add context-aware comment before each equipment block
-            neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            neqsim_type = self.resolve_neqsim_type(op)
             if neqsim_type and neqsim_type not in self.SKIPPED_NEQSIM_TYPES:
                 desc = self._describe_equipment_in_context(op, topo)
                 # Strip markdown bold for plain-text comment
@@ -2808,6 +2974,8 @@ class UniSimToNeqSim:
             'stream into gas, oil and water by gravity.',
         'Separator': 'Two-phase separator — flashes the inlet into gas and '
             'liquid phases.',
+        'GasScrubber': 'Vertical gas scrubber — a vertical two-phase '
+            'separator optimised for removing liquid droplets from gas.',
         'Compressor': 'Gas compressor — raises gas pressure using mechanical '
             'work.  Outlet conditions depend on efficiency and pressure ratio.',
         'Cooler': 'Cooler — removes heat (e.g. air or sea-water cooling) to '
@@ -2983,9 +3151,8 @@ class UniSimToNeqSim:
                     if o_.name == prod_name:
                         op_ = o_
                         break
-                n_type = UniSimReader.OPERATION_TYPE_MAP.get(
-                    op_.type_name) if op_ else None
-                if (n_type == 'Separator'
+                n_type = self.resolve_neqsim_type(op_) if op_ else None
+                if (n_type in ('Separator', 'GasScrubber')
                         and op_ and len(op_.products or []) >= 2):
                     ports = ['gasOut', 'liquidOut']
                 elif (n_type == 'ThreePhaseSeparator'
@@ -3053,7 +3220,7 @@ class UniSimToNeqSim:
         _md('### Equipment')
         sub_flowsheet_vars = []  # Track sub-flowsheet ProcessSystem vars
         for op in topo['sorted_ops']:
-            neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            neqsim_type = self.resolve_neqsim_type(op)
             if neqsim_type is None or neqsim_type in self.SKIPPED_NEQSIM_TYPES:
                 continue  # skip silently in notebook
             # Use context-aware description instead of static generic text
@@ -3260,7 +3427,7 @@ class UniSimToNeqSim:
         needed_factories.add('get_stream')
         if topo['sorted_ops']:
             for op in topo['sorted_ops']:
-                nt = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+                nt = self.resolve_neqsim_type(op)
                 factory = self.EOT_COMPONENT_MAP.get(nt)
                 if factory:
                     needed_factories.add(factory)
@@ -3333,9 +3500,8 @@ class UniSimToNeqSim:
                     if o_.name == prod_name:
                         op_ = o_
                         break
-                n_type = UniSimReader.OPERATION_TYPE_MAP.get(
-                    op_.type_name) if op_ else None
-                if (n_type == 'Separator'
+                n_type = self.resolve_neqsim_type(op_) if op_ else None
+                if (n_type in ('Separator', 'GasScrubber')
                         and op_ and len(op_.products or []) >= 2):
                     ports = ['gasOut', 'liquidOut']
                 elif (n_type == 'ThreePhaseSeparator'
@@ -3387,7 +3553,7 @@ class UniSimToNeqSim:
 
         # ---- equipment ----
         for op in topo['sorted_ops']:
-            neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            neqsim_type = self.resolve_neqsim_type(op)
             if neqsim_type is None or neqsim_type in self.SKIPPED_NEQSIM_TYPES:
                 _a(f'{indent}# SKIPPED: {op.name} ({op.type_name})')
                 continue
@@ -3495,7 +3661,7 @@ class UniSimToNeqSim:
             if v:
                 _a(f'{indent}self.process.add({v})')
         for op in topo['sorted_ops']:
-            neqsim_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
+            neqsim_type = self.resolve_neqsim_type(op)
             if neqsim_type is None or neqsim_type in self.SKIPPED_NEQSIM_TYPES:
                 continue
             v = var_names.get(op.name)
@@ -3670,6 +3836,25 @@ class UniSimToNeqSim:
                 lines.append(f'{var}.setLength({op.properties["length_m"]})')
             if op.properties.get('diameter_m'):
                 lines.append(f'{var}.setDiameter({op.properties["diameter_m"]})')
+
+        elif neqsim_type in ('Separator', 'GasScrubber',
+                             'ThreePhaseSeparator'):
+            # Entrainment specs extracted from UniSim
+            entrainment_specs = op.properties.get('entrainment', [])
+            for ent in entrainment_specs:
+                val = ent['value']
+                spec_type = ent.get('specType', 'volume')
+                spec_stream = ent.get('specifiedStream', 'product')
+                phase_from = ent['phaseFrom']
+                phase_to = ent['phaseTo']
+                lines.append(
+                    f'{var}.setEntrainment({val}, "{spec_type}", '
+                    f'"{spec_stream}", "{phase_from}", "{phase_to}")  '
+                    f'# UniSim: {phase_from} in {phase_to}')
+            # Dimensions
+            if op.properties.get('diameter_m'):
+                lines.append(
+                    f'{var}.setInternalDiameter({op.properties["diameter_m"]})')
 
 
 # ---------------------------------------------------------------------------
