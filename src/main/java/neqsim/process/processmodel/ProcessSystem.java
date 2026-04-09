@@ -3999,16 +3999,17 @@ public class ProcessSystem extends SimulationBaseClass {
     if (ref == null || ref.trim().isEmpty()) {
       return null;
     }
+    String normalizedRef = ref.trim();
 
     String unitName;
     String port = "outlet";
 
-    if (ref.contains(".")) {
-      String[] parts = ref.split("\\.", 2);
-      unitName = parts[0];
-      port = parts[1].toLowerCase();
+    if (normalizedRef.contains(".")) {
+      String[] parts = normalizedRef.split("\\.", 2);
+      unitName = parts[0].trim();
+      port = parts[1].trim().toLowerCase();
     } else {
-      unitName = ref;
+      unitName = normalizedRef;
     }
 
     ProcessEquipmentInterface unit = getUnit(unitName);

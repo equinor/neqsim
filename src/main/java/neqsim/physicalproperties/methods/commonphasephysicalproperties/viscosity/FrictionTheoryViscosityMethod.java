@@ -15,6 +15,11 @@ import neqsim.thermo.phase.PhasePrEos;
  * <p>References:
  * Quiñones-Cisneros, R., and Firoozabadi, A. (2000). Friction theory for the viscosity of fluids.
  * AIChE Journal, 46(4), 16–23.
+ * Chung, T.-H., Ajlan, M., Lee, L. L., and Starling, K. E. (1988). Generalized multiparameter
+ * correlation for nonpolar and polar fluid transport properties. Industrial &amp; Engineering Chemistry
+ * Research, 27(4), 671–679.
+ * Wilke, C. R. (1950). A viscosity equation for gas mixtures. The Journal of Chemical Physics,
+ * 18(4), 517–519.
  * </p>
  *
  * @author esol
@@ -53,6 +58,8 @@ public class FrictionTheoryViscosityMethod extends Viscosity
 
   // Second-order repulsive term constant
   protected double kaprr_fconst = 1.35994e-8;
+  private static final double MICRO_POISE_TO_PA_S = 1.0e-7;
+  private static final double MIN_VISCOSITY_PA_S = 1.0e-6;
 
   /**
    * <p>
@@ -131,22 +138,23 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     PhaseInterface localPhase = phase.getPhase();
     int numComp = localPhase.getNumberOfComponents();
     double[] molarMassPow = new double[numComp];
-    double visk0 = 0.0;
+    double visk0 = calcDiluteGasMixtureViscosityMicroPoise(localPhase);
     double MM = 0.0;
     for (int i = 0; i < numComp; i++) {
       ComponentInterface comp = localPhase.getComponent(i);
       molarMassPow[i] = Math.pow(comp.getMolarMass(), 0.3);
-      visk0 += comp.getx() * Math.log(getPureComponentViscosity(i));
       MM += comp.getx() / molarMassPow[i];
     }
-    visk0 = Math.exp(visk0);
     double Prepulsive = 1.0;
-    double Pattractive = 1.0;
+    double Pattractive = 0.0;
     try {
       Prepulsive = ((neqsim.thermo.phase.PhaseEosInterface) localPhase).getPressureRepulsive();
       Pattractive = ((neqsim.thermo.phase.PhaseEosInterface) localPhase).getPressureAttractive();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      Prepulsive = localPhase.getPressure();
+      Pattractive = 0.0;
+      logger.warn(
+          "Friction-theory viscosity called for non-EOS phase type. Falling back to total pressure for repulsive contribution and zero attractive contribution.");
     }
     double kaprmx = 0.0;
     double kapamx = 0.0;
@@ -176,9 +184,33 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     double visk1 = kaprmx * Prepulsive + kapamx * Pattractive + kaprrmx * Prepulsive * Prepulsive;
 
     if ((visk0 + visk1) < 1e-20) {
-      return 1e-6;
+      return MIN_VISCOSITY_PA_S;
     }
-    return (visk0 + visk1) * 1.0e-7;
+    return Math.max((visk0 + visk1) * MICRO_POISE_TO_PA_S, MIN_VISCOSITY_PA_S);
+  }
+
+  /**
+   * Calculate dilute-gas mixture viscosity in micropoise using Wilke's mixing rule.
+   *
+   * @param localPhase phase containing composition and molar masses
+   * @return mixture dilute-gas viscosity in micropoise
+   */
+  private double calcDiluteGasMixtureViscosityMicroPoise(PhaseInterface localPhase) {
+    double viscosity = 0.0;
+    for (int i = 0; i < localPhase.getNumberOfComponents(); i++) {
+      double denominator = 0.0;
+      for (int j = 0; j < localPhase.getNumberOfComponents(); j++) {
+        double phiij = Math
+            .pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
+                * Math.pow(localPhase.getComponent(j).getMolarMass()
+                    / localPhase.getComponent(i).getMolarMass(), 0.25), 2.0)
+            / Math.sqrt(8.0 * (1.0 + localPhase.getComponent(i).getMolarMass()
+                / localPhase.getComponent(j).getMolarMass()));
+        denominator += localPhase.getComponent(j).getx() * phiij;
+      }
+      viscosity += localPhase.getComponent(i).getx() * pureComponentViscosity[i] / denominator;
+    }
+    return viscosity;
   }
 
   /**
@@ -237,7 +269,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     double temperature = localPhase.getTemperature();
     for (int i = 0; i < localPhase.getNumberOfComponents(); i++) {
       ComponentInterface comp = localPhase.getComponent(i);
-      Fc[i] = 1.0 - 0.2756 * comp.getAcentricFactor();
+      double relativeDipole =
+          131.3 * comp.getDebyeDipoleMoment() / Math.sqrt(comp.getCriticalVolume() * comp.getTC());
+      Fc[i] = 1.0 - 0.2756 * comp.getAcentricFactor() + 0.059035 * Math.pow(relativeDipole, 4.0)
+          + comp.getViscosityCorrectionFactor();
 
       double tempVar = 1.2593 * temperature / comp.getTC();
       double varLast = -6.435e-4 * Math.pow(tempVar, 0.14874)
