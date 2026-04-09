@@ -13,10 +13,16 @@ Copy-paste reference for common NeqSim operations. All Java code must be Java 8 
 |-----------|-----------|-------------|
 | Dry/lean gas, simple HC | `SystemSrkEos` | `"classic"` |
 | General hydrocarbons, oil | `SystemPrEos` | `"classic"` |
+| **Matched to commercial simulator PR-LK** | **`SystemPrLeeKeslerEos`** | `"classic"` |
 | Water, MEG, methanol, polar | `SystemSrkCPAstatoil` | `10` (numeric) |
 | Custody transfer, fiscal metering | `SystemGERG2008Eos` | (none needed) |
 | Electrolyte systems | `SystemElectrolyteCPAstatoil` | `10` |
 | Volume-corrected SRK | `SystemSrkEosvolcor` | `"classic"` |
+
+**PR-LK vs PR78**: `SystemPrLeeKeslerEos` uses PR76 alpha for ALL ω:
+`m = 0.37464 + 1.54226ω − 0.26992ω²`. Standard `SystemPrEos1978` uses a modified
+cubic for ω > 0.49. Use PR-LK when matching commercial simulator models that use
+this EOS label.
 
 ## Fluid Creation (Required Sequence)
 
@@ -44,6 +50,60 @@ fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addPlusFraction("C20+", 0.02, 350.0 / 1000, 0.88);
 fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
 fluid.getCharacterization().characterisePlusFraction();
+```
+
+## Loading Fluids from E300 Files
+
+NeqSim can read Eclipse E300-format fluid files with full component properties
+and binary interaction parameters:
+
+```java
+// Load fluid from E300 file (returns SystemInterface with PR-EOS)
+SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300");
+// Returns a PR-EOS fluid with all components, properties, and BIPs set
+```
+
+**Required E300 sections**: `CNAMES`, `TCRIT`, `PCRIT`, `ACF`, `MW`, `TBOIL`,
+`VCRIT`, `PARACHOR`, `SSHIFT`, `BIC`, `ZI`.
+
+**Optional E300 sections** (NeqSim parses and applies these):
+- `OMEGAA` / `OMEGAB` — per-component OmegaA/B overrides (applied after `init(0)`)
+- `BICS` — surface-condition BICs (parsed, same lower-triangular format as `BIC`)
+- `SSHIFTS` — surface-condition volume shift
+- `PEDERSEN` — activates Pedersen viscosity model
+
+**EOS keyword determines fluid class:**
+- `EOS\nSRK /` → `SystemSrkEos`
+- `EOS\nPR /\nPRCORR` → `SystemPrEos1978`
+- `EOS\nPR /\nPRLKCORR` → `SystemPrLeeKeslerEos` ← use for PR-LK matching
+- `EOS\nPR /` → `SystemPrEos`
+
+**CRITICAL**: The `BIC` section must ALWAYS be present. If omitted, NeqSim
+defaults to zero BIPs (no crash, but results may differ significantly from the
+source simulator). The `PARACHOR` section is also required — estimate unknown
+values with `4.0 * MW^0.77`.
+
+**Component name mapping**: `C1`→methane, `C2`→ethane, `C3`→propane,
+`iC4`→i-butane, `C4`→n-butane, `iC5`→i-pentane, `C5`→n-pentane,
+`C6`→n-hexane, `N2`→nitrogen, `CO2`→CO2, `H2O`→water. All other names are
+treated as TBP pseudo-fractions via `addTBPfraction()` — including aromatics
+(Benzene, Toluene, etc.).
+
+```python
+# Python usage — auto-detects EOS from file
+from neqsim import jneqsim
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+fluid = EclipseFluidReadWrite.read("path/to/fluid.e300")
+
+# Force a specific EOS regardless of what's in the file
+SystemPrLeeKeslerEos = jneqsim.thermo.system.SystemPrLeeKeslerEos
+target_fluid = SystemPrLeeKeslerEos(288.15, 1.01325)
+fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", target_fluid)
+```
+
+**JSON process builder also supports PR-LK** via `"model": "PR_LK"`:
+```json
+{ "fluid": { "model": "PR_LK", "temperature": 288.15, "pressure": 50.0, ... } }
 ```
 
 ## Flash Calculations and Property Retrieval
@@ -161,12 +221,32 @@ cooler = Cooler("C-100", hx.getOutStream(int(0)))   # shell side out
 valve  = ThrottlingValve("VLV-100", hx.getOutStream(int(1)))  # tube side out
 ```
 
-### Valve
+### Valve (JT / Isenthalpic Expansion)
 
 ```java
 ThrottlingValve valve = new ThrottlingValve("JT Valve", stream);
 valve.setOutletPressure(20.0);
 Stream out = valve.getOutletStream();
+```
+
+**CRITICAL:** Always use `ThrottlingValve` inside a `ProcessSystem` for Joule-Thomson
+cooling calculations. Manual `PHflash()` on a cloned fluid gives wrong JT temperatures
+(tested: 14.9°C error vs 1.7°C with ThrottlingValve). The valve handles the isenthalpic
+enthalpy bookkeeping internally.
+
+```python
+# Python — Correct JT expansion pattern
+proc = ProcessSystem()
+feed = Stream('SG', fluid.clone())
+feed.setFlowRate(flow, 'kg/hr')
+feed.setTemperature(T_in, 'C')
+feed.setPressure(P_in, 'bara')
+proc.add(feed)
+valve = ThrottlingValve('JT', feed)
+valve.setOutletPressure(P_out)
+proc.add(valve)
+proc.run()
+T_jt = float(valve.getOutletStream().getTemperature('C'))
 ```
 
 ### Mixer
@@ -184,7 +264,7 @@ Used to model TEG dehydration contactors as simple water-removal units.
 Splits a stream per-component: `splitFactor[k] = 1.0` keeps the component in
 stream 0 (dry gas), `0.0` removes it to stream 1 (water).
 
-**Pattern from Oseberg model**: water is always the last component added,
+**TEG dehydration pattern**: water is always the last component added,
 so use `[1.0] * (N-1) + [0.0]` to remove only water.
 
 ```java
@@ -201,7 +281,7 @@ Stream water  = dehydrator.getSplitStream(1);   // removed water
 ```
 
 ```python
-# Python (from Oseberg reference notebook)
+# Python
 water_dehydration = neqsim.process.equipment.splitter.ComponentSplitter(
     "dehyd", wet_gas_stream)
 complen = wet_gas_stream.getFluid().getNumberOfComponents()
@@ -213,7 +293,22 @@ dry_gas = water_dehydration.getSplitStream(0)
 > **When to use**: Any absorber with a glycol-related name ("glyc", "teg",
 > "dehydrat") should be modeled as a ComponentSplitter rather than a
 > DistillationColumn. This avoids solver convergence issues and is the
-> pattern used in all production Oseberg/Sture models.
+> standard pattern for production platform models.
+
+### Pump
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(20.0);           // bara
+pump.setIsentropicEfficiency(0.75);     // 0-1
+Stream out = pump.getOutletStream();
+// After run: pump.getPower("kW")
+```
+
+**Three operating modes:**
+1. **Isentropic (default):** PS flash → isentropic enthalpy → divide by efficiency → PH flash
+2. **Fixed outlet temperature:** `pump.setOutletTemperature(40.0, "C")` → back-calculates power
+3. **Pump chart:** `pump.getPumpChart()` → head, efficiency, NPSH curves
 
 ### Pipeline
 
@@ -224,13 +319,50 @@ pipe.setDiameter(0.508);   // meters (20 inch)
 Stream out = pipe.getOutletStream();
 ```
 
-### Recycle and Adjuster
+### Recycle (Detailed)
+
+Recycles enable iterative convergence of process loops. The `ProcessSystem`
+automatically detects and iterates recycles up to 100 times.
 
 ```java
-Recycle recycle = new Recycle("Recycle");
-recycle.addStream(outletStream);
-// Add to process after the equipment loop
+// 1. Create placeholder stream with estimated conditions
+Stream placeholder = new Stream("recycle estimate", fluidGuess.clone());
+placeholder.setFlowRate(estimatedFlow, "kg/hr");
+placeholder.setTemperature(estimatedT, "C");
+placeholder.setPressure(estimatedP, "bara");
+process.add(placeholder);
 
+// 2. Build downstream equipment using the placeholder as input
+Mixer mixer = new Mixer("recycle mixer");
+mixer.addStream(mainFeed);
+mixer.addStream(placeholder);       // ← placeholder used here
+process.add(mixer);
+// ... more equipment in the loop ...
+
+// 3. Create Recycle that connects actual outlet back to placeholder
+Recycle recycle = new Recycle("RCY-1");
+recycle.addStream(actualOutletStream);    // downstream end of loop
+recycle.setOutletStream(placeholder);      // connects back to start
+recycle.setTolerance(1e-3);               // tighter than default 1e-2
+process.add(recycle);
+```
+
+**Convergence tuning:**
+```java
+recycle.setFlowTolerance(1e-3);          // flow convergence (default 1e-2)
+recycle.setTemperatureTolerance(1e-3);   // temperature convergence
+recycle.setCompositionTolerance(1e-3);   // composition convergence
+recycle.setPriority(50);                 // lower = solved first (default 100)
+recycle.setAccelerationMethod("Wegstein"); // or "Direct Substitution", "Broyden"
+```
+
+**Priority-based nesting:** Set lower priority numbers on inner recycle loops.
+The `RecycleController` solves lower-priority recycles first, then higher.
+ProcessSystem hard cap: 100 iterations (not user-configurable).
+
+### Adjuster
+
+```java
 Adjuster adjuster = new Adjuster("Adj");
 adjuster.setAdjustedVariable(equipment, "methodName");
 adjuster.setTargetVariable(stream, "methodName", targetValue);
@@ -256,10 +388,10 @@ separate `ProcessSystem` objects per process area, then combine them into a sing
 `ProcessModel`. **NEVER try to add a ProcessModule or ProcessSystem to another
 ProcessSystem** — use `ProcessModel` as the top-level container.
 
-### Architecture Pattern (from Oseberg/Snorre field models)
+### Architecture Pattern (from reference platform models)
 
 ```
-ProcessModel ("Grane Platform")              ← TOP-LEVEL CONTAINER
+ProcessModel ("Gas Platform")                ← TOP-LEVEL CONTAINER
   ├── ProcessSystem ("well process")          ← Well feed & manifold
   ├── ProcessSystem ("separation train A")    ← HP/LP separation
   ├── ProcessSystem ("separation train B")    ← HP/LP separation
@@ -305,7 +437,7 @@ System.out.println(plant.getMassBalanceReport());
 
 ### Python Example (Recommended Pattern)
 
-The Oseberg model uses **functions** that return ProcessSystem objects:
+The reference model uses **functions** that return ProcessSystem objects:
 
 ```python
 def create_well_feed_model(inp):
@@ -361,6 +493,8 @@ print(plant.getMassBalanceReport())
 | Set convergence tolerance | `setTolerance(1e-4)` or individual `setFlowTolerance()` etc. |
 | Save/load model | `saveToNeqsim("file.neqsim")`, `loadFromNeqsim("file.neqsim")` |
 | JSON report | `getReport_json()` |
+| Automation facade | `getAutomation()` returns `ProcessAutomation` (string-addressable variables) |
+| Lifecycle state | `ProcessModelState.fromProcessModel(plant)`, `.saveToFile()`, `.compare(v1, v2)` |
 
 ### Cross-System Stream Sharing
 
@@ -388,6 +522,68 @@ Streams cross sub-system boundaries by **direct object reference**:
 - Add equipment to `ProcessSystem` in topological order
 - Call `process.run()` only ONCE after building the entire flowsheet
 - **For multi-area plants**: use `ProcessModel` to combine `ProcessSystem` objects — never nest them
+
+## Automation API (String-Addressable Variables)
+
+Use `ProcessAutomation` for agent-friendly variable access — no Java class navigation needed.
+
+### Setup and Discovery
+
+```java
+ProcessAutomation auto = process.getAutomation();   // or plant.getAutomation()
+List<String> units = auto.getUnitList();             // ["Feed Gas", "HP Sep", ...]
+List<SimulationVariable> vars = auto.getVariableList("HP Sep");
+// Each variable: address, name, type (INPUT/OUTPUT), defaultUnit, description
+String eqType = auto.getEquipmentType("HP Sep");     // "Separator"
+```
+
+### Read / Write Variables
+
+```java
+// Read with unit conversion (dot-notation addressing)
+double temp = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C");
+double flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr");
+
+// Write INPUT variables, then re-run
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
+process.run();
+```
+
+### Multi-Area Addressing
+
+```java
+ProcessAutomation plantAuto = plant.getAutomation();
+List<String> areas = plantAuto.getAreaList();
+// Area-qualified: "Area::Unit.property"
+double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+```
+
+## Lifecycle State (Save / Restore / Compare)
+
+JSON snapshots for reproducibility and version tracking.
+
+```java
+// Save
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing"); state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");
+
+// Load and validate
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
+assert loaded.validate().isValid();
+
+// Multi-area
+ProcessModelState ms = ProcessModelState.fromProcessModel(plant);
+ms.saveToFile("plant_v1.json");
+
+// Version diff
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+// diff.getModifiedParameters(), diff.getAddedEquipment(), diff.getRemovedEquipment()
+
+// Compressed bytes for API transfer
+byte[] bytes = ms.toCompressedBytes();
+ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
+```
 
 ## Design Feasibility Reports
 

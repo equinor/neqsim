@@ -261,7 +261,11 @@ Use **either** Google NotebookLM or Copilot — or both:
 **Option B: GitHub Copilot in VS Code** (best for code-adjacent research)
 - Open Copilot Chat and ask research questions directly
 - Copilot can search the web, read repo docs, and summarise findings
-- For PDFs, extract key sections as text or summarise them in `notes.md`
+- For PDFs, extract pages as images using `devtools/pdf_to_figures.py`:
+  ```bash
+  python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+  ```
+  Then use `view_image` on the extracted PNGs to read diagrams, charts, and tables
 
 **Copilot research workflow:**
 
@@ -729,16 +733,24 @@ Place literature papers, standards documents, and other reference material here.
 
 ## How the AI uses these files
 
-1. **Google NotebookLM (recommended for PDFs):** Upload the PDFs from this
+1. **PDF figure extraction (PREFERRED for visual content):** Use `devtools/pdf_to_figures.py`
+   to convert PDF pages to PNG images, then use `view_image` to analyze engineering
+   drawings, P&IDs, charts, data tables, and compressor maps:
+   ```bash
+   python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+   ```
+   This is the fastest way to make PDF content available for AI analysis.
+
+2. **Google NotebookLM (recommended for deep literature review):** Upload the PDFs from this
    folder to NotebookLM. It can read, cross-reference, and cite multiple
    documents at once. Ask it targeted questions and paste the answers into
    `notes.md`.
 
-2. **VS Code Copilot Chat:** Copilot can read text-based files (`.txt`, `.md`,
-   `.csv`) placed here. For PDFs, extract key sections as text or summarise
-   them in `notes.md` so the AI can reference the content.
+3. **VS Code Copilot Chat:** Copilot can read text-based files (`.txt`, `.md`,
+   `.csv`) placed here. For PDFs, first extract pages as images using
+   `pdf_to_figures.py`, then use `view_image` to read the content.
 
-3. **Manual notes:** Read the papers yourself and capture key equations,
+4. **Manual notes:** Read the papers yourself and capture key equations,
    data points, and design rules in `notes.md` under the "Literature &
    Reference Documents" section.
 
@@ -750,7 +762,7 @@ Use descriptive filenames that include author/org and year:
 Smith_2019_CNG_Tank_Thermal_Analysis.pdf
 API_521_6th_Ed_Relief_Systems.pdf
 DNV-ST-F101_2021_Submarine_Pipelines.pdf
-Equinor_TR2000_Pressure_Vessel_Design.pdf
+OperatorA_TR2000_Pressure_Vessel_Design.pdf
 Lab_Report_Fluid_Analysis_2024.pdf
 ```
 
@@ -780,7 +792,7 @@ List the codes, standards, and company requirements that govern this task.
 |----------|-------|-----------------|
 | | | |
 
-Examples: NORSOK P-001, ISO 6976, DNV-OS-F101, API 520, ASME B31.3, Equinor TR1414
+Examples: NORSOK P-001, ISO 6976, DNV-OS-F101, API 520, ASME B31.3, Operator TR1414
 
 ## Calculation Methods & Models
 

@@ -455,4 +455,112 @@ class JsonProcessBuilderTest {
     assertNotNull(process.getUnit("cooler"));
     assertNotNull(process.getUnit("lpValve"));
   }
+
+  @Test
+  void testBuildWithGasScrubber() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"GasScrubber\", \"name\": \"scrubber\"," + "   \"inlet\": \"feed\"},"
+        + "  {\"type\": \"Compressor\", \"name\": \"comp\"," + "   \"inlet\": \"scrubber.gasOut\","
+        + "   \"properties\": {\"outletPressure\": 100.0}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    assertNotNull(process.getUnit("scrubber"));
+    assertTrue(
+        process.getUnit("scrubber") instanceof neqsim.process.equipment.separator.GasScrubber);
+    assertNotNull(process.getUnit("comp"));
+  }
+
+  @Test
+  void testBuildWithEntrainment() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"multiPhaseCheck\": true,"
+        + "  \"components\": {\"methane\": 0.70, \"nC10\": 0.20, \"water\": 0.10}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"ThreePhaseSeparator\", \"name\": \"3PS\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {" + "     \"entrainment\": ["
+        + "       {\"value\": 0.05, \"specType\": \"volume\","
+        + "        \"specifiedStream\": \"product\","
+        + "        \"phaseFrom\": \"aqueous\", \"phaseTo\": \"oil\"},"
+        + "       {\"value\": 0.002, \"specType\": \"volume\","
+        + "        \"specifiedStream\": \"product\","
+        + "        \"phaseFrom\": \"oil\", \"phaseTo\": \"aqueous\"}" + "     ]" + "   }}" + "]"
+        + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    assertNotNull(result.getProcessSystem().getUnit("3PS"));
+  }
+
+  @Test
+  void testBuildWithRecycleLoop() {
+    // Tests that a recycle loop (Mixer → Cooler → Separator → Recycle → back to Mixer)
+    // builds and runs correctly with the iterative wiring + guess stream.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Mixer\", \"name\": \"mix\","
+        + "   \"inlets\": [\"feed\", \"rcy.outlet\"]},"
+        + "  {\"type\": \"Cooler\", \"name\": \"cool\"," + "   \"inlet\": \"mix.outlet\","
+        + "   \"properties\": {\"outTemperature\": 288.15}},"
+        + "  {\"type\": \"Separator\", \"name\": \"flash\"," + "   \"inlet\": \"cool.outlet\"},"
+        + "  {\"type\": \"Recycle\", \"name\": \"rcy\"," + "   \"inlet\": \"flash.liquidOut\","
+        + "   \"properties\": {\"tolerance\": 0.01}}" + "]," + "\"autoRun\": true" + "}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertFalse(result.isError(), "Build+run should not error: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    assertNotNull(process);
+    assertNotNull(process.getUnit("rcy"), "Recycle should exist");
+    assertNotNull(process.getUnit("mix"), "Mixer should exist");
+    assertNotNull(process.getUnit("flash"), "Flash should exist");
+    // Verify the process ran — feed stream should have non-zero flow
+    Stream feed = (Stream) process.getUnit("feed");
+    assertTrue(feed.getFlowRate("kg/hr") > 0, "Feed flow should be positive");
+  }
+
+  @Test
+  void testBuildWithAdjuster() {
+    // Tests that an Adjuster wires its adjusted/target variables correctly
+    // from JSON properties (no inlet/inlets — references other equipment).
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"sep\","
+        + "   \"inlet\": \"feed\"},"
+        + "  {\"type\": \"Compressor\", \"name\": \"comp\","
+        + "   \"inlet\": \"sep.gasOut\","
+        + "   \"properties\": {\"outletPressure\": 100.0}},"
+        + "  {\"type\": \"Cooler\", \"name\": \"cooler\","
+        + "   \"inlet\": \"comp.outlet\","
+        + "   \"properties\": {\"outTemperature\": 303.15}},"
+        + "  {\"type\": \"Adjuster\", \"name\": \"adj\","
+        + "   \"properties\": {"
+        + "     \"adjustedEquipment\": \"comp\","
+        + "     \"adjustedVariable\": \"pressure\","
+        + "     \"targetEquipment\": \"cooler\","
+        + "     \"targetVariable\": \"temperature\","
+        + "     \"targetValue\": 313.15,"
+        + "     \"tolerance\": 0.5"
+        + "   }}" + "]," + "\"autoRun\": true" + "}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertFalse(result.isError(), "Build+run should not error: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    assertNotNull(process);
+    assertNotNull(process.getUnit("adj"), "Adjuster should exist");
+    assertNotNull(process.getUnit("comp"), "Compressor should exist");
+    assertNotNull(process.getUnit("cooler"), "Cooler should exist");
+  }
 }

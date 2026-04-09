@@ -1592,6 +1592,11 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Sets inlet conditions.
+   *
+   * @param pressure the inlet pressure in bara
+   * @param temperature the inlet temperature in Kelvin
+   * @param waterCut the water cut fraction
+   * @param gor the gas-oil ratio
    */
   private void setInletConditions(double pressure, double temperature, double waterCut,
       double gor) {

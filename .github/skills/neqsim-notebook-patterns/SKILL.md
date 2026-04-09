@@ -152,11 +152,42 @@ Common plot types:
 - Cost breakdowns (bar charts)
 - Tornado diagrams (sensitivity ranking)
 
+### Including Extracted PDF Figures in Notebooks
+
+When reference documents (papers, standards, data sheets) are available as PDFs,
+extract their pages as PNG images for inclusion in the analysis:
+
+```python
+# In a notebook cell — extract specific pages from a reference PDF
+import subprocess
+subprocess.run([
+    "python", "../../devtools/pdf_to_figures.py",
+    "../step1_scope_and_research/references/compressor_datasheet.pdf",
+    "--pages", "3", "5",
+    "--outdir", "../figures/"
+], check=True)
+```
+
+Or use the Python API directly:
+```python
+from devtools.pdf_to_figures import pdf_to_pngs
+pngs = pdf_to_pngs(
+    "../step1_scope_and_research/references/compressor_datasheet.pdf",
+    outdir="../figures/", pages=[3, 5]
+)
+```
+
+This is useful for:
+- Embedding reference diagrams alongside simulation results for comparison
+- Digitizing data from charts to validate NeqSim predictions
+- Including vendor performance curves in design feasibility notebooks
+- Documenting the source drawings/P&IDs that drove the simulation setup
+
 ## Multi-Area Plant Architecture (ProcessModel)
 
 For large plants (platforms, gas plants, refineries), split into separate `ProcessSystem`
 objects per process area and combine with `ProcessModel`. This is the pattern used in
-production models for Oseberg, Snorre, and Grane.
+production models for large platforms.
 
 ### Pattern: Functions Returning ProcessSystem
 
@@ -235,6 +266,73 @@ fluid.initProperties()              # MANDATORY before transport properties
 fluid.getDensity("kg/m3")
 fluid.getPhase("gas").getViscosity("kg/msec")
 fluid.getPhase("gas").getThermalConductivity("W/mK")
+```
+
+## Automation API (String-Addressable Variables)
+
+Use `ProcessAutomation` for agent-friendly access to simulation variables — avoids
+navigating Java class hierarchies. Preferred when programmatically exploring or
+modifying process simulations in notebooks.
+
+```python
+# Get automation facade
+auto = process.getAutomation()
+
+# Discover equipment
+units = list(auto.getUnitList())         # ["Feed Gas", "HP Sep", "Compressor", ...]
+eq_type = auto.getEquipmentType("HP Sep")  # "Separator"
+
+# List variables for an equipment unit
+vars_list = list(auto.getVariableList("HP Sep"))
+for v in vars_list:
+    print(f"{v.getAddress()} [{v.getType()}] ({v.getDefaultUnit()}) — {v.getDescription()}")
+
+# Read values with unit conversion (dot-notation address)
+temp = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C")
+flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr")
+
+# Write INPUT variables and re-run
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara")
+process.run()  # propagate changes
+
+# Multi-area plant
+plant_auto = plant.getAutomation()
+areas = list(plant_auto.getAreaList())  # ["Separation", "Compression"]
+t = plant_auto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C")
+```
+
+## Lifecycle State (Save / Restore / Compare)
+
+JSON snapshots for reproducibility and version comparison in notebooks:
+
+```python
+import jpype
+ProcessSystemState = jpype.JClass("neqsim.process.processmodel.lifecycle.ProcessSystemState")
+ProcessModelState = jpype.JClass("neqsim.process.processmodel.lifecycle.ProcessModelState")
+
+# Save state
+state = ProcessSystemState.fromProcessSystem(process)
+state.setName("Gas Processing")
+state.setVersion("1.0.0")
+state.saveToFile("model_v1.json")
+
+# Load and validate
+loaded = ProcessSystemState.loadFromFile("model_v1.json")
+result = loaded.validate()
+print(f"Valid: {result.isValid()}")
+
+# Multi-area model state
+model_state = ProcessModelState.fromProcessModel(plant)
+model_state.setVersion("1.0.0")
+model_state.saveToFile("plant_v1.json")
+
+# Compare two versions
+v1 = ProcessModelState.fromProcessModel(plant)  # before changes
+# ... make changes ...
+v2 = ProcessModelState.fromProcessModel(plant)  # after changes
+diff = ProcessModelState.compare(v1, v2)
+if diff.hasChanges():
+    print("Modified parameters:", list(diff.getModifiedParameters()))
 ```
 
 ## results.json Template (for Task-Solving Notebooks)

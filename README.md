@@ -42,7 +42,9 @@ Use it from **Java**, **Python**, **Jupyter notebooks**, **.NET**, **MATLAB**, o
 | **Mechanical design** | Wall thickness, weight estimation, cost analysis for pipelines, vessels, wells (SURF) |
 | **Field development** | Production forecasting, concept screening, NPV/IRR economics, Monte Carlo uncertainty |
 
----
+See the [NeqSim Java Wiki](https://github.com/equinor/neqsim/wiki) for how to use the NeqSim API.
+Additional pages are available in the [local wiki](docs/wiki/index.md), including the [distillation column solver guide](docs/wiki/distillation_column.md) with six algorithms, mathematical formulations, and usage examples.
+NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file. Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions).
 
 ## 🚀 Quick Start
 
@@ -108,6 +110,52 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m³");
 ```
 
 The agent scopes the task, builds a NeqSim simulation, validates results, and generates a Word + HTML report — no coding required.
+
+---
+
+## ✨ Hero Demos
+
+### Demo 1 — Natural-language dew point via MCP
+
+> **You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
+
+The LLM calls NeqSim's `runFlash` tool and responds with a rigorous answer:
+
+> **LLM:** "The dew point temperature is **-42.3°C** at 50 bara (SRK equation of state,
+> converged in 12 iterations). Below this temperature, liquid will begin to condense."
+
+No coding. No GUI. Just a question and a physics-backed answer with provenance.
+
+### Demo 2 — JSON flowsheet → results with provenance
+
+Send a 10-line JSON process definition to the `runProcess` MCP tool:
+
+```json
+{
+  "fluid": { "model": "SRK", "temperature": 303.15, "pressure": 80.0,
+             "mixingRule": "classic",
+             "components": { "methane": 0.80, "ethane": 0.12, "propane": 0.05, "n-butane": 0.03 } },
+  "process": [
+    { "type": "Stream", "name": "feed", "properties": { "flowRate": [50000.0, "kg/hr"] } },
+    { "type": "Separator", "name": "HP Sep", "inlet": "feed" },
+    { "type": "Compressor", "name": "Comp", "inlet": "HP Sep.gasOut",
+      "properties": { "outletPressure": [150.0, "bara"] } }
+  ]
+}
+```
+
+Get back compressor power, outlet temperature, phase compositions — plus EOS model,
+convergence status, and warnings.
+
+### Demo 3 — Engineering study → professional report
+
+```
+@solve.task TEG dehydration sizing for 50 MMSCFD wet gas
+```
+
+The agent creates a task folder, runs NeqSim simulations, generates matplotlib
+figures, validates against standards, and produces a Word + HTML report — complete
+with uncertainty analysis and risk evaluation.
 
 ---
 
@@ -261,11 +309,62 @@ LLMs are excellent at engineering reasoning but hallucinate physics. NeqSim is e
 
 The [NeqSim MCP Server](neqsim-mcp-server/) lets **any MCP-compatible client** (VS Code Copilot, Claude Desktop, Cursor, etc.) run real calculations:
 
-| Ask the LLM | What happens |
-|---|---|
-| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | Flash calculation via NeqSim |
-| *"Get density, viscosity, and thermal conductivity at 25°C, 80 bara"* | Physical property lookup |
-| *"Simulate gas through a separator then compressor to 120 bara"* | Full process simulation |
+**Install in seconds** — pick jar or Docker:
+
+```bash
+# Jar (requires Java 17+) — replace VERSION with the latest release, e.g. 3.7.0
+curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
+
+# Docker (no Java needed)
+docker pull ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+Then point your LLM client at `java -jar neqsim-mcp-server-*.jar` or `docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest`. See [full setup guide](neqsim-mcp-server/#install-from-github-release-3-steps).
+
+| Ask the LLM | What happens | MCP Tool |
+|---|---|---|
+| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | Flash calculation via NeqSim | `runFlash` |
+| *"How does density change from 0 to 50 °C at 80 bara?"* | Multi-point sensitivity sweep | `runBatch` |
+| *"Get density, viscosity, and Cp from 10 to 100 bara"* | Property table across a range | `getPropertyTable` |
+| *"Phase envelope for this natural gas"* | Bubble/dew point curve | `getPhaseEnvelope` |
+| *"Simulate gas through a separator then compressor to 120 bara"* | Full process simulation | `runProcess` |
+| *"What can NeqSim calculate?"* | Capabilities discovery | `getCapabilities` |
+
+**Quick path (no flowsheet needed):** For single properties, sensitivity studies, and
+phase boundaries, use `runFlash`, `runBatch`, `getPropertyTable`, or `getPhaseEnvelope`.
+These return results directly with provenance metadata (EOS model, assumptions, limitations).
+
+**Full simulation path:** For multi-equipment flowsheets, use `runProcess` with a JSON
+process definition. See the [MCP Server docs](neqsim-mcp-server/) or the
+[getting-started tutorial](docs/integration/mcp_getting_started.md).
+
+### Why trust this answer? — every result includes provenance
+
+Unlike generic LLM guesses, every NeqSim MCP response tells you *why* you should trust it:
+
+```json
+{
+  "status": "success",
+  "provenance": {
+    "model": "SRK",
+    "flashType": "TP",
+    "convergence": { "converged": true, "iterations": 8 },
+    "assumptions": ["Classic van der Waals mixing rule"],
+    "limitations": ["SRK may underpredict liquid density by 5-15%"],
+    "recommendedCrossChecks": ["Compare with GERG-2008 for high-pressure gas"]
+  },
+  "fluid": {
+    "properties": {
+      "gas": {
+        "density": { "value": 62.3, "unit": "kg/m3" },
+        "compressibilityFactor": { "value": 0.88 }
+      }
+    }
+  }
+}
+```
+
+**The LLM reasons. NeqSim computes. Provenance proves it.**
 
 ### AI task-solving workflow
 
@@ -434,7 +533,52 @@ code .
 
 ### Architecture
 
-NeqSim is built on seven modules:
+```mermaid
+graph TB
+    subgraph core["NeqSim Core (Java 8+)"]
+        THERMO["Thermodynamics<br/>60+ EOS models"]
+        PROCESS["Process Simulation<br/>33+ equipment types"]
+        PVT["PVT Simulation"]
+        MECH["Mechanical Design<br/>& Standards"]
+    end
+
+    subgraph access["Access Layers"]
+        PYTHON["Python / Jupyter<br/>pip install neqsim"]
+        JAVA["Java / Maven<br/>Direct API"]
+        MCP["MCP Server (Java 17+)<br/>LLM integration"]
+        AGENTS["AI Agents<br/>VS Code Copilot"]
+    end
+
+    PYTHON --> THERMO
+    PYTHON --> PROCESS
+    JAVA --> THERMO
+    JAVA --> PROCESS
+    MCP --> THERMO
+    MCP --> PROCESS
+    AGENTS --> MCP
+    AGENTS --> PYTHON
+```
+
+#### Which entry point should I use?
+
+| I want to… | Use | Requires |
+|---|---|---|
+| Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 17+ (or Docker) |
+| Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.8+, JVM |
+| Embed in a Java application | Maven dependency | Java 8+ |
+| Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
+| .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
+
+#### Java version matrix
+
+| Component | Java Version | Notes |
+|---|---|---|
+| **NeqSim core library** | 8+ | All thermodynamics, process equipment, PVT |
+| **MCP server** | 17+ | Quarkus-based; thin wrapper around core |
+| **Python users** | No Java coding | JVM bundled via jpype |
+| **Running prebuilt MCP jar** | 17+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
+
+#### Core modules
 
 | Module | Package | Purpose |
 |--------|---------|---------|
@@ -457,6 +601,16 @@ We welcome contributions of all kinds — bug fixes, new models, examples, docum
 - [Contributing structure](docs/contributing-structure.md) — Where to place code, tests, and resources
 - [Interactive Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7) — Getting started as a developer
 
+#### Where to start
+
+| # | First Contribution | Difficulty | What to do |
+|---|---|---|---|
+| 1 | Add a NIST validation benchmark | Easy | Compare NeqSim flash results to NIST data in `docs/benchmarks/` |
+| 2 | Create a Jupyter notebook example | Medium | Add a worked example to `examples/notebooks/` |
+| 3 | Add an MCP example to the catalog | Easy | Add a new entry in `ExampleCatalog.java` |
+| 4 | Fix a broken doc link | Easy | Search `docs/**/*.md` for dead links and fix them |
+| 5 | Add a unit test for existing equipment | Medium | Add tests under `src/test/java/neqsim/` |
+
 All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 
 ---
@@ -466,7 +620,9 @@ All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 | Resource | Link |
 |----------|------|
 | **User documentation** | [equinor.github.io/neqsim](https://equinor.github.io/neqsim/) |
+| **Benchmark gallery** | [docs/benchmarks/](docs/benchmarks/index.md) — validation against NIST, published data |
 | **Reference manual index** | [REFERENCE_MANUAL_INDEX.md](docs/REFERENCE_MANUAL_INDEX.md) (350+ pages) |
+| **MCP tool contract** | [MCP_CONTRACT.md](neqsim-mcp-server/MCP_CONTRACT.md) — stable API for agent builders |
 | **JavaDoc API** | [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) |
 | **Jupyter notebooks** | [examples/notebooks/](examples/notebooks/) (30+ examples) |
 | **Discussion forum** | [GitHub Discussions](https://github.com/equinor/neqsim/discussions) |

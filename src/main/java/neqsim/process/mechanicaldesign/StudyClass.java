@@ -82,7 +82,7 @@ public enum StudyClass {
    */
   CLASS_B("Class B (Concept/Pre-FEED)",
       toSet(DeliverableType.PFD, DeliverableType.THERMAL_UTILITIES, DeliverableType.FIRE_SCENARIOS,
-          DeliverableType.INSTRUMENT_SCHEDULE)),
+          DeliverableType.INSTRUMENT_SCHEDULE, DeliverableType.REFERENCE_DESIGNATION_SCHEDULE)),
 
   /**
    * Class C: Screening study. Minimal deliverable set.
@@ -154,7 +154,10 @@ public enum StudyClass {
     NOISE_ASSESSMENT("Noise Assessment"),
 
     /** Instrument schedule with ISA-5.1 tags, alarm setpoints, SIL ratings, and live devices. */
-    INSTRUMENT_SCHEDULE("Instrument Schedule");
+    INSTRUMENT_SCHEDULE("Instrument Schedule"),
+
+    /** IEC 81346 reference designation schedule for all equipment. */
+    REFERENCE_DESIGNATION_SCHEDULE("Reference Designation Schedule");
 
     private final String displayName;
 

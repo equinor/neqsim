@@ -2200,6 +2200,69 @@ public class TPmultiflash extends TPflash {
         stabilityAnalysisEnhanced();
       }
     }
+
+    // For ionic systems: stability analysis ran on the ion-free system and may have
+    // introduced a spurious third phase that is essentially a duplicate of an existing
+    // aqueous phase. Stripping ions removes the Debye-Hückel / Born / short-range
+    // stabilisation that keeps the aqueous phase distinct, so the algorithm finds a
+    // near-identical water-rich trial phase that passes the trivial-solution check
+    // (threshold 1e-4). This leads to two nearly-identical aqueous phases that cause
+    // solveBeta to diverge, destroying mass balance.
+    // Fix: reject the new phase if its non-ionic composition is very similar to an
+    // existing water-rich phase — this means it's a spurious duplicate caused by ion
+    // stripping, not a genuine new phase. We compare only non-ionic component mole
+    // fractions and reject if max |Δx| < 0.05 (true duplicates differ by < 0.01).
+    if (hasIons && multiPhaseTest && system.getNumberOfPhases() > 2) {
+      int newestPhase = system.getNumberOfPhases() - 1;
+      double newestWaterX = 0;
+      try {
+        newestWaterX = system.getPhase(newestPhase).getComponent("water").getx();
+      } catch (Exception ex) {
+        // no water component
+      }
+      boolean isDuplicate = false;
+      if (newestWaterX > 0.5) {
+        for (int pp = 0; pp < newestPhase && !isDuplicate; pp++) {
+          double existingWaterX = 0;
+          try {
+            existingWaterX = system.getPhase(pp).getComponent("water").getx();
+          } catch (Exception ex) {
+            continue;
+          }
+          if (existingWaterX <= 0.5) {
+            continue;
+          }
+          // Both phases are water-dominated — compare non-ionic compositions
+          double maxAbsDiff = 0;
+          for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+            if (system.getPhase(0).getComponent(k).getIonicCharge() != 0) {
+              continue;
+            }
+            double diff = Math.abs(system.getPhase(newestPhase).getComponent(k).getx()
+                - system.getPhase(pp).getComponent(k).getx());
+            if (diff > maxAbsDiff) {
+              maxAbsDiff = diff;
+            }
+          }
+          if (maxAbsDiff < 0.05) {
+            isDuplicate = true;
+          }
+        }
+      }
+      if (isDuplicate) {
+        // Spurious duplicate — revert to pre-stability state
+        logger.debug(
+            "Rejecting spurious aqueous duplicate phase from ion-stripped stability analysis");
+        system.removePhaseKeepTotalComposition(newestPhase);
+        system.normalizeBeta();
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("init after spurious phase rejection failed: " + ex.getMessage());
+        }
+        multiPhaseTest = false;
+      }
+    }
     if (!multiPhaseTest && seedAdditionalPhaseFromFeed()) {
       multiPhaseTest = true;
       doStabilityAnalysis = false;
@@ -2409,9 +2472,56 @@ public class TPmultiflash extends TPflash {
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+          // For systems with ions, never remove the only AQUEOUS phase — ions can only
+          // exist in aqueous phases. Removing it causes mass balance violations because
+          // setXY() forces ion x = 1e-50 in all non-aqueous phases.
+          if (hasIons && system.getPhase(i).getType() == PhaseType.AQUEOUS) {
+            logger.debug(
+                "Protecting aqueous phase {} from removal (beta={}) — ions require aqueous phase",
+                i, system.getBeta(i));
+            continue;
+          }
           system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
+        }
+      }
+
+      // For ionic systems: if the aqueous phase survived with near-zero beta but a
+      // non-aqueous phase was introduced by stability analysis (done on the ion-free
+      // system) and is also marginal, that third phase is likely spurious. Remove it
+      // to let the system settle back to the 2-phase result (gas + aqueous) that the
+      // initial TPflash found correctly.
+      if (hasIons && !hasRemovedPhase && system.getNumberOfPhases() > 2) {
+        int aqIdx =
+            system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
+        if (aqIdx >= 0 && system.getBeta(aqIdx) < 10.0 * phaseFractionMinimumLimit) {
+          // Aqueous phase beta is very low — the 3-phase result is not converging
+          // properly. Remove the non-aqueous phase with the smallest beta instead.
+          int removeIdx = -1;
+          double minBeta = Double.MAX_VALUE;
+          for (int i = 0; i < system.getNumberOfPhases(); i++) {
+            if (i != aqIdx && system.getBeta(i) < minBeta) {
+              minBeta = system.getBeta(i);
+              removeIdx = i;
+            }
+          }
+          if (removeIdx >= 0) {
+            logger.debug(
+                "Removing spurious non-aqueous phase {} (beta={}) to preserve ionic aqueous phase",
+                removeIdx, minBeta);
+            system.removePhaseKeepTotalComposition(removeIdx);
+            doStabilityAnalysis = false;
+            hasRemovedPhase = true;
+            // Re-run beta solver with the 2-phase system to ensure convergence
+            setDoubleArrays();
+            for (int iter2 = 0; iter2 < 50; iter2++) {
+              double d = this.solveBeta();
+              if (d < 1e-10) {
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -2434,7 +2544,13 @@ public class TPmultiflash extends TPflash {
           for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
             if (Math
                 .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
-              system.removePhaseKeepTotalComposition(j);
+              // Protect aqueous phase in ionic systems from trivial-solution removal
+              if (hasIons && system.getPhase(j).getType() == PhaseType.AQUEOUS) {
+                // Remove the non-aqueous duplicate instead
+                system.removePhaseKeepTotalComposition(i);
+              } else {
+                system.removePhaseKeepTotalComposition(j);
+              }
               doStabilityAnalysis = false;
               hasRemovedPhase = true;
             }

@@ -2135,6 +2135,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     /** {@inheritDoc} */
     @Override
+    public void setClassicOrHV(int i, int j, String type) {
+      classicOrHV[i][j] = type;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public double getKijWongSandler(int i, int j) {
       return WSintparam[i][j];
     }
@@ -2530,6 +2536,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double getHValphaParameter(int i, int j) {
       return HValpha[i][j];
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setClassicOrHV(int i, int j, String type) {
+      classicOrHV[i][j] = type;
     }
 
     /** {@inheritDoc} */

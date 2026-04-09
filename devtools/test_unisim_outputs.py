@@ -49,13 +49,22 @@ def _build_test_model():
                 UniSimStreamData("Cooled Feed", temperature_C=15.0, pressure_bara=84.5),
                 UniSimStreamData("Sep Gas", temperature_C=15.0, pressure_bara=84.0),
                 UniSimStreamData("Sep Liquid", temperature_C=15.0, pressure_bara=84.0),
+                UniSimStreamData("MP Gas", temperature_C=15.0, pressure_bara=30.0),
+                UniSimStreamData("MP Oil", temperature_C=15.0, pressure_bara=30.0),
+                UniSimStreamData("MP Water", temperature_C=15.0, pressure_bara=30.0),
+                UniSimStreamData("Scrubber Gas", temperature_C=14.0, pressure_bara=83.0),
+                UniSimStreamData("Scrubber Liq", temperature_C=14.0, pressure_bara=83.0),
                 UniSimStreamData("Compressed Gas", temperature_C=95.0, pressure_bara=150.0),
                 UniSimStreamData("Export Gas", temperature_C=40.0, pressure_bara=149.0),
+                UniSimStreamData("Dry Export Gas", temperature_C=40.0, pressure_bara=148.5),
+                UniSimStreamData("Export Condensate", temperature_C=40.0, pressure_bara=148.5),
+                UniSimStreamData("Recycled Condensate", temperature_C=40.0, pressure_bara=148.5),
+                UniSimStreamData("Mixed Feed", temperature_C=35.0, pressure_bara=85.0),
             ],
             operations=[
                 UniSimOperation(
                     "Inlet Cooler", "coolerop",
-                    feeds=["Feed Gas"], products=["Cooled Feed"],
+                    feeds=["Mixed Feed"], products=["Cooled Feed"],
                     properties={"outlet_temperature_C": 15.0},
                 ),
                 UniSimOperation(
@@ -63,8 +72,28 @@ def _build_test_model():
                     feeds=["Cooled Feed"], products=["Sep Gas", "Sep Liquid"],
                 ),
                 UniSimOperation(
+                    "MP Separator", "sep3op",
+                    feeds=["Sep Liquid"],
+                    products=["MP Gas", "MP Oil", "MP Water"],
+                    properties={
+                        "entrainment": [
+                            {"value": 0.084, "specType": "volume",
+                             "specifiedStream": "product",
+                             "phaseFrom": "aqueous", "phaseTo": "oil"},
+                            {"value": 0.002, "specType": "volume",
+                             "specifiedStream": "product",
+                             "phaseFrom": "oil", "phaseTo": "aqueous"},
+                        ],
+                    },
+                ),
+                UniSimOperation(
+                    "Inlet Scrubber", "flashtank",
+                    feeds=["Sep Gas"], products=["Scrubber Gas", "Scrubber Liq"],
+                    properties={"detected_vertical": True},
+                ),
+                UniSimOperation(
                     "Export Compressor", "compressor",
-                    feeds=["Sep Gas"], products=["Compressed Gas"],
+                    feeds=["Scrubber Gas"], products=["Compressed Gas"],
                     properties={"outlet_pressure_bara": 150.0,
                                 "adiabatic_efficiency": 0.75},
                 ),
@@ -72,6 +101,37 @@ def _build_test_model():
                     "Aftercooler", "coolerop",
                     feeds=["Compressed Gas"], products=["Export Gas"],
                     properties={"outlet_temperature_C": 40.0},
+                ),
+                # Aftercooler produces condensate that recycles back
+                UniSimOperation(
+                    "Export Flash", "flashtank",
+                    feeds=["Export Gas"],
+                    products=["Dry Export Gas", "Export Condensate"],
+                ),
+                UniSimOperation(
+                    "Condensate Recycle", "recycle",
+                    feeds=["Export Condensate"],
+                    products=["Recycled Condensate"],
+                    properties={"tolerance": 1e-2},
+                ),
+                UniSimOperation(
+                    "Feed Mixer", "mixerop",
+                    feeds=["Feed Gas", "Recycled Condensate"],
+                    products=["Mixed Feed"],
+                ),
+                # Adjuster: adjust compressor outlet pressure to hit
+                # a target temperature on the export gas stream
+                UniSimOperation(
+                    "Temp Adjuster", "adjust",
+                    feeds=[], products=[],
+                    properties={
+                        "adjusted_object_name": "Export Compressor",
+                        "adjusted_variable": "pressure",
+                        "target_object_name": "Aftercooler",
+                        "target_variable": "temperature",
+                        "target_value": 313.15,
+                        "tolerance": 0.5,
+                    },
                 ),
             ],
         ),
@@ -91,6 +151,14 @@ def test_to_python():
     # Check equipment appears
     assert "Inlet Cooler" in py_code or "inlet_cooler" in py_code
     assert "HP Separator" in py_code or "hp_separator" in py_code
+    assert "MP Separator" in py_code or "mp_separator" in py_code
+    # Check three-phase separator type used
+    assert "ThreePhaseSeparator" in py_code
+    # Check vertical separator maps to GasScrubber
+    assert "GasScrubber" in py_code
+    assert "Inlet Scrubber" in py_code or "inlet_scrubber" in py_code
+    # Check entrainment is set
+    assert "setEntrainment" in py_code
     print("  PASS")
     return py_code
 
@@ -226,6 +294,97 @@ def test_code_consistency():
     print("  PASS")
 
 
+def test_to_json():
+    """Verify JSON output has correct types, ports, and entrainment."""
+    model = _build_test_model()
+    converter = UniSimToNeqSim(model)
+    result = converter.to_json()
+    process = result['process']
+    print(f"  to_json(): {len(process)} process entries")
+
+    # Check fluid section
+    assert 'fluid' in result
+    assert result['fluid']['model'] in ('SRK', 'PR')
+    assert 'methane' in result['fluid']['components']
+
+    # Collect types from process array
+    types_by_name = {e['name']: e['type'] for e in process if 'name' in e}
+
+    # Vertical separator should be GasScrubber
+    assert types_by_name.get('Inlet Scrubber') == 'GasScrubber', \
+        f"Expected GasScrubber, got {types_by_name.get('Inlet Scrubber')}"
+
+    # 3-phase separator should be ThreePhaseSeparator
+    assert types_by_name.get('MP Separator') == 'ThreePhaseSeparator'
+
+    # HP Separator should be plain Separator
+    assert types_by_name.get('HP Separator') == 'Separator'
+
+    # Check entrainment property on MP Separator
+    mp_entry = next(e for e in process if e.get('name') == 'MP Separator')
+    assert 'properties' in mp_entry
+    assert 'entrainment' in mp_entry['properties']
+    ent = mp_entry['properties']['entrainment']
+    assert len(ent) == 2
+    assert ent[0]['phaseFrom'] == 'aqueous'
+    assert ent[0]['phaseTo'] == 'oil'
+
+    # Check inlet references use dot-notation for separator ports
+    comp_entry = next(e for e in process if e.get('name') == 'Export Compressor')
+    assert 'inlet' in comp_entry
+    # Should reference Inlet Scrubber's gas port
+    assert 'Inlet Scrubber.gasOut' in comp_entry['inlet']
+
+    # --- Recycle loop assertions ---
+
+    # Recycle entry should exist with correct type and tolerance
+    assert types_by_name.get('Condensate Recycle') == 'Recycle', \
+        f"Expected Recycle, got {types_by_name.get('Condensate Recycle')}"
+    rcy_entry = next(e for e in process if e.get('name') == 'Condensate Recycle')
+    assert 'inlet' in rcy_entry
+    # Recycle inlet should reference Export Flash liquid port
+    assert 'Export Flash.liquidOut' in rcy_entry['inlet'], \
+        f"Expected Export Flash.liquidOut, got {rcy_entry['inlet']}"
+    # Recycle should have tolerance property
+    assert 'properties' in rcy_entry
+    assert rcy_entry['properties'].get('tolerance') == 1e-2
+
+    # Feed Mixer should exist and reference both Feed Gas and Recycle outlet
+    mixer_entry = next(e for e in process if e.get('name') == 'Feed Mixer')
+    assert mixer_entry['type'] == 'Mixer'
+    assert 'inlets' in mixer_entry
+    # One inlet should be the external feed, other should be the recycle outlet
+    inlet_refs = mixer_entry['inlets']
+    assert len(inlet_refs) == 2
+    has_recycle_ref = any('Condensate Recycle' in ref for ref in inlet_refs)
+    assert has_recycle_ref, \
+        f"Mixer should reference Condensate Recycle outlet, got: {inlet_refs}"
+
+    # Export Flash should be a Separator (2-phase flashtank)
+    assert types_by_name.get('Export Flash') == 'Separator'
+
+    # --- Adjuster assertions ---
+
+    # Adjuster entry should exist with correct type
+    assert types_by_name.get('Temp Adjuster') == 'Adjuster', \
+        f"Expected Adjuster, got {types_by_name.get('Temp Adjuster')}"
+    adj_entry = next(e for e in process if e.get('name') == 'Temp Adjuster')
+    assert 'properties' in adj_entry
+    adj_props = adj_entry['properties']
+    # Check adjusted variable references
+    assert adj_props.get('adjustedEquipment') == 'Export Compressor'
+    assert adj_props.get('adjustedVariable') == 'pressure'
+    # Check target variable references
+    assert adj_props.get('targetEquipment') == 'Aftercooler'
+    assert adj_props.get('targetVariable') == 'temperature'
+    assert adj_props.get('targetValue') == 313.15
+    # Check tolerance
+    assert adj_props.get('tolerance') == 0.5
+
+    print("  PASS")
+    return result
+
+
 if __name__ == "__main__":
     tests = [
         ("to_python", test_to_python),
@@ -235,6 +394,7 @@ if __name__ == "__main__":
         ("save_eot_simulator", test_save_eot_simulator),
         ("to_eot_notebook", test_to_eot_notebook),
         ("code_consistency", test_code_consistency),
+        ("to_json", test_to_json),
     ]
     passed = 0
     failed = 0

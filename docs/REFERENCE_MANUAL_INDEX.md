@@ -94,6 +94,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Getting Started | [docs/wiki/getting_started.md](wiki/getting_started)                                               | Installation and first steps  |
 | GitHub Setup    | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github) | NeqSim and GitHub setup       |
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                                 | Development environment setup |
+| Productization Roadmap | [docs/development/PRODUCTIZATION_ROADMAP.md](development/PRODUCTIZATION_ROADMAP)              | Adoption, trust, contributor scaling plan |
+| Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index)                                                    | Validation against NIST and published data |
 
 ### Chapter 5: Quick Start Examples
 
@@ -414,6 +416,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **External Optimizer Integration**   | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION)                 | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation**                                          |
 | **Web API / JSON Process Builder**   | [docs/integration/web_api_json_process_builder.md](integration/web_api_json_process_builder)                     | **Build and run process simulations from JSON, structured error responses, equipment wiring API, multi-user session management**          |
 | **MCP Core Layer**                   | [docs/integration/mcp_neqsim_core_layer.md](integration/mcp_neqsim_core_layer)                                  | **MCP runners (FlashRunner, ProcessRunner, Validator, ComponentQuery), typed models, example/schema catalogs**                            |
+| **MCP Getting Started**              | [docs/integration/mcp_getting_started.md](integration/mcp_getting_started)                                       | **5-minute guide: connect any LLM to NeqSim via MCP — setup, first calculation, tool selection, common patterns**                        |
 | **MCP Server Guide**                | [docs/integration/mcp_server_guide.md](integration/mcp_server_guide)                                             | **Quarkus MCP Server for VS Code Copilot, Claude Desktop, Cursor — installation, tools, resources, testing**                              |
 | **Production Optimization Guide**    | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE)                         | **Complete guide to production optimization with Java and Python examples**                                                               |
 | **Pressure Boundary Optimization**   | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization)                         | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power**                             |
@@ -744,6 +747,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ASTM D6377                | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp)                     | ASTM D6377 RVP                                     |
 | **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards)       | **ASTM D86, D445, D4052, D4294, D2500, D97, BS&W** |
 | Sales Contracts           | [docs/standards/sales_contracts.md](standards/sales_contracts)                   | Sales contracts                                    |
+| **IEC 81346 Reference Designations** | [docs/standards/iec81346-reference-designations.md](standards/iec81346-reference-designations) | **IEC 81346 structured equipment identification — letter codes, automatic designation generation, hierarchical/flat function numbering, ProcessModel integration, lifecycle state persistence, engineering deliverables, ISA-5.1 cross-reference, DEXPI export, ProcessAutomation integration** |
 
 ---
 

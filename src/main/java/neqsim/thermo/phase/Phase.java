@@ -1698,7 +1698,21 @@ public abstract class Phase implements PhaseInterface {
     if (getComponent(k).getReferenceStateType().equals("solvent")) {
       fug = getLogPureComponentFugacity(k);
     } else {
-      fug = getLogInfiniteDiluteFugacity(k);
+      // Use binary refPhase (component k + solvent) when water is available.
+      // The 1-arg getLogInfiniteDiluteFugacity clones the full multicomponent phase
+      // and only dilutes component k, leaving counter-ions at their original
+      // concentration. For electrolyte systems this gives a wrong reference state
+      // (ionic strength is not zero at "infinite dilution"), making the DH
+      // contribution too weak.
+      int waterIndex = -1;
+      if (hasComponent("water")) {
+        waterIndex = getComponent("water").getComponentNumber();
+      }
+      if (waterIndex >= 0) {
+        fug = getLogInfiniteDiluteFugacity(k, waterIndex);
+      } else {
+        fug = getLogInfiniteDiluteFugacity(k);
+      }
     }
     return Math.exp(oldFug - fug);
   }
@@ -1766,7 +1780,16 @@ public abstract class Phase implements PhaseInterface {
   public double getActivityCoefficientUnSymetric(int k) {
     double fug = 0.0;
     double oldFug = getComponent(k).getLogFugacityCoefficient();
-    fug = getLogInfiniteDiluteFugacity(k);
+    // Use binary refPhase when water is available (see getActivityCoefficient fix)
+    int waterIndex = -1;
+    if (hasComponent("water")) {
+      waterIndex = getComponent("water").getComponentNumber();
+    }
+    if (waterIndex >= 0) {
+      fug = getLogInfiniteDiluteFugacity(k, waterIndex);
+    } else {
+      fug = getLogInfiniteDiluteFugacity(k);
+    }
     return Math.exp(oldFug - fug);
   }
 

@@ -67,7 +67,7 @@ try (Connection conn = NeqSimProcessDesignDataBase.createConnection()) {
 separator.initMechanicalDesign()
 design = separator.getMechanicalDesign()
 design.setDesignStandardCode("NORSOK-P-001")
-design.setCompanySpecificDesignStandards("Equinor")
+design.setCompanySpecificDesignStandards("OperatorA")
 design.readDesignSpecifications()
 design.calcDesign()
 print(design.toJson())

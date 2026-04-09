@@ -17,6 +17,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -106,6 +107,29 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Read an Eclipse E300 fluid file and load components into the supplied fluid system, ignoring
+   * the EOS keyword in the file. This allows any NeqSim EOS (e.g. SystemPrLeeKeslerEos) to be used
+   * with an E300 composition file that was written for a different EOS.
+   *
+   * <p>
+   * Usage example:
+   * </p>
+   *
+   * <pre>
+   * SystemInterface fluid = new SystemPrLeeKeslerEos(288.15, 1.01325);
+   * EclipseFluidReadWrite.read(e300Path, fluid);
+   * </pre>
+   *
+   * @param inputFile a {@link java.lang.String} object — path to the E300 file
+   * @param targetFluid a pre-created {@link neqsim.thermo.system.SystemInterface} to populate
+   * @return the same {@code targetFluid} instance, now populated with components and BIPs
+   * @throws java.lang.IllegalArgumentException if the input file cannot be read
+   */
+  public static SystemInterface read(String inputFile, SystemInterface targetFluid) {
+    return readImpl(inputFile, targetFluid);
+  }
+
+  /**
    * <p>
    * read.
    * </p>
@@ -115,6 +139,27 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile) {
+    return readImpl(inputFile, null);
+  }
+
+  /**
+   * Reads a line from the given reader and strips '/' delimiter characters. Returns null if
+   * end-of-stream is reached, preventing NPE from calling replace on a null readLine() result.
+   *
+   * @param br the BufferedReader to read from
+   * @return the line with '/' characters removed, or null at end of stream
+   * @throws IOException if an I/O error occurs
+   */
+  private static String readLineClean(BufferedReader br) throws IOException {
+    String line = br.readLine();
+    return line != null ? line.replace("/", "") : null;
+  }
+
+  /**
+   * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS
+   * keyword in file is ignored). Otherwise the EOS keyword drives fluid creation.
+   */
+  private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid) {
     File file = new File(inputFile);
     if (!file.exists()) {
       throw new IllegalArgumentException(
@@ -125,8 +170,9 @@ public class EclipseFluidReadWrite {
           "Eclipse fluid file cannot be read: " + inputFile + ". Check file permissions.");
     }
 
-    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
-        ThermodynamicConstantsInterface.referencePressure);
+    neqsim.thermo.system.SystemInterface fluid = (forcedFluid != null) ? forcedFluid
+        : new neqsim.thermo.system.SystemSrkEos(288.15,
+            ThermodynamicConstantsInterface.referencePressure);
 
     Double[][] kij = null;
     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -146,6 +192,8 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       ArrayList<Double> BICS = new ArrayList<Double>();
       ArrayList<Double> LBCCOEF = new ArrayList<Double>();
+      ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
+      ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
       String EOS;
       while ((st = br.readLine()) != null) {
@@ -153,123 +201,162 @@ public class EclipseFluidReadWrite {
 
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
-          EOS = br.readLine().trim().replace("/", "");
-          if (EOS.contains("SRK")) {
-            fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
-                ThermodynamicConstantsInterface.referencePressure);
-          } else if (EOS.contains("PR")) {
-            String corr = br.readLine().trim().replace("/", "");
-            if (corr.equals("PRCORR")) {
-              fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+          String eosLine = br.readLine();
+          if (eosLine == null) {
+            break;
+          }
+          EOS = eosLine.trim().replace("/", "");
+          if (forcedFluid == null) {
+            // Only auto-create the fluid system when no target was forced by the caller.
+            if (EOS.contains("SRK")) {
+              fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
+            } else if (EOS.contains("PR")) {
+              String corrLine = br.readLine();
+              if (corrLine == null) {
+                break;
+              }
+              String corr = corrLine.trim().replace("/", "");
+              if (corr.equals("PRLKCORR")) {
+                fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
+                    ThermodynamicConstantsInterface.referencePressure);
+              } else if (corr.equals("PRCORR")) {
+                fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+                    ThermodynamicConstantsInterface.referencePressure);
+              } else {
+                fluid = new neqsim.thermo.system.SystemPrEos(288.15,
+                    ThermodynamicConstantsInterface.referencePressure);
+              }
             } else {
               fluid = new neqsim.thermo.system.SystemPrEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             }
-          } else {
-            fluid = new neqsim.thermo.system.SystemPrEos(288.15,
-                ThermodynamicConstantsInterface.referencePressure);
+          } else if (EOS.contains("PR")) {
+            // Skip the PRCORR / PRLKCORR line so the reader stays in sync.
+            br.readLine();
           }
         }
         if (st.trim().equals("CNAMES")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             names.add(st);
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.trim().equals("TCRIT")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TC.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("PCRIT")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PC.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("ACF")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ACF.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("MW")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             MW.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("TBOIL")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TBOIL.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("VCRIT")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             VCRIT.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("SSHIFT")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             SSHIFT.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("PARACHOR")) {
-          st = st.trim();
-          while ((st = br.readLine().trim().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PARACHOR.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("ZI")) {
-          st = st.trim();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = readLineClean(br)) != null) {
             st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ZI.add(Double.parseDouble(st));
           }
+          if (st == null) {
+            break;
+          }
         }
         if (st.equals("BIC")) {
-          st = st.trim();
           int addedComps = 0;
           kij = new Double[names.size()][names.size()];
           for (Double[] row : kij) {
@@ -277,10 +364,9 @@ public class EclipseFluidReadWrite {
           }
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
-          while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
+          while (addedComps < names.size() - 1 && (st = readLineClean(br)) != null) {
             st = st.trim();
-            if (st.startsWith("--") || st.isEmpty() || st.trim().startsWith("/")
-                || st.trim().startsWith(" ")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
 
@@ -300,19 +386,78 @@ public class EclipseFluidReadWrite {
             addedComps++;
             list.clear();
           }
+          if (st == null) {
+            break;
+          }
+        }
+        if (st.trim().equals("PEDERSEN")) {
+          usePedersen = true;
+        }
+        if (st.trim().equals("BICS")) {
+          // Skip BICS section (surface-condition BIPs) - not needed for standard fluid
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+          }
+          if (st == null) {
+            break;
+          }
+        }
+        if (st.trim().equals("ZCRIT")) {
+          // Skip ZCRIT section (critical Z-factors) - informational only
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+          }
+          if (st == null) {
+            break;
+          }
         }
         if (st.trim().equals("SSHIFTS")) {
-          String line;
-          while ((line = br.readLine()) != null) {
-            line = line.trim();
-            st = line.replace("/", "");
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             try {
               SSHIFTS.add(Double.parseDouble(st));
             } catch (NumberFormatException e) {
-              System.out.println("Error parsing double value: " + e.getMessage());
+              logger.debug("Error parsing SSHIFTS value: " + e.getMessage());
+            }
+          }
+          if (st == null) {
+            break;
+          }
+        }
+        if (st.trim().equals("OMEGAA")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAA_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAA value: " + e.getMessage());
+            }
+          }
+        }
+        if (st.trim().equals("OMEGAB")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAB_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAB value: " + e.getMessage());
             }
           }
         }
@@ -390,12 +535,18 @@ public class EclipseFluidReadWrite {
           fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
           fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));
           fluid.getPhase(i).getComponent(name).setMolarMass(MW.get(counter) / 1000.0);
-          fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
-          fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
-          fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
-          if (SSHIFTS.size() > 0) {
+          if (TBOIL.size() > counter) {
+            fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
+          }
+          if (VCRIT.size() > counter) {
+            fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
+          }
+          if (PARACHOR.size() > counter) {
+            fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
+          }
+          if (SSHIFTS.size() > counter) {
             fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFTS.get(counter));
-          } else {
+          } else if (SSHIFT.size() > counter) {
             fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
           }
           fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
@@ -409,6 +560,27 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
+      // Apply per-component OmegaA overrides when OMEGAA section was present in the
+      // file.
+      // setOmegaA() stores the value so calca() uses it in every subsequent init()
+      // call.
+      if (!OMEGAA_list.isEmpty()) {
+        for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+          for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
+            neqsim.thermo.component.ComponentEos comp =
+                (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum).getComponent(k);
+            comp.setOmegaA(OMEGAA_list.get(k));
+          }
+        }
+        // Re-init so calca() runs with the new OmegaA values.
+        fluid.init(0);
+      }
+      if (kij == null) {
+        kij = new Double[names.size()][names.size()];
+        for (Double[] row : kij) {
+          Arrays.fill(row, 0.0);
+        }
+      }
       for (int i = 0; i < names.size(); i++) {
         for (int j = i; j < names.size(); j++) {
           for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
@@ -558,7 +730,8 @@ public class EclipseFluidReadWrite {
     // Add water component with zero mole fraction
     fluid.addComponent("water", 0.0);
 
-    // Set water-specific volume correction and parachor matching PVTsim parameterization
+    // Set water-specific volume correction and parachor matching PVTsim
+    // parameterization
     for (int phaseIdx = 0; phaseIdx < fluid.getMaxNumberOfPhases(); phaseIdx++) {
       fluid.getPhase(phaseIdx).getComponent("water").setVolumeCorrectionConst(0.084004);
       fluid.getPhase(phaseIdx).getComponent("water").setParachorParameter(10.0);
@@ -639,6 +812,8 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       ArrayList<Double> BICS = new ArrayList<Double>();
       ArrayList<Double> LBCCOEF = new ArrayList<Double>();
+      ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
+      ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
       String EOS;
       while ((st = br.readLine()) != null) {
@@ -652,7 +827,10 @@ public class EclipseFluidReadWrite {
                 ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
             String corr = br.readLine().trim().replace("/", "");
-            if (corr.equals("PRCORR")) {
+            if (corr.equals("PRLKCORR")) {
+              fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
+                  ThermodynamicConstantsInterface.referencePressure);
+            } else if (corr.equals("PRCORR")) {
               fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             } else {
@@ -775,17 +953,46 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.trim().equals("SSHIFTS")) {
-          String line;
-          while ((line = br.readLine()) != null) {
-            line = line.trim();
-            st = line.replace("/", "");
+          while ((st = readLineClean(br)) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             try {
               SSHIFTS.add(Double.parseDouble(st));
             } catch (NumberFormatException e) {
-              System.out.println("Error parsing double value: " + e.getMessage());
+              logger.debug("Error parsing SSHIFTS value: " + e.getMessage());
+            }
+          }
+          if (st == null) {
+            break;
+          }
+        }
+        if (st.trim().equals("OMEGAA")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAA_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAA value: " + e.getMessage());
+            }
+          }
+        }
+        if (st.trim().equals("OMEGAB")) {
+          String line2;
+          while ((line2 = br.readLine()) != null) {
+            line2 = line2.trim().replace("/", "").trim();
+            if (line2.startsWith("--") || line2.isEmpty()) {
+              break;
+            }
+            try {
+              OMEGAB_list.add(Double.parseDouble(line2));
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing OMEGAB value: " + e.getMessage());
             }
           }
         }
@@ -913,6 +1120,17 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
+      // Apply per-component OmegaA overrides when OMEGAA section was present.
+      if (!OMEGAA_list.isEmpty()) {
+        for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+          for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
+            neqsim.thermo.component.ComponentEos comp =
+                (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum).getComponent(k);
+            comp.setOmegaA(OMEGAA_list.get(k));
+          }
+        }
+        fluid.init(0);
+      }
 
       int nCompsPerFluid = names.size(); // base number of components
       int nFluids = fluidNames.length; // number of times you replicate
@@ -920,6 +1138,12 @@ public class EclipseFluidReadWrite {
       // We end up with N * nFluids total components in the fluid
       // Suppose we want to replicate the same kij block for each fluid
       // and across the same fluid. Typically you'd do:
+      if (kij == null) {
+        kij = new Double[nCompsPerFluid][nCompsPerFluid];
+        for (Double[] row : kij) {
+          Arrays.fill(row, 0.0);
+        }
+      }
       for (int i = 0; i < nCompsPerFluid * nFluids; i++) {
         // figure out which base component i corresponds to
         // and which fluid-block it belongs to
@@ -1189,6 +1413,7 @@ public class EclipseFluidReadWrite {
     // Header
     writer.write("-- Eclipse 300 Compositional EOS File\n");
     writer.write("-- Generated by NeqSim on " + timestamp + "\n");
+    writer.write("-- EOS: " + getEOSType(fluid) + "\n");
     writer.write("--\n");
 
     // Units
@@ -1203,10 +1428,15 @@ public class EclipseFluidReadWrite {
     writer.write("-- Equation of state\n");
     writer.write("EOS\n");
     String eosType = getEOSType(fluid);
-    writer.write(eosType + " /\n");
+    // PR-LK is written as "PR" in the EOS line (same family), distinguished by
+    // PRLKCORR
+    String eosLine = "PR-LK".equals(eosType) ? "PR" : eosType;
+    writer.write(eosLine + " /\n");
 
-    // PRCORR keyword for Peng-Robinson EOS
-    if ("PR".equals(eosType)) {
+    // Correction keyword for Peng-Robinson variants
+    if ("PR-LK".equals(eosType)) {
+      writer.write("PRLKCORR\n");
+    } else if ("PR".equals(eosType)) {
       writer.write("PRCORR\n");
     }
 
@@ -1254,19 +1484,26 @@ public class EclipseFluidReadWrite {
     }
     writer.write("/\n");
 
-    // OmegaA EOS parameter
+    // OmegaA EOS parameter — use per-component override when available
     writer.write("-- OmegaA\n");
     writer.write("OMEGAA\n");
-    double omegaA = "PR".equals(eosType) ? 0.45724 : 0.42748;
+    double omegaADefault = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.45724 : 0.42748;
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaA));
+      double omegaAVal = omegaADefault;
+      if (fluid.getComponent(i) instanceof ComponentEos) {
+        ComponentEos ce = (ComponentEos) fluid.getComponent(i);
+        if (ce.hasOmegaAOverride()) {
+          omegaAVal = ce.getOmegaAOverride();
+        }
+      }
+      writer.write(String.format(java.util.Locale.US, "     %.8f\n", omegaAVal));
     }
     writer.write("/\n");
 
     // OmegaB EOS parameter
     writer.write("-- OmegaB\n");
     writer.write("OMEGAB\n");
-    double omegaB = "PR".equals(eosType) ? 0.07780 : 0.08664;
+    double omegaB = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.07780 : 0.08664;
     for (int i = 0; i < nComps; i++) {
       writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
     }
@@ -1421,6 +1658,8 @@ public class EclipseFluidReadWrite {
     String className = fluid.getClass().getSimpleName().toLowerCase();
     if (className.contains("srk")) {
       return "SRK";
+    } else if (className.contains("leekes") || className.contains("leekesler")) {
+      return "PR-LK";
     } else if (className.contains("pr")) {
       return "PR";
     } else {

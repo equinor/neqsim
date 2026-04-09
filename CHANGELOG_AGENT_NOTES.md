@@ -9,6 +9,372 @@
 
 ---
 
+## 2026-07-08 — UniSim Reader: Default E300 Fluid Export
+
+### E300 is Now the Default Fluid Transfer Route
+
+When importing fluids from UniSim to NeqSim, the **E300 file route is now the
+default**. `UniSimReader.read(export_e300=True)` (the default) extracts critical
+properties (Tc, Pc, acentric factor, MW, BIPs, volume shifts) from each component
+via COM and writes an E300 file per fluid package.
+
+This preserves all thermodynamic characterization — including hypothetical/pseudo
+components like C7+ fractions — that component name mapping alone cannot capture.
+
+### New Java Overloads
+
+```java
+// Build and run with a pre-built fluid (e.g., from E300 file)
+ProcessSystem.fromJsonAndRun(String json, SystemInterface fluid)
+JsonProcessBuilder.buildAndRun(String json, SystemInterface fluid)
+```
+
+### Python Usage (Automatic)
+
+```python
+reader = UniSimReader()
+model = reader.read(r'C:\path\to\model.usc')  # auto-exports E300 files
+for fp in model.fluid_packages:
+    print(f"  {fp.name}: {fp.e300_file_path}")
+
+converter = UniSimToNeqSim(model)
+result = converter.build_and_run()  # auto-loads E300 fluid
+```
+
+### Python Usage (Manual E300 Loading)
+
+```python
+from neqsim import jneqsim
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
+```
+
+### Affected Files
+- `devtools/unisim_reader.py` — `UniSimComponent` (critical properties), `UniSimFluidPackage` (`write_e300()`, `has_critical_properties`), `_extract_fluid_packages()` (COM property extraction), `_extract_bips()` (new), `read()` (`export_e300` parameter), `_build_fluid_section()` (E300 path in fluid dict), `build_and_run()` (E300 auto-loading)
+- `src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java` — `buildAndRun(String, SystemInterface)`, `buildFromJsonObject(JsonObject, SystemInterface)`
+- `src/main/java/neqsim/process/processmodel/ProcessSystem.java` — `fromJsonAndRun(String, SystemInterface)`
+- `.github/skills/neqsim-unisim-reader/SKILL.md` — E300 section added
+- `AGENTS.md` — Updated descriptions
+
+---
+
+## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
+<<<<<<< HEAD
+
+### Vertical Separator → GasScrubber Mapping
+
+The UniSim reader (`devtools/unisim_reader.py`) now detects separator orientation.
+Vertical `flashtank` operations are mapped to `GasScrubber` instead of `Separator`.
+
+| UniSim flashtank | NeqSim Type |
+|---|---|
+| horizontal (default) | `Separator` |
+| vertical | `GasScrubber` |
+| has WaterProduct | `ThreePhaseSeparator` |
+
+`GasScrubber` extends `Separator` — it is a vertical vessel with K-value
+sizing constraints and 10% liquid level. The orientation is detected from
+UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation`).
+
+### Affected Files
+- `devtools/unisim_reader.py` — `resolve_neqsim_type()` method, orientation extraction
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `AGENTS.md`
+
+---
+
+## 2026-07-07 — Full FPSO Model: Architecture Learnings
+
+### HP Separator Water Routing
+
+When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
+may not produce a separate aqueous phase in UniSim. To match this behavior, use
+`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
+
+```java
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
+Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
+hpLiqRecombine.addStream(hpSep.getOilOutStream());
+hpLiqRecombine.addStream(hpSep.getWaterOutStream());
+// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
+```
+
+### Import Gas Compression Architecture
+
+Large FPSO models use staged import gas compression matching pressure levels:
+- VLP gas (~2 bar) → VRU compressor → ~5 bar → mix with LP gas
+- LP+VRU gas (~5 bar) → 1st import compressor → ~22 bar → mix with MP gas
+- MP+1st import gas (~22 bar) → 2nd import compressor → ~90 bar → mix with HP gas
+
+Each stage has cooler + flash drum before the compressor (removes condensate).
+
+### Pump API
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(6.1);          // bara
+pump.setIsentropicEfficiency(0.75);
+pump.getPower("kW");                  // after run
+```
+
+### ComponentSplitter for TEG Dehydration
+
+```java
+ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
+int nComp = wetGasStream.getFluid().getNumberOfComponents();
+double[] sf = new double[nComp];
+java.util.Arrays.fill(sf, 1.0);
+sf[nComp - 1] = 0.0;  // water is last component
+teg.setSplitFactors(sf);
+// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
+```
+
+### Model Scale: 50+ Equipment Units in Single ProcessSystem
+
+The reference FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
+covering wellhead → HP/MP/LP/VLP separation → VRU + import gas compression →
+gas cooling + TEG → 2-stage export compression → seal gas JT → oil export.
+Single `ProcessSystem` converges in ~2 seconds without recycles.
+
+---
+
+## 2026-07-06 — JT Expansion: Use ThrottlingValve, Not PHflash
+
+### Critical Agent Guidance
+
+When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
+`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on FPSO seal gas
+(90→48 bar):
+
+| Method | Temperature (°C) | UniSim Reference | Error |
+|--------|-----------------|------------------|-------|
+| `ThrottlingValve` in ProcessSystem | 16.44 | 18.17 | -1.73°C |
+| Manual `PHflash(H/n)` on clone | 33.05 | 18.17 | +14.88°C |
+
+The manual PHflash approach fails because `getEnthalpy('J')` returns total system enthalpy
+while `PHflash(double)` expects a specific enthalpy convention (per mole at the system's
+reference state). The ThrottlingValve handles the enthalpy bookkeeping internally.
+
+**Pattern:**
+```java
+// CORRECT: Use process-level valve
+ProcessSystem proc = new ProcessSystem();
+Stream sg = new Stream("SG", fluid.clone());
+proc.add(sg);
+ThrottlingValve jt = new ThrottlingValve("JT", sg);
+jt.setOutletPressure(48.0);
+proc.add(jt);
+proc.run();
+double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperature
+
+// WRONG: Manual PHflash — gives incorrect JT temperature
+// SystemInterface clone = fluid.clone();
+// clone.setPressure(48.0);
+// new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
+```
+
+### FPSO Model Extension
+
+Extended the NeqSim FPSO replication to include:
+- LP/MP gas recompression + mixing with HP gas
+- Gas cooling (24HA101, 75°C→36°C) + flash drum (24VG101)
+- Seal gas takeoff (5.4% split)
+- 2-stage export compression (26KA101: 86→259 bar, 26KA102: 258→554 bar)
+- Seal gas JT expansion curve showing 1.35% max condensation at 30 bar
+
+Compressor discharge temperature comparison:
+- 26KA101: NeqSim 126.7°C vs UniSim 117.8°C (75% η_is assumed)
+- 26KA102: NeqSim 85.9°C vs UniSim 83.6°C
+- Suggests UniSim uses ~83-85% isentropic efficiency
+
+---
+
+## 2026-07-05 — EclipseFluidReadWrite Null BIC Fix, UniSim BIP Extraction
+
+### Bug Fix
+
+| Class | Issue | Fix |
+|-------|-------|-----|
+| `EclipseFluidReadWrite` | `NullPointerException` when E300 file has no BIC section — `kij` array stays `null` | Both `read()` methods now initialize `kij` to zero matrix if BIC section is missing. E300 files without BIC load correctly (all BIPs default to 0.0). |
+
+### Impact on Agents
+
+- **E300 file loading**: Previously required a BIC section or the reader crashed. Now optional (defaults to zero BIPs). However, agents should always include BIC in generated E300 files for accurate results.
+- **UniSim → E300 workflow**: BIPs can now be extracted from UniSim via `pp.Kij.Values` (tuple-of-tuples). See `neqsim-unisim-reader` skill Section 1.1 for the COM access pattern.
+
+### Key Discovery
+
+UniSim COM BIP extraction pattern:
+```python
+kij_obj = pp.Kij          # CDispatch (RealFlexVariable)
+raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
+# Diagonal sentinel = -32767.0, replace with 0.0
+```
+- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
+- `kij_obj.GetValues()` fails — use `.Values` property instead
+
+---
+
+## 2026-04-08 — IEC 81346 Reference Designation Support
+=======
+>>>>>>> 0a1cdaa75a2293eaa9447f3df1b0ec9460a74c1e
+
+### Vertical Separator → GasScrubber Mapping
+
+The UniSim reader (`devtools/unisim_reader.py`) now detects separator orientation.
+Vertical `flashtank` operations are mapped to `GasScrubber` instead of `Separator`.
+
+| UniSim flashtank | NeqSim Type |
+|---|---|
+| horizontal (default) | `Separator` |
+| vertical | `GasScrubber` |
+| has WaterProduct | `ThreePhaseSeparator` |
+
+`GasScrubber` extends `Separator` — it is a vertical vessel with K-value
+sizing constraints and 10% liquid level. The orientation is detected from
+UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation`).
+
+### Affected Files
+- `devtools/unisim_reader.py` — `resolve_neqsim_type()` method, orientation extraction
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `AGENTS.md`
+
+---
+
+## 2026-07-07 — Full FPSO Model: Architecture Learnings
+
+### HP Separator Water Routing
+
+When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
+may not produce a separate aqueous phase in UniSim. To match this behavior, use
+`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
+
+```java
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
+Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
+hpLiqRecombine.addStream(hpSep.getOilOutStream());
+hpLiqRecombine.addStream(hpSep.getWaterOutStream());
+// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
+```
+
+### Import Gas Compression Architecture
+
+Large FPSO models use staged import gas compression matching pressure levels:
+- VLP gas (~2 bar) → VRU compressor → ~5 bar → mix with LP gas
+- LP+VRU gas (~5 bar) → 1st import compressor → ~22 bar → mix with MP gas
+- MP+1st import gas (~22 bar) → 2nd import compressor → ~90 bar → mix with HP gas
+
+Each stage has cooler + flash drum before the compressor (removes condensate).
+
+### Pump API
+
+```java
+Pump pump = new Pump("P-100", liquidStream);
+pump.setOutletPressure(6.1);          // bara
+pump.setIsentropicEfficiency(0.75);
+pump.getPower("kW");                  // after run
+```
+
+### ComponentSplitter for TEG Dehydration
+
+```java
+ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
+int nComp = wetGasStream.getFluid().getNumberOfComponents();
+double[] sf = new double[nComp];
+java.util.Arrays.fill(sf, 1.0);
+sf[nComp - 1] = 0.0;  // water is last component
+teg.setSplitFactors(sf);
+// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
+```
+
+### Model Scale: 50+ Equipment Units in Single ProcessSystem
+
+The reference FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
+covering wellhead → HP/MP/LP/VLP separation → VRU + import gas compression →
+gas cooling + TEG → 2-stage export compression → seal gas JT → oil export.
+Single `ProcessSystem` converges in ~2 seconds without recycles.
+
+---
+
+## 2026-07-06 — JT Expansion: Use ThrottlingValve, Not PHflash
+
+### Critical Agent Guidance
+
+When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
+`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on FPSO seal gas
+(90→48 bar):
+
+| Method | Temperature (°C) | UniSim Reference | Error |
+|--------|-----------------|------------------|-------|
+| `ThrottlingValve` in ProcessSystem | 16.44 | 18.17 | -1.73°C |
+| Manual `PHflash(H/n)` on clone | 33.05 | 18.17 | +14.88°C |
+
+The manual PHflash approach fails because `getEnthalpy('J')` returns total system enthalpy
+while `PHflash(double)` expects a specific enthalpy convention (per mole at the system's
+reference state). The ThrottlingValve handles the enthalpy bookkeeping internally.
+
+**Pattern:**
+```java
+// CORRECT: Use process-level valve
+ProcessSystem proc = new ProcessSystem();
+Stream sg = new Stream("SG", fluid.clone());
+proc.add(sg);
+ThrottlingValve jt = new ThrottlingValve("JT", sg);
+jt.setOutletPressure(48.0);
+proc.add(jt);
+proc.run();
+double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperature
+
+// WRONG: Manual PHflash — gives incorrect JT temperature
+// SystemInterface clone = fluid.clone();
+// clone.setPressure(48.0);
+// new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
+```
+
+### FPSO Model Extension
+
+Extended the NeqSim FPSO replication to include:
+- LP/MP gas recompression + mixing with HP gas
+- Gas cooling (24HA101, 75°C→36°C) + flash drum (24VG101)
+- Seal gas takeoff (5.4% split)
+- 2-stage export compression (26KA101: 86→259 bar, 26KA102: 258→554 bar)
+- Seal gas JT expansion curve showing 1.35% max condensation at 30 bar
+
+Compressor discharge temperature comparison:
+- 26KA101: NeqSim 126.7°C vs UniSim 117.8°C (75% η_is assumed)
+- 26KA102: NeqSim 85.9°C vs UniSim 83.6°C
+- Suggests UniSim uses ~83-85% isentropic efficiency
+
+---
+
+## 2026-07-05 — EclipseFluidReadWrite Null BIC Fix, UniSim BIP Extraction
+
+### Bug Fix
+
+| Class | Issue | Fix |
+|-------|-------|-----|
+| `EclipseFluidReadWrite` | `NullPointerException` when E300 file has no BIC section — `kij` array stays `null` | Both `read()` methods now initialize `kij` to zero matrix if BIC section is missing. E300 files without BIC load correctly (all BIPs default to 0.0). |
+
+### Impact on Agents
+
+- **E300 file loading**: Previously required a BIC section or the reader crashed. Now optional (defaults to zero BIPs). However, agents should always include BIC in generated E300 files for accurate results.
+- **UniSim → E300 workflow**: BIPs can now be extracted from UniSim via `pp.Kij.Values` (tuple-of-tuples). See `neqsim-unisim-reader` skill Section 1.1 for the COM access pattern.
+
+### Key Discovery
+
+UniSim COM BIP extraction pattern:
+```python
+kij_obj = pp.Kij          # CDispatch (RealFlexVariable)
+raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
+# Diagonal sentinel = -32767.0, replace with 0.0
+```
+- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
+- `kij_obj.GetValues()` fails — use `.Values` property instead
+
+---
+
 ## 2026-04-05 — Heat Integration, Power Generation, Agentic QA Gate
 
 ### New Java Classes

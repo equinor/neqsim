@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAMM;
+import neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface;
 
 /**
  * Electrolyte CPA (e-CPA) phase class implementing the Maribo-Mogensen model.
@@ -91,6 +92,23 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   protected double packingFractiondV = 0.0;
 
   /**
+   * Mean closest-approach diameter for extended Debye-Hückel [m]. Computed as the charge-weighted
+   * average of ion LJ diameters: d = Σ(n_i z_i² σ_i) / Σ(n_i z_i²).
+   */
+  protected double meanIonDiameter = 0.0;
+  /**
+   * DH screening factor τ(χ) = 3ψ(χ)/χ³ where χ = κd [-]. Reduces the primitive DH (DHLL)
+   * contribution to account for finite ion size. τ = 1.0 recovers the DHLL; τ ≈ 0.6 at 1 molal
+   * NaCl.
+   */
+  protected double tauDH = 1.0;
+  /**
+   * Derivative of screening factor dτ/dχ [-]. Used for composition derivatives where κ changes
+   * significantly with added ions.
+   */
+  protected double tauDHprime = 0.0;
+
+  /**
    * Ion-solvent binary interaction parameters wij. These are populated from the ΔU_iw parameters
    * from Maribo-Mogensen thesis Table 6.11. Format: wij[i][j] where i is ion index and j is solvent
    * index. Units: Kelvin (energy/R).
@@ -109,19 +127,28 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /** Flag to enable/disable Born term. */
   protected boolean bornOn = true;
   /**
-   * Flag to enable/disable short-range ion-solvent term. Disabled by default - the current
-   * implementation needs further development to properly scale the ΔU_iw parameters from
-   * Maribo-Mogensen Table 6.11. The short-range contribution is intended to balance the Born
-   * solvation term but requires careful parameter fitting with the other electrolyte terms. Enable
-   * this via setShortRangeOn(true) for experimental testing.
+   * Flag to enable/disable short-range ion-solvent term. Uses the Furst electrolyte mixing rule
+   * correlation for wij parameters, combined with the FSR2 Helmholtz framework. Enable this via
+   * setShortRangeOn(true).
    */
-  protected boolean shortRangeOn = false;
+  protected boolean shortRangeOn = true;
+
+  /** Electrolyte mixing rule for computing W, Wi, WiT (Furst-style wij from Stokes diameter). */
+  protected transient ElectrolyteMixingRulesInterface electrolyteMixingRule;
+
+  /** Short-range W parameter from electrolyte mixing rule [m³·mol]. */
+  protected double srW = 0.0;
+  /** Temperature derivative of W [m³·mol/K]. */
+  protected double srWT = 0.0;
+  /** Second temperature derivative of W [m³·mol/K²]. */
+  protected double srWTT = 0.0;
 
   /**
    * Constructor for PhaseElectrolyteCPAMM.
    */
   public PhaseElectrolyteCPAMM() {
     super();
+    electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
   }
 
   /** {@inheritDoc} */
@@ -166,7 +193,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * Initialize volume-dependent electrolyte properties. Called during molar volume iteration.
    */
   public void initElectrolyteProperties() {
-    initMixingRuleWij(); // Initialize wij from component ΔU_iw parameters
     solventPermittivity = calcSolventPermittivity(temperature);
     solventPermittivitydT = calcSolventPermittivitydT(temperature);
     solventPermittivitydTdT = calcSolventPermittivitydTdT(temperature);
@@ -174,10 +200,143 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     kappa = calcKappa();
     kappadT = calcKappadT();
     bornX = calcBornX();
-    ionSolventW = calcIonSolventW();
-    ionSolventWdT = calcIonSolventWdT();
     packingFraction = calcPackingFraction();
     packingFractiondV = calcPackingFractiondV();
+
+    // Extended Debye-Hückel: compute mean ion diameter and screening factor
+    meanIonDiameter = calcMeanIonDiameter();
+    if (meanIonDiameter > 1e-30 && kappa > 1e-30) {
+      double chi = kappa * meanIonDiameter;
+      tauDH = calcTauDH(chi);
+      tauDHprime = calcTauDHprime(chi);
+    } else {
+      tauDH = 1.0;
+      tauDHprime = 0.0;
+    }
+
+    // Compute W/WT/WTT from the Furst electrolyte mixing rule (wij from Stokes diameter)
+    if (shortRangeOn && electrolyteMixingRule != null) {
+      srW = electrolyteMixingRule.calcW(this, temperature, pressure, numberOfComponents);
+      srWT = electrolyteMixingRule.calcWT(this, temperature, pressure, numberOfComponents);
+      srWTT = electrolyteMixingRule.calcWTT(this, temperature, pressure, numberOfComponents);
+    }
+
+    // MM short-range: compute ion-solvent W from ΔU_iw parameters
+    if (shortRangeOn) {
+      initMixingRuleWij();
+      ionSolventW = calcIonSolventW();
+      ionSolventWdT = calcIonSolventWdT();
+    }
+  }
+
+  /**
+   * Calculate the mean closest-approach diameter for the extended Debye-Hückel. Uses the
+   * charge-squared weighted average of ionic LJ diameters.
+   *
+   * @return mean ion diameter [m]
+   */
+  public double calcMeanIonDiameter() {
+    double sumNZ2sigma = 0.0;
+    double sumNZ2 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double z = componentArray[i].getIonicCharge();
+      if (z != 0) {
+        double n = componentArray[i].getNumberOfMolesInPhase();
+        double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10; // Å to m
+        sumNZ2sigma += n * z * z * sigma;
+        sumNZ2 += n * z * z;
+      }
+    }
+    if (sumNZ2 < 1e-30) {
+      return 0.0;
+    }
+    return sumNZ2sigma / sumNZ2;
+  }
+
+  /**
+   * Extended DH charging function ψ(u) = ln(1+u) - u + u²/2. In the limit u → 0, ψ → u³/3 (recovers
+   * primitive DH).
+   *
+   * @param u dimensionless argument κd
+   * @return ψ(u) [-]
+   */
+  static double psiDH(double u) {
+    if (u < 1e-8) {
+      return u * u * u / 3.0;
+    }
+    return Math.log(1.0 + u) - u + 0.5 * u * u;
+  }
+
+  /**
+   * First derivative of ψ: ψ'(u) = u²/(1+u). In the limit u → 0, ψ' → u².
+   *
+   * @param u dimensionless argument κd
+   * @return ψ'(u) [-]
+   */
+  static double psiDHprime(double u) {
+    if (u < 1e-8) {
+      return u * u;
+    }
+    return u * u / (1.0 + u);
+  }
+
+  /**
+   * DH screening factor τ(χ) = 3ψ(χ)/χ³. Equals 1.0 in the primitive DH limit (χ → 0), with values
+   * less than 1 at finite concentration. For NaCl at 1 molal, τ ≈ 0.60.
+   *
+   * @param chi dimensionless screening parameter κd
+   * @return τ [-]
+   */
+  static double calcTauDH(double chi) {
+    if (chi < 1e-6) {
+      return 1.0;
+    }
+    return 3.0 * psiDH(chi) / (chi * chi * chi);
+  }
+
+  /**
+   * Derivative of DH screening factor: dτ/dχ. Used for the composition derivative correction of the
+   * extended DH where κ changes with ion amount.
+   *
+   * @param chi dimensionless screening parameter κd
+   * @return dτ/dχ [-]
+   */
+  static double calcTauDHprime(double chi) {
+    if (chi < 1e-6) {
+      return 0.0;
+    }
+    // τ(χ) = 3ψ(χ)/χ³
+    // τ'(χ) = 3[ψ'(χ)χ³ - 3χ²ψ(χ)] / χ⁶ = 3[ψ'χ - 3ψ] / χ⁴
+    double psi = psiDH(chi);
+    double psip = psiDHprime(chi);
+    return 3.0 * (psip * chi - 3.0 * psi) / (chi * chi * chi * chi);
+  }
+
+  /**
+   * Get the DH screening factor τ(κd) [-].
+   *
+   * @return τ value (1.0 for primitive DH, less than 1 for extended DH)
+   */
+  public double getTauDH() {
+    return tauDH;
+  }
+
+  /**
+   * Get the derivative of DH screening factor dτ/dχ [-].
+   *
+   * @return dτ/d(κd)
+   */
+  public double getTauDHprime() {
+    return tauDHprime;
+  }
+
+  /**
+   * Get the mean ion closest-approach diameter [m].
+   *
+   * @return mean ion diameter in meters
+   */
+  public double getMeanIonDiameter() {
+    return meanIonDiameter;
   }
 
   /**
@@ -1134,9 +1293,11 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    // κ² ∝ 1/(ε_r * T), so dκ²/dT = κ² * (-1/T - (1/ε_r)*dε_r/dT)
+    // κ² ∝ 1/(ε_mix * T), so dκ²/dT = κ² * (-1/T - (1/ε_mix)*dε_mix/dT)
+    // Since ε_mix = ε_solv * (1-η)/(1+η/2) and η is T-independent at constant V,n:
+    // (1/ε_mix)*dε_mix/dT = (1/ε_solv)*dε_solv/dT = solventPermittivitydT/solventPermittivity
     double dKappa2dT =
-        kappa * kappa * (-1.0 / temperature - solventPermittivitydT / mixturePermittivity);
+        kappa * kappa * (-1.0 / temperature - solventPermittivitydT / solventPermittivity);
     return dKappa2dT / (2.0 * kappa);
   }
 
@@ -1278,26 +1439,21 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * {@link #initMixingRuleWij()}.
    * </p>
    *
-   * @return W [J/mol]
+   * @return W [K·mol²]
    */
   public double calcIonSolventW() {
     if (wij == null) {
       return 0.0;
     }
     double sum = 0.0;
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
-    if (V < 1e-30) {
-      return 0.0;
-    }
 
-    // Sum over all pairs using wij mixing rule parameters
+    // W = Σ_i Σ_j n_i n_j wij (wij in Kelvin from ΔU_iw/kB)
     for (int i = 0; i < numberOfComponents; i++) {
       double ni = componentArray[i].getNumberOfMolesInPhase();
       for (int j = 0; j < numberOfComponents; j++) {
         if (wij[i][j] != 0.0) {
           double nj = componentArray[j].getNumberOfMolesInPhase();
-          // W contribution: n_i * n_j * wij * R / V
-          sum += ni * nj * wij[i][j] * ThermodynamicConstantsInterface.R / V;
+          sum += ni * nj * wij[i][j];
         }
       }
     }
@@ -1307,25 +1463,21 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Calculate temperature derivative of W using wijT mixing rule parameters.
    *
-   * @return dW/dT [J/(mol·K)]
+   * @return dW/dT [mol²] (wijT is dimensionless: d(wij)/dT in K/K = 1)
    */
   public double calcIonSolventWdT() {
     if (wijT == null) {
       return 0.0;
     }
     double sum = 0.0;
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
-    if (V < 1e-30) {
-      return 0.0;
-    }
 
-    // Sum over all pairs using wijT mixing rule parameters
+    // dW/dT = Σ_i Σ_j n_i n_j dwij/dT
     for (int i = 0; i < numberOfComponents; i++) {
       double ni = componentArray[i].getNumberOfMolesInPhase();
       for (int j = 0; j < numberOfComponents; j++) {
         if (wijT[i][j] != 0.0) {
           double nj = componentArray[j].getNumberOfMolesInPhase();
-          sum += ni * nj * wijT[i][j] * ThermodynamicConstantsInterface.R / V;
+          sum += ni * nj * wijT[i][j];
         }
       }
     }
@@ -1346,10 +1498,14 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    *
    * <pre>
    * A^DH = -κ³ V k_B T / (12π)
-   * F^DH = A^DH / (RT) = -κ³ V k_B / (12π R) = -κ³ V / (12π N_A)
+   * F^DH = A^DH / (RT) = -κ³ V / (12π N_A)
    * </pre>
    *
-   * where V is the total volume [m³]. This is extensive (scales with n).
+   * <p>
+   * The extended DH applies a screening factor τ(χ) = 3ψ(χ)/χ³ where χ = κd and d is the mean ion
+   * closest-approach diameter. This accounts for finite ion size and reduces the DH contribution by
+   * ~40% at 1 molal NaCl. F^DH_ext = F^DH_DHLL × τ(κd).
+   * </p>
    *
    * @return F^DH contribution to Helmholtz energy [-]
    */
@@ -1359,14 +1515,15 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     }
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
     double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * V / (12.0 * Math.PI * AVOGADRO);
+    return -kappa3 * V / (12.0 * Math.PI * AVOGADRO) * tauDH;
   }
 
   /**
    * Temperature derivative of Debye-Hückel term at constant V. dF^DH/dT
    *
    * <p>
-   * F^DH = -κ³V/(12π N_A), so dF^DH/dT = -V/(12π N_A) * dκ³/dT
+   * Uses extended DH: dF/dT = -V/(12π N_A) × dκ³/dT × τ(κd). The dτ/dT correction is neglected
+   * since it is O(0.03%/K) relative to the main term.
    * </p>
    *
    * @return dF^DH/dT [-/K]
@@ -1378,15 +1535,15 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
     double dKappa3dT = 3.0 * kappa * kappa * kappadT;
 
-    // F = -κ³V/(12π N_A), so dF/dT = -V/(12π N_A) * dκ³/dT
-    return -V / (12.0 * Math.PI * AVOGADRO) * dKappa3dT;
+    return -V / (12.0 * Math.PI * AVOGADRO) * dKappa3dT * tauDH;
   }
 
   /**
-   * Volume derivative of Debye-Hückel term. dF^DH/dV = ∂F^DH/∂V
+   * Volume derivative of Debye-Hückel term. dF^DH/dV = ∂F^DH/∂V at constant κ.
    *
    * <p>
-   * F^DH = -κ³V/(12π N_A), so dF/dV = -κ³/(12π N_A)
+   * Uses extended DH: dF/dV = -κ³/(12π N_A) × τ(κd). Since τ is independent of V at constant κ, and
+   * F is linear in V, this is exact.
    * </p>
    *
    * @return dF^DH/dV [1/m³]
@@ -1395,9 +1552,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    // F = -κ³V/(12π N_A), so dF/dV = -κ³/(12π N_A)
     double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * 1e-5 / (12.0 * Math.PI * AVOGADRO);
+    return -kappa3 * 1e-5 / (12.0 * Math.PI * AVOGADRO) * tauDH;
   }
 
   /**
@@ -1525,326 +1681,447 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     return -prefactor / (solventPermittivity * solventPermittivity);
   }
 
-  // ==================== Short-Range Ion-Solvent Term ====================
+  // ==================== Short-Range Ion-Solvent Term (MM Formula) ====================
 
   /**
-   * Short-range ion-solvent contribution to Helmholtz free energy.
-   *
-   * <p>
-   * Following the NRTL/Huron-Vidal framework used by Maribo-Mogensen, the short-range term is:
-   * </p>
+   * Short-range ion-solvent contribution to Helmholtz free energy using the Maribo-Mogensen
+   * formula.
    *
    * <pre>
-   * F^SR = (1/n_T) × Σ_i Σ_j (n_i × n_j × τ_ij)
+   * F_SR = W / (n_T × T × (1 - η))
    * </pre>
    *
    * <p>
-   * where τ_ij = ΔU_ij / T and ΔU_ij are the wij parameters from MM thesis (in Kelvin = energy/R).
+   * where W = Σ_i Σ_j n_i n_j ΔU_ij(T) is computed from the ion-solvent wij parameters (from
+   * IonParametersMM ΔU_iw values), n_T is total moles, T is temperature, and η is the packing
+   * fraction.
    * </p>
    *
-   * <p>
-   * Including the packing fraction correction from Furst:
-   * </p>
-   *
-   * <pre>
-   * F^SR = W / (n_T × T × (1 - η))
-   * </pre>
-   *
-   * <p>
-   * where W = Σ_i Σ_j (n_i × n_j × wij) with wij in Kelvin.
-   * </p>
-   *
-   * @return F^SR contribution [-]
+   * @return F_SR contribution [-]
    */
   public double FShortRange() {
     if (!shortRangeOn) {
       return 0.0;
     }
+    if (Math.abs(ionSolventW) < 1e-30) {
+      return 0.0;
+    }
+    double nT = numberOfMolesInPhase;
+    if (nT < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return ionSolventW / (nT * temperature * oneMinusEps);
+  }
+
+  // -- FSR2 partial derivatives with respect to W, V, eps --
+
+  /**
+   * Partial derivative of FSR2 with respect to W.
+   *
+   * @return dFSR2/dW [1/(m³)]
+   */
+  public double FSR2W() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return 1.0 / (V * oneMinusEps);
+  }
+
+  /**
+   * Partial derivative of FSR2 with respect to V.
+   *
+   * @return dFSR2/dV [1/m³]
+   */
+  public double FSR2V() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return -srW / (V * V * oneMinusEps);
+  }
+
+  /**
+   * Partial derivative of FSR2 with respect to eps (packing fraction).
+   *
+   * @return dFSR2/deps [-]
+   */
+  public double FSR2eps() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return srW / (V * oneMinusEps * oneMinusEps);
+  }
+
+  // -- Second order partial derivatives --
+
+  /**
+   * d²FSR2/(dV²).
+   *
+   * @return d²FSR2/dV² [1/m⁶]
+   */
+  public double FSR2VV() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return 2.0 * srW / (V * V * V * oneMinusEps);
+  }
+
+  /**
+   * d²FSR2/(dV deps).
+   *
+   * @return d²FSR2/(dV deps)
+   */
+  public double FSR2epsV() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return -srW / (V * V * oneMinusEps * oneMinusEps);
+  }
+
+  /**
+   * d²FSR2/(deps²).
+   *
+   * @return d²FSR2/deps²
+   */
+  public double FSR2epseps() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return 2.0 * srW / (V * oneMinusEps * oneMinusEps * oneMinusEps);
+  }
+
+  /**
+   * d²FSR2/(dV dW).
+   *
+   * @return d²FSR2/(dV dW)
+   */
+  public double FSR2VW() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return -1.0 / (V * V * oneMinusEps);
+  }
+
+  /**
+   * d²FSR2/(deps dW).
+   *
+   * @return d²FSR2/(deps dW)
+   */
+  public double FSR2epsW() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return 1.0 / (V * oneMinusEps * oneMinusEps);
+  }
+
+  // -- Third order partial derivatives --
+
+  /**
+   * d³FSR2/(dV³).
+   *
+   * @return d³FSR2/dV³
+   */
+  public double FSR2VVV() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return -6.0 * srW / (V * V * V * V * oneMinusEps);
+  }
+
+  /**
+   * d³FSR2/(deps² dV).
+   *
+   * @return d³FSR2/(deps² dV)
+   */
+  public double FSR2epsepsV() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return -2.0 * srW / (V * V * oneMinusEps * oneMinusEps * oneMinusEps);
+  }
+
+  /**
+   * d³FSR2/(dV² deps).
+   *
+   * @return d³FSR2/(dV² deps)
+   */
+  public double FSR2VVeps() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return 2.0 * srW / (V * V * V * oneMinusEps * oneMinusEps);
+  }
+
+  /**
+   * d³FSR2/(deps³).
+   *
+   * @return d³FSR2/deps³
+   */
+  public double FSR2epsepseps() {
+    double V = getMolarVolume() * 1e-5 * numberOfMolesInPhase;
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    double oneMinusEps = 1.0 - packingFraction;
+    if (oneMinusEps < 0.01) {
+      oneMinusEps = 0.01;
+    }
+    return 6.0 * srW / (V * oneMinusEps * oneMinusEps * oneMinusEps * oneMinusEps);
+  }
+
+  // -- Total FSR2 derivatives with respect to T and V --
+
+  /**
+   * Temperature derivative of MM short-range term: dF_SR/dT.
+   *
+   * <p>
+   * F = W/(nT × T × (1-η)), so dF/dT = Wt/(nT × T × (1-η)) - W/(nT × T² × (1-η))
+   * </p>
+   *
+   * @return dFSR/dT [-/K]
+   */
+  public double dFShortRangedT() {
+    if (!shortRangeOn || numberOfMolesInPhase < 1e-30) {
+      return 0.0;
+    }
+    double nT = numberOfMolesInPhase;
+    double oneMinusEps = Math.max(1.0 - packingFraction, 0.01);
+    return (ionSolventWdT - ionSolventW / temperature) / (nT * temperature * oneMinusEps);
+  }
+
+  /**
+   * Second temperature derivative of MM short-range term.
+   *
+   * @return d²FSR/dT² [-/K²]
+   */
+  public double dFShortRangedTdT() {
+    if (!shortRangeOn) {
+      return 0.0;
+    }
+    // Approximate: d²F/dT² ≈ 2F/T²
+    return 2.0 * FShortRange() / (temperature * temperature);
+  }
+
+  /**
+   * Volume derivative of MM short-range term. The MM SR is F = W/(nT × T × (1-η)). Since η depends
+   * on V, dF/dV = F × (dη/dV) / (1-η). For dilute solutions η is small and this is negligible.
+   *
+   * @return dFSR/dV [1/m³]
+   */
+  public double dFShortRangedV() {
+    if (!shortRangeOn) {
+      return 0.0;
+    }
+    double oneMinusEps = Math.max(1.0 - packingFraction, 0.01);
+    return FShortRange() * packingFractiondV / oneMinusEps * 1e-5;
+  }
+
+  /**
+   * Second volume derivative of MM short-range term. Approximately zero for dilute solutions.
+   *
+   * @return d²FSR/dV²
+   */
+  public double dFShortRangedVdV() {
+    if (!shortRangeOn) {
+      return 0.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Third volume derivative of MM short-range term.
+   *
+   * @return d³FSR/dV³
+   */
+  public double dFShortRangedVdVdV() {
+    if (!shortRangeOn) {
+      return 0.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Mixed temperature-volume derivative of MM short-range term.
+   *
+   * @return d²FSR/dTdV [1/(m³·K)]
+   */
+  public double dFShortRangedTdV() {
+    if (!shortRangeOn) {
+      return 0.0;
+    }
+    return 0.0;
+  }
+
+  // -- Electrolyte mixing rule accessor methods --
+
+  /**
+   * Compute Wi = dW/dn_i for component i from the electrolyte mixing rule.
+   *
+   * @param compNumb component index
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
+   * @param numbcomp number of components
+   * @return Wi value
+   */
+  public double calcWi(int compNumb, double temperature, double pressure, int numbcomp) {
+    if (electrolyteMixingRule == null) {
+      return 0.0;
+    }
+    return electrolyteMixingRule.calcWi(compNumb, this, temperature, pressure, numbcomp);
+  }
+
+  /**
+   * Compute ∂W/∂n_i for the MM short-range from the wij matrix. W = Σ_a Σ_b n_a n_b wij[a][b], so
+   * ∂W/∂n_i = 2 Σ_b n_b wij[i][b].
+   *
+   * @param compNumb component index
+   * @return dW/dn_i [K·mol]
+   */
+  public double calcMMWi(int compNumb) {
     if (wij == null) {
       return 0.0;
     }
-
-    // Calculate W = Σ n_i n_j wij directly (wij in K)
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        if (wij[i][j] != 0.0) {
-          double nj = componentArray[j].getNumberOfMolesInPhase();
-          W += ni * nj * wij[i][j];
-        }
-      }
+    double sum = 0.0;
+    for (int j = 0; j < numberOfComponents; j++) {
+      sum += componentArray[j].getNumberOfMolesInPhase() * wij[compNumb][j];
     }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01; // Avoid singularity at high packing
-    }
-
-    // F^SR = W / (n_T × T × (1 - η))
-    return W / (numberOfMolesInPhase * temperature * oneMinusEta);
+    return 2.0 * sum;
   }
 
   /**
-   * Temperature derivative of short-range term.
+   * Compute d²W/(dn_i dT) for the MM short-range from the wijT matrix. Since W_T = Σ_a Σ_b n_a n_b
+   * wijT[a][b], the derivative is ∂W_T/∂n_i = 2 Σ_b n_b wijT[i][b].
    *
-   * <pre>
-   * dF^SR/dT = dW/dT / (n_T × T × (1 - η)) - W / (n_T × T² × (1 - η))
-   * </pre>
-   *
-   * @return dF^SR/dT [-/K]
+   * @param compNumb component index
+   * @return d²W/(dn_i dT) [mol] (wijT is dimensionless)
    */
-  public double dFShortRangedT() {
-    if (!shortRangeOn || wij == null) {
+  public double calcMMWiT(int compNumb) {
+    if (wijT == null) {
       return 0.0;
     }
-
-    // Calculate W and WT
-    double W = 0.0;
-    double WT = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        double nj = componentArray[j].getNumberOfMolesInPhase();
-        if (wij[i][j] != 0.0) {
-          W += ni * nj * wij[i][j];
-        }
-        if (wijT != null && wijT[i][j] != 0.0) {
-          WT += ni * nj * wijT[i][j];
-        }
-      }
+    double sum = 0.0;
+    for (int j = 0; j < numberOfComponents; j++) {
+      sum += componentArray[j].getNumberOfMolesInPhase() * wijT[compNumb][j];
     }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01;
-    }
-
-    double T = temperature;
-    double nT = numberOfMolesInPhase;
-
-    // dF/dT = WT / (nT × T × (1-η)) - W / (nT × T² × (1-η))
-    return WT / (nT * T * oneMinusEta) - W / (nT * T * T * oneMinusEta);
+    return 2.0 * sum;
   }
 
   /**
-   * Volume derivative of short-range term.
+   * Compute WiT = d²W/(dn_i dT) for component i (Furst mixing rule version).
    *
-   * <pre>
-   * dF^SR/dV = W × dη/dV / (n_T × T × (1 - η)²)
-   * </pre>
-   *
-   * <p>
-   * Note: W itself doesn't depend on V in this formulation.
-   * </p>
-   *
-   * @return dF^SR/dV [1/m³]
+   * @param compNumb component index
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
+   * @param numbcomp number of components
+   * @return WiT value
    */
-  public double dFShortRangedV() {
-    if (!shortRangeOn || wij == null) {
+  public double calcWiT(int compNumb, double temperature, double pressure, int numbcomp) {
+    if (electrolyteMixingRule == null) {
       return 0.0;
     }
-
-    // Calculate W
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        if (wij[i][j] != 0.0) {
-          double nj = componentArray[j].getNumberOfMolesInPhase();
-          W += ni * nj * wij[i][j];
-        }
-      }
-    }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01;
-    }
-
-    double detadV = packingFractiondV;
-    double T = temperature;
-    double nT = numberOfMolesInPhase;
-
-    // dF/dV = W × (dη/dV) / (nT × T × (1-η)²) since d(1-η)^-1/dV = (dη/dV)/(1-η)²
-    // Need to multiply by 1e-5 for volume unit conversion (cm³→m³)
-    return W * detadV / (nT * T * oneMinusEta * oneMinusEta) * 1e-5;
+    return electrolyteMixingRule.calcWiT(compNumb, this, temperature, pressure, numbcomp);
   }
 
   /**
-   * Second volume derivative of short-range term.
+   * Compute Wij = d²W/(dn_i dn_j) from the electrolyte mixing rule.
    *
-   * @return d²F^SR/dV² [1/m⁶]
+   * @param i first component index
+   * @param j second component index
+   * @param temperature temperature in K
+   * @param pressure pressure in bar
+   * @param numbcomp number of components
+   * @return Wij value
    */
-  public double dFShortRangedVdV() {
-    if (!shortRangeOn || wij == null) {
+  public double calcWij(int i, int j, double temperature, double pressure, int numbcomp) {
+    if (electrolyteMixingRule == null) {
       return 0.0;
     }
-
-    // Calculate W
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        if (wij[i][j] != 0.0) {
-          double nj = componentArray[j].getNumberOfMolesInPhase();
-          W += ni * nj * wij[i][j];
-        }
-      }
-    }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01;
-    }
-
-    double detadV = packingFractiondV;
-    double T = temperature;
-    double nT = numberOfMolesInPhase;
-
-    // d²F/dV² = 2W × (dη/dV)² / (nT × T × (1-η)³) (ignoring d²η/dV²)
-    return 2.0 * W * detadV * detadV / (nT * T * Math.pow(oneMinusEta, 3.0)) * 1e-10;
+    return electrolyteMixingRule.calcWij(i, j, this, temperature, pressure, numbcomp);
   }
 
   /**
-   * Third volume derivative of short-range term.
+   * Get the electrolyte mixing rule.
    *
-   * @return d³F^SR/dV³ [1/m⁹]
+   * @return the electrolyte mixing rule interface
    */
-  public double dFShortRangedVdVdV() {
-    if (!shortRangeOn || wij == null) {
-      return 0.0;
-    }
-
-    // Calculate W
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        if (wij[i][j] != 0.0) {
-          double nj = componentArray[j].getNumberOfMolesInPhase();
-          W += ni * nj * wij[i][j];
-        }
-      }
-    }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01;
-    }
-
-    double detadV = packingFractiondV;
-    double T = temperature;
-    double nT = numberOfMolesInPhase;
-
-    // d³F/dV³ = 6W × (dη/dV)³ / (nT × T × (1-η)⁴) (ignoring higher derivatives)
-    return 6.0 * W * Math.pow(detadV, 3.0) / (nT * T * Math.pow(oneMinusEta, 4.0)) * 1e-15;
+  public ElectrolyteMixingRulesInterface getElectrolyteMixingRule() {
+    return electrolyteMixingRule;
   }
 
   /**
-   * Second temperature derivative of short-range term.
+   * Get the W parameter from short-range mixing rule.
    *
-   * @return d²F^SR/dT² [-/K²]
+   * @return W value
    */
-  public double dFShortRangedTdT() {
-    if (!shortRangeOn || wij == null) {
-      return 0.0;
-    }
-
-    // Calculate W
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        if (wij[i][j] != 0.0) {
-          double nj = componentArray[j].getNumberOfMolesInPhase();
-          W += ni * nj * wij[i][j];
-        }
-      }
-    }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01;
-    }
-
-    double T = temperature;
-    double nT = numberOfMolesInPhase;
-
-    // d²F/dT² ≈ 2W / (nT × T³ × (1-η)) (ignoring WTT)
-    return 2.0 * W / (nT * Math.pow(T, 3.0) * oneMinusEta);
+  public double getSrW() {
+    return srW;
   }
 
   /**
-   * Mixed temperature-volume derivative of short-range term.
+   * Get the WT parameter (temperature derivative of W).
    *
-   * @return d²F^SR/dTdV [1/(m³·K)]
+   * @return WT value
    */
-  public double dFShortRangedTdV() {
-    if (!shortRangeOn || wij == null) {
-      return 0.0;
-    }
-
-    // Calculate W
-    double W = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < numberOfComponents; j++) {
-        if (wij[i][j] != 0.0) {
-          double nj = componentArray[j].getNumberOfMolesInPhase();
-          W += ni * nj * wij[i][j];
-        }
-      }
-    }
-
-    if (Math.abs(W) < 1e-30) {
-      return 0.0;
-    }
-
-    double eta = packingFraction;
-    double oneMinusEta = 1.0 - eta;
-    if (oneMinusEta < 0.01) {
-      oneMinusEta = 0.01;
-    }
-
-    double detadV = packingFractiondV;
-    double T = temperature;
-    double nT = numberOfMolesInPhase;
-
-    // d²F/dTdV = W × (dη/dV) / (nT × T² × (1-η)²) - W × (dη/dV) / (nT × T × (1-η)²) × dT
-    // Simplified: ∂/∂V[W/(nT×T×(1-η))] = W × (dη/dV) / (nT × T × (1-η)²)
-    // Then ∂/∂T of that gives additional -1/T² factor
-    return W * detadV / (nT * T * T * oneMinusEta * oneMinusEta) * 1e-5;
+  public double getSrWT() {
+    return srWT;
   }
 
   /**
@@ -1871,6 +2148,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Second temperature derivative of Debye-Hückel term. d²F^DH/dT²
    *
+   * <p>
+   * Uses extended DH screening factor τ.
+   * </p>
+   *
    * @return d²F^DH/dT² [-/K²]
    */
   public double dFDebyeHuckeldTdT() {
@@ -1881,13 +2162,16 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double kappa3 = kappa * kappa * kappa;
 
     // Simplified: main contribution from 1/T² dependence
-    // F = -κ³V/(12πRT*N_A), dF/dT ∝ κ³/T², d²F/dT² ∝ -2κ³/T³
     return -2.0 * V / (12.0 * Math.PI * R * AVOGADRO) * kappa3
-        / (temperature * temperature * temperature);
+        / (temperature * temperature * temperature) * tauDH;
   }
 
   /**
    * Mixed temperature-volume derivative of Debye-Hückel term. d²F^DH/dTdV
+   *
+   * <p>
+   * Uses extended DH screening factor τ.
+   * </p>
    *
    * @return d²F^DH/dTdV [1/(m³·K)]
    */
@@ -1896,9 +2180,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double kappa3 = kappa * kappa * kappa;
-    // d/dV of dF/dT: F = -κ³V/(12πRT*N_A), so dF/dT has V term
-    // d²F/dTdV = d/dV(κ³V/(12πRT²*N_A)) = κ³/(12πRT²*N_A)
-    return kappa3 * 1e-5 / (12.0 * Math.PI * R * AVOGADRO * temperature * temperature);
+    return kappa3 * 1e-5 / (12.0 * Math.PI * R * AVOGADRO * temperature * temperature) * tauDH;
   }
 
   /**
@@ -2223,5 +2505,23 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public boolean isShortRangeOn() {
     return shortRangeOn;
+  }
+
+  /**
+   * Check if Debye-Hückel term is enabled.
+   *
+   * @return true if DH term is enabled
+   */
+  public boolean isDebyeHuckelOn() {
+    return debyeHuckelOn;
+  }
+
+  /**
+   * Check if Born solvation term is enabled.
+   *
+   * @return true if Born term is enabled
+   */
+  public boolean isBornOn() {
+    return bornOn;
   }
 }

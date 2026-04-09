@@ -21,6 +21,7 @@ import java.util.UUID;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
+import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
@@ -75,6 +76,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Flag indicating if the equipment is in a failed state.
    */
   private boolean isFailed = false;
+
+  /**
+   * IEC 81346 reference designation for this equipment. Contains the function, product, and
+   * location aspects per IEC 81346 standard.
+   */
+  private ReferenceDesignation referenceDesignation = new ReferenceDesignation();
 
   /**
    * <p>
@@ -574,6 +581,19 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.isFailed = false;
     this.isActive = true;
     this.capacityAnalysisEnabled = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReferenceDesignation getReferenceDesignation() {
+    return referenceDesignation;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceDesignation(ReferenceDesignation referenceDesignation) {
+    this.referenceDesignation =
+        referenceDesignation != null ? referenceDesignation : new ReferenceDesignation();
   }
 
   /**

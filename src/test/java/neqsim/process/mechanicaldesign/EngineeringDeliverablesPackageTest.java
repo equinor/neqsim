@@ -164,7 +164,7 @@ class EngineeringDeliverablesPackageTest {
     }
 
     @Test
-    @DisplayName("Class A should generate all 7 deliverables")
+    @DisplayName("Class A should generate all 8 deliverables")
     void classAShouldGenerateAll() {
       EngineeringDeliverablesPackage pkg =
           new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
@@ -172,12 +172,12 @@ class EngineeringDeliverablesPackageTest {
 
       assertTrue(pkg.isGenerated());
       assertTrue(pkg.isComplete());
-      assertEquals(7, pkg.getSuccessCount());
+      assertEquals(8, pkg.getSuccessCount());
       assertTrue(pkg.getFailedDeliverables().isEmpty());
     }
 
     @Test
-    @DisplayName("Class B should generate 4 deliverables")
+    @DisplayName("Class B should generate 5 deliverables")
     void classBShouldGenerateThree() {
       EngineeringDeliverablesPackage pkg =
           new EngineeringDeliverablesPackage(process, StudyClass.CLASS_B);
@@ -185,7 +185,7 @@ class EngineeringDeliverablesPackageTest {
 
       assertTrue(pkg.isGenerated());
       assertTrue(pkg.isComplete());
-      assertEquals(4, pkg.getSuccessCount());
+      assertEquals(5, pkg.getSuccessCount());
     }
 
     @Test
@@ -307,7 +307,7 @@ class EngineeringDeliverablesPackageTest {
 
       Map<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> statusMap =
           pkg.getStatusMap();
-      assertEquals(7, statusMap.size());
+      assertEquals(8, statusMap.size());
       for (EngineeringDeliverablesPackage.DeliverableStatus status : statusMap.values()) {
         assertTrue(status.isSuccess());
         assertTrue(status.getDurationMs() >= 0);
@@ -404,7 +404,7 @@ class EngineeringDeliverablesPackageTest {
     }
 
     @Test
-    @DisplayName("Class B orchestrator should produce 4 deliverables")
+    @DisplayName("Class B orchestrator should produce 5 deliverables")
     void classBOrchestratorShouldProduceThree() {
       FieldDevelopmentDesignOrchestrator orch =
           new FieldDevelopmentDesignOrchestrator(process, "CLASSB-001");
@@ -413,7 +413,7 @@ class EngineeringDeliverablesPackageTest {
 
       EngineeringDeliverablesPackage pkg = orch.getEngineeringDeliverables();
       assertNotNull(pkg);
-      assertEquals(4, pkg.getSuccessCount());
+      assertEquals(5, pkg.getSuccessCount());
     }
   }
 }

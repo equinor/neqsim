@@ -20,6 +20,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrLeeKesler;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
@@ -47,6 +48,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double a = 1;
 
   public double b = 1;
+
+  /** Per-component OmegaA override. NaN means use the EOS default. */
+  protected double omegaAOverride = Double.NaN;
 
   public double m = 0;
 
@@ -93,10 +97,11 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * Constructor for ComponentEos.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component
+   *                     array.
    */
   public ComponentEos(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -108,11 +113,11 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
   public ComponentEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -219,6 +224,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
     } else if (i == 20) {
       setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
+    } else if (i == 21) {
+      setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
     } else {
       logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
@@ -329,9 +336,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient =
-        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-            - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
+    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+        - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
     fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -389,7 +395,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   // Method added by Neeraj
   /*
-   * public double getdfugdn(int i){ double[] dfugdnv = this.logfugcoefdN(phase); //return 0.0001;
+   * public double getdfugdn(int i){ double[] dfugdnv = this.logfugcoefdN(phase);
+   * //return 0.0001;
    * return dfugdnv[i]; }
    */
   // Added By Neeraj
@@ -513,7 +520,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   /** {@inheritDoc} */
   @Override
-  public void setdBdTdT(double val) {}
+  public void setdBdTdT(double val) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -584,7 +592,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double[] getDeltaEosParameters() {
-    double[] param = {delta1, delta2};
+    double[] param = { delta1, delta2 };
     return param;
   }
 
@@ -592,6 +600,39 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public void seta(double a) {
     this.a = a;
+  }
+
+  /**
+   * Override the OmegaA parameter used in {@link #calca()}. Once set, every call
+   * to
+   * {@code calca()} (including those triggered by {@code init()}) will use this
+   * value instead of
+   * the EOS class default. Use {@code Double.NaN} to revert to the EOS default.
+   *
+   * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
+   */
+  public void setOmegaA(double omegaA) {
+    this.omegaAOverride = omegaA;
+  }
+
+  /**
+   * Returns true when a per-component OmegaA override has been set via
+   * {@link #setOmegaA}.
+   *
+   * @return true if an OmegaA override is active
+   */
+  public boolean hasOmegaAOverride() {
+    return !Double.isNaN(omegaAOverride);
+  }
+
+  /**
+   * Returns the active OmegaA value, or {@code Double.NaN} when no override has
+   * been set.
+   *
+   * @return active OmegaA override, or NaN
+   */
+  public double getOmegaAOverride() {
+    return omegaAOverride;
   }
 
   /** {@inheritDoc} */
@@ -613,12 +654,16 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double getSurfaceTenisionInfluenceParameter(double temperature) {
     /*
      * double a_inf = -3.471 + 4.927 * getCriticalCompressibilityFactor() + 13.085 *
-     * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 2.067 * getAcentricFactor() + 1.891 *
+     * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 2.067 *
+     * getAcentricFactor() + 1.891 *
      * Math.pow(getAcentricFactor(), 2.0); double b_inf = -1.690 + 2.311 *
-     * getCriticalCompressibilityFactor() + 5.644 * Math.pow(getCriticalCompressibilityFactor(),
-     * 2.0) - 1.027 * getAcentricFactor() + 1.424 * Math.pow(getAcentricFactor(), 2.0); double c_inf
+     * getCriticalCompressibilityFactor() + 5.644 *
+     * Math.pow(getCriticalCompressibilityFactor(),
+     * 2.0) - 1.027 * getAcentricFactor() + 1.424 * Math.pow(getAcentricFactor(),
+     * 2.0); double c_inf
      * = -0.318 + 0.299 * getCriticalCompressibilityFactor() + 1.710 *
-     * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 0.174 * getAcentricFactor() + 0.157 *
+     * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 0.174 *
+     * getAcentricFactor() + 0.157 *
      * Math.pow(getAcentricFactor(), 2.0);
      */
 
@@ -725,7 +770,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * getdUdndnSV.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase     a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param compNumb1 a int
    * @param compNumb2 a int
    * @return a double
@@ -743,7 +788,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * Getter for the field <code>attractiveParameter</code>.
    * </p>
    *
-   * @return a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
+   * @return a
+   *         {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface}
+   *         object
    */
   public AttractiveTermInterface getAttractiveParameter() {
     return attractiveParameter;
@@ -755,7 +802,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * </p>
    *
    * @param attractiveParameter a
-   *        {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
+   *                            {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface}
+   *                            object
    */
   public void setAttractiveParameter(AttractiveTermInterface attractiveParameter) {
     this.attractiveParameter = attractiveParameter;

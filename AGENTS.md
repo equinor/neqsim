@@ -54,6 +54,11 @@ workspace root.
    - Fill `step1_scope_and_research/task_spec.md` (standards, methods, deliverables, acceptance criteria)
    - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
    - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
+   - **Extract figures from PDFs** using `devtools/pdf_to_figures.py`:
+     ```bash
+     python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+     ```
+     Then view extracted pages with `view_image` to read diagrams, P&IDs, charts, and tables.
    - Summarise each document's key contributions in `notes.md` under "Literature & Reference Documents"
 
    **Step 1.5 — Deep Analysis & Solution Design (MANDATORY for Standard/Comprehensive)**
@@ -100,11 +105,9 @@ workspace root.
 
    **Step 3 — Report**
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
-   - Run `python step3_report/generate_report.py` to produce Word + HTML
-   - Add `--paper` to also generate a scientific paper: `Paper.docx` + `Paper.html`
-   - Use `--paper-only` to generate only the paper (skips technical report)
-   - For the paper, configure `PAPER_TITLE`, `PAPER_AUTHORS`, `PAPER_KEYWORDS`,
-     and `PAPER_SECTIONS` in `generate_report.py`
+   - Run `python step3_report/generate_report.py` to produce a professional
+     engineering report (Report.docx + Report.html)
+   - Scientific papers (`--paper`) are only generated when explicitly requested
    - **Important:** The template now has built-in styled formatting for
      Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections
      (color-coded risk badges, P10/P50/P90 tables, tornado tables, benchmark
@@ -378,6 +381,103 @@ and measurement devices. Query all elements at once:
 List<ProcessElementInterface> all = process.getAllElements();
 ```
 
+### Automation API (PREFERRED for agents)
+
+String-addressable variable access without navigating Java internals.
+Use `ProcessAutomation` for reading/writing simulation variables:
+
+```java
+// Get the automation facade (convenience method on ProcessSystem)
+ProcessAutomation auto = process.getAutomation();
+
+// Discover units and variables
+List<String> units = auto.getUnitList();                    // ["Feed Gas", "HP Sep", ...]
+List<SimulationVariable> vars = auto.getVariableList("HP Sep"); // all variables with type/unit/description
+String eqType = auto.getEquipmentType("HP Sep");            // "Separator"
+
+// Read values with unit conversion
+double t = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C");
+double p = auto.getVariableValue("HP Sep.pressure", "bara");
+double flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr");
+
+// Write inputs (only INPUT-type variables) and re-run
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
+process.run();  // propagate changes
+```
+
+For multi-area `ProcessModel`:
+
+```java
+ProcessAutomation plantAuto = plant.getAutomation();
+List<String> areas = plantAuto.getAreaList();  // ["Separation", "Compression"]
+// Area-qualified addresses
+double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bara");
+plant.run();
+```
+
+### Self-healing automation (PREFERRED for agents)
+
+The automation API includes self-diagnosis and auto-correction. When an address
+is wrong, use the safe accessors for automatic fuzzy matching and recovery:
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+// Safe get — returns JSON with value on success, or diagnostics on failure
+String result = auto.getVariableValueSafe("hp separator.temperature", "C");
+// Returns: {"status":"auto_corrected","originalAddress":"hp separator.temperature",
+//           "correctedAddress":"HP Sep.temperature","value":25.0,"unit":"C",...}
+
+// Safe set — validates physical bounds + fuzzy address matching
+String setResult = auto.setVariableValueSafe("Compressor.outletPressure", 150.0, "bara");
+
+// Access diagnostics for learning and insights
+AutomationDiagnostics diag = auto.getDiagnostics();
+String report = diag.getLearningReport();  // operation stats, error patterns, corrections
+```
+
+Key capabilities:
+- **Fuzzy name matching** — finds closest unit/property when exact match fails
+- **Auto-correction** — fixes case, whitespace, partial names, typos (edit distance ≤ 2)
+- **Learned corrections** — remembers past corrections for instant reuse
+- **Physical bounds** — validates temperature, pressure, efficiency ranges before setting
+- **Operation tracking** — tracks success/failure rates and generates recommendations
+
+### Lifecycle state: save, restore, compare
+
+Portable, Git-diffable JSON snapshots for reproducibility and version tracking:
+
+```java
+// Save a ProcessSystem snapshot
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing");
+state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");                    // human-readable JSON
+state.saveToCompressedFile("model_v1.json.gz");       // smaller for archival
+
+// Load and validate
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
+ProcessSystemState.ValidationResult result = loaded.validate();
+assert result.isValid();
+
+// Multi-area ProcessModel state
+ProcessModelState modelState = ProcessModelState.fromProcessModel(plant);
+modelState.setVersion("1.0.0");
+modelState.saveToFile("plant_v1.json");
+
+// Version comparison (design reviews, change tracking)
+ProcessModelState v2 = ProcessModelState.fromProcessModel(plant);
+v2.setVersion("2.0");
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+assert diff.hasChanges();
+// diff.getModifiedParameters(), diff.getAddedEquipment(), diff.getRemovedEquipment()
+
+// Compressed bytes for network/API transfer (no disk I/O)
+byte[] bytes = modelState.toCompressedBytes();
+ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
+```
+
 ### Python (Jupyter) fluid
 
 ```python
@@ -385,6 +485,65 @@ from neqsim import jneqsim
 fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)
 fluid.addComponent("methane", 0.85)
 fluid.setMixingRule("classic")
+```
+
+### Headless execution (no kernel restarts)
+
+For long-running or fragile simulations, use the neqsim_runner to run each job
+in an isolated subprocess with automatic retry:
+
+```python
+from neqsim_runner.agent_bridge import AgentBridge
+
+bridge = AgentBridge(task_dir="task_solve/2026-04-08_my_task")
+
+# Submit a notebook (default: mode="execute" produces executed .ipynb with outputs)
+job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", max_retries=3)
+
+# Or use mode="script" to convert to .py (lighter, no .ipynb output)
+job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", mode="script")
+
+# Or submit a standalone script
+job_id = bridge.submit_script("run_sim.py", args={"pressure": 60.0})
+
+# Or submit a parametric sweep (each case = own subprocess + JVM)
+cases = [{"pressure": p} for p in [30, 60, 90, 120]]
+job_ids = bridge.submit_parametric_sweep("run_case.py", cases)
+
+# Run all (supervisor handles retry/recovery)
+bridge.run_all()
+
+# Read results
+results = bridge.get_results(job_id)
+bridge.copy_results_to_task(job_id)
+
+# Get the executed notebook (with cell outputs, plots, etc.)
+executed_nb = bridge.get_executed_notebook(job_id)
+```
+
+CLI equivalent: `python -m neqsim_runner go my_sim.py --args '{"pressure": 60}'`
+
+### Task progress checkpoints (survives context exhaustion)
+
+Long-running tasks often exhaust the agent's context window. The progress
+tracker writes a `progress.json` to the task folder after each milestone.
+A fresh agent reads it and resumes where the previous one left off:
+
+```python
+from neqsim_runner.progress import TaskProgress
+
+# Start or resume
+progress = TaskProgress("task_solve/2026-04-08_my_task")
+if progress.is_resuming():
+    print(progress.resume_summary())  # prints what's done + next action
+
+# Checkpoint after each milestone
+progress.complete_milestone("step1_research_done",
+    summary="Research complete. SRK EOS, 3-stage compression.",
+    outputs=["step1_scope_and_research/task_spec.md"],
+    decisions={"eos": "SRK", "scale": "Standard"})
+progress.store_context("feed_composition", {"methane": 0.85, "ethane": 0.07})
+progress.set_next_action("Create notebook: 01_compression.ipynb")
 ```
 
 ### Build process from JSON
@@ -532,7 +691,9 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
 | `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
 | `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
-| `devtools/unisim_reader.py` | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ op types, port-specific forward refs, auto-recycle wiring. Verified with TUTOR1.usc (11/13 streams match). |
+| `src/main/java/neqsim/process/automation/` | ProcessAutomation (string-addressable variable API), AutomationDiagnostics (fuzzy matching, auto-correction, physical validation, learning), SimulationVariable (INPUT/OUTPUT descriptor) |
+| `src/main/java/neqsim/process/processmodel/lifecycle/` | ProcessSystemState, ProcessModelState — JSON lifecycle snapshots, version comparison, compressed transfer |
+| `devtools/unisim_reader.py` | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ op types, port-specific forward refs, auto-recycle wiring. **Default E300 fluid export**: `read(export_e300=True)` extracts Tc, Pc, omega, MW, BIPs from COM and writes E300 files for all fluid packages. `build_and_run()` auto-loads E300 fluids via `EclipseFluidReadWrite.read()` and `ProcessSystem.fromJsonAndRun(json, fluid)`. Verified with TUTOR1.usc (11/13 streams match). |
 | `devtools/test_unisim_outputs.py` | 14 tests for all UniSim converter output modes (no COM needed — synthetic models) |
 | `examples/notebooks/tutor1_gas_processing.ipynb` | End-to-end UniSim→NeqSim verification: TUTOR1 gas processing (7 comp, PR EOS, 13 ops). Reference for conversion workflows. |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
@@ -543,6 +704,8 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `src/main/java/neqsim/process/measurementdevice/` | Transmitters (PT, TT, LT, FT), AlarmConfig, ImpurityMonitor |
 | `examples/notebooks/` | Jupyter notebook examples |
 | `devtools/new_task.py` | Task-solving script |
+| `devtools/neqsim_runner/` | Supervised simulation runner — isolated subprocess per job, auto-retry, checkpoint/resume, SQLite state. Use `AgentBridge` for task-solving integration. |
+| `devtools/pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`. |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Past solved tasks (search before starting) |
@@ -562,6 +725,8 @@ ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor
 | `.github/agents/reaction.engineering.agent.md` | Reaction engineering systems design |
 | `.github/agents/control.system.agent.md` | Control system and instrumentation design |
 | `.github/agents/emissions.environmental.agent.md` | Emissions calculation and environmental compliance |
+| `.github/agents/ccs.hydrogen.agent.md` | CCS value chain and hydrogen systems (CO2 transport, injection, H2 blending) |
+| `.github/agents/technical.reader.agent.md` | Read technical documents (PDF, Word, Excel) and engineering images (P&IDs, mechanical drawings, vendor datasheets, performance maps, phase envelopes) — extract equipment data, compositions, requirements, stream tables, piping topology, dimensions, and operating conditions |
 
 ## Skills Reference
 
@@ -576,7 +741,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-input-validation` | Pre-simulation checks (T, P, composition, component names) |
 | `neqsim-regression-baselines` | Baseline management for preventing accuracy drift |
 | `neqsim-standards-lookup` | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking in results.json |
-| `neqsim-agent-handoff` | Structured schemas for multi-agent result passing |
+| `neqsim-agent-handoff` | Structured schemas for multi-agent result passing (includes lifecycle state handoff) |
 | `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
 | `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |
 | `neqsim-field-development` | Field development workflows, concept selection, lifecycle management |
@@ -584,12 +749,16 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost, tieback analysis |
 | `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
 | `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
-| `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, and HeatExchanger UA tuning notes. |
+| `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. **Default E300 fluid export** for lossless transfer of critical properties (Tc, Pc, omega, MW, BIPs) including hypothetical/pseudo components. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, HeatExchanger UA tuning notes, separator 2-phase/3-phase auto-detection (flashtank with WaterProduct promoted to ThreePhaseSeparator), orientation detection (vertical → GasScrubber, horizontal → Separator), and entrainment extraction (liquid carryover, gas carry-under, water-in-oil, oil-in-water). |
 | `neqsim-eos-regression` | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization, scipy optimization |
 | `neqsim-reaction-engineering` | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed |
 | `neqsim-dynamic-simulation` | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization |
 | `neqsim-distillation-design` | Distillation column design — solver selection, feed tray rules, convergence, internals sizing |
 | `neqsim-electrolyte-systems` | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection |
+| `neqsim-flow-assurance` | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing |
+| `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
+| `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
+| `neqsim-technical-document-reading` | Read technical documents and engineering images — PDF/Word/Excel extraction, P&ID topology, vendor datasheet parsing, image analysis with view_image, performance map digitization, figure discussion generation |
 
 ## API Verification (Mandatory)
 

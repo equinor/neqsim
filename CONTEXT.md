@@ -58,6 +58,23 @@ src/main/java/neqsim/
                          AlarmTripScheduleGenerator, SparePartsInventory
   process/processmodel/  ProcessSystem — the flowsheet orchestrator
                          ProcessConnection — typed connection metadata (MATERIAL/ENERGY/SIGNAL)
+    lifecycle/           ProcessSystemState, ProcessModelState — JSON lifecycle
+                         snapshots with version comparison (ModelDiff), compressed
+                         bytes for network transfer, Git-diffable state
+  process/automation/    ProcessAutomation — stable string-addressable API for
+                         reading/writing simulation variables without Java knowledge.
+                         SimulationVariable — INPUT/OUTPUT typed descriptor.
+                         AutomationDiagnostics — self-healing with fuzzy name matching,
+                         auto-correction, physical bounds validation, operation tracking.
+                         Safe accessors: getVariableValueSafe(), setVariableValueSafe()
+                         return diagnostic JSON with suggestions instead of throwing.
+                         Addresses: "Unit.property", "Area::Unit.stream.property",
+                         or IEC 81346 reference designations ("=A1-B1+P1.property")
+  process/equipment/iec81346/  IEC 81346 reference designation support:
+                         IEC81346LetterCode — enum mapping equipment to IEC 81346-2 codes
+                         ReferenceDesignation — data class (function/product/location aspects)
+                         ReferenceDesignationGenerator — auto-assigns designations to a
+                         ProcessSystem or ProcessModel; exports JSON reports
     dexpi/               DEXPI P&ID import/export/round-trip, topology resolver,
                          equipment factory, simulation builder, cycle detection, column support
   pvtsimulation/         CME, CVD, DL, saturation, GOR, swelling, MMP
@@ -152,6 +169,20 @@ System.out.println("Compressor power: " + comp.getPower("kW") + " kW");
 // Stream introspection (works on any equipment, no casting needed)
 List<StreamInterface> inlets = sep.getInletStreams();   // [feed]
 List<StreamInterface> outlets = sep.getOutletStreams();  // [gasOut, liquidOut]
+
+// --- Automation API (PREFERRED for agents — no Java class navigation needed)
+ProcessAutomation auto = process.getAutomation();
+List<String> units = auto.getUnitList();               // ["feed", "HP Sep", "Compressor"]
+auto.getVariableList("HP Sep");                         // SimulationVariable list with INPUT/OUTPUT types
+double t = auto.getVariableValue("HP Sep.gasOutStream.temperature", "C");
+auto.setVariableValue("Compressor.outletPressure", 120.0, "bara");
+process.run();  // Re-run after changing inputs
+
+// --- Lifecycle state: save/restore/compare
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");           // Git-diffable JSON
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
 
 // Named controllers (multiple per equipment)
 valve.addController("LC-100", levelController);
@@ -284,6 +315,8 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | Heat integration / pinch analysis | `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` (PinchAnalysis, HeatStream) |
 | Power generation (combined cycle) | `src/main/java/neqsim/process/equipment/powergeneration/` (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
 | Agentic QA & validation | `src/main/java/neqsim/util/agentic/` (TaskResultValidator, SimulationQualityGate, AgentSession) |
+| Automation API (string-addressed variables) | `src/main/java/neqsim/process/automation/` (ProcessAutomation, SimulationVariable) |
+| Lifecycle state / save-restore | `src/main/java/neqsim/process/processmodel/lifecycle/` (ProcessSystemState, ProcessModelState) |
 | Component database | `src/main/resources/` |
 
 ## Key Constraints

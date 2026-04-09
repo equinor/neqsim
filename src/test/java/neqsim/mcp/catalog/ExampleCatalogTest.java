@@ -95,10 +95,13 @@ class ExampleCatalogTest {
   void testGetCategories() {
     List<String> categories = ExampleCatalog.getCategories();
 
-    assertEquals(3, categories.size());
+    assertEquals(6, categories.size());
     assertTrue(categories.contains("flash"));
     assertTrue(categories.contains("process"));
     assertTrue(categories.contains("validation"));
+    assertTrue(categories.contains("batch"));
+    assertTrue(categories.contains("property-table"));
+    assertTrue(categories.contains("phase-envelope"));
   }
 
   @Test
@@ -135,5 +138,46 @@ class ExampleCatalogTest {
     assertTrue(root.has("flash"));
     assertTrue(root.has("process"));
     assertTrue(root.has("validation"));
+    assertTrue(root.has("batch"));
+    assertTrue(root.has("property-table"));
+    assertTrue(root.has("phase-envelope"));
+  }
+
+  @Test
+  void testBatchExamples() {
+    List<String> names = ExampleCatalog.getExampleNames("batch");
+    assertEquals(2, names.size());
+    assertTrue(names.contains("temperature-sweep"));
+    assertTrue(names.contains("pressure-sweep"));
+
+    String example = ExampleCatalog.getExample("batch", "temperature-sweep");
+    assertNotNull(example);
+    JsonObject root = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(root.has("cases"));
+    assertTrue(root.has("components"));
+  }
+
+  @Test
+  void testPropertyTableExamples() {
+    List<String> names = ExampleCatalog.getExampleNames("property-table");
+    assertEquals(2, names.size());
+
+    String example = ExampleCatalog.getExample("property-table", "temperature-sweep");
+    assertNotNull(example);
+    JsonObject root = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(root.has("sweep"));
+    assertEquals("temperature", root.get("sweep").getAsString());
+  }
+
+  @Test
+  void testPhaseEnvelopeExamples() {
+    List<String> names = ExampleCatalog.getExampleNames("phase-envelope");
+    assertEquals(1, names.size());
+    assertTrue(names.contains("natural-gas"));
+
+    String example = ExampleCatalog.getExample("phase-envelope", "natural-gas");
+    assertNotNull(example);
+    JsonObject root = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(root.has("components"));
   }
 }

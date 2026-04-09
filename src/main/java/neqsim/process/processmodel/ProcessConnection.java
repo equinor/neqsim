@@ -31,6 +31,8 @@ public class ProcessConnection implements Serializable {
   private final String targetEquipment;
   private final String targetPort;
   private final ConnectionType type;
+  private String sourceReferenceDesignation;
+  private String targetReferenceDesignation;
 
   /**
    * Creates a new process connection.
@@ -103,6 +105,42 @@ public class ProcessConnection implements Serializable {
    */
   public ConnectionType getType() {
     return type;
+  }
+
+  /**
+   * Returns the IEC 81346 reference designation of the source equipment, if set.
+   *
+   * @return source reference designation string, or {@code null}
+   */
+  public String getSourceReferenceDesignation() {
+    return sourceReferenceDesignation;
+  }
+
+  /**
+   * Sets the IEC 81346 reference designation of the source equipment.
+   *
+   * @param sourceReferenceDesignation source ref des string (e.g. "=A1.B1")
+   */
+  public void setSourceReferenceDesignation(String sourceReferenceDesignation) {
+    this.sourceReferenceDesignation = sourceReferenceDesignation;
+  }
+
+  /**
+   * Returns the IEC 81346 reference designation of the target equipment, if set.
+   *
+   * @return target reference designation string, or {@code null}
+   */
+  public String getTargetReferenceDesignation() {
+    return targetReferenceDesignation;
+  }
+
+  /**
+   * Sets the IEC 81346 reference designation of the target equipment.
+   *
+   * @param targetReferenceDesignation target ref des string (e.g. "=A1.K1")
+   */
+  public void setTargetReferenceDesignation(String targetReferenceDesignation) {
+    this.targetReferenceDesignation = targetReferenceDesignation;
   }
 
   /** {@inheritDoc} */

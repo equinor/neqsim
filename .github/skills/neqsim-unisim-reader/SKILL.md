@@ -166,6 +166,215 @@ app.Quit()
 - Property values accessed via `.GetValue(unit_string)`
 - Composition accessed via `.GetValues()` returning a sequence
 
+### 1.1 Extracting Binary Interaction Parameters (BIPs / kij)
+
+UniSim stores the full BIP (kij) matrix on the PropertyPackage object. The
+correct COM access pattern is:
+
+```python
+fp = case.Flowsheet.FluidPackage
+pp = fp.PropertyPackage
+
+kij_obj = pp.Kij          # Returns CDispatch (RealFlexVariable)
+raw = kij_obj.Values      # Returns tuple-of-tuples (n×n matrix)
+
+# IMPORTANT: The .Values property returns the full symmetric matrix.
+# Diagonal values are -32767.0 (sentinel for "self-interaction").
+# Replace with 0.0 when parsing.
+n = fp.Components.Count
+comp_names = [fp.Components.Item(i).Name for i in range(n)]
+
+bic = []
+for i in range(n):
+    row = []
+    for j in range(n):
+        val = float(raw[i][j])
+        if abs(val + 32767.0) < 1.0:  # diagonal sentinel
+            val = 0.0
+        row.append(val)
+    bic.append(row)
+```
+
+**Key discoveries:**
+- `pp.Kij` returns a `CDispatch` (UniSim RealFlexVariable), NOT a Python-iterable
+- `kij_obj.Values` is the correct access pattern — returns tuple-of-tuples
+- `kij_obj.GetValues()` fails with "Invalid number of parameters"
+- `kij_obj.__call__(i,j)` fails with "Does not support a collection"
+- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation-based
+  BIPs are stored internally, not as user-defined parameters)
+- The matrix is symmetric: `kij[i][j] == kij[j][i]`
+- For PR-LK, BIPs are generated from the Lee-Kesler correlation — they are
+  non-zero even if never explicitly tuned by the user
+
+**Common BIP patterns (PR-LK, hydrocarbon system):**
+- H2O–HC: +0.48 to +0.50 (strong positive interaction)
+- H2O–N2: -2.24 (strong negative)
+- H2O–CO2: -0.56
+- CO2–C1: +0.105
+- N2–C1: +0.025
+- HC–HC (light–heavy): small values, typically < 0.01
+
+### 1.2 Extracting Component Thermodynamic Properties
+
+For pseudo-components and library components, extract critical properties
+and other thermodynamic data:
+
+```python
+fp = case.Flowsheet.FluidPackage
+pp = fp.PropertyPackage
+
+n = fp.Components.Count
+for i in range(n):
+    comp = fp.Components.Item(i)
+    name = comp.Name
+    mw = comp.MolecularWeight.GetValue()
+    tc = comp.CriticalTemperature.GetValue("C")   # °C
+    pc = comp.CriticalPressure.GetValue("bar")     # bar
+    nbp = comp.NormalBoilingPt.GetValue("C")       # °C
+    vc = comp.CriticalVolume.GetValue("m3/kgmole") # m3/kmol
+    # Acentric factor — not directly available via .AcentricFactor
+    # Use Edmister correlation: w = (3/7) * log10(Pc/1.01325) / (Tc/Tbp - 1) - 1
+```
+
+**Notes:**
+- Acentric factor is NOT directly accessible via COM for all property packages.
+  `comp.AcentricFactor` may not exist. Use the Edmister correlation as fallback.
+- Parachor can sometimes be read via `pp.Parachor.Values` (same pattern as Kij).
+- Volume shift: `pp.VolumShift.Values` (note the UniSim spelling: "VolumShift",
+  not "VolumeShift").
+
+### 1.3 Generating E300 Fluid Files from UniSim Data
+
+To create an Eclipse E300-format fluid file from UniSim-extracted properties
+for loading into NeqSim via `EclipseFluidReadWrite.read()`:
+
+**Required E300 sections** (NeqSim reader will crash without these):
+- `CNAMES` — component names
+- `TCRIT` — critical temperatures (K)
+- `PCRIT` — critical pressures (atm)
+- `ACF` — acentric factors
+- `MW` — molecular weights (g/mol)
+- `TBOIL` — normal boiling points (K)
+- `VCRIT` — critical volumes (m3/kg-mol)
+- `PARACHOR` — parachor values (if unknown: `4.0 * MW^0.77`)
+- `SSHIFT` — volume shift parameters (can be all zeros)
+- `BIC` — binary interaction coefficients (lower triangular)
+- `ZI` — mole fractions
+
+**Optional E300 sections** (NeqSim supports these):
+- `BICS` — volume-corrected BICs at surface conditions (parsed but same format as BIC)
+- `OMEGAA` — per-component OmegaA override values (one value per line + `/` terminator)
+- `OMEGAB` — per-component OmegaB override values (same format)
+- `SSHIFTS` — volume shift at surface conditions (same format as SSHIFT)
+- `PEDERSEN` — keyword (no values) → activates Pedersen viscosity correlation
+
+**EOS Selection via E300:**
+- `EOS\nSRK /` → `SystemSrkEos`
+- `EOS\nPR /\nPRCORR` → `SystemPrEos1978` (PR1978 correction)
+- `EOS\nPR /\nPRLKCORR` → **`SystemPrLeeKeslerEos`** (PR-LK, PR76 alpha for all ω)
+- `EOS\nPR /` → `SystemPrEos` (base PR)
+
+**CRITICAL**: If the BIC section is omitted, NeqSim's `EclipseFluidReadWrite`
+will crash with a NullPointerException. Always include BIC, even if all zeros.
+
+**Loading with a forced EOS (ignores EOS keyword in file):**
+```python
+from neqsim import jneqsim
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+SystemPrLeeKeslerEos = jneqsim.thermo.system.SystemPrLeeKeslerEos
+
+# Force PR-LK regardless of EOS in file
+fluid = SystemPrLeeKeslerEos(288.15, 1.01325)
+fluid = EclipseFluidReadWrite.read(e300_path, fluid)
+```
+
+**⚠️ CRITICAL WARNING — Water BIPs and OmegaA:**
+
+When water is present, the water–hydrocarbon BIPs (kij) interact dangerously
+with OmegaA. **NEVER mix BIP conventions with OmegaA modifications:**
+
+- Standard E300 BIPs for water–HC are typically **+0.48 to +0.50**
+- PR-LK correlation BIPs for H2O–N2 are typically **−2.24** (negative!)
+- H2O–CO2 is typically **−0.557**, H2O–H2S is typically **−0.390**
+
+These negative BIPs **intentionally** increase cross-attraction and keep water
+in the liquid phase. If you simultaneously set `OMEGAA` for water to a
+non-standard value (e.g., 0.42748), the phase behavior will be wrong —
+HP Separator vapour fraction can jump from 0.41 to 0.81 (catastrophic).
+
+**Rule**: Only use `OMEGAA` for water together with its matched BIP set.
+Default (no OMEGAA section) is safer unless you have a PVTsim-generated file
+that was specifically fitted with both OMEGAA and BICs together.
+
+**NeqSim E300 component name mapping:**
+| E300 Name | NeqSim Maps To |
+|-----------|---------------|
+| `C1` | `methane` |
+| `C2` | `ethane` |
+| `C3` | `propane` |
+| `iC4` | `i-butane` |
+| `C4` | `n-butane` |
+| `iC5` | `i-pentane` |
+| `C5` | `n-pentane` |
+| `C6` | `n-hexane` |
+| `N2` | `nitrogen` |
+| `CO2` | `CO2` |
+| `H2O` | `water` |
+| All others | TBP pseudo-fraction (via `addTBPfraction()`) |
+
+**Note:** Aromatics (Benzene, Toluene, E-Benzene, m-Xylene, etc.) are NOT in
+NeqSim's E300 recognized name map — they will be treated as TBP pseudo-fractions
+with estimated density.
+
+### E300 Fluid Export (DEFAULT — Recommended Route)
+
+**The E300 export route is the default and preferred method for transferring
+fluid definitions from UniSim to NeqSim.** It preserves all critical properties
+(Tc, Pc, acentric factor, MW, BIPs, volume shifts, parachors) for both standard
+and hypothetical/pseudo components — including C7+ fractions that cannot be
+accurately recreated by component name mapping alone.
+
+When `UniSimReader.read()` is called with `export_e300=True` (the default),
+it extracts critical properties from each component in each fluid package via COM,
+then writes an E300 file per fluid package to the output directory.
+
+**COM properties extracted per component:**
+- `component.CriticalTemperature` → Tc (K)
+- `component.CriticalPressure` → Pc (kPa → bara, divide by 100)
+- `component.AcentricFactor` → omega
+- `component.MolecularWeight` → MW (g/mol)
+- `component.NormalBoilingPoint` → Tboil (K)
+- `component.CriticalVolume` → Vcrit (m³/kgmol)
+
+**BIPs extracted via:** `FluidPackage.PropertyPackage.GetBIP(i, j)` or
+`PropertyPackage.BinaryInteractionParameters` (matrix fallback).
+
+**E300 file format keywords:**
+`METRIC`, `NCOMPS`, `EOS`, `PRCORR`, `RTEMP`, `STCOND`, `CNAMES`, `TCRIT`,
+`PCRIT`, `ACF`, `MW`, `TBOIL`, `VCRIT`, `SSHIFT`, `PARACHOR`, `ZI`, `BIC`
+
+**NeqSim loading:** Use `EclipseFluidReadWrite.read(e300Path)` in Java, or
+via Python: `jneqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(path)`.
+
+**Automatic integration:** When `build_and_run()` detects an E300 file in the
+fluid section, it loads the fluid via `EclipseFluidReadWrite.read()` and passes
+it to `ProcessSystem.fromJsonAndRun(json, fluid)`, bypassing component name
+mapping entirely.
+
+```python
+# Example: Full E300 workflow
+reader = UniSimReader()
+model = reader.read(r'C:\path\to\model.usc')  # auto-exports E300 files
+
+# E300 files now available:
+for fp in model.fluid_packages:
+    print(f"  {fp.name}: {fp.e300_file_path}")
+
+# Convert to NeqSim and run — E300 fluid used automatically
+converter = UniSimToNeqSim(model)
+result = converter.build_and_run()
+```
+
 ---
 
 ## 2. Operation Type Mapping
@@ -178,7 +387,7 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 |-----------------|-------------|-------------|
 | `valveop` | `ThrottlingValve` | Pressure letdown valve, choke |
 | `sep3op` | `ThreePhaseSeparator` | Three-phase separator |
-| `flashtank` | `Separator` | Two-phase flash drum/separator |
+| `flashtank` | `Separator` / `GasScrubber` | Two-phase separator. Auto-promoted to `ThreePhaseSeparator` if `WaterProduct` connected. Vertical orientation → `GasScrubber`. |
 | `mixerop` | `Mixer` | Stream mixer/junction |
 | `teeop` | `Splitter` | Stream splitter/tee |
 | `compressor` | `Compressor` | Gas compressor |
@@ -209,7 +418,7 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 > **Glycol/TEG Contactor Rule**: When an Absorber operation has a name
 > containing "glyc", "teg", or "dehydrat" (case-insensitive), the code
 > generator produces a `ComponentSplitter` instead of a `DistillationColumn`.
-> This removes water from the gas stream using the Oseberg pattern:
+> This removes water from the gas stream using the standard pattern:
 > `setSplitFactors([1.0] * (N-1) + [0.0])` where water is the last component.
 > Stream 0 = dry gas, stream 1 = removed water. Port resolution uses
 > `split0`/`split1` instead of `gasOut`/`liquidOut`. Non-glycol absorbers
@@ -439,7 +648,7 @@ out with a skip reason. This output is ideal for:
 - **Manual editing** — users can modify equipment parameters, add controllers
 - **Learning** — shows the exact NeqSim API mapping for each UniSim operation
 
-**Example for the Grane platform model:** `to_python()` generates ~850 lines
+**Example for a large platform model:** `to_python()` generates ~850 lines
 covering ~180 operations including Splitters, ThreePhaseSeparators, Compressors,
 Coolers, Mixers, ThrottlingValves, and sub-flowsheet equipment.
 
@@ -556,12 +765,27 @@ comparator.print_report(comparisons)
 
 ### Factors Causing Deviations
 
-1. **EOS differences**: UniSim PR-LK vs NeqSim PR — different alpha functions
-2. **BIP (binary interaction parameters)**: UniSim may use tuned BIPs
-3. **Hypothetical components**: Pseudo-component property estimation differs
-4. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim
-5. **Transport properties**: Different correlations for viscosity, thermal conductivity
-6. **Convergence**: Different solver algorithms, tolerance settings
+1. **EOS differences**: UniSim PR-LK uses PR76 alpha (`m = 0.37464 + 1.54226ω − 0.26992ω²`)
+   for ALL components, including those with ω > 0.49 (where PR78 uses a different cubic).
+   **Fix**: Use `SystemPrLeeKeslerEos` in NeqSim — add `PRLKCORR` line after `EOS PR` in E300 file.
+   This typically reduces vapour-fraction bias from −1.6% to < 0.3%.
+2. **BIP (binary interaction parameters)**: UniSim PR-LK correlation BIPs are non-zero even for
+   pure-prediction (never user-tuned). Extract via `pp.Kij.Values` (Section 1.1) and include in
+   E300 BIC section. Without correct BIPs, vapour fraction can differ by 5%+ and oil MW by 100%+.
+3. **Water BIPs**: PR-LK BIPs for H2O–N2 (≈−2.24), H2O–CO2 (≈−0.557), H2O–H2S (≈−0.390)
+   are **negative** (increase cross-attraction → keep water in liquid). If a file has both
+   water BIPs AND OMEGAA overrides, they must be used as a matched set. Using standard BIPs
+   with modified OmegaA causes catastrophic phase split errors.
+4. **Water distribution (multi-stage)**: In UniSim with recycles, water may split across
+   multiple separators. NeqSim forward-flow models capture water mainly at the first stage.
+   +70% water flow error at secondary stages is structurally expected if recycles are missing.
+5. **Hypothetical components**: Pseudo-component property estimation differs between simulators.
+   Critical properties and acentric factor estimation methods vary.
+6. **Compressor efficiency**: UniSim COM sometimes returns `None` for `AdiabaticEfficiency`.
+   Always check extracted efficiency values; default to 75% isentropic with a warning.
+7. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim.
+8. **Transport properties**: Different viscosity/thermal conductivity correlations.
+9. **Convergence**: Different solver algorithms, tolerance settings, and recycle initialization.
 
 ---
 
@@ -694,6 +918,57 @@ When compressor efficiency is not available from the UniSim COM extraction
 This matters because NeqSim defaults to 100% isentropic efficiency,
 which produces unrealistically low outlet temperatures.
 
+#### Separator Phase Detection and Entrainment Extraction
+
+The reader now detects 2-phase vs 3-phase separators by two mechanisms:
+
+1. **UniSim TypeName**: `flashtank` → `Separator` (2-phase),
+   `sep3op` → `ThreePhaseSeparator` (3-phase)
+2. **WaterProduct heuristic**: If a `flashtank` has a `WaterProduct`
+   connected, it is automatically promoted to `ThreePhaseSeparator`
+
+#### Orientation Detection (Vertical → GasScrubber)
+
+The reader extracts separator orientation from UniSim COM attributes
+(`Orientation`, `VesselOrientation`, `SeparatorOrientation`). When a
+`flashtank` is detected as **vertical**, the NeqSim type is mapped to
+`GasScrubber` instead of `Separator`.
+
+| UniSim Type | Orientation | NeqSim Type |
+|---|---|---|
+| `flashtank` | horizontal (default) | `Separator` |
+| `flashtank` | vertical | `GasScrubber` |
+| `flashtank` + WaterProduct | any | `ThreePhaseSeparator` |
+| `sep3op` | any | `ThreePhaseSeparator` |
+
+`GasScrubber` extends `Separator` in NeqSim — it is a vertical vessel
+optimised for removing liquid droplets from a gas stream, with K-value
+sizing constraints and a default 10% liquid level.
+
+**Entrainment** is extracted from UniSim COM and mapped to NeqSim
+`setEntrainment()` calls. The reader tries multiple COM attribute names
+for each entrainment direction:
+
+| Entrainment Direction | UniSim COM Attributes (tried in order) | NeqSim `setEntrainment` Args |
+|---|---|---|
+| Liquid in gas (oil carryover) | `LiqCarryOverMolFrac`, `LiqCarryOverFrac`, `LiquidInVapourFraction`, `LiqInVap`, `LiquidCarryover` | `(val, "volume", "product", "oil", "gas")` |
+| Gas in liquid (gas carry-under) | `VapCarryUnderMolFrac`, `VapCarryUnderFrac`, `VapourInLiquidFraction`, `VapInLiq`, `VapourCarryunder` | `(val, "volume", "product", "gas", "liquid")` |
+| Water in oil (3-phase) | `WaterInOilFraction`, `WaterInOil`, `AqInOil`, `AqueousInOilFraction` | `(val, "volume", "product", "aqueous", "oil")` |
+| Oil in water (3-phase) | `OilInWaterFraction`, `OilInWater`, `OilInAq`, `OilInAqueousFraction` | `(val, "volume", "product", "oil", "aqueous")` |
+
+Generated Python code example:
+```python
+# Three-phase separator with entrainment from UniSim
+mp_sep = ThreePhaseSeparator("20VA102", heater_mp.getOutletStream())
+mp_sep.setEntrainment(0.084, "volume", "product", "aqueous", "oil")  # water in oil
+mp_sep.setEntrainment(0.002, "volume", "product", "oil", "aqueous")  # oil in water
+process.add(mp_sep)
+```
+
+**Note:** If the UniSim COM does not expose entrainment attributes (some
+model versions or configurations may not), the extraction silently skips
+them — the separator will use NeqSim defaults (zero entrainment).
+
 ---
 
 ## 8. Handling Sub-Flowsheets
@@ -712,13 +987,13 @@ In NeqSim, these map to either:
 | Main + 3+ sub-flowsheets | ProcessModule with separate ProcessSystems |
 | Sub-flowsheet has own fluid package | Must be separate ProcessSystem |
 
-### Example: Grane Model Structure
+### Example: Large Platform Model Structure
 
 ```
 Main Flowsheet (146 operations)
-├── Breidablikk (18 operations) — well stream preparation
-├── Grane_LP (16 operations) — low pressure inlet
-├── Grane_HP (6 operations) — high pressure inlet
+├── Satellite (18 operations) — well stream preparation
+├── LP_Inlet (16 operations) — low pressure inlet
+├── HP_Inlet (6 operations) — high pressure inlet
 ├── TPL1 (6 operations) — test separator
 ├── DPC_UNIT (20 operations) — dew point control
 └── HM (41 operations) — heating medium system
@@ -729,11 +1004,11 @@ This would become:
 from neqsim import jneqsim
 ProcessModule = jneqsim.process.processmodel.ProcessModule
 
-module = ProcessModule("Grane")
+module = ProcessModule("Platform")
 module.add(main_process)         # Main separation & compression
-module.add(breidablikk_process)  # Breidablikk wells
-module.add(grane_lp_process)     # LP inlet
-module.add(grane_hp_process)     # HP inlet
+module.add(satellite_process)    # Satellite wells
+module.add(lp_inlet_process)     # LP inlet
+module.add(hp_inlet_process)     # HP inlet
 module.add(dpc_process)          # Dew point control
 # HM (heating medium) typically not modeled in NeqSim
 module.run()
@@ -781,7 +1056,9 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
 
 1. **Windows only** — COM automation requires Windows + UniSim installed
 2. **Hypothetical components** — pseudo-components need manual C7+ characterization
-3. **Tuned BIPs** — UniSim's tuned binary interaction parameters not extracted
+3. **Tuned BIPs** — Extractable via `pp.Kij.Values` (see Section 1.1). The
+   `unisim_reader.py` does not yet automate this, but manual extraction is
+   straightforward. The returned matrix uses -32767.0 as a diagonal sentinel.
 4. **Column internals** — distillation column tray/packing details not fully mapped
 5. **Dynamic models** — only steady-state data extracted
 6. **Control logic** — PID controllers produce TODO comments, not functional controllers

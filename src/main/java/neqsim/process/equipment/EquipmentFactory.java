@@ -31,6 +31,7 @@ import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
 import neqsim.process.equipment.reservoir.ReservoirTPsim;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.separator.GasScrubber;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
@@ -75,6 +76,10 @@ public final class EquipmentFactory {
       case "separator3phase":
       case "threephaseseparator":
         return createEquipment(name, EquipmentEnum.ThreePhaseSeparator);
+      case "gasscrubber":
+      case "gas_scrubber":
+      case "scrubber":
+        return createEquipment(name, EquipmentEnum.GasScrubber);
       case "co₂electrolyzer":
       case "co2electrolyser":
       case "co2electrolyzer":
@@ -136,6 +141,8 @@ public final class EquipmentFactory {
         return new Pump(name);
       case Separator:
         return new Separator(name);
+      case GasScrubber:
+        return new GasScrubber(name);
       case HeatExchanger:
         return new HeatExchanger(name);
       case Mixer:

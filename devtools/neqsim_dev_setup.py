@@ -73,17 +73,24 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     """
     root = Path(project_root) if project_root else _PROJECT_ROOT
 
-    # If JVM is already running, we must restart the kernel to reload classes
+    # If JVM is already running, handle based on recompile flag
     if jpype.isJVMStarted():
         if recompile:
-            print("JVM already running — compiling before restart... ",
+            # Must restart to reload freshly compiled classes
+            print("JVM already running — compiling before kernel restart... ",
                   end="", flush=True)
             _run_compile(root)
+            import IPython
+            IPython.Application.instance().kernel.do_shutdown(restart=True)
+            return None  # won't reach here (kernel restarts)
         else:
-            print("JVM already running — restarting kernel to reload classes...")
-        import IPython
-        IPython.Application.instance().kernel.do_shutdown(restart=True)
-        return None  # won't reach here
+            # Reuse current JVM — no restart needed
+            if verbose:
+                print("JVM already running — reusing existing JVM")
+            ns = types.SimpleNamespace()
+            ns.PROJECT_ROOT = root
+            ns.JClass = jpype.JClass
+            return ns
 
     if recompile:
         _run_compile(root)

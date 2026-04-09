@@ -61,7 +61,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Usage Example (Java)</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * // Create process model
  * ProcessSystem process = new ProcessSystem();
@@ -84,7 +84,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Usage Example (Python via neqsim-python/JPype)</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * from neqsim.neqsimpython import jneqsim
  *
@@ -107,7 +107,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Multi-Variable Optimization Example</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * // Define manipulated variables
  * List<ManipulatedVariable> variables = Arrays.asList(
@@ -201,7 +201,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * OptimizationObjective throughput = new OptimizationObjective("throughput",
    *     proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
@@ -210,7 +210,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>
    * from jpype import JImplements, JOverride
    *
@@ -1000,7 +1000,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).tolerance(100.0)
    *     .maxIterations(50).searchMode(SearchMode.GOLDEN_SECTION_SCORE).rateUnit("kg/hr")
@@ -1010,7 +1010,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * config = OptimizationConfig(50000.0, 200000.0) \
    *     .tolerance(100.0) \
@@ -1093,13 +1093,13 @@ public class ProductionOptimizer {
 
     /**
      * Sets whether to reject simulation results that are physically invalid.
-     * 
+     *
      * <p>
      * When enabled (default), the optimizer will mark operating points as infeasible if any
      * equipment reports invalid simulation results (e.g., negative power in compressors, NaN
      * values, etc.).
      * </p>
-     * 
+     *
      * @param reject true to reject invalid simulations
      * @return this config for method chaining
      */
@@ -1110,7 +1110,7 @@ public class ProductionOptimizer {
 
     /**
      * Gets whether invalid simulations are rejected.
-     * 
+     *
      * @return true if invalid simulations are rejected
      */
     public boolean isRejectInvalidSimulations() {
@@ -1315,12 +1315,12 @@ public class ProductionOptimizer {
 
     /**
      * Enables parallel evaluation of candidates in PSO and scenario optimization.
-     * 
+     *
      * <p>
      * When enabled, particle swarm optimization evaluates particles in parallel using a thread
      * pool, and scenario optimization runs scenarios concurrently.
      * </p>
-     * 
+     *
      * @param parallel true to enable parallel evaluations
      * @return this config for method chaining
      */
@@ -1331,7 +1331,7 @@ public class ProductionOptimizer {
 
     /**
      * Sets the number of threads for parallel evaluations.
-     * 
+     *
      * @param threads number of threads (default: available processors)
      * @return this config for method chaining
      */
@@ -1342,12 +1342,12 @@ public class ProductionOptimizer {
 
     /**
      * Sets the grid size for Pareto front generation.
-     * 
+     *
      * <p>
      * For weighted-sum Pareto optimization, this determines how many weight combinations are
      * evaluated. A grid size of 11 generates weights: 0.0, 0.1, 0.2, ..., 1.0.
      * </p>
-     * 
+     *
      * @param gridSize number of weight points per objective (default: 11)
      * @return this config for method chaining
      */
@@ -1358,7 +1358,7 @@ public class ProductionOptimizer {
 
     /**
      * Returns whether parallel evaluations are enabled.
-     * 
+     *
      * @return true if parallel evaluations are enabled
      */
     public boolean isParallelEvaluations() {
@@ -1367,7 +1367,7 @@ public class ProductionOptimizer {
 
     /**
      * Returns the number of threads for parallel evaluations.
-     * 
+     *
      * @return number of threads
      */
     public int getParallelThreads() {
@@ -1376,7 +1376,7 @@ public class ProductionOptimizer {
 
     /**
      * Returns the grid size for Pareto front generation.
-     * 
+     *
      * @return Pareto grid size
      */
     public int getParetoGridSize() {
@@ -1625,7 +1625,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * ManipulatedVariable flowVar = new ManipulatedVariable("feedFlow", 50000.0, 200000.0, // lower/upper
    *                                                                                      // bounds
@@ -1635,7 +1635,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>
    * from jpype import JImplements, JOverride
    *
@@ -2152,7 +2152,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * ProductionOptimizer optimizer = new ProductionOptimizer();
    * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
@@ -2165,7 +2165,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * optimizer = ProductionOptimizer()
    * config = OptimizationConfig(50000.0, 200000.0) \
@@ -2223,7 +2223,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * List<ManipulatedVariable> variables = Arrays.asList(
    *     new ManipulatedVariable("flow", 50000, 200000, "kg/hr",
@@ -2241,7 +2241,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>
    * from jpype import JImplements, JOverride
    * Arrays = jneqsim.java.util.Arrays
@@ -2424,7 +2424,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * List<OptimizationObjective> objectives = Arrays.asList(
    *     new OptimizationObjective("throughput", p -> p.getUnit("outlet").getFlowRate("kg/hr"), 1.0,
@@ -2446,7 +2446,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * objectives = Arrays.asList([throughput_obj, power_obj])
    * config = OptimizationConfig(50000, 200000).paretoGridSize(11)
@@ -2529,7 +2529,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * List<ManipulatedVariable> variables =
    *     Arrays.asList(new ManipulatedVariable("flow", 50000, 200000, "kg/hr", flowSetter),
@@ -2715,6 +2715,10 @@ public class ProductionOptimizer {
 
   /**
    * Create weighted objectives from original objectives and weights.
+   *
+   * @param originals the original optimization objectives
+   * @param weights the weight multipliers for each objective
+   * @return the weighted objectives
    */
   private List<OptimizationObjective> createWeightedObjectives(
       List<OptimizationObjective> originals, double[] weights) {
@@ -2730,6 +2734,10 @@ public class ProductionOptimizer {
 
   /**
    * Filter points to keep only Pareto-optimal (non-dominated) solutions.
+   *
+   * @param allPoints all candidate Pareto points
+   * @param objectiveTypes map of objective names to their types
+   * @return the non-dominated Pareto front
    */
   private List<ParetoPoint> filterToPareto(List<ParetoPoint> allPoints,
       Map<String, ObjectiveType> objectiveTypes) {

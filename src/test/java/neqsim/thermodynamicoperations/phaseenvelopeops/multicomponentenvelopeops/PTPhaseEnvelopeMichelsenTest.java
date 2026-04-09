@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -582,5 +583,55 @@ public class PTPhaseEnvelopeMichelsenTest {
     assertNotNull(qT75, "qualityT_0.75 should not be null");
     assertTrue(qT25.length > 3, "Quality line 0.25 should have > 3 points");
     assertTrue(qT75.length > 3, "Quality line 0.75 should have > 3 points");
+  }
+
+  /**
+   * Test that the get(String, double[]) overload returns results when the key exists and returns
+   * the default array when the key is absent or maps to null. This enables the Python/JPype idiom
+   * {@code pe_data.get("dewT", [])} that previously threw a JPype overload resolution error.
+   */
+  @Test
+  void testGetWithDefault() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("nitrogen", 0.01);
+    testSystem.addComponent("CO2", 0.01);
+    testSystem.addComponent("methane", 0.98);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+    testOps.calcPTphaseEnvelope();
+
+    double[] emptyDefault = new double[0];
+
+    // Existing key should return actual data, not the default
+    double[] dewT = testOps.get("dewT", emptyDefault);
+    assertNotNull(dewT, "dewT with default should not be null");
+    assertTrue(dewT.length > 0, "dewT should have data points");
+    assertTrue(dewT != emptyDefault, "dewT should be the actual array, not the default");
+
+    double[] dewP = testOps.get("dewP", emptyDefault);
+    assertNotNull(dewP, "dewP with default should not be null");
+    assertTrue(dewP.length > 0, "dewP should have data points");
+
+    // Absent key should return the default
+    double[] unknown = testOps.get("nonExistentKey", emptyDefault);
+    assertArrayEquals(emptyDefault, unknown, "Absent key should return the default array");
+
+    // Key that maps to null (e.g. dewT2) should return the default
+    double[] dewT2 = testOps.get("dewT2", emptyDefault);
+    assertArrayEquals(emptyDefault, dewT2, "dewT2 (null) should return the default array");
+
+    // Also test via the OperationInterface directly
+    PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
+    double[] bubP = env.get("bubP", emptyDefault);
+    assertNotNull(bubP, "bubP via operation with default should not be null");
+    assertTrue(bubP.length > 0, "bubP should have data points");
+
+    double[] missing = env.get("noSuchKey", emptyDefault);
+    assertArrayEquals(emptyDefault, missing,
+        "Absent key via operation should return the default array");
   }
 }

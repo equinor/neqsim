@@ -8,9 +8,9 @@ nav_order: 1
 
 # FieldDevelopmentWorkflow
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`FieldDevelopmentWorkflow.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 
 ---
@@ -60,7 +60,7 @@ The screening level uses correlations and empirical models for quick assessment.
 ```python
 # Create a quick gas tieback screening study
 workflow = FieldDevelopmentWorkflow.quickGasTieback(
-    "Snorre_Satellite",
+    "Satellite_Field",
     50.0,    # reserves in GSm3
     120.0,   # distance to host in km
     350.0,   # water depth in m
@@ -242,7 +242,7 @@ The FieldDevelopmentWorkflow provides:
 
 Key integration points:
 - PVT: `SystemSrkEos`, `SystemSrkCPAstatoil`
-- Reservoir: `SimpleReservoir`, `WellSystem`  
+- Reservoir: `SimpleReservoir`, `WellSystem`
 - Process: `ProcessSystem`, unit operations
 - Economics: `CashFlowEngine`, tax models
 

@@ -481,6 +481,68 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Generates IEC 81346 reference designations for all equipment across all process areas in this
+   * model. Each area receives a unique function sub-level (A1, A2, A3, ...).
+   *
+   * <p>
+   * This is a convenience wrapper around
+   * {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}.
+   * </p>
+   *
+   * @param locationPrefix the location-aspect prefix (e.g. "P1" for a specific platform)
+   * @return the generator instance (for further queries such as {@code toJson()})
+   */
+  public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator generateReferenceDesignations(
+      String locationPrefix) {
+    neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen =
+        new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator(this);
+    gen.setLocationPrefix(locationPrefix);
+    gen.generate();
+    return gen;
+  }
+
+  /**
+   * Generates IEC 81346 reference designations with hierarchical function structure. Each area
+   * receives a nested function sub-level under the given prefix (e.g. "A1.A1", "A1.A2").
+   *
+   * @param functionPrefix the top-level function prefix (e.g. "A1")
+   * @param locationPrefix the location-aspect prefix (e.g. "P1")
+   * @return the generator instance
+   */
+  public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator generateReferenceDesignations(
+      String functionPrefix, String locationPrefix) {
+    neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen =
+        new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator(this);
+    gen.setFunctionPrefix(functionPrefix);
+    gen.setLocationPrefix(locationPrefix);
+    gen.setUseHierarchicalFunctions(true);
+    gen.generate();
+    return gen;
+  }
+
+  /**
+   * Looks up a process equipment unit across all process areas by its IEC 81346 reference
+   * designation string (e.g. {@code "=A1.B1"}, {@code "-B1"}).
+   *
+   * @param refDesignation the reference designation string to match
+   * @return the matching equipment, or {@code null} if not found in any area
+   */
+  public neqsim.process.equipment.ProcessEquipmentInterface getUnitByReferenceDesignation(
+      String refDesignation) {
+    if (refDesignation == null || refDesignation.trim().isEmpty()) {
+      return null;
+    }
+    for (ProcessSystem system : processes.values()) {
+      neqsim.process.equipment.ProcessEquipmentInterface found =
+          system.getUnitByReferenceDesignation(refDesignation);
+      if (found != null) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Removes a process by its name.
    *
    * @param name a {@link java.lang.String} object
@@ -1274,9 +1336,10 @@ public class ProcessModel implements Runnable, Serializable {
    * it is skipped and a warning is logged.
    * </p>
    *
-   * @param json the JSON string with the "areas" structure @return the built ProcessModel (not yet
-   *        run) @throws IllegalArgumentException if JSON is null, empty, or missing the "areas"
-   *        key @see #toJson()
+   * @param json the JSON string with the "areas" structure
+   * @return the built ProcessModel (not yet run)
+   * @throws IllegalArgumentException if JSON is null, empty, or missing the "areas" key
+   * @see #toJson()
    */
   public static ProcessModel fromJson(String json) {
     if (json == null || json.trim().isEmpty()) {

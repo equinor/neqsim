@@ -635,6 +635,206 @@ List<ProcessElementInterface> all = process.getAllElements();
 
 ---
 
+## Automation API (String-Addressable Variables)
+
+The `ProcessAutomation` facade provides string-addressable variable access — ideal
+for agents that need to discover, read, and write simulation variables without
+navigating Java class hierarchies.
+
+### Discover Units and Variables
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+// List all equipment names
+List<String> units = auto.getUnitList();
+// ["Feed Gas", "HP Separator", "Compressor Stage 1", ...]
+
+// List all variables for an equipment unit
+List<SimulationVariable> vars = auto.getVariableList("HP Separator");
+// Each SimulationVariable has: address, name, type (INPUT/OUTPUT), defaultUnit, description
+
+// Get equipment type
+String type = auto.getEquipmentType("HP Separator");  // "Separator"
+```
+
+### Read Variable Values
+
+```java
+// Dot-notation addressing: "UnitName.streamOrProperty"
+double temp = auto.getVariableValue("HP Separator.gasOutStream.temperature", "C");
+double press = auto.getVariableValue("HP Separator.pressure", "bara");
+double flow = auto.getVariableValue("HP Separator.gasOutStream.flowRate", "kg/hr");
+```
+
+### Write Input Variables and Re-run
+
+```java
+// Only INPUT-type variables are writable
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
+process.run();  // propagate changes through the flowsheet
+```
+
+### Multi-Area ProcessModel
+
+```java
+ProcessAutomation plantAuto = plant.getAutomation();
+List<String> areas = plantAuto.getAreaList();  // ["Separation", "Compression"]
+
+// Area-qualified addresses use "::" separator
+double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bara");
+plant.run();
+```
+
+### Python / Jupyter Usage
+
+```python
+auto = process.getAutomation()
+units = list(auto.getUnitList())
+vars_list = list(auto.getVariableList("HP Separator"))
+temp = auto.getVariableValue("HP Separator.gasOutStream.temperature", "C")
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara")
+process.run()
+```
+
+### Self-Healing: Fuzzy Matching and Auto-Correction
+
+When agents use wrong names (typos, case differences, partial names), the safe
+accessors automatically diagnose the error and attempt correction:
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+// Safe get — returns JSON with value on success, or diagnostics + suggestions on failure
+String result = auto.getVariableValueSafe("hp separator.temperature", "C");
+// If "HP Sep" exists: {"status":"auto_corrected","originalAddress":"hp separator.temperature",
+//                      "correctedAddress":"HP Sep.temperature","value":25.0,"unit":"C"}
+
+// Safe set — also validates physical bounds before writing
+String setResult = auto.setVariableValueSafe("Compressor.outletPressure", 150.0, "bara");
+
+// Access diagnostics for insights and learning
+AutomationDiagnostics diag = auto.getDiagnostics();
+
+// Fuzzy name matching
+List<String> suggestions = diag.findClosestNames("HP Separator", auto.getUnitList(), 5);
+
+// Auto-correction (case, whitespace, partial names, edit distance ≤ 2)
+String corrected = diag.autoCorrectName("hp sep", auto.getUnitList());
+
+// Physical bounds validation
+AutomationDiagnostics.DiagnosticResult boundsCheck =
+    diag.validatePhysicalBounds("temperature", -300.0, "C");  // catches impossible values
+
+// Operation tracking and learning
+String report = diag.getLearningReport();  // JSON with stats, error patterns, recommendations
+```
+
+### Python / Jupyter Self-Healing
+
+```python
+auto = process.getAutomation()
+
+# Safe accessors return JSON (not exceptions)
+result = auto.getVariableValueSafe("hp separator.temperature", "C")
+import json
+data = json.loads(str(result))
+if data["status"] == "auto_corrected":
+    print(f"Corrected: {data['originalAddress']} -> {data['correctedAddress']}")
+    print(f"Value: {data['value']}")
+elif data["status"] == "success":
+    print(f"Value: {data['value']}")
+else:
+    print(f"Error: {data['errorMessage']}")
+    print(f"Suggestions: {data['suggestions']}")
+
+# Diagnostics
+diag = auto.getDiagnostics()
+report = json.loads(str(diag.getLearningReport()))
+print(f"Success rate: {report['successRate']:.0%}")
+```
+
+---
+
+## Lifecycle State (Save / Restore / Compare)
+
+JSON snapshots for reproducibility, version tracking, and agent-to-agent handoff.
+
+### Save ProcessSystem State
+
+```java
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing v1");
+state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");               // human-readable JSON
+state.saveToCompressedFile("model_v1.json.gz");   // smaller for archival
+```
+
+### Load and Validate
+
+```java
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
+ProcessSystemState.ValidationResult result = loaded.validate();
+if (result.isValid()) {
+    // State is consistent and can be restored
+}
+```
+
+### Multi-Area ProcessModel State
+
+```java
+ProcessModelState modelState = ProcessModelState.fromProcessModel(plant);
+modelState.setVersion("1.0.0");
+modelState.saveToFile("plant_v1.json");
+```
+
+### Version Comparison (Design Reviews, Change Tracking)
+
+```java
+ProcessModelState v1 = ProcessModelState.fromProcessModel(plant);
+v1.setVersion("1.0");
+// ... make changes ...
+ProcessModelState v2 = ProcessModelState.fromProcessModel(plant);
+v2.setVersion("2.0");
+
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+if (diff.hasChanges()) {
+    // diff.getModifiedParameters()   — what changed
+    // diff.getAddedEquipment()       — new equipment in v2
+    // diff.getRemovedEquipment()     — removed from v1
+}
+```
+
+### Compressed Bytes for Network / API Transfer
+
+```java
+byte[] bytes = modelState.toCompressedBytes();
+ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
+```
+
+### Python / Jupyter Usage
+
+```python
+import jpype
+ProcessSystemState = jpype.JClass(
+    "neqsim.process.processmodel.lifecycle.ProcessSystemState")
+ProcessModelState = jpype.JClass(
+    "neqsim.process.processmodel.lifecycle.ProcessModelState")
+
+state = ProcessSystemState.fromProcessSystem(process)
+state.setName("Gas Processing")
+state.setVersion("1.0.0")
+state.saveToFile("model_v1.json")
+
+# Load
+loaded = ProcessSystemState.loadFromFile("model_v1.json")
+result = loaded.validate()
+print(f"Valid: {result.isValid()}")
+```
+
+---
+
 ## Complete Process Flowsheet
 
 ### Gas Compression Train

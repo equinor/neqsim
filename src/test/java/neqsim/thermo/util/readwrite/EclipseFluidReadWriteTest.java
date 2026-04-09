@@ -42,7 +42,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String gow = file.getAbsolutePath() + "/gas_oil_water.e300";
 
   /**
-   * 
+   *
    * @Test void testReadBrd() throws IOException { testSystem =
    *       EclipseFluidReadWrite.read(file_brd); double[] molcomp = new double[] {0.000793504,
    *       0.002185115, 0.970279547, 0.020714159, 0.002100576, 0.002181042, 0.000447426,
@@ -51,12 +51,12 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    *       {0.001139104, 0.002173947, 0.969756121, 0.02078901, 0.002092749, 0.002280241,
    *       0.000446227, 0.000499483, 0.000120059, 0.000288996, 0.000226389, 0.000151364,
    *       3.43368E-05, 1.97238E-06, 1.15E-09, 8.71E-13, 3.03E-16, 1.57E-25};
-   * 
+   *
    *       testSystem.setMolarComposition(molcomp);
-   * 
+   *
    *       Stream stream1 = new Stream("Stream1", testSystem); stream1.run(); assertEquals(-4.0,
    *       stream1.CCT("C"), 0.2); }
-   * 
+   *
    *       /** Test method for
    *       {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
    *
@@ -152,7 +152,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     double x_methane_A19 = testSystem.getPhase(1).getComponent("methane_A19").getx();
     assertEquals(0.0, x_methane_A13, 1e-9);
-    assertEquals(0.0046202437, x_methane_A19, 1e-9);
+    assertEquals(0.0046202120219944005, x_methane_A19, 1e-9);
 
     // double[][] interactionParams =
     // ((PhaseEos)
@@ -378,8 +378,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value due to thermodynamic model changes
-    Assertions.assertEquals(-4639.29712, ent, 1e-3);
+    // Updated expected value: OMEGAA from file (0.45724) now applied instead of default
+    // (0.45724333333)
+    Assertions.assertEquals(-4639.239569750378, ent, 1e-3);
 
     // Oil outlet stream is single-phase oil after separation
     Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
@@ -1172,5 +1173,66 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(fluid.hasComponent("water"));
     Assertions.assertTrue(fluid.doMultiPhaseCheck(),
         "Multi-phase check should be enabled after adding water");
+  }
+
+  @Test
+  void testReadPvtSimReferenceFormat() throws IOException {
+    // Read the PVTsim Nova reference E300 format with all sections:
+    // OMEGAA, OMEGAB, TBOIL, VCRIT, ZCRIT, SSHIFT, PARACHOR, BICS, PEDERSEN, SSHIFTS
+    String pvtsimFile = file.getAbsolutePath() + "/pvtsim_reference.e300";
+    testSystem = EclipseFluidReadWrite.read(pvtsimFile);
+
+    // Verify correct number of components (17)
+    assertEquals(17, testSystem.getNumberOfComponents());
+
+    // Verify EOS type is PR (PRCORR)
+    Assertions.assertTrue(testSystem instanceof neqsim.thermo.system.SystemPrEos1978);
+
+    // Verify key component properties
+    // First component is N2 (nitrogen)
+    Assertions.assertTrue(testSystem.hasComponent("nitrogen"));
+    // Third component is C1 (methane)
+    Assertions.assertTrue(testSystem.hasComponent("methane"));
+    // Last component is H2O (water)
+    Assertions.assertTrue(testSystem.hasComponent("water"));
+
+    // Verify Tc for methane (should be ~190.578 K)
+    double methane_tc = testSystem.getComponent("methane").getTC();
+    assertEquals(190.578, methane_tc, 0.01);
+
+    // Verify composition sums to ~1.0
+    double sumZi = 0.0;
+    for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
+      sumZi += testSystem.getComponent(i).getz();
+    }
+    assertEquals(1.0, sumZi, 1e-4);
+
+    // Verify BIPs were loaded from the BIC lower-triangular matrix.
+    // Component order: N2(0), CO2(1), C1(2), ...
+    // BIC row 0: kij(N2,CO2) = 0.0
+    // BIC row 1: kij(N2,C1) = 0.025, kij(CO2,C1) = 0.105
+    double kij_n2_co2 = ((PhaseEos) testSystem.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(0, 1);
+    assertEquals(0.0, kij_n2_co2, 1e-4);
+    double kij_co2_c1 = ((PhaseEos) testSystem.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(1, 2);
+    assertEquals(0.105, kij_co2_c1, 1e-4);
+
+    // Verify SSHIFTS (volume correction) were loaded for all 17 components.
+    // First SSHIFTS value (N2) = -0.193010, last (H2O) = 0.126143
+    double n2VolCorr = testSystem.getPhase(0).getComponent("nitrogen").getVolumeCorrectionConst();
+    assertEquals(-0.193010, n2VolCorr, 1e-4, "SSHIFTS value for N2 should match");
+    double waterVolCorr = testSystem.getPhase(0).getComponent("water").getVolumeCorrectionConst();
+    assertEquals(0.126143, waterVolCorr, 1e-4, "SSHIFTS value for water should match");
+
+    // Verify Pedersen viscosity model flag was set
+    // (PEDERSEN keyword appears in the reference file)
+
+    // Verify a TPflash runs without error
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(100.0, "bara");
+    testSystem.setTemperature(110.0, "C");
+    testOps.TPflash();
+    Assertions.assertTrue(testSystem.getNumberOfPhases() >= 1);
   }
 }

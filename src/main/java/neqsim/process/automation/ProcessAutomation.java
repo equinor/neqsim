@@ -97,6 +97,7 @@ public class ProcessAutomation {
 
   private final ProcessSystem processSystem;
   private final ProcessModel processModel;
+  private final AutomationDiagnostics diagnostics;
 
   /**
    * Creates an automation facade for a single process system.
@@ -109,6 +110,7 @@ public class ProcessAutomation {
     }
     this.processSystem = processSystem;
     this.processModel = null;
+    this.diagnostics = new AutomationDiagnostics();
   }
 
   /**
@@ -126,6 +128,7 @@ public class ProcessAutomation {
     }
     this.processModel = processModel;
     this.processSystem = null;
+    this.diagnostics = new AutomationDiagnostics();
   }
 
   /**
@@ -135,6 +138,92 @@ public class ProcessAutomation {
    */
   public boolean isMultiArea() {
     return processModel != null;
+  }
+
+  /**
+   * Returns the diagnostics instance for this automation facade. The diagnostics provide fuzzy name
+   * matching, auto-correction, physical value validation, and operation history tracking.
+   *
+   * @return the automation diagnostics
+   */
+  public AutomationDiagnostics getDiagnostics() {
+    return diagnostics;
+  }
+
+  /**
+   * Reads a variable value with self-healing: if the exact address fails, attempts auto-correction
+   * via fuzzy matching against known unit names and variable addresses. Returns a JSON string with
+   * the value on success, or a diagnostic result with suggestions on failure.
+   *
+   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
+   * @param unitOfMeasure the desired unit
+   * @return JSON result string with either value or diagnostic information
+   */
+  public String getVariableValueSafe(String address, String unitOfMeasure) {
+    try {
+      double value = getVariableValue(address, unitOfMeasure);
+      diagnostics.recordSuccess("get", address);
+      return buildSuccessJson(address, value, unitOfMeasure);
+    } catch (IllegalArgumentException e) {
+      AutomationDiagnostics.DiagnosticResult diag = diagnoseAndAttemptRecovery(address, e);
+      if (diag.hasAutoCorrection()) {
+        try {
+          double value = getVariableValue(diag.getAutoCorrection(), unitOfMeasure);
+          diagnostics.recordFailure("get", address, diag.getCategory(), diag.getAutoCorrection());
+          return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value, unitOfMeasure,
+              diag);
+        } catch (Exception retryEx) {
+          // Auto-correction also failed
+        }
+      }
+      diagnostics.recordFailure("get", address, diag.getCategory(), null);
+      return diag.toJson();
+    }
+  }
+
+  /**
+   * Sets a variable value with self-healing: if the exact address fails, attempts auto-correction
+   * via fuzzy matching. Also validates the value against physical bounds before setting.
+   *
+   * @param address the dot-notation address
+   * @param value the value to set
+   * @param unitOfMeasure the unit of the value
+   * @return JSON result string with either success or diagnostic information
+   */
+  public String setVariableValueSafe(String address, double value, String unitOfMeasure) {
+    // Pre-validate physical bounds
+    String propertyName = extractPropertyName(address);
+    AutomationDiagnostics.DiagnosticResult boundsCheck =
+        diagnostics.validatePhysicalBounds(propertyName, value, unitOfMeasure);
+    if (boundsCheck != null
+        && boundsCheck.getCategory() == AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS
+        && boundsCheck.getContext().containsKey("severity")
+        && !"WARNING".equals(boundsCheck.getContext().get("severity"))) {
+      diagnostics.recordFailure("set", address,
+          AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS, null);
+      return boundsCheck.toJson();
+    }
+
+    try {
+      setVariableValue(address, value, unitOfMeasure);
+      diagnostics.recordSuccess("set", address);
+      String warningJson = boundsCheck != null ? boundsCheck.toJson() : null;
+      return buildSetSuccessJson(address, value, unitOfMeasure, warningJson);
+    } catch (IllegalArgumentException e) {
+      AutomationDiagnostics.DiagnosticResult diag = diagnoseAndAttemptRecovery(address, e);
+      if (diag.hasAutoCorrection()) {
+        try {
+          setVariableValue(diag.getAutoCorrection(), value, unitOfMeasure);
+          diagnostics.recordFailure("set", address, diag.getCategory(), diag.getAutoCorrection());
+          return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value, unitOfMeasure,
+              diag);
+        } catch (Exception retryEx) {
+          // Auto-correction also failed
+        }
+      }
+      diagnostics.recordFailure("set", address, diag.getCategory(), null);
+      return diag.toJson();
+    }
   }
 
   /**
@@ -400,16 +489,43 @@ public class ProcessAutomation {
    * @throws IllegalArgumentException if the unit is not found
    */
   private ProcessEquipmentInterface findUnit(String areaName, String unitName) {
+    // Check if the address is an IEC 81346 reference designation (starts with = or -)
+    if (unitName != null && (unitName.startsWith("=") || unitName.startsWith("-"))) {
+      ProcessEquipmentInterface found = findByReferenceDesignation(areaName, unitName);
+      if (found != null) {
+        return found;
+      }
+    }
+
     if (processModel != null) {
       if (areaName != null) {
         ProcessSystem area = processModel.get(areaName);
         if (area == null) {
-          throw new IllegalArgumentException("Area not found: " + areaName);
+          // Try fuzzy area matching
+          List<String> areaNames = processModel.getProcessSystemNames();
+          String corrected = diagnostics.autoCorrectName(areaName, areaNames);
+          if (corrected != null) {
+            area = processModel.get(corrected);
+          }
+          if (area == null) {
+            List<String> suggestions = diagnostics.findClosestNames(areaName, areaNames, 3);
+            throw new IllegalArgumentException("Area not found: " + areaName
+                + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+          }
         }
         ProcessEquipmentInterface unit = area.getUnit(unitName);
         if (unit == null) {
-          throw new IllegalArgumentException(
-              "Unit not found: " + unitName + " in area " + areaName);
+          // Try fuzzy unit matching within the area
+          List<String> unitNames = getPlainUnitNames(area);
+          String corrected = diagnostics.autoCorrectName(unitName, unitNames);
+          if (corrected != null) {
+            unit = area.getUnit(corrected);
+          }
+          if (unit == null) {
+            List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
+            throw new IllegalArgumentException("Unit not found: " + unitName + " in area "
+                + areaName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+          }
         }
         return unit;
       }
@@ -421,15 +537,105 @@ public class ProcessAutomation {
           return unit;
         }
       }
-      throw new IllegalArgumentException("Unit not found in any area: " + unitName);
+      // Fuzzy search across all areas
+      List<String> allNames = new ArrayList<String>();
+      for (String name : processModel.getProcessSystemNames()) {
+        allNames.addAll(getPlainUnitNames(processModel.get(name)));
+      }
+      String corrected = diagnostics.autoCorrectName(unitName, allNames);
+      if (corrected != null) {
+        for (String name : processModel.getProcessSystemNames()) {
+          ProcessEquipmentInterface u = processModel.get(name).getUnit(corrected);
+          if (u != null) {
+            return u;
+          }
+        }
+      }
+      List<String> suggestions = diagnostics.findClosestNames(unitName, allNames, 3);
+      throw new IllegalArgumentException("Unit not found in any area: " + unitName
+          + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
     }
 
     // Single ProcessSystem mode
     ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
     if (unit == null) {
-      throw new IllegalArgumentException("Unit not found: " + unitName);
+      // Try fuzzy matching
+      List<String> unitNames = getPlainUnitNames(processSystem);
+      String corrected = diagnostics.autoCorrectName(unitName, unitNames);
+      if (corrected != null) {
+        unit = processSystem.getUnit(corrected);
+      }
+      if (unit == null) {
+        List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
+        throw new IllegalArgumentException("Unit not found: " + unitName
+            + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+      }
     }
     return unit;
+  }
+
+  /**
+   * Gets plain (non-area-qualified) unit names from a ProcessSystem.
+   *
+   * @param ps the process system
+   * @return list of unit names
+   */
+  private List<String> getPlainUnitNames(ProcessSystem ps) {
+    List<ProcessEquipmentInterface> units = ps.getUnitOperations();
+    List<String> names = new ArrayList<String>(units.size());
+    for (ProcessEquipmentInterface u : units) {
+      names.add(u.getName());
+    }
+    return names;
+  }
+
+  /**
+   * Finds a unit by its IEC 81346 reference designation string.
+   *
+   * <p>
+   * Searches all equipment in the relevant process system(s) for a matching reference designation.
+   * This enables addressing equipment by their IEC 81346 codes, e.g. "=A1-B1" or "-K2".
+   * </p>
+   *
+   * @param areaName the area name to search within (null to search all)
+   * @param refDesString the reference designation string to match
+   * @return the matching equipment, or null if not found
+   */
+  private ProcessEquipmentInterface findByReferenceDesignation(String areaName,
+      String refDesString) {
+    if (processModel != null) {
+      if (areaName != null) {
+        ProcessSystem area = processModel.get(areaName);
+        if (area != null) {
+          return searchByRefDes(area, refDesString);
+        }
+      }
+      for (String name : processModel.getProcessSystemNames()) {
+        ProcessEquipmentInterface found = searchByRefDes(processModel.get(name), refDesString);
+        if (found != null) {
+          return found;
+        }
+      }
+      return null;
+    }
+    return searchByRefDes(processSystem, refDesString);
+  }
+
+  /**
+   * Searches a process system for equipment matching a reference designation string.
+   *
+   * @param ps the process system to search
+   * @param refDesString the reference designation to match
+   * @return the matching equipment, or null if not found
+   */
+  private ProcessEquipmentInterface searchByRefDes(ProcessSystem ps, String refDesString) {
+    for (ProcessEquipmentInterface unit : ps.getUnitOperations()) {
+      String unitRefDes = unit.getReferenceDesignationString();
+      if (unitRefDes != null && !unitRefDes.isEmpty() && unitRefDes.equals(refDesString)) {
+        return unit;
+      }
+    }
+    return null;
   }
 
   /**
@@ -1228,5 +1434,180 @@ public class ProcessAutomation {
         break;
     }
     throw new IllegalArgumentException("Cannot set stream property: " + property);
+  }
+
+  // ========================== Self-Healing Helpers ==========================
+
+  /**
+   * Diagnoses an address resolution failure and attempts recovery via fuzzy matching.
+   *
+   * @param address the failed address
+   * @param error the caught exception
+   * @return a diagnostic result with suggestions and possible auto-correction
+   */
+  private AutomationDiagnostics.DiagnosticResult diagnoseAndAttemptRecovery(String address,
+      IllegalArgumentException error) {
+    String msg = error.getMessage();
+    if (msg == null) {
+      msg = "";
+    }
+
+    // Parse address to extract components
+    String localAddress = address;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    if (areaSepIdx >= 0) {
+      localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    String[] parts = localAddress.split("\\.", 3);
+    String unitName = parts.length > 0 ? parts[0] : "";
+
+    // Unit not found
+    if (msg.contains("Unit not found") || msg.contains("Area not found")) {
+      List<String> validUnits = getUnitList();
+      return diagnostics.diagnoseUnitNotFound(unitName, validUnits);
+    }
+
+    // Stream port not found
+    if (msg.contains("Stream port not found") || msg.contains("port")) {
+      List<String> validPorts = java.util.Arrays.asList("gasOutStream", "liquidOutStream",
+          "oilOutStream", "waterOutStream", "outletStream", "inletStream");
+      String portName = parts.length > 1 ? parts[1] : "";
+      return diagnostics.diagnosePortNotFound(address, unitName, portName, validPorts);
+    }
+
+    // Property not found (Unknown property, Cannot set property, Unknown stream property)
+    if (msg.contains("Unknown property") || msg.contains("Cannot set property")
+        || msg.contains("Unknown stream property") || msg.contains("Cannot set stream")) {
+      try {
+        List<SimulationVariable> vars = getVariableList(unitName);
+        String propertyName = parts.length > 1 ? parts[parts.length - 1] : "";
+        return diagnostics.diagnosePropertyNotFound(address, unitName, propertyName, vars);
+      } catch (Exception e) {
+        // Can't get variable list - fall through
+      }
+    }
+
+    // Invalid address format or generic error
+    java.util.Map<String, Object> context = new java.util.LinkedHashMap<String, Object>();
+    context.put("errorMessage", msg);
+    context.put("addressFormat", "unitName.property or unitName.port.property");
+    return new AutomationDiagnostics.DiagnosticResult(
+        AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, address, msg,
+        new java.util.ArrayList<String>(), null,
+        "Check address format. Expected: 'unitName.property' or 'unitName.port.property'. "
+            + "Use getUnitList() and getVariableList(unitName) to discover valid addresses.",
+        context);
+  }
+
+  /**
+   * Extracts the property name from an address (the last dot-separated segment).
+   *
+   * @param address the dot-notation address
+   * @return the property name
+   */
+  private String extractPropertyName(String address) {
+    if (address == null) {
+      return "";
+    }
+    String localAddress = address;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    if (areaSepIdx >= 0) {
+      localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    int lastDot = localAddress.lastIndexOf('.');
+    return lastDot >= 0 ? localAddress.substring(lastDot + 1) : localAddress;
+  }
+
+  /**
+   * Builds a success JSON response for a get operation.
+   *
+   * @param address the address
+   * @param value the value
+   * @param unit the unit of measure
+   * @return JSON string
+   */
+  private String buildSuccessJson(String address, double value, String unit) {
+    com.google.gson.JsonObject result = new com.google.gson.JsonObject();
+    result.addProperty("status", "success");
+    result.addProperty("address", address);
+    result.addProperty("value", value);
+    if (unit != null) {
+      result.addProperty("unit", unit);
+    }
+    return result.toString();
+  }
+
+  /**
+   * Builds a JSON response for a successful auto-corrected get operation.
+   *
+   * @param originalAddress the original address that failed
+   * @param correctedAddress the corrected address that succeeded
+   * @param value the value read
+   * @param unit the unit of measure
+   * @param diag the diagnostic result
+   * @return JSON string
+   */
+  private String buildAutoCorrectedJson(String originalAddress, String correctedAddress,
+      double value, String unit, AutomationDiagnostics.DiagnosticResult diag) {
+    com.google.gson.JsonObject result = new com.google.gson.JsonObject();
+    result.addProperty("status", "auto_corrected");
+    result.addProperty("originalAddress", originalAddress);
+    result.addProperty("correctedAddress", correctedAddress);
+    result.addProperty("value", value);
+    if (unit != null) {
+      result.addProperty("unit", unit);
+    }
+    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
+        + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
+    return result.toString();
+  }
+
+  /**
+   * Builds a success JSON response for a set operation.
+   *
+   * @param address the address
+   * @param value the value set
+   * @param unit the unit of measure
+   * @param warningJson JSON warning from bounds validation, or null
+   * @return JSON string
+   */
+  private String buildSetSuccessJson(String address, double value, String unit,
+      String warningJson) {
+    com.google.gson.JsonObject result = new com.google.gson.JsonObject();
+    result.addProperty("status", "success");
+    result.addProperty("address", address);
+    result.addProperty("value", value);
+    if (unit != null) {
+      result.addProperty("unit", unit);
+    }
+    if (warningJson != null) {
+      result.add("warning", com.google.gson.JsonParser.parseString(warningJson).getAsJsonObject());
+    }
+    return result.toString();
+  }
+
+  /**
+   * Builds a JSON response for a successful auto-corrected set operation.
+   *
+   * @param originalAddress the original address that failed
+   * @param correctedAddress the corrected address that succeeded
+   * @param value the value set
+   * @param unit the unit of measure
+   * @param diag the diagnostic result
+   * @return JSON string
+   */
+  private String buildAutoCorrectedSetJson(String originalAddress, String correctedAddress,
+      double value, String unit, AutomationDiagnostics.DiagnosticResult diag) {
+    com.google.gson.JsonObject result = new com.google.gson.JsonObject();
+    result.addProperty("status", "auto_corrected");
+    result.addProperty("originalAddress", originalAddress);
+    result.addProperty("correctedAddress", correctedAddress);
+    result.addProperty("value", value);
+    if (unit != null) {
+      result.addProperty("unit", unit);
+    }
+    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
+        + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
+    return result.toString();
   }
 }

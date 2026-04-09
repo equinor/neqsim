@@ -79,7 +79,7 @@ task_solve/
 │   ├── step2_analysis/                               ← simulations, notebooks
 │   ├── step2_analysis/notes.md                       ← validation log
 │   ├── step3_report/generate_report.py               ← produces Word + HTML + Paper
-│   └── figures/                                      ← all saved plots
+│   └── figures/                                      ← all saved plots + extracted PDF pages
 └── 2026-03-07_jt_cooling_rich_gas/                   ← example real task
 ```
 
@@ -466,6 +466,36 @@ The AI reads actual Java source files, so it:
 - **May get physics wrong** — always verify numbers against known references
 - **Cannot access external data** — if you need lab data or NIST values, paste them in
 
+### Working with Reference PDFs and Engineering Drawings
+
+Place PDFs (papers, standards, data sheets, P&IDs) in `step1_scope_and_research/references/`.
+Use `devtools/pdf_to_figures.py` to convert pages to PNG images that AI tools can analyze:
+
+```bash
+# Convert all PDFs in the references folder
+python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+
+# Convert specific pages from a single PDF
+python devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
+
+# Higher DPI for detailed engineering drawings
+python devtools/pdf_to_figures.py path/to/drawing.pdf --dpi 300 --outdir figures/
+```
+
+Then use `view_image` on the extracted PNGs to:
+- Read engineering drawings, P&IDs, and process flow diagrams
+- Extract data from charts, graphs, and performance curves
+- Analyze equipment layouts and piping arrangements
+- Digitize data tables and stream conditions from scanned documents
+- Review compressor maps, pump curves, and valve characteristics
+
+This is especially useful for:
+- **Design basis documents** — extract operating conditions, fluid compositions
+- **Vendor data sheets** — read equipment specifications, performance curves
+- **Standards documents** — capture design formulas, factor tables, limit values
+- **Lab reports** — extract PVT data, fluid analysis results
+- **Field drawings** — understand existing facility layout for brownfield studies
+
 ---
 
 ## The Develop-While-Solving Workflow in Detail
@@ -670,13 +700,11 @@ into reports and ensures the report always reflects the latest simulation run.
    with open(os.path.join(os.path.dirname(os.getcwd()), "results.json"), "w") as f:
        json.dump(results, f, indent=2)
    ```
-4. Run `python step3_report/generate_report.py` — the Results, Validation, and
-   Scope sections auto-populate from `results.json` and `task_spec.md`
-5. To also generate a scientific paper: `python step3_report/generate_report.py --paper`
-   - Produces `Paper.docx` and `Paper.html` in academic format
-   - Configure `PAPER_TITLE`, `PAPER_AUTHORS`, `PAPER_KEYWORDS`, and `PAPER_SECTIONS`
-     in `generate_report.py` for best results
-   - Use `--paper-only` to skip the technical report and generate only the paper
+4. Run `python step3_report/generate_report.py` — produces a professional engineering
+   report (Report.docx + Report.html). The Results, Validation, and Scope sections
+   auto-populate from `results.json` and `task_spec.md`
+5. Scientific papers are only generated when explicitly requested:
+   `python step3_report/generate_report.py --paper` (adds Paper.docx + Paper.html)
 6. **Built-in styled formatting:** The template automatically renders these sections
    when the corresponding keys exist in `results.json`:
    - **Benchmark Validation** (`benchmark_validation`): PASS/FAIL table with color coding
@@ -1230,8 +1258,8 @@ coding agent that can read files and run commands can follow the same workflow.
 | `python devtools/new_task.py` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
 | Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
-| `python generate_report.py` | Produces Word + HTML | Any terminal |
-| `python generate_report.py --paper` | Also produces Paper.docx + Paper.html | Any terminal |
+| `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
+| `python generate_report.py --paper` | Also produces Paper.docx + Paper.html (only when requested) | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
 
 ### What's VS Code Copilot-Specific (Optional Convenience)

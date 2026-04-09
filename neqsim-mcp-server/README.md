@@ -9,23 +9,247 @@ oil & gas thermodynamics.
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
 (STDIO transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
-## What Can an LLM Do With This?
+---
 
-| Capability | Example Prompt |
-|---|---|
-| **Flash calculations** | "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?" |
-| **Phase equilibrium** | "How many phases exist for this rich gas at 0 °C and 100 bara?" |
-| **Physical properties** | "Get the density, viscosity, and thermal conductivity of natural gas at 25 °C, 80 bara" |
-| **Process simulation** | "Simulate a gas going through a separator then a compressor to 120 bara" |
-| **Input validation** | "Check if my process JSON is valid before running it" |
-| **Component lookup** | "What components does NeqSim have that contain 'butane'?" |
+## Install from GitHub Release (3 steps)
 
-The LLM discovers the tools automatically via MCP, reads the embedded examples
-and schemas to learn the JSON format, then calls the tools to compute answers.
+Pick **jar** or **Docker** — both are first-class paths.
+
+<table>
+<tr>
+<th width="50%">Option A — Jar (requires Java 17+)</th>
+<th width="50%">Option B — Docker (no Java needed)</th>
+</tr>
+<tr><td>
+
+**1. Download the jar + checksum**
+
+```bash
+# Replace VERSION with the latest release (e.g. 3.7.0)
+VERSION=3.7.0
+curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
+curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+```
+
+**2. Verify integrity**
+
+```bash
+sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
+```
+
+**3. Connect to your LLM** (see config snippets below)
+
+```
+java -jar neqsim-mcp-server-3.7.0-runner.jar
+```
+
+</td><td>
+
+**1. Pull the image**
+
+```bash
+docker pull ghcr.io/equinor/neqsim-mcp-server:latest
+# or pin a version:
+docker pull ghcr.io/equinor/neqsim-mcp-server:3.7.0
+```
+
+**2. Smoke-test**
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+**3. Connect to your LLM** (see config snippets below)
+
+```
+docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+</td></tr>
+</table>
+
+> **Find the latest release:** [github.com/equinor/neqsim/releases](https://github.com/equinor/neqsim/releases)
+> — look for the assets named **`neqsim-mcp-server-*-runner.jar`** and **`neqsim-mcp-server-*-runner.jar.sha256`**.
+
+<details>
+<summary><strong>Install Java 17+ (if using the jar path)</strong></summary>
+
+| OS | Command |
+|----|---------|
+| **macOS** | `brew install openjdk@17` |
+| **Linux (Ubuntu/Debian)** | `sudo apt install openjdk-17-jdk` |
+| **Windows** | `winget install EclipseAdoptium.Temurin.17.JDK` |
+
+Verify: `java -version` should show 17 or higher.
+</details>
 
 ---
 
-## Prerequisites
+## Connect to Your LLM
+
+### Claude Desktop
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+<table>
+<tr>
+<th width="50%">Jar</th>
+<th width="50%">Docker</th>
+</tr>
+<tr><td>
+
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/neqsim-mcp-server-3.7.0-runner.jar"
+      ]
+    }
+  }
+}
+```
+
+</td><td>
+
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "ghcr.io/equinor/neqsim-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+</td></tr>
+</table>
+
+Restart Claude Desktop.
+
+### VS Code Copilot
+
+Add to `.vscode/mcp.json`:
+
+<table>
+<tr>
+<th width="50%">Jar</th>
+<th width="50%">Docker</th>
+</tr>
+<tr><td>
+
+```json
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/neqsim-mcp-server-3.7.0-runner.jar"
+      ]
+    }
+  }
+}
+```
+
+</td><td>
+
+```json
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "ghcr.io/equinor/neqsim-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+</td></tr>
+</table>
+
+Restart VS Code.
+
+### Cursor / Other MCP Clients
+
+Any MCP STDIO client works. Point it at one of:
+
+```bash
+java -jar /path/to/neqsim-mcp-server-3.7.0-runner.jar          # jar
+docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
+```
+
+---
+
+## What Can an LLM Do With This?
+
+| Capability | Example Prompt | Tool |
+|---|---|---|
+| **Flash calculations** | "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?" | `runFlash` |
+| **Batch sensitivity** | "How does density change from 0 to 50 °C at 80 bara? Give me 10 data points." | `runBatch` |
+| **Property table** | "Get density, viscosity, Cp, and Z-factor from 10 to 100 bara at 25 °C" | `getPropertyTable` |
+| **Phase envelope** | "Plot the phase envelope for this natural gas composition" | `getPhaseEnvelope` |
+| **Process simulation** | "Simulate a gas going through a separator then a compressor to 120 bara" | `runProcess` |
+| **Input validation** | "Check if my process JSON is valid before running it" | `validateInput` |
+| **Component lookup** | "What components does NeqSim have that contain 'butane'?" | `searchComponents` |
+| **Capabilities** | "What can NeqSim calculate? Which EOS models are available?" | `getCapabilities` |
+
+### Quick Path vs Full Simulation
+
+| Need | Tool | Flowsheet Required? |
+|---|---|---|
+| Single property lookup | `runFlash` | No |
+| Multi-point sweep | `runBatch` or `getPropertyTable` | No |
+| Phase boundary | `getPhaseEnvelope` | No |
+| Multi-equipment process | `runProcess` | Yes (JSON definition) |
+
+The LLM discovers the tools automatically via MCP, reads the embedded examples
+and schemas to learn the JSON format, then calls the tools to compute answers.
+Every response includes **provenance metadata** (EOS model, assumptions,
+limitations, convergence status) for trust assessment.
+
+---
+
+## Hero Demo: Example Conversation
+
+**You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
+
+**LLM** *(internally calls `runFlash` with `flashType: "dewPointT"`)*
+
+**LLM responds:** "The dew point temperature is -42.3°C at 50 bara (SRK equation of state, converged in 12 iterations). Below this temperature, liquid will begin to condense."
+
+Every response includes **provenance**: which EOS model was used, whether the calculation converged, and what limitations apply.
+
+**Try these:**
+
+> "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
+
+> "Plot the phase envelope for 85% methane, 10% ethane, 5% propane"
+
+> "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
+
+The LLM discovers NeqSim's tools automatically and calls them to compute rigorous answers — no coding needed.
+
+---
+
+## Developer Build (from source)
+
+If you want to build from source (for development or to use the latest unreleased code):
+
+### Prerequisites
 
 | Requirement | Version | Notes |
 |---|---|---|
@@ -33,11 +257,9 @@ and schemas to learn the JSON format, then calls the tools to compute answers.
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
 | NeqSim core | 3.6.1 | Must be installed to local Maven repo first (see below) |
 
-## Quick Start
+### Build steps
 
-### 1. Install NeqSim to Local Maven Repo
-
-From the **parent neqsim directory**:
+**1. Install NeqSim to local Maven repo** (from the parent neqsim directory):
 
 ```bash
 # Linux / macOS
@@ -47,9 +269,7 @@ From the **parent neqsim directory**:
 .\mvnw.cmd install -DskipTests "-Dmaven.javadoc.skip=true"
 ```
 
-This puts `com.equinor.neqsim:neqsim:3.6.1` in your local `~/.m2/repository`.
-
-### 2. Build the MCP Server
+**2. Build the MCP server:**
 
 ```bash
 cd neqsim-mcp-server
@@ -61,41 +281,22 @@ cd neqsim-mcp-server
 ..\mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"
 ```
 
-This produces a single uber-jar:
-`target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
+This produces: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
 
-### 3. Verify the Server Works
-
-**Quick STDIO test** — send an MCP `initialize` request:
+**3. Verify the server works:**
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
   | java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
 ```
 
-Expected response:
-
-```json
-{
-  "jsonrpc": "2.0", "id": 1,
-  "result": {
-    "capabilities": { "resources": {"subscribe": true}, "logging": {}, "tools": {} },
-    "serverInfo": { "name": "neqsim", "version": "1.0.0" },
-    "protocolVersion": "2024-11-05"
-  }
-}
-```
-
-**Comprehensive test suite** — runs 111 checks covering flash calculations,
-process simulations, validation, and error handling:
+**4. Run the comprehensive test suite** (111 checks):
 
 ```bash
 python test_mcp_server.py
 ```
 
-### 4. (Optional) Test with MCP Inspector
-
-If Node.js is installed, use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+**5. (Optional) Test with MCP Inspector:**
 
 ```bash
 npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
@@ -103,57 +304,19 @@ npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNA
 
 ---
 
-## Connecting to LLM Clients
+## Connecting to LLM Clients (Developer Build)
 
-### VS Code Copilot
+> **Using a prebuilt jar or Docker?** See the [Install from GitHub Release](#install-from-github-release-3-steps)
+> and [Connect to Your LLM](#connect-to-your-llm) sections above.
 
 The workspace already includes `.vscode/mcp.json`. After building the uber-jar,
 restart VS Code and Copilot will discover the NeqSim tools automatically.
 
-To configure manually, add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
-    "neqsim": {
-      "type": "stdio",
-      "command": "java",
-      "args": [
-        "-jar",
-        "${workspaceFolder}/neqsim-mcp-server/target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
-      ]
-    }
-  }
-}
-```
-
-### Claude Desktop
-
-Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
-`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
-
-```json
-{
-  "mcpServers": {
-    "neqsim": {
-      "command": "java",
-      "args": [
-        "-jar",
-        "/absolute/path/to/neqsim-mcp-server/target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
-      ]
-    }
-  }
-}
-```
-
-Restart Claude Desktop to activate.
-
-### Cursor / Other MCP Clients
-
-Any client that supports MCP STDIO transport can connect. Point it at:
+For other clients, use the same config snippets from [Connect to Your LLM](#connect-to-your-llm),
+replacing the jar path with your local build output:
 
 ```
-java -jar /path/to/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
+target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
 ```
 
 ---
@@ -419,8 +582,9 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds 6 tools. It reads
-   the descriptions to understand what each tool does.
+1. **Discovery** — The LLM calls `tools/list` and finds the available tools. It reads
+   the descriptions to understand what each tool does. Or it calls `getCapabilities`
+   for a structured manifest of all NeqSim capabilities.
 
 2. **Learning the format** — The LLM calls `getExample` or `getSchema` to see
    the expected JSON format for the tool it wants to use.
@@ -461,13 +625,18 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.11.0
 ├── test_mcp_server.py                     # 111-check comprehensive test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 6 @Tool-annotated MCP tools
+    ├── NeqSimTools.java                   # @Tool-annotated MCP tools (flash, batch, process, etc.)
     └── NeqSimResources.java               # 2 @Resource + 2 @ResourceTemplate
 
 Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 ├── runners/
 │   ├── FlashRunner.java                   # Flash calculations (9 flash types × 6 EOS)
+│   ├── BatchRunner.java                   # Multi-point batch flash (sensitivity studies)
+│   ├── PropertyTableRunner.java           # Property table sweep (T or P)
+│   ├── PhaseEnvelopeRunner.java           # PT phase envelope calculation
 │   ├── ProcessRunner.java                 # Process simulation via JsonProcessBuilder
+│   ├── AutomationRunner.java              # String-addressable variable access
+│   ├── CapabilitiesRunner.java            # Capabilities discovery manifest
 │   ├── Validator.java                     # Pre-flight input validation (12+ check types)
 │   └── ComponentQuery.java                # Component database search & fuzzy matching
 ├── model/
@@ -476,7 +645,8 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   ├── FlashResult.java                   # Typed flash output
 │   ├── ProcessResult.java                 # Typed process output
 │   ├── ValueWithUnit.java                 # Numeric value with unit string
-│   └── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
+│   ├── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
+│   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
     ├── ExampleCatalog.java                # 8 ready-to-use examples (flash + process)
     └── SchemaCatalog.java                 # JSON Schema definitions (4 tools × in/out)

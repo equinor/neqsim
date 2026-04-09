@@ -2,10 +2,10 @@
   "servers": {
     "neqsim": {
       "type": "stdio",
-      "command": "java",
+      "command": "docker",
       "args": [
-        "-jar",
-        "${workspaceFolder}/neqsim-mcp-server/target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
+        "run", "-i", "--rm",
+        "ghcr.io/equinor/neqsim-mcp-server:latest"
       ]
     }
   }
