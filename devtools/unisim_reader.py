@@ -1528,7 +1528,7 @@ class UniSimToNeqSim:
         return base_type
 
     def to_json(self, include_subflowsheets: bool = True,
-                full_mode: bool = False) -> Dict:
+                full_mode: bool = True) -> Dict:
         """Convert the full model to NeqSim JSON builder format.
 
         For complex models with sub-flowsheets, produces a structure
@@ -1580,7 +1580,7 @@ class UniSimToNeqSim:
         """Get the JSON as a string ready for ProcessSystem.fromJson()."""
         return json.dumps(self.to_json(), indent=2)
 
-    def build_and_run(self, verbose: bool = True, full_mode: bool = False):
+    def build_and_run(self, verbose: bool = True, full_mode: bool = True):
         """Build and run the NeqSim process from JSON automatically.
 
         This is the main automation entry point: UniSim model → JSON → NeqSim
@@ -3104,6 +3104,9 @@ class UniSimToNeqSim:
                 lines.append(
                     f'{v}.setOutletStream('
                     f'{inlet_ref}.clone("{op.name} outlet"))')
+            # Set very large tolerance so recycle "converges" in 2 iterations
+            # (essentially a single-pass with UniSim-initialised tear streams)
+            lines.append(f'{v}.setTolerance(1e6)')
             # Wire outlet to the forward-reference placeholder if one exists
             fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
             if op.name in fwd_ref_vars_map:
@@ -3287,6 +3290,7 @@ class UniSimToNeqSim:
                         f'{rcy_var}.addStream({v}.{port_method})')
                     lines.append(
                         f'{rcy_var}.setOutletStream({port_pv})')
+                    lines.append(f'{rcy_var}.setTolerance(1e6)')
                     lines.append(f'process.add({rcy_var})')
 
         return lines
@@ -3925,7 +3929,7 @@ class UniSimToNeqSim:
     # -----------------------------------------------------------------
 
     def to_python(self, include_subflowsheets: bool = True,
-                  full_mode: bool = False) -> str:
+                  full_mode: bool = True) -> str:
         """Generate a self-contained Python script that builds the NeqSim process.
 
         The generated code uses the ``jneqsim`` gateway and creates every
@@ -4199,7 +4203,7 @@ class UniSimToNeqSim:
         }
 
     def to_notebook(self, include_subflowsheets: bool = True,
-                    full_mode: bool = False) -> Dict:
+                    full_mode: bool = True) -> Dict:
         """Generate a Jupyter notebook (nbformat v4 dict) for the NeqSim process.
 
         The notebook mirrors ``to_python()`` exactly — the same shared

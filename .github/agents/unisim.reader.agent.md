@@ -53,8 +53,21 @@ Examine what was extracted:
 |---------|-------------|
 | ≤ 20 operations, no sub-flowsheets | Single ProcessSystem via JSON |
 | > 20 operations, 1-2 sub-flowsheets | Flatten into single ProcessSystem |
-| > 20 operations, 3+ sub-flowsheets | ProcessModule with multiple ProcessSystems |
+| > 20 operations, 3+ sub-flowsheets | ProcessModel with multiple ProcessSystems |
 | Different fluid packages per sub-FS | Separate ProcessSystems mandatory |
+
+**Full mode (default):** Since `full_mode=True` is now the default for all
+conversion methods (`to_python()`, `to_notebook()`, `to_json()`,
+`build_and_run()`), sub-flowsheet classification and ProcessModel generation
+happen automatically. Process sub-flowsheets (those sharing streams with the
+main flowsheet) become separate `ProcessSystem` areas composed into a
+`ProcessModel`. Utility sub-flowsheets are excluded. Classification uses
+`classify_subflowsheets()` and `get_process_subflowsheets()` internally.
+
+**E300 fluid export:** When `export_e300=True` (default), the reader extracts
+Tc, Pc, omega, MW, and BIPs from UniSim COM and writes E300 files. The
+generated code loads the fluid via `EclipseFluidReadWrite.read()` for lossless
+transfer of hypothetical/pseudo component properties.
 
 ### Step 3: Handle Component Mapping
 
@@ -83,7 +96,7 @@ print("Assumptions:", converter.assumptions)
 **Option B — Python code (for human review and editing):**
 ```python
 converter = UniSimToNeqSim(model)
-python_code = converter.to_python()
+python_code = converter.to_python()  # full_mode=True by default
 
 # Save as a standalone, runnable script
 with open("process.py", "w") as f:
@@ -92,13 +105,15 @@ print(f"Generated {len(python_code.splitlines())} lines of Python")
 ```
 
 The generated Python script uses explicit `jneqsim` API calls — every stream,
-equipment item, and connection is visible and editable. This is ideal when the
-user wants to inspect, modify, or learn from the converted process.
+equipment item, and connection is visible and editable. With `full_mode=True`
+(default), all equipment from the main flowsheet AND process sub-flowsheets is
+included, composed into a `ProcessModel`. This is ideal when the user wants to
+inspect, modify, or learn from the converted process.
 
 **Option C — Jupyter notebook (for interactive exploration):**
 ```python
 converter = UniSimToNeqSim(model)
-converter.save_notebook("process.ipynb")
+converter.save_notebook("process.ipynb")  # full_mode=True by default
 ```
 
 The notebook wraps the same code from `to_python()` in separate cells with
@@ -356,6 +371,12 @@ unrealistically low outlet temperatures (observed: -24.9°C deviation).
 
 ### Recycle Convergence Limitations
 
+The generated code sets `setTolerance(1e6)` on all Recycle objects to prevent
+single-pass timeout. Even so, models with many recycles (13+) composed into
+a `ProcessModel` may still time out during `plant.run()`. **Workaround:**
+test connected sub-paths incrementally (main-path-only first, then add
+sub-flowsheets one at a time).
+
 Models with many forward references (5+) may not converge on the first
 `process.run()`. The placeholder initial values (from UniSim stream data)
 may not be close enough. Possible mitigation:
@@ -384,7 +405,9 @@ fix applies to all three output modes. This is by design.
 
 ---
 
-## Verified Reference Case: TUTOR1
+## Verified Reference Cases
+
+### TUTOR1 (Simple — 7 Components)
 
 The `TUTOR1.usc` UniSim tutorial has been fully converted and verified. Use it
 as a reference pattern for any conversion workflow:
@@ -394,6 +417,25 @@ as a reference pattern for any conversion workflow:
 - **Operations**: Mixer → Separator → Gas/Gas HX → Chiller → LTS → DePropanizer
 - **Result**: 11/13 streams match within 1°C and 2% flow. DePropanizer column
   does not converge (known NeqSim limitation for NGL-rich feeds).
+
+### R510 SG Condensation (Complex — 31 Components, 8 Sub-Flowsheets)
+
+A large industrial model verified with `full_mode=True`:
+
+- **Components**: 31 (lumped pseudo-components C10-C11* through C30P*), PR-LK EOS
+- **Operations**: ~250 total across 8 sub-flowsheets (5 process, 3 utility)
+- **Feeds**: 3 (Reservoir oil MW=58.5, Formation water, Res gas MW=19.6)
+- **Isolated unit comparison**: 97 GOOD / 9 WARN / 30 BAD (78% match rate)
+- **Connected main-path model**: 11 OK / 1 WARN / 5 BAD (71% match rate)
+- **Temperature accuracy**: < 0.3°C throughout connected model
+- **Scripts**: `output/run_comparison_v2.py` (isolated), `output/run_connected_model.py` (connected)
+
+**Key findings from R510:**
+1. E300 fluid loading preserves all 31 lumped pseudo-component properties losslessly
+2. All separators have `has_water_product: False` — use 2-phase `Separator` (not `ThreePhaseSeparator`)
+3. Compressor efficiencies not extracted from COM → 75% default causes 10-32°C T deviation
+4. Full ProcessModel with 13+ recycles may time out — test sub-paths incrementally
+5. JSON keys are `pressure_bara` and `mass_flow_kgh` (verify before comparison scripts)
 
 ### Key Patterns from TUTOR1
 

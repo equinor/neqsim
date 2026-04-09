@@ -580,19 +580,43 @@ A warning is logged when a fallback mapping is used.
 
 ## 5. Workflow: From .usc File to Running NeqSim Model
 
+### Full Mode (Default — Recommended)
+
+All four output methods (`to_json()`, `build_and_run()`, `to_python()`,
+`to_notebook()`) default to **`full_mode=True`**. This means:
+
+1. **Sub-flowsheet auto-classification**: Sub-flowsheets are classified as
+   either "process" (shares streams with the main flowsheet) or "utility"
+   (isolated). Only process sub-flowsheets are included.
+2. **ProcessModel architecture**: The main flowsheet and each process
+   sub-flowsheet become separate `ProcessSystem` objects composed inside a
+   `ProcessModel` (multi-area plant model).
+3. **E300 fluid loading**: When the `UniSimReader.read(export_e300=True)`
+   option was used (default), the converter uses `EclipseFluidReadWrite.read()`
+   to load the fluid with exact Tc, Pc, ω, MW, and BIPs from UniSim.
+4. **Recycle tolerance**: All auto-generated Recycle objects have
+   `setTolerance(1e6)` to prevent convergence blocking during initial runs.
+
+To disable full mode and get only the main flowsheet operations:
+
+```python
+converter = UniSimToNeqSim(model)
+python_code = converter.to_python(full_mode=False)
+```
+
 ### Quick Usage (Python)
 
 ```python
 from devtools.unisim_reader import UniSimReader, UniSimToNeqSim, UniSimComparator
 
-# Step 1: Read the UniSim file
+# Step 1: Read the UniSim file (export_e300=True is default)
 with UniSimReader(visible=False) as reader:
     model = reader.read(r"path\to\file.usc")
 
 # Step 2: Inspect what was extracted
 print(model.summary())
 
-# Step 3: Convert to NeqSim JSON
+# Step 3: Convert to NeqSim JSON (full_mode=True by default)
 converter = UniSimToNeqSim(model)
 neqsim_json = converter.to_json()
 
@@ -623,7 +647,7 @@ Instead of JSON, generate a standalone Python script with explicit `jneqsim` API
 
 ```python
 converter = UniSimToNeqSim(model)
-python_code = converter.to_python(include_subflowsheets=True)
+python_code = converter.to_python()  # full_mode=True by default
 
 # Save to file
 with open("process.py", "w") as f:
@@ -638,7 +662,7 @@ The generated script is a **complete, runnable Python file** that includes:
 4. All equipment in **topological order** (upstream before downstream)
 5. Equipment properties set via `jneqsim` API calls (efficiency, outlet pressure, etc.)
 6. Stream wiring through outlet stream references (e.g., `separator.getGasOutStream()`)
-7. Sub-flowsheet operations (if `include_subflowsheets=True`)
+7. Sub-flowsheet operations (included by default in `full_mode=True`)
 8. `process.run()` call at the end
 
 The generated code uses **direct NeqSim Java API calls** — no JSON intermediate.
@@ -661,12 +685,12 @@ overview):
 
 ```python
 converter = UniSimToNeqSim(model)
-converter.save_notebook("process.ipynb")
+converter.save_notebook("process.ipynb")  # full_mode=True by default
 ```
 
 Or get the raw dict (nbformat v4):
 ```python
-nb_dict = converter.to_notebook(include_subflowsheets=True)
+nb_dict = converter.to_notebook()  # full_mode=True by default
 ```
 
 The notebook contains:
@@ -976,42 +1000,54 @@ them — the separator will use NeqSim defaults (zero entrainment).
 UniSim uses sub-flowsheets (template operations) for modular process sections.
 In NeqSim, these map to either:
 
-1. **Separate ProcessSystem objects** composed in a `ProcessModule`
+1. **Separate ProcessSystem objects** composed in a `ProcessModel`
 2. **Flattened into the main ProcessSystem** (simpler but may not handle inter-area recycles)
+
+### Auto-Classification (full_mode=True, Default)
+
+When `full_mode=True` (the default), the converter automatically classifies
+sub-flowsheets into **process** (shares material streams with the main
+flowsheet) and **utility** (isolated, e.g., heating/cooling medium loops).
+Only process sub-flowsheets are included in the generated code.
+
+Classification is done by `classify_subflowsheets()`:
+
+```python
+classification = converter.classify_subflowsheets()
+# Returns: {'TPL1': 'process', 'TPL3': 'utility', 'COL1': 'process', ...}
+process_sfs = converter.get_process_subflowsheets()
+# Returns: ['TPL1', 'TPL2', 'TPL5', 'TPL7', 'COL1']
+```
+
+A sub-flowsheet is classified as **process** if any of its operations produce
+or consume a stream that also appears in the main flowsheet or another process
+sub-flowsheet. Otherwise it is **utility** (typically heating/cooling medium,
+flare, utility water systems).
 
 ### Architecture Decision
 
 | Model Complexity | Strategy |
 |-----------------|----------|
 | Main + 1-2 small sub-flowsheets | Flatten into single ProcessSystem |
-| Main + 3+ sub-flowsheets | ProcessModule with separate ProcessSystems |
+| Main + 3+ sub-flowsheets | ProcessModel with separate ProcessSystems |
 | Sub-flowsheet has own fluid package | Must be separate ProcessSystem |
 
-### Example: Large Platform Model Structure
+### Sub-Flowsheet to ProcessModel Mapping
 
-```
-Main Flowsheet (146 operations)
-├── Satellite (18 operations) — well stream preparation
-├── LP_Inlet (16 operations) — low pressure inlet
-├── HP_Inlet (6 operations) — high pressure inlet
-├── TPL1 (6 operations) — test separator
-├── DPC_UNIT (20 operations) — dew point control
-└── HM (41 operations) — heating medium system
-```
+In `full_mode=True`, each process sub-flowsheet becomes its own
+`ProcessSystem`, all composed inside a `ProcessModel`:
 
-This would become:
 ```python
 from neqsim import jneqsim
-ProcessModule = jneqsim.process.processmodel.ProcessModule
+ProcessModel = jneqsim.process.processmodel.ProcessModel
 
-module = ProcessModule("Platform")
-module.add(main_process)         # Main separation & compression
-module.add(satellite_process)    # Satellite wells
-module.add(lp_inlet_process)     # LP inlet
-module.add(hp_inlet_process)     # HP inlet
-module.add(dpc_process)          # Dew point control
-# HM (heating medium) typically not modeled in NeqSim
-module.run()
+plant = ProcessModel("Platform")
+plant.add("Main", main_process)
+plant.add("TPL1", tpl1_process)
+plant.add("TPL2", tpl2_process)
+plant.add("COL1", col1_process)
+# Utility sub-flowsheets (TPL3, TPL4, TPL6) are excluded
+plant.run()
 ```
 
 ---
@@ -1090,6 +1126,24 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
     must be tuned to match UniSim's heat duty. Counter-current heat balance
     differences between UniSim and NeqSim typically produce 1–2°C deviation
     on outlet temperatures.
+19. **Full ProcessModel timeout** — Large models with 5+ sub-flowsheets, 10+
+    recycles, and Adjusters may time out during `plant.run()` even with relaxed
+    recycle tolerances. Root cause is typically the combination of Adjuster
+    iteration, absorber column convergence, and multi-area coordination.
+    **Workaround**: Test individual ProcessSystem areas or connected sub-paths
+    first, then build up incrementally. The connected main-path approach (no
+    recycles, manual feed data) runs in < 1 second for even large models.
+20. **Separator liquid MW deviation** — When UniSim separators have
+    `has_water_product=False` (2-product), the NeqSim `Separator` includes
+    water in the liquid phase. This causes liquid MW to be lower than UniSim's
+    value (water dilutes the MW). Using `ThreePhaseSeparator` overcorrects by
+    removing ALL water. Expect 20-40% liquid MW deviation at low/medium
+    pressures. Gas MW and temperatures are much more accurate.
+21. **Utility sub-flowsheets excluded** — In `full_mode=True`, sub-flowsheets
+    classified as "utility" (no shared streams with process flowsheet) are
+    excluded. This is correct for heating/cooling medium loops but may
+    miss utility systems that interact with process streams through
+    non-standard connections.
 
 ---
 
@@ -1232,6 +1286,7 @@ class UniSimModel:
 | Case | File | Components | Operations | Converged | Notes |
 |------|------|-----------|------------|-----------|-------|
 | TUTOR1 | `TUTOR1.usc` | 7 (N₂, CO₂, C₁–nC₄) | 13 | 11/13 streams | DePropanizer column diverges; upstream matches within 1°C. Notebook: `examples/notebooks/tutor1_gas_processing.ipynb` |
+| R510 SG Cond | R510 model | 31 (lumped pseudo-C7+ through C30P*) | 185 main + 8 sub-flowsheets (~250 total) | 78% isolated, 71% connected | PR-LK EOS with E300 BIPs. Full mode: 5 process + 3 utility sub-flowsheets |
 
 ### TUTOR1 Lessons Learned
 
@@ -1260,3 +1315,77 @@ Key findings that apply to any UniSim conversion:
    ADJ-1 (adjuster) are not needed for mass balance; safe to skip.
 
 6. **Heating Value spreadsheet**: Property-only calculations; safe to skip.
+
+### R510 SG Condensation Model — Lessons Learned
+
+The R510 SG Condensation model is a large-scale offshore processing model with
+31 components (including lumped pseudo-components C10-C11* through C30P*, aromatics,
+and glycols), 8 sub-flowsheets, 13+ recycle loops, and ~250 total operations.
+This is the first full-mode verified conversion with sub-flowsheet classification.
+
+**Model characteristics:**
+- **Fluid package**: PR-LK (Peng-Robinson Lee-Kesler) with 31 components
+- **Feed streams**: 3 feeds — "Reservoir oil" (MW=58.5, 1,950,684 kg/h),
+  "Formation water" (MW=18.0, 398,728 kg/h), "Res gas" (MW=19.6, 30,271 kg/h)
+- **Sub-flowsheets**: 5 process (TPL1, TPL2, TPL5, TPL7, COL1) +
+  3 utility (TPL3, TPL4, TPL6)
+- **Generated code**: ~2000 lines of Python with ProcessModel architecture
+
+#### Comparison Results
+
+**Isolated unit-by-unit** (each unit fed with correct UniSim inlet data):
+- 97 GOOD (< 5% deviation), 9 WARN (5-15%), 30 BAD (> 15%), 66 SKIPPED
+- **78% match rate** across 136 comparable stream properties
+
+**Connected main-path model** (17 units, no recycles, error propagation):
+- 11 OK, 1 WARN, 5 BAD — **71% match rate** in 0.5 seconds
+- Temperature accuracy: excellent (< 0.3°C for most streams)
+- Gas MW matching: good (< 5%)
+- Liquid MW: moderate deviation due to water handling (see below)
+
+#### Key Findings
+
+1. **E300 fluid loading is essential for pseudo-components.** The `read(export_e300=True)`
+   option extracts Tc, Pc, ω, MW, and BIPs for all 31 components including lumped
+   pseudo-components (C10-C11*, C12-C13*, etc.). Without E300 BIPs, phase split
+   deviations exceed 100% for heavy components.
+
+2. **Component name mapping for lumped pseudo-components.** UniSim uses names like
+   `C10-C11*`, `C12-C13*`, `C14-C15*`, `C16-C18*`, `C19-C20*`, `C21-C23*`,
+   `C24-C29*`, `C30P*`. These map 1:1 to the same names in the E300 file.
+   Do NOT assume individual components (C10, C11, C12, ...) — the model uses
+   lumped groups.
+
+3. **Separator water handling (2-phase vs 3-phase).**
+   When UniSim's `sep3op` has `has_water_product: False` (all separators in R510),
+   use NeqSim `Separator` (2-phase), NOT `ThreePhaseSeparator`. The 2-phase Separator
+   gives combined oil+water liquid matching UniSim's 2-product behavior.
+   `ThreePhaseSeparator` removes ALL water, overcorrecting liquid MW
+   (e.g., 201.9 vs target 98.2, while 2-phase gives 66.2 — closer overall).
+
+4. **Compressor efficiency extraction fails for some models.** All 6 compressors
+   in R510 returned `None` for `AdiabaticEfficiency` from COM. The 75% isentropic
+   default causes 10-32°C outlet temperature deviations. To improve accuracy,
+   back-calculate efficiency from UniSim inlet/outlet data.
+
+5. **Recycle convergence.** Even with `setTolerance(1e6)` on all 13 recycles,
+   the full ProcessModel with 8 areas still times out. Root cause is likely the
+   combination of Adjusters, absorber columns, and multi-area iteration.
+   **Workaround**: Test individual process areas or connected sub-paths first
+   (the 17-unit connected model runs in 0.5s). Build up to full model incrementally.
+
+6. **JSON key format.** The extracted JSON uses `pressure_bara` (not `pressure_kPa`)
+   and `mass_flow_kgh` (not `mass_flow_kg_h`). When writing comparison scripts,
+   use these exact keys.
+
+7. **Sub-flowsheet mapping uses positional order.** When the JSON has sub-flowsheet
+   operations that cannot be matched by name or stream overlap, the reader falls
+   back to positional matching based on the original JSON order. This handles
+   cases where sub-flowsheet operation names are generic (e.g., `MIX-100` appears
+   in both main and sub-flowsheet).
+
+8. **Temperature matching is the strongest comparison metric.** Temperatures
+   showed < 0.3°C deviation across the connected path. Gas-phase MW was within
+   5% for most equipment. Use temperature as the primary validation metric;
+   MW and flow deviations are often caused by liquid-phase water handling
+   rather than thermodynamic model errors.
