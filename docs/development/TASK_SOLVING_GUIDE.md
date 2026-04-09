@@ -729,6 +729,10 @@ The workflow enforces quality gates between steps:
 - Figures saved to `figures/` as PNG
 - **Benchmark validation notebook** exists with comparison table and deviation plot
 - `benchmark_validation` section populated in results.json
+- **Consistency check PASSED**: Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
+  to detect inconsistencies across notebooks. Fix CRITICAL issues before generating reports.
+  Common issues: numerical mismatches, scope mismatches (volumetric vs mass-based calculations),
+  contradictory conclusions, or external study data measuring different quantities than notebooks.
 
 ### Structured Validation
 

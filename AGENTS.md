@@ -103,6 +103,14 @@ workspace root.
      - Saves `uncertainty` and `risk_evaluation` results to `results.json`
    - **Save results.json** in the task root (see pattern below)
 
+   **Step 2.5 — Consistency Check (MANDATORY before report)**
+   - Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
+   - The tool extracts numerical values from all notebooks and results.json
+   - Detects inconsistencies: numerical mismatches, scope mismatches (e.g., volumetric vs mass-based), contradictory claims
+   - Produces `consistency_report.json` in the task folder
+   - **Fix any CRITICAL issues before generating the report**
+   - Common issues: external study data measuring different quantities than notebook calculations
+
    **Step 3 — Report**
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce a professional
@@ -293,6 +301,41 @@ if report.getWarningCount() > 0:
 
 assert report.isValid(), "results.json failed validation — fix errors above"
 ```
+
+### Iterative Updates to results.json
+
+When working iteratively with continuous updates:
+
+1. **Load before Modifying** — Always read existing results.json before adding new data:
+   ```python
+   results_path = TASK_DIR / "results.json"
+   if results_path.exists():
+       with open(results_path, "r") as f:
+           results = json.load(f)
+   else:
+       results = {}
+   ```
+
+2. **Use dict.update() for New Data** — Merge new results without losing existing:
+   ```python
+   results["key_results"] = {**results.get("key_results", {}), "new_result": 42.5}
+   results["figure_captions"] = {**results.get("figure_captions", {}), "new_plot.png": "Caption"}
+   ```
+
+3. **Append to Lists** — For discussion, tables, equations:
+   ```python
+   results.setdefault("figure_discussion", []).append(new_discussion)
+   results.setdefault("tables", []).append(new_table)
+   ```
+
+4. **Run Consistency Check** before report generation:
+   ```bash
+   python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
+   ```
+
+5. **Regenerate Report** — The report generator dynamically includes sections based on
+   what's present in results.json. Adding `uncertainty` or `risk_evaluation` automatically
+   creates those sections in the report.
 
 The report generator auto-reads this file to populate Results and Validation sections.
 - **key_results**: Rendered as styled table with auto-detected units (use suffixes like `_C`, `_bar`, `_kg`, `_hours`)

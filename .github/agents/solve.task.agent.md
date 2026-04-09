@@ -1357,7 +1357,18 @@ Document the independent check in `step2_analysis/notes.md` under a
     you MUST update these strings to match the latest results. Where possible, let
     conclusions come from `results.json["conclusions"]` instead of hardcoding.
 
-17. **Run the report generator** to produce the engineering report (Word + HTML):
+17. **Run consistency checker** (MANDATORY before report generation):
+    ```
+    Run in terminal: python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
+    ```
+    The consistency checker:
+    - Extracts numerical values from all notebooks and results.json
+    - Detects inconsistencies: numerical mismatches, scope mismatches (e.g., volumetric vs mass-based), contradictory claims
+    - Produces `consistency_report.json` in the task folder
+    - **Fix any CRITICAL issues before generating the report**
+    - Common issue: external study data (e.g., Gudrun paper) measuring different quantities than notebook calculations — these need clarification in the report, not "fixing"
+
+18. **Run the report generator** to produce the engineering report (Word + HTML):
     ```
     Run in terminal: python step3_report/generate_report.py
     ```
@@ -1376,19 +1387,19 @@ Document the independent check in `step2_analysis/notes.md` under a
     - All formatting renders automatically when corresponding keys exist in
       `results.json` — no custom rendering code needed per task
 
-18. **Update the task README** (`README.md` in the task folder):
+19. **Update the task README** (`README.md` in the task folder):
     - Fill in the Problem Statement
     - Check off completed steps
     - Write the Key Results section
 
 ### Phase 4: Knowledge Capture & Contribution
 
-19. **Identify reusable outputs**:
+20. **Identify reusable outputs**:
     - If the notebook is generally useful → mention it could go to `examples/notebooks/`
     - If a NeqSim API gap was found → document it for future development
     - If a new pattern was discovered → note it for `CODE_PATTERNS.md`
 
-20. **Fix and improve documentation** encountered during the task:
+21. **Fix and improve documentation** encountered during the task:
     - If you found **errors** in existing docs (wrong API signatures, outdated
       patterns, incorrect examples), fix them and include the fixes in the PR.
     - If you discovered **missing documentation** (undocumented classes, missing
@@ -1399,7 +1410,7 @@ Document the independent check in `step2_analysis/notes.md` under a
       when adding new doc pages.
     - Documentation fixes go in the **same PR** as the task outputs.
 
-21. **Draft a task log entry** (but don't write to the file directly):
+22. **Draft a task log entry** (but don't write to the file directly):
     ```
     ### YYYY-MM-DD — Task Title
     **Type:** X (TypeName)
@@ -1409,7 +1420,7 @@ Document the independent check in `step2_analysis/notes.md` under a
     ```
     Show this to the user for them to add to `docs/development/TASK_LOG.md`.
 
-22. **Create a Pull Request** (if the user asks, or if reusable outputs were produced):
+23. **Create a Pull Request** (if the user asks, or if reusable outputs were produced):
 
     When the task produces reusable code (tests, notebooks, docs, API extensions),
     offer to create a PR. If the user confirms, execute these steps:

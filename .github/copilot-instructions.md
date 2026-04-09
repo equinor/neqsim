@@ -1365,7 +1365,13 @@ docs, or the workspace root.
 9. **For cost estimation:** Use component-level NeqSim classes (e.g., `SURFCostEstimator`, `SubseaCostEstimator`) instead of flat lump-sum estimates. Break down CAPEX into verifiable subcategories.
 10. **Self-review before delivering:** Re-read all formulas checking for sign errors, double-counting, wrong time indexing, and missing terms. Compare key outputs against industry benchmarks.
 11. **Benchmark validation (MANDATORY):** Create a separate benchmark notebook (`XX_benchmark_validation.ipynb`) comparing NeqSim results against independent reference data (NIST, textbook examples, published cases, industry benchmarks). Include at least 3 data points, a parity/deviation plot, and save `benchmark_validation` results to `results.json`. Include benchmark comparison in the final report.
-12. **Uncertainty analysis (MANDATORY):** Create a separate uncertainty notebook (`XX_uncertainty_risk_analysis.ipynb`) that:
+12. **Consistency check (MANDATORY before report):** Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/` before generating reports. This tool:
+    - Extracts numerical values from all notebooks and results.json
+    - Detects inconsistencies: numerical mismatches, scope mismatches (volumetric vs mass-based), contradictory claims
+    - Produces `consistency_report.json` with issues to fix
+    - **Fix CRITICAL issues before generating the report**
+    - Common issue: external study data (e.g., Gudrun) measuring different quantities than notebook calculations
+13. **Uncertainty analysis (MANDATORY):** Create a separate uncertainty notebook (`XX_uncertainty_risk_analysis.ipynb`) that:
     - Identifies key uncertain input parameters with realistic ranges (low/base/high or probability distributions)
     - **MUST use full NeqSim process simulations inside the Monte Carlo loop** — do NOT
       use simplified Python correlations when NeqSim classes exist for the calculation

@@ -53,6 +53,7 @@ for a full explanation of the architecture and internals.
 | `neqsim_dev_setup.py` | JVM bootstrap, class imports, compile + kernel restart |
 | `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) |
 | `new_task.py` | Create task-solving folders for the 4-step AI workflow |
+| `consistency_checker.py` | **Pre-report quality gate.** Extracts numerical values from notebooks and results.json, detects inconsistencies (numerical mismatches, scope mismatches, contradictory claims). Run before `generate_report.py`. Produces `consistency_report.json`. |
 | `unisim_reader.py` | UniSim/HYSYS .usc COM reader → NeqSim Python/notebook/EOT/JSON. 45+ op types, port-specific forward refs, auto-recycle wiring. |
 | `test_unisim_outputs.py` | 14 pytest tests for all UniSim converter output modes (no COM needed) |
 | `explore_unisim_com.py` | Diagnostic: dump UniSim COM object model from any .usc file |
