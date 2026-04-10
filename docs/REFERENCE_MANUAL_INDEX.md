@@ -307,6 +307,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Water Cooler & Reboiler**     | [docs/process/equipment/water_cooler_reboiler.md](process/equipment/water_cooler_reboiler)           | **WaterCooler (IAPWS), ReBoiler for distillation**                                                                  |
 | Mechanical Design               | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design)               | HX mechanical design                                                                                                |
 | **Thermal-Hydraulic Design**    | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design) | **Shell-and-tube thermal design: Gnielinski, Kern, Bell-Delaware, LMTD correction, vibration screening, zone analysis** |
+| **Two-Phase Heat Transfer**     | [docs/process/mechanical_design/two_phase_heat_transfer.md](process/mechanical_design/two_phase_heat_transfer) | **Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH two-phase pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts** |
 | **Heat Integration (Pinch Analysis)** | [docs/process/equipment/heat_integration.md](process/equipment/heat_integration) | **PinchAnalysis class: Linnhoff method, composite curves, grand composite curve, minimum utility targeting, HeatStream model** |
 
 ### Chapter 17: Valves & Flow Control
@@ -998,6 +999,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ----------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide) | **NEW** TEMA shell and tube heat exchanger design standards |
 | **Thermal-Hydraulic Design** | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design) | **NEW** Tube/shell HTC (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops, LMTD correction, vibration screening, rating mode |
+| **Two-Phase Heat Transfer** | [docs/process/mechanical_design/two_phase_heat_transfer.md](process/mechanical_design/two_phase_heat_transfer) | **NEW** Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH two-phase pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts |
 
 ### Appendix H: Cookbook (Quick Recipes)
 
