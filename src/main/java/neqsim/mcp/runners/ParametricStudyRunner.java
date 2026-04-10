@@ -18,46 +18,26 @@ import neqsim.process.processmodel.SimulationResult;
  * Parametric study runner for sensitivity analysis and optimization sweeps.
  *
  * <p>
- * Enables license-free batch exploration of a process design space. A typical
- * cooperative UniSim–NeqSim workflow:
- * <ol>
- *   <li>Engineer builds the base case in UniSim (industry-accepted model)</li>
- *   <li>Convert to NeqSim JSON via {@code unisim_reader.py}</li>
- *   <li>Run a parametric study with this runner (hundreds of cases, no license)</li>
- *   <li>Identify optimal operating point</li>
- *   <li>Write the optimal case back to UniSim via {@code unisim_writer.py}</li>
- * </ol>
+ * Enables license-free batch exploration of a process design space. A typical cooperative
+ * UniSim–NeqSim workflow:
  * </p>
+ * <ol>
+ * <li>Engineer builds the base case in UniSim (industry-accepted model)</li>
+ * <li>Convert to NeqSim JSON via {@code unisim_reader.py}</li>
+ * <li>Run a parametric study with this runner (hundreds of cases, no license)</li>
+ * <li>Identify optimal operating point</li>
+ * <li>Write the optimal case back to UniSim via {@code unisim_writer.py}</li>
+ * </ol>
  *
  * <h2>Input JSON Format:</h2>
  *
- * <pre>{@code
- * {
- *   "baseProcess": { ... standard process JSON ... },
- *   "sweeps": [
- *     {
- *       "address": "Feed.temperature",
- *       "unit": "C",
- *       "values": [10.0, 20.0, 30.0, 40.0, 50.0]
- *     },
- *     {
- *       "address": "Feed.pressure",
- *       "unit": "bara",
- *       "from": 30.0,
- *       "to": 80.0,
- *       "steps": 6
- *     }
- *   ],
- *   "outputs": [
- *     {"address": "HP Sep.gasOutStream.flowRate", "unit": "MSm3/day"},
- *     {"address": "Compressor.power", "unit": "kW"}
- *   ],
- *   "mode": "full_factorial"
- * }
- * }</pre>
+ * <pre>{@code { "baseProcess": { ... standard process JSON ... }, "sweeps": [ { "address":
+ * "Feed.temperature", "unit": "C", "values": [10.0, 20.0, 30.0, 40.0, 50.0] }, { "address":
+ * "Feed.pressure", "unit": "bara", "from": 30.0, "to": 80.0, "steps": 6 } ], "outputs": [
+ * {"address": "HP Sep.gasOutStream.flowRate", "unit": "MSm3/day"}, {"address": "Compressor.power",
+ * "unit": "kW"} ], "mode": "full_factorial" } }</pre>
  *
- * @author Even Solbraa
- * @version 1.0
+ * @author Even Solbraa @version 1.0
  */
 public class ParametricStudyRunner {
 
@@ -75,8 +55,8 @@ public class ParametricStudyRunner {
    * <p>
    * Supports two modes:
    * <ul>
-   *   <li>{@code full_factorial} — all combinations of sweep values (N1 × N2 × ...)</li>
-   *   <li>{@code one_at_a_time} — vary one parameter while keeping others at base (default)</li>
+   * <li>{@code full_factorial} — all combinations of sweep values (N1 × N2 × ...)</li>
+   * <li>{@code one_at_a_time} — vary one parameter while keeping others at base (default)</li>
    * </ul>
    *
    * @param json the parametric study specification
@@ -142,8 +122,7 @@ public class ParametricStudyRunner {
     if (input.has("outputs") && input.get("outputs").isJsonArray()) {
       for (JsonElement elem : input.getAsJsonArray("outputs")) {
         JsonObject out = elem.getAsJsonObject();
-        outputs.add(new OutputDef(
-            out.get("address").getAsString(),
+        outputs.add(new OutputDef(out.get("address").getAsString(),
             out.has("unit") ? out.get("unit").getAsString() : ""));
       }
     }
@@ -239,8 +218,7 @@ public class ParametricStudyRunner {
         JsonObject outputVals = new JsonObject();
         for (OutputDef out : outputs) {
           try {
-            String valStr = auto.getVariableValue(out.address, out.unit);
-            double val = Double.parseDouble(valStr);
+            double val = auto.getVariableValue(out.address, out.unit);
             outputVals.addProperty(out.address, val);
           } catch (Exception e) {
             outputVals.addProperty(out.address + "_error", e.getMessage());
@@ -313,8 +291,8 @@ public class ParametricStudyRunner {
       List<Double> values = new ArrayList<>();
       for (JsonElement elem : caseResults) {
         JsonObject c = elem.getAsJsonObject();
-        if (c.has("converged") && c.get("converged").getAsBoolean()
-            && c.has("outputs") && c.getAsJsonObject("outputs").has(out.address)) {
+        if (c.has("converged") && c.get("converged").getAsBoolean() && c.has("outputs")
+            && c.getAsJsonObject("outputs").has(out.address)) {
           values.add(c.getAsJsonObject("outputs").get(out.address).getAsDouble());
         }
       }

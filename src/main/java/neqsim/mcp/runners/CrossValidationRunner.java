@@ -16,38 +16,24 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 
 /**
- * Cross-validation runner that compares the same process model under different
- * thermodynamic models (equations of state) to quantify model-selection risk.
+ * Cross-validation runner that compares the same process model under different thermodynamic models
+ * (equations of state) to quantify model-selection risk.
  *
  * <p>
- * This is a key enabler for UniSim–NeqSim cooperation: an engineer can export a
- * UniSim model (typically Peng-Robinson), convert it to NeqSim JSON, then run
- * cross-validation against CPA, GERG-2008, or other EoS that UniSim does not
- * offer — all in a single MCP tool call.
+ * This is a key enabler for UniSim–NeqSim cooperation: an engineer can export a UniSim model
+ * (typically Peng-Robinson), convert it to NeqSim JSON, then run cross-validation against CPA,
+ * GERG-2008, or other EoS that UniSim does not offer — all in a single MCP tool call.
  * </p>
  *
  * <h2>Input JSON Format:</h2>
  *
- * <pre>{@code
- * {
- *   "baseProcess": { ... standard process JSON ... },
- *   "models": ["SRK", "PR", "CPA", "GERG2008"],
- *   "compareVariables": [
- *     {"address": "HP Sep.gasOutStream.temperature", "unit": "C"},
- *     {"address": "Compressor.power", "unit": "kW"},
- *     {"address": "HP Sep.gasOutStream.density", "unit": "kg/m3"}
- *   ],
- *   "tolerances": {
- *     "temperature": 2.0,
- *     "pressure": 0.5,
- *     "density": 5.0,
- *     "default": 10.0
- *   }
- * }
- * }</pre>
+ * <pre>{@code { "baseProcess": { ... standard process JSON ... }, "models": ["SRK", "PR", "CPA",
+ * "GERG2008"], "compareVariables": [ {"address": "HP Sep.gasOutStream.temperature", "unit": "C"},
+ * {"address": "Compressor.power", "unit": "kW"}, {"address": "HP Sep.gasOutStream.density", "unit":
+ * "kg/m3"} ], "tolerances": { "temperature": 2.0, "pressure": 0.5, "density": 5.0, "default": 10.0
+ * } } }</pre>
  *
- * @author Even Solbraa
- * @version 1.0
+ * @author Even Solbraa @version 1.0
  */
 public class CrossValidationRunner {
 
@@ -60,8 +46,8 @@ public class CrossValidationRunner {
   private CrossValidationRunner() {}
 
   /**
-   * Runs the same process definition under multiple thermodynamic models and compares
-   * key output variables across all models.
+   * Runs the same process definition under multiple thermodynamic models and compares key output
+   * variables across all models.
    *
    * @param json JSON specification with baseProcess, models, and compareVariables
    * @return JSON string with per-model results, deviations, and risk flags
@@ -94,13 +80,11 @@ public class CrossValidationRunner {
     JsonArray modelsArray = input.getAsJsonArray("models");
 
     if (modelsArray.size() < 2) {
-      return errorJson("INSUFFICIENT_MODELS",
-          "Need at least 2 models for cross-validation",
+      return errorJson("INSUFFICIENT_MODELS", "Need at least 2 models for cross-validation",
           "Provide 2+ model names in the 'models' array");
     }
     if (modelsArray.size() > MAX_MODELS) {
-      return errorJson("TOO_MANY_MODELS",
-          "Maximum " + MAX_MODELS + " models per cross-validation",
+      return errorJson("TOO_MANY_MODELS", "Maximum " + MAX_MODELS + " models per cross-validation",
           "Reduce the number of models");
     }
 
@@ -109,8 +93,7 @@ public class CrossValidationRunner {
     if (input.has("compareVariables") && input.get("compareVariables").isJsonArray()) {
       for (JsonElement elem : input.getAsJsonArray("compareVariables")) {
         JsonObject spec = elem.getAsJsonObject();
-        compareSpecs.add(new CompareSpec(
-            spec.get("address").getAsString(),
+        compareSpecs.add(new CompareSpec(spec.get("address").getAsString(),
             spec.has("unit") ? spec.get("unit").getAsString() : ""));
       }
     }
@@ -149,20 +132,25 @@ public class CrossValidationRunner {
 
     // Cross-model comparison for each variable
     if (!compareSpecs.isEmpty()) {
-      JsonArray comparisons = buildComparisons(compareSpecs, modelRuns, tolerances,
-          defaultTolerance);
+      JsonArray comparisons =
+          buildComparisons(compareSpecs, modelRuns, tolerances, defaultTolerance);
       result.add("crossComparison", comparisons);
     }
 
     // Risk assessment summary
-    result.add("riskAssessment", buildRiskAssessment(compareSpecs, modelRuns,
-        tolerances, defaultTolerance));
+    result.add("riskAssessment",
+        buildRiskAssessment(compareSpecs, modelRuns, tolerances, defaultTolerance));
 
     return GSON.toJson(result);
   }
 
   /**
    * Runs the process with a specific EoS model, extracting the requested variables.
+   *
+   * @param baseProcess the base process JSON definition
+   * @param modelName the EoS model name to use
+   * @param compareSpecs list of variables to extract after simulation
+   * @return a ModelRun containing extracted values and convergence status
    */
   private static ModelRun runWithModel(JsonObject baseProcess, String modelName,
       List<CompareSpec> compareSpecs) {
@@ -191,8 +179,7 @@ public class CrossValidationRunner {
           ProcessAutomation auto = process.getAutomation();
           for (CompareSpec spec : compareSpecs) {
             try {
-              String valueStr = auto.getVariableValue(spec.address, spec.unit);
-              double value = Double.parseDouble(valueStr);
+              double value = auto.getVariableValue(spec.address, spec.unit);
               run.values.put(spec.address, value);
             } catch (Exception e) {
               run.extractionErrors.put(spec.address, e.getMessage());
@@ -216,9 +203,15 @@ public class CrossValidationRunner {
 
   /**
    * Builds per-variable cross-model comparisons with deviation analysis.
+   *
+   * @param specs list of variables to compare
+   * @param runs list of model run results
+   * @param tolerances per-variable tolerance overrides
+   * @param defaultTol default tolerance percentage
+   * @return a JSON array of comparison objects
    */
-  private static JsonArray buildComparisons(List<CompareSpec> specs,
-      List<ModelRun> runs, Map<String, Double> tolerances, double defaultTol) {
+  private static JsonArray buildComparisons(List<CompareSpec> specs, List<ModelRun> runs,
+      Map<String, Double> tolerances, double defaultTol) {
     JsonArray comparisons = new JsonArray();
 
     for (CompareSpec spec : specs) {
@@ -263,8 +256,8 @@ public class CrossValidationRunner {
         comp.addProperty("tolerancePercent", tol);
         boolean withinTolerance = spreadPct <= tol;
         comp.addProperty("withinTolerance", withinTolerance);
-        comp.addProperty("riskLevel", withinTolerance ? "LOW"
-            : (spreadPct <= tol * 2) ? "MEDIUM" : "HIGH");
+        comp.addProperty("riskLevel",
+            withinTolerance ? "LOW" : (spreadPct <= tol * 2) ? "MEDIUM" : "HIGH");
       }
 
       comparisons.add(comp);
@@ -275,9 +268,15 @@ public class CrossValidationRunner {
 
   /**
    * Builds an overall risk assessment summary.
+   *
+   * @param specs list of variables to assess
+   * @param runs list of model run results
+   * @param tolerances per-variable tolerance overrides
+   * @param defaultTol default tolerance percentage
+   * @return a JSON object with the risk assessment summary
    */
-  private static JsonObject buildRiskAssessment(List<CompareSpec> specs,
-      List<ModelRun> runs, Map<String, Double> tolerances, double defaultTol) {
+  private static JsonObject buildRiskAssessment(List<CompareSpec> specs, List<ModelRun> runs,
+      Map<String, Double> tolerances, double defaultTol) {
     JsonObject assessment = new JsonObject();
 
     int totalVars = specs.size();

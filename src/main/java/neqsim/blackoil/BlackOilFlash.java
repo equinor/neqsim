@@ -1,12 +1,18 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
+
 /**
  * Core Black-Oil flash calculator. Temperature dependence is assumed to be captured by the PVT
  * table (single Tref) unless you extend it.
  *
  * @author esol
+ * @version 1.0
  */
-public final class BlackOilFlash {
+public final class BlackOilFlash implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   private final BlackOilPVTTable pvt;
   private final double rho_o_sc;
   private final double rho_g_sc;

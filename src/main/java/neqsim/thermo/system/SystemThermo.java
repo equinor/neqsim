@@ -1914,7 +1914,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final double getBeta() {
-    // TODO: verify, actually returning the heaviest?
+    // Returns beta of the first phase (lightest/gas by convention after phase identification)
     return beta[0];
   }
 
@@ -3159,19 +3159,18 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public int getPhaseIndex(String phaseTypeName) {
-    // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
         return phaseIndex[i];
       }
     }
+    logger.debug("Phase type '{}' not found, returning first phase index", phaseTypeName);
     return phaseIndex[0];
   }
 
   /** {@inheritDoc} */
   @Override
   public int getPhaseNumberOfPhase(PhaseType pt) {
-    // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getType() == pt) {
         return i;
@@ -3189,6 +3188,7 @@ public abstract class SystemThermo implements SystemInterface {
         return i;
       }
     }
+    logger.debug("Phase type {} not found, returning phase 0", pt);
     return 0;
   }
 
@@ -4125,12 +4125,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isPhase(int i) {
-    // TODO: what if i > numberofphases?
-    if (i > phaseArray.length) {
+    if (i < 0 || i >= numberOfPhases) {
       return false;
     }
-
-    // getPhase(i) without try/catch
     return phaseArray[phaseIndex[i]] != null;
   }
 
@@ -4416,10 +4413,9 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void reInitPhaseType() {
     phaseType[0] = PhaseType.GAS;
-    phaseType[1] = PhaseType.LIQUID;
-    phaseType[2] = PhaseType.LIQUID;
-    phaseType[3] = PhaseType.LIQUID;
-    // TODO: why stop at 3 and not iterate through MAX_PHASES elements?
+    for (int i = 1; i < phaseType.length; i++) {
+      phaseType[i] = PhaseType.LIQUID;
+    }
   }
 
   /** {@inheritDoc} */
@@ -4512,11 +4508,11 @@ public abstract class SystemThermo implements SystemInterface {
   public void reset() {
     init(0);
     for (int i = 0; i < numberOfComponents; i++) {
-      // TODO: numeric issue, nearly zero
-      addComponent(getPhase(0).getComponent(i).getComponentName(),
-          -getPhase(0).getComponent(i).getNumberOfMolesInPhase());
+      double moles = getPhase(0).getComponent(i).getNumberOfMolesInPhase();
+      if (Math.abs(moles) > 1e-100) {
+        addComponent(getPhase(0).getComponent(i).getComponentName(), -moles);
+      }
     }
-    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -4769,7 +4765,11 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void setBeta(double b) {
-    // TODO: if number of phases > 2, should fail
+    if (numberOfPhases > 2) {
+      logger.warn(
+          "setBeta(double) called with {} phases - use setBeta(int, double) for multi-phase systems",
+          numberOfPhases);
+    }
     if (b < 0) {
       logger.warn("setBeta - Tried to set beta < 0: " + beta);
       b = phaseFractionMinimumLimit;
