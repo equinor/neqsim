@@ -4125,7 +4125,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isPhase(int i) {
-    if (i < 0 || i >= numberOfPhases) {
+    if (i < 0 || i >= phaseArray.length) {
       return false;
     }
     return phaseArray[phaseIndex[i]] != null;
