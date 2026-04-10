@@ -19,6 +19,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
+  /** Cached molar volume from last converged solution for faster initial guess. */
+  private transient double cachedMolarVolume = -1.0;
+
   double dnSAFTdVdVdV = 1.0;
 
   double daHSSAFTdNdNdN = 1.0;
@@ -1142,7 +1145,13 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     if (Btemp <= 0) {
       logger.info("b negative in volume calc");
     }
-    setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+
+    // Use cached molar volume from previous converged solution as initial guess
+    if (cachedMolarVolume > 1.0e-10) {
+      setMolarVolume(cachedMolarVolume);
+    } else {
+      setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+    }
     int iterations = 0;
     double oldMolarVolume = 0.0;
     // System.out.println("volume " + getVolume());
@@ -1203,6 +1212,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
      * " "+"  itert: " + iterations +" " + "  phase " + pt+ "  " + h + " " +dh + " B " + Btemp +
      * "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
      */
+    cachedMolarVolume = getMolarVolume();
     return getMolarVolume();
   }
 }

@@ -82,24 +82,33 @@ public class SystemPCSAFT extends SystemSrkEos {
   @Override
   public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass,
       double density) {
-    // componentName = (componentName + "_" + getFluidName());
     super.addTBPfraction(componentName2, numberOfMoles, molarMass, density);
-    // addComponent(componentName2, numberOfMoles, 290.0, 30.0, 0.11);
     String componentName =
         getPhase(0).getComponent(getPhase(0).getNumberOfComponents() - 1).getComponentName();
-    for (int i = 0; i < numberOfPhases; i++) {
-      // getPhase(phaseIndex[i]).getComponent(componentName).setMolarMass(molarMass);
-      // getPhase(phaseIndex[i]).getComponent(componentName).setIsTBPfraction(true);
+    double mwG = molarMass * 1e3; // convert kg/mol to g/mol
 
-      double mSaft = 0.0249 * molarMass * 1e3 + 0.9711;
-      double epskSaftm = 6.5446 * molarMass * 1e3 + 177.92;
-      double msigm = 1.6947 * molarMass * 1e3 + 23.27;
+    // Gross & Sadowski (2001, I&EC Res, 40, 1244-1260) n-alkane correlations
+    double mSaft = 0.0257 * mwG + 0.8444;
+    double epskSaftm = 7.0106 * mwG + 117.10; // m * (eps/k) [K]
+    double msigm3 = 1.7296 * mwG + 15.050; // m * sigma^3 [Angstrom^3]
+
+    // Density-based correction for sigma when specific gravity is available.
+    // Higher SG (e.g. aromatics) implies smaller molecular diameter at same MW.
+    if (density > 0.5 && density < 1.5) {
+      // Approximate n-alkane specific gravity from Riazi-Daubert type fit (C5-C20)
+      double sgAlkane = 1.07 - 3.5649 / Math.pow(mwG, 0.25);
+      if (sgAlkane > 0.5 && sgAlkane < 1.0) {
+        msigm3 = msigm3 * (sgAlkane / density);
+      }
+    }
+
+    for (int i = 0; i < numberOfPhases; i++) {
       getPhase(phaseIndex[i]).getComponent(componentName).setmSAFTi(mSaft);
       getPhase(phaseIndex[i]).getComponent(componentName).setEpsikSAFT(epskSaftm / mSaft);
       getPhase(phaseIndex[i]).getComponent(componentName)
-          .setSigmaSAFTi(Math.pow(msigm / mSaft, 1.0 / 3.0) / 1.0e10);
-      logger.info("Saft parameters: m " + mSaft + " epsk " + epskSaftm / mSaft + " sigma "
-          + Math.pow(msigm / mSaft, 1.0 / 3.0));
+          .setSigmaSAFTi(Math.pow(msigm3 / mSaft, 1.0 / 3.0) / 1.0e10);
+      logger.info("PC-SAFT TBP params: m=" + mSaft + " eps/k=" + epskSaftm / mSaft + " sigma="
+          + Math.pow(msigm3 / mSaft, 1.0 / 3.0) + " Angstrom (SG=" + density + ")");
     }
   }
 
@@ -122,8 +131,8 @@ public class SystemPCSAFT extends SystemSrkEos {
    * </p>
    */
   public void commonInitialization() {
-    setImplementedCompositionDeriativesofFugacity(false);
-    setImplementedPressureDeriativesofFugacity(false);
-    setImplementedTemperatureDeriativesofFugacity(false);
+    setImplementedCompositionDeriativesofFugacity(true);
+    setImplementedPressureDeriativesofFugacity(true);
+    setImplementedTemperatureDeriativesofFugacity(true);
   }
 }
