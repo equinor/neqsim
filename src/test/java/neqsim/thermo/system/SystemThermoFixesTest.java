@@ -31,7 +31,7 @@ class SystemThermoFixesTest {
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
 
-    ThermodynamicOper ations ops = new ThermodynamicOperations(fluid);
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
 
     int nPhases = fluid.getNumberOfPhases();
