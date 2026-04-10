@@ -868,8 +868,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       return;
     }
 
-    // Initialize fluid for calculations
+    // Initialize fluid for calculations (must have density and viscosity)
     SystemInterface fluid = fluidTemplate.clone();
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+      ops.TPflash();
+    } catch (Exception ex) {
+      logger.warn("TP flash failed for fluid template: " + ex.getMessage());
+    }
+    fluid.initProperties();
 
     iterationCount = 0;
     converged = false;
