@@ -169,4 +169,7 @@
 "EN-13445","2021","HeatExchanger","CorrosionAllowance",1.00,3.00,"mm","Corrosion allowance"
 "PD-5500","2021","HeatExchanger","MaxPressure",0.00,400.00,"barg","PD 5500 maximum design pressure for HX"
 "PD-5500","2021","HeatExchanger","JointEfficiency",0.65,1.00,"-","Joint efficiency range"
-"PD-5500","2021","HeatExchanger","CorrosionAllowance",1.50,3.00,"mm","Corrosion allowance"
+"PD-5500","2021","HeatExchanger","CorrosionAllowance",1.50,3.00,"mm","Corrosion allowance""ISO-16530-1","2017","SubseaWell","WellIntegrityTestInterval",0.50,1.00,"yr","Well integrity test interval (Section 8)"
+"ISO-16530-1","2017","SubseaWell","AnnularPressureMonitoring",1.00,1.00,"-","Continuous annular P monitoring required"
+"ISO-16530-1","2017","SubseaWell","BarrierVerificationInterval",1.00,1.00,"yr","Barrier element verification interval (Section 9)"
+"ISO-16530-1","2017","SubseaWell","CementEvaluationRequired",1.00,1.00,"-","Cement bond evaluation required post-placement"
