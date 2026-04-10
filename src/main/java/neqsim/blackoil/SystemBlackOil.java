@@ -1,12 +1,18 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
+
 /**
  * Lightweight Black-Oil "system/stream" with standard totals and P/T. Not a full NeqSim
  * SystemInterface (by design, to keep it minimal).
  *
  * @author esol
+ * @version 1.0
  */
-public class SystemBlackOil {
+public class SystemBlackOil implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   private final BlackOilPVTTable pvt;
   private final BlackOilFlash flash;
   private double P;
