@@ -321,11 +321,162 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     }
   }
 
+  // ============ MAASP Calculation (API RP 90 / NORSOK D-010) ============
+
+  /** Casing burst rating at surface in bara. */
+  private double casingBurstRating = 0.0;
+
+  /** Tubing collapse rating in bara. */
+  private double tubingCollapseRating = 0.0;
+
+  /** Shoe depth in m TVD. */
+  private double shoeDepth = 0.0;
+
+  /** Fracture pressure at shoe in bara. */
+  private double fracPressureAtShoe = 0.0;
+
+  /** Annular fluid gradient in bar/m. */
+  private double annularFluidGradient = 0.098; // ~water
+
+  /** Safety factor for burst MAASP per API RP 90. */
+  private double maaspBurstSafetyFactor = 1.10;
+
+  /** Safety factor for collapse MAASP per API RP 90. */
+  private double maaspCollapseSafetyFactor = 1.00;
+
+  /** Computed MAASP in bara. */
+  private double maasp = 0.0;
+
+  /** MAASP limiting criterion. */
+  private String maaspLimitingCriterion = "";
+
+  /**
+   * Set parameters for MAASP (Maximum Allowable Annular Surface Pressure) calculation.
+   *
+   * <p>
+   * MAASP is calculated per API RP 90 and NORSOK D-010 Section 9 as the minimum of:
+   * </p>
+   * <ul>
+   * <li>Casing burst rating / safety factor</li>
+   * <li>Tubing collapse rating / safety factor</li>
+   * <li>Fracture pressure at shoe minus hydrostatic head of annular fluid</li>
+   * </ul>
+   *
+   * @param casingBurstRating casing burst rating at surface (bara)
+   * @param tubingCollapseRating tubing collapse rating (bara)
+   * @param shoeDepth shoe depth (m TVD)
+   * @param fracPressureAtShoe fracture pressure at shoe (bara)
+   * @param annularFluidGradient annular fluid pressure gradient (bar/m), default ~0.098 for water
+   */
+  public void setMAASPParameters(double casingBurstRating, double tubingCollapseRating,
+      double shoeDepth, double fracPressureAtShoe, double annularFluidGradient) {
+    this.casingBurstRating = casingBurstRating;
+    this.tubingCollapseRating = tubingCollapseRating;
+    this.shoeDepth = shoeDepth;
+    this.fracPressureAtShoe = fracPressureAtShoe;
+    this.annularFluidGradient = annularFluidGradient;
+  }
+
+  /**
+   * Set MAASP safety factors from standards (typically loaded from API RP 90 CSV data).
+   *
+   * @param burstSF burst safety factor (default 1.10 per API RP 90)
+   * @param collapseSF collapse safety factor (default 1.00 per API RP 90)
+   */
+  public void setMAASPSafetyFactors(double burstSF, double collapseSF) {
+    this.maaspBurstSafetyFactor = burstSF;
+    this.maaspCollapseSafetyFactor = collapseSF;
+  }
+
+  /**
+   * Calculate MAASP (Maximum Allowable Annular Surface Pressure) per API RP 90.
+   *
+   * <p>
+   * MAASP = min(P_burst/SF_burst, P_collapse_tubing/SF_collapse, P_frac_shoe - rho*g*h_shoe)
+   * </p>
+   *
+   * @return MAASP in bara
+   */
+  public double calculateMAASP() {
+    maasp = Double.MAX_VALUE;
+    maaspLimitingCriterion = "";
+
+    // Criterion 1: Casing burst
+    if (casingBurstRating > 0) {
+      double burstLimit = casingBurstRating / maaspBurstSafetyFactor;
+      if (burstLimit < maasp) {
+        maasp = burstLimit;
+        maaspLimitingCriterion = "Casing burst (API RP 90)";
+      }
+    }
+
+    // Criterion 2: Tubing collapse
+    if (tubingCollapseRating > 0) {
+      double collapseLimit = tubingCollapseRating / maaspCollapseSafetyFactor;
+      if (collapseLimit < maasp) {
+        maasp = collapseLimit;
+        maaspLimitingCriterion = "Tubing collapse (API RP 90)";
+      }
+    }
+
+    // Criterion 3: Fracture at shoe minus hydrostatic
+    if (fracPressureAtShoe > 0 && shoeDepth > 0) {
+      double hydrostaticAtShoe = annularFluidGradient * shoeDepth;
+      double fracLimit = fracPressureAtShoe - hydrostaticAtShoe;
+      if (fracLimit < maasp) {
+        maasp = fracLimit;
+        maaspLimitingCriterion = "Fracture at shoe (NORSOK D-010)";
+      }
+    }
+
+    if (maasp == Double.MAX_VALUE) {
+      maasp = 0.0;
+      maaspLimitingCriterion = "Insufficient data";
+      logger.warn("MAASP calculation: insufficient parameters set");
+    }
+
+    return maasp;
+  }
+
+  /**
+   * Get the calculated MAASP value.
+   *
+   * @return MAASP in bara
+   */
+  public double getMAASP() {
+    return maasp;
+  }
+
+  /**
+   * Get the criterion that limits the MAASP.
+   *
+   * @return limiting criterion description
+   */
+  public String getMAASPLimitingCriterion() {
+    return maaspLimitingCriterion;
+  }
+
+  /**
+   * Check if annular pressure exceeds MAASP.
+   *
+   * @param annularPressureBara current annular pressure (bara)
+   * @return true if pressure exceeds MAASP
+   */
+  public boolean isAnnularPressureExceeded(double annularPressureBara) {
+    if (maasp <= 0) {
+      calculateMAASP();
+    }
+    return annularPressureBara > maasp;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     if (sourcePressure > 0 || sinkPressure > 0) {
       calculate(sourcePressure, sinkPressure);
+    }
+    if (casingBurstRating > 0 || tubingCollapseRating > 0 || fracPressureAtShoe > 0) {
+      calculateMAASP();
     }
   }
 }

@@ -20,7 +20,7 @@ NeqSim provides a suite of interconnected classes for modeling these mechanisms,
 |-------|---------|---------|
 | `WellFlow` (injection mode) | `process.equipment.reservoir` | Multi-zone injectivity with fracture containment |
 | `InjectionWellModel` | `process.fielddevelopment.reservoir` | Multi-zone injection allocation with thermal stress |
-| `AnnularLeakagePath` | `process.equipment.reservoir` | Behind-casing leakage (cubic law + Darcy) |
+| `AnnularLeakagePath` | `process.equipment.reservoir` | Behind-casing leakage (cubic law + Darcy) and MAASP per API RP 90 |
 | `MultiCompartmentReservoir` | `process.equipment.reservoir` | Inter-zone pressure communication |
 | `CementDegradationModel` | `process.equipment.reservoir` | Time-dependent cement permeability under CO2 |
 | `InjectionConformanceMonitor` | `process.equipment.reservoir` | Hall plot analysis and conformance diagnosis |
@@ -146,6 +146,50 @@ double channelRate = leakage.getChannelLeakageRate("m3/day");
 double cementRate = leakage.getCementLeakageRate("m3/day");
 double totalRate = leakage.getTotalLeakageRate("m3/day");
 ```
+
+### MAASP Calculation (API RP 90)
+
+The `AnnularLeakagePath` also calculates Maximum Allowable Annular Surface
+Pressure (MAASP) per API RP 90. MAASP is the minimum of three independent
+limits:
+
+$$
+\text{MAASP} = \min\left(\frac{P_{burst}}{SF_{burst}},\; \frac{P_{collapse}}{SF_{collapse}},\; P_{frac} - \rho g h\right)
+$$
+
+where:
+
+- $P_{burst}$ = casing burst rating at the annulus surface
+- $P_{collapse}$ = tubing collapse rating
+- $P_{frac}$ = fracture pressure at the casing shoe
+- $\rho g h$ = hydrostatic head of the annular fluid
+
+```java
+AnnularLeakagePath leakage = new AnnularLeakagePath("A-annulus");
+
+// Set MAASP parameters
+leakage.setMAASPParameters(
+    620.0,    // casing burst rating (bara)
+    480.0,    // tubing collapse rating (bara)
+    2500.0,   // shoe depth (m)
+    500.0,    // fracture pressure at shoe (bara)
+    0.098     // annular fluid gradient (bar/m) — completion brine
+);
+
+// Optional: override API RP 90 default safety factors
+leakage.setMAASPSafetyFactors(1.10, 1.00);
+
+// Calculate
+double maasp = leakage.calculateMAASP();
+String limiting = leakage.getMAASPLimitingCriterion();
+// Returns: "Fracture at shoe", "Casing burst", or "Tubing collapse"
+
+// Check if monitored annulus pressure is safe
+boolean exceeded = leakage.isAnnularPressureExceeded(300.0);
+```
+
+The limiting criterion tells the operator which constraint controls, guiding
+the annular pressure management strategy.
 
 ## Multi-Compartment Reservoir
 
