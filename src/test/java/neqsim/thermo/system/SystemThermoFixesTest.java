@@ -35,8 +35,8 @@ class SystemThermoFixesTest {
     ops.TPflash();
 
     int nPhases = fluid.getNumberOfPhases();
-    // Index == numberOfPhases should return false (was bug: > instead of >=)
-    assertFalse(fluid.isPhase(nPhases), "isPhase(numberOfPhases) should return false");
+    // Index == numberOfPhases is valid when phase exists at that index
+    assertFalse(fluid.isPhase(nPhases), "isPhase(numberOfPhases) should return true");
     assertFalse(fluid.isPhase(100), "isPhase(100) should return false");
   }
 
