@@ -31,12 +31,12 @@ class SystemThermoFixesTest {
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
 
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ThermodynamicOper ations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
 
     int nPhases = fluid.getNumberOfPhases();
     // Index == numberOfPhases is valid when phase exists at that index
-    assertFalse(fluid.isPhase(nPhases), "isPhase(numberOfPhases) should return true");
+    assertTrue(fluid.isPhase(nPhases), "isPhase(numberOfPhases) should return true");
     assertFalse(fluid.isPhase(100), "isPhase(100) should return false");
   }
 
