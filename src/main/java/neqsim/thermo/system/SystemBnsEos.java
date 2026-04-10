@@ -69,11 +69,8 @@ public class SystemBnsEos extends SystemEos {
    * @return volume shift parameter
    */
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
-    // TODO: Review this implementation - appears to be incomplete
-    // Original implementation was commented out:
-    // double b = omegaB * ThermodynamicConstantsInterface.R * tc / pc;
-    // The volume shift should likely be: ciField * b
-    return ciField; // * b;
+    double b = omegaB * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
+    return ciField * b;
   }
 
   private static double[] pseudoCritical(double sgHc, boolean ag) {

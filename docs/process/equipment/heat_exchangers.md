@@ -19,6 +19,10 @@ Documentation for heat transfer equipment in NeqSim process simulation.
 > and rating mode, see the
 > [Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design).
 
+> **Two-Phase Services:** For condensation, boiling, two-phase pressure drop,
+> dynamic fouling, and tube insert enhancement, see the
+> [Two-Phase Heat Transfer Guide](../mechanical_design/two_phase_heat_transfer).
+
 ---
 
 ## Overview

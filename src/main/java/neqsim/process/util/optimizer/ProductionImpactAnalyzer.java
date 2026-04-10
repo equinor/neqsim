@@ -292,6 +292,8 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Calculates baseline (normal operation) values.
+   *
+   * @param result the result object to populate with baseline values
    */
   private void calculateBaseline(ProductionImpactResult result) {
     if (cachedBaselineProduction == null) {
@@ -382,6 +384,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Identifies equipment affected by the failure.
+   *
+   * @param process the process system to analyze
+   * @param failedEquipment the name of the failed equipment
+   * @param result the result object to populate with affected equipment
    */
   private void identifyAffectedEquipment(ProcessSystem process, String failedEquipment,
       ProductionImpactResult result) {

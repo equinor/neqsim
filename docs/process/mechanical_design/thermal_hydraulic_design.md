@@ -10,6 +10,11 @@ exchangers. The toolkit connects rigorous thermodynamic property predictions fro
 the process simulation to industry-standard heat transfer and pressure drop
 correlations.
 
+> **Two-Phase Services:** For condensation (Shah), boiling (Chen, Gungor-Winterton),
+> two-phase pressure drop (Friedel, MSH), dynamic fouling (Ebert-Panchal),
+> incremental zone analysis, and tube insert enhancement models, see the
+> [Two-Phase Heat Transfer and Advanced Correlations](two_phase_heat_transfer) guide.
+
 ## Architecture Overview
 
 The thermal design is built on five coordinated classes:

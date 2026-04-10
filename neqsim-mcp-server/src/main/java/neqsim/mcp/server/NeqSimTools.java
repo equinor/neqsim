@@ -14,6 +14,8 @@ import neqsim.mcp.runners.Validator;
 import neqsim.mcp.runners.AutomationRunner;
 import neqsim.mcp.runners.BatchRunner;
 import neqsim.mcp.runners.CapabilitiesRunner;
+import neqsim.mcp.runners.CrossValidationRunner;
+import neqsim.mcp.runners.ParametricStudyRunner;
 import neqsim.mcp.runners.PhaseEnvelopeRunner;
 import neqsim.mcp.runners.PropertyTableRunner;
 
@@ -548,5 +550,57 @@ public class NeqSimTools {
     error.addProperty("status", "error");
     error.addProperty("message", message);
     return error.toString();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // UniSim cooperation tools — cross-validation and parametric studies
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Cross-validate a process model across multiple thermodynamic models.
+   *
+   * @param crossValidationJson JSON specification with baseProcess, models, and compareVariables
+   * @return JSON with per-model results, deviations, and risk flags
+   */
+  @Tool(description = "Cross-validate a process model by running it under multiple equations "
+      + "of state (e.g. SRK, PR, CPA, GERG2008) and comparing key output variables. "
+      + "Quantifies model-selection risk for UniSim-to-NeqSim conversions or any design "
+      + "where EoS choice matters. Returns per-model values, spread, tolerance flags, "
+      + "and an overall risk assessment with recommendations.")
+  public String crossValidateModels(
+      @ToolArg(description = "JSON specification with: 'baseProcess' (standard process JSON), "
+          + "'models' (array of EoS names, e.g. [\"SRK\",\"PR\",\"CPA\",\"GERG2008\"]), "
+          + "'compareVariables' (array of {address, unit} to track across models), and "
+          + "optional 'tolerances' ({\"temperature\": 2.0, \"density\": 5.0, \"default\": 10.0} "
+          + "as percent thresholds).") String crossValidationJson) {
+    try {
+      return CrossValidationRunner.crossValidate(crossValidationJson);
+    } catch (Exception e) {
+      return errorJson("Cross-validation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a parametric study sweeping input variables and recording outputs.
+   *
+   * @param studyJson JSON specification with baseProcess, sweeps, and outputs
+   * @return JSON with all case results and summary statistics
+   */
+  @Tool(description = "Run a parametric study by sweeping one or more input variables and "
+      + "recording output variables for each case. Supports full-factorial (all combinations) "
+      + "and one-at-a-time (vary one while others at midpoint) modes. Ideal for license-free "
+      + "optimization of models converted from UniSim — run hundreds of cases without "
+      + "commercial license constraints. Max 5000 cases per study.")
+  public String runParametricStudy(
+      @ToolArg(description = "JSON specification with: 'baseProcess' (standard process JSON), "
+          + "'sweeps' (array of sweep definitions with 'address', 'unit', and either "
+          + "'values' array or 'from'/'to'/'steps' range), 'outputs' (array of {address, unit} "
+          + "to extract from each case), and optional 'mode' ('one_at_a_time' or "
+          + "'full_factorial', default one_at_a_time).") String studyJson) {
+    try {
+      return ParametricStudyRunner.run(studyJson);
+    } catch (Exception e) {
+      return errorJson("Parametric study failed: " + e.getMessage());
+    }
   }
 }
