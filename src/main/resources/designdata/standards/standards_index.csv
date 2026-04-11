@@ -42,3 +42,7 @@
 "NORSOK-P-002-HX","Rev 5","Process System Design Heat Exchangers","HeatExchanger,Cooler,Heater","standards/norsok_standards.csv","true"
 "NORSOK-M-001-HX","Rev 6","Materials Selection Heat Exchangers","HeatExchanger,Cooler,Heater","standards/norsok_standards.csv","true"
 "ISO-15547","2005","Plate-Fin Heat Exchangers Braised Aluminium","HeatExchanger","standards/dnv_iso_en_standards.csv","true"
+"NORSOK-D-010","Rev 5","Well integrity in drilling and well operations","SubseaWell","standards/norsok_standards.csv","true"
+"API-RP-90","1st Ed","Annular Casing Pressure Management","SubseaWell","standards/api_standards.csv","true"
+"API-TR-5C3","2008","Casing and Tubing Buckling in Wells","SubseaWell","standards/api_standards.csv","true"
+"ISO-16530-1","2017","Well Integrity Part 1 Life Cycle Governance","SubseaWell","standards/dnv_iso_en_standards.csv","true"

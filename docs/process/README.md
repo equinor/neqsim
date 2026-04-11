@@ -138,6 +138,7 @@ This documentation is organized into the following sections:
 | [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |
 | [torg_integration.md](torg_integration) | Technical Requirements Documents (TORG) integration |
 | [field_development_orchestration.md](field_development_orchestration) | Complete design workflow orchestration |
+| [mechanical_design/two_phase_heat_transfer.md](mechanical_design/two_phase_heat_transfer) | **Two-phase heat transfer — Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts** |
 
 ### Cost Estimation Framework (NEW) ✨
 

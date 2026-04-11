@@ -618,6 +618,11 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Checks if flow can be achieved with given inlet pressure.
+   *
+   * @param flow the target flow rate
+   * @param inletPressure the inlet pressure to test
+   * @param outletPressure the required outlet pressure
+   * @return true if the outlet pressure meets the requirement
    */
   private boolean canAchieveFlowWithPressure(double flow, double inletPressure,
       double outletPressure) {
@@ -640,6 +645,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Checks if all constraints are satisfied.
+   *
+   * @return true if all equipment constraints are within limits
    */
   private boolean areAllConstraintsSatisfied() {
     if (!hasProcess()) {
@@ -661,6 +668,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Evaluates all constraint violations.
+   *
+   * @return list of constraint violation descriptions
    */
   private List<String> evaluateAllConstraintViolations() {
     List<String> violations = new ArrayList<String>();
