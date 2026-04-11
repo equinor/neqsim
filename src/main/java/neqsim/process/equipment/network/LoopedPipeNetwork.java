@@ -229,6 +229,22 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Artificial lift type for wells.
+   */
+  public enum ArtificialLiftType {
+    /** No artificial lift (natural flow). */
+    NONE,
+    /** Gas lift — gas injected into tubing to reduce hydrostatic head. */
+    GAS_LIFT,
+    /** Electrical submersible pump. */
+    ESP,
+    /** Jet pump (hydraulic lift). */
+    JET_PUMP,
+    /** Sucker rod pump. */
+    ROD_PUMP
+  }
+
+  /**
    * Node type in the network.
    */
   public enum NodeType {
@@ -466,6 +482,33 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     private double erosionalVelocity = 0.0; // m/s — allowable erosional velocity
     private double erosionalVelocityRatio = 0.0; // actual/allowable (> 1.0 = exceeded)
     private double erosionalC = 125.0; // API RP 14E C-factor (100-150)
+
+    // Artificial lift parameters (for GAS_LIFT element type)
+    private double gasLiftRate = 0.0; // kg/s of lift gas injected
+    private double gasLiftGLR = 0.0; // m3/m3 gas-liquid ratio target
+    private double espPower = 0.0; // kW — ESP rated power
+    private double espFrequency = 60.0; // Hz — ESP motor frequency
+    private double espEfficiency = 0.55; // ESP pump efficiency
+    private double espHeadRise = 0.0; // Pa — calculated head rise
+    private ArtificialLiftType artificialLiftType = ArtificialLiftType.NONE;
+
+    // Water handling parameters
+    private double waterCut = 0.0; // volume fraction of water in liquid (0-1)
+    private double waterFlowRate = 0.0; // kg/s — produced water flow
+    private double waterInjectionRate = 0.0; // kg/s — injected water rate
+
+    // Sand / solids parameters
+    private double sandRate = 0.0; // kg/s — sand production rate
+    private double sandConcentration = 0.0; // kg/m3 — sand concentration in fluid
+    private double erosionRate = 0.0; // mm/yr — calculated pipe erosion rate
+    private double depositionRate = 0.0; // kg/m/yr — solids deposition per meter
+
+    // Corrosion parameters
+    private double co2MoleFraction = 0.0; // mol fraction of CO2 in gas
+    private double h2sMoleFraction = 0.0; // mol fraction of H2S in gas
+    private double corrosionRate = 0.0; // mm/yr — calculated corrosion rate
+    private double remainingWallLife = 0.0; // years until min wall thickness
+    private String corrosionModel = "deWaard"; // "deWaard" or "norsokM506"
 
     /**
      * Constructor for network pipe.
@@ -1250,6 +1293,348 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     public void setErosionalVelocityRatio(double ratio) {
       this.erosionalVelocityRatio = ratio;
     }
+
+    /**
+     * Get gas lift injection rate in kg/s.
+     *
+     * @return gas lift rate
+     */
+    public double getGasLiftRate() {
+      return gasLiftRate;
+    }
+
+    /**
+     * Set gas lift injection rate in kg/s.
+     *
+     * @param rate gas lift rate in kg/s
+     */
+    public void setGasLiftRate(double rate) {
+      this.gasLiftRate = rate;
+    }
+
+    /**
+     * Get gas lift target GLR in m3/m3.
+     *
+     * @return gas-liquid ratio target
+     */
+    public double getGasLiftGLR() {
+      return gasLiftGLR;
+    }
+
+    /**
+     * Set gas lift target GLR in m3/m3.
+     *
+     * @param glr gas-liquid ratio
+     */
+    public void setGasLiftGLR(double glr) {
+      this.gasLiftGLR = glr;
+    }
+
+    /**
+     * Get ESP rated power in kW.
+     *
+     * @return ESP power
+     */
+    public double getEspPower() {
+      return espPower;
+    }
+
+    /**
+     * Set ESP rated power in kW.
+     *
+     * @param power ESP rated power in kW
+     */
+    public void setEspPower(double power) {
+      this.espPower = power;
+    }
+
+    /**
+     * Get ESP motor frequency in Hz.
+     *
+     * @return frequency in Hz
+     */
+    public double getEspFrequency() {
+      return espFrequency;
+    }
+
+    /**
+     * Set ESP motor frequency in Hz.
+     *
+     * @param freq frequency in Hz
+     */
+    public void setEspFrequency(double freq) {
+      this.espFrequency = freq;
+    }
+
+    /**
+     * Get ESP pump efficiency (0-1).
+     *
+     * @return efficiency
+     */
+    public double getEspEfficiency() {
+      return espEfficiency;
+    }
+
+    /**
+     * Set ESP pump efficiency (0-1).
+     *
+     * @param eff efficiency (typically 0.3-0.7)
+     */
+    public void setEspEfficiency(double eff) {
+      this.espEfficiency = eff;
+    }
+
+    /**
+     * Get calculated ESP head rise in Pa.
+     *
+     * @return head rise
+     */
+    public double getEspHeadRise() {
+      return espHeadRise;
+    }
+
+    /**
+     * Set calculated ESP head rise in Pa.
+     *
+     * @param head head rise in Pa
+     */
+    public void setEspHeadRise(double head) {
+      this.espHeadRise = head;
+    }
+
+    /**
+     * Get artificial lift type.
+     *
+     * @return lift type
+     */
+    public ArtificialLiftType getArtificialLiftType() {
+      return artificialLiftType;
+    }
+
+    /**
+     * Set artificial lift type.
+     *
+     * @param type the lift type
+     */
+    public void setArtificialLiftType(ArtificialLiftType type) {
+      this.artificialLiftType = type;
+    }
+
+    /**
+     * Get water cut (volume fraction of water in liquid, 0-1).
+     *
+     * @return water cut
+     */
+    public double getWaterCut() {
+      return waterCut;
+    }
+
+    /**
+     * Set water cut (volume fraction of water in liquid, 0-1).
+     *
+     * @param wc water cut fraction
+     */
+    public void setWaterCut(double wc) {
+      this.waterCut = wc;
+    }
+
+    /**
+     * Get produced water flow rate in kg/s.
+     *
+     * @return water flow rate
+     */
+    public double getWaterFlowRate() {
+      return waterFlowRate;
+    }
+
+    /**
+     * Set produced water flow rate in kg/s.
+     *
+     * @param rate water flow rate in kg/s
+     */
+    public void setWaterFlowRate(double rate) {
+      this.waterFlowRate = rate;
+    }
+
+    /**
+     * Get water injection rate in kg/s.
+     *
+     * @return water injection rate
+     */
+    public double getWaterInjectionRate() {
+      return waterInjectionRate;
+    }
+
+    /**
+     * Set water injection rate in kg/s.
+     *
+     * @param rate water injection rate in kg/s
+     */
+    public void setWaterInjectionRate(double rate) {
+      this.waterInjectionRate = rate;
+    }
+
+    /**
+     * Get sand production rate in kg/s.
+     *
+     * @return sand rate
+     */
+    public double getSandRate() {
+      return sandRate;
+    }
+
+    /**
+     * Set sand production rate in kg/s.
+     *
+     * @param rate sand rate in kg/s
+     */
+    public void setSandRate(double rate) {
+      this.sandRate = rate;
+    }
+
+    /**
+     * Get sand concentration in kg/m3.
+     *
+     * @return sand concentration
+     */
+    public double getSandConcentration() {
+      return sandConcentration;
+    }
+
+    /**
+     * Set sand concentration in kg/m3.
+     *
+     * @param conc sand concentration in kg/m3
+     */
+    public void setSandConcentration(double conc) {
+      this.sandConcentration = conc;
+    }
+
+    /**
+     * Get calculated pipe erosion rate in mm/yr.
+     *
+     * @return erosion rate
+     */
+    public double getErosionRate() {
+      return erosionRate;
+    }
+
+    /**
+     * Set calculated pipe erosion rate in mm/yr.
+     *
+     * @param rate erosion rate in mm/yr
+     */
+    public void setErosionRate(double rate) {
+      this.erosionRate = rate;
+    }
+
+    /**
+     * Get solids deposition rate in kg/m/yr.
+     *
+     * @return deposition rate
+     */
+    public double getDepositionRate() {
+      return depositionRate;
+    }
+
+    /**
+     * Set solids deposition rate in kg/m/yr.
+     *
+     * @param rate deposition rate in kg/m/yr
+     */
+    public void setDepositionRate(double rate) {
+      this.depositionRate = rate;
+    }
+
+    /**
+     * Get CO2 mole fraction in gas phase.
+     *
+     * @return CO2 mole fraction
+     */
+    public double getCo2MoleFraction() {
+      return co2MoleFraction;
+    }
+
+    /**
+     * Set CO2 mole fraction in gas phase.
+     *
+     * @param moleFrac CO2 mole fraction (0-1)
+     */
+    public void setCo2MoleFraction(double moleFrac) {
+      this.co2MoleFraction = moleFrac;
+    }
+
+    /**
+     * Get H2S mole fraction in gas phase.
+     *
+     * @return H2S mole fraction
+     */
+    public double getH2sMoleFraction() {
+      return h2sMoleFraction;
+    }
+
+    /**
+     * Set H2S mole fraction in gas phase.
+     *
+     * @param moleFrac H2S mole fraction (0-1)
+     */
+    public void setH2sMoleFraction(double moleFrac) {
+      this.h2sMoleFraction = moleFrac;
+    }
+
+    /**
+     * Get calculated corrosion rate in mm/yr.
+     *
+     * @return corrosion rate
+     */
+    public double getCorrosionRate() {
+      return corrosionRate;
+    }
+
+    /**
+     * Set calculated corrosion rate in mm/yr.
+     *
+     * @param rate corrosion rate in mm/yr
+     */
+    public void setCorrosionRate(double rate) {
+      this.corrosionRate = rate;
+    }
+
+    /**
+     * Get remaining wall life in years until minimum wall thickness is reached.
+     *
+     * @return remaining wall life in years
+     */
+    public double getRemainingWallLife() {
+      return remainingWallLife;
+    }
+
+    /**
+     * Set remaining wall life in years.
+     *
+     * @param years remaining life in years
+     */
+    public void setRemainingWallLife(double years) {
+      this.remainingWallLife = years;
+    }
+
+    /**
+     * Get corrosion model name.
+     *
+     * @return model name ("deWaard" or "norsokM506")
+     */
+    public String getCorrosionModel() {
+      return corrosionModel;
+    }
+
+    /**
+     * Set corrosion model name.
+     *
+     * @param model "deWaard" or "norsokM506"
+     */
+    public void setCorrosionModel(String model) {
+      this.corrosionModel = model;
+    }
   }
 
   // Network topology
@@ -1296,6 +1681,28 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   // Compressor fuel gas tracking
   private double fuelGasHeatRate = 10000.0; // kJ/kWh (typical gas turbine ~10000)
   private double totalFuelGasRate = 0.0; // kg/s
+
+  // Water handling tracking
+  private final transient Map<String, double[]> nodeWaterBalance = new LinkedHashMap<>();
+  private double totalWaterProduction = 0.0; // kg/s
+  private double totalWaterInjection = 0.0; // kg/s
+
+  // Sand and solids tracking
+  private final transient Map<String, double[]> pipeSandResults = new LinkedHashMap<>();
+  private final transient List<String> sandViolations = new ArrayList<>();
+  private double maxAllowableSandRate = 0.0; // kg/s (0 = not checked)
+  private double maxAllowableErosionRate = 5.0; // mm/yr default limit
+
+  // Corrosion integrity tracking
+  private final transient Map<String, double[]> pipeCorrosionResults = new LinkedHashMap<>();
+  private final transient List<String> corrosionViolations = new ArrayList<>();
+  private double minAllowableWallLife = 5.0; // years — minimum remaining life before alarm
+
+  // Emissions tracking
+  private final transient Map<String, double[]> emissionsResults = new LinkedHashMap<>();
+  private double co2EmissionFactor = 2.75; // kgCO2/kg fuel gas (natural gas default)
+  private double totalCO2Emissions = 0.0; // kg/hr
+  private double methaneSlipFactor = 0.02; // fraction — unburned CH4 slip (typical 2%)
 
   /**
    * Create a new looped pipe network.
@@ -1828,6 +2235,704 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     element.setElementType(NetworkElementType.REGULATOR);
     element.setRegulatorSetPoint(setPointBar * 1e5);
     return element;
+  }
+
+  // =====================================================================
+  // Artificial Lift Methods
+  // =====================================================================
+
+  /**
+   * Configure gas lift on an existing well tubing or IPR element.
+   *
+   * <p>
+   * Gas lift reduces the hydrostatic head in the tubing by injecting gas, effectively reducing the
+   * pressure drop from bottomhole to wellhead. The model applies a head-loss reduction factor based
+   * on the injection rate.
+   * </p>
+   *
+   * @param elementName name of the well element (IPR or tubing)
+   * @param gasLiftRateKgHr gas lift injection rate in kg/hr
+   */
+  public void setGasLift(String elementName, double gasLiftRateKgHr) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setArtificialLiftType(ArtificialLiftType.GAS_LIFT);
+    pipe.setGasLiftRate(gasLiftRateKgHr / 3600.0);
+  }
+
+  /**
+   * Configure an Electrical Submersible Pump (ESP) on a well element.
+   *
+   * <p>
+   * The ESP adds a negative head-loss (pressure boost) to the tubing element, calculated as: dP =
+   * espPower * efficiency / volumetricFlowRate. This enables production from wells that cannot flow
+   * naturally.
+   * </p>
+   *
+   * @param elementName name of the well element (IPR or tubing)
+   * @param ratedPowerKW ESP rated power in kW
+   * @param efficiency pump efficiency (0-1, typically 0.3-0.7)
+   */
+  public void setESP(String elementName, double ratedPowerKW, double efficiency) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setArtificialLiftType(ArtificialLiftType.ESP);
+    pipe.setEspPower(ratedPowerKW);
+    pipe.setEspEfficiency(efficiency);
+  }
+
+  /**
+   * Configure a jet pump on a well element.
+   *
+   * <p>
+   * The jet pump uses high-pressure power fluid to create a pressure boost via a venturi effect.
+   * Modeled similarly to ESP with an equivalent power and efficiency.
+   * </p>
+   *
+   * @param elementName name of the well element
+   * @param equivalentPowerKW equivalent hydraulic power in kW
+   * @param efficiency nozzle-throat efficiency (typically 0.2-0.4)
+   */
+  public void setJetPump(String elementName, double equivalentPowerKW, double efficiency) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setArtificialLiftType(ArtificialLiftType.JET_PUMP);
+    pipe.setEspPower(equivalentPowerKW);
+    pipe.setEspEfficiency(efficiency);
+  }
+
+  /**
+   * Configure a rod pump (beam pump) on a well element.
+   *
+   * <p>
+   * The rod pump provides artificial lift for low-rate wells. Modeled as an equivalent pressure
+   * boost based on pump displacement and stroke rate.
+   * </p>
+   *
+   * @param elementName name of the well element
+   * @param equivalentPowerKW equivalent mechanical power in kW
+   * @param efficiency pump efficiency (typically 0.4-0.6)
+   */
+  public void setRodPump(String elementName, double equivalentPowerKW, double efficiency) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setArtificialLiftType(ArtificialLiftType.ROD_PUMP);
+    pipe.setEspPower(equivalentPowerKW);
+    pipe.setEspEfficiency(efficiency);
+  }
+
+  /**
+   * Get the total gas lift injection rate across all wells in kg/hr.
+   *
+   * @return total gas lift rate in kg/hr
+   */
+  public double getTotalGasLiftRate() {
+    double total = 0.0;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getArtificialLiftType() == ArtificialLiftType.GAS_LIFT) {
+        total += pipe.getGasLiftRate();
+      }
+    }
+    return total * 3600.0;
+  }
+
+  /**
+   * Get the total ESP power consumption across all wells in kW.
+   *
+   * @return total ESP power in kW
+   */
+  public double getTotalESPPower() {
+    double total = 0.0;
+    for (NetworkPipe pipe : pipes.values()) {
+      ArtificialLiftType lift = pipe.getArtificialLiftType();
+      if (lift == ArtificialLiftType.ESP || lift == ArtificialLiftType.JET_PUMP
+          || lift == ArtificialLiftType.ROD_PUMP) {
+        total += pipe.getEspPower();
+      }
+    }
+    return total;
+  }
+
+  // =====================================================================
+  // Water Handling Methods
+  // =====================================================================
+
+  /**
+   * Set the water cut for a well or pipe element.
+   *
+   * <p>
+   * Water cut is the volume fraction of water in the total liquid production. This enables produced
+   * water tracking through the network for water treatment sizing and disposal planning.
+   * </p>
+   *
+   * @param elementName name of the element
+   * @param waterCut water cut fraction (0-1)
+   */
+  public void setWaterCut(String elementName, double waterCut) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setWaterCut(waterCut);
+  }
+
+  /**
+   * Add a water injection well element between two nodes.
+   *
+   * <p>
+   * Water injection wells provide pressure support to reservoirs. The injection rate creates a
+   * negative flow (into the reservoir) and increases reservoir pressure.
+   * </p>
+   *
+   * @param sourceNode water supply node
+   * @param reservoirNode reservoir node
+   * @param elementName element name
+   * @param injectionRateKgHr injection rate in kg/hr
+   * @return the created element
+   */
+  public NetworkPipe addWaterInjection(String sourceNode, String reservoirNode, String elementName,
+      double injectionRateKgHr) {
+    NetworkPipe element = addPipe(sourceNode, reservoirNode, elementName, 1.0, 0.1);
+    element.setElementType(NetworkElementType.PIPE);
+    element.setWaterInjectionRate(injectionRateKgHr / 3600.0);
+    return element;
+  }
+
+  /**
+   * Calculate water balance for the entire network.
+   *
+   * <p>
+   * Tracks water production at each node based on water cuts and flow rates. Also tracks water
+   * injection rates. Returns per-node water balance: [0] = water production (kg/hr), [1] = water
+   * injection (kg/hr), [2] = net water (kg/hr).
+   * </p>
+   *
+   * @return map of node name to water balance array
+   */
+  public Map<String, double[]> calculateWaterBalance() {
+    nodeWaterBalance.clear();
+    totalWaterProduction = 0.0;
+    totalWaterInjection = 0.0;
+
+    for (NetworkPipe pipe : pipes.values()) {
+      double flowKgs = Math.abs(pipe.getFlowRate());
+      double waterProd = flowKgs * pipe.getWaterCut();
+      double waterInj = pipe.getWaterInjectionRate();
+
+      // Accumulate at the downstream node
+      String node = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
+      double[] existing = nodeWaterBalance.get(node);
+      if (existing == null) {
+        existing = new double[3];
+        nodeWaterBalance.put(node, existing);
+      }
+      existing[0] += waterProd * 3600.0;
+      existing[1] += waterInj * 3600.0;
+      existing[2] += (waterProd - waterInj) * 3600.0;
+
+      totalWaterProduction += waterProd;
+      totalWaterInjection += waterInj;
+    }
+    return new LinkedHashMap<>(nodeWaterBalance);
+  }
+
+  /**
+   * Get total water production rate in kg/hr.
+   *
+   * @return total water production
+   */
+  public double getTotalWaterProduction() {
+    return totalWaterProduction * 3600.0;
+  }
+
+  /**
+   * Get total water injection rate in kg/hr.
+   *
+   * @return total water injection
+   */
+  public double getTotalWaterInjection() {
+    return totalWaterInjection * 3600.0;
+  }
+
+  /**
+   * Set the water breakthrough profile for a well (time-dependent water cut).
+   *
+   * <p>
+   * Models water breakthrough as a function of cumulative production. When the cumulative
+   * production from a well exceeds the breakthrough threshold, the water cut ramps up linearly to
+   * the final water cut.
+   * </p>
+   *
+   * @param elementName well element name
+   * @param breakthroughWC water cut at breakthrough (typically 0.05-0.10)
+   * @param finalWC ultimate water cut (typically 0.80-0.95)
+   * @param currentWC current water cut
+   */
+  public void setWaterBreakthrough(String elementName, double breakthroughWC, double finalWC,
+      double currentWC) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setWaterCut(currentWC);
+    // Store breakthrough parameters in waterFlowRate field as packed values
+    // (breakthroughWC in high bits, finalWC as reference)
+    pipe.setWaterFlowRate(finalWC); // Store ultimate WC for forecast use
+  }
+
+  // =====================================================================
+  // Sand and Solids Tracking Methods
+  // =====================================================================
+
+  /**
+   * Set the sand production rate for a well element.
+   *
+   * @param elementName well element name
+   * @param sandRateKgHr sand production rate in kg/hr
+   */
+  public void setSandRate(String elementName, double sandRateKgHr) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setSandRate(sandRateKgHr / 3600.0);
+  }
+
+  /**
+   * Set the maximum allowable sand production rate.
+   *
+   * @param maxRateKgHr maximum sand rate in kg/hr (0 = no limit)
+   */
+  public void setMaxAllowableSandRate(double maxRateKgHr) {
+    this.maxAllowableSandRate = maxRateKgHr / 3600.0;
+  }
+
+  /**
+   * Set the maximum allowable erosion rate for integrity management.
+   *
+   * @param maxRateMmYr maximum erosion rate in mm/yr (default 5.0)
+   */
+  public void setMaxAllowableErosionRate(double maxRateMmYr) {
+    this.maxAllowableErosionRate = maxRateMmYr;
+  }
+
+  /**
+   * Calculate sand transport and erosion rates for all pipe elements.
+   *
+   * <p>
+   * Sand erosion rate is calculated using the DNV RP O501 simplified model: E = K * F(alpha) * v^n
+   * * d_p / (rho_t * A) where K is material constant, F(alpha) is impact angle function, v is
+   * velocity, d_p is particle size, rho_t is target material density, A is pipe cross-section area.
+   * For the simplified API approach: E_rate = C_sand * rho_sand * V^2 / (rho_pipe * t_wall)
+   * </p>
+   *
+   * @return map of pipe name to sand results: [0]=sandConc_kgm3, [1]=erosionRate_mmyr,
+   *         [2]=depositionRate_kgmyr, [3]=sandVelocity_ms
+   */
+  public Map<String, double[]> calculateSandTransport() {
+    pipeSandResults.clear();
+    sandViolations.clear();
+
+    if (fluidTemplate == null) {
+      return pipeSandResults;
+    }
+
+    SystemInterface fluid = fluidTemplate.clone();
+    try {
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
+    } catch (Exception ex) {
+      logger.warn("Flash failed in sand calculation: " + ex.getMessage());
+      return pipeSandResults;
+    }
+    double fluidDensity = fluid.getDensity("kg/m3");
+
+    // Track cumulative sand through network from wells to sinks
+    Map<String, Double> nodeSandRate = new LinkedHashMap<>();
+
+    // Initialize sand from well elements
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getSandRate() > 0) {
+        String downNode = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
+        double existing = nodeSandRate.containsKey(downNode) ? nodeSandRate.get(downNode) : 0.0;
+        nodeSandRate.put(downNode, existing + pipe.getSandRate());
+      }
+    }
+
+    // Calculate per-pipe sand concentration and erosion
+    double pipeMaterialDensity = 7800.0; // kg/m3 carbon steel
+    double particleDiameter = 0.0003; // m (300 micron default sand)
+
+    for (NetworkPipe pipe : pipes.values()) {
+      NetworkElementType type = pipe.getElementType();
+      if (type == NetworkElementType.WELL_IPR || type == NetworkElementType.COMPRESSOR
+          || type == NetworkElementType.REGULATOR) {
+        continue;
+      }
+
+      double flowKgs = Math.abs(pipe.getFlowRate());
+      if (flowKgs < 1e-10 || pipe.getDiameter() < 1e-6) {
+        continue;
+      }
+
+      // Get sand rate entering this pipe from upstream node
+      String upNode = pipe.getFlowRate() >= 0 ? pipe.getFromNode() : pipe.getToNode();
+      double sandKgs = nodeSandRate.containsKey(upNode) ? nodeSandRate.get(upNode) : 0.0;
+
+      double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+      double velocity = flowKgs / (fluidDensity * area);
+      double sandConc = sandKgs / (flowKgs / fluidDensity); // kg/m3 in fluid stream
+
+      // DNV RP O501 simplified erosion rate (mm/yr)
+      // E = K * rho_p * v^2.6 * d_p^0.2 / (rho_t * A_pipe)
+      double kMaterial = 2e-9; // material erosion constant for carbon steel
+      double erosionMmYr = kMaterial * sandConc * Math.pow(velocity, 2.6)
+          * Math.pow(particleDiameter, 0.2) * 3600.0 * 8760.0;
+      pipe.setErosionRate(erosionMmYr);
+      pipe.setSandConcentration(sandConc);
+
+      // Deposition — simplified: if velocity < 1 m/s, sand settles
+      double depositionKgmYr = 0.0;
+      if (velocity < 1.0 && sandConc > 0) {
+        depositionKgmYr = sandConc * area * (1.0 - velocity) * 3600.0 * 8760.0;
+      }
+      pipe.setDepositionRate(depositionKgmYr);
+
+      // Remaining wall life
+      double wallThicknessMm = pipe.getWallThickness() * 1000.0;
+      double minThicknessMm = wallThicknessMm * 0.2; // 20% of original is minimum
+      if (erosionMmYr > 0.001) {
+        pipe.setRemainingWallLife((wallThicknessMm - minThicknessMm) / erosionMmYr);
+      }
+
+      pipeSandResults.put(pipe.getName(),
+          new double[] {sandConc, erosionMmYr, depositionKgmYr, velocity});
+
+      // Propagate sand to downstream node
+      String downNode = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
+      double downSand = nodeSandRate.containsKey(downNode) ? nodeSandRate.get(downNode) : 0.0;
+      nodeSandRate.put(downNode, downSand + sandKgs);
+
+      // Check violations
+      if (maxAllowableSandRate > 0 && sandKgs > maxAllowableSandRate) {
+        sandViolations.add(String.format("%s: sand rate %.2f kg/hr exceeds limit %.2f kg/hr",
+            pipe.getName(), sandKgs * 3600.0, maxAllowableSandRate * 3600.0));
+      }
+      if (erosionMmYr > maxAllowableErosionRate) {
+        sandViolations.add(String.format("%s: erosion rate %.2f mm/yr exceeds limit %.1f mm/yr",
+            pipe.getName(), erosionMmYr, maxAllowableErosionRate));
+      }
+    }
+    return new LinkedHashMap<>(pipeSandResults);
+  }
+
+  /**
+   * Get sand violation messages.
+   *
+   * @return list of sand/erosion violation messages
+   */
+  public List<String> getSandViolations() {
+    return new ArrayList<>(sandViolations);
+  }
+
+  // =====================================================================
+  // Corrosion and Integrity Methods
+  // =====================================================================
+
+  /**
+   * Set CO2 and H2S mole fractions for a pipe element for corrosion calculation.
+   *
+   * @param elementName pipe element name
+   * @param co2MoleFrac CO2 mole fraction in gas phase (0-1)
+   * @param h2sMoleFrac H2S mole fraction in gas phase (0-1)
+   */
+  public void setCorrosiveGas(String elementName, double co2MoleFrac, double h2sMoleFrac) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setCo2MoleFraction(co2MoleFrac);
+    pipe.setH2sMoleFraction(h2sMoleFrac);
+  }
+
+  /**
+   * Set the corrosion model for a pipe element.
+   *
+   * @param elementName pipe element name
+   * @param model "deWaard" for de Waard-Milliams (1975/1991) or "norsokM506" for NORSOK M-506
+   */
+  public void setCorrosionModel(String elementName, String model) {
+    NetworkPipe pipe = pipes.get(elementName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Element '" + elementName + "' not found");
+    }
+    pipe.setCorrosionModel(model);
+  }
+
+  /**
+   * Set the minimum allowable remaining wall life.
+   *
+   * @param years minimum years before wall thickness falls below minimum
+   */
+  public void setMinAllowableWallLife(double years) {
+    this.minAllowableWallLife = years;
+  }
+
+  /**
+   * Calculate CO2/H2S corrosion rates for all pipe elements.
+   *
+   * <p>
+   * Supports two corrosion models:
+   * </p>
+   * <ul>
+   * <li><b>de Waard-Milliams (1975/1991)</b>: log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2) where
+   * T is temperature in K and pCO2 is CO2 partial pressure in bar.</li>
+   * <li><b>NORSOK M-506 (2005)</b>: Vcorr = K_t * f(T) * (fCO2)^0.62 * (S/19)^0.146 + f(Vwall)
+   * which includes temperature, CO2 fugacity, shear stress, and pH effects.</li>
+   * </ul>
+   *
+   * @return map of pipe name to corrosion results: [0]=corrosionRate_mmyr,
+   *         [1]=co2PartialPressure_bar, [2]=h2sPartialPressure_bar, [3]=remainingLife_yr
+   */
+  public Map<String, double[]> calculateCorrosion() {
+    pipeCorrosionResults.clear();
+    corrosionViolations.clear();
+
+    for (NetworkPipe pipe : pipes.values()) {
+      NetworkElementType type = pipe.getElementType();
+      if (type == NetworkElementType.WELL_IPR || type == NetworkElementType.COMPRESSOR
+          || type == NetworkElementType.REGULATOR) {
+        continue;
+      }
+
+      double co2Frac = pipe.getCo2MoleFraction();
+      double h2sFrac = pipe.getH2sMoleFraction();
+      if (co2Frac < 1e-10 && h2sFrac < 1e-10) {
+        continue;
+      }
+
+      // Get pipe conditions (upstream node pressure, temperature)
+      NetworkNode upNode = nodes.get(pipe.getFromNode());
+      if (upNode == null) {
+        continue;
+      }
+      double pressureBar = upNode.getPressure() / 1e5;
+      double temperatureK = upNode.getTemperature();
+      double temperatureC = temperatureK - 273.15;
+
+      double pCO2 = pressureBar * co2Frac; // bar
+      double pH2S = pressureBar * h2sFrac; // bar
+
+      double corrosionMmYr = 0.0;
+
+      if ("norsokM506".equals(pipe.getCorrosionModel())) {
+        // NORSOK M-506 (2005) simplified model
+        // Vcorr = Kt * fCO2^0.62 * (S/19)^0.146
+        // Kt is temperature-dependent factor
+        double kt;
+        if (temperatureC < 20) {
+          kt = 0.42;
+        } else if (temperatureC < 40) {
+          kt = 0.42 + (temperatureC - 20) * 0.058;
+        } else if (temperatureC < 60) {
+          kt = 1.58 + (temperatureC - 40) * 0.021;
+        } else if (temperatureC < 80) {
+          kt = 2.0 + (temperatureC - 60) * (-0.03);
+        } else if (temperatureC < 120) {
+          kt = 1.4 + (temperatureC - 80) * (-0.01);
+        } else {
+          kt = 1.0;
+        }
+        double fCO2 = pCO2; // simplified: fugacity ~ partial pressure
+        if (fCO2 > 0.001) {
+          double wallShear = 19.0; // Pa — default wall shear stress
+          corrosionMmYr = kt * Math.pow(fCO2, 0.62) * Math.pow(wallShear / 19.0, 0.146);
+        }
+      } else {
+        // de Waard-Milliams (1975/1991) model
+        // log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2)
+        if (pCO2 > 0.001 && temperatureK > 250) {
+          double logCR = 5.8 - 1710.0 / temperatureK + 0.67 * Math.log10(pCO2);
+          corrosionMmYr = Math.pow(10.0, logCR);
+        }
+      }
+
+      // H2S contribution (NACE MR0175 — adds to CO2 corrosion when pH2S > 0.003 bar)
+      if (pH2S > 0.003) {
+        corrosionMmYr *= (1.0 + 0.5 * Math.log10(pH2S / 0.003));
+      }
+
+      // Clamp to reasonable range
+      corrosionMmYr = Math.max(0.0, Math.min(corrosionMmYr, 50.0));
+      pipe.setCorrosionRate(corrosionMmYr);
+
+      // Calculate remaining wall life
+      double wallMm = pipe.getWallThickness() * 1000.0;
+      double minWallMm = wallMm * 0.2; // 20% minimum threshold
+      double remainingLife = corrosionMmYr > 0.001 ? (wallMm - minWallMm) / corrosionMmYr : 999.0;
+      pipe.setRemainingWallLife(remainingLife);
+
+      pipeCorrosionResults.put(pipe.getName(),
+          new double[] {corrosionMmYr, pCO2, pH2S, remainingLife});
+
+      // Check violations
+      if (remainingLife < minAllowableWallLife) {
+        corrosionViolations.add(String.format(
+            "%s: remaining wall life %.1f yr < minimum %.1f yr (CR=%.2f mm/yr, pCO2=%.3f bar)",
+            pipe.getName(), remainingLife, minAllowableWallLife, corrosionMmYr, pCO2));
+      }
+    }
+    return new LinkedHashMap<>(pipeCorrosionResults);
+  }
+
+  /**
+   * Get corrosion violation messages.
+   *
+   * @return list of corrosion/integrity violation messages
+   */
+  public List<String> getCorrosionViolations() {
+    return new ArrayList<>(corrosionViolations);
+  }
+
+  // =====================================================================
+  // Emissions Tracking Methods
+  // =====================================================================
+
+  /**
+   * Set the CO2 emission factor for fuel gas combustion.
+   *
+   * @param factor emission factor in kgCO2 per kg fuel gas (default 2.75 for natural gas)
+   */
+  public void setCO2EmissionFactor(double factor) {
+    this.co2EmissionFactor = factor;
+  }
+
+  /**
+   * Get the CO2 emission factor.
+   *
+   * @return kgCO2 per kg fuel gas
+   */
+  public double getCO2EmissionFactor() {
+    return co2EmissionFactor;
+  }
+
+  /**
+   * Set the methane slip factor for gas turbine/engine drivers.
+   *
+   * @param slipFraction fraction of unburned methane (0-1, default 0.02 = 2%)
+   */
+  public void setMethaneSlipFactor(double slipFraction) {
+    this.methaneSlipFactor = slipFraction;
+  }
+
+  /**
+   * Calculate greenhouse gas emissions for all compressor stations in the network.
+   *
+   * <p>
+   * Emissions are calculated from fuel gas consumption (from compressor power and heat rate).
+   * Results include: CO2 from combustion, methane slip (unburned CH4), and CO2-equivalent (using
+   * GWP=28 for CH4 per IPCC AR5). Per-compressor breakdown is returned.
+   * </p>
+   *
+   * @return map of compressor element name to emissions array: [0]=CO2_kghr, [1]=CH4_slip_kghr,
+   *         [2]=CO2eq_kghr, [3]=power_kW, [4]=fuelGas_kghr
+   */
+  public Map<String, double[]> calculateEmissions() {
+    emissionsResults.clear();
+    totalCO2Emissions = 0.0;
+
+    if (fluidTemplate == null) {
+      return emissionsResults;
+    }
+
+    // Get fuel gas heating value (approximate from fluid)
+    double lhvKJPerKg = 50000.0; // default 50 MJ/kg for natural gas
+    try {
+      SystemInterface fuel = fluidTemplate.clone();
+      ThermodynamicOperations ops = new ThermodynamicOperations(fuel);
+      ops.TPflash();
+      fuel.initProperties();
+      double molarMass = fuel.getMolarMass("kg/mol");
+      // Approximate LHV from molar mass: CH4=50MJ, C2=47, C3=46
+      if (molarMass < 0.02) {
+        lhvKJPerKg = 50000.0;
+      } else if (molarMass < 0.035) {
+        lhvKJPerKg = 48000.0;
+      } else {
+        lhvKJPerKg = 46000.0;
+      }
+    } catch (Exception ex) {
+      // Use default
+    }
+
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() != NetworkElementType.COMPRESSOR) {
+        continue;
+      }
+      double powerKW = pipe.getCompressorPower();
+      if (powerKW < 0.001) {
+        continue;
+      }
+
+      // Fuel gas consumption: power * heat_rate / LHV
+      double fuelGasKgs = powerKW * fuelGasHeatRate / (lhvKJPerKg * 3600.0);
+      double fuelGasKghr = fuelGasKgs * 3600.0;
+
+      // CO2 from combustion
+      double co2Kghr = fuelGasKghr * co2EmissionFactor;
+
+      // Methane slip (unburned CH4)
+      double ch4SlipKghr = fuelGasKghr * methaneSlipFactor;
+
+      // CO2 equivalent (GWP=28 for CH4 per IPCC AR5 100-yr)
+      double co2eqKghr = co2Kghr + ch4SlipKghr * 28.0;
+
+      emissionsResults.put(pipe.getName(),
+          new double[] {co2Kghr, ch4SlipKghr, co2eqKghr, powerKW, fuelGasKghr});
+
+      totalCO2Emissions += co2eqKghr;
+    }
+    return new LinkedHashMap<>(emissionsResults);
+  }
+
+  /**
+   * Get total CO2-equivalent emissions from all compressors in kg/hr.
+   *
+   * @return total CO2eq emissions in kg/hr
+   */
+  public double getTotalCO2Emissions() {
+    return totalCO2Emissions;
+  }
+
+  /**
+   * Get annual CO2-equivalent emissions in tonnes/year.
+   *
+   * @return annual CO2eq in tonnes/yr
+   */
+  public double getAnnualCO2EmissionsTonnes() {
+    return totalCO2Emissions * 8760.0 / 1000.0;
+  }
+
+  /**
+   * Get emissions intensity in kgCO2eq per tonne of production.
+   *
+   * @return emissions intensity (kgCO2eq/tonne product)
+   */
+  public double getEmissionsIntensity() {
+    double totalFlowKghr = Math.abs(getTotalSinkFlow()) * 3600.0;
+    if (totalFlowKghr < 1.0) {
+      return 0.0;
+    }
+    return totalCO2Emissions / (totalFlowKghr / 1000.0);
   }
 
   /**
@@ -2383,23 +3488,61 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @return head loss in Pa (positive = pressure drop from-to direction)
    */
   private double calculateHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
+    double baseHeadLoss;
     switch (pipe.getElementType()) {
       case WELL_IPR:
-        return calculateHeadLossIPR(pipe, fluid);
+        baseHeadLoss = calculateHeadLossIPR(pipe, fluid);
+        break;
       case CHOKE:
-        return calculateHeadLossChoke(pipe, fluid);
+        baseHeadLoss = calculateHeadLossChoke(pipe, fluid);
+        break;
       case TUBING:
-        return calculateHeadLossTubing(pipe, fluid);
+        baseHeadLoss = calculateHeadLossTubing(pipe, fluid);
+        break;
       case MULTIPHASE_PIPE:
-        return calculateHeadLossMultiphase(pipe, fluid);
+        baseHeadLoss = calculateHeadLossMultiphase(pipe, fluid);
+        break;
       case COMPRESSOR:
-        return calculateHeadLossCompressor(pipe, fluid);
+        baseHeadLoss = calculateHeadLossCompressor(pipe, fluid);
+        break;
       case REGULATOR:
-        return calculateHeadLossRegulator(pipe, fluid);
+        baseHeadLoss = calculateHeadLossRegulator(pipe, fluid);
+        break;
       case PIPE:
       default:
-        return calculateHeadLossDarcyWeisbach(pipe, fluid);
+        baseHeadLoss = calculateHeadLossDarcyWeisbach(pipe, fluid);
+        break;
     }
+
+    // Apply artificial lift pressure boost (reduces effective head loss)
+    ArtificialLiftType liftType = pipe.getArtificialLiftType();
+    if (liftType != ArtificialLiftType.NONE) {
+      double boostPa = 0.0;
+      double flowKgs = Math.abs(pipe.getFlowRate());
+      double density = fluid.getDensity("kg/m3");
+
+      if (liftType == ArtificialLiftType.GAS_LIFT && pipe.getGasLiftRate() > 0) {
+        // Gas lift reduces hydrostatic head by lightening the fluid column
+        // Effective: reduces head loss by ~20-50% depending on GLR
+        double glr = pipe.getGasLiftRate() / Math.max(flowKgs, 1e-6);
+        double reductionFactor = Math.min(0.5, glr * 2.0); // up to 50% reduction
+        boostPa = Math.abs(baseHeadLoss) * reductionFactor;
+      } else if (pipe.getEspPower() > 0 && pipe.getEspEfficiency() > 0) {
+        // ESP/jet pump/rod pump: dP_boost = Power * efficiency / Q_volumetric
+        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+        double velocity = flowKgs / (density * Math.max(area, 1e-6));
+        double volumeFlowM3s = velocity * area;
+        if (volumeFlowM3s > 1e-10) {
+          boostPa = pipe.getEspPower() * 1000.0 * pipe.getEspEfficiency() / volumeFlowM3s;
+        }
+        pipe.setEspHeadRise(boostPa / 1e5); // store in bar for reporting
+      }
+
+      // Subtract boost from head loss (boost acts against the natural pressure drop)
+      baseHeadLoss -= Math.signum(baseHeadLoss) * boostPa;
+    }
+
+    return baseHeadLoss;
   }
 
   /**
@@ -5344,6 +6487,92 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       }
     }
 
+    // Artificial lift summary
+    boolean hasLift = false;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getArtificialLiftType() != ArtificialLiftType.NONE) {
+        if (!hasLift) {
+          sb.append("\n--- Artificial Lift ---\n");
+          sb.append(String.format("%-20s %-12s %12s %12s%n", "Well", "Lift Type", "GL Rate(kg/h)",
+              "ESP Power(kW)"));
+          hasLift = true;
+        }
+        sb.append(String.format("%-20s %-12s %12.1f %12.1f%n", pipe.getName(),
+            pipe.getArtificialLiftType().name(), pipe.getGasLiftRate() * 3600.0,
+            pipe.getEspPower()));
+      }
+    }
+    if (hasLift) {
+      sb.append(String.format("  Total gas lift: %.1f kg/hr | Total ESP power: %.1f kW%n",
+          getTotalGasLiftRate(), getTotalESPPower()));
+    }
+
+    // Water balance
+    if (!nodeWaterBalance.isEmpty()) {
+      sb.append("\n--- Water Balance ---\n");
+      sb.append(String.format("%-20s %12s %12s %12s%n", "Node", "WaterProd(kg/h)", "WaterInj(kg/h)",
+          "NetWater(kg/h)"));
+      for (Map.Entry<String, double[]> entry : nodeWaterBalance.entrySet()) {
+        double[] wb = entry.getValue();
+        sb.append(
+            String.format("%-20s %12.1f %12.1f %12.1f%n", entry.getKey(), wb[0], wb[1], wb[2]));
+      }
+      sb.append(String.format("  Total water production: %.1f kg/hr%n", getTotalWaterProduction()));
+      sb.append(String.format("  Total water injection: %.1f kg/hr%n", getTotalWaterInjection()));
+    }
+
+    // Sand and erosion
+    if (!pipeSandResults.isEmpty()) {
+      sb.append("\n--- Sand Transport & Erosion (DNV RP O501) ---\n");
+      sb.append(String.format("%-20s %12s %12s %12s %12s%n", "Element", "SandConc(kg/m3)",
+          "Erosion(mm/yr)", "Deposition(kg/m/yr)", "Velocity(m/s)"));
+      for (Map.Entry<String, double[]> entry : pipeSandResults.entrySet()) {
+        double[] sr = entry.getValue();
+        sb.append(String.format("%-20s %12.4f %12.3f %12.2f %12.2f%n", entry.getKey(), sr[0], sr[1],
+            sr[2], sr[3]));
+      }
+    }
+    if (!sandViolations.isEmpty()) {
+      sb.append("\n--- Sand/Erosion Violations ---\n");
+      for (String v : sandViolations) {
+        sb.append("  WARN: ").append(v).append("\n");
+      }
+    }
+
+    // Corrosion
+    if (!pipeCorrosionResults.isEmpty()) {
+      sb.append("\n--- Corrosion Assessment ---\n");
+      sb.append(String.format("%-20s %12s %12s %12s %12s%n", "Element", "CR(mm/yr)", "pCO2(bar)",
+          "pH2S(bar)", "Life(yr)"));
+      for (Map.Entry<String, double[]> entry : pipeCorrosionResults.entrySet()) {
+        double[] cr = entry.getValue();
+        sb.append(String.format("%-20s %12.3f %12.4f %12.4f %12.1f%n", entry.getKey(), cr[0], cr[1],
+            cr[2], cr[3]));
+      }
+    }
+    if (!corrosionViolations.isEmpty()) {
+      sb.append("\n--- Corrosion Integrity Violations ---\n");
+      for (String v : corrosionViolations) {
+        sb.append("  ALERT: ").append(v).append("\n");
+      }
+    }
+
+    // Emissions
+    if (!emissionsResults.isEmpty()) {
+      sb.append("\n--- GHG Emissions (per compressor) ---\n");
+      sb.append(String.format("%-20s %12s %12s %12s %12s %12s%n", "Compressor", "CO2(kg/hr)",
+          "CH4slip(kg/hr)", "CO2eq(kg/hr)", "Power(kW)", "FuelGas(kg/hr)"));
+      for (Map.Entry<String, double[]> entry : emissionsResults.entrySet()) {
+        double[] em = entry.getValue();
+        sb.append(String.format("%-20s %12.1f %12.2f %12.1f %12.0f %12.1f%n", entry.getKey(), em[0],
+            em[1], em[2], em[3], em[4]));
+      }
+      sb.append(String.format("  Total CO2eq: %.1f kg/hr (%.0f tonnes/yr)%n", totalCO2Emissions,
+          getAnnualCO2EmissionsTonnes()));
+      sb.append(String.format("  Emissions intensity: %.1f kgCO2eq/tonne product%n",
+          getEmissionsIntensity()));
+    }
+
     // Constraint violations
     if (!constraintViolations.isEmpty()) {
       sb.append("\n--- Constraint Violations ---\n");
@@ -6189,6 +7418,39 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         pipeJson.addProperty("erosionalC", pipe.getErosionalC());
       }
 
+      // Artificial lift data
+      if (pipe.getArtificialLiftType() != ArtificialLiftType.NONE) {
+        pipeJson.addProperty("artificialLiftType", pipe.getArtificialLiftType().name());
+        pipeJson.addProperty("gasLiftRate_kghr", pipe.getGasLiftRate() * 3600.0);
+        pipeJson.addProperty("espPower_kW", pipe.getEspPower());
+        pipeJson.addProperty("espEfficiency", pipe.getEspEfficiency());
+        pipeJson.addProperty("espHeadRise_bar", pipe.getEspHeadRise());
+      }
+
+      // Water handling data
+      if (pipe.getWaterCut() > 0 || pipe.getWaterInjectionRate() > 0) {
+        pipeJson.addProperty("waterCut", pipe.getWaterCut());
+        pipeJson.addProperty("waterFlowRate_kghr", pipe.getWaterFlowRate() * 3600.0);
+        pipeJson.addProperty("waterInjectionRate_kghr", pipe.getWaterInjectionRate() * 3600.0);
+      }
+
+      // Sand/erosion data
+      if (pipe.getSandRate() > 0 || pipe.getErosionRate() > 0) {
+        pipeJson.addProperty("sandRate_kghr", pipe.getSandRate() * 3600.0);
+        pipeJson.addProperty("sandConcentration_kgm3", pipe.getSandConcentration());
+        pipeJson.addProperty("erosionRate_mmyr", pipe.getErosionRate());
+        pipeJson.addProperty("depositionRate_kgmyr", pipe.getDepositionRate());
+      }
+
+      // Corrosion data
+      if (pipe.getCorrosionRate() > 0) {
+        pipeJson.addProperty("corrosionModel", pipe.getCorrosionModel());
+        pipeJson.addProperty("co2MoleFraction", pipe.getCo2MoleFraction());
+        pipeJson.addProperty("h2sMoleFraction", pipe.getH2sMoleFraction());
+        pipeJson.addProperty("corrosionRate_mmyr", pipe.getCorrosionRate());
+        pipeJson.addProperty("remainingWallLife_yr", pipe.getRemainingWallLife());
+      }
+
       pipesArray.add(pipeJson);
     }
     json.add("pipes", pipesArray);
@@ -6229,6 +7491,77 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         oilQualObj.add(entry.getKey(), nodeOQ);
       }
       json.add("oilQuality_ASTM_D6377", oilQualObj);
+    }
+
+    // Water balance
+    if (!nodeWaterBalance.isEmpty()) {
+      JsonObject waterObj = new JsonObject();
+      waterObj.addProperty("totalWaterProduction_kghr", getTotalWaterProduction());
+      waterObj.addProperty("totalWaterInjection_kghr", getTotalWaterInjection());
+      JsonObject nodesWB = new JsonObject();
+      for (Map.Entry<String, double[]> entry : nodeWaterBalance.entrySet()) {
+        double[] wb = entry.getValue();
+        JsonObject nodeWB = new JsonObject();
+        nodeWB.addProperty("waterProduction_kghr", wb[0]);
+        nodeWB.addProperty("waterInjection_kghr", wb[1]);
+        nodeWB.addProperty("netWater_kghr", wb[2]);
+        nodesWB.add(entry.getKey(), nodeWB);
+      }
+      waterObj.add("nodeBalance", nodesWB);
+      json.add("waterBalance", waterObj);
+    }
+
+    // Sand transport results
+    if (!pipeSandResults.isEmpty()) {
+      JsonObject sandObj = new JsonObject();
+      for (Map.Entry<String, double[]> entry : pipeSandResults.entrySet()) {
+        double[] sr = entry.getValue();
+        JsonObject pipeS = new JsonObject();
+        pipeS.addProperty("sandConcentration_kgm3", sr[0]);
+        pipeS.addProperty("erosionRate_mmyr", sr[1]);
+        pipeS.addProperty("depositionRate_kgmyr", sr[2]);
+        pipeS.addProperty("velocity_ms", sr[3]);
+        sandObj.add(entry.getKey(), pipeS);
+      }
+      json.add("sandTransport_DNV_RP_O501", sandObj);
+    }
+
+    // Corrosion assessment
+    if (!pipeCorrosionResults.isEmpty()) {
+      JsonObject corrObj = new JsonObject();
+      for (Map.Entry<String, double[]> entry : pipeCorrosionResults.entrySet()) {
+        double[] cr = entry.getValue();
+        JsonObject pipeC = new JsonObject();
+        pipeC.addProperty("corrosionRate_mmyr", cr[0]);
+        pipeC.addProperty("co2PartialPressure_bar", cr[1]);
+        pipeC.addProperty("h2sPartialPressure_bar", cr[2]);
+        pipeC.addProperty("remainingLife_yr", cr[3]);
+        corrObj.add(entry.getKey(), pipeC);
+      }
+      json.add("corrosionAssessment", corrObj);
+    }
+
+    // Emissions
+    if (!emissionsResults.isEmpty()) {
+      JsonObject emObj = new JsonObject();
+      emObj.addProperty("totalCO2eq_kghr", totalCO2Emissions);
+      emObj.addProperty("annualCO2eq_tonnesyr", getAnnualCO2EmissionsTonnes());
+      emObj.addProperty("emissionsIntensity_kgCO2eqPerTonne", getEmissionsIntensity());
+      emObj.addProperty("co2EmissionFactor_kgCO2perkgFuel", co2EmissionFactor);
+      emObj.addProperty("methaneSlipFactor", methaneSlipFactor);
+      JsonObject compEmissions = new JsonObject();
+      for (Map.Entry<String, double[]> entry : emissionsResults.entrySet()) {
+        double[] em = entry.getValue();
+        JsonObject compEm = new JsonObject();
+        compEm.addProperty("co2_kghr", em[0]);
+        compEm.addProperty("ch4Slip_kghr", em[1]);
+        compEm.addProperty("co2eq_kghr", em[2]);
+        compEm.addProperty("power_kW", em[3]);
+        compEm.addProperty("fuelGas_kghr", em[4]);
+        compEmissions.add(entry.getKey(), compEm);
+      }
+      emObj.add("compressors", compEmissions);
+      json.add("emissions", emObj);
     }
 
     // Constraint violations

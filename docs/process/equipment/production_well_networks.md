@@ -21,6 +21,12 @@ Newton-Raphson Global Gradient Algorithm (NR-GGA) solver.
 - [Solver Details](#solver-details)
 - [Usage Examples](#usage-examples)
 - [Results and Inspection](#results-and-inspection)
+- [Artificial Lift](#artificial-lift)
+- [Water Handling](#water-handling)
+- [Sand and Solids Tracking](#sand-and-solids-tracking)
+- [Corrosion and Integrity](#corrosion-and-integrity)
+- [GHG Emissions Tracking](#ghg-emissions-tracking)
+- [Large-Scale Networks](#large-scale-networks)
 - [Troubleshooting](#troubleshooting)
 - [Related Documentation](#related-documentation)
 
@@ -531,6 +537,259 @@ String report = net.getHydraulicReport();
 // Verify mass balance at every node
 String massBalance = net.getMassBalanceReport();
 ```
+
+---
+
+## Artificial Lift
+
+The `LoopedPipeNetwork` supports four artificial lift methods that inject
+additional energy into wells to increase production. Each method applies a
+pressure boost in the NR-GGA solver's `calculateHeadLoss()` step.
+
+### Lift Types
+
+| Type | Enum Value | Method | Typical Application |
+|------|-----------|--------|---------------------|
+| Gas lift | `GAS_LIFT` | `setGasLift()` | High GOR wells, offshore |
+| ESP | `ESP` | `setESP()` | High-rate wells, deepwater |
+| Jet pump | `JET_PUMP` | `setJetPump()` | Low-rate, deviated wells |
+| Rod pump | `ROD_PUMP` | `setRodPump()` | Onshore, low-rate stripper wells |
+
+### API
+
+```java
+// Gas lift: inject gas to reduce hydrostatic gradient
+net.setGasLift("W3", 500.0);              // 500 kg/hr gas lift rate
+
+// ESP: electrical submersible pump
+net.setESP("W4", 80.0, 0.55);             // 80 kW power, 55% efficiency
+
+// Jet pump: Venturi-based downhole pump
+net.setJetPump("W5", 600.0, 0.40);        // 600 kW nozzle power, 40% efficiency
+
+// Rod pump: sucker-rod beam pump
+net.setRodPump("W6", 30.0, 0.35);         // 30 kW motor, 35% efficiency
+
+// Query totals
+double totalGL = net.getTotalGasLiftRate();   // kg/hr
+double totalESP = net.getTotalESPPower();     // kW
+```
+
+### Effect on Solver
+
+Each artificial lift type converts its input energy (gas injection rate or
+electrical power) to a pressure boost $\Delta P_{lift}$ that is subtracted from
+the well element's head loss. For example, gas lift reduces the effective
+hydrostatic gradient, while ESP/jet/rod pump add a direct pressure rise to the
+well's IPR resistance.
+
+---
+
+## Water Handling
+
+Track produced water, water injection, and water breakthrough per well.
+
+### API
+
+```java
+// Set water cut on a well (fraction, 0-1)
+net.setWaterCut("W1", 0.15);       // 15% water cut
+net.setWaterCut("W2", 0.40);       // 40% water cut
+
+// Add water injection support
+// addWaterInjection(sourceNode, reservoirNode, elementName, rateKgHr)
+net.addWaterInjection("WI_supply", "R2", "WI-W2", 2000.0);
+
+// Water breakthrough tracking
+// setWaterBreakthrough(elementName, breakthroughWC, finalWC, currentWC)
+net.setWaterBreakthrough("W1", 0.10, 0.65, 0.10);
+
+// Calculate water balance (after run)
+Map<String, double[]> wb = net.calculateWaterBalance();
+// Per node: [0] = water production (kg/hr), [1] = injection (kg/hr), [2] = net
+
+double totalProd = net.getTotalWaterProduction();   // kg/hr
+double totalInj  = net.getTotalWaterInjection();    // kg/hr
+```
+
+---
+
+## Sand and Solids Tracking
+
+Per-element sand production, erosion rate (DNV RP O501), and deposition
+tracking with configurable limits and violation reporting.
+
+### API
+
+```java
+net.setSandRate("W1", 3.0);             // 3 kg/hr sand production
+net.setSandRate("W2", 12.0);            // 12 kg/hr
+
+net.setMaxAllowableSandRate(10.0);      // kg/hr limit
+net.setMaxAllowableErosionRate(5.0);    // mm/yr limit
+
+net.run();
+Map<String, double[]> sand = net.calculateSandTransport();
+// Per element: [0] = sand rate (kg/hr), [1] = concentration (kg/m3),
+//              [2] = erosion rate (mm/yr), [3] = deposition rate (mm/yr)
+
+List<String> violations = net.getSandViolations();
+```
+
+### Erosion Model (DNV RP O501)
+
+$$
+E = K \cdot C_{sand} \cdot v^{2.6} \cdot d_p^{0.2} \cdot 3600 \cdot 8760
+$$
+
+where $E$ is erosion rate (mm/yr), $K$ is the material factor, $C_{sand}$ is
+sand concentration (kg/m3), $v$ is flow velocity (m/s), and $d_p$ is particle
+diameter (m). Deposition is flagged when velocity falls below 1 m/s.
+
+---
+
+## Corrosion and Integrity
+
+Inline CO2/H2S corrosion rate estimation with two industry-standard models
+and remaining wall life calculation.
+
+### API
+
+```java
+// Set corrosive gas composition on a pipe or well
+net.setCorrosiveGas("trunk", 0.035, 0.002);  // 3.5 mol% CO2, 0.2 mol% H2S
+net.setCorrosionModel("trunk", "NORSOK");     // "DEWAARD" (default) or "NORSOK"
+
+net.setMinAllowableWallLife(20.0);  // years
+
+net.run();
+Map<String, double[]> corr = net.calculateCorrosion();
+// Per element: [0] = corrosion rate (mm/yr), [1] = pCO2 (bar),
+//              [2] = remaining wall life (yr)
+
+List<String> violations = net.getCorrosionViolations();
+```
+
+### de Waard-Milliams Model
+
+$$
+\log_{10}(V_{corr}) = 5.8 - \frac{1710}{T} + 0.67 \cdot \log_{10}(p_{CO_2})
+$$
+
+where $T$ is temperature (K) and $p_{CO_2}$ is CO2 partial pressure (bar).
+An H2S multiplier $(1 + 2 \cdot y_{H_2S}/y_{CO_2})$ is applied when H2S is present.
+
+### NORSOK M-506 Model
+
+$$
+V_{corr} = K_t \cdot f_{CO_2}^{0.62} \cdot \left(\frac{S}{19}\right)^{0.146}
+$$
+
+where $K_t$ is a temperature-dependent factor, $f_{CO_2}$ is CO2 fugacity,
+and $S$ is the wall shear stress (Pa). The NORSOK model generally predicts
+lower rates than de Waard-Milliams and accounts for protective scale formation.
+
+---
+
+## GHG Emissions Tracking
+
+Calculate CO2 and methane emissions per compressor station with field-level
+totals, annual figures, and emissions intensity.
+
+### API
+
+```java
+net.setCO2EmissionFactor(2.75);     // kg CO2 per kg fuel gas (default)
+net.setMethaneSlipFactor(0.02);     // 2% methane slip (default)
+
+net.run();
+
+// Set compressor power (if not computed by the solver)
+net.getPipe("booster").setCompressorPower(1500.0);  // kW
+
+Map<String, double[]> em = net.calculateEmissions();
+// Per compressor: [0] = CO2 (kg/hr), [1] = CH4 slip (kg/hr),
+//                 [2] = CO2-eq (kg/hr), [3] = power (kW), [4] = fuel gas (kg/hr)
+
+double totalCO2eq = net.getTotalCO2Emissions();        // kg/hr
+double annual     = net.getAnnualCO2EmissionsTonnes();  // tonnes/yr
+double intensity  = net.getEmissionsIntensity();        // kgCO2-eq/tonne product
+```
+
+### Emission Factors
+
+| Parameter | Default | Units | Source |
+|-----------|---------|-------|--------|
+| CO2 emission factor | 2.75 | kgCO2/kg fuel | Natural gas combustion |
+| Methane slip | 2% | fraction | Gas turbine typical |
+| Methane GWP | 28 | - | IPCC AR5 (100-yr) |
+| Fuel gas heat rate | 10,000 | kJ/kWh | Gas turbine typical |
+| LHV natural gas | 48,000 | kJ/kg | - |
+
+### Calculations
+
+$$
+\dot{m}_{fuel} = \frac{P \cdot HR}{LHV \cdot 3600}
+$$
+
+$$
+CO_{2,eq} = \dot{m}_{fuel} \cdot EF_{CO_2} + \dot{m}_{fuel} \cdot f_{slip} \cdot GWP_{CH_4}
+$$
+
+where $P$ is compressor power (kW), $HR$ is heat rate (kJ/kWh),
+$LHV$ is LHV (kJ/kg), $EF_{CO_2}$ is the CO2 emission factor,
+$f_{slip}$ is methane slip fraction, and $GWP_{CH_4}$ is the methane global
+warming potential.
+
+---
+
+## Large-Scale Networks
+
+The NR-GGA solver handles networks with 100+ wells efficiently. The Schur
+complement reduction keeps the system matrix size proportional to the number
+of independent loops, not the total number of elements.
+
+### Scaling Example
+
+```java
+LoopedPipeNetwork net = new LoopedPipeNetwork("large");
+net.setFluidTemplate(gas);
+net.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+net.setMaxIterations(500);
+net.setTolerance(500.0);
+
+// 6 manifolds, 20 wells each = 120 wells
+for (int m = 0; m < 6; m++) {
+    net.addJunctionNode("MF" + (m + 1));
+    for (int w = 0; w < 20; w++) {
+        double resP = 230.0 + random(-30, 30);
+        double pi = 5e-13 * random(0.5, 2.0);
+        net.addSourceNode("R" + m + "_" + w, resP, 0.0);
+        net.addWellIPR("R" + m + "_" + w, "MF" + (m + 1),
+                        "W" + m + "_" + w, pi, true);
+    }
+}
+
+// Star topology: manifolds to hub to export
+net.addJunctionNode("hub");
+for (int m = 0; m < 6; m++) {
+    net.addPipe("MF" + (m + 1), "hub", "trunk" + (m + 1),
+                5000.0 + m * 3000.0, 0.3);
+}
+net.addFixedPressureSinkNode("export", 70.0);
+net.addPipe("hub", "export", "export_line", 30000.0, 0.4);
+
+net.run();
+// Typically converges in 15-20 iterations, < 0.1 s
+```
+
+### Performance Benchmarks
+
+| Network Size | Wells | Elements | Iterations | Time |
+|-------------|-------|----------|-----------|------|
+| Small | 4 | 10 | 8-12 | < 0.01 s |
+| Medium | 20 | 50 | 12-15 | < 0.03 s |
+| Large | 120 | 300+ | 15-20 | < 0.1 s |
 
 ---
 

@@ -246,3 +246,25 @@ Do NOT assume API patterns — check constructors, method names, and parameter t
 4. **Fuel gas variability**: Composition changes affect emission factors — use NeqSim simulation values
 5. **Electrification credit**: Platforms powered from shore have near-zero Scope 1 combustion emissions
 6. **Double counting**: Don't count CO2 removed by amine system as both process emission and a reduction
+
+## LoopedPipeNetwork Emissions Tracking
+
+For production gathering networks, `LoopedPipeNetwork` provides field-level
+GHG emissions tracking across all compressor stations:
+
+```java
+net.setCO2EmissionFactor(2.75);     // kg CO2 per kg fuel gas
+net.setMethaneSlipFactor(0.02);     // 2% methane slip
+net.run();
+
+Map<String, double[]> em = net.calculateEmissions();
+// Per compressor: [0] = CO2, [1] = CH4 slip, [2] = CO2-eq (kg/hr),
+//                 [3] = power (kW), [4] = fuel gas (kg/hr)
+
+double totalCO2eq = net.getTotalCO2Emissions();        // kg/hr
+double annual     = net.getAnnualCO2EmissionsTonnes();  // tonnes/yr
+double intensity  = net.getEmissionsIntensity();        // kgCO2-eq/tonne product
+```
+
+Defaults: EF=2.75 kgCO2/kg fuel, methane slip=2%, GWP(CH4)=28 (IPCC AR5).
+See `docs/process/equipment/production_well_networks.md` for full details.
