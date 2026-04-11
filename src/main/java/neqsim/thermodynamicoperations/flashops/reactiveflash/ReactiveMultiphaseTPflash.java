@@ -145,7 +145,14 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
           + numberOfReactions + " independent reactions");
 
       if (numberOfReactions == 0) {
-        // No chemical reactions - fall back to standard multiphase flash
+        // No chemical reactions - composition is fully determined by element balance.
+        // For single-phase systems, just mark as converged.
+        // For multi-phase, fall back to standard VLE flash.
+        if (system.getNumberOfPhases() <= 1) {
+          logger.debug("No reactions, single phase: composition is at equilibrium");
+          converged = true;
+          return;
+        }
         logger.debug("No independent reactions detected, running standard flash approach");
         runNonReactiveFlash();
         return;

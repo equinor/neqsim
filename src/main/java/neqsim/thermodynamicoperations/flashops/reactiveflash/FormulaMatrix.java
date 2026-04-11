@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.reactiveflash;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -50,11 +51,17 @@ public class FormulaMatrix implements java.io.Serializable {
   /** The formula matrix A[NE][NC]. A[k][i] = count of element k in component i. */
   private double[][] A;
 
-  /** Number of elements (rows). */
+  /** Number of elements (rows), including charge balance row if ionic species present. */
   private int numElements;
 
   /** Number of components (columns). */
   private int numComponents;
+
+  /** Whether the system contains ionic species (at least one component with nonzero charge). */
+  private boolean hasIonicSpecies;
+
+  /** Ionic charges for each component (0 for non-ionic). */
+  private double[] ionicCharges;
 
   /**
    * Construct formula matrix from a NeqSim system.
@@ -76,9 +83,17 @@ public class FormulaMatrix implements java.io.Serializable {
     Set<String> elementSet = new LinkedHashSet<String>();
     List<Map<String, Double>> componentElements = new ArrayList<Map<String, Double>>();
 
+    // Detect ionic species and collect charges
+    ionicCharges = new double[numComponents];
+    hasIonicSpecies = false;
+
     for (int i = 0; i < numComponents; i++) {
       ComponentInterface comp = phase.getComponent(i);
       componentNames[i] = comp.getComponentName();
+      ionicCharges[i] = comp.getIonicCharge();
+      if (ionicCharges[i] != 0.0) {
+        hasIonicSpecies = true;
+      }
 
       Map<String, Double> elemMap = new LinkedHashMap<String, Double>();
       neqsim.thermo.atomelement.Element elems = comp.getElements();
@@ -99,19 +114,33 @@ public class FormulaMatrix implements java.io.Serializable {
       componentElements.add(elemMap);
     }
 
-    // Build element name array
-    elementNames = elementSet.toArray(new String[0]);
+    // Build element name array; add "Charge" as final element if ionic species present
+    List<String> elemList = new ArrayList<String>(elementSet);
+    if (hasIonicSpecies) {
+      elemList.add("Charge");
+    }
+    elementNames = elemList.toArray(new String[0]);
     numElements = elementNames.length;
 
     // Build A matrix
     A = new double[numElements][numComponents];
+    int baseElements = elementSet.size(); // number of actual elements (before charge row)
     for (int i = 0; i < numComponents; i++) {
       Map<String, Double> elemMap = componentElements.get(i);
-      for (int k = 0; k < numElements; k++) {
+      for (int k = 0; k < baseElements; k++) {
         Double coef = elemMap.get(elementNames[k]);
         if (coef != null) {
           A[k][i] = coef;
         }
+      }
+    }
+
+    // Add charge balance row: A[chargeRow][i] = ionicCharge of component i
+    // This enforces electroneutrality: sum_i (n_i * z_i) = 0
+    if (hasIonicSpecies) {
+      int chargeRow = numElements - 1;
+      for (int i = 0; i < numComponents; i++) {
+        A[chargeRow][i] = ionicCharges[i];
       }
     }
   }
@@ -132,6 +161,18 @@ public class FormulaMatrix implements java.io.Serializable {
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
         this.A[k][i] = A[k][i];
+      }
+    }
+    // Detect if charge row is present (named "Charge")
+    this.hasIonicSpecies = false;
+    this.ionicCharges = new double[numComponents];
+    for (int k = 0; k < numElements; k++) {
+      if ("Charge".equals(elementNames[k])) {
+        this.hasIonicSpecies = true;
+        for (int i = 0; i < numComponents; i++) {
+          this.ionicCharges[i] = A[k][i];
+        }
+        break;
       }
     }
   }
@@ -277,5 +318,39 @@ public class FormulaMatrix implements java.io.Serializable {
    */
   public int getNumberOfIndependentReactions() {
     return numComponents - getRank();
+  }
+
+  /**
+   * Check whether the system contains ionic species.
+   *
+   * <p>
+   * When true, the formula matrix includes a charge balance row (electroneutrality constraint) as
+   * its last row, and the element name for that row is "Charge".
+   * </p>
+   *
+   * @return true if any component has nonzero ionic charge
+   */
+  public boolean hasIonicSpecies() {
+    return hasIonicSpecies;
+  }
+
+  /**
+   * Get the ionic charges for all components.
+   *
+   * @return array of ionic charges (length NC), 0 for non-ionic species
+   */
+  public double[] getIonicCharges() {
+    return ionicCharges;
+  }
+
+  /**
+   * Check if a component is ionic (has nonzero charge).
+   *
+   * @param componentIndex the component index
+   * @return true if the component is an ion
+   */
+  public boolean isIon(int componentIndex) {
+    return ionicCharges != null && componentIndex >= 0 && componentIndex < numComponents
+        && ionicCharges[componentIndex] != 0.0;
   }
 }

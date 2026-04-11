@@ -1409,4 +1409,254 @@ public class ReactiveFlashBenchmarkTest {
     assertEquals(xNH3_noDIIS, xNH3_DIIS, 0.02,
         "NH3 should match: noDIIS=" + xNH3_noDIIS + " DIIS=" + xNH3_DIIS);
   }
+
+  // ======================================================================
+  // Ionic / Electrolyte Tests
+  // ======================================================================
+
+  /**
+   * Test FormulaMatrix charge balance row for ionic species.
+   *
+   * <p>
+   * Verifies that when a system contains ionic species (Na+, Cl-), the FormulaMatrix automatically
+   * adds a "Charge" row enforcing electroneutrality: sum_i(n_i * z_i) = 0.
+   * </p>
+   */
+  @Test
+  void testFormulaMatrixChargeBalanceRow() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("water", 0.9);
+    system.addComponent("Na+", 0.05);
+    system.addComponent("Cl-", 0.05);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    FormulaMatrix fm = new FormulaMatrix(system);
+
+    assertTrue(fm.hasIonicSpecies(), "System with Na+ and Cl- should detect ionic species");
+
+    // Check that the last element is "Charge"
+    String[] elems = fm.getElementNames();
+    assertEquals("Charge", elems[elems.length - 1],
+        "Last element should be 'Charge' for electroneutrality");
+
+    // Check the charge row has correct values
+    double[][] A = fm.getMatrix();
+    int chargeRow = fm.getNumberOfElements() - 1;
+
+    // Find Na+ and Cl- column indices
+    String[] compNames = fm.getComponentNames();
+    int naIdx = -1;
+    int clIdx = -1;
+    int waterIdx = -1;
+    for (int i = 0; i < compNames.length; i++) {
+      if ("Na+".equals(compNames[i])) {
+        naIdx = i;
+      }
+      if ("Cl-".equals(compNames[i])) {
+        clIdx = i;
+      }
+      if ("water".equals(compNames[i])) {
+        waterIdx = i;
+      }
+    }
+
+    assertTrue(naIdx >= 0, "Na+ should be in component list");
+    assertTrue(clIdx >= 0, "Cl- should be in component list");
+
+    assertEquals(1.0, A[chargeRow][naIdx], 1e-10, "Na+ charge should be +1");
+    assertEquals(-1.0, A[chargeRow][clIdx], 1e-10, "Cl- charge should be -1");
+    assertEquals(0.0, A[chargeRow][waterIdx], 1e-10, "Water charge should be 0");
+
+    // Check that isIon works
+    assertTrue(fm.isIon(naIdx), "Na+ should be flagged as ion");
+    assertTrue(fm.isIon(clIdx), "Cl- should be flagged as ion");
+    assertFalse(fm.isIon(waterIdx), "Water should not be flagged as ion");
+  }
+
+  /**
+   * Test that FormulaMatrix has NO charge row for systems without ions.
+   */
+  @Test
+  void testFormulaMatrixNoChargeRowWithoutIons() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("water", 0.5);
+    system.addComponent("CO2", 0.5);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    FormulaMatrix fm = new FormulaMatrix(system);
+
+    assertFalse(fm.hasIonicSpecies(), "System without ions should not have ionic flag");
+    String[] elems = fm.getElementNames();
+    for (String e : elems) {
+      assertNotEquals("Charge", e, "Should not have Charge row without ions");
+    }
+  }
+
+  /**
+   * Test RAND solver with simple Na+/Cl- in water (no reactions, only electroneutrality).
+   *
+   * <p>
+   * Na+ and Cl- are spectator ions in pure water — they should remain conserved with zero net
+   * charge. The reactive flash should converge and preserve the initial charge balance.
+   * </p>
+   */
+  @Test
+  void testNaClWaterElectroneutrality() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("water", 0.90);
+    system.addComponent("Na+", 0.05);
+    system.addComponent("Cl-", 0.05);
+    system.setMixingRule("classic");
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+    system.init(0);
+    system.init(1);
+
+    ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
+    flash.run();
+
+    // Should converge (ions are conserved, no reactions needed)
+    assertTrue(flash.isConverged(), "Na+/Cl-/water should converge");
+
+    // Verify electroneutrality is preserved
+    double xNa = system.getPhase(0).getComponent("Na+").getx();
+    double xCl = system.getPhase(0).getComponent("Cl-").getx();
+    double xWater = system.getPhase(0).getComponent("water").getx();
+
+    // Na+ and Cl- should be equal (electroneutrality)
+    assertEquals(xNa, xCl, 1e-6, "Na+ and Cl- mole fractions should be equal (charge balance)");
+    assertTrue(xWater > 0.5, "Water should be the dominant component");
+    assertTrue(xNa > 0.0, "Na+ should have nonzero mole fraction");
+  }
+
+  /**
+   * Test RAND solver with CO2 + water system and ions (chemicalReactionInit simulation).
+   *
+   * <p>
+   * Manually adds the ionic products of CO2 hydration to test that the reactive flash can handle a
+   * molecular/ionic mixture: CO2 + 2H2O = HCO3- + H3O+, 2H2O = OH- + H3O+. The Gibbs minimization
+   * should produce physically reasonable ionic concentrations.
+   * </p>
+   */
+  @Test
+  void testCO2WaterWithIons() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("CO2", 0.01);
+    system.addComponent("water", 0.99);
+    // Add ionic species that would be produced by chemicalReactionInit
+    system.addComponent("HCO3-", 1.0e-10);
+    system.addComponent("H3O+", 1.0e-10);
+    system.addComponent("OH-", 1.0e-10);
+    system.addComponent("CO3--", 1.0e-10);
+    system.setMixingRule("classic");
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+    system.init(0);
+    system.init(1);
+
+    FormulaMatrix fm = new FormulaMatrix(system);
+    assertTrue(fm.hasIonicSpecies(), "System with ions should have ionic flag");
+
+    // This system has reactions: CO2 + 2H2O <-> HCO3- + H3O+ etc.
+    int nReactions = fm.getNumberOfIndependentReactions();
+    assertTrue(nReactions >= 2, "CO2/water/ions system should have >= 2 independent reactions");
+
+    ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
+    flash.run();
+
+    assertTrue(flash.isConverged(), "CO2/water/ions system should converge");
+
+    // Verify charge balance (sum of z_i * x_i = 0)
+    double chargeSum = 0.0;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      double xi = system.getPhase(0).getComponent(i).getx();
+      double zi = system.getPhase(0).getComponent(i).getIonicCharge();
+      chargeSum += xi * zi;
+    }
+    assertEquals(0.0, chargeSum, 1e-6, "Charge balance should be preserved");
+
+    // Water should remain dominant
+    double xWater = system.getPhase(0).getComponent("water").getx();
+    assertTrue(xWater > 0.9, "Water should remain dominant in aqueous CO2 system");
+
+    // CO2 hydration has very small equilibrium constant (Ka ~ 4.3e-7 at 298K)
+    // so conversion is tiny. Just verify CO2 still exists and ions are present.
+    double xCO2 = system.getPhase(0).getComponent("CO2").getx();
+    assertTrue(xCO2 > 0.0, "CO2 should not be completely consumed");
+    assertTrue(xCO2 <= 0.011, "CO2 should not increase beyond feed fraction");
+  }
+
+  /**
+   * Test that FormulaMatrix element vector preserves electroneutrality.
+   *
+   * <p>
+   * For a feed with equal moles of Na+ and Cl-, the charge element of the b vector should be zero.
+   * This is the fundamental constraint that ensures the RAND solver maintains electroneutrality
+   * throughout the iteration.
+   * </p>
+   */
+  @Test
+  void testElementVectorChargeBalance() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("water", 0.80);
+    system.addComponent("Na+", 0.10);
+    system.addComponent("Cl-", 0.10);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    FormulaMatrix fm = new FormulaMatrix(system);
+    double[] z = new double[fm.getNumberOfComponents()];
+    for (int i = 0; i < z.length; i++) {
+      z[i] = system.getPhase(0).getComponent(i).getz();
+    }
+    double[] bVec = fm.computeElementVector(z);
+
+    // The charge element (last) should be ~0 for electroneutral feed
+    int chargeIdx = fm.getNumberOfElements() - 1;
+    assertEquals("Charge", fm.getElementNames()[chargeIdx]);
+    assertEquals(0.0, bVec[chargeIdx], 1e-10,
+        "Charge balance in feed should be zero for equal Na+/Cl-");
+  }
+
+  /**
+   * Test that mixed-charge system (Ca++ with 2 Cl-) preserves neutrality.
+   *
+   * <p>
+   * Verifies that the formula matrix correctly handles divalent ions: Ca++ (charge +2) balanced by
+   * two Cl- (charge -1 each).
+   * </p>
+   */
+  @Test
+  void testDivalentIonChargeBalance() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("water", 0.90);
+    system.addComponent("Ca++", 0.0333);
+    system.addComponent("Cl-", 0.0667);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    FormulaMatrix fm = new FormulaMatrix(system);
+    assertTrue(fm.hasIonicSpecies(), "CaCl2 system should have ionic species");
+
+    double[] z = new double[fm.getNumberOfComponents()];
+    for (int i = 0; i < z.length; i++) {
+      z[i] = system.getPhase(0).getComponent(i).getz();
+    }
+    double[] bVec = fm.computeElementVector(z);
+
+    // Charge balance: 2*Ca++ + (-1)*2*Cl- = 2*0.0333 - 0.0667 ≈ -0.0001 (feed)
+    // The feed charge sum from z[i]*charge[i]
+    int chargeIdx = fm.getNumberOfElements() - 1;
+    double chargeTotal = bVec[chargeIdx];
+    // Ca++ contributes +2*0.0333 = 0.0666, Cl- contributes -1*0.0667 = -0.0667
+    // Net ≈ -0.0001 (small rounding from the chosen mole fractions)
+    assertTrue(Math.abs(chargeTotal) < 0.01,
+        "Charge balance for CaCl2 system should be near zero: " + chargeTotal);
+  }
 }

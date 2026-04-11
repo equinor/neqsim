@@ -125,6 +125,15 @@ public class ModifiedRANDSolver implements java.io.Serializable {
   /** Count of accepted DIIS steps. */
   private int diisStepsAccepted;
 
+  /** Whether this system contains ionic species. */
+  private boolean hasIonicSpecies;
+
+  /** Flags: true if component i is ionic (charge != 0). */
+  private boolean[] isIon;
+
+  /** Flags: true if phase j is a gas phase (ions cannot exist in gas). */
+  private boolean[] isGasPhase;
+
   /**
    * Constructor.
    *
@@ -137,6 +146,16 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     this.nc = formulaMatrix.getNumberOfComponents();
     this.ne = formulaMatrix.getNumberOfElements();
     this.A = formulaMatrix.getMatrix();
+    this.hasIonicSpecies = formulaMatrix.hasIonicSpecies();
+
+    // Build ion flag array
+    this.isIon = new boolean[nc];
+    if (hasIonicSpecies) {
+      double[] charges = formulaMatrix.getIonicCharges();
+      for (int i = 0; i < nc; i++) {
+        isIon[i] = (charges[i] != 0.0);
+      }
+    }
   }
 
   /**
@@ -471,6 +490,10 @@ public class ModifiedRANDSolver implements java.io.Serializable {
    * Recalculate phase totals, total moles, mole fractions, and phase fractions.
    */
   private void recalcTotals() {
+    // Enforce ionic phase constraints before recalculating totals
+    if (hasIonicSpecies) {
+      enforceIonPhaseConstraints();
+    }
     totalMoles = 0.0;
     for (int j = 0; j < np; j++) {
       nPhase[j] = 0.0;
@@ -494,7 +517,37 @@ public class ModifiedRANDSolver implements java.io.Serializable {
   }
 
   /**
+   * Enforce ionic phase constraints: ions can only exist in liquid/aqueous phases.
+   *
+   * <p>
+   * In gas phases, ionic moles are pinned to the minimum floor value (EPS). This prevents the
+   * solver from placing ions in the vapor phase, which is physically unrealistic for strong
+   * electrolytes in the condensed phase.
+   * </p>
+   */
+  private void enforceIonPhaseConstraints() {
+    if (!hasIonicSpecies || isGasPhase == null) {
+      return;
+    }
+    for (int j = 0; j < np; j++) {
+      if (isGasPhase[j]) {
+        for (int i = 0; i < nc; i++) {
+          if (isIon[i]) {
+            n[j][i] = EPS;
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Initialize arrays from system state.
+   *
+   * <p>
+   * Sets up moles, mole fractions, phase fractions from the current system. For systems with ionic
+   * species, detects gas phases and pins ionic moles to near-zero in non-aqueous phases (ions exist
+   * only in liquid/aqueous phases).
+   * </p>
    */
   private void initialize() {
     n = new double[np][nc];
@@ -503,6 +556,15 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     beta = new double[np];
     lnPhi = new double[np][nc];
     lambda = new double[ne];
+
+    // Detect gas phases for ion constraint enforcement
+    isGasPhase = new boolean[np];
+    if (hasIonicSpecies) {
+      for (int j = 0; j < np; j++) {
+        String phaseType = system.getPhase(j).getPhaseTypeName();
+        isGasPhase[j] = "gas".equalsIgnoreCase(phaseType);
+      }
+    }
 
     for (int j = 0; j < np; j++) {
       PhaseInterface phase = system.getPhase(j);
@@ -514,6 +576,10 @@ public class ModifiedRANDSolver implements java.io.Serializable {
         x[j][i] = phase.getComponent(i).getx();
         n[j][i] = x[j][i] * beta[j];
         if (n[j][i] < EPS) {
+          n[j][i] = EPS;
+        }
+        // Pin ions to EPS in gas phases
+        if (hasIonicSpecies && isIon[i] && isGasPhase[j]) {
           n[j][i] = EPS;
         }
       }
@@ -541,6 +607,12 @@ public class ModifiedRANDSolver implements java.io.Serializable {
    * where ΔH_heat = integral(298,T) Cp dT and ΔS_heat = integral(298,T) Cp/T dT. Falls back to
    * constant approximation if Cp data is unavailable.
    * </p>
+   *
+   * <p>
+   * For ionic species, the standard chemical potential is the Gibbs energy of formation in aqueous
+   * solution (stored in the component database), not the ideal gas value. Since ions exist only in
+   * solution, no pressure correction (ln P/Pref) is applied.
+   * </p>
    */
   private void computeG0() {
     g0 = new double[nc];
@@ -552,6 +624,13 @@ public class ModifiedRANDSolver implements java.io.Serializable {
 
     PhaseInterface ph = system.getPhase(0);
     for (int i = 0; i < nc; i++) {
+      // For ionic species, use aqueous-state Gibbs energy directly
+      if (hasIonicSpecies && isIon[i]) {
+        double dGfAq = ph.getComponent(i).getGibbsEnergyOfFormation();
+        g0[i] = dGfAq / RT; // no pressure correction for solution-phase species
+        continue;
+      }
+
       double dHf = ph.getComponent(i).getIdealGasEnthalpyOfFormation();
       double S0 = ph.getComponent(i).getIdealGasAbsoluteEntropy();
       double dGf298 = ph.getComponent(i).getGibbsEnergyOfFormation();
@@ -598,12 +677,28 @@ public class ModifiedRANDSolver implements java.io.Serializable {
 
   /**
    * Initialize Lagrange multipliers from current compositions using least-squares fit.
+   *
+   * <p>
+   * For systems with ions, uses a liquid/aqueous phase (not gas) for the initial h[i] values, since
+   * ions exist only in solution.
+   * </p>
    */
   private void initializeLambda() {
+    // Choose the reference phase: prefer a non-gas phase when ions are present
+    int refPhase = 0;
+    if (hasIonicSpecies && isGasPhase != null) {
+      for (int j = 0; j < np; j++) {
+        if (!isGasPhase[j]) {
+          refPhase = j;
+          break;
+        }
+      }
+    }
+
     double[] h = new double[nc];
     for (int i = 0; i < nc; i++) {
-      double xi = x[0][i] > EPS ? x[0][i] : EPS;
-      h[i] = g0[i] + Math.log(xi) + lnPhi[0][i];
+      double xi = x[refPhase][i] > EPS ? x[refPhase][i] : EPS;
+      h[i] = g0[i] + Math.log(xi) + lnPhi[refPhase][i];
     }
 
     double[][] AtA = new double[ne][ne];
