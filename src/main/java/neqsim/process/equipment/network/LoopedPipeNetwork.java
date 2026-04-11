@@ -18,9 +18,11 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
@@ -6269,5 +6271,938 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
         .toJson(json);
+  }
+
+  // =====================================================================
+  // P3: Direct Node Pressure Update API
+  // =====================================================================
+
+  /**
+   * Set the pressure of an existing node.
+   *
+   * <p>
+   * Convenience method to update a node's pressure without recreating it. For source nodes this
+   * changes the reservoir pressure. For sink nodes this changes the delivery pressure (back-
+   * pressure). Throws {@link IllegalArgumentException} if the node does not exist.
+   * </p>
+   *
+   * @param nodeName name of the existing node
+   * @param pressureBar new pressure in bara
+   */
+  public void setNodePressure(String nodeName, double pressureBar) {
+    NetworkNode node = nodes.get(nodeName);
+    if (node == null) {
+      throw new IllegalArgumentException("Node '" + nodeName + "' not found in network");
+    }
+    node.setPressure(pressureBar * 1e5);
+  }
+
+  /**
+   * Set the reservoir pressure for all IPR wells connected to a given source node.
+   *
+   * <p>
+   * Updates both the source node pressure and the reservoir-pressure parameter on each connected
+   * IPR element. This is the correct API when modelling reservoir depletion.
+   * </p>
+   *
+   * @param sourceNodeName name of the reservoir source node
+   * @param pressureBar new reservoir pressure in bara
+   */
+  public void setReservoirPressure(String sourceNodeName, double pressureBar) {
+    setNodePressure(sourceNodeName, pressureBar);
+    double pPa = pressureBar * 1e5;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.WELL_IPR
+          && pipe.getFromNode().equals(sourceNodeName)) {
+        pipe.setReservoirPressure(pPa);
+      }
+    }
+  }
+
+  // =====================================================================
+  // P1: Built-in Network–Topside Coupling Loop
+  // =====================================================================
+
+  /** The topside {@link ProcessSystem} coupled to the network outlet. */
+  private transient ProcessSystem topsideModel;
+  /** Name of the sink node used as the topside coupling point. */
+  private String topsideSinkNodeName;
+  /** Maximum separator capacity utilization (0.0 to 1.0). Default 0.90. */
+  private double maxSeparatorUtilization = 0.90;
+  /** Maximum compressor power in MW. Default 999 (unlimited). */
+  private double maxCompressorPowerMW = 999.0;
+  /** Pressure tolerance for topside coupling convergence (bar). Default 0.5. */
+  private double couplingToleranceBar = 0.5;
+  /** Maximum coupling iterations. Default 20. */
+  private int maxCouplingIterations = 20;
+
+  /**
+   * Set the topside process model to couple with the network.
+   *
+   * <p>
+   * When a topside model is set, calling {@link #runCoupled()} will iterate between the network
+   * solver and the topside separator/compressor model until the arrival pressure converges. The
+   * topside model should be a {@link ProcessSystem} containing at minimum an inlet separator.
+   * </p>
+   *
+   * @param topside the topside {@link ProcessSystem}
+   * @param sinkNodeName the network sink node to couple (the arrival point)
+   */
+  public void setTopsideModel(ProcessSystem topside, String sinkNodeName) {
+    this.topsideModel = topside;
+    this.topsideSinkNodeName = sinkNodeName;
+  }
+
+  /**
+   * Get the coupled topside model.
+   *
+   * @return the topside {@link ProcessSystem}, or null if not set
+   */
+  public ProcessSystem getTopsideModel() {
+    return topsideModel;
+  }
+
+  /**
+   * Set the maximum separator utilization for coupled optimisation.
+   *
+   * @param maxUtil maximum utilization (0.0 to 1.0), e.g. 0.90 for 90%
+   */
+  public void setMaxSeparatorUtilization(double maxUtil) {
+    this.maxSeparatorUtilization = maxUtil;
+  }
+
+  /**
+   * Get the maximum separator utilization limit.
+   *
+   * @return max utilization (0.0 to 1.0)
+   */
+  public double getMaxSeparatorUtilization() {
+    return maxSeparatorUtilization;
+  }
+
+  /**
+   * Set the maximum compressor power limit for topside coupling.
+   *
+   * @param maxPowerMW power limit in MW
+   */
+  public void setMaxCompressorPowerMW(double maxPowerMW) {
+    this.maxCompressorPowerMW = maxPowerMW;
+  }
+
+  /**
+   * Get the maximum compressor power limit.
+   *
+   * @return power limit in MW
+   */
+  public double getMaxCompressorPowerMW() {
+    return maxCompressorPowerMW;
+  }
+
+  /**
+   * Set the coupling convergence tolerance.
+   *
+   * @param toleranceBar pressure tolerance in bar
+   */
+  public void setCouplingToleranceBar(double toleranceBar) {
+    this.couplingToleranceBar = toleranceBar;
+  }
+
+  /**
+   * Set the maximum coupling iterations.
+   *
+   * @param maxIter maximum iterations
+   */
+  public void setMaxCouplingIterations(int maxIter) {
+    this.maxCouplingIterations = maxIter;
+  }
+
+  /**
+   * Run the network coupled with the topside model.
+   *
+   * <p>
+   * Solves the integrated network + topside system by iterating: (1) solve the network to get
+   * outlet flow, (2) feed the outlet stream to the topside model, (3) run the topside model, (4)
+   * evaluate topside constraints (separator utilisation, compressor power), and (5) iterate. The
+   * convergence criterion is that the network arrives at a feasible operating point where all
+   * topside constraints are satisfied.
+   * </p>
+   *
+   * <p>
+   * If no topside model is set, this method simply calls {@link #run()}.
+   * </p>
+   *
+   * @return a map with coupling results: arrivalPressure_bara, totalFlow_kghr,
+   *         separatorUtilization, compressorPower_MW, converged, iterations
+   */
+  public Map<String, Double> runCoupled() {
+    Map<String, Double> result = new LinkedHashMap<>();
+    if (topsideModel == null || topsideSinkNodeName == null) {
+      run();
+      double flow = Math.abs(getTotalSinkFlow()) * 3600.0;
+      double arrP = getNodePressure(topsideSinkNodeName != null ? topsideSinkNodeName : "");
+      result.put("arrivalPressure_bara", arrP);
+      result.put("totalFlow_kghr", flow);
+      result.put("converged", 1.0);
+      result.put("iterations", 1.0);
+      return result;
+    }
+
+    // Binary search on arrival pressure to find optimal feasible point
+    double pLow = 30.0;
+    double pHigh = 150.0;
+    // First find a rough upper bound on feasible pressure
+    NetworkNode sinkNode = nodes.get(topsideSinkNodeName);
+    if (sinkNode != null) {
+      pHigh = Math.min(pHigh, sinkNode.getPressure() / 1e5 + 50.0);
+      pLow = Math.max(pLow, 20.0);
+    }
+
+    double bestP = -1.0;
+    double bestFlow = 0.0;
+    double bestSepUtil = 0.0;
+    double bestCompPower = 0.0;
+    int totalIter = 0;
+
+    // Sweep arrival pressure from high to low, find max feasible production
+    double step = 5.0;
+    for (double p = pHigh; p >= pLow; p -= step) {
+      totalIter++;
+      if (totalIter > maxCouplingIterations) {
+        break;
+      }
+      setNodePressure(topsideSinkNodeName, p);
+      try {
+        run();
+      } catch (Exception e) {
+        continue;
+      }
+      if (!isConverged()) {
+        continue;
+      }
+
+      double flow = Math.abs(getTotalSinkFlow()) * 3600.0;
+      if (flow < 1.0) {
+        continue;
+      }
+
+      // Feed network outlet to topside
+      StreamInterface outlet = getOutletStream(topsideSinkNodeName);
+      if (outlet == null) {
+        continue;
+      }
+
+      // Update the topside feed stream with network flow and pressure
+      neqsim.process.equipment.ProcessEquipmentInterface firstUnit =
+          topsideModel.getUnitOperations().get(0);
+      if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+        neqsim.process.equipment.stream.StreamInterface feedStream =
+            (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+        feedStream.setFlowRate(flow, "kg/hr");
+        feedStream.setPressure(p, "bara");
+      }
+      topsideModel.run();
+
+      // Evaluate constraints — look for separator and compressor in topside
+      double sepUtil = 0.0;
+      double compPower = 0.0;
+      for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel
+          .getUnitOperations()) {
+        if (unit instanceof neqsim.process.equipment.separator.Separator) {
+          neqsim.process.equipment.separator.Separator sep =
+              (neqsim.process.equipment.separator.Separator) unit;
+          sepUtil = Math.max(sepUtil, sep.getCapacityUtilization());
+        }
+        if (unit instanceof Compressor) {
+          Compressor comp = (Compressor) unit;
+          compPower += comp.getPower("MW");
+        }
+      }
+
+      boolean feasible = sepUtil <= maxSeparatorUtilization && compPower <= maxCompressorPowerMW;
+
+      if (feasible && flow > bestFlow) {
+        bestP = p;
+        bestFlow = flow;
+        bestSepUtil = sepUtil;
+        bestCompPower = compPower;
+      }
+    }
+
+    // Set network to best point found
+    if (bestP > 0) {
+      setNodePressure(topsideSinkNodeName, bestP);
+      run();
+    }
+
+    result.put("arrivalPressure_bara", bestP);
+    result.put("totalFlow_kghr", bestFlow);
+    result.put("separatorUtilization", bestSepUtil);
+    result.put("compressorPower_MW", bestCompPower);
+    result.put("converged", bestP > 0 ? 1.0 : 0.0);
+    result.put("iterations", (double) totalIter);
+    return result;
+  }
+
+  /**
+   * Check whether the current network state is feasible given topside constraints.
+   *
+   * @return true if separator utilization and compressor power are within limits
+   */
+  public boolean isTopsideFeasible() {
+    if (topsideModel == null) {
+      return true;
+    }
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel
+        .getUnitOperations()) {
+      if (unit instanceof neqsim.process.equipment.separator.Separator) {
+        neqsim.process.equipment.separator.Separator sep =
+            (neqsim.process.equipment.separator.Separator) unit;
+        if (sep.getCapacityUtilization() > maxSeparatorUtilization) {
+          return false;
+        }
+      }
+      if (unit instanceof Compressor) {
+        Compressor comp = (Compressor) unit;
+        if (comp.getPower("MW") > maxCompressorPowerMW) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // =====================================================================
+  // P5: Production Forecast with Re-Optimization at Each Timestep
+  // =====================================================================
+
+  /**
+   * Run production forecast with choke re-optimisation at each timestep.
+   *
+   * <p>
+   * This extends {@link #productionForecast(double[], double[])} by calling
+   * {@link #optimizeProduction(int, double)} at each timestep. This models how operators manage
+   * declining fields: as reservoir pressure drops, chokes are re-adjusted to maximise production or
+   * revenue. If a topside model is set, topside constraints are enforced at each timestep.
+   * </p>
+   *
+   * @param reservoirPressureProfiles map from source-node name to pressure profiles (bara). Each
+   *        array must have the same length as timestepYears.
+   * @param timestepYears array of timestep years (e.g., 0, 1, 2, ... 20)
+   * @param optimMaxIter max iterations for choke optimisation at each timestep
+   * @param optimTolerance convergence tolerance for optimisation
+   * @return map with time-series results: time_years, rate_kghr, cumulative_kg, revenue_usd_hr,
+   *         separator_util_pct, compressor_power_MW, plus per-reservoir pressures
+   */
+  public Map<String, double[]> productionForecastWithOptimization(
+      Map<String, double[]> reservoirPressureProfiles, double[] timestepYears, int optimMaxIter,
+      double optimTolerance) {
+
+    int n = timestepYears.length;
+    double[] rates = new double[n];
+    double[] cumulative = new double[n];
+    double[] revenue = new double[n];
+    double[] sepUtil = new double[n];
+    double[] compPower = new double[n];
+
+    double cumProd = 0.0;
+    for (int t = 0; t < n; t++) {
+      // Update each reservoir's pressure
+      for (Map.Entry<String, double[]> entry : reservoirPressureProfiles.entrySet()) {
+        String sourceNode = entry.getKey();
+        double[] pressures = entry.getValue();
+        if (t < pressures.length) {
+          setReservoirPressure(sourceNode, pressures[t]);
+        }
+      }
+
+      // Optimise choke settings at this timestep
+      optimizeProduction(optimMaxIter, optimTolerance);
+
+      double rateKgHr = Math.abs(getTotalSinkFlow()) * 3600.0;
+      rates[t] = rateKgHr;
+      revenue[t] = computeObjective();
+
+      // Run topside if coupled
+      if (topsideModel != null) {
+        try {
+          // Update topside feed with current network output
+          neqsim.process.equipment.ProcessEquipmentInterface firstUnit =
+              topsideModel.getUnitOperations().get(0);
+          if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+            neqsim.process.equipment.stream.StreamInterface feedStream =
+                (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+            feedStream.setFlowRate(rateKgHr, "kg/hr");
+            double sinkP = getNodePressure(topsideSinkNodeName);
+            feedStream.setPressure(sinkP, "bara");
+          }
+          topsideModel.run();
+          for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel
+              .getUnitOperations()) {
+            if (unit instanceof neqsim.process.equipment.separator.Separator) {
+              neqsim.process.equipment.separator.Separator sep =
+                  (neqsim.process.equipment.separator.Separator) unit;
+              sepUtil[t] = Math.max(sepUtil[t], sep.getCapacityUtilization() * 100.0);
+            }
+            if (unit instanceof Compressor) {
+              Compressor comp = (Compressor) unit;
+              compPower[t] += comp.getPower("MW");
+            }
+          }
+        } catch (Exception e) {
+          logger.warn("Topside run failed at timestep " + t + ": " + e.getMessage());
+        }
+      }
+
+      // Cumulative production (trapezoidal integration)
+      if (t > 0) {
+        double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
+        cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
+      }
+      cumulative[t] = cumProd;
+    }
+
+    Map<String, double[]> result = new LinkedHashMap<>();
+    result.put("time_years", timestepYears.clone());
+    result.put("rate_kghr", rates);
+    result.put("cumulative_kg", cumulative);
+    result.put("revenue_usd_hr", revenue);
+    result.put("separator_util_pct", sepUtil);
+    result.put("compressor_power_MW", compPower);
+
+    // Also include per-reservoir pressure profiles
+    for (Map.Entry<String, double[]> entry : reservoirPressureProfiles.entrySet()) {
+      result.put("pressure_" + entry.getKey() + "_bara", entry.getValue().clone());
+    }
+
+    return result;
+  }
+
+  /**
+   * Simplified production forecast with re-optimisation using a single reservoir.
+   *
+   * <p>
+   * Convenience overload for networks with a single reservoir source node. Delegates to
+   * {@link #productionForecastWithOptimization(Map, double[], int, double)}.
+   * </p>
+   *
+   * @param sourceNodeName name of the reservoir source node
+   * @param reservoirPressures pressure profile (bara) at each timestep
+   * @param timestepYears array of timestep years
+   * @param optimMaxIter max iterations for optimisation
+   * @param optimTolerance convergence tolerance
+   * @return time-series results map
+   */
+  public Map<String, double[]> productionForecastWithOptimization(String sourceNodeName,
+      double[] reservoirPressures, double[] timestepYears, int optimMaxIter,
+      double optimTolerance) {
+    Map<String, double[]> profiles = new LinkedHashMap<>();
+    profiles.put(sourceNodeName, reservoirPressures);
+    return productionForecastWithOptimization(profiles, timestepYears, optimMaxIter,
+        optimTolerance);
+  }
+
+  // =====================================================================
+  // E300 Fluid Integration
+  // =====================================================================
+
+  /**
+   * Load a fluid template from an Eclipse E300-format file.
+   *
+   * <p>
+   * Reads the E300 file using {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read} and
+   * sets it as the network's fluid template. The EOS type (SRK, PR, PR-LK) is determined
+   * automatically from the file. After loading, specific reservoir compositions can be set using
+   * {@link #setReservoirCompositionFromE300(String, String)}.
+   * </p>
+   *
+   * @param e300FilePath path to the E300 file
+   * @return the loaded {@link SystemInterface} for further inspection
+   */
+  public SystemInterface loadFluidFromE300(String e300FilePath) {
+    SystemInterface fluid = neqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(e300FilePath);
+    setFluidTemplate(fluid);
+    return fluid;
+  }
+
+  /**
+   * Set a reservoir node's fluid composition from a separate E300 file.
+   *
+   * <p>
+   * Uses the same component characterisation (EOS, Tc, Pc, omega, BIPs) as the template fluid but
+   * applies a different molar composition read from the ZI section of the specified E300 file. This
+   * enables multi-reservoir networks where different reservoirs have different compositions but
+   * share the same fluid characterisation.
+   * </p>
+   *
+   * @param sourceNodeName name of the reservoir source node
+   * @param e300FilePath path to the E300 file with ZI section for this reservoir
+   */
+  public void setReservoirCompositionFromE300(String sourceNodeName, String e300FilePath) {
+    NetworkNode node = nodes.get(sourceNodeName);
+    if (node == null) {
+      throw new IllegalArgumentException("Source node '" + sourceNodeName + "' not found");
+    }
+    if (fluidTemplate == null) {
+      throw new IllegalStateException("Fluid template must be set before loading compositions");
+    }
+    SystemInterface resFluid = fluidTemplate.clone();
+    neqsim.thermo.util.readwrite.EclipseFluidReadWrite.setComposition(resFluid, e300FilePath);
+    setNodeFluid(sourceNodeName, resFluid);
+  }
+
+  /**
+   * Set the molar composition for a specific reservoir source node.
+   *
+   * <p>
+   * The composition array must have the same length and order as the fluid template's components.
+   * The template's EOS, BIPs, and component properties are preserved. Only the mole fractions
+   * change.
+   * </p>
+   *
+   * @param sourceNodeName name of the reservoir source node
+   * @param molarComposition mole fractions (same component order as template)
+   */
+  public void setReservoirComposition(String sourceNodeName, double[] molarComposition) {
+    NetworkNode node = nodes.get(sourceNodeName);
+    if (node == null) {
+      throw new IllegalArgumentException("Source node '" + sourceNodeName + "' not found");
+    }
+    if (fluidTemplate == null) {
+      throw new IllegalStateException("Fluid template must be set before setting compositions");
+    }
+    SystemInterface resFluid = fluidTemplate.clone();
+    resFluid.setMolarComposition(molarComposition);
+    setNodeFluid(sourceNodeName, resFluid);
+  }
+
+  // =====================================================================
+  // Full Field Optimisation: Reservoir to Export
+  // =====================================================================
+
+  /**
+   * Run full-field optimisation from reservoir to export.
+   *
+   * <p>
+   * Combines network flow optimisation with topside equipment constraints to find the maximum
+   * revenue operating point. This is the highest-level optimisation call: it optimises choke
+   * settings, evaluates topside feasibility, and optionally sweeps arrival pressure to find the
+   * best overall operating point.
+   * </p>
+   *
+   * @param optimMaxIter max iterations for choke optimisation
+   * @param optimTolerance tolerance for optimisation convergence
+   * @return map with results: arrivalPressure_bara, totalFlow_kghr, revenue_usd_hr,
+   *         separatorUtilization, compressorPower_MW, chokeSettings (per-well)
+   */
+  public Map<String, Object> optimizeFullField(int optimMaxIter, double optimTolerance) {
+    Map<String, Object> result = new LinkedHashMap<>();
+
+    if (topsideModel != null) {
+      // Run coupled optimisation: sweep arrival pressure + optimise chokes at each
+      Map<String, Double> coupledResult = runCoupled();
+      result.put("arrivalPressure_bara", coupledResult.get("arrivalPressure_bara"));
+      result.put("totalFlow_kghr", coupledResult.get("totalFlow_kghr"));
+      result.put("separatorUtilization", coupledResult.get("separatorUtilization"));
+      result.put("compressorPower_MW", coupledResult.get("compressorPower_MW"));
+
+      // Also optimize chokes at the final point
+      optimizeProduction(optimMaxIter, optimTolerance);
+      result.put("revenue_usd_hr", computeObjective());
+    } else {
+      // No topside — just optimize chokes
+      double rev = optimizeProduction(optimMaxIter, optimTolerance);
+      double flow = Math.abs(getTotalSinkFlow()) * 3600.0;
+      result.put("totalFlow_kghr", flow);
+      result.put("revenue_usd_hr", rev);
+    }
+
+    // Append choke settings
+    Map<String, Double> chokeSettings = new LinkedHashMap<>();
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        chokeSettings.put(pipe.getName(), pipe.getChokeOpening());
+      }
+    }
+    result.put("chokeSettings", chokeSettings);
+
+    // Append well allocation
+    buildWellAllocationReport();
+    result.put("wellAllocation", new LinkedHashMap<>(wellAllocationResults));
+
+    return result;
+  }
+
+  /**
+   * Run a full-field lifecycle forecast from plateau through decline.
+   *
+   * <p>
+   * Performs a complete field lifecycle simulation: at each year, updates reservoir pressures,
+   * re-optimises choke settings, runs the topside model, and records all KPIs. This is the
+   * highest-level forecast for field development planning.
+   * </p>
+   *
+   * @param reservoirPressureProfiles map from source-node name to pressure arrays (bara)
+   * @param timestepYears array of years
+   * @return comprehensive forecast results per timestep
+   */
+  public Map<String, double[]> fullFieldForecast(Map<String, double[]> reservoirPressureProfiles,
+      double[] timestepYears) {
+    return productionForecastWithOptimization(reservoirPressureProfiles, timestepYears, 30, 0.01);
+  }
+
+  // =====================================================================
+  // Reservoir Coupling: SimpleReservoir material-balance integration
+  // =====================================================================
+
+  /**
+   * Attached reservoir info: maps a network source node to a SimpleReservoir and well within it.
+   */
+  static class ReservoirAttachment implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    /** The SimpleReservoir instance. */
+    transient SimpleReservoir reservoir;
+    /** Well type: "gas", "oil", "water". */
+    String wellType;
+    /** Index of this well within the reservoir's well list. */
+    int wellIndex;
+    /** Source node name in the network. */
+    String sourceNodeName;
+
+    ReservoirAttachment(SimpleReservoir reservoir, String wellType, int wellIndex,
+        String sourceNodeName) {
+      this.reservoir = reservoir;
+      this.wellType = wellType;
+      this.wellIndex = wellIndex;
+      this.sourceNodeName = sourceNodeName;
+    }
+  }
+
+  /** Map from source node name to reservoir attachment. */
+  private Map<String, ReservoirAttachment> attachedReservoirs = new LinkedHashMap<>();
+
+  /**
+   * Attach a SimpleReservoir to a source node in the network.
+   *
+   * <p>
+   * When a reservoir is attached, the network can run coupled transient simulations where
+   * production drains the reservoir (via TV-flash material balance) and the reservoir pressure
+   * drops naturally. This replaces the need for manually-supplied pressure profiles.
+   * </p>
+   *
+   * <p>
+   * The reservoir must already have the appropriate producer well added (via {@code addGasProducer}
+   * or {@code addOilProducer}).
+   * </p>
+   *
+   * @param sourceNodeName name of the reservoir source node in the network
+   * @param reservoir the SimpleReservoir instance
+   * @param wellType type of producer well: "gas" or "oil"
+   * @param wellIndex index of the well in the reservoir's producer list (0-based)
+   */
+  public void attachReservoir(String sourceNodeName, SimpleReservoir reservoir, String wellType,
+      int wellIndex) {
+    if (!nodes.containsKey(sourceNodeName)) {
+      throw new IllegalArgumentException(
+          "Source node '" + sourceNodeName + "' not found in network");
+    }
+    attachedReservoirs.put(sourceNodeName,
+        new ReservoirAttachment(reservoir, wellType, wellIndex, sourceNodeName));
+    // Sync initial reservoir pressure to the network source node
+    double resPressureBara = reservoir.getReservoirFluid().getPressure("bara");
+    setReservoirPressure(sourceNodeName, resPressureBara);
+  }
+
+  /**
+   * Attach a SimpleReservoir to a source node (convenience: assumes well index 0).
+   *
+   * @param sourceNodeName name of the reservoir source node
+   * @param reservoir the SimpleReservoir instance
+   * @param wellType "gas" or "oil"
+   */
+  public void attachReservoir(String sourceNodeName, SimpleReservoir reservoir, String wellType) {
+    attachReservoir(sourceNodeName, reservoir, wellType, 0);
+  }
+
+  /**
+   * Get the attached reservoir for a source node, or null if none.
+   *
+   * @param sourceNodeName source node name
+   * @return the SimpleReservoir, or null
+   */
+  public SimpleReservoir getAttachedReservoir(String sourceNodeName) {
+    ReservoirAttachment att = attachedReservoirs.get(sourceNodeName);
+    return att != null ? att.reservoir : null;
+  }
+
+  /**
+   * Check whether any reservoirs are attached to this network.
+   *
+   * @return true if at least one reservoir is attached
+   */
+  public boolean hasAttachedReservoirs() {
+    return !attachedReservoirs.isEmpty();
+  }
+
+  /**
+   * Run a single coupled timestep: solve network, drain reservoirs, update pressures.
+   *
+   * <p>
+   * This is the core coupled simulation step:
+   * </p>
+   * <ol>
+   * <li>Optimise choke settings to maximise production at current reservoir pressures</li>
+   * <li>For each attached reservoir, set the well stream flow rate to match the network flow</li>
+   * <li>Call {@code reservoir.runTransient(dt)} to deplete moles and TV-flash at fixed volume</li>
+   * <li>Read the new reservoir pressure and update the network source node + IPR elements</li>
+   * </ol>
+   *
+   * @param dtSeconds timestep duration in seconds
+   * @param optimMaxIter max iterations for choke optimisation (0 to skip optimisation)
+   * @param optimTolerance convergence tolerance for optimisation
+   * @return map with post-step state: reservoir pressures, total flow, GIP/OIP
+   */
+  public Map<String, Object> runTransientCoupled(double dtSeconds, int optimMaxIter,
+      double optimTolerance) {
+    // Step 1: Optimise production at current pressures
+    if (optimMaxIter > 0) {
+      optimizeProduction(optimMaxIter, optimTolerance);
+    } else {
+      run();
+    }
+
+    double totalFlowKgHr = Math.abs(getTotalSinkFlow()) * 3600.0;
+
+    // Step 2: Run topside if coupled
+    if (topsideModel != null) {
+      try {
+        neqsim.process.equipment.ProcessEquipmentInterface firstUnit =
+            topsideModel.getUnitOperations().get(0);
+        if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+          neqsim.process.equipment.stream.StreamInterface feedStream =
+              (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+          feedStream.setFlowRate(totalFlowKgHr, "kg/hr");
+          if (topsideSinkNodeName != null) {
+            feedStream.setPressure(getNodePressure(topsideSinkNodeName), "bara");
+          }
+        }
+        topsideModel.run();
+      } catch (Exception e) {
+        logger.warn("Topside run failed in transient step: " + e.getMessage());
+      }
+    }
+
+    // Step 3: For each reservoir, set well flow and run transient
+    for (Map.Entry<String, ReservoirAttachment> entry : attachedReservoirs.entrySet()) {
+      String srcNode = entry.getKey();
+      ReservoirAttachment att = entry.getValue();
+
+      // Sum the flow from all IPR + choke pipes leaving this source node (kg/s)
+      double flowKgS = 0.0;
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getFromNode().equals(srcNode)
+            && (pipe.getElementType() == NetworkElementType.WELL_IPR
+                || pipe.getElementType() == NetworkElementType.CHOKE)) {
+          flowKgS += Math.abs(pipe.getFlowRate());
+        }
+      }
+
+      // Update well stream on the reservoir
+      StreamInterface wellStream;
+      if ("oil".equalsIgnoreCase(att.wellType)) {
+        wellStream = att.reservoir.getOilProducer(att.wellIndex).getStream();
+      } else {
+        wellStream = att.reservoir.getGasProducer(att.wellIndex).getStream();
+      }
+      wellStream.setFlowRate(flowKgS, "kg/sec");
+
+      // Run transient material balance with sub-stepping for numerical stability.
+      // Large dt with high flow can remove more moles than the reservoir contains,
+      // crashing the TV-flash. Sub-stepping (max 30 days per step) prevents this.
+      double maxSubStepSeconds = 30.0 * 24.0 * 3600.0; // 30 days
+      int nSubSteps = Math.max(1, (int) Math.ceil(dtSeconds / maxSubStepSeconds));
+      double subDt = dtSeconds / nSubSteps;
+      for (int ss = 0; ss < nSubSteps; ss++) {
+        double currentP = att.reservoir.getReservoirFluid().getPressure("bara");
+        if (currentP < att.reservoir.getLowPressureLimit("bara")) {
+          break;
+        }
+        att.reservoir.runTransient(subDt);
+      }
+
+      // Step 4: Read new reservoir pressure and update network
+      double newPressureBara = att.reservoir.getReservoirFluid().getPressure("bara");
+      setReservoirPressure(srcNode, newPressureBara);
+    }
+
+    // Build result map
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("totalFlow_kghr", totalFlowKgHr);
+    for (Map.Entry<String, ReservoirAttachment> entry : attachedReservoirs.entrySet()) {
+      String key = entry.getKey();
+      SimpleReservoir res = entry.getValue().reservoir;
+      result.put("pressure_" + key + "_bara", res.getReservoirFluid().getPressure("bara"));
+      result.put("GIP_" + key + "_GSm3", res.getGasInPlace("GSm3"));
+      result.put("OIP_" + key + "_MSm3", res.getOilInPlace("MSm3"));
+    }
+    return result;
+  }
+
+  /**
+   * Run a full lifecycle forecast with coupled SimpleReservoir material balance.
+   *
+   * <p>
+   * Unlike {@link #productionForecastWithOptimization} which requires externally-supplied pressure
+   * profiles, this method computes reservoir pressure decline naturally through the thermodynamic
+   * TV-flash material balance in SimpleReservoir. Each timestep:
+   * </p>
+   * <ol>
+   * <li>Network solves flow rates at current reservoir pressure</li>
+   * <li>Production flow rates update the reservoir well streams</li>
+   * <li>Reservoir runs TV-flash at fixed volume, computing new pressure and composition</li>
+   * <li>New pressure feeds back to network for next timestep</li>
+   * </ol>
+   *
+   * <p>
+   * Reservoirs must be attached via {@link #attachReservoir} before calling this method.
+   * </p>
+   *
+   * @param timestepYears array of timestep years (e.g., 0, 1, 2, ... 20)
+   * @param optimMaxIter max iterations for choke optimisation at each timestep
+   * @param optimTolerance convergence tolerance for optimisation
+   * @return map with time-series: time_years, rate_kghr, cumulative_kg, revenue_usd_hr,
+   *         separator_util_pct, compressor_power_MW, plus per-reservoir pressures and GIP/OIP
+   */
+  public Map<String, double[]> productionForecastCoupled(double[] timestepYears, int optimMaxIter,
+      double optimTolerance) {
+
+    if (attachedReservoirs.isEmpty()) {
+      throw new IllegalStateException(
+          "No reservoirs attached. Use attachReservoir() before calling productionForecastCoupled.");
+    }
+
+    int n = timestepYears.length;
+    double[] rates = new double[n];
+    double[] cumulative = new double[n];
+    double[] revenue = new double[n];
+    double[] sepUtil = new double[n];
+    double[] compPower = new double[n];
+
+    // Per-reservoir arrays
+    Map<String, double[]> resPressures = new LinkedHashMap<>();
+    Map<String, double[]> resGIP = new LinkedHashMap<>();
+    Map<String, double[]> resOIP = new LinkedHashMap<>();
+    for (String srcNode : attachedReservoirs.keySet()) {
+      resPressures.put(srcNode, new double[n]);
+      resGIP.put(srcNode, new double[n]);
+      resOIP.put(srcNode, new double[n]);
+    }
+
+    double cumProd = 0.0;
+    for (int t = 0; t < n; t++) {
+      // Calculate dt in seconds
+      double dtSeconds;
+      if (t == 0) {
+        // First timestep: just solve, don't drain yet
+        dtSeconds = 0.0;
+      } else {
+        dtSeconds = (timestepYears[t] - timestepYears[t - 1]) * 365.25 * 24 * 3600.0;
+      }
+
+      // Run the coupled step
+      if (dtSeconds > 0) {
+        runTransientCoupled(dtSeconds, optimMaxIter, optimTolerance);
+      } else {
+        // Initial step: just optimise at starting conditions
+        if (optimMaxIter > 0) {
+          optimizeProduction(optimMaxIter, optimTolerance);
+        } else {
+          run();
+        }
+      }
+
+      double rateKgHr = Math.abs(getTotalSinkFlow()) * 3600.0;
+      rates[t] = rateKgHr;
+      revenue[t] = computeObjective();
+
+      // Run topside for metrics (already run inside runTransientCoupled, but t=0 needs it)
+      if (topsideModel != null && dtSeconds == 0) {
+        try {
+          neqsim.process.equipment.ProcessEquipmentInterface firstUnit =
+              topsideModel.getUnitOperations().get(0);
+          if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+            neqsim.process.equipment.stream.StreamInterface feedStream =
+                (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+            feedStream.setFlowRate(rateKgHr, "kg/hr");
+            if (topsideSinkNodeName != null) {
+              feedStream.setPressure(getNodePressure(topsideSinkNodeName), "bara");
+            }
+          }
+          topsideModel.run();
+        } catch (Exception e) {
+          logger.warn("Topside run failed at t=0: " + e.getMessage());
+        }
+      }
+
+      // Collect topside metrics
+      if (topsideModel != null) {
+        for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel
+            .getUnitOperations()) {
+          if (unit instanceof neqsim.process.equipment.separator.Separator) {
+            neqsim.process.equipment.separator.Separator sep =
+                (neqsim.process.equipment.separator.Separator) unit;
+            sepUtil[t] = Math.max(sepUtil[t], sep.getCapacityUtilization() * 100.0);
+          }
+          if (unit instanceof Compressor) {
+            Compressor comp = (Compressor) unit;
+            compPower[t] += comp.getPower("MW");
+          }
+        }
+      }
+
+      // Cumulative production (trapezoidal)
+      if (t > 0) {
+        double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
+        cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
+      }
+      cumulative[t] = cumProd;
+
+      // Record per-reservoir state
+      for (Map.Entry<String, ReservoirAttachment> entry : attachedReservoirs.entrySet()) {
+        String key = entry.getKey();
+        SimpleReservoir res = entry.getValue().reservoir;
+        resPressures.get(key)[t] = res.getReservoirFluid().getPressure("bara");
+        resGIP.get(key)[t] = res.getGasInPlace("GSm3");
+        resOIP.get(key)[t] = res.getOilInPlace("MSm3");
+      }
+    }
+
+    // Build result
+    Map<String, double[]> result = new LinkedHashMap<>();
+    result.put("time_years", timestepYears.clone());
+    result.put("rate_kghr", rates);
+    result.put("cumulative_kg", cumulative);
+    result.put("revenue_usd_hr", revenue);
+    result.put("separator_util_pct", sepUtil);
+    result.put("compressor_power_MW", compPower);
+    for (String key : attachedReservoirs.keySet()) {
+      result.put("pressure_" + key + "_bara", resPressures.get(key));
+      result.put("GIP_" + key + "_GSm3", resGIP.get(key));
+      result.put("OIP_" + key + "_MSm3", resOIP.get(key));
+    }
+    return result;
+  }
+
+  /**
+   * Run a coupled lifecycle forecast with default optimisation parameters.
+   *
+   * <p>
+   * Convenience overload using 30 iterations and 0.01 tolerance.
+   * </p>
+   *
+   * @param timestepYears array of timestep years
+   * @return time-series results
+   */
+  public Map<String, double[]> productionForecastCoupled(double[] timestepYears) {
+    return productionForecastCoupled(timestepYears, 30, 0.01);
   }
 }

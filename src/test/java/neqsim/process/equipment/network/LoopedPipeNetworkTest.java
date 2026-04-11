@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -2604,5 +2606,517 @@ class LoopedPipeNetworkTest {
     for (double p : pressures) {
       assertTrue(p > 0, "Required pressure should be positive");
     }
+  }
+
+  // =====================================================================
+  // P3: setNodePressure API Tests
+  // =====================================================================
+
+  @Test
+  void testSetNodePressure() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("setP");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 65.0);
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    // Run at original pressure
+    network.run();
+    double flow1 = Math.abs(network.getTotalSinkFlow()) * 3600;
+    assertTrue(flow1 > 0, "Should have positive flow");
+
+    // Change sink pressure to higher → less flow
+    network.setNodePressure("platform", 80.0);
+    network.run();
+    double flow2 = Math.abs(network.getTotalSinkFlow()) * 3600;
+    assertTrue(flow2 < flow1, "Higher back-pressure should reduce flow");
+
+    // Verify getNodePressure returns the updated value
+    assertEquals(80.0, network.getNodePressure("platform"), 0.1);
+  }
+
+  @Test
+  void testSetReservoirPressure() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("resP");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 250.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    network.run();
+    double flowHigh = Math.abs(network.getTotalSinkFlow()) * 3600;
+
+    // Drop reservoir pressure → less flow
+    network.setReservoirPressure("res", 150.0);
+    network.run();
+    double flowLow = Math.abs(network.getTotalSinkFlow()) * 3600;
+
+    assertTrue(flowLow < flowHigh, "Lower reservoir pressure should reduce flow");
+    assertEquals(150.0, network.getNodePressure("res"), 0.5);
+  }
+
+  // =====================================================================
+  // P1: Topside Coupling Tests
+  // =====================================================================
+
+  @Test
+  void testTopsideCoupling() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("coupled");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 250.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 70.0);
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    // Build topside: separator + compressor
+    network.run();
+    neqsim.process.equipment.stream.StreamInterface outlet = network.getOutletStream("platform");
+    assertNotNull(outlet, "Should have outlet stream");
+
+    neqsim.process.equipment.stream.Stream feed =
+        new neqsim.process.equipment.stream.Stream("Feed", outlet.getFluid().clone());
+    feed.setFlowRate(outlet.getFlowRate("kg/hr"), "kg/hr");
+    feed.setPressure(outlet.getPressure("bara"), "bara");
+    feed.setTemperature(25.0, "C");
+
+    neqsim.process.equipment.separator.Separator sep =
+        new neqsim.process.equipment.separator.Separator("Sep", feed);
+    sep.setInternalDiameter(3.0);
+    sep.setSeparatorLength(10.0);
+
+    neqsim.process.equipment.compressor.Compressor comp =
+        new neqsim.process.equipment.compressor.Compressor("Comp", sep.getGasOutStream());
+    comp.setOutletPressure(150.0);
+    comp.setPolytropicEfficiency(0.78);
+
+    neqsim.process.processmodel.ProcessSystem topside =
+        new neqsim.process.processmodel.ProcessSystem();
+    topside.add(feed);
+    topside.add(sep);
+    topside.add(comp);
+
+    // Set coupling
+    network.setTopsideModel(topside, "platform");
+    network.setMaxSeparatorUtilization(0.95);
+    network.setMaxCompressorPowerMW(10.0);
+
+    assertNotNull(network.getTopsideModel(), "Topside model should be set");
+
+    // Run coupled
+    Map<String, Double> result = network.runCoupled();
+    assertNotNull(result, "Coupled result should not be null");
+    assertTrue(result.get("arrivalPressure_bara") > 0, "Should find feasible point");
+    assertTrue(result.get("totalFlow_kghr") > 0, "Should have positive flow");
+    assertEquals(1.0, result.get("converged"), 0.01, "Should converge");
+  }
+
+  @Test
+  void testIsTopsideFeasible() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("feasible");
+    // Without topside → always feasible
+    assertTrue(network.isTopsideFeasible());
+  }
+
+  // =====================================================================
+  // P5: Production Forecast with Re-Optimisation Tests
+  // =====================================================================
+
+  @Test
+  void testProductionForecastWithOptimization() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("forecast");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 250.0, 0.0);
+    network.addJunctionNode("bhp");
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+    network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 70.0);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    double[] pressures = {250.0, 220.0, 190.0, 160.0, 130.0};
+    double[] years = {0, 2, 5, 8, 10};
+
+    Map<String, double[]> result =
+        network.productionForecastWithOptimization("res", pressures, years, 20, 0.01);
+
+    assertNotNull(result, "Forecast result should not be null");
+    assertNotNull(result.get("rate_kghr"), "Should have rate array");
+    assertNotNull(result.get("revenue_usd_hr"), "Should have revenue array");
+    assertNotNull(result.get("cumulative_kg"), "Should have cumulative");
+
+    double[] rates = result.get("rate_kghr");
+    assertEquals(5, rates.length, "Should have 5 timesteps");
+    assertTrue(rates[0] > rates[4], "Production should decline: " + rates[0] + " > " + rates[4]);
+    assertTrue(result.get("cumulative_kg")[4] > 0, "Cumulative should be positive");
+  }
+
+  @Test
+  void testProductionForecastWithOptimizationMultiReservoir() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("multiRes");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Two reservoirs
+    network.addSourceNode("resA", 280.0, 0.0);
+    network.addSourceNode("resB", 220.0, 0.0);
+    network.addJunctionNode("bhpA");
+    network.addJunctionNode("bhpB");
+    network.addJunctionNode("whA");
+    network.addJunctionNode("whB");
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("platform", 60.0);
+
+    network.addWellIPR("resA", "bhpA", "iprA", 5e-6, false);
+    network.addChoke("bhpA", "whA", "chokeA", 40.0, 80.0);
+    network.addWellIPR("resB", "bhpB", "iprB", 4e-6, false);
+    network.addChoke("bhpB", "whB", "chokeB", 35.0, 70.0);
+
+    network.addPipe("whA", "manifold", "flA", 5000, 0.20, 0.00005);
+    network.addPipe("whB", "manifold", "flB", 6000, 0.20, 0.00005);
+    network.addPipe("manifold", "platform", "export", 20000, 0.30, 0.00005);
+
+    Map<String, double[]> profiles = new java.util.LinkedHashMap<>();
+    profiles.put("resA", new double[] {280, 250, 220, 190, 160});
+    profiles.put("resB", new double[] {220, 200, 180, 150, 120});
+    double[] years = {0, 3, 6, 9, 12};
+
+    Map<String, double[]> result =
+        network.productionForecastWithOptimization(profiles, years, 20, 0.01);
+
+    assertNotNull(result.get("rate_kghr"));
+    double[] rates = result.get("rate_kghr");
+    assertEquals(5, rates.length);
+    assertTrue(rates[0] > rates[4], "Production should decline over time");
+  }
+
+  // =====================================================================
+  // E300 Fluid Integration Tests
+  // =====================================================================
+
+  @Test
+  void testLoadFluidFromE300() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("e300");
+
+    // Use an existing E300 test file
+    String e300Path = "src/test/java/neqsim/thermo/util/readwrite/fluid1.e300";
+    java.io.File f = new java.io.File(e300Path);
+    if (!f.exists()) {
+      // Skip if test file not available
+      System.out.println("Skipping E300 test — file not found: " + e300Path);
+      return;
+    }
+
+    SystemInterface fluid = network.loadFluidFromE300(e300Path);
+    assertNotNull(fluid, "Should load fluid from E300");
+    assertNotNull(network.getFluidTemplate(), "Template should be set");
+    assertTrue(fluid.getNumberOfComponents() > 0, "Should have components");
+  }
+
+  @Test
+  void testSetReservoirComposition() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("comp");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("resA", 250.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+    network.addWellIPR("resA", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    // Set different composition for reservoir A (richer gas)
+    double[] richComp = {0.80, 0.12, 0.08}; // more ethane+propane
+    network.setReservoirComposition("resA", richComp);
+
+    // Should still solve
+    network.run();
+    double flow = Math.abs(network.getTotalSinkFlow()) * 3600;
+    assertTrue(flow > 0, "Should have positive flow with custom composition");
+  }
+
+  // =====================================================================
+  // Full Field Optimisation Tests
+  // =====================================================================
+
+  @Test
+  void testOptimizeFullFieldBasic() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("fullField");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 250.0, 0.0);
+    network.addJunctionNode("bhp");
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 60.0);
+
+    network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 50.0);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    network.setWellPrice("choke1", 0.30);
+
+    Map<String, Object> result = network.optimizeFullField(30, 0.01);
+    assertNotNull(result, "Full field result should not be null");
+    assertTrue((Double) result.get("totalFlow_kghr") > 0, "Should have positive flow");
+    assertTrue((Double) result.get("revenue_usd_hr") > 0, "Should have positive revenue");
+    assertNotNull(result.get("chokeSettings"), "Should have choke settings");
+  }
+
+  @Test
+  void testFullFieldForecast() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("lifecycle");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 280.0, 0.0);
+    network.addJunctionNode("bhp");
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 80.0);
+    network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
+
+    Map<String, double[]> profiles = new java.util.LinkedHashMap<>();
+    profiles.put("res", new double[] {280, 240, 200, 160, 120});
+    double[] years = {0, 5, 10, 15, 20};
+
+    Map<String, double[]> forecast = network.fullFieldForecast(profiles, years);
+    assertNotNull(forecast, "Forecast should not be null");
+    double[] rates = forecast.get("rate_kghr");
+    assertEquals(5, rates.length);
+    assertTrue(rates[0] > rates[4], "Should show decline");
+    assertTrue(forecast.get("cumulative_kg")[4] > 0, "Should have cumulative production");
+  }
+
+  // =====================================================================
+  // Reservoir Coupling Tests
+  // =====================================================================
+
+  /**
+   * Helper: create a SimpleReservoir with gas for testing.
+   *
+   * @param pressureBara initial reservoir pressure in bara
+   * @param gasVolumeMcm gas-in-place volume in cubic metres
+   * @return configured SimpleReservoir ready for coupling
+   */
+  private SimpleReservoir createTestGasReservoir(double pressureBara, double gasVolumeMcm) {
+    SystemInterface resFluid = new SystemSrkEos(273.15 + 100.0, pressureBara);
+    resFluid.addComponent("methane", 0.90);
+    resFluid.addComponent("ethane", 0.07);
+    resFluid.addComponent("propane", 0.03);
+    resFluid.createDatabase(true);
+    resFluid.setMixingRule("classic");
+    resFluid.setMultiPhaseCheck(true);
+
+    SimpleReservoir reservoir = new SimpleReservoir("TestRes");
+    reservoir.setReservoirFluid(resFluid, gasVolumeMcm, 0.0, 0.0);
+    return reservoir;
+  }
+
+  /**
+   * Helper: build a standard single-well coupled network.
+   *
+   * @param network the network to configure
+   * @param resPressure reservoir pressure in bara
+   */
+  private void buildSingleWellCoupledNetwork(LoopedPipeNetwork network, double resPressure) {
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", resPressure, 0.0);
+    network.addJunctionNode("wh");
+    network.addJunctionNode("ds");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-13, true);
+    network.addChoke("wh", "ds", "choke", 100.0, 80.0);
+    network.addPipe("ds", "platform", "pipe", 10000, 0.25, 0.00005);
+  }
+
+  @Test
+  void testAttachReservoir() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("coupled-test");
+    buildSingleWellCoupledNetwork(network, 300.0);
+
+    // Create reservoir at 300 bara
+    SimpleReservoir reservoir = createTestGasReservoir(300.0, 1.0e7);
+    StreamInterface prodStream = reservoir.addGasProducer("producer");
+    prodStream.setFlowRate(10.0, "kg/sec");
+
+    // Attach reservoir
+    network.attachReservoir("res", reservoir, "gas");
+
+    assertTrue(network.hasAttachedReservoirs(), "Should have attached reservoirs");
+    assertNotNull(network.getAttachedReservoir("res"), "Should return the reservoir");
+  }
+
+  @Test
+  void testRunTransientCoupled() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("transient-coupled");
+    buildSingleWellCoupledNetwork(network, 300.0);
+
+    // Create reservoir at 300 bara with large volume (realistic gas field)
+    SimpleReservoir reservoir = createTestGasReservoir(300.0, 1.0e8);
+    StreamInterface prodStream = reservoir.addGasProducer("producer");
+    prodStream.setFlowRate(1.0, "kg/sec");
+    network.attachReservoir("res", reservoir, "gas");
+
+    // Get initial pressure
+    double initialP = reservoir.getReservoirFluid().getPressure("bara");
+
+    // Run one year timestep
+    double oneYear = 365.25 * 24 * 3600.0;
+    Map<String, Object> result = network.runTransientCoupled(oneYear, 10, 0.01);
+
+    double newP = (Double) result.get("pressure_res_bara");
+    double flow = (Double) result.get("totalFlow_kghr");
+
+    assertTrue(flow > 0, "Should have positive production: " + flow);
+    assertTrue(newP < initialP, "Pressure should decline from " + initialP + " to " + newP);
+    assertTrue(newP > 50.0, "Pressure should not drop too much: " + newP);
+  }
+
+  @Test
+  void testProductionForecastCoupled() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("forecast-coupled");
+    buildSingleWellCoupledNetwork(network, 300.0);
+
+    // Create reservoir at 300 bara with large volume
+    SimpleReservoir reservoir = createTestGasReservoir(300.0, 5.0e8);
+    StreamInterface prodStream = reservoir.addGasProducer("producer");
+    prodStream.setFlowRate(1.0, "kg/sec");
+    network.attachReservoir("res", reservoir, "gas");
+
+    // Run 10-year forecast
+    double[] years = {0, 2, 4, 6, 8, 10};
+    Map<String, double[]> forecast = network.productionForecastCoupled(years, 10, 0.01);
+
+    assertNotNull(forecast);
+    double[] rates = forecast.get("rate_kghr");
+    double[] pressures = forecast.get("pressure_res_bara");
+    double[] cumul = forecast.get("cumulative_kg");
+
+    assertEquals(6, rates.length, "Should have 6 timesteps");
+    assertTrue(rates[0] > 0, "Should have initial production");
+    assertTrue(rates[0] > rates[5], "Rate should decline over time");
+    assertTrue(pressures[0] > pressures[5], "Pressure should decline");
+    assertTrue(cumul[5] > 0, "Should have cumulative production");
+
+    // Check GIP also tracked
+    double[] gip = forecast.get("GIP_res_GSm3");
+    assertNotNull(gip, "GIP should be tracked");
+  }
+
+  @Test
+  void testCoupledMultiReservoir() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("multi-res-coupled");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(500);
+    network.setTolerance(500.0);
+
+    // Two reservoirs at different pressures
+    SimpleReservoir resA = createTestGasReservoir(350.0, 5.0e8);
+    StreamInterface prodA = resA.addGasProducer("prodA");
+    prodA.setFlowRate(1.0, "kg/sec");
+
+    SimpleReservoir resB = createTestGasReservoir(250.0, 3.0e8);
+    StreamInterface prodB = resB.addGasProducer("prodB");
+    prodB.setFlowRate(1.0, "kg/sec");
+
+    // Network with 2 reservoirs + chokes
+    network.addSourceNode("ResA", 350.0, 0.0);
+    network.addSourceNode("ResB", 250.0, 0.0);
+    network.addJunctionNode("whA");
+    network.addJunctionNode("whB");
+    network.addJunctionNode("dsA");
+    network.addJunctionNode("dsB");
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("ResA", "whA", "iprA", 8e-13, true);
+    network.addChoke("whA", "dsA", "chokeA", 150.0, 80.0);
+    network.addWellIPR("ResB", "whB", "iprB", 5e-13, true);
+    network.addChoke("whB", "dsB", "chokeB", 150.0, 60.0);
+    network.addPipe("dsA", "manifold", "pipeA", 3000, 0.15, 0.00005);
+    network.addPipe("dsB", "manifold", "pipeB", 5000, 0.12, 0.00005);
+    network.addPipe("manifold", "platform", "export", 15000, 0.25, 0.00005);
+
+    network.attachReservoir("ResA", resA, "gas");
+    network.attachReservoir("ResB", resB, "gas");
+
+    // Run 5-year forecast
+    double[] years = {0, 1, 2, 3, 4, 5};
+    Map<String, double[]> forecast = network.productionForecastCoupled(years);
+
+    double[] pA = forecast.get("pressure_ResA_bara");
+    double[] pB = forecast.get("pressure_ResB_bara");
+
+    assertTrue(pA[0] > pA[5], "ResA pressure should decline");
+    assertTrue(pB[0] > pB[5], "ResB pressure should decline");
+    // Higher-pressure reservoir should still be higher at end
+    assertTrue(pA[5] > pB[5], "ResA should remain at higher pressure than ResB");
+
+    double[] rates = forecast.get("rate_kghr");
+    assertTrue(rates[0] > rates[5], "Total production should decline");
+  }
+
+  @Test
+  void testCoupledReservoirPressureConverges() {
+    // Verify that a very small reservoir depletes rapidly
+    LoopedPipeNetwork network = new LoopedPipeNetwork("depletion-test");
+    buildSingleWellCoupledNetwork(network, 300.0);
+
+    // Small reservoir volume - fast depletion
+    SimpleReservoir reservoir = createTestGasReservoir(300.0, 5.0e6);
+    StreamInterface prodStream = reservoir.addGasProducer("producer");
+    prodStream.setFlowRate(1.0, "kg/sec");
+    network.attachReservoir("res", reservoir, "gas");
+
+    // Run 5-year forecast with shorter steps
+    double[] years = {0, 1, 2, 3, 4, 5};
+    Map<String, double[]> forecast = network.productionForecastCoupled(years);
+
+    double[] pressures = forecast.get("pressure_res_bara");
+    double[] rates = forecast.get("rate_kghr");
+
+    // Pressure should drop significantly with small reservoir
+    double finalP = pressures[pressures.length - 1];
+    assertTrue(finalP < 200.0, "Small reservoir should deplete below 200 bara, got: " + finalP);
+    // Production rate should be significantly reduced
+    assertTrue(rates[rates.length - 1] < rates[0] * 0.8,
+        "Rate should drop by > 20% for small reservoir");
   }
 }
