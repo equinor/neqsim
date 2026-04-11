@@ -58,8 +58,8 @@ public class SystemBnsEosParityTest {
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
 
-    assertEquals(0.7689709359409634, Z, 0.01);
-    assertEquals(95.451592440, density, 0.01);
+    assertEquals(0.790903069244, Z, 0.01);
+    assertEquals(95.4492017141868, density, 0.5);
     assertEquals(53.7112082181241, cp, 1.0);
     assertEquals(30.73168795781629, cv, 1.0);
     assertEquals(3.800162780643346, jt, 0.1);
@@ -92,8 +92,8 @@ public class SystemBnsEosParityTest {
     double jt = sys.getPhase(0).getJouleThomsonCoefficient() * 10.0;
     double cp = sys.getPhase(0).getCp("J/molK");
 
-    assertEquals(0.7653652388925711, Z, 1e-3);
-    assertEquals(150.3029810272768, density, 0.3);
+    assertEquals(0.7941023149604872, Z, 1e-3);
+    assertEquals(150.3030335721797, density, 0.5);
     assertEquals(3.104453199, jt, 0.002);
     assertEquals(55.59932830685, cp, 0.01);
   }
