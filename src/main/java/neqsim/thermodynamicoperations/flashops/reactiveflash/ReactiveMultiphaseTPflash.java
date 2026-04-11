@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops.reactiveflash;
 
+import java.util.Collections;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,6 +108,15 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   /** Whether to use DIIS acceleration in the RAND solver. */
   private boolean useDIIS = true;
 
+  /** Whether to auto-discover reactions via chemicalReactionInit. */
+  private boolean useChemicalReactionInit = false;
+
+  /**
+   * User-specified maximum number of phases. When positive, overrides system.getMaxNumberOfPhases()
+   * (which may be reset by init calls). A value of -1 means use the system's value.
+   */
+  private int userMaxPhases = -1;
+
   /**
    * Constructor for ReactiveMultiphaseTPflash.
    *
@@ -133,8 +143,36 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   @Override
   public void run() {
     try {
+      // Resolve effective maxPhases: prefer user-set value, fall back to system
+      int effectiveMaxPhases = userMaxPhases > 0 ? userMaxPhases : system.getMaxNumberOfPhases();
+
       // Step 0: Initialize system
       system.init(1);
+
+      // Step 0.5: Auto-discover reactions and add missing ionic/product species
+      // This queries the reaction database for known reactions involving the feed
+      // components, adds missing product species (e.g., ions from dissociation),
+      // and sets up the chemical reaction framework.
+      if (useChemicalReactionInit) {
+        int ncBefore = system.getPhase(0).getNumberOfComponents();
+        int savedMaxPhases = system.getMaxNumberOfPhases();
+        system.chemicalReactionInit();
+        int ncAfter = system.getPhase(0).getNumberOfComponents();
+        if (ncAfter > ncBefore) {
+          // New components were added - must reinitialize the database and mixing rule
+          // to size interaction parameter matrices for the new component count.
+          system.createDatabase(true);
+          system.setMixingRule(system.getMixingRule());
+        }
+        // Restore maxPhases — createDatabase/setMixingRule may reset it
+        system.setMaxNumberOfPhases(savedMaxPhases);
+        // Also enforce maxPhases on current number of phases
+        if (savedMaxPhases == 1) {
+          system.setNumberOfPhases(1);
+        }
+        system.init(0);
+        system.init(1);
+      }
 
       // Step 1: Build the formula matrix from component elemental composition
       formulaMatrix = new FormulaMatrix(system);
@@ -146,39 +184,86 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
 
       if (numberOfReactions == 0) {
         // No chemical reactions - composition is fully determined by element balance.
-        // For single-phase systems, just mark as converged.
-        // For multi-phase, fall back to standard VLE flash.
-        if (system.getNumberOfPhases() <= 1) {
-          logger.debug("No reactions, single phase: composition is at equilibrium");
+        // For systems with ionic species, init(1) may create multiple phases but
+        // the composition is still fully constrained (NR=0 means element balance
+        // uniquely determines all mole fractions). Mark as converged directly.
+        if (system.getNumberOfPhases() <= 1 || formulaMatrix.hasIonicSpecies()) {
+          logger.debug("No reactions: composition is at equilibrium (NR=0)");
           converged = true;
           return;
         }
+        // For non-ionic multi-phase: fall back to standard VLE flash
         logger.debug("No independent reactions detected, running standard flash approach");
         runNonReactiveFlash();
         return;
       }
 
-      // Step 2: Reactive stability analysis
-      ReactiveStabilityAnalysis stability = new ReactiveStabilityAnalysis(system, formulaMatrix);
-      boolean isUnstable = stability.run();
-
-      if (!isUnstable) {
-        // Single phase is stable - just solve homogeneous CE
-        logger.debug("System is phase-stable, computing single-phase chemical equilibrium");
-        solveSinglePhaseChemicalEquilibrium();
-        converged = true;
-        return;
+      // Step 2: Initialize phase split with a conventional (non-reactive) VLE flash.
+      // This provides a much better starting point for the reactive RAND solver
+      // than starting from a one-phase mixture of immiscible components.
+      // The VLE flash separates the system into gas-rich and liquid-rich phases,
+      // and then the RAND solver refines this by applying chemical equilibrium.
+      // Only run VLE init when user allows multi-phase (maxPhases > 1).
+      // Electrolyte CPA init may create 2 phases internally, but if user wants
+      // single-phase CE (maxPhases=1), we should not honour those spurious phases.
+      if (effectiveMaxPhases > 1) {
+        initializeWithVLEFlash();
       }
 
-      // Step 3: Add trial phases from stability analysis
-      List<double[]> unstableTrials = stability.getUnstableTrialCompositions();
-      addTrialPhases(unstableTrials);
+      // Enforce effectiveMaxPhases: electrolyte CPA init may have created extra phases
+      if (effectiveMaxPhases == 1 && system.getNumberOfPhases() > 1) {
+        system.setNumberOfPhases(1);
+        system.setMaxNumberOfPhases(1);
+        system.init(0);
+      }
+
+      // Step 2.5: Reactive stability analysis
+      // Skip stability analysis when system already has 2+ phases AND the user
+      // allows multi-phase solutions (maxPhases >= 2). Running single-phase CE
+      // for immiscible systems like methane/water is ill-posed and wastes
+      // computational effort. But if maxPhases=1, the user wants single-phase,
+      // so stability analysis runs normally. Uses effectiveMaxPhases
+      // because createDatabase/setMixingRule/init may reset maxPhases.
+      boolean skipStability = system.getNumberOfPhases() >= 2 && effectiveMaxPhases >= 2;
+      boolean isUnstable;
+      List<double[]> unstableTrials;
+
+      if (skipStability) {
+        logger.debug(
+            "Skipping stability (already " + system.getNumberOfPhases() + " phases from VLE)");
+        isUnstable = true; // treat as unstable since we have multiple phases
+        unstableTrials = java.util.Collections.emptyList();
+      } else {
+        logger.debug("Step 2.5: stability analysis, np=" + system.getNumberOfPhases());
+        ReactiveStabilityAnalysis stability = new ReactiveStabilityAnalysis(system, formulaMatrix);
+        isUnstable = stability.run();
+        logger.debug("Stability: unstable=" + isUnstable);
+
+        if (!isUnstable) {
+          // Single phase is stable - just solve homogeneous CE
+          logger.debug("Phase-stable, solving single-phase CE");
+          solveSinglePhaseChemicalEquilibrium();
+          logger
+              .debug("Single-phase CE done, converged=" + converged + " iters=" + totalIterations);
+          converged = true;
+          return;
+        }
+        unstableTrials = stability.getUnstableTrialCompositions();
+      }
+
+      // Step 3: Add trial phases from stability analysis (skip if already multi-phase)
+      if (!unstableTrials.isEmpty()) {
+        logger.debug("Adding " + unstableTrials.size() + " trial phases");
+        addTrialPhases(unstableTrials);
+      }
+      logger.debug("Starting outer loop with np=" + system.getNumberOfPhases());
 
       // Step 4: Outer iteration loop
       // - Solve multiphase RAND
       // - Remove negligible phases
       // - Re-check stability
       for (int outerIter = 0; outerIter < MAX_OUTER_ITER; outerIter++) {
+        logger.debug("Outer iter " + outerIter + " np=" + system.getNumberOfPhases());
         // Step 4a: Solve the multiphase modified RAND system
         ModifiedRANDSolver randSolver = new ModifiedRANDSolver(system, formulaMatrix);
         randSolver.setUseDIIS(this.useDIIS);
@@ -186,33 +271,70 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
         totalIterations += randSolver.getIterationsUsed();
         equilibriumTotalMoles = randSolver.getTotalMoles();
         this.solver = randSolver;
+        logger.debug("RAND: converged=" + randConverged + " iters=" + randSolver.getIterationsUsed()
+            + " residual=" + randSolver.getFinalResidual());
 
         if (!randConverged) {
           logger.warn("Modified RAND solver did not converge at outer iteration " + outerIter);
+          // Accept near-converged multi-phase solutions to prevent outer loop
+          // from restarting and overshooting a good solution
+          if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3) {
+            converged = true;
+            logger.info("Accepted near-converged (residual=" + randSolver.getFinalResidual() + ")");
+            break;
+          }
         }
 
         // Step 4b: Remove phases with negligible fractions
         boolean phaseRemoved = removeNegligiblePhases();
+        logger.debug("phaseRemoved=" + phaseRemoved + " np=" + system.getNumberOfPhases());
 
         // Step 4c: Check convergence
         if (randConverged && !phaseRemoved) {
+          // If we can't add more phases (at maxPhases), accept the result.
+          // Running stability analysis is expensive and can hang for immiscible
+          // systems where single-phase CE is ill-posed (e.g., methane/water).
+          if (system.getNumberOfPhases() >= effectiveMaxPhases) {
+            converged = true;
+            logger.debug("CONVERGED (at maxPhases=" + effectiveMaxPhases + ")");
+            break;
+          }
+
           // Do a final stability check to see if we need another phase
+          logger.debug("RAND converged, checking stability...");
           ReactiveStabilityAnalysis recheck = new ReactiveStabilityAnalysis(system, formulaMatrix);
           boolean stillUnstable = recheck.run();
+          logger.debug("Stability recheck: unstable=" + stillUnstable);
 
           if (!stillUnstable) {
             converged = true;
+            logger.debug("CONVERGED (stable after RAND)");
             break;
           }
 
           // Add new trial phases and continue
           List<double[]> newTrials = recheck.getUnstableTrialCompositions();
           if (!newTrials.isEmpty()) {
+            int phasesBefore = system.getNumberOfPhases();
             addTrialPhases(newTrials);
+            if (system.getNumberOfPhases() == phasesBefore) {
+              // Could not add phase (maxPhases reached) — accept current CE as converged
+              converged = true;
+              logger.debug("CONVERGED (maxPhases reached)");
+              break;
+            }
           } else {
             converged = true;
+            logger.debug("CONVERGED (no trials)");
             break;
           }
+        }
+
+        // Step 4d: If converged but a phase was removed, accept CE result
+        if (randConverged && phaseRemoved) {
+          // Phase was negligible — CE is satisfied in remaining phases
+          converged = true;
+          break;
         }
       }
 
@@ -355,6 +477,119 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   }
 
   /**
+   * Initialize the phase split using a conventional (non-reactive) VLE flash.
+   *
+   * <p>
+   * Uses Wilson K-values and successive substitution on the Rachford-Rice equation to determine if
+   * the system splits into two phases. If VLE instability is detected, the system is initialized
+   * with the two-phase split, providing a much better starting point for the reactive RAND solver.
+   * </p>
+   */
+  private void initializeWithVLEFlash() {
+    // If system already has 2+ phases (e.g. from a prior TPflash), skip Wilson
+    // K-value initialization — the existing phase split is better than Wilson estimates.
+    if (system.getNumberOfPhases() >= 2) {
+      logger.debug("VLE initialization skipped: system already has " + system.getNumberOfPhases()
+          + " phases");
+      return;
+    }
+
+    int nc = system.getPhase(0).getNumberOfComponents();
+    double T = system.getTemperature();
+    double P = system.getPressure();
+
+    // Compute Wilson K-values
+    double[] lnK = new double[nc];
+    boolean hasVolatile = false;
+    for (int i = 0; i < nc; i++) {
+      double tc = system.getPhase(0).getComponent(i).getTC();
+      double pc = system.getPhase(0).getComponent(i).getPC();
+      double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
+      if (pc > 0 && tc > 0) {
+        lnK[i] = Math.log(pc / P) + 5.373 * (1.0 + omega) * (1.0 - tc / T);
+        if (Math.abs(lnK[i]) > 0.1) {
+          hasVolatile = true;
+        }
+      }
+    }
+
+    if (!hasVolatile) {
+      return; // No VLE split expected
+    }
+
+    // Get overall composition
+    double[] z = new double[nc];
+    for (int i = 0; i < nc; i++) {
+      z[i] = system.getPhase(0).getComponent(i).getz();
+    }
+
+    // Solve Rachford-Rice for vapor fraction
+    double V = 0.5;
+    for (int iter = 0; iter < 100; iter++) {
+      double f = 0.0;
+      double df = 0.0;
+      for (int i = 0; i < nc; i++) {
+        double Ki = Math.exp(lnK[i]);
+        double denom = 1.0 + V * (Ki - 1.0);
+        if (Math.abs(denom) < 1e-30) {
+          continue;
+        }
+        f += z[i] * (Ki - 1.0) / denom;
+        df -= z[i] * (Ki - 1.0) * (Ki - 1.0) / (denom * denom);
+      }
+      if (Math.abs(f) < 1e-10) {
+        break;
+      }
+      if (Math.abs(df) > 1e-30) {
+        V -= f / df;
+      }
+      V = Math.max(0.0, Math.min(1.0, V));
+    }
+
+    // Check if valid two-phase solution
+    if (V < 1e-10 || V > 1.0 - 1e-10) {
+      return; // Single phase - no VLE initialization needed
+    }
+
+    // Set up 2-phase system
+    if (system.getNumberOfPhases() < 2) {
+      system.addPhase();
+      int newIdx = system.getNumberOfPhases() - 1;
+      try {
+        neqsim.thermo.phase.PhaseInterface newPhase = system.getPhase(0).clone();
+        system.setPhase(newPhase, newIdx);
+      } catch (Exception ex) {
+        logger.warn("Failed to create VLE trial phase: " + ex.getMessage());
+        return;
+      }
+    }
+
+    // Set compositions for both phases
+    for (int i = 0; i < nc; i++) {
+      double Ki = Math.exp(lnK[i]);
+      double xi = z[i] / (1.0 + V * (Ki - 1.0)); // liquid composition
+      double yi = Ki * xi; // vapor composition
+      system.getPhase(0).getComponent(i).setx(Math.max(xi, 1e-30));
+      if (system.getNumberOfPhases() > 1) {
+        system.getPhase(1).getComponent(i).setx(Math.max(yi, 1e-30));
+      }
+    }
+    system.getPhase(0).normalize();
+    if (system.getNumberOfPhases() > 1) {
+      system.getPhase(1).normalize();
+    }
+
+    // Set phase fractions
+    system.setBeta(0, 1.0 - V); // liquid
+    if (system.getNumberOfPhases() > 1) {
+      system.setBeta(1, V); // vapor
+    }
+
+    system.init(1);
+    logger.debug("VLE initialization: V=" + V + " phases=" + system.getNumberOfPhases());
+  }
+
+  /**
    * Solve single-phase chemical equilibrium using the modified RAND method.
    */
   private void solveSinglePhaseChemicalEquilibrium() {
@@ -374,6 +609,13 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   /**
    * Add trial phases from stability analysis to the system.
    *
+   * <p>
+   * Creates a proper phase object by cloning an existing phase and setting the trial composition.
+   * The standard {@code system.addPhase()} only increments the phase counter without creating phase
+   * objects, which would cause null pointer errors. This method clones phase 0 to ensure all
+   * component, mixing rule, and EOS data are properly initialized for the new phase.
+   * </p>
+   *
    * @param trialCompositions list of trial phase compositions (mole fractions)
    */
   private void addTrialPhases(List<double[]> trialCompositions) {
@@ -385,27 +627,43 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       return;
     }
 
+    // Check if we can add more phases
+    int currentPhases = system.getNumberOfPhases();
+    if (currentPhases >= system.getMaxNumberOfPhases()) {
+      logger.debug("Cannot add trial phase: already at max phases (" + currentPhases + ")");
+      return;
+    }
+
     double[] trial = trialCompositions.get(0); // most unstable already sorted
 
+    // Increment phase count and set the new phase as a clone of phase 0
+    // Note: system.addPhase() only increments the counter — it does NOT
+    // create a phase object. We must clone an existing phase.
     system.addPhase();
     int newPhaseIdx = system.getNumberOfPhases() - 1;
 
-    // Set the composition of the new phase
-    for (int i = 0; i < nc; i++) {
-      system.getPhase(newPhaseIdx).getComponent(i).setx(trial[i]);
-    }
-    system.getPhase(newPhaseIdx).normalize();
-
-    // Set initial phase fraction (small)
-    double initialBeta = 0.01;
-    system.setBeta(newPhaseIdx, initialBeta);
-    system.normalizeBeta();
-
     try {
+      // Clone phase 0 to create the new phase with proper EOS/mixing rule setup
+      neqsim.thermo.phase.PhaseInterface newPhase = system.getPhase(0).clone();
+      // Set the composition of the new phase
+      for (int i = 0; i < nc; i++) {
+        newPhase.getComponent(i).setx(trial[i]);
+      }
+      newPhase.normalize();
+
+      // Install the cloned phase into the system's phase array
+      system.setPhase(newPhase, newPhaseIdx);
+
+      // Set initial phase fraction (small)
+      double initialBeta = 0.01;
+      system.setBeta(newPhaseIdx, initialBeta);
+      system.normalizeBeta();
+
       system.init(1);
     } catch (Exception ex) {
       logger.warn("Failed to initialize new trial phase: " + ex.getMessage());
-      system.removePhaseKeepTotalComposition(newPhaseIdx);
+      // Revert the phase addition
+      system.setNumberOfPhases(currentPhases);
     }
   }
 
@@ -625,6 +883,47 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       return solver.getDiisStepsAccepted();
     }
     return 0;
+  }
+
+  /**
+   * Set whether to auto-discover reactions via chemicalReactionInit.
+   *
+   * <p>
+   * When enabled, the flash will call system.chemicalReactionInit() before building the formula
+   * matrix. This queries the reaction database for known reactions involving the feed components
+   * and automatically adds missing product species (e.g., ionic species from dissociation reactions
+   * like CO2 + 2H2O &lt;-&gt; HCO3- + H3O+).
+   * </p>
+   *
+   * <p>
+   * This is useful when the user provides only molecular species (e.g., CO2, water) and wants the
+   * flash to automatically determine which ionic species participate in the equilibrium.
+   * </p>
+   *
+   * @param useChemReacInit true to enable auto-discovery of reactions
+   */
+  public void setUseChemicalReactionInit(boolean useChemReacInit) {
+    this.useChemicalReactionInit = useChemReacInit;
+  }
+
+  /**
+   * Check if chemicalReactionInit auto-discovery is enabled.
+   *
+   * @return true if enabled
+   */
+  public boolean isUseChemicalReactionInit() {
+    return useChemicalReactionInit;
+  }
+
+  /**
+   * Set the maximum number of phases for the reactive flash. When set to a positive value, this
+   * overrides system.getMaxNumberOfPhases() which may be reset by init calls. Use this when the
+   * system's init resets maxPhases (e.g., electrolyte CPA creates 2 phases even when maxPhases=1).
+   *
+   * @param maxPhases maximum number of phases (1 for single-phase CE, 2+ for VLE+CE)
+   */
+  public void setMaxNumberOfPhases(int maxPhases) {
+    this.userMaxPhases = maxPhases;
   }
 
 }

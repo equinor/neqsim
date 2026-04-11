@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -1506,18 +1507,28 @@ public class ReactiveFlashBenchmarkTest {
    */
   @Test
   void testNaClWaterElectroneutrality() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    // Use electrolyte CPA EOS for proper ion handling (Born/MSA/SR2 contributions)
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
     system.addComponent("water", 0.90);
     system.addComponent("Na+", 0.05);
     system.addComponent("Cl-", 0.05);
-    system.setMixingRule("classic");
+    system.setMixingRule(10); // CLASSIC_TX_CPA for electrolyte systems
     system.setMaxNumberOfPhases(1);
     system.setNumberOfPhases(1);
     system.init(0);
     system.init(1);
 
+    FormulaMatrix fm = new FormulaMatrix(system);
+    System.out.println("DEBUG NaCl: NE=" + fm.getNumberOfElements() + " NC="
+        + fm.getNumberOfComponents() + " rank=" + fm.getRank() + " NR="
+        + fm.getNumberOfIndependentReactions() + " hasIons=" + fm.hasIonicSpecies());
+    System.out.println("DEBUG NaCl: elements=" + java.util.Arrays.toString(fm.getElementNames()));
+    System.out.println("DEBUG NaCl: numPhases=" + system.getNumberOfPhases());
+
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
+    System.out.println("DEBUG NaCl: converged=" + flash.isConverged() + " NR="
+        + flash.getNumberOfReactions() + " iters=" + flash.getTotalIterations());
 
     // Should converge (ions are conserved, no reactions needed)
     assertTrue(flash.isConverged(), "Na+/Cl-/water should converge");
@@ -1544,7 +1555,8 @@ public class ReactiveFlashBenchmarkTest {
    */
   @Test
   void testCO2WaterWithIons() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    // Use electrolyte CPA EOS for proper ion handling
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
     system.addComponent("CO2", 0.01);
     system.addComponent("water", 0.99);
     // Add ionic species that would be produced by chemicalReactionInit
@@ -1552,7 +1564,7 @@ public class ReactiveFlashBenchmarkTest {
     system.addComponent("H3O+", 1.0e-10);
     system.addComponent("OH-", 1.0e-10);
     system.addComponent("CO3--", 1.0e-10);
-    system.setMixingRule("classic");
+    system.setMixingRule(10); // CLASSIC_TX_CPA for electrolyte systems
     system.setMaxNumberOfPhases(1);
     system.setNumberOfPhases(1);
     system.init(0);
@@ -1566,6 +1578,7 @@ public class ReactiveFlashBenchmarkTest {
     assertTrue(nReactions >= 2, "CO2/water/ions system should have >= 2 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
+    flash.setMaxNumberOfPhases(1); // single aqueous phase at 1 bar; init(0) resets system maxPhases
     flash.run();
 
     assertTrue(flash.isConverged(), "CO2/water/ions system should converge");
@@ -1658,5 +1671,264 @@ public class ReactiveFlashBenchmarkTest {
     // Net ≈ -0.0001 (small rounding from the chosen mole fractions)
     assertTrue(Math.abs(chargeTotal) < 0.01,
         "Charge balance for CaCl2 system should be near zero: " + chargeTotal);
+  }
+
+  /**
+   * Test electrolyte EOS detection in RAND solver.
+   *
+   * <p>
+   * Verifies that the solver correctly detects when the system uses an electrolyte EOS
+   * (Born/MSA/SR2/CPA) versus a plain SRK EOS, and applies the appropriate g0 computation.
+   * </p>
+   */
+  @Test
+  void testElectrolyteEOSDetection() {
+    // Test with plain SRK (not electrolyte)
+    SystemInterface srkSystem = new SystemSrkEos(298.15, 1.0);
+    srkSystem.addComponent("water", 0.90);
+    srkSystem.addComponent("Na+", 0.05);
+    srkSystem.addComponent("Cl-", 0.05);
+    srkSystem.setMixingRule("classic");
+    srkSystem.init(0);
+    srkSystem.init(1);
+
+    FormulaMatrix fmSrk = new FormulaMatrix(srkSystem);
+    ModifiedRANDSolver solverSrk = new ModifiedRANDSolver(srkSystem, fmSrk);
+    assertFalse(solverSrk.isElectrolyteEOS(), "SRK should not be detected as electrolyte EOS");
+
+    // Test with electrolyte CPA EOS
+    SystemInterface elecSystem = new SystemElectrolyteCPAstatoil(298.15, 1.0);
+    elecSystem.addComponent("water", 0.90);
+    elecSystem.addComponent("Na+", 0.05);
+    elecSystem.addComponent("Cl-", 0.05);
+    elecSystem.setMixingRule(10);
+    elecSystem.init(0);
+    elecSystem.init(1);
+
+    FormulaMatrix fmElec = new FormulaMatrix(elecSystem);
+    ModifiedRANDSolver solverElec = new ModifiedRANDSolver(elecSystem, fmElec);
+    assertTrue(solverElec.isElectrolyteEOS(), "Electrolyte CPA should be detected as electrolyte");
+  }
+
+  /**
+   * Test NaCl/water with electrolyte CPA EOS and chemicalReactionInit disabled.
+   *
+   * <p>
+   * NaCl/water has NR=0 (no independent reactions), so the RAND solver should detect this and
+   * return immediately, preserving the initial composition exactly. Na+ and Cl- are spectator ions.
+   * </p>
+   */
+  @Test
+  void testNaClElectrolyteCPAConvergence() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
+    system.addComponent("water", 0.90);
+    system.addComponent("Na+", 0.05);
+    system.addComponent("Cl-", 0.05);
+    system.setMixingRule(10);
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+    system.init(0);
+    system.init(1);
+
+    FormulaMatrix fm = new FormulaMatrix(system);
+    int nReactions = fm.getNumberOfIndependentReactions();
+    assertEquals(0, nReactions, "NaCl/water should have NR=0 (no independent reactions)");
+
+    ModifiedRANDSolver solver = new ModifiedRANDSolver(system, fm);
+    assertTrue(solver.isElectrolyteEOS(), "Electrolyte CPA should be detected");
+
+    boolean converged = solver.solve();
+    assertTrue(converged, "NaCl with NR=0 should converge immediately");
+    assertEquals(0, solver.getIterationsUsed(), "NR=0 should need 0 iterations");
+
+    // Composition should be preserved exactly (no reactions)
+    double xWater = system.getPhase(0).getComponent("water").getx();
+    double xNa = system.getPhase(0).getComponent("Na+").getx();
+    double xCl = system.getPhase(0).getComponent("Cl-").getx();
+    assertEquals(0.90, xWater, 1e-6, "Water mole fraction should be preserved");
+    assertEquals(0.05, xNa, 1e-6, "Na+ mole fraction should be preserved");
+    assertEquals(0.05, xCl, 1e-6, "Cl- mole fraction should be preserved");
+  }
+
+  /**
+   * Test chemicalReactionInit integration with CO2/water system.
+   *
+   * <p>
+   * Verifies that the reactive flash can auto-discover ionic products from the reaction database
+   * when only molecular species (CO2, water) are provided. The chemicalReactionInit step should add
+   * HCO3-, H3O+, OH-, CO3-- automatically.
+   * </p>
+   */
+  @Test
+  void testChemicalReactionInitCO2Water() {
+    // Use electrolyte CPA EOS with only molecular species — the chemicalReactionInit
+    // step should auto-discover ionic products (HCO3-, H3O+, OH-, CO3--) from the
+    // reaction database.
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
+    system.addComponent("CO2", 0.01);
+    system.addComponent("water", 0.99);
+    system.setMixingRule(10);
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+    system.init(0);
+    system.init(1);
+
+    int ncBefore = system.getPhase(0).getNumberOfComponents();
+
+    // Use the flash's built-in chemicalReactionInit integration
+    ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
+    flash.setUseChemicalReactionInit(true);
+    flash.setMaxNumberOfPhases(1);
+    flash.run();
+
+    int ncAfter = system.getPhase(0).getNumberOfComponents();
+    System.out.println("chemicalReactionInit: before=" + ncBefore + " after=" + ncAfter
+        + " converged=" + flash.isConverged() + " NR=" + flash.getNumberOfReactions());
+
+    // chemicalReactionInit should have added ionic species
+    assertTrue(ncAfter > ncBefore,
+        "chemicalReactionInit should add ionic species to CO2/water system");
+
+    // The flash should converge
+    assertTrue(flash.isConverged(), "CO2/water flash should converge after chemicalReactionInit");
+
+    // Print all components
+    for (int i = 0; i < ncAfter; i++) {
+      String name = system.getPhase(0).getComponent(i).getComponentName();
+      double xi = system.getPhase(0).getComponent(i).getx();
+      System.out.println("  " + name + ": " + xi);
+    }
+
+    // Water should remain dominant
+    double xWater = system.getPhase(0).getComponent("water").getx();
+    assertTrue(xWater > 0.9, "Water should remain dominant");
+  }
+
+  /**
+   * Test reactive flash with methane/CO2/n-heptane/water and ionic reactions.
+   *
+   * <p>
+   * This is a realistic multi-component, multi-phase system where CO2 dissolved in the aqueous
+   * phase undergoes hydration reactions producing HCO3-, H3O+, OH-, CO3--. The system should form a
+   * hydrocarbon-rich phase (methane, n-heptane) and an aqueous phase (water, dissolved CO2, ionic
+   * products). The reactive flash should converge, preserve charge balance, and maintain physically
+   * reasonable compositions.
+   * </p>
+   */
+  @Test
+  void testMethane_CO2_nHeptane_Water_WithReactions() {
+    // Electrolyte CPA EOS at reservoir-like conditions with VLE + CE
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 50.0);
+    system.addComponent("methane", 0.50);
+    system.addComponent("CO2", 0.05);
+    system.addComponent("n-heptane", 0.10);
+    system.addComponent("water", 0.35);
+    // Add ionic species from CO2/water equilibrium
+    // Charge balance: -1*HCO3 + 1*H3O+ - 1*OH- - 2*CO3-- = 0
+    // => H3O+ = HCO3- + OH- + 2*CO3-- = 1e-10 + 1e-10 + 2e-10 = 4e-10
+    system.addComponent("HCO3-", 1.0e-10);
+    system.addComponent("H3O+", 4.0e-10);
+    system.addComponent("OH-", 1.0e-10);
+    system.addComponent("CO3--", 1.0e-10);
+    system.setMixingRule(10); // CLASSIC_TX_CPA for electrolyte systems
+    system.setMaxNumberOfPhases(2);
+    system.init(0);
+    system.init(1);
+
+    int nc = system.getPhase(0).getNumberOfComponents();
+    System.out.println("=== Methane/CO2/nC7/Water reactive flash (VLE+CE) ===");
+    System.out.println("NC=" + nc + " T=" + (system.getTemperature() - 273.15) + "C P="
+        + system.getPressure() + " bar");
+
+    // Step 1: Standard VLE flash to get proper 2-phase initial state
+    // This separates gas (methane, n-heptane rich) from liquid (water, ions)
+    // before applying chemical equilibrium reactions
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    System.out.println("After VLE: phases=" + system.getNumberOfPhases());
+
+    // Step 2: Reactive flash for CE on top of the VLE result
+    FormulaMatrix fm = new FormulaMatrix(system);
+    int nReactions = fm.getNumberOfIndependentReactions();
+    System.out.println("NE=" + fm.getNumberOfElements() + " rank=" + fm.getRank() + " NR="
+        + nReactions + " hasIons=" + fm.hasIonicSpecies());
+    assertTrue(nReactions >= 2,
+        "Multi-component CO2/water/ions system should have >= 2 independent reactions");
+
+    ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
+    flash.run();
+
+    System.out.println("converged=" + flash.isConverged() + " iterations="
+        + flash.getTotalIterations() + " phases=" + system.getNumberOfPhases());
+
+    assertTrue(flash.isConverged(), "Methane/CO2/nC7/water reactive flash should converge");
+
+    // Print phase compositions
+    for (int i = 0; i < nc; i++) {
+      String name = system.getPhase(0).getComponent(i).getComponentName();
+      double xi = system.getPhase(0).getComponent(i).getx();
+      if (xi > 1.0e-20) {
+        System.out.printf("  %-12s  x=%.6e%n", name, xi);
+      }
+    }
+
+    // Verify charge balance
+    double chargeSum = 0.0;
+    for (int i = 0; i < nc; i++) {
+      double xi = system.getPhase(0).getComponent(i).getx();
+      double zi = system.getPhase(0).getComponent(i).getIonicCharge();
+      chargeSum += xi * zi;
+    }
+    assertEquals(0.0, chargeSum, 1e-6, "Charge balance should be zero");
+  }
+
+  /**
+   * Test reactive flash with methane/CO2/n-heptane/water using chemicalReactionInit.
+   *
+   * <p>
+   * This test starts with only molecular species and uses chemicalReactionInit to auto-discover the
+   * ionic products of CO2/water reactions. Verifies that the full pipeline (auto-discovery + RAND
+   * solve) works for a realistic hydrocarbon/water system.
+   * </p>
+   */
+  @Test
+  void testMethane_CO2_nHeptane_Water_ChemReactionInit() {
+    // Start with only molecular species
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 50.0);
+    system.addComponent("methane", 0.50);
+    system.addComponent("CO2", 0.05);
+    system.addComponent("n-heptane", 0.10);
+    system.addComponent("water", 0.35);
+    system.setMixingRule(10);
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+    system.init(0);
+    system.init(1);
+
+    int ncBefore = system.getPhase(0).getNumberOfComponents();
+    System.out.println("=== Methane/CO2/nC7/Water with chemicalReactionInit ===");
+    System.out.println("NC before = " + ncBefore);
+
+    ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
+    flash.setUseChemicalReactionInit(true);
+    flash.run();
+
+    int ncAfter = system.getPhase(0).getNumberOfComponents();
+    System.out.println("NC after = " + ncAfter + " converged=" + flash.isConverged() + " NR="
+        + flash.getNumberOfReactions() + " iters=" + flash.getTotalIterations());
+
+    // chemicalReactionInit should have added ionic species
+    assertTrue(ncAfter > ncBefore,
+        "chemicalReactionInit should add ionic species for CO2/water system");
+
+    assertTrue(flash.isConverged(),
+        "Methane/CO2/nC7/water should converge with auto-discovered reactions");
+
+    // Print all components and compositions
+    for (int i = 0; i < ncAfter; i++) {
+      String name = system.getPhase(0).getComponent(i).getComponentName();
+      double xi = system.getPhase(0).getComponent(i).getx();
+      System.out.printf("  %-12s  x=%.6e%n", name, xi);
+    }
   }
 }
