@@ -1276,4 +1276,240 @@ class LoopedPipeNetworkTest {
     assertTrue(json.contains("WELL_IPR") || json.contains("ipr"),
         "JSON should reference IPR element");
   }
+
+  // ============================================================
+  // ProcessSystem integration tests
+  // ============================================================
+
+  /**
+   * Test that LoopedPipeNetwork produces outlet streams after solving.
+   */
+  @Test
+  void testOutletStreamCreation() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("outlet-test");
+    network.setFluidTemplate(testGas);
+
+    network.addSourceNode("supply", 50.0, 1000.0);
+    network.addSinkNode("customer", 500.0);
+    network.addJunctionNode("junc");
+    network.addPipe("supply", "junc", "p1", 5000.0, 0.3);
+    network.addPipe("junc", "customer", "p2", 3000.0, 0.2);
+
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    network.setMaxIterations(200);
+    network.run();
+
+    assertTrue(network.isConverged(), "Network should converge");
+
+    // Outlet stream should exist at sink node
+    neqsim.process.equipment.stream.StreamInterface outStream = network.getOutletStream("customer");
+    assertNotNull(outStream, "Outlet stream should be created at sink node");
+
+    // Outlet stream should have solved pressure
+    double outPressureBara = outStream.getPressure("bara");
+    assertTrue(outPressureBara > 1.0 && outPressureBara < 50.0,
+        "Outlet pressure should be between 1 and 50 bara, got " + outPressureBara);
+
+    // Default getOutletStream() should return the same
+    neqsim.process.equipment.stream.StreamInterface defaultOut = network.getOutletStream();
+    assertNotNull(defaultOut, "Default outlet stream should exist");
+
+    // getOutletStreams() should be non-empty
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> outlets =
+        network.getOutletStreams();
+    assertTrue(outlets.size() > 0, "getOutletStreams() should return at least one stream");
+  }
+
+  /**
+   * Test feed stream constructor and stream-based source node update.
+   */
+  @Test
+  void testFeedStreamConstructor() {
+    // Create upstream stream
+    neqsim.process.equipment.stream.Stream feed =
+        new neqsim.process.equipment.stream.Stream("feed", testGas);
+    feed.setFlowRate(2000.0, "kg/hr");
+    feed.setPressure(60.0, "bara");
+    feed.setTemperature(25.0, "C");
+    feed.run();
+
+    // Create network with feed stream
+    LoopedPipeNetwork network = new LoopedPipeNetwork("feed-test", feed);
+    assertNotNull(network.getFluidTemplate(), "Fluid template should be set from feed stream");
+
+    // Add nodes (source pressure will be overwritten by feed stream)
+    network.addSourceNode("supply", 50.0, 1000.0);
+    network.addSinkNode("customer", 500.0);
+    network.addPipe("supply", "customer", "pipe", 5000.0, 0.3);
+
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    network.setMaxIterations(200);
+    network.run();
+
+    assertTrue(network.isConverged(), "Network should converge with feed stream");
+
+    // Source node should have the feed stream's pressure (60 bara)
+    double supplyP = network.getNodePressure("supply");
+    assertEquals(60.0, supplyP, 1.0, "Supply pressure should be ~60 bara from feed stream");
+  }
+
+  /**
+   * Test explicit setFeedStream binding to a named source node.
+   */
+  @Test
+  void testSetFeedStreamNamed() {
+    neqsim.process.equipment.stream.Stream feed1 =
+        new neqsim.process.equipment.stream.Stream("feed1", testGas);
+    feed1.setFlowRate(1500.0, "kg/hr");
+    feed1.setPressure(70.0, "bara");
+    feed1.setTemperature(30.0, "C");
+    feed1.run();
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("named-feed-test");
+    network.addSourceNode("well1", 50.0, 500.0);
+    network.addFixedPressureSinkNode("sep", 30.0);
+    network.addPipe("well1", "sep", "line", 5000.0, 0.2);
+
+    // Bind feed stream to named source node
+    network.setFeedStream("well1", feed1);
+
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    network.setMaxIterations(200);
+    network.run();
+
+    assertTrue(network.isConverged(), "Named feed stream network should converge");
+
+    // Well1 node should have feed stream's pressure (70 bara)
+    double wellP = network.getNodePressure("well1");
+    assertEquals(70.0, wellP, 1.0, "Well1 pressure should be ~70 bara from named feed stream");
+
+    // getInletStreams() should return the feed
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets =
+        network.getInletStreams();
+    assertEquals(1, inlets.size(), "Should have one inlet stream");
+  }
+
+  /**
+   * Test LoopedPipeNetwork inside a ProcessSystem with upstream and downstream equipment.
+   */
+  @Test
+  void testProcessSystemIntegration() {
+    // Build a simple process: Stream -> LoopedPipeNetwork -> downstream check
+    neqsim.process.equipment.stream.Stream feed =
+        new neqsim.process.equipment.stream.Stream("feed gas", testGas);
+    feed.setFlowRate(5000.0, "kg/hr");
+    feed.setPressure(80.0, "bara");
+    feed.setTemperature(25.0, "C");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("gathering", feed);
+    network.addSourceNode("inlet", 80.0, 5000.0);
+    network.addFixedPressureSinkNode("delivery", 40.0);
+    network.addPipe("inlet", "delivery", "export", 10000.0, 0.3);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    network.setMaxIterations(200);
+
+    // Add to ProcessSystem
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(feed);
+    process.add(network);
+    process.run();
+
+    // Network should have converged
+    assertTrue(network.isConverged(), "Network in ProcessSystem should converge");
+
+    // Outlet stream should be available for downstream connection
+    neqsim.process.equipment.stream.StreamInterface outlet = network.getOutletStream();
+    assertNotNull(outlet, "Network outlet stream should exist after ProcessSystem.run()");
+
+    double outP = outlet.getPressure("bara");
+    assertEquals(40.0, outP, 1.0, "Outlet pressure should be ~40 bara (fixed sink)");
+
+    double outFlow = outlet.getFlowRate("kg/hr");
+    assertTrue(outFlow > 100.0, "Outlet flow should be positive, got " + outFlow);
+  }
+
+  /**
+   * Test outlet stream can be chained to downstream equipment (Separator).
+   */
+  @Test
+  void testDownstreamChaining() {
+    neqsim.process.equipment.stream.Stream feed =
+        new neqsim.process.equipment.stream.Stream("well fluid", testGas);
+    feed.setFlowRate(3000.0, "kg/hr");
+    feed.setPressure(60.0, "bara");
+    feed.setTemperature(40.0, "C");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("pipeline", feed);
+    network.addSourceNode("wellhead", 60.0, 3000.0);
+    network.addFixedPressureSinkNode("platform", 35.0);
+    network.addPipe("wellhead", "platform", "flowline", 8000.0, 0.2);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    network.setMaxIterations(200);
+
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(feed);
+    process.add(network);
+    process.run();
+
+    // Get outlet and connect to separator
+    neqsim.process.equipment.stream.StreamInterface pipelineOutlet = network.getOutletStream();
+    assertNotNull(pipelineOutlet, "Pipeline outlet should exist");
+
+    neqsim.process.equipment.separator.Separator separator =
+        new neqsim.process.equipment.separator.Separator("HP Sep", pipelineOutlet);
+    process.add(separator);
+
+    // Run separator
+    separator.run();
+
+    // Separator should have run with the network outlet's conditions
+    assertNotNull(separator.getGasOutStream(), "Separator gas outlet should exist");
+    double sepP = separator.getGasOutStream().getPressure("bara");
+    assertEquals(35.0, sepP, 2.0, "Separator should operate near pipeline delivery pressure");
+  }
+
+  /**
+   * Test production network with IPR well, choke, and flowline producing outlet streams.
+   */
+  @Test
+  void testProductionNetworkOutletStreams() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("prod-net-streams");
+    network.setFluidTemplate(testGas);
+
+    network.addSourceNode("reservoir", 350.0, 0.0);
+    network.addJunctionNode("wellhead");
+    network.addJunctionNode("downstream");
+    network.addFixedPressureSinkNode("separator", 50.0);
+
+    network.addWellIPR("reservoir", "wellhead", "ipr", 5e-7, false);
+    network.addChoke("wellhead", "downstream", "choke", 150.0, 80.0);
+    network.addPipe("downstream", "separator", "flowline", 5000.0, 0.2);
+
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(500.0);
+    network.setMaxIterations(500);
+    network.run();
+
+    assertTrue(network.isConverged(), "Production network should converge");
+
+    // Sink outlet stream
+    neqsim.process.equipment.stream.StreamInterface sepStream =
+        network.getOutletStream("separator");
+    assertNotNull(sepStream, "Separator outlet stream should exist");
+    assertEquals(50.0, sepStream.getPressure("bara"), 1.0, "Separator stream should be at 50 bara");
+    assertTrue(sepStream.getFlowRate("kg/hr") > 1000.0,
+        "Separator stream should have significant flow");
+
+    // Source node stream (reservoir)
+    neqsim.process.equipment.stream.StreamInterface resStream =
+        network.getSourceNodeStream("reservoir");
+    assertNotNull(resStream, "Reservoir source stream should exist");
+  }
 }

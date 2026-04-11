@@ -1,7 +1,9 @@
 package neqsim.process.equipment.network;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1025,6 +1027,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   private SystemInterface fluidTemplate;
   private double massBalanceError = 0.0;
 
+  // Stream integration for ProcessSystem connectivity
+  private final transient Map<String, StreamInterface> feedStreams = new LinkedHashMap<>();
+  private final transient Map<String, StreamInterface> outletStreams = new LinkedHashMap<>();
+
   /**
    * Create a new looped pipe network.
    *
@@ -1032,6 +1038,114 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    */
   public LoopedPipeNetwork(String name) {
     super(name);
+  }
+
+  /**
+   * Create a new looped pipe network with a single feed stream.
+   *
+   * <p>
+   * The feed stream's fluid is used as the network fluid template. The stream is associated with
+   * the first source node added to the network. Call
+   * {@link #setFeedStream(String, StreamInterface)} to explicitly bind a stream to a named source
+   * node.
+   * </p>
+   *
+   * @param name network name
+   * @param feedStream inlet stream providing fluid composition, temperature and pressure
+   */
+  public LoopedPipeNetwork(String name, StreamInterface feedStream) {
+    super(name);
+    if (feedStream != null) {
+      this.fluidTemplate = feedStream.getFluid().clone();
+      this.feedStreams.put("__default__", feedStream);
+    }
+  }
+
+  /**
+   * Associate a feed stream with a named source node.
+   *
+   * <p>
+   * When {@link #run(UUID)} is called, the stream's pressure and flow rate are read and applied to
+   * the named source node. If the fluid template has not been set, it is derived from the first
+   * feed stream.
+   * </p>
+   *
+   * @param sourceNodeName name of an existing source node
+   * @param stream the feed stream
+   */
+  public void setFeedStream(String sourceNodeName, StreamInterface stream) {
+    if (stream == null) {
+      return;
+    }
+    this.feedStreams.put(sourceNodeName, stream);
+    if (this.fluidTemplate == null && stream.getFluid() != null) {
+      this.fluidTemplate = stream.getFluid().clone();
+    }
+  }
+
+  /**
+   * Get the outlet stream for a named sink node.
+   *
+   * <p>
+   * The returned stream contains the solved pressure, temperature, flow rate, and fluid composition
+   * at the sink node. It is updated each time {@link #run(UUID)} completes and can be connected to
+   * downstream process equipment.
+   * </p>
+   *
+   * @param sinkNodeName name of a sink node
+   * @return outlet stream, or null if the node does not exist or has not been solved
+   */
+  public StreamInterface getOutletStream(String sinkNodeName) {
+    return outletStreams.get(sinkNodeName);
+  }
+
+  /**
+   * Get the default outlet stream.
+   *
+   * <p>
+   * Returns the outlet stream of the first sink node in the network. This provides a convenient
+   * single-outlet accessor for networks with one delivery point.
+   * </p>
+   *
+   * @return outlet stream of the first sink node, or null if no sinks exist
+   */
+  public StreamInterface getOutletStream() {
+    if (outletStreams.isEmpty()) {
+      return null;
+    }
+    return outletStreams.values().iterator().next();
+  }
+
+  /**
+   * Get the outlet stream for a named source node (for IPR well sources where flow is computed).
+   *
+   * @param sourceNodeName name of a source node
+   * @return outlet stream at the source node, or null if not yet solved
+   */
+  public StreamInterface getSourceNodeStream(String sourceNodeName) {
+    NetworkNode node = nodes.get(sourceNodeName);
+    if (node != null) {
+      return node.getStream();
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    if (feedStreams.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(new ArrayList<>(feedStreams.values()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (outletStreams.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(new ArrayList<>(outletStreams.values()));
   }
 
   /**
@@ -2489,6 +2603,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
   @Override
   public void run(UUID id) {
+    // Pull conditions from connected feed streams
+    applyFeedStreams();
+
     if (pipes.isEmpty()) {
       return;
     }
@@ -2527,6 +2644,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     // Calculate mass balance error
     calculateMassBalanceError();
+
+    // Populate outlet streams at sink nodes for downstream equipment
+    updateOutletStreams();
   }
 
   /**
@@ -2541,10 +2661,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops =
           new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
       ops.TPflash();
+      fluid.initProperties();
     } catch (Exception ex) {
       logger.warn("TP flash failed in property update: " + ex.getMessage());
+      return;
     }
-    fluid.initProperties();
 
     for (NetworkPipe pipe : pipes.values()) {
       double headLoss = calculateHeadLoss(pipe, fluid);
@@ -2980,6 +3101,156 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         }
       }
       massBalanceError = Math.max(massBalanceError, Math.abs(netFlow));
+    }
+  }
+
+  /**
+   * Apply conditions from connected feed streams to their corresponding source nodes.
+   *
+   * <p>
+   * For each registered feed stream, updates the source node's pressure and supply flow rate from
+   * the stream's current state. Also updates the fluid template from the first feed stream if not
+   * already set.
+   * </p>
+   */
+  private void applyFeedStreams() {
+    for (Map.Entry<String, StreamInterface> entry : feedStreams.entrySet()) {
+      String nodeName = entry.getKey();
+      StreamInterface stream = entry.getValue();
+      if (stream == null) {
+        continue;
+      }
+
+      // Handle the default single-feed case: bind to first source node
+      if ("__default__".equals(nodeName)) {
+        for (NetworkNode node : nodes.values()) {
+          if (node.getType() == NodeType.SOURCE) {
+            nodeName = node.getName();
+            break;
+          }
+        }
+        if ("__default__".equals(nodeName)) {
+          continue; // No source nodes defined yet
+        }
+      }
+
+      NetworkNode node = nodes.get(nodeName);
+      if (node == null || node.getType() != NodeType.SOURCE) {
+        continue;
+      }
+
+      // Update source node from stream state
+      double streamPressurePa = stream.getPressure("Pa");
+      if (streamPressurePa > 0) {
+        node.setPressure(streamPressurePa);
+      }
+
+      double streamFlowKgs = stream.getFlowRate("kg/sec");
+      if (streamFlowKgs > 0) {
+        node.setDemand(-streamFlowKgs); // Negative = supply
+      }
+
+      node.setTemperature(stream.getTemperature("K"));
+
+      // Update fluid template from first feed stream
+      if (fluidTemplate == null && stream.getFluid() != null) {
+        fluidTemplate = stream.getFluid().clone();
+      }
+    }
+  }
+
+  /**
+   * Create or update outlet streams at sink nodes with the solved network state.
+   *
+   * <p>
+   * For each sink node, creates a {@link Stream} containing the fluid at the solved pressure,
+   * temperature, and flow rate. These streams can be connected to downstream process equipment in a
+   * {@link neqsim.process.processmodel.ProcessSystem}.
+   * </p>
+   */
+  private void updateOutletStreams() {
+    if (fluidTemplate == null) {
+      return;
+    }
+
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() != NodeType.SINK) {
+        continue;
+      }
+
+      // Calculate total flow into this sink node from all connected pipes
+      double totalFlowKgs = 0.0;
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getToNode().equals(node.getName())) {
+          totalFlowKgs += Math.abs(pipe.getFlowRate());
+        }
+        if (pipe.getFromNode().equals(node.getName())) {
+          totalFlowKgs -= Math.abs(pipe.getFlowRate());
+        }
+      }
+      if (totalFlowKgs < 0) {
+        totalFlowKgs = 0.0;
+      }
+
+      try {
+        // Create or update outlet stream
+        StreamInterface outStream = outletStreams.get(node.getName());
+        if (outStream == null) {
+          SystemInterface outFluid = fluidTemplate.clone();
+          outFluid.setPressure(node.getPressure() / 1e5, "bara");
+          outFluid.setTemperature(node.getTemperature(), "K");
+          outStream = new Stream(node.getName() + "_outlet", outFluid);
+          outStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+          outStream.run();
+          outletStreams.put(node.getName(), outStream);
+        } else {
+          outStream.getFluid().setPressure(node.getPressure() / 1e5, "bara");
+          outStream.getFluid().setTemperature(node.getTemperature(), "K");
+          outStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+          outStream.run();
+        }
+
+        // Also store on the node for direct access
+        node.setStream(outStream);
+      } catch (Exception ex) {
+        logger.warn(
+            "Failed to create outlet stream for node " + node.getName() + ": " + ex.getMessage());
+      }
+    }
+
+    // Also update streams on source nodes (useful for IPR wells)
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() != NodeType.SOURCE) {
+        continue;
+      }
+      double totalFlowKgs = 0.0;
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getFromNode().equals(node.getName())) {
+          totalFlowKgs += Math.abs(pipe.getFlowRate());
+        }
+      }
+      if (totalFlowKgs > 0) {
+        try {
+          StreamInterface srcStream = node.getStream();
+          if (srcStream == null) {
+            SystemInterface srcFluid = fluidTemplate.clone();
+            srcFluid.setPressure(node.getPressure() / 1e5, "bara");
+            srcFluid.setTemperature(node.getTemperature(), "K");
+            srcStream = new Stream(node.getName() + "_stream", srcFluid);
+            srcStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+            srcStream.run();
+            node.setStream(srcStream);
+          } else {
+            srcStream.getFluid().setPressure(node.getPressure() / 1e5, "bara");
+            srcStream.getFluid().setTemperature(node.getTemperature(), "K");
+            srcStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+            srcStream.run();
+          }
+        } catch (Exception ex) {
+          logger.warn(
+              "Failed to create source stream for node " + node.getName() + ": " + ex.getMessage());
+        }
+      }
     }
   }
 
