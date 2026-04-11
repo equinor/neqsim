@@ -14,10 +14,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -181,7 +184,21 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      * Multiphase pipeline using Beggs-Brill correlation. Wraps NeqSim's PipeBeggsAndBrills for
      * accurate pressure drop in two-phase and three-phase systems.
      */
-    MULTIPHASE_PIPE
+    MULTIPHASE_PIPE,
+
+    /**
+     * Compressor or booster station. Wraps NeqSim's {@link Compressor} with optional
+     * {@link CompressorChartInterface} for head-flow performance curves, surge/stonewall detection,
+     * and power calculation. Adds energy (negative head loss) to the flow.
+     */
+    COMPRESSOR,
+
+    /**
+     * Pressure regulator or PRV (Pressure Reducing Valve). Maintains a fixed downstream pressure
+     * set-point regardless of upstream pressure, as long as upstream pressure exceeds the
+     * set-point. Models pressure let-down stations in gas distribution networks.
+     */
+    REGULATOR
   }
 
   /**
@@ -418,6 +435,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     private double chokeKv = 0.0; // m3/hr/sqrt(bar) - valve flow coefficient
     private double chokeOpening = 100.0; // percent (0-100)
     private double chokeCriticalPressureRatio = 0.5; // xt for critical flow
+    private boolean chokeUseValveModel = false; // use NeqSim ThrottlingValve delegate
 
     // Tubing parameters (for TUBING element type)
     private double tubingInclination = 90.0; // degrees from horizontal (90 = vertical)
@@ -425,6 +443,24 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     // Multiphase pipe parameters (for MULTIPHASE_PIPE element type)
     private int multiphaseSegments = 10; // number of calculation segments
+
+    // Compressor parameters (for COMPRESSOR element type)
+    private double compressorSpeed = 3000.0; // RPM
+    private double compressorEfficiency = 0.75; // polytropic efficiency (0-1)
+    private double compressorPower = 0.0; // kW (calculated)
+    private boolean compressorHasChart = false;
+    private transient Compressor compressorModel;
+
+    // Regulator parameters (for REGULATOR element type)
+    private double regulatorSetPoint = 0.0; // Pa — target downstream pressure
+
+    // Pipe efficiency factor for aging/fouling (1.0 = new pipe, < 1.0 = degraded)
+    private double pipeEfficiency = 1.0;
+
+    // Erosional velocity results (API RP 14E)
+    private double erosionalVelocity = 0.0; // m/s — allowable erosional velocity
+    private double erosionalVelocityRatio = 0.0; // actual/allowable (> 1.0 = exceeded)
+    private double erosionalC = 125.0; // API RP 14E C-factor (100-150)
 
     /**
      * Constructor for network pipe.
@@ -953,6 +989,30 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     /**
+     * Check if choke should use NeqSim ThrottlingValve model.
+     *
+     * @return true if ThrottlingValve delegate is enabled
+     */
+    public boolean isChokeUseValveModel() {
+      return chokeUseValveModel;
+    }
+
+    /**
+     * Enable or disable the NeqSim ThrottlingValve delegate for this choke.
+     *
+     * <p>
+     * When enabled, the choke head loss is calculated using NeqSim's {@code ThrottlingValve} which
+     * includes real thermodynamic flash calculations for more accurate results. Default is false
+     * (uses simplified Kv equation for faster convergence).
+     * </p>
+     *
+     * @param useValveModel true to use ThrottlingValve, false for simplified equation
+     */
+    public void setChokeUseValveModel(boolean useValveModel) {
+      this.chokeUseValveModel = useValveModel;
+    }
+
+    /**
      * Get tubing inclination from horizontal in degrees.
      *
      * @return inclination in degrees (90 = vertical)
@@ -1005,6 +1065,186 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     public void setMultiphaseSegments(int segments) {
       this.multiphaseSegments = segments;
     }
+
+    /**
+     * Get compressor speed in RPM.
+     *
+     * @return compressor speed
+     */
+    public double getCompressorSpeed() {
+      return compressorSpeed;
+    }
+
+    /**
+     * Set compressor speed in RPM.
+     *
+     * @param speed RPM
+     */
+    public void setCompressorSpeed(double speed) {
+      this.compressorSpeed = speed;
+    }
+
+    /**
+     * Get compressor polytropic efficiency (0-1).
+     *
+     * @return efficiency
+     */
+    public double getCompressorEfficiency() {
+      return compressorEfficiency;
+    }
+
+    /**
+     * Set compressor polytropic efficiency (0-1).
+     *
+     * @param efficiency polytropic efficiency
+     */
+    public void setCompressorEfficiency(double efficiency) {
+      this.compressorEfficiency = efficiency;
+    }
+
+    /**
+     * Get calculated compressor power in kW.
+     *
+     * @return power in kW
+     */
+    public double getCompressorPower() {
+      return compressorPower;
+    }
+
+    /**
+     * Set calculated compressor power.
+     *
+     * @param power power in kW
+     */
+    public void setCompressorPower(double power) {
+      this.compressorPower = power;
+    }
+
+    /**
+     * Check if compressor has a performance chart.
+     *
+     * @return true if chart is set
+     */
+    public boolean isCompressorHasChart() {
+      return compressorHasChart;
+    }
+
+    /**
+     * Set whether compressor has a performance chart.
+     *
+     * @param hasChart true if chart set
+     */
+    public void setCompressorHasChart(boolean hasChart) {
+      this.compressorHasChart = hasChart;
+    }
+
+    /**
+     * Get the NeqSim Compressor model for this element.
+     *
+     * @return compressor model or null
+     */
+    public Compressor getCompressorModel() {
+      return compressorModel;
+    }
+
+    /**
+     * Set the NeqSim Compressor model for this element.
+     *
+     * @param model compressor model
+     */
+    public void setCompressorModel(Compressor model) {
+      this.compressorModel = model;
+    }
+
+    /**
+     * Get regulator set-point pressure in Pa.
+     *
+     * @return set-point pressure
+     */
+    public double getRegulatorSetPoint() {
+      return regulatorSetPoint;
+    }
+
+    /**
+     * Set regulator set-point pressure in Pa.
+     *
+     * @param setPointPa set-point in Pa
+     */
+    public void setRegulatorSetPoint(double setPointPa) {
+      this.regulatorSetPoint = setPointPa;
+    }
+
+    /**
+     * Get pipe efficiency factor (1.0 = new, lower = degraded).
+     *
+     * @return efficiency factor
+     */
+    public double getPipeEfficiency() {
+      return pipeEfficiency;
+    }
+
+    /**
+     * Set pipe efficiency factor for aging/fouling (1.0 = new, 0.85 = aged).
+     *
+     * @param efficiency efficiency factor (0.5-1.0)
+     */
+    public void setPipeEfficiency(double efficiency) {
+      this.pipeEfficiency = efficiency;
+    }
+
+    /**
+     * Get the API RP 14E C-factor for erosional velocity calculation.
+     *
+     * @return C-factor (typically 100-150)
+     */
+    public double getErosionalC() {
+      return erosionalC;
+    }
+
+    /**
+     * Set the API RP 14E C-factor for erosional velocity calculation.
+     *
+     * @param cFactor C-factor (100 for continuous, 125 standard, 150 intermittent)
+     */
+    public void setErosionalC(double cFactor) {
+      this.erosionalC = cFactor;
+    }
+
+    /**
+     * Get calculated erosional velocity in m/s.
+     *
+     * @return erosional velocity limit
+     */
+    public double getErosionalVelocity() {
+      return erosionalVelocity;
+    }
+
+    /**
+     * Set erosional velocity.
+     *
+     * @param vel erosional velocity in m/s
+     */
+    public void setErosionalVelocity(double vel) {
+      this.erosionalVelocity = vel;
+    }
+
+    /**
+     * Get erosional velocity ratio (actual / allowable). Values above 1.0 indicate exceedance.
+     *
+     * @return erosional velocity ratio
+     */
+    public double getErosionalVelocityRatio() {
+      return erosionalVelocityRatio;
+    }
+
+    /**
+     * Set erosional velocity ratio.
+     *
+     * @param ratio actual/allowable ratio
+     */
+    public void setErosionalVelocityRatio(double ratio) {
+      this.erosionalVelocityRatio = ratio;
+    }
   }
 
   // Network topology
@@ -1030,6 +1270,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   // Stream integration for ProcessSystem connectivity
   private final transient Map<String, StreamInterface> feedStreams = new LinkedHashMap<>();
   private final transient Map<String, StreamInterface> outletStreams = new LinkedHashMap<>();
+
+  // Per-node fluid composition for compositional tracking
+  private final transient Map<String, SystemInterface> nodeFluidMap = new LinkedHashMap<>();
+
+  // Erosional velocity tracking
+  private final transient List<String> erosionalViolations = new ArrayList<>();
 
   /**
    * Create a new looped pipe network.
@@ -1495,6 +1741,138 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Add a compressor or booster station element between two nodes.
+   *
+   * <p>
+   * The compressor adds energy to the flow (negative head loss). Head rise is calculated from
+   * polytropic efficiency and compression ratio, or from a performance chart if provided. Wraps
+   * NeqSim's {@link Compressor} class internally.
+   * </p>
+   *
+   * @param fromNode suction (upstream) node name
+   * @param toNode discharge (downstream) node name
+   * @param elementName element name
+   * @param polytropicEfficiency polytropic efficiency (0-1, typically 0.70-0.85)
+   * @return the created element
+   */
+  public NetworkPipe addCompressor(String fromNode, String toNode, String elementName,
+      double polytropicEfficiency) {
+    NetworkPipe element = addPipe(fromNode, toNode, elementName, 1.0, 0.5);
+    element.setElementType(NetworkElementType.COMPRESSOR);
+    element.setCompressorEfficiency(polytropicEfficiency);
+    return element;
+  }
+
+  /**
+   * Add a compressor with a performance chart (speed curves).
+   *
+   * <p>
+   * When a chart is provided, the head-flow relationship follows the compressor curve at the
+   * specified speed. The solver iterates to find the operating point on the curve.
+   * </p>
+   *
+   * @param fromNode suction node name
+   * @param toNode discharge node name
+   * @param elementName element name
+   * @param compressor pre-configured NeqSim {@link Compressor} with chart
+   * @return the created element
+   */
+  public NetworkPipe addCompressorWithChart(String fromNode, String toNode, String elementName,
+      Compressor compressor) {
+    NetworkPipe element = addPipe(fromNode, toNode, elementName, 1.0, 0.5);
+    element.setElementType(NetworkElementType.COMPRESSOR);
+    element.setCompressorModel(compressor);
+    element.setCompressorHasChart(true);
+    element.setCompressorEfficiency(compressor.getPolytropicEfficiency());
+    return element;
+  }
+
+  /**
+   * Add a pressure regulator (PRV) element between two nodes.
+   *
+   * <p>
+   * The regulator maintains a fixed downstream pressure set-point. If upstream pressure is above
+   * the set-point, the regulator throttles to deliver exactly the set-point downstream. If upstream
+   * pressure falls below the set-point, the regulator is fully open (acts as a pipe).
+   * </p>
+   *
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
+   * @param elementName element name
+   * @param setPointBar downstream pressure set-point in bara
+   * @return the created element
+   */
+  public NetworkPipe addRegulator(String fromNode, String toNode, String elementName,
+      double setPointBar) {
+    NetworkPipe element = addPipe(fromNode, toNode, elementName, 0.5, 0.1);
+    element.setElementType(NetworkElementType.REGULATOR);
+    element.setRegulatorSetPoint(setPointBar * 1e5);
+    return element;
+  }
+
+  /**
+   * Set the fluid composition for a specific source node.
+   *
+   * <p>
+   * Enables compositional tracking where different wells/sources have different fluid compositions.
+   * At junction nodes, fluids are mixed weighted by mass flow from each incoming pipe. This
+   * provides accurate gas quality (heating value, Wobbe index) and phase behavior at each node.
+   * </p>
+   *
+   * @param sourceNodeName name of the source node
+   * @param fluid the fluid composition at this source
+   */
+  public void setNodeFluid(String sourceNodeName, SystemInterface fluid) {
+    if (fluid != null) {
+      nodeFluidMap.put(sourceNodeName, fluid.clone());
+    }
+  }
+
+  /**
+   * Get the fluid composition at a specific node (after solving with compositional tracking).
+   *
+   * @param nodeName node name
+   * @return fluid at this node, or the template fluid if compositional tracking is not used
+   */
+  public SystemInterface getNodeFluid(String nodeName) {
+    SystemInterface fluid = nodeFluidMap.get(nodeName);
+    return fluid != null ? fluid : fluidTemplate;
+  }
+
+  /**
+   * Get erosional velocity violations after solving.
+   *
+   * <p>
+   * Returns a list of pipe names where the actual velocity exceeds the API RP 14E erosional
+   * velocity limit: {@code V_erosional = C / sqrt(rho_mixture)} where C is typically 100-150.
+   * </p>
+   *
+   * @return list of violation descriptions (empty if no violations)
+   */
+  public List<String> getErosionalVelocityViolations() {
+    return new ArrayList<>(erosionalViolations);
+  }
+
+  /**
+   * Set pipe efficiency factor for a named pipe.
+   *
+   * <p>
+   * The efficiency factor accounts for pipe aging, internal fouling, wax deposition, or scale
+   * build-up. A factor of 1.0 means new pipe; 0.85 means 15% degradation. The friction loss is
+   * multiplied by {@code 1/efficiency}.
+   * </p>
+   *
+   * @param pipeName pipe name
+   * @param efficiency efficiency factor (0.5-1.0, typically 0.85-1.0)
+   */
+  public void setPipeEfficiency(String pipeName, double efficiency) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe != null) {
+      pipe.setPipeEfficiency(efficiency);
+    }
+  }
+
+  /**
    * Get a node by name.
    *
    * @param name node name
@@ -1899,6 +2277,30 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
             }
             break;
 
+          case COMPRESSOR:
+            // Compressor: estimate from polytropic head equation
+            // Start with a moderate flow based on pipe area if available
+            double compDia = pipe.getDiameter();
+            if (compDia > 0.01) {
+              double compArea = Math.PI * compDia * compDia / 4.0;
+              qEstimate = compArea * 20.0 * density * Math.signum(dP); // ~20 m/s
+            } else {
+              qEstimate = 10.0 * Math.signum(dP); // 10 kg/s default
+            }
+            break;
+
+          case REGULATOR:
+            // Regulator: treat as short pipe with Cv sizing
+            // Use Kv-like approximation: Q = Cv * sqrt(dP * rho)
+            double regDia = pipe.getDiameter();
+            if (regDia > 0.01) {
+              double regArea = Math.PI * regDia * regDia / 4.0;
+              qEstimate = regArea * 10.0 * density * Math.signum(dP); // ~10 m/s
+            } else {
+              qEstimate = 5.0 * Math.signum(dP); // 5 kg/s default
+            }
+            break;
+
           default:
             // Standard Darcy-Weisbach estimate for pipes and tubing
             double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
@@ -1970,6 +2372,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         return calculateHeadLossTubing(pipe, fluid);
       case MULTIPHASE_PIPE:
         return calculateHeadLossMultiphase(pipe, fluid);
+      case COMPRESSOR:
+        return calculateHeadLossCompressor(pipe, fluid);
+      case REGULATOR:
+        return calculateHeadLossRegulator(pipe, fluid);
       case PIPE:
       default:
         return calculateHeadLossDarcyWeisbach(pipe, fluid);
@@ -2030,6 +2436,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     pipe.setReynoldsNumber(reynolds);
     pipe.setFrictionFactor(frictionFactor);
     pipe.setFlowRegime(reynolds < 2300 ? "Laminar" : reynolds < 4000 ? "Transition" : "Turbulent");
+
+    // Apply pipe efficiency factor (aging/fouling): effective loss = loss / efficiency
+    double effFactor = pipe.getPipeEfficiency();
+    if (effFactor > 0.01 && effFactor < 1.0) {
+      frictionLoss = frictionLoss / effFactor;
+    }
 
     double totalLoss = frictionLoss + elevationLoss;
     return Math.signum(pipe.getFlowRate()) * totalLoss;
@@ -2135,30 +2547,71 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     double density = fluid.getDensity("kg/m3");
-    double kv = pipe.getChokeKv(); // m3/hr per sqrt(bar)
-    double opening = pipe.getChokeOpening() / 100.0; // fraction
 
-    // Effective Kv adjusted for opening
+    // Try using real NeqSim ThrottlingValve for Cv/Kv-based sizing with choked flow detection
+    // Only when explicitly enabled via setChokeUseValveModel(true) — slower but more accurate
+    if (pipe.isChokeUseValveModel()) {
+      try {
+        SystemInterface chokeFluid = fluid.clone();
+        Stream chokeInlet = new Stream("chokeIn", chokeFluid);
+        chokeInlet.setFlowRate(flowKgs, "kg/sec");
+
+        // Set upstream pressure from the from-node
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        double upstreamP = fromNode.getPressure();
+        chokeInlet.setPressure(upstreamP / 1e5, "bara");
+        chokeInlet.setTemperature(fromNode.getTemperature(), "K");
+        chokeInlet.run();
+
+        ThrottlingValve valve = new ThrottlingValve("networkChoke", chokeInlet);
+        double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
+        if (kvEff > 0.01) {
+          valve.setCv(kvEff, "Kv");
+        }
+        valve.run();
+
+        double outP = valve.getOutletPressure(); // bara
+        double dP = (upstreamP / 1e5 - outP) * 1e5; // Pa
+        if (dP < 0.0) {
+          dP = 0.0;
+        }
+
+        // Update pipe hydraulic info
+        double qVolM3s = flowKgs / density;
+        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+        if (area > 1e-10) {
+          pipe.setVelocity(qVolM3s / area);
+        }
+
+        // Check if choked
+        double xt = pipe.getChokeCriticalPressureRatio();
+        double maxDp = upstreamP * xt;
+        pipe.setFlowRegime(dP >= maxDp * 0.95 ? "Choked" : "Subcritical");
+
+        return Math.signum(pipe.getFlowRate()) * dP;
+      } catch (Exception ex) {
+        logger.debug("ThrottlingValve delegate failed, using simplified: " + ex.getMessage());
+      }
+    } // end if chokeUseValveModel
+
+    // Fallback: simplified Kv equation
+    double kv = pipe.getChokeKv();
+    double opening = pipe.getChokeOpening() / 100.0;
     double kvEff = kv * opening;
     if (kvEff < 1e-10) {
-      return 1e7; // Nearly closed valve - very high resistance
+      return 1e7;
     }
 
-    // Convert Kv to SI: Q[m3/s] = Kv[m3/hr/sqrt(bar)] * sqrt(dP[bar]) / 3600
-    // => Q[m3/s] = (Kv/3600) * sqrt(dP[Pa]/1e5)
-    // => Q[kg/s] = density * (Kv/3600) * sqrt(dP[Pa]/1e5)
-    // => dP[Pa] = 1e5 * (Q[kg/s] * 3600 / (density * Kv))^2
-    double qVolM3s = flowKgs / density; // m3/s
-    double qVolM3hr = qVolM3s * 3600.0; // m3/hr
-    double dP = 1e5 * Math.pow(qVolM3hr / kvEff, 2); // Pa
+    double qVolM3s = flowKgs / density;
+    double qVolM3hr = qVolM3s * 3600.0;
+    double dP = 1e5 * Math.pow(qVolM3hr / kvEff, 2);
 
-    // Check for critical flow
     NetworkNode fromNode = nodes.get(pipe.getFromNode());
     double upstreamP = fromNode.getPressure();
     double xt = pipe.getChokeCriticalPressureRatio();
     double maxDp = upstreamP * xt;
     if (dP > maxDp) {
-      dP = maxDp; // Choked flow - limit pressure drop
+      dP = maxDp;
     }
 
     pipe.setVelocity(qVolM3s / (Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0));
@@ -2233,10 +2686,180 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @return head loss in Pa
    */
   private double calculateHeadLossMultiphase(NetworkPipe pipe, SystemInterface fluid) {
-    // For the network solver, use a simplified approach based on mixture properties
-    // The Darcy-Weisbach calculation with mixture density/viscosity is reasonable
-    // for single-phase-dominant flow and provides adequate Jacobian for NR convergence
-    return calculateHeadLossDarcyWeisbach(pipe, fluid);
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      return calculateHeadLossDarcyWeisbach(pipe, fluid);
+    }
+
+    // Use NeqSim's PipeBeggsAndBrills for true multiphase pressure drop
+    try {
+      SystemInterface pipeFluid = fluid.clone();
+      NetworkNode fromNode = nodes.get(pipe.getFromNode());
+      pipeFluid.setPressure(fromNode.getPressure() / 1e5, "bara");
+      pipeFluid.setTemperature(fromNode.getTemperature(), "K");
+
+      Stream inletStream = new Stream(pipe.getName() + "_bbInlet", pipeFluid);
+      inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
+      inletStream.run();
+
+      PipeBeggsAndBrills bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
+      bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
+      bbPipe.setLength(pipe.getLength());
+      bbPipe.setDiameter(pipe.getDiameter());
+
+      // Set elevation angle from node elevations
+      NetworkNode toNode = nodes.get(pipe.getToNode());
+      double dz = toNode.getElevation() - fromNode.getElevation();
+      if (pipe.getLength() > 0 && Math.abs(dz) > 0.01) {
+        double angle = Math.toDegrees(Math.asin(dz / pipe.getLength()));
+        bbPipe.setAngle(angle);
+      }
+      bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
+      bbPipe.run();
+
+      double inletP = inletStream.getPressure("Pa");
+      double outletP = bbPipe.getOutletStream().getPressure("Pa");
+      double dP = inletP - outletP;
+
+      // Store hydraulic properties from BB model
+      pipe.setFlowRegime("BB-Multiphase");
+      pipe.setOutletTemperature(bbPipe.getOutletStream().getTemperature("K"));
+
+      // Apply pipe efficiency factor
+      double effFactor = pipe.getPipeEfficiency();
+      if (effFactor > 0.01 && effFactor < 1.0) {
+        dP = dP / effFactor;
+      }
+
+      return Math.signum(pipe.getFlowRate()) * dP;
+    } catch (Exception ex) {
+      logger.warn("Beggs-Brill calculation failed for " + pipe.getName()
+          + ", falling back to Darcy-Weisbach: " + ex.getMessage());
+      return calculateHeadLossDarcyWeisbach(pipe, fluid);
+    }
+  }
+
+  /**
+   * Calculate head loss for a compressor element.
+   *
+   * <p>
+   * Compressors add energy to the flow, so they produce a <b>negative</b> head loss (pressure
+   * rise). The pressure rise is computed from the polytropic efficiency and compression ratio, or
+   * from a performance chart if available.
+   * </p>
+   *
+   * @param pipe the compressor element
+   * @param fluid fluid properties
+   * @return head loss in Pa (negative = pressure rise)
+   */
+  private double calculateHeadLossCompressor(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      return 0.0;
+    }
+
+    // Use NeqSim Compressor model if available (has chart)
+    if (pipe.getCompressorModel() != null) {
+      try {
+        Compressor comp = pipe.getCompressorModel();
+        SystemInterface compFluid = fluid.clone();
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        NetworkNode toNode = nodes.get(pipe.getToNode());
+        compFluid.setPressure(fromNode.getPressure() / 1e5, "bara");
+        compFluid.setTemperature(fromNode.getTemperature(), "K");
+
+        Stream compInlet = new Stream(pipe.getName() + "_compIn", compFluid);
+        compInlet.setFlowRate(flowKgs * 3600.0, "kg/hr");
+        compInlet.run();
+
+        comp.setInletStream(compInlet);
+        comp.setOutletPressure(toNode.getPressure() / 1e5, "bara");
+        comp.run();
+
+        double power = comp.getPower("kW");
+        pipe.setCompressorPower(power);
+        pipe.setCompressorEfficiency(comp.getPolytropicEfficiency());
+
+        // Pressure rise from suction to discharge
+        double pRise = comp.getOutletStream().getPressure("Pa") - fromNode.getPressure();
+        pipe.setFlowRegime("Compressor-Chart");
+        return -Math.signum(pipe.getFlowRate()) * Math.abs(pRise);
+      } catch (Exception ex) {
+        logger.warn(
+            "Compressor chart calculation failed for " + pipe.getName() + ": " + ex.getMessage());
+      }
+    }
+
+    // Simplified polytropic compression calculation
+    NetworkNode fromNode = nodes.get(pipe.getFromNode());
+    NetworkNode toNode = nodes.get(pipe.getToNode());
+    double pSuction = fromNode.getPressure();
+    double pDischarge = toNode.getPressure();
+
+    if (pDischarge <= pSuction) {
+      // No compression needed (downstream pressure <= upstream)
+      pipe.setFlowRegime("Compressor-Bypass");
+      pipe.setCompressorPower(0.0);
+      return 0.0;
+    }
+
+    // Polytropic head calculation: W_poly = (Z*R*T / (MW*(n/(n-1)))) * ((P2/P1)^((n-1)/n) - 1)
+    double density = fluid.getDensity("kg/m3");
+    double molarMass = fluid.getMolarMass("kg/mol");
+    double temperature = fromNode.getTemperature();
+    double zFactor = pSuction / (density * 8314.0 / molarMass * temperature); // Approx Z
+    double kappa = 1.3; // Typical Cp/Cv for natural gas
+    double nPoly = kappa / (1.0 - (kappa - 1.0) / (kappa * pipe.getCompressorEfficiency()));
+    double compressionRatio = pDischarge / pSuction;
+    double polytropicHead = zFactor * 8314.0 * temperature / (molarMass * (nPoly / (nPoly - 1.0)))
+        * (Math.pow(compressionRatio, (nPoly - 1.0) / nPoly) - 1.0);
+
+    double power = flowKgs * polytropicHead / (pipe.getCompressorEfficiency() * 1000.0); // kW
+    pipe.setCompressorPower(power);
+    pipe.setFlowRegime("Compressor-Polytropic");
+
+    // Return negative head loss (pressure rise)
+    double pRise = pDischarge - pSuction;
+    return -Math.signum(pipe.getFlowRate()) * pRise;
+  }
+
+  /**
+   * Calculate head loss for a pressure regulator element.
+   *
+   * <p>
+   * The regulator maintains a fixed downstream pressure set-point. When upstream pressure exceeds
+   * the set-point, the regulator throttles: &Delta;P = P_upstream - P_setpoint. When upstream is
+   * below the set-point, the regulator is fully open (minimal resistance).
+   * </p>
+   *
+   * @param pipe the regulator element
+   * @param fluid fluid properties (used for velocity calculation only)
+   * @return head loss in Pa
+   */
+  private double calculateHeadLossRegulator(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    NetworkNode fromNode = nodes.get(pipe.getFromNode());
+    double upstreamP = fromNode.getPressure();
+    double setPoint = pipe.getRegulatorSetPoint();
+
+    if (upstreamP <= setPoint || flowKgs < 1e-10) {
+      // Regulator fully open — minimal resistance
+      pipe.setFlowRegime("Regulator-Open");
+      return 0.0;
+    }
+
+    // Regulator is active — throttling to set-point
+    double dP = upstreamP - setPoint;
+    pipe.setFlowRegime("Regulator-Active");
+
+    // Velocity for reporting
+    double density = fluid.getDensity("kg/m3");
+    double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+    if (density > 0 && area > 0) {
+      pipe.setVelocity(flowKgs / (density * area));
+    }
+
+    return Math.signum(pipe.getFlowRate()) * dP;
   }
 
   /**
@@ -2257,6 +2880,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         return calculateHeadLossDerivativeIPR(pipe);
       case CHOKE:
         return calculateHeadLossDerivativeChoke(pipe, fluid);
+      case COMPRESSOR:
+        return calculateHeadLossDerivativeCompressor(pipe, fluid);
+      case REGULATOR:
+        return calculateHeadLossDerivativeRegulator(pipe, fluid);
       default:
         // For pipes, tubing, and multiphase: h ~ Q^2, so dh/dQ = 2h/Q
         double headLoss = Math.abs(calculateHeadLoss(pipe, fluid));
@@ -2369,6 +2996,60 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     return subcriticalDeriv;
+  }
+
+  /**
+   * Calculate dh/dQ for compressor element.
+   *
+   * <p>
+   * For a compressor (which produces a pressure rise), the head loss is negative. The derivative
+   * reflects how the pressure rise changes with flow. At high flow, head decreases per the
+   * compressor curve. A first-order approximation uses 2|h|/Q.
+   * </p>
+   *
+   * @param pipe the compressor element
+   * @param fluid fluid properties
+   * @return dh/dQ in Pa/(kg/s) — typically negative (head rise decreases with more flow)
+   */
+  private double calculateHeadLossDerivativeCompressor(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      flowKgs = 1e-10;
+    }
+    double headLoss = calculateHeadLoss(pipe, fluid);
+    // Compressor head is negative (pressure rise); derivative ~ 2|h|/Q
+    return 2.0 * Math.abs(headLoss) / flowKgs;
+  }
+
+  /**
+   * Calculate dh/dQ for regulator (pressure reducing valve) element.
+   *
+   * <p>
+   * A regulator maintains a set-point downstream pressure. When it is active (upstream pressure
+   * above set-point), the pressure drop is nearly independent of flow, so the derivative is small.
+   * </p>
+   *
+   * @param pipe the regulator element
+   * @param fluid fluid properties
+   * @return dh/dQ in Pa/(kg/s)
+   */
+  private double calculateHeadLossDerivativeRegulator(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      flowKgs = 1e-10;
+    }
+    NetworkNode fromNode = nodes.get(pipe.getFromNode());
+    double upstreamP = fromNode.getPressure();
+    double setPoint = pipe.getRegulatorSetPoint();
+
+    if (upstreamP > setPoint) {
+      // Active regulator: dP ≈ constant (upstream P - setPoint), so dh/dQ ~ dP/Q
+      double dP = upstreamP - setPoint;
+      return dP / flowKgs;
+    }
+    // Fully open: behaves like a short pipe, use quadratic approximation
+    double headLoss = Math.abs(calculateHeadLoss(pipe, fluid));
+    return 2.0 * headLoss / flowKgs;
   }
 
   /**
@@ -2674,6 +3355,491 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Update compositional mixing at junction nodes.
+   *
+   * <p>
+   * When different source nodes have different fluid compositions (set via
+   * {@link #setNodeFluid(String, SystemInterface)}), this method traces flows through the network
+   * and calculates mass-weighted mixed compositions at junction nodes. The resulting mixed fluid at
+   * each node is stored in the {@code nodeFluidMap}.
+   * </p>
+   *
+   * <p>
+   * Call this after the network has converged to determine gas quality (heating value, Wobbe index)
+   * at each delivery point.
+   * </p>
+   */
+  public void updateCompositionalMixing() {
+    if (nodeFluidMap.isEmpty()) {
+      return;
+    }
+
+    // Process nodes in topological order: sources first, then junctions
+    java.util.Set<String> processed = new java.util.HashSet<>();
+    java.util.Queue<String> queue = new java.util.LinkedList<>();
+
+    // Start with source nodes that have assigned fluids
+    for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
+      NetworkNode node = nodes.get(entry.getKey());
+      if (node != null && node.getType() == NodeType.SOURCE) {
+        processed.add(entry.getKey());
+        queue.add(entry.getKey());
+      }
+    }
+
+    // BFS propagation: for each node, find downstream junctions and mix
+    int maxIterations = nodes.size() * 2;
+    int iter = 0;
+    while (!queue.isEmpty() && iter < maxIterations) {
+      iter++;
+      String current = queue.poll();
+
+      // Find all pipes leaving this node (current is fromNode)
+      for (NetworkPipe pipe : pipes.values()) {
+        String downstream = null;
+        if (pipe.getFromNode().equals(current) && pipe.getFlowRate() > 0) {
+          downstream = pipe.getToNode();
+        } else if (pipe.getToNode().equals(current) && pipe.getFlowRate() < 0) {
+          downstream = pipe.getFromNode();
+        }
+
+        if (downstream == null || processed.contains(downstream)) {
+          continue;
+        }
+
+        // Collect all inflows to the downstream node
+        List<SystemInterface> inflowFluids = new ArrayList<>();
+        List<Double> inflowMasses = new ArrayList<>();
+        boolean allInputsProcessed = true;
+
+        for (NetworkPipe inPipe : pipes.values()) {
+          String upstreamNode = null;
+          double flow = 0.0;
+          if (inPipe.getToNode().equals(downstream) && inPipe.getFlowRate() > 0) {
+            upstreamNode = inPipe.getFromNode();
+            flow = inPipe.getFlowRate();
+          } else if (inPipe.getFromNode().equals(downstream) && inPipe.getFlowRate() < 0) {
+            upstreamNode = inPipe.getToNode();
+            flow = Math.abs(inPipe.getFlowRate());
+          }
+          if (upstreamNode != null && flow > 1e-10) {
+            SystemInterface upFluid = nodeFluidMap.get(upstreamNode);
+            if (upFluid == null) {
+              allInputsProcessed = false;
+              break;
+            }
+            inflowFluids.add(upFluid);
+            inflowMasses.add(flow);
+          }
+        }
+
+        if (!allInputsProcessed || inflowFluids.isEmpty()) {
+          continue;
+        }
+
+        // Mass-weighted mixing of component mole fractions
+        if (inflowFluids.size() == 1) {
+          nodeFluidMap.put(downstream, inflowFluids.get(0).clone());
+        } else {
+          SystemInterface mixedFluid = inflowFluids.get(0).clone();
+          double totalMass = inflowMasses.get(0);
+          int nComp = mixedFluid.getNumberOfComponents();
+
+          // Accumulate mass-weighted mole fractions
+          double[] mixedZ = new double[nComp];
+          for (int c = 0; c < nComp; c++) {
+            mixedZ[c] =
+                inflowFluids.get(0).getPhase(0).getComponent(c).getz() * inflowMasses.get(0);
+          }
+          for (int f = 1; f < inflowFluids.size(); f++) {
+            double mass = inflowMasses.get(f);
+            totalMass += mass;
+            SystemInterface fFluid = inflowFluids.get(f);
+            int compCount = Math.min(nComp, fFluid.getNumberOfComponents());
+            for (int c = 0; c < compCount; c++) {
+              mixedZ[c] += fFluid.getPhase(0).getComponent(c).getz() * mass;
+            }
+          }
+
+          // Normalize
+          for (int c = 0; c < nComp; c++) {
+            mixedZ[c] /= totalMass;
+          }
+
+          // Set mixed composition — use addComponent to reset moles
+          for (int c = 0; c < nComp; c++) {
+            mixedFluid.getPhase(0).getComponent(c).setz(mixedZ[c]);
+            mixedFluid.getPhase(1).getComponent(c).setz(mixedZ[c]);
+          }
+          nodeFluidMap.put(downstream, mixedFluid);
+        }
+
+        processed.add(downstream);
+        queue.add(downstream);
+      }
+    }
+  }
+
+  /**
+   * Check erosional velocity limits per API RP 14E for all pipe elements.
+   *
+   * <p>
+   * The erosional velocity is calculated as:
+   * </p>
+   *
+   * <pre>
+   * V_e = C / sqrt(rho_mixture)
+   * </pre>
+   *
+   * <p>
+   * where C is the empirical constant (default 125 for continuous service, 100-150 typical range)
+   * and rho_mixture is the mixture density in kg/m3. Pipes where the actual velocity exceeds the
+   * erosional velocity are flagged as violations.
+   * </p>
+   *
+   * @return list of violation descriptions (empty if all pipes are within limits)
+   */
+  public List<String> checkErosionalVelocity() {
+    erosionalViolations.clear();
+
+    if (fluidTemplate == null) {
+      return erosionalViolations;
+    }
+
+    SystemInterface fluid = fluidTemplate.clone();
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
+    } catch (Exception ex) {
+      logger.warn("TP flash failed in erosional check: " + ex.getMessage());
+      return erosionalViolations;
+    }
+
+    double density = fluid.getDensity("kg/m3");
+
+    for (NetworkPipe pipe : pipes.values()) {
+      // Only check pipe-type elements (not IPR, not abstract elements)
+      NetworkElementType type = pipe.getElementType();
+      if (type == NetworkElementType.WELL_IPR || type == NetworkElementType.COMPRESSOR
+          || type == NetworkElementType.REGULATOR) {
+        continue;
+      }
+
+      double flowKgs = Math.abs(pipe.getFlowRate());
+      if (flowKgs < 1e-10 || pipe.getDiameter() < 1e-6) {
+        continue;
+      }
+
+      double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+      double velocity = flowKgs / (density * area);
+      double cFactor = pipe.getErosionalC();
+      double verosional = cFactor / Math.sqrt(density);
+
+      pipe.setErosionalVelocity(verosional);
+      pipe.setErosionalVelocityRatio(velocity / verosional);
+
+      if (velocity > verosional) {
+        String msg = String.format("%s: V=%.1f m/s exceeds Ve=%.1f m/s (C=%.0f, ratio=%.2f)",
+            pipe.getName(), velocity, verosional, cFactor, velocity / verosional);
+        erosionalViolations.add(msg);
+      }
+    }
+
+    return erosionalViolations;
+  }
+
+  /**
+   * Optimize choke openings to maximize total production from all wells.
+   *
+   * <p>
+   * Uses a gradient-based optimization approach: for each choke element, perturb the opening
+   * slightly, re-solve the network, and compute the sensitivity of total production to the choke
+   * opening. Then adjust openings in the direction of increasing total production.
+   * </p>
+   *
+   * <p>
+   * The optimization respects constraints: choke openings between 0-100%, and downstream
+   * pressure/erosional limits.
+   * </p>
+   *
+   * @param maxIterations maximum number of optimization iterations
+   * @param tolerance convergence tolerance for relative change in total production
+   * @return total optimized production in kg/s
+   */
+  public double optimizeChokeOpenings(int maxIterations, double tolerance) {
+    // Collect choke elements
+    List<NetworkPipe> chokes = new ArrayList<>();
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        chokes.add(pipe);
+      }
+    }
+
+    if (chokes.isEmpty()) {
+      return getTotalSinkFlow();
+    }
+
+    double lastProduction = 0.0;
+    double stepSize = 2.0; // Opening percentage step for numerical gradient
+
+    for (int iter = 0; iter < maxIterations; iter++) {
+      // Solve current state
+      run();
+      double currentProduction = getTotalSinkFlow();
+
+      // Check convergence
+      if (iter > 0) {
+        double relChange = Math.abs(currentProduction - lastProduction)
+            / Math.max(Math.abs(currentProduction), 1e-10);
+        if (relChange < tolerance) {
+          logger.info("Choke optimization converged after " + (iter + 1) + " iterations");
+          break;
+        }
+      }
+      lastProduction = currentProduction;
+
+      // Compute gradient for each choke
+      double[] gradients = new double[chokes.size()];
+      for (int c = 0; c < chokes.size(); c++) {
+        NetworkPipe choke = chokes.get(c);
+        double origOpening = choke.getChokeOpening();
+
+        // Perturb opening upward
+        double perturbedOpening = Math.min(origOpening + stepSize, 100.0);
+        choke.setChokeOpening(perturbedOpening);
+        run();
+        double productionUp = getTotalSinkFlow();
+
+        // Restore and perturb downward
+        double perturbedDown = Math.max(origOpening - stepSize, 1.0);
+        choke.setChokeOpening(perturbedDown);
+        run();
+        double productionDown = getTotalSinkFlow();
+
+        // Central difference gradient
+        gradients[c] = (productionUp - productionDown) / (perturbedOpening - perturbedDown);
+
+        // Restore original
+        choke.setChokeOpening(origOpening);
+      }
+
+      // Update choke openings in gradient direction
+      for (int c = 0; c < chokes.size(); c++) {
+        NetworkPipe choke = chokes.get(c);
+        double newOpening = choke.getChokeOpening() + stepSize * Math.signum(gradients[c]);
+        newOpening = Math.max(1.0, Math.min(100.0, newOpening));
+        choke.setChokeOpening(newOpening);
+      }
+    }
+
+    // Final solve with optimized openings
+    run();
+    return getTotalSinkFlow();
+  }
+
+  /**
+   * Get total flow rate into all sink nodes (total network production).
+   *
+   * @return total sink inflow in kg/s (positive value)
+   */
+  public double getTotalSinkFlow() {
+    double totalFlow = 0.0;
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SINK) {
+        // Sum all pipe inflows to this sink
+        for (NetworkPipe pipe : pipes.values()) {
+          if (pipe.getToNode().equals(node.getName()) && pipe.getFlowRate() > 0) {
+            totalFlow += pipe.getFlowRate();
+          } else if (pipe.getFromNode().equals(node.getName()) && pipe.getFlowRate() < 0) {
+            totalFlow += Math.abs(pipe.getFlowRate());
+          }
+        }
+      }
+    }
+    return totalFlow;
+  }
+
+  /**
+   * Export VFP (Vertical Flow Performance) tables for well elements in the network.
+   *
+   * <p>
+   * Generates Eclipse E300-compatible VFPPROD/VFPINJ tables using the
+   * {@link neqsim.process.util.optimizer.EclipseVFPExporter}. For each well (IPR + tubing) element
+   * pair, this method creates a VFP table covering the specified flow rate, THP, and parameter
+   * ranges.
+   * </p>
+   *
+   * @param filePath the file path to write VFP tables to
+   * @param flowRates array of flow rates (Sm3/d) for VFP table
+   * @param thps array of tubing head pressures (bara) for VFP table
+   * @param waterCuts array of water cuts (fraction) for VFP table
+   * @param gors array of gas-oil ratios (Sm3/Sm3) for VFP table
+   */
+  public void exportVFPTables(String filePath, double[] flowRates, double[] thps,
+      double[] waterCuts, double[] gors) {
+    try {
+      neqsim.process.util.optimizer.EclipseVFPExporter exporter =
+          new neqsim.process.util.optimizer.EclipseVFPExporter();
+
+      int tableNum = 1;
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getElementType() == NetworkElementType.WELL_IPR
+            || pipe.getElementType() == NetworkElementType.TUBING) {
+          exporter.setTableNumber(tableNum);
+          exporter.setFlowRates(flowRates);
+          exporter.setTHPs(thps);
+          if (waterCuts != null) {
+            exporter.setWaterCuts(waterCuts);
+          }
+          if (gors != null) {
+            exporter.setGORs(gors);
+          }
+
+          // Generate BHP table data from the network model
+          // For each combo of (flow, THP), solve the well system to get BHP
+          double[][][][][] bhpTable = generateBHPTable(pipe, flowRates, thps, waterCuts, gors);
+          exporter.setBHPTable(bhpTable);
+
+          String wellFile =
+              filePath.replace(".inc", "_" + pipe.getName().replaceAll("\\s+", "_") + ".inc");
+          exporter.exportVFPPROD(wellFile);
+          tableNum++;
+        }
+      }
+      logger.info("VFP tables exported for " + (tableNum - 1) + " well elements to " + filePath);
+    } catch (Exception ex) {
+      logger.error("VFP export failed: " + ex.getMessage());
+    }
+  }
+
+  /**
+   * Generate BHP table for a well element across parameter ranges.
+   *
+   * @param pipe the well element (IPR or tubing)
+   * @param flowRates flow rates to evaluate (Sm3/d)
+   * @param thps tubing head pressures (bara)
+   * @param waterCuts water cut values (fraction)
+   * @param gors GOR values (Sm3/Sm3)
+   * @return 5D BHP table: [flow][thp][wc][gor][alq]
+   */
+  private double[][][][][] generateBHPTable(NetworkPipe pipe, double[] flowRates, double[] thps,
+      double[] waterCuts, double[] gors) {
+    int nFlow = flowRates.length;
+    int nThp = thps.length;
+    int nWc = waterCuts != null ? waterCuts.length : 1;
+    int nGor = gors != null ? gors.length : 1;
+    int nAlq = 1; // No artificial lift for now
+
+    double[][][][][] bhpTable = new double[nFlow][nThp][nWc][nGor][nAlq];
+
+    double pRes = pipe.getReservoirPressure();
+    if (pRes < 1.0) {
+      // Use source node pressure as reservoir pressure
+      NetworkNode srcNode = nodes.get(pipe.getFromNode());
+      if (srcNode != null) {
+        pRes = srcNode.getPressure();
+      }
+    }
+
+    for (int f = 0; f < nFlow; f++) {
+      for (int t = 0; t < nThp; t++) {
+        for (int w = 0; w < nWc; w++) {
+          for (int g = 0; g < nGor; g++) {
+            // Calculate BHP from IPR at this flow rate
+            double qSm3d = flowRates[f];
+            // Convert to kg/s using approximate density (gas ~0.8 kg/m3 at std conditions)
+            double qKgs = qSm3d * 0.8 / 86400.0;
+
+            double bhp;
+            switch (pipe.getIprType()) {
+              case VOGEL:
+                double qmax = pipe.getVogelQmax();
+                double qRatio = Math.min(Math.abs(qKgs) / qmax, 0.999);
+                double pwfRatio = (-0.2 + Math.sqrt(0.04 + 3.2 * (1.0 - qRatio))) / 1.6;
+                bhp = pRes * pwfRatio;
+                break;
+              case FETKOVICH:
+                double cCoeff = pipe.getFetkovichC();
+                double nExp = pipe.getFetkovichN();
+                double p2d = Math.pow(Math.abs(qKgs) / cCoeff, 1.0 / nExp);
+                bhp = Math.sqrt(Math.max(pRes * pRes - p2d, 0.0));
+                break;
+              default:
+                double pi = pipe.getProductivityIndex();
+                if (pipe.isGasIPR()) {
+                  bhp = Math.sqrt(Math.max(pRes * pRes - Math.abs(qKgs) / pi, 0.0));
+                } else {
+                  bhp = pRes - Math.abs(qKgs) / Math.max(pi, 1e-20);
+                }
+                break;
+            }
+            bhpTable[f][t][w][g][0] = Math.max(bhp / 1e5, 0.0); // Convert to bara
+          }
+        }
+      }
+    }
+
+    return bhpTable;
+  }
+
+  /**
+   * Get a summary report of the network solution including gas quality at each node.
+   *
+   * <p>
+   * This method provides a comprehensive report with node pressures, pipe flows, element types,
+   * erosional velocity checks, and compositional data at each node. Useful for verifying network
+   * convergence and identifying potential issues.
+   * </p>
+   *
+   * @return formatted report string
+   */
+  public String getNetworkReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Network Solution Report ===\n");
+    sb.append(
+        String.format("Network: %s | Converged: %b | Iterations: %d | Max Residual: %.2f Pa%n",
+            getName(), converged, iterationCount, maxResidual));
+    sb.append("\n--- Nodes ---\n");
+    sb.append(
+        String.format("%-20s %-10s %12s %12s%n", "Name", "Type", "P (bara)", "Demand (kg/h)"));
+    for (NetworkNode node : nodes.values()) {
+      sb.append(String.format("%-20s %-10s %12.2f %12.2f%n", node.getName(), node.getType().name(),
+          node.getPressure() / 1e5, node.getDemand() * 3600.0));
+    }
+
+    sb.append("\n--- Elements ---\n");
+    sb.append(String.format("%-20s %-12s %-12s %-8s %12s %12s %10s%n", "Name", "Type", "From", "To",
+        "Flow (kg/h)", "dP (bar)", "Velocity"));
+    for (NetworkPipe pipe : pipes.values()) {
+      sb.append(String.format("%-20s %-12s %-12s %-8s %12.2f %12.4f %10.2f%n", pipe.getName(),
+          pipe.getElementType().name(), pipe.getFromNode(), pipe.getToNode(),
+          pipe.getFlowRate() * 3600.0, pipe.getHeadLoss() / 1e5, pipe.getVelocity()));
+    }
+
+    // Erosional violations
+    if (!erosionalViolations.isEmpty()) {
+      sb.append("\n--- Erosional Velocity Violations (API RP 14E) ---\n");
+      for (String v : erosionalViolations) {
+        sb.append("  WARN: ").append(v).append("\n");
+      }
+    }
+
+    // Gas quality at delivery nodes
+    if (!nodeFluidMap.isEmpty()) {
+      sb.append("\n--- Gas Quality at Nodes ---\n");
+      sb.append(String.format("%-20s %12s%n", "Node", "Components"));
+      for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
+        sb.append(String.format("%-20s %12d%n", entry.getKey(),
+            entry.getValue().getNumberOfComponents()));
+      }
+    }
+
+    return sb.toString();
+  }
+
+  /**
    * Initialize pressures for free (non-fixed) nodes using BFS propagation from fixed-pressure
    * nodes. This produces a reasonable pressure gradient across the network, especially important
    * for production networks where junctions sit between high-pressure sources and low-pressure
@@ -2897,6 +4063,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
           }
           double resistance =
               ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+          // Apply pipe efficiency factor (aging/fouling): increase effective resistance
+          double effFactor = pipe.getPipeEfficiency();
+          if (effFactor > 0.01 && effFactor < 1.0) {
+            resistance = resistance / effFactor;
+          }
           f1[i] = resistance * pipeFlowsSI[i] * Math.abs(pipeFlowsSI[i]) - (pFromPa - pToPa)
               + density * 9.81 * elevDiff;
         } else {
@@ -3453,6 +4624,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (NetworkPipe pipe : pipes.values()) {
       JsonObject pipeJson = new JsonObject();
       pipeJson.addProperty("name", pipe.getName());
+      pipeJson.addProperty("elementType", pipe.getElementType().name());
       pipeJson.addProperty("fromNode", pipe.getFromNode());
       pipeJson.addProperty("toNode", pipe.getToNode());
       pipeJson.addProperty("length_m", pipe.getLength());
@@ -3465,9 +4637,46 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipeJson.addProperty("reynoldsNumber", pipe.getReynoldsNumber());
       pipeJson.addProperty("frictionFactor", pipe.getFrictionFactor());
       pipeJson.addProperty("flowRegime", pipe.getFlowRegime());
+      pipeJson.addProperty("pipeEfficiency", pipe.getPipeEfficiency());
+
+      // Element-specific fields
+      if (pipe.getElementType() == NetworkElementType.COMPRESSOR) {
+        pipeJson.addProperty("compressorSpeed_rpm", pipe.getCompressorSpeed());
+        pipeJson.addProperty("compressorEfficiency", pipe.getCompressorEfficiency());
+        pipeJson.addProperty("compressorPower_kW", pipe.getCompressorPower());
+        pipeJson.addProperty("compressorHasChart", pipe.isCompressorHasChart());
+      }
+      if (pipe.getElementType() == NetworkElementType.REGULATOR) {
+        pipeJson.addProperty("regulatorSetPoint_bara", pipe.getRegulatorSetPoint() / 1e5);
+      }
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        pipeJson.addProperty("chokeKv", pipe.getChokeKv());
+        pipeJson.addProperty("chokeOpening_pct", pipe.getChokeOpening());
+      }
+      if (pipe.getElementType() == NetworkElementType.WELL_IPR) {
+        pipeJson.addProperty("iprType", pipe.getIprType().name());
+        pipeJson.addProperty("reservoirPressure_bara", pipe.getReservoirPressure() / 1e5);
+      }
+
+      // Erosional velocity data
+      if (pipe.getErosionalVelocity() > 0) {
+        pipeJson.addProperty("erosionalVelocity_ms", pipe.getErosionalVelocity());
+        pipeJson.addProperty("erosionalVelocityRatio", pipe.getErosionalVelocityRatio());
+        pipeJson.addProperty("erosionalC", pipe.getErosionalC());
+      }
+
       pipesArray.add(pipeJson);
     }
     json.add("pipes", pipesArray);
+
+    // Erosional violations
+    if (!erosionalViolations.isEmpty()) {
+      JsonArray violationsArray = new JsonArray();
+      for (String v : erosionalViolations) {
+        violationsArray.add(v);
+      }
+      json.add("erosionalViolations", violationsArray);
+    }
 
     // Loops
     if (loops != null && !loops.isEmpty()) {

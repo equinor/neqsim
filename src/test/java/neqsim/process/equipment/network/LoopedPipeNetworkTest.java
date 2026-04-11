@@ -1512,4 +1512,436 @@ class LoopedPipeNetworkTest {
         network.getSourceNodeStream("reservoir");
     assertNotNull(resStream, "Reservoir source stream should exist");
   }
+
+  // ===== Tests for 8 state-of-the-art improvements =====
+
+  /**
+   * Test compressor element in network (Improvement #2).
+   */
+  @Test
+  void testCompressorElement() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("CompressorNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Source -> Pipe -> Compressor -> Pipe -> Sink
+    network.addSourceNode("supply", 30.0, 0.0);
+    network.addJunctionNode("j1");
+    network.addJunctionNode("j2");
+    network.addFixedPressureSinkNode("delivery", 60.0);
+
+    network.addPipe("supply", "j1", "feed_pipe", 5000, 0.3, 0.00005);
+    network.addCompressor("j1", "j2", "comp1", 0.75);
+    network.addPipe("j2", "delivery", "discharge_pipe", 10000, 0.3, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "Compressor network should converge");
+
+    // Compressor should produce a pressure rise (negative head loss)
+    LoopedPipeNetwork.NetworkPipe comp = network.getPipe("comp1");
+    assertNotNull(comp, "Compressor element should exist");
+    assertEquals(LoopedPipeNetwork.NetworkElementType.COMPRESSOR, comp.getElementType());
+  }
+
+  /**
+   * Test regulator (pressure reducing valve) element.
+   */
+  @Test
+  void testRegulatorElement() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("RegulatorNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // High pressure source -> Pipe -> Regulator (set to 40 bar) -> Pipe -> Low pressure sink
+    network.addSourceNode("hp_supply", 80.0, 0.0);
+    network.addJunctionNode("j1");
+    network.addJunctionNode("j2");
+    network.addFixedPressureSinkNode("lp_delivery", 35.0);
+
+    network.addPipe("hp_supply", "j1", "hp_pipe", 2000, 0.3, 0.00005);
+    network.addRegulator("j1", "j2", "prv1", 40.0);
+    network.addPipe("j2", "lp_delivery", "lp_pipe", 5000, 0.25, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "Regulator network should converge");
+
+    LoopedPipeNetwork.NetworkPipe reg = network.getPipe("prv1");
+    assertNotNull(reg);
+    assertEquals(LoopedPipeNetwork.NetworkElementType.REGULATOR, reg.getElementType());
+    assertEquals(40e5, reg.getRegulatorSetPoint(), 1e3);
+  }
+
+  /**
+   * Test pipe efficiency factor for aged/fouled pipes (Improvement #7a).
+   */
+  @Test
+  void testPipeEfficiency() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("EfficiencyNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("supply", 50.0, 0.0);
+    network.addFixedPressureSinkNode("delivery", 40.0);
+    network.addPipe("supply", "delivery", "main", 10000, 0.3, 0.00005);
+
+    // First run with default efficiency (1.0)
+    network.run();
+    assertTrue(network.isConverged(), "Default efficiency should converge");
+    double flowDefault = network.getPipe("main").getFlowRate();
+
+    // Set pipe efficiency to 0.85 (fouled pipe)
+    network.setPipeEfficiency("main", 0.85);
+    assertEquals(0.85, network.getPipe("main").getPipeEfficiency(), 0.001);
+
+    network.run();
+    assertTrue(network.isConverged(), "Reduced efficiency should converge");
+    double flowFouled = network.getPipe("main").getFlowRate();
+
+    // Fouled pipe should carry less flow (or at least not more)
+    assertTrue(Math.abs(flowFouled) <= Math.abs(flowDefault) * 1.01,
+        "Fouled pipe should not carry more flow than clean pipe");
+  }
+
+  /**
+   * Test erosional velocity check per API RP 14E (Improvement #7b).
+   */
+  @Test
+  void testErosionalVelocityCheck() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ErosionalNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("supply", 80.0, 0.0);
+    network.addFixedPressureSinkNode("delivery", 30.0);
+    network.addPipe("supply", "delivery", "small_pipe", 5000, 0.05, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "Erosional check network should converge");
+
+    // Run erosional velocity check
+    List<String> violations = network.checkErosionalVelocity();
+    assertNotNull(violations, "Violations list should not be null");
+
+    // The erosional velocity should be calculated
+    LoopedPipeNetwork.NetworkPipe pipe = network.getPipe("small_pipe");
+    assertTrue(pipe.getErosionalVelocity() > 0, "Erosional velocity should be calculated");
+    assertTrue(pipe.getErosionalVelocityRatio() > 0, "Erosional ratio should be calculated");
+  }
+
+  /**
+   * Test per-node fluid composition tracking (Improvement #5).
+   */
+  @Test
+  void testPerNodeFluidComposition() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("CompositionalNet");
+
+    // Create two different gas compositions
+    SystemInterface leanGas = new SystemSrkEos(288.15, 50.0);
+    leanGas.addComponent("methane", 0.95);
+    leanGas.addComponent("ethane", 0.03);
+    leanGas.addComponent("propane", 0.02);
+    leanGas.createDatabase(true);
+    leanGas.setMixingRule("classic");
+    leanGas.init(0);
+    leanGas.init(1);
+
+    SystemInterface richGas = new SystemSrkEos(288.15, 50.0);
+    richGas.addComponent("methane", 0.80);
+    richGas.addComponent("ethane", 0.12);
+    richGas.addComponent("propane", 0.08);
+    richGas.createDatabase(true);
+    richGas.setMixingRule("classic");
+    richGas.init(0);
+    richGas.init(1);
+
+    network.setFluidTemplate(leanGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Two sources mixing at a junction
+    network.addSourceNode("well1", 60.0, 0.0);
+    network.addSourceNode("well2", 60.0, 0.0);
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("platform", 40.0);
+
+    network.addPipe("well1", "manifold", "pipe_w1", 5000, 0.2, 0.00005);
+    network.addPipe("well2", "manifold", "pipe_w2", 5000, 0.2, 0.00005);
+    network.addPipe("manifold", "platform", "export", 10000, 0.3, 0.00005);
+
+    // Assign compositions to source nodes
+    network.setNodeFluid("well1", leanGas);
+    network.setNodeFluid("well2", richGas);
+
+    network.run();
+    assertTrue(network.isConverged(), "Compositional network should converge");
+
+    // Run compositional mixing
+    network.updateCompositionalMixing();
+
+    // Check that manifold has a mixed composition
+    SystemInterface mixedFluid = network.getNodeFluid("manifold");
+    assertNotNull(mixedFluid, "Manifold should have a mixed fluid");
+
+    // The mixed methane fraction should be between the two sources
+    double methaneZ = mixedFluid.getPhase(0).getComponent("methane").getz();
+    assertTrue(methaneZ > 0.79 && methaneZ < 0.96,
+        "Mixed methane fraction should be between lean and rich gas: " + methaneZ);
+  }
+
+  /**
+   * Test choke optimization to maximize production (Improvement #6).
+   */
+  @Test
+  void testChokeOptimization() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ChokeOptNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Two wells with chokes sharing a gathering manifold
+    network.addSourceNode("res1", 200.0, 0.0);
+    network.addSourceNode("res2", 180.0, 0.0);
+    network.addJunctionNode("wh1");
+    network.addJunctionNode("wh2");
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0);
+    network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
+
+    // Get baseline production
+    network.run();
+    assertTrue(network.isConverged(), "Baseline should converge");
+    double baselineFlow = network.getTotalSinkFlow();
+    assertTrue(baselineFlow > 0, "Baseline production should be positive");
+
+    // Optimize choke openings (few iterations to keep test fast)
+    double optimizedFlow = network.optimizeChokeOpenings(3, 0.01);
+    assertTrue(optimizedFlow >= baselineFlow * 0.9,
+        "Optimized should not be much less than baseline");
+  }
+
+  /**
+   * Test multiphase pipe with Beggs-Brill (Improvement #3).
+   */
+  @Test
+  void testMultiphasePipeBeggsAndBrills() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("MultiphaseNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("wellhead", 80.0, 0.0);
+    network.addFixedPressureSinkNode("platform", 40.0);
+
+    network.addMultiphasePipe("wellhead", "platform", "flowline", 15000.0, 0.2);
+
+    network.run();
+    assertTrue(network.isConverged(), "Multiphase pipe network should converge");
+
+    LoopedPipeNetwork.NetworkPipe flowline = network.getPipe("flowline");
+    assertNotNull(flowline);
+    assertEquals(LoopedPipeNetwork.NetworkElementType.MULTIPHASE_PIPE, flowline.getElementType());
+    assertTrue(Math.abs(flowline.getFlowRate()) > 0, "Flowline should have non-zero flow");
+  }
+
+  /**
+   * Test VFP table export (Improvement #8).
+   */
+  @Test
+  void testVFPExport() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("VFPNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("reservoir", 250.0, 0.0);
+    network.addJunctionNode("wellhead");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("reservoir", "wellhead", "ipr", 8e-6, false);
+    network.addPipe("wellhead", "platform", "flowline", 10000, 0.2, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "VFP network should converge");
+
+    // Export VFP tables (to temp file)
+    String tempFile = System.getProperty("java.io.tmpdir") + "/test_vfp.inc";
+    double[] flowRates = new double[] {100, 500, 1000, 2000};
+    double[] thps = new double[] {10, 20, 30, 50};
+    double[] waterCuts = new double[] {0.0, 0.2};
+    double[] gors = new double[] {100, 200};
+
+    // This should not throw
+    network.exportVFPTables(tempFile, flowRates, thps, waterCuts, gors);
+  }
+
+  /**
+   * Test ThrottlingValve delegate for choke (Improvement #4).
+   */
+  @Test
+  void testChokeValveModelDelegate() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ValveModelNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(200.0);
+
+    network.addSourceNode("reservoir", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("manifold", 50.0);
+
+    network.addWellIPR("reservoir", "wh", "ipr", 5e-6, false);
+    network.addChoke("wh", "manifold", "choke", 50.0, 80.0);
+
+    // Enable ThrottlingValve model
+    network.getPipe("choke").setChokeUseValveModel(true);
+    assertTrue(network.getPipe("choke").isChokeUseValveModel());
+
+    // Run - should not crash (convergence depends on flash)
+    network.run();
+    LoopedPipeNetwork.NetworkPipe choke = network.getPipe("choke");
+    assertNotNull(choke);
+  }
+
+  /**
+   * Test JSON output includes new element types.
+   */
+  @Test
+  void testJsonOutputNewElementTypes() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("JsonTestNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("supply", 30.0, 0.0);
+    network.addJunctionNode("j1");
+    network.addJunctionNode("j2");
+    network.addFixedPressureSinkNode("delivery", 60.0);
+
+    network.addPipe("supply", "j1", "pipe1", 1000, 0.3, 0.00005);
+    network.addCompressor("j1", "j2", "comp", 0.75);
+    network.addPipe("j2", "delivery", "pipe2", 1000, 0.3, 0.00005);
+
+    network.run();
+
+    String json = network.toJson();
+    assertNotNull(json);
+    assertTrue(json.contains("COMPRESSOR"), "JSON should contain COMPRESSOR element type");
+    assertTrue(json.contains("elementType"), "JSON should contain elementType field");
+    assertTrue(json.contains("compressorEfficiency"), "JSON should contain compressor fields");
+  }
+
+  /**
+   * Test network report generation.
+   */
+  @Test
+  void testNetworkReport() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ReportNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("supply", 50.0, 0.0);
+    network.addFixedPressureSinkNode("delivery", 40.0);
+    network.addPipe("supply", "delivery", "main", 10000, 0.3, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged());
+
+    String report = network.getNetworkReport();
+    assertNotNull(report);
+    assertTrue(report.contains("Network Solution Report"), "Report should have header");
+    assertTrue(report.contains("supply"), "Report should list nodes");
+    assertTrue(report.contains("main"), "Report should list pipes");
+  }
+
+  /**
+   * Test getTotalSinkFlow aggregation.
+   */
+  @Test
+  void testTotalSinkFlow() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("SinkFlowNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("s1", 60.0, 0.0);
+    network.addSourceNode("s2", 60.0, 0.0);
+    network.addJunctionNode("j");
+    network.addFixedPressureSinkNode("sink", 40.0);
+
+    network.addPipe("s1", "j", "p1", 5000, 0.2, 0.00005);
+    network.addPipe("s2", "j", "p2", 5000, 0.2, 0.00005);
+    network.addPipe("j", "sink", "p3", 5000, 0.3, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged());
+
+    double totalFlow = network.getTotalSinkFlow();
+    assertTrue(totalFlow > 0, "Total sink flow should be positive");
+  }
+
+  /**
+   * Test combined production network with all element types.
+   */
+  @Test
+  void testCombinedProductionNetwork() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("CombinedNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Well -> IPR -> Choke -> Pipe -> Compressor -> Pipe -> Regulator -> Pipe -> Platform
+    network.addSourceNode("reservoir", 250.0, 0.0);
+    network.addJunctionNode("bhp");
+    network.addJunctionNode("wh");
+    network.addJunctionNode("comp_in");
+    network.addJunctionNode("comp_out");
+    network.addJunctionNode("reg_in");
+    network.addJunctionNode("reg_out");
+    network.addFixedPressureSinkNode("platform", 40.0);
+
+    network.addWellIPR("reservoir", "bhp", "ipr", 5e-6, false);
+    network.addChoke("bhp", "wh", "choke", 50.0, 70.0);
+    network.addPipe("wh", "comp_in", "flowline", 15000, 0.2, 0.00005);
+    network.addCompressor("comp_in", "comp_out", "compressor", 0.75);
+    network.addPipe("comp_out", "reg_in", "discharge", 5000, 0.25, 0.00005);
+    network.addRegulator("reg_in", "reg_out", "prv", 45.0);
+    network.addPipe("reg_out", "platform", "delivery", 2000, 0.25, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "Combined network with all element types should converge");
+
+    // Verify flow is positive throughout
+    assertTrue(Math.abs(network.getPipeFlowRate("flowline")) > 0,
+        "flowline should have non-zero flow");
+
+    // Run erosional check
+    List<String> violations = network.checkErosionalVelocity();
+    assertNotNull(violations);
+
+    // Get report
+    String report = network.getNetworkReport();
+    assertTrue(report.length() > 100, "Report should be substantial");
+  }
 }
