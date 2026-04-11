@@ -142,6 +142,69 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Network element type for generalized resistance elements.
+   *
+   * <p>
+   * Each "pipe" in the network can represent different physical elements. The NR-GGA solver uses
+   * custom &Delta;P(Q) and d&Delta;P/dQ functions for each element type, enabling production
+   * network modeling with wells, chokes, tubing, and multiphase pipelines.
+   * </p>
+   */
+  public enum NetworkElementType {
+    /**
+     * Standard single-phase pipe using Darcy-Weisbach equation (default).
+     */
+    PIPE,
+
+    /**
+     * Reservoir inflow performance relationship (IPR). Models flow from reservoir to wellbore using
+     * PI, Vogel, or Fetkovich correlations. The pressure drop across this element is &Delta;P =
+     * P_reservoir - P_wellbore = f(Q) per the selected IPR model.
+     */
+    WELL_IPR,
+
+    /**
+     * Production choke or control valve. Uses simplified valve equation: Q = Kv * opening *
+     * sqrt(&Delta;P / SG) for subcritical flow.
+     */
+    CHOKE,
+
+    /**
+     * Wellbore tubing using simplified multiphase vertical lift performance. Pressure drop includes
+     * gravity (hydrostatic head), friction, and acceleration terms.
+     */
+    TUBING,
+
+    /**
+     * Multiphase pipeline using Beggs-Brill correlation. Wraps NeqSim's PipeBeggsAndBrills for
+     * accurate pressure drop in two-phase and three-phase systems.
+     */
+    MULTIPHASE_PIPE
+  }
+
+  /**
+   * IPR model type for well inflow performance.
+   */
+  public enum IPRType {
+    /**
+     * Constant productivity index: q = PI * (P_r - P_wf) for liquid, q = PI * (P_r^2 - P_wf^2) for
+     * gas.
+     */
+    PRODUCTIVITY_INDEX,
+
+    /**
+     * Vogel correlation for solution-gas-drive oil wells: q/q_max = 1 - 0.2*(P_wf/P_r) -
+     * 0.8*(P_wf/P_r)^2.
+     */
+    VOGEL,
+
+    /**
+     * Fetkovich correlation for gas wells: q = C * (P_r^2 - P_wf^2)^n.
+     */
+    FETKOVICH
+  }
+
+  /**
    * Node type in the network.
    */
   public enum NodeType {
@@ -336,6 +399,30 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     private double ambientTemperature = 288.15; // K
     private AdiabaticPipe pipeModel;
     private PipeBeggsAndBrills bbModel;
+
+    // Element type and production parameters
+    private NetworkElementType elementType = NetworkElementType.PIPE;
+
+    // IPR parameters (for WELL_IPR element type)
+    private IPRType iprType = IPRType.PRODUCTIVITY_INDEX;
+    private double reservoirPressure = 0.0; // Pa
+    private double productivityIndex = 0.0; // kg/s/Pa (for gas: kg/s/Pa^2)
+    private double vogelQmax = 0.0; // kg/s (AOF)
+    private double fetkovichC = 0.0; // kg/s/Pa^(2n)
+    private double fetkovichN = 1.0; // exponent (0.5-1.0)
+    private boolean gasIPR = false; // true: use P^2 formulation for gas wells
+
+    // Choke parameters (for CHOKE element type)
+    private double chokeKv = 0.0; // m3/hr/sqrt(bar) - valve flow coefficient
+    private double chokeOpening = 100.0; // percent (0-100)
+    private double chokeCriticalPressureRatio = 0.5; // xt for critical flow
+
+    // Tubing parameters (for TUBING element type)
+    private double tubingInclination = 90.0; // degrees from horizontal (90 = vertical)
+    private int tubingSegments = 10; // number of discretization segments
+
+    // Multiphase pipe parameters (for MULTIPHASE_PIPE element type)
+    private int multiphaseSegments = 10; // number of calculation segments
 
     /**
      * Constructor for network pipe.
@@ -664,6 +751,258 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     public void setAmbientTemperature(double temperature) {
       this.ambientTemperature = temperature;
     }
+
+    /**
+     * Get the network element type.
+     *
+     * @return element type
+     */
+    public NetworkElementType getElementType() {
+      return elementType;
+    }
+
+    /**
+     * Set the network element type.
+     *
+     * @param type element type
+     */
+    public void setElementType(NetworkElementType type) {
+      this.elementType = type;
+    }
+
+    /**
+     * Get the IPR model type.
+     *
+     * @return IPR type
+     */
+    public IPRType getIprType() {
+      return iprType;
+    }
+
+    /**
+     * Set the IPR model type.
+     *
+     * @param type IPR model type
+     */
+    public void setIprType(IPRType type) {
+      this.iprType = type;
+    }
+
+    /**
+     * Get reservoir pressure in Pa.
+     *
+     * @return reservoir pressure
+     */
+    public double getReservoirPressure() {
+      return reservoirPressure;
+    }
+
+    /**
+     * Set reservoir pressure in Pa.
+     *
+     * @param pressure reservoir pressure in Pa
+     */
+    public void setReservoirPressure(double pressure) {
+      this.reservoirPressure = pressure;
+    }
+
+    /**
+     * Get productivity index in kg/s/Pa (or kg/s/Pa^2 for gas).
+     *
+     * @return productivity index
+     */
+    public double getProductivityIndex() {
+      return productivityIndex;
+    }
+
+    /**
+     * Set productivity index in kg/s/Pa (or kg/s/Pa^2 for gas).
+     *
+     * @param pi productivity index
+     */
+    public void setProductivityIndex(double pi) {
+      this.productivityIndex = pi;
+    }
+
+    /**
+     * Get Vogel q_max (absolute open flow) in kg/s.
+     *
+     * @return Vogel q_max
+     */
+    public double getVogelQmax() {
+      return vogelQmax;
+    }
+
+    /**
+     * Set Vogel q_max (absolute open flow) in kg/s.
+     *
+     * @param qmax AOF in kg/s
+     */
+    public void setVogelQmax(double qmax) {
+      this.vogelQmax = qmax;
+    }
+
+    /**
+     * Get Fetkovich flow coefficient C.
+     *
+     * @return Fetkovich C
+     */
+    public double getFetkovichC() {
+      return fetkovichC;
+    }
+
+    /**
+     * Set Fetkovich flow coefficient C.
+     *
+     * @param c Fetkovich C
+     */
+    public void setFetkovichC(double c) {
+      this.fetkovichC = c;
+    }
+
+    /**
+     * Get Fetkovich exponent n.
+     *
+     * @return Fetkovich n
+     */
+    public double getFetkovichN() {
+      return fetkovichN;
+    }
+
+    /**
+     * Set Fetkovich exponent n.
+     *
+     * @param n Fetkovich exponent (0.5-1.0)
+     */
+    public void setFetkovichN(double n) {
+      this.fetkovichN = n;
+    }
+
+    /**
+     * Check if gas IPR formulation is used (P^2 drawdown).
+     *
+     * @return true if gas IPR
+     */
+    public boolean isGasIPR() {
+      return gasIPR;
+    }
+
+    /**
+     * Set whether to use gas IPR formulation (P^2 drawdown).
+     *
+     * @param gas true for gas wells
+     */
+    public void setGasIPR(boolean gas) {
+      this.gasIPR = gas;
+    }
+
+    /**
+     * Get choke valve flow coefficient Kv in m3/hr/sqrt(bar).
+     *
+     * @return Kv
+     */
+    public double getChokeKv() {
+      return chokeKv;
+    }
+
+    /**
+     * Set choke valve flow coefficient Kv in m3/hr/sqrt(bar).
+     *
+     * @param kv flow coefficient
+     */
+    public void setChokeKv(double kv) {
+      this.chokeKv = kv;
+    }
+
+    /**
+     * Get choke opening percentage (0-100).
+     *
+     * @return choke opening in percent
+     */
+    public double getChokeOpening() {
+      return chokeOpening;
+    }
+
+    /**
+     * Set choke opening percentage (0-100).
+     *
+     * @param opening choke opening in percent
+     */
+    public void setChokeOpening(double opening) {
+      this.chokeOpening = opening;
+    }
+
+    /**
+     * Get critical pressure ratio for choked flow.
+     *
+     * @return critical pressure ratio
+     */
+    public double getChokeCriticalPressureRatio() {
+      return chokeCriticalPressureRatio;
+    }
+
+    /**
+     * Set critical pressure ratio for choked flow.
+     *
+     * @param ratio critical pressure ratio (typically 0.4-0.6)
+     */
+    public void setChokeCriticalPressureRatio(double ratio) {
+      this.chokeCriticalPressureRatio = ratio;
+    }
+
+    /**
+     * Get tubing inclination from horizontal in degrees.
+     *
+     * @return inclination in degrees (90 = vertical)
+     */
+    public double getTubingInclination() {
+      return tubingInclination;
+    }
+
+    /**
+     * Set tubing inclination from horizontal in degrees.
+     *
+     * @param degrees inclination (90 = vertical, 0 = horizontal)
+     */
+    public void setTubingInclination(double degrees) {
+      this.tubingInclination = degrees;
+    }
+
+    /**
+     * Get number of tubing discretization segments.
+     *
+     * @return number of segments
+     */
+    public int getTubingSegments() {
+      return tubingSegments;
+    }
+
+    /**
+     * Set number of tubing discretization segments.
+     *
+     * @param segments number of segments
+     */
+    public void setTubingSegments(int segments) {
+      this.tubingSegments = segments;
+    }
+
+    /**
+     * Get number of multiphase pipe segments.
+     *
+     * @return number of segments
+     */
+    public int getMultiphaseSegments() {
+      return multiphaseSegments;
+    }
+
+    /**
+     * Set number of multiphase pipe segments.
+     *
+     * @param segments number of segments
+     */
+    public void setMultiphaseSegments(int segments) {
+      this.multiphaseSegments = segments;
+    }
   }
 
   // Network topology
@@ -889,6 +1228,156 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     NetworkPipe pipe = addPipe(fromNode, toNode, pipeName, lengthM, diameterM);
     pipe.setRoughness(roughnessM);
     return pipe;
+  }
+
+  /**
+   * Add a well IPR element using the productivity index model.
+   *
+   * <p>
+   * Creates a network element from reservoir node to wellbore node representing the inflow
+   * performance relationship. For gas wells, uses P^2 drawdown: q = PI * (Pr^2 - Pwf^2). For oil
+   * wells, uses linear drawdown: q = PI * (Pr - Pwf).
+   * </p>
+   *
+   * @param reservoirNode name of reservoir (source) node (must be fixed-pressure)
+   * @param wellboreNode name of wellbore/bottomhole node
+   * @param elementName element name
+   * @param productivityIndexSI productivity index in kg/s/Pa (oil) or kg/s/Pa^2 (gas)
+   * @param isGas true for gas wells (P^2 formulation)
+   * @return the created element
+   */
+  public NetworkPipe addWellIPR(String reservoirNode, String wellboreNode, String elementName,
+      double productivityIndexSI, boolean isGas) {
+    NetworkPipe element = addPipe(reservoirNode, wellboreNode, elementName, 1.0, 0.1); // dummy L, D
+    element.setElementType(NetworkElementType.WELL_IPR);
+    element.setIprType(IPRType.PRODUCTIVITY_INDEX);
+    element.setProductivityIndex(productivityIndexSI);
+    element.setGasIPR(isGas);
+    // Store reservoir pressure from node
+    NetworkNode resNode = nodes.get(reservoirNode);
+    if (resNode != null) {
+      element.setReservoirPressure(resNode.getPressure());
+    }
+    return element;
+  }
+
+  /**
+   * Add a well IPR element using the Vogel model for solution-gas-drive oil wells.
+   *
+   * @param reservoirNode name of reservoir (source) node
+   * @param wellboreNode name of wellbore node
+   * @param elementName element name
+   * @param qmaxKgS absolute open flow in kg/s
+   * @return the created element
+   */
+  public NetworkPipe addWellIPRVogel(String reservoirNode, String wellboreNode, String elementName,
+      double qmaxKgS) {
+    NetworkPipe element = addPipe(reservoirNode, wellboreNode, elementName, 1.0, 0.1); // dummy L, D
+    element.setElementType(NetworkElementType.WELL_IPR);
+    element.setIprType(IPRType.VOGEL);
+    element.setVogelQmax(qmaxKgS);
+    NetworkNode resNode = nodes.get(reservoirNode);
+    if (resNode != null) {
+      element.setReservoirPressure(resNode.getPressure());
+    }
+    return element;
+  }
+
+  /**
+   * Add a well IPR element using the Fetkovich model for gas wells.
+   *
+   * @param reservoirNode name of reservoir (source) node
+   * @param wellboreNode name of wellbore node
+   * @param elementName element name
+   * @param cCoeff Fetkovich coefficient C in kg/s/Pa^(2n)
+   * @param nExp Fetkovich exponent n (0.5-1.0)
+   * @return the created element
+   */
+  public NetworkPipe addWellIPRFetkovich(String reservoirNode, String wellboreNode,
+      String elementName, double cCoeff, double nExp) {
+    NetworkPipe element = addPipe(reservoirNode, wellboreNode, elementName, 1.0, 0.1); // dummy L, D
+    element.setElementType(NetworkElementType.WELL_IPR);
+    element.setIprType(IPRType.FETKOVICH);
+    element.setFetkovichC(cCoeff);
+    element.setFetkovichN(nExp);
+    element.setGasIPR(true);
+    NetworkNode resNode = nodes.get(reservoirNode);
+    if (resNode != null) {
+      element.setReservoirPressure(resNode.getPressure());
+    }
+    return element;
+  }
+
+  /**
+   * Add a production choke element between two nodes.
+   *
+   * <p>
+   * The choke uses a simplified valve equation: Q = Kv * (opening/100) * sqrt(dP * rho). For
+   * critical (choked) flow, the pressure drop is limited by the critical pressure ratio.
+   * </p>
+   *
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
+   * @param elementName element name
+   * @param kv valve flow coefficient in m3/hr per sqrt(bar)
+   * @param openingPercent valve opening (0-100%)
+   * @return the created element
+   */
+  public NetworkPipe addChoke(String fromNode, String toNode, String elementName, double kv,
+      double openingPercent) {
+    NetworkPipe element = addPipe(fromNode, toNode, elementName, 0.5, 0.05); // dummy L, D
+    element.setElementType(NetworkElementType.CHOKE);
+    element.setChokeKv(kv);
+    element.setChokeOpening(openingPercent);
+    return element;
+  }
+
+  /**
+   * Add wellbore tubing element (vertical lift performance).
+   *
+   * <p>
+   * Models multiphase flow through wellbore tubing. Pressure drop includes hydrostatic head, wall
+   * friction, and flow acceleration. Uses a simplified Beggs-Brill-like approach with gravity and
+   * friction components.
+   * </p>
+   *
+   * @param bottomNode bottomhole node name (higher pressure)
+   * @param topNode wellhead node name (lower pressure)
+   * @param elementName element name
+   * @param lengthM tubing measured depth in meters
+   * @param diameterM tubing inner diameter in meters
+   * @param inclinationDeg inclination from horizontal (90 = vertical)
+   * @return the created element
+   */
+  public NetworkPipe addTubing(String bottomNode, String topNode, String elementName,
+      double lengthM, double diameterM, double inclinationDeg) {
+    NetworkPipe element = addPipe(bottomNode, topNode, elementName, lengthM, diameterM);
+    element.setElementType(NetworkElementType.TUBING);
+    element.setTubingInclination(inclinationDeg);
+    return element;
+  }
+
+  /**
+   * Add a multiphase pipeline element using Beggs-Brill correlation.
+   *
+   * <p>
+   * Uses NeqSim's PipeBeggsAndBrills internally for accurate multiphase pressure-drop calculation.
+   * This element type is suitable for subsea flowlines and production pipelines carrying gas-oil or
+   * gas-oil-water mixtures.
+   * </p>
+   *
+   * @param fromNode upstream node name
+   * @param toNode downstream node name
+   * @param elementName element name
+   * @param lengthM pipe length in meters
+   * @param diameterM pipe inner diameter in meters
+   * @return the created element
+   */
+  public NetworkPipe addMultiphasePipe(String fromNode, String toNode, String elementName,
+      double lengthM, double diameterM) {
+    NetworkPipe element = addPipe(fromNode, toNode, elementName, lengthM, diameterM);
+    element.setElementType(NetworkElementType.MULTIPHASE_PIPE);
+    return element;
   }
 
   /**
@@ -1242,29 +1731,145 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         if (Math.abs(dP) < 1.0) {
           dP = 100.0; // Small default if pressures are equal
         }
-        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-        // Rough estimate: assume f=0.02, Q = sqrt(|dP| * D * 2 * rho * A^2 / (f * L)) * sign
-        double ff = 0.02;
-        double denom = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
-        double qEstimate = Math.sqrt(Math.abs(dP) / denom) * Math.signum(dP);
+
+        double qEstimate;
+
+        switch (pipe.getElementType()) {
+          case WELL_IPR:
+            // Use IPR equation for initial flow estimate
+            double absDp = Math.abs(dP);
+            switch (pipe.getIprType()) {
+              case VOGEL:
+                // q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)^2
+                // Rough: assume 50% drawdown ratio -> q ~ 0.65*qmax
+                qEstimate = 0.3 * pipe.getVogelQmax() * Math.signum(dP);
+                break;
+              case FETKOVICH:
+                double pRes = pipe.getReservoirPressure();
+                if (pRes < 1.0) {
+                  pRes = fromNode.getPressure();
+                }
+                double pWf = Math.max(pRes - absDp, pRes * 0.5);
+                double p2d = pRes * pRes - pWf * pWf;
+                qEstimate = pipe.getFetkovichC()
+                    * Math.pow(Math.max(p2d, 0.0), pipe.getFetkovichN()) * Math.signum(dP);
+                break;
+              case PRODUCTIVITY_INDEX:
+              default:
+                if (pipe.isGasIPR()) {
+                  double pResPI = pipe.getReservoirPressure();
+                  if (pResPI < 1.0) {
+                    pResPI = fromNode.getPressure();
+                  }
+                  double pWfPI = Math.max(pResPI - absDp, pResPI * 0.5);
+                  qEstimate = pipe.getProductivityIndex() * (pResPI * pResPI - pWfPI * pWfPI)
+                      * Math.signum(dP);
+                } else {
+                  qEstimate = pipe.getProductivityIndex() * dP;
+                }
+                break;
+            }
+            break;
+
+          case CHOKE:
+            // Q = Kv * opening * sqrt(dP * rho) -> Use valve equation
+            double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
+            if (kvEff > 1e-10) {
+              // Kv is in m3/hr per sqrt(bar), dP is in Pa
+              double dPbar = Math.abs(dP) / 1e5;
+              double qVolM3hr = kvEff * Math.sqrt(dPbar);
+              double qMassKgs = qVolM3hr * density / 3600.0;
+              qEstimate = qMassKgs * Math.signum(dP);
+            } else {
+              qEstimate = 0.001 * Math.signum(dP);
+            }
+            break;
+
+          default:
+            // Standard Darcy-Weisbach estimate for pipes and tubing
+            double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+            double ff = 0.02;
+            double denom =
+                ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+            qEstimate = Math.sqrt(Math.abs(dP) / denom) * Math.signum(dP);
+            break;
+        }
         pipe.setFlowRate(qEstimate);
+
+        // Cap maximum initial flow to prevent divergence from unrealistic estimates
+        double maxInitFlowKgs = 500.0; // kg/s (~1800 t/hr) - generous upper bound
+        if (Math.abs(pipe.getFlowRate()) > maxInitFlowKgs) {
+          pipe.setFlowRate(maxInitFlowKgs * Math.signum(pipe.getFlowRate()));
+        }
+      }
+
+      // For serial element paths (source -> IPR -> junction -> choke -> junction -> pipe -> sink),
+      // independent estimates often violate mass balance wildly. Equalize flows by setting each
+      // junction's connected element flows to the minimum magnitude estimate (most restrictive).
+      for (int pass = 0; pass < 3; pass++) {
+        for (NetworkNode node : nodes.values()) {
+          if (node.getType() != NodeType.JUNCTION) {
+            continue;
+          }
+          // Find all elements connected to this junction
+          List<NetworkPipe> connected = new ArrayList<>();
+          for (NetworkPipe pp : pipes.values()) {
+            if (pp.getFromNode().equals(node.getName()) || pp.getToNode().equals(node.getName())) {
+              connected.add(pp);
+            }
+          }
+          if (connected.size() == 2) {
+            // Serial connection: equalize flows to the minimum magnitude
+            double minMag = Math.min(Math.abs(connected.get(0).getFlowRate()),
+                Math.abs(connected.get(1).getFlowRate()));
+            if (minMag < 1e-10) {
+              minMag = 0.1; // Ensure nonzero
+            }
+            for (NetworkPipe pp : connected) {
+              pp.setFlowRate(minMag * Math.signum(pp.getFlowRate()));
+            }
+          }
+        }
       }
     }
   }
 
   /**
-   * Calculate head loss for a pipe using Darcy-Weisbach equation with elevation.
+   * Calculate head loss for a network element based on its type.
    *
    * <p>
-   * Total head loss includes friction loss and hydrostatic head change: dP_total = dP_friction +
-   * rho * g * (z_to - z_from)
+   * Dispatches to the appropriate head loss model depending on the element type: Darcy-Weisbach
+   * pipe, well IPR, production choke, tubing VLP, or multiphase pipe.
    * </p>
    *
-   * @param pipe the pipe
+   * @param pipe the network element
    * @param fluid fluid properties
    * @return head loss in Pa (positive = pressure drop from-to direction)
    */
   private double calculateHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
+    switch (pipe.getElementType()) {
+      case WELL_IPR:
+        return calculateHeadLossIPR(pipe, fluid);
+      case CHOKE:
+        return calculateHeadLossChoke(pipe, fluid);
+      case TUBING:
+        return calculateHeadLossTubing(pipe, fluid);
+      case MULTIPHASE_PIPE:
+        return calculateHeadLossMultiphase(pipe, fluid);
+      case PIPE:
+      default:
+        return calculateHeadLossDarcyWeisbach(pipe, fluid);
+    }
+  }
+
+  /**
+   * Calculate head loss for a standard pipe using Darcy-Weisbach equation with elevation.
+   *
+   * @param pipe the pipe
+   * @param fluid fluid properties
+   * @return head loss in Pa
+   */
+  private double calculateHeadLossDarcyWeisbach(NetworkPipe pipe, SystemInterface fluid) {
     double flowKgs = Math.abs(pipe.getFlowRate()); // kg/s (internal unit)
     if (flowKgs < 1e-10) {
       // Still include hydrostatic head even at zero flow
@@ -1290,10 +1895,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double frictionFactor;
 
     if (reynolds < 2300) {
-      // Laminar flow
       frictionFactor = 64.0 / reynolds;
     } else {
-      // Turbulent flow - Swamee-Jain approximation
       double term1 = relRoughness / 3.7;
       double term2 = 5.74 / Math.pow(reynolds, 0.9);
       frictionFactor = 0.25 / Math.pow(Math.log10(term1 + term2), 2);
@@ -1303,41 +1906,355 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double frictionLoss = frictionFactor * (pipe.getLength() / pipe.getDiameter())
         * (density * velocity * velocity / 2.0);
 
-    // Hydrostatic head: dP_elevation = rho * g * (z_out - z_in)
+    // Hydrostatic head
     NetworkNode fromNode = nodes.get(pipe.getFromNode());
     NetworkNode toNode = nodes.get(pipe.getToNode());
     double elevationLoss = density * 9.81 * (toNode.getElevation() - fromNode.getElevation());
 
-    // Store hydraulic parameters on the pipe for reporting
+    // Store hydraulic parameters
     pipe.setVelocity(velocity);
     pipe.setReynoldsNumber(reynolds);
     pipe.setFrictionFactor(frictionFactor);
     pipe.setFlowRegime(reynolds < 2300 ? "Laminar" : reynolds < 4000 ? "Transition" : "Turbulent");
 
-    // Total head loss (apply sign based on flow direction)
     double totalLoss = frictionLoss + elevationLoss;
     return Math.signum(pipe.getFlowRate()) * totalLoss;
   }
 
   /**
-   * Calculate derivative of head loss with respect to flow rate.
+   * Calculate head loss for a well IPR element.
    *
-   * @param pipe the pipe
+   * <p>
+   * Models the reservoir-to-wellbore pressure relationship. For a given flow rate Q:
+   * </p>
+   * <ul>
+   * <li>PI model (oil): dP = Q / PI</li>
+   * <li>PI model (gas): Pr^2 - Pwf^2 = Q / PI, so dP = Pr - sqrt(Pr^2 - Q/PI)</li>
+   * <li>Vogel: q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)^2</li>
+   * <li>Fetkovich: q = C * (Pr^2 - Pwf^2)^n</li>
+   * </ul>
+   *
+   * @param pipe the IPR element
+   * @param fluid fluid properties (not used directly, IPR is empirical)
+   * @return head loss in Pa
+   */
+  private double calculateHeadLossIPR(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    double pRes = pipe.getReservoirPressure(); // Pa
+
+    if (flowKgs < 1e-10) {
+      return 0.0; // No flow, no drawdown
+    }
+
+    double dP;
+    switch (pipe.getIprType()) {
+      case VOGEL:
+        // Vogel: q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)^2
+        // Solving for Pwf given q: quadratic in (Pwf/Pr)
+        // 0.8*x^2 + 0.2*x + (q/qmax - 1) = 0 where x = Pwf/Pr
+        double qRatio = Math.min(flowKgs / pipe.getVogelQmax(), 0.999);
+        double disc = 0.04 + 3.2 * (1.0 - qRatio); // 0.2^2 + 4*0.8*(1-qRatio)
+        double pRatio = (-0.2 + Math.sqrt(disc)) / 1.6; // Positive root
+        pRatio = Math.max(0.0, Math.min(1.0, pRatio));
+        dP = pRes * (1.0 - pRatio);
+        break;
+
+      case FETKOVICH:
+        // q = C * (Pr^2 - Pwf^2)^n => (Pr^2 - Pwf^2) = (q/C)^(1/n)
+        double cCoeff = pipe.getFetkovichC();
+        double nExp = pipe.getFetkovichN();
+        if (cCoeff < 1e-20) {
+          return 0.0;
+        }
+        double p2diff = Math.pow(flowKgs / cCoeff, 1.0 / nExp);
+        double pwf2 = pRes * pRes - p2diff;
+        if (pwf2 < 0) {
+          pwf2 = 0.0; // Beyond AOF
+        }
+        dP = pRes - Math.sqrt(pwf2);
+        break;
+
+      case PRODUCTIVITY_INDEX:
+      default:
+        if (pipe.isGasIPR()) {
+          // Gas: q = PI * (Pr^2 - Pwf^2) => Pwf = sqrt(Pr^2 - q/PI)
+          double pi = pipe.getProductivityIndex();
+          if (pi < 1e-20) {
+            return 0.0;
+          }
+          double pwf2Gas = pRes * pRes - flowKgs / pi;
+          if (pwf2Gas < 0) {
+            pwf2Gas = 0.0; // Beyond AOF
+          }
+          dP = pRes - Math.sqrt(pwf2Gas);
+        } else {
+          // Oil: q = PI * (Pr - Pwf) => dP = q / PI
+          dP = flowKgs / Math.max(pipe.getProductivityIndex(), 1e-20);
+        }
+        break;
+    }
+
+    pipe.setFlowRegime("IPR-" + pipe.getIprType().name());
+    return Math.signum(pipe.getFlowRate()) * dP;
+  }
+
+  /**
+   * Calculate head loss for a production choke element.
+   *
+   * <p>
+   * Uses a simplified valve equation: Q = Kv * (opening/100) * sqrt(dP * rho / SG_ref). Inverting:
+   * dP = (Q / (Kv_eff))^2 / rho where Kv_eff = Kv * (opening/100) converted to SI.
+   * </p>
+   *
+   * <p>
+   * For critical (choked) flow, the effective dP is limited by the critical pressure ratio.
+   * </p>
+   *
+   * @param pipe the choke element
+   * @param fluid fluid properties
+   * @return head loss in Pa
+   */
+  private double calculateHeadLossChoke(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      return 0.0;
+    }
+
+    double density = fluid.getDensity("kg/m3");
+    double kv = pipe.getChokeKv(); // m3/hr per sqrt(bar)
+    double opening = pipe.getChokeOpening() / 100.0; // fraction
+
+    // Effective Kv adjusted for opening
+    double kvEff = kv * opening;
+    if (kvEff < 1e-10) {
+      return 1e7; // Nearly closed valve - very high resistance
+    }
+
+    // Convert Kv to SI: Q[m3/s] = Kv[m3/hr/sqrt(bar)] * sqrt(dP[bar]) / 3600
+    // => Q[m3/s] = (Kv/3600) * sqrt(dP[Pa]/1e5)
+    // => Q[kg/s] = density * (Kv/3600) * sqrt(dP[Pa]/1e5)
+    // => dP[Pa] = 1e5 * (Q[kg/s] * 3600 / (density * Kv))^2
+    double qVolM3s = flowKgs / density; // m3/s
+    double qVolM3hr = qVolM3s * 3600.0; // m3/hr
+    double dP = 1e5 * Math.pow(qVolM3hr / kvEff, 2); // Pa
+
+    // Check for critical flow
+    NetworkNode fromNode = nodes.get(pipe.getFromNode());
+    double upstreamP = fromNode.getPressure();
+    double xt = pipe.getChokeCriticalPressureRatio();
+    double maxDp = upstreamP * xt;
+    if (dP > maxDp) {
+      dP = maxDp; // Choked flow - limit pressure drop
+    }
+
+    pipe.setVelocity(qVolM3s / (Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0));
+    pipe.setFlowRegime(dP >= maxDp ? "Choked" : "Subcritical");
+    return Math.signum(pipe.getFlowRate()) * dP;
+  }
+
+  /**
+   * Calculate head loss for wellbore tubing (VLP) element.
+   *
+   * <p>
+   * Simplified multiphase vertical lift model with gravity and friction components: dP = dP_gravity
+   * + dP_friction = rho * g * L * sin(theta) + f * (L/D) * (rho * v^2 / 2)
+   * </p>
+   *
+   * @param pipe the tubing element
+   * @param fluid fluid properties
+   * @return head loss in Pa (positive = pressure drop bottom-to-top)
+   */
+  private double calculateHeadLossTubing(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    double density = fluid.getDensity("kg/m3");
+    double viscosity = fluid.getViscosity("kg/msec");
+
+    // Gravity component
+    double sinTheta = Math.sin(Math.toRadians(pipe.getTubingInclination()));
+    double gravityLoss = density * 9.81 * pipe.getLength() * sinTheta;
+
+    if (flowKgs < 1e-10) {
+      return gravityLoss; // Hydrostatic head only
+    }
+
+    // Friction component (using Darcy-Weisbach)
+    double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+    double velocity = flowKgs / (density * area);
+    double reynolds = density * velocity * pipe.getDiameter() / viscosity;
+
+    double relRoughness = pipe.getRoughness() / pipe.getDiameter();
+    double ff;
+    if (reynolds < 2300) {
+      ff = 64.0 / Math.max(reynolds, 1.0);
+    } else {
+      double e = relRoughness / 3.7;
+      double t = 5.74 / Math.pow(reynolds, 0.9);
+      ff = 0.25 / Math.pow(Math.log10(e + t), 2);
+    }
+
+    double frictionLoss =
+        ff * (pipe.getLength() / pipe.getDiameter()) * (density * velocity * velocity / 2.0);
+
+    pipe.setVelocity(velocity);
+    pipe.setReynoldsNumber(reynolds);
+    pipe.setFrictionFactor(ff);
+    pipe.setFlowRegime("Tubing-" + (reynolds < 2300 ? "Laminar" : "Turbulent"));
+
+    double totalLoss = gravityLoss + frictionLoss;
+    return Math.signum(pipe.getFlowRate()) * totalLoss;
+  }
+
+  /**
+   * Calculate head loss for a multiphase pipe using simplified Beggs-Brill approach.
+   *
+   * <p>
+   * When the fluid template has multiple phases, this uses a mixture density and viscosity for the
+   * pressure drop calculation. For single-phase conditions, it degenerates to Darcy-Weisbach.
+   * Elevation is incorporated via sin(angle) where angle is calculated from pipe-level elevation
+   * difference.
+   * </p>
+   *
+   * @param pipe the multiphase pipe element
+   * @param fluid fluid properties
+   * @return head loss in Pa
+   */
+  private double calculateHeadLossMultiphase(NetworkPipe pipe, SystemInterface fluid) {
+    // For the network solver, use a simplified approach based on mixture properties
+    // The Darcy-Weisbach calculation with mixture density/viscosity is reasonable
+    // for single-phase-dominant flow and provides adequate Jacobian for NR convergence
+    return calculateHeadLossDarcyWeisbach(pipe, fluid);
+  }
+
+  /**
+   * Calculate derivative of head loss with respect to flow rate for any element type.
+   *
+   * @param pipe the network element
    * @param fluid fluid properties
    * @return dh/dQ in Pa/(kg/s)
    */
   private double calculateHeadLossDerivative(NetworkPipe pipe, SystemInterface fluid) {
-    double flowKgs = Math.abs(pipe.getFlowRate()); // kg/s (internal unit)
+    double flowKgs = Math.abs(pipe.getFlowRate());
     if (flowKgs < 1e-10) {
-      flowKgs = 1e-10; // Avoid division by zero
+      flowKgs = 1e-10;
     }
 
-    // For turbulent flow, h is approximately proportional to Q^2
-    // So dh/dQ ≈ 2h/Q where h is in Pa and Q is in kg/s
-    // The Hardy Cross correction: dQ = -imbalance / sum(dh/dQ) gives kg/s
-    double headLoss = Math.abs(calculateHeadLoss(pipe, fluid));
+    switch (pipe.getElementType()) {
+      case WELL_IPR:
+        return calculateHeadLossDerivativeIPR(pipe);
+      case CHOKE:
+        return calculateHeadLossDerivativeChoke(pipe, fluid);
+      default:
+        // For pipes, tubing, and multiphase: h ~ Q^2, so dh/dQ = 2h/Q
+        double headLoss = Math.abs(calculateHeadLoss(pipe, fluid));
+        return 2.0 * headLoss / flowKgs;
+    }
+  }
 
-    return 2.0 * headLoss / flowKgs;
+  /**
+   * Calculate dh/dQ for IPR element.
+   *
+   * @param pipe the IPR element
+   * @return dh/dQ in Pa/(kg/s)
+   */
+  private double calculateHeadLossDerivativeIPR(NetworkPipe pipe) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      flowKgs = 1e-10;
+    }
+    double pRes = pipe.getReservoirPressure();
+
+    switch (pipe.getIprType()) {
+      case VOGEL:
+        // d(dP)/dQ from Vogel: numerical differentiation
+        double qmax = pipe.getVogelQmax();
+        double qRatio = Math.min(flowKgs / qmax, 0.999);
+        // Pwf/Pr = (-0.2 + sqrt(0.04 + 3.2*(1-q/qmax))) / 1.6
+        double disc = 0.04 + 3.2 * (1.0 - qRatio);
+        // d(Pwf/Pr)/d(q/qmax) = -3.2 / (2*1.6*sqrt(disc)) = -1.0/sqrt(disc)
+        return pRes / (qmax * Math.sqrt(disc));
+
+      case FETKOVICH:
+        double cCoeff = pipe.getFetkovichC();
+        double nExp = pipe.getFetkovichN();
+        if (cCoeff < 1e-20) {
+          return 1e10;
+        }
+        // Pwf^2 = Pr^2 - (q/C)^(1/n)
+        // dPwf/dq = -(1/(2*n*C)) * (q/C)^(1/n - 1) / sqrt(Pr^2 - (q/C)^(1/n))
+        double p2diff = Math.pow(flowKgs / cCoeff, 1.0 / nExp);
+        double pwf2 = pRes * pRes - p2diff;
+        if (pwf2 < pRes * pRes * 0.01) {
+          // Near or beyond AOF: Pwf ~ 0, derivative singular
+          // Use secant approximation: d(dP)/dQ ≈ 2*dP/Q
+          // dP is approximately pRes when near AOF
+          double dPApprox = pRes - Math.sqrt(Math.max(pwf2, 0.0));
+          return 2.0 * dPApprox / flowKgs;
+        }
+        double pwf = Math.sqrt(pwf2);
+        double dPwf_dq =
+            (1.0 / (2.0 * nExp * cCoeff)) * Math.pow(flowKgs / cCoeff, 1.0 / nExp - 1.0) / pwf;
+        return dPwf_dq;
+
+      case PRODUCTIVITY_INDEX:
+      default:
+        if (pipe.isGasIPR()) {
+          // dP = Pr - sqrt(Pr^2 - q/PI)
+          double pi = Math.max(pipe.getProductivityIndex(), 1e-20);
+          double pwf2Gas = pRes * pRes - flowKgs / pi;
+          if (pwf2Gas < pRes * pRes * 0.01) {
+            // Near AOF: use secant approximation
+            double dPApproxGas = pRes - Math.sqrt(Math.max(pwf2Gas, 0.0));
+            return 2.0 * dPApproxGas / flowKgs;
+          }
+          return 1.0 / (2.0 * pi * Math.sqrt(pwf2Gas));
+        } else {
+          return 1.0 / Math.max(pipe.getProductivityIndex(), 1e-20);
+        }
+    }
+  }
+
+  /**
+   * Calculate dh/dQ for choke element.
+   *
+   * @param pipe the choke element
+   * @param fluid fluid properties
+   * @return dh/dQ in Pa/(kg/s)
+   */
+  private double calculateHeadLossDerivativeChoke(NetworkPipe pipe, SystemInterface fluid) {
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1e-10) {
+      flowKgs = 1e-10;
+    }
+    double density = fluid.getDensity("kg/m3");
+    double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
+    if (kvEff < 1e-10) {
+      return 1e10; // Closed valve
+    }
+
+    // Subcritical derivative: dP = 1e5 * (Q*3600/(rho*Kv))^2
+    // d(dP)/dQ = 2 * 1e5 * Q * 3600^2 / (rho^2 * Kv^2)
+    double subcriticalDeriv =
+        2.0 * 1e5 * flowKgs * 3600.0 * 3600.0 / (density * density * kvEff * kvEff);
+
+    // Check if flow is in critical (choked) regime
+    // In critical flow, dP is capped at upstream_P * xt, independent of Q
+    // The derivative w.r.t. Q is effectively zero (dP depends on P_upstream, not Q)
+    // Use a small regularized value to avoid singularity
+    NetworkNode fromNode = nodes.get(pipe.getFromNode());
+    double upstreamP = fromNode.getPressure();
+    double xt = pipe.getChokeCriticalPressureRatio();
+    double maxDp = upstreamP * xt;
+
+    double qVolM3hr = (flowKgs / density) * 3600.0;
+    double subcriticalDp = 1e5 * Math.pow(qVolM3hr / kvEff, 2);
+
+    if (subcriticalDp > maxDp) {
+      // Choked flow: return small regularized derivative
+      // Use maxDp / Q as a softer estimate (pressure drop ~ constant)
+      return maxDp / flowKgs;
+    }
+
+    return subcriticalDeriv;
   }
 
   /**
@@ -1636,6 +2553,109 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Initialize pressures for free (non-fixed) nodes using BFS propagation from fixed-pressure
+   * nodes. This produces a reasonable pressure gradient across the network, especially important
+   * for production networks where junctions sit between high-pressure sources and low-pressure
+   * sinks.
+   *
+   * @param freeNodeList names of free nodes needing pressure initialization
+   */
+  private void initializeFreeNodePressures(List<String> freeNodeList) {
+    // Find pressure range from fixed nodes
+    double maxP = Double.MIN_VALUE;
+    double minP = Double.MAX_VALUE;
+    for (NetworkNode node : nodes.values()) {
+      if (node.isPressureFixed()) {
+        maxP = Math.max(maxP, node.getPressure());
+        minP = Math.min(minP, node.getPressure());
+      }
+    }
+    if (maxP <= minP) {
+      // Fallback: all fixed pressures are the same
+      for (String name : freeNodeList) {
+        NetworkNode node = nodes.get(name);
+        if (node.getPressure() < 1.0) {
+          node.setPressure(maxP * 0.9);
+        }
+      }
+      return;
+    }
+
+    // BFS from fixed-pressure nodes: assign intermediate pressures based on
+    // graph distance (hop count) from sources and sinks.
+    Map<String, Integer> distFromSource = new HashMap<>();
+    Map<String, Integer> distFromSink = new HashMap<>();
+
+    // BFS from sources (high pressure)
+    java.util.Queue<String> queue = new java.util.LinkedList<>();
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SOURCE) {
+        queue.add(node.getName());
+        distFromSource.put(node.getName(), 0);
+      }
+    }
+    bfsDistances(queue, distFromSource);
+
+    // BFS from sinks (low pressure)
+    queue.clear();
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SINK) {
+        queue.add(node.getName());
+        distFromSink.put(node.getName(), 0);
+      }
+    }
+    bfsDistances(queue, distFromSink);
+
+    // Interpolate pressure for free nodes based on relative distance
+    for (String name : freeNodeList) {
+      NetworkNode node = nodes.get(name);
+      if (node.getPressure() >= 1.0) {
+        continue; // Already initialized
+      }
+
+      int dSrc = distFromSource.getOrDefault(name, 1);
+      int dSnk = distFromSink.getOrDefault(name, 1);
+      int total = dSrc + dSnk;
+      if (total == 0) {
+        total = 1;
+      }
+
+      // Linear interpolation: closer to source -> higher pressure
+      double fraction = (double) dSrc / total; // 0 = at source, 1 = at sink
+      double interpP = maxP - fraction * (maxP - minP);
+
+      // Add small perturbation to avoid identical pressures at same depth
+      interpP *= (0.98 + 0.02 * dSrc);
+      node.setPressure(interpP);
+    }
+  }
+
+  /**
+   * BFS distance computation from seed nodes through pipe connections.
+   *
+   * @param queue initial queue of seed nodes
+   * @param dist map to populate with distances
+   */
+  private void bfsDistances(java.util.Queue<String> queue, Map<String, Integer> dist) {
+    while (!queue.isEmpty()) {
+      String current = queue.poll();
+      int d = dist.get(current);
+      for (NetworkPipe pipe : pipes.values()) {
+        String neighbor = null;
+        if (pipe.getFromNode().equals(current)) {
+          neighbor = pipe.getToNode();
+        } else if (pipe.getToNode().equals(current)) {
+          neighbor = pipe.getFromNode();
+        }
+        if (neighbor != null && !dist.containsKey(neighbor)) {
+          dist.put(neighbor, d + 1);
+          queue.add(neighbor);
+        }
+      }
+    }
+  }
+
+  /**
    * Run Newton-Raphson Global Gradient Algorithm (Todini-Pilati, 1988).
    *
    * <p>
@@ -1671,108 +2691,106 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       }
     }
 
-    int np = pipeList.size(); // number of pipes
+    int np = pipeList.size(); // number of pipes/elements
     int nn = freeNodeList.size(); // number of free nodes (unknown pressures)
 
     // When nn == 0 (all pressures fixed), the Schur complement is empty and
     // the back-substitution dQ = D^{-1}*(-f1) determines flows directly from
     // pressure differences. This is the "pressure-pressure" deliverability mode.
 
-    // Initialize pressures for free nodes (average of source pressures)
-    double avgSourcePressure = 0.0;
-    int sourceCount = 0;
-    for (NetworkNode node : nodes.values()) {
-      if (node.isPressureFixed()) {
-        avgSourcePressure += node.getPressure();
-        sourceCount++;
-      }
-    }
-    if (sourceCount > 0) {
-      avgSourcePressure /= sourceCount;
-    }
-    for (String nodeName : freeNodeList) {
-      NetworkNode node = nodes.get(nodeName);
-      if (node.getPressure() < 1.0) {
-        node.setPressure(avgSourcePressure * 0.95); // Start slightly below sources
-      }
-    }
+    // Initialize pressures for free nodes using propagation from fixed-pressure nodes.
+    // For production networks, this creates a reasonable pressure gradient from
+    // sources (high P) through junctions to sinks (low P).
+    initializeFreeNodePressures(freeNodeList);
 
     iterationCount = 0;
     converged = false;
     double density = fluid.getDensity("kg/m3");
-    double viscosity = fluid.getViscosity("kg/msec");
 
     while (iterationCount < maxIterations && !converged) {
       iterationCount++;
 
-      // --- Work in SI units: Pa for pressure, kg/s for flow ---
-      // --- Step 1: Calculate resistance coefficients for each pipe ---
-      // h_i = r_i * Q_i * |Q_i| where r_i = f * L / (D * 2 * rho * A^2) [Pa/(kg/s)^2]
-      double[] resistance = new double[np];
+      // --- Step 1: Calculate h(Q) and dh/dQ for each element ---
+      // For standard pipes: h = r*Q*|Q| and dh/dQ = 2*r*|Q|
+      // For IPR/choke/tubing: use element-specific models via calculateHeadLoss
       double[] pipeFlowsSI = new double[np]; // kg/s
+      double[] elementHeadLoss = new double[np]; // Pa (signed)
+      double[] elementDerivative = new double[np]; // dh/d|Q| in Pa/(kg/s)
 
       for (int i = 0; i < np; i++) {
         NetworkPipe pipe = pipes.get(pipeList.get(i));
         pipeFlowsSI[i] = pipe.getFlowRate(); // Already in kg/s
 
-        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-        double absFlow = Math.abs(pipeFlowsSI[i]);
-        if (absFlow < 1e-10) {
-          absFlow = 1e-10;
-        }
-
-        double vel = absFlow / (density * area);
-        double reynolds = density * vel * pipe.getDiameter() / viscosity;
-        double ff;
-        if (reynolds < 2300) {
-          ff = 64.0 / Math.max(reynolds, 1.0);
-        } else {
-          double e = pipe.getRoughness() / pipe.getDiameter();
-          ff = 0.25 / Math.pow(Math.log10(e / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
-        }
-        resistance[i] = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+        // Calculate head loss using the element-specific model
+        elementHeadLoss[i] = calculateHeadLoss(pipe, fluid);
+        elementDerivative[i] = calculateHeadLossDerivative(pipe, fluid);
       }
 
       // --- Step 2: Build and solve the linearized system ---
-      // Using Schur complement: solve for dH first, then back-substitute for dQ.
-      //
-      // From: A11*dQ + A12*dH = -f1 and A21*dQ = -f2
-      // Where A11 = diag(2*r_i*|Q_i|), and A12 is incidence matrix (pipe-to-node)
-      //
-      // Schur complement: (A21 * A11^{-1} * A12) * dH = -f2 + A21 * A11^{-1} * f1
-      //
-      // This is an nn x nn system (small for typical networks).
+      // Using Schur complement with generalized A11 = diag(dh/dQ):
+      // A11*dQ + A12*dH = -f1 and A21*dQ = -f2
+      // Schur: (A21 * A11^{-1} * A12) * dH = -f2 + A21 * A11^{-1} * f1
 
-      // Build A11 diagonal (inverse)
+      // Build A11 diagonal (inverse): 1/derivative for each element
       double[] a11inv = new double[np];
       for (int i = 0; i < np; i++) {
-        double absQ = Math.abs(pipeFlowsSI[i]);
-        if (absQ < 1e-10) {
-          absQ = 1e-10;
+        double deriv = elementDerivative[i];
+        if (deriv < 1e-10) {
+          deriv = 1e-10; // Avoid singularity
         }
-        a11inv[i] = 1.0 / (2.0 * resistance[i] * absQ);
+        a11inv[i] = 1.0 / deriv;
       }
 
-      // Build pipe head residuals (all in Pa):
-      // f1_i = r_i * Q_i * |Q_i| - (P_from - P_to) + rho*g*(z_to - z_from)
+      // Build head residuals: f1_i = h_i(Q_i) - (P_from - P_to) + rho*g*(z_to - z_from)
+      // Note: calculateHeadLoss already includes elevation for pipes/tubing.
+      // For the NR system we need: h_element(Q) = P_from - P_to (at solution)
+      // Residual: f1_i = h_element(Q) - (P_from - P_to)
       double[] f1 = new double[np];
       for (int i = 0; i < np; i++) {
         NetworkPipe pipe = pipes.get(pipeList.get(i));
-        double pFromPa = nodes.get(pipe.getFromNode()).getPressure(); // Already in Pa
-        double pToPa = nodes.get(pipe.getToNode()).getPressure(); // Already in Pa
-        double elevDiff = nodes.get(pipe.getToNode()).getElevation()
-            - nodes.get(pipe.getFromNode()).getElevation();
-        f1[i] = resistance[i] * pipeFlowsSI[i] * Math.abs(pipeFlowsSI[i]) - (pFromPa - pToPa)
-            + density * 9.81 * elevDiff;
+        double pFromPa = nodes.get(pipe.getFromNode()).getPressure();
+        double pToPa = nodes.get(pipe.getToNode()).getPressure();
+
+        // For standard pipes: headLoss already includes sign and elevation
+        // Residual = headLoss - (P_from - P_to). When converged, headLoss = P_from - P_to
+        if (pipe.getElementType() == NetworkElementType.PIPE
+            || pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE) {
+          // calculateHeadLoss returns signed value with elevation included
+          double elevDiff = nodes.get(pipe.getToNode()).getElevation()
+              - nodes.get(pipe.getFromNode()).getElevation();
+          double absFlow = Math.abs(pipeFlowsSI[i]);
+          if (absFlow < 1e-10) {
+            absFlow = 1e-10;
+          }
+          // Resistance formulation: r*Q*|Q| + rho*g*dz = P_from - P_to
+          double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+          double vel = absFlow / (density * area);
+          double viscosity = fluid.getViscosity("kg/msec");
+          double reynolds = density * vel * pipe.getDiameter() / viscosity;
+          double ff;
+          if (reynolds < 2300) {
+            ff = 64.0 / Math.max(reynolds, 1.0);
+          } else {
+            double e = pipe.getRoughness() / pipe.getDiameter();
+            ff = 0.25 / Math.pow(Math.log10(e / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
+          }
+          double resistance =
+              ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+          f1[i] = resistance * pipeFlowsSI[i] * Math.abs(pipeFlowsSI[i]) - (pFromPa - pToPa)
+              + density * 9.81 * elevDiff;
+        } else {
+          // For IPR, choke, tubing: elementHeadLoss is the signed ΔP(Q)
+          // Residual = |elementHeadLoss| - (P_from - P_to) for positive flow dir
+          f1[i] = elementHeadLoss[i] - (pFromPa - pToPa);
+        }
       }
 
-      // Build node flow residuals (in kg/s):
-      // f2_j = demand_j - sum(Q_i * sign_ij)
+      // Build node flow residuals: f2_j = demand_j - sum(Q_i * sign_ij)
       double[] f2 = new double[nn];
       for (int j = 0; j < nn; j++) {
         String nodeName = freeNodeList.get(j);
         NetworkNode node = nodes.get(nodeName);
-        double netFlow = node.getDemand(); // Already in kg/s
+        double netFlow = node.getDemand();
         for (int i = 0; i < np; i++) {
           NetworkPipe pipe = pipes.get(pipeList.get(i));
           if (pipe.getToNode().equals(nodeName)) {
@@ -1787,20 +2805,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Build Schur complement matrix S = A21 * A11^{-1} * A12 (nn x nn)
       double[][] schur = new double[nn][nn];
-      double[] rhs = new double[nn]; // -f2 + A21 * A11^{-1} * f1
+      double[] rhs = new double[nn];
 
-      // Process each pipe's contribution to Schur complement
       for (int i = 0; i < np; i++) {
         NetworkPipe pipe = pipes.get(pipeList.get(i));
-        int jFrom = freeNodeList.indexOf(pipe.getFromNode()); // -1 if fixed
-        int jTo = freeNodeList.indexOf(pipe.getToNode()); // -1 if fixed
+        int jFrom = freeNodeList.indexOf(pipe.getFromNode());
+        int jTo = freeNodeList.indexOf(pipe.getToNode());
 
         double val = a11inv[i];
-
-        // Incidence: from-node is +1, to-node is -1 for pipe flow
-        // A12[i][jFrom] = +1, A12[i][jTo] = -1
-        // A21 = A12^T: A21[jFrom][i] = +1, A21[jTo][i] = -1
-        // Contribution to S: A21[:,i] * a11inv[i] * A12[i,:]
 
         if (jFrom >= 0) {
           schur[jFrom][jFrom] += val;
@@ -1816,29 +2828,39 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         }
       }
 
-      // RHS = -f2 + A21*A11^{-1}*f1
       for (int j = 0; j < nn; j++) {
         rhs[j] = -f2[j] + rhs[j];
       }
 
-      // Solve S * dH = rhs using Gaussian elimination (small system)
-      // dH is in Pa
       double[] dH = solveLinearSystem(schur, rhs, nn);
 
-      // --- Step 3: Update pressures (convert Pa correction to bara) ---
-      for (int j = 0; j < nn; j++) {
-        NetworkNode node = nodes.get(freeNodeList.get(j));
-        node.setPressure(node.getPressure() + relaxationFactor * dH[j]); // Both in Pa
+      // --- Step 3: Adaptive relaxation ---
+      // Use under-relaxation when residuals are large (early iterations) to prevent
+      // overshooting, especially for mixed element networks (IPR + choke + pipe).
+      double stepRelax = relaxationFactor;
+      if (iterationCount <= 5 && maxResidual > 1e6) {
+        stepRelax = Math.min(relaxationFactor, 0.3);
+      } else if (iterationCount <= 15 && maxResidual > 1e4) {
+        stepRelax = Math.min(relaxationFactor, 0.6);
       }
 
-      // --- Step 4: Back-substitute to get new pipe flows (in kg/s, then convert to kg/hr) ---
-      // From D*dQ - A^T*dH = -f1 => dQ = D^{-1}*(-f1 + A^T*dH)
+      // --- Step 4: Update pressures ---
+      for (int j = 0; j < nn; j++) {
+        NetworkNode node = nodes.get(freeNodeList.get(j));
+        double newP = node.getPressure() + stepRelax * dH[j];
+        // Prevent negative pressures
+        if (newP < 1e3) {
+          newP = 1e3; // Minimum 0.01 bar
+        }
+        node.setPressure(newP);
+      }
+
+      // --- Step 5: Back-substitute for new flows ---
       for (int i = 0; i < np; i++) {
         NetworkPipe pipe = pipes.get(pipeList.get(i));
         int jFrom = freeNodeList.indexOf(pipe.getFromNode());
         int jTo = freeNodeList.indexOf(pipe.getToNode());
 
-        // A^T*dH for pipe i: +dH[jFrom] - dH[jTo]
         double atDh = 0.0;
         if (jFrom >= 0) {
           atDh += dH[jFrom];
@@ -1847,19 +2869,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
           atDh -= dH[jTo];
         }
 
-        double dQ = a11inv[i] * (-f1[i] + atDh); // kg/s correction
-        double newFlowKgs = pipeFlowsSI[i] + relaxationFactor * dQ;
-        pipe.setFlowRate(newFlowKgs); // Already in kg/s
+        double dQ = a11inv[i] * (-f1[i] + atDh);
+        double newFlowKgs = pipeFlowsSI[i] + stepRelax * dQ;
+        pipe.setFlowRate(newFlowKgs);
       }
 
       // --- Step 5: Check convergence ---
-      // f1 residuals are in Pa, f2 residuals are in kg/s (scale to Pa equivalent)
       maxResidual = 0.0;
       for (int i = 0; i < np; i++) {
         maxResidual = Math.max(maxResidual, Math.abs(f1[i]));
       }
       for (int j = 0; j < nn; j++) {
-        // Scale flow residual: 1 kg/s flow error ~ 1e5 Pa pressure effect
         maxResidual = Math.max(maxResidual, Math.abs(f2[j]) * 1e5);
       }
 

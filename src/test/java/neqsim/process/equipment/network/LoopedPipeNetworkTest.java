@@ -764,4 +764,516 @@ class LoopedPipeNetworkTest {
     assertTrue(m2P < platformP && m2P > 0, "Manifold2 pressure should be reasonable: " + m2P);
     assertTrue(m3P < platformP && m3P > 0, "Manifold3 pressure should be reasonable: " + m3P);
   }
+
+  // ===================================================================
+  // Production Well Network Tests
+  // ===================================================================
+
+  /**
+   * Test simple oil well IPR (PI model) producing to a separator.
+   *
+   * <p>
+   * Reservoir at 300 bar connects via IPR to wellhead, then via pipe to separator at 50 bar. The
+   * NR-GGA solver should find flows and intermediate pressures.
+   * </p>
+   */
+  @Test
+  void testSingleWellIPR_PIModel() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("single well PI");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Reservoir as fixed-pressure source at 300 bar
+    network.addSourceNode("reservoir", 300.0, 0.0);
+    // Wellhead as junction node
+    network.addJunctionNode("wellhead");
+    // Separator as fixed-pressure sink at 50 bar
+    network.addFixedPressureSinkNode("separator", 50.0);
+
+    // IPR from reservoir to wellhead: PI = 5e-7 kg/s/Pa (oil type, ~1.8 kg/s per bar drawdown)
+    network.addWellIPR("reservoir", "wellhead", "ipr", 5e-7, false);
+    // Flowline from wellhead to separator
+    network.addPipe("wellhead", "separator", "flowline", 5000.0, 0.15);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Single well PI model should converge");
+
+    // Wellhead pressure should be between reservoir (300) and separator (50)
+    double pWh = network.getNodePressure("wellhead");
+    assertTrue(pWh > 50.0 && pWh < 300.0,
+        "Wellhead pressure should be between separator and reservoir: " + pWh);
+
+    // Flow should be positive (reservoir to separator direction)
+    double iprFlow = network.getPipeFlowRate("ipr");
+    double lineFlow = network.getPipeFlowRate("flowline");
+    assertTrue(iprFlow > 0, "IPR flow should be positive (producing): " + iprFlow);
+    assertEquals(iprFlow, lineFlow, 1.0, "Mass balance: IPR flow = flowline flow");
+
+    System.out.println("=== Single Well PI IPR ===");
+    System.out.println("Wellhead P = " + String.format("%.2f", pWh) + " bara");
+    System.out.println("Production rate = " + String.format("%.1f", iprFlow) + " kg/hr");
+  }
+
+  /**
+   * Test well IPR using the Vogel model for solution-gas-drive oil wells.
+   */
+  @Test
+  void testSingleWellIPR_VogelModel() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("single well Vogel");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Reservoir at 250 bar
+    network.addSourceNode("reservoir", 250.0, 0.0);
+    network.addJunctionNode("wellhead");
+    network.addFixedPressureSinkNode("separator", 30.0);
+
+    // Vogel IPR: qmax = 50 kg/s (absolute open flow)
+    network.addWellIPRVogel("reservoir", "wellhead", "ipr_vogel", 50.0);
+    network.addPipe("wellhead", "separator", "flowline", 3000.0, 0.15);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Vogel IPR should converge");
+
+    double pWh = network.getNodePressure("wellhead");
+    double flow = network.getPipeFlowRate("ipr_vogel");
+
+    assertTrue(pWh > 30.0 && pWh < 250.0,
+        "Wellhead pressure should be between separator and reservoir: " + pWh);
+    assertTrue(flow > 0.0, "Production flow should be positive");
+    // Flow should be less than qmax (in kg/hr = qmax*3600)
+    assertTrue(flow < 50.0 * 3600.0, "Flow should be below AOF: " + flow);
+
+    System.out.println("=== Single Well Vogel IPR ===");
+    System.out.println("Wellhead P = " + String.format("%.2f", pWh) + " bara");
+    System.out.println("Production rate = " + String.format("%.1f", flow) + " kg/hr");
+  }
+
+  /**
+   * Test Fetkovich IPR model for gas well.
+   */
+  @Test
+  void testSingleWellIPR_FetkovichModel() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("Fetkovich gas well");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(500);
+    network.setTolerance(500.0);
+
+    // Gas reservoir at 350 bar
+    network.addSourceNode("reservoir", 350.0, 0.0);
+    network.addJunctionNode("wellhead");
+    network.addFixedPressureSinkNode("separator", 80.0);
+
+    // Fetkovich: C = 1e-12 kg/s/Pa^(2n), n = 0.8
+    network.addWellIPRFetkovich("reservoir", "wellhead", "ipr_fetk", 1e-12, 0.8);
+    network.addPipe("wellhead", "separator", "flowline", 5000.0, 0.20);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Fetkovich IPR should converge");
+
+    double pWh = network.getNodePressure("wellhead");
+    double flow = network.getPipeFlowRate("ipr_fetk");
+
+    assertTrue(pWh > 80.0 && pWh < 350.0,
+        "Wellhead pressure should be between separator and reservoir: " + pWh);
+    assertTrue(flow > 0.0, "Gas production should be positive: " + flow);
+
+    System.out.println("=== Fetkovich Gas Well ===");
+    System.out.println("Wellhead P = " + String.format("%.2f", pWh) + " bara");
+    System.out.println("Production rate = " + String.format("%.1f", flow) + " kg/hr");
+  }
+
+  /**
+   * Test production choke element between wellhead and manifold.
+   *
+   * <p>
+   * Reservoir -> IPR -> wellhead -> choke -> manifold -> pipe -> separator. The choke creates an
+   * additional pressure drop that reduces production compared to the no-choke case.
+   * </p>
+   */
+  @Test
+  void testWellWithChoke() {
+    // Case 1: Without choke
+    LoopedPipeNetwork noChoke = new LoopedPipeNetwork("no choke");
+    noChoke.setFluidTemplate(testGas);
+    noChoke.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    noChoke.setMaxIterations(500);
+    noChoke.setTolerance(500.0);
+
+    noChoke.addSourceNode("reservoir", 300.0, 0.0);
+    noChoke.addJunctionNode("wellhead");
+    noChoke.addFixedPressureSinkNode("separator", 50.0);
+    noChoke.addWellIPR("reservoir", "wellhead", "ipr", 5e-7, false);
+    noChoke.addPipe("wellhead", "separator", "flowline", 5000.0, 0.15);
+    noChoke.run();
+
+    // Case 2: With choke (50% open)
+    LoopedPipeNetwork withChoke = new LoopedPipeNetwork("with choke");
+    withChoke.setFluidTemplate(testGas);
+    withChoke.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    withChoke.setMaxIterations(500);
+    withChoke.setTolerance(500.0);
+
+    withChoke.addSourceNode("reservoir", 300.0, 0.0);
+    withChoke.addJunctionNode("wellhead");
+    withChoke.addJunctionNode("downstream_choke");
+    withChoke.addFixedPressureSinkNode("separator", 50.0);
+    withChoke.addWellIPR("reservoir", "wellhead", "ipr", 5e-7, false);
+    withChoke.addChoke("wellhead", "downstream_choke", "choke", 150.0, 50.0);
+    withChoke.addPipe("downstream_choke", "separator", "flowline", 5000.0, 0.15);
+    withChoke.run();
+
+    assertTrue(noChoke.isConverged(), "No-choke case should converge");
+    assertTrue(withChoke.isConverged(), "Choke case should converge");
+
+    double flowNoChoke = noChoke.getPipeFlowRate("ipr");
+    double flowWithChoke = withChoke.getPipeFlowRate("ipr");
+
+    assertTrue(flowWithChoke < flowNoChoke,
+        "Choke should reduce production: " + flowWithChoke + " vs " + flowNoChoke);
+
+    // Choke creates pressure drop between wellhead and downstream
+    double pWh = withChoke.getNodePressure("wellhead");
+    double pDs = withChoke.getNodePressure("downstream_choke");
+    assertTrue(pWh > pDs, "Pressure should drop across choke: " + pWh + " -> " + pDs);
+
+    System.out.println("=== Well With Production Choke ===");
+    System.out.println("No choke: " + String.format("%.1f", flowNoChoke) + " kg/hr");
+    System.out.println("With choke (50%): " + String.format("%.1f", flowWithChoke) + " kg/hr");
+    System.out.println("Choke dP = " + String.format("%.2f", pWh - pDs) + " bar");
+  }
+
+  /**
+   * Test choke sensitivity - reducing opening should reduce flow.
+   */
+  @Test
+  void testChokeSensitivity() {
+    double previousFlow = Double.MAX_VALUE;
+    double[] openings = {100.0, 75.0, 50.0, 25.0};
+
+    System.out.println("=== Choke Sensitivity ===");
+
+    for (double opening : openings) {
+      LoopedPipeNetwork network = new LoopedPipeNetwork("choke_" + opening);
+      network.setFluidTemplate(testGas);
+      network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+      network.setMaxIterations(500);
+      network.setTolerance(500.0);
+
+      network.addSourceNode("reservoir", 300.0, 0.0);
+      network.addJunctionNode("wellhead");
+      network.addJunctionNode("ds_choke");
+      network.addFixedPressureSinkNode("separator", 50.0);
+      network.addWellIPR("reservoir", "wellhead", "ipr", 5e-7, false);
+      network.addChoke("wellhead", "ds_choke", "choke", 150.0, opening);
+      network.addPipe("ds_choke", "separator", "line", 5000.0, 0.15);
+
+      network.run();
+      assertTrue(network.isConverged(), "Should converge at " + opening + "% opening");
+
+      double flow = network.getPipeFlowRate("ipr");
+      assertTrue(flow < previousFlow || opening == 100.0,
+          "Reducing choke opening should reduce flow: " + flow + " at " + opening + "%");
+      previousFlow = flow;
+
+      System.out
+          .println("Opening=" + opening + "% -> Flow=" + String.format("%.1f", flow) + " kg/hr");
+    }
+  }
+
+  /**
+   * Test wellbore tubing element with vertical lift.
+   *
+   * <p>
+   * Reservoir -> IPR -> bottomhole -> tubing -> wellhead -> pipe -> separator. The tubing
+   * introduces hydrostatic and friction pressure drops.
+   * </p>
+   */
+  @Test
+  void testWellWithTubing() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("well with tubing");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Reservoir at 400 bar
+    network.addSourceNode("reservoir", 400.0, 0.0);
+    // Bottomhole - near reservoir
+    network.addJunctionNode("bottomhole");
+    // Wellhead - at surface
+    network.addJunctionNode("wellhead");
+    // Separator at platform
+    network.addFixedPressureSinkNode("separator", 50.0);
+
+    // IPR from reservoir to bottomhole (gas IPR: PI in kg/s/Pa^2)
+    network.addWellIPR("reservoir", "bottomhole", "ipr", 5e-13, true); // gas IPR
+
+    // Tubing from bottomhole to wellhead: 3000m, 4.5" (0.1143m), vertical (90deg)
+    network.addTubing("bottomhole", "wellhead", "tubing", 3000.0, 0.1143, 90.0);
+
+    // Flowline from wellhead to separator
+    network.addPipe("wellhead", "separator", "flowline", 10000.0, 0.20);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Well with tubing should converge");
+
+    double pBh = network.getNodePressure("bottomhole");
+    double pWh = network.getNodePressure("wellhead");
+    double flow = network.getPipeFlowRate("ipr");
+
+    assertTrue(pBh > pWh, "BHP should be higher than WHP: " + pBh + " > " + pWh);
+    assertTrue(pBh < 400.0, "BHP should be less than reservoir pressure: " + pBh);
+    assertTrue(flow > 0, "Production should be positive: " + flow);
+
+    System.out.println("=== Well With Tubing ===");
+    System.out.println("BHP = " + String.format("%.2f", pBh) + " bara");
+    System.out.println("WHP = " + String.format("%.2f", pWh) + " bara");
+    System.out.println("Tubing dP = " + String.format("%.2f", pBh - pWh) + " bar");
+    System.out.println("Rate = " + String.format("%.1f", flow) + " kg/hr");
+  }
+
+  /**
+   * Test multi-well gathering system with IPR, chokes, and pipelines.
+   *
+   * <p>
+   * Two wells (different IPR) -> chokes -> manifold -> export pipeline -> separator. This is the
+   * canonical production well network that NR-GGA uniquely enables.
+   * </p>
+   */
+  @Test
+  void testMultiWellGatheringNetwork() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("multi-well gathering");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(500);
+    network.setTolerance(500.0);
+
+    // Two reservoirs at different pressures
+    network.addSourceNode("res1", 350.0, 0.0);
+    network.addSourceNode("res2", 280.0, 0.0);
+
+    // Wellheads
+    network.addJunctionNode("wh1");
+    network.addJunctionNode("wh2");
+
+    // Downstream of chokes
+    network.addJunctionNode("ds1");
+    network.addJunctionNode("ds2");
+
+    // Common manifold
+    network.addJunctionNode("manifold");
+
+    // Separator
+    network.addFixedPressureSinkNode("separator", 40.0);
+
+    // Well 1: Higher pressure, higher PI (gas: PI in kg/s/Pa^2)
+    network.addWellIPR("res1", "wh1", "ipr1", 8e-13, true); // gas
+    network.addChoke("wh1", "ds1", "choke1", 150.0, 80.0); // 80% open
+
+    // Well 2: Lower pressure, lower PI
+    network.addWellIPR("res2", "wh2", "ipr2", 5e-13, true); // gas
+    network.addChoke("wh2", "ds2", "choke2", 150.0, 60.0); // 60% open
+
+    // Flowlines to manifold
+    network.addPipe("ds1", "manifold", "line1", 3000.0, 0.15);
+    network.addPipe("ds2", "manifold", "line2", 5000.0, 0.12);
+
+    // Export pipeline
+    network.addPipe("manifold", "separator", "export", 15000.0, 0.25);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Multi-well gathering should converge");
+
+    double flow1 = network.getPipeFlowRate("ipr1");
+    double flow2 = network.getPipeFlowRate("ipr2");
+    double exportFlow = network.getPipeFlowRate("export");
+
+    assertTrue(flow1 > 0 && flow2 > 0, "Both wells should produce");
+    assertTrue(flow1 > flow2, "Well 1 should produce more (higher Pr, higher PI, wider choke)");
+    assertEquals(flow1 + flow2, exportFlow, 5.0, "Mass balance at manifold");
+
+    double pManifold = network.getNodePressure("manifold");
+    assertTrue(pManifold > 40.0 && pManifold < 280.0,
+        "Manifold pressure should be reasonable: " + pManifold);
+
+    System.out.println("=== Multi-Well Gathering Network ===");
+    System.out.println("Well 1: " + String.format("%.1f", flow1) + " kg/hr, WHP="
+        + String.format("%.2f", network.getNodePressure("wh1")) + " bara");
+    System.out.println("Well 2: " + String.format("%.1f", flow2) + " kg/hr, WHP="
+        + String.format("%.2f", network.getNodePressure("wh2")) + " bara");
+    System.out.println("Manifold P = " + String.format("%.2f", pManifold) + " bara");
+    System.out.println("Export: " + String.format("%.1f", exportFlow) + " kg/hr");
+  }
+
+  /**
+   * Test looped production gathering with two paths from wells to platform.
+   *
+   * <p>
+   * Two wells feed into a ring main that has two paths to the platform. This is a true looped
+   * production network that sequential solvers cannot handle.
+   * </p>
+   */
+  @Test
+  void testLoopedProductionGathering() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("looped production");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(300);
+    network.setTolerance(100.0);
+
+    // Two reservoirs
+    network.addSourceNode("resA", 320.0, 0.0);
+    network.addSourceNode("resB", 310.0, 0.0);
+
+    // Wellheads
+    network.addJunctionNode("whA");
+    network.addJunctionNode("whB");
+
+    // Two manifold nodes (ring main junction points)
+    network.addJunctionNode("M1");
+    network.addJunctionNode("M2");
+
+    // Platform separator
+    network.addFixedPressureSinkNode("platform", 45.0);
+
+    // Well IPRs
+    network.addWellIPR("resA", "whA", "iprA", 6e-13, true);
+    network.addWellIPR("resB", "whB", "iprB", 6e-13, true);
+
+    // Flowlines from wellheads to manifold ring
+    network.addPipe("whA", "M1", "lineA", 4000.0, 0.15);
+    network.addPipe("whB", "M2", "lineB", 4000.0, 0.15);
+
+    // Ring main: M1 -> M2 (creates loop)
+    network.addPipe("M1", "M2", "ring", 6000.0, 0.12);
+
+    // Two export paths: M1 -> platform and M2 -> platform
+    network.addPipe("M1", "platform", "export1", 10000.0, 0.20);
+    network.addPipe("M2", "platform", "export2", 12000.0, 0.20);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Looped production gathering should converge");
+
+    // Both wells should produce
+    double flowA = network.getPipeFlowRate("iprA");
+    double flowB = network.getPipeFlowRate("iprB");
+    assertTrue(flowA > 0 && flowB > 0, "Both wells should produce");
+
+    // Total flow in = total flow out (mass balance)
+    double totalIn = flowA + flowB;
+    double exp1 = network.getPipeFlowRate("export1");
+    double exp2 = network.getPipeFlowRate("export2");
+    double totalOut = exp1 + exp2;
+    assertEquals(totalIn, totalOut, 10.0,
+        "Total inflow should equal total outflow: " + totalIn + " vs " + totalOut);
+
+    System.out.println("=== Looped Production Gathering ===");
+    System.out.println("Well A: " + String.format("%.1f", flowA) + " kg/hr");
+    System.out.println("Well B: " + String.format("%.1f", flowB) + " kg/hr");
+    System.out
+        .println("Ring flow: " + String.format("%.1f", network.getPipeFlowRate("ring")) + " kg/hr");
+    System.out.println("Export 1: " + String.format("%.1f", exp1) + " kg/hr");
+    System.out.println("Export 2: " + String.format("%.1f", exp2) + " kg/hr");
+    System.out.println("M1 P = " + String.format("%.2f", network.getNodePressure("M1")) + " bara");
+    System.out.println("M2 P = " + String.format("%.2f", network.getNodePressure("M2")) + " bara");
+  }
+
+  /**
+   * Test complete well system: IPR + tubing + choke + flowline.
+   */
+  @Test
+  void testCompleteWellSystem() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("complete well");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(500);
+    network.setTolerance(500.0);
+
+    // Full well path: reservoir -> BH -> tubing -> WH -> choke -> ds_choke -> flowline -> sep
+    network.addSourceNode("reservoir", 400.0, 0.0);
+    network.addJunctionNode("BH");
+    network.addJunctionNode("WH");
+    network.addJunctionNode("DS");
+    network.addFixedPressureSinkNode("separator", 40.0);
+
+    network.addWellIPR("reservoir", "BH", "ipr", 3e-13, true);
+    network.addTubing("BH", "WH", "tubing", 3500.0, 0.1, 85.0); // near-vertical
+    network.addChoke("WH", "DS", "choke", 150.0, 70.0);
+    network.addPipe("DS", "separator", "flowline", 8000.0, 0.20);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Complete well system should converge");
+
+    double pRes = 400.0;
+    double pBh = network.getNodePressure("BH");
+    double pWh = network.getNodePressure("WH");
+    double pDs = network.getNodePressure("DS");
+    double pSep = 40.0;
+    double rate = network.getPipeFlowRate("ipr");
+
+    // Pressure should decrease monotonically: res > BH > WH > DS > sep
+    assertTrue(pBh < pRes, "BHP < Pres: " + pBh + " < " + pRes);
+    assertTrue(pWh < pBh, "WHP < BHP: " + pWh + " < " + pBh);
+    assertTrue(pDs < pWh, "Downstream choke P < WHP: " + pDs + " < " + pWh);
+    assertTrue(pDs > pSep, "Downstream choke P > Psep: " + pDs + " > " + pSep);
+    assertTrue(rate > 0, "Should produce: " + rate);
+
+    System.out.println("=== Complete Well System ===");
+    System.out.println("P_res=" + String.format("%.1f", pRes) + " -> BHP="
+        + String.format("%.1f", pBh) + " -> WHP=" + String.format("%.1f", pWh) + " -> DS_choke="
+        + String.format("%.1f", pDs) + " -> Sep=" + String.format("%.1f", pSep) + " bara");
+    System.out.println("IPR drawdown = " + String.format("%.1f", pRes - pBh) + " bar");
+    System.out.println("Tubing dP = " + String.format("%.1f", pBh - pWh) + " bar");
+    System.out.println("Choke dP = " + String.format("%.1f", pWh - pDs) + " bar");
+    System.out.println("Flowline dP = " + String.format("%.1f", pDs - pSep) + " bar");
+    System.out.println("Rate = " + String.format("%.1f", rate) + " kg/hr");
+  }
+
+  /**
+   * Test element type reporting in solution summary.
+   */
+  @Test
+  void testElementTypeInSolutionSummary() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("element types");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 300.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("sep", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-7, false);
+    network.addPipe("wh", "sep", "line", 5000.0, 0.15);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Should converge");
+
+    // Verify element types are accessible
+    LoopedPipeNetwork.NetworkPipe iprPipe = network.getPipe("ipr");
+    LoopedPipeNetwork.NetworkPipe linePipe = network.getPipe("line");
+
+    assertEquals(LoopedPipeNetwork.NetworkElementType.WELL_IPR, iprPipe.getElementType());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.PIPE, linePipe.getElementType());
+
+    // JSON output should include element types
+    String json = network.toJson();
+    assertTrue(json.contains("WELL_IPR") || json.contains("ipr"),
+        "JSON should reference IPR element");
+  }
 }
