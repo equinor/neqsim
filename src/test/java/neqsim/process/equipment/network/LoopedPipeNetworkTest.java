@@ -518,6 +518,142 @@ class LoopedPipeNetworkTest {
   }
 
   /**
+   * Test pressure-pressure mode: fixed pressures at both ends, solver finds flow rate.
+   *
+   * <p>
+   * Single pipe between a 50 bar source and a 48 bar fixed-pressure sink. The NR solver should
+   * compute the flow rate that produces exactly 2 bar pressure drop across the pipe.
+   * </p>
+   */
+  @Test
+  void testFixedPressureSinkSinglePipe() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("pressure-pressure");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(100);
+    network.setTolerance(100.0);
+
+    // Source at 50 bar, sink at 48 bar (2 bar pressure drop)
+    network.addSourceNode("S", 50.0, 0.0); // flow rate not needed (determined by solver)
+    network.addFixedPressureSinkNode("D", 48.0);
+    network.addPipe("S", "D", "main", 5000.0, 0.25); // 5 km, 10 inch
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Pressure-pressure mode should converge");
+
+    // Pressures should be at specified values
+    assertEquals(50.0, network.getNodePressure("S"), 0.01, "Source pressure should be 50 bar");
+    assertEquals(48.0, network.getNodePressure("D"), 0.01, "Sink pressure should be 48 bar");
+
+    // Flow should be positive and physically reasonable
+    double flow = network.getPipeFlowRate("main");
+    assertTrue(flow > 0, "Flow should be positive from high to low pressure");
+    assertTrue(flow > 100, "Flow should be non-trivial for 2 bar drop over 5 km");
+    assertTrue(flow < 100000, "Flow should not be unreasonably large");
+
+    // Node flow at sink should equal pipe flow
+    double deliveredFlow = network.getNodeFlowRate("D");
+    assertEquals(flow, deliveredFlow, 1.0, "Delivered flow at sink should equal pipe flow");
+
+    System.out.println("Pressure-pressure single pipe: flow = " + flow + " kg/hr");
+  }
+
+  /**
+   * Test pressure-pressure mode with parallel pipes (looped network, all fixed pressures).
+   *
+   * <p>
+   * Two parallel pipes of different diameters between a 60 bar source and a 58 bar sink. The solver
+   * must find flows in each pipe such that both produce the same 2 bar drop.
+   * </p>
+   */
+  @Test
+  void testFixedPressureSinkParallelPipes() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("pressure-pressure parallel");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(100);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("S", 60.0, 0.0);
+    network.addJunctionNode("A");
+    network.addJunctionNode("B");
+    network.addFixedPressureSinkNode("D", 58.0);
+
+    network.addPipe("S", "A", "inlet", 500.0, 0.35);
+    network.addPipe("A", "B", "upper", 2000.0, 0.20);
+    network.addPipe("A", "B", "lower", 2000.0, 0.30); // larger diameter, more flow
+    network.addPipe("B", "D", "outlet", 500.0, 0.35);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Parallel pipes with fixed P should converge");
+
+    // Verify pressures
+    assertEquals(60.0, network.getNodePressure("S"), 0.01);
+    assertEquals(58.0, network.getNodePressure("D"), 0.01);
+
+    // Larger pipe should carry more flow
+    double upperFlow = Math.abs(network.getPipeFlowRate("upper"));
+    double lowerFlow = Math.abs(network.getPipeFlowRate("lower"));
+    assertTrue(lowerFlow > upperFlow, "Larger pipe should carry more flow");
+
+    // Mass balance: inlet = upper + lower = outlet = delivered
+    double inletFlow = network.getPipeFlowRate("inlet");
+    double outletFlow = network.getPipeFlowRate("outlet");
+    assertEquals(inletFlow, outletFlow, 1.0, "Inlet and outlet flows should match");
+    assertEquals(inletFlow, upperFlow + lowerFlow, 1.0, "Mass balance at junction A");
+
+    System.out.println("Parallel pipes: upper=" + upperFlow + " lower=" + lowerFlow + " total="
+        + inletFlow + " kg/hr");
+  }
+
+  /**
+   * Test pressure-pressure mode with elevation between source and sink.
+   *
+   * <p>
+   * Source at 100 bar at 0m, sink at 95 bar at 200m elevation. Hydrostatic head reduces the driving
+   * pressure difference, resulting in less flow than flat terrain.
+   * </p>
+   */
+  @Test
+  void testFixedPressureSinkWithElevation() {
+    // Flat case - no elevation
+    LoopedPipeNetwork netFlat = new LoopedPipeNetwork("flat");
+    netFlat.setFluidTemplate(testGas);
+    netFlat.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    netFlat.setMaxIterations(100);
+    netFlat.setTolerance(100.0);
+
+    netFlat.addSourceNode("S", 100.0, 0.0);
+    netFlat.addFixedPressureSinkNode("D", 95.0);
+    netFlat.addPipe("S", "D", "main", 10000.0, 0.30);
+    netFlat.run();
+
+    // Uphill case - 200m elevation gain
+    LoopedPipeNetwork netUphill = new LoopedPipeNetwork("uphill");
+    netUphill.setFluidTemplate(testGas);
+    netUphill.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    netUphill.setMaxIterations(100);
+    netUphill.setTolerance(100.0);
+
+    netUphill.addSourceNode("S", 100.0, 0.0, 0.0);
+    netUphill.addFixedPressureSinkNode("D", 95.0, 200.0);
+    netUphill.addPipe("S", "D", "main", 10000.0, 0.30);
+    netUphill.run();
+
+    assertTrue(netFlat.isConverged(), "Flat case should converge");
+    assertTrue(netUphill.isConverged(), "Uphill case should converge");
+
+    double flowFlat = netFlat.getPipeFlowRate("main");
+    double flowUphill = netUphill.getPipeFlowRate("main");
+
+    assertTrue(flowUphill < flowFlat,
+        "Uphill flow should be less than flat flow due to hydrostatic head");
+    System.out.println("Flat flow=" + flowFlat + " Uphill flow=" + flowUphill + " kg/hr");
+  }
+
+  /**
    * Test pipe hydraulic properties are populated after solve.
    */
   @Test

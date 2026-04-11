@@ -785,6 +785,38 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Add a fixed-pressure sink node (delivery point with specified pressure).
+   *
+   * <p>
+   * In this mode the solver determines the flow rate that the network can deliver to this node
+   * given the upstream source pressures and network resistances. This is the "pressure-pressure"
+   * operating mode, analogous to PIPESIM's fixed-pressure deliverability calculation.
+   * </p>
+   *
+   * @param name node name
+   * @param pressureBar delivery pressure in bara
+   */
+  public void addFixedPressureSinkNode(String name, double pressureBar) {
+    NetworkNode node = new NetworkNode(name, NodeType.SINK);
+    node.setPressure(pressureBar * 1e5); // Convert to Pa
+    node.setDemand(0.0); // Flow determined by solver
+    node.setPressureFixed(true);
+    nodes.put(name, node);
+  }
+
+  /**
+   * Add a fixed-pressure sink node with specified elevation.
+   *
+   * @param name node name
+   * @param pressureBar delivery pressure in bara
+   * @param elevationM node elevation in meters
+   */
+  public void addFixedPressureSinkNode(String name, double pressureBar, double elevationM) {
+    addFixedPressureSinkNode(name, pressureBar);
+    nodes.get(name).setElevation(elevationM);
+  }
+
+  /**
    * Add a junction node to the network.
    *
    * @param name node name
@@ -1054,6 +1086,35 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Get the net delivered flow rate at a node in kg/hr.
+   *
+   * <p>
+   * Computes the net inflow to the node: sum of incoming pipe flows minus outgoing. For a source
+   * node this is negative (supply). For a sink node this is the delivered flow rate. Useful in
+   * pressure-pressure mode where the delivered flow is not specified but computed by the solver.
+   * </p>
+   *
+   * @param nodeName node name
+   * @return net delivered flow in kg/hr (positive = net inflow to node)
+   */
+  public double getNodeFlowRate(String nodeName) {
+    NetworkNode node = nodes.get(nodeName);
+    if (node == null) {
+      throw new IllegalArgumentException("Node '" + nodeName + "' not found");
+    }
+    double netFlowKgs = 0.0;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getToNode().equals(nodeName)) {
+        netFlowKgs += pipe.getFlowRate(); // inflow
+      }
+      if (pipe.getFromNode().equals(nodeName)) {
+        netFlowKgs -= pipe.getFlowRate(); // outflow
+      }
+    }
+    return netFlowKgs * 3600.0; // Convert to kg/hr
+  }
+
+  /**
    * Initialize pipe flow estimates using BFS spanning tree to satisfy mass balance.
    *
    * <p>
@@ -1149,6 +1210,46 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     // Non-tree pipes remain at 0 — loop solver will correct them
+
+    // For pressure-driven mode (all nodes fixed-pressure, all demands zero):
+    // BFS gives zero flows everywhere. Use pressure-difference initial estimate instead.
+    boolean allFlowsZero = true;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (Math.abs(pipe.getFlowRate()) > 1e-15) {
+        allFlowsZero = false;
+        break;
+      }
+    }
+    if (allFlowsZero) {
+      // Estimate initial flows from pressure differences using simplified resistance
+      SystemInterface fluid = fluidTemplate.clone();
+      try {
+        neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+            new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+        ops.TPflash();
+      } catch (Exception ex) {
+        logger.warn("TP flash failed during flow init: " + ex.getMessage());
+      }
+      fluid.initProperties();
+      double density = fluid.getDensity("kg/m3");
+      double viscosity = fluid.getViscosity("kg/msec");
+
+      for (NetworkPipe pipe : pipes.values()) {
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        NetworkNode toNode = nodes.get(pipe.getToNode());
+        double dP = fromNode.getPressure() - toNode.getPressure()
+            - density * 9.81 * (toNode.getElevation() - fromNode.getElevation());
+        if (Math.abs(dP) < 1.0) {
+          dP = 100.0; // Small default if pressures are equal
+        }
+        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+        // Rough estimate: assume f=0.02, Q = sqrt(|dP| * D * 2 * rho * A^2 / (f * L)) * sign
+        double ff = 0.02;
+        double denom = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+        double qEstimate = Math.sqrt(Math.abs(dP) / denom) * Math.signum(dP);
+        pipe.setFlowRate(qEstimate);
+      }
+    }
   }
 
   /**
@@ -1573,11 +1674,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     int np = pipeList.size(); // number of pipes
     int nn = freeNodeList.size(); // number of free nodes (unknown pressures)
 
-    if (nn == 0) {
-      logger.info("All nodes have fixed pressure - using sequential solver");
-      runSequential(id);
-      return;
-    }
+    // When nn == 0 (all pressures fixed), the Schur complement is empty and
+    // the back-substitution dQ = D^{-1}*(-f1) determines flows directly from
+    // pressure differences. This is the "pressure-pressure" deliverability mode.
 
     // Initialize pressures for free nodes (average of source pressures)
     double avgSourcePressure = 0.0;
@@ -1951,6 +2050,48 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Pipe '" + pipeName + "' not found");
     }
     return pipe.getHeadLoss() / 1e5; // Convert Pa to bara
+  }
+
+  /**
+   * Get Reynolds number for a specific pipe.
+   *
+   * @param pipeName pipe name
+   * @return Reynolds number (dimensionless, after solving)
+   */
+  public double getPipeReynoldsNumber(String pipeName) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Pipe '" + pipeName + "' not found");
+    }
+    return pipe.getReynoldsNumber();
+  }
+
+  /**
+   * Get Darcy friction factor for a specific pipe.
+   *
+   * @param pipeName pipe name
+   * @return friction factor (dimensionless, after solving)
+   */
+  public double getPipeFrictionFactor(String pipeName) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Pipe '" + pipeName + "' not found");
+    }
+    return pipe.getFrictionFactor();
+  }
+
+  /**
+   * Get flow regime description for a specific pipe.
+   *
+   * @param pipeName pipe name
+   * @return flow regime string (e.g. "Turbulent", "Laminar")
+   */
+  public String getPipeFlowRegime(String pipeName) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Pipe '" + pipeName + "' not found");
+    }
+    return pipe.getFlowRegime();
   }
 
   /**
