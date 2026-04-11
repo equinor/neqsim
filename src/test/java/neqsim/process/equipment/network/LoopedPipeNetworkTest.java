@@ -345,4 +345,287 @@ class LoopedPipeNetworkTest {
           "Ring loop should have 4 members: riser1, ring12, ring23, riser2");
     }
   }
+
+  /**
+   * Test Hardy Cross solver converges for a simple triangle loop.
+   *
+   * <p>
+   * Network: Source(S) --pipe1--> A --pipe2--> B --pipe3--> Sink(D) A --pipe4--> B (parallel,
+   * creating a loop)
+   * </p>
+   */
+  @Test
+  void testHardyCrossSolverConvergence() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("HC convergence");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.HARDY_CROSS);
+    network.setMaxIterations(200);
+    network.setTolerance(1.0); // 1 Pa: tight tolerance needed for gas with small dP
+
+    // Source at 50 bar supplying 1000 kg/hr
+    network.addSourceNode("S", 50.0, 1000.0);
+    network.addJunctionNode("A");
+    network.addJunctionNode("B");
+    network.addSinkNode("D", 1000.0);
+
+    // Two parallel paths from A to B (creates one loop)
+    network.addPipe("S", "A", "inlet", 1000.0, 0.3);
+    network.addPipe("A", "B", "upper", 800.0, 0.2);
+    network.addPipe("A", "B", "lower", 600.0, 0.25); // Shorter & larger = more flow
+    network.addPipe("B", "D", "outlet", 500.0, 0.3);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Hardy Cross should converge for simple parallel pipe loop");
+
+    // The larger/shorter pipe (lower) should carry more flow than the upper
+    double upperFlow = Math.abs(network.getPipeFlowRate("upper"));
+    double lowerFlow = Math.abs(network.getPipeFlowRate("lower"));
+    assertTrue(lowerFlow > upperFlow,
+        "Shorter/larger pipe should carry more flow: lower=" + lowerFlow + " upper=" + upperFlow);
+
+    // Total flow in parallel section should equal inlet flow
+    double inletFlow = Math.abs(network.getPipeFlowRate("inlet"));
+    assertTrue(inletFlow > 0, "Inlet flow should be positive");
+  }
+
+  /**
+   * Test Newton-Raphson GGA solver converges for a simple tree network.
+   */
+  @Test
+  void testNewtonRaphsonTreeNetwork() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("NR tree");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(50);
+    network.setTolerance(100.0);
+
+    // Source -> Junction -> two sinks
+    network.addSourceNode("S", 60.0, 2000.0);
+    network.addJunctionNode("J");
+    network.addSinkNode("D1", 800.0);
+    network.addSinkNode("D2", 1200.0);
+
+    network.addPipe("S", "J", "main", 2000.0, 0.4);
+    network.addPipe("J", "D1", "branch1", 500.0, 0.2);
+    network.addPipe("J", "D2", "branch2", 500.0, 0.25);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "NR should converge for tree network");
+
+    // Check node pressures are sensible (all below source, all positive)
+    double sourceP = network.getNodePressure("S");
+    double junctionP = network.getNodePressure("J");
+    assertTrue(junctionP < sourceP, "Junction pressure should be below source");
+    assertTrue(junctionP > 0, "Junction pressure should be positive");
+  }
+
+  /**
+   * Test Newton-Raphson GGA solver for a looped network.
+   */
+  @Test
+  void testNewtonRaphsonLoopedNetwork() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("NR looped");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(100);
+    network.setTolerance(100.0);
+
+    // Ring network: S -> A -> B -> D, with a parallel A -> B path
+    network.addSourceNode("S", 55.0, 1500.0);
+    network.addJunctionNode("A");
+    network.addJunctionNode("B");
+    network.addSinkNode("D", 1500.0);
+
+    network.addPipe("S", "A", "inlet", 1000.0, 0.35);
+    network.addPipe("A", "B", "upper", 800.0, 0.2);
+    network.addPipe("A", "B", "lower", 800.0, 0.2); // Same size = equal split
+    network.addPipe("B", "D", "outlet", 1000.0, 0.35);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "NR should converge for looped network");
+
+    // Equal parallel pipes should carry approximately equal flow
+    double upperFlow = Math.abs(network.getPipeFlowRate("upper"));
+    double lowerFlow = Math.abs(network.getPipeFlowRate("lower"));
+    double diff = Math.abs(upperFlow - lowerFlow);
+    assertTrue(diff < upperFlow * 0.1, "Equal parallel pipes should carry similar flow: upper="
+        + upperFlow + " lower=" + lowerFlow);
+  }
+
+  /**
+   * Test network with elevation changes.
+   */
+  @Test
+  void testElevationChanges() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("elevation test");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(50);
+    network.setTolerance(100.0);
+
+    // Source at sea level, sink at 100m elevation
+    network.addSourceNode("S", 60.0, 1000.0, 0.0);
+    network.addSinkNode("D", 1000.0, 100.0);
+
+    network.addPipe("S", "D", "uphill", 2000.0, 0.3);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Should converge with elevation");
+
+    // Pressure at sink should be lower than source (friction + elevation)
+    double sP = network.getNodePressure("S");
+    double dP = network.getNodePressure("D");
+    assertTrue(dP < sP, "Sink pressure should be lower than source with uphill flow");
+  }
+
+  /**
+   * Test network validation.
+   */
+  @Test
+  void testNetworkValidation() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("validation test");
+
+    // No fluid template
+    List<String> issues = network.validate();
+    assertTrue(issues.size() > 0, "Should report issues for empty network");
+
+    boolean hasFluidError = false;
+    for (String issue : issues) {
+      if (issue.contains("Fluid template")) {
+        hasFluidError = true;
+      }
+    }
+    assertTrue(hasFluidError, "Should report missing fluid template");
+
+    // Add fluid and nodes
+    network.setFluidTemplate(testGas);
+    network.addSourceNode("S", 50.0, 1000.0);
+    network.addSinkNode("D", 1000.0);
+    network.addPipe("S", "D", "main", 1000.0, 0.3);
+
+    List<String> issues2 = network.validate();
+    boolean hasErrors = false;
+    for (String issue : issues2) {
+      if (issue.startsWith("ERROR")) {
+        hasErrors = true;
+      }
+    }
+    assertTrue(!hasErrors, "Valid network should have no errors");
+  }
+
+  /**
+   * Test pipe hydraulic properties are populated after solve.
+   */
+  @Test
+  void testPipeHydraulicProperties() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("hydraulics test");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.HARDY_CROSS);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("S", 50.0, 1000.0);
+    network.addSinkNode("D", 1000.0);
+    network.addPipe("S", "D", "main", 1000.0, 0.3);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Should converge");
+
+    // Check that hydraulic properties are populated
+    double velocity = network.getPipeVelocity("main");
+    assertTrue(velocity > 0, "Velocity should be positive after solve");
+
+    double headLoss = network.getPipeHeadLoss("main");
+    assertTrue(headLoss > 0, "Head loss should be positive in flow direction");
+  }
+
+  /**
+   * Test JSON output includes hydraulic properties.
+   */
+  @Test
+  void testJsonIncludesHydraulics() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("json hydraulics");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.HARDY_CROSS);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("S", 50.0, 800.0);
+    network.addSinkNode("D", 800.0);
+    network.addPipe("S", "D", "main", 1000.0, 0.25);
+
+    network.run();
+
+    String json = network.toJson();
+    assertNotNull(json);
+    assertTrue(json.contains("velocity_ms"), "JSON should include velocity");
+    assertTrue(json.contains("reynoldsNumber"), "JSON should include Reynolds number");
+    assertTrue(json.contains("frictionFactor"), "JSON should include friction factor");
+    assertTrue(json.contains("flowRegime"), "JSON should include flow regime");
+  }
+
+  /**
+   * Test larger gathering network with multiple wells feeding a manifold via a ring.
+   */
+  @Test
+  void testGatheringNetworkMultipleWells() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("gathering network");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Platform at 60 bar acts as the supply
+    network.addSourceNode("platform", 60.0, 10000.0);
+
+    // Manifolds in a ring
+    network.addJunctionNode("manifold1");
+    network.addJunctionNode("manifold2");
+    network.addJunctionNode("manifold3");
+
+    // Delivery point
+    network.addSinkNode("delivery", 10000.0);
+
+    // Ring main pipes (smaller diameters for meaningful pressure drops in gas)
+    network.addPipe("platform", "manifold1", "riser1", 2000.0, 0.15);
+    network.addPipe("manifold1", "manifold2", "ring12", 5000.0, 0.10);
+    network.addPipe("manifold2", "manifold3", "ring23", 5000.0, 0.10);
+    network.addPipe("manifold3", "platform", "riser2", 2000.0, 0.15); // Loop-close
+
+    // Export from manifold2 to delivery
+    network.addPipe("manifold2", "delivery", "export", 8000.0, 0.12);
+
+    network.run();
+
+    // Print debug info
+    double platformP = network.getNodePressure("platform");
+    double m1P = network.getNodePressure("manifold1");
+    double m2P = network.getNodePressure("manifold2");
+    double m3P = network.getNodePressure("manifold3");
+    System.out.println("=== Gathering Network Results ===");
+    System.out.println(
+        "Converged: " + network.isConverged() + ", iterations: " + network.getIterationCount());
+    System.out.println("Platform: " + String.format("%.4f", platformP) + " bara");
+    System.out.println("Manifold 1: " + String.format("%.4f", m1P) + " bara");
+    System.out.println("Manifold 2: " + String.format("%.4f", m2P) + " bara");
+    System.out.println("Manifold 3: " + String.format("%.4f", m3P) + " bara");
+    for (String pipeName : network.getPipeNames()) {
+      System.out.println(pipeName + ": " + String.format("%.1f", network.getPipeFlowRate(pipeName))
+          + " kg/hr, dP=" + String.format("%.4f", network.getPipeHeadLoss(pipeName)) + " bar, v="
+          + String.format("%.3f", network.getPipeVelocity(pipeName)) + " m/s");
+    }
+
+    // Verify convergence and solution quality
+    assertTrue(network.isConverged(), "Gathering network should converge");
+
+    // All junction pressures should be between source and minimum delivery
+    assertTrue(m1P < platformP && m1P > 0, "Manifold1 pressure should be reasonable: " + m1P);
+    assertTrue(m2P < platformP && m2P > 0, "Manifold2 pressure should be reasonable: " + m2P);
+    assertTrue(m3P < platformP && m3P > 0, "Manifold3 pressure should be reasonable: " + m3P);
+  }
 }

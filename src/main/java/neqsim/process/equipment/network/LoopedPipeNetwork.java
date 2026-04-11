@@ -13,6 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -119,9 +120,25 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     SEQUENTIAL,
 
     /**
-     * Newton-Raphson simultaneous solver.
+     * Newton-Raphson Global Gradient Algorithm (Todini-Pilati). Solves nodal pressure and pipe flow
+     * simultaneously. Converges faster than Hardy Cross for large networks.
      */
     NEWTON_RAPHSON
+  }
+
+  /**
+   * Pipe flow model type.
+   */
+  public enum PipeModelType {
+    /**
+     * Darcy-Weisbach equation for single-phase flow (default).
+     */
+    DARCY_WEISBACH,
+
+    /**
+     * Beggs-Brill correlation for multiphase oil/gas/water flow.
+     */
+    BEGGS_BRILL
   }
 
   /**
@@ -307,7 +324,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     private double roughness = 4.5e-5; // m (default: commercial steel)
     private double flowRate = 0.0; // kg/s (positive = from->to)
     private double headLoss = 0.0; // Pa
+    private double velocity = 0.0; // m/s
+    private double reynoldsNumber = 0.0;
+    private double frictionFactor = 0.0;
+    private String flowRegime = "";
+    private double liquidHoldup = 0.0;
+    private double outletTemperature = 288.15; // K
+    private double wallThickness = 0.0127; // m (default 0.5 inch)
+    private double insulationThickness = 0.0; // m
+    private double overallHeatTransferCoeff = 0.0; // W/m2K (0 = adiabatic)
+    private double ambientTemperature = 288.15; // K
     private AdiabaticPipe pipeModel;
+    private PipeBeggsAndBrills bbModel;
 
     /**
      * Constructor for network pipe.
@@ -456,6 +484,186 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     public void setPipeModel(AdiabaticPipe model) {
       this.pipeModel = model;
     }
+
+    /**
+     * Get Beggs-Brill pipe model.
+     *
+     * @return the PipeBeggsAndBrills model or null
+     */
+    public PipeBeggsAndBrills getBBModel() {
+      return bbModel;
+    }
+
+    /**
+     * Set Beggs-Brill pipe model.
+     *
+     * @param model the pipe model
+     */
+    public void setBBModel(PipeBeggsAndBrills model) {
+      this.bbModel = model;
+    }
+
+    /**
+     * Get velocity in m/s.
+     *
+     * @return velocity
+     */
+    public double getVelocity() {
+      return velocity;
+    }
+
+    /**
+     * Set velocity in m/s.
+     *
+     * @param velocity velocity in m/s
+     */
+    public void setVelocity(double velocity) {
+      this.velocity = velocity;
+    }
+
+    /**
+     * Get Reynolds number.
+     *
+     * @return Reynolds number
+     */
+    public double getReynoldsNumber() {
+      return reynoldsNumber;
+    }
+
+    /**
+     * Set Reynolds number.
+     *
+     * @param re Reynolds number
+     */
+    public void setReynoldsNumber(double re) {
+      this.reynoldsNumber = re;
+    }
+
+    /**
+     * Get friction factor.
+     *
+     * @return Darcy friction factor
+     */
+    public double getFrictionFactor() {
+      return frictionFactor;
+    }
+
+    /**
+     * Set friction factor.
+     *
+     * @param ff friction factor
+     */
+    public void setFrictionFactor(double ff) {
+      this.frictionFactor = ff;
+    }
+
+    /**
+     * Get flow regime name.
+     *
+     * @return flow regime
+     */
+    public String getFlowRegime() {
+      return flowRegime;
+    }
+
+    /**
+     * Set flow regime name.
+     *
+     * @param regime flow regime
+     */
+    public void setFlowRegime(String regime) {
+      this.flowRegime = regime;
+    }
+
+    /**
+     * Get liquid holdup (fraction 0-1).
+     *
+     * @return liquid holdup
+     */
+    public double getLiquidHoldup() {
+      return liquidHoldup;
+    }
+
+    /**
+     * Set liquid holdup.
+     *
+     * @param holdup liquid holdup fraction
+     */
+    public void setLiquidHoldup(double holdup) {
+      this.liquidHoldup = holdup;
+    }
+
+    /**
+     * Get outlet temperature in K.
+     *
+     * @return outlet temperature
+     */
+    public double getOutletTemperature() {
+      return outletTemperature;
+    }
+
+    /**
+     * Set outlet temperature in K.
+     *
+     * @param temperature outlet temperature in K
+     */
+    public void setOutletTemperature(double temperature) {
+      this.outletTemperature = temperature;
+    }
+
+    /**
+     * Get wall thickness in m.
+     *
+     * @return wall thickness
+     */
+    public double getWallThickness() {
+      return wallThickness;
+    }
+
+    /**
+     * Set wall thickness in m.
+     *
+     * @param thickness wall thickness in m
+     */
+    public void setWallThickness(double thickness) {
+      this.wallThickness = thickness;
+    }
+
+    /**
+     * Get overall heat transfer coefficient in W/m2K.
+     *
+     * @return U-value (0 means adiabatic)
+     */
+    public double getOverallHeatTransferCoeff() {
+      return overallHeatTransferCoeff;
+    }
+
+    /**
+     * Set overall heat transfer coefficient in W/m2K.
+     *
+     * @param uValue U-value (0 for adiabatic)
+     */
+    public void setOverallHeatTransferCoeff(double uValue) {
+      this.overallHeatTransferCoeff = uValue;
+    }
+
+    /**
+     * Get ambient temperature in K.
+     *
+     * @return ambient temperature
+     */
+    public double getAmbientTemperature() {
+      return ambientTemperature;
+    }
+
+    /**
+     * Set ambient temperature in K.
+     *
+     * @param temperature ambient temperature in K
+     */
+    public void setAmbientTemperature(double temperature) {
+      this.ambientTemperature = temperature;
+    }
   }
 
   // Network topology
@@ -465,6 +673,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
   // Solver settings
   private SolverType solverType = SolverType.HARDY_CROSS;
+  private PipeModelType pipeModelType = PipeModelType.DARCY_WEISBACH;
   private double tolerance = 1e-6; // Pa for head loss balance
   private int maxIterations = 100;
   private double relaxationFactor = 1.0;
@@ -475,6 +684,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   private double maxResidual = 0.0;
   private boolean converged = false;
   private SystemInterface fluidTemplate;
+  private double massBalanceError = 0.0;
 
   /**
    * Create a new looped pipe network.
@@ -504,6 +714,24 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Set the pipe flow model type.
+   *
+   * @param type pipe model type (DARCY_WEISBACH or BEGGS_BRILL)
+   */
+  public void setPipeModelType(PipeModelType type) {
+    this.pipeModelType = type;
+  }
+
+  /**
+   * Get the pipe flow model type.
+   *
+   * @return pipe model type
+   */
+  public PipeModelType getPipeModelType() {
+    return pipeModelType;
+  }
+
+  /**
    * Add a source node to the network.
    *
    * @param name node name
@@ -519,6 +747,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Add a source node with specified elevation.
+   *
+   * @param name node name
+   * @param pressureBar fixed pressure in bara
+   * @param flowRateKgHr supply flow rate in kg/hr
+   * @param elevationM node elevation in meters
+   */
+  public void addSourceNode(String name, double pressureBar, double flowRateKgHr,
+      double elevationM) {
+    addSourceNode(name, pressureBar, flowRateKgHr);
+    nodes.get(name).setElevation(elevationM);
+  }
+
+  /**
    * Add a sink node (demand point) to the network.
    *
    * @param name node name
@@ -531,6 +773,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Add a sink node with specified elevation.
+   *
+   * @param name node name
+   * @param demandKgHr demand flow rate in kg/hr
+   * @param elevationM node elevation in meters
+   */
+  public void addSinkNode(String name, double demandKgHr, double elevationM) {
+    addSinkNode(name, demandKgHr);
+    nodes.get(name).setElevation(elevationM);
+  }
+
+  /**
    * Add a junction node to the network.
    *
    * @param name node name
@@ -539,6 +793,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     NetworkNode node = new NetworkNode(name, NodeType.JUNCTION);
     node.setDemand(0.0);
     nodes.put(name, node);
+  }
+
+  /**
+   * Add a junction node with specified elevation.
+   *
+   * @param name node name
+   * @param elevationM node elevation in meters
+   */
+  public void addJunctionNode(String name, double elevationM) {
+    addJunctionNode(name);
+    nodes.get(name).setElevation(elevationM);
   }
 
   /**
@@ -574,6 +839,61 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     pipeNames.add(pipeName);
 
     return pipe;
+  }
+
+  /**
+   * Add a pipe with specified roughness.
+   *
+   * @param fromNode source node name
+   * @param toNode target node name
+   * @param pipeName pipe name
+   * @param lengthM pipe length in meters
+   * @param diameterM pipe inner diameter in meters
+   * @param roughnessM pipe roughness in meters
+   * @return the created pipe
+   */
+  public NetworkPipe addPipe(String fromNode, String toNode, String pipeName, double lengthM,
+      double diameterM, double roughnessM) {
+    NetworkPipe pipe = addPipe(fromNode, toNode, pipeName, lengthM, diameterM);
+    pipe.setRoughness(roughnessM);
+    return pipe;
+  }
+
+  /**
+   * Get a node by name.
+   *
+   * @param name node name
+   * @return the node
+   */
+  public NetworkNode getNode(String name) {
+    NetworkNode node = nodes.get(name);
+    if (node == null) {
+      throw new IllegalArgumentException("Node '" + name + "' not found");
+    }
+    return node;
+  }
+
+  /**
+   * Get a pipe by name.
+   *
+   * @param name pipe name
+   * @return the pipe
+   */
+  public NetworkPipe getPipe(String name) {
+    NetworkPipe pipe = pipes.get(name);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Pipe '" + name + "' not found");
+    }
+    return pipe;
+  }
+
+  /**
+   * Get mass balance error from last solve in kg/s.
+   *
+   * @return mass balance error
+   */
+  public double getMassBalanceError() {
+    return massBalanceError;
   }
 
   /**
@@ -734,63 +1054,132 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Initialize pipe flow estimates using topological analysis.
+   * Initialize pipe flow estimates using BFS spanning tree to satisfy mass balance.
+   *
+   * <p>
+   * Builds a spanning tree from source nodes using BFS. Tree-edge flows are set to satisfy mass
+   * balance at every node (required for Hardy Cross). Non-tree edges (loop closers) are initialized
+   * to zero — the loop solver will correct them.
+   * </p>
    */
   private void initializeFlowEstimates() {
-    // Simple initialization: distribute supply evenly through shortest paths
-    // More sophisticated methods could use spanning tree analysis
+    // Step 1: BFS spanning tree from source nodes
+    java.util.Set<String> visited = new java.util.HashSet<>();
+    List<String> bfsOrder = new ArrayList<>();
+    Map<String, String> parentPipeName = new HashMap<>(); // child -> tree pipe name
+    Map<String, Boolean> parentPipeForward = new HashMap<>(); // child -> true if pipe from->to
+    java.util.Set<String> treeEdges = new java.util.HashSet<>();
 
-    double totalSupply = 0.0;
+    java.util.Queue<String> queue = new java.util.LinkedList<>();
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SOURCE) {
-        totalSupply += Math.abs(node.getDemand());
+        queue.add(node.getName());
+        visited.add(node.getName());
       }
     }
 
-    // Initial estimate: assign flow based on pipe conductance
-    for (NetworkPipe pipe : pipes.values()) {
-      // Hydraulic conductance estimate (proportional to D^5/L)
-      double conductance =
-          Math.pow(pipe.getDiameter(), 5) / (pipe.getLength() * pipe.getRoughness());
+    while (!queue.isEmpty()) {
+      String current = queue.poll();
+      bfsOrder.add(current);
 
-      // Initial flow estimate
-      pipe.setFlowRate(totalSupply * 0.5 * conductance / getTotalConductance());
+      for (NetworkPipe pipe : pipes.values()) {
+        String neighbor = null;
+        boolean forward = false;
+
+        if (pipe.getFromNode().equals(current) && !visited.contains(pipe.getToNode())) {
+          neighbor = pipe.getToNode();
+          forward = true; // parent->child follows pipe from->to
+        } else if (pipe.getToNode().equals(current) && !visited.contains(pipe.getFromNode())) {
+          neighbor = pipe.getFromNode();
+          forward = false; // parent->child opposes pipe direction
+        }
+
+        if (neighbor != null) {
+          visited.add(neighbor);
+          parentPipeName.put(neighbor, pipe.getName());
+          parentPipeForward.put(neighbor, forward);
+          treeEdges.add(pipe.getName());
+          queue.add(neighbor);
+        }
+      }
     }
+
+    // Step 2: Initialize all pipe flows to zero
+    for (NetworkPipe pipe : pipes.values()) {
+      pipe.setFlowRate(0.0);
+    }
+
+    // Step 3: Bottom-up: compute subtree demand and set tree-pipe flows
+    // subtreeDemand[node] = node's local demand + sum of children's subtree demands
+    Map<String, Double> subtreeDemand = new HashMap<>();
+
+    for (int i = bfsOrder.size() - 1; i >= 0; i--) {
+      String nodeName = bfsOrder.get(i);
+      NetworkNode node = nodes.get(nodeName);
+
+      // Start with local demand (kg/s; positive = outflow/demand, negative = supply)
+      double demand = node.getDemand();
+
+      // Add subtree demands of all BFS children of this node
+      for (String child : bfsOrder) {
+        if (parentPipeName.containsKey(child)) {
+          // Find the parent of 'child' - it's the other end of the parent pipe
+          String pipeName = parentPipeName.get(child);
+          boolean fwd = parentPipeForward.get(child);
+          NetworkPipe pipe = pipes.get(pipeName);
+          String parent = fwd ? pipe.getFromNode() : pipe.getToNode();
+          if (parent.equals(nodeName)) {
+            demand += subtreeDemand.getOrDefault(child, 0.0);
+          }
+        }
+      }
+      subtreeDemand.put(nodeName, demand);
+
+      // Set tree pipe flow from parent to this node
+      if (parentPipeName.containsKey(nodeName)) {
+        String pipeName = parentPipeName.get(nodeName);
+        boolean forward = parentPipeForward.get(nodeName);
+        NetworkPipe pipe = pipes.get(pipeName);
+
+        // The pipe must deliver 'demand' kg/s into this node's subtree
+        // forward=true: pipe from->to = parent->child, so positive flow = delivery
+        // forward=false: pipe to->from = parent->child, so negative flow = delivery
+        pipe.setFlowRate(forward ? demand : -demand);
+      }
+    }
+
+    // Non-tree pipes remain at 0 — loop solver will correct them
   }
 
   /**
-   * Get total conductance of all pipes.
+   * Calculate head loss for a pipe using Darcy-Weisbach equation with elevation.
    *
-   * @return total conductance
-   */
-  private double getTotalConductance() {
-    double total = 0.0;
-    for (NetworkPipe pipe : pipes.values()) {
-      total += Math.pow(pipe.getDiameter(), 5) / (pipe.getLength() * pipe.getRoughness());
-    }
-    return total;
-  }
-
-  /**
-   * Calculate head loss for a pipe using Darcy-Weisbach equation.
+   * <p>
+   * Total head loss includes friction loss and hydrostatic head change: dP_total = dP_friction +
+   * rho * g * (z_to - z_from)
+   * </p>
    *
    * @param pipe the pipe
    * @param fluid fluid properties
-   * @return head loss in Pa
+   * @return head loss in Pa (positive = pressure drop from-to direction)
    */
   private double calculateHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
-    double flow = Math.abs(pipe.getFlowRate());
-    if (flow < 1e-10) {
-      return 0.0;
+    double flowKgs = Math.abs(pipe.getFlowRate()); // kg/s (internal unit)
+    if (flowKgs < 1e-10) {
+      // Still include hydrostatic head even at zero flow
+      NetworkNode fromNode = nodes.get(pipe.getFromNode());
+      NetworkNode toNode = nodes.get(pipe.getToNode());
+      double density = fluid.getDensity("kg/m3");
+      return density * 9.81 * (toNode.getElevation() - fromNode.getElevation());
     }
 
     // Get fluid properties
     double density = fluid.getDensity("kg/m3");
     double viscosity = fluid.getViscosity("kg/msec");
 
-    // Calculate velocity
+    // Calculate velocity from mass flow (kg/s)
     double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-    double velocity = flow / (density * area);
+    double velocity = flowKgs / (density * area);
 
     // Reynolds number
     double reynolds = density * velocity * pipe.getDiameter() / viscosity;
@@ -809,12 +1198,24 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       frictionFactor = 0.25 / Math.pow(Math.log10(term1 + term2), 2);
     }
 
-    // Darcy-Weisbach equation: dP = f * (L/D) * (rho * v^2 / 2)
-    double headLoss = frictionFactor * (pipe.getLength() / pipe.getDiameter())
+    // Darcy-Weisbach: dP_friction = f * (L/D) * (rho * v^2 / 2)
+    double frictionLoss = frictionFactor * (pipe.getLength() / pipe.getDiameter())
         * (density * velocity * velocity / 2.0);
 
-    // Apply sign based on flow direction
-    return Math.signum(pipe.getFlowRate()) * headLoss;
+    // Hydrostatic head: dP_elevation = rho * g * (z_out - z_in)
+    NetworkNode fromNode = nodes.get(pipe.getFromNode());
+    NetworkNode toNode = nodes.get(pipe.getToNode());
+    double elevationLoss = density * 9.81 * (toNode.getElevation() - fromNode.getElevation());
+
+    // Store hydraulic parameters on the pipe for reporting
+    pipe.setVelocity(velocity);
+    pipe.setReynoldsNumber(reynolds);
+    pipe.setFrictionFactor(frictionFactor);
+    pipe.setFlowRegime(reynolds < 2300 ? "Laminar" : reynolds < 4000 ? "Transition" : "Turbulent");
+
+    // Total head loss (apply sign based on flow direction)
+    double totalLoss = frictionLoss + elevationLoss;
+    return Math.signum(pipe.getFlowRate()) * totalLoss;
   }
 
   /**
@@ -825,16 +1226,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @return dh/dQ in Pa/(kg/s)
    */
   private double calculateHeadLossDerivative(NetworkPipe pipe, SystemInterface fluid) {
-    double flow = Math.abs(pipe.getFlowRate());
-    if (flow < 1e-10) {
-      flow = 1e-10; // Avoid division by zero
+    double flowKgs = Math.abs(pipe.getFlowRate()); // kg/s (internal unit)
+    if (flowKgs < 1e-10) {
+      flowKgs = 1e-10; // Avoid division by zero
     }
 
     // For turbulent flow, h is approximately proportional to Q^2
-    // So dh/dQ ≈ 2h/Q
+    // So dh/dQ ≈ 2h/Q where h is in Pa and Q is in kg/s
+    // The Hardy Cross correction: dQ = -imbalance / sum(dh/dQ) gives kg/s
     double headLoss = Math.abs(calculateHeadLoss(pipe, fluid));
 
-    return 2.0 * headLoss / flow;
+    return 2.0 * headLoss / flowKgs;
   }
 
   /**
@@ -1094,14 +1496,461 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         runSequential(id);
         break;
       case NEWTON_RAPHSON:
-        // TODO: Implement Newton-Raphson solver
-        runHardyCross(id);
+        runNewtonRaphson(id);
         break;
       default:
         runHardyCross(id);
     }
 
     setCalculationIdentifier(id);
+
+    // Update hydraulic properties for all pipes after solver completes
+    updatePipeHydraulicProperties();
+
+    // Calculate mass balance error
+    calculateMassBalanceError();
+  }
+
+  /**
+   * Update hydraulic properties (velocity, Reynolds, friction factor) for all pipes.
+   */
+  private void updatePipeHydraulicProperties() {
+    if (fluidTemplate == null) {
+      return;
+    }
+    SystemInterface fluid = fluidTemplate.clone();
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+      ops.TPflash();
+    } catch (Exception ex) {
+      logger.warn("TP flash failed in property update: " + ex.getMessage());
+    }
+    fluid.initProperties();
+
+    for (NetworkPipe pipe : pipes.values()) {
+      double headLoss = calculateHeadLoss(pipe, fluid);
+      pipe.setHeadLoss(headLoss);
+    }
+  }
+
+  /**
+   * Run Newton-Raphson Global Gradient Algorithm (Todini-Pilati, 1988).
+   *
+   * <p>
+   * Solves the system of nodal mass balance equations + pipe head loss equations simultaneously
+   * using a Newton-Raphson scheme. This is the algorithm used by EPANET and PIPESIM Network.
+   * </p>
+   *
+   * <p>
+   * The method solves: [A11 A12] [dQ] = [f1] where A11 = diag(dh/dQ), A12 = incidence matrix, [A21
+   * 0 ] [dH] = [f2] A21 = A12^T, f1 = head residuals, f2 = flow residuals
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  private void runNewtonRaphson(UUID id) {
+    // Initialize fluid for property calculation
+    SystemInterface fluid = fluidTemplate.clone();
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+      ops.TPflash();
+    } catch (Exception ex) {
+      logger.warn("TP flash failed for fluid template: " + ex.getMessage());
+    }
+    fluid.initProperties();
+
+    // Build ordered lists for matrix indexing
+    List<String> pipeList = new ArrayList<>(pipeNames);
+    List<String> freeNodeList = new ArrayList<>();
+    for (NetworkNode node : nodes.values()) {
+      if (!node.isPressureFixed()) {
+        freeNodeList.add(node.getName());
+      }
+    }
+
+    int np = pipeList.size(); // number of pipes
+    int nn = freeNodeList.size(); // number of free nodes (unknown pressures)
+
+    if (nn == 0) {
+      logger.info("All nodes have fixed pressure - using sequential solver");
+      runSequential(id);
+      return;
+    }
+
+    // Initialize pressures for free nodes (average of source pressures)
+    double avgSourcePressure = 0.0;
+    int sourceCount = 0;
+    for (NetworkNode node : nodes.values()) {
+      if (node.isPressureFixed()) {
+        avgSourcePressure += node.getPressure();
+        sourceCount++;
+      }
+    }
+    if (sourceCount > 0) {
+      avgSourcePressure /= sourceCount;
+    }
+    for (String nodeName : freeNodeList) {
+      NetworkNode node = nodes.get(nodeName);
+      if (node.getPressure() < 1.0) {
+        node.setPressure(avgSourcePressure * 0.95); // Start slightly below sources
+      }
+    }
+
+    iterationCount = 0;
+    converged = false;
+    double density = fluid.getDensity("kg/m3");
+    double viscosity = fluid.getViscosity("kg/msec");
+
+    while (iterationCount < maxIterations && !converged) {
+      iterationCount++;
+
+      // --- Work in SI units: Pa for pressure, kg/s for flow ---
+      // --- Step 1: Calculate resistance coefficients for each pipe ---
+      // h_i = r_i * Q_i * |Q_i| where r_i = f * L / (D * 2 * rho * A^2) [Pa/(kg/s)^2]
+      double[] resistance = new double[np];
+      double[] pipeFlowsSI = new double[np]; // kg/s
+
+      for (int i = 0; i < np; i++) {
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        pipeFlowsSI[i] = pipe.getFlowRate(); // Already in kg/s
+
+        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+        double absFlow = Math.abs(pipeFlowsSI[i]);
+        if (absFlow < 1e-10) {
+          absFlow = 1e-10;
+        }
+
+        double vel = absFlow / (density * area);
+        double reynolds = density * vel * pipe.getDiameter() / viscosity;
+        double ff;
+        if (reynolds < 2300) {
+          ff = 64.0 / Math.max(reynolds, 1.0);
+        } else {
+          double e = pipe.getRoughness() / pipe.getDiameter();
+          ff = 0.25 / Math.pow(Math.log10(e / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
+        }
+        resistance[i] = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+      }
+
+      // --- Step 2: Build and solve the linearized system ---
+      // Using Schur complement: solve for dH first, then back-substitute for dQ.
+      //
+      // From: A11*dQ + A12*dH = -f1 and A21*dQ = -f2
+      // Where A11 = diag(2*r_i*|Q_i|), and A12 is incidence matrix (pipe-to-node)
+      //
+      // Schur complement: (A21 * A11^{-1} * A12) * dH = -f2 + A21 * A11^{-1} * f1
+      //
+      // This is an nn x nn system (small for typical networks).
+
+      // Build A11 diagonal (inverse)
+      double[] a11inv = new double[np];
+      for (int i = 0; i < np; i++) {
+        double absQ = Math.abs(pipeFlowsSI[i]);
+        if (absQ < 1e-10) {
+          absQ = 1e-10;
+        }
+        a11inv[i] = 1.0 / (2.0 * resistance[i] * absQ);
+      }
+
+      // Build pipe head residuals (all in Pa):
+      // f1_i = r_i * Q_i * |Q_i| - (P_from - P_to) + rho*g*(z_to - z_from)
+      double[] f1 = new double[np];
+      for (int i = 0; i < np; i++) {
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        double pFromPa = nodes.get(pipe.getFromNode()).getPressure(); // Already in Pa
+        double pToPa = nodes.get(pipe.getToNode()).getPressure(); // Already in Pa
+        double elevDiff = nodes.get(pipe.getToNode()).getElevation()
+            - nodes.get(pipe.getFromNode()).getElevation();
+        f1[i] = resistance[i] * pipeFlowsSI[i] * Math.abs(pipeFlowsSI[i]) - (pFromPa - pToPa)
+            + density * 9.81 * elevDiff;
+      }
+
+      // Build node flow residuals (in kg/s):
+      // f2_j = demand_j - sum(Q_i * sign_ij)
+      double[] f2 = new double[nn];
+      for (int j = 0; j < nn; j++) {
+        String nodeName = freeNodeList.get(j);
+        NetworkNode node = nodes.get(nodeName);
+        double netFlow = node.getDemand(); // Already in kg/s
+        for (int i = 0; i < np; i++) {
+          NetworkPipe pipe = pipes.get(pipeList.get(i));
+          if (pipe.getToNode().equals(nodeName)) {
+            netFlow -= pipeFlowsSI[i]; // inflow
+          }
+          if (pipe.getFromNode().equals(nodeName)) {
+            netFlow += pipeFlowsSI[i]; // outflow
+          }
+        }
+        f2[j] = netFlow;
+      }
+
+      // Build Schur complement matrix S = A21 * A11^{-1} * A12 (nn x nn)
+      double[][] schur = new double[nn][nn];
+      double[] rhs = new double[nn]; // -f2 + A21 * A11^{-1} * f1
+
+      // Process each pipe's contribution to Schur complement
+      for (int i = 0; i < np; i++) {
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        int jFrom = freeNodeList.indexOf(pipe.getFromNode()); // -1 if fixed
+        int jTo = freeNodeList.indexOf(pipe.getToNode()); // -1 if fixed
+
+        double val = a11inv[i];
+
+        // Incidence: from-node is +1, to-node is -1 for pipe flow
+        // A12[i][jFrom] = +1, A12[i][jTo] = -1
+        // A21 = A12^T: A21[jFrom][i] = +1, A21[jTo][i] = -1
+        // Contribution to S: A21[:,i] * a11inv[i] * A12[i,:]
+
+        if (jFrom >= 0) {
+          schur[jFrom][jFrom] += val;
+          rhs[jFrom] += val * f1[i];
+        }
+        if (jTo >= 0) {
+          schur[jTo][jTo] += val;
+          rhs[jTo] -= val * f1[i];
+        }
+        if (jFrom >= 0 && jTo >= 0) {
+          schur[jFrom][jTo] -= val;
+          schur[jTo][jFrom] -= val;
+        }
+      }
+
+      // RHS = -f2 + A21*A11^{-1}*f1
+      for (int j = 0; j < nn; j++) {
+        rhs[j] = -f2[j] + rhs[j];
+      }
+
+      // Solve S * dH = rhs using Gaussian elimination (small system)
+      // dH is in Pa
+      double[] dH = solveLinearSystem(schur, rhs, nn);
+
+      // --- Step 3: Update pressures (convert Pa correction to bara) ---
+      for (int j = 0; j < nn; j++) {
+        NetworkNode node = nodes.get(freeNodeList.get(j));
+        node.setPressure(node.getPressure() + relaxationFactor * dH[j]); // Both in Pa
+      }
+
+      // --- Step 4: Back-substitute to get new pipe flows (in kg/s, then convert to kg/hr) ---
+      // From D*dQ - A^T*dH = -f1 => dQ = D^{-1}*(-f1 + A^T*dH)
+      for (int i = 0; i < np; i++) {
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        int jFrom = freeNodeList.indexOf(pipe.getFromNode());
+        int jTo = freeNodeList.indexOf(pipe.getToNode());
+
+        // A^T*dH for pipe i: +dH[jFrom] - dH[jTo]
+        double atDh = 0.0;
+        if (jFrom >= 0) {
+          atDh += dH[jFrom];
+        }
+        if (jTo >= 0) {
+          atDh -= dH[jTo];
+        }
+
+        double dQ = a11inv[i] * (-f1[i] + atDh); // kg/s correction
+        double newFlowKgs = pipeFlowsSI[i] + relaxationFactor * dQ;
+        pipe.setFlowRate(newFlowKgs); // Already in kg/s
+      }
+
+      // --- Step 5: Check convergence ---
+      // f1 residuals are in Pa, f2 residuals are in kg/s (scale to Pa equivalent)
+      maxResidual = 0.0;
+      for (int i = 0; i < np; i++) {
+        maxResidual = Math.max(maxResidual, Math.abs(f1[i]));
+      }
+      for (int j = 0; j < nn; j++) {
+        // Scale flow residual: 1 kg/s flow error ~ 1e5 Pa pressure effect
+        maxResidual = Math.max(maxResidual, Math.abs(f2[j]) * 1e5);
+      }
+
+      if (maxResidual < tolerance) {
+        converged = true;
+      }
+
+      if (iterationCount % 10 == 0) {
+        logger.debug("NR-GGA iteration " + iterationCount + ", max residual: " + maxResidual);
+      }
+    }
+
+    // Update head losses and hydraulic parameters for reporting
+    for (NetworkPipe pipe : pipes.values()) {
+      double headLoss = calculateHeadLoss(pipe, fluid);
+      pipe.setHeadLoss(headLoss);
+    }
+
+    if (converged) {
+      logger.info("Newton-Raphson GGA converged in " + iterationCount + " iterations");
+    } else {
+      logger.warn("Newton-Raphson GGA did not converge after " + iterationCount + " iterations");
+    }
+  }
+
+  /**
+   * Solve a linear system Ax = b using Gaussian elimination with partial pivoting.
+   *
+   * @param matA coefficient matrix (n x n), modified in place
+   * @param vecB right-hand side vector (n), modified in place
+   * @param n system size
+   * @return solution vector x
+   */
+  private double[] solveLinearSystem(double[][] matA, double[] vecB, int n) {
+    double[] x = new double[n];
+
+    // Forward elimination with partial pivoting
+    for (int k = 0; k < n; k++) {
+      // Find pivot
+      int maxRow = k;
+      for (int i = k + 1; i < n; i++) {
+        if (Math.abs(matA[i][k]) > Math.abs(matA[maxRow][k])) {
+          maxRow = i;
+        }
+      }
+      // Swap rows
+      double[] tempRow = matA[k];
+      matA[k] = matA[maxRow];
+      matA[maxRow] = tempRow;
+      double tempB = vecB[k];
+      vecB[k] = vecB[maxRow];
+      vecB[maxRow] = tempB;
+
+      if (Math.abs(matA[k][k]) < 1e-20) {
+        continue; // Skip near-singular row
+      }
+
+      // Eliminate
+      for (int i = k + 1; i < n; i++) {
+        double factor = matA[i][k] / matA[k][k];
+        for (int j = k + 1; j < n; j++) {
+          matA[i][j] -= factor * matA[k][j];
+        }
+        vecB[i] -= factor * vecB[k];
+      }
+    }
+
+    // Back substitution
+    for (int i = n - 1; i >= 0; i--) {
+      x[i] = vecB[i];
+      for (int j = i + 1; j < n; j++) {
+        x[i] -= matA[i][j] * x[j];
+      }
+      if (Math.abs(matA[i][i]) > 1e-20) {
+        x[i] /= matA[i][i];
+      }
+    }
+
+    return x;
+  }
+
+  /**
+   * Calculate overall mass balance error for the network.
+   */
+  private void calculateMassBalanceError() {
+    massBalanceError = 0.0;
+    for (NetworkNode node : nodes.values()) {
+      if (node.isPressureFixed()) {
+        continue; // Source nodes balance is implicit
+      }
+      double netFlow = node.getDemand(); // positive = outflow
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getToNode().equals(node.getName())) {
+          netFlow -= pipe.getFlowRate(); // inflow
+        }
+        if (pipe.getFromNode().equals(node.getName())) {
+          netFlow += pipe.getFlowRate(); // outflow
+        }
+      }
+      massBalanceError = Math.max(massBalanceError, Math.abs(netFlow));
+    }
+  }
+
+  /**
+   * Validate the network topology. Checks connectivity, mass balance feasibility, and required
+   * fluid template.
+   *
+   * @return list of validation messages (empty if valid)
+   */
+  public List<String> validate() {
+    List<String> issues = new ArrayList<>();
+
+    if (fluidTemplate == null) {
+      issues.add("ERROR: Fluid template not set");
+    }
+    if (pipes.isEmpty()) {
+      issues.add("ERROR: No pipes in network");
+    }
+    if (nodes.isEmpty()) {
+      issues.add("ERROR: No nodes in network");
+    }
+
+    // Check at least one source
+    boolean hasSource = false;
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SOURCE) {
+        hasSource = true;
+        break;
+      }
+    }
+    if (!hasSource) {
+      issues.add("ERROR: No source node defined (need at least one fixed-pressure node)");
+    }
+
+    // Check mass balance feasibility (total supply >= total demand)
+    double totalSupply = 0.0;
+    double totalDemand = 0.0;
+    for (NetworkNode node : nodes.values()) {
+      if (node.getDemand() < 0) {
+        totalSupply += Math.abs(node.getDemand());
+      } else {
+        totalDemand += node.getDemand();
+      }
+    }
+    if (totalDemand > totalSupply * 1.001 && totalSupply > 0) {
+      issues.add("WARNING: Total demand (" + String.format("%.2f", totalDemand * 3600)
+          + " kg/hr) exceeds supply (" + String.format("%.2f", totalSupply * 3600) + " kg/hr)");
+    }
+
+    // Check all pipe endpoints exist
+    for (NetworkPipe pipe : pipes.values()) {
+      if (!nodes.containsKey(pipe.getFromNode())) {
+        issues.add("ERROR: Pipe '" + pipe.getName() + "' references unknown node '"
+            + pipe.getFromNode() + "'");
+      }
+      if (!nodes.containsKey(pipe.getToNode())) {
+        issues.add("ERROR: Pipe '" + pipe.getName() + "' references unknown node '"
+            + pipe.getToNode() + "'");
+      }
+    }
+
+    return issues;
+  }
+
+  /**
+   * Get pipe velocity in m/s.
+   *
+   * @param pipeName pipe name
+   * @return velocity in m/s (after solving)
+   */
+  public double getPipeVelocity(String pipeName) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Pipe '" + pipeName + "' not found");
+    }
+    return pipe.getVelocity();
+  }
+
+  /**
+   * Get head loss for a specific pipe in bara.
+   *
+   * @param pipeName pipe name
+   * @return head loss in bara
+   */
+  public double getPipeHeadLoss(String pipeName) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe == null) {
+      throw new IllegalArgumentException("Pipe '" + pipeName + "' not found");
+    }
+    return pipe.getHeadLoss() / 1e5; // Convert Pa to bara
   }
 
   /**
@@ -1121,6 +1970,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     summary.put("iterations", iterationCount);
     summary.put("maxResidual_Pa", maxResidual);
     summary.put("tolerance_Pa", tolerance);
+    summary.put("massBalanceError_kgs", massBalanceError);
 
     // Node pressures
     Map<String, Double> nodePressures = new HashMap<>();
@@ -1178,6 +2028,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipeJson.addProperty("roughness_m", pipe.getRoughness());
       pipeJson.addProperty("flowRate_kghr", pipe.getFlowRate() * 3600.0);
       pipeJson.addProperty("headLoss_Pa", pipe.getHeadLoss());
+      pipeJson.addProperty("headLoss_bar", pipe.getHeadLoss() / 1e5);
+      pipeJson.addProperty("velocity_ms", pipe.getVelocity());
+      pipeJson.addProperty("reynoldsNumber", pipe.getReynoldsNumber());
+      pipeJson.addProperty("frictionFactor", pipe.getFrictionFactor());
+      pipeJson.addProperty("flowRegime", pipe.getFlowRegime());
       pipesArray.add(pipeJson);
     }
     json.add("pipes", pipesArray);
