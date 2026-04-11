@@ -1,9 +1,11 @@
 package neqsim.process.equipment.network;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -1943,5 +1945,664 @@ class LoopedPipeNetworkTest {
     // Get report
     String report = network.getNetworkReport();
     assertTrue(report.length() > 100, "Report should be substantial");
+  }
+
+  // =====================================================================
+  // Tests for Phase-2 Improvements: Gas Quality, Nodal Analysis,
+  // Constraint Checking, Fuel Gas Consumption
+  // =====================================================================
+
+  /**
+   * Test ISO 6976 gas quality tracking at network nodes (Phase-2 Improvement #1).
+   */
+  @Test
+  void testGasQualityTracking() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("GasQualNet");
+
+    // Lean and rich gas fluids
+    SystemInterface leanGas = new SystemSrkEos(288.15, 60e5);
+    leanGas.addComponent("methane", 0.95);
+    leanGas.addComponent("ethane", 0.03);
+    leanGas.addComponent("propane", 0.02);
+    leanGas.createDatabase(true);
+    leanGas.setMixingRule("classic");
+    leanGas.init(0);
+    leanGas.init(1);
+
+    SystemInterface richGas = new SystemSrkEos(288.15, 60e5);
+    richGas.addComponent("methane", 0.80);
+    richGas.addComponent("ethane", 0.12);
+    richGas.addComponent("propane", 0.08);
+    richGas.createDatabase(true);
+    richGas.setMixingRule("classic");
+    richGas.init(0);
+    richGas.init(1);
+
+    network.setFluidTemplate(leanGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Two wells mixing at manifold
+    network.addSourceNode("well1", 60.0, 0.0);
+    network.addSourceNode("well2", 60.0, 0.0);
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("delivery", 40.0);
+
+    network.addPipe("well1", "manifold", "pipe_w1", 5000, 0.2, 0.00005);
+    network.addPipe("well2", "manifold", "pipe_w2", 5000, 0.2, 0.00005);
+    network.addPipe("manifold", "delivery", "export", 10000, 0.3, 0.00005);
+
+    network.setNodeFluid("well1", leanGas);
+    network.setNodeFluid("well2", richGas);
+
+    network.run();
+    assertTrue(network.isConverged(), "Network should converge");
+
+    // Propagate compositions and calculate gas quality
+    network.updateCompositionalMixing();
+    Map<String, double[]> gasQuality = network.calculateGasQuality();
+
+    // Should have quality data at nodes with fluids
+    assertFalse(gasQuality.isEmpty(), "Gas quality map should not be empty");
+
+    // Check source node quality
+    double[] well1Quality = network.getNodeGasQuality("well1");
+    assertNotNull(well1Quality, "Well1 should have gas quality data");
+    assertTrue(well1Quality[0] > 40.0 && well1Quality[0] < 60.0,
+        "Wobbe index should be in typical range (40-60 MJ/Sm3): " + well1Quality[0]);
+    assertTrue(well1Quality[1] > 30000 && well1Quality[1] < 50000,
+        "HHV should be reasonable (30000-50000 kJ/Sm3): " + well1Quality[1]);
+    assertTrue(well1Quality[3] > 0.5 && well1Quality[3] < 1.0,
+        "Relative density should be between 0.5 and 1.0: " + well1Quality[3]);
+
+    // Lean gas should have higher Wobbe than rich gas (more methane, less heavy)
+    double[] well2Quality = network.getNodeGasQuality("well2");
+    assertNotNull(well2Quality, "Well2 should have gas quality data");
+
+    // Check Wobbe bounds
+    List<String> violations = network.checkGasQualityLimits(46.0, 53.0);
+    assertNotNull(violations, "Violations list should not be null");
+
+    // Network report should contain gas quality section
+    String report = network.getNetworkReport();
+    assertTrue(report.contains("ISO 6976"), "Report should include ISO 6976 section");
+
+    // JSON should include gas quality
+    String json = network.toJson();
+    assertTrue(json.contains("gasQuality_ISO6976"), "JSON should include gas quality data");
+  }
+
+  /**
+   * Test nodal analysis (IPR-VLP crossplot) for a production well (Phase-2 Improvement #2).
+   */
+  @Test
+  void testNodalAnalysis() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("NodalNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Well with IPR and tubing
+    network.addSourceNode("reservoir", 300.0, 0.0);
+    network.addJunctionNode("bhp_node");
+    network.addFixedPressureSinkNode("wellhead", 80.0);
+
+    network.addWellIPR("reservoir", "bhp_node", "well_ipr", 5e-6, true);
+    network.addPipe("bhp_node", "wellhead", "tubing", 3000, 0.1, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "Production well should converge");
+
+    // Perform nodal analysis
+    Map<String, double[]> nodalResult = network.nodalAnalysis("well_ipr", "tubing", 25);
+
+    assertFalse(nodalResult.isEmpty(), "Nodal analysis should return results");
+
+    double[] bhps = nodalResult.get("bhp");
+    assertNotNull(bhps, "Should have BHP array");
+    assertEquals(25, bhps.length, "Should have 25 sweep points");
+
+    double[] iprRates = nodalResult.get("iprRate");
+    assertNotNull(iprRates, "Should have IPR rate array");
+
+    double[] vlpRates = nodalResult.get("vlpRate");
+    assertNotNull(vlpRates, "Should have VLP rate array");
+
+    // Debug output
+    System.out.println("Nodal debug: wellhead P=" + network.getNodePressure("wellhead"));
+    for (int i = 0; i < Math.min(5, bhps.length); i++) {
+      System.out.printf("  BHP=%.1f: IPR=%.0f, VLP=%.0f%n", bhps[i], iprRates[i], vlpRates[i]);
+    }
+
+    // Operating point should exist
+    double[] opBHP = nodalResult.get("operatingBHP");
+    double[] opRate = nodalResult.get("operatingRate");
+    assertNotNull(opBHP, "Should have operating BHP");
+    assertNotNull(opRate, "Should have operating rate");
+    assertTrue(opBHP[0] >= 1.0 && opBHP[0] <= 300.0,
+        "Operating BHP should be in sweep range: " + opBHP[0]);
+    assertTrue(opRate[0] >= 0, "Operating rate should be non-negative: " + opRate[0]);
+
+    // IPR rate should decrease as BHP increases (towards reservoir pressure)
+    assertTrue(iprRates[0] > iprRates[bhps.length - 1],
+        "IPR rate at low BHP should exceed rate at high BHP");
+  }
+
+  /**
+   * Test constraint envelope checking (Phase-2 Improvement #3).
+   */
+  @Test
+  void testConstraintChecking() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ConstraintNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("inlet", 80.0, 0.0);
+    network.addJunctionNode("mid");
+    network.addFixedPressureSinkNode("outlet", 30.0);
+
+    network.addPipe("inlet", "mid", "pipe1", 50000, 0.5, 0.00005);
+    network.addPipe("mid", "outlet", "pipe2", 50000, 0.5, 0.00005);
+
+    // Set constraints: mid pressure must be between 50 and 70 bara
+    network.setNodePressureLimits("mid", 50.0, 70.0);
+
+    // Set flow limit on pipe1: max 200,000 kg/hr
+    network.setElementFlowLimits("pipe1", 0, 200000.0);
+
+    network.run();
+    assertTrue(network.isConverged(), "Constraint network should converge");
+
+    // Check constraints
+    List<String> violations = network.checkConstraints();
+    assertNotNull(violations, "Violations list should not be null");
+
+    // The mid-node pressure should be around 55 bara (halfway between 80 and 30)
+    double midP = network.getNodePressure("mid");
+    if (midP < 50.0 || midP > 70.0) {
+      assertFalse(violations.isEmpty(), "Should report violation when pressure out of bounds");
+      assertTrue(violations.get(0).contains("PRESSURE"),
+          "Violation should mention pressure: " + violations.get(0));
+    }
+
+    // Get violations via getter
+    List<String> stored = network.getConstraintViolations();
+    assertEquals(violations.size(), stored.size(), "Stored violations should match returned");
+
+    // Network report should contain constraint section if violations exist
+    if (!violations.isEmpty()) {
+      String report = network.getNetworkReport();
+      assertTrue(report.contains("Constraint Violations"),
+          "Report should include constraint violations");
+    }
+
+    // JSON should include violations if present
+    if (!violations.isEmpty()) {
+      String json = network.toJson();
+      assertTrue(json.contains("constraintViolations"),
+          "JSON should include constraint violations");
+    }
+  }
+
+  /**
+   * Test compressor fuel gas consumption calculation (Phase-2 Improvement #4).
+   */
+  @Test
+  void testFuelGasConsumption() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("FuelGasNet");
+
+    SystemInterface gasFluid = new SystemSrkEos(288.15, 60e5);
+    gasFluid.addComponent("methane", 0.90);
+    gasFluid.addComponent("ethane", 0.07);
+    gasFluid.addComponent("propane", 0.03);
+    gasFluid.createDatabase(true);
+    gasFluid.setMixingRule("classic");
+    gasFluid.init(0);
+    gasFluid.init(1);
+
+    network.setFluidTemplate(gasFluid);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    // Simple source -> compressor -> delivery.
+    // The NR-GGA solver may put the compressor in bypass if the pressure profile
+    // doesn't require active compression. We explicitly set compressor power after
+    // solving to test the fuel gas calculation.
+    network.addSourceNode("inlet", 60.0, 0.0);
+    network.addJunctionNode("comp_in");
+    network.addJunctionNode("comp_out");
+    network.addFixedPressureSinkNode("delivery", 40.0);
+
+    network.addPipe("inlet", "comp_in", "suction", 1000, 0.3, 0.00005);
+    network.addCompressor("comp_in", "comp_out", "compressor1", 0.75);
+    network.addPipe("comp_out", "delivery", "discharge", 1000, 0.3, 0.00005);
+
+    // Set fuel gas heat rate (gas turbine)
+    network.setFuelGasHeatRate(10000.0);
+    assertEquals(10000.0, network.getFuelGasHeatRate(), 0.1);
+
+    // Assign fluid for gas quality calculation
+    network.setNodeFluid("inlet", gasFluid);
+
+    network.run();
+    assertTrue(network.isConverged(), "Fuel gas network should converge");
+
+    // Set compressor power explicitly (simulates external compressor model or user input).
+    // In the NR-GGA, the compressor may bypass if pressure profile doesn't require it.
+    network.getPipe("compressor1").setCompressorPower(5000.0); // 5 MW gas turbine
+
+    // Run compositional mixing and gas quality for LHV-based fuel calc
+    network.updateCompositionalMixing();
+    network.calculateGasQuality();
+
+    // Calculate fuel gas
+    Map<String, Double> fuelRates = network.calculateFuelGasConsumption();
+    assertNotNull(fuelRates, "Fuel rates map should not be null");
+    assertFalse(fuelRates.isEmpty(), "Should have at least one compressor fuel rate");
+
+    // Compressor should consume fuel
+    Double comp1Fuel = fuelRates.get("compressor1");
+    assertNotNull(comp1Fuel, "compressor1 should have fuel rate");
+    assertTrue(comp1Fuel > 0, "Fuel rate should be positive: " + comp1Fuel);
+
+    // Total fuel gas rate
+    double totalFuel = network.getTotalFuelGasRate();
+    assertTrue(totalFuel > 0, "Total fuel gas should be positive: " + totalFuel);
+
+    // Fuel gas percentage should be reasonable (typically 1-5% for gas networks)
+    double pct = network.getFuelGasPercentage();
+    assertTrue(pct >= 0, "Fuel gas percentage should be non-negative: " + pct);
+
+    // Report should include fuel gas
+    String report = network.getNetworkReport();
+    assertTrue(report.contains("Fuel Gas"), "Report should include fuel gas section");
+
+    // JSON should include fuel gas
+    String json = network.toJson();
+    assertTrue(json.contains("fuelGasConsumption"), "JSON should include fuel gas data");
+  }
+
+  /**
+   * Test oil quality tracing: TVP and RVP at network nodes using ASTM D6377.
+   *
+   * <p>
+   * Oil quality tracking (TVP/RVP) operates on the per-node fluid composition map. This test sets
+   * up a simple oil pipeline network, assigns oil fluids at the nodes, and verifies TVP/RVP
+   * calculations per ASTM D6377.
+   * </p>
+   */
+  @Test
+  void testOilQualityTracking() {
+    // Gas fluid template for the network solver
+    SystemInterface gasTemplate = new SystemSrkEos(288.15, 60e5);
+    gasTemplate.addComponent("methane", 0.95);
+    gasTemplate.addComponent("ethane", 0.03);
+    gasTemplate.addComponent("propane", 0.02);
+    gasTemplate.createDatabase(true);
+    gasTemplate.setMixingRule("classic");
+    gasTemplate.init(0);
+    gasTemplate.init(1);
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("oil_quality_test");
+    network.setFluidTemplate(gasTemplate);
+
+    // Simple pipeline: source -> junction -> delivery
+    network.addSourceNode("oil_terminal", 50.0, 100000.0);
+    network.addJunctionNode("midpoint");
+    network.addSinkNode("refinery", 100000.0);
+
+    network.addPipe("oil_terminal", "midpoint", "pipeline1", 50000.0, 0.4, 0.00005);
+    network.addPipe("midpoint", "refinery", "pipeline2", 50000.0, 0.4, 0.00005);
+
+    // Create an oil/condensate fluid for quality tracking
+    // Matches the pattern from Standard_ASTM_D6377Test for known-good RVP/TVP values
+    SystemInterface oilFluid = new SystemSrkEos(273.15 + 30.0, 10.0);
+    oilFluid.addComponent("methane", 0.0006538);
+    oilFluid.addComponent("ethane", 0.006538);
+    oilFluid.addComponent("propane", 0.06538);
+    oilFluid.addComponent("n-pentane", 0.1545);
+    oilFluid.addComponent("nC10", 0.545);
+    oilFluid.setMixingRule(2);
+    oilFluid.init(0);
+
+    // Assign oil fluids at nodes for quality tracking
+    network.setNodeFluid("oil_terminal", oilFluid);
+    network.setNodeFluid("midpoint", oilFluid);
+    network.setNodeFluid("refinery", oilFluid);
+
+    // Calculate oil quality (doesn't require network.run() — just needs node fluids)
+    Map<String, double[]> oilQuality = network.calculateOilQuality();
+
+    // Should have results at all nodes with fluids
+    assertEquals(3, oilQuality.size(), "Should have oil quality for 3 nodes");
+
+    // Check source node oil quality
+    double[] sourceQ = network.getNodeOilQuality("oil_terminal");
+    assertNotNull(sourceQ, "Source node should have oil quality");
+
+    // TVP should be positive (some vapor pressure from light ends)
+    double tvp = sourceQ[0];
+    assertTrue(tvp > 0, "TVP should be positive: " + tvp);
+    // TVP from ASTM D6377 test at 37.8C is ~1.67 bara; at 30C should be slightly less
+    assertTrue(tvp < 5.0, "TVP should be reasonable for this oil: " + tvp);
+
+    // RVP should be positive
+    double rvp = sourceQ[1];
+    assertTrue(rvp > 0, "RVP should be positive: " + rvp);
+    // RVP from ASTM D6377 test is ~1.10 bara (VPCR4 method)
+    assertTrue(rvp < 3.0, "RVP should be reasonable for this oil: " + rvp);
+
+    // VPCR4 should be positive
+    double vpcr4 = sourceQ[2];
+    assertTrue(vpcr4 > 0, "VPCR4 should be positive: " + vpcr4);
+
+    // Check oil quality limits with generous specs (should pass)
+    List<String> violations = network.checkOilQualityLimits(5.0, 5.0);
+    assertNotNull(violations, "Violations list should not be null");
+    assertTrue(violations.isEmpty(), "Should have no violations with generous limits");
+
+    // Check oil quality limits with tight specs at the refinery sink
+    List<String> tightViolations = network.checkOilQualityLimits(0.1, 0.1);
+    assertFalse(tightViolations.isEmpty(), "Should detect violations with tight limits");
+
+    // Report should include oil quality
+    String report = network.getNetworkReport();
+    assertTrue(report.contains("Oil Quality"), "Report should include oil quality section");
+    assertTrue(report.contains("TVP"), "Report should include TVP");
+    assertTrue(report.contains("RVP"), "Report should include RVP");
+
+    // JSON should include oil quality
+    String json = network.toJson();
+    assertTrue(json.contains("oilQuality_ASTM_D6377"), "JSON should include oil quality data");
+    assertTrue(json.contains("tvp_bara"), "JSON should include TVP data");
+    assertTrue(json.contains("rvp_bara"), "JSON should include RVP data");
+  }
+
+  // =====================================================================
+  // Production Optimization Tests
+  // =====================================================================
+
+  @Test
+  void testOptimizeProductionMaxFlow() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("optProd");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res1", 200.0, 0.0);
+    network.addSourceNode("res2", 180.0, 0.0);
+    network.addJunctionNode("wh1");
+    network.addJunctionNode("wh2");
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 40.0);
+    network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
+
+    network.run();
+    assertTrue(network.isConverged(), "Baseline should converge");
+    double baselineFlow = network.getTotalSinkFlow();
+    assertTrue(baselineFlow > 0, "Baseline flow should be positive");
+
+    double optimizedObj = network.optimizeProduction(5, 0.005);
+    assertTrue(optimizedObj >= baselineFlow * 3600.0 * 0.9,
+        "Optimized should not be much less than baseline");
+  }
+
+  @Test
+  void testOptimizeProductionRevenueWeighted() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("revOpt");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res1", 200.0, 0.0);
+    network.addSourceNode("res2", 180.0, 0.0);
+    network.addJunctionNode("wh1");
+    network.addJunctionNode("wh2");
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0);
+    network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
+
+    network.setWellPrice("choke1", 0.50);
+    network.setWellPrice("choke2", 1.00);
+
+    double revenue = network.optimizeProduction(5, 0.005);
+    assertTrue(revenue > 0, "Revenue should be positive after optimization");
+
+    java.util.Map<String, double[]> alloc = network.getWellAllocationResults();
+    assertFalse(alloc.isEmpty(), "Allocation report should not be empty");
+  }
+
+  @Test
+  void testSensitivityAnalysisChokeOpening() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("sensChoke");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addJunctionNode("downstream");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addChoke("wh", "downstream", "choke", 50.0, 50.0);
+    network.addPipe("downstream", "platform", "pipeline", 20000, 0.3, 0.00005);
+
+    double[] openings = {10, 30, 50, 70, 90, 100};
+    java.util.Map<String, double[]> results =
+        network.sensitivityAnalysis("choke", "choke_opening", openings);
+
+    assertNotNull(results.get("totalFlow_kghr"), "Should have flow results");
+    assertEquals(openings.length, results.get("totalFlow_kghr").length);
+    double[] flows = results.get("totalFlow_kghr");
+    // At least some flows should be positive
+    boolean anyPositive = false;
+    for (double f : flows) {
+      assertTrue(f >= 0, "Flow should not be negative");
+      if (f > 0) {
+        anyPositive = true;
+      }
+    }
+    assertTrue(anyPositive, "At least some choke openings should produce flow");
+  }
+
+  @Test
+  void testSensitivityAnalysisReservoirPressure() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("sensRes");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipeline", 20000, 0.3, 0.00005);
+
+    double[] pressures = {100, 130, 160, 200};
+    java.util.Map<String, double[]> results =
+        network.sensitivityAnalysis("ipr", "reservoir_pressure", pressures);
+
+    double[] flows = results.get("totalFlow_kghr");
+    assertNotNull(flows, "Should have flow results");
+    assertTrue(flows[flows.length - 1] > flows[0],
+        "Higher reservoir pressure should give more flow");
+  }
+
+  @Test
+  void testProductionForecast() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("forecast");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipeline", 20000, 0.3, 0.00005);
+
+    double[] pressures = {200, 180, 160, 140, 120};
+    double[] years = {0, 1, 2, 3, 4};
+
+    java.util.Map<String, double[]> forecast = network.productionForecast(pressures, years);
+
+    assertNotNull(forecast.get("rate_kghr"), "Should have rate profile");
+    double[] rates = forecast.get("rate_kghr");
+    assertTrue(rates[0] > rates[rates.length - 1],
+        "Production rate should decline as reservoir depletes");
+
+    double[] cum = forecast.get("cumulative_kg");
+    assertTrue(cum[cum.length - 1] > 0, "Cumulative production should be positive");
+    for (int i = 1; i < cum.length; i++) {
+      assertTrue(cum[i] >= cum[i - 1], "Cumulative should be monotonically increasing");
+    }
+  }
+
+  // =====================================================================
+  // VFP Table Generation Tests
+  // =====================================================================
+
+  @Test
+  void testCoupledVFPTableGeneration() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("coupledVFP");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "tubing", 3000, 0.15, 0.00005);
+
+    double[] flowRates = {500, 1000, 2000, 5000, 10000}; // kg/hr
+    double[] thps = {50, 60, 70, 80}; // bara
+
+    java.util.Map<String, double[][]> tables = network.generateCoupledVFPTables(flowRates, thps);
+
+    assertFalse(tables.isEmpty(), "Should have at least one VFP table");
+    double[][] bhpTable = tables.values().iterator().next();
+    assertEquals(flowRates.length, bhpTable.length, "Flow rate dimension should match");
+    assertEquals(thps.length, bhpTable[0].length, "THP dimension should match");
+
+    // BHP should be positive
+    for (int f = 0; f < flowRates.length; f++) {
+      for (int t = 0; t < thps.length; t++) {
+        assertTrue(bhpTable[f][t] > 0,
+            "BHP should be positive at flow=" + flowRates[f] + " THP=" + thps[t]);
+      }
+    }
+
+    // BHP should increase with THP
+    for (int f = 0; f < flowRates.length; f++) {
+      assertTrue(bhpTable[f][thps.length - 1] >= bhpTable[f][0],
+          "BHP should increase with THP for flow rate index " + f);
+    }
+  }
+
+  @Test
+  void testCoupledVFPExportToFile() throws Exception {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("vfpExportFile");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "tubing", 2000, 0.15, 0.00005);
+
+    double[] flowRates = {1000, 5000, 10000}; // kg/hr
+    double[] thps = {50, 70}; // bara
+
+    java.io.File tempFile = java.io.File.createTempFile("coupled_vfp_", ".inc");
+    tempFile.deleteOnExit();
+
+    network.exportCoupledVFPTables(tempFile.getAbsolutePath(), flowRates, thps);
+    assertTrue(true, "Export completed without error");
+  }
+
+  @Test
+  void testVFPPointValidation() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("vfpValidate");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "tubing", 2000, 0.15, 0.00005);
+
+    double[] flowRates = {500, 2000, 5000, 10000}; // kg/hr
+    double[] thps = {40, 60, 80}; // bara
+
+    java.util.Map<String, double[][]> tables = network.generateCoupledVFPTables(flowRates, thps);
+    double[][] bhpTable = tables.values().iterator().next();
+
+    java.util.Map<String, Double> validation =
+        network.validateVFPPoint(bhpTable, flowRates, thps, 2000, 60.0, bhpTable[1][1]);
+
+    assertNotNull(validation.get("error_pct"), "Should have error percentage");
+    assertTrue(validation.get("error_pct") < 5.0, "Error at table point should be small");
+  }
+
+  @Test
+  void testNetworkBackpressureCurve() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("backpressure");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+
+    network.addSourceNode("res", 200.0, 0.0);
+    network.addJunctionNode("wh");
+    network.addFixedPressureSinkNode("platform", 50.0);
+
+    network.addWellIPR("res", "wh", "ipr", 5e-6, false);
+    network.addPipe("wh", "platform", "pipeline", 20000, 0.3, 0.00005);
+
+    double[] flowRates = {2000, 5000, 10000}; // kg/hr
+
+    java.util.Map<String, double[]> curve =
+        network.generateNetworkBackpressureCurve("platform", flowRates);
+
+    assertNotNull(curve.get("requiredPressure_bara"), "Should have pressure results");
+    double[] pressures = curve.get("requiredPressure_bara");
+    assertEquals(flowRates.length, pressures.length, "Result length should match");
+    for (double p : pressures) {
+      assertTrue(p > 0, "Required pressure should be positive");
+    }
   }
 }

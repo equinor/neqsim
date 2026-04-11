@@ -21,7 +21,10 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.standards.gasquality.Standard_ISO6976;
+import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Pipeline network supporting looped topologies with Hardy Cross solver.
@@ -1276,6 +1279,21 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
   // Erosional velocity tracking
   private final transient List<String> erosionalViolations = new ArrayList<>();
+
+  // Gas quality at each node (ISO 6976): Wobbe index, HHV, relative density
+  private final transient Map<String, double[]> nodeGasQuality = new LinkedHashMap<>();
+
+  // Oil quality at each node: TVP and RVP (ASTM D6377)
+  private final transient Map<String, double[]> nodeOilQuality = new LinkedHashMap<>();
+
+  // Constraint envelope: per-node and per-element limits
+  private final transient Map<String, double[]> nodePressureLimits = new LinkedHashMap<>();
+  private final transient Map<String, double[]> elementFlowLimits = new LinkedHashMap<>();
+  private final transient List<String> constraintViolations = new ArrayList<>();
+
+  // Compressor fuel gas tracking
+  private double fuelGasHeatRate = 10000.0; // kJ/kWh (typical gas turbine ~10000)
+  private double totalFuelGasRate = 0.0; // kg/s
 
   /**
    * Create a new looped pipe network.
@@ -3550,6 +3568,696 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     return erosionalViolations;
   }
 
+  // =====================================================================
+  // Gas Quality Tracking (ISO 6976)
+  // =====================================================================
+
+  /**
+   * Calculate gas quality properties at every node that has an assigned fluid composition.
+   *
+   * <p>
+   * Uses NeqSim's {@link Standard_ISO6976} implementation to compute ISO 6976 properties at each
+   * node: superior (gross) calorific value, inferior (net) calorific value, Wobbe index, and
+   * relative density. Call {@link #updateCompositionalMixing()} first to propagate compositions
+   * through the network.
+   * </p>
+   *
+   * <p>
+   * Results are stored per node and accessible via {@link #getNodeGasQuality(String)}. The returned
+   * array contains: [0] = Superior Wobbe Index (MJ/Sm3), [1] = Superior Calorific Value (kJ/Sm3),
+   * [2] = Inferior Calorific Value (kJ/Sm3), [3] = Relative Density.
+   * </p>
+   *
+   * @return map of node name to gas quality array [Wobbe, HHV, LHV, relDens]
+   */
+  public Map<String, double[]> calculateGasQuality() {
+    nodeGasQuality.clear();
+
+    for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
+      String nodeName = entry.getKey();
+      SystemInterface fluid = entry.getValue();
+
+      try {
+        Standard_ISO6976 iso = new Standard_ISO6976(fluid.clone());
+        iso.setReferenceState("real");
+        iso.setVolRefT(15);
+        iso.setEnergyRefT(15);
+        iso.calculate();
+
+        double wobbeIndex = iso.getValue("SuperiorWobbeIndex") / 1e3; // kJ -> MJ
+        double hhv = iso.getValue("SuperiorCalorificValue"); // kJ/Sm3
+        double lhv = iso.getValue("InferiorCalorificValue"); // kJ/Sm3
+        double relDens = iso.getValue("RelativeDensity");
+
+        nodeGasQuality.put(nodeName, new double[] {wobbeIndex, hhv, lhv, relDens});
+      } catch (Exception ex) {
+        logger.warn("Gas quality calculation failed for node {}: {}", nodeName, ex.getMessage());
+      }
+    }
+    return Collections.unmodifiableMap(nodeGasQuality);
+  }
+
+  /**
+   * Get gas quality properties at a specific node.
+   *
+   * <p>
+   * Returns null if gas quality has not been calculated or the node has no assigned fluid. Call
+   * {@link #calculateGasQuality()} first.
+   * </p>
+   *
+   * @param nodeName name of the node
+   * @return array of [Wobbe (MJ/Sm3), HHV (kJ/Sm3), LHV (kJ/Sm3), RelDens], or null
+   */
+  public double[] getNodeGasQuality(String nodeName) {
+    return nodeGasQuality.get(nodeName);
+  }
+
+  /**
+   * Check if gas quality at all sink (delivery) nodes meets the specified Wobbe index bounds.
+   *
+   * <p>
+   * Typical H-gas Wobbe bounds: 46.44-52.81 MJ/Sm3 (EN 16726). Call {@link #calculateGasQuality()}
+   * first.
+   * </p>
+   *
+   * @param wobbeMin minimum acceptable Wobbe index in MJ/Sm3
+   * @param wobbeMax maximum acceptable Wobbe index in MJ/Sm3
+   * @return list of violation descriptions (empty if all sinks are within spec)
+   */
+  public List<String> checkGasQualityLimits(double wobbeMin, double wobbeMax) {
+    List<String> violations = new ArrayList<>();
+    for (Map.Entry<String, double[]> entry : nodeGasQuality.entrySet()) {
+      NetworkNode node = nodes.get(entry.getKey());
+      if (node == null || node.getType() != NodeType.SINK) {
+        continue;
+      }
+      double wobbe = entry.getValue()[0];
+      if (wobbe < wobbeMin) {
+        violations.add(
+            String.format("%s: Wobbe=%.2f MJ/Sm3 below min %.2f", entry.getKey(), wobbe, wobbeMin));
+      }
+      if (wobbe > wobbeMax) {
+        violations.add(
+            String.format("%s: Wobbe=%.2f MJ/Sm3 above max %.2f", entry.getKey(), wobbe, wobbeMax));
+      }
+    }
+    return violations;
+  }
+
+  // =====================================================================
+  // Oil Quality Tracing (TVP / RVP per ASTM D6377)
+  // =====================================================================
+
+  /**
+   * Calculate oil quality properties (TVP and RVP) at every node that has an assigned fluid
+   * composition.
+   *
+   * <p>
+   * True Vapor Pressure (TVP) is the bubble-point pressure at the node's actual flowing
+   * temperature. Reid Vapor Pressure (RVP) is calculated per ASTM D6377 at the standard reference
+   * temperature of 37.8 deg C (100 deg F). Both are key oil quality metrics for pipeline transport,
+   * storage tank design, and emissions control.
+   * </p>
+   *
+   * <p>
+   * Results are stored per node and accessible via {@link #getNodeOilQuality(String)}. The returned
+   * array contains: [0] = TVP (bara), [1] = RVP (bara), [2] = VPCR4 (bara).
+   * </p>
+   *
+   * @return map of node name to oil quality array [TVP_bara, RVP_bara, VPCR4_bara]
+   */
+  public Map<String, double[]> calculateOilQuality() {
+    nodeOilQuality.clear();
+
+    for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
+      String nodeName = entry.getKey();
+      SystemInterface fluid = entry.getValue();
+      NetworkNode node = nodes.get(nodeName);
+      if (node == null) {
+        continue;
+      }
+
+      try {
+        // TVP: bubble-point pressure at flowing temperature
+        double nodeTempK =
+            node.getPressure() > 0 ? estimateNodeTemperature(nodeName) : 273.15 + 15.0; // default
+                                                                                        // 15C if no
+                                                                                        // temperature
+                                                                                        // info
+        SystemInterface tvpFluid = fluid.clone();
+        tvpFluid.setTemperature(nodeTempK);
+        tvpFluid.setPressure(1.01325); // start near atmospheric
+        ThermodynamicOperations tvpOps = new ThermodynamicOperations(tvpFluid);
+        tvpOps.bubblePointPressureFlash(false);
+        double tvp = tvpFluid.getPressure(); // bara
+
+        // RVP: per ASTM D6377 at 37.8C
+        SystemInterface rvpFluid = fluid.clone();
+        Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(rvpFluid);
+        standard.calculate();
+        double rvp = standard.getValue("RVP"); // bara (default VPCR4 method)
+        double vpcr4 = standard.getValue("TVP"); // TVP from the ASTM standard = VPCR4 base
+
+        nodeOilQuality.put(nodeName, new double[] {tvp, rvp, vpcr4});
+      } catch (Exception ex) {
+        logger.warn("Oil quality calculation failed for node {}: {}", nodeName, ex.getMessage());
+      }
+    }
+    return Collections.unmodifiableMap(nodeOilQuality);
+  }
+
+  /**
+   * Estimate the node temperature in Kelvin.
+   *
+   * <p>
+   * For source nodes, uses the inlet fluid temperature. For other nodes, uses 15 deg C as a
+   * default. This can be overridden with per-node temperature data if available.
+   * </p>
+   *
+   * @param nodeName the node name
+   * @return temperature in Kelvin
+   */
+  private double estimateNodeTemperature(String nodeName) {
+    SystemInterface fluid = nodeFluidMap.get(nodeName);
+    if (fluid != null && fluid.getTemperature() > 0) {
+      return fluid.getTemperature(); // already in K
+    }
+    return 273.15 + 15.0; // default 15C
+  }
+
+  /**
+   * Get oil quality properties at a specific node.
+   *
+   * <p>
+   * Returns null if oil quality has not been calculated or the node has no assigned fluid. Call
+   * {@link #calculateOilQuality()} first.
+   * </p>
+   *
+   * @param nodeName name of the node
+   * @return array of [TVP (bara), RVP (bara), VPCR4 (bara)], or null
+   */
+  public double[] getNodeOilQuality(String nodeName) {
+    return nodeOilQuality.get(nodeName);
+  }
+
+  /**
+   * Check if oil quality at all sink (delivery) nodes meets the specified TVP and RVP limits.
+   *
+   * <p>
+   * TVP limits are typically driven by storage tank design pressure and emission regulations. RVP
+   * limits depend on crude classification and regional regulations (e.g., EPA, ASTM D4953). Typical
+   * pipeline crude specifications: TVP max 1.0 bara (atmospheric storage), RVP max 0.69 bara (10
+   * psi) for light crude. Call {@link #calculateOilQuality()} first.
+   * </p>
+   *
+   * @param tvpMaxBara maximum acceptable TVP in bara at delivery
+   * @param rvpMaxBara maximum acceptable RVP in bara at delivery
+   * @return list of violation descriptions (empty if all sinks are within spec)
+   */
+  public List<String> checkOilQualityLimits(double tvpMaxBara, double rvpMaxBara) {
+    List<String> violations = new ArrayList<>();
+    for (Map.Entry<String, double[]> entry : nodeOilQuality.entrySet()) {
+      NetworkNode node = nodes.get(entry.getKey());
+      if (node == null || node.getType() != NodeType.SINK) {
+        continue;
+      }
+      double tvp = entry.getValue()[0];
+      double rvp = entry.getValue()[1];
+      if (tvp > tvpMaxBara) {
+        violations.add(
+            String.format("%s: TVP=%.4f bara above max %.4f", entry.getKey(), tvp, tvpMaxBara));
+      }
+      if (rvp > rvpMaxBara) {
+        violations.add(
+            String.format("%s: RVP=%.4f bara above max %.4f", entry.getKey(), rvp, rvpMaxBara));
+      }
+    }
+    return violations;
+  }
+
+  // =====================================================================
+  // Nodal Analysis (IPR-VLP Crossplot)
+  // =====================================================================
+
+  /**
+   * Perform nodal analysis for a well defined by an IPR element and an outflow (tubing/pipe/choke)
+   * element downstream of the well node.
+   *
+   * <p>
+   * Sweeps bottom-hole pressure from near-zero to reservoir pressure, computing the IPR flow rate
+   * and the VLP (vertical lift performance) flow rate at each point. The operating point is the
+   * intersection where IPR rate equals VLP rate. This is standard well deliverability analysis per
+   * Beggs (Production Optimization) and Brown &amp; Lea.
+   * </p>
+   *
+   * <p>
+   * The returned map contains:
+   * </p>
+   * <ul>
+   * <li>"bhp" - array of bottom-hole pressures in bara (sweep points)</li>
+   * <li>"iprRate" - array of IPR flow rates in kg/hr at each BHP</li>
+   * <li>"vlpRate" - array of VLP flow rates in kg/hr at each BHP (backpressure-derived)</li>
+   * <li>"operatingBHP" - single value, operating BHP in bara</li>
+   * <li>"operatingRate" - single value, operating rate in kg/hr</li>
+   * </ul>
+   *
+   * @param iprElementName name of the WELL_IPR element
+   * @param outflowElementName name of the downstream element (pipe, choke, or tubing)
+   * @param numPoints number of sweep points (default 20 if &lt;= 0)
+   * @return map with nodal analysis arrays, or empty map if elements not found
+   */
+  public Map<String, double[]> nodalAnalysis(String iprElementName, String outflowElementName,
+      int numPoints) {
+    Map<String, double[]> result = new LinkedHashMap<>();
+    if (numPoints <= 0) {
+      numPoints = 20;
+    }
+
+    NetworkPipe iprPipe = getPipe(iprElementName);
+    NetworkPipe outPipe = getPipe(outflowElementName);
+    if (iprPipe == null || outPipe == null) {
+      logger.warn("Nodal analysis: element not found: {} or {}", iprElementName,
+          outflowElementName);
+      return result;
+    }
+
+    double pRes = iprPipe.getReservoirPressure(); // Pa
+    if (pRes < 1e5) {
+      logger.warn("Nodal analysis: reservoir pressure too low: {} Pa", pRes);
+      return result;
+    }
+
+    double[] bhpArray = new double[numPoints];
+    double[] iprRate = new double[numPoints];
+    double[] vlpRate = new double[numPoints];
+
+    // Sweep BHP from near-zero to reservoir pressure
+    double pMin = 1e5; // 1 bara minimum
+    double pStep = (pRes - pMin) / (numPoints - 1);
+
+    for (int i = 0; i < numPoints; i++) {
+      double bhpPa = pMin + i * pStep;
+      bhpArray[i] = bhpPa / 1e5; // store as bara
+
+      // IPR rate at this BHP
+      double qIPR = computeIPRFlowRate(iprPipe, pRes, bhpPa);
+      iprRate[i] = Math.abs(qIPR) * 3600.0; // kg/hr
+
+      // VLP: estimate backpressure needed for this flow
+      // Use the outflow element's head loss at this flow rate
+      double qVLP = estimateVLPRate(outPipe, bhpPa);
+      vlpRate[i] = Math.abs(qVLP) * 3600.0; // kg/hr
+    }
+
+    // Find intersection: where |iprRate - vlpRate| is minimized (only where both rates > 0)
+    double minDiff = Double.MAX_VALUE;
+    int crossIdx = 0;
+    for (int i = 0; i < numPoints; i++) {
+      if (iprRate[i] < 1e-3 && vlpRate[i] < 1e-3) {
+        continue; // Skip points where both rates are essentially zero
+      }
+      double diff = Math.abs(iprRate[i] - vlpRate[i]);
+      if (diff < minDiff) {
+        minDiff = diff;
+        crossIdx = i;
+      }
+    }
+
+    result.put("bhp", bhpArray);
+    result.put("iprRate", iprRate);
+    result.put("vlpRate", vlpRate);
+    result.put("operatingBHP", new double[] {bhpArray[crossIdx]});
+    result.put("operatingRate", new double[] {iprRate[crossIdx]});
+
+    return result;
+  }
+
+  /**
+   * Compute IPR flow rate at a given bottom-hole pressure.
+   *
+   * @param iprPipe the IPR element
+   * @param pResPa reservoir pressure in Pa
+   * @param bhpPa bottom-hole pressure in Pa
+   * @return flow rate in kg/s (positive)
+   */
+  private double computeIPRFlowRate(NetworkPipe iprPipe, double pResPa, double bhpPa) {
+    if (bhpPa >= pResPa) {
+      return 0.0;
+    }
+    double pi = iprPipe.getProductivityIndex();
+    if (iprPipe.isGasIPR()) {
+      return pi * (pResPa * pResPa - bhpPa * bhpPa);
+    } else {
+      if (iprPipe.getIprType() == IPRType.VOGEL) {
+        double ratio = bhpPa / pResPa;
+        double qRatio = 1.0 - 0.2 * ratio - 0.8 * ratio * ratio;
+        return iprPipe.getVogelQmax() * Math.max(0.0, qRatio);
+      }
+      return pi * (pResPa - bhpPa);
+    }
+  }
+
+  /**
+   * Estimate VLP (outflow) rate at a given bottom-hole pressure.
+   *
+   * <p>
+   * For a pipe/choke downstream of the well, this estimates the flow rate that the outflow system
+   * can deliver given the available driving pressure (BHP minus downstream network pressure).
+   * </p>
+   *
+   * @param outPipe the outflow element
+   * @param bhpPa available bottom-hole pressure in Pa
+   * @return flow rate in kg/s (positive)
+   */
+  private double estimateVLPRate(NetworkPipe outPipe, double bhpPa) {
+    // Get downstream node pressure as back-pressure
+    NetworkNode downNode = nodes.get(outPipe.getToNode());
+    double pDownPa = (downNode != null) ? downNode.getPressure() : 1e5;
+    double dpAvailable = bhpPa - pDownPa;
+    if (dpAvailable <= 0) {
+      return 0.0;
+    }
+
+    // Estimate flow from element type
+    if (outPipe.getElementType() == NetworkElementType.CHOKE) {
+      double kv = outPipe.getChokeKv();
+      double opening = outPipe.getChokeOpening() / 100.0;
+      if (kv < 1e-10 || opening < 0.01) {
+        return 0.0;
+      }
+      double density = (fluidTemplate != null) ? fluidTemplate.getDensity("kg/m3") : 50.0;
+      if (density < 1.0) {
+        density = 50.0;
+      }
+      double sg = density / 1000.0;
+      double dpBar = dpAvailable / 1e5;
+      double qm3hr = kv * opening * Math.sqrt(dpBar / Math.max(sg, 0.001));
+      return qm3hr * density / 3600.0; // kg/s
+    }
+
+    // For pipes: Q ~ sqrt(dP) relationship using Darcy-Weisbach
+    double diameter = outPipe.getDiameter();
+    double length = outPipe.getLength();
+    if (diameter < 0.001 || length < 0.1) {
+      return 0.0;
+    }
+    double density = (fluidTemplate != null) ? fluidTemplate.getDensity("kg/m3") : 50.0;
+    if (density < 1.0) {
+      density = 50.0;
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    // Simplified: dP = f * L/D * rho * v^2 / 2, so v ~ sqrt(2 * dP * D / (f * L * rho))
+    double fGuess = 0.015;
+    double vGuess = Math.sqrt(2.0 * dpAvailable * diameter / (fGuess * length * density));
+    return density * area * vGuess;
+  }
+
+  // =====================================================================
+  // Constraint Envelope Checking
+  // =====================================================================
+
+  /**
+   * Set pressure limits for a node.
+   *
+   * <p>
+   * After solving the network, call {@link #checkConstraints()} to verify pressures at all
+   * constrained nodes are within bounds. This enables safety envelope checking for minimum arrival
+   * pressure, maximum allowable working pressure, hydrate formation limits, etc.
+   * </p>
+   *
+   * @param nodeName name of the node
+   * @param minPressureBar minimum acceptable pressure in bara
+   * @param maxPressureBar maximum acceptable pressure in bara
+   */
+  public void setNodePressureLimits(String nodeName, double minPressureBar, double maxPressureBar) {
+    nodePressureLimits.put(nodeName, new double[] {minPressureBar * 1e5, maxPressureBar * 1e5});
+  }
+
+  /**
+   * Set flow rate limits for a network element (pipe, choke, compressor, etc.).
+   *
+   * <p>
+   * Limits are checked after the network is solved. This enables enforcement of choke rate limits,
+   * compressor minimum/maximum flow, pipeline capacity limits, etc.
+   * </p>
+   *
+   * @param elementName name of the element
+   * @param minFlowKgHr minimum acceptable flow rate in kg/hr (use 0 for no minimum)
+   * @param maxFlowKgHr maximum acceptable flow rate in kg/hr
+   */
+  public void setElementFlowLimits(String elementName, double minFlowKgHr, double maxFlowKgHr) {
+    elementFlowLimits.put(elementName, new double[] {minFlowKgHr / 3600.0, maxFlowKgHr / 3600.0});
+  }
+
+  /**
+   * Check all defined constraints and return any violations.
+   *
+   * <p>
+   * Verifies:
+   * </p>
+   * <ul>
+   * <li>Node pressures within min/max bounds (set via
+   * {@link #setNodePressureLimits(String, double, double)})</li>
+   * <li>Element flow rates within min/max bounds (set via
+   * {@link #setElementFlowLimits(String, double, double)})</li>
+   * </ul>
+   *
+   * @return list of constraint violation descriptions (empty if all constraints satisfied)
+   */
+  public List<String> checkConstraints() {
+    constraintViolations.clear();
+
+    // Check node pressure limits
+    for (Map.Entry<String, double[]> entry : nodePressureLimits.entrySet()) {
+      String nodeName = entry.getKey();
+      double[] limits = entry.getValue();
+      NetworkNode node = nodes.get(nodeName);
+      if (node == null) {
+        continue;
+      }
+      double pPa = node.getPressure();
+      if (pPa < limits[0]) {
+        constraintViolations.add(String.format("PRESSURE_LOW: %s = %.2f bara < min %.2f bara",
+            nodeName, pPa / 1e5, limits[0] / 1e5));
+      }
+      if (pPa > limits[1]) {
+        constraintViolations.add(String.format("PRESSURE_HIGH: %s = %.2f bara > max %.2f bara",
+            nodeName, pPa / 1e5, limits[1] / 1e5));
+      }
+    }
+
+    // Check element flow limits
+    for (Map.Entry<String, double[]> entry : elementFlowLimits.entrySet()) {
+      String elemName = entry.getKey();
+      double[] limits = entry.getValue();
+      NetworkPipe pipe = getPipe(elemName);
+      if (pipe == null) {
+        continue;
+      }
+      double absFlow = Math.abs(pipe.getFlowRate());
+      if (absFlow < limits[0]) {
+        constraintViolations.add(String.format("FLOW_LOW: %s = %.0f kg/hr < min %.0f kg/hr",
+            elemName, absFlow * 3600.0, limits[0] * 3600.0));
+      }
+      if (absFlow > limits[1]) {
+        constraintViolations.add(String.format("FLOW_HIGH: %s = %.0f kg/hr > max %.0f kg/hr",
+            elemName, absFlow * 3600.0, limits[1] * 3600.0));
+      }
+    }
+
+    return constraintViolations;
+  }
+
+  /**
+   * Get the list of constraint violations from the last {@link #checkConstraints()} call.
+   *
+   * @return list of violation descriptions
+   */
+  public List<String> getConstraintViolations() {
+    return Collections.unmodifiableList(constraintViolations);
+  }
+
+  // =====================================================================
+  // Compressor Fuel Gas Consumption
+  // =====================================================================
+
+  /**
+   * Set the fuel gas heat rate for gas-turbine driven compressors.
+   *
+   * <p>
+   * The heat rate defines how much fuel energy is consumed per unit of mechanical work. Typical
+   * values: 9,000-12,000 kJ/kWh for industrial gas turbines, 3,600 kJ/kWh for electric drives
+   * (ideal).
+   * </p>
+   *
+   * @param heatRateKJPerKWh fuel gas heat rate in kJ/kWh
+   */
+  public void setFuelGasHeatRate(double heatRateKJPerKWh) {
+    this.fuelGasHeatRate = heatRateKJPerKWh;
+  }
+
+  /**
+   * Get the fuel gas heat rate in kJ/kWh.
+   *
+   * @return heat rate
+   */
+  public double getFuelGasHeatRate() {
+    return fuelGasHeatRate;
+  }
+
+  /**
+   * Calculate fuel gas consumption for all compressor elements in the network.
+   *
+   * <p>
+   * For each compressor element, computes fuel gas rate from shaft power and driver heat rate:
+   * </p>
+   *
+   * <pre>
+   * fuelRate_kgs = (power_kW * heatRate_kJperkWh) / (LHV_kJperkg * 3600)
+   * </pre>
+   *
+   * <p>
+   * where LHV is the lower heating value of the gas at the compressor suction node. If gas quality
+   * has been calculated via {@link #calculateGasQuality()}, the LHV from ISO 6976 is used.
+   * Otherwise a default of 47,000 kJ/kg (typical natural gas) is assumed.
+   * </p>
+   *
+   * <p>
+   * The total fuel gas rate is the sum across all compressors and can be accessed via
+   * {@link #getTotalFuelGasRate()}.
+   * </p>
+   *
+   * @return map of compressor element name to fuel gas rate in kg/hr
+   */
+  public Map<String, Double> calculateFuelGasConsumption() {
+    Map<String, Double> fuelRates = new LinkedHashMap<>();
+    totalFuelGasRate = 0.0;
+
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() != NetworkElementType.COMPRESSOR) {
+        continue;
+      }
+
+      double powerKW = pipe.getCompressorPower();
+      if (powerKW <= 0.0) {
+        // Estimate power from polytropic head if not set
+        powerKW = estimateCompressorPower(pipe);
+      }
+
+      // Get LHV: prefer ISO 6976 calculation, fallback to default
+      double lhvKJperKg = 47000.0; // default natural gas LHV
+      String suctionNode = pipe.getFromNode();
+      double[] gasQuality = nodeGasQuality.get(suctionNode);
+      if (gasQuality != null && gasQuality[2] > 0) {
+        // gasQuality[2] = LHV in kJ/Sm3, convert to kJ/kg using density
+        double relDens = gasQuality[3];
+        if (relDens > 0) {
+          double molMass = relDens * 28.97e-3; // kg/mol (approx from relative density)
+          double molarVol = 0.02366; // Sm3/mol at 15C (approx)
+          double densStd = molMass / molarVol; // kg/Sm3
+          if (densStd > 0.1) {
+            lhvKJperKg = gasQuality[2] / densStd;
+          }
+        }
+      }
+
+      // Fuel rate = power * heat_rate / (LHV * 3600)
+      double fuelKgPerS = (powerKW * fuelGasHeatRate) / (lhvKJperKg * 3600.0);
+      double fuelKgPerHr = fuelKgPerS * 3600.0;
+
+      fuelRates.put(pipe.getName(), fuelKgPerHr);
+      totalFuelGasRate += fuelKgPerS;
+    }
+
+    return fuelRates;
+  }
+
+  /**
+   * Estimate compressor shaft power from polytropic head calculation.
+   *
+   * @param compPipe the compressor element
+   * @return estimated power in kW
+   */
+  private double estimateCompressorPower(NetworkPipe compPipe) {
+    String fromNodeName = compPipe.getFromNode();
+    String toNodeName = compPipe.getToNode();
+    NetworkNode fromNode = nodes.get(fromNodeName);
+    NetworkNode toNode = nodes.get(toNodeName);
+    if (fromNode == null || toNode == null) {
+      return 0.0;
+    }
+
+    double pSuction = fromNode.getPressure();
+    double pDischarge = toNode.getPressure();
+    if (pSuction < 1e3 || pDischarge <= pSuction) {
+      return 0.0;
+    }
+
+    double massFlow = Math.abs(compPipe.getFlowRate()); // kg/s
+    double gamma = 1.3; // typical k for natural gas
+    double efficiency = compPipe.getCompressorEfficiency();
+    if (efficiency < 0.1) {
+      efficiency = 0.75;
+    }
+
+    // Polytropic head: Wp = (gamma/(gamma-1)) * R*T/M * [(Pd/Ps)^((gamma-1)/gamma) - 1] / eff
+    double temp = fromNode.getTemperature(); // K
+    double molarMass = (fluidTemplate != null) ? fluidTemplate.getMolarMass() : 0.018; // kg/mol
+    if (molarMass < 0.001) {
+      molarMass = 0.018;
+    }
+    double R = 8.314; // J/(mol·K)
+    double pratio = pDischarge / pSuction;
+    double exponent = (gamma - 1.0) / gamma;
+    double polyHead = (gamma / (gamma - 1.0)) * (R * temp / molarMass)
+        * (Math.pow(pratio, exponent) - 1.0) / efficiency;
+    double powerW = massFlow * polyHead;
+    return powerW / 1000.0; // kW
+  }
+
+  /**
+   * Get the total fuel gas consumption rate for all compressors in the network.
+   *
+   * <p>
+   * Call {@link #calculateFuelGasConsumption()} first to populate this value.
+   * </p>
+   *
+   * @return total fuel gas rate in kg/hr
+   */
+  public double getTotalFuelGasRate() {
+    return totalFuelGasRate * 3600.0;
+  }
+
+  /**
+   * Get the fuel gas consumption as a percentage of total network throughput.
+   *
+   * <p>
+   * This is the "self-consumption" ratio: how much of the transported gas is consumed as compressor
+   * fuel. Typical values: 1-3% for gas transmission, 0% for electric drives.
+   * </p>
+   *
+   * @return fuel gas percentage of total sink flow (0-100)
+   */
+  public double getFuelGasPercentage() {
+    double totalSinkKgS = 0.0;
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SINK) {
+        // Sum absolute flow into sink from all connected pipes
+        for (NetworkPipe pipe : pipes.values()) {
+          if (pipe.getToNode().equals(node.getName()) && pipe.getFlowRate() > 0) {
+            totalSinkKgS += pipe.getFlowRate();
+          } else if (pipe.getFromNode().equals(node.getName()) && pipe.getFlowRate() < 0) {
+            totalSinkKgS += Math.abs(pipe.getFlowRate());
+          }
+        }
+      }
+    }
+    if (totalSinkKgS < 1e-10) {
+      return 0.0;
+    }
+    return (totalFuelGasRate / totalSinkKgS) * 100.0;
+  }
+
   /**
    * Optimize choke openings to maximize total production from all wells.
    *
@@ -3784,6 +4492,781 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     return bhpTable;
   }
 
+  // =====================================================================
+  // Advanced Production Optimization
+  // =====================================================================
+
+  /** Per-well oil price for revenue-based optimization (USD/kg). */
+  private final transient Map<String, Double> wellOilPrices = new LinkedHashMap<>();
+
+  /** Per-well gas price for revenue-based optimization (USD/kg). */
+  private final transient Map<String, Double> wellGasPrices = new LinkedHashMap<>();
+
+  /** Last optimization results per well. */
+  private final transient Map<String, double[]> wellAllocationResults = new LinkedHashMap<>();
+
+  /**
+   * Set oil price for revenue-based optimization.
+   *
+   * @param pricePerKg oil price in USD/kg (e.g., 0.50 for ~$80/bbl crude)
+   */
+  public void setOilPrice(double pricePerKg) {
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.WELL_IPR
+          || pipe.getElementType() == NetworkElementType.CHOKE) {
+        wellOilPrices.put(pipe.getName(), pricePerKg);
+      }
+    }
+  }
+
+  /**
+   * Set gas price for revenue-based optimization.
+   *
+   * @param pricePerKg gas price in USD/kg
+   */
+  public void setGasPrice(double pricePerKg) {
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.WELL_IPR
+          || pipe.getElementType() == NetworkElementType.CHOKE) {
+        wellGasPrices.put(pipe.getName(), pricePerKg);
+      }
+    }
+  }
+
+  /**
+   * Set per-well product price for revenue allocation.
+   *
+   * @param wellOrChokeName name of the well IPR or choke element
+   * @param pricePerKg product price in USD/kg
+   */
+  public void setWellPrice(String wellOrChokeName, double pricePerKg) {
+    wellOilPrices.put(wellOrChokeName, pricePerKg);
+  }
+
+  /**
+   * Optimize choke openings to maximize revenue (price-weighted production).
+   *
+   * <p>
+   * Uses adaptive gradient ascent with Armijo backtracking line search. Supports revenue-based
+   * objective (price x rate) and respects constraint limits set via {@link #setNodePressureLimits}
+   * and {@link #setElementFlowLimits}.
+   * </p>
+   *
+   * @param maxIterations maximum number of optimization iterations
+   * @param tolerance convergence tolerance for relative revenue change
+   * @return optimized total revenue in USD/hr (or total flow in kg/hr if no prices set)
+   */
+  public double optimizeProduction(int maxIterations, double tolerance) {
+    List<NetworkPipe> chokes = new ArrayList<>();
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        chokes.add(pipe);
+      }
+    }
+    if (chokes.isEmpty()) {
+      run();
+      return computeObjective();
+    }
+
+    double lastObjective = 0.0;
+    double stepSize = 5.0;
+    double stepDecay = 0.8;
+    double minStep = 0.1;
+
+    for (int iter = 0; iter < maxIterations; iter++) {
+      run();
+      double currentObj = computeObjective();
+
+      if (iter > 0) {
+        double relChange =
+            Math.abs(currentObj - lastObjective) / Math.max(Math.abs(currentObj), 1e-10);
+        if (relChange < tolerance) {
+          break;
+        }
+      }
+      lastObjective = currentObj;
+
+      // Compute gradient for each choke using central differences
+      double[] gradients = new double[chokes.size()];
+      double[] openings = new double[chokes.size()];
+      for (int c = 0; c < chokes.size(); c++) {
+        NetworkPipe choke = chokes.get(c);
+        openings[c] = choke.getChokeOpening();
+        double h = Math.max(stepSize * 0.1, 0.5);
+
+        double upOpen = Math.min(openings[c] + h, 100.0);
+        choke.setChokeOpening(upOpen);
+        run();
+        double objUp = computeConstrainedObjective();
+
+        double downOpen = Math.max(openings[c] - h, 1.0);
+        choke.setChokeOpening(downOpen);
+        run();
+        double objDown = computeConstrainedObjective();
+
+        gradients[c] = (objUp - objDown) / (upOpen - downOpen);
+        choke.setChokeOpening(openings[c]);
+      }
+
+      // Normalize gradient and apply Armijo backtracking line search
+      double gradNorm = 0.0;
+      for (double g : gradients) {
+        gradNorm += g * g;
+      }
+      gradNorm = Math.sqrt(gradNorm);
+      if (gradNorm < 1e-15) {
+        break;
+      }
+
+      // Try full step, then backtrack
+      double alpha = stepSize;
+      boolean improved = false;
+      for (int bt = 0; bt < 5; bt++) {
+        for (int c = 0; c < chokes.size(); c++) {
+          double newOpen = openings[c] + alpha * gradients[c] / gradNorm;
+          chokes.get(c).setChokeOpening(Math.max(1.0, Math.min(100.0, newOpen)));
+        }
+        run();
+        double trialObj = computeConstrainedObjective();
+        if (trialObj > currentObj - 1e-10) {
+          improved = true;
+          break;
+        }
+        alpha *= 0.5;
+      }
+
+      if (!improved) {
+        // Restore and reduce step size
+        for (int c = 0; c < chokes.size(); c++) {
+          chokes.get(c).setChokeOpening(openings[c]);
+        }
+        stepSize = Math.max(stepSize * stepDecay, minStep);
+      }
+    }
+
+    // Final solve and build allocation report
+    run();
+    buildWellAllocationReport();
+    return computeObjective();
+  }
+
+  /**
+   * Compute the optimization objective (revenue or total flow).
+   *
+   * @return objective value
+   */
+  private double computeObjective() {
+    if (wellOilPrices.isEmpty()) {
+      return getTotalSinkFlow() * 3600.0; // kg/hr
+    }
+    double revenue = 0.0;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE
+          || pipe.getElementType() == NetworkElementType.WELL_IPR) {
+        double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
+        Double price = wellOilPrices.get(pipe.getName());
+        if (price != null) {
+          revenue += rate * price;
+        } else {
+          revenue += rate;
+        }
+      }
+    }
+    return revenue;
+  }
+
+  /**
+   * Compute objective with penalty for constraint violations.
+   *
+   * @return penalized objective
+   */
+  private double computeConstrainedObjective() {
+    double obj = computeObjective();
+    List<String> violations = checkConstraints();
+    if (!violations.isEmpty()) {
+      obj -= violations.size() * Math.abs(obj) * 0.1;
+    }
+    // Also check erosional velocity
+    List<String> erosions = checkErosionalVelocity();
+    if (!erosions.isEmpty()) {
+      obj -= erosions.size() * Math.abs(obj) * 0.05;
+    }
+    return obj;
+  }
+
+  /**
+   * Build per-well allocation report after optimization.
+   */
+  private void buildWellAllocationReport() {
+    wellAllocationResults.clear();
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.WELL_IPR
+          || pipe.getElementType() == NetworkElementType.CHOKE) {
+        double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
+        Double price = wellOilPrices.get(pipe.getName());
+        double rev = (price != null) ? rate * price : rate;
+        double opening = pipe.getChokeOpening();
+        // [0]=rate_kg_hr, [1]=revenue_usd_hr, [2]=choke_opening_pct
+        wellAllocationResults.put(pipe.getName(), new double[] {rate, rev, opening});
+      }
+    }
+  }
+
+  /**
+   * Get the well allocation results from the last optimization.
+   *
+   * <p>
+   * Returns a map from well/choke name to double[3]: [0]=rate_kg_hr, [1]=revenue_usd_hr,
+   * [2]=choke_opening_pct.
+   * </p>
+   *
+   * @return well allocation results map
+   */
+  public Map<String, double[]> getWellAllocationResults() {
+    return Collections.unmodifiableMap(wellAllocationResults);
+  }
+
+  // =====================================================================
+  // Sensitivity Analysis (Parametric Sweep)
+  // =====================================================================
+
+  /**
+   * Run sensitivity analysis by sweeping a parameter across a range.
+   *
+   * <p>
+   * Supported parameter types: "reservoir_pressure", "well_pi", "choke_opening", "sink_pressure",
+   * "pipe_diameter".
+   * </p>
+   *
+   * @param elementName name of the element to sweep
+   * @param parameterType type of parameter to vary
+   * @param values array of parameter values to evaluate
+   * @return map with keys "paramValues", "totalFlow_kghr", "sinkPressures_bara" containing results
+   */
+  public Map<String, double[]> sensitivityAnalysis(String elementName, String parameterType,
+      double[] values) {
+    Map<String, double[]> results = new LinkedHashMap<>();
+    if (values == null || values.length == 0) {
+      return results;
+    }
+
+    double[] totalFlows = new double[values.length];
+    double[] objectiveValues = new double[values.length];
+
+    // Save original state
+    NetworkPipe targetPipe = getPipe(elementName);
+    NetworkNode targetNode = nodes.get(elementName);
+    double origValue = 0;
+    if (targetPipe != null) {
+      switch (parameterType) {
+        case "choke_opening":
+          origValue = targetPipe.getChokeOpening();
+          break;
+        case "reservoir_pressure":
+          origValue = targetPipe.getReservoirPressure() / 1e5;
+          break;
+        case "well_pi":
+          origValue = targetPipe.getProductivityIndex();
+          break;
+        case "pipe_diameter":
+          origValue = targetPipe.getDiameter();
+          break;
+        default:
+          break;
+      }
+    } else if (targetNode != null && "sink_pressure".equals(parameterType)) {
+      origValue = targetNode.getPressure() / 1e5;
+    }
+
+    for (int i = 0; i < values.length; i++) {
+      // Apply parameter
+      applyParameterValue(elementName, parameterType, values[i]);
+
+      try {
+        run();
+        totalFlows[i] = getTotalSinkFlow() * 3600.0; // kg/hr
+        objectiveValues[i] = computeObjective();
+      } catch (Exception e) {
+        totalFlows[i] = 0.0;
+        objectiveValues[i] = 0.0;
+      }
+    }
+
+    // Restore original value
+    applyParameterValue(elementName, parameterType, origValue);
+    run();
+
+    results.put("paramValues", values.clone());
+    results.put("totalFlow_kghr", totalFlows);
+    results.put("objective", objectiveValues);
+    return results;
+  }
+
+  /**
+   * Apply a parameter value to a network element.
+   *
+   * @param elementName element name
+   * @param parameterType parameter type
+   * @param value value to set
+   */
+  private void applyParameterValue(String elementName, String parameterType, double value) {
+    NetworkPipe pipe = getPipe(elementName);
+    NetworkNode node = nodes.get(elementName);
+
+    if (pipe != null) {
+      switch (parameterType) {
+        case "choke_opening":
+          pipe.setChokeOpening(Math.max(1.0, Math.min(100.0, value)));
+          break;
+        case "reservoir_pressure":
+          pipe.setReservoirPressure(value * 1e5); // bara -> Pa
+          break;
+        case "well_pi":
+          pipe.setProductivityIndex(value);
+          break;
+        case "pipe_diameter":
+          pipe.setDiameter(value);
+          break;
+        default:
+          break;
+      }
+    } else if (node != null && "sink_pressure".equals(parameterType)) {
+      node.setPressure(value * 1e5);
+    }
+  }
+
+  // =====================================================================
+  // Production Forecast (Time-Stepping)
+  // =====================================================================
+
+  /**
+   * Run a production forecast with declining reservoir pressure over time.
+   *
+   * <p>
+   * At each timestep, reservoir pressures are updated for all well IPR elements and the network is
+   * re-solved. Returns time-series of production rates, pressures, and cumulative production.
+   * </p>
+   *
+   * @param reservoirPressures array of reservoir pressures (bara) at each timestep
+   * @param timestepYears array of time values (years) corresponding to each pressure
+   * @return map with keys "time_years", "rate_kghr", "cumulative_kg", "avg_pressure_bara"
+   */
+  public Map<String, double[]> productionForecast(double[] reservoirPressures,
+      double[] timestepYears) {
+    Map<String, double[]> result = new LinkedHashMap<>();
+    int n = Math.min(reservoirPressures.length, timestepYears.length);
+    double[] rates = new double[n];
+    double[] cumulative = new double[n];
+    double[] avgPressures = new double[n];
+
+    // Find all well IPR elements
+    List<NetworkPipe> wells = new ArrayList<>();
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.WELL_IPR) {
+        wells.add(pipe);
+      }
+    }
+
+    double cumProd = 0.0;
+    for (int t = 0; t < n; t++) {
+      // Update all well reservoir pressures
+      double pResPa = reservoirPressures[t] * 1e5;
+      for (NetworkPipe well : wells) {
+        well.setReservoirPressure(pResPa);
+        // Also update the source node pressure
+        NetworkNode srcNode = nodes.get(well.getFromNode());
+        if (srcNode != null && srcNode.getType() == NodeType.SOURCE) {
+          srcNode.setPressure(pResPa);
+        }
+      }
+
+      run();
+      double rateKgHr = getTotalSinkFlow() * 3600.0;
+      rates[t] = rateKgHr;
+      avgPressures[t] = reservoirPressures[t];
+
+      // Cumulative production (trapezoidal integration)
+      if (t > 0) {
+        double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
+        cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
+      }
+      cumulative[t] = cumProd;
+    }
+
+    result.put("time_years", timestepYears.clone());
+    result.put("rate_kghr", rates);
+    result.put("cumulative_kg", cumulative);
+    result.put("avg_pressure_bara", avgPressures);
+    return result;
+  }
+
+  // =====================================================================
+  // Enhanced VFP Table Generation
+  // =====================================================================
+
+  /**
+   * Generate coupled VFP tables for wells in the network.
+   *
+   * <p>
+   * Unlike the basic {@link #exportVFPTables}, this method runs the full well system (IPR +
+   * tubing/flowline) at each (Q, THP) point. The THP is applied as the boundary condition at the
+   * wellhead node and the coupled system is solved to determine BHP. This produces accurate VFP
+   * tables suitable for reservoir simulation coupling.
+   * </p>
+   *
+   * @param flowRates_kghr array of flow rates (kg/hr) for VFP table
+   * @param thps array of tubing head pressures (bara) for VFP table
+   * @return map from well name to 2D BHP table [flowRate][THP] in bara
+   */
+  public Map<String, double[][]> generateCoupledVFPTables(double[] flowRates_kghr, double[] thps) {
+    Map<String, double[][]> allTables = new LinkedHashMap<>();
+
+    // Find IPR + downstream tubing/flowline pairs
+    for (NetworkPipe iprPipe : pipes.values()) {
+      if (iprPipe.getElementType() != NetworkElementType.WELL_IPR) {
+        continue;
+      }
+
+      String wellName = iprPipe.getName();
+      double pRes = iprPipe.getReservoirPressure(); // Pa
+      if (pRes < 1e5) {
+        NetworkNode srcNode = nodes.get(iprPipe.getFromNode());
+        if (srcNode != null) {
+          pRes = srcNode.getPressure();
+        }
+      }
+
+      // Find the outflow element(s) from the IPR downstream node
+      String bhpNodeName = iprPipe.getToNode();
+      List<NetworkPipe> outflowElements = new ArrayList<>();
+      for (NetworkPipe p : pipes.values()) {
+        if (p.getFromNode().equals(bhpNodeName) && p != iprPipe) {
+          outflowElements.add(p);
+        }
+      }
+
+      double[][] bhpTable = new double[flowRates_kghr.length][thps.length];
+
+      for (int f = 0; f < flowRates_kghr.length; f++) {
+        for (int t = 0; t < thps.length; t++) {
+          double qKgHr = flowRates_kghr[f];
+          double thpPa = thps[t] * 1e5;
+
+          // Calculate BHP by summing THP + pressure drops through outflow elements
+          double totalDp = 0.0;
+          for (NetworkPipe outPipe : outflowElements) {
+            double dpPa = estimatePressureDropAtRate(outPipe, qKgHr / 3600.0);
+            totalDp += dpPa;
+          }
+
+          // BHP from IPR: for given Q, what BHP is needed?
+          double bhpFromIpr = computeBHPFromIPR(iprPipe, pRes, qKgHr / 3600.0);
+
+          // Coupled BHP = max(IPR-derived BHP, THP + outflow dP)
+          double bhpCoupled = Math.max(bhpFromIpr, (thpPa + totalDp));
+          bhpTable[f][t] = Math.max(bhpCoupled / 1e5, 0.0); // bara
+        }
+      }
+
+      allTables.put(wellName, bhpTable);
+    }
+
+    return allTables;
+  }
+
+  /**
+   * Compute BHP from IPR model given a flow rate.
+   *
+   * @param iprPipe the IPR element
+   * @param pResPa reservoir pressure in Pa
+   * @param qKgs flow rate in kg/s
+   * @return bottom-hole pressure in Pa
+   */
+  private double computeBHPFromIPR(NetworkPipe iprPipe, double pResPa, double qKgs) {
+    double pi = iprPipe.getProductivityIndex();
+    if (qKgs <= 0) {
+      return pResPa;
+    }
+
+    switch (iprPipe.getIprType()) {
+      case VOGEL:
+        double qmax = iprPipe.getVogelQmax();
+        double qRatio = Math.min(Math.abs(qKgs) / qmax, 0.999);
+        double pwfRatio = (-0.2 + Math.sqrt(0.04 + 3.2 * (1.0 - qRatio))) / 1.6;
+        return pResPa * Math.max(pwfRatio, 0.0);
+      case FETKOVICH:
+        double cCoeff = iprPipe.getFetkovichC();
+        double nExp = iprPipe.getFetkovichN();
+        double p2diff = Math.pow(Math.abs(qKgs) / cCoeff, 1.0 / nExp);
+        return Math.sqrt(Math.max(pResPa * pResPa - p2diff, 0.0));
+      default:
+        if (iprPipe.isGasIPR()) {
+          return Math.sqrt(Math.max(pResPa * pResPa - Math.abs(qKgs) / pi, 0.0));
+        }
+        return Math.max(pResPa - Math.abs(qKgs) / Math.max(pi, 1e-20), 0.0);
+    }
+  }
+
+  /**
+   * Estimate pressure drop through a network element at a given flow rate.
+   *
+   * @param pipe the network element
+   * @param qKgs flow rate in kg/s
+   * @return pressure drop in Pa (positive)
+   */
+  private double estimatePressureDropAtRate(NetworkPipe pipe, double qKgs) {
+    if (qKgs <= 0) {
+      return 0.0;
+    }
+    double density = (fluidTemplate != null) ? fluidTemplate.getDensity("kg/m3") : 50.0;
+    if (density < 1.0) {
+      density = 50.0;
+    }
+
+    if (pipe.getElementType() == NetworkElementType.CHOKE) {
+      double kv = pipe.getChokeKv();
+      double opening = pipe.getChokeOpening() / 100.0;
+      if (kv < 1e-10 || opening < 0.01) {
+        return 1e7;
+      }
+      double sg = density / 1000.0;
+      double qm3hr = qKgs * 3600.0 / density;
+      double dpBar = (qm3hr / (kv * opening)) * (qm3hr / (kv * opening)) * sg;
+      return dpBar * 1e5;
+    }
+
+    double dia = pipe.getDiameter();
+    double len = pipe.getLength();
+    if (dia < 0.001 || len < 0.1) {
+      return 0.0;
+    }
+    double area = Math.PI * dia * dia / 4.0;
+    double velocity = qKgs / (density * area);
+    double fFriction = 0.015;
+    return fFriction * (len / dia) * 0.5 * density * velocity * velocity;
+  }
+
+  /**
+   * Export coupled VFP tables to Eclipse-format files.
+   *
+   * <p>
+   * Generates accurate VFPPROD tables by running the full well system at each operating point. Each
+   * well gets its own VFP table file.
+   * </p>
+   *
+   * @param filePath base file path for VFP files
+   * @param flowRates_kghr flow rates in kg/hr
+   * @param thps tubing head pressures in bara
+   */
+  public void exportCoupledVFPTables(String filePath, double[] flowRates_kghr, double[] thps) {
+    Map<String, double[][]> tables = generateCoupledVFPTables(flowRates_kghr, thps);
+
+    int tableNum = 1;
+    for (Map.Entry<String, double[][]> entry : tables.entrySet()) {
+      try {
+        neqsim.process.util.optimizer.EclipseVFPExporter exporter =
+            new neqsim.process.util.optimizer.EclipseVFPExporter();
+        exporter.setTableNumber(tableNum);
+        exporter.setTableTitle("Coupled VFP for " + entry.getKey());
+
+        // Convert kg/hr to Sm3/d (approximate: gas density ~0.8 kg/Sm3)
+        double[] flowRatesSm3d = new double[flowRates_kghr.length];
+        for (int i = 0; i < flowRates_kghr.length; i++) {
+          flowRatesSm3d[i] = flowRates_kghr[i] / 0.8 * 24.0;
+        }
+        exporter.setFlowRates(flowRatesSm3d);
+        exporter.setTHPs(thps);
+
+        // Convert 2D table to 5D (single WC, GOR, ALQ)
+        double[][] bhp2d = entry.getValue();
+        double[][][][][] bhp5d = new double[bhp2d.length][bhp2d[0].length][1][1][1];
+        for (int f = 0; f < bhp2d.length; f++) {
+          for (int t = 0; t < bhp2d[0].length; t++) {
+            bhp5d[f][t][0][0][0] = bhp2d[f][t];
+          }
+        }
+        exporter.setBHPTable(bhp5d);
+
+        String wellFile =
+            filePath.replace(".inc", "_" + entry.getKey().replaceAll("\\s+", "_") + ".inc");
+        exporter.exportVFPPROD(wellFile);
+        tableNum++;
+      } catch (Exception ex) {
+        logger.error("Coupled VFP export failed for " + entry.getKey() + ": " + ex.getMessage());
+      }
+    }
+    logger.info("Exported coupled VFP tables for " + (tableNum - 1) + " wells to " + filePath);
+  }
+
+  /**
+   * Generate network back-pressure VFP table (VFPEXP).
+   *
+   * <p>
+   * For each delivery rate at the network export boundary, this method determines the required
+   * inlet pressure. This enables reservoir-to-facility coupled simulation by providing the facility
+   * back-pressure curve for the reservoir simulator.
+   * </p>
+   *
+   * @param exportNodeName name of the export/delivery sink node
+   * @param flowRates_kghr array of flow rates (kg/hr) to evaluate
+   * @return map with "flowRate_kghr" and "requiredPressure_bara" arrays
+   */
+  public Map<String, double[]> generateNetworkBackpressureCurve(String exportNodeName,
+      double[] flowRates_kghr) {
+    Map<String, double[]> result = new LinkedHashMap<>();
+    double[] pressures = new double[flowRates_kghr.length];
+
+    // Save original state
+    Map<String, Double> origSourceFlows = new LinkedHashMap<>();
+    Map<String, Double> origSourcePressures = new LinkedHashMap<>();
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SOURCE) {
+        origSourcePressures.put(node.getName(), node.getPressure());
+      }
+    }
+
+    for (int i = 0; i < flowRates_kghr.length; i++) {
+      // For a fixed total delivery rate, find the source pressure needed
+      // Use bisection: increase/decrease source pressure until delivery matches target
+      double targetRate = flowRates_kghr[i] / 3600.0; // kg/s
+      double pLow = 10.0 * 1e5; // 10 bara
+      double pHigh = 500.0 * 1e5; // 500 bara
+
+      double pResult = pHigh;
+      for (int bisect = 0; bisect < 30; bisect++) {
+        double pMid = (pLow + pHigh) / 2.0;
+
+        // Set all source node pressures proportionally
+        for (Map.Entry<String, Double> entry : origSourcePressures.entrySet()) {
+          double ratio = pMid / origSourcePressures.values().iterator().next();
+          nodes.get(entry.getKey()).setPressure(entry.getValue() * ratio);
+          // Also update IPR reservoir pressures
+          for (NetworkPipe pipe : pipes.values()) {
+            if (pipe.getElementType() == NetworkElementType.WELL_IPR
+                && pipe.getFromNode().equals(entry.getKey())) {
+              pipe.setReservoirPressure(entry.getValue() * ratio);
+            }
+          }
+        }
+
+        try {
+          run();
+          double actualRate = getTotalSinkFlow();
+          if (Math.abs(actualRate) > targetRate) {
+            pHigh = pMid;
+          } else {
+            pLow = pMid;
+          }
+          pResult = pMid;
+        } catch (Exception e) {
+          pHigh = pMid;
+        }
+      }
+
+      pressures[i] = pResult / 1e5; // bara
+    }
+
+    // Restore original state
+    for (Map.Entry<String, Double> entry : origSourcePressures.entrySet()) {
+      nodes.get(entry.getKey()).setPressure(entry.getValue());
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getElementType() == NetworkElementType.WELL_IPR
+            && pipe.getFromNode().equals(entry.getKey())) {
+          pipe.setReservoirPressure(entry.getValue());
+        }
+      }
+    }
+    run();
+
+    result.put("flowRate_kghr", flowRates_kghr.clone());
+    result.put("requiredPressure_bara", pressures);
+    return result;
+  }
+
+  /**
+   * Validate VFP table against network solution at current operating point.
+   *
+   * <p>
+   * Runs the network and compares the actual BHP/rate/THP against the VFP table interpolated
+   * values. Reports discrepancy as a percentage error.
+   * </p>
+   *
+   * @param vfpTable 2D BHP table [flowRate][THP] from generateCoupledVFPTables
+   * @param flowRates_kghr flow rate axis values in kg/hr
+   * @param thps THP axis values in bara
+   * @param actualRate actual rate in kg/hr
+   * @param actualTHP actual THP in bara
+   * @param actualBHP actual BHP in bara
+   * @return map with "vfpBHP_bara", "actualBHP_bara", "error_pct"
+   */
+  public Map<String, Double> validateVFPPoint(double[][] vfpTable, double[] flowRates_kghr,
+      double[] thps, double actualRate, double actualTHP, double actualBHP) {
+    Map<String, Double> result = new LinkedHashMap<>();
+
+    // Bilinear interpolation in the VFP table
+    double vfpBhp = interpolateVFP(vfpTable, flowRates_kghr, thps, actualRate, actualTHP);
+
+    double errorPct = 0.0;
+    if (actualBHP > 0.01) {
+      errorPct = Math.abs(vfpBhp - actualBHP) / actualBHP * 100.0;
+    }
+
+    result.put("vfpBHP_bara", vfpBhp);
+    result.put("actualBHP_bara", actualBHP);
+    result.put("error_pct", errorPct);
+    return result;
+  }
+
+  /**
+   * Bilinear interpolation in a 2D VFP table.
+   *
+   * @param table BHP table [flowRate][THP]
+   * @param xAxis flow rate axis
+   * @param yAxis THP axis
+   * @param x query flow rate
+   * @param y query THP
+   * @return interpolated BHP
+   */
+  private double interpolateVFP(double[][] table, double[] xAxis, double[] yAxis, double x,
+      double y) {
+    // Find bounding indices for x
+    int ix = 0;
+    for (int i = 0; i < xAxis.length - 1; i++) {
+      if (x >= xAxis[i] && x <= xAxis[i + 1]) {
+        ix = i;
+        break;
+      }
+      if (x > xAxis[i]) {
+        ix = i;
+      }
+    }
+    int ix2 = Math.min(ix + 1, xAxis.length - 1);
+
+    // Find bounding indices for y
+    int iy = 0;
+    for (int i = 0; i < yAxis.length - 1; i++) {
+      if (y >= yAxis[i] && y <= yAxis[i + 1]) {
+        iy = i;
+        break;
+      }
+      if (y > yAxis[i]) {
+        iy = i;
+      }
+    }
+    int iy2 = Math.min(iy + 1, yAxis.length - 1);
+
+    // Bilinear interpolation factors
+    double fx = (ix == ix2) ? 0.0 : (x - xAxis[ix]) / (xAxis[ix2] - xAxis[ix]);
+    double fy = (iy == iy2) ? 0.0 : (y - yAxis[iy]) / (yAxis[iy2] - yAxis[iy]);
+
+    double v00 = table[ix][iy];
+    double v10 = table[ix2][iy];
+    double v01 = table[ix][iy2];
+    double v11 = table[ix2][iy2];
+
+    return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy) + v01 * (1 - fx) * fy + v11 * fx * fy;
+  }
+
   /**
    * Get a summary report of the network solution including gas quality at each node.
    *
@@ -3828,12 +5311,51 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     // Gas quality at delivery nodes
     if (!nodeFluidMap.isEmpty()) {
-      sb.append("\n--- Gas Quality at Nodes ---\n");
+      sb.append("\n--- Gas Composition at Nodes ---\n");
       sb.append(String.format("%-20s %12s%n", "Node", "Components"));
       for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
         sb.append(String.format("%-20s %12d%n", entry.getKey(),
             entry.getValue().getNumberOfComponents()));
       }
+    }
+
+    // ISO 6976 Gas quality
+    if (!nodeGasQuality.isEmpty()) {
+      sb.append("\n--- Gas Quality (ISO 6976 @ 15C) ---\n");
+      sb.append(String.format("%-20s %12s %12s %12s %10s%n", "Node", "Wobbe(MJ/Sm3)", "HHV(kJ/Sm3)",
+          "LHV(kJ/Sm3)", "Rel.Dens"));
+      for (Map.Entry<String, double[]> entry : nodeGasQuality.entrySet()) {
+        double[] q = entry.getValue();
+        sb.append(String.format("%-20s %12.2f %12.1f %12.1f %10.4f%n", entry.getKey(), q[0], q[1],
+            q[2], q[3]));
+      }
+    }
+
+    // Oil quality (TVP / RVP per ASTM D6377)
+    if (!nodeOilQuality.isEmpty()) {
+      sb.append("\n--- Oil Quality (TVP / RVP per ASTM D6377) ---\n");
+      sb.append(
+          String.format("%-20s %12s %12s %12s%n", "Node", "TVP(bara)", "RVP(bara)", "VPCR4(bara)"));
+      for (Map.Entry<String, double[]> entry : nodeOilQuality.entrySet()) {
+        double[] q = entry.getValue();
+        sb.append(String.format("%-20s %12.4f %12.4f %12.4f%n", entry.getKey(), q[0], q[1], q[2]));
+      }
+    }
+
+    // Constraint violations
+    if (!constraintViolations.isEmpty()) {
+      sb.append("\n--- Constraint Violations ---\n");
+      for (String v : constraintViolations) {
+        sb.append("  VIOLATION: ").append(v).append("\n");
+      }
+    }
+
+    // Fuel gas consumption
+    if (totalFuelGasRate > 0) {
+      sb.append(String.format("%n--- Fuel Gas Consumption (heat rate: %.0f kJ/kWh) ---%n",
+          fuelGasHeatRate));
+      sb.append(String.format("  Total fuel gas: %.1f kg/hr (%.2f%% of throughput)%n",
+          totalFuelGasRate * 3600.0, getFuelGasPercentage()));
     }
 
     return sb.toString();
@@ -4676,6 +6198,53 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         violationsArray.add(v);
       }
       json.add("erosionalViolations", violationsArray);
+    }
+
+    // Gas quality (ISO 6976)
+    if (!nodeGasQuality.isEmpty()) {
+      JsonObject gasQualObj = new JsonObject();
+      for (Map.Entry<String, double[]> entry : nodeGasQuality.entrySet()) {
+        double[] q = entry.getValue();
+        JsonObject nodeGQ = new JsonObject();
+        nodeGQ.addProperty("wobbeIndex_MJperSm3", q[0]);
+        nodeGQ.addProperty("hhv_kJperSm3", q[1]);
+        nodeGQ.addProperty("lhv_kJperSm3", q[2]);
+        nodeGQ.addProperty("relativeDensity", q[3]);
+        gasQualObj.add(entry.getKey(), nodeGQ);
+      }
+      json.add("gasQuality_ISO6976", gasQualObj);
+    }
+
+    // Oil quality (TVP / RVP per ASTM D6377)
+    if (!nodeOilQuality.isEmpty()) {
+      JsonObject oilQualObj = new JsonObject();
+      for (Map.Entry<String, double[]> entry : nodeOilQuality.entrySet()) {
+        double[] q = entry.getValue();
+        JsonObject nodeOQ = new JsonObject();
+        nodeOQ.addProperty("tvp_bara", q[0]);
+        nodeOQ.addProperty("rvp_bara", q[1]);
+        nodeOQ.addProperty("vpcr4_bara", q[2]);
+        oilQualObj.add(entry.getKey(), nodeOQ);
+      }
+      json.add("oilQuality_ASTM_D6377", oilQualObj);
+    }
+
+    // Constraint violations
+    if (!constraintViolations.isEmpty()) {
+      JsonArray constrArray = new JsonArray();
+      for (String v : constraintViolations) {
+        constrArray.add(v);
+      }
+      json.add("constraintViolations", constrArray);
+    }
+
+    // Fuel gas consumption
+    if (totalFuelGasRate > 0) {
+      JsonObject fuelObj = new JsonObject();
+      fuelObj.addProperty("heatRate_kJperkWh", fuelGasHeatRate);
+      fuelObj.addProperty("totalFuelGas_kghr", totalFuelGasRate * 3600.0);
+      fuelObj.addProperty("fuelGasPercentage", getFuelGasPercentage());
+      json.add("fuelGasConsumption", fuelObj);
     }
 
     // Loops
