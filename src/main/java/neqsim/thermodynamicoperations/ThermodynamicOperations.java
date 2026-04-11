@@ -399,6 +399,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Solve simultaneous chemical and phase equilibrium at constant T, P using the modified RAND
+   * (non-stoichiometric) method.
+   *
+   * <p>
+   * The method minimizes total Gibbs energy subject to element balance constraints without
+   * requiring explicit reaction stoichiometry. It automatically determines the number of
+   * independent reactions from the formula matrix (element-component mapping) and handles
+   * single-phase chemical equilibrium, VLE, and VLLE with simultaneous reactions in all phases.
+   * </p>
+   *
+   * <p>
+   * If no element data is available for the components (no independent reactions detected), the
+   * method falls back to a standard TP flash.
+   * </p>
+   */
+  public void reactiveTPflash() {
+    operation =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash(system);
+    getOperation().run();
+  }
+
+  /**
    * <p>
    * PHflash.
    * </p>
