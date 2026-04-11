@@ -131,6 +131,16 @@ public class WellFlow extends TwoPortEquipment {
   boolean useWellProductionIndex = false;
   boolean calcpressure = true;
 
+  /**
+   * Flow direction mode for the well.
+   */
+  public enum FlowMode {
+    /** Standard production mode (fluid flows from reservoir to wellbore). */
+    PRODUCTION,
+    /** Injection mode (fluid flows from wellbore to reservoir). */
+    INJECTION
+  }
+
   /** Inflow performance models supported by the well. */
   public enum InflowPerformanceModel {
     /** Constant production index. */
@@ -162,9 +172,11 @@ public class WellFlow extends TwoPortEquipment {
   // Multi-layer support
   private transient List<ReservoirLayer> layers = new ArrayList<>();
   private boolean isMultiLayer = false;
+  private FlowMode flowMode = FlowMode.PRODUCTION;
+  private String targetZoneName = null;
 
   /**
-   * Represents a single reservoir layer for commingled well production.
+   * Represents a single reservoir layer for commingled well production or injection.
    */
   public static class ReservoirLayer {
     /** Layer name. */
@@ -173,10 +185,16 @@ public class WellFlow extends TwoPortEquipment {
     public StreamInterface stream;
     /** Reservoir pressure for this layer (bara). */
     public double reservoirPressure;
-    /** Productivity index for this layer. */
+    /** Productivity/Injectivity index for this layer. */
     public double productivityIndex;
     /** Calculated flow rate from this layer. */
     public double calculatedRate;
+    /** Fracture pressure for this layer (bara). -1 means not set. */
+    public double fracturePressure = -1.0;
+    /** Stress contrast at caprock/barrier boundary (bar). */
+    public double barrierStressContrast = 0.0;
+    /** Whether this is the target zone for injection. */
+    public boolean isTargetZone = false;
 
     /**
      * Create a reservoir layer.
@@ -192,6 +210,69 @@ public class WellFlow extends TwoPortEquipment {
       this.stream = stream;
       this.reservoirPressure = reservoirPressure;
       this.productivityIndex = pi;
+    }
+
+    /**
+     * Set the fracture pressure for this layer.
+     *
+     * @param pressure fracture pressure
+     * @param unit pressure unit ("bara", "psia")
+     */
+    public void setFracturePressure(double pressure, String unit) {
+      if ("psia".equalsIgnoreCase(unit)) {
+        this.fracturePressure = pressure * 0.0689476;
+      } else {
+        this.fracturePressure = pressure;
+      }
+    }
+
+    /**
+     * Set the stress contrast at the barrier/caprock boundary of this layer.
+     *
+     * @param contrast stress contrast value
+     * @param unit stress unit ("bar", "psi", "MPa")
+     */
+    public void setBarrierStressContrast(double contrast, String unit) {
+      if ("psi".equalsIgnoreCase(unit)) {
+        this.barrierStressContrast = contrast * 0.0689476;
+      } else if ("MPa".equalsIgnoreCase(unit)) {
+        this.barrierStressContrast = contrast * 10.0;
+      } else {
+        this.barrierStressContrast = contrast;
+      }
+    }
+
+    /**
+     * Check whether an induced fracture at the given BHP would be contained within this zone.
+     *
+     * <p>
+     * Containment condition: net pressure must be below the stress contrast at zone boundary plus
+     * any tensile strength of the barrier rock.
+     * </p>
+     *
+     * @param bhp bottom-hole pressure (bara)
+     * @return true if fracture is expected to remain contained
+     */
+    public boolean isFractureContained(double bhp) {
+      if (fracturePressure < 0) {
+        return true; // No fracture data set - assume contained
+      }
+      double netPressure = bhp - fracturePressure;
+      return netPressure < barrierStressContrast;
+    }
+
+    /**
+     * Get the fracture containment safety margin at the given BHP.
+     *
+     * @param bhp bottom-hole pressure (bara)
+     * @return margin (bar); positive means contained, negative means breach risk
+     */
+    public double getFractureContainmentMargin(double bhp) {
+      if (fracturePressure < 0) {
+        return Double.MAX_VALUE;
+      }
+      double netPressure = bhp - fracturePressure;
+      return barrierStressContrast - netPressure;
     }
   }
 
@@ -223,6 +304,134 @@ public class WellFlow extends TwoPortEquipment {
   public void addLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
     layers.add(new ReservoirLayer(name, stream, reservoirPressure, pi));
     isMultiLayer = true;
+  }
+
+  /**
+   * Add an injection zone with fracture pressure limit.
+   *
+   * <p>
+   * For injection wells, each zone has a reservoir pressure, injectivity index, and a fracture
+   * pressure that limits the maximum allowable BHP. The injectivity index follows: q_i = II_i *
+   * (Pwf - Pres_i)
+   * </p>
+   *
+   * @param name zone identifier
+   * @param zoneFluid stream representing the zone fluid
+   * @param reservoirPressure zone reservoir pressure (bara)
+   * @param injectivityIndex zone injectivity index (Sm3/day/bar for liquid, Sm3/day/bar² for gas)
+   * @param fracturePressure zone fracture pressure (bara)
+   */
+  public void addInjectionZone(String name, StreamInterface zoneFluid, double reservoirPressure,
+      double injectivityIndex, double fracturePressure) {
+    ReservoirLayer layer = new ReservoirLayer(name, zoneFluid, reservoirPressure, injectivityIndex);
+    layer.fracturePressure = fracturePressure;
+    layers.add(layer);
+    isMultiLayer = true;
+    flowMode = FlowMode.INJECTION;
+  }
+
+  /**
+   * Set the flow mode (production or injection).
+   *
+   * @param mode flow mode
+   */
+  public void setFlowMode(FlowMode mode) {
+    this.flowMode = mode;
+  }
+
+  /**
+   * Get the current flow mode.
+   *
+   * @return current flow mode
+   */
+  public FlowMode getFlowMode() {
+    return flowMode;
+  }
+
+  /**
+   * Set the name of the target zone for injection efficiency calculation.
+   *
+   * @param name target zone name
+   */
+  public void setTargetZone(String name) {
+    this.targetZoneName = name;
+    for (ReservoirLayer layer : layers) {
+      layer.isTargetZone = layer.name.equals(name);
+    }
+  }
+
+  /**
+   * Get allocation fractions showing how injected fluid distributes across zones.
+   *
+   * @return array of zone allocation fractions (sum to 1.0)
+   */
+  public double[] getZoneAllocationFractions() {
+    if (layers.isEmpty()) {
+      return new double[0];
+    }
+    double totalRate = 0.0;
+    for (ReservoirLayer layer : layers) {
+      totalRate += Math.abs(layer.calculatedRate);
+    }
+    double[] fractions = new double[layers.size()];
+    for (int i = 0; i < layers.size(); i++) {
+      fractions[i] = totalRate > 0 ? Math.abs(layers.get(i).calculatedRate) / totalRate : 0.0;
+    }
+    return fractions;
+  }
+
+  /**
+   * Check fracture risk for each zone at the current BHP.
+   *
+   * @return array of booleans; true if BHP exceeds fracture pressure for that zone
+   */
+  public boolean[] getZoneFractureRisk() {
+    boolean[] risks = new boolean[layers.size()];
+    double bhp = pressureOut;
+    for (int i = 0; i < layers.size(); i++) {
+      ReservoirLayer layer = layers.get(i);
+      if (layer.fracturePressure > 0) {
+        risks[i] = bhp > layer.fracturePressure;
+      }
+    }
+    return risks;
+  }
+
+  /**
+   * Get injection efficiency: fraction of total rate entering the target zone.
+   *
+   * @return injection efficiency (0.0 to 1.0); 1.0 means all fluid enters target
+   */
+  public double getInjectionEfficiency() {
+    double totalRate = 0.0;
+    double targetRate = 0.0;
+    for (ReservoirLayer layer : layers) {
+      double absRate = Math.abs(layer.calculatedRate);
+      totalRate += absRate;
+      if (layer.isTargetZone) {
+        targetRate += absRate;
+      }
+    }
+    return totalRate > 0 ? targetRate / totalRate : 0.0;
+  }
+
+  /**
+   * Get total out-of-zone injection rate (sum of rates into non-target zones).
+   *
+   * @param unit flow rate unit ("Sm3/day", "MSm3/day")
+   * @return out-of-zone rate
+   */
+  public double getOutOfZoneRate(String unit) {
+    double oozRate = 0.0;
+    for (ReservoirLayer layer : layers) {
+      if (!layer.isTargetZone && layer.calculatedRate > 0) {
+        oozRate += layer.calculatedRate;
+      }
+    }
+    if ("MSm3/day".equalsIgnoreCase(unit)) {
+      oozRate /= 1.0e6;
+    }
+    return oozRate;
   }
 
   /**
@@ -380,11 +589,12 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Run multi-layer commingled production calculation.
+   * Run multi-layer commingled production or injection calculation.
    *
    * <p>
    * For commingled wells, the flow from each layer is calculated based on the common bottom-hole
-   * pressure. The total flow is the sum of individual layer contributions.
+   * pressure. In production mode: q = PI * (Pres² - Pwf²). In injection mode: q = II * (Pwf - Pres)
+   * for liquid or q = II * (Pwf² - Pres²) for gas.
    * </p>
    *
    * @param id calculation UUID
@@ -397,21 +607,63 @@ public class WellFlow extends TwoPortEquipment {
 
     double pwf = pressureOut; // Common bottom-hole pressure
 
-    // Calculate flow from each layer
+    if (flowMode == FlowMode.INJECTION) {
+      runMultiLayerInjection(pwf);
+    } else {
+      runMultiLayerProduction(pwf);
+    }
+  }
+
+  /**
+   * Run multi-layer production calculation.
+   *
+   * @param pwf common bottom-hole pressure (bara)
+   */
+  private void runMultiLayerProduction(double pwf) {
     double totalFlow = 0.0;
     for (ReservoirLayer layer : layers) {
       double presRes = layer.reservoirPressure;
       double pi = layer.productivityIndex;
-      // Using production index equation: q = PI * (Pres² - Pwf²)
       double layerFlow = pi * (Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0));
       if (layerFlow < 0) {
-        layerFlow = 0.0; // Layer may not contribute if PWF > reservoir pressure
+        layerFlow = 0.0;
       }
       layer.calculatedRate = layerFlow;
       totalFlow += layerFlow;
     }
 
-    // Set up output stream with blended composition (using first layer as base)
+    thermoSystem = layers.get(0).stream.getThermoSystem().clone();
+    thermoSystem.setPressure(pwf, "bara");
+    outStream.setThermoSystem(thermoSystem);
+    outStream.setFlowRate(totalFlow, "MSm3/day");
+    outStream.run();
+  }
+
+  /**
+   * Run multi-layer injection allocation calculation.
+   *
+   * <p>
+   * For injection, fluid enters the wellbore from the surface and distributes across open zones
+   * based on each zone's injectivity and pressure differential. The injection rate into zone i is:
+   * q_i = II_i * (Pwf² - Pres_i²) for gas, or q_i = II_i * (Pwf - Pres_i) for liquid.
+   * </p>
+   *
+   * @param pwf common bottom-hole pressure (bara)
+   */
+  private void runMultiLayerInjection(double pwf) {
+    double totalFlow = 0.0;
+    for (ReservoirLayer layer : layers) {
+      double presRes = layer.reservoirPressure;
+      double ii = layer.productivityIndex;
+      // Injection: flow from wellbore into reservoir (Pwf > Pres)
+      double layerFlow = ii * (Math.pow(pwf, 2.0) - Math.pow(presRes, 2.0));
+      if (layerFlow < 0) {
+        layerFlow = 0.0; // Zone not accepting fluid if Pres > Pwf
+      }
+      layer.calculatedRate = layerFlow;
+      totalFlow += layerFlow;
+    }
+
     thermoSystem = layers.get(0).stream.getThermoSystem().clone();
     thermoSystem.setPressure(pwf, "bara");
     outStream.setThermoSystem(thermoSystem);
