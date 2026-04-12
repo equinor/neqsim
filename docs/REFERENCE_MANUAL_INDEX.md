@@ -235,6 +235,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Design       | [docs/process/process_design_guide.md](process/process_design_guide)                           | Process design guide                      |
 | Design Framework     | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK)                                   | Automated design & optimization framework |
 | Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Optimization implementation status        |
+| Pipeline Network Optimization | [docs/process/pipeline_network_optimization.md](process/pipeline_network_optimization) | NLP optimizer, sparse solver, Pareto, benchmarks |
 
 ### Chapter 12: Process Systems & Models
 
