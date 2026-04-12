@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemInterface;
  * <li>For each new trial phase found to be unstable, a homogeneous CE is solved again to bring it
  * to the chemical equilibrium surface.</li>
  * </ol>
- * </p>
  *
  * <p>
  * The key rationale is that the tangent plane condition for reactive stability uses the element
@@ -37,7 +36,6 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Ascani, Sadowski, Held (2023) Molecules 28, 1768</li>
  * <li>Tsanas, Stenby, Yan (2017) Ind. Eng. Chem. Res. 56, 11983-11995</li>
  * </ul>
- * </p>
  *
  * @author copilot
  * @version 1.0
@@ -104,7 +102,6 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
    * <li>Check if any trial gives TPD &lt; 0 (unstable)</li>
    * <li>For each unstable trial, solve homogeneous CE to find the equilibrated trial</li>
    * </ol>
-   * </p>
    *
    * @return true if the system is unstable (a new phase should be added)
    */

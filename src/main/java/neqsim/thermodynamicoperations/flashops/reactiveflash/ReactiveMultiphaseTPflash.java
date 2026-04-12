@@ -32,7 +32,6 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * <li><b>Phase removal:</b> Remove phases with negligible phase fractions.</li>
  * <li><b>Convergence check:</b> Verify all equilibrium conditions are satisfied.</li>
  * </ol>
- * </p>
  *
  * <p>
  * The approach is non-stoichiometric: no explicit reactions or reaction extents are needed. Instead
@@ -48,7 +47,6 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * <li>Reactive azeotropes</li>
  * <li>Solid precipitation with reactions</li>
  * </ul>
- * </p>
  *
  * <p>
  * References:
@@ -61,7 +59,6 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * <li>Paterson, Michelsen, Stenby, Yan (2018) SPE Journal 23(03), 609-622</li>
  * <li>Ascani, Sadowski, Held (2023) Molecules 28, 1768</li>
  * </ul>
- * </p>
  *
  * @author copilot
  * @version 1.0

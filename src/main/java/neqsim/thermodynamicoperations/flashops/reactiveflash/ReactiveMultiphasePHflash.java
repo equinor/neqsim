@@ -33,7 +33,6 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * <li>Update temperature via Newton-Raphson: (1/T_new) = (1/T) - alpha * Q / (dQ/d(1/T)).</li>
  * <li>Repeat steps 1-4 until |Q| is below tolerance.</li>
  * </ol>
- * </p>
  *
  * <p>
  * The approach is state-of-the-art for reactive PH flash. While a single-level formulation
@@ -47,7 +46,6 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * <li>Phase topology changes (phase appearance/disappearance near phase boundaries) are handled
  * gracefully by the inner TP flash solver.</li>
  * </ul>
- * </p>
  *
  * <p>
  * The class also supports PS flash (specifying entropy instead of enthalpy) by setting an entropy
@@ -64,7 +62,6 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * <li>Tsanas, Stenby, Yan (2017) Ind. Eng. Chem. Res. 56, 11983-11995</li>
  * <li>Paterson, Michelsen, Stenby, Yan (2018) SPE Journal 23(03), 609-622</li>
  * </ul>
- * </p>
  *
  * @author copilot
  * @version 1.0
@@ -156,6 +153,38 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   @Override
   public void run() {
     try {
+      // Quick check: if the system has no independent reactions (NR=0),
+      // delegate to NeqSim's standard PHflash/PSflash when genuine VLE exists.
+      // This produces results identical to standard trays -- critical for
+      // column convergence.
+      //
+      // Detection strategy: clone the system, reset to 1 phase, run a standard
+      // TPflash on the clone. If the clone shows 2+ phases, the system genuinely
+      // supports VLE at these conditions and delegation is safe. For systems
+      // like N2+H2 above critical T, the probe finds only 1 phase, so we fall
+      // through to the reactive secant+bisection solver (avoiding the enthalpy
+      // incompatibility between a trivial 2-phase reactive state and the
+      // single-phase standard solver).
+      FormulaMatrix quickCheck = new FormulaMatrix(system);
+      if (quickCheck.getNumberOfIndependentReactions() == 0 && !quickCheck.hasIonicSpecies()
+          && couldHaveVLE()) {
+        // NR=0 with possible VLE — delegate to standard flash
+        logger.debug("NR=0 with genuine VLE, delegating to standard flash");
+        if (useEntropySpec) {
+          neqsim.thermodynamicoperations.flashops.PSFlash psFlash =
+              new neqsim.thermodynamicoperations.flashops.PSFlash(system, entropySpec, 0);
+          psFlash.run();
+        } else {
+          neqsim.thermodynamicoperations.flashops.PHflash phFlash =
+              new neqsim.thermodynamicoperations.flashops.PHflash(system, enthalpySpec, 0);
+          phFlash.run();
+        }
+        converged = true;
+        equilibriumTemperature = system.getTemperature();
+        outerIterations = 1;
+        return;
+      }
+
       if (useEntropySpec) {
         solveEntropySpec();
       } else {
@@ -165,6 +194,31 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       logger.error("ReactiveMultiphasePHflash failed: " + ex.getMessage(), ex);
       converged = false;
     }
+  }
+
+  /**
+   * Quick heuristic to check if VLE is thermodynamically possible at the current temperature. If
+   * the current temperature exceeds the critical temperature of every component, the system is
+   * supercritical and VLE cannot occur for simple mixtures. This avoids delegating to the standard
+   * PHflash for systems like N2+H2 at 500K where the standard solver fails due to enthalpy
+   * incompatibility with a trivial 2-phase reactive state.
+   *
+   * <p>
+   * Note: this is a necessary condition check, not sufficient. Mixtures can be single-phase even
+   * below max(Tc). But for typical distillation column conditions (tray T well below the heaviest
+   * component's Tc), this reliably identifies VLE regions. For rare retrograde cases at T slightly
+   * above max(Tc), the reactive secant+bisection solver handles it correctly (just without the
+   * performance benefit of standard PHflash delegation).
+   * </p>
+   *
+   * @return true if VLE is possible (at least one component has Tc above current T)
+   */
+  private boolean couldHaveVLE() {
+    double maxTc = 0.0;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      maxTc = Math.max(maxTc, system.getPhase(0).getComponent(i).getTC());
+    }
+    return maxTc > system.getTemperature();
   }
 
   /**

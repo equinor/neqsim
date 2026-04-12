@@ -157,8 +157,15 @@ public class ReactiveDistillationTest {
         .println("Reactive column: gas=" + gasFlow + " liq=" + liqFlow + " total=" + totalOut);
 
     double massBalanceError = Math.abs(totalOut - 1000.0) / 1000.0;
-    assertTrue(massBalanceError < 0.15, "Mass balance error should be < 15% for NR=0 system, got "
-        + (massBalanceError * 100) + "%");
+    assertTrue(massBalanceError < 0.05,
+        "Mass balance error should be < 5% for NR=0 system, got " + (massBalanceError * 100) + "%");
+
+    // For NR=0, reactive column should produce results identical to the standard column
+    // because the PHflash delegation bypasses the reactive solver entirely
+    assertEquals(stdGas, gasFlow, 0.01,
+        "NR=0 reactive column gas flow should match standard column");
+    assertEquals(stdLiq, liqFlow, 0.01,
+        "NR=0 reactive column liquid flow should match standard column");
   }
 
   /**
@@ -260,10 +267,11 @@ public class ReactiveDistillationTest {
     double rxnGasTemp = rxnColumn.getGasOutStream().getTemperature();
     double rxnLiqTemp = rxnColumn.getLiquidOutStream().getTemperature();
 
-    // Temperatures should be similar (within 5K) since no reactions occur
-    assertEquals(stdGasTemp, rxnGasTemp, 5.0,
+    // With NR=0 PHflash delegation, reactive column delegates to standard PHflash
+    // so results should be identical
+    assertEquals(stdGasTemp, rxnGasTemp, 0.01,
         "Gas outlet temperatures should match for non-reactive system");
-    assertEquals(stdLiqTemp, rxnLiqTemp, 5.0,
+    assertEquals(stdLiqTemp, rxnLiqTemp, 0.01,
         "Liquid outlet temperatures should match for non-reactive system");
   }
 
@@ -301,5 +309,117 @@ public class ReactiveDistillationTest {
 
     assertNotNull(column.getGasOutStream(), "Should have gas out stream");
     assertNotNull(column.getLiquidOutStream(), "Should have liquid out stream");
+  }
+
+  /**
+   * Benchmark: verify that a single reactive tray at specified T,P produces the same chemical
+   * equilibrium composition as a standalone reactive TP flash at the same conditions. We run the
+   * tray first (which does a PH flash — finding T from enthalpy), then do a standalone reactive TP
+   * flash at the tray's converged temperature. This verifies the tray's internal flash is
+   * consistent with the standalone solver.
+   */
+  @Test
+  public void testReactiveTrayMatchesStandaloneFlash() {
+    double tempC = 400.0;
+    double pressBara = 10.0;
+
+    // WGS feed: CO + H2O -> CO2 + H2
+    SystemInterface fluid = new SystemSrkEos(273.15 + tempC, pressBara);
+    fluid.addComponent("CO", 0.40);
+    fluid.addComponent("water", 0.40);
+    fluid.addComponent("CO2", 0.10);
+    fluid.addComponent("hydrogen", 0.10);
+    fluid.setMixingRule("classic");
+
+    // --- Reactive tray (does PH flash internally) ---
+    Stream trayFeed = new Stream("tray feed", fluid);
+    trayFeed.setFlowRate(100.0, "kg/hr");
+    trayFeed.setTemperature(tempC, "C");
+    trayFeed.setPressure(pressBara, "bara");
+    trayFeed.run();
+
+    ReactiveTray tray = new ReactiveTray("WGS tray");
+    tray.addStream(trayFeed);
+    tray.run();
+
+    SystemInterface trayResult = tray.getThermoSystem();
+    double trayTempK = trayResult.getTemperature();
+
+    double trayCO2 = 0.0;
+    double trayH2 = 0.0;
+    for (int p = 0; p < trayResult.getNumberOfPhases(); p++) {
+      double beta = trayResult.getPhase(p).getBeta();
+      trayCO2 += beta * trayResult.getPhase(p).getComponent("CO2").getx();
+      trayH2 += beta * trayResult.getPhase(p).getComponent("hydrogen").getx();
+    }
+
+    // --- Standalone reactive TP flash at the tray's converged temperature ---
+    SystemInterface flashFluid = fluid.clone();
+    flashFluid.setTemperature(trayTempK);
+    ThermodynamicOperations flashOps = new ThermodynamicOperations(flashFluid);
+    flashOps.reactiveTPflash();
+    flashFluid.initProperties();
+
+    double flashCO2 = 0.0;
+    double flashH2 = 0.0;
+    for (int p = 0; p < flashFluid.getNumberOfPhases(); p++) {
+      double beta = flashFluid.getPhase(p).getBeta();
+      flashCO2 += beta * flashFluid.getPhase(p).getComponent("CO2").getx();
+      flashH2 += beta * flashFluid.getPhase(p).getComponent("hydrogen").getx();
+    }
+
+    // Both should show reaction products (CO2 and H2 above feed levels)
+    assertTrue(trayCO2 > 0.10,
+        "CO2 from tray should be enriched above feed (0.10), got " + trayCO2);
+    assertTrue(trayH2 > 0.10, "H2 from tray should be enriched above feed (0.10), got " + trayH2);
+
+    // Compositions should match within 5% relative (tray PH flash vs standalone TP flash
+    // may have slightly different convergence since PH flash iterates on T)
+    assertEquals(flashCO2, trayCO2, flashCO2 * 0.05,
+        "CO2 from reactive tray should match standalone reactive TP flash");
+    assertEquals(flashH2, trayH2, flashH2 * 0.05,
+        "H2 from reactive tray should match standalone reactive TP flash");
+  }
+
+  /**
+   * Benchmark: verify that a reactive distillation column with WGS (CO + H2O -> CO2 + H2) runs and
+   * produces measurable reaction products. The reactive PH flash (secant+bisection for NR &gt; 0)
+   * handles the simultaneous chemical and phase equilibrium on each tray. Mass balance for reactive
+   * systems is currently less tight than for NR=0 due to the iterative T-loop algorithm.
+   */
+  @Test
+  public void testReactiveColumnWGSProducesProducts() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 250.0, 10.0);
+    fluid.addComponent("CO", 0.40);
+    fluid.addComponent("water", 0.40);
+    fluid.addComponent("CO2", 0.10);
+    fluid.addComponent("hydrogen", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("WGS feed", fluid);
+    feed.setFlowRate(500.0, "kg/hr");
+    feed.setTemperature(250.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("WGS Column", 2, true, false);
+    column.setReactive(true);
+    column.addFeedStream(feed, 2);
+    column.getReboiler().setOutTemperature(273.15 + 350.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(100);
+
+    // Should run without exception
+    column.run();
+
+    // Verify the column produced output
+    assertNotNull(column.getGasOutStream(), "Should have gas out stream");
+
+    // Check that reaction happened: H2 should be enriched in the gas product
+    SystemInterface gasOut = column.getGasOutStream().getFluid();
+    double h2InGas = gasOut.getPhase(0).getComponent("hydrogen").getx();
+    assertTrue(h2InGas > 0.10,
+        "H2 in gas product should be enriched above feed (0.10), got " + h2InGas);
   }
 }

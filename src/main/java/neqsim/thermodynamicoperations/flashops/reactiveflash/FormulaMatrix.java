@@ -33,7 +33,6 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Smith, Missen (1982) Chemical Reaction Equilibrium Analysis, Wiley</li>
  * <li>Tsanas, Stenby, Yan (2017) Ind. Eng. Chem. Res. 56, 11983-11995</li>
  * </ul>
- * </p>
  *
  * @author copilot
  * @version 1.0

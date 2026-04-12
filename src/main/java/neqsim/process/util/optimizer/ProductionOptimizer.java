@@ -2983,6 +2983,10 @@ public class ProductionOptimizer {
   /**
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a
    * concise summary (max rate, limiting equipment, utilization margin).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to vary
+   * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
   public OptimizationSummary quickOptimize(ProcessSystem process, StreamInterface feedStream) {
     return quickOptimize(process, feedStream, "kg/hr", Collections.emptyList());

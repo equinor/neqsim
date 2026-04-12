@@ -34,7 +34,6 @@
  * <li>Paterson, Michelsen, Stenby, Yan (2018) SPE Journal 23(03), 609-622</li>
  * <li>Ascani, Sadowski, Held (2023) Molecules 28, 1768</li>
  * </ul>
- * </p>
  *
  * @author copilot
  * @version 1.0
