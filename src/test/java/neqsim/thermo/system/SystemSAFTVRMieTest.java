@@ -3770,4 +3770,83 @@ public class SystemSAFTVRMieTest {
 
     assertTrue(true, "Diagnostic test completed");
   }
+
+  /**
+   * Test methane-water binary system with association. At typical gas processing conditions (e.g.
+   * 300K, 100 bar), this should produce two phases: a gas phase dominated by methane and an aqueous
+   * phase dominated by water.
+   */
+  @Test
+  public void testMethaneWaterBinary() {
+    double T = 300.0; // K
+    double P = 100.0; // bar
+
+    SystemInterface fluid = new SystemSAFTVRMie(T, P);
+    fluid.addComponent("methane", 0.95);
+    fluid.addComponent("water", 0.05);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      fail("TPflash failed for CH4+H2O at " + T + "K, " + P + " bar: " + e.getMessage());
+    }
+
+    fluid.initProperties();
+    int nPhases = fluid.getNumberOfPhases();
+
+    System.out.println("=== Methane-Water Binary: T=" + T + "K, P=" + P + " bar ===");
+    System.out.println("Number of phases: " + nPhases);
+
+    for (int ph = 0; ph < nPhases; ph++) {
+      PhaseInterface phase = fluid.getPhase(ph);
+      double xCH4 = phase.getComponent("methane").getx();
+      double xH2O = phase.getComponent("water").getx();
+      double density = phase.getDensity("kg/m3");
+      double Z = phase.getZ();
+      System.out.printf("Phase %d (%s): x_CH4=%.6f x_H2O=%.6f rho=%.2f kg/m3 Z=%.4f%n", ph,
+          phase.getType(), xCH4, xH2O, density, Z);
+
+      if (phase instanceof PhaseSAFTVRMie) {
+        PhaseSAFTVRMie saft = (PhaseSAFTVRMie) phase;
+        System.out.printf("  F_HC=%.6e F_DISP=%.6e F_ASSOC=%.6e%n", saft.F_HC_SAFT(),
+            saft.F_DISP_SAFT(), saft.F_ASSOC_SAFT());
+        System.out.printf("  hcpatot=%.6f useASSOC=%d totalSites=%d%n", saft.getHcpatot(),
+            saft.getUseASSOC(), saft.getTotalNumberOfAssociationSites());
+
+        // Print XA for water (component 1)
+        ComponentSAFTVRMie waterComp = (ComponentSAFTVRMie) saft.getComponent("water");
+        double[] xa = waterComp.getXsiteAssoc();
+        if (xa != null && xa.length > 0) {
+          StringBuilder sb = new StringBuilder("  Water XA:");
+          for (int s = 0; s < xa.length; s++) {
+            sb.append(String.format(" [%d]=%.6f", s, xa[s]));
+          }
+          System.out.println(sb.toString());
+        }
+      }
+    }
+
+    assertTrue(nPhases >= 2, "Should have at least 2 phases (gas + aqueous)");
+
+    // Check that compositions are physically reasonable
+    // Gas phase should be CH4-rich, aqueous phase should be water-rich
+    boolean foundGasRich = false;
+    boolean foundWaterRich = false;
+    for (int ph = 0; ph < nPhases; ph++) {
+      PhaseInterface phase = fluid.getPhase(ph);
+      double xCH4 = phase.getComponent("methane").getx();
+      double xH2O = phase.getComponent("water").getx();
+      if (xCH4 > 0.9) {
+        foundGasRich = true;
+      }
+      if (xH2O > 0.9) {
+        foundWaterRich = true;
+      }
+    }
+    assertTrue(foundGasRich, "Should find a CH4-rich gas phase");
+    assertTrue(foundWaterRich, "Should find a water-rich aqueous phase");
+  }
 }
