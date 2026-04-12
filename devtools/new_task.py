@@ -629,7 +629,9 @@ plt.show()
 
 When you run `python step3_report/generate_report.py`, the Results and Validation
 sections are auto-populated from this file. Figures in `figures/` are also embedded.
-Equations from results.json are rendered with KaTeX in HTML and as images in Word.
+Equations from results.json are rendered with KaTeX in HTML and as native OMML
+equations in Word (editable, scalable, matching document font). Falls back to
+matplotlib images if latex2mathml/lxml/MML2OMML.XSL are unavailable.
 
 ---
 
@@ -970,14 +972,14 @@ GENERATE_REPORT = '''"""
 generate_report.py - Generate Word and HTML reports for this task.
 
 Usage:
-    pip install python-docx matplotlib   (one-time setup)
+    pip install python-docx matplotlib latex2mathml lxml   (one-time setup)
     python step3_report/generate_report.py
 
 This script AUTO-READS data from the task folder:
   - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
   - results.json (task root)               -> populates Results + Validation
   - figures/*.png                          -> embeds all plots
-  - results.json "equations"               -> renders equations (KaTeX/images)
+  - results.json "equations"               -> renders equations (native OMML / KaTeX / images)
   - results.json "figure_captions"         -> custom captions for figures
 
 It produces:
@@ -1006,7 +1008,7 @@ except ImportError:
     print("ERROR: python-docx not installed. Run: pip install python-docx")
     sys.exit(1)
 
-# Optional: matplotlib for rendering equations to images (Word report)
+# Optional: matplotlib for rendering equations to images (Word report fallback)
 try:
     import matplotlib
     matplotlib.use("Agg")
@@ -1014,6 +1016,51 @@ try:
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
+
+# ── OMML equation support (LaTeX → MathML → OMML for native Word equations) ──
+_omml_transform = None
+HAS_OMML = False
+
+def _init_omml():
+    """Lazily load the MML2OMML XSLT transform for converting MathML to OMML."""
+    global _omml_transform, HAS_OMML
+    if _omml_transform is not None:
+        return True
+    try:
+        from lxml import etree
+        import latex2mathml.converter  # noqa: F401
+    except ImportError:
+        return False
+    xsl_candidates = [
+        os.path.expandvars(r'%ProgramFiles%\Microsoft Office\root\Office16\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles(x86)%\Microsoft Office\root\Office16\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles%\Microsoft Office\Office16\MML2OMML.XSL'),
+    ]
+    for path in xsl_candidates:
+        if os.path.exists(path):
+            xslt_doc = etree.parse(path)
+            _omml_transform = etree.XSLT(xslt_doc)
+            HAS_OMML = True
+            return True
+    return False
+
+def _latex_to_omml(latex_str):
+    """Convert a LaTeX math string to an OMML XML element for Word embedding.
+
+    Returns an lxml Element (m:oMath) on success, or None if the pipeline
+    is unavailable or the conversion fails for this particular expression.
+    """
+    if not _init_omml():
+        return None
+    try:
+        import latex2mathml.converter
+        from lxml import etree
+        mathml = latex2mathml.converter.convert(latex_str)
+        tree = etree.fromstring(mathml.encode('utf-8'))
+        omml = _omml_transform(tree)
+        return omml.getroot()
+    except Exception:
+        return None
 
 # ── Paths ────────────────────────────────────────────────
 TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1297,8 +1344,8 @@ def get_equations(results):
 def render_equation_to_image(latex_str, output_path):
     """Render a LaTeX equation to a high-quality PNG image using matplotlib.
 
-    Uses display-style math, large font, and 300 DPI for crisp rendering
-    in Word documents. Returns True if the image was created, False otherwise.
+    This is a FALLBACK when the OMML pipeline is unavailable.
+    Returns True if the image was created, False otherwise.
     """
     if not HAS_MATPLOTLIB:
         return False
@@ -1317,6 +1364,81 @@ def render_equation_to_image(latex_str, output_path):
     except Exception as e:
         print("  Warning: could not render equation: {}".format(e))
         return False
+
+
+def _add_display_equation_to_doc(doc, latex_str, eq_number=None):
+    """Add a display equation to a Word document using native OMML if available.
+
+    Tries the OMML pipeline first (produces editable, scalable equations that
+    match the document font). Falls back to a matplotlib image, then plain
+    italic text.
+
+    Args:
+        doc: python-docx Document object.
+        latex_str: LaTeX math string (without delimiters).
+        eq_number: Optional equation number for right-aligned numbering.
+    """
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    omml = _latex_to_omml(latex_str)
+    if omml is not None:
+        p._element.append(omml)
+    else:
+        # Fallback: matplotlib image
+        eq_img_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "_eq_images")
+        if not os.path.exists(eq_img_dir):
+            os.makedirs(eq_img_dir)
+        import hashlib
+        eq_hash = hashlib.md5(latex_str.encode()).hexdigest()[:8]
+        eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_hash))
+        if render_equation_to_image(latex_str, eq_img_path):
+            doc.add_picture(eq_img_path, width=Inches(5.5))
+            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        else:
+            # Last resort: italic Cambria Math text
+            run = p.add_run(latex_str)
+            run.italic = True
+            run.font.name = 'Cambria Math'
+            run.font.size = Pt(11)
+
+    if eq_number is not None:
+        run = p.add_run("    ({})".format(eq_number))
+        run.font.size = Pt(10)
+
+
+def _add_inline_math_runs(paragraph, text):
+    """Add text with inline $math$ rendered as native OMML equations.
+
+    Splits text on $...$ delimiters. Math segments become OMML elements;
+    non-math segments become regular text runs.
+    """
+    import re as _re
+    parts = _re.split(r'(?<!\$)(\$(?!\$).+?\$(?!\$))', text)
+    for part in parts:
+        if not part:
+            continue
+        if part.startswith('$') and part.endswith('$') and not part.startswith('$$'):
+            latex = part[1:-1]
+            omml = _latex_to_omml(latex)
+            if omml is not None:
+                paragraph._element.append(omml)
+            else:
+                run = paragraph.add_run(latex)
+                run.italic = True
+                run.font.name = 'Cambria Math'
+        else:
+            # Formatted text with **bold**
+            fmt_parts = _re.split(r'(\*\*.+?\*\*)', part)
+            for fp in fmt_parts:
+                if not fp:
+                    continue
+                if fp.startswith('**') and fp.endswith('**'):
+                    run = paragraph.add_run(fp[2:-2])
+                    run.bold = True
+                else:
+                    paragraph.add_run(fp)
 
 
 def _parse_key_name(key):
@@ -1780,30 +1902,24 @@ def build_word_report(sections, results=None):
             equations = get_equations(results)
             if equations:
                 doc.add_heading("Key Equations", level=2)
-                eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-                if not os.path.exists(eq_img_dir):
-                    os.makedirs(eq_img_dir)
+                # Report OMML status
+                if _init_omml():
+                    print("  [INFO] Native Word equations enabled (LaTeX -> OMML)")
+                else:
+                    print("  [WARN] OMML unavailable; equations as images/text")
                 for eq_idx, eq in enumerate(equations, 1):
                     label = eq.get("label", "Equation {}".format(eq_idx))
                     latex = eq.get("latex", "")
                     if not latex:
                         continue
-                    # Try to render equation as image
-                    eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
-                    if render_equation_to_image(latex, eq_img_path):
-                        doc.add_paragraph("")
-                        doc.add_picture(eq_img_path, width=Inches(5.5))
-                        last_para = doc.paragraphs[-1]
-                        last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption = doc.add_paragraph(
-                            "Equation {}: {}".format(eq_idx, label)
-                        )
-                        caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption.runs[0].font.size = Pt(9)
-                        caption.runs[0].font.italic = True
-                    else:
-                        # Fallback: text representation
-                        doc.add_paragraph("{}: {}".format(label, latex))
+                    # Add label above the equation
+                    label_p = doc.add_paragraph()
+                    label_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run = label_p.add_run("Equation {}: {}".format(eq_idx, label))
+                    run.font.size = Pt(9)
+                    run.font.italic = True
+                    # Add the equation using native OMML (or fallback)
+                    _add_display_equation_to_doc(doc, latex, eq_number=eq_idx)
                     doc.add_paragraph("")
 
     # Save
