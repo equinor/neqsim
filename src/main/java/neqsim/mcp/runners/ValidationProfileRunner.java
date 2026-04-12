@@ -29,7 +29,6 @@ import com.google.gson.JsonParser;
  * <li><b>brazil</b> — Brazil deepwater (ANP, Petrobras N-series)</li>
  * <li><b>generic</b> — International standards only (ISO, API)</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0

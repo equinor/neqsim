@@ -26,7 +26,6 @@ import com.google.gson.JsonParser;
  * <li>Rate limiting to protect compute resources from abuse</li>
  * <li>User/project context for multi-tenant usage</li>
  * </ul>
- * </p>
  *
  * <p>
  * This is an application-level security layer. In production, combine with transport-level security

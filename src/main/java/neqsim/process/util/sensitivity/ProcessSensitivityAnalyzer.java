@@ -35,17 +35,17 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
- * 
+ *
  * // Define what we want to compute
  * analyzer.withInput("feed", "flowRate").withInput("feed", "temperature")
  *     .withOutput("product", "temperature").withOutput("product", "pressure");
- * 
+ *
  * // Compute sensitivities (uses Broyden Jacobian if available)
  * SensitivityMatrix result = analyzer.compute();
- * 
+ *
  * // Query specific sensitivity
  * double dT_dFlow = result.getSensitivity("product.temperature", "feed.flowRate");
  * </pre>
@@ -342,6 +342,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Finds the RecycleController for this process system.
+   *
+   * @return the RecycleController if found, or null if no recycles exist
    */
   private RecycleController findRecycleController() {
     // Look for recycle equipment and get its controller
@@ -363,6 +365,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Creates a RecycleController from recycles in the process.
+   *
+   * @return a new RecycleController initialized with process recycles, or null if none found
    */
   private RecycleController createRecycleController() {
     RecycleController controller = new RecycleController();

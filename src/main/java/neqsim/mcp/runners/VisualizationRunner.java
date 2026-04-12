@@ -27,7 +27,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Compressor map SVG — performance curves with operating point</li>
  * <li>Property comparison — styled HTML table comparing multi-case results</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0

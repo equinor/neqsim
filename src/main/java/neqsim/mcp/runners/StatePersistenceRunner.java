@@ -35,7 +35,6 @@ import com.google.gson.JsonParser;
  * <li>Compare two saved versions (diff)</li>
  * <li>Export session as a standalone shareable JSON</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0
