@@ -85,27 +85,25 @@ industrial validation.
 | `sizeEquipment` | CALCULATION | v1.2 | Quick equipment sizing (separator, compressor) |
 | `compareProcesses` | CALCULATION | v1.2 | Compare process configurations side by side |
 | `generateReport` | ADVISORY | v1.1 | Generate structured engineering reports |
-| `runReservoir` | CALCULATION | v1.1 | Material balance reservoir simulation |
-| `runFieldEconomics` | CALCULATION | v1.1 | NPV/IRR/cash flow with fiscal regimes + decline curves |
-| `manageSession` | EXECUTION | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore) |
-| `solveTask` | EXECUTION | v1.1 | Solve engineering tasks from high-level descriptions |
-| `composeWorkflow` | EXECUTION | v1.1 | Chain simulation steps into multi-domain workflows |
 | `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
 
-Execution tools (`manageSession`, `solveTask`, `composeWorkflow`) may perform
-multi-step or stateful operations and are subject to stricter governance.
-They are not part of the minimal trusted calculation core.
-
-**Note:** `solveTask` is intended for exploratory and automation use cases.
-It should not be used for governed engineering decisions without external validation.
-
 ## Experimental Tools
 
-Functional but interfaces may evolve between minor versions.
+Functional but interfaces may evolve between minor versions. Includes
+high-autonomy execution tools that require external validation and
+domain-specific runners with limited qualification evidence.
+
+`DESKTOP_ENGINEER` only. Blocked in all other modes by code-level
+`enforceAccess()` guards.
 
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
+| `solveTask` | EXECUTION | v1.1 | Autonomous task solver — results require independent engineer review |
+| `composeWorkflow` | EXECUTION | v1.1 | Chain simulation steps into multi-domain workflows |
+| `manageSession` | EXECUTION | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore) |
+| `runReservoir` | CALCULATION | v1.1 | Material balance reservoir simulation |
+| `runFieldEconomics` | CALCULATION | v1.1 | NPV/IRR/cash flow with fiscal regimes + decline curves |
 | `runDynamic` | CALCULATION | v1.1 | Dynamic transient simulation with auto-instrumented controllers |
 | `runBioprocess` | CALCULATION | v1.1 | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
 | `streamSimulation` | PLATFORM | v1.2 | Async simulation with incremental polling |
@@ -113,6 +111,10 @@ Functional but interfaces may evolve between minor versions.
 | `manageSecurity` | PLATFORM | v1.2 | API key management, rate limiting, audit logging |
 | `manageState` | PLATFORM | v1.2 | Persist/restore simulation states across server restarts |
 | `manageValidationProfile` | PLATFORM | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
+
+Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) perform
+multi-step or stateful operations. They are **not part of any governed tier**
+and must not be used for engineering decisions without independent validation.
 
 ## Browsable Resources (Stable)
 
