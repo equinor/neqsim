@@ -8,7 +8,10 @@
  *
  * <ul>
  * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash} —
- * Main entry point for the reactive flash algorithm.</li>
+ * Main entry point for the reactive TP flash algorithm.</li>
+ * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash} —
+ * Reactive PH flash: finds equilibrium temperature given pressure and enthalpy. Also supports PS
+ * (entropy) specification.</li>
  * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ModifiedRANDSolver} — Core
  * Newton-based solver for the modified RAND method.</li>
  * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveStabilityAnalysis} —
