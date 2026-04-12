@@ -434,7 +434,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
 | **Detailed flare modeling** | No radiation / noise model | Source term only |
-| **Full pipeline network** | Basic looped network solver | Limited to simple networks |
+| **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 
 ### EOS Limitations
 
