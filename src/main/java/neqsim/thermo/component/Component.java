@@ -187,6 +187,11 @@ public abstract class Component implements ComponentInterface {
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
   private double associationEnergySAFTVRMie = 0;
+  /**
+   * SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Angstrom^3 =
+   * 1.0169e-28 m^3. If zero, falls back to kappa * sigma^3 (PC-SAFT convention).
+   */
+  private double associationVolumeSAFTVRMie = 0;
 
   /**
    * <p>
@@ -485,6 +490,14 @@ public abstract class Component implements ComponentInterface {
           }
         } catch (Exception ex) {
           // Column not available or zero - will use PCSAFT value as fallback
+        }
+        try {
+          double kHB = Double.parseDouble(dataSet.getString("associationvolume_SAFTVRMie"));
+          if (kHB > 0) {
+            associationVolumeSAFTVRMie = kHB;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will compute from PCSAFT kappa * sigma^3 as fallback
         }
         if (Math.abs(criticalViscosity) < 1e-12) {
           criticalViscosity =
@@ -2299,6 +2312,18 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie) {
     this.associationEnergySAFTVRMie = associationEnergySAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationVolumeSAFTVRMie() {
+    return associationVolumeSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationVolumeSAFTVRMie(double associationVolumeSAFTVRMie) {
+    this.associationVolumeSAFTVRMie = associationVolumeSAFTVRMie;
   }
 
   /** {@inheritDoc} */

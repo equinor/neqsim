@@ -2321,6 +2321,21 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie);
 
   /**
+   * Get the SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Ang^3 =
+   * 1.0169e-28 m^3. Returns 0 if not set (caller should fall back to kappa * sigma^3).
+   *
+   * @return bond volume K_HB in m^3
+   */
+  public double getAssociationVolumeSAFTVRMie();
+
+  /**
+   * Set the SAFT-VR Mie bond volume K_HB in m^3.
+   *
+   * @param associationVolumeSAFTVRMie bond volume in m^3
+   */
+  public void setAssociationVolumeSAFTVRMie(double associationVolumeSAFTVRMie);
+
+  /**
    * <p>
    * getSurfaceTenisionInfluenceParameter.
    * </p>

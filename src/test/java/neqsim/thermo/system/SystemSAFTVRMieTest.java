@@ -2824,7 +2824,11 @@ public class SystemSAFTVRMieTest {
 
       // Verify DB value is correct VR Mie association energy
       double epsHB = fluid.getPhase(0).getComponent(0).getAssociationEnergySAFTVRMie();
+      double kHB = fluid.getPhase(0).getComponent(0).getAssociationVolumeSAFTVRMie();
+      double kappa = fluid.getPhase(0).getComponent(0).getAssociationVolumeSAFT();
       System.out.println("epsHB_VRMie from DB: " + epsHB + " (expected ~16506.7)");
+      System.out.println("K_HB_VRMie from DB: " + kHB + " (expected ~1.0169e-28)");
+      System.out.println("kappa_PCSAFT from DB: " + kappa);
 
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       try {
@@ -3048,5 +3052,377 @@ public class SystemSAFTVRMieTest {
       System.out.println("dFdVdV relative error: " + relErrVV);
       assertTrue(relErrVV < 0.05, "dFdVdV analytical/numerical mismatch > 5%: " + relErrVV);
     }
+  }
+
+  /**
+   * Diagnostic: compare g_HS vs g_Mie at typical water liquid density conditions. Helps understand
+   * how much the Mie perturbation corrections change the association RDF.
+   */
+  @Test
+  public void testGhsVsGmieForWater() {
+    double T = 373.15;
+    SystemInterface fluid = new SystemSAFTVRMie(T, 1.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ComponentSAFTVRMie comp = (ComponentSAFTVRMie) fluid.getPhases()[0].getComponent(0);
+    double sigma = comp.getSigmaSAFTi();
+    double epsk = comp.getEpsikSAFT();
+    double lr = comp.getLambdaRSAFTVRMie();
+    double la = comp.getLambdaASAFTVRMie();
+    double d = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsk, T, lr, la);
+    double cMie = ComponentSAFTVRMie.calcMiePrefactor(lr, la);
+    double x0 = sigma / d;
+    double beta = epsk / T;
+
+    System.out.println("=== g_HS vs g_Mie diagnostic for water at T=" + T + "K ===");
+    System.out.println("sigma=" + sigma + " d=" + d + " x0=" + x0 + " lr=" + lr + " la=" + la);
+    System.out.println("eps/k=" + epsk + " beta=eps/(kT)=" + beta + " cMie=" + cMie);
+
+    System.out.printf("%-8s %-12s %-12s %-12s %-12s %-12s %-12s%n", "eta", "g_HS_CS", "g_HS_x0",
+        "g1", "g2", "g_Mie", "gMie/gHS");
+
+    double[] etas = {0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45};
+    for (double eta : etas) {
+      double om = 1.0 - eta;
+      double gHS_CS = (1.0 - eta / 2.0) / (om * om * om); // simple CS contact
+      double gHS_x0 = PhaseSAFTVRMie.calcGHS_x0(eta, x0);
+      double zetaSt = eta * x0 * x0 * x0;
+      double g1 = PhaseSAFTVRMie.calcG1Chain(eta, lr, la, cMie, x0);
+      double g2 = PhaseSAFTVRMie.calcG2Chain(eta, zetaSt, lr, la, beta, cMie, x0);
+      double gMie = PhaseSAFTVRMie.calcGMie(eta, zetaSt, lr, la, beta, cMie, x0);
+      double ratio = gMie / gHS_CS;
+      System.out.printf("%-8.3f %-12.4f %-12.4f %-12.4e %-12.4e %-12.4f %-12.4f%n", eta, gHS_CS,
+          gHS_x0, g1, g2, gMie, ratio);
+    }
+
+    // Also show for methane (non-associating baseline)
+    SystemInterface fluidCH4 = new SystemSAFTVRMie(T, 1.0);
+    fluidCH4.addComponent("methane", 1.0);
+    fluidCH4.setMixingRule("classic");
+    fluidCH4.init(0);
+    ComponentSAFTVRMie ch4 = (ComponentSAFTVRMie) fluidCH4.getPhases()[0].getComponent(0);
+    double sigCH4 = ch4.getSigmaSAFTi();
+    double epskCH4 = ch4.getEpsikSAFT();
+    double lrCH4 = ch4.getLambdaRSAFTVRMie();
+    double laCH4 = ch4.getLambdaASAFTVRMie();
+    double dCH4 = ComponentSAFTVRMie.calcEffectiveDiameter(sigCH4, epskCH4, T, lrCH4, laCH4);
+    // Don't delete the below, keep as placeholder
+    double cMieCH4 = ComponentSAFTVRMie.calcMiePrefactor(lrCH4, laCH4);
+    double x0CH4 = sigCH4 / dCH4;
+    double betaCH4 = epskCH4 / T;
+
+    System.out.println("\n=== Methane comparison: lr=" + lrCH4 + " ===");
+    for (double eta : etas) {
+      double om = 1.0 - eta;
+      double gHS_CS = (1.0 - eta / 2.0) / (om * om * om);
+      double zetaSt = eta * x0CH4 * x0CH4 * x0CH4;
+      double gMie = PhaseSAFTVRMie.calcGMie(eta, zetaSt, lrCH4, laCH4, betaCH4, cMieCH4, x0CH4);
+      System.out.printf("eta=%.3f  g_HS=%.4f  g_Mie=%.4f  ratio=%.4f%n", eta, gHS_CS, gMie,
+          gMie / gHS_CS);
+    }
+  }
+
+  /**
+   * Comprehensive term-by-term comparison against teqp (NIST) and Clapeyron.jl reference values.
+   * Methane at T=200K, rho=15000 mol/m3 (liquid-like density).
+   *
+   * <p>
+   * teqp reference values from compare_saft_terms.py using Lafitte 2013 parameters: sigma=3.7412A,
+   * eps/k=153.36K, lambda_r=12.65, lambda_a=6.0, m=1.0
+   * </p>
+   */
+  @Test
+  public void testTermByTermVsTeqpMethane() {
+    // teqp reference: methane, T=200K, rho=15000 mol/m3
+    double T = 200.0;
+    double rho = 15000.0; // mol/m3
+    double sigmaA = 3.7412; // Angstrom
+    double sigma_m = sigmaA * 1.0e-10; // meters
+    double epsk = 153.36; // K
+    double lr = 12.65;
+    double la = 6.0;
+    double m = 1.0;
+
+    // Compute intermediate quantities
+    double cMie = ComponentSAFTVRMie.calcMiePrefactor(lr, la);
+    double d_m = ComponentSAFTVRMie.calcEffectiveDiameter(sigma_m, epsk, T, lr, la);
+    double d_A = d_m * 1.0e10;
+    double x0 = sigma_m / d_m;
+    double epsOverKT = epsk / T;
+
+    // teqp reference values
+    double teqp_d_A = 3.6234886608;
+    double teqp_eta = 0.2250201985;
+    double teqp_a1kB = -447.0968499924;
+    double teqp_a2kB2 = -3465.8460018106;
+    double teqp_a3kB3 = -64986.785068533871;
+    double teqp_alphar_mono = -1.0845221762;
+
+    // Packing fraction: eta = pi/6 * N_A * (1 mole) * m * d^3 / V
+    // V = 1/rho (for 1 mole). rho = N_A * n_segments/V (Clapeyron)
+    // For m=1: rhoS = N_A/V = rho*N_A, but we want eta = pi/6 * rhoS * d^3
+    // rhoS in number density: rhoS = rho * N_A (mol/m3 * #/mol = #/m3)
+    // eta = pi/6 * rhoS * d^3 = pi/6 * rho * N_A * d^3
+    double NA = 6.02214076e23;
+    double eta_calc = Math.PI / 6.0 * rho * NA * m * d_m * d_m * d_m;
+
+    System.out.println("=== Term-by-Term: NeqSim vs teqp (NIST) ===");
+    System.out.println("Methane: T=200K, rho=15000 mol/m3, Lafitte 2013 params");
+    System.out.printf("  d(A):       NeqSim=%.10f  teqp=%.10f  diff=%.2e%n", d_A, teqp_d_A,
+        Math.abs(d_A - teqp_d_A));
+    System.out.printf("  x0=sig/d:   %.10f%n", x0);
+    System.out.printf("  eta:        NeqSim=%.10f  teqp=%.10f  diff=%.2e%n", eta_calc, teqp_eta,
+        Math.abs(eta_calc - teqp_eta));
+    System.out.printf("  C_Mie:      %.10f%n", cMie);
+    System.out.printf("  eps/kT:     %.10f%n", epsOverKT);
+
+    double x03 = x0 * x0 * x0;
+    double zetaSt = eta_calc * x03;
+    System.out.printf("  zetaStar:   %.10f%n", zetaSt);
+
+    // --- a1 comparison ---
+    // Our a1Disp = C*(x0^la*(a1S_a+B_a) - x0^lr*(a1S_r+B_r)) where a1S includes 12*eps/kT*eta
+    double our_a1 = PhaseSAFTVRMie.calcA1MieAtEta(eta_calc, lr, la, epsOverKT, cMie, x0);
+    // teqp a1kB/T should equal our a1Disp (per segment)
+    double teqp_a1_reduced = teqp_a1kB / T;
+    System.out.printf("  a1/(NkT):   NeqSim=%.10f  teqp=%.10f  diff=%.2e  relErr=%.4f%%%n", our_a1,
+        teqp_a1_reduced, Math.abs(our_a1 - teqp_a1_reduced),
+        Math.abs(our_a1 - teqp_a1_reduced) / Math.abs(teqp_a1_reduced) * 100);
+
+    // --- a2 comparison ---
+    double our_a2 = PhaseSAFTVRMie.calcA2MieAtEta(eta_calc, zetaSt, lr, la, epsOverKT, cMie, x0);
+    double teqp_a2_reduced = teqp_a2kB2 / (T * T);
+    System.out.printf("  a2/(NkT):   NeqSim=%.10f  teqp=%.10f  diff=%.2e  relErr=%.4f%%%n", our_a2,
+        teqp_a2_reduced, Math.abs(our_a2 - teqp_a2_reduced),
+        Math.abs(our_a2 - teqp_a2_reduced) / Math.abs(teqp_a2_reduced) * 100);
+
+    // --- a3 comparison ---
+    double our_a3 = PhaseSAFTVRMie.calcA3Mie(zetaSt, lr, la, epsOverKT);
+    double teqp_a3_reduced = teqp_a3kB3 / (T * T * T);
+    System.out.printf("  a3/(NkT):   NeqSim=%.10f  teqp=%.10f  diff=%.2e  relErr=%.4f%%%n", our_a3,
+        teqp_a3_reduced, Math.abs(our_a3 - teqp_a3_reduced),
+        Math.abs(our_a3 - teqp_a3_reduced) / Math.abs(teqp_a3_reduced) * 100);
+
+    // --- a_HS ---
+    double aHS =
+        (4.0 * eta_calc - 3.0 * eta_calc * eta_calc) / ((1.0 - eta_calc) * (1.0 - eta_calc));
+    double alphar_mono = m * (aHS + our_a1 + our_a2 + our_a3);
+    System.out.printf("  a_HS:       %.10f%n", aHS);
+    System.out.printf("  alphar_mono:NeqSim=%.10f  teqp=%.10f  diff=%.2e  relErr=%.4f%%%n",
+        alphar_mono, teqp_alphar_mono, Math.abs(alphar_mono - teqp_alphar_mono),
+        Math.abs(alphar_mono - teqp_alphar_mono) / Math.abs(teqp_alphar_mono) * 100);
+
+    // --- Bare (Clapeyron convention) sub-terms (public methods) ---
+    double aS1b_a = PhaseSAFTVRMie.calcAS1Bare(eta_calc, la);
+    double Bb_a = PhaseSAFTVRMie.calcBBare(eta_calc, la, x0);
+    double aS1b_r = PhaseSAFTVRMie.calcAS1Bare(eta_calc, lr);
+    double Bb_r = PhaseSAFTVRMie.calcBBare(eta_calc, lr, x0);
+    System.out.printf("  aS1_bare(la): %.10f  B_bare(la): %.10f%n", aS1b_a, Bb_a);
+    System.out.printf("  aS1_bare(lr): %.10f  B_bare(lr): %.10f%n", aS1b_r, Bb_r);
+    System.out.printf("  x0^la=%.10f  x0^lr=%.10f%n", Math.pow(x0, la), Math.pow(x0, lr));
+
+    // --- g_HS and g_Mie ---
+    double gHS_x0 = PhaseSAFTVRMie.calcGHS_x0(eta_calc, x0);
+    double gMie = PhaseSAFTVRMie.calcGMie(eta_calc, zetaSt, lr, la, epsOverKT, cMie, x0);
+    double g1chain = PhaseSAFTVRMie.calcG1Chain(eta_calc, lr, la, cMie, x0);
+    double g2chain = PhaseSAFTVRMie.calcG2Chain(eta_calc, zetaSt, lr, la, epsOverKT, cMie, x0);
+    System.out.printf("  g_HS(x0):   %.10f%n", gHS_x0);
+    System.out.printf("  g1_chain:   %.10f%n", g1chain);
+    System.out.printf("  g2_chain:   %.10f%n", g2chain);
+    System.out.printf("  g_Mie:      %.10f%n", gMie);
+
+    // --- KHS and alpha ---
+    double KHS = PhaseSAFTVRMie.calcKHS(eta_calc);
+    double alpha = PhaseSAFTVRMie.calcMieAlpha(lr, la);
+    System.out.printf("  KHS:        %.10f%n", KHS);
+    System.out.printf("  alpha:      %.10f%n", alpha);
+
+    // --- Multi-density comparison ---
+    System.out.println("\n--- Multi-density comparison vs teqp ---");
+    System.out.printf("%-10s %-14s %-14s %-14s %-14s %-14s%n", "rho", "eta", "alphar_NeqSim",
+        "alphar_teqp", "relErr%", "a1/NkT_err%");
+    // teqp reference alphar values for methane at T=200K:
+    double[] rhos = {100, 500, 1000, 5000, 10000, 15000, 20000};
+    double[] teqp_alphar =
+        {-0.00943231, -0.04685630, -0.09298883, -0.43951493, -0.80685502, -1.08452218, -1.24675279};
+    double[] teqp_a1kBs =
+        {-2.605779, -13.093714, -26.347599, -137.748418, -288.292139, -447.096850, -607.776810};
+
+    for (int i = 0; i < rhos.length; i++) {
+      double rr = rhos[i];
+      double eta_i = Math.PI / 6.0 * rr * NA * m * d_m * d_m * d_m;
+      double x03_i = x0 * x0 * x0;
+      double zetaSt_i = eta_i * x03_i;
+      double our_a1_i = PhaseSAFTVRMie.calcA1MieAtEta(eta_i, lr, la, epsOverKT, cMie, x0);
+      double our_a2_i = PhaseSAFTVRMie.calcA2MieAtEta(eta_i, zetaSt_i, lr, la, epsOverKT, cMie, x0);
+      double our_a3_i = PhaseSAFTVRMie.calcA3Mie(zetaSt_i, lr, la, epsOverKT);
+      double aHS_i = (4.0 * eta_i - 3.0 * eta_i * eta_i) / ((1.0 - eta_i) * (1.0 - eta_i));
+      double aR_i = m * (aHS_i + our_a1_i + our_a2_i + our_a3_i);
+      double aR_ref = teqp_alphar[i];
+      double relErr = (aR_ref != 0) ? (aR_i - aR_ref) / Math.abs(aR_ref) * 100.0 : 0.0;
+      double a1err =
+          teqp_a1kBs[i] != 0 ? (our_a1_i - teqp_a1kBs[i] / T) / Math.abs(teqp_a1kBs[i] / T) * 100.0
+              : 0.0;
+      System.out.printf("%-10.0f %-14.10f %-14.10f %-14.10f %-14.6f %-14.6f%n", rr, eta_i, aR_i,
+          aR_ref, relErr, a1err);
+    }
+
+    // Assert key terms match teqp within tolerance
+    assertEquals(teqp_d_A, d_A, 0.0001, "Effective diameter should match teqp");
+    assertEquals(teqp_eta, eta_calc, 0.0001, "Packing fraction should match teqp");
+    assertEquals(teqp_a1_reduced, our_a1, 0.001, "a1 per segment should match teqp");
+    assertEquals(teqp_alphar_mono, alphar_mono, 0.01, "Total alphar_mono should match teqp");
+  }
+
+  /**
+   * Comprehensive comparison of ethane (chain molecule, m=1.4373) against teqp reference. Tests
+   * both dispersion and chain terms at multiple densities.
+   */
+  @Test
+  public void testTermByTermVsTeqpEthane() {
+    double T = 250.0;
+    double sigma_m = 3.7257e-10;
+    double epsk = 206.12;
+    double lr = 12.4;
+    double la = 6.0;
+    double m = 1.4373;
+
+    double cMie = ComponentSAFTVRMie.calcMiePrefactor(lr, la);
+    double d_m = ComponentSAFTVRMie.calcEffectiveDiameter(sigma_m, epsk, T, lr, la);
+    double x0 = sigma_m / d_m;
+    double epsOverKT = epsk / T;
+    double NA = 6.02214076e23;
+
+    System.out.println("\n=== Term-by-Term: Ethane (m=1.4373, chain molecule) vs teqp ===");
+    System.out.printf("T=%.1fK  sigma=%.4fA  eps/k=%.2fK  lr=%.1f  x0=%.8f  C=%.8f%n", T,
+        sigma_m * 1e10, epsk, lr, x0, cMie);
+
+    // teqp reference: ethane at T=250K
+    double[] rhos = {100, 500, 1000, 5000, 10000, 14000};
+    double[] teqp_alphar =
+        {-0.02299173, -0.11533694, -0.23049466, -1.05441146, -1.82919942, -2.29649029};
+    double[] teqp_mono =
+        {-0.02246116, -0.11131852, -0.22035669, -1.01976762, -1.79020015, -2.18623052};
+    double[] teqp_chain =
+        {-0.00053058, -0.00401843, -0.01013798, -0.03464384, -0.03899927, -0.11025977};
+
+    System.out.printf("%-8s %-12s %-14s %-14s %-10s %-14s %-14s %-10s%n", "rho", "eta",
+        "mono_neqsim", "mono_teqp", "mono_err%", "chain_neqsim", "chain_teqp", "chain_err%");
+
+    for (int i = 0; i < rhos.length; i++) {
+      double rr = rhos[i];
+      // eta uses segment density: rhoS = rho * N_A * m / V... actually
+      // eta = pi/6 * (N_A * rr * m) * d^3 : segment number density * d^3
+      double eta = Math.PI / 6.0 * rr * NA * m * d_m * d_m * d_m;
+      double x03 = x0 * x0 * x0;
+      double zetaSt = eta * x03;
+
+      // Dispersion (per segment)
+      double a1 = PhaseSAFTVRMie.calcA1MieAtEta(eta, lr, la, epsOverKT, cMie, x0);
+      double a2 = PhaseSAFTVRMie.calcA2MieAtEta(eta, zetaSt, lr, la, epsOverKT, cMie, x0);
+      double a3 = PhaseSAFTVRMie.calcA3Mie(zetaSt, lr, la, epsOverKT);
+      double aHS = (4.0 * eta - 3.0 * eta * eta) / ((1.0 - eta) * (1.0 - eta));
+      double alphar_mono = m * (aHS + a1 + a2 + a3);
+
+      // Chain: Clapeyron: -sum_i z_i*(m_i-1)*ln(g_Mie_ii) / sum_z
+      double gMie = PhaseSAFTVRMie.calcGMie(eta, zetaSt, lr, la, epsOverKT, cMie, x0);
+      double alphar_chain = -(m - 1.0) * Math.log(gMie);
+
+      double monoErr =
+          teqp_mono[i] != 0 ? (alphar_mono - teqp_mono[i]) / Math.abs(teqp_mono[i]) * 100 : 0;
+      double chainErr =
+          teqp_chain[i] != 0 ? (alphar_chain - teqp_chain[i]) / Math.abs(teqp_chain[i]) * 100 : 0;
+
+      System.out.printf("%-8.0f %-12.8f %-14.10f %-14.10f %-10.4f %-14.10f %-14.10f %-10.4f%n", rr,
+          eta, alphar_mono, teqp_mono[i], monoErr, alphar_chain, teqp_chain[i], chainErr);
+    }
+  }
+
+  /**
+   * Compares water (non-associating terms only) between NeqSim and teqp. Tests with both Lafitte
+   * 2013 (lr=35.823) and Dufal 2015 (lr=17.02) parameters.
+   */
+  @Test
+  public void testTermByTermVsTeqpWater() {
+    double T = 373.15;
+    double sigma_m = 3.0063e-10;
+    double epsk = 266.68;
+    double la = 6.0;
+    double m = 1.0;
+    double NA = 6.02214076e23;
+
+    // === Lafitte 2013: lr=35.823 ===
+    double lr_laf = 35.823;
+    double cMie_laf = ComponentSAFTVRMie.calcMiePrefactor(lr_laf, la);
+    double d_laf = ComponentSAFTVRMie.calcEffectiveDiameter(sigma_m, epsk, T, lr_laf, la);
+    double x0_laf = sigma_m / d_laf;
+    double eps_laf = epsk / T;
+
+    // === Dufal 2015: lr=17.02 (Clapeyron default) ===
+    double lr_duf = 17.02;
+    double cMie_duf = ComponentSAFTVRMie.calcMiePrefactor(lr_duf, la);
+    double d_duf = ComponentSAFTVRMie.calcEffectiveDiameter(sigma_m, epsk, T, lr_duf, la);
+    double x0_duf = sigma_m / d_duf;
+    double eps_duf = epsk / T;
+
+    System.out
+        .println("\n=== Water (non-assoc) comparison: Lafitte lr=35.823 vs Dufal lr=17.02 ===");
+    System.out.printf("T=%.2fK  sigma=%.4fA  eps/k=%.2fK%n", T, sigma_m * 1e10, epsk);
+    System.out.printf("Lafitte: d=%.10f x0=%.10f C=%.6f%n", d_laf * 1e10, x0_laf, cMie_laf);
+    System.out.printf("Dufal:   d=%.10f x0=%.10f C=%.6f%n", d_duf * 1e10, x0_duf, cMie_duf);
+
+    // teqp reference for Lafitte lr=35.823 at T=373.15K
+    double[] rhos = {100, 1000, 5000, 20000, 30000};
+    double[] teqp_laf = {-0.00117365, -0.01156402, -0.05410136, -0.14496859, -0.10836449};
+    // teqp reference for Dufal lr=17.02
+    double[] teqp_duf = {-0.00298429, -0.02958600, -0.14272230, 0.0, 0.0};
+
+    System.out.printf("%-8s %-12s %-14s %-14s %-10s %-14s %-14s %-10s%n", "rho", "eta_laf",
+        "aR_laf_NQ", "aR_laf_teqp", "laf_err%", "aR_duf_NQ", "aR_duf_teqp", "duf_err%");
+
+    for (int i = 0; i < rhos.length; i++) {
+      double rr = rhos[i];
+      // Lafitte
+      double eta_l = Math.PI / 6.0 * rr * NA * m * d_laf * d_laf * d_laf;
+      double zetaSt_l = eta_l * x0_laf * x0_laf * x0_laf;
+      double a1_l = PhaseSAFTVRMie.calcA1MieAtEta(eta_l, lr_laf, la, eps_laf, cMie_laf, x0_laf);
+      double a2_l =
+          PhaseSAFTVRMie.calcA2MieAtEta(eta_l, zetaSt_l, lr_laf, la, eps_laf, cMie_laf, x0_laf);
+      double a3_l = PhaseSAFTVRMie.calcA3Mie(zetaSt_l, lr_laf, la, eps_laf);
+      double aHS_l = (4.0 * eta_l - 3.0 * eta_l * eta_l) / ((1.0 - eta_l) * (1.0 - eta_l));
+      double aR_l = m * (aHS_l + a1_l + a2_l + a3_l);
+      double lErr = (teqp_laf[i] != 0) ? (aR_l - teqp_laf[i]) / Math.abs(teqp_laf[i]) * 100 : 0;
+
+      // Dufal
+      double eta_d = Math.PI / 6.0 * rr * NA * m * d_duf * d_duf * d_duf;
+      double zetaSt_d = eta_d * x0_duf * x0_duf * x0_duf;
+      double a1_d = PhaseSAFTVRMie.calcA1MieAtEta(eta_d, lr_duf, la, eps_duf, cMie_duf, x0_duf);
+      double a2_d =
+          PhaseSAFTVRMie.calcA2MieAtEta(eta_d, zetaSt_d, lr_duf, la, eps_duf, cMie_duf, x0_duf);
+      double a3_d = PhaseSAFTVRMie.calcA3Mie(zetaSt_d, lr_duf, la, eps_duf);
+      double aHS_d = (4.0 * eta_d - 3.0 * eta_d * eta_d) / ((1.0 - eta_d) * (1.0 - eta_d));
+      double aR_d = m * (aHS_d + a1_d + a2_d + a3_d);
+      double dErr = (teqp_duf[i] != 0) ? (aR_d - teqp_duf[i]) / Math.abs(teqp_duf[i]) * 100 : 0;
+
+      System.out.printf("%-8.0f %-12.8f %-14.10f %-14.10f %-10.4f %-14.10f %-14.10f %-10.4f%n", rr,
+          eta_l, aR_l, teqp_laf[i], lErr, aR_d, (teqp_duf.length > i ? teqp_duf[i] : 0.0), dErr);
+    }
+
+    // For the Dufal-parametrized water, also print individual terms at rho=30000
+    double rr = 30000.0;
+    double eta_d30 = Math.PI / 6.0 * rr * NA * m * d_duf * d_duf * d_duf;
+    double zetaSt_d30 = eta_d30 * x0_duf * x0_duf * x0_duf;
+    System.out.printf("%nDufal water at rho=30000: eta=%.8f zetaSt=%.8f%n", eta_d30, zetaSt_d30);
+    System.out.printf("  a1/(NkT) = %.10f%n",
+        PhaseSAFTVRMie.calcA1MieAtEta(eta_d30, lr_duf, la, eps_duf, cMie_duf, x0_duf));
+    System.out.printf("  a2/(NkT) = %.10f%n",
+        PhaseSAFTVRMie.calcA2MieAtEta(eta_d30, zetaSt_d30, lr_duf, la, eps_duf, cMie_duf, x0_duf));
+    System.out.printf("  a3/(NkT) = %.10f%n",
+        PhaseSAFTVRMie.calcA3Mie(zetaSt_d30, lr_duf, la, eps_duf));
+    System.out.printf("  gHS(x0)  = %.10f%n", PhaseSAFTVRMie.calcGHS_x0(eta_d30, x0_duf));
+    System.out.printf("  gMie     = %.10f%n",
+        PhaseSAFTVRMie.calcGMie(eta_d30, zetaSt_d30, lr_duf, la, eps_duf, cMie_duf, x0_duf));
   }
 }
