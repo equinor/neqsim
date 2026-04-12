@@ -11,6 +11,58 @@ Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/d
 
 ---
 
+## Industry Readiness
+
+The server includes an industrial governance layer for deployment in
+engineering environments where trust, traceability, and access control matter.
+
+### Deployment Profiles
+
+| Profile | Use Case | Tool Access |
+|---------|----------|-------------|
+| `DESKTOP_ENGINEER` | Individual engineering work, exploration | All 42+ tools |
+| `STUDY_TEAM` | Collaborative team studies, peer review | All tools, enforced validation |
+| `DIGITAL_TWIN` | Live operations advisory | Read-only + calculations only |
+| `ENTERPRISE` | Production deployment, governed access | Industrial core (20 tools) + approval gates |
+
+Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
+
+```json
+{"action": "setActive", "mode": "STUDY_TEAM"}
+```
+
+### Auto-Validation
+
+Every calculation tool (`runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
+`calculateStandard`, `runPipeline`) automatically validates its output against
+engineering design rules. The validation result is appended to the response —
+there is no way to skip it in production modes.
+
+### Benchmark Trust
+
+Before relying on a tool for design decisions, query its validation status:
+
+```json
+{"action": "getTool", "toolName": "runFlash"}
+```
+
+Returns maturity level (VALIDATED / TESTED / EXPERIMENTAL), reference validation
+cases, accuracy bounds, known limitations, and unsupported conditions.
+
+### Tool Classification
+
+| Category | Description | Example Tools |
+|----------|-------------|---------------|
+| **ADVISORY** | Read-only, always safe | `getCapabilities`, `validateInput`, `searchComponents` |
+| **CALCULATION** | Stateless computation | `runFlash`, `runProcess`, `runPVT` |
+| **EXECUTION** | State-modifying | `setSimulationVariable`, `solveTask` |
+| **PLATFORM** | Infrastructure | `manageSecurity`, `manageState` |
+
+In `ENTERPRISE` mode, EXECUTION tools require human approval and PLATFORM tools
+are blocked entirely.
+
+---
+
 ## Install from GitHub Release (3 steps)
 
 Pick **jar** or **Docker** — both are first-class paths.

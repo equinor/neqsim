@@ -188,3 +188,95 @@ of the server version.
 | Contract Version | Server Versions | Notes |
 |-----------------|-----------------|-------|
 | 1.0 | 1.0.0+ | Initial stable release |
+| 1.1 | 1.1.0+ | Extended domain, session, workflow tools |
+| 1.2 | 1.2.0+ | Platform tools, industrial governance, benchmark trust |
+
+---
+
+## Industrial Governance (v1.2)
+
+### Deployment Profiles
+
+The `manageIndustrialProfile` tool controls which tools are exposed and
+what validation level is enforced.
+
+| Profile | Description | Tool Access | Auto-Validation |
+|---------|-------------|-------------|-----------------|
+| `DESKTOP_ENGINEER` | Full access for individual engineering work | All tools | On by default |
+| `STUDY_TEAM` | Collaborative team environment | All tools | Enforced |
+| `DIGITAL_TWIN` | Read-heavy advisory for live operations | ADVISORY + CALCULATION only | Enforced |
+| `ENTERPRISE` | Restricted to industrial core tools | Industrial core only | Enforced, approval gates on EXECUTION |
+
+Default mode: `DESKTOP_ENGINEER`.
+
+### Tool Categories
+
+Every tool is classified into exactly one category:
+
+| Category | Description | Examples |
+|----------|-------------|---------|
+| `ADVISORY` | Read-only discovery and validation; always allowed | `getCapabilities`, `getExample`, `getSchema`, `validateInput`, `searchComponents` |
+| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `calculateStandard` |
+| `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `manageSession`, `solveTask` |
+| `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
+
+### Industrial Core Toolset
+
+These 20 tools are the production-proven subset available in all deployment
+modes including `ENTERPRISE`:
+
+```
+runFlash, runProcess, runPVT, runFlowAssurance, calculateStandard,
+crossValidateModels, runParametricStudy, validateResults, generateReport,
+validateInput, searchComponents, getCapabilities, getExample, getSchema,
+getPropertyTable, getPhaseEnvelope, runBatch, runPipeline, sizeEquipment,
+compareProcesses
+```
+
+### Governance Tools (Stable)
+
+| Tool | Status | Since | Description |
+|------|--------|-------|-------------|
+| `manageIndustrialProfile` | **Stable** | v1.2 | Deployment profiles, tool access, validation enforcement |
+| `getBenchmarkTrust` | **Stable** | v1.2 | Per-tool validation status, accuracy bounds, limitations |
+| `checkToolAccess` | **Stable** | v1.2 | Pre-flight tool access check for governed deployments |
+
+### Auto-Validation Pipeline
+
+When auto-validation is enabled (default in all modes), every CALCULATION
+tool automatically appends a `"autoValidation"` block to the response containing:
+
+```json
+{
+  "autoValidation": {
+    "overall": "PASS | WARNING | FAIL",
+    "checks": [
+      { "rule": "...", "status": "PASS", "message": "..." }
+    ],
+    "timestamp": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+Auto-validated tools: `runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
+`calculateStandard`, `runPipeline`.
+
+### Benchmark Trust Metadata
+
+The `getBenchmarkTrust` tool returns per-tool validation metadata:
+
+| Field | Description |
+|-------|-------------|
+| `maturityLevel` | `VALIDATED`, `TESTED`, or `EXPERIMENTAL` |
+| `validationCases` | Reference cases with expected results |
+| `accuracyBounds` | Typical accuracy ranges (e.g., density ±0.5%) |
+| `knownLimitations` | Conditions where results are unreliable |
+| `unsupported` | Explicitly unsupported scenarios |
+
+**Maturity levels:**
+
+| Level | Meaning |
+|-------|---------|
+| `VALIDATED` | Verified against NIST/experimental data; suitable for design decisions |
+| `TESTED` | Tested against literature/industry cases; suitable for screening studies |
+| `EXPERIMENTAL` | Functional but limited validation; use for exploration only |

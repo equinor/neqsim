@@ -37,9 +37,11 @@ import neqsim.mcp.runners.StreamingRunner;
 import neqsim.mcp.runners.TaskSolverRunner;
 import neqsim.mcp.runners.ValidationProfileRunner;
 import neqsim.mcp.runners.VisualizationRunner;
+import neqsim.mcp.runners.BenchmarkTrust;
 import neqsim.mcp.runners.CompositionRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
 import neqsim.mcp.runners.EquipmentSizingRunner;
+import neqsim.mcp.runners.IndustrialProfile;
 import neqsim.mcp.runners.ProcessComparisonRunner;
 
 /**
@@ -49,6 +51,22 @@ import neqsim.mcp.runners.ProcessComparisonRunner;
  * Each method annotated with {@code @Tool} is exposed as an MCP tool that LLM clients can discover
  * and invoke via the Model Context Protocol. The tools delegate to the stateless runner layer in
  * {@code neqsim.mcp.runners}.
+ * </p>
+ *
+ * <p>
+ * Tools are classified into four categories by the {@link IndustrialProfile} system:
+ * </p>
+ * <ul>
+ * <li><b>ADVISORY</b> — read-only discovery and validation (always allowed)</li>
+ * <li><b>CALCULATION</b> — stateless engineering calculations</li>
+ * <li><b>EXECUTION</b> — state-modifying operations (may require approval)</li>
+ * <li><b>PLATFORM</b> — security, persistence, multi-server (restricted in production)</li>
+ * </ul>
+ *
+ * <p>
+ * When auto-validation is enabled (default), every CALCULATION tool automatically runs
+ * {@link EngineeringValidator#validate(String, String)} on its output and appends a
+ * {@code "validation"} block to the response.
  * </p>
  */
 @ApplicationScoped
@@ -105,7 +123,7 @@ public class NeqSimTools {
       json.addProperty("model", eos);
       json.addProperty("flashType", flashType);
 
-      return FlashRunner.run(json.toString());
+      return withAutoValidation(FlashRunner.run(json.toString()), "flash");
     } catch (Exception e) {
       return errorJson("Flash calculation failed: " + e.getMessage());
     }
@@ -126,7 +144,7 @@ public class NeqSimTools {
           + "'fluid' with components and model, and 'equipment' array with process units. "
           + "Use getExample(category='process', name='simple-separation') for a template.") String processJson) {
     try {
-      return ProcessRunner.run(processJson);
+      return withAutoValidation(ProcessRunner.run(processJson), "process");
     } catch (Exception e) {
       return errorJson("Process simulation failed: " + e.getMessage());
     }
@@ -650,7 +668,7 @@ public class NeqSimTools {
           + "'experimentConfig' with experiment-specific parameters like 'pressures_bara' "
           + "array, separator stages, or injection gas composition.") String pvtJson) {
     try {
-      return PVTRunner.run(pvtJson);
+      return withAutoValidation(PVTRunner.run(pvtJson), "general");
     } catch (Exception e) {
       return errorJson("PVT simulation failed: " + e.getMessage());
     }
@@ -679,7 +697,7 @@ public class NeqSimTools {
           + "scalePrediction, erosion, pipelineCooldown, emulsionViscosity), and "
           + "'analysisConfig' with analysis-specific parameters.") String flowAssuranceJson) {
     try {
-      return FlowAssuranceRunner.run(flowAssuranceJson);
+      return withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline");
     } catch (Exception e) {
       return errorJson("Flow assurance analysis failed: " + e.getMessage());
     }
@@ -709,7 +727,7 @@ public class NeqSimTools {
           + "'standard' (ISO6976, ISO12213, AGA3, ASTM_D86, etc.). "
           + "Some standards require additional parameters in 'standardConfig'.") String standardJson) {
     try {
-      return StandardsRunner.run(standardJson);
+      return withAutoValidation(StandardsRunner.run(standardJson), "general");
     } catch (Exception e) {
       return errorJson("Standard calculation failed: " + e.getMessage());
     }
@@ -735,7 +753,7 @@ public class NeqSimTools {
           + "'flowRate' ({value, unit}), 'pipe' ({diameter_m, length_m, "
           + "elevation_m, roughness_m, numberOfIncrements}).") String pipelineJson) {
     try {
-      return PipelineRunner.run(pipelineJson);
+      return withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline");
     } catch (Exception e) {
       return errorJson("Pipeline simulation failed: " + e.getMessage());
     }
@@ -1297,6 +1315,203 @@ public class NeqSimTools {
       return ProcessComparisonRunner.run(comparisonJson);
     } catch (Exception e) {
       return errorJson("Process comparison failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Industrial governance & trust tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * List deployment profiles and manage the active industrial mode.
+   *
+   * <p>
+   * The industrial profile system controls which tools are exposed, whether human-approval gates
+   * are required, and which validation level is enforced. Four profiles cover the range from
+   * full-access desktop engineering to restricted enterprise deployment.
+   * </p>
+   *
+   * @param profileJson JSON with action and optional parameters
+   * @return JSON with profile information or confirmation
+   */
+  @Tool(description = "Manage industrial deployment profiles that control tool access, "
+      + "validation enforcement, and approval gates. "
+      + "Profiles: DESKTOP_ENGINEER (all tools), STUDY_TEAM (collaborative), "
+      + "DIGITAL_TWIN (read-heavy advisory), ENTERPRISE (restricted industrial core). "
+      + "Actions: describe (list all profiles), getActive (current mode), "
+      + "setActive (change mode), classifyTool (check a tool's category).")
+  public String manageIndustrialProfile(
+      @ToolArg(description = "JSON with: 'action' (describe|getActive|setActive|classifyTool). "
+          + "For setActive: 'mode' (DESKTOP_ENGINEER|STUDY_TEAM|DIGITAL_TWIN|ENTERPRISE). "
+          + "For classifyTool: 'toolName' (name of tool to classify).") String profileJson) {
+    try {
+      JsonObject input = JsonParser.parseString(profileJson).getAsJsonObject();
+      String action = input.has("action") ? input.get("action").getAsString() : "describe";
+
+      switch (action) {
+        case "describe":
+          return IndustrialProfile.describeProfiles();
+        case "getActive": {
+          JsonObject result = new JsonObject();
+          result.addProperty("status", "success");
+          result.addProperty("activeMode", IndustrialProfile.getActiveMode().name());
+          result.addProperty("autoValidation", IndustrialProfile.isAutoValidationEnabled());
+          return GSON_PRETTY.toJson(result);
+        }
+        case "setActive": {
+          String modeName = input.has("mode") ? input.get("mode").getAsString() : "";
+          try {
+            IndustrialProfile.DeploymentMode mode =
+                IndustrialProfile.DeploymentMode.valueOf(modeName);
+            IndustrialProfile.setActiveMode(mode);
+            JsonObject result = new JsonObject();
+            result.addProperty("status", "success");
+            result.addProperty("activeMode", mode.name());
+            result.addProperty("message",
+                "Deployment mode set to " + mode.name() + ". Tool access updated.");
+            return GSON_PRETTY.toJson(result);
+          } catch (IllegalArgumentException e) {
+            return errorJson("Invalid mode: " + modeName
+                + ". Use DESKTOP_ENGINEER, STUDY_TEAM, DIGITAL_TWIN, or ENTERPRISE.");
+          }
+        }
+        case "classifyTool": {
+          String toolName = input.has("toolName") ? input.get("toolName").getAsString() : "";
+          IndustrialProfile.ToolCategory cat = IndustrialProfile.getToolCategory(toolName);
+          JsonObject result = new JsonObject();
+          result.addProperty("status", "success");
+          result.addProperty("tool", toolName);
+          result.addProperty("category", cat != null ? cat.name() : "UNKNOWN");
+          result.addProperty("allowed", IndustrialProfile.isToolAllowed(toolName));
+          result.addProperty("requiresApproval", IndustrialProfile.requiresApproval(toolName));
+          result.addProperty("inIndustrialCore",
+              IndustrialProfile.getIndustrialCore().contains(toolName));
+          return GSON_PRETTY.toJson(result);
+        }
+        default:
+          return errorJson("Unknown action: " + action
+              + ". Use describe, getActive, setActive, or classifyTool.");
+      }
+    } catch (Exception e) {
+      return errorJson("Industrial profile operation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Get benchmark trust metadata for tools — validation cases, accuracy bounds, known limitations,
+   * and maturity levels.
+   *
+   * <p>
+   * Industrial users should review this before relying on results for design decisions or
+   * safety-critical applications.
+   * </p>
+   *
+   * @param trustJson JSON with action and optional tool name
+   * @return JSON with trust metadata
+   */
+  @Tool(description = "Get benchmark trust metadata for NeqSim MCP tools. "
+      + "Shows validation status (VALIDATED/TESTED/EXPERIMENTAL), reference validation "
+      + "cases with accuracy bounds, known limitations, and unsupported conditions. "
+      + "Industrial users should review this before relying on results. "
+      + "Actions: getAll (full trust report), getTool (single tool trust page).")
+  public String getBenchmarkTrust(@ToolArg(description = "JSON with: 'action' (getAll|getTool). "
+      + "For getTool: 'toolName' (e.g. 'runFlash', 'runProcess', 'runPVT').") String trustJson) {
+    try {
+      JsonObject input = JsonParser.parseString(trustJson).getAsJsonObject();
+      String action = input.has("action") ? input.get("action").getAsString() : "getAll";
+
+      if ("getTool".equals(action)) {
+        String toolName = input.has("toolName") ? input.get("toolName").getAsString() : "";
+        return BenchmarkTrust.getToolTrust(toolName);
+      } else {
+        return BenchmarkTrust.getTrustReport();
+      }
+    } catch (Exception e) {
+      return errorJson("Benchmark trust query failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Check whether the current deployment profile allows a tool and whether it requires human
+   * approval. Use this before invoking tools in governed deployments.
+   *
+   * @param toolName the tool name to check
+   * @return JSON with access decision
+   */
+  @Tool(description = "Check if a tool is allowed in the current industrial deployment mode "
+      + "and whether it requires human approval before execution. "
+      + "Use this in governed deployments (DIGITAL_TWIN, ENTERPRISE) to verify "
+      + "access before calling a tool. Returns: allowed, requiresApproval, category, "
+      + "and active deployment mode.")
+  public String checkToolAccess(@ToolArg(description = "Tool name to check, e.g. 'runProcess', "
+      + "'setSimulationVariable', 'manageSecurity'.") String toolName) {
+    try {
+      JsonObject result = new JsonObject();
+      result.addProperty("status", "success");
+      result.addProperty("tool", toolName);
+      result.addProperty("activeMode", IndustrialProfile.getActiveMode().name());
+
+      IndustrialProfile.ToolCategory cat = IndustrialProfile.getToolCategory(toolName);
+      result.addProperty("category", cat != null ? cat.name() : "UNKNOWN");
+      result.addProperty("allowed", IndustrialProfile.isToolAllowed(toolName));
+      result.addProperty("requiresApproval", IndustrialProfile.requiresApproval(toolName));
+      result.addProperty("inIndustrialCore",
+          IndustrialProfile.getIndustrialCore().contains(toolName));
+      result.addProperty("autoValidation", IndustrialProfile.isAutoValidationEnabled());
+
+      if (!IndustrialProfile.isToolAllowed(toolName)) {
+        result.addProperty("message",
+            "Tool '" + toolName + "' is not allowed in " + IndustrialProfile.getActiveMode().name()
+                + " mode. Switch to a less restrictive profile or use an alternative tool.");
+      } else if (IndustrialProfile.requiresApproval(toolName)) {
+        result.addProperty("message",
+            "Tool '" + toolName + "' requires human approval in "
+                + IndustrialProfile.getActiveMode().name()
+                + " mode. Present the planned action to the engineer for confirmation.");
+      }
+
+      return GSON_PRETTY.toJson(result);
+    } catch (Exception e) {
+      return errorJson("Tool access check failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Helpers
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private static final com.google.gson.Gson GSON_PRETTY = new com.google.gson.GsonBuilder()
+      .setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+
+  /**
+   * Wraps a calculation result with automatic engineering validation when enabled.
+   *
+   * <p>
+   * If {@link IndustrialProfile#isAutoValidationEnabled()} is true, this method appends a
+   * {@code "validation"} block to the result JSON. This enforces the review's requirement that
+   * validation be unavoidable, not optional.
+   * </p>
+   *
+   * @param resultJson the raw calculation result JSON
+   * @param context the validation context (process, compressor, pipeline, etc.)
+   * @return the original JSON with validation appended, or unchanged if validation is off
+   */
+  static String withAutoValidation(String resultJson, String context) {
+    if (!IndustrialProfile.isAutoValidationEnabled()) {
+      return resultJson;
+    }
+    try {
+      JsonObject result = JsonParser.parseString(resultJson).getAsJsonObject();
+      // Only validate successful results
+      if (result.has("status") && "success".equals(result.get("status").getAsString())) {
+        String validationJson = EngineeringValidator.validate(resultJson, context);
+        JsonObject validation = JsonParser.parseString(validationJson).getAsJsonObject();
+        result.add("autoValidation", validation);
+      }
+      return GSON_PRETTY.toJson(result);
+    } catch (Exception e) {
+      // If validation itself fails, return the original result unchanged
+      return resultJson;
     }
   }
 }
