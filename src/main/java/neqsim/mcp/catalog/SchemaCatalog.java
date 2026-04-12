@@ -1023,6 +1023,217 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  // ========== Equipment Sizing Schemas ==========
+
+  /**
+   * Returns the JSON Schema for equipment sizing input.
+   *
+   * @return JSON Schema string
+   */
+  public static String equipmentSizingInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "EquipmentSizingInput");
+    schema.put("description", "Input for equipment sizing (size_equipment tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("equipmentType", enumProp("Equipment type to size",
+        Arrays.asList("separator", "compressor", "heatExchanger", "pipe")));
+    properties.put("model",
+        enumProp("Thermodynamic model", Arrays.asList("SRK", "PR", "CPA", "GERG2008")));
+    properties.put("temperature_C", numberProp("Operating temperature (C)"));
+    properties.put("pressure_bara", numberProp("Operating pressure (bara)"));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Component name to mole fraction map");
+    Map<String, Object> addProps = new LinkedHashMap<String, Object>();
+    addProps.put("type", "number");
+    components.put("additionalProperties", addProps);
+    properties.put("components", components);
+
+    Map<String, Object> flowRate = new LinkedHashMap<String, Object>();
+    flowRate.put("type", "object");
+    flowRate.put("description", "Flow rate with value and unit");
+    properties.put("flowRate", flowRate);
+
+    properties.put("orientation",
+        enumProp("Separator orientation", Arrays.asList("horizontal", "vertical")));
+    properties.put("liquidRetentionTime_min", numberProp("Liquid retention time (minutes)"));
+    properties.put("outletPressure_bara", numberProp("Compressor outlet pressure (bara)"));
+    properties.put("polytropicEfficiency", numberProp("Compressor polytropic efficiency (0-1)"));
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("equipmentType", "components"));
+
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for equipment sizing output.
+   *
+   * @return JSON Schema string
+   */
+  public static String equipmentSizingOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "EquipmentSizingOutput");
+    schema.put("description", "Output of equipment sizing");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("equipmentType", stringProp("Equipment type sized"));
+
+    Map<String, Object> sizing = new LinkedHashMap<String, Object>();
+    sizing.put("type", "object");
+    sizing.put("description", "Sizing results with dimensions and capacities");
+    properties.put("sizing", sizing);
+
+    Map<String, Object> designBasis = new LinkedHashMap<String, Object>();
+    designBasis.put("type", "object");
+    designBasis.put("description", "Design basis used for sizing");
+    properties.put("designBasis", designBasis);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+
+    return GSON.toJson(schema);
+  }
+
+  // ========== Process Comparison Schemas ==========
+
+  /**
+   * Returns the JSON Schema for process comparison input.
+   *
+   * @return JSON Schema string
+   */
+  public static String comparisonInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "ProcessComparisonInput");
+    schema.put("description",
+        "Input for process comparison (compare_processes tool). Each case is a "
+            + "full process definition that will be run and compared.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+
+    Map<String, Object> cases = new LinkedHashMap<String, Object>();
+    cases.put("type", "array");
+    cases.put("description",
+        "Array of process cases to compare. Each case has a name, fluid definition, "
+            + "and process equipment array.");
+    cases.put("minItems", 2);
+    Map<String, Object> caseItem = new LinkedHashMap<String, Object>();
+    caseItem.put("type", "object");
+    Map<String, Object> caseProps = new LinkedHashMap<String, Object>();
+    caseProps.put("name", stringProp("Case name for labelling"));
+    Map<String, Object> fluid = new LinkedHashMap<String, Object>();
+    fluid.put("type", "object");
+    fluid.put("description", "Fluid definition (same as run_process fluid block)");
+    caseProps.put("fluid", fluid);
+    Map<String, Object> process = new LinkedHashMap<String, Object>();
+    process.put("type", "array");
+    process.put("description", "Equipment array (same as run_process process block)");
+    caseProps.put("process", process);
+    caseItem.put("properties", caseProps);
+    cases.put("items", caseItem);
+    properties.put("cases", cases);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("cases"));
+
+    return GSON.toJson(schema);
+  }
+
+  // ========== Session Schemas ==========
+
+  /**
+   * Returns the JSON Schema for session management input.
+   *
+   * @return JSON Schema string
+   */
+  public static String sessionInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "SessionInput");
+    schema.put("description", "Input for simulation session management (manage_session tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("action", enumProp("Session action",
+        Arrays.asList("create", "addEquipment", "run", "modify", "getState", "list", "close")));
+    properties.put("sessionId", stringProp("Session ID (required for all actions except create)"));
+
+    Map<String, Object> fluid = new LinkedHashMap<String, Object>();
+    fluid.put("type", "object");
+    fluid.put("description", "Fluid definition (required for create action)");
+    properties.put("fluid", fluid);
+
+    Map<String, Object> equipment = new LinkedHashMap<String, Object>();
+    equipment.put("type", "object");
+    equipment.put("description", "Equipment definition (required for addEquipment action)");
+    properties.put("equipment", equipment);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("action"));
+
+    return GSON.toJson(schema);
+  }
+
+  // ========== Visualization Schemas ==========
+
+  /**
+   * Returns the JSON Schema for visualization input.
+   *
+   * @return JSON Schema string
+   */
+  public static String visualizationInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "VisualizationInput");
+    schema.put("description", "Input for visualization generation (visualize tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("type", enumProp("Visualization type", Arrays.asList("phaseEnvelope",
+        "flowsheet", "compressorMap", "propertyTable", "barChart", "pieChart", "lineChart")));
+    properties.put("title", stringProp("Chart title"));
+    properties.put("model",
+        enumProp("Thermodynamic model (for phaseEnvelope)", Arrays.asList("SRK", "PR", "CPA")));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Components (for phaseEnvelope type)");
+    properties.put("components", components);
+
+    properties.put("xLabel", stringProp("X-axis label"));
+    properties.put("yLabel", stringProp("Y-axis label"));
+
+    Map<String, Object> categories = new LinkedHashMap<String, Object>();
+    categories.put("type", "array");
+    Map<String, Object> catItems = new LinkedHashMap<String, Object>();
+    catItems.put("type", "string");
+    categories.put("items", catItems);
+    categories.put("description", "Category labels (for barChart/pieChart)");
+    properties.put("categories", categories);
+
+    Map<String, Object> values = new LinkedHashMap<String, Object>();
+    values.put("type", "array");
+    Map<String, Object> valItems = new LinkedHashMap<String, Object>();
+    valItems.put("type", "number");
+    values.put("items", valItems);
+    values.put("description", "Data values (for barChart/pieChart)");
+    properties.put("values", values);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("type"));
+
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -1034,7 +1245,8 @@ public final class SchemaCatalog {
     return Collections.unmodifiableList(Arrays.asList("run_flash", "run_process", "validate_input",
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
-        "run_reservoir", "run_field_economics", "run_dynamic", "run_bioprocess"));
+        "run_reservoir", "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
+        "compare_processes", "manage_session", "visualize"));
   }
 
   /**
@@ -1077,6 +1289,15 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? dynamicInputSchema() : null;
     } else if ("run_bioprocess".equals(toolName)) {
       return "input".equals(schemaType) ? bioprocessInputSchema() : null;
+    } else if ("size_equipment".equals(toolName)) {
+      return "input".equals(schemaType) ? equipmentSizingInputSchema()
+          : equipmentSizingOutputSchema();
+    } else if ("compare_processes".equals(toolName)) {
+      return "input".equals(schemaType) ? comparisonInputSchema() : null;
+    } else if ("manage_session".equals(toolName)) {
+      return "input".equals(schemaType) ? sessionInputSchema() : null;
+    } else if ("visualize".equals(toolName)) {
+      return "input".equals(schemaType) ? visualizationInputSchema() : null;
     }
     return null;
   }

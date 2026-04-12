@@ -39,6 +39,8 @@ import neqsim.mcp.runners.ValidationProfileRunner;
 import neqsim.mcp.runners.VisualizationRunner;
 import neqsim.mcp.runners.CompositionRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
+import neqsim.mcp.runners.EquipmentSizingRunner;
+import neqsim.mcp.runners.ProcessComparisonRunner;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
@@ -1253,6 +1255,48 @@ public class NeqSimTools {
       return DataCatalogRunner.run(catalogJson);
     } catch (Exception e) {
       return errorJson("Data catalog query failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Perform quick equipment sizing for separators and compressors.
+   *
+   * @param sizingJson JSON with equipmentType, fluid, and sizing parameters
+   * @return JSON string with sizing results
+   */
+  @Tool(description = "Perform quick equipment sizing for separators and compressors. "
+      + "For separators: calculates vessel diameter and length using Souders-Brown approach. "
+      + "For compressors: calculates power, outlet temperature, and recommended stages. "
+      + "Use getExample with category 'equipment-sizing' for templates.")
+  public String sizeEquipment(
+      @ToolArg(description = "JSON with: 'equipmentType' (separator|compressor), "
+          + "'model', 'temperature_C', 'pressure_bara', 'components', 'flowRate'. "
+          + "For separator: 'orientation', 'liquidRetentionTime_min'. "
+          + "For compressor: 'outletPressure_bara', 'polytropicEfficiency'.") String sizingJson) {
+    try {
+      return EquipmentSizingRunner.run(sizingJson);
+    } catch (Exception e) {
+      return errorJson("Equipment sizing failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Compare two or more process configurations side by side.
+   *
+   * @param comparisonJson JSON with cases array
+   * @return JSON string with comparison results
+   */
+  @Tool(description = "Compare two or more process configurations side by side. "
+      + "Run multiple process cases and get a comparison table of key outputs "
+      + "(temperatures, pressures, duties, compositions). "
+      + "Use getExample with category 'comparison' for templates.")
+  public String compareProcesses(
+      @ToolArg(description = "JSON with 'cases' array. Each case has 'name', 'fluid', "
+          + "and 'process' (same format as runProcess). Minimum 2 cases.") String comparisonJson) {
+    try {
+      return ProcessComparisonRunner.run(comparisonJson);
+    } catch (Exception e) {
+      return errorJson("Process comparison failed: " + e.getMessage());
     }
   }
 }

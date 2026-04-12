@@ -388,6 +388,129 @@ public final class ExampleCatalog {
         + "    \"moisture\": 0.15\n" + "  }\n" + "}";
   }
 
+  // ========== Session Examples ==========
+
+  /**
+   * Returns a session creation example.
+   *
+   * @return JSON string for SessionRunner.run()
+   */
+  public static String sessionCreate() {
+    return "{\n" + "  \"action\": \"create\",\n" + "  \"fluid\": {\n" + "    \"model\": \"SRK\",\n"
+        + "    \"temperature\": 298.15,\n" + "    \"pressure\": 50.0,\n"
+        + "    \"mixingRule\": \"classic\",\n" + "    \"components\": {\n"
+        + "      \"methane\": 0.85,\n" + "      \"ethane\": 0.10,\n" + "      \"propane\": 0.05\n"
+        + "    }\n" + "  }\n" + "}";
+  }
+
+  /**
+   * Returns a session add-equipment example (requires a valid sessionId).
+   *
+   * @return JSON string for SessionRunner.run()
+   */
+  public static String sessionAddEquipment() {
+    return "{\n" + "  \"action\": \"addEquipment\",\n" + "  \"sessionId\": \"<SESSION_ID>\",\n"
+        + "  \"equipment\": {\n" + "    \"type\": \"Separator\",\n" + "    \"name\": \"HP Sep\",\n"
+        + "    \"inlet\": \"feed\"\n" + "  }\n" + "}";
+  }
+
+  // ========== Visualization Examples ==========
+
+  /**
+   * Returns a phase envelope visualization example.
+   *
+   * @return JSON string for VisualizationRunner.run()
+   */
+  public static String visualizationPhaseEnvelope() {
+    return "{\n" + "  \"type\": \"phaseEnvelope\",\n" + "  \"model\": \"SRK\",\n"
+        + "  \"components\": {\n" + "    \"methane\": 0.80,\n" + "    \"ethane\": 0.10,\n"
+        + "    \"propane\": 0.05,\n" + "    \"n-butane\": 0.03,\n" + "    \"n-pentane\": 0.02\n"
+        + "  }\n" + "}";
+  }
+
+  /**
+   * Returns a bar chart visualization example.
+   *
+   * @return JSON string for VisualizationRunner.run()
+   */
+  public static String visualizationBarChart() {
+    return "{\n" + "  \"type\": \"barChart\",\n" + "  \"title\": \"Phase Fractions\",\n"
+        + "  \"xLabel\": \"Phase\",\n" + "  \"yLabel\": \"Mole Fraction\",\n"
+        + "  \"categories\": [\"Gas\", \"Liquid\"],\n" + "  \"values\": [0.72, 0.28]\n" + "}";
+  }
+
+  /**
+   * Returns a flowsheet diagram visualization example.
+   *
+   * @return JSON string for VisualizationRunner.run()
+   */
+  public static String visualizationFlowsheet() {
+    return "{\n" + "  \"type\": \"flowsheet\",\n" + "  \"equipment\": [\n" + "    {\n"
+        + "      \"name\": \"Feed\",\n" + "      \"type\": \"Stream\"\n" + "    },\n" + "    {\n"
+        + "      \"name\": \"HP Sep\",\n" + "      \"type\": \"Separator\",\n"
+        + "      \"inlet\": \"Feed\"\n" + "    },\n" + "    {\n"
+        + "      \"name\": \"Compressor\",\n" + "      \"type\": \"Compressor\",\n"
+        + "      \"inlet\": \"HP Sep\"\n" + "    }\n" + "  ]\n" + "}";
+  }
+
+  // ========== Equipment Sizing Examples ==========
+
+  /**
+   * Returns a separator sizing example.
+   *
+   * @return JSON string for EquipmentSizingRunner.run()
+   */
+  public static String sizingSeparator() {
+    return "{\n" + "  \"equipmentType\": \"separator\",\n" + "  \"model\": \"SRK\",\n"
+        + "  \"temperature_C\": 40.0,\n" + "  \"pressure_bara\": 50.0,\n" + "  \"components\": {\n"
+        + "    \"methane\": 0.80,\n" + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05,\n"
+        + "    \"n-heptane\": 0.05\n" + "  },\n"
+        + "  \"flowRate\": {\"value\": 50000.0, \"unit\": \"kg/hr\"},\n"
+        + "  \"orientation\": \"horizontal\",\n" + "  \"liquidRetentionTime_min\": 5.0\n" + "}";
+  }
+
+  /**
+   * Returns a compressor sizing example.
+   *
+   * @return JSON string for EquipmentSizingRunner.run()
+   */
+  public static String sizingCompressor() {
+    return "{\n" + "  \"equipmentType\": \"compressor\",\n" + "  \"model\": \"SRK\",\n"
+        + "  \"temperature_C\": 30.0,\n" + "  \"pressure_bara\": 10.0,\n" + "  \"components\": {\n"
+        + "    \"methane\": 0.90,\n" + "    \"ethane\": 0.07,\n" + "    \"propane\": 0.03\n"
+        + "  },\n" + "  \"flowRate\": {\"value\": 20000.0, \"unit\": \"kg/hr\"},\n"
+        + "  \"outletPressure_bara\": 80.0,\n" + "  \"polytropicEfficiency\": 0.75\n" + "}";
+  }
+
+  // ========== Process Comparison Examples ==========
+
+  /**
+   * Returns a process comparison example with two cases.
+   *
+   * @return JSON string for ProcessComparisonRunner.run()
+   */
+  public static String comparisonTwoCases() {
+    return "{\n" + "  \"cases\": [\n" + "    {\n" + "      \"name\": \"Low Pressure\",\n"
+        + "      \"fluid\": {\n" + "        \"model\": \"SRK\",\n"
+        + "        \"temperature\": 298.15,\n" + "        \"pressure\": 30.0,\n"
+        + "        \"mixingRule\": \"classic\",\n" + "        \"components\": {\n"
+        + "          \"methane\": 0.85,\n" + "          \"ethane\": 0.10,\n"
+        + "          \"propane\": 0.05\n" + "        }\n" + "      },\n" + "      \"process\": [\n"
+        + "        {\"type\": \"Stream\", \"name\": \"feed\", "
+        + "\"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},\n"
+        + "        {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}\n"
+        + "      ]\n" + "    },\n" + "    {\n" + "      \"name\": \"High Pressure\",\n"
+        + "      \"fluid\": {\n" + "        \"model\": \"SRK\",\n"
+        + "        \"temperature\": 298.15,\n" + "        \"pressure\": 80.0,\n"
+        + "        \"mixingRule\": \"classic\",\n" + "        \"components\": {\n"
+        + "          \"methane\": 0.85,\n" + "          \"ethane\": 0.10,\n"
+        + "          \"propane\": 0.05\n" + "        }\n" + "      },\n" + "      \"process\": [\n"
+        + "        {\"type\": \"Stream\", \"name\": \"feed\", "
+        + "\"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},\n"
+        + "        {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}\n"
+        + "      ]\n" + "    }\n" + "  ]\n" + "}";
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -396,9 +519,10 @@ public final class ExampleCatalog {
    * @return unmodifiable list of category names
    */
   public static List<String> getCategories() {
-    return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation", "batch",
-        "property-table", "phase-envelope", "pvt", "flow-assurance", "standards", "pipeline",
-        "reservoir", "economics", "bioprocess"));
+    return Collections.unmodifiableList(
+        Arrays.asList("flash", "process", "validation", "batch", "property-table", "phase-envelope",
+            "pvt", "flow-assurance", "standards", "pipeline", "reservoir", "economics",
+            "bioprocess", "session", "visualization", "equipment-sizing", "comparison"));
   }
 
   /**
@@ -435,6 +559,14 @@ public final class ExampleCatalog {
       return Arrays.asList("norwegian-ncs", "decline-curve");
     } else if ("bioprocess".equals(category)) {
       return Arrays.asList("anaerobic-digestion", "gasification");
+    } else if ("session".equals(category)) {
+      return Arrays.asList("create", "add-equipment");
+    } else if ("visualization".equals(category)) {
+      return Arrays.asList("phase-envelope", "bar-chart", "flowsheet");
+    } else if ("equipment-sizing".equals(category)) {
+      return Arrays.asList("separator", "compressor");
+    } else if ("comparison".equals(category)) {
+      return Arrays.asList("two-cases");
     }
     return Collections.emptyList();
   }
@@ -529,6 +661,34 @@ public final class ExampleCatalog {
       if ("gasification".equals(name)) {
         return bioprocessGasification();
       }
+    } else if ("session".equals(category)) {
+      if ("create".equals(name)) {
+        return sessionCreate();
+      }
+      if ("add-equipment".equals(name)) {
+        return sessionAddEquipment();
+      }
+    } else if ("visualization".equals(category)) {
+      if ("phase-envelope".equals(name)) {
+        return visualizationPhaseEnvelope();
+      }
+      if ("bar-chart".equals(name)) {
+        return visualizationBarChart();
+      }
+      if ("flowsheet".equals(name)) {
+        return visualizationFlowsheet();
+      }
+    } else if ("equipment-sizing".equals(category)) {
+      if ("separator".equals(name)) {
+        return sizingSeparator();
+      }
+      if ("compressor".equals(name)) {
+        return sizingCompressor();
+      }
+    } else if ("comparison".equals(category)) {
+      if ("two-cases".equals(name)) {
+        return comparisonTwoCases();
+      }
     }
     return null;
   }
@@ -622,6 +782,31 @@ public final class ExampleCatalog {
     bioExamples.put("anaerobic-digestion", "Anaerobic digestion of food waste at 37C mesophilic");
     bioExamples.put("gasification", "Downdraft biomass gasification with air agent at 850C");
     catalog.put("bioprocess", bioExamples);
+
+    // Session examples
+    Map<String, String> sessionExamples = new LinkedHashMap<String, String>();
+    sessionExamples.put("create", "Create a new simulation session with a 3-component gas fluid");
+    sessionExamples.put("add-equipment",
+        "Add a separator to an existing session (requires sessionId)");
+    catalog.put("session", sessionExamples);
+
+    // Visualization examples
+    Map<String, String> vizExamples = new LinkedHashMap<String, String>();
+    vizExamples.put("phase-envelope", "Phase envelope SVG for a 5-component natural gas");
+    vizExamples.put("bar-chart", "Bar chart SVG comparing phase fractions");
+    vizExamples.put("flowsheet", "Mermaid flowsheet diagram for a simple process");
+    catalog.put("visualization", vizExamples);
+
+    // Equipment sizing examples
+    Map<String, String> sizingExamples = new LinkedHashMap<String, String>();
+    sizingExamples.put("separator", "Horizontal separator sizing for a 4-component gas/liquid");
+    sizingExamples.put("compressor", "Centrifugal compressor sizing from 10 to 80 bara");
+    catalog.put("equipment-sizing", sizingExamples);
+
+    // Process comparison examples
+    Map<String, String> compExamples = new LinkedHashMap<String, String>();
+    compExamples.put("two-cases", "Compare separation at 30 bara vs 80 bara side by side");
+    catalog.put("comparison", compExamples);
 
     return GSON.toJson(catalog);
   }

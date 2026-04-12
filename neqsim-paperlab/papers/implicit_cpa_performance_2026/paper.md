@@ -18,7 +18,7 @@
 
 ## Abstract
 
-The Cubic-Plus-Association (CPA) equation of state requires solving site fraction equations self-consistently with the volume equation during molar volume calculations. The standard approach uses a nested loop: an outer iteration for volume (Halley's method) containing an inner loop for site fractions (successive substitution followed by Newton refinement). Following the fully implicit formulation recently proposed by Igben et al. [10], this work implements and evaluates the algorithm where volume and all association site fractions are solved simultaneously in a single coupled Newton–Raphson system of dimension $(n_s + 1)$, where $n_s$ is the total number of association sites. The Jacobian is constructed analytically with four structured blocks and solved by Gaussian elimination with partial pivoting, avoiding external linear algebra library dependencies. Benchmarks across 11 fluid systems — ranging from pure water to 10-component oil–gas–water–MEG mixtures and including a natural gas–water–TEG system representative of gas dehydration — show median speedup factors from 2.0× (pure water) to 8.4× (MEG–water), with zero loss in thermodynamic accuracy. For a ternary associating system (water–ethanol–acetic acid), the speedup reaches 32.8×. The implicit algorithm is particularly effective for systems with many association sites and binary/ternary associating mixtures. A comparison of CPA parameters between the present implementation and the Igben et al. reference confirms consistency for key self-associating compounds. All results are fully reproducible from an open-source implementation in the NeqSim library.
+The Cubic-Plus-Association (CPA) equation of state requires solving site fraction equations self-consistently with the volume equation during molar volume calculations. The standard approach uses a nested loop: an outer iteration for volume (Halley's method) containing an inner loop for site fractions (successive substitution followed by Newton refinement). Michelsen [8] noted the possibility of solving volume and site fractions simultaneously but recommended the nested approach. Igben et al. [10] provided the first complete algorithmic specification of this simultaneous solver. This work implements and evaluates the algorithm where volume and all association site fractions are solved in a single coupled Newton–Raphson system of dimension $(n_s + 1)$, where $n_s$ is the total number of association sites. The Jacobian is constructed analytically with four structured blocks and solved by Gaussian elimination with partial pivoting, avoiding external linear algebra library dependencies. Benchmarks across 11 fluid systems — ranging from pure water to 10-component oil–gas–water–MEG mixtures and including a natural gas–water–TEG system representative of gas dehydration — show median speedup factors from 2.0× (pure water) to 8.4× (MEG–water), with zero loss in thermodynamic accuracy. For a ternary associating system (water–ethanol–acetic acid), the speedup reaches 32.8×. The implicit algorithm is particularly effective for systems with many association sites and binary/ternary associating mixtures. A comparison of CPA parameters between the present implementation and the Igben et al. reference confirms consistency for key self-associating compounds. All results are fully reproducible from an open-source implementation in the NeqSim library.
 
 ## Keywords
 
@@ -52,13 +52,15 @@ The site fractions themselves depend on volume through the association strength 
 
 This nesting introduces redundant computation. Each outer volume step requires full convergence of the inner site fraction loop, even though the site fractions may change only slightly between consecutive volume updates. Furthermore, the implicit function theorem must be applied to compute volume derivatives of the association contribution ($\partial F^{\text{assoc}}/\partial V$, $\partial^2 F^{\text{assoc}}/\partial V^2$) needed by the outer Halley update, requiring an additional linear system solve at each step. Topliss et al. [19] discussed analogous computational challenges for density-dependent mixing rules in non-cubic equations.
 
+Michelsen [8] recognized this inefficiency and noted that an alternative approach would be to solve for volume and site fractions simultaneously — what he termed "the more risky procedure." However, Michelsen assessed that with a loose inner-loop convergence tolerance, "only a single inner-loop iteration is necessary in most cases," making the nested loop "only slightly lower" in efficiency than direct coupling. He therefore recommended the nested approach as the default strategy, with the globally convergent Q-function maximization as a backup. Michelsen did not derive the coupled Jacobian, implement the simultaneous solver, or provide quantitative benchmarks for it.
+
 Mahabadian et al. [23] developed a multiphase flash with CPA accounting for hydrate-forming systems, where the computational cost of the nested CPA solver is amplified by the need for repeated stability analyses.
 
 ### 1.3 The fully implicit approach of Igben et al.
 
-Igben et al. [10] recently proposed eliminating the nested-loop structure by solving volume and site fractions simultaneously in a single Newton–Raphson system. Their fully implicit formulation constructs a coupled system of dimension $(n_s + 1)$ — where $n_s$ is the total number of association sites — with an analytically derived Jacobian matrix. They demonstrated the approach on three systems: pure water (4C scheme), water–methanol binary, and water–ethanol–acetic acid ternary, reporting 30–80% computational cost reduction compared to the standard nested solver. The CPA parameters used in their work for self-associating compounds were taken from the comprehensive compilation by Kontogeorgis et al. [11].
+Igben et al. [10] recently provided the first complete algorithmic specification of the simultaneous volume–site fraction solver for CPA, building on the concept mentioned by Michelsen [8]. Their fully implicit formulation constructs a coupled system of dimension $(n_s + 1)$ — where $n_s$ is the total number of association sites — with an analytically derived Jacobian matrix having a natural four-block structure. Beyond the basic concept acknowledged by Michelsen, Igben et al. contributed: (i) explicit derivation of all Jacobian entries including the non-trivial cross-derivatives involving the volume dependence of the radial distribution function; (ii) a restart criterion with threshold parameter $\alpha$ to suppress unnecessary root searches in supercritical regions where only one physical root exists; (iii) step limiting adapted to the coupled system; and (iv) systematic quantitative benchmarking of all four solution methods (analytical, successive substitution, second-order, and fully implicit). They demonstrated the approach on three systems: pure water (4C scheme), water–methanol binary, and water–ethanol–acetic acid ternary, reporting 30–80% computational cost reduction compared to the standard nested solver. The CPA parameters used in their work for self-associating compounds were taken from the comprehensive compilation by Kontogeorgis et al. [11].
 
-However, the Igben et al. study was limited to at most three associating components and did not explore the performance characteristics on industrially relevant multicomponent systems such as natural gas processing with glycol inhibitors, gas condensates, or multiphase oil–water–gas systems.
+However, the Igben et al. study was limited to at most three associating components and did not explore the performance characteristics on industrially relevant multicomponent systems such as natural gas processing with glycol inhibitors, gas condensates, or multiphase oil–water–gas systems. Furthermore, Michelsen's assessment that the nested approach is "only slightly lower" in efficiency than direct coupling deserves quantitative verification across a broader range of association strengths and system complexities.
 
 ### 1.4 Contributions
 
@@ -140,7 +142,7 @@ where $F_V = \partial F / \partial V$ evaluated at $V = b/(n\zeta)$.
 
 ### 3.1 Standard nested approach
 
-The conventional algorithm [7,8] iterates as follows:
+The conventional algorithm was established by Michelsen and Hendriks [7] and refined by Michelsen [8], who presented multiple solution strategies for the inner site fraction equations — successive substitution, damped successive substitution, and a second-order (Newton) method based on Q-function maximization with a modified Hessian guaranteeing global convergence. The complete nested procedure iterates as follows:
 
 **Outer loop** (variable $\zeta$, Halley's method):
 
@@ -460,9 +462,9 @@ Fig. 6 shows the speedup factor vs. number of components. While there is no simp
 
 The performance advantage has three sources:
 
-1. **Elimination of inner-loop overhead**: The standard approach requires 5–15 successive substitution steps plus sometimes Newton refinement at *each* outer volume step. The implicit approach absorbs this work into the coupled system.
+1. **Elimination of inner-loop overhead**: The standard approach requires 5–15 successive substitution steps plus sometimes Newton refinement at *each* outer volume step. The implicit approach absorbs this work into the coupled system. Michelsen [8] noted that with a loose inner-loop tolerance "only a single inner-loop iteration is necessary in most cases," but this assessment holds primarily for weakly to moderately associating systems. For strongly associating liquids (glycols, organic acids) and binary/ternary associating mixtures, the inner loop cost is substantially higher — as confirmed by the iteration count data of Igben et al. [10, Figs. 6–7] and the present benchmarks.
 
-2. **Avoidance of implicit function theorem derivatives**: The standard approach must solve $\mathbf{H} \cdot \mathbf{X}_V = -\mathbf{b}$ to compute $\partial F^{\text{assoc}} / \partial V$. In the implicit approach, this coupling is handled directly through the off-diagonal Jacobian blocks.
+2. **Avoidance of implicit function theorem derivatives**: The standard approach must solve $\mathbf{H} \cdot \mathbf{X}_V = -\mathbf{b}$ to compute $\partial F^{\text{assoc}} / \partial V$ at every outer iteration. In the implicit approach, the coupling between volume and site fractions is captured directly through the off-diagonal Jacobian blocks ($\mathbf{j}_{X\zeta}$ and $\mathbf{j}_{\zeta X}$), completely eliminating this additional linear system solve. This is arguably the most important structural advantage of the coupled formulation.
 
 3. **Reduced linear algebra overhead**: Hand-coded Gaussian elimination for small systems avoids object allocation and generality overhead of external libraries. For $n_s \leq 10$, the $O(n_s^3)$ cost is negligible compared to thermodynamic property evaluations.
 
@@ -470,7 +472,7 @@ The performance advantage has three sources:
 
 ## 7. Conclusions
 
-A fully implicit Newton–Raphson algorithm for the CPA equation of state, following the formulation of Igben et al. [10], has been implemented in the open-source NeqSim library and benchmarked against the standard nested solver across 11 fluid systems spanning pure components to 10-component industrial mixtures.
+A fully implicit Newton–Raphson algorithm for the CPA equation of state, following the detailed formulation of Igben et al. [10] which builds on the concept of simultaneous volume–site fraction solution mentioned by Michelsen [8], has been implemented in the open-source NeqSim library and benchmarked against the standard nested solver across 11 fluid systems spanning pure components to 10-component industrial mixtures.
 
 1. The implicit solver achieves speedup factors from 1.9× to 32.8× with zero thermodynamic accuracy loss (maximum density error: 0.00000% across 652 state points in 11 systems).
 
@@ -487,6 +489,8 @@ A fully implicit Newton–Raphson algorithm for the CPA equation of state, follo
 ### 7.1 Limitations
 
 The benchmarks are restricted to SRK-CPA with the simplified radial distribution function. Extension to PR-CPA or the full RDF formulation would require re-deriving the Jacobian blocks. The timing ratios are sensitive to the specific JVM and hardware, though the relative ordering of systems is expected to be robust.
+
+The present results quantitatively contradict Michelsen's [8] qualitative assessment that the nested loop approach is "only slightly lower" in efficiency than direct coupling. While this holds for pure water and weakly associating systems (speedup $\approx 2\times$), for strongly associating mixtures and systems with many association sites the speedup reaches 8–33×, demonstrating that the fully implicit approach has substantial practical value beyond what Michelsen anticipated.
 
 ### 7.2 Future work
 

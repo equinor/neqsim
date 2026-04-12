@@ -63,9 +63,14 @@ public final class VisualizationRunner {
           return generateStyledTable(input);
         case "barChart":
           return generateBarChartSVG(input);
+        case "pieChart":
+          return generatePieChartSVG(input);
+        case "lineChart":
+          return generateLineChartSVG(input);
         default:
           return errorJson("Unknown visualization type: " + type
-              + ". Use: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart");
+              + ". Use: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart, "
+              + "pieChart, lineChart");
       }
     } catch (Exception e) {
       return errorJson("Visualization failed: " + e.getMessage());
@@ -616,5 +621,232 @@ public final class VisualizationRunner {
     error.addProperty("status", "error");
     error.addProperty("message", message);
     return GSON.toJson(error);
+  }
+
+  /**
+   * Generates an SVG pie chart showing proportions.
+   *
+   * @param input JSON with categories and values arrays
+   * @return JSON with SVG string
+   */
+  private static String generatePieChartSVG(JsonObject input) {
+    String title = input.has("title") ? input.get("title").getAsString() : "Pie Chart";
+    JsonArray categories =
+        input.has("categories") ? input.getAsJsonArray("categories") : new JsonArray();
+    JsonArray values = input.has("values") ? input.getAsJsonArray("values") : new JsonArray();
+
+    if (categories.size() == 0 || values.size() == 0) {
+      return errorJson("Provide 'categories' and 'values' arrays for pie chart");
+    }
+
+    int n = Math.min(categories.size(), values.size());
+    double total = 0;
+    List<Double> vals = new ArrayList<Double>();
+    for (int i = 0; i < n; i++) {
+      double v = Math.abs(values.get(i).getAsDouble());
+      vals.add(v);
+      total += v;
+    }
+    if (total == 0) {
+      total = 1;
+    }
+
+    int size = 400;
+    int cx = 160;
+    int cy = 180;
+    int r = 120;
+
+    String[] colors =
+        {"#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B"};
+
+    StringBuilder svg = new StringBuilder();
+    svg.append("<svg xmlns='http://www.w3.org/2000/svg' ");
+    svg.append("width='").append(size).append("' height='").append(size).append("'>\n");
+    svg.append("<rect width='100%' height='100%' fill='white'/>\n");
+
+    // Title
+    svg.append("<text x='").append(size / 2).append("' y='25' ");
+    svg.append("text-anchor='middle' font-size='14' font-weight='bold'>");
+    svg.append(escapeXml(title)).append("</text>\n");
+
+    double startAngle = 0;
+    for (int i = 0; i < n; i++) {
+      double fraction = vals.get(i) / total;
+      double angle = fraction * 2 * Math.PI;
+      double endAngle = startAngle + angle;
+
+      double x1 = cx + r * Math.cos(startAngle);
+      double y1 = cy + r * Math.sin(startAngle);
+      double x2 = cx + r * Math.cos(endAngle);
+      double y2 = cy + r * Math.sin(endAngle);
+      int largeArc = angle > Math.PI ? 1 : 0;
+
+      svg.append("<path d='M ").append(cx).append(",").append(cy);
+      svg.append(" L ").append(String.format("%.1f", x1)).append(",");
+      svg.append(String.format("%.1f", y1));
+      svg.append(" A ").append(r).append(",").append(r).append(" 0 ");
+      svg.append(largeArc).append(",1 ");
+      svg.append(String.format("%.1f", x2)).append(",");
+      svg.append(String.format("%.1f", y2)).append(" Z'");
+      svg.append(" fill='").append(colors[i % colors.length]).append("'/>\n");
+
+      startAngle = endAngle;
+    }
+
+    // Legend
+    int legendX = 310;
+    int legendY = 60;
+    for (int i = 0; i < n; i++) {
+      svg.append("<rect x='").append(legendX).append("' y='").append(legendY + i * 22);
+      svg.append("' width='12' height='12' fill='").append(colors[i % colors.length]);
+      svg.append("'/>\n");
+      svg.append("<text x='").append(legendX + 18).append("' y='").append(legendY + i * 22 + 11);
+      svg.append("' font-size='10'>");
+      svg.append(escapeXml(categories.get(i).getAsString()));
+      svg.append(" (").append(String.format("%.1f%%", vals.get(i) / total * 100)).append(")");
+      svg.append("</text>\n");
+    }
+
+    svg.append("</svg>");
+
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("visualizationType", "pieChart");
+    response.addProperty("title", title);
+    response.addProperty("svg", svg.toString());
+    response.addProperty("mimeType", "image/svg+xml");
+    return GSON.toJson(response);
+  }
+
+  /**
+   * Generates an SVG line chart for trend/time-series data.
+   *
+   * @param input JSON with xValues, yValues arrays, labels, and optional series
+   * @return JSON with SVG string
+   */
+  private static String generateLineChartSVG(JsonObject input) {
+    String title = input.has("title") ? input.get("title").getAsString() : "Line Chart";
+    String xLabel = input.has("xLabel") ? input.get("xLabel").getAsString() : "X";
+    String yLabel = input.has("yLabel") ? input.get("yLabel").getAsString() : "Y";
+
+    JsonArray xValues = input.has("xValues") ? input.getAsJsonArray("xValues") : new JsonArray();
+    JsonArray yValues = input.has("yValues") ? input.getAsJsonArray("yValues") : new JsonArray();
+
+    if (xValues.size() == 0 || yValues.size() == 0) {
+      return errorJson("Provide 'xValues' and 'yValues' arrays for line chart");
+    }
+
+    int n = Math.min(xValues.size(), yValues.size());
+    List<Double> xVals = new ArrayList<Double>();
+    List<Double> yVals = new ArrayList<Double>();
+    double xMin = Double.MAX_VALUE;
+    double xMax = -Double.MAX_VALUE;
+    double yMin = Double.MAX_VALUE;
+    double yMax = -Double.MAX_VALUE;
+
+    for (int i = 0; i < n; i++) {
+      double x = xValues.get(i).getAsDouble();
+      double y = yValues.get(i).getAsDouble();
+      xVals.add(x);
+      yVals.add(y);
+      xMin = Math.min(xMin, x);
+      xMax = Math.max(xMax, x);
+      yMin = Math.min(yMin, y);
+      yMax = Math.max(yMax, y);
+    }
+
+    if (xMax == xMin) {
+      xMax = xMin + 1;
+    }
+    if (yMax == yMin) {
+      yMax = yMin + 1;
+    }
+
+    int width = 600;
+    int height = 400;
+    int margin = 65;
+    int plotW = width - 2 * margin;
+    int plotH = height - 2 * margin;
+
+    StringBuilder svg = new StringBuilder();
+    svg.append("<svg xmlns='http://www.w3.org/2000/svg' ");
+    svg.append("width='").append(width).append("' height='").append(height).append("'>\n");
+    svg.append("<rect width='100%' height='100%' fill='white'/>\n");
+
+    // Title
+    svg.append("<text x='").append(width / 2).append("' y='20' ");
+    svg.append("text-anchor='middle' font-size='14' font-weight='bold'>");
+    svg.append(escapeXml(title)).append("</text>\n");
+
+    // Axes
+    svg.append("<line x1='").append(margin).append("' y1='").append(margin);
+    svg.append("' x2='").append(margin).append("' y2='").append(height - margin);
+    svg.append("' stroke='black'/>\n");
+    svg.append("<line x1='").append(margin).append("' y1='").append(height - margin);
+    svg.append("' x2='").append(width - margin).append("' y2='").append(height - margin);
+    svg.append("' stroke='black'/>\n");
+
+    // Axis labels
+    svg.append("<text x='").append(width / 2).append("' y='").append(height - 10);
+    svg.append("' text-anchor='middle' font-size='11'>").append(escapeXml(xLabel));
+    svg.append("</text>\n");
+    svg.append("<text x='12' y='").append(height / 2);
+    svg.append("' text-anchor='middle' font-size='11' ");
+    svg.append("transform='rotate(-90,12,").append(height / 2).append(")'>");
+    svg.append(escapeXml(yLabel)).append("</text>\n");
+
+    // Grid lines (5 horizontal)
+    for (int i = 0; i <= 4; i++) {
+      double yVal = yMin + (yMax - yMin) * i / 4.0;
+      int py = (height - margin) - (int) ((yVal - yMin) / (yMax - yMin) * plotH);
+      svg.append("<line x1='").append(margin).append("' y1='").append(py);
+      svg.append("' x2='").append(width - margin).append("' y2='").append(py);
+      svg.append("' stroke='#e0e0e0'/>\n");
+      svg.append("<text x='").append(margin - 5).append("' y='").append(py + 4);
+      svg.append("' text-anchor='end' font-size='9'>");
+      svg.append(String.format("%.1f", yVal)).append("</text>\n");
+    }
+
+    // X-axis tick labels
+    for (int i = 0; i <= 4; i++) {
+      double xVal = xMin + (xMax - xMin) * i / 4.0;
+      int px = margin + (int) ((xVal - xMin) / (xMax - xMin) * plotW);
+      svg.append("<text x='").append(px).append("' y='").append(height - margin + 15);
+      svg.append("' text-anchor='middle' font-size='9'>");
+      svg.append(String.format("%.1f", xVal)).append("</text>\n");
+    }
+
+    // Line
+    StringBuilder path = new StringBuilder();
+    for (int i = 0; i < n; i++) {
+      int px = margin + (int) ((xVals.get(i) - xMin) / (xMax - xMin) * plotW);
+      int py = (height - margin) - (int) ((yVals.get(i) - yMin) / (yMax - yMin) * plotH);
+      if (i == 0) {
+        path.append("M ").append(px).append(",").append(py);
+      } else {
+        path.append(" L ").append(px).append(",").append(py);
+      }
+    }
+    svg.append("<path d='").append(path.toString());
+    svg.append("' fill='none' stroke='#2196F3' stroke-width='2'/>\n");
+
+    // Data point dots
+    for (int i = 0; i < n; i++) {
+      int px = margin + (int) ((xVals.get(i) - xMin) / (xMax - xMin) * plotW);
+      int py = (height - margin) - (int) ((yVals.get(i) - yMin) / (yMax - yMin) * plotH);
+      svg.append("<circle cx='").append(px).append("' cy='").append(py);
+      svg.append("' r='3' fill='#2196F3'/>\n");
+    }
+
+    svg.append("</svg>");
+
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("visualizationType", "lineChart");
+    response.addProperty("title", title);
+    response.addProperty("svg", svg.toString());
+    response.addProperty("mimeType", "image/svg+xml");
+    response.addProperty("dataPointCount", n);
+    return GSON.toJson(response);
   }
 }
