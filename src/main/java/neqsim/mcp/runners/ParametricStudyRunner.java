@@ -175,6 +175,13 @@ public class ParametricStudyRunner {
 
   /**
    * Runs a single parametric case.
+   *
+   * @param baseProcess the base process JSON definition
+   * @param sweeps the sweep parameter definitions
+   * @param inputValues the input values for this case
+   * @param outputs the output definitions to collect
+   * @param caseIndex the index of this case
+   * @return a JsonObject containing the case results
    */
   private static JsonObject runCase(JsonObject baseProcess, List<SweepDef> sweeps,
       Map<String, Double> inputValues, List<OutputDef> outputs, int caseIndex) {
@@ -236,6 +243,9 @@ public class ParametricStudyRunner {
 
   /**
    * Generates all combinations for full-factorial design.
+   *
+   * @param sweeps the sweep parameter definitions
+   * @return a list of maps, each representing one factorial case
    */
   private static List<Map<String, Double>> generateFullFactorialCases(List<SweepDef> sweeps) {
     List<Map<String, Double>> cases = new ArrayList<>();

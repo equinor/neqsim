@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * computed values, expected values, and pass/fail status.
  * </p>
  *
- * <h3>Benchmark Cases</h3>
+ * <h2>Benchmark Cases</h2>
  * <ul>
  * <li><b>Single Pipe (Darcy-Weisbach)</b>: Analytical ΔP from Swamee-Jain / Darcy-Weisbach
  * equation</li>
