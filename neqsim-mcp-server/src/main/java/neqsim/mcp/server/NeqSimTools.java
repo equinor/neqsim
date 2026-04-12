@@ -945,18 +945,22 @@ public class NeqSimTools {
    * @param taskJson JSON with task description and parameters
    * @return JSON with execution plan, step results, validation, and report
    */
-  @Tool(description = "Solve a complete engineering task. Takes a high-level description "
+  @Tool(description = "[EXPERIMENTAL — Tier 3] Solve a complete engineering task. "
+      + "Takes a high-level description "
       + "(e.g., 'Design a 3-stage compression system from 5 to 150 bara'), automatically "
-      + "classifies the task, builds a multi-step execution plan (flash → process → "
-      + "validate), executes each step, chains results between steps, runs engineering "
-      + "validation against industry rules, and returns a structured report. "
-      + "Supports: compression, separation, dehydration, pipeline, PVT, flow assurance, "
-      + "CCS, reservoir, economics, dynamic simulation, heat exchange, and distillation.")
+      + "classifies the task, builds a multi-step execution plan, executes each step, "
+      + "chains results between steps, runs engineering validation against industry rules, "
+      + "and returns a structured report. Limited validation — results require independent "
+      + "review. Not available in STUDY_TEAM, DIGITAL_TWIN, or ENTERPRISE modes.")
   public String solveTask(
       @ToolArg(description = "JSON with: 'task' (natural language description), "
           + "'fluid' (composition), 'parameters' (task-specific values like outletPressure, "
           + "stages, intercoolerTemp), optional 'process' (equipment definitions), "
           + "optional 'validate' (true/false, default true).") String taskJson) {
+    String blocked = IndustrialProfile.enforceAccess("solveTask");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return TaskSolverRunner.solveTask(taskJson);
     } catch (Exception e) {
