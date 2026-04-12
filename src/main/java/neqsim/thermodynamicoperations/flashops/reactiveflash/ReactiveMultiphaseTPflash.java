@@ -362,8 +362,6 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
    * </p>
    */
   private void runNonReactiveFlash() {
-    // Use a standard approach: simple SS on Rachford-Rice
-    // Since we're not modifying existing flash classes, implement a minimal version
     int nc = system.getPhase(0).getNumberOfComponents();
 
     // Check trivial stability first using Wilson K-values
@@ -378,13 +376,23 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       }
     }
     if (allSupercritical) {
-      // All components above critical temperature - single phase gas is stable
       converged = true;
       return;
     }
 
     if (system.getNumberOfPhases() < 2) {
       system.addPhase();
+    }
+
+    // Determine which logical phase index is liquid vs gas.
+    // After init(0), NeqSim defaults to phase 0 = GAS, phase 1 = LIQUID.
+    // After init(2)/reOrderPhases(), this may be rearranged.
+    // The SS VLE requires correct EOS root assignment: K = fugCoef_liq / fugCoef_vap.
+    int liqIdx = 0;
+    int gasIdx = 1;
+    if (system.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+      liqIdx = 1;
+      gasIdx = 0;
     }
 
     // Initialize K-values from Wilson correlation
@@ -400,37 +408,53 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       }
     }
 
-    // Successive substitution
+    // Use Wilson K-values to compute initial phase split BEFORE calling init(1).
+    // This breaks the trivial K=1 fixed point when both phases start with identical
+    // compositions (which happens after init(0) duplicates z to both phases).
+    double beta = solveRachfordRice(lnK, 0.5);
+    beta = Math.max(1e-15, Math.min(1.0 - 1e-15, beta));
+    double[] z = new double[nc];
+    for (int i = 0; i < nc; i++) {
+      z[i] = system.getPhase(0).getComponent(i).getz();
+      double Ki = Math.exp(lnK[i]);
+      double xi = z[i] / (1.0 + beta * (Ki - 1.0));
+      double yi = Ki * xi;
+      system.getPhase(liqIdx).getComponent(i).setx(Math.max(xi, MIN_MOLES));
+      system.getPhase(gasIdx).getComponent(i).setx(Math.max(yi, MIN_MOLES));
+    }
+    system.getPhase(liqIdx).normalize();
+    system.getPhase(gasIdx).normalize();
+    system.setBeta(liqIdx, 1.0 - beta);
+    system.setBeta(gasIdx, beta);
+
+    // Successive substitution with fugacity-based K-values
     for (int iter = 0; iter < 200; iter++) {
       double err = 0.0;
       system.init(1);
       for (int i = 0; i < nc; i++) {
-        double lnPhiL = system.getPhase(0).getComponent(i).getLogFugacityCoefficient();
-        double lnPhiV = system.getPhase(1).getComponent(i).getLogFugacityCoefficient();
+        double lnPhiL = system.getPhase(liqIdx).getComponent(i).getLogFugacityCoefficient();
+        double lnPhiV = system.getPhase(gasIdx).getComponent(i).getLogFugacityCoefficient();
         double lnKnew = lnPhiL - lnPhiV;
         err += Math.abs(lnKnew - lnK[i]);
         lnK[i] = lnKnew;
       }
 
-      // Update compositions using Rachford-Rice
-      double beta = system.getBeta(1);
+      beta = system.getBeta(gasIdx);
       beta = solveRachfordRice(lnK, beta);
       beta = Math.max(1e-15, Math.min(1.0 - 1e-15, beta));
 
-      // Set compositions
-      double[] z = new double[nc];
       for (int i = 0; i < nc; i++) {
         z[i] = system.getPhase(0).getComponent(i).getz();
         double Ki = Math.exp(lnK[i]);
         double xi = z[i] / (1.0 + beta * (Ki - 1.0));
         double yi = Ki * xi;
-        system.getPhase(0).getComponent(i).setx(Math.max(xi, MIN_MOLES));
-        system.getPhase(1).getComponent(i).setx(Math.max(yi, MIN_MOLES));
+        system.getPhase(liqIdx).getComponent(i).setx(Math.max(xi, MIN_MOLES));
+        system.getPhase(gasIdx).getComponent(i).setx(Math.max(yi, MIN_MOLES));
       }
-      system.getPhase(0).normalize();
-      system.getPhase(1).normalize();
-      system.setBeta(0, 1.0 - beta);
-      system.setBeta(1, beta);
+      system.getPhase(liqIdx).normalize();
+      system.getPhase(gasIdx).normalize();
+      system.setBeta(liqIdx, 1.0 - beta);
+      system.setBeta(gasIdx, beta);
 
       if (err < 1e-10) {
         converged = true;
