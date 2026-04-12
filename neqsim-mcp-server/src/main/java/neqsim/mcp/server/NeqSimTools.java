@@ -30,8 +30,15 @@ import neqsim.mcp.runners.PluginRegistry;
 import neqsim.mcp.runners.ProgressTracker;
 import neqsim.mcp.runners.PropertyTableRunner;
 import neqsim.mcp.runners.ReportRunner;
+import neqsim.mcp.runners.SecurityRunner;
 import neqsim.mcp.runners.SessionRunner;
+import neqsim.mcp.runners.StatePersistenceRunner;
+import neqsim.mcp.runners.StreamingRunner;
 import neqsim.mcp.runners.TaskSolverRunner;
+import neqsim.mcp.runners.ValidationProfileRunner;
+import neqsim.mcp.runners.VisualizationRunner;
+import neqsim.mcp.runners.CompositionRunner;
+import neqsim.mcp.runners.DataCatalogRunner;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
@@ -1057,6 +1064,195 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Progress query failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Streaming simulations
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run long-running simulations with streaming/polling results.
+   *
+   * @param streamJson JSON with streaming action and parameters
+   * @return JSON with operation ID or polled results
+   */
+  @Tool(description = "Run simulations with incremental streaming results. "
+      + "Starts async operations (parametric sweeps, dynamic sims, Monte Carlo) "
+      + "and polls for new results as they become available. "
+      + "Actions: startParametricSweep, startDynamicStreaming, startMonteCarlo, "
+      + "pollResults, cancelOperation, listOperations.")
+  public String streamSimulation(
+      @ToolArg(description = "JSON with: 'action' (startParametricSweep|startDynamicStreaming|"
+          + "startMonteCarlo|pollResults|cancelOperation|listOperations). "
+          + "For start actions: simulation parameters. "
+          + "For pollResults: 'operationId' and 'lastIndex'.") String streamJson) {
+    try {
+      return StreamingRunner.run(streamJson);
+    } catch (Exception e) {
+      return errorJson("Streaming operation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Visualization
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Generate inline visualizations (SVG charts, diagrams, styled tables).
+   *
+   * @param vizJson JSON with visualization type and data
+   * @return JSON with SVG/Mermaid/HTML content
+   */
+  @Tool(description = "Generate inline visualizations for simulation results. "
+      + "Produces SVG charts (phase envelopes, compressor maps, bar charts), "
+      + "Mermaid flowsheet diagrams, and styled HTML tables. "
+      + "Types: phaseEnvelope, flowsheetDiagram, compressorMap, barChart, styledTable.")
+  public String generateVisualization(
+      @ToolArg(description = "JSON with: 'type' (phaseEnvelope|flowsheetDiagram|compressorMap|"
+          + "barChart|styledTable). For phaseEnvelope: fluid components. "
+          + "For flowsheetDiagram: processJson. For barChart: labels, values. "
+          + "For styledTable: headers, rows, caption.") String vizJson) {
+    try {
+      return VisualizationRunner.run(vizJson);
+    } catch (Exception e) {
+      return errorJson("Visualization failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Multi-server composition
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Compose multi-server engineering workflows.
+   *
+   * @param compositionJson JSON with composition action and parameters
+   * @return JSON with workflow plan or server info
+   */
+  @Tool(description = "Compose multi-server engineering workflows across MCP servers. "
+      + "Browse external servers (cost estimation, plant historian, CAD, safety), "
+      + "plan cross-domain workflows (digital-twin, feed study, vendor evaluation), "
+      + "and describe NeqSim capabilities. "
+      + "Actions: listServers, registerServer, removeServer, listWorkflows, "
+      + "getWorkflow, planComposition, describeCapabilities.")
+  public String composeMultiServerWorkflow(
+      @ToolArg(description = "JSON with: 'action' (listServers|registerServer|removeServer|"
+          + "listWorkflows|getWorkflow|planComposition|describeCapabilities). "
+          + "For planComposition: 'task' (natural language description). "
+          + "For getWorkflow: 'workflowId' (digital-twin|feed-study|vendor-evaluation|"
+          + "safety-study).") String compositionJson) {
+    try {
+      return CompositionRunner.run(compositionJson);
+    } catch (Exception e) {
+      return errorJson("Composition failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Security & audit
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Manage API keys, audit logging, rate limiting, and security configuration.
+   *
+   * @param securityJson JSON with security action and parameters
+   * @return JSON with security status or audit entries
+   */
+  @Tool(description = "Manage MCP server security: API key management, audit logging, "
+      + "rate limiting, and access control configuration. "
+      + "Actions: createApiKey, revokeApiKey, authenticate, getAuditLog, "
+      + "getRateLimits, setConfig, getStatus.")
+  public String manageSecurity(
+      @ToolArg(description = "JSON with: 'action' (createApiKey|revokeApiKey|authenticate|"
+          + "getAuditLog|getRateLimits|setConfig|getStatus). "
+          + "For createApiKey: 'userId', 'project', 'role', 'rateLimit'. "
+          + "For getAuditLog: optional 'userId', 'tool', 'limit' filters.") String securityJson) {
+    try {
+      return SecurityRunner.run(securityJson);
+    } catch (Exception e) {
+      return errorJson("Security operation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // State persistence
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Save, load, compare, and export simulation states.
+   *
+   * @param persistJson JSON with persistence action and parameters
+   * @return JSON with save confirmation, loaded state, or comparison
+   */
+  @Tool(description = "Persist simulation states across server restarts. "
+      + "Save sessions to versioned JSON files, load saved states to create new sessions, "
+      + "compare versions, and export for sharing. "
+      + "Actions: save, load, list, delete, compare, export, setStorageDir, getInfo.")
+  public String manageState(
+      @ToolArg(description = "JSON with: 'action' (save|load|list|delete|compare|export|"
+          + "setStorageDir|getInfo). " + "For save: 'sessionId', 'name', 'version', 'description'. "
+          + "For load: 'filename' or 'filePath'. "
+          + "For compare: 'file1', 'file2'.") String persistJson) {
+    try {
+      return StatePersistenceRunner.run(persistJson);
+    } catch (Exception e) {
+      return errorJson("State persistence failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Validation profiles
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Manage domain-specific validation profiles for different jurisdictions.
+   *
+   * @param profileJson JSON with profile action and parameters
+   * @return JSON with profile details or validation results
+   */
+  @Tool(description = "Manage domain-specific validation profiles for different jurisdictions. "
+      + "Built-in profiles: ncs (Norway), ukcs (UK), gom (Gulf of Mexico), brazil, generic. "
+      + "Create custom profiles with operator-specific overrides. "
+      + "Actions: listProfiles, getProfile, setActiveProfile, createProfile, "
+      + "deleteProfile, validateWithProfile, getActiveProfile, getStandardsForEquipment.")
+  public String manageValidationProfile(
+      @ToolArg(description = "JSON with: 'action' (listProfiles|getProfile|setActiveProfile|"
+          + "createProfile|deleteProfile|validateWithProfile|getActiveProfile|"
+          + "getStandardsForEquipment). " + "For setActiveProfile: 'profileName'. "
+          + "For createProfile: 'profileName', optional 'basedOn', 'overrides'. "
+          + "For getStandardsForEquipment: 'equipmentType'.") String profileJson) {
+    try {
+      return ValidationProfileRunner.run(profileJson);
+    } catch (Exception e) {
+      return errorJson("Validation profile operation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Data catalog
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Browse the NeqSim data catalog — components, EOS models, materials, standards.
+   *
+   * @param catalogJson JSON with catalog query
+   * @return JSON with catalog data
+   */
+  @Tool(description = "Browse the NeqSim data catalog. Query thermodynamic component properties, "
+      + "equation-of-state models, pipe/plate/casing materials, design standards, and database "
+      + "tables. Actions: listComponentFamilies, getComponentProperties, listEOSModels, "
+      + "listMaterials, listDesignStandards, queryStandard, listDataTables.")
+  public String queryDataCatalog(
+      @ToolArg(description = "JSON with: 'action' (listComponentFamilies|getComponentProperties|"
+          + "listEOSModels|listMaterials|listDesignStandards|queryStandard|listDataTables). "
+          + "For getComponentProperties: 'componentName'. "
+          + "For listMaterials: 'materialType' (pipe|plate|casing|compressor|heatExchanger). "
+          + "For queryStandard: 'code', optional 'equipmentType'.") String catalogJson) {
+    try {
+      return DataCatalogRunner.run(catalogJson);
+    } catch (Exception e) {
+      return errorJson("Data catalog query failed: " + e.getMessage());
     }
   }
 }

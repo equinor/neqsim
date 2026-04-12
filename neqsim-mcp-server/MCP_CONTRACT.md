@@ -63,6 +63,48 @@ response keys are stable.
 | `crossValidateModels` | **Stable** | v1.1 | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | **Stable** | v1.1 | Multi-variable parametric sweep |
 
+## Session & Workflow Tools (Stable)
+
+| Tool | Status | Since | Description |
+|------|--------|-------|-------------|
+| `manageSession` | **Stable** | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore) |
+| `solveTask` | **Stable** | v1.1 | Solve engineering tasks from high-level descriptions |
+| `composeWorkflow` | **Stable** | v1.1 | Chain simulation steps into multi-domain workflows |
+| `validateResults` | **Stable** | v1.1 | Validate results against engineering design rules |
+| `generateReport` | **Stable** | v1.1 | Generate structured engineering reports |
+| `runPlugin` | **Stable** | v1.1 | Run or list registered MCP runner plugins |
+| `getProgress` | **Stable** | v1.1 | Check progress of long-running simulations |
+
+## Platform Tools (Experimental)
+
+These tools are functional but their interfaces may evolve between minor versions.
+
+| Tool | Status | Since | Description |
+|------|--------|-------|-------------|
+| `streamSimulation` | **Experimental** | v1.2 | Async simulation with incremental polling (parametric sweep, Monte Carlo, dynamic) |
+| `generateVisualization` | **Experimental** | v1.2 | Inline SVG/Mermaid/HTML visualization (phase envelopes, flowsheets, charts) |
+| `composeMultiServerWorkflow` | **Experimental** | v1.2 | Multi-server orchestration across MCP servers |
+| `manageSecurity` | **Experimental** | v1.2 | API key management, rate limiting, audit logging |
+| `manageState` | **Experimental** | v1.2 | Persist/restore simulation states across server restarts |
+| `manageValidationProfile` | **Experimental** | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
+| `queryDataCatalog` | **Experimental** | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
+
+## Browsable Resources (Stable)
+
+| URI | Status | Since | Description |
+|-----|--------|-------|-------------|
+| `neqsim://example-catalog` | **Stable** | v1.0 | Full catalog of examples |
+| `neqsim://schema-catalog` | **Stable** | v1.0 | Full catalog of JSON schemas |
+| `neqsim://examples/{category}/{name}` | **Stable** | v1.0 | Specific example |
+| `neqsim://schemas/{tool}/{type}` | **Stable** | v1.0 | Specific schema |
+| `neqsim://components` | **Stable** | v1.2 | Component families |
+| `neqsim://components/{name}` | **Stable** | v1.2 | Component properties (Tc, Pc, omega, MW) |
+| `neqsim://standards` | **Stable** | v1.2 | Design standards catalog |
+| `neqsim://standards/{code}` | **Stable** | v1.2 | Specific standard parameters |
+| `neqsim://models` | **Stable** | v1.2 | EOS model catalog |
+| `neqsim://materials/{type}` | **Stable** | v1.2 | Material grades and properties |
+| `neqsim://data-tables` | **Stable** | v1.2 | All queryable database tables |
+
 ## Guided Workflow Prompts
 
 | Prompt | Description |
@@ -76,15 +118,6 @@ response keys are stable.
 | `biorefinery_analysis` | Biorefinery process analysis |
 | `dynamic_simulation` | Dynamic simulation with controller setup |
 | `pipeline_sizing` | Multiphase pipeline sizing |
-
-## Experimental Tools
-
-These tools are useful but their interface may change. Do not depend on
-exact field names or response structure across releases.
-
-| Tool | Status | Notes |
-|------|--------|-------|
-| *(none currently)* | | |
 
 ## Response Envelope (Stable)
 

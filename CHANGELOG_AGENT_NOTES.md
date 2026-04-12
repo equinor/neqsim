@@ -9,6 +9,72 @@
 
 ---
 
+## 2026-07-13 — MCP Server: 42 Tools, 9 Prompts, 11 Resources
+
+### MCP Server Expansion Summary
+
+The NeqSim MCP Server has expanded from 8 basic tools to a comprehensive
+engineering simulation platform:
+
+**42 @Tool methods** in `NeqSimTools.java`:
+- 9 core thermodynamic tools (flash, batch, property table, phase envelope, validation, search, capabilities, example, schema)
+- 8 automation tools (list units, list variables, get/set variable, save/compare state, diagnose, learning report)
+- 3 analysis tools (cross-validation, parametric study, property table)
+- 8 domain-specific tools (PVT, flow assurance, standards, pipeline, reservoir, field economics, dynamic, bioprocess)
+- 7 session/workflow tools (session, task solver, workflow, validation, report, plugin, progress)
+- 7 platform tools (streaming, visualization, multi-server composition, security, state persistence, validation profiles, data catalog)
+
+**9 @Prompt guided workflows** in `NeqSimPrompts.java`:
+- gas processing, PVT study, flow assurance, field development, CCS, TEG dehydration, biorefinery, dynamic simulation, pipeline sizing
+
+**11 resource endpoints** in `NeqSimResources.java` (4 static + 7 templates):
+- example-catalog, schema-catalog, components, components/{name}, standards, standards/{code}, models, materials/{type}, data-tables, examples/{category}/{name}, schemas/{tool}/{type}
+
+### New Runner Classes (in `src/main/java/neqsim/mcp/runners/`)
+
+| Runner | Purpose |
+|--------|---------|
+| `PVTRunner` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR, viscosity) |
+| `FlowAssuranceRunner` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown |
+| `StandardsRunner` | Gas/oil quality per 22 industry standards |
+| `PipelineRunner` | Multiphase pipeline flow (Beggs & Brill) |
+| `ReservoirRunner` | Material balance reservoir simulation |
+| `FieldDevelopmentRunner` | NPV, IRR, cash flow, fiscal regimes, decline curves |
+| `DynamicRunner` | Transient simulation with auto-instrumented PID controllers |
+| `BioprocessRunner` | Anaerobic digestion, fermentation, gasification, pyrolysis |
+| `CrossValidationRunner` | Multi-EOS cross-validation |
+| `ParametricStudyRunner` | Multi-variable parametric sweeps |
+| `SessionRunner` | Persistent simulation sessions (create/modify/run/snapshot/restore) |
+| `TaskSolverRunner` | Engineering task solving from high-level descriptions |
+| `EngineeringValidator` | Design rule validation against standards |
+| `ReportRunner` | Structured engineering report generation |
+| `McpRunnerPlugin` | Plugin interface for custom runners |
+| `PluginRegistry` | Plugin lifecycle management |
+| `ProgressTracker` | Long-running simulation progress tracking |
+| `StreamingRunner` | Async simulation with incremental polling |
+| `VisualizationRunner` | SVG/Mermaid/HTML visualization generation |
+| `CompositionRunner` | Multi-server MCP orchestration |
+| `SecurityRunner` | API key management, rate limiting, audit logging |
+| `StatePersistenceRunner` | Simulation state save/load/compare across restarts |
+| `ValidationProfileRunner` | Jurisdiction-specific validation (NCS, UKCS, GoM, Brazil, generic) |
+| `DataCatalogRunner` | Database browsing (components, standards, materials, EOS models) |
+
+### Key Architecture Points
+
+- All runners follow the stateless `Runner.run(String json) → String json` pattern
+- Runners live in neqsim core (`src/main/java/neqsim/mcp/runners/`)
+- MCP server is a thin Quarkus wrapper (`neqsim-mcp-server/`)
+- Each runner can be used independently from REST, CLI, or other MCP frameworks
+- New runners are added by implementing the runner + adding a @Tool method to NeqSimTools.java
+
+### Documentation Updated
+
+- `neqsim-mcp-server/README.md` — Full rewrite with all 42 tools, 11 resources, 9 prompts
+- `neqsim-mcp-server/MCP_CONTRACT.md` — Added Session/Workflow tools (stable), Platform tools (experimental), Resources
+- `CHANGELOG_AGENT_NOTES.md` — This entry
+
+---
+
 ## 2026-04-12 — Bioprocessing & Bioenergy: Phases 5–7
 
 ### New Classes
