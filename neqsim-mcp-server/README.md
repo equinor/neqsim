@@ -246,32 +246,11 @@ Verify: `java -version` should show 17 or higher.
 
 ---
 
-## What Can an LLM Do with NeqSim?
+## Complete Tool Inventory
 
-The server exposes tools across three tiers (core, advanced, experimental),
-9 guided-workflow prompts, and 11 browsable resources.
-
-### Core Thermodynamic Tools
-
-| Tool | Description |
-|------|-------------|
-| `runFlash` | Phase equilibrium flash (TP, PH, PS, TV, dew/bubble point, hydrate) across 6 EOS models |
-| `runBatch` | Multi-point sensitivity sweep (vary T, P, or composition) |
-| `getPropertyTable` | Property table across T or P range |
-| `getPhaseEnvelope` | Full PT phase envelope (bubble/dew curves, cricondenbar/therm) |
-| `validateInput` | Pre-flight validation with typo correction and range checking |
-| `searchComponents` | Fuzzy search across 100+ components in the database |
-| `getCapabilities` | Structured manifest of all NeqSim capabilities |
-| `getExample` | Ready-to-use JSON templates (flash, process, validation) |
-| `getSchema` | JSON Schema definitions for all tool inputs/outputs |
-
-### Process Simulation Tools
-
-| Tool | Description |
-|------|-------------|
-| `runProcess` | Build and run a complete flowsheet from JSON (separators, compressors, coolers, valves, columns, etc.) |
-| `crossValidateModels` | Run same process under multiple EOS and compare results |
-| `runParametricStudy` | Multi-variable parametric sweep with tabulated results |
+The server exposes 38 tools across three tiers, 9 guided-workflow prompts,
+and 11 browsable resources. See the tier sections above for the governance
+model. Additional platform tools not listed in the three tiers:
 
 ### Process Automation (String-Addressable)
 
@@ -279,49 +258,13 @@ The server exposes tools across three tiers (core, advanced, experimental),
 |------|-------------|
 | `listSimulationUnits` | List all addressable equipment in a process |
 | `listUnitVariables` | List all variables (INPUT/OUTPUT) for a unit |
-| `getSimulationVariable` | Read a variable by dot-notation address (e.g. `HP Sep.gasOutStream.temperature`) |
+| `getSimulationVariable` | Read a variable by dot-notation address |
 | `setSimulationVariable` | Set an INPUT variable and re-run the process |
 | `saveSimulationState` | Save a complete process state as a JSON snapshot |
 | `compareSimulationStates` | Diff two state snapshots to find what changed |
 | `diagnoseAutomation` | Self-healing diagnostics with fuzzy name matching |
 | `getAutomationLearningReport` | Operation history, error patterns, and learned corrections |
-
-### Domain-Specific Simulation Tools
-
-| Tool | Description |
-|------|-------------|
-| `runPVT` | PVT lab experiments: CME, CVD, differential liberation, separator test, swelling, GOR, viscosity |
-| `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion analysis |
-| `calculateStandard` | Gas/oil quality per 22 standards (ISO 6976, AGA 8, GPA 2145, EN 16726, etc.) |
-| `runPipeline` | Multiphase pipeline flow with Beggs & Brill correlations |
-| `runReservoir` | Material balance reservoir simulation (tank model) |
-| `runFieldEconomics` | NPV, IRR, cash flow with fiscal regimes (NCS, UK) + decline curves |
-| `runDynamic` | Transient dynamic simulation with auto-instrumented PID controllers |
-| `runBioprocess` | Bioprocessing reactors: anaerobic digestion, fermentation, gasification, pyrolysis |
-
-### Session & Workflow Management Tools
-
-| Tool | Description |
-|------|-------------|
-| `manageSession` | Persistent simulation sessions: create, modify, run, snapshot, restore |
-| `solveTask` | Solve a complete engineering task from a high-level description |
-| `composeWorkflow` | Chain simulation steps into a multi-domain workflow |
-| `validateResults` | Validate simulation results against engineering design rules |
-| `generateReport` | Generate structured engineering reports from simulation results |
-| `runPlugin` | Run or list registered MCP runner plugins |
 | `getProgress` | Check progress of long-running simulations |
-
-### Advanced Platform Tools
-
-| Tool | Description |
-|------|-------------|
-| `streamSimulation` | Async simulations with incremental polling (parametric sweep, Monte Carlo, dynamic) |
-| `generateVisualization` | Inline SVG phase envelopes, Mermaid flowsheets, compressor maps, HTML tables |
-| `composeMultiServerWorkflow` | Multi-server orchestration (cost estimation, plant historian, CAD, safety) |
-| `manageSecurity` | API key management, rate limiting, audit logging |
-| `manageState` | Persist/restore simulation states across server restarts |
-| `manageValidationProfile` | Jurisdiction-specific validation (NCS, UKCS, GoM, Brazil, generic) |
-| `queryDataCatalog` | Browse thermodynamic databases: components, standards, materials, EOS models |
 
 ### Guided Workflow Prompts (9)
 
@@ -346,11 +289,11 @@ The server exposes tools across three tiers (core, advanced, experimental),
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool and input/output |
 | `neqsim://components` | Component families (hydrocarbons, acid gases, glycols, etc.) |
-| `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
+| `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW) |
 | `neqsim://standards` | Design standards catalog (ASME, API, DNV, ISO, NORSOK) |
 | `neqsim://standards/{code}` | Parameters for a specific design standard |
 | `neqsim://models` | Equation of state models with recommendations |
-| `neqsim://materials/{type}` | Material grades and properties (pipe, plate, casing) |
+| `neqsim://materials/{type}` | Material grades and properties |
 | `neqsim://data-tables` | All queryable database tables |
 
 ---
@@ -463,46 +406,18 @@ docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 
 ---
 
-## What Can an LLM Do With This?
-
-| Capability | Example Prompt | Tool |
-|---|---|---|
-| **Flash calculations** | "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?" | `runFlash` |
-| **Batch sensitivity** | "How does density change from 0 to 50 °C at 80 bara? Give me 10 data points." | `runBatch` |
-| **Property table** | "Get density, viscosity, Cp, and Z-factor from 10 to 100 bara at 25 °C" | `getPropertyTable` |
-| **Phase envelope** | "Plot the phase envelope for this natural gas composition" | `getPhaseEnvelope` |
-| **Process simulation** | "Simulate a gas going through a separator then a compressor to 120 bara" | `runProcess` |
-| **Input validation** | "Check if my process JSON is valid before running it" | `validateInput` |
-| **Component lookup** | "What components does NeqSim have that contain 'butane'?" | `searchComponents` |
-| **Capabilities** | "What can NeqSim calculate? Which EOS models are available?" | `getCapabilities` |
-
-### Quick Path vs Full Simulation
-
-| Need | Tool | Flowsheet Required? |
-|---|---|---|
-| Single property lookup | `runFlash` | No |
-| Multi-point sweep | `runBatch` or `getPropertyTable` | No |
-| Phase boundary | `getPhaseEnvelope` | No |
-| Multi-equipment process | `runProcess` | Yes (JSON definition) |
-
-The LLM discovers the tools automatically via MCP, reads the embedded examples
-and schemas to learn the JSON format, then calls the tools to compute answers.
-Every response includes **provenance metadata** (EOS model, assumptions,
-limitations, convergence status) for trust assessment.
-
----
-
-## Hero Demo: Example Conversation
+## Quick Start: Example Conversation
 
 **You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
 
-**LLM** *(internally calls `runFlash` with `flashType: "dewPointT"`)*
+**LLM** *(calls Tier 1 tool `runFlash` with `flashType: "dewPointT"`)*
 
 **LLM responds:** "The dew point temperature is -42.3°C at 50 bara (SRK equation of state, converged in 12 iterations). Below this temperature, liquid will begin to condense."
 
-Every response includes **provenance**: which EOS model was used, whether the calculation converged, and what limitations apply.
+Every response includes **provenance** (EOS model, convergence, limitations)
+and **auto-validation** against engineering design rules.
 
-**Try these:**
+**More examples:**
 
 > "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
 
@@ -510,7 +425,8 @@ Every response includes **provenance**: which EOS model was used, whether the ca
 
 > "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
 
-The LLM discovers NeqSim's tools automatically and calls them to compute rigorous answers — no coding needed.
+The LLM discovers NeqSim's tools automatically via MCP, reads the embedded
+examples and schemas, then calls the tools to compute rigorous answers.
 
 ---
 
