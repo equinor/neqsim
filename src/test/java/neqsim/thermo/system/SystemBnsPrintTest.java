@@ -1,8 +1,12 @@
 package neqsim.thermo.system;
 
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+/**
+ * Tests for BNS EOS print output.
+ */
 public class SystemBnsPrintTest {
   @Test
   public void printAll() {
@@ -24,9 +28,9 @@ public class SystemBnsPrintTest {
     System.out.println("cv = " + sys.getPhase(0).getCv("J/molK"));
     System.out.println("jt = " + sys.getPhase(0).getJouleThomsonCoefficient() * 10.0);
     double gamma = sys.getPhase(0).getCp("J/molK") / sys.getPhase(0).getCv("J/molK");
-    double speed = Math.sqrt(gamma * sys.getPhase(0).getZ()
-        * neqsim.thermo.ThermodynamicConstantsInterface.R * sys.getTemperature()
-        / sys.getMolarMass());
+    double speed =
+        Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
+            * sys.getTemperature() / sys.getMolarMass());
     System.out.println("speed = " + speed);
     System.out.println("MW = " + sys.getMolarMass());
 
