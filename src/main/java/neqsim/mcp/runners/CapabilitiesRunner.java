@@ -24,7 +24,7 @@ public class CapabilitiesRunner {
 
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-  /** Cached capabilities JSON (built once). */
+  /** Cached capabilities JSON (built once on first access). */
   private static volatile String cachedCapabilities;
 
   /**
@@ -114,15 +114,25 @@ public class CapabilitiesRunner {
 
     // --- Calculation Modes ---
     JsonObject modes = new JsonObject();
-    modes.add("available",
-        toJsonArray(Arrays.asList("runFlash — Single flash calculation (9 flash types x 6 EOS)",
-            "runBatch — Multiple flash calculations in one call (sensitivity studies)",
-            "runProcess — Full process simulation from JSON",
-            "getPropertyTable — Sweep T or P and get property table",
-            "getPhaseEnvelope — Calculate PT phase envelope",
-            "searchComponents — Component database search",
-            "validateInput — Pre-flight input validation",
-            "getCapabilities — This tool (discovery)")));
+    modes.add("available", toJsonArray(Arrays.asList(
+        "runFlash — Single flash calculation (9 flash types x 6 EOS)",
+        "runBatch — Multiple flash calculations in one call (sensitivity studies)",
+        "runProcess — Full process simulation from JSON",
+        "getPropertyTable — Sweep T or P and get property table",
+        "getPhaseEnvelope — Calculate PT phase envelope",
+        "runPVT — PVT laboratory experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity)",
+        "runFlowAssurance — Flow assurance analysis (hydrate, wax, asphaltene, corrosion, erosion, cooldown)",
+        "calculateStandard — Gas/oil quality per 22 industry standards (ISO, AGA, GPA, EN, ASTM)",
+        "runPipeline — Multiphase pipeline flow simulation (Beggs & Brill)",
+        "runReservoir — Material balance reservoir simulation (tank model, depletion)",
+        "runFieldEconomics — NPV/IRR with fiscal regimes (Norwegian NCS, UK, Brazil, US-GOM) + decline curves",
+        "runDynamic — Dynamic transient simulation with auto-instrumented PID controllers",
+        "runBioprocess — Bioprocessing reactors (anaerobic digester, fermentation, gasification, pyrolysis)",
+        "searchComponents — Component database search",
+        "validateInput — Pre-flight input validation",
+        "crossValidateModels — Run process under multiple EOS to quantify model risk",
+        "runParametricStudy — Sweep inputs and record outputs (sensitivity/optimization)",
+        "getCapabilities — This tool (discovery)")));
     modes.addProperty("quickCalculation",
         "Use runFlash or getPropertyTable for single-query answers. "
             + "No process flowsheet required.");
@@ -132,18 +142,38 @@ public class CapabilitiesRunner {
 
     // --- Engineering Domains ---
     JsonObject domains = new JsonObject();
-    domains.add("supported",
-        toJsonArray(Arrays.asList("Natural gas processing (dehydration, NGL recovery, compression)",
-            "Oil processing (separation, stabilization)",
-            "CO2 capture, transport, and storage (CCS)",
-            "Hydrogen systems (blending, electrolysis, transport)",
-            "Flow assurance (hydrate, wax, corrosion, pipeline hydraulics)",
-            "PVT analysis (CME, CVD, differential liberation, swelling)",
-            "Mechanical design (pipelines, vessels, wells per ASME/API/DNV/NORSOK)",
-            "Safety (depressurization, PSV sizing, source terms)",
-            "Power generation (gas turbines, steam cycles, HRSG)",
-            "Heat integration (pinch analysis)")));
+    domains.add("supported", toJsonArray(Arrays.asList(
+        "Natural gas processing (dehydration, NGL recovery, compression)",
+        "Oil processing (separation, stabilization)", "CO2 capture, transport, and storage (CCS)",
+        "Hydrogen systems (blending, electrolysis, transport)",
+        "Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, pipeline hydraulics)",
+        "PVT analysis (CME, CVD, differential liberation, separator test, swelling, GOR, viscosity)",
+        "Gas/oil quality standards (ISO 6976, AGA 3, GPA 2145, EN 16726, ASTM tests)",
+        "Pipeline design (multiphase flow, pressure drop, flow regime, liquid holdup)",
+        "Reservoir simulation (material balance, depletion, production forecasting)",
+        "Field economics (NPV, IRR, cash flow, Norwegian/UK/Brazilian fiscal regimes, decline curves)",
+        "Dynamic/transient simulation (PID control, startup/shutdown, controller tuning)",
+        "Bioprocessing (anaerobic digestion, fermentation, gasification, pyrolysis)",
+        "Mechanical design (pipelines, vessels, wells per ASME/API/DNV/NORSOK)",
+        "Safety (depressurization, PSV sizing, source terms)",
+        "Power generation (gas turbines, steam cycles, HRSG, combined cycle)",
+        "Heat integration (pinch analysis)")));
     root.add("engineeringDomains", domains);
+
+    // --- Guided Workflows (MCP Prompts) ---
+    JsonObject prompts = new JsonObject();
+    prompts.add("available",
+        toJsonArray(
+            Arrays.asList("design_gas_processing — Step-by-step gas processing facility design",
+                "pvt_study — Complete PVT study on a reservoir fluid",
+                "flow_assurance_screening — Pipeline flow assurance screening",
+                "field_development_screening — Field development concept screening",
+                "co2_ccs_chain — CO2 transport and storage chain analysis",
+                "teg_dehydration_design — TEG dehydration unit design",
+                "biorefinery_analysis — Biorefinery process analysis",
+                "dynamic_simulation — Dynamic simulation with controller setup",
+                "pipeline_sizing — Multiphase pipeline sizing and design")));
+    root.add("guidedWorkflows", prompts);
 
     // --- Trust Model ---
     JsonObject trust = new JsonObject();

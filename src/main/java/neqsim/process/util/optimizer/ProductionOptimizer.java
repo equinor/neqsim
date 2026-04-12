@@ -1767,17 +1767,31 @@ public class ProductionOptimizer {
       return metric.applyAsDouble(result);
     }
 
-    /** Convenience KPI for reporting optimal rate. */
+    /**
+     * Convenience KPI for reporting optimal rate.
+     *
+     * @param unitLabel the unit label for the rate (e.g. "kg/hr")
+     * @return a ScenarioKpi that extracts the optimal rate
+     */
     public static ScenarioKpi optimalRate(String unitLabel) {
       return new ScenarioKpi("optimalRate", unitLabel, OptimizationResult::getOptimalRate);
     }
 
-    /** Convenience KPI for reporting solver score. */
+    /**
+     * Convenience KPI for reporting solver score.
+     *
+     * @return a ScenarioKpi that extracts the optimization score
+     */
     public static ScenarioKpi score() {
       return new ScenarioKpi("score", null, OptimizationResult::getScore);
     }
 
-    /** KPI that returns a specific objective value by name. */
+    /**
+     * KPI that returns a specific objective value by name.
+     *
+     * @param objectiveName the name of the objective to extract
+     * @return a ScenarioKpi that extracts the named objective value
+     */
     public static ScenarioKpi objectiveValue(String objectiveName) {
       return new ScenarioKpi(objectiveName, null,
           result -> result.getObjectiveValues().getOrDefault(objectiveName, Double.NaN));
@@ -3494,6 +3508,14 @@ public class ProductionOptimizer {
    * via central differences for better accuracy. The search direction is the negative gradient
    * (steepest ascent since we maximize feasibility score).
    * </p>
+   *
+   * @param process the process system to optimize
+   * @param variables the manipulated variables with bounds
+   * @param config the optimization configuration
+   * @param objectives the optimization objectives
+   * @param constraints the optimization constraints
+   * @param iterationHistory list to record iteration progress
+   * @return the optimization result with best found point
    */
   private OptimizationResult gradientDescentSearch(ProcessSystem process,
       List<ManipulatedVariable> variables, OptimizationConfig config,

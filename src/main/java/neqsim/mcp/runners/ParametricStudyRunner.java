@@ -268,6 +268,9 @@ public class ParametricStudyRunner {
 
   /**
    * Generates one-at-a-time cases: vary one parameter while keeping others at midpoint.
+   *
+   * @param sweeps the sweep definitions for each parameter
+   * @return list of parameter cases, each mapping address to value
    */
   private static List<Map<String, Double>> generateOneAtATimeCases(List<SweepDef> sweeps) {
     List<Map<String, Double>> cases = new ArrayList<>();
@@ -293,6 +296,10 @@ public class ParametricStudyRunner {
 
   /**
    * Builds summary statistics for each output variable across all converged cases.
+   *
+   * @param outputs the output variable definitions
+   * @param caseResults the JSON array of individual case results
+   * @return JSON object containing min, max, mean, and std for each output
    */
   private static JsonObject buildOutputSummary(List<OutputDef> outputs, JsonArray caseResults) {
     JsonObject summary = new JsonObject();
