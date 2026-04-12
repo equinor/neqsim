@@ -206,3 +206,89 @@ process.run();
 4. **Damping**: Use `setDampingComposition(0.01)` for oscillating systems
 5. **Energy mode**: Choose ISOTHERMAL vs ADIABATIC based on the physical reactor — wrong choice gives wrong results
 6. **Unit consistency**: Activation energy in J/mol, heat of reaction in J/mol
+
+---
+
+## Bioprocessing Reactors
+
+NeqSim includes specialized bioreactors beyond the generic `StirredTankReactor`/`Fermenter`.
+
+### AnaerobicDigester
+
+Substrate-specific biogas production from organic waste. Not a flash-based reactor — uses empirical biogas yield models.
+
+```java
+AnaerobicDigester digester = new AnaerobicDigester("AD-1", feedStream);
+digester.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
+// Options: FOOD_WASTE, SEWAGE_SLUDGE, MANURE, CROP_RESIDUE, MIXED_WASTE
+digester.setDigesterTemperature(37.0, "C");  // mesophilic
+digester.setFeedRate(10000.0, 0.25);         // kg/hr, total solids fraction
+digester.setVesselVolume(6000.0);            // m³
+digester.run();
+// Outputs: getBiogasOutStream(), getDigestateOutStream()
+// Metrics: getMethaneProductionNm3PerDay(), getBiogasFlowRateNm3PerDay()
+```
+
+### FermentationReactor
+
+Extends `Fermenter` with kinetic models and operation modes.
+
+```java
+FermentationReactor reactor = new FermentationReactor("FR-1", sugarFeed);
+reactor.setKineticModel(FermentationReactor.KineticModel.MONOD);
+// Options: MONOD, CONTOIS, SUBSTRATE_INHIBITED
+reactor.setOperationMode(FermentationReactor.OperationMode.CONTINUOUS);
+// Options: BATCH, FED_BATCH, CONTINUOUS
+reactor.setSubstrateConcentration(100.0);    // g/L
+reactor.setBiomassConcentration(1.0);        // g/L
+reactor.setMaxSpecificGrowthRate(0.30);      // 1/hr
+reactor.setMonodConstant(1.0);               // g/L (Ks)
+reactor.setYieldBiomass(0.10);               // g biomass / g substrate
+reactor.setYieldProduct(0.45);               // g product / g substrate
+reactor.setResidenceTime(10.0, "hr");
+reactor.run();
+Map<String, Object> results = reactor.getResults();
+// Keys: substrateConversion, finalProductConc_g_per_L, finalBiomassConc_g_per_L,
+//       productivity_g_per_L_hr
+```
+
+### BiogasUpgrader
+
+Splits biogas into biomethane + offgas using technology-specific split factors.
+
+```java
+BiogasUpgrader upgrader = new BiogasUpgrader("BGU-1", biogasStream);
+upgrader.setTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
+// Options: WATER_SCRUBBING, AMINE_SCRUBBING, PSA, MEMBRANE
+upgrader.run();
+// Outputs: getBiomethaneOutStream(), getOffgasOutStream()
+// Enum getters: tech.getMethaneRecovery(), tech.getCo2RemovalEfficiency()
+```
+
+### Pre-built Biorefinery Modules
+
+| Module | Purpose | Key Methods |
+|--------|---------|-------------|
+| `BiogasToGridModule` | AD → upgrading → compression → grid | `setGridPressureBara()`, `setGridTemperatureC()`, `getResults()` |
+| `GasificationSynthesisModule` | Biomass → syngas → FT liquids | `setBiomass(BiomassCharacterization, kgPerHr)` |
+| `WasteToEnergyCHPModule` | AD → gas engine CHP | `setElectricalEfficiency()`, `getElectricalPowerKW()`, `getHeatOutputKW()` |
+
+### SustainabilityMetrics
+
+Utility class for CO₂-equivalent tracking and LCA:
+
+```java
+SustainabilityMetrics metrics = new SustainabilityMetrics();
+metrics.setBiogasProductionNm3PerYear(3_000_000.0);
+metrics.setMethaneContentFraction(0.60);
+metrics.setMethaneSlipPercent(1.5);
+metrics.setElectricityProductionMWhPerYear(8000.0);
+metrics.setHeatProductionMWhPerYear(10000.0);
+metrics.setParasiticElectricityMWhPerYear(800.0);
+metrics.setFossilReferenceEmissionFactor(0.450);  // kgCO2/kWh
+metrics.setFossilHeatEmissionFactor(0.250);
+metrics.calculate();
+// getTotalEmissionsTCO2eqPerYear(), getCarbonIntensityKgCO2PerMWh()
+// getFossilFuelDisplacementTCO2PerYear(), getNetCarbonBalanceTCO2PerYear()
+// getEnergyReturnOnInvestment(), getRenewableEnergyFraction()
+```

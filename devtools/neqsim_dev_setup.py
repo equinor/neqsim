@@ -216,6 +216,32 @@ def neqsim_classes(ns):
         "neqsim.process.equipment.reactor.StirredTankReactor"
     )
 
+    # Bioprocessing / bioenergy
+    ns.AnaerobicDigester = JClass(
+        "neqsim.process.equipment.reactor.AnaerobicDigester"
+    )
+    ns.FermentationReactor = JClass(
+        "neqsim.process.equipment.reactor.FermentationReactor"
+    )
+    ns.BiomassCharacterization = JClass(
+        "neqsim.thermo.characterization.BiomassCharacterization"
+    )
+    ns.BiogasUpgrader = JClass(
+        "neqsim.process.equipment.splitter.BiogasUpgrader"
+    )
+    ns.SustainabilityMetrics = JClass(
+        "neqsim.process.util.fielddevelopment.SustainabilityMetrics"
+    )
+    ns.BiogasToGridModule = JClass(
+        "neqsim.process.processmodel.biorefinery.BiogasToGridModule"
+    )
+    ns.WasteToEnergyCHPModule = JClass(
+        "neqsim.process.processmodel.biorefinery.WasteToEnergyCHPModule"
+    )
+    ns.GasificationSynthesisModule = JClass(
+        "neqsim.process.processmodel.biorefinery.GasificationSynthesisModule"
+    )
+
     print("All NeqSim classes imported OK")
     return ns
 

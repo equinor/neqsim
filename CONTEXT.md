@@ -281,6 +281,9 @@ System.out.println(design.toJson());
 | Heat exchanger | `heatexchanger` | `Cooler`, `Heater`, `HeatExchanger` |
 | Heat integration | `heatexchanger.heatintegration` | `PinchAnalysis`, `HeatStream` |
 | Power generation | `powergeneration` | `GasTurbine`, `SteamTurbine`, `HRSG`, `CombinedCycleSystem` |
+| Bioprocessing reactors | `reactor` | `AnaerobicDigester`, `FermentationReactor`, `BiomassGasifier`, `PyrolysisReactor` |
+| Biogas upgrading | `splitter` | `BiogasUpgrader` (4 technologies: membrane, PSA, amine, water scrub) |
+| Biorefinery modules | `processmodel.biorefinery` | `BiogasToGridModule`, `GasificationSynthesisModule`, `WasteToEnergyCHPModule` |
 | Pipeline | `pipeline` | `AdiabaticPipe`, `PipeBeggsAndBrills` |
 | Mixer | `mixer` | `Mixer` |
 | Splitter | `splitter` | `Splitter` |
@@ -314,6 +317,7 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | HX thermal-hydraulic design | `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
 | Heat integration / pinch analysis | `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` (PinchAnalysis, HeatStream) |
 | Power generation (combined cycle) | `src/main/java/neqsim/process/equipment/powergeneration/` (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
+| Bioprocessing / bioenergy | `src/main/java/neqsim/process/equipment/reactor/` (AnaerobicDigester, FermentationReactor, BiomassGasifier, PyrolysisReactor), `splitter/BiogasUpgrader`, `processmodel/biorefinery/` (BiogasToGridModule, GasificationSynthesisModule, WasteToEnergyCHPModule), `util/fielddevelopment/SustainabilityMetrics`, `thermo/characterization/BiomassCharacterization` |
 | Agentic QA & validation | `src/main/java/neqsim/util/agentic/` (TaskResultValidator, SimulationQualityGate, AgentSession) |
 | Automation API (string-addressed variables) | `src/main/java/neqsim/process/automation/` (ProcessAutomation, SimulationVariable) |
 | Lifecycle state / save-restore | `src/main/java/neqsim/process/processmodel/lifecycle/` (ProcessSystemState, ProcessModelState) |

@@ -1202,6 +1202,19 @@ CombinedCycleSystem = jneqsim.process.equipment.powergeneration.CombinedCycleSys
 # Heat integration (pinch analysis)
 PinchAnalysis = jneqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis
 
+# Bioprocessing / bioenergy
+AnaerobicDigester = jneqsim.process.equipment.reactor.AnaerobicDigester
+FermentationReactor = jneqsim.process.equipment.reactor.FermentationReactor
+BiomassGasifier = jneqsim.process.equipment.reactor.BiomassGasifier
+PyrolysisReactor = jneqsim.process.equipment.reactor.PyrolysisReactor
+BiogasUpgrader = jneqsim.process.equipment.splitter.BiogasUpgrader
+BiomassCharacterization = jneqsim.thermo.characterization.BiomassCharacterization
+# SustainabilityMetrics = jpype.JClass("neqsim.process.util.fielddevelopment.SustainabilityMetrics")
+# BiogasToGridModule = jpype.JClass("neqsim.process.processmodel.biorefinery.BiogasToGridModule")
+# WasteToEnergyCHPModule = jpype.JClass("neqsim.process.processmodel.biorefinery.WasteToEnergyCHPModule")
+# GasificationSynthesisModule = jpype.JClass("neqsim.process.processmodel.biorefinery.GasificationSynthesisModule")
+# BiorefineryCostEstimator = jpype.JClass("neqsim.process.mechanicaldesign.BiorefineryCostEstimator")
+
 # Agentic QA classes (use jpype.JClass for these)
 # SimulationQualityGate = jpype.JClass("neqsim.util.agentic.SimulationQualityGate")
 # TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
