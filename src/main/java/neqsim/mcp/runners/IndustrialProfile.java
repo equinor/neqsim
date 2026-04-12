@@ -65,6 +65,27 @@ public final class IndustrialProfile {
     PLATFORM
   }
 
+  /**
+   * Explicit trust tier for each tool. This separation is enforced in code, not just documented.
+   */
+  public enum ToolTier {
+    /**
+     * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds,
+     * clear error behavior. Available in all deployment modes including ENTERPRISE.
+     */
+    TRUSTED_CORE,
+    /**
+     * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for
+     * screening studies. Available in DESKTOP_ENGINEER and STUDY_TEAM.
+     */
+    ENGINEERING_ADVANCED,
+    /**
+     * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools
+     * that are hard to validate. Available in DESKTOP_ENGINEER only.
+     */
+    EXPERIMENTAL
+  }
+
   /** Active deployment mode. */
   private static volatile DeploymentMode activeMode = DeploymentMode.DESKTOP_ENGINEER;
 
@@ -85,25 +106,32 @@ public final class IndustrialProfile {
   private static final Map<String, ToolCategory> TOOL_CATEGORIES = buildToolCategories();
 
   /**
-   * Industrial core — the approved subset of tools for governed engineering deployments. Each tool
-   * in this set has documented validation basis, known accuracy bounds, and clear error behavior.
+   * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds,
+   * clear error behavior. This is the smallest credible surface for enterprise adoption.
    */
   private static final Set<String> INDUSTRIAL_CORE =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess", "runPVT",
-          "runPipeline", "calculateStandard", "validateResults", "validateInput",
-          "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
-          "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile")));
+      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess",
+          "validateInput", "validateResults", "calculateStandard", "searchComponents",
+          "getCapabilities", "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
+          "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile")));
 
   /**
-   * Advanced tools — functional and useful but not yet qualified for the industrial core. Available
-   * in DESKTOP_ENGINEER and STUDY_TEAM modes. Each tool works correctly but lacks the formal
-   * qualification evidence (validation cases, documented accuracy bounds) required for the core.
+   * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
+   * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ADVANCED_TOOLS = Collections
-      .unmodifiableSet(new HashSet<>(Arrays.asList("runFlowAssurance", "crossValidateModels",
-          "runParametricStudy", "runBatch", "sizeEquipment", "compareProcesses", "generateReport",
-          "runReservoir", "runFieldEconomics", "manageSession", "solveTask", "composeWorkflow",
-          "generateVisualization", "queryDataCatalog")));
+  private static final Set<String> ENGINEERING_ADVANCED = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runFlowAssurance",
+          "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
+          "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog")));
+
+  /**
+   * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
+   * are difficult to validate for industrial use. Available in DESKTOP_ENGINEER only.
+   */
+  private static final Set<String> EXPERIMENTAL_TOOLS = Collections.unmodifiableSet(new HashSet<>(
+      Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess", "solveTask",
+          "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
+          "manageSecurity", "manageState", "manageValidationProfile", "runPlugin")));
 
   /**
    * Builds the tool-to-category mapping.
@@ -214,23 +242,70 @@ public final class IndustrialProfile {
   public static boolean isToolAllowed(String toolName) {
     switch (activeMode) {
       case DESKTOP_ENGINEER:
-        return true; // all tools available
+        return true; // all tiers available — engineer chooses risk
       case STUDY_TEAM:
-        // Core + advanced tools; no raw platform tools
-        ToolCategory studyCat = TOOL_CATEGORIES.get(toolName);
-        return studyCat != ToolCategory.PLATFORM;
+        // Tier 1 + Tier 2 only; experimental and platform tools blocked
+        return INDUSTRIAL_CORE.contains(toolName) || ENGINEERING_ADVANCED.contains(toolName);
       case DIGITAL_TWIN:
-        // Advisory + Calculation only, plus read-only state operations
+        // Advisory + Calculation from Tier 1 only — no write, no experimental
         ToolCategory cat = TOOL_CATEGORIES.get(toolName);
-        return cat == ToolCategory.ADVISORY || cat == ToolCategory.CALCULATION
-            || "getSimulationVariable".equals(toolName) || "listSimulationUnits".equals(toolName)
-            || "listUnitVariables".equals(toolName);
+        return INDUSTRIAL_CORE.contains(toolName)
+            && (cat == ToolCategory.ADVISORY || cat == ToolCategory.CALCULATION);
       case ENTERPRISE:
-        // Industrial core only
+        // Tier 1 only
         return INDUSTRIAL_CORE.contains(toolName);
       default:
         return true;
     }
+  }
+
+  /**
+   * Enforces tool access for the current deployment mode. Returns an error JSON string if the tool
+   * is blocked, or null if the tool is allowed. Call at the top of every @Tool method to prove
+   * governance is enforced in code, not just described in docs.
+   *
+   * @param toolName the MCP tool name being invoked
+   * @return null if allowed, or a JSON error string if blocked
+   */
+  public static String enforceAccess(String toolName) {
+    if (isToolAllowed(toolName)) {
+      return null;
+    }
+    JsonObject error = new JsonObject();
+    error.addProperty("status", "blocked");
+    error.addProperty("tool", toolName);
+    error.addProperty("mode", activeMode.name());
+    ToolTier tier = getToolTier(toolName);
+    error.addProperty("tier", tier != null ? tier.name() : "UNKNOWN");
+    error.addProperty("reason",
+        "Tool '" + toolName + "' is not available in " + activeMode.name()
+            + " mode. This mode allows "
+            + (activeMode == DeploymentMode.ENTERPRISE ? "Tier 1 (TRUSTED_CORE) only."
+                : activeMode == DeploymentMode.STUDY_TEAM
+                    ? "Tier 1 (TRUSTED_CORE) and Tier 2 (ENGINEERING_ADVANCED) only."
+                    : "a restricted subset of tools."));
+    error.addProperty("remediation",
+        "Switch to DESKTOP_ENGINEER mode or request approval for this tool.");
+    return GSON.toJson(error);
+  }
+
+  /**
+   * Returns the tier classification for a tool.
+   *
+   * @param toolName the MCP tool name
+   * @return the tier, or null if the tool is not classified
+   */
+  public static ToolTier getToolTier(String toolName) {
+    if (INDUSTRIAL_CORE.contains(toolName)) {
+      return ToolTier.TRUSTED_CORE;
+    }
+    if (ENGINEERING_ADVANCED.contains(toolName)) {
+      return ToolTier.ENGINEERING_ADVANCED;
+    }
+    if (EXPERIMENTAL_TOOLS.contains(toolName)) {
+      return ToolTier.EXPERIMENTAL;
+    }
+    return null;
   }
 
   /**
@@ -276,12 +351,21 @@ public final class IndustrialProfile {
   }
 
   /**
-   * Returns the set of advanced tools (functional but not yet qualified for the core).
+   * Returns the set of Tier 2 (engineering advanced) tools.
    *
    * @return unmodifiable set of tool names
    */
-  public static Set<String> getAdvancedTools() {
-    return ADVANCED_TOOLS;
+  public static Set<String> getEngineeringAdvanced() {
+    return ENGINEERING_ADVANCED;
+  }
+
+  /**
+   * Returns the set of Tier 3 (experimental) tools.
+   *
+   * @return unmodifiable set of tool names
+   */
+  public static Set<String> getExperimentalTools() {
+    return EXPERIMENTAL_TOOLS;
   }
 
   /**
@@ -319,19 +403,26 @@ public final class IndustrialProfile {
     }
     root.add("toolClassification", toolClassification);
 
-    // Industrial core
+    // Tier 1 — Trusted Core
     JsonArray core = new JsonArray();
     for (String tool : INDUSTRIAL_CORE) {
       core.add(tool);
     }
-    root.add("industrialCore", core);
+    root.add("tier1_trustedCore", core);
 
-    // Advanced tools
+    // Tier 2 — Engineering Advanced
     JsonArray advanced = new JsonArray();
-    for (String tool : ADVANCED_TOOLS) {
+    for (String tool : ENGINEERING_ADVANCED) {
       advanced.add(tool);
     }
-    root.add("advancedTools", advanced);
+    root.add("tier2_engineeringAdvanced", advanced);
+
+    // Tier 3 — Experimental
+    JsonArray experimental = new JsonArray();
+    for (String tool : EXPERIMENTAL_TOOLS) {
+      experimental.add(tool);
+    }
+    root.add("tier3_experimental", experimental);
 
     return GSON.toJson(root);
   }

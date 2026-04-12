@@ -1,36 +1,41 @@
 # NeqSim MCP Server
 
-An engineering-grade [Model Context Protocol](https://modelcontextprotocol.io/)
-(MCP) server that gives any LLM — VS Code Copilot, Claude Desktop, Cursor,
-or any MCP-compatible client — validated thermodynamic calculations and
-process simulations through [NeqSim](https://github.com/equinor/neqsim).
+A governed engineering calculation platform for AI-assisted workflows.
 
-**Why engineers can trust it:**
+[Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that
+gives any LLM — VS Code Copilot, Claude Desktop, Cursor, or any MCP client —
+validated thermodynamic calculations and process simulations through
+[NeqSim](https://github.com/equinor/neqsim).
 
-- **Enforced validation** — every calculation automatically validates its
-  output against engineering design rules. Validation cannot be skipped in
-  production modes.
-- **Benchmark trust metadata** — each tool reports its maturity level
-  (VALIDATED / TESTED / EXPERIMENTAL), reference validation cases, accuracy
-  bounds, and known limitations.
-- **Governed deployment modes** — four profiles from full-access desktop
-  engineering to restricted enterprise deployment with approval gates.
+**Governance is enforced in code, not just described in docs:**
+
+- **3-tier tool model** — 14 Trusted Core tools (NIST-validated), 11 Engineering
+  Advanced tools (literature-tested), 13 Experimental tools (limited validation).
+  Tier enforcement is code-level: blocked tools return structured error JSON.
+- **Auto-validation** — every calculation tool validates its output against
+  engineering design rules. Cannot be skipped in production modes.
+- **Benchmark trust** — each tool reports maturity level (VALIDATED / TESTED /
+  EXPERIMENTAL), reference cases, accuracy bounds, and known limitations.
+- **Four deployment profiles** — from full-access desktop to restricted enterprise
+  with approval gates. Each profile enforces which tiers are accessible.
 - **Traceability** — every response includes provenance metadata (EOS model,
   convergence status, assumptions, limitations, warnings).
 
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
 (STDIO transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
+See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
+
 ---
 
 ## Deployment Profiles
 
-| Profile | Use Case | Tool Access |
-|---------|----------|-------------|
-| `DESKTOP_ENGINEER` | Individual engineering work, exploration | Core + Advanced + Experimental (all tiers, labeled) |
-| `STUDY_TEAM` | Collaborative team studies, peer review | Core + Advanced, enforced validation |
-| `DIGITAL_TWIN` | Advisory-only live operations support | ADVISORY + CALCULATION only |
-| `ENTERPRISE` | Production deployment, governed access | Approved industrial core (16 tools) + approval gates |
+| Profile | Tier 1 | Tier 2 | Tier 3 | Approval Gate |
+|---------|--------|--------|--------|---------------|
+| `DESKTOP_ENGINEER` | ✅ | ✅ | ✅ | Off |
+| `STUDY_TEAM` | ✅ | ✅ | ❌ | Off |
+| `DIGITAL_TWIN` | ✅ (ADVISORY+CALC) | ❌ | ❌ | On |
+| `ENTERPRISE` | ✅ | ❌ | ❌ | On |
 
 Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
 
@@ -54,18 +59,15 @@ and monitoring dashboards without introducing control risk.
 
 ---
 
-## Industrial Core Tools
+## Tier 1 — Trusted Core (14 tools)
 
-The approved industrial subset — available in all deployment modes including
-`ENTERPRISE`. Each tool has documented validation basis, known accuracy
-bounds, and clear error behavior.
+Validated against NIST/experimental data. Available in all deployment modes.
+Each tool has documented accuracy bounds and clear error behavior.
 
 | Tool | Category | Description |
 |------|----------|-------------|
 | `runFlash` | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
 | `runProcess` | CALCULATION | Process simulation from JSON definition |
-| `runPVT` | CALCULATION | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
-| `runPipeline` | CALCULATION | Multiphase pipeline flow (Beggs & Brill) |
 | `calculateStandard` | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN) |
 | `getPropertyTable` | CALCULATION | Property table across T or P range |
 | `getPhaseEnvelope` | CALCULATION | Full PT phase envelope |
@@ -99,46 +101,66 @@ limitations, and unsupported conditions.
 
 ---
 
-## Advanced Tools
+## Tier 2 — Engineering Advanced (11 tools)
 
-Functional and useful, with stable interfaces, but not yet formally qualified
-for the industrial core. Available in `DESKTOP_ENGINEER` and `STUDY_TEAM` modes.
+Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
+and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
+code-level `enforceAccess()` — returns structured error JSON, not a silent skip.
 
 | Tool | Description |
 |------|-------------|
+| `runPVT` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
+| `runPipeline` | Multiphase pipeline flow (Beggs & Brill) |
 | `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
 | `crossValidateModels` | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | Multi-variable parametric sweep |
 | `runBatch` | Multi-point sensitivity sweep |
 | `sizeEquipment` | Quick equipment sizing (separator, compressor) |
 | `compareProcesses` | Compare process configurations side by side |
-| `generateReport` | Generate structured engineering reports |
-| `runReservoir` | Material balance reservoir simulation |
-| `runFieldEconomics` | NPV/IRR/cash flow with fiscal regimes + decline curves |
-| `manageSession` | Persistent simulation sessions |
-| `solveTask` | Solve engineering tasks from high-level descriptions |
-| `composeWorkflow` | Chain simulation steps into multi-domain workflows |
-| `queryDataCatalog` | Browse component, standards, material, and EOS databases |
+| `generateReport` | Structured engineering report generation |
 | `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
+| `queryDataCatalog` | Browse component, standards, material, and EOS databases |
 
-These tools may be promoted to the industrial core as formal qualification
-evidence (validation cases, documented accuracy bounds) is added.
+---
 
-### Experimental Tools
+## Tier 3 — Experimental (13 tools)
 
-Functional but interfaces may change between minor versions.
+Functional but limited validation or high-autonomy tools. `DESKTOP_ENGINEER`
+only. Blocked in all other modes by code-level `enforceAccess()`.
+Interfaces may change between minor versions.
 
 | Tool | Description |
 |------|-------------|
+| `runReservoir` | Material balance reservoir simulation |
+| `runFieldEconomics` | NPV/IRR/cash flow with fiscal regimes + decline curves |
 | `runDynamic` | Transient dynamic simulation with auto-instrumented PID controllers |
 | `runBioprocess` | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
+| `solveTask` | Autonomous task solver — results require engineer review |
+| `composeWorkflow` | Chain simulation steps into multi-domain workflows |
+| `manageSession` | Persistent simulation sessions |
 | `streamSimulation` | Async simulation with incremental polling |
 | `composeMultiServerWorkflow` | Multi-server orchestration |
 | `manageSecurity` | API key management, rate limiting, audit logging |
-| `manageState` | Persist/restore simulation states across restarts |
+| `manageState` | Persist/restore simulation states |
 | `manageValidationProfile` | Jurisdiction-specific validation profiles |
+| `runPlugin` | Run or list registered MCP runner plugins |
 
-### Tool Classification
+### Enforcement Example
+
+When a blocked tool is called, the response is:
+
+```json
+{
+  "status": "blocked",
+  "tool": "solveTask",
+  "mode": "ENTERPRISE",
+  "tier": "EXPERIMENTAL",
+  "reason": "Tool 'solveTask' is not available in ENTERPRISE mode. This mode allows Tier 1 (TRUSTED_CORE) only.",
+  "remediation": "Switch to DESKTOP_ENGINEER mode or request approval for this tool."
+}
+```
+
+### Tool Categories
 
 | Category | Description |
 |----------|-------------|
@@ -146,9 +168,6 @@ Functional but interfaces may change between minor versions.
 | **CALCULATION** | Stateless engineering computation |
 | **EXECUTION** | State-modifying — sessions, variable writes, task solving |
 | **PLATFORM** | Infrastructure — security, persistence, multi-server |
-
-In `ENTERPRISE` mode, EXECUTION tools require human approval and PLATFORM
-tools are blocked entirely.
 
 ---
 

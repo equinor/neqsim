@@ -667,6 +667,10 @@ public class NeqSimTools {
           + "saturationTemperature, separatorTest, swellingTest, GOR, viscosity), and "
           + "'experimentConfig' with experiment-specific parameters like 'pressures_bara' "
           + "array, separator stages, or injection gas composition.") String pvtJson) {
+    String blocked = IndustrialProfile.enforceAccess("runPVT");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return withAutoValidation(PVTRunner.run(pvtJson), "general");
     } catch (Exception e) {
@@ -696,6 +700,10 @@ public class NeqSimTools {
           + "'analysis' (hydrateRiskMap, waxAppearance, asphalteneStability, CO2Corrosion, "
           + "scalePrediction, erosion, pipelineCooldown, emulsionViscosity), and "
           + "'analysisConfig' with analysis-specific parameters.") String flowAssuranceJson) {
+    String blocked = IndustrialProfile.enforceAccess("runFlowAssurance");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline");
     } catch (Exception e) {
@@ -752,6 +760,10 @@ public class NeqSimTools {
           + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', "
           + "'flowRate' ({value, unit}), 'pipe' ({diameter_m, length_m, "
           + "elevation_m, roughness_m, numberOfIncrements}).") String pipelineJson) {
+    String blocked = IndustrialProfile.enforceAccess("runPipeline");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline");
     } catch (Exception e) {
@@ -780,6 +792,10 @@ public class NeqSimTools {
           + "'gasVolume_Sm3', 'oilVolume_Sm3', 'waterVolume_Sm3', "
           + "'producers' (array of {name, flowRate: {value, unit}}), "
           + "'simulationYears' (optional), 'timeStepDays' (optional).") String reservoirJson) {
+    String blocked = IndustrialProfile.enforceAccess("runReservoir");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return ReservoirRunner.run(reservoirJson);
     } catch (Exception e) {
@@ -812,6 +828,10 @@ public class NeqSimTools {
           + "gas: {year: sm3}}), 'discountRate'. For productionProfile: 'declineType' "
           + "(EXPONENTIAL/HYPERBOLIC/HARMONIC), 'initialRate_bblPerDay', 'annualDeclineRate', "
           + "'startYear', 'totalYears', 'plateauYears' (optional).") String economicsJson) {
+    String blocked = IndustrialProfile.enforceAccess("runFieldEconomics");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return FieldDevelopmentRunner.run(economicsJson);
     } catch (Exception e) {
@@ -840,6 +860,10 @@ public class NeqSimTools {
           + "definition), 'duration_seconds' (simulation length), 'timeStep_seconds' "
           + "(step size, default 1.0), and optional 'tuning' ({pressure: {kp, ti}, "
           + "level: {kp, ti}, flow: {kp, ti}, temperature: {kp, ti}}).") String dynamicJson) {
+    String blocked = IndustrialProfile.enforceAccess("runDynamic");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return DynamicRunner.run(dynamicJson);
     } catch (Exception e) {
@@ -956,6 +980,10 @@ public class NeqSimTools {
           + "'steps' array of {runner, name, input} objects. Runners: flash, process, "
           + "pipeline, pvt, flow_assurance, reservoir, economics, dynamic, standards, "
           + "bioprocess. Each step's output is available to subsequent steps.") String workflowJson) {
+    String blocked = IndustrialProfile.enforceAccess("composeWorkflow");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return TaskSolverRunner.composeWorkflow(workflowJson);
     } catch (Exception e) {
