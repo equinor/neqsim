@@ -169,6 +169,9 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Flash Equations     | [docs/wiki/flash_equations_and_tests.md](wiki/flash_equations_and_tests)                       | Flash equations and testing     |
 | Thermo Operations   | [docs/thermo/thermodynamic_operations.md](thermo/thermodynamic_operations)                     | Thermodynamic operations        |
 | TP Flash Algorithm  | [docs/thermodynamicoperations/TPflash_algorithm.md](thermodynamicoperations/TPflash_algorithm) | TP flash algorithm details      |
+| Reactive Flash      | [docs/thermo/reactive_flash.md](thermo/reactive_flash)                                        | Simultaneous chemical and phase equilibrium (Modified RAND method) |
+| Reactive PH Flash   | [examples/notebooks/reactive_ph_flash_examples.ipynb](../examples/notebooks/reactive_ph_flash_examples.ipynb) | Isenthalpic/isentropic reactive flash examples (PH, PS flash) |
+| Reactive Distillation | [docs/process/reactive_distillation.md](process/reactive_distillation)                        | Reactive distillation column with equilibrium-based reactive flash on each tray |
 | Phase Envelope Algorithm | [docs/thermodynamicoperations/phase_envelope_algorithm.md](thermodynamicoperations/phase_envelope_algorithm) | Michelsen continuation method, cricondenbar/cricondentherm Newton refinement, critical point detection |
 | Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/)                             | Thermodynamic operations module |
 
@@ -235,6 +238,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Design       | [docs/process/process_design_guide.md](process/process_design_guide)                           | Process design guide                      |
 | Design Framework     | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK)                                   | Automated design & optimization framework |
 | Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Optimization implementation status        |
+| Pipeline Network Optimization | [docs/process/pipeline_network_optimization.md](process/pipeline_network_optimization) | NLP optimizer, sparse solver, Pareto, benchmarks |
 
 ### Chapter 12: Process Systems & Models
 
@@ -363,6 +367,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **CO2 Injection Well Analysis**       | [docs/process/co2_injection_well_analysis.md](process/co2_injection_well_analysis)                  | **CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections — integrated safety analysis for CO2 injection wells**                 |
 | Networks                              | [docs/process/equipment/networks.md](process/equipment/networks)                                   | Pipeline network modeling                                                                                                                                |
 | **Looped Pipeline Networks**          | [docs/process/equipment/looped_networks.md](process/equipment/looped_networks)                     | **Hardy Cross solver, ring mains, parallel pipelines, loop detection**                                                                                   |
+| **Production Well Networks**          | [docs/process/equipment/production_well_networks.md](process/equipment/production_well_networks)   | **IPR (PI, Vogel, Fetkovich), chokes, tubing VLP, multiphase pipe, artificial lift, water handling, sand/solids, corrosion, emissions in NR-GGA solver** |
+| **Production Network Tutorial**       | [examples/notebooks/production_well_network.ipynb](../examples/notebooks/production_well_network.ipynb) | **8-example notebook: IPR models, choke sensitivity, complete well system, multi-well gathering, choke allocation optimization**                    |
+| **Advanced Network Features**         | [examples/notebooks/production_network_advanced_features.ipynb](../examples/notebooks/production_network_advanced_features.ipynb) | **Artificial lift, 120-well scale, water handling, sand erosion (DNV RP O501), corrosion (NORSOK M-506), GHG emissions** |
 | **Looped Network Solver**             | [docs/process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT) | **Hardy Cross looped network solver for ring mains and parallel pipelines**                                                                              |
 | **Looped Network Tutorial**           | [docs/examples/LoopedPipelineNetworkExample.ipynb](examples/LoopedPipelineNetworkExample.ipynb)    | **Interactive notebook: ring mains, offshore rings, loop detection, Hardy Cross**                                                                        |
 | **Network Solver Tutorial**           | [docs/examples/NetworkSolverTutorial.md](examples/NetworkSolverTutorial)                           | **Tutorial for pipeline network solvers with worked examples**                                                                                           |

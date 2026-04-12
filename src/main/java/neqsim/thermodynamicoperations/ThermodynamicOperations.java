@@ -408,6 +408,64 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Solve simultaneous chemical and phase equilibrium at constant T, P using the modified RAND
+   * (non-stoichiometric) method.
+   *
+   * <p>
+   * The method minimizes total Gibbs energy subject to element balance constraints without
+   * requiring explicit reaction stoichiometry. It automatically determines the number of
+   * independent reactions from the formula matrix (element-component mapping) and handles
+   * single-phase chemical equilibrium, VLE, and VLLE with simultaneous reactions in all phases.
+   * </p>
+   *
+   * <p>
+   * If no element data is available for the components (no independent reactions detected), the
+   * method falls back to a standard TP flash.
+   * </p>
+   */
+  public void reactiveTPflash() {
+    operation =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash(system);
+    getOperation().run();
+  }
+
+  /**
+   * Reactive multiphase PH flash: finds the equilibrium temperature, phase split, and composition
+   * at a given pressure P and total enthalpy H_spec, with simultaneous chemical and phase
+   * equilibrium.
+   *
+   * <p>
+   * Uses a nested approach: Newton-Raphson on 1/T (outer loop) wraps the Modified RAND reactive TP
+   * flash (inner loop). Suitable for systems with gas-phase reactions (WGS, SMR, NH3 synthesis),
+   * ionic equilibria, and multiphase reactive systems.
+   * </p>
+   *
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard)
+   */
+  public void reactivePHflash(double Hspec, int type) {
+    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(
+        system, Hspec, type);
+    getOperation().run();
+  }
+
+  /**
+   * Reactive multiphase PS flash: finds the equilibrium temperature, phase split, and composition
+   * at a given pressure P and total entropy S_spec, with simultaneous chemical and phase
+   * equilibrium.
+   *
+   * @param Sspec specified total entropy in J/K
+   */
+  public void reactivePSflash(double Sspec) {
+    neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash phflash =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system,
+            0.0, 0);
+    phflash.setEntropySpec(Sspec);
+    operation = phflash;
+    getOperation().run();
+  }
+
+  /**
    * <p>
    * PHflash.
    * </p>

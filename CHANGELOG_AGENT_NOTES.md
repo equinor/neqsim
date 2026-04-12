@@ -9,6 +9,111 @@
 
 ---
 
+## 2026-04-12 — Bioprocessing & Bioenergy: Phases 5–7
+
+### New Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `FermentationReactor` | `process.equipment.reactor` | Monod/Contois/substrate-inhibited kinetics; batch, fed-batch, continuous modes. Extends `Fermenter`. |
+| `SustainabilityMetrics` | `process.util.fielddevelopment` | CO₂eq tracking (IPCC AR6 GWP), carbon intensity (kgCO₂/MWh), EROI, renewable energy fraction, fossil fuel displacement |
+| `BiogasToGridModule` | `process.processmodel.biorefinery` | Pre-built: AnaerobicDigester → BiogasUpgrader → Compressor → Cooler → grid injection |
+| `GasificationSynthesisModule` | `process.processmodel.biorefinery` | Pre-built: BiomassGasifier → gas cleaning → Fischer-Tropsch synthesis |
+| `WasteToEnergyCHPModule` | `process.processmodel.biorefinery` | Pre-built: AnaerobicDigester → gas engine CHP with electrical + thermal output |
+
+### Key API Patterns
+
+```java
+// FermentationReactor
+FermentationReactor reactor = new FermentationReactor("FR-1", sugarFeed);
+reactor.setKineticModel(FermentationReactor.KineticModel.MONOD);
+reactor.setOperationMode(FermentationReactor.OperationMode.CONTINUOUS);
+reactor.setMaxSpecificGrowthRate(0.30);  // NOT setMuMax()
+reactor.setResidenceTime(10.0, "hr");    // requires unit string
+reactor.setFeedingRate(50.0);            // NOT setFedBatchFeedRate()
+reactor.setFeedSubstrateConcentration(200.0);  // NOT setFedBatchFeedConcentration()
+reactor.run();
+Map<String, Object> results = reactor.getResults();
+
+// BiogasUpgrader enum methods
+BiogasUpgrader.UpgradingTechnology tech = BiogasUpgrader.UpgradingTechnology.MEMBRANE;
+tech.getMethaneRecovery();       // NOT getCh4Recovery()
+tech.getCo2RemovalEfficiency();  // NOT getCo2Removal()
+
+// SustainabilityMetrics
+SustainabilityMetrics metrics = new SustainabilityMetrics();
+metrics.setBiogasProductionNm3PerYear(3_000_000.0);
+metrics.calculate();
+metrics.getCarbonIntensityKgCO2PerMWh();
+
+// BiogasToGridModule
+BiogasToGridModule btg = new BiogasToGridModule("BTG");
+btg.setFeedStream(wasteStream);
+btg.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
+btg.setUpgradingTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
+btg.setGridPressureBara(40.0);
+btg.run();
+Map<String, Object> results = btg.getResults();
+```
+
+### Common Mistakes (from testing)
+
+- `getCh4Recovery()` → use `getMethaneRecovery()`
+- `getCo2Removal()` → use `getCo2RemovalEfficiency()`
+- `setMuMax()` → use `setMaxSpecificGrowthRate()`
+- `setResidenceTime(10.0)` → use `setResidenceTime(10.0, "hr")` (unit required)
+- `GasificationSynthesisModule` constructor takes `(String name)` only — set biomass via `setBiomass(BiomassCharacterization, feedRateKgPerHr)`
+
+### Skills/Agents Updated
+
+- `neqsim-capability-map` — added Section I-bis (Bioprocessing & Bioenergy) + quick lookup entries
+- `neqsim-reaction-engineering` — added Bioprocessing Reactors section
+- `copilot-instructions.md` — added bioprocessing class import paths
+- `AGENTS.md` — updated reaction-engineering skill description
+- `CONTEXT.md` — added bioprocessing to equipment and where-to-find tables
+- `neqsim_dev_setup.py` — added all bioprocessing classes to `neqsim_classes()`
+
+### Existing Classes (Phases 1–3, prior sessions)
+
+| Class | Package | Tests |
+|-------|---------|-------|
+| `BiomassCharacterization` | `thermo.characterization` | 12 tests |
+| `AnaerobicDigester` | `process.equipment.reactor` | 10 tests |
+| `BiomassGasifier` | `process.equipment.reactor` | 8 tests |
+| `PyrolysisReactor` | `process.equipment.reactor` | 8 tests |
+| `BiogasUpgrader` | `process.equipment.splitter` | 10 tests |
+| `BiorefineryCostEstimator` | `process.mechanicaldesign` | 18 tests |
+
+---
+
+## 2026-07-12 — LoopedPipeNetwork: 6 Advanced Production Features
+
+### New Capabilities in `LoopedPipeNetwork`
+
+Six production network features added to `neqsim.process.equipment.network.LoopedPipeNetwork`:
+
+1. **Artificial Lift** — Gas lift (`setGasLift`), ESP (`setESP`), jet pump (`setJetPump`), rod pump (`setRodPump`) with `ArtificialLiftType` enum. Pressure boost applied in NR-GGA solver.
+2. **Large-Scale Networks** — 120+ wells with 6 manifolds converge in 15-20 iterations (< 0.1 s). Schur complement keeps matrix size proportional to loops, not elements.
+3. **Water Handling** — `setWaterCut`, `addWaterInjection(src, res, name, rate)`, `setWaterBreakthrough(elem, btWC, finalWC, currentWC)`, `calculateWaterBalance()`.
+4. **Sand/Solids Tracking** — `setSandRate`, `calculateSandTransport()` per DNV RP O501, `getSandViolations()`, configurable erosion/sand rate limits.
+5. **Corrosion & Integrity** — `setCorrosiveGas(elem, co2, h2s)`, `setCorrosionModel(elem, "NORSOK")`, `calculateCorrosion()` with de Waard-Milliams and NORSOK M-506 models, wall life, `getCorrosionViolations()`.
+6. **GHG Emissions** — `setCO2EmissionFactor`, `setMethaneSlipFactor`, `calculateEmissions()`, `getTotalCO2Emissions()`, `getAnnualCO2EmissionsTonnes()`, `getEmissionsIntensity()`. Defaults: EF=2.75, slip=2%, GWP(CH4)=28 (IPCC AR5).
+
+### Affected Skills/Agents
+
+- **neqsim-capability-map**: Updated — no longer "limited to simple networks"
+- **neqsim-production-optimization**: Added LoopedPipeNetwork section with advanced API
+- **neqsim-flow-assurance**: Added network-level corrosion (de Waard/NORSOK) and sand erosion (DNV RP O501) patterns
+- **emissions agent**: Added LoopedPipeNetwork emissions tracking section
+
+### Documentation
+
+- `docs/process/equipment/production_well_networks.md` — 6 new sections with API, formulas, and examples
+- `examples/notebooks/production_network_advanced_features.ipynb` — 25-cell notebook demonstrating all features
+- 96 unit tests in `LoopedPipeNetworkTest.java`
+
+---
+
 ## 2026-07-08 — UniSim Reader: Default E300 Fluid Export
 
 ### E300 is Now the Default Fluid Transfer Route

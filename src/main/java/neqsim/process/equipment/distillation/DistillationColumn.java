@@ -126,6 +126,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean doMultiPhaseCheck = true;
 
   /**
+   * When {@code true}, trays in the reactive section use {@link ReactiveTray} (simultaneous
+   * chemical + phase equilibrium via the Modified RAND method) instead of standard VLE
+   * {@link SimpleTray}. Set this before the first {@link #run()} call.
+   */
+  private boolean reactive = false;
+
+  /**
+   * First tray index (0-based, inclusive) of the reactive section. A value of {@code -1} means all
+   * middle trays (i.e. excluding reboiler/condenser) are reactive.
+   */
+  private int reactiveStartTray = -1;
+
+  /**
+   * Last tray index (0-based, inclusive) of the reactive section. A value of {@code -1} means all
+   * middle trays are reactive.
+   */
+  private int reactiveEndTray = -1;
+
+  /**
    * Flag tracking whether the column has been solved at least once. Used to seed the sequential
    * solver with the previous tray state on re-runs, preventing divergence from an unrelaxed start.
    */
@@ -246,7 +265,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Then the middle "simple" trays
     for (int i = 0; i < numberOfTraysLocal; i++) {
-      trays.add(new SimpleTray("SimpleTray" + (i + 1)));
+      trays.add(createMiddleTray("SimpleTray" + (i + 1), i));
     }
 
     // If user sets hasCondenser, add it at the top
@@ -863,7 +882,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Middle trays
       int simpleTrays = n - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
       for (int i = 0; i < simpleTrays; i++) {
-        SimpleTray tray = new SimpleTray("SimpleTray" + (i + 1));
+        SimpleTray tray = createMiddleTray("SimpleTray" + (i + 1), i);
         tray.setMultiPhaseCheck(doMultiPhaseCheck);
         trays.add(tray);
         trayCount++;
@@ -2954,7 +2973,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int change = tempNumberOfTrays - oldNumberOfTrays;
     if (change > 0) {
       for (int i = 0; i < change; i++) {
-        trays.add(1, new SimpleTray("SimpleTray" + (oldNumberOfTrays + i + 1)));
+        trays.add(1,
+            createMiddleTray("SimpleTray" + (oldNumberOfTrays + i + 1), oldNumberOfTrays + i));
       }
     } else if (change < 0) {
       for (int i = 0; i > change; i--) {
@@ -2964,6 +2984,89 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     numberOfTrays = tempNumberOfTrays;
     setDoInitializion(true);
     init();
+  }
+
+  /**
+   * Create a middle tray (between reboiler and condenser). Sets the reactive flash flag when the
+   * column is in reactive mode and the tray index falls inside the reactive section.
+   *
+   * @param name the tray name
+   * @param middleTrayIndex 0-based index among the middle trays (excluding reboiler/condenser)
+   * @return a new SimpleTray with reactive flash configured
+   */
+  private SimpleTray createMiddleTray(String name, int middleTrayIndex) {
+    SimpleTray tray = new SimpleTray(name);
+    if (reactive && isInReactiveSection(middleTrayIndex)) {
+      tray.setUseReactiveFlash(true);
+    }
+    return tray;
+  }
+
+  /**
+   * Check whether a middle-tray index falls inside the reactive section.
+   *
+   * @param middleTrayIndex 0-based index among middle trays
+   * @return {@code true} when the tray should use reactive flash
+   */
+  private boolean isInReactiveSection(int middleTrayIndex) {
+    if (reactiveStartTray < 0 || reactiveEndTray < 0) {
+      return true; // all middle trays are reactive
+    }
+    return middleTrayIndex >= reactiveStartTray && middleTrayIndex <= reactiveEndTray;
+  }
+
+  /**
+   * Enable or disable reactive distillation for all middle trays. When enabled, middle trays use
+   * {@link ReactiveTray} (simultaneous chemical + phase equilibrium via the Modified RAND method).
+   * Can be called after construction; existing trays will be replaced.
+   *
+   * @param reactive {@code true} to enable reactive distillation
+   */
+  public void setReactive(boolean reactive) {
+    this.reactive = reactive;
+    this.reactiveStartTray = -1;
+    this.reactiveEndTray = -1;
+    replaceMiddleTrays();
+  }
+
+  /**
+   * Enable reactive distillation on a specific section of middle trays. Tray indices are 0-based
+   * among the middle trays (excluding reboiler/condenser). For example, in a column with reboiler +
+   * 10 middle trays + condenser, {@code setReactive(true, 3, 7)} makes trays 4–8 (1-based) of the
+   * middle section reactive.
+   *
+   * @param reactive {@code true} to enable reactive distillation
+   * @param startTray first reactive middle-tray index (0-based, inclusive)
+   * @param endTray last reactive middle-tray index (0-based, inclusive)
+   */
+  public void setReactive(boolean reactive, int startTray, int endTray) {
+    this.reactive = reactive;
+    this.reactiveStartTray = startTray;
+    this.reactiveEndTray = endTray;
+    replaceMiddleTrays();
+  }
+
+  /**
+   * Update the reactive flash flag on middle trays to match the current reactive mode
+   * configuration. Called automatically by {@link #setReactive}.
+   */
+  private void replaceMiddleTrays() {
+    int start = hasReboiler ? 1 : 0;
+    int end = hasCondenser ? trays.size() - 1 : trays.size();
+    for (int i = start; i < end; i++) {
+      int middleIndex = i - start;
+      boolean shouldBeReactive = reactive && isInReactiveSection(middleIndex);
+      trays.get(i).setUseReactiveFlash(shouldBeReactive);
+    }
+  }
+
+  /**
+   * Check whether reactive distillation mode is enabled.
+   *
+   * @return {@code true} when the column has reactive trays
+   */
+  public boolean isReactive() {
+    return reactive;
   }
 
   /**

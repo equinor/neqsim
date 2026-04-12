@@ -25,7 +25,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   double heatInput = 0.0;
   private double temperature = Double.NaN;
 
-  private double trayPressure = -1.0;
+  /** Tray operating pressure in bara. Negative means use stream pressure. */
+  protected double trayPressure = -1.0;
+
+  /**
+   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase
+   * equilibrium) instead of standard VLE flash. Set via
+   * {@link DistillationColumn#setReactive(boolean)}.
+   */
+  private boolean useReactiveFlash = false;
 
   /** Cached gas out stream, invalidated when run() is called. */
   private transient StreamInterface cachedGasOutStream = null;
@@ -121,6 +129,24 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public void TPflash() {}
 
+  /**
+   * Enable or disable reactive flash on this tray.
+   *
+   * @param useReactiveFlash {@code true} to use reactive (chemical + phase) equilibrium
+   */
+  public void setUseReactiveFlash(boolean useReactiveFlash) {
+    this.useReactiveFlash = useReactiveFlash;
+  }
+
+  /**
+   * Check whether this tray uses reactive flash.
+   *
+   * @return {@code true} if reactive flash is enabled
+   */
+  public boolean isUseReactiveFlash() {
+    return useReactiveFlash;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -167,17 +193,29 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       if (!Double.isNaN(getOutTemperature())) {
         mixedStream.getThermoSystem().setTemperature(getOutTemperature());
       }
-      testOps.TPflash();
+      if (useReactiveFlash) {
+        testOps.reactiveTPflash();
+      } else {
+        testOps.TPflash();
+      }
       mixedStream.getThermoSystem().init(2);
     } else {
       try {
-        testOps.PHflash(enthalpy, 0);
+        if (useReactiveFlash) {
+          testOps.reactivePHflash(enthalpy, 0);
+        } else {
+          testOps.PHflash(enthalpy, 0);
+        }
       } catch (Exception ex) {
         try {
           if (!Double.isNaN(getOutTemperature())) {
             mixedStream.getThermoSystem().setTemperature(getOutTemperature());
           }
-          testOps.TPflash();
+          if (useReactiveFlash) {
+            testOps.reactiveTPflash();
+          } else {
+            testOps.TPflash();
+          }
         } catch (Exception ex2) {
           logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
         }
