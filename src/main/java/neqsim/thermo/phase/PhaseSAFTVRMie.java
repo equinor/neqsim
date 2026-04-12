@@ -1370,8 +1370,17 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Association contribution (SAFT-VR Mie) =====
 
   /**
-   * Initializes association-related quantities for the current volume. Computes the association
-   * radial distribution function and its volume derivatives from the SAFT hard-sphere model.
+   * Initializes association-related quantities for the current volume. Computes the hard-sphere
+   * contact radial distribution function g_HS(eta) and its volume derivatives for use in the
+   * association delta. Uses g_HS(eta) = (1 - eta/2) / (1 - eta)^3 (Carnahan-Starling).
+   *
+   * <p>
+   * Note: The theoretically correct SAFT-VR Mie approach uses g_Mie(sigma) from Lafitte 2013 Eq. 35
+   * instead of g_HS. However, the fitted association parameters (kappa from PC-SAFT convention)
+   * partially compensate for using g_HS, giving reasonable results (water Psat within 2x of NIST).
+   * When dispersion terms are verified against reference implementations for extreme lambda_r
+   * values (e.g., water lambda_r = 35.823), switch to g_Mie via calcAssocGMieEffective() and use
+   * K_HB bond volume from the database instead of kappa * sigma^3.
    */
   private void initAssocGDerivatives() {
     if (useASSOC == 0) {
@@ -1379,34 +1388,111 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     }
     double eta = nSAFT;
 
-    // g for association = hard-sphere contact RDF (Carnahan-Starling)
+    // Hard-sphere contact RDF (Carnahan-Starling)
     double om = 1.0 - eta;
     gcpaAssoc = (1.0 - eta / 2.0) / (om * om * om);
 
-    // d(ln g)/d(eta) = -1/(2-eta) + 3/(1-eta) = (5 - 2*eta)/((2-eta)*(1-eta))
+    // d(ln g_HS)/d(eta) = (5 - 2*eta) / ((2 - eta) * (1 - eta))
     double dlngDeta = (5.0 - 2.0 * eta) / ((2.0 - eta) * (1.0 - eta));
 
-    // d(ln g)/dV_SI = d(ln g)/d(eta) * d(eta)/dV_SI
-    // d(eta)/dV_SI = dnSAFTdV (already in SI units, m^-3)
+    // Convert to volume derivative: d(ln g)/dV = d(ln g)/d(eta) * d(eta)/dV
     gcpavAssoc = dlngDeta * dnSAFTdV;
 
-    // d2(ln g)/dV2: product rule d/dV[dlng/deta * deta/dV]
+    // d2(ln g)/d(eta)2 via numerical finite difference
     double d2lngDeta2 = calcD2LngDeta2(eta);
+
+    // d2(ln g)/dV2
     gcpavvAssoc = d2lngDeta2 * dnSAFTdV * dnSAFTdV + dlngDeta * dnSAFTdVdV;
 
-    // d3(ln g)/dV3: numerical
-    double dEtaV = Math.max(Math.abs(eta) * 1.0e-5, 1.0e-12);
-    double etaP = eta + dEtaV;
-    double etaM = Math.max(eta - dEtaV, 1.0e-15);
-    dEtaV = (etaP - etaM) / 2.0;
-    double dlngDeP = (5.0 - 2.0 * etaP) / ((2.0 - etaP) * (1.0 - etaP));
-    double dlngDeM = (5.0 - 2.0 * etaM) / ((2.0 - etaM) * (1.0 - etaM));
-    double d3lngDeta3 = (dlngDeP - 2.0 * dlngDeta + dlngDeM) / (dEtaV * dEtaV);
-    // Approximation using third volume derivative:
-    // dnSAFTdVdVdV = -6 * pi/6 * N_A * n / V^4 * dSAFT
+    // d3(ln g)/d(eta)3 via numerical finite difference of d2
+    double dEta = Math.max(Math.abs(eta) * 1.0e-4, 1.0e-11);
+    double etaP = Math.min(eta + dEta, 0.54);
+    double etaM = Math.max(eta - dEta, 1.0e-15);
+    dEta = (etaP - etaM) / 2.0;
+    double d2P = calcD2LngDeta2(etaP);
+    double d2M = calcD2LngDeta2(etaM);
+    double d3lngDeta3 = (d2P - d2M) / (2.0 * dEta);
+    if (!Double.isFinite(d3lngDeta3)) {
+      d3lngDeta3 = 0.0;
+    }
+
+    // d3(ln g)/dV3
     double dnSAFTdVdVdV = -3.0 * dnSAFTdVdV / volumeSAFT;
     gcpavvvAssoc = d3lngDeta3 * dnSAFTdV * dnSAFTdV * dnSAFTdV
         + 3.0 * d2lngDeta2 * dnSAFTdV * dnSAFTdVdV + dlngDeta * dnSAFTdVdVdV;
+  }
+
+  /**
+   * Computes the effective association g_Mie as a composition-weighted average over associating
+   * component pairs. For pure components, returns g_Mie(sigma; eta, T) directly. Uses the full Mie
+   * RDF from Lafitte 2013 Eq. 35 instead of the simple hard-sphere g_HS contact value.
+   *
+   * @param etaVal packing fraction
+   * @return effective g_Mie for association delta computation
+   */
+  private double calcAssocGMieEffective(double etaVal) {
+    if (etaVal < 1.0e-10 || etaVal > 0.55) {
+      double om = 1.0 - Math.max(etaVal, 0.0);
+      return (1.0 - Math.max(etaVal, 0.0) / 2.0) / (om * om * om);
+    }
+
+    double nMoles = getNumberOfMolesInPhase();
+    double lnGSum = 0.0;
+    double weightSum = 0.0;
+
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (!hasAssociationParams(i)) {
+        continue;
+      }
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      double xi = ci.getNumberOfMolesInPhase() / nMoles;
+      int nSitesI = ci.getNumberOfAssociationSites();
+
+      for (int j = 0; j < numberOfComponents; j++) {
+        if (!hasAssociationParams(j)) {
+          continue;
+        }
+        ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
+        double xj = cj.getNumberOfMolesInPhase() / nMoles;
+        int nSitesJ = cj.getNumberOfAssociationSites();
+
+        double weight = xi * nSitesI * xj * nSitesJ;
+        if (weight < 1.0e-30) {
+          continue;
+        }
+
+        // Cross parameters (same combining rules as dispersion)
+        double sigI = ci.getSigmaSAFTi();
+        double sigJ = cj.getSigmaSAFTi();
+        double sigIJ = (sigI + sigJ) / 2.0;
+        double si3 = sigI * sigI * sigI;
+        double sj3 = sigJ * sigJ * sigJ;
+        double sij3 = sigIJ * sigIJ * sigIJ;
+        double epsIJ_k =
+            Math.sqrt(ci.getEpsikSAFT() * cj.getEpsikSAFT()) * Math.sqrt(si3 * sj3) / sij3;
+        double lrIJ =
+            3.0 + Math.sqrt((ci.getLambdaRSAFTVRMie() - 3.0) * (cj.getLambdaRSAFTVRMie() - 3.0));
+        double laIJ =
+            3.0 + Math.sqrt((ci.getLambdaASAFTVRMie() - 3.0) * (cj.getLambdaASAFTVRMie() - 3.0));
+        double dIJ =
+            ComponentSAFTVRMie.calcEffectiveDiameter(sigIJ, epsIJ_k, temperature, lrIJ, laIJ);
+        double cMieIJ = ComponentSAFTVRMie.calcMiePrefactor(lrIJ, laIJ);
+        double x0IJ = (dIJ > 0) ? sigIJ / dIJ : 1.0;
+        double betaIJ = epsIJ_k / temperature;
+        double zetaStIJ = etaVal * x0IJ * x0IJ * x0IJ;
+
+        double gMieIJ = calcGMie(etaVal, zetaStIJ, lrIJ, laIJ, betaIJ, cMieIJ, x0IJ);
+        lnGSum += weight * Math.log(gMieIJ);
+        weightSum += weight;
+      }
+    }
+
+    if (weightSum > 0.0) {
+      return Math.exp(lnGSum / weightSum);
+    }
+    // Fallback to simple HS
+    double om = 1.0 - etaVal;
+    return (1.0 - etaVal / 2.0) / (om * om * om);
   }
 
   /**
@@ -1429,9 +1515,15 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes the association strength delta for all site-site pairs. Uses the SAFT-VR Mie combining
-   * rules: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1), kappa_ij = sqrt(kappa_i * kappa_j) *
-   * Wolbach-Sandler correction, sigma_ij = (sigma_i + sigma_j)/2.
+   * Computes the association strength delta for all site-site pairs using the hard-sphere g_HS from
+   * initAssocGDerivatives. Uses cross parameters: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1),
+   * kappa_ij = sqrt(kappa_i * kappa_j), sigma_ij = (sigma_i + sigma_j)/2.
+   *
+   * <p>
+   * The current implementation uses the PC-SAFT convention: delta = (exp(eps_HB/RT) - 1) * sigma^3
+   * * NA * kappa * g_HS. The theoretically correct SAFT-VR Mie formula (Lafitte 2013 Eq. 39) uses
+   * K_HB (bond volume in m^3) and g_Mie(sigma), but requires exact dispersion term consistency with
+   * Lafitte's implementation. See initAssocGDerivatives() note for details.
    */
   private void computeDeltaAssoc() {
     if (useASSOC == 0) {
@@ -1448,25 +1540,22 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
           continue;
         }
 
-        // Cross parameters
+        // Cross sigma
         double sigI = getComponent(i).getSigmaSAFTi();
         double sigJ = getComponent(j).getSigmaSAFTi();
         double sigIJ = (sigI + sigJ) / 2.0;
         double sigIJ3 = sigIJ * sigIJ * sigIJ;
 
+        // Association cross parameters (CR-1 combining rule)
         double epsHBI = getComponent(i).getAssociationEnergySAFTVRMie(); // J/mol
         double epsHBJ = getComponent(j).getAssociationEnergySAFTVRMie();
-        double epsHBIJ = (epsHBI + epsHBJ) / 2.0; // CR-1
+        double epsHBIJ = (epsHBI + epsHBJ) / 2.0;
 
         double kappaI = getComponent(i).getAssociationVolumeSAFT();
         double kappaJ = getComponent(j).getAssociationVolumeSAFT();
-        // Wolbach-Sandler correction: sqrt(sigma_i * sigma_j) / sigmaIJ
-        double kappaIJ = Math.sqrt(kappaI * kappaJ) * Math.pow(Math.sqrt(sigI * sigJ) / sigIJ, 3.0);
+        double kappaIJ = Math.sqrt(kappaI * kappaJ);
 
-        // Delta = (exp(eps_HB/(RT)) - 1) * sigma_ij^3 * N_A * kappa * g_HS
-        // Note: NO 1e5 factor here because the XA solver divides by volumeSAFT (=V_m3),
-        // not getVolume() (=V_neqsim = V_m3*1e5). The density is n/V_m3 [mol/m^3]
-        // and we need molecular density n*NA/V_m3, hence the NA factor.
+        // Delta = (exp(eps_HB/RT) - 1) * sigma^3 * NA * kappa * g_HS
         double expTerm = Math.exp(epsHBIJ / (RGas * temperature)) - 1.0;
         double deltaBase = expTerm * sigIJ3 * NA * kappaIJ * gcpaAssoc;
 
