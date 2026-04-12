@@ -23,9 +23,15 @@ import neqsim.mcp.runners.AutomationRunner;
 import neqsim.mcp.runners.BatchRunner;
 import neqsim.mcp.runners.CapabilitiesRunner;
 import neqsim.mcp.runners.CrossValidationRunner;
+import neqsim.mcp.runners.EngineeringValidator;
 import neqsim.mcp.runners.ParametricStudyRunner;
 import neqsim.mcp.runners.PhaseEnvelopeRunner;
+import neqsim.mcp.runners.PluginRegistry;
+import neqsim.mcp.runners.ProgressTracker;
 import neqsim.mcp.runners.PropertyTableRunner;
+import neqsim.mcp.runners.ReportRunner;
+import neqsim.mcp.runners.SessionRunner;
+import neqsim.mcp.runners.TaskSolverRunner;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
@@ -845,6 +851,212 @@ public class NeqSimTools {
       return BioprocessRunner.run(bioprocessJson);
     } catch (Exception e) {
       return errorJson("Bioprocess simulation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Session management tools (stateful)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Manage a persistent simulation session for incremental flowsheet construction.
+   *
+   * @param sessionJson JSON with action and session parameters
+   * @return JSON with session state or results
+   */
+  @Tool(description = "Manage a persistent simulation session. Enables incremental process "
+      + "construction: create a session with a fluid, add equipment one-by-one, modify "
+      + "parameters, and re-run — all without resending the entire JSON each time. "
+      + "Sessions persist across multiple calls with automatic 30-minute TTL. "
+      + "Actions: 'create' (new session with fluid), 'addEquipment' (add equipment to "
+      + "session), 'run' (execute simulation), 'modify' (change a parameter and re-run), "
+      + "'getState' (inspect session), 'list' (all sessions), 'close' (delete session).")
+  public String manageSession(
+      @ToolArg(description = "JSON with 'action' (create|addEquipment|run|modify|getState|"
+          + "list|close). For create: 'fluid' (composition) or 'processJson' (full process). "
+          + "For addEquipment: 'sessionId', 'equipment' ({type, name, inlet, properties}). "
+          + "For modify: 'sessionId', 'address' (e.g. 'Compressor.outletPressure'), "
+          + "'value', 'unit'. For run/getState/close: 'sessionId'.") String sessionJson) {
+    try {
+      return SessionRunner.run(sessionJson);
+    } catch (Exception e) {
+      return errorJson("Session operation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task solver and workflow composition
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Solve a high-level engineering task by automatic planning and execution.
+   *
+   * @param taskJson JSON with task description and parameters
+   * @return JSON with execution plan, step results, validation, and report
+   */
+  @Tool(description = "Solve a complete engineering task. Takes a high-level description "
+      + "(e.g., 'Design a 3-stage compression system from 5 to 150 bara'), automatically "
+      + "classifies the task, builds a multi-step execution plan (flash → process → "
+      + "validate), executes each step, chains results between steps, runs engineering "
+      + "validation against industry rules, and returns a structured report. "
+      + "Supports: compression, separation, dehydration, pipeline, PVT, flow assurance, "
+      + "CCS, reservoir, economics, dynamic simulation, heat exchange, and distillation.")
+  public String solveTask(
+      @ToolArg(description = "JSON with: 'task' (natural language description), "
+          + "'fluid' (composition), 'parameters' (task-specific values like outletPressure, "
+          + "stages, intercoolerTemp), optional 'process' (equipment definitions), "
+          + "optional 'validate' (true/false, default true).") String taskJson) {
+    try {
+      return TaskSolverRunner.solveTask(taskJson);
+    } catch (Exception e) {
+      return errorJson("Task solving failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Compose a multi-domain workflow by chaining runners in sequence.
+   *
+   * @param workflowJson JSON with workflow steps
+   * @return JSON with all step results and combined output
+   */
+  @Tool(description = "Compose a multi-domain workflow by chaining simulation steps. "
+      + "Define a sequence of runners (flash, process, pipeline, pvt, flow_assurance, "
+      + "reservoir, economics, dynamic, standards, bioprocess) and chain them together — "
+      + "results from each step flow to the next. Example: Reservoir → Process → "
+      + "Pipeline → Economics for a full field development evaluation.")
+  public String composeWorkflow(
+      @ToolArg(description = "JSON with: 'workflow' (name), 'fluid' (shared fluid), "
+          + "'steps' array of {runner, name, input} objects. Runners: flash, process, "
+          + "pipeline, pvt, flow_assurance, reservoir, economics, dynamic, standards, "
+          + "bioprocess. Each step's output is available to subsequent steps.") String workflowJson) {
+    try {
+      return TaskSolverRunner.composeWorkflow(workflowJson);
+    } catch (Exception e) {
+      return errorJson("Workflow composition failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Engineering validation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Validate simulation results against engineering design rules and industry standards.
+   *
+   * @param resultsJson JSON with simulation results
+   * @param context the validation context
+   * @return JSON with validation findings
+   */
+  @Tool(description = "Validate simulation results against engineering design rules. "
+      + "Checks: temperature/pressure physical limits, compressor efficiency (75-88%) and "
+      + "compression ratio (<4.5 per stage per API 617), separator residence time "
+      + "(>60s per NORSOK P-001), heat exchanger approach temperature (>3C per TEMA), "
+      + "pipeline erosional velocity (<25 m/s per API RP 14E), mass/energy balance closure, "
+      + "convergence status, hydrate risk, and material selection limits. "
+      + "Returns PASS / PASS_WITH_WARNINGS / FAIL verdict with remediation hints.")
+  public String validateResults(
+      @ToolArg(description = "JSON with simulation results to validate. Can be output "
+          + "from any runner (flash, process, pipeline, etc.).") String resultsJson,
+      @ToolArg(description = "Validation context: 'process', 'compressor', 'separator', "
+          + "'heatExchanger', 'pipeline', 'valve', or 'general'.") String context) {
+    try {
+      return EngineeringValidator.validate(resultsJson, context);
+    } catch (Exception e) {
+      return errorJson("Validation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Report generation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Generate a structured engineering report from simulation results.
+   *
+   * @param reportJson JSON with report type, title, and data
+   * @return JSON with Markdown report, tables, chart data, and validation
+   */
+  @Tool(description = "Generate a structured engineering report from simulation results. "
+      + "Produces a professional Markdown report with tables, chart-ready data arrays "
+      + "(for plotting by AI agents), summary statistics, and optional engineering "
+      + "validation. Report types: process_summary, pvt_study, parametric_sweep, "
+      + "flow_assurance, equipment_design, custom.")
+  public String generateReport(
+      @ToolArg(description = "JSON with: 'reportType' (process_summary|pvt_study|"
+          + "parametric_sweep|flow_assurance|equipment_design|custom), 'title' (report "
+          + "title), 'data' (simulation results to report on), optional 'author', "
+          + "'includeValidation' (true/false), 'includeChartData' (true/false).") String reportJson) {
+    try {
+      return ReportRunner.run(reportJson);
+    } catch (Exception e) {
+      return errorJson("Report generation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Plugin system
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a registered plugin by name, or list all available plugins.
+   *
+   * @param pluginJson JSON with plugin name and input
+   * @return JSON with plugin output or plugin list
+   */
+  @Tool(description = "Run a registered plugin or list available plugins. "
+      + "Plugins extend NeqSim MCP with domain-specific calculations. "
+      + "Use action 'list' to discover available plugins, or 'run' to execute one.")
+  public String runPlugin(
+      @ToolArg(description = "JSON with: 'action' ('list' or 'run'). For 'run': "
+          + "'pluginName' (registered plugin name), 'input' (plugin-specific JSON). "
+          + "For 'list': no additional fields needed.") String pluginJson) {
+    try {
+      JsonObject input = JsonParser.parseString(pluginJson).getAsJsonObject();
+      String action = input.has("action") ? input.get("action").getAsString() : "list";
+
+      if ("list".equals(action)) {
+        return PluginRegistry.listPlugins();
+      } else if ("run".equals(action)) {
+        String pluginName = input.has("pluginName") ? input.get("pluginName").getAsString() : "";
+        String pluginInput = input.has("input") ? input.get("input").toString() : "{}";
+        return PluginRegistry.runPlugin(pluginName, pluginInput);
+      } else {
+        return errorJson("Unknown plugin action: " + action + ". Use 'list' or 'run'.");
+      }
+    } catch (Exception e) {
+      return errorJson("Plugin operation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Progress tracking
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Check progress of long-running simulations.
+   *
+   * @param progressJson JSON with operation ID or action
+   * @return JSON with progress details
+   */
+  @Tool(description = "Check progress of long-running simulations. "
+      + "Use 'listActive' to see all running operations, or provide an 'operationId' "
+      + "to get detailed progress (percentage, current step, milestones).")
+  public String getProgress(
+      @ToolArg(description = "JSON with: 'action' ('get' or 'listActive'). For 'get': "
+          + "'operationId' (ID returned when starting a long simulation).") String progressJson) {
+    try {
+      JsonObject input = JsonParser.parseString(progressJson).getAsJsonObject();
+      String action = input.has("action") ? input.get("action").getAsString() : "listActive";
+
+      if ("listActive".equals(action)) {
+        return ProgressTracker.listActive();
+      } else if ("get".equals(action) && input.has("operationId")) {
+        return ProgressTracker.getProgress(input.get("operationId").getAsString());
+      } else {
+        return ProgressTracker.listActive();
+      }
+    } catch (Exception e) {
+      return errorJson("Progress query failed: " + e.getMessage());
     }
   }
 }
