@@ -30,6 +30,16 @@ NeqSim provides a suite of unit operations for modeling bio-processing and biore
   - [Crystallizer](#crystallizer)
 - [Integration with ProcessSystem](#integration-with-processsystem)
 - [Complete Biorefinery Example](#complete-biorefinery-example)
+- [Bioenergy Classes](#bioenergy-classes)
+  - [AnaerobicDigester](#anaerobicdigester)
+  - [BiomassGasifier](#biomassgasifier)
+  - [BiogasUpgrader](#biogasupgrader)
+  - [FermentationReactor](#fermentationreactor)
+  - [SustainabilityMetrics](#sustainabilitymetrics)
+- [Pre-Built Biorefinery Modules](#pre-built-biorefinery-modules)
+  - [BiogasToGridModule](#biogastoGridmodule)
+  - [GasificationSynthesisModule](#gasificationsynthesismodule)
+  - [WasteToEnergyCHPModule](#wastetoenergychpmodule)
 
 ---
 
@@ -159,7 +169,7 @@ rxn.setConversion(0.90);
 
 ### StirredTankReactor (CSTR)
 
-**Package:** `neqsim.process.equipment.reactor`  
+**Package:** `neqsim.process.equipment.reactor`
 **Extends:** `TwoPortEquipment` (single inlet, single outlet)
 
 Models a continuous stirred-tank reactor (or batch reactor). Reactions are applied sequentially to the cloned feed system, followed by a thermodynamic flash at specified outlet conditions.
@@ -262,7 +272,7 @@ System.out.println("Outlet T: " + (cstr.getOutletStream().getTemperature() - 273
 
 ### Fermenter
 
-**Package:** `neqsim.process.equipment.reactor`  
+**Package:** `neqsim.process.equipment.reactor`
 **Extends:** `StirredTankReactor`
 
 A bioreactor with additional bio-process features: aeration, oxygen mass transfer, pH control, and cell growth.
@@ -364,7 +374,7 @@ System.out.println("Total power: " + fermenter.getTotalPower() + " kW");
 
 ### EnzymeTreatment
 
-**Package:** `neqsim.process.equipment.reactor`  
+**Package:** `neqsim.process.equipment.reactor`
 **Extends:** `StirredTankReactor`
 
 Models enzyme-catalyzed reactions (hydrolysis, saccharification, proteolysis). Operates at mild conditions with lower agitator power than a standard CSTR.
@@ -465,7 +475,7 @@ System.out.println("Enzyme cost: $" + hydrolysis.getEnzymeCostPerHour() + "/hr")
 
 ### SolidsSeparator
 
-**Package:** `neqsim.process.equipment.separator`  
+**Package:** `neqsim.process.equipment.separator`
 **Extends:** `ProcessEquipmentBaseClass` (two outlets: solids + liquid)
 
 Base class for all solid-liquid separation equipment. Splits the feed into a solids-rich stream (cake) and a liquid-clear stream (filtrate) using component-specific split fractions.
@@ -616,7 +626,7 @@ Mechanical dewatering via rotating screw compression. Lowest energy consumption.
 
 ### LiquidLiquidExtractor
 
-**Package:** `neqsim.process.equipment.separator`  
+**Package:** `neqsim.process.equipment.separator`
 **Extends:** `ProcessEquipmentBaseClass` (two inlets, two outlets)
 
 Models liquid-liquid extraction by mixing a feed stream with a solvent stream and performing a thermodynamic LLE flash to separate into extract and raffinate phases.
@@ -718,7 +728,7 @@ System.out.println("Raffinate phases: " + raffinate.getThermoSystem().getNumberO
 
 ### MultiEffectEvaporator
 
-**Package:** `neqsim.process.equipment.heatexchanger`  
+**Package:** `neqsim.process.equipment.heatexchanger`
 **Extends:** `ProcessEquipmentBaseClass` (two outlets: concentrate + vapor condensate)
 
 Models a series of evaporator effects at decreasing pressures. The vapor from each effect provides heating for the next, achieving significant steam economy.
@@ -807,7 +817,7 @@ StreamInterface condensate = mee.getVaporCondensateStream();
 
 ### Dryer
 
-**Package:** `neqsim.process.equipment.heatexchanger`  
+**Package:** `neqsim.process.equipment.heatexchanger`
 **Extends:** `ProcessEquipmentBaseClass` (two outlets: dried product + vapor)
 
 Models drying equipment (drum, spray, flash, rotary) that removes moisture from a wet feed by heating and phase separation.
@@ -888,7 +898,7 @@ StreamInterface vapor = dryer.getVaporStream();
 
 ### Crystallizer
 
-**Package:** `neqsim.process.equipment.separator`  
+**Package:** `neqsim.process.equipment.separator`
 **Extends:** `ProcessEquipmentBaseClass` (two outlets: crystals + mother liquor)
 
 Models crystallization processes: cooling, evaporative, or anti-solvent crystallization.
@@ -1107,3 +1117,185 @@ NeqSimDataBase.useExtendedComponentDatabase(false);
 | `MultiEffectEvaporator` | `heatexchanger` | 1 in, 2 out | effects, pressures, concentration factor |
 | `Dryer` | `heatexchanger` | 1 in, 2 out | type, outlet T, moisture, efficiency |
 | `Crystallizer` | `separator` | 1 in, 2 out | type, solute, recovery, purity |
+
+---
+
+## Bioenergy Classes
+
+The bioenergy classes model the full value chain from biomass feedstock to energy product.
+
+### AnaerobicDigester
+
+**Package:** `neqsim.process.equipment.reactor`
+**Extends:** `Fermenter`
+
+Models anaerobic digestion of organic waste producing biogas (CH4 + CO2) and digestate.
+
+**Substrate types:** FOOD_WASTE, SEWAGE_SLUDGE, MANURE, CROP_RESIDUE, ENERGY_CROPS, INDUSTRIAL_WASTE, MUNICIPAL_SOLID_WASTE — each with default specific methane yield, VS destruction, and VS/TS ratio.
+
+```java
+AnaerobicDigester digester = new AnaerobicDigester("AD-1", feedStream);
+digester.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
+digester.setDigesterTemperature(37.0, "C");
+digester.setFeedRate(10000.0, 0.25);  // kg/hr, total solids fraction
+digester.setVesselVolume(5000.0);     // m3
+digester.run();
+
+StreamInterface biogas = digester.getBiogasOutStream();
+StreamInterface digestate = digester.getDigestateOutStream();
+```
+
+### BiomassGasifier
+
+**Package:** `neqsim.process.equipment.reactor`
+**Extends:** `StirredTankReactor`
+
+Thermochemical gasification of biomass, producing syngas (H2, CO, CO2, CH4, N2).
+
+```java
+BiomassGasifier gasifier = new BiomassGasifier("Gasifier-1");
+BiomassCharacterization wood = new BiomassCharacterization("wood_chips");
+// set proximate/ultimate analysis on wood...
+wood.calculate();
+gasifier.setBiomass(wood, 5000.0);  // 5 t/hr
+gasifier.setGasificationTemperature(273.15 + 850.0);
+gasifier.run();
+
+StreamInterface syngas = gasifier.getSyngasOutStream();
+StreamInterface charAsh = gasifier.getCharAshOutStream();
+```
+
+### BiogasUpgrader
+
+**Package:** `neqsim.process.equipment.splitter`
+**Extends:** `ComponentSplitter`
+
+Purifies raw biogas to biomethane spec by removing CO2, H2S, and moisture.
+
+**Technologies:** WATER_SCRUBBING, AMINE_SCRUBBING, PSA, MEMBRANE, CRYOGENIC — each with specific CO2 removal efficiency, CH4 recovery, and energy consumption.
+
+```java
+BiogasUpgrader upgrader = new BiogasUpgrader("Upgrader", biogasStream);
+upgrader.setTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
+upgrader.run();
+
+StreamInterface biomethane = upgrader.getBiomethaneOutStream();
+StreamInterface offgas = upgrader.getOffgasOutStream();
+```
+
+### FermentationReactor
+
+**Package:** `neqsim.process.equipment.reactor`
+**Extends:** `Fermenter`
+
+Advanced fermentation modeling with multiple kinetic models and operation modes.
+
+**Kinetic models:**
+
+| Model | Growth Rate Equation |
+|-------|---------------------|
+| MONOD | $\mu = \mu_{max} \frac{S}{K_s + S}$ |
+| CONTOIS | $\mu = \mu_{max} \frac{S}{K_{sx} X + S}$ |
+| SUBSTRATE_INHIBITED | $\mu = \mu_{max} \frac{S}{K_s + S + S^2/K_i}$ |
+| PRODUCT_INHIBITED | $\mu = \mu_{max} \frac{S}{K_s + S}(1 - P/P_{max})$ |
+
+**Operation modes:** CONTINUOUS (steady-state CSTR), BATCH (time integration), FED_BATCH (variable volume).
+
+```java
+FermentationReactor reactor = new FermentationReactor("FR-1", feed);
+reactor.setKineticModel(FermentationReactor.KineticModel.MONOD);
+reactor.setOperationMode(FermentationReactor.OperationMode.CONTINUOUS);
+reactor.setSubstrateConcentration(100.0);  // g/L
+reactor.setBiomassConcentration(1.0);      // g/L
+reactor.setMaxSpecificGrowthRate(0.30);    // 1/hr
+reactor.setMonodConstant(1.0);             // g/L
+reactor.setYieldBiomass(0.10);
+reactor.setYieldProduct(0.45);
+reactor.setResidenceTime(10.0, "hr");
+reactor.run();
+
+Map<String, Object> results = reactor.getResults();
+// Keys: finalProductConc_g_per_L, finalSubstrateConc_g_per_L,
+//       substrateConversion, productivity_g_per_L_hr, etc.
+```
+
+### SustainabilityMetrics
+
+**Package:** `neqsim.process.util.fielddevelopment`
+**Implements:** `Serializable`
+
+LCA/sustainability KPI calculator for biorefinery processes. Tracks CO2-equivalent
+emissions (IPCC AR6 GWP values), carbon intensity, EROI, and fossil fuel displacement.
+
+```java
+SustainabilityMetrics metrics = new SustainabilityMetrics();
+metrics.setBiogasProductionNm3PerYear(2_000_000.0);
+metrics.setMethaneContentFraction(0.60);
+metrics.setElectricityProductionMWhPerYear(5000.0);
+metrics.setHeatProductionMWhPerYear(6000.0);
+metrics.setParasiticElectricityMWhPerYear(500.0);
+metrics.setMethaneSlipPercent(1.5);
+metrics.setFossilReferenceEmissionFactor(0.450);
+metrics.calculate();
+
+double carbonIntensity = metrics.getCarbonIntensityKgCO2PerMWh();
+double netCarbon = metrics.getNetCarbonBalanceTCO2PerYear();
+double eroi = metrics.getEnergyReturnOnInvestment();
+String json = metrics.toJson();
+```
+
+---
+
+## Pre-Built Biorefinery Modules
+
+These modules extend `ProcessModule` and compose multiple equipment into
+ready-to-use biorefinery process chains.
+
+### BiogasToGridModule
+
+Anaerobic digestion + biogas upgrading + compression + cooling for grid injection.
+
+```java
+BiogasToGridModule module = new BiogasToGridModule("BTG-Plant");
+module.setFeedStream(wasteStream);
+module.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
+module.setUpgradingTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
+module.setGridPressureBara(40.0);
+module.setGridTemperatureC(25.0);
+module.run();
+
+StreamInterface biomethane = module.getBiomethaneOutStream();
+```
+
+### GasificationSynthesisModule
+
+Biomass gasification + syngas cooling + Fischer-Tropsch synthesis + product separation.
+
+```java
+GasificationSynthesisModule module = new GasificationSynthesisModule("GTL");
+BiomassCharacterization wood = new BiomassCharacterization("wood_chips");
+// configure biomass...
+wood.calculate();
+module.setBiomass(wood, 5000.0);
+module.setGasificationTemperatureC(850.0);
+module.setFtReactorTemperatureC(220.0);
+module.run();
+```
+
+### WasteToEnergyCHPModule
+
+Anaerobic digestion + CHP engine for combined heat and power from waste.
+
+```java
+WasteToEnergyCHPModule module = new WasteToEnergyCHPModule("CHP-Plant");
+module.setFeedStream(wasteStream);
+module.setSubstrateType(AnaerobicDigester.SubstrateType.SEWAGE_SLUDGE);
+module.setElectricalEfficiency(0.38);
+module.setThermalEfficiency(0.45);
+module.setOperatingHoursPerYear(8000.0);
+module.run();
+
+double powerKW = module.getElectricalPowerKW();
+double heatKW = module.getHeatOutputKW();
+double co2 = module.getCO2EmissionsKgPerHr();
+```
