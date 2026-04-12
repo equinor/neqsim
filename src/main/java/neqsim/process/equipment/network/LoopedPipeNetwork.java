@@ -3855,20 +3855,40 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     // Use NeqSim's PipeBeggsAndBrills for true multiphase pressure drop
+    // Cache the Stream + BB model on the NetworkPipe to avoid re-creating each iteration
     try {
-      SystemInterface pipeFluid = fluid.clone();
       NetworkNode fromNode = nodes.get(pipe.getFromNode());
-      pipeFluid.setPressure(fromNode.getPressure() / 1e5, "bara");
-      pipeFluid.setTemperature(fromNode.getTemperature(), "K");
+      double inletP = fromNode.getPressure() / 1e5; // bara
+      double inletT = fromNode.getTemperature(); // K
 
-      Stream inletStream = new Stream(pipe.getName() + "_bbInlet", pipeFluid);
-      inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
-      inletStream.run();
+      PipeBeggsAndBrills bbPipe = pipe.getBBModel();
+      Stream inletStream;
 
-      PipeBeggsAndBrills bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
-      bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
-      bbPipe.setLength(pipe.getLength());
-      bbPipe.setDiameter(pipe.getDiameter());
+      if (bbPipe == null) {
+        // First call: create and cache the model
+        SystemInterface pipeFluid = fluid.clone();
+        pipeFluid.setPressure(inletP, "bara");
+        pipeFluid.setTemperature(inletT, "K");
+
+        inletStream = new Stream(pipe.getName() + "_bbInlet", pipeFluid);
+        inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
+        inletStream.run();
+
+        bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
+        bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
+        bbPipe.setLength(pipe.getLength());
+        bbPipe.setDiameter(pipe.getDiameter());
+        bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
+        pipe.setBBModel(bbPipe);
+      } else {
+        // Subsequent calls: reuse model, update inlet conditions
+        inletStream = (Stream) bbPipe.getInletStream();
+        SystemInterface pipeFluid = inletStream.getFluid();
+        pipeFluid.setPressure(inletP, "bara");
+        pipeFluid.setTemperature(inletT, "K");
+        inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
+        inletStream.run();
+      }
 
       // Set elevation angle from node elevations
       NetworkNode toNode = nodes.get(pipe.getToNode());
@@ -3877,12 +3897,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         double angle = Math.toDegrees(Math.asin(dz / pipe.getLength()));
         bbPipe.setAngle(angle);
       }
-      bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
       bbPipe.run();
 
-      double inletP = inletStream.getPressure("Pa");
+      double inletPPa = inletStream.getPressure("Pa");
       double outletP = bbPipe.getOutletStream().getPressure("Pa");
-      double dP = inletP - outletP;
+      double dP = inletPPa - outletP;
 
       // Store hydraulic properties from BB model
       pipe.setFlowRegime("BB-Multiphase");
@@ -6951,59 +6970,21 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Solve a linear system Ax = b using Gaussian elimination with partial pivoting.
+   * Solve a linear system Ax = b using the best available solver.
    *
-   * @param matA coefficient matrix (n x n), modified in place
-   * @param vecB right-hand side vector (n), modified in place
+   * <p>
+   * Delegates to {@link NetworkLinearSolver#solve(double[][], double[], int)} which automatically
+   * selects sparse CSC LU (for n &gt; 30), dense EJML LU, or Gaussian elimination with partial
+   * pivoting as a fallback.
+   * </p>
+   *
+   * @param matA coefficient matrix (n x n)
+   * @param vecB right-hand side vector (n)
    * @param n system size
    * @return solution vector x
    */
   private double[] solveLinearSystem(double[][] matA, double[] vecB, int n) {
-    double[] x = new double[n];
-
-    // Forward elimination with partial pivoting
-    for (int k = 0; k < n; k++) {
-      // Find pivot
-      int maxRow = k;
-      for (int i = k + 1; i < n; i++) {
-        if (Math.abs(matA[i][k]) > Math.abs(matA[maxRow][k])) {
-          maxRow = i;
-        }
-      }
-      // Swap rows
-      double[] tempRow = matA[k];
-      matA[k] = matA[maxRow];
-      matA[maxRow] = tempRow;
-      double tempB = vecB[k];
-      vecB[k] = vecB[maxRow];
-      vecB[maxRow] = tempB;
-
-      if (Math.abs(matA[k][k]) < 1e-20) {
-        continue; // Skip near-singular row
-      }
-
-      // Eliminate
-      for (int i = k + 1; i < n; i++) {
-        double factor = matA[i][k] / matA[k][k];
-        for (int j = k + 1; j < n; j++) {
-          matA[i][j] -= factor * matA[k][j];
-        }
-        vecB[i] -= factor * vecB[k];
-      }
-    }
-
-    // Back substitution
-    for (int i = n - 1; i >= 0; i--) {
-      x[i] = vecB[i];
-      for (int j = i + 1; j < n; j++) {
-        x[i] -= matA[i][j] * x[j];
-      }
-      if (Math.abs(matA[i][i]) > 1e-20) {
-        x[i] /= matA[i][i];
-      }
-    }
-
-    return x;
+    return NetworkLinearSolver.solve(matA, vecB, n);
   }
 
   /**
@@ -8537,5 +8518,78 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    */
   public Map<String, double[]> productionForecastCoupled(double[] timestepYears) {
     return productionForecastCoupled(timestepYears, 30, 0.01);
+  }
+
+  // =====================================================================
+  // Formal NLP Optimizer Integration
+  // =====================================================================
+
+  /**
+   * Create a {@link NetworkOptimizer} for this network.
+   *
+   * <p>
+   * The returned optimizer provides access to BOBYQA and CMA-ES derivative-free optimization
+   * algorithms and multi-objective Pareto front exploration. Use it for formal production
+   * optimization as an alternative to the simpler gradient-based
+   * {@link #optimizeChokeOpenings(int, double)} and {@link #optimizeProduction(int, double)}.
+   * </p>
+   *
+   * @return a new optimizer bound to this network
+   */
+  public NetworkOptimizer createOptimizer() {
+    return new NetworkOptimizer(this);
+  }
+
+  /**
+   * Optimize production using a formal NLP solver (BOBYQA by default).
+   *
+   * <p>
+   * Convenience method that creates a {@link NetworkOptimizer}, runs BOBYQA to maximize total
+   * production, and returns the optimized result. For more control (algorithm selection, objective
+   * type, max evaluations), use {@link #createOptimizer()} directly.
+   * </p>
+   *
+   * @return optimization result
+   */
+  public NetworkOptimizer.OptimizationResult optimizeProductionNLP() {
+    NetworkOptimizer optimizer = createOptimizer();
+    return optimizer.optimize();
+  }
+
+  /**
+   * Run multi-objective optimization exploring the production vs compression power trade-off.
+   *
+   * <p>
+   * Sweeps Pareto front weights and returns all non-dominated solutions. Each point represents a
+   * different balance between maximizing production and minimizing compressor fuel/power.
+   * </p>
+   *
+   * @param numPoints number of Pareto front points to evaluate (5–20 typical)
+   * @return list of Pareto-optimal results
+   */
+  public List<NetworkOptimizer.OptimizationResult> optimizeMultiObjective(int numPoints) {
+    NetworkOptimizer optimizer = createOptimizer();
+    optimizer.setParetoPoints(numPoints);
+    return optimizer.optimizeMultiObjective();
+  }
+
+  // =====================================================================
+  // Validation Benchmarks Integration
+  // =====================================================================
+
+  /**
+   * Run all validation benchmarks and return results.
+   *
+   * <p>
+   * Provides quantitative verification against analytical solutions (Darcy-Weisbach, parallel pipe
+   * flow split), mass balance checks, solver cross-verification (Hardy Cross vs Newton-Raphson),
+   * pressure monotonicity, and sparse vs dense solver agreement.
+   * </p>
+   *
+   * @return list of benchmark results
+   * @see NetworkValidationBenchmarks
+   */
+  public static List<NetworkValidationBenchmarks.BenchmarkResult> runValidationBenchmarks() {
+    return NetworkValidationBenchmarks.runAllBenchmarks();
   }
 }
