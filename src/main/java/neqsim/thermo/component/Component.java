@@ -179,8 +179,19 @@ public abstract class Component implements ComponentInterface {
   protected double mSAFTi = 0;
   protected double sigmaSAFTi = 0;
   protected double epsikSAFT = 0;
+  protected double lambdaRSAFTVRMie = 12.0;
+  protected double lambdaASAFTVRMie = 6.0;
+  protected double mSAFTVRMie = 0;
+  protected double sigmaSAFTVRMie = 0;
+  protected double epsikSAFTVRMie = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
+  private double associationEnergySAFTVRMie = 0;
+  /**
+   * SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Angstrom^3 =
+   * 1.0169e-28 m^3. If zero, falls back to kappa * sigma^3 (PC-SAFT convention).
+   */
+  private double associationVolumeSAFTVRMie = 0;
 
   /**
    * <p>
@@ -453,9 +464,41 @@ public abstract class Component implements ComponentInterface {
         mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
         sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
         epsikSAFT = Double.parseDouble(dataSet.getString("epsikSAFT"));
+        try {
+          lambdaRSAFTVRMie = Double.parseDouble(dataSet.getString("lambdaRSAFTVRMie"));
+          lambdaASAFTVRMie = Double.parseDouble(dataSet.getString("lambdaASAFTVRMie"));
+        } catch (Exception ex) {
+          lambdaRSAFTVRMie = 12.0;
+          lambdaASAFTVRMie = 6.0;
+        }
+        try {
+          mSAFTVRMie = Double.parseDouble(dataSet.getString("mSAFTVRMie"));
+          sigmaSAFTVRMie = Double.parseDouble(dataSet.getString("sigmaSAFTVRMie")) / 1.0e10;
+          epsikSAFTVRMie = Double.parseDouble(dataSet.getString("epsikSAFTVRMie"));
+        } catch (Exception ex) {
+          mSAFTVRMie = mSAFTi;
+          sigmaSAFTVRMie = sigmaSAFTi;
+          epsikSAFTVRMie = epsikSAFT;
+        }
         setAssociationVolumeSAFT(
             Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
         setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
+        try {
+          double epsVRMie = Double.parseDouble(dataSet.getString("associationenergy_SAFTVRMie"));
+          if (epsVRMie > 0) {
+            associationEnergySAFTVRMie = epsVRMie;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will use PCSAFT value as fallback
+        }
+        try {
+          double kHB = Double.parseDouble(dataSet.getString("associationvolume_SAFTVRMie"));
+          if (kHB > 0) {
+            associationVolumeSAFTVRMie = kHB;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will compute from PCSAFT kappa * sigma^3 as fallback
+        }
         if (Math.abs(criticalViscosity) < 1e-12) {
           criticalViscosity =
               7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
@@ -508,7 +551,8 @@ public abstract class Component implements ComponentInterface {
             + getMeltingPointTemperature()
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
-            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+            + ", 12.0, 6.0, 0, 0, 0, 0, 0)");
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {
@@ -2177,6 +2221,66 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getLambdaRSAFTVRMie() {
+    return lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaRSAFTVRMie(double lambdaRSAFTVRMie) {
+    this.lambdaRSAFTVRMie = lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLambdaASAFTVRMie() {
+    return lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaASAFTVRMie(double lambdaASAFTVRMie) {
+    this.lambdaASAFTVRMie = lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getmSAFTVRMie() {
+    return mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setmSAFTVRMie(double mSAFTVRMie) {
+    this.mSAFTVRMie = mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSigmaSAFTVRMie() {
+    return sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSigmaSAFTVRMie(double sigmaSAFTVRMie) {
+    this.sigmaSAFTVRMie = sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEpsikSAFTVRMie() {
+    return epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEpsikSAFTVRMie(double epsikSAFTVRMie) {
+    this.epsikSAFTVRMie = epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getAssociationVolumeSAFT() {
     return associationVolumeSAFT;
   }
@@ -2197,6 +2301,30 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAssociationEnergySAFT(double associationEnergySAFT) {
     this.associationEnergySAFT = associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationEnergySAFTVRMie() {
+    return associationEnergySAFTVRMie > 0 ? associationEnergySAFTVRMie : associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie) {
+    this.associationEnergySAFTVRMie = associationEnergySAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationVolumeSAFTVRMie() {
+    return associationVolumeSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationVolumeSAFTVRMie(double associationVolumeSAFTVRMie) {
+    this.associationVolumeSAFTVRMie = associationVolumeSAFTVRMie;
   }
 
   /** {@inheritDoc} */

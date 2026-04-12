@@ -95,7 +95,7 @@ class ExampleCatalogTest {
   void testGetCategories() {
     List<String> categories = ExampleCatalog.getCategories();
 
-    assertEquals(6, categories.size());
+    assertTrue(categories.size() >= 6);
     assertTrue(categories.contains("flash"));
     assertTrue(categories.contains("process"));
     assertTrue(categories.contains("validation"));

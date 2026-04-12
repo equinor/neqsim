@@ -182,8 +182,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
-    operation =
-        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    if (system instanceof neqsim.thermo.system.SystemSAFTVRMie) {
+      // SAFT-VR Mie uses a specialized TPflash with separate volume solvers per phase
+      // for improved robustness with the non-cubic EOS.
+      // Standard bubble/dew point algorithms use the standard init(1) path which works
+      // via the overridden molarVolume() and dFdN/dFdNdT/dFdNdV derivatives.
+      operation = new neqsim.thermodynamicoperations.flashops.TPflashSAFT(system,
+          system.doSolidPhaseCheck());
+    } else {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    }
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
