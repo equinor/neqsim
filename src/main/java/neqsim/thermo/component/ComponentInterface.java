@@ -2193,6 +2193,84 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * getLambdaRSAFTVRMie.
+   * </p>
+   *
+   * @return repulsive Mie exponent
+   */
+  public double getLambdaRSAFTVRMie();
+
+  /**
+   * <p>
+   * setLambdaRSAFTVRMie.
+   * </p>
+   *
+   * @param lambdaRSAFTVRMie repulsive Mie exponent
+   */
+  public void setLambdaRSAFTVRMie(double lambdaRSAFTVRMie);
+
+  /**
+   * <p>
+   * getLambdaASAFTVRMie.
+   * </p>
+   *
+   * @return attractive Mie exponent
+   */
+  public double getLambdaASAFTVRMie();
+
+  /**
+   * <p>
+   * setLambdaASAFTVRMie.
+   * </p>
+   *
+   * @param lambdaASAFTVRMie attractive Mie exponent
+   */
+  public void setLambdaASAFTVRMie(double lambdaASAFTVRMie);
+
+  /**
+   * Gets the SAFT-VR Mie segment number.
+   *
+   * @return segment number for SAFT-VR Mie
+   */
+  public double getmSAFTVRMie();
+
+  /**
+   * Sets the SAFT-VR Mie segment number.
+   *
+   * @param mSAFTVRMie segment number
+   */
+  public void setmSAFTVRMie(double mSAFTVRMie);
+
+  /**
+   * Gets the SAFT-VR Mie segment diameter.
+   *
+   * @return sigma for SAFT-VR Mie in meters
+   */
+  public double getSigmaSAFTVRMie();
+
+  /**
+   * Sets the SAFT-VR Mie segment diameter.
+   *
+   * @param sigmaSAFTVRMie sigma in meters
+   */
+  public void setSigmaSAFTVRMie(double sigmaSAFTVRMie);
+
+  /**
+   * Gets the SAFT-VR Mie well depth divided by k.
+   *
+   * @return eps/k for SAFT-VR Mie in Kelvin
+   */
+  public double getEpsikSAFTVRMie();
+
+  /**
+   * Sets the SAFT-VR Mie well depth divided by k.
+   *
+   * @param epsikSAFTVRMie eps/k in Kelvin
+   */
+  public void setEpsikSAFTVRMie(double epsikSAFTVRMie);
+
+  /**
+   * <p>
    * getAssociationVolumeSAFT.
    * </p>
    *

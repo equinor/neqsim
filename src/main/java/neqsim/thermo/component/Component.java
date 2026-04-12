@@ -179,6 +179,11 @@ public abstract class Component implements ComponentInterface {
   protected double mSAFTi = 0;
   protected double sigmaSAFTi = 0;
   protected double epsikSAFT = 0;
+  protected double lambdaRSAFTVRMie = 12.0;
+  protected double lambdaASAFTVRMie = 6.0;
+  protected double mSAFTVRMie = 0;
+  protected double sigmaSAFTVRMie = 0;
+  protected double epsikSAFTVRMie = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
 
@@ -453,6 +458,22 @@ public abstract class Component implements ComponentInterface {
         mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
         sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
         epsikSAFT = Double.parseDouble(dataSet.getString("epsikSAFT"));
+        try {
+          lambdaRSAFTVRMie = Double.parseDouble(dataSet.getString("lambdaRSAFTVRMie"));
+          lambdaASAFTVRMie = Double.parseDouble(dataSet.getString("lambdaASAFTVRMie"));
+        } catch (Exception ex) {
+          lambdaRSAFTVRMie = 12.0;
+          lambdaASAFTVRMie = 6.0;
+        }
+        try {
+          mSAFTVRMie = Double.parseDouble(dataSet.getString("mSAFTVRMie"));
+          sigmaSAFTVRMie = Double.parseDouble(dataSet.getString("sigmaSAFTVRMie")) / 1.0e10;
+          epsikSAFTVRMie = Double.parseDouble(dataSet.getString("epsikSAFTVRMie"));
+        } catch (Exception ex) {
+          mSAFTVRMie = mSAFTi;
+          sigmaSAFTVRMie = sigmaSAFTi;
+          epsikSAFTVRMie = epsikSAFT;
+        }
         setAssociationVolumeSAFT(
             Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
         setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
@@ -2173,6 +2194,66 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setEpsikSAFT(double epsikSAFT) {
     this.epsikSAFT = epsikSAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLambdaRSAFTVRMie() {
+    return lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaRSAFTVRMie(double lambdaRSAFTVRMie) {
+    this.lambdaRSAFTVRMie = lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLambdaASAFTVRMie() {
+    return lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaASAFTVRMie(double lambdaASAFTVRMie) {
+    this.lambdaASAFTVRMie = lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getmSAFTVRMie() {
+    return mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setmSAFTVRMie(double mSAFTVRMie) {
+    this.mSAFTVRMie = mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSigmaSAFTVRMie() {
+    return sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSigmaSAFTVRMie(double sigmaSAFTVRMie) {
+    this.sigmaSAFTVRMie = sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEpsikSAFTVRMie() {
+    return epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEpsikSAFTVRMie(double epsikSAFTVRMie) {
+    this.epsikSAFTVRMie = epsikSAFTVRMie;
   }
 
   /** {@inheritDoc} */
