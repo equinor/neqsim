@@ -60,6 +60,13 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   private double F2dispI2dn = 0.0;
   private double F2dispZHCdn = 0.0;
 
+  // ===== Association site fractions =====
+  /** Association site fractions X_A for this component. */
+  private double[] xsiteAssoc = null;
+
+  /** Number of association sites on this component (as used in SAFT-VR Mie). */
+  private int nAssocSites = 0;
+
   /**
    * Constructor for ComponentSAFTVRMie.
    *
@@ -117,10 +124,101 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     ComponentSAFTVRMie clonedComponent = null;
     try {
       clonedComponent = (ComponentSAFTVRMie) super.clone();
+      if (xsiteAssoc != null) {
+        clonedComponent.xsiteAssoc = xsiteAssoc.clone();
+      }
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
     return clonedComponent;
+  }
+
+  // ===== Association methods =====
+
+  /**
+   * Initializes the association site fraction arrays. Called from
+   * PhaseSAFTVRMie.initAssociationSchemes.
+   *
+   * @param nSites number of association sites for this component
+   */
+  public void initAssociationArrays(int nSites) {
+    nAssocSites = nSites;
+    xsiteAssoc = new double[nSites];
+    for (int i = 0; i < nSites; i++) {
+      xsiteAssoc[i] = 1.0; // Initial guess: no association
+    }
+  }
+
+  /**
+   * Returns the association site fraction array.
+   *
+   * @return xsiteAssoc array
+   */
+  public double[] getXsiteAssoc() {
+    return xsiteAssoc;
+  }
+
+  /**
+   * Sets a site fraction value.
+   *
+   * @param siteIndex site index
+   * @param value new XA value
+   */
+  public void setXsiteAssoc(int siteIndex, double value) {
+    if (xsiteAssoc != null && siteIndex < xsiteAssoc.length) {
+      xsiteAssoc[siteIndex] = value;
+    }
+  }
+
+  /**
+   * Returns the number of association sites used in SAFT-VR Mie.
+   *
+   * @return number of sites
+   */
+  public int getNAssocSites() {
+    return nAssocSites;
+  }
+
+  /**
+   * Calculates the association contribution to dF/dNi. dFCPAdN = sum_A [ln(X_A^i)] - hcpatot/2 *
+   * d(ln g_HS)/d(ni), where g_HS is the Carnahan-Starling contact value used for association (NOT
+   * the chain g_Mie).
+   *
+   * @param phase the phase
+   * @param numberOfComponents number of components
+   * @param temperature temperature in K
+   * @param pressure pressure in Pa
+   * @return dF_ASSOC/dNi
+   */
+  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
+    if (sp.getUseASSOC() == 0 || nAssocSites == 0) {
+      return 0.0;
+    }
+
+    // sum_A ln(X_A^i)
+    double sumLnXA = 0.0;
+    for (int a = 0; a < nAssocSites; a++) {
+      sumLnXA += Math.log(xsiteAssoc[a]);
+    }
+
+    // d(ln g_HS_CS)/d(ni) = d(ln g_HS)/d(eta) * d(eta)/d(ni)
+    // g_HS_CS = (1-eta/2)/(1-eta)^3; ln(g) = ln(2-eta) - ln(2) - 3*ln(1-eta)
+    // d(ln g)/d(eta) = -1/(2-eta) + 3/(1-eta) = (5-2*eta)/((2-eta)*(1-eta))
+    double eta = sp.getNSAFT();
+    double dlngDeta = (5.0 - 2.0 * eta) / ((2.0 - eta) * (1.0 - eta));
+
+    // d(eta)/d(ni) = pi/6 * N_A * mi * di^3 / V_SI
+    double mi = getmSAFTi();
+    double di = getdSAFTi();
+    double piOver6 = ThermodynamicConstantsInterface.pi / 6.0;
+    double NA = ThermodynamicConstantsInterface.avagadroNumber;
+    double V_SI = sp.getVolumeSAFT(); // already in m^3
+    double detaDni = piOver6 * NA * mi * Math.pow(di, 3.0) / V_SI;
+    double dlngDni = dlngDeta * detaDni;
+
+    return sumLnXA - sp.getHcpatot() / 2.0 * dlngDni;
   }
 
   /**
@@ -299,10 +397,11 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       return sp.getF() / n - v * sp.dFdV();
     }
 
-    // Mixture: analytical dF/dN_i = dF_HC/dN_i + dF_DISP/dN_i
+    // Mixture: analytical dF/dN_i = dF_HC/dN_i + dF_DISP/dN_i + dF_ASSOC/dN_i
     // Compute on-the-fly (not from cached fields) so this works on cloned phases
     return dF_HC_SAFTdN(phase, numberOfComponents, temperature, pressure)
-        + dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure);
+        + dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure)
+        + dFCPAdN(phase, numberOfComponents, temperature, pressure);
   }
 
   /**

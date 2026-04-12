@@ -2306,6 +2306,21 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setAssociationEnergySAFT(double associationEnergySAFT);
 
   /**
+   * Get the association energy for SAFT-VR Mie EOS. Returns the VR-Mie-specific value if set,
+   * otherwise falls back to the PC-SAFT/CPA association energy.
+   *
+   * @return association energy in J/mol for SAFT-VR Mie
+   */
+  public double getAssociationEnergySAFTVRMie();
+
+  /**
+   * Set the association energy for SAFT-VR Mie EOS.
+   *
+   * @param associationEnergySAFTVRMie association energy in J/mol
+   */
+  public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie);
+
+  /**
    * <p>
    * getSurfaceTenisionInfluenceParameter.
    * </p>

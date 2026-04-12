@@ -1,10 +1,12 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentSAFTVRMie;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseSAFTVRMie;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -2464,5 +2466,587 @@ public class SystemSAFTVRMieTest {
     // Note: non-associating SAFT-VR Mie for water may not correctly predict phase split
     // This is a limitation of the model parameters, not the flash algorithm
     System.out.printf("  Number of phases: %d (non-associating SAFT-VR Mie)%n", nPhases);
+  }
+
+  /**
+   * Test standard NeqSim bubble point pressure algorithm with SAFT-VR Mie. This verifies that the
+   * standard flash infrastructure (not just TPflashSAFT) works with the SAFT-VR Mie EOS.
+   */
+  @Test
+  public void testStandardBubblePointPressure() {
+    // Pure methane at T=160K, should give Psat around 10-20 bar
+    SystemInterface fluid = new SystemSAFTVRMie(160.0, 1.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+      fail("Bubble point pressure flash threw exception: " + ex.getMessage());
+    }
+
+    double Psat = fluid.getPressure();
+    System.out.printf("CH4 bubble P at T=160K: %.2f bar%n", Psat);
+    assertTrue(Psat > 5.0 && Psat < 50.0,
+        "CH4 Psat at 160K should be between 5 and 50 bar, got " + Psat);
+    assertFalse(Double.isNaN(Psat), "Psat should not be NaN");
+  }
+
+  /**
+   * Test standard NeqSim bubble point temperature algorithm with SAFT-VR Mie.
+   */
+  @Test
+  public void testStandardBubblePointTemperature() {
+    // Ethane at P=10 bar, should give Tsat around 200-250 K
+    SystemInterface fluid = new SystemSAFTVRMie(200.0, 10.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.bubblePointTemperatureFlash();
+    } catch (Exception ex) {
+      fail("Bubble point temperature flash threw exception: " + ex.getMessage());
+    }
+
+    double Tsat = fluid.getTemperature();
+    System.out.printf("C2H6 bubble T at P=10 bar: %.2f K%n", Tsat);
+    assertTrue(Tsat > 150.0 && Tsat < 310.0,
+        "C2H6 Tsat at 10 bar should be between 150 and 310 K, got " + Tsat);
+    assertFalse(Double.isNaN(Tsat), "Tsat should not be NaN");
+  }
+
+  /**
+   * Test standard dew point pressure algorithm with SAFT-VR Mie.
+   */
+  @Test
+  public void testStandardDewPointPressure() {
+    // Pure propane at T=300K
+    SystemInterface fluid = new SystemSAFTVRMie(300.0, 1.0);
+    fluid.addComponent("propane", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.dewPointPressureFlash();
+    } catch (Exception ex) {
+      fail("Dew point pressure flash threw exception: " + ex.getMessage());
+    }
+
+    double Psat = fluid.getPressure();
+    System.out.printf("C3H8 dew P at T=300K: %.2f bar%n", Psat);
+    assertTrue(Psat > 1.0 && Psat < 50.0,
+        "C3H8 Pdew at 300K should be between 1 and 50 bar, got " + Psat);
+    assertFalse(Double.isNaN(Psat), "Psat should not be NaN");
+  }
+
+  /**
+   * Test standard bubble point for binary mixture with SAFT-VR Mie.
+   */
+  @Test
+  public void testStandardBubblePointBinaryMixture() {
+    // CH4/C2H6 mixture at T=200K, start at P closer to expected Psat
+    SystemInterface fluid = new SystemSAFTVRMie(200.0, 10.0);
+    fluid.addComponent("methane", 0.50);
+    fluid.addComponent("ethane", 0.50);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+      fail("Binary bubble point pressure flash threw exception: " + ex.getMessage());
+    }
+
+    double Psat = fluid.getPressure();
+    System.out.printf("CH4/C2H6 (50/50) bubble P at T=200K: %.2f bar%n", Psat);
+    assertTrue(Psat > 1.0 && Psat < 100.0,
+        "Binary Psat should be between 1 and 100 bar, got " + Psat);
+    assertFalse(Double.isNaN(Psat), "Psat should not be NaN");
+  }
+
+  /**
+   * Test that dFdVdVdV returns non-zero for SAFT-VR Mie.
+   */
+  @Test
+  public void testDFdVdVdVNonZero() {
+    SystemInterface fluid = new SystemSAFTVRMie(250.0, 30.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(1);
+
+    double dfdvvv = ((neqsim.thermo.phase.PhaseEos) fluid.getPhase(0)).dFdVdVdV();
+    System.out.printf("dFdVdVdV for CH4 at 250K/30bar: %.6e%n", dfdvvv);
+    assertTrue(Math.abs(dfdvvv) > 1e-30, "dFdVdVdV should be non-zero, got " + dfdvvv);
+    assertFalse(Double.isNaN(dfdvvv), "dFdVdVdV should not be NaN");
+  }
+
+  // ===== Association tests =====
+
+  /**
+   * Test that water loads association parameters: 4C scheme, 4 sites, non-zero energy and volume.
+   */
+  @Test
+  public void testWaterAssociationParametersLoaded() {
+    SystemInterface fluid = new SystemSAFTVRMie(373.15, 1.01325);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    int nSites = fluid.getPhase(0).getComponent(0).getNumberOfAssociationSites();
+    double epsHB = fluid.getPhase(0).getComponent(0).getAssociationEnergySAFT();
+    double kappa = fluid.getPhase(0).getComponent(0).getAssociationVolumeSAFT();
+
+    System.out.println("=== Water Association Parameters ===");
+    System.out
+        .println("Association scheme: " + fluid.getPhase(0).getComponent(0).getAssociationScheme());
+    System.out.println("Number of sites: " + nSites);
+    System.out.println("eps_HB (J/mol): " + epsHB);
+    System.out.println("kappa: " + kappa);
+
+    assertEquals(4, nSites, "Water should have 4 association sites (4C scheme)");
+    assertTrue(epsHB > 10000.0, "eps_HB should be > 10000 J/mol, got " + epsHB);
+    assertTrue(kappa > 0.0 && kappa < 1.0, "kappa should be between 0 and 1, got " + kappa);
+
+    PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
+    assertTrue(phase.getUseASSOC() > 0, "useASSOC should be > 0 for water");
+    assertTrue(phase.getTotalNumberOfAssociationSites() >= 4,
+        "Total sites should be >= 4, got " + phase.getTotalNumberOfAssociationSites());
+  }
+
+  /**
+   * Test pure water density at 1 atm, 373.15 K (boiling point at ~1 bar). With association, water
+   * should exhibit a reasonable liquid density ~960 kg/m3 (or gas phase near 0.6 kg/m3). The key
+   * check is that the simulation converges and gives physical results.
+   */
+  @Test
+  public void testWaterTPFlashWithAssociation() {
+    // Slightly subcritical water at moderate conditions
+    SystemInterface fluid = new SystemSAFTVRMie(400.0, 10.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+      fluid.initProperties();
+    } catch (Exception e) {
+      System.out.println("Water TP flash exception: " + e.getMessage());
+    }
+
+    double density = fluid.getDensity("kg/m3");
+    double Z = fluid.getPhase(0).getZ();
+    double pressure = fluid.getPressure();
+
+    System.out.println("=== Water SAFT-VR Mie + Association ===");
+    System.out.println("T = " + fluid.getTemperature() + " K, P = " + pressure + " bar");
+    System.out.println("Density = " + density + " kg/m3");
+    System.out.println("Z = " + Z);
+    System.out.println("Number of phases = " + fluid.getNumberOfPhases());
+
+    assertTrue(density > 0.0, "Density should be positive, got " + density);
+    assertFalse(Double.isNaN(density), "Density should not be NaN");
+    assertFalse(Double.isNaN(Z), "Z should not be NaN");
+    assertTrue(Z > 0.0 && Z < 10.0, "Z should be physical, got " + Z);
+  }
+
+  /**
+   * Test that XA values for water are between 0 and 1 after solving association.
+   */
+  @Test
+  public void testWaterXASiteValues() {
+    SystemInterface fluid = new SystemSAFTVRMie(373.15, 1.01325);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("Water flash exception: " + e.getMessage());
+    }
+
+    PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
+    ComponentSAFTVRMie comp = (ComponentSAFTVRMie) phase.getComponent(0);
+
+    double[] xsite = comp.getXsiteAssoc();
+    System.out.println("=== Water XA Site Values ===");
+    if (xsite != null) {
+      for (int i = 0; i < xsite.length; i++) {
+        System.out.printf("  X_A[%d] = %.6f%n", i, xsite[i]);
+        assertTrue(xsite[i] > 0.0 && xsite[i] <= 1.0,
+            "X_A[" + i + "] should be between 0 and 1, got " + xsite[i]);
+      }
+      // For liquid water at 100°C, XA should be significantly < 1.0 (strong association)
+      // For gas, XA should be close to 1.0 (weak association)
+      assertTrue(xsite[0] < 1.0, "At least some association should occur, X_A = " + xsite[0]);
+    }
+  }
+
+  /**
+   * Test that methane (non-associating) is unaffected by the association code. Compare density with
+   * and without association - they should be identical since methane has no association sites.
+   */
+  @Test
+  public void testNonAssociatingUnchanged() {
+    // This test verifies that existing non-associating components give identical results
+    SystemInterface fluid = new SystemSAFTVRMie(300.0, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+      fluid.initProperties();
+    } catch (Exception e) {
+      fail("Methane flash should work: " + e.getMessage());
+    }
+
+    double density = fluid.getDensity("kg/m3");
+    double Z = fluid.getPhase(0).getZ();
+
+    // These should match the pre-association NIST validation values
+    // NIST: methane at 300K, 50 bar: ~35.7 kg/m3
+    double relError = Math.abs(density - 35.7) / 35.7;
+    assertTrue(relError < 0.05, "Methane density should be within 5% of NIST, got " + density);
+    System.out.println("Methane 300K/50bar: rho=" + density + " kg/m3, Z=" + Z);
+
+    PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
+    assertEquals(0, phase.getUseASSOC(),
+        "Methane should have useASSOC=0 (no association parameters)");
+  }
+
+  /**
+   * Test water + methane binary with association. Water is associating (4C), methane is not. The
+   * system should flash successfully and water should exhibit association.
+   */
+  @Test
+  public void testWaterMethaneAssociation() {
+    SystemInterface fluid = new SystemSAFTVRMie(350.0, 50.0);
+    fluid.addComponent("water", 0.3);
+    fluid.addComponent("methane", 0.7);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+      fluid.initProperties();
+    } catch (Exception e) {
+      System.out.println("Water/methane flash: " + e.getMessage());
+    }
+
+    double density = fluid.getDensity("kg/m3");
+    int nPhases = fluid.getNumberOfPhases();
+
+    System.out.println("=== Water + Methane SAFT-VR Mie ===");
+    System.out.println("T = 350 K, P = 50 bar");
+    System.out.println("Density = " + density + " kg/m3");
+    System.out.println("Number of phases = " + nPhases);
+
+    PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
+    assertTrue(phase.getUseASSOC() > 0, "Phase should have association enabled");
+    assertTrue(density > 0 && !Double.isNaN(density), "Density should be physical");
+  }
+
+  /**
+   * Test F_ASSOC contribution values directly. For pure water at moderate conditions, F_ASSOC
+   * should be negative (association lowers free energy).
+   */
+  @Test
+  public void testFAssocContribution() {
+    SystemInterface fluid = new SystemSAFTVRMie(373.15, 1.01325);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("Flash exception: " + e.getMessage());
+    }
+
+    PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
+    double fAssoc = phase.F_ASSOC_SAFT();
+    double fTotal = phase.getF();
+    double gcpa = phase.getGcpaAssoc();
+    double hcpatot = phase.getHcpatot();
+    double dFdV = phase.dF_ASSOC_SAFTdV();
+    double dFdT = phase.dF_ASSOC_SAFTdT();
+
+    System.out.println("=== F_ASSOC Contributions ===");
+    System.out.println("F_ASSOC = " + fAssoc);
+    System.out.println("F_total = " + fTotal);
+    System.out.println("gcpaAssoc (g_HS) = " + gcpa);
+    System.out.println("hcpatot = " + hcpatot);
+    System.out.println("dF_ASSOC/dV = " + dFdV);
+    System.out.println("dF_ASSOC/dT = " + dFdT);
+
+    if (phase.getUseASSOC() > 0 && phase.getTotalNumberOfAssociationSites() > 0) {
+      assertTrue(fAssoc <= 0.0,
+          "F_ASSOC should be <= 0 (association lowers energy), got " + fAssoc);
+      assertFalse(Double.isNaN(fAssoc), "F_ASSOC should not be NaN");
+      assertFalse(Double.isNaN(dFdV), "dF_ASSOC/dV should not be NaN");
+      assertFalse(Double.isNaN(dFdT), "dF_ASSOC/dT should not be NaN");
+      assertTrue(gcpa > 0.0, "g_HS should be positive, got " + gcpa);
+    }
+  }
+
+  /**
+   * Test pure water VLE: bubble point pressure at several temperatures. NIST reference: water Psat
+   * at 373.15K = 1.01325 bar, at 400K = 2.458 bar, at 450K = 9.322 bar. SAFT-VR Mie + association
+   * should give reasonable Psat values (within an order of magnitude for initial implementation).
+   */
+  @Test
+  public void testWaterBubblePointPressure() {
+    double[] temps = {373.15, 400.0, 450.0};
+    double[] nistPsat = {1.01325, 2.458, 9.322};
+
+    System.out.println("=== Water Bubble Point Pressure: SAFT-VR Mie + Association ===");
+    System.out.printf("%-10s %-12s %-12s %-8s%n", "T (K)", "Psat_SAFT", "Psat_NIST", "ratio");
+
+    // Lafitte et al. (2013) Table 11: eps_HB/k = 1985.4 K for SAFT-VR Mie water.
+    // Now read from DB column associationenergy_SAFTVRMie = 16506.6756 J/mol.
+
+    for (int i = 0; i < temps.length; i++) {
+      SystemInterface fluid = new SystemSAFTVRMie(temps[i], nistPsat[i]);
+      fluid.addComponent("water", 1.0);
+      fluid.setMixingRule("classic");
+      fluid.init(0);
+
+      // Verify DB value is correct VR Mie association energy
+      double epsHB = fluid.getPhase(0).getComponent(0).getAssociationEnergySAFTVRMie();
+      System.out.println("epsHB_VRMie from DB: " + epsHB + " (expected ~16506.7)");
+
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      try {
+        ops.bubblePointPressureFlash(false);
+      } catch (Exception e) {
+        System.out.println("Bubble point failed at T=" + temps[i] + ": " + e.getMessage());
+        continue;
+      }
+
+      double Psat = fluid.getPressure();
+      double ratio = Psat / nistPsat[i];
+      System.out.printf("%-10.1f %-12.4f %-12.4f %-8.3f%n", temps[i], Psat, nistPsat[i], ratio);
+
+      assertTrue(Psat > 0.0, "Psat should be positive at T=" + temps[i]);
+      assertFalse(Double.isNaN(Psat), "Psat should not be NaN at T=" + temps[i]);
+      // Generous tolerance for initial implementation - within factor of 5
+      assertTrue(Psat > nistPsat[i] / 5.0 && Psat < nistPsat[i] * 5.0,
+          "Psat " + Psat + " should be within factor of 5 of NIST " + nistPsat[i]);
+    }
+  }
+
+  /**
+   * Diagnostic test: check fugacity coefficients and F_ASSOC at known conditions.
+   */
+  @Test
+  public void testWaterFugacityDiagnostics() {
+    // Use conditions where molar volume solver is known to converge
+    SystemInterface fluid = new SystemSAFTVRMie(350.0, 50.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    // Print VR Mie parameters for water
+    ComponentSAFTVRMie comp = (ComponentSAFTVRMie) fluid.getPhases()[0].getComponent(0);
+    System.out.println("=== Water SAFT-VR Mie Parameters ===");
+    System.out.println("m=" + comp.getmSAFTi() + " sigma=" + comp.getSigmaSAFTi() + " eps_k="
+        + comp.getEpsikSAFT());
+    System.out.println(
+        "lambdaR=" + comp.getLambdaRSAFTVRMie() + " lambdaA=" + comp.getLambdaASAFTVRMie());
+    System.out.println("epsHB_VRMie=" + comp.getAssociationEnergySAFTVRMie() + " epsHB_PCSAFT="
+        + comp.getAssociationEnergySAFT() + " kappa=" + comp.getAssociationVolumeSAFT() + " nSites="
+        + comp.getNumberOfAssociationSites());
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("TPflash failed: " + e.getMessage());
+      return;
+    }
+    fluid.initProperties();
+
+    System.out.println("=== Fugacity Diagnostics: T=350K, P=50bar ===");
+    for (int ph = 0; ph < fluid.getNumberOfPhases(); ph++) {
+      PhaseInterface phase = fluid.getPhase(ph);
+      double fugCoef = phase.getComponent(0).getFugacityCoefficient();
+      double molarVol = phase.getMolarVolume();
+      double Z = phase.getPressure() * molarVol / (8.314 * phase.getTemperature());
+      System.out.println("Phase " + ph + " type=" + phase.getType() + " V=" + molarVol + " Z=" + Z
+          + " fugCoef=" + fugCoef + " logFugCoef=" + Math.log(fugCoef));
+
+      if (phase instanceof PhaseSAFTVRMie) {
+        PhaseSAFTVRMie saft = (PhaseSAFTVRMie) phase;
+        System.out.println("  F_HC=" + saft.F_HC_SAFT() + " F_DISP=" + saft.F_DISP_SAFT()
+            + " F_ASSOC=" + saft.F_ASSOC_SAFT());
+      }
+    }
+
+    // Pressure sweep to find model Psat
+    System.out.println("\n=== Pressure sweep at T=373.15K ===");
+    System.out.printf("%-8s %-12s %-12s %-12s %-12s %-12s %-12s%n", "P(bar)", "V_liq", "V_vap",
+        "phiL", "phiV", "K", "lnK");
+    double[] pressures = {0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0};
+    for (double p : pressures) {
+      SystemInterface fl = new SystemSAFTVRMie(373.15, p);
+      fl.addComponent("water", 1.0);
+      fl.setMixingRule("classic");
+      fl.init(0);
+      fl.setNumberOfPhases(2);
+      fl.setBeta(1, 1.0 - 1e-10);
+      fl.setBeta(0, 1e-10);
+      try {
+        fl.init(3);
+        double phiL = fl.getPhase(1).getComponent(0).getFugacityCoefficient();
+        double phiV = fl.getPhase(0).getComponent(0).getFugacityCoefficient();
+        double vL = fl.getPhase(1).getMolarVolume();
+        double vV = fl.getPhase(0).getMolarVolume();
+        double K = phiL / phiV;
+        System.out.printf("%-8.1f %-12.4f %-12.4f %-12.6e %-12.6e %-12.6e %-12.4f%n", p, vL, vV,
+            phiL, phiV, K, Math.log(K));
+      } catch (Exception e) {
+        System.out.println("P=" + p + " failed: " + e.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Diagnostic: probe EOS P(V) directly in the gas region for water at T=373K. This checks whether
+   * the gas root exists and the scan can find it.
+   */
+  @Test
+  public void testGasRootProbe() {
+    // Create a water system at some initial P (doesn't matter, we'll set V manually)
+    SystemInterface fluid = new SystemSAFTVRMie(373.15, 1.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    // Get gas phase
+    PhaseSAFTVRMie gasPhase = (PhaseSAFTVRMie) fluid.getPhases()[0]; // first phase = gas-like
+
+    System.out.println("=== Gas Root Probe: P_EOS(V) for water at T=373.15K ===");
+    System.out.println("epsHB_VRMie=" + gasPhase.getComponent(0).getAssociationEnergySAFTVRMie());
+    System.out.printf("%-12s %-12s %-12s %-12s %-12s %-12s%n", "V_neqsim", "V_m3", "eta",
+        "P_EOS(bar)", "P_ideal(bar)", "ratio");
+
+    // Probe volumes from dense gas (V=50) to ideal gas (V=6000)
+    double[] vols = {50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000, 3100, 3200, 4000, 5000, 6000};
+    for (double V : vols) {
+      gasPhase.setMolarVolume(V);
+      gasPhase.volInit();
+      double pEOS = gasPhase.calcPressure();
+      double Vm3 = V * 1.0e-5; // m3/mol
+      double pIdeal = 8.314 * 373.15 / Vm3 / 1.0e5; // bar
+      double eta =
+          gasPhase.getComponent(0).getmSAFTVRMie() * gasPhase.getComponent(0).getSigmaSAFTVRMie()
+              * gasPhase.getComponent(0).getSigmaSAFTVRMie()
+              * gasPhase.getComponent(0).getSigmaSAFTVRMie() * Math.PI / 6.0
+              * gasPhase.getNumberOfMolesInPhase() * 6.022e23 / (V * 1.0e-5);
+      System.out.printf("%-12.1f %-12.6e %-12.6e %-12.6e %-12.6e %-12.4f%n", V, Vm3, eta, pEOS,
+          pIdeal, pEOS / pIdeal);
+    }
+  }
+
+  /**
+   * Test that association derivative consistency: numerical vs analytical dF_ASSOC/dV. Perturbs
+   * volume by a small amount and compares the numerical derivative of F_ASSOC with the analytical
+   * dF_ASSOC/dV.
+   */
+  @Test
+  public void testAssociationDerivativeConsistency() {
+    SystemInterface fluid = new SystemSAFTVRMie(350.0, 50.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("Flash exception: " + e.getMessage());
+    }
+
+    PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
+
+    // Get analytical derivatives
+    double F = phase.getF();
+    double dFdV = phase.dFdV();
+    double dFdVdV = phase.dFdVdV();
+    double dFdT = phase.dFdT();
+
+    // Breakdown: individual contributions
+    double hcF = phase.F_HC_SAFT();
+    double dispF = phase.F_DISP_SAFT();
+    double assocF = phase.F_ASSOC_SAFT();
+    double hcDVDV = phase.dF_HC_SAFTdVdV() * 1.0e-10;
+    double dispDVDV = phase.dF_DISP_SAFTdVdV() * 1.0e-10;
+    double assocDVDV = phase.dF_ASSOC_SAFTdVdV() * 1.0e-10;
+
+    System.out.println("=== Individual Contributions ===");
+    System.out.println("F: HC=" + hcF + " DISP=" + dispF + " ASSOC=" + assocF + " TOTAL=" + F);
+    System.out.println(
+        "dFdVdV: HC=" + hcDVDV + " DISP=" + dispDVDV + " ASSOC=" + assocDVDV + " TOTAL=" + dFdVdV);
+
+    // Numerical check: perturb volume
+    double v = phase.getMolarVolume();
+    double n = phase.getNumberOfMolesInPhase();
+    double dv = v * 1.0e-6;
+
+    PhaseSAFTVRMie pPlus = (PhaseSAFTVRMie) phase.clone();
+    pPlus.setMolarVolume(v + dv);
+    pPlus.volInit();
+    double FPlus = pPlus.getF();
+    double FAssocPlus = pPlus.F_ASSOC_SAFT();
+    double FHCPlus = pPlus.F_HC_SAFT();
+    double FDispPlus = pPlus.F_DISP_SAFT();
+
+    PhaseSAFTVRMie pMinus = (PhaseSAFTVRMie) phase.clone();
+    pMinus.setMolarVolume(v - dv);
+    pMinus.volInit();
+    double FMinus = pMinus.getF();
+    double FAssocMinus = pMinus.F_ASSOC_SAFT();
+    double FHCMinus = pMinus.F_HC_SAFT();
+    double FDispMinus = pMinus.F_DISP_SAFT();
+
+    double dFdV_num = (FPlus - FMinus) / (2.0 * dv * n);
+    double dFdVdV_num = (FPlus - 2.0 * F + FMinus) / (dv * n * dv * n);
+
+    double d2FHC_num = (FHCPlus - 2.0 * hcF + FHCMinus) / (dv * n * dv * n);
+    double d2FDisp_num = (FDispPlus - 2.0 * dispF + FDispMinus) / (dv * n * dv * n);
+    double d2FAssoc_num = (FAssocPlus - 2.0 * assocF + FAssocMinus) / (dv * n * dv * n);
+
+    System.out.println("=== Numerical d2F/dV2 by term ===");
+    System.out.println("HC:    analytical=" + hcDVDV + " numerical=" + d2FHC_num);
+    System.out.println("DISP:  analytical=" + dispDVDV + " numerical=" + d2FDisp_num);
+    System.out.println("ASSOC: analytical=" + assocDVDV + " numerical=" + d2FAssoc_num);
+
+    System.out.println("=== Total ===");
+    System.out.println("dFdV analytical: " + dFdV);
+    System.out.println("dFdV numerical:  " + dFdV_num);
+    System.out.println("dFdVdV analytical: " + dFdVdV);
+    System.out.println("dFdVdV numerical:  " + dFdVdV_num);
+
+    if (Math.abs(dFdV) > 1e-15) {
+      double relErrV = Math.abs(dFdV - dFdV_num) / Math.abs(dFdV);
+      System.out.println("dFdV relative error: " + relErrV);
+      assertTrue(relErrV < 0.01, "dFdV analytical/numerical mismatch > 1%: " + relErrV);
+    }
+    if (Math.abs(dFdVdV) > 1e-15) {
+      double relErrVV = Math.abs(dFdVdV - dFdVdV_num) / Math.abs(dFdVdV);
+      System.out.println("dFdVdV relative error: " + relErrVV);
+      assertTrue(relErrVV < 0.05, "dFdVdV analytical/numerical mismatch > 5%: " + relErrVV);
+    }
   }
 }

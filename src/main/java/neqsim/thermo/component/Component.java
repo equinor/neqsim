@@ -186,6 +186,7 @@ public abstract class Component implements ComponentInterface {
   protected double epsikSAFTVRMie = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
+  private double associationEnergySAFTVRMie = 0;
 
   /**
    * <p>
@@ -477,6 +478,14 @@ public abstract class Component implements ComponentInterface {
         setAssociationVolumeSAFT(
             Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
         setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
+        try {
+          double epsVRMie = Double.parseDouble(dataSet.getString("associationenergy_SAFTVRMie"));
+          if (epsVRMie > 0) {
+            associationEnergySAFTVRMie = epsVRMie;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will use PCSAFT value as fallback
+        }
         if (Math.abs(criticalViscosity) < 1e-12) {
           criticalViscosity =
               7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
@@ -2278,6 +2287,18 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAssociationEnergySAFT(double associationEnergySAFT) {
     this.associationEnergySAFT = associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationEnergySAFTVRMie() {
+    return associationEnergySAFTVRMie > 0 ? associationEnergySAFTVRMie : associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie) {
+    this.associationEnergySAFTVRMie = associationEnergySAFTVRMie;
   }
 
   /** {@inheritDoc} */
