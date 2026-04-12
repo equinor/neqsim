@@ -794,7 +794,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
 | `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. **Default E300 fluid export** for lossless transfer of critical properties (Tc, Pc, omega, MW, BIPs) including hypothetical/pseudo components. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, HeatExchanger UA tuning notes, separator 2-phase/3-phase auto-detection (flashtank with WaterProduct promoted to ThreePhaseSeparator), orientation detection (vertical → GasScrubber, horizontal → Separator), and entrainment extraction (liquid carryover, gas carry-under, water-in-oil, oil-in-water). |
 | `neqsim-eos-regression` | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization, scipy optimization |
-| `neqsim-reaction-engineering` | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed |
+| `neqsim-reaction-engineering` | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed, **AnaerobicDigester, FermentationReactor, BiogasUpgrader, biorefinery modules** |
 | `neqsim-dynamic-simulation` | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization |
 | `neqsim-distillation-design` | Distillation column design — solver selection, feed tray rules, convergence, internals sizing |
 | `neqsim-electrolyte-systems` | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection |
