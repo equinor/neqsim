@@ -182,8 +182,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
-    operation =
-        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    if (system instanceof neqsim.thermo.system.SystemSAFTVRMie) {
+      operation = new neqsim.thermodynamicoperations.flashops.TPflashSAFT(system,
+          system.doSolidPhaseCheck());
+    } else {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    }
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
