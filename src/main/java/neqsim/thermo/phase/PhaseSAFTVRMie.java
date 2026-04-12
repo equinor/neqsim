@@ -183,6 +183,117 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       {8.0956883, 3.70900, 0.0000, 40.53683, 2556.1810, 4241.6}};
 
   /**
+   * Dufal 2015 association integral I(T*, rho*) coefficient matrix.
+   *
+   * <p>
+   * From Dufal et al. (2015) Mol. Phys. 113(9-10), 948-984, Table A-1. I(Tr, rhoStar) = sum_n sum_m
+   * c[n][m] * Tr^m * rhoStar^n, where Tr = T / (epsilon/kB) and rhoStar = rhoS * sigma^3. The
+   * matrix is upper-triangular: for row n, m runs from 0 to 10-n. Row index n = power of rhoStar
+   * (0..10). Column index m = power of Tr (0..10).
+   * </p>
+   */
+  static final double[][] DUFAL_C = {
+      {0.0756425183020431, -0.128667137050961, 0.128350632316055, -0.0725321780970292,
+          0.0257782547511452, -0.00601170055221687, 0.000933363147191978, -9.55607377143667e-05,
+          6.19576039900837e-06, -2.30466608213628e-07, 3.74605718435540e-09},
+      {0.134228218276565, -0.182682168504886, 0.0771662412959262, -0.000717458641164565,
+          -0.00872427344283170, 0.00297971836051287, -0.000484863997651451, 4.35262491516424e-05,
+          -2.07789181640066e-06, 4.13749349344802e-08, 0},
+      {-0.565116428942893, 1.00930692226792, -0.660166945915607, 0.214492212294301,
+          -0.0388462990166792, 0.00406016982985030, -0.000239515566373142, 7.25488368831468e-06,
+          -8.58904640281928e-08, 0, 0},
+      {-0.387336382687019, -0.211614570109503, 0.450442894490509, -0.176931752538907,
+          0.0317171522104923, -0.00291368915845693, 0.000130193710011706, -2.14505500786531e-06, 0,
+          0, 0},
+      {2.13713180911797, -2.02798460133021, 0.336709255682693, 0.00118106507393722,
+          -0.00600058423301506, 0.000626343952584415, -2.03636395699819e-05, 0, 0, 0, 0},
+      {-0.300527494795524, 2.89920714512243, -0.567134839686498, 0.0518085125423494,
+          -0.00239326776760414, 4.15107362643844e-05, 0, 0, 0, 0, 0},
+      {-6.21028065719194, -1.92883360342573, 0.284109761066570, -0.0157606767372364,
+          0.000368599073256615, 0, 0, 0, 0, 0, 0},
+      {11.6083532818029, 0.742215544511197, -0.0823976531246117, 0.00186167650098254, 0, 0, 0, 0, 0,
+          0, 0},
+      {-10.2632535542427, -0.125035689035085, 0.0114299144831867, 0, 0, 0, 0, 0, 0, 0, 0},
+      {4.65297446837297, -0.00192518067137033, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+      {-0.867296219639940, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+
+  /**
+   * Evaluates the Dufal 2015 association integral I(Tr, rhoStar).
+   *
+   * <p>
+   * I = sum_{n=0}^{10} sum_{m=0}^{10-n} c[n][m] * Tr^m * rhoStar^n
+   * </p>
+   *
+   * @param Tr reduced temperature T / (epsilon/kB)
+   * @param rhoStar reduced segment density rhoS * sigma^3
+   * @return value of the I integral
+   */
+  public static double calcDufalI(double Tr, double rhoStar) {
+    double result = 0.0;
+    double rhoN = 1.0;
+    for (int n = 0; n <= 10; n++) {
+      double sumM = 0.0;
+      double TrM = 1.0;
+      int mMax = 10 - n;
+      for (int m = 0; m <= mMax; m++) {
+        sumM += DUFAL_C[n][m] * TrM;
+        TrM *= Tr;
+      }
+      result += sumM * rhoN;
+      rhoN *= rhoStar;
+    }
+    return result;
+  }
+
+  /**
+   * Evaluates the partial derivative dI/d(rhoStar) of the Dufal 2015 association integral.
+   *
+   * @param Tr reduced temperature T / (epsilon/kB)
+   * @param rhoStar reduced segment density rhoS * sigma^3
+   * @return dI/d(rhoStar)
+   */
+  public static double calcDufalIdRhoStar(double Tr, double rhoStar) {
+    double result = 0.0;
+    double rhoNm1 = 1.0;
+    for (int n = 1; n <= 10; n++) {
+      double sumM = 0.0;
+      double TrM = 1.0;
+      int mMax = 10 - n;
+      for (int m = 0; m <= mMax; m++) {
+        sumM += DUFAL_C[n][m] * TrM;
+        TrM *= Tr;
+      }
+      result += n * sumM * rhoNm1;
+      rhoNm1 *= rhoStar;
+    }
+    return result;
+  }
+
+  /**
+   * Evaluates the partial derivative dI/dTr of the Dufal 2015 association integral.
+   *
+   * @param Tr reduced temperature T / (epsilon/kB)
+   * @param rhoStar reduced segment density rhoS * sigma^3
+   * @return dI/dTr
+   */
+  public static double calcDufalIdTr(double Tr, double rhoStar) {
+    double result = 0.0;
+    double rhoN = 1.0;
+    for (int n = 0; n <= 10; n++) {
+      double sumM = 0.0;
+      double TrM = 1.0;
+      int mMax = 10 - n;
+      for (int m = 1; m <= mMax; m++) {
+        sumM += m * DUFAL_C[n][m] * TrM;
+        TrM *= Tr;
+      }
+      result += sumM * rhoN;
+      rhoN *= rhoStar;
+    }
+    return result;
+  }
+
+  /**
    * Constructor for PhaseSAFTVRMie.
    */
   public PhaseSAFTVRMie() {}
@@ -310,10 +421,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return true if component has association params
    */
   private boolean hasAssociationParams(int compIndex) {
-    return getComponent(compIndex).getNumberOfAssociationSites() > 0
-        && getComponent(compIndex).getAssociationEnergySAFTVRMie() != 0.0
-        && getComponent(compIndex).getAssociationVolumeSAFT() != 0.0
-        && ((ComponentSAFTVRMie) getComponent(compIndex)).getSigmaSAFTVRMie() > 0;
+    ComponentSAFTVRMie c = (ComponentSAFTVRMie) getComponent(compIndex);
+    return c.getNumberOfAssociationSites() > 0 && c.getAssociationEnergySAFTVRMie() != 0.0
+        && (c.getAssociationVolumeSAFTVRMie() > 0 || c.getAssociationVolumeSAFT() != 0.0)
+        && c.getSigmaSAFTVRMie() > 0;
   }
 
   /**
@@ -1370,56 +1481,88 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Association contribution (SAFT-VR Mie) =====
 
   /**
-   * Initializes association-related quantities for the current volume. Computes the hard-sphere
-   * contact radial distribution function g_HS(eta) and its volume derivatives for use in the
-   * association delta. Uses g_HS(eta) = (1 - eta/2) / (1 - eta)^3 (Carnahan-Starling).
+   * Initializes association-related quantities for the current volume. Computes the Dufal 2015
+   * association integral I(Tr, rhoStar) and its volume derivatives using the polynomial from Dufal
+   * et al. (2015) Mol. Phys. 113(9-10), 948-984.
    *
    * <p>
-   * Note: The theoretically correct SAFT-VR Mie approach uses g_Mie(sigma) from Lafitte 2013 Eq. 35
-   * instead of g_HS. However, the fitted association parameters (kappa from PC-SAFT convention)
-   * partially compensate for using g_HS, giving reasonable results (water Psat within 2x of NIST).
-   * When dispersion terms are verified against reference implementations for extreme lambda_r
-   * values (e.g., water lambda_r = 35.823), switch to g_Mie via calcAssocGMieEffective() and use
-   * K_HB bond volume from the database instead of kappa * sigma^3.
+   * The I integral replaces the simple g_HS contact RDF used in PC-SAFT. It captures the
+   * orientationally-averaged Mie potential Boltzmann factor integral and provides a more accurate
+   * association strength for SAFT-VR Mie. For the Michelsen-Hendriks dF/dV shortcut, gcpavAssoc is
+   * set to d(ln I)/dV.
+   * </p>
    */
   private void initAssocGDerivatives() {
     if (useASSOC == 0) {
       return;
     }
-    double eta = nSAFT;
 
-    // Hard-sphere contact RDF (Carnahan-Starling)
-    double om = 1.0 - eta;
-    gcpaAssoc = (1.0 - eta / 2.0) / (om * om * om);
+    double NA = ThermodynamicConstantsInterface.avagadroNumber;
 
-    // d(ln g_HS)/d(eta) = (5 - 2*eta) / ((2 - eta) * (1 - eta))
-    double dlngDeta = (5.0 - 2.0 * eta) / ((2.0 - eta) * (1.0 - eta));
-
-    // Convert to volume derivative: d(ln g)/dV = d(ln g)/d(eta) * d(eta)/dV
-    gcpavAssoc = dlngDeta * dnSAFTdV;
-
-    // d2(ln g)/d(eta)2 via numerical finite difference
-    double d2lngDeta2 = calcD2LngDeta2(eta);
-
-    // d2(ln g)/dV2
-    gcpavvAssoc = d2lngDeta2 * dnSAFTdV * dnSAFTdV + dlngDeta * dnSAFTdVdV;
-
-    // d3(ln g)/d(eta)3 via numerical finite difference of d2
-    double dEta = Math.max(Math.abs(eta) * 1.0e-4, 1.0e-11);
-    double etaP = Math.min(eta + dEta, 0.54);
-    double etaM = Math.max(eta - dEta, 1.0e-15);
-    dEta = (etaP - etaM) / 2.0;
-    double d2P = calcD2LngDeta2(etaP);
-    double d2M = calcD2LngDeta2(etaM);
-    double d3lngDeta3 = (d2P - d2M) / (2.0 * dEta);
-    if (!Double.isFinite(d3lngDeta3)) {
-      d3lngDeta3 = 0.0;
+    // Compute segment density and composition-averaged sigma^3 for Dufal I
+    double totalSegMoles = 0.0;
+    double sigma3x = 0.0;
+    double epsRef = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      double ni = ci.getNumberOfMolesInPhase();
+      double mi = ci.getmSAFTi();
+      double xSi = ni * mi;
+      totalSegMoles += xSi;
+      double sigi = ci.getSigmaSAFTi();
+      sigma3x += xSi * xSi * sigi * sigi * sigi;
+      if (hasAssociationParams(i) && epsRef == 0.0) {
+        epsRef = ci.getEpsikSAFT();
+      }
+    }
+    if (totalSegMoles > 0) {
+      sigma3x /= (totalSegMoles * totalSegMoles);
     }
 
-    // d3(ln g)/dV3
-    double dnSAFTdVdVdV = -3.0 * dnSAFTdVdV / volumeSAFT;
-    gcpavvvAssoc = d3lngDeta3 * dnSAFTdV * dnSAFTdV * dnSAFTdV
-        + 3.0 * d2lngDeta2 * dnSAFTdV * dnSAFTdVdV + dlngDeta * dnSAFTdVdVdV;
+    // Segment number density and reduced density
+    double rhoS = NA * totalSegMoles / volumeSAFT;
+    double rhoStar = rhoS * sigma3x;
+    double Tr = (epsRef > 0) ? temperature / epsRef : 1.0;
+
+    // Dufal I polynomial and its density derivative
+    double I_val = calcDufalI(Tr, rhoStar);
+    double dIdRhoStar = calcDufalIdRhoStar(Tr, rhoStar);
+
+    gcpaAssoc = I_val;
+
+    // d(ln I)/dV: rhoStar = rhoS * sigma3x, dRhoStar/dV = -rhoStar/V
+    // d(ln I)/dV = (1/I) * dI/dRhoStar * (-rhoStar/V)
+    if (I_val > 1.0e-30) {
+      gcpavAssoc = -(rhoStar / (volumeSAFT * I_val)) * dIdRhoStar;
+    } else {
+      gcpavAssoc = 0.0;
+    }
+
+    // Higher volume derivatives via numerical differentiation of d(ln I)/dV
+    double dV = Math.max(volumeSAFT * 1.0e-5, 1.0e-20);
+    double rhoStarP = rhoS * sigma3x * volumeSAFT / (volumeSAFT + dV);
+    double rhoStarM = rhoS * sigma3x * volumeSAFT / (volumeSAFT - dV);
+    double I_P = calcDufalI(Tr, rhoStarP);
+    double I_M = calcDufalI(Tr, rhoStarM);
+    double dIdRhoP = calcDufalIdRhoStar(Tr, rhoStarP);
+    double dIdRhoM = calcDufalIdRhoStar(Tr, rhoStarM);
+    double dlnIdV_P = (I_P > 1e-30) ? -(rhoStarP / ((volumeSAFT + dV) * I_P)) * dIdRhoP : 0.0;
+    double dlnIdV_M = (I_M > 1e-30) ? -(rhoStarM / ((volumeSAFT - dV) * I_M)) * dIdRhoM : 0.0;
+    gcpavvAssoc = (dlnIdV_P - dlnIdV_M) / (2.0 * dV);
+
+    // Third derivative numerically
+    double dV2 = Math.max(volumeSAFT * 1.0e-4, 1.0e-18);
+    double rhoStarP2 = rhoS * sigma3x * volumeSAFT / (volumeSAFT + dV2);
+    double rhoStarM2 = rhoS * sigma3x * volumeSAFT / (volumeSAFT - dV2);
+    double I_P2 = calcDufalI(Tr, rhoStarP2);
+    double I_M2 = calcDufalI(Tr, rhoStarM2);
+    double dIdRhoP2 = calcDufalIdRhoStar(Tr, rhoStarP2);
+    double dIdRhoM2 = calcDufalIdRhoStar(Tr, rhoStarM2);
+    double dlnIdV_P2 = (I_P2 > 1e-30) ? -(rhoStarP2 / ((volumeSAFT + dV2) * I_P2)) * dIdRhoP2 : 0;
+    double dlnIdV_M2 = (I_M2 > 1e-30) ? -(rhoStarM2 / ((volumeSAFT - dV2) * I_M2)) * dIdRhoM2 : 0;
+    double gcpavvP = (dlnIdV_P2 - gcpavAssoc) / dV2;
+    double gcpavvM = (gcpavAssoc - dlnIdV_M2) / dV2;
+    gcpavvvAssoc = (gcpavvP - gcpavvM) / dV2;
   }
 
   /**
@@ -1515,15 +1658,15 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes the association strength delta for all site-site pairs using the hard-sphere g_HS from
-   * initAssocGDerivatives. Uses cross parameters: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1),
-   * kappa_ij = sqrt(kappa_i * kappa_j), sigma_ij = (sigma_i + sigma_j)/2.
+   * Computes the association strength delta for all site-site pairs using Dufal 2015 I polynomial.
+   * Association cross parameters: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1), K_HB_ij = sqrt(K_HB_i *
+   * K_HB_j) (geometric mean).
    *
    * <p>
-   * The current implementation uses the PC-SAFT convention: delta = (exp(eps_HB/RT) - 1) * sigma^3
-   * * NA * kappa * g_HS. The theoretically correct SAFT-VR Mie formula (Lafitte 2013 Eq. 39) uses
-   * K_HB (bond volume in m^3) and g_Mie(sigma), but requires exact dispersion term consistency with
-   * Lafitte's implementation. See initAssocGDerivatives() note for details.
+   * Uses delta = (exp(eps_HB/RT) - 1) * NA * K_HB * I(Tr, rho*) where I is the orientationally
+   * averaged association kernel from Dufal et al. (2015) Mol. Phys. 113(9-10), 948-984. The
+   * pair-specific reduced temperature Tr_ij = T / eps_disp_ij uses the dispersion cross epsilon.
+   * </p>
    */
   private void computeDeltaAssoc() {
     if (useASSOC == 0) {
@@ -1531,6 +1674,24 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     }
     double NA = ThermodynamicConstantsInterface.avagadroNumber;
     double RGas = ThermodynamicConstantsInterface.R;
+
+    // Compute segment density and reduced density for I polynomial
+    double totalSegMoles = 0.0;
+    double sigma3x = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      double ni = ci.getNumberOfMolesInPhase();
+      double mi = ci.getmSAFTi();
+      double xSi = ni * mi;
+      totalSegMoles += xSi;
+      double sigi = ci.getSigmaSAFTi();
+      sigma3x += xSi * xSi * sigi * sigi * sigi;
+    }
+    if (totalSegMoles > 0) {
+      sigma3x /= (totalSegMoles * totalSegMoles);
+    }
+    double rhoS = NA * totalSegMoles / volumeSAFT;
+    double rhoStar = rhoS * sigma3x;
 
     for (int i = 0; i < numberOfComponents; i++) {
       int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
@@ -1540,29 +1701,32 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
           continue;
         }
 
-        // Cross sigma
-        double sigI = getComponent(i).getSigmaSAFTi();
-        double sigJ = getComponent(j).getSigmaSAFTi();
-        double sigIJ = (sigI + sigJ) / 2.0;
-        double sigIJ3 = sigIJ * sigIJ * sigIJ;
-
         // Association cross parameters (CR-1 combining rule)
         double epsHBI = getComponent(i).getAssociationEnergySAFTVRMie(); // J/mol
         double epsHBJ = getComponent(j).getAssociationEnergySAFTVRMie();
         double epsHBIJ = (epsHBI + epsHBJ) / 2.0;
 
-        double kappaI = getComponent(i).getAssociationVolumeSAFT();
-        double kappaJ = getComponent(j).getAssociationVolumeSAFT();
-        double kappaIJ = Math.sqrt(kappaI * kappaJ);
+        // K_HB bond volume (m^3); geometric mean for cross
+        double khbI = getComponent(i).getAssociationVolumeSAFTVRMie();
+        double khbJ = getComponent(j).getAssociationVolumeSAFTVRMie();
+        double khbIJ = Math.sqrt(Math.abs(khbI) * Math.abs(khbJ));
 
-        // Delta = (exp(eps_HB/RT) - 1) * sigma^3 * NA * kappa * g_HS
+        // Per-pair Dufal I using cross dispersion epsilon
+        double epsDispI = ((ComponentSAFTVRMie) getComponent(i)).getEpsikSAFT();
+        double epsDispJ = ((ComponentSAFTVRMie) getComponent(j)).getEpsikSAFT();
+        double epsDispIJ = Math.sqrt(epsDispI * epsDispJ);
+        double Tr_ij = temperature / epsDispIJ;
+        double I_ij = calcDufalI(Tr_ij, rhoStar);
+
+        // Delta = (exp(eps_HB/RT) - 1) * NA * K_HB * I
         double expTerm = Math.exp(epsHBIJ / (RGas * temperature)) - 1.0;
-        double deltaBase = expTerm * sigIJ3 * NA * kappaIJ * gcpaAssoc;
+        double deltaBase = expTerm * NA * khbIJ * I_ij;
 
-        // Temperature derivative: d(delta)/dT
+        // Temperature derivative: d(delta)/dT = dF/dT * NA * K_HB * I + F * NA * K_HB * dI/dT
         double dExpTermDT = -epsHBIJ / (RGas * temperature * temperature)
             * Math.exp(epsHBIJ / (RGas * temperature));
-        double deltadTBase = dExpTermDT * sigIJ3 * NA * kappaIJ * gcpaAssoc;
+        double dIdT_ij = calcDufalIdTr(Tr_ij, rhoStar) / epsDispIJ;
+        double deltadTBase = dExpTermDT * NA * khbIJ * I_ij + expTerm * NA * khbIJ * dIdT_ij;
 
         // Fill global site arrays with scheme indicator
         for (int a = 0; a < nSitesI; a++) {

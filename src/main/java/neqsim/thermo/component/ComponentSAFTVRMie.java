@@ -181,8 +181,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
 
   /**
    * Calculates the association contribution to dF/dNi. dFCPAdN = sum_A [ln(X_A^i)] - hcpatot/2 *
-   * d(ln g_HS)/d(ni), where g_HS is the Carnahan-Starling contact value used for association (NOT
-   * the chain g_Mie).
+   * d(ln I)/d(ni), where I is the Dufal 2015 association integral used for the SAFT-VR Mie
+   * association strength.
    *
    * @param phase the phase
    * @param numberOfComponents number of components
@@ -203,22 +203,46 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       sumLnXA += Math.log(xsiteAssoc[a]);
     }
 
-    // d(ln g_HS_CS)/d(ni) = d(ln g_HS)/d(eta) * d(eta)/d(ni)
-    // g_HS_CS = (1-eta/2)/(1-eta)^3; ln(g) = ln(2-eta) - ln(2) - 3*ln(1-eta)
-    // d(ln g)/d(eta) = -1/(2-eta) + 3/(1-eta) = (5-2*eta)/((2-eta)*(1-eta))
-    double eta = sp.getNSAFT();
-    double dlngDeta = (5.0 - 2.0 * eta) / ((2.0 - eta) * (1.0 - eta));
-
-    // d(eta)/d(ni) = pi/6 * N_A * mi * di^3 / V_SI
-    double mi = getmSAFTi();
-    double di = getdSAFTi();
-    double piOver6 = ThermodynamicConstantsInterface.pi / 6.0;
+    // d(ln I)/dNi using Dufal 2015 polynomial
     double NA = ThermodynamicConstantsInterface.avagadroNumber;
-    double V_SI = sp.getVolumeSAFT(); // already in m^3
-    double detaDni = piOver6 * NA * mi * Math.pow(di, 3.0) / V_SI;
-    double dlngDni = dlngDeta * detaDni;
+    double V_SI = sp.getVolumeSAFT();
 
-    return sumLnXA - sp.getHcpatot() / 2.0 * dlngDni;
+    // Recompute segment density and reduced density
+    double totalSegMoles = 0.0;
+    double sigma3x = 0.0;
+    double epsRef = 0.0;
+    for (int k = 0; k < numberOfComponents; k++) {
+      ComponentSAFTVRMie ck = (ComponentSAFTVRMie) phase.getComponent(k);
+      double nk = ck.getNumberOfMolesInPhase();
+      double mk = ck.getmSAFTi();
+      double xSk = nk * mk;
+      totalSegMoles += xSk;
+      double sigk = ck.getSigmaSAFTi();
+      sigma3x += xSk * xSk * sigk * sigk * sigk;
+      if (epsRef == 0.0 && ck.getNumberOfAssociationSites() > 0
+          && ck.getAssociationEnergySAFTVRMie() != 0.0) {
+        epsRef = ck.getEpsikSAFT();
+      }
+    }
+    if (totalSegMoles > 0) {
+      sigma3x /= (totalSegMoles * totalSegMoles);
+    }
+
+    double rhoS = NA * totalSegMoles / V_SI;
+    double rhoStar = rhoS * sigma3x;
+    double Tr = (epsRef > 0) ? temperature / epsRef : 1.0;
+
+    double I_val = PhaseSAFTVRMie.calcDufalI(Tr, rhoStar);
+    double dIdRhoStar = PhaseSAFTVRMie.calcDufalIdRhoStar(Tr, rhoStar);
+
+    // dRhoStar/dNi = NA * mi * sigma^3 / V_SI (pure component; neglects dsigma3x/dNi)
+    double mi = getmSAFTi();
+    double sigi = getSigmaSAFTi();
+    double dRhoStarDNi = NA * mi * sigi * sigi * sigi / V_SI;
+
+    double dlnIdNi = (I_val > 1.0e-30) ? (dIdRhoStar / I_val) * dRhoStarDNi : 0.0;
+
+    return sumLnXA - sp.getHcpatot() / 2.0 * dlnIdNi;
   }
 
   /**
