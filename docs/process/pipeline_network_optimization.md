@@ -137,12 +137,15 @@ for (NetworkValidationBenchmarks.BenchmarkResult r : results) {
 }
 ```
 
-Or via the convenience method:
+Or via the static convenience method on `LoopedPipeNetwork`:
 
 ```java
-LoopedPipeNetwork network = new LoopedPipeNetwork("test");
-network.setFluidTemplate(gas);
-String report = network.runValidationBenchmarks();
+List<NetworkValidationBenchmarks.BenchmarkResult> results =
+    LoopedPipeNetwork.runValidationBenchmarks();
+
+for (NetworkValidationBenchmarks.BenchmarkResult r : results) {
+    System.out.println(r.getSummary());
+}
 ```
 
 ## Python Example

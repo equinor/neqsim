@@ -375,17 +375,23 @@ public class NetworkOptimizer {
       });
 
       // Use current position as start (warm-start from previous Pareto point)
-      double[] x0 = (p == 0) ? originalOpenings.clone()
-          : paretoFront.get(paretoFront.size() - 1).chokeOpenings.clone();
+      double[] x0;
+      if (p == 0 || paretoFront.isEmpty()) {
+        x0 = originalOpenings.clone();
+      } else {
+        x0 = paretoFront.get(paretoFront.size() - 1).chokeOpenings.clone();
+      }
 
       PointValuePair result;
       try {
-        int interpPts = 2 * n + 1;
+        int interpPts = Math.min(2 * n + 1, (n + 1) * (n + 2) / 2);
+        interpPts = Math.max(interpPts, n + 2);
         double trustRadius = 10.0;
         double stopRadius = 0.01;
         BOBYQAOptimizer optimizer = new BOBYQAOptimizer(interpPts, trustRadius, stopRadius);
-        result = optimizer.optimize(new MaxEval(maxEvaluations / paretoPoints + 50), objFunc,
-            GoalType.MINIMIZE, new InitialGuess(x0), new SimpleBounds(lowerBounds, upperBounds));
+        int evalBudget = Math.max(maxEvaluations / paretoPoints + 50, 100);
+        result = optimizer.optimize(new MaxEval(evalBudget), objFunc, GoalType.MINIMIZE,
+            new InitialGuess(x0), new SimpleBounds(lowerBounds, upperBounds));
       } catch (Exception e) {
         logger.warn("Pareto point w=" + w + " failed: " + e.getMessage());
         continue;
