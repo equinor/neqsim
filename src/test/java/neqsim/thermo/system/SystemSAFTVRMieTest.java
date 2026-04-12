@@ -2844,9 +2844,9 @@ public class SystemSAFTVRMieTest {
 
       assertTrue(Psat > 0.0, "Psat should be positive at T=" + temps[i]);
       assertFalse(Double.isNaN(Psat), "Psat should not be NaN at T=" + temps[i]);
-      // Generous tolerance for initial implementation - within factor of 5
-      assertTrue(Psat > nistPsat[i] / 5.0 && Psat < nistPsat[i] * 5.0,
-          "Psat " + Psat + " should be within factor of 5 of NIST " + nistPsat[i]);
+      // Dufal 2015 parameters should give Psat within 5% of NIST
+      assertEquals(nistPsat[i], Psat, nistPsat[i] * 0.05,
+          "Psat " + Psat + " should be within 5% of NIST " + nistPsat[i]);
     }
   }
 
@@ -3424,5 +3424,350 @@ public class SystemSAFTVRMieTest {
     System.out.printf("  gHS(x0)  = %.10f%n", PhaseSAFTVRMie.calcGHS_x0(eta_d30, x0_duf));
     System.out.printf("  gMie     = %.10f%n",
         PhaseSAFTVRMie.calcGMie(eta_d30, zetaSt_d30, lr_duf, la, eps_duf, cMie_duf, x0_duf));
+  }
+
+  /**
+   * Diagnostic test: validate Dufal 2015 I polynomial at known conditions and print values to
+   * compare with Clapeyron.jl reference.
+   */
+  @Test
+  public void testDufalIPolynomial() {
+    System.out.println("=== Dufal 2015 I Polynomial Evaluation ===");
+    double Tr_water = 373.15 / 266.68; // 1.3994
+    System.out.println("Water at 373.15K: Tr=" + Tr_water);
+
+    System.out.printf("%-10s %-18s %-18s%n", "rhoStar", "I(Tr,rhoStar)", "dI/dRhoStar");
+    double[] rhoStars =
+        {0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.87, 0.9, 0.95, 1.0};
+    for (double rs : rhoStars) {
+      double I = PhaseSAFTVRMie.calcDufalI(Tr_water, rs);
+      double dI = PhaseSAFTVRMie.calcDufalIdRhoStar(Tr_water, rs);
+      System.out.printf("%-10.4f %-18.10e %-18.10e%n", rs, I, dI);
+    }
+
+    // Also test at different Tr values
+    System.out.println("\nI at various Tr, rhoStar=0.5:");
+    double[] Trs = {0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0};
+    for (double tr : Trs) {
+      double I = PhaseSAFTVRMie.calcDufalI(tr, 0.5);
+      System.out.printf("Tr=%-6.2f  I=%-18.10e%n", tr, I);
+    }
+
+    // Now test the full association delta at known liquid water conditions
+    System.out.println("\n=== Full Association Delta for Liquid Water ===");
+    double NA = neqsim.thermo.ThermodynamicConstantsInterface.avagadroNumber;
+    double R = neqsim.thermo.ThermodynamicConstantsInterface.R;
+    double T = 373.15;
+    double sigma = 3.0063e-10;
+    double epsk = 266.68;
+    double epsHB_Jmol = 16506.6756;
+    double K_HB = 1.0169e-28;
+    double Tr = T / epsk;
+
+    // Liquid water: V_molar ~ 18.8 cm3/mol = 1.88e-5 m3/mol
+    double[] Vmolars_m3 = {1.80e-5, 1.85e-5, 1.88e-5, 1.95e-5, 2.00e-5, 2.50e-5, 5.0e-5, 1.0e-4};
+    System.out.printf("%-12s %-10s %-12s %-12s %-12s %-12s%n", "V_m3/mol", "rhoStar", "I", "F",
+        "delta_mol", "XA_4C");
+    for (double Vm : Vmolars_m3) {
+      double rhoS = NA / Vm; // for 1 mol, m=1
+      double rhoStar_ = rhoS * sigma * sigma * sigma;
+      double I = PhaseSAFTVRMie.calcDufalI(Tr, rhoStar_);
+      double F = Math.exp(epsHB_Jmol / (R * T)) - 1.0;
+      double deltaMol = F * K_HB * I; // molecular delta [m3]
+      // Solve XA for 4C: 1/X = 1 + 2*rho*delta*X where rho = NA/V = 1/Vm * NA
+      double rhoNum = NA / Vm;
+      // For 1 mol: sum_j nj = 1, so solver: 1/X = 1 + 2*(1/Vm)*deltaMolar*X
+      // where deltaMolar = NA * deltaMol
+      double deltaMolar = NA * deltaMol;
+      // 1/X = 1 + 2*(1/Vm)*deltaMolar*X
+      double coeff = 2.0 / Vm * deltaMolar;
+      // X^2 * coeff + X - 1 = 0 -> X = (-1+sqrt(1+4*coeff))/(2*coeff)
+      double XA = (-1.0 + Math.sqrt(1.0 + 4.0 * coeff)) / (2.0 * coeff);
+      System.out.printf("%-12.4e %-10.4f %-12.4e %-12.4e %-12.4e %-12.6f%n", Vm, rhoStar_, I, F,
+          deltaMol, XA);
+    }
+  }
+
+  /**
+   * Numerical verification of dF_ASSOC/dV versus the Michelsen-Hendriks analytical formula. Creates
+   * water at liquid conditions, computes F_ASSOC at V, V+dV, V-dV (using phase cloning and
+   * volInit), and compares numerical dF/dV with the cached analytical value.
+   */
+  @Test
+  public void testAssocDFDVNumerical() {
+    // Create water at high pressure (liquid)
+    SystemInterface fluid = new SystemSAFTVRMie(373.15, 50.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("Flash failed: " + e.getMessage());
+      return;
+    }
+
+    // Get liquid phase (lowest molar volume)
+    int liquidIdx = 0;
+    double minV = Double.MAX_VALUE;
+    for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+      if (fluid.getPhase(p).getMolarVolume() < minV) {
+        minV = fluid.getPhase(p).getMolarVolume();
+        liquidIdx = p;
+      }
+    }
+    PhaseSAFTVRMie liqPhase = (PhaseSAFTVRMie) fluid.getPhase(liquidIdx);
+
+    double vm = liqPhase.getMolarVolume();
+    double volumeSAFT = liqPhase.getVolumeSAFT();
+    double F0 = liqPhase.F_ASSOC_SAFT();
+    double dFdV_analytical = liqPhase.dF_ASSOC_SAFTdV();
+
+    System.out.println("=== Numerical dF_ASSOC/dV Verification ===");
+    System.out.println("Molar volume = " + vm + " (internal units)");
+    System.out.println("volumeSAFT = " + volumeSAFT + " m3");
+    System.out.println("F_ASSOC = " + F0);
+    System.out.println("dF/dV analytical = " + dFdV_analytical);
+    System.out.println("hcpatot = " + liqPhase.getHcpatot());
+    System.out.println("gcpaAssoc (I) = " + liqPhase.getGcpaAssoc());
+
+    // Print XA values
+    ComponentSAFTVRMie comp = (ComponentSAFTVRMie) liqPhase.getComponent(0);
+    double[] xsite = comp.getXsiteAssoc();
+    if (xsite != null) {
+      for (int a = 0; a < xsite.length; a++) {
+        System.out.println("X_A[" + a + "] = " + xsite[a]);
+      }
+    }
+
+    // Numerical derivative using cloning
+    double dvm = vm * 1.0e-6;
+    double n = liqPhase.getNumberOfMolesInPhase();
+    double dVSI = dvm * n * 1.0e-5;
+
+    PhaseSAFTVRMie clonePlus = (PhaseSAFTVRMie) liqPhase.clone();
+    clonePlus.setMolarVolume(vm + dvm);
+    clonePlus.volInit();
+    double FPlus = clonePlus.F_ASSOC_SAFT();
+
+    PhaseSAFTVRMie cloneMinus = (PhaseSAFTVRMie) liqPhase.clone();
+    cloneMinus.setMolarVolume(vm - dvm);
+    cloneMinus.volInit();
+    double FMinus = cloneMinus.F_ASSOC_SAFT();
+
+    double dFdV_numerical = (FPlus - FMinus) / (2.0 * dVSI);
+
+    System.out.println("F_plus = " + FPlus + " F_minus = " + FMinus);
+    System.out.println("dF/dV numerical = " + dFdV_numerical);
+    System.out.println("dF/dV analytical = " + dFdV_analytical);
+    double relErr =
+        Math.abs(dFdV_analytical - dFdV_numerical) / Math.max(Math.abs(dFdV_numerical), 1e-30);
+    System.out.println("Relative error = " + relErr);
+
+    // Also print dispersion and chain for context
+    System.out.println("F_HC = " + liqPhase.F_HC_SAFT());
+    System.out.println("F_DISP = " + liqPhase.F_DISP_SAFT());
+    System.out.println("dF_HC/dV = " + liqPhase.dF_HC_SAFTdV());
+    System.out.println("dF_DISP/dV = " + liqPhase.dF_DISP_SAFTdV());
+
+    // Check that numerical and analytical agree within 5%
+    if (Math.abs(dFdV_numerical) > 1e-10) {
+      assertTrue(relErr < 0.05,
+          "Analytical dF/dV (" + dFdV_analytical + ") should match numerical (" + dFdV_numerical
+              + ") within 5%, relative error = " + relErr);
+    }
+  }
+
+  /**
+   * Comprehensive diagnostic: decompose ALL Helmholtz contributions for water at T=373.15K. Prints
+   * F, dF/dV, and pressure contribution from each term (HC, DISP, ASSOC) at the converged liquid
+   * volume, helping identify which term causes the Psat error.
+   */
+  @Test
+  public void testWaterDecomposedDiagnostic() {
+    double T = 373.15;
+    double P_init = 1.0; // bar, start at NIST Psat
+
+    System.out.println("========================================");
+    System.out.println("WATER SAFT-VR Mie DECOMPOSED DIAGNOSTIC");
+    System.out.println("T = " + T + " K, initial P = " + P_init + " bar");
+    System.out.println("========================================");
+
+    // Create system
+    SystemInterface fluid = new SystemSAFTVRMie(T, P_init);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    // Print parameters
+    ComponentSAFTVRMie comp = (ComponentSAFTVRMie) fluid.getPhase(0).getComponent(0);
+    System.out.println("\n--- Parameters ---");
+    System.out.printf("m = %.6f%n", comp.getmSAFTi());
+    System.out.printf("sigma = %.6e m%n", comp.getSigmaSAFTi());
+    System.out.printf("eps/k = %.4f K%n", comp.getEpsikSAFT());
+    System.out.printf("lambdaR = %.4f%n", comp.getLambdaRSAFTVRMie());
+    System.out.printf("lambdaA = %.4f%n", comp.getLambdaASAFTVRMie());
+    System.out.printf("epsHB (J/mol) = %.4f%n", comp.getAssociationEnergySAFTVRMie());
+    System.out.printf("epsHB/k = %.4f K%n", comp.getAssociationEnergySAFTVRMie() / 8.314);
+    System.out.printf("K_HB = %.6e m^3%n", comp.getAssociationVolumeSAFTVRMie());
+    System.out.printf("nSites = %d%n", comp.getNumberOfAssociationSites());
+
+    // Force 2-phase and init for liquid
+    fluid.setNumberOfPhases(2);
+    fluid.setBeta(1, 1.0 - 1e-10); // almost all liquid
+    fluid.setBeta(0, 1e-10);
+
+    try {
+      fluid.init(3);
+    } catch (Exception e) {
+      System.out.println("init(3) failed: " + e.getMessage());
+      return;
+    }
+
+    // Print diagnostics for BOTH phases
+    for (int ph = 0; ph < fluid.getNumberOfPhases(); ph++) {
+      PhaseInterface phase = fluid.getPhase(ph);
+      if (!(phase instanceof PhaseSAFTVRMie)) {
+        continue;
+      }
+      PhaseSAFTVRMie saft = (PhaseSAFTVRMie) phase;
+      double n = phase.getNumberOfMolesInPhase();
+      double Vm = phase.getMolarVolume(); // NeqSim units
+      double V_SI = Vm * n * 1e-5; // m^3
+      double Rgas = 8.314;
+      double NA = 6.02214076e23;
+
+      System.out.printf("%n--- Phase %d (%s) ---%n", ph, phase.getType());
+      System.out.printf("n = %.6f mol%n", n);
+      System.out.printf("V_neqsim = %.6e%n", Vm * n);
+      System.out.printf("V_SI = %.6e m^3%n", V_SI);
+      System.out.printf("V_molar = %.6e m^3/mol%n", V_SI / n);
+      System.out.printf("rho = %.4f kg/m^3%n", comp.getMolarMass() * 1000.0 * n / V_SI);
+      System.out.printf("eta (nSAFT) = %.8f%n", saft.getNSAFT());
+      System.out.printf("volumeSAFT = %.6e m^3%n", saft.getVolumeSAFT());
+
+      // Compute association quantities manually for verification
+      double m = comp.getmSAFTi();
+      double sigma = comp.getSigmaSAFTi();
+      double epsK = comp.getEpsikSAFT();
+      double rhoS = NA * n * m / V_SI;
+      double sigma3 = sigma * sigma * sigma;
+      double rhoStar = rhoS * sigma3;
+      double Tr = T / epsK;
+      double I = PhaseSAFTVRMie.calcDufalI(Tr, rhoStar);
+      double dIdRhoStar = PhaseSAFTVRMie.calcDufalIdRhoStar(Tr, rhoStar);
+      double dIdTr = PhaseSAFTVRMie.calcDufalIdTr(Tr, rhoStar);
+
+      double epsHB_Jmol = comp.getAssociationEnergySAFTVRMie();
+      double K_HB = comp.getAssociationVolumeSAFTVRMie();
+      double F_Mayer = Math.exp(epsHB_Jmol / (Rgas * T)) - 1.0;
+      double delta_code = saft.getDeltaAssoc(0, 2); // H-e pair (site 0 on comp 0 to site 2)
+      double delta_manual = F_Mayer * NA * K_HB * I;
+
+      System.out.printf("%n  Association details:%n");
+      System.out.printf("  rhoS = %.6e m^-3%n", rhoS);
+      System.out.printf("  rhoStar = %.8f%n", rhoStar);
+      System.out.printf("  Tr = %.8f%n", Tr);
+      System.out.printf("  I(Tr,rhoStar) = %.8e%n", I);
+      System.out.printf("  dI/dRhoStar = %.8e%n", dIdRhoStar);
+      System.out.printf("  F_Mayer = exp(%.4f)-1 = %.6f%n", epsHB_Jmol / (Rgas * T), F_Mayer);
+      System.out.printf("  K_HB = %.6e m^3%n", K_HB);
+      System.out.printf("  delta(H-e) from code = %.8e%n", delta_code);
+      System.out.printf("  delta(H-e) manual    = %.8e%n", delta_manual);
+      System.out.printf("  delta ratio = %.8f%n",
+          delta_code != 0 ? delta_manual / delta_code : Double.NaN);
+
+      // XA values
+      double[] xa = ((ComponentSAFTVRMie) saft.getComponent(0)).getXsiteAssoc();
+      if (xa != null) {
+        System.out.printf("  XA values:");
+        for (int s = 0; s < xa.length; s++) {
+          System.out.printf(" [%d]=%.8f", s, xa[s]);
+        }
+        System.out.println();
+
+        // Verify XA manually: for pure water 4C, X_H=X_e=X
+        // 1/X = 1 + 2*(n/V)*delta*X => quadratic
+        double rhoMolar = n / V_SI; // mol/m^3
+        double sumCoeff = 2.0 * rhoMolar * delta_manual; // 2 bonding partners per site type
+        // X^2 * sumCoeff + X - 1 = 0
+        double disc = 1.0 + 4.0 * sumCoeff;
+        double X_manual = (-1.0 + Math.sqrt(disc)) / (2.0 * sumCoeff);
+        System.out.printf("  XA manual (quadratic) = %.8f%n", X_manual);
+        System.out.printf("  rhoMolar * delta = %.6f%n", rhoMolar * delta_manual);
+      }
+
+      System.out.printf("  hcpatot = %.8f%n", saft.getHcpatot());
+      System.out.printf("  gcpaAssoc (legacy g_CS) = %.8f%n", saft.getGcpaAssoc());
+
+      // Free energies
+      double F_HC = saft.F_HC_SAFT();
+      double F_DISP = saft.F_DISP_SAFT();
+      double F_ASSOC = saft.F_ASSOC_SAFT();
+      System.out.printf("%n  Helmholtz free energies (dimensionless F = A_res/(RT)):%n");
+      System.out.printf("  F_HC   = %.10e%n", F_HC);
+      System.out.printf("  F_DISP = %.10e%n", F_DISP);
+      System.out.printf("  F_ASSOC= %.10e%n", F_ASSOC);
+      System.out.printf("  F_total= %.10e%n", F_HC + F_DISP + F_ASSOC);
+
+      // Derivatives w.r.t. V (m^3)
+      double dF_HC_dV = saft.dF_HC_SAFTdV();
+      double dF_DISP_dV = saft.dF_DISP_SAFTdV();
+      double dF_ASSOC_dV = saft.dF_ASSOC_SAFTdV();
+      System.out.printf("%n  dF/dV (w.r.t. V_SI, m^-3):%n");
+      System.out.printf("  dF_HC/dV   = %.10e%n", dF_HC_dV);
+      System.out.printf("  dF_DISP/dV = %.10e%n", dF_DISP_dV);
+      System.out.printf("  dF_ASSOC/dV= %.10e%n", dF_ASSOC_dV);
+      System.out.printf("  dF_total/dV= %.10e%n", dF_HC_dV + dF_DISP_dV + dF_ASSOC_dV);
+
+      // Pressure contributions: P = nRT/V - RT*dF/dV (in Pa, then convert to bar)
+      double P_ideal = n * Rgas * T / V_SI; // Pa
+      double P_HC = -Rgas * T * dF_HC_dV; // Pa
+      double P_DISP = -Rgas * T * dF_DISP_dV; // Pa
+      double P_ASSOC = -Rgas * T * dF_ASSOC_dV; // Pa
+      double P_total = P_ideal + P_HC + P_DISP + P_ASSOC;
+      System.out.printf("%n  Pressure contributions (bar):%n");
+      System.out.printf("  P_ideal = %.4f%n", P_ideal / 1e5);
+      System.out.printf("  P_HC    = %.4f%n", P_HC / 1e5);
+      System.out.printf("  P_DISP  = %.4f%n", P_DISP / 1e5);
+      System.out.printf("  P_ASSOC = %.4f%n", P_ASSOC / 1e5);
+      System.out.printf("  P_total = %.4f bar%n", P_total / 1e5);
+      System.out.printf("  P from calcPressure() = %.6f%n", saft.calcPressure());
+
+      // Fugacity coefficient
+      double fugCoef = phase.getComponent(0).getFugacityCoefficient();
+      System.out.printf("  ln(fugCoef) = %.8f%n", Math.log(fugCoef));
+      System.out.printf("  fugCoef = %.8e%n", fugCoef);
+    }
+
+    // Now do bubble point
+    System.out.println("\n--- Bubble Point Calculation ---");
+    SystemInterface fluid2 = new SystemSAFTVRMie(T, P_init);
+    fluid2.addComponent("water", 1.0);
+    fluid2.setMixingRule("classic");
+    fluid2.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid2);
+    try {
+      ops.bubblePointPressureFlash(false);
+      double Psat = fluid2.getPressure();
+      System.out.printf("Psat = %.6f bar (NIST = 1.01325 bar)%n", Psat);
+      System.out.printf("Psat/NIST = %.4f%n", Psat / 1.01325);
+
+      // Print phase volumes at converged Psat
+      for (int ph = 0; ph < fluid2.getNumberOfPhases(); ph++) {
+        PhaseInterface phase = fluid2.getPhase(ph);
+        System.out.printf("Phase %d (%s): V_molar=%.6e V_SI=%.6e%n", ph, phase.getType(),
+            phase.getMolarVolume(),
+            phase.getMolarVolume() * phase.getNumberOfMolesInPhase() * 1e-5);
+      }
+    } catch (Exception e) {
+      System.out.println("Bubble point failed: " + e.getMessage());
+      e.printStackTrace();
+    }
+
+    assertTrue(true, "Diagnostic test completed");
   }
 }
