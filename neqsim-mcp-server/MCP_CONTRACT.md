@@ -1,6 +1,9 @@
 # MCP Tool Contract v1
 
-A governed engineering calculation platform for AI-assisted workflows.
+A governed engineering calculation layer for AI-assisted workflows.
+
+The MCP server does not perform autonomous decision-making; it executes explicit
+tool calls under defined constraints.
 
 Tools are organized into three explicit tiers with code-level enforcement:
 
@@ -82,6 +85,13 @@ between minor versions.
 | `manageValidationProfile` | PLATFORM | Jurisdiction-specific validation profiles |
 | `runPlugin` | PLATFORM | Run or list registered MCP runner plugins |
 
+Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) may perform
+multi-step or stateful operations and are subject to stricter governance.
+They are not part of the minimal trusted calculation core.
+
+**Note:** `solveTask` is intended for exploratory and automation use cases.
+It should not be used for governed engineering decisions without external validation.
+
 ## Code-Level Enforcement
 
 Governance is not just documented — it is enforced in code. Every Tier 2 and
@@ -105,12 +115,22 @@ in a restricted mode regardless of how it is called.
 
 ## Deployment Profiles
 
+Each profile defines enforced constraints on tool availability, validation behavior,
+and execution permissions.
+
 | Profile | Tier 1 | Tier 2 | Tier 3 | Approval Gate | Audit |
 |---------|--------|--------|--------|---------------|-------|
 | `DESKTOP_ENGINEER` | ✅ | ✅ | ✅ | Off | Off |
 | `STUDY_TEAM` | ✅ | ✅ | ❌ | Off | On |
 | `DIGITAL_TWIN` | ✅ (ADVISORY+CALC) | ❌ | ❌ | On | On |
 | `ENTERPRISE` | ✅ | ❌ | ❌ | On | On |
+
+**ENTERPRISE** constraints:
+
+- Restricted to approved industrial toolset
+- Execution tools require explicit approval (if enabled)
+- Platform-level tools disabled
+- Validation is enforced and cannot be bypassed
 
 **DIGITAL_TWIN advisory:** This mode supports operator decision support and
 what-if analysis. It does not provide plant control, write-back to operational
@@ -121,7 +141,9 @@ Default mode: `DESKTOP_ENGINEER`.
 
 ## Tool Categories
 
-Every tool is classified into exactly one category:
+Every tool is classified into exactly one category. Tool categories reflect
+increasing levels of operational impact and therefore increasing governance
+requirements.
 
 | Category | Description |
 |----------|-------------|
@@ -133,7 +155,17 @@ Every tool is classified into exactly one category:
 ## Auto-Validation Pipeline
 
 When auto-validation is enabled (default in all modes), every CALCULATION
-tool automatically appends an `"autoValidation"` block:
+tool automatically appends an `"autoValidation"` block.
+
+In governed deployment profiles, validation is automatically applied and cannot
+be disabled.
+
+Validation results include:
+
+- Convergence status
+- Consistency checks
+- Known limitations
+- Warnings for out-of-range conditions
 
 ```json
 {
@@ -283,6 +315,10 @@ Each has documented validation basis, known accuracy bounds, and clear
 error/warning behavior. Available in all deployment modes including
 `ENTERPRISE`.
 
+The industrial core toolset represents tools intended for controlled engineering use.
+These tools vary in validation maturity and should be interpreted according to their
+benchmark trust metadata.
+
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlash` | CALCULATION | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
@@ -304,7 +340,9 @@ error/warning behavior. Available in all deployment modes including
 
 ## Stable Platform
 
-Automation and process-inspection tools. Stable interfaces.
+Automation and process-inspection tools. "Stable" indicates API stability and
+availability, not necessarily full industrial validation. Interfaces are stable
+within v1.
 
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
@@ -325,6 +363,9 @@ Functional and useful, but not yet formally qualified for the industrial core.
 Interfaces are stable; classification may change as qualification evidence
 is added. Available in `DESKTOP_ENGINEER` and `STUDY_TEAM` modes.
 
+"Stable" in this context indicates API stability and availability, not full
+industrial validation.
+
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlowAssurance` | CALCULATION | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
@@ -341,6 +382,13 @@ is added. Available in `DESKTOP_ENGINEER` and `STUDY_TEAM` modes.
 | `composeWorkflow` | EXECUTION | v1.1 | Chain simulation steps into multi-domain workflows |
 | `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
+
+Execution tools (`manageSession`, `solveTask`, `composeWorkflow`) may perform
+multi-step or stateful operations and are subject to stricter governance.
+They are not part of the minimal trusted calculation core.
+
+**Note:** `solveTask` is intended for exploratory and automation use cases.
+It should not be used for governed engineering decisions without external validation.
 
 ## Experimental Tools
 
@@ -465,7 +513,8 @@ of the server version.
 ### Deployment Profiles
 
 The `manageIndustrialProfile` tool controls which tools are exposed and
-what validation level is enforced.
+what validation level is enforced. Each profile defines enforced constraints
+on tool availability, validation behavior, and execution permissions.
 
 | Profile | Description | Tool Access | Auto-Validation |
 |---------|-------------|-------------|-----------------|
@@ -474,11 +523,20 @@ what validation level is enforced.
 | `DIGITAL_TWIN` | Advisory-only for live operations | ADVISORY + CALCULATION only; no plant control, no write-back, no autonomous execution | Enforced |
 | `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (16 tools) | Enforced, approval gates on EXECUTION |
 
+**ENTERPRISE** constraints:
+
+- Restricted to approved industrial toolset
+- Execution tools require explicit approval (if enabled)
+- Platform-level tools disabled
+- Validation is enforced and cannot be bypassed
+
 Default mode: `DESKTOP_ENGINEER`.
 
 ### Tool Categories
 
-Every tool is classified into exactly one category:
+Every tool is classified into exactly one category. Tool categories reflect
+increasing levels of operational impact and therefore increasing governance
+requirements.
 
 | Category | Description | Examples |
 |----------|-------------|---------|
@@ -490,6 +548,10 @@ Every tool is classified into exactly one category:
 ### Industrial Core Toolset
 
 These 16 tools form the approved industrial subset for governed deployments.
+The industrial core toolset represents tools intended for controlled engineering use.
+These tools vary in validation maturity and should be interpreted according to their
+benchmark trust metadata.
+
 Each has documented validation basis, known accuracy bounds, and clear
 error/warning behavior:
 
@@ -507,6 +569,9 @@ qualification evidence is added.
 
 ### Governance Tools (Stable)
 
+Governance tools provide visibility into access control, validation maturity,
+and deployment configuration.
+
 | Tool | Status | Since | Description |
 |------|--------|-------|-------------|
 | `manageIndustrialProfile` | **Stable** | v1.2 | Deployment profiles, tool access, validation enforcement |
@@ -517,6 +582,16 @@ qualification evidence is added.
 
 When auto-validation is enabled (default in all modes), every CALCULATION
 tool automatically appends a `"autoValidation"` block to the response containing:
+
+In governed deployment profiles, validation is automatically applied and cannot
+be disabled.
+
+Validation results include:
+
+- Convergence status
+- Consistency checks
+- Known limitations
+- Warnings for out-of-range conditions
 
 ```json
 {
@@ -552,3 +627,9 @@ The `getBenchmarkTrust` tool returns per-tool validation metadata:
 | `VALIDATED` | Verified against NIST/experimental data; suitable for design decisions |
 | `TESTED` | Tested against literature/industry cases; suitable for screening studies |
 | `EXPERIMENTAL` | Functional but limited validation; use for exploration only |
+
+**Tool maturity classification:**
+
+- **Qualified:** Validated against reference data and suitable for governed use
+- **Engineering:** Generally applicable but with limited validation coverage
+- **Experimental:** Research-grade, not intended for production use

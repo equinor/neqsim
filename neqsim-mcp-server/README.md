@@ -1,23 +1,31 @@
 # NeqSim MCP Server
 
-A governed engineering calculation platform for AI-assisted workflows.
+NeqSim MCP Server provides a governed engineering calculation layer for AI-assisted workflows.
 
-[Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that
-gives any LLM — VS Code Copilot, Claude Desktop, Cursor, or any MCP client —
-validated thermodynamic calculations and process simulations through
-[NeqSim](https://github.com/equinor/neqsim).
+It exposes validated thermodynamic and process simulation capabilities from
+[NeqSim](https://github.com/equinor/neqsim) through a structured
+[Model Context Protocol](https://modelcontextprotocol.io/) (MCP) tool interface,
+with built-in validation, traceability, and deployment profiles for controlled use
+in engineering environments.
 
-**Governance is enforced in code, not just described in docs:**
+The MCP server does not perform autonomous decision-making; it executes explicit
+tool calls under defined constraints.
 
-- **3-tier tool model** — 14 Trusted Core tools (NIST-validated), 11 Engineering
-  Advanced tools (literature-tested), 13 Experimental tools (limited validation).
-  Tier enforcement is code-level: blocked tools return structured error JSON.
+Any MCP client — VS Code Copilot, Claude Desktop, Cursor, or others — can
+connect and use these capabilities.
+
+The system is designed to support controlled engineering use through:
+
+- **3-tier tool model** — tools are classified by validation maturity and
+  operational impact, with code-level enforcement that blocks disallowed
+  tools with structured error JSON.
 - **Auto-validation** — every calculation tool validates its output against
-  engineering design rules. Cannot be skipped in production modes.
+  engineering design rules. In governed deployment profiles, validation is
+  automatically applied and cannot be disabled.
 - **Benchmark trust** — each tool reports maturity level (VALIDATED / TESTED /
   EXPERIMENTAL), reference cases, accuracy bounds, and known limitations.
-- **Four deployment profiles** — from full-access desktop to restricted enterprise
-  with approval gates. Each profile enforces which tiers are accessible.
+- **Four deployment profiles** — each profile defines enforced constraints on
+  tool availability, validation behavior, and execution permissions.
 - **Traceability** — every response includes provenance metadata (EOS model,
   convergence status, assumptions, limitations, warnings).
 
@@ -29,6 +37,9 @@ See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
 ---
 
 ## Deployment Profiles
+
+Each profile defines enforced constraints on tool availability, validation behavior,
+and execution permissions.
 
 | Profile | Tier 1 | Tier 2 | Tier 3 | Approval Gate |
 |---------|--------|--------|--------|---------------|
@@ -42,6 +53,13 @@ Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
 ```json
 {"action": "setActive", "mode": "STUDY_TEAM"}
 ```
+
+**ENTERPRISE** constraints:
+
+- Restricted to approved industrial toolset
+- Execution tools require explicit approval (if enabled)
+- Platform-level tools disabled
+- Validation is enforced and cannot be bypassed
 
 ### DIGITAL_TWIN Mode — Advisory Only
 
@@ -85,8 +103,15 @@ Each tool has documented accuracy bounds and clear error behavior.
 
 Every calculation tool (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
 `calculateStandard`, and `runFlowAssurance`) automatically validates its
-output against engineering design rules. The validation result is appended
-to the response — there is no way to skip it in production modes.
+output against engineering design rules. In governed deployment profiles,
+validation is automatically applied and cannot be disabled.
+
+Validation results include:
+
+- Convergence status
+- Consistency checks
+- Known limitations
+- Warnings for out-of-range conditions
 
 ### Benchmark Trust
 
@@ -161,6 +186,9 @@ When a blocked tool is called, the response is:
 ```
 
 ### Tool Categories
+
+Tool categories reflect increasing levels of operational impact and therefore
+increasing governance requirements.
 
 | Category | Description |
 |----------|-------------|
@@ -246,11 +274,15 @@ Verify: `java -version` should show 17 or higher.
 
 ---
 
-## Complete Tool Inventory
+## Capabilities Overview
 
 The server exposes 38 tools across three tiers, 9 guided-workflow prompts,
-and 11 browsable resources. See the tier sections above for the governance
-model. Additional platform tools not listed in the three tiers:
+and 11 browsable resources.
+
+## Complete Tool Inventory
+
+See the tier sections above for the governance model. Additional platform
+tools not listed in the three tiers:
 
 ### Process Automation (String-Addressable)
 
