@@ -85,14 +85,25 @@ public final class IndustrialProfile {
   private static final Map<String, ToolCategory> TOOL_CATEGORIES = buildToolCategories();
 
   /**
-   * Industrial core — the subset of tools recommended for production engineering use.
+   * Industrial core — the approved subset of tools for governed engineering deployments. Each tool
+   * in this set has documented validation basis, known accuracy bounds, and clear error behavior.
    */
   private static final Set<String> INDUSTRIAL_CORE =
       Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess", "runPVT",
-          "runFlowAssurance", "calculateStandard", "crossValidateModels", "runParametricStudy",
-          "validateResults", "generateReport", "validateInput", "searchComponents",
-          "getCapabilities", "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
-          "runBatch", "runPipeline", "sizeEquipment", "compareProcesses")));
+          "runPipeline", "calculateStandard", "validateResults", "validateInput",
+          "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
+          "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile")));
+
+  /**
+   * Advanced tools — functional and useful but not yet qualified for the industrial core. Available
+   * in DESKTOP_ENGINEER and STUDY_TEAM modes. Each tool works correctly but lacks the formal
+   * qualification evidence (validation cases, documented accuracy bounds) required for the core.
+   */
+  private static final Set<String> ADVANCED_TOOLS = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("runFlowAssurance", "crossValidateModels",
+          "runParametricStudy", "runBatch", "sizeEquipment", "compareProcesses", "generateReport",
+          "runReservoir", "runFieldEconomics", "manageSession", "solveTask", "composeWorkflow",
+          "generateVisualization", "queryDataCatalog")));
 
   /**
    * Builds the tool-to-category mapping.
@@ -205,8 +216,9 @@ public final class IndustrialProfile {
       case DESKTOP_ENGINEER:
         return true; // all tools available
       case STUDY_TEAM:
-        // All except raw security management
-        return !"manageSecurity".equals(toolName);
+        // Core + advanced tools; no raw platform tools
+        ToolCategory studyCat = TOOL_CATEGORIES.get(toolName);
+        return studyCat != ToolCategory.PLATFORM;
       case DIGITAL_TWIN:
         // Advisory + Calculation only, plus read-only state operations
         ToolCategory cat = TOOL_CATEGORIES.get(toolName);
@@ -264,6 +276,15 @@ public final class IndustrialProfile {
   }
 
   /**
+   * Returns the set of advanced tools (functional but not yet qualified for the core).
+   *
+   * @return unmodifiable set of tool names
+   */
+  public static Set<String> getAdvancedTools() {
+    return ADVANCED_TOOLS;
+  }
+
+  /**
    * Returns a JSON description of all deployment modes and their tool access.
    *
    * @return JSON string describing all profiles
@@ -305,6 +326,13 @@ public final class IndustrialProfile {
     }
     root.add("industrialCore", core);
 
+    // Advanced tools
+    JsonArray advanced = new JsonArray();
+    for (String tool : ADVANCED_TOOLS) {
+      advanced.add(tool);
+    }
+    root.add("advancedTools", advanced);
+
     return GSON.toJson(root);
   }
 
@@ -317,18 +345,22 @@ public final class IndustrialProfile {
   private static String getProfileDescription(DeploymentMode mode) {
     switch (mode) {
       case DESKTOP_ENGINEER:
-        return "Full access for a single engineer. All 42 tools available. "
-            + "Auto-validation on. No approval gates. Ideal for study work and exploration.";
+        return "Full access for a single engineer. Core, advanced, and experimental "
+            + "tools available with clear tier labeling. Auto-validation on. "
+            + "No approval gates. Ideal for study work and exploration.";
       case STUDY_TEAM:
-        return "Collaborative mode for engineering teams. All tools except raw security "
-            + "management. Session isolation and audit logging enabled. Auto-validation on.";
+        return "Collaborative mode for engineering teams. Core and advanced tools "
+            + "available. Session isolation and audit logging enabled. "
+            + "Auto-validation enforced on all calculations.";
       case DIGITAL_TWIN:
-        return "Read-heavy advisory mode for plant operations support. Advisory and "
-            + "calculation tools only. Execution tools require human approval. "
-            + "Ideal for operator assistance and what-if analysis.";
+        return "Advisory-only mode for plant operations support. Advisory and "
+            + "calculation tools only — no direct plant control, no write-back to "
+            + "operational systems, no autonomous action execution without separate "
+            + "approval architecture. Ideal for operator decision support and "
+            + "what-if analysis.";
       case ENTERPRISE:
-        return "Restricted mode for governed deployments. Industrial core tools only "
-            + "(20 tools). Approval gates on all state-modifying operations. "
+        return "Restricted mode for governed deployments. Approved industrial core "
+            + "tools only. Approval gates on all state-modifying operations. "
             + "Rate limiting and full audit logging. Recommended for enterprise integration.";
       default:
         return "Unknown mode";

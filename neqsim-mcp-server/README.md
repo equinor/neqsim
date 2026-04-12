@@ -1,29 +1,36 @@
 # NeqSim MCP Server
 
-A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that gives any
-LLM — VS Code Copilot, Claude Desktop, Cursor, or any MCP-compatible client — the
-ability to run rigorous thermodynamic calculations and process simulations through
-[NeqSim](https://github.com/equinor/neqsim), an open-source Java library for
-oil & gas thermodynamics.
+An engineering-grade [Model Context Protocol](https://modelcontextprotocol.io/)
+(MCP) server that gives any LLM — VS Code Copilot, Claude Desktop, Cursor,
+or any MCP-compatible client — validated thermodynamic calculations and
+process simulations through [NeqSim](https://github.com/equinor/neqsim).
+
+**Why engineers can trust it:**
+
+- **Enforced validation** — every calculation automatically validates its
+  output against engineering design rules. Validation cannot be skipped in
+  production modes.
+- **Benchmark trust metadata** — each tool reports its maturity level
+  (VALIDATED / TESTED / EXPERIMENTAL), reference validation cases, accuracy
+  bounds, and known limitations.
+- **Governed deployment modes** — four profiles from full-access desktop
+  engineering to restricted enterprise deployment with approval gates.
+- **Traceability** — every response includes provenance metadata (EOS model,
+  convergence status, assumptions, limitations, warnings).
 
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
 (STDIO transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
 ---
 
-## Industry Readiness
-
-The server includes an industrial governance layer for deployment in
-engineering environments where trust, traceability, and access control matter.
-
-### Deployment Profiles
+## Deployment Profiles
 
 | Profile | Use Case | Tool Access |
 |---------|----------|-------------|
-| `DESKTOP_ENGINEER` | Individual engineering work, exploration | All 42+ tools |
-| `STUDY_TEAM` | Collaborative team studies, peer review | All tools, enforced validation |
-| `DIGITAL_TWIN` | Live operations advisory | Read-only + calculations only |
-| `ENTERPRISE` | Production deployment, governed access | Industrial core (20 tools) + approval gates |
+| `DESKTOP_ENGINEER` | Individual engineering work, exploration | Core + Advanced + Experimental (all tiers, labeled) |
+| `STUDY_TEAM` | Collaborative team studies, peer review | Core + Advanced, enforced validation |
+| `DIGITAL_TWIN` | Advisory-only live operations support | ADVISORY + CALCULATION only |
+| `ENTERPRISE` | Production deployment, governed access | Approved industrial core (16 tools) + approval gates |
 
 Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
 
@@ -31,12 +38,53 @@ Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
 {"action": "setActive", "mode": "STUDY_TEAM"}
 ```
 
+### DIGITAL_TWIN Mode — Advisory Only
+
+In `DIGITAL_TWIN` mode, the server operates as a read-only calculation and
+decision-support tool. This means:
+
+- **No direct plant control** — no tools can write back to operational systems.
+- **No autonomous execution** — state-modifying tools (sessions, variable
+  writes) are blocked; EXECUTION requires separate approval architecture.
+- **No write-back to operational data** — the server computes answers and
+  recommendations but does not act on them.
+
+This makes it suitable for operator decision support, what-if analysis,
+and monitoring dashboards without introducing control risk.
+
+---
+
+## Industrial Core Tools
+
+The approved industrial subset — available in all deployment modes including
+`ENTERPRISE`. Each tool has documented validation basis, known accuracy
+bounds, and clear error behavior.
+
+| Tool | Category | Description |
+|------|----------|-------------|
+| `runFlash` | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
+| `runProcess` | CALCULATION | Process simulation from JSON definition |
+| `runPVT` | CALCULATION | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
+| `runPipeline` | CALCULATION | Multiphase pipeline flow (Beggs & Brill) |
+| `calculateStandard` | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN) |
+| `getPropertyTable` | CALCULATION | Property table across T or P range |
+| `getPhaseEnvelope` | CALCULATION | Full PT phase envelope |
+| `validateInput` | ADVISORY | Pre-flight input validation with typo correction |
+| `validateResults` | ADVISORY | Validate results against engineering design rules |
+| `searchComponents` | ADVISORY | Fuzzy search across 100+ components |
+| `getCapabilities` | ADVISORY | Structured capabilities manifest |
+| `getExample` | ADVISORY | Ready-to-use JSON templates |
+| `getSchema` | ADVISORY | JSON Schema definitions |
+| `getBenchmarkTrust` | ADVISORY | Per-tool validation status and accuracy bounds |
+| `checkToolAccess` | ADVISORY | Pre-flight tool access check |
+| `manageIndustrialProfile` | ADVISORY | Deployment profile management |
+
 ### Auto-Validation
 
-Every calculation tool (`runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
-`calculateStandard`, `runPipeline`) automatically validates its output against
-engineering design rules. The validation result is appended to the response —
-there is no way to skip it in production modes.
+Every calculation tool (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
+`calculateStandard`, and `runFlowAssurance`) automatically validates its
+output against engineering design rules. The validation result is appended
+to the response — there is no way to skip it in production modes.
 
 ### Benchmark Trust
 
@@ -46,20 +94,61 @@ Before relying on a tool for design decisions, query its validation status:
 {"action": "getTool", "toolName": "runFlash"}
 ```
 
-Returns maturity level (VALIDATED / TESTED / EXPERIMENTAL), reference validation
-cases, accuracy bounds, known limitations, and unsupported conditions.
+Returns maturity level, reference validation cases, accuracy bounds, known
+limitations, and unsupported conditions.
+
+---
+
+## Advanced Tools
+
+Functional and useful, with stable interfaces, but not yet formally qualified
+for the industrial core. Available in `DESKTOP_ENGINEER` and `STUDY_TEAM` modes.
+
+| Tool | Description |
+|------|-------------|
+| `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
+| `crossValidateModels` | Cross-validate process under multiple EOS models |
+| `runParametricStudy` | Multi-variable parametric sweep |
+| `runBatch` | Multi-point sensitivity sweep |
+| `sizeEquipment` | Quick equipment sizing (separator, compressor) |
+| `compareProcesses` | Compare process configurations side by side |
+| `generateReport` | Generate structured engineering reports |
+| `runReservoir` | Material balance reservoir simulation |
+| `runFieldEconomics` | NPV/IRR/cash flow with fiscal regimes + decline curves |
+| `manageSession` | Persistent simulation sessions |
+| `solveTask` | Solve engineering tasks from high-level descriptions |
+| `composeWorkflow` | Chain simulation steps into multi-domain workflows |
+| `queryDataCatalog` | Browse component, standards, material, and EOS databases |
+| `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
+
+These tools may be promoted to the industrial core as formal qualification
+evidence (validation cases, documented accuracy bounds) is added.
+
+### Experimental Tools
+
+Functional but interfaces may change between minor versions.
+
+| Tool | Description |
+|------|-------------|
+| `runDynamic` | Transient dynamic simulation with auto-instrumented PID controllers |
+| `runBioprocess` | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
+| `streamSimulation` | Async simulation with incremental polling |
+| `composeMultiServerWorkflow` | Multi-server orchestration |
+| `manageSecurity` | API key management, rate limiting, audit logging |
+| `manageState` | Persist/restore simulation states across restarts |
+| `manageValidationProfile` | Jurisdiction-specific validation profiles |
 
 ### Tool Classification
 
-| Category | Description | Example Tools |
-|----------|-------------|---------------|
-| **ADVISORY** | Read-only, always safe | `getCapabilities`, `validateInput`, `searchComponents` |
-| **CALCULATION** | Stateless computation | `runFlash`, `runProcess`, `runPVT` |
-| **EXECUTION** | State-modifying | `setSimulationVariable`, `solveTask` |
-| **PLATFORM** | Infrastructure | `manageSecurity`, `manageState` |
+| Category | Description |
+|----------|-------------|
+| **ADVISORY** | Read-only, always safe — discovery, validation, inspection |
+| **CALCULATION** | Stateless engineering computation |
+| **EXECUTION** | State-modifying — sessions, variable writes, task solving |
+| **PLATFORM** | Infrastructure — security, persistence, multi-server |
 
-In `ENTERPRISE` mode, EXECUTION tools require human approval and PLATFORM tools
-are blocked entirely.
+In `ENTERPRISE` mode, EXECUTION tools require human approval and PLATFORM
+tools are blocked entirely.
 
 ---
 
@@ -140,7 +229,8 @@ Verify: `java -version` should show 17 or higher.
 
 ## What Can an LLM Do with NeqSim?
 
-The server exposes **42 tools**, **9 guided-workflow prompts**, and **11 browsable resources**.
+The server exposes tools across three tiers (core, advanced, experimental),
+9 guided-workflow prompts, and 11 browsable resources.
 
 ### Core Thermodynamic Tools
 
