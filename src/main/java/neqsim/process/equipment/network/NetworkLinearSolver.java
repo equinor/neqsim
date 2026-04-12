@@ -98,7 +98,7 @@ public class NetworkLinearSolver {
    * Solve using EJML dense LU decomposition with partial pivoting.
    *
    * <p>
-   * Uses {@link LinearSolverFactory_DDRM#lu(int, int)} which provides O(n³/3) factorization with
+   * Uses EJML LinearSolverFactory_DDRM.lu() which provides O(n³/3) factorization with
    * BLAS-optimized operations. For n=50, approximately 5x faster than hand-coded Gaussian
    * elimination.
    * </p>
