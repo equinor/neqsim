@@ -7,9 +7,17 @@ import io.quarkiverse.mcp.server.ToolArg;
 import jakarta.enterprise.context.ApplicationScoped;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.mcp.runners.BioprocessRunner;
 import neqsim.mcp.runners.ComponentQuery;
+import neqsim.mcp.runners.DynamicRunner;
+import neqsim.mcp.runners.FieldDevelopmentRunner;
 import neqsim.mcp.runners.FlashRunner;
+import neqsim.mcp.runners.FlowAssuranceRunner;
+import neqsim.mcp.runners.PVTRunner;
+import neqsim.mcp.runners.PipelineRunner;
 import neqsim.mcp.runners.ProcessRunner;
+import neqsim.mcp.runners.ReservoirRunner;
+import neqsim.mcp.runners.StandardsRunner;
 import neqsim.mcp.runners.Validator;
 import neqsim.mcp.runners.AutomationRunner;
 import neqsim.mcp.runners.BatchRunner;
@@ -601,6 +609,242 @@ public class NeqSimTools {
       return ParametricStudyRunner.run(studyJson);
     } catch (Exception e) {
       return errorJson("Parametric study failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PVT laboratory simulation tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a PVT laboratory experiment simulation.
+   *
+   * @param pvtJson JSON specification with fluid, experiment type, and conditions
+   * @return JSON with PVT experiment results
+   */
+  @Tool(description = "Run a PVT laboratory experiment simulation on a fluid. "
+      + "Supports: CME (constant mass expansion), CVD (constant volume depletion), "
+      + "differentialLiberation, saturationPressure, saturationTemperature, "
+      + "separatorTest, swellingTest, GOR (gas-oil ratio), and viscosity measurements. "
+      + "Requires fluid composition, experiment type, and conditions.")
+  public String runPVT(
+      @ToolArg(description = "JSON specification with: 'components' (composition map), "
+          + "'model' (SRK/PR/CPA), 'temperature_C' and 'pressure_bara' for the reservoir "
+          + "conditions, 'experiment' (CME, CVD, differentialLiberation, saturationPressure, "
+          + "saturationTemperature, separatorTest, swellingTest, GOR, viscosity), and "
+          + "'experimentConfig' with experiment-specific parameters like 'pressures_bara' "
+          + "array, separator stages, or injection gas composition.") String pvtJson) {
+    try {
+      return PVTRunner.run(pvtJson);
+    } catch (Exception e) {
+      return errorJson("PVT simulation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Flow assurance tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a flow assurance analysis on a fluid.
+   *
+   * @param flowAssuranceJson JSON specification with fluid and analysis type
+   * @return JSON with flow assurance analysis results
+   */
+  @Tool(description = "Run a flow assurance analysis on a fluid mixture. "
+      + "Supports: hydrateRiskMap (hydrate formation temperatures/pressures), "
+      + "waxAppearance (WAT), asphalteneStability (onset pressure), "
+      + "CO2Corrosion (corrosion rate), scalePrediction, erosion, "
+      + "pipelineCooldown (temperature profile during shutdown), and "
+      + "emulsionViscosity calculation. Essential for pipeline design and operation.")
+  public String runFlowAssurance(
+      @ToolArg(description = "JSON specification with: 'components' (composition map), "
+          + "'model' (SRK/PR/CPA), 'temperature_C', 'pressure_bara', "
+          + "'analysis' (hydrateRiskMap, waxAppearance, asphalteneStability, CO2Corrosion, "
+          + "scalePrediction, erosion, pipelineCooldown, emulsionViscosity), and "
+          + "'analysisConfig' with analysis-specific parameters.") String flowAssuranceJson) {
+    try {
+      return FlowAssuranceRunner.run(flowAssuranceJson);
+    } catch (Exception e) {
+      return errorJson("Flow assurance analysis failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Gas/oil quality standards tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Calculate gas or oil quality per industry standards.
+   *
+   * @param standardJson JSON specification with fluid and standard to apply
+   * @return JSON with standard calculation results
+   */
+  @Tool(description = "Calculate gas or oil properties per industry standards. "
+      + "Supports 22 standards: ISO 6976 (calorific value, Wobbe index), "
+      + "ISO 12213 (compressibility), ISO 13443 (energy), ISO 18453 (cricondentherm), "
+      + "ISO 14687 (hydrogen fuel), ISO 15112 (energy determination), "
+      + "ISO 6578 (LNG custody), AGA 3 (flow measurement), AGA 7 (ultrasonic), "
+      + "GPA 2145/2172 (physical constants), EN 16723/16726 (gas quality), "
+      + "ASTM D86/D445/D2500/D4052/D4294/D6377/D97/BSW (oil testing). "
+      + "Essential for custody transfer and sales gas specification compliance.")
+  public String calculateStandard(
+      @ToolArg(description = "JSON specification with: 'components' (composition map), "
+          + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', and "
+          + "'standard' (ISO6976, ISO12213, AGA3, ASTM_D86, etc.). "
+          + "Some standards require additional parameters in 'standardConfig'.") String standardJson) {
+    try {
+      return StandardsRunner.run(standardJson);
+    } catch (Exception e) {
+      return errorJson("Standard calculation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pipeline flow simulation tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Simulate multiphase pipeline flow using Beggs and Brill correlation.
+   *
+   * @param pipelineJson JSON specification with fluid, pipe geometry, and flow conditions
+   * @return JSON with pressure drop, temperature profile, and flow regime
+   */
+  @Tool(description = "Simulate multiphase pipeline flow using the Beggs & Brill "
+      + "correlation. Calculates pressure drop, outlet temperature, liquid holdup, "
+      + "and flow regime for gas-liquid flow in pipes. Specify pipe geometry "
+      + "(diameter, length, elevation, roughness) and flow conditions.")
+  public String runPipeline(
+      @ToolArg(description = "JSON specification with: 'components' (composition map), "
+          + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', "
+          + "'flowRate' ({value, unit}), 'pipe' ({diameter_m, length_m, "
+          + "elevation_m, roughness_m, numberOfIncrements}).") String pipelineJson) {
+    try {
+      return PipelineRunner.run(pipelineJson);
+    } catch (Exception e) {
+      return errorJson("Pipeline simulation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Reservoir simulation tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Simulate a reservoir using material balance (tank model).
+   *
+   * @param reservoirJson JSON specification with fluid, reservoir volumes, and producers
+   * @return JSON with reservoir pressure decline and production data
+   */
+  @Tool(description = "Simulate a reservoir using material balance (tank model). "
+      + "Creates a SimpleReservoir with gas/oil/water volumes, adds producer and "
+      + "injector wells, and optionally runs transient depletion over multiple years. "
+      + "Returns reservoir pressure, volumes in place, and cumulative production. "
+      + "Ideal for resource estimation and production forecasting.")
+  public String runReservoir(
+      @ToolArg(description = "JSON specification with: 'components' (composition map), "
+          + "'model' (SRK/PR), 'reservoirTemperature_C', 'reservoirPressure_bara', "
+          + "'gasVolume_Sm3', 'oilVolume_Sm3', 'waterVolume_Sm3', "
+          + "'producers' (array of {name, flowRate: {value, unit}}), "
+          + "'simulationYears' (optional), 'timeStepDays' (optional).") String reservoirJson) {
+    try {
+      return ReservoirRunner.run(reservoirJson);
+    } catch (Exception e) {
+      return errorJson("Reservoir simulation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Field development economics tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run field development economics (NPV, IRR, cash flow analysis).
+   *
+   * @param economicsJson JSON specification with CAPEX, OPEX, production, prices, and fiscal regime
+   * @return JSON with NPV, IRR, payback, and annual cash flows
+   */
+  @Tool(description = "Run field development economics analysis. Calculates NPV, IRR, "
+      + "payback period, and annual cash flows with detailed tax breakdown. "
+      + "Supports multiple fiscal regimes: Norwegian NCS (78% marginal rate with "
+      + "uplift/depreciation), UK (40% ring-fence + 35% supplementary), Brazil, "
+      + "US-GOM. Also generates production profiles with exponential/hyperbolic/"
+      + "harmonic decline curves. Two modes: 'cashflow' (full NPV/IRR) or "
+      + "'productionProfile' (decline curve generation).")
+  public String runFieldEconomics(
+      @ToolArg(description = "JSON specification with 'mode' ('cashflow' or 'productionProfile'). "
+          + "For cashflow: 'country' (NO/UK/BR/US-GOM), 'capex' ({totalMusd, year} or "
+          + "{schedule: {year: musd}}), 'opex' ({percentOfCapex, fixedPerYearMusd, variablePerBoe}), "
+          + "'oilPrice_usdPerBbl', 'gasPrice_usdPerSm3', 'production' ({oil: {year: bbl}, "
+          + "gas: {year: sm3}}), 'discountRate'. For productionProfile: 'declineType' "
+          + "(EXPONENTIAL/HYPERBOLIC/HARMONIC), 'initialRate_bblPerDay', 'annualDeclineRate', "
+          + "'startYear', 'totalYears', 'plateauYears' (optional).") String economicsJson) {
+    try {
+      return FieldDevelopmentRunner.run(economicsJson);
+    } catch (Exception e) {
+      return errorJson("Field economics calculation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Dynamic simulation tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a dynamic (transient) process simulation with controllers.
+   *
+   * @param dynamicJson JSON specification with process, duration, and optional tuning
+   * @return JSON with time-series results from all transmitters
+   */
+  @Tool(description = "Run a dynamic (transient) process simulation. Takes a standard "
+      + "process JSON, automatically instruments it with PID controllers and "
+      + "measurement devices (pressure, level, temperature, flow transmitters), "
+      + "then runs a transient simulation for the specified duration. "
+      + "Returns time-series data from all transmitters. Use for startup/shutdown "
+      + "analysis, controller tuning, and dynamic response studies.")
+  public String runDynamic(
+      @ToolArg(description = "JSON specification with: 'processJson' (standard process "
+          + "definition), 'duration_seconds' (simulation length), 'timeStep_seconds' "
+          + "(step size, default 1.0), and optional 'tuning' ({pressure: {kp, ti}, "
+          + "level: {kp, ti}, flow: {kp, ti}, temperature: {kp, ti}}).") String dynamicJson) {
+    try {
+      return DynamicRunner.run(dynamicJson);
+    } catch (Exception e) {
+      return errorJson("Dynamic simulation failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Bioprocessing tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a bioprocess reactor simulation.
+   *
+   * @param bioprocessJson JSON specification with reactor type and parameters
+   * @return JSON with bioprocess results
+   */
+  @Tool(description = "Run a bioprocessing reactor simulation. Supports: "
+      + "anaerobicDigester (biogas from organic waste — food waste, manure, sewage sludge), "
+      + "fermentation (ethanol, biochemicals — Monod, Contois kinetics), "
+      + "gasifier (thermochemical biomass gasification — downdraft, updraft, fluidized bed), "
+      + "pyrolysis (thermal decomposition — slow, fast, flash modes producing char, "
+      + "bio-oil, and gas). Each reactor returns product yields, energy balances, "
+      + "and conversion efficiencies.")
+  public String runBioprocess(
+      @ToolArg(description = "JSON specification with: 'reactorType' (anaerobicDigester, "
+          + "fermentation, gasifier, pyrolysis). For anaerobicDigester: 'substrateType' "
+          + "(FOOD_WASTE, MANURE, SEWAGE_SLUDGE, etc.), 'feedRate_kgPerHr', "
+          + "'totalSolidsFraction', 'temperature_C'. For fermentation: 'kineticModel' "
+          + "(MONOD, CONTOIS), 'maxSpecificGrowthRate', 'yieldBiomass', 'yieldProduct'. "
+          + "For gasifier: 'biomass' ({carbon, hydrogen, oxygen, nitrogen, sulfur, ash}), "
+          + "'gasifierType' (DOWNDRAFT, UPDRAFT, FLUIDIZED_BED), 'agentType' (AIR, OXYGEN, STEAM). "
+          + "For pyrolysis: 'biomass' (same), 'mode' (SLOW, FAST, FLASH), "
+          + "'temperature_C'.") String bioprocessJson) {
+    try {
+      return BioprocessRunner.run(bioprocessJson);
+    } catch (Exception e) {
+      return errorJson("Bioprocess simulation failed: " + e.getMessage());
     }
   }
 }

@@ -35,6 +35,48 @@ response keys are stable.
 | `getExample` | **Stable** | v1.0 | Example templates for all tools |
 | `getSchema` | **Stable** | v1.0 | JSON Schema definitions |
 
+## Automation Tools (Stable)
+
+| Tool | Status | Since | Description |
+|------|--------|-------|-------------|
+| `listSimulationUnits` | **Stable** | v1.0 | List addressable equipment in a process |
+| `listUnitVariables` | **Stable** | v1.0 | List variables for a specific unit |
+| `getSimulationVariable` | **Stable** | v1.0 | Read a variable by dot-notation address |
+| `setSimulationVariable` | **Stable** | v1.0 | Set an INPUT variable and re-run |
+| `saveSimulationState` | **Stable** | v1.0 | Save process state as JSON snapshot |
+| `compareSimulationStates` | **Stable** | v1.0 | Diff two state snapshots |
+| `diagnoseAutomation` | **Stable** | v1.0 | Self-healing diagnostics for failed operations |
+| `getAutomationLearningReport` | **Stable** | v1.0 | Automation operation history and insights |
+
+## Extended Domain Tools (Stable)
+
+| Tool | Status | Since | Description |
+|------|--------|-------|-------------|
+| `runPVT` | **Stable** | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
+| `runFlowAssurance` | **Stable** | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
+| `calculateStandard` | **Stable** | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
+| `runPipeline` | **Stable** | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
+| `runReservoir` | **Stable** | v1.1 | Material balance reservoir simulation |
+| `runFieldEconomics` | **Stable** | v1.1 | NPV/IRR/cash flow with fiscal regimes + decline curves |
+| `runDynamic` | **Stable** | v1.1 | Dynamic transient simulation with auto-instrumented controllers |
+| `runBioprocess` | **Stable** | v1.1 | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
+| `crossValidateModels` | **Stable** | v1.1 | Cross-validate process under multiple EOS models |
+| `runParametricStudy` | **Stable** | v1.1 | Multi-variable parametric sweep |
+
+## Guided Workflow Prompts
+
+| Prompt | Description |
+|--------|-------------|
+| `design_gas_processing` | Step-by-step gas processing design |
+| `pvt_study` | Complete PVT study workflow |
+| `flow_assurance_screening` | Pipeline flow assurance screening |
+| `field_development_screening` | Field development concept screening |
+| `co2_ccs_chain` | CO2 CCS chain analysis |
+| `teg_dehydration_design` | TEG dehydration unit design |
+| `biorefinery_analysis` | Biorefinery process analysis |
+| `dynamic_simulation` | Dynamic simulation with controller setup |
+| `pipeline_sizing` | Multiphase pipeline sizing |
+
 ## Experimental Tools
 
 These tools are useful but their interface may change. Do not depend on
