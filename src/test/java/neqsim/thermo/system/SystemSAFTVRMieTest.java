@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
@@ -3848,5 +3849,79 @@ public class SystemSAFTVRMieTest {
     }
     assertTrue(foundGasRich, "Should find a CH4-rich gas phase");
     assertTrue(foundWaterRich, "Should find a water-rich aqueous phase");
+  }
+
+  /**
+   * Calculate a PT phase envelope for a methane-propane binary using SAFT-VR Mie.
+   */
+  @Test
+  void testMethaneProplanePhaseEnvelope() {
+    SystemSAFTVRMie fluid = new SystemSAFTVRMie(200.0, 10.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("propane", 0.1);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    try {
+      ops.calcPTphaseEnvelope(true, 1.0);
+    } catch (Exception ex) {
+      fail("Phase envelope calculation threw exception: " + ex.getMessage());
+    }
+
+    double[] bubT = ops.get("bubT");
+    double[] bubP = ops.get("bubP");
+    double[] dewT = ops.get("dewT");
+    double[] dewP = ops.get("dewP");
+
+    assertNotNull(bubT, "Bubble point temperatures should not be null");
+    assertNotNull(bubP, "Bubble point pressures should not be null");
+    assertNotNull(dewT, "Dew point temperatures should not be null");
+    assertNotNull(dewP, "Dew point pressures should not be null");
+
+    // Print the envelope for inspection
+    System.out.println("=== CH4/C3H8 (90/10) Phase Envelope with SAFT-VR Mie ===");
+    System.out.println("\nBubble point curve (" + bubT.length + " points):");
+    System.out.printf("%-12s %-12s%n", "T (K)", "P (bar)");
+    for (int i = 0; i < bubT.length; i++) {
+      if (bubT[i] > 0 && bubP[i] > 0) {
+        System.out.printf("%-12.2f %-12.4f%n", bubT[i], bubP[i]);
+      }
+    }
+    System.out.println("\nDew point curve (" + dewT.length + " points):");
+    System.out.printf("%-12s %-12s%n", "T (K)", "P (bar)");
+    for (int i = 0; i < dewT.length; i++) {
+      if (dewT[i] > 0 && dewP[i] > 0) {
+        System.out.printf("%-12.2f %-12.4f%n", dewT[i], dewP[i]);
+      }
+    }
+
+    // Check cricondenbar and cricondentherm
+    double[] cricondenbar = ops.get("cricondenbar");
+    double[] cricondentherm = ops.get("cricondentherm");
+    if (cricondenbar != null) {
+      System.out.printf("%nCricondenbar:   T=%.2f K, P=%.4f bar%n", cricondenbar[0],
+          cricondenbar[1]);
+    }
+    if (cricondentherm != null) {
+      System.out.printf("Cricondentherm: T=%.2f K, P=%.4f bar%n", cricondentherm[0],
+          cricondentherm[1]);
+    }
+
+    // For 90% CH4 / 10% C3H8: cricondenbar should be ~55-85 bar,
+    // cricondentherm around 230-270 K
+    assertTrue(bubT.length > 2, "Should have multiple bubble points");
+    assertTrue(dewT.length > 2, "Should have multiple dew points");
+
+    // Check that pressures and temperatures are in physically reasonable ranges
+    for (int i = 0; i < bubT.length; i++) {
+      if (bubT[i] > 0) {
+        assertTrue(bubT[i] > 80 && bubT[i] < 400,
+            "Bubble T should be between 80-400 K, got: " + bubT[i]);
+      }
+      if (bubP[i] > 0) {
+        assertTrue(bubP[i] < 200, "Bubble P should be < 200 bar, got: " + bubP[i]);
+      }
+    }
   }
 }
