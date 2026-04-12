@@ -31,6 +31,13 @@
   .fig-caption { font-style: italic; color: #666; margin-top: 0.5em; }
   hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }
   strong { color: #1565C0; }
+  a.cite { color: #1565C0; text-decoration: none; font-weight: 600; }
+  a.cite:hover { text-decoration: underline; }
+  .cite-unknown { color: red; }
+  ol.references { font-size: 0.92em; line-height: 1.6; }
+  ol.references li { margin-bottom: 4px; }
+  .references .ref-entry { font-size: 0.92em; line-height: 1.6; margin-bottom: 4px;
+                            padding-left: 2em; text-indent: -2em; }
 </style>
 </head>
 <body>
@@ -661,34 +668,6 @@ the algorithm:
 <hr>
 </p>
 <p>
-
-<div style="background: #E3F2FD; padding: 20px; border-radius: 8px; margin: 2em 0;">
-<h2 style="margin-top: 0;">Figures</h2>
-<div class="fig-container">
-<img src="../figures/fig1_convergence_by_family.png" alt="Fig. 1">
-<p class="fig-caption">Fig. 1. TPflash convergence rate and two-phase case distribution across 6 fluid families (SRK EOS, 1664 total cases).</p>
-</div>
-<div class="fig-container">
-<img src="../figures/fig2_convergence_maps.png" alt="Fig. 2">
-<p class="fig-caption">Fig. 2. Convergence success/failure mapped in temperature-pressure space. Green: single-phase converged; blue: two-phase converged; red cross: failed to converge.</p>
-</div>
-<div class="fig-container">
-<img src="../figures/fig3_timing_distribution.png" alt="Fig. 3">
-<p class="fig-caption">Fig. 3. CPU timing distribution: (left) box plots by fluid family; (right) overall histogram with median and 95th percentile markers.</p>
-</div>
-<div class="fig-container">
-<img src="../figures/fig4_beta_distribution.png" alt="Fig. 4">
-<p class="fig-caption">Fig. 4. Distribution of vapor fraction (beta) in two-phase cases by family.</p>
-</div>
-<div class="fig-container">
-<img src="../figures/fig5_time_vs_components.png" alt="Fig. 5">
-<p class="fig-caption">Fig. 5. Median flash computation time vs number of components, showing expected scaling with system size.</p>
-</div>
-<div class="fig-container">
-<img src="../figures/fig6_near_critical_analysis.png" alt="Fig. 6">
-<p class="fig-caption">Fig. 6. Near-critical analysis: (left) timing by phase fraction region; (right) timing vs pressure colored by number of phases.</p>
-</div>
-</div>
 <h2>6. Conclusions</h2>
 </p>
 <p>
@@ -800,6 +779,11 @@ directory.
 <li>Wilson, G.M. (1969). A modified Redlich-Kwong equation of state, application to general physical data calculations. <em>Proc. AIChE National Meeting</em>, Cleveland, OH.</li>
 
 </p>
+
+<h2>References</h2>
+<ol class="references">
+</ol>
+
 
 </body>
 </html>

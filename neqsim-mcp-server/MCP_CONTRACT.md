@@ -4,90 +4,117 @@ This document defines the stable API surface for the NeqSim MCP Server.
 Agent builders and application developers can rely on these guarantees
 when integrating with NeqSim.
 
+Tools are organized into four tiers: **Stable Industrial Core** (the minimum
+trusted surface), **Stable Platform** (discovery and automation plumbing),
+**Advanced** (functional but not yet formally qualified), and **Experimental**
+(interfaces may change between minor versions).
+
 ## Stability Promise
 
 - **Required input fields** will not be removed or renamed within v1.
 - **Required response fields** will not be removed within v1.
 - **New optional fields** may be added to inputs or outputs at any time.
+- **Advanced tools** have stable interfaces but may be reclassified.
 - **Experimental tools** may change or be removed between minor versions.
 - Every MCP response includes `"apiVersion": "1.0"` for contract identification.
 
-## Core Tools (Stable)
+## Stable Industrial Core
 
-These tools are part of the v1 contract. Their required parameters and
-response keys are stable.
+These tools form the approved industrial subset for governed deployments.
+Each has documented validation basis, known accuracy bounds, and clear
+error/warning behavior. Available in all deployment modes including
+`ENTERPRISE`.
 
-| Tool | Status | Since | Description |
-|------|--------|-------|-------------|
-| `runFlash` | **Stable** | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
-| `runBatch` | **Stable** | v1.0 | Multi-point sensitivity sweep |
-| `getPropertyTable` | **Stable** | v1.0 | Property table across T or P range |
-| `getPhaseEnvelope` | **Stable** | v1.0 | Phase envelope (PT curve) |
-| `runProcess` | **Stable** | v1.0 | Process simulation from JSON definition |
-| `validateInput` | **Stable** | v1.0 | Pre-flight input validation |
-| `searchComponents` | **Stable** | v1.0 | Component database search |
+The industrial core toolset represents tools intended for controlled engineering use.
+These tools vary in validation maturity and should be interpreted according to their
+benchmark trust metadata.
 
-## Discovery Tools (Stable)
+| Tool | Category | Since | Description |
+|------|----------|-------|-------------|
+| `runFlash` | CALCULATION | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
+| `runProcess` | CALCULATION | v1.0 | Process simulation from JSON definition |
+| `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
+| `runPipeline` | CALCULATION | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
+| `calculateStandard` | CALCULATION | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
+| `getPropertyTable` | CALCULATION | v1.0 | Property table across T or P range |
+| `getPhaseEnvelope` | CALCULATION | v1.0 | Phase envelope (PT curve) |
+| `validateInput` | ADVISORY | v1.0 | Pre-flight input validation |
+| `validateResults` | ADVISORY | v1.1 | Validate results against engineering design rules |
+| `searchComponents` | ADVISORY | v1.0 | Component database search |
+| `getCapabilities` | ADVISORY | v1.0 | Capabilities discovery manifest |
+| `getExample` | ADVISORY | v1.0 | Example templates for all tools |
+| `getSchema` | ADVISORY | v1.0 | JSON Schema definitions |
+| `getBenchmarkTrust` | ADVISORY | v1.2 | Per-tool validation status, accuracy bounds, limitations |
+| `checkToolAccess` | ADVISORY | v1.2 | Pre-flight tool access check for governed deployments |
+| `manageIndustrialProfile` | ADVISORY | v1.2 | Deployment profiles, tool access, validation enforcement |
 
-| Tool | Status | Since | Description |
-|------|--------|-------|-------------|
-| `getCapabilities` | **Stable** | v1.0 | Capabilities discovery manifest |
-| `getExample` | **Stable** | v1.0 | Example templates for all tools |
-| `getSchema` | **Stable** | v1.0 | JSON Schema definitions |
+## Stable Platform
 
-## Automation Tools (Stable)
+Automation and process-inspection tools. "Stable" indicates API stability and
+availability, not necessarily full industrial validation. Interfaces are stable
+within v1.
 
-| Tool | Status | Since | Description |
-|------|--------|-------|-------------|
-| `listSimulationUnits` | **Stable** | v1.0 | List addressable equipment in a process |
-| `listUnitVariables` | **Stable** | v1.0 | List variables for a specific unit |
-| `getSimulationVariable` | **Stable** | v1.0 | Read a variable by dot-notation address |
-| `setSimulationVariable` | **Stable** | v1.0 | Set an INPUT variable and re-run |
-| `saveSimulationState` | **Stable** | v1.0 | Save process state as JSON snapshot |
-| `compareSimulationStates` | **Stable** | v1.0 | Diff two state snapshots |
-| `diagnoseAutomation` | **Stable** | v1.0 | Self-healing diagnostics for failed operations |
-| `getAutomationLearningReport` | **Stable** | v1.0 | Automation operation history and insights |
+| Tool | Category | Since | Description |
+|------|----------|-------|-------------|
+| `listSimulationUnits` | ADVISORY | v1.0 | List addressable equipment in a process |
+| `listUnitVariables` | ADVISORY | v1.0 | List variables for a specific unit |
+| `getSimulationVariable` | ADVISORY | v1.0 | Read a variable by dot-notation address |
+| `setSimulationVariable` | EXECUTION | v1.0 | Set an INPUT variable and re-run |
+| `saveSimulationState` | EXECUTION | v1.0 | Save process state as JSON snapshot |
+| `compareSimulationStates` | ADVISORY | v1.0 | Diff two state snapshots |
+| `diagnoseAutomation` | ADVISORY | v1.0 | Self-healing diagnostics for failed operations |
+| `getAutomationLearningReport` | ADVISORY | v1.0 | Automation operation history and insights |
+| `getProgress` | ADVISORY | v1.1 | Check progress of long-running simulations |
+| `runPlugin` | PLATFORM | v1.1 | Run or list registered MCP runner plugins |
 
-## Extended Domain Tools (Stable)
+## Advanced Tools
 
-| Tool | Status | Since | Description |
-|------|--------|-------|-------------|
-| `runPVT` | **Stable** | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
-| `runFlowAssurance` | **Stable** | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
-| `calculateStandard` | **Stable** | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
-| `runPipeline` | **Stable** | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
-| `runReservoir` | **Stable** | v1.1 | Material balance reservoir simulation |
-| `runFieldEconomics` | **Stable** | v1.1 | NPV/IRR/cash flow with fiscal regimes + decline curves |
-| `runDynamic` | **Stable** | v1.1 | Dynamic transient simulation with auto-instrumented controllers |
-| `runBioprocess` | **Stable** | v1.1 | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
-| `crossValidateModels` | **Stable** | v1.1 | Cross-validate process under multiple EOS models |
-| `runParametricStudy` | **Stable** | v1.1 | Multi-variable parametric sweep |
+Functional and useful, but not yet formally qualified for the industrial core.
+Interfaces are stable; classification may change as qualification evidence
+is added. Available in `DESKTOP_ENGINEER` and `STUDY_TEAM` modes.
 
-## Session & Workflow Tools (Stable)
+"Stable" in this context indicates API stability and availability, not full
+industrial validation.
 
-| Tool | Status | Since | Description |
-|------|--------|-------|-------------|
-| `manageSession` | **Stable** | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore) |
-| `solveTask` | **Stable** | v1.1 | Solve engineering tasks from high-level descriptions |
-| `composeWorkflow` | **Stable** | v1.1 | Chain simulation steps into multi-domain workflows |
-| `validateResults` | **Stable** | v1.1 | Validate results against engineering design rules |
-| `generateReport` | **Stable** | v1.1 | Generate structured engineering reports |
-| `runPlugin` | **Stable** | v1.1 | Run or list registered MCP runner plugins |
-| `getProgress` | **Stable** | v1.1 | Check progress of long-running simulations |
+| Tool | Category | Since | Description |
+|------|----------|-------|-------------|
+| `runFlowAssurance` | CALCULATION | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
+| `crossValidateModels` | CALCULATION | v1.1 | Cross-validate process under multiple EOS models |
+| `runParametricStudy` | CALCULATION | v1.1 | Multi-variable parametric sweep |
+| `runBatch` | CALCULATION | v1.0 | Multi-point sensitivity sweep |
+| `sizeEquipment` | CALCULATION | v1.2 | Quick equipment sizing (separator, compressor) |
+| `compareProcesses` | CALCULATION | v1.2 | Compare process configurations side by side |
+| `generateReport` | ADVISORY | v1.1 | Generate structured engineering reports |
+| `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
+| `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
 
-## Platform Tools (Experimental)
+## Experimental Tools
 
-These tools are functional but their interfaces may evolve between minor versions.
+Functional but interfaces may evolve between minor versions. Includes
+high-autonomy execution tools that require external validation and
+domain-specific runners with limited qualification evidence.
 
-| Tool | Status | Since | Description |
-|------|--------|-------|-------------|
-| `streamSimulation` | **Experimental** | v1.2 | Async simulation with incremental polling (parametric sweep, Monte Carlo, dynamic) |
-| `generateVisualization` | **Experimental** | v1.2 | Inline SVG/Mermaid/HTML visualization (phase envelopes, flowsheets, charts) |
-| `composeMultiServerWorkflow` | **Experimental** | v1.2 | Multi-server orchestration across MCP servers |
-| `manageSecurity` | **Experimental** | v1.2 | API key management, rate limiting, audit logging |
-| `manageState` | **Experimental** | v1.2 | Persist/restore simulation states across server restarts |
-| `manageValidationProfile` | **Experimental** | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
-| `queryDataCatalog` | **Experimental** | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
+`DESKTOP_ENGINEER` only. Blocked in all other modes by code-level
+`enforceAccess()` guards.
+
+| Tool | Category | Since | Description |
+|------|----------|-------|-------------|
+| `solveTask` | EXECUTION | v1.1 | Autonomous task solver — results require independent engineer review |
+| `composeWorkflow` | EXECUTION | v1.1 | Chain simulation steps into multi-domain workflows |
+| `manageSession` | EXECUTION | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore) |
+| `runReservoir` | CALCULATION | v1.1 | Material balance reservoir simulation |
+| `runFieldEconomics` | CALCULATION | v1.1 | NPV/IRR/cash flow with fiscal regimes + decline curves |
+| `runDynamic` | CALCULATION | v1.1 | Dynamic transient simulation with auto-instrumented controllers |
+| `runBioprocess` | CALCULATION | v1.1 | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
+| `streamSimulation` | PLATFORM | v1.2 | Async simulation with incremental polling |
+| `composeMultiServerWorkflow` | PLATFORM | v1.2 | Multi-server orchestration across MCP servers |
+| `manageSecurity` | PLATFORM | v1.2 | API key management, rate limiting, audit logging |
+| `manageState` | PLATFORM | v1.2 | Persist/restore simulation states across server restarts |
+| `manageValidationProfile` | PLATFORM | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
+
+Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) perform
+multi-step or stateful operations. They are **not part of any governed tier**
+and must not be used for engineering decisions without independent validation.
 
 ## Browsable Resources (Stable)
 
@@ -188,3 +215,163 @@ of the server version.
 | Contract Version | Server Versions | Notes |
 |-----------------|-----------------|-------|
 | 1.0 | 1.0.0+ | Initial stable release |
+| 1.1 | 1.1.0+ | Extended domain, session, workflow tools |
+| 1.2 | 1.2.0+ | Platform tools, industrial governance, benchmark trust |
+
+---
+
+## Industrial Governance (v1.2)
+
+### Deployment Profiles
+
+The `manageIndustrialProfile` tool controls which tools are exposed and
+what validation level is enforced. Each profile defines enforced constraints
+on tool availability, validation behavior, and execution permissions.
+
+| Profile | Description | Tool Access | Auto-Validation |
+|---------|-------------|-------------|-----------------|
+| `DESKTOP_ENGINEER` | Full access for individual engineering work | Core + Advanced + Experimental (all tiers, labeled) | On by default |
+| `STUDY_TEAM` | Collaborative team environment | Core + Advanced (no PLATFORM) | Enforced |
+| `DIGITAL_TWIN` | Advisory-only for live operations | ADVISORY + CALCULATION only; no plant control, no write-back, no autonomous execution | Enforced |
+| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (21 tools) | Enforced, approval gates on EXECUTION |
+
+**ENTERPRISE** constraints:
+
+- Restricted to approved industrial toolset
+- Execution tools require explicit approval (if enabled)
+- Platform-level tools disabled
+- Validation is enforced and cannot be bypassed
+
+Default mode: `DESKTOP_ENGINEER`.
+
+### Code-Level Enforcement
+
+Governance is not just documented — it is enforced in code. Every Advanced and
+Experimental tool calls `IndustrialProfile.enforceAccess(toolName)` as its first
+operation. When a tool is blocked, the response is:
+
+```json
+{
+  "status": "blocked",
+  "tool": "runReservoir",
+  "mode": "ENTERPRISE",
+  "tier": "EXPERIMENTAL",
+  "reason": "Tool 'runReservoir' is not available in ENTERPRISE mode.",
+  "remediation": "Switch to DESKTOP_ENGINEER mode or request approval."
+}
+```
+
+The enforcement method returns null (allowed) or a structured error JSON (blocked).
+This ensures no Advanced/Experimental tool can execute in a restricted mode
+regardless of how it is called.
+
+**DIGITAL_TWIN advisory:** This mode supports operator decision support and
+what-if analysis. It does not provide plant control, write-back to operational
+systems, or autonomous action execution. A separate approval architecture
+is required for any actions that affect plant operations.
+
+### Tool Categories
+
+Every tool is classified into exactly one category. Tool categories reflect
+increasing levels of operational impact and therefore increasing governance
+requirements.
+
+| Category | Description | Examples |
+|----------|-------------|---------|
+| `ADVISORY` | Read-only discovery and validation; always allowed | `getCapabilities`, `getExample`, `getSchema`, `validateInput`, `searchComponents` |
+| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `calculateStandard` |
+| `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `manageSession`, `solveTask` |
+| `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
+
+### Industrial Core Toolset
+
+These 21 tools form the approved industrial subset for governed deployments.
+The industrial core toolset represents tools intended for controlled engineering use.
+These tools vary in validation maturity and should be interpreted according to their
+benchmark trust metadata.
+
+Each has documented validation basis, known accuracy bounds, and clear
+error/warning behavior:
+
+```
+runFlash, runProcess, runPVT, runPipeline, calculateStandard,
+getPropertyTable, getPhaseEnvelope, validateInput, validateResults,
+searchComponents, getCapabilities, getExample, getSchema,
+getBenchmarkTrust, checkToolAccess, manageIndustrialProfile,
+listSimulationUnits, listUnitVariables, getSimulationVariable,
+compareSimulationStates, diagnoseAutomation, getAutomationLearningReport,
+getProgress
+```
+
+Tools such as `runFlowAssurance`, `crossValidateModels`, `runParametricStudy`,
+`runBatch`, `sizeEquipment`, `compareProcesses`, and `generateReport` are
+available as **Advanced** tools and may be promoted to the core as formal
+qualification evidence is added.
+
+### Governance Tools (Stable)
+
+Governance tools provide visibility into access control, validation maturity,
+and deployment configuration.
+
+| Tool | Status | Since | Description |
+|------|--------|-------|-------------|
+| `manageIndustrialProfile` | **Stable** | v1.2 | Deployment profiles, tool access, validation enforcement |
+| `getBenchmarkTrust` | **Stable** | v1.2 | Per-tool validation status, accuracy bounds, limitations |
+| `checkToolAccess` | **Stable** | v1.2 | Pre-flight tool access check for governed deployments |
+
+### Auto-Validation Pipeline
+
+When auto-validation is enabled (default in all modes), the following six
+CALCULATION tools automatically append an `"autoValidation"` block to the
+response:
+
+In governed deployment profiles, validation is automatically applied and cannot
+be disabled.
+
+Validation results include:
+
+- Convergence status
+- Consistency checks
+- Known limitations
+- Warnings for out-of-range conditions
+
+```json
+{
+  "autoValidation": {
+    "overall": "PASS | WARNING | FAIL",
+    "checks": [
+      { "rule": "...", "status": "PASS", "message": "..." }
+    ],
+    "timestamp": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+Auto-validated tools: `runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
+`calculateStandard`, `runPipeline`.
+
+### Benchmark Trust Metadata
+
+The `getBenchmarkTrust` tool returns per-tool validation metadata:
+
+| Field | Description |
+|-------|-------------|
+| `maturityLevel` | `VALIDATED`, `TESTED`, or `EXPERIMENTAL` |
+| `validationCases` | Reference cases with expected results |
+| `accuracyBounds` | Typical accuracy ranges (e.g., density ±0.5%) |
+| `knownLimitations` | Conditions where results are unreliable |
+| `unsupported` | Explicitly unsupported scenarios |
+
+**Maturity levels:**
+
+| Level | Meaning |
+|-------|---------|
+| `VALIDATED` | Verified against NIST/experimental data; suitable for design decisions |
+| `TESTED` | Tested against literature/industry cases; suitable for screening studies |
+| `EXPERIMENTAL` | Functional but limited validation; use for exploration only |
+
+**Tool maturity classification:**
+
+- **Qualified:** Validated against reference data and suitable for governed use
+- **Engineering:** Generally applicable but with limited validation coverage
+- **Experimental:** Research-grade, not intended for production use

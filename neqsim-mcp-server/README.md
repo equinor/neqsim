@@ -1,13 +1,204 @@
 # NeqSim MCP Server
 
-A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that gives any
-LLM — VS Code Copilot, Claude Desktop, Cursor, or any MCP-compatible client — the
-ability to run rigorous thermodynamic calculations and process simulations through
-[NeqSim](https://github.com/equinor/neqsim), an open-source Java library for
-oil & gas thermodynamics.
+NeqSim MCP Server provides a governed engineering calculation layer for AI-assisted workflows.
+
+It exposes validated thermodynamic and process simulation capabilities from
+[NeqSim](https://github.com/equinor/neqsim) through a structured
+[Model Context Protocol](https://modelcontextprotocol.io/) (MCP) tool interface,
+with built-in validation, traceability, and deployment profiles for controlled use
+in engineering environments.
+
+The MCP server does not perform autonomous decision-making; it executes explicit
+tool calls under defined constraints.
+
+Any MCP client — VS Code Copilot, Claude Desktop, Cursor, or others — can
+connect and use these capabilities.
+
+The system is designed to support controlled engineering use through:
+
+- **3-tier tool model** — tools are classified by validation maturity and
+  operational impact, with code-level enforcement that blocks disallowed
+  tools with structured error JSON.
+- **Auto-validation** — every calculation tool validates its output against
+  engineering design rules. In governed deployment profiles, validation is
+  automatically applied and cannot be disabled.
+- **Benchmark trust** — each tool reports maturity level (VALIDATED / TESTED /
+  EXPERIMENTAL), reference cases, accuracy bounds, and known limitations.
+- **Four deployment profiles** — each profile defines enforced constraints on
+  tool availability, validation behavior, and execution permissions.
+- **Traceability** — every response includes provenance metadata (EOS model,
+  convergence status, assumptions, limitations, warnings).
 
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
 (STDIO transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
+
+See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
+
+---
+
+## Deployment Profiles
+
+Each profile defines enforced constraints on tool availability, validation behavior,
+and execution permissions.
+
+| Profile | Tier 1 | Tier 2 | Tier 3 | Approval Gate |
+|---------|--------|--------|--------|---------------|
+| `DESKTOP_ENGINEER` | ✅ | ✅ | ✅ | Off |
+| `STUDY_TEAM` | ✅ | ✅ | ❌ | Off |
+| `DIGITAL_TWIN` | ✅ (ADVISORY+CALC) | ❌ | ❌ | On |
+| `ENTERPRISE` | ✅ | ❌ | ❌ | On |
+
+Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
+
+```json
+{"action": "setActive", "mode": "STUDY_TEAM"}
+```
+
+**ENTERPRISE** constraints:
+
+- Restricted to approved industrial toolset
+- Execution tools require explicit approval (if enabled)
+- Platform-level tools disabled
+- Validation is enforced and cannot be bypassed
+
+### DIGITAL_TWIN Mode — Advisory Only
+
+In `DIGITAL_TWIN` mode, the server operates as a read-only calculation and
+decision-support tool. This means:
+
+- **No direct plant control** — no tools can write back to operational systems.
+- **No autonomous execution** — state-modifying tools (sessions, variable
+  writes) are blocked; EXECUTION requires separate approval architecture.
+- **No write-back to operational data** — the server computes answers and
+  recommendations but does not act on them.
+
+This makes it suitable for operator decision support, what-if analysis,
+and monitoring dashboards without introducing control risk.
+
+---
+
+## Tier 1 — Trusted Core (14 tools)
+
+Validated against NIST/experimental data. Available in all deployment modes.
+Each tool has documented accuracy bounds and clear error behavior.
+
+> For the full authoritative contract including version tracking, see
+> [MCP_CONTRACT.md](MCP_CONTRACT.md).
+
+| Tool | Category | Description |
+|------|----------|-------------|
+| `runFlash` | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
+| `runProcess` | CALCULATION | Process simulation from JSON definition |
+| `calculateStandard` | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN) |
+| `getPropertyTable` | CALCULATION | Property table across T or P range |
+| `getPhaseEnvelope` | CALCULATION | Full PT phase envelope |
+| `validateInput` | ADVISORY | Pre-flight input validation with typo correction |
+| `validateResults` | ADVISORY | Validate results against engineering design rules |
+| `searchComponents` | ADVISORY | Fuzzy search across 100+ components |
+| `getCapabilities` | ADVISORY | Structured capabilities manifest |
+| `getExample` | ADVISORY | Ready-to-use JSON templates |
+| `getSchema` | ADVISORY | JSON Schema definitions |
+| `getBenchmarkTrust` | ADVISORY | Per-tool validation status and accuracy bounds |
+| `checkToolAccess` | ADVISORY | Pre-flight tool access check |
+| `manageIndustrialProfile` | ADVISORY | Deployment profile management |
+
+### Auto-Validation
+
+Six calculation tools (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
+`calculateStandard`, and `runFlowAssurance`) automatically validate their
+output against engineering design rules. In governed deployment profiles,
+validation is automatically applied and cannot be disabled.
+
+Validation results include:
+
+- Convergence status
+- Consistency checks
+- Known limitations
+- Warnings for out-of-range conditions
+
+### Benchmark Trust
+
+Before relying on a tool for design decisions, query its validation status:
+
+```json
+{"action": "getTool", "toolName": "runFlash"}
+```
+
+Returns maturity level, reference validation cases, accuracy bounds, known
+limitations, and unsupported conditions.
+
+---
+
+## Tier 2 — Engineering Advanced (11 tools)
+
+Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
+and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
+code-level `enforceAccess()` — returns structured error JSON, not a silent skip.
+
+| Tool | Description |
+|------|-------------|
+| `runPVT` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
+| `runPipeline` | Multiphase pipeline flow (Beggs & Brill) |
+| `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
+| `crossValidateModels` | Cross-validate process under multiple EOS models |
+| `runParametricStudy` | Multi-variable parametric sweep |
+| `runBatch` | Multi-point sensitivity sweep |
+| `sizeEquipment` | Quick equipment sizing (separator, compressor) |
+| `compareProcesses` | Compare process configurations side by side |
+| `generateReport` | Structured engineering report generation |
+| `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
+| `queryDataCatalog` | Browse component, standards, material, and EOS databases |
+
+---
+
+## Tier 3 — Experimental (13 tools)
+
+Functional but limited validation or high-autonomy tools. `DESKTOP_ENGINEER`
+only. Blocked in all other modes by code-level `enforceAccess()`.
+Interfaces may change between minor versions.
+
+| Tool | Description |
+|------|-------------|
+| `runReservoir` | Material balance reservoir simulation |
+| `runFieldEconomics` | NPV/IRR/cash flow with fiscal regimes + decline curves |
+| `runDynamic` | Transient dynamic simulation with auto-instrumented PID controllers |
+| `runBioprocess` | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
+| `solveTask` | Autonomous task solver — results require engineer review |
+| `composeWorkflow` | Chain simulation steps into multi-domain workflows |
+| `manageSession` | Persistent simulation sessions |
+| `streamSimulation` | Async simulation with incremental polling |
+| `composeMultiServerWorkflow` | Multi-server orchestration |
+| `manageSecurity` | API key management, rate limiting, audit logging |
+| `manageState` | Persist/restore simulation states |
+| `manageValidationProfile` | Jurisdiction-specific validation profiles |
+| `runPlugin` | Run or list registered MCP runner plugins |
+
+### Enforcement Example
+
+When a blocked tool is called, the response is:
+
+```json
+{
+  "status": "blocked",
+  "tool": "solveTask",
+  "mode": "ENTERPRISE",
+  "tier": "EXPERIMENTAL",
+  "reason": "Tool 'solveTask' is not available in ENTERPRISE mode. This mode allows Tier 1 (TRUSTED_CORE) only.",
+  "remediation": "Switch to DESKTOP_ENGINEER mode or request approval for this tool."
+}
+```
+
+### Tool Categories
+
+Tool categories reflect increasing levels of operational impact and therefore
+increasing governance requirements.
+
+| Category | Description |
+|----------|-------------|
+| **ADVISORY** | Read-only, always safe — discovery, validation, inspection |
+| **CALCULATION** | Stateless engineering computation |
+| **EXECUTION** | State-modifying — sessions, variable writes, task solving |
+| **PLATFORM** | Infrastructure — security, persistence, multi-server |
 
 ---
 
@@ -86,81 +277,34 @@ Verify: `java -version` should show 17 or higher.
 
 ---
 
-## What Can an LLM Do with NeqSim?
+## Capabilities Overview
 
-The server exposes **42 tools**, **9 guided-workflow prompts**, and **11 browsable resources**.
+The server exposes 47 tools organized into three tiers plus platform tools,
+9 guided-workflow prompts, and 11 browsable resources.
 
-### Core Thermodynamic Tools
+## Complete Tool Inventory
 
-| Tool | Description |
-|------|-------------|
-| `runFlash` | Phase equilibrium flash (TP, PH, PS, TV, dew/bubble point, hydrate) across 6 EOS models |
-| `runBatch` | Multi-point sensitivity sweep (vary T, P, or composition) |
-| `getPropertyTable` | Property table across T or P range |
-| `getPhaseEnvelope` | Full PT phase envelope (bubble/dew curves, cricondenbar/therm) |
-| `validateInput` | Pre-flight validation with typo correction and range checking |
-| `searchComponents` | Fuzzy search across 100+ components in the database |
-| `getCapabilities` | Structured manifest of all NeqSim capabilities |
-| `getExample` | Ready-to-use JSON templates (flash, process, validation) |
-| `getSchema` | JSON Schema definitions for all tool inputs/outputs |
-
-### Process Simulation Tools
-
-| Tool | Description |
-|------|-------------|
-| `runProcess` | Build and run a complete flowsheet from JSON (separators, compressors, coolers, valves, columns, etc.) |
-| `crossValidateModels` | Run same process under multiple EOS and compare results |
-| `runParametricStudy` | Multi-variable parametric sweep with tabulated results |
+See the tier sections above for the governance model. Additional platform
+tools not listed in the three tiers:
 
 ### Process Automation (String-Addressable)
+
+These tools enable direct variable access on running simulations.
+Read-only tools are classified as **Tier 1** (available in all modes).
+Write operations (`setSimulationVariable`, `saveSimulationState`) are
+**Tier 2** — blocked in `DIGITAL_TWIN` and `ENTERPRISE` modes.
 
 | Tool | Description |
 |------|-------------|
 | `listSimulationUnits` | List all addressable equipment in a process |
 | `listUnitVariables` | List all variables (INPUT/OUTPUT) for a unit |
-| `getSimulationVariable` | Read a variable by dot-notation address (e.g. `HP Sep.gasOutStream.temperature`) |
+| `getSimulationVariable` | Read a variable by dot-notation address |
 | `setSimulationVariable` | Set an INPUT variable and re-run the process |
 | `saveSimulationState` | Save a complete process state as a JSON snapshot |
 | `compareSimulationStates` | Diff two state snapshots to find what changed |
 | `diagnoseAutomation` | Self-healing diagnostics with fuzzy name matching |
 | `getAutomationLearningReport` | Operation history, error patterns, and learned corrections |
-
-### Domain-Specific Simulation Tools
-
-| Tool | Description |
-|------|-------------|
-| `runPVT` | PVT lab experiments: CME, CVD, differential liberation, separator test, swelling, GOR, viscosity |
-| `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion analysis |
-| `calculateStandard` | Gas/oil quality per 22 standards (ISO 6976, AGA 8, GPA 2145, EN 16726, etc.) |
-| `runPipeline` | Multiphase pipeline flow with Beggs & Brill correlations |
-| `runReservoir` | Material balance reservoir simulation (tank model) |
-| `runFieldEconomics` | NPV, IRR, cash flow with fiscal regimes (NCS, UK) + decline curves |
-| `runDynamic` | Transient dynamic simulation with auto-instrumented PID controllers |
-| `runBioprocess` | Bioprocessing reactors: anaerobic digestion, fermentation, gasification, pyrolysis |
-
-### Session & Workflow Management Tools
-
-| Tool | Description |
-|------|-------------|
-| `manageSession` | Persistent simulation sessions: create, modify, run, snapshot, restore |
-| `solveTask` | Solve a complete engineering task from a high-level description |
-| `composeWorkflow` | Chain simulation steps into a multi-domain workflow |
-| `validateResults` | Validate simulation results against engineering design rules |
-| `generateReport` | Generate structured engineering reports from simulation results |
-| `runPlugin` | Run or list registered MCP runner plugins |
 | `getProgress` | Check progress of long-running simulations |
-
-### Advanced Platform Tools
-
-| Tool | Description |
-|------|-------------|
-| `streamSimulation` | Async simulations with incremental polling (parametric sweep, Monte Carlo, dynamic) |
-| `generateVisualization` | Inline SVG phase envelopes, Mermaid flowsheets, compressor maps, HTML tables |
-| `composeMultiServerWorkflow` | Multi-server orchestration (cost estimation, plant historian, CAD, safety) |
-| `manageSecurity` | API key management, rate limiting, audit logging |
-| `manageState` | Persist/restore simulation states across server restarts |
-| `manageValidationProfile` | Jurisdiction-specific validation (NCS, UKCS, GoM, Brazil, generic) |
-| `queryDataCatalog` | Browse thermodynamic databases: components, standards, materials, EOS models |
 
 ### Guided Workflow Prompts (9)
 
@@ -185,11 +329,11 @@ The server exposes **42 tools**, **9 guided-workflow prompts**, and **11 browsab
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool and input/output |
 | `neqsim://components` | Component families (hydrocarbons, acid gases, glycols, etc.) |
-| `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
+| `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW) |
 | `neqsim://standards` | Design standards catalog (ASME, API, DNV, ISO, NORSOK) |
 | `neqsim://standards/{code}` | Parameters for a specific design standard |
 | `neqsim://models` | Equation of state models with recommendations |
-| `neqsim://materials/{type}` | Material grades and properties (pipe, plate, casing) |
+| `neqsim://materials/{type}` | Material grades and properties |
 | `neqsim://data-tables` | All queryable database tables |
 
 ---
@@ -302,46 +446,18 @@ docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 
 ---
 
-## What Can an LLM Do With This?
-
-| Capability | Example Prompt | Tool |
-|---|---|---|
-| **Flash calculations** | "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?" | `runFlash` |
-| **Batch sensitivity** | "How does density change from 0 to 50 °C at 80 bara? Give me 10 data points." | `runBatch` |
-| **Property table** | "Get density, viscosity, Cp, and Z-factor from 10 to 100 bara at 25 °C" | `getPropertyTable` |
-| **Phase envelope** | "Plot the phase envelope for this natural gas composition" | `getPhaseEnvelope` |
-| **Process simulation** | "Simulate a gas going through a separator then a compressor to 120 bara" | `runProcess` |
-| **Input validation** | "Check if my process JSON is valid before running it" | `validateInput` |
-| **Component lookup** | "What components does NeqSim have that contain 'butane'?" | `searchComponents` |
-| **Capabilities** | "What can NeqSim calculate? Which EOS models are available?" | `getCapabilities` |
-
-### Quick Path vs Full Simulation
-
-| Need | Tool | Flowsheet Required? |
-|---|---|---|
-| Single property lookup | `runFlash` | No |
-| Multi-point sweep | `runBatch` or `getPropertyTable` | No |
-| Phase boundary | `getPhaseEnvelope` | No |
-| Multi-equipment process | `runProcess` | Yes (JSON definition) |
-
-The LLM discovers the tools automatically via MCP, reads the embedded examples
-and schemas to learn the JSON format, then calls the tools to compute answers.
-Every response includes **provenance metadata** (EOS model, assumptions,
-limitations, convergence status) for trust assessment.
-
----
-
-## Hero Demo: Example Conversation
+## Quick Start: Example Conversation
 
 **You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
 
-**LLM** *(internally calls `runFlash` with `flashType: "dewPointT"`)*
+**LLM** *(calls Tier 1 tool `runFlash` with `flashType: "dewPointT"`)*
 
 **LLM responds:** "The dew point temperature is -42.3°C at 50 bara (SRK equation of state, converged in 12 iterations). Below this temperature, liquid will begin to condense."
 
-Every response includes **provenance**: which EOS model was used, whether the calculation converged, and what limitations apply.
+Every response includes **provenance** (EOS model, convergence, limitations)
+and **auto-validation** against engineering design rules.
 
-**Try these:**
+**More examples:**
 
 > "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
 
@@ -349,7 +465,8 @@ Every response includes **provenance**: which EOS model was used, whether the ca
 
 > "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
 
-The LLM discovers NeqSim's tools automatically and calls them to compute rigorous answers — no coding needed.
+The LLM discovers NeqSim's tools automatically via MCP, reads the embedded
+examples and schemas, then calls the tools to compute rigorous answers.
 
 ---
 
@@ -545,282 +662,17 @@ target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
 
 ---
 
-## Available MCP Tools
+## Tool & Resource Reference
 
-### `runFlash` — Thermodynamic Flash Calculation
-
-Computes phase equilibrium for a fluid mixture. Returns per-phase densities,
-viscosities, thermal conductivities, heat capacities, compressibility factors,
-and compositions.
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `components` | JSON string | Component-to-mole-fraction map, e.g. `{"methane": 0.85, "ethane": 0.15}` |
-| `temperature` | number | Temperature value |
-| `temperatureUnit` | string | `C`, `K`, or `F` |
-| `pressure` | number | Pressure value |
-| `pressureUnit` | string | `bara`, `barg`, `Pa`, `kPa`, `MPa`, `psi`, or `atm` |
-| `eos` | string | Equation of state (see table below) |
-| `flashType` | string | Flash algorithm (see table below) |
-
-**Supported Equations of State:**
-
-| EOS | Full Name | Best For |
-|---|---|---|
-| `SRK` | Soave-Redlich-Kwong | General hydrocarbon systems (default) |
-| `PR` | Peng-Robinson | General purpose, slightly different liquid densities |
-| `CPA` | CPA-SRK | Systems with water, methanol, MEG, or other associating fluids |
-| `GERG2008` | GERG-2008 | High-accuracy natural gas (reference-quality) |
-| `PCSAFT` | PC-SAFT | Polymers, associating fluids |
-| `UMRPRU` | UMR-PRU with Mathias-Copeman | Advanced mixing rules |
-
-**Supported Flash Types:**
-
-| Flash Type | Description |
-|---|---|
-| `TP` | Temperature-Pressure flash (most common) |
-| `PH` | Pressure-Enthalpy flash (requires `enthalpy` in input) |
-| `PS` | Pressure-Entropy flash (requires `entropy` in input) |
-| `TV` | Temperature-Volume flash (requires `volume` in input) |
-| `dewPointT` | Dew point temperature at given pressure |
-| `dewPointP` | Dew point pressure at given temperature |
-| `bubblePointT` | Bubble point temperature at given pressure |
-| `bubblePointP` | Bubble point pressure at given temperature |
-| `hydrateTP` | Hydrate equilibrium temperature at given pressure |
-
-**Example call (via MCP JSON-RPC):**
-
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "runFlash",
-    "arguments": {
-      "components": "{\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}",
-      "temperature": 25.0,
-      "temperatureUnit": "C",
-      "pressure": 50.0,
-      "pressureUnit": "bara",
-      "eos": "SRK",
-      "flashType": "TP"
-    }
-  }
-}
-```
-
-**Example response (abbreviated):**
-
-```json
-{
-  "status": "success",
-  "flash": {
-    "model": "SRK",
-    "flashType": "TP",
-    "numberOfPhases": 1,
-    "phases": ["gas"]
-  },
-  "fluid": {
-    "properties": {
-      "gas": {
-        "density": { "value": 38.9, "unit": "kg/m3" },
-        "compressibilityFactor": { "value": 0.907, "unit": "" },
-        "viscosity": { "value": 1.17e-5, "unit": "Pa·s" },
-        "thermalConductivity": { "value": 0.038, "unit": "W/(m·K)" },
-        "Cp": { "value": 2350, "unit": "J/(kg·K)" }
-      }
-    },
-    "composition": {
-      "gas": {
-        "methane": { "value": 0.85 },
-        "ethane": { "value": 0.10 },
-        "propane": { "value": 0.05 }
-      }
-    }
-  }
-}
-```
-
-### `runProcess` — Process Simulation
-
-Builds and runs a flowsheet from a JSON definition. Supports streams, separators,
-compressors, coolers, heaters, valves, mixers, splitters, heat exchangers, distillation
-columns, and pipelines.
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `processJson` | JSON string | Complete process definition (see format below) |
-
-**Process JSON format:**
-
-```json
-{
-  "fluid": {
-    "model": "SRK",
-    "temperature": 298.15,
-    "pressure": 50.0,
-    "mixingRule": "classic",
-    "components": {
-      "methane": 0.85,
-      "ethane": 0.10,
-      "propane": 0.05
-    }
-  },
-  "process": [
-    {
-      "type": "Stream",
-      "name": "feed",
-      "properties": { "flowRate": [50000.0, "kg/hr"] }
-    },
-    {
-      "type": "Separator",
-      "name": "HP Sep",
-      "inlet": "feed"
-    },
-    {
-      "type": "Compressor",
-      "name": "Comp",
-      "inlet": "HP Sep.gasOut",
-      "properties": { "outletPressure": [80.0, "bara"] }
-    }
-  ]
-}
-```
-
-**Equipment types:** `Stream`, `Separator`, `Compressor`, `Cooler`, `Heater`,
-`Valve`, `Mixer`, `Splitter`, `HeatExchanger`, `DistillationColumn`, `Pipe`
-
-**Outlet port selectors** (for connecting equipment):
-
-| Port | Description |
-|---|---|
-| `<name>.gasOut` | Gas outlet from separator |
-| `<name>.liquidOut` | Liquid outlet from separator |
-| `<name>.oilOut` | Oil outlet from three-phase separator |
-| `<name>.waterOut` | Water outlet from three-phase separator |
-
-**Multiple fluids** — use `"fluids"` (plural) with named references:
-
-```json
-{
-  "fluids": {
-    "gas": { "model": "SRK", "temperature": 298.15, "pressure": 50.0, "components": {"methane": 0.9} },
-    "oil": { "model": "PR", "temperature": 350.0, "pressure": 100.0, "components": {"nC10": 1.0} }
-  },
-  "process": [
-    { "type": "Stream", "name": "gasFeed", "fluidRef": "gas", "properties": {"flowRate": [10000.0, "kg/hr"]} },
-    { "type": "Stream", "name": "oilFeed", "fluidRef": "oil", "properties": {"flowRate": [50000.0, "kg/hr"]} }
-  ]
-}
-```
-
-### `validateInput` — Pre-flight Validation
-
-Validates a flash or process JSON **before running it**. Catches common mistakes
-and returns actionable fix suggestions.
-
-**Checks performed:**
-- Component names exist in the database (suggests corrections for typos)
-- Temperature and pressure are in physically reasonable ranges
-- EOS model is recognized
-- Flash type is valid, and required specs are present (e.g. enthalpy for PH flash)
-- Composition sums are reasonable
-- Process equipment types are recognized
-- Duplicate equipment names detected
-
-**Example response (with errors):**
-
-```json
-{
-  "valid": false,
-  "issues": [
-    {
-      "severity": "error",
-      "code": "UNKNOWN_COMPONENT",
-      "message": "'metane' is not a known component. Did you mean 'methane'?"
-    },
-    {
-      "severity": "error",
-      "code": "UNKNOWN_MODEL",
-      "message": "'FAKEOS' is not a supported model. Valid: SRK, PR, CPA, GERG2008, PCSAFT, UMRPRU"
-    }
-  ]
-}
-```
-
-### `searchComponents` — Component Database Search
-
-Searches the NeqSim component database by name (partial matching, case-insensitive).
-
-**Examples:**
-- `query: "methane"` → `["methane"]`
-- `query: "meth"` → `["methane", "methanol", "dimethylether", ...]`
-- `query: ""` → all 100+ components
-
-### `getExample` — Example Templates
-
-Returns ready-to-use JSON examples. The LLM reads these to learn the format,
-then modifies them based on the user's requirements.
-
-**Available examples:**
-
-| Category | Name | Description |
-|---|---|---|
-| `flash` | `tp-simple-gas` | TP flash of a simple natural gas |
-| `flash` | `tp-two-phase` | TP flash producing gas + liquid phases |
-| `flash` | `dew-point-t` | Dew point temperature calculation |
-| `flash` | `bubble-point-p` | Bubble point pressure calculation |
-| `flash` | `cpa-with-water` | CPA EOS flash with water (associating fluid) |
-| `process` | `simple-separation` | Stream → Separator |
-| `process` | `compression-with-cooling` | Stream → Compressor → Cooler |
-| `validation` | `error-flash` | A deliberately invalid flash input |
-
-### `getSchema` — JSON Schemas
-
-Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
-
-**Available schemas:**
-
-| Tool Name | Types | Description |
-|---|---|---|
-| `run_flash` | `input`, `output` | Flash calculation JSON format |
-| `run_process` | `input`, `output` | Process simulation JSON format |
-| `validate_input` | `input`, `output` | Validator JSON format |
-| `search_components` | `input`, `output` | Component search JSON format |
-
----
-
-## Available MCP Resources (11 Endpoints)
-
-### Catalog Resources (Static)
-
-| URI | Description |
-|---|---|
-| `neqsim://example-catalog` | Full catalog of all examples with descriptions |
-| `neqsim://schema-catalog` | Full catalog of all JSON schemas |
-| `neqsim://components` | Component families: hydrocarbons, acid gases, glycols, olefins, etc. |
-| `neqsim://standards` | Design standards catalog: ASME, API, DNV, ISO, NORSOK |
-| `neqsim://models` | Equation of state models with usage recommendations |
-| `neqsim://data-tables` | All queryable tables in thermodynamic and design databases |
-
-### Template Resources (Parameterized)
-
-| URI Pattern | Description |
-|---|---|
-| `neqsim://examples/{category}/{name}` | Specific example by category and name |
-| `neqsim://schemas/{tool}/{type}` | Specific schema by tool name and type |
-| `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
-| `neqsim://standards/{code}` | Parameters for a specific design standard |
-| `neqsim://materials/{type}` | Material grades by type: pipe, plate, casing, etc. |
+For detailed parameter documentation, JSON formats, example calls, and
+response schemas for all tools and browsable resources, see
+**[docs/API_REFERENCE.md](docs/API_REFERENCE.md)**.
 
 ---
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 42 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 47 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
    `neqsim://components` and `neqsim://models` to discover available data.
@@ -872,8 +724,8 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.11.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 42 @Tool-annotated MCP tools
-    ├── NeqSimResources.java               # 4 @Resource + 7 @ResourceTemplate (11 endpoints)
+    ├── NeqSimTools.java                   # 47 @Tool-annotated MCP tools
+    ├── NeqSimResources.java               # 6 @Resource + 5 @ResourceTemplate (11 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
 Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
