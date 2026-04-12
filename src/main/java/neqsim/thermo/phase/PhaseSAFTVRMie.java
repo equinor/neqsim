@@ -1,5 +1,6 @@
 package neqsim.thermo.phase;
 
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -98,6 +99,62 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    */
   double[] aDispPerComp = null;
 
+  // ===== Association (CPA-style) fields =====
+  /** Toggle association contribution (1 = on, 0 = off). */
+  int useASSOC = 0;
+
+  /** Total number of association sites across all components. */
+  int totalNumberOfAssociationSites = 0;
+
+  /** Site offset for component i: first site of comp i is siteOffset[i]. */
+  int[] siteOffset = null;
+
+  /**
+   * Self-association scheme indicator. selfAssocScheme[comp][siteA][siteB] = 1 if site A can bond
+   * with site B on the same component (0 otherwise).
+   */
+  int[][][] selfAssocScheme = null;
+
+  /**
+   * Cross-association scheme indicator. crossAssocScheme[compI][compJ][siteA][siteB] = 1 if site A
+   * on comp I can bond with site B on comp J.
+   */
+  int[][][][] crossAssocScheme = null;
+
+  /**
+   * Association strength delta[siteI][siteJ] between flattened sites (global indexing). Delta =
+   * scheme * (exp(eps_HB/RT) - 1) * sigma_ij^3 * NA * 1e5 * kappa_ij * g_HS.
+   */
+  double[][] deltaAssoc = null;
+
+  /** Temperature derivative of delta. */
+  double[][] deltadTAssoc = null;
+
+  /** Sum of (1-XA)*ni over all sites: hcpatot = sum_i ni * sum_A (1 - X_Ai). */
+  double hcpatot = 0.0;
+  /** dh/dT. */
+  double hcpatotdT = 0.0;
+  /** d2h/dT2. */
+  double hcpatotdTdT = 0.0;
+
+  /** Association g (hard-sphere RDF used in delta). For SAFT-VR Mie this equals ghsSAFT. */
+  double gcpaAssoc = 1.0;
+  /** d(ln g)/dV in SI units (m^3). */
+  double gcpavAssoc = 0.0;
+  /** d2(ln g)/dV2 in SI units (m^6). */
+  double gcpavvAssoc = 0.0;
+  /** d3(ln g)/dV3 in SI units. */
+  double gcpavvvAssoc = 0.0;
+
+  /** Cached F_ASSOC value from volInit. */
+  double cachedFAssoc = 0.0;
+  /** Cached dF_ASSOC/dV_SI from volInit (m^-3). */
+  double cacheddFAssocDV = 0.0;
+  /** Cached d2F_ASSOC/dV_SI2 from volInit (m^-6), computed numerically. */
+  double cacheddFAssocDVDV = 0.0;
+  /** Whether cacheddFAssocDVDV is valid (computed after molar volume convergence). */
+  boolean assocDVDVValid = false;
+
   /**
    * Effective packing fraction parameterization coefficients from Lafitte 2013. c_i(lambda) =
    * A[i][0] + A[i][1]/(lambda-3) + A[i][2]/(lambda-3)^2 + A[i][3]/(lambda-3)^3 Rows: c1, c2, c3,
@@ -153,6 +210,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
+    if (initType == 0) {
+      initAssociationSchemes(numberOfComponents);
+    }
+
     // Note: PhaseEos.init() (via super) calls molarVolume() then Finit() for each component.
     // Do NOT call Finit() here before super.init() because the SAFT state (eta, aDisp, etc.)
     // has not been updated for the current composition/volume. The second Finit inside
@@ -170,6 +231,214 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       // For liquid/oil/aqueous, keep the classification from PhaseEos
       // (it correctly distinguishes OIL vs AQUEOUS by composition)
     }
+  }
+
+  /**
+   * Detects associating components and builds the site-site bonding scheme arrays. Called once at
+   * initType=0. Sets useASSOC=1 if any component has association sites.
+   *
+   * @param numberOfComponents number of components
+   */
+  private void initAssociationSchemes(int numberOfComponents) {
+    // Count total association sites
+    totalNumberOfAssociationSites = 0;
+    siteOffset = new int[numberOfComponents];
+    for (int i = 0; i < numberOfComponents; i++) {
+      siteOffset[i] = totalNumberOfAssociationSites;
+      // Only count sites for components that have VR Mie params AND association params
+      if (hasAssociationParams(i)) {
+        totalNumberOfAssociationSites += getComponent(i).getNumberOfAssociationSites();
+      }
+    }
+
+    if (totalNumberOfAssociationSites == 0) {
+      useASSOC = 0;
+      return;
+    }
+    useASSOC = 1;
+
+    // Build self-association scheme
+    selfAssocScheme = new int[numberOfComponents][][];
+    for (int i = 0; i < numberOfComponents; i++) {
+      int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      selfAssocScheme[i] = new int[nSitesI][nSitesI];
+      if (nSitesI > 0) {
+        setupAssociationScheme(selfAssocScheme[i], getComponent(i).getAssociationScheme(), nSitesI);
+      }
+    }
+
+    // Build cross-association scheme
+    crossAssocScheme = new int[numberOfComponents][numberOfComponents][][];
+    for (int i = 0; i < numberOfComponents; i++) {
+      for (int j = 0; j < numberOfComponents; j++) {
+        int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+        int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
+        crossAssocScheme[i][j] = new int[nSitesI][nSitesJ];
+        if (i == j) {
+          // Self interaction: copy self scheme
+          for (int a = 0; a < nSitesI; a++) {
+            for (int b = 0; b < nSitesJ; b++) {
+              crossAssocScheme[i][j][a][b] = selfAssocScheme[i][a][b];
+            }
+          }
+        } else if (nSitesI > 0 && nSitesJ > 0) {
+          // Cross-association: use CR-1 combining rule
+          setupCrossAssociationScheme(crossAssocScheme[i][j],
+              getComponent(i).getAssociationScheme(), nSitesI,
+              getComponent(j).getAssociationScheme(), nSitesJ);
+        }
+      }
+    }
+
+    // Allocate delta arrays (global site indexing)
+    deltaAssoc = new double[totalNumberOfAssociationSites][totalNumberOfAssociationSites];
+    deltadTAssoc = new double[totalNumberOfAssociationSites][totalNumberOfAssociationSites];
+
+    // Initialize XA=1.0 on each component
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      ci.initAssociationArrays(nSites);
+    }
+  }
+
+  /**
+   * Checks whether component i has valid SAFT-VR Mie association parameters (both VR Mie segment
+   * params and association energy/volume must be set).
+   *
+   * @param compIndex component index
+   * @return true if component has association params
+   */
+  private boolean hasAssociationParams(int compIndex) {
+    return getComponent(compIndex).getNumberOfAssociationSites() > 0
+        && getComponent(compIndex).getAssociationEnergySAFTVRMie() != 0.0
+        && getComponent(compIndex).getAssociationVolumeSAFT() != 0.0
+        && ((ComponentSAFTVRMie) getComponent(compIndex)).getSigmaSAFTVRMie() > 0;
+  }
+
+  /**
+   * Sets up self-association scheme matrix for a given scheme type. Following the standard CPA/SAFT
+   * convention: sites are split into electron donors and acceptors.
+   *
+   * @param scheme output matrix [nSites][nSites] to fill with 0/1
+   * @param schemeName scheme name from database: "4C", "2B", "3B", "1A", "2A"
+   * @param nSites number of sites
+   */
+  private void setupAssociationScheme(int[][] scheme, String schemeName, int nSites) {
+    if (schemeName == null) {
+      return;
+    }
+
+    if ("4C".equals(schemeName) && nSites >= 4) {
+      // Sites 0,1 = electron donors (e.g. H), sites 2,3 = acceptors (e.g. lone pairs)
+      // Donors bond with acceptors only
+      scheme[0][2] = 1;
+      scheme[0][3] = 1;
+      scheme[1][2] = 1;
+      scheme[1][3] = 1;
+      scheme[2][0] = 1;
+      scheme[2][1] = 1;
+      scheme[3][0] = 1;
+      scheme[3][1] = 1;
+    } else if ("2B".equals(schemeName) && nSites >= 2) {
+      // Site 0 = donor, site 1 = acceptor
+      scheme[0][1] = 1;
+      scheme[1][0] = 1;
+    } else if ("3B".equals(schemeName) && nSites >= 3) {
+      // Sites 0,1 = donors, site 2 = acceptor; donor-acceptor bonding
+      scheme[0][2] = 1;
+      scheme[1][2] = 1;
+      scheme[2][0] = 1;
+      scheme[2][1] = 1;
+    } else if ("1A".equals(schemeName) && nSites >= 1) {
+      // Single site: self-bonds
+      scheme[0][0] = 1;
+    } else if ("2A".equals(schemeName) && nSites >= 2) {
+      // Two identical sites: all bond with all
+      scheme[0][0] = 1;
+      scheme[0][1] = 1;
+      scheme[1][0] = 1;
+      scheme[1][1] = 1;
+    }
+  }
+
+  /**
+   * Sets up cross-association scheme between two components using CR-1 combining rule. Donors on
+   * one component bond with acceptors on the other.
+   *
+   * @param scheme output matrix [nSitesI][nSitesJ]
+   * @param schemeI scheme name of component I
+   * @param nSitesI number of sites on I
+   * @param schemeJ scheme name of component J
+   * @param nSitesJ number of sites on J
+   */
+  private void setupCrossAssociationScheme(int[][] scheme, String schemeI, int nSitesI,
+      String schemeJ, int nSitesJ) {
+    // Simple approach: identify donor/acceptor sites for each component
+    // and allow cross donor-acceptor bonding
+    boolean[] donorsI = getSiteDonors(schemeI, nSitesI);
+    boolean[] acceptorsI = getSiteAcceptors(schemeI, nSitesI);
+    boolean[] donorsJ = getSiteDonors(schemeJ, nSitesJ);
+    boolean[] acceptorsJ = getSiteAcceptors(schemeJ, nSitesJ);
+
+    for (int a = 0; a < nSitesI; a++) {
+      for (int b = 0; b < nSitesJ; b++) {
+        if ((donorsI[a] && acceptorsJ[b]) || (acceptorsI[a] && donorsJ[b])) {
+          scheme[a][b] = 1;
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns donor mask for sites of a given scheme type.
+   *
+   * @param schemeName scheme name
+   * @param nSites number of sites
+   * @return boolean array where true = donor
+   */
+  private boolean[] getSiteDonors(String schemeName, int nSites) {
+    boolean[] donors = new boolean[nSites];
+    if ("4C".equals(schemeName) && nSites >= 4) {
+      donors[0] = true;
+      donors[1] = true; // sites 0,1 are donors
+    } else if ("2B".equals(schemeName) && nSites >= 2) {
+      donors[0] = true;
+    } else if ("3B".equals(schemeName) && nSites >= 3) {
+      donors[0] = true;
+      donors[1] = true;
+    } else if ("1A".equals(schemeName) && nSites >= 1) {
+      donors[0] = true;
+    } else if ("2A".equals(schemeName) && nSites >= 2) {
+      donors[0] = true;
+      donors[1] = true;
+    }
+    return donors;
+  }
+
+  /**
+   * Returns acceptor mask for sites of a given scheme type.
+   *
+   * @param schemeName scheme name
+   * @param nSites number of sites
+   * @return boolean array where true = acceptor
+   */
+  private boolean[] getSiteAcceptors(String schemeName, int nSites) {
+    boolean[] acceptors = new boolean[nSites];
+    if ("4C".equals(schemeName) && nSites >= 4) {
+      acceptors[2] = true;
+      acceptors[3] = true; // sites 2,3 are acceptors
+    } else if ("2B".equals(schemeName) && nSites >= 2) {
+      acceptors[1] = true;
+    } else if ("3B".equals(schemeName) && nSites >= 3) {
+      acceptors[2] = true;
+    } else if ("1A".equals(schemeName) && nSites >= 1) {
+      acceptors[0] = true;
+    } else if ("2A".equals(schemeName) && nSites >= 2) {
+      acceptors[0] = true;
+      acceptors[1] = true;
+    }
+    return acceptors;
   }
 
   // ===== Volume initialization =====
@@ -257,6 +526,52 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
         }
       }
     }
+
+    // Association: compute g derivatives and delta for current volume, solve XA, compute hcpatot
+    if (useASSOC > 0) {
+      initAssocGDerivatives();
+      computeDeltaAssoc();
+      solveAssociation();
+      calcAssocHCPA();
+
+      // Cache F_ASSOC value
+      cachedFAssoc = F_ASSOC_SAFT();
+
+      // Analytical dF/dV from Q-function stationarity (Michelsen-Hendriks):
+      // dF_assoc/dV = 0.5 * (1/V - d(ln g)/dV) * hcpatot
+      // This is exact because at the converged XA, partial derivatives w.r.t. XA vanish.
+      cacheddFAssocDV = 0.5 / volumeSAFT * (1.0 - volumeSAFT * gcpavAssoc) * hcpatot;
+
+      // NOTE: cacheddFAssocDVDV is NOT computed here. It is computed on-demand
+      // in dF_ASSOC_SAFTdVdV() via cloning + numerical differentiation, because the
+      // Michelsen-Hendriks Q-function correction for d2F/dV2 requires the full implicit
+      // XA response which cannot be captured by the product rule of the dFdV formula
+      // (hcpatot is nearly constant for strong association like water).
+      assocDVDVValid = false;
+    }
+  }
+
+  /**
+   * Recomputes the base SAFT quantities (nSAFT, dnSAFTdV, etc.) for the current molarVolume. This
+   * is used during numerical association derivative computation to update the SAFT state without
+   * running a full volInit (which would recurse).
+   */
+  private void recomputeSAFTBaseQuantities() {
+    // Recompute the packing fraction and its volume derivatives for the current molarVolume
+    volumeSAFT = getVolume() * 1.0e-5;
+    double nMoles = getNumberOfMolesInPhase();
+    double dAvg3 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double xi = getComponent(i).getNumberOfMolesInPhase() / nMoles;
+      dAvg3 += xi * getComponent(i).getmSAFTi()
+          * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
+    }
+    nSAFT = Math.PI / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * dAvg3 / volumeSAFT;
+    if (nSAFT < 0 || nSAFT > 0.55) {
+      nSAFT = Math.max(1e-15, Math.min(0.54, nSAFT));
+    }
+    dnSAFTdV = -nSAFT / volumeSAFT;
+    dnSAFTdVdV = 2.0 * nSAFT / (volumeSAFT * volumeSAFT);
   }
 
   /**
@@ -1052,48 +1367,571 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     return result;
   }
 
+  // ===== Association contribution (SAFT-VR Mie) =====
+
+  /**
+   * Initializes association-related quantities for the current volume. Computes the association
+   * radial distribution function and its volume derivatives from the SAFT hard-sphere model.
+   */
+  private void initAssocGDerivatives() {
+    if (useASSOC == 0) {
+      return;
+    }
+    double eta = nSAFT;
+
+    // g for association = hard-sphere contact RDF (Carnahan-Starling)
+    double om = 1.0 - eta;
+    gcpaAssoc = (1.0 - eta / 2.0) / (om * om * om);
+
+    // d(ln g)/d(eta) = -1/(2-eta) + 3/(1-eta) = (5 - 2*eta)/((2-eta)*(1-eta))
+    double dlngDeta = (5.0 - 2.0 * eta) / ((2.0 - eta) * (1.0 - eta));
+
+    // d(ln g)/dV_SI = d(ln g)/d(eta) * d(eta)/dV_SI
+    // d(eta)/dV_SI = dnSAFTdV (already in SI units, m^-3)
+    gcpavAssoc = dlngDeta * dnSAFTdV;
+
+    // d2(ln g)/dV2: product rule d/dV[dlng/deta * deta/dV]
+    double d2lngDeta2 = calcD2LngDeta2(eta);
+    gcpavvAssoc = d2lngDeta2 * dnSAFTdV * dnSAFTdV + dlngDeta * dnSAFTdVdV;
+
+    // d3(ln g)/dV3: numerical
+    double dEtaV = Math.max(Math.abs(eta) * 1.0e-5, 1.0e-12);
+    double etaP = eta + dEtaV;
+    double etaM = Math.max(eta - dEtaV, 1.0e-15);
+    dEtaV = (etaP - etaM) / 2.0;
+    double dlngDeP = (5.0 - 2.0 * etaP) / ((2.0 - etaP) * (1.0 - etaP));
+    double dlngDeM = (5.0 - 2.0 * etaM) / ((2.0 - etaM) * (1.0 - etaM));
+    double d3lngDeta3 = (dlngDeP - 2.0 * dlngDeta + dlngDeM) / (dEtaV * dEtaV);
+    // Approximation using third volume derivative:
+    // dnSAFTdVdVdV = -6 * pi/6 * N_A * n / V^4 * dSAFT
+    double dnSAFTdVdVdV = -3.0 * dnSAFTdVdV / volumeSAFT;
+    gcpavvvAssoc = d3lngDeta3 * dnSAFTdV * dnSAFTdV * dnSAFTdV
+        + 3.0 * d2lngDeta2 * dnSAFTdV * dnSAFTdVdV + dlngDeta * dnSAFTdVdVdV;
+  }
+
+  /**
+   * Second derivative of ln(g_HS) with respect to packing fraction eta.
+   *
+   * @param eta packing fraction
+   * @return d2(ln g)/d(eta)2
+   */
+  private double calcD2LngDeta2(double eta) {
+    // ln(g) = ln(2-eta) - ln(2) - 3*ln(1 - eta)
+    // d(ln g)/d(eta) = -1/(2-eta) + 3/(1-eta) = (5 - 2*eta)/((2-eta)*(1-eta))
+    // d2(ln g)/d(eta)2: numerical for robustness
+    double dE = Math.max(Math.abs(eta) * 1.0e-5, 1.0e-12);
+    double eP = eta + dE;
+    double eM = Math.max(eta - dE, 1.0e-15);
+    dE = (eP - eM) / 2.0;
+    double fP = (5.0 - 2.0 * eP) / ((2.0 - eP) * (1.0 - eP));
+    double fM = (5.0 - 2.0 * eM) / ((2.0 - eM) * (1.0 - eM));
+    return (fP - fM) / (2.0 * dE);
+  }
+
+  /**
+   * Computes the association strength delta for all site-site pairs. Uses the SAFT-VR Mie combining
+   * rules: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1), kappa_ij = sqrt(kappa_i * kappa_j) *
+   * Wolbach-Sandler correction, sigma_ij = (sigma_i + sigma_j)/2.
+   */
+  private void computeDeltaAssoc() {
+    if (useASSOC == 0) {
+      return;
+    }
+    double NA = ThermodynamicConstantsInterface.avagadroNumber;
+    double RGas = ThermodynamicConstantsInterface.R;
+
+    for (int i = 0; i < numberOfComponents; i++) {
+      int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      for (int j = 0; j < numberOfComponents; j++) {
+        int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
+        if (nSitesI == 0 || nSitesJ == 0) {
+          continue;
+        }
+
+        // Cross parameters
+        double sigI = getComponent(i).getSigmaSAFTi();
+        double sigJ = getComponent(j).getSigmaSAFTi();
+        double sigIJ = (sigI + sigJ) / 2.0;
+        double sigIJ3 = sigIJ * sigIJ * sigIJ;
+
+        double epsHBI = getComponent(i).getAssociationEnergySAFTVRMie(); // J/mol
+        double epsHBJ = getComponent(j).getAssociationEnergySAFTVRMie();
+        double epsHBIJ = (epsHBI + epsHBJ) / 2.0; // CR-1
+
+        double kappaI = getComponent(i).getAssociationVolumeSAFT();
+        double kappaJ = getComponent(j).getAssociationVolumeSAFT();
+        // Wolbach-Sandler correction: sqrt(sigma_i * sigma_j) / sigmaIJ
+        double kappaIJ = Math.sqrt(kappaI * kappaJ) * Math.pow(Math.sqrt(sigI * sigJ) / sigIJ, 3.0);
+
+        // Delta = (exp(eps_HB/(RT)) - 1) * sigma_ij^3 * N_A * kappa * g_HS
+        // Note: NO 1e5 factor here because the XA solver divides by volumeSAFT (=V_m3),
+        // not getVolume() (=V_neqsim = V_m3*1e5). The density is n/V_m3 [mol/m^3]
+        // and we need molecular density n*NA/V_m3, hence the NA factor.
+        double expTerm = Math.exp(epsHBIJ / (RGas * temperature)) - 1.0;
+        double deltaBase = expTerm * sigIJ3 * NA * kappaIJ * gcpaAssoc;
+
+        // Temperature derivative: d(delta)/dT
+        double dExpTermDT = -epsHBIJ / (RGas * temperature * temperature)
+            * Math.exp(epsHBIJ / (RGas * temperature));
+        double deltadTBase = dExpTermDT * sigIJ3 * NA * kappaIJ * gcpaAssoc;
+
+        // Fill global site arrays with scheme indicator
+        for (int a = 0; a < nSitesI; a++) {
+          for (int b = 0; b < nSitesJ; b++) {
+            int globalA = siteOffset[i] + a;
+            int globalB = siteOffset[j] + b;
+            deltaAssoc[globalA][globalB] = crossAssocScheme[i][j][a][b] * deltaBase;
+            deltadTAssoc[globalA][globalB] = crossAssocScheme[i][j][a][b] * deltadTBase;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Solves the association fraction X_A for all sites using successive substitution. X_A = 1 / (1 +
+   * (1/V) * sum_j nj * sum_B delta_AB * X_B).
+   *
+   * @return true if converged
+   */
+  private boolean solveAssociation() {
+    if (useASSOC == 0) {
+      return true;
+    }
+
+    int maxIter = 500;
+    double tol = 1.0e-12;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+      double maxChange = 0.0;
+
+      for (int i = 0; i < numberOfComponents; i++) {
+        ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+        int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+
+        for (int a = 0; a < nSitesI; a++) {
+          double sum = 0.0;
+          for (int j = 0; j < numberOfComponents; j++) {
+            ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
+            int nSitesJ =
+                hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
+            double nj = cj.getNumberOfMolesInPhase();
+            for (int b = 0; b < nSitesJ; b++) {
+              int globalA = siteOffset[i] + a;
+              int globalB = siteOffset[j] + b;
+              sum += nj / volumeSAFT * deltaAssoc[globalA][globalB] * cj.getXsiteAssoc()[b];
+            }
+          }
+          double xNew = 1.0 / (1.0 + sum);
+          double xOld = ci.getXsiteAssoc()[a];
+          maxChange = Math.max(maxChange, Math.abs(xNew - xOld));
+          ci.setXsiteAssoc(a, xNew);
+        }
+      }
+
+      if (maxChange < tol) {
+        return true;
+      }
+    }
+    return false; // Did not converge
+  }
+
+  /**
+   * Calculates hcpatot = sum_i ni * sum_A (1 - X_Ai). Also computes T derivatives.
+   */
+  private void calcAssocHCPA() {
+    if (useASSOC == 0) {
+      hcpatot = 0.0;
+      hcpatotdT = 0.0;
+      hcpatotdTdT = 0.0;
+      return;
+    }
+
+    hcpatot = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      double ni = ci.getNumberOfMolesInPhase();
+      for (int a = 0; a < nSites; a++) {
+        hcpatot += ni * (1.0 - ci.getXsiteAssoc()[a]);
+      }
+    }
+
+    // Temperature derivative of hcpatot: numerical (requires solving X at perturbed T)
+    // For now, use analytical approximation through deltadT
+    calcHcpatotDerivatives();
+  }
+
+  /**
+   * Calculates temperature derivatives of hcpatot using perturbation of delta. dh/dT = sum_i ni *
+   * sum_A (-dX_A/dT), where the XA T-derivative comes from implicit differentiation of the
+   * association equation.
+   */
+  private void calcHcpatotDerivatives() {
+    // Numerical approach: perturb temperature, re-solve XA, take finite difference
+    double dT = temperature * 1.0e-6;
+
+    // Save current XA
+    double[][] xSave = new double[numberOfComponents][];
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      xSave[i] = new double[nSites];
+      for (int a = 0; a < nSites; a++) {
+        xSave[i][a] = ci.getXsiteAssoc()[a];
+      }
+    }
+
+    // Perturb T+ : recompute delta and solve
+    double origTemp = temperature;
+    temperature = origTemp + dT;
+    computeDeltaAssoc();
+    solveAssociation();
+
+    double hPlus = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      for (int a = 0; a < nSites; a++) {
+        hPlus += ci.getNumberOfMolesInPhase() * (1.0 - ci.getXsiteAssoc()[a]);
+      }
+    }
+
+    // Restore and perturb T-
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      for (int a = 0; a < xSave[i].length; a++) {
+        ci.setXsiteAssoc(a, xSave[i][a]);
+      }
+    }
+    temperature = origTemp - dT;
+    computeDeltaAssoc();
+    solveAssociation();
+
+    double hMinus = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      for (int a = 0; a < nSites; a++) {
+        hMinus += ci.getNumberOfMolesInPhase() * (1.0 - ci.getXsiteAssoc()[a]);
+      }
+    }
+
+    hcpatotdT = (hPlus - hMinus) / (2.0 * dT);
+    hcpatotdTdT = (hPlus - 2.0 * hcpatot + hMinus) / (dT * dT);
+
+    // Restore original state
+    temperature = origTemp;
+    computeDeltaAssoc();
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      for (int a = 0; a < xSave[i].length; a++) {
+        ci.setXsiteAssoc(a, xSave[i][a]);
+      }
+    }
+    solveAssociation();
+  }
+
+  /**
+   * Performs the full association calculation sequence: compute g and its derivatives, compute
+   * delta, solve for XA, and compute hcpatot. Called inside the molarVolume solver at each
+   * iteration.
+   */
+  private void solveAssociationFull() {
+    if (useASSOC == 0) {
+      return;
+    }
+    initAssocGDerivatives();
+    computeDeltaAssoc();
+    solveAssociation();
+    calcAssocHCPA();
+  }
+
+  // ===== Association Helmholtz free energy and derivatives =====
+
+  /**
+   * Association Helmholtz free energy following PCSAFTa/CPA convention. F_ASSOC = sum_i ni * sum_A
+   * [ln(X_Ai) - X_Ai/2 + 1/2].
+   *
+   * @return F_ASSOC
+   */
+  public double F_ASSOC_SAFT() {
+    if (useASSOC == 0) {
+      return 0.0;
+    }
+    double sum = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+      int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+      double ni = ci.getNumberOfMolesInPhase();
+      for (int a = 0; a < nSites; a++) {
+        double xa = ci.getXsiteAssoc()[a];
+        sum += ni * (Math.log(xa) - xa / 2.0 + 0.5);
+      }
+    }
+    return sum;
+  }
+
+  /**
+   * dF_ASSOC/dV (w.r.t. V_m3). Returns cached value computed during volInit.
+   *
+   * @return dF_ASSOC/dV_m3
+   */
+  public double dF_ASSOC_SAFTdV() {
+    if (useASSOC == 0) {
+      return 0.0;
+    }
+    return cacheddFAssocDV;
+  }
+
+  /**
+   * d2F_ASSOC/dV2 (w.r.t. V_m3). Computed via cloned-phase numerical differentiation to correctly
+   * capture the full implicit XA response (Michelsen-Hendriks Q-function correction). The
+   * analytical product-rule of dFdV fails for strong association (e.g., water) because hcpatot is
+   * nearly V-independent while F_ASSOC (through ln XA) varies steeply.
+   *
+   * @return second volume derivative in SI units (m^-6)
+   */
+  public double dF_ASSOC_SAFTdVdV() {
+    if (useASSOC == 0) {
+      return 0.0;
+    }
+    if (!assocDVDVValid) {
+      computeAssocDVDV();
+    }
+    return cacheddFAssocDVDV;
+  }
+
+  /**
+   * Computes d2F_ASSOC/dV_SI2 numerically via cloned phases. Clones the phase, perturbs molar
+   * volume, runs volInit on the clone (which re-solves XA), and takes central difference of
+   * F_ASSOC. This avoids corrupting the original phase state.
+   */
+  private void computeAssocDVDV() {
+    double vm = getMolarVolume();
+    double dvm = vm * 1.0e-6;
+    double n = numberOfMolesInPhase;
+    double dVneq = dvm * n;
+    double dVSI = dVneq * 1.0e-5;
+    double F0 = F_ASSOC_SAFT();
+
+    PhaseSAFTVRMie clonePlus = (PhaseSAFTVRMie) this.clone();
+    clonePlus.setMolarVolume(vm + dvm);
+    clonePlus.volInit();
+    double FPlus = clonePlus.F_ASSOC_SAFT();
+
+    PhaseSAFTVRMie cloneMinus = (PhaseSAFTVRMie) this.clone();
+    cloneMinus.setMolarVolume(vm - dvm);
+    cloneMinus.volInit();
+    double FMinus = cloneMinus.F_ASSOC_SAFT();
+
+    // Use fresh F0, not cachedFAssoc, to ensure consistency
+    cacheddFAssocDVDV = (FPlus - 2.0 * F0 + FMinus) / (dVSI * dVSI);
+    assocDVDVValid = true;
+  }
+
+  /**
+   * dF_ASSOC/dT.
+   *
+   * @return temperature derivative
+   */
+  public double dF_ASSOC_SAFTdT() {
+    if (useASSOC == 0) {
+      return 0.0;
+    }
+    return -0.5 * hcpatotdT;
+  }
+
+  /**
+   * d2F_ASSOC/dT2.
+   *
+   * @return second temperature derivative
+   */
+  public double dF_ASSOC_SAFTdTdT() {
+    if (useASSOC == 0) {
+      return 0.0;
+    }
+    return -0.5 * hcpatotdTdT;
+  }
+
+  /**
+   * d2F_ASSOC/dTdV (w.r.t. V_m3). Numerical via central difference.
+   *
+   * @return cross derivative
+   */
+  public double dF_ASSOC_SAFTdTdV() {
+    if (useASSOC == 0) {
+      return 0.0;
+    }
+    // Numerical: perturb volume, compute dFdT at V+dV and V-dV
+    double Vtotal = getMolarVolume() * getNumberOfMolesInPhase();
+    double dV = Math.max(Math.abs(Vtotal) * 1.0e-6, 1.0e-15);
+    double n = getNumberOfMolesInPhase();
+    double vmOrig = getMolarVolume();
+
+    setMolarVolume((Vtotal + dV) / n);
+    volInit();
+    solveAssociationFull();
+    double dFdTplus = dF_ASSOC_SAFTdT();
+
+    setMolarVolume((Vtotal - dV) / n);
+    volInit();
+    solveAssociationFull();
+    double dFdTminus = dF_ASSOC_SAFTdT();
+
+    // Restore
+    setMolarVolume(vmOrig);
+    volInit();
+    solveAssociationFull();
+
+    return (dFdTplus - dFdTminus) / (2.0 * dV);
+  }
+
+  /**
+   * Returns total number of association sites in this phase.
+   *
+   * @return total sites
+   */
+  public int getTotalNumberOfAssociationSites() {
+    return totalNumberOfAssociationSites;
+  }
+
+  /**
+   * Returns association toggle.
+   *
+   * @return useASSOC
+   */
+  public int getUseASSOC() {
+    return useASSOC;
+  }
+
+  /**
+   * Returns hcpatot (sum of (1-XA)*n over all sites).
+   *
+   * @return hcpatot
+   */
+  public double getHcpatot() {
+    return hcpatot;
+  }
+
+  /**
+   * Returns association g (hard-sphere contact RDF used in delta).
+   *
+   * @return gcpaAssoc
+   */
+  public double getGcpaAssoc() {
+    return gcpaAssoc;
+  }
+
+  /**
+   * Returns the cross-association scheme indicator between sites of two components.
+   *
+   * @param comp1 component 1 index
+   * @param comp2 component 2 index
+   * @param site1 site index on comp1
+   * @param site2 site index on comp2
+   * @return 1 if sites can bond, 0 otherwise
+   */
+  public int getCrossAssociationScheme(int comp1, int comp2, int site1, int site2) {
+    if (crossAssocScheme == null || comp1 >= crossAssocScheme.length
+        || comp2 >= crossAssocScheme[comp1].length || site1 >= crossAssocScheme[comp1][comp2].length
+        || site2 >= crossAssocScheme[comp1][comp2][site1].length) {
+      return 0;
+    }
+    return crossAssocScheme[comp1][comp2][site1][site2];
+  }
+
+  /**
+   * Returns the global delta between two sites (global indexing).
+   *
+   * @param globalSiteA global site index A
+   * @param globalSiteB global site index B
+   * @return delta value
+   */
+  public double getDeltaAssoc(int globalSiteA, int globalSiteB) {
+    if (deltaAssoc == null) {
+      return 0.0;
+    }
+    return deltaAssoc[globalSiteA][globalSiteB];
+  }
+
+  /**
+   * Returns the site offset for component i (first global site index of component i).
+   *
+   * @param compIndex component index
+   * @return site offset
+   */
+  public int getSiteOffset(int compIndex) {
+    if (siteOffset == null) {
+      return 0;
+    }
+    return siteOffset[compIndex];
+  }
+
   // ===== Helmholtz free energy and derivatives =====
 
   /** {@inheritDoc} */
   @Override
   public double getF() {
-    return useHS * F_HC_SAFT() + useDISP * F_DISP_SAFT();
+    return useHS * F_HC_SAFT() + useDISP * F_DISP_SAFT() + useASSOC * F_ASSOC_SAFT();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
-    return (useHS * dF_HC_SAFTdV() + useDISP * dF_DISP_SAFTdV()) * 1.0e-5;
+    return (useHS * dF_HC_SAFTdV() + useDISP * dF_DISP_SAFTdV() + useASSOC * dF_ASSOC_SAFTdV())
+        * 1.0e-5;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    return (useHS * dF_HC_SAFTdVdV() + useDISP * dF_DISP_SAFTdVdV()) * 1.0e-10;
+    return (useHS * dF_HC_SAFTdVdV() + useDISP * dF_DISP_SAFTdVdV()
+        + useASSOC * dF_ASSOC_SAFTdVdV()) * 1.0e-10;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdVdV() {
-    return 0.0;
+    // Numerical third volume derivative via central difference of dFdVdV
+    double Vtotal = getMolarVolume() * getNumberOfMolesInPhase(); // neqsim volume
+    double dV = Math.max(Math.abs(Vtotal) * 1.0e-5, 1.0e-15);
+    double n = getNumberOfMolesInPhase();
+
+    double vmOrig = getMolarVolume();
+
+    setMolarVolume((Vtotal + dV) / n);
+    volInit();
+    double dFdVdVplus = dFdVdV();
+
+    setMolarVolume((Vtotal - dV) / n);
+    volInit();
+    double dFdVdVminus = dFdVdV();
+
+    // Restore original state
+    setMolarVolume(vmOrig);
+    volInit();
+
+    return (dFdVdVplus - dFdVdVminus) / (2.0 * dV) * 1.0e-5;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdT() {
-    return useHS * dF_HC_SAFTdT() + useDISP * dF_DISP_SAFTdT();
+    return useHS * dF_HC_SAFTdT() + useDISP * dF_DISP_SAFTdT() + useASSOC * dF_ASSOC_SAFTdT();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdT() {
-    return useHS * dF_HC_SAFTdTdT() + useDISP * dF_DISP_SAFTdTdT();
+    return useHS * dF_HC_SAFTdTdT() + useDISP * dF_DISP_SAFTdTdT() + useASSOC * dF_ASSOC_SAFTdTdT();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    return (useHS * dF_HC_SAFTdTdV() + useDISP * dF_DISP_SAFTdTdV()) * 1.0e-5;
+    return (useHS * dF_HC_SAFTdTdV() + useDISP * dF_DISP_SAFTdTdV()
+        + useASSOC * dF_ASSOC_SAFTdTdV()) * 1.0e-5;
   }
 
   // ===== Hard-chain contribution =====
@@ -1327,9 +2165,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     setMolarVolume(initialVmNeqsim);
 
     // Volume solver for SAFT-VR Mie.
-    // For chain molecules (m > 1), liquid roots use scan+bisect for robustness.
-    // Gas roots and monomer (m=1) fluids use homotopy continuation + Newton.
+    // For chain molecules (m > 1) or associated fluids, use scan+bisect for robustness.
+    // Gas roots and non-associated monomer (m=1) fluids use homotopy continuation + Newton.
     boolean needsChainCorrection = mmin1SAFT > 1.0e-10 || calcmmin1SAFT() > 1.0e-10;
+    boolean needsScanBisect = needsChainCorrection || useASSOC > 0;
     gMieCorrectionEnabled = true;
 
     // Compute SAFT segment volume for packing fraction (eta) calculations
@@ -1352,8 +2191,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       segVolForCheck *= Math.PI / 6.0 * 6.023e23;
     }
 
-    if (needsChainCorrection && pt != PhaseType.GAS && segVolForCheck > 1e-15) {
-      // --- LIQUID ROOT for chain molecules: scan + bisect at full g_Mie ---
+    if (needsScanBisect && pt != PhaseType.GAS && segVolForCheck > 1e-15) {
+      // --- LIQUID ROOT for chain molecules or associated fluids: scan + bisect ---
       gMieBlendFraction = 1.0;
 
       // Scan P(V) from dense (eta=0.52) to dilute (eta=0.05) to find liquid bracket
@@ -1435,16 +2274,21 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
           } while (Math.abs(logVm - oldLogVm) > 1.0e-8 && iter < 300);
         }
       }
-    } else if (needsChainCorrection && pt == PhaseType.GAS && segVolForCheck > 1e-15) {
-      // --- GAS ROOT for chain molecules: scan + bisect at full g_Mie ---
+    } else if (needsScanBisect && pt == PhaseType.GAS && segVolForCheck > 1e-15) {
+      // --- GAS ROOT for chain molecules or associated fluids: scan + bisect ---
       gMieBlendFraction = 1.0;
 
       // Scan P(V) from dilute (large V) to moderate density.
       // Gas branch: P increases as V decreases until the gas spinodal.
       // Restrict to gas-like densities (eta < 0.10) to avoid unstable region.
-      int nScan = 40;
+      // The upper volume bound must encompass the ideal gas solution:
+      // V_ideal = n*R*T/P (in NeqSim units). Use 2x ideal gas as safety margin.
+      int nScan = 50;
       double logVLo = Math.log(segVolForCheck / 0.10 * 1.0e5); // moderate gas density
-      double logVHi = Math.log(segVolForCheck / 0.001 * 1.0e5); // very dilute
+      double idealGasVol = R * temperature / pressure; // per-mole ideal gas V in NeqSim units
+      double logVFromEta = Math.log(segVolForCheck / 0.001 * 1.0e5);
+      double logVFromIdeal = Math.log(idealGasVol * 2.0); // 2x ideal gas
+      double logVHi = Math.max(logVFromEta, logVFromIdeal); // take the larger bound
       double dLogV = (logVHi - logVLo) / nScan;
 
       double prevP = Double.NaN;
@@ -1512,7 +2356,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
         Z = pressure * getMolarVolume() / (R * temperature);
       }
     } else {
-      // --- GAS ROOT or MONOMER (m=1): homotopy continuation + Newton ---
+      // --- Non-associated MONOMER (m=1): homotopy continuation + Newton ---
       double[] alphaSteps =
           needsChainCorrection ? new double[] {0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0}
               : new double[] {0.0};
