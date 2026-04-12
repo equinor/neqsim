@@ -9,6 +9,34 @@
 
 ---
 
+## 2026-07-12 — LoopedPipeNetwork: 6 Advanced Production Features
+
+### New Capabilities in `LoopedPipeNetwork`
+
+Six production network features added to `neqsim.process.equipment.network.LoopedPipeNetwork`:
+
+1. **Artificial Lift** — Gas lift (`setGasLift`), ESP (`setESP`), jet pump (`setJetPump`), rod pump (`setRodPump`) with `ArtificialLiftType` enum. Pressure boost applied in NR-GGA solver.
+2. **Large-Scale Networks** — 120+ wells with 6 manifolds converge in 15-20 iterations (< 0.1 s). Schur complement keeps matrix size proportional to loops, not elements.
+3. **Water Handling** — `setWaterCut`, `addWaterInjection(src, res, name, rate)`, `setWaterBreakthrough(elem, btWC, finalWC, currentWC)`, `calculateWaterBalance()`.
+4. **Sand/Solids Tracking** — `setSandRate`, `calculateSandTransport()` per DNV RP O501, `getSandViolations()`, configurable erosion/sand rate limits.
+5. **Corrosion & Integrity** — `setCorrosiveGas(elem, co2, h2s)`, `setCorrosionModel(elem, "NORSOK")`, `calculateCorrosion()` with de Waard-Milliams and NORSOK M-506 models, wall life, `getCorrosionViolations()`.
+6. **GHG Emissions** — `setCO2EmissionFactor`, `setMethaneSlipFactor`, `calculateEmissions()`, `getTotalCO2Emissions()`, `getAnnualCO2EmissionsTonnes()`, `getEmissionsIntensity()`. Defaults: EF=2.75, slip=2%, GWP(CH4)=28 (IPCC AR5).
+
+### Affected Skills/Agents
+
+- **neqsim-capability-map**: Updated — no longer "limited to simple networks"
+- **neqsim-production-optimization**: Added LoopedPipeNetwork section with advanced API
+- **neqsim-flow-assurance**: Added network-level corrosion (de Waard/NORSOK) and sand erosion (DNV RP O501) patterns
+- **emissions agent**: Added LoopedPipeNetwork emissions tracking section
+
+### Documentation
+
+- `docs/process/equipment/production_well_networks.md` — 6 new sections with API, formulas, and examples
+- `examples/notebooks/production_network_advanced_features.ipynb` — 25-cell notebook demonstrating all features
+- 96 unit tests in `LoopedPipeNetworkTest.java`
+
+---
+
 ## 2026-07-08 — UniSim Reader: Default E300 Fluid Export
 
 ### E300 is Now the Default Fluid Transfer Route

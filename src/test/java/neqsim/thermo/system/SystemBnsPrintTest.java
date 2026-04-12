@@ -1,8 +1,12 @@
 package neqsim.thermo.system;
 
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+/**
+ * Tests for BNS EOS print output.
+ */
 public class SystemBnsPrintTest {
   @Test
   public void printAll() {
