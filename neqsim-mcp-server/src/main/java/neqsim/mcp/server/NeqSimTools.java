@@ -574,6 +574,10 @@ public class NeqSimTools {
           + "\"pressure\": {\"value\": 50, \"unit\": \"bara\"}}, "
           + "{\"temperature\": {\"value\": 25, \"unit\": \"C\"}, "
           + "\"pressure\": {\"value\": 50, \"unit\": \"bara\"}}]") String cases) {
+    String blocked = IndustrialProfile.enforceAccess("runBatch");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       com.google.gson.JsonObject json = new com.google.gson.JsonObject();
       json.add("components", com.google.gson.JsonParser.parseString(components));
@@ -614,6 +618,10 @@ public class NeqSimTools {
           + "'compareVariables' (array of {address, unit} to track across models), and "
           + "optional 'tolerances' ({\"temperature\": 2.0, \"density\": 5.0, \"default\": 10.0} "
           + "as percent thresholds).") String crossValidationJson) {
+    String blocked = IndustrialProfile.enforceAccess("crossValidateModels");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return CrossValidationRunner.crossValidate(crossValidationJson);
     } catch (Exception e) {
@@ -638,6 +646,10 @@ public class NeqSimTools {
           + "'values' array or 'from'/'to'/'steps' range), 'outputs' (array of {address, unit} "
           + "to extract from each case), and optional 'mode' ('one_at_a_time' or "
           + "'full_factorial', default one_at_a_time).") String studyJson) {
+    String blocked = IndustrialProfile.enforceAccess("runParametricStudy");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return ParametricStudyRunner.run(studyJson);
     } catch (Exception e) {
@@ -898,6 +910,10 @@ public class NeqSimTools {
           + "'gasifierType' (DOWNDRAFT, UPDRAFT, FLUIDIZED_BED), 'agentType' (AIR, OXYGEN, STEAM). "
           + "For pyrolysis: 'biomass' (same), 'mode' (SLOW, FAST, FLASH), "
           + "'temperature_C'.") String bioprocessJson) {
+    String blocked = IndustrialProfile.enforceAccess("runBioprocess");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return BioprocessRunner.run(bioprocessJson);
     } catch (Exception e) {
@@ -928,6 +944,10 @@ public class NeqSimTools {
           + "For addEquipment: 'sessionId', 'equipment' ({type, name, inlet, properties}). "
           + "For modify: 'sessionId', 'address' (e.g. 'Compressor.outletPressure'), "
           + "'value', 'unit'. For run/getState/close: 'sessionId'.") String sessionJson) {
+    String blocked = IndustrialProfile.enforceAccess("manageSession");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return SessionRunner.run(sessionJson);
     } catch (Exception e) {
@@ -1045,6 +1065,10 @@ public class NeqSimTools {
           + "parametric_sweep|flow_assurance|equipment_design|custom), 'title' (report "
           + "title), 'data' (simulation results to report on), optional 'author', "
           + "'includeValidation' (true/false), 'includeChartData' (true/false).") String reportJson) {
+    String blocked = IndustrialProfile.enforceAccess("generateReport");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return ReportRunner.run(reportJson);
     } catch (Exception e) {
@@ -1069,6 +1093,10 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with: 'action' ('list' or 'run'). For 'run': "
           + "'pluginName' (registered plugin name), 'input' (plugin-specific JSON). "
           + "For 'list': no additional fields needed.") String pluginJson) {
+    String blocked = IndustrialProfile.enforceAccess("runPlugin");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       JsonObject input = JsonParser.parseString(pluginJson).getAsJsonObject();
       String action = input.has("action") ? input.get("action").getAsString() : "list";
@@ -1139,6 +1167,10 @@ public class NeqSimTools {
           + "startMonteCarlo|pollResults|cancelOperation|listOperations). "
           + "For start actions: simulation parameters. "
           + "For pollResults: 'operationId' and 'lastIndex'.") String streamJson) {
+    String blocked = IndustrialProfile.enforceAccess("streamSimulation");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return StreamingRunner.run(streamJson);
     } catch (Exception e) {
@@ -1165,6 +1197,10 @@ public class NeqSimTools {
           + "barChart|styledTable). For phaseEnvelope: fluid components. "
           + "For flowsheetDiagram: processJson. For barChart: labels, values. "
           + "For styledTable: headers, rows, caption.") String vizJson) {
+    String blocked = IndustrialProfile.enforceAccess("generateVisualization");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return VisualizationRunner.run(vizJson);
     } catch (Exception e) {
@@ -1194,6 +1230,10 @@ public class NeqSimTools {
           + "For planComposition: 'task' (natural language description). "
           + "For getWorkflow: 'workflowId' (digital-twin|feed-study|vendor-evaluation|"
           + "safety-study).") String compositionJson) {
+    String blocked = IndustrialProfile.enforceAccess("composeMultiServerWorkflow");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return CompositionRunner.run(compositionJson);
     } catch (Exception e) {
@@ -1220,6 +1260,10 @@ public class NeqSimTools {
           + "getAuditLog|getRateLimits|setConfig|getStatus). "
           + "For createApiKey: 'userId', 'project', 'role', 'rateLimit'. "
           + "For getAuditLog: optional 'userId', 'tool', 'limit' filters.") String securityJson) {
+    String blocked = IndustrialProfile.enforceAccess("manageSecurity");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return SecurityRunner.run(securityJson);
     } catch (Exception e) {
@@ -1246,6 +1290,10 @@ public class NeqSimTools {
           + "setStorageDir|getInfo). " + "For save: 'sessionId', 'name', 'version', 'description'. "
           + "For load: 'filename' or 'filePath'. "
           + "For compare: 'file1', 'file2'.") String persistJson) {
+    String blocked = IndustrialProfile.enforceAccess("manageState");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return StatePersistenceRunner.run(persistJson);
     } catch (Exception e) {
@@ -1274,6 +1322,10 @@ public class NeqSimTools {
           + "getStandardsForEquipment). " + "For setActiveProfile: 'profileName'. "
           + "For createProfile: 'profileName', optional 'basedOn', 'overrides'. "
           + "For getStandardsForEquipment: 'equipmentType'.") String profileJson) {
+    String blocked = IndustrialProfile.enforceAccess("manageValidationProfile");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return ValidationProfileRunner.run(profileJson);
     } catch (Exception e) {
@@ -1301,6 +1353,10 @@ public class NeqSimTools {
           + "For getComponentProperties: 'componentName'. "
           + "For listMaterials: 'materialType' (pipe|plate|casing|compressor|heatExchanger). "
           + "For queryStandard: 'code', optional 'equipmentType'.") String catalogJson) {
+    String blocked = IndustrialProfile.enforceAccess("queryDataCatalog");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return DataCatalogRunner.run(catalogJson);
     } catch (Exception e) {
@@ -1323,6 +1379,10 @@ public class NeqSimTools {
           + "'model', 'temperature_C', 'pressure_bara', 'components', 'flowRate'. "
           + "For separator: 'orientation', 'liquidRetentionTime_min'. "
           + "For compressor: 'outletPressure_bara', 'polytropicEfficiency'.") String sizingJson) {
+    String blocked = IndustrialProfile.enforceAccess("sizeEquipment");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return EquipmentSizingRunner.run(sizingJson);
     } catch (Exception e) {
@@ -1343,6 +1403,10 @@ public class NeqSimTools {
   public String compareProcesses(
       @ToolArg(description = "JSON with 'cases' array. Each case has 'name', 'fluid', "
           + "and 'process' (same format as runProcess). Minimum 2 cases.") String comparisonJson) {
+    String blocked = IndustrialProfile.enforceAccess("compareProcesses");
+    if (blocked != null) {
+      return blocked;
+    }
     try {
       return ProcessComparisonRunner.run(comparisonJson);
     } catch (Exception e) {

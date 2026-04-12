@@ -113,16 +113,19 @@ public final class IndustrialProfile {
       Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess",
           "validateInput", "validateResults", "calculateStandard", "searchComponents",
           "getCapabilities", "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
-          "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile")));
+          "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
+          "listUnitVariables", "getSimulationVariable", "compareSimulationStates",
+          "diagnoseAutomation", "getAutomationLearningReport", "getProgress")));
 
   /**
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
    * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED = Collections
-      .unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runFlowAssurance",
-          "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
-          "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog")));
+  private static final Set<String> ENGINEERING_ADVANCED =
+      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
+          "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
+          "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
+          "queryDataCatalog", "setSimulationVariable", "saveSimulationState")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
