@@ -60,6 +60,9 @@ public class SeparatorInternalsDatabase implements Serializable {
   /** Loaded inlet device records. */
   private List<InletDeviceRecord> inletDeviceRecords = new ArrayList<InletDeviceRecord>();
 
+  /** Loaded vendor grade-efficiency curve records. */
+  private List<VendorCurveRecord> vendorCurveRecords = new ArrayList<VendorCurveRecord>();
+
   /** Whether data has been loaded. */
   private boolean loaded = false;
 
@@ -151,6 +154,72 @@ public class SeparatorInternalsDatabase implements Serializable {
   }
 
   /**
+   * Data record for a vendor-certified grade efficiency curve from factory acceptance testing (FAT).
+   *
+   * <p>
+   * Each record contains measured efficiency points at specific droplet diameters, obtained from
+   * standardised testing (EN 13544, ISO 29042, or vendor in-house methods). This provides the
+   * "vendor-certified internals curves" capability comparable to commercial tools like MySep.
+   * </p>
+   *
+   * <p>
+   * The diameter and efficiency arrays are stored as semicolon-separated values in the CSV and
+   * parsed into arrays on load. A {@link GradeEfficiencyCurve} with linear interpolation between
+   * measured points is created via {@link #toGradeEfficiencyCurve()}.
+   * </p>
+   */
+  public static class VendorCurveRecord implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    /** Unique curve identifier (e.g., "VC001"). */
+    public String curveId;
+    /** Internals type (WIRE_MESH, VANE_PACK, AXIAL_CYCLONE, PLATE_PACK). */
+    public String internalsType;
+    /** Vendor name. */
+    public String vendorName;
+    /** Product family or model designation. */
+    public String productFamily;
+    /** Test standard used (e.g., "EN 13544 / ISO 29042"). */
+    public String testStandard;
+    /** Test fluid (e.g., "Air-Water", "N2-Exxsol"). */
+    public String testFluid;
+    /** Test pressure [bar]. */
+    public double testPressure_bar;
+    /** Test temperature [degC]. */
+    public double testTemperature_C;
+    /** Measured droplet diameters [um]. */
+    public double[] diameterPoints_um;
+    /** Measured efficiencies [0-1] corresponding to diameterPoints_um. */
+    public double[] efficiencyPoints;
+    /** Maximum K-factor at test conditions [m/s]. */
+    public double maxKFactor;
+    /** Date of factory acceptance test. */
+    public String testDate;
+    /** Certificate or report reference number. */
+    public String certificateRef;
+    /** Additional notes. */
+    public String notes;
+
+    /**
+     * Creates a custom GradeEfficiencyCurve from the measured points using linear interpolation.
+     *
+     * @return grade efficiency curve interpolating measured vendor data
+     */
+    public GradeEfficiencyCurve toGradeEfficiencyCurve() {
+      if (diameterPoints_um == null || efficiencyPoints == null
+          || diameterPoints_um.length < 2 || diameterPoints_um.length != efficiencyPoints.length) {
+        // Fall back to a generic sigmoid if data is incomplete
+        return GradeEfficiencyCurve.wireMeshDefault();
+      }
+      double[] diametersM = new double[diameterPoints_um.length];
+      for (int i = 0; i < diameterPoints_um.length; i++) {
+        diametersM[i] = diameterPoints_um[i] * 1e-6;
+      }
+      return GradeEfficiencyCurve.custom(diametersM, efficiencyPoints);
+    }
+  }
+
+  /**
    * Private constructor — use getInstance().
    */
   private SeparatorInternalsDatabase() {
@@ -183,6 +252,7 @@ public class SeparatorInternalsDatabase implements Serializable {
 
     loadInternalsData();
     loadInletDeviceData();
+    loadVendorCurveData();
     loaded = true;
   }
 
@@ -274,6 +344,64 @@ public class SeparatorInternalsDatabase implements Serializable {
     } catch (Exception ex) {
       logger.error("Error loading SeparatorInletDevices.csv: " + ex.getMessage(), ex);
       createDefaultInletDeviceRecords();
+    }
+  }
+
+  /**
+   * Loads vendor-certified grade efficiency curve data from SeparatorVendorCurves.csv.
+   *
+   * <p>
+   * Each row contains measured efficiency points at specific droplet diameters from factory
+   * acceptance testing. The diameter and efficiency arrays are semicolon-separated within their
+   * respective CSV fields.
+   * </p>
+   */
+  private void loadVendorCurveData() {
+    try {
+      InputStream is = getClass().getResourceAsStream("/designdata/SeparatorVendorCurves.csv");
+      if (is == null) {
+        logger.info("SeparatorVendorCurves.csv not found - vendor curves not loaded");
+        return;
+      }
+      BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+      String header = reader.readLine(); // Skip header
+      String line;
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty()) {
+          continue;
+        }
+        String[] parts = line.split(",", -1);
+        if (parts.length < 14) {
+          continue;
+        }
+        VendorCurveRecord rec = new VendorCurveRecord();
+        rec.curveId = parts[0].trim();
+        rec.internalsType = parts[1].trim();
+        rec.vendorName = parts[2].trim();
+        rec.productFamily = parts[3].trim();
+        rec.testStandard = parts[4].trim();
+        rec.testFluid = parts[5].trim();
+        rec.testPressure_bar = parseDouble(parts[6]);
+        rec.testTemperature_C = parseDouble(parts[7]);
+        rec.diameterPoints_um = parseSemicolonDoubles(parts[8]);
+        rec.efficiencyPoints = parseSemicolonDoubles(parts[9]);
+        rec.maxKFactor = parseDouble(parts[10]);
+        rec.testDate = parts[11].trim();
+        rec.certificateRef = parts[12].trim();
+        rec.notes = parts.length > 13 ? parts[13].trim() : "";
+
+        if (rec.diameterPoints_um != null && rec.efficiencyPoints != null
+            && rec.diameterPoints_um.length >= 2
+            && rec.diameterPoints_um.length == rec.efficiencyPoints.length) {
+          vendorCurveRecords.add(rec);
+        } else {
+          logger.warn("Skipping vendor curve " + rec.curveId + ": invalid data point arrays");
+        }
+      }
+      reader.close();
+    } catch (Exception ex) {
+      logger.error("Error loading SeparatorVendorCurves.csv: " + ex.getMessage(), ex);
     }
   }
 
@@ -394,6 +522,81 @@ public class SeparatorInternalsDatabase implements Serializable {
   }
 
   /**
+   * Gets all vendor curve records.
+   *
+   * @return all vendor curve records
+   */
+  public List<VendorCurveRecord> getAllVendorCurves() {
+    return new ArrayList<VendorCurveRecord>(vendorCurveRecords);
+  }
+
+  /**
+   * Finds vendor curve records matching the specified internals type.
+   *
+   * @param internalsType type (e.g., "WIRE_MESH", "VANE_PACK", "AXIAL_CYCLONE")
+   * @return list of matching records
+   */
+  public List<VendorCurveRecord> findVendorCurvesByType(String internalsType) {
+    List<VendorCurveRecord> results = new ArrayList<VendorCurveRecord>();
+    for (VendorCurveRecord rec : vendorCurveRecords) {
+      if (rec.internalsType.equalsIgnoreCase(internalsType)) {
+        results.add(rec);
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Finds vendor curve records from a specific vendor.
+   *
+   * @param vendorName vendor name (case-insensitive)
+   * @return list of matching records
+   */
+  public List<VendorCurveRecord> findVendorCurvesByVendor(String vendorName) {
+    List<VendorCurveRecord> results = new ArrayList<VendorCurveRecord>();
+    for (VendorCurveRecord rec : vendorCurveRecords) {
+      if (rec.vendorName.equalsIgnoreCase(vendorName)) {
+        results.add(rec);
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Finds a vendor curve record by its unique curve ID.
+   *
+   * @param curveId curve identifier (e.g., "VC001")
+   * @return matching record or null
+   */
+  public VendorCurveRecord findVendorCurveById(String curveId) {
+    for (VendorCurveRecord rec : vendorCurveRecords) {
+      if (rec.curveId.equalsIgnoreCase(curveId)) {
+        return rec;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds vendor curve records matching internals type and vendor.
+   *
+   * @param internalsType type (e.g., "WIRE_MESH")
+   * @param vendorName vendor name
+   * @return list of matching records
+   */
+  public List<VendorCurveRecord> findVendorCurvesByTypeAndVendor(String internalsType,
+      String vendorName) {
+    List<VendorCurveRecord> results = new ArrayList<VendorCurveRecord>();
+    for (VendorCurveRecord rec : vendorCurveRecords) {
+      if (rec.internalsType.equalsIgnoreCase(internalsType)
+          && rec.vendorName.equalsIgnoreCase(vendorName)) {
+        results.add(rec);
+      }
+    }
+    return results;
+  }
+
+  /**
    * Returns a JSON catalog of all available separator internals.
    *
    * @return JSON string
@@ -430,6 +633,25 @@ public class SeparatorInternalsDatabase implements Serializable {
     }
     catalog.put("inletDevices", devicesList);
 
+    List<Map<String, Object>> vendorList = new ArrayList<Map<String, Object>>();
+    for (VendorCurveRecord rec : vendorCurveRecords) {
+      Map<String, Object> item = new LinkedHashMap<String, Object>();
+      item.put("curveId", rec.curveId);
+      item.put("internalsType", rec.internalsType);
+      item.put("vendorName", rec.vendorName);
+      item.put("productFamily", rec.productFamily);
+      item.put("testStandard", rec.testStandard);
+      item.put("testFluid", rec.testFluid);
+      item.put("testPressure_bar", rec.testPressure_bar);
+      item.put("testTemperature_C", rec.testTemperature_C);
+      item.put("dataPoints", rec.diameterPoints_um != null ? rec.diameterPoints_um.length : 0);
+      item.put("maxKFactor_m_s", rec.maxKFactor);
+      item.put("testDate", rec.testDate);
+      item.put("certificateRef", rec.certificateRef);
+      vendorList.add(item);
+    }
+    catalog.put("vendorCurves", vendorList);
+
     return new GsonBuilder().setPrettyPrinting().create().toJson(catalog);
   }
 
@@ -448,5 +670,37 @@ public class SeparatorInternalsDatabase implements Serializable {
     } catch (NumberFormatException e) {
       return 0.0;
     }
+  }
+
+  /**
+   * Parses a semicolon-separated list of doubles (e.g., "1.0;2.5;5.0;10.0").
+   *
+   * @param s semicolon-separated double values
+   * @return array of parsed doubles, or null if input is empty
+   */
+  private static double[] parseSemicolonDoubles(String s) {
+    if (s == null || s.trim().isEmpty()) {
+      return null;
+    }
+    String[] tokens = s.trim().split(";");
+    List<Double> values = new ArrayList<Double>();
+    for (String token : tokens) {
+      String t = token.trim();
+      if (!t.isEmpty()) {
+        try {
+          values.add(Double.parseDouble(t));
+        } catch (NumberFormatException e) {
+          // skip invalid tokens
+        }
+      }
+    }
+    if (values.isEmpty()) {
+      return null;
+    }
+    double[] result = new double[values.size()];
+    for (int i = 0; i < values.size(); i++) {
+      result[i] = values.get(i);
+    }
+    return result;
   }
 }
