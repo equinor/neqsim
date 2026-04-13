@@ -163,6 +163,67 @@ for (String geometry : geometries) {
 ### JSON Output
 
 ```java
+String json = calc.toJson();
+System.out.println(json);
+```
+
+---
+
+## Sand Load Defaults by Completion Type
+
+The calculator provides default sand production parameters based on well completion type, enabling quick screening assessments without detailed sand monitoring data.
+
+### Available Completion Types
+
+| Completion | Sand Rate (g/m3) | Particle Diameter (μm) | Description |
+|------------|-------------------|-------------------------|-------------|
+| `openhole_gravel_pack` | 5.0 | 200 | Open hole with gravel pack |
+| `cased_perforated` | 15.0 | 250 | Cased and perforated |
+| `standalone_screen` | 3.0 | 150 | Standalone screen in open hole |
+| `frac_pack` | 8.0 | 180 | Hydraulic fracture with gravel pack |
+| `expandable_screen` | 4.0 | 170 | Expandable sand screen |
+
+### Usage
+
+```java
+ErosionPredictionCalculator calc = new ErosionPredictionCalculator();
+
+// Apply defaults for a completion type
+calc.applySandLoadDefaults("cased_perforated");
+// Sets sandRate = 15.0 g/m3, sandParticleDiameter = 250 μm
+
+// Get defaults without applying
+ErosionPredictionCalculator.SandLoadDefaults defaults =
+    calc.getSandLoadDefaults("frac_pack");
+System.out.println(defaults.getSandRate());           // 8.0
+System.out.println(defaults.getSandParticleDiameter()); // 180.0
+System.out.println(defaults.getDescription());        // "Hydraulic fracture with gravel pack"
+
+// List all available completion types
+List<String> types = calc.getAvailableCompletionTypes();
+```
+
+## Maximum Velocity for Corrosion Protection
+
+In addition to erosion limits, the calculator provides a velocity limit to protect internal corrosion barriers (coatings, inhibitor films):
+
+```java
+// Calculate maximum velocity that preserves corrosion protection
+double maxVel = calc.calcMaxVelocityForCorrosionProtection(
+    150.0,    // mixture density kg/m3
+    0.0002    // sand concentration kg/kg (200 ppm)
+);
+// Typical range: 5-20 m/s depending on conditions
+```
+
+---
+
+## Related Documentation
+
+- [Flow Assurance Screening Tools](flow_assurance_screening_tools) - Pipeline cooldown, corrosion, scale
+- [Emulsion Viscosity](emulsion_viscosity_calculator) - Emulsion viscosity models
+
+```java
 calc.calculate();
 String json = calc.toJson();
 System.out.println(json);

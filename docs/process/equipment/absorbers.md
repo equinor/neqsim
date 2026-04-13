@@ -1,6 +1,6 @@
 ---
 title: Absorbers and Strippers
-description: Documentation for mass transfer columns in NeqSim.
+description: "Documentation for mass transfer columns in NeqSim: TEG dehydration with Fs-factor sizing, amine gas sweetening (MDEA/DEA/MEA), simple absorber models, and water stripping."
 ---
 
 # Absorbers and Strippers
@@ -10,8 +10,10 @@ Documentation for mass transfer columns in NeqSim.
 ## Table of Contents
 - [Overview](#overview)
 - [Absorber](#absorber)
-- [Stripper](#stripper)
 - [Simple Absorber](#simple-absorber)
+- [Simple TEG Absorber](#simple-teg-absorber)
+- [Simple Amine Absorber](#simple-amine-absorber)
+- [Stripper](#stripper)
 - [Examples](#examples)
 
 ---
@@ -21,11 +23,13 @@ Documentation for mass transfer columns in NeqSim.
 **Location:** `neqsim.process.equipment.absorber`
 
 **Classes:**
-| Class                 | Description               |
-| --------------------- | ------------------------- |
-| `Absorber`            | General absorption column |
-| `SimpleAbsorber`      | Simplified absorber model |
-| `WaterStripperColumn` | Water stripping column    |
+| Class                   | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| `Absorber`              | General absorption column                             |
+| `SimpleAbsorber`        | Simplified absorber model (base class)                |
+| `SimpleTEGAbsorber`     | TEG dehydration with Fs-factor sizing                 |
+| `SimpleAmineAbsorber`   | Amine gas sweetening (MDEA, DEA, MEA)                 |
+| `WaterStripperColumn`   | Water stripping column                                |
 
 Absorbers transfer components from gas to liquid phase, while strippers transfer from liquid to gas.
 
@@ -99,6 +103,201 @@ absorber.addSolventInStream(solvent);
 absorber.setAbsorptionEfficiency(0.90);
 absorber.run();
 ```
+
+### Fs-Factor and Wetting Rate
+
+The base `SimpleAbsorber` class provides Fs-factor and wetting rate calculations used by all absorber subclasses:
+
+$$F_s = v_s \cdot \sqrt{\rho_g}$$
+
+where $v_s$ is the superficial gas velocity (m/s) and $\rho_g$ is gas density (kg/m3).
+
+The wetting rate is the liquid volume flowing per unit packing area:
+
+$$WR = \frac{Q_L}{\pi / 4 \cdot D^2}$$
+
+---
+
+## Simple TEG Absorber
+
+`SimpleTEGAbsorber` extends the base absorber with TEG-specific sizing via the Kremser equation and Fs-factor capacity checking.
+
+### Fs-Factor Sizing
+
+The Fs-factor determines whether the contactor diameter is adequate for the gas load. Industry practice limits Fs to approximately 2.5-3.5 (Pa)^0.5 for structured packing:
+
+```java
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+
+SimpleTEGAbsorber tegAbsorber = new SimpleTEGAbsorber("TEG Contactor");
+tegAbsorber.addGasInStream(wetGasStream);
+tegAbsorber.addSolventInStream(leanTEGStream);
+tegAbsorber.run();
+
+// Fs-factor capacity check
+double fs = tegAbsorber.getFsFactor();
+double maxFs = tegAbsorber.getMaxAllowableFsFactor();  // default 3.0
+boolean withinLimit = tegAbsorber.isFsFactorWithinDesignLimit();
+double utilization = tegAbsorber.getFsFactorUtilization();  // fs / maxFs
+
+// Minimum diameter needed
+double minDiameter = tegAbsorber.getMinimumDiameterForFsLimit();
+
+// Full validation report
+String report = tegAbsorber.validateContactorDesign();
+System.out.println(report);
+```
+
+### TEG Quality and Water Dew Point
+
+```java
+// Check equilibrium water dew point from TEG purity
+double dewPointC = tegAbsorber.getLeanTEGEquilibriumWaterDewPoint(99.5);
+System.out.println("Water dew point at 99.5 wt% TEG: " + dewPointC + " °C");
+
+// Check if TEG quality margin is adequate
+boolean adequate = tegAbsorber.hasAdequateTEGQualityMargin(99.5, -18.0);
+```
+
+### Key Methods
+
+| Method | Description |
+|--------|-------------|
+| `getFsFactor()` | Current Fs-factor from gas outlet stream |
+| `getMaxAllowableFsFactor()` | Design limit (default 3.0) |
+| `setMaxAllowableFsFactor(double)` | Override design limit |
+| `isFsFactorWithinDesignLimit()` | Check if Fs is below limit |
+| `getFsFactorUtilization()` | Fraction of capacity used (0-1) |
+| `getMinimumDiameterForFsLimit()` | Minimum diameter at current gas load |
+| `getLeanTEGEquilibriumWaterDewPoint(double)` | Water dew point for a TEG purity |
+| `hasAdequateTEGQualityMargin(double, double)` | TEG purity vs target dew point |
+| `validateContactorDesign()` | Full text validation report |
+
+---
+
+## Simple Amine Absorber
+
+`SimpleAmineAbsorber` models amine-based gas sweetening for CO2 and H2S removal. It calculates acid gas removal by applying user-specified removal efficiencies, and includes design calculations for column sizing, loading, and validation.
+
+### Basic Usage
+
+```java
+import neqsim.process.equipment.absorber.SimpleAmineAbsorber;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create sour gas
+SystemSrkEos sourGas = new SystemSrkEos(273.15 + 40.0, 70.0);
+sourGas.addComponent("methane", 0.85);
+sourGas.addComponent("CO2", 0.10);
+sourGas.addComponent("H2S", 0.005);
+sourGas.addComponent("ethane", 0.045);
+sourGas.setMixingRule("classic");
+
+Stream sourGasStream = new Stream("Sour Gas", sourGas);
+sourGasStream.setFlowRate(50000.0, "kg/hr");
+
+// Create amine absorber
+SimpleAmineAbsorber absorber = new SimpleAmineAbsorber("MDEA Absorber", sourGasStream);
+absorber.setAmineType("MDEA");
+absorber.setAmineConcentrationWtPct(50.0);
+absorber.setCO2RemovalEfficiency(0.95);
+absorber.setH2SRemovalEfficiency(0.99);
+
+// Wire into process
+ProcessSystem process = new ProcessSystem();
+process.add(sourGasStream);
+process.add(absorber);
+process.run();
+
+// Get treated gas
+Stream sweetGas = (Stream) absorber.getSweetGasOutStream();
+```
+
+### With Lean Amine Stream
+
+When a lean amine stream is provided, the absorber also calculates the rich amine outlet (acid gas picked up by the solvent):
+
+```java
+// Lean amine
+SystemSrkEos amineFluid = new SystemSrkEos(273.15 + 42.0, 70.0);
+amineFluid.addComponent("MDEA", 0.50);
+amineFluid.addComponent("water", 0.50);
+amineFluid.setMixingRule("classic");
+
+Stream leanAmine = new Stream("Lean Amine", amineFluid);
+leanAmine.setFlowRate(30000.0, "kg/hr");
+
+absorber.setLeanAmineInStream(leanAmine);
+process.add(leanAmine);
+process.run();
+
+// Rich amine with absorbed acid gas
+Stream richAmine = (Stream) absorber.getRichAmineOutStream();
+```
+
+### Design Calculations
+
+```java
+// Acid gas loading
+absorber.setLeanAmineLoading(0.01);
+absorber.setApproachToEquilibrium(0.70);
+double richLoading = absorber.calcRichAmineLoading(0.50);
+// richLoading = 0.01 + (0.50 - 0.01) * 0.70 = 0.353 mol/mol
+
+// Amine circulation rate
+double rate = absorber.calcRequiredCirculationRate(
+    10.0,     // mol/s acid gas to remove
+    1050.0,   // kg/m3 amine density
+    0.119     // kg/mol MDEA molar mass
+);
+
+// Packing height with redistribution sections
+absorber.setMaxPackingHeightPerSection(5.5);
+absorber.calcPackingHeight(1.0, 12.0);  // HTU=1.0m, NTU=12
+int sections = absorber.getNumberOfPackingSections();  // 3
+
+// Demister K-factor
+double kFactor = absorber.calcDemisterKFactor(2.0, 50.0, 1050.0);
+boolean withinLimit = absorber.isDemisterWithinLimit();  // K <= 0.08
+
+// Temperature margin check
+boolean tempOk = absorber.checkAmineTemperatureMargin(30.0, 37.0);  // need 6°C margin
+
+// Foaming derating
+double effectiveFlow = absorber.getEffectiveGasCapacityWithFoamingMargin(100.0);  // 120.0
+```
+
+### Design Validation
+
+```java
+// Run all design checks at once
+Map<String, SimpleAmineAbsorber.DesignCheck> checks = absorber.validateDesign();
+for (Map.Entry<String, SimpleAmineAbsorber.DesignCheck> entry : checks.entrySet()) {
+    System.out.println(entry.getKey() + ": " +
+        (entry.getValue().isPassed() ? "PASS" : "FAIL") +
+        " - " + entry.getValue().getDetail());
+}
+
+// Get full design summary
+System.out.println(absorber.getDesignSummary());
+```
+
+### Design Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| Amine type | MDEA | Amine solvent (MDEA, DEA, MEA) |
+| Concentration | 50 wt% | Amine weight percent in lean solvent |
+| CO2 removal | 90% | Overall CO2 removal efficiency |
+| H2S removal | 99% | Overall H2S removal efficiency |
+| Foaming margin | 20% | Capacity derating for foaming |
+| Max packing height | 5.5 m | Maximum per section before redistribution |
+| Amine temperature margin | 6 °C | Lean amine T above gas feed T |
+| Gas carry-under | 0.03 | Am3 gas per Am3 amine |
+| Demister K-factor limit | 0.08 m/s | Wire mesh at gas outlet |
+| Approach to equilibrium | 70% | Fraction of thermodynamic equilibrium loading |
 
 ---
 
@@ -223,5 +422,7 @@ System.out.println("Methanol in clean gas: " + meohRemaining + " mol%");
 ## Related Documentation
 
 - [Equipment Index](index.md) - All equipment
+- [Water Treatment](water_treatment) - Hydrocyclones and gas flotation units
 - [Distillation](distillation) - Distillation columns
 - [Separators](separators) - Phase separation
+- [H2S Scavenger Guide](../H2S_scavenger_guide) - Chemical scavenging of H2S
