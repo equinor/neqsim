@@ -1,31 +1,166 @@
-# JSON Process Export/Import & UniSim Interoperability
+# Add physics-based separator entrainment modeling framework
 
 ## Summary
 
-Adds a **complete JSON round-trip** for NeqSim process models — any `ProcessSystem` or `ProcessModel` can be exported to JSON with `toJson()`, stored/transferred, and rebuilt with `fromJson()`. This enables **interoperability with external simulators** (e.g., Honeywell UniSim Design via COM automation) using JSON as the universal exchange format.
+Adds a comprehensive **physics-based entrainment calculation framework** for separator performance evaluation. The framework models the complete separation chain — inlet device, gravity settling, mist elimination — using first-principles correlations from industry standards (Shell DEP, GPSA, Souders-Brown). Replaces empirical K-factor-only approaches with stage-by-stage droplet tracking.
 
-Also adds a comprehensive **UniSim-to-NeqSim converter** (`unisim_reader.py`) that reads `.usc` files via COM automation and generates executable NeqSim Python notebooks, plus new **reactor equipment** (PlugFlowReactor, CatalystBed, KineticReaction) and DistillationColumn enhancements.
+**25 files changed, 8,342 insertions, 25 deletions.**
+
+## Commit Message
+
+```
+feat: add physics-based separator entrainment modeling framework
+
+Add 8 new classes in neqsim.process.equipment.separator.entrainment
+for detailed separator performance calculation:
+
+- SeparatorPerformanceCalculator: 7-stage pipeline orchestrator
+- DropletSizeDistribution: Rosin-Rammler & log-normal DSDs
+- DropletSettlingCalculator: Schiller-Naumann terminal velocity
+- GradeEfficiencyCurve: S-curve grade efficiency for wire mesh,
+  vane pack, axial cyclone, and plate pack internals
+- InletDeviceModel: 7 inlet device types with bulk efficiency,
+  momentum flux, pressure drop, and downstream DSD modification
+- MultiphaseFlowRegime: Taitel-Dukler flow regime prediction for
+  horizontal and vertical pipe orientations (7 regimes)
+- SeparatorGeometryCalculator: vessel geometry, residence times,
+  liquid levels, and gas/liquid area calculations
+- SeparatorInternalsDatabase: CSV-backed singleton for mist
+  eliminator and inlet device specifications
+
+Integrate into Separator and ThreePhaseSeparator via
+setEnhancedEntrainmentCalculation(true) with convenience methods
+for inlet device type, pipe diameter, and surface tension.
+
+Add 2 CSV databases (SeparatorInternals.csv, SeparatorInletDevices.csv),
+9 JUnit 5 test classes (67 tests), documentation guide, and a Jupyter
+notebook example covering horizontal 2-phase, vertical scrubber, and
+horizontal 3-phase separator cases.
+```
 
 ## What's New
 
-### 1. JSON Process Exporter (`JsonProcessExporter.java`) — NEW
+### 1. Entrainment Calculation Package (`separator.entrainment`) — 8 NEW classes
 
-Serializes a `ProcessSystem` to the JSON schema consumed by `JsonProcessBuilder`, enabling full round-trip:
+#### SeparatorPerformanceCalculator
+Orchestrates the full 7-stage enhanced calculation pipeline:
+1. Generate inlet droplet size distribution (Rosin-Rammler, d₀ from Hinze correlation)
+2. Predict multiphase flow regime (Taitel-Dukler)
+3. Calculate inlet device bulk separation + downstream DSD modification
+4. Calculate vessel geometry (gas/liquid areas, residence times)
+5. Calculate gravity section efficiency (Souders-Brown / Stokes settling)
+6. Calculate mist eliminator efficiency (grade efficiency curve integration)
+7. Combine into overall gas-liquid and liquid-liquid efficiencies
+
+Key outputs: K-factor, K-factor utilization, gravity cut diameter, oil-in-gas fraction, water-in-gas fraction, mist eliminator flooding status, JSON report.
+
+#### DropletSizeDistribution
+- Factory methods: `rosinRammler(d0, n)`, `logNormal(dMedian, sigma)`
+- Properties: D50, D32 (Sauter mean), discrete volume-weighted classes
+- Used as input/output for inlet device and efficiency calculations
+
+#### DropletSettlingCalculator
+- `calcTerminalVelocity(diameter, rhoGas, rhoLiq, muGas)` — Schiller-Naumann correlation
+- Stokes regime for small droplets, drag correction for intermediate Re
+
+#### GradeEfficiencyCurve
+- S-shaped efficiency curves parameterized by cut diameter (d₅₀) and steepness
+- Factory methods: `wireMeshDefault()`, `vanePackDefault()`, `axialCycloneDefault()`, `platePack(d50, maxEff)`
+- `calcOverallEfficiency(DSD)` — integrates grade curve against a full DSD
+
+#### InletDeviceModel
+- 7 device types: NONE, DEFLECTOR_PLATE, HALF_PIPE, INLET_VANE, SCHOEPENTOETER, IMPINGEMENT_PLATE, INLET_CYCLONE
+- Calculates: bulk separation efficiency, momentum flux, pressure drop, downstream DSD
+
+#### MultiphaseFlowRegime
+- Taitel-Dukler flow regime prediction
+- 7 regimes: STRATIFIED_SMOOTH, STRATIFIED_WAVY, ANNULAR, PLUG, SLUG, ANNULAR_MIST, DISPERSED_BUBBLE
+- Supports horizontal and vertical pipe orientations
+
+#### SeparatorGeometryCalculator
+- Gas/liquid area from vessel diameter + liquid level fraction
+- Gas and liquid residence times
+- Effective settling height for horizontal/vertical vessels
+
+#### SeparatorInternalsDatabase
+- CSV-backed singleton loading from `designdata/SeparatorInternals.csv` (17 records) and `SeparatorInletDevices.csv` (13 records)
+- Query by type, K-factor range, application suitability
+
+### 2. Separator & ThreePhaseSeparator Integration
+
+New convenience methods on both `Separator` and `ThreePhaseSeparator`:
+- `setEnhancedEntrainmentCalculation(true)` — enables detailed calculation
+- `setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE)`
+- `setInletPipeDiameter(0.254)` — feed pipe diameter in meters
+- `setGasLiquidSurfaceTension(0.015)` — in N/m
+- `getKFactor()`, `getKFactorUtilization()`, `getInletFlowRegime()`, `isMistEliminatorFlooded()`
+- `getPerformanceCalculator()` — access the full calculator for advanced configuration
+
+### 3. CSV Design Data
+
+| File | Records | Content |
+|------|---------|---------|
+| `SeparatorInternals.csv` | 17 | Wire mesh, vane pack, cyclone specs with K-factor ranges |
+| `SeparatorInletDevices.csv` | 13 | Inlet device specs with efficiency and pressure drop data |
+
+### 4. Tests — 9 test classes, 67 tests
+
+| Test Class | Tests | Coverage |
+|------------|-------|----------|
+| `SeparatorPerformanceCalculatorTest` | 8 | Full pipeline, JSON output, K-factor |
+| `EnhancedPerformanceCalculatorTest` | 10 | Integration with Separator/ThreePhaseSep |
+| `DropletSizeDistributionTest` | 7 | RR, log-normal, D50, D32, edge cases |
+| `DropletSettlingCalculatorTest` | 6 | Terminal velocity, Stokes, intermediate Re |
+| `GradeEfficiencyCurveTest` | 8 | Wire mesh, vane, cyclone, overall efficiency |
+| `InletDeviceModelTest` | 8 | All 7 device types, DSD modification |
+| `MultiphaseFlowRegimeTest` | 8 | All 7 regimes, horizontal + vertical |
+| `SeparatorGeometryCalculatorTest` | 8 | Areas, residence times, liquid levels |
+| `SeparatorInternalsDatabaseTest` | 4 | CSV loading, queries, record access |
+
+### 5. Documentation
+
+- **New guide**: `docs/process/equipment/separator-entrainment-modeling.md` — ~950 lines covering physics, API, examples
+- **Updated**: `docs/process/equipment/separators.md` — callout linking to enhanced guide
+- **Updated**: `docs/REFERENCE_MANUAL_INDEX.md` — new entry
+
+### 6. Jupyter Notebook Example
+
+`examples/notebooks/separator_entrainment_modeling.ipynb` — fully executed notebook with:
+- Standalone tool demos (DSD, grade efficiency, settling velocity)
+- Case 1: Horizontal two-phase separator (2.4m × 8m, 70 bara)
+- Case 2: Vertical gas scrubber (1.8m × 5m, 85 bara)
+- Case 3: Horizontal three-phase separator (3.2m × 12m, 25 bara)
+- Comparison table, sensitivity study, inlet device comparison, flow regime map
+- 8 matplotlib figures
+
+## Usage Example
 
 ```java
-// Export
-String json = process.toJson();
+// Enable enhanced entrainment on any Separator
+Separator sep = new Separator("HP Sep", feed);
+sep.setInternalDiameter(2.4);
+sep.setSeparatorLength(8.0);
+sep.setOrientation("horizontal");
+sep.setEnhancedEntrainmentCalculation(true);
+sep.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+sep.setInletPipeDiameter(0.254);
+sep.setGasLiquidSurfaceTension(0.015);
+sep.getPerformanceCalculator().setMistEliminatorCurve(
+    GradeEfficiencyCurve.wireMeshDefault());
 
-// Round-trip
-ProcessSystem rebuilt = ProcessSystem.fromJsonAndRun(json).getProcessSystem();
+process.add(sep);
+process.run();
+
+// Read results
+double kFactor = sep.getKFactor();
+double efficiency = sep.getPerformanceCalculator().getOverallGasLiquidEfficiency();
+boolean flooded = sep.isMistEliminatorFlooded();
+String json = sep.getPerformanceCalculator().toJson();
 ```
 
-**Supported equipment types:** Stream, Separator, ThreePhaseSeparator, Compressor, Expander, ThrottlingValve, Heater, Cooler, HeatExchanger, Mixer, Splitter, Pump, Recycle, Adjuster, AdiabaticPipe.
+## Breaking Changes
 
-**Key design:**
-- Two-phase export: (1) build stream reference map using IdentityHashMap, (2) serialize units in topological order
-- Port-specific stream references: `"HP Sep.gasOut"`, `"HP Sep.liquidOut"`, `"splitter.split0"`
-- Equipment properties exported per type: outletPressure, polytropicEfficiency, splitFactors, outletTemperature, pressureDrop, length, diameter
+None. The enhanced calculation is opt-in via `setEnhancedEntrainmentCalculation(true)`. Default separator behavior is unchanged.
 
 ### 2. ProcessSystem.toJson() / fromJson() — NEW
 

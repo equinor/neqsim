@@ -67,7 +67,8 @@ public class FlashRunner {
 
   private static final List<String> SUPPORTED_FLASH_TYPES =
       Collections.unmodifiableList(Arrays.asList("TP", "PH", "PS", "TV", "dewPointT", "dewPointP",
-          "bubblePointT", "bubblePointP", "hydrateTP"));
+          "bubblePointT", "bubblePointP", "hydrateTP", "dewPointTemperature", "dewPointPressure",
+          "bubblePointTemperature", "bubblePointPressure"));
 
   private static final List<String> SUPPORTED_MODELS = Collections
       .unmodifiableList(Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU"));
@@ -139,6 +140,7 @@ public class FlashRunner {
       return errorJson("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
           "Use one of: " + SUPPORTED_FLASH_TYPES);
     }
+    flashType = normalizeFlashType(flashType);
 
     // --- Parse components ---
     if (!input.has("components")) {
@@ -308,7 +310,9 @@ public class FlashRunner {
       result.add("flash", meta);
 
       // Fluid data
-      result.add("fluid", JsonParser.parseString(fluidJson));
+      JsonObject fluidObj = JsonParser.parseString(fluidJson).getAsJsonObject();
+      addCompatibilityFields(fluidObj);
+      result.add("fluid", fluidObj);
 
       // Provenance (trust metadata)
       ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
@@ -349,6 +353,79 @@ public class FlashRunner {
    */
   public static List<String> getSupportedModels() {
     return SUPPORTED_MODELS;
+  }
+
+  /**
+   * Normalizes legacy flash-type aliases to canonical names.
+   *
+   * @param flashType requested flash type string
+   * @return canonical flash type name used internally
+   */
+  private static String normalizeFlashType(String flashType) {
+    if ("dewPointTemperature".equals(flashType)) {
+      return "dewPointT";
+    }
+    if ("dewPointPressure".equals(flashType)) {
+      return "dewPointP";
+    }
+    if ("bubblePointTemperature".equals(flashType)) {
+      return "bubblePointT";
+    }
+    if ("bubblePointPressure".equals(flashType)) {
+      return "bubblePointP";
+    }
+    return flashType;
+  }
+
+  /**
+   * Adds backward-compatible flattened fields used by older clients and tests.
+   *
+   * @param fluidObj fluid response JSON object
+   */
+  private static void addCompatibilityFields(JsonObject fluidObj) {
+    if (fluidObj == null) {
+      return;
+    }
+
+    if (fluidObj.has("properties") && fluidObj.get("properties").isJsonObject()) {
+      JsonObject properties = fluidObj.getAsJsonObject("properties");
+      if (properties.has("overall") && properties.get("overall").isJsonObject()) {
+        JsonObject overall = properties.getAsJsonObject("overall");
+        if (overall.has("density") && overall.get("density").isJsonObject()) {
+          JsonObject density = overall.getAsJsonObject("density");
+          if (density.has("value")) {
+            try {
+              properties.addProperty("density_kgm3", density.get("value").getAsDouble());
+            } catch (Exception ignored) {
+            }
+          }
+        }
+      }
+    }
+
+    if (fluidObj.has("conditions") && fluidObj.get("conditions").isJsonObject()) {
+      JsonObject conditions = fluidObj.getAsJsonObject("conditions");
+      if (conditions.has("overall") && conditions.get("overall").isJsonObject()) {
+        JsonObject overall = conditions.getAsJsonObject("overall");
+        if (overall.has("temperature") && overall.get("temperature").isJsonObject()) {
+          JsonObject temperature = overall.getAsJsonObject("temperature");
+          if (temperature.has("value")) {
+            try {
+              double temperatureValue = temperature.get("value").getAsDouble();
+              String temperatureUnit =
+                  temperature.has("unit") ? temperature.get("unit").getAsString() : "K";
+              if ("C".equalsIgnoreCase(temperatureUnit)) {
+                temperatureValue += 273.15;
+              } else if ("F".equalsIgnoreCase(temperatureUnit)) {
+                temperatureValue = (temperatureValue - 32.0) * 5.0 / 9.0 + 273.15;
+              }
+              conditions.addProperty("temperature_K", temperatureValue);
+            } catch (Exception ignored) {
+            }
+          }
+        }
+      }
+    }
   }
 
   /**

@@ -102,9 +102,13 @@ public class StandardsRunner {
       double pBara = 1.01325;
       if (input.has("temperature")) {
         tempK = parseTemperature(input.get("temperature"));
+      } else if (input.has("temperature_C")) {
+        tempK = input.get("temperature_C").getAsDouble() + 273.15;
       }
       if (input.has("pressure")) {
         pBara = parsePressure(input.get("pressure"));
+      } else if (input.has("pressure_bara")) {
+        pBara = input.get("pressure_bara").getAsDouble();
       }
       fluid = createFluid(model, tempK, pBara);
       JsonObject comps = input.getAsJsonObject("components");
@@ -131,6 +135,7 @@ public class StandardsRunner {
 
       JsonObject data = runStandard(fluid, standard, input);
       result.add("data", data);
+      result.add("results", data);
 
       ResultProvenance provenance = new ResultProvenance();
       provenance.setCalculationType("standards: " + standard);
