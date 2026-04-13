@@ -111,6 +111,7 @@ domain-specific runners with limited qualification evidence.
 | `manageSecurity` | PLATFORM | v1.2 | API key management, rate limiting, audit logging |
 | `manageState` | PLATFORM | v1.2 | Persist/restore simulation states across server restarts |
 | `manageValidationProfile` | PLATFORM | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
+| `bridgeTaskWorkflow` | ADVISORY | v1.2 | Convert MCP tool output to task_solve results.json format |
 
 Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) perform
 multi-step or stateful operations. They are **not part of any governed tier**

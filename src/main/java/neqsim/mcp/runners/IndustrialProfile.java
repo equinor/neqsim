@@ -131,10 +131,11 @@ public final class IndustrialProfile {
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
    * are difficult to validate for industrial use. Available in DESKTOP_ENGINEER only.
    */
-  private static final Set<String> EXPERIMENTAL_TOOLS = Collections.unmodifiableSet(new HashSet<>(
-      Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess", "solveTask",
-          "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
-          "manageSecurity", "manageState", "manageValidationProfile", "runPlugin")));
+  private static final Set<String> EXPERIMENTAL_TOOLS =
+      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics",
+          "runDynamic", "runBioprocess", "solveTask", "composeWorkflow", "manageSession",
+          "streamSimulation", "composeMultiServerWorkflow", "manageSecurity", "manageState",
+          "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
 
   /**
    * Builds the tool-to-category mapping.
@@ -159,6 +160,7 @@ public final class IndustrialProfile {
     map.put("getProgress", ToolCategory.ADVISORY);
     map.put("queryDataCatalog", ToolCategory.ADVISORY);
     map.put("generateReport", ToolCategory.ADVISORY);
+    map.put("bridgeTaskWorkflow", ToolCategory.ADVISORY);
 
     // Calculation tools — compute results, no persistent state changes
     map.put("runFlash", ToolCategory.CALCULATION);

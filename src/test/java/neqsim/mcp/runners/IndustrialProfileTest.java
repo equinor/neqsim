@@ -43,8 +43,8 @@ class IndustrialProfileTest {
         "Tier 1 (TRUSTED_CORE) should have 21 tools");
     assertEquals(13, IndustrialProfile.getEngineeringAdvanced().size(),
         "Tier 2 (ENGINEERING_ADVANCED) should have 13 tools");
-    assertEquals(13, IndustrialProfile.getExperimentalTools().size(),
-        "Tier 3 (EXPERIMENTAL) should have 13 tools");
+    assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
+        "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
 
   @Test
@@ -381,7 +381,7 @@ class IndustrialProfileTest {
 
     assertEquals(21, root.getAsJsonArray("tier1_trustedCore").size());
     assertEquals(13, root.getAsJsonArray("tier2_engineeringAdvanced").size());
-    assertEquals(13, root.getAsJsonArray("tier3_experimental").size());
+    assertEquals(14, root.getAsJsonArray("tier3_experimental").size());
   }
 
   @Test

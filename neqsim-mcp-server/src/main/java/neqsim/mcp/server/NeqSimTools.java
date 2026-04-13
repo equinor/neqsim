@@ -1077,6 +1077,39 @@ public class NeqSimTools {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // Task workflow bridge (task_solve integration)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Convert MCP tool output to the task_solve results.json format.
+   *
+   * @param bridgeJson JSON with tool output and metadata
+   * @return JSON in task_solve results.json schema
+   */
+  @Tool(description = "Convert any MCP tool output into the task_solve results.json format "
+      + "for professional engineering report generation. Takes raw output from any tool "
+      + "(runFlash, runProcess, runPVT, runPipeline, calculateStandard, runFieldEconomics, etc.), "
+      + "extracts key results, validation status, and produces the results.json schema "
+      + "consumed by generate_report.py. Use action 'getSchema' for the full schema reference. "
+      + "This bridges MCP simulations to the NeqSim task-solving workflow that produces "
+      + "Word/HTML engineering reports.")
+  public String bridgeTaskWorkflow(
+      @ToolArg(description = "JSON with: 'action' ('toResultsJson' or 'getSchema'). "
+          + "For toResultsJson: 'toolOutput' (raw output from any MCP tool), "
+          + "'sourceRunner' (tool name, e.g. 'runFlash'), optional 'taskTitle', "
+          + "'approach' (methodology description), 'conclusions'.") String bridgeJson) {
+    String blocked = IndustrialProfile.enforceAccess("bridgeTaskWorkflow");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return TaskWorkflowBridge.run(bridgeJson);
+    } catch (Exception e) {
+      return errorJson("Task workflow bridge failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Plugin system
   // ═══════════════════════════════════════════════════════════════════════════
 

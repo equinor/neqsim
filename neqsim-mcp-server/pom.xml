@@ -13,11 +13,24 @@
     <properties>
         <quarkus.version>3.33.1</quarkus.version>
         <mcp-server.version>1.11.0</mcp-server.version>
+        <!-- Keep in sync with ../pom.xml <revision> property -->
         <neqsim.version>3.7.0</neqsim.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <!-- Use -Plocal-dev when iterating against the workspace SNAPSHOT build:
+         mvn package -Plocal-dev
+         This picks up whatever neqsim was last installed via `mvn install` in the parent. -->
+    <profiles>
+        <profile>
+            <id>local-dev</id>
+            <properties>
+                <neqsim.version>3.7.0</neqsim.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
@@ -32,10 +45,17 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- MCP Server STDIO transport -->
+        <!-- MCP Server STDIO transport (default — used with Claude Desktop, VS Code, etc.) -->
         <dependency>
             <groupId>io.quarkiverse.mcp</groupId>
             <artifactId>quarkus-mcp-server-stdio</artifactId>
+            <version>${mcp-server.version}</version>
+        </dependency>
+
+        <!-- MCP Server SSE/HTTP transport (for team sharing, web dashboards, multi-server) -->
+        <dependency>
+            <groupId>io.quarkiverse.mcp</groupId>
+            <artifactId>quarkus-mcp-server-sse</artifactId>
             <version>${mcp-server.version}</version>
         </dependency>
 

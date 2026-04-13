@@ -30,7 +30,7 @@ The system is designed to support controlled engineering use through:
   convergence status, assumptions, limitations, warnings).
 
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
-(STDIO transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
+(STDIO + HTTP/SSE transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
 See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
 
@@ -151,7 +151,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 
 ---
 
-## Tier 3 — Experimental (13 tools)
+## Tier 3 — Experimental (14 tools)
 
 Functional but limited validation or high-autonomy tools. `DESKTOP_ENGINEER`
 only. Blocked in all other modes by code-level `enforceAccess()`.
@@ -165,6 +165,7 @@ Interfaces may change between minor versions.
 | `runBioprocess` | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
 | `solveTask` | Autonomous task solver — results require engineer review |
 | `composeWorkflow` | Chain simulation steps into multi-domain workflows |
+| `bridgeTaskWorkflow` | Convert MCP tool output to task_solve results.json format |
 | `manageSession` | Persistent simulation sessions |
 | `streamSimulation` | Async simulation with incremental polling |
 | `composeMultiServerWorkflow` | Multi-server orchestration |
@@ -279,7 +280,7 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 47 tools organized into three tiers plus platform tools,
+The server exposes 48 tools organized into three tiers plus platform tools,
 9 guided-workflow prompts, and 11 browsable resources.
 
 ## Complete Tool Inventory
@@ -444,6 +445,26 @@ java -jar /path/to/neqsim-mcp-server-3.7.0-runner.jar          # jar
 docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 ```
 
+### HTTP/SSE Transport
+
+The server also supports HTTP/SSE transport for web-based clients and remote
+access. By default, the SSE endpoint is available at `http://localhost:8080/mcp`
+when the server starts. CORS is configured for local development frontends
+(`localhost:3000`, `localhost:5173`).
+
+To use HTTP/SSE with an MCP client that supports it, configure the server URL
+instead of stdin/stdout command:
+
+```json
+{
+  "mcpServers": {
+    "neqsim": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
 ---
 
 ## Quick Start: Example Conversation
@@ -467,6 +488,37 @@ and **auto-validation** against engineering design rules.
 
 The LLM discovers NeqSim's tools automatically via MCP, reads the embedded
 examples and schemas, then calls the tools to compute rigorous answers.
+
+---
+
+## Task Workflow Bridge
+
+The `bridgeTaskWorkflow` tool converts MCP tool outputs into the `results.json`
+format used by the task-solving workflow. This enables end-to-end integration
+between MCP-based AI assistants and the engineering task-solving pipeline in
+`task_solve/`.
+
+| Action | Description |
+|--------|-------------|
+| `toResultsJson` | Convert an MCP tool response to task_solve `results.json` schema |
+| `getSchema` | Get the full `results.json` schema documentation |
+
+Example: after running a flash calculation via the MCP server, bridge the result
+into the task-solving format for report generation:
+
+```json
+{
+  "action": "toResultsJson",
+  "toolOutput": "<flash result JSON>",
+  "toolName": "runFlash",
+  "taskTitle": "Dew Point Study"
+}
+```
+
+The bridge extracts runner-specific key results (flash properties, process
+equipment data, PVT measurements, pipeline profiles, economics, standards
+compliance) and maps them into the standard `results.json` structure with
+`key_results`, `validation`, `approach`, and `conclusions` sections.
 
 ---
 
@@ -615,12 +667,22 @@ If you want to build from source (for development or to use the latest unrelease
 ```bash
 cd neqsim-mcp-server
 
-# Linux / macOS
+# Linux / macOS (use public release version)
 ../mvnw package -DskipTests -Dmaven.javadoc.skip=true
+
+# Linux / macOS (use local SNAPSHOT — matches parent pom revision)
+../mvnw package -DskipTests -Dmaven.javadoc.skip=true -Plocal-dev
 
 # Windows
 ..\mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"
+
+# Windows (local SNAPSHOT)
+..\mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true" -Plocal-dev
 ```
+
+> **Tip:** The `-Plocal-dev` profile resolves NeqSim from your local Maven repo
+> (`~/.m2/`) using the SNAPSHOT version, so you can test MCP server changes
+> against unreleased NeqSim core changes without publishing a release.
 
 This produces: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
 
@@ -672,7 +734,7 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 47 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 48 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
    `neqsim://components` and `neqsim://models` to discover available data.
@@ -724,7 +786,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.11.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 47 @Tool-annotated MCP tools
+    ├── NeqSimTools.java                   # 48 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 6 @Resource + 5 @ResourceTemplate (11 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -754,6 +816,7 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   │  ── Strategic Runners ──
 │   ├── SessionRunner.java                 # Persistent simulation sessions
 │   ├── TaskSolverRunner.java              # Engineering task solving
+│   ├── TaskWorkflowBridge.java            # Bridge MCP output to task_solve results.json
 │   ├── EngineeringValidator.java          # Design rule validation
 │   ├── ReportRunner.java                  # Structured report generation
 │   ├── McpRunnerPlugin.java               # Plugin interface
@@ -804,11 +867,11 @@ The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates 111 checks:
+and validates all 48 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration |
+| Protocol | 9 | Tool/resource/template registration (48 tools, 6 resources, 5 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
@@ -816,7 +879,24 @@ and validates 111 checks:
 | Process simulation | 13 | Separator, compressor, cooler, heater, valve, multi-unit trains |
 | Validation | 22 | Valid input, unknown components, bad models, missing specs |
 | Error handling | 2 | Graceful failure on bad input |
+| Tier 2 tools | 14 | PVT, pipeline, flow assurance, standards, reservoir, economics, dynamic, sizing, comparison |
+| Tier 3 tools | 17 | Sessions, task solver, workflow, reports, plugins, streaming, visualization, state, security |
+| Governance tools | 6 | Industrial profile, benchmark trust, tool access |
 | Catalog round-trip | 10 | All examples run end-to-end through the server |
+
+### NIST Benchmark Validation
+
+`BenchmarkValidationTest.java` validates claimed accuracy bounds against reference data:
+
+| Test | Reference | Tolerance |
+|---|---|---|
+| Methane density at 25°C, 100 bara | NIST 66.16 kg/m³ | ±2% |
+| Methane-ethane VLE at 50 bara | Two-phase check | Phase count |
+| Natural gas dew point | Physical range | \[-80, 20\] °C |
+| Separator mass balance | Closure | < 0.1% |
+| ISO 6976 methane GCV | 37.706 MJ/Sm³ | ±0.5% |
+| Trust report completeness | 15 tools | All present |
+| Trust page structure | Required fields | Non-null |
 
 ```bash
 cd neqsim-mcp-server

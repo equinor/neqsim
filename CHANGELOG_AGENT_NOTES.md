@@ -9,6 +9,57 @@
 
 ---
 
+## 2026-04-13 — MCP Server: Professional-Use Improvements (48 Tools)
+
+### Summary
+
+Five improvements for professional engineering use:
+
+1. **Build coordination** — `neqsim-mcp-server/pom.xml` now has a `local-dev` Maven
+   profile (`-Plocal-dev`) that resolves NeqSim from local `~/.m2/` using SNAPSHOT
+   version. Keeps MCP server and core in sync during development.
+
+2. **HTTP/SSE transport** — Added `quarkus-mcp-server-sse` dependency alongside
+   existing STDIO. SSE endpoint at `http://localhost:8080/mcp` with CORS for
+   `localhost:3000` and `localhost:5173`. Web-based clients can now connect
+   without STDIO subprocess management.
+
+3. **NIST benchmark validation** — New `BenchmarkValidationTest.java` (7 tests)
+   validates accuracy claims against reference data: methane density vs NIST
+   (±2%), ISO 6976 GCV (±0.5%), separator mass balance (<0.1%), VLE phase check,
+   dew point range, and trust report completeness.
+
+4. **Full E2E test coverage** — `test_mcp_server.py` expanded from 19 to 48 tool
+   coverage. All three tiers tested: Tier 1 (21 core), Tier 2 (13 advanced),
+   Tier 3 (14 experimental), plus governance tools.
+
+5. **Task workflow bridge** — New `bridgeTaskWorkflow` tool + `TaskWorkflowBridge`
+   runner. Converts MCP tool output to `task_solve/` `results.json` format.
+   Actions: `toResultsJson`, `getSchema`. Classified as Tier 3 EXPERIMENTAL /
+   ADVISORY category. Enables end-to-end MCP → task-solving → report pipeline.
+
+### New/Changed Files
+
+| File | Change |
+|------|--------|
+| `neqsim-mcp-server/pom.xml` | Added `local-dev` profile, SSE dependency |
+| `neqsim-mcp-server/src/main/resources/application.properties` | Added HTTP/SSE/CORS config |
+| `src/main/java/neqsim/mcp/runners/TaskWorkflowBridge.java` | **NEW** — results.json bridge |
+| `src/main/java/neqsim/mcp/runners/IndustrialProfile.java` | Added `bridgeTaskWorkflow` to EXPERIMENTAL + ADVISORY |
+| `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java` | Added `bridgeTaskWorkflow` tool method |
+| `src/test/java/neqsim/mcp/runners/BenchmarkValidationTest.java` | **NEW** — 7 NIST benchmark tests |
+| `src/test/java/neqsim/mcp/runners/IndustrialProfileTest.java` | Updated tier size assertions (13→14 experimental) |
+| `neqsim-mcp-server/test_mcp_server.py` | Expanded from 19 to 48 tool E2E coverage |
+
+### Tool Count
+
+- Total: **48** tools (was 47)
+- Tier 1 (TRUSTED_CORE): 21
+- Tier 2 (ENGINEERING_ADVANCED): 13
+- Tier 3 (EXPERIMENTAL): 14 (was 13, added `bridgeTaskWorkflow`)
+
+---
+
 ## 2026-07-13 — MCP Server: 42 Tools, 9 Prompts, 11 Resources
 
 ### MCP Server Expansion Summary

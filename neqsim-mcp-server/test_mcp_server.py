@@ -1,22 +1,44 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests real thermodynamic flash calculations and process simulations
-through the MCP server, verifying against known values from the
-neqsim JUnit test suite.
+Tests all 47 MCP tools through the real JSON-RPC protocol, verifying
+correctness against known values from the NeqSim JUnit test suite.
 
-Covers:
+Tier 1 — Trusted Core (21 tools):
   - TP flash (single phase, two-phase, multi-component)
   - Dew point / bubble point calculations
-  - Different EOS models (SRK, PR)
+  - Different EOS models (SRK, PR, CPA)
   - Transport properties (viscosity, thermal conductivity)
-  - Separator process simulation
-  - Compressor process simulation
-  - Cooler/heater process simulation
-  - Valve (throttling) process simulation
-  - Multi-equipment process trains
-  - Validation (error cases, typos, missing fields)
-  - Resources and schemas
+  - Process simulation (separator, compressor, cooler, heater, valve, trains)
+  - Input validation (error cases, typos, missing fields)
+  - Examples, schemas, component search, capabilities
+  - Batch calculations, property tables, phase envelopes
+  - Automation API (units, variables, state save/compare, diagnostics)
+  - Industrial profile, benchmark trust, tool access
+
+Tier 2 — Engineering Advanced (13 tools):
+  - PVT laboratory experiments
+  - Flow assurance (hydrate, corrosion, wax)
+  - Standards calculations (ISO 6976, AGA)
+  - Pipeline flow simulation
+  - Reservoir material balance
+  - Field development economics
+  - Dynamic transient simulation
+  - Bioprocess reactors
+  - Equipment sizing
+  - Process comparison
+  - Engineering validation
+  - Cross-model validation
+  - Parametric studies
+
+Tier 3 — Experimental (13 tools):
+  - Session management
+  - Task solver, workflow composition
+  - Report generation, visualization
+  - Plugins, progress tracking, streaming
+  - Multi-server composition
+  - Security, state persistence
+  - Validation profiles, data catalog
 """
 import subprocess
 import json
@@ -180,24 +202,45 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("19 tools registered", len(tools) == 19, f"got {len(tools)}: {tool_names}")
-    for name in ["runFlash", "runProcess", "validateInput", "searchComponents",
-                  "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
-                  "getCapabilities", "runBatch", "listSimulationUnits",
-                  "listUnitVariables", "getSimulationVariable", "setSimulationVariable",
-                  "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
-                  "getAutomationLearningReport"]:
-        check(f"tool '{name}'", name in tool_names)
+    check("48 tools registered", len(tools) == 48, f"got {len(tools)}: {tool_names}")
+
+    # Tier 1 — Trusted Core (21 tools)
+    tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
+             "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
+             "getCapabilities", "runBatch", "listSimulationUnits",
+             "listUnitVariables", "getSimulationVariable", "setSimulationVariable",
+             "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
+             "getAutomationLearningReport", "manageIndustrialProfile",
+             "getBenchmarkTrust", "checkToolAccess"]
+    for name in tier1:
+        check(f"tier1 tool '{name}'", name in tool_names)
+
+    # Tier 2 — Engineering Advanced (13 tools)
+    tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
+             "runFlowAssurance", "calculateStandard", "runPipeline",
+             "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
+             "sizeEquipment", "compareProcesses", "validateResults"]
+    for name in tier2:
+        check(f"tier2 tool '{name}'", name in tool_names)
+
+    # Tier 3 — Experimental (14 tools)
+    tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
+             "runPlugin", "getProgress", "streamSimulation",
+             "generateVisualization", "composeMultiServerWorkflow",
+             "manageSecurity", "manageState", "manageValidationProfile",
+             "queryDataCatalog", "bridgeTaskWorkflow"]
+    for name in tier3:
+        check(f"tier3 tool '{name}'", name in tool_names)
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("2 resources", len(resources) == 2, f"got {len(resources)}")
+    check("6 resources", len(resources) == 6, f"got {len(resources)}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("2 templates", len(templates) == 2, f"got {len(templates)}")
+    check("5 templates", len(templates) == 5, f"got {len(templates)}")
 
 
 def test_component_search():
@@ -1204,6 +1247,567 @@ def test_capabilities():
 
 
 # ===========================================================================
+# TIER 2 TOOL TESTS — Engineering Advanced
+# ===========================================================================
+
+# --- PVT tools ---
+
+def test_pvt_saturation_pressure():
+    """Run a PVT saturation pressure experiment."""
+    print("\n=== PVT: Saturation Pressure ===")
+    r = call_tool("runPVT", {
+        "components": json.dumps({"methane": 0.6, "ethane": 0.1, "propane": 0.1, "n-heptane": 0.2}),
+        "model": "SRK",
+        "temperature_C": 80.0,
+        "pressure_bara": 200.0,
+        "experiment": "saturationPressure",
+    })
+    check("pvt satP status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Flow assurance tools ---
+
+def test_flow_assurance_hydrate():
+    """Run a hydrate risk map analysis."""
+    print("\n=== Flow Assurance: Hydrate Risk Map ===")
+    r = call_tool("runFlowAssurance", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.08, "propane": 0.04, "water": 0.03}),
+        "model": "CPA",
+        "temperature_C": 4.0,
+        "pressure_bara": 100.0,
+        "analysis": "hydrateRiskMap",
+    })
+    check("hydrate status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Standards tools ---
+
+def test_calculate_standard_iso6976():
+    """Calculate gas quality per ISO 6976."""
+    print("\n=== Standards: ISO 6976 ===")
+    r = call_tool("calculateStandard", {
+        "components": json.dumps({"methane": 0.90, "ethane": 0.06, "propane": 0.03, "nitrogen": 0.01}),
+        "model": "SRK",
+        "temperature_C": 15.0,
+        "pressure_bara": 1.01325,
+        "standard": "ISO6976",
+    })
+    check("ISO6976 status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Pipeline tools ---
+
+def test_pipeline_single_phase_gas():
+    """Simulate a single-phase gas pipeline."""
+    print("\n=== Pipeline: Single Phase Gas ===")
+    r = call_tool("runPipeline", {
+        "components": json.dumps({"methane": 0.95, "ethane": 0.05}),
+        "model": "SRK",
+        "temperature_C": 25.0,
+        "pressure_bara": 100.0,
+        "flowRate": json.dumps({"value": 5000.0, "unit": "kg/hr"}),
+        "pipe": json.dumps({"diameter_m": 0.2, "length_m": 10000.0,
+                            "elevation_m": 0.0, "roughness_m": 0.00005,
+                            "numberOfIncrements": 10}),
+    })
+    check("pipeline status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Reservoir tools ---
+
+def test_reservoir_simple_tank():
+    """Simulate a gas reservoir material balance."""
+    print("\n=== Reservoir: Simple Tank Model ===")
+    r = call_tool("runReservoir", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.10, "propane": 0.05}),
+        "model": "SRK",
+        "reservoirTemperature_C": 100.0,
+        "reservoirPressure_bara": 200.0,
+        "gasVolume_Sm3": 1e9,
+        "oilVolume_Sm3": 0.0,
+        "waterVolume_Sm3": 0.0,
+        "producers": json.dumps([{"name": "well1", "flowRate": {"value": 100000.0, "unit": "Sm3/day"}}]),
+    })
+    check("reservoir status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Field economics tools ---
+
+def test_field_economics_production_profile():
+    """Generate a production decline profile."""
+    print("\n=== Field Economics: Production Profile ===")
+    r = call_tool("runFieldEconomics", {
+        "mode": "productionProfile",
+        "declineType": "EXPONENTIAL",
+        "initialRate_bblPerDay": 10000.0,
+        "annualDeclineRate": 0.15,
+        "startYear": 2025,
+        "totalYears": 20,
+    })
+    check("econ profile status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Dynamic simulation tools ---
+
+def test_dynamic_separator():
+    """Run a short dynamic simulation on a separator."""
+    print("\n=== Dynamic: Separator Transient ===")
+    process_json = {
+        "fluid": {
+            "components": {"methane": 0.7, "propane": 0.2, "n-decane": 0.1},
+            "model": "SRK",
+            "temperature_C": 25.0,
+            "pressure_bara": 50.0,
+        },
+        "process": {
+            "equipment": [
+                {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                {"type": "separator", "name": "sep", "inlet": "feed"},
+            ]
+        },
+    }
+    r = call_tool("runDynamic", {
+        "processJson": json.dumps(process_json),
+        "duration_seconds": 10.0,
+        "timeStep_seconds": 1.0,
+    })
+    check("dynamic status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Bioprocess tools ---
+
+def test_bioprocess_anaerobic_digester():
+    """Run an anaerobic digester simulation."""
+    print("\n=== Bioprocess: Anaerobic Digester ===")
+    r = call_tool("runBioprocess", {
+        "reactorType": "anaerobicDigester",
+        "substrateType": "FOOD_WASTE",
+        "feedRate_kgPerHr": 100.0,
+        "totalSolidsFraction": 0.15,
+        "temperature_C": 37.0,
+    })
+    check("bioprocess status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Equipment sizing tools ---
+
+def test_size_separator():
+    """Size a separator vessel."""
+    print("\n=== Equipment Sizing: Separator ===")
+    r = call_tool("sizeEquipment", {
+        "equipmentType": "separator",
+        "model": "SRK",
+        "temperature_C": 25.0,
+        "pressure_bara": 50.0,
+        "components": json.dumps({"methane": 0.7, "propane": 0.2, "n-decane": 0.1}),
+        "flowRate": json.dumps({"value": 10000.0, "unit": "kg/hr"}),
+        "orientation": "horizontal",
+        "liquidRetentionTime_min": 5.0,
+    })
+    check("size sep status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_size_compressor():
+    """Size a compressor."""
+    print("\n=== Equipment Sizing: Compressor ===")
+    r = call_tool("sizeEquipment", {
+        "equipmentType": "compressor",
+        "model": "SRK",
+        "temperature_C": 25.0,
+        "pressure_bara": 20.0,
+        "components": json.dumps({"methane": 0.95, "ethane": 0.05}),
+        "flowRate": json.dumps({"value": 5000.0, "unit": "kg/hr"}),
+        "outletPressure_bara": 80.0,
+        "polytropicEfficiency": 0.80,
+    })
+    check("size comp status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Process comparison tools ---
+
+def test_compare_processes():
+    """Compare two process cases side by side."""
+    print("\n=== Process Comparison ===")
+    case = {
+        "fluid": {
+            "components": {"methane": 0.9, "ethane": 0.1},
+            "model": "SRK",
+            "temperature_C": 25.0,
+            "pressure_bara": 50.0,
+        },
+        "process": {
+            "equipment": [
+                {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                {"type": "separator", "name": "sep", "inlet": "feed"},
+            ]
+        },
+    }
+    r = call_tool("compareProcesses", {
+        "cases": json.dumps([
+            {"name": "Case-A", **case},
+            {"name": "Case-B", **case},
+        ]),
+    })
+    check("compare status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Validation tools ---
+
+def test_validate_results():
+    """Validate a flash result against engineering rules."""
+    print("\n=== Validate Results ===")
+    # First run a flash to get results
+    flash_r = run_flash({"methane": 0.9, "ethane": 0.1}, 25.0, 50.0)
+    r = call_tool("validateResults", {
+        "resultsJson": json.dumps(flash_r),
+        "context": "general",
+    })
+    check("validateResults status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Cross-validation tools ---
+
+def test_cross_validate_models():
+    """Cross-validate a process across multiple EOS models."""
+    print("\n=== Cross-Validate Models ===")
+    r = call_tool("crossValidateModels", {
+        "baseProcess": json.dumps({
+            "fluid": {
+                "components": {"methane": 0.9, "ethane": 0.1},
+                "model": "SRK",
+                "temperature_C": 25.0,
+                "pressure_bara": 50.0,
+            },
+            "process": {
+                "equipment": [
+                    {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                    {"type": "separator", "name": "sep", "inlet": "feed"},
+                ]
+            },
+        }),
+        "models": json.dumps(["SRK", "PR"]),
+        "compareVariables": json.dumps([
+            {"address": "sep.gasOutStream.temperature", "unit": "C"},
+        ]),
+    })
+    check("crossValidate status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Parametric study tools ---
+
+def test_parametric_study():
+    """Run a parametric pressure sweep."""
+    print("\n=== Parametric Study ===")
+    r = call_tool("runParametricStudy", {
+        "baseProcess": json.dumps({
+            "fluid": {
+                "components": {"methane": 0.9, "ethane": 0.1},
+                "model": "SRK",
+                "temperature_C": 25.0,
+                "pressure_bara": 50.0,
+            },
+            "process": {
+                "equipment": [
+                    {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                    {"type": "separator", "name": "sep", "inlet": "feed"},
+                ]
+            },
+        }),
+        "sweeps": json.dumps([
+            {"address": "feed.pressure", "unit": "bara", "from": 30.0, "to": 80.0, "steps": 3},
+        ]),
+        "outputs": json.dumps([
+            {"address": "sep.gasOutStream.temperature", "unit": "C"},
+        ]),
+        "mode": "one_at_a_time",
+    })
+    check("parametric status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# ===========================================================================
+# TIER 3 TOOL TESTS — Experimental
+# ===========================================================================
+
+# --- Session management tools ---
+
+def test_session_lifecycle():
+    """Create, list, and close a session."""
+    print("\n=== Session: Lifecycle ===")
+    # Create
+    r = call_tool("manageSession", {
+        "action": "create",
+        "fluid": json.dumps({"methane": 0.9, "ethane": 0.1}),
+    })
+    check("session create status=success", r.get("status") == "success", r.get("message", ""))
+    session_id = r.get("sessionId", "")
+
+    # List
+    r2 = call_tool("manageSession", {"action": "list"})
+    check("session list status=success", r2.get("status") == "success", r2.get("message", ""))
+
+    # Close
+    if session_id:
+        r3 = call_tool("manageSession", {
+            "action": "close",
+            "sessionId": session_id,
+        })
+        check("session close status=success", r3.get("status") == "success", r3.get("message", ""))
+
+
+# --- Task solver tools ---
+
+def test_solve_task():
+    """Solve a simple engineering task."""
+    print("\n=== Solve Task ===")
+    r = call_tool("solveTask", {
+        "task": "Calculate the density of methane at 25C and 50 bar",
+        "fluid": json.dumps({"methane": 1.0}),
+    })
+    check("solveTask status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Workflow composition tools ---
+
+def test_compose_workflow():
+    """Compose a simple two-step workflow."""
+    print("\n=== Compose Workflow ===")
+    r = call_tool("composeWorkflow", {
+        "workflow": "test-workflow",
+        "fluid": json.dumps({"methane": 0.9, "ethane": 0.1}),
+        "steps": json.dumps([
+            {"runner": "flash", "name": "step1",
+             "input": {"temperature_C": 25.0, "pressure_bara": 50.0}},
+        ]),
+    })
+    check("workflow status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Report generation tools ---
+
+def test_generate_report():
+    """Generate a process summary report."""
+    print("\n=== Generate Report ===")
+    flash_r = run_flash({"methane": 0.9, "ethane": 0.1}, 25.0, 50.0)
+    r = call_tool("generateReport", {
+        "reportType": "process_summary",
+        "title": "Test Report",
+        "data": json.dumps(flash_r),
+    })
+    check("report status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Task workflow bridge ---
+
+def test_bridge_task_workflow_schema():
+    """Get the results.json schema from the bridge."""
+    print("\n=== Bridge Task Workflow: Schema ===")
+    r = call_tool("bridgeTaskWorkflow", {"action": "getSchema"})
+    check("bridge schema status=success", r.get("status") == "success", r.get("message", ""))
+    check("bridge schema has schema", "schema" in r or "resultsJsonSchema" in str(r),
+          str(r)[:200])
+
+
+def test_bridge_task_workflow_convert():
+    """Convert a flash result to results.json format."""
+    print("\n=== Bridge Task Workflow: Convert ===")
+    flash_r = run_flash({"methane": 0.85, "ethane": 0.1, "propane": 0.05}, 25.0, 60.0)
+    r = call_tool("bridgeTaskWorkflow", {
+        "action": "toResultsJson",
+        "toolOutput": json.dumps(flash_r),
+        "toolName": "runFlash",
+        "taskTitle": "E2E Test Flash",
+    })
+    check("bridge convert status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Plugin tools ---
+
+def test_plugin_list():
+    """List available plugins."""
+    print("\n=== Plugin: List ===")
+    r = call_tool("runPlugin", {"action": "list"})
+    check("plugin list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Progress tracking tools ---
+
+def test_progress_list():
+    """List active operations."""
+    print("\n=== Progress: List Active ===")
+    r = call_tool("getProgress", {"action": "listActive"})
+    check("progress list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Streaming tools ---
+
+def test_streaming_list():
+    """List streaming operations."""
+    print("\n=== Streaming: List Operations ===")
+    r = call_tool("streamSimulation", {"action": "listOperations"})
+    check("streaming list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Visualization tools ---
+
+def test_visualization_bar_chart():
+    """Generate a bar chart visualization."""
+    print("\n=== Visualization: Bar Chart ===")
+    r = call_tool("generateVisualization", {
+        "type": "barChart",
+        "labels": json.dumps(["A", "B", "C"]),
+        "values": json.dumps([10.0, 20.0, 30.0]),
+    })
+    check("viz barChart status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Multi-server composition tools ---
+
+def test_multi_server_describe():
+    """Describe NeqSim capabilities to other servers."""
+    print("\n=== Multi-Server: Describe Capabilities ===")
+    r = call_tool("composeMultiServerWorkflow", {"action": "describeCapabilities"})
+    check("multiserver describe status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_multi_server_list():
+    """List registered external servers."""
+    print("\n=== Multi-Server: List Servers ===")
+    r = call_tool("composeMultiServerWorkflow", {"action": "listServers"})
+    check("multiserver list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Security tools ---
+
+def test_security_status():
+    """Get security status."""
+    print("\n=== Security: Status ===")
+    r = call_tool("manageSecurity", {"action": "getStatus"})
+    check("security status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- State persistence tools ---
+
+def test_state_list():
+    """List saved states."""
+    print("\n=== State: List ===")
+    r = call_tool("manageState", {"action": "list"})
+    check("state list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_state_info():
+    """Get state storage info."""
+    print("\n=== State: Info ===")
+    r = call_tool("manageState", {"action": "getInfo"})
+    check("state info status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Validation profile tools ---
+
+def test_validation_profile_list():
+    """List validation profiles."""
+    print("\n=== Validation Profiles: List ===")
+    r = call_tool("manageValidationProfile", {"action": "listProfiles"})
+    check("valprofile list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_validation_profile_active():
+    """Get the active validation profile."""
+    print("\n=== Validation Profiles: Active ===")
+    r = call_tool("manageValidationProfile", {"action": "getActiveProfile"})
+    check("valprofile active status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Data catalog tools ---
+
+def test_data_catalog_component_families():
+    """List component families."""
+    print("\n=== Data Catalog: Component Families ===")
+    r = call_tool("queryDataCatalog", {"action": "listComponentFamilies"})
+    check("catalog families status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_data_catalog_eos_models():
+    """List EOS models."""
+    print("\n=== Data Catalog: EOS Models ===")
+    r = call_tool("queryDataCatalog", {"action": "listEOSModels"})
+    check("catalog eos status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# ===========================================================================
+# GOVERNANCE TOOL TESTS
+# ===========================================================================
+
+def test_industrial_profile_describe():
+    """Describe all industrial profiles."""
+    print("\n=== Industrial Profile: Describe ===")
+    r = call_tool("manageIndustrialProfile", {"action": "describe"})
+    check("profile describe status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_industrial_profile_active():
+    """Get active deployment mode."""
+    print("\n=== Industrial Profile: Active ===")
+    r = call_tool("manageIndustrialProfile", {"action": "getActive"})
+    check("profile active status=success", r.get("status") == "success", r.get("message", ""))
+    check("profile mode is DESKTOP_ENGINEER",
+          r.get("activeMode") == "DESKTOP_ENGINEER",
+          f"got {r.get('activeMode')}")
+
+
+def test_industrial_profile_classify():
+    """Classify a tool."""
+    print("\n=== Industrial Profile: Classify Tool ===")
+    r = call_tool("manageIndustrialProfile", {
+        "action": "classifyTool",
+        "toolName": "runFlash",
+    })
+    check("classify status=success", r.get("status") == "success", r.get("message", ""))
+    check("runFlash is TRUSTED_CORE",
+          r.get("category") == "TRUSTED_CORE",
+          f"got category={r.get('category')}")
+
+
+def test_benchmark_trust_all():
+    """Get the full trust report."""
+    print("\n=== Benchmark Trust: All ===")
+    r = call_tool("getBenchmarkTrust", {"action": "getAll"})
+    check("trust all status=success", r.get("status") == "success", r.get("message", ""))
+    check("trust has tools", "tools" in r,
+          f"keys: {list(r.keys())}")
+    # Check covered tools
+    tools = r.get("tools", {})
+    for t in ["runFlash", "runProcess", "runPVT"]:
+        check(f"trust covers {t}", t in tools)
+
+
+def test_benchmark_trust_single():
+    """Get trust page for a single tool."""
+    print("\n=== Benchmark Trust: Single Tool ===")
+    r = call_tool("getBenchmarkTrust", {
+        "action": "getTool",
+        "toolName": "runFlash",
+    })
+    check("trust single status=success", r.get("status") == "success", r.get("message", ""))
+    check("trust has trust object", "trust" in r)
+    trust = r.get("trust", {})
+    check("flash trust maturity=VALIDATED",
+          trust.get("maturityLevel") == "VALIDATED",
+          f"got {trust.get('maturityLevel')}")
+
+
+def test_check_tool_access():
+    """Check tool access for different tools."""
+    print("\n=== Check Tool Access ===")
+    r = call_tool("checkToolAccess", {"toolName": "runFlash"})
+    check("access runFlash status=success", r.get("status") == "success", r.get("message", ""))
+    check("runFlash is allowed", r.get("allowed") is True)
+
+    r2 = call_tool("checkToolAccess", {"toolName": "manageSecurity"})
+    check("access manageSecurity status=success", r2.get("status") == "success")
+    check("manageSecurity is allowed (DESKTOP_ENGINEER)", r2.get("allowed") is True)
+
+
+# ===========================================================================
 # MAIN
 # ===========================================================================
 
@@ -1292,6 +1896,51 @@ if __name__ == "__main__":
 
         # Capabilities
         test_capabilities()
+
+        # ── Tier 2: Engineering Advanced tools ──
+        test_pvt_saturation_pressure()
+        test_flow_assurance_hydrate()
+        test_calculate_standard_iso6976()
+        test_pipeline_single_phase_gas()
+        test_reservoir_simple_tank()
+        test_field_economics_production_profile()
+        test_dynamic_separator()
+        test_bioprocess_anaerobic_digester()
+        test_size_separator()
+        test_size_compressor()
+        test_compare_processes()
+        test_validate_results()
+        test_cross_validate_models()
+        test_parametric_study()
+
+        # ── Tier 3: Experimental tools ──
+        test_session_lifecycle()
+        test_solve_task()
+        test_compose_workflow()
+        test_generate_report()
+        test_bridge_task_workflow_schema()
+        test_bridge_task_workflow_convert()
+        test_plugin_list()
+        test_progress_list()
+        test_streaming_list()
+        test_visualization_bar_chart()
+        test_multi_server_describe()
+        test_multi_server_list()
+        test_security_status()
+        test_state_list()
+        test_state_info()
+        test_validation_profile_list()
+        test_validation_profile_active()
+        test_data_catalog_component_families()
+        test_data_catalog_eos_models()
+
+        # ── Governance tools ──
+        test_industrial_profile_describe()
+        test_industrial_profile_active()
+        test_industrial_profile_classify()
+        test_benchmark_trust_all()
+        test_benchmark_trust_single()
+        test_check_tool_access()
 
     finally:
         stop_server()
