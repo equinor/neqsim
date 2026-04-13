@@ -211,4 +211,155 @@ public class SeparatorMechanicalDesignTest {
 
     System.out.println("Response class populated successfully");
   }
+
+  // ============================================================================
+  // Entrainment Integration Tests
+  // ============================================================================
+
+  @Test
+  public void testEntrainmentFieldsDefaultWhenNotEnabled() {
+    // Without enabling detailed entrainment, fields should be at defaults
+    assertFalse(mechDesign.isDetailedEntrainmentUsed(),
+        "Detailed entrainment should be false by default");
+    assertEquals(0.0, mechDesign.getOilInGasFraction(), 1e-10,
+        "Oil-in-gas fraction should be 0 when not enabled");
+    assertEquals(0.0, mechDesign.getWaterInGasFraction(), 1e-10,
+        "Water-in-gas fraction should be 0 when not enabled");
+    assertEquals(1.0, mechDesign.getLiquidInGasCalibrationFactor(), 1e-10,
+        "LIG calibration factor should be 1.0 when not enabled");
+    assertEquals(1.0, mechDesign.getGasCarryUnderCalibrationFactor(), 1e-10,
+        "GCU calibration factor should be 1.0 when not enabled");
+    assertEquals(1.0, mechDesign.getLiquidLiquidCalibrationFactor(), 1e-10,
+        "LL calibration factor should be 1.0 when not enabled");
+    assertFalse(mechDesign.isMistEliminatorFlooded(),
+        "Mist eliminator should not be flooded by default");
+  }
+
+  @Test
+  public void testEntrainmentFieldsPopulatedWhenEnabled() {
+    // Create fluid with gas + liquid phases
+    SystemInterface fluid = new SystemSrkEos(298.15, 30.0);
+    fluid.addComponent("methane", 0.6);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("propane", 0.1);
+    fluid.addComponent("n-pentane", 0.1);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Feed2", fluid);
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(30.0, "bara");
+    feed.run();
+
+    Separator sep = new Separator("TestSep2", feed);
+    sep.setDetailedEntrainmentCalculation(true);
+    sep.run();
+
+    SeparatorMechanicalDesign design =
+        (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+    design.calcDesign();
+
+    assertTrue(design.isDetailedEntrainmentUsed(),
+        "Detailed entrainment should be enabled after calcDesign");
+    System.out.println("Entrainment enabled — efficiency: "
+        + design.getOverallGasLiquidEfficiency());
+    System.out.println("Oil-in-gas: " + design.getOilInGasFraction());
+    System.out.println("K-factor utilization: " + design.getKFactorUtilization());
+    System.out.println("Mist eliminator flooded: " + design.isMistEliminatorFlooded());
+    System.out.println("Detail JSON null: " + (design.getEntrainmentDetailJson() == null));
+    if (design.getEntrainmentDetailJson() != null) {
+      System.out.println("Detail JSON length: " + design.getEntrainmentDetailJson().length());
+    }
+    // The performance calculator is populated after run() — entrainment fractions
+    // and efficiency should be populated (may be 0 if no gas-liquid separation
+    // is computed, but the fields should be available).
+    assertTrue(design.getOverallGasLiquidEfficiency() >= 0,
+        "Overall gas-liquid efficiency should be >= 0");
+    assertNotNull(design.getEntrainmentDetailJson(),
+        "Entrainment detail JSON should not be null");
+    assertTrue(design.getEntrainmentDetailJson().contains("overallGasLiquidEfficiency"),
+        "Entrainment JSON should contain efficiency field");
+  }
+
+  @Test
+  public void testEntrainmentInResponseJson() {
+    // Setup separator with detailed entrainment
+    SystemInterface fluid = new SystemSrkEos(298.15, 30.0);
+    fluid.addComponent("methane", 0.6);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("propane", 0.1);
+    fluid.addComponent("n-pentane", 0.1);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Feed3", fluid);
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(30.0, "bara");
+    feed.run();
+
+    Separator sep = new Separator("TestSep3", feed);
+    sep.setDetailedEntrainmentCalculation(true);
+    sep.run();
+
+    SeparatorMechanicalDesign design =
+        (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+    design.calcDesign();
+
+    // Get JSON output
+    String json = design.toJson();
+    assertNotNull(json, "JSON output should not be null");
+    assertTrue(json.contains("detailedEntrainmentUsed"),
+        "JSON should contain detailedEntrainmentUsed");
+    assertTrue(json.contains("overallGasLiquidEfficiency"),
+        "JSON should contain overallGasLiquidEfficiency");
+    assertTrue(json.contains("oilInGasFraction"),
+        "JSON should contain oilInGasFraction");
+    assertTrue(json.contains("liquidInGasCalibrationFactor"),
+        "JSON should contain calibration factor");
+
+    System.out.println("Entrainment data present in mechanical design JSON: OK");
+  }
+
+  @Test
+  public void testResponseEntrainmentFieldsMatch() {
+    // Setup separator with detailed entrainment
+    SystemInterface fluid = new SystemSrkEos(298.15, 30.0);
+    fluid.addComponent("methane", 0.6);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("propane", 0.1);
+    fluid.addComponent("n-pentane", 0.1);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Feed4", fluid);
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(30.0, "bara");
+    feed.run();
+
+    Separator sep = new Separator("TestSep4", feed);
+    sep.setDetailedEntrainmentCalculation(true);
+    sep.run();
+
+    SeparatorMechanicalDesign design =
+        (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+    design.calcDesign();
+
+    SeparatorMechanicalDesignResponse response =
+        new SeparatorMechanicalDesignResponse(design);
+
+    // Verify response fields match design fields
+    assertEquals(design.isDetailedEntrainmentUsed(), response.isDetailedEntrainmentUsed(),
+        "detailedEntrainmentUsed should match");
+    assertEquals(design.getOverallGasLiquidEfficiency(),
+        response.getOverallGasLiquidEfficiency(), 1e-10,
+        "overallGasLiquidEfficiency should match");
+    assertEquals(design.getOilInGasFraction(), response.getOilInGasFraction(), 1e-10,
+        "oilInGasFraction should match");
+    assertEquals(design.getLiquidInGasCalibrationFactor(),
+        response.getLiquidInGasCalibrationFactor(), 1e-10,
+        "liquidInGasCalibrationFactor should match");
+  }
 }

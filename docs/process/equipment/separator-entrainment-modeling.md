@@ -33,6 +33,7 @@ computes entrainment from first principles rather than user-specified fractions.
   - [Java API](#java-api)
   - [Python API](#python-api)
 - [JSON Output](#json-output)
+- [Mechanical Design Integration](#mechanical-design-integration)
 - [Comparison to Commercial Tools](#comparison-to-commercial-tools)
 - [Correlations and References](#correlations-and-references)
 - [Class Reference](#class-reference)
@@ -1082,6 +1083,106 @@ The separator performance modeling market breaks into four tiers:
 | Calibrating to plant data across multiple operating points | **NeqSim** (batch CSV calibration) |
 | FPSO separator sizing with vessel motion | MySep |
 | Academic research / teaching | **NeqSim** (open-source, auditable) |
+
+---
+
+## Mechanical Design Integration
+
+When detailed entrainment calculation is enabled, the `SeparatorMechanicalDesign` class
+automatically pulls performance results from the `SeparatorPerformanceCalculator` into
+the mechanical design output. This means `calcDesign()` and `toJson()` include
+entrainment fractions, efficiency metrics, calibration factors, and the full performance
+calculator JSON — all in a single design report.
+
+### How It Works
+
+1. Enable detailed entrainment on the separator: `separator.setDetailedEntrainmentCalculation(true)`
+2. Run the separator: `separator.run()` — this executes the performance calculator
+3. Call `calcDesign()` on the mechanical design — at the end, it calls `populateEntrainmentResults()`
+   which copies all performance data from the calculator into the design object
+4. Call `toJson()` — the response includes both vessel sizing data AND entrainment performance
+
+### Fields Added to Mechanical Design JSON
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `detailedEntrainmentUsed` | boolean | Whether detailed entrainment was active |
+| `oilInGasFraction` | double | Oil-in-gas carryover (volume basis, 0-1) |
+| `waterInGasFraction` | double | Water-in-gas carryover (volume basis, 0-1) |
+| `gasInOilFraction` | double | Gas carry-under into oil (volume basis, 0-1) |
+| `gasInWaterFraction` | double | Gas carry-under into water (volume basis, 0-1) |
+| `oilInWaterFraction` | double | Oil-in-water (volume basis, 0-1) |
+| `waterInOilFraction` | double | Water-in-oil (volume basis, 0-1) |
+| `overallGasLiquidEfficiency` | double | Combined gravity + ME efficiency (0-1) |
+| `mistEliminatorEfficiency` | double | Mist eliminator efficiency alone (0-1) |
+| `kFactorUtilization` | double | Actual K / design K (0-1) |
+| `mistEliminatorFlooded` | boolean | True if K-factor exceeds ME capacity |
+| `liquidInGasCalibrationFactor` | double | Calibration multiplier (1.0 = uncalibrated) |
+| `gasCarryUnderCalibrationFactor` | double | Calibration multiplier (1.0 = uncalibrated) |
+| `liquidLiquidCalibrationFactor` | double | Calibration multiplier (1.0 = uncalibrated) |
+| `entrainmentDetailJson` | String | Full `SeparatorPerformanceCalculator.toJson()` output |
+
+### Java Example
+
+```java
+Separator separator = new Separator("HP Sep", feedStream);
+separator.setDetailedEntrainmentCalculation(true);
+separator.run();
+
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.calcDesign();
+
+// Entrainment data is now part of the mechanical design
+double efficiency = design.getOverallGasLiquidEfficiency();
+double oilCarryover = design.getOilInGasFraction();
+boolean flooded = design.isMistEliminatorFlooded();
+
+// Full JSON includes vessel sizing + entrainment performance
+String json = design.toJson();
+```
+
+### Python Example
+
+```python
+from neqsim import jneqsim
+import json
+
+Separator = jneqsim.process.equipment.separator.Separator
+
+sep = Separator("HP Sep", feed_stream)
+sep.setDetailedEntrainmentCalculation(True)
+sep.run()
+
+design = sep.getMechanicalDesign()
+design.calcDesign()
+
+print(f"Efficiency: {design.getOverallGasLiquidEfficiency():.2%}")
+print(f"Oil in gas: {design.getOilInGasFraction():.4f}")
+print(f"ME flooded: {design.isMistEliminatorFlooded()}")
+
+# Full JSON report
+report = json.loads(str(design.toJson()))
+```
+
+### Calibration Factors in Design Reports
+
+When the performance calculator has been calibrated (via `calibrateFromMeasuredFractions()`
+or batch CSV calibration), the calibration factors are carried through to the mechanical
+design JSON. This provides full traceability from measured plant data to the design report.
+
+```java
+// Calibrate, then generate design
+SeparatorPerformanceCalculator perf = separator.getPerformanceCalculator();
+perf.calibrateFromMeasuredFractions(measuredOilInGas, measuredGasInOil, measuredOilInWater);
+
+// Re-run separator with calibrated calculator
+separator.run();
+
+// Design now includes calibration factors
+design.calcDesign();
+assert design.getLiquidInGasCalibrationFactor() != 1.0; // calibrated
+```
 
 ---
 
