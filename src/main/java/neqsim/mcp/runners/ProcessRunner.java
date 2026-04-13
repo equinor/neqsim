@@ -277,16 +277,74 @@ public class ProcessRunner {
   private static String normalizeProcessJson(String json) {
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+      if (root.has("fluid") && root.get("fluid").isJsonObject()) {
+        JsonObject fluid = root.getAsJsonObject("fluid");
+        if (!fluid.has("temperature") && fluid.has("temperature_C")) {
+          fluid.addProperty("temperature", fluid.get("temperature_C").getAsDouble() + 273.15);
+        }
+        if (!fluid.has("pressure") && fluid.has("pressure_bara")) {
+          fluid.addProperty("pressure", fluid.get("pressure_bara").getAsDouble());
+        }
+      }
+
       if (root.has("process") && root.get("process").isJsonObject()) {
         JsonObject processObj = root.getAsJsonObject("process");
         if (processObj.has("equipment") && processObj.get("equipment").isJsonArray()) {
           root.add("process", processObj.getAsJsonArray("equipment"));
-          return GSON.toJson(root);
         }
       }
+
+      if (root.has("process") && root.get("process").isJsonArray()) {
+        JsonArray processArr = root.getAsJsonArray("process");
+        for (int i = 0; i < processArr.size(); i++) {
+          JsonObject unit = processArr.get(i).getAsJsonObject();
+          JsonObject properties = unit.has("properties") && unit.get("properties").isJsonObject()
+              ? unit.getAsJsonObject("properties")
+              : new JsonObject();
+
+          if (!properties.has("flowRate") && unit.has("flowRate")) {
+            properties.add("flowRate", unit.get("flowRate"));
+          }
+          if (!properties.has("temperature") && unit.has("temperature")) {
+            properties.add("temperature", unit.get("temperature"));
+          }
+          if (!properties.has("pressure") && unit.has("pressure")) {
+            properties.add("pressure", unit.get("pressure"));
+          }
+
+          if (properties.size() > 0) {
+            normalizeLegacyPropertyObjects(properties);
+            unit.add("properties", properties);
+          }
+        }
+      }
+
+      return GSON.toJson(root);
     } catch (Exception ignored) {
     }
     return json;
+  }
+
+  /**
+   * Converts legacy {value, unit} property objects to [value, unit] arrays expected by the
+   * JsonProcessBuilder reflection setter logic.
+   *
+   * @param properties mutable properties object
+   */
+  private static void normalizeLegacyPropertyObjects(JsonObject properties) {
+    String[] unitAwareKeys = {"flowRate", "temperature", "pressure"};
+    for (String key : unitAwareKeys) {
+      if (properties.has(key) && properties.get(key).isJsonObject()) {
+        JsonObject obj = properties.getAsJsonObject(key);
+        if (obj.has("value") && obj.has("unit")) {
+          JsonArray arr = new JsonArray();
+          arr.add(obj.get("value"));
+          arr.add(obj.get("unit"));
+          properties.add(key, arr);
+        }
+      }
+    }
   }
 
   /**

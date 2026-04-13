@@ -411,7 +411,15 @@ public class FlashRunner {
           JsonObject temperature = overall.getAsJsonObject("temperature");
           if (temperature.has("value")) {
             try {
-              conditions.addProperty("temperature_K", temperature.get("value").getAsDouble());
+              double temperatureValue = temperature.get("value").getAsDouble();
+              String temperatureUnit =
+                  temperature.has("unit") ? temperature.get("unit").getAsString() : "K";
+              if ("C".equalsIgnoreCase(temperatureUnit)) {
+                temperatureValue += 273.15;
+              } else if ("F".equalsIgnoreCase(temperatureUnit)) {
+                temperatureValue = (temperatureValue - 32.0) * 5.0 / 9.0 + 273.15;
+              }
+              conditions.addProperty("temperature_K", temperatureValue);
             } catch (Exception ignored) {
             }
           }

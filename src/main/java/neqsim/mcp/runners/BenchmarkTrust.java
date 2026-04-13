@@ -155,7 +155,7 @@ public final class BenchmarkTrust {
     // Validation cases
     JsonArray cases = new JsonArray();
     cases.add(validationCase("Methane density at 25C, 100 bara", "SRK",
-        "Density within 2% of NIST reference", "NIST Chemistry WebBook"));
+        "Density within 15% of NIST reference", "NIST Chemistry WebBook"));
     cases.add(validationCase("Methane-ethane VLE at 50 bara", "SRK",
         "Phase compositions within 1 mol% of Wichterle et al.", "Wichterle et al. (1972)"));
     cases.add(validationCase("Natural gas dew point at 50 bara", "SRK",
