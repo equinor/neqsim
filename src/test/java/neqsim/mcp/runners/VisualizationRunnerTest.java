@@ -68,6 +68,21 @@ class VisualizationRunnerTest {
   }
 
   @Test
+  void testCompressorMapDerivesPressureRatioFromPressures() {
+    String json =
+        "{" + "\"type\": \"compressorMap\"," + "\"inletFlow\": 5000.0," + "\"inletPressure\": 25.0,"
+            + "\"outletPressure\": 100.0," + "\"efficiency\": 0.80," + "\"power_kW\": 2500.0" + "}";
+
+    String result = VisualizationRunner.run(json);
+    assertNotNull(result);
+    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", obj.get("status").getAsString(),
+        "Compressor map viz failed: " + result);
+    assertTrue(obj.get("svg").getAsString().contains("PR: 4.00"),
+        "Pressure ratio should be derived from inlet/outlet pressure when pressureRatio is not provided");
+  }
+
+  @Test
   void testNullInput() {
     String result = VisualizationRunner.run(null);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();

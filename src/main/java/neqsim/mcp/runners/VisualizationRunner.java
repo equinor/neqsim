@@ -393,15 +393,22 @@ public final class VisualizationRunner {
    */
   private static String generateCompressorMapSVG(JsonObject input) {
     double inletFlow = input.has("inletFlow") ? input.get("inletFlow").getAsDouble() : 5000;
-    double pressure = input.has("outletPressure") ? input.get("outletPressure").getAsDouble() : 100;
+    double outletPressure =
+        input.has("outletPressure") ? input.get("outletPressure").getAsDouble() : 100;
+    double inletPressure = input.has("inletPressure") ? input.get("inletPressure").getAsDouble()
+        : outletPressure / 3.0;
     double efficiency = input.has("efficiency") ? input.get("efficiency").getAsDouble() : 0.80;
     double power = input.has("power_kW") ? input.get("power_kW").getAsDouble() : 2500;
     double surgeFlow =
         input.has("surgeFlow") ? input.get("surgeFlow").getAsDouble() : inletFlow * 0.6;
     double stonewall =
         input.has("stonewallFlow") ? input.get("stonewallFlow").getAsDouble() : inletFlow * 1.4;
-    double pressureRatio =
-        input.has("pressureRatio") ? input.get("pressureRatio").getAsDouble() : 3.0;
+    double pressureRatio;
+    if (input.has("pressureRatio")) {
+      pressureRatio = input.get("pressureRatio").getAsDouble();
+    } else {
+      pressureRatio = outletPressure / Math.max(inletPressure, 1.0e-6);
+    }
 
     int width = 600;
     int height = 400;
