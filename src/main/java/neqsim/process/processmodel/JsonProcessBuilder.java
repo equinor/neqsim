@@ -44,8 +44,10 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
  * Builds a {@link ProcessSystem} from a JSON definition string.
  *
  * <p>
- * Supports declarative definition of fluids, streams, and equipment with automatic stream wiring by
- * name reference. Designed for web API integration where clients submit JSON process definitions
+ * Supports declarative definition of fluids, streams, and equipment with
+ * automatic stream wiring by
+ * name reference. Designed for web API integration where clients submit JSON
+ * process definitions
  * and receive simulation results.
  * </p>
  *
@@ -79,7 +81,8 @@ public class JsonProcessBuilder {
   /**
    * Constructs a new JsonProcessBuilder.
    */
-  public JsonProcessBuilder() {}
+  public JsonProcessBuilder() {
+  }
 
   /**
    * Builds a ProcessSystem from a JSON string.
@@ -112,16 +115,21 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Builds a ProcessSystem from a parsed JsonObject, optionally with a pre-built fluid.
+   * Builds a ProcessSystem from a parsed JsonObject, optionally with a pre-built
+   * fluid.
    *
    * <p>
-   * When {@code preBuiltFluid} is non-null, it is used as the default fluid for all streams instead
-   * of parsing the 'fluid' section from JSON. This is the recommended path when importing fluids
-   * from external sources (e.g., Eclipse E300 files) that preserve all component critical
+   * When {@code preBuiltFluid} is non-null, it is used as the default fluid for
+   * all streams instead
+   * of parsing the 'fluid' section from JSON. This is the recommended path when
+   * importing fluids
+   * from external sources (e.g., Eclipse E300 files) that preserve all component
+   * critical
    * properties and BIPs.
    *
-   * @param root the root JSON object
-   * @param preBuiltFluid optional pre-built fluid system (null to use JSON fluid section)
+   * @param root          the root JSON object
+   * @param preBuiltFluid optional pre-built fluid system (null to use JSON fluid
+   *                      section)
    * @return a SimulationResult containing the built ProcessSystem or errors
    */
   public SimulationResult buildFromJsonObject(JsonObject root, SystemInterface preBuiltFluid) {
@@ -297,12 +305,10 @@ public class JsonProcessBuilder {
    */
   private SystemInterface buildFluid(JsonObject fluidDef) {
     try {
-      double temperature =
-          fluidDef.has("temperature") ? fluidDef.get("temperature").getAsDouble() : 288.15;
+      double temperature = fluidDef.has("temperature") ? fluidDef.get("temperature").getAsDouble() : 288.15;
       double pressure = fluidDef.has("pressure") ? fluidDef.get("pressure").getAsDouble() : 1.01325;
 
-      String model =
-          fluidDef.has("model") ? fluidDef.get("model").getAsString().toUpperCase() : "SRK";
+      String model = fluidDef.has("model") ? fluidDef.get("model").getAsString().toUpperCase() : "SRK";
 
       SystemInterface fluid = createFluidByModel(model, temperature, pressure);
       if (fluid == null) {
@@ -332,8 +338,7 @@ public class JsonProcessBuilder {
           double tc = cc.get("Tc").getAsDouble();
           double pc = cc.get("Pc").getAsDouble();
           double omega = cc.get("acentricFactor").getAsDouble();
-          boolean isPlusFraction =
-              cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
+          boolean isPlusFraction = cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
           if (isPlusFraction) {
             fluid.addPlusFraction(compName, moleFraction, molarMass, density);
             int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
@@ -357,8 +362,7 @@ public class JsonProcessBuilder {
       }
 
       // Set mixing rule
-      String mixingRule =
-          fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
+      String mixingRule = fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
       fluid.setMixingRule(mixingRule);
 
       // Apply binary interaction parameters (BICs)
@@ -413,9 +417,9 @@ public class JsonProcessBuilder {
   /**
    * Creates a SystemInterface based on the model type string.
    *
-   * @param model the model name (e.g., "SRK", "PR", "CPA")
+   * @param model       the model name (e.g., "SRK", "PR", "CPA")
    * @param temperature temperature in Kelvin
-   * @param pressure pressure in bara
+   * @param pressure    pressure in bara
    * @return the created fluid system, or null if unknown model
    */
   private SystemInterface createFluidByModel(String model, double temperature, double pressure) {
@@ -444,10 +448,10 @@ public class JsonProcessBuilder {
   /**
    * Pass 1: Creates a unit (no wiring) and registers it.
    *
-   * @param process the process system
-   * @param unitDef the JSON definition
+   * @param process      the process system
+   * @param unitDef      the JSON definition
    * @param defaultFluid the default fluid
-   * @param index the unit index
+   * @param index        the unit index
    */
   private void createUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid,
       int index) {
@@ -459,8 +463,7 @@ public class JsonProcessBuilder {
     }
 
     String type = unitDef.get("type").getAsString();
-    String name =
-        unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
+    String name = unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
 
     try {
       ProcessEquipmentInterface equipment;
@@ -509,10 +512,11 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Creates a DistillationColumn from its JSON definition, extracting tray count and
+   * Creates a DistillationColumn from its JSON definition, extracting tray count
+   * and
    * condenser/reboiler flags from properties.
    *
-   * @param name the column name
+   * @param name    the column name
    * @param unitDef the JSON definition
    * @return the created DistillationColumn
    */
@@ -538,10 +542,11 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Reports an unwired unit as a warning (not a hard error). Extracts reference details so the user
+   * Reports an unwired unit as a warning (not a hard error). Extracts reference
+   * details so the user
    * knows which connections could not be resolved.
    *
-   * @param name the unit name
+   * @param name    the unit name
    * @param unitDef the JSON definition
    */
   private void reportUnwiredUnit(String name, JsonObject unitDef) {
@@ -568,7 +573,7 @@ public class JsonProcessBuilder {
   /**
    * Pass 2: Wires inlet connections for a unit (all units now exist).
    *
-   * @param name the unit name
+   * @param name    the unit name
    * @param unitDef the JSON definition
    */
   private void wireUnit(String name, JsonObject unitDef) {
@@ -620,11 +625,13 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Attempts to wire all inlet references for a unit. Returns true only if ALL references resolve
-   * successfully, allowing downstream units to use this unit's outlets. Does not add error details
+   * Attempts to wire all inlet references for a unit. Returns true only if ALL
+   * references resolve
+   * successfully, allowing downstream units to use this unit's outlets. Does not
+   * add error details
    * on failure (those are added by the fallback wireUnit call).
    *
-   * @param name the unit name
+   * @param name    the unit name
    * @param unitDef the JSON definition
    * @return true if all inlet references resolved and were wired
    */
@@ -706,12 +713,13 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Builds a single process unit from its JSON definition and adds it to the process.
+   * Builds a single process unit from its JSON definition and adds it to the
+   * process.
    *
-   * @param process the process system to add the unit to
-   * @param unitDef the JSON object defining the unit
+   * @param process      the process system to add the unit to
+   * @param unitDef      the JSON object defining the unit
    * @param defaultFluid the default fluid to use for streams
-   * @param index the unit index (for error reporting)
+   * @param index        the unit index (for error reporting)
    * @deprecated Use createUnit + wireUnit two-pass approach instead
    */
   @Deprecated
@@ -719,18 +727,17 @@ public class JsonProcessBuilder {
       int index) {
     createUnit(process, unitDef, defaultFluid, index);
     String type = unitDef.has("type") ? unitDef.get("type").getAsString() : "";
-    String name =
-        unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
+    String name = unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
     wireUnit(name, unitDef);
   }
 
   /**
    * Creates a unit and wires its inlet stream based on the JSON definition.
    *
-   * @param process the process system
-   * @param type the equipment type
-   * @param name the equipment name
-   * @param unitDef the JSON definition
+   * @param process      the process system
+   * @param type         the equipment type
+   * @param name         the equipment name
+   * @param unitDef      the JSON definition
    * @param defaultFluid the default fluid
    * @return the created equipment, or null if creation failed
    */
@@ -778,8 +785,8 @@ public class JsonProcessBuilder {
   /**
    * Creates a Stream from its JSON definition.
    *
-   * @param name the stream name
-   * @param unitDef the JSON definition
+   * @param name         the stream name
+   * @param unitDef      the JSON definition
    * @param defaultFluid the default fluid
    * @return the created stream
    */
@@ -923,7 +930,7 @@ public class JsonProcessBuilder {
    * Wires an inlet stream to an equipment unit via reflection.
    *
    * @param equipment the equipment to wire
-   * @param stream the inlet stream
+   * @param stream    the inlet stream
    */
   private void wireInletStream(ProcessEquipmentInterface equipment, StreamInterface stream) {
     // Special handling for DistillationColumn — uses addFeedStream, not
@@ -935,20 +942,17 @@ public class JsonProcessBuilder {
     }
 
     try {
-      java.lang.reflect.Method setInlet =
-          equipment.getClass().getMethod("setInletStream", StreamInterface.class);
+      java.lang.reflect.Method setInlet = equipment.getClass().getMethod("setInletStream", StreamInterface.class);
       setInlet.invoke(equipment, stream);
     } catch (NoSuchMethodException e) {
       // Try addStream for Mixer
       try {
-        java.lang.reflect.Method addStream =
-            equipment.getClass().getMethod("addStream", StreamInterface.class);
+        java.lang.reflect.Method addStream = equipment.getClass().getMethod("addStream", StreamInterface.class);
         addStream.invoke(equipment, stream);
       } catch (Exception ex) {
         // Try addFeedStream for column-like equipment
         try {
-          java.lang.reflect.Method addFeed =
-              equipment.getClass().getMethod("addFeedStream", StreamInterface.class);
+          java.lang.reflect.Method addFeed = equipment.getClass().getMethod("addFeedStream", StreamInterface.class);
           addFeed.invoke(equipment, stream);
         } catch (Exception ex2) {
           warnings.add("Cannot set inlet stream on " + equipment.getName()
@@ -963,13 +967,13 @@ public class JsonProcessBuilder {
   /**
    * Applies property settings from JSON to an equipment unit via reflection.
    *
-   * @param equipment the equipment to configure
+   * @param equipment  the equipment to configure
    * @param properties the properties JSON object
    */
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
     // Properties that are handled by dedicated logic (not generic reflection)
-    java.util.Set<String> handledProps =
-        new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "adjustedEquipment",
+    java.util.Set<String> handledProps = new java.util.HashSet<>(
+        java.util.Arrays.asList("splitFactors", "adjustedEquipment",
             "adjustedVariable", "targetEquipment", "targetVariable", "targetValue", "stepSize"));
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
@@ -990,7 +994,8 @@ public class JsonProcessBuilder {
    * Wires an Adjuster's adjusted and target variables from JSON properties.
    *
    * <p>
-   * The Adjuster modifies one equipment property (adjusted variable) to achieve a target value on
+   * The Adjuster modifies one equipment property (adjusted variable) to achieve a
+   * target value on
    * another equipment property (target variable). JSON format:
    * </p>
    *
@@ -1007,7 +1012,7 @@ public class JsonProcessBuilder {
    * </pre>
    *
    * @param adjuster the adjuster to configure
-   * @param props the properties JSON object
+   * @param props    the properties JSON object
    */
   private void wireAdjuster(Adjuster adjuster, JsonObject props) {
     // Wire adjusted variable (the variable being changed)
@@ -1031,8 +1036,7 @@ public class JsonProcessBuilder {
       String tgtEquipName = props.get("targetEquipment").getAsString();
       ProcessEquipmentInterface tgtEquip = namedEquipment.get(tgtEquipName);
       if (tgtEquip != null) {
-        String tgtVar =
-            props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
+        String tgtVar = props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
         double tgtVal = props.has("targetValue") ? props.get("targetValue").getAsDouble() : 0.0;
         String tgtUnit = props.has("targetUnit") ? props.get("targetUnit").getAsString() : "";
         if (!tgtVar.isEmpty() && props.has("targetValue")) {
@@ -1053,12 +1057,13 @@ public class JsonProcessBuilder {
    * Applies entrainment specifications to a separator from a JSON array.
    *
    * <p>
-   * Each array element is an object with keys: value, specType, specifiedStream, phaseFrom,
+   * Each array element is an object with keys: value, specType, specifiedStream,
+   * phaseFrom,
    * phaseTo. These map directly to
    * {@link Separator#setEntrainment(double, String, String, String, String)}.
    * </p>
    *
-   * @param separator the separator to configure
+   * @param separator          the separator to configure
    * @param entrainmentElement the JSON element (expected to be a JsonArray)
    */
   private void applyEntrainment(Separator separator, JsonElement entrainmentElement) {
@@ -1075,8 +1080,7 @@ public class JsonProcessBuilder {
       try {
         double value = spec.get("value").getAsDouble();
         String specType = spec.has("specType") ? spec.get("specType").getAsString() : "volume";
-        String specifiedStream =
-            spec.has("specifiedStream") ? spec.get("specifiedStream").getAsString() : "product";
+        String specifiedStream = spec.has("specifiedStream") ? spec.get("specifiedStream").getAsString() : "product";
         String phaseFrom = spec.get("phaseFrom").getAsString();
         String phaseTo = spec.get("phaseTo").getAsString();
         separator.setEntrainment(value, specType, specifiedStream, phaseFrom, phaseTo);
@@ -1091,8 +1095,8 @@ public class JsonProcessBuilder {
    * Applies a single property to an equipment unit.
    *
    * @param equipment the equipment
-   * @param propName the property name
-   * @param value the property value
+   * @param propName  the property name
+   * @param value     the property value
    */
   private void applyProperty(ProcessEquipmentInterface equipment, String propName,
       JsonElement value) {
@@ -1105,16 +1109,14 @@ public class JsonProcessBuilder {
         if (arr.size() >= 2) {
           double numValue = arr.get(0).getAsDouble();
           String unit = arr.get(1).getAsString();
-          java.lang.reflect.Method method =
-              equipment.getClass().getMethod(setterName, double.class, String.class);
+          java.lang.reflect.Method method = equipment.getClass().getMethod(setterName, double.class, String.class);
           method.invoke(equipment, numValue, unit);
         }
       } else if (value.isJsonPrimitive()) {
         if (value.getAsJsonPrimitive().isNumber()) {
           // Try double setter first
           try {
-            java.lang.reflect.Method method =
-                equipment.getClass().getMethod(setterName, double.class);
+            java.lang.reflect.Method method = equipment.getClass().getMethod(setterName, double.class);
             method.invoke(equipment, value.getAsDouble());
           } catch (NoSuchMethodException e) {
             // Try int setter
@@ -1122,12 +1124,10 @@ public class JsonProcessBuilder {
             method.invoke(equipment, value.getAsInt());
           }
         } else if (value.getAsJsonPrimitive().isBoolean()) {
-          java.lang.reflect.Method method =
-              equipment.getClass().getMethod(setterName, boolean.class);
+          java.lang.reflect.Method method = equipment.getClass().getMethod(setterName, boolean.class);
           method.invoke(equipment, value.getAsBoolean());
         } else if (value.getAsJsonPrimitive().isString()) {
-          java.lang.reflect.Method method =
-              equipment.getClass().getMethod(setterName, String.class);
+          java.lang.reflect.Method method = equipment.getClass().getMethod(setterName, String.class);
           method.invoke(equipment, value.getAsString());
         }
       }
@@ -1156,16 +1156,21 @@ public class JsonProcessBuilder {
   }
 
   /**
-   * Convenience method to build and run a process from JSON with a pre-built fluid.
+   * Convenience method to build and run a process from JSON with a pre-built
+   * fluid.
    *
    * <p>
-   * This overload is used when the fluid has been loaded from an external source (e.g., an Eclipse
-   * E300 file via {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite}) and should be used
-   * instead of the fluid definition in the JSON. The pre-built fluid preserves all critical
-   * properties (Tc, Pc, acentric factor, MW, BIPs) for both standard and hypothetical/pseudo
+   * This overload is used when the fluid has been loaded from an external source
+   * (e.g., an Eclipse
+   * E300 file via {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite}) and
+   * should be used
+   * instead of the fluid definition in the JSON. The pre-built fluid preserves
+   * all critical
+   * properties (Tc, Pc, acentric factor, MW, BIPs) for both standard and
+   * hypothetical/pseudo
    * components.
    *
-   * @param json the JSON process definition (the 'fluid' section is ignored)
+   * @param json  the JSON process definition (the 'fluid' section is ignored)
    * @param fluid the pre-built thermodynamic system to use
    * @return the simulation result with report
    */
