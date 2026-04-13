@@ -25,12 +25,15 @@ computes entrainment from first principles rather than user-specified fractions.
   - [Stage 6: Mist Eliminator](#stage-6-mist-eliminator)
   - [Stage 7: Liquid-Liquid Separation (Three-Phase)](#stage-7-liquid-liquid-separation-three-phase)
 - [Separator Internals Database](#separator-internals-database)
+- [Vendor-Certified Efficiency Curves](#vendor-certified-efficiency-curves)
 - [Droplet Size Distributions](#droplet-size-distributions)
 - [Grade Efficiency Curves](#grade-efficiency-curves)
+- [Calibration Framework](#calibration-framework)
 - [Using the Enhanced Mode](#using-the-enhanced-mode)
   - [Java API](#java-api)
   - [Python API](#python-api)
 - [JSON Output](#json-output)
+- [Mechanical Design Integration](#mechanical-design-integration)
 - [Comparison to Commercial Tools](#comparison-to-commercial-tools)
 - [Correlations and References](#correlations-and-references)
 - [Class Reference](#class-reference)
@@ -460,8 +463,9 @@ interfacial tension between oil and water phases.
 A CSV-backed database of separator internals specifications, loaded as a
 singleton from `src/main/resources/designdata/`:
 
-- [SeparatorInternals.csv](../../../src/main/resources/designdata/SeparatorInternals.csv) — 17 records covering wire mesh, vane pack, axial cyclone, plate pack, and gravity types
-- [SeparatorInletDevices.csv](../../../src/main/resources/designdata/SeparatorInletDevices.csv) — 13 records covering all inlet device types
+- [SeparatorInternals.csv](../../../src/main/resources/designdata/SeparatorInternals.csv) — 70+ records covering wire mesh (19 variants incl. Monel, Hastelloy, PTFE, Duplex), vane pack (12 variants), axial cyclone (10 variants), plate pack (13 variants), and gravity (10 variants)
+- [SeparatorInletDevices.csv](../../../src/main/resources/designdata/SeparatorInletDevices.csv) — 31 records covering all inlet device types (elbow inlets, distributors, vanes, cyclones, deflector plates, schoepentoeter, impingement plates)
+- [SeparatorVendorCurves.csv](../../../src/main/resources/designdata/SeparatorVendorCurves.csv) — 25 vendor-certified grade efficiency curves from factory acceptance tests (FAT), covering wire mesh, vane pack, axial cyclone, and plate pack; includes atmospheric and high-pressure (50 bar) test data
 
 ### Internals Records
 
@@ -479,9 +483,11 @@ Each record in `SeparatorInternals.csv` contains:
 | `minKFactor` | Minimum recommended K-factor [m/s] | 0.01 to 0.05 |
 | `pressureDrop_mbar` | Typical pressure drop [mbar] | 0.1 to 10.0 |
 | `designStandard` | Applicable standard | API 12J, NORSOK P-100 |
-| `material` | Construction material | SS316L, SS316L/PTFE |
-| `maxTemperature_C` | Maximum operating temperature [C] | 200 to 500 |
-| `reference` | Published reference | Brunazzi and Paglianti (1998) |
+| `material` | Construction material | SS316L, Monel, Hastelloy C-276, PTFE, Titanium Gr2, Duplex 2205 |
+| `maxTemperature_C` | Maximum operating temperature [C] | 150 to 800 |
+| `minThickness_mm` | Minimum pad/element thickness [mm] | 50 to 300 |
+| `weight_kg_m2` | Installed weight per unit area [kg/m²] | 10 to 120 |
+| `reference` | Published reference | Brunazzi and Paglianti (1998), El-Dessouky et al. (2000), York (2003) |
 
 ### Inlet Device Records
 
@@ -530,6 +536,102 @@ String json = db.toCatalogJson();
 Add rows to the CSV files to include vendor-specific or custom internals.
 The database reloads automatically on next `getInstance()` call after JVM restart.
 Fields are public for direct access — no getters needed.
+
+---
+
+## Vendor-Certified Efficiency Curves
+
+The database includes **25 vendor-certified grade efficiency curves** from factory
+acceptance tests (FAT), stored in `SeparatorVendorCurves.csv`. Each curve contains
+12 measured (droplet diameter, efficiency) points obtained from standardized testing
+(EN 13544, ISO 29042, or vendor in-house methods).
+
+### Vendor Curve Records
+
+| Field | Description | Example |
+|-------|-------------|--------|
+| `curveId` | Unique identifier | VC001, VC015 |
+| `internalsType` | WIRE_MESH, VANE_PACK, AXIAL_CYCLONE, PLATE_PACK | WIRE_MESH |
+| `vendorName` | Vendor name | VendorA, VendorB |
+| `productFamily` | Product model designation | WM-StdKnit-150, VP-DP-Standard |
+| `testStandard` | Test method | EN 13544 / ISO 29042 |
+| `testFluid` | Gas-liquid pair used | Air-Water, N2-Exxsol |
+| `testPressure_bar` | Test pressure [bar] | 1.0, 50.0 |
+| `testTemperature_C` | Test temperature [°C] | 20, 25 |
+| `diameterPoints_um` | Measured droplet diameters [µm] | 1;2;3;5;8;10;15;20;30;50;80;100 |
+| `efficiencyPoints` | Measured collection efficiencies [0-1] | 0.05;0.12;0.25;0.50;... |
+| `maxKFactor` | Maximum K-factor at test conditions [m/s] | 0.107 |
+| `testDate` | Factory acceptance test date | 2022-03-15 |
+| `certificateRef` | Certificate or report reference | FAT-2022-001 |
+
+### Coverage
+
+| Internals Type | Number of Curves | Includes HP (50 bar) |
+|----------------|-----------------|---------------------|
+| WIRE_MESH | 8 | Yes (2 curves) |
+| VANE_PACK | 6 | Yes (1 curve) |
+| AXIAL_CYCLONE | 6 | Yes (1 curve) |
+| PLATE_PACK | 3 | No |
+| **Total** | **25** | |
+
+### Querying Vendor Curves
+
+```java
+SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
+
+// All vendor curves
+List<SeparatorInternalsDatabase.VendorCurveRecord> all = db.getAllVendorCurves();
+
+// Find by internals type
+List<SeparatorInternalsDatabase.VendorCurveRecord> meshCurves =
+    db.findVendorCurvesByType("WIRE_MESH");
+
+// Find by vendor
+List<SeparatorInternalsDatabase.VendorCurveRecord> vendorACurves =
+    db.findVendorCurvesByVendor("VendorA");
+
+// Find specific curve by ID
+SeparatorInternalsDatabase.VendorCurveRecord curve = db.findVendorCurveById("VC001");
+System.out.println("Product: " + curve.productFamily);
+System.out.println("Test pressure: " + curve.testPressure_bar + " bar");
+System.out.println("Points: " + curve.diameterPoints_um.length);
+
+// Convert to GradeEfficiencyCurve for calculations
+GradeEfficiencyCurve gec = curve.toGradeEfficiencyCurve();
+double eta10 = gec.getEfficiency(10e-6);  // Efficiency at 10 µm
+
+// Find by type AND vendor
+List<SeparatorInternalsDatabase.VendorCurveRecord> vendorBMesh =
+    db.findVendorCurvesByTypeAndVendor("WIRE_MESH", "VendorB");
+```
+
+### Using Vendor Curves in Simulation
+
+```java
+// Use a specific vendor curve instead of the generic defaults
+SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
+SeparatorInternalsDatabase.VendorCurveRecord vc =
+    db.findVendorCurveById("VC001");
+
+separator.getPerformanceCalculator()
+    .setMistEliminatorCurve(vc.toGradeEfficiencyCurve());
+```
+
+### Python API
+
+```python
+db = SeparatorInternalsDatabase.getInstance()
+
+# Browse vendor curves
+for vc in db.getAllVendorCurves():
+    print(f"{vc.curveId:6s}  {vc.internalsType:15s}  {vc.vendorName:10s}  "
+          f"{vc.productFamily:25s}  P={vc.testPressure_bar:.0f} bar")
+
+# Get a specific curve and use it
+curve = db.findVendorCurveById("VC001")
+gec = curve.toGradeEfficiencyCurve()
+print(f"Efficiency at 10 um: {gec.getEfficiency(10e-6):.3f}")
+```
 
 ---
 
@@ -605,6 +707,95 @@ double overall = wireMesh.calcOverallEfficiency(dsd);  // Integrated over DSD
 
 ---
 
+## Calibration Framework
+
+The enhanced model includes a structured calibration system for matching model
+predictions to plant or laboratory measurements. Three independent calibration
+multipliers adjust three categories of entrainment:
+
+| Multiplier | Affects | Default |
+|-----------|---------|--------|
+| `liquidInGasCalibrationFactor` | Oil-in-gas, water-in-gas | 1.0 |
+| `gasCarryUnderCalibrationFactor` | Gas-in-oil, gas-in-water | 1.0 |
+| `liquidLiquidCalibrationFactor` | Oil-in-water, water-in-oil | 1.0 |
+
+### Manual Calibration
+
+Set factors directly:
+
+```java
+SeparatorPerformanceCalculator perf = separator.getPerformanceCalculator();
+perf.setLiquidInGasCalibrationFactor(1.5);     // 50% more carryover than model
+perf.setGasCarryUnderCalibrationFactor(0.8);   // 20% less gas carry-under
+perf.setLiquidLiquidCalibrationFactor(2.0);    // double liq-liq cross-contamination
+```
+
+### Auto-Calibration from a Single Measurement
+
+Fit factors to one set of measured fractions:
+
+```java
+SeparatorPerformanceCalculator.CalibrationSummary summary =
+    perf.calibrateFromMeasuredFractions(
+        1.5e-3,   // measured oil-in-gas fraction
+        0.0,      // measured water-in-gas (0 if not measured)
+        8.0e-3,   // measured gas-in-oil
+        0.0,      // measured gas-in-water
+        2.0e-2,   // measured oil-in-water
+        0.0,      // measured water-in-oil
+        1e-12);   // model floor (avoid divide-by-zero)
+
+System.out.println("New liquid-in-gas factor: " + summary.newLiquidInGasFactor);
+System.out.println("New gas carry-under factor: " + summary.newGasCarryUnderFactor);
+System.out.println("New liquid-liquid factor: " + summary.newLiquidLiquidFactor);
+```
+
+### Grouped-Measurement Convenience
+
+When plant data is reported as grouped categories (not individual fractions):
+
+```java
+SeparatorPerformanceCalculator.CalibrationSummary summary =
+    perf.calibrateFromGroupedMeasurements(
+        1.5e-3,   // measured grouped liquid-in-gas
+        8.0e-3,   // measured grouped gas carry-under
+        2.0e-2,   // measured grouped liquid-liquid
+        1e-12);   // model floor
+```
+
+### Batch Calibration from CSV Case Library
+
+Fit calibration factors across multiple operating points from a CSV file:
+
+```java
+// Load calibration cases from CSV
+List<SeparatorPerformanceCalculator.CalibrationCase> cases =
+    SeparatorPerformanceCalculator.loadCalibrationCasesFromCsv(
+        "src/main/resources/designdata/SeparatorCalibrationCasesTemplate.csv");
+
+// Fit (finds median ratio across all cases)
+SeparatorPerformanceCalculator.BatchCalibrationSummary fit =
+    perf.calibrateFromCaseLibrary(cases, 1e-12);
+
+System.out.println("Cases: " + fit.nCases);
+System.out.println("Before MAPE: " + fit.beforeMAPE);
+System.out.println("After MAPE: " + fit.afterMAPE);
+```
+
+### JSON Calibration Report
+
+Generate a comprehensive report with per-case residuals:
+
+```java
+String report = perf.buildBatchCalibrationReportJson(cases, fit);
+System.out.println(report);  // JSON with calibrationFactors, caseResults, summary
+
+// Or save to file
+perf.saveBatchCalibrationReportJson("calibration_report.json", cases, fit);
+```
+
+---
+
 ## Using the Enhanced Mode
 
 ### Java API
@@ -657,6 +848,21 @@ double gasInOil = perf.getGasInOilFraction();
 
 // Full JSON report
 String json = perf.toJson();
+
+// Optional: one-point grouped calibration from measured field data
+// (liquid-in-gas, gas carry-under, liquid-liquid)
+perf.calibrateFromGroupedMeasurements(
+    1.5e-3, // measured grouped liquid-in-gas
+    8.0e-3, // measured grouped gas carry-under
+    2.0e-2, // measured grouped liquid-liquid cross-contamination
+    1e-12); // model floor
+
+// Optional: batch calibration from a field-case library CSV
+List<SeparatorPerformanceCalculator.CalibrationCase> cases =
+    SeparatorPerformanceCalculator.loadCalibrationCasesFromCsv(
+        "src/main/resources/designdata/SeparatorCalibrationCasesTemplate.csv");
+SeparatorPerformanceCalculator.BatchCalibrationSummary fit =
+    perf.calibrateFromCaseLibrary(cases, 1e-12);
 ```
 
 ### Advanced: Direct Calculator Usage
@@ -780,36 +986,203 @@ JSON report. When enhanced mode is active, it includes additional sections:
 
 ## Comparison to Commercial Tools
 
-| Feature | MySep | ProSep | NeqSim Enhanced |
-|---------|-------|--------|-----------------|
-| Flow regime at inlet | Yes (proprietary) | Limited | **Yes** — Mandhane + Taitel-Dukler (open literature) |
-| DSD from inlet conditions | Yes (CFD-calibrated) | Empirical | **Yes** — Azzopardi, Ishii-Grolmes, Hinze |
-| Inlet device modeling | Yes (7+ types) | Yes | **Yes** — 7 types with Bothamley momentum limits |
-| Grade efficiency curves | Yes (vendor-specific) | Yes | **Yes** — wire mesh, vane pack, cyclone, plate pack, gravity |
-| Internals database | Proprietary | Proprietary | **Yes** — CSV-based (17 + 13 records), extensible |
-| H/V vessel geometry | Yes | Yes | **Yes** — exact circular segment, 2-phase and 3-phase |
-| K-factor with flooding | Yes | Yes | **Yes** — Souders-Brown with database max K limits |
-| Three-phase (oil/water) | Yes | Yes | **Yes** — oil pad, water layer, Stokes settling |
-| Coupled with thermo EOS | No (standalone) | No | **Yes** — reads densities, viscosities, surface tension from NeqSim fluid |
-| Open-source | No | No | **Yes** |
-| CFD-calibrated corrections | Yes | No | No (open correlations only) |
-| Vendor-specific curves | Yes | Yes | No (generic, extensible via CSV) |
+### Tool Landscape (2025)
 
-**Key advantages of the NeqSim approach:**
+The separator performance modeling market breaks into four tiers:
+
+| Tier | Tools | Approach |
+|------|-------|----------|
+| **Dedicated separator design** | MySep, Kelvin (Osprey) | Full DSD tracking through inlet-to-outlet stages |
+| **Process simulators** | HYSYS, UniSim, Symmetry | Equilibrium flash, no entrainment physics |
+| **Transient multiphase** | OLGA, LedaFlow, K-Spice | Pipeline slug delivery to separator, volume-based holdup |
+| **Liquid-liquid specialist** | dEMULion (ConocoPhillips) | Emulsion breakup, coalescence, chemical dosing |
+| **Open-source** | **NeqSim Enhanced** | DSD tracking + EOS coupling + calibration + vendor curves |
+
+### Feature Comparison Matrix
+
+| Feature | MySep | Kelvin (Osprey) | HYSYS / UniSim | OLGA / LedaFlow | dEMULion | **NeqSim Enhanced** |
+|---------|-------|-----------------|----------------|-----------------|----------|---------------------|
+| DSD tracking through stages | Yes (proprietary) | Yes (open-lit.) | No | Pipe only | Yes (L-L only) | **Yes** — 7-stage chain |
+| Inlet device modeling | Yes (proprietary) | Yes | No | No | Partial | **Yes** — 7 types, Bothamley limits |
+| Gravity settling | Yes (proprietary trajectory) | Yes (Stokes-Newton) | K-factor only | Volume-based | Yes (L-L) | **Yes** — Schiller-Naumann drag |
+| Mist eliminator | Yes (vendor-calibrated) | Yes (vendor + open) | No | No | No | **Yes** — Souders-Brown + Brunazzi-Paglianti |
+| Liquid-liquid separation | Yes | Yes | Retention time | Simplified | **Best-in-class** | **Yes** — Stokes + Csanady + Hinze DSD |
+| Flow regime prediction | Yes (proprietary) | Partial | No | Yes (pipe) | Partial | **Yes** — Mandhane + Taitel-Dukler |
+| Three-phase oil/water | Yes | Yes | Equilibrium flash | Three-layer | Emulsion model | **Yes** — EOS volume fractions |
+| Turbulent diffusion correction | Yes (CFD-based) | Unknown | No | N/A | No | **Yes** — Csanady (1963) + Koenders (2015) |
+| Partial flooding degradation | Yes | Unknown | No | N/A | No | **Yes** — Fabian/GPSA linear model |
+| API 12J compliance check | Yes | Unknown | No | No | No | **Yes** — K, cut dia., HRT |
+| Coupled with thermo EOS | Via simulator link | No (standalone) | Native (flash) | Native (pipe flow) | Limited | **Native** — SRK, PR, CPA in-process |
+| Internals database | Large (proprietary, 100+) | Moderate | None | N/A | N/A | **100+ records** (CSV-extensible) |
+| FPSO vessel motion | **Yes** (unique) | No | No | No | No | No |
+| Sand deposition | **Yes** | No | No | No | No | No |
+| Dynamic capability | Via MySep Engine plug-in | No | Yes (holdup) | Yes (transient) | No | Steady-state |
+| Process integration | Via links to HYSYS etc. | Standalone | Native process sim | Pipeline focus | Standalone | **Native ProcessSystem** — recycles, adjusters, controllers |
+| Open-source | No | No | No | No | No | **Yes** |
+| Approx. price (USD/seat/yr) | ~15k–40k | ~5k–15k | In HYSYS license | ~30k–80k | JIP license | **Free** |
+
+### Calibration Capability Comparison
+
+| Calibration Feature | MySep | Kelvin | HYSYS | OLGA | **NeqSim Enhanced** |
+|---------------------|-------|--------|-------|------|---------------------|
+| Manual factor tuning | Yes | Yes | K-factor only | Vol./split | **Yes** — 3 independent multipliers |
+| Auto-calibrate from measured data | Limited | Unknown | No | Pipeline tuning | **Yes** — `calibrateFromMeasuredFractions()` |
+| Grouped-measurement convenience | No | No | No | No | **Yes** — `calibrateFromGroupedMeasurements()` |
+| CSV batch calibration from case library | No | No | No | No | **Yes** — `calibrateFromCaseLibrary()` + CSV loader |
+| MAPE-based fit quality metrics | No | No | No | No | **Yes** — before/after MAPE in `BatchCalibrationSummary` |
+| JSON calibration report with residuals | No | No | No | No | **Yes** — `buildBatchCalibrationReportJson()` |
+| Vendor-specific internals curves | **Yes** (proprietary test data) | Some | No | No | **Yes** — 25 FAT-certified curves (CSV-extensible) |
+| CFD-calibrated corrections | **Yes** (core R&D) | No | No | No | No |
+
+### Key Advantages of the NeqSim Approach
 
 1. **Thermodynamic coupling** — fluid properties come directly from the EOS
    (SRK, PR, CPA), not from user inputs. Property changes with T/P are automatic.
-2. **Open correlations** — every formula traces to a published reference.
-   No black-box or proprietary data.
-3. **Extensible database** — add vendor data by editing CSV files.
+   The three-phase oil/water split uses actual EOS volumetric phase fractions.
+
+2. **Transparency** — every formula traces to a published, peer-reviewed reference.
+   No black-box or proprietary data. Any engineer can audit the calculation chain.
+
+3. **Structured calibration framework** — 3-group calibration multipliers, one-point
+   auto-calibration, batch fitting from CSV case libraries, MAPE quality metrics,
+   and JSON reports with per-case residuals. More systematic than the manual tuning
+   in most commercial tools.
+
 4. **Process integration** — the separator runs inside a `ProcessSystem` with
-   recycles, adjusters, and controllers. Commercial tools are standalone.
+   recycles, adjusters, and controllers. Commercial tools are standalone or require
+   external links to process simulators.
 
-**Limitations vs. commercial tools:**
+5. **Cost** — free, open-source, no vendor lock-in. Suitable for operators, EPCs,
+   and academics who cannot justify commercial license fees.
 
-- No CFD-calibrated DSD corrections (MySep uses CFD-validated data)
-- No vendor-specific internals curves from test data
-- No droplet coalescence/breakup modeling in the gravity section
+6. **Extensible database** — add vendor data, plant measurements, or company-specific
+   internals by editing CSV files without vendor support.
+
+### Remaining Gaps vs. Commercial Tools
+
+| Gap | Impact | Affected Tool | Possible Mitigation |
+|-----|--------|---------------|---------------------|
+| No CFD-calibrated DSD corrections | High | MySep | Open-literature DSD + calibration factors from field data |
+| ~~No vendor-certified internals curves~~ | ~~Medium~~ | ~~MySep, Kelvin~~ | **Closed** — 25 FAT-certified vendor curves in `SeparatorVendorCurves.csv` |
+| No FPSO vessel motion module | Medium | MySep | Applicable to floating facilities only |
+| No sand deposition modeling | Low | MySep | Rare requirement; handle separately |
+| No droplet coalescence/breakup in gravity section | Low-Medium | MySep, dEMULion | Conservative DSD assumption is standard practice |
+| ~~Internals library depth (30 vs 100+)~~ | ~~Medium~~ | ~~MySep~~ | **Closed** — 100+ records (70 internals + 31 inlet devices + 25 vendor curves) |
+
+### When to Use Which Tool
+
+| Scenario | Recommended Tool |
+|----------|-----------------|
+| Detailed separator bid evaluation / vendor comparison | MySep |
+| Transparent, auditable feasibility screening | **NeqSim** |
+| Process simulation with realistic separation | **NeqSim** (native ProcessSystem) |
+| Operator with no commercial separator license | **NeqSim** |
+| Slug catcher sizing from pipeline transients | OLGA/LedaFlow → separator volume |
+| Emulsion breaking / chemical dosing optimization | dEMULion |
+| Quick material balance without entrainment | HYSYS/UniSim |
+| Calibrating to plant data across multiple operating points | **NeqSim** (batch CSV calibration) |
+| FPSO separator sizing with vessel motion | MySep |
+| Academic research / teaching | **NeqSim** (open-source, auditable) |
+
+---
+
+## Mechanical Design Integration
+
+When detailed entrainment calculation is enabled, the `SeparatorMechanicalDesign` class
+automatically pulls performance results from the `SeparatorPerformanceCalculator` into
+the mechanical design output. This means `calcDesign()` and `toJson()` include
+entrainment fractions, efficiency metrics, calibration factors, and the full performance
+calculator JSON — all in a single design report.
+
+### How It Works
+
+1. Enable detailed entrainment on the separator: `separator.setDetailedEntrainmentCalculation(true)`
+2. Run the separator: `separator.run()` — this executes the performance calculator
+3. Call `calcDesign()` on the mechanical design — at the end, it calls `populateEntrainmentResults()`
+   which copies all performance data from the calculator into the design object
+4. Call `toJson()` — the response includes both vessel sizing data AND entrainment performance
+
+### Fields Added to Mechanical Design JSON
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `detailedEntrainmentUsed` | boolean | Whether detailed entrainment was active |
+| `oilInGasFraction` | double | Oil-in-gas carryover (volume basis, 0-1) |
+| `waterInGasFraction` | double | Water-in-gas carryover (volume basis, 0-1) |
+| `gasInOilFraction` | double | Gas carry-under into oil (volume basis, 0-1) |
+| `gasInWaterFraction` | double | Gas carry-under into water (volume basis, 0-1) |
+| `oilInWaterFraction` | double | Oil-in-water (volume basis, 0-1) |
+| `waterInOilFraction` | double | Water-in-oil (volume basis, 0-1) |
+| `overallGasLiquidEfficiency` | double | Combined gravity + ME efficiency (0-1) |
+| `mistEliminatorEfficiency` | double | Mist eliminator efficiency alone (0-1) |
+| `kFactorUtilization` | double | Actual K / design K (0-1) |
+| `mistEliminatorFlooded` | boolean | True if K-factor exceeds ME capacity |
+| `liquidInGasCalibrationFactor` | double | Calibration multiplier (1.0 = uncalibrated) |
+| `gasCarryUnderCalibrationFactor` | double | Calibration multiplier (1.0 = uncalibrated) |
+| `liquidLiquidCalibrationFactor` | double | Calibration multiplier (1.0 = uncalibrated) |
+| `entrainmentDetailJson` | String | Full `SeparatorPerformanceCalculator.toJson()` output |
+
+### Java Example
+
+```java
+Separator separator = new Separator("HP Sep", feedStream);
+separator.setDetailedEntrainmentCalculation(true);
+separator.run();
+
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.calcDesign();
+
+// Entrainment data is now part of the mechanical design
+double efficiency = design.getOverallGasLiquidEfficiency();
+double oilCarryover = design.getOilInGasFraction();
+boolean flooded = design.isMistEliminatorFlooded();
+
+// Full JSON includes vessel sizing + entrainment performance
+String json = design.toJson();
+```
+
+### Python Example
+
+```python
+from neqsim import jneqsim
+import json
+
+Separator = jneqsim.process.equipment.separator.Separator
+
+sep = Separator("HP Sep", feed_stream)
+sep.setDetailedEntrainmentCalculation(True)
+sep.run()
+
+design = sep.getMechanicalDesign()
+design.calcDesign()
+
+print(f"Efficiency: {design.getOverallGasLiquidEfficiency():.2%}")
+print(f"Oil in gas: {design.getOilInGasFraction():.4f}")
+print(f"ME flooded: {design.isMistEliminatorFlooded()}")
+
+# Full JSON report
+report = json.loads(str(design.toJson()))
+```
+
+### Calibration Factors in Design Reports
+
+When the performance calculator has been calibrated (via `calibrateFromMeasuredFractions()`
+or batch CSV calibration), the calibration factors are carried through to the mechanical
+design JSON. This provides full traceability from measured plant data to the design report.
+
+```java
+// Calibrate, then generate design
+SeparatorPerformanceCalculator perf = separator.getPerformanceCalculator();
+perf.calibrateFromMeasuredFractions(measuredOilInGas, measuredGasInOil, measuredOilInWater);
+
+// Re-run separator with calibrated calculator
+separator.run();
+
+// Design now includes calibration factors
+design.calcDesign();
+assert design.getLiquidInGasCalibrationFactor() != 1.0; // calibrated
+```
 
 ---
 
@@ -827,6 +1200,11 @@ JSON report. When enhanced mode is active, it includes additional sections:
 | Souders-Brown | K-factor for mist eliminator flooding | Souders, M., Brown, G.G. (1934). Design of fractionating columns. *Ind. Eng. Chem.*, 26(1), 98-103. |
 | Bothamley | Inlet device momentum limits | Bothamley, M. (2013). Gas/Liquid Separators: Quantifying Separation Performance. *Oil Gas Facilities*, 2(4), 21-29. |
 | Brunazzi-Paglianti | Wire mesh demister performance | Brunazzi, E., Paglianti, A. (1998). Design of wire mesh mist eliminators. *AIChE J.*, 44(3), 505-512. |
+| Csanady | Turbulent diffusion cut-diameter correction | Csanady, G.T. (1963). Turbulent diffusion of heavy particles in the atmosphere. *J. Atmos. Sci.*, 20(3), 201-208. |
+| Koenders et al. | Turbulence intensity from K-factor load | Koenders, M.A. et al. (2015). Gas-liquid separation: prediction of liquid carryover from gravity settlers. *SPE J.*, 20(4), 810-822. |
+| API 12J | Compliance thresholds (K, cut diameter, HRT) | API Specification 12J (2014). Specification for Oil and Gas Separators. American Petroleum Institute. |
+| Fabian et al. / GPSA | Partial flooding efficiency degradation | Fabian, P. et al. (1993). Demisting applications. *Chem. Eng. Progress*, 89(10), 58-63; GPSA Engineering Data Book (14th ed.), Ch. 7. |
+| Hinze | Liquid-liquid droplet breakup (oil-water DSD) | Hinze, J.O. (1955). Fundamentals of the hydrodynamic mechanism of splitting in dispersion processes. *AIChE J.*, 1(3), 289-295. |
 
 ---
 
@@ -848,6 +1226,19 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 | `setInletPipeDiameter(double)` | Feed pipe diameter [m] |
 | `setSurfaceTension(double)` | Gas-liquid interfacial tension [N/m] |
 | `setOilWaterInterfacialTension(double)` | Oil-water interfacial tension [N/m] |
+| `setLiquidInGasCalibrationFactor(double)` | Calibration multiplier for liquid-in-gas fractions |
+| `setGasCarryUnderCalibrationFactor(double)` | Calibration multiplier for gas carry-under fractions |
+| `setLiquidLiquidCalibrationFactor(double)` | Calibration multiplier for liquid-liquid fractions |
+| `calibrateFromMeasuredFractions(...)` | Auto-calibrate from measured entrainment fractions |
+| `calibrateFromGroupedMeasurements(...)` | Auto-calibrate from grouped measurement categories |
+| `static loadCalibrationCasesFromCsv(String)` | Load calibration cases from CSV file |
+| `calibrateFromCaseLibrary(List, double)` | Batch fit factors across multiple cases |
+| `buildBatchCalibrationReportJson(List, BatchCalibrationSummary)` | JSON calibration report |
+| `saveBatchCalibrationReportJson(String, List, BatchCalibrationSummary)` | Save report to file |
+| `setOilVolumeFraction(double)` | Oil fraction in liquid for 3-phase geometry [0-1] — auto-set from EOS when running via `Separator` |
+| `setApplyTurbulenceCorrection(boolean)` | Enable/disable Csanady turbulence correction (default: true) |
+| `getApiComplianceResult()` | API 12J compliance result after `calculate()` |
+| `static generateLiquidLiquidDSD(sigma, rhoCont, vNozzle, dNozzle)` | Hinze-based oil-water DSD from inlet conditions |
 | `getOverallGasLiquidEfficiency()` | Combined gravity + mist eliminator efficiency |
 | `getGravitySectionEfficiency()` | Gravity section efficiency alone |
 | `getMistEliminatorEfficiency()` | Mist eliminator efficiency alone |
@@ -924,6 +1315,8 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 |--------|-------------|
 | `static calcTerminalVelocity(d, rhoCont, rhoDisp, muCont)` | Terminal velocity [m/s] |
 | `static calcDragCoefficient(Re)` | Schiller-Naumann drag |
+| `static calcTurbulenceCorrectedCutDiameter(dCut, vGas, H, kFactor, kDesign, rhoGas, rhoLiq, muGas)` | Csanady (1963) turbulence-corrected effective cut diameter [m] |
+| `static checkApi12JCompliance(dCut, kFactor, hasME, liquidHRT, orientation, isThreePhase)` | API 12J compliance check returning `ApiComplianceResult` |
 
 ### `GradeEfficiencyCurve`
 
@@ -944,9 +1337,14 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 | `findByType(String)` | Find internals by type |
 | `findByTypeAndSubType(String, String)` | Find specific variant |
 | `findInletDeviceByType(String)` | Find inlet devices by type |
-| `getAllInternals()` | All internals records |
-| `getAllInletDevices()` | All inlet device records |
-| `toCatalogJson()` | Full catalog as JSON |
+| `getAllInternals()` | All internals records (70+) |
+| `getAllInletDevices()` | All inlet device records (31) |
+| `getAllVendorCurves()` | All vendor curve records (25) |
+| `findVendorCurvesByType(String)` | Find vendor curves by internals type |
+| `findVendorCurvesByVendor(String)` | Find vendor curves by vendor name |
+| `findVendorCurveById(String)` | Find a specific vendor curve by ID |
+| `findVendorCurvesByTypeAndVendor(String, String)` | Find curves by type and vendor |
+| `toCatalogJson()` | Full catalog as JSON (internals + inlet devices + vendor curves) |
 
 ---
 

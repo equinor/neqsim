@@ -178,6 +178,26 @@ public class ThreePhaseSeparator extends Separator {
 
     neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator calc =
         getPerformanceCalculator();
+
+    // Compute actual oil volume fraction from phase volumetric flow (n * V_m) for
+    // three-phase geometry in the performance calculator.
+    double oilVolFlow = 0.0;
+    double waterVolFlow = 0.0;
+    if (thermoSystem2.hasPhaseType("oil")) {
+      int oilPhaseIdx = thermoSystem2.getPhaseIndex("oil");
+      oilVolFlow = thermoSystem2.getPhase(oilPhaseIdx).getNumberOfMolesInPhase()
+          * thermoSystem2.getPhase(oilPhaseIdx).getMolarVolume();
+    }
+    if (thermoSystem2.hasPhaseType("aqueous")) {
+      int aqPhaseIdx = thermoSystem2.getPhaseIndex("aqueous");
+      waterVolFlow = thermoSystem2.getPhase(aqPhaseIdx).getNumberOfMolesInPhase()
+          * thermoSystem2.getPhase(aqPhaseIdx).getMolarVolume();
+    }
+    double totalLiqVol = oilVolFlow + waterVolFlow;
+    if (totalLiqVol > 1e-30) {
+      calc.setOilVolumeFraction(oilVolFlow / totalLiqVol);
+    }
+
     calc.calculate(gasDensity, oilDensityVal, waterDensityVal, gasViscosity, oilViscosityVal,
         waterViscosityVal, gasVelocity, getInternalDiameter(), getSeparatorLength(),
         getOrientation(), liquidLevelFrac);

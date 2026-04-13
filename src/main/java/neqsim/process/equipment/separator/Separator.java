@@ -528,6 +528,26 @@ public class Separator extends ProcessEquipmentBaseClass
       liquidLevelFrac = 1.0;
     }
 
+    // Compute actual oil volume fraction for three-phase calculations.
+    // Using molar flow * molar volume (= volumetric flow) gives the correct split
+    // even when oil and water densities differ significantly.
+    double oilVolFlow = 0.0;
+    double waterVolFlow = 0.0;
+    if (thermoSystem2.hasPhaseType("oil")) {
+      int oilPhaseIdx = thermoSystem2.getPhaseIndex("oil");
+      oilVolFlow = thermoSystem2.getPhase(oilPhaseIdx).getNumberOfMolesInPhase()
+          * thermoSystem2.getPhase(oilPhaseIdx).getMolarVolume();
+    }
+    if (thermoSystem2.hasPhaseType("aqueous")) {
+      int aqPhaseIdx = thermoSystem2.getPhaseIndex("aqueous");
+      waterVolFlow = thermoSystem2.getPhase(aqPhaseIdx).getNumberOfMolesInPhase()
+          * thermoSystem2.getPhase(aqPhaseIdx).getMolarVolume();
+    }
+    double totalLiqVol = oilVolFlow + waterVolFlow;
+    if (totalLiqVol > 1e-30) {
+      performanceCalculator.setOilVolumeFraction(oilVolFlow / totalLiqVol);
+    }
+
     performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity,
         oilViscosity, waterViscosity, gasVelocity, internalDiameter, separatorLength, orientation,
         liquidLevelFrac);

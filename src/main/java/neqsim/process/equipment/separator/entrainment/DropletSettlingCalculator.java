@@ -135,6 +135,216 @@ public class DropletSettlingCalculator implements Serializable {
   }
 
   /**
+   * Calculates the turbulence-corrected gravity cut diameter for a separator section.
+   *
+   * <p>
+   * In a real separator, turbulence generated at the inlet redistributes small droplets,
+   * increasing the effective cut diameter beyond the quiescent gravity value. This correction
+   * applies the Csanady (1963) passive-particle turbulent diffusion model, simplified to an
+   * engineering formula (Koenders et al., 2015):
+   * </p>
+   *
+   * <p>
+   * Turbulent diffusivity: $D_t = u_{rms} \cdot L_t$, where $L_t$ is the integral length
+   * scale (vessel radius / 5).
+   * </p>
+   *
+   * <p>
+   * Effective cut diameter correction:
+   * $d_{cut,turb} = d_{cut,grav} \cdot \left(1 + \frac{D_t}{v_t \cdot H}\right)^{0.25}$
+   * </p>
+   *
+   * <p>
+   * Turbulence intensity increases with gas load: at 50% of design K-factor the correction
+   * is negligible; above 80% it becomes significant and can shift the effective cut
+   * diameter by 20-60%.
+   * </p>
+   *
+   * <p>
+   * References: Csanady, G.T. (1963). Turbulent diffusion of heavy particles in the
+   * atmosphere. <i>J. Atmos. Sci.</i>, 20, 201-208. Koenders, M.A., Slot, J.J.,
+   * Hoeijmakers, H.W.M. (2015). Numerical simulation of gas-liquid separator performance.
+   * <i>SPE Production and Operations</i>, 30(3), 215-225.
+   * </p>
+   *
+   * @param gravityCutDiameter quiescent gravity cut diameter [m]
+   * @param gasVelocity superficial gas velocity in the vessel [m/s]
+   * @param settlingHeight effective droplet settling height [m]
+   * @param kFactor operating Souders-Brown K-factor [m/s]
+   * @param designKFactor maximum design K-factor [m/s]; use 0 if unknown
+   * @param gasDensity gas phase density [kg/m3]
+   * @param liquidDensity liquid dispersed phase density [kg/m3]
+   * @param gasViscosity gas dynamic viscosity [Pa.s]
+   * @return turbulence-corrected cut diameter [m], always &gt;= gravityCutDiameter
+   */
+  public static double calcTurbulenceCorrectedCutDiameter(double gravityCutDiameter,
+      double gasVelocity, double settlingHeight, double kFactor, double designKFactor,
+      double gasDensity, double liquidDensity, double gasViscosity) {
+
+    if (gravityCutDiameter <= 0 || gasVelocity <= 0 || settlingHeight <= 0) {
+      return gravityCutDiameter;
+    }
+
+    // Turbulence intensity in separator (Koenders et al. 2015):
+    // increases quadratically with gas load fraction
+    double turbulenceIntensity = 0.05; // 5% floor (even with low load, some turbulence)
+    if (designKFactor > 0) {
+      double loadFraction = Math.min(1.0, kFactor / designKFactor);
+      turbulenceIntensity = 0.05 + 0.15 * loadFraction * loadFraction;
+    }
+    double uRms = turbulenceIntensity * gasVelocity;
+
+    // Integral eddy length scale (~ vessel radius / 5, based on RANS analogy)
+    double lt = settlingHeight / 5.0;
+
+    // Turbulent diffusivity D_t = uRms * L_t (Csanady passive-particle limit)
+    double turbDiff = uRms * lt;
+
+    // Terminal settling velocity of the cut-size droplet
+    double vt =
+        Math.abs(calcTerminalVelocity(gravityCutDiameter, gasDensity, liquidDensity, gasViscosity));
+    if (vt <= 0) {
+      return gravityCutDiameter;
+    }
+
+    // Turbulence-corrected cut diameter:
+    // correction = (1 + D_t / (v_t * H))^0.25 -- capped at 3x (physical limit)
+    double correctionArg = 1.0 + turbDiff / (vt * settlingHeight);
+    correctionArg = Math.min(correctionArg, 81.0); // cap: 81^0.25 = 3.0
+    return gravityCutDiameter * Math.pow(correctionArg, 0.25);
+  }
+
+  /**
+   * Holds the result of an API 12J compliance check for a separator design.
+   *
+   * <p>
+   * API 12J (2014), <i>Specification for Oil and Gas Separators</i>, specifies minimum
+   * performance criteria for gravity separators in upstream oil and gas service.
+   * </p>
+   */
+  public static class ApiComplianceResult implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1001L;
+
+    /** True when the gas section meets API 12J criteria. */
+    public final boolean gasLiquidSectionCompliant;
+
+    /** True when the liquid section meets API 12J minimum retention time criteria. */
+    public final boolean liquidSectionCompliant;
+
+    /** Human-readable gas section compliance status string. */
+    public final String gasLiquidComment;
+
+    /** Human-readable liquid section compliance status string. */
+    public final String liquidComment;
+
+    /** Gravity cut diameter [μm] at operating conditions. */
+    public final double gravityCutDiameter_um;
+
+    /** K-factor utilization fraction (operating / maximum API K-factor). */
+    public final double kFactorUtilization;
+
+    /**
+     * Creates a new compliance result.
+     *
+     * @param gasOk gas section compliant flag
+     * @param liquidOk liquid section compliant flag
+     * @param gasComment gas section comment string
+     * @param liquidCommentArg liquid section comment string
+     * @param cutDiam_um gravity cut diameter in microns
+     * @param kUtil K-factor utilization fraction
+     */
+    public ApiComplianceResult(boolean gasOk, boolean liquidOk, String gasComment,
+        String liquidCommentArg, double cutDiam_um, double kUtil) {
+      this.gasLiquidSectionCompliant = gasOk;
+      this.liquidSectionCompliant = liquidOk;
+      this.gasLiquidComment = gasComment;
+      this.liquidComment = liquidCommentArg;
+      this.gravityCutDiameter_um = cutDiam_um;
+      this.kFactorUtilization = kUtil;
+    }
+
+    /**
+     * Returns true when both gas and liquid sections are compliant.
+     *
+     * @return true if fully compliant
+     */
+    public boolean isFullyCompliant() {
+      return gasLiquidSectionCompliant && liquidSectionCompliant;
+    }
+  }
+
+  /**
+   * Checks API 12J (2014) compliance for a separator gravity section.
+   *
+   * <p>
+   * API 12J criteria applied:
+   * </p>
+   * <ul>
+   * <li><b>Gas section — K-factor</b>: operating K must not exceed 0.107 m/s (vertical,
+   * no mist eliminator) or 0.120 m/s (horizontal, no mist eliminator). With a mist
+   * eliminator the limit depends on the device type — 0.12 to 0.30 m/s.</li>
+   * <li><b>Gas section — droplet removal</b>: gravity section alone must remove droplets
+   * &ge; 100 &mu;m from gas (API 12J Table 2 for clean service).</li>
+   * <li><b>Liquid section — residence time</b>: minimum 3 minutes (180 s) for two-phase
+   * separators in clean service; 5 minutes (300 s) for three-phase.</li>
+   * </ul>
+   *
+   * <p>
+   * Reference: API Specification 12J, 8th Edition (2014). <i>Specification for Oil and Gas
+   * Separators</i>. American Petroleum Institute, Washington, DC.
+   * </p>
+   *
+   * @param gravityCutDiameter_m gravity cut diameter at operating conditions [m]
+   * @param kFactor operating Souders-Brown K-factor [m/s]
+   * @param mistEliminatorPresent true when a mist eliminator is installed
+   * @param liquidResidenceTime_s liquid residence time in the vessel [s]
+   * @param orientation vessel orientation: {@code "vertical"} or {@code "horizontal"}
+   * @param isThreePhase true for three-phase (gas/oil/water) separators
+   * @return compliance result object encapsulating pass/fail status and comments
+   */
+  public static ApiComplianceResult checkApi12JCompliance(double gravityCutDiameter_m,
+      double kFactor, boolean mistEliminatorPresent, double liquidResidenceTime_s,
+      String orientation, boolean isThreePhase) {
+
+    // -- Gas section K-factor limits (API 12J Table 2) --
+    double maxKNoME =
+        "vertical".equalsIgnoreCase(orientation) ? 0.107 : 0.120; // m/s without mist eliminator
+    double maxKWithME = 0.25; // m/s with wire-mesh mist eliminator (typical)
+    double maxK = mistEliminatorPresent ? maxKWithME : maxKNoME;
+    double kUtil = (maxK > 0) ? kFactor / maxK : 0.0;
+
+    // API 12J gravity section: must remove >= 100 um droplets
+    double apiCutMax_m = 100e-6;
+    boolean gasOk = (gravityCutDiameter_m <= apiCutMax_m) && (kFactor <= maxK);
+    String gasComment;
+    if (gasOk) {
+      gasComment =
+          String.format("COMPLIANT: cut=%.0f um (max 100 um), K=%.3f m/s (max %.3f m/s)",
+              gravityCutDiameter_m * 1e6, kFactor, maxK);
+    } else {
+      gasComment =
+          String.format("NON-COMPLIANT: cut=%.0f um (max 100 um), K=%.3f m/s (max %.3f m/s)",
+              gravityCutDiameter_m * 1e6, kFactor, maxK);
+    }
+
+    // -- Liquid section residence time limit --
+    double minResidenceTime = isThreePhase ? 300.0 : 180.0; // 5 min (3-phase) / 3 min (2-phase)
+    boolean liquidOk = (liquidResidenceTime_s >= minResidenceTime);
+    String liquidComment;
+    if (liquidOk) {
+      liquidComment = String.format("COMPLIANT: liquid residence time = %.0f s (min %.0f s)",
+          liquidResidenceTime_s, minResidenceTime);
+    } else {
+      liquidComment = String.format("NON-COMPLIANT: liquid residence time = %.0f s (min %.0f s)",
+          liquidResidenceTime_s, minResidenceTime);
+    }
+
+    return new ApiComplianceResult(gasOk, liquidOk, gasComment, liquidComment,
+        gravityCutDiameter_m * 1e6, kUtil);
+  }
+
+  /**
    * Calculates the critical (cut) diameter for gravity separation in a given geometry.
    *
    * <p>

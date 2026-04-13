@@ -9,6 +9,7 @@ import neqsim.process.costestimation.separator.SeparatorCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.SeparatorInterface;
+import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStandard;
@@ -142,6 +143,41 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   private double oilOutletNozzleID = 0.0;
   /** Water outlet nozzle internal diameter [m]. */
   private double waterOutletNozzleID = 0.0;
+
+  // ============================================================================
+  // Entrainment Performance Results (populated from SeparatorPerformanceCalculator)
+  // ============================================================================
+
+  /** Whether detailed entrainment calculation was used. */
+  private boolean detailedEntrainmentUsed = false;
+  /** Oil-in-gas entrainment fraction (volume basis) [0-1]. */
+  private double oilInGasFraction = 0.0;
+  /** Water-in-gas entrainment fraction (volume basis) [0-1]. */
+  private double waterInGasFraction = 0.0;
+  /** Gas-in-oil carry-under fraction (volume basis) [0-1]. */
+  private double gasInOilFraction = 0.0;
+  /** Gas-in-water carry-under fraction (volume basis) [0-1]. */
+  private double gasInWaterFraction = 0.0;
+  /** Oil-in-water entrainment fraction (volume basis) [0-1]. */
+  private double oilInWaterFraction = 0.0;
+  /** Water-in-oil entrainment fraction (volume basis) [0-1]. */
+  private double waterInOilFraction = 0.0;
+  /** Overall gas-liquid separation efficiency [0-1]. */
+  private double overallGasLiquidEfficiency = 0.0;
+  /** Mist eliminator efficiency [0-1]. */
+  private double mistEliminatorEfficiency = 0.0;
+  /** K-factor utilization (actual/design) [0-1]. */
+  private double kFactorUtilization = 0.0;
+  /** Whether the mist eliminator is flooded. */
+  private boolean mistEliminatorFlooded = false;
+  /** Liquid-in-gas calibration factor. */
+  private double liquidInGasCalibrationFactor = 1.0;
+  /** Gas carry-under calibration factor. */
+  private double gasCarryUnderCalibrationFactor = 1.0;
+  /** Liquid-liquid calibration factor. */
+  private double liquidLiquidCalibrationFactor = 1.0;
+  /** JSON string from performance calculator toJson(). */
+  private transient String entrainmentDetailJson = null;
 
   /**
    * <p>
@@ -385,6 +421,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     setModuleWidth(moduleWidth);
 
     setModuleLength(moduleLength);
+
+    // Populate entrainment performance results if detailed calculation is enabled
+    populateEntrainmentResults();
   }
 
   /**
@@ -494,6 +533,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // Set default liquid level fractions
     calculateDefaultLevelFractions();
+
+    // Populate entrainment performance results if detailed calculation is enabled
+    populateEntrainmentResults();
   }
 
   /** {@inheritDoc} */
@@ -1926,6 +1968,202 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   public boolean validateDropletDiameter(double actualDropletDiameterUm, boolean isGasLiquid) {
     double designDiameter = isGasLiquid ? dropletDiameterGasLiquid : dropletDiameterLiquidLiquid;
     return actualDropletDiameterUm >= designDiameter;
+  }
+
+  // ============================================================================
+  // Entrainment Performance Getters
+  // ============================================================================
+
+  /**
+   * Checks if detailed entrainment calculation was used.
+   *
+   * @return true if detailed entrainment was used
+   */
+  public boolean isDetailedEntrainmentUsed() {
+    return detailedEntrainmentUsed;
+  }
+
+  /**
+   * Gets the oil-in-gas entrainment fraction (volume basis).
+   *
+   * @return oil-in-gas fraction [0-1]
+   */
+  public double getOilInGasFraction() {
+    return oilInGasFraction;
+  }
+
+  /**
+   * Gets the water-in-gas entrainment fraction (volume basis).
+   *
+   * @return water-in-gas fraction [0-1]
+   */
+  public double getWaterInGasFraction() {
+    return waterInGasFraction;
+  }
+
+  /**
+   * Gets the gas-in-oil carry-under fraction (volume basis).
+   *
+   * @return gas-in-oil fraction [0-1]
+   */
+  public double getGasInOilFraction() {
+    return gasInOilFraction;
+  }
+
+  /**
+   * Gets the gas-in-water carry-under fraction (volume basis).
+   *
+   * @return gas-in-water fraction [0-1]
+   */
+  public double getGasInWaterFraction() {
+    return gasInWaterFraction;
+  }
+
+  /**
+   * Gets the oil-in-water entrainment fraction (volume basis).
+   *
+   * @return oil-in-water fraction [0-1]
+   */
+  public double getOilInWaterFraction() {
+    return oilInWaterFraction;
+  }
+
+  /**
+   * Gets the water-in-oil entrainment fraction (volume basis).
+   *
+   * @return water-in-oil fraction [0-1]
+   */
+  public double getWaterInOilFraction() {
+    return waterInOilFraction;
+  }
+
+  /**
+   * Gets the overall gas-liquid separation efficiency.
+   *
+   * @return efficiency [0-1]
+   */
+  public double getOverallGasLiquidEfficiency() {
+    return overallGasLiquidEfficiency;
+  }
+
+  /**
+   * Gets the mist eliminator efficiency.
+   *
+   * @return efficiency [0-1]
+   */
+  public double getMistEliminatorEfficiency() {
+    return mistEliminatorEfficiency;
+  }
+
+  /**
+   * Gets the K-factor utilization (actual/design).
+   *
+   * @return utilization ratio [0-1]
+   */
+  public double getKFactorUtilization() {
+    return kFactorUtilization;
+  }
+
+  /**
+   * Checks if the mist eliminator is flooded.
+   *
+   * @return true if flooded
+   */
+  public boolean isMistEliminatorFlooded() {
+    return mistEliminatorFlooded;
+  }
+
+  /**
+   * Gets the liquid-in-gas calibration factor.
+   *
+   * @return calibration factor (1.0 = uncalibrated)
+   */
+  public double getLiquidInGasCalibrationFactor() {
+    return liquidInGasCalibrationFactor;
+  }
+
+  /**
+   * Gets the gas carry-under calibration factor.
+   *
+   * @return calibration factor (1.0 = uncalibrated)
+   */
+  public double getGasCarryUnderCalibrationFactor() {
+    return gasCarryUnderCalibrationFactor;
+  }
+
+  /**
+   * Gets the liquid-liquid calibration factor.
+   *
+   * @return calibration factor (1.0 = uncalibrated)
+   */
+  public double getLiquidLiquidCalibrationFactor() {
+    return liquidLiquidCalibrationFactor;
+  }
+
+  /**
+   * Gets the detailed entrainment JSON from the performance calculator.
+   *
+   * @return JSON string or null if not available
+   */
+  public String getEntrainmentDetailJson() {
+    return entrainmentDetailJson;
+  }
+
+  // ============================================================================
+  // Entrainment Population Method
+  // ============================================================================
+
+  /**
+   * Populates entrainment performance fields from the Separator's PerformanceCalculator. Called
+   * automatically at the end of {@link #calcDesign()} and {@link #performSizingCalculations()} if
+   * the separator has detailed entrainment calculation enabled.
+   *
+   * <p>
+   * If the separator does not have detailed entrainment enabled, all entrainment fields remain at
+   * their default values (fractions = 0, calibration factors = 1, booleans = false).
+   * </p>
+   */
+  private void populateEntrainmentResults() {
+    if (!(getProcessEquipment() instanceof Separator)) {
+      return;
+    }
+    Separator separator = (Separator) getProcessEquipment();
+    if (!separator.isDetailedEntrainmentCalculation()) {
+      detailedEntrainmentUsed = false;
+      return;
+    }
+    try {
+      SeparatorPerformanceCalculator perf = separator.getPerformanceCalculator();
+      if (perf == null) {
+        return;
+      }
+      detailedEntrainmentUsed = true;
+
+      // Entrainment fractions
+      oilInGasFraction = perf.getOilInGasFraction();
+      waterInGasFraction = perf.getWaterInGasFraction();
+      gasInOilFraction = perf.getGasInOilFraction();
+      gasInWaterFraction = perf.getGasInWaterFraction();
+      oilInWaterFraction = perf.getOilInWaterFraction();
+      waterInOilFraction = perf.getWaterInOilFraction();
+
+      // Performance metrics
+      overallGasLiquidEfficiency = perf.getOverallGasLiquidEfficiency();
+      mistEliminatorEfficiency = perf.getMistEliminatorEfficiency();
+      kFactorUtilization = perf.getKFactorUtilization();
+      mistEliminatorFlooded = perf.isMistEliminatorFlooded();
+
+      // Calibration factors
+      liquidInGasCalibrationFactor = perf.getLiquidInGasCalibrationFactor();
+      gasCarryUnderCalibrationFactor = perf.getGasCarryUnderCalibrationFactor();
+      liquidLiquidCalibrationFactor = perf.getLiquidLiquidCalibrationFactor();
+
+      // Full detailed JSON
+      entrainmentDetailJson = perf.toJson();
+    } catch (Exception ex) {
+      // Log but don't fail design calculation due to entrainment issues
+      detailedEntrainmentUsed = false;
+    }
   }
 
   /**

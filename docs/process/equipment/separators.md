@@ -1061,9 +1061,39 @@ System.out.println("\n" + separator.toJson());
 
 ---
 
+## Entrainment Performance in Mechanical Design
+
+When [detailed entrainment calculation](separator-entrainment-modeling.md) is enabled,
+the mechanical design output (`calcDesign()` / `toJson()`) automatically includes
+entrainment performance data alongside the vessel sizing results:
+
+```java
+separator.setDetailedEntrainmentCalculation(true);
+separator.run();
+
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.calcDesign();
+
+// Entrainment data is now part of the JSON report
+double efficiency = design.getOverallGasLiquidEfficiency();
+double oilCarryover = design.getOilInGasFraction();
+boolean flooded = design.isMistEliminatorFlooded();
+String json = design.toJson();  // includes vessel sizing + entrainment
+```
+
+The JSON output will include entrainment fractions (oil-in-gas, gas-in-oil, etc.),
+separation efficiency, K-factor utilization, mist eliminator flooding status,
+and calibration factors if calibration has been applied. See the
+[Mechanical Design Integration](separator-entrainment-modeling.md#mechanical-design-integration)
+section for full details.
+
+---
+
 ## Related Documentation
 
 - [Process Package](../) - Package overview
 - [Streams](streams) - Stream handling
+- [Enhanced Entrainment Modeling](separator-entrainment-modeling.md) - Physics-based performance calculation
 - [Design Framework](../DESIGN_FRAMEWORK) - Auto-sizing and design specifications
 - [Bottleneck Analysis](../../wiki/bottleneck_analysis) - Capacity utilization
