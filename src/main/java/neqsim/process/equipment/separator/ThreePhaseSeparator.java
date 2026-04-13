@@ -136,6 +136,79 @@ public class ThreePhaseSeparator extends Separator {
     }
   }
 
+  /**
+   * Updates all six entrainment fractions from the detailed performance calculator for three-phase
+   * separation. Called during {@code run()} when detailed entrainment is enabled.
+   */
+  private void updateThreePhaseEntrainment() {
+    thermoSystem2.initPhysicalProperties();
+
+    double gasDensity = 0.0;
+    double gasViscosity = 0.0;
+    double oilDensityVal = 0.0;
+    double oilViscosityVal = 0.0;
+    double waterDensityVal = 0.0;
+    double waterViscosityVal = 0.0;
+
+    if (thermoSystem2.hasPhaseType("gas")) {
+      gasDensity = thermoSystem2.getPhase("gas").getPhysicalProperties().getDensity();
+      gasViscosity = thermoSystem2.getPhase("gas").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem2.hasPhaseType("oil")) {
+      oilDensityVal = thermoSystem2.getPhase("oil").getPhysicalProperties().getDensity();
+      oilViscosityVal = thermoSystem2.getPhase("oil").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem2.hasPhaseType("aqueous")) {
+      waterDensityVal = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getDensity();
+      waterViscosityVal = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getViscosity();
+    }
+
+    double gasVelocity = 0.0;
+    if (gasDensity > 0) {
+      gasVelocity = getGasSuperficialVelocity();
+    }
+
+    double liquidLevelFrac = liquidLevel / getInternalDiameter();
+    if (liquidLevelFrac < 0.0) {
+      liquidLevelFrac = 0.0;
+    }
+    if (liquidLevelFrac > 1.0) {
+      liquidLevelFrac = 1.0;
+    }
+
+    neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator calc =
+        getPerformanceCalculator();
+    calc.calculate(gasDensity, oilDensityVal, waterDensityVal, gasViscosity, oilViscosityVal,
+        waterViscosityVal, gasVelocity, getInternalDiameter(), getSeparatorLength(),
+        getOrientation(), liquidLevelFrac);
+
+    // Update the six entrainment paths with calculated values
+    if (calc.getOilInGasFraction() > 0) {
+      oilInGas = calc.getOilInGasFraction();
+      oilInGasSpec = "volume";
+    }
+    if (calc.getWaterInGasFraction() > 0) {
+      aqueousInGas = calc.getWaterInGasFraction();
+      aqueousInGasSpec = "volume";
+    }
+    if (calc.getGasInOilFraction() > 0) {
+      gasInOil = calc.getGasInOilFraction();
+      gasInOilSpec = "volume";
+    }
+    if (calc.getGasInWaterFraction() > 0) {
+      gasInAqueous = calc.getGasInWaterFraction();
+      gasInAqueousSpec = "volume";
+    }
+    if (calc.getOilInWaterFraction() > 0) {
+      oilInAqueous = calc.getOilInWaterFraction();
+      oilInAqueousSpec = "volume";
+    }
+    if (calc.getWaterInOilFraction() > 0) {
+      aqueousInOil = calc.getWaterInOilFraction();
+      aqueousInOilSpec = "volume";
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface inletStream) {
@@ -191,26 +264,21 @@ public class ThreePhaseSeparator extends Separator {
     Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
     if (gasOutStream != null) {
       state.put("gas flow",
-          ProcessEquipmentInterface.createStateEntry(
-              gasOutStream.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(gasOutStream.getFlowRate(flowUnit), flowUnit));
     }
     if (liquidOutStream != null) {
-      state.put("oil flow",
-          ProcessEquipmentInterface.createStateEntry(
-              liquidOutStream.getFlowRate(flowUnit), flowUnit));
+      state.put("oil flow", ProcessEquipmentInterface
+          .createStateEntry(liquidOutStream.getFlowRate(flowUnit), flowUnit));
     }
     if (waterOutStream != null) {
-      state.put("water flow",
-          ProcessEquipmentInterface.createStateEntry(
-              waterOutStream.getFlowRate(flowUnit), flowUnit));
+      state.put("water flow", ProcessEquipmentInterface
+          .createStateEntry(waterOutStream.getFlowRate(flowUnit), flowUnit));
     }
     if (gasOutStream != null) {
-      state.put("pressure",
-          ProcessEquipmentInterface.createStateEntry(
-              gasOutStream.getPressure(pressureUnit), pressureUnit));
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(
-              gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure", ProcessEquipmentInterface
+          .createStateEntry(gasOutStream.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
     }
     return state;
   }
@@ -401,6 +469,13 @@ public class ThreePhaseSeparator extends Separator {
     if (useTempMultiPhaseCheck) {
       thermoSystem2.setMultiPhaseCheck(false);
     }
+
+    // If detailed entrainment model is enabled, compute from droplet physics
+    if (isDetailedEntrainmentCalculation() && getPerformanceCalculator() != null
+        && thermoSystem2.getNumberOfPhases() >= 2) {
+      updateThreePhaseEntrainment();
+    }
+
     // thermoSystem.display();
     thermoSystem2.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas",
         "aqueous");

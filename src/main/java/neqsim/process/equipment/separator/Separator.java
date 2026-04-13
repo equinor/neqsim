@@ -32,6 +32,10 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
+import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
+import neqsim.process.equipment.separator.entrainment.SeparatorGeometryCalculator;
+import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -242,6 +246,19 @@ public class Separator extends ProcessEquipmentBaseClass
       new LinkedHashMap<String, CapacityConstraint>();
 
   /**
+   * Optional detailed performance calculator using droplet size distributions and grade efficiency
+   * curves. When enabled, this replaces the simple entrainment fractions with physics-based
+   * calculations. Marked transient because it is not serializable by default.
+   */
+  private transient SeparatorPerformanceCalculator performanceCalculator;
+
+  /**
+   * Whether to use the detailed performance calculator for entrainment computation. When false
+   * (default), the simple entrainment fraction model is used.
+   */
+  private boolean useDetailedEntrainmentCalculation = false;
+
+  /**
    * Constructor for Separator.
    *
    * @param name Name of separator
@@ -421,21 +438,17 @@ public class Separator extends ProcessEquipmentBaseClass
     Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
     if (gasOutStream != null) {
       state.put("gas flow",
-          ProcessEquipmentInterface.createStateEntry(
-              gasOutStream.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(gasOutStream.getFlowRate(flowUnit), flowUnit));
     }
     if (liquidOutStream != null) {
-      state.put("liquid flow",
-          ProcessEquipmentInterface.createStateEntry(
-              liquidOutStream.getFlowRate(flowUnit), flowUnit));
+      state.put("liquid flow", ProcessEquipmentInterface
+          .createStateEntry(liquidOutStream.getFlowRate(flowUnit), flowUnit));
     }
     if (gasOutStream != null) {
-      state.put("pressure",
-          ProcessEquipmentInterface.createStateEntry(
-              gasOutStream.getPressure(pressureUnit), pressureUnit));
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(
-              gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure", ProcessEquipmentInterface
+          .createStateEntry(gasOutStream.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
     }
     return state;
   }
@@ -474,6 +487,66 @@ public class Separator extends ProcessEquipmentBaseClass
     }
   }
 
+  /**
+   * Updates the entrainment fractions from the detailed performance calculator. Called during
+   * {@code run()} when detailed entrainment calculation is enabled. Extracts fluid properties from
+   * the flashed thermodynamic system and runs the performance calculator.
+   */
+  protected void updateEntrainmentFromPerformanceCalculator() {
+    thermoSystem2.initPhysicalProperties();
+
+    double gasDensity = 0.0;
+    double gasViscosity = 0.0;
+    double oilDensity = 0.0;
+    double oilViscosity = 0.0;
+    double waterDensity = 0.0;
+    double waterViscosity = 0.0;
+
+    if (thermoSystem2.hasPhaseType("gas")) {
+      gasDensity = thermoSystem2.getPhase("gas").getPhysicalProperties().getDensity();
+      gasViscosity = thermoSystem2.getPhase("gas").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem2.hasPhaseType("oil")) {
+      oilDensity = thermoSystem2.getPhase("oil").getPhysicalProperties().getDensity();
+      oilViscosity = thermoSystem2.getPhase("oil").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem2.hasPhaseType("aqueous")) {
+      waterDensity = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getDensity();
+      waterViscosity = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getViscosity();
+    }
+
+    double gasVelocity = 0.0;
+    if (gasDensity > 0) {
+      gasVelocity = getGasSuperficialVelocity();
+    }
+
+    double liquidLevelFrac = liquidLevel / internalDiameter;
+    if (liquidLevelFrac < 0.0) {
+      liquidLevelFrac = 0.0;
+    }
+    if (liquidLevelFrac > 1.0) {
+      liquidLevelFrac = 1.0;
+    }
+
+    performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity,
+        oilViscosity, waterViscosity, gasVelocity, internalDiameter, separatorLength, orientation,
+        liquidLevelFrac);
+
+    // Update entrainment fractions — use "volume" spec type for physics-based results
+    if (performanceCalculator.getOilInGasFraction() > 0) {
+      oilInGas = performanceCalculator.getOilInGasFraction();
+      oilInGasSpec = "volume";
+    }
+    if (performanceCalculator.getWaterInGasFraction() > 0) {
+      waterInGas = performanceCalculator.getWaterInGasFraction();
+      waterInGasSpec = "volume";
+    }
+    if (performanceCalculator.getGasInOilFraction() > 0) {
+      gasInLiquid = performanceCalculator.getGasInOilFraction();
+      gasInLiquidSpec = "volume";
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -507,6 +580,12 @@ public class Separator extends ProcessEquipmentBaseClass
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
       ops.TPflash();
       thermoSystem2.initProperties();
+    }
+
+    // If detailed entrainment model is enabled, compute entrainment from droplet physics
+    if (useDetailedEntrainmentCalculation && performanceCalculator != null
+        && thermoSystem2.getNumberOfPhases() >= 2) {
+      updateEntrainmentFromPerformanceCalculator();
     }
 
     thermoSystem2.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
@@ -809,6 +888,148 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public void setGasCarryunderFraction(double gasCarryunderFraction) {
     this.gasCarryunderFraction = gasCarryunderFraction;
+  }
+
+  /**
+   * Enables or disables the detailed droplet-based entrainment calculation. When enabled, the
+   * separator uses a {@link SeparatorPerformanceCalculator} with droplet size distributions and
+   * grade efficiency curves instead of simple entrainment fractions.
+   *
+   * @param enabled true to enable detailed calculation, false to use simple fractions
+   */
+  public void setDetailedEntrainmentCalculation(boolean enabled) {
+    this.useDetailedEntrainmentCalculation = enabled;
+    if (enabled && performanceCalculator == null) {
+      performanceCalculator = new SeparatorPerformanceCalculator();
+    }
+  }
+
+  /**
+   * Returns whether detailed entrainment calculation is enabled.
+   *
+   * @return true if detailed calculation is enabled
+   */
+  public boolean isDetailedEntrainmentCalculation() {
+    return useDetailedEntrainmentCalculation;
+  }
+
+  /**
+   * Gets the detailed performance calculator. Creates one if it does not exist.
+   *
+   * @return the performance calculator
+   */
+  public SeparatorPerformanceCalculator getPerformanceCalculator() {
+    if (performanceCalculator == null) {
+      performanceCalculator = new SeparatorPerformanceCalculator();
+    }
+    return performanceCalculator;
+  }
+
+  /**
+   * Sets the detailed performance calculator.
+   *
+   * @param calculator the performance calculator to use
+   */
+  public void setPerformanceCalculator(SeparatorPerformanceCalculator calculator) {
+    this.performanceCalculator = calculator;
+  }
+
+  /**
+   * Enables the enhanced (state-of-the-art) entrainment calculation with flow regime prediction,
+   * inlet device modeling, detailed vessel geometry, and database-driven internals. This
+   * automatically enables the detailed entrainment calculation.
+   *
+   * @param enabled true to enable enhanced calculation
+   */
+  public void setEnhancedEntrainmentCalculation(boolean enabled) {
+    setDetailedEntrainmentCalculation(enabled);
+    getPerformanceCalculator().setUseEnhancedCalculation(enabled);
+  }
+
+  /**
+   * Returns whether the enhanced entrainment calculation is enabled.
+   *
+   * @return true if enhanced calculation is enabled
+   */
+  public boolean isEnhancedEntrainmentCalculation() {
+    return useDetailedEntrainmentCalculation && performanceCalculator != null
+        && performanceCalculator.isUseEnhancedCalculation();
+  }
+
+  /**
+   * Sets the inlet device type for the enhanced entrainment calculation.
+   *
+   * @param deviceType the inlet device type
+   */
+  public void setInletDeviceType(InletDeviceModel.InletDeviceType deviceType) {
+    getPerformanceCalculator().setInletDeviceModel(new InletDeviceModel(deviceType));
+  }
+
+  /**
+   * Sets the inlet pipe diameter for flow regime calculation. This affects the DSD generated from
+   * inlet pipe flow regime correlations.
+   *
+   * @param diameter inlet pipe internal diameter [m]
+   */
+  public void setInletPipeDiameter(double diameter) {
+    getPerformanceCalculator().setInletPipeDiameter(diameter);
+  }
+
+  /**
+   * Sets the gas-liquid interfacial tension for DSD generation in the enhanced model.
+   *
+   * @param sigma interfacial tension [N/m]
+   */
+  public void setGasLiquidSurfaceTension(double sigma) {
+    getPerformanceCalculator().setSurfaceTension(sigma);
+  }
+
+  /**
+   * Gets the predicted inlet flow regime from the last enhanced calculation.
+   *
+   * @return flow regime enum or null if not calculated
+   */
+  public MultiphaseFlowRegime.FlowRegime getInletFlowRegime() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.getInletFlowRegime();
+    }
+    return null;
+  }
+
+  /**
+   * Gets the K-factor (Souders-Brown) from the last enhanced calculation.
+   *
+   * @return K-factor [m/s] or 0 if not calculated
+   */
+  public double getKFactor() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.getKFactor();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets the K-factor utilization from the last enhanced calculation.
+   *
+   * @return utilization ratio (operating/design), values above 1.0 indicate flooding
+   */
+  public double getKFactorUtilization() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.getKFactorUtilization();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Returns whether the mist eliminator was detected as flooded in the last calculation.
+   *
+   * @return true if flooded
+   */
+  public boolean isMistEliminatorFlooded() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.isMistEliminatorFlooded();
+    }
+    return false;
   }
 
   /** {@inheritDoc} */

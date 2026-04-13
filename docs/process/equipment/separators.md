@@ -21,6 +21,11 @@ Documentation for separator equipment in NeqSim process simulation.
 - [Usage Examples](#usage-examples)
 - [Design Calculations](#design-calculations)
 
+> **Enhanced Entrainment Modeling:** For physics-based separator performance
+> calculations using droplet size distributions, flow regime prediction,
+> inlet device modeling, grade efficiency curves, and internals databases,
+> see the [Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md) guide.
+
 ---
 
 ## Overview
