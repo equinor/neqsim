@@ -18,6 +18,7 @@ python-docx>=0.8.11            # Word (.docx) output
 latex2mathml>=3.0              # LaTeX -> MathML -> OMML equation pipeline
 lxml>=4.9                      # XML manipulation for OMML equations
 Jinja2>=3.1                    # HTML report templating
+typst>=0.12                    # PDF rendering via typst compiler (also needs pandoc on PATH)
 pyyaml>=6.0                    # journal profile configs
 
 # --- Bibliography ---

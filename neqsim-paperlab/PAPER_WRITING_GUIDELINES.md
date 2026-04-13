@@ -362,7 +362,34 @@ python paperflow.py format papers/<slug>/ --journal <journal_name>
 ```
 
 This produces **both** `submission/paper.tex` (LaTeX) and `submission/paper.docx`
-(Word) in a single invocation.
+(Word) in a single invocation. A typeset **PDF** is also generated when the
+`typst` Python package and `pandoc` are available.
+
+### PDF Document Quality
+
+The PDF renderer (`tools/render_pdf.py`) produces publication-quality PDFs with
+properly typeset math equations, numbered automatically by typst.  The pipeline:
+
+```
+paper.md  →  strip \tag{} + HTML comments
+          →  pandoc --to typst
+          →  add academic preamble (A4, New Computer Modern 11pt, equation numbering)
+          →  fix table column widths (auto-sizing instead of pandoc's percentages)
+          →  typst.compile()  →  submission/paper.pdf
+```
+
+Key features:
+- **Math equations** rendered natively by typst (fractions, subscripts, Greek, etc.)
+- **Auto-numbered equations** via `math.equation(numbering: "(1)")`
+- **Tables** use auto column widths so math-heavy cells are not squeezed
+- **ASCII-art figures** in code blocks are preserved with monospace styling
+- **Title and author** extracted from `plan.json` or `paper.md` automatically
+
+The PDF can also be generated standalone:
+
+```bash
+python tools/render_pdf.py papers/<slug>/
+```
 
 ### Word Document Quality
 
@@ -383,8 +410,11 @@ fall back to Unicode text rendering (Greek letters, operators).
 ### Required Python Packages
 
 ```
-pip install python-docx latex2mathml lxml pyyaml
+pip install python-docx latex2mathml lxml pyyaml typst
 ```
+
+Also ensure **pandoc ≥ 3.0** is installed and on PATH (https://pandoc.org).
+Pandoc is needed for both LaTeX and PDF rendering.
 
 ### 2. Keep the claims pipeline proportional to the paper type
 

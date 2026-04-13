@@ -1075,6 +1075,17 @@ def main():
     if tex_file:
         print(f"  [OK] LaTeX: {tex_file}")
 
+    # PDF (via typst)
+    try:
+        from render_pdf import render_pdf
+        pdf_file = render_pdf(paper_dir)
+        if pdf_file:
+            print(f"  [OK] PDF:   {pdf_file}  ({pdf_file.stat().st_size:,} bytes)")
+    except ImportError:
+        print("  [SKIP] PDF: typst or pandoc not available")
+    except Exception as exc:
+        print(f"  [WARN] PDF: {exc}")
+
     print("=" * 50)
     print("Done.")
 
