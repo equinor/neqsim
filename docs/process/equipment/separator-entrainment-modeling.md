@@ -1521,4 +1521,8 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 ## Related Documentation
 
 - [Separator Equipment](separators.md) — Base separator documentation, entrainment specification, design constraints
+- [Dynamic Simulation Guide](../../simulation/dynamic_simulation_guide.md) — Transient simulation, time stepping, control systems
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) — K-value and performance constraints system
+- [Dynamic Entrainment Notebook](../../../examples/notebooks/separator_dynamic_entrainment.ipynb) — Transient separator simulation with enhanced entrainment
+- [Vendor Curves & Calibration Notebook](../../../examples/notebooks/separator_vendor_curves_and_calibration.ipynb) — Internals database, vendor curves, calibration
+- [Steady-State Entrainment Notebook](../../../examples/notebooks/separator_entrainment_modeling.ipynb) — Physics-based entrainment modeling
