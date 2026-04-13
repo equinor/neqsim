@@ -376,6 +376,20 @@ def cmd_format(args):
     docx_file = render_word_document(str(paper_dir), journal_profile=profile)
     print(f"Word:   {docx_file}")
 
+    # Render PDF (via typst)
+    print("\nRendering PDF...")
+    try:
+        from render_pdf import render_pdf
+        pdf_file = render_pdf(str(paper_dir))
+        if pdf_file:
+            print(f"PDF:    {pdf_file}")
+        else:
+            print("PDF:    generation failed (check pandoc/typst)")
+    except ImportError:
+        print("PDF:    skipped (install typst: pip install typst)")
+    except Exception as exc:
+        print(f"PDF:    failed — {exc}")
+
 
 def cmd_audit(args):
     """Audit manuscript for unsupported claims."""
@@ -1059,6 +1073,20 @@ def cmd_render(args):
             print(f"  Warning: LaTeX/Word rendering failed: {e}")
     else:
         print("  Skipping LaTeX/Word (no journal profile)")
+
+    # Render PDF (via typst) — always attempted, does not need journal profile
+    print("Rendering PDF...")
+    try:
+        from render_pdf import render_pdf
+        pdf_file = render_pdf(str(paper_dir))
+        if pdf_file:
+            print(f"  Output: {pdf_file}")
+        else:
+            print("  PDF generation failed (check pandoc/typst)")
+    except ImportError:
+        print("  Skipped PDF (install typst: pip install typst)")
+    except Exception as exc:
+        print(f"  PDF failed: {exc}")
 
     print("\nDone. Files in:", paper_dir / "submission")
 
