@@ -59,13 +59,14 @@ public class ProcessRunner {
 
     long startTime = System.currentTimeMillis();
     try {
-      SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+      String normalizedJson = normalizeProcessJson(json);
+      SimulationResult result = ProcessSystem.fromJsonAndRun(normalizedJson);
       String simJson = result.toJson();
 
       // Inject provenance into the response
-      String model = extractModel(json);
-      String mixingRule = extractMixingRule(json);
-      int equipCount = extractEquipmentCount(json);
+      String model = extractModel(normalizedJson);
+      String mixingRule = extractMixingRule(normalizedJson);
+      int equipCount = extractEquipmentCount(normalizedJson);
       ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.setConverged(!result.isError());
@@ -105,9 +106,10 @@ public class ProcessRunner {
     }
 
     long startTime = System.currentTimeMillis();
+    String normalizedJson = normalizeProcessJson(json);
 
     // Pre-validate
-    String validationJson = Validator.validate(json);
+    String validationJson = Validator.validate(normalizedJson);
     JsonObject validation = JsonParser.parseString(validationJson).getAsJsonObject();
 
     if (!validation.get("valid").getAsBoolean()) {
@@ -121,13 +123,13 @@ public class ProcessRunner {
 
     // Run simulation
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(json);
+      SimulationResult simResult = ProcessSystem.fromJsonAndRun(normalizedJson);
       String simJson = simResult.toJson();
 
       // Inject provenance
-      String model = extractModel(json);
-      String mixingRule = extractMixingRule(json);
-      int equipCount = extractEquipmentCount(json);
+      String model = extractModel(normalizedJson);
+      String mixingRule = extractMixingRule(normalizedJson);
+      int equipCount = extractEquipmentCount(normalizedJson);
       ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.setConverged(!simResult.isError());
@@ -176,7 +178,7 @@ public class ProcessRunner {
     }
 
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(json);
+      SimulationResult simResult = ProcessSystem.fromJsonAndRun(normalizeProcessJson(json));
 
       if (simResult.isError()) {
         java.util.List<neqsim.mcp.model.DiagnosticIssue> issues =
@@ -258,6 +260,33 @@ public class ProcessRunner {
     } catch (Exception ignored) {
     }
     return 0;
+  }
+
+  /**
+   * Normalizes accepted process JSON variants to the canonical schema.
+   *
+   * <p>
+   * Canonical schema expects {@code process} to be an array. Some legacy clients send
+   * {@code {"process": {"equipment": [...]}}}. This method converts the legacy shape to the
+   * canonical one while preserving all other fields.
+   * </p>
+   *
+   * @param json raw process JSON
+   * @return canonical JSON string (or original input if not parseable)
+   */
+  private static String normalizeProcessJson(String json) {
+    try {
+      JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("process") && root.get("process").isJsonObject()) {
+        JsonObject processObj = root.getAsJsonObject("process");
+        if (processObj.has("equipment") && processObj.get("equipment").isJsonArray()) {
+          root.add("process", processObj.getAsJsonArray("equipment"));
+          return GSON.toJson(root);
+        }
+      }
+    } catch (Exception ignored) {
+    }
+    return json;
   }
 
   /**
