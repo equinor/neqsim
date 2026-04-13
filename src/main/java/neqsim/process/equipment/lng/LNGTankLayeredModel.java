@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.standards.gasquality.Standard_ISO6578;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.gasquality.Standard_ISO6976_2016;
+import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -87,6 +88,24 @@ public class LNGTankLayeredModel implements Serializable {
 
   /** Sloshing mixing enhancement factor (1.0 = no sloshing, &gt;1.0 = enhanced mixing). */
   private double sloshingMixingFactor = 1.0;
+
+  /** Whether to use GERG-2008 EOS for density and quality calculations. */
+  private boolean useGERG2008 = false;
+
+  /** Tank geometry model (optional, overrides surface area if set). */
+  private TankGeometry tankGeometry;
+
+  /** Multi-zone heat transfer model (optional, overrides simple U*A if set). */
+  private TankHeatTransferModel heatTransferModel;
+
+  /** Methane number calculator (optional, overrides simplified correlation if set). */
+  private MethaneNumberCalculator methaneNumberCalculator;
+
+  /** Sloshing model (optional, overrides constant sloshing factor if set). */
+  private LNGSloshingModel sloshingModel;
+
+  /** Effective diffusion coefficient for inter-layer mass transfer (m2/s). */
+  private double effectiveDiffusionCoeff = 1.0e-9;
 
   /**
    * Constructor for LNGTankLayeredModel.
@@ -219,9 +238,15 @@ public class LNGTankLayeredModel implements Serializable {
       return new LNGAgeingResult();
     }
 
-    // 1. Calculate heat ingress: Q = U * A * (T_amb - T_LNG)
-    double heatIngress =
-        overallHeatTransferCoeff * tankSurfaceArea * (ambientTemperature - bulkTemperature);
+    // 1. Calculate heat ingress
+    double heatIngress;
+    if (heatTransferModel != null) {
+      heatTransferModel.updateBoundaryConditions(currentAmbientTemp, 0, currentAmbientTemp - 5.0);
+      heatIngress = heatTransferModel.calculateTotalHeatIngress(bulkTemperature);
+    } else {
+      heatIngress =
+          overallHeatTransferCoeff * tankSurfaceArea * (ambientTemperature - bulkTemperature);
+    }
     if (heatIngress < 0) {
       heatIngress = 0.0;
     }
@@ -260,8 +285,13 @@ public class LNGTankLayeredModel implements Serializable {
       bogMolesThisStep = bogMassKgPerStep / molarMass;
       bogMassRate = bogMassKgPerStep / timeStepHours; // kg/hr
 
-      // Sloshing can enhance surface renewal and thus BOG
-      bogMolesThisStep *= sloshingMixingFactor;
+      // Apply sloshing model if available, otherwise use constant factor
+      double effectiveSloshing = sloshingMixingFactor;
+      if (sloshingModel != null) {
+        double fillFraction = getCurrentFillFraction();
+        effectiveSloshing = sloshingModel.calculateBOGEnhancement(1.0, fillFraction);
+      }
+      bogMolesThisStep *= effectiveSloshing;
     }
 
     // 4. Remove boil-off from top layer (LNGship pattern: remove gas-composition-weighted moles)
@@ -269,7 +299,7 @@ public class LNGTankLayeredModel implements Serializable {
       topLayer.removeVapor(bogMolesThisStep, currentVaporComposition);
     }
 
-    // 5. Distribute heat to layers (simple: all to bottom in single-layer case)
+    // 5. Distribute heat to layers
     if (layers.size() == 1) {
       double cpEstimate = estimateCp(flashSystem);
       if (cpEstimate > 0) {
@@ -277,6 +307,11 @@ public class LNGTankLayeredModel implements Serializable {
       }
     } else {
       distributeHeatToLayers(heatIngressJoules, flashSystem);
+    }
+
+    // 5b. Inter-layer diffusion (Fick's law mass transfer between adjacent layers)
+    if (layers.size() > 1) {
+      applyInterLayerDiffusion(timeStepHours);
     }
 
     // 6. Update bulk properties
@@ -549,6 +584,11 @@ public class LNGTankLayeredModel implements Serializable {
   /**
    * Calculate ISO 6976 quality KPIs (WI, GCV) from current state.
    *
+   * <p>
+   * If GERG-2008 mode is enabled, uses GERG-2008 EOS for density calculation. Always uses ISO 6976
+   * for calorific values.
+   * </p>
+   *
    * @param result ageing result to populate with quality data
    */
   private void calculateQualityKPIs(LNGAgeingResult result) {
@@ -564,10 +604,22 @@ public class LNGTankLayeredModel implements Serializable {
       ops.bubblePointTemperatureFlash();
       qualitySystem.init(0);
 
-      // ISO 6578 density
-      Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
-      densityStd.calculate();
-      result.setDensity(densityStd.getValue("density"));
+      // Density calculation: GERG-2008 or ISO 6578
+      if (useGERG2008) {
+        double gergDensity = calculateGERG2008Density(topLayer);
+        if (gergDensity > 0) {
+          result.setDensity(gergDensity);
+        } else {
+          // Fall back to ISO 6578
+          Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
+          densityStd.calculate();
+          result.setDensity(densityStd.getValue("density"));
+        }
+      } else {
+        Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
+        densityStd.calculate();
+        result.setDensity(densityStd.getValue("density"));
+      }
 
       // ISO 6976 quality
       standardISO6976.setThermoSystem(qualitySystem);
@@ -579,32 +631,171 @@ public class LNGTankLayeredModel implements Serializable {
       result.setGcvMass(standardISO6976.getValue("SuperiorCalorificValue") / 1000.0);
       standardISO6976.setReferenceType("volume");
 
-      // Methane Number estimate (simplified GPA 2145 correlation)
-      double xC1 = 0;
-      double xC2 = 0;
-      double xC3 = 0;
+      // Methane Number — use calculator if available, otherwise simplified correlation
       Map<String, Double> comp = topLayer.getComposition();
-      if (comp.containsKey("methane")) {
-        xC1 = comp.get("methane");
+      if (methaneNumberCalculator != null) {
+        result.setMethaneNumber(methaneNumberCalculator.calculate(comp));
+      } else {
+        double xC1 = comp.containsKey("methane") ? comp.get("methane") : 0;
+        double xC2 = comp.containsKey("ethane") ? comp.get("ethane") : 0;
+        double xC3 = comp.containsKey("propane") ? comp.get("propane") : 0;
+        double xN2 = comp.containsKey("nitrogen") ? comp.get("nitrogen") : 0;
+        double mn = 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 * xN2;
+        if (mn < 0) {
+          mn = 0;
+        }
+        result.setMethaneNumber(mn);
       }
-      if (comp.containsKey("ethane")) {
-        xC2 = comp.get("ethane");
-      }
-      if (comp.containsKey("propane")) {
-        xC3 = comp.get("propane");
-      }
-      // Simplified MN correlation: MN ~ 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 *
-      // xN2
-      double xN2 = comp.containsKey("nitrogen") ? comp.get("nitrogen") : 0.0;
-      double mn = 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 * xN2;
-      if (mn < 0) {
-        mn = 0;
-      }
-      result.setMethaneNumber(mn);
-
     } catch (Exception ex) {
       logger.warn("Failed to calculate quality KPIs", ex);
     }
+  }
+
+  /**
+   * Calculate LNG density using GERG-2008 EOS.
+   *
+   * <p>
+   * Creates a GERG-2008 thermo system from the layer composition, runs a TP flash at the layer
+   * temperature and tank pressure, and returns the liquid density. This provides higher accuracy
+   * density than the Klosek-McKinley (ISO 6578) correlation.
+   * </p>
+   *
+   * @param layer the tank layer
+   * @return density (kg/m3) or -1 if calculation fails
+   */
+  private double calculateGERG2008Density(LNGTankLayer layer) {
+    try {
+      SystemGERG2008Eos gergSystem = new SystemGERG2008Eos(layer.getTemperature(), tankPressure);
+
+      Map<String, Double> comp = layer.getComposition();
+      for (Map.Entry<String, Double> entry : comp.entrySet()) {
+        if (entry.getValue() > 1e-10) {
+          gergSystem.addComponent(entry.getKey(), entry.getValue());
+        }
+      }
+      gergSystem.setMixingRule(2);
+      gergSystem.init(0);
+
+      ThermodynamicOperations gergOps = new ThermodynamicOperations(gergSystem);
+      gergOps.TPflash();
+      gergSystem.initProperties();
+
+      if (gergSystem.hasPhaseType("oil")) {
+        return gergSystem.getPhase("oil").getDensity("kg/m3");
+      } else if (gergSystem.getNumberOfPhases() > 0) {
+        return gergSystem.getPhase(0).getDensity("kg/m3");
+      }
+    } catch (Exception ex) {
+      logger.debug("GERG-2008 density calculation failed, falling back to ISO 6578", ex);
+    }
+    return -1;
+  }
+
+  /**
+   * Apply inter-layer molecular diffusion using Fick's first law.
+   *
+   * <p>
+   * For each pair of adjacent layers, calculate mass transfer flux: J_i = D_eff * (c_upper_i -
+   * c_lower_i) / delta_h, where c is concentration (mole fraction), and transfer moles to equalise
+   * compositions over time. The effective diffusion coefficient includes both molecular diffusion
+   * and turbulent eddy diffusion from natural convection.
+   * </p>
+   *
+   * @param timeStepHours time step (hours)
+   */
+  private void applyInterLayerDiffusion(double timeStepHours) {
+    double dtSeconds = timeStepHours * 3600.0;
+
+    for (int i = 0; i < layers.size() - 1; i++) {
+      LNGTankLayer lower = layers.get(i);
+      LNGTankLayer upper = layers.get(i + 1);
+
+      // Estimate interface area and layer height
+      double interfaceArea = estimateInterfaceArea();
+      double deltaH = estimateLayerSpacing(lower, upper);
+      if (deltaH <= 0 || interfaceArea <= 0) {
+        continue;
+      }
+
+      Map<String, Double> lowerComp = lower.getComposition();
+      Map<String, Double> upperComp = upper.getComposition();
+
+      // Moles transferred per component: dn = D_eff * A * (c_upper - c_lower) / dH * dt
+      // c here is mole fraction (simplified — full model would use molar concentration)
+      double transferScale = effectiveDiffusionCoeff * interfaceArea * dtSeconds / deltaH;
+
+      // Limit transfer to avoid instability (max 1% of smaller layer per step)
+      double maxTransfer = Math.min(lower.getTotalMoles(), upper.getTotalMoles()) * 0.01;
+      transferScale = Math.min(transferScale, maxTransfer);
+
+      Map<String, Double> newLowerComp = new LinkedHashMap<String, Double>(lowerComp);
+      Map<String, Double> newUpperComp = new LinkedHashMap<String, Double>(upperComp);
+
+      for (String comp : lowerComp.keySet()) {
+        double xLower = lowerComp.containsKey(comp) ? lowerComp.get(comp) : 0;
+        double xUpper = upperComp.containsKey(comp) ? upperComp.get(comp) : 0;
+        double diff = xUpper - xLower;
+
+        if (Math.abs(diff) > 1e-12) {
+          double molesTransferred = diff * transferScale;
+          // Transfer from higher concentration to lower
+          double fracOfLower =
+              lower.getTotalMoles() > 0 ? molesTransferred / lower.getTotalMoles() : 0;
+          double fracOfUpper =
+              upper.getTotalMoles() > 0 ? molesTransferred / upper.getTotalMoles() : 0;
+
+          newLowerComp.put(comp, Math.max(0, xLower + fracOfLower));
+          newUpperComp.put(comp, Math.max(0, xUpper - fracOfUpper));
+        }
+      }
+
+      lower.setComposition(newLowerComp);
+      upper.setComposition(newUpperComp);
+    }
+  }
+
+  /**
+   * Estimate the liquid cross-sectional area for diffusion interface.
+   *
+   * @return interface area (m2)
+   */
+  private double estimateInterfaceArea() {
+    if (tankGeometry != null) {
+      return tankGeometry.getLiquidSurfaceArea(getCurrentFillFraction());
+    }
+    // Default: assume cylindrical with 40m diameter
+    double diameter = 40.0;
+    return Math.PI * diameter * diameter / 4.0;
+  }
+
+  /**
+   * Estimate the vertical spacing between two layer centres.
+   *
+   * @param lower lower layer
+   * @param upper upper layer
+   * @return spacing (m)
+   */
+  private double estimateLayerSpacing(LNGTankLayer lower, LNGTankLayer upper) {
+    double area = estimateInterfaceArea();
+    if (area <= 0) {
+      return 1.0;
+    }
+    double hLower = lower.getVolume() / area;
+    double hUpper = upper.getVolume() / area;
+    return (hLower + hUpper) / 2.0;
+  }
+
+  /**
+   * Get current fill fraction (liquid volume / total volume).
+   *
+   * @return fill fraction (0-1)
+   */
+  public double getCurrentFillFraction() {
+    double liquidVol = 0;
+    for (LNGTankLayer layer : layers) {
+      liquidVol += layer.getVolume();
+    }
+    return totalTankVolume > 0 ? liquidVol / totalTankVolume : 0;
   }
 
   /**
@@ -804,5 +995,117 @@ public class LNGTankLayeredModel implements Serializable {
    */
   public SystemInterface getReferenceSystem() {
     return referenceSystem;
+  }
+
+  /**
+   * Enable or disable GERG-2008 EOS for density calculations.
+   *
+   * @param useGERG2008 true to use GERG-2008 for density
+   */
+  public void setUseGERG2008(boolean useGERG2008) {
+    this.useGERG2008 = useGERG2008;
+  }
+
+  /**
+   * Check if GERG-2008 density calculation is enabled.
+   *
+   * @return true if using GERG-2008
+   */
+  public boolean isUseGERG2008() {
+    return useGERG2008;
+  }
+
+  /**
+   * Set the tank geometry model.
+   *
+   * @param geometry tank geometry
+   */
+  public void setTankGeometry(TankGeometry geometry) {
+    this.tankGeometry = geometry;
+    if (geometry != null) {
+      this.tankSurfaceArea = geometry.getTotalSurfaceArea();
+      this.totalTankVolume = geometry.getTotalVolume();
+    }
+  }
+
+  /**
+   * Get the tank geometry model.
+   *
+   * @return tank geometry or null
+   */
+  public TankGeometry getTankGeometry() {
+    return tankGeometry;
+  }
+
+  /**
+   * Set the multi-zone heat transfer model.
+   *
+   * @param model heat transfer model
+   */
+  public void setHeatTransferModel(TankHeatTransferModel model) {
+    this.heatTransferModel = model;
+  }
+
+  /**
+   * Get the heat transfer model.
+   *
+   * @return heat transfer model or null
+   */
+  public TankHeatTransferModel getHeatTransferModel() {
+    return heatTransferModel;
+  }
+
+  /**
+   * Set the methane number calculator.
+   *
+   * @param calculator methane number calculator
+   */
+  public void setMethaneNumberCalculator(MethaneNumberCalculator calculator) {
+    this.methaneNumberCalculator = calculator;
+  }
+
+  /**
+   * Get the methane number calculator.
+   *
+   * @return calculator or null
+   */
+  public MethaneNumberCalculator getMethaneNumberCalculator() {
+    return methaneNumberCalculator;
+  }
+
+  /**
+   * Set the sloshing model.
+   *
+   * @param model sloshing model
+   */
+  public void setSloshingModel(LNGSloshingModel model) {
+    this.sloshingModel = model;
+  }
+
+  /**
+   * Get the sloshing model.
+   *
+   * @return sloshing model or null
+   */
+  public LNGSloshingModel getSloshingModel() {
+    return sloshingModel;
+  }
+
+  /**
+   * Set the effective diffusion coefficient for inter-layer mass transfer.
+   *
+   * @param diffCoeff diffusion coefficient (m2/s), typical 1e-9 to 1e-8 for LNG
+   */
+  public void setEffectiveDiffusionCoeff(double diffCoeff) {
+    this.effectiveDiffusionCoeff = diffCoeff;
+  }
+
+  /**
+   * Get the effective diffusion coefficient.
+   *
+   * @return diffusion coefficient (m2/s)
+   */
+  public double getEffectiveDiffusionCoeff() {
+    return effectiveDiffusionCoeff;
   }
 }

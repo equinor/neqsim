@@ -80,6 +80,12 @@ public class LNGVaporSpaceModel implements Serializable {
   /** BOG moles generated but not yet handled in this time step. */
   private double unhandledBOGMoles = 0.0;
 
+  /** Reference thermo system for flash-based vapor space calculations. */
+  private transient SystemInterface referenceSystem;
+
+  /** Whether to use flash-based vapor space model (true) or simple PV=nRT (false). */
+  private boolean useFlashModel = false;
+
   /**
    * Constructor for LNGVaporSpaceModel.
    *
@@ -367,5 +373,146 @@ public class LNGVaporSpaceModel implements Serializable {
    */
   public double getUnhandledBOGMoles() {
     return unhandledBOGMoles;
+  }
+
+  /**
+   * Set the reference thermo system for flash-based vapor space calculations.
+   *
+   * @param system reference thermo system
+   */
+  public void setReferenceSystem(SystemInterface system) {
+    this.referenceSystem = system;
+  }
+
+  /**
+   * Get the reference thermo system.
+   *
+   * @return reference thermo system or null
+   */
+  public SystemInterface getReferenceSystem() {
+    return referenceSystem;
+  }
+
+  /**
+   * Enable or disable flash-based vapor space model.
+   *
+   * <p>
+   * When enabled, the vapor space composition and pressure are determined by a TP flash on the
+   * combined liquid surface + accumulated vapor inventory, rather than the simple PV=nRT model.
+   * This captures condensation of heavier components from the vapor and re-evaporation phenomena.
+   * </p>
+   *
+   * @param useFlash true to use flash model
+   */
+  public void setUseFlashModel(boolean useFlash) {
+    this.useFlashModel = useFlash;
+  }
+
+  /**
+   * Check if flash-based vapor space model is enabled.
+   *
+   * @return true if using flash model
+   */
+  public boolean isUseFlashModel() {
+    return useFlashModel;
+  }
+
+  /**
+   * Perform a flash-based update of the vapor space.
+   *
+   * <p>
+   * Creates a thermo system with the current ullage gas composition, runs a TP flash to determine
+   * how much condenses back into liquid versus stays in the vapor. This provides more accurate
+   * vapor composition and pressure than the simple ideal gas model, especially when heavier
+   * components accumulate in the vapor space.
+   * </p>
+   *
+   * @param bogMolesGenerated moles of BOG generated
+   * @param bogMolesRemoved moles removed by BOG handling
+   * @param liquidVolume current liquid volume (m3)
+   * @param equilibriumVaporComp vapor composition from liquid VLE flash
+   * @param liquidTemperature liquid surface temperature (K)
+   */
+  public void updateWithFlash(double bogMolesGenerated, double bogMolesRemoved, double liquidVolume,
+      Map<String, Double> equilibriumVaporComp, double liquidTemperature) {
+    if (referenceSystem == null || !useFlashModel) {
+      update(bogMolesGenerated, bogMolesRemoved, liquidVolume, equilibriumVaporComp,
+          liquidTemperature);
+      return;
+    }
+
+    this.currentLiquidVolume = liquidVolume;
+    double ullageVol = getUllageVolume();
+    if (ullageVol <= 0) {
+      return;
+    }
+
+    try {
+      // Build a system representing the ullage gas + new BOG
+      SystemInterface vaporSystem = referenceSystem.clone();
+      vaporSystem.setTemperature(vaporTemperature);
+      vaporSystem.setPressure(tankPressure);
+
+      // Set composition from blended vapor (existing + new BOG)
+      double newBOGFraction = (vaporMoles + bogMolesGenerated > 0)
+          ? bogMolesGenerated / (vaporMoles + bogMolesGenerated)
+          : 1.0;
+      double oldFraction = 1.0 - newBOGFraction;
+
+      vaporSystem.init(0);
+      double currentMoles = vaporSystem.getTotalNumberOfMoles();
+      double targetMoles = vaporMoles + bogMolesGenerated - bogMolesRemoved;
+      if (targetMoles < 0) {
+        targetMoles = 0;
+      }
+
+      for (int i = 0; i < vaporSystem.getPhase(0).getNumberOfComponents(); i++) {
+        String name = vaporSystem.getPhase(0).getComponent(i).getComponentName();
+        double yOld = vaporComposition.containsKey(name) ? vaporComposition.get(name) : 0;
+        double yNew = equilibriumVaporComp.containsKey(name) ? equilibriumVaporComp.get(name) : 0;
+        double yBlend = oldFraction * yOld + newBOGFraction * yNew;
+        double molesNeeded =
+            yBlend * targetMoles - vaporSystem.getPhase(0).getComponent(i).getz() * currentMoles;
+        if (Math.abs(molesNeeded) > 1e-20) {
+          vaporSystem.addComponent(name, molesNeeded);
+        }
+      }
+
+      // Run TP flash on the vapor system
+      vaporSystem.init(0);
+      ThermodynamicOperations ops = new ThermodynamicOperations(vaporSystem);
+      ops.TPflash();
+      vaporSystem.init(0);
+
+      // Update vapor composition from flash result
+      if (vaporSystem.hasPhaseType("gas")) {
+        vaporComposition.clear();
+        for (int i = 0; i < vaporSystem.getPhase("gas").getNumberOfComponents(); i++) {
+          String name = vaporSystem.getPhase("gas").getComponent(i).getComponentName();
+          double y = vaporSystem.getPhase("gas").getComponent(i).getx();
+          vaporComposition.put(name, y);
+        }
+        this.vaporMoles = vaporSystem.getPhase("gas").getNumberOfMolesInPhase();
+      }
+
+      // Update pressure from real gas behavior
+      if (ullageVol > 0 && vaporMoles > 0) {
+        double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
+        this.tankPressure = pressurePa / 1.0e5;
+      }
+
+      // Clamp pressure
+      if (tankPressure > maxPressure) {
+        logger.warn(
+            String.format("Tank pressure %.3f bara exceeds max %.3f", tankPressure, maxPressure));
+      }
+      if (tankPressure < minPressure) {
+        tankPressure = minPressure;
+      }
+    } catch (Exception ex) {
+      logger.warn("Vapor space flash failed, falling back to simple model", ex);
+      update(bogMolesGenerated, bogMolesRemoved, liquidVolume, equilibriumVaporComp,
+          liquidTemperature);
+    }
   }
 }

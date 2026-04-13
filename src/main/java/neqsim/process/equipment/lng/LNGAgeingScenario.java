@@ -107,6 +107,18 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
   /** Voyage profile (optional). */
   private LNGVoyageProfile voyageProfile;
 
+  /** Operational events (loading, unloading, cooldown, etc.). */
+  private List<OperationalEvent> operationalEvents;
+
+  /** Tank geometry model (optional). */
+  private TankGeometry tankGeometry;
+
+  /** Methane number calculator (optional). */
+  private MethaneNumberCalculator methaneNumberCalculator;
+
+  /** Whether to use GERG-2008 for density calculations. */
+  private boolean useGERG2008 = false;
+
   /** Time-series results. */
   private List<LNGAgeingResult> results;
 
@@ -130,6 +142,7 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     this.rolloverDetector = new LNGRolloverDetector();
     this.bogNetwork = new LNGBOGHandlingNetwork();
     this.heelManager = new LNGHeelManager();
+    this.operationalEvents = new ArrayList<OperationalEvent>();
   }
 
   /**
@@ -165,6 +178,15 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     tankModel.setTankSurfaceArea(tankSurfaceArea);
     tankModel.setOverallHeatTransferCoeff(overallHeatTransferCoeff);
     tankModel.setTankPressure(tankPressure);
+
+    // Wire advanced models if configured
+    if (tankGeometry != null) {
+      tankModel.setTankGeometry(tankGeometry);
+    }
+    if (methaneNumberCalculator != null) {
+      tankModel.setMethaneNumberCalculator(methaneNumberCalculator);
+    }
+    tankModel.setUseGERG2008(useGERG2008);
 
     // Initialise from the inlet fluid
     double initialLiquidVolume = tankVolume * initialFillingRatio;
@@ -359,6 +381,78 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
    */
   public LNGVoyageProfile getVoyageProfile() {
     return voyageProfile;
+  }
+
+  /**
+   * Set tank geometry model.
+   *
+   * @param geometry tank geometry
+   */
+  public void setTankGeometry(TankGeometry geometry) {
+    this.tankGeometry = geometry;
+  }
+
+  /**
+   * Get tank geometry model.
+   *
+   * @return tank geometry or null
+   */
+  public TankGeometry getTankGeometry() {
+    return tankGeometry;
+  }
+
+  /**
+   * Set methane number calculator.
+   *
+   * @param calculator methane number calculator
+   */
+  public void setMethaneNumberCalculator(MethaneNumberCalculator calculator) {
+    this.methaneNumberCalculator = calculator;
+  }
+
+  /**
+   * Get methane number calculator.
+   *
+   * @return calculator or null
+   */
+  public MethaneNumberCalculator getMethaneNumberCalculator() {
+    return methaneNumberCalculator;
+  }
+
+  /**
+   * Enable GERG-2008 for density calculations.
+   *
+   * @param use true to use GERG-2008
+   */
+  public void setUseGERG2008(boolean use) {
+    this.useGERG2008 = use;
+  }
+
+  /**
+   * Check if GERG-2008 is enabled.
+   *
+   * @return true if using GERG-2008
+   */
+  public boolean isUseGERG2008() {
+    return useGERG2008;
+  }
+
+  /**
+   * Add an operational event (loading, unloading, cooldown, etc.).
+   *
+   * @param event operational event
+   */
+  public void addOperationalEvent(OperationalEvent event) {
+    operationalEvents.add(event);
+  }
+
+  /**
+   * Get all operational events.
+   *
+   * @return list of events
+   */
+  public List<OperationalEvent> getOperationalEvents() {
+    return operationalEvents;
   }
 
   /**
@@ -612,5 +706,144 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     sb.append(String.format("Max BOR: %.4f %%/day\n", maxBOR));
 
     return sb.toString();
+  }
+
+  /**
+   * Represents an operational event during an LNG voyage or storage period.
+   *
+   * <p>
+   * Events change the tank operating mode at a specified time. Supported event types include
+   * loading/unloading (which add/remove cargo), cooldown (spray-cooling to reduce temperature), and
+   * mode changes (e.g., switch between laden voyage and ballast).
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static class OperationalEvent implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1030L;
+
+    /**
+     * Event type enumeration.
+     */
+    public enum EventType {
+      /** Loading LNG into the tank. */
+      LOADING,
+      /** Unloading LNG from the tank. */
+      UNLOADING,
+      /** Cooldown spray cooling. */
+      COOLDOWN,
+      /** Switch to laden voyage mode. */
+      LADEN_VOYAGE,
+      /** Switch to ballast voyage mode. */
+      BALLAST_VOYAGE,
+      /** Port waiting / anchoring. */
+      PORT_WAIT,
+      /** Custom event. */
+      CUSTOM
+    }
+
+    /** Event type. */
+    private EventType eventType;
+
+    /** Event start time (hours from simulation start). */
+    private double startTimeHours;
+
+    /** Event duration (hours). */
+    private double durationHours;
+
+    /** Event description. */
+    private String description;
+
+    /** Rate parameter for loading/unloading (m3/hr). */
+    private double rateM3PerHour;
+
+    /**
+     * Constructor.
+     *
+     * @param eventType type of event
+     * @param startTimeHours start time (hours)
+     * @param durationHours duration (hours)
+     */
+    public OperationalEvent(EventType eventType, double startTimeHours, double durationHours) {
+      this.eventType = eventType;
+      this.startTimeHours = startTimeHours;
+      this.durationHours = durationHours;
+      this.description = eventType.name();
+    }
+
+    /**
+     * Get event type.
+     *
+     * @return event type
+     */
+    public EventType getEventType() {
+      return eventType;
+    }
+
+    /**
+     * Get start time.
+     *
+     * @return start time (hours)
+     */
+    public double getStartTimeHours() {
+      return startTimeHours;
+    }
+
+    /**
+     * Get duration.
+     *
+     * @return duration (hours)
+     */
+    public double getDurationHours() {
+      return durationHours;
+    }
+
+    /**
+     * Get description.
+     *
+     * @return description
+     */
+    public String getDescription() {
+      return description;
+    }
+
+    /**
+     * Set description.
+     *
+     * @param description event description
+     */
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    /**
+     * Get rate (for loading/unloading).
+     *
+     * @return volume rate (m3/hr)
+     */
+    public double getRateM3PerHour() {
+      return rateM3PerHour;
+    }
+
+    /**
+     * Set rate (for loading/unloading).
+     *
+     * @param rate volume rate (m3/hr)
+     */
+    public void setRateM3PerHour(double rate) {
+      this.rateM3PerHour = rate;
+    }
+
+    /**
+     * Check if this event is active at a given time.
+     *
+     * @param timeHours current time (hours)
+     * @return true if event is active
+     */
+    public boolean isActiveAt(double timeHours) {
+      return timeHours >= startTimeHours && timeHours < startTimeHours + durationHours;
+    }
   }
 }

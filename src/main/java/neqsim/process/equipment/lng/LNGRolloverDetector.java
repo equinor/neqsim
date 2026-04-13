@@ -1,6 +1,7 @@
 package neqsim.process.equipment.lng;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,6 +60,12 @@ public class LNGRolloverDetector implements Serializable {
   /** LNG thermal diffusivity (m2/s). Approximate for LNG. */
   private double thermalDiffusivity = 8.5e-8;
 
+  /** History of density differences for trend extrapolation (most recent last). */
+  private List<Double> densityDiffHistory = new ArrayList<Double>();
+
+  /** Maximum history length for trend analysis. */
+  private int maxHistoryLength = 100;
+
   /**
    * Risk level enumeration for rollover assessment.
    */
@@ -102,6 +109,9 @@ public class LNGRolloverDetector implements Serializable {
 
     /** Layer index pair where maximum risk exists. */
     private int riskLayerUpper;
+
+    /** Estimated time until rollover occurs (hours). -1 = no rollover predicted. */
+    private double estimatedTimeToRolloverHours = -1;
 
     /** Descriptive message. */
     private String message;
@@ -235,6 +245,24 @@ public class LNGRolloverDetector implements Serializable {
     }
 
     /**
+     * Get the estimated time to rollover.
+     *
+     * @return hours until rollover, or -1 if no rollover predicted
+     */
+    public double getEstimatedTimeToRolloverHours() {
+      return estimatedTimeToRolloverHours;
+    }
+
+    /**
+     * Set the estimated time to rollover.
+     *
+     * @param hours hours until rollover, or -1 if no rollover predicted
+     */
+    public void setEstimatedTimeToRolloverHours(double hours) {
+      this.estimatedTimeToRolloverHours = hours;
+    }
+
+    /**
      * Get the assessment message.
      *
      * @return descriptive message
@@ -329,6 +357,14 @@ public class LNGRolloverDetector implements Serializable {
     assessment.setRayleighNumber(ra);
     assessment.setRiskLayerLower(worstLower);
     assessment.setRiskLayerUpper(worstUpper);
+
+    // Time-to-rollover prediction based on density difference trend
+    densityDiffHistory.add(maxDensityDiff);
+    if (densityDiffHistory.size() > maxHistoryLength) {
+      densityDiffHistory.remove(0);
+    }
+    double ttr = estimateTimeToRollover(maxDensityDiff);
+    assessment.setEstimatedTimeToRolloverHours(ttr);
 
     if (level.ordinal() >= RolloverRiskLevel.HIGH.ordinal()) {
       logger.warn("Rollover risk: " + msg);
@@ -470,5 +506,74 @@ public class LNGRolloverDetector implements Serializable {
     this.thermalExpansionCoeff = thermalExpansionCoeff;
     this.kinematicViscosity = kinematicViscosity;
     this.thermalDiffusivity = thermalDiffusivity;
+  }
+
+  /**
+   * Estimate the time to rollover based on density difference trend.
+   *
+   * <p>
+   * Uses linear extrapolation of the density difference history to predict when a density inversion
+   * (heavier layer on top) will reach the alarm threshold. Requires at least 3 history points for
+   * extrapolation.
+   * </p>
+   *
+   * @param currentDensityDiff current density difference (kg/m3)
+   * @return estimated hours to rollover, or -1 if no rollover trend detected
+   */
+  private double estimateTimeToRollover(double currentDensityDiff) {
+    if (densityDiffHistory.size() < 3) {
+      return -1;
+    }
+
+    // Simple linear regression on the last N points (y = a + b*x, x in hours)
+    int n = densityDiffHistory.size();
+    int windowSize = Math.min(n, 20);
+    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+    for (int i = n - windowSize; i < n; i++) {
+      double x = i - (n - windowSize);
+      double y = densityDiffHistory.get(i);
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumX2 += x * x;
+    }
+
+    double denom = windowSize * sumX2 - sumX * sumX;
+    if (Math.abs(denom) < 1e-20) {
+      return -1;
+    }
+
+    double slope = (windowSize * sumXY - sumX * sumY) / denom;
+
+    // If density difference is decreasing (slope < 0), rollover is not approaching
+    if (slope <= 0) {
+      return -1;
+    }
+
+    // Extrapolate: how many more steps until density diff reaches alarm threshold?
+    double remainingDiff = densityAlarmThreshold - currentDensityDiff;
+    if (remainingDiff <= 0) {
+      return 0; // Already at or above alarm
+    }
+
+    // Each step in the history corresponds to one assessment call (typically one time step)
+    return remainingDiff / slope;
+  }
+
+  /**
+   * Clear the density difference history.
+   */
+  public void clearHistory() {
+    densityDiffHistory.clear();
+  }
+
+  /**
+   * Get the density difference history for analysis.
+   *
+   * @return list of historical density differences
+   */
+  public List<Double> getDensityDiffHistory() {
+    return densityDiffHistory;
   }
 }
