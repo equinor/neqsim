@@ -35,7 +35,6 @@ computes entrainment from first principles rather than user-specified fractions.
 - [JSON Output](#json-output)
 - [Mechanical Design Integration](#mechanical-design-integration)
 - [Dynamic Simulation Integration](#dynamic-simulation-integration)
-- [Comparison to Commercial Tools](#comparison-to-commercial-tools)
 - [Correlations and References](#correlations-and-references)
 - [Class Reference](#class-reference)
 
@@ -464,9 +463,9 @@ interfacial tension between oil and water phases.
 A CSV-backed database of separator internals specifications, loaded as a
 singleton from `src/main/resources/designdata/`:
 
-- [SeparatorInternals.csv](../../../src/main/resources/designdata/SeparatorInternals.csv) — 70+ records covering wire mesh (19 variants incl. Monel, Hastelloy, PTFE, Duplex), vane pack (12 variants), axial cyclone (10 variants), plate pack (13 variants), and gravity (10 variants)
-- [SeparatorInletDevices.csv](../../../src/main/resources/designdata/SeparatorInletDevices.csv) — 31 records covering all inlet device types (elbow inlets, distributors, vanes, cyclones, deflector plates, schoepentoeter, impingement plates)
-- [SeparatorVendorCurves.csv](../../../src/main/resources/designdata/SeparatorVendorCurves.csv) — 25 vendor-certified grade efficiency curves from factory acceptance tests (FAT), covering wire mesh, vane pack, axial cyclone, and plate pack; includes atmospheric and high-pressure (50 bar) test data
+- [SeparatorInternals.csv](https://github.com/equinor/neqsim/blob/master/src/main/resources/designdata/SeparatorInternals.csv) — 70+ records covering wire mesh (19 variants incl. Monel, Hastelloy, PTFE, Duplex), vane pack (12 variants), axial cyclone (10 variants), plate pack (13 variants), and gravity (10 variants)
+- [SeparatorInletDevices.csv](https://github.com/equinor/neqsim/blob/master/src/main/resources/designdata/SeparatorInletDevices.csv) — 31 records covering all inlet device types (elbow inlets, distributors, vanes, cyclones, deflector plates, schoepentoeter, impingement plates)
+- [SeparatorVendorCurves.csv](https://github.com/equinor/neqsim/blob/master/src/main/resources/designdata/SeparatorVendorCurves.csv) — 25 vendor-certified grade efficiency curves from factory acceptance tests (FAT), covering wire mesh, vane pack, axial cyclone, and plate pack; includes atmospheric and high-pressure (50 bar) test data
 
 ### Internals Records
 
@@ -982,108 +981,6 @@ JSON report. When enhanced mode is active, it includes additional sections:
   }
 }
 ```
-
----
-
-## Comparison to Commercial Tools
-
-### Tool Landscape (2025)
-
-The separator performance modeling market breaks into four tiers:
-
-| Tier | Tools | Approach |
-|------|-------|----------|
-| **Dedicated separator design** | MySep, Kelvin (Osprey) | Full DSD tracking through inlet-to-outlet stages |
-| **Process simulators** | HYSYS, UniSim, Symmetry | Equilibrium flash, no entrainment physics |
-| **Transient multiphase** | OLGA, LedaFlow, K-Spice | Pipeline slug delivery to separator, volume-based holdup |
-| **Liquid-liquid specialist** | dEMULion (ConocoPhillips) | Emulsion breakup, coalescence, chemical dosing |
-| **Open-source** | **NeqSim Enhanced** | DSD tracking + EOS coupling + calibration + vendor curves |
-
-### Feature Comparison Matrix
-
-| Feature | MySep | Kelvin (Osprey) | HYSYS / UniSim | OLGA / LedaFlow | dEMULion | **NeqSim Enhanced** |
-|---------|-------|-----------------|----------------|-----------------|----------|---------------------|
-| DSD tracking through stages | Yes (proprietary) | Yes (open-lit.) | No | Pipe only | Yes (L-L only) | **Yes** — 7-stage chain |
-| Inlet device modeling | Yes (proprietary) | Yes | No | No | Partial | **Yes** — 7 types, Bothamley limits |
-| Gravity settling | Yes (proprietary trajectory) | Yes (Stokes-Newton) | K-factor only | Volume-based | Yes (L-L) | **Yes** — Schiller-Naumann drag |
-| Mist eliminator | Yes (vendor-calibrated) | Yes (vendor + open) | No | No | No | **Yes** — Souders-Brown + Brunazzi-Paglianti |
-| Liquid-liquid separation | Yes | Yes | Retention time | Simplified | **Best-in-class** | **Yes** — Stokes + Csanady + Hinze DSD |
-| Flow regime prediction | Yes (proprietary) | Partial | No | Yes (pipe) | Partial | **Yes** — Mandhane + Taitel-Dukler |
-| Three-phase oil/water | Yes | Yes | Equilibrium flash | Three-layer | Emulsion model | **Yes** — EOS volume fractions |
-| Turbulent diffusion correction | Yes (CFD-based) | Unknown | No | N/A | No | **Yes** — Csanady (1963) + Koenders (2015) |
-| Partial flooding degradation | Yes | Unknown | No | N/A | No | **Yes** — Fabian/GPSA linear model |
-| API 12J compliance check | Yes | Unknown | No | No | No | **Yes** — K, cut dia., HRT |
-| Coupled with thermo EOS | Via simulator link | No (standalone) | Native (flash) | Native (pipe flow) | Limited | **Native** — SRK, PR, CPA in-process |
-| Internals database | Large (proprietary, 100+) | Moderate | None | N/A | N/A | **100+ records** (CSV-extensible) |
-| FPSO vessel motion | **Yes** (unique) | No | No | No | No | No |
-| Sand deposition | **Yes** | No | No | No | No | No |
-| Dynamic capability | Via MySep Engine plug-in | No | Yes (holdup) | Yes (transient) | No | Steady-state |
-| Process integration | Via links to HYSYS etc. | Standalone | Native process sim | Pipeline focus | Standalone | **Native ProcessSystem** — recycles, adjusters, controllers |
-| Open-source | No | No | No | No | No | **Yes** |
-| Approx. price (USD/seat/yr) | ~15k–40k | ~5k–15k | In HYSYS license | ~30k–80k | JIP license | **Free** |
-
-### Calibration Capability Comparison
-
-| Calibration Feature | MySep | Kelvin | HYSYS | OLGA | **NeqSim Enhanced** |
-|---------------------|-------|--------|-------|------|---------------------|
-| Manual factor tuning | Yes | Yes | K-factor only | Vol./split | **Yes** — 3 independent multipliers |
-| Auto-calibrate from measured data | Limited | Unknown | No | Pipeline tuning | **Yes** — `calibrateFromMeasuredFractions()` |
-| Grouped-measurement convenience | No | No | No | No | **Yes** — `calibrateFromGroupedMeasurements()` |
-| CSV batch calibration from case library | No | No | No | No | **Yes** — `calibrateFromCaseLibrary()` + CSV loader |
-| MAPE-based fit quality metrics | No | No | No | No | **Yes** — before/after MAPE in `BatchCalibrationSummary` |
-| JSON calibration report with residuals | No | No | No | No | **Yes** — `buildBatchCalibrationReportJson()` |
-| Vendor-specific internals curves | **Yes** (proprietary test data) | Some | No | No | **Yes** — 25 FAT-certified curves (CSV-extensible) |
-| CFD-calibrated corrections | **Yes** (core R&D) | No | No | No | No |
-
-### Key Advantages of the NeqSim Approach
-
-1. **Thermodynamic coupling** — fluid properties come directly from the EOS
-   (SRK, PR, CPA), not from user inputs. Property changes with T/P are automatic.
-   The three-phase oil/water split uses actual EOS volumetric phase fractions.
-
-2. **Transparency** — every formula traces to a published, peer-reviewed reference.
-   No black-box or proprietary data. Any engineer can audit the calculation chain.
-
-3. **Structured calibration framework** — 3-group calibration multipliers, one-point
-   auto-calibration, batch fitting from CSV case libraries, MAPE quality metrics,
-   and JSON reports with per-case residuals. More systematic than the manual tuning
-   in most commercial tools.
-
-4. **Process integration** — the separator runs inside a `ProcessSystem` with
-   recycles, adjusters, and controllers. Commercial tools are standalone or require
-   external links to process simulators.
-
-5. **Cost** — free, open-source, no vendor lock-in. Suitable for operators, EPCs,
-   and academics who cannot justify commercial license fees.
-
-6. **Extensible database** — add vendor data, plant measurements, or company-specific
-   internals by editing CSV files without vendor support.
-
-### Remaining Gaps vs. Commercial Tools
-
-| Gap | Impact | Affected Tool | Possible Mitigation |
-|-----|--------|---------------|---------------------|
-| No CFD-calibrated DSD corrections | High | MySep | Open-literature DSD + calibration factors from field data |
-| ~~No vendor-certified internals curves~~ | ~~Medium~~ | ~~MySep, Kelvin~~ | **Closed** — 25 FAT-certified vendor curves in `SeparatorVendorCurves.csv` |
-| No FPSO vessel motion module | Medium | MySep | Applicable to floating facilities only |
-| No sand deposition modeling | Low | MySep | Rare requirement; handle separately |
-| No droplet coalescence/breakup in gravity section | Low-Medium | MySep, dEMULion | Conservative DSD assumption is standard practice |
-| ~~Internals library depth (30 vs 100+)~~ | ~~Medium~~ | ~~MySep~~ | **Closed** — 100+ records (70 internals + 31 inlet devices + 25 vendor curves) |
-
-### When to Use Which Tool
-
-| Scenario | Recommended Tool |
-|----------|-----------------|
-| Detailed separator bid evaluation / vendor comparison | MySep |
-| Transparent, auditable feasibility screening | **NeqSim** |
-| Process simulation with realistic separation | **NeqSim** (native ProcessSystem) |
-| Operator with no commercial separator license | **NeqSim** |
-| Slug catcher sizing from pipeline transients | OLGA/LedaFlow → separator volume |
-| Emulsion breaking / chemical dosing optimization | dEMULion |
-| Quick material balance without entrainment | HYSYS/UniSim |
-| Calibrating to plant data across multiple operating points | **NeqSim** (batch CSV calibration) |
-| FPSO separator sizing with vessel motion | MySep |
-| Academic research / teaching | **NeqSim** (open-source, auditable) |
 
 ---
 
