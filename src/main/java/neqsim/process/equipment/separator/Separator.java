@@ -690,6 +690,97 @@ public class Separator extends ProcessEquipmentBaseClass
     return thermoSystem.getResultTable();
   }
 
+  /**
+   * Updates entrainment fractions from the performance calculator using the live vessel state. This
+   * method is used during transient simulation where {@code thermoSystem} (the vessel inventory) is
+   * the post-VU-flash system, as opposed to steady-state which uses {@code thermoSystem2}. Gas
+   * velocity is estimated from the gas outlet stream throughput rather than the vessel inventory
+   * flow rate. The method updates {@code oilInGas}, {@code waterInGas}, and {@code gasInLiquid}
+   * fields in the same way as the steady-state version.
+   */
+  protected void updateEntrainmentForTransient() {
+    thermoSystem.initPhysicalProperties();
+
+    double gasDensity = 0.0;
+    double gasViscosity = 0.0;
+    double oilDensity = 0.0;
+    double oilViscosity = 0.0;
+    double waterDensity = 0.0;
+    double waterViscosity = 0.0;
+
+    if (thermoSystem.hasPhaseType("gas")) {
+      gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
+      gasViscosity = thermoSystem.getPhase("gas").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem.hasPhaseType("oil")) {
+      oilDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+      oilViscosity = thermoSystem.getPhase("oil").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      waterDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+      waterViscosity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getViscosity();
+    }
+
+    // Estimate gas velocity from the outlet stream throughput (previous timestep).
+    // Using thermoSystem.getPhase(0).getFlowRate() would give the vessel inventory,
+    // not the throughput, so the outlet stream is a better proxy.
+    double gasVelocity = 0.0;
+    if (gasDensity > 0 && gasOutStream != null) {
+      try {
+        double gasVolFlow = gasOutStream.getFluid().getFlowRate("m3/sec");
+        double crossArea;
+        if (orientation.equals("horizontal")) {
+          crossArea = sepCrossArea - liquidArea(liquidLevel);
+        } else {
+          crossArea = sepCrossArea;
+        }
+        if (crossArea > 1e-10) {
+          gasVelocity = gasVolFlow / crossArea;
+        }
+      } catch (Exception ex) {
+        gasVelocity = 0.0;
+      }
+    }
+
+    double liquidLevelFrac = liquidLevel / internalDiameter;
+    liquidLevelFrac = Math.max(0.0, Math.min(1.0, liquidLevelFrac));
+
+    // Compute oil volume fraction from vessel inventory phase volumes.
+    double oilVolFlow = 0.0;
+    double waterVolFlow = 0.0;
+    if (thermoSystem.hasPhaseType("oil")) {
+      int oilIdx = thermoSystem.getPhaseIndex("oil");
+      oilVolFlow = thermoSystem.getPhase(oilIdx).getNumberOfMolesInPhase()
+          * thermoSystem.getPhase(oilIdx).getMolarVolume();
+    }
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      int aqIdx = thermoSystem.getPhaseIndex("aqueous");
+      waterVolFlow = thermoSystem.getPhase(aqIdx).getNumberOfMolesInPhase()
+          * thermoSystem.getPhase(aqIdx).getMolarVolume();
+    }
+    double totalLiqVol = oilVolFlow + waterVolFlow;
+    if (totalLiqVol > 1e-30) {
+      performanceCalculator.setOilVolumeFraction(oilVolFlow / totalLiqVol);
+    }
+
+    performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity,
+        oilViscosity, waterViscosity, gasVelocity, internalDiameter, separatorLength, orientation,
+        liquidLevelFrac);
+
+    if (performanceCalculator.getOilInGasFraction() > 0) {
+      oilInGas = performanceCalculator.getOilInGasFraction();
+      oilInGasSpec = "volume";
+    }
+    if (performanceCalculator.getWaterInGasFraction() > 0) {
+      waterInGas = performanceCalculator.getWaterInGasFraction();
+      waterInGasSpec = "volume";
+    }
+    if (performanceCalculator.getGasInOilFraction() > 0) {
+      gasInLiquid = performanceCalculator.getGasInOilFraction();
+      gasInLiquidSpec = "volume";
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -774,15 +865,69 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
+      // Update entrainment fractions from performance calculator during transient
+      if (useDetailedEntrainmentCalculation && performanceCalculator != null
+          && thermoSystem.getNumberOfPhases() >= 2) {
+        updateEntrainmentForTransient();
+      }
+
+      // Determine whether entrainment corrections apply to outlet compositions
+      boolean applyEntrainment =
+          (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
+              && thermoSystem.getNumberOfPhases() >= 2;
+
       if (thermoSystem.getNumberOfComponents() > 1) {
-        if (thermoSystem.hasPhaseType("gas")) {
-          gasOutStream.getFluid()
-              .setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
-        }
-        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-          if (thermoSystem.getNumberOfPhases() > 1) {
-            liquidOutStream.getFluid()
-                .setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+        if (applyEntrainment) {
+          // Clone the vessel state and redistribute moles to model imperfect separation.
+          // The original thermoSystem (vessel inventory) remains unmodified.
+          SystemInterface entrainedSystem = thermoSystem.clone();
+          entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil",
+              "gas");
+          entrainedSystem.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream,
+              "aqueous", "gas");
+          if (entrainedSystem.hasPhaseType("liquid")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream,
+                "gas", "liquid");
+          } else if (entrainedSystem.hasPhaseType("oil")
+              && entrainedSystem.hasPhaseType("aqueous")) {
+            double oilMoles = entrainedSystem.getPhase("oil").getNumberOfMolesInPhase();
+            double waterMoles = entrainedSystem.getPhase("aqueous").getNumberOfMolesInPhase();
+            double totalMoles = oilMoles + waterMoles;
+            if (totalMoles > 0.0) {
+              double oilShare = oilMoles / totalMoles;
+              double waterShare = waterMoles / totalMoles;
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec,
+                  specifiedStream, "gas", "oil");
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec,
+                  specifiedStream, "gas", "aqueous");
+            }
+          } else if (entrainedSystem.hasPhaseType("oil")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream,
+                "gas", "oil");
+          } else if (entrainedSystem.hasPhaseType("aqueous")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream,
+                "gas", "aqueous");
+          }
+          if (entrainedSystem.hasPhaseType("gas")) {
+            gasOutStream.getFluid()
+                .setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
+          }
+          if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
+            if (entrainedSystem.getNumberOfPhases() > 1) {
+              liquidOutStream.getFluid()
+                  .setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
+            }
+          }
+        } else {
+          if (thermoSystem.hasPhaseType("gas")) {
+            gasOutStream.getFluid()
+                .setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
+          }
+          if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+            if (thermoSystem.getNumberOfPhases() > 1) {
+              liquidOutStream.getFluid()
+                  .setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+            }
           }
         }
       }
