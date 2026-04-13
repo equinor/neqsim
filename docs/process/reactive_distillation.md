@@ -176,7 +176,7 @@ This produces results identical to a standard (non-reactive) distillation column
 
 ## Test Coverage
 
-The reactive distillation implementation is tested in [ReactiveDistillationTest.java](../../src/test/java/neqsim/process/equipment/distillation/ReactiveDistillationTest.java) with 8 tests:
+The reactive distillation implementation is tested in [ReactiveDistillationTest.java](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/equipment/distillation/ReactiveDistillationTest.java) with 8 tests:
 
 1. **Tray creation** — Verifying reactive trays are created correctly
 2. **Partial reactive sections** — Testing `setReactive(true, start, end)`

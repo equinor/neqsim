@@ -312,8 +312,8 @@ Minimum viable skill that can:
 ## Related Work
 
 - **Evaluation notebook:** [json_process_builder_evaluation.ipynb](../../examples/notebooks/json_process_builder_evaluation.ipynb) — prototypes the translation layer and validates the architecture
-- **JSON builder:** `ProcessSystem.fromJson()` in [ProcessSystem.java](../../src/main/java/neqsim/process/processmodel/ProcessSystem.java)
-- **Equipment factory:** [EquipmentFactory.java](../../src/main/java/neqsim/process/equipment/EquipmentFactory.java)
+- **JSON builder:** `ProcessSystem.fromJson()` in [ProcessSystem.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/processmodel/ProcessSystem.java)
+- **Equipment factory:** [EquipmentFactory.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/EquipmentFactory.java)
 - **Existing agents:** `solve.process.agent.md`, `router.agent.md` — could use this skill
 - **ProcessPilot-NeqSimInterface** (Equinor) — production wrapper with Pydantic models and tag-based lookup
 

@@ -188,7 +188,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 **Best for**: Filling gaps, fixing errors, or improving clarity.
 
 1. **Find documentation to improve**:
-   - Browse [docs/](../../docs/)
+   - Browse [docs/](../)
    - Look for "TODO", missing sections, or outdated content
    - Check [BROKEN_API_AUDIT_REPORT.md](../BROKEN_API_AUDIT_REPORT.md) for known issues
 

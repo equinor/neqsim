@@ -14,7 +14,7 @@ NeqSim implements Venturi flow calculations primarily in the `DifferentialPressu
 1. **Flow from dP**: Calculate mass flow rate given differential pressure
 2. **dP from Flow**: Calculate differential pressure given mass flow rate (inverse calculation)
 
-**Location:** [DifferentialPressureFlowCalculator.java](../../src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java)
+**Location:** [DifferentialPressureFlowCalculator.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java)
 
 ## Supported Flow Meter Types
 
@@ -73,17 +73,17 @@ private static double[] calcVenturi(double[] dp, double[] p, double[] rho, doubl
   double beta4 = Math.pow(beta, 4.0);
   double betaTerm = Math.sqrt(Math.max(1.0 - beta4, 1e-30));
   double[] massFlow = new double[dp.length];
-  
+
   for (int i = 0; i < dp.length; i++) {
     double tau = p[i] / (p[i] + dp[i]);
     double k = kappa[i];
     double tau2k = Math.pow(tau, 2.0 / k);
-    
+
     // Expansibility factor calculation
     double numerator = k * tau2k / (k - 1.0) * (1.0 - beta4)
         / (1.0 - beta4 * tau2k) * (1.0 - Math.pow(tau, (k - 1.0) / k)) / (1.0 - tau);
     double eps = Math.sqrt(Math.max(numerator, 0.0));
-    
+
     // Mass flow calculation
     double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
     double value = C / betaTerm * eps * Math.PI / 4.0 * d * d * rootTerm;
@@ -280,7 +280,7 @@ double throatDiameterMm = 200.0;     // mm
 double Cd = 0.985;                   // discharge coefficient
 
 double dpMbar = DifferentialPressureFlowCalculator.calculateDpFromFlowVenturi(
-    massFlowKgPerHour, pressureBara, density, kappa, 
+    massFlowKgPerHour, pressureBara, density, kappa,
     pipeDiameterMm, throatDiameterMm, Cd);
 
 System.out.println("Differential pressure: " + dpMbar + " mbar");
@@ -337,5 +337,5 @@ The implementations are based on:
 
 ## Related Classes
 
-- [Orifice.java](../../src/main/java/neqsim/process/equipment/diffpressure/Orifice.java) - Equipment class for orifice calculations in process simulations
-- [VirtualFlowMeter.java](../../src/main/java/neqsim/process/measurementdevice/vfm/VirtualFlowMeter.java) - Virtual flow meter using differential pressure
+- [Orifice.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/diffpressure/Orifice.java) - Equipment class for orifice calculations in process simulations
+- [VirtualFlowMeter.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/measurementdevice/vfm/VirtualFlowMeter.java) - Virtual flow meter using differential pressure

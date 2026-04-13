@@ -8,9 +8,9 @@ nav_order: 1
 
 # ReadingFluidProperties
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ReadingFluidProperties.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb).
 
 ---
@@ -143,19 +143,19 @@ Phase properties are accessed via `fluid.getPhase(...)`. Phases are ordered by d
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
     phase_type = str(phase.getType())
-    
+
     print(f"\n=== PHASE {i}: {phase_type} ===")
     print(f"Phase fraction (mole): {phase.getMoleFraction():.4f}")
     print(f"Z-factor: {phase.getZ():.6f}")
     print(f"Molar mass: {phase.getMolarMass('gr/mol'):.4f} gr/mol")
-    
+
     # Thermodynamic properties
     print(f"\nThermodynamic Properties:")
     print(f"  Enthalpy: {phase.getEnthalpy('J/mol'):.2f} J/mol")
     print(f"  Entropy: {phase.getEntropy('J/molK'):.4f} J/molK")
     print(f"  Cp: {phase.getCp('kJ/kgK'):.4f} kJ/kgK")
     print(f"  Speed of sound: {phase.getSoundSpeed():.2f} m/s")
-    
+
     # Transport properties (require initPhysicalProperties)
     print(f"\nTransport Properties:")
     print(f"  Viscosity: {phase.getViscosity('cP'):.6f} cP")
@@ -213,15 +213,15 @@ print("=== DENSITY COMPARISON ===")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
     phase_type = str(phase.getType())
-    
+
     # WITHOUT Peneloux correction (raw EoS)
     density_no_corr = phase.getDensity()
-    
+
     # WITH Peneloux correction (recommended)
     density_with_corr = phase.getDensity("kg/m3")
-    
+
     diff_percent = (density_no_corr - density_with_corr) / density_with_corr * 100
-    
+
     print(f"\nPhase {i} ({phase_type}):")
     print(f"  Density (no correction): {density_no_corr:.4f} kg/m3")
     print(f"  Density (with correction): {density_with_corr:.4f} kg/m3")
@@ -270,13 +270,13 @@ oil_phase = fluid.getPhase("oil") if fluid.hasPhaseType("oil") else None
 for i in range(fluid.getNumberOfComponents()):
     comp_name = str(fluid.getComponent(i).getComponentName())  # Convert to Python string
     z = fluid.getComponent(i).getz()
-    
+
     x_gas = gas_phase.getComponent(i).getx() if gas_phase else 0
     x_oil = oil_phase.getComponent(i).getx() if oil_phase else 0
-    
+
     # K-value = y/x (gas composition / liquid composition)
     k_value = x_gas / x_oil if x_oil > 1e-10 else float('inf')
-    
+
     print(f"{comp_name:<12} {z:<12.6f} {x_gas:<12.6f} {x_oil:<12.6f} {k_value:<12.4f}")
 ```
 
@@ -287,16 +287,16 @@ for i in range(fluid.getNumberOfComponents()):
 === COMPONENT PROPERTIES ===
 
 Overall composition (z) vs Phase compositions (x):
-Component    z (total)    x (gas)      x (oil)      K-value     
+Component    z (total)    x (gas)      x (oil)      K-value
 ------------------------------------------------------------
-nitrogen     0.020000     0.021474     0.002454     8.7518      
-CO2          0.030000     0.031036     0.017666     1.7568      
-methane      0.700000     0.741289     0.208407     3.5569      
-ethane       0.100000     0.099369     0.107509     0.9243      
-propane      0.080000     0.069830     0.201091     0.3473      
-n-butane     0.040000     0.026506     0.200661     0.1321      
-n-pentane    0.020000     0.008337     0.158855     0.0525      
-n-hexane     0.010000     0.002159     0.103357     0.0209      
+nitrogen     0.020000     0.021474     0.002454     8.7518
+CO2          0.030000     0.031036     0.017666     1.7568
+methane      0.700000     0.741289     0.208407     3.5569
+ethane       0.100000     0.099369     0.107509     0.9243
+propane      0.080000     0.069830     0.201091     0.3473
+n-butane     0.040000     0.026506     0.200661     0.1321
+n-pentane    0.020000     0.008337     0.158855     0.0525
+n-hexane     0.010000     0.002159     0.103357     0.0209
 ```
 
 </details>
@@ -308,10 +308,10 @@ print("-" * 42)
 
 for i in range(fluid.getNumberOfComponents()):
     comp_name = str(fluid.getComponent(i).getComponentName())  # Convert to Python string
-    
+
     phi_gas = gas_phase.getComponent(i).getFugacityCoefficient() if gas_phase else 0
     phi_oil = oil_phase.getComponent(i).getFugacityCoefficient() if oil_phase else 0
-    
+
     print(f"{comp_name:<12} {phi_gas:<15.6f} {phi_oil:<15.6f}")
 ```
 
@@ -321,16 +321,16 @@ for i in range(fluid.getNumberOfComponents()):
 ```
 
 === FUGACITY COEFFICIENTS ===
-Component    φ (gas)         φ (oil)        
+Component    φ (gas)         φ (oil)
 ------------------------------------------
-nitrogen     1.098474        9.613682       
-CO2          0.819822        1.440273       
-methane      0.935675        3.328125       
-ethane       0.700605        0.647561       
-propane      0.553571        0.192229       
-n-butane     0.439506        0.058056       
-n-pentane    0.348610        0.018297       
-n-hexane     0.275949        0.005764       
+nitrogen     1.098474        9.613682
+CO2          0.819822        1.440273
+methane      0.935675        3.328125
+ethane       0.700605        0.647561
+propane      0.553571        0.192229
+n-butane     0.439506        0.058056
+n-pentane    0.348610        0.018297
+n-hexane     0.275949        0.005764
 ```
 
 </details>
@@ -357,16 +357,16 @@ for i in range(fluid.getNumberOfComponents()):
 
 ```
 === PURE COMPONENT PROPERTIES ===
-Component    Tc (K)       Pc (bara)    ω            MW (g/mol)  
+Component    Tc (K)       Pc (bara)    ω            MW (g/mol)
 ------------------------------------------------------------
-nitrogen     126.10       33.94        0.0403       28.0135     
-CO2          304.19       73.81        0.2276       44.0100     
-methane      190.56       45.99        0.0115       16.0430     
-ethane       305.32       48.72        0.0995       30.0700     
-propane      369.83       42.48        0.1523       44.0970     
-n-butane     425.12       37.96        0.2002       58.1230     
-n-pentane    469.70       33.70        0.2515       72.1500     
-n-hexane     507.60       30.25        0.3013       86.1770     
+nitrogen     126.10       33.94        0.0403       28.0135
+CO2          304.19       73.81        0.2276       44.0100
+methane      190.56       45.99        0.0115       16.0430
+ethane       305.32       48.72        0.0995       30.0700
+propane      369.83       42.48        0.1523       44.0970
+n-butane     425.12       37.96        0.2002       58.1230
+n-pentane    469.70       33.70        0.2515       72.1500
+n-hexane     507.60       30.25        0.3013       86.1770
 ```
 
 </details>
@@ -376,7 +376,7 @@ n-hexane     507.60       30.25        0.3013       86.1770
 ```python
 if fluid.getNumberOfPhases() > 1:
     print("=== INTERFACIAL PROPERTIES ===")
-    
+
     if fluid.hasPhaseType("gas") and fluid.hasPhaseType("oil"):
         ift = fluid.getInterfacialTension("gas", "oil")
         print(f"Gas-Oil interfacial tension: {ift * 1000:.4f} mN/m")
@@ -664,5 +664,5 @@ Properties for ethane:
 - [SystemInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/system/SystemInterface.java)
 - [PhaseInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/phase/PhaseInterface.java)
 - [ComponentInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/component/ComponentInterface.java)
-- [Reading Properties Documentation](../../docs/thermo/reading_fluid_properties.md)
+- [Reading Properties Documentation](../thermo/reading_fluid_properties.md)
 

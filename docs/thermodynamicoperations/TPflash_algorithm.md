@@ -266,7 +266,7 @@ The method can be selected via:
 RachfordRice.setMethod("Nielsen2023");  // or "Michelsen2001"
 ```
 
-See [RachfordRice.java](../../src/main/java/neqsim/thermodynamicoperations/flashops/RachfordRice.java) for implementation details.
+See [RachfordRice.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/RachfordRice.java) for implementation details.
 
 ### 1.3 Successive Substitution
 
@@ -367,7 +367,7 @@ $$J_{ij} = \frac{\partial f_i}{\partial u_j} = \frac{1}{\beta}\left(\frac{\delta
 
 **NeqSim Implementation:**
 
-See [SysNewtonRhapsonTPflash.java](../../src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) for the full implementation.
+See [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) for the full implementation.
 
 ---
 
@@ -1653,11 +1653,11 @@ The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the ma
 
 | File | Description |
 |------|-------------|
-| [TPflash.java](../../src/main/java/neqsim/thermodynamicoperations/flashops/TPflash.java) | Two-phase flash with SSI and Newton |
-| [TPmultiflash.java](../../src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java) | Multi-phase flash with stability analysis |
-| [RachfordRice.java](../../src/main/java/neqsim/thermodynamicoperations/flashops/RachfordRice.java) | Rachford-Rice equation solvers |
-| [SysNewtonRhapsonTPflash.java](../../src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) | Second-order Newton solver |
-| [ChemicalReactionOperations.java](../../src/main/java/neqsim/chemicalreactions/ChemicalReactionOperations.java) | Chemical equilibrium solver |
+| [TPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/TPflash.java) | Two-phase flash with SSI and Newton |
+| [TPmultiflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java) | Multi-phase flash with stability analysis |
+| [RachfordRice.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/RachfordRice.java) | Rachford-Rice equation solvers |
+| [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) | Second-order Newton solver |
+| [ChemicalReactionOperations.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/chemicalreactions/ChemicalReactionOperations.java) | Chemical equilibrium solver |
 
 ---
 

@@ -157,7 +157,7 @@ In VS Code Copilot Chat:
 @solve.task 3-stage compression with intercooling from 5 to 150 bara
 ```
 
-See [docs/development/AI_AGENTS.md](../../docs/development/AI_AGENTS.md) for detailed documentation.
+See the [AGENTS.md](../../AGENTS.md) file in the repo root for detailed documentation.
 ```
 
 ---
@@ -271,7 +271,7 @@ Complete worked examples from real projects:
 
 See also:
 - [Documentation Examples](../docs/examples/) - Documentation-embedded examples
-- [Test Examples](../src/test/java/neqsim/) - Unit test examples
+- [Test Examples](https://github.com/equinor/neqsim/tree/master/src/test/java/neqsim/) - Unit test examples
 ```
 
 ---
@@ -450,7 +450,7 @@ src/test/java/neqsim/
 3. **Test naming**: `<ClassName>Test.java` (e.g., `SeparatorTest.java`)
 4. **Method naming**: Descriptive test names (e.g., `testTwoPhaseFlashWithWater()`)
 
-See [docs/development/TESTING.md](../../docs/development/TESTING.md) for detailed testing guidelines.
+See the [wiki test overview](../../wiki/test-overview.md) for detailed testing guidelines.
 ```
 
 #### B. Tag Slow Tests Consistently
