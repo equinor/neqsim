@@ -34,6 +34,7 @@ computes entrainment from first principles rather than user-specified fractions.
   - [Python API](#python-api)
 - [JSON Output](#json-output)
 - [Mechanical Design Integration](#mechanical-design-integration)
+- [Dynamic Simulation Integration](#dynamic-simulation-integration)
 - [Comparison to Commercial Tools](#comparison-to-commercial-tools)
 - [Correlations and References](#correlations-and-references)
 - [Class Reference](#class-reference)
@@ -1186,6 +1187,175 @@ assert design.getLiquidInGasCalibrationFactor() != 1.0; // calibrated
 
 ---
 
+## Dynamic Simulation Integration
+
+The enhanced entrainment model is fully integrated with NeqSim's transient (dynamic)
+simulation via `runTransient()`. When enabled, the separator recalculates entrainment
+fractions at every timestep using live vessel conditions, then applies those fractions to
+outlet stream compositions—without disturbing the vessel mass/energy balance.
+
+### How It Works
+
+During each `runTransient(dt, id)` call the following sequence executes:
+
+1. **VU flash** — The standard volume-energy (VU) flash solves for the new vessel state
+   given inlet/outlet mass flows and energy balance.
+2. **Performance calculator update** — If enhanced entrainment is enabled, the calculator
+   reads physical properties directly from the post-flash vessel state (`thermoSystem`),
+   estimates gas velocity from the previous-timestep outlet stream, and runs the full
+   7-stage calculation chain.
+3. **Clone and redistribute** — The vessel inventory is **cloned** (never modified), and
+   `addPhaseFractionToPhase()` is applied to the clone to model imperfect separation.
+   Outlet stream compositions are set from the modified clone.
+4. **Vessel inventory preserved** — The original `thermoSystem` (mass balance state) is
+   untouched. Entrainment only affects what leaves the vessel, not what is stored in it.
+
+This design ensures that the dynamic mass balance remains conserved while outlet quality
+responds to changing conditions in real time.
+
+### Enabling Entrainment in Dynamic Mode
+
+#### Java API
+
+```java
+// Create separator
+Separator separator = new Separator("V-100", feed);
+separator.setOrientation("horizontal");
+separator.setSeparatorLength(5.0);
+separator.setInternalDiameter(1.5);
+separator.setLiquidLevel(0.5);
+
+// Enable enhanced entrainment (auto-generates DSD from flow regime)
+separator.setEnhancedEntrainmentCalculation(true);
+
+// Switch to transient mode
+separator.setCalculateSteadyState(false);
+
+// Initial steady-state run
+separator.run();
+
+// Transient loop
+UUID id = UUID.randomUUID();
+double dt = 1.0; // seconds
+for (int step = 0; step < 3600; step++) {
+    separator.runTransient(dt, id);
+
+    // Read current entrainment fractions (updated each timestep)
+    SeparatorPerformanceCalculator perf = separator.getPerformanceCalculator();
+    double oilInGas = perf.getOilInGasFraction();
+    double gasInOil = perf.getGasInOilFraction();
+}
+```
+
+#### Python API
+
+```python
+from neqsim import jneqsim
+import java.util.UUID as UUID
+
+Separator = jneqsim.process.equipment.separator.Separator
+
+separator = Separator("V-100", feed)
+separator.setOrientation("horizontal")
+separator.setSeparatorLength(5.0)
+separator.setInternalDiameter(1.5)
+separator.setLiquidLevel(0.5)
+separator.setEnhancedEntrainmentCalculation(True)
+separator.setCalculateSteadyState(False)
+separator.run()
+
+sim_id = UUID.randomUUID()
+dt = 1.0
+
+for step in range(3600):
+    separator.runTransient(dt, sim_id)
+    level = separator.getLiquidLevel()
+    perf = separator.getPerformanceCalculator()
+    oil_in_gas = perf.getOilInGasFraction()
+```
+
+### Three-Phase Separator
+
+`ThreePhaseSeparator` follows the same pattern but tracks all six entrainment paths:
+
+| Path | From Phase | To Phase |
+|------|-----------|----------|
+| Oil-in-gas | Oil | Gas |
+| Water-in-gas | Aqueous | Gas |
+| Gas-in-oil | Gas | Oil |
+| Gas-in-water | Gas | Aqueous |
+| Oil-in-water | Oil | Aqueous |
+| Water-in-oil | Aqueous | Oil |
+
+```java
+ThreePhaseSeparator sep3 = new ThreePhaseSeparator("V-200", feed);
+sep3.setEnhancedEntrainmentCalculation(true);
+sep3.setCalculateSteadyState(false);
+sep3.run();
+
+UUID id = UUID.randomUUID();
+for (int step = 0; step < 3600; step++) {
+    sep3.runTransient(1.0, id);
+    // Gas, oil, and water outlets all have entrainment-corrected compositions
+}
+```
+
+### Key Design Notes
+
+| Aspect | Detail |
+|--------|--------|
+| Gas velocity source | Estimated from gas outlet stream flow rate (previous timestep), not from vessel inventory |
+| Liquid level | Read from `liquidLevel` field, which is updated each timestep by the VU flash |
+| Oil volume fraction | Computed from vessel phase volumes (moles × molar volume) |
+| Vessel inventory | **Never modified** by entrainment—only outlet compositions change |
+| Backward compatible | Entrainment only activates when `setEnhancedEntrainmentCalculation(true)` is called; default behavior unchanged |
+| Standard vs enhanced | The **enhanced** path auto-generates DSD from flow regime prediction; the **standard** path requires explicit DSD setup |
+| Manual fractions | `setEntrainment()` fractions are also applied during `runTransient()` (no calculator needed) |
+
+### Monitoring Entrainment Over Time
+
+Track entrainment fractions across timesteps to observe how they respond to feed
+disturbances, pressure changes, or liquid level swings:
+
+```java
+List<Double> oilInGasHistory = new ArrayList<>();
+List<Double> gasVelocityHistory = new ArrayList<>();
+
+for (int step = 0; step < totalSteps; step++) {
+    separator.runTransient(dt, id);
+
+    SeparatorPerformanceCalculator perf = separator.getPerformanceCalculator();
+    oilInGasHistory.add(perf.getOilInGasFraction());
+
+    // Also track gas velocity to correlate with entrainment
+    // gasVelocityHistory.add(perf.getGasVelocity()); // if exposed
+}
+```
+
+In Python with matplotlib:
+
+```python
+import matplotlib.pyplot as plt
+
+times, oil_in_gas_vals, levels = [], [], []
+for step in range(total_steps):
+    separator.runTransient(dt, sim_id)
+    times.append(step * dt)
+    oil_in_gas_vals.append(separator.getPerformanceCalculator().getOilInGasFraction())
+    levels.append(separator.getLiquidLevel())
+
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+ax1.plot(times, oil_in_gas_vals)
+ax1.set_ylabel("Oil-in-Gas Fraction")
+ax2.plot(times, levels)
+ax2.set_ylabel("Liquid Level (m)")
+ax2.set_xlabel("Time (s)")
+plt.tight_layout()
+plt.show()
+```
+
+---
+
 ## Correlations and References
 
 | Correlation | Application | Reference |
@@ -1351,4 +1521,8 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 ## Related Documentation
 
 - [Separator Equipment](separators.md) — Base separator documentation, entrainment specification, design constraints
+- [Dynamic Simulation Guide](../../simulation/dynamic_simulation_guide.md) — Transient simulation, time stepping, control systems
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) — K-value and performance constraints system
+- [Dynamic Entrainment Notebook](../../../examples/notebooks/separator_dynamic_entrainment.ipynb) — Transient separator simulation with enhanced entrainment
+- [Vendor Curves & Calibration Notebook](../../../examples/notebooks/separator_vendor_curves_and_calibration.ipynb) — Internals database, vendor curves, calibration
+- [Steady-State Entrainment Notebook](../../../examples/notebooks/separator_entrainment_modeling.ipynb) — Physics-based entrainment modeling
