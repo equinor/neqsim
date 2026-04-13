@@ -1,6 +1,6 @@
 ---
 title: Water Treatment Equipment
-description: Documentation for produced water treatment equipment in NeqSim.
+description: "Documentation for produced water treatment equipment in NeqSim: hydrocyclones with differential pressure validation, gas flotation units (IGF/DGF), treatment trains, and regulatory compliance."
 ---
 
 # Water Treatment Equipment
@@ -10,6 +10,7 @@ Documentation for produced water treatment equipment in NeqSim.
 ## Table of Contents
 - [Overview](#overview)
 - [Hydrocyclone](#hydrocyclone)
+- [Gas Flotation Unit](#gas-flotation-unit)
 - [Produced Water Treatment Train](#produced-water-treatment-train)
 - [Design Considerations](#design-considerations)
 - [Regulatory Compliance](#regulatory-compliance)
@@ -26,7 +27,8 @@ Produced water treatment is critical for offshore oil and gas operations. NeqSim
 
 | Class | Description |
 |-------|-------------|
-| `Hydrocyclone` | Centrifugal oil-water separator |
+| `Hydrocyclone` | Centrifugal oil-water separator with dP validation |
+| `GasFlotationUnit` | IGF/DGF multi-stage flotation |
 | `ProducedWaterTreatmentTrain` | Multi-stage treatment system |
 
 ---
@@ -117,6 +119,142 @@ Stream treatedWater = (Stream) cyclone.getOutletStream();
 Stream oilReject = (Stream) cyclone.getOilOutStream();
 ```
 
+### Design Validation
+
+The `Hydrocyclone` includes differential pressure and efficiency validation:
+
+```java
+// Check if differential pressure is adequate (typically 1-3 bar)
+boolean dpOk = cyclone.isDifferentialPressureAdequate();
+
+// Calculate required inlet pressure for a target dP
+double requiredInletP = cyclone.calcRequiredInletPressure(5.0);  // target outlet 5 bar
+
+// Estimate efficiency from operating conditions
+double estimatedEff = cyclone.estimateEfficiencyFromConditions(
+    850.0,   // oil density kg/m3
+    1025.0,  // water density kg/m3
+    15.0     // droplet size microns
+);
+
+// Full validation summary
+String summary = cyclone.getDesignValidationSummary();
+System.out.println(summary);
+```
+
+### Hydrocyclone Design Parameters
+
+| Parameter | Default | Method | Description |
+|-----------|---------|--------|-------------|
+| d50 cut size | 12 μm | `setD50Microns()` | 50% removal droplet size |
+| Reject ratio | 2% | `setRejectRatio()` | Oil-rich stream fraction |
+| Pressure drop | 2.0 bar | `setPressureDrop()` | Across cyclone |
+| Min dP | 1.0 bar | `setMinPressureDrop()` | Minimum acceptable dP |
+| Max dP | 3.0 bar | `setMaxPressureDrop()` | Maximum acceptable dP |
+| Oil removal efficiency | 95% | `setOilRemovalEfficiency()` | Overall efficiency |
+
+---
+
+## Gas Flotation Unit
+
+### Overview
+
+The `GasFlotationUnit` models Induced Gas Flotation (IGF) or Dissolved Gas Flotation (DGF) for removing dispersed oil from produced water. Fine gas bubbles are injected into the water; oil droplets attach to the bubbles and rise to the surface where they are skimmed off.
+
+### Design Requirements
+
+| Parameter | Requirement |
+|-----------|-------------|
+| Gas supply pressure | Minimum 4 bar above water pressure |
+| Gas volume | Minimum 10 Avol% of water flow |
+| Reject flow | Minimum 2% of inlet water per stage |
+| Gas mixing dP | At least 0.5 bar across mixing valve |
+| Typical stages | 3-4 in series |
+| Oil removal | 80-95% overall |
+
+### Basic Usage
+
+```java
+import neqsim.process.equipment.watertreatment.GasFlotationUnit;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Produced water stream
+SystemSrkEos pw = new SystemSrkEos(273.15 + 60.0, 5.0);
+pw.addComponent("water", 0.99);
+pw.addComponent("n-heptane", 0.01);
+pw.setMixingRule("classic");
+
+Stream pwStream = new Stream("Produced Water", pw);
+pwStream.setFlowRate(200.0, "m3/hr");
+
+// Gas flotation unit
+GasFlotationUnit igf = new GasFlotationUnit("IGF-100", pwStream);
+igf.setNumberOfStages(4);
+igf.setOilRemovalEfficiency(0.90);
+igf.setInletOilConcentration(200.0);  // mg/L
+igf.setWaterFlowRate(200.0);          // m3/h
+
+// Wire into process
+ProcessSystem process = new ProcessSystem();
+process.add(pwStream);
+process.add(igf);
+process.run();
+
+// Results
+System.out.println("Outlet OIW: " + igf.getOutletOilMgL() + " mg/L");
+```
+
+### Per-Stage Efficiency
+
+The overall efficiency is distributed across stages. Per-stage efficiency is calculated from the overall target:
+
+$$1 - \eta_{overall} = (1 - \eta_{stage})^N$$
+
+```java
+igf.setNumberOfStages(4);
+igf.setOilRemovalEfficiency(0.90);
+double perStage = igf.calcPerStageEfficiency();  // ~0.44
+```
+
+### Gas and Reject Flow
+
+```java
+// Minimum gas flow (10 Avol% of water flow)
+igf.setWaterFlowRate(200.0);
+double minGas = igf.calcMinimumGasFlowRate();  // 20 Am3/h
+
+// Reject flow per stage (2% of inlet water per stage)
+double rejectPerStage = igf.calcRejectFlowPerStage();  // 4.0 m3/h
+double totalReject = igf.getTotalRejectFlow();          // 16.0 m3/h
+```
+
+### Nitrogen Corrosion Warning
+
+When nitrogen is used as the flotation gas instead of fuel gas, the unit flags a corrosion risk:
+
+```java
+igf.setFlotationGasType("nitrogen");
+igf.run();
+
+// Design summary will include corrosion warning
+String summary = igf.getDesignValidationSummary();
+// Contains: "nitrogen as flotation gas may cause corrosion..."
+```
+
+### GasFlotationUnit Design Parameters
+
+| Parameter | Default | Method | Description |
+|-----------|---------|--------|-------------|
+| Number of stages | 4 | `setNumberOfStages()` | Flotation stages in series |
+| Oil removal efficiency | 90% | `setOilRemovalEfficiency()` | Overall target |
+| Min gas overpressure | 4 bar | `setMinGasOverpressureBar()` | Above water pressure |
+| Min gas volume | 10 Avol% | `setMinGasVolumeFractionPct()` | Of water flow |
+| Min reject fraction | 2%/stage | `setMinRejectFractionPerStage()` | Of inlet water |
+| Min gas mixing dP | 0.5 bar | `setMinGasMixingDPBar()` | Across mixing valve |
+| Flotation gas type | fuel_gas | `setFlotationGasType()` | fuel_gas or nitrogen |
+
 ---
 
 ## Produced Water Treatment Train
@@ -141,7 +279,7 @@ import neqsim.process.equipment.stream.Stream;
 
 // Create treatment train
 ProducedWaterTreatmentTrain train = new ProducedWaterTreatmentTrain(
-    "PW Treatment", 
+    "PW Treatment",
     producedWater
 );
 
@@ -260,11 +398,11 @@ Oil-water separation efficiency varies with temperature:
 
 ```java
 // Check against NCS requirements
-boolean ncsCompliant = train.getOutletOilConcentration() 
+boolean ncsCompliant = train.getOutletOilConcentration()
     <= ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL;
 
 // Check against OSPAR
-boolean osparCompliant = train.getOutletOilConcentration() 
+boolean osparCompliant = train.getOutletOilConcentration()
     <= ProducedWaterTreatmentTrain.OSPAR_OIW_LIMIT_MGL;
 
 // Get compliance report
