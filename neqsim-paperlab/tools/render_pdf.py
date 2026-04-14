@@ -232,6 +232,15 @@ def render_pdf(paper_dir):
     clean_text = strip_tags_and_comments(md_text)
     clean_md.write_text(clean_text, encoding="utf-8")
 
+    # Stage figures into submission/ so relative markdown links (figures/*.png)
+    # resolve during typst compilation without accessing parent directories.
+    figures_src = paper_dir / "figures"
+    figures_dst = submission_dir / "figures"
+    if figures_src.exists():
+        if figures_dst.exists():
+            shutil.rmtree(figures_dst)
+        shutil.copytree(figures_src, figures_dst)
+
     # 2. Extract metadata for preamble ------------------------------------
     plan_title, plan_author = _extract_metadata_from_plan(paper_dir)
     title = plan_title or _extract_title_from_md(md_text)
@@ -239,8 +248,16 @@ def render_pdf(paper_dir):
 
     # 3. Pandoc: markdown → typst -----------------------------------------
     result = subprocess.run(
-        ["pandoc", str(clean_md), "-o", str(typ_file), "--wrap=none"],
-        capture_output=True, text=True,
+        [
+            "pandoc",
+            str(clean_md),
+            "-o",
+            str(typ_file),
+            "--wrap=none",
+            f"--resource-path={paper_dir}",
+        ],
+        capture_output=True,
+        text=True,
     )
     if result.returncode != 0:
         print(f"[render_pdf] pandoc error:\n{result.stderr}")
