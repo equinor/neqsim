@@ -511,7 +511,7 @@ public class LumpingModel implements java.io.Serializable {
    * getModel.
    * </p>
    *
-   * @param modelName a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
    */
   public LumpingModelInterface getModel(String name) {
