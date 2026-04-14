@@ -93,9 +93,7 @@ public class PlusFractionModel implements java.io.Serializable {
       maxPlusMolarMass = 0.605;
     }
 
-    /**
-     * @return the name
-     */
+    /** {@inheritDoc} */
     @Override
     public String getName() {
       return name;
@@ -113,9 +111,8 @@ public class PlusFractionModel implements java.io.Serializable {
       return zPlus;
     }
 
-    /**
-     * @return the maxPlusMolarMass
-     */
+    /** {@inheritDoc} */
+
     @Override
     public double getMaxPlusMolarMass() {
       return maxPlusMolarMass;
@@ -552,9 +549,6 @@ public class PlusFractionModel implements java.io.Serializable {
     @Override
     public boolean characterizePlusFraction(TBPModelInterface TBPModel) {
       system.init(0);
-      double MWBU = Double.NaN;
-      double MWBL = Double.NaN;
-      double sumZ = 0.0;
 
       // Auto-estimate alpha if enabled
       if (autoEstimateAlpha) {
@@ -578,6 +572,9 @@ public class PlusFractionModel implements java.io.Serializable {
       molarMasses = new double[lastPlusFractionNumber];
       densities = new double[lastPlusFractionNumber];
 
+      double MWBU = Double.NaN;
+      double MWBL = Double.NaN;
+      double sumZ = 0.0;
       if (model.equals("Whitson")) {
         for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
           if (i == firstPlusFractionNumber) {
@@ -699,10 +696,12 @@ public class PlusFractionModel implements java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public double getCoef(int i) {
-      if (i == 0)
+      if (i == 0) {
         return alfa;
-      if (i == 1)
+      }
+      if (i == 1) {
         return eta;
+      }
       return 0;
     }
 
@@ -734,13 +733,15 @@ public class PlusFractionModel implements java.io.Serializable {
    * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
    */
   public PlusFractionModelInterface getModel(String name) {
-    if (name.equals("Pedersen")) {
+    if (name.equals("Pedersen") || name.isBlank()) {
       return new PedersenPlusModel();
     } else if (name.equals("Pedersen Heavy Oil")) {
       return new PedersenHeavyOilPlusModel();
     } else if (name.equals("Whitson Gamma Model")) {
       return new WhitsonGammaModel();
     } else {
+      logger.warn(
+          "Plus fraction model '" + name + "' not recognized, defaulting to PedersenPlusModel");
       return new PedersenPlusModel();
     }
   }
