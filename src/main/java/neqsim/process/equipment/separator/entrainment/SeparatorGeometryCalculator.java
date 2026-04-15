@@ -14,7 +14,7 @@ import com.google.gson.GsonBuilder;
  * horizontal and vertical separators.
  * </p>
  *
- * <h3>Horizontal Separator Geometry</h3>
+ * Horizontal Separator Geometry:
  * <p>
  * For a horizontal vessel with liquid level at height h in a cylinder of diameter D, the liquid and
  * gas cross-sectional areas are computed from circular segment geometry:
@@ -25,7 +25,7 @@ import com.google.gson.GsonBuilder;
  *
  * $$ A_{gas} = \frac{\pi D^2}{4} - A_{liq} $$
  *
- * <h3>Vertical Separator Geometry</h3>
+ * Vertical Separator Geometry:
  * <p>
  * For vertical vessels, the gas and liquid occupy the full cross section at different heights. The
  * gas residence time depends on the gas travel height above the liquid level to the mist

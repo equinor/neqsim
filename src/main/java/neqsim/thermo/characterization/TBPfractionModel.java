@@ -1372,7 +1372,7 @@ public class TBPfractionModel implements java.io.Serializable {
    */
   public TBPModelInterface getModel(String name) {
     this.name = name;
-    if (name.equals("PedersenSRK")) {
+    if (name.equals("PedersenSRK") || name.isEmpty()) {
       return new PedersenTBPModelSRK();
     } else if (name.equals("PedersenSRKHeavyOil")) {
       logger.info("using SRK heavy oil TBP model");
