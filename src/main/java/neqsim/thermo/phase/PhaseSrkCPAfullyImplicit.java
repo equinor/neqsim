@@ -423,13 +423,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
 
     } while (iterations < MAX_IMPLICIT_ITERATIONS);
 
-    // --- Non-convergence handling: use best solution if close enough ---
-    if (!converged && bestMaxResidual < 1.0e-8) {
-      zeta = bestZeta;
-      System.arraycopy(bestXsite, 0, xSite, 0, ns);
-      converged = true;
-    }
-
     if (!converged) {
       fallbackCount++;
       if (logger.isDebugEnabled()) {
