@@ -522,7 +522,7 @@ public class LumpingModel implements java.io.Serializable {
       this.name = "no lumping";
       return new NoLumpingModel();
     } else {
-      if (!name.isBlank()) {
+      if (!name.isEmpty()) {
         logger.warn(
             "Lumping model '" + name + "' not recognized, defaulting to StandardLumpingModel");
       }
