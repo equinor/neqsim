@@ -12,17 +12,24 @@ import neqsim.thermo.component.ComponentSrkCPA;
  * Combines two acceleration strategies:
  * </p>
  * <ul>
- * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026): simultaneous solution
- * of molar volume and association site fractions, eliminating inner iterations.</li>
- * <li><b>Site type reduction</b>: groups equivalent association sites (same deltaNog row on same
- * component) into types with multiplicities, reducing the system dimension from (n_s + 1) to (p +
+ * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026):
+ * simultaneous solution
+ * of molar volume and association site fractions, eliminating inner
+ * iterations.</li>
+ * <li><b>Site type reduction</b>: groups equivalent association sites (same
+ * deltaNog row on same
+ * component) into types with multiplicities, reducing the system dimension from
+ * (n_s + 1) to (p +
  * 1).</li>
  * </ul>
  *
  * <p>
- * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional system at every
- * iteration (no Broyden approximation), solved via Gaussian elimination O(p^3). This gives both the
- * per-iteration cost reduction of dimension reduction AND the quadratic convergence of full Newton.
+ * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional
+ * system at every
+ * iteration (no Broyden approximation), solved via Gaussian elimination O(p^3).
+ * This gives both the
+ * per-iteration cost reduction of dimension reduction AND the quadratic
+ * convergence of full Newton.
  * </p>
  *
  * <p>
@@ -160,8 +167,10 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Fully implicit + reduced molar volume solver. Operates on the reduced (p+1)-dimensional system
-   * where p is the number of unique association site types. Uses full Newton Jacobian at every
+   * Fully implicit + reduced molar volume solver. Operates on the reduced
+   * (p+1)-dimensional system
+   * where p is the number of unique association site types. Uses full Newton
+   * Jacobian at every
    * iteration (no Broyden approximation), solved via Gaussian elimination.
    * </p>
    */
@@ -177,11 +186,13 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
-    // Build site type map early so initCPAMatrix(1) works even for gas-phase fallback
+    // Build site type map early so initCPAMatrix(1) works even for gas-phase
+    // fallback
     calcDelta();
     buildSiteTypeMap(ns);
 
-    // Gas phase: nested solver (weak association, but initCPAMatrix override is active)
+    // Gas phase: nested solver (weak association, but initCPAMatrix override is
+    // active)
     if (pt == PhaseType.GAS) {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -260,19 +271,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
 
     int iterations = 0;
     boolean converged = false;
-
-    // --- Adaptive damping and stagnation tracking ---
-    double damping = 1.0;
-    double prevMaxResidual = Double.MAX_VALUE;
-    int stallCount = 0;
-    int restartCount = 0;
-    int ssRecoveryCount = 0;
-
-    // Best solution tracking (use if we get close but don't fully converge)
-    double bestMaxResidual = Double.MAX_VALUE;
-    double bestZeta = zeta;
-    double[] bestXtype = new double[p];
-    System.arraycopy(xType, 0, bestXtype, 0, p);
+    boolean restartTriggered = false;
 
     // Reusable temp array for expanding reduced types to full site fractions
     double[] xSiteFullTemp = new double[ns];
@@ -344,69 +343,6 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
         break;
       }
 
-      // Track best solution found
-      if (maxResidual < bestMaxResidual) {
-        bestMaxResidual = maxResidual;
-        bestZeta = zeta;
-        System.arraycopy(xType, 0, bestXtype, 0, p);
-      }
-
-      // --- Adaptive damping: track residual improvement ---
-      if (maxResidual > prevMaxResidual * 0.999 && iterations > 2) {
-        stallCount++;
-        damping = Math.max(0.1, damping * 0.5);
-      } else {
-        stallCount = 0;
-        damping = Math.min(1.0, damping * 1.5);
-      }
-      prevMaxResidual = maxResidual;
-
-      // --- Stagnation recovery: SS iterations to re-stabilize ---
-      if (stallCount >= 4 && ssRecoveryCount < 3) {
-        ssRecoveryCount++;
-        stallCount = 0;
-        damping = 1.0;
-        expandAndSetSiteFractions(xType, ns);
-        solveX2(5);
-        readXsiteFromComponents(xSiteFullTemp, ns);
-        for (int t = 0; t < p; t++) {
-          xType[t] = xSiteFullTemp[typeRepSite[t]];
-        }
-        continue;
-      }
-
-      // --- Multi-restart with different initial guesses ---
-      if (stallCount >= 6 && restartCount < 2) {
-        restartCount++;
-        stallCount = 0;
-        damping = 1.0;
-        prevMaxResidual = Double.MAX_VALUE;
-        if (restartCount == 1) {
-          // Restart 1: opposite phase initial guess
-          if (pt == PhaseType.GAS) {
-            zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
-          } else {
-            zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
-          }
-        } else {
-          // Restart 2: midpoint
-          zeta = 0.3;
-        }
-        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
-        for (int t = 0; t < p; t++) {
-          xType[t] = 0.5;
-        }
-        molarVol = Btemp / (numberOfMolesInPhase * zeta);
-        setMolarVolume(molarVol);
-        expandAndSetSiteFractions(xType, ns);
-        solveX2(10);
-        readXsiteFromComponents(xSiteFullTemp, ns);
-        for (int t = 0; t < p; t++) {
-          xType[t] = xSiteFullTemp[typeRepSite[t]];
-        }
-        continue;
-      }
-
       // --- Build full Newton Jacobian (every iteration) ---
       buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
       jacobianEvals++;
@@ -417,22 +353,12 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       }
       boolean solveOk = solveLinearSystem(jacobian, dx, dim);
       if (!solveOk) {
-        // Singular Jacobian: try SS recovery before fallback
-        if (ssRecoveryCount < 3) {
-          ssRecoveryCount++;
-          expandAndSetSiteFractions(xType, ns);
-          solveX2(10);
-          readXsiteFromComponents(xSiteFullTemp, ns);
-          for (int t = 0; t < p; t++) {
-            xType[t] = xSiteFullTemp[typeRepSite[t]];
-          }
-          continue;
-        }
-        break;
+        fallbackCount++;
+        return super.molarVolume(pressure, temperature, A, B, pt);
       }
 
-      // --- Step limiting with adaptive damping ---
-      double maxStep = damping;
+      // --- Step limiting ---
+      double maxStep = 1.0;
       for (int t = 0; t < p; t++) {
         double proposed = xType[t] + maxStep * dx[t];
         if (proposed < 1.0e-15) {
@@ -465,13 +391,27 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       zeta += maxStep * dx[p];
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
 
+      // --- Restart criterion (supercritical detection) ---
+      if (iterations > 20 && maxResidual > 0.1 && !restartTriggered) {
+        restartTriggered = true;
+        if (pt == PhaseType.GAS) {
+          zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+        } else {
+          zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
+        }
+        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
+        for (int t = 0; t < p; t++) {
+          xType[t] = 0.5;
+        }
+      }
+
     } while (iterations < MAX_ITERATIONS);
 
     if (!converged) {
       fallbackCount++;
       if (logger.isDebugEnabled()) {
         logger.debug("Implicit-reduced non-convergence: ns=" + ns + " p=" + numTypes + " pt=" + pt
-            + " iters=" + iterations + " zeta=" + zeta + " bestRes=" + bestMaxResidual + " P="
+            + " iters=" + iterations + " zeta=" + zeta + " P="
             + pressure + " T=" + temperature);
       }
       return super.molarVolume(pressure, temperature, A, B, pt);
@@ -509,8 +449,10 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Build the site type map by grouping equivalent association sites.
    *
    * <p>
-   * Two individual sites are equivalent if they belong to the same component and have identical
-   * deltaNog rows (same bonding pattern to all other sites). This corresponds to sites with the
+   * Two individual sites are equivalent if they belong to the same component and
+   * have identical
+   * deltaNog rows (same bonding pattern to all other sites). This corresponds to
+   * sites with the
    * same charge in the CPA association scheme.
    * </p>
    *
@@ -557,7 +499,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Expand reduced site fraction values to all individual sites on components.
    *
    * @param xType reduced site fraction array (length p)
-   * @param ns total number of individual sites
+   * @param ns    total number of individual sites
    */
   private void expandAndSetSiteFractions(double[] xType, int ns) {
     int idx = 0;
@@ -574,7 +516,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Read individual site fractions from component objects into a flat array.
    *
    * @param xSite array to fill (length ns)
-   * @param ns total number of individual sites
+   * @param ns    total number of individual sites
    */
   private void readXsiteFromComponents(double[] xSite, int ns) {
     int idx = 0;
@@ -603,21 +545,22 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * <li>j_zeta_zeta: volume equation self-sensitivity</li>
    * </ul>
    *
-   * @param jac Jacobian matrix to populate (dim x dim)
-   * @param xType reduced site fraction values (length p)
-   * @param tMoles moles per type (length p)
-   * @param redSum precomputed reduced summation for each type (length p)
+   * @param jac      Jacobian matrix to populate (dim x dim)
+   * @param xType    reduced site fraction values (length p)
+   * @param tMoles   moles per type (length p)
+   * @param redSum   precomputed reduced summation for each type (length p)
    * @param totalVol total volume V
-   * @param gdv1 g'(V) - 1/V
-   * @param zeta current B/(nV)
-   * @param btemp co-volume B
-   * @param dim system dimension (p+1)
-   * @param p number of unique site types
+   * @param gdv1     g'(V) - 1/V
+   * @param zeta     current B/(nV)
+   * @param btemp    co-volume B
+   * @param dim      system dimension (p+1)
+   * @param p        number of unique site types
    */
   private void buildReducedJacobian(double[][] jac, double[] xType, double[] tMoles,
       double[] redSum, double totalVol, double gdv1, double zeta, double btemp, int dim, int p) {
 
-    // J_XX block: dR_a/dX_b = delta_ab + X_a^2 * mult_b * n_b * delta(rep_a,rep_b) / V
+    // J_XX block: dR_a/dX_b = delta_ab + X_a^2 * mult_b * n_b * delta(rep_a,rep_b)
+    // / V
     for (int a = 0; a < p; a++) {
       double xa2 = xType[a] * xType[a];
       for (int b = 0; b < p; b++) {
@@ -691,8 +634,10 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Override type 1 initialization to use reduced-dimension site type computation. Higher-order
-   * volume derivatives (FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV) are computed using the type
+   * Override type 1 initialization to use reduced-dimension site type
+   * computation. Higher-order
+   * volume derivatives (FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV) are computed using
+   * the type
    * grouping, reducing linear system size from n_s to p.
    * </p>
    */
@@ -732,8 +677,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     double gv = getGcpav();
     double fV = gv - 1.0 / totalVolume;
     double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;
-    double fVVV =
-        fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
+    double fVVV = fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
 
     // Read reduced site fractions and moles
     double[] xSiteFull = new double[ns];
@@ -743,7 +687,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       workM[t] = componentArray[typeCompIdx[t]].getNumberOfMolesInPhase();
     }
 
-    // Build reduced K matrix: K_red[a][b] = mult_a * mult_b * n_a * n_b * delta(rep_a,rep_b) / V
+    // Build reduced K matrix: K_red[a][b] = mult_a * mult_b * n_a * n_b *
+    // delta(rep_a,rep_b) / V
     double invV = 1.0 / totalVolume;
     for (int a = 0; a < p; a++) {
       double maInvV = typeMult[a] * workM[a] * invV;
@@ -812,7 +757,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   }
 
   /**
-   * Solve a linear system A*x = b in-place (b overwritten with solution) using Gaussian elimination
+   * Solve a linear system A*x = b in-place (b overwritten with solution) using
+   * Gaussian elimination
    * with partial pivoting.
    *
    * @param a coefficient matrix (modified in-place)
