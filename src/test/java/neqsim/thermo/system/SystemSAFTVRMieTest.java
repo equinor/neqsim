@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentSAFTVRMie;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseSAFTVRMie;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

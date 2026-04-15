@@ -8,8 +8,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.processmodel.SimulationResult;
 
 /**
  * Compares two or more process configurations side by side.
