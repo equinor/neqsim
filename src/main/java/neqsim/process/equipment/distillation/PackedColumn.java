@@ -7,9 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.distillation.internals.PackingHydraulicsCalculator;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  * Packed column (contactor/absorber/stripper) using packing internals with HETP-based staging.
@@ -423,8 +421,7 @@ public class PackedColumn extends DistillationColumn {
       perf.addProperty("gasOutPressure_bara", getGasOutStream().getPressure());
     }
     if (getLiquidOutStream() != null) {
-      perf.addProperty("liquidOutTemperature_C",
-          getLiquidOutStream().getTemperature() - 273.15);
+      perf.addProperty("liquidOutTemperature_C", getLiquidOutStream().getTemperature() - 273.15);
       perf.addProperty("liquidOutPressure_bara", getLiquidOutStream().getPressure());
     }
     perf.addProperty("converged", solved());

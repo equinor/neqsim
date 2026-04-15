@@ -1,6 +1,5 @@
 package neqsim.process.mechanicaldesign.compressor;
 
-import java.util.List;
 import java.util.Map;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 

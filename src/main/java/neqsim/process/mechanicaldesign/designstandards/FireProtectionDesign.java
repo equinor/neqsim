@@ -1,7 +1,6 @@
 package neqsim.process.mechanicaldesign.designstandards;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;

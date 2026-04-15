@@ -2,7 +2,6 @@ package neqsim.mcp.model;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 /**
  * A numeric value with its associated unit.

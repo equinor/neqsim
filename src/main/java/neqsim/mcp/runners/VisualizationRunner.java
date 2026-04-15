@@ -1,18 +1,14 @@
 package neqsim.mcp.runners;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**

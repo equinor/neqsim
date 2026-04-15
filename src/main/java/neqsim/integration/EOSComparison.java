@@ -11,8 +11,6 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.thermo.system.SystemEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;

@@ -13,8 +13,6 @@ import neqsim.process.equipment.splitter.BiogasUpgrader;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Pre-built biorefinery module for biogas-to-grid injection.
