@@ -964,7 +964,12 @@ Document any parameter sweeps performed:
 - [ ] validation section populated with all checks above
 - [ ] approach and conclusions fields filled in
 - [ ] figure_captions populated with custom captions for key plots
+- [ ] figure_discussion populated for each decision-critical figure
+      (observation, mechanism, implication, recommendation, linked_results)
 - [ ] equations populated with key equations used in the analysis
+- [ ] benchmark_validation populated if comparing against reference data
+- [ ] uncertainty populated if sensitivity/Monte Carlo was performed
+- [ ] risk_evaluation populated if risk assessment was performed
 - [ ] Figures saved to figures/ using absolute TASK_DIR path (not os.getcwd!)
 """
 
@@ -1032,9 +1037,9 @@ def _init_omml():
     except ImportError:
         return False
     xsl_candidates = [
-        os.path.expandvars(r'%ProgramFiles%\Microsoft Office\root\Office16\MML2OMML.XSL'),
-        os.path.expandvars(r'%ProgramFiles(x86)%\Microsoft Office\root\Office16\MML2OMML.XSL'),
-        os.path.expandvars(r'%ProgramFiles%\Microsoft Office\Office16\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles%\\Microsoft Office\\root\\Office16\\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles(x86)%\\Microsoft Office\\root\\Office16\\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles%\\Microsoft Office\\Office16\\MML2OMML.XSL'),
     ]
     for path in xsl_candidates:
         if os.path.exists(path):
@@ -1090,6 +1095,11 @@ MANUAL_SECTIONS = {
     "approach": (
         "[Describe the methodology: EOS used, process configuration, "
         "simulation setup, key assumptions.]"
+    ),
+    "results_discussion": (
+        "[Discuss the key results: what they mean physically, why they matter "
+        "for design/operation, and what actions should follow. Auto-populated "
+        "from results.json figure_discussion entries when available.]"
     ),
     "conclusions": (
         "[Summarize key findings and provide recommendations.]"
@@ -1599,6 +1609,362 @@ def format_references_html(results):
     return h
 
 
+def format_figure_discussion_html(results):
+    """Format figure_discussion entries as structured HTML discussion blocks."""
+    discussions = results.get("figure_discussion", [])
+    if not discussions:
+        return ""
+    html_parts = []
+    for disc in discussions:
+        figure = disc.get("figure", "")
+        title = disc.get("title", figure)
+        obs = disc.get("observation", "")
+        mech = disc.get("mechanism", "")
+        impl = disc.get("implication", "")
+        rec = disc.get("recommendation", "")
+        linked = disc.get("linked_results", [])
+        h = \'<div class="discussion-block">\\n\'
+        h += \'  <h3 class="disc-title">{}</h3>\\n\'.format(title)
+        if obs:
+            h += \'  <div class="disc-row"><span class="disc-label">Observation:</span> {}</div>\\n\'.format(obs)
+        if mech:
+            h += \'  <div class="disc-row"><span class="disc-label">Physical Mechanism:</span> {}</div>\\n\'.format(mech)
+        if impl:
+            h += \'  <div class="disc-row"><span class="disc-label">Engineering Implication:</span> {}</div>\\n\'.format(impl)
+        if rec:
+            h += \'  <div class="disc-row disc-rec"><span class="disc-label">Recommendation:</span> {}</div>\\n\'.format(rec)
+        if linked:
+            h += \'  <div class="disc-trace">Linked results: {}</div>\\n\'.format(
+                ", ".join(linked))
+        h += \'</div>\\n\'
+        html_parts.append(h)
+    return "\\n".join(html_parts)
+
+
+def format_benchmark_html(results):
+    """Format benchmark_validation from results.json as styled HTML."""
+    bv = results.get("benchmark_validation", {})
+    if not bv:
+        return ""
+    source = bv.get("source", "")
+    tests = bv.get("tests", [])
+    h = ""
+    if source:
+        h += \'<p><strong>Reference source:</strong> {}</p>\\n\'.format(source)
+    if tests:
+        h += \'<table class="benchmark-table"><thead><tr>\'
+        h += \'<th>Parameter</th><th>NeqSim</th><th>Reference</th>\'
+        h += \'<th>Unit</th><th>Tol %</th><th>Status</th></tr></thead><tbody>\\n\'
+        for t in tests:
+            param = t.get("parameter", "")
+            neq = t.get("neqsim", "")
+            ref = t.get("reference", "")
+            unit = t.get("unit", "")
+            tol = t.get("tolerance_pct", "")
+            passed = t.get("pass", None)
+            if passed is True:
+                badge = \'<span class="pass">PASS</span>\'
+            elif passed is False:
+                badge = \'<span class="fail">FAIL</span>\'
+            else:
+                badge = str(passed)
+            neq_s = "{:.4g}".format(neq) if isinstance(neq, float) else str(neq)
+            ref_s = "{:.4g}".format(ref) if isinstance(ref, float) else str(ref)
+            tol_s = "{:.1f}".format(tol) if isinstance(tol, float) else str(tol)
+            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(param, neq_s)
+            h += \'<td class="num">{}</td><td>{}</td>\'.format(ref_s, unit)
+            h += \'<td class="num">{}</td><td>{}</td></tr>\\n\'.format(tol_s, badge)
+        h += \'</tbody></table>\'
+    return h
+
+
+def format_uncertainty_html(results):
+    """Format uncertainty analysis from results.json as styled HTML."""
+    unc = results.get("uncertainty", {})
+    if not unc:
+        return ""
+    h = ""
+    method = unc.get("method", "")
+    n_sims = unc.get("n_simulations", "")
+    engine = unc.get("simulation_engine", "")
+    if method:
+        h += \'<p><strong>Method:</strong> {}</p>\\n\'.format(method)
+    if engine:
+        h += \'<p><strong>Simulation engine:</strong> {}</p>\\n\'.format(engine)
+    if n_sims:
+        h += \'<p><strong>Number of simulations:</strong> {}</p>\\n\'.format(n_sims)
+    # P10/P50/P90 summary
+    output_param = unc.get("output_parameter", "Output")
+    p10 = unc.get("p10")
+    p50 = unc.get("p50")
+    p90 = unc.get("p90")
+    mean = unc.get("mean")
+    std = unc.get("std")
+    prob_neg = unc.get("prob_negative_pct")
+    if p10 is not None or p50 is not None or p90 is not None:
+        h += \'<h3>Statistical Summary: {}</h3>\\n\'.format(output_param)
+        h += \'<table class="uncertainty-table"><thead><tr>\'
+        h += \'<th>Statistic</th><th>Value</th></tr></thead><tbody>\\n\'
+        if p10 is not None:
+            h += \'<tr><td>P10 (low)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p10)
+        if p50 is not None:
+            h += \'<tr><td>P50 (median)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p50)
+        if p90 is not None:
+            h += \'<tr><td>P90 (high)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p90)
+        if mean is not None:
+            h += \'<tr><td>Mean</td><td class="num">{:.4g}</td></tr>\\n\'.format(mean)
+        if std is not None:
+            h += \'<tr><td>Std Dev</td><td class="num">{:.4g}</td></tr>\\n\'.format(std)
+        if prob_neg is not None:
+            h += \'<tr><td>P(negative)</td><td class="num">{:.1f}%</td></tr>\\n\'.format(prob_neg)
+        h += \'</tbody></table>\\n\'
+    # Input parameters table
+    inputs = unc.get("input_parameters", [])
+    if inputs:
+        h += \'<h3>Input Parameter Ranges</h3>\\n\'
+        h += \'<table class="uncertainty-table"><thead><tr>\'
+        h += \'<th>Parameter</th><th>Low</th><th>Base</th><th>High</th>\'
+        h += \'<th>Unit</th><th>Distribution</th></tr></thead><tbody>\\n\'
+        for inp in inputs:
+            name = inp.get("name", "")
+            unit = inp.get("unit", "")
+            low = inp.get("low", "")
+            base = inp.get("base", "")
+            high = inp.get("high", "")
+            dist = inp.get("distribution", "")
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, float) else str(v)
+            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(name, fmt(low))
+            h += \'<td class="num">{}</td><td class="num">{}</td>\'.format(fmt(base), fmt(high))
+            h += \'<td>{}</td><td>{}</td></tr>\\n\'.format(unit, dist)
+        h += \'</tbody></table>\\n\'
+    # Tornado table
+    tornado = unc.get("tornado", [])
+    if tornado:
+        h += \'<h3>Sensitivity Ranking (Tornado)</h3>\\n\'
+        h += \'<table class="tornado-table"><thead><tr>\'
+        h += \'<th>Parameter</th><th>Low Case</th><th>High Case</th>\'
+        h += \'<th>Swing</th></tr></thead><tbody>\\n\'
+        for t in tornado:
+            param = t.get("parameter", "")
+            low_v = t.get("npv_low", t.get("low", ""))
+            high_v = t.get("npv_high", t.get("high", ""))
+            swing = t.get("swing", "")
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, (int, float)) else str(v)
+            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(param, fmt(low_v))
+            h += \'<td class="num">{}</td><td class="num">{}</td></tr>\\n\'.format(
+                fmt(high_v), fmt(swing))
+        h += \'</tbody></table>\\n\'
+    return h
+
+
+def format_risk_html(results):
+    """Format risk_evaluation from results.json as styled HTML."""
+    risk = results.get("risk_evaluation", {})
+    if not risk:
+        return ""
+    h = ""
+    overall = risk.get("overall_risk_level", "")
+    matrix = risk.get("risk_matrix_used", "")
+    if overall:
+        css = "risk-high" if "high" in overall.lower() else (
+            "risk-med" if "medium" in overall.lower() else "risk-low")
+        h += \'<p>Overall risk level: <span class="{}">{}</span></p>\\n\'.format(
+            css, overall)
+    if matrix:
+        h += \'<p>Risk matrix: {}</p>\\n\'.format(matrix)
+    risks = risk.get("risks", [])
+    if risks:
+        h += \'<table class="risk-table"><thead><tr>\'
+        h += \'<th>ID</th><th>Description</th><th>Category</th>\'
+        h += \'<th>Likelihood</th><th>Consequence</th><th>Risk Level</th>\'
+        h += \'<th>Mitigation</th></tr></thead><tbody>\\n\'
+        for r in risks:
+            rid = r.get("id", "")
+            desc = r.get("description", "")
+            cat = r.get("category", "")
+            like = r.get("likelihood", "")
+            cons = r.get("consequence", "")
+            level = r.get("risk_level", "")
+            mitig = r.get("mitigation", "")
+            css = "risk-high" if "high" in level.lower() else (
+                "risk-med" if "medium" in level.lower() else "risk-low")
+            h += \'<tr><td>{}</td><td>{}</td><td>{}</td>\'.format(rid, desc, cat)
+            h += \'<td>{}</td><td>{}</td>\'.format(like, cons)
+            h += \'<td><span class="{}">{}</span></td>\'.format(css, level)
+            h += \'<td>{}</td></tr>\\n\'.format(mitig)
+        h += \'</tbody></table>\'
+    return h
+
+
+def add_figure_discussion_word(doc, results):
+    """Add figure_discussion entries to a Word document."""
+    discussions = results.get("figure_discussion", [])
+    if not discussions:
+        return
+    for disc in discussions:
+        title = disc.get("title", disc.get("figure", ""))
+        obs = disc.get("observation", "")
+        mech = disc.get("mechanism", "")
+        impl = disc.get("implication", "")
+        rec = disc.get("recommendation", "")
+        linked = disc.get("linked_results", [])
+        doc.add_heading(title, level=2)
+        fields = [
+            ("Observation", obs),
+            ("Physical Mechanism", mech),
+            ("Engineering Implication", impl),
+            ("Recommendation", rec),
+        ]
+        for label, text in fields:
+            if text:
+                p = doc.add_paragraph()
+                run = p.add_run("{}: ".format(label))
+                run.bold = True
+                p.add_run(text)
+        if linked:
+            p = doc.add_paragraph()
+            run = p.add_run("Linked results: ")
+            run.font.size = Pt(8)
+            run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+            run2 = p.add_run(", ".join(linked))
+            run2.font.size = Pt(8)
+            run2.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+        doc.add_paragraph("")
+
+
+def add_benchmark_word(doc, results):
+    """Add benchmark_validation section to a Word document."""
+    bv = results.get("benchmark_validation", {})
+    if not bv:
+        return
+    source = bv.get("source", "")
+    if source:
+        doc.add_paragraph("Reference source: {}".format(source))
+    tests = bv.get("tests", [])
+    if tests:
+        headers = ["Parameter", "NeqSim", "Reference", "Unit", "Tol %", "Status"]
+        rows = []
+        for t in tests:
+            neq = t.get("neqsim", "")
+            ref = t.get("reference", "")
+            tol = t.get("tolerance_pct", "")
+            passed = t.get("pass", None)
+            status = "PASS" if passed is True else ("FAIL" if passed is False else str(passed))
+            neq_s = "{:.4g}".format(neq) if isinstance(neq, float) else str(neq)
+            ref_s = "{:.4g}".format(ref) if isinstance(ref, float) else str(ref)
+            tol_s = "{:.1f}".format(tol) if isinstance(tol, float) else str(tol)
+            rows.append([t.get("parameter", ""), neq_s, ref_s,
+                         t.get("unit", ""), tol_s, status])
+        table = add_word_table(doc, headers, rows)
+        # Color-code PASS/FAIL
+        for row in table.rows[1:]:
+            cell = row.cells[5]
+            text = cell.text.strip()
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+                    if text == "PASS":
+                        run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
+                    elif text == "FAIL":
+                        run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
+
+
+def add_uncertainty_word(doc, results):
+    """Add uncertainty analysis section to a Word document."""
+    unc = results.get("uncertainty", {})
+    if not unc:
+        return
+    method = unc.get("method", "")
+    n_sims = unc.get("n_simulations", "")
+    engine = unc.get("simulation_engine", "")
+    if method:
+        doc.add_paragraph("Method: {}".format(method))
+    if engine:
+        doc.add_paragraph("Engine: {}".format(engine))
+    if n_sims:
+        doc.add_paragraph("Simulations: {}".format(n_sims))
+    output_param = unc.get("output_parameter", "Output")
+    p10 = unc.get("p10")
+    p50 = unc.get("p50")
+    p90 = unc.get("p90")
+    mean = unc.get("mean")
+    std = unc.get("std")
+    prob_neg = unc.get("prob_negative_pct")
+    if p10 is not None or p50 is not None or p90 is not None:
+        doc.add_heading("Statistical Summary: {}".format(output_param), level=2)
+        rows = []
+        if p10 is not None:
+            rows.append(["P10 (low)", "{:.4g}".format(p10)])
+        if p50 is not None:
+            rows.append(["P50 (median)", "{:.4g}".format(p50)])
+        if p90 is not None:
+            rows.append(["P90 (high)", "{:.4g}".format(p90)])
+        if mean is not None:
+            rows.append(["Mean", "{:.4g}".format(mean)])
+        if std is not None:
+            rows.append(["Std Dev", "{:.4g}".format(std)])
+        if prob_neg is not None:
+            rows.append(["P(negative)", "{:.1f}%".format(prob_neg)])
+        add_word_table(doc, ["Statistic", "Value"], rows)
+    inputs = unc.get("input_parameters", [])
+    if inputs:
+        doc.add_heading("Input Parameter Ranges", level=2)
+        headers = ["Parameter", "Low", "Base", "High", "Unit", "Distribution"]
+        rows = []
+        for inp in inputs:
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, float) else str(v)
+            rows.append([inp.get("name", ""), fmt(inp.get("low", "")),
+                         fmt(inp.get("base", "")), fmt(inp.get("high", "")),
+                         inp.get("unit", ""), inp.get("distribution", "")])
+        add_word_table(doc, headers, rows)
+    tornado = unc.get("tornado", [])
+    if tornado:
+        doc.add_heading("Sensitivity Ranking (Tornado)", level=2)
+        headers = ["Parameter", "Low Case", "High Case", "Swing"]
+        rows = []
+        for t in tornado:
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, (int, float)) else str(v)
+            rows.append([t.get("parameter", ""),
+                         fmt(t.get("npv_low", t.get("low", ""))),
+                         fmt(t.get("npv_high", t.get("high", ""))),
+                         fmt(t.get("swing", ""))])
+        add_word_table(doc, headers, rows)
+
+
+def add_risk_word(doc, results):
+    """Add risk_evaluation section to a Word document."""
+    risk = results.get("risk_evaluation", {})
+    if not risk:
+        return
+    overall = risk.get("overall_risk_level", "")
+    matrix = risk.get("risk_matrix_used", "")
+    if overall:
+        p = doc.add_paragraph()
+        run = p.add_run("Overall risk level: ")
+        run.bold = True
+        run2 = p.add_run(overall)
+        run2.bold = True
+        if "high" in overall.lower():
+            run2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
+        elif "medium" in overall.lower():
+            run2.font.color.rgb = RGBColor(0xFF, 0x8C, 0x00)
+        else:
+            run2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
+    if matrix:
+        doc.add_paragraph("Risk matrix: {}".format(matrix))
+    risks = risk.get("risks", [])
+    if risks:
+        headers = ["ID", "Description", "Category", "Likelihood",
+                    "Consequence", "Risk Level", "Mitigation"]
+        rows = []
+        for r in risks:
+            rows.append([r.get("id", ""), r.get("description", ""),
+                         r.get("category", ""), r.get("likelihood", ""),
+                         r.get("consequence", ""), r.get("risk_level", ""),
+                         r.get("mitigation", "")])
+        add_word_table(doc, headers, rows)
+
+
 def add_word_table(doc, headers, data_rows, col_widths=None):
     """Add a professionally styled table to a Word document.
 
@@ -1792,7 +2158,17 @@ def build_sections(results, task_spec):
         "has_figures": True,
     })
 
-    # 6. Validation Summary (auto-populated from results.json)
+    # 6. Results Discussion (auto-populated from figure_discussion)
+    discussion_content = MANUAL_SECTIONS["results_discussion"]
+    if results and results.get("figure_discussion"):
+        discussion_content = "See structured discussion below."
+    sections.append({
+        "heading": "6. Results Discussion",
+        "content": discussion_content,
+        "has_discussion": True,
+    })
+
+    # 7. Validation Summary (auto-populated from results.json)
     if results and results.get("validation"):
         validation_text = format_validation_table(results)
     else:
@@ -1801,20 +2177,46 @@ def build_sections(results, task_spec):
             "Add validation checks to your notebook results output.]"
         )
     sections.append({
-        "heading": "6. Validation Summary",
+        "heading": "7. Validation Summary",
         "content": validation_text,
     })
 
-    # 7. Conclusions and Recommendations
+    # 8. Benchmark Validation (auto-populated from results.json)
+    if results and results.get("benchmark_validation"):
+        sections.append({
+            "heading": "8. Benchmark Validation",
+            "content": "See benchmark comparison below.",
+            "has_benchmark": True,
+        })
+
+    # 9. Uncertainty Analysis (auto-populated from results.json)
+    if results and results.get("uncertainty"):
+        sections.append({
+            "heading": "9. Uncertainty Analysis",
+            "content": "See uncertainty analysis below.",
+            "has_uncertainty": True,
+        })
+
+    # 10. Risk Evaluation (auto-populated from results.json)
+    if results and results.get("risk_evaluation"):
+        sections.append({
+            "heading": "10. Risk Evaluation",
+            "content": "See risk evaluation below.",
+            "has_risk": True,
+        })
+
+    # N. Conclusions and Recommendations
+    sec_n = len(sections) + 1
     conclusions = MANUAL_SECTIONS["conclusions"]
     if results and results.get("conclusions"):
         conclusions = results["conclusions"]
     sections.append({
-        "heading": "7. Conclusions and Recommendations",
+        "heading": "{}. Conclusions and Recommendations".format(sec_n),
         "content": conclusions,
     })
 
-    # 8. References (auto-populated from results.json if available)
+    # N+1. References (auto-populated from results.json if available)
+    sec_n = len(sections) + 1
     refs_content = MANUAL_SECTIONS["references"]
     if results and results.get("references"):
         ref_lines = []
@@ -1827,7 +2229,7 @@ def build_sections(results, task_spec):
                 ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\\n".join(ref_lines)
     sections.append({
-        "heading": "8. References",
+        "heading": "{}. References".format(sec_n),
         "content": refs_content,
         "has_references": True,
     })
@@ -1868,9 +2270,21 @@ def build_word_report(sections, results=None):
         elif section.get("has_scope"):
             # Scope section: parse markdown tables, bold, and lists
             render_scope_to_word(doc, section["content"])
-        elif "Validation" in section["heading"] and results and results.get("validation"):
+        elif "Validation" in section["heading"] and not section.get("has_benchmark") and results and results.get("validation"):
             # Validation section: use Word table
             add_validation_word_table(doc, results)
+        elif section.get("has_discussion") and results and results.get("figure_discussion"):
+            # Results Discussion: structured observation/mechanism/implication/rec
+            add_figure_discussion_word(doc, results)
+        elif section.get("has_benchmark") and results:
+            # Benchmark Validation: comparison table with PASS/FAIL
+            add_benchmark_word(doc, results)
+        elif section.get("has_uncertainty") and results:
+            # Uncertainty Analysis: P10/P50/P90, inputs, tornado
+            add_uncertainty_word(doc, results)
+        elif section.get("has_risk") and results:
+            # Risk Evaluation: risk register with color-coded levels
+            add_risk_word(doc, results)
         else:
             # Regular text content
             for para_text in section["content"].split("\\n\\n"):
@@ -2030,8 +2444,20 @@ def build_html_report(sections, results=None):
         if section.get("has_equations") and equation_html:
             content += equation_html
 
-        if "Validation" in section["heading"] and validation_html:
+        if "Validation" in section["heading"] and not section.get("has_benchmark") and validation_html:
             content = validation_html
+
+        if section.get("has_discussion") and results and results.get("figure_discussion"):
+            content = format_figure_discussion_html(results)
+
+        if section.get("has_benchmark") and results:
+            content = format_benchmark_html(results)
+
+        if section.get("has_uncertainty") and results:
+            content = format_uncertainty_html(results)
+
+        if section.get("has_risk") and results:
+            content = format_risk_html(results)
 
         if section.get("has_references") and results and results.get("references"):
             content = format_references_html(results)
@@ -2133,6 +2559,26 @@ def build_html_report(sections, results=None):
         .reference-list li {{ margin-bottom: 0.6rem; padding: 0.4rem 0.6rem;
             border-left: 3px solid #2F5496; background: #f8f9fa; }}
         .reference-list li strong {{ color: #2F5496; }}
+        .discussion-block {{ margin: 1.5rem 0; padding: 1rem 1.2rem;
+            background: #f8f9fa; border-left: 4px solid #2F5496;
+            border-radius: 0 4px 4px 0; }}
+        .disc-title {{ color: #2F5496; margin-top: 0 !important; margin-bottom: 0.6rem;
+            font-size: 1rem; border-bottom: none !important; }}
+        .disc-row {{ margin-bottom: 0.4rem; line-height: 1.5; }}
+        .disc-label {{ font-weight: 600; color: #444; }}
+        .disc-rec {{ background: #e8f5e9; padding: 0.4rem 0.6rem;
+            border-radius: 3px; margin-top: 0.3rem; }}
+        .disc-trace {{ font-size: 0.8rem; color: #888; margin-top: 0.4rem; }}
+        .benchmark-table {{ max-width: 700px; }}
+        .uncertainty-table {{ max-width: 600px; }}
+        .tornado-table {{ max-width: 600px; }}
+        .risk-table {{ font-size: 0.88rem; }}
+        .risk-high {{ color: #fff; background: #dc3545; padding: 0.15rem 0.5rem;
+            border-radius: 3px; font-weight: 600; }}
+        .risk-med {{ color: #fff; background: #ff8c00; padding: 0.15rem 0.5rem;
+            border-radius: 3px; font-weight: 600; }}
+        .risk-low {{ color: #fff; background: #28a745; padding: 0.15rem 0.5rem;
+            border-radius: 3px; font-weight: 600; }}
         @media (max-width: 768px) {{
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
