@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -33,10 +31,10 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <h2>Table Format</h2>
- * 
+ *
  * <pre>
  * BHP[rate][outletP][WC][GOR] = required inlet pressure (bara)
- * 
+ *
  * Where:
  *   - BHP = inlet pressure required to achieve the given rate
  *   - THP = outlet pressure constraint
@@ -53,7 +51,7 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Setup fluid input and generator
  * FluidMagicInput input = FluidMagicInput.fromE300File("FLUID.E300");

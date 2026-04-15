@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.exception.IsNaNException;
 
 /**
  * ASTM D86 - Standard Test Method for Distillation of Petroleum Products and Liquid Fuels at

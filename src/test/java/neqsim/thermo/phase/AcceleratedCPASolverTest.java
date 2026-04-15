@@ -3,13 +3,12 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkCPAstatoilAndersonMixing;
+import neqsim.thermo.system.SystemSrkCPAstatoilAndersonReduced;
 import neqsim.thermo.system.SystemSrkCPAstatoilBroydenImplicit;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
-import neqsim.thermo.system.SystemSrkCPAstatoilAndersonReduced;
 import neqsim.thermo.system.SystemSrkCPAstatoilReduced;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

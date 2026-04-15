@@ -1,21 +1,15 @@
 package neqsim.process.costestimation.adsorber;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
-import neqsim.process.equipment.adsorber.MercuryRemovalBed;
 import neqsim.process.mechanicaldesign.adsorber.MercuryRemovalMechanicalDesign;
 
 /**
  * Cost estimation for mercury removal guard beds.
  *
  * <p>
- * Provides CAPEX and OPEX estimates for a fixed-bed mercury chemisorption unit,
- * including:
+ * Provides CAPEX and OPEX estimates for a fixed-bed mercury chemisorption unit, including:
  * </p>
  * <ul>
  * <li>Pressure vessel fabrication cost (weight-based)</li>
@@ -65,11 +59,11 @@ public class MercuryRemovalCostEstimate extends UnitCostEstimateBaseClass {
     MercuryRemovalMechanicalDesign design = (MercuryRemovalMechanicalDesign) mechanicalEquipment;
 
     // Vessel shell + internals steel cost
-    double vesselSteelWeight = design.getWeigthVesselShell()
-        + design.getInternalsWeight() + design.getWeightNozzle();
+    double vesselSteelWeight =
+        design.getWeigthVesselShell() + design.getInternalsWeight() + design.getWeightNozzle();
 
-    double vesselCost = vesselSteelWeight * steelCostPerKg
-        * getCostCalculator().getMaterialFactor();
+    double vesselCost =
+        vesselSteelWeight * steelCostPerKg * getCostCalculator().getMaterialFactor();
 
     // Initial sorbent charge cost
     double sorbentCost = design.getSorbentChargeWeight() * sorbentUnitPrice;

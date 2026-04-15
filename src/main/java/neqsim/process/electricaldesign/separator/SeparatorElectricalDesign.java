@@ -2,7 +2,6 @@ package neqsim.process.electricaldesign.separator;
 
 import neqsim.process.electricaldesign.ElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.separator.Separator;
 
 /**
  * Electrical design for separators.
