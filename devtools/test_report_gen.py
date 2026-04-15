@@ -249,7 +249,7 @@ def main():
         test_results = json.load(f)
 
     issues = check_fn(test_results)
-    severities = [i[0] for i in issues]
+    severities = [i["severity"] for i in issues]
     if 'ERROR' in severities:
         print("  OK: Consistency checker catches benchmark-vs-conclusions contradiction")
     else:
@@ -262,17 +262,19 @@ def main():
         'However, pressure drop deviation exceeds tolerance and requires '
         'further investigation.')
     issues_fixed = check_fn(test_results_fixed)
-    fixed_errors = [i for i in issues_fixed if i[0] == 'ERROR']
-    if not fixed_errors:
-        print("  OK: Fixed conclusions pass consistency check (no ERRORs)")
+    fixed_errors = [i for i in issues_fixed if i["severity"] == 'ERROR']
+    # Only text-type errors should be resolved; calculation-type may persist
+    fixed_text_errors = [i for i in fixed_errors if i.get("fix_type") == "text"]
+    if not fixed_text_errors:
+        print("  OK: Fixed conclusions pass text consistency check (no text ERRORs)")
     else:
         errors.append(
-            "Fixed conclusions should not have ERRORs but got: {}".format(
-                fixed_errors[0][1]))
+            "Fixed conclusions should not have text ERRORs but got: {}".format(
+                fixed_text_errors[0]["message"]))
 
     # Test 3: None results should return INFO, not crash
     issues_none = check_fn(None)
-    if issues_none and issues_none[0][0] == 'INFO':
+    if issues_none and issues_none[0]["severity"] == 'INFO':
         print("  OK: None results returns INFO gracefully")
     else:
         errors.append("check_report_consistency(None) should return INFO")
@@ -284,8 +286,8 @@ def main():
     test_results_risky['conclusions'] = 'The analysis confirms safe and favourable conditions.'
     test_results_risky['benchmark_validation'] = {}  # Remove benchmark contradiction
     issues_risky = check_fn(test_results_risky)
-    risky_warnings = [i for i in issues_risky if i[0] == 'WARNING'
-                      and 'unfavourable' in i[1].lower() or '45' in i[1]]
+    risky_warnings = [i for i in issues_risky if i["severity"] == 'WARNING'
+                      and ('unfavourable' in i["message"].lower() or '45' in i["message"])]
     if risky_warnings:
         print("  OK: High prob_negative + positive conclusions flagged")
     else:
@@ -299,12 +301,32 @@ def main():
         'validation': {'mass_balance_pct': 0.01},
     }
     issues_clean = check_fn(clean_results)
-    clean_errors = [i for i in issues_clean if i[0] == 'ERROR']
+    clean_errors = [i for i in issues_clean if i["severity"] == 'ERROR']
     if not clean_errors:
         print("  OK: Clean results produce no ERRORs")
     else:
         errors.append("Clean results should not produce ERRORs: {}".format(
-            clean_errors[0][1]))
+            clean_errors[0]["message"]))
+
+    # Test 6: fix_type classification — benchmark >20% deviation => "calculation" fix
+    test_results_calc = dict(test_results)
+    test_results_calc['benchmark_validation'] = {
+        'tests': [
+            {'parameter': 'density', 'pass': False, 'deviation_pct': 25.0},
+        ]
+    }
+    test_results_calc['conclusions'] = 'The model is confirmed safe.'
+    issues_calc = check_fn(test_results_calc)
+    calc_fixes = [i for i in issues_calc if i.get("fix_type") == "calculation"]
+    text_fixes = [i for i in issues_calc if i.get("fix_type") == "text"]
+    if calc_fixes:
+        print("  OK: Benchmark >20% deviation classified as calculation fix")
+    else:
+        errors.append("Benchmark >20% deviation should be classified as calculation fix")
+    if text_fixes:
+        print("  OK: Optimistic conclusions classified as text fix")
+    else:
+        errors.append("Optimistic conclusions with failed benchmark should be text fix")
 
     if errors:
         print("\nFAILURES:")

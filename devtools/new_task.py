@@ -2241,11 +2241,13 @@ def add_custom_word_tables(doc, results):
 def check_report_consistency(results):
     """Check results.json for internal contradictions and inconsistencies.
 
-    Returns a list of (severity, message) tuples where severity is
-    \'ERROR\', \'WARNING\', or \'INFO\'.
+    Returns a list of dicts with keys: severity, message, fix_type.
+    severity: \'ERROR\', \'WARNING\', or \'INFO\'.
+    fix_type: \'text\' (auto-fixable in report), \'calculation\' (needs
+    agent to re-run notebook), or \'none\' (informational).
     """
     if not results:
-        return [("INFO", "No results.json loaded; all sections use placeholders.")]
+        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
 
     issues = []
 
@@ -2257,28 +2259,51 @@ def check_report_consistency(results):
     conclusions = results.get("conclusions", "")
 
     if n_fail > 0:
-        # Check if conclusions acknowledge the failures
+        # Check if any failure has large deviation (>20%) => calculation fix
+        large_devs = []
+        for t in bmk_tests:
+            if t.get("pass") is False:
+                dev_pct = t.get("deviation_pct")
+                if dev_pct is not None and abs(dev_pct) > 20:
+                    large_devs.append(t)
+
         failure_words = ["fail", "exceed", "deviation", "caution", "attention",
                          "issue", "concern", "discrepanc", "not met"]
         conc_lower = conclusions.lower()
         acknowledges = any(w in conc_lower for w in failure_words)
+
+        if large_devs:
+            params = [t.get("parameter", "?") for t in large_devs]
+            issues.append({
+                "severity": "ERROR",
+                "message": "Benchmark deviation >20% for: {}. Model may need "
+                           "retuning or different EOS/parameters.".format(
+                               ", ".join(params)),
+                "fix_type": "calculation",
+                "action": "Re-run benchmark notebook with revised model "
+                          "parameters (check EOS, BIPs, component characterization).",
+                "parameters": params,
+            })
+
         if not acknowledges:
             safe_words = ["safe", "confirm", "acceptable", "satisfactor",
                           "within limits", "meets"]
             if any(w in conc_lower for w in safe_words):
-                issues.append((
-                    "ERROR",
-                    "Conclusions say '{}' but {}/{} benchmark tests FAILED. "
-                    "Conclusions must acknowledge benchmark failures or explain "
-                    "why they are acceptable.".format(
-                        conclusions[:80], n_fail, n_total)
-                ))
+                issues.append({
+                    "severity": "ERROR",
+                    "message": "Conclusions say \\'{}\\' but {}/{} benchmark tests FAILED. "
+                               "Conclusions must acknowledge benchmark failures or explain "
+                               "why they are acceptable.".format(
+                                   conclusions[:80], n_fail, n_total),
+                    "fix_type": "text",
+                })
             else:
-                issues.append((
-                    "WARNING",
-                    "{}/{} benchmark tests failed. Consider addressing this "
-                    "in the conclusions.".format(n_fail, n_total)
-                ))
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "{}/{} benchmark tests failed. Consider addressing this "
+                               "in the conclusions.".format(n_fail, n_total),
+                    "fix_type": "text",
+                })
 
     # --- 2. Validation failures vs optimistic conclusions ---
     validation = results.get("validation", {})
@@ -2293,12 +2318,26 @@ def check_report_consistency(results):
         safe_words = ["safe", "confirm", "acceptable", "satisfactor",
                       "all.*pass", "within limits"]
         if any(w in conc_lower for w in safe_words):
-            issues.append((
-                "ERROR",
-                "Conclusions claim safety/acceptability but validation checks "
-                "show issues: {}. Revise conclusions or explain why failures "
-                "are acceptable.".format(", ".join(val_failures))
-            ))
+            issues.append({
+                "severity": "ERROR",
+                "message": "Conclusions claim safety/acceptability but validation checks "
+                           "show issues: {}. Revise conclusions or explain why failures "
+                           "are acceptable.".format(", ".join(val_failures)),
+                "fix_type": "text",
+            })
+        # Check if validation error is large enough to need recalculation
+        large_val = [v for v in validation.values()
+                     if isinstance(v, (int, float)) and v >= 10.0]
+        if large_val:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Validation error >=10% detected ({}). Model accuracy "
+                           "may be insufficient — consider retuning.".format(
+                               ", ".join(val_failures)),
+                "fix_type": "calculation",
+                "action": "Re-run main analysis notebook with tighter convergence "
+                          "tolerances or revised model setup.",
+            })
 
     # --- 3. High risk level vs unconditionally positive conclusions ---
     risk_eval = results.get("risk_evaluation", {})
@@ -2315,13 +2354,14 @@ def check_report_consistency(results):
             w in conc_lower for w in ["safe", "confirm", "recommend proceed",
                                       "no concern"]
         ):
-            issues.append((
-                "WARNING",
-                "{} high-risk items identified ({}), but conclusions don\\'t "
-                "mention risk mitigation. Consider adding caveats.".format(
-                    len(high_risks),
-                    ", ".join(r.get("description", "") for r in high_risks[:3]))
-            ))
+            issues.append({
+                "severity": "WARNING",
+                "message": "{} high-risk items identified ({}), but conclusions don\\'t "
+                           "mention risk mitigation. Consider adding caveats.".format(
+                               len(high_risks),
+                               ", ".join(r.get("description", "") for r in high_risks[:3])),
+                "fix_type": "text",
+            })
 
     # --- 4. High probability of negative outcome vs positive conclusions ---
     uncertainty = results.get("uncertainty", {})
@@ -2330,12 +2370,13 @@ def check_report_consistency(results):
         conc_lower = conclusions.lower()
         if any(w in conc_lower for w in ["safe", "confirm", "favourable",
                                           "recommend proceed"]):
-            issues.append((
-                "WARNING",
-                "Probability of unfavourable outcome is {:.1f}% (>25%). "
-                "Conclusions should acknowledge the significant downside "
-                "risk.".format(prob_neg)
-            ))
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
+                           "Conclusions should acknowledge the significant downside "
+                           "risk.".format(prob_neg),
+                "fix_type": "text",
+            })
 
     # --- 5. Discussion recommendations contradict conclusions ---
     discussions = results.get("figure_discussion", [])
@@ -2346,36 +2387,42 @@ def check_report_consistency(results):
         conc_lower = conclusions.lower()
         # Check for direct contradictions
         if "do not proceed" in rec_lower and "proceed" in conc_lower:
-            issues.append((
-                "ERROR",
-                "Discussion recommends \\'do not proceed\\' but conclusions "
-                "say \\'proceed\\'. Resolve the contradiction."
-            ))
+            issues.append({
+                "severity": "ERROR",
+                "message": "Discussion recommends \\'do not proceed\\' but conclusions "
+                           "say \\'proceed\\'. Resolve the contradiction.",
+                "fix_type": "text",
+            })
         if "further study" in rec_lower or "sensitivity" in rec_lower:
             if "no further" in conc_lower:
-                issues.append((
-                    "WARNING",
-                    "Discussion recommends further study/sensitivity analysis "
-                    "but conclusions dismiss it. Ensure consistency."
-                ))
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "Discussion recommends further study/sensitivity analysis "
+                               "but conclusions dismiss it. Ensure consistency.",
+                    "fix_type": "text",
+                })
 
     # --- 6. Missing critical sections ---
     if not results.get("key_results"):
-        issues.append((
-            "WARNING",
-            "No key_results in results.json. The Results section will be empty."
-        ))
+        issues.append({
+            "severity": "WARNING",
+            "message": "No key_results in results.json. The Results section will be empty.",
+            "fix_type": "calculation",
+            "action": "Run the main analysis notebook and populate key_results in results.json.",
+        })
     if not results.get("conclusions") or results["conclusions"].startswith("["):
-        issues.append((
-            "WARNING",
-            "Conclusions are still a placeholder. Fill in conclusions "
-            "before finalising the report."
-        ))
+        issues.append({
+            "severity": "WARNING",
+            "message": "Conclusions are still a placeholder. Fill in conclusions "
+                       "before finalising the report.",
+            "fix_type": "text",
+        })
     if not results.get("approach") or results["approach"].startswith("["):
-        issues.append((
-            "WARNING",
-            "Approach section is still a placeholder."
-        ))
+        issues.append({
+            "severity": "WARNING",
+            "message": "Approach section is still a placeholder.",
+            "fix_type": "text",
+        })
 
     # --- 7. Numerical consistency: key_results referenced in discussions ---
     key_results = results.get("key_results", {})
@@ -2396,52 +2443,63 @@ def check_report_consistency(results):
                     ]
                     val_strs = [v for v in val_strs if v]
                     if obs and not any(v in obs for v in val_strs):
-                        issues.append((
-                            "WARNING",
-                            "Discussion links to \\'{}\\' (value={}) but "
-                            "observation text doesn\\'t mention this value. "
-                            "Verify numerical consistency.".format(
-                                link_key, expected_val)
-                        ))
+                        issues.append({
+                            "severity": "WARNING",
+                            "message": "Discussion links to \\'{}\\' (value={}) but "
+                                       "observation text doesn\\'t mention this value. "
+                                       "Verify numerical consistency.".format(
+                                           link_key, expected_val),
+                            "fix_type": "calculation",
+                            "action": "Verify the value of \\'{}\\' in the notebook output "
+                                      "and update either key_results or the discussion "
+                                      "observation text.".format(link_key),
+                        })
 
     # --- 8. Risk level vs uncertainty probability alignment ---
     if prob_neg is not None and overall_risk:
         if prob_neg > 40 and overall_risk in ("low",):
-            issues.append((
-                "WARNING",
-                "Probability of negative outcome is {:.0f}% but overall risk "
-                "is \\'Low\\'. These seem inconsistent.".format(prob_neg)
-            ))
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of negative outcome is {:.0f}% but overall risk "
+                           "is \\'Low\\'. These seem inconsistent.".format(prob_neg),
+                "fix_type": "text",
+            })
         if prob_neg < 5 and overall_risk in ("high", "very high"):
-            issues.append((
-                "INFO",
-                "Probability of negative outcome is only {:.0f}% but overall "
-                "risk is \\'{}\\'. Consider whether the risk rating is driven "
-                "by non-economic factors.".format(prob_neg, overall_risk.title())
-            ))
+            issues.append({
+                "severity": "INFO",
+                "message": "Probability of negative outcome is only {:.0f}% but overall "
+                           "risk is \\'{}\\'. Consider whether the risk rating is driven "
+                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
+                "fix_type": "none",
+            })
 
     if not issues:
-        issues.append(("INFO", "No consistency issues found."))
+        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
 
     return issues
 
 
 def print_consistency_report(issues):
     """Print the consistency check results with visual formatting."""
-    errors = [i for i in issues if i[0] == "ERROR"]
-    warnings = [i for i in issues if i[0] == "WARNING"]
-    infos = [i for i in issues if i[0] == "INFO"]
+    errors = [i for i in issues if i["severity"] == "ERROR"]
+    warnings = [i for i in issues if i["severity"] == "WARNING"]
+    infos = [i for i in issues if i["severity"] == "INFO"]
+
+    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
+    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
 
     print("  ===== Report Consistency Check =====")
     if errors:
-        for sev, msg in errors:
-            print("  [ERROR] {}".format(msg))
+        for i in errors:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [ERROR{}] {}".format(tag, i["message"]))
     if warnings:
-        for sev, msg in warnings:
-            print("  [WARNING] {}".format(msg))
+        for i in warnings:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [WARNING{}] {}".format(tag, i["message"]))
     if infos and not errors and not warnings:
-        for sev, msg in infos:
-            print("  [OK] {}".format(msg))
+        for i in infos:
+            print("  [OK] {}".format(i["message"]))
 
     if errors:
         print("")
@@ -2454,8 +2512,110 @@ def print_consistency_report(issues):
             len(warnings)))
     else:
         print("  Report is internally consistent.")
+
+    if text_fixes:
+        print("  {} text fix(es) will be applied automatically.".format(len(text_fixes)))
+    if calc_fixes:
+        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
+            len(calc_fixes)))
+
     print("  ====================================")
     return len(errors)
+
+
+def auto_fix_consistency(results):
+    """Automatically fix consistency issues in results by appending caveats.
+
+    Modifies results dict in-place. Returns list of fixes applied.
+    """
+    if not results:
+        return []
+
+    fixes = []
+    conclusions = results.get("conclusions", "")
+    if not conclusions or conclusions.startswith("["):
+        return fixes
+
+    caveats = []
+
+    # --- Fix 1: Benchmark failures not acknowledged ---
+    bmk = results.get("benchmark_validation", {})
+    bmk_tests = bmk.get("tests", [])
+    failed_tests = [t for t in bmk_tests if t.get("pass") is False]
+    if failed_tests:
+        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
+                         "issue", "concern", "discrepanc", "not met",
+                         "outside tolerance", "tolerance"]
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in failure_words):
+            failed_params = [t.get("parameter", "?") for t in failed_tests]
+            caveat = ("Note: {}/{} benchmark comparisons exceeded tolerance "
+                      "({}). These deviations should be evaluated against "
+                      "project-specific acceptance criteria.".format(
+                          len(failed_tests), len(bmk_tests),
+                          ", ".join(failed_params)))
+            caveats.append(caveat)
+            fixes.append("Added benchmark failure caveat for: {}".format(
+                ", ".join(failed_params)))
+
+    # --- Fix 2: High risk items not mentioned ---
+    risk_eval = results.get("risk_evaluation", {})
+    risks = risk_eval.get("risks", [])
+    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()]
+    if high_risks:
+        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
+                         "condition", "subject to", "provided that"]
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in caution_words):
+            risk_descs = [r.get("description", "?") for r in high_risks[:3]]
+            caveat = ("Key risks requiring mitigation: {}. See Risk Evaluation "
+                      "section for details.".format("; ".join(risk_descs)))
+            caveats.append(caveat)
+            fixes.append("Added risk caveat for {} high-risk item(s)".format(
+                len(high_risks)))
+
+    # --- Fix 3: High probability of negative outcome ---
+    uncertainty = results.get("uncertainty", {})
+    prob_neg = uncertainty.get("prob_negative_pct")
+    if prob_neg is not None and prob_neg > 25:
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in ["probability", "unfavourable",
+                                              "downside", "negative",
+                                              "uncertainty"]):
+            caveat = ("Uncertainty analysis indicates a {:.0f}% probability of "
+                      "unfavourable outcome. Sensitivity to key input parameters "
+                      "should be considered in decision-making.".format(prob_neg))
+            caveats.append(caveat)
+            fixes.append("Added uncertainty caveat (P(negative)={:.0f}%)".format(
+                prob_neg))
+
+    # --- Fix 4: Validation failures ---
+    validation = results.get("validation", {})
+    val_failures = []
+    for check, outcome in validation.items():
+        if outcome is False:
+            val_failures.append(check.replace("_", " ").title())
+    if val_failures:
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in ["fail", "attention", "issue",
+                                              "not met", "concern"]):
+            caveat = ("Validation checks flagged: {}. Review these items "
+                      "before finalising design.".format(
+                          ", ".join(val_failures)))
+            caveats.append(caveat)
+            fixes.append("Added validation failure caveat for: {}".format(
+                ", ".join(val_failures)))
+
+    # --- Apply caveats by appending to conclusions ---
+    if caveats:
+        # Remove overly optimistic opening if needed
+        conc_lower = conclusions.lower()
+        # Don't replace the original — append caveats after it
+        updated = conclusions.rstrip(".")
+        updated += ". " + " ".join(caveats)
+        results["conclusions"] = updated
+
+    return fixes
 
 
 # ══════════════════════════════════════════════════════════
@@ -3012,6 +3172,55 @@ if __name__ == "__main__":
     issues = check_report_consistency(results)
     n_errors = print_consistency_report(issues)
 
+    # Separate text fixes (auto-apply) from calculation fixes (need agent)
+    text_issues = [i for i in issues
+                   if i.get("fix_type") == "text"
+                   and i["severity"] in ("ERROR", "WARNING")]
+    calc_issues = [i for i in issues if i.get("fix_type") == "calculation"]
+
+    # Auto-apply text fixes
+    if text_issues and results:
+        print("")
+        print("  Applying automatic text fixes...")
+        fixes = auto_fix_consistency(results)
+        for f in fixes:
+            print("    -> {}".format(f))
+        if fixes:
+            # Re-check to confirm fixes resolved text issues
+            recheck = check_report_consistency(results)
+            remaining_text_errors = [
+                i for i in recheck
+                if i.get("fix_type") == "text" and i["severity"] == "ERROR"
+            ]
+            if remaining_text_errors:
+                print("  {} text error(s) remain after auto-fix:".format(
+                    len(remaining_text_errors)))
+                for i in remaining_text_errors:
+                    print("    [ERROR] {}".format(i["message"]))
+            else:
+                print("  All text issues resolved.")
+
+    # Write fixes_needed.json for calculation-level issues
+    if calc_issues:
+        fixes_path = os.path.join(TASK_DIR, "fixes_needed.json")
+        calc_entries = []
+        for ci in calc_issues:
+            entry = {
+                "severity": ci["severity"],
+                "message": ci["message"],
+                "action": ci.get("action", "Re-run the relevant notebook with revised parameters."),
+            }
+            if "parameters" in ci:
+                entry["parameters"] = ci["parameters"]
+            calc_entries.append(entry)
+        with open(fixes_path, "w", encoding="utf-8") as f:
+            json.dump(calc_entries, f, indent=2)
+        print("")
+        print("  Wrote {} calculation fix(es) to fixes_needed.json".format(
+            len(calc_entries)))
+        print("  The solve-task agent should read this file and re-run")
+        print("  the affected notebooks before regenerating the report.")
+
     # Build sections (auto-populated where data exists)
     sections = build_sections(results, task_spec)
 
@@ -3023,10 +3232,11 @@ if __name__ == "__main__":
     print("Both reports generated.")
     print("  Open Report.html in a browser for navigable view.")
     print("  Open Report.docx for formal distribution.")
-    if n_errors > 0:
+    if calc_issues:
         print("")
-        print("  !! {} consistency ERROR(s) detected above.".format(n_errors))
-        print("  !! Fix results.json or MANUAL_SECTIONS before distributing.")
+        print("  !! {} calculation issue(s) need agent re-run.".format(
+            len(calc_issues)))
+        print("  !! See fixes_needed.json for details.")
     if not results:
         print("")
         print("TIP: Create results.json in the task root to auto-populate")

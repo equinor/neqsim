@@ -38,8 +38,18 @@ def audit_word(path):
 
 
 def main():
-    tmpdir = sys.argv[1] if len(sys.argv) > 1 else (
-        r"C:\Users\ESOL\AppData\Local\Temp\report_test_bdezxs1y")
+    tmpdir = sys.argv[1] if len(sys.argv) > 1 else None
+    if tmpdir is None:
+        # Try to find the latest report_test_* directory in temp
+        import glob
+        import tempfile
+        pattern = os.path.join(tempfile.gettempdir(), "report_test_*")
+        candidates = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        if candidates:
+            tmpdir = candidates[0]
+        else:
+            print("No report_test_* directory found in temp. Run test_report_gen.py first.")
+            return 1
     html_path = os.path.join(tmpdir, "step3_report", "Report.html")
     docx_path = os.path.join(tmpdir, "step3_report", "Report.docx")
 
