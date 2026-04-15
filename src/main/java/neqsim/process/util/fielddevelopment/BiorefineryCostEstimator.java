@@ -1,7 +1,6 @@
 package neqsim.process.util.fielddevelopment;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.google.gson.GsonBuilder;

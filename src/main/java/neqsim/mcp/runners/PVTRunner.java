@@ -1,6 +1,5 @@
 package neqsim.mcp.runners;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,23 +12,22 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.model.ResultProvenance;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemPrEos;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemGERG2008Eos;
-import neqsim.thermo.system.SystemPCSAFT;
-import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
 import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
 import neqsim.pvtsimulation.simulation.DifferentialLiberation;
+import neqsim.pvtsimulation.simulation.GOR;
 import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.pvtsimulation.simulation.SaturationTemperature;
 import neqsim.pvtsimulation.simulation.SeparatorTest;
 import neqsim.pvtsimulation.simulation.SwellingTest;
-import neqsim.pvtsimulation.simulation.GOR;
 import neqsim.pvtsimulation.simulation.ViscositySim;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermo.system.SystemGERG2008Eos;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPCSAFT;
+import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
 
 /**
  * Stateless PVT simulation runner for MCP integration.

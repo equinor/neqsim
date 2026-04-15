@@ -1,7 +1,6 @@
 package neqsim.process.electricaldesign.system;
 
 import neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**

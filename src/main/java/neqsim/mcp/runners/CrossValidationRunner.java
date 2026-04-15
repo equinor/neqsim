@@ -11,7 +11,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.automation.ProcessAutomation;
-import neqsim.process.automation.SimulationVariable;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 

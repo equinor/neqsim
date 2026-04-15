@@ -2,7 +2,6 @@ package neqsim.process.equipment.iec81346;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;

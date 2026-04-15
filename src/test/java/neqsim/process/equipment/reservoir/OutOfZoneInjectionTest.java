@@ -1,7 +1,6 @@
 package neqsim.process.equipment.reservoir;
 
 import static org.junit.jupiter.api.Assertions.*;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel;
 

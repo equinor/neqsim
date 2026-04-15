@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;

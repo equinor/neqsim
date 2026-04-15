@@ -11,7 +11,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Template for creating amine-based CO2 capture systems.
@@ -41,14 +40,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ProcessBasis basis = new ProcessBasis();
  * basis.setFeedFluid(flueGasFluid);
  * basis.setParameter("amineType", "MDEA");
  * basis.setParameter("amineConcentration", 0.45); // 45 wt%
  * basis.setParameter("co2RemovalTarget", 0.90); // 90% removal
- * 
+ *
  * CO2CaptureTemplate template = new CO2CaptureTemplate();
  * ProcessSystem capture = template.create(basis);
  * capture.run();
@@ -115,7 +114,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
 
     /**
      * Gets the amine name.
-     * 
+     *
      * @return amine name
      */
     public String getAmineName() {
@@ -124,7 +123,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
 
     /**
      * Gets typical amine concentration (mass fraction).
-     * 
+     *
      * @return typical concentration
      */
     public double getTypicalConcentration() {
@@ -133,7 +132,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
 
     /**
      * Gets recommended reboiler temperature in Celsius.
-     * 
+     *
      * @return reboiler temperature
      */
     public double getReboilerTemp() {
@@ -142,7 +141,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
 
     /**
      * Gets maximum rich loading (mol CO2/mol amine).
-     * 
+     *
      * @return maximum rich loading
      */
     public double getMaxRichLoading() {

@@ -1,6 +1,5 @@
 package neqsim.process.equipment.reservoir;
 
-import java.io.Serializable;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

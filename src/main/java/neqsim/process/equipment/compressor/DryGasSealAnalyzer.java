@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

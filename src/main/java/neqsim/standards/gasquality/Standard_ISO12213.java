@@ -3,7 +3,6 @@ package neqsim.standards.gasquality;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.util.gerg.NeqSimAGA8Detail;
 
 /**

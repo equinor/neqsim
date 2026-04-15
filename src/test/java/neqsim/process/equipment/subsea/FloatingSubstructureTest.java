@@ -2,7 +2,6 @@ package neqsim.process.equipment.subsea;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -41,17 +40,14 @@ class FloatingSubstructureTest {
         "Displacement must equal total mass");
 
     // GM must be positive for stable floating body
-    assertTrue(fs.getMetacentricHeight() > 0,
-        "GM must be positive for stability");
+    assertTrue(fs.getMetacentricHeight() > 0, "GM must be positive for stability");
 
     // Freeboard must be positive
     assertTrue(fs.getFreeboard() > 0, "Freeboard must be positive");
 
     // Natural periods should be reasonable
-    assertTrue(fs.getHeaveNaturalPeriod() > 5.0,
-        "Heave period should exceed 5 s");
-    assertTrue(fs.getHeaveNaturalPeriod() < 60.0,
-        "Heave period should be below 60 s");
+    assertTrue(fs.getHeaveNaturalPeriod() > 5.0, "Heave period should exceed 5 s");
+    assertTrue(fs.getHeaveNaturalPeriod() < 60.0, "Heave period should be below 60 s");
 
     // Steel weight should be reasonable (1000-5000 tonnes)
     assertTrue(fs.getSteelWeight() > 500, "Steel weight too low");
@@ -94,12 +90,10 @@ class FloatingSubstructureTest {
     fs.run();
 
     // Barge should have large waterplane area
-    assertTrue(fs.getWaterplaneArea() > 2000.0,
-        "Barge waterplane area should be large");
+    assertTrue(fs.getWaterplaneArea() > 2000.0, "Barge waterplane area should be large");
 
     // GM should be large (wide waterplane)
-    assertTrue(fs.getMetacentricHeight() > 5.0,
-        "Barge GM should be large due to wide waterplane");
+    assertTrue(fs.getMetacentricHeight() > 5.0, "Barge GM should be large due to wide waterplane");
 
     assertEquals(fs.getTotalMass(), fs.getDisplacement(), 1.0);
   }
@@ -120,8 +114,7 @@ class FloatingSubstructureTest {
 
     // A well-designed semi-sub should pass stability check
     // (GM > 1.0 m per DNV-ST-0119)
-    assertTrue(fs.isStabilityAdequate(),
-        "Semi-sub should have adequate stability (GM > 1.0 m)");
+    assertTrue(fs.isStabilityAdequate(), "Semi-sub should have adequate stability (GM > 1.0 m)");
   }
 
   @Test
