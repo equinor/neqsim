@@ -1451,6 +1451,117 @@ def _add_inline_math_runs(paragraph, text):
                     paragraph.add_run(fp)
 
 
+def auto_executive_summary(results, task_spec):
+    """Generate an executive summary paragraph from available results data."""
+    parts = []
+
+    # Opening: what was done
+    approach = ""
+    if results and results.get("approach"):
+        approach = results["approach"]
+    if approach and not approach.startswith("["):
+        # First sentence of approach
+        first_sent = approach.split(". ")[0].rstrip(".")
+        parts.append(first_sent + ".")
+
+    # Key findings: summarize top results
+    if results and results.get("key_results"):
+        kr = results["key_results"]
+        items = list(kr.items())[:5]  # Top 5 results
+        findings = []
+        for key, value in items:
+            label, unit = _parse_key_name(key)
+            if isinstance(value, float):
+                val_str = "{:.4g}".format(value)
+            else:
+                val_str = str(value)
+            if unit:
+                findings.append("{} = {} {}".format(label, val_str, unit))
+            else:
+                findings.append("{} = {}".format(label, val_str))
+        if findings:
+            parts.append("Key findings: {}.".format(", ".join(findings)))
+
+    # Uncertainty summary
+    if results and results.get("uncertainty"):
+        unc = results["uncertainty"]
+        p50 = unc.get("p50")
+        output = unc.get("output_parameter", "output")
+        prob_neg = unc.get("prob_negative_pct")
+        if p50 is not None:
+            unc_text = "Monte Carlo analysis ({} simulations) yields a P50 {} of {:.4g}".format(
+                unc.get("n_simulations", "N"), output, p50)
+            p10 = unc.get("p10")
+            p90 = unc.get("p90")
+            if p10 is not None and p90 is not None:
+                unc_text += " (P10: {:.4g}, P90: {:.4g})".format(p10, p90)
+            unc_text += "."
+            if prob_neg is not None:
+                unc_text += " Probability of unfavourable outcome: {:.1f}%.".format(prob_neg)
+            parts.append(unc_text)
+
+    # Validation status
+    if results and results.get("validation"):
+        val = results["validation"]
+        all_pass = all(
+            v is True or (isinstance(v, (int, float)) and v < 1.0)
+            for v in val.values()
+        )
+        if all_pass:
+            parts.append("All validation checks passed.")
+        else:
+            parts.append("Some validation checks require attention.")
+
+    # Benchmark status
+    if results and results.get("benchmark_validation"):
+        bv = results["benchmark_validation"]
+        tests = bv.get("tests", [])
+        n_pass = sum(1 for t in tests if t.get("pass") is True)
+        n_total = len(tests)
+        if n_pass == n_total:
+            parts.append("All {} benchmark comparisons passed.".format(n_total))
+        else:
+            parts.append("{}/{} benchmark comparisons passed.".format(n_pass, n_total))
+
+    # Conclusion
+    if results and results.get("conclusions"):
+        conc = results["conclusions"]
+        if not conc.startswith("["):
+            parts.append(conc)
+
+    # Risk summary
+    if results and results.get("risk_evaluation"):
+        re_ = results["risk_evaluation"]
+        overall = re_.get("overall_risk_level", "")
+        if overall:
+            parts.append("Overall project risk is assessed as {}.".format(overall))
+
+    if parts:
+        return " ".join(parts)
+    return ""
+
+
+def auto_problem_description(results, task_spec):
+    """Generate a problem description from task_spec.md sections."""
+    parts = []
+    # Try extracting objective/description from task_spec
+    for heading in ["Objective", "Description", "Problem Statement",
+                    "Task Description", "Background"]:
+        text = extract_spec_section(task_spec, heading)
+        if text:
+            parts.append(text)
+            break  # Use the first match
+
+    # If task_spec has operating envelope, mention it
+    envelope = extract_spec_section(task_spec, "Operating Envelope")
+    if envelope:
+        parts.append("Operating envelope: " + envelope.replace("\\n", " ").strip())
+
+    if parts:
+        return "\\n\\n".join(parts)
+    return ""
+
+
 def _parse_key_name(key):
     """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
     unit_suffixes = [
@@ -1615,7 +1726,7 @@ def format_figure_discussion_html(results):
     if not discussions:
         return ""
     html_parts = []
-    for disc in discussions:
+    for i, disc in enumerate(discussions, 1):
         figure = disc.get("figure", "")
         title = disc.get("title", figure)
         obs = disc.get("observation", "")
@@ -1623,8 +1734,9 @@ def format_figure_discussion_html(results):
         impl = disc.get("implication", "")
         rec = disc.get("recommendation", "")
         linked = disc.get("linked_results", [])
+        insight_ref = disc.get("insight_question_ref", "")
         h = \'<div class="discussion-block">\\n\'
-        h += \'  <h3 class="disc-title">{}</h3>\\n\'.format(title)
+        h += \'  <h3 class="disc-title">Discussion {}: {}</h3>\\n\'.format(i, title)
         if obs:
             h += \'  <div class="disc-row"><span class="disc-label">Observation:</span> {}</div>\\n\'.format(obs)
         if mech:
@@ -1633,11 +1745,29 @@ def format_figure_discussion_html(results):
             h += \'  <div class="disc-row"><span class="disc-label">Engineering Implication:</span> {}</div>\\n\'.format(impl)
         if rec:
             h += \'  <div class="disc-row disc-rec"><span class="disc-label">Recommendation:</span> {}</div>\\n\'.format(rec)
+        trace_parts = []
         if linked:
-            h += \'  <div class="disc-trace">Linked results: {}</div>\\n\'.format(
-                ", ".join(linked))
+            trace_parts.append("Results: " + ", ".join(linked))
+        if insight_ref:
+            trace_parts.append("Addresses: " + insight_ref)
+        if figure:
+            trace_parts.append("Figure: " + figure)
+        if trace_parts:
+            h += \'  <div class="disc-trace">{}</div>\\n\'.format(
+                " &bull; ".join(trace_parts))
         h += \'</div>\\n\'
         html_parts.append(h)
+
+    # Summary of all recommendations
+    recs = [d.get("recommendation", "") for d in discussions if d.get("recommendation")]
+    if len(recs) > 1:
+        summary = \'<div class="discussion-summary">\\n\'
+        summary += \'  <h3>Summary of Recommendations</h3>\\n<ol>\\n\'
+        for r in recs:
+            summary += \'  <li>{}</li>\\n\'.format(r)
+        summary += \'</ol></div>\\n\'
+        html_parts.append(summary)
+
     return "\\n".join(html_parts)
 
 
@@ -1801,14 +1931,16 @@ def add_figure_discussion_word(doc, results):
     discussions = results.get("figure_discussion", [])
     if not discussions:
         return
-    for disc in discussions:
+    for i, disc in enumerate(discussions, 1):
         title = disc.get("title", disc.get("figure", ""))
         obs = disc.get("observation", "")
         mech = disc.get("mechanism", "")
         impl = disc.get("implication", "")
         rec = disc.get("recommendation", "")
         linked = disc.get("linked_results", [])
-        doc.add_heading(title, level=2)
+        insight_ref = disc.get("insight_question_ref", "")
+        figure = disc.get("figure", "")
+        doc.add_heading("Discussion {}: {}".format(i, title), level=2)
         fields = [
             ("Observation", obs),
             ("Physical Mechanism", mech),
@@ -1821,14 +1953,27 @@ def add_figure_discussion_word(doc, results):
                 run = p.add_run("{}: ".format(label))
                 run.bold = True
                 p.add_run(text)
+        # Traceability line
+        trace_parts = []
         if linked:
+            trace_parts.append("Results: " + ", ".join(linked))
+        if insight_ref:
+            trace_parts.append("Addresses: " + insight_ref)
+        if figure:
+            trace_parts.append("Figure: " + figure)
+        if trace_parts:
             p = doc.add_paragraph()
-            run = p.add_run("Linked results: ")
+            run = p.add_run(" | ".join(trace_parts))
             run.font.size = Pt(8)
             run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
-            run2 = p.add_run(", ".join(linked))
-            run2.font.size = Pt(8)
-            run2.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+        doc.add_paragraph("")
+
+    # Summary of all recommendations
+    recs = [d.get("recommendation", "") for d in discussions if d.get("recommendation")]
+    if len(recs) > 1:
+        doc.add_heading("Summary of Recommendations", level=2)
+        for j, r in enumerate(recs, 1):
+            doc.add_paragraph("{}. {}".format(j, r))
         doc.add_paragraph("")
 
 
@@ -2090,6 +2235,230 @@ def add_custom_word_tables(doc, results):
 
 
 # ══════════════════════════════════════════════════════════
+# Report consistency checker
+# ══════════════════════════════════════════════════════════
+
+def check_report_consistency(results):
+    """Check results.json for internal contradictions and inconsistencies.
+
+    Returns a list of (severity, message) tuples where severity is
+    \'ERROR\', \'WARNING\', or \'INFO\'.
+    """
+    if not results:
+        return [("INFO", "No results.json loaded; all sections use placeholders.")]
+
+    issues = []
+
+    # --- 1. Benchmark failures vs optimistic conclusions ---
+    bmk = results.get("benchmark_validation", {})
+    bmk_tests = bmk.get("tests", [])
+    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
+    n_total = len(bmk_tests)
+    conclusions = results.get("conclusions", "")
+
+    if n_fail > 0:
+        # Check if conclusions acknowledge the failures
+        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
+                         "issue", "concern", "discrepanc", "not met"]
+        conc_lower = conclusions.lower()
+        acknowledges = any(w in conc_lower for w in failure_words)
+        if not acknowledges:
+            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                          "within limits", "meets"]
+            if any(w in conc_lower for w in safe_words):
+                issues.append((
+                    "ERROR",
+                    "Conclusions say '{}' but {}/{} benchmark tests FAILED. "
+                    "Conclusions must acknowledge benchmark failures or explain "
+                    "why they are acceptable.".format(
+                        conclusions[:80], n_fail, n_total)
+                ))
+            else:
+                issues.append((
+                    "WARNING",
+                    "{}/{} benchmark tests failed. Consider addressing this "
+                    "in the conclusions.".format(n_fail, n_total)
+                ))
+
+    # --- 2. Validation failures vs optimistic conclusions ---
+    validation = results.get("validation", {})
+    val_failures = []
+    for check, outcome in validation.items():
+        if outcome is False:
+            val_failures.append(check)
+        elif isinstance(outcome, (int, float)) and outcome >= 5.0:
+            val_failures.append("{} ({})".format(check, outcome))
+    if val_failures:
+        conc_lower = conclusions.lower()
+        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                      "all.*pass", "within limits"]
+        if any(w in conc_lower for w in safe_words):
+            issues.append((
+                "ERROR",
+                "Conclusions claim safety/acceptability but validation checks "
+                "show issues: {}. Revise conclusions or explain why failures "
+                "are acceptable.".format(", ".join(val_failures))
+            ))
+
+    # --- 3. High risk level vs unconditionally positive conclusions ---
+    risk_eval = results.get("risk_evaluation", {})
+    overall_risk = risk_eval.get("overall_risk_level", "").lower()
+    risks = risk_eval.get("risks", [])
+    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
+                  or "very high" in r.get("risk_level", "").lower()]
+    if high_risks:
+        conc_lower = conclusions.lower()
+        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
+                         "condition", "subject to", "provided that"]
+        has_caution = any(w in conc_lower for w in caution_words)
+        if not has_caution and any(
+            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
+                                      "no concern"]
+        ):
+            issues.append((
+                "WARNING",
+                "{} high-risk items identified ({}), but conclusions don\\'t "
+                "mention risk mitigation. Consider adding caveats.".format(
+                    len(high_risks),
+                    ", ".join(r.get("description", "") for r in high_risks[:3]))
+            ))
+
+    # --- 4. High probability of negative outcome vs positive conclusions ---
+    uncertainty = results.get("uncertainty", {})
+    prob_neg = uncertainty.get("prob_negative_pct")
+    if prob_neg is not None and prob_neg > 25:
+        conc_lower = conclusions.lower()
+        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
+                                          "recommend proceed"]):
+            issues.append((
+                "WARNING",
+                "Probability of unfavourable outcome is {:.1f}% (>25%). "
+                "Conclusions should acknowledge the significant downside "
+                "risk.".format(prob_neg)
+            ))
+
+    # --- 5. Discussion recommendations contradict conclusions ---
+    discussions = results.get("figure_discussion", [])
+    recs = [d.get("recommendation", "") for d in discussions
+            if d.get("recommendation")]
+    for rec in recs:
+        rec_lower = rec.lower()
+        conc_lower = conclusions.lower()
+        # Check for direct contradictions
+        if "do not proceed" in rec_lower and "proceed" in conc_lower:
+            issues.append((
+                "ERROR",
+                "Discussion recommends \\'do not proceed\\' but conclusions "
+                "say \\'proceed\\'. Resolve the contradiction."
+            ))
+        if "further study" in rec_lower or "sensitivity" in rec_lower:
+            if "no further" in conc_lower:
+                issues.append((
+                    "WARNING",
+                    "Discussion recommends further study/sensitivity analysis "
+                    "but conclusions dismiss it. Ensure consistency."
+                ))
+
+    # --- 6. Missing critical sections ---
+    if not results.get("key_results"):
+        issues.append((
+            "WARNING",
+            "No key_results in results.json. The Results section will be empty."
+        ))
+    if not results.get("conclusions") or results["conclusions"].startswith("["):
+        issues.append((
+            "WARNING",
+            "Conclusions are still a placeholder. Fill in conclusions "
+            "before finalising the report."
+        ))
+    if not results.get("approach") or results["approach"].startswith("["):
+        issues.append((
+            "WARNING",
+            "Approach section is still a placeholder."
+        ))
+
+    # --- 7. Numerical consistency: key_results referenced in discussions ---
+    key_results = results.get("key_results", {})
+    for disc in discussions:
+        obs = disc.get("observation", "")
+        linked = disc.get("linked_results", [])
+        for link_key in linked:
+            if link_key in key_results:
+                expected_val = key_results[link_key]
+                if isinstance(expected_val, float):
+                    # Check if the observation mentions a consistent number
+                    val_strs = [
+                        "{:.4g}".format(expected_val),
+                        "{:.3g}".format(expected_val),
+                        "{:.2g}".format(expected_val),
+                        "{:.1f}".format(expected_val),
+                        str(int(expected_val)) if expected_val == int(expected_val) else "",
+                    ]
+                    val_strs = [v for v in val_strs if v]
+                    if obs and not any(v in obs for v in val_strs):
+                        issues.append((
+                            "WARNING",
+                            "Discussion links to \\'{}\\' (value={}) but "
+                            "observation text doesn\\'t mention this value. "
+                            "Verify numerical consistency.".format(
+                                link_key, expected_val)
+                        ))
+
+    # --- 8. Risk level vs uncertainty probability alignment ---
+    if prob_neg is not None and overall_risk:
+        if prob_neg > 40 and overall_risk in ("low",):
+            issues.append((
+                "WARNING",
+                "Probability of negative outcome is {:.0f}% but overall risk "
+                "is \\'Low\\'. These seem inconsistent.".format(prob_neg)
+            ))
+        if prob_neg < 5 and overall_risk in ("high", "very high"):
+            issues.append((
+                "INFO",
+                "Probability of negative outcome is only {:.0f}% but overall "
+                "risk is \\'{}\\'. Consider whether the risk rating is driven "
+                "by non-economic factors.".format(prob_neg, overall_risk.title())
+            ))
+
+    if not issues:
+        issues.append(("INFO", "No consistency issues found."))
+
+    return issues
+
+
+def print_consistency_report(issues):
+    """Print the consistency check results with visual formatting."""
+    errors = [i for i in issues if i[0] == "ERROR"]
+    warnings = [i for i in issues if i[0] == "WARNING"]
+    infos = [i for i in issues if i[0] == "INFO"]
+
+    print("  ===== Report Consistency Check =====")
+    if errors:
+        for sev, msg in errors:
+            print("  [ERROR] {}".format(msg))
+    if warnings:
+        for sev, msg in warnings:
+            print("  [WARNING] {}".format(msg))
+    if infos and not errors and not warnings:
+        for sev, msg in infos:
+            print("  [OK] {}".format(msg))
+
+    if errors:
+        print("")
+        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
+            len(errors)))
+        print("  Errors indicate contradictions that undermine report credibility.")
+    elif warnings:
+        print("")
+        print("  {} WARNING(s) found. Review before finalising.".format(
+            len(warnings)))
+    else:
+        print("  Report is internally consistent.")
+    print("  ====================================")
+    return len(errors)
+
+
+# ══════════════════════════════════════════════════════════
 # Build sections (auto-populated where possible)
 # ══════════════════════════════════════════════════════════
 
@@ -2097,16 +2466,22 @@ def build_sections(results, task_spec):
     """Build report sections, auto-populating from results.json and task_spec.md."""
     sections = []
 
-    # 1. Executive Summary
+    # 1. Executive Summary (auto-generated from results data)
+    exec_summary = auto_executive_summary(results, task_spec)
+    if not exec_summary:
+        exec_summary = MANUAL_SECTIONS["executive_summary"]
     sections.append({
         "heading": "1. Executive Summary",
-        "content": MANUAL_SECTIONS["executive_summary"],
+        "content": exec_summary,
     })
 
-    # 2. Problem Description
+    # 2. Problem Description (auto-populated from task_spec.md)
+    prob_desc = auto_problem_description(results, task_spec)
+    if not prob_desc:
+        prob_desc = MANUAL_SECTIONS["problem_description"]
     sections.append({
         "heading": "2. Problem Description",
-        "content": MANUAL_SECTIONS["problem_description"],
+        "content": prob_desc,
     })
 
     # 3. Scope and Standards (auto-populated from task_spec.md)
@@ -2569,6 +2944,11 @@ def build_html_report(sections, results=None):
         .disc-rec {{ background: #e8f5e9; padding: 0.4rem 0.6rem;
             border-radius: 3px; margin-top: 0.3rem; }}
         .disc-trace {{ font-size: 0.8rem; color: #888; margin-top: 0.4rem; }}
+        .discussion-summary {{ background: #f0f4f8; border-left: 3px solid #1a73e8;
+            padding: 1rem 1.2rem; margin-top: 1.5rem; border-radius: 4px; }}
+        .discussion-summary h3 {{ margin-top: 0; color: #1a73e8; }}
+        .discussion-summary ol {{ margin: 0.5rem 0; padding-left: 1.5rem; }}
+        .discussion-summary li {{ margin-bottom: 0.3rem; }}
         .benchmark-table {{ max-width: 700px; }}
         .uncertainty-table {{ max-width: 600px; }}
         .tornado-table {{ max-width: 600px; }}
@@ -2627,6 +3007,11 @@ if __name__ == "__main__":
     results = load_results()
     task_spec = load_task_spec()
 
+    # Run consistency check BEFORE generating reports
+    print("")
+    issues = check_report_consistency(results)
+    n_errors = print_consistency_report(issues)
+
     # Build sections (auto-populated where data exists)
     sections = build_sections(results, task_spec)
 
@@ -2638,6 +3023,10 @@ if __name__ == "__main__":
     print("Both reports generated.")
     print("  Open Report.html in a browser for navigable view.")
     print("  Open Report.docx for formal distribution.")
+    if n_errors > 0:
+        print("")
+        print("  !! {} consistency ERROR(s) detected above.".format(n_errors))
+        print("  !! Fix results.json or MANUAL_SECTIONS before distributing.")
     if not results:
         print("")
         print("TIP: Create results.json in the task root to auto-populate")

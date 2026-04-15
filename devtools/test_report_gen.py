@@ -33,9 +33,17 @@ def create_test_task(tmpdir):
     for subdir in ['figures', 'step3_report', 'step1_scope_and_research']:
         os.makedirs(os.path.join(tmpdir, subdir), exist_ok=True)
 
-    # task_spec.md
+    # task_spec.md — richer with Objective section for auto problem description
     with open(os.path.join(tmpdir, 'step1_scope_and_research', 'task_spec.md'), 'w') as f:
-        f.write('## Applicable Standards\nASME VIII\n## Acceptance Criteria\nT error < 5%\n')
+        f.write(
+            '## Objective\n'
+            'Evaluate the thermal performance of a JT cooling system '
+            'for rich gas processing at high pressure.\n\n'
+            '## Applicable Standards\nASME VIII\n'
+            '## Operating Envelope\n'
+            'Pressure: 60-120 bara, Temperature: -20 to 40 C\n'
+            '## Acceptance Criteria\nT error < 5%\n'
+        )
 
     # Tiny figure
     with open(os.path.join(tmpdir, 'figures', 'plot.png'), 'wb') as f:
@@ -57,6 +65,17 @@ def create_test_task(tmpdir):
                 'implication': 'Equipment can operate safely.',
                 'recommendation': 'Proceed with current design.',
                 'linked_results': ['outlet_T_C'],
+                'insight_question_ref': 'Q1',
+            },
+            {
+                'figure': 'plot.png',
+                'title': 'Pressure Drop Analysis',
+                'observation': 'Pressure drop of 3.2 bar exceeds reference by 14%.',
+                'mechanism': 'Higher friction factor due to pipe roughness assumption.',
+                'implication': 'May require larger pipe diameter for production optimization.',
+                'recommendation': 'Conduct sensitivity study on pipe roughness.',
+                'linked_results': ['pressure_drop_bar'],
+                'insight_question_ref': 'Q2',
             }
         ],
         'benchmark_validation': {
@@ -165,20 +184,37 @@ def main():
 
         # Check new sections are rendered
         checks = {
+            # Auto-generated executive summary
+            'Auto exec summary - approach': 'SRK EOS',
+            'Auto exec summary - key result': 'Outlet T',
+            'Auto exec summary - uncertainty': 'P50',
+            'Auto exec summary - benchmark count': 'benchmark comparisons',
+            'Auto exec summary - risk level': 'Overall project risk',
+            # Auto-generated problem description
+            'Auto problem desc - objective': 'thermal performance',
+            'Auto problem desc - operating envelope': 'Operating envelope',
+            # Discussion with numbering
             'Results Discussion section': 'Results Discussion',
             'discussion-block class': 'discussion-block',
+            'discussion numbering': 'Discussion 1:',
             'observation text': 'Max temperature is 25.3',
             'mechanism text': 'JT cooling',
             'recommendation text': 'Proceed with current design',
+            'second discussion': 'Pressure Drop Analysis',
+            'insight question ref': 'Q1',
+            'recommendation summary': 'Summary of Recommendations',
+            # Benchmark
             'Benchmark section': 'Benchmark Validation',
             'benchmark-table class': 'benchmark-table',
             'NIST source': 'NIST Reference',
             'PASS badge': 'PASS',
             'FAIL badge': 'FAIL',
+            # Uncertainty
             'Uncertainty section': 'Uncertainty Analysis',
             'P10 value': 'P10',
             'P50 value': 'P50',
             'tornado table': 'Sensitivity Ranking',
+            # Risk
             'Risk section': 'Risk Evaluation',
             'risk-high class': 'risk-high',
             'risk-low class': 'risk-low',
@@ -189,6 +225,86 @@ def main():
                 errors.append("MISSING in HTML: {} ('{}')".format(desc, needle))
             else:
                 print("  OK: {}".format(desc))
+
+    # ---- Consistency checker tests ----
+    print("\n  ---- Consistency Checker Tests ----")
+
+    # Extract check_report_consistency from the generated report script
+    # by executing the template and pulling the function from its namespace
+    saved_cwd2 = os.getcwd()
+    os.chdir(os.path.join(tmpdir, 'step3_report'))
+    try:
+        with open(report_script, 'r', encoding='utf-8') as f:
+            src = f.read()
+        # Compile and exec just the function definitions (stop before __main__)
+        # We need to exec in a namespace that has the imports and helpers
+        ns = {'__file__': report_script, '__name__': '_test_ns_'}
+        exec(compile(src, report_script, 'exec'), ns)
+        check_fn = ns['check_report_consistency']
+    finally:
+        os.chdir(saved_cwd2)
+
+    # Test 1: Our mock data has "safe operation" + benchmark FAIL => should flag ERROR
+    with open(os.path.join(tmpdir, 'results.json'), 'r') as f:
+        test_results = json.load(f)
+
+    issues = check_fn(test_results)
+    severities = [i[0] for i in issues]
+    if 'ERROR' in severities:
+        print("  OK: Consistency checker catches benchmark-vs-conclusions contradiction")
+    else:
+        errors.append("Consistency checker should flag ERROR for 'safe operation' + benchmark FAIL")
+
+    # Test 2: Fix conclusions to acknowledge the failure, then re-check
+    test_results_fixed = dict(test_results)
+    test_results_fixed['conclusions'] = (
+        'The analysis shows acceptable thermal performance. '
+        'However, pressure drop deviation exceeds tolerance and requires '
+        'further investigation.')
+    issues_fixed = check_fn(test_results_fixed)
+    fixed_errors = [i for i in issues_fixed if i[0] == 'ERROR']
+    if not fixed_errors:
+        print("  OK: Fixed conclusions pass consistency check (no ERRORs)")
+    else:
+        errors.append(
+            "Fixed conclusions should not have ERRORs but got: {}".format(
+                fixed_errors[0][1]))
+
+    # Test 3: None results should return INFO, not crash
+    issues_none = check_fn(None)
+    if issues_none and issues_none[0][0] == 'INFO':
+        print("  OK: None results returns INFO gracefully")
+    else:
+        errors.append("check_report_consistency(None) should return INFO")
+
+    # Test 4: High prob_negative + positive conclusions => WARNING
+    test_results_risky = dict(test_results)
+    test_results_risky['uncertainty'] = dict(test_results.get('uncertainty', {}))
+    test_results_risky['uncertainty']['prob_negative_pct'] = 45.0
+    test_results_risky['conclusions'] = 'The analysis confirms safe and favourable conditions.'
+    test_results_risky['benchmark_validation'] = {}  # Remove benchmark contradiction
+    issues_risky = check_fn(test_results_risky)
+    risky_warnings = [i for i in issues_risky if i[0] == 'WARNING'
+                      and 'unfavourable' in i[1].lower() or '45' in i[1]]
+    if risky_warnings:
+        print("  OK: High prob_negative + positive conclusions flagged")
+    else:
+        errors.append("Should flag WARNING for 45% negative probability + positive conclusions")
+
+    # Test 5: Clean results should have no errors
+    clean_results = {
+        'key_results': {'temp_C': 25.0},
+        'approach': 'Used SRK EOS.',
+        'conclusions': 'Results are within acceptable ranges.',
+        'validation': {'mass_balance_pct': 0.01},
+    }
+    issues_clean = check_fn(clean_results)
+    clean_errors = [i for i in issues_clean if i[0] == 'ERROR']
+    if not clean_errors:
+        print("  OK: Clean results produce no ERRORs")
+    else:
+        errors.append("Clean results should not produce ERRORs: {}".format(
+            clean_errors[0][1]))
 
     if errors:
         print("\nFAILURES:")
