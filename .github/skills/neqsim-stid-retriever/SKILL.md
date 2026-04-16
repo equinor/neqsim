@@ -8,6 +8,35 @@ description: "Retrieves engineering documents (compressor curves, mechanical dra
 Retrieve engineering documents (compressor curves, mechanical drawings, data
 sheets, vendor reports) for use in NeqSim task-solving workflows.
 
+## ⚠️ CRITICAL: All documents go INSIDE the task folder
+
+**ALL downloaded documents — STID drawings, PI historian exports,
+vendor datasheets, P&IDs, literature PDFs — MUST be saved to
+`step1_scope_and_research/references/` within the task folder.**
+
+NEVER download or save task-related files to workspace-level directories like
+`output/`, `figures/`, or any path outside `task_solve/YYYY-MM-DD_slug/`.
+
+```python
+# CORRECT — saves inside the task folder:
+TASK_DIR = "task_solve/YYYY-MM-DD_slug"
+out_dir = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
+
+# WRONG — saves outside the task folder:
+out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_nls")  # NEVER
+out_dir = "output/stid_docs"  # NEVER
+```
+
+**For PDF-to-PNG conversion:** Output to the task's `figures/`:
+```bash
+python devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
+    --outdir task_solve/YYYY-MM-DD_slug/figures/
+```
+
+This rule ensures every task is self-contained and portable.
+
+---
+
 This skill is **backend-agnostic** — it works with any document source:
 - Documents placed manually in the task folder
 - A pre-existing local directory of downloaded files
@@ -61,6 +90,33 @@ The task solver will automatically:
 When a retrieval backend is configured via `devtools/doc_retrieval_config.yaml`
 (gitignored — never committed), the task solver can auto-fetch documents
 by equipment tag. See the config template below for setup instructions.
+
+### STID Download Helper (Recommended)
+
+Use `devtools/stid_download.py` to download STID documents directly into a
+task folder. This ensures all documents end up in the right place:
+
+```bash
+# Download documents by tag — saves to task's references/ folder
+python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
+    --inst NLS --tags 30PT0185 30PT0189 33AI0117
+
+# Download + convert to PNG for AI analysis
+python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
+    --inst NLS --tags 30PT0185 --convert-png
+
+# Download specific document numbers
+python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
+    --inst NLS --docs E234-AS-P-XB-30005-01 E234-AS-BI672-DS-00001
+```
+
+The helper:
+- Downloads PDFs to `step1_scope_and_research/references/` inside the task folder
+- Saves a `stid_retrieval_manifest.json` for traceability
+- Optionally converts PDFs to PNGs in the task's `figures/` directory
+- Skips already-downloaded files
+
+### Generic retrieval interface
 
 ```python
 # Generic retrieval interface used by the task solver:

@@ -1335,6 +1335,34 @@ All deliverables (task_spec.md, notebooks, notes.md, results.json, figures/)
 are placed inside this folder. Never write task analysis files to `examples/`,
 docs, or the workspace root.
 
+### ⚠️ MANDATORY: All downloaded documents go INSIDE the task folder
+
+**All documents retrieved during a task — STID drawings, PI historian exports,
+vendor datasheets, P&IDs, literature PDFs, downloaded standards — MUST be saved
+to `step1_scope_and_research/references/` within the task folder.**
+
+NEVER download or save task-related files to workspace-level directories like
+`output/`, `figures/`, or any path outside `task_solve/YYYY-MM-DD_slug/`.
+
+**For STID/document retrieval scripts:** Always pass the task's `references/`
+path as the output directory:
+```python
+# CORRECT — saves inside the task folder:
+out_dir = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
+
+# WRONG — saves outside the task folder:
+out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_nls")  # NEVER DO THIS
+```
+
+**For PDF-to-PNG conversion:** Output converted images to the task's `figures/`:
+```bash
+python devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
+    --outdir task_solve/YYYY-MM-DD_slug/figures/
+```
+
+This ensures every task is self-contained and portable — zip the task folder
+and everything needed is inside it.
+
 ### Before Starting
 
 1. Read `CONTEXT.md` for orientation (60 seconds)

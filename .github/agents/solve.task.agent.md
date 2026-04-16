@@ -24,7 +24,7 @@ task_solve/YYYY-MM-DD_task_slug/
 │   ├── notes.md                       ← Research notes
 │   ├── analysis.md                    ← Deep analysis (Design/Development)
 │   ├── neqsim_improvements.md         ← NIPs for gaps found
-│   └── references/                    ← Reference documents
+│   └── references/                    ← Reference documents (STID, PDFs, datasheets)
 ├── step2_analysis/
 │   ├── *.ipynb                        ← Jupyter notebooks (main analysis)
 │   └── notes.md                       ← Validation notes
@@ -33,6 +33,34 @@ task_solve/YYYY-MM-DD_task_slug/
 ```
 
 **If you skip this step, the entire workflow is broken.** Do it NOW, before anything else.
+
+### ⚠️ MANDATORY: All downloaded documents go INSIDE the task folder
+
+**All documents retrieved during a task — STID drawings, PI historian exports,
+vendor datasheets, P&IDs, literature PDFs, downloaded standards — MUST be saved
+to `step1_scope_and_research/references/` within the task folder.**
+
+NEVER download or save task-related files to workspace-level directories like
+`output/`, `figures/`, or any path outside `task_solve/YYYY-MM-DD_slug/`.
+
+**For STID/document retrieval scripts:** Always pass the task's `references/`
+path as the output directory:
+```python
+# CORRECT — saves inside the task folder:
+out_dir = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
+
+# WRONG — saves outside the task folder:
+out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_nls")  # NEVER DO THIS
+```
+
+**For PDF-to-PNG conversion:** Output converted images to the task's `figures/`:
+```bash
+python devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
+    --outdir task_solve/YYYY-MM-DD_slug/figures/
+```
+
+This ensures every task is self-contained and portable — zip the task folder
+and everything needed is inside it.
 
 ---
 

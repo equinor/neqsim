@@ -38,6 +38,15 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 this folder. Never write task analysis files to `examples/`, docs, or the
 workspace root.
 
+### ⚠️ MANDATORY: All downloaded documents go INSIDE the task folder
+
+**All documents retrieved during a task — STID drawings, PI historian exports,
+vendor datasheets, P&IDs, literature PDFs — MUST be saved to
+`step1_scope_and_research/references/` within the task folder.** Never save
+task-related files to workspace-level directories like `output/` or `figures/`.
+Converted PNGs go to the task's `figures/` directory. This ensures tasks are
+self-contained and portable.
+
 ### Step-by-step
 
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
