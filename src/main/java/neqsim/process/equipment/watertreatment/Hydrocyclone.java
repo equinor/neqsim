@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.watertreatment.HydrocycloneMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -209,6 +210,9 @@ public class Hydrocyclone extends Separator {
   /** Number of vessels (calculated from liners). */
   private int numberOfVessels = 1;
 
+  /** Hydrocyclone-specific mechanical design instance. */
+  private HydrocycloneMechanicalDesign hydrocycloneMechanicalDesign;
+
   // ============================================================================
   // CONSTRUCTORS
   // ============================================================================
@@ -241,6 +245,22 @@ public class Hydrocyclone extends Separator {
    */
   private void initLinerDefaults() {
     updateLinerCapacityFromDiameter();
+  }
+
+  // ============================================================================
+  // MECHANICAL DESIGN
+  // ============================================================================
+
+  /** {@inheritDoc} */
+  @Override
+  public HydrocycloneMechanicalDesign getMechanicalDesign() {
+    return hydrocycloneMechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    hydrocycloneMechanicalDesign = new HydrocycloneMechanicalDesign(this);
   }
 
   // ============================================================================
