@@ -512,6 +512,12 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **NORSOK M-506 Corrosion Rate**       | [docs/process/corrosion/norsok_m506_corrosion_rate.md](process/corrosion/norsok_m506_corrosion_rate)             | **CO2 corrosion rate prediction — fugacity, pH, correction factors, parameter sweeps, JSON reporting**           |
 | **NORSOK M-001 Material Selection**   | [docs/process/corrosion/norsok_m001_material_selection.md](process/corrosion/norsok_m001_material_selection)     | **Material grade recommendation — sweet/sour classification, CRA selection, chloride SCC, corrosion allowance** |
 | **Pipeline Corrosion Integration**    | [docs/process/corrosion/pipeline_corrosion_integration.md](process/corrosion/pipeline_corrosion_integration)     | **Automated corrosion analysis from process simulation — stream extraction, combined mechanical + corrosion**    |
+| **Sour Service Assessment**           | [docs/process/corrosion/sour_service_assessment.md](process/corrosion/sour_service_assessment)                   | **ISO 15156 / NACE MR0175 sour region classification, SSC/HIC/SOHIC risk, material recommendations**           |
+| **CO2 Corrosion Material Selection**  | [docs/process/corrosion/co2_corrosion_material_selection.md](process/corrosion/co2_corrosion_material_selection) | **CRA selection hierarchy — 13Cr/22Cr/25Cr/nickel alloy based on CO2 rate, H2S, chloride, temperature**        |
+| **Chloride SCC Assessment**           | [docs/process/corrosion/chloride_scc_assessment.md](process/corrosion/chloride_scc_assessment)                   | **Chloride stress corrosion cracking risk for austenitic and duplex stainless steels per NORSOK M-001/MTI 15**  |
+| **Oxygen Corrosion Assessment**       | [docs/process/corrosion/oxygen_corrosion_assessment.md](process/corrosion/oxygen_corrosion_assessment)           | **Dissolved O2 corrosion/pitting for injection water and utility systems per NORSOK M-001 / NACE SP0499**       |
+| **Dense Phase CO2 Corrosion**         | [docs/process/corrosion/dense_phase_co2_corrosion.md](process/corrosion/dense_phase_co2_corrosion)               | **CCS pipeline corrosion — impurity specs, free water risk, water solubility per DNV-RP-J202 / ISO 27913**      |
+| **Ammonia Compatibility**             | [docs/process/corrosion/ammonia_compatibility.md](process/corrosion/ammonia_compatibility)                       | **NH3 service material assessment — SCC, O2 inhibitor, copper restriction per CGA G-2.1 / ASME B31.3**         |
 
 ### Chapter 24: Serialization & Persistence
 

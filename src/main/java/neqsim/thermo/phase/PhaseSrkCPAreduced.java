@@ -825,6 +825,11 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     double totalVolume2 = totalVolume * totalVolume;
     double totalVolume3 = totalVolume2 * totalVolume;
 
+    // Update delta with current g-function (critical: base class initCPAMatrix does
+    // this but the reduced override must do it explicitly to avoid stale delta when
+    // called from code paths that update gcpa without calling updateDeltaWithG)
+    updateDeltaWithG(ns);
+
     double gv = getGcpav();
     double fV = gv - 1.0 / totalVolume;
     double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;

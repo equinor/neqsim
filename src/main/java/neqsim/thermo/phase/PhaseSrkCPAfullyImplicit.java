@@ -526,111 +526,12 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       return;
     }
 
-    if (type > 1) {
-      // Delegate to parent for temperature/composition derivatives.
-      // Need hessianInvers populated by solveX().
-      solveX();
-      super.initCPAMatrix(type);
-      return;
-    }
-
-    // --- Type 1: compute volume derivatives from scratch ---
-    ensureWorkArrays(ns);
-
-    double totalVolume = getTotalVolume();
-    double totalVolume2 = totalVolume * totalVolume;
-    double totalVolume3 = totalVolume2 * totalVolume;
-
-    double gv = getGcpav();
-    double fV = gv - 1.0 / totalVolume;
-    double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;
-    double fVVV =
-        fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
-
-    // Read site fractions (ksi) and mole counts (m) from components
-    int idx = 0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        workKsi[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
-        workM[idx] = ni;
-        idx++;
-      }
-    }
-
-    // Build Klk[i][j] = m_i * m_j / V * delta[i][j]
-    double invV = 1.0 / totalVolume;
-    for (int i = 0; i < ns; i++) {
-      double miV = workM[i] * invV;
-      for (int j = i; j < ns; j++) {
-        double k = miV * workM[j] * delta[i][j];
-        workKlk[i][j] = k;
-        workKlk[j][i] = k;
-      }
-    }
-
-    // Compute klkKsi = Klk * ksi (single matrix-vector product)
-    for (int i = 0; i < ns; i++) {
-      double s = 0;
-      for (int j = 0; j < ns; j++) {
-        s += workKlk[i][j] * workKsi[j];
-      }
-      workKlkKsi[i] = s;
-    }
-
-    // Build Hessian: H[i][j] = -m[i]/(ksi[i]^2) * delta(i,j) - Klk[i][j]
-    // Need a copy since GE destroys it
-    for (int i = 0; i < ns; i++) {
-      for (int j = 0; j < ns; j++) {
-        workHess[i][j] = -workKlk[i][j];
-      }
-      workHess[i][i] -= workM[i] / (workKsi[i] * workKsi[i]);
-    }
-
-    // Solve H * XV = fV * klkKsi
-    for (int i = 0; i < ns; i++) {
-      workXV[i] = fV * workKlkKsi[i];
-    }
-    solveLinearSystem(workHess, workXV, ns);
-
-    // --- Compute dot products needed by all derivatives ---
-    double dotKsiKlkKsi = 0; // ksi' * Klk * ksi
-    double dotKlkKsiXV = 0; // klkKsi' * XV
-    double fcpa = 0;
-    for (int i = 0; i < ns; i++) {
-      dotKsiKlkKsi += workKsi[i] * workKlkKsi[i];
-      dotKlkKsiXV += workKlkKsi[i] * workXV[i];
-      fcpa += workM[i] * (Math.log(workKsi[i]) - workKsi[i] / 2.0 + 0.5);
-    }
-    FCPA = fcpa;
-
-    // dFCPAdV = -0.5 * fV * ksi' * Klk * ksi
-    dFCPAdV = -0.5 * fV * dotKsiKlkKsi;
-
-    // dFCPAdVdV = -0.5 * fVV * ksi'*Klk*ksi - fV * klkKsi'*XV
-    dFCPAdVdV = -0.5 * fVV * dotKsiKlkKsi - fV * dotKlkKsiXV;
-
-    // dFCPAdVdVdV:
-    // = -0.5 * fVVV * ksi'*Klk*ksi - 3*fVV * klkKsi'*XV
-    // - 3*fV * XV'*Klk*XV + (sum XV*Q) * (sum XV^2) where Q[i]=2m[i]/ksi[i]^3
-    double dotXVKlkXV = 0;
-    for (int i = 0; i < ns; i++) {
-      double s = 0;
-      for (int j = 0; j < ns; j++) {
-        s += workKlk[i][j] * workXV[j];
-      }
-      dotXVKlkXV += workXV[i] * s;
-    }
-
-    double sumQXV = 0;
-    double sumXV2 = 0;
-    for (int i = 0; i < ns; i++) {
-      sumQXV += workXV[i] * 2.0 * workM[i] / (workKsi[i] * workKsi[i] * workKsi[i]);
-      sumXV2 += workXV[i] * workXV[i];
-    }
-
-    dFCPAdVdVdV = -0.5 * fVVV * dotKsiKlkKsi - 3.0 * fVV * dotKlkKsiXV - 3.0 * fV * dotXVKlkXV
-        + sumQXV * sumXV2;
+    // Delegate all types to parent implementation.
+    // For type 1 and type > 1, the parent uses solveX() + EJML matrix operations.
+    // This ensures numerical consistency with the standard solver when computing
+    // CPA derivatives for post-convergence finalization and gas-phase fallback.
+    solveX();
+    super.initCPAMatrix(type);
   }
 
   /** {@inheritDoc} */

@@ -12,24 +12,17 @@ import neqsim.thermo.component.ComponentSrkCPA;
  * Combines two acceleration strategies:
  * </p>
  * <ul>
- * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026):
- * simultaneous solution
- * of molar volume and association site fractions, eliminating inner
- * iterations.</li>
- * <li><b>Site type reduction</b>: groups equivalent association sites (same
- * deltaNog row on same
- * component) into types with multiplicities, reducing the system dimension from
- * (n_s + 1) to (p +
+ * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026): simultaneous solution
+ * of molar volume and association site fractions, eliminating inner iterations.</li>
+ * <li><b>Site type reduction</b>: groups equivalent association sites (same deltaNog row on same
+ * component) into types with multiplicities, reducing the system dimension from (n_s + 1) to (p +
  * 1).</li>
  * </ul>
  *
  * <p>
- * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional
- * system at every
- * iteration (no Broyden approximation), solved via Gaussian elimination O(p^3).
- * This gives both the
- * per-iteration cost reduction of dimension reduction AND the quadratic
- * convergence of full Newton.
+ * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional system at every
+ * iteration (no Broyden approximation), solved via Gaussian elimination O(p^3). This gives both the
+ * per-iteration cost reduction of dimension reduction AND the quadratic convergence of full Newton.
  * </p>
  *
  * <p>
@@ -167,10 +160,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Fully implicit + reduced molar volume solver. Operates on the reduced
-   * (p+1)-dimensional system
-   * where p is the number of unique association site types. Uses full Newton
-   * Jacobian at every
+   * Fully implicit + reduced molar volume solver. Operates on the reduced (p+1)-dimensional system
+   * where p is the number of unique association site types. Uses full Newton Jacobian at every
    * iteration (no Broyden approximation), solved via Gaussian elimination.
    * </p>
    */
@@ -411,8 +402,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       fallbackCount++;
       if (logger.isDebugEnabled()) {
         logger.debug("Implicit-reduced non-convergence: ns=" + ns + " p=" + numTypes + " pt=" + pt
-            + " iters=" + iterations + " zeta=" + zeta + " P="
-            + pressure + " T=" + temperature);
+            + " iters=" + iterations + " zeta=" + zeta + " P=" + pressure + " T=" + temperature);
       }
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -449,10 +439,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Build the site type map by grouping equivalent association sites.
    *
    * <p>
-   * Two individual sites are equivalent if they belong to the same component and
-   * have identical
-   * deltaNog rows (same bonding pattern to all other sites). This corresponds to
-   * sites with the
+   * Two individual sites are equivalent if they belong to the same component and have identical
+   * deltaNog rows (same bonding pattern to all other sites). This corresponds to sites with the
    * same charge in the CPA association scheme.
    * </p>
    *
@@ -499,7 +487,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Expand reduced site fraction values to all individual sites on components.
    *
    * @param xType reduced site fraction array (length p)
-   * @param ns    total number of individual sites
+   * @param ns total number of individual sites
    */
   private void expandAndSetSiteFractions(double[] xType, int ns) {
     int idx = 0;
@@ -516,7 +504,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Read individual site fractions from component objects into a flat array.
    *
    * @param xSite array to fill (length ns)
-   * @param ns    total number of individual sites
+   * @param ns total number of individual sites
    */
   private void readXsiteFromComponents(double[] xSite, int ns) {
     int idx = 0;
@@ -545,16 +533,16 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * <li>j_zeta_zeta: volume equation self-sensitivity</li>
    * </ul>
    *
-   * @param jac      Jacobian matrix to populate (dim x dim)
-   * @param xType    reduced site fraction values (length p)
-   * @param tMoles   moles per type (length p)
-   * @param redSum   precomputed reduced summation for each type (length p)
+   * @param jac Jacobian matrix to populate (dim x dim)
+   * @param xType reduced site fraction values (length p)
+   * @param tMoles moles per type (length p)
+   * @param redSum precomputed reduced summation for each type (length p)
    * @param totalVol total volume V
-   * @param gdv1     g'(V) - 1/V
-   * @param zeta     current B/(nV)
-   * @param btemp    co-volume B
-   * @param dim      system dimension (p+1)
-   * @param p        number of unique site types
+   * @param gdv1 g'(V) - 1/V
+   * @param zeta current B/(nV)
+   * @param btemp co-volume B
+   * @param dim system dimension (p+1)
+   * @param p number of unique site types
    */
   private void buildReducedJacobian(double[][] jac, double[] xType, double[] tMoles,
       double[] redSum, double totalVol, double gdv1, double zeta, double btemp, int dim, int p) {
@@ -634,10 +622,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Override type 1 initialization to use reduced-dimension site type
-   * computation. Higher-order
-   * volume derivatives (FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV) are computed using
-   * the type
+   * Override type 1 initialization to use reduced-dimension site type computation. Higher-order
+   * volume derivatives (FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV) are computed using the type
    * grouping, reducing linear system size from n_s to p.
    * </p>
    */
@@ -674,10 +660,16 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     double totalVolume2 = totalVolume * totalVolume;
     double totalVolume3 = totalVolume2 * totalVolume;
 
+    // Update delta with current g-function (critical: base class initCPAMatrix does
+    // this but the reduced override must do it explicitly to avoid stale delta when
+    // called from code paths that update gcpa without calling updateDeltaWithG)
+    updateDeltaWithG(ns);
+
     double gv = getGcpav();
     double fV = gv - 1.0 / totalVolume;
     double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;
-    double fVVV = fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
+    double fVVV =
+        fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
 
     // Read reduced site fractions and moles
     double[] xSiteFull = new double[ns];
@@ -757,8 +749,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   }
 
   /**
-   * Solve a linear system A*x = b in-place (b overwritten with solution) using
-   * Gaussian elimination
+   * Solve a linear system A*x = b in-place (b overwritten with solution) using Gaussian elimination
    * with partial pivoting.
    *
    * @param a coefficient matrix (modified in-place)

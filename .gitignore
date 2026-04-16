@@ -116,3 +116,5 @@ devtools/neqsim_dev_setup.egg-info/top_level.txt
 devtools/neqsim_dev_setup.egg-info/requires.txt
 devtools/neqsim_dev_setup.egg-info/SOURCES.txt
 
+run_notebook.bat
+run_notebook.py
