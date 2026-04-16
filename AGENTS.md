@@ -810,6 +810,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-flow-assurance` | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing |
 | `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
 | `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
+| `neqsim-platform-modeling` | Production platform process modeling — multi-stage separation, recompression with compressor curves and anti-surge, export/injection compression, scrubber liquid recycles, Cv valve flow, iteration strategies, structured result extraction. Derived from 15+ NCS platform models |
 | `neqsim-technical-document-reading` | Read technical documents and engineering images — PDF/Word/Excel extraction, P&ID topology, vendor datasheet parsing, image analysis with view_image, performance map digitization, figure discussion generation |
 | `neqsim-stid-retriever` | Retrieve engineering documents (compressor curves, mechanical drawings, data sheets) for tasks. Supports local dirs, manual upload, pluggable retrieval backends (configured via gitignored `devtools/doc_retrieval_config.yaml`). Includes relevance filtering by task type and retrieval manifests for traceability |
 
