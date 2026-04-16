@@ -61,6 +61,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double minResponse = Double.NEGATIVE_INFINITY;
   private double maxResponse = Double.POSITIVE_INFINITY;
   boolean isActive = true;
+  private ControllerMode mode = ControllerMode.AUTO;
+  private double manualOutput = 30.0;
+  private boolean bumplessTransferPending = false;
   private NavigableMap<Double, double[]> gainSchedule = new TreeMap<>();
   private java.util.List<ControllerEvent> eventLog = new java.util.ArrayList<>();
   private double totalTime = 0.0;
@@ -139,6 +142,21 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       calcIdentifier = id;
       return;
     }
+
+    // Handle MANUAL mode: bypass PID, use manual output, track errors for future transfer
+    if (mode == ControllerMode.MANUAL) {
+      totalTime += dt;
+      response = manualOutput;
+      double measurement = getMeasuredValue(unit);
+      oldoldError = oldError;
+      oldError = error;
+      error = measurement - controllerSetPoint;
+      eventLog
+          .add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
+      calcIdentifier = id;
+      return;
+    }
+
     totalTime += dt;
     if (isReverseActing()) {
       propConstant = -1;
@@ -147,6 +165,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     applyGainSchedule(measurement);
     oldoldError = error;
     oldError = error;
+
+    // Perform bumpless transfer back-calculation when switching from MANUAL to AUTO
+    if (bumplessTransferPending) {
+      error = measurement - controllerSetPoint;
+      oldError = error;
+      oldoldError = error;
+      derivativeState = 0.0;
+      if (propConstant != 0) {
+        TintValue = (manualOutput - initResponse) / propConstant;
+      }
+      bumplessTransferPending = false;
+    }
 
     double band = 0.0;
     double TintIncrement = 0.0;
@@ -619,6 +649,51 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     integralAbsoluteError = 0.0;
     lastTimeOutsideBand = 0.0;
     totalTime = 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ControllerMode getMode() {
+    return mode;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * When switching from MANUAL to AUTO, a bumpless transfer is scheduled so that the controller
+   * output does not jump on the next {@code runTransient} call. The integral state is
+   * back-calculated to match the current manual output. When switching from AUTO to MANUAL, the
+   * current PID output is captured as the manual output value.
+   * </p>
+   */
+  @Override
+  public void setMode(ControllerMode newMode) {
+    if (newMode == null || newMode == mode) {
+      return;
+    }
+    if (newMode == ControllerMode.AUTO && mode == ControllerMode.MANUAL) {
+      bumplessTransferPending = true;
+    }
+    if (newMode == ControllerMode.MANUAL) {
+      manualOutput = response;
+    }
+    this.mode = newMode;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getManualOutput() {
+    return manualOutput;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setManualOutput(double output) {
+    this.manualOutput = output;
+    if (mode == ControllerMode.MANUAL) {
+      response = output;
+    }
   }
 
   /**

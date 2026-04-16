@@ -200,6 +200,56 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
     autoTune(ultimateGain, ultimatePeriod);
   }
 
+  /**
+   * Operating modes for a feedback controller. These mirror the standard modes found in commercial
+   * DCS and simulator products (AUTO, MANUAL, CASCADE).
+   */
+  public static enum ControllerMode {
+    /** Controller output is computed by the PID algorithm. */
+    AUTO,
+    /** Controller output is set manually by the operator; PID computation is bypassed. */
+    MANUAL,
+    /**
+     * Controller receives its set-point from an upstream (primary) controller rather than from a
+     * fixed value.
+     */
+    CASCADE
+  }
+
+  /**
+   * Get the current operating mode of the controller.
+   *
+   * @return the controller mode
+   */
+  public default ControllerMode getMode() {
+    return ControllerMode.AUTO;
+  }
+
+  /**
+   * Switch the controller to a new operating mode. Implementations should perform bumpless transfer
+   * when transitioning between modes so that the controller output does not jump.
+   *
+   * @param mode the desired controller mode
+   */
+  public default void setMode(ControllerMode mode) {}
+
+  /**
+   * Get the manual output value used when the controller is in MANUAL mode.
+   *
+   * @return the manual output value in engineering units
+   */
+  public default double getManualOutput() {
+    return getResponse();
+  }
+
+  /**
+   * Set the manual output value. This value is used as the controller response when the controller
+   * is in MANUAL mode.
+   *
+   * @param output the desired manual output in engineering units
+   */
+  public default void setManualOutput(double output) {}
+
   /** Available tuning rules for step-response based auto-tuning. */
   public static enum StepResponseTuningMethod {
     /** Original Ziegler-Nichols-inspired correlations used historically in NeqSim. */

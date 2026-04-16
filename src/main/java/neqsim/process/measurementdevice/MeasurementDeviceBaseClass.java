@@ -45,6 +45,10 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private String conditionAnalysisMessage = "";
   private double conditionAnalysisMaxDeviation = 0.0;
 
+  private SensorFaultType faultType = SensorFaultType.NONE;
+  private double faultParameter = 0.0;
+  private double faultAccumulator = 0.0;
+
   private AlarmConfig alarmConfig;
   private final AlarmState alarmState = new AlarmState();
 
@@ -196,18 +200,19 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Apply configured noise and delay to a raw measurement value.
+   * Apply configured noise, delay and sensor fault to a raw measurement value.
    *
    * @param rawValue unmodified measurement value
-   * @return value after noise and delay are applied
+   * @return value after noise, fault injection and delay are applied
    */
   protected double applySignalModifiers(double rawValue) {
+    double faultedValue = applyFault(rawValue);
     Random r = random;
     if (r == null) {
       r = new Random();
       random = r;
     }
-    double noisyValue = rawValue + r.nextGaussian() * noiseStdDev;
+    double noisyValue = faultedValue + r.nextGaussian() * noiseStdDev;
     delayBuffer.addLast(noisyValue);
     if (delayBuffer.size() > delaySteps) {
       return delayBuffer.removeFirst();
@@ -345,6 +350,81 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    */
   public boolean doConditionAnalysis() {
     return conditionAnalysis;
+  }
+
+  /**
+   * Apply a sensor fault to the raw measurement value. The fault transformation depends on the
+   * currently configured {@link SensorFaultType}.
+   *
+   * @param rawValue true process measurement before fault injection
+   * @return measurement value after fault transformation
+   */
+  private double applyFault(double rawValue) {
+    switch (faultType) {
+      case STUCK_AT_VALUE:
+        return faultParameter;
+      case LINEAR_DRIFT:
+        faultAccumulator += faultParameter;
+        return rawValue + faultAccumulator;
+      case BIAS:
+        return rawValue + faultParameter;
+      case NOISE_BURST:
+        Random r = random;
+        if (r == null) {
+          r = new Random();
+          random = r;
+        }
+        return rawValue + r.nextGaussian() * faultParameter;
+      case SATURATION:
+        if (faultParameter >= 0) {
+          return Math.min(rawValue, faultParameter);
+        } else {
+          return Math.max(rawValue, faultParameter);
+        }
+      case NONE:
+      default:
+        return rawValue;
+    }
+  }
+
+  /**
+   * Inject a sensor fault into this measurement device. While a fault is active, the measured value
+   * will be transformed according to the specified fault type and parameter.
+   *
+   * @param type the type of sensor fault to inject
+   * @param parameter fault-specific parameter (e.g. stuck value, drift rate, bias)
+   */
+  public void setFault(SensorFaultType type, double parameter) {
+    this.faultType = type != null ? type : SensorFaultType.NONE;
+    this.faultParameter = parameter;
+    this.faultAccumulator = 0.0;
+  }
+
+  /**
+   * Remove any active sensor fault and return to normal operation.
+   */
+  public void clearFault() {
+    this.faultType = SensorFaultType.NONE;
+    this.faultParameter = 0.0;
+    this.faultAccumulator = 0.0;
+  }
+
+  /**
+   * Get the currently active sensor fault type.
+   *
+   * @return the active fault type, or {@link SensorFaultType#NONE} if no fault is injected
+   */
+  public SensorFaultType getFaultType() {
+    return faultType;
+  }
+
+  /**
+   * Get the parameter associated with the currently active sensor fault.
+   *
+   * @return the fault parameter value
+   */
+  public double getFaultParameter() {
+    return faultParameter;
   }
 
   /**
