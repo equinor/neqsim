@@ -1,1 +1,4 @@
 jpype1
+
+[pdf]
+pymupdf>=1.22.0
