@@ -13,6 +13,14 @@ The `neqsim.process.corrosion` package provides industry-standard corrosion asse
 |-------|----------|---------|
 | [`NorsokM506CorrosionRate`](norsok_m506_corrosion_rate) | NORSOK M-506 | CO2 corrosion rate prediction (mm/yr) |
 | [`NorsokM001MaterialSelection`](norsok_m001_material_selection) | NORSOK M-001 | Material grade recommendation and corrosion allowance |
+| [`SourServiceAssessment`](sour_service_assessment) | ISO 15156 / NACE MR0175 | Sour region classification, SSC/HIC/SOHIC risk |
+| [`CO2CorrosionMaterialSelection`](co2_corrosion_material_selection) | NORSOK M-001 / EFC 17 | CRA selection hierarchy based on CO2 corrosion rate |
+| [`ChlorideSCCAssessment`](chloride_scc_assessment) | NORSOK M-001 / MTI 15 | Chloride stress corrosion cracking risk for stainless steels |
+| [`OxygenCorrosionAssessment`](oxygen_corrosion_assessment) | NORSOK M-001 / NACE SP0499 | Dissolved oxygen corrosion and pitting assessment |
+| [`DensePhaseCO2Corrosion`](dense_phase_co2_corrosion) | DNV-RP-J202 / ISO 27913 | CCS pipeline corrosion — impurity limits, free water risk |
+| [`AmmoniaCompatibility`](ammonia_compatibility) | CGA G-2.1 / ASME B31.3 | Ammonia service material compatibility and SCC assessment |
+| [`HydrogenMaterialAssessment`](hydrogen_material_assessment) | API 941 / ASME B31.12 | Hydrogen embrittlement and HTHA assessment |
+| [`NelsonCurveAssessment`](nelson_curve_assessment) | API 941 8th Ed | High-temperature hydrogen attack (HTHA) Nelson curve check |
 
 ## Integration
 
@@ -102,10 +110,18 @@ print(f"Severity: {model.getCorrosionSeverity()}")
 | Standard | Scope | Implementation |
 |----------|-------|----------------|
 | NORSOK M-506 (2005/2017) | CO2 corrosion rate model | `NorsokM506CorrosionRate` |
-| NORSOK M-001 | Material selection guidelines | `NorsokM001MaterialSelection` |
-| NACE MR0175 / ISO 15156 | Sour service classification | Both classes |
-| ISO 15156-2 | Carbon steel in sour service | `NorsokM001MaterialSelection` |
-| ISO 15156-3 | CRA in sour service | `NorsokM001MaterialSelection` |
+| NORSOK M-001 | Material selection guidelines | `NorsokM001MaterialSelection`, `CO2CorrosionMaterialSelection`, `ChlorideSCCAssessment`, `OxygenCorrosionAssessment` |
+| NACE MR0175 / ISO 15156 | Sour service classification | `SourServiceAssessment`, `NorsokM001MaterialSelection` |
+| ISO 15156-2 | Carbon steel in sour service | `SourServiceAssessment` |
+| ISO 15156-3 | CRA in sour service | `SourServiceAssessment`, `CO2CorrosionMaterialSelection` |
+| EFC 16/17 | CO2/H2S corrosion guidelines | `SourServiceAssessment`, `CO2CorrosionMaterialSelection` |
+| MTI Publication 15 | Chloride SCC guidelines | `ChlorideSCCAssessment` |
+| NACE SP0499 | Corrosion in water injection | `OxygenCorrosionAssessment` |
+| DNV-RP-J202 | CCS pipeline corrosion | `DensePhaseCO2Corrosion` |
+| ISO 27913 | CO2 transport by pipeline | `DensePhaseCO2Corrosion` |
+| CGA G-2.1 | Ammonia piping/equipment | `AmmoniaCompatibility` |
+| ASME B31.3 / B31.12 | Process piping / H2 piping | `AmmoniaCompatibility`, `HydrogenMaterialAssessment` |
+| API 941 | Nelson curves / HTHA | `HydrogenMaterialAssessment`, `NelsonCurveAssessment` |
 
 ## Related Documentation
 
