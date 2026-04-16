@@ -1152,7 +1152,7 @@ TT-20001.PV (°C)        → feed stream temperature (+273.15)
 FT-20001.PV (kg/hr)     → feed stream flowRate
 AT-20001-CH4.PV (mol%)  → fluid component "methane" (/100)
 AT-20001-C2H6.PV (mol%) → fluid component "ethane" (/100)
-PT-23601.PV (bara)      → compressor outletPressure
+PT-23001.PV (bara)      → compressor outletPressure
 ```
 
 **JSON with Historian Placeholder Tags:**
@@ -1173,8 +1173,8 @@ Use `"$TAG:tagname$"` placeholders that a data bridge fills at runtime:
   },
   "process": [
     {"type": "Stream", "name": "feed", "properties": {"flowRate": ["$TAG:FT-20001.PV$", "kg/hr"]}},
-    {"type": "Compressor", "name": "23KA601", "inlet": "feed",
-      "properties": {"outletPressure": "$TAG:PT-23601.PV$"}}
+    {"type": "Compressor", "name": "23KA001", "inlet": "feed",
+      "properties": {"outletPressure": "$TAG:PT-23001.PV$"}}
   ]
 }
 ```

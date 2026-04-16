@@ -23,7 +23,7 @@ TASK_DIR = "task_solve/YYYY-MM-DD_slug"
 out_dir = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
 
 # WRONG — saves outside the task folder:
-out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_nls")  # NEVER
+out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_docs")  # NEVER
 out_dir = "output/stid_docs"  # NEVER
 ```
 
@@ -99,15 +99,15 @@ task folder. This ensures all documents end up in the right place:
 ```bash
 # Download documents by tag — saves to task's references/ folder
 python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
-    --inst NLS --tags 30PT0185 30PT0189 33AI0117
+    --inst MYINST --tags 30PT0001 30PT0002 33AI0001
 
 # Download + convert to PNG for AI analysis
 python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
-    --inst NLS --tags 30PT0185 --convert-png
+    --inst MYINST --tags 30PT0001 --convert-png
 
 # Download specific document numbers
 python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
-    --inst NLS --docs E234-AS-P-XB-30005-01 E234-AS-BI672-DS-00001
+    --inst MYINST --docs E001-AS-P-XB-00001-01 E001-AS-BI000-DS-00001
 ```
 
 The helper:
@@ -123,7 +123,7 @@ The helper:
 from devtools.doc_retriever import retrieve_documents
 
 docs = retrieve_documents(
-    tags=['35-KA101A'],
+    tags=['35-KA001A'],
     doc_types=['CE', 'AA', 'MD', 'DS'],
     output_dir='step1_scope_and_research/references/'
 )
@@ -254,7 +254,7 @@ manifest = {
     "source": "local" | "backend" | "manual",
     "retrieval_date": "2026-04-16",
     "task_type": "compressor_analysis",
-    "tags_searched": ["35-KA101A", "35-KA101B"],
+    "tags_searched": ["35-KA001A", "35-KA001B"],
     "documents_retrieved": [
         {
             "filename": "performance_curves.pdf",
@@ -292,7 +292,7 @@ The task solver uses this manifest to:
 ```markdown
 ## Data Sources
 
-- **Equipment tags:** 35-KA101A, 35-KA101B (export compressors)
+- **Equipment tags:** 35-KA001A, 35-KA001B (export compressors)
 - **Document source:** Local directory / Auto-retrieval / User-provided
 - **Key documents used:**
   - performance_curves.pdf: Vendor performance maps (41 pages)
@@ -364,8 +364,8 @@ retrieval backend is configured. The two approaches coexist:
 
 ```
 step1_scope_and_research/references/
-├── [auto-retrieved]    performance_curves_35KA101A.pdf    (from backend)
-├── [auto-retrieved]    datasheet_35KA101A.pdf             (from backend)
+├── [auto-retrieved]    performance_curves_35KA001A.pdf    (from backend)
+├── [auto-retrieved]    datasheet_35KA001A.pdf             (from backend)
 ├── [manual]            vendor_email_attachment.pdf         (user dropped in)
 ├── [manual]            field_test_report_2025.xlsx         (user dropped in)
 └── [manual]            photo_nameplate.jpg                 (user dropped in)
@@ -411,7 +411,7 @@ protocol:
 
 1. **Log the gap** — record what's missing and why in the notebook:
    ```python
-   # DATA GAP: Need mechanical drawing (AA) for 35-KA101A to get
+   # DATA GAP: Need mechanical drawing (AA) for 35-KA001A to get
    # nozzle sizes for piping stress analysis. Current docs only have
    # performance curves (CE) and datasheet (DS).
    ```
@@ -422,7 +422,7 @@ protocol:
    from devtools.doc_retriever import retrieve_documents
 
    additional = retrieve_documents(
-       tags=['35-KA101A'],
+       tags=['35-KA001A'],
        doc_types=['AA', 'MD'],  # specifically what's missing
        output_dir='step1_scope_and_research/references/'
    )
@@ -435,7 +435,7 @@ protocol:
 3. **Ask the user** if auto-retrieval is unavailable or returned nothing:
    ```markdown
    **Data gap identified:** I need the General Arrangement drawing (AA) for
-   35-KA101A to extract nozzle dimensions. Options:
+   35-KA001A to extract nozzle dimensions. Options:
    - Drop the PDF into `step1_scope_and_research/references/` and I'll continue
    - Provide the dimensions directly (suction nozzle OD, discharge nozzle OD)
    - Skip this analysis (I'll use typical values with a note on uncertainty)
@@ -448,8 +448,8 @@ protocol:
        "phase": "step2_analysis",
        "reason": "Need nozzle dimensions for piping stress",
        "doc_types_requested": ["AA", "MD"],
-       "tags": ["35-KA101A"],
-       "documents_found": ["general_arrangement_35KA101A.pdf"],
+       "tags": ["35-KA001A"],
+       "documents_found": ["general_arrangement_35KA001A.pdf"],
        "source": "backend"  # or "manual" or "user_provided_value"
    })
    ```
@@ -516,3 +516,22 @@ backend: none   # change to: stidapi, local
 
 If this file doesn't exist, the task solver works normally — it just
 expects documents in `references/` instead of auto-fetching them.
+
+---
+
+## Related: STID Tags → Plant Historian → CSV
+
+When STID retrieval identifies equipment tags (e.g., `35-KA001A`), the
+same tags can be used to read operating data from the plant historian
+(OSIsoft PI / Aspen IP.21) via **tagreader**, and the data should be
+saved as CSV inside the task folder for reproducibility.
+
+The full pipeline is documented in the **`neqsim-plant-data` skill**:
+
+```
+STID (tag search) → Tagreader (historian read) → CSV (snapshot) → NeqSim (simulation)
+```
+
+See the "STID → Tagreader → CSV → NeqSim Pipeline" section in that skill
+for the complete end-to-end example with CSV persistence, data quality
+filtering, and digital twin comparison — all saved to the task folder.

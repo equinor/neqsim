@@ -50,7 +50,7 @@ path as the output directory:
 out_dir = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
 
 # WRONG — saves outside the task folder:
-out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_nls")  # NEVER DO THIS
+out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_docs")  # NEVER DO THIS
 ```
 
 **For PDF-to-PNG conversion:** Output converted images to the task's `figures/`:

@@ -40,12 +40,12 @@ sources = tagreader.list_sources("aspenone",
 ### Creating and Connecting a Client
 
 ```python
-# Equinor PI Web API
-c = tagreader.IMSClient("PINO", "piwebapi")
+# PI Web API
+c = tagreader.IMSClient("MY_PI_SOURCE", "piwebapi")
 c.connect()
 
-# Equinor Aspen IP.21
-c = tagreader.IMSClient("TRA", "aspenone")
+# Aspen IP.21
+c = tagreader.IMSClient("MY_ASPEN_SOURCE", "aspenone")
 c.connect()
 
 # Non-Equinor with custom auth
@@ -143,6 +143,69 @@ df = c.read(["TAG1.PV"], end_time="01.06.2025 12:00:00",
 
 **Returns:** `pandas.DataFrame` with `DatetimeIndex` and one column per tag.
 
+### Saving Data to CSV (MANDATORY for Task Workflows)
+
+**All plant data read via tagreader MUST be saved as CSV inside the task folder.**
+This creates a reproducible data snapshot so analysis can be rerun without
+live historian access, and keeps the task self-contained.
+
+```python
+import os, pathlib
+
+# ── Resolve task directory (same pattern as notebooks) ──
+NOTEBOOK_DIR = pathlib.Path(globals().get(
+    "__vsc_ipynb_file__", os.path.abspath("step2_analysis/notebook.ipynb")
+)).resolve().parent
+TASK_DIR = NOTEBOOK_DIR.parent
+REFS_DIR = TASK_DIR / "step1_scope_and_research" / "references"
+REFS_DIR.mkdir(parents=True, exist_ok=True)
+
+# ── Read from historian ──
+tags = list(TAG_MAP.values())
+start = "01.06.2025 06:00:00"
+end   = "01.06.2025 18:00:00"
+df = c.read(tags, start, end, 300)  # 5-min interpolated
+
+# ── Save raw plant data as CSV ──
+csv_path = REFS_DIR / "plant_data_raw.csv"
+df.to_csv(str(csv_path))
+print(f"Saved {len(df)} rows × {len(df.columns)} tags → {csv_path}")
+
+# ── Save tag mapping alongside the data ──
+import json
+tag_map_path = REFS_DIR / "tag_mapping.json"
+with open(str(tag_map_path), "w") as f:
+    json.dump(TAG_MAP, f, indent=2)
+print(f"Tag mapping saved → {tag_map_path}")
+```
+
+**Loading saved CSV for offline analysis** (no historian needed):
+
+```python
+import pandas as pd, json, pathlib
+
+REFS_DIR = TASK_DIR / "step1_scope_and_research" / "references"
+
+# Load data + tag map
+df_plant = pd.read_csv(str(REFS_DIR / "plant_data_raw.csv"),
+                        index_col=0, parse_dates=True)
+with open(str(REFS_DIR / "tag_mapping.json")) as f:
+    TAG_MAP = json.load(f)
+
+print(f"Loaded {len(df_plant)} rows, tags: {list(TAG_MAP.keys())}")
+```
+
+**CSV naming conventions** — use descriptive filenames with date range:
+
+| Filename | Content |
+|----------|---------|
+| `plant_data_raw.csv` | Raw historian data (all tags, full period) |
+| `plant_data_20250601_20250615.csv` | Date-scoped raw data |
+| `plant_data_hourly_avg.csv` | Aggregated hourly averages |
+| `plant_data_cleaned.csv` | After quality filtering (NaN removed, outliers clipped) |
+| `tag_mapping.json` | Logical name → historian tag mapping |
+| `digital_twin_results.csv` | Simulated vs plant comparison output |
+
 ### Data Quality
 
 ```python
@@ -187,21 +250,21 @@ Map logical process parameters to historian tag names:
 ```python
 TAG_MAP = {
     # Inlet separator
-    'inlet_pressure':       'PLANT-20PT0118.PV',
-    'inlet_temperature':    'PLANT-20TT0124.PV',
+    'inlet_pressure':       'PLANT-20PT0201.PV',
+    'inlet_temperature':    'PLANT-20TT0201.PV',
 
     # Compressor A
-    'compA_suction_P':      'PLANT-35PT3601A.PV',
-    'compA_discharge_P':    'PLANT-35PT3601B.PV',
-    'compA_suction_T':      'PLANT-35TT3601A.PV',
-    'compA_discharge_T':    'PLANT-35TT3601B.PV',
-    'compA_flow':           'PLANT-35FT3601.PV',
-    'compA_power':          'PLANT-35JI3191F000.PV',
-    'compA_speed':          'PLANT-35SI3152.PV',
+    'compA_suction_P':      'PLANT-35PT0101A.PV',
+    'compA_discharge_P':    'PLANT-35PT0101B.PV',
+    'compA_suction_T':      'PLANT-35TT0101A.PV',
+    'compA_discharge_T':    'PLANT-35TT0101B.PV',
+    'compA_flow':           'PLANT-35FT0101.PV',
+    'compA_power':          'PLANT-35JI0101.PV',
+    'compA_speed':          'PLANT-35SI0101.PV',
 
     # Export
-    'export_pressure':      'PLANT-27PT0004.PV',
-    'export_flow':          'PLANT-27FT0006.PV',
+    'export_pressure':      'PLANT-27PT0301.PV',
+    'export_flow':          'PLANT-27FT0301.PV',
 }
 ```
 
@@ -243,17 +306,17 @@ def get_plant_value(df, tag_map, param_name, aggregation='mean'):
 
 ## Naming Conventions for Plant Tags
 
-Common Equinor/NCS tag naming patterns:
+Common NCS / ISO 14617 tag naming patterns:
 
 | Prefix | Meaning | Example |
-|--------|---------|---------|
-| `PT` | Pressure Transmitter | `TRA-35PT3601A.PV` |
-| `TT` | Temperature Transmitter | `TRA-35TT3601A.PV` |
-| `FT` | Flow Transmitter | `TRA-35FT3601.PV` |
-| `LT` | Level Transmitter | `TRA-20LT0118.PV` |
-| `AT` | Analytical Transmitter | `TRA-20AT0130.PV` |
-| `SI` | Speed Indicator | `TRA-35SI3152.PV` |
-| `JI` | Power/Energy Indicator | `TRA-35JI3191F000.PV` |
+|--------|---------|--------|
+| `PT` | Pressure Transmitter | `PLANT-35PT0101A.PV` |
+| `TT` | Temperature Transmitter | `PLANT-35TT0101A.PV` |
+| `FT` | Flow Transmitter | `PLANT-35FT0101.PV` |
+| `LT` | Level Transmitter | `PLANT-20LT0201.PV` |
+| `AT` | Analytical Transmitter | `PLANT-20AT0301.PV` |
+| `SI` | Speed Indicator | `PLANT-35SI0101.PV` |
+| `JI` | Power/Energy Indicator | `PLANT-35JI0101.PV` |
 | `.PV` | Process Value (current reading) | — |
 | `.SP` | Setpoint | — |
 | `.OP` | Output (controller) | — |
@@ -508,6 +571,166 @@ Step 7: What-If / Prediction
   ├── Predict capacity at declining reservoir pressure
   └── Generate VFP tables for reservoir simulation
 ```
+
+## STID → Tagreader → CSV → NeqSim Pipeline
+
+When engineering tasks involve real plant equipment, the full data integration
+pipeline flows from STID document retrieval through historian data to NeqSim
+simulation. All outputs go inside the task folder.
+
+```
+STID (tag search)  →  Tagreader (historian read)  →  CSV (persistent snapshot)  →  NeqSim (simulation)
+        ↓                      ↓                            ↓                            ↓
+  references/           references/                   references/                  step2_analysis/
+  ├── *.pdf             ├── plant_data_raw.csv        ├── plant_data_cleaned.csv   └── notebook.ipynb
+  └── manifest.json     └── tag_mapping.json          └── digital_twin_results.csv
+```
+
+### End-to-End Example
+
+```python
+import os, json, pathlib
+import pandas as pd
+import numpy as np
+from neqsim import jneqsim
+
+# ── 0. Resolve task paths ──
+NOTEBOOK_DIR = pathlib.Path(globals().get(
+    "__vsc_ipynb_file__", os.path.abspath("step2_analysis/notebook.ipynb")
+)).resolve().parent
+TASK_DIR = NOTEBOOK_DIR.parent
+REFS_DIR = TASK_DIR / "step1_scope_and_research" / "references"
+FIGURES_DIR = TASK_DIR / "figures"
+REFS_DIR.mkdir(parents=True, exist_ok=True)
+FIGURES_DIR.mkdir(exist_ok=True)
+
+# ── 1. STID: retrieve documents for equipment tags ──
+# (Run from terminal before notebook, or use stidapi in code)
+# python devtools/stid_download.py --task-dir {TASK_DIR} \
+#     --inst MYINST --tags 35-KA001A 35-KA001B --convert-png
+
+# ── 2. TAG MAP: define logical names → historian tags ──
+TAG_MAP = {
+    'comp_suction_P':    'PLANT-35PT0101A.PV',
+    'comp_discharge_P':  'PLANT-35PT0101B.PV',
+    'comp_suction_T':    'PLANT-35TT0101A.PV',
+    'comp_discharge_T':  'PLANT-35TT0101B.PV',
+    'comp_flow':         'PLANT-35FT0101.PV',
+    'comp_power':        'PLANT-35JI0101.PV',
+    'comp_speed':        'PLANT-35SI0101.PV',
+}
+
+# Save tag mapping
+with open(str(REFS_DIR / "tag_mapping.json"), "w") as f:
+    json.dump(TAG_MAP, f, indent=2)
+
+# ── 3. TAGREADER: read historian data ──
+import tagreader
+c = tagreader.IMSClient("MY_PI_SOURCE", "piwebapi")
+c.connect()
+
+tags = list(TAG_MAP.values())
+start = "01.06.2025 06:00:00"
+end   = "15.06.2025 06:00:00"
+df_raw = c.read(tags, start, end, 300)  # 5-min interpolated
+
+# ── 4. CSV: save raw data (reproducible snapshot) ──
+csv_raw = REFS_DIR / "plant_data_raw.csv"
+df_raw.to_csv(str(csv_raw))
+print(f"Raw data: {len(df_raw)} rows → {csv_raw}")
+
+# ── 5. CLEAN: filter bad data, save cleaned CSV ──
+df_clean = df_raw.copy()
+for tag in tags:
+    if tag in df_clean.columns:
+        # Remove physically impossible values
+        df_clean.loc[df_clean[tag] <= 0, tag] = np.nan
+        # Remove frozen signals
+        rolling_std = df_clean[tag].rolling(12).std()
+        df_clean.loc[rolling_std < 1e-6, tag] = np.nan
+
+df_clean = df_clean.dropna(how='all')
+csv_clean = REFS_DIR / "plant_data_cleaned.csv"
+df_clean.to_csv(str(csv_clean))
+print(f"Cleaned data: {len(df_clean)} rows → {csv_clean}")
+
+# ── 6. NEQSIM: build model and compare against plant ──
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+
+fluid = SystemSrkEos(273.15 + 25.0, 30.0)
+fluid.addComponent("methane", 0.90)
+fluid.addComponent("ethane", 0.05)
+fluid.addComponent("propane", 0.03)
+fluid.addComponent("CO2", 0.02)
+fluid.setMixingRule("classic")
+
+feed = Stream("Feed", fluid)
+comp = Compressor("Compressor", feed)
+comp.setOutletPressure(90.0)
+process = ProcessSystem()
+process.add(feed)
+process.add(comp)
+
+# Digital twin loop: compare model vs plant
+results = []
+for i in range(0, len(df_clean), 6):  # every 30 min
+    row = df_clean.iloc[i]
+    p_in = float(row.get(TAG_MAP['comp_suction_P'], np.nan))
+    t_in = float(row.get(TAG_MAP['comp_suction_T'], np.nan))
+    if np.isnan(p_in) or np.isnan(t_in) or p_in <= 0:
+        continue
+    feed.setPressure(p_in, "bara")
+    feed.setTemperature(t_in, "C")
+    try:
+        process.run()
+        results.append({
+            'timestamp': df_clean.index[i],
+            'plant_power_MW': float(row.get(TAG_MAP['comp_power'], np.nan)),
+            'sim_power_MW': float(comp.getPower('MW')),
+            'plant_discharge_T_C': float(row.get(TAG_MAP['comp_discharge_T'], np.nan)),
+            'sim_discharge_T_C': float(comp.getOutletStream().getTemperature('C')),
+        })
+    except Exception:
+        pass
+
+# ── 7. CSV: save comparison results ──
+df_results = pd.DataFrame(results)
+csv_results = REFS_DIR / "digital_twin_results.csv"
+df_results.to_csv(str(csv_results), index=False)
+print(f"Digital twin results: {len(df_results)} points → {csv_results}")
+```
+
+### What Gets Saved Where
+
+| File | Location | Content | Purpose |
+|------|----------|---------|---------|
+| `*.pdf` | `references/` | STID engineering drawings | Vendor data extraction |
+| `stid_retrieval_manifest.json` | `references/` | STID download traceability | Provenance |
+| `tag_mapping.json` | `references/` | Logical name → PI/IP.21 tag | Reproducibility |
+| `plant_data_raw.csv` | `references/` | Raw historian snapshot | Offline rerun |
+| `plant_data_cleaned.csv` | `references/` | Quality-filtered data | Analysis input |
+| `digital_twin_results.csv` | `references/` | Simulated vs measured | Model validation |
+| `*.png` | `figures/` | Converted PDF pages + plots | Report figures |
+
+### Rerunning Without Historian Access
+
+Once CSVs are saved, analysis can be repeated without network/historian:
+
+```python
+# Load saved data — no tagreader or historian needed
+df_plant = pd.read_csv(str(REFS_DIR / "plant_data_cleaned.csv"),
+                        index_col=0, parse_dates=True)
+with open(str(REFS_DIR / "tag_mapping.json")) as f:
+    TAG_MAP = json.load(f)
+
+# Continue with NeqSim model...
+```
+
+This makes the task fully **self-contained and portable** — zip the task
+folder and anyone can reproduce the analysis.
 
 ## Common Pitfalls
 

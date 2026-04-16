@@ -8,15 +8,15 @@ Optionally converts PDFs to PNGs in the task's figures/ directory.
 Usage:
     # Download by tag list
     python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
-        --inst NLS --tags 30PT0185 30PT0189 33AI0117
+        --inst MYINST --tags 30PT0001 30PT0002 33AI0001
 
     # Download specific documents by doc number
     python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
-        --inst NLS --docs E234-AS-P-XB-30005-01 E234-AS-BI672-DS-00001
+        --inst MYINST --docs E001-AS-P-XB-00001-01 E001-AS-BI000-DS-00001
 
     # Download and convert PDFs to PNG for AI analysis
     python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
-        --inst NLS --tags 30PT0185 --convert-png
+        --inst MYINST --tags 30PT0001 --convert-png
 
 Requirements:
     pip install stidapi
@@ -32,7 +32,7 @@ def get_docs_for_tags(inst_code, tag_list):
     """Retrieve unique documents referenced by STID tags.
 
     Args:
-        inst_code: STID installation code (e.g., 'NLS')
+        inst_code: STID installation code (e.g., 'MYINST')
         tag_list: List of tag numbers to search
 
     Returns:
@@ -221,7 +221,7 @@ def main():
     )
     parser.add_argument(
         "--inst", required=True,
-        help="STID installation code (e.g., NLS)"
+        help="STID installation code (e.g., MYINST)"
     )
     parser.add_argument(
         "--tags", nargs="+", default=[],
