@@ -126,7 +126,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve correct mass
    * balance.
    */
-  private boolean useOptimizedExecution = true;
+  private boolean useOptimizedExecution = false;
 
   /**
    * Transient listener for simulation progress callbacks. Used for real-time visualization in
@@ -145,6 +145,24 @@ public class ProcessSystem extends SimulationBaseClass {
    * Validation warnings are logged but do not abort execution. Enable via setAutoValidate(true).
    */
   private boolean autoValidate = false;
+
+  /**
+   * When true, per-unit execution timing is recorded during simulation. After run() completes, call
+   * {@link #getExecutionProfile()} to retrieve a map from equipment name to cumulative execution
+   * time in milliseconds. Enable via {@link #setProfilingEnabled(boolean)}.
+   */
+  private transient boolean profilingEnabled = false;
+
+  /**
+   * Stores cumulative execution time per equipment unit in nanoseconds. Keyed by equipment name.
+   * Populated during simulation when {@link #profilingEnabled} is true.
+   */
+  private transient Map<String, long[]> executionTimingNanos = null;
+
+  /**
+   * Stores the total elapsed wall-clock time of the last run() call in nanoseconds.
+   */
+  private transient long lastRunElapsedNanos = 0;
 
   /**
    * Interface for monitoring simulation progress during execution. Implementations receive
@@ -1066,20 +1084,32 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runOptimized(UUID id) {
     if (hasAdjusters()) {
       // Adjusters create implicit feedback loops (they modify upstream variables
-      // and read downstream targets), requiring all units to re-run each iteration.
-      // Use sequential execution for correct convergence.
+      // and read downstream targets). Sequential execution ensures correct
+      // evaluation order for adjuster convergence.
       runSequential(id);
     } else if (hasRecycles()) {
-      // Process has Recycle units - use sequential execution for full convergence.
-      // This ensures all units are re-evaluated in each iteration using insertion
-      // order, which may be carefully chosen for convergence in complex processes
-      // (e.g. TEG dehydration with regen column and makeup).
-      runSequential(id);
+      // Process has Recycle units. Use hybrid execution which parallelizes the
+      // feed-forward levels before the recycle section and iterates on the rest.
+      try {
+        runHybrid(id);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Hybrid execution interrupted, falling back to sequential");
+        runSequential(id);
+      }
     } else if (hasMultiInputEquipment()) {
-      // Process has multi-input equipment (Mixer, Manifold, HeatExchanger, etc.)
-      // These require sequential execution to ensure correct mass balance.
-      // Parallel execution can change the order in which input streams are processed.
-      runSequential(id);
+      // Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
+      // recycles or adjusters. The graph correctly places multi-input equipment
+      // at levels after all their input producers, so parallel execution of
+      // independent units at earlier levels is safe. Use runParallel which
+      // respects the topological order and Union-Find grouping.
+      try {
+        runParallel(id);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Parallel execution interrupted, falling back to sequential");
+        runSequential(id);
+      }
     } else {
       // Feed-forward process with single-input equipment only - use parallel execution.
       // Units at the same level (no dependencies) run concurrently for maximum speed.
@@ -1255,7 +1285,7 @@ public class ProcessSystem extends SimulationBaseClass {
           ProcessEquipmentInterface unit = node.getEquipment();
           if (!(unit instanceof Setter)) {
             try {
-              unit.run(id);
+              runUnitProfiled(unit, id);
             } catch (Exception ex) {
               logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
             }
@@ -1272,7 +1302,7 @@ public class ProcessSystem extends SimulationBaseClass {
               ProcessEquipmentInterface unit = node.getEquipment();
               if (!(unit instanceof Setter)) {
                 try {
-                  unit.run(calcId);
+                  runUnitProfiled(unit, calcId);
                 } catch (Exception ex) {
                   logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
                 }
@@ -1332,8 +1362,8 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           if (!(unit instanceof Recycle)) {
             try {
-              if (iter == 1 || unit.needRecalculation()) {
-                unit.run(id);
+              if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
+                runUnitProfiled(unit, id);
               }
             } catch (Exception ex) {
               logger.error("error running unit operation " + unit.getName() + " " + ex.getMessage(),
@@ -1342,7 +1372,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
             try {
-              unit.run(id);
+              runUnitProfiled(unit, id);
             } catch (Exception ex) {
               logger.error(ex.getMessage(), ex);
             }
@@ -1560,7 +1590,7 @@ public class ProcessSystem extends SimulationBaseClass {
         ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
         if (!(unit instanceof Setter)) {
           try {
-            unit.run(id);
+            runUnitProfiled(unit, id);
           } catch (Exception ex) {
             logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
           }
@@ -1571,7 +1601,7 @@ public class ProcessSystem extends SimulationBaseClass {
           ProcessEquipmentInterface unit = node.getEquipment();
           if (!(unit instanceof Setter)) {
             try {
-              unit.run(id);
+              runUnitProfiled(unit, id);
             } catch (Exception ex) {
               logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
             }
@@ -1587,7 +1617,7 @@ public class ProcessSystem extends SimulationBaseClass {
               final UUID calcId = id;
               futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
                 try {
-                  unitToRun.run(calcId);
+                  runUnitProfiled(unitToRun, calcId);
                 } catch (Exception ex) {
                   logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
                       ex);
@@ -1602,7 +1632,7 @@ public class ProcessSystem extends SimulationBaseClass {
                 ProcessEquipmentInterface unit = node.getEquipment();
                 if (!(unit instanceof Setter)) {
                   try {
-                    unit.run(calcId);
+                    runUnitProfiled(unit, calcId);
                   } catch (Exception ex) {
                     logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
                   }
@@ -1831,13 +1861,19 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public synchronized void run(UUID id) {
-    // Use optimized execution by default for best performance
-    if (useOptimizedExecution) {
-      runOptimized(id);
-      return;
+    resetExecutionProfile();
+    long wallStart = System.nanoTime();
+    try {
+      // Use optimized execution by default for best performance
+      if (useOptimizedExecution) {
+        runOptimized(id);
+        return;
+      }
+      // Legacy sequential execution path
+      runSequential(id);
+    } finally {
+      lastRunElapsedNanos = System.nanoTime() - wallStart;
     }
-    // Legacy sequential execution path
-    runSequential(id);
   }
 
   /**
@@ -1906,8 +1942,8 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
-              unit.run(id);
+            if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
+              runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
             logger.error("error running unit uperation " + unit.getName() + " " + ex.getMessage(),
@@ -1918,7 +1954,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
-            unit.run(id);
+            runUnitProfiled(unit, id);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
           }
@@ -2051,6 +2087,146 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public boolean isAutoValidate() {
     return this.autoValidate;
+  }
+
+  /**
+   * Enables or disables per-unit execution timing profiling. When enabled, each call to an
+   * equipment unit's run() method is timed and accumulated. After simulation completes, use
+   * {@link #getExecutionProfile()} to retrieve timing data and {@link #printExecutionProfile()} to
+   * print it.
+   *
+   * @param enabled true to enable profiling, false to disable (default)
+   */
+  public void setProfilingEnabled(boolean enabled) {
+    this.profilingEnabled = enabled;
+    if (enabled && executionTimingNanos == null) {
+      executionTimingNanos = new java.util.LinkedHashMap<>();
+    }
+  }
+
+  /**
+   * Returns whether execution profiling is enabled.
+   *
+   * @return true if per-unit timing data is being collected
+   */
+  public boolean isProfilingEnabled() {
+    return profilingEnabled;
+  }
+
+  /**
+   * Returns the execution profile from the last simulation run.
+   *
+   * <p>
+   * The returned map contains equipment names as keys and arrays of
+   * {@code [total_time_ms, call_count]} as values. Equipment is sorted by total time descending.
+   * </p>
+   *
+   * @return map from equipment name to [total_time_ms, call_count], or empty map if profiling is
+   *         disabled
+   */
+  public Map<String, double[]> getExecutionProfile() {
+    Map<String, double[]> result = new java.util.LinkedHashMap<>();
+    if (executionTimingNanos == null) {
+      return result;
+    }
+    // Sort by total time descending
+    List<Map.Entry<String, long[]>> entries = new ArrayList<>(executionTimingNanos.entrySet());
+    Collections.sort(entries, (a, b) -> Long.compare(b.getValue()[0], a.getValue()[0]));
+    for (Map.Entry<String, long[]> entry : entries) {
+      long[] nanos = entry.getValue();
+      result.put(entry.getKey(), new double[] {nanos[0] / 1e6, nanos[1]});
+    }
+    return result;
+  }
+
+  /**
+   * Returns the total wall-clock elapsed time of the last run() call in milliseconds.
+   *
+   * @return elapsed time in milliseconds, or 0 if no run has been executed
+   */
+  public double getLastRunElapsedMs() {
+    return lastRunElapsedNanos / 1e6;
+  }
+
+  /**
+   * Prints the execution profile to System.out in a formatted table.
+   *
+   * <p>
+   * Shows each equipment unit's total execution time, percentage of total, and call count. Useful
+   * for identifying bottleneck equipment in large process simulations.
+   * </p>
+   */
+  public void printExecutionProfile() {
+    Map<String, double[]> profile = getExecutionProfile();
+    if (profile.isEmpty()) {
+      System.out.println("No profiling data. Enable with setProfilingEnabled(true) before run().");
+      return;
+    }
+    double totalMs = 0;
+    for (double[] vals : profile.values()) {
+      totalMs += vals[0];
+    }
+    System.out.printf("=== Execution Profile (total wall-clock: %.1f ms) ===%n",
+        getLastRunElapsedMs());
+    System.out.printf("%-40s %10s %8s %8s%n", "Equipment", "Time (ms)", "% Total", "Calls");
+    System.out.printf("%-40s %10s %8s %8s%n", "----------------------------------------",
+        "----------", "--------", "--------");
+    for (Map.Entry<String, double[]> entry : profile.entrySet()) {
+      double ms = entry.getValue()[0];
+      int calls = (int) entry.getValue()[1];
+      double pct = totalMs > 0 ? (ms / totalMs) * 100.0 : 0;
+      System.out.printf("%-40s %10.1f %7.1f%% %8d%n", entry.getKey(), ms, pct, calls);
+    }
+  }
+
+  /**
+   * Records execution time for a unit operation when profiling is enabled.
+   *
+   * @param unitName the name of the equipment unit
+   * @param elapsedNanos the elapsed time in nanoseconds
+   */
+  private void recordUnitTiming(String unitName, long elapsedNanos) {
+    if (!profilingEnabled || executionTimingNanos == null) {
+      return;
+    }
+    synchronized (executionTimingNanos) {
+      long[] timing = executionTimingNanos.get(unitName);
+      if (timing == null) {
+        timing = new long[] {0, 0};
+        executionTimingNanos.put(unitName, timing);
+      }
+      timing[0] += elapsedNanos;
+      timing[1]++;
+    }
+  }
+
+  /**
+   * Resets the execution profile data. Called at the start of each run.
+   */
+  private void resetExecutionProfile() {
+    if (profilingEnabled) {
+      if (executionTimingNanos == null) {
+        executionTimingNanos = new java.util.LinkedHashMap<>();
+      } else {
+        executionTimingNanos.clear();
+      }
+    }
+  }
+
+  /**
+   * Runs a single equipment unit with optional profiling.
+   *
+   * @param unit the equipment unit to run
+   * @param id the calculation identifier
+   */
+  private void runUnitProfiled(ProcessEquipmentInterface unit, UUID id) {
+    if (profilingEnabled) {
+      long t0 = System.nanoTime();
+      unit.run(id);
+      recordUnitTiming(unit.getName(), System.nanoTime() - t0);
+    } else {
+      unit.run(id);
+    }
   }
 
   /**
@@ -2188,7 +2364,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
               notifyBeforeUnit(unit, i, totalUnits, iter);
               unit.run(id);
             }

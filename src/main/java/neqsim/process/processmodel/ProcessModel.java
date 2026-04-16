@@ -751,34 +751,70 @@ public class ProcessModel implements Runnable, Serializable {
   private void runAllProcessesWithHooks(int iterationNumber) {
     int totalAreas = processes.size();
 
-    // If no listener is attached, delegate to the original method for parallel optimization
+    // If no listener is attached and events disabled, delegate to the parallel-aware method
     if (progressListener == null && !publishEvents) {
       runAllProcesses();
       return;
     }
 
-    // With hooks, iterate sequentially so before/after callbacks fire in order
-    int areaIdx = 0;
-    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      if (Thread.currentThread().isInterrupted()) {
-        return;
-      }
-      String areaName = entry.getKey();
-      ProcessSystem process = entry.getValue();
+    // Check for independent process groups - run them in parallel even with hooks
+    List<List<ProcessSystem>> independentGroups = findIndependentProcessGroups();
+    boolean canParallelize = independentGroups.size() == 1 && independentGroups.get(0).size() > 1;
 
-      notifyBeforeProcessArea(areaName, process, areaIdx, totalAreas, iterationNumber);
-      try {
-        runSingleProcess(process);
-        notifyProcessAreaComplete(areaName, process, areaIdx, totalAreas, iterationNumber);
-      } catch (Exception e) {
-        publishModelEvent(ProcessEvent.EventType.ERROR,
-            "Error in process area '" + areaName + "': " + e.getMessage(),
-            ProcessEvent.Severity.ERROR);
-        if (!notifyProcessAreaError(areaName, process, e)) {
-          break;
-        }
+    if (canParallelize) {
+      // Notify before all areas — use IdentityHashMap because ProcessSystem.hashCode()
+      // includes mutable fields (time, unitOperations) that change during run()
+      int areaIdx = 0;
+      Map<ProcessSystem, Integer> processIndexMap = new java.util.IdentityHashMap<>();
+      Map<ProcessSystem, String> processNameMap = new java.util.IdentityHashMap<>();
+      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+        processIndexMap.put(entry.getValue(), areaIdx);
+        processNameMap.put(entry.getValue(), entry.getKey());
+        notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
+            iterationNumber);
+        areaIdx++;
       }
-      areaIdx++;
+
+      // Run all independent areas in parallel
+      List<Future<?>> futures = new ArrayList<>();
+      for (ProcessSystem process : independentGroups.get(0)) {
+        final ProcessSystem proc = process;
+        futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+          runSingleProcess(proc);
+        }));
+      }
+      waitForFutures(futures);
+
+      // Notify after all areas
+      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+        int idx = processIndexMap.get(entry.getValue());
+        notifyProcessAreaComplete(entry.getKey(), entry.getValue(), idx, totalAreas,
+            iterationNumber);
+      }
+    } else {
+      // With dependencies, iterate sequentially with hooks
+      int areaIdx = 0;
+      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+        if (Thread.currentThread().isInterrupted()) {
+          return;
+        }
+        String areaName = entry.getKey();
+        ProcessSystem process = entry.getValue();
+
+        notifyBeforeProcessArea(areaName, process, areaIdx, totalAreas, iterationNumber);
+        try {
+          runSingleProcess(process);
+          notifyProcessAreaComplete(areaName, process, areaIdx, totalAreas, iterationNumber);
+        } catch (Exception e) {
+          publishModelEvent(ProcessEvent.EventType.ERROR,
+              "Error in process area '" + areaName + "': " + e.getMessage(),
+              ProcessEvent.Severity.ERROR);
+          if (!notifyProcessAreaError(areaName, process, e)) {
+            break;
+          }
+        }
+        areaIdx++;
+      }
     }
   }
 

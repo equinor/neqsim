@@ -437,17 +437,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     StreamInterface out = getOutletStream();
     if (out != null) {
       state.put("flow",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
       state.put("pressure",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getPressure(pressureUnit), pressureUnit));
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getTemperature(temperatureUnit), temperatureUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
     }
-    state.put("power",
-        ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
     return state;
   }
 
@@ -535,6 +531,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     thermoOps.PHflash(houtGuess, 0);
     System.out.println("TEMPERATURE .." + getThermoSystem().getTemperature());
     return getThermoSystem().getPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean needRecalculation() {
+    if (thermoSystem == null) {
+      return true;
+    }
+    if (inStream.getThermoSystem().getTemperature() == thermoSystem.getTemperature()
+        && inStream.getThermoSystem().getPressure() == thermoSystem.getPressure()
+        && inStream.getThermoSystem().getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")
+        && Math.abs(pressure - outStream.getPressure(pressureUnit)) < 1e-6) {
+      return false;
+    }
+    return true;
   }
 
   /** {@inheritDoc} */

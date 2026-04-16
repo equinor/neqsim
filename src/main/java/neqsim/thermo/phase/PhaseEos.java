@@ -407,13 +407,38 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    // Use analytical cubic solver for initial BonV guess (much better than heuristic)
+    double BonV;
+    double Btemp = getB();
+    double Ad = A * pressure / (R * R * temperature * temperature);
+    double Bd = B * pressure / (R * temperature);
+    double e_d1d2 = delta1 + delta2;
+    double f_d1d2 = delta1 * delta2;
+    double c2 = (e_d1d2 - 1.0) * Bd - 1.0;
+    double c1 = Ad + f_d1d2 * Bd * Bd - e_d1d2 * Bd * (1.0 + Bd);
+    double c0 = -(Ad * Bd + f_d1d2 * Bd * Bd * (1.0 + Bd));
+    double[] roots = solveCubic(c2, c1, c0);
+    double zGuess = Double.NaN;
+    for (double r : roots) {
+      if (!Double.isNaN(r) && r > Bd) {
+        if (Double.isNaN(zGuess)) {
+          zGuess = r;
+        } else if (pt == PhaseType.GAS && r > zGuess) {
+          zGuess = r;
+        } else if (pt != PhaseType.GAS && r < zGuess) {
+          zGuess = r;
+        }
+      }
+    }
+    if (!Double.isNaN(zGuess) && Double.isFinite(zGuess) && zGuess > Bd) {
+      BonV = Bd / zGuess;
+    } else {
+      BonV = pt == PhaseType.GAS ? pressure * Btemp / (numberOfMolesInPhase * temperature * R)
+          : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    }
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double BonVold = BonV;
-
-    double Btemp = getB();
     double h;
     double dh;
     double dhh;
@@ -481,12 +506,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < maxIterations);
-    // logger.info("pressure " + Z*R*temperature/molarVolume);
-    // logger.info("error in volume " +
-    // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
-    // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
     if (iterations >= maxIterations) {
-      // Fallback to analytic cubic solver if numerical solver fails
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {
