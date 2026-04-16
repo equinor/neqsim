@@ -264,7 +264,6 @@ public class ThrottlingValve extends TwoPortEquipment
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -351,7 +350,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.init(2);
+    thermoSystem.initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -712,15 +711,12 @@ public class ThrottlingValve extends TwoPortEquipment
         ProcessEquipmentInterface.createStateEntry(percentValveOpening, "%"));
     StreamInterface out = getOutletStream();
     if (out != null) {
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
       state.put("pressure",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getPressure(pressureUnit), pressureUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
       state.put("flow",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
     }
     return state;
   }

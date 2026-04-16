@@ -1114,6 +1114,43 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    // ---- Cached per-init arrays to avoid recomputing in calcAi (called N times) ----
+    /** Cached indices of active (non-negligible moles) components. */
+    private transient int[] cachedActive;
+    /** Number of active components in cachedActive array. */
+    private transient int cachedActiveCount;
+    /** Cached moles-in-phase for each component. */
+    private transient double[] cachedN;
+    /** Cached sqrt(a_i(T)) for each component. */
+    private transient double[] cachedSqrtAT;
+
+    /**
+     * Builds the active component cache arrays for the current phase state. Called once by
+     * {@link #calcA} before the per-component {@link #calcAi} calls in
+     * {@code PhaseEos.init -> Finit}.
+     *
+     * @param comp component array from the phase
+     * @param numbcomp number of components
+     */
+    private void buildActiveCache(ComponentEosInterface[] comp, int numbcomp) {
+      int[] active = new int[numbcomp];
+      double[] n = new double[numbcomp];
+      double[] sqrtAT = new double[numbcomp];
+      int m = 0;
+      for (int i = 0; i < numbcomp; i++) {
+        double ni = comp[i].getNumberOfMolesInPhase();
+        if (ni >= 1e-100) {
+          n[i] = ni;
+          sqrtAT[i] = Math.sqrt(comp[i].getaT());
+          active[m++] = i;
+        }
+      }
+      this.cachedActive = active;
+      this.cachedActiveCount = m;
+      this.cachedN = n;
+      this.cachedSqrtAT = sqrtAT;
+    }
+
     public double getkij(double temp, int i, int j) {
       // System.out.println("kij " +intparam[i][j] );
       return intparam[i][j];
@@ -1124,19 +1161,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      // Collect active components using in-phase moles (phase property)
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp]; // n_i in current phase
-      double[] sqrtAT = new double[numbcomp]; // sqrt(a_i(T))
-      for (int i = 0; i < numbcomp; i++) {
-        double ni = comp[i].getNumberOfMolesInPhase();
-        if (ni >= 1e-100) {
-          n[i] = ni;
-          sqrtAT[i] = Math.sqrt(comp[i].getaT());
-          active[m++] = i;
-        }
-      }
+      // Build active-component cache for reuse by calcAi (called N times after calcA)
+      buildActiveCache(comp, numbcomp);
+
+      int[] active = cachedActive;
+      int m = cachedActiveCount;
+      double[] n = cachedN;
+      double[] sqrtAT = cachedSqrtAT;
 
       if (m == 0) {
         A = 0.0;
@@ -1183,21 +1214,39 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         int numbcomp) {
       ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      // Cache and build active j-list using in-phase moles
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp];
-      double[] sqrtAT = new double[numbcomp];
-      for (int j = 0; j < numbcomp; j++) {
-        double nj = comp[j].getNumberOfMolesInPhase();
-        if (nj >= 1e-100) {
-          n[j] = nj;
-          sqrtAT[j] = Math.sqrt(comp[j].getaT());
-          active[m++] = j;
+      // Use cached active-component arrays if available (built by calcA).
+      // Falls back to local computation if cache is stale or not built.
+      int[] active;
+      int m;
+      double[] n;
+      double[] sqrtAT;
+
+      if (cachedActive != null && cachedActiveCount > 0 && cachedN != null
+          && cachedN.length >= numbcomp) {
+        active = cachedActive;
+        m = cachedActiveCount;
+        n = cachedN;
+        sqrtAT = cachedSqrtAT;
+      } else {
+        // Fallback: build locally (e.g. if calcAi called without prior calcA)
+        active = new int[numbcomp];
+        m = 0;
+        n = new double[numbcomp];
+        sqrtAT = new double[numbcomp];
+        for (int j = 0; j < numbcomp; j++) {
+          double nj = comp[j].getNumberOfMolesInPhase();
+          if (nj >= 1e-100) {
+            n[j] = nj;
+            sqrtAT[j] = Math.sqrt(comp[j].getaT());
+            active[m++] = j;
+          }
         }
       }
 
-      double sqrtAi = Math.sqrt(comp[compNumb].getaT());
+      double sqrtAi =
+          (cachedSqrtAT != null && compNumb < cachedSqrtAT.length && cachedSqrtAT[compNumb] > 0.0)
+              ? cachedSqrtAT[compNumb]
+              : Math.sqrt(comp[compNumb].getaT());
       double sum = 0.0;
       for (int idx = 0; idx < m; idx++) {
         int j = active[idx];
