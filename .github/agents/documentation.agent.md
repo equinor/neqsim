@@ -100,3 +100,71 @@ Do NOT write code examples based on assumptions — always read the source class
 The file `src/test/java/neqsim/DocExamplesCompilationTest.java` contains tests for all
 engineering utility doc examples. When adding new documentation with code examples,
 add corresponding tests to this file or a similar dedicated test class.
+
+---
+
+## Detailed Workflow
+
+### Step 1: Understand the Documentation Request
+
+1. **Classify the request** — new page, update, fix, or restructure?
+2. **Identify the target audience** — developer, process engineer, student?
+3. **Determine the documentation type** — reference, tutorial, cookbook, or troubleshooting?
+4. **Check existing docs** — search `docs/REFERENCE_MANUAL_INDEX.md` and the target folder to avoid duplicating existing content
+
+### Step 2: Research the NeqSim API
+
+Before writing ANY documentation:
+
+1. **Search for the Java class**: `file_search("**/ClassName.java")`
+2. **Read the source** — constructors, public methods, parameter types, return types
+3. **Check for existing tests** — `file_search("**/ClassNameTest.java")` for usage examples
+4. **Check for existing notebooks** — `file_search("examples/notebooks/*keyword*")`
+5. **Note any inner classes/enums** — verify exact paths and constant names
+
+### Step 3: Write the Documentation
+
+Follow the structure appropriate to the document type:
+
+**Reference Guide:**
+1. Overview paragraph (what the class/feature does, when to use it)
+2. Quick Start code example (minimal working example)
+3. API Reference table (methods, parameters, return types)
+4. Detailed examples with explanations
+5. Common pitfalls / troubleshooting
+6. Related documentation links
+
+**Tutorial:**
+1. Prerequisites and learning objectives
+2. Step-by-step walkthrough with code and explanations
+3. Expected output at each step
+4. Exercises for the reader
+5. Summary and next steps
+
+**Cookbook Recipe:**
+1. One-line description of what it solves
+2. Complete, copy-paste ready code (Java and/or Python)
+3. Expected output
+4. Variations for common use cases
+
+### Step 4: Verify and Index
+
+1. **Write and run** the JUnit verification test (see above)
+2. **Verify all links** — use `file_search` to confirm every linked file exists
+3. **Update `docs/REFERENCE_MANUAL_INDEX.md`** — add the new entry in the correct section
+4. **Update the section's `index.md`** — add a link to the new page
+5. **Check front matter** — title, description, no duplicate H1
+
+### Step 5: Review Checklist
+
+- [ ] Jekyll front matter with `title` and `description` (both quoted if containing colons)
+- [ ] No H1 heading duplicating the title after front matter
+- [ ] All code examples verified by a passing JUnit test
+- [ ] All internal links point to existing files
+- [ ] Math equations use `$...$` (inline) and `$$...$$` (display), never `\[...\]`
+- [ ] Tables have blank lines before and after
+- [ ] No markdown inside `<div>` tags
+- [ ] `REFERENCE_MANUAL_INDEX.md` updated
+- [ ] Section `index.md` updated
+- [ ] Python examples use `jneqsim` gateway, not raw jpype
+- [ ] Java examples are Java 8 compatible (no `var`, `List.of()`, etc.)

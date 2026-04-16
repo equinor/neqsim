@@ -200,6 +200,115 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ---
 
+### CCS & Hydrogen
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **ccs.hydrogen** | `@ccs.hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — phase behavior with impurities, dense phase pipeline design, injection well analysis, H2 blending |
+
+**Examples:**
+```
+@ccs.hydrogen CO2 pipeline design for 5 Mt/yr with 2% N2 impurity
+@ccs.hydrogen Injection well safety analysis for CO2 with H2 impurity
+@ccs.hydrogen Hydrogen blending impact on gas network Wobbe index
+@ccs.hydrogen Full CCS chain from capture to injection
+```
+
+---
+
+### Reaction Engineering
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **reaction.engineering** | `@reaction.engineering <description>` | Chemical reactor design — equilibrium (Gibbs), kinetic PFR/CSTR, catalyst beds, conversion analysis, reactor sizing |
+
+**Examples:**
+```
+@reaction.engineering Steam methane reforming at 850°C and 30 bar
+@reaction.engineering Ammonia synthesis reactor with Fe catalyst
+@reaction.engineering Claus reactor for sulfur recovery
+@reaction.engineering Water-gas shift reactor downstream of gasifier
+```
+
+---
+
+### Emissions & Environmental
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **emissions.environmental** | `@emissions.environmental <description>` | GHG emissions, flaring/venting, carbon intensity, regulatory reporting (EU ETS, Norwegian CO2 tax), ESG metrics |
+
+**Examples:**
+```
+@emissions.environmental CO2 emissions from gas turbine compressor driver
+@emissions.environmental Flare gas inventory for HP/LP separation
+@emissions.environmental Carbon intensity of LNG production
+@emissions.environmental Methane slip from gas engine power generation
+```
+
+---
+
+### Control Systems
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **control.system** | `@control.system <description>` | PID controller design and tuning, control loop architecture, measurement device selection, alarm/trip configuration, control narratives |
+
+**Examples:**
+```
+@control.system Design level control for HP separator with 2m diameter
+@control.system Tune pressure controller for gas export compressor
+@control.system Cascade temperature control for heat exchanger
+@control.system Generate control narrative for 3-stage separation
+```
+
+---
+
+### Engineering Deliverables
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **engineering.deliverables** | `@engineering.deliverables <description>` | PFDs, thermal utility summaries, instrument schedules, fire/noise assessments, spare parts inventories |
+
+**Examples:**
+```
+@engineering.deliverables Generate Class A deliverables for HP/LP separation train
+@engineering.deliverables Produce Class B deliverables for subsea tieback concept
+@engineering.deliverables Full FEED deliverable package for gas compression facility
+```
+
+---
+
+### Process Extraction
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **extract.process** | `@extract.process <description>` | Extract process info from text, PFDs, or data sheets and convert to NeqSim JSON / ProcessModule |
+
+**Examples:**
+```
+@extract.process "Feed gas at 80 bara, 40°C → cooler to 15°C → separator → compress to 120 bara"
+@extract.process Build a NeqSim model from this heat and mass balance table
+@extract.process Convert this PFD description into a running simulation
+```
+
+---
+
+### UniSim / HYSYS Conversion
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **unisim.reader** | `@unisim.reader <description>` | Read UniSim Design / Aspen HYSYS .usc files via COM and convert to NeqSim models |
+
+**Examples:**
+```
+@unisim.reader Read C:\Models\GasPlant.usc and build a NeqSim model
+@unisim.reader Convert all UniSim cases in C:\Cases\ to NeqSim
+@unisim.reader Compare UniSim and NeqSim results for a platform model
+```
+
+---
+
 ### Technical Document Reading
 
 | Agent | Command | Purpose |
@@ -250,6 +359,12 @@ Each agent is a specialized prompt that:
 | **PVT** | All standard lab tests, parameter fitting | Non-standard experiments (add to NeqSim first) |
 | **Standards** | Calculations per ISO/API/NORSOK | Legal interpretation of standards |
 | **Document Reading** | Extract data from PDF, Word, Excel (data sheets, TRs, stream tables, inspection reports) | OCR of scanned diagrams, reading proprietary CAD formats |
+| **Mechanical** | Design per codes, material selection, cost | Detailed FEA or stress analysis |
+| **CCS & Hydrogen** | CO2 phase envelopes, dense phase transport, injection wells, H2 blending | Geological storage simulation, reservoir composition tracking |
+| **Reactions** | Equilibrium (Gibbs), kinetic PFR/CSTR, catalyst beds | Detailed reaction mechanism fitting, CFD reactor modeling |
+| **Emissions** | GHG inventories, flaring calculations, carbon intensity | Atmospheric dispersion modeling, regulatory submissions |
+| **Control Systems** | PID tuning, control loop design, alarm configuration | DCS/SIS programming, SIL verification calculations |
+| **UniSim Conversion** | Read .usc via COM, convert to NeqSim ProcessSystem, compare results | Modify UniSim files, convert from Aspen Plus |
 
 ---
 
@@ -270,12 +385,28 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-physics-explanations` | Explaining results or adding educational context | Plain-language explanations of thermodynamic and process phenomena |
 | `neqsim-capability-map` | Checking what NeqSim can do, planning implementations | Structured inventory of all NeqSim capabilities by discipline |
 | `neqsim-technical-document-reading` | Reading technical documents (PDF, Word, Excel) | Extraction patterns, unit normalization, component mapping, quality scoring |
+| `neqsim-ccs-hydrogen` | CCS or hydrogen system tasks | CO2 phase behavior, impurity management, injection wells, H2 blending |
+| `neqsim-distillation-design` | Distillation column setup or troubleshooting | Solver selection, feed tray rules, convergence, internals sizing |
+| `neqsim-dynamic-simulation` | Transient simulations, controller tuning | runTransient, PID controllers, transmitters, depressurization |
+| `neqsim-electrolyte-systems` | Brine, MEG, ions, or scale prediction | SystemElectrolyteCPAstatoil, ion components, scale risk |
+| `neqsim-eos-regression` | Fitting EOS to experimental data | kij tuning, PVT matching (CME, CVD), C7+ characterization |
+| `neqsim-field-development` | Field development studies | Concept selection, tieback analysis, production forecasting, lifecycle |
+| `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes | Norwegian NCS, UK fiscal, cost estimation, Monte Carlo |
+| `neqsim-flow-assurance` | Hydrate, wax, corrosion, pipeline hydraulics | All flow assurance threats with NeqSim code patterns |
+| `neqsim-plant-data` | Connecting to plant historian data | Tagreader API, tag mapping, digital twin loops, data quality |
+| `neqsim-power-generation` | Gas/steam turbines, HRSG, combined cycle | Equipment patterns, efficiency calculations, heat integration |
+| `neqsim-process-extraction` | Extracting process data from text or tables | Equipment mapping, stream wiring, unit conversion, JSON builder |
+| `neqsim-production-optimization` | Production optimization, bottleneck analysis | Decline curves, gas lift, network optimization |
+| `neqsim-reaction-engineering` | Chemical reactor modeling | GibbsReactor, PFR, CSTR, kinetics, AnaerobicDigester |
+| `neqsim-standards-lookup` | Standards compliance or lookup | Equipment-to-standards mapping, CSV database queries |
+| `neqsim-stid-retriever` | Retrieving vendor/engineering documents | Local dirs, manual upload, retrieval backends, relevance filtering |
+| `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost | Casing design, tieback analysis, cost estimation |
+| `neqsim-unisim-reader` | UniSim/HYSYS conversion tasks | COM reader, component/EOS mapping, topology reconstruction |
 
 ### API Changelog
 
 See `CHANGELOG_AGENT_NOTES.md` in the repo root for recent API changes,
 new classes, deprecated methods, and migration guidance.
-| **Mechanical** | Design per codes, material selection, cost | Detailed FEA or stress analysis |
 
 ---
 

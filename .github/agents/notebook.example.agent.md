@@ -104,3 +104,31 @@ with cells in "not executed" state.
    - Temperatures in expected ranges, pressures positive, flows non-zero
    - Plots render correctly with labels and units
    - JSON reports parse without errors
+
+---
+
+## Error Recovery Strategies
+
+When a notebook cell fails during execution, follow this diagnostic sequence:
+
+| Error Type | Diagnosis | Fix |
+|-----------|-----------|-----|
+| `ModuleNotFoundError: No module named 'neqsim'` | neqsim-python not installed | `pip install neqsim` or use dual-boot cell |
+| `AttributeError` on a class method | Method name wrong or doesn't exist | Search Java source: `file_search("**/ClassName.java")`, read actual methods |
+| `TypeError: No matching overloads` | Wrong parameter types or count | Read Java method signature — check if method needs unit string, double vs int, etc. |
+| `RuntimeError: JVM cannot be restarted` | Kernel died and restarted | Restart kernel fresh; do not call `jpype.shutdownJVM()` |
+| Zero or NaN property values | Missing `initProperties()` after flash | Add `fluid.initProperties()` before reading transport properties |
+| Phase not found | Wrong phase name | Use `"gas"`, `"oil"`, `"aqueous"` — not `"vapor"`, `"liquid"`, `"water"` |
+
+## Quality Checklist (verify before delivering)
+
+- [ ] All code cells executed without errors
+- [ ] Introduction explains what the notebook demonstrates
+- [ ] Setup cell uses the dual-boot pattern (devtools + pip fallback)
+- [ ] Fluid creation includes `setMixingRule()` call
+- [ ] Results displayed in a formatted table with units
+- [ ] At least 2-3 matplotlib figures with axis labels, titles, legends, grids
+- [ ] All figures saved to disk as PNG (dpi=150, bbox_inches="tight")
+- [ ] Summary cell with key takeaways
+- [ ] No hardcoded absolute paths — use relative paths or pathlib
+- [ ] Temperature conversions correct (constructors use Kelvin, display in °C)
