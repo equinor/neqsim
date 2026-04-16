@@ -446,16 +446,16 @@ This file is in `.gitignore` and never committed to the public repo.
 # THIS FILE IS GITIGNORED — contains organization-specific configuration
 #
 # Supported backends:
-#   stidapi  — Equinor STID (requires stidapi package + network access)
+#   stidapi  — STID document management (requires stidapi package + network)
 #   local    — just reads from a local directory
 #   none     — disabled (user must provide docs manually)
 
-backend: stidapi   # or: local, none
+backend: none   # change to: stidapi, local
 
 # Backend-specific settings (only needed for auto-retrieval):
 # stidapi:
 #   auth_method: azure_ad_sso
-#   default_inst_code: TROA
+#   default_inst_code: YOUR_INST_CODE
 ```
 
 If this file doesn't exist, the task solver works normally — it just
