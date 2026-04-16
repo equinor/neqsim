@@ -898,17 +898,32 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0.0;
       double A = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
+      // Pre-compute n_i * sqrt(aT_i) for active components, skip zero-mole
+      double[] nSqrtA = new double[numbcomp];
+      int activeCount = 0;
+      int[] activeIdx = new int[numbcomp];
       for (int i = 0; i < numbcomp; i++) {
-        for (int j = 0; j < numbcomp; j++) {
-          aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT());
-          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-              * aij;
+        double ni = compArray[i].getNumberOfMolesInPhase();
+        if (ni < 1e-100) {
+          continue;
+        }
+        nSqrtA[i] = ni * Math.sqrt(compArray[i].getaT());
+        activeIdx[activeCount++] = i;
+      }
+
+      // Upper-triangle sum: A = sum_i(nSqrtA_i^2) + 2*sum_{i<j}(nSqrtA_i*nSqrtA_j)
+      for (int ii = 0; ii < activeCount; ii++) {
+        int i = activeIdx[ii];
+        double nSqrtAi = nSqrtA[i];
+        A += nSqrtAi * nSqrtAi;
+        for (int jj = ii + 1; jj < activeCount; jj++) {
+          A += 2.0 * nSqrtAi * nSqrtA[activeIdx[jj]];
         }
       }
+
       Atot = A;
       return A;
     }
@@ -957,16 +972,19 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
-      double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
+      double sqrtAi = Math.sqrt(compArray[compNumb].getaT());
       Ai = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-        aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
-        Ai += compArray[j].getNumberOfMolesInPhase() * aij;
+        double nj = compArray[j].getNumberOfMolesInPhase();
+        if (nj < 1e-100) {
+          continue;
+        }
+        Ai += nj * Math.sqrt(compArray[j].getaT());
       }
 
-      return 2.0 * Ai;
+      return 2.0 * sqrtAi * Ai;
     }
 
     /** {@inheritDoc} */

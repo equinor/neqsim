@@ -762,10 +762,11 @@ public class ProcessModel implements Runnable, Serializable {
     boolean canParallelize = independentGroups.size() == 1 && independentGroups.get(0).size() > 1;
 
     if (canParallelize) {
-      // Notify before all areas
+      // Notify before all areas — use IdentityHashMap because ProcessSystem.hashCode()
+      // includes mutable fields (time, unitOperations) that change during run()
       int areaIdx = 0;
-      Map<ProcessSystem, Integer> processIndexMap = new java.util.LinkedHashMap<>();
-      Map<ProcessSystem, String> processNameMap = new java.util.LinkedHashMap<>();
+      Map<ProcessSystem, Integer> processIndexMap = new java.util.IdentityHashMap<>();
+      Map<ProcessSystem, String> processNameMap = new java.util.IdentityHashMap<>();
       for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
         processIndexMap.put(entry.getValue(), areaIdx);
         processNameMap.put(entry.getValue(), entry.getKey());

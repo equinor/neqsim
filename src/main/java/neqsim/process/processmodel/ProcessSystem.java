@@ -1362,7 +1362,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           if (!(unit instanceof Recycle)) {
             try {
-              if (iter == 1 || unit.needRecalculation()) {
+              if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
                 runUnitProfiled(unit, id);
               }
             } catch (Exception ex) {
@@ -1942,7 +1942,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
               runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
@@ -2364,7 +2364,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
               notifyBeforeUnit(unit, i, totalUnits, iter);
               unit.run(id);
             }
