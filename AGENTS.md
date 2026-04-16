@@ -159,7 +159,7 @@ try:
     ns = neqsim_classes(ns)
     NEQSIM_MODE = "devtools"
     print("NeqSim loaded via devtools (local dev mode)")
-except ImportError:
+except Exception:
     try:
         import neqsim
     except ImportError:
@@ -802,6 +802,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
 | `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
 | `neqsim-technical-document-reading` | Read technical documents and engineering images — PDF/Word/Excel extraction, P&ID topology, vendor datasheet parsing, image analysis with view_image, performance map digitization, figure discussion generation |
+| `neqsim-stid-retriever` | Retrieve engineering documents (compressor curves, mechanical drawings, data sheets) for tasks. Supports local dirs, manual upload, pluggable retrieval backends (configured via gitignored `devtools/doc_retrieval_config.yaml`). Includes relevance filtering by task type and retrieval manifests for traceability |
 
 ## API Verification (Mandatory)
 

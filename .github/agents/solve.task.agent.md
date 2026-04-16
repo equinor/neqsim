@@ -484,6 +484,15 @@ user: "Step 1 is complete. Please start a new conversation and say
    - Search the NeqSim codebase for existing classes/methods relevant to the task
    - Check `CHANGELOG_AGENT_NOTES.md` for any recent API changes affecting this task
    - Use web search if available for engineering reference data
+   - **Retrieve vendor documents** if the task references specific equipment tags.
+     Load the `neqsim-stid-retriever` skill for document retrieval patterns:
+     relevance filtering, retrieval manifests, and backend configuration.
+     If a retrieval backend is configured (via gitignored `devtools/doc_retrieval_config.yaml`),
+     auto-fetch performance curves, mechanical drawings, and data sheets.
+     Otherwise, expect documents in `step1_scope_and_research/references/`.
+     Users can always **add documents manually** to `references/` alongside
+     auto-retrieved ones — both sources coexist and are tracked in the manifest.
+     Ask the user: "Do you have additional documents to add?" before leaving Step 1.
    - **Extract figures from reference PDFs** placed in `step1_scope_and_research/references/`:
      ```bash
      python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
@@ -665,6 +674,14 @@ condensed analysis section in notes and proceed.
    - Address each engineering insight question in the notebook
    - For every NeqSim gap: implement the proposed improvement or use a workaround
    - Choose reasonable engineering defaults for missing input data (document assumptions)
+   - **Check for data gaps** — if analysis requires documents not yet retrieved
+     (e.g., mechanical drawings, instrument datasheets, P&IDs, parallel train data):
+     1. Log the gap in the notebook with what's missing and why
+     2. If a retrieval backend is configured, auto-fetch the specific doc types needed
+     3. If not, ask the user to drop the file in `references/` or provide the values
+     4. Update the retrieval manifest with `iterative_retrievals` entries
+     5. Re-extract PNGs for any new PDFs and continue analysis
+     See `neqsim-stid-retriever` skill § "Iterative Retrieval During Analysis"
 
 9. **Create a Jupyter notebook** in `step2_analysis/`:
    - Use the dual-boot setup pattern (devtools + pip fallback)

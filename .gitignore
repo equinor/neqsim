@@ -116,5 +116,8 @@ devtools/neqsim_dev_setup.egg-info/top_level.txt
 devtools/neqsim_dev_setup.egg-info/requires.txt
 devtools/neqsim_dev_setup.egg-info/SOURCES.txt
 
+# Document retrieval backend config (organization-specific, never commit)
+devtools/doc_retrieval_config.yaml
+
 run_notebook.bat
 run_notebook.py

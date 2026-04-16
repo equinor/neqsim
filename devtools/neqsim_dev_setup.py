@@ -20,8 +20,49 @@ import os
 import types
 
 
-# ── Project root (auto-detected: this file lives in <project>/devtools/) ──
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# ── Project root detection ──
+# Priority order:
+# 1. Explicit project_root parameter (in neqsim_init)
+# 2. NEQSIM_PROJECT_ROOT environment variable
+# 3. Walk upward from this file's location (works when devtools/ is in the repo)
+# 4. Walk upward from CWD (works when notebook is inside the repo)
+# 5. Well-known default paths
+
+
+def _find_project_root():
+    """Auto-detect the neqsim project root by searching for pom.xml + mvnw."""
+    # From env var
+    env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+    if env_root:
+        p = Path(env_root)
+        if (p / "pom.xml").exists():
+            return p
+
+    # Walk up from this file (works when installed in <repo>/devtools/)
+    candidates = [Path(__file__).resolve().parent.parent]
+
+    # Walk up from CWD (works when notebook is run from inside the repo)
+    cwd = Path.cwd().resolve()
+    candidates.append(cwd)
+    for parent in cwd.parents:
+        candidates.append(parent)
+        if len(parent.parts) <= 2:
+            break  # stop at drive root
+
+    # Well-known default paths
+    candidates.append(Path.home() / "Documents" / "GitHub" / "neqsim2")
+    candidates.append(Path.home() / "Documents" / "GitHub" / "neqsim")
+
+    for c in candidates:
+        if (c / "pom.xml").exists() and (
+            (c / "mvnw.cmd").exists() or (c / "mvnw").exists()
+        ):
+            return c
+
+    return None
+
+
+_PROJECT_ROOT = _find_project_root() or Path(__file__).resolve().parent.parent
 
 
 def _run_compile(root):
@@ -72,6 +113,16 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         Pass to ``neqsim_classes(ns)`` to add class imports.
     """
     root = Path(project_root) if project_root else _PROJECT_ROOT
+
+    # Validate the root has a pom.xml
+    if not (root / "pom.xml").exists():
+        raise FileNotFoundError(
+            f"NeqSim project root not found at {root}. "
+            "Set NEQSIM_PROJECT_ROOT env var or pass project_root= parameter."
+        )
+
+    if verbose:
+        print(f"NeqSim project root: {root}")
 
     # If JVM is already running, handle based on recompile flag
     if jpype.isJVMStarted():
