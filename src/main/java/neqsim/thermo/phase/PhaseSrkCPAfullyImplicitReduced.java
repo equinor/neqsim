@@ -1,23 +1,28 @@
 package neqsim.thermo.phase;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 
 /**
- * CPA phase class with site symmetry reduction and Broyden quasi-Newton acceleration.
+ * Fully implicit CPA phase with site type reduction.
  *
  * <p>
- * Reduces the coupled (n_s + 1)-dimensional Newton system to (p + 1) dimensions, where p is the
- * number of unique association site types. Sites on the same component with identical bonding
- * patterns (same delta row in the association matrix) are grouped into a single "type" with a
- * multiplicity factor. This exploits the mathematical theorem that equivalent sites converge to
- * equal site fractions at equilibrium.
+ * Combines two acceleration strategies:
  * </p>
+ * <ul>
+ * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026): simultaneous solution
+ * of molar volume and association site fractions, eliminating inner iterations.</li>
+ * <li><b>Site type reduction</b>: groups equivalent association sites (same deltaNog row on same
+ * component) into types with multiplicities, reducing the system dimension from (n_s + 1) to (p +
+ * 1).</li>
+ * </ul>
  *
  * <p>
- * Combined with Broyden rank-1 updates of the inverse Jacobian after initial convergence, this
- * yields compounded speedup from both dimension reduction and reduced per-iteration cost.
+ * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional system at every
+ * iteration (no Broyden approximation), solved via Gaussian elimination O(p^3). This gives both the
+ * per-iteration cost reduction of dimension reduction AND the quadratic convergence of full Newton.
  * </p>
  *
  * <p>
@@ -61,23 +66,22 @@ import neqsim.thermo.component.ComponentSrkCPA;
  * @author Even Solbraa
  * @version 1.0
  */
-public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
+public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1002L;
+  private static final long serialVersionUID = 1003L;
+
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(PhaseSrkCPAfullyImplicitReduced.class);
 
   // --- Solver constants ---
-  /** Maximum iterations for the coupled Newton/Broyden solver. */
+  /** Maximum iterations for the coupled Newton solver. */
   static final int MAX_ITERATIONS = 100;
   /** Convergence tolerance for the max residual. */
   static final double CONVERGENCE_TOL = 1.0e-12;
-  /** Minimum full Newton steps before switching to Broyden. */
-  static final int MIN_NEWTON_STEPS = 2;
-  /** Max residual below which Broyden updates are activated. */
-  static final double BROYDEN_SWITCH_TOL = 1.0e-4;
-  /** Ratio threshold for detecting stalling. */
-  static final double STALL_RATIO = 0.3;
-  /** Maximum relative step. */
-  static final double MAX_REL_STEP = 0.9;
+  /** Maximum relative step size per iteration to prevent divergence. */
+  static final double MAX_REL_STEP = 0.5;
+  /** Restart threshold parameter alpha (supercritical detection). */
+  static final double RESTART_ALPHA = 0.1;
 
   // --- Site type mapping (transient, rebuilt each molarVolume call) ---
   /** Number of unique site types for the current system. */
@@ -96,10 +100,8 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   long callCount = 0;
   /** Total iterations across all calls. */
   long totalIters = 0;
-  /** Number of full Jacobian evaluations. */
+  /** Number of Jacobian evaluations (full Newton, no Broyden). */
   long jacobianEvals = 0;
-  /** Number of Broyden rank-1 updates. */
-  long broydenUpdates = 0;
   /** Number of solver fallbacks to the base class. */
   long fallbackCount = 0;
   /** Number of site types (last call). */
@@ -117,19 +119,19 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   private transient int workP = 0;
 
   /**
-   * Construct a PhaseSrkCPAreduced phase.
+   * Construct a PhaseSrkCPAfullyImplicitReduced phase.
    */
-  public PhaseSrkCPAreduced() {
+  public PhaseSrkCPAfullyImplicitReduced() {
     super();
+    thermoPropertyModelName = "SRK-CPA-EoS-FullyImplicit-Reduced";
   }
 
   /** {@inheritDoc} */
   @Override
-  public PhaseSrkCPAreduced clone() {
-    PhaseSrkCPAreduced clonedPhase = null;
+  public PhaseSrkCPAfullyImplicitReduced clone() {
+    PhaseSrkCPAfullyImplicitReduced clonedPhase = null;
     try {
-      clonedPhase = (PhaseSrkCPAreduced) super.clone();
-      // Transient fields are rebuilt as needed
+      clonedPhase = (PhaseSrkCPAfullyImplicitReduced) super.clone();
       clonedPhase.numTypes = -1;
       clonedPhase.siteToType = null;
       clonedPhase.typeRepSite = null;
@@ -158,9 +160,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Reduced-dimension coupled Newton/Broyden molar volume solver. Exploits association site
-   * symmetry to work in (p+1) dimensions where p is the number of unique site types, combined with
-   * Broyden rank-1 inverse-Jacobian updates after the initial Newton phase.
+   * Fully implicit + reduced molar volume solver. Operates on the reduced (p+1)-dimensional system
+   * where p is the number of unique association site types. Uses full Newton Jacobian at every
+   * iteration (no Broyden approximation), solved via Gaussian elimination.
    * </p>
    */
   @Override
@@ -175,12 +177,13 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
-    // Build site type map early so initCPAMatrix(1) works even for gas-phase fallback.
-    // calcDelta builds deltaNog which depends only on temperature.
+    // Build site type map early so initCPAMatrix(1) works even for gas-phase
+    // fallback
     calcDelta();
     buildSiteTypeMap(ns);
 
-    // Gas phase: nested solver (weak association, but initCPAMatrix override is active)
+    // Gas phase: nested solver (weak association, but initCPAMatrix override is
+    // active)
     if (pt == PhaseType.GAS) {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -189,10 +192,11 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
 
     double Btemp = getB();
     if (Btemp <= 0) {
+      logger.info("b negative in fully implicit reduced volume calc");
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
-    // If no reduction possible (each site unique), fall back to avoid overhead
+    // If no reduction possible (each site unique), fall back
     if (numTypes == ns) {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -220,7 +224,6 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     gcpav = calc_lngV();
     updateDeltaWithG(ns);
 
-    // Read current individual site fractions, extract reduced X
     double[] xSiteFull = new double[ns];
     readXsiteFromComponents(xSiteFull, ns);
 
@@ -254,19 +257,15 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
 
     // --- Pre-allocate work arrays ---
     double[] residual = new double[dim];
-    double[] residualOld = new double[dim];
     double[][] jacobian = new double[dim][dim];
-    double[][] invJac = new double[dim][dim];
     double[] dx = new double[dim];
-    double[] xOld = new double[dim];
-    double[] df = new double[dim];
 
     int iterations = 0;
     boolean converged = false;
     boolean restartTriggered = false;
-    boolean useBroyden = false;
-    int stallCount = 0;
-    double prevResNorm = Double.MAX_VALUE;
+
+    // Reusable temp array for expanding reduced types to full site fractions
+    double[] xSiteFullTemp = new double[ns];
 
     do {
       iterations++;
@@ -335,77 +334,18 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
         break;
       }
 
-      // --- Newton or Broyden step ---
-      if (!useBroyden || iterations <= MIN_NEWTON_STEPS || maxResidual > BROYDEN_SWITCH_TOL) {
-        buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
-        boolean ok = invertMatrix(jacobian, invJac, dim);
-        if (!ok) {
-          fallbackCount++;
-          return super.molarVolume(pressure, temperature, A, B, pt);
-        }
-        jacobianEvals++;
-        if (maxResidual <= BROYDEN_SWITCH_TOL && iterations > MIN_NEWTON_STEPS) {
-          useBroyden = true;
-        }
-        stallCount = 0;
-      } else {
-        // Broyden rank-1 update
-        for (int i = 0; i < dim; i++) {
-          df[i] = residual[i] - residualOld[i];
-        }
-        double[] dxPrev = new double[dim];
-        for (int t = 0; t < p; t++) {
-          dxPrev[t] = xType[t] - xOld[t];
-        }
-        dxPrev[p] = zeta - xOld[p];
+      // --- Build full Newton Jacobian (every iteration) ---
+      buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
+      jacobianEvals++;
 
-        broydenUpdate(invJac, dxPrev, df, dim);
-        broydenUpdates++;
-
-        if (maxResidual > prevResNorm) {
-          buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim,
-              p);
-          boolean ok = invertMatrix(jacobian, invJac, dim);
-          if (!ok) {
-            fallbackCount++;
-            return super.molarVolume(pressure, temperature, A, B, pt);
-          }
-          jacobianEvals++;
-          stallCount = 0;
-        } else if (maxResidual > prevResNorm * STALL_RATIO) {
-          stallCount++;
-          if (stallCount >= 2) {
-            buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim,
-                p);
-            boolean ok = invertMatrix(jacobian, invJac, dim);
-            if (!ok) {
-              fallbackCount++;
-              return super.molarVolume(pressure, temperature, A, B, pt);
-            }
-            jacobianEvals++;
-            stallCount = 0;
-          }
-        } else {
-          stallCount = 0;
-        }
-      }
-
-      prevResNorm = maxResidual;
-
-      // Save state for Broyden update
-      for (int t = 0; t < p; t++) {
-        xOld[t] = xType[t];
-      }
-      xOld[p] = zeta;
-      System.arraycopy(residual, 0, residualOld, 0, dim);
-
-      // --- Compute step: dx = -H * R ---
+      // --- Solve J * dx = -R using Gaussian elimination ---
       for (int i = 0; i < dim; i++) {
-        double s = 0.0;
-        for (int j = 0; j < dim; j++) {
-          s += invJac[i][j] * residual[j];
-        }
-        dx[i] = -s;
+        dx[i] = -residual[i];
+      }
+      boolean solveOk = solveLinearSystem(jacobian, dx, dim);
+      if (!solveOk) {
+        fallbackCount++;
+        return super.molarVolume(pressure, temperature, A, B, pt);
       }
 
       // --- Step limiting ---
@@ -442,10 +382,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       zeta += maxStep * dx[p];
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
 
-      // --- Restart criterion ---
+      // --- Restart criterion (supercritical detection) ---
       if (iterations > 20 && maxResidual > 0.1 && !restartTriggered) {
         restartTriggered = true;
-        useBroyden = false;
         if (pt == PhaseType.GAS) {
           zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
         } else {
@@ -461,6 +400,10 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
 
     if (!converged) {
       fallbackCount++;
+      if (logger.isDebugEnabled()) {
+        logger.debug("Implicit-reduced non-convergence: ns=" + ns + " p=" + numTypes + " pt=" + pt
+            + " iters=" + iterations + " zeta=" + zeta + " P=" + pressure + " T=" + temperature);
+      }
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
@@ -498,8 +441,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * <p>
    * Two individual sites are equivalent if they belong to the same component and have identical
    * deltaNog rows (same bonding pattern to all other sites). This corresponds to sites with the
-   * same charge in the CPA association scheme — e.g., the two electron-donor sites of water (4C)
-   * have identical interactions with all other sites.
+   * same charge in the CPA association scheme.
    * </p>
    *
    * @param ns total number of individual association sites
@@ -517,7 +459,6 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
         if (moleculeNumber[i] != moleculeNumber[typeRepSite[t]]) {
           continue;
         }
-        // Same component — check if deltaNog rows are identical
         boolean identical = true;
         for (int j = 0; j < ns; j++) {
           if (Math.abs(deltaNog[i][j] - deltaNog[typeRepSite[t]][j]) > 1.0e-30) {
@@ -576,7 +517,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   }
 
   // ===========================================================================
-  // Reduced-dimension Jacobian and linear algebra
+  // Reduced-dimension Jacobian
   // ===========================================================================
 
   /**
@@ -606,7 +547,8 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   private void buildReducedJacobian(double[][] jac, double[] xType, double[] tMoles,
       double[] redSum, double totalVol, double gdv1, double zeta, double btemp, int dim, int p) {
 
-    // J_XX block: dR_a/dX_b = delta_ab + X_a^2 * mult_b * n_b * delta(rep_a,rep_b) / V
+    // J_XX block: dR_a/dX_b = delta_ab + X_a^2 * mult_b * n_b * delta(rep_a,rep_b)
+    // / V
     for (int a = 0; a < p; a++) {
       double xa2 = xType[a] * xType[a];
       for (int b = 0; b < p; b++) {
@@ -651,113 +593,6 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       for (int j = i; j < ns; j++) {
         delta[i][j] = deltaNog[i][j] * gcpa;
         delta[j][i] = delta[i][j];
-      }
-    }
-  }
-
-  /**
-   * Invert matrix A into Ainv using Gauss-Jordan elimination with partial pivoting.
-   *
-   * @param a input matrix (will be modified by the elimination)
-   * @param ainv output inverse matrix
-   * @param n matrix dimension
-   * @return true if successful, false if singular
-   */
-  private static boolean invertMatrix(double[][] a, double[][] ainv, int n) {
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        ainv[i][j] = (i == j) ? 1.0 : 0.0;
-      }
-    }
-    double[][] work = new double[n][n];
-    for (int i = 0; i < n; i++) {
-      System.arraycopy(a[i], 0, work[i], 0, n);
-    }
-    for (int col = 0; col < n; col++) {
-      int maxRow = col;
-      double maxVal = Math.abs(work[col][col]);
-      for (int row = col + 1; row < n; row++) {
-        double val = Math.abs(work[row][col]);
-        if (val > maxVal) {
-          maxVal = val;
-          maxRow = row;
-        }
-      }
-      if (maxVal < 1.0e-30) {
-        return false;
-      }
-      if (maxRow != col) {
-        double[] tempRow = work[col];
-        work[col] = work[maxRow];
-        work[maxRow] = tempRow;
-        tempRow = ainv[col];
-        ainv[col] = ainv[maxRow];
-        ainv[maxRow] = tempRow;
-      }
-      double pivot = work[col][col];
-      for (int k = 0; k < n; k++) {
-        work[col][k] /= pivot;
-        ainv[col][k] /= pivot;
-      }
-      for (int row = 0; row < n; row++) {
-        if (row == col) {
-          continue;
-        }
-        double factor = work[row][col];
-        for (int k = 0; k < n; k++) {
-          work[row][k] -= factor * work[col][k];
-          ainv[row][k] -= factor * ainv[col][k];
-        }
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Broyden "good" rank-1 update of the inverse Jacobian H.
-   *
-   * <p>
-   * H_new = H + (dx - H*df) * (dx^T * H) / (dx^T * H * df). Cost: O(n^2).
-   * </p>
-   *
-   * @param invJ inverse Jacobian (updated in-place)
-   * @param dxVec step vector x_{k+1} - x_k
-   * @param dfVec residual change R(x_{k+1}) - R(x_k)
-   * @param n system dimension
-   */
-  private static void broydenUpdate(double[][] invJ, double[] dxVec, double[] dfVec, int n) {
-    double[] hdf = new double[n];
-    for (int i = 0; i < n; i++) {
-      double s = 0.0;
-      for (int j = 0; j < n; j++) {
-        s += invJ[i][j] * dfVec[j];
-      }
-      hdf[i] = s;
-    }
-    double[] dxH = new double[n];
-    for (int j = 0; j < n; j++) {
-      double s = 0.0;
-      for (int i = 0; i < n; i++) {
-        s += dxVec[i] * invJ[i][j];
-      }
-      dxH[j] = s;
-    }
-    double denom = 0.0;
-    for (int j = 0; j < n; j++) {
-      denom += dxH[j] * dfVec[j];
-    }
-    if (Math.abs(denom) < 1.0e-30) {
-      return;
-    }
-    double[] numVec = new double[n];
-    for (int i = 0; i < n; i++) {
-      numVec[i] = dxVec[i] - hdf[i];
-    }
-    double invDenom = 1.0 / denom;
-    for (int i = 0; i < n; i++) {
-      double numI = numVec[i] * invDenom;
-      for (int j = 0; j < n; j++) {
-        invJ[i][j] += numI * dxH[j];
       }
     }
   }
@@ -844,7 +679,8 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       workM[t] = componentArray[typeCompIdx[t]].getNumberOfMolesInPhase();
     }
 
-    // Build reduced K matrix: K_red[a][b] = mult_a * mult_b * n_a * n_b * delta(rep_a,rep_b) / V
+    // Build reduced K matrix: K_red[a][b] = mult_a * mult_b * n_a * n_b *
+    // delta(rep_a,rep_b) / V
     double invV = 1.0 / totalVolume;
     for (int a = 0; a < p; a++) {
       double maInvV = typeMult[a] * workM[a] * invV;
@@ -913,14 +749,15 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   }
 
   /**
-   * Solve the linear system A*x = b in-place (b overwritten with solution) using Gaussian
-   * elimination with partial pivoting.
+   * Solve a linear system A*x = b in-place (b overwritten with solution) using Gaussian elimination
+   * with partial pivoting.
    *
    * @param a coefficient matrix (modified in-place)
    * @param b right-hand side vector (overwritten with solution)
    * @param n system dimension
+   * @return true if successful, false if singular
    */
-  private static void solveLinearSystem(double[][] a, double[] b, int n) {
+  private static boolean solveLinearSystem(double[][] a, double[] b, int n) {
     for (int col = 0; col < n; col++) {
       int maxRow = col;
       double maxVal = Math.abs(a[col][col]);
@@ -931,18 +768,18 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
           maxRow = row;
         }
       }
+      if (maxVal < 1.0e-30) {
+        return false;
+      }
       if (maxRow != col) {
-        double[] tmpRow = a[col];
+        double[] tempRow = a[col];
         a[col] = a[maxRow];
-        a[maxRow] = tmpRow;
-        double tmpVal = b[col];
+        a[maxRow] = tempRow;
+        double tempB = b[col];
         b[col] = b[maxRow];
-        b[maxRow] = tmpVal;
+        b[maxRow] = tempB;
       }
       double pivot = a[col][col];
-      if (Math.abs(pivot) < 1.0e-30) {
-        continue;
-      }
       for (int row = col + 1; row < n; row++) {
         double factor = a[row][col] / pivot;
         for (int k = col + 1; k < n; k++) {
@@ -952,12 +789,13 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       }
     }
     for (int row = n - 1; row >= 0; row--) {
-      double s = b[row];
+      double sum = b[row];
       for (int k = row + 1; k < n; k++) {
-        s -= a[row][k] * b[k];
+        sum -= a[row][k] * b[k];
       }
-      b[row] = (Math.abs(a[row][row]) > 1.0e-30) ? s / a[row][row] : 0.0;
+      b[row] = sum / a[row][row];
     }
+    return true;
   }
 
   /** {@inheritDoc} */
@@ -982,16 +820,16 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   }
 
   /**
-   * Get the total Newton/Broyden iterations across all calls.
+   * Get the total Newton iterations across all calls.
    *
-   * @return total iterations
+   * @return total iteration count
    */
   public long getTotalIters() {
     return totalIters;
   }
 
   /**
-   * Get the total number of full Jacobian evaluations.
+   * Get the number of Jacobian evaluations.
    *
    * @return Jacobian evaluation count
    */
@@ -1000,16 +838,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   }
 
   /**
-   * Get the total number of Broyden rank-1 updates.
-   *
-   * @return Broyden update count
-   */
-  public long getBroydenUpdates() {
-    return broydenUpdates;
-  }
-
-  /**
-   * Get the number of fallbacks to the base class solver.
+   * Get the number of solver fallbacks to the base class.
    *
    * @return fallback count
    */
@@ -1018,31 +847,20 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   }
 
   /**
-   * Get the number of unique site types from the last molarVolume call.
+   * Get the number of unique site types from the last call.
    *
-   * @return number of unique types (p)
+   * @return last number of unique types
    */
   public int getLastNumTypes() {
     return lastNumTypes;
   }
 
   /**
-   * Get the total number of individual sites from the last molarVolume call.
+   * Get the number of full sites from the last call.
    *
-   * @return number of full sites (n_s)
+   * @return last full site count
    */
   public int getLastFullSites() {
     return lastFullSites;
-  }
-
-  /**
-   * Reset all profiling counters to zero.
-   */
-  public void resetProfiling() {
-    callCount = 0;
-    totalIters = 0;
-    jacobianEvals = 0;
-    broydenUpdates = 0;
-    fallbackCount = 0;
   }
 }

@@ -964,7 +964,12 @@ Document any parameter sweeps performed:
 - [ ] validation section populated with all checks above
 - [ ] approach and conclusions fields filled in
 - [ ] figure_captions populated with custom captions for key plots
+- [ ] figure_discussion populated for each decision-critical figure
+      (observation, mechanism, implication, recommendation, linked_results)
 - [ ] equations populated with key equations used in the analysis
+- [ ] benchmark_validation populated if comparing against reference data
+- [ ] uncertainty populated if sensitivity/Monte Carlo was performed
+- [ ] risk_evaluation populated if risk assessment was performed
 - [ ] Figures saved to figures/ using absolute TASK_DIR path (not os.getcwd!)
 """
 
@@ -1032,9 +1037,9 @@ def _init_omml():
     except ImportError:
         return False
     xsl_candidates = [
-        os.path.expandvars(r'%ProgramFiles%\Microsoft Office\root\Office16\MML2OMML.XSL'),
-        os.path.expandvars(r'%ProgramFiles(x86)%\Microsoft Office\root\Office16\MML2OMML.XSL'),
-        os.path.expandvars(r'%ProgramFiles%\Microsoft Office\Office16\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles%\\Microsoft Office\\root\\Office16\\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles(x86)%\\Microsoft Office\\root\\Office16\\MML2OMML.XSL'),
+        os.path.expandvars(r'%ProgramFiles%\\Microsoft Office\\Office16\\MML2OMML.XSL'),
     ]
     for path in xsl_candidates:
         if os.path.exists(path):
@@ -1090,6 +1095,11 @@ MANUAL_SECTIONS = {
     "approach": (
         "[Describe the methodology: EOS used, process configuration, "
         "simulation setup, key assumptions.]"
+    ),
+    "results_discussion": (
+        "[Discuss the key results: what they mean physically, why they matter "
+        "for design/operation, and what actions should follow. Auto-populated "
+        "from results.json figure_discussion entries when available.]"
     ),
     "conclusions": (
         "[Summarize key findings and provide recommendations.]"
@@ -1441,6 +1451,117 @@ def _add_inline_math_runs(paragraph, text):
                     paragraph.add_run(fp)
 
 
+def auto_executive_summary(results, task_spec):
+    """Generate an executive summary paragraph from available results data."""
+    parts = []
+
+    # Opening: what was done
+    approach = ""
+    if results and results.get("approach"):
+        approach = results["approach"]
+    if approach and not approach.startswith("["):
+        # First sentence of approach
+        first_sent = approach.split(". ")[0].rstrip(".")
+        parts.append(first_sent + ".")
+
+    # Key findings: summarize top results
+    if results and results.get("key_results"):
+        kr = results["key_results"]
+        items = list(kr.items())[:5]  # Top 5 results
+        findings = []
+        for key, value in items:
+            label, unit = _parse_key_name(key)
+            if isinstance(value, float):
+                val_str = "{:.4g}".format(value)
+            else:
+                val_str = str(value)
+            if unit:
+                findings.append("{} = {} {}".format(label, val_str, unit))
+            else:
+                findings.append("{} = {}".format(label, val_str))
+        if findings:
+            parts.append("Key findings: {}.".format(", ".join(findings)))
+
+    # Uncertainty summary
+    if results and results.get("uncertainty"):
+        unc = results["uncertainty"]
+        p50 = unc.get("p50")
+        output = unc.get("output_parameter", "output")
+        prob_neg = unc.get("prob_negative_pct")
+        if p50 is not None:
+            unc_text = "Monte Carlo analysis ({} simulations) yields a P50 {} of {:.4g}".format(
+                unc.get("n_simulations", "N"), output, p50)
+            p10 = unc.get("p10")
+            p90 = unc.get("p90")
+            if p10 is not None and p90 is not None:
+                unc_text += " (P10: {:.4g}, P90: {:.4g})".format(p10, p90)
+            unc_text += "."
+            if prob_neg is not None:
+                unc_text += " Probability of unfavourable outcome: {:.1f}%.".format(prob_neg)
+            parts.append(unc_text)
+
+    # Validation status
+    if results and results.get("validation"):
+        val = results["validation"]
+        all_pass = all(
+            v is True or (isinstance(v, (int, float)) and v < 1.0)
+            for v in val.values()
+        )
+        if all_pass:
+            parts.append("All validation checks passed.")
+        else:
+            parts.append("Some validation checks require attention.")
+
+    # Benchmark status
+    if results and results.get("benchmark_validation"):
+        bv = results["benchmark_validation"]
+        tests = bv.get("tests", [])
+        n_pass = sum(1 for t in tests if t.get("pass") is True)
+        n_total = len(tests)
+        if n_pass == n_total:
+            parts.append("All {} benchmark comparisons passed.".format(n_total))
+        else:
+            parts.append("{}/{} benchmark comparisons passed.".format(n_pass, n_total))
+
+    # Conclusion
+    if results and results.get("conclusions"):
+        conc = results["conclusions"]
+        if not conc.startswith("["):
+            parts.append(conc)
+
+    # Risk summary
+    if results and results.get("risk_evaluation"):
+        re_ = results["risk_evaluation"]
+        overall = re_.get("overall_risk_level", "")
+        if overall:
+            parts.append("Overall project risk is assessed as {}.".format(overall))
+
+    if parts:
+        return " ".join(parts)
+    return ""
+
+
+def auto_problem_description(results, task_spec):
+    """Generate a problem description from task_spec.md sections."""
+    parts = []
+    # Try extracting objective/description from task_spec
+    for heading in ["Objective", "Description", "Problem Statement",
+                    "Task Description", "Background"]:
+        text = extract_spec_section(task_spec, heading)
+        if text:
+            parts.append(text)
+            break  # Use the first match
+
+    # If task_spec has operating envelope, mention it
+    envelope = extract_spec_section(task_spec, "Operating Envelope")
+    if envelope:
+        parts.append("Operating envelope: " + envelope.replace("\\n", " ").strip())
+
+    if parts:
+        return "\\n\\n".join(parts)
+    return ""
+
+
 def _parse_key_name(key):
     """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
     unit_suffixes = [
@@ -1599,6 +1720,396 @@ def format_references_html(results):
     return h
 
 
+def format_figure_discussion_html(results):
+    """Format figure_discussion entries as structured HTML discussion blocks."""
+    discussions = results.get("figure_discussion", [])
+    if not discussions:
+        return ""
+    html_parts = []
+    for i, disc in enumerate(discussions, 1):
+        figure = disc.get("figure", "")
+        title = disc.get("title", figure)
+        obs = disc.get("observation", "")
+        mech = disc.get("mechanism", "")
+        impl = disc.get("implication", "")
+        rec = disc.get("recommendation", "")
+        linked = disc.get("linked_results", [])
+        insight_ref = disc.get("insight_question_ref", "")
+        h = \'<div class="discussion-block">\\n\'
+        h += \'  <h3 class="disc-title">Discussion {}: {}</h3>\\n\'.format(i, title)
+        if obs:
+            h += \'  <div class="disc-row"><span class="disc-label">Observation:</span> {}</div>\\n\'.format(obs)
+        if mech:
+            h += \'  <div class="disc-row"><span class="disc-label">Physical Mechanism:</span> {}</div>\\n\'.format(mech)
+        if impl:
+            h += \'  <div class="disc-row"><span class="disc-label">Engineering Implication:</span> {}</div>\\n\'.format(impl)
+        if rec:
+            h += \'  <div class="disc-row disc-rec"><span class="disc-label">Recommendation:</span> {}</div>\\n\'.format(rec)
+        trace_parts = []
+        if linked:
+            trace_parts.append("Results: " + ", ".join(linked))
+        if insight_ref:
+            trace_parts.append("Addresses: " + insight_ref)
+        if figure:
+            trace_parts.append("Figure: " + figure)
+        if trace_parts:
+            h += \'  <div class="disc-trace">{}</div>\\n\'.format(
+                " &bull; ".join(trace_parts))
+        h += \'</div>\\n\'
+        html_parts.append(h)
+
+    # Summary of all recommendations
+    recs = [d.get("recommendation", "") for d in discussions if d.get("recommendation")]
+    if len(recs) > 1:
+        summary = \'<div class="discussion-summary">\\n\'
+        summary += \'  <h3>Summary of Recommendations</h3>\\n<ol>\\n\'
+        for r in recs:
+            summary += \'  <li>{}</li>\\n\'.format(r)
+        summary += \'</ol></div>\\n\'
+        html_parts.append(summary)
+
+    return "\\n".join(html_parts)
+
+
+def format_benchmark_html(results):
+    """Format benchmark_validation from results.json as styled HTML."""
+    bv = results.get("benchmark_validation", {})
+    if not bv:
+        return ""
+    source = bv.get("source", "")
+    tests = bv.get("tests", [])
+    h = ""
+    if source:
+        h += \'<p><strong>Reference source:</strong> {}</p>\\n\'.format(source)
+    if tests:
+        h += \'<table class="benchmark-table"><thead><tr>\'
+        h += \'<th>Parameter</th><th>NeqSim</th><th>Reference</th>\'
+        h += \'<th>Unit</th><th>Tol %</th><th>Status</th></tr></thead><tbody>\\n\'
+        for t in tests:
+            param = t.get("parameter", "")
+            neq = t.get("neqsim", "")
+            ref = t.get("reference", "")
+            unit = t.get("unit", "")
+            tol = t.get("tolerance_pct", "")
+            passed = t.get("pass", None)
+            if passed is True:
+                badge = \'<span class="pass">PASS</span>\'
+            elif passed is False:
+                badge = \'<span class="fail">FAIL</span>\'
+            else:
+                badge = str(passed)
+            neq_s = "{:.4g}".format(neq) if isinstance(neq, float) else str(neq)
+            ref_s = "{:.4g}".format(ref) if isinstance(ref, float) else str(ref)
+            tol_s = "{:.1f}".format(tol) if isinstance(tol, float) else str(tol)
+            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(param, neq_s)
+            h += \'<td class="num">{}</td><td>{}</td>\'.format(ref_s, unit)
+            h += \'<td class="num">{}</td><td>{}</td></tr>\\n\'.format(tol_s, badge)
+        h += \'</tbody></table>\'
+    return h
+
+
+def format_uncertainty_html(results):
+    """Format uncertainty analysis from results.json as styled HTML."""
+    unc = results.get("uncertainty", {})
+    if not unc:
+        return ""
+    h = ""
+    method = unc.get("method", "")
+    n_sims = unc.get("n_simulations", "")
+    engine = unc.get("simulation_engine", "")
+    if method:
+        h += \'<p><strong>Method:</strong> {}</p>\\n\'.format(method)
+    if engine:
+        h += \'<p><strong>Simulation engine:</strong> {}</p>\\n\'.format(engine)
+    if n_sims:
+        h += \'<p><strong>Number of simulations:</strong> {}</p>\\n\'.format(n_sims)
+    # P10/P50/P90 summary
+    output_param = unc.get("output_parameter", "Output")
+    p10 = unc.get("p10")
+    p50 = unc.get("p50")
+    p90 = unc.get("p90")
+    mean = unc.get("mean")
+    std = unc.get("std")
+    prob_neg = unc.get("prob_negative_pct")
+    if p10 is not None or p50 is not None or p90 is not None:
+        h += \'<h3>Statistical Summary: {}</h3>\\n\'.format(output_param)
+        h += \'<table class="uncertainty-table"><thead><tr>\'
+        h += \'<th>Statistic</th><th>Value</th></tr></thead><tbody>\\n\'
+        if p10 is not None:
+            h += \'<tr><td>P10 (low)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p10)
+        if p50 is not None:
+            h += \'<tr><td>P50 (median)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p50)
+        if p90 is not None:
+            h += \'<tr><td>P90 (high)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p90)
+        if mean is not None:
+            h += \'<tr><td>Mean</td><td class="num">{:.4g}</td></tr>\\n\'.format(mean)
+        if std is not None:
+            h += \'<tr><td>Std Dev</td><td class="num">{:.4g}</td></tr>\\n\'.format(std)
+        if prob_neg is not None:
+            h += \'<tr><td>P(negative)</td><td class="num">{:.1f}%</td></tr>\\n\'.format(prob_neg)
+        h += \'</tbody></table>\\n\'
+    # Input parameters table
+    inputs = unc.get("input_parameters", [])
+    if inputs:
+        h += \'<h3>Input Parameter Ranges</h3>\\n\'
+        h += \'<table class="uncertainty-table"><thead><tr>\'
+        h += \'<th>Parameter</th><th>Low</th><th>Base</th><th>High</th>\'
+        h += \'<th>Unit</th><th>Distribution</th></tr></thead><tbody>\\n\'
+        for inp in inputs:
+            name = inp.get("name", "")
+            unit = inp.get("unit", "")
+            low = inp.get("low", "")
+            base = inp.get("base", "")
+            high = inp.get("high", "")
+            dist = inp.get("distribution", "")
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, float) else str(v)
+            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(name, fmt(low))
+            h += \'<td class="num">{}</td><td class="num">{}</td>\'.format(fmt(base), fmt(high))
+            h += \'<td>{}</td><td>{}</td></tr>\\n\'.format(unit, dist)
+        h += \'</tbody></table>\\n\'
+    # Tornado table
+    tornado = unc.get("tornado", [])
+    if tornado:
+        h += \'<h3>Sensitivity Ranking (Tornado)</h3>\\n\'
+        h += \'<table class="tornado-table"><thead><tr>\'
+        h += \'<th>Parameter</th><th>Low Case</th><th>High Case</th>\'
+        h += \'<th>Swing</th></tr></thead><tbody>\\n\'
+        for t in tornado:
+            param = t.get("parameter", "")
+            low_v = t.get("npv_low", t.get("low", ""))
+            high_v = t.get("npv_high", t.get("high", ""))
+            swing = t.get("swing", "")
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, (int, float)) else str(v)
+            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(param, fmt(low_v))
+            h += \'<td class="num">{}</td><td class="num">{}</td></tr>\\n\'.format(
+                fmt(high_v), fmt(swing))
+        h += \'</tbody></table>\\n\'
+    return h
+
+
+def format_risk_html(results):
+    """Format risk_evaluation from results.json as styled HTML."""
+    risk = results.get("risk_evaluation", {})
+    if not risk:
+        return ""
+    h = ""
+    overall = risk.get("overall_risk_level", "")
+    matrix = risk.get("risk_matrix_used", "")
+    if overall:
+        css = "risk-high" if "high" in overall.lower() else (
+            "risk-med" if "medium" in overall.lower() else "risk-low")
+        h += \'<p>Overall risk level: <span class="{}">{}</span></p>\\n\'.format(
+            css, overall)
+    if matrix:
+        h += \'<p>Risk matrix: {}</p>\\n\'.format(matrix)
+    risks = risk.get("risks", [])
+    if risks:
+        h += \'<table class="risk-table"><thead><tr>\'
+        h += \'<th>ID</th><th>Description</th><th>Category</th>\'
+        h += \'<th>Likelihood</th><th>Consequence</th><th>Risk Level</th>\'
+        h += \'<th>Mitigation</th></tr></thead><tbody>\\n\'
+        for r in risks:
+            rid = r.get("id", "")
+            desc = r.get("description", "")
+            cat = r.get("category", "")
+            like = r.get("likelihood", "")
+            cons = r.get("consequence", "")
+            level = r.get("risk_level", "")
+            mitig = r.get("mitigation", "")
+            css = "risk-high" if "high" in level.lower() else (
+                "risk-med" if "medium" in level.lower() else "risk-low")
+            h += \'<tr><td>{}</td><td>{}</td><td>{}</td>\'.format(rid, desc, cat)
+            h += \'<td>{}</td><td>{}</td>\'.format(like, cons)
+            h += \'<td><span class="{}">{}</span></td>\'.format(css, level)
+            h += \'<td>{}</td></tr>\\n\'.format(mitig)
+        h += \'</tbody></table>\'
+    return h
+
+
+def add_figure_discussion_word(doc, results):
+    """Add figure_discussion entries to a Word document."""
+    discussions = results.get("figure_discussion", [])
+    if not discussions:
+        return
+    for i, disc in enumerate(discussions, 1):
+        title = disc.get("title", disc.get("figure", ""))
+        obs = disc.get("observation", "")
+        mech = disc.get("mechanism", "")
+        impl = disc.get("implication", "")
+        rec = disc.get("recommendation", "")
+        linked = disc.get("linked_results", [])
+        insight_ref = disc.get("insight_question_ref", "")
+        figure = disc.get("figure", "")
+        doc.add_heading("Discussion {}: {}".format(i, title), level=2)
+        fields = [
+            ("Observation", obs),
+            ("Physical Mechanism", mech),
+            ("Engineering Implication", impl),
+            ("Recommendation", rec),
+        ]
+        for label, text in fields:
+            if text:
+                p = doc.add_paragraph()
+                run = p.add_run("{}: ".format(label))
+                run.bold = True
+                p.add_run(text)
+        # Traceability line
+        trace_parts = []
+        if linked:
+            trace_parts.append("Results: " + ", ".join(linked))
+        if insight_ref:
+            trace_parts.append("Addresses: " + insight_ref)
+        if figure:
+            trace_parts.append("Figure: " + figure)
+        if trace_parts:
+            p = doc.add_paragraph()
+            run = p.add_run(" | ".join(trace_parts))
+            run.font.size = Pt(8)
+            run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+        doc.add_paragraph("")
+
+    # Summary of all recommendations
+    recs = [d.get("recommendation", "") for d in discussions if d.get("recommendation")]
+    if len(recs) > 1:
+        doc.add_heading("Summary of Recommendations", level=2)
+        for j, r in enumerate(recs, 1):
+            doc.add_paragraph("{}. {}".format(j, r))
+        doc.add_paragraph("")
+
+
+def add_benchmark_word(doc, results):
+    """Add benchmark_validation section to a Word document."""
+    bv = results.get("benchmark_validation", {})
+    if not bv:
+        return
+    source = bv.get("source", "")
+    if source:
+        doc.add_paragraph("Reference source: {}".format(source))
+    tests = bv.get("tests", [])
+    if tests:
+        headers = ["Parameter", "NeqSim", "Reference", "Unit", "Tol %", "Status"]
+        rows = []
+        for t in tests:
+            neq = t.get("neqsim", "")
+            ref = t.get("reference", "")
+            tol = t.get("tolerance_pct", "")
+            passed = t.get("pass", None)
+            status = "PASS" if passed is True else ("FAIL" if passed is False else str(passed))
+            neq_s = "{:.4g}".format(neq) if isinstance(neq, float) else str(neq)
+            ref_s = "{:.4g}".format(ref) if isinstance(ref, float) else str(ref)
+            tol_s = "{:.1f}".format(tol) if isinstance(tol, float) else str(tol)
+            rows.append([t.get("parameter", ""), neq_s, ref_s,
+                         t.get("unit", ""), tol_s, status])
+        table = add_word_table(doc, headers, rows)
+        # Color-code PASS/FAIL
+        for row in table.rows[1:]:
+            cell = row.cells[5]
+            text = cell.text.strip()
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+                    if text == "PASS":
+                        run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
+                    elif text == "FAIL":
+                        run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
+
+
+def add_uncertainty_word(doc, results):
+    """Add uncertainty analysis section to a Word document."""
+    unc = results.get("uncertainty", {})
+    if not unc:
+        return
+    method = unc.get("method", "")
+    n_sims = unc.get("n_simulations", "")
+    engine = unc.get("simulation_engine", "")
+    if method:
+        doc.add_paragraph("Method: {}".format(method))
+    if engine:
+        doc.add_paragraph("Engine: {}".format(engine))
+    if n_sims:
+        doc.add_paragraph("Simulations: {}".format(n_sims))
+    output_param = unc.get("output_parameter", "Output")
+    p10 = unc.get("p10")
+    p50 = unc.get("p50")
+    p90 = unc.get("p90")
+    mean = unc.get("mean")
+    std = unc.get("std")
+    prob_neg = unc.get("prob_negative_pct")
+    if p10 is not None or p50 is not None or p90 is not None:
+        doc.add_heading("Statistical Summary: {}".format(output_param), level=2)
+        rows = []
+        if p10 is not None:
+            rows.append(["P10 (low)", "{:.4g}".format(p10)])
+        if p50 is not None:
+            rows.append(["P50 (median)", "{:.4g}".format(p50)])
+        if p90 is not None:
+            rows.append(["P90 (high)", "{:.4g}".format(p90)])
+        if mean is not None:
+            rows.append(["Mean", "{:.4g}".format(mean)])
+        if std is not None:
+            rows.append(["Std Dev", "{:.4g}".format(std)])
+        if prob_neg is not None:
+            rows.append(["P(negative)", "{:.1f}%".format(prob_neg)])
+        add_word_table(doc, ["Statistic", "Value"], rows)
+    inputs = unc.get("input_parameters", [])
+    if inputs:
+        doc.add_heading("Input Parameter Ranges", level=2)
+        headers = ["Parameter", "Low", "Base", "High", "Unit", "Distribution"]
+        rows = []
+        for inp in inputs:
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, float) else str(v)
+            rows.append([inp.get("name", ""), fmt(inp.get("low", "")),
+                         fmt(inp.get("base", "")), fmt(inp.get("high", "")),
+                         inp.get("unit", ""), inp.get("distribution", "")])
+        add_word_table(doc, headers, rows)
+    tornado = unc.get("tornado", [])
+    if tornado:
+        doc.add_heading("Sensitivity Ranking (Tornado)", level=2)
+        headers = ["Parameter", "Low Case", "High Case", "Swing"]
+        rows = []
+        for t in tornado:
+            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, (int, float)) else str(v)
+            rows.append([t.get("parameter", ""),
+                         fmt(t.get("npv_low", t.get("low", ""))),
+                         fmt(t.get("npv_high", t.get("high", ""))),
+                         fmt(t.get("swing", ""))])
+        add_word_table(doc, headers, rows)
+
+
+def add_risk_word(doc, results):
+    """Add risk_evaluation section to a Word document."""
+    risk = results.get("risk_evaluation", {})
+    if not risk:
+        return
+    overall = risk.get("overall_risk_level", "")
+    matrix = risk.get("risk_matrix_used", "")
+    if overall:
+        p = doc.add_paragraph()
+        run = p.add_run("Overall risk level: ")
+        run.bold = True
+        run2 = p.add_run(overall)
+        run2.bold = True
+        if "high" in overall.lower():
+            run2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
+        elif "medium" in overall.lower():
+            run2.font.color.rgb = RGBColor(0xFF, 0x8C, 0x00)
+        else:
+            run2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
+    if matrix:
+        doc.add_paragraph("Risk matrix: {}".format(matrix))
+    risks = risk.get("risks", [])
+    if risks:
+        headers = ["ID", "Description", "Category", "Likelihood",
+                    "Consequence", "Risk Level", "Mitigation"]
+        rows = []
+        for r in risks:
+            rows.append([r.get("id", ""), r.get("description", ""),
+                         r.get("category", ""), r.get("likelihood", ""),
+                         r.get("consequence", ""), r.get("risk_level", ""),
+                         r.get("mitigation", "")])
+        add_word_table(doc, headers, rows)
+
+
 def add_word_table(doc, headers, data_rows, col_widths=None):
     """Add a professionally styled table to a Word document.
 
@@ -1724,6 +2235,390 @@ def add_custom_word_tables(doc, results):
 
 
 # ══════════════════════════════════════════════════════════
+# Report consistency checker
+# ══════════════════════════════════════════════════════════
+
+def check_report_consistency(results):
+    """Check results.json for internal contradictions and inconsistencies.
+
+    Returns a list of dicts with keys: severity, message, fix_type.
+    severity: \'ERROR\', \'WARNING\', or \'INFO\'.
+    fix_type: \'text\' (auto-fixable in report), \'calculation\' (needs
+    agent to re-run notebook), or \'none\' (informational).
+    """
+    if not results:
+        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
+
+    issues = []
+
+    # --- 1. Benchmark failures vs optimistic conclusions ---
+    bmk = results.get("benchmark_validation", {})
+    bmk_tests = bmk.get("tests", [])
+    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
+    n_total = len(bmk_tests)
+    conclusions = results.get("conclusions", "")
+
+    if n_fail > 0:
+        # Check if any failure has large deviation (>20%) => calculation fix
+        large_devs = []
+        for t in bmk_tests:
+            if t.get("pass") is False:
+                dev_pct = t.get("deviation_pct")
+                if dev_pct is not None and abs(dev_pct) > 20:
+                    large_devs.append(t)
+
+        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
+                         "issue", "concern", "discrepanc", "not met"]
+        conc_lower = conclusions.lower()
+        acknowledges = any(w in conc_lower for w in failure_words)
+
+        if large_devs:
+            params = [t.get("parameter", "?") for t in large_devs]
+            issues.append({
+                "severity": "ERROR",
+                "message": "Benchmark deviation >20% for: {}. Model may need "
+                           "retuning or different EOS/parameters.".format(
+                               ", ".join(params)),
+                "fix_type": "calculation",
+                "action": "Re-run benchmark notebook with revised model "
+                          "parameters (check EOS, BIPs, component characterization).",
+                "parameters": params,
+            })
+
+        if not acknowledges:
+            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                          "within limits", "meets"]
+            if any(w in conc_lower for w in safe_words):
+                issues.append({
+                    "severity": "ERROR",
+                    "message": "Conclusions say \\'{}\\' but {}/{} benchmark tests FAILED. "
+                               "Conclusions must acknowledge benchmark failures or explain "
+                               "why they are acceptable.".format(
+                                   conclusions[:80], n_fail, n_total),
+                    "fix_type": "text",
+                })
+            else:
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "{}/{} benchmark tests failed. Consider addressing this "
+                               "in the conclusions.".format(n_fail, n_total),
+                    "fix_type": "text",
+                })
+
+    # --- 2. Validation failures vs optimistic conclusions ---
+    validation = results.get("validation", {})
+    val_failures = []
+    for check, outcome in validation.items():
+        if outcome is False:
+            val_failures.append(check)
+        elif isinstance(outcome, (int, float)) and outcome >= 5.0:
+            val_failures.append("{} ({})".format(check, outcome))
+    if val_failures:
+        conc_lower = conclusions.lower()
+        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                      "all.*pass", "within limits"]
+        if any(w in conc_lower for w in safe_words):
+            issues.append({
+                "severity": "ERROR",
+                "message": "Conclusions claim safety/acceptability but validation checks "
+                           "show issues: {}. Revise conclusions or explain why failures "
+                           "are acceptable.".format(", ".join(val_failures)),
+                "fix_type": "text",
+            })
+        # Check if validation error is large enough to need recalculation
+        large_val = [v for v in validation.values()
+                     if isinstance(v, (int, float)) and v >= 10.0]
+        if large_val:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Validation error >=10% detected ({}). Model accuracy "
+                           "may be insufficient — consider retuning.".format(
+                               ", ".join(val_failures)),
+                "fix_type": "calculation",
+                "action": "Re-run main analysis notebook with tighter convergence "
+                          "tolerances or revised model setup.",
+            })
+
+    # --- 3. High risk level vs unconditionally positive conclusions ---
+    risk_eval = results.get("risk_evaluation", {})
+    overall_risk = risk_eval.get("overall_risk_level", "").lower()
+    risks = risk_eval.get("risks", [])
+    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
+                  or "very high" in r.get("risk_level", "").lower()]
+    if high_risks:
+        conc_lower = conclusions.lower()
+        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
+                         "condition", "subject to", "provided that"]
+        has_caution = any(w in conc_lower for w in caution_words)
+        if not has_caution and any(
+            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
+                                      "no concern"]
+        ):
+            issues.append({
+                "severity": "WARNING",
+                "message": "{} high-risk items identified ({}), but conclusions don\\'t "
+                           "mention risk mitigation. Consider adding caveats.".format(
+                               len(high_risks),
+                               ", ".join(r.get("description", "") for r in high_risks[:3])),
+                "fix_type": "text",
+            })
+
+    # --- 4. High probability of negative outcome vs positive conclusions ---
+    uncertainty = results.get("uncertainty", {})
+    prob_neg = uncertainty.get("prob_negative_pct")
+    if prob_neg is not None and prob_neg > 25:
+        conc_lower = conclusions.lower()
+        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
+                                          "recommend proceed"]):
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
+                           "Conclusions should acknowledge the significant downside "
+                           "risk.".format(prob_neg),
+                "fix_type": "text",
+            })
+
+    # --- 5. Discussion recommendations contradict conclusions ---
+    discussions = results.get("figure_discussion", [])
+    recs = [d.get("recommendation", "") for d in discussions
+            if d.get("recommendation")]
+    for rec in recs:
+        rec_lower = rec.lower()
+        conc_lower = conclusions.lower()
+        # Check for direct contradictions
+        if "do not proceed" in rec_lower and "proceed" in conc_lower:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Discussion recommends \\'do not proceed\\' but conclusions "
+                           "say \\'proceed\\'. Resolve the contradiction.",
+                "fix_type": "text",
+            })
+        if "further study" in rec_lower or "sensitivity" in rec_lower:
+            if "no further" in conc_lower:
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "Discussion recommends further study/sensitivity analysis "
+                               "but conclusions dismiss it. Ensure consistency.",
+                    "fix_type": "text",
+                })
+
+    # --- 6. Missing critical sections ---
+    if not results.get("key_results"):
+        issues.append({
+            "severity": "WARNING",
+            "message": "No key_results in results.json. The Results section will be empty.",
+            "fix_type": "calculation",
+            "action": "Run the main analysis notebook and populate key_results in results.json.",
+        })
+    if not results.get("conclusions") or results["conclusions"].startswith("["):
+        issues.append({
+            "severity": "WARNING",
+            "message": "Conclusions are still a placeholder. Fill in conclusions "
+                       "before finalising the report.",
+            "fix_type": "text",
+        })
+    if not results.get("approach") or results["approach"].startswith("["):
+        issues.append({
+            "severity": "WARNING",
+            "message": "Approach section is still a placeholder.",
+            "fix_type": "text",
+        })
+
+    # --- 7. Numerical consistency: key_results referenced in discussions ---
+    key_results = results.get("key_results", {})
+    for disc in discussions:
+        obs = disc.get("observation", "")
+        linked = disc.get("linked_results", [])
+        for link_key in linked:
+            if link_key in key_results:
+                expected_val = key_results[link_key]
+                if isinstance(expected_val, float):
+                    # Check if the observation mentions a consistent number
+                    val_strs = [
+                        "{:.4g}".format(expected_val),
+                        "{:.3g}".format(expected_val),
+                        "{:.2g}".format(expected_val),
+                        "{:.1f}".format(expected_val),
+                        str(int(expected_val)) if expected_val == int(expected_val) else "",
+                    ]
+                    val_strs = [v for v in val_strs if v]
+                    if obs and not any(v in obs for v in val_strs):
+                        issues.append({
+                            "severity": "WARNING",
+                            "message": "Discussion links to \\'{}\\' (value={}) but "
+                                       "observation text doesn\\'t mention this value. "
+                                       "Verify numerical consistency.".format(
+                                           link_key, expected_val),
+                            "fix_type": "calculation",
+                            "action": "Verify the value of \\'{}\\' in the notebook output "
+                                      "and update either key_results or the discussion "
+                                      "observation text.".format(link_key),
+                        })
+
+    # --- 8. Risk level vs uncertainty probability alignment ---
+    if prob_neg is not None and overall_risk:
+        if prob_neg > 40 and overall_risk in ("low",):
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of negative outcome is {:.0f}% but overall risk "
+                           "is \\'Low\\'. These seem inconsistent.".format(prob_neg),
+                "fix_type": "text",
+            })
+        if prob_neg < 5 and overall_risk in ("high", "very high"):
+            issues.append({
+                "severity": "INFO",
+                "message": "Probability of negative outcome is only {:.0f}% but overall "
+                           "risk is \\'{}\\'. Consider whether the risk rating is driven "
+                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
+                "fix_type": "none",
+            })
+
+    if not issues:
+        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
+
+    return issues
+
+
+def print_consistency_report(issues):
+    """Print the consistency check results with visual formatting."""
+    errors = [i for i in issues if i["severity"] == "ERROR"]
+    warnings = [i for i in issues if i["severity"] == "WARNING"]
+    infos = [i for i in issues if i["severity"] == "INFO"]
+
+    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
+    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
+
+    print("  ===== Report Consistency Check =====")
+    if errors:
+        for i in errors:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [ERROR{}] {}".format(tag, i["message"]))
+    if warnings:
+        for i in warnings:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [WARNING{}] {}".format(tag, i["message"]))
+    if infos and not errors and not warnings:
+        for i in infos:
+            print("  [OK] {}".format(i["message"]))
+
+    if errors:
+        print("")
+        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
+            len(errors)))
+        print("  Errors indicate contradictions that undermine report credibility.")
+    elif warnings:
+        print("")
+        print("  {} WARNING(s) found. Review before finalising.".format(
+            len(warnings)))
+    else:
+        print("  Report is internally consistent.")
+
+    if text_fixes:
+        print("  {} text fix(es) will be applied automatically.".format(len(text_fixes)))
+    if calc_fixes:
+        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
+            len(calc_fixes)))
+
+    print("  ====================================")
+    return len(errors)
+
+
+def auto_fix_consistency(results):
+    """Automatically fix consistency issues in results by appending caveats.
+
+    Modifies results dict in-place. Returns list of fixes applied.
+    """
+    if not results:
+        return []
+
+    fixes = []
+    conclusions = results.get("conclusions", "")
+    if not conclusions or conclusions.startswith("["):
+        return fixes
+
+    caveats = []
+
+    # --- Fix 1: Benchmark failures not acknowledged ---
+    bmk = results.get("benchmark_validation", {})
+    bmk_tests = bmk.get("tests", [])
+    failed_tests = [t for t in bmk_tests if t.get("pass") is False]
+    if failed_tests:
+        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
+                         "issue", "concern", "discrepanc", "not met",
+                         "outside tolerance", "tolerance"]
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in failure_words):
+            failed_params = [t.get("parameter", "?") for t in failed_tests]
+            caveat = ("Note: {}/{} benchmark comparisons exceeded tolerance "
+                      "({}). These deviations should be evaluated against "
+                      "project-specific acceptance criteria.".format(
+                          len(failed_tests), len(bmk_tests),
+                          ", ".join(failed_params)))
+            caveats.append(caveat)
+            fixes.append("Added benchmark failure caveat for: {}".format(
+                ", ".join(failed_params)))
+
+    # --- Fix 2: High risk items not mentioned ---
+    risk_eval = results.get("risk_evaluation", {})
+    risks = risk_eval.get("risks", [])
+    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()]
+    if high_risks:
+        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
+                         "condition", "subject to", "provided that"]
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in caution_words):
+            risk_descs = [r.get("description", "?") for r in high_risks[:3]]
+            caveat = ("Key risks requiring mitigation: {}. See Risk Evaluation "
+                      "section for details.".format("; ".join(risk_descs)))
+            caveats.append(caveat)
+            fixes.append("Added risk caveat for {} high-risk item(s)".format(
+                len(high_risks)))
+
+    # --- Fix 3: High probability of negative outcome ---
+    uncertainty = results.get("uncertainty", {})
+    prob_neg = uncertainty.get("prob_negative_pct")
+    if prob_neg is not None and prob_neg > 25:
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in ["probability", "unfavourable",
+                                              "downside", "negative",
+                                              "uncertainty"]):
+            caveat = ("Uncertainty analysis indicates a {:.0f}% probability of "
+                      "unfavourable outcome. Sensitivity to key input parameters "
+                      "should be considered in decision-making.".format(prob_neg))
+            caveats.append(caveat)
+            fixes.append("Added uncertainty caveat (P(negative)={:.0f}%)".format(
+                prob_neg))
+
+    # --- Fix 4: Validation failures ---
+    validation = results.get("validation", {})
+    val_failures = []
+    for check, outcome in validation.items():
+        if outcome is False:
+            val_failures.append(check.replace("_", " ").title())
+    if val_failures:
+        conc_lower = conclusions.lower()
+        if not any(w in conc_lower for w in ["fail", "attention", "issue",
+                                              "not met", "concern"]):
+            caveat = ("Validation checks flagged: {}. Review these items "
+                      "before finalising design.".format(
+                          ", ".join(val_failures)))
+            caveats.append(caveat)
+            fixes.append("Added validation failure caveat for: {}".format(
+                ", ".join(val_failures)))
+
+    # --- Apply caveats by appending to conclusions ---
+    if caveats:
+        # Remove overly optimistic opening if needed
+        conc_lower = conclusions.lower()
+        # Don't replace the original — append caveats after it
+        updated = conclusions.rstrip(".")
+        updated += ". " + " ".join(caveats)
+        results["conclusions"] = updated
+
+    return fixes
+
+
+# ══════════════════════════════════════════════════════════
 # Build sections (auto-populated where possible)
 # ══════════════════════════════════════════════════════════
 
@@ -1731,16 +2626,22 @@ def build_sections(results, task_spec):
     """Build report sections, auto-populating from results.json and task_spec.md."""
     sections = []
 
-    # 1. Executive Summary
+    # 1. Executive Summary (auto-generated from results data)
+    exec_summary = auto_executive_summary(results, task_spec)
+    if not exec_summary:
+        exec_summary = MANUAL_SECTIONS["executive_summary"]
     sections.append({
         "heading": "1. Executive Summary",
-        "content": MANUAL_SECTIONS["executive_summary"],
+        "content": exec_summary,
     })
 
-    # 2. Problem Description
+    # 2. Problem Description (auto-populated from task_spec.md)
+    prob_desc = auto_problem_description(results, task_spec)
+    if not prob_desc:
+        prob_desc = MANUAL_SECTIONS["problem_description"]
     sections.append({
         "heading": "2. Problem Description",
-        "content": MANUAL_SECTIONS["problem_description"],
+        "content": prob_desc,
     })
 
     # 3. Scope and Standards (auto-populated from task_spec.md)
@@ -1792,7 +2693,17 @@ def build_sections(results, task_spec):
         "has_figures": True,
     })
 
-    # 6. Validation Summary (auto-populated from results.json)
+    # 6. Results Discussion (auto-populated from figure_discussion)
+    discussion_content = MANUAL_SECTIONS["results_discussion"]
+    if results and results.get("figure_discussion"):
+        discussion_content = "See structured discussion below."
+    sections.append({
+        "heading": "6. Results Discussion",
+        "content": discussion_content,
+        "has_discussion": True,
+    })
+
+    # 7. Validation Summary (auto-populated from results.json)
     if results and results.get("validation"):
         validation_text = format_validation_table(results)
     else:
@@ -1801,20 +2712,46 @@ def build_sections(results, task_spec):
             "Add validation checks to your notebook results output.]"
         )
     sections.append({
-        "heading": "6. Validation Summary",
+        "heading": "7. Validation Summary",
         "content": validation_text,
     })
 
-    # 7. Conclusions and Recommendations
+    # 8. Benchmark Validation (auto-populated from results.json)
+    if results and results.get("benchmark_validation"):
+        sections.append({
+            "heading": "8. Benchmark Validation",
+            "content": "See benchmark comparison below.",
+            "has_benchmark": True,
+        })
+
+    # 9. Uncertainty Analysis (auto-populated from results.json)
+    if results and results.get("uncertainty"):
+        sections.append({
+            "heading": "9. Uncertainty Analysis",
+            "content": "See uncertainty analysis below.",
+            "has_uncertainty": True,
+        })
+
+    # 10. Risk Evaluation (auto-populated from results.json)
+    if results and results.get("risk_evaluation"):
+        sections.append({
+            "heading": "10. Risk Evaluation",
+            "content": "See risk evaluation below.",
+            "has_risk": True,
+        })
+
+    # N. Conclusions and Recommendations
+    sec_n = len(sections) + 1
     conclusions = MANUAL_SECTIONS["conclusions"]
     if results and results.get("conclusions"):
         conclusions = results["conclusions"]
     sections.append({
-        "heading": "7. Conclusions and Recommendations",
+        "heading": "{}. Conclusions and Recommendations".format(sec_n),
         "content": conclusions,
     })
 
-    # 8. References (auto-populated from results.json if available)
+    # N+1. References (auto-populated from results.json if available)
+    sec_n = len(sections) + 1
     refs_content = MANUAL_SECTIONS["references"]
     if results and results.get("references"):
         ref_lines = []
@@ -1827,7 +2764,7 @@ def build_sections(results, task_spec):
                 ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\\n".join(ref_lines)
     sections.append({
-        "heading": "8. References",
+        "heading": "{}. References".format(sec_n),
         "content": refs_content,
         "has_references": True,
     })
@@ -1868,9 +2805,21 @@ def build_word_report(sections, results=None):
         elif section.get("has_scope"):
             # Scope section: parse markdown tables, bold, and lists
             render_scope_to_word(doc, section["content"])
-        elif "Validation" in section["heading"] and results and results.get("validation"):
+        elif "Validation" in section["heading"] and not section.get("has_benchmark") and results and results.get("validation"):
             # Validation section: use Word table
             add_validation_word_table(doc, results)
+        elif section.get("has_discussion") and results and results.get("figure_discussion"):
+            # Results Discussion: structured observation/mechanism/implication/rec
+            add_figure_discussion_word(doc, results)
+        elif section.get("has_benchmark") and results:
+            # Benchmark Validation: comparison table with PASS/FAIL
+            add_benchmark_word(doc, results)
+        elif section.get("has_uncertainty") and results:
+            # Uncertainty Analysis: P10/P50/P90, inputs, tornado
+            add_uncertainty_word(doc, results)
+        elif section.get("has_risk") and results:
+            # Risk Evaluation: risk register with color-coded levels
+            add_risk_word(doc, results)
         else:
             # Regular text content
             for para_text in section["content"].split("\\n\\n"):
@@ -2030,8 +2979,20 @@ def build_html_report(sections, results=None):
         if section.get("has_equations") and equation_html:
             content += equation_html
 
-        if "Validation" in section["heading"] and validation_html:
+        if "Validation" in section["heading"] and not section.get("has_benchmark") and validation_html:
             content = validation_html
+
+        if section.get("has_discussion") and results and results.get("figure_discussion"):
+            content = format_figure_discussion_html(results)
+
+        if section.get("has_benchmark") and results:
+            content = format_benchmark_html(results)
+
+        if section.get("has_uncertainty") and results:
+            content = format_uncertainty_html(results)
+
+        if section.get("has_risk") and results:
+            content = format_risk_html(results)
 
         if section.get("has_references") and results and results.get("references"):
             content = format_references_html(results)
@@ -2133,6 +3094,31 @@ def build_html_report(sections, results=None):
         .reference-list li {{ margin-bottom: 0.6rem; padding: 0.4rem 0.6rem;
             border-left: 3px solid #2F5496; background: #f8f9fa; }}
         .reference-list li strong {{ color: #2F5496; }}
+        .discussion-block {{ margin: 1.5rem 0; padding: 1rem 1.2rem;
+            background: #f8f9fa; border-left: 4px solid #2F5496;
+            border-radius: 0 4px 4px 0; }}
+        .disc-title {{ color: #2F5496; margin-top: 0 !important; margin-bottom: 0.6rem;
+            font-size: 1rem; border-bottom: none !important; }}
+        .disc-row {{ margin-bottom: 0.4rem; line-height: 1.5; }}
+        .disc-label {{ font-weight: 600; color: #444; }}
+        .disc-rec {{ background: #e8f5e9; padding: 0.4rem 0.6rem;
+            border-radius: 3px; margin-top: 0.3rem; }}
+        .disc-trace {{ font-size: 0.8rem; color: #888; margin-top: 0.4rem; }}
+        .discussion-summary {{ background: #f0f4f8; border-left: 3px solid #1a73e8;
+            padding: 1rem 1.2rem; margin-top: 1.5rem; border-radius: 4px; }}
+        .discussion-summary h3 {{ margin-top: 0; color: #1a73e8; }}
+        .discussion-summary ol {{ margin: 0.5rem 0; padding-left: 1.5rem; }}
+        .discussion-summary li {{ margin-bottom: 0.3rem; }}
+        .benchmark-table {{ max-width: 700px; }}
+        .uncertainty-table {{ max-width: 600px; }}
+        .tornado-table {{ max-width: 600px; }}
+        .risk-table {{ font-size: 0.88rem; }}
+        .risk-high {{ color: #fff; background: #dc3545; padding: 0.15rem 0.5rem;
+            border-radius: 3px; font-weight: 600; }}
+        .risk-med {{ color: #fff; background: #ff8c00; padding: 0.15rem 0.5rem;
+            border-radius: 3px; font-weight: 600; }}
+        .risk-low {{ color: #fff; background: #28a745; padding: 0.15rem 0.5rem;
+            border-radius: 3px; font-weight: 600; }}
         @media (max-width: 768px) {{
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
@@ -2181,6 +3167,60 @@ if __name__ == "__main__":
     results = load_results()
     task_spec = load_task_spec()
 
+    # Run consistency check BEFORE generating reports
+    print("")
+    issues = check_report_consistency(results)
+    n_errors = print_consistency_report(issues)
+
+    # Separate text fixes (auto-apply) from calculation fixes (need agent)
+    text_issues = [i for i in issues
+                   if i.get("fix_type") == "text"
+                   and i["severity"] in ("ERROR", "WARNING")]
+    calc_issues = [i for i in issues if i.get("fix_type") == "calculation"]
+
+    # Auto-apply text fixes
+    if text_issues and results:
+        print("")
+        print("  Applying automatic text fixes...")
+        fixes = auto_fix_consistency(results)
+        for f in fixes:
+            print("    -> {}".format(f))
+        if fixes:
+            # Re-check to confirm fixes resolved text issues
+            recheck = check_report_consistency(results)
+            remaining_text_errors = [
+                i for i in recheck
+                if i.get("fix_type") == "text" and i["severity"] == "ERROR"
+            ]
+            if remaining_text_errors:
+                print("  {} text error(s) remain after auto-fix:".format(
+                    len(remaining_text_errors)))
+                for i in remaining_text_errors:
+                    print("    [ERROR] {}".format(i["message"]))
+            else:
+                print("  All text issues resolved.")
+
+    # Write fixes_needed.json for calculation-level issues
+    if calc_issues:
+        fixes_path = os.path.join(TASK_DIR, "fixes_needed.json")
+        calc_entries = []
+        for ci in calc_issues:
+            entry = {
+                "severity": ci["severity"],
+                "message": ci["message"],
+                "action": ci.get("action", "Re-run the relevant notebook with revised parameters."),
+            }
+            if "parameters" in ci:
+                entry["parameters"] = ci["parameters"]
+            calc_entries.append(entry)
+        with open(fixes_path, "w", encoding="utf-8") as f:
+            json.dump(calc_entries, f, indent=2)
+        print("")
+        print("  Wrote {} calculation fix(es) to fixes_needed.json".format(
+            len(calc_entries)))
+        print("  The solve-task agent should read this file and re-run")
+        print("  the affected notebooks before regenerating the report.")
+
     # Build sections (auto-populated where data exists)
     sections = build_sections(results, task_spec)
 
@@ -2192,6 +3232,11 @@ if __name__ == "__main__":
     print("Both reports generated.")
     print("  Open Report.html in a browser for navigable view.")
     print("  Open Report.docx for formal distribution.")
+    if calc_issues:
+        print("")
+        print("  !! {} calculation issue(s) need agent re-run.".format(
+            len(calc_issues)))
+        print("  !! See fixes_needed.json for details.")
     if not results:
         print("")
         print("TIP: Create results.json in the task root to auto-populate")
