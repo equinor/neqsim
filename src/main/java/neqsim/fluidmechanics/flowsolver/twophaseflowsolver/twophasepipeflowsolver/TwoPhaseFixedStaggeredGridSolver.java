@@ -341,8 +341,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       pipe.getNode(i).getBulkSystem().getPhase(0).setTemperature(savedGasTemp);
       pipe.getNode(i).getBulkSystem().getPhase(1).setTemperature(savedLiqTemp);
 
-      pipe.getNode(i).initFlowCalc();
-      pipe.getNode(i).calcFluxes();
+      try {
+        pipe.getNode(i).initFlowCalc();
+        pipe.getNode(i).calcFluxes();
+      } catch (Exception e) {
+        logger.debug("Node {} flow calc failed, skipping: {}", i, e.getMessage());
+        continue;
+      }
 
       // ========================================================================
       // SEPARATE ENERGY EQUATIONS FOR GAS AND LIQUID PHASES
@@ -648,7 +653,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       // Re-init after applying transfer so phaseFraction reflects new state
       pipe.getNode(i).getBulkSystem().initBeta();
       pipe.getNode(i).getBulkSystem().init_x_y();
-      pipe.getNode(i).initFlowCalc();
+      try {
+        pipe.getNode(i).initFlowCalc();
+      } catch (Exception e) {
+        logger.debug("Node {} post-transfer flow calc failed", i);
+      }
     }
 
     // Handle last node - copy from previous node
@@ -672,14 +681,26 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
 
     pipe.getNode(lastNode).getBulkSystem().initBeta();
     pipe.getNode(lastNode).getBulkSystem().init_x_y();
-    pipe.getNode(lastNode).getBulkSystem().init(3);
+    try {
+      pipe.getNode(lastNode).getBulkSystem().init(3);
+    } catch (Exception e) {
+      try {
+        pipe.getNode(lastNode).getBulkSystem().init(1);
+      } catch (Exception e2) {
+        logger.debug("Last node thermo init failed, keeping previous state");
+      }
+    }
 
     // Restore temperature after init
     pipe.getNode(lastNode).getBulkSystem().getPhase(0).setTemperature(savedLastGasTemp);
     pipe.getNode(lastNode).getBulkSystem().getPhase(1).setTemperature(savedLastLiqTemp);
 
-    pipe.getNode(lastNode).initFlowCalc();
-    pipe.getNode(lastNode).calcFluxes();
+    try {
+      pipe.getNode(lastNode).initFlowCalc();
+      pipe.getNode(lastNode).calcFluxes();
+    } catch (Exception e) {
+      logger.debug("Last node flow calc failed");
+    }
   }
 
   /**

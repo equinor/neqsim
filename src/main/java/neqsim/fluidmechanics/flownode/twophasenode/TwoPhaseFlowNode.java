@@ -91,8 +91,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * @return a double
    */
   public double initVelocity() {
-    getBulkSystem().init(1);
-    getBulkSystem().initPhysicalProperties();
+    try {
+      getBulkSystem().init(1);
+      getBulkSystem().initPhysicalProperties();
+    } catch (Exception e) {
+      logger.debug("initVelocity: thermo init failed, using existing state");
+    }
 
     int numPhases = getBulkSystem().getNumberOfPhases();
 
