@@ -372,10 +372,12 @@ public class DiffusivityModelsTest {
   }
 
   /**
-   * Test comparing Siddiqi-Lucas aqueous vs non-aqueous correlations.
+   * Test Siddiqi-Lucas auto-detection of aqueous vs non-aqueous solvents. After the fix,
+   * calcBinaryDiffusionCoefficient automatically selects the correct correlation based on whether
+   * the solvent component is water.
    */
   @Test
-  void testSiddiqiLucasAqueousVsNonAqueous() {
+  void testSiddiqiLucasAutoDetection() {
     ThermodynamicOperations ops = new ThermodynamicOperations(hydrocarbonSystem);
     ops.TPflash();
     hydrocarbonSystem.initPhysicalProperties();
@@ -386,35 +388,16 @@ public class DiffusivityModelsTest {
 
       int nComps = hydrocarbonSystem.getPhase("oil").getNumberOfComponents();
 
-      System.out.println("\n=== Siddiqi-Lucas: Aqueous vs Non-Aqueous Correlations ===");
-      System.out.println(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Aqueous Corr.",
-          "Non-Aqueous Corr.", "Ratio"));
-      System.out.println(StringUtils.repeat("-", 80));
-
+      // For a hydrocarbon system (no water), should use non-aqueous correlation
       for (int i = 0; i < nComps; i++) {
         for (int j = 0; j < nComps; j++) {
           if (i != j) {
-            double dAqueous = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
-            double dNonAqueous = siddiqiModel.calcBinaryDiffusionCoefficient2(i, j, 0);
-
-            String compI = hydrocarbonSystem.getPhase("oil").getComponent(i).getComponentName();
-            String compJ = hydrocarbonSystem.getPhase("oil").getComponent(j).getComponentName();
-            String pair = compI + "/" + compJ;
-
-            double ratio = (dNonAqueous > 0) ? dAqueous / dNonAqueous : Double.NaN;
-
-            System.out.println(
-                String.format("%-20s %-20.4e %-20.4e %-15.2f", pair, dAqueous, dNonAqueous, ratio));
-
-            // Non-aqueous should be valid for hydrocarbons
-            if (dNonAqueous > 0 && !Double.isNaN(dNonAqueous) && !Double.isInfinite(dNonAqueous)) {
-              assertTrue(dNonAqueous > 1e-12 && dNonAqueous < 1e-5,
-                  "Siddiqi non-aqueous D out of range: " + dNonAqueous);
-            }
+            double D = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
+            assertTrue(D > 1e-12 && D < 1e-5,
+                "Siddiqi-Lucas D out of range for hydrocarbon system: " + D);
           }
         }
       }
-      System.out.println();
     }
   }
 
@@ -427,9 +410,9 @@ public class DiffusivityModelsTest {
 
     System.out.println("\n=== Temperature Dependence Comparison ===");
     System.out.println("System: methane/n-hexane at 10 bar");
-    System.out.println(String.format("%-10s %-18s %-18s %-18s", "T (K)", "Hayduk-Minhas",
-        "Siddiqi-Lucas", "Siddiqi Non-Aq"));
-    System.out.println(StringUtils.repeat("-", 70));
+    System.out
+        .println(String.format("%-10s %-18s %-18s", "T (K)", "Hayduk-Minhas", "Siddiqi-Lucas"));
+    System.out.println(StringUtils.repeat("-", 50));
 
     for (double temp : temps) {
       SystemInterface testSystem = new SystemSrkEos(temp, 10.0);
@@ -451,10 +434,8 @@ public class DiffusivityModelsTest {
 
         double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
         double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
-        double dSiddiqiNonAq = siddiqiModel.calcBinaryDiffusionCoefficient2(0, 1, 0);
 
-        System.out.println(String.format("%-10.1f %-18.4e %-18.4e %-18.4e", temp, dHayduk, dSiddiqi,
-            dSiddiqiNonAq));
+        System.out.println(String.format("%-10.1f %-18.4e %-18.4e", temp, dHayduk, dSiddiqi));
 
         // All should increase with temperature
         assertTrue(dHayduk > 0, "Hayduk-Minhas should be positive at T=" + temp);

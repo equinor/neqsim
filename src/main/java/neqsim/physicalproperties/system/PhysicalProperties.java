@@ -23,10 +23,15 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalproperties.methods.gasphysicalproperties.conductivity.ChungConductivityMethod;
+import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.FullerSchettlerGiddingsDiffusivity;
 import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.WilkeLeeDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Costald;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.AmineDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HaydukMinhasDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HighPressureDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.TynCalusDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.WilkeChangDiffusivity;
 import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
@@ -316,12 +321,25 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   public void setDiffusionCoefficientModel(String model) {
     if ("CSP".equals(model)) {
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
+    } else if ("Chapman-Enskog".equals(model)) {
+      diffusivityCalc =
+          new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
     } else if ("Wilke Lee".equals(model)) {
       diffusivityCalc = new WilkeLeeDiffusivity(this);
     } else if ("Siddiqi Lucas".equals(model)) {
       diffusivityCalc = new SiddiqiLucasMethod(this);
     } else if ("Alkanol amine".equals(model)) {
       diffusivityCalc = new AmineDiffusivity(this);
+    } else if ("Fuller-Schettler-Giddings".equals(model)) {
+      diffusivityCalc = new FullerSchettlerGiddingsDiffusivity(this);
+    } else if ("Wilke-Chang".equals(model)) {
+      diffusivityCalc = new WilkeChangDiffusivity(this);
+    } else if ("Tyn-Calus".equals(model)) {
+      diffusivityCalc = new TynCalusDiffusivity(this);
+    } else if ("Hayduk-Minhas".equals(model)) {
+      diffusivityCalc = new HaydukMinhasDiffusivity(this);
+    } else if ("High Pressure".equals(model)) {
+      diffusivityCalc = new HighPressureDiffusivity(this);
     }
   }
 
