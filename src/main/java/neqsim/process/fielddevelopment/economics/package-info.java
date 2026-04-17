@@ -36,7 +36,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create tax model
  * NorwegianTaxModel taxModel = new NorwegianTaxModel();

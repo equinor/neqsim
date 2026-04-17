@@ -28,7 +28,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * PVTRegression regression = new PVTRegression(fluid);

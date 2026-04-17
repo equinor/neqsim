@@ -1,7 +1,5 @@
 package neqsim.process.instrumentdesign;
 
-import neqsim.process.measurementdevice.MeasurementDeviceInterface;
-
 /**
  * Specification for a single instrument in a process plant.
  *

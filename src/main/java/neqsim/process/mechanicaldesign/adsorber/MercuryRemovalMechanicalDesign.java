@@ -139,6 +139,7 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM line items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
@@ -185,6 +186,7 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
    *
    * @return JSON string with all design data
    */
+  @Override
   public String toJson() {
     JsonObject json = new JsonObject();
     json.addProperty("equipmentName", getProcessEquipment().getName());

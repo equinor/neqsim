@@ -662,7 +662,6 @@ public final class DexpiXmlReader {
         try {
           return Double.parseDouble(candidate);
         } catch (NumberFormatException ignored) {
-          return null;
         }
       }
       return null;

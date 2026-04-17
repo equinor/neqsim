@@ -12,7 +12,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;

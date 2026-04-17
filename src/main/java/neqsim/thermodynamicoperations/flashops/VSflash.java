@@ -161,7 +161,7 @@ public class VSflash extends Flash {
       }
 
       // Apply damping factor that increases with iterations
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
 
       // Limit step sizes for stability
       double maxDeltaT = 0.2 * oldTemp;

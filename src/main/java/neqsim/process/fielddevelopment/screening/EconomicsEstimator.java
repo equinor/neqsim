@@ -59,7 +59,7 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create estimator
  * EconomicsEstimator estimator = new EconomicsEstimator();
@@ -994,7 +994,7 @@ public class EconomicsEstimator {
      * <p>
      * <b>Usage Example</b>
      * </p>
-     * 
+     *
      * <pre>
      * EconomicsReport report = EconomicsReport.builder().facilityCapexMUSD(400).equipmentCapexMUSD(150)
      *     .wellCapexMUSD(200).infrastructureCapexMUSD(50).totalCapexMUSD(800).annualOpexMUSD(80)

@@ -12,29 +12,29 @@ import java.util.stream.Collectors;
 
 /**
  * Discovers and documents AI-exposed NeqSim functionality.
- * 
+ *
  * <p>
  * This class uses reflection to find methods marked with {@link AIExposable} and generates
  * structured documentation that AI agents can parse.
  * </p>
- * 
+ *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * AISchemaDiscovery discovery = new AISchemaDiscovery();
- * 
+ *
  * // Discover methods in a class
  * List<MethodSchema> methods = discovery.discoverMethods(SystemSrkEos.class);
- * 
+ *
  * // Generate prompt for AI
  * String prompt = discovery.generateMethodPrompt(methods);
- * 
+ *
  * // Get all core NeqSim APIs
  * Map<String, List<MethodSchema>> coreAPIs = discovery.discoverCoreAPIs();
  * }
  * </pre>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -213,7 +213,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Discover all AI-exposed methods in a class.
-   * 
+   *
    * @param clazz class to scan
    * @return list of method schemas
    */
@@ -234,11 +234,11 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Discover common NeqSim methods even without annotations.
-   * 
+   *
    * <p>
    * This provides a basic discovery of frequently-used methods for AI consumption.
    * </p>
-   * 
+   *
    * @param clazz class to scan
    * @return list of common method schemas
    */
@@ -326,7 +326,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Generate a prompt containing discovered methods.
-   * 
+   *
    * @param methods list of method schemas
    * @return formatted prompt text
    */
@@ -350,7 +350,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Discover core NeqSim APIs by scanning common classes.
-   * 
+   *
    * @return map of class name to method schemas
    */
   public Map<String, List<MethodSchema>> discoverCoreAPIs() {
@@ -390,7 +390,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Get a quick-start prompt for AI agents.
-   * 
+   *
    * @return formatted quick-start prompt
    */
   public String getQuickStartPrompt() {

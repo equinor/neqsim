@@ -17,7 +17,6 @@ public class SurgeCurve extends BoundaryCurve {
    * Default constructor.
    */
   public SurgeCurve() {
-    super();
   }
 
   /**

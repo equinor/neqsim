@@ -10,7 +10,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Example demonstrating ESD (Emergency Shutdown) Valve functionality.
- * 
+ *
  * <p>
  * This example illustrates the key features of ESDValve:
  * <ul>

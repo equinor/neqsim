@@ -16,7 +16,7 @@
  * <p>
  * Example workflow:
  * </p>
- * 
+ *
  * <pre>
  * // 1. Configure equipment with specifications
  * DesignSpecification.forSeparator("HP-Separator").setKFactor(0.08).setDiameter(3.0, "m")

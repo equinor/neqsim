@@ -65,11 +65,11 @@ public class InvalidOutputException extends neqsim.util.exception.ThermoExceptio
 
   /**
    * Get remediation advice for this exception.
-   * 
+   *
    * <p>
    * Returns a hint on how to fix invalid output issues. AI agents can use this to self-correct.
    * </p>
-   * 
+   *
    * @return remediation advice string
    */
   public String getRemediation() {

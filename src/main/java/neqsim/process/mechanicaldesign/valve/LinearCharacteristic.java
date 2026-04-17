@@ -8,6 +8,8 @@ package neqsim.process.mechanicaldesign.valve;
  */
 public class LinearCharacteristic implements ValveCharacteristic {
 
+  private static final long serialVersionUID = 1L;
+
   /** {@inheritDoc} */
   @Override
   public double getActualKv(double Kv, double percentOpening) {

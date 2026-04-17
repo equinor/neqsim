@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * For a fitting with L/D ratio, the equivalent length is:
  * </p>
- * 
+ *
  * <pre>
  * L_eq = (L/D) × D
  * </pre>
@@ -42,7 +42,7 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * The total effective pipe length for pressure drop calculations becomes:
  * </p>
- * 
+ *
  * <pre>
  * L_eff = L_physical + Σ(L/D)_i × D
  * </pre>
@@ -51,7 +51,7 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * The L/D method is related to the resistance coefficient (K-factor) method by:
  * </p>
- * 
+ *
  * <pre>
  * K = f × (L/D)
  * </pre>
@@ -105,7 +105,7 @@ import org.apache.logging.log4j.Logger;
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create fittings collection

@@ -99,7 +99,6 @@ public class PhaseSrkCPAandersonMixing extends PhaseSrkCPAs {
    * Constructor for PhaseSrkCPAandersonMixing.
    */
   public PhaseSrkCPAandersonMixing() {
-    super();
     thermoPropertyModelName = "SRK-CPA-EoS-AndersonMixing";
   }
 

@@ -20,14 +20,14 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * <p>
  * <strong>Usage</strong>
  * </p>
- * 
+ *
  * <pre>
  * // Get the singleton instance
  * EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
- * 
+ *
  * // Register a custom strategy
  * registry.register(new MyCustomCompressorStrategy());
- * 
+ *
  * // Find strategy for equipment
  * EquipmentCapacityStrategy strategy = registry.findStrategy(myCompressor);
  * if (strategy != null) {

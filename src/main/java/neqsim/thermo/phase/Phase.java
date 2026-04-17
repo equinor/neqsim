@@ -2216,7 +2216,6 @@ public abstract class Phase implements PhaseInterface {
       return getpH_molality();
     }
     if (method.equalsIgnoreCase("activity")) {
-      return getpH_activity();
     }
     // Default to activity (consistent with mole fraction-based equilibrium constants)
     return getpH_activity();

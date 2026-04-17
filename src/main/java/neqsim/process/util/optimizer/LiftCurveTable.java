@@ -18,7 +18,7 @@ import java.util.Arrays;
  * </ul>
  *
  * <h2>Eclipse Format Example</h2>
- * 
+ *
  * <pre>
  * THP
  * 20 40 60
@@ -109,7 +109,7 @@ public class LiftCurveTable implements Serializable {
    * <p>
    * Format:
    * </p>
-   * 
+   *
    * <pre>
    * THP
    * thp1 thp2 thp3

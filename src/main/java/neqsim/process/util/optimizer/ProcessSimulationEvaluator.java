@@ -41,7 +41,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Python Integration Example</strong>
  * </p>
- * 
+ *
  * <pre>
  * # Using with SciPy
  * from neqsim import jneqsim
@@ -407,6 +407,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     }
 
     // Getters and setters
+    @Override
     public String getName() {
       return name;
     }
@@ -455,6 +456,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       this.unit = unit;
     }
 
+    @Override
     public boolean isHard() {
       return isHard;
     }
@@ -463,6 +465,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       isHard = hard;
     }
 
+    @Override
     public double getPenaltyWeight() {
       return penaltyWeight;
     }
@@ -495,6 +498,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param process the process system
      * @return constraint margin
      */
+    @Override
     public double margin(ProcessSystem process) {
       double value = evaluate(process);
       switch (type) {
@@ -517,6 +521,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param process the process system
      * @return true if satisfied
      */
+    @Override
     public boolean isSatisfied(ProcessSystem process) {
       return margin(process) >= 0;
     }

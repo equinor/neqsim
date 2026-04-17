@@ -46,38 +46,38 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  * </ul>
  *
  * <h2>Usage Examples</h2>
- * 
+ *
  * <h3>Full Evaluation</h3>
- * 
+ *
  * <pre>
  * ConceptEvaluator evaluator = new ConceptEvaluator();
  * ConceptKPIs kpis = evaluator.evaluate(concept);
- * 
+ *
  * // Access individual reports
  * FlowAssuranceReport fa = kpis.getFlowAssuranceReport();
  * EconomicsEstimator.EconomicsReport econ = kpis.getEconomicsReport();
- * 
+ *
  * // Check warnings
  * kpis.getWarnings().forEach((category, message) -&gt; {
  *   System.out.println("WARNING: " + message);
  * });
- * 
+ *
  * // Get overall score
  * System.out.println("Overall Score: " + kpis.getOverallScore());
  * </pre>
  *
  * <h3>Evaluation with Custom Facility</h3>
- * 
+ *
  * <pre>
  * FacilityConfig facility =
  *     FacilityBuilder.builder().addBlock(BlockConfig.of(BlockType.INLET_SEPARATION))
  *         .addBlock(BlockConfig.of(BlockType.TEG_DEHYDRATION)).build();
- * 
+ *
  * ConceptKPIs kpis = evaluator.evaluate(concept, facility);
  * </pre>
  *
  * <h3>Quick Screening (Reduced Fidelity)</h3>
- * 
+ *
  * <pre>
  * ConceptKPIs quickKpis = evaluator.quickScreen(concept);
  * // Note: Safety assessment not included in quick screen

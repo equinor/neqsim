@@ -352,6 +352,7 @@ public class SubseaTree extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaTreeMechanicalDesign(this);
   }

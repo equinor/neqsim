@@ -107,6 +107,7 @@ public class ThreePhaseSeparator extends Separator {
    * @param phaseFrom a {@link java.lang.String} object
    * @param phaseTo a {@link java.lang.String} object
    */
+  @Override
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
       String phaseTo) {
     this.specifiedStream = specifiedStream;
@@ -909,6 +910,7 @@ public class ThreePhaseSeparator extends Separator {
    * @param temp a double
    * @param pres a double
    */
+  @Override
   public void setTempPres(double temp, double pres) {
     gasOutStream.getThermoSystem().setTemperature(temp);
     gasOutStream.getThermoSystem().setPressure(pres);

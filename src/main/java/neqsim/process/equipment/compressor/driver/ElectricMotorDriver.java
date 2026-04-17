@@ -27,12 +27,12 @@ package neqsim.process.equipment.compressor.driver;
  * </p>
  *
  * <p><strong>Example Usage</strong></p>
- * 
+ *
  * <pre>
  * ElectricMotorDriver motor = new ElectricMotorDriver(5000, 3600, 0.95);
  * motor.setHasVFD(true);
  * motor.setMinSpeedRatio(0.3); // 30% minimum speed with VFD
- * 
+ *
  * double availablePower = motor.getAvailablePower(2500); // At 2500 RPM
  * double efficiency = motor.getEfficiency(3000, 0.8); // At 80% load
  * </pre>
@@ -79,7 +79,6 @@ public class ElectricMotorDriver extends DriverCurveBase {
    * Default constructor.
    */
   public ElectricMotorDriver() {
-    super();
   }
 
   /**

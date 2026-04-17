@@ -90,7 +90,7 @@
  * <p>
  * <strong>Quick Start - ProcessOptimizationEngine (throughput-focused):</strong>
  * </p>
- * 
+ *
  * <pre>
  * // Find maximum throughput at given pressures
  * ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
@@ -109,7 +109,7 @@
  * <p>
  * <strong>Quick Start - ProductionOptimizer (general-purpose):</strong>
  * </p>
- * 
+ *
  * <pre>
  * // Optimize with custom objective
  * ProductionOptimizer optimizer = new ProductionOptimizer();
@@ -126,7 +126,7 @@
  * <p>
  * <strong>Pareto Multi-Objective Optimization:</strong>
  * </p>
- * 
+ *
  * <pre>
  * // Trade off throughput vs power
  * List&lt;OptimizationObjective&gt; objectives = Arrays.asList(
@@ -149,7 +149,7 @@
  * <p>
  * <strong>Constraint Evaluation with Caching:</strong>
  * </p>
- * 
+ *
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(process);
  * evaluator.setCacheTTLMillis(30000); // 30 second cache

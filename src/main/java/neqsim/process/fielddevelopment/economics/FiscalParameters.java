@@ -26,12 +26,12 @@ import java.io.Serializable;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create custom parameters
  * FiscalParameters params = FiscalParameters.builder("CustomCountry").corporateTaxRate(0.25)
  *     .resourceTaxRate(0.40).royaltyRate(0.10).depreciationYears(5).build();
- * 
+ *
  * // Or use predefined country
  * FiscalParameters norway = FiscalRegimeRegistry.getParameters("Norway");
  * }</pre>

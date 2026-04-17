@@ -68,7 +68,6 @@ public class ProcessDesignStandard extends DesignStandard {
    * Constructs a ProcessDesignStandard with default values.
    */
   public ProcessDesignStandard() {
-    super();
   }
 
   /**

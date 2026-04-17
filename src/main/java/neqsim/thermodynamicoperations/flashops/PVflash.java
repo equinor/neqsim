@@ -52,6 +52,7 @@ public class PVflash extends QfuncFlash {
    *
    * @return volume residual in m³
    */
+  @Override
   public double calcdQdT() {
     return system.getVolume() - Vspec;
   }
@@ -65,6 +66,7 @@ public class PVflash extends QfuncFlash {
    *
    * @return derivative of volume with respect to temperature at constant P
    */
+  @Override
   public double calcdQdTT() {
     // Get dV/dT at constant P using system-level method
     // Note: getdVdTpn returns -dV/dT, so dV/dT = -getdVdTpn()
@@ -76,6 +78,7 @@ public class PVflash extends QfuncFlash {
    *
    * @return converged temperature in K
    */
+  @Override
   public double solveQ() {
     double oldTemp = system.getTemperature();
     double nyTemp = system.getTemperature();
@@ -120,7 +123,7 @@ public class PVflash extends QfuncFlash {
       }
 
       // Newton step with damping
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
       double deltaT = -factor * dV / dVdT;
 
       // Limit step size to 20% of current temperature

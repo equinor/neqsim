@@ -147,7 +147,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * Constructor for PhaseElectrolyteCPAMM.
    */
   public PhaseElectrolyteCPAMM() {
-    super();
     electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
   }
 
@@ -1981,7 +1980,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double dFShortRangedVdV() {
     if (!shortRangeOn) {
-      return 0.0;
     }
     return 0.0;
   }
@@ -1993,7 +1991,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double dFShortRangedVdVdV() {
     if (!shortRangeOn) {
-      return 0.0;
     }
     return 0.0;
   }
@@ -2005,7 +2002,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double dFShortRangedTdV() {
     if (!shortRangeOn) {
-      return 0.0;
     }
     return 0.0;
   }
@@ -2347,6 +2343,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    *
    * @return kappa [1/m]
    */
+  @Override
   public double getKappa() {
     return kappa;
   }

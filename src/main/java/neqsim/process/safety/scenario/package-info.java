@@ -23,7 +23,7 @@
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * AutomaticScenarioGenerator generator = new AutomaticScenarioGenerator(process);
  *

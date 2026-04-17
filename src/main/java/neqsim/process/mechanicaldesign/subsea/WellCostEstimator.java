@@ -301,7 +301,6 @@ public class WellCostEstimator {
     if ("DRILLSHIP".equals(rigType)) {
       return 1.20;
     } else if ("SEMI_SUBMERSIBLE".equals(rigType)) {
-      return 1.0;
     } else if ("JACK_UP".equals(rigType)) {
       return 0.70;
     } else if ("PLATFORM_RIG".equals(rigType)) {
@@ -320,7 +319,6 @@ public class WellCostEstimator {
     if ("OPEN_HOLE".equals(completionType)) {
       return 0.70;
     } else if ("CASED_PERFORATED".equals(completionType)) {
-      return 1.0;
     } else if ("GRAVEL_PACK".equals(completionType)) {
       return 1.30;
     } else if ("ICD".equals(completionType)) {

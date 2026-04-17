@@ -7,7 +7,7 @@ import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Utility class for evaluating alarms across multiple measurement devices.
- * 
+ *
  * <p>
  * Simplifies the alarm evaluation loop by automatically running the process system and evaluating
  * all registered measurement devices.
@@ -23,7 +23,7 @@ public final class AlarmEvaluator {
 
   /**
    * Evaluates alarms for all devices registered with the alarm manager.
-   * 
+   *
    * <p>
    * This method:
    * <ol>
@@ -31,7 +31,7 @@ public final class AlarmEvaluator {
    * <li>Evaluates each registered measurement device</li>
    * <li>Returns all generated alarm events</li>
    * </ol>
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param system the process system to run
    * @param dt time step
@@ -54,7 +54,7 @@ public final class AlarmEvaluator {
 
   /**
    * Evaluates a list of measurement devices.
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param devices the devices to evaluate
    * @param dt time step
@@ -76,7 +76,7 @@ public final class AlarmEvaluator {
 
   /**
    * Evaluates alarms and displays them if any are generated.
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param devices the devices to evaluate
    * @param dt time step

@@ -51,7 +51,6 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
    * Creates a dynamic risk result.
    */
   public DynamicRiskResult() {
-    super();
   }
 
   // Getters for simulation parameters

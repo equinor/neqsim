@@ -301,6 +301,7 @@ public class HydrogenPipelineDesign extends MechanicalDesign {
    *
    * @param od outer diameter [m]
    */
+  @Override
   public void setOuterDiameter(double od) {
     this.outerDiameter = od;
   }
@@ -310,6 +311,7 @@ public class HydrogenPipelineDesign extends MechanicalDesign {
    *
    * @return outer diameter [m]
    */
+  @Override
   public double getOuterDiameter() {
     return outerDiameter;
   }
@@ -374,6 +376,7 @@ public class HydrogenPipelineDesign extends MechanicalDesign {
    *
    * @param ca corrosion allowance [mm]
    */
+  @Override
   public void setCorrosionAllowance(double ca) {
     this.corrosionAllowance = ca;
   }

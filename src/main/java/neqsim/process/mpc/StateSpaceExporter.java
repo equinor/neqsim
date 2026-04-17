@@ -20,7 +20,7 @@ import com.google.gson.GsonBuilder;
  * <p>
  * State-space representation:
  * </p>
- * 
+ *
  * <pre>
  * x(k+1) = A * x(k) + B * u(k)
  * y(k) = C * x(k) + D * u(k)
@@ -38,7 +38,7 @@ import com.google.gson.GsonBuilder;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create exporter from linearization result
@@ -121,7 +121,7 @@ public class StateSpaceExporter implements Serializable {
    * For a first-order system with gain K and time constant τ, the discrete-time state-space
    * representation with sample time Ts is:
    * </p>
-   * 
+   *
    * <pre>
    * A = exp(-Ts/τ)
    * B = K * (1 - exp(-Ts/τ))

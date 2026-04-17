@@ -285,7 +285,7 @@ public class ComponentPCSAFT extends ComponentSrk {
     if (h == 0) {
       h = 1e-6;
     }
-    PhasePCSAFT plus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT plus = ((PhasePCSAFT) phase).clone();
     plus.setTemperature(temperature + h);
     for (int i = 0; i < numberOfComponents; i++) {
       ((ComponentPCSAFT) plus.getComponent(i)).init(plus.getTemperature(), pressure,
@@ -295,7 +295,7 @@ public class ComponentPCSAFT extends ComponentSrk {
     double dFplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
         numberOfComponents, plus.getTemperature(), pressure);
 
-    PhasePCSAFT minus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT minus = ((PhasePCSAFT) phase).clone();
     minus.setTemperature(temperature - h);
     for (int i = 0; i < numberOfComponents; i++) {
       ((ComponentPCSAFT) minus.getComponent(i)).init(minus.getTemperature(), pressure,
@@ -327,13 +327,13 @@ public class ComponentPCSAFT extends ComponentSrk {
       h = 1.0e-10;
     }
 
-    PhasePCSAFT plus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT plus = ((PhasePCSAFT) phase).clone();
     plus.setMolarVolume((totalVolume + h) / phase.getNumberOfMolesInPhase());
     reinitSAFTOnPhase(plus, numberOfComponents, temperature, pressure);
     double dFdNplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
         numberOfComponents, temperature, pressure);
 
-    PhasePCSAFT minus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT minus = ((PhasePCSAFT) phase).clone();
     minus.setMolarVolume((totalVolume - h) / phase.getNumberOfMolesInPhase());
     reinitSAFTOnPhase(minus, numberOfComponents, temperature, pressure);
     double dFdNminus = ((ComponentPCSAFT) minus.getComponent(getComponentNumber())).dFdN(minus,
@@ -360,7 +360,7 @@ public class ComponentPCSAFT extends ComponentSrk {
     double totalVolume = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
     double totalMoles = phase.getNumberOfMolesInPhase();
 
-    PhasePCSAFT plus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT plus = ((PhasePCSAFT) phase).clone();
     plus.getComponent(j).setNumberOfMolesInPhase(nj + h);
     double newTotalPlus = totalMoles + h;
     plus.numberOfMolesInPhase = newTotalPlus;
@@ -369,7 +369,7 @@ public class ComponentPCSAFT extends ComponentSrk {
     double dFdNplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
         numberOfComponents, temperature, pressure);
 
-    PhasePCSAFT minus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT minus = ((PhasePCSAFT) phase).clone();
     minus.getComponent(j).setNumberOfMolesInPhase(nj - h);
     double newTotalMinus = totalMoles - h;
     minus.numberOfMolesInPhase = newTotalMinus;

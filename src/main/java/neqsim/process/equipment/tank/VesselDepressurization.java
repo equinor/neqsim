@@ -1334,6 +1334,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * @return Pressure [Pa]
    */
+  @Override
   public double getPressure() {
     return thermoSystem.getPressure() * 1e5; // bar to Pa
   }
@@ -1344,6 +1345,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @param unit Pressure unit ("Pa", "bar", "bara", "barg", "psi")
    * @return Pressure in specified unit
    */
+  @Override
   public double getPressure(String unit) {
     double pPa = getPressure();
     switch (unit.toLowerCase()) {
@@ -1364,6 +1366,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * @return Temperature [K]
    */
+  @Override
   public double getTemperature() {
     return thermoSystem.getTemperature();
   }
@@ -1374,6 +1377,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @param unit Temperature unit ("K", "C", "F")
    * @return Temperature in specified unit
    */
+  @Override
   public double getTemperature(String unit) {
     double tK = getTemperature();
     switch (unit.toUpperCase()) {
@@ -2654,6 +2658,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * @return The thermodynamic system
    */
+  @Override
   public SystemInterface getThermoSystem() {
     return thermoSystem;
   }

@@ -618,6 +618,7 @@ public class Pump extends TwoPortEquipment
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double outTemperature) {
     setOutletTemperature(outTemperature);
@@ -663,6 +664,7 @@ public class Pump extends TwoPortEquipment
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     setOutletPressure(pressure);
     pressureUnit = unit;
@@ -757,6 +759,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return NPSHa in meters
    */
+  @Override
   public double getNPSHAvailable() {
     try {
       inStream.getThermoSystem().init(3);
@@ -808,6 +811,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return NPSHr in meters
    */
+  @Override
   public double getNPSHRequired() {
     // Try to get NPSH from pump chart if available
     if (pumpChart != null && pumpChart.isUsePumpChart() && pumpChart.hasNPSHCurve()) {
@@ -845,6 +849,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return true if cavitation risk exists (NPSHa &lt; npshMargin * NPSHr)
    */
+  @Override
   public boolean isCavitating() {
     if (!checkNPSH) {
       return false;
@@ -865,6 +870,7 @@ public class Pump extends TwoPortEquipment
    *
    * @param checkNPSH true to enable NPSH checking
    */
+  @Override
   public void setCheckNPSH(boolean checkNPSH) {
     this.checkNPSH = checkNPSH;
   }

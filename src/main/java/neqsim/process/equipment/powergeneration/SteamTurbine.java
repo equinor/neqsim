@@ -146,6 +146,7 @@ public class SteamTurbine extends TwoPortEquipment {
    *
    * @param pressure outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     this.outletPressure = pressure;
   }
@@ -156,6 +157,7 @@ public class SteamTurbine extends TwoPortEquipment {
    * @param pressure outlet pressure
    * @param unit pressure unit ("bara", "barg", "psi")
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     if ("barg".equals(unit)) {
       this.outletPressure = pressure + 1.01325;

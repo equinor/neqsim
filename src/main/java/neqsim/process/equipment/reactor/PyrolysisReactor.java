@@ -784,6 +784,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
    *
    * @return JSON results string
    */
+  @Override
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
         .toJson(getResults());

@@ -63,7 +63,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </table>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * SystemInterface fluid = new SystemSrkEos(373.15, 100.0);
@@ -72,7 +72,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * fluid.addComponent("n-heptane", 0.20);
  * fluid.createDatabase(true);
  * fluid.setMixingRule("classic");
- * 
+ *
  * ReservoirFluidType type = FluidClassifier.classify(fluid);
  * System.out.println("Fluid type: " + type.getDisplayName());
  * }

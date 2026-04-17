@@ -362,6 +362,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the well.
    */
+  @Override
   public void calculateCostEstimate() {
     WellCostEstimator ce = getCostEstimator();
 
@@ -440,6 +441,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     return getCostEstimator().generateBillOfMaterials(well);
   }

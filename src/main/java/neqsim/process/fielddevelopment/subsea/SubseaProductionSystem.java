@@ -40,35 +40,35 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create subsea system
  * SubseaProductionSystem subsea = new SubseaProductionSystem("Snohvit Satellite");
  * subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER);
  * subsea.setWaterDepthM(350.0);
  * subsea.setTiebackDistanceKm(25.0);
- * 
+ *
  * // Configure wells
  * subsea.setWellCount(4);
  * subsea.setWellheadPressureBara(180.0);
  * subsea.setWellheadTemperatureC(80.0);
- * 
+ *
  * // Set fluid
  * subsea.setReservoirFluid(gasCondensateFluid);
- * 
+ *
  * // Configure flowline
  * subsea.setFlowlineDiameterInches(12.0);
  * subsea.setSeabedTemperatureC(4.0);
- * 
+ *
  * // Define host facility
  * HostFacility host = HostFacility.builder("Snohvit LNG").location(71.3, 20.8).waterDepth(350)
  *     .gasCapacity(20.0, "MSm3/d").build();
  * subsea.setHostFacility(host);
- * 
+ *
  * // Build and run
  * subsea.build();
  * subsea.run();
- * 
+ *
  * // Get results
  * double arrivalPressure = subsea.getArrivalPressureBara();
  * double arrivalTemperature = subsea.getArrivalTemperatureC();

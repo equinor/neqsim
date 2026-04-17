@@ -383,6 +383,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     this.pressure = pressure;
     this.pressureUnit = unit;
@@ -2493,6 +2494,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double outTemperature) {
     setOutletTemperature(outTemperature);
@@ -4960,7 +4962,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     if (getMechanicalDesign() != null) {
       sb.append("\n--- Mechanical Design ---\n");
-      CompressorMechanicalDesign mechDesign = (CompressorMechanicalDesign) getMechanicalDesign();
+      CompressorMechanicalDesign mechDesign = getMechanicalDesign();
       sb.append("Number of Stages: ").append(mechDesign.getNumberOfStages()).append("\n");
       sb.append("Impeller Diameter: ")
           .append(String.format("%.0f mm", mechDesign.getImpellerDiameter())).append("\n");
@@ -4993,7 +4995,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     }
 
     if (getMechanicalDesign() != null) {
-      CompressorMechanicalDesign mechDesign = (CompressorMechanicalDesign) getMechanicalDesign();
+      CompressorMechanicalDesign mechDesign = getMechanicalDesign();
       Map<String, Object> mechReport = new LinkedHashMap<String, Object>();
       mechReport.put("numberOfStages", mechDesign.getNumberOfStages());
       mechReport.put("impellerDiameter_mm", mechDesign.getImpellerDiameter());

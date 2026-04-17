@@ -29,13 +29,13 @@ import java.util.List;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * DecommissioningEstimator estimator =
  *     new DecommissioningEstimator().setFacilityType(FacilityType.FIXED_JACKET).setWaterDepth(120)
  *         .setTopsideWeight(15000).setNumberOfWells(12).setPipelineLength(45);
- * 
+ *
  * double totalCost = estimator.getTotalCostMUSD();
  * System.out.println("Decom cost: $" + totalCost + "M");
  * }

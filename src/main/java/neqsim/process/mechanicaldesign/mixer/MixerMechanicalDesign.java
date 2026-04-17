@@ -11,7 +11,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
  * Mechanical design class for mixing equipment.
- * 
+ *
  * <p>
  * Handles design calculations for tees, manifolds, and mixing headers including header sizing,
  * branch connections, and pressure drop calculations.

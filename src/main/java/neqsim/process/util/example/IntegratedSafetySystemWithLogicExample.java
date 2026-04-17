@@ -30,7 +30,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Advanced example demonstrating integrated safety systems using the NeqSim process logic framework
  * and scenario simulation capabilities.
- * 
+ *
  * <p>
  * This example showcases:
  * <ul>
@@ -40,7 +40,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Transient simulations with process logic execution</li>
  * <li>Custom logic actions and conditions</li>
  * </ul>
- * 
+ *
  * <p>
  * Safety layers implemented:
  * <ul>
@@ -161,6 +161,7 @@ public class IntegratedSafetySystemWithLogicExample {
    * Custom HIPPS logic implementing SIL-3 with 2oo2 voting.
    */
   static class HIPPSLogic implements ProcessLogic {
+    private static final long serialVersionUID = 1L;
     private final String name;
     private final PressureTransmitter pt1, pt2;
     private final ThrottlingValve valve;

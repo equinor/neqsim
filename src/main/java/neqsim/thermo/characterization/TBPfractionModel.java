@@ -258,6 +258,7 @@ public class TBPfractionModel implements java.io.Serializable {
     private double boilingPoint = 0.0;
     protected boolean calcm = true;
 
+    @Override
     public void setBoilingPoint(double boilingPoint) {
       this.boilingPoint = boilingPoint;
     }

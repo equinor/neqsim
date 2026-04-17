@@ -20,7 +20,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
  * </ul>
  *
  * <h2>Stratified Three-Layer Geometry</h2>
- * 
+ *
  * <pre>
  *         Gas (α_g)
  *     ─────────────────
@@ -82,7 +82,6 @@ public class ThreeFluidSection extends TwoFluidSection {
    * Default constructor.
    */
   public ThreeFluidSection() {
-    super();
     initializeWaterPhase();
   }
 
@@ -377,34 +376,42 @@ public class ThreeFluidSection extends TwoFluidSection {
 
   // Getters and setters for water phase
 
+  @Override
   public double getWaterHoldup() {
     return waterHoldup;
   }
 
+  @Override
   public void setWaterHoldup(double waterHoldup) {
     this.waterHoldup = waterHoldup;
   }
 
+  @Override
   public double getWaterVelocity() {
     return waterVelocity;
   }
 
+  @Override
   public void setWaterVelocity(double waterVelocity) {
     this.waterVelocity = waterVelocity;
   }
 
+  @Override
   public double getWaterDensity() {
     return waterDensity;
   }
 
+  @Override
   public void setWaterDensity(double waterDensity) {
     this.waterDensity = waterDensity;
   }
 
+  @Override
   public double getWaterViscosity() {
     return waterViscosity;
   }
 
+  @Override
   public void setWaterViscosity(double waterViscosity) {
     this.waterViscosity = waterViscosity;
   }
@@ -419,34 +426,42 @@ public class ThreeFluidSection extends TwoFluidSection {
 
   // Getters and setters for oil phase
 
+  @Override
   public double getOilHoldup() {
     return oilHoldup;
   }
 
+  @Override
   public void setOilHoldup(double oilHoldup) {
     this.oilHoldup = oilHoldup;
   }
 
+  @Override
   public double getOilVelocity() {
     return oilVelocity;
   }
 
+  @Override
   public void setOilVelocity(double oilVelocity) {
     this.oilVelocity = oilVelocity;
   }
 
+  @Override
   public double getOilDensity() {
     return oilDensity;
   }
 
+  @Override
   public void setOilDensity(double oilDensity) {
     this.oilDensity = oilDensity;
   }
 
+  @Override
   public double getOilViscosity() {
     return oilViscosity;
   }
 
+  @Override
   public void setOilViscosity(double oilViscosity) {
     this.oilViscosity = oilViscosity;
   }
@@ -461,34 +476,42 @@ public class ThreeFluidSection extends TwoFluidSection {
 
   // Getters and setters for conservative variables
 
+  @Override
   public double getWaterMassPerLength() {
     return waterMassPerLength;
   }
 
+  @Override
   public void setWaterMassPerLength(double waterMassPerLength) {
     this.waterMassPerLength = waterMassPerLength;
   }
 
+  @Override
   public double getWaterMomentumPerLength() {
     return waterMomentumPerLength;
   }
 
+  @Override
   public void setWaterMomentumPerLength(double waterMomentumPerLength) {
     this.waterMomentumPerLength = waterMomentumPerLength;
   }
 
+  @Override
   public double getOilMassPerLength() {
     return oilMassPerLength;
   }
 
+  @Override
   public void setOilMassPerLength(double oilMassPerLength) {
     this.oilMassPerLength = oilMassPerLength;
   }
 
+  @Override
   public double getOilMomentumPerLength() {
     return oilMomentumPerLength;
   }
 
+  @Override
   public void setOilMomentumPerLength(double oilMomentumPerLength) {
     this.oilMomentumPerLength = oilMomentumPerLength;
   }
@@ -553,10 +576,12 @@ public class ThreeFluidSection extends TwoFluidSection {
     this.gasWaterSurfaceTension = gasWaterSurfaceTension;
   }
 
+  @Override
   public double getWaterCut() {
     return waterCut;
   }
 
+  @Override
   public void setWaterCut(double waterCut) {
     this.waterCut = waterCut;
   }
