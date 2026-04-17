@@ -9,6 +9,62 @@
 
 ---
 
+## 2026-04-17 — InterphaseDropletFlow: Corrected Mass/Heat Transfer for Dispersed Flow
+
+### Summary
+
+Fixed and enhanced `InterphaseDropletFlow` — the interphase transport coefficient
+calculator for droplet (mist) and bubble flow regimes. The previous implementation
+erroneously reused stratified flow (Yih-Chen) correlations via copy-paste. The new
+implementation uses physics-appropriate correlations for dispersed particles.
+
+### What Changed
+
+1. **Bug fix:** Mass and heat transfer now use the **particle diameter** (droplet/bubble)
+   as the characteristic length, not the pipe hydraulic diameter. This is the fundamental
+   difference between dispersed and stratified flow transport.
+
+2. **Ranz-Marshall correlation** for continuous phase: `Sh = 2 + 0.6·Re_p^0.5·Sc^0.33`
+   (both mass and heat transfer).
+
+3. **Kronig-Brink model** for dispersed phase interior: `Sh = 17.66` (steady-state limit
+   for internally circulating spheres).
+
+4. **Abramzon-Sirignano (1989) extended film model** — optional correction for
+   evaporating droplets that accounts for Stefan flow (blowing) at the droplet surface.
+   Enabled via `setUseAbramzonSirignano(true)` and `setSpaldingMassTransferNumber(B_M)`.
+
+5. **Particle diameter resolution** from `DropletFlowNode.getAverageDropletDiameter()`
+   and `BubbleFlowNode.getAverageBubbleDiameter()`.
+
+### New/Changed Files
+
+| File | Change |
+|------|--------|
+| `InterphaseDropletFlow.java` | **Rewritten** — Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano |
+| `InterphaseDropletFlowMassTransferTest.java` | **NEW** — 9 tests covering correlations and limits |
+| `condensation_pipeline_equilibrium_vs_nonequilibrium.ipynb` | **NEW** — Example notebook comparing equilibrium vs non-equilibrium pipeline condensation |
+| `docs/fluidmechanics/droplet_flow_correlations.md` | **NEW** — Full documentation of dispersed flow correlations |
+
+### New API Methods on `InterphaseDropletFlow`
+
+| Method | Description |
+|--------|-------------|
+| `setUseAbramzonSirignano(boolean)` | Enable/disable blowing correction |
+| `isUseAbramzonSirignano()` | Query blowing correction state |
+| `setSpaldingMassTransferNumber(double)` | Set B_M for Abramzon-Sirignano |
+| `getSpaldingMassTransferNumber()` | Get current B_M value |
+| `calcAbramzonSirignanoF(double bm)` | Calculate F(B_M) correction function |
+
+### Migration
+
+No breaking API changes. The corrected correlations may produce different mass
+transfer coefficients than before for droplet/bubble flow nodes, but this is a
+**bug fix** — the old values were physically incorrect (using pipe diameter instead
+of particle diameter).
+
+---
+
 ## 2026-04-13 — MCP Server: Professional-Use Improvements (48 Tools)
 
 ### Summary

@@ -6,6 +6,7 @@ import neqsim.fluidmechanics.flownode.FlowNode;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.InterfacialAreaModel;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.nucleation.ClassicalNucleationTheory;
 
 /**
  * <p>
@@ -722,21 +723,35 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Gets the initial droplet/bubble diameter for nucleation based on critical nucleation theory.
+   * Gets the initial droplet/bubble diameter for nucleation using Classical Nucleation Theory
+   * (CNT).
+   * </p>
+   *
+   * <p>
+   * For droplet formation (condensation), uses heterogeneous CNT with a default pipe wall contact
+   * angle of 60 degrees. The supersaturation is estimated from the pressure difference between
+   * actual conditions and the dew/bubble point. Surface tension and gas properties are taken from
+   * the bulk thermodynamic system.
+   * </p>
+   *
+   * <p>
+   * Falls back to a simplified 4*sigma/deltaP estimate if CNT fails.
    * </p>
    *
    * @param isDroplet true for condensation (droplets), false for bubbles
    * @return the initial nucleation diameter in meters
    */
   public double getNucleationDiameter(boolean isDroplet) {
-    // Critical nucleation diameter from classical nucleation theory:
-    // d_crit = 4 * σ / Δp where σ is surface tension and Δp is supersaturation pressure
-    double surfaceTension = getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    double surfaceTension;
+    try {
+      surfaceTension = getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    } catch (Exception e) {
+      surfaceTension = 0.02; // Default 20 mN/m
+    }
 
-    // Estimate supersaturation from pressure difference
+    // Estimate supersaturation from pressure difference to dew/bubble point
     double saturationPressure;
     try {
-      // Clone system to avoid modifying the original
       neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
       neqsim.thermodynamicoperations.ThermodynamicOperations ops =
           new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
@@ -747,19 +762,95 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       }
       saturationPressure = tempSystem.getPressure();
     } catch (Exception e) {
-      // Default to a reasonable nucleation diameter (1 micron)
-      return 1.0e-6;
+      return 1.0e-6; // Default 1 micron if flash fails
     }
 
     double pressureDiff = Math.abs(getBulkSystem().getPressure() - saturationPressure) * 1e5; // Pa
     if (pressureDiff < 1.0) {
-      pressureDiff = 1.0; // Prevent division by zero
+      pressureDiff = 1.0;
     }
 
-    double criticalDiameter = 4.0 * surfaceTension / pressureDiff;
+    // Use CNT to calculate the critical nucleus diameter
+    try {
+      // Estimate molecular properties from the heaviest (most condensable) component
+      int heaviestComp = findHeaviestComponent();
+      double mw = getBulkSystem().getPhase(0).getComponent(heaviestComp).getMolarMass();
+      double condensedDensity = 800.0; // Approximate hydrocarbon liquid density
+      if (getBulkSystem().getNumberOfPhases() >= 2) {
+        condensedDensity = getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+      }
 
-    // Ensure reasonable bounds (1 nm to 1 mm)
+      ClassicalNucleationTheory cnt =
+          new ClassicalNucleationTheory(mw, condensedDensity, surfaceTension);
+      cnt.setTemperature(getBulkSystem().getTemperature());
+      cnt.setTotalPressure(getBulkSystem().getPressure() * 1e5);
+
+      // Estimate supersaturation from pressure difference
+      double actualPressure = getBulkSystem().getPressure() * 1e5;
+      double satPressurePa = saturationPressure * 1e5;
+      double supersat;
+      if (isDroplet) {
+        // For condensation: S = p_actual / p_dew (actual pressure exceeds dew point)
+        supersat = Math.max(1.01, actualPressure / satPressurePa);
+      } else {
+        // For bubble nucleation: S = p_bubble / p_actual
+        supersat = Math.max(1.01, satPressurePa / actualPressure);
+      }
+      cnt.setSupersaturationRatio(supersat);
+
+      // Set gas-phase transport properties
+      if (getBulkSystem().getNumberOfPhases() >= 1) {
+        try {
+          double visc = getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+          if (visc > 0) {
+            cnt.setGasViscosity(visc);
+          }
+        } catch (Exception e) {
+          // Use defaults
+        }
+      }
+
+      // Use heterogeneous nucleation (pipe wall acts as nucleation site)
+      cnt.setHeterogeneous(true);
+      cnt.setContactAngle(60.0); // Typical pipe wall contact angle
+
+      // Residence time: estimate from node length and velocity
+      double gasVelocity = velocity[0] > 0 ? velocity[0] : 1.0;
+      double nodeLength = pipe.getNodeLength() > 0 ? pipe.getNodeLength() : 0.1;
+      cnt.setResidenceTime(nodeLength / gasVelocity);
+
+      cnt.calculate();
+
+      double diameter = cnt.getMeanParticleDiameter();
+      if (diameter > 0.0 && Double.isFinite(diameter)) {
+        return Math.max(1.0e-9, Math.min(1.0e-3, diameter));
+      }
+    } catch (Exception e) {
+      logger.debug("CNT calculation failed, using simplified estimate: " + e.getMessage());
+    }
+
+    // Fallback: simplified d = 4*sigma/deltaP
+    double criticalDiameter = 4.0 * surfaceTension / pressureDiff;
     return Math.max(1.0e-9, Math.min(1.0e-3, criticalDiameter));
+  }
+
+  /**
+   * Finds the index of the heaviest (highest molecular weight) component in the system. This is
+   * typically the most condensable component.
+   *
+   * @return index of the heaviest component
+   */
+  private int findHeaviestComponent() {
+    int heaviest = 0;
+    double maxMw = 0.0;
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      double mw = getBulkSystem().getPhase(0).getComponent(i).getMolarMass();
+      if (mw > maxMw) {
+        maxMw = mw;
+        heaviest = i;
+      }
+    }
+    return heaviest;
   }
 
   /**
