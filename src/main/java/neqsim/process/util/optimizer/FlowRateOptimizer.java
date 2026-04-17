@@ -1011,6 +1011,13 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Evaluates process and captures power data for each compressor.
+   *
+   * @param flowRate the inlet flow rate
+   * @param flowRateUnit the unit for flow rate
+   * @param inletPressure the inlet pressure
+   * @param pressureUnit the unit for pressure
+   * @param point the operating point to store compressor data in
+   * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessWithPower(double flowRate, String flowRateUnit,
       double inletPressure, String pressureUnit, ProcessOperatingPoint point) {
@@ -1058,6 +1065,9 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Checks if any violations are hard violations.
+   *
+   * @param violations the list of constraint violations to check
+   * @return true if any violation is a hard violation
    */
   private boolean hasHardViolations(List<ConstraintViolation> violations) {
     for (ConstraintViolation v : violations) {

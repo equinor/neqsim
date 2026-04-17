@@ -620,6 +620,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Gets a property value from equipment using reflection.
+   *
+   * @param equipment the process equipment to read from
+   * @param property the property name
+   * @param unit the unit string, or null to use default
+   * @return the property value, or NaN if not found
    */
   private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property,
       String unit) {
@@ -665,6 +670,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Gets standard properties that are common across equipment types.
+   *
+   * @param equipment the process equipment to read from
+   * @param property the property name (case-insensitive)
+   * @param unit the unit string, or null to use default
+   * @return the property value, or NaN if not found
    */
   private double getStandardProperty(ProcessEquipmentInterface equipment, String property,
       String unit) {
@@ -699,6 +709,13 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Calls a method with optional unit parameter.
+   *
+   * @param equipment the process equipment to invoke the method on
+   * @param methodName the name of the getter method
+   * @param unit the unit string, or null to use default
+   * @param defaultUnit the default unit if unit is null
+   * @return the property value, or NaN if the method is not found
+   * @throws Exception if the reflective method invocation fails
    */
   private double callMethodWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName,
       String unit, String defaultUnit) throws Exception {
@@ -726,6 +743,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Sets a property value on equipment using reflection.
+   *
+   * @param equipment the process equipment to set the property on
+   * @param property the property name
+   * @param value the value to set
+   * @param unit the unit string, or null for no unit
    */
   private void setPropertyOnEquipment(ProcessEquipmentInterface equipment, String property,
       double value, String unit) {

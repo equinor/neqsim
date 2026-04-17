@@ -2018,7 +2018,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * <p>
    * This is a bridge method: physical configuration should be set via MechanicalDesign, which
    * delegates to the separator for dynamic simulation. The coefficient corresponds to the Euler
-   * number used in {@link DemistingInternal}.
+   * number used in {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal}.
    * </p>
    *
    * @param coefficient the dimensionless pressure drop coefficient (Euler number)
@@ -2072,8 +2072,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Configures the mist eliminator from a {@link DemistingInternal} design object. Pushes the Euler
-   * number as the dynamic pressure drop coefficient and the thickness to the separator.
+   * Configures the mist eliminator from a
+   * {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal} design object.
+   * Pushes the Euler number as the dynamic pressure drop coefficient and the thickness to the
+   * separator.
    *
    * <p>
    * This connects the design-phase demister model to the runtime dynamic simulation, keeping the
