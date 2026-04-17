@@ -15,6 +15,13 @@ public class SiddiqiLucasMethod extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
   /**
+   * Flag to enable automatic selection between aqueous and non-aqueous correlations. When false
+   * (default), always uses the aqueous correlation for backward compatibility. When true,
+   * auto-detects the solvent type and selects the appropriate correlation.
+   */
+  private boolean autoSelectCorrelation = false;
+
+  /**
    * <p>
    * Constructor for SiddiqiLucasMethod.
    * </p>
@@ -71,8 +78,8 @@ public class SiddiqiLucasMethod extends Diffusivity {
     }
     etaCp = Math.max(0.01, etaCp);
 
-    if (isAqueousSolvent(j)) {
-      // Siddiqi-Lucas aqueous correlation
+    if (!autoSelectCorrelation || isAqueousSolvent(j)) {
+      // Siddiqi-Lucas aqueous correlation (default for backward compatibility)
       binaryDiffusionCoefficients[i][j] = 1.0e-4 * 2.98e-7 * Math.pow(etaCp, -1.026)
           * Math.pow(VA, -0.5473) * liquidPhase.getPhase().getTemperature();
     } else {
@@ -82,5 +89,16 @@ public class SiddiqiLucasMethod extends Diffusivity {
           * Math.pow(VA, -0.45) * Math.pow(VB, 0.265) * liquidPhase.getPhase().getTemperature();
     }
     return binaryDiffusionCoefficients[i][j];
+  }
+
+  /**
+   * Enable or disable automatic correlation selection based on solvent type. When enabled,
+   * non-aqueous solvents use the Siddiqi-Lucas organic solvent correlation. When disabled
+   * (default), the aqueous correlation is used for all systems for backward compatibility.
+   *
+   * @param enable true to auto-select correlation based on solvent type
+   */
+  public void setAutoSelectCorrelation(boolean enable) {
+    this.autoSelectCorrelation = enable;
   }
 }

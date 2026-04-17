@@ -331,7 +331,9 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       wlModel.setUseDiffusionLJOverride(true);
       diffusivityCalc = wlModel;
     } else if ("Siddiqi Lucas".equals(model)) {
-      diffusivityCalc = new SiddiqiLucasMethod(this);
+      SiddiqiLucasMethod slModel = new SiddiqiLucasMethod(this);
+      slModel.setAutoSelectCorrelation(true);
+      diffusivityCalc = slModel;
     } else if ("Alkanol amine".equals(model)) {
       diffusivityCalc = new AmineDiffusivity(this);
     } else if ("Fuller-Schettler-Giddings".equals(model)) {
