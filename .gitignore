@@ -123,3 +123,4 @@ run_notebook.bat
 run_notebook.py
 token_cache.bin
 .gitignore
+neqsim_profile.jfr

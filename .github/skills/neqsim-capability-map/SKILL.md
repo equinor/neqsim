@@ -332,7 +332,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Class | Equipment | Package |
 |-------|----------|---------|
 | `MechanicalDesign` | Base class | `process.mechanicaldesign` |
-| `SeparatorMechanicalDesign` | Separator sizing | `process.mechanicaldesign.separator` |
+| `SeparatorMechanicalDesign` | Separator vessel sizing, K-factor, demister config, nozzle sizing, liquid levels (HHLL/HLL/NLL/LLL/LLLL), inlet device, foam allowance, retention time, entrainment performance, design validation. **Gateway for all separator physical configuration.** | `process.mechanicaldesign.separator` |
 | `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
