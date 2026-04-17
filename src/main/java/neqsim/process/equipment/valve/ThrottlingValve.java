@@ -252,7 +252,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
       setGasValve(true);
@@ -261,10 +261,11 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     if (!valveKvSet) {
+      thermoSystem.initPhysicalProperties("density");
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
+    // inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -712,15 +713,12 @@ public class ThrottlingValve extends TwoPortEquipment
         ProcessEquipmentInterface.createStateEntry(percentValveOpening, "%"));
     StreamInterface out = getOutletStream();
     if (out != null) {
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
       state.put("pressure",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getPressure(pressureUnit), pressureUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
       state.put("flow",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
     }
     return state;
   }

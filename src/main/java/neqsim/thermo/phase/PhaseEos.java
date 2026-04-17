@@ -481,12 +481,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < maxIterations);
-    // logger.info("pressure " + Z*R*temperature/molarVolume);
-    // logger.info("error in volume " +
-    // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
-    // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
     if (iterations >= maxIterations) {
-      // Fallback to analytic cubic solver if numerical solver fails
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {

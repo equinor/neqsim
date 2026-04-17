@@ -106,6 +106,15 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** Flag for HX-specific capacity analysis. */
   private boolean hxCapacityAnalysisEnabled = true;
 
+  /** Cached inlet stream 2 temperature for needRecalculation check. */
+  private double lastInStream2Temperature = 0.0;
+  /** Cached inlet stream 2 pressure for needRecalculation check. */
+  private double lastInStream2Pressure = 0.0;
+  /** Cached inlet stream 2 flow rate for needRecalculation check. */
+  private double lastInStream2FlowRate = 0.0;
+  /** Cached UA value for needRecalculation check. */
+  private double lastUAvalue = 0.0;
+
   /**
    * Constructor for HeatExchanger.
    *
@@ -416,7 +425,59 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
           - inStream[streamToSet].getThermoSystem().getTemperature());
     }
 
+    updateLastState();
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean needRecalculation() {
+    if (firstTime || inStream[0] == null || inStream[1] == null) {
+      return true;
+    }
+    if (super.needRecalculation()) {
+      return true;
+    }
+    if (inStream[1].getThermoSystem() == null) {
+      return true;
+    }
+    if (inStream[1].getThermoSystem().getTemperature() != lastInStream2Temperature
+        || inStream[1].getThermoSystem().getPressure() != lastInStream2Pressure
+        || UAvalue != lastUAvalue) {
+      return true;
+    }
+    double flow2 = inStream[1].getThermoSystem().getFlowRate("kg/hr");
+    if (flow2 > 0 && Math.abs(flow2 - lastInStream2FlowRate) / flow2 > 1e-6) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Updates cached state for needRecalculation checks. Saves both HeatExchanger stream-2 state and
+   * Heater base-class stream-1 state so that super.needRecalculation() returns false when inputs
+   * are unchanged.
+   */
+  private void updateLastState() {
+    // Save stream 2 state (HeatExchanger-specific)
+    if (inStream[1] != null && inStream[1].getThermoSystem() != null) {
+      lastInStream2Temperature = inStream[1].getThermoSystem().getTemperature();
+      lastInStream2Pressure = inStream[1].getThermoSystem().getPressure();
+      lastInStream2FlowRate = inStream[1].getThermoSystem().getFlowRate("kg/hr");
+    }
+    lastUAvalue = UAvalue;
+
+    // Save Heater base-class state (stream 0) so super.needRecalculation() works correctly.
+    // The Heater's inStream field (not shadowed array) refers to stream 0 via the constructor.
+    if (inStream[0] != null && inStream[0].getThermoSystem() != null) {
+      lastTemperature = inStream[0].getThermoSystem().getTemperature();
+      lastPressure = inStream[0].getThermoSystem().getPressure();
+      lastFlowRate = inStream[0].getThermoSystem().getFlowRate("kg/hr");
+    }
+    lastDuty = getDuty();
+    lastOutPressure = pressureOut;
+    lastOutTemperature = temperatureOut;
+    lastPressureDrop = getPressureDrop();
   }
 
   /** {@inheritDoc} */
@@ -424,6 +485,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   public void run(UUID id) {
     if (useDeltaT) {
       runDeltaT(id);
+      updateLastState();
       return;
     }
     if (getSpecification().equals("out stream")) {
@@ -550,6 +612,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
        */
     }
 
+    updateLastState();
     setCalculationIdentifier(id);
   }
 

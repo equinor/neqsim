@@ -347,7 +347,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       setCalculationIdentifier(id);
       return;
     }
-    system.init(3);
+    // Use init(2) instead of init(3) - only need enthalpy (from init level 2), not composition
+    // derivatives (level 3). The clone from the inlet already has valid thermodynamic state.
+    system.init(2);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {
       energyInput = -energyStream.getDuty();

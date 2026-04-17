@@ -285,7 +285,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Membrane           | [docs/wiki/membrane_separation.md](wiki/membrane_separation)                   | Membrane separation                                                                                                                                                                                                |
 | Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes)             | Membrane equipment                                                                                                                                                                                                 |
 | Filters            | [docs/process/equipment/filters.md](process/equipment/filters)                 | Filter equipment                                                                                                                                                                                                   |
-| Water Treatment    | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment) | **Hydrocyclones (dP validation, efficiency estimation), GasFlotationUnit (IGF/DGF, per-stage efficiency, reject flow)**, produced water treatment trains, OIW limits                                                |
+| Water Treatment    | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment) | **Hydrocyclones (physics-based d50, DSD integration, PDR model, liner sizing, OSPAR compliance, ASME VIII mechanical design), GasFlotationUnit (IGF/DGF, per-stage efficiency, reject flow)**, produced water treatment trains, OIW limits |
 
 ### Chapter 15: Rotating Equipment
 
