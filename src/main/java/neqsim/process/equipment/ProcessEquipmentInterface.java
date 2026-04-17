@@ -10,6 +10,7 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.electricaldesign.ElectricalDesign;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
@@ -703,5 +704,223 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    */
   public default String getReferenceDesignationString() {
     return getReferenceDesignation().toReferenceDesignationString();
+  }
+
+  // ============================================================
+  // Capacity Constraint Support (universal for all equipment)
+  // ============================================================
+
+  /**
+   * Gets all capacity constraints defined for this equipment.
+   *
+   * <p>
+   * Returns an unmodifiable map of constraint name to constraint object. Constraints are used by
+   * the optimization framework to detect bottlenecks, enforce limits, and guide production
+   * allocation. Equipment subclasses populate this map via
+   * {@link #addCapacityConstraint(CapacityConstraint)}.
+   * </p>
+   *
+   * @return unmodifiable map of constraint name to constraint, empty if none defined
+   */
+  public default Map<String, CapacityConstraint> getCapacityConstraints() {
+    return Collections.emptyMap();
+  }
+
+  /**
+   * Adds a capacity constraint to this equipment.
+   *
+   * <p>
+   * Constraints can be added at any time. If a constraint with the same name already exists, it is
+   * replaced. Use the fluent builder API on {@link CapacityConstraint} to configure the constraint
+   * before adding.
+   * </p>
+   *
+   * @param constraint the capacity constraint to add (ignored if null)
+   */
+  public default void addCapacityConstraint(CapacityConstraint constraint) {
+    // No-op default; overridden in ProcessEquipmentBaseClass
+  }
+
+  /**
+   * Gets the bottleneck (most limiting) constraint for this equipment.
+   *
+   * <p>
+   * Returns the enabled constraint with the highest utilization ratio. If no constraints are
+   * defined or enabled, returns null.
+   * </p>
+   *
+   * @return the most limiting constraint, or null if none
+   */
+  public default CapacityConstraint getBottleneckConstraint() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    if (constraints == null || constraints.isEmpty()) {
+      return null;
+    }
+    CapacityConstraint bottleneck = null;
+    double maxUtil = -1.0;
+    for (CapacityConstraint c : constraints.values()) {
+      if (c.isEnabled()) {
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = c;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /**
+   * Checks if any capacity constraint is violated (exceeds 100% utilization).
+   *
+   * <p>
+   * A violated constraint means the equipment is operating beyond its design capacity. For HARD
+   * constraints, this may indicate equipment trip or failure. For SOFT constraints, this indicates
+   * reduced efficiency or accelerated wear.
+   * </p>
+   *
+   * @return true if any enabled constraint utilization exceeds 1.0 (100%)
+   */
+  public default boolean isCapacityExceeded() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    if (constraints == null) {
+      return false;
+    }
+    for (CapacityConstraint c : constraints.values()) {
+      if (c.isEnabled() && c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if any HARD constraint limit is exceeded.
+   *
+   * <p>
+   * HARD limits represent absolute equipment limits (e.g., maximum speed) that cannot be exceeded
+   * without equipment trip or damage. This is more severe than general capacity exceedance.
+   * </p>
+   *
+   * @return true if any enabled HARD constraint's max value is exceeded
+   */
+  public default boolean isHardLimitExceeded() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    if (constraints == null) {
+      return false;
+    }
+    for (CapacityConstraint c : constraints.values()) {
+      if (c.isEnabled() && c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Gets the maximum utilization across all enabled constraints.
+   *
+   * <p>
+   * Returns the highest utilization ratio across all enabled constraints. Values above 1.0 indicate
+   * the equipment is over capacity. Returns 0.0 if no constraints are defined or enabled.
+   * </p>
+   *
+   * @return maximum utilization as fraction (1.0 = 100% of design capacity)
+   */
+  public default double getMaxUtilization() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    if (constraints == null || constraints.isEmpty()) {
+      return 0.0;
+    }
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : constraints.values()) {
+      if (c.isEnabled()) {
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+        }
+      }
+    }
+    return maxUtil;
+  }
+
+  /**
+   * Gets the maximum utilization as a percentage.
+   *
+   * @return maximum utilization as percentage (100.0 = 100% of design capacity)
+   */
+  public default double getMaxUtilizationPercent() {
+    return getMaxUtilization() * 100.0;
+  }
+
+  /**
+   * Gets the available margin (headroom) on the most limiting constraint.
+   *
+   * <p>
+   * Returns the remaining capacity before the bottleneck constraint reaches 100%. Negative values
+   * indicate the equipment is already over capacity.
+   * </p>
+   *
+   * @return available margin as fraction (0.2 = 20% headroom remaining)
+   */
+  public default double getAvailableMargin() {
+    return 1.0 - getMaxUtilization();
+  }
+
+  /**
+   * Gets the available margin as a percentage.
+   *
+   * @return available margin as percentage
+   */
+  public default double getAvailableMarginPercent() {
+    return getAvailableMargin() * 100.0;
+  }
+
+  /**
+   * Checks if any enabled constraint is near its limit (above warning threshold).
+   *
+   * <p>
+   * The warning threshold is typically set at 90% of design capacity to provide early warning
+   * before constraints are violated.
+   * </p>
+   *
+   * @return true if any enabled constraint is above its warning threshold
+   */
+  public default boolean isNearCapacityLimit() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    if (constraints == null) {
+      return false;
+    }
+    for (CapacityConstraint c : constraints.values()) {
+      if (c.isEnabled() && c.isNearLimit()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Gets a summary of all enabled constraint utilizations.
+   *
+   * <p>
+   * Returns a map of constraint names to their current utilization percentages. Useful for
+   * reporting and visualization.
+   * </p>
+   *
+   * @return map of constraint name to utilization percentage
+   */
+  public default Map<String, Double> getUtilizationSummary() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    Map<String, Double> summary = new LinkedHashMap<String, Double>();
+    if (constraints == null) {
+      return summary;
+    }
+    for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
+      CapacityConstraint c = entry.getValue();
+      if (c.isEnabled()) {
+        summary.put(entry.getKey(), c.getUtilization() * 100.0);
+      }
+    }
+    return summary;
   }
 }

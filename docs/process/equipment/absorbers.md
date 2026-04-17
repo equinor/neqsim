@@ -1,6 +1,6 @@
 ---
 title: Absorbers and Strippers
-description: "Documentation for mass transfer columns in NeqSim: TEG dehydration with Fs-factor sizing, amine gas sweetening (MDEA/DEA/MEA), simple absorber models, and water stripping."
+description: "Documentation for mass transfer columns in NeqSim: TEG dehydration with Fs-factor sizing, amine gas sweetening (MDEA/DEA/MEA), rate-based absorber with Onda and Billet-Schultes mass transfer correlations, simple absorber models, and water stripping."
 ---
 
 # Absorbers and Strippers
@@ -14,6 +14,7 @@ Documentation for mass transfer columns in NeqSim.
 - [Simple TEG Absorber](#simple-teg-absorber)
 - [Simple Amine Absorber](#simple-amine-absorber)
 - [Stripper](#stripper)
+- [Rate-Based Absorber](#rate-based-absorber)
 - [Examples](#examples)
 
 ---
@@ -419,6 +420,143 @@ System.out.println("Methanol in clean gas: " + meohRemaining + " mol%");
 
 ---
 
+## Rate-Based Absorber
+
+`RateBasedAbsorber` extends `SimpleAbsorber` with rigorous mass transfer calculations
+using published correlations. Unlike the equilibrium-stage models above, the rate-based
+approach computes actual mass transfer rates through gas and liquid film resistances,
+giving more physically meaningful predictions of column performance.
+
+### When to Use Rate-Based vs Equilibrium
+
+| Factor | Equilibrium (SimpleAbsorber) | Rate-Based (RateBasedAbsorber) |
+|--------|------------------------------|-------------------------------|
+| Speed | Fast | Moderate |
+| Input data | Minimal (efficiency) | Packing type, column diameter, packed height |
+| Physical basis | Assumed HETP/efficiency | Film theory with correlations |
+| Reactive systems | Manual adjustment | Enhancement factor models |
+| Use case | Screening, quick estimates | Detailed design, packing selection, scale-up |
+
+### Mass Transfer Models
+
+Two correlations are available:
+
+**Onda et al. (1968)** — Classic correlation for random and structured packings:
+
+$$k_G a_w = C \cdot \left(\frac{Re_G}{a_p}\right)^{0.7} Sc_G^{1/3} (a_p D_p)^{-2.0}$$
+
+$$k_L \left(\frac{\rho_L}{\mu_L g}\right)^{1/3} = 0.0051 \left(\frac{Re_L}{a_w}\right)^{2/3} Sc_L^{-1/2} (a_p D_p)^{0.4}$$
+
+**Billet & Schultes (1999)** — Modern correlation with packing-specific constants ($C_l$, $C_v$):
+
+$$k_L = C_l \left(\frac{D_L}{d_h}\right) \sqrt{\frac{u_{Ls}}{a_p \varepsilon_h}}$$
+
+$$k_G = C_v \frac{1}{\varepsilon - h_L} \sqrt{\frac{a_p D_G}{u_{Gs}}}$$
+
+### Enhancement Factor Models
+
+For reactive absorption (e.g., CO2 into amine):
+
+| Model | Use Case |
+|-------|----------|
+| `NONE` | Physical absorption only |
+| `HATTA_PSEUDO_FIRST_ORDER` | Fast pseudo-first-order reaction (e.g., CO2 + MEA) |
+| `VAN_KREVELEN_HOFTIJZER` | Second-order reaction with finite amine concentration |
+
+The Hatta number characterises the ratio of reaction rate to diffusion rate:
+
+$$Ha = \frac{\sqrt{k_1 D_L}}{k_L^0}$$
+
+where $k_1$ is the pseudo-first-order rate constant and $D_L$ is liquid diffusivity.
+
+### Basic Usage
+
+```java
+import neqsim.process.equipment.absorber.RateBasedAbsorber;
+import neqsim.process.equipment.absorber.RateBasedAbsorber.MassTransferModel;
+import neqsim.process.equipment.absorber.RateBasedAbsorber.EnhancementModel;
+
+// Create streams (gas and solvent)
+RateBasedAbsorber absorber = new RateBasedAbsorber("CO2 Absorber");
+absorber.addGasInStream(sourGasStream);
+absorber.addSolventInStream(amineSolventStream);
+
+// Column geometry
+absorber.setColumnDiameter(2.0);       // 2 m diameter
+absorber.setPackedHeight(10.0);        // 10 m packed height
+absorber.setNumberOfTheoreticalStages(10);
+
+// Packing properties (e.g., Mellapak 250Y)
+absorber.setPackingSpecificArea(250.0);  // m2/m3
+absorber.setPackingVoidFraction(0.95);
+absorber.setPackingNominalSize(0.025);   // 25 mm
+absorber.setPackingCriticalSurfaceTension(0.075);  // N/m
+
+// Mass transfer model
+absorber.setMassTransferModel(MassTransferModel.ONDA_1968);
+
+// Enhancement factor for reactive absorption
+absorber.setEnhancementModel(EnhancementModel.HATTA_PSEUDO_FIRST_ORDER);
+absorber.setReactionRateConstant(5000.0);  // 1/s for CO2 + amine
+
+absorber.run();
+
+// Results
+double kGa = absorber.getOverallKGa();
+double kLa = absorber.getOverallKLa();
+double wettedArea = absorber.getWettedArea();
+double htu = absorber.getHeightOfTransferUnit();
+double ntu = absorber.getNumberOfTransferUnits();
+```
+
+### Stage Results
+
+Per-stage detail is available for profiling the column:
+
+```java
+java.util.List<RateBasedAbsorber.StageResult> stages = absorber.getStageResults();
+for (RateBasedAbsorber.StageResult stage : stages) {
+    System.out.printf("Stage %d: T=%.1f K, kGa=%.4f, kLa=%.4f, E=%.2f%n",
+        stage.getStageNumber(),
+        stage.getTemperature(),
+        stage.getKGa(),
+        stage.getKLa(),
+        stage.getEnhancementFactor());
+}
+```
+
+### Billet-Schultes Model
+
+When using Billet-Schultes, supply packing-specific constants from the literature:
+
+```java
+absorber.setMassTransferModel(MassTransferModel.BILLET_SCHULTES_1999);
+absorber.setBilletSchultesConstants(1.2, 0.4);  // Cl, Cv for Mellapak 250Y
+```
+
+### Key Methods Reference
+
+| Method | Description |
+|--------|-------------|
+| `setMassTransferModel(MassTransferModel)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
+| `setEnhancementModel(EnhancementModel)` | `NONE`, `HATTA_PSEUDO_FIRST_ORDER`, `VAN_KREVELEN_HOFTIJZER` |
+| `setColumnDiameter(double)` | Column ID in metres |
+| `setPackedHeight(double)` | Height of packing in metres |
+| `setPackingSpecificArea(double)` | Packing area per unit volume (m2/m3) |
+| `setPackingVoidFraction(double)` | Void fraction (0-1) |
+| `setPackingNominalSize(double)` | Nominal packing size (m) |
+| `setPackingCriticalSurfaceTension(double)` | Surface tension of packing (N/m) |
+| `setReactionRateConstant(double)` | Pseudo-1st-order rate constant (1/s) |
+| `setStoichiometricRatio(double)` | Moles of amine per mole of CO2 |
+| `setBilletSchultesConstants(double, double)` | Packing constants Cl, Cv |
+| `getOverallKGa()` / `getOverallKLa()` | Overall volumetric coefficients (1/s) |
+| `getWettedArea()` | Effective wetted area (m2/m3) |
+| `getHeightOfTransferUnit()` | HTU based on gas-side (m) |
+| `getNumberOfTransferUnits()` | NTU for the given packed height |
+| `getStageResults()` | List of per-stage mass transfer results |
+
+---
+
 ## Related Documentation
 
 - [Equipment Index](index.md) - All equipment
@@ -426,3 +564,4 @@ System.out.println("Methanol in clean gas: " + meohRemaining + " mol%");
 - [Distillation](distillation) - Distillation columns
 - [Separators](separators) - Phase separation
 - [H2S Scavenger Guide](../H2S_scavenger_guide) - Chemical scavenging of H2S
+- [Multiphase Flow Correlations](multiphase_flow_correlations) - Pipeline flow models

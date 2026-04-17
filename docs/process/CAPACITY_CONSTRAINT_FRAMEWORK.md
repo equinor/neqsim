@@ -9,10 +9,13 @@ description: "The Capacity Constraint Framework extends NeqSim's existing bottle
 
 The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis capability with multi-constraint support. It provides:
 
+- **Universal constraint support**: ALL 144+ equipment types inheriting from `ProcessEquipmentBaseClass` can have capacity constraints — not just those implementing `CapacityConstrainedEquipment`
 - **Multiple constraints per equipment**: Track speed, power, surge margin, temperature, etc. simultaneously
+- **18 built-in capacity strategies**: Pre-configured constraints for compressors, separators, pipes, valves, heat exchangers, pumps, expanders, reactors, power generation, subsea equipment, filters, electrolyzers, wells, and more
 - **Constraint types**: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
 - **Warning thresholds**: Early warning when approaching limits
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
+- **ProcessSystem-wide analysis**: `findBottleneck()`, `getCapacityUtilizationSummary()`, and related methods iterate over ALL equipment
 
 ## Important: Constraints Disabled by Default
 
@@ -239,20 +242,20 @@ Interface that equipment classes implement to participate in capacity tracking.
 public interface CapacityConstrainedEquipment {
     // Get all constraints
     Map<String, CapacityConstraint> getCapacityConstraints();
-    
+
     // Get the most limiting constraint
     CapacityConstraint getBottleneckConstraint();
-    
+
     // Check constraint status
     boolean isCapacityExceeded();
     boolean isHardLimitExceeded();
     boolean isNearCapacityLimit();
-    
+
     // Get utilization metrics
     double getMaxUtilization();
     double getMaxUtilizationPercent();
     double getAvailableMargin();
-    
+
     // Modify constraints
     void addCapacityConstraint(CapacityConstraint constraint);
     boolean removeCapacityConstraint(String constraintName);
@@ -382,9 +385,9 @@ for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
 }
 
 // 4. Use in optimization - optimizer checks ALL constraints
-ProductionOptimizer.OptimizationConfig config = 
+ProductionOptimizer.OptimizationConfig config =
     new ProductionOptimizer.OptimizationConfig(1000.0, 50000.0);
-ProductionOptimizer.OptimizationResult result = 
+ProductionOptimizer.OptimizationResult result =
     ProductionOptimizer.optimize(process, feed, config);
 
 // 5. The bottleneck could be separator, compressor, or pipeline
@@ -519,7 +522,7 @@ if (productionModule.isAnyEquipmentOverloaded()) {
 }
 
 // Get all constrained equipment from the module
-List<CapacityConstrainedEquipment> allConstrained = 
+List<CapacityConstrainedEquipment> allConstrained =
     productionModule.getConstrainedEquipment();
 System.out.println("Found " + allConstrained.size() + " constrained equipment items");
 
@@ -587,7 +590,7 @@ System.out.println("Available margin: " + compressor.getAvailableMarginPercent()
 Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints();
 for (CapacityConstraint c : constraints.values()) {
     System.out.printf("  %s: %.1f / %.1f %s (%.1f%% utilized)\n",
-        c.getName(), c.getCurrentValue(), c.getDesignValue(), 
+        c.getName(), c.getCurrentValue(), c.getDesignValue(),
         c.getUnit(), c.getUtilizationPercent());
 }
 
@@ -604,7 +607,7 @@ Separator separator = (Separator) process.getUnit("20-VA-01");
 
 // Add liquid residence time constraint
 CapacityConstraint residenceTime = new CapacityConstraint(
-    StandardConstraintType.SEPARATOR_LIQUID_RESIDENCE_TIME, 
+    StandardConstraintType.SEPARATOR_LIQUID_RESIDENCE_TIME,
     CapacityConstraint.ConstraintType.DESIGN)
     .setDesignValue(180.0)  // 3 minutes minimum
     .setMinValue(60.0)      // Absolute minimum 1 minute
@@ -678,18 +681,18 @@ EquipmentCapacityStrategy heaterStrategy = new EquipmentCapacityStrategy() {
     public boolean supports(ProcessEquipmentInterface equipment) {
         return equipment instanceof Heater && equipment.getName().equals("Process Heater");
     }
-    
+
     @Override
     public Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment) {
         Heater h = (Heater) equipment;
         Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
-        
+
         constraints.put("duty", new CapacityConstraint("duty", ConstraintType.DESIGN)
             .setDesignValue(5000.0)  // kW
             .setMaxValue(6000.0)
             .setUnit("kW")
             .setValueSupplier(() -> Math.abs(h.getDuty()) / 1000.0));
-        
+
         return constraints;
     }
     // ... implement other interface methods
@@ -704,19 +707,19 @@ registry.registerStrategy(heaterStrategy);
 // Create subclass with constraint support
 public class ConstrainedHeater extends Heater implements CapacityConstrainedEquipment {
     private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
-    
+
     public ConstrainedHeater(String name, StreamInterface inletStream) {
         super(name, inletStream);
         initializeCapacityConstraints();
     }
-    
+
     protected void initializeCapacityConstraints() {
         addCapacityConstraint(new CapacityConstraint("duty", ConstraintType.DESIGN)
             .setDesignValue(5000.0)
             .setUnit("kW")
             .setValueSupplier(() -> Math.abs(getDuty()) / 1000.0));
     }
-    
+
     // Implement CapacityConstrainedEquipment interface methods...
 }
 ```
@@ -919,17 +922,17 @@ for (LiftCurvePoint point : liftCurve.getPoints()) {
 public double findMaxThroughput(ProcessSystem process, double initialRate) {
     double rate = initialRate;
     double maxRate = initialRate;
-    
+
     while (!process.isAnyEquipmentOverloaded()) {
         maxRate = rate;
         rate *= 1.05;  // Increase by 5%
-        
+
         // Update feed rate
         Stream feed = (Stream) process.getUnit("well stream");
         feed.setFlowRate(rate, "kmol/hr");
         process.run();
     }
-    
+
     // Report bottleneck at max rate
     BottleneckResult bottleneck = process.findBottleneck();
     System.out.printf("Maximum rate: %.0f kmol/hr\n", maxRate);
@@ -937,7 +940,7 @@ public double findMaxThroughput(ProcessSystem process, double initialRate) {
         bottleneck.getEquipmentName(),
         bottleneck.getConstraint().getName(),
         bottleneck.getUtilizationPercent());
-    
+
     return maxRate;
 }
 ```
@@ -958,9 +961,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class MyEquipment extends ProcessEquipmentBaseClass 
+public class MyEquipment extends ProcessEquipmentBaseClass
     implements CapacityConstrainedEquipment {
-    
+
     // Storage for constraints
     private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
 ```
@@ -972,7 +975,7 @@ public class MyEquipment extends ProcessEquipmentBaseClass
         super(name, inletStream);
         initializeCapacityConstraints();
     }
-    
+
     /**
      * Initializes default capacity constraints for this equipment.
      */
@@ -984,7 +987,7 @@ public class MyEquipment extends ProcessEquipmentBaseClass
             .setDesignValue(designFlowRate)
             .setMaxValue(maxFlowRate)
             .setValueSupplier(() -> this.getFlowRate());
-        
+
         capacityConstraints.put(flowConstraint.getName(), flowConstraint);
     }
 ```
@@ -1074,14 +1077,14 @@ public class MyEquipment extends ProcessEquipmentBaseClass
 ```java
     /**
      * Sets the design flow rate.
-     * 
+     *
      * @param flowRate design flow rate in m³/hr
      */
     public void setDesignFlowRate(double flowRate) {
         this.designFlowRate = flowRate;
         updateFlowConstraint();
     }
-    
+
     private void updateFlowConstraint() {
         CapacityConstraint existing = capacityConstraints.get("flowRate");
         if (existing != null) {
@@ -1094,14 +1097,14 @@ public class MyEquipment extends ProcessEquipmentBaseClass
 ### Example: Implementing for Pump
 
 ```java
-public class Pump extends ProcessEquipmentBaseClass 
+public class Pump extends ProcessEquipmentBaseClass
     implements CapacityConstrainedEquipment {
-    
+
     private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
     private double designFlowRate = 100.0;  // m³/hr
     private double designHead = 50.0;       // m
     private double designNPSH = 3.0;        // m (required)
-    
+
     private void initializeCapacityConstraints() {
         // Flow rate constraint
         CapacityConstraint flow = new CapacityConstraint(
@@ -1111,7 +1114,7 @@ public class Pump extends ProcessEquipmentBaseClass
             .setMaxValue(designFlowRate * 1.2)
             .setValueSupplier(() -> getInletStream().getFlowRate("m3/hr"));
         capacityConstraints.put(flow.getName(), flow);
-        
+
         // Power constraint
         CapacityConstraint power = new CapacityConstraint(
             StandardConstraintType.PUMP_POWER,
@@ -1120,7 +1123,7 @@ public class Pump extends ProcessEquipmentBaseClass
             .setMaxValue(motorRatedPower * 1.1)  // 110% service factor
             .setValueSupplier(() -> getPower());
         capacityConstraints.put(power.getName(), power);
-        
+
         // NPSH margin constraint (inverted - higher available is better)
         CapacityConstraint npsh = new CapacityConstraint(
             StandardConstraintType.PUMP_NPSH_MARGIN,
@@ -1130,7 +1133,7 @@ public class Pump extends ProcessEquipmentBaseClass
             .setValueSupplier(() -> getNPSHavailable());
         capacityConstraints.put(npsh.getName(), npsh);
     }
-    
+
     // ... implement all interface methods as shown above
 }
 ```
@@ -1138,13 +1141,13 @@ public class Pump extends ProcessEquipmentBaseClass
 ### Example: Implementing for Heat Exchanger
 
 ```java
-public class HeatExchanger extends ProcessEquipmentBaseClass 
+public class HeatExchanger extends ProcessEquipmentBaseClass
     implements CapacityConstrainedEquipment {
-    
+
     private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
     private double designDuty = 1000.0;        // kW
     private double designApproachTemp = 5.0;   // °C
-    
+
     private void initializeCapacityConstraints() {
         // Duty constraint
         CapacityConstraint duty = new CapacityConstraint(
@@ -1154,7 +1157,7 @@ public class HeatExchanger extends ProcessEquipmentBaseClass
             .setMaxValue(designDuty * 1.1)  // 10% overdesign typical
             .setValueSupplier(() -> Math.abs(getDuty()) / 1000.0);  // Convert W to kW
         capacityConstraints.put(duty.getName(), duty);
-        
+
         // Approach temperature constraint (inverted - want to stay above minimum)
         CapacityConstraint approach = new CapacityConstraint(
             StandardConstraintType.HEAT_EXCHANGER_APPROACH_TEMP,
@@ -1163,7 +1166,7 @@ public class HeatExchanger extends ProcessEquipmentBaseClass
             .setMinValue(2.0)  // Minimum practical approach
             .setValueSupplier(() -> getApproachTemperature());
         capacityConstraints.put(approach.getName(), approach);
-        
+
         // Pressure drop constraint
         CapacityConstraint pressureDrop = new CapacityConstraint(
             StandardConstraintType.HEAT_EXCHANGER_PRESSURE_DROP,
@@ -1179,12 +1182,12 @@ public class HeatExchanger extends ProcessEquipmentBaseClass
 ### Example: Implementing for Pipe/Pipeline
 
 ```java
-public class Pipe extends ProcessEquipmentBaseClass 
+public class Pipe extends ProcessEquipmentBaseClass
     implements CapacityConstrainedEquipment {
-    
+
     private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
     private double erosionalVelocityRatio = 0.8;  // Design at 80% of erosional
-    
+
     private void initializeCapacityConstraints() {
         // Velocity constraint
         CapacityConstraint velocity = new CapacityConstraint(
@@ -1194,7 +1197,7 @@ public class Pipe extends ProcessEquipmentBaseClass
             .setMaxValue(calculateErosionalVelocity())
             .setValueSupplier(() -> getFluidVelocity());
         capacityConstraints.put(velocity.getName(), velocity);
-        
+
         // Erosional velocity ratio constraint
         CapacityConstraint erosional = new CapacityConstraint(
             StandardConstraintType.PIPE_EROSIONAL_VELOCITY,
@@ -1203,7 +1206,7 @@ public class Pipe extends ProcessEquipmentBaseClass
             .setMaxValue(1.0)  // Never exceed erosional velocity
             .setValueSupplier(() -> getFluidVelocity() / calculateErosionalVelocity());
         capacityConstraints.put(erosional.getName(), erosional);
-        
+
         // Pressure drop constraint
         CapacityConstraint dp = new CapacityConstraint(
             StandardConstraintType.PIPE_PRESSURE_DROP,
@@ -1532,35 +1535,63 @@ public void setDesignSpeed(double speed) {
 
 ## Equipment Capacity Strategy Registry
 
-The Strategy Registry provides a plugin-based architecture for evaluating equipment capacity constraints without modifying equipment classes. This is useful when:
+The Strategy Registry provides a plugin-based architecture for evaluating equipment capacity constraints without modifying equipment classes. The registry ships with **18 built-in strategies** covering all major equipment categories:
 
-- Working with equipment that doesn't implement `CapacityConstrainedEquipment`
 - Adding custom constraint evaluation logic
 - Performing system-wide optimization
+- Extending constraints for new/custom equipment types
+
+### Built-in Strategies (18 total)
+
+| Strategy | Equipment Types | Typical Constraints |
+|----------|----------------|---------------------|
+| `CompressorCapacityStrategy` | Compressor | speed, power, surgeMargin, stonewallMargin |
+| `SeparatorCapacityStrategy` | Separator, ThreePhaseSeparator | gasLoadFactor, liquidResidenceTime, dropletCutSize |
+| `PipeCapacityStrategy` | Pipeline, AdiabaticPipe | velocity, pressureDrop, FIV_LOF, FIV_FRMS |
+| `ValveCapacityStrategy` | ThrottlingValve | valveOpening, cvUtilization |
+| `HeatExchangerCapacityStrategy` | Heater, Cooler | duty, outletTemperature |
+| `PumpCapacityStrategy` | Pump | npshMargin, power, flowRate |
+| `ExpanderCapacityStrategy` | Expander | speed, power |
+| `EjectorCapacityStrategy` | Ejector | compressionRatio, motiveFlow |
+| `MixerCapacityStrategy` | Mixer | flowRate, pressureDiff |
+| `SplitterCapacityStrategy` | Splitter | flowRate |
+| `TankCapacityStrategy` | Tank | fillLevel, fillRate |
+| `DistillationColumnCapacityStrategy` | DistillationColumn | floodingFactor, reboilerDuty |
+| `ReactorCapacityStrategy` | GibbsReactor, PlugFlowReactor, StirredTankReactor | throughput, residenceTime, conversionRate |
+| `PowerGenerationCapacityStrategy` | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem | power, fuelFlow, exhaustTemp |
+| `SubseaEquipmentCapacityStrategy` | SubseaWell, SubseaTree | flowRate, wellheadPressure, chokeOpening |
+| `FilterAdsorberCapacityStrategy` | Filter, SulfurFilter, CharCoalFilter, SimpleAdsorber | pressureDrop, throughput |
+| `ElectrolyzerCapacityStrategy` | Electrolyzer, CO2Electrolyzer | power, currentDensity, efficiency |
+| `WellFlowCapacityStrategy` | WellFlow | flowRate, wellheadPressure, drawdown |
 
 ### Strategy Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                 EquipmentCapacityStrategyRegistry (Singleton)       │
+│            EquipmentCapacityStrategyRegistry (Singleton)            │
 │  ┌─────────────────────────────────────────────────────────────────┐│
 │  │  findStrategy(equipment)  │  getAllStrategies()                 ││
-│  │  registerStrategy(...)    │  getConstraints(equipment)          ││
+│  │  register(strategy)       │  getConstraints(equipment)         ││
 │  └─────────────────────────────────────────────────────────────────┘│
 │                              │                                       │
 │         ┌────────────────────┴────────────────────┐                  │
 │         ▼                                         ▼                  │
 │  ┌──────────────────────┐             ┌─────────────────────────────┐│
-│  │  Built-in Strategies │             │  Custom Strategies          ││
-│  │  CompressorStrategy  │             │  MyEquipmentStrategy        ││
-│  │  SeparatorStrategy   │             │  VendorSpecificStrategy     ││
-│  │  PumpStrategy        │             │  ...                        ││
-│  │  ValveStrategy       │             │                             ││
-│  │  PipeStrategy        │             │                             ││
-│  │  HeatExchangerStrategy│            │                             ││
+│  │ Built-in (18)        │             │  Custom Strategies          ││
+│  │ Compressor, Separator│             │  MyEquipmentStrategy        ││
+│  │ Pump, Valve, Pipe    │             │  VendorSpecificStrategy     ││
+│  │ Reactor, PowerGen    │             │  ...                        ││
+│  │ Subsea, Filter       │             │                             ││
+│  │ Electrolyzer, Well   │             │                             ││
 │  └──────────────────────┘             └─────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Universal Constraint Support:** Since all equipment inherits constraint
+> methods from `ProcessEquipmentBaseClass`, you can add constraints to ANY
+> equipment — even types without a dedicated strategy. The strategy registry
+> provides pre-configured constraints; manual `addCapacityConstraint()` works
+> on all equipment.
 
 ### Using the Strategy Registry
 
@@ -1569,7 +1600,7 @@ import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 
 // Get the singleton registry
-EquipmentCapacityStrategyRegistry registry = 
+EquipmentCapacityStrategyRegistry registry =
     EquipmentCapacityStrategyRegistry.getInstance();
 
 // Find strategy for a specific equipment
@@ -1580,15 +1611,15 @@ if (strategy != null) {
     // Evaluate capacity
     double utilization = strategy.evaluateCapacity(compressor);
     System.out.printf("Compressor utilization: %.1f%%\n", utilization * 100);
-    
+
     // Get all constraints
     Map<String, CapacityConstraint> constraints = strategy.getConstraints(compressor);
     for (CapacityConstraint c : constraints.values()) {
         System.out.printf("  %s: %.2f %s (%.1f%% of design)\n",
-            c.getName(), c.getCurrentValue(), c.getUnit(), 
+            c.getName(), c.getCurrentValue(), c.getUnit(),
             c.getUtilizationPercent());
     }
-    
+
     // Check for violations
     List<CapacityConstraint> violations = strategy.getViolations(compressor);
     if (!violations.isEmpty()) {
@@ -1598,7 +1629,7 @@ if (strategy != null) {
                 v.getName(), v.getCurrentValue(), v.getDesignValue());
         }
     }
-    
+
     // Get bottleneck constraint
     CapacityConstraint bottleneck = strategy.getBottleneckConstraint(compressor);
     System.out.println("Bottleneck: " + bottleneck.getName());
@@ -1613,42 +1644,42 @@ Implement `EquipmentCapacityStrategy` for equipment-specific logic:
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 
 public class MyCustomStrategy implements EquipmentCapacityStrategy {
-    
+
     @Override
     public boolean supports(ProcessEquipmentInterface equipment) {
         // Return true if this strategy handles this equipment type
         return equipment instanceof MyCustomEquipment;
     }
-    
+
     @Override
     public int getPriority() {
         // Higher priority = more specific strategy
         return 100;  // Built-in strategies use priority 10
     }
-    
+
     @Override
     public double evaluateCapacity(ProcessEquipmentInterface equipment) {
         MyCustomEquipment eq = (MyCustomEquipment) equipment;
         // Return utilization as 0.0 to 1.0+
         return eq.getCurrentLoad() / eq.getMaxLoad();
     }
-    
+
     @Override
     public Map<String, CapacityConstraint> getConstraints(
             ProcessEquipmentInterface equipment) {
         Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
         MyCustomEquipment eq = (MyCustomEquipment) equipment;
-        
-        constraints.put("customLoad", 
+
+        constraints.put("customLoad",
             new CapacityConstraint("customLoad", ConstraintType.DESIGN)
                 .setDesignValue(eq.getDesignLoad())
                 .setMaxValue(eq.getMaxLoad())
                 .setUnit("kW")
                 .setValueSupplier(() -> eq.getCurrentLoad()));
-        
+
         return constraints;
     }
-    
+
     @Override
     public List<CapacityConstraint> getViolations(
             ProcessEquipmentInterface equipment) {
@@ -1660,7 +1691,7 @@ public class MyCustomStrategy implements EquipmentCapacityStrategy {
         }
         return violations;
     }
-    
+
     @Override
     public CapacityConstraint getBottleneckConstraint(
             ProcessEquipmentInterface equipment) {
@@ -1674,7 +1705,7 @@ public class MyCustomStrategy implements EquipmentCapacityStrategy {
         }
         return bottleneck;
     }
-    
+
     @Override
     public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
         for (CapacityConstraint c : getConstraints(equipment).values()) {
@@ -1684,7 +1715,7 @@ public class MyCustomStrategy implements EquipmentCapacityStrategy {
         }
         return true;
     }
-    
+
     @Override
     public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
         for (CapacityConstraint c : getConstraints(equipment).values()) {

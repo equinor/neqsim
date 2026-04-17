@@ -148,7 +148,20 @@ public class ProcessOptimizationEngine implements Serializable {
      * (1-D) simplification, not a full matrix BFGS.
      * </p>
      */
-    BFGS
+    BFGS,
+    /**
+     * Sequential Quadratic Programming for constrained multi-variable optimization.
+     *
+     * <p>
+     * Full matrix BFGS with active-set QP sub-problems and L1 merit function line search. Handles
+     * equality constraints, inequality constraints, and variable bounds natively. Suitable for
+     * multi-variable process optimization with nonlinear constraints (e.g., equipment limits,
+     * material balance).
+     * </p>
+     *
+     * @see SQPoptimizer
+     */
+    SEQUENTIAL_QUADRATIC_PROGRAMMING
   }
 
   /**
