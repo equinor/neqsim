@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2025-07-24 — Process Optimization Enhancements: NIP-03, NIP-06, NIP-08, NIP-09 Implementation
+**Type:** E (Feature)
+**Keywords:** process optimization, rate-based absorber, SQP optimizer, multiphase flow, Hagedorn-Brown, Mukherjee-Brill, multi-variable adjuster, Onda correlation, Billet-Schultes, mass transfer, enhancement factor, damped successive substitution
+**Solution:** src/main/java/neqsim/process/equipment/absorber/RateBasedAbsorber.java, src/main/java/neqsim/process/util/optimizer/SQPoptimizer.java, src/main/java/neqsim/process/equipment/pipeline/PipeHagedornBrown.java, src/main/java/neqsim/process/equipment/pipeline/PipeMukherjeeAndBrill.java, examples/notebooks/process_optimization_enhancements.ipynb
+**Notes:** Implemented four NIPs from process optimization review. NIP-06: RateBasedAbsorber with Onda 1968 and Billet-Schultes 1999 mass transfer correlations, Hatta/Van Krevelen enhancement factors (6 tests). NIP-08: SQPoptimizer with active-set SQP for constrained process optimization (5 tests). NIP-03: PipeHagedornBrown and PipeMukherjeeAndBrill multiphase flow correlations (8 tests). NIP-09: MultiVariableAdjuster convergence fix — replaced Broyden accelerator with damped successive substitution (α=0.1) after Broyden caused oscillation/divergence due to wrong Jacobian sign. All 23 tests pass. Docs updated: absorbers.md, sqp_optimizer.md, multiphase_flow_correlations.md, adjusters.md, CHANGELOG_AGENT_NOTES.md.
+
 ### 2026-04-17 — cDFT Surface Tension: Kernel Correction, Mixture Extension, Paper
 **Type:** E (Feature)
 **Keywords:** cDFT, surface tension, interfacial tension, density functional theory, kernel range, mixture IFT, Peng-Robinson, SRK, predictive, lambda correlation, acentric factor, critical correction, Miqueu, gradient theory, Parachor, Fluid Phase Equilibria

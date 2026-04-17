@@ -10,10 +10,10 @@ Documentation for mass transfer columns in NeqSim.
 ## Table of Contents
 - [Overview](#overview)
 - [Absorber](#absorber)
+- [Stripper](#stripper)
 - [Simple Absorber](#simple-absorber)
 - [Simple TEG Absorber](#simple-teg-absorber)
 - [Simple Amine Absorber](#simple-amine-absorber)
-- [Stripper](#stripper)
 - [Rate-Based Absorber](#rate-based-absorber)
 - [Examples](#examples)
 
@@ -26,11 +26,12 @@ Documentation for mass transfer columns in NeqSim.
 **Classes:**
 | Class                   | Description                                           |
 | ----------------------- | ----------------------------------------------------- |
-| `Absorber`              | General absorption column                             |
 | `SimpleAbsorber`        | Simplified absorber model (base class)                |
 | `SimpleTEGAbsorber`     | TEG dehydration with Fs-factor sizing                 |
 | `SimpleAmineAbsorber`   | Amine gas sweetening (MDEA, DEA, MEA)                 |
 | `WaterStripperColumn`   | Water stripping column                                |
+| `RateBasedAbsorber`     | Rate-based absorber with mass transfer correlations   |
+| `H2SScavenger`          | H2S scavenger model                                   |
 
 Absorbers transfer components from gas to liquid phase, while strippers transfer from liquid to gas.
 
@@ -38,33 +39,30 @@ Absorbers transfer components from gas to liquid phase, while strippers transfer
 
 ## Absorber
 
-### Basic Usage
+The absorber classes in NeqSim model gas-liquid contactors where components transfer
+from the gas phase into a liquid solvent. The `SimpleAbsorber` is the base class
+providing equilibrium-stage calculations. For TEG dehydration use `SimpleTEGAbsorber`;
+for amine gas sweetening use `SimpleAmineAbsorber`; for rigorous mass transfer use
+`RateBasedAbsorber`.
+
+### Basic Usage (SimpleAbsorber)
 
 ```java
-import neqsim.process.equipment.absorber.Absorber;
+import neqsim.process.equipment.absorber.SimpleAbsorber;
 
-Absorber absorber = new Absorber("Amine Absorber");
-absorber.addGasInStream(gasStream);
-absorber.addSolventInStream(amineSolution);
-absorber.setNumberOfTheoreticalStages(10);
+SimpleAbsorber absorber = new SimpleAbsorber("Gas Absorber", gasStream, solventStream);
+absorber.setNumberOfStages(10);
+absorber.setAproachToEquilibrium(0.7);  // Murphree stage efficiency
 absorber.run();
 
-Stream sweetGas = absorber.getGasOutStream();
-Stream richAmine = absorber.getLiquidOutStream();
-```
-
-### Absorption Efficiency
-
-```java
-// Component removal efficiency
-absorber.setRemovalEfficiency("CO2", 0.95);  // 95% CO2 removal
-absorber.setRemovalEfficiency("H2S", 0.99);  // 99% H2S removal
+Stream treatedGas = (Stream) absorber.getGasOutStream();
+Stream richSolvent = (Stream) absorber.getLiquidOutStream();
 ```
 
 ### Stage Configuration
 
 ```java
-absorber.setNumberOfTheoreticalStages(20);
+absorber.setNumberOfStages(20);
 absorber.setStageEfficiency(0.7);  // Murphree efficiency
 ```
 
@@ -78,13 +76,12 @@ absorber.setStageEfficiency(0.7);  // Murphree efficiency
 import neqsim.process.equipment.absorber.WaterStripperColumn;
 
 WaterStripperColumn stripper = new WaterStripperColumn("Regenerator");
-stripper.setLiquidInStream(richAmine);
-stripper.setNumberOfStages(15);
-stripper.setReboilerTemperature(120.0, "C");
+stripper.addGasInStream(stripGas);
+stripper.addSolventInStream(richAmine);
 stripper.run();
 
-Stream leanAmine = stripper.getLiquidOutStream();
-Stream acidGas = stripper.getGasOutStream();
+Stream leanAmine = (Stream) stripper.getLiquidOutStream();
+Stream acidGas = (Stream) stripper.getGasOutStream();
 ```
 
 ---
@@ -98,10 +95,8 @@ Simplified mass transfer model.
 ```java
 import neqsim.process.equipment.absorber.SimpleAbsorber;
 
-SimpleAbsorber absorber = new SimpleAbsorber("CO2 Absorber");
-absorber.addGasInStream(feedGas);
-absorber.addSolventInStream(solvent);
-absorber.setAbsorptionEfficiency(0.90);
+SimpleAbsorber absorber = new SimpleAbsorber("CO2 Absorber", feedGas, solvent);
+absorber.setAproachToEquilibrium(0.90);  // 90% approach to equilibrium
 absorber.run();
 ```
 
@@ -137,7 +132,7 @@ tegAbsorber.run();
 
 // Fs-factor capacity check
 double fs = tegAbsorber.getFsFactor();
-double maxFs = tegAbsorber.getMaxAllowableFsFactor();  // default 3.0
+double maxFs = tegAbsorber.getMaxAllowableFsFactor();  // default 3.0 (Pa)^0.5
 boolean withinLimit = tegAbsorber.isFsFactorWithinDesignLimit();
 double utilization = tegAbsorber.getFsFactorUtilization();  // fs / maxFs
 
@@ -152,12 +147,12 @@ System.out.println(report);
 ### TEG Quality and Water Dew Point
 
 ```java
-// Check equilibrium water dew point from TEG purity
-double dewPointC = tegAbsorber.getLeanTEGEquilibriumWaterDewPoint(99.5);
-System.out.println("Water dew point at 99.5 wt% TEG: " + dewPointC + " °C");
+// Check equilibrium water dew point from lean TEG stream
+double dewPointK = tegAbsorber.getLeanTEGEquilibriumWaterDewPoint();
+System.out.println("Lean TEG equilibrium water dew point: " + (dewPointK - 273.15) + " °C");
 
-// Check if TEG quality margin is adequate
-boolean adequate = tegAbsorber.hasAdequateTEGQualityMargin(99.5, -18.0);
+// Check if TEG quality margin is adequate (target dew point in °C, margin in °C)
+boolean adequate = tegAbsorber.hasAdequateTEGQualityMargin(-18.0, 10.0);
 ```
 
 ### Key Methods
@@ -166,12 +161,11 @@ boolean adequate = tegAbsorber.hasAdequateTEGQualityMargin(99.5, -18.0);
 |--------|-------------|
 | `getFsFactor()` | Current Fs-factor from gas outlet stream |
 | `getMaxAllowableFsFactor()` | Design limit (default 3.0) |
-| `setMaxAllowableFsFactor(double)` | Override design limit |
 | `isFsFactorWithinDesignLimit()` | Check if Fs is below limit |
 | `getFsFactorUtilization()` | Fraction of capacity used (0-1) |
 | `getMinimumDiameterForFsLimit()` | Minimum diameter at current gas load |
-| `getLeanTEGEquilibriumWaterDewPoint(double)` | Water dew point for a TEG purity |
-| `hasAdequateTEGQualityMargin(double, double)` | TEG purity vs target dew point |
+| `getLeanTEGEquilibriumWaterDewPoint()` | Equilibrium water dew point (K) from lean TEG stream |
+| `hasAdequateTEGQualityMargin(double, double)` | Check target dew point (°C) vs margin (°C) |
 | `validateContactorDesign()` | Full text validation report |
 
 ---
@@ -309,7 +303,7 @@ System.out.println(absorber.getDesignSummary());
 ```java
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.absorber.Absorber;
+import neqsim.process.equipment.absorber.SimpleAmineAbsorber;
 
 // Sour gas
 SystemSrkCPAstatoil sourGas = new SystemSrkCPAstatoil(313.15, 70.0);
@@ -323,32 +317,23 @@ Stream gasIn = new Stream("Sour Gas", sourGas);
 gasIn.setFlowRate(100000.0, "Sm3/hr");
 gasIn.run();
 
-// Lean amine (MDEA solution)
-SystemSrkCPAstatoil amine = new SystemSrkCPAstatoil(313.15, 70.0);
-amine.addComponent("water", 0.50);
-amine.addComponent("MDEA", 0.50);
-amine.setMixingRule("classic");
-
-Stream leanAmine = new Stream("Lean Amine", amine);
-leanAmine.setFlowRate(50000.0, "kg/hr");
-leanAmine.run();
-
-// Absorber
-Absorber absorber = new Absorber("Amine Contactor");
-absorber.addGasInStream(gasIn);
-absorber.addSolventInStream(leanAmine);
-absorber.setNumberOfTheoreticalStages(15);
+// Amine absorber
+SimpleAmineAbsorber absorber = new SimpleAmineAbsorber("MDEA Contactor", gasIn);
+absorber.setAmineType("MDEA");
+absorber.setAmineConcentrationWtPct(50.0);
+absorber.setCO2RemovalEfficiency(0.95);
+absorber.setH2SRemovalEfficiency(0.99);
 absorber.run();
 
 // Results
-Stream sweetGas = absorber.getGasOutStream();
-double co2Out = sweetGas.getFluid().getMoleFraction("CO2") * 1e6;  // ppm
-System.out.println("Sweet gas CO2: " + co2Out + " ppm");
+Stream sweetGas = (Stream) absorber.getSweetGasOutStream();
 ```
 
 ### Example 2: TEG Dehydration
 
 ```java
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+
 // Wet natural gas
 SystemSrkEos wetGas = new SystemSrkEos(303.15, 70.0);
 wetGas.addComponent("methane", 0.90);
@@ -372,15 +357,15 @@ leanTEG.setFlowRate(1000.0, "kg/hr");
 leanTEG.run();
 
 // Contactor
-Absorber contactor = new Absorber("TEG Contactor");
+SimpleTEGAbsorber contactor = new SimpleTEGAbsorber("TEG Contactor");
 contactor.addGasInStream(gasIn);
 contactor.addSolventInStream(leanTEG);
-contactor.setNumberOfTheoreticalStages(3);
 contactor.run();
 
-Stream dryGas = contactor.getGasOutStream();
-double waterContent = dryGas.getFluid().getMoleFraction("water") * 1e6;
-System.out.println("Dry gas water content: " + waterContent + " ppm");
+// Results
+Stream dryGas = (Stream) contactor.getGasOutStream();
+double fs = contactor.getFsFactor();
+System.out.println("Fs-factor: " + fs);
 ```
 
 ### Example 3: Water Wash Column
@@ -406,16 +391,12 @@ Stream washWater = new Stream("Wash Water", water);
 washWater.setFlowRate(500.0, "kg/hr");
 washWater.run();
 
-// Absorber
-SimpleAbsorber waterWash = new SimpleAbsorber("Water Wash");
-waterWash.addGasInStream(gasIn);
-waterWash.addSolventInStream(washWater);
-waterWash.setAbsorptionEfficiency(0.85);
+// Simple absorber (constructor takes gas and solvent streams)
+SimpleAbsorber waterWash = new SimpleAbsorber("Water Wash", gasIn, washWater);
+waterWash.setAproachToEquilibrium(0.85);
 waterWash.run();
 
-Stream cleanGas = waterWash.getGasOutStream();
-double meohRemaining = cleanGas.getFluid().getMoleFraction("methanol") * 100;
-System.out.println("Methanol in clean gas: " + meohRemaining + " mol%");
+Stream cleanGas = (Stream) waterWash.getGasOutStream();
 ```
 
 ---

@@ -1,6 +1,6 @@
 ---
 title: Adjusters
-description: "Documentation for adjuster equipment in NeqSim process simulation. Covers single-variable Adjuster with standard and functional interface modes, and MultiVariableAdjuster for simultaneous multi-variable specification using Broyden's method."
+description: "Documentation for adjuster equipment in NeqSim process simulation. Covers single-variable Adjuster with standard and functional interface modes, and MultiVariableAdjuster for simultaneous multi-variable specification using damped successive substitution."
 ---
 
 # Adjusters
@@ -385,7 +385,7 @@ process.add(adj2);
 **Class:** `MultiVariableAdjuster` (package `neqsim.process.equipment.util`)
 
 The `MultiVariableAdjuster` solves N equations in N unknowns simultaneously using
-**Broyden's quasi-Newton method**. This is significantly faster and more robust than
+**damped successive substitution**. This is more robust than
 chaining N single-variable adjusters, which solve sequentially and may oscillate when
 the variables interact.
 
@@ -419,7 +419,7 @@ process.add(heater);
 process.add(comp);
 
 // Multi-variable adjuster: adjust 2 variables to hit 2 targets
-MultiVariableAdjuster mva = new MultiVariableAdjuster("MVA", process);
+MultiVariableAdjuster mva = new MultiVariableAdjuster("MVA");
 
 // Variable 1: heater outlet temperature
 mva.addAdjustedVariable(heater, "outTemperature", "K");
@@ -460,7 +460,7 @@ if (mva.isConverged()) {
 | `addTargetSpecification(equipment, variable, target, unit)` | Add a target to satisfy |
 | `setVariableBounds(index, lower, upper)` | Set bounds on adjusted variable by index |
 | `setMaxIterations(int)` | Maximum solver iterations (default: 50) |
-| `setTolerance(double)` | Convergence tolerance (default: 1e-6) |
+| `setTolerance(double)` | Convergence tolerance (default: 1e-4) |
 | `isConverged()` | Whether the solver converged |
 | `getIterations()` | Number of iterations used |
 | `getMaxResidual()` | Largest residual at convergence |
@@ -468,15 +468,16 @@ if (mva.isConverged()) {
 
 ### How It Works
 
-Broyden's method builds an approximate Jacobian (sensitivity matrix) from an
-initial finite-difference evaluation, then updates it rank-1 each iteration
-using the secant condition. This avoids the N full process evaluations per
-iteration that a finite-difference Newton method would require.
+The damped successive substitution algorithm adjusts each variable by a fraction
+of the current residual:
 
-$$\mathbf{B}_{k+1} = \mathbf{B}_k + \frac{(\Delta \mathbf{F}_k - \mathbf{B}_k \Delta \mathbf{x}_k) \Delta \mathbf{x}_k^T}{\Delta \mathbf{x}_k^T \Delta \mathbf{x}_k}$$
+$$\mathbf{x}_{k+1} = \mathbf{x}_k + \alpha \cdot \mathbf{r}_k$$
 
-where $\mathbf{B}$ is the Jacobian approximation, $\Delta \mathbf{F}$ the change in
-residuals, and $\Delta \mathbf{x}$ the change in variables.
+where $\mathbf{r}_k = \mathbf{t} - \mathbf{y}(\mathbf{x}_k)$ is the residual vector
+(target minus current output) and $\alpha = 0.1$ is the damping factor. This
+provides robust first-order convergence for a wide range of process gains.
+The method converges when $|1 - \alpha \cdot g| < 1$ for all variables, where
+$g$ is the process gain (sensitivity of output to input).
 
 ---
 

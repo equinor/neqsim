@@ -46,20 +46,19 @@ import neqsim.process.equipment.pipeline.PipeHagedornBrown;
 PipeHagedornBrown well = new PipeHagedornBrown("Production Tubing", feedStream);
 well.setLength(3000.0);     // 3000 m TVD
 well.setDiameter(0.1);      // 4-inch tubing
-well.setAngle(90.0);        // Vertical
+well.setElevation(-3000.0);  // Vertical downward (production)
 well.setNumberOfIncrements(50);
-well.setWallRoughness(4.5e-5);
+well.setPipeWallRoughness(4.5e-5);
 well.run();
 
 // Results
 double outletPressure = well.getOutletStream().getPressure();
 double[] pressureProfile = well.getPressureProfile();
 double[] temperatureProfile = well.getTemperatureProfile();
-double[] holdupProfile = well.getLiquidHoldupProfile();
-String flowPattern = well.getFlowPatternDescription();
+double liquidHoldup = well.getLiquidHoldup();
 
 System.out.println("Outlet P: " + outletPressure + " bara");
-System.out.println("Flow pattern: " + flowPattern);
+System.out.println("Liquid holdup: " + liquidHoldup);
 ```
 
 ## Mukherjee-Brill Correlation
@@ -87,16 +86,16 @@ import neqsim.process.equipment.pipeline.PipeMukherjeeAndBrill;
 PipeMukherjeeAndBrill pipeline = new PipeMukherjeeAndBrill("Export Pipeline", feedStream);
 pipeline.setLength(25000.0);   // 25 km
 pipeline.setDiameter(0.254);   // 10-inch
-pipeline.setAngle(0.0);        // Horizontal
+pipeline.setElevation(0.0);    // Horizontal
 pipeline.setNumberOfIncrements(100);
-pipeline.setWallRoughness(4.5e-5);
+pipeline.setPipeWallRoughness(4.5e-5);
 pipeline.run();
 
 // Results
 double outletP = pipeline.getOutletStream().getPressure();
-PipeMukherjeeAndBrill.FlowPattern pattern = pipeline.getFlowPattern();
-double[] holdup = pipeline.getLiquidHoldupProfile();
-PipeMukherjeeAndBrill.FlowPattern[] patternProfile = pipeline.getFlowPatternProfile();
+String pattern = pipeline.getFlowPattern();
+double liquidHoldup = pipeline.getLiquidHoldup();
+List<String> patternProfile = pipeline.getFlowPatternProfile();
 
 System.out.println("Outlet P: " + outletP + " bara");
 System.out.println("Outlet flow pattern: " + pattern);
@@ -108,7 +107,7 @@ Mukherjee-Brill handles downhill flow (negative inclination) better than Beggs-B
 making it suitable for terrain-following pipelines:
 
 ```java
-pipeline.setAngle(-5.0);  // 5 degrees downhill
+pipeline.setElevation(-200.0);  // 200 m downhill over pipeline length
 pipeline.run();
 ```
 
@@ -135,7 +134,7 @@ feed.run();
 PipeBeggsAndBrills pBB = new PipeBeggsAndBrills("BB", feed);
 pBB.setLength(5000.0);
 pBB.setDiameter(0.2);
-pBB.setAngle(90.0);
+pBB.setElevation(-5000.0);  // Vertical downward
 pBB.setNumberOfIncrements(50);
 pBB.run();
 
@@ -143,7 +142,7 @@ pBB.run();
 PipeHagedornBrown pHB = new PipeHagedornBrown("HB", feed);
 pHB.setLength(5000.0);
 pHB.setDiameter(0.2);
-pHB.setAngle(90.0);
+pHB.setElevation(-5000.0);  // Vertical downward
 pHB.setNumberOfIncrements(50);
 pHB.run();
 
@@ -151,7 +150,7 @@ pHB.run();
 PipeMukherjeeAndBrill pMB = new PipeMukherjeeAndBrill("MB", feed);
 pMB.setLength(5000.0);
 pMB.setDiameter(0.2);
-pMB.setAngle(90.0);
+pMB.setElevation(-5000.0);  // Vertical downward
 pMB.setNumberOfIncrements(50);
 pMB.run();
 
@@ -169,10 +168,10 @@ increment) for integration with plotting tools:
 |--------|---------|-------------|
 | `getPressureProfile()` | `double[]` | All three |
 | `getTemperatureProfile()` | `double[]` | All three |
-| `getLiquidHoldupProfile()` | `double[]` | HagedornBrown, MukherjeeAndBrill |
-| `getFlowPatternProfile()` | `FlowPattern[]` | MukherjeeAndBrill only |
-| `getFlowPatternDescription()` | `String` | HagedornBrown |
-| `getOutletSuperficialVelocity()` | `double` | HagedornBrown |
+| `getLiquidHoldup()` | `double` | HagedornBrown, MukherjeeAndBrill |
+| `getFlowPatternProfile()` | `List<String>` | MukherjeeAndBrill only |
+| `getFlowPattern()` | `String` | MukherjeeAndBrill |
+| `getFlowPatternEnum()` | `FlowPattern` | MukherjeeAndBrill |
 
 ## Related Documentation
 

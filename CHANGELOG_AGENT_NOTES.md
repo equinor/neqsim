@@ -91,9 +91,10 @@ horizontal, uphill, and downhill flows with flow pattern detection.
 
 | Method | Description |
 |--------|-------------|
-| `getFlowPattern()` | Returns `FlowPattern` enum: STRATIFIED, SLUG, ANNULAR, BUBBLE, SINGLE_PHASE |
-| `getLiquidHoldupProfile()` | `double[]` holdup along pipe |
-| `getFlowPatternProfile()` | `FlowPattern[]` pattern at each increment |
+| `getFlowPattern()` | Returns outlet flow pattern as String: STRATIFIED, SLUG, ANNULAR, BUBBLE, SINGLE_PHASE |
+| `getFlowPatternEnum()` | Returns `FlowPattern` enum |
+| `getLiquidHoldup()` | Scalar outlet liquid holdup |
+| `getFlowPatternProfile()` | `List<String>` pattern at each increment |
 | Same geometry methods as PipeHagedornBrown | — |
 
 **Extends:** `Pipeline`
@@ -101,7 +102,7 @@ horizontal, uphill, and downhill flows with flow pattern detection.
 
 #### 5. MultiVariableAdjuster (`neqsim.process.equipment.util`)
 
-Simultaneous multi-variable adjuster using Broyden's quasi-Newton method.
+Simultaneous multi-variable adjuster using damped successive substitution.
 Solves N equations in N unknowns (target specifications) by adjusting N
 process variables simultaneously.
 
@@ -114,7 +115,6 @@ process variables simultaneously.
 | `isConverged()` / `getIterations()` / `getMaxResidual()` | Solution status |
 | `getNumberOfVariables()` | Number of adjusted variables |
 
-**Uses:** `BroydenAccelerator` from `neqsim.math.solvers`
 **Test:** `MultiVariableAdjusterTest` (4 tests)
 
 ### Agents/Skills Affected

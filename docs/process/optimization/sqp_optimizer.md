@@ -75,7 +75,8 @@ sqp.setMaxIterations(100);
 sqp.setTolerance(1e-8);
 
 // Solve from initial point
-OptimizationResult result = sqp.solve(new double[] {0.0, 0.0});
+sqp.setInitialPoint(new double[] {0.0, 0.0});
+OptimizationResult result = sqp.solve();
 
 if (result.isConverged()) {
     double[] xOpt = result.getOptimalPoint();
@@ -134,7 +135,8 @@ sqp.setMaxIterations(30);
 sqp.setTolerance(1e-4);
 sqp.setFiniteDifferenceStep(0.5);  // pressure step for gradients
 
-OptimizationResult result = sqp.solve(new double[] {20.0});
+sqp.setInitialPoint(new double[] {20.0});
+OptimizationResult result = sqp.solve();
 
 if (result.isConverged()) {
     double pOpt = result.getOptimalPoint()[0];
