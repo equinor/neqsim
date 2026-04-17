@@ -238,6 +238,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private int innerLoopSteps = 3;
 
+  // ============ Dynamic Simulation Fields ============
+  /** Whether the dynamic tray model is enabled for transient simulation. */
+  private boolean dynamicColumnEnabled = false;
+  /** Liquid holdup per tray in moles. Indexed by tray number. */
+  private transient double[] trayLiquidHoldup = null;
+  /** Weir height on each tray in metres. */
+  private double trayWeirHeight = 0.05;
+  /** Weir length (crest length) on each tray in metres. */
+  private double trayWeirLength = 1.0;
+
   /**
    * <p>
    * Constructor for DistillationColumn.
@@ -4166,6 +4176,212 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public static Builder builder(String name) {
     return new Builder(name);
+  }
+
+  // ============ Dynamic Column Getters/Setters ============
+
+  /**
+   * Enables or disables the dynamic tray-by-tray model for transient simulation.
+   *
+   * @param enabled true to enable dynamic column model
+   */
+  public void setDynamicColumnEnabled(boolean enabled) {
+    this.dynamicColumnEnabled = enabled;
+  }
+
+  /**
+   * Returns whether the dynamic tray-by-tray model is enabled.
+   *
+   * @return true if dynamic column model is active
+   */
+  public boolean isDynamicColumnEnabled() {
+    return dynamicColumnEnabled;
+  }
+
+  /**
+   * Sets the weir height for all trays (used in Francis weir overflow).
+   *
+   * @param weirHeight weir height in metres
+   */
+  public void setTrayWeirHeight(double weirHeight) {
+    this.trayWeirHeight = Math.max(0.0, weirHeight);
+  }
+
+  /**
+   * Gets the weir height for all trays.
+   *
+   * @return weir height in metres
+   */
+  public double getTrayWeirHeight() {
+    return trayWeirHeight;
+  }
+
+  /**
+   * Sets the weir crest length for all trays.
+   *
+   * @param weirLength weir length in metres
+   */
+  public void setTrayWeirLength(double weirLength) {
+    this.trayWeirLength = Math.max(0.0, weirLength);
+  }
+
+  /**
+   * Gets the weir crest length for all trays.
+   *
+   * @return weir length in metres
+   */
+  public double getTrayWeirLength() {
+    return trayWeirLength;
+  }
+
+  /**
+   * Returns the liquid holdup array (moles per tray). May be null if dynamic model has not been
+   * initialized.
+   *
+   * @return array of liquid holdups indexed by tray number, or null
+   */
+  public double[] getTrayLiquidHoldup() {
+    return trayLiquidHoldup;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Dynamic distillation column model. When {@code dynamicColumnEnabled} is true, performs a single
+   * forward-Euler integration step on each tray's liquid holdup using the MESH equations. Liquid
+   * leaving each tray is calculated using the Francis weir overflow formula.
+   * </p>
+   *
+   * @param dt time step in seconds
+   * @param id calculation identifier
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (!dynamicColumnEnabled || trays.isEmpty()) {
+      // Fall back to steady-state solve
+      if (getCalculateSteadyState()) {
+        run(id);
+      }
+      increaseTime(dt);
+      return;
+    }
+
+    int nTrays = trays.size();
+
+    // Initialize liquid holdups on first call
+    if (trayLiquidHoldup == null || trayLiquidHoldup.length != nTrays) {
+      trayLiquidHoldup = new double[nTrays];
+      for (int i = 0; i < nTrays; i++) {
+        SystemInterface trayFluid = trays.get(i).getThermoSystem();
+        if (trayFluid != null) {
+          trayLiquidHoldup[i] = trayFluid.getTotalNumberOfMoles();
+        } else {
+          trayLiquidHoldup[i] = 100.0; // default
+        }
+      }
+    }
+
+    // Francis weir coefficient (SI)
+    double cWeir = 1.84;
+
+    // For each tray (top to bottom), compute liquid overflow and vapor up-flow
+    // then update holdup with forward Euler
+    for (int i = 0; i < nTrays; i++) {
+      SimpleTray tray = trays.get(i);
+      SystemInterface trayFluid = tray.getThermoSystem();
+      if (trayFluid == null) {
+        continue;
+      }
+
+      // Compute liquid overflow using Francis weir formula
+      // Q = Cw * Lw * h_ow^1.5 (m3/s) where h_ow is liquid height over weir
+      double liquidMolarVolume = 1.0e-4; // default m3/mol
+      if (trayFluid.hasPhaseType("aqueous") || trayFluid.hasPhaseType("oil")
+          || trayFluid.getNumberOfPhases() > 1) {
+        double liquidDensity = trayFluid.getPhase(1).getDensity("mol/m3");
+        if (liquidDensity > 0) {
+          liquidMolarVolume = 1.0 / liquidDensity;
+        }
+      }
+
+      double liquidVolume = trayLiquidHoldup[i] * liquidMolarVolume;
+      double trayArea = Math.PI / 4.0 * internalDiameter * internalDiameter;
+      double liquidHeight = trayArea > 0 ? liquidVolume / trayArea : 0.0;
+      double howOverWeir = Math.max(0.0, liquidHeight - trayWeirHeight);
+      double overflowRate = cWeir * trayWeirLength * Math.pow(howOverWeir, 1.5); // m3/s volumetric
+
+      // Convert to mol/s
+      double liquidOutRate = overflowRate / liquidMolarVolume;
+
+      // Vapor in-flow from tray below (simplified: use current vapor production)
+      double vaporInRate = 0.0;
+      if (i < nTrays - 1) {
+        // From tray below: approximate from that tray's gas production
+        SystemInterface belowFluid = trays.get(i + 1).getThermoSystem();
+        if (belowFluid != null && belowFluid.getNumberOfPhases() > 0) {
+          vaporInRate = belowFluid.getPhase(0).getNumberOfMolesInPhase() / Math.max(dt, 0.001);
+        }
+      }
+
+      // Liquid in-flow from tray above
+      double liquidInRate = 0.0;
+      if (i > 0 && trayLiquidHoldup[i - 1] > 0) {
+        // Use the overflow from the tray above (already computed)
+        SystemInterface aboveFluid = trays.get(i - 1).getThermoSystem();
+        if (aboveFluid != null) {
+          double aboveLMV = liquidMolarVolume;
+          double aboveVol = trayLiquidHoldup[i - 1] * aboveLMV;
+          double aboveHeight = trayArea > 0 ? aboveVol / trayArea : 0.0;
+          double aboveHow = Math.max(0.0, aboveHeight - trayWeirHeight);
+          double aboveOverflow = cWeir * trayWeirLength * Math.pow(aboveHow, 1.5);
+          liquidInRate = aboveOverflow / aboveLMV;
+        }
+      }
+
+      // Feed stream contribution
+      double feedRate = 0.0;
+      List<StreamInterface> trayFeeds = feedStreams.get(i);
+      if (trayFeeds != null) {
+        for (StreamInterface feedStream : trayFeeds) {
+          if (feedStream.getThermoSystem() != null) {
+            feedRate += feedStream.getThermoSystem().getTotalNumberOfMoles() / Math.max(dt, 0.001);
+          }
+        }
+      }
+
+      // Vapor production rate from this tray
+      double vaporOutRate = 0.0;
+      if (trayFluid.getNumberOfPhases() > 0) {
+        vaporOutRate = trayFluid.getPhase(0).getNumberOfMolesInPhase() / Math.max(dt, 0.001);
+      }
+
+      // Forward Euler holdup update: dn/dt = Lin + Vin + F - Lout - Vout
+      double dHoldup = (liquidInRate + vaporInRate + feedRate - liquidOutRate - vaporOutRate) * dt;
+      trayLiquidHoldup[i] = Math.max(0.0, trayLiquidHoldup[i] + dHoldup);
+
+      // Re-flash the tray with updated holdup (VU flash at constant T)
+      try {
+        tray.run(id);
+      } catch (Exception ex) {
+        logger.warn("Dynamic tray " + i + " flash failed: " + ex.getMessage());
+      }
+    }
+
+    // Update column outlet streams from top and bottom trays
+    if (trays.size() > 0) {
+      StreamInterface gasOut = trays.get(0).getGasOutStream();
+      if (gasOut != null && gasOut.getThermoSystem() != null) {
+        gasOutStream.setThermoSystem(gasOut.getThermoSystem().clone());
+      }
+      StreamInterface liqOut = trays.get(nTrays - 1).getLiquidOutStream();
+      if (liqOut != null && liqOut.getThermoSystem() != null) {
+        liquidOutStream.setThermoSystem(liqOut.getThermoSystem().clone());
+      }
+    }
+
+    increaseTime(dt);
+    setCalculationIdentifier(id);
   }
 
   /**

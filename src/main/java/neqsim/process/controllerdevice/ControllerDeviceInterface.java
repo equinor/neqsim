@@ -234,6 +234,25 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   public default void setMode(ControllerMode mode) {}
 
   /**
+   * Set the 2-DOF PID setpoint weight for the proportional term. A value of 1.0 gives standard PID
+   * (setpoint changes cause full proportional kick). A value of 0.0 removes setpoint from the
+   * proportional term entirely (derivative-on-measurement behaviour). Typical values are 0.0 to
+   * 1.0.
+   *
+   * @param b the setpoint weight (0.0 to 1.0, default 1.0)
+   */
+  public default void setSetpointWeight(double b) {}
+
+  /**
+   * Get the 2-DOF PID setpoint weight for the proportional term.
+   *
+   * @return the setpoint weight (0.0 to 1.0)
+   */
+  public default double getSetpointWeight() {
+    return 1.0;
+  }
+
+  /**
    * Get the manual output value used when the controller is in MANUAL mode.
    *
    * @return the manual output value in engineering units

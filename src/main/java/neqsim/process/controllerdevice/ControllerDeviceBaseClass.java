@@ -70,6 +70,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double integralAbsoluteError = 0.0;
   private double lastTimeOutsideBand = 0.0;
   private double settlingTolerance = 0.02;
+  private double setpointWeight = 1.0;
   private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation =
       new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
@@ -198,6 +199,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
       error = measurement - controllerSetPoint;
+      // 2-DOF PID: proportional error uses setpoint weight b
+      // propError = measurement - b * setpoint, integral uses full error
+      double propError = measurement - setpointWeight * controllerSetPoint;
+      double oldPropError = oldError - (1.0 - setpointWeight) * controllerSetPoint;
       integralAbsoluteError += Math.abs(error) * dt;
       band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
@@ -222,7 +227,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         derivativeState = 0.0;
       }
 
-      delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+      delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
 
       response = initResponse + propConstant * delta;
 
@@ -694,6 +699,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     if (mode == ControllerMode.MANUAL) {
       response = output;
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSetpointWeight(double b) {
+    this.setpointWeight = Math.max(0.0, Math.min(1.0, b));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSetpointWeight() {
+    return setpointWeight;
   }
 
   /**
