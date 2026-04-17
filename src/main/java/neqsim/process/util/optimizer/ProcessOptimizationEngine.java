@@ -483,6 +483,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Evaluates a single lift curve point.
+   *
+   * @param pressure the inlet pressure in bara
+   * @param temperature the temperature in Kelvin
+   * @param waterCut the water cut fraction (0-1)
+   * @param gor the gas-oil ratio
+   * @return the evaluated lift curve point, or null if evaluation fails
    */
   private LiftCurvePoint evaluateLiftCurvePoint(double pressure, double temperature,
       double waterCut, double gor) {
@@ -510,6 +516,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Golden section search for maximum flow.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param minFlow the minimum flow rate to search
+   * @param maxFlow the maximum flow rate to search
+   * @return the maximum achievable flow rate found by golden section search
    */
   private double goldenSectionSearch(double inletPressure, double outletPressure, double minFlow,
       double maxFlow) {
@@ -569,6 +581,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Binary search for required inlet pressure.
+   *
+   * @param targetFlow the target flow rate to achieve
+   * @param outletPressure the outlet pressure in bara
+   * @param minPressure the minimum pressure to search in bara
+   * @param maxPressure the maximum pressure to search in bara
+   * @return the minimum inlet pressure required to achieve the target flow
    */
   private double pressureBinarySearch(double targetFlow, double outletPressure, double minPressure,
       double maxPressure) {

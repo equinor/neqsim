@@ -167,6 +167,12 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculate DLE property value.
+   *
+   * @param fluid the thermodynamic system to use for calculation
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in Kelvin
+   * @param propertyIndex the property index (0=Rs, 1=Bo, 2=Oil density)
+   * @return the calculated DLE property value
    */
   private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature,
       int propertyIndex) {
@@ -192,6 +198,13 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculate separator test property value.
+   *
+   * @param fluid the thermodynamic system to use for calculation
+   * @param separatorPressure the separator pressure in bara
+   * @param separatorTemperature the separator temperature in Kelvin
+   * @param propertyIndex the property index (0=GOR, etc.)
+   * @param reservoirTemperature the reservoir temperature in Kelvin
+   * @return the calculated separator property value
    */
   private double calculateSeparatorValue(SystemInterface fluid, double separatorPressure,
       double separatorTemperature, int propertyIndex, double reservoirTemperature) {
