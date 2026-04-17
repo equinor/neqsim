@@ -238,6 +238,9 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       }
       double nuContinuous = node.getBulkSystem().getPhase(continuousPhase).getPhysicalProperties()
           .getKinematicViscosity();
+      if (nuContinuous < 1e-15) {
+        nuContinuous = 1e-6;
+      }
       double reParticle = relativeVelocity * particleDiameter / nuContinuous;
       double nusseltNumber = 2.0 + 0.6 * Math.pow(reParticle, 0.5) * Math.pow(prandtlNumber, 0.33);
       return nusseltNumber * conductivity / particleDiameter;
@@ -297,9 +300,13 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
     boolean isBubbleFlow = node instanceof BubbleFlowNode;
 
     // Binary diffusivity D_ij = kinematic viscosity / Schmidt number
-    double diffusivity =
-        node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-            / schmidtNumber;
+    double kinVisc =
+        node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
+    if (kinVisc < 1e-15) {
+      kinVisc = 1e-6;
+    }
+    double safeSchmidt = schmidtNumber > 0.0 ? schmidtNumber : 1.0;
+    double diffusivity = kinVisc / safeSchmidt;
 
     // Determine if this phase is the continuous or dispersed phase
     // Droplet flow: gas (phase 0) is continuous, liquid (phase 1) is dispersed
@@ -319,6 +326,9 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
 
       double nuContinuous = node.getBulkSystem().getPhase(continuousPhase).getPhysicalProperties()
           .getKinematicViscosity();
+      if (nuContinuous < 1e-15) {
+        nuContinuous = 1e-6;
+      }
       double reParticle = relativeVelocity * particleDiameter / nuContinuous;
 
       // Ranz-Marshall: Sh = 2 + 0.6 * Re^0.5 * Sc^0.33

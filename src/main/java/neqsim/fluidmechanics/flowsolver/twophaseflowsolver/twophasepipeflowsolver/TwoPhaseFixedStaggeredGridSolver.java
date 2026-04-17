@@ -330,8 +330,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       try {
         pipe.getNode(i).getBulkSystem().init(3);
       } catch (Exception e) {
-        // If init fails, try with init(1) to re-establish thermodynamic equilibrium
-        pipe.getNode(i).getBulkSystem().init(1);
+        try {
+          pipe.getNode(i).getBulkSystem().init(1);
+        } catch (Exception e2) {
+          logger.debug("Node {} thermo init failed, keeping previous state", i);
+        }
       }
 
       // Restore temperature after init - temperature must be propagated along pipe, not reset
@@ -523,6 +526,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         double transferToLiquid =
             pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                 * pipe.getNode(i).getInterphaseContactArea();
+
+        // Guard against NaN/Infinity from transport coefficient calculations
+        if (!Double.isFinite(transferToLiquid)) {
+          transferToLiquid = 0.0;
+        }
 
         // Get transfer limits from configuration
         double maxFractionBidir = massTransferConfig.getMaxTransferFractionBidirectional();
