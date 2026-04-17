@@ -252,11 +252,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    // Skip full initProperties() - the clone already has valid thermodynamic state from the
-    // inlet stream (which was fully initialized by upstream equipment). Physical properties
-    // (viscosity, thermal conductivity) are not needed before the flash. Only re-validate
-    // thermodynamic properties via init(2) for safety.
-    thermoSystem.init(2);
+    thermoSystem.initProperties();
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
       setGasValve(true);
@@ -268,6 +264,7 @@ public class ThrottlingValve extends TwoPortEquipment
       calcKv();
       valveKvSet = true;
     }
+    inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -354,7 +351,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
