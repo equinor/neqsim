@@ -1,6 +1,6 @@
 /*
  * ImprovedVUflashQfunc.java
- * 
+ *
  * Enhanced VU flash with better numerical stability for separator applications
  */
 
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * ImprovedVUflashQfunc class with enhanced numerical stability.
  * </p>
- * 
+ *
  * Improvements: - Bounds checking for pressure and temperature - Better damping and convergence
  * criteria - Validation of inputs and outputs - Fallback mechanisms for problematic cases
  *

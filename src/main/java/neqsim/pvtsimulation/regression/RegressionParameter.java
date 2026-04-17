@@ -1,6 +1,5 @@
 package neqsim.pvtsimulation.regression;
 
-import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**

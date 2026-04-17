@@ -27,7 +27,7 @@
  * <h2>Integration Patterns</h2>
  *
  * <h3>Dashboard Integration (REST API)</h3>
- * 
+ *
  * <pre>
  * RealTimeRiskMonitor monitor = new RealTimeRiskMonitor("Platform-A", processSystem);
  * monitor.setUpdateIntervalSeconds(60);
@@ -40,7 +40,7 @@
  * </pre>
  *
  * <h3>Alert Handling</h3>
- * 
+ *
  * <pre>
  * monitor.addAlertListener(new AlertListener() {
  *   public void onAlert(RiskAlert alert) {
@@ -53,7 +53,7 @@
  * </pre>
  *
  * <h3>OPC-UA Integration</h3>
- * 
+ *
  * <pre>
  * // Update process variables from OPC-UA
  * assessment.addProcessVariable("PT-001", opcClient.readValue("PT-001"), 85.0, "bar");

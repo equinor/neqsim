@@ -633,7 +633,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   /**
    * First-order upwind scheme for component conservation (original implementation).
-   * 
+   *
    * <p>
    * This scheme is unconditionally stable but has high numerical dispersion: D_num = (v × Δx / 2) ×
    * (1 - CFL)
@@ -702,7 +702,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   /**
    * TVD (Total Variation Diminishing) scheme with flux limiters.
-   * 
+   *
    * <p>
    * Achieves second-order accuracy in smooth regions while preventing oscillations near
    * discontinuities. The flux limiter blends between first-order upwind and a higher-order scheme
@@ -824,7 +824,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   /**
    * Second-order upwind (Linear Upwind Differencing) scheme.
-   * 
+   *
    * <p>
    * Uses two upstream points for higher accuracy. Much less dispersive than first-order upwind but
    * may oscillate near discontinuities.
@@ -917,7 +917,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   /**
    * QUICK scheme (Quadratic Upstream Interpolation for Convective Kinematics).
-   * 
+   *
    * <p>
    * Third-order accurate on uniform grids. Uses quadratic interpolation with upstream bias. Very
    * low numerical dispersion but may produce oscillations.

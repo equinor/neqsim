@@ -170,30 +170,6 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
 
   /** {@inheritDoc} */
   @Override
-  public void setInletElevation(double inletElevation) {
-    super.setInletElevation(inletElevation);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getInletElevation() {
-    return super.getInletElevation();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setOutletElevation(double outletElevation) {
-    super.setOutletElevation(outletElevation);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getOutletElevation() {
-    return super.getOutletElevation();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     pipeSpecification = pipeSec;
     insideDiameter = nominalDiameter / 1000.0;

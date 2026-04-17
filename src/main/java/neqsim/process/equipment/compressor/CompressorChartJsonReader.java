@@ -12,7 +12,7 @@ import com.google.gson.JsonParser;
  * <p>
  * Expected JSON format:
  * </p>
- * 
+ *
  * <pre>
  * {
  *   "compressorName": "Compressor Name",

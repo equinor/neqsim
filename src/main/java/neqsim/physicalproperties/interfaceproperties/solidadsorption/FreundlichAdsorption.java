@@ -60,7 +60,6 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Default constructor.
    */
   public FreundlichAdsorption() {
-    super();
   }
 
   /**

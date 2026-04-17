@@ -34,15 +34,15 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * DegradedOperationOptimizer optimizer = new DegradedOperationOptimizer(processSystem);
  * optimizer.setFeedStreamName("Well Feed");
- * 
+ *
  * // Optimize with compressor down
  * DegradedOperationResult result = optimizer.optimizeWithEquipmentDown("HP Compressor");
- * 
+ *
  * // Get recommended setpoints
  * Map<String, Double> setpoints = result.getOptimizedSetpoints();
  * }

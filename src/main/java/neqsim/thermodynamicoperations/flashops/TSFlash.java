@@ -134,7 +134,7 @@ public class TSFlash extends QfuncFlash {
       }
 
       // Apply damping factor that increases with iterations
-      factor = (double) iterations / (iterations + 5.0);
+      factor = iterations / (iterations + 5.0);
       nyPres = oldPres + factor * deltaP;
 
       // Ensure pressure stays positive and physical

@@ -458,6 +458,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double calcdF2dispZHCdT() {
     double temp0 = -Math.pow(F2dispZHC, 2.0);
     double temp1 = getmSAFT() * ((8 - 4 * getNSAFT()) * dNSAFTdT * Math.pow(1 - getNSAFT(), 4) + 4
@@ -513,6 +514,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double calcdF1dispSumTermdT() {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -538,6 +540,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double calcdF2dispSumTermdT() {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -684,6 +687,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double calcdF1dispI1dT() {
     double temp1 = 0.0;
     for (int i = 0; i < 7; i++) {
@@ -699,6 +703,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double calcdF2dispI2dT() {
     double temp1 = 0.0;
     for (int i = 0; i < 7; i++) {
@@ -811,6 +816,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double dF_HC_SAFTdT() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * dNSAFTdT
         - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dNSAFTdT);
@@ -920,6 +926,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double dF_DISP1_SAFTdT() {
     return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi
         * (dF1dispVolTermdT * getF1dispSumTerm() * getF1dispI1()
@@ -934,6 +941,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double dF_DISP2_SAFTdT() {
     return getNumberOfMolesInPhase() * (-1 * ThermodynamicConstantsInterface.pi * getmSAFT())
         * getF1dispVolTerm()
@@ -1112,6 +1120,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    *
    * @return a double
    */
+  @Override
   public double getdDSAFTdT() {
     double temp = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {

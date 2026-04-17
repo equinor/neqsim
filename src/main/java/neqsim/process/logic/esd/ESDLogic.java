@@ -35,6 +35,7 @@ import neqsim.process.logic.ProcessLogic;
  * @version 1.0
  */
 public class ESDLogic implements ProcessLogic {
+  private static final long serialVersionUID = 1L;
   private final String name;
   private LogicState state = LogicState.IDLE;
   private final transient List<ActionWithDelay> actions = new ArrayList<>();

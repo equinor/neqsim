@@ -337,7 +337,6 @@ fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
 ---
 
 ## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
-<<<<<<< HEAD
 
 ### Vertical Separator → GasScrubber Mapping
 
@@ -495,8 +494,6 @@ raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
 ---
 
 ## 2026-04-08 — IEC 81346 Reference Designation Support
-=======
->>>>>>> 0a1cdaa75a2293eaa9447f3df1b0ec9460a74c1e
 
 ### Vertical Separator → GasScrubber Mapping
 

@@ -5,12 +5,12 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for thermodynamic systems.
- * 
+ *
  * <p>
  * Defines requirements and guarantees for {@link SystemInterface} implementations. AI agents can
  * use this contract to validate fluid setup before running simulations.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the system needs):</h2>
  * <ul>
  * <li>At least one component defined</li>
@@ -19,14 +19,14 @@ import neqsim.util.validation.ValidationResult;
  * <li>Mixing rule set for multi-component systems</li>
  * <li>Total moles &gt; 0</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what init() provides):</h2>
  * <ul>
  * <li>Valid phase fractions (sum to 1.0)</li>
  * <li>Finite compressibility factor</li>
  * <li>Finite enthalpy and entropy</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -44,7 +44,7 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static ThermodynamicSystemContract getInstance() {

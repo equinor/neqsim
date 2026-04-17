@@ -79,7 +79,6 @@ public class GasTurbineDriver extends DriverCurveBase {
    * Default constructor.
    */
   public GasTurbineDriver() {
-    super();
     setDriverType();
   }
 

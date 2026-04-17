@@ -569,9 +569,7 @@ public class WellDesignCalculator implements Serializable {
     } else if ("J55".equals(grade) || "K55".equals(grade)) {
       return 517.0;
     } else if ("N80".equals(grade) || "L80".equals(grade)) {
-      return 689.0;
     } else if ("C90".equals(grade)) {
-      return 689.0;
     } else if ("C95".equals(grade) || "T95".equals(grade)) {
       return 724.0;
     } else if ("P110".equals(grade)) {
@@ -579,7 +577,6 @@ public class WellDesignCalculator implements Serializable {
     } else if ("Q125".equals(grade)) {
       return 931.0;
     } else if ("13Cr".equals(grade) || "13CR".equals(grade)) {
-      return 689.0;
     } else if ("S13Cr".equals(grade) || "Super13Cr".equals(grade)) {
       return 724.0;
     } else if ("25Cr".equals(grade)) {
@@ -601,7 +598,6 @@ public class WellDesignCalculator implements Serializable {
     } else if ("J55".equals(grade) || "K55".equals(grade)) {
       return 379.0;
     } else if ("N80".equals(grade) || "L80".equals(grade)) {
-      return 552.0;
     } else if ("C90".equals(grade)) {
       return 621.0;
     } else if ("C95".equals(grade) || "T95".equals(grade)) {
@@ -611,7 +607,6 @@ public class WellDesignCalculator implements Serializable {
     } else if ("Q125".equals(grade)) {
       return 862.0;
     } else if ("13Cr".equals(grade) || "13CR".equals(grade)) {
-      return 552.0; // Similar to L80 for 13Cr-L80
     } else if ("S13Cr".equals(grade) || "Super13Cr".equals(grade)) {
       return 621.0;
     } else if ("25Cr".equals(grade)) {

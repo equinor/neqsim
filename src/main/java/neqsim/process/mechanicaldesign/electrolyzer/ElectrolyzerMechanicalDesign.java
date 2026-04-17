@@ -141,7 +141,7 @@ public class ElectrolyzerMechanicalDesign extends MechanicalDesign {
     // === Power and Efficiency ===
     totalPowerKW = totalCurrentA * cellVoltage * totalCells / totalCurrentA * cellCurrentA / 1000.0;
     // Simplified: P = n_cells * V_cell * I_cell
-    totalPowerKW = (double) totalCells * cellVoltage * cellCurrentA / 1000.0;
+    totalPowerKW = totalCells * cellVoltage * cellCurrentA / 1000.0;
     specificEnergyKWhPerKg = totalPowerKW / (h2ProductionRateKgHr);
 
     // HHV of H2 = 39.4 kWh/kg

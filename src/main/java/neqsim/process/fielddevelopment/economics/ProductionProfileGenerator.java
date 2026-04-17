@@ -27,11 +27,11 @@ import java.util.Map;
  * <p>
  * The general Arps hyperbolic equation:
  * </p>
- * 
+ *
  * <pre>
  * q(t) = qi / (1 + b * Di * t) ^ (1 / b)
  * </pre>
- * 
+ *
  * <p>
  * Where:
  * </p>
@@ -44,11 +44,11 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create generator
  * ProductionProfileGenerator generator = new ProductionProfileGenerator();
- * 
+ *
  * // Generate exponential decline (typical for gas wells)
  * Map<Integer, Double> gasProfile = generator.generateExponentialDecline(10.0e6, // Initial rate:
  *                                                                                // 10 MSm3/d
@@ -57,7 +57,7 @@ import java.util.Map;
  *     20, // 20 years
  *     0.5e6 // Economic limit: 0.5 MSm3/d
  * );
- * 
+ *
  * // Generate hyperbolic decline (typical for oil wells)
  * Map<Integer, Double> oilProfile = generator.generateHyperbolicDecline(15000, // Initial rate:
  *                                                                              // 15,000 bbl/d
@@ -67,7 +67,7 @@ import java.util.Map;
  *     25, // 25 years
  *     100 // Economic limit: 100 bbl/d
  * );
- * 
+ *
  * // Use with CashFlowEngine
  * CashFlowEngine engine = new CashFlowEngine("NO");
  * engine.setProductionProfile(oilProfile, gasProfile, null);
@@ -78,7 +78,7 @@ import java.util.Map;
  * Many fields have a plateau period before decline begins. Use the methods with plateau parameters
  * to model this behavior:
  * </p>
- * 
+ *
  * <pre>{@code
  * // 3 years plateau, then exponential decline
  * Map<Integer, Double> profile = generator.generateWithPlateau(10.0e6, // Plateau rate
@@ -148,7 +148,7 @@ public class ProductionProfileGenerator implements Serializable {
    * <p>
    * Exponential decline assumes a constant percentage decline per time period:
    * </p>
-   * 
+   *
    * <pre>
    * q(t) = qi * e ^ (-Di * t)
    * </pre>
@@ -206,7 +206,7 @@ public class ProductionProfileGenerator implements Serializable {
    * <p>
    * Hyperbolic decline uses the Arps equation with 0 &lt; b &lt; 1:
    * </p>
-   * 
+   *
    * <pre>
    * q(t) = qi / (1 + b * Di * t) ^ (1 / b)
    * </pre>
@@ -274,7 +274,7 @@ public class ProductionProfileGenerator implements Serializable {
    * <p>
    * Harmonic decline is a special case of hyperbolic decline with b = 1:
    * </p>
-   * 
+   *
    * <pre>
    * q(t) = qi / (1 + Di * t)
    * </pre>

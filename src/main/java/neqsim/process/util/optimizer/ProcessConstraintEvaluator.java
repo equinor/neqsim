@@ -30,18 +30,18 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Example Usage</strong>
  * </p>
- * 
+ *
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(processSystem);
- * 
+ *
  * // Evaluate all constraints
  * ConstraintEvaluationResult result = evaluator.evaluate();
  * System.out.println("Bottleneck: " + result.getBottleneckEquipment());
  * System.out.println("Utilization: " + result.getOverallUtilization());
- * 
+ *
  * // Calculate sensitivities
  * Map&lt;String, Double&gt; sensitivities = evaluator.calculateFlowSensitivities(5000.0, "kg/hr");
- * 
+ *
  * // Estimate max flow
  * double maxFlow = evaluator.estimateMaxFlow(5000.0, "kg/hr");
  * </pre>

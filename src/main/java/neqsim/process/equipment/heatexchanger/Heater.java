@@ -248,6 +248,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    *
    * @param pressure Pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     setOutPressure = true;
     this.pressureUnit = "bara";
@@ -269,6 +270,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    *
    * @param temperature Temperature in Kelvin
    */
+  @Override
   public void setOutletTemperature(double temperature) {
     setTemperature = true;
     setEnergyInput = false;
@@ -284,6 +286,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * @param temperature Temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double temperature) {
     setOutletTemperature(temperature);

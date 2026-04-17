@@ -22,6 +22,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60534 {
 
+  private static final long serialVersionUID = 1L;
   // === Additional IEC 60534 Constants from 'fluids' library ===
   /** Constant related to valve geometry for Reynolds number calculation. Units: mm. */
   private static final double N2 = 1.6E-3;
@@ -47,7 +48,6 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    * </p>
    */
   public ControlValveSizing_IEC_60534_full() {
-    super();
   }
 
   /**

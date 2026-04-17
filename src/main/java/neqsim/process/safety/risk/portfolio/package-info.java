@@ -25,7 +25,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * PortfolioRiskAnalyzer analyzer = new PortfolioRiskAnalyzer("North Sea Portfolio");
  *

@@ -25,7 +25,7 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * BatchConceptRunner runner = new BatchConceptRunner();
  * runner.addConcept(concept1);

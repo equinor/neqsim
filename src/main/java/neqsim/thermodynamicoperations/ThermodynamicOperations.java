@@ -45,6 +45,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
 import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyFlashInterface;
@@ -1966,6 +1967,47 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
       // throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
+    }
+  }
+
+  /**
+   * Computes the capillary dew point temperature at the current system pressure.
+   *
+   * <p>
+   * The capillary dew point accounts for the Young-Laplace pressure difference across the curved
+   * gas-liquid interface in a pore or capillary. This shifts the dew point to a higher temperature
+   * than the bulk (flat-interface) dew point.
+   * </p>
+   *
+   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   */
+  public void capillaryDewPointTemperatureFlash(double poreRadiusM) throws IsNaNException {
+    ConstantDutyFlashInterface operation = new CapillaryDewPointFlash(system, poreRadiusM);
+    operation.run();
+    if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "capillaryDewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
+    }
+  }
+
+  /**
+   * Computes the capillary dew point temperature with a specified contact angle.
+   *
+   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @param contactAngleRad the contact angle in radians (0 = perfect wetting)
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   */
+  public void capillaryDewPointTemperatureFlash(double poreRadiusM, double contactAngleRad)
+      throws IsNaNException {
+    ConstantDutyFlashInterface operation =
+        new CapillaryDewPointFlash(system, poreRadiusM, contactAngleRad);
+    operation.run();
+    if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "capillaryDewPointTemperatureFlash",
       // "Could not find solution - possible no dew point exists");
     }
   }

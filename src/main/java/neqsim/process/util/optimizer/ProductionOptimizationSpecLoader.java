@@ -34,7 +34,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * <strong>YAML Format Specification:</strong>
  * </p>
- * 
+ *
  * <pre>
  * scenarios:
  *   - name: "Scenario1"
@@ -87,31 +87,31 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * <strong>Java Usage Example:</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * // 1. Build process and create registries
  * ProcessSystem process = new ProcessSystem();
  * // ... add equipment ...
  * process.run();
- * 
+ *
  * StreamInterface feed = (StreamInterface) process.getUnit("feed");
- * 
+ *
  * // 2. Create mapping registries
  * Map<String, ProcessSystem> processes = new HashMap<>();
  * processes.put("myProcess", process);
- * 
+ *
  * Map<String, StreamInterface> feeds = new HashMap<>();
  * feeds.put("myFeed", feed);
- * 
+ *
  * Map<String, ToDoubleFunction<ProcessSystem>> metrics = new HashMap<>();
  * metrics.put("throughputMetric", p -> p.getUnit("outlet").getFlowRate("kg/hr"));
  * metrics.put("powerMetric", p -> ((Compressor) p.getUnit("comp")).getPower("kW"));
- * 
+ *
  * // 3. Load and run scenarios
  * Path specFile = Paths.get("optimization_scenarios.yaml");
  * List<ScenarioRequest> scenarios =
  *     ProductionOptimizationSpecLoader.load(specFile, processes, feeds, metrics);
- * 
+ *
  * ProductionOptimizer optimizer = new ProductionOptimizer();
  * for (ScenarioRequest scenario : scenarios) {
  *   OptimizationResult result = optimizer.optimizeScenario(scenario);
@@ -122,7 +122,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * <strong>Python Usage Example (via JPype):</strong>
  * </p>
- * 
+ *
  * <pre>
  * from neqsim.neqsimpython import jneqsim
  * from jpype import JImplements, JOverride

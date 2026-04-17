@@ -18,15 +18,15 @@ package neqsim.mcp.runners;
  *   public String name() {
  *     return "my_custom_analysis";
  *   }
- * 
+ *
  *   public String description() {
  *     return "Runs custom corrosion analysis";
  *   }
- * 
+ *
  *   public String inputSchema() {
  *     return "{\"type\":\"object\",\"properties\":{...}}";
  *   }
- * 
+ *
  *   public String run(String json) {
  *     // Parse JSON, do calculation, return result JSON
  *   }

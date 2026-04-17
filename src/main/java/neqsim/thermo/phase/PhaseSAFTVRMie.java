@@ -1967,12 +1967,12 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double dVSI = dVneq * 1.0e-5;
     double F0 = F_ASSOC_SAFT();
 
-    PhaseSAFTVRMie clonePlus = (PhaseSAFTVRMie) this.clone();
+    PhaseSAFTVRMie clonePlus = this.clone();
     clonePlus.setMolarVolume(vm + dvm);
     clonePlus.volInit();
     double FPlus = clonePlus.F_ASSOC_SAFT();
 
-    PhaseSAFTVRMie cloneMinus = (PhaseSAFTVRMie) this.clone();
+    PhaseSAFTVRMie cloneMinus = this.clone();
     cloneMinus.setMolarVolume(vm - dvm);
     cloneMinus.volInit();
     double FMinus = cloneMinus.F_ASSOC_SAFT();

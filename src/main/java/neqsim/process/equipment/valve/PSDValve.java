@@ -7,12 +7,12 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
  * Process Shutdown (PSD) Valve that automatically closes on High-High Alarm (PAHH).
- * 
+ *
  * <p>
  * A PSD valve is a fast-acting isolation valve that provides emergency shutdown protection. It
  * monitors a pressure transmitter and closes rapidly when a High-High (HIHI) alarm is triggered,
  * preventing overpressure conditions from propagating through the process.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -21,21 +21,21 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <li>Manual reset capability after alarm clears</li>
  * <li>Trip state tracking for safety interlock logic</li>
  * </ul>
- * 
+ *
  * <p>
  * Typical usage:
- * 
+ *
  * <pre>
  * // Create pressure transmitter with alarm configuration
  * PressureTransmitter PT = new PressureTransmitter("PT-101", separatorInlet);
  * PT.setAlarmConfig(
  *     AlarmConfig.builder().highHighLimit(55.0).deadband(1.0).delay(0.5).unit("bara").build());
- * 
+ *
  * // Create PSD valve linked to transmitter
  * PSDValve psdValve = new PSDValve("PSD-101", feedStream);
  * psdValve.linkToPressureTransmitter(PT);
  * psdValve.setClosureTime(2.0); // 2 seconds fast closure
- * 
+ *
  * // In dynamic simulation loop
  * system.runTransient(dt, UUID.randomUUID());
  * // Valve automatically closes if PT-101 goes into HIHI alarm
@@ -123,7 +123,7 @@ public class PSDValve extends ThrottlingValve {
 
   /**
    * Resets the trip state, allowing valve to be reopened.
-   * 
+   *
    * <p>
    * In real operations, this would require operator action and verification that the alarm
    * condition has cleared. The valve will not automatically reopen after reset - it must be
@@ -154,7 +154,7 @@ public class PSDValve extends ThrottlingValve {
 
   /**
    * Performs dynamic simulation step with automatic trip logic.
-   * 
+   *
    * <p>
    * This method overrides the base class to add HIHI alarm monitoring. If the linked pressure
    * transmitter reports a HIHI alarm and trip is enabled, the valve will automatically command
@@ -200,7 +200,7 @@ public class PSDValve extends ThrottlingValve {
 
   /**
    * Overrides setPercentValveOpening to prevent opening when tripped.
-   * 
+   *
    * <p>
    * If the valve has tripped, it cannot be opened until reset() is called. This prevents
    * inadvertent reopening during an alarm condition.

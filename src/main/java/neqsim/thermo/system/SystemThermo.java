@@ -1728,6 +1728,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /** {@inheritDoc} */
+  @Override
   public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint) {
     double TB = boilingPoint;
 
@@ -1798,6 +1799,7 @@ public abstract class SystemThermo implements SystemInterface {
    *
    * Calculates molar mass from density and boiling point
    */
+  @Override
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint) {
     double TB = boilingPoint;
 

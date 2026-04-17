@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionOptimizer;
 
@@ -65,7 +64,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * WellScheduler scheduler = new WellScheduler(reservoir, facility);
  *

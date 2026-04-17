@@ -389,6 +389,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM line items as maps
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
@@ -541,6 +542,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    *
    * @param efficiency joint efficiency (0.0 to 1.0)
    */
+  @Override
   public void setJointEfficiency(double efficiency) {
     this.jointEfficiency = efficiency;
   }

@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ControlValveSizing implements ControlValveSizingInterface, Serializable {
 
+  private static final long serialVersionUID = 1L;
   ValveMechanicalDesign valveMechanicalDesign = null;
 
   /**
@@ -66,11 +67,13 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    *
    * @return a double
    */
+  @Override
   public double getxT() {
     return xT;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setxT(double xT) {
     this.xT = xT;
   }
@@ -82,16 +85,19 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    *
    * @return a boolean
    */
+  @Override
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
 
   /** {@inheritDoc} */
+  @Override
   public Map<String, Object> calcValveSize(double percentOpening) {
     ThrottlingValve valve = (ThrottlingValve) valveMechanicalDesign.getProcessEquipment();
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
@@ -203,6 +209,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * inlet/outlet streams.
    * </p>
    */
+  @Override
   public double calculateFlowRateFromValveOpening(double actualKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateMolarFlow(actualKv, inletStream, outletStream);
@@ -283,6 +290,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * streams.
    * </p>
    */
+  @Override
   public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
       StreamInterface inletStream, StreamInterface outletStream) {
     if (actualKv <= 0) {
@@ -336,6 +344,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
    * </p>
    */
+  @Override
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     return calculateOutletPressure(actualKv, inletStream);
   }

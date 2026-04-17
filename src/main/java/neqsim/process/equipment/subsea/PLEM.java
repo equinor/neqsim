@@ -311,6 +311,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public PLEMMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new PLEMMechanicalDesign(this);
@@ -321,6 +322,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new PLEMMechanicalDesign(this);
   }
@@ -494,6 +496,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
    *
    * @return list of inlet streams
    */
+  @Override
   public List<StreamInterface> getInletStreams() {
     return inletStreams;
   }

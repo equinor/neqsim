@@ -108,7 +108,7 @@ public class LNGSloshingModel implements Serializable {
    * The mixing factor enhances inter-layer diffusion and is applied as a multiplier to the
    * effective diffusion coefficient. The factor depends on wave height and fill level:
    * </p>
-   * 
+   *
    * <pre>
    * factor = 1 + k * (Hs / Hs_ref) ^ 2 * f(fill)
    * </pre>

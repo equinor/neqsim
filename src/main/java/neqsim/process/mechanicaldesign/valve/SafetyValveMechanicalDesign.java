@@ -273,6 +273,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private class GasSizingStrategy implements SafetyValveSizingStrategy {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double calculateOrificeArea(SizingContext context) {
       if (context.scenario.getSizingStandard() == SizingStandard.ISO_4126) {
@@ -289,6 +291,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private class LiquidSizingStrategy implements SafetyValveSizingStrategy {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double calculateOrificeArea(SizingContext context) {
       double kd = context.dischargeCoefficient;
@@ -300,6 +304,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private class MultiphaseSizingStrategy implements SafetyValveSizingStrategy {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double calculateOrificeArea(SizingContext context) {
       double kd = context.dischargeCoefficient;
@@ -311,6 +317,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private class FireCaseSizingStrategy extends GasSizingStrategy {
+    private static final long serialVersionUID = 1L;
     private static final double FIRE_MARGIN_FACTOR = 1.1;
 
     @Override

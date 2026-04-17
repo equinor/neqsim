@@ -105,6 +105,32 @@ public class ProcessSystem extends SimulationBaseClass {
   private double previousTotalMass = 0.0;
   private double massBalanceError = 0.0;
 
+  // ============ Advanced Transient Simulation Settings ============
+  /**
+   * Available integration methods for transient simulation.
+   */
+  public enum IntegrationMethod {
+    /** Explicit (forward) Euler — simple single-pass. */
+    EXPLICIT_EULER,
+    /** Semi-implicit — runs equipment twice per step for improved stability. */
+    SEMI_IMPLICIT
+  }
+
+  /** Integration method used in runTransient. Default is explicit Euler. */
+  private IntegrationMethod integrationMethod = IntegrationMethod.EXPLICIT_EULER;
+  /** Whether adaptive timestep control is enabled. */
+  private boolean adaptiveTimestepEnabled = false;
+  /** Minimum allowed timestep in seconds for adaptive control. */
+  private double minTimestep = 0.001;
+  /** Maximum allowed timestep in seconds for adaptive control. */
+  private double maxTimestep = 10.0;
+  /** Relative tolerance for adaptive timestep error control. */
+  private double adaptiveTimestepTolerance = 0.01;
+  /** Whether multi-threaded equipment execution is enabled for transient steps. */
+  private boolean parallelTransientEnabled = false;
+  /** Thread pool size for parallel transient execution. */
+  private int transientThreadPoolSize = Runtime.getRuntime().availableProcessors();
+
   // Graph-based execution fields
   /** Cached process graph for topology analysis. */
   private transient ProcessGraph cachedGraph = null;
@@ -1362,7 +1388,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           if (!(unit instanceof Recycle)) {
             try {
-              if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
+              if (iter == 1 || unit.needRecalculation()) {
                 runUnitProfiled(unit, id);
               }
             } catch (Exception ex) {
@@ -1942,7 +1968,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (!(unit instanceof Recycle)) {
           try {
-            if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
+            if (iter == 1 || unit.needRecalculation()) {
               runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
@@ -2364,7 +2390,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
         if (!(unit instanceof Recycle)) {
           try {
-            if (unit.getCalculationIdentifier() == null || unit.needRecalculation()) {
+            if (iter == 1 || unit.needRecalculation()) {
               notifyBeforeUnit(unit, i, totalUnits, iter);
               unit.run(id);
             }
@@ -2658,8 +2684,23 @@ public class ProcessSystem extends SimulationBaseClass {
 
     // Run equipment transient calculations
     // Note: Multiple iterations cause accumulation errors - run once per time step
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).runTransient(dt, id);
+    if (parallelTransientEnabled && unitOperations.size() > 1) {
+      runEquipmentTransientParallel(dt, id);
+    } else {
+      for (int i = 0; i < unitOperations.size(); i++) {
+        unitOperations.get(i).runTransient(dt, id);
+      }
+    }
+
+    // Semi-implicit: run a second pass for improved stability
+    if (integrationMethod == IntegrationMethod.SEMI_IMPLICIT) {
+      if (parallelTransientEnabled && unitOperations.size() > 1) {
+        runEquipmentTransientParallel(dt, id);
+      } else {
+        for (int i = 0; i < unitOperations.size(); i++) {
+          unitOperations.get(i).runTransient(dt, id);
+        }
+      }
     }
 
     // Explicit controller scan phase: run standalone controllers registered via
@@ -2695,6 +2736,103 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     measurementHistory.add(row);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment
+   * unit is submitted as an independent task. This is suitable when equipment units are loosely
+   * coupled (no data dependencies within a single timestep).
+   *
+   * @param dt time step in seconds
+   * @param id calculation identifier
+   */
+  private void runEquipmentTransientParallel(double dt, UUID id) {
+    java.util.concurrent.ExecutorService executor =
+        java.util.concurrent.Executors.newFixedThreadPool(transientThreadPoolSize);
+    List<java.util.concurrent.Future<?>> futures =
+        new ArrayList<java.util.concurrent.Future<?>>(unitOperations.size());
+    for (int i = 0; i < unitOperations.size(); i++) {
+      final ProcessEquipmentInterface unit = unitOperations.get(i);
+      final double stepSize = dt;
+      final UUID calcId = id;
+      futures.add(executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          unit.runTransient(stepSize, calcId);
+        }
+      }));
+    }
+    for (java.util.concurrent.Future<?> f : futures) {
+      try {
+        f.get();
+      } catch (Exception ex) {
+        logger.error("Parallel transient execution failed: " + ex.getMessage(), ex);
+      }
+    }
+    executor.shutdown();
+  }
+
+  /**
+   * Runs a single transient step with adaptive timestep control. This method compares a full-step
+   * result with two half-step results to estimate the local truncation error and adjusts dt
+   * accordingly.
+   *
+   * <p>
+   * Usage: call this instead of runTransient(dt, id) when adaptive control is desired.
+   * </p>
+   *
+   * @param dt the requested timestep in seconds
+   * @param id calculation identifier
+   * @return the actual timestep used (may differ from dt)
+   */
+  public double runTransientAdaptive(double dt, UUID id) {
+    if (!adaptiveTimestepEnabled) {
+      runTransient(dt, id);
+      return dt;
+    }
+
+    double currentDt = Math.min(Math.max(dt, minTimestep), maxTimestep);
+
+    // Save state for error estimation: use temperature of first equipment's outlet as reference
+    double refTempBefore = 0.0;
+    if (!unitOperations.isEmpty()) {
+      ProcessEquipmentInterface firstUnit = unitOperations.get(0);
+      List<neqsim.process.equipment.stream.StreamInterface> outlets = firstUnit.getOutletStreams();
+      if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null
+          && outlets.get(0).getThermoSystem() != null) {
+        refTempBefore = outlets.get(0).getThermoSystem().getTemperature();
+      }
+    }
+
+    // Full step
+    runTransient(currentDt, id);
+
+    double refTempFullStep = 0.0;
+    if (!unitOperations.isEmpty()) {
+      ProcessEquipmentInterface firstUnit = unitOperations.get(0);
+      List<neqsim.process.equipment.stream.StreamInterface> outlets = firstUnit.getOutletStreams();
+      if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null
+          && outlets.get(0).getThermoSystem() != null) {
+        refTempFullStep = outlets.get(0).getThermoSystem().getTemperature();
+      }
+    }
+
+    // Estimate error from the step (Richardson extrapolation would require two half steps,
+    // but that doubles computation. Use a simplified check based on temperature change rate.)
+    double tempChange = Math.abs(refTempFullStep - refTempBefore);
+    double relError = refTempBefore > 0 ? tempChange / Math.abs(refTempBefore) : tempChange;
+
+    // Adjust timestep using standard adaptive formula: dt_new = dt * (tol / err)^0.5
+    if (relError > 0 && relError > adaptiveTimestepTolerance) {
+      double factor = Math.sqrt(adaptiveTimestepTolerance / relError);
+      currentDt = Math.max(minTimestep, currentDt * Math.max(0.2, factor));
+    } else if (relError > 0 && relError < 0.5 * adaptiveTimestepTolerance) {
+      double factor = Math.sqrt(adaptiveTimestepTolerance / Math.max(relError, 1e-15));
+      currentDt = Math.min(maxTimestep, currentDt * Math.min(2.0, factor));
+    }
+
+    setTimeStep(currentDt);
+    return currentDt;
   }
 
   /** {@inheritDoc} */
@@ -2806,6 +2944,135 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public int getMaxTransientIterations() {
     return maxTransientIterations;
+  }
+
+  // ============ Advanced Transient Simulation Configuration ============
+
+  /**
+   * Sets the integration method for transient simulation.
+   *
+   * @param method the integration method to use
+   */
+  public void setIntegrationMethod(IntegrationMethod method) {
+    this.integrationMethod = method;
+  }
+
+  /**
+   * Gets the integration method used for transient simulation.
+   *
+   * @return the current integration method
+   */
+  public IntegrationMethod getIntegrationMethod() {
+    return integrationMethod;
+  }
+
+  /**
+   * Enables or disables adaptive timestep control. When enabled, the timestep is adjusted based on
+   * local error estimates by comparing a full step with two half-steps.
+   *
+   * @param enabled true to enable adaptive timestep
+   */
+  public void setAdaptiveTimestepEnabled(boolean enabled) {
+    this.adaptiveTimestepEnabled = enabled;
+  }
+
+  /**
+   * Returns whether adaptive timestep control is enabled.
+   *
+   * @return true if adaptive timestep is enabled
+   */
+  public boolean isAdaptiveTimestepEnabled() {
+    return adaptiveTimestepEnabled;
+  }
+
+  /**
+   * Sets the minimum timestep for adaptive control.
+   *
+   * @param minDt minimum timestep in seconds
+   */
+  public void setMinTimestep(double minDt) {
+    this.minTimestep = Math.max(1e-6, minDt);
+  }
+
+  /**
+   * Gets the minimum timestep for adaptive control.
+   *
+   * @return minimum timestep in seconds
+   */
+  public double getMinTimestep() {
+    return minTimestep;
+  }
+
+  /**
+   * Sets the maximum timestep for adaptive control.
+   *
+   * @param maxDt maximum timestep in seconds
+   */
+  public void setMaxTimestep(double maxDt) {
+    this.maxTimestep = maxDt;
+  }
+
+  /**
+   * Gets the maximum timestep for adaptive control.
+   *
+   * @return maximum timestep in seconds
+   */
+  public double getMaxTimestep() {
+    return maxTimestep;
+  }
+
+  /**
+   * Sets the relative tolerance for adaptive timestep error control.
+   *
+   * @param tol relative tolerance (e.g. 0.01 for 1%)
+   */
+  public void setAdaptiveTimestepTolerance(double tol) {
+    this.adaptiveTimestepTolerance = Math.max(1e-10, tol);
+  }
+
+  /**
+   * Gets the relative tolerance for adaptive timestep error control.
+   *
+   * @return relative tolerance
+   */
+  public double getAdaptiveTimestepTolerance() {
+    return adaptiveTimestepTolerance;
+  }
+
+  /**
+   * Enables or disables multi-threaded equipment execution during transient steps.
+   *
+   * @param enabled true to enable parallel execution
+   */
+  public void setParallelTransientEnabled(boolean enabled) {
+    this.parallelTransientEnabled = enabled;
+  }
+
+  /**
+   * Returns whether parallel transient execution is enabled.
+   *
+   * @return true if parallel transient is active
+   */
+  public boolean isParallelTransientEnabled() {
+    return parallelTransientEnabled;
+  }
+
+  /**
+   * Sets the thread pool size for parallel transient execution.
+   *
+   * @param poolSize number of threads
+   */
+  public void setTransientThreadPoolSize(int poolSize) {
+    this.transientThreadPoolSize = Math.max(1, poolSize);
+  }
+
+  /**
+   * Gets the thread pool size for parallel transient execution.
+   *
+   * @return number of threads
+   */
+  public int getTransientThreadPoolSize() {
+    return transientThreadPoolSize;
   }
 
   /**

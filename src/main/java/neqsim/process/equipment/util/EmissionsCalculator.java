@@ -3,7 +3,6 @@ package neqsim.process.equipment.util;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -56,17 +55,17 @@ import neqsim.thermo.system.SystemInterface;
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Calculate emissions from a separator gas outlet
  * EmissionsCalculator calc = new EmissionsCalculator(separator.getGasOutStream());
  * calc.calculate();
- * 
+ *
  * System.out.println("CO2: " + calc.getCO2EmissionRate("kg/hr") + " kg/hr");
  * System.out.println("Methane: " + calc.getMethaneEmissionRate("kg/hr") + " kg/hr");
  * System.out.println("CO2 equivalents: " + calc.getCO2Equivalents("tonnes/year") + " t/yr");
- * 
+ *
  * // Compare with conventional method
  * double conventionalCH4 = EmissionsCalculator.calculateConventionalCH4(waterVol, dP);
  * System.out.println("Conventional method gives: " + conventionalCH4 + " kg");
@@ -772,7 +771,6 @@ public class EmissionsCalculator implements Serializable {
         int carbonNum = Integer.parseInt(name.replaceAll("[^0-9]", "").substring(0, 1));
         return carbonNum >= 6;
       } catch (Exception e) {
-        return false;
       }
     }
     return false;

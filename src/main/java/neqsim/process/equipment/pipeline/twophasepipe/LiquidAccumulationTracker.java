@@ -265,7 +265,7 @@ public class LiquidAccumulationTracker implements Serializable {
 
   /**
    * Distribute accumulated liquid among sections in the zone.
-   * 
+   *
    * <p>
    * This method now ACTUALLY updates the section holdups, not just a separate tracking variable.
    * This is critical for terrain-induced slug formation.

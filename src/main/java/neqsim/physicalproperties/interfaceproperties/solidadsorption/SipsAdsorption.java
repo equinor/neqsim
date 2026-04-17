@@ -66,7 +66,6 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Default constructor.
    */
   public SipsAdsorption() {
-    super();
   }
 
   /**

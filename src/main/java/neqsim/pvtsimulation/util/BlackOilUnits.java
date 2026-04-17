@@ -13,7 +13,7 @@ public enum BlackOilUnits {
 
   /**
    * Field units (US oilfield standard).
-   * 
+   *
    * <ul>
    * <li>Pressure: psia</li>
    * <li>Temperature: °F</li>
@@ -27,7 +27,7 @@ public enum BlackOilUnits {
 
   /**
    * SI/Metric units.
-   * 
+   *
    * <ul>
    * <li>Pressure: bara</li>
    * <li>Temperature: °C</li>
@@ -41,7 +41,7 @@ public enum BlackOilUnits {
 
   /**
    * NeqSim internal units.
-   * 
+   *
    * <ul>
    * <li>Pressure: bara</li>
    * <li>Temperature: K</li>

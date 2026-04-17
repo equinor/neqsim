@@ -14,7 +14,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Run all examples
  * RiskFrameworkQuickStart.main(new String[] {});

@@ -22,14 +22,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * Typical usage:
- * 
+ *
  * <pre>
  * MultiStageSeparatorTest sepTest = new MultiStageSeparatorTest(reservoirFluid);
  * sepTest.addSeparatorStage(50.0, 40.0); // HP separator: 50 bara, 40°C
  * sepTest.addSeparatorStage(10.0, 30.0); // LP separator: 10 bara, 30°C
  * sepTest.addSeparatorStage(1.01325, 15.0); // Stock tank: 1 atm, 15°C
  * sepTest.run();
- * 
+ *
  * System.out.println("Total GOR: " + sepTest.getTotalGOR() + " Sm3/Sm3");
  * System.out.println("Bo: " + sepTest.getBo() + " m3/Sm3");
  * System.out.println("API: " + sepTest.getStockTankAPIGravity());

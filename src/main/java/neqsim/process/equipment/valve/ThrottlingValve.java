@@ -53,6 +53,18 @@ public class ThrottlingValve extends TwoPortEquipment
   private double valveClosingTravelTimeSec = Double.NaN;
   private double valveTimeConstantSec = 0.0;
   private ValveTravelModel travelModel = ValveTravelModel.NONE;
+  /** Valve deadband in percent — signal changes smaller than this are ignored. */
+  private double valveDeadband = 0.0;
+  /** Valve stiction band in percent — valve sticks until force overcomes this threshold. */
+  private double valveStiction = 0.0;
+  /** Hysteresis band in percent — position offset between increasing/decreasing signal. */
+  private double valveHysteresis = 0.0;
+  /** Last direction the valve moved: +1 = opening, -1 = closing, 0 = initial. */
+  private int lastMoveDirection = 0;
+  /** Whether the valve is currently stuck due to stiction. */
+  private boolean isStuck = true;
+  /** The valve position when it last became stuck. */
+  private double stuckPosition = Double.NaN;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
@@ -171,6 +183,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
     this.pressure = pressure;
@@ -252,10 +265,6 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    // Skip full initProperties() - the clone already has valid thermodynamic state from the
-    // inlet stream (which was fully initialized by upstream equipment). Physical properties
-    // (viscosity, thermal conductivity) are not needed before the flash. Only re-validate
-    // thermodynamic properties via init(2) for safety.
     thermoSystem.init(2);
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
@@ -265,9 +274,11 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     if (!valveKvSet) {
+      thermoSystem.initPhysicalProperties("density");
       calcKv();
       valveKvSet = true;
     }
+    // inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -354,7 +365,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -431,7 +442,6 @@ public class ThrottlingValve extends TwoPortEquipment
       if (flow > minimumMolarFlow) {
         return flow;
       }
-      return 0.0;
     }
     return 0.0;
   }
@@ -491,37 +501,77 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   private double applyTravelDynamics(double current, double target, double dt) {
+    // Step 1: Apply deadband — ignore small signal changes
+    double effectiveTarget = target;
+    if (valveDeadband > 0.0 && Math.abs(target - current) < valveDeadband) {
+      effectiveTarget = current;
+    }
+
+    // Step 2: Apply stiction — valve sticks until force exceeds stiction band
+    if (valveStiction > 0.0) {
+      if (Double.isNaN(stuckPosition)) {
+        stuckPosition = current;
+        isStuck = true;
+      }
+      if (isStuck) {
+        if (Math.abs(effectiveTarget - stuckPosition) >= valveStiction) {
+          isStuck = false;
+          // Valve breaks free — jump to target
+        } else {
+          effectiveTarget = stuckPosition;
+        }
+      } else {
+        // Valve is moving — check if it should re-stick
+        if (Math.abs(effectiveTarget - current) < valveStiction * 0.1) {
+          isStuck = true;
+          stuckPosition = current;
+          effectiveTarget = current;
+        }
+      }
+    }
+
+    // Step 3: Apply hysteresis — offset position based on direction
+    if (valveHysteresis > 0.0 && Math.abs(effectiveTarget - current) > 1e-12) {
+      int direction = effectiveTarget > current ? 1 : -1;
+      if (direction != lastMoveDirection && lastMoveDirection != 0) {
+        // Direction reversal — apply half hysteresis band as offset
+        effectiveTarget = effectiveTarget - direction * valveHysteresis / 2.0;
+      }
+      lastMoveDirection = direction;
+    }
+
+    // Step 4: Apply rate limiting / lag as before
     if (travelModel == null || travelModel == ValveTravelModel.NONE) {
-      return target;
+      return effectiveTarget;
     }
 
     double effectiveDt = Math.max(0.0, dt);
     switch (travelModel) {
       case LINEAR_RATE_LIMIT:
-        double delta = target - current;
+        double delta = effectiveTarget - current;
         if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double travelTime =
             delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
         if (travelTime <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double maxRate = 100.0 / travelTime;
         double maxChange = maxRate * effectiveDt;
         if (Math.abs(delta) <= maxChange) {
-          return target;
+          return effectiveTarget;
         }
         return current + Math.copySign(maxChange, delta);
       case FIRST_ORDER_LAG:
         double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
         if (tau <= 0.0 || effectiveDt <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double alpha = 1.0 - Math.exp(-effectiveDt / tau);
-        return current + alpha * (target - current);
+        return current + alpha * (effectiveTarget - current);
       default:
-        return target;
+        return effectiveTarget;
     }
   }
 
@@ -570,6 +620,62 @@ public class ThrottlingValve extends TwoPortEquipment
    */
   public double getMaximumValveOpening() {
     return maxValveOpening;
+  }
+
+  /**
+   * Sets the valve deadband in percent. Signal changes smaller than this are ignored.
+   *
+   * @param deadband deadband in percent (0 to 100)
+   */
+  public void setValveDeadband(double deadband) {
+    this.valveDeadband = Math.max(0.0, deadband);
+  }
+
+  /**
+   * Gets the valve deadband in percent.
+   *
+   * @return deadband in percent
+   */
+  public double getValveDeadband() {
+    return valveDeadband;
+  }
+
+  /**
+   * Sets the valve stiction band in percent. The valve sticks until the requested change exceeds
+   * this threshold, then jumps to the target position.
+   *
+   * @param stiction stiction band in percent (0 to 100)
+   */
+  public void setValveStiction(double stiction) {
+    this.valveStiction = Math.max(0.0, stiction);
+  }
+
+  /**
+   * Gets the valve stiction band in percent.
+   *
+   * @return stiction band in percent
+   */
+  public double getValveStiction() {
+    return valveStiction;
+  }
+
+  /**
+   * Sets the valve hysteresis band in percent. This models the positional offset between increasing
+   * and decreasing signal directions.
+   *
+   * @param hysteresis hysteresis band in percent (0 to 100)
+   */
+  public void setValveHysteresis(double hysteresis) {
+    this.valveHysteresis = Math.max(0.0, hysteresis);
+  }
+
+  /**
+   * Gets the valve hysteresis band in percent.
+   *
+   * @return hysteresis band in percent
+   */
+  public double getValveHysteresis() {
+    return valveHysteresis;
   }
 
   /**

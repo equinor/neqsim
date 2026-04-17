@@ -22,7 +22,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * // Get a pressure vessel standard
  * DesignStandard pvStandard =

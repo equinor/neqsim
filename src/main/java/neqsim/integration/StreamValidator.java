@@ -7,7 +7,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Validators for process streams (StreamInterface).
- * 
+ *
  * <p>
  * Checks:
  * <ul>

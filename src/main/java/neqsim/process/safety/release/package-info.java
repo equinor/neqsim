@@ -23,18 +23,18 @@
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * SystemInterface gas = new SystemSrkEos(300.0, 50.0);
  * gas.addComponent("methane", 1.0);
  * gas.setMixingRule("classic");
  * gas.init(0);
  * gas.init(1);
- * 
+ *
  * LeakModel leak = LeakModel.builder().fluid(gas).holeDiameter(0.025) // 25mm hole
  *     .vesselVolume(10.0) // 10 m³
  *     .scenarioName("HP Separator Leak").build();
- * 
+ *
  * SourceTermResult result = leak.calculateSourceTerm(300.0, 1.0); // 5 minutes
  * System.out.println("Peak flow: " + result.getPeakMassFlowRate() + " kg/s");
  * System.out.println("Total released: " + result.getTotalMassReleased() + " kg");

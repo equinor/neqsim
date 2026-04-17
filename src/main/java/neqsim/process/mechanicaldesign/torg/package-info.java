@@ -43,7 +43,7 @@
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Create TORG manually
  * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
@@ -67,7 +67,7 @@
  * The CSV data source supports a standards-focused format where each row defines one standard
  * assignment:
  * </p>
- * 
+ *
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,DESIGN_CATEGORY,STANDARD_CODE,VERSION
  * PROJ-001,Platform A,Equinor,pressure vessel design code,ASME-VIII-Div1,2021

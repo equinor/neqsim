@@ -33,7 +33,7 @@ import com.google.gson.JsonParser;
  * <p>
  * Usage example:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // For individual equipment

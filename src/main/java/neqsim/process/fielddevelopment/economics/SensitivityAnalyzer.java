@@ -26,21 +26,21 @@ import java.util.Random;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Set up base case engine
  * CashFlowEngine baseCase = new CashFlowEngine("NO");
  * baseCase.setCapex(800, 2025);
  * baseCase.setOilPrice(75.0);
  * // ... configure production, etc.
- * 
+ *
  * // Create analyzer
  * SensitivityAnalyzer analyzer = new SensitivityAnalyzer(baseCase, 0.08);
- * 
+ *
  * // Tornado analysis (±20% variation)
  * TornadoResult tornado = analyzer.tornadoAnalysis(0.20);
  * System.out.println(tornado.toMarkdownTable());
- * 
+ *
  * // Monte Carlo simulation
  * analyzer.setOilPriceDistribution(60.0, 90.0); // Uniform distribution
  * analyzer.setCapexDistribution(700, 900);

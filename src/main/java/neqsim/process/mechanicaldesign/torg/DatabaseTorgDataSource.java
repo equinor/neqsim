@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <h2>TORG_Projects table</h2>
- * 
+ *
  * <pre>
  * CREATE TABLE TORG_Projects (
  *   PROJECT_ID VARCHAR(50) PRIMARY KEY,
@@ -40,7 +40,7 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <h2>TORG_Standards table</h2>
- * 
+ *
  * <pre>
  * CREATE TABLE TORG_Standards (
  *   PROJECT_ID VARCHAR(50),

@@ -186,7 +186,7 @@ public final class NeqSimThreadPool {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * CompletionService<Double> cs = NeqSimThreadPool.newCompletionService();

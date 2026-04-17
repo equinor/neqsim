@@ -536,6 +536,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public SubseaManifoldMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new SubseaManifoldMechanicalDesign(this);
@@ -546,6 +547,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaManifoldMechanicalDesign(this);
   }

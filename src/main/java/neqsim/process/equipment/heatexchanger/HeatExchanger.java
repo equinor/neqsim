@@ -115,6 +115,31 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** Cached UA value for needRecalculation check. */
   private double lastUAvalue = 0.0;
 
+  // Dynamic simulation fields
+  /** Metal wall mass in kg. */
+  private double wallMass = 0.0;
+  /** Metal wall specific heat capacity in J/(kg*K). */
+  private double wallCp = 500.0;
+  /** Metal wall temperature in Kelvin — state variable for dynamic simulation. */
+  private double wallTemperature = Double.NaN;
+  /** Shell-side fluid holdup volume in m3. */
+  private double shellHoldupVolume = 0.0;
+  /** Tube-side fluid holdup volume in m3. */
+  private double tubeHoldupVolume = 0.0;
+  /** Shell-side heat transfer coefficient in W/(m2*K). */
+  private double shellSideHtc = 500.0;
+  /** Tube-side heat transfer coefficient in W/(m2*K). */
+  private double tubeSideHtc = 1000.0;
+  /** Heat transfer area in m2 (for dynamic model). */
+  private double heatTransferArea = 0.0;
+  /** Whether the dynamic heat exchanger model is enabled. */
+  private boolean dynamicModelEnabled = false;
+
+  /** Shell-side fluid temperature in K — state variable for fluid accumulation model. */
+  private double shellFluidTemperature = Double.NaN;
+  /** Tube-side fluid temperature in K — state variable for fluid accumulation model. */
+  private double tubeFluidTemperature = Double.NaN;
+
   /**
    * Constructor for HeatExchanger.
    *
@@ -1479,6 +1504,283 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public void clearCapacityConstraints() {
     hxCapacityConstraints.clear();
+  }
+
+  // ============ Dynamic Simulation Getters/Setters ============
+
+  /**
+   * Gets the metal wall mass used in the dynamic heat exchanger model.
+   *
+   * @return wall mass in kg
+   */
+  public double getWallMass() {
+    return wallMass;
+  }
+
+  /**
+   * Sets the metal wall mass for the dynamic heat exchanger model.
+   *
+   * @param wallMass wall mass in kg (must be non-negative)
+   */
+  public void setWallMass(double wallMass) {
+    this.wallMass = Math.max(0.0, wallMass);
+  }
+
+  /**
+   * Gets the metal wall specific heat capacity.
+   *
+   * @return wall Cp in J/(kg*K)
+   */
+  public double getWallCp() {
+    return wallCp;
+  }
+
+  /**
+   * Sets the metal wall specific heat capacity.
+   *
+   * @param wallCp specific heat in J/(kg*K)
+   */
+  public void setWallCp(double wallCp) {
+    this.wallCp = wallCp;
+  }
+
+  /**
+   * Gets the current metal wall temperature (dynamic state variable).
+   *
+   * @return wall temperature in Kelvin (NaN if not yet initialized)
+   */
+  public double getWallTemperature() {
+    return wallTemperature;
+  }
+
+  /**
+   * Sets the metal wall temperature.
+   *
+   * @param wallTemperature wall temperature in Kelvin
+   */
+  public void setWallTemperature(double wallTemperature) {
+    this.wallTemperature = wallTemperature;
+  }
+
+  /**
+   * Gets the shell-side holdup volume.
+   *
+   * @return shell holdup volume in m3
+   */
+  public double getShellHoldupVolume() {
+    return shellHoldupVolume;
+  }
+
+  /**
+   * Sets the shell-side holdup volume.
+   *
+   * @param shellHoldupVolume volume in m3
+   */
+  public void setShellHoldupVolume(double shellHoldupVolume) {
+    this.shellHoldupVolume = Math.max(0.0, shellHoldupVolume);
+  }
+
+  /**
+   * Gets the tube-side holdup volume.
+   *
+   * @return tube holdup volume in m3
+   */
+  public double getTubeHoldupVolume() {
+    return tubeHoldupVolume;
+  }
+
+  /**
+   * Sets the tube-side holdup volume.
+   *
+   * @param tubeHoldupVolume volume in m3
+   */
+  public void setTubeHoldupVolume(double tubeHoldupVolume) {
+    this.tubeHoldupVolume = Math.max(0.0, tubeHoldupVolume);
+  }
+
+  /**
+   * Gets the shell-side heat transfer coefficient.
+   *
+   * @return heat transfer coefficient in W/(m2*K)
+   */
+  public double getShellSideHtc() {
+    return shellSideHtc;
+  }
+
+  /**
+   * Sets the shell-side heat transfer coefficient.
+   *
+   * @param shellSideHtc heat transfer coefficient in W/(m2*K)
+   */
+  public void setShellSideHtc(double shellSideHtc) {
+    this.shellSideHtc = shellSideHtc;
+  }
+
+  /**
+   * Gets the tube-side heat transfer coefficient.
+   *
+   * @return heat transfer coefficient in W/(m2*K)
+   */
+  public double getTubeSideHtc() {
+    return tubeSideHtc;
+  }
+
+  /**
+   * Sets the tube-side heat transfer coefficient.
+   *
+   * @param tubeSideHtc heat transfer coefficient in W/(m2*K)
+   */
+  public void setTubeSideHtc(double tubeSideHtc) {
+    this.tubeSideHtc = tubeSideHtc;
+  }
+
+  /**
+   * Gets the heat transfer area used in the dynamic model.
+   *
+   * @return heat transfer area in m2
+   */
+  public double getHeatTransferArea() {
+    return heatTransferArea;
+  }
+
+  /**
+   * Sets the heat transfer area for the dynamic model.
+   *
+   * @param heatTransferArea area in m2
+   */
+  public void setHeatTransferArea(double heatTransferArea) {
+    this.heatTransferArea = Math.max(0.0, heatTransferArea);
+  }
+
+  /**
+   * Returns whether the dynamic heat exchanger model is enabled.
+   *
+   * @return true if dynamic model is active
+   */
+  public boolean isDynamicModelEnabled() {
+    return dynamicModelEnabled;
+  }
+
+  /**
+   * Enables or disables the dynamic heat exchanger model. When enabled, the runTransient method
+   * integrates the metal wall energy balance instead of using steady-state calculations.
+   *
+   * @param enabled true to enable
+   */
+  public void setDynamicModelEnabled(boolean enabled) {
+    this.dynamicModelEnabled = enabled;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Dynamic heat exchanger model. When {@code dynamicModelEnabled} is true, integrates the metal
+   * wall energy ODE using forward Euler:
+   * </p>
+   *
+   * <p>
+   * M_wall * Cp_wall * dT_wall/dt = h_shell * A * (T_shell - T_wall) - h_tube * A * (T_wall -
+   * T_tube)
+   * </p>
+   *
+   * <p>
+   * The heat duty to each fluid side is then calculated and applied via enthalpy adjustment.
+   * </p>
+   *
+   * @param dt time step in seconds
+   * @param id calculation identifier
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (!dynamicModelEnabled || wallMass <= 0.0 || heatTransferArea <= 0.0) {
+      super.runTransient(dt, id);
+      return;
+    }
+
+    // Initialize wall temperature on first call to the average of inlet temperatures
+    if (Double.isNaN(wallTemperature)) {
+      double tShellIn = inStream[0].getThermoSystem().getTemperature();
+      double tTubeIn = inStream[1].getThermoSystem().getTemperature();
+      wallTemperature = 0.5 * (tShellIn + tTubeIn);
+    }
+
+    double tShellIn = inStream[0].getThermoSystem().getTemperature();
+    double tTubeIn = inStream[1].getThermoSystem().getTemperature();
+
+    // --- Shell-side fluid accumulation ODE (CSTR model) ---
+    // When shellHoldupVolume > 0, track shell-side fluid temperature as a state
+    // variable. The fluid temperature evolves via mixing with incoming fluid and
+    // heat exchange with the wall. This adds thermal inertia from the fluid mass.
+    double tShellForWall = tShellIn; // default: no holdup → use inlet T
+    if (shellHoldupVolume > 0.0) {
+      if (Double.isNaN(shellFluidTemperature)) {
+        shellFluidTemperature = tShellIn;
+      }
+      double shellRho = inStream[0].getThermoSystem().getDensity("kg/m3");
+      double shellCp = inStream[0].getThermoSystem().getCp("J/kgK");
+      double shellFluidMass = shellRho * shellHoldupVolume;
+      if (shellFluidMass > 0.0 && shellCp > 0.0) {
+        double shellMassFlow = inStream[0].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = shellMassFlow * shellCp * (tShellIn - shellFluidTemperature);
+        double qFluidToWall =
+            shellSideHtc * heatTransferArea * (shellFluidTemperature - wallTemperature);
+        double dTshellFluid = (qInletMixing - qFluidToWall) / (shellFluidMass * shellCp);
+        shellFluidTemperature += dTshellFluid * dt;
+      }
+      tShellForWall = shellFluidTemperature;
+    }
+
+    // --- Tube-side fluid accumulation ODE (CSTR model) ---
+    double tTubeForWall = tTubeIn; // default: no holdup → use inlet T
+    if (tubeHoldupVolume > 0.0) {
+      if (Double.isNaN(tubeFluidTemperature)) {
+        tubeFluidTemperature = tTubeIn;
+      }
+      double tubeRho = inStream[1].getThermoSystem().getDensity("kg/m3");
+      double tubeCp = inStream[1].getThermoSystem().getCp("J/kgK");
+      double tubeFluidMass = tubeRho * tubeHoldupVolume;
+      if (tubeFluidMass > 0.0 && tubeCp > 0.0) {
+        double tubeMassFlow = inStream[1].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = tubeMassFlow * tubeCp * (tTubeIn - tubeFluidTemperature);
+        double qWallToFluid =
+            tubeSideHtc * heatTransferArea * (wallTemperature - tubeFluidTemperature);
+        double dTtubeFluid = (qInletMixing + qWallToFluid) / (tubeFluidMass * tubeCp);
+        tubeFluidTemperature += dTtubeFluid * dt;
+      }
+      tTubeForWall = tubeFluidTemperature;
+    }
+
+    // Metal wall energy balance (forward Euler) — uses fluid temperatures when holdup is active
+    double qShellToWall = shellSideHtc * heatTransferArea * (tShellForWall - wallTemperature);
+    double qWallToTube = tubeSideHtc * heatTransferArea * (wallTemperature - tTubeForWall);
+    double dTwall = (qShellToWall - qWallToTube) / (wallMass * wallCp);
+    wallTemperature += dTwall * dt;
+
+    // Apply duty to each fluid side using PH flash
+    // Shell side loses heat: outlet enthalpy = inlet enthalpy - qShellToWall * dt_effective
+    SystemInterface shellOut = inStream[0].getThermoSystem().clone();
+    double shellInletH = inStream[0].getThermoSystem().getEnthalpy();
+    double shellOutH = shellInletH - qShellToWall;
+    neqsim.thermodynamicoperations.ThermodynamicOperations shellOps =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(shellOut);
+    shellOps.PHflash(shellOutH);
+    outStream[0].setThermoSystem(shellOut);
+    outStream[0].setCalculationIdentifier(id);
+
+    // Tube side gains heat: outlet enthalpy = inlet enthalpy + qWallToTube * dt_effective
+    SystemInterface tubeOut = inStream[1].getThermoSystem().clone();
+    double tubeInletH = inStream[1].getThermoSystem().getEnthalpy();
+    double tubeOutH = tubeInletH + qWallToTube;
+    neqsim.thermodynamicoperations.ThermodynamicOperations tubeOps =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(tubeOut);
+    tubeOps.PHflash(tubeOutH);
+    outStream[1].setThermoSystem(tubeOut);
+    outStream[1].setCalculationIdentifier(id);
+
+    duty = qShellToWall;
+    increaseTime(dt);
+    setCalculationIdentifier(id);
   }
 
   /**
