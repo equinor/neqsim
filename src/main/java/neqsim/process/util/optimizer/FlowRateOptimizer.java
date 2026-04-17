@@ -1065,6 +1065,9 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Checks if any violations are hard violations.
+   *
+   * @param violations the list of constraint violations to check
+   * @return true if any violation is a hard violation
    */
   private boolean hasHardViolations(List<ConstraintViolation> violations) {
     for (ConstraintViolation v : violations) {
@@ -1840,6 +1843,12 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Evaluates ProcessSystem outlet pressure.
+   *
+   * @param flowRate the flow rate value
+   * @param flowRateUnit the unit of the flow rate
+   * @param inletPressure the inlet pressure value
+   * @param pressureUnit the unit of the pressure
+   * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessSystem(double flowRate, String flowRateUnit, double inletPressure,
       String pressureUnit) {
@@ -1863,6 +1872,12 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Evaluates ProcessModel outlet pressure.
+   *
+   * @param flowRate the flow rate value
+   * @param flowRateUnit the unit of the flow rate
+   * @param inletPressure the inlet pressure value
+   * @param pressureUnit the unit of the pressure
+   * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessModel(double flowRate, String flowRateUnit, double inletPressure,
       String pressureUnit) {
@@ -1928,6 +1943,8 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Gets list of all equipment to check for constraints.
+   *
+   * @return list of all process equipment in the current mode
    */
   private List<ProcessEquipmentInterface> getEquipmentList() {
     List<ProcessEquipmentInterface> equipment = new ArrayList<ProcessEquipmentInterface>();

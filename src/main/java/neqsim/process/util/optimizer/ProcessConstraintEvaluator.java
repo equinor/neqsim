@@ -864,6 +864,11 @@ public class ProcessConstraintEvaluator implements Serializable {
 
   /**
    * Gets constraints with caching support.
+   *
+   * @param equipment the process equipment to get constraints for
+   * @param strategy the capacity strategy to use
+   * @param processRunCount the current process run count for cache validation
+   * @return map of constraint name to capacity constraint
    */
   private Map<String, CapacityConstraint> getConstraintsWithCaching(
       ProcessEquipmentInterface equipment, EquipmentCapacityStrategy strategy,

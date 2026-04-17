@@ -318,7 +318,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     // Initialize Broyden accelerator on first call
     if (broyden == null) {
       broyden = new BroydenAccelerator(n);
-      broyden.setDelayIterations(1);
+      broyden.setDelayIterations(2);
       broyden.setRelaxationFactor(0.8);
     } else if (broyden.getDimension() != n) {
       broyden.initialize(n);
@@ -343,26 +343,19 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     // Perform one adjustment step
     iterations++;
 
-    double[] xNew;
-
-    if (iterations <= 2) {
-      // First two iterations: use damped perturbation (like single-variable Adjuster)
-      // This avoids overshoot from the initial unit-Jacobian assumption and provides
-      // the Broyden accelerator with good finite-difference information.
-      double dampingFactor = 0.1;
-      xNew = new double[n];
-      for (int i = 0; i < n; i++) {
-        xNew[i] = x[i] + dampingFactor * residuals[i];
-      }
-    } else {
-      // Subsequent iterations: use Broyden quasi-Newton acceleration
-      // Build fixed-point form: g(x) = x + residuals
-      double[] gx = new double[n];
-      for (int i = 0; i < n; i++) {
-        gx[i] = x[i] + residuals[i];
-      }
-      xNew = broyden.accelerate(x, gx);
+    // Build damped fixed-point form: g(x) = x + alpha * residuals
+    // The damping factor ensures stable initial convergence while preserving
+    // the correct fixed point (g(x*)=x* when residuals=0). Broyden's method
+    // then accelerates convergence by building up a Jacobian approximation
+    // from successive damped steps.
+    double dampingFactor = 0.1;
+    double[] gx = new double[n];
+    for (int i = 0; i < n; i++) {
+      gx[i] = x[i] + dampingFactor * residuals[i];
     }
+
+    // Get Broyden-accelerated next iterate
+    double[] xNew = broyden.accelerate(x, gx);
 
     // Apply bounds clamping
     for (int i = 0; i < n; i++) {
