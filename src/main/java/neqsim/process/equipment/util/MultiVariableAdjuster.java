@@ -340,17 +340,29 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
       return;
     }
 
-    // Perform one Broyden step
+    // Perform one adjustment step
     iterations++;
 
-    // Build fixed-point form: g(x) = x + residuals
-    double[] gx = new double[n];
-    for (int i = 0; i < n; i++) {
-      gx[i] = x[i] + residuals[i];
-    }
+    double[] xNew;
 
-    // Get Broyden-accelerated next iterate
-    double[] xNew = broyden.accelerate(x, gx);
+    if (iterations <= 2) {
+      // First two iterations: use damped perturbation (like single-variable Adjuster)
+      // This avoids overshoot from the initial unit-Jacobian assumption and provides
+      // the Broyden accelerator with good finite-difference information.
+      double dampingFactor = 0.1;
+      xNew = new double[n];
+      for (int i = 0; i < n; i++) {
+        xNew[i] = x[i] + dampingFactor * residuals[i];
+      }
+    } else {
+      // Subsequent iterations: use Broyden quasi-Newton acceleration
+      // Build fixed-point form: g(x) = x + residuals
+      double[] gx = new double[n];
+      for (int i = 0; i < n; i++) {
+        gx[i] = x[i] + residuals[i];
+      }
+      xNew = broyden.accelerate(x, gx);
+    }
 
     // Apply bounds clamping
     for (int i = 0; i < n; i++) {
