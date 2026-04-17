@@ -5,10 +5,13 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.costestimation.separator.SeparatorCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.SeparatorInterface;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -27,6 +30,8 @@ import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(SeparatorMechanicalDesign.class);
   /**
    * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107 for mesh demister.
    */
@@ -199,21 +204,21 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
           .readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
     } else {
-      System.out.println("material plate design codes specified......");
+      logger.info("no material plate design codes specified");
     }
     if (getDesignStandard().containsKey("pressure vessel design code")) {
-      System.out.println("pressure vessel code standard: "
-          + getDesignStandard().get("pressure vessel design code").getStandardName());
+      logger.info("pressure vessel code standard: {}",
+          getDesignStandard().get("pressure vessel design code").getStandardName());
       wallThickness =
           ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
               .calcWallThickness();
     } else {
-      System.out.println("no pressure vessel code standard specified......");
+      logger.info("no pressure vessel code standard specified");
     }
 
     if (getDesignStandard().containsKey("separator process design")) {
-      System.out.println("separator process design: "
-          + getDesignStandard().get("separator process design").getStandardName());
+      logger.info("separator process design: {}",
+          getDesignStandard().get("separator process design").getStandardName());
       gasLoadFactor =
           ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
               .getGasLoadFactor();
@@ -225,7 +230,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
     } else {
-      System.out.println("no separator process design specified......");
+      logger.info("no separator process design specified");
     }
   }
 
@@ -547,6 +552,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // Synchronize design parameters back to separator
     separator.setDesignGasLoadFactor(gasLoadFactor);
     separator.setDesignLiquidLevelFraction(1.0 - Fg);
+    // Synchronize inlet nozzle diameter if set
+    if (inletNozzleID > 0) {
+      separator.setInletPipeDiameter(inletNozzleID);
+    }
   }
 
   /**
@@ -1780,6 +1789,132 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public void setDemisterType(String type) {
     this.demisterType = type;
+  }
+
+  // ============================================================================
+  // Bridge Methods — MechanicalDesign as gateway to Separator physical config
+  // ============================================================================
+
+  /**
+   * Sets the inlet pipe diameter on the separator's performance calculator. This affects the
+   * droplet size distribution generated from inlet pipe flow regime correlations.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator's performance calculator.
+   * </p>
+   *
+   * @param diameter inlet pipe internal diameter [m]
+   */
+  public void setInletPipeDiameter(double diameter) {
+    this.inletNozzleID = diameter;
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setInletPipeDiameter(diameter);
+    }
+  }
+
+  /**
+   * Gets the inlet pipe diameter.
+   *
+   * @return inlet pipe internal diameter [m]
+   */
+  public double getInletPipeDiameter() {
+    if (getProcessEquipment() instanceof Separator) {
+      SeparatorPerformanceCalculator perf =
+          ((Separator) getProcessEquipment()).getPerformanceCalculator();
+      if (perf != null) {
+        return perf.getInletPipeDiameter();
+      }
+    }
+    return inletNozzleID;
+  }
+
+  /**
+   * Sets the inlet device type for the separator's enhanced entrainment calculation.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator's performance calculator.
+   * </p>
+   *
+   * @param deviceType the inlet device type
+   */
+  public void setInletDeviceType(InletDeviceModel.InletDeviceType deviceType) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setInletDeviceType(deviceType);
+    }
+  }
+
+  /**
+   * Sets the gas-liquid interfacial tension for DSD generation in the enhanced model.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator's performance calculator.
+   * </p>
+   *
+   * @param sigma interfacial tension [N/m]
+   */
+  public void setGasLiquidSurfaceTension(double sigma) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setGasLiquidSurfaceTension(sigma);
+    }
+  }
+
+  /**
+   * Adds a separator section (e.g., vane pack, mesh pad, manway, valve, nozzle) to the underlying
+   * separator. Sections define the internals of the separator vessel.
+   *
+   * <p>
+   * This is a bridge method: separator internals should be configured via MechanicalDesign, which
+   * delegates to the separator's section list.
+   * </p>
+   *
+   * @param name section name
+   * @param type section type ("vane", "meshpad", "manway", "valve", "nozzle")
+   */
+  public void addSeparatorSection(String name, String type) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).addSeparatorSection(name, type);
+    }
+  }
+
+  /**
+   * Gets the separator sections from the underlying separator.
+   *
+   * @return list of separator sections
+   */
+  public java.util.ArrayList<SeparatorSection> getSeparatorSections() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getSeparatorSections();
+    }
+    return new java.util.ArrayList<SeparatorSection>();
+  }
+
+  /**
+   * Gets a separator section by index.
+   *
+   * @param index section index
+   * @return the separator section at the given index
+   */
+  public SeparatorSection getSeparatorSection(int index) {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getSeparatorSection(index);
+    }
+    return null;
+  }
+
+  /**
+   * Gets a separator section by name.
+   *
+   * @param name section name
+   * @return the separator section with the given name, or null if not found
+   */
+  public SeparatorSection getSeparatorSection(String name) {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getSeparatorSection(name);
+    }
+    return null;
   }
 
   // ============================================================================
