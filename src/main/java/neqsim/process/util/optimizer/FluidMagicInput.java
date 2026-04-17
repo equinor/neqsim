@@ -30,7 +30,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // From E300 file
  * FluidMagicInput input = FluidMagicInput.fromE300File(Paths.get("FLUID.E300"));

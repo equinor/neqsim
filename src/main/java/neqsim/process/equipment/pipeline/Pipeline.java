@@ -1324,8 +1324,8 @@ public class Pipeline extends TwoPortEquipment
    * </p>
    *
    * <p>
-   * Requires that the pipeline has been run (i.e., the inlet stream has valid fluid data).
-   * If the mechanical design has not been initialised, it will be created automatically.
+   * Requires that the pipeline has been run (i.e., the inlet stream has valid fluid data). If the
+   * mechanical design has not been initialised, it will be created automatically.
    * </p>
    */
   public void runCorrosionAnalysis() {

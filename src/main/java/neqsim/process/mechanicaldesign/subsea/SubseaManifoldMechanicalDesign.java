@@ -225,6 +225,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the manifold.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -267,6 +268,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();

@@ -56,11 +56,13 @@ public class PhaseIdealGas extends Phase {
    *
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
+  @Override
   public EosMixingRulesInterface getMixingRule() {
     return null;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
@@ -69,6 +71,7 @@ public class PhaseIdealGas extends Phase {
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setMixingRuleGEModel(String name) {}
 
   /**
@@ -78,12 +81,15 @@ public class PhaseIdealGas extends Phase {
    *
    * @param mr a {@link neqsim.thermo.mixingrule.MixingRuleTypeInterface} object
    */
+  @Override
   public void setMixingRule(MixingRuleTypeInterface mr) {}
 
   /** {@inheritDoc} */
+  @Override
   public void resetMixingRule(MixingRuleTypeInterface mr) {}
 
   /** {@inheritDoc} */
+  @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {

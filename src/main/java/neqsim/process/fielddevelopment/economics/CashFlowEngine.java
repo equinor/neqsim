@@ -37,11 +37,11 @@ import java.util.Map;
  * <p>
  * The engine supports any country's fiscal regime via the {@link TaxModel} interface:
  * </p>
- * 
+ *
  * <pre>{@code
  * // Use Norwegian tax model (default)
  * CashFlowEngine engine = new CashFlowEngine();
- * 
+ *
  * // Use any country from the registry
  * engine.setTaxModel(TaxModelRegistry.createModel("BR-PSA")); // Brazil Pre-Salt
  * engine.setTaxModel(TaxModelRegistry.createModel("UK")); // UK Continental Shelf
@@ -49,27 +49,27 @@ import java.util.Map;
  * }</pre>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create engine with Brazilian tax model
  * CashFlowEngine engine = new CashFlowEngine("BR");
- * 
+ *
  * // Set project parameters
  * engine.setCapex(800, 2025); // 800 MUSD in 2025
  * engine.setOpexPercentOfCapex(0.04); // 4% of CAPEX per year
- * 
+ *
  * // Set price assumptions
  * engine.setOilPrice(75.0); // USD/bbl
  * engine.setGasPrice(0.25); // USD/Sm3
- * 
+ *
  * // Add production profile
  * engine.addAnnualProduction(2026, 0, 5.0e6, 0); // 5 MSm3 gas in 2026
  * engine.addAnnualProduction(2027, 0, 10.0e6, 0); // 10 MSm3 gas in 2027
  * // ... more years
- * 
+ *
  * // Calculate cash flow
  * CashFlowResult result = engine.calculate(0.08); // 8% discount rate
- * 
+ *
  * // Results
  * System.out.println("NPV: " + result.getNpv() + " MUSD");
  * System.out.println("IRR: " + result.getIrr() * 100 + "%");

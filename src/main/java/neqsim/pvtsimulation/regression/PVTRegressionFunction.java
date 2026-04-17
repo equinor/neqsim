@@ -46,6 +46,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    *
    * @param bounds 2D array [nParams][2] with [lower, upper] bounds
    */
+  @Override
   public void setBounds(double[][] bounds) {
     this.bounds = bounds;
   }

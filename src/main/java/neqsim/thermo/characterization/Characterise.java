@@ -286,7 +286,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
    *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * SystemInterface referenceFluid = ...;  // Fluid with "master" PC structure
    * SystemInterface myFluid = ...;         // Fluid to be matched
@@ -311,7 +311,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
    *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * CharacterizationOptions options = CharacterizationOptions.builder()
    *     .transferBinaryInteractionParameters(true).normalizeComposition(true).build();

@@ -18,11 +18,11 @@ package neqsim.process.equipment.compressor.driver;
  * </ul>
  *
  * <p><strong>Example Usage</strong></p>
- * 
+ *
  * <pre>
  * DriverCurve driver = new GasTurbineDriver(10000, 0.35); // 10 MW, 35% efficiency
  * driver.setAmbientTemperature(35.0); // 35°C ambient
- * 
+ *
  * double availablePower = driver.getAvailablePower(8000); // at 8000 RPM
  * double efficiency = driver.getEfficiency(8000, 0.8); // at 80% load
  * </pre>

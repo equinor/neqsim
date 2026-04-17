@@ -5,7 +5,6 @@ import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.BlowdownValve;
-import neqsim.process.util.fire.SeparatorFireExposure;
 import neqsim.process.util.fire.SeparatorFireExposure.FireExposureResult;
 import neqsim.process.util.fire.SeparatorFireExposure.FireScenarioConfig;
 import neqsim.thermo.system.SystemInterface;

@@ -2,7 +2,7 @@ package neqsim.process.logic;
 
 /**
  * Represents an action that can be executed as part of process logic.
- * 
+ *
  * <p>
  * Actions encapsulate specific operations on process equipment such as:
  * <ul>
@@ -20,7 +20,7 @@ public interface LogicAction {
 
   /**
    * Executes the action.
-   * 
+   *
    * <p>
    * This method performs the actual operation on the target equipment.
    * </p>
@@ -36,7 +36,7 @@ public interface LogicAction {
 
   /**
    * Checks if the action has completed.
-   * 
+   *
    * <p>
    * Some actions are instantaneous (return true immediately), while others may take time to
    * complete (e.g., valve stroke).

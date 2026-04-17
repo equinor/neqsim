@@ -83,7 +83,7 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If equipment implements CapacityConstrainedEquipment, use its constraints
     if (mixer instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) mixer).getMaxUtilization();
+      return mixer.getMaxUtilization();
     }
 
     // Fall back to basic evaluation
@@ -141,7 +141,7 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If mixer implements CapacityConstrainedEquipment, use its constraints
     if (mixer instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) mixer).getCapacityConstraints();
+      return mixer.getCapacityConstraints();
     }
 
     // Pressure drop constraint

@@ -34,7 +34,6 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
 import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
-import neqsim.process.equipment.separator.entrainment.SeparatorGeometryCalculator;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
@@ -2642,6 +2641,7 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * @param heatInput heat duty in watts
    */
+  @Override
   public void setHeatInput(double heatInput) {
     this.heatInput = heatInput;
     this.heatInputUnit = "W";
@@ -2654,6 +2654,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @param heatInput heat duty value
    * @param unit heat duty unit (W, kW, MW, J/s, etc.)
    */
+  @Override
   public void setHeatInput(double heatInput, String unit) {
     this.heatInputUnit = unit;
     // Convert to watts for internal calculations
@@ -2716,6 +2717,7 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * @return heat input in watts
    */
+  @Override
   public double getHeatInput() {
     return heatInput;
   }
@@ -2726,6 +2728,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @param unit desired unit (W, kW, MW)
    * @return heat input in specified unit
    */
+  @Override
   public double getHeatInput(String unit) {
     switch (unit.toLowerCase()) {
       case "kw":
@@ -2763,6 +2766,7 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * @return true if heat input is explicitly set
    */
+  @Override
   public boolean isSetHeatInput() {
     return setHeatInput;
   }

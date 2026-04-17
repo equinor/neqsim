@@ -232,7 +232,7 @@ public class JsonProcessExporter {
   private SystemInterface findFeedFluid(List<ProcessEquipmentInterface> units) {
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof StreamInterface) {
-        SystemInterface fluid = ((StreamInterface) unit).getFluid();
+        SystemInterface fluid = unit.getFluid();
         if (fluid != null) {
           return fluid;
         }

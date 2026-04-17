@@ -214,6 +214,7 @@ public class CombinedCycleSystem extends TwoPortEquipment {
    *
    * @return JSON with all combined-cycle results
    */
+  @Override
   public String toJson() {
     Map<String, Object> results = new HashMap<>();
     results.put("gasTurbinePower_MW", gasTurbinePower / 1.0e6);

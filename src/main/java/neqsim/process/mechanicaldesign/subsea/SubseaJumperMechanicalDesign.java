@@ -223,14 +223,12 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
         int grade = Integer.parseInt(materialGrade.substring(1));
         return grade * 6.895; // Convert ksi to MPa
       } catch (NumberFormatException e) {
-        return 450.0;
       }
     } else if (materialGrade.contains("316")) {
       return 205.0; // 316L stainless
     } else if (materialGrade.contains("6Mo")) {
       return 300.0; // 6Mo super austenitic
     } else if (materialGrade.contains("Duplex")) {
-      return 450.0; // Duplex stainless
     }
 
     return 450.0; // Default X65 equivalent
@@ -270,6 +268,7 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the jumper.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -313,6 +312,7 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();

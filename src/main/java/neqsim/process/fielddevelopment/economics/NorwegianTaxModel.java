@@ -28,17 +28,17 @@ import java.io.Serializable;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * NorwegianTaxModel taxModel = new NorwegianTaxModel();
- * 
+ *
  * // Calculate tax for a single year
  * TaxResult result = taxModel.calculateTax(500.0, // Gross revenue (MUSD)
  *     100.0, // OPEX (MUSD)
  *     80.0, // Depreciation (MUSD)
  *     44.0 // Uplift deduction (MUSD)
  * );
- * 
+ *
  * System.out.println("Corporate tax: " + result.getCorporateTax());
  * System.out.println("Petroleum tax: " + result.getPetroleumTax());
  * System.out.println("Total tax: " + result.getTotalTax());

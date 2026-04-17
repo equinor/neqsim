@@ -3,7 +3,6 @@ package neqsim.thermo.phase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentElectrolyteCPAAdvanced;
-import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
 import neqsim.thermo.util.constants.IonParametersAdvanced;
 
 /**
@@ -79,7 +78,6 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
    * Constructor for PhaseElectrolyteCPAAdvanced.
    */
   public PhaseElectrolyteCPAAdvanced() {
-    super();
   }
 
   /** {@inheritDoc} */

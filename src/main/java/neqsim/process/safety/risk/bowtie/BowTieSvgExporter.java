@@ -22,11 +22,11 @@ import java.util.List;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * BowTieModel model = new BowTieModel("HAZARD-001", "Vessel Rupture");
  * // ... configure model ...
- * 
+ *
  * BowTieSvgExporter exporter = new BowTieSvgExporter(model);
  * String svg = exporter.export();
  * Files.writeString(Path.of("bowtie.svg"), svg);

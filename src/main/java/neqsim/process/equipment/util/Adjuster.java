@@ -445,6 +445,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    *
    * @return true if the Adjuster is active, false otherwise
    */
+  @Override
   public boolean isActive() {
     return active;
   }

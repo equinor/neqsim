@@ -17,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
+  private static final long serialVersionUID = 1L;
   // === IEC 60534 Constants (Units: Q[m^3/h], P[kPa], rho[kg/m^3]) ===
   /** Constant for liquids (flow in m^3/h, pressure in kPa). */
   static final double N1 = 0.1;
@@ -51,11 +52,13 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    *
    * @return a boolean
    */
+  @Override
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
@@ -114,7 +117,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * </p>
    */
   public ControlValveSizing_IEC_60534() {
-    super();
   }
 
   /**
@@ -241,6 +243,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   // === Main API ===
   /** {@inheritDoc} */
+  @Override
   public Map<String, Object> calcValveSize(double percentOpening) {
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
@@ -363,6 +366,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * inlet/outlet streams.
    * </p>
    */
+  @Override
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
@@ -900,6 +904,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
    * </p>
    */
+  @Override
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
       return findOutletPressureForFixedKvGas(actualKv, inletStream);

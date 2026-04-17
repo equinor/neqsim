@@ -677,6 +677,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param nominalDiameter a double in inch
    * @param pipeSec a {@link java.lang.String} object
    */
+  @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     this.pipeSpecification = pipeSec;
     this.nominalDiameter = nominalDiameter;
@@ -754,6 +755,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param angle a double
    */
+  @Override
   public void setAngle(double angle) {
     this.angle = angle;
   }
@@ -765,6 +767,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param pipeWallRoughness the pipeWallRoughness to set
    */
+  @Override
   public void setPipeWallRoughness(double pipeWallRoughness) {
     this.pipeWallRoughness = pipeWallRoughness;
   }
@@ -776,6 +779,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param numberOfIncrements a int
    */
+  @Override
   public void setNumberOfIncrements(int numberOfIncrements) {
     this.numberOfIncrements = numberOfIncrements;
   }
@@ -939,6 +943,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param heatTransferCoefficient the overall heat transfer coefficient in W/(m²·K)
    * @throws IllegalArgumentException if heatTransferCoefficient is negative
    */
+  @Override
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
     if (heatTransferCoefficient < 0) {
       throw new IllegalArgumentException(
@@ -955,6 +960,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param pressure the desired outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     this.specifiedOutletPressure = pressure;
     this.specifiedOutletPressureUnit = "bara";
@@ -969,6 +975,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param pressure the desired outlet pressure
    * @param unit the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     this.specifiedOutletPressure = pressure;
     this.specifiedOutletPressureUnit = unit;
@@ -1897,6 +1904,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param coefficient the outer heat transfer coefficient [W/(m²·K)]
    * @throws IllegalArgumentException if coefficient is negative
    */
+  @Override
   public void setOuterHeatTransferCoefficient(double coefficient) {
     if (coefficient < 0) {
       throw new IllegalArgumentException(
@@ -1910,6 +1918,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return the outer heat transfer coefficient [W/(m²·K)]
    */
+  @Override
   public double getOuterHeatTransferCoefficient() {
     return outerHeatTransferCoefficient;
   }
@@ -1974,6 +1983,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return the insulation thickness [m]
    */
+  @Override
   public double getInsulationThickness() {
     return insulationThickness;
   }
@@ -2627,6 +2637,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return the heat transfer coefficient
    */
+  @Override
   public double getHeatTransferCoefficient() {
     return heatTransferCoefficient;
   }
@@ -2649,6 +2660,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return a double
    */
+  @Override
   public int getNumberOfIncrements() {
     return numberOfIncrements;
   }
@@ -2660,6 +2672,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return angle in degrees
    */
+  @Override
   public double getAngle() {
     return angle;
   }

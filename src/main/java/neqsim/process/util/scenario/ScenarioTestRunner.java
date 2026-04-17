@@ -7,7 +7,7 @@ import neqsim.process.util.monitor.KPIDashboard;
 
 /**
  * Utility class for running and managing multiple test scenarios with automatic KPI collection.
- * 
+ *
  * <p>
  * This class simplifies the execution of multiple scenarios by:
  * <ul>
@@ -16,27 +16,27 @@ import neqsim.process.util.monitor.KPIDashboard;
  * <li>Providing consistent formatting and reporting</li>
  * <li>Handling scenario numbering and headers</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * ProcessScenarioRunner runner = new ProcessScenarioRunner(processSystem);
  * runner.initializeSteadyState();
- * 
+ *
  * ScenarioTestRunner testRunner = new ScenarioTestRunner(runner);
- * 
+ *
  * // Execute scenarios
  * testRunner.executeScenario("Normal Startup", normalScenario, "System Startup", 30.0, 1.0);
  * testRunner.executeScenario("Manual ESD", esdScenario, "ESD Level 1", 25.0, 0.5);
- * 
+ *
  * // Display results
  * testRunner.displayDashboard();
  * </pre>
- * 
+ *
  * <p>
  * Batch execution example using builder:
- * 
+ *
  * <pre>
  * testRunner.printHeader();
  * testRunner.batch().add("Normal Startup", normalScenario, "System Startup", 30.0, 1.0)
@@ -76,7 +76,7 @@ public class ScenarioTestRunner {
 
   /**
    * Executes a scenario with automatic logic activation, KPI collection, and reset.
-   * 
+   *
    * @param scenarioName the display name for the scenario
    * @param scenario the safety scenario to execute
    * @param logicToActivate the name of the logic sequence to activate (can be null)
@@ -120,7 +120,7 @@ public class ScenarioTestRunner {
 
   /**
    * Executes a scenario without activating any logic.
-   * 
+   *
    * @param scenarioName the display name for the scenario
    * @param scenario the safety scenario to execute
    * @param duration the simulation duration in seconds
@@ -134,11 +134,11 @@ public class ScenarioTestRunner {
 
   /**
    * Executes a scenario with delayed logic activation using a background thread.
-   * 
+   *
    * <p>
    * This is useful for simulating manual interventions or automatic triggers that occur after some
    * time during the scenario.
-   * 
+   *
    * @param scenarioName the display name for the scenario
    * @param scenario the safety scenario to execute
    * @param logicToActivate the name of the logic sequence to activate
@@ -232,10 +232,10 @@ public class ScenarioTestRunner {
 
   /**
    * Creates a batch executor for running multiple scenarios in sequence.
-   * 
+   *
    * <p>
    * This provides a fluent API for defining and executing multiple scenarios:
-   * 
+   *
    * <pre>
    * testRunner.batch().add("Scenario 1", scenario1, "Logic 1", 30.0, 1.0)
    *     .add("Scenario 2", scenario2, null, 25.0, 0.5)
@@ -251,7 +251,7 @@ public class ScenarioTestRunner {
 
   /**
    * Fluent builder for batch execution of multiple scenarios.
-   * 
+   *
    * <p>
    * This inner class provides a convenient way to define and execute multiple scenarios in sequence
    * with automatic header printing and dashboard display at the end.

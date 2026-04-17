@@ -110,7 +110,6 @@ public class PhaseSrkCPABroydenImplicit extends PhaseSrkCPAs {
    * Constructor for PhaseSrkCPABroydenImplicit.
    */
   public PhaseSrkCPABroydenImplicit() {
-    super();
     thermoPropertyModelName = "SRK-CPA-EoS-BroydenImplicit";
   }
 

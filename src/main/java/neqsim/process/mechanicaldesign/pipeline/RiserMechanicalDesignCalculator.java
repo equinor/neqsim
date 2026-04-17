@@ -225,7 +225,6 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    * Default constructor.
    */
   public RiserMechanicalDesignCalculator() {
-    super();
   }
 
   // ============================================================================
@@ -790,6 +789,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    *
    * @return depth in meters
    */
+  @Override
   public double getWaterDepth() {
     return waterDepth;
   }
@@ -799,6 +799,7 @@ public class RiserMechanicalDesignCalculator extends PipeMechanicalDesignCalcula
    *
    * @param waterDepth depth in meters
    */
+  @Override
   public void setWaterDepth(double waterDepth) {
     this.waterDepth = waterDepth;
   }

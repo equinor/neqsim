@@ -62,7 +62,7 @@
  * <h2>Usage Patterns</h2>
  *
  * <h3>Basic MPC Setup</h3>
- * 
+ *
  * <pre>
  * {@code
  * // Build process system
@@ -99,7 +99,7 @@
  * </pre>
  *
  * <h3>Model Export for External MPC</h3>
- * 
+ *
  * <pre>
  * {@code
  * // After linearization
@@ -114,7 +114,7 @@
  * </pre>
  *
  * <h3>Advanced: Nonlinear Prediction</h3>
- * 
+ *
  * <pre>
  * {@code
  * // Enable nonlinear prediction for highly nonlinear processes

@@ -43,7 +43,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Complete integrated example demonstrating alarm-triggered process logic.
- * 
+ *
  * <p>
  * This example demonstrates the full integration of:
  * <ul>
@@ -56,7 +56,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Startup Logic with alarm permissives</li>
  * <li>ProcessScenarioRunner for automated testing</li>
  * </ul>
- * 
+ *
  * <p>
  * Layered safety architecture with alarm integration:
  * <ul>
@@ -135,7 +135,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Builds the complete process system.
-   * 
+   *
    * @return the configured process system
    */
   private static ProcessSystem buildProcessSystem() {
@@ -234,7 +234,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Sets up instrumentation with comprehensive alarm configuration.
-   * 
+   *
    * @param system the process system to instrument
    * @param alarmManager the alarm manager to register devices with
    * @return the instrumentation setup containing all configured devices
@@ -338,7 +338,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Registers automatic alarm-triggered actions with the alarm manager.
-   * 
+   *
    * @param alarmManager the alarm manager to register actions with
    * @param system the process system containing equipment
    * @param logicSetup the process logic setup containing ESD and HIPPS logic
@@ -378,7 +378,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Sets up process logic sequences.
-   * 
+   *
    * @param system the process system containing equipment
    * @param instruments the instrumentation setup containing measurement devices
    * @return the process logic setup containing configured logic sequences
@@ -431,7 +431,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Runs comprehensive alarm-triggered scenarios.
-   * 
+   *
    * @param runner the scenario runner for executing scenarios
    * @param alarmManager the alarm manager for evaluation and tracking
    * @param instruments the instrumentation setup containing devices
@@ -545,7 +545,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Simulates low level alarm triggering shutdown.
-   * 
+   *
    * @param esdLogic the ESD logic to activate
    * @param alarmManager the alarm manager for acknowledgement
    */
@@ -566,7 +566,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Runs transient blowdown simulation after ESD activation.
-   * 
+   *
    * @param system the process system
    * @param instruments the instrumentation setup
    * @param alarmManager the alarm manager
@@ -624,7 +624,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Prints scenario header.
-   * 
+   *
    * @param title the scenario title to display
    */
   private static void printScenarioHeader(String title) {
@@ -633,7 +633,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Executes a scenario step and evaluates alarms.
-   * 
+   *
    * @param system the process system
    * @param alarmManager the alarm manager
    * @param instruments the instrumentation setup
@@ -672,7 +672,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Creates independent HIPPS logic.
-   * 
+   *
    * @param hippsValve the HIPPS valve to control
    * @return the configured HIPPS logic
    */

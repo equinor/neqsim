@@ -79,7 +79,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
    * Constructor for PhaseSrkCPAfullyImplicit.
    */
   public PhaseSrkCPAfullyImplicit() {
-    super();
     thermoPropertyModelName = "SRK-CPA-EoS-FullyImplicit";
   }
 

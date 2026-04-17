@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.BottleneckResult;
-import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
-import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.risk.condition.ProcessEquipmentMonitor;
 
@@ -34,15 +32,15 @@ import neqsim.process.safety.risk.condition.ProcessEquipmentMonitor;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... add equipment and configure process ...
  * process.run();
- * 
+ *
  * PhysicsBasedRiskMonitor monitor = new PhysicsBasedRiskMonitor(process);
  * monitor.setBaseFailureRates("Compressor1", 0.0001); // failures/hour
- * 
+ *
  * PhysicsBasedRiskAssessment assessment = monitor.assess();
  * System.out.println("Overall risk score: " + assessment.getOverallRiskScore());
  * System.out.println("Bottleneck: " + assessment.getBottleneckEquipment());

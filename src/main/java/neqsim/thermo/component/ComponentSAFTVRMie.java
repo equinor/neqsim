@@ -410,6 +410,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
    * @param pressure pressure in Pa
    * @return dF/dNi
    */
+  @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
@@ -450,7 +451,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     double dT = temperature * 1.0e-5;
     double totalVolume = v * n;
 
-    PhaseSAFTVRMie pPlus = (PhaseSAFTVRMie) sp.clone();
+    PhaseSAFTVRMie pPlus = sp.clone();
     pPlus.setTemperature(temperature + dT);
     for (int i = 0; i < numberOfComponents; i++) {
       ((ComponentSAFTVRMie) pPlus.getComponent(i)).recalcSAFTDiameter(temperature + dT);
@@ -459,7 +460,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus,
         numberOfComponents, temperature + dT, pressure);
 
-    PhaseSAFTVRMie pMinus = (PhaseSAFTVRMie) sp.clone();
+    PhaseSAFTVRMie pMinus = sp.clone();
     pMinus.setTemperature(temperature - dT);
     for (int i = 0; i < numberOfComponents; i++) {
       ((ComponentSAFTVRMie) pMinus.getComponent(i)).recalcSAFTDiameter(temperature - dT);
@@ -494,13 +495,13 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     double totalVolume = v * n;
     double dV = totalVolume * 1.0e-6;
 
-    PhaseSAFTVRMie pPlus = (PhaseSAFTVRMie) sp.clone();
+    PhaseSAFTVRMie pPlus = sp.clone();
     pPlus.setMolarVolume((totalVolume + dV) / n);
     pPlus.volInit();
     double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus,
         numberOfComponents, temperature, pressure);
 
-    PhaseSAFTVRMie pMinus = (PhaseSAFTVRMie) sp.clone();
+    PhaseSAFTVRMie pMinus = sp.clone();
     pMinus.setMolarVolume((totalVolume - dV) / n);
     pMinus.volInit();
     double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus,
@@ -529,7 +530,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     // Ensure h is small relative to total phase moles
     h = Math.min(h, Math.max(totalMoles * 0.4, 1.0e-20));
 
-    PhaseSAFTVRMie plus = (PhaseSAFTVRMie) ((PhaseSAFTVRMie) phase).clone();
+    PhaseSAFTVRMie plus = ((PhaseSAFTVRMie) phase).clone();
     plus.getComponent(j).setNumberOfMolesInPhase(nj + h);
     double newTotalPlus = totalMoles + h;
     plus.numberOfMolesInPhase = newTotalPlus;
@@ -540,7 +541,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
 
     if (nj > h * 1.5) {
       // Central difference
-      PhaseSAFTVRMie minus = (PhaseSAFTVRMie) ((PhaseSAFTVRMie) phase).clone();
+      PhaseSAFTVRMie minus = ((PhaseSAFTVRMie) phase).clone();
       minus.getComponent(j).setNumberOfMolesInPhase(nj - h);
       double newTotalMinus = totalMoles - h;
       minus.numberOfMolesInPhase = newTotalMinus;

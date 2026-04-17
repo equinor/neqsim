@@ -4428,6 +4428,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Pressure at each section (Pa)
    */
+  @Override
   public double[] getPressureProfile() {
     return pressureProfile != null ? pressureProfile.clone() : new double[0];
   }
@@ -4437,6 +4438,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Temperature at each section (K)
    */
+  @Override
   public double[] getTemperatureProfile() {
     return temperatureProfile != null ? temperatureProfile.clone() : new double[0];
   }
@@ -4451,6 +4453,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Holdup at each section (0-1)
    */
+  @Override
   public double[] getLiquidHoldupProfile() {
     if (sections == null) {
       return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
@@ -4904,6 +4907,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param length Length (m)
    */
+  @Override
   public void setLength(double length) {
     this.length = length;
   }
@@ -4913,6 +4917,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Length (m)
    */
+  @Override
   public double getLength() {
     return length;
   }
@@ -4922,6 +4927,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param diameter Diameter (m)
    */
+  @Override
   public void setDiameter(double diameter) {
     this.diameter = diameter;
   }
@@ -4931,6 +4937,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Diameter (m)
    */
+  @Override
   public double getDiameter() {
     return diameter;
   }
@@ -5115,6 +5122,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param pressure Pressure (Pa)
    */
+  @Override
   public void setOutletPressure(double pressure) {
     this.outletPressure = pressure;
     this.outletPressureSet = true;
@@ -5209,6 +5217,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param pressure Pressure (Pa)
    */
+  @Override
   public void setInletPressure(double pressure) {
     this.inletPressure = pressure;
     this.inletPressureSet = true;
@@ -5245,6 +5254,7 @@ public class TwoFluidPipe extends Pipeline {
    * @param pressure Pressure value
    * @param unit Pressure unit ("Pa", "bara", "barg", "psia")
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     double P_pa;
     switch (unit.toLowerCase()) {
@@ -5471,6 +5481,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param heatTransferCoefficient Heat transfer coefficient in W/(m²·K)
    */
+  @Override
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
     if (heatTransferCoefficient < 0) {
       throw new IllegalArgumentException(
@@ -5502,6 +5513,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Heat transfer coefficient in W/(m²·K)
    */
+  @Override
   public double getHeatTransferCoefficient() {
     return heatTransferCoefficient;
   }
@@ -6138,6 +6150,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Wall thickness [m]
    */
+  @Override
   public double getWallThickness() {
     return wallThickness;
   }
@@ -6684,6 +6697,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Inlet pressure [bara]
    */
+  @Override
   public double getInletPressure() {
     if (sections == null || sections.length == 0) {
       return getInletStream().getPressure("bara");
@@ -6696,6 +6710,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Outlet pressure [bara]
    */
+  @Override
   public double getOutletPressure() {
     if (sections == null || sections.length == 0) {
       if (outletPressure > 0) {

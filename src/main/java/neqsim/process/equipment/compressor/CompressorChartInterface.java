@@ -197,7 +197,7 @@ public interface CompressorChartInterface extends Cloneable {
    * @return the calculated speed in RPM as a double
    */
   public default double getSpeedValue(double flow, double head) {
-    return (double) getSpeed(flow, head);
+    return getSpeed(flow, head);
   }
 
   /**

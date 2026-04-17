@@ -246,7 +246,6 @@ public class MultiphaseFlowRegime implements Serializable {
 
     if (vsg < vBubbleSlug) {
       if (vsg < 0.05) {
-        return FlowRegime.BUBBLE;
       }
       return FlowRegime.BUBBLE;
     }

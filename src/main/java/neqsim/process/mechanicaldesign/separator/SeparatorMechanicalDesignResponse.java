@@ -262,7 +262,6 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
    * Default constructor.
    */
   public SeparatorMechanicalDesignResponse() {
-    super();
     setEquipmentType("Separator");
     setDesignStandard("ASME VIII / API 12J");
   }

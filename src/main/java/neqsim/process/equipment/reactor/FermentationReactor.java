@@ -412,6 +412,7 @@ public class FermentationReactor extends Fermenter {
    *
    * @param ms maintenance coefficient in g substrate / (g cells * hr)
    */
+  @Override
   public void setMaintenanceCoefficient(double ms) {
     this.maintenanceCoeff = ms;
   }
@@ -421,6 +422,7 @@ public class FermentationReactor extends Fermenter {
    *
    * @return maintenance coefficient
    */
+  @Override
   public double getMaintenanceCoefficient() {
     return maintenanceCoeff;
   }

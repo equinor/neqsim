@@ -19,10 +19,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * The total pressure drop consists of friction loss and elevation change:
  * </p>
- * 
+ *
  * <pre>
  * ΔP_total = ΔP_friction + ΔP_elevation
- * 
+ *
  * ΔP_friction = f × (L_eff / D) × (ρV² / 2)
  * ΔP_elevation = ρg(z_in - z_out)
  * </pre>
@@ -45,13 +45,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * equivalent length method. Each fitting is assigned an L/D ratio representing the length of
  * straight pipe (in diameters) that would produce the same pressure drop.
  * </p>
- * 
+ *
  * <pre>
  * L_eff = L_physical + Σ(L/D)_i × D
  * </pre>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create water stream
@@ -121,7 +121,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
    * <p>
    * Uses the Darcy-Weisbach equation with effective length (physical + fittings):
    * </p>
-   * 
+   *
    * <pre>
    * ΔP_friction = f × (L_eff / D) × (ρV² / 2)
    * </pre>

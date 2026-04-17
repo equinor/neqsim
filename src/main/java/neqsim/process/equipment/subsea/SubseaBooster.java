@@ -489,6 +489,7 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaBoosterMechanicalDesign(this);
   }
@@ -590,6 +591,7 @@ public class SubseaBooster extends TwoPortEquipment {
    *
    * @return outlet pressure in bara
    */
+  @Override
   public double getOutletPressure() {
     return outletPressure;
   }
@@ -599,6 +601,7 @@ public class SubseaBooster extends TwoPortEquipment {
    *
    * @param outletPressure outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double outletPressure) {
     this.outletPressure = outletPressure;
   }

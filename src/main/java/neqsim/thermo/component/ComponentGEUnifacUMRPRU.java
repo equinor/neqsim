@@ -105,6 +105,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * after setting the correct molar mass on a pseudo-component that was created with a "default"
    * database fallback.
    */
+  @Override
   public void initPCUNIFACGroups() {
     double number = getMolarMass() / 0.014;
     int intNumb = (int) Math.round(number) - 2;

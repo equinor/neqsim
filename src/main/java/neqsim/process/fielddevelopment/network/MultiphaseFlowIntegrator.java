@@ -31,19 +31,19 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * MultiphaseFlowIntegrator integrator = new MultiphaseFlowIntegrator();
- * 
+ *
  * // Configure pipeline
  * integrator.setPipelineLength(25.0); // km
  * integrator.setPipelineDiameter(0.254); // 10 inch
  * integrator.setSeabedTemperature(4.0); // C
  * integrator.setOverallHeatTransferCoeff(5.0); // W/m2K
- * 
+ *
  * // Calculate hydraulics
  * PipelineResult result = integrator.calculateHydraulics(wellheadStream, 30.0);
- * 
+ *
  * System.out.println("Arrival pressure: " + result.getArrivalPressureBar() + " bara");
  * System.out.println("Arrival temperature: " + result.getArrivalTemperatureC() + " C");
  * System.out.println("Flow regime: " + result.getFlowRegime());

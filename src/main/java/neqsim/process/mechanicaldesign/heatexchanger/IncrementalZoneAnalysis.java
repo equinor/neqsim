@@ -465,7 +465,7 @@ public class IncrementalZoneAnalysis implements Serializable {
 
     // Scale for zone fraction of total baffles
     int zoneBaffles =
-        Math.max(1, (int) Math.round((double) (tubeLengthm / baffleSpacingm) / zones.size()));
+        Math.max(1, (int) Math.round(tubeLengthm / baffleSpacingm / zones.size()));
 
     return BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm, zoneBaffles,
         zone.shellDensity, zone.shellViscosity, muW);

@@ -41,41 +41,41 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * <b>Example Usage:</b>
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create fluid
  * SystemInterface water = new SystemSrkEos(298.15, 10.0);
  * water.addComponent("water", 1.0);
  * water.setMixingRule("classic");
- * 
+ *
  * Stream feed = new Stream("feed", water);
  * feed.setFlowRate(100, "kg/hr");
  * feed.run();
- * 
+ *
  * // Create water hammer pipe
  * WaterHammerPipe pipe = new WaterHammerPipe("pipe", feed);
  * pipe.setLength(1000); // 1 km
  * pipe.setDiameter(0.2); // 200 mm
  * pipe.setNumberOfNodes(100); // Grid resolution
  * pipe.run(); // Initialize steady state
- * 
+ *
  * // Transient simulation with valve closure
  * pipe.setDownstreamBoundary(BoundaryType.VALVE);
  * UUID id = UUID.randomUUID();
- * 
+ *
  * for (int step = 0; step < 1000; step++) {
  *   double t = step * 0.001; // 1 ms time step
- * 
+ *
  *   // Close valve from t=0.1s to t=0.2s
  *   if (t >= 0.1 && t <= 0.2) {
  *     double tau = (t - 0.1) / 0.1;
  *     pipe.setValveOpening(1.0 - tau); // 100% -> 0%
  *   }
- * 
+ *
  *   pipe.runTransient(0.001, id);
  * }
- * 
+ *
  * // Get maximum pressure surge
  * double maxP = pipe.getMaxPressureEnvelope();
  * }
@@ -183,6 +183,7 @@ public class WaterHammerPipe extends Pipeline {
    *
    * @param length Length in meters
    */
+  @Override
   public void setLength(double length) {
     this.length = length;
   }
@@ -214,6 +215,7 @@ public class WaterHammerPipe extends Pipeline {
    *
    * @param diameter Diameter in meters
    */
+  @Override
   public void setDiameter(double diameter) {
     this.diameter = diameter;
   }
@@ -245,6 +247,7 @@ public class WaterHammerPipe extends Pipeline {
    *
    * @param thickness Wall thickness in meters
    */
+  @Override
   public void setWallThickness(double thickness) {
     this.wallThickness = thickness;
   }
@@ -762,6 +765,7 @@ public class WaterHammerPipe extends Pipeline {
    *
    * @return Pressure profile in Pa
    */
+  @Override
   public double[] getPressureProfile() {
     return pressureProfile.clone();
   }
@@ -937,6 +941,7 @@ public class WaterHammerPipe extends Pipeline {
    *
    * @return Length in meters
    */
+  @Override
   public double getLength() {
     return length;
   }
@@ -946,6 +951,7 @@ public class WaterHammerPipe extends Pipeline {
    *
    * @return Diameter in meters
    */
+  @Override
   public double getDiameter() {
     return diameter;
   }

@@ -289,7 +289,7 @@ public class CricondenBarFlash extends PTphaseEnvelope {
    * <p>
    * The Jacobian has the structure:
    * </p>
-   * 
+   *
    * <pre>
    *   J = | dg_equil/dlnK   dg_equil/dlnT   dg_equil/dlnP |
    *       | dg_RR/dlnK      dg_RR/dlnT      dg_RR/dlnP    |

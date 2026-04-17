@@ -1,6 +1,5 @@
 package neqsim.thermo.phase;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 
@@ -120,7 +119,6 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
    * Construct a PhaseSrkCPAreduced phase.
    */
   public PhaseSrkCPAreduced() {
-    super();
   }
 
   /** {@inheritDoc} */

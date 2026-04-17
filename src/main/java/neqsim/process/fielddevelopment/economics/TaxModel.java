@@ -17,11 +17,11 @@ import java.io.Serializable;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Get tax model for a country
  * TaxModel model = TaxModelRegistry.createModel("NO");
- * 
+ *
  * // Calculate tax
  * TaxModel.TaxResult result = model.calculateTax(500.0, 100.0, 80.0, 44.0);
  * System.out.println("Total tax: " + result.getTotalTax());

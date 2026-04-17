@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
@@ -786,7 +784,7 @@ final class DexpiLayoutEngine {
       return "0";
     }
     if (Math.abs(value - Math.round(value)) < 0.01) {
-      return String.valueOf((long) Math.round(value));
+      return String.valueOf(Math.round(value));
     }
     return String.format(Locale.ROOT, "%.1f", value);
   }

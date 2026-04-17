@@ -60,6 +60,7 @@ public class IntegratedSafetySystemExample {
    * HIPPS controller implementing SIL-3 logic.
    */
   static class HIPPSController extends ControllerDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private PressureTransmitter pt1;
     private PressureTransmitter pt2;
     private ThrottlingValve hippsValve;
@@ -112,6 +113,7 @@ public class IntegratedSafetySystemExample {
    * ESD controller implementing SIL-2 logic.
    */
   static class ESDController extends ControllerDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private PressureTransmitter pressureMonitor;
     private TemperatureTransmitter tempMonitor;
     private PushButton manualESD;

@@ -25,7 +25,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ProcessBasis basis = ProcessBasis.builder().setFeedFluid(gasCondensate)
  *     .setFeedFlowRate(100000.0, "kg/hr").setFeedPressure(100.0, "bara")

@@ -509,6 +509,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
    *
    * @return JSON string
    */
+  @Override
   public String toJson() {
     Map<String, Object> results = new LinkedHashMap<>();
     results.put("systemName", getName());

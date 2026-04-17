@@ -27,14 +27,14 @@ import java.util.List;
  * </p>
  *
  * <p><strong>Example Usage</strong></p>
- * 
+ *
  * <pre>
  * OperatingEnvelope envelope = new OperatingEnvelope();
  * envelope.setSurgeLine(surgeFlows, surgeHeads, surgeSpeeds);
  * envelope.setStonewallLine(stonewallFlows, stonewallHeads, stonewallSpeeds);
  * envelope.setMinSpeed(7000);
  * envelope.setMaxSpeed(10500);
- * 
+ *
  * boolean inEnvelope = envelope.isWithinEnvelope(currentFlow, currentHead, currentSpeed);
  * double surgeMargin = envelope.getSurgeMargin(currentFlow, currentHead, currentSpeed);
  * </pre>

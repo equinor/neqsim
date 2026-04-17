@@ -322,6 +322,7 @@ public class PLET extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new PLETMechanicalDesign(this);
   }

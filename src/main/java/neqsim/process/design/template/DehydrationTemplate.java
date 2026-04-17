@@ -31,14 +31,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ProcessBasis basis = new ProcessBasis();
  * basis.setFeedFluid(wetGasFluid);
  * basis.setParameter("tegCirculationRate", 5.0); // m3/hr
  * basis.setParameter("reboilerTemperature", 204.0); // °C
  * basis.setParameter("numberOfStages", 4);
- * 
+ *
  * DehydrationTemplate template = new DehydrationTemplate();
  * ProcessSystem dehy = template.create(basis);
  * dehy.run();

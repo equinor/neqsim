@@ -2,11 +2,11 @@ package neqsim.process.logic.voting;
 
 /**
  * Standard voting patterns for redundant sensors or conditions.
- * 
+ *
  * <p>
  * This enum defines common voting patterns used across all logic contexts (not just SIS). It's
  * compatible with the SIS-specific VotingLogic enum but more generic.
- * 
+ *
  * @author ESOL
  * @version 1.0
  */

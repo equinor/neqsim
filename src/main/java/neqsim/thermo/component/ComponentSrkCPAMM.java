@@ -583,7 +583,6 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     // Born term has no direct volume dependence in the MM formulation
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
     if (mmPhase == null || !mmPhase.isBornOn()) {
-      return 0.0;
     }
     return 0.0;
   }
@@ -817,7 +816,6 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
     if (mmPhase == null || !mmPhase.isShortRangeOn()) {
-      return 0.0;
     }
     // For dilute solutions, η << 1 and the V-dependence is negligible
     return 0.0;

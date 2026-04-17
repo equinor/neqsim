@@ -28,14 +28,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ProcessBasis basis = new ProcessBasis();
  * basis.setFeedFluid(gasFluid);
  * basis.setFeedPressure(5.0); // bara
  * basis.setParameter("dischargePressure", 100.0); // bara
  * basis.setParameter("interstageTemperature", 40.0); // °C
- * 
+ *
  * GasCompressionTemplate template = new GasCompressionTemplate();
  * ProcessSystem compression = template.create(basis);
  * compression.run();

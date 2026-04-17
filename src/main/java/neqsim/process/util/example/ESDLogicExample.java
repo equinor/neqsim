@@ -17,7 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Example demonstrating ESD Logic Framework - coordinated shutdown sequence.
- * 
+ *
  * <p>
  * This example shows how to use the new ProcessLogic framework to implement a coordinated ESD
  * sequence that:
@@ -27,7 +27,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Redirects flow through splitter (set split factors)</li>
  * <li>All triggered by a single push button</li>
  * </ul>
- * 
+ *
  * <p>
  * Benefits of logic framework:
  * <ul>

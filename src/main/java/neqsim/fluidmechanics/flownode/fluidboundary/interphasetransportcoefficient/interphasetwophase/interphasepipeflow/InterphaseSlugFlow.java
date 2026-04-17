@@ -6,13 +6,13 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
  * <p>
  * InterphaseSlugFlow class.
  * </p>
- * 
+ *
  * <p>
  * Calculates interphase transport coefficients for slug flow regime. Slug flow is characterized by
  * alternating liquid slugs and gas bubbles (Taylor bubbles) moving through the pipe. This regime is
  * common in horizontal and near-horizontal pipes at intermediate gas and liquid flow rates.
  * </p>
- * 
+ *
  * <p>
  * The correlations implemented here are based on the work of:
  * <ul>

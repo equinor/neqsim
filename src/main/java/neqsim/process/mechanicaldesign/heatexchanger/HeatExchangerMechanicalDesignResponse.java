@@ -205,7 +205,6 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
    * Default constructor.
    */
   public HeatExchangerMechanicalDesignResponse() {
-    super();
     setEquipmentType("HeatExchanger");
     setDesignStandard("TEMA / ASME VIII");
   }
@@ -378,10 +377,12 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
     this.shellWallThickness = shellWallThickness;
   }
 
+  @Override
   public String getShellMaterial() {
     return shellMaterial;
   }
 
+  @Override
   public void setShellMaterial(String shellMaterial) {
     this.shellMaterial = shellMaterial;
   }

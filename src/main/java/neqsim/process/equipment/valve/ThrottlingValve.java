@@ -171,6 +171,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
     this.pressure = pressure;
@@ -429,7 +430,6 @@ public class ThrottlingValve extends TwoPortEquipment
       if (flow > minimumMolarFlow) {
         return flow;
       }
-      return 0.0;
     }
     return 0.0;
   }

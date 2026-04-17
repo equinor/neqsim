@@ -141,7 +141,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       h = 1.0e-10;
     }
     // Perturb volume up
-    PhasePCSAFTa plus = (PhasePCSAFTa) this.clone();
+    PhasePCSAFTa plus = this.clone();
     double molarVolPlus = (totalV + h) / numberOfMolesInPhase;
     plus.setMolarVolume(molarVolPlus);
     plus.volInit();
@@ -151,7 +151,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     double dFdTplus = plus.dFCPAdT();
 
     // Perturb volume down
-    PhasePCSAFTa minus = (PhasePCSAFTa) this.clone();
+    PhasePCSAFTa minus = this.clone();
     double molarVolMinus = (totalV - h) / numberOfMolesInPhase;
     minus.setMolarVolume(molarVolMinus);
     minus.volInit();
@@ -277,6 +277,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_hCPA() {
     double htot = 0.0;
     double tot = 0.0;

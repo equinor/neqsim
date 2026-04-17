@@ -292,6 +292,7 @@ public class FiredHeater extends Heater {
    *
    * @return JSON string with heater performance data
    */
+  @Override
   public String toJson() {
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("equipmentType", "FiredHeater");

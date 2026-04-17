@@ -227,6 +227,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the umbilical.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -272,6 +273,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
