@@ -399,6 +399,7 @@ process.run();
 Physical dimensions, internals, and design parameters are configured through
 `SeparatorMechanicalDesign` — NOT directly on `Separator`. This follows the
 same pattern used for wells, pipelines, compressors, and heat exchangers.
+Bridge methods delegate to the Separator's performance calculator:
 
 ```java
 // After process.run():
@@ -410,10 +411,26 @@ design.setGasLoadFactor(0.107);       // K-factor [m/s]
 design.setRetentionTime(120.0);       // Liquid retention [s]
 design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
 design.setDemisterType("wire_mesh");
+
+// Bridge methods — inlet pipe, inlet device, sections
+design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD [m]
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.addSeparatorSection("Demister", "meshpad");
+
 design.readDesignSpecifications();
 design.calcDesign();
 String json = design.toJson();
 ```
+
+**Internals classes** (`mechanicaldesign.separator.internals`):
+- `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,
+  carry-over model for wire mesh / vane pack / cyclone demisting devices
+- `DemistingInternalWithDrainage` — adds drainage section efficiency
+
+**Primary separation** (`mechanicaldesign.separator.primaryseparation`):
+- `PrimarySeparation` — inlet momentum, bulk separation, carry-over
+- `InletVane` (6000 Pa, 85%), `InletVaneWithMeshpad` (92%+mesh),
+  `InletCyclones` (8000 Pa, 95%)
 
 ### Stream introspection
 

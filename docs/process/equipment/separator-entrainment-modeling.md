@@ -1029,6 +1029,13 @@ separator.run();
 
 SeparatorMechanicalDesign design =
     (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+
+// Configure inlet pipe and device via bridge methods (preferred)
+design.setInletPipeDiameter(0.254);    // delegates to Separator performance calculator
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.setGasLiquidSurfaceTension(0.020);
+design.addSeparatorSection("Demister", "meshpad");
+
 design.calcDesign();
 
 // Entrainment data is now part of the mechanical design
@@ -1081,6 +1088,45 @@ separator.run();
 design.calcDesign();
 assert design.getLiquidInGasCalibrationFactor() != 1.0; // calibrated
 ```
+
+### Mechanical Design Internals and Primary Separation Classes
+
+In addition to the entrainment calculation classes in `process.equipment.separator.entrainment`,
+the **mechanical design layer** provides standalone sizing classes for separator internals
+and inlet devices. These are used by `SeparatorMechanicalDesign` for physical vessel design
+(wall thickness, nozzle sizing, internals specification) rather than performance calculation.
+
+**Bridge methods** on `SeparatorMechanicalDesign` delegate to the Separator's performance
+calculator, keeping MechanicalDesign as the single gateway for all physical configuration:
+
+| Bridge Method | Delegates To |
+|---------------|-------------|
+| `setInletPipeDiameter(double)` | `Separator.setInletPipeDiameter()` — inlet pipe diameter for DSD generation |
+| `setInletDeviceType(InletDeviceType)` | `Separator.setInletDeviceType()` — inlet device selection |
+| `setGasLiquidSurfaceTension(double)` | `Separator.setGasLiquidSurfaceTension()` — interfacial tension |
+| `addSeparatorSection(String, String)` | `Separator.addSeparatorSection()` — vane/meshpad/nozzle sections |
+| `getSeparatorSections()` | Returns all configured separator sections |
+| `getSeparatorSection(String)` | Returns a section by name |
+
+**Demisting internals** (`process.mechanicaldesign.separator.internals`):
+
+| Class | Description |
+|-------|-------------|
+| `DemistingInternal` | Base class for wire mesh, vane pack, cyclone demisting devices. Calculates Souders-Brown max gas velocity, Eu-number pressure drop, and exponential carry-over model. Types: `wire_mesh`, `vane_pack`, `cyclone`. |
+| `DemistingInternalWithDrainage` | Extends `DemistingInternal` — adds drainage section that reduces carry-over by a configurable efficiency factor. |
+
+**Primary separation** (`process.mechanicaldesign.separator.primaryseparation`):
+
+| Class | Description |
+|-------|-------------|
+| `PrimarySeparation` | Base class for inlet devices — inlet momentum ($\rho v^2$), momentum limit checking, liquid carry-over with degradation above limit. |
+| `InletVane` | Inlet vane (max momentum 6000 Pa, 85% bulk efficiency). |
+| `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + additional mesh capture at 90%). |
+| `InletCyclones` | Inlet cyclone cluster (max momentum 8000 Pa, 95% bulk efficiency, configurable number and diameter). |
+
+These mechanical design classes complement the performance calculator: the calculator
+predicts entrainment from first principles during simulation, while the mechanical
+design classes specify the physical equipment for vessel engineering.
 
 ---
 

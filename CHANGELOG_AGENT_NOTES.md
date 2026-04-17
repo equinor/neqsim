@@ -85,6 +85,72 @@ instrumentation realism, equipment dynamics, and numerical infrastructure.
 
 ---
 
+## 2026-04-17 — Separator MechanicalDesign Bridge Methods & Internals Classes
+
+### Summary
+
+MechanicalDesign is now the single gateway for ALL separator physical
+configuration. Four changes:
+
+1. **Bridge methods on SeparatorMechanicalDesign** — New methods that delegate
+   to the Separator process equipment:
+   - `setInletPipeDiameter(double)` / `getInletPipeDiameter()` — sets inlet
+     pipe diameter on the performance calculator for DSD generation
+   - `setInletDeviceType(InletDeviceModel.InletDeviceType)` — sets inlet
+     device (INLET_VANE, INLET_CYCLONE, etc.)
+   - `setGasLiquidSurfaceTension(double)` — sets interfacial tension for DSD
+   - `addSeparatorSection(String, String)` — adds vane/meshpad/nozzle/manway
+     sections
+   - `getSeparatorSections()` / `getSeparatorSection(int)` /
+     `getSeparatorSection(String)` — read sections
+   - `setDesign()` now also pushes `inletNozzleID` back to Separator
+
+2. **New `internals/` package** (`process.mechanicaldesign.separator.internals`):
+   - `DemistingInternal` — base class for wire mesh, vane pack, cyclone
+     demisting devices. Calculates Souders-Brown max gas velocity, Euler-number
+     pressure drop, and exponential liquid carry-over model.
+   - `DemistingInternalWithDrainage` — adds drainage section efficiency
+     (reduces carry-over by drainage factor).
+
+3. **New `primaryseparation/` package**
+   (`process.mechanicaldesign.separator.primaryseparation`):
+   - `PrimarySeparation` — base class for inlet devices: inlet momentum
+     (rho*v^2), momentum limit checking, liquid carry-over with degradation.
+   - `InletVane` — inlet vane (6000 Pa max momentum, 85% efficiency)
+   - `InletVaneWithMeshpad` — inlet vane + downstream mesh pad (92% + mesh
+     pad capture)
+   - `InletCyclones` — inlet cyclone cluster (8000 Pa, 95% efficiency)
+
+4. **Logging cleanup** — Replaced `System.out.println` with log4j2 `logger`
+   in `SeparatorMechanicalDesign`, `GasScrubberMechanicalDesign`, and
+   `GasScrubberSimple`.
+
+### Migration
+
+**Before (setting inlet pipe diameter directly on Separator):**
+```java
+separator.setInletPipeDiameter(0.254);
+```
+
+**After (set via MechanicalDesign — preferred):**
+```java
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.setInletPipeDiameter(0.254);
+```
+
+Both paths still work — the old Separator methods remain for backward
+compatibility. But all new code should use the MechanicalDesign gateway.
+
+### Agents/Skills affected
+
+- `neqsim-api-patterns` — updated with bridge method examples
+- `neqsim-capability-map` — added internals and primaryseparation packages
+- `copilot-instructions.md` / `AGENTS.md` — updated architecture table and
+  example code
+
+---
+
 ## 2026-04-13 — MCP Server: Professional-Use Improvements (48 Tools)
 
 ### Summary
@@ -357,7 +423,6 @@ fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
 ---
 
 ## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
-<<<<<<< HEAD
 
 ### Vertical Separator → GasScrubber Mapping
 
@@ -515,8 +580,6 @@ raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
 ---
 
 ## 2026-04-08 — IEC 81346 Reference Designation Support
-=======
->>>>>>> 0a1cdaa75a2293eaa9447f3df1b0ec9460a74c1e
 
 ### Vertical Separator → GasScrubber Mapping
 

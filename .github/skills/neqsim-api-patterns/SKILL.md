@@ -204,6 +204,12 @@ design.setDemisterPressureDrop(1.5);  // [mbar]
 design.setDemisterThickness(150.0);   // [mm]
 design.setFoamAllowanceFactor(1.0);   // 1.0 = no foam
 
+// Bridge methods — inlet pipe, inlet device, sections (delegate to Separator)
+design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD generation [m]
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.setGasLiquidSurfaceTension(0.020); // Interfacial tension [N/m]
+design.addSeparatorSection("Demister", "meshpad");
+
 // Run design calculation
 design.readDesignSpecifications();
 design.calcDesign();
