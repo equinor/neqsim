@@ -17,13 +17,12 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * This class solves the multi-variable analog of the single-variable {@link Adjuster}: given N
  * manipulated (adjusted) variables and N target specifications, it simultaneously drives all
- * targets to their desired values using Broyden's quasi-Newton method.
+ * targets to their desired values using damped successive substitution.
  * </p>
  *
  * <p>
- * The underlying algorithm uses the inverse Jacobian approximation from {@link BroydenAccelerator},
- * which avoids expensive numerical perturbation of all variables and provides superlinear
- * convergence for well-conditioned problems.
+ * The underlying algorithm uses damped successive substitution (x_{n+1} = x_n + alpha * residuals)
+ * which provides robust first-order convergence for a wide range of process gains.
  * </p>
  *
  * <h2>Problem Statement</h2>
@@ -39,7 +38,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <h2>Key Features</h2>
  * <ul>
  * <li>Simultaneous N-variable convergence (vs N independent single-variable loops)</li>
- * <li>Broyden quasi-Newton with Sherman-Morrison inverse Jacobian updates</li>
+ * <li>Damped successive substitution with configurable relaxation</li>
  * <li>Variable bounds enforcement with clamping</li>
  * <li>Configurable convergence tolerance and maximum iterations</li>
  * <li>Support for pressure, temperature, flow rate, and molar flow adjustments</li>
@@ -84,8 +83,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /** List of target specification definitions. */
   private List<TargetSpecification> targetSpecifications = new ArrayList<TargetSpecification>();
 
-  /** Broyden accelerator for quasi-Newton convergence. */
-  private transient BroydenAccelerator broyden;
+
 
   /** Maximum number of outer iterations. */
   private int maxIterations = 50;
@@ -293,7 +291,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
    * Run one step of the multi-variable adjustment.
    *
    * <p>
-   * Unlike an internal iteration loop, this method performs a single Broyden step per call. The
+   * Unlike an internal iteration loop, this method performs a single damped step per call. The
    * {@link neqsim.process.processmodel.ProcessSystem} provides the outer iteration loop: it runs
    * all equipment, calls this method, checks {@link #solved()}, and re-runs the process if needed.
    * This ensures downstream equipment is re-evaluated between adjustment steps.
@@ -315,15 +313,6 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
           + ") must equal number of target specifications (" + targetSpecifications.size() + ")");
     }
 
-    // Initialize Broyden accelerator on first call
-    if (broyden == null) {
-      broyden = new BroydenAccelerator(n);
-      broyden.setDelayIterations(2);
-      broyden.setRelaxationFactor(0.8);
-    } else if (broyden.getDimension() != n) {
-      broyden.initialize(n);
-    }
-
     // Read current adjusted variable values
     double[] x = new double[n];
     for (int i = 0; i < n; i++) {
@@ -343,19 +332,17 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     // Perform one adjustment step
     iterations++;
 
-    // Build damped fixed-point form: g(x) = x + alpha * residuals
-    // The damping factor ensures stable initial convergence while preserving
-    // the correct fixed point (g(x*)=x* when residuals=0). Broyden's method
-    // then accelerates convergence by building up a Jacobian approximation
-    // from successive damped steps.
+    // Damped successive substitution: x_{n+1} = x_n + alpha * residuals
+    // This is a robust first-order method that converges when the process
+    // gain (d output / d input) is bounded. The damping factor alpha must be
+    // small enough that |1 - alpha * gain| < 1 for all variables.
+    // For typical process equipment (compressors, heaters, valves), gains
+    // range from 0.5 to 5, so alpha = 0.1 ensures convergence.
     double dampingFactor = 0.1;
-    double[] gx = new double[n];
+    double[] xNew = new double[n];
     for (int i = 0; i < n; i++) {
-      gx[i] = x[i] + dampingFactor * residuals[i];
+      xNew[i] = x[i] + dampingFactor * residuals[i];
     }
-
-    // Get Broyden-accelerated next iterate
-    double[] xNew = broyden.accelerate(x, gx);
 
     // Apply bounds clamping
     for (int i = 0; i < n; i++) {
