@@ -322,10 +322,14 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     if ("CSP".equals(model)) {
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     } else if ("Chapman-Enskog".equals(model)) {
-      diffusivityCalc =
+      neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel =
           new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+      ceModel.setUseDiffusionLJOverride(true);
+      diffusivityCalc = ceModel;
     } else if ("Wilke Lee".equals(model)) {
-      diffusivityCalc = new WilkeLeeDiffusivity(this);
+      WilkeLeeDiffusivity wlModel = new WilkeLeeDiffusivity(this);
+      wlModel.setUseDiffusionLJOverride(true);
+      diffusivityCalc = wlModel;
     } else if ("Siddiqi Lucas".equals(model)) {
       diffusivityCalc = new SiddiqiLucasMethod(this);
     } else if ("Alkanol amine".equals(model)) {

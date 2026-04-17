@@ -42,6 +42,9 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   /** Flag to enable/disable temperature range warnings. */
   protected boolean enableTemperatureWarnings = true;
 
+  /** Flag to enable textbook LJ parameter override for improved diffusion accuracy. */
+  protected boolean useDiffusionLJOverride = false;
+
   /**
    * Standard Lennard-Jones parameters for gas diffusion calculations. Values from Poling, Prausnitz
    * and O'Connell (2001) Table E-1 and Bird, Stewart and Lightfoot (2002) Table E.1. Format: {sigma
@@ -120,15 +123,29 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     binaryLennardJonesOmega = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
         .getPhase().getNumberOfComponents()];
     effectiveDiffusionCoefficient = new double[gasPhase.getPhase().getNumberOfComponents()];
+  }
 
-    // Override binary LJ parameters with standard diffusion values where available
-    initDiffusionLJParameters();
+  /**
+   * Enable textbook Lennard-Jones parameter override for improved diffusion accuracy. When enabled,
+   * LJ parameters from Poling/BSL tables are used for known components, and Tee-Gotoh-Stewart
+   * estimates from critical properties are used for unknown components. This produces more accurate
+   * gas-phase diffusion coefficients but may change results compared to the database LJ parameters.
+   *
+   * @param enable true to use textbook/estimated LJ parameters, false to use database values
+   */
+  public void setUseDiffusionLJOverride(boolean enable) {
+    this.useDiffusionLJOverride = enable;
+    if (enable) {
+      initDiffusionLJParameters();
+    }
   }
 
   /**
    * Override the inherited binary Lennard-Jones parameters with standard diffusion-specific values
    * from Poling/BSL tables. The general-purpose LJ parameters in the NeqSim database may be
-   * parameterized for other purposes (EOS, viscosity) and give poor diffusion predictions.
+   * parameterized for other purposes (EOS, viscosity) and give poor diffusion predictions. For
+   * components not in the lookup table, Lennard-Jones parameters are estimated from critical
+   * properties using the Tee-Gotoh-Stewart correlation to ensure consistency.
    */
   private void initDiffusionLJParameters() {
     int nComps = gasPhase.getPhase().getNumberOfComponents();
@@ -142,9 +159,20 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
         sigma[i] = ljParams[0];
         epsOverK[i] = ljParams[1];
       } else {
-        // Keep original DB values as fallback
-        sigma[i] = gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter();
-        epsOverK[i] = gasPhase.getPhase().getComponent(i).getLennardJonesEnergyParameter();
+        // Estimate from critical properties using Tee-Gotoh-Stewart correlation
+        // (Poling et al., 2001, Eq. 9-4.2 and 9-4.3) for consistency with the
+        // textbook values used for known components.
+        double Tc = gasPhase.getPhase().getComponent(i).getTC(); // K
+        double Pc = gasPhase.getPhase().getComponent(i).getPC(); // bara
+        double omega = gasPhase.getPhase().getComponent(i).getAcentricFactor();
+        if (Tc > 0 && Pc > 0) {
+          sigma[i] = (2.3551 - 0.087 * omega) * Math.pow(Tc / Pc, 1.0 / 3.0);
+          epsOverK[i] = Tc * (0.7915 + 0.1693 * omega * omega);
+        } else {
+          // Last resort: keep original DB values
+          sigma[i] = gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter();
+          epsOverK[i] = gasPhase.getPhase().getComponent(i).getLennardJonesEnergyParameter();
+        }
       }
     }
     // Recompute binary combining rules
