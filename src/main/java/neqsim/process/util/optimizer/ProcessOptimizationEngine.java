@@ -608,6 +608,11 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Evaluates the flow objective function.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param flow the flow rate to evaluate
+   * @return the flow value if feasible, or negative max value if infeasible
    */
   private double evaluateFlowObjective(double inletPressure, double outletPressure, double flow) {
     if (!canAchieveFlow(inletPressure, outletPressure, flow)) {
@@ -618,6 +623,11 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Checks if a flow rate can be achieved.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param flow the flow rate to check
+   * @return true if the flow rate can be achieved at the given pressures
    */
   private boolean canAchieveFlow(double inletPressure, double outletPressure, double flow) {
     if (!hasProcess()) {
