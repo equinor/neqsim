@@ -2121,7 +2121,7 @@ public class TPmultiflash extends TPflash {
       return false;
     }
 
-    system.addPhase();;
+    system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.OIL);
 

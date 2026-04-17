@@ -12,7 +12,7 @@ package neqsim.process.equipment.compressor;
  * <p>
  * Usage examples:
  * </p>
- * 
+ *
  * <pre>
  * // Single speed (uses compressor's current speed)
  * CompressorChart chart = generator.generateCompressorChart("normal");

@@ -183,7 +183,6 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
    * Constructor for PhaseSrkCPAandersonReduced.
    */
   public PhaseSrkCPAandersonReduced() {
-    super();
     thermoPropertyModelName = "SRK-CPA-EoS-AndersonReduced";
   }
 

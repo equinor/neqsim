@@ -34,27 +34,27 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create estimator for a process system
  * EnKFParameterEstimator estimator = new EnKFParameterEstimator(processSystem);
- * 
+ *
  * // Define tunable parameters (what we want to estimate)
  * estimator.addTunableParameter("Pipe1.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
  * estimator.addTunableParameter("Pipe2.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
- * 
+ *
  * // Define measurements (what we observe)
  * estimator.addMeasuredVariable("HPManifold.temperature", "C", 0.5); // 0.5°C noise std
  * estimator.addMeasuredVariable("LPManifold.temperature", "C", 0.5);
- * 
+ *
  * // Initialize the filter
  * estimator.initialize(50, 42); // 50 ensemble members, seed 42
- * 
+ *
  * // In live loop:
  * Map<String, Double> measurements = getMeasurementsFromPlant();
  * EnKFResult result = estimator.update(measurements);
- * 
+ *
  * System.out.println("Estimates: " + Arrays.toString(result.getEstimates()));
  * System.out.println("Uncertainties: " + Arrays.toString(result.getUncertainties()));
  * }

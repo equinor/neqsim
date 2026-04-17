@@ -157,7 +157,6 @@ public class GERG2008NH3 extends GERG2008 {
    * Default constructor for GERG2008NH3.
    */
   public GERG2008NH3() {
-    super();
   }
 
   /**

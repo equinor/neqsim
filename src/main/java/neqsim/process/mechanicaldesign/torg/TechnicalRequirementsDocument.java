@@ -27,7 +27,7 @@ import neqsim.process.mechanicaldesign.designstandards.StandardType;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
  *     .projectId("PROJECT-001").projectName("Offshore Gas Platform").companyIdentifier("Equinor")

@@ -11,7 +11,6 @@ import neqsim.process.costestimation.ProcessCostEstimate;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
-import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -31,7 +30,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Fidelity Levels</h2>
- * 
+ *
  * <table border="1">
  * <caption>Cost Estimation Fidelity Levels</caption>
  * <tr>
@@ -67,26 +66,26 @@ import neqsim.process.processmodel.ProcessSystem;
  * </table>
  *
  * <h2>Integration with FieldProductionScheduler</h2>
- * 
+ *
  * <pre>{@code
  * // Create production scheduler
  * FieldProductionScheduler scheduler = new FieldProductionScheduler("Offshore Field");
  * scheduler.addReservoir(reservoir);
  * scheduler.setFacility(facility);
  * scheduler.setPlateauRate(10.0, "MSm3/day");
- * 
+ *
  * // Create cost estimator linked to facility
  * FieldDevelopmentCostEstimator costEstimator = new FieldDevelopmentCostEstimator(facility);
  * costEstimator.setFidelityLevel(FidelityLevel.CONCEPTUAL);
  * costEstimator.setLocationFactor(1.3); // Norwegian Sea
- * 
+ *
  * // Run mechanical design and cost estimation
  * FieldDevelopmentCostReport report = costEstimator.estimateDevelopmentCosts();
- * 
+ *
  * System.out.println("Total CAPEX: $" + report.getTotalCapex() / 1e6 + " M");
  * System.out.println("Facilities weight: " + report.getTotalWeight() / 1000 + " tonnes");
  * System.out.println("Installation man-hours: " + report.getTotalManHours());
- * 
+ *
  * // Use for NPV calculation
  * scheduler.setCapex(report.getTotalCapex() / 1e6, 2025);
  * ProductionSchedule schedule = scheduler.generateSchedule(startDate, 20.0, 30.0);
@@ -94,12 +93,12 @@ import neqsim.process.processmodel.ProcessSystem;
  * }</pre>
  *
  * <h2>Concept Comparison</h2>
- * 
+ *
  * <pre>{@code
  * // Compare multiple development concepts
  * List<ProcessSystem> concepts = Arrays.asList(conceptA, conceptB, conceptC);
  * List<FieldDevelopmentCostReport> reports = costEstimator.compareConceptCosts(concepts);
- * 
+ *
  * for (FieldDevelopmentCostReport report : reports) {
  *   System.out.printf("%s: CAPEX=$%.0fM, Weight=%.0ft, Area=%.0fm2%n", report.getConceptName(),
  *       report.getTotalCapex() / 1e6, report.getTotalWeight() / 1000, report.getFootprintArea());

@@ -131,6 +131,7 @@ public class MercuryRemovalCostEstimate extends UnitCostEstimateBaseClass {
    *
    * @return JSON string with cost breakdown
    */
+  @Override
   public String toJson() {
     MercuryRemovalMechanicalDesign design = (MercuryRemovalMechanicalDesign) mechanicalEquipment;
 

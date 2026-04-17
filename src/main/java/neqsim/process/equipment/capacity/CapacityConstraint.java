@@ -15,7 +15,7 @@ import java.util.function.DoubleSupplier;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", ConstraintType.HARD)
  *     .setDesignValue(10000.0).setMaxValue(11000.0).setWarningThreshold(0.9)
@@ -60,7 +60,7 @@ public class CapacityConstraint implements Serializable {
 
   /**
    * Enum defining the severity level of constraint violations.
-   * 
+   *
    * <p>
    * Used by the optimizer to determine how to handle constraint violations:
    * <ul>

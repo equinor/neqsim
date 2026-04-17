@@ -102,7 +102,7 @@ public class ReservoirRunner {
                 fr.has("unit") ? fr.get("unit").getAsString() : "MSm3/day");
           }
         }
-        process.add((Stream) prodStreams[i]);
+        process.add(prodStreams[i]);
       }
 
       // --- Run initial steady state ---

@@ -92,6 +92,7 @@ public class TUflash extends QfuncFlash {
    *
    * @return converged pressure in bar
    */
+  @Override
   public double solveQ() {
     double oldPres = system.getPressure();
     double nyPres = system.getPressure();
@@ -141,7 +142,7 @@ public class TUflash extends QfuncFlash {
       }
 
       // Newton step with damping
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
       double deltaP = -factor * dU / dUdP;
 
       // Limit step size

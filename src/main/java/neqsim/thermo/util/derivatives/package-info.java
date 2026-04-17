@@ -23,7 +23,7 @@
  * </ul>
  *
  * <h2>Usage with Python/JAX:</h2>
- * 
+ *
  * <pre>
  * {@code
  * # Define custom VJP for JAX

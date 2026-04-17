@@ -41,22 +41,22 @@ import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Define discovery
  * FieldConcept discovery = FieldConcept.gasTieback("Marginal Gas", 25.0, 2, 1.5);
- * 
+ *
  * // Define potential hosts
  * List<HostFacility> hosts = new ArrayList<>();
  * hosts.add(HostFacility.builder("Platform A").location(61.5, 2.3).waterDepth(110)
  *     .spareGasCapacity(3.0).minTieInPressure(80).build());
  * hosts.add(HostFacility.builder("FPSO B").location(61.8, 2.1).waterDepth(350)
  *     .spareGasCapacity(5.0).build());
- * 
+ *
  * // Analyze
  * TiebackAnalyzer analyzer = new TiebackAnalyzer();
  * TiebackReport report = analyzer.analyze(discovery, hosts, 61.6, 2.5);
- * 
+ *
  * // Review results
  * System.out.println(report.getSummary());
  * TiebackOption best = report.getBestOption();

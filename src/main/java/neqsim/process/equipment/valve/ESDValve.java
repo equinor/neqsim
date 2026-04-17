@@ -5,12 +5,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Emergency Shutdown (ESD) Valve / Isolation Valve (XV) for process safety systems.
- * 
+ *
  * <p>
  * An ESD valve is a normally-open isolation valve that closes automatically during emergency
  * shutdown events. These valves are critical safety elements designed to isolate process equipment
  * or stop flow during hazardous conditions.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -22,7 +22,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Status feedback for monitoring systems</li>
  * <li>Suitable for SIL-rated safety instrumented functions</li>
  * </ul>
- * 
+ *
  * <p>
  * Design philosophy:
  * <ul>
@@ -31,36 +31,36 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li><b>Fast acting</b>: Closes within defined stroke time (typically 5-30 seconds)</li>
  * <li><b>Tight shutoff</b>: Provides complete isolation when closed</li>
  * </ul>
- * 
+ *
  * <p>
  * Typical usage in ESD system:
- * 
+ *
  * <pre>
  * // Create process stream
  * Stream feedStream = new Stream("Feed", thermoSystem);
  * feedStream.setFlowRate(10000.0, "kg/hr");
  * feedStream.setPressure(50.0, "bara");
- * 
+ *
  * // Create ESD inlet valve (normally open)
  * ESDValve esdValve = new ESDValve("ESD-XV-101", feedStream);
  * esdValve.setStrokeTime(10.0); // 10 seconds to close
  * esdValve.setCv(500.0); // Large Cv for minimal pressure drop when open
- * 
+ *
  * // Normal operation
  * esdValve.energize(); // Keep valve open
  * esdValve.run();
- * 
+ *
  * // Emergency shutdown
  * esdValve.deEnergize(); // Triggers closure
- * 
+ *
  * // In transient simulation loop
  * esdValve.runTransient(dt, UUID.randomUUID());
  * // Valve closes progressively over stroke time
  * </pre>
- * 
+ *
  * <p>
  * Integration with ESD controller:
- * 
+ *
  * <pre>
  * // ESD controller monitors process conditions
  * if (pressure &gt; highPressureSetpoint || fireDetected || manualESDActivated) {
@@ -172,7 +172,7 @@ public class ESDValve extends ThrottlingValve {
 
   /**
    * Energizes the valve (allows it to open/maintain open position).
-   * 
+   *
    * <p>
    * In normal operation, ESD valves are energized to maintain the open position. This simulates the
    * electrical/pneumatic signal that keeps the valve actuator in the open state.
@@ -189,7 +189,7 @@ public class ESDValve extends ThrottlingValve {
 
   /**
    * De-energizes the valve (initiates emergency closure).
-   * 
+   *
    * <p>
    * This simulates the ESD signal that removes power from the valve actuator, causing the
    * spring-return mechanism to close the valve. This is the primary safety action during emergency
@@ -209,7 +209,7 @@ public class ESDValve extends ThrottlingValve {
 
   /**
    * Trips the valve (same as de-energizing - forces closure).
-   * 
+   *
    * <p>
    * Convenience method that is semantically clearer for emergency shutdown scenarios.
    * </p>
@@ -220,7 +220,7 @@ public class ESDValve extends ThrottlingValve {
 
   /**
    * Resets the valve after emergency shutdown.
-   * 
+   *
    * <p>
    * After an ESD event, the valve must be manually reset by operations personnel. This simulates
    * the reset process after the emergency condition has been resolved.
@@ -266,12 +266,12 @@ public class ESDValve extends ThrottlingValve {
 
   /**
    * Initiates a partial stroke test (PST).
-   * 
+   *
    * <p>
    * Partial stroke testing is a proof test method that verifies valve functionality without causing
    * a full process shutdown. The valve closes to a specified position (e.g., 80%) and then reopens.
    * </p>
-   * 
+   *
    * <p>
    * This is important for SIL-rated valves to verify functionality between full proof test
    * intervals, as required by IEC 61511.
@@ -306,7 +306,7 @@ public class ESDValve extends ThrottlingValve {
 
   /**
    * Performs dynamic simulation step with automatic closure logic.
-   * 
+   *
    * <p>
    * If the valve has been de-energized, it will close progressively according to the configured
    * stroke time until reaching the fail-safe position.

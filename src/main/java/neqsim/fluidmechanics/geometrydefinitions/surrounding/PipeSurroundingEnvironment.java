@@ -72,7 +72,6 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Default constructor for exposed pipe in air.
    */
   public PipeSurroundingEnvironment() {
-    super();
     setForAir(0.0);
   }
 
@@ -82,7 +81,6 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param typeName Environment type name (AIR, SEAWATER, BURIED, CUSTOM)
    */
   public PipeSurroundingEnvironment(String typeName) {
-    super();
     try {
       this.environmentType = EnvironmentType.valueOf(typeName.toUpperCase());
     } catch (IllegalArgumentException e) {

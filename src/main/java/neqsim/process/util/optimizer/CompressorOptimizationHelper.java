@@ -67,7 +67,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
  * <p>
  * <strong>Usage Example (Java):</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * // Extract bounds from compressor chart
  * CompressorBounds bounds = CompressorOptimizationHelper.extractBounds(compressor);
@@ -84,7 +84,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
  * <p>
  * <strong>Usage Example (Python via JPype):</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * from neqsim.neqsimpython import jneqsim
  *

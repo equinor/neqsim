@@ -1,7 +1,6 @@
 package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
-import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentAmmoniaEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.util.referenceequations.Ammonia2023;
@@ -228,6 +227,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
    *
    * @return a double
    */
+  @Override
   public double getHresTP() {
     return numberOfMolesInPhase * R * temperature * (ar[1][0].val + ar[0][1].val);
   }
@@ -250,6 +250,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
    *
    * @return isothermal compressibility (1/Pa)
    */
+  @Override
   public double getIsothermalCompressibility() {
     return kappa;
   }

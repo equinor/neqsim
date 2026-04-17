@@ -716,6 +716,7 @@ public class WellFlow extends TwoPortEquipment {
    * @param pressure outlet pressure
    * @param unit pressure unit
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     this.pressureOut = pressure;
     this.pressureUnit = unit;

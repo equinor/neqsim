@@ -150,7 +150,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     hasController = controller != null;
     if (controller != null) {
       String tag = controller instanceof neqsim.util.NamedInterface
-          ? ((neqsim.util.NamedInterface) controller).getName()
+          ? controller.getName()
           : "default";
       controllerMap.put(tag, controller);
     }
@@ -167,7 +167,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.flowValveController = controller;
     if (controller != null) {
       String tag = controller instanceof neqsim.util.NamedInterface
-          ? ((neqsim.util.NamedInterface) controller).getName()
+          ? controller.getName()
           : "flowValve";
       controllerMap.put(tag, controller);
     }

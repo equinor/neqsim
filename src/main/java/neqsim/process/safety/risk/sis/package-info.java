@@ -39,24 +39,24 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create SIS-integrated risk model
  * SISIntegratedRiskModel riskModel = new SISIntegratedRiskModel("HIPPS Analysis");
- * 
+ *
  * // Add SIF
  * SafetyInstrumentedFunction hipps = new SafetyInstrumentedFunction("SDV-001", "Main HIPPS",
  *     SafetyInstrumentedFunction.SIFCategory.HIPPS, 2, "1oo2");
  * hipps.setProofTestIntervalYears(1);
  * riskModel.addSIF(hipps);
- * 
+ *
  * // Add IPL
  * riskModel.addIPL("PSV-001", "Pressure Safety Valve", 0.01);
- * 
+ *
  * // Perform LOPA
  * LOPAResult lopa = riskModel.performLOPA("Overpressure", 0.1, // initiating frequency
  *     1e-4); // target frequency
- * 
+ *
  * // Verify SIL
  * SILVerificationResult verification = riskModel.verifySIL(hipps);
  * </pre>

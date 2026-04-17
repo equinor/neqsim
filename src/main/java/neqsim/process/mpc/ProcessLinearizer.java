@@ -16,7 +16,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * The linearization uses central finite differences for improved accuracy:
  * </p>
- * 
+ *
  * <pre>
  * ∂CV[i]/∂MV[j] ≈ (CV[i](MV[j]+δ) - CV[i](MV[j]-δ)) / (2δ)
  * </pre>
@@ -24,7 +24,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create linearizer for a process

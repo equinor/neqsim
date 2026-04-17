@@ -9,7 +9,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
@@ -26,7 +25,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * ScenarioAnalyzer analyzer = new ScenarioAnalyzer(processSystem);
  * analyzer.addScenario("Base Case", new ScenarioParameters().setOilRate(10000.0).setGOR(150.0));

@@ -16,7 +16,7 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * FacilityConfig config =
  *     FacilityBuilder.forConcept(myConcept).addBlock(BlockConfig.inletSeparation(80, 25))

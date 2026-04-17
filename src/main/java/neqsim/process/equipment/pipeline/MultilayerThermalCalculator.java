@@ -21,7 +21,7 @@ import java.util.List;
  * <p>
  * The thermal resistance network approach is used:
  * </p>
- * 
+ *
  * <pre>
  * T_fluid --- R_inner --- [ Layer 1 ] --- [ Layer 2 ] --- ... --- R_outer --- T_ambient
  * </pre>
@@ -412,7 +412,7 @@ public class MultilayerThermalCalculator implements Serializable {
    * <p>
    * Uses explicit finite difference scheme for each layer. The heat balance for each layer is:
    * </p>
-   * 
+   *
    * <pre>
    * m * Cp * dT/dt = Q_in - Q_out
    * </pre>

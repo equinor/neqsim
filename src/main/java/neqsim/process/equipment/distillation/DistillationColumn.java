@@ -3706,7 +3706,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     gasSystem.init(1);
 
     if (trays.get(trayIndex) instanceof SimpleTray) {
-      ((SimpleTray) trays.get(trayIndex)).setCachedGasOutStream(new Stream("", gasSystem));
+      trays.get(trayIndex).setCachedGasOutStream(new Stream("", gasSystem));
     }
   }
 

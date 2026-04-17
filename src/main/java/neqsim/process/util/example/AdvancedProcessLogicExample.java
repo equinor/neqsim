@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Comprehensive example demonstrating advanced process logic features.
- * 
+ *
  * <p>
  * This example showcases:
  * <ul>
@@ -35,7 +35,7 @@ public class AdvancedProcessLogicExample {
 
   /**
    * Java 8 compatible method to repeat a string.
-   * 
+   *
    * @param str the string to repeat
    * @param count the number of times to repeat
    * @return the repeated string

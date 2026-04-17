@@ -6,26 +6,26 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for separator equipment.
- * 
+ *
  * <p>
  * Defines requirements and guarantees for {@link Separator} implementations. AI agents can use this
  * contract to validate separator setup before running.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the separator needs):</h2>
  * <ul>
  * <li>At least one inlet stream connected</li>
  * <li>Inlet stream(s) have been run</li>
  * <li>Multi-phase fluid (gas + liquid) for meaningful separation</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what run() provides):</h2>
  * <ul>
  * <li>Gas outlet stream with vapor phase</li>
  * <li>Liquid outlet stream with liquid phase(s)</li>
  * <li>Mass/energy balance maintained</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -37,7 +37,7 @@ public class SeparatorContract implements ModuleContract<Separator> {
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static SeparatorContract getInstance() {

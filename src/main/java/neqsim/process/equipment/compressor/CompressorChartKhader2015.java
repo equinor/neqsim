@@ -33,7 +33,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(SystemInterface fluid, double impellerdiam) {
-    super();
     this.fluid = fluid;
     this.impellerOuterDiameter = impellerdiam;
   }
@@ -47,7 +46,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   public CompressorChartKhader2015(SystemInterface fluid, SystemInterface referenceFluid,
       double impellerdiam) {
-    super();
     this.fluid = fluid;
     this.ref_fluid = referenceFluid;
     this.impellerOuterDiameter = impellerdiam;
@@ -60,7 +58,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(StreamInterface stream, double impellerdiam) {
-    super();
     this.stream = stream;
     this.impellerOuterDiameter = impellerdiam;
   }
@@ -98,6 +95,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param flowPolyEff 2D array of flows for efficiency
    * @param polyEff 2D array of polytropic efficiencies
    */
+  @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
     if (fluid == null && stream != null) {
@@ -280,7 +278,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     }
     SystemInterface localfluid = null;
     try {
-      localfluid = (SystemInterface) fluid.getClass().getConstructor().newInstance();
+      localfluid = fluid.getClass().getConstructor().newInstance();
     } catch (Exception e) {
       logger.error("Error creating fluid instance: ", e);
       throw new RuntimeException("Failed to create fluid instance", e);

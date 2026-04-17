@@ -137,7 +137,6 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
    * Default constructor.
    */
   public CompressorMechanicalDesignResponse() {
-    super();
     setEquipmentType("Compressor");
     setDesignStandard("API 617");
   }

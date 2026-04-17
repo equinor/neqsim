@@ -1,6 +1,6 @@
 /*
  * OptimizedVUflash.java
- * 
+ *
  * High-performance VU flash with optimized convergence for separator applications
  */
 

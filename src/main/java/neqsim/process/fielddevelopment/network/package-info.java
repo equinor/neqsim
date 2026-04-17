@@ -33,7 +33,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * NetworkSolver network = new NetworkSolver("Gathering System");
  * network.addWell(well1, 3.0); // 3 km flowline

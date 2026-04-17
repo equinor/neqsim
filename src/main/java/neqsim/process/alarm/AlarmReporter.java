@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Utility class for formatting and displaying alarm information.
- * 
+ *
  * <p>
  * Provides consistent formatting for:
  * <ul>
@@ -25,7 +25,7 @@ public final class AlarmReporter {
 
   /**
    * Displays current alarm status in a formatted box.
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param context description of current context
    */
@@ -54,7 +54,7 @@ public final class AlarmReporter {
 
   /**
    * Displays complete alarm history in a formatted report.
-   * 
+   *
    * @param alarmManager the alarm manager
    */
   public static void displayAlarmHistory(ProcessAlarmManager alarmManager) {
@@ -63,7 +63,7 @@ public final class AlarmReporter {
 
   /**
    * Displays complete alarm history in a formatted report.
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param maxRecentEvents maximum number of recent events to display
    */
@@ -97,7 +97,7 @@ public final class AlarmReporter {
 
   /**
    * Displays alarm statistics aggregated by type and level.
-   * 
+   *
    * @param alarmManager the alarm manager
    */
   public static void displayAlarmStatistics(ProcessAlarmManager alarmManager) {
@@ -140,7 +140,7 @@ public final class AlarmReporter {
 
   /**
    * Formats an alarm event for display with full details.
-   * 
+   *
    * @param event the alarm event
    * @return formatted string
    */
@@ -153,7 +153,7 @@ public final class AlarmReporter {
 
   /**
    * Formats alarm event in compact form for reports.
-   * 
+   *
    * @param event the alarm event
    * @return formatted string
    */
@@ -166,7 +166,7 @@ public final class AlarmReporter {
 
   /**
    * Gets an icon representing the event type.
-   * 
+   *
    * @param type the event type
    * @return icon character
    */
@@ -185,7 +185,7 @@ public final class AlarmReporter {
 
   /**
    * Prints a formatted scenario header.
-   * 
+   *
    * @param title the scenario title
    */
   public static void printScenarioHeader(String title) {
@@ -196,7 +196,7 @@ public final class AlarmReporter {
 
   /**
    * Displays alarm events in a formatted box.
-   * 
+   *
    * @param events the alarm events to display
    */
   public static void displayAlarmEvents(List<AlarmEvent> events) {

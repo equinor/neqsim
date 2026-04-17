@@ -731,7 +731,7 @@ public final class DexpiXmlWriter {
    */
   private static String formatMechValue(double value) {
     if (Math.abs(value - Math.round(value)) < 0.01) {
-      return String.valueOf((long) Math.round(value));
+      return String.valueOf(Math.round(value));
     }
     return String.format(Locale.ROOT, "%.1f", value);
   }
