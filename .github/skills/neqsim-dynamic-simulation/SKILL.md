@@ -50,8 +50,8 @@ Stream feed = new Stream("feed", fluid);
 feed.setFlowRate(10000.0, "kg/hr");
 
 Separator sep = new Separator("HP Sep", feed);
-sep.setInternalDiameter(2.0);  // m
-sep.setSeparatorLength(6.0);   // m
+sep.setInternalDiameter(2.0);  // m — for dynamic simulation, set directly for level dynamics
+sep.setSeparatorLength(6.0);   // m — for design purposes, use SeparatorMechanicalDesign instead
 
 ThrottlingValve gasValve = new ThrottlingValve("gas valve", sep.getGasOutStream());
 gasValve.setOutletPressure(20.0, "bara");
@@ -228,5 +228,5 @@ TransferFunctionBlock leadLag = new TransferFunctionBlock();
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
 3. **Reverse acting**: Level controllers are usually reverse-acting (level up = open valve)
 4. **Controller windup**: Large setpoint changes can cause integral windup
-5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics
+5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range

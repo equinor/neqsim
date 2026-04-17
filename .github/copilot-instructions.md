@@ -911,24 +911,60 @@ List<Map<String, Object>> bom = design.getCalculator().generateBillOfMaterials()
 
 ### Example Usage Pattern
 
-```java
-// Initialize equipment
-Separator separator = new Separator("HP Separator", feed);
-separator.initMechanicalDesign();
+**IMPORTANT: MechanicalDesign is the gateway for all physical configuration.**
+Physical dimensions (vessel diameter, nozzle sizes), internals (demister pads,
+inlet devices, separator sections), and design parameters (K-factor, retention
+time, foam allowance) are all configured through `SeparatorMechanicalDesign` —
+NOT directly on the `Separator` process equipment class. The `Separator` class
+is for process simulation (flash calculations, entrainment); the
+`SeparatorMechanicalDesign` class owns the physical vessel design.
 
-// Configure design
+```java
+// 1. Create and run the process equipment
+Separator separator = new Separator("HP Separator", feed);
+processSystem.add(separator);
+processSystem.run();
+
+// 2. Initialize and configure mechanical design
+separator.initMechanicalDesign();
 SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+
+// 3. Set design envelope
 design.setMaxOperationPressure(85.0);
 design.setMaxOperationTemperature(273.15 + 80.0);
-design.setMaterialGrade("SA-516-70");
-design.setDesignStandardCode("ASME-VIII-Div1");
 design.setCompanySpecificDesignStandards("OperatorA");
 
-// Calculate and report
+// 4. Configure vessel physical parameters via MechanicalDesign
+design.setGasLoadFactor(0.107);          // K-factor for Souders-Brown [m/s]
+design.setRetentionTime(120.0);          // Liquid retention time [s]
+design.setFg(0.5);                       // Gas area fraction
+design.setInletNozzleID(0.254);          // 10-inch inlet nozzle [m]
+design.setDemisterType("wire_mesh");     // Demister type
+design.setDemisterPressureDrop(1.5);     // Demister dP [mbar]
+design.setFoamAllowanceFactor(1.0);      // Foam allowance (1.0 = no foam)
+
+// 5. Load standards and calculate
 design.readDesignSpecifications();
 design.calcDesign();
 String jsonReport = design.toJson();
 ```
+
+### Separator MechanicalDesign Architecture
+
+| Layer | Class | Responsibility |
+|-------|-------|---------------|
+| Process simulation | `Separator` | Flash calculation, phase split, entrainment calculation |
+| Physical design | `SeparatorMechanicalDesign` | Vessel sizing, nozzles, internals, demister, levels, standards |
+| Design standards | `SeparatorDesignStandard` | K-factor, retention time, design codes (API 12J, NORSOK P-001) |
+| Entrainment physics | `SeparatorPerformanceCalculator` | DSD, grade efficiency, inlet device models |
+
+The `SeparatorMechanicalDesign` owns: vessel dimensions (ID, length, wall
+thickness), nozzle sizes (inlet, gas outlet, oil outlet, water outlet), liquid
+levels (HHLL/HLL/NLL/LLL/LLLL), demister/mist eliminator parameters, inlet
+device K-factor, gas load factor, retention time, foam allowance, and
+entrainment performance results. When `calcDesign()` is called, it reads
+process conditions from the `Separator`, applies design standards, and
+calculates the physical vessel.
 
 ## Well Mechanical Design Pattern
 

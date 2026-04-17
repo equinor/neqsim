@@ -394,6 +394,27 @@ process.add(sep);
 process.run();
 ```
 
+### Separator mechanical design (physical configuration)
+
+Physical dimensions, internals, and design parameters are configured through
+`SeparatorMechanicalDesign` — NOT directly on `Separator`. This follows the
+same pattern used for wells, pipelines, compressors, and heat exchangers.
+
+```java
+// After process.run():
+sep.initMechanicalDesign();
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+design.setMaxOperationPressure(85.0);
+design.setGasLoadFactor(0.107);       // K-factor [m/s]
+design.setRetentionTime(120.0);       // Liquid retention [s]
+design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
+design.setDemisterType("wire_mesh");
+design.readDesignSpecifications();
+design.calcDesign();
+String json = design.toJson();
+```
+
 ### Stream introspection
 
 Every `ProcessEquipmentInterface` exposes its connected streams:

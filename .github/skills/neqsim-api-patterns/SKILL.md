@@ -171,6 +171,48 @@ Stream gasOut = sep.getGasOutStream();
 Stream liqOut = sep.getLiquidOutStream();
 ```
 
+### Separator Mechanical Design (Physical Configuration)
+
+Physical dimensions, internals, and design parameters are configured through
+`SeparatorMechanicalDesign` — NOT directly on `Separator`. The `Separator`
+class handles process simulation (flash, entrainment); `SeparatorMechanicalDesign`
+owns the physical vessel design.
+
+```java
+// After process.run():
+sep.initMechanicalDesign();
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+
+// Design envelope
+design.setMaxOperationPressure(85.0);           // bara
+design.setMaxOperationTemperature(273.15 + 80); // K
+
+// Vessel sizing parameters (configured via MechanicalDesign)
+design.setGasLoadFactor(0.107);       // K-factor [m/s]
+design.setRetentionTime(120.0);       // Liquid retention [s]
+design.setFg(0.5);                    // Gas area fraction
+
+// Nozzle diameters (set via MechanicalDesign, NOT on Separator)
+design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
+design.setGasOutletNozzleID(0.20);    // Gas outlet [m]
+design.setOilOutletNozzleID(0.15);    // Oil outlet [m]
+
+// Demister/mist eliminator parameters
+design.setDemisterType("wire_mesh");  // "wire_mesh", "vane_pack", "cyclone"
+design.setDemisterPressureDrop(1.5);  // [mbar]
+design.setDemisterThickness(150.0);   // [mm]
+design.setFoamAllowanceFactor(1.0);   // 1.0 = no foam
+
+// Run design calculation
+design.readDesignSpecifications();
+design.calcDesign();
+String report = design.toJson();
+
+// Results: design.getInnerDiameter(), design.getTantanLength(),
+//          design.getWallThickness(), design.getInletNozzleID(), etc.
+```
+
 ### Compressor
 
 ```java
