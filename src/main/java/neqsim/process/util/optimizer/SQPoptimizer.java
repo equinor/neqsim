@@ -75,13 +75,13 @@ public class SQPoptimizer implements Serializable {
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(SQPoptimizer.class);
 
-  /** Objective function: f(x) -> double. */
+  /** Objective function: f(x) &gt; double. */
   private transient ObjectiveFunc objectiveFunction;
 
   /** Equality constraints: g_i(x) = 0. */
   private transient List<ConstraintFunc> equalityConstraints = new ArrayList<ConstraintFunc>();
 
-  /** Inequality constraints: h_j(x) >= 0. */
+  /** Inequality constraints: h_j(x) &gt;= 0. */
   private transient List<ConstraintFunc> inequalityConstraints = new ArrayList<ConstraintFunc>();
 
   /** Lower bounds on variables. */

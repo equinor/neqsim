@@ -384,6 +384,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Computes sensitivities directly from Broyden Jacobian.
+   *
+   * @param result the sensitivity matrix to populate
+   * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeFromBroyden(SensitivityMatrix result, boolean[][] computed) {
     // Build mapping from variable names to Jacobian indices
@@ -420,6 +423,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Computes sensitivities using chain rule through tear streams.
+   *
+   * @param result the sensitivity matrix to populate
+   * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaChainRule(SensitivityMatrix result, boolean[][] computed) {
     // For non-tear outputs, we can use:
@@ -483,6 +489,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Computes remaining sensitivities via finite differences.
+   *
+   * @param result the sensitivity matrix to populate
+   * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaFiniteDifferences(SensitivityMatrix result, boolean[][] computed) {
     // Get baseline outputs
@@ -605,6 +614,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Finds equipment by name in the process system.
+   *
+   * @param name the equipment name to search for
+   * @return the equipment interface, or null if not found
    */
   private ProcessEquipmentInterface findEquipment(String name) {
     for (Object unit : processSystem.getUnitOperations()) {
@@ -620,6 +632,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Gets a property value from equipment using reflection.
+   *
+   * @param equipment the process equipment to read from
+   * @param property the property name
+   * @param unit the unit string, or null
+   * @return the property value, or NaN if not found
    */
   private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property,
       String unit) {
@@ -665,6 +682,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Gets standard properties that are common across equipment types.
+   *
+   * @param equipment the process equipment to read from
+   * @param property the property name (e.g., temperature, pressure, flowrate)
+   * @param unit the unit string, or null for default units
+   * @return the property value, or NaN if not found
    */
   private double getStandardProperty(ProcessEquipmentInterface equipment, String property,
       String unit) {
