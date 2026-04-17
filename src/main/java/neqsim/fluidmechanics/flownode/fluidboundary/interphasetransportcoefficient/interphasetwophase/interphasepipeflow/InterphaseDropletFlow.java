@@ -253,7 +253,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   @Override
   public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
