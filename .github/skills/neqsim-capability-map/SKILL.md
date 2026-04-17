@@ -332,6 +332,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Class | Equipment | Package |
 |-------|----------|---------|
 | `MechanicalDesign` | Base class | `process.mechanicaldesign` |
+<<<<<<< HEAD
 | `SeparatorMechanicalDesign` | Separator vessel sizing, K-factor, demister config, nozzle sizing, liquid levels (HHLL/HLL/NLL/LLL/LLLL), inlet device, foam allowance, retention time, entrainment performance, design validation. **Gateway for all separator physical configuration.** Bridge methods: `setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`. | `process.mechanicaldesign.separator` |
 | `DemistingInternal` | Demisting internal sizing — Souders-Brown max gas velocity, Eu-number pressure drop, carry-over model. Types: wire mesh, vane pack, cyclone. | `process.mechanicaldesign.separator.internals` |
 | `DemistingInternalWithDrainage` | Demisting internal with drainage section — reduces carry-over by drainage efficiency factor. | `process.mechanicaldesign.separator.internals` |
@@ -339,6 +340,9 @@ transport properties (viscosity, thermal conductivity, density).
 | `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + mesh pad capture). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletCyclones` | Inlet cyclone cluster (8000 Pa max momentum, 95% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
+=======
+| `SeparatorMechanicalDesign` | Separator vessel sizing, K-factor, demister config, nozzle sizing, liquid levels (HHLL/HLL/NLL/LLL/LLLL), inlet device, foam allowance, retention time, entrainment performance, design validation. **Gateway for all separator physical configuration.** | `process.mechanicaldesign.separator` |
+>>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
 | `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |

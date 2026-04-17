@@ -399,7 +399,10 @@ process.run();
 Physical dimensions, internals, and design parameters are configured through
 `SeparatorMechanicalDesign` — NOT directly on `Separator`. This follows the
 same pattern used for wells, pipelines, compressors, and heat exchangers.
+<<<<<<< HEAD
 Bridge methods delegate to the Separator's performance calculator:
+=======
+>>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
 
 ```java
 // After process.run():
@@ -411,17 +414,21 @@ design.setGasLoadFactor(0.107);       // K-factor [m/s]
 design.setRetentionTime(120.0);       // Liquid retention [s]
 design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
 design.setDemisterType("wire_mesh");
+<<<<<<< HEAD
 
 // Bridge methods — inlet pipe, inlet device, sections
 design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD [m]
 design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
 design.addSeparatorSection("Demister", "meshpad");
 
+=======
+>>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
 design.readDesignSpecifications();
 design.calcDesign();
 String json = design.toJson();
 ```
 
+<<<<<<< HEAD
 **Internals classes** (`mechanicaldesign.separator.internals`):
 - `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,
   carry-over model for wire mesh / vane pack / cyclone demisting devices
@@ -432,6 +439,8 @@ String json = design.toJson();
 - `InletVane` (6000 Pa, 85%), `InletVaneWithMeshpad` (92%+mesh),
   `InletCyclones` (8000 Pa, 95%)
 
+=======
+>>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
 ### Stream introspection
 
 Every `ProcessEquipmentInterface` exposes its connected streams:
