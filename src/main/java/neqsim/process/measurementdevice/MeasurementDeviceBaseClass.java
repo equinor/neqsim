@@ -41,6 +41,11 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private double noiseStdDev = 0.0;
   private transient volatile Random random = new Random();
 
+  /** First-order filter time constant in seconds (0 = disabled). */
+  private double firstOrderTimeConstant = 0.0;
+  /** Previous filtered value used by the first-order filter. */
+  private double filteredPreviousValue = Double.NaN;
+
   private boolean conditionAnalysis = true;
   private String conditionAnalysisMessage = "";
   private double conditionAnalysisMaxDeviation = 0.0;
@@ -200,6 +205,42 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
+   * Shelves (suppresses) the alarm on this measurement point indefinitely. While shelved, alarm
+   * evaluations continue to track the value but no events are generated.
+   *
+   * @param reason operator-provided reason for shelving
+   */
+  public void shelveAlarm(String reason) {
+    alarmState.shelve(reason);
+  }
+
+  /**
+   * Shelves (suppresses) the alarm on this measurement point until the given simulation time.
+   *
+   * @param reason operator-provided reason for shelving
+   * @param expiryTime simulation time when shelving expires
+   */
+  public void shelveAlarm(String reason, double expiryTime) {
+    alarmState.shelve(reason, expiryTime);
+  }
+
+  /**
+   * Removes the alarm shelve, resuming normal alarm evaluation.
+   */
+  public void unshelveAlarm() {
+    alarmState.unshelve();
+  }
+
+  /**
+   * Returns whether the alarm on this measurement point is currently shelved.
+   *
+   * @return {@code true} if shelved
+   */
+  public boolean isAlarmShelved() {
+    return alarmState.isShelved();
+  }
+
+  /**
    * Apply configured noise, delay and sensor fault to a raw measurement value.
    *
    * @param rawValue unmodified measurement value
@@ -213,6 +254,18 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
       random = r;
     }
     double noisyValue = faultedValue + r.nextGaussian() * noiseStdDev;
+
+    // First-order exponential filter: y(k) = alpha * x(k) + (1-alpha) * y(k-1)
+    if (firstOrderTimeConstant > 0.0) {
+      if (Double.isNaN(filteredPreviousValue)) {
+        filteredPreviousValue = noisyValue;
+      }
+      // Use a default dt of 1.0 second for per-sample filtering
+      double alpha = 1.0 - Math.exp(-1.0 / firstOrderTimeConstant);
+      noisyValue = alpha * noisyValue + (1.0 - alpha) * filteredPreviousValue;
+      filteredPreviousValue = noisyValue;
+    }
+
     delayBuffer.addLast(noisyValue);
     if (delayBuffer.size() > delaySteps) {
       return delayBuffer.removeFirst();
@@ -236,6 +289,28 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    */
   public double getNoiseStdDev() {
     return noiseStdDev;
+  }
+
+  /**
+   * Sets the first-order filter time constant for smoothing measurement readings. A value of 0 (the
+   * default) disables the filter. Typical transmitter time constants range from 0.5 to 10 seconds.
+   *
+   * @param timeConstant time constant in seconds (0 = disabled)
+   */
+  public void setFirstOrderTimeConstant(double timeConstant) {
+    this.firstOrderTimeConstant = Math.max(0.0, timeConstant);
+    if (timeConstant <= 0.0) {
+      filteredPreviousValue = Double.NaN;
+    }
+  }
+
+  /**
+   * Gets the configured first-order filter time constant.
+   *
+   * @return time constant in seconds (0 = disabled)
+   */
+  public double getFirstOrderTimeConstant() {
+    return firstOrderTimeConstant;
   }
 
   /**

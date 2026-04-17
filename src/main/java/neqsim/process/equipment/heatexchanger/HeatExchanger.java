@@ -135,6 +135,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** Whether the dynamic heat exchanger model is enabled. */
   private boolean dynamicModelEnabled = false;
 
+  /** Shell-side fluid temperature in K — state variable for fluid accumulation model. */
+  private double shellFluidTemperature = Double.NaN;
+  /** Tube-side fluid temperature in K — state variable for fluid accumulation model. */
+  private double tubeFluidTemperature = Double.NaN;
+
   /**
    * Constructor for HeatExchanger.
    *
@@ -1703,9 +1708,52 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double tShellIn = inStream[0].getThermoSystem().getTemperature();
     double tTubeIn = inStream[1].getThermoSystem().getTemperature();
 
-    // Metal wall energy balance (forward Euler)
-    double qShellToWall = shellSideHtc * heatTransferArea * (tShellIn - wallTemperature);
-    double qWallToTube = tubeSideHtc * heatTransferArea * (wallTemperature - tTubeIn);
+    // --- Shell-side fluid accumulation ODE (CSTR model) ---
+    // When shellHoldupVolume > 0, track shell-side fluid temperature as a state
+    // variable. The fluid temperature evolves via mixing with incoming fluid and
+    // heat exchange with the wall. This adds thermal inertia from the fluid mass.
+    double tShellForWall = tShellIn; // default: no holdup → use inlet T
+    if (shellHoldupVolume > 0.0) {
+      if (Double.isNaN(shellFluidTemperature)) {
+        shellFluidTemperature = tShellIn;
+      }
+      double shellRho = inStream[0].getThermoSystem().getDensity("kg/m3");
+      double shellCp = inStream[0].getThermoSystem().getCp("J/kgK");
+      double shellFluidMass = shellRho * shellHoldupVolume;
+      if (shellFluidMass > 0.0 && shellCp > 0.0) {
+        double shellMassFlow = inStream[0].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = shellMassFlow * shellCp * (tShellIn - shellFluidTemperature);
+        double qFluidToWall =
+            shellSideHtc * heatTransferArea * (shellFluidTemperature - wallTemperature);
+        double dTshellFluid = (qInletMixing - qFluidToWall) / (shellFluidMass * shellCp);
+        shellFluidTemperature += dTshellFluid * dt;
+      }
+      tShellForWall = shellFluidTemperature;
+    }
+
+    // --- Tube-side fluid accumulation ODE (CSTR model) ---
+    double tTubeForWall = tTubeIn; // default: no holdup → use inlet T
+    if (tubeHoldupVolume > 0.0) {
+      if (Double.isNaN(tubeFluidTemperature)) {
+        tubeFluidTemperature = tTubeIn;
+      }
+      double tubeRho = inStream[1].getThermoSystem().getDensity("kg/m3");
+      double tubeCp = inStream[1].getThermoSystem().getCp("J/kgK");
+      double tubeFluidMass = tubeRho * tubeHoldupVolume;
+      if (tubeFluidMass > 0.0 && tubeCp > 0.0) {
+        double tubeMassFlow = inStream[1].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = tubeMassFlow * tubeCp * (tTubeIn - tubeFluidTemperature);
+        double qWallToFluid =
+            tubeSideHtc * heatTransferArea * (wallTemperature - tubeFluidTemperature);
+        double dTtubeFluid = (qInletMixing + qWallToFluid) / (tubeFluidMass * tubeCp);
+        tubeFluidTemperature += dTtubeFluid * dt;
+      }
+      tTubeForWall = tubeFluidTemperature;
+    }
+
+    // Metal wall energy balance (forward Euler) — uses fluid temperatures when holdup is active
+    double qShellToWall = shellSideHtc * heatTransferArea * (tShellForWall - wallTemperature);
+    double qWallToTube = tubeSideHtc * heatTransferArea * (wallTemperature - tTubeForWall);
     double dTwall = (qShellToWall - qWallToTube) / (wallMass * wallCp);
     wallTemperature += dTwall * dt;
 

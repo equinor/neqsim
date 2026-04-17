@@ -247,6 +247,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double trayWeirHeight = 0.05;
   /** Weir length (crest length) on each tray in metres. */
   private double trayWeirLength = 1.0;
+  /** Per-tray enthalpy in J. Indexed by tray number. Null until initialized. */
+  private transient double[] trayEnthalpy = null;
+  /** Dry tray pressure drop in Pa per tray — for vapor hydraulic model. */
+  private double trayDryPressureDrop = 0.0;
+  /** Whether per-tray energy balance is active (uses PH flash instead of TP). */
+  private boolean dynamicEnergyEnabled = false;
 
   /**
    * <p>
@@ -4245,6 +4251,54 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Returns the per-tray enthalpy array in J. May be null if energy balance has not been
+   * initialized.
+   *
+   * @return array of tray enthalpies indexed by tray number, or null
+   */
+  public double[] getTrayEnthalpy() {
+    return trayEnthalpy;
+  }
+
+  /**
+   * Sets the dry tray pressure drop per tray in Pa. Used in the dynamic vapor hydraulic model to
+   * compute vapor flow rate as a function of pressure difference between trays.
+   *
+   * @param dpPa dry tray pressure drop in Pascals (positive value)
+   */
+  public void setTrayDryPressureDrop(double dpPa) {
+    this.trayDryPressureDrop = Math.max(0.0, dpPa);
+  }
+
+  /**
+   * Returns the dry tray pressure drop per tray in Pa.
+   *
+   * @return dry tray pressure drop in Pa
+   */
+  public double getTrayDryPressureDrop() {
+    return trayDryPressureDrop;
+  }
+
+  /**
+   * Enables or disables the per-tray energy balance in dynamic mode. When enabled, each tray's
+   * enthalpy is tracked and PH flash is used for re-equilibration instead of TP flash.
+   *
+   * @param enabled true to enable energy-balanced trays
+   */
+  public void setDynamicEnergyEnabled(boolean enabled) {
+    this.dynamicEnergyEnabled = enabled;
+  }
+
+  /**
+   * Returns whether the per-tray energy balance is enabled.
+   *
+   * @return true if energy-balanced trays are active
+   */
+  public boolean isDynamicEnergyEnabled() {
+    return dynamicEnergyEnabled;
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
@@ -4282,11 +4336,43 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
+    // Initialize per-tray enthalpy on first call (when energy balance enabled)
+    if (dynamicEnergyEnabled && (trayEnthalpy == null || trayEnthalpy.length != nTrays)) {
+      trayEnthalpy = new double[nTrays];
+      for (int i = 0; i < nTrays; i++) {
+        SystemInterface trayFluid = trays.get(i).getThermoSystem();
+        if (trayFluid != null) {
+          trayEnthalpy[i] = trayFluid.getEnthalpy();
+        }
+      }
+    }
+
     // Francis weir coefficient (SI)
     double cWeir = 1.84;
 
-    // For each tray (top to bottom), compute liquid overflow and vapor up-flow
-    // then update holdup with forward Euler
+    // Pre-compute overflow rates for all trays so downstream trays can
+    // read the correct liquid-in from the tray above
+    double[] overflowMolRate = new double[nTrays];
+    double[] liquidMolarVol = new double[nTrays];
+    double trayArea = Math.PI / 4.0 * internalDiameter * internalDiameter;
+    for (int i = 0; i < nTrays; i++) {
+      SystemInterface trayFluid = trays.get(i).getThermoSystem();
+      liquidMolarVol[i] = 1.0e-4; // default m3/mol
+      if (trayFluid != null && (trayFluid.hasPhaseType("aqueous") || trayFluid.hasPhaseType("oil")
+          || trayFluid.getNumberOfPhases() > 1)) {
+        double liquidDensity = trayFluid.getPhase(1).getDensity("mol/m3");
+        if (liquidDensity > 0) {
+          liquidMolarVol[i] = 1.0 / liquidDensity;
+        }
+      }
+      double liquidVolume = trayLiquidHoldup[i] * liquidMolarVol[i];
+      double liquidHeight = trayArea > 0 ? liquidVolume / trayArea : 0.0;
+      double howOverWeir = Math.max(0.0, liquidHeight - trayWeirHeight);
+      double overflowVol = cWeir * trayWeirLength * Math.pow(howOverWeir, 1.5);
+      overflowMolRate[i] = overflowVol / liquidMolarVol[i];
+    }
+
+    // For each tray (top to bottom), compute flows and update holdup
     for (int i = 0; i < nTrays; i++) {
       SimpleTray tray = trays.get(i);
       SystemInterface trayFluid = tray.getThermoSystem();
@@ -4294,58 +4380,53 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         continue;
       }
 
-      // Compute liquid overflow using Francis weir formula
-      // Q = Cw * Lw * h_ow^1.5 (m3/s) where h_ow is liquid height over weir
-      double liquidMolarVolume = 1.0e-4; // default m3/mol
-      if (trayFluid.hasPhaseType("aqueous") || trayFluid.hasPhaseType("oil")
-          || trayFluid.getNumberOfPhases() > 1) {
-        double liquidDensity = trayFluid.getPhase(1).getDensity("mol/m3");
-        if (liquidDensity > 0) {
-          liquidMolarVolume = 1.0 / liquidDensity;
-        }
-      }
+      double liquidOutRate = overflowMolRate[i];
 
-      double liquidVolume = trayLiquidHoldup[i] * liquidMolarVolume;
-      double trayArea = Math.PI / 4.0 * internalDiameter * internalDiameter;
-      double liquidHeight = trayArea > 0 ? liquidVolume / trayArea : 0.0;
-      double howOverWeir = Math.max(0.0, liquidHeight - trayWeirHeight);
-      double overflowRate = cWeir * trayWeirLength * Math.pow(howOverWeir, 1.5); // m3/s volumetric
-
-      // Convert to mol/s
-      double liquidOutRate = overflowRate / liquidMolarVolume;
-
-      // Vapor in-flow from tray below (simplified: use current vapor production)
+      // Vapor in-flow from tray below
       double vaporInRate = 0.0;
       if (i < nTrays - 1) {
-        // From tray below: approximate from that tray's gas production
         SystemInterface belowFluid = trays.get(i + 1).getThermoSystem();
         if (belowFluid != null && belowFluid.getNumberOfPhases() > 0) {
-          vaporInRate = belowFluid.getPhase(0).getNumberOfMolesInPhase() / Math.max(dt, 0.001);
+          if (trayDryPressureDrop > 0.0) {
+            // Pressure-driven vapor hydraulic: vapor rises if pressure below exceeds
+            // pressure above by more than the tray resistance (dry DP + liquid head).
+            double liquidHeight =
+                trayArea > 0 ? trayLiquidHoldup[i] * liquidMolarVol[i] / trayArea : 0.0;
+            double liquidHeadPa =
+                liquidHeight * 9.81 * (liquidMolarVol[i] > 0 ? 1.0 / liquidMolarVol[i] : 800.0);
+            double totalTrayDp = trayDryPressureDrop + liquidHeadPa;
+            double pBelow = belowFluid.getPressure("Pa");
+            double pAbove = trayFluid.getPressure("Pa");
+            double dpAvailable = pBelow - pAbove;
+            if (dpAvailable > 0.0 && totalTrayDp > 0.0) {
+              // Vapor flow proportional to sqrt of available DP fraction
+              double vaporMoles = belowFluid.getPhase(0).getNumberOfMolesInPhase();
+              double dpRatio = Math.min(dpAvailable / totalTrayDp, 2.0);
+              vaporInRate = vaporMoles * Math.sqrt(dpRatio) / Math.max(dt, 0.001);
+            }
+          } else {
+            // Original simplified model: all vapor rises in one timestep
+            vaporInRate = belowFluid.getPhase(0).getNumberOfMolesInPhase() / Math.max(dt, 0.001);
+          }
         }
       }
 
-      // Liquid in-flow from tray above
-      double liquidInRate = 0.0;
-      if (i > 0 && trayLiquidHoldup[i - 1] > 0) {
-        // Use the overflow from the tray above (already computed)
-        SystemInterface aboveFluid = trays.get(i - 1).getThermoSystem();
-        if (aboveFluid != null) {
-          double aboveLMV = liquidMolarVolume;
-          double aboveVol = trayLiquidHoldup[i - 1] * aboveLMV;
-          double aboveHeight = trayArea > 0 ? aboveVol / trayArea : 0.0;
-          double aboveHow = Math.max(0.0, aboveHeight - trayWeirHeight);
-          double aboveOverflow = cWeir * trayWeirLength * Math.pow(aboveHow, 1.5);
-          liquidInRate = aboveOverflow / aboveLMV;
-        }
-      }
+      // Liquid in-flow from tray above (use pre-computed overflow)
+      double liquidInRate = (i > 0) ? overflowMolRate[i - 1] : 0.0;
 
       // Feed stream contribution
       double feedRate = 0.0;
+      double feedEnthalpy = 0.0;
       List<StreamInterface> trayFeeds = feedStreams.get(i);
       if (trayFeeds != null) {
         for (StreamInterface feedStream : trayFeeds) {
           if (feedStream.getThermoSystem() != null) {
-            feedRate += feedStream.getThermoSystem().getTotalNumberOfMoles() / Math.max(dt, 0.001);
+            double fMoles =
+                feedStream.getThermoSystem().getTotalNumberOfMoles() / Math.max(dt, 0.001);
+            feedRate += fMoles;
+            if (dynamicEnergyEnabled) {
+              feedEnthalpy += feedStream.getThermoSystem().getEnthalpy() / Math.max(dt, 0.001);
+            }
           }
         }
       }
@@ -4360,11 +4441,63 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double dHoldup = (liquidInRate + vaporInRate + feedRate - liquidOutRate - vaporOutRate) * dt;
       trayLiquidHoldup[i] = Math.max(0.0, trayLiquidHoldup[i] + dHoldup);
 
-      // Re-flash the tray with updated holdup (VU flash at constant T)
-      try {
-        tray.run(id);
-      } catch (Exception ex) {
-        logger.warn("Dynamic tray " + i + " flash failed: " + ex.getMessage());
+      // --- Re-flash the tray ---
+      if (dynamicEnergyEnabled && trayEnthalpy != null) {
+        // Energy-balance mode: compute enthalpy flows and use PH flash
+        double hLiqIn = 0.0;
+        if (i > 0 && liquidInRate > 0) {
+          SystemInterface aboveFluid = trays.get(i - 1).getThermoSystem();
+          if (aboveFluid != null && aboveFluid.getNumberOfPhases() > 1) {
+            double molarH = aboveFluid.getPhase(1).getEnthalpy()
+                / Math.max(aboveFluid.getPhase(1).getNumberOfMolesInPhase(), 1.0);
+            hLiqIn = liquidInRate * molarH;
+          }
+        }
+        double hVapIn = 0.0;
+        if (i < nTrays - 1 && vaporInRate > 0) {
+          SystemInterface belowFluid = trays.get(i + 1).getThermoSystem();
+          if (belowFluid != null && belowFluid.getNumberOfPhases() > 0) {
+            double molarH = belowFluid.getPhase(0).getEnthalpy()
+                / Math.max(belowFluid.getPhase(0).getNumberOfMolesInPhase(), 1.0);
+            hVapIn = vaporInRate * molarH;
+          }
+        }
+        double hLiqOut = 0.0;
+        if (liquidOutRate > 0 && trayFluid.getNumberOfPhases() > 1) {
+          double molarH = trayFluid.getPhase(1).getEnthalpy()
+              / Math.max(trayFluid.getPhase(1).getNumberOfMolesInPhase(), 1.0);
+          hLiqOut = liquidOutRate * molarH;
+        }
+        double hVapOut = 0.0;
+        if (vaporOutRate > 0 && trayFluid.getNumberOfPhases() > 0) {
+          double molarH = trayFluid.getPhase(0).getEnthalpy()
+              / Math.max(trayFluid.getPhase(0).getNumberOfMolesInPhase(), 1.0);
+          hVapOut = vaporOutRate * molarH;
+        }
+        double dEnthalpy = (hLiqIn + hVapIn + feedEnthalpy - hLiqOut - hVapOut) * dt;
+        trayEnthalpy[i] += dEnthalpy;
+
+        // PH flash: set tray fluid to tracked enthalpy
+        try {
+          neqsim.thermodynamicoperations.ThermodynamicOperations trayOps =
+              new neqsim.thermodynamicoperations.ThermodynamicOperations(trayFluid);
+          trayOps.PHflash(trayEnthalpy[i]);
+        } catch (Exception ex) {
+          logger.warn("Dynamic tray " + i + " PH flash failed: " + ex.getMessage());
+          // Fallback to TP flash
+          try {
+            tray.run(id);
+          } catch (Exception ex2) {
+            logger.warn("Dynamic tray " + i + " TP flash fallback failed: " + ex2.getMessage());
+          }
+        }
+      } else {
+        // Default: TP flash (original behavior)
+        try {
+          tray.run(id);
+        } catch (Exception ex) {
+          logger.warn("Dynamic tray " + i + " flash failed: " + ex.getMessage());
+        }
       }
     }
 

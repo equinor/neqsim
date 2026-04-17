@@ -944,6 +944,38 @@ public class Separator extends ProcessEquipmentBaseClass
       }
       setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
+      // --- Separator internals: weir-controlled liquid outflow ---
+      // When weir geometry is configured, limit the liquid outlet flow rate to the
+      // Francis weir overflow rate. This models the physical constraint of liquid
+      // flowing over the weir to the outlet nozzle.
+      if (weirHeight > 0.0 && weirLength > 0.0
+          && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
+        double weirFlowRate = getWeirOverflowRate(); // m3/s
+        if (weirFlowRate > 0.0) {
+          double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
+          if (currentLiqOutRate > weirFlowRate) {
+            double scaleFactor = weirFlowRate / currentLiqOutRate;
+            liquidOutStream.setFlowRate(
+                liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor, "kg/hr");
+          }
+        } else {
+          // Liquid below weir — no outflow
+          liquidOutStream.setFlowRate(0.0, "kg/hr");
+        }
+      }
+
+      // --- Separator internals: mist eliminator pressure drop ---
+      // When a mist eliminator is configured, apply a pressure drop to the gas outlet
+      // stream. This gives the controller a realistic pressure signal.
+      if (mistEliminatorDpCoeff > 0.0 && thermoSystem.hasPhaseType("gas")) {
+        double meDp = getMistEliminatorPressureDrop(); // Pa
+        double meDpBar = meDp / 1.0e5;
+        double gasPres = gasOutStream.getPressure();
+        if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
+          gasOutStream.setPressure(gasPres - meDpBar, "bara");
+        }
+      }
+
       liquidLevel = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
         double volumeLoc = 0.0;
