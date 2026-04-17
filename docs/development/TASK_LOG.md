@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-04-18 — Systematic "hardcoded phase 0" bug elimination in two-phase flow
+**Type:** E (Feature/Bugfix)
+**Keywords:** two-phase flow, mass transfer, heat transfer, friction factor, Reynolds number, velocity, phase index, interphase transport, Krishna-Standart, film model, non-equilibrium, pipeline condensation, stratified flow, slug flow, droplet flow, stirred cell
+**Solution:** src/main/java/neqsim/fluidmechanics/flownode/ (multiple files across 3 rounds)
+**Notes:** Found and fixed 29 bugs across 3 audit rounds. Root cause: methods accepting `int phase`/`int phaseNum` parameters internally called `getReynoldsNumber()`, `getVelocity()`, or `calcWallFrictionFactor(0, node)` without passing the phase index through. These default to phase 0 (gas), making liquid-phase (1) calculations use incorrect gas-phase Reynolds numbers, velocities, and friction factors. Fixed files: NonEquilibriumFluidBoundary, ReactiveKrishnaStandartFilmModel, KrishnaStandartFilmModel, TwoPhaseFixedStaggeredGridSolver, InterphaseStratifiedFlow, TwoPhaseFlowNode, InterphaseDropletFlow, InterphaseSlugFlow, InterphaseTransportCoefficientBaseClass, MultiPhaseFlowNode, InterphasePipeFlow, InterphaseStirredCellFlow. Also added NaN guards, divide-by-zero protections, convergence fixes, and dead code cleanup. All fluidmechanics tests pass.
+
 ### 2026-06-18 — TwoFluidPipe transient & pressure gradient benchmark and fixes
 **Type:** E (Feature)
 **Keywords:** TwoFluidPipe, transient, multiphase, two-fluid model, pressure gradient, benchmark, McAdams viscosity, Beggs Brill, holdup, friction factor, Haaland, pipeline

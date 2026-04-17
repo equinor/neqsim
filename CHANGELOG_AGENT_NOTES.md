@@ -9,6 +9,72 @@
 
 ---
 
+## 2026-04-18 — Systematic Phase-Index Bug Fixes in Two-Phase Flow Transport
+
+### Summary
+
+Comprehensive audit and fix of 29 bugs across the `fluidmechanics` package where
+methods that accept a `phase` or `phaseNum` parameter internally used phase-0 defaults
+for Reynolds number, velocity, or friction factor calculations. This caused all
+liquid-phase (phase 1) transport coefficients to be computed with gas-phase values.
+
+### What Changed
+
+**Round 1 (13 bugs):** Critical fixes in core solver and flow nodes:
+- `NonEquilibriumFluidBoundary`: Prandtl number missing `/getMolarMass()`, heat transfer solver step clamping
+- `ReactiveKrishnaStandartFilmModel`: Per-component enhancement factor scaling
+- `KrishnaStandartFilmModel`: 3 NaN guards (Schmidt, phi matrix, mass transfer inverse)
+- `TwoPhaseFixedStaggeredGridSolver`: `initFinalResults` phase param, sign error, zero guards, velocity/enthalpy phase fixes
+- `InterphaseStratifiedFlow`: Liquid mass transfer floor, friction uses `phase` param, heat/mass transfer use `getReynoldsNumber(phaseNum)`
+- `TwoPhaseFlowNode`: Hydraulic diameter guards, convergence fix, Reynolds viscosity guard, `interphaseFrictionFactor[1]` uses phase 1
+
+**Round 2 (6 bugs):**
+- `TwoPhaseFixedStaggeredGridSolver`: Component conservation uses `getVelocity(phaseNum)`
+- `TwoPhaseFixedStaggeredGridSolver`: Latent heat enthalpy zero-moles guard (2 locations)
+- `InterphaseDropletFlow`: Friction factor uses `phase` parameter
+- `InterphaseSlugFlow`: Friction factor uses `phase` parameter
+- `InterphaseStratifiedFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
+
+**Round 3 (10 bugs):**
+- `InterphaseTransportCoefficientBaseClass`: Base class `calcInterPhaseFrictionFactor` now uses `calcWallFrictionFactor(phase, node)` instead of hardcoded 0
+- `MultiPhaseFlowNode`: `interphaseFrictionFactor[1]` uses phase 1 (same as TwoPhaseFlowNode fix)
+- `InterphaseDropletFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
+- `InterphaseSlugFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
+- `InterphasePipeFlow` (one-phase): All 3 methods use `getReynoldsNumber(phase)` consistently; turbulent branches use `getVelocity(phaseNum)`
+- `InterphaseStirredCellFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `NonEquilibriumFluidBoundary.java` | Prandtl fix, step clamping, df==0 guard |
+| `ReactiveKrishnaStandartFilmModel.java` | Enhancement factor diagonal scaling |
+| `KrishnaStandartFilmModel.java` | 3 NaN guards |
+| `TwoPhaseFixedStaggeredGridSolver.java` | Phase params, sign fix, zero guards |
+| `InterphaseStratifiedFlow.java` | Phase params for Re, friction, mass transfer |
+| `TwoPhaseFlowNode.java` | Hydraulic diameter, convergence, friction[1] |
+| `InterphaseDropletFlow.java` | Phase params for friction and Re |
+| `InterphaseSlugFlow.java` | Phase params for friction, heat, mass transfer |
+| `InterphaseTransportCoefficientBaseClass.java` | Base class friction uses phase param |
+| `MultiPhaseFlowNode.java` | `interphaseFrictionFactor[1]` phase fix |
+| `InterphasePipeFlow.java` | Consistent Re and velocity phase usage |
+| `InterphaseStirredCellFlow.java` | Phase params for heat and mass transfer |
+
+### Impact
+
+Liquid-phase mass transfer, heat transfer, and friction factor calculations now
+use the correct liquid-phase Reynolds number and velocity. This significantly
+affects non-equilibrium pipeline simulations where condensation occurs — the
+liquid film transport was previously computed with gas-phase properties.
+
+### Migration
+
+No API changes. All fixes are internal corrections. Results from two-phase
+non-equilibrium simulations will differ from previous versions — this is the
+**correct** behavior. Previous results had incorrect liquid-phase transport.
+
+---
+
 ## 2026-04-17 — InterphaseDropletFlow: Corrected Mass/Heat Transfer for Dispersed Flow
 
 ### Summary
