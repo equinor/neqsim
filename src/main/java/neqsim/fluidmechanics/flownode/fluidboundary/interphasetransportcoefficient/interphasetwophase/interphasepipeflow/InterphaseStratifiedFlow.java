@@ -91,8 +91,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
   /** {@inheritDoc} */
   @Override
   public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
-    // TODO: Should call calcWallFrictionFactor(phase)? Input phase is unused
-    return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
+    return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(phase, node);
   }
 
   /** {@inheritDoc} */
@@ -119,8 +118,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
   @Override
   public double calcInterphaseHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
-    // System.out.println("velocity " + node.getVelocity(phase));
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else {
@@ -172,11 +170,16 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
       // node.getReynoldsNumber(phase)/schmidtNumber);
       // er usikker paa denne korreksjonen med 1e-2 - maa sjekkes opp mot artikkel av
       // Yih og Chen (1982) - satser paa at de ga den med enhet cm/sek
-      massTrans = redMassTrans
-          * Math.pow(Math.pow(node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
-              .getKinematicViscosity(), 2.0) / gravity, -1.0 / 3.0)
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-          / schmidtNumber;
+      massTrans =
+          redMassTrans
+              * Math
+                  .pow(
+                      Math.max(Math.pow(node.getBulkSystem().getPhase(phaseNum)
+                          .getPhysicalProperties().getKinematicViscosity(), 2.0) / gravity, 1e-30),
+                      -1.0 / 3.0)
+              * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
+                  .getKinematicViscosity()
+              / schmidtNumber;
     }
     if (phaseNum == 0) {
       if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2300) {

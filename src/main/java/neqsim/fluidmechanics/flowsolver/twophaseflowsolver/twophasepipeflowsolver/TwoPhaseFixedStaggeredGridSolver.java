@@ -1455,7 +1455,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double interphaseHeatFlux =
           sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum) * nodeLength
               * pipe.getNode(i).getInterphaseContactLength(phaseNum)
-              * (nodeLength / pipe.getNode(i).getVelocity(phaseNum));
+              * (nodeLength / Math.max(pipe.getNode(i).getVelocity(phaseNum), 1e-6));
 
       // Potential energy change (elevation work)
       double potentialEnergy = -pipe.getNode(i).getArea(phaseNum) * gravity
@@ -1552,7 +1552,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     double interphaseHeatFluxLast =
         sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum) * nodeLengthLast
             * pipe.getNode(i).getInterphaseContactLength(phaseNum)
-            * (nodeLengthLast / pipe.getNode(i).getVelocity(phaseNum));
+            * (nodeLengthLast / Math.max(pipe.getNode(i).getVelocity(phaseNum), 1e-6));
 
     // Potential energy change for last node
     double potentialEnergyLast = -pipe.getNode(i).getArea(phaseNum) * gravity
@@ -1595,7 +1595,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void setComponentConservationMatrix2(int phaseNum, int componentNumber) {
     double SU = 0;
-    double sign = (phaseNum == 0) ? 1.0 : 1.0;
+    double sign = (phaseNum == 0) ? -1.0 : 1.0;
     a[0] = 0;
     b[0] = 1.0;
     c[0] = 0;
@@ -1766,14 +1766,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void initFinalResults(int phase) {
     for (int i = 0; i < numberOfNodes; i++) {
-      oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn().doubleValue();
+      oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn(phase).doubleValue();
       oldDensity[phase][i] =
-          pipe.getNode(i).getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
-      oldInternalEnergy[phase][i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy()
-          / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
-          / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+          pipe.getNode(i).getBulkSystem().getPhase(phase).getPhysicalProperties().getDensity();
+      oldInternalEnergy[phase][i] = pipe.getNode(i).getBulkSystem().getPhase(phase).getEnthalpy()
+          / pipe.getNode(i).getBulkSystem().getPhase(phase).getNumberOfMolesInPhase()
+          / pipe.getNode(i).getBulkSystem().getPhase(phase).getMolarMass();
 
-      for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
+      for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhase(phase)
           .getNumberOfComponents(); j++) {
         oldComposition[phase][j][i] = xNew[phase][j][i];
         // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getx() *

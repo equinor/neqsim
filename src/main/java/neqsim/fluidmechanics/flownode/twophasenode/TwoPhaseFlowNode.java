@@ -258,10 +258,10 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       // System.out.println("f " + f + " iterations " + iterations + " beta " + phaseFraction[0]);
     }
     // while (Math.abs(f) > 1e-6 && iterations < 100);
-    while (Math.abs((f - fOld) / f) > 1e-8 && iterations < 100);
+    while (Math.abs(f) > 1e-20 && Math.abs((f - fOld) / f) > 1e-8 && iterations < 100);
 
-    if (iterations == 10000) {
-      System.out.println("error in void init calc");
+    if (iterations >= 100) {
+      logger.debug("initFlowCalc holdup iteration did not converge after 100 iterations");
     }
     // System.out.println("f " + f + " iterations " + iterations + " beta " +
     // phaseFraction[0]);
@@ -276,9 +276,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * @return a double
    */
   public double calcHydraulicDiameter() {
-    hydraulicDiameter[0] = 4.0 * phaseFraction[0] * pipe.getArea()
-        / (wallContactLength[0] + interphaseContactLength[0]);
-    hydraulicDiameter[1] = 4.0 * phaseFraction[1] * pipe.getArea() / wallContactLength[1];
+    double wallPlusInterface = wallContactLength[0] + interphaseContactLength[0];
+    hydraulicDiameter[0] =
+        (wallPlusInterface > 1e-20) ? 4.0 * phaseFraction[0] * pipe.getArea() / wallPlusInterface
+            : 0.0;
+    hydraulicDiameter[1] = (wallContactLength[1] > 1e-20)
+        ? 4.0 * phaseFraction[1] * pipe.getArea() / wallContactLength[1]
+        : 0.0;
     return hydraulicDiameter[0];
   }
 
@@ -290,12 +294,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * @return a double
    */
   public double calcReynoldNumber() {
-    reynoldsNumber[1] = velocity[1] * hydraulicDiameter[1]
-        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-        / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
-    reynoldsNumber[0] = velocity[0] * hydraulicDiameter[0]
-        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-        / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+    double visc1 = bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+    double visc0 = bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+    reynoldsNumber[1] = (Math.abs(visc1) > 1e-30) ? velocity[1] * hydraulicDiameter[1]
+        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / visc1 : 0.0;
+    reynoldsNumber[0] = (Math.abs(visc0) > 1e-30) ? velocity[0] * hydraulicDiameter[0]
+        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / visc0 : 0.0;
     return reynoldsNumber[1];
   }
 
