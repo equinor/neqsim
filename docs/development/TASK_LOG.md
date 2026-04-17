@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-04-17 — cDFT Surface Tension: Kernel Correction, Mixture Extension, Paper
+**Type:** E (Feature)
+**Keywords:** cDFT, surface tension, interfacial tension, density functional theory, kernel range, mixture IFT, Peng-Robinson, SRK, predictive, lambda correlation, acentric factor, critical correction, Miqueu, gradient theory, Parachor, Fluid Phase Equilibria
+**Solution:** src/main/java/neqsim/thermo/util/LCSF/surfacetension/CDFTSurfaceTension.java, task_solve/2026-04-17_cdft_surface_tension_paper_kernel_correction_and_mixture_extension/, neqsim-paperlab/papers/cdft_surface_tension_2026/
+**Notes:** Implemented predictive cDFT surface tension from cubic EOS. Three proposals: (A) kernel range correction λ(ω) = 0.749 − 0.740ω reduces AAD from 41.5% to 9.5% for 8 pure components (beats GT 12.8%, Parachor 17.6%; Miqueu GT 2.2% still best). (B) Mixture solver with shared-δ tanh profiles and cross kernels achieves 37.6% AAD for CH4/C3H8 at 277.6K (vs 61.7% Parachor). (C) Paper manuscript for Fluid Phase Equilibria with 4 figures, 3 tables. 27+ tests across 6 test classes. Key insight: critical exponent correction (1−Tr)^(−0.24) essential near Tc.
+
 ### 2026-06-18 — TwoFluidPipe transient & pressure gradient benchmark and fixes
 **Type:** E (Feature)
 **Keywords:** TwoFluidPipe, transient, multiphase, two-fluid model, pressure gradient, benchmark, McAdams viscosity, Beggs Brill, holdup, friction factor, Haaland, pipeline
