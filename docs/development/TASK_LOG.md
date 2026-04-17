@@ -211,6 +211,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 - Added ProcessSystem.getSystemElectricalDesign() for one-call plant electrical summary
 - 24 unit tests all passing in ElectricalDesignTest
 
+### 2026-04-16 — Review Dynamic Process and Control Functionality
+**Type:** G (Workflow)
+**Keywords:** dynamic simulation, transient, PID controller, MPC, HYSYS Dynamics, K-Spice, safety chain, HIPPS, ESD, blowdown, VU-flash, DynamicProcessHelper, ProcessEventBus, alarm, runTransient, control, measurement device, valve, split-range, override, bumpless transfer, sequence control, SFC, distillation dynamics, heat exchanger dynamics, rotor inertia
+**Solution:** task_solve/2026-04-16_review_dynamic_process_and_control_functionality/step1_scope_and_research/analysis.md
+**Notes:** Comprehensive 45-feature comparison across 7 categories against 5 commercial simulators. NeqSim scores 63/90 (70%) vs HYSYS 79/90 (88%). Leads in 8 areas (VU-flash, safety chain, Monte Carlo risk, auto-instrumentation, water hammer, DEXPI export, event bus, specialised analysers). 10 NIPs proposed with 4-phase roadmap. Key gaps: explicit Euler only (no implicit/adaptive), no dynamic HX/column, no bumpless transfer, no split-range/override, no sequence control.
+
 ---
 
 <!--

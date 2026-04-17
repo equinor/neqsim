@@ -9,6 +9,82 @@
 
 ---
 
+## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
+
+### Summary
+
+Major dynamic simulation feature set: 21 features across controller logic,
+instrumentation realism, equipment dynamics, and numerical infrastructure.
+59 JUnit tests. Full docs at `docs/process/dynamic-simulation-enhancements.md`.
+
+### New Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `SequentialFunctionChart` | `process.controllerdevice` | IEC 61131-3 SFC — startup/shutdown sequences, ESD logic, timed transitions |
+| `OverrideControllerStructure` | `process.controllerdevice.structure` | HIGH_SELECT / LOW_SELECT override control |
+| `SplitRangeControllerStructure` | `process.controllerdevice.structure` | Single controller driving multiple final elements with configurable sub-ranges |
+| `SensorFaultType` | `process.measurementdevice` | Enum: NONE, STUCK_AT_VALUE, LINEAR_DRIFT, BIAS, NOISE_BURST, SATURATION |
+
+### New API on Existing Classes
+
+**ControllerDeviceInterface / ControllerDeviceBaseClass:**
+- `ControllerMode` enum: `AUTO`, `MANUAL`, `CASCADE`
+- `getMode()` / `setMode(ControllerMode)` — with bumpless transfer on MANUAL→AUTO
+- `getManualOutput()` / `setManualOutput(double)` — direct output in MANUAL mode
+- `setSetpointWeight(double b)` / `getSetpointWeight()` — 2-DOF PID (0.0–1.0)
+
+**MeasurementDeviceBaseClass:**
+- `setFirstOrderTimeConstant(double)` / `getFirstOrderTimeConstant()` — transmitter filter (0 = disabled)
+- `setFault(SensorFaultType, double)` / `clearFault()` — sensor fault injection
+- `shelveAlarm(String reason)` / `shelveAlarm(String, double expiry)` — alarm shelving
+- `unshelveAlarm()` / `isAlarmShelved()` — alarm unshelve and query
+
+**AlarmState:**
+- `shelve(String reason)` / `shelve(String, double)` — timed alarm shelving
+- `unshelve()` / `isShelved()` / `getShelveReason()` / `getShelveExpiry()`
+
+**ThrottlingValve:**
+- `setValveDeadband(double)` / `getValveDeadband()` — valve deadband (%)
+- `setValveStiction(double)` / `getValveStiction()` — valve stiction (%)
+- `setValveHysteresis(double)` / `getValveHysteresis()` — valve hysteresis (%)
+
+**Separator:**
+- `setWeirHeight(double)` / `setWeirLength(double)` — weir-controlled liquid outflow (Francis formula)
+- `setBootVolume(double)` — boot (sump) volume
+- `setMistEliminatorDpCoeff(double)` / `setMistEliminatorThickness(double)` — mist eliminator ΔP
+- `getWeirOverflowRate()` / `getMistEliminatorPressureDrop()` — calculated outputs
+
+**HeatExchanger:**
+- `setDynamicModelEnabled(boolean)` — enable wall + fluid thermal ODE
+- `setWallMass(double)` / `setWallCp(double)` — wall thermal properties
+- `setHeatTransferArea(double)` — heat transfer area (m²)
+- `setShellSideHtc(double)` / `setTubeSideHtc(double)` — side-specific HTCs
+- `setShellHoldupVolume(double)` / `setTubeHoldupVolume(double)` — CSTR fluid holdup
+- `getWallTemperature()` — tracked wall temperature (K)
+
+**DistillationColumn:**
+- `setDynamicColumnEnabled(boolean)` — per-tray liquid holdup (Francis weir)
+- `setTrayWeirHeight(double)` / `setTrayWeirLength(double)` — weir geometry
+- `setDynamicEnergyEnabled(boolean)` — per-tray enthalpy tracking
+- `setTrayDryPressureDrop(double)` — pressure-driven vapor flow
+- `getTrayLiquidHoldup()` / `getTrayEnthalpy()` — per-tray state arrays
+
+**ProcessSystem:**
+- `IntegrationMethod` enum: `EXPLICIT_EULER`, `RUNGE_KUTTA_4`
+- `setIntegrationMethod(IntegrationMethod)` / `getIntegrationMethod()`
+- `setAdaptiveTimestepEnabled(boolean)` + `setMinTimestep` / `setMaxTimestep` / `setAdaptiveTimestepTolerance`
+- `runTransientAdaptive(double dt, UUID id)` — returns actual timestep used
+- `setParallelTransientEnabled(boolean)` / `setTransientThreadPoolSize(int)`
+
+### Affected Skills
+
+- `neqsim-dynamic-simulation` — update with new controller modes, SFC, equipment dynamics
+- `neqsim-api-patterns` — add 2-DOF PID, valve nonlinearities, alarm shelving patterns
+- `neqsim-capability-map` — update dynamic simulation capabilities inventory
+
+---
+
 ## 2026-04-13 — MCP Server: Professional-Use Improvements (48 Tools)
 
 ### Summary

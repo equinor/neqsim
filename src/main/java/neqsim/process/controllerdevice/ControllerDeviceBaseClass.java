@@ -61,12 +61,16 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double minResponse = Double.NEGATIVE_INFINITY;
   private double maxResponse = Double.POSITIVE_INFINITY;
   boolean isActive = true;
+  private ControllerMode mode = ControllerMode.AUTO;
+  private double manualOutput = 30.0;
+  private boolean bumplessTransferPending = false;
   private NavigableMap<Double, double[]> gainSchedule = new TreeMap<>();
   private java.util.List<ControllerEvent> eventLog = new java.util.ArrayList<>();
   private double totalTime = 0.0;
   private double integralAbsoluteError = 0.0;
   private double lastTimeOutsideBand = 0.0;
   private double settlingTolerance = 0.02;
+  private double setpointWeight = 1.0;
   private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation =
       new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
@@ -139,6 +143,21 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       calcIdentifier = id;
       return;
     }
+
+    // Handle MANUAL mode: bypass PID, use manual output, track errors for future transfer
+    if (mode == ControllerMode.MANUAL) {
+      totalTime += dt;
+      response = manualOutput;
+      double measurement = getMeasuredValue(unit);
+      oldoldError = oldError;
+      oldError = error;
+      error = measurement - controllerSetPoint;
+      eventLog
+          .add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
+      calcIdentifier = id;
+      return;
+    }
+
     totalTime += dt;
     if (isReverseActing()) {
       propConstant = -1;
@@ -147,6 +166,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     applyGainSchedule(measurement);
     oldoldError = error;
     oldError = error;
+
+    // Perform bumpless transfer back-calculation when switching from MANUAL to AUTO
+    if (bumplessTransferPending) {
+      error = measurement - controllerSetPoint;
+      oldError = error;
+      oldoldError = error;
+      derivativeState = 0.0;
+      if (propConstant != 0) {
+        TintValue = (manualOutput - initResponse) / propConstant;
+      }
+      bumplessTransferPending = false;
+    }
 
     double band = 0.0;
     double TintIncrement = 0.0;
@@ -168,6 +199,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
       error = measurement - controllerSetPoint;
+      // 2-DOF PID: proportional error uses setpoint weight b
+      // propError = measurement - b * setpoint, integral uses full error
+      double propError = measurement - setpointWeight * controllerSetPoint;
+      double oldPropError = oldError - (1.0 - setpointWeight) * controllerSetPoint;
       integralAbsoluteError += Math.abs(error) * dt;
       band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
@@ -192,7 +227,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         derivativeState = 0.0;
       }
 
-      delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+      delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
 
       response = initResponse + propConstant * delta;
 
@@ -619,6 +654,63 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     integralAbsoluteError = 0.0;
     lastTimeOutsideBand = 0.0;
     totalTime = 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ControllerMode getMode() {
+    return mode;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * When switching from MANUAL to AUTO, a bumpless transfer is scheduled so that the controller
+   * output does not jump on the next {@code runTransient} call. The integral state is
+   * back-calculated to match the current manual output. When switching from AUTO to MANUAL, the
+   * current PID output is captured as the manual output value.
+   * </p>
+   */
+  @Override
+  public void setMode(ControllerMode newMode) {
+    if (newMode == null || newMode == mode) {
+      return;
+    }
+    if (newMode == ControllerMode.AUTO && mode == ControllerMode.MANUAL) {
+      bumplessTransferPending = true;
+    }
+    if (newMode == ControllerMode.MANUAL) {
+      manualOutput = response;
+    }
+    this.mode = newMode;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getManualOutput() {
+    return manualOutput;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setManualOutput(double output) {
+    this.manualOutput = output;
+    if (mode == ControllerMode.MANUAL) {
+      response = output;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSetpointWeight(double b) {
+    this.setpointWeight = Math.max(0.0, Math.min(1.0, b));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSetpointWeight() {
+    return setpointWeight;
   }
 
   /**

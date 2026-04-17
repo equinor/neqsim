@@ -15,10 +15,8 @@ import neqsim.thermo.system.SystemPrEos;
  * Tests for DryGasSealAnalyzer class.
  *
  * <p>
- * Validates all six sub-analyses using the Bacalhau GIC seal gas composition
- * and conditions from
- * SOK7305593 (Flowserve API 692 datasheet). Expected results are
- * cross-validated against manual
+ * Validates all six sub-analyses using the Bacalhau GIC seal gas composition and conditions from
+ * SOK7305593 (Flowserve API 692 datasheet). Expected results are cross-validated against manual
  * NeqSim TPflash/PHflash calculations performed during the original task.
  * </p>
  *
@@ -34,8 +32,7 @@ class DryGasSealAnalyzerTest {
   private DryGasSealAnalyzer analyzer;
 
   /**
-   * Creates the Bacalhau GIC seal gas composition and configures the analyzer
-   * with operating
+   * Creates the Bacalhau GIC seal gas composition and configures the analyzer with operating
    * conditions from SOK7305593.
    */
   @BeforeEach
@@ -94,8 +91,7 @@ class DryGasSealAnalyzerTest {
   }
 
   /**
-   * Tests that isenthalpic expansion produces JT cooling and condensation
-   * consistent with the
+   * Tests that isenthalpic expansion produces JT cooling and condensation consistent with the
    * original analysis (max liquid ~2-4 vol%, significant cooling from 44 degC).
    */
   @Test
@@ -103,7 +99,8 @@ class DryGasSealAnalyzerTest {
     analyzer.runFullAnalysis();
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> jtResults = (Map<String, Object>) analyzer.getResults().get("isenthalpic_expansion");
+    Map<String, Object> jtResults =
+        (Map<String, Object>) analyzer.getResults().get("isenthalpic_expansion");
     assertNotNull(jtResults, "JT results should exist");
 
     double maxLiquid = (Double) jtResults.get("max_liquid_vol_pct");
@@ -118,17 +115,16 @@ class DryGasSealAnalyzerTest {
   }
 
   /**
-   * Tests that the retrograde condensation map identifies two-phase conditions at
-   * standstill (25
-   * degC, 50-70 barg) consistent with the original analysis and process
-   * simulation validation.
+   * Tests that the retrograde condensation map identifies two-phase conditions at standstill (25
+   * degC, 50-70 barg) consistent with the original analysis and process simulation validation.
    */
   @Test
   void testRetrogradeCondensationMapIdentifiesTwoPhaseZone() {
     analyzer.runFullAnalysis();
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> retroResults = (Map<String, Object>) analyzer.getResults().get("retrograde_condensation_map");
+    Map<String, Object> retroResults =
+        (Map<String, Object>) analyzer.getResults().get("retrograde_condensation_map");
     assertNotNull(retroResults, "Retrograde condensation results should exist");
 
     double maxLiquid = (Double) retroResults.get("max_liquid_vol_pct");
@@ -137,21 +133,22 @@ class DryGasSealAnalyzerTest {
 
     // Dew point curve should have been calculated
     @SuppressWarnings("unchecked")
-    List<Map<String, Object>> dewCurve = (List<Map<String, Object>>) retroResults.get("dew_point_curve");
+    List<Map<String, Object>> dewCurve =
+        (List<Map<String, Object>>) retroResults.get("dew_point_curve");
     assertNotNull(dewCurve, "Dew point curve should exist");
     assertFalse(dewCurve.isEmpty(), "Dew point curve should have points");
   }
 
   /**
-   * Tests the dead-leg cooldown calculation produces physically reasonable
-   * results.
+   * Tests the dead-leg cooldown calculation produces physically reasonable results.
    */
   @Test
   void testDeadLegCooldownReachesAmbient() {
     analyzer.runFullAnalysis();
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> cooldownResults = (Map<String, Object>) analyzer.getResults().get("dead_leg_cooldown");
+    Map<String, Object> cooldownResults =
+        (Map<String, Object>) analyzer.getResults().get("dead_leg_cooldown");
     assertNotNull(cooldownResults, "Cooldown results should exist");
 
     double finalTempC = (Double) cooldownResults.get("final_temperature_C");
@@ -167,8 +164,7 @@ class DryGasSealAnalyzerTest {
   }
 
   /**
-   * Tests the condensate accumulation rate is consistent with the original
-   * analysis (~6.83 L/day,
+   * Tests the condensate accumulation rate is consistent with the original analysis (~6.83 L/day,
    * fill time ~6 hours).
    */
   @Test
@@ -176,7 +172,8 @@ class DryGasSealAnalyzerTest {
     analyzer.runFullAnalysis();
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> accumResults = (Map<String, Object>) analyzer.getResults().get("condensate_accumulation");
+    Map<String, Object> accumResults =
+        (Map<String, Object>) analyzer.getResults().get("condensate_accumulation");
     assertNotNull(accumResults, "Accumulation results should exist");
 
     boolean hasCondensation = (Boolean) accumResults.get("condensation_present");
@@ -191,8 +188,7 @@ class DryGasSealAnalyzerTest {
   }
 
   /**
-   * Tests the flash vaporisation impact pressure calculation produces results
-   * that confirm seal
+   * Tests the flash vaporisation impact pressure calculation produces results that confirm seal
    * damage potential (impact > 10 bar threshold for gas film collapse).
    */
   @Test
@@ -200,7 +196,8 @@ class DryGasSealAnalyzerTest {
     analyzer.runFullAnalysis();
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> impactResults = (Map<String, Object>) analyzer.getResults().get("flash_vaporisation_impact");
+    Map<String, Object> impactResults =
+        (Map<String, Object>) analyzer.getResults().get("flash_vaporisation_impact");
     assertNotNull(impactResults, "Impact results should exist");
 
     double joukowsky = (Double) impactResults.get("joukowsky_impact_pressure_bar");
@@ -212,8 +209,7 @@ class DryGasSealAnalyzerTest {
   }
 
   /**
-   * Tests the GCU sizing produces physically reasonable cooling and reheating
-   * duties.
+   * Tests the GCU sizing produces physically reasonable cooling and reheating duties.
    */
   @Test
   void testGCUSizing() {

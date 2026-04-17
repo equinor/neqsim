@@ -237,6 +237,18 @@ public class Separator extends ProcessEquipmentBaseClass
   private double designLiquidLevelFraction = 0.8;
   /** Maximum gas volumetric flow rate from design [m3/s]. */
   private double maxDesignGasFlowRate = Double.MAX_VALUE;
+
+  // Separator internals parameters
+  /** Weir height in meters — liquid spills over the weir to the outlet. */
+  private double weirHeight = 0.0;
+  /** Weir length (crest length) in meters across the separator. */
+  private double weirLength = 0.0;
+  /** Boot (sump) volume in m3 for water/heavy liquid collection. */
+  private double bootVolume = 0.0;
+  /** Mist eliminator pressure drop coefficient (dP = coeff * rho * v^2 / 2). */
+  private double mistEliminatorDpCoeff = 0.0;
+  /** Mist eliminator thickness in meters. */
+  private double mistEliminatorThickness = 0.0;
   /** Whether to enforce capacity limits during simulation. */
   private boolean enforceCapacityLimits = false;
 
@@ -871,9 +883,8 @@ public class Separator extends ProcessEquipmentBaseClass
       }
 
       // Determine whether entrainment corrections apply to outlet compositions
-      boolean applyEntrainment =
-          (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
-              && thermoSystem.getNumberOfPhases() >= 2;
+      boolean applyEntrainment = (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
+          && thermoSystem.getNumberOfPhases() >= 2;
 
       if (thermoSystem.getNumberOfComponents() > 1) {
         if (applyEntrainment) {
@@ -931,6 +942,38 @@ public class Separator extends ProcessEquipmentBaseClass
         }
       }
       setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
+
+      // --- Separator internals: weir-controlled liquid outflow ---
+      // When weir geometry is configured, limit the liquid outlet flow rate to the
+      // Francis weir overflow rate. This models the physical constraint of liquid
+      // flowing over the weir to the outlet nozzle.
+      if (weirHeight > 0.0 && weirLength > 0.0
+          && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
+        double weirFlowRate = getWeirOverflowRate(); // m3/s
+        if (weirFlowRate > 0.0) {
+          double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
+          if (currentLiqOutRate > weirFlowRate) {
+            double scaleFactor = weirFlowRate / currentLiqOutRate;
+            liquidOutStream.setFlowRate(
+                liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor, "kg/hr");
+          }
+        } else {
+          // Liquid below weir — no outflow
+          liquidOutStream.setFlowRate(0.0, "kg/hr");
+        }
+      }
+
+      // --- Separator internals: mist eliminator pressure drop ---
+      // When a mist eliminator is configured, apply a pressure drop to the gas outlet
+      // stream. This gives the controller a realistic pressure signal.
+      if (mistEliminatorDpCoeff > 0.0 && thermoSystem.hasPhaseType("gas")) {
+        double meDp = getMistEliminatorPressureDrop(); // Pa
+        double meDpBar = meDp / 1.0e5;
+        double gasPres = gasOutStream.getPressure();
+        if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
+          gasOutStream.setPressure(gasPres - meDpBar, "bara");
+        }
+      }
 
       liquidLevel = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
@@ -2361,6 +2404,143 @@ public class Separator extends ProcessEquipmentBaseClass
     this.separatorVolume = sepCrossArea * separatorLength;
     this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();
+  }
+
+  /**
+   * Sets the weir height in meters. Liquid overflows the weir to the outlet. The liquid outlet flow
+   * is modelled as Francis weir flow: Q = Cw * Lw * h_ow^1.5 where h_ow is the liquid height above
+   * the weir.
+   *
+   * @param height weir height in meters (must be positive, less than internal diameter)
+   */
+  public void setWeirHeight(double height) {
+    this.weirHeight = Math.max(0.0, Math.min(height, internalDiameter));
+  }
+
+  /**
+   * Gets the weir height in meters.
+   *
+   * @return the weir height
+   */
+  public double getWeirHeight() {
+    return weirHeight;
+  }
+
+  /**
+   * Sets the weir length (crest length) in meters.
+   *
+   * @param length the weir crest length in meters
+   */
+  public void setWeirLength(double length) {
+    this.weirLength = Math.max(0.0, length);
+  }
+
+  /**
+   * Gets the weir length in meters.
+   *
+   * @return the weir length
+   */
+  public double getWeirLength() {
+    return weirLength;
+  }
+
+  /**
+   * Sets the boot (sump) volume in cubic meters. The boot is used for water or heavy liquid
+   * collection below the main separator body.
+   *
+   * @param volume boot volume in m3
+   */
+  public void setBootVolume(double volume) {
+    this.bootVolume = Math.max(0.0, volume);
+  }
+
+  /**
+   * Gets the boot volume in cubic meters.
+   *
+   * @return the boot volume
+   */
+  public double getBootVolume() {
+    return bootVolume;
+  }
+
+  /**
+   * Sets the mist eliminator pressure drop coefficient. The pressure drop across the mist
+   * eliminator is calculated as dP = coeff * 0.5 * rho_gas * v_gas^2.
+   *
+   * @param coefficient the pressure drop coefficient (dimensionless)
+   */
+  public void setMistEliminatorDpCoeff(double coefficient) {
+    this.mistEliminatorDpCoeff = Math.max(0.0, coefficient);
+  }
+
+  /**
+   * Gets the mist eliminator pressure drop coefficient.
+   *
+   * @return the pressure drop coefficient
+   */
+  public double getMistEliminatorDpCoeff() {
+    return mistEliminatorDpCoeff;
+  }
+
+  /**
+   * Sets the mist eliminator thickness in meters.
+   *
+   * @param thickness the mist eliminator pad thickness in meters
+   */
+  public void setMistEliminatorThickness(double thickness) {
+    this.mistEliminatorThickness = Math.max(0.0, thickness);
+  }
+
+  /**
+   * Gets the mist eliminator thickness in meters.
+   *
+   * @return the thickness in meters
+   */
+  public double getMistEliminatorThickness() {
+    return mistEliminatorThickness;
+  }
+
+  /**
+   * Calculates the liquid overflow rate over the weir using the Francis weir formula. Q = Cw * Lw *
+   * h_ow^1.5 where Cw is the weir coefficient (1.84 for SI units), Lw is the weir crest length, and
+   * h_ow is the liquid height above the weir.
+   *
+   * @return the volumetric overflow rate in m3/s, or 0 if liquid is below the weir
+   */
+  public double getWeirOverflowRate() {
+    if (weirHeight <= 0.0 || weirLength <= 0.0) {
+      return 0.0;
+    }
+    double howOver = liquidLevel - weirHeight;
+    if (howOver <= 0.0) {
+      return 0.0;
+    }
+    double cw = 1.84; // Francis weir coefficient for SI units
+    return cw * weirLength * Math.pow(howOver, 1.5);
+  }
+
+  /**
+   * Calculates the mist eliminator pressure drop in Pascal based on the current gas velocity and
+   * density.
+   *
+   * @return pressure drop in Pa, or 0 if no mist eliminator is configured
+   */
+  public double getMistEliminatorPressureDrop() {
+    if (mistEliminatorDpCoeff <= 0.0) {
+      return 0.0;
+    }
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("gas")) {
+      return 0.0;
+    }
+    double rhoGas = thermoSystem.getPhase("gas").getDensity("kg/m3");
+    double gasVol = gasVolume > 0 ? gasVolume : separatorVolume * 0.5;
+    double crossArea = sepCrossArea;
+    if (crossArea <= 0 || gasVol <= 0) {
+      return 0.0;
+    }
+    double gasFlowRate = gasOutStream.getThermoSystem().getFlowRate("m3/sec");
+    double vGas = gasFlowRate / crossArea;
+    return mistEliminatorDpCoeff * 0.5 * rhoGas * vGas * vGas;
   }
 
   /**
