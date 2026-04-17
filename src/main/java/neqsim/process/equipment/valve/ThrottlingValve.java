@@ -252,7 +252,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
       setGasValve(true);
@@ -261,10 +261,11 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     if (!valveKvSet) {
+      thermoSystem.initPhysicalProperties("density");
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
+    // inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
