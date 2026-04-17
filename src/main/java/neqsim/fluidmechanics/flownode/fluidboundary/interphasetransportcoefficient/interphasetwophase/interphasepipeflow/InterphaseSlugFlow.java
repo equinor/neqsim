@@ -169,7 +169,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
     // Higher interphase friction in slug flow due to intense mixing at slug front
     // Uses Andreussi-Bendiksen correlation framework
-    double baseFriction = calcWallFrictionFactor(0, node);
+    double baseFriction = calcWallFrictionFactor(phase, node);
     double mixingEnhancement = 1.0 + 150.0 * node.getPhaseFraction(1);
     return baseFriction * mixingEnhancement;
   }

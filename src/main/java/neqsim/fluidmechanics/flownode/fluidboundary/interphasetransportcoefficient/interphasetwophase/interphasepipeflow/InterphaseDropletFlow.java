@@ -187,8 +187,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   /** {@inheritDoc} */
   @Override
   public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
-    // TODO: Should call calcWallFrictionFactor(phase)? Input phase is unused
-    return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
+    return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(phase, node);
   }
 
   /** {@inheritDoc} */
