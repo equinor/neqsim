@@ -204,15 +204,19 @@ design.setDemisterPressureDrop(1.5);  // [mbar]
 design.setDemisterThickness(150.0);   // [mm]
 design.setFoamAllowanceFactor(1.0);   // 1.0 = no foam
 
-<<<<<<< HEAD
-// Bridge methods — inlet pipe, inlet device, sections (delegate to Separator)
+// Bridge methods — entrainment internals (delegate to Separator)
 design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD generation [m]
 design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
 design.setGasLiquidSurfaceTension(0.020); // Interfacial tension [N/m]
 design.addSeparatorSection("Demister", "meshpad");
 
-=======
->>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
+// Bridge methods — dynamic internals (delegate to Separator)
+design.setWeirHeightAbsolute(0.30);   // Weir height [m] (syncs weirFraction)
+design.setWeirLength(1.5);            // Weir crest length [m]
+design.setBootVolume(2.0);            // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);  // Euler number for dP calc
+design.setMistEliminatorThickness(0.15); // Demister pad thickness [m]
+
 // Run design calculation
 design.readDesignSpecifications();
 design.calcDesign();

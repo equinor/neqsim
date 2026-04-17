@@ -1099,6 +1099,8 @@ and inlet devices. These are used by `SeparatorMechanicalDesign` for physical ve
 **Bridge methods** on `SeparatorMechanicalDesign` delegate to the Separator's performance
 calculator, keeping MechanicalDesign as the single gateway for all physical configuration:
 
+**Entrainment bridges:**
+
 | Bridge Method | Delegates To |
 |---------------|-------------|
 | `setInletPipeDiameter(double)` | `Separator.setInletPipeDiameter()` — inlet pipe diameter for DSD generation |
@@ -1107,6 +1109,17 @@ calculator, keeping MechanicalDesign as the single gateway for all physical conf
 | `addSeparatorSection(String, String)` | `Separator.addSeparatorSection()` — vane/meshpad/nozzle sections |
 | `getSeparatorSections()` | Returns all configured separator sections |
 | `getSeparatorSection(String)` | Returns a section by name |
+
+**Dynamic internals bridges:**
+
+| Bridge Method | Delegates To |
+|---------------|-------------|
+| `setWeirHeightAbsolute(double)` | `Separator.setWeirHeight()` — weir height [m], also syncs `weirFraction` |
+| `setWeirLength(double)` | `Separator.setWeirLength()` — weir crest length [m] |
+| `setBootVolume(double)` | `Separator.setBootVolume()` — boot/sump volume [m3] |
+| `setMistEliminatorDpCoeff(double)` | `Separator.setMistEliminatorDpCoeff()` — Euler number for dP |
+| `setMistEliminatorThickness(double)` | `Separator.setMistEliminatorThickness()` — pad thickness [m] (stored as mm internally) |
+| `applyDemistingInternal(DemistingInternal)` | Pushes Eu number + thickness from a design object to Separator |
 
 **Demisting internals** (`process.mechanicaldesign.separator.internals`):
 
@@ -1170,6 +1183,16 @@ separator.setLiquidLevel(0.5);
 
 // Enable enhanced entrainment (auto-generates DSD from flow regime)
 separator.setEnhancedEntrainmentCalculation(true);
+
+// Configure dynamic internals via MechanicalDesign bridge (preferred)
+separator.initMechanicalDesign();
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.setWeirHeightAbsolute(0.30);       // Weir height [m]
+design.setWeirLength(1.5);                // Weir crest length [m]
+design.setBootVolume(2.0);                // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);   // Euler number
+design.setMistEliminatorThickness(0.15);  // Pad thickness [m]
 
 // Switch to transient mode
 separator.setCalculateSteadyState(false);

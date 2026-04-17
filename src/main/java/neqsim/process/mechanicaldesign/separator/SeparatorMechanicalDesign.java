@@ -1917,6 +1917,178 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     return null;
   }
 
+  /**
+   * Sets the weir height for dynamic liquid overflow control (Francis weir model). Also updates the
+   * internal {@code weirFraction} to keep both representations in sync.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param height weir height in meters (must be positive)
+   */
+  public void setWeirHeightAbsolute(double height) {
+    if (getProcessEquipment() instanceof Separator) {
+      Separator sep = (Separator) getProcessEquipment();
+      sep.setWeirHeight(height);
+      double id = sep.getInternalDiameter();
+      if (id > 0) {
+        this.weirFraction = height / id;
+      }
+    } else {
+      if (innerDiameter > 0) {
+        this.weirFraction = height / innerDiameter;
+      }
+    }
+  }
+
+  /**
+   * Gets the weir height from the separator (absolute value set for dynamic simulation).
+   *
+   * @return weir height in meters
+   */
+  public double getWeirHeightAbsolute() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getWeirHeight();
+    }
+    return getWeirHeight();
+  }
+
+  /**
+   * Sets the weir crest length for dynamic liquid overflow control (Francis weir model).
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param length weir crest length in meters
+   */
+  public void setWeirLength(double length) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setWeirLength(length);
+    }
+  }
+
+  /**
+   * Gets the weir crest length from the separator.
+   *
+   * @return weir length in meters
+   */
+  public double getWeirLength() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getWeirLength();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the boot (sump) volume for water/heavy liquid collection.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param volume boot volume in cubic meters
+   */
+  public void setBootVolume(double volume) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setBootVolume(volume);
+    }
+  }
+
+  /**
+   * Gets the boot (sump) volume from the separator.
+   *
+   * @return boot volume in cubic meters
+   */
+  public double getBootVolume() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getBootVolume();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the mist eliminator pressure drop coefficient for dynamic simulation. The coefficient is
+   * used as: dP = coeff * 0.5 * rho_gas * v_gas^2.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation. The coefficient corresponds to the Euler
+   * number used in {@link DemistingInternal}.
+   * </p>
+   *
+   * @param coefficient the dimensionless pressure drop coefficient (Euler number)
+   */
+  public void setMistEliminatorDpCoeff(double coefficient) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setMistEliminatorDpCoeff(coefficient);
+    }
+  }
+
+  /**
+   * Gets the mist eliminator pressure drop coefficient from the separator.
+   *
+   * @return the dimensionless pressure drop coefficient
+   */
+  public double getMistEliminatorDpCoeff() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getMistEliminatorDpCoeff();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the mist eliminator thickness on the separator for dynamic simulation. Accepts thickness
+   * in meters. Also updates the local {@code demisterThickness} field (stored in mm).
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param thicknessMeters the mist eliminator thickness in meters
+   */
+  public void setMistEliminatorThickness(double thicknessMeters) {
+    this.demisterThickness = thicknessMeters * 1000.0; // Store in mm locally
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setMistEliminatorThickness(thicknessMeters);
+    }
+  }
+
+  /**
+   * Gets the mist eliminator thickness from the separator.
+   *
+   * @return thickness in meters
+   */
+  public double getMistEliminatorThickness() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getMistEliminatorThickness();
+    }
+    return demisterThickness / 1000.0; // Convert mm to m
+  }
+
+  /**
+   * Configures the mist eliminator from a {@link DemistingInternal} design object. Pushes the Euler
+   * number as the dynamic pressure drop coefficient and the thickness to the separator.
+   *
+   * <p>
+   * This connects the design-phase demister model to the runtime dynamic simulation, keeping the
+   * two in sync.
+   * </p>
+   *
+   * @param demistingInternal the demisting internal design object
+   */
+  public void applyDemistingInternal(
+      neqsim.process.mechanicaldesign.separator.internals.DemistingInternal demistingInternal) {
+    setMistEliminatorDpCoeff(demistingInternal.getEuNumber());
+    setMistEliminatorThickness(demistingInternal.getThickness());
+    this.demisterType = demistingInternal.getType();
+  }
+
   // ============================================================================
   // Design Calculation Methods
   // ============================================================================

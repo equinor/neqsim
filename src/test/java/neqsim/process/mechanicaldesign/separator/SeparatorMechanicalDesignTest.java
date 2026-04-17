@@ -408,6 +408,100 @@ public class SeparatorMechanicalDesignTest {
   }
 
   // ============================================================================
+  // Dynamic Internals Bridge Method Tests (weir, boot, mist eliminator)
+  // ============================================================================
+
+  @Test
+  public void testSetWeirHeightAbsoluteBridge() {
+    double height = 0.3; // 0.3 m weir height
+    mechDesign.setWeirHeightAbsolute(height);
+
+    // Verify value propagated to Separator
+    assertEquals(height, separator.getWeirHeight(), 1e-6,
+        "Weir height should be set on Separator via bridge");
+
+    // Verify MechanicalDesign getter returns same value
+    assertEquals(height, mechDesign.getWeirHeightAbsolute(), 1e-6,
+        "getWeirHeightAbsolute should return value from Separator");
+  }
+
+  @Test
+  public void testSetWeirLengthBridge() {
+    double length = 1.5; // 1.5 m weir crest length
+    mechDesign.setWeirLength(length);
+
+    assertEquals(length, separator.getWeirLength(), 1e-6,
+        "Weir length should be set on Separator via bridge");
+    assertEquals(length, mechDesign.getWeirLength(), 1e-6,
+        "getWeirLength should return value from Separator");
+  }
+
+  @Test
+  public void testSetBootVolumeBridge() {
+    double volume = 2.0; // 2.0 m3 boot volume
+    mechDesign.setBootVolume(volume);
+
+    assertEquals(volume, separator.getBootVolume(), 1e-6,
+        "Boot volume should be set on Separator via bridge");
+    assertEquals(volume, mechDesign.getBootVolume(), 1e-6,
+        "getBootVolume should return value from Separator");
+  }
+
+  @Test
+  public void testSetMistEliminatorDpCoeffBridge() {
+    double coeff = 150.0; // Euler number for wire mesh
+    mechDesign.setMistEliminatorDpCoeff(coeff);
+
+    assertEquals(coeff, separator.getMistEliminatorDpCoeff(), 1e-6,
+        "Mist eliminator dP coeff should be set on Separator via bridge");
+    assertEquals(coeff, mechDesign.getMistEliminatorDpCoeff(), 1e-6,
+        "getMistEliminatorDpCoeff should return value from Separator");
+  }
+
+  @Test
+  public void testSetMistEliminatorThicknessBridge() {
+    double thicknessM = 0.15; // 150 mm = 0.15 m
+    mechDesign.setMistEliminatorThickness(thicknessM);
+
+    assertEquals(thicknessM, separator.getMistEliminatorThickness(), 1e-6,
+        "Mist eliminator thickness should be set on Separator via bridge");
+    assertEquals(thicknessM, mechDesign.getMistEliminatorThickness(), 1e-6,
+        "getMistEliminatorThickness should return value in meters");
+
+    // Verify local demisterThickness is stored in mm
+    assertEquals(150.0, mechDesign.getDemisterThickness(), 1e-6,
+        "Local demisterThickness should be stored in mm");
+  }
+
+  @Test
+  public void testApplyDemistingInternalBridge() {
+    DemistingInternal demister = new DemistingInternal("WireMesh", "wire_mesh");
+
+    mechDesign.applyDemistingInternal(demister);
+
+    // Euler number should be pushed as dpCoeff
+    assertEquals(demister.getEuNumber(), separator.getMistEliminatorDpCoeff(), 1e-6,
+        "Euler number should map to mist eliminator dP coefficient");
+
+    // Thickness should be pushed (in meters)
+    assertEquals(demister.getThickness(), separator.getMistEliminatorThickness(), 1e-6,
+        "Demister thickness should be pushed to Separator in meters");
+  }
+
+  @Test
+  public void testApplyDemistingInternalVanePack() {
+    DemistingInternal vanePack = new DemistingInternal("VanePack", "vane_pack");
+
+    mechDesign.applyDemistingInternal(vanePack);
+
+    // Vane pack Eu=40
+    assertEquals(40.0, separator.getMistEliminatorDpCoeff(), 1e-6,
+        "Vane pack Eu number should be pushed");
+    assertEquals(0.30, separator.getMistEliminatorThickness(), 1e-6,
+        "Vane pack thickness should be pushed");
+  }
+
+  // ============================================================================
   // DemistingInternal Tests
   // ============================================================================
 

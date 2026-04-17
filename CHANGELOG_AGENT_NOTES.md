@@ -151,6 +151,57 @@ compatibility. But all new code should use the MechanicalDesign gateway.
 
 ---
 
+## 2026-04-17 — Dynamic Internals Bridge Methods on SeparatorMechanicalDesign
+
+### Summary
+
+Extended the MechanicalDesign gateway with bridge methods for separator dynamic
+simulation parameters (weir, boot, mist eliminator). These delegate to the
+corresponding `Separator` fields used by `runTransient()`:
+
+- `setWeirHeightAbsolute(double)` / `getWeirHeightAbsolute()` — sets weir
+  height [m] on Separator, also syncs `weirFraction` from inner diameter
+- `setWeirLength(double)` / `getWeirLength()` — weir crest length [m]
+- `setBootVolume(double)` / `getBootVolume()` — boot/sump volume [m3]
+- `setMistEliminatorDpCoeff(double)` / `getMistEliminatorDpCoeff()` — Euler
+  number for mist eliminator dP calculation (dP = Eu * 0.5 * rho * v^2)
+- `setMistEliminatorThickness(double)` / `getMistEliminatorThickness()` —
+  demister pad thickness [m] (converts to/from MechanicalDesign mm storage)
+- `applyDemistingInternal(DemistingInternal)` — convenience method that pushes
+  Eu number and thickness from a design object to the dynamic Separator
+
+### Naming note
+
+`setWeirHeightAbsolute` is used (not `setWeirHeight`) because the existing
+`getWeirHeight()` in SeparatorMechanicalDesign returns `weirFraction * ID`
+(design-phase calculated value), not the absolute dynamic height.
+
+### Migration
+
+**Before (setting dynamic params directly on Separator):**
+```java
+separator.setWeirHeight(0.30);
+separator.setMistEliminatorDpCoeff(150.0);
+```
+
+**After (set via MechanicalDesign — preferred):**
+```java
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.setWeirHeightAbsolute(0.30);
+design.setMistEliminatorDpCoeff(150.0);
+// Or push from a design object:
+design.applyDemistingInternal(new DemistingInternal("WireMesh", "wire_mesh"));
+```
+
+### Agents/Skills affected
+
+- `neqsim-api-patterns` — added dynamic bridge method examples
+- `copilot-instructions.md` / `AGENTS.md` — updated code examples and
+  architecture table with full bridge method list
+
+---
+
 ## 2026-04-13 — MCP Server: Professional-Use Improvements (48 Tools)
 
 ### Summary

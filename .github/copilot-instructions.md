@@ -943,15 +943,21 @@ design.setDemisterType("wire_mesh");     // Demister type
 design.setDemisterPressureDrop(1.5);     // Demister dP [mbar]
 design.setFoamAllowanceFactor(1.0);      // Foam allowance (1.0 = no foam)
 
-<<<<<<< HEAD
-// 4b. Bridge methods — inlet pipe, inlet device, sections (delegate to Separator)
+// 4b. Bridge methods — entrainment internals (delegate to Separator)
 design.setInletPipeDiameter(0.254);      // Inlet pipe ID for DSD generation [m]
 design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
 design.setGasLiquidSurfaceTension(0.020); // Interfacial tension [N/m]
 design.addSeparatorSection("Demister", "meshpad");
 
-=======
->>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
+// 4c. Bridge methods — dynamic internals (delegate to Separator)
+design.setWeirHeightAbsolute(0.30);      // Weir height [m] (also syncs weirFraction)
+design.setWeirLength(1.5);               // Weir crest length [m]
+design.setBootVolume(2.0);               // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);  // Euler number for dP calc
+design.setMistEliminatorThickness(0.15); // Demister pad thickness [m]
+// Or apply from a DemistingInternal design object:
+// design.applyDemistingInternal(new DemistingInternal("WireMesh", "wire_mesh"));
+
 // 5. Load standards and calculate
 design.readDesignSpecifications();
 design.calcDesign();
@@ -963,13 +969,9 @@ String jsonReport = design.toJson();
 | Layer | Class | Responsibility |
 |-------|-------|---------------|
 | Process simulation | `Separator` | Flash calculation, phase split, entrainment calculation |
-<<<<<<< HEAD
-| Physical design | `SeparatorMechanicalDesign` | Vessel sizing, nozzles, internals, demister, levels, standards. **Bridge methods** delegate to Separator: `setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension` |
+| Physical design | `SeparatorMechanicalDesign` | Vessel sizing, nozzles, internals, demister, levels, standards. **Bridge methods** delegate to Separator for entrainment (`setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`, `setMistEliminatorDpCoeff`, `setMistEliminatorThickness`, `applyDemistingInternal`) |
 | Demisting internals | `DemistingInternal`, `DemistingInternalWithDrainage` | Eu-number pressure drop, Souders-Brown max velocity, carry-over model (`mechanicaldesign.separator.internals`) |
 | Primary separation | `PrimarySeparation`, `InletVane`, `InletVaneWithMeshpad`, `InletCyclones` | Inlet momentum, bulk separation efficiency, carry-over (`mechanicaldesign.separator.primaryseparation`) |
-=======
-| Physical design | `SeparatorMechanicalDesign` | Vessel sizing, nozzles, internals, demister, levels, standards |
->>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
 | Design standards | `SeparatorDesignStandard` | K-factor, retention time, design codes (API 12J, NORSOK P-001) |
 | Entrainment physics | `SeparatorPerformanceCalculator` | DSD, grade efficiency, inlet device models |
 
@@ -977,17 +979,15 @@ The `SeparatorMechanicalDesign` owns: vessel dimensions (ID, length, wall
 thickness), nozzle sizes (inlet, gas outlet, oil outlet, water outlet), liquid
 levels (HHLL/HLL/NLL/LLL/LLLL), demister/mist eliminator parameters, inlet
 device K-factor, gas load factor, retention time, foam allowance, and
-<<<<<<< HEAD
-entrainment performance results. Bridge methods (`setInletPipeDiameter`,
-`setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`)
-delegate to the Separator's performance calculator, keeping MechanicalDesign as
-the single gateway for all physical configuration. When `calcDesign()` is called,
-it reads process conditions from the `Separator`, applies design standards, and
-=======
-entrainment performance results. When `calcDesign()` is called, it reads
-process conditions from the `Separator`, applies design standards, and
->>>>>>> 2a3f83c19aaaca55aed6b75655cab85f25a0e6f8
-calculates the physical vessel.
+entrainment performance results. Bridge methods delegate to the Separator,
+keeping MechanicalDesign as the single gateway for all physical configuration:
+entrainment bridges (`setInletPipeDiameter`, `setInletDeviceType`,
+`addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals
+bridges (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`,
+`setMistEliminatorDpCoeff`, `setMistEliminatorThickness`,
+`applyDemistingInternal`). When `calcDesign()` is called, it reads process
+conditions from the `Separator`, applies design standards, and calculates the
+physical vessel.
 
 ## Well Mechanical Design Pattern
 
