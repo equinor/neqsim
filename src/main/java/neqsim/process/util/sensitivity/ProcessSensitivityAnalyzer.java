@@ -699,6 +699,13 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Calls a method with optional unit parameter.
+   *
+   * @param equipment the process equipment to call the method on
+   * @param methodName the name of the method to invoke
+   * @param unit the unit string to pass, or null to use default
+   * @param defaultUnit the default unit if unit is null
+   * @return the result of the method call as a double
+   * @throws Exception if the method invocation fails
    */
   private double callMethodWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName,
       String unit, String defaultUnit) throws Exception {
@@ -726,6 +733,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Sets a property value on equipment using reflection.
+   *
+   * @param equipment the process equipment to set the property on
+   * @param property the property name to set
+   * @param value the value to set
+   * @param unit the unit string for the value, or null
    */
   private void setPropertyOnEquipment(ProcessEquipmentInterface equipment, String property,
       double value, String unit) {
