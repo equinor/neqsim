@@ -15,7 +15,7 @@ After reading this chapter, the reader will be able to:
 
 ## 2.1 Fundamental Thermodynamic Relations
 
-Before presenting the CPA equation of state, we must establish the thermodynamic framework within which it operates. This chapter reviews the essential concepts of chemical potential, fugacity, and phase equilibrium that underpin all equation of state calculations.
+Before presenting the CPA equation of state, we must establish the thermodynamic framework within which it operates. This chapter reviews the essential concepts of chemical potential, fugacity, and phase equilibrium that underpin all equation of state calculations \cite{Prausnitz1999,SmithVanNess2005,Tester1997}.
 
 ### 2.1.1 The Gibbs Energy and Chemical Potential
 
@@ -43,7 +43,7 @@ which is a crucial consistency check for any thermodynamic model.
 
 ### 2.1.2 Fugacity and the Fugacity Coefficient
 
-While the chemical potential is the thermodynamically rigorous quantity, it has the inconvenience of approaching $-\infty$ as the concentration of a component approaches zero. Lewis (1901) introduced the **fugacity** $f_i$ as an alternative measure that behaves like a corrected partial pressure:
+While the chemical potential is the thermodynamically rigorous quantity, it has the inconvenience of approaching $-\infty$ as the concentration of a component approaches zero. \cite{Lewis1901} introduced the **fugacity** $f_i$ as an alternative measure that behaves like a corrected partial pressure:
 
 $$\mu_i = \mu_i^0 + RT \ln \frac{f_i}{f_i^0}$$
 
@@ -51,7 +51,7 @@ The fugacity has units of pressure and is defined such that it equals the partia
 
 $$\lim_{P \to 0} \frac{f_i}{y_i P} = 1$$
 
-The **fugacity coefficient** $\varphi_i$ is defined as the ratio of fugacity to the product of mole fraction and pressure:
+The **fugacity coefficient** $\varphi_i$ is defined as the ratio of fugacity to the product of mole fraction and pressure \cite{Poling2001}:
 
 $$\varphi_i = \frac{f_i}{x_i P}$$
 
@@ -144,7 +144,7 @@ For a two-phase system, the flash problem combines the equilibrium conditions wi
 
 $$z_i = \beta y_i + (1 - \beta) x_i$$
 
-where $\beta$ is the vapor fraction. The **Rachford–Rice equation** eliminates the individual phase compositions:
+where $\beta$ is the vapor fraction. The **Rachford–Rice equation** \cite{RachfordRice1952} eliminates the individual phase compositions:
 
 $$\sum_{i=1}^{c} \frac{z_i (K_i - 1)}{1 + \beta(K_i - 1)} = 0$$
 
@@ -152,7 +152,7 @@ This single equation in $\beta$ is solved iteratively, with the K-factors update
 
 ### 2.3.2 Stability Analysis
 
-Before performing a flash calculation, it is essential to determine whether the system is stable as a single phase or whether it will split into multiple phases. Michelsen's (1982) **tangent plane distance** (TPD) criterion provides a rigorous test:
+Before performing a flash calculation, it is essential to determine whether the system is stable as a single phase or whether it will split into multiple phases. Michelsen's \cite{Michelsen1982a,Michelsen1982b} **tangent plane distance** (TPD) criterion provides a rigorous test:
 
 $$\text{TPD}(\mathbf{w}) = \sum_{i=1}^{c} w_i \left[ \ln w_i + \ln \varphi_i(\mathbf{w}) - \ln z_i - \ln \varphi_i(\mathbf{z}) \right]$$
 
@@ -198,7 +198,7 @@ print(f"Dew point temperature: {fluid.getTemperature('C'):.2f} C")
 
 ## 2.4 Excess Properties and the Activity Coefficient Connection
 
-Understanding excess properties is essential for interpreting CPA results because the association term generates large, physically meaningful excess properties that classical cubic EoS cannot reproduce.
+Understanding excess properties is essential for interpreting CPA results because the association term generates large, physically meaningful excess properties that classical cubic EoS cannot reproduce \cite{Sandler2006}.
 
 ### 2.4.1 Excess Properties Defined
 
@@ -326,7 +326,7 @@ For CPA, every derivative listed above includes both the cubic (SRK) contributio
 
 ## 2.6 The Gibbs Phase Rule and Degrees of Freedom
 
-Before discussing flash calculations and property initialization, it is important to establish the number of independent variables that specify the state of a system.
+Before discussing flash calculations and property initialization, it is important to establish the number of independent variables that specify the state of a system \cite{Gibbs1876}.
 
 ### 2.6.1 Statement of the Phase Rule
 
@@ -346,7 +346,7 @@ For CPA, the number of components $C$ includes all molecular species but not the
 
 ## 2.7 Property Initialization in NeqSim
 
-A critical practical point when using NeqSim for property calculations: after any flash calculation, you must call `fluid.initProperties()` before reading physical and transport properties. This initializes both thermodynamic properties (from the EoS) and physical properties (viscosity, thermal conductivity, surface tension):
+A critical practical point when using NeqSim for property calculations: after any flash calculation, you must call `fluid.initProperties()` before reading physical and transport properties. This initializes both thermodynamic properties (from the EoS) and physical properties (viscosity \cite{Lohrenz1964}, thermal conductivity, surface tension):
 
 ```python
 from neqsim import jneqsim
@@ -457,7 +457,7 @@ However, association can change the number of phases that form. A system that is
 
 Key points from this chapter:
 
-- Phase equilibrium is governed by equality of fugacities (or chemical potentials) across all phases
+- Phase equilibrium is governed by equality of fugacities (or chemical potentials) across all phases \cite{Prausnitz1999,Poling2001}
 - Fugacity coefficients are computed from the equation of state via an integral over volume
 - The flash problem determines the number, amounts, and compositions of coexisting phases
 - Stability analysis (Michelsen's TPD criterion) must precede flash calculations

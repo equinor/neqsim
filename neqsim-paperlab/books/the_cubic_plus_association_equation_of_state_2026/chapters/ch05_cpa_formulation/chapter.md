@@ -18,7 +18,7 @@ After reading this chapter, the reader will be able to:
 
 ### 5.1.1 Combining Cubic and Association Terms
 
-The CPA equation of state writes the pressure as the sum of a classical cubic term and an association term:
+The CPA equation of state \cite{Kontogeorgis1996,Kontogeorgis2006} writes the pressure as the sum of a classical cubic term and an association term. A comprehensive treatment of CPA theory and applications is given by Kontogeorgis and Folas \cite{Kontogeorgis2010book}:
 
 $$P = P^{\text{cubic}} + P^{\text{assoc}}$$
 
@@ -30,7 +30,7 @@ The first two terms are the standard SRK equation. The third term is the associa
 
 ### 5.1.2 The Simplified CPA (sCPA)
 
-The original CPA formulation used a hard-sphere reference for the radial distribution function, leading to a complex density dependence in the association term. Kontogeorgis et al. (1999) proposed a simplification where the RDF and its derivative are approximated as:
+The original CPA formulation used a hard-sphere reference for the radial distribution function, leading to a complex density dependence in the association term. \cite{Kontogeorgis1999} proposed a simplification where the RDF and its derivative are approximated as:
 
 $$g(\rho) = \frac{1}{1 - 1.9\eta}, \quad \eta = \frac{b}{4V_m}$$
 
@@ -58,7 +58,7 @@ $$A^{\text{SRK}} = -nRT \ln\left(\frac{V - nb}{V}\right) - \frac{a}{b} \ln\left(
 
 $$A^{\text{assoc}} = nRT \sum_i x_i \sum_{A_i} \left(\ln X_{A_i} - \frac{X_{A_i}}{2} + \frac{1}{2}\right)$$
 
-All thermodynamic properties can be derived from this Helmholtz energy by differentiation.
+All thermodynamic properties can be derived from this Helmholtz energy by differentiation \cite{Michelsen2007}.
 
 ## 5.2 The Five Pure-Component Parameters
 
@@ -132,7 +132,7 @@ When implementing CPA, it is essential to verify the analytical fugacity coeffic
 
 $$\ln \varphi_i^{\text{numerical}} = \frac{1}{RT} \frac{\partial A^{\text{res}}}{\partial n_i} \bigg|_{T,V}^{\text{numerical}} \approx \frac{A^{\text{res}}(n_i + \delta) - A^{\text{res}}(n_i - \delta)}{2\delta \cdot RT}$$
 
-This is a critical development practice used in NeqSim's test suite.
+This is a critical development practice used in NeqSim's test suite \cite{Solbraa2026}.
 
 ## 5.4 Thermodynamic Derivatives
 

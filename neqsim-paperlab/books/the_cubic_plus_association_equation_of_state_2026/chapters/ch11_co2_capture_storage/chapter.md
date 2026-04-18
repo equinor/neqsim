@@ -24,13 +24,13 @@ Carbon capture and storage (CCS) has emerged as one of the most important indust
 - Effect of impurities (N$_2$, O$_2$, H$_2$, Ar, H$_2$S, SO$_2$) on phase boundaries
 - Transport properties (density, viscosity) for pipeline hydraulics
 
-CPA is uniquely suited for these applications because CO$_2$ forms Lewis acid–base interactions with water — a type of solvation that is naturally modeled by CPA's cross-association framework.
+CPA is uniquely suited for these applications because CO$_2$ forms Lewis acid–base interactions with water \cite{Tsivintzelis2010,Tsivintzelis2014} — a type of solvation that is naturally modeled by CPA's cross-association framework.
 
 ## 11.2 CO$_2$–Water Phase Behavior
 
 ### 11.2.1 Experimental Observations
 
-The CO$_2$–water system is one of the most extensively studied binary systems in thermodynamics. Key features include:
+The CO$_2$–water system is one of the most extensively studied binary systems in thermodynamics \cite{Duan2003,Spycher2003}. Key features include:
 
 **CO$_2$ solubility in water:**
 - Increases with pressure up to about 100–200 bar, then levels off
@@ -49,7 +49,7 @@ CO$_2$ does not self-associate — it has no proton donor sites. However, it act
 
 $$\Delta^{A_{\text{H}_2\text{O}} B_{\text{CO}_2}} = g(\rho) \left[\exp\left(\frac{\varepsilon^{A_{\text{H}_2\text{O}} B_{\text{CO}_2}}}{RT}\right) - 1\right] b_{ij} \beta^{A_{\text{H}_2\text{O}} B_{\text{CO}_2}}$$
 
-The solvation parameters ($\varepsilon_{\text{cross}}$, $\beta_{\text{cross}}$) are fitted to CO$_2$–water mutual solubility data.
+The solvation parameters ($\varepsilon_{\text{cross}}$, $\beta_{\text{cross}}$) are fitted to CO$_2$–water mutual solubility data \cite{Austegard2006}.
 
 ### 11.2.3 CPA Predictions vs. Experimental Data
 
@@ -157,7 +157,7 @@ for fluid, label in [(fluid_pure, "Pure CO2"),
 
 ### 11.3.3 Impact on Pipeline Design
 
-For CCS pipeline design, the minimum operating pressure must keep the CO$_2$ in single-phase (dense phase) throughout the pipeline. Impurities raise this minimum:
+For CCS pipeline design, the minimum operating pressure must keep the CO$_2$ in single-phase (dense phase) throughout the pipeline \\cite{DNVF104,ISO27913}. Impurities raise this minimum:
 
 - Pure CO$_2$: critical pressure = 73.8 bar → minimum operating pressure ≈ 85 bar
 - CO$_2$ + 2% N$_2$: saturation pressure ≈ 85 bar at 10°C → minimum operating ≈ 95 bar
@@ -169,7 +169,7 @@ CPA provides the phase boundary predictions needed to set these operating pressu
 
 ### 11.4.1 Dense Phase Transport
 
-CCS pipelines operate in the "dense phase" — supercritical or compressed liquid CO$_2$ — to maximize transport capacity. The pipeline must be designed to prevent two-phase flow, which causes:
+CCS pipelines operate in the "dense phase" \cite{deVisser2008,Li2014,Knoope2014} — supercritical or compressed liquid CO$_2$ — to maximize transport capacity. The pipeline must be designed to prevent two-phase flow, which causes:
 
 - Increased pressure drop (two-phase friction factors 5–20× higher)
 - Liquid slugging and pipeline vibration
@@ -182,7 +182,7 @@ A critical specification for CCS pipelines is the water content of the CO$_2$ st
 
 $$\text{CO}_2 + \text{H}_2\text{O} \rightleftharpoons \text{H}_2\text{CO}_3 \rightleftharpoons \text{H}^+ + \text{HCO}_3^-$$
 
-Corrosion rates can exceed 10 mm/year for wet CO$_2$ on carbon steel, compared to < 0.1 mm/year for dry CO$_2$. The industry typically specifies water content below 50–500 ppm(mol), depending on operating conditions and material selection.
+Corrosion rates can exceed 10 mm/year for wet CO$_2$ on carbon steel \cite{deWaard1975}, compared to < 0.1 mm/year for dry CO$_2$. The industry typically specifies water content below 50–500 ppm(mol), depending on operating conditions and material selection.
 
 CPA predicts the water saturation point of CO$_2$ at pipeline conditions:
 

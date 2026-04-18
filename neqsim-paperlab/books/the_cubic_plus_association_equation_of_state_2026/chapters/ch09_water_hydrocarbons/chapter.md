@@ -16,7 +16,7 @@ After reading this chapter, the reader will be able to:
 
 ## 9.1 Industrial Importance of Water–Hydrocarbon Systems
 
-Water is ubiquitous in oil and gas processing. Every reservoir fluid contains dissolved water, and every surface processing facility must handle water in multiple forms:
+Water is ubiquitous in oil and gas processing \cite{Prausnitz1999,Tsonopoulos1999}. Every reservoir fluid contains dissolved water, and every surface processing facility must handle water in multiple forms:
 
 - **Dissolved water in gas**: determines dehydration requirements and hydrate risk
 - **Free water in oil**: affects corrosion, emulsion stability, and water treatment design
@@ -30,7 +30,7 @@ The accuracy of thermodynamic predictions for water–hydrocarbon systems direct
 - Separator sizing (water-in-oil specification, oil-in-water discharge)
 - Environmental compliance (dissolved hydrocarbon limits in produced water)
 
-Errors of 50–100% in water content prediction — common with classical cubic EoS — translate directly into oversized or undersized equipment, incorrect inhibitor dosing, and potential hydrate blockages.
+Errors of 50–100% in water content prediction — common with classical cubic EoS \cite{Bukacek1955,Olds1942} — translate directly into oversized or undersized equipment, incorrect inhibitor dosing, and potential hydrate blockages.
 
 ## 9.2 Mutual Solubilities: Water–Alkane Systems
 
@@ -48,7 +48,7 @@ which simplifies to:
 
 $$x_w^\beta = x_w^\alpha \frac{\gamma_w^\alpha}{\gamma_w^\beta}$$
 
-Since $x_w^\alpha \approx 1$ (aqueous phase is mostly water) and $\gamma_w^\alpha \approx 1$ (Raoult's law limit), the solubility of water in the hydrocarbon phase is approximately:
+Since $x_w^\alpha \approx 1$ (aqueous phase is mostly water) and $\gamma_w^\alpha \approx 1$ (Raoult's law \cite{Raoult1887} limit), the solubility of water in the hydrocarbon phase is approximately:
 
 $$x_w^\beta \approx \frac{1}{\gamma_w^\beta}$$
 
@@ -56,7 +56,7 @@ The activity coefficient of water at infinite dilution in the hydrocarbon phase,
 
 ### 9.2.2 Experimental Behavior
 
-The mutual solubility of water and alkanes exhibits several characteristic features:
+The mutual solubility of water and alkanes exhibits several characteristic features \cite{Tsonopoulos1983,Tsonopoulos1999}:
 
 **Solubility of water in alkanes:**
 - Increases with temperature (endothermic dissolution)
@@ -120,7 +120,7 @@ for i in range(fluid.getNumberOfPhases()):
 
 *Table 9.1: CPA predictions vs. experimental mutual solubilities (representative values).*
 
-CPA typically reproduces mutual solubilities within 10–30%, compared to errors of 100–1000% with SRK.
+CPA typically reproduces mutual solubilities within 10–30% \cite{Kontogeorgis2006,Derawi2003,Folas2005}, compared to errors of 100–1000% with SRK.
 
 ## 9.3 Water Content of Natural Gas
 
@@ -135,7 +135,7 @@ The water content of natural gas (also called the water dew point or moisture co
 
 ### 9.3.2 McKetta–Wehe Chart and Its Limitations
 
-The McKetta–Wehe chart has been the industry standard for estimating water content of sweet natural gas since the 1950s. It provides water content as a function of temperature and pressure for pure methane–water systems. Corrections are applied for gas composition (gravity correction) and sour gas content (Maddox correction).
+The McKetta–Wehe chart \cite{McKetta1958} has been the industry standard for estimating water content of sweet natural gas since the 1950s. It provides water content as a function of temperature and pressure for pure methane–water systems. Corrections are applied for gas composition (gravity correction) and sour gas content (Maddox correction) \cite{GPSA2012,Campbell2014}.
 
 However, the chart-based approach has significant limitations:
 
@@ -297,7 +297,7 @@ for i in range(fluid.getNumberOfPhases()):
 
 ### 9.5.1 Henry's Law and Its Extensions
 
-The solubility of a gas in water at low pressures follows Henry's law:
+The solubility of a gas in water at low pressures follows Henry's law \cite{Henry1803}:
 
 $$f_i^V = H_i(T) x_i$$
 

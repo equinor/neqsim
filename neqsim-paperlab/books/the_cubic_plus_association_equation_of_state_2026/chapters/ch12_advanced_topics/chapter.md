@@ -36,7 +36,7 @@ $$A = A^{\text{ideal}} + A^{\text{SRK}} + A^{\text{assoc}} + A^{\text{Born}} + A
 
 where the additional terms are:
 
-**Born solvation term:**
+**Born solvation term** \cite{Born1920}:
 
 The Born term accounts for the energy of transferring an ion from vacuum to a dielectric medium (the solvent). It is given by:
 
@@ -46,11 +46,11 @@ where $N_A$ is Avogadro's number, $e$ is the elementary charge, $\varepsilon_0$ 
 
 **MSA (Mean Spherical Approximation) term:**
 
-The MSA term models the long-range electrostatic interactions between ions. It is based on solving the Ornstein-Zernike integral equation for charged hard spheres in a dielectric continuum:
+The MSA term \cite{Blum1975} models the long-range electrostatic interactions between ions. It is based on solving the Ornstein-Zernike integral equation \cite{OrnsteinZernike1914} for charged hard spheres in a dielectric continuum:
 
 $$\frac{A^{\text{MSA}}}{RT} = \frac{V \Gamma^3}{3\pi} - \sum_i n_i \frac{z_i^2 e^2 \Gamma}{4\pi\varepsilon_0 \varepsilon_r k_B T (1 + \Gamma\sigma_i)}$$
 
-where $\Gamma$ is the MSA screening parameter, analogous to the Debye-Hückel screening length but accounting for ion size. The screening parameter is determined by the implicit equation:
+where $\Gamma$ is the MSA screening parameter, analogous to the Debye–Hückel \cite{DebyeHuckel1923} screening length but accounting for ion size. The screening parameter is determined by the implicit equation:
 
 $$4\Gamma^2 = \frac{e^2}{\varepsilon_0 \varepsilon_r k_B T} \sum_i \frac{\rho_i z_i^2}{(1 + \Gamma \sigma_i)^2}$$
 
@@ -64,7 +64,7 @@ These derivatives include contributions from the composition dependence of $\var
 
 ### 12.1.3 NeqSim Implementation
 
-NeqSim implements electrolyte CPA through the `SystemElectrolyteCPAstatoil` class:
+NeqSim implements electrolyte CPA through the `SystemElectrolyteCPAstatoil` class \cite{MariboMogensen2012,MariboMogensen2015}:
 
 ```python
 from neqsim import jneqsim
@@ -91,7 +91,7 @@ for i in range(fluid.getNumberOfPhases()):
 ### 12.1.4 Applications of e-CPA
 
 **Scale prediction:**
-Scale formation occurs when the solubility product of a mineral (e.g., BaSO$_4$, CaCO$_3$) is exceeded. e-CPA provides accurate activity coefficients of ions in complex brines, enabling reliable scale risk assessment.
+Scale formation occurs when the solubility product of a mineral (e.g., BaSO$_4$, CaCO$_3$) is exceeded \cite{StummMorgan1996}. e-CPA provides accurate activity coefficients of ions in complex brines, enabling reliable scale risk assessment.
 
 **MEG with salts:**
 During MEG regeneration, dissolved salts accumulate in the MEG loop. e-CPA predicts how salt concentration affects:
@@ -100,7 +100,7 @@ During MEG regeneration, dissolved salts accumulate in the MEG loop. e-CPA predi
 - Salt precipitation risk
 
 **Gas solubility in brine:**
-The salting-out effect reduces gas solubility in brine by 20–60% compared to pure water. e-CPA captures this effect through the ion-solvent interactions.
+The salting-out effect \cite{Setschenow1889} reduces gas solubility in brine by 20–60% compared to pure water. e-CPA captures this effect through the ion-solvent interactions.
 
 ## 12.2 Group-Contribution Approaches: GC-CPA
 
@@ -143,19 +143,19 @@ The reduced accuracy is the price of predictive capability. For screening studie
 
 CPA and SAFT emerged from the same theoretical foundation — Wertheim's thermodynamic perturbation theory — but took different implementation paths:
 
-- **CPA (1996)**: combined existing cubic EoS with the SAFT association term → backward-compatible with existing infrastructure
-- **SAFT (1990)**: built the entire EoS from molecular-level terms → more rigorous but less compatible
+- **CPA (1996)** \cite{Kontogeorgis1996}: combined existing cubic EoS with the SAFT association term \textrightarrow{} backward-compatible with existing infrastructure
+- **SAFT (1990)** \cite{Chapman1988,Chapman1990}: built the entire EoS from molecular-level terms \textrightarrow{} more rigorous but less compatible
 
 Several SAFT variants have been developed, each with different choices for the reference and perturbation terms.
 
 ### 12.3.2 PC-SAFT (Perturbed Chain SAFT)
 
-PC-SAFT \cite{Gross2001} is the most widely used SAFT variant in industrial applications. Key differences from CPA:
+PC-SAFT \cite{Gross2001,Gross2002} is the most widely used SAFT variant in industrial applications. Key differences from CPA:
 
 | Feature | CPA | PC-SAFT |
 |---------|-----|---------|
 | Reference fluid | SRK cubic | Hard-sphere chain |
-| Dispersion | van der Waals (cubic) | Barker-Henderson perturbation |
+| Dispersion | van der Waals (cubic) | Barker–Henderson \cite{Barker1967} perturbation |
 | Repulsion | Cubic (implicit) | Carnahan-Starling hard sphere |
 | Pure parameters | 3 + 2 association | 3 + 2 association |
 | Mixing rules | Classical + CR-1 | Berthelot-Lorentz + CR-1 |
@@ -201,7 +201,7 @@ PC-SAFT tends to be more accurate for pure-component properties (especially dens
 
 ### 12.3.5 SAFT-VR Mie and SAFT-$\gamma$ Mie
 
-More recent SAFT variants use the Mie potential (a generalized Lennard-Jones potential with variable attractive and repulsive exponents) as the basis for the monomer reference term:
+More recent SAFT variants use the Mie potential \cite{Mie1903,LennardJones1924} (a generalized Lennard-Jones potential with variable attractive and repulsive exponents) as the basis for the monomer reference term:
 
 $$u(r) = C \varepsilon \left[\left(\frac{\sigma}{r}\right)^{\lambda_r} - \left(\frac{\sigma}{r}\right)^{\lambda_a}\right]$$
 
@@ -209,7 +209,7 @@ where $\lambda_r$ and $\lambda_a$ are the repulsive and attractive exponents (th
 
 The additional parameters ($\lambda_r$, $\lambda_a$) provide extra flexibility to match second-derivative properties (speed of sound, heat capacity) that CPA and standard PC-SAFT cannot simultaneously fit with three non-association parameters.
 
-**SAFT-$\gamma$ Mie** combines the Mie potential with a group-contribution approach:
+**SAFT-$\gamma$ Mie** \cite{Papaioannou2014,Lafitte2013} combines the Mie potential with a group-contribution approach:
 
 1. Molecules are decomposed into functional groups (CH$_3$, CH$_2$, OH, C=O, etc.)
 2. Each group has Mie potential parameters ($\sigma_k$, $\varepsilon_k$, $\lambda_{r,k}$, $\lambda_{a,k}$)
@@ -234,7 +234,7 @@ The trade-off is significantly higher computational cost (5–20× slower than C
 
 ### 12.4.1 Concept
 
-The Unified Mixing Rule (UMR) approach combines CPA with an activity coefficient model through a modified mixing rule. Instead of using van der Waals one-fluid mixing rules for the energy parameter $a$:
+The Unified Mixing Rule (UMR) approach \cite{Voutsas2004} combines CPA with an activity coefficient model through a modified mixing rule. Instead of using van der Waals one-fluid mixing rules for the energy parameter $a$:
 
 $$a = \sum_i \sum_j x_i x_j a_{ij}$$
 
@@ -247,8 +247,8 @@ where $g^E$ is the excess Gibbs energy from an activity coefficient model (typic
 ### 12.4.2 Advantages
 
 UMR-CPA combines the strengths of:
-- **CPA**: handles association (hydrogen bonding) rigorously
-- **UNIFAC**: provides predictive capability for non-associating interactions through group contributions
+- **CPA**: handles association (hydrogen bonding) rigorously \cite{Panayiotou1991}
+- **UNIFAC** \cite{Fredenslund1975}: provides predictive capability for non-associating interactions through group contributions
 
 This is particularly powerful for:
 - Systems with both polar and non-polar components
@@ -275,7 +275,7 @@ Predicting asphaltene stability requires modeling the balance between solvation 
 
 ### 12.5.2 CPA for Asphaltenes
 
-CPA can model asphaltenes by:
+CPA can model asphaltenes \cite{LiFiroozabadi2010,Arya2016} by:
 
 1. Characterizing asphaltenes as a pseudo-component with association parameters
 2. Using a 1A or 2B association scheme (modeling $\pi$–$\pi$ stacking or hydrogen bonding through heteroatoms)
@@ -471,7 +471,7 @@ CPA's key advantage is that it uses the same 3 parameters ($T_c$, $P_c$, $\omega
 Despite its strengths, CPA is not the best choice for all systems:
 
 1. **Pure activity coefficient problems** (low pressure, liquid phase only): NRTL or UNIFAC may be simpler and equally accurate
-2. **Polymer solutions**: SAFT variants with chain contributions are better suited
+2. **Polymer solutions**: SAFT variants with chain contributions \cite{Flory1942,Huggins1941,SanchezLacombe1976} are better suited
 3. **Strongly ionic systems** (concentrated brines > 6 mol/kg): specialized electrolyte models may be required
 4. **Quantum fluids** (H$_2$, He at very low temperatures): require quantum corrections not in CPA
 5. **Multifunctional molecules** with complex association patterns: SAFT-$\gamma$ Mie with its group-contribution approach may be more predictive
@@ -563,7 +563,7 @@ The salting-out effect — reduced gas solubility in brine compared to pure wate
 
 ### 12.12.4 Ion-Specific Parameters: The Advanced e-CPA
 
-A significant improvement to e-CPA was proposed by Solbraa (2026), who introduced **ion-specific** short-range interaction parameters $W_0$ in the Debye–Hückel term. In the standard formulation, the $W_0$ parameter is a single salt-specific value. The advanced formulation allows each ion to have its own $W_0$, fitted to mean ionic activity coefficient data.
+A significant improvement to e-CPA was proposed by \cite{Solbraa2026}, who introduced **ion-specific** short-range interaction parameters $W_0$ in the Debye–Hückel term. In the standard formulation, the $W_0$ parameter is a single salt-specific value. The advanced formulation allows each ion to have its own $W_0$, fitted to mean ionic activity coefficient data.
 
 The results across five representative salts demonstrate substantial accuracy improvements:
 
@@ -576,7 +576,7 @@ The results across five representative salts demonstrate substantial accuracy im
 | Na$_2$SO$_4$ | $3.43 \times 10^{-3}$ | $-6.91 \times 10^{-3}$ | 20.8% | 1.8% | 92% |
 | **Average** | | | **16.9%** | **4.2%** | **75%** |
 
-*Table 12.7: Ion-specific $W_0$ parameters and accuracy improvement for the advanced e-CPA (Solbraa 2026). MAE is mean absolute error for $\gamma_\pm$ from 0.001 to 6 molal.*
+*Table 12.7: Ion-specific $W_0$ parameters and accuracy improvement for the advanced e-CPA \cite{Solbraa2026}. MAE is mean absolute error for $\gamma_\pm$ from 0.001 to 6 molal.*
 
 The improvement is most dramatic for Na$_2$SO$_4$ (92% reduction in MAE) and CaCl$_2$ (73%), which are the salts most poorly described by the standard approach. Note the sign reversal for CaCl$_2$: the divalent Ca$^{2+}$ cation has a negative $W_0$, reflecting its stronger hydration shell that modifies the local solvent structure differently from monovalent cations.
 
@@ -588,7 +588,7 @@ An important finding from this work is that **the Born solvation contribution is
 | $\ln \varphi^\infty$ | (shifts by same amount) | $-37.4$ |
 | $\ln \gamma = \ln \varphi - \ln \varphi^\infty$ | $\sim 0.5$ | $< 10^{-7}$ (Born) |
 
-*Table 12.8: Cancellation of Born solvation in the activity coefficient (Solbraa 2026).*
+*Table 12.8: Cancellation of Born solvation in the activity coefficient \cite{Solbraa2026}.*
 
 This means that efforts to improve e-CPA should focus on the Debye–Hückel term and the ion-specific $W_0$ parameters rather than on refining the Born model.
 
@@ -603,7 +603,7 @@ A key question for predictive capabilities is whether ion-specific parameters ar
 | LiCl | $-4.26 \times 10^{-3}$ | 1.23 |
 | CaCl$_2$ | $+4.08 \times 10^{-3}$ | −1.18 |
 
-*Table 12.9: Chloride $W_0$ values across different salts (Solbraa 2026).*
+*Table 12.9: Chloride $W_0$ values across different salts \cite{Solbraa2026}.*
 
 The monovalent chloride salts (NaCl, KCl, LiCl) show consistent negative $W_0$ values within a factor of 1.23, suggesting reasonable transferability. However, the sign reversal for CaCl$_2$ indicates that ion-specific parameters are not fully transferable for mixed-valence systems — the divalent cation fundamentally alters the local electrostatic environment around chloride.
 

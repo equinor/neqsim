@@ -142,9 +142,38 @@ This creates the scaffold with empty chapters (`ch01` through `ch12`).
 4. **Fill frontmatter** — at minimum: title_page.md (title, authors),
    preface.md (motivation, audience, acknowledgements).
 
-5. **Create chapter content** — each `chapter.md` uses markdown with:
+5. **Deep Literature Review and refs.bib (DO THIS BEFORE WRITING CHAPTERS)**:
+
+   This step is **non-negotiable** — a book with sparse references signals
+   shallow scholarship. Complete the bibliography BEFORE writing chapter content.
+
+   a. **Build master refs.bib** at the book root with 100+ entries minimum.
+      Organize into clearly commented sections by topic:
+      ```bibtex
+      % ─── Foundational thermodynamics ───
+      @book{Prausnitz1999, ... }
+
+      % ─── Equations of state ───
+      @article{Soave1972, ... }
+      ```
+   b. **Mine existing PaperLab papers** — Search `papers/*/refs.bib` for
+      related citations. Reuse BibTeX entries for consistency:
+      ```bash
+      grep -rl "keyword" papers/*/refs.bib
+      ```
+   c. **Ensure coverage per chapter** — Each chapter should have 10–20+ unique
+      references identified before writing begins.
+   d. **Include all categories**: seminal/foundational works, recent advances
+      (last 5 years), textbooks, experimental data sources, competing methods,
+      review articles.
+
+   See `PAPER_WRITING_GUIDELINES.md` "MANDATORY: Literature Review and Citation
+   Collection First" for the complete workflow and quality rules.
+
+6. **Create chapter content** — each `chapter.md` uses markdown with:
    - `$$...$$` for display equations (rendered as OMML in Word, KaTeX in HTML)
    - `$...$` for inline math
+   - `\cite{key}` tags for every claim, equation origin, and data source
    - `![Caption](figures/filename.png)` for figures
    - Standard markdown tables (rendered as booktabs-style)
 

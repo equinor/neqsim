@@ -29,6 +29,8 @@ The standard approach uses two types of experimental data for pure components:
 1. **Saturated vapor pressure** $P^{\text{sat}}(T)$: sensitive to $a_0$, $c_1$, and $\varepsilon$
 2. **Saturated liquid density** $\rho^L(T)$: sensitive to $b$ and, to a lesser extent, $\varepsilon$ and $\beta$
 
+Experimental data for parameter regression are typically sourced from evaluated databases such as DIPPR \cite{DIPPR2016} or the NIST Chemistry WebBook \cite{NISTWebBook}. For key substances like water and CO$_2$, multiparameter reference equations of state \cite{Span1996} provide highly accurate benchmark data against which CPA can be validated.
+
 The objective function for parameter regression is typically:
 
 $$F_{\text{obj}} = \sum_{k=1}^{N_P} \left(\frac{P_k^{\text{calc}} - P_k^{\text{exp}}}{P_k^{\text{exp}}}\right)^2 + w_\rho \sum_{k=1}^{N_\rho} \left(\frac{\rho_k^{\text{calc}} - \rho_k^{\text{exp}}}{\rho_k^{\text{exp}}}\right)^2$$
@@ -49,7 +51,7 @@ Fitting over too narrow a temperature range leads to parameters that extrapolate
 
 ### 6.2.1 The Levenberg–Marquardt Algorithm
 
-The parameter estimation problem is a nonlinear least-squares optimization. The Levenberg–Marquardt (LM) algorithm is the most widely used method for this class of problems. It interpolates between the Gauss–Newton method (fast convergence near the solution) and gradient descent (robust far from the solution).
+The parameter estimation problem is a nonlinear least-squares optimization. The Levenberg–Marquardt (LM) algorithm \cite{Levenberg1944,Marquardt1963} is the most widely used method for this class of problems. It interpolates between the Gauss–Newton method (fast convergence near the solution) and gradient descent (robust far from the solution).
 
 Given the objective function:
 
@@ -175,7 +177,7 @@ The association energy represents the depth of the hydrogen-bond potential well.
 
 *Table 6.1: Typical association energy values for different molecule classes.*
 
-The association energy can be compared with experimental hydrogen-bond enthalpies from spectroscopy. For water, the O–H···O bond energy is approximately 20 kJ/mol ($\approx 2400$ K in $\varepsilon/k_B$), consistent with CPA parameter values.
+The association energy can be compared with experimental hydrogen-bond enthalpies from spectroscopy \cite{Jeffrey1997}. For water, the O–H···O bond energy is approximately 20 kJ/mol ($\approx 2400$ K in $\varepsilon/k_B$), consistent with CPA parameter values.
 
 ### 6.3.2 Association Volume ($\beta$)
 
@@ -215,7 +217,7 @@ These parameters reproduce:
 - Vapor pressure: average absolute deviation (AAD) < 1% over 280–620 K
 - Liquid density: AAD < 1.5% over 280–580 K
 
-A cross-validation study (Solbraa 2026) verified the NeqSim parameter set against the independent values reported by Igben et al., confirming excellent agreement:
+A cross-validation study \cite{Solbraa2026} verified the NeqSim parameter set against the independent values reported by Igben et al., confirming excellent agreement:
 
 | Compound | Parameter | NeqSim | Igben et al. | Match |
 |----------|-----------|:---:|:---:|:---:|
@@ -232,7 +234,7 @@ A cross-validation study (Solbraa 2026) verified the NeqSim parameter set agains
 | Acetic acid | $\varepsilon$ (bar·L/mol) | 375.58 | 375.6 | Yes |
 | Acetic acid | $\beta \times 10^3$ | 71.5 | 71.5 | Yes |
 
-*Table 6.3: Cross-validation of NeqSim CPA parameters against Igben et al. (Solbraa 2026). †Factor-of-10 difference is a unit convention (Pa·m$^6$ vs. bar·L$^2$).*
+*Table 6.3: Cross-validation of NeqSim CPA parameters against Igben et al. \cite{Solbraa2026}. †Factor-of-10 difference is a unit convention (Pa·m$^6$ vs. bar·L$^2$).*
 
 The only discrepancy is the $\beta$ parameter for methanol and ethanol, which arises from the different association scheme used: NeqSim uses 2B while Igben et al. used 3B. The 3B scheme distributes the association volume over one additional site, giving $\beta_{3B} \approx 2\beta_{2B}$.
 
@@ -248,7 +250,7 @@ Water is most commonly modeled with the 4C scheme (four sites), but it can also 
 | $\varepsilon/R$ (K) | 2003.2 | 2660.5 | Different |
 | $\beta \times 10^3$ | 69.2 | 188.6 | $\beta_{2B} \approx 2.73 \beta_{4C}$ |
 
-*Table 6.3a: Comparison of 4C and 2B CPA parameters for water (Solbraa 2026).*
+*Table 6.3a: Comparison of 4C and 2B CPA parameters for water \cite{Solbraa2026}.*
 
 The key observations are:
 

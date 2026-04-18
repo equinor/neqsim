@@ -28,7 +28,7 @@ with the combining rule:
 
 $$a_{ij} = \sqrt{a_i a_j} (1 - k_{ij})$$
 
-The binary interaction parameter $k_{ij}$ is the primary adjustable parameter for tuning VLE predictions. For CPA, $k_{ij}$ accounts for deviations in the **non-associating** interactions between unlike molecules — the associating interactions are handled separately by the cross-association parameters.
+The binary interaction parameter $k_{ij}$ is the primary adjustable parameter for tuning VLE predictions \cite{Kontogeorgis2006,Kontogeorgis2006b}. For CPA, $k_{ij}$ accounts for deviations in the **non-associating** interactions between unlike molecules — the associating interactions are handled separately by the cross-association parameters.
 
 ### 7.1.2 Binary Interaction Parameters for CPA
 
@@ -97,7 +97,7 @@ This is a system of four coupled nonlinear equations that must be solved simulta
 
 ### 7.3.1 The CR-1 Rule
 
-The most widely used combining rule in CPA is **CR-1** (Combining Rule 1):
+The most widely used combining rule in CPA is **CR-1** (Combining Rule 1) \cite{Kontogeorgis1996}:
 
 $$\varepsilon^{A_i B_j} = \frac{\varepsilon^{A_i} + \varepsilon^{B_j}}{2}$$
 
@@ -120,7 +120,7 @@ CR-2 generally gives similar results to CR-1 for molecules with similar associat
 
 ### 7.3.3 The Elliott Combining Rule (ECR)
 
-Elliott et al. (1990) proposed a combining rule directly for the association strength:
+\cite{Elliott1990} proposed a combining rule directly for the association strength:
 
 $$\Delta^{A_i B_j} = \sqrt{\Delta^{A_i A_i} \cdot \Delta^{B_j B_j}}$$
 
@@ -175,7 +175,7 @@ For CO$_2$ solvation with water, the approach is:
    - $\varepsilon^{\text{cross}}$: typically set equal to a fraction (e.g., half) of water's self-association energy
    - $\beta^{\text{cross}}$: fitted to binary VLE/LLE data
 
-This approach significantly improves the prediction of CO$_2$ solubility in water and the water content of CO$_2$-rich phases.
+This approach significantly improves the prediction of CO$_2$ solubility in water and the water content of CO$_2$-rich phases \cite{Tsivintzelis2010}.
 
 ### 7.4.4 Modified CR-1 for Solvation
 
@@ -411,21 +411,21 @@ While CPA with van der Waals mixing rules handles most oil and gas applications,
 
 ### 7.10.1 The Huron–Vidal Mixing Rule
 
-Huron and Vidal (1979) proposed a mixing rule that connects the equation of state to activity coefficient models at infinite pressure:
+Huron and Vidal \cite{Huron1979} proposed a mixing rule that connects the equation of state to activity coefficient models at infinite pressure:
 
 $$\frac{a_m}{b_m} = \sum_i x_i \frac{a_i}{b_i} + \frac{G^{E,\infty}}{C}$$
 
-where $G^{E,\infty}$ is the excess Gibbs energy at infinite pressure (from an activity coefficient model like NRTL or UNIQUAC) and $C$ is a constant that depends on the EoS ($C = \ln 2$ for SRK).
+where $G^{E,\infty}$ is the excess Gibbs energy at infinite pressure (from an activity coefficient model like NRTL \cite{Renon1968} or UNIQUAC \cite{Abrams1975}) and $C$ is a constant that depends on the EoS ($C = \ln 2$ for SRK).
 
-This approach provides much more flexibility for describing highly non-ideal mixtures — but at the cost of requiring binary NRTL/UNIQUAC parameters instead of a single $k_{ij}$.
+This approach provides much more flexibility for describing highly non-ideal mixtures — but at the cost of requiring binary NRTL/UNIQUAC parameters (or Wilson \cite{Wilson1964} parameters) instead of a single $k_{ij}$.
 
 ### 7.10.2 The MHV2 and Wong–Sandler Mixing Rules
 
-Michelsen (1990) derived the Modified Huron–Vidal second-order (MHV2) mixing rule that connects the EoS to $G^E$ models at zero pressure rather than infinite pressure:
+\cite{Michelsen1990} derived the Modified Huron–Vidal second-order (MHV2) mixing rule that connects the EoS to $G^E$ models at zero pressure rather than infinite pressure:
 
 $$q(a_m, b_m) = \sum_i x_i q(a_i, b_i) + \frac{G^E}{C_1}$$
 
-The Wong–Sandler (1992) mixing rule takes a different approach, enforcing the correct second virial coefficient composition dependence while recovering a $G^E$ model at low pressures. Both methods provide excellent results for polar/non-ideal systems.
+The Wong–Sandler \cite{Wong1992} mixing rule takes a different approach, enforcing the correct second virial coefficient composition dependence while recovering a $G^E$ model at low pressures. Michelsen and Hendriks \cite{MichelsenHendriks2001} further analyzed the theoretical foundations of these approaches. Both methods provide excellent results for polar/non-ideal systems.
 
 ### 7.10.3 Why CPA Does Not Need Advanced Mixing Rules
 

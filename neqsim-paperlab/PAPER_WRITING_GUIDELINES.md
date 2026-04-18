@@ -29,6 +29,121 @@ this paper is accepted?"** If the answer is "nothing," the paper is out of scope
 
 ---
 
+## MANDATORY: Literature Review and Citation Collection First
+
+**Before writing a single sentence of a paper or book chapter, you MUST complete a
+deep literature review and build a comprehensive bibliography.** This is the
+non-negotiable first step for every paper and every book project.
+
+### Why Literature First?
+
+A book or paper with sparse references signals shallow scholarship. Readers (and
+reviewers) judge depth by the breadth and quality of the bibliography:
+
+| Project type | Minimum references | Target references |
+|---|---|---|
+| Journal paper | 30 | 40–60 |
+| Conference paper | 15 | 25–40 |
+| Book (full) | 100 | 150–300+ |
+| Book chapter | 15 per chapter | 20–40 per chapter |
+
+### Literature Review Workflow (Papers)
+
+**Step 0 — before plan.json, before any writing:**
+
+1. **Survey the field** — Identify 5–10 key review papers and seminal works
+   in the topic area. Read abstracts and introductions to map the landscape.
+2. **Build refs.bib** — Collect BibTeX entries for ALL potentially relevant works.
+   Aim for 2× the minimum count (you'll prune later). Include:
+   - Foundational/seminal papers (the "must-cite" classics)
+   - Recent advances (last 5 years)
+   - Competing methods and alternative approaches
+   - Experimental data sources used for validation
+   - Textbooks that provide background theory
+3. **Check existing PaperLab papers** — Search `papers/*/refs.bib` for related
+   citations. Reuse BibTeX entries from other PaperLab papers when relevant.
+   This ensures consistency across the project and avoids duplicating effort:
+   ```bash
+   grep -rl "keyword" papers/*/refs.bib
+   ```
+4. **Produce literature_map.md** — Use the literature-reviewer agent or write
+   manually. Organize by theme, not chronologically.
+5. **Identify gaps** — Write gap_statement.md articulating what's missing.
+
+Only AFTER steps 1–5 should you create `plan.json` and begin writing.
+
+### Literature Review Workflow (Books)
+
+**Step 0 — before writing any chapter:**
+
+1. **Build a comprehensive master refs.bib** at the book root with ALL references
+   across all chapters. Aim for 100+ entries minimum for a full book. Organize
+   the bib file into clearly commented sections by topic area:
+   ```bibtex
+   % ─── Foundational thermodynamics ───
+   @book{Prausnitz1999, ... }
+   @book{SmithVanNess2005, ... }
+
+   % ─── Equations of state ───
+   @article{Soave1972, ... }
+   @article{PengRobinson1976, ... }
+
+   % ─── Association theory ───
+   @article{Wertheim1984, ... }
+   ```
+2. **Mine existing PaperLab papers for citations** — Every paper in `papers/`
+   has a `refs.bib`. Extract relevant entries for the book. This is a major
+   source of high-quality, pre-verified references:
+   ```bash
+   # Find all refs.bib files
+   find papers/ -name "refs.bib" -exec grep -l "CPA\|association\|equation.of.state" {} \;
+   ```
+3. **Ensure coverage per chapter** — Each chapter should cite at least 10–20
+   unique references. Before writing a chapter, identify which refs.bib entries
+   belong to that chapter's topic.
+4. **Cite as you write** — Every factual claim, historical attribution, method
+   description, and data source gets a `\cite{}` tag. Do not write "as shown in
+   the literature" — cite the specific work.
+5. **After all chapters are written**, run the bibliography validation:
+   ```bash
+   python paperflow.py validate-bib books/<book_dir>/
+   ```
+   Verify: no orphan bib entries (every entry is cited), no unresolved cite tags,
+   references are numbered sequentially.
+
+### Cross-Referencing PaperLab Papers
+
+PaperLab papers share a common knowledge base. When writing a new paper or book:
+
+1. **Search existing paper bibliographies** for relevant entries:
+   - `papers/implicit_cpa_performance_2026/refs.bib` — CPA algorithm references
+   - `papers/tpflash_algorithms_2026/refs.bib` — Flash algorithm references
+   - `papers/gibbs_minimization_2026/refs.bib` — Chemical equilibrium references
+   - `papers/electrolyte_cpa_advanced_2026/refs.bib` — Electrolyte references
+   - `papers/thermal_conductivity_methods_2026/refs.bib` — Transport property references
+   - (and all others in `papers/`)
+2. **Use consistent BibTeX keys** across papers and books. If `Michelsen1982a`
+   is used in one paper, use the same key everywhere.
+3. **Cite PaperLab papers themselves** when they are published or under review:
+   ```bibtex
+   @article{OurTPflash2026,
+     title = {Systematic Characterization of a Hybrid Flash Algorithm},
+     ...
+   }
+   ```
+
+### Literature Quality Rules
+
+- **ALWAYS cite the original source**, not a secondary reference or review
+- **DO NOT fabricate references** — if unsure, mark as `[VERIFY]` and confirm later
+- **Include both classic AND recent** (last 5 years) references
+- **Every equation** should cite its origin (who derived it first)
+- **Every dataset** should cite its source (NIST, DIPPR, original experiment)
+- **Every method** should cite the paper that introduced it
+- **Every historical claim** should cite a primary source ("van der Waals proposed..." → cite van der Waals 1873)
+
+---
+
 ## Core Writing Principle
 
 **Papers are about algorithms, methods, and scientific contributions — not about NeqSim as a software product.**

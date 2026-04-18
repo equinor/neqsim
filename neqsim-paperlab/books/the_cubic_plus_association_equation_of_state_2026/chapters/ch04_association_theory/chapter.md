@@ -20,7 +20,7 @@ After reading this chapter, the reader will be able to:
 
 A hydrogen bond forms when a hydrogen atom covalently bonded to an electronegative atom (the **donor**) interacts with a lone pair of electrons on another electronegative atom (the **acceptor**). The interaction is primarily electrostatic but has a significant covalent component at short distances.
 
-The key characteristics of hydrogen bonds that distinguish them from dispersion forces:
+The key characteristics of hydrogen bonds that distinguish them from dispersion forces \cite{Jeffrey1997,Pauling1960}:
 
 - **Strength**: Hydrogen bonds have energies of 10–40 kJ/mol, compared to 0.5–5 kJ/mol for typical dispersion interactions
 - **Directionality**: Hydrogen bonds are roughly linear, with an optimal donor–H–acceptor angle near 180°
@@ -33,7 +33,7 @@ These characteristics mean that hydrogen bonding cannot be adequately described 
 
 Two distinct types of strong specific interactions are relevant for thermodynamic modeling:
 
-**Self-association** occurs between molecules of the same species. Water molecules form hydrogen bonds with other water molecules, creating a three-dimensional network. Alcohols self-associate through OH–OH hydrogen bonds, forming linear chains in the liquid state.
+**Self-association** occurs between molecules of the same species. Water molecules form hydrogen bonds with other water molecules, creating a three-dimensional network \cite{EisenbergKauzmann1969}. Alcohols self-associate through OH–OH hydrogen bonds, forming linear chains in the liquid state.
 
 **Cross-association** (or solvation) occurs between different molecular species. For example, the oxygen atom in a ketone can accept a hydrogen bond from water, even though the ketone cannot donate hydrogen bonds. Similarly, the $\pi$-electrons in aromatic compounds can act as weak hydrogen bond acceptors.
 
@@ -43,7 +43,7 @@ Both phenomena are captured within Wertheim's framework by appropriate assignmen
 
 ### 4.2.1 The Fundamental Papers
 
-Between 1984 and 1986, Michael Wertheim published a series of four papers that laid the foundation for modern association models. The theory is developed in the context of classical statistical mechanics for fluids with anisotropic interactions.
+Between 1984 and 1986, Michael Wertheim published a series of four papers \cite{Wertheim1984a,Wertheim1984b,Wertheim1986a,Wertheim1986b} that laid the foundation for modern association models. The theory is developed in the context of classical statistical mechanics for fluids with anisotropic interactions.
 
 The key innovation was to decompose the intermolecular potential into two parts:
 
@@ -65,7 +65,7 @@ The critical assumption of the theory is that **each site can bond with at most 
 
 ### 4.2.3 Graph Theory and Cluster Expansion
 
-Wertheim developed his theory using a graphical expansion of the partition function, analogous to the Mayer cluster expansion for simple fluids. The key step is to classify molecular clusters according to the bonding topology:
+Wertheim developed his theory using a graphical expansion of the partition function, analogous to the Mayer cluster expansion \cite{Mayer1940} for simple fluids. The key step is to classify molecular clusters according to the bonding topology:
 
 - **Monomers**: molecules with no bonds
 - **Dimers**: pairs of molecules connected by one bond
@@ -114,13 +114,13 @@ The radial distribution function $g(\rho)$ describes the probability of finding 
 
 $$g(\rho) = \frac{1}{1 - 1.9 \eta}$$
 
-where $\eta = b\rho/4$ is the packing fraction. This expression, derived from the Carnahan–Starling equation, provides a good approximation for hard-sphere fluids and captures the key physics: as density increases, the probability of molecular contact increases (because molecules are forced closer together), which enhances the rate of association.
+where $\eta = b\rho/4$ is the packing fraction. This expression, derived from the Carnahan–Starling equation \cite{Carnahan1969}, provides a good approximation for hard-sphere fluids and captures the key physics: as density increases, the probability of molecular contact increases (because molecules are forced closer together), which enhances the rate of association.
 
 ## 4.4 Association Schemes
 
 ### 4.4.1 Notation
 
-Association schemes specify the number and type of sites on each molecule. The standard notation, introduced by Huang and Radosz (1990), uses numbers and letters:
+Association schemes specify the number and type of sites on each molecule. The standard notation, introduced by \cite{Huang1990,Huang1991}, uses numbers and letters:
 
 - **1A**: One association site (e.g., HCl)
 - **2A**: Two identical sites (e.g., dimerizing acid)
@@ -469,7 +469,7 @@ Key points from this chapter:
 
 A key structural feature of most association schemes is that several individual sites on a molecule are **equivalent by symmetry**. In the 4C scheme for water, for example, the two electron-donor sites are indistinguishable (both lone pairs on oxygen), and the two proton-donor sites are likewise indistinguishable (both O–H bonds). This means $X_{e_1} = X_{e_2}$ and $X_{H_1} = X_{H_2}$ at equilibrium.
 
-Solbraa (2026) proved formally that this equivalence is not merely an approximation but an **exact consequence** of Wertheim's theory. When sites $k$ and $l$ on component $i$ belong to the same type $\alpha$ (i.e., they interact identically with all other sites), then:
+\cite{Solbraa2026} proved formally that this equivalence is not merely an approximation but an **exact consequence** of Wertheim's theory. When sites $k$ and $l$ on component $i$ belong to the same type $\alpha$ (i.e., they interact identically with all other sites), then:
 
 $$X_{i,k} = X_{i,l} \equiv \tilde{X}_{i,\alpha} \quad \text{for all } k, l \in \text{type } \alpha$$
 
@@ -490,7 +490,7 @@ The reduction depends on the molecular symmetry:
 | Acetic acid | 1A | 1 | 1 | $m = 1$ | 0% |
 | CO$_2$ (solvation) | — | 1 | 1 | $m_e = 1$ | 0% |
 
-*Table 4.2: Dimensionality reduction from site symmetry for common molecules (Solbraa 2026).*
+*Table 4.2: Dimensionality reduction from site symmetry for common molecules \cite{Solbraa2026}.*
 
 The 2B scheme gains nothing from reduction because both sites are already of different types (one electron donor, one proton donor). The largest benefit comes from the 4C scheme, which is also the most common in industrial applications (water, glycols).
 
@@ -507,7 +507,7 @@ For mixtures, the total dimensions of the site balance system are:
 | NG + H$_2$O + MEG | 8 | 4 | 9 | 5 | 5.8× |
 | NG + H$_2$O + TEG | 8 | 4 | 9 | 5 | 5.8× |
 
-*Table 4.3: Site balance system dimensions and Jacobian speedup factors for common mixtures (Solbraa 2026). The Jacobian speedup is $((n_s+1)/(p+1))^3$.*
+*Table 4.3: Site balance system dimensions and Jacobian speedup factors for common mixtures \cite{Solbraa2026}. The Jacobian speedup is $((n_s+1)/(p+1))^3$.*
 
 The water–MEG–TEG ternary system — common in gas processing — sees the most dramatic reduction: from 12 individual site fractions to just 6 type-averaged fractions, yielding a 6.4× speedup in the Jacobian factorization.
 

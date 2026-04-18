@@ -19,7 +19,7 @@ After reading this chapter, the reader will be able to:
 
 ### 8.1.1 The Nested Iteration Problem
 
-CPA introduces a fundamental computational challenge that does not exist for classical cubic EoS: the site fractions $X_A$ are implicit functions of temperature, density, and composition. In a flash calculation, the overall algorithm has a nested structure:
+CPA introduces a fundamental computational challenge that does not exist for classical cubic EoS: the site fractions $X_A$ are implicit functions of temperature, density, and composition \cite{Michelsen2007,vonSolms2004}. In a flash calculation, the overall algorithm has a nested structure:
 
 **Outer loop (Flash)**: Update phase compositions ($x_i$, $y_i$) and phase fraction ($\beta$)
   **Inner loop (Fugacity)**: For each phase, solve the site balance equations to get $X_A$, then compute fugacity coefficients
@@ -72,13 +72,15 @@ $$X_{A_i}^{(k+1)} = \omega \cdot X_{A_i}^{\text{new}} + (1 - \omega) \cdot X_{A_
 
 where $\omega \in (0, 1]$ is the damping factor. This can prevent oscillations but slows convergence.
 
-**Wegstein acceleration**: Estimates the contraction factor from two successive iterates and applies a Wegstein-type update:
+**Wegstein acceleration** \cite{Wegstein1958}: Estimates the contraction factor from two successive iterates and applies a Wegstein-type update:
 
 $$X^{(k+1)} = X^{(k)} + \frac{g^{(k)} - X^{(k)}}{1 - q^{(k)}}$$
 
 where $q^{(k)}$ estimates the slope of the iteration map.
 
 ## 8.3 Newton's Method for the Site Balance
+
+For a comprehensive treatment of Newton-type methods for nonlinear equations, see \cite{DennisMore1977} and \cite{OrtegaRheinboldt1970}.
 
 ### 8.3.1 Formulation
 
@@ -177,7 +179,7 @@ for fluid, name in [(fluid_std, "Standard"), (fluid_impl, "Fully Implicit")]:
 
 ### 8.5.1 Motivation
 
-Newton's method requires computing and factoring the Jacobian at each step, which involves evaluating many partial derivatives. Broyden's method approximates the Jacobian using information from previous iterations, avoiding the need for explicit derivative computation.
+Newton's method requires computing and factoring the Jacobian at each step, which involves evaluating many partial derivatives. Broyden's method \cite{Broyden1965} approximates the Jacobian using information from previous iterations, avoiding the need for explicit derivative computation.
 
 ### 8.5.2 The Broyden Update
 
@@ -222,7 +224,7 @@ print(f"Density: {fluid.getDensity('kg/m3'):.2f} kg/m3")
 
 ### 8.6.1 The Anderson Mixing Algorithm
 
-Anderson acceleration (also called Anderson mixing or DIIS — Direct Inversion in the Iterative Subspace) is a convergence accelerator that can dramatically speed up fixed-point iterations. Given a sequence of iterates from successive substitution, Anderson acceleration constructs improved estimates by mixing previous iterates.
+Anderson acceleration \cite{Anderson1965} (also called Anderson mixing or DIIS \cite{Pulay1980} — Direct Inversion in the Iterative Subspace) is a convergence accelerator that can dramatically speed up fixed-point iterations. Given a sequence of iterates from successive substitution, Anderson acceleration constructs improved estimates by mixing previous iterates.
 
 The algorithm maintains a history of $m$ previous iterates and residuals:
 
@@ -422,7 +424,7 @@ In flash calculations, the fugacity coefficients are evaluated many times at sim
 
 ## 8.10 Comprehensive Benchmark: Solver Performance Across 11 Systems
 
-This section presents systematic benchmark results from Solbraa (2026), comparing five CPA solver algorithms across 11 industrially relevant systems with up to 10 components.
+This section presents systematic benchmark results from \cite{Solbraa2026}, comparing five CPA solver algorithms across 11 industrially relevant systems with up to 10 components.
 
 ### 8.10.1 Benchmark Systems
 
@@ -460,7 +462,7 @@ The fully implicit solver eliminates the inner iteration loop by solving the vol
 | MEG + water | 8 | 0.119 | **8.4×** | 0.00000 |
 | NG + water + TEG | 8 | 0.276 | **3.6×** | 0.00000 |
 
-*Table 8.6: Speedup of the fully implicit solver vs. standard nested solver (Solbraa 2026). All systems show zero thermodynamic accuracy loss.*
+*Table 8.6: Speedup of the fully implicit solver vs. standard nested solver \cite{Solbraa2026}. All systems show zero thermodynamic accuracy loss.*
 
 Key observations:
 
@@ -482,7 +484,7 @@ Combining Anderson acceleration (§8.6) with the site symmetry reduction from §
 | NG + water + MEG | 8→4 | 340.4 | 185.9 | **1.83×** |
 | NG + water + TEG | 8→4 | 379.6 | 198.1 | **1.92×** |
 
-*Table 8.7: Combined Anderson acceleration + site type reduction benchmarks (Solbraa 2026).*
+*Table 8.7: Combined Anderson acceleration + site type reduction benchmarks \cite{Solbraa2026}.*
 
 ### 8.10.4 Solver Selection Recommendations
 

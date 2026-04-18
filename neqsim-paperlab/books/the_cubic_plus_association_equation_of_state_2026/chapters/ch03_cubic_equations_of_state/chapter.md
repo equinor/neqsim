@@ -18,7 +18,7 @@ After reading this chapter, the reader will be able to:
 
 ### 3.1.1 Physical Basis
 
-In 1873, Johannes Diderik van der Waals proposed the first equation of state that could describe both the gas and liquid phases:
+In 1873, Johannes Diderik van der Waals \cite{vanderWaals1873} proposed the first equation of state that could describe both the gas and liquid phases:
 
 $$P = \frac{RT}{V_m - b} - \frac{a}{V_m^2}$$
 
@@ -49,17 +49,17 @@ The van der Waals equation can be rewritten as a cubic polynomial in $V_m$:
 
 $$V_m^3 - \left(b + \frac{RT}{P}\right) V_m^2 + \frac{a}{P} V_m - \frac{ab}{P} = 0$$
 
-This cubic nature is fundamental — it allows the equation to have up to three real roots, corresponding to the vapor, unstable, and liquid volumes. The cubic form also enables analytical solutions and efficient root-finding algorithms.
+This cubic nature is fundamental — it allows the equation to have up to three real roots, corresponding to the vapor, unstable, and liquid volumes. The cubic form also enables analytical solutions and efficient root-finding algorithms \cite{Walas1985}. Clausius \cite{Clausius1880} proposed an early modification of van der Waals' equation with a temperature-dependent attraction term, anticipating later developments by Redlich–Kwong and Soave.
 
 ## 3.2 The Soave–Redlich–Kwong (SRK) Equation
 
 ### 3.2.1 Development
 
-In 1949, Redlich and Kwong modified the van der Waals attraction term to include a temperature dependence:
+In 1949, Redlich and Kwong \cite{Redlich1949} modified the van der Waals attraction term to include a temperature dependence:
 
 $$P = \frac{RT}{V_m - b} - \frac{a}{T^{1/2} V_m(V_m + b)}$$
 
-While this improved predictions at high temperatures, it still could not accurately reproduce vapor pressures. In 1972, Soave made the crucial innovation of replacing the fixed $T^{-1/2}$ dependence with a component-specific alpha function:
+While this improved predictions at high temperatures, it still could not accurately reproduce vapor pressures. In 1972, Soave \cite{Soave1972} made the crucial innovation of replacing the fixed $T^{-1/2}$ dependence with a component-specific alpha function:
 
 $$P = \frac{RT}{V_m - b} - \frac{a \cdot \alpha(T)}{V_m(V_m + b)}$$
 
@@ -67,7 +67,7 @@ where:
 
 $$\alpha(T) = \left[1 + m\left(1 - \sqrt{T_r}\right)\right]^2$$
 
-and $m$ is correlated with the acentric factor $\omega$:
+and $m$ is correlated with the acentric factor $\omega$ \cite{Pitzer1955}:
 
 $$m = 0.48508 + 1.55171\omega - 0.15613\omega^2$$
 
@@ -99,7 +99,7 @@ The binary interaction parameter $k_{ij}$ is the single adjustable parameter ava
 
 ### 3.3.1 Formulation
 
-In 1976, Peng and Robinson proposed a modification that improved liquid density predictions:
+In 1976, Peng and Robinson \cite{PengRobinson1976} proposed a modification that improved liquid density predictions:
 
 $$P = \frac{RT}{V_m - b} - \frac{a \cdot \alpha(T)}{V_m(V_m + b) + b(V_m - b)}$$
 
@@ -172,7 +172,7 @@ Note that PR tends to **under-predict** volumes for small molecules like water, 
 
 ### 3.4.1 The Péneloux Correction
 
-Péneloux et al. (1982) proposed a simple volume translation that shifts the molar volume without affecting VLE calculations:
+Péneloux et al. \cite{Peneloux1982} proposed a simple volume translation that shifts the molar volume without affecting VLE calculations:
 
 $$V^{\text{corrected}} = V^{\text{EoS}} - \sum_i x_i c_i$$
 
@@ -196,11 +196,11 @@ The original Soave alpha function:
 
 $$\alpha(T_r) = \left[1 + m(1 - \sqrt{T_r})\right]^2$$
 
-where $T_r = T/T_c$ is the reduced temperature, works well for $T_r < 1$ but can exhibit unphysical behavior at high supercritical temperatures (negative values of $\alpha$ for components with high $\omega$).
+where $T_r = T/T_c$ is the reduced temperature, works well for $T_r < 1$ but can exhibit unphysical behavior at high supercritical temperatures (negative values of $\alpha$ for components with high $\omega$). Boston and Mathias \cite{BostonMathias1980} proposed an extrapolation for the supercritical region that is monotonically decreasing and avoids negative $\alpha$ values. For heavy hydrocarbons, Gasem et al. \cite{Gasem2001} developed improved $m$ correlations that better represent vapor pressures of $n$-alkanes.
 
 ### 3.5.2 The Mathias–Copeman Alpha Function
 
-For improved accuracy, particularly for polar and associating components, the Mathias–Copeman (1983) alpha function provides additional flexibility:
+For improved accuracy, particularly for polar and associating components, the Mathias–Copeman \cite{Mathias1983} alpha function provides additional flexibility:
 
 $$\alpha(T_r) = \left[1 + c_1(1 - \sqrt{T_r}) + c_2(1 - \sqrt{T_r})^2 + c_3(1 - \sqrt{T_r})^3\right]^2 \quad \text{for } T_r \leq 1$$
 
@@ -212,7 +212,7 @@ In the context of CPA, the alpha function is particularly important for the ener
 
 ### 3.5.3 The Twu Alpha Function
 
-Twu et al. (1991) proposed an alpha function that is guaranteed to be positive and monotonically decreasing:
+\cite{Twu1991} proposed an alpha function that is guaranteed to be positive and monotonically decreasing:
 
 $$\alpha(T_r) = T_r^{N(M-1)} \exp\left[L(1 - T_r^{NM})\right]$$
 
@@ -248,7 +248,7 @@ The van der Waals mixing rules assume that the interaction between unlike molecu
 - Size-asymmetric systems (methane + heavy hydrocarbons)
 - Mixtures with strong specific interactions (CO$_2$ + water)
 
-More sophisticated mixing rules (Wong–Sandler, MHV2, LCVM) have been developed to address these limitations, but they add complexity and additional parameters. CPA takes a different approach: keep the simple van der Waals mixing rules for the cubic part, but add the association term to explicitly account for hydrogen bonding.
+More sophisticated mixing rules (Wong–Sandler \cite{Wong1992}, MHV2 \cite{Michelsen1990}, LCVM \cite{Boukouvalas1994}) have been developed to address these limitations, but they add complexity and additional parameters. CPA takes a different approach: keep the simple van der Waals mixing rules for the cubic part, but add the association term to explicitly account for hydrogen bonding.
 
 ## 3.7 Limitations of Cubic EoS for Associating Systems
 

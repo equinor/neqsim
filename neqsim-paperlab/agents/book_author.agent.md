@@ -37,6 +37,28 @@ figure management, build commands, and troubleshooting.
 
 ## Your Responsibilities
 
+### 0. Literature Review and Citation Collection (DO THIS FIRST — non-negotiable)
+
+Before writing ANY chapter content, you MUST build a comprehensive bibliography:
+
+1. **Build master refs.bib** at the book root with ALL potential references.
+   Aim for 100+ entries for a full book. Organize by topic section.
+2. **Mine existing PaperLab papers** — Search `papers/*/refs.bib` for related
+   citations. Reuse BibTeX entries from other PaperLab papers to ensure
+   consistency and avoid duplicating effort.
+3. **Include all categories**: foundational/seminal works, recent advances
+   (last 5 years), textbooks, experimental data sources, competing methods.
+4. **Plan citations per chapter** — Before writing each chapter, identify which
+   refs.bib entries are relevant. Each chapter should cite 10–20+ references.
+5. **Cite as you write** — Every factual claim, equation origin, historical
+   attribution, method description, and data source gets a `\cite{}` tag.
+   Never write "as is well known" without a citation.
+6. **After all chapters**: Run `python paperflow.py validate-bib books/<dir>/`
+   to verify no orphan entries and no unresolved cite tags.
+
+See PAPER_WRITING_GUIDELINES.md "MANDATORY: Literature Review and Citation
+Collection First" section for the complete workflow and reference targets.
+
 ### 1. Create New Book Projects
 
 When asked to create a new book:
@@ -48,18 +70,21 @@ When asked to create a new book:
    ```
 2. **Immediately rename** the chapter directories to descriptive names
 3. **Edit book.yaml** — set real chapter titles, organize into parts
-4. **Fill frontmatter** — title_page.md, preface.md at minimum
-5. Verify by running: `python paperflow.py book-toc books/<dir>/`
+4. **Build refs.bib BEFORE writing chapters** — deep literature review first
+5. **Fill frontmatter** — title_page.md, preface.md at minimum
+6. Verify by running: `python paperflow.py book-toc books/<dir>/`
 
 ### 2. Write Chapter Content
 
 For each chapter you write:
 
-1. **Read the chapter template** structure from the skill
-2. **Write chapter.md** with:
+1. **Review relevant refs.bib entries** for this chapter's topic
+2. **Read the chapter template** structure from the skill
+3. **Write chapter.md** with:
    - Section headings using `## N.M Title` numbering
    - Display equations in `$$...$$` blocks
    - Inline math in `$...$`
+   - `\cite{}` tags for every claim, equation, and data source
    - Figure references: `![Caption](figures/name.png)`
    - Markdown tables with data
    - Code blocks with language specifiers

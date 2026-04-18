@@ -16,7 +16,7 @@ After reading this chapter, the reader will be able to:
 
 ## 10.1 Introduction to Gas Processing with CPA
 
-Gas processing operations frequently involve polar chemicals: glycols for dehydration, methanol and MEG for hydrate inhibition, amines for acid gas removal. These chemicals form hydrogen bonds with water and with each other, making CPA the natural thermodynamic model for these applications.
+Gas processing operations frequently involve polar chemicals \cite{Campbell2014,GPSA2012,Kidnay2011}: glycols for dehydration, methanol and MEG for hydrate inhibition, amines for acid gas removal. These chemicals form hydrogen bonds with water and with each other, making CPA the natural thermodynamic model for these applications.
 
 Classical cubic EoS with conventional mixing rules cannot accurately predict:
 
@@ -124,7 +124,7 @@ CPA predicts the equilibrium water content above TEG solutions accurately:
 
 ### 10.3.1 The Methanol Partitioning Problem
 
-Methanol is widely used as a thermodynamic hydrate inhibitor in subsea gas production. The dosing rate must account for methanol that partitions into three phases:
+Methanol is widely used as a thermodynamic hydrate inhibitor in subsea gas production \cite{Folas2007}. The dosing rate must account for methanol that partitions into three phases:
 
 1. **Aqueous phase**: where methanol acts as a hydrate inhibitor
 2. **Gas phase**: methanol losses that do not contribute to inhibition
@@ -173,7 +173,7 @@ CPA predictions show:
 
 ### 10.3.4 Hydrate Inhibition Effectiveness
 
-The Hammerschmidt equation provides a simple estimate of the hydrate temperature depression:
+The Hammerschmidt equation \cite{Hammerschmidt1934} provides a simple estimate of the hydrate temperature depression:
 
 $$\Delta T = \frac{K_H \cdot w}{M(100 - w)}$$
 
@@ -190,7 +190,7 @@ CPA provides a more rigorous prediction through the activity of water in the inh
 
 $$\Delta T \approx -\frac{RT_0^2}{\Delta H_{\text{hyd}}} \ln(a_w)$$
 
-where $T_0$ is the hydrate equilibrium temperature for pure water, $\Delta H_{\text{hyd}}$ is the enthalpy of hydrate dissociation (~54 kJ/mol for structure I, ~57 kJ/mol for structure II), and $a_w = x_w \gamma_w$ is the activity of water computed by CPA. The advantage of this approach is that $\gamma_w$ is predicted from the CPA model, accounting for non-ideal mixing, dissolved gases, and the specific inhibitor–water hydrogen bond interactions.
+where $T_0$ is the hydrate equilibrium temperature for pure water, $\Delta H_{\text{hyd}}$ is the enthalpy of hydrate dissociation (~54 kJ/mol for structure I, ~57 kJ/mol for structure II) \cite{Sloan2008,vanderWaalsPlatteuw1959}, and $a_w = x_w \gamma_w$ is the activity of water computed by CPA. The advantage of this approach is that $\gamma_w$ is predicted from the CPA model, accounting for non-ideal mixing, dissolved gases, and the specific inhibitor–water hydrogen bond interactions.
 
 For high methanol concentrations (> 40 wt%), the Margules-type activity coefficient can exceed 1.5, leading to Hammerschmidt underestimating the depression by 3–5°C — a significant safety margin that would result in over-dosing if ignored.
 
@@ -209,7 +209,7 @@ The main disadvantage is higher viscosity and lower hydrate suppression per unit
 
 ### 10.4.2 CPA for MEG Systems
 
-MEG (4C association scheme) forms strong hydrogen bonds with water. CPA accurately predicts:
+MEG (4C association scheme) forms strong hydrogen bonds with water. CPA accurately predicts \cite{Westman2016}:
 
 - **MEG–water VLE**: vapor pressure depression of water by MEG
 - **MEG losses to gas**: very small (typically < 0.1% of injected MEG), but important for MEG makeup calculation
@@ -481,7 +481,7 @@ The CPA model provides several quantities that are critical for the design but c
 
 ### 10.10.1 TEG Losses to the Gas Phase
 
-TEG losses are a significant operational cost and environmental concern. The vapor pressure of TEG at the contactor top determines the TEG content of the dry gas. CPA accurately predicts the activity coefficient of TEG in the water–TEG mixture, which controls the TEG partial pressure.
+TEG losses are a significant operational cost and environmental concern \cite{Folas2006,Oliveira2007}. The vapor pressure of TEG at the contactor top determines the TEG content of the dry gas. CPA accurately predicts the activity coefficient of TEG in the water–TEG mixture \cite{vonSolms2003}, which controls the TEG partial pressure.
 
 At typical contactor conditions (30°C, 70 bar), CPA predicts TEG losses of approximately 5–15 mg/MSm$^3$. For a 10 MSm$^3$/day plant, this corresponds to 50–150 g/day or roughly 20–55 kg/year of TEG lost to the gas phase.
 
@@ -516,7 +516,7 @@ Monoethylene glycol (MEG) is the preferred hydrate inhibitor for subsea pipeline
 
 CPA plays a critical role at every step, providing the thermodynamic properties needed for:
 
-- **Hydrate equilibrium**: water activity in the MEG solution determines the hydrate depression
+- **Hydrate equilibrium**: water activity in the MEG solution determines the hydrate depression \cite{Parrish1986}
 - **Flash separation**: accurate phase splits between gas, condensate, and MEG/water
 - **Regeneration column**: VLE of the MEG–water system at various pressures
 - **Salt partitioning**: electrolyte CPA for brine-containing systems
@@ -577,7 +577,7 @@ Key points from this chapter:
 
 ## 10.12 Solver Performance in Industrial TEG Dehydration
 
-Applying the solver advances from Chapter 8 to a realistic TEG process illustrates the practical impact of algorithmic improvements. Solbraa (2026) benchmarked five CPA solver variants on a complete TEG dehydration simulation.
+Applying the solver advances from Chapter 8 to a realistic TEG process illustrates the practical impact of algorithmic improvements. \cite{Solbraa2026} benchmarked five CPA solver variants on a complete TEG dehydration simulation.
 
 ### 10.12.1 Benchmark Specification
 
@@ -625,7 +625,7 @@ The performance differences, however, are significant:
 | **Anderson-reduced** | **Nested** | **1126** | **1.59×** |
 | Implicit-reduced | Coupled | 1441 | 1.24× |
 
-*Table 10.5: Solver performance for the full TEG dehydration simulation (Solbraa 2026).*
+*Table 10.5: Solver performance for the full TEG dehydration simulation \cite{Solbraa2026}.*
 
 The Anderson-reduced solver delivers 1.59× speedup over the standard solver, translating directly to faster process optimization runs. For a typical design study requiring 500+ flash evaluations across temperature and pressure sweeps, this reduces total computation time from 15 minutes to under 10 minutes.
 
@@ -660,7 +660,7 @@ Six methods of varying complexity can be applied, ranging from empirical correla
 | Flory-Huggins | 57% (4/7) | ~140× |
 | CPA EOS | 71% (5/7) | ~425× |
 
-*Table 10.6: Method accuracy for risk classification of 7 field cases (Solbraa 2026).*
+*Table 10.6: Method accuracy for risk classification of 7 field cases \cite{Solbraa2026}.*
 
 The SARA Colloidal Instability Index (CII) outperforms all other methods for risk classification. However, CPA provides **quantitative onset pressures** that simpler methods cannot:
 
@@ -672,7 +672,7 @@ The SARA Colloidal Instability Index (CII) outperforms all other methods for ris
 | Hammami Live Oil | 347 | 239 | 108 | 31.1% |
 | Hassi-Messaoud (Algeria) | 430 | 387 | 43 | 9.9% |
 
-*Table 10.7: CPA onset pressure predictions for 5 field cases (Solbraa 2026). Two cases (Burke Prinos, Akbarzadeh Heavy Oil) were not detected by CPA.*
+*Table 10.7: CPA onset pressure predictions for 5 field cases \cite{Solbraa2026}. Two cases (Burke Prinos, Akbarzadeh Heavy Oil) were not detected by CPA.*
 
 CPA onset pressure predictions have an average absolute deviation of approximately 59 bar (18.7%), which is adequate for screening purposes. The model tends to underpredict onset pressures, making it a non-conservative estimate—screening with SARA CII is recommended as a first pass.
 

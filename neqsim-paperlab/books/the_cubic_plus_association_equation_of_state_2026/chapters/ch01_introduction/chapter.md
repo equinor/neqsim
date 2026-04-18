@@ -15,7 +15,7 @@ After reading this chapter, the reader will be able to:
 
 ## 1.1 Why Association Matters
 
-The accurate prediction of thermodynamic properties is the foundation of chemical and petroleum engineering design. For decades, cubic equations of state (EoS) such as the Soave–Redlich–Kwong (SRK) and Peng–Robinson (PR) equations have served as the workhorses of industrial process simulation. These models excel at describing the phase behavior of hydrocarbon mixtures, where intermolecular interactions are dominated by relatively weak van der Waals (dispersion) forces.
+The accurate prediction of thermodynamic properties is the foundation of chemical and petroleum engineering design. For decades, cubic equations of state (EoS) such as the Soave–Redlich–Kwong (SRK) \cite{Soave1972} and Peng–Robinson (PR) \cite{PengRobinson1976} equations have served as the workhorses of industrial process simulation. These models excel at describing the phase behavior of hydrocarbon mixtures, where intermolecular interactions are dominated by relatively weak van der Waals (dispersion) forces.
 
 However, a significant class of industrially important fluids exhibits much stronger intermolecular interactions — specifically, **hydrogen bonding**. Water, alcohols (methanol, ethanol), glycols (MEG, DEG, TEG), organic acids, and amines all form hydrogen bonds that profoundly affect their thermodynamic behavior. These interactions lead to phenomena that classical cubic EoS cannot capture:
 
@@ -55,7 +55,7 @@ This limitation extends to many systems of industrial importance:
 
 ### 1.3.1 Early Association Models (1908–1980)
 
-The concept that molecules can associate into clusters is not new. As early as 1908, Dolezalek proposed a "chemical theory" of solutions in which non-ideal behavior was attributed to the formation of new chemical species through association. In this framework, a dimerizing acid like acetic acid is treated as an equilibrium mixture of monomers and dimers:
+The concept that molecules can associate into clusters is not new. As early as 1908, Dolezalek \cite{Dolezalek1908} proposed a "chemical theory" of solutions in which non-ideal behavior was attributed to the formation of new chemical species through association. In this framework, a dimerizing acid like acetic acid is treated as an equilibrium mixture of monomers and dimers:
 
 $$2A \rightleftharpoons A_2, \quad K = \frac{x_{A_2}}{x_A^2}$$
 
@@ -63,7 +63,7 @@ While conceptually appealing, chemical theory models suffered from several limit
 
 ### 1.3.2 Statistical Mechanics of Association (1984–1986)
 
-A breakthrough came in 1984–1986 when Michael Wertheim published a series of four landmark papers that provided a rigorous statistical mechanical framework for describing associating fluids. Wertheim's thermodynamic perturbation theory (TPT) treats association as a perturbation to a reference fluid (typically a hard-sphere or Lennard-Jones fluid) and derives exact expressions for the Helmholtz free energy contribution due to association.
+A breakthrough came in 1984–1986 when Michael Wertheim published a series of four landmark papers \cite{Wertheim1984a,Wertheim1984b,Wertheim1986a,Wertheim1986b} that provided a rigorous statistical mechanical framework for describing associating fluids. Wertheim's thermodynamic perturbation theory (TPT) treats association as a perturbation to a reference fluid (typically a hard-sphere or Lennard-Jones fluid) and derives exact expressions for the Helmholtz free energy contribution due to association.
 
 The key insight of Wertheim's theory is that each molecule has a fixed number of **association sites** — specific locations on the molecule where hydrogen bonds can form. Each site can bond with at most one site on another molecule. The fraction of molecules *not* bonded at site $A$, denoted $X_A$, satisfies:
 
@@ -79,15 +79,15 @@ This framework is remarkable for its generality — it can describe self-associa
 
 ### 1.3.3 From SAFT to CPA (1988–1996)
 
-Wertheim's theory was first applied to equation of state development by Chapman, Gubbins, Jackson, and Radosz, who in 1988–1990 developed the **Statistical Associating Fluid Theory** (SAFT). SAFT builds the total Helmholtz free energy from four contributions:
+Wertheim's theory was first applied to equation of state development by Chapman, Gubbins, Jackson, and Radosz, who in 1988–1990 developed the **Statistical Associating Fluid Theory** (SAFT) \cite{Chapman1988,Chapman1990}. SAFT builds the total Helmholtz free energy from four contributions:
 
 $$A = A^{\text{ideal}} + A^{\text{segment}} + A^{\text{chain}} + A^{\text{assoc}}$$
 
 where the segment term describes reference fluid interactions (hard sphere + dispersion), the chain term accounts for molecular connectivity, and the association term uses Wertheim's TPT.
 
-While SAFT and its variants (PC-SAFT, soft-SAFT, SAFT-VR) have achieved remarkable success, they differ fundamentally from the cubic EoS that the oil and gas industry had used for decades. This created a practical barrier to adoption: replacing SRK or PR in existing simulation software required changes to flash algorithms, property routines, and process simulators.
+While SAFT and its variants (PC-SAFT \cite{Gross2001}, soft-SAFT, SAFT-VR \cite{GilVillegas1997}) have achieved remarkable success, they differ fundamentally from the cubic EoS that the oil and gas industry had used for decades. This created a practical barrier to adoption: replacing SRK or PR in existing simulation software required changes to flash algorithms, property routines, and process simulators.
 
-Recognizing this barrier, Georgios Kontogeorgis and colleagues at the Technical University of Denmark (DTU) proposed the **Cubic Plus Association** (CPA) equation of state in 1996. The central idea was elegantly simple: combine the familiar SRK cubic equation with Wertheim's association term:
+Recognizing this barrier, Georgios Kontogeorgis and colleagues at the Technical University of Denmark (DTU) proposed the **Cubic Plus Association** (CPA) equation of state in 1996 \cite{Kontogeorgis1996}. The central idea was elegantly simple: combine the familiar SRK cubic equation with Wertheim's association term:
 
 $$P = \underbrace{\frac{RT}{V_m - b} - \frac{a(T)}{V_m(V_m + b)}}_{\text{SRK cubic term}} + \underbrace{P^{\text{assoc}}}_{\text{Wertheim association}}$$
 
@@ -99,10 +99,10 @@ The publication of CPA marked the beginning of rapid development and industrial 
 
 - **1996–2000**: Initial parameter fitting and validation for water, alcohols, glycols
 - **2000–2006**: Extension to multicomponent systems; Equinor (then Statoil) began internal adoption
-- **2006–2010**: Simplified CPA (sCPA) developed for computational efficiency; electrolyte CPA formulated
+- **2006–2010**: Simplified CPA (sCPA) developed for computational efficiency \cite{Kontogeorgis1999}; electrolyte CPA formulated \cite{MariboMogensen2012}
 - **2010–2015**: PR-CPA variant; UMR-CPA (Universal Mixing Rules + CPA); broad industrial deployment
 - **2015–2020**: Asphaltene modeling with CPA; improved cross-association schemes
-- **2020–present**: Fully implicit solvers; Anderson acceleration; Broyden methods for faster convergence
+- **2020–present**: Fully implicit solvers; Anderson acceleration \cite{Anderson1965}; Broyden methods \cite{Broyden1965} for faster convergence
 
 Today, CPA is implemented in most major process simulators and is the recommended model for systems involving water, alcohols, glycols, and CO$_2$ in the petroleum industry.
 
