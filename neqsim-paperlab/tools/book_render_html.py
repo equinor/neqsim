@@ -10,6 +10,7 @@ Extends render_html_generic.py with:
 """
 
 import re
+import shutil
 from pathlib import Path
 
 import book_builder
@@ -410,32 +411,52 @@ def _esc(text):
 
 _BOOK_ICON_SVG = (
     '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
-    '<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">'
+    '<defs>'
+    '<linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">'
     '<stop offset="0%" style="stop-color:#0d3b66;stop-opacity:1"/>'
     '<stop offset="100%" style="stop-color:#2980b9;stop-opacity:1"/>'
-    '</linearGradient></defs>'
+    '</linearGradient>'
+    '<linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%">'
+    '<stop offset="0%" style="stop-color:#2980b9;stop-opacity:0.3"/>'
+    '<stop offset="100%" style="stop-color:#0d3b66;stop-opacity:0.3"/>'
+    '</linearGradient>'
+    '</defs>'
+    # Outer ring
     '<circle cx="60" cy="60" r="56" fill="none" stroke="url(#g1)" stroke-width="3"/>'
-    '<circle cx="60" cy="60" r="48" fill="none" stroke="#1a5276" stroke-width="1" '
-    'stroke-dasharray="4,4" opacity="0.4"/>'
-    # Stylized atom / network nodes representing AI + physics
-    '<circle cx="60" cy="38" r="6" fill="#0d3b66"/>'
-    '<circle cx="38" cy="72" r="6" fill="#2980b9"/>'
-    '<circle cx="82" cy="72" r="6" fill="#2980b9"/>'
-    '<circle cx="60" cy="60" r="8" fill="#1a5276"/>'
-    '<line x1="60" y1="38" x2="60" y2="60" stroke="#1a5276" stroke-width="2"/>'
-    '<line x1="38" y1="72" x2="60" y2="60" stroke="#1a5276" stroke-width="2"/>'
-    '<line x1="82" y1="72" x2="60" y2="60" stroke="#1a5276" stroke-width="2"/>'
-    '<line x1="60" y1="38" x2="38" y2="72" stroke="#0d3b66" stroke-width="1" '
-    'opacity="0.3"/>'
-    '<line x1="60" y1="38" x2="82" y2="72" stroke="#0d3b66" stroke-width="1" '
-    'opacity="0.3"/>'
-    '<line x1="38" y1="72" x2="82" y2="72" stroke="#0d3b66" stroke-width="1" '
-    'opacity="0.3"/>'
-    # Small satellite dots for "agent" feel
-    '<circle cx="49" cy="49" r="2.5" fill="#2980b9" opacity="0.6"/>'
-    '<circle cx="71" cy="49" r="2.5" fill="#2980b9" opacity="0.6"/>'
-    '<circle cx="49" cy="66" r="2.5" fill="#0d3b66" opacity="0.6"/>'
-    '<circle cx="71" cy="66" r="2.5" fill="#0d3b66" opacity="0.6"/>'
+    # Inner dashed ring
+    '<circle cx="60" cy="60" r="48" fill="none" stroke="#1a5276" stroke-width="0.8" '
+    'stroke-dasharray="3,3" opacity="0.3"/>'
+    # Subtle background fill
+    '<circle cx="60" cy="60" r="47" fill="url(#g2)"/>'
+    # Network connections (behind nodes)
+    '<line x1="60" y1="30" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/>'
+    '<line x1="34" y1="75" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/>'
+    '<line x1="86" y1="75" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/>'
+    '<line x1="60" y1="30" x2="34" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/>'
+    '<line x1="60" y1="30" x2="86" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/>'
+    '<line x1="34" y1="75" x2="86" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/>'
+    # Outer orbit dots
+    '<circle cx="60" cy="18" r="2" fill="#2980b9" opacity="0.5"/>'
+    '<circle cx="24" cy="80" r="2" fill="#2980b9" opacity="0.5"/>'
+    '<circle cx="96" cy="80" r="2" fill="#2980b9" opacity="0.5"/>'
+    '<circle cx="95" cy="38" r="2" fill="#0d3b66" opacity="0.4"/>'
+    '<circle cx="25" cy="38" r="2" fill="#0d3b66" opacity="0.4"/>'
+    # Central node (AI core)
+    '<circle cx="60" cy="60" r="10" fill="#1a5276"/>'
+    '<circle cx="60" cy="60" r="6" fill="#fff" opacity="0.15"/>'
+    # Primary nodes
+    '<circle cx="60" cy="30" r="7" fill="#0d3b66"/>'
+    '<circle cx="34" cy="75" r="7" fill="#2980b9"/>'
+    '<circle cx="86" cy="75" r="7" fill="#2980b9"/>'
+    # Node highlights
+    '<circle cx="58" cy="28" r="2" fill="#fff" opacity="0.25"/>'
+    '<circle cx="32" cy="73" r="2" fill="#fff" opacity="0.25"/>'
+    '<circle cx="84" cy="73" r="2" fill="#fff" opacity="0.25"/>'
+    # Interstitial satellite dots
+    '<circle cx="47" cy="45" r="3" fill="#2980b9" opacity="0.55"/>'
+    '<circle cx="73" cy="45" r="3" fill="#2980b9" opacity="0.55"/>'
+    '<circle cx="47" cy="68" r="3" fill="#0d3b66" opacity="0.55"/>'
+    '<circle cx="73" cy="68" r="3" fill="#0d3b66" opacity="0.55"/>'
     '</svg>'
 )
 
@@ -889,6 +910,16 @@ def render_book_html(book_dir, chapter_filter=None):
     # Write output
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy chapter figures into submission/figures/ so relative src paths work
+    figures_out = submission_dir / "figures"
+    figures_out.mkdir(parents=True, exist_ok=True)
+    for _ch_num, ch, _pt in book_builder.iter_chapters(cfg):
+        ch_fig_dir = book_builder.resolve_chapter_dir(book_dir, ch) / "figures"
+        if ch_fig_dir.is_dir():
+            for img_file in ch_fig_dir.iterdir():
+                if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"):
+                    shutil.copy2(str(img_file), str(figures_out / img_file.name))
 
     out_name = "book.html" if not chapter_filter else f"{chapter_filter}.html"
     out_path = submission_dir / out_name

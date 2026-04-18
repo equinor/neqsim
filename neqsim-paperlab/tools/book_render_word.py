@@ -780,6 +780,7 @@ def _add_code_block(doc, code_text, language=""):
 
     # Write code lines into the cell paragraph
     para = cell.paragraphs[0]
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
     para.paragraph_format.line_spacing = 1.0
     para.paragraph_format.space_before = Pt(2)
     para.paragraph_format.space_after = Pt(2)
