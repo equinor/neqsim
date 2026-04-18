@@ -9,9 +9,14 @@ package neqsim.physicalproperties.system;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyType;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.FrictionTheoryConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
@@ -209,8 +214,18 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
               this);
     } else if ("Chung".equals(model)) {
       conductivityCalc = new ChungConductivityMethod(this);
+    } else if ("Chung-dense".equals(model)) {
+      conductivityCalc = new ChungDenseConductivityMethod(this);
     } else if ("CO2Model".equals(model)) {
       conductivityCalc = new CO2ConductivityMethod(this);
+    } else if ("friction theory".equals(model)) {
+      conductivityCalc = new FrictionTheoryConductivityMethod(this);
+    } else if ("Filippov".equals(model)) {
+      conductivityCalc = new FilippovConductivityMethod(this);
+    } else if ("WaterModel".equals(model)) {
+      conductivityCalc = new WaterConductivityMethod(this);
+    } else if ("H2Model".equals(model)) {
+      conductivityCalc = new HydrogenConductivityMethod(this);
     } else {
       conductivityCalc = new PFCTConductivityMethodMod86(this);
     }

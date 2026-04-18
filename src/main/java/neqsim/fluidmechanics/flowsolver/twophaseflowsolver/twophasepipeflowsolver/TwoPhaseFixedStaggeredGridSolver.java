@@ -330,16 +330,24 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       try {
         pipe.getNode(i).getBulkSystem().init(3);
       } catch (Exception e) {
-        // If init fails, try with init(1) to re-establish thermodynamic equilibrium
-        pipe.getNode(i).getBulkSystem().init(1);
+        try {
+          pipe.getNode(i).getBulkSystem().init(1);
+        } catch (Exception e2) {
+          logger.debug("Node {} thermo init failed, keeping previous state", i);
+        }
       }
 
       // Restore temperature after init - temperature must be propagated along pipe, not reset
       pipe.getNode(i).getBulkSystem().getPhase(0).setTemperature(savedGasTemp);
       pipe.getNode(i).getBulkSystem().getPhase(1).setTemperature(savedLiqTemp);
 
-      pipe.getNode(i).initFlowCalc();
-      pipe.getNode(i).calcFluxes();
+      try {
+        pipe.getNode(i).initFlowCalc();
+        pipe.getNode(i).calcFluxes();
+      } catch (Exception e) {
+        logger.debug("Node {} flow calc failed, skipping: {}", i, e.getMessage());
+        continue;
+      }
 
       // ========================================================================
       // SEPARATE ENERGY EQUATIONS FOR GAS AND LIQUID PHASES
@@ -524,6 +532,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                 * pipe.getNode(i).getInterphaseContactArea();
 
+        // Guard against NaN/Infinity from transport coefficient calculations
+        if (!Double.isFinite(transferToLiquid)) {
+          transferToLiquid = 0.0;
+        }
+
         // Get transfer limits from configuration
         double maxFractionBidir = massTransferConfig.getMaxTransferFractionBidirectional();
         double maxFractionDir = massTransferConfig.getMaxTransferFractionDirectional();
@@ -640,7 +653,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       // Re-init after applying transfer so phaseFraction reflects new state
       pipe.getNode(i).getBulkSystem().initBeta();
       pipe.getNode(i).getBulkSystem().init_x_y();
-      pipe.getNode(i).initFlowCalc();
+      try {
+        pipe.getNode(i).initFlowCalc();
+      } catch (Exception e) {
+        logger.debug("Node {} post-transfer flow calc failed", i);
+      }
     }
 
     // Handle last node - copy from previous node
@@ -664,14 +681,26 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
 
     pipe.getNode(lastNode).getBulkSystem().initBeta();
     pipe.getNode(lastNode).getBulkSystem().init_x_y();
-    pipe.getNode(lastNode).getBulkSystem().init(3);
+    try {
+      pipe.getNode(lastNode).getBulkSystem().init(3);
+    } catch (Exception e) {
+      try {
+        pipe.getNode(lastNode).getBulkSystem().init(1);
+      } catch (Exception e2) {
+        logger.debug("Last node thermo init failed, keeping previous state");
+      }
+    }
 
     // Restore temperature after init
     pipe.getNode(lastNode).getBulkSystem().getPhase(0).setTemperature(savedLastGasTemp);
     pipe.getNode(lastNode).getBulkSystem().getPhase(1).setTemperature(savedLastLiqTemp);
 
-    pipe.getNode(lastNode).initFlowCalc();
-    pipe.getNode(lastNode).calcFluxes();
+    try {
+      pipe.getNode(lastNode).initFlowCalc();
+      pipe.getNode(lastNode).calcFluxes();
+    } catch (Exception e) {
+      logger.debug("Last node flow calc failed");
+    }
   }
 
   /**
@@ -1398,14 +1427,18 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             .getNumberOfComponents(); comp++) {
           double molarFlux = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(comp);
           // Enthalpy difference between gas and liquid phase for this component
-          double gasEnthalpy = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
-              .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature())
-              / pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
-                  .getNumberOfMolesInPhase();
-          double liquidEnthalpy = pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
-              .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature())
-              / pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
-                  .getNumberOfMolesInPhase();
+          double gasMolesComp = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
+              .getNumberOfMolesInPhase();
+          double gasEnthalpy = (Math.abs(gasMolesComp) > 1e-30)
+              ? pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp).getEnthalpy(
+                  pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature()) / gasMolesComp
+              : 0.0;
+          double liquidMolesComp = pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
+              .getNumberOfMolesInPhase();
+          double liquidEnthalpy = (Math.abs(liquidMolesComp) > 1e-30)
+              ? pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp).getEnthalpy(
+                  pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature()) / liquidMolesComp
+              : 0.0;
           double enthalpyOfVaporization = gasEnthalpy - liquidEnthalpy;
 
           // Latent heat = mass flux * enthalpy of vaporization * contact area * residence time
@@ -1426,7 +1459,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double interphaseHeatFlux =
           sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum) * nodeLength
               * pipe.getNode(i).getInterphaseContactLength(phaseNum)
-              * (nodeLength / pipe.getNode(i).getVelocity(phaseNum));
+              * (nodeLength / Math.max(pipe.getNode(i).getVelocity(phaseNum), 1e-6));
 
       // Potential energy change (elevation work)
       double potentialEnergy = -pipe.getNode(i).getArea(phaseNum) * gravity
@@ -1496,14 +1529,18 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       for (int comp = 0; comp < pipe.getNode(i).getBulkSystem().getPhase(phaseNum)
           .getNumberOfComponents(); comp++) {
         double molarFluxLast = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(comp);
-        double gasEnthalpyLast = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
-            .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature())
-            / pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
-                .getNumberOfMolesInPhase();
-        double liquidEnthalpyLast = pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
-            .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature())
-            / pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
-                .getNumberOfMolesInPhase();
+        double gasMolesCompLast = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
+            .getNumberOfMolesInPhase();
+        double gasEnthalpyLast = (Math.abs(gasMolesCompLast) > 1e-30)
+            ? pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp).getEnthalpy(
+                pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature()) / gasMolesCompLast
+            : 0.0;
+        double liquidMolesCompLast = pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
+            .getNumberOfMolesInPhase();
+        double liquidEnthalpyLast = (Math.abs(liquidMolesCompLast) > 1e-30)
+            ? pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp).getEnthalpy(
+                pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature()) / liquidMolesCompLast
+            : 0.0;
         double enthalpyOfVaporizationLast = gasEnthalpyLast - liquidEnthalpyLast;
         double contactLengthLast = pipe.getNode(i).getInterphaseContactLength(phaseNum);
         double residenceTimeLast =
@@ -1523,7 +1560,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     double interphaseHeatFluxLast =
         sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum) * nodeLengthLast
             * pipe.getNode(i).getInterphaseContactLength(phaseNum)
-            * (nodeLengthLast / pipe.getNode(i).getVelocity(phaseNum));
+            * (nodeLengthLast / Math.max(pipe.getNode(i).getVelocity(phaseNum), 1e-6));
 
     // Potential energy change for last node
     double potentialEnergyLast = -pipe.getNode(i).getArea(phaseNum) * gravity
@@ -1566,7 +1603,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void setComponentConservationMatrix2(int phaseNum, int componentNumber) {
     double SU = 0;
-    double sign = (phaseNum == 0) ? 1.0 : 1.0;
+    double sign = (phaseNum == 0) ? -1.0 : 1.0;
     a[0] = 0;
     b[0] = 1.0;
     c[0] = 0;
@@ -1605,10 +1642,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       // pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
       a[i] = Math.max(Fw, 0);
       c[i] = Math.max(-Fe, 0); // - Fe/2.0;
-      b[i] = a[i] + c[i] + (Fe - Fw)
-          - sign * pipe.getNode(i).getArea(phaseNum)
-              * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-              / pipe.getNode(i).getVelocity() * pipe.getNode(i).getGeometry().getNodeLength();
+      b[i] = a[i] + c[i] + (Fe - Fw) - sign * pipe.getNode(i).getArea(phaseNum)
+          * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+          / pipe.getNode(i).getVelocity(phaseNum) * pipe.getNode(i).getGeometry().getNodeLength();
       r[i] = 0;
       // setter ligningen paa rett form
       a[i] = -a[i];
@@ -1737,14 +1773,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void initFinalResults(int phase) {
     for (int i = 0; i < numberOfNodes; i++) {
-      oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn().doubleValue();
+      oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn(phase).doubleValue();
       oldDensity[phase][i] =
-          pipe.getNode(i).getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
-      oldInternalEnergy[phase][i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy()
-          / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
-          / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+          pipe.getNode(i).getBulkSystem().getPhase(phase).getPhysicalProperties().getDensity();
+      oldInternalEnergy[phase][i] = pipe.getNode(i).getBulkSystem().getPhase(phase).getEnthalpy()
+          / pipe.getNode(i).getBulkSystem().getPhase(phase).getNumberOfMolesInPhase()
+          / pipe.getNode(i).getBulkSystem().getPhase(phase).getMolarMass();
 
-      for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
+      for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhase(phase)
           .getNumberOfComponents(); j++) {
         oldComposition[phase][j][i] = xNew[phase][j][i];
         // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getx() *

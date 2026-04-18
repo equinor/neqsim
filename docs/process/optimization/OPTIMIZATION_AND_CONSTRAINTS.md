@@ -101,10 +101,19 @@ The constraint framework is built on these key classes in `neqsim.process.equipm
 |-------|---------|
 | `CapacityConstraint` | Single constraint with design/max values and live value supplier |
 | `CapacityConstrainedEquipment` | Interface for equipment with capacity limits |
+| `ProcessEquipmentBaseClass` | **Universal constraint storage** — all 144+ equipment types inherit constraint methods |
 | `StandardConstraintType` | Predefined constraint types (speed, power, K-factor, etc.) |
 | `BottleneckResult` | Result of bottleneck analysis with equipment and constraint info |
 | `EquipmentCapacityStrategy` | Strategy interface for equipment-specific constraint evaluation |
-| `EquipmentCapacityStrategyRegistry` | Plugin registry for equipment strategies |
+| `EquipmentCapacityStrategyRegistry` | Plugin registry for equipment strategies (18 built-in strategies) |
+
+> **Universal Constraint Support:** Every equipment class that extends `ProcessEquipmentBaseClass`
+> (all 144+ classes) now inherits capacity constraint methods — `addCapacityConstraint()`,
+> `getBottleneckConstraint()`, `isCapacityExceeded()`, `getMaxUtilization()`, etc.
+> You no longer need to check if equipment implements `CapacityConstrainedEquipment`.
+> The `ProcessSystem` methods (`findBottleneck()`, `isAnyEquipmentOverloaded()`,
+> `getCapacityUtilizationSummary()`, `getEquipmentNearCapacityLimit()`) now iterate
+> over ALL equipment in the process.
 
 #### CapacityConstraint
 
@@ -159,6 +168,12 @@ Each equipment type has a capacity strategy that knows how to:
 | `SplitterCapacityStrategy` | Splitter | flowRate |
 | `EjectorCapacityStrategy` | Ejector | compressionRatio, motiveFlow |
 | `DistillationColumnCapacityStrategy` | DistillationColumn | floodingFactor, reboilerDuty |
+| `ReactorCapacityStrategy` | GibbsReactor, PlugFlowReactor, StirredTankReactor | throughput, residenceTime, conversionRate |
+| `PowerGenerationCapacityStrategy` | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem | power, fuelFlow, exhaustTemp |
+| `SubseaEquipmentCapacityStrategy` | SubseaWell, SubseaTree | flowRate, wellheadPressure, chokeOpening |
+| `FilterAdsorberCapacityStrategy` | Filter, SulfurFilter, CharCoalFilter, SimpleAdsorber | pressureDrop, throughput |
+| `ElectrolyzerCapacityStrategy` | Electrolyzer, CO2Electrolyzer | power, currentDensity, efficiency |
+| `WellFlowCapacityStrategy` | WellFlow | flowRate, wellheadPressure, drawdown |
 
 ### Constraint Types and Severity
 
@@ -271,11 +286,11 @@ Pareto optimization finds non-dominated solutions when objectives conflict:
 ```java
 // Define multiple objectives
 List<OptimizationObjective> objectives = Arrays.asList(
-    new OptimizationObjective("throughput", 
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 
+    new OptimizationObjective("throughput",
+        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE),
-    new OptimizationObjective("powerConsumption", 
-        proc -> proc.getUnit("compressor").getPower("kW"), 
+    new OptimizationObjective("powerConsumption",
+        proc -> proc.getUnit("compressor").getPower("kW"),
         1.0, ObjectiveType.MINIMIZE)
 );
 
@@ -378,11 +393,11 @@ Configure how much of design capacity the optimizer can use:
 OptimizationConfig config = new OptimizationConfig(minRate, maxRate)
     // Global default
     .defaultUtilizationLimit(0.95)  // 95% max for all equipment
-    
+
     // Equipment-type specific
     .utilizationLimitForType(Compressor.class, 0.90)  // 90% for compressors
     .utilizationLimitForType(Separator.class, 0.98)   // 98% for separators
-    
+
     // Equipment-specific
     .utilizationLimitForEquipment("HP Compressor", 0.85);  // 85% for this specific unit
 ```
@@ -430,7 +445,7 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
 
 OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
 
-System.out.printf("Maximum throughput: %.0f %s%n", 
+System.out.printf("Maximum throughput: %.0f %s%n",
     result.getOptimalRate(), result.getRateUnit());
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
 System.out.printf("Utilization: %.1f%%%n", result.getBottleneckUtilization() * 100);
@@ -452,12 +467,12 @@ if (!bottleneck.isEmpty()) {
     System.out.println("Equipment: " + bottleneck.getEquipmentName());
     System.out.println("Constraint: " + bottleneck.getConstraintName());
     System.out.printf("Utilization: %.1f%%%n", bottleneck.getUtilizationPercent());
-    
+
     // Get constraint details
     CapacityConstraint constraint = bottleneck.getConstraint();
-    System.out.printf("Current value: %.2f %s%n", 
+    System.out.printf("Current value: %.2f %s%n",
         constraint.getCurrentValue(), constraint.getUnit());
-    System.out.printf("Design limit: %.2f %s%n", 
+    System.out.printf("Design limit: %.2f %s%n",
         constraint.getDesignValue(), constraint.getUnit());
     System.out.printf("Type: %s%n", constraint.getConstraintType());
 }
@@ -526,15 +541,15 @@ Trade off competing objectives:
 ```java
 // Define conflicting objectives
 List<OptimizationObjective> objectives = Arrays.asList(
-    new OptimizationObjective("throughput", 
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 
+    new OptimizationObjective("throughput",
+        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE),
-    new OptimizationObjective("specificPower", 
+    new OptimizationObjective("specificPower",
         proc -> {
             double power = ((Compressor)proc.getUnit("comp")).getPower("kW");
             double flow = proc.getUnit("outlet").getFlowRate("kg/hr");
             return power / flow * 1000;  // kWh/tonne
-        }, 
+        },
         1.0, ObjectiveType.MINIMIZE)
 );
 
@@ -548,7 +563,7 @@ System.out.println("Throughput (kg/hr) | Specific Power (kWh/t)");
 System.out.println("-------------------|-----------------------");
 for (OptimizationResult point : pareto.getParetoFront()) {
     Map<String, Double> vals = point.getObjectiveValues();
-    System.out.printf("%18.0f | %22.1f%n", 
+    System.out.printf("%18.0f | %22.1f%n",
         vals.get("throughput"), vals.get("specificPower"));
 }
 ```
@@ -619,7 +634,7 @@ optimization:
     unit: kg/hr
   tolerance: 100.0
   max_iterations: 30
-  
+
   utilization_limits:
     default: 0.95
     by_type:
@@ -632,7 +647,7 @@ optimization:
     - name: throughput
       direction: maximize
       weight: 1.0
-    
+
   constraints:
     - name: max_power
       value: 5000

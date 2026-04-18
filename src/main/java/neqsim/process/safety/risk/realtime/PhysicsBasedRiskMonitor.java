@@ -345,8 +345,16 @@ public class PhysicsBasedRiskMonitor implements Serializable {
     Map<String, Double> utilizations = processSystem.getCapacityUtilizationSummary();
     assessment.getEquipmentUtilizations().putAll(utilizations);
 
+    // Also include utilizations from equipment monitors for equipment not already covered
+    for (Map.Entry<String, ProcessEquipmentMonitor> entry : equipmentMonitors.entrySet()) {
+      if (!assessment.getEquipmentUtilizations().containsKey(entry.getKey())) {
+        double monitorUtil = entry.getValue().getCurrentCapacityUtilization();
+        assessment.getEquipmentUtilizations().put(entry.getKey(), monitorUtil);
+      }
+    }
+
     // Check for equipment near capacity
-    for (Map.Entry<String, Double> entry : utilizations.entrySet()) {
+    for (Map.Entry<String, Double> entry : assessment.getEquipmentUtilizations().entrySet()) {
       if (entry.getValue() > 0.9) {
         assessment.getWarnings().add(entry.getKey() + " at "
             + String.format("%.1f%%", entry.getValue() * 100) + " utilization");

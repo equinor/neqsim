@@ -354,6 +354,9 @@ public class PVTRegression {
 
   /**
    * Add DLE samples to the sample list.
+   *
+   * @param sampleList the list to add DLE samples to
+   * @param function the PVT regression function to clone for each sample
    */
   private void addDLESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.DLE, 1.0);
@@ -383,6 +386,9 @@ public class PVTRegression {
 
   /**
    * Add separator samples to the sample list.
+   *
+   * @param sampleList the list to add separator samples to
+   * @param function the PVT regression function to clone for each sample
    */
   private void addSeparatorSamples(ArrayList<SampleValue> sampleList,
       PVTRegressionFunction function) {

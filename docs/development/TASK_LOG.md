@@ -27,11 +27,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2025-07-24 — Process Optimization Enhancements: NIP-03, NIP-06, NIP-08, NIP-09 Implementation
+**Type:** E (Feature)
+**Keywords:** process optimization, rate-based absorber, SQP optimizer, multiphase flow, Hagedorn-Brown, Mukherjee-Brill, multi-variable adjuster, Onda correlation, Billet-Schultes, mass transfer, enhancement factor, damped successive substitution
+**Solution:** src/main/java/neqsim/process/equipment/absorber/RateBasedAbsorber.java, src/main/java/neqsim/process/util/optimizer/SQPoptimizer.java, src/main/java/neqsim/process/equipment/pipeline/PipeHagedornBrown.java, src/main/java/neqsim/process/equipment/pipeline/PipeMukherjeeAndBrill.java, examples/notebooks/process_optimization_enhancements.ipynb
+**Notes:** Implemented four NIPs from process optimization review. NIP-06: RateBasedAbsorber with Onda 1968 and Billet-Schultes 1999 mass transfer correlations, Hatta/Van Krevelen enhancement factors (6 tests). NIP-08: SQPoptimizer with active-set SQP for constrained process optimization (5 tests). NIP-03: PipeHagedornBrown and PipeMukherjeeAndBrill multiphase flow correlations (8 tests). NIP-09: MultiVariableAdjuster convergence fix — replaced Broyden accelerator with damped successive substitution (α=0.1) after Broyden caused oscillation/divergence due to wrong Jacobian sign. All 23 tests pass. Docs updated: absorbers.md, sqp_optimizer.md, multiphase_flow_correlations.md, adjusters.md, CHANGELOG_AGENT_NOTES.md.
+
 ### 2026-04-17 — cDFT Surface Tension: Kernel Correction, Mixture Extension, Paper
 **Type:** E (Feature)
 **Keywords:** cDFT, surface tension, interfacial tension, density functional theory, kernel range, mixture IFT, Peng-Robinson, SRK, predictive, lambda correlation, acentric factor, critical correction, Miqueu, gradient theory, Parachor, Fluid Phase Equilibria
 **Solution:** src/main/java/neqsim/thermo/util/LCSF/surfacetension/CDFTSurfaceTension.java, task_solve/2026-04-17_cdft_surface_tension_paper_kernel_correction_and_mixture_extension/, neqsim-paperlab/papers/cdft_surface_tension_2026/
 **Notes:** Implemented predictive cDFT surface tension from cubic EOS. Three proposals: (A) kernel range correction λ(ω) = 0.749 − 0.740ω reduces AAD from 41.5% to 9.5% for 8 pure components (beats GT 12.8%, Parachor 17.6%; Miqueu GT 2.2% still best). (B) Mixture solver with shared-δ tanh profiles and cross kernels achieves 37.6% AAD for CH4/C3H8 at 277.6K (vs 61.7% Parachor). (C) Paper manuscript for Fluid Phase Equilibria with 4 figures, 3 tables. 27+ tests across 6 test classes. Key insight: critical exponent correction (1−Tr)^(−0.24) essential near Tc.
+### 2026-04-18 — Systematic "hardcoded phase 0" bug elimination in two-phase flow
+**Type:** E (Feature/Bugfix)
+**Keywords:** two-phase flow, mass transfer, heat transfer, friction factor, Reynolds number, velocity, phase index, interphase transport, Krishna-Standart, film model, non-equilibrium, pipeline condensation, stratified flow, slug flow, droplet flow, stirred cell
+**Solution:** src/main/java/neqsim/fluidmechanics/flownode/ (multiple files across 3 rounds)
+**Notes:** Found and fixed 29 bugs across 3 audit rounds. Root cause: methods accepting `int phase`/`int phaseNum` parameters internally called `getReynoldsNumber()`, `getVelocity()`, or `calcWallFrictionFactor(0, node)` without passing the phase index through. These default to phase 0 (gas), making liquid-phase (1) calculations use incorrect gas-phase Reynolds numbers, velocities, and friction factors. Fixed files: NonEquilibriumFluidBoundary, ReactiveKrishnaStandartFilmModel, KrishnaStandartFilmModel, TwoPhaseFixedStaggeredGridSolver, InterphaseStratifiedFlow, TwoPhaseFlowNode, InterphaseDropletFlow, InterphaseSlugFlow, InterphaseTransportCoefficientBaseClass, MultiPhaseFlowNode, InterphasePipeFlow, InterphaseStirredCellFlow. Also added NaN guards, divide-by-zero protections, convergence fixes, and dead code cleanup. All fluidmechanics tests pass.
 
 ### 2026-06-18 — TwoFluidPipe transient & pressure gradient benchmark and fixes
 **Type:** E (Feature)

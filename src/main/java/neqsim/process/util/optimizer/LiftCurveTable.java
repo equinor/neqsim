@@ -401,6 +401,9 @@ public class LiftCurveTable implements Serializable {
 
   /**
    * Formats a number for output.
+   *
+   * @param value the number to format
+   * @return the formatted string representation
    */
   private String formatNumber(double value) {
     if (Math.abs(value) < 0.01 || Math.abs(value) >= 10000) {
