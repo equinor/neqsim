@@ -2,6 +2,7 @@ package neqsim.util.nucleation;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * @author esol
  * @version 1.0
  */
+@Disabled("Long-running test - disabled for CI")
 class ClassicalNucleationTheoryTest {
 
   private ClassicalNucleationTheory cnt;

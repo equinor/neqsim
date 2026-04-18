@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -16,6 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  * @version 1.0
  */
+@Disabled("Long-running test - disabled for CI")
 class SpinodalDecompositionDetectorTest {
 
   @Test

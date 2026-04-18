@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoeffici
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -20,6 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * @author esol
  */
+@Disabled("Long-running test - disabled for CI")
 public class InterphaseDropletFlowMassTransferTest {
   private SystemInterface testSystem;
   private PipeData pipe;

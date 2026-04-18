@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -18,6 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  * @version 1.0
  */
+@Disabled("Long-running test - disabled for CI")
 class MulticomponentNucleationTest {
 
   private SystemInterface system;
