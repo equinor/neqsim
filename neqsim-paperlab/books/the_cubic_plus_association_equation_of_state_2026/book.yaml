@@ -1,0 +1,71 @@
+title: "The Cubic Plus Association Equation of State (CPA-EoS)"
+subtitle: "From Fundamentals to Industrial Applications"
+authors:
+  - name: "Even Solbraa"
+    affiliation: "Equinor ASA / NeqSim Project"
+    email: "even.solbraa@gmail.com"
+edition: "1st"
+year: 2026
+publisher: "springer"
+language: "en"
+isbn: ""
+
+settings:
+  page_size: "b5"
+  font_size: 10
+  line_spacing: 1.2
+  two_sided: true
+  chapter_numbering: true
+  equation_numbering: "chapter"
+
+frontmatter:
+  - title_page
+  - copyright
+  - dedication
+  - preface
+
+parts:
+  - title: "Part I: Foundations"
+    chapters:
+      - dir: "ch01_introduction"
+        title: "Introduction and Historical Context"
+      - dir: "ch02_thermodynamic_foundations"
+        title: "Thermodynamic Foundations"
+      - dir: "ch03_cubic_equations_of_state"
+        title: "Cubic Equations of State"
+      - dir: "ch04_association_theory"
+        title: "Association Theory and Wertheim's Perturbation Theory"
+
+  - title: "Part II: The CPA Model"
+    chapters:
+      - dir: "ch05_cpa_formulation"
+        title: "The CPA Equation of State — Formulation"
+      - dir: "ch06_pure_component_parameters"
+        title: "Pure Component Parameters and Regression"
+      - dir: "ch07_mixing_rules"
+        title: "Mixing Rules and Cross-Association"
+      - dir: "ch08_numerical_implementation"
+        title: "Numerical Implementation and Solver Strategies"
+
+  - title: "Part III: Applications and Validation"
+    chapters:
+      - dir: "ch09_water_hydrocarbons"
+        title: "Water-Hydrocarbon Systems"
+      - dir: "ch10_gas_processing"
+        title: "Gas Processing and Glycol Dehydration"
+      - dir: "ch11_co2_capture_storage"
+        title: "CO2 Capture, Transport, and Storage"
+      - dir: "ch12_advanced_topics"
+        title: "Advanced Topics and Future Directions"
+
+backmatter:
+  - glossary
+  - author_bio
+
+nomenclature:
+  file: "nomenclature.yaml"
+  position: "after_toc"
+
+bibliography:
+  style: "numeric"
+  file: "refs.bib"

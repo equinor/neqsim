@@ -527,3 +527,247 @@ def format_toc(toc):
         else:
             lines.append(f"            {title}")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Book drafting — generate chapter content from outline
+# ---------------------------------------------------------------------------
+
+def load_chapter_outline(book_dir):
+    """Load ``chapter_outlines.yaml`` from *book_dir* if it exists.
+
+    Returns a dict mapping chapter dir names to outline dicts, or empty dict.
+    """
+    book_dir = Path(book_dir)
+    outline_path = book_dir / "chapter_outlines.yaml"
+    if not outline_path.exists():
+        return {}
+    with open(outline_path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return data if isinstance(data, dict) else {}
+
+
+def draft_chapter(book_dir, ch_dir_name, outline=None, force=False):
+    """Generate a draft chapter.md from an outline specification.
+
+    Parameters
+    ----------
+    book_dir : str or Path
+        Book project directory.
+    ch_dir_name : str
+        Chapter directory name (e.g., ``ch01_introduction``).
+    outline : dict or None
+        Chapter outline with keys: ``title``, ``target_pages``,
+        ``learning_objectives``, ``sections`` (list of section dicts
+        with ``heading``, ``content_guidance``, ``subsections``).
+        If None, loads from ``chapter_outlines.yaml``.
+    force : bool
+        Overwrite existing chapter.md even if it has content beyond template.
+
+    Returns
+    -------
+    Path
+        Path to the written chapter.md.
+    """
+    book_dir = Path(book_dir)
+    ch_dir = book_dir / "chapters" / ch_dir_name
+
+    if not ch_dir.exists():
+        ch_dir.mkdir(parents=True, exist_ok=True)
+        (ch_dir / "notebooks").mkdir(exist_ok=True)
+        (ch_dir / "figures").mkdir(exist_ok=True)
+
+    ch_md = ch_dir / "chapter.md"
+
+    # Don't overwrite substantive content unless forced
+    if ch_md.exists() and not force:
+        existing = ch_md.read_text(encoding="utf-8")
+        if "TODO" not in existing and len(existing.split()) > 500:
+            return ch_md
+
+    # Load outline from file if not provided
+    if outline is None:
+        outlines = load_chapter_outline(book_dir)
+        outline = outlines.get(ch_dir_name, {})
+
+    if not outline:
+        return ch_md  # No outline to draft from
+
+    # Determine chapter number from book.yaml
+    cfg = load_book_config(book_dir)
+    ch_num = 1
+    for num, ch, _part in iter_chapters(cfg):
+        if ch["dir"] == ch_dir_name:
+            ch_num = num
+            break
+
+    title = outline.get("title", f"Chapter {ch_num}")
+    target_pages = outline.get("target_pages", 20)
+    objectives = outline.get("learning_objectives", [])
+    sections = outline.get("sections", [])
+    notebooks = outline.get("notebooks", [])
+
+    lines = []
+    lines.append(f"# {title}\n")
+    lines.append(f"<!-- Chapter metadata -->")
+    if notebooks:
+        lines.append(f"<!-- Notebooks: {', '.join(notebooks)} -->")
+    lines.append(f"<!-- Estimated pages: {target_pages} -->")
+    lines.append("")
+
+    # Learning objectives
+    if objectives:
+        lines.append("## Learning Objectives\n")
+        lines.append("After reading this chapter, the reader will be able to:\n")
+        for i, obj in enumerate(objectives, 1):
+            lines.append(f"{i}. {obj}")
+        lines.append("")
+
+    # Sections
+    for sec in sections:
+        heading = sec.get("heading", "Section")
+        content = sec.get("content_guidance", "")
+        subsections = sec.get("subsections", [])
+        code_examples = sec.get("code_examples", [])
+        equations = sec.get("equations", [])
+        figures = sec.get("figures", [])
+        tables = sec.get("tables", [])
+
+        lines.append(f"## {heading}\n")
+
+        if content:
+            lines.append(f"{content}\n")
+
+        # Equations
+        for eq in equations:
+            label = eq.get("label", "")
+            latex = eq.get("latex", "")
+            description = eq.get("description", "")
+            if latex:
+                lines.append(f"$${latex}$$\n")
+            if description:
+                lines.append(f"{description}\n")
+
+        # Subsections
+        for sub in subsections:
+            sub_heading = sub.get("heading", "Subsection")
+            sub_content = sub.get("content_guidance", "")
+            sub_equations = sub.get("equations", [])
+            sub_code = sub.get("code_examples", [])
+            sub_figures = sub.get("figures", [])
+            sub_tables = sub.get("tables", [])
+
+            lines.append(f"### {sub_heading}\n")
+            if sub_content:
+                lines.append(f"{sub_content}\n")
+
+            for eq in sub_equations:
+                if eq.get("latex"):
+                    lines.append(f"$${eq['latex']}$$\n")
+                if eq.get("description"):
+                    lines.append(f"{eq['description']}\n")
+
+            for code in sub_code:
+                lang = code.get("language", "python")
+                snippet = code.get("code", "# TODO")
+                caption = code.get("caption", "")
+                if caption:
+                    lines.append(f"*{caption}*\n")
+                lines.append(f"```{lang}")
+                lines.append(snippet)
+                lines.append("```\n")
+
+            for fig in sub_figures:
+                fname = fig.get("file", "placeholder.png")
+                caption = fig.get("caption", "Figure")
+                lines.append(f"![{caption}](figures/{fname})\n")
+                lines.append(f"*{caption}*\n")
+
+            for tbl in sub_tables:
+                tbl_caption = tbl.get("caption", "Table")
+                headers = tbl.get("headers", [])
+                rows = tbl.get("rows", [])
+                if headers:
+                    lines.append(f"*{tbl_caption}*\n")
+                    lines.append("| " + " | ".join(str(h) for h in headers) + " |")
+                    lines.append("| " + " | ".join("---" for _ in headers) + " |")
+                    for row in rows:
+                        lines.append("| " + " | ".join(str(c) for c in row) + " |")
+                    lines.append("")
+
+        # Top-level code examples
+        for code in code_examples:
+            lang = code.get("language", "python")
+            snippet = code.get("code", "# TODO")
+            caption = code.get("caption", "")
+            if caption:
+                lines.append(f"*{caption}*\n")
+            lines.append(f"```{lang}")
+            lines.append(snippet)
+            lines.append("```\n")
+
+        # Top-level figures
+        for fig in figures:
+            fname = fig.get("file", "placeholder.png")
+            caption = fig.get("caption", "Figure")
+            lines.append(f"![{caption}](figures/{fname})\n")
+            lines.append(f"*{caption}*\n")
+
+        # Top-level tables
+        for tbl in tables:
+            tbl_caption = tbl.get("caption", "Table")
+            headers = tbl.get("headers", [])
+            rows = tbl.get("rows", [])
+            if headers:
+                lines.append(f"*{tbl_caption}*\n")
+                lines.append("| " + " | ".join(str(h) for h in headers) + " |")
+                lines.append("| " + " | ".join("---" for _ in headers) + " |")
+                for row in rows:
+                    lines.append("| " + " | ".join(str(c) for c in row) + " |")
+                lines.append("")
+
+    # Summary
+    summary = outline.get("summary_points", [])
+    if summary:
+        lines.append("## Summary\n")
+        lines.append("Key points from this chapter:\n")
+        for pt in summary:
+            lines.append(f"- {pt}")
+        lines.append("")
+
+    # Exercises
+    exercises = outline.get("exercises", [])
+    if exercises:
+        lines.append("## Exercises\n")
+        for i, ex in enumerate(exercises, 1):
+            lines.append(f"{i}. **Exercise {ch_num}.{i}:** {ex}")
+        lines.append("")
+
+    # References
+    lines.append("## References\n")
+    lines.append("<!-- Chapter-level references are merged into master refs.bib -->\n")
+
+    ch_md.write_text("\n".join(lines), encoding="utf-8")
+    return ch_md
+
+
+def draft_all_chapters(book_dir, force=False):
+    """Draft all chapters in the book from ``chapter_outlines.yaml``.
+
+    Returns list of (chapter_dir_name, path) tuples for drafted chapters.
+    """
+    book_dir = Path(book_dir)
+    outlines = load_chapter_outline(book_dir)
+    if not outlines:
+        return []
+
+    cfg = load_book_config(book_dir)
+    drafted = []
+
+    for _num, ch, _part in iter_chapters(cfg):
+        ch_name = ch["dir"]
+        if ch_name in outlines:
+            path = draft_chapter(book_dir, ch_name, outlines[ch_name], force=force)
+            drafted.append((ch_name, path))
+
+    return drafted
