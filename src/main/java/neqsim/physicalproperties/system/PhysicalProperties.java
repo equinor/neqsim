@@ -9,9 +9,14 @@ package neqsim.physicalproperties.system;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyType;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.FrictionTheoryConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
@@ -23,10 +28,15 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalproperties.methods.gasphysicalproperties.conductivity.ChungConductivityMethod;
+import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.FullerSchettlerGiddingsDiffusivity;
 import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.WilkeLeeDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Costald;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.AmineDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HaydukMinhasDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HighPressureDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.TynCalusDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.WilkeChangDiffusivity;
 import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
@@ -204,8 +214,18 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
               this);
     } else if ("Chung".equals(model)) {
       conductivityCalc = new ChungConductivityMethod(this);
+    } else if ("Chung-dense".equals(model)) {
+      conductivityCalc = new ChungDenseConductivityMethod(this);
     } else if ("CO2Model".equals(model)) {
       conductivityCalc = new CO2ConductivityMethod(this);
+    } else if ("friction theory".equals(model)) {
+      conductivityCalc = new FrictionTheoryConductivityMethod(this);
+    } else if ("Filippov".equals(model)) {
+      conductivityCalc = new FilippovConductivityMethod(this);
+    } else if ("WaterModel".equals(model)) {
+      conductivityCalc = new WaterConductivityMethod(this);
+    } else if ("H2Model".equals(model)) {
+      conductivityCalc = new HydrogenConductivityMethod(this);
     } else {
       conductivityCalc = new PFCTConductivityMethodMod86(this);
     }
@@ -316,12 +336,31 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   public void setDiffusionCoefficientModel(String model) {
     if ("CSP".equals(model)) {
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
+    } else if ("Chapman-Enskog".equals(model)) {
+      neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel =
+          new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+      ceModel.setUseDiffusionLJOverride(true);
+      diffusivityCalc = ceModel;
     } else if ("Wilke Lee".equals(model)) {
-      diffusivityCalc = new WilkeLeeDiffusivity(this);
+      WilkeLeeDiffusivity wlModel = new WilkeLeeDiffusivity(this);
+      wlModel.setUseDiffusionLJOverride(true);
+      diffusivityCalc = wlModel;
     } else if ("Siddiqi Lucas".equals(model)) {
-      diffusivityCalc = new SiddiqiLucasMethod(this);
+      SiddiqiLucasMethod slModel = new SiddiqiLucasMethod(this);
+      slModel.setAutoSelectCorrelation(true);
+      diffusivityCalc = slModel;
     } else if ("Alkanol amine".equals(model)) {
       diffusivityCalc = new AmineDiffusivity(this);
+    } else if ("Fuller-Schettler-Giddings".equals(model)) {
+      diffusivityCalc = new FullerSchettlerGiddingsDiffusivity(this);
+    } else if ("Wilke-Chang".equals(model)) {
+      diffusivityCalc = new WilkeChangDiffusivity(this);
+    } else if ("Tyn-Calus".equals(model)) {
+      diffusivityCalc = new TynCalusDiffusivity(this);
+    } else if ("Hayduk-Minhas".equals(model)) {
+      diffusivityCalc = new HaydukMinhasDiffusivity(this);
+    } else if ("High Pressure".equals(model)) {
+      diffusivityCalc = new HighPressureDiffusivity(this);
     }
   }
 

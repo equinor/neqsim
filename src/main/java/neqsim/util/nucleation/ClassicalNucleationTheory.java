@@ -3,6 +3,7 @@ package neqsim.util.nucleation;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * General-purpose Classical Nucleation Theory (CNT) model for predicting particle formation from
@@ -107,6 +108,26 @@ public class ClassicalNucleationTheory {
    * 1.0 (every collision sticks). Typical range 0.01 to 1.0.
    */
   private double stickingCoefficient = 1.0;
+
+  // ============================================================================
+  // Heterogeneous Nucleation Parameters
+  // ============================================================================
+
+  /** Whether to use heterogeneous nucleation (with contact angle correction). */
+  private boolean heterogeneous = false;
+
+  /**
+   * Contact angle in degrees between the condensed phase and the substrate surface. Only used when
+   * heterogeneous = true. Range 0 to 180 degrees. 0 = complete wetting (no barrier), 180 =
+   * non-wetting (same as homogeneous).
+   */
+  private double contactAngleDegrees = 90.0;
+
+  /**
+   * Fletcher shape factor f(theta) that multiplies the homogeneous barrier. f(theta) = (2 -
+   * 3*cos(theta) + cos^3(theta)) / 4. Range: 0 (complete wetting) to 1 (non-wetting).
+   */
+  private double contactAngleFactor = 0.5;
 
   // ============================================================================
   // Process Conditions (Inputs)
@@ -287,6 +308,170 @@ public class ClassicalNucleationTheory {
   }
 
   // ============================================================================
+  // EOS-Coupled Factory Method
+  // ============================================================================
+
+  /**
+   * Creates a CNT model from a NeqSim thermodynamic system for a specified condensable component.
+   *
+   * <p>
+   * This factory method extracts physical properties from the EOS-based thermo system:
+   * </p>
+   * <ul>
+   * <li>Temperature from the system temperature</li>
+   * <li>Surface tension from interphase properties (if two phases exist)</li>
+   * <li>Gas-phase transport properties (viscosity, diffusivity) from the gas phase</li>
+   * <li>Total pressure for mean free path estimation</li>
+   * <li>Supersaturation is estimated from the fugacity ratio if two phases are present</li>
+   * </ul>
+   *
+   * <p>
+   * The system should have been flashed (TPflash + initProperties) before calling this method.
+   * </p>
+   *
+   * @param system the NeqSim thermodynamic system (should be flashed and initialized)
+   * @param componentName the name of the condensable component (e.g., "n-heptane", "water")
+   * @return ClassicalNucleationTheory model populated from the EOS, or null if the component is not
+   *         found
+   */
+  public static ClassicalNucleationTheory fromThermoSystem(SystemInterface system,
+      String componentName) {
+    // Find the component index
+    int compIndex = -1;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      if (system.getPhase(0).getComponent(i).getComponentName().equalsIgnoreCase(componentName)) {
+        compIndex = i;
+        break;
+      }
+    }
+    if (compIndex < 0) {
+      return null;
+    }
+
+    // Get component properties
+    double mw = system.getPhase(0).getComponent(compIndex).getMolarMass(); // kg/mol
+    double tc = system.getPhase(0).getComponent(compIndex).getTC(); // K
+    double pc = system.getPhase(0).getComponent(compIndex).getPC() * 1e5; // Pa
+
+    // Estimate condensed phase density from critical properties (Rackett equation approximation)
+    double density = estimateCondensedDensity(mw, tc, pc, system.getTemperature());
+
+    // Estimate surface tension from Macleod-Sugden if two phases exist,
+    // otherwise use Eotvos approximation
+    double sigma;
+    if (system.getNumberOfPhases() >= 2) {
+      try {
+        sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
+      } catch (Exception e) {
+        sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
+      }
+    } else {
+      sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
+    }
+
+    // Create CNT model
+    ClassicalNucleationTheory cnt = new ClassicalNucleationTheory(mw, density, sigma);
+    cnt.substanceName = componentName + " (from EOS)";
+    cnt.setTemperature(system.getTemperature());
+    cnt.setTotalPressure(system.getPressure() * 1e5); // bara to Pa
+
+    // Set gas-phase transport properties if available
+    if (system.getNumberOfPhases() >= 1 && system.hasPhaseType("gas")) {
+      try {
+        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+        double gasVisc = system.getPhase(gasPhaseIndex).getViscosity("kg/msec");
+        if (gasVisc > 0.0) {
+          cnt.setGasViscosity(gasVisc);
+        }
+      } catch (Exception e) {
+        // Use default viscosity
+      }
+    }
+
+    // Estimate supersaturation from fugacity ratio if two phases present
+    if (system.getNumberOfPhases() >= 2) {
+      try {
+        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+        int liquidPhaseIndex = system.getPhaseNumberOfPhase("oil");
+        if (liquidPhaseIndex < 0) {
+          liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
+        }
+
+        if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0) {
+          // Fugacity = x_i * P * phi_i
+          double xGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getx();
+          double phiGas =
+              system.getPhase(gasPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
+          double xLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getx();
+          double phiLiq =
+              system.getPhase(liquidPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
+          double pressure = system.getPressure() * 1e5; // bara to Pa
+          double fugGas = xGas * pressure * phiGas;
+          double fugLiq = xLiq * pressure * phiLiq;
+          if (fugLiq > 0.0 && fugGas > 0.0) {
+            double s = fugGas / fugLiq;
+            if (s > 1.0) {
+              cnt.setSupersaturationRatio(s);
+            }
+          }
+        }
+      } catch (Exception e) {
+        // Supersaturation remains at default
+      }
+    }
+
+    // Set carrier gas molar mass (approximate from overall gas composition)
+    if (system.hasPhaseType("gas")) {
+      try {
+        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+        double gasMw = system.getPhase(gasPhaseIndex).getMolarMass();
+        if (gasMw > 0.0) {
+          cnt.setCarrierGasMolarMass(gasMw);
+        }
+      } catch (Exception e) {
+        // Use default
+      }
+    }
+
+    return cnt;
+  }
+
+  /**
+   * Estimates condensed phase density from critical properties using a simplified Rackett equation.
+   *
+   * @param mw molecular weight in kg/mol
+   * @param tc critical temperature in K
+   * @param pc critical pressure in Pa
+   * @param temperature actual temperature in K
+   * @return estimated liquid density in kg/m3
+   */
+  private static double estimateCondensedDensity(double mw, double tc, double pc,
+      double temperature) {
+    // Simplified: rho_L ~ pc * mw / (R * tc) * (1 + 0.85*(1 - T/Tc))
+    double rhoC = pc * mw / (R_GAS * tc);
+    double tr = Math.min(temperature / tc, 0.99);
+    return rhoC * (1.0 + 0.85 * (1.0 - tr));
+  }
+
+  /**
+   * Estimates surface tension from critical properties using the Eotvos correlation.
+   *
+   * @param tc critical temperature in K
+   * @param pc critical pressure in Pa
+   * @param temperature actual temperature in K
+   * @return estimated surface tension in N/m
+   */
+  private static double estimateSurfaceTension(double tc, double pc, double temperature) {
+    // Eotvos: sigma = k_E * (Tc - T - 6) / V_m^(2/3)
+    // Simplified Brock-Bird: sigma = 0.1207 * (1 + T_br/T_c * ln(P_c/1.01325e5) / (1 -
+    // T_br/T_c))^(2/3) * (1 - T/Tc)^(11/9)
+    // Use simplified Macleod-Sugden approximation
+    double tr = Math.min(temperature / tc, 0.99);
+    double sigma = 0.072 * Math.pow(1.0 - tr, 1.222); // Simplified correlation
+    return Math.max(sigma, 1.0e-4); // Minimum bound
+  }
+
+  // ============================================================================
   // Setters for Process Conditions
   // ============================================================================
 
@@ -421,6 +606,90 @@ public class ClassicalNucleationTheory {
     this.substanceName = name;
   }
 
+  /**
+   * Sets whether to use heterogeneous nucleation. When true, the free energy barrier is multiplied
+   * by the contact angle factor f(theta), which reduces the barrier and increases the nucleation
+   * rate. This models nucleation on surfaces such as pipe walls, particulate impurities, or
+   * pre-existing droplets.
+   *
+   * @param isHeterogeneous true to enable heterogeneous nucleation
+   */
+  public void setHeterogeneous(boolean isHeterogeneous) {
+    this.heterogeneous = isHeterogeneous;
+    this.calculated = false;
+  }
+
+  /**
+   * Returns whether heterogeneous nucleation is enabled.
+   *
+   * @return true if heterogeneous nucleation is enabled
+   */
+  public boolean isHeterogeneous() {
+    return heterogeneous;
+  }
+
+  /**
+   * Sets the contact angle for heterogeneous nucleation. The contact angle determines how much the
+   * free energy barrier is reduced relative to homogeneous nucleation.
+   *
+   * <p>
+   * Also automatically enables heterogeneous mode if not already set.
+   * </p>
+   *
+   * @param angleDegrees contact angle in degrees (0 to 180). 0 = complete wetting (no barrier), 90
+   *        = partial wetting (half barrier), 180 = non-wetting (same as homogeneous).
+   */
+  public void setContactAngle(double angleDegrees) {
+    this.contactAngleDegrees = Math.max(0.0, Math.min(180.0, angleDegrees));
+    this.contactAngleFactor = heterogeneousContactAngleFactor(this.contactAngleDegrees);
+    this.calculated = false;
+  }
+
+  /**
+   * Returns the contact angle in degrees.
+   *
+   * @return contact angle in degrees
+   */
+  public double getContactAngle() {
+    return contactAngleDegrees;
+  }
+
+  /**
+   * Returns the contact angle factor f(theta). This multiplies the homogeneous barrier to give the
+   * heterogeneous barrier.
+   *
+   * @return contact angle factor (0 to 1)
+   */
+  public double getContactAngleFactor() {
+    return contactAngleFactor;
+  }
+
+  /**
+   * Computes the Fletcher shape factor for heterogeneous nucleation.
+   *
+   * <p>
+   * f(theta) = (2 - 3*cos(theta) + cos^3(theta)) / 4
+   * </p>
+   *
+   * <p>
+   * This factor reduces the nucleation barrier when a substrate surface is present. Physical
+   * meaning:
+   * </p>
+   * <ul>
+   * <li>f(0) = 0: complete wetting, no barrier, barrierless nucleation</li>
+   * <li>f(90) = 0.5: partial wetting, half the homogeneous barrier</li>
+   * <li>f(180) = 1.0: non-wetting, same as homogeneous nucleation</li>
+   * </ul>
+   *
+   * @param angleDegrees contact angle in degrees (0 to 180)
+   * @return shape factor f(theta) in range [0, 1]
+   */
+  public static double heterogeneousContactAngleFactor(double angleDegrees) {
+    double thetaRad = Math.toRadians(angleDegrees);
+    double cosTheta = Math.cos(thetaRad);
+    return (2.0 - 3.0 * cosTheta + cosTheta * cosTheta * cosTheta) / 4.0;
+  }
+
   // ============================================================================
   // Main Calculation
   // ============================================================================
@@ -468,8 +737,16 @@ public class ClassicalNucleationTheory {
 
     // 4. Free energy barrier
     // DeltaG* = (16*pi/3) * gamma^3 * v_m^2 / (kT * ln(S))^2
-    freeEnergyBarrier = (16.0 * Math.PI / 3.0) * Math.pow(surfaceTension, 3)
+    double homogeneousBarrier = (16.0 * Math.PI / 3.0) * Math.pow(surfaceTension, 3)
         * Math.pow(molecularVolume, 2) / Math.pow(kT * lnS, 2);
+
+    // Apply heterogeneous nucleation correction if enabled
+    // DeltaG*_het = f(theta) * DeltaG*_hom
+    if (heterogeneous) {
+      freeEnergyBarrier = contactAngleFactor * homogeneousBarrier;
+    } else {
+      freeEnergyBarrier = homogeneousBarrier;
+    }
 
     dimensionlessFreeEnergyBarrier = freeEnergyBarrier / kT;
 
@@ -817,6 +1094,15 @@ public class ClassicalNucleationTheory {
   // ============================================================================
 
   /**
+   * Returns the condensed phase density.
+   *
+   * @return condensed phase density in kg/m3
+   */
+  public double getCondensedPhaseDensity() {
+    return condensedPhaseDensity;
+  }
+
+  /**
    * Returns the critical nucleus radius.
    *
    * @return critical radius in m
@@ -992,6 +1278,11 @@ public class ClassicalNucleationTheory {
     result.put("processConditions", conditions);
 
     Map<String, Object> nucleation = new LinkedHashMap<String, Object>();
+    nucleation.put("heterogeneous", heterogeneous);
+    if (heterogeneous) {
+      nucleation.put("contactAngle_degrees", contactAngleDegrees);
+      nucleation.put("contactAngleFactor_fTheta", contactAngleFactor);
+    }
     nucleation.put("criticalRadius_m", criticalRadius);
     nucleation.put("criticalRadius_nm", criticalRadius * 1e9);
     nucleation.put("criticalNucleusMolecules", criticalNucleusMolecules);

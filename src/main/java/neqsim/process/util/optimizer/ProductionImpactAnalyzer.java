@@ -406,6 +406,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Optimizes operation with failed equipment.
+   *
+   * @param failedProcess the process system with the failed equipment
+   * @param failedEquipment the name of the failed equipment
+   * @param result the production impact result to update with optimized values
    */
   private void optimizeDegradedOperation(ProcessSystem failedProcess, String failedEquipment,
       ProductionImpactResult result) {
@@ -461,6 +465,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Gets the production rate from a process system.
+   *
+   * @param process the process system to get production rate from
+   * @return the production rate in kg/hr, or 0.0 if unavailable
    */
   private double getProductionRate(ProcessSystem process) {
     if (productStreamName == null) {
@@ -490,6 +497,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Gets the total power consumption from a process system.
+   *
+   * @param process the process system to get total power from
+   * @return the total power consumption in kW
    */
   private double getTotalPower(ProcessSystem process) {
     double totalPower = 0.0;

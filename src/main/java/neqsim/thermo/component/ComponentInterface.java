@@ -1485,6 +1485,15 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * Set the dipole moment of the component.
+   * </p>
+   *
+   * @param debyeDipoleMoment dipole moment in Debye
+   */
+  public void setDebyeDipoleMoment(double debyeDipoleMoment);
+
+  /**
+   * <p>
    * getViscosityCorrectionFactor.
    * </p>
    *

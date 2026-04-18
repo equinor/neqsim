@@ -91,6 +91,12 @@ public class EquipmentCapacityStrategyRegistry {
     register(new SplitterCapacityStrategy());
     register(new TankCapacityStrategy());
     register(new DistillationColumnCapacityStrategy());
+    register(new ReactorCapacityStrategy());
+    register(new PowerGenerationCapacityStrategy());
+    register(new SubseaEquipmentCapacityStrategy());
+    register(new FilterAdsorberCapacityStrategy());
+    register(new ElectrolyzerCapacityStrategy());
+    register(new WellFlowCapacityStrategy());
   }
 
   /**

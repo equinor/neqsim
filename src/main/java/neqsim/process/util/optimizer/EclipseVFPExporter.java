@@ -221,6 +221,9 @@ public class EclipseVFPExporter implements Serializable {
    *   1  1  1  1  BHP1  BHP2  ... /
    *   2  1  1  1  BHP1  BHP2  ... /
    * </pre>
+   *
+   * @param out the appendable to write VFPPROD content to
+   * @throws IOException if an I/O error occurs during writing
    */
   private void writeVFPPRODContent(Appendable out) throws IOException {
     // Header comments

@@ -148,7 +148,20 @@ public class ProcessOptimizationEngine implements Serializable {
      * (1-D) simplification, not a full matrix BFGS.
      * </p>
      */
-    BFGS
+    BFGS,
+    /**
+     * Sequential Quadratic Programming for constrained multi-variable optimization.
+     *
+     * <p>
+     * Full matrix BFGS with active-set QP sub-problems and L1 merit function line search. Handles
+     * equality constraints, inequality constraints, and variable bounds natively. Suitable for
+     * multi-variable process optimization with nonlinear constraints (e.g., equipment limits,
+     * material balance).
+     * </p>
+     *
+     * @see SQPoptimizer
+     */
+    SEQUENTIAL_QUADRATIC_PROGRAMMING
   }
 
   /**
@@ -470,6 +483,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Evaluates a single lift curve point.
+   *
+   * @param pressure the inlet pressure in bara
+   * @param temperature the temperature in Kelvin
+   * @param waterCut the water cut fraction (0-1)
+   * @param gor the gas-oil ratio
+   * @return the evaluated lift curve point, or null if evaluation fails
    */
   private LiftCurvePoint evaluateLiftCurvePoint(double pressure, double temperature,
       double waterCut, double gor) {
@@ -497,6 +516,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Golden section search for maximum flow.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param minFlow the minimum flow rate to search
+   * @param maxFlow the maximum flow rate to search
+   * @return the maximum achievable flow rate found by golden section search
    */
   private double goldenSectionSearch(double inletPressure, double outletPressure, double minFlow,
       double maxFlow) {
@@ -556,6 +581,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Binary search for required inlet pressure.
+   *
+   * @param targetFlow the target flow rate to achieve
+   * @param outletPressure the outlet pressure in bara
+   * @param minPressure the minimum pressure to search in bara
+   * @param maxPressure the maximum pressure to search in bara
+   * @return the minimum inlet pressure required to achieve the target flow
    */
   private double pressureBinarySearch(double targetFlow, double outletPressure, double minPressure,
       double maxPressure) {
@@ -577,6 +608,11 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Evaluates the flow objective function.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param flow the flow rate to evaluate
+   * @return the flow value if feasible, or negative max value if infeasible
    */
   private double evaluateFlowObjective(double inletPressure, double outletPressure, double flow) {
     if (!canAchieveFlow(inletPressure, outletPressure, flow)) {
@@ -587,6 +623,11 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Checks if a flow rate can be achieved.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param flow the flow rate to check
+   * @return true if the flow rate can be achieved at the given pressures
    */
   private boolean canAchieveFlow(double inletPressure, double outletPressure, double flow) {
     if (!hasProcess()) {

@@ -9,79 +9,373 @@
 
 ---
 
+## 2026-04-17 — Diffusion Coefficient Model Fixes and Validation
+
+### Summary
+
+Major bug fixes and accuracy improvements to all diffusion coefficient models
+(gas and liquid). Added 6 new model names to `setDiffusionCoefficientModel()`.
+All models validated against published experimental data (Marrero & Mason 1972,
+Poling 2001). Full docs at `docs/physical_properties/diffusivity_models.md`.
+
+### Bug Fixes
+
+| Bug | File(s) | Impact |
+|-----|---------|--------|
+| Fuller constant 10x too large (`1.013e-2` → `1.013e-3`) | `FullerSchettlerGiddingsDiffusivity` | Gas D values were 10x too high |
+| Critical volume unit conversion (`Vc * 1e3` removed) | `FullerSchettlerGiddingsDiffusivity`, `SiddiqiLucasMethod`, `WilkeChangDiffusivity`, `TynCalusDiffusivity`, `HaydukMinhasDiffusivity` | Fallback molar volumes were 1000x too large |
+| HaydukMinhas volume formula inverted (`Vc * 1e6 / 0.285` → `0.285 * Vc^1.048`) | `HaydukMinhasDiffusivity` | Completely wrong liquid D values |
+| Gas LJ parameters from DB unsuitable for diffusion | `Diffusivity` (gas base class) | Chapman-Enskog/Wilke-Lee gave ~60% error |
+
+### New Features
+
+- **Diffusion-specific LJ parameter table** — ~35 common components from Poling (2001)
+  and Bird, Stewart, Lightfoot (2002). Automatically overrides DB LJ parameters for
+  gas diffusion calculations in Chapman-Enskog and Wilke-Lee models.
+- **`"Chapman-Enskog"` model name** — Added to `setDiffusionCoefficientModel()` for
+  explicit selection of the base Chapman-Enskog gas diffusion model.
+
+### New/Updated Model Names for `setDiffusionCoefficientModel()`
+
+| Model String | Phase | Class | Status |
+|---|---|---|---|
+| `"Chapman-Enskog"` | Gas | `Diffusivity` | **NEW** |
+| `"Wilke Lee"` | Gas | `WilkeLeeDiffusivity` | Existing (fixed) |
+| `"Fuller-Schettler-Giddings"` | Gas | `FullerSchettlerGiddingsDiffusivity` | Existing (fixed) |
+| `"Siddiqi Lucas"` | Liquid | `SiddiqiLucasMethod` | Existing (fixed) |
+| `"Wilke-Chang"` | Liquid | `WilkeChangDiffusivity` | Existing (fixed) |
+| `"Tyn-Calus"` | Liquid | `TynCalusDiffusivity` | Existing (fixed) |
+| `"Hayduk-Minhas"` | Liquid | `HaydukMinhasDiffusivity` | Existing (fixed) |
+| `"CSP"` | Gas/Liquid | `CorrespondingStatesDiffusivity` | Unchanged |
+| `"High Pressure"` | Liquid | `HighPressureDiffusivity` | Unchanged |
+| `"Alkanol amine"` | Aqueous | `AmineDiffusivity` | Unchanged |
+
+### Validation Results (298 K, 1 atm)
+
+Gas models (vs Marrero & Mason 1972, Poling 2001):
+- CH₄-N₂: Chapman-Enskog 0.7%, Fuller 2.0%, Wilke-Lee 5.0%
+- CO₂-N₂: Chapman-Enskog 7.4%, Fuller 2.7%, Wilke-Lee 0.3%
+
+Liquid models (CO₂ in water vs Poling 2001):
+- Wilke-Chang 10%, Hayduk-Minhas 15%, Siddiqi-Lucas 31%
+
+### Test Classes
+
+- `DiffusivityExperimentalValidationTest` — 13 tests validating all models against experimental data
+- `AllDiffusivityModelsTest` — 17 tests (existing, all pass)
+- `DiffusivityModelsTest` — 15 tests (existing, all pass)
+
+### Affected Skills
+
+- `neqsim-api-patterns` — Update diffusivity model examples
+- `neqsim-flow-assurance` — May reference diffusion models for corrosion/mass transfer
+
+---
+
+## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
+## 2026-04-17 — Process Optimization Enhancements: Rate-Based Absorber, SQP Optimizer, Flow Correlations, Multi-Variable Adjuster
+
+### Summary
+
+Five new classes and one enum addition for improved process simulation fidelity
+and optimization capability. These close key gaps identified in a reservoir-to-market
+process optimization review comparing NeqSim to commercial simulators.
+
+### New Classes
+
+#### 1. RateBasedAbsorber (`neqsim.process.equipment.absorber`)
+
+Rate-based (non-equilibrium) absorption column with rigorous mass transfer
+calculations. Two mass transfer correlations and three enhancement factor models.
+
+| Method | Description |
+|--------|-------------|
+| `setMassTransferModel(MassTransferModel)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
+| `setEnhancementModel(EnhancementModel)` | `NONE`, `HATTA_PSEUDO_FIRST_ORDER`, `VAN_KREVELEN_HOFTIJZER` |
+| `setColumnDiameter(double)` | Column diameter in metres |
+| `setPackedHeight(double)` | Packed height in metres |
+| `setPackingSpecificArea(double)` | Packing specific area (m2/m3) |
+| `setPackingVoidFraction(double)` | Packing void fraction |
+| `setPackingNominalSize(double)` | Packing nominal size (m) |
+| `setPackingCriticalSurfaceTension(double)` | Packing critical surface tension (N/m) |
+| `setReactionRateConstant(double)` | Pseudo-first-order reaction rate constant (1/s) |
+| `setStoichiometricRatio(double)` | Stoichiometric ratio for VKH model |
+| `setBilletSchultesConstants(double, double)` | Cl and Cv for Billet-Schultes |
+| `getOverallKGa()` / `getOverallKLa()` | Overall mass transfer coefficients |
+| `getWettedArea()` | Wetted area from correlation |
+| `getHeightOfTransferUnit()` / `getNumberOfTransferUnits()` | HTU/NTU |
+| `getStageResults()` | List of `StageResult` with per-stage detail |
+
+**Extends:** `SimpleAbsorber`
+**Test:** `RateBasedAbsorberTest` (6 tests)
+
+#### 2. SQPoptimizer (`neqsim.process.util.optimizer`)
+
+Full Sequential Quadratic Programming NLP solver with damped BFGS Hessian
+update, active-set QP sub-problem, L1 exact penalty merit function, and
+Armijo backtracking line search.
+
+| Method | Description |
+|--------|-------------|
+| `setObjectiveFunction(ObjectiveFunc)` | Set objective f(x) |
+| `addEqualityConstraint(ConstraintFunc)` | Add c(x) = 0 constraint |
+| `addInequalityConstraint(ConstraintFunc)` | Add h(x) >= 0 constraint |
+| `setVariableBounds(double[], double[])` | Lower/upper bounds on variables |
+| `solve(double[])` | Solve from initial point; returns `OptimizationResult` |
+| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls |
+| `setFiniteDifferenceStep(double)` | Step for central-difference gradients |
+
+**Inner interfaces:** `ObjectiveFunc`, `ConstraintFunc`
+**Inner class:** `OptimizationResult` — `isConverged()`, `getOptimalPoint()`, `getOptimalValue()`, `getIterations()`, `getKktError()`
+**Enum added:** `ProcessOptimizationEngine.SearchAlgorithm.SEQUENTIAL_QUADRATIC_PROGRAMMING`
+**Test:** `SQPoptimizerTest` (5 tests)
+
+#### 3. PipeHagedornBrown (`neqsim.process.equipment.pipeline`)
+
+Hagedorn-Brown (1965) empirical holdup correlation for vertical/near-vertical
+multiphase pipe flow. Best suited for oil production wells.
+
+| Method | Description |
+|--------|-------------|
+| `setLength(double)` / `setDiameter(double)` / `setAngle(double)` | Geometry |
+| `setNumberOfIncrements(int)` | Discretization segments |
+| `setWallRoughness(double)` | Absolute roughness (m) |
+| `getOutletSuperficialVelocity()` | Gas superficial velocity at outlet |
+| `getLiquidHoldupProfile()` | `double[]` holdup along pipe |
+| `getFlowPatternDescription()` | Descriptive string |
+| `getPressureProfile()` / `getTemperatureProfile()` | `double[]` profiles |
+
+**Extends:** `Pipeline`
+**Test:** `PipeHagedornBrownTest` (3 tests)
+
+#### 4. PipeMukherjeeAndBrill (`neqsim.process.equipment.pipeline`)
+
+Mukherjee-Brill (1985) all-inclination holdup and friction correlation. Handles
+horizontal, uphill, and downhill flows with flow pattern detection.
+
+| Method | Description |
+|--------|-------------|
+| `getFlowPattern()` | Returns outlet flow pattern as String: STRATIFIED, SLUG, ANNULAR, BUBBLE, SINGLE_PHASE |
+| `getFlowPatternEnum()` | Returns `FlowPattern` enum |
+| `getLiquidHoldup()` | Scalar outlet liquid holdup |
+| `getFlowPatternProfile()` | `List<String>` pattern at each increment |
+| Same geometry methods as PipeHagedornBrown | — |
+
+**Extends:** `Pipeline`
+**Test:** `PipeMukherjeeAndBrillTest` (5 tests)
+
+#### 5. MultiVariableAdjuster (`neqsim.process.equipment.util`)
+
+Simultaneous multi-variable adjuster using damped successive substitution.
+Solves N equations in N unknowns (target specifications) by adjusting N
+process variables simultaneously.
+
+| Method | Description |
+|--------|-------------|
+| `addAdjustedVariable(ProcessEquipmentInterface, String, String)` | Variable to manipulate |
+| `addTargetSpecification(ProcessEquipmentInterface, String, double, String)` | Target to satisfy |
+| `setVariableBounds(int, double, double)` | Bounds on adjusted variable |
+| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls |
+| `isConverged()` / `getIterations()` / `getMaxResidual()` | Solution status |
+| `getNumberOfVariables()` | Number of adjusted variables |
+
+**Test:** `MultiVariableAdjusterTest` (4 tests)
+
+### Agents/Skills Affected
+
+- `neqsim-api-patterns` skill — add rate-based absorber, SQP optimizer, flow correlation, multi-variable adjuster patterns
+- `neqsim-capability-map` skill — update mass transfer, optimization, and multiphase flow sections
+- `@solve.process` agent — can now use RateBasedAbsorber and MultiVariableAdjuster
+- `@mechanical.design` agent — PipeHagedornBrown/PipeMukherjeeAndBrill for well tubing design
+
+---
+
+## 2026-04-17 — Universal Capacity Constraints for All Equipment
+
+### Summary
+
+Capacity constraint methods are now available on ALL 144+ equipment types via
+`ProcessEquipmentBaseClass`. Previously, only ~60 equipment classes implementing
+`CapacityConstrainedEquipment` could participate in bottleneck analysis and
+optimization. Now any equipment can have constraints added at runtime.
+
+Six new capacity strategies were added (18 total built-in), covering reactors,
+power generation, subsea equipment, filters/adsorbers, electrolyzers, and wells.
+
+### New API on ProcessEquipmentBaseClass
+
+All equipment now inherits these methods (no need to cast or check interface):
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `addCapacityConstraint(CapacityConstraint)` | `void` | Add a constraint to any equipment |
+| `getCapacityConstraints()` | `Map<String, CapacityConstraint>` | Get all constraints (unmodifiable) |
+| `getBottleneckConstraint()` | `CapacityConstraint` | Most limiting enabled constraint |
+| `isCapacityExceeded()` | `boolean` | Any enabled constraint violated |
+| `isHardLimitExceeded()` | `boolean` | Any HARD constraint exceeded |
+| `getMaxUtilization()` | `double` | Highest utilization ratio (fraction) |
+| `getMaxUtilizationPercent()` | `double` | Highest utilization as percentage |
+| `getAvailableMargin()` | `double` | Headroom on bottleneck (fraction) |
+| `getAvailableMarginPercent()` | `double` | Headroom as percentage |
+| `isNearCapacityLimit()` | `boolean` | Any constraint above warning threshold |
+| `getUtilizationSummary()` | `Map<String, Double>` | All constraint utilizations |
+| `getConstraintEvaluationReport()` | `String` | Multi-line diagnostic report |
+
+### Updated ProcessSystem Methods
+
+These methods now iterate over ALL equipment (not just `CapacityConstrainedEquipment`):
+
+- `findBottleneck()` — returns `BottleneckResult` for the most-utilized equipment
+- `isAnyEquipmentOverloaded()` — checks all equipment for capacity exceedance
+- `isAnyHardLimitExceeded()` — checks all equipment for HARD limit violations
+- `getCapacityUtilizationSummary()` — map of all equipment utilizations
+- `getEquipmentNearCapacityLimit()` — list of equipment near their limits
+
+### New Capacity Strategy Classes (6 new, 18 total)
+
+| Class | Equipment Types |
+|-------|----------------|
+| `ReactorCapacityStrategy` | GibbsReactor, PlugFlowReactor, StirredTankReactor |
+| `PowerGenerationCapacityStrategy` | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem |
+| `SubseaEquipmentCapacityStrategy` | SubseaWell, SubseaTree |
+| `FilterAdsorberCapacityStrategy` | Filter, SulfurFilter, CharCoalFilter, SimpleAdsorber |
+| `ElectrolyzerCapacityStrategy` | Electrolyzer, CO2Electrolyzer |
+| `WellFlowCapacityStrategy` | WellFlow |
+
+### Migration Notes
+
+- **No breaking changes** — existing code using `CapacityConstrainedEquipment` still works
+- For new code, prefer using `ProcessEquipmentInterface` methods directly
+- `ProcessEquipmentBaseClass.initializeDefaultConstraints()` is a protected hook
+  for subclasses to set up default constraints (called lazily)
+- Constraint map is `transient` (not serialized) — reconstructed on first access
+
+### Affected Skills
+
+- `neqsim-api-patterns` — add universal constraint patterns
+- `neqsim-capability-map` — update optimization capabilities
+
+---
+
 ## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
 
 ### Summary
 
-Major dynamic simulation feature set: 21 features across controller logic,
-instrumentation realism, equipment dynamics, and numerical infrastructure.
-59 JUnit tests. Full docs at `docs/process/dynamic-simulation-enhancements.md`.
+Comprehensive audit and fix of 29 bugs across the `fluidmechanics` package where
+methods that accept a `phase` or `phaseNum` parameter internally used phase-0 defaults
+for Reynolds number, velocity, or friction factor calculations. This caused all
+liquid-phase (phase 1) transport coefficients to be computed with gas-phase values.
 
-### New Classes
+### What Changed
 
-| Class | Package | Purpose |
-|-------|---------|---------|
-| `SequentialFunctionChart` | `process.controllerdevice` | IEC 61131-3 SFC — startup/shutdown sequences, ESD logic, timed transitions |
-| `OverrideControllerStructure` | `process.controllerdevice.structure` | HIGH_SELECT / LOW_SELECT override control |
-| `SplitRangeControllerStructure` | `process.controllerdevice.structure` | Single controller driving multiple final elements with configurable sub-ranges |
-| `SensorFaultType` | `process.measurementdevice` | Enum: NONE, STUCK_AT_VALUE, LINEAR_DRIFT, BIAS, NOISE_BURST, SATURATION |
+**Round 1 (13 bugs):** Critical fixes in core solver and flow nodes:
+- `NonEquilibriumFluidBoundary`: Prandtl number missing `/getMolarMass()`, heat transfer solver step clamping
+- `ReactiveKrishnaStandartFilmModel`: Per-component enhancement factor scaling
+- `KrishnaStandartFilmModel`: 3 NaN guards (Schmidt, phi matrix, mass transfer inverse)
+- `TwoPhaseFixedStaggeredGridSolver`: `initFinalResults` phase param, sign error, zero guards, velocity/enthalpy phase fixes
+- `InterphaseStratifiedFlow`: Liquid mass transfer floor, friction uses `phase` param, heat/mass transfer use `getReynoldsNumber(phaseNum)`
+- `TwoPhaseFlowNode`: Hydraulic diameter guards, convergence fix, Reynolds viscosity guard, `interphaseFrictionFactor[1]` uses phase 1
 
-### New API on Existing Classes
+**Round 2 (6 bugs):**
+- `TwoPhaseFixedStaggeredGridSolver`: Component conservation uses `getVelocity(phaseNum)`
+- `TwoPhaseFixedStaggeredGridSolver`: Latent heat enthalpy zero-moles guard (2 locations)
+- `InterphaseDropletFlow`: Friction factor uses `phase` parameter
+- `InterphaseSlugFlow`: Friction factor uses `phase` parameter
+- `InterphaseStratifiedFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
 
-**ControllerDeviceInterface / ControllerDeviceBaseClass:**
-- `ControllerMode` enum: `AUTO`, `MANUAL`, `CASCADE`
-- `getMode()` / `setMode(ControllerMode)` — with bumpless transfer on MANUAL→AUTO
-- `getManualOutput()` / `setManualOutput(double)` — direct output in MANUAL mode
-- `setSetpointWeight(double b)` / `getSetpointWeight()` — 2-DOF PID (0.0–1.0)
+**Round 3 (10 bugs):**
+- `InterphaseTransportCoefficientBaseClass`: Base class `calcInterPhaseFrictionFactor` now uses `calcWallFrictionFactor(phase, node)` instead of hardcoded 0
+- `MultiPhaseFlowNode`: `interphaseFrictionFactor[1]` uses phase 1 (same as TwoPhaseFlowNode fix)
+- `InterphaseDropletFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
+- `InterphaseSlugFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
+- `InterphasePipeFlow` (one-phase): All 3 methods use `getReynoldsNumber(phase)` consistently; turbulent branches use `getVelocity(phaseNum)`
+- `InterphaseStirredCellFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
 
-**MeasurementDeviceBaseClass:**
-- `setFirstOrderTimeConstant(double)` / `getFirstOrderTimeConstant()` — transmitter filter (0 = disabled)
-- `setFault(SensorFaultType, double)` / `clearFault()` — sensor fault injection
-- `shelveAlarm(String reason)` / `shelveAlarm(String, double expiry)` — alarm shelving
-- `unshelveAlarm()` / `isAlarmShelved()` — alarm unshelve and query
+### Files Changed
 
-**AlarmState:**
-- `shelve(String reason)` / `shelve(String, double)` — timed alarm shelving
-- `unshelve()` / `isShelved()` / `getShelveReason()` / `getShelveExpiry()`
+| File | Change |
+|------|--------|
+| `NonEquilibriumFluidBoundary.java` | Prandtl fix, step clamping, df==0 guard |
+| `ReactiveKrishnaStandartFilmModel.java` | Enhancement factor diagonal scaling |
+| `KrishnaStandartFilmModel.java` | 3 NaN guards |
+| `TwoPhaseFixedStaggeredGridSolver.java` | Phase params, sign fix, zero guards |
+| `InterphaseStratifiedFlow.java` | Phase params for Re, friction, mass transfer |
+| `TwoPhaseFlowNode.java` | Hydraulic diameter, convergence, friction[1] |
+| `InterphaseDropletFlow.java` | Phase params for friction and Re |
+| `InterphaseSlugFlow.java` | Phase params for friction, heat, mass transfer |
+| `InterphaseTransportCoefficientBaseClass.java` | Base class friction uses phase param |
+| `MultiPhaseFlowNode.java` | `interphaseFrictionFactor[1]` phase fix |
+| `InterphasePipeFlow.java` | Consistent Re and velocity phase usage |
+| `InterphaseStirredCellFlow.java` | Phase params for heat and mass transfer |
 
-**ThrottlingValve:**
-- `setValveDeadband(double)` / `getValveDeadband()` — valve deadband (%)
-- `setValveStiction(double)` / `getValveStiction()` — valve stiction (%)
-- `setValveHysteresis(double)` / `getValveHysteresis()` — valve hysteresis (%)
+### Impact
 
-**Separator:**
-- `setWeirHeight(double)` / `setWeirLength(double)` — weir-controlled liquid outflow (Francis formula)
-- `setBootVolume(double)` — boot (sump) volume
-- `setMistEliminatorDpCoeff(double)` / `setMistEliminatorThickness(double)` — mist eliminator ΔP
-- `getWeirOverflowRate()` / `getMistEliminatorPressureDrop()` — calculated outputs
+Liquid-phase mass transfer, heat transfer, and friction factor calculations now
+use the correct liquid-phase Reynolds number and velocity. This significantly
+affects non-equilibrium pipeline simulations where condensation occurs — the
+liquid film transport was previously computed with gas-phase properties.
 
-**HeatExchanger:**
-- `setDynamicModelEnabled(boolean)` — enable wall + fluid thermal ODE
-- `setWallMass(double)` / `setWallCp(double)` — wall thermal properties
-- `setHeatTransferArea(double)` — heat transfer area (m²)
-- `setShellSideHtc(double)` / `setTubeSideHtc(double)` — side-specific HTCs
-- `setShellHoldupVolume(double)` / `setTubeHoldupVolume(double)` — CSTR fluid holdup
-- `getWallTemperature()` — tracked wall temperature (K)
+### Migration
 
-**DistillationColumn:**
-- `setDynamicColumnEnabled(boolean)` — per-tray liquid holdup (Francis weir)
-- `setTrayWeirHeight(double)` / `setTrayWeirLength(double)` — weir geometry
-- `setDynamicEnergyEnabled(boolean)` — per-tray enthalpy tracking
-- `setTrayDryPressureDrop(double)` — pressure-driven vapor flow
-- `getTrayLiquidHoldup()` / `getTrayEnthalpy()` — per-tray state arrays
+No API changes. All fixes are internal corrections. Results from two-phase
+non-equilibrium simulations will differ from previous versions — this is the
+**correct** behavior. Previous results had incorrect liquid-phase transport.
 
-**ProcessSystem:**
-- `IntegrationMethod` enum: `EXPLICIT_EULER`, `RUNGE_KUTTA_4`
-- `setIntegrationMethod(IntegrationMethod)` / `getIntegrationMethod()`
-- `setAdaptiveTimestepEnabled(boolean)` + `setMinTimestep` / `setMaxTimestep` / `setAdaptiveTimestepTolerance`
-- `runTransientAdaptive(double dt, UUID id)` — returns actual timestep used
-- `setParallelTransientEnabled(boolean)` / `setTransientThreadPoolSize(int)`
+---
 
-### Affected Skills
+## 2026-04-17 — InterphaseDropletFlow: Corrected Mass/Heat Transfer for Dispersed Flow
 
-- `neqsim-dynamic-simulation` — update with new controller modes, SFC, equipment dynamics
-- `neqsim-api-patterns` — add 2-DOF PID, valve nonlinearities, alarm shelving patterns
-- `neqsim-capability-map` — update dynamic simulation capabilities inventory
+### Summary
+
+Fixed and enhanced `InterphaseDropletFlow` — the interphase transport coefficient
+calculator for droplet (mist) and bubble flow regimes. The previous implementation
+erroneously reused stratified flow (Yih-Chen) correlations via copy-paste. The new
+implementation uses physics-appropriate correlations for dispersed particles.
+
+### What Changed
+
+1. **Bug fix:** Mass and heat transfer now use the **particle diameter** (droplet/bubble)
+   as the characteristic length, not the pipe hydraulic diameter. This is the fundamental
+   difference between dispersed and stratified flow transport.
+
+2. **Ranz-Marshall correlation** for continuous phase: `Sh = 2 + 0.6·Re_p^0.5·Sc^0.33`
+   (both mass and heat transfer).
+
+3. **Kronig-Brink model** for dispersed phase interior: `Sh = 17.66` (steady-state limit
+   for internally circulating spheres).
+
+4. **Abramzon-Sirignano (1989) extended film model** — optional correction for
+   evaporating droplets that accounts for Stefan flow (blowing) at the droplet surface.
+   Enabled via `setUseAbramzonSirignano(true)` and `setSpaldingMassTransferNumber(B_M)`.
+
+5. **Particle diameter resolution** from `DropletFlowNode.getAverageDropletDiameter()`
+   and `BubbleFlowNode.getAverageBubbleDiameter()`.
+
+### New/Changed Files
+
+| File | Change |
+|------|--------|
+| `InterphaseDropletFlow.java` | **Rewritten** — Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano |
+| `InterphaseDropletFlowMassTransferTest.java` | **NEW** — 9 tests covering correlations and limits |
+| `condensation_pipeline_equilibrium_vs_nonequilibrium.ipynb` | **NEW** — Example notebook comparing equilibrium vs non-equilibrium pipeline condensation |
+| `docs/fluidmechanics/droplet_flow_correlations.md` | **NEW** — Full documentation of dispersed flow correlations |
+
+### New API Methods on `InterphaseDropletFlow`
+
+| Method | Description |
+|--------|-------------|
+| `setUseAbramzonSirignano(boolean)` | Enable/disable blowing correction |
+| `isUseAbramzonSirignano()` | Query blowing correction state |
+| `setSpaldingMassTransferNumber(double)` | Set B_M for Abramzon-Sirignano |
+| `getSpaldingMassTransferNumber()` | Get current B_M value |
+| `calcAbramzonSirignanoF(double bm)` | Calculate F(B_M) correction function |
+
+### Migration
+
+No breaking API changes. The corrected correlations may produce different mass
+transfer coefficients than before for droplet/bubble flow nodes, but this is a
+**bug fix** — the old values were physically incorrect (using pipe diameter instead
+of particle diameter).
 
 ---
 
