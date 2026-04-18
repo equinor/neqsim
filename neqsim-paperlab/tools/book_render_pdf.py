@@ -313,6 +313,10 @@ def render_book_pdf(book_dir, chapter_filter=None):
         all_fragments = all_fragments + [bib_fragment]
     full_typst = preamble + "\n\n".join(all_fragments)
 
+    # Final postprocessing on the assembled document (catches bibliography
+    # fragments and any cross-fragment issues missed by per-chapter passes).
+    full_typst = postprocess_typst(full_typst)
+
     # Write master file
     master_typ = submission_dir / "book.typ"
     master_typ.write_text(full_typst, encoding="utf-8")

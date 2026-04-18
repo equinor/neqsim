@@ -165,18 +165,32 @@ def postprocess_typst(typ_text):
 
     # Remove BibTeX case-protection braces that survive pandoc conversion.
     # These are bare { } in text that Typst interprets as content blocks.
-    # Matched pairs like {K}, {CO$_2$}, {CPA} -> strip braces, keep content.
-    typ_text = re.sub(r'\{([^{}\n]{1,80})\}', r'\1', typ_text)
-    # Unmatched orphan { in text lines (e.g. from truncated references).
-    # Process line-by-line: remove bare { on lines that are NOT Typst code.
+    # Only target reference-like lines (starting with [number]) to avoid
+    # breaking legitimate Typst syntax.
+    # Also convert LaTeX subscript math ($_{N}$ or $_N$) to Unicode
+    # subscript digits, because Typst math requires a base before `_`.
+    _sub_map = {
+        '0': '\u2080', '1': '\u2081', '2': '\u2082', '3': '\u2083',
+        '4': '\u2084', '5': '\u2085', '6': '\u2086', '7': '\u2087',
+        '8': '\u2088', '9': '\u2089', '+': '\u208A', '-': '\u208B',
+    }
+
+    def _sub_repl(m):
+        return ''.join(_sub_map.get(c, c) for c in m.group(1))
+
     out_lines = []
     in_code = False
     for line in typ_text.split('\n'):
         s = line.lstrip()
         if s.startswith('```'):
             in_code = not in_code
-        if not in_code and not s.startswith('#') and '{' in line:
+        if not in_code and re.match(r'\[\d+\]', s):
+            # Reference line: strip BibTeX braces
             line = line.replace('{', '').replace('}', '')
+            # Convert $_{digits}$ and $_digits$ to Unicode subscripts
+            line = re.sub(r'\$_\{?([0-9+-]+)\}?\$', _sub_repl, line)
+            # Convert $^{digits}$ to Unicode superscripts
+            line = re.sub(r'\$\^\{?([0-9+-]+)\}?\$', _sub_repl, line)
         out_lines.append(line)
     typ_text = '\n'.join(out_lines)
 

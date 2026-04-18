@@ -305,9 +305,9 @@ ops.TPflash()
 fluid.initProperties()
 
 # Read results
-print(f"Number of phases: fluid.getNumberOfPhases()")
-print(f"Gas phase water content: fluid.getPhase('gas').getComponent('water').getx():.6f")
-print(f"Liquid phase methane solubility: fluid.getPhase('aqueous').getComponent('methane').getx():.6f")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
+print(f"Gas phase water content: {fluid.getPhase('gas').getComponent('water').getx():.6f}")
+print(f"Liquid phase methane solubility: {fluid.getPhase('aqueous').getComponent('methane').getx():.6f}")
 ```
 
 This simple example already demonstrates the power of CPA: it correctly predicts the very low mutual solubility of water and methane, which a classical SRK model would overpredict by an order of magnitude.
@@ -589,10 +589,10 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
-    print(f"Phase i: phase.getType(), density = phase.getDensity('kg/m3'):.1f kg/m3")
+    print(f"Phase {i}: {phase.getType()}, density = {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
 == 2.3 The Flash Problem
@@ -657,11 +657,11 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 
 # Bubble point calculation
 ops.bubblePointPressureFlash(False)
-print(f"Bubble point pressure: fluid.getPressure('bara'):.2f bara")
+print(f"Bubble point pressure: {fluid.getPressure('bara'):.2f} bara")
 
 # Dew point calculation
 ops.dewPointTemperatureFlash()
-print(f"Dew point temperature: fluid.getTemperature('C'):.2f C")
+print(f"Dew point temperature: {fluid.getTemperature('C'):.2f} C")
 ```
 
 == 2.4 Excess Properties and the Activity Coefficient Connection
@@ -845,11 +845,11 @@ ops.TPflash()
 fluid.initProperties()
 
 # Now we can read all properties
-print(f"Density: fluid.getDensity('kg/m3'):.2f kg/m3")
-print(f"Enthalpy: fluid.getEnthalpy('J/mol'):.1f J/mol")
-print(f"Entropy: fluid.getEntropy('J/molK'):.3f J/(mol·K)")
-print(f"Cp: fluid.getCp('J/molK'):.2f J/(mol·K)")
-print(f"Speed of sound: fluid.getSoundSpeed():.1f m/s")
+print(f"Density: {fluid.getDensity('kg/m3'):.2f} kg/m3")
+print(f"Enthalpy: {fluid.getEnthalpy('J/mol'):.1f} J/mol")
+print(f"Entropy: {fluid.getEntropy('J/molK'):.3f} J/(mol·K)")
+print(f"Cp: {fluid.getCp('J/molK'):.2f} J/(mol·K)")
+print(f"Speed of sound: {fluid.getSoundSpeed():.1f} m/s")
 ```
 
 == 2.8 Worked Example: The Rachford--Rice Flash Algorithm
@@ -1395,9 +1395,9 @@ Z = fluid.getPhase(0).getZ()
 rho = fluid.getDensity("kg/m3")
 fug = fluid.getPhase(0).getComponent("methane").getFugacityCoefficient()
 
-print(f"Z = Z:.4f")
-print(f"Density = rho:.2f kg/m3")
-print(f"Fugacity coefficient = fug:.4f")
+print(f"Z = {Z:.4f}")
+print(f"Density = {rho:.2f} kg/m3")
+print(f"Fugacity coefficient = {fug:.4f}")
 ```
 
 == Summary
@@ -1509,7 +1509,7 @@ Wertheim modeled the anisotropic attraction by placing discrete #strong[associat
 
 The site--site interaction potential has the form:
 
-$ u_(upright("assoc"))^(A B) \( 1 \, 2 \) = cases(delim: "", - epsilon^(A B) & upright("if ") r_(A B) < r_c^(A B), 0 & upright("otherwise")) $
+$ u_(upright("assoc"))^(A B) \( 1 \, 2 \) = cases(delim: "{", - epsilon^(A B) & upright("if ") r_(A B) < r_c^(A B), 0 & upright("otherwise")) $
 
 where $epsilon^(A B)$ is the association energy (well depth) and $r_c^(A B)$ is the critical bonding distance.
 
@@ -1613,7 +1613,7 @@ Water is the most important associating molecule in process engineering. In the 
 - Sites $e_1$ and $e_2$ represent the two lone electron pairs (electron donors / hydrogen bond acceptors)
 - Sites $H_1$ and $H_2$ represent the two hydrogen atoms (proton donors)
 
-An $H$ site on one water molecule bonds with an $e$ site on another. The allowed bond pairs are $ H_1 arrow.l.r e_1 \, H_1 arrow.l.r e_2 \, H_2 arrow.l.r e_1 \, H_2 arrow.l.r e_2 $, while $H arrow.l.r H$ and $e arrow.l.r e$ bonds are forbidden.
+An $H$ site on one water molecule bonds with an $e$ site on another. The allowed bond pairs are ${ H_1 arrow.l.r e_1 \, H_1 arrow.l.r e_2 \, H_2 arrow.l.r e_1 \, H_2 arrow.l.r e_2 }$, while $H arrow.l.r H$ and $e arrow.l.r e$ bonds are forbidden.
 
 With symmetric sites ($X_(H_1) = X_(H_2) equiv X_H$ and $X_(e_1) = X_(e_2) equiv X_e$), the site balance equations reduce to:
 
@@ -1775,7 +1775,7 @@ for T_C in [25, 50, 100, 150, 200, 250, 300, 350]:
 
     # The density reflects the degree of association
     density = fluid.getDensity("kg/m3")
-    print(f"T = T_C:4d C, rho = density:.1f kg/m3")
+    print(f"T = {T_C:4d} C, rho = {density:.1f} kg/m3")
 ```
 
 == 4.9 Worked Example: Computing Site Fractions for Water
@@ -1929,7 +1929,7 @@ A key structural feature of most association schemes is that several individual 
 
 $ X_(i \, k) = X_(i \, l) equiv tilde(X)_(i \, alpha) quad upright("for all ") k \, l in upright("type ") alpha $
 
-This allows replacing the site balance equations in terms of individual site fractions $ X_(A_i) $ (dimension $n_s = sum_i s_i$) with type-averaged fractions $ tilde(X)_(i \, alpha) $ (dimension $p = sum_i p_i$), where $p_i$ is the number of unique site types on component $i$.
+This allows replacing the site balance equations in terms of individual site fractions ${ X_(A_i) }$ (dimension $n_s = sum_i s_i$) with type-averaged fractions ${ tilde(X)_(i \, alpha) }$ (dimension $p = sum_i p_i$), where $p_i$ is the number of unique site types on component $i$.
 
 === 4.12.2 Dimensionality Reduction for Common Systems
 <dimensionality-reduction-for-common-systems>
@@ -2344,7 +2344,7 @@ for fluid, name in [(fluid_srk, "SRK-CPA"), (fluid_pr, "PR-CPA")]:
     ops.TPflash()
     fluid.initProperties()
     rho = fluid.getDensity("kg/m3")
-    print(f"name: density = rho:.1f kg/m3")
+    print(f"{name}: density = {rho:.1f} kg/m3")
 ```
 
 == 5.7 Derivative Properties from CPA
@@ -2624,7 +2624,7 @@ for ModelClass, name in [
     fluid.initProperties()
 
     rho_liq = fluid.getPhase("aqueous").getDensity("kg/m3")
-    print(f"name: liquid density at 100 C = rho_liq:.1f kg/m3")
+    print(f"{name}: liquid density at 100 C = {rho_liq:.1f} kg/m3")
     # Experimental: 958.4 kg/m3
 ```
 
@@ -3124,7 +3124,7 @@ fluid.setMixingRule(10)
 ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.bubblePointPressureFlash(False)
 
-print(f"Predicted boiling pressure: fluid.getPressure('bara'):.4f bara")
+print(f"Predicted boiling pressure: {fluid.getPressure('bara'):.4f} bara")
 print(f"Experimental (1 atm): 1.0132 bara")
 ```
 
@@ -3634,10 +3634,10 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
-    print(f"Phase i (phase.getType()): phase.getDensity('kg/m3'):.1f kg/m3")
+    print(f"Phase {i} ({phase.getType()}): {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
 === 7.5.2 The CPAMixingRuleHandler
@@ -3739,7 +3739,7 @@ fluid.initProperties()
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
     x_meoh = phase.getComponent("methanol").getx()
-    print(f"Phase i (phase.getType()): x_MeOH = x_meoh:.4f")
+    print(f"Phase {i} ({phase.getType()}): x_MeOH = {x_meoh:.4f}")
 ```
 
 == 7.8 Worked Example: Cross-Association in Water--Methanol
@@ -4099,7 +4099,7 @@ for fluid, name in [(fluid_std, "Standard"), (fluid_impl, "Fully Implicit")]:
     ops.TPflash()
     fluid.initProperties()
     rho = fluid.getDensity("kg/m3")
-    print(f"name: density = rho:.2f kg/m3")
+    print(f"{name}: density = {rho:.2f} kg/m3")
 ```
 
 == 8.5 Broyden's Quasi-Newton Method
@@ -4164,7 +4164,7 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Density: fluid.getDensity('kg/m3'):.2f kg/m3")
+print(f"Density: {fluid.getDensity('kg/m3'):.2f} kg/m3")
 ```
 
 == 8.6 Anderson Acceleration
@@ -4232,7 +4232,7 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Density: fluid.getDensity('kg/m3'):.2f kg/m3")
+print(f"Density: {fluid.getDensity('kg/m3'):.2f} kg/m3")
 ```
 
 == 8.7 Reduced-Variable Formulation
@@ -4354,8 +4354,8 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
-print(f"Gas density: fluid.getPhase('gas').getDensity('kg/m3'):.2f kg/m3")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
+print(f"Gas density: {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
 ```
 
 == 8.9 Performance Optimization
@@ -4680,7 +4680,7 @@ cannot be solved in closed form because $X_A$ depends on $V$ through the density
 
 ```
 repeat:
-    V_k = V_k-1 + delta_V  (volume update)
+    V_k = V_{k-1} + delta_V  (volume update)
     solve X_A(V_k) iteratively
     evaluate P(V_k) - P_spec
     check convergence
@@ -4953,12 +4953,12 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
     x_water = phase.getComponent("water").getx()
     x_hexane = phase.getComponent("n-hexane").getx()
-    print(f"Phase i (phase.getType()): x_water=x_water:.6f, x_hexane=x_hexane:.6f")
+    print(f"Phase {i} ({phase.getType()}): x_water={x_water:.6f}, x_hexane={x_hexane:.6f}")
 ```
 
 === 9.2.5 Comparison with Experimental Data
@@ -5053,11 +5053,11 @@ fluid.initProperties()
 # Water content in gas phase
 gas_phase = fluid.getPhase("gas")
 y_water = gas_phase.getComponent("water").getx()
-print(f"Water mole fraction in gas: y_water:.6f")
+print(f"Water mole fraction in gas: {y_water:.6f}")
 
 # Convert to mg/Sm3
 # y_water * P_std / (R * T_std) * M_water * 1e6
-print(f"Approximate water content: y_water * 1e6:.0f ppm(mol)")
+print(f"Approximate water content: {y_water * 1e6:.0f} ppm(mol)")
 ```
 
 === 9.3.5 Effect of Gas Composition
@@ -5091,7 +5091,7 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.waterDewPointTemperatureFlash()
 
 T_dew = fluid.getTemperature("C")
-print(f"Water dew point: T_dew:.1f C at fluid.getPressure('bara'):.0f bara")
+print(f"Water dew point: {T_dew:.1f} C at {fluid.getPressure('bara'):.0f} bara")
 ```
 
 == 9.4 Three-Phase Equilibrium: VLLE
@@ -5143,13 +5143,13 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
-    print(f"\nPhase i (phase.getType()):")
-    print(f"  Density: phase.getDensity('kg/m3'):.1f kg/m3")
+    print(f"\nPhase {i} ({phase.getType()}):")
+    print(f"  Density: {phase.getDensity('kg/m3'):.1f} kg/m3")
     for comp in ["methane", "n-pentane", "water"]:
-        print(f"  x_comp: phase.getComponent(comp).getx():.6f")
+        print(f"  x_{comp}: {phase.getComponent(comp).getx():.6f}")
 ```
 
 == 9.5 Gas Solubility in Water
@@ -5239,7 +5239,7 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.hydrateFormationTemperature()
 
 T_hydrate = fluid.getTemperature("C")
-print(f"Hydrate formation temperature: T_hydrate:.1f C at 100 bara")
+print(f"Hydrate formation temperature: {T_hydrate:.1f} C at 100 bara")
 ```
 
 == 9.8 Validation Against Experimental Data
@@ -5321,13 +5321,13 @@ fluid.initProperties()
 
 # Water content in mg/Sm3
 y_water = fluid.getPhase("gas").getComponent("water").getx()
-print(f"Water mole fraction in gas: y_water:.6f")
-print(f"Water content: y_water * 1e6:.0f ppm (mole)")
+print(f"Water mole fraction in gas: {y_water:.6f}")
+print(f"Water content: {y_water * 1e6:.0f} ppm (mole)")
 
 # Water dew point
 ops.waterDewPointTemperature()
 T_dew = fluid.getTemperature("C")
-print(f"Water dew point: T_dew:.1f C at 80 bar")
+print(f"Water dew point: {T_dew:.1f} C at 80 bar")
 ```
 
 === 9.9.4 Comparison with the McKetta--Wehe Chart
@@ -5642,11 +5642,11 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
     x_meoh = phase.getComponent("methanol").getx()
-    print(f"Phase i (phase.getType()): x_MeOH = x_meoh:.6f")
+    print(f"Phase {i} ({phase.getType()}): x_MeOH = {x_meoh:.6f}")
 ```
 
 === 10.3.3 Effect of Pressure and Temperature on Methanol Partitioning
@@ -5719,12 +5719,12 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
     x_meg = phase.getComponent("MEG").getx()
     x_water = phase.getComponent("water").getx()
-    print(f"Phase i (phase.getType()): x_MEG=x_meg:.6f, x_water=x_water:.6f")
+    print(f"Phase {i} ({phase.getType()}): x_MEG={x_meg:.6f}, x_water={x_water:.6f}")
 ```
 
 === 10.4.3 Rich vs.~Lean MEG Properties
@@ -5796,7 +5796,7 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 ```
 
 == 10.6 Thermodynamics of Gas--Liquid Absorption
@@ -5901,13 +5901,13 @@ for T, P in conditions:
     fluid_srk.initProperties()
 
     T_C = T - 273.15
-    print(f"\nT=T_C:.0f C, P=P:.0f bar:")
+    print(f"\nT={T_C:.0f} C, P={P:.0f} bar:")
     if fluid_cpa.hasPhaseType("gas"):
         y_w_cpa = fluid_cpa.getPhase("gas").getComponent("water").getx()
         y_w_srk = fluid_srk.getPhase("gas").getComponent("water").getx()
-        print(f"  CPA water in gas: y_w_cpa:.6f")
-        print(f"  SRK water in gas: y_w_srk:.6f")
-        print(f"  Ratio SRK/CPA:   y_w_srk/y_w_cpa:.2f")
+        print(f"  CPA water in gas: {y_w_cpa:.6f}")
+        print(f"  SRK water in gas: {y_w_srk:.6f}")
+        print(f"  Ratio SRK/CPA:   {y_w_srk/y_w_cpa:.2f}")
 ```
 
 === 10.8.2 Design Implications
@@ -6066,8 +6066,8 @@ for wt_meg in [0, 20, 40, 60, 80, 90, 95]:
     ops.TPflash()
     fluid.initProperties()
 
-    print(f"MEG wt_meg wt%: water activity coeff = "
-          f"fluid.getPhase(0).getActivityCoefficient(1):.3f")
+    print(f"MEG {wt_meg} wt%: water activity coeff = "
+          f"{fluid.getPhase(0).getActivityCoefficient(1):.3f}")
 ```
 
 === 10.11.3 Hydrate Depression Prediction
@@ -6378,7 +6378,7 @@ temperatures = [298.15, 323.15, 348.15, 373.15]
 pressures = np.arange(10, 210, 10)
 
 for T in temperatures:
-    print(f"\nT = T - 273.15:.0f C:")
+    print(f"\nT = {T - 273.15:.0f} C:")
     for P in [50, 100, 150, 200]:
         fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(T, float(P))
         fluid.addComponent("CO2", 0.5)
@@ -6396,8 +6396,8 @@ for T in temperatures:
             aq_phase = fluid.getPhase(1)
             x_co2_aq = aq_phase.getComponent("CO2").getx()
             y_w_co2 = co2_phase.getComponent("water").getx()
-            print(f"  P=P bar: x_CO2 in water = x_co2_aq:.4f, "
-                  f"x_water in CO2 = y_w_co2:.6f")
+            print(f"  P={P} bar: x_CO2 in water = {x_co2_aq:.4f}, "
+                  f"x_water in CO2 = {y_w_co2:.6f}")
 ```
 
 === 11.2.4 Accuracy Assessment
@@ -6482,7 +6482,7 @@ for fluid, label in [(fluid_pure, "Pure CO2"),
     ops.TPflash()
     fluid.initProperties()
     rho = fluid.getDensity("kg/m3")
-    print(f"label: density = rho:.1f kg/m3 at 25 C, 80 bar")
+    print(f"{label}: density = {rho:.1f} kg/m3 at 25 C, 80 bar")
 ```
 
 === 11.3.3 Impact on Pipeline Design
@@ -6528,7 +6528,7 @@ fluid.setMixingRule(10)
 ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.waterDewPointTemperatureFlash()
 T_wdp = fluid.getTemperature("C")
-print(f"Water dew point of CO2 with 1000 ppm water: T_wdp:.1f C at 110 bar")
+print(f"Water dew point of CO2 with 1000 ppm water: {T_wdp:.1f} C at 110 bar")
 ```
 
 === 11.4.3 Pipeline Hydraulics with CPA
@@ -6559,9 +6559,9 @@ mu = fluid.getPhase(0).getViscosity("kg/msec")
 cp = fluid.getPhase(0).getCp("J/molK")
 
 print(f"Pipeline conditions (5 C, 150 bar):")
-print(f"  Density: rho:.1f kg/m3")
-print(f"  Viscosity: mu*1000:.4f mPa.s")
-print(f"  Cp: cp:.1f J/(mol K)")
+print(f"  Density: {rho:.1f} kg/m3")
+print(f"  Viscosity: {mu*1000:.4f} mPa.s")
+print(f"  Cp: {cp:.1f} J/(mol K)")
 ```
 
 == 11.5 CO$""_2$ Injection Well Analysis
@@ -6644,7 +6644,7 @@ for fluid, label in [(fluid_sweet, "Sweet gas"), (fluid_sour, "Sour gas (10% CO2
 
     if fluid.hasPhaseType("gas"):
         y_water = fluid.getPhase("gas").getComponent("water").getx()
-        print(f"label: water in gas = y_water:.6f (y_water*1e6:.0f ppm)")
+        print(f"{label}: water in gas = {y_water:.6f} ({y_water*1e6:.0f} ppm)")
 ```
 
 == 11.7 CO$""_2$--Brine Systems
@@ -6680,7 +6680,7 @@ ops.TPflash()
 fluid.initProperties()
 
 x_co2 = fluid.getPhase("aqueous").getComponent("CO2").getx()
-print(f"CO2 solubility in brine: x_co2:.4f mol frac")
+print(f"CO2 solubility in brine: {x_co2:.4f} mol frac")
 ```
 
 == 11.8 Comparison with Other Models
@@ -6779,7 +6779,7 @@ for T_C in [5, 15, 25, 35]:
 
     jt = fluid.getPhase(0).getJouleThomsonCoefficient()
     rho = fluid.getDensity("kg/m3")
-    print(f"T=T_C C, P=110 bar: JT coeff = jt:.3f K/bar, rho = rho:.1f kg/m3")
+    print(f"T={T_C} C, P=110 bar: JT coeff = {jt:.3f} K/bar, rho = {rho:.1f} kg/m3")
 ```
 
 == 11.10 Worked Example: CO$""_2$ Pipeline Design with CPA
@@ -6829,7 +6829,7 @@ ops.TPflash()
 fluid.initProperties()
 
 rho = fluid.getDensity("kg/m3")
-print(f"Dense phase density: rho:.1f kg/m3")
+print(f"Dense phase density: {rho:.1f} kg/m3")
 ```
 
 The cricondenbar for this CO$""_2$ mixture (with 2% N$""_2$ and 1% CH$""_4$) is approximately 77--82 bar. Since the minimum pipeline pressure is 80 bar, we must verify adequate margin above the phase boundary.
@@ -7041,10 +7041,10 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 for i in range(fluid.getNumberOfPhases()):
     phase = fluid.getPhase(i)
-    print(f"Phase i (phase.getType()): density = phase.getDensity('kg/m3'):.1f kg/m3")
+    print(f"Phase {i} ({phase.getType()}): density = {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
 === 12.1.4 Applications of e-CPA
@@ -7331,13 +7331,13 @@ ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
 fluid.initProperties()
 
-print(f"Number of phases: fluid.getNumberOfPhases()")
+print(f"Number of phases: {fluid.getNumberOfPhases()}")
 rho = fluid.getDensity("kg/m3")
-print(f"Density: rho:.1f kg/m3")
+print(f"Density: {rho:.1f} kg/m3")
 
 if fluid.hasPhaseType("gas"):
     y_water = fluid.getPhase("gas").getComponent("water").getx()
-    print(f"Water in gas: y_water*1e6:.0f ppm(mol)")
+    print(f"Water in gas: {y_water*1e6:.0f} ppm(mol)")
 ```
 
 == 12.9 Future Research Directions
@@ -7625,8 +7625,8 @@ for salt_molality in [0.0, 1.0, 2.0, 4.0]:
 
     if fluid.hasPhaseType("aqueous"):
         x_co2 = fluid.getPhase("aqueous").getComponent("CO2").getx()
-        print(f"NaCl = salt_molality:.0f m: CO2 mole frac in water = "
-              f"x_co2:.5f")
+        print(f"NaCl = {salt_molality:.0f} m: CO2 mole frac in water = "
+              f"{x_co2:.5f}")
 ```
 
 == 12.13 Mineral Scale Prediction with e-CPA
@@ -7686,7 +7686,7 @@ seawater.setMixingRule(10)
 for sw_frac in [0.1, 0.3, 0.5, 0.7, 0.9]:
     mixed = formation.clone()
     # ... mixing and activity coefficient calculation
-    print(f"Seawater fraction sw_frac:.0%: check BaSO4 saturation index")
+    print(f"Seawater fraction {sw_frac:.0%}: check BaSO4 saturation index")
 ```
 
 == Summary
@@ -7801,25 +7801,25 @@ Key points from this chapter:
 
 #heading("References", level: 1)
 
-[1] Soave, "Equilibrium constants from a modified {Redlich-Kwong," Chemical Engineering Science, vol. 27, pp. 1197--1203, 1972.
+[1] Soave, "Equilibrium constants from a modified Redlich-Kwong," Chemical Engineering Science, vol. 27, pp. 1197--1203, 1972.
 
 [2] Peng and Robinson, "A new two-constant equation of state," Industrial & Engineering Chemistry Fundamentals, vol. 15, pp. 59--64, 1976.
 
-[3] Dolezalek, "{\"U," Zeitschrift f{\"u, vol. 64, pp. 727--747, 1908.
+[3] Dolezalek, "\"U," Zeitschrift f\"u, vol. 64, pp. 727--747, 1908.
 
-[4] Wertheim, "Fluids with highly directional attractive forces. {I," Journal of Statistical Physics, vol. 35, pp. 19--34, 1984.
+[4] Wertheim, "Fluids with highly directional attractive forces. I," Journal of Statistical Physics, vol. 35, pp. 19--34, 1984.
 
-[5] Wertheim, "Fluids with highly directional attractive forces. {II," Journal of Statistical Physics, vol. 35, pp. 35--47, 1984.
+[5] Wertheim, "Fluids with highly directional attractive forces. II," Journal of Statistical Physics, vol. 35, pp. 35--47, 1984.
 
-[6] Wertheim, "Fluids with highly directional attractive forces. {III," Journal of Statistical Physics, vol. 42, pp. 459--476, 1986.
+[6] Wertheim, "Fluids with highly directional attractive forces. III," Journal of Statistical Physics, vol. 42, pp. 459--476, 1986.
 
-[7] Wertheim, "Fluids with highly directional attractive forces. {IV," Journal of Statistical Physics, vol. 42, pp. 477--492, 1986.
+[7] Wertheim, "Fluids with highly directional attractive forces. IV," Journal of Statistical Physics, vol. 42, pp. 477--492, 1986.
 
 [8] Chapman et al., "Phase equilibria of associating fluids: chain molecules with multiple bonding sites," Molecular Physics, vol. 65, pp. 1057--1079, 1988.
 
 [9] Chapman et al., "New reference equation of state for associating liquids," Industrial & Engineering Chemistry Research, vol. 29, pp. 1709--1721, 1990.
 
-[10] Gross and Sadowski, "Perturbed-chain {SAFT," Industrial & Engineering Chemistry Research, vol. 40, pp. 1244--1260, 2001.
+[10] Gross and Sadowski, "Perturbed-chain SAFT," Industrial & Engineering Chemistry Research, vol. 40, pp. 1244--1260, 2001.
 
 [11] Gil-Villegas et al., "Statistical associating fluid theory for chain molecules with attractive potentials of variable range," The Journal of Chemical Physics, vol. 106, pp. 4168--4186, 1997.
 
@@ -7827,7 +7827,7 @@ Key points from this chapter:
 
 [13] Kontogeorgis et al., "Multicomponent phase equilibrium calculations for water-methanol-alkane mixtures," Fluid Phase Equilibria, vol. 158--160, pp. 201--209, 1999.
 
-[14] Maribo-Mogensen et al., "An electrolyte {CPA," Industrial & Engineering Chemistry Research, vol. 51, pp. 5353--5363, 2012.
+[14] Maribo-Mogensen et al., "An electrolyte CPA," Industrial & Engineering Chemistry Research, vol. 51, pp. 5353--5363, 2012.
 
 [15] Anderson, "Iterative procedures for nonlinear integral equations," Journal of the ACM, vol. 12, pp. 547--560, 1965.
 
@@ -7845,9 +7845,9 @@ Key points from this chapter:
 
 [22] Rachford and Rice, "Procedure for use of electronic digital computers in calculating flash vaporization hydrocarbon equilibrium," Journal of Petroleum Technology, vol. 4, pp. 19, 1952.
 
-[23] Michelsen, "The isothermal flash problem. {Part I," Fluid Phase Equilibria, vol. 9, pp. 1--19, 1982.
+[23] Michelsen, "The isothermal flash problem. Part I," Fluid Phase Equilibria, vol. 9, pp. 1--19, 1982.
 
-[24] Michelsen, "The isothermal flash problem. {Part II," Fluid Phase Equilibria, vol. 9, pp. 21--40, 1982.
+[24] Michelsen, "The isothermal flash problem. Part II," Fluid Phase Equilibria, vol. 9, pp. 21--40, 1982.
 
 [25] Sandler, "Chemical, Biochemical, and Engineering Thermodynamics," John Wiley & Sons, 2006.
 
@@ -7861,25 +7861,25 @@ Key points from this chapter:
 
 [30] Clausius, "Ueber das Verhalten der Kohlens\"aure in Bezug auf Druck, Volumen und Temperatur," Annalen der Physik, vol. 245, pp. 337--357, 1880.
 
-[31] Redlich and Kwong, "On the thermodynamics of solutions. {V," Chemical Reviews, vol. 44, pp. 233--244, 1949.
+[31] Redlich and Kwong, "On the thermodynamics of solutions. V," Chemical Reviews, vol. 44, pp. 233--244, 1949.
 
-[32] Pitzer, "The volumetric and thermodynamic properties of fluids. {I," Journal of the American Chemical Society, vol. 77, pp. 3427--3433, 1955.
+[32] Pitzer, "The volumetric and thermodynamic properties of fluids. I," Journal of the American Chemical Society, vol. 77, pp. 3427--3433, 1955.
 
-[33] P\'e, "A consistent correction for {Redlich-Kwong-Soave," Fluid Phase Equilibria, vol. 8, pp. 7--23, 1982.
+[33] P\'e, "A consistent correction for Redlich-Kwong-Soave," Fluid Phase Equilibria, vol. 8, pp. 7--23, 1982.
 
 [34] Boston and Mathias, "Phase equilibria in a third-generation process simulator," Proceedings of the 2nd International Conference on Phase Equilibria and Fluid Properties in the Chemical Industry, 1980.
 
-[35] Gasem et al., "A modified temperature dependence for the {Peng-Robinson," Fluid Phase Equilibria, vol. 181, pp. 113--125, 2001.
+[35] Gasem et al., "A modified temperature dependence for the Peng-Robinson," Fluid Phase Equilibria, vol. 181, pp. 113--125, 2001.
 
-[36] Mathias and Copeman, "Extension of the {Peng-Robinson," Fluid Phase Equilibria, vol. 13, pp. 91--108, 1983.
+[36] Mathias and Copeman, "Extension of the Peng-Robinson," Fluid Phase Equilibria, vol. 13, pp. 91--108, 1983.
 
 [37] Twu et al., "A cubic equation of state with a new alpha function and a new mixing rule," Fluid Phase Equilibria, vol. 69, pp. 33--50, 1991.
 
 [38] Wong and Sandler, "A theoretically correct mixing rule for cubic equations of state," AIChE Journal, vol. 38, pp. 671--680, 1992.
 
-[39] Michelsen, "A modified {Huron-Vidal," Fluid Phase Equilibria, vol. 60, pp. 213--219, 1990.
+[39] Michelsen, "A modified Huron-Vidal," Fluid Phase Equilibria, vol. 60, pp. 213--219, 1990.
 
-[40] Boukouvalas et al., "{Prediction of vapor-liquid equilibrium with the LCVM model: a linear combination of the Vidal and Michelsen mixing rules coupled with the original UNIFAC and the t-mPR equation of state," Fluid Phase Equilibria, vol. 92, pp. 75--106, 1994.
+[40] Boukouvalas et al., "Prediction of vapor-liquid equilibrium with the LCVM model: a linear combination of the Vidal and Michelsen mixing rules coupled with the original UNIFAC and the t-mPR equation of state," Fluid Phase Equilibria, vol. 92, pp. 75--106, 1994.
 
 [41] Jeffrey, "An Introduction to Hydrogen Bonding," Oxford University Press, 1997.
 
@@ -7895,9 +7895,9 @@ Key points from this chapter:
 
 [47] Huang and Radosz, "Equation of state for small, large, polydisperse, and associating molecules: extension to fluid mixtures," Industrial & Engineering Chemistry Research, vol. 30, pp. 1994--2005, 1991.
 
-[48] Solbraa, "The Cubic Plus Association Equation of State ({CPA-EoS," NeqSim Press, 2026.
+[48] Solbraa, "The Cubic Plus Association Equation of State (CPA-EoS," NeqSim Press, 2026.
 
-[49] Kontogeorgis et al., "Ten years with the {CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4855--4868, 2006.
+[49] Kontogeorgis et al., "Ten years with the CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4855--4868, 2006.
 
 [50] Kontogeorgis and Folas, "Thermodynamic Models for Industrial Applications: From Classical and Advanced Mixing Rules to Association Theories," John Wiley & Sons, 2010.
 
@@ -7905,27 +7905,27 @@ Key points from this chapter:
 
 [52] AIChE DIPPR Project 801, "Evaluated Standard Thermophysical Property Values," Brigham Young University, 2016.
 
-[53] National Institute of Standards and Technology, "{NIST," 2023.
+[53] National Institute of Standards and Technology, "NIST," 2023.
 
-[54] Span and Wagner, "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 {K," Journal of Physical and Chemical Reference Data, vol. 25, pp. 1509--1596, 1996.
+[54] Span and Wagner, "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K," Journal of Physical and Chemical Reference Data, vol. 25, pp. 1509--1596, 1996.
 
 [55] Levenberg, "A method for the solution of certain non-linear problems in least squares," Quarterly of Applied Mathematics, vol. 2, pp. 164--168, 1944.
 
 [56] Marquardt, "An algorithm for least-squares estimation of nonlinear parameters," Journal of the Society for Industrial and Applied Mathematics, vol. 11, pp. 431--441, 1963.
 
-[57] Kontogeorgis et al., "Ten years with the {CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4869--4878, 2006.
+[57] Kontogeorgis et al., "Ten years with the CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4869--4878, 2006.
 
 [58] Elliott et al., "A simple equation of state for non-spherical and associating molecules," Industrial & Engineering Chemistry Research, vol. 29, pp. 1476--1485, 1990.
 
-[59] Tsivintzelis et al., "Modeling phase equilibria for acid gas mixtures using the {CPA," AIChE Journal, vol. 56, pp. 2965--2982, 2010.
+[59] Tsivintzelis et al., "Modeling phase equilibria for acid gas mixtures using the CPA," AIChE Journal, vol. 56, pp. 2965--2982, 2010.
 
 [60] Huron, "New mixing rules in simple equations of state for representing vapour-liquid equilibria of strongly non-ideal mixtures," Fluid Phase Equilibria, vol. 3, pp. 255--271, 1979.
 
 [61] Renon and Prausnitz, "Local compositions in thermodynamic excess functions for liquid mixtures," AIChE Journal, vol. 14, pp. 135--144, 1968.
 
-[62] Abrams and Prausnitz, "{Statistical thermodynamics of liquid mixtures: A new expression for the excess Gibbs energy of partly or completely miscible systems," AIChE Journal, vol. 21, pp. 116--128, 1975.
+[62] Abrams and Prausnitz, "Statistical thermodynamics of liquid mixtures: A new expression for the excess Gibbs energy of partly or completely miscible systems," AIChE Journal, vol. 21, pp. 116--128, 1975.
 
-[63] Wilson, "Vapor-liquid equilibrium. {XI," Journal of the American Chemical Society, vol. 86, pp. 127--130, 1964.
+[63] Wilson, "Vapor-liquid equilibrium. XI," Journal of the American Chemical Society, vol. 86, pp. 127--130, 1964.
 
 [64] Michelsen and Hendriks, "Physical properties from association models," Fluid Phase Equilibria, vol. 180, pp. 165--174, 2001.
 
@@ -7933,11 +7933,11 @@ Key points from this chapter:
 
 [66] Wegstein, "Accelerating convergence of iterative processes," Communications of the ACM, vol. 1, pp. 9--13, 1958.
 
-[67] Dennis and Mor\'e, "Quasi-{Newton," SIAM Review, vol. 19, pp. 46--89, 1977.
+[67] Dennis and Mor\'e, "Quasi-Newton," SIAM Review, vol. 19, pp. 46--89, 1977.
 
 [68] Ortega and Rheinboldt, "Iterative Solution of Nonlinear Equations in Several Variables," Academic Press, 1970.
 
-[69] Pulay, "Convergence acceleration of iterative sequences. {The," Chemical Physics Letters, vol. 73, pp. 393--398, 1980.
+[69] Pulay, "Convergence acceleration of iterative sequences. The," Chemical Physics Letters, vol. 73, pp. 393--398, 1980.
 
 [70] Tsonopoulos, "Thermodynamic analysis of the mutual solubilities of normal alkanes and water," Fluid Phase Equilibria, vol. 156, pp. 21--33, 1999.
 
@@ -7947,11 +7947,11 @@ Key points from this chapter:
 
 [73] Raoult, "Loi g\'en\'erale des tensions de vapeur des dissolvants," Comptes Rendus de l'Acad\'emie des Sciences, vol. 104, pp. 1430--1433, 1887.
 
-[74] Tsonopoulos and Wilson, "High-temperature mutual solubilities of hydrocarbons and water. {Part I," AIChE Journal, vol. 29, pp. 990--999, 1983.
+[74] Tsonopoulos and Wilson, "High-temperature mutual solubilities of hydrocarbons and water. Part I," AIChE Journal, vol. 29, pp. 990--999, 1983.
 
 [75] Derawi et al., "Extension of the cubic-plus-association equation of state to glycol-water cross-associating systems," Industrial & Engineering Chemistry Research, vol. 42, pp. 1470--1477, 2003.
 
-[76] Folas et al., "Application of the cubic-plus-association ({CPA," Industrial & Engineering Chemistry Research, vol. 44, pp. 3823--3833, 2005.
+[76] Folas et al., "Application of the cubic-plus-association (CPA," Industrial & Engineering Chemistry Research, vol. 44, pp. 3823--3833, 2005.
 
 [77] McKetta and Wehe, "Use this chart for water content of natural gases," Petroleum Refiner, vol. 37, pp. 153--154, 1958.
 
@@ -7963,7 +7963,7 @@ Key points from this chapter:
 
 [81] Kidnay et al., "Fundamentals of Natural Gas Processing," CRC Press, 2011.
 
-[82] Folas et al., "Application of the cubic-plus-association ({CPA," Industrial & Engineering Chemistry Research, vol. 46, pp. 3622--3632, 2007.
+[82] Folas et al., "Application of the cubic-plus-association (CPA," Industrial & Engineering Chemistry Research, vol. 46, pp. 3622--3632, 2007.
 
 [83] Hammerschmidt, "Formation of gas hydrates in natural gas transmission lines," Industrial & Engineering Chemistry, vol. 26, pp. 851--855, 1934.
 
@@ -7971,39 +7971,39 @@ Key points from this chapter:
 
 [85] van der Waals and Platteeuw, "Clathrate solutions," Advances in Chemical Physics, vol. 2, pp. 1--57, 1959.
 
-[86] Westman et al., "Vapor-liquid equilibrium data for the carbon dioxide and nitrogen ({CO$_2$ + N$_2$," Fluid Phase Equilibria, vol. 421, pp. 67--87, 2016.
+[86] Westman et al., "Vapor-liquid equilibrium data for the carbon dioxide and nitrogen (CO₂ + N₂," Fluid Phase Equilibria, vol. 421, pp. 67--87, 2016.
 
 [87] Folas et al., "Application of the cubic-plus-association equation of state to mixtures with polar chemicals and high pressures," Industrial & Engineering Chemistry Research, vol. 45, pp. 1527--1538, 2006.
 
-[88] Oliveira and Coutinho, "Mutual solubilities of hydrocarbons and water with the {CPA," Fluid Phase Equilibria, vol. 258, pp. 58--66, 2007.
+[88] Oliveira and Coutinho, "Mutual solubilities of hydrocarbons and water with the CPA," Fluid Phase Equilibria, vol. 258, pp. 58--66, 2007.
 
-[89] von Solms et al., "Computational and physical performance of a modified {PC-SAFT," Industrial & Engineering Chemistry Research, vol. 42, pp. 1098--1105, 2003.
+[89] von Solms et al., "Computational and physical performance of a modified PC-SAFT," Industrial & Engineering Chemistry Research, vol. 42, pp. 1098--1105, 2003.
 
 [90] Parrish et al., "Phase behavior of the triethylene glycol-water system and dehydration/regeneration design for extremely low dew point requirements," Proceedings of the 65th Annual GPA Convention, 1986.
 
-[91] Tsivintzelis and Kontogeorgis, "Modelling phase equilibria for acid gas mixtures using the {CPA," Journal of Supercritical Fluids, vol. 84, pp. generalized, 2014.
+[91] Tsivintzelis and Kontogeorgis, "Modelling phase equilibria for acid gas mixtures using the CPA," Journal of Supercritical Fluids, vol. 84, pp. generalized, 2014.
 
-[92] Duan and Sun, "An improved model calculating {CO$_2$," Chemical Geology, vol. 193, pp. 257--271, 2003.
+[92] Duan and Sun, "An improved model calculating CO₂," Chemical Geology, vol. 193, pp. 257--271, 2003.
 
-[93] Spycher et al., "{CO$_2$-H$_2$O," Geochimica et Cosmochimica Acta, vol. 67, pp. 3015--3031, 2003.
+[93] Spycher et al., "CO₂-H₂O," Geochimica et Cosmochimica Acta, vol. 67, pp. 3015--3031, 2003.
 
-[94] Austegard et al., "Thermodynamic models for calculating mutual solubilities in {H$_2$O-CO$_2$-CH$_4$," Chemical Engineering Research and Design, vol. 84, pp. 781--794, 2006.
+[94] Austegard et al., "Thermodynamic models for calculating mutual solubilities in H₂O-CO₂-CH₄," Chemical Engineering Research and Design, vol. 84, pp. 781--794, 2006.
 
-[95] DNV GL, "{DNV-RP-F104," 2021.
+[95] DNV GL, "DNV-RP-F104," 2021.
 
-[96] International Organization for Standardization, "{ISO 27913," 2016.
+[96] International Organization for Standardization, "ISO 27913," 2016.
 
-[97] de Visser et al., "{Dynamis CO$_2$ quality recommendations," International Journal of Greenhouse Gas Control, vol. 2, pp. 478--484, 2008.
+[97] de Visser et al., "Dynamis CO₂ quality recommendations," International Journal of Greenhouse Gas Control, vol. 2, pp. 478--484, 2008.
 
-[98] Li et al., "Hydrate formation during {CO$_2$," International Journal of Greenhouse Gas Control, vol. 24, pp. 40--46, 2014.
+[98] Li et al., "Hydrate formation during CO₂," International Journal of Greenhouse Gas Control, vol. 24, pp. 40--46, 2014.
 
-[99] Knoope et al., "Improved cost models for optimizing {CO$_2$," International Journal of Greenhouse Gas Control, vol. 22, pp. 25--46, 2014.
+[99] Knoope et al., "Improved cost models for optimizing CO₂," International Journal of Greenhouse Gas Control, vol. 22, pp. 25--46, 2014.
 
 [100] de Waard and Milliams, "Carbonic acid corrosion of steel," Corrosion, vol. 31, pp. 177--181, 1975.
 
-[101] Born, "Volumen und Hydratationsw\"arme der Ionen," Zeitschrift f{\"u, vol. 1, pp. 45--48, 1920.
+[101] Born, "Volumen und Hydratationsw\"arme der Ionen," Zeitschrift f\"u, vol. 1, pp. 45--48, 1920.
 
-[102] Blum, "Mean spherical model for asymmetric electrolytes. {I," Molecular Physics, vol. 30, pp. 1529--1535, 1975.
+[102] Blum, "Mean spherical model for asymmetric electrolytes. I," Molecular Physics, vol. 30, pp. 1529--1535, 1975.
 
 [103] Ornstein and Zernike, "Accidental deviations of density and opalescence at the critical point of a single substance," Proceedings of the Royal Netherlands Academy of Arts and Sciences, vol. 17, pp. 793--806, 1914.
 
@@ -8013,25 +8013,25 @@ Key points from this chapter:
 
 [106] Stumm and Morgan, "Aquatic Chemistry: Chemical Equilibria and Rates in Natural Waters," John Wiley & Sons, 1996.
 
-[107] Setschenow, "{\"U," Zeitschrift f{\"u, vol. 4, pp. 117--125, 1889.
+[107] Setschenow, "\"U," Zeitschrift f\"u, vol. 4, pp. 117--125, 1889.
 
-[108] Gross and Sadowski, "Application of the perturbed-chain {SAFT," Industrial & Engineering Chemistry Research, vol. 41, pp. 5510--5515, 2002.
+[108] Gross and Sadowski, "Application of the perturbed-chain SAFT," Industrial & Engineering Chemistry Research, vol. 41, pp. 5510--5515, 2002.
 
-[109] Barker and Henderson, "Perturbation theory and equation of state for fluids. {II," The Journal of Chemical Physics, vol. 47, pp. 4714--4721, 1967.
+[109] Barker and Henderson, "Perturbation theory and equation of state for fluids. II," The Journal of Chemical Physics, vol. 47, pp. 4714--4721, 1967.
 
-[110] Mie, "{Zur kinetischen Theorie der einatomigen K\"orper," Annalen der Physik, vol. 316, pp. 657--697, 1903.
+[110] Mie, "Zur kinetischen Theorie der einatomigen K\"orper," Annalen der Physik, vol. 316, pp. 657--697, 1903.
 
 [111] Lennard-Jones, "On the determination of molecular fields," Proceedings of the Royal Society of London. Series A, vol. 106, pp. 463--477, 1924.
 
-[112] Papaioannou et al., "Group contribution methodology based on the statistical associating fluid theory for heteronuclear molecules formed from {Mie," The Journal of Chemical Physics, vol. 140, pp. 054107, 2014.
+[112] Papaioannou et al., "Group contribution methodology based on the statistical associating fluid theory for heteronuclear molecules formed from Mie," The Journal of Chemical Physics, vol. 140, pp. 054107, 2014.
 
-[113] Lafitte et al., "Accurate statistical associating fluid theory for chain molecules formed from {Mie," The Journal of Chemical Physics, vol. 139, pp. 154504, 2013.
+[113] Lafitte et al., "Accurate statistical associating fluid theory for chain molecules formed from Mie," The Journal of Chemical Physics, vol. 139, pp. 154504, 2013.
 
-[114] Voutsas et al., "{Universal mixing rule for cubic equations of state applicable to symmetric and asymmetric systems: results with the Peng-Robinson equation of state," Industrial & Engineering Chemistry Research, vol. 43, pp. 6238--6246, 2004.
+[114] Voutsas et al., "Universal mixing rule for cubic equations of state applicable to symmetric and asymmetric systems: results with the Peng-Robinson equation of state," Industrial & Engineering Chemistry Research, vol. 43, pp. 6238--6246, 2004.
 
 [115] Panayiotou and Sanchez, "Hydrogen bonding in fluids: An equation-of-state approach," The Journal of Physical Chemistry, vol. 95, pp. 10090--10097, 1991.
 
-[116] Fredenslund et al., "{Group-contribution estimation of activity coefficients in nonideal liquid mixtures," AIChE Journal, vol. 21, pp. 1086--1099, 1975.
+[116] Fredenslund et al., "Group-contribution estimation of activity coefficients in nonideal liquid mixtures," AIChE Journal, vol. 21, pp. 1086--1099, 1975.
 
 [117] Li and Firoozabadi, "Modeling asphaltene precipitation by n-alkanes from heavy oils and bitumens using cubic-plus-association equation of state," Energy & Fuels, vol. 24, pp. 1106--1113, 2010.
 
@@ -8041,4 +8041,4 @@ Key points from this chapter:
 
 [120] Huggins, "Solutions of long chain compounds," The Journal of Chemical Physics, vol. 9, pp. 440, 1941.
 
-[121] Sanchez and Lacombe, "An elementary molecular theory of classical fluids. {Pure," The Journal of Physical Chemistry, vol. 80, pp. 2352--2362, 1976.
+[121] Sanchez and Lacombe, "An elementary molecular theory of classical fluids. Pure," The Journal of Physical Chemistry, vol. 80, pp. 2352--2362, 1976.
