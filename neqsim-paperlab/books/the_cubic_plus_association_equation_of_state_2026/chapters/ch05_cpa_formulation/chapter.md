@@ -220,9 +220,63 @@ for fluid, name in [(fluid_srk, "SRK-CPA"), (fluid_pr, "PR-CPA")]:
     print(f"{name}: density = {rho:.1f} kg/m3")
 ```
 
-## 5.7 Implementation in NeqSim
+## 5.7 Derivative Properties from CPA
 
-### 5.7.1 Class Hierarchy
+### 5.7.1 Pressure Derivatives
+
+For engineering calculations, the first and second derivatives of pressure with respect to temperature, volume, and composition are needed. Each derivative has contributions from both the cubic and association terms.
+
+The pressure derivative with respect to temperature at constant volume:
+
+$$\left(\frac{\partial P}{\partial T}\right)_V = \left(\frac{\partial P^{\text{SRK}}}{\partial T}\right)_V + \left(\frac{\partial P^{\text{assoc}}}{\partial T}\right)_V$$
+
+The cubic contribution is:
+
+$$\left(\frac{\partial P^{\text{SRK}}}{\partial T}\right)_V = \frac{nR}{V - nb} - \frac{\frac{da}{dT}}{V(V + nb)}$$
+
+The association contribution requires the chain rule through the site fractions:
+
+$$\left(\frac{\partial P^{\text{assoc}}}{\partial T}\right)_V = -nRT \sum_i x_i \sum_{A_i} \frac{1}{X_{A_i}} \frac{\partial X_{A_i}}{\partial T} \cdot \frac{1}{V}$$
+
+Computing $\partial X_{A_i}/\partial T$ requires differentiating the implicit site balance equations with respect to temperature, yielding a linear system of equations in the site fraction derivatives.
+
+### 5.7.2 Fugacity Coefficient with Association
+
+The fugacity coefficient of component $i$ in CPA is:
+
+$$\ln \varphi_i = \ln \varphi_i^{\text{SRK}} + \ln \varphi_i^{\text{assoc}}$$
+
+The association contribution to the fugacity coefficient is:
+
+$$\ln \varphi_i^{\text{assoc}} = \sum_{A_i} \left(\ln X_{A_i} - \frac{X_{A_i}}{2} + \frac{1}{2}\right) + \sum_j x_j \sum_{A_j} \frac{1}{X_{A_j}} \frac{\partial X_{A_j}}{\partial n_i}$$
+
+The last term accounts for the fact that changing the amount of component $i$ affects the site fractions of all other components through the site balance equations. This coupling term is often the most computationally expensive part of the fugacity calculation.
+
+### 5.7.3 Residual Enthalpy and Entropy
+
+The residual enthalpy from CPA includes:
+
+$$H^{\text{res,assoc}} = -nRT^2 \sum_i x_i \sum_{A_i} \frac{1}{X_{A_i}} \left(\frac{\partial X_{A_i}}{\partial T}\right)_{P,\mathbf{n}}$$
+
+This term is always negative (association releases energy when bonds form) and is responsible for the large heat of vaporization of water and alcohols.
+
+The residual entropy from association:
+
+$$S^{\text{res,assoc}} = -nR \sum_i x_i \sum_{A_i} \left(\ln X_{A_i} - \frac{X_{A_i}}{2} + \frac{1}{2}\right) - \frac{H^{\text{res,assoc}}}{T}$$
+
+The first term is always positive (association reduces the number of microscopic configurations), while the enthalpy term is always negative. The net entropy of association is typically negative — association creates order.
+
+### 5.7.4 Heat Capacity from CPA
+
+The association contribution to the isobaric heat capacity $C_P$ is significant for strongly associating fluids:
+
+$$C_P^{\text{assoc}} = \left(\frac{\partial H^{\text{assoc}}}{\partial T}\right)_P$$
+
+For liquid water, the association contribution accounts for approximately 40% of the total $C_P$, reflecting the energy required to break hydrogen bonds as temperature increases. CPA reproduces this effect quantitatively, while classical cubic EoS underpredict $C_P$ by 15–25%.
+
+## 5.8 Implementation in NeqSim
+
+### 5.8.1 Class Hierarchy
 
 The CPA implementation in NeqSim follows a layered architecture with System, Phase, and Component levels:
 
@@ -273,7 +327,161 @@ The mixing rule index 10 in NeqSim activates the CPA mixing rules with automatic
 3. Handles solvation between associating and non-self-associating species
 4. Manages the site bookkeeping for complex multicomponent mixtures
 
-## 5.8 Comparison: CPA vs. SRK for Pure Water
+## 5.9 Worked Example: Step-by-Step CPA Pressure Calculation
+
+This section walks through the computation of pressure from CPA for a pure associating fluid at a given temperature and molar volume, showing how the cubic and association contributions combine.
+
+### 5.9.1 Problem Setup
+
+Compute the CPA pressure for pure water at $T = 373.15$ K and $V_m = 18.8 \times 10^{-6}$ m$^3$/mol (approximately liquid water at 100°C).
+
+### 5.9.2 Step 1: Evaluate the SRK Cubic Contribution
+
+The SRK parameters for CPA-water (Equinor set): $a_0 = 0.12277$ Pa·m$^6$/mol$^2$, $b = 1.4515 \times 10^{-5}$ m$^3$/mol, $c_1 = 0.6736$.
+
+The temperature-dependent $a(T)$:
+
+$$\alpha(T) = [1 + c_1(1 - \sqrt{T_r})]^2$$
+
+where $T_r = T/T_c = 373.15/647.3 = 0.5765$:
+
+$$\alpha = [1 + 0.6736(1 - \sqrt{0.5765})]^2 = [1 + 0.6736 \times 0.2407]^2 = 1.3560$$
+
+$$a(T) = a_0 \times \alpha = 0.12277 \times 1.3560 = 0.16648 \text{ Pa·m}^6/\text{mol}^2$$
+
+The SRK pressure contribution:
+
+$$P^{\text{SRK}} = \frac{RT}{V_m - b} - \frac{a(T)}{V_m(V_m + b)}$$
+
+$$= \frac{8.314 \times 373.15}{18.8 \times 10^{-6} - 1.4515 \times 10^{-5}} - \frac{0.16648}{18.8 \times 10^{-6}(18.8 \times 10^{-6} + 1.4515 \times 10^{-5})}$$
+
+### 5.9.3 Step 2: Solve the Site Balance
+
+For water (4C scheme), $X_e = X_H = X$:
+
+$$X = \frac{-1 + \sqrt{1 + 8\rho\Delta}}{4\rho\Delta}$$
+
+where $\rho = 1/V_m$ and $\Delta$ is computed from the association parameters.
+
+### 5.9.4 Step 3: Compute the Association Pressure
+
+The association contribution to pressure is:
+
+$$P^{\text{assoc}} = -\frac{RT}{V_m}\left(1 + V_m \frac{\partial \ln g}{\partial V_m}\right)\sum_{A}\left(\frac{1}{X_A} - \frac{1}{2}\right) \frac{\partial X_A}{\partial (1/V_m)}$$
+
+In practice, this derivative is computed numerically in NeqSim via the chain rule, as detailed in Chapter 8.
+
+### 5.9.5 Step 4: Total CPA Pressure
+
+$$P^{\text{CPA}} = P^{\text{SRK}} + P^{\text{assoc}}$$
+
+The association term is always **positive** for the pressure (it increases the total pressure relative to SRK alone) because the association reduces the Helmholtz energy, and $P = -(\partial A/\partial V)_T$.
+
+## 5.10 The Simplified CPA (sCPA)
+
+In the original CPA formulation, the radial distribution function $g(V_m)$ is taken from the Carnahan–Starling hard-sphere expression:
+
+$$g^{\text{CS}}(\eta) = \frac{1 - \eta/2}{(1-\eta)^3}, \quad \eta = \frac{b}{4V_m}$$
+
+In the **simplified CPA** (sCPA), the radial distribution function is replaced by the simpler expression:
+
+$$g^{\text{sCPA}}(\eta) = \frac{1}{1 - 1.9\eta}$$
+
+where $\eta = b/(4V_m)$. This simplification:
+
+1. **Reduces computational cost**: $g^{\text{sCPA}}$ and its derivatives are simpler to evaluate
+2. **Improves numerical stability**: the sCPA expression has a single singularity at $\eta = 1/1.9 = 0.526$ vs. a triple singularity at $\eta = 1$ for Carnahan–Starling
+3. **Gives equivalent accuracy**: when parameters are refitted to the simplified model, the quality of predictions is essentially unchanged
+
+The NeqSim `SystemSrkCPAstatoil` class uses the sCPA formulation, which is recommended for all industrial applications. The full Carnahan–Starling version is available in `SystemSrkCPA` for research purposes.
+
+### 5.10.1 Impact on Derivatives
+
+The choice of $g$ affects all derivative properties because the pressure includes a term proportional to $\partial g/\partial V$:
+
+For Carnahan–Starling:
+
+$$\frac{\partial \ln g^{\text{CS}}}{\partial \eta} = \frac{5 - 2\eta}{2(1-\eta)(2-\eta)}$$
+
+For sCPA:
+
+$$\frac{\partial \ln g^{\text{sCPA}}}{\partial \eta} = \frac{1.9}{1 - 1.9\eta}$$
+
+The simpler derivative in sCPA propagates through the entire calculation chain (fugacity, enthalpy, heat capacity), reducing both coding complexity and computational cost.
+
+## 5.11 Complete Derivative Chain: From Helmholtz Energy to Engineering Properties
+
+To compute any thermodynamic property from CPA, one follows a systematic derivative chain starting from the residual Helmholtz energy:
+
+$$A^{\text{res}} = A^{\text{SRK}} + A^{\text{assoc}}$$
+
+### 5.11.1 Association Contribution to Helmholtz Energy
+
+The association Helmholtz energy is:
+
+$$\frac{A^{\text{assoc}}}{nRT} = \sum_i x_i \sum_{A_i} \left[\ln X_{A_i} - \frac{X_{A_i}}{2} + \frac{1}{2}\right]$$
+
+This compact expression contains all the thermodynamic information about the hydrogen-bond network. The factor $[\ln X_{A_i} - X_{A_i}/2 + 1/2]$ is always non-positive (since $0 \leq X_{A_i} \leq 1$), confirming that association always reduces the Helmholtz energy — hydrogen bonds stabilize the system.
+
+### 5.11.2 Derivatives with Respect to Volume
+
+The association contribution to pressure requires:
+
+$$P^{\text{assoc}} = -\left(\frac{\partial A^{\text{assoc}}}{\partial V}\right)_{T,\mathbf{n}}$$
+
+Using the chain rule:
+
+$$P^{\text{assoc}} = -\frac{nRT}{2V}\rho \frac{\partial \ln g}{\partial \rho}\sum_i x_i \sum_{A_i}(1 - X_{A_i})$$
+
+where $\rho = n/V$ is the molar density and $g$ is the radial distribution function. The quantity $(1 - X_{A_i})$ is the fraction of sites of type $A$ on molecule $i$ that are bonded.
+
+### 5.11.3 Derivatives with Respect to Temperature
+
+The enthalpy contribution requires:
+
+$$H^{\text{assoc}} = A^{\text{assoc}} + TS^{\text{assoc}} + P^{\text{assoc}}V - nRT$$
+
+where:
+
+$$S^{\text{assoc}} = -\left(\frac{\partial A^{\text{assoc}}}{\partial T}\right)_{V,\mathbf{n}}$$
+
+The temperature derivative involves:
+
+$$\left(\frac{\partial A^{\text{assoc}}}{\partial T}\right)_V = \frac{A^{\text{assoc}}}{T} + nRT\sum_i x_i \sum_{A_i}\frac{1}{X_{A_i}}\frac{\partial X_{A_i}}{\partial T}$$
+
+The term $\partial X_{A_i}/\partial T$ captures the fact that hydrogen bonds break as temperature increases. Computing this derivative requires solving a linear system obtained by differentiating the site balance equations with respect to temperature.
+
+### 5.11.4 The Linear System for Site Fraction Derivatives
+
+Differentiating the site balance equation with respect to any variable $\xi$ (which can be $T$, $V$, or $n_j$):
+
+$$\frac{\partial X_{A_i}}{\partial \xi} = -X_{A_i}^2 \sum_j \rho_j \sum_{B_j} \left[\frac{\partial \Delta^{A_iB_j}}{\partial \xi} X_{B_j} + \Delta^{A_iB_j}\frac{\partial X_{B_j}}{\partial \xi}\right]$$
+
+This is a linear system in the unknowns $\partial X_{B_j}/\partial \xi$. For a system with $N_s$ total association sites, this is an $N_s \times N_s$ linear system. For water (4 sites) in a binary with methane (0 sites), it is a $4 \times 4$ system. For water + methanol (4 + 2 sites), it is $6 \times 6$.
+
+The matrix of this linear system is:
+
+$$\mathbf{M}_{(A_i)(B_j)} = \delta_{(A_i)(B_j)} + X_{A_i}^2 \rho_j \Delta^{A_iB_j}$$
+
+and the right-hand side depends on $\partial \Delta/\partial \xi$.
+
+### 5.11.5 Temperature Derivative of the Association Strength
+
+$$\frac{\partial \Delta^{A_iB_j}}{\partial T} = \Delta^{A_iB_j}\left[\frac{\varepsilon^{A_iB_j}}{RT^2} + \frac{1}{g}\frac{\partial g}{\partial T} + \frac{1}{b_{ij}}\frac{\partial b_{ij}}{\partial T}\right]$$
+
+The dominant term is $\varepsilon/(RT^2)$, which is always positive — meaning the association strength increases as temperature decreases. This is physically correct: cooling promotes hydrogen bond formation.
+
+### 5.11.6 Heat Capacity Contribution
+
+The association contribution to $C_V$ requires the second temperature derivative:
+
+$$C_V^{\text{assoc}} = -T\left(\frac{\partial^2 A^{\text{assoc}}}{\partial T^2}\right)_V$$
+
+This involves second derivatives of the site fractions, requiring differentiation of the linear system a second time. The resulting contribution is always positive — association increases the heat capacity because breaking hydrogen bonds requires energy.
+
+For water, the association contribution to $C_P$ accounts for approximately 30% of the total heat capacity at 25°C — explaining why CPA gives significantly better heat capacity predictions than SRK.
+
+## 5.12 Comparison: CPA vs. SRK for Pure Water
 
 To demonstrate the improvement CPA provides, let us compare predictions for pure water:
 
@@ -301,6 +509,44 @@ for ModelClass, name in [
     print(f"{name}: liquid density at 100 C = {rho_liq:.1f} kg/m3")
     # Experimental: 958.4 kg/m3
 ```
+
+## 5.13 The Fugacity Coefficient: Composition Dependence
+
+### 5.13.1 General Expression
+
+The fugacity coefficient of component $i$ in a CPA mixture is:
+
+$$\ln \varphi_i = \ln \varphi_i^{\text{SRK}} + \ln \varphi_i^{\text{assoc}}$$
+
+The SRK contribution is the standard expression from cubic EoS theory. The association contribution is obtained from:
+
+$$\ln \varphi_i^{\text{assoc}} = \frac{1}{RT}\left(\frac{\partial n A^{\text{assoc}}}{\partial n_i}\right)_{T,V,n_{j \neq i}}$$
+
+### 5.13.2 The Composition Derivative
+
+Evaluating $\partial(n A^{\text{assoc}})/\partial n_i$ requires careful application of the chain rule because $A^{\text{assoc}}$ depends on $n_i$ both explicitly (through the sum over components) and implicitly (through $X_{A_j}$, which depends on all compositions).
+
+Using the identity that $\partial A^{\text{assoc}}/\partial X_{A_j} = 0$ at the site-balance solution (this is a key simplification from Wertheim's theory), the result simplifies to:
+
+$$\ln \varphi_i^{\text{assoc}} = \sum_{A_i}\left(\ln X_{A_i} - \frac{X_{A_i}}{2} + \frac{1}{2}\right) - \frac{1}{2}\sum_j n_j \sum_{A_j}\frac{1}{X_{A_j}}\frac{\partial X_{A_j}}{\partial n_i}$$
+
+The first sum runs only over the sites on molecule $i$ — the direct contribution from molecule $i$'s own bonding state. The second sum runs over all sites on all molecules — the indirect contribution from how adding molecule $i$ changes the bonding state of every other molecule.
+
+### 5.13.3 Physical Interpretation
+
+For a non-associating component (e.g., methane) in a mixture with water:
+
+- The first sum is zero (methane has no association sites)
+- The second sum is nonzero because adding methane dilutes the system, reducing the density and thereby changing water's site fractions
+
+This means methane has a nonzero association contribution to its fugacity coefficient even though it has no association sites. The effect arises because methane molecules occupy space that could otherwise be occupied by water molecules — reducing the average number of hydrogen bonds in the system and indirectly affecting the chemical potential.
+
+For water in the same mixture:
+
+- The first sum reflects water's own bonding state (partially bonded, $X_A < 1$)
+- The second sum reflects how adding one more water molecule perturbs the bonding network
+
+The net effect is that water's fugacity is reduced by association (hydrogen bonds stabilize water in the liquid phase), leading to lower vapor pressure and lower solubility in the gas phase compared to SRK predictions.
 
 ## Summary
 

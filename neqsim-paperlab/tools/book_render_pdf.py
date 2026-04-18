@@ -18,6 +18,9 @@ from pathlib import Path
 
 import book_builder
 from render_pdf import strip_tags_and_comments, postprocess_typst
+from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
+                            resolve_citations_numbered_plain, build_key_to_num,
+                            format_bib_entry_plain)
 
 # ---------------------------------------------------------------------------
 # Typst preamble for a book
@@ -157,15 +160,23 @@ def build_book_typst_preamble(cfg, profile=None):
 # Chapter preprocessing
 # ---------------------------------------------------------------------------
 
-def _preprocess_chapter(text, ch_num, figures_dir=None):
+def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None):
     """Clean chapter markdown for typst conversion.
 
     - Strip HTML comments and \\tag{}
     - Fix figure paths to point to the copy in submission/
+    - Resolve \\cite{key} to [N]
+    - Strip empty ## References placeholder
     """
     text = strip_tags_and_comments(text)
 
-    # Rewrite relative figure paths: figures/foo.png → figures_chNN/foo.png
+    # Resolve citations
+    if key_to_num:
+        text = resolve_citations_numbered_plain(text, key_to_num)
+    # Strip empty "## References" placeholder
+    text = re.sub(r'##\s+References\s*\n?(?:\s*\n)*', '', text)
+
+    # Rewrite relative figure paths: figures/foo.png -> figures_chNN/foo.png
     if figures_dir:
         text = re.sub(
             r"!\[([^\]]*)\]\(figures/([^)]+)\)",
@@ -214,6 +225,12 @@ def render_book_pdf(book_dir, chapter_filter=None):
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
 
+    # Load bibliography and build citation numbering
+    bib_path = book_dir / "refs.bib"
+    bib_entries = parse_bibtex(bib_path)
+    all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
+    key_to_num = build_key_to_num(all_cited_keys)
+
     # Build preamble
     preamble = build_book_typst_preamble(cfg, profile)
 
@@ -239,9 +256,12 @@ def render_book_pdf(book_dir, chapter_filter=None):
                 shutil.rmtree(fig_dst)
             shutil.copytree(fig_src, fig_dst)
 
-        # Preprocess chapter markdown
+        # Preprocess chapter markdown (includes citation resolution)
         text = ch_md.read_text(encoding="utf-8")
-        text = _preprocess_chapter(text, ch_num, figures_dir=fig_src if fig_src.exists() else None)
+        text = _preprocess_chapter(
+            text, ch_num,
+            figures_dir=fig_src if fig_src.exists() else None,
+            key_to_num=key_to_num if key_to_num else None)
 
         # Write cleaned markdown to temp file
         clean_md = submission_dir / f"_ch{ch_num:02d}_clean.md"
@@ -271,8 +291,27 @@ def render_book_pdf(book_dir, chapter_filter=None):
         print("[book_render_pdf] No chapters to render")
         return None
 
+    # Build bibliography typst fragment if there are citations
+    bib_fragment = ""
+    if all_cited_keys and bib_entries:
+        bib_lines = ['#heading("References", level: 1)\n']
+        for key in all_cited_keys:
+            num = key_to_num[key]
+            fields = bib_entries.get(key, {})
+            if fields:
+                entry_text = format_bib_entry_plain(fields)
+            else:
+                entry_text = "[{}] -- not in refs.bib".format(key)
+            # Escape special typst characters in entry text
+            safe_text = entry_text.replace("#", "\\#").replace("@", "\\@")
+            bib_lines.append("[{}] {}\n".format(num, safe_text))
+        bib_fragment = "\n".join(bib_lines)
+
     # Assemble full typst document
-    full_typst = preamble + "\n\n".join(chapter_fragments)
+    all_fragments = chapter_fragments
+    if bib_fragment:
+        all_fragments = all_fragments + [bib_fragment]
+    full_typst = preamble + "\n\n".join(all_fragments)
 
     # Write master file
     master_typ = submission_dir / "book.typ"

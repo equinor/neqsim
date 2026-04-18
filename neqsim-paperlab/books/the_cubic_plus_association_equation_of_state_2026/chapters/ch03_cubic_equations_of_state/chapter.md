@@ -129,9 +129,68 @@ The choice between SRK and PR is sometimes debated, but in practice the differen
 
 For CPA, the SRK form is used as the cubic foundation because CPA was originally developed with SRK. A PR-based variant (PR-CPA) exists but is less commonly used in the oil and gas industry.
 
-## 3.4 Alpha Functions and Temperature Dependence
+### 3.3.3 Fugacity from a Cubic EoS
 
-### 3.4.1 The Soave Alpha Function
+The fugacity coefficient of component $i$ in a mixture is derived from the residual chemical potential:
+
+$$\ln \varphi_i = \frac{1}{RT}\int_V^\infty \left[\left(\frac{\partial P}{\partial n_i}\right)_{T,V,n_{j\neq i}} - \frac{RT}{V}\right] dV - \ln Z$$
+
+For SRK, this yields:
+
+$$\ln \varphi_i = \frac{b_i}{b}(Z-1) - \ln(Z-B) - \frac{A}{B}\left(\frac{2\sum_j x_j a_{ij}}{a} - \frac{b_i}{b}\right)\ln\left(1 + \frac{B}{Z}\right)$$
+
+where $A = aP/(R^2T^2)$, $B = bP/(RT)$, and $Z$ is the compressibility factor. This expression provides the thermodynamic backbone that CPA builds upon — the association contribution adds additional terms to $\ln \varphi_i$ involving the site fractions $X_A$ (Chapter 5).
+
+### 3.3.4 Cubic Root Selection and Phase Stability
+
+The cubic equation in $Z$ can yield one or three real roots. When three real roots exist:
+
+- The **largest root** corresponds to the vapor (or gas-like) phase
+- The **smallest positive root** corresponds to the liquid phase
+- The **middle root** is thermodynamically unstable (negative compressibility)
+
+The correct root is selected by comparing Gibbs energies. For a single-phase calculation, the root with the lower molar Gibbs energy $G = H - TS$ (or equivalently, the lower fugacity) is the stable phase.
+
+For CPA, root selection is more complex because the association term modifies the pressure–volume relationship. The association contribution always reduces the pressure at a given volume (association is attractive), which can shift the liquid root to smaller volumes and change which root is the global minimum.
+
+### 3.3.5 Comparison of SRK and PR for Liquid Density
+
+A persistent criticism of SRK is that it overpredicts liquid molar volumes by 5–15% for most compounds. PR was designed to improve this:
+
+| Compound | $V_L^{\text{exp}}$ (cm$^3$/mol) | $V_L^{\text{SRK}}$ | Error (%) | $V_L^{\text{PR}}$ | Error (%) |
+|----------|-------------------------------|--------------------|-----------|--------------------|-----------|
+| Methane (111 K) | 37.9 | 42.8 | +12.9 | 39.5 | +4.2 |
+| n-Hexane (298 K) | 131.6 | 149.1 | +13.3 | 137.0 | +4.1 |
+| Water (298 K) | 18.07 | 18.9 | +4.6 | 17.2 | $-4.8$ |
+| Methanol (298 K) | 40.7 | 44.2 | +8.6 | 41.0 | +0.7 |
+
+*Table 3.2: Liquid molar volume predictions of SRK and PR.*
+
+Note that PR tends to **under-predict** volumes for small molecules like water, while SRK consistently **over-predicts**. For CPA, the association term provides an additional volume correction that improves liquid densities for hydrogen-bonding fluids beyond what either cubic EoS achieves alone.
+
+## 3.4 Volume Translation
+
+### 3.4.1 The Péneloux Correction
+
+Péneloux et al. (1982) proposed a simple volume translation that shifts the molar volume without affecting VLE calculations:
+
+$$V^{\text{corrected}} = V^{\text{EoS}} - \sum_i x_i c_i$$
+
+where $c_i$ is a component-specific volume shift parameter, typically fitted to match the experimental saturated liquid density at a reference temperature. The key property of this correction is that it does not change fugacity coefficients — the VLE results are identical with and without the correction.
+
+For the SRK-based CPA in NeqSim, the Péneloux correction significantly improves liquid density predictions. Without volume translation, SRK-CPA may overpredict liquid volumes by 3–10%; with the correction, errors are typically reduced to 1–3%.
+
+### 3.4.2 Temperature-Dependent Volume Translation
+
+The Péneloux correction with a constant $c_i$ is accurate near the reference temperature but degrades at other temperatures. Several temperature-dependent correlations have been proposed:
+
+$$c_i(T) = c_i^0 + c_i^1(T - T_{\text{ref}})$$
+
+or more sophisticated functions involving the reduced temperature $T_r$. NeqSim supports both constant and temperature-dependent volume translation for CPA.
+
+## 3.5 Alpha Functions and Temperature Dependence
+
+### 3.5.1 The Soave Alpha Function
 
 The original Soave alpha function:
 
@@ -139,7 +198,7 @@ $$\alpha(T_r) = \left[1 + m(1 - \sqrt{T_r})\right]^2$$
 
 where $T_r = T/T_c$ is the reduced temperature, works well for $T_r < 1$ but can exhibit unphysical behavior at high supercritical temperatures (negative values of $\alpha$ for components with high $\omega$).
 
-### 3.4.2 The Mathias–Copeman Alpha Function
+### 3.5.2 The Mathias–Copeman Alpha Function
 
 For improved accuracy, particularly for polar and associating components, the Mathias–Copeman (1983) alpha function provides additional flexibility:
 
@@ -151,7 +210,7 @@ The three parameters $c_1$, $c_2$, $c_3$ are fitted to experimental vapor pressu
 
 In the context of CPA, the alpha function is particularly important for the energy parameter of the cubic term. For associating components, the effective temperature dependence of $a(T)$ captures both the changing dispersion interactions and, to some extent, compensates for simplified treatment of the reference term.
 
-### 3.4.3 The Twu Alpha Function
+### 3.5.3 The Twu Alpha Function
 
 Twu et al. (1991) proposed an alpha function that is guaranteed to be positive and monotonically decreasing:
 
@@ -159,60 +218,17 @@ $$\alpha(T_r) = T_r^{N(M-1)} \exp\left[L(1 - T_r^{NM})\right]$$
 
 This form has better thermodynamic consistency at high temperatures and is used in some CPA implementations.
 
-## 3.5 Volume Translation
+### 3.5.4 Thermodynamic Consistency of Alpha Functions
 
-### 3.5.1 The Péneloux Correction
+An important consideration for any alpha function is thermodynamic consistency. A physically consistent alpha function must satisfy:
 
-Both SRK and PR systematically overpredict liquid molar volumes. Péneloux et al. (1982) showed that a simple volume shift can correct this without affecting vapor–liquid equilibrium:
+1. $\alpha(T_r) > 0$ for all $T_r$ (positive energy parameter)
+2. $\frac{d\alpha}{dT_r} < 0$ for $T_r > 0$ (attraction decreases with temperature)
+3. $\frac{d^2\alpha}{dT_r^2} > 0$ for $T_r > 0$ (convex function — ensures correct $C_P$ behavior)
 
-$$V_m^{\text{corrected}} = V_m^{\text{EoS}} - c$$
+The Soave alpha function satisfies conditions 1 and 2 for $T_r < [1 + 1/m]^2$ but violates condition 2 for very high temperatures. The Twu function satisfies all three conditions by construction. For CPA applications, where most calculations involve $T_r < 1$ for the associating components, the Soave function is generally adequate.
 
-where $c$ is the volume translation parameter. For component $i$:
-
-$$c_i = 0.40768 \frac{RT_{c,i}}{P_{c,i}} \left(0.29441 - Z_{\text{RA},i}\right)$$
-
-where $Z_{\text{RA}}$ is the Rackett compressibility factor.
-
-The remarkable property of the Péneloux correction is that it does not change the fugacity coefficients — the VLE predictions remain identical, while liquid densities improve significantly.
-
-### 3.5.2 Temperature-Dependent Volume Translation
-
-For improved accuracy over wide temperature ranges, temperature-dependent volume translation can be used:
-
-$$c(T) = c_0 + c_1(T - T_{\text{ref}})$$
-
-However, care must be taken: temperature-dependent volume translation can introduce thermodynamic inconsistencies (crossing of isotherms in the $P$-$V$ diagram), so constant volume translation is generally preferred.
-
-### 3.5.3 Volume Translation in NeqSim
-
-NeqSim supports volume translation for both SRK and CPA:
-
-```python
-from neqsim import jneqsim
-
-# Without volume translation
-fluid_no_vt = jneqsim.thermo.system.SystemSrkCPAstatoil(298.15, 1.01325)
-fluid_no_vt.addComponent("water", 1.0)
-fluid_no_vt.setMixingRule(10)
-ops1 = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid_no_vt)
-ops1.TPflash()
-fluid_no_vt.initProperties()
-
-# With Peneloux volume translation
-fluid_vt = jneqsim.thermo.system.SystemSrkCPAstatoil(298.15, 1.01325)
-fluid_vt.addComponent("water", 1.0)
-fluid_vt.setMixingRule(10)
-fluid_vt.useVolumeCorrection(True)
-ops2 = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid_vt)
-ops2.TPflash()
-fluid_vt.initProperties()
-
-print(f"Without volume translation: {fluid_no_vt.getDensity('kg/m3'):.1f} kg/m3")
-print(f"With volume translation: {fluid_vt.getDensity('kg/m3'):.1f} kg/m3")
-print(f"Experimental (water at 25C): 997.0 kg/m3")
-```
-
-## 3.6 Mixing Rules
+## 3.6 Mixing Rules for Cubic EoS
 
 ### 3.6.1 Classical van der Waals Mixing Rules
 
@@ -257,6 +273,121 @@ The water–n-alkane mutual solubilities exhibit characteristic behavior:
 - Both solubilities have a minimum as a function of temperature
 
 Classical cubic EoS with a single $k_{ij}$ cannot reproduce these trends because $k_{ij}$ is essentially a constant correction that cannot capture the temperature-dependent effects of association. CPA resolves this by explicitly accounting for the hydrogen-bond network in the aqueous phase.
+
+## 3.8 The Pressure–Volume Isotherm and Phase Stability
+
+### 3.8.1 Subcritical Isotherms and the van der Waals Loop
+
+At temperatures below the critical temperature, a cubic EoS produces a characteristic S-shaped (van der Waals loop) isotherm in the $P$–$V_m$ diagram. Between the liquid and vapor volumes, the pressure first decreases (physically reasonable), then increases (mechanically unstable region where $(\partial P/\partial V_m)_T > 0$), before decreasing again.
+
+The mechanical stability condition requires:
+
+$$\left(\frac{\partial P}{\partial V_m}\right)_T < 0$$
+
+The region where this condition is violated ($V_m^{\text{spinodal,L}} < V_m < V_m^{\text{spinodal,V}}$) is the **spinodal region**, bounded by the locus of inflection points. Inside the spinodal, the system is unconditionally unstable — any infinitesimal perturbation causes spontaneous phase separation. The region between the spinodal and the saturation curve (binodal) is **metastable** — the system is mechanically stable but thermodynamically unstable.
+
+### 3.8.2 The Maxwell Equal-Area Construction
+
+The equilibrium vapor pressure $P^{\text{sat}}$ at a given temperature is determined by the Maxwell equal-area rule: the horizontal line at $P = P^{\text{sat}}$ divides the van der Waals loop into two regions of equal area.
+
+Mathematically, this is equivalent to requiring that the fugacities of the two coexisting phases are equal:
+
+$$f^L(T, P^{\text{sat}}) = f^V(T, P^{\text{sat}})$$
+
+which is the same as:
+
+$$\int_{V_m^L}^{V_m^V} \left(P - P^{\text{sat}}\right) dV_m = 0$$
+
+This integral represents the net work in a reversible isothermal expansion from liquid to vapor volume. The two "lobes" of the van der Waals loop above and below $P^{\text{sat}}$ must cancel exactly.
+
+The Maxwell construction provides physical insight into how cubic EoS predict phase equilibrium: the saturation pressure is not an input but emerges naturally from the shape of the isotherm. Any change to the EoS parameters ($a$, $b$, $\alpha$) shifts the isotherm shape and hence the predicted saturation pressure.
+
+### 3.8.3 Critical Point from the EoS
+
+At the critical point, the van der Waals loop collapses to an inflection point where:
+
+$$\left(\frac{\partial P}{\partial V_m}\right)_{T_c} = 0, \quad \left(\frac{\partial^2 P}{\partial V_m^2}\right)_{T_c} = 0, \quad \left(\frac{\partial^3 P}{\partial V_m^3}\right)_{T_c} < 0$$
+
+These conditions yield the critical properties in terms of the EoS parameters. For SRK:
+
+$$T_c = \frac{a}{b R} \cdot \frac{1}{2.4694}, \quad P_c = \frac{a}{b^2} \cdot 0.04278, \quad Z_c = 1/3$$
+
+The fact that SRK predicts $Z_c = 1/3$ for all substances (compared to experimental values of 0.23–0.29) is a fundamental limitation. CPA modifies the critical behavior by adding the association contribution to the pressure, which changes the critical point location and improves the predicted $Z_c$ for associating fluids (though the improvement is modest).
+
+### 3.8.4 The Acentric Factor and Its Role
+
+Pitzer's acentric factor $\omega$ quantifies the departure of a molecule from simple (spherical, non-polar) fluid behavior:
+
+$$\omega = -\log_{10}\left(\frac{P^{\text{sat}}}{P_c}\right)_{T_r=0.7} - 1$$
+
+For noble gases and methane, $\omega \approx 0$. For normal alkanes, $\omega$ increases roughly linearly with chain length: ethane (0.099), propane (0.152), n-butane (0.200), n-octane (0.399). For polar and associating molecules, $\omega$ includes both the non-sphericity and the polar/association contributions: water (0.345), methanol (0.564), acetic acid (0.467).
+
+The fact that $\omega$ lumps together shape, polarity, and association effects is precisely why the Soave alpha function cannot fully capture the behavior of associating molecules — it treats water ($\omega = 0.345$) similarly to a moderately non-spherical hydrocarbon like isobutane ($\omega = 0.181$), despite the fundamentally different physics.
+
+## 3.9 Worked Example: Computing Properties from SRK
+
+To solidify the concepts, let us work through a complete example of computing thermodynamic properties for pure methane using the SRK equation.
+
+### 3.9.1 Critical Properties and Parameters
+
+For methane: $T_c = 190.56$ K, $P_c = 45.99$ bar, $\omega = 0.0115$.
+
+The SRK parameters at $T = 200$ K are:
+
+$$\alpha(T) = [1 + m(1 - \sqrt{T_r})]^2$$
+
+where $m = 0.480 + 1.574\omega - 0.176\omega^2 = 0.480 + 1.574(0.0115) - 0.176(0.0115)^2 = 0.4981$.
+
+At $T_r = T/T_c = 200/190.56 = 1.0495$:
+
+$$\alpha = [1 + 0.4981(1 - \sqrt{1.0495})]^2 = [1 + 0.4981(-0.0243)]^2 = 0.9760$$
+
+$$a(T) = \frac{0.42748 R^2 T_c^2}{P_c} \alpha = \frac{0.42748 \times (83.14)^2 \times (190.56)^2}{45.99 \times 10^5} \times 0.9760$$
+
+$$b = \frac{0.08664 R T_c}{P_c} = \frac{0.08664 \times 83.14 \times 190.56}{45.99 \times 10^5}$$
+
+### 3.9.2 Solving the Cubic Equation
+
+At $T = 200$ K and $P = 50$ bar, the SRK equation in terms of $Z = PV/(nRT)$:
+
+$$Z^3 - Z^2 + (A - B - B^2)Z - AB = 0$$
+
+where $A = aP/(R^2T^2)$ and $B = bP/(RT)$. This cubic equation has either one or three real roots. For a vapor-liquid system at these conditions, there are three real roots: the largest ($Z^V$) corresponds to the vapor, the smallest ($Z^L$) to the liquid.
+
+### 3.9.3 Computing Fugacity
+
+The fugacity coefficient from SRK is:
+
+$$\ln \varphi = (Z-1) - \ln(Z-B) - \frac{A}{B}\ln\left(1 + \frac{B}{Z}\right)$$
+
+For a mixture, the component fugacity coefficient is:
+
+$$\ln \varphi_i = \frac{b_i}{b}(Z-1) - \ln(Z-B) + \frac{A}{B}\left(\frac{b_i}{b} - \frac{2\sum_j x_j a_{ij}}{a}\right)\ln\left(1 + \frac{B}{Z}\right)$$
+
+This expression is the starting point for the CPA fugacity coefficient derived in Chapter 5, which adds the association contribution.
+
+### 3.9.4 NeqSim Verification
+
+```python
+from neqsim import jneqsim
+
+# Pure methane at 200 K, 50 bar
+fluid = jneqsim.thermo.system.SystemSrkEos(200.0, 50.0)
+fluid.addComponent("methane", 1.0)
+fluid.setMixingRule("classic")
+
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+Z = fluid.getPhase(0).getZ()
+rho = fluid.getDensity("kg/m3")
+fug = fluid.getPhase(0).getComponent("methane").getFugacityCoefficient()
+
+print(f"Z = {Z:.4f}")
+print(f"Density = {rho:.2f} kg/m3")
+print(f"Fugacity coefficient = {fug:.4f}")
+```
 
 ## Summary
 

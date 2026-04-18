@@ -36,14 +36,31 @@ $$A = A^{\text{ideal}} + A^{\text{SRK}} + A^{\text{assoc}} + A^{\text{Born}} + A
 
 where the additional terms are:
 
-- $A^{\text{Born}}$: Born solvation energy — accounts for the energy of transferring ions from vacuum to a dielectric medium
-- $A^{\text{MSA}}$: Mean Spherical Approximation — a statistical mechanical model for ion-ion electrostatic interactions
+**Born solvation term:**
 
-The Debye screening parameter $\Gamma$ (related to the Debye-Hückel screening length) is determined by:
+The Born term accounts for the energy of transferring an ion from vacuum to a dielectric medium (the solvent). It is given by:
+
+$$\frac{A^{\text{Born}}}{RT} = -\frac{N_A e^2}{8\pi\varepsilon_0 RT} \left(1 - \frac{1}{\varepsilon_r}\right) \sum_i n_i \frac{z_i^2}{\sigma_i^{\text{Born}}}$$
+
+where $N_A$ is Avogadro's number, $e$ is the elementary charge, $\varepsilon_0$ is the vacuum permittivity, $\varepsilon_r$ is the relative permittivity of the solvent mixture (which depends on composition and density), $z_i$ is the ion charge, and $\sigma_i^{\text{Born}}$ is the Born diameter of the ion. The relative permittivity of the mixture is computed from a mixing rule involving the pure-component static permittivities, which introduces an additional composition dependence.
+
+**MSA (Mean Spherical Approximation) term:**
+
+The MSA term models the long-range electrostatic interactions between ions. It is based on solving the Ornstein-Zernike integral equation for charged hard spheres in a dielectric continuum:
+
+$$\frac{A^{\text{MSA}}}{RT} = \frac{V \Gamma^3}{3\pi} - \sum_i n_i \frac{z_i^2 e^2 \Gamma}{4\pi\varepsilon_0 \varepsilon_r k_B T (1 + \Gamma\sigma_i)}$$
+
+where $\Gamma$ is the MSA screening parameter, analogous to the Debye-Hückel screening length but accounting for ion size. The screening parameter is determined by the implicit equation:
 
 $$4\Gamma^2 = \frac{e^2}{\varepsilon_0 \varepsilon_r k_B T} \sum_i \frac{\rho_i z_i^2}{(1 + \Gamma \sigma_i)^2}$$
 
-where $z_i$ is the ion charge, $\sigma_i$ is the ion diameter, and $\varepsilon_r$ is the relative permittivity of the solvent mixture.
+where $\rho_i = n_i/V$ is the ion number density, $z_i$ is the ion valence, and $\sigma_i$ is the ion hard-sphere diameter. This equation must be solved iteratively for $\Gamma$, but convergence is rapid (3–5 iterations).
+
+The total contribution of the electrolyte terms to the chemical potential of species $i$ is:
+
+$$\mu_i^{\text{elec}} = \mu_i^{\text{Born}} + \mu_i^{\text{MSA}} = \left(\frac{\partial A^{\text{Born}}}{\partial n_i}\right)_{T,V,n_{j\neq i}} + \left(\frac{\partial A^{\text{MSA}}}{\partial n_i}\right)_{T,V,n_{j\neq i}}$$
+
+These derivatives include contributions from the composition dependence of $\varepsilon_r$ and $\Gamma$, making the implementation non-trivial but straightforward.
 
 ### 12.1.3 NeqSim Implementation
 
@@ -133,7 +150,7 @@ Several SAFT variants have been developed, each with different choices for the r
 
 ### 12.3.2 PC-SAFT (Perturbed Chain SAFT)
 
-PC-SAFT (Gross and Sadowski, 2001) is the most widely used SAFT variant in industrial applications. Key differences from CPA:
+PC-SAFT \cite{Gross2001} is the most widely used SAFT variant in industrial applications. Key differences from CPA:
 
 | Feature | CPA | PC-SAFT |
 |---------|-----|---------|
@@ -184,13 +201,34 @@ PC-SAFT tends to be more accurate for pure-component properties (especially dens
 
 ### 12.3.5 SAFT-VR Mie and SAFT-$\gamma$ Mie
 
-More recent SAFT variants use the Mie potential (a generalized Lennard-Jones potential with variable attractive and repulsive exponents) as the basis:
+More recent SAFT variants use the Mie potential (a generalized Lennard-Jones potential with variable attractive and repulsive exponents) as the basis for the monomer reference term:
 
 $$u(r) = C \varepsilon \left[\left(\frac{\sigma}{r}\right)^{\lambda_r} - \left(\frac{\sigma}{r}\right)^{\lambda_a}\right]$$
 
-where $\lambda_r$ and $\lambda_a$ are the repulsive and attractive exponents. The additional parameters ($\lambda_r$, $\lambda_a$) provide extra flexibility to match second-derivative properties (speed of sound, heat capacity) that CPA and standard PC-SAFT cannot simultaneously fit with three non-association parameters.
+where $\lambda_r$ and $\lambda_a$ are the repulsive and attractive exponents (the Lennard-Jones 12-6 potential is recovered with $\lambda_r = 12$, $\lambda_a = 6$), and $C = \frac{\lambda_r}{\lambda_r - \lambda_a}\left(\frac{\lambda_r}{\lambda_a}\right)^{\lambda_a/(\lambda_r - \lambda_a)}$ is a normalization constant ensuring the minimum of the potential is $-\varepsilon$.
 
-SAFT-$\gamma$ Mie combines the Mie potential with a group-contribution approach, enabling fully predictive calculations for complex molecules. This represents the state of the art in molecular-based EoS, but at significantly higher computational cost.
+The additional parameters ($\lambda_r$, $\lambda_a$) provide extra flexibility to match second-derivative properties (speed of sound, heat capacity) that CPA and standard PC-SAFT cannot simultaneously fit with three non-association parameters.
+
+**SAFT-$\gamma$ Mie** combines the Mie potential with a group-contribution approach:
+
+1. Molecules are decomposed into functional groups (CH$_3$, CH$_2$, OH, C=O, etc.)
+2. Each group has Mie potential parameters ($\sigma_k$, $\varepsilon_k$, $\lambda_{r,k}$, $\lambda_{a,k}$)
+3. Group–group interactions are described by unlike Mie parameters
+4. The chain formation (bonding groups into molecules) uses Wertheim's TPT1
+
+This approach enables fully predictive calculations for complex molecules. For example, a new glycol can be predicted from its constituent groups without any fitting. The accuracy is impressive:
+
+| Property | SAFT-$\gamma$ Mie AAD (%) | CPA AAD (%) |
+|----------|---------------------------|-------------|
+| Vapor pressure | 1–3 | 0.5–2 |
+| Liquid density | 0.5–1 | 0.5–2 |
+| Speed of sound | 1–3 | 5–15 |
+| Heat capacity | 1–5 | 3–10 |
+| VLE (predictive) | 3–10 | 5–15 (with $k_{ij}$) |
+
+*Table 12.3: SAFT-$\gamma$ Mie vs. CPA accuracy (SAFT-$\gamma$ Mie is predictive; CPA values assume fitted parameters).*
+
+The trade-off is significantly higher computational cost (5–20× slower than CPA) and greater implementation complexity.
 
 ## 12.4 Unified Mixing Rule CPA (UMR-CPA)
 
@@ -392,14 +430,281 @@ Process digital twins require real-time thermodynamic predictions. CPA's combina
 
 NeqSim's automation API, combined with CPA, provides a ready-made foundation for digital twin applications.
 
+## 12.10 Comprehensive Comparison: CPA vs. Alternative Models
+
+To aid practitioners in model selection, this section provides a detailed comparison of CPA with the main alternative thermodynamic models for associating systems.
+
+### 12.10.1 Performance by Application Domain
+
+| Application | CPA | PC-SAFT | SAFT-VR | NRTL + SRK | UNIFAC + SRK |
+|-------------|-----|---------|---------|------------|--------------|
+| Water–gas VLE | ★★★★★ | ★★★★ | ★★★★ | ★★★ | ★★ |
+| Water–oil LLE | ★★★★ | ★★★★ | ★★★★ | ★★ | ★★ |
+| Glycol VLE | ★★★★★ | ★★★★ | ★★★ | ★★★★ | ★★★ |
+| CO$_2$–brine | ★★★★ | ★★★★ | ★★★★ | ★★★ | ★★ |
+| Alcohol–water | ★★★★ | ★★★★★ | ★★★★ | ★★★★★ | ★★★★ |
+| Electrolyte systems | ★★★ (e-CPA) | ★★ | ★★ | ★★★★★ | ★★★ |
+| Asphaltenes | ★★★ | ★★★★ | ★★★ | ★ | ★ |
+| High pressure | ★★★★★ | ★★★★★ | ★★★★★ | ★★ | ★★ |
+| Computational speed | ★★★★ | ★★★ | ★★ | ★★★★★ | ★★★★ |
+| Ease of implementation | ★★★★ | ★★★ | ★★ | ★★★★★ | ★★★★ |
+
+*Table 12.4: Qualitative comparison of thermodynamic models by application domain (★ = poor to ★★★★★ = excellent).*
+
+### 12.10.2 Parameter Requirements
+
+| Model | Pure params (associating) | Pure params (non-assoc.) | Binary params | Typical data needed |
+|-------|--------------------------|-------------------------|---------------|-------------------|
+| CPA | 5 ($a_0$, $b$, $c_1$, $\varepsilon$, $\beta$) | 3 ($T_c$, $P_c$, $\omega$) | 1 ($k_{ij}$) | VLE, density |
+| PC-SAFT | 5 ($m$, $\sigma$, $\varepsilon/k$, $\varepsilon^{AB}$, $\kappa^{AB}$) | 3 ($m$, $\sigma$, $\varepsilon/k$) | 1 ($k_{ij}$) | VLE, density |
+| SAFT-VR | 6 ($m$, $\sigma$, $\varepsilon$, $\lambda_r$, $\varepsilon^{AB}$, $K^{AB}$) | 4 | 1 | VLE, density |
+| SAFT-$\gamma$ Mie | Group params | Group params | 0 (predictive) | Group interaction data |
+| NRTL | — | — | 2–3 ($\tau_{12}$, $\tau_{21}$, $\alpha$) | VLE |
+| UNIFAC | Group params | Group params | 0 (predictive) | Group interaction data |
+
+*Table 12.5: Parameter requirements for different thermodynamic models.*
+
+CPA's key advantage is that it uses the same 3 parameters ($T_c$, $P_c$, $\omega$) as classical cubic EoS for non-associating components. This means the extensive parameter databases developed for SRK/PR over decades can be used directly — only the associating components need the 5 CPA-specific parameters.
+
+### 12.10.3 When Not to Use CPA
+
+Despite its strengths, CPA is not the best choice for all systems:
+
+1. **Pure activity coefficient problems** (low pressure, liquid phase only): NRTL or UNIFAC may be simpler and equally accurate
+2. **Polymer solutions**: SAFT variants with chain contributions are better suited
+3. **Strongly ionic systems** (concentrated brines > 6 mol/kg): specialized electrolyte models may be required
+4. **Quantum fluids** (H$_2$, He at very low temperatures): require quantum corrections not in CPA
+5. **Multifunctional molecules** with complex association patterns: SAFT-$\gamma$ Mie with its group-contribution approach may be more predictive
+
+## 12.11 The Road Ahead: CPA in 2030 and Beyond
+
+### 12.11.1 Current Research Frontiers
+
+Active research areas in CPA development include:
+
+**Self-consistent association models**: Current CPA uses a two-step approach (cubic + association). Truly self-consistent models that derive both the repulsive-attractive and association terms from the same statistical mechanical framework would be more rigorous.
+
+**Machine learning-assisted parameterization**: Neural networks trained on molecular simulation data can generate initial CPA parameter estimates, reducing the need for extensive regression against experimental data. Preliminary work has shown 50–70% reduction in fitting effort.
+
+**Automated EoS selection**: Given a set of components and conditions, an expert system could automatically select the best EoS (SRK, CPA, PC-SAFT, electrolyte CPA) based on the system characteristics. NeqSim's class hierarchy is designed to facilitate this.
+
+### 12.11.2 The CCS and Hydrogen Economy
+
+The transition to low-carbon energy creates new demands for thermodynamic modeling:
+
+- **CO$_2$–H$_2$–N$_2$–H$_2$O–H$_2$S** multicomponent systems for CCS with H$_2$ byproducts
+- **NH$_3$ as hydrogen carrier**: ammonia is a self-associating molecule well suited to CPA
+- **MEA/MDEA/PZ blends**: amine solvents for post-combustion capture require electrolyte CPA
+- **Geological storage**: CO$_2$–brine–mineral interactions under reservoir conditions
+
+CPA is well-positioned for these applications because it handles the key molecular interactions (hydrogen bonding in water/ammonia/amines, solvation with CO$_2$, non-associating gases H$_2$/N$_2$/CH$_4$) within a single thermodynamic framework.
+
+### 12.11.3 Towards Autonomous Process Design
+
+The combination of CPA with modern AI and optimization tools points toward autonomous process design:
+
+1. An AI agent receives process specifications
+2. It selects the appropriate fluid model (CPA for associating systems)
+3. It builds and runs the process simulation using NeqSim
+4. It optimizes the design against techno-economic criteria
+5. It validates the results against engineering standards
+
+NeqSim's automation API (`ProcessAutomation`) and the agentic infrastructure (`AgentSession`, `TaskResultValidator`) provide the technical foundation for this vision. The CPA equation of state, with its balance of rigor, accuracy, and computational efficiency, is ideally suited as the thermodynamic engine in such autonomous workflows.
+
+## 12.12 Detailed Formulation of Electrolyte CPA (e-CPA)
+
+### 12.12.1 The Born and Debye–Hückel Contributions
+
+Electrolyte CPA extends the standard CPA Helmholtz energy with two additional terms that account for ionic interactions:
+
+$$A = A^{\text{SRK}} + A^{\text{assoc}} + A^{\text{Born}} + A^{\text{DH}}$$
+
+The **Born solvation** term accounts for the energy of transferring an ion from vacuum into the dielectric medium of the solvent:
+
+$$\frac{A^{\text{Born}}}{RT} = -\frac{N_A e^2}{8\pi\varepsilon_0 k_B T} \sum_i n_i \frac{z_i^2}{r_i^{\text{Born}}} \left(1 - \frac{1}{\varepsilon_r}\right)$$
+
+where $z_i$ is the ion charge, $r_i^{\text{Born}}$ is the Born radius, $\varepsilon_0$ is the vacuum permittivity, and $\varepsilon_r$ is the relative permittivity of the solvent mixture.
+
+The **Debye–Hückel** term captures the long-range electrostatic interactions between ions:
+
+$$\frac{A^{\text{DH}}}{RT} = -\frac{V}{4\pi N_A d_s^3} \left[\ln(1 + \kappa d_s) - \kappa d_s + \frac{(\kappa d_s)^2}{2}\right]$$
+
+where $\kappa$ is the inverse Debye screening length:
+
+$$\kappa^2 = \frac{e^2 N_A}{\varepsilon_0 \varepsilon_r k_B T V} \sum_i n_i z_i^2$$
+
+and $d_s$ is the closest approach distance for ions.
+
+### 12.12.2 The Dielectric Constant Model
+
+A critical input to e-CPA is the relative permittivity $\varepsilon_r$ of the solvent mixture. For pure water, $\varepsilon_r$ varies from 87 (0°C) to 55 (100°C). For MEG–water mixtures, $\varepsilon_r$ decreases as MEG content increases.
+
+The temperature and composition dependence is modeled as:
+
+$$\varepsilon_r = 1 + \frac{1}{V} \sum_i n_i \alpha_i^{\text{pol}} f(T)$$
+
+where $\alpha_i^{\text{pol}}$ is the polarizability volume and $f(T)$ is a temperature function fitted to experimental permittivity data.
+
+The coupling between $\varepsilon_r$ and the fluid state (through volume and composition) means that the electrostatic terms contribute to the equation of state and the chemical potentials, affecting both the pressure and the fugacities.
+
+### 12.12.3 Applications of e-CPA
+
+| System | CPA Accuracy | e-CPA Accuracy | Key Improvement |
+|--------|-------------|----------------|-----------------|
+| CO$_2$–H$_2$O | 3% error in $x_{\text{CO}_2}$ | 3% (no ions) | Same for pure water |
+| CO$_2$–H$_2$O–NaCl (1 m) | 15% error | 5% error | Salting-out captured |
+| CO$_2$–H$_2$O–NaCl (5 m) | 40% error | 8% error | Essential for brines |
+| H$_2$O–NaCl mean $\gamma_\pm$ | Not applicable | 3% to 6 molal | Ion activity coefficients |
+| CH$_4$–H$_2$O–NaCl (4 m) | 25% error | 5% error | Salting-out of gas |
+
+*Table 12.6: Accuracy comparison of CPA vs. e-CPA for electrolyte systems.*
+
+The salting-out effect — reduced gas solubility in brine compared to pure water — is of major practical importance for CO$_2$ storage in saline aquifers and natural gas processing of sour water. Standard CPA cannot reproduce this effect because it has no mechanism for the ion–solvent interactions that modify the solvent's ability to dissolve gases.
+
+### 12.12.4 Ion-Specific Parameters: The Advanced e-CPA
+
+A significant improvement to e-CPA was proposed by Solbraa (2026), who introduced **ion-specific** short-range interaction parameters $W_0$ in the Debye–Hückel term. In the standard formulation, the $W_0$ parameter is a single salt-specific value. The advanced formulation allows each ion to have its own $W_0$, fitted to mean ionic activity coefficient data.
+
+The results across five representative salts demonstrate substantial accuracy improvements:
+
+| Salt | $W_0^{\text{cat}}$ | $W_0^{\text{an}}$ | e-CPA MAE | e-CPA-Adv MAE | Improvement |
+|------|:---:|:---:|:---:|:---:|:---:|
+| NaCl | $3.76 \times 10^{-3}$ | $-3.47 \times 10^{-3}$ | 9.9% | 4.4% | 56% |
+| KCl | $3.91 \times 10^{-3}$ | $-3.92 \times 10^{-3}$ | 5.4% | 1.0% | 82% |
+| LiCl | $3.78 \times 10^{-3}$ | $-4.26 \times 10^{-3}$ | 4.5% | 2.2% | 51% |
+| CaCl$_2$ | $-8.17 \times 10^{-3}$ | $4.08 \times 10^{-3}$ | 43.9% | 11.7% | 73% |
+| Na$_2$SO$_4$ | $3.43 \times 10^{-3}$ | $-6.91 \times 10^{-3}$ | 20.8% | 1.8% | 92% |
+| **Average** | | | **16.9%** | **4.2%** | **75%** |
+
+*Table 12.7: Ion-specific $W_0$ parameters and accuracy improvement for the advanced e-CPA (Solbraa 2026). MAE is mean absolute error for $\gamma_\pm$ from 0.001 to 6 molal.*
+
+The improvement is most dramatic for Na$_2$SO$_4$ (92% reduction in MAE) and CaCl$_2$ (73%), which are the salts most poorly described by the standard approach. Note the sign reversal for CaCl$_2$: the divalent Ca$^{2+}$ cation has a negative $W_0$, reflecting its stronger hydration shell that modifies the local solvent structure differently from monovalent cations.
+
+An important finding from this work is that **the Born solvation contribution is negligible** for activity coefficients. Although the Born term contributes significantly to the raw fugacity coefficient $\ln \varphi_i$, these contributions cancel exactly when computing the activity coefficient $\gamma_i = \varphi_i / \varphi_i^\infty$:
+
+| Contribution | $\ln \varphi_{\text{Na}^+}$ | $\Delta$(Adv − CPA) |
+|:---|:---:|:---:|
+| Total $\ln \varphi$ | $-118.3$ | $-37.4$ |
+| $\ln \varphi^\infty$ | (shifts by same amount) | $-37.4$ |
+| $\ln \gamma = \ln \varphi - \ln \varphi^\infty$ | $\sim 0.5$ | $< 10^{-7}$ (Born) |
+
+*Table 12.8: Cancellation of Born solvation in the activity coefficient (Solbraa 2026).*
+
+This means that efforts to improve e-CPA should focus on the Debye–Hückel term and the ion-specific $W_0$ parameters rather than on refining the Born model.
+
+### 12.12.5 Chloride Ion Transferability
+
+A key question for predictive capabilities is whether ion-specific parameters are transferable across different salts. Examining the Cl$^-$ parameters across four chloride salts:
+
+| Salt | $W_0(\text{Cl}^-)$ | Ratio to NaCl value |
+|------|:---:|:---:|
+| NaCl | $-3.47 \times 10^{-3}$ | 1.00 |
+| KCl | $-3.92 \times 10^{-3}$ | 1.13 |
+| LiCl | $-4.26 \times 10^{-3}$ | 1.23 |
+| CaCl$_2$ | $+4.08 \times 10^{-3}$ | −1.18 |
+
+*Table 12.9: Chloride $W_0$ values across different salts (Solbraa 2026).*
+
+The monovalent chloride salts (NaCl, KCl, LiCl) show consistent negative $W_0$ values within a factor of 1.23, suggesting reasonable transferability. However, the sign reversal for CaCl$_2$ indicates that ion-specific parameters are not fully transferable for mixed-valence systems — the divalent cation fundamentally alters the local electrostatic environment around chloride.
+
+```python
+from neqsim import jneqsim
+
+# e-CPA: CO2 solubility in brine vs. pure water
+for salt_molality in [0.0, 1.0, 2.0, 4.0]:
+    fluid = jneqsim.thermo.system.SystemElectrolyteCPAstatoil(
+        273.15 + 50.0, 100.0)
+    fluid.addComponent("CO2", 0.03)
+    fluid.addComponent("water", 0.97)
+    if salt_molality > 0:
+        # Add NaCl as ions
+        x_salt = salt_molality * 0.018015 / (1 + salt_molality * 0.018015)
+        fluid.addComponent("Na+", x_salt)
+        fluid.addComponent("Cl-", x_salt)
+    fluid.setMixingRule(10)
+    fluid.setMultiPhaseCheck(True)
+
+    ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+    ops.TPflash()
+    fluid.initProperties()
+
+    if fluid.hasPhaseType("aqueous"):
+        x_co2 = fluid.getPhase("aqueous").getComponent("CO2").getx()
+        print(f"NaCl = {salt_molality:.0f} m: CO2 mole frac in water = "
+              f"{x_co2:.5f}")
+```
+
+## 12.13 Mineral Scale Prediction with e-CPA
+
+Mineral scale deposition — the precipitation of sparingly soluble salts such as BaSO$_4$ (barite), CaCO$_3$ (calcite), and CaSO$_4$ (anhydrite) — is one of the most costly flow assurance challenges in oil and gas production. Scale forms when incompatible waters mix: for example, when sulfate-rich seawater contacts barium-rich formation water during waterflooding.
+
+### 12.13.1 Thermodynamic Framework for Scale Prediction
+
+The solubility product of a mineral salt M$_\nu$A$_\mu$ in aqueous solution is:
+
+$$K_{sp}(T, P) = a_{\text{M}^{z+}}^{\nu} \cdot a_{\text{A}^{z-}}^{\mu} = (m_{\text{M}} \gamma_{\text{M}})^{\nu} (m_{\text{A}} \gamma_{\text{A}})^{\mu}$$
+
+where $a_i$ is the ion activity, $m_i$ the molality, and $\gamma_i$ the molal activity coefficient. The saturation index (SI) is:
+
+$$\text{SI} = \log_{10}\left(\frac{Q}{K_{sp}}\right)$$
+
+where $Q$ is the ion activity product of the actual solution. When SI > 0, the solution is supersaturated and scale precipitation is thermodynamically favorable.
+
+The accuracy of scale prediction depends critically on the accuracy of the activity coefficients $\gamma_i$, which is where e-CPA's advantage over simpler models becomes decisive.
+
+### 12.13.2 Comparison of Activity Coefficient Models
+
+Three approaches are commonly used for activity coefficients in scale prediction:
+
+**Davies equation** (simplest): An empirical extension of the Debye–Hückel limiting law, valid to approximately 0.5 molal. Uses no adjustable parameters but degrades rapidly at higher ionic strengths typical of oilfield brines (1–6 molal).
+
+**Pitzer model**: The industry standard, using virial-type expansions with binary ($\beta_{ij}$) and ternary ($C_{ijk}$) ion interaction parameters. Accurate to 6+ molal for well-characterized salts, but requires extensive experimental data for parameter regression.
+
+**e-CPA**: Uses the equation-of-state framework with the ion-specific $W_0$ parameters from Table 12.7. Handles temperature, pressure, and composition effects self-consistently through the thermodynamic model.
+
+For oilfield brines with total dissolved solids (TDS) of 50,000–200,000 mg/L (ionic strength 0.8–3.4 molal), e-CPA provides accuracy comparable to Pitzer while offering the advantage of consistent temperature and pressure dependence without additional empirical correlations.
+
+### 12.13.3 Practical Scale Prediction Workflow
+
+```python
+from neqsim import jneqsim
+
+# Formation water (Ba-rich)
+formation = jneqsim.thermo.system.SystemElectrolyteCPAstatoil(
+    273.15 + 90.0, 200.0)
+formation.addComponent("water", 0.95)
+formation.addComponent("Na+", 0.02)
+formation.addComponent("Cl-", 0.02)
+formation.addComponent("Ba++", 0.001)
+formation.setMixingRule(10)
+
+# Seawater (SO4-rich)
+seawater = jneqsim.thermo.system.SystemElectrolyteCPAstatoil(
+    273.15 + 15.0, 200.0)
+seawater.addComponent("water", 0.96)
+seawater.addComponent("Na+", 0.015)
+seawater.addComponent("Cl-", 0.015)
+seawater.addComponent("SO4--", 0.002)
+seawater.setMixingRule(10)
+
+# Mix at various ratios and check supersaturation
+for sw_frac in [0.1, 0.3, 0.5, 0.7, 0.9]:
+    mixed = formation.clone()
+    # ... mixing and activity coefficient calculation
+    print(f"Seawater fraction {sw_frac:.0%}: check BaSO4 saturation index")
+```
+
 ## Summary
 
 Key points from this chapter:
 
 - Electrolyte CPA extends the model to brine systems and salt-containing processes
+- Ion-specific $W_0$ parameters reduce activity coefficient MAE from 16.9% to 4.2% (75% improvement)
+- The Born solvation contribution cancels in activity coefficients and can be neglected
 - Group-contribution CPA enables predictive calculations without experimental data
 - PC-SAFT offers better pure-component properties but similar VLE accuracy to CPA
 - CPA is preferred when speed, simplicity, and backward compatibility are important
+- Scale prediction benefits from e-CPA's self-consistent treatment of temperature and pressure effects
 - Asphaltene, hydrogen, and machine learning applications represent active research frontiers
 - The future lies in multiscale integration from quantum chemistry to process optimization
 - NeqSim provides a comprehensive platform for exploring all these directions

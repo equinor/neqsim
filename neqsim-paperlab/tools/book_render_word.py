@@ -12,6 +12,7 @@ Scientific book formatting with:
 - Auto-generated TOC field
 - Page numbers
 - Part separator pages
+- Citation resolution and bibliography
 """
 
 import re
@@ -30,6 +31,9 @@ except ImportError:
     HAS_DOCX = False
 
 import book_builder
+from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
+                            resolve_citations_numbered_plain, build_key_to_num,
+                            format_bib_entry_plain)
 
 try:
     from math_utils import latex_to_omml, latex_to_unicode
@@ -776,6 +780,12 @@ def render_book_word(book_dir, chapter_filter=None):
 
     eq_counter = EquationCounter()
 
+    # Load bibliography and build citation numbering
+    bib_path = book_dir / "refs.bib"
+    bib_entries = parse_bibtex(bib_path)
+    all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
+    key_to_num = build_key_to_num(all_cited_keys)
+
     # Title page
     if not chapter_filter:
         title_md = book_dir / "frontmatter" / "title_page.md"
@@ -881,11 +891,37 @@ def render_book_word(book_dir, chapter_filter=None):
         text = ch_md.read_text(encoding="utf-8")
         text = _strip_html_comments(text)
 
+        # Resolve citations: \cite{key} -> [N]
+        if key_to_num:
+            text = resolve_citations_numbered_plain(text, key_to_num)
+        # Strip empty "## References" placeholder (bibliography at end)
+        text = re.sub(r'##\s+References\s*\n?(?:\s*\n)*', '', text)
+
         figures_dir = ch_dir / "figures"
         _render_md_to_doc(
             doc, text, chapter_num=ch_num,
             figures_dir=figures_dir if figures_dir.exists() else None,
             eq_counter=eq_counter, fig_counter=fig_counter)
+
+    # Bibliography section
+    if all_cited_keys and bib_entries:
+        _add_page_break(doc)
+        doc.add_heading("References", level=1)
+        for key in all_cited_keys:
+            num = key_to_num[key]
+            fields = bib_entries.get(key, {})
+            if fields:
+                entry_text = format_bib_entry_plain(fields)
+            else:
+                entry_text = "[{}] -- not in refs.bib".format(key)
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent = Cm(1.0)
+            p.paragraph_format.first_line_indent = Cm(-1.0)
+            p.paragraph_format.space_after = Pt(2)
+            p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+            run = p.add_run("[{}]  {}".format(num, entry_text))
+            run.font.size = Pt(9)
+            run.font.name = "Times New Roman"
 
     # Backmatter
     if not chapter_filter:

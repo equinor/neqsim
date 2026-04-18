@@ -6,12 +6,15 @@ Extends render_html_generic.py with:
 - KaTeX for math rendering
 - Syntax-highlighted code blocks
 - Responsive design
+- Citation resolution and bibliography generation
 """
 
 import re
 from pathlib import Path
 
 import book_builder
+from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
+                            resolve_citations_numbered_html, collect_cited_keys)
 
 
 # ---------------------------------------------------------------------------
@@ -432,6 +435,13 @@ def render_book_html(book_dir, chapter_filter=None):
 
     title = cfg.get("title", "Untitled")
 
+    # Load bibliography
+    bib_path = book_dir / "refs.bib"
+    bib_entries = parse_bibtex(bib_path)
+
+    # Collect all cited keys across chapters (global numbering)
+    all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
+
     # Build HTML
     parts = []
     parts.append(_html_head(title))
@@ -474,6 +484,13 @@ def render_book_html(book_dir, chapter_filter=None):
         if ch_md.exists():
             text = ch_md.read_text(encoding="utf-8")
             text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+            # Resolve citations before converting to HTML
+            if bib_entries and all_cited_keys:
+                text, _ = resolve_citations_numbered_html(
+                    text, bib_entries, all_cited_keys)
+            # Strip empty "## References" sections (will be rendered at end)
+            text = re.sub(
+                r'##\s+References\s*\n?(?:\s*\n)*', '', text)
             parts.append(_md_to_html(text))
         else:
             parts.append(f"<h1>Chapter {ch_num}: {_esc(ch.get('title', 'Untitled'))}</h1>")
@@ -490,6 +507,13 @@ def render_book_html(book_dir, chapter_filter=None):
                 parts.append(f'<section id="{bm}">')
                 parts.append(_md_to_html(text))
                 parts.append("</section>")
+
+    # Bibliography section — only if there are cited keys
+    if all_cited_keys and bib_entries:
+        _, ref_html = resolve_citations_numbered_html("", bib_entries, all_cited_keys)
+        parts.append('<section id="bibliography">')
+        parts.append(ref_html)
+        parts.append("</section>")
 
     parts.append("</main>")
     parts.append("</body>")

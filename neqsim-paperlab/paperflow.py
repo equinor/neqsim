@@ -1439,6 +1439,126 @@ def cmd_verify_dois(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Evaluate commands — automated figure & result evaluation
+# ═══════════════════════════════════════════════════════════════════════════
+
+def cmd_evaluate_figures(args):
+    """Evaluate all figures in a paper or book chapter."""
+    target_dir = Path(args.target_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from figure_evaluator import (evaluate_all_figures,
+                                  print_evaluation_report,
+                                  save_evaluation_report)
+
+    provider = getattr(args, "provider", "openai")
+    model = getattr(args, "model", "gpt-4o")
+    skip_llm = getattr(args, "skip_llm", False)
+    skip_ocr = getattr(args, "skip_ocr", False)
+
+    print(f"Evaluating figures in {target_dir}...")
+    if skip_llm:
+        print("  (LLM critique disabled — technical checks only)")
+
+    reports = evaluate_all_figures(
+        str(target_dir),
+        provider=provider, model=model,
+        skip_llm=skip_llm, skip_ocr=skip_ocr,
+    )
+
+    if not reports:
+        print("No figures found to evaluate.")
+        return
+
+    print_evaluation_report(reports)
+
+    # Save JSON report
+    output_file = target_dir / "figure_evaluation.json"
+    save_evaluation_report(reports, output_file)
+    print(f"Report saved to {output_file}")
+
+
+def cmd_evaluate_results(args):
+    """Check result consistency and optionally run LLM quality assessment."""
+    target_dir = Path(args.target_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from result_evaluator import (check_result_consistency,
+                                  print_consistency_report,
+                                  save_consistency_report,
+                                  evaluate_results_quality,
+                                  print_quality_report)
+
+    # Always run consistency check (free, fast)
+    print(f"Checking result consistency in {target_dir}...")
+    report = check_result_consistency(str(target_dir))
+    print_consistency_report(report)
+
+    # Save consistency report
+    output_file = target_dir / "result_consistency.json"
+    save_consistency_report(report, output_file)
+    print(f"Consistency report saved to {output_file}")
+
+    # LLM quality assessment (optional)
+    skip_llm = getattr(args, "skip_llm", False)
+    if not skip_llm:
+        provider = getattr(args, "provider", "openai")
+        model = getattr(args, "model", "gpt-4o")
+        print(f"\nRunning LLM quality assessment ({provider}/{model})...")
+        quality = evaluate_results_quality(
+            str(target_dir), provider=provider, model=model
+        )
+        print_quality_report(quality)
+
+    if report.verdict == "FAIL":
+        sys.exit(1)
+
+
+def cmd_generate_context(args):
+    """Auto-generate discussion context for figures."""
+    target_dir = Path(args.target_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from result_evaluator import generate_figure_context
+
+    provider = getattr(args, "provider", "openai")
+    model = getattr(args, "model", "gpt-4o")
+    use_vision = not getattr(args, "no_vision", False)
+
+    print(f"Generating figure context for {target_dir}...")
+    contexts = generate_figure_context(
+        str(target_dir), provider=provider, model=model,
+        use_vision=use_vision,
+    )
+
+    if not contexts:
+        print("No figures found.")
+        return
+
+    # Print and save
+    for ctx in contexts:
+        print(f"\n  [{ctx.figure_name}]")
+        if ctx.generated_caption:
+            print(f"    Caption: {ctx.generated_caption}")
+        if ctx.observation:
+            print(f"    Observation: {ctx.observation[:120]}...")
+        if ctx.mechanism:
+            print(f"    Mechanism: {ctx.mechanism[:120]}...")
+        if ctx.implication:
+            print(f"    Implication: {ctx.implication[:120]}...")
+        if ctx.recommendation:
+            print(f"    Recommendation: {ctx.recommendation[:120]}...")
+
+    # Save to JSON
+    import dataclasses
+    output_file = target_dir / "figure_contexts.json"
+    output_data = [dataclasses.asdict(c) for c in contexts]
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(output_data, f, indent=2, default=str)
+    print(f"\nContexts saved to {output_file}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Book commands
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1568,6 +1688,49 @@ def cmd_book_toc(args):
     toc = generate_toc(args.book_dir)
     print(f"\nTable of Contents — {cfg.get('title', 'Untitled')}\n")
     print(format_toc(toc))
+
+
+def cmd_book_inject_citations(args):
+    """Convert author-year prose references to \\cite{key} using refs.bib."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from citation_utils import parse_bibtex, inject_citations
+    from book_builder import load_book_config, iter_chapters, resolve_chapter_dir
+
+    book_dir = Path(args.book_dir)
+    dry_run = getattr(args, "dry_run", False)
+    chapter_filter = getattr(args, "chapter", None)
+
+    bib_path = book_dir / "refs.bib"
+    bib_entries = parse_bibtex(bib_path)
+    if not bib_entries:
+        print(f"No entries found in {bib_path}")
+        sys.exit(1)
+
+    cfg = load_book_config(book_dir)
+    total = 0
+
+    for ch_num, ch, part_title in iter_chapters(cfg):
+        if chapter_filter and ch["dir"] != chapter_filter:
+            continue
+        ch_dir = resolve_chapter_dir(book_dir, ch)
+        ch_md = ch_dir / "chapter.md"
+        if not ch_md.exists():
+            continue
+
+        text = ch_md.read_text(encoding="utf-8")
+        new_text, count = inject_citations(text, bib_entries)
+        if count > 0:
+            print(f"  Ch {ch_num:2d} ({ch['dir']}): {count} citation(s) injected")
+            if not dry_run:
+                ch_md.write_text(new_text, encoding="utf-8")
+            total += count
+        else:
+            print(f"  Ch {ch_num:2d} ({ch['dir']}): no matches")
+
+    action = "would inject" if dry_run else "injected"
+    print(f"\nTotal: {action} {total} citation(s) across all chapters")
+    if dry_run and total > 0:
+        print("Run without --dry-run to apply changes.")
 
 
 def cmd_book_draft(args):
@@ -1856,6 +2019,46 @@ Examples:
                                     help="Verify DOIs in refs.bib resolve correctly")
     p_dois.add_argument("paper_dir", help="Paper directory")
 
+    # ── Evaluate commands ──────────────────────────────────────────────
+
+    # evaluate-figures — multi-layer figure evaluation
+    p_evalfig = subparsers.add_parser("evaluate-figures",
+                                       help="Evaluate figures (technical + structural + LLM)")
+    p_evalfig.add_argument("target_dir", help="Paper or book chapter directory")
+    p_evalfig.add_argument("--provider", default="openai",
+                           choices=["openai", "anthropic", "litellm"],
+                           help="LLM provider (default: openai)")
+    p_evalfig.add_argument("--model", default="gpt-4o",
+                           help="LLM model (default: gpt-4o)")
+    p_evalfig.add_argument("--skip-llm", action="store_true",
+                           help="Skip LLM critique (fast, technical-only)")
+    p_evalfig.add_argument("--skip-ocr", action="store_true",
+                           help="Skip OCR structural analysis")
+
+    # evaluate-results — consistency check + LLM quality assessment
+    p_evalres = subparsers.add_parser("evaluate-results",
+                                       help="Check result consistency and quality")
+    p_evalres.add_argument("target_dir", help="Paper or book chapter directory")
+    p_evalres.add_argument("--provider", default="openai",
+                           choices=["openai", "anthropic", "litellm"],
+                           help="LLM provider (default: openai)")
+    p_evalres.add_argument("--model", default="gpt-4o",
+                           help="LLM model (default: gpt-4o)")
+    p_evalres.add_argument("--skip-llm", action="store_true",
+                           help="Skip LLM quality assessment (consistency only)")
+
+    # generate-context — auto-generate figure discussions
+    p_genctx = subparsers.add_parser("generate-context",
+                                      help="Auto-generate figure discussion and captions")
+    p_genctx.add_argument("target_dir", help="Paper or book chapter directory")
+    p_genctx.add_argument("--provider", default="openai",
+                           choices=["openai", "anthropic", "litellm"],
+                           help="LLM provider (default: openai)")
+    p_genctx.add_argument("--model", default="gpt-4o",
+                           help="LLM model (default: gpt-4o)")
+    p_genctx.add_argument("--no-vision", action="store_true",
+                           help="Disable vision (text-only context generation)")
+
     # ── Book commands ──────────────────────────────────────────────────
 
     # book-new — create a new book project
@@ -1940,6 +2143,14 @@ Examples:
     p_bbuild.add_argument("--stop-on-error", action="store_true",
                            help="Stop on first notebook error")
 
+    # book-inject-citations — convert author-year prose refs to \cite{key}
+    p_binject = subparsers.add_parser("book-inject-citations",
+                                       help="Convert author-year prose references to \\cite{key}")
+    p_binject.add_argument("book_dir", help="Book directory")
+    p_binject.add_argument("--chapter", help="Inject in a single chapter (dir name)")
+    p_binject.add_argument("--dry-run", action="store_true",
+                            help="Show what would be changed without modifying files")
+
     args = parser.parse_args()
 
     if args.command == "new":
@@ -1996,6 +2207,12 @@ Examples:
         cmd_latex(args)
     elif args.command == "verify-dois":
         cmd_verify_dois(args)
+    elif args.command == "evaluate-figures":
+        cmd_evaluate_figures(args)
+    elif args.command == "evaluate-results":
+        cmd_evaluate_results(args)
+    elif args.command == "generate-context":
+        cmd_generate_context(args)
     elif args.command == "book-new":
         cmd_book_new(args)
     elif args.command == "book-add-chapter":
@@ -2014,6 +2231,8 @@ Examples:
         cmd_book_run_notebooks(args)
     elif args.command == "book-build":
         cmd_book_build(args)
+    elif args.command == "book-inject-citations":
+        cmd_book_inject_citations(args)
     else:
         parser.print_help()
 

@@ -32,3 +32,10 @@ language-tool-python>=2.7      # grammar/spelling checker (wraps LanguageTool)
 
 # --- Scientific rigor ---
 scikit-learn>=1.0              # TF-IDF for self-plagiarism detection
+
+# --- Figure & result evaluation (optional — graceful degradation) ---
+# pyiqa>=0.1.15                # no-reference image quality (BRISQUE, NIQE, MUSIQ); needs torch
+# pytesseract>=0.3.13          # OCR for reading figure axis labels/legends
+# litellm>=1.83                # unified LLM gateway (OpenAI, Anthropic, local) for figure critique
+# openai>=2.0                  # OpenAI GPT-4o vision API for figure evaluation
+# anthropic>=0.30              # Anthropic Claude vision API (alternative provider)

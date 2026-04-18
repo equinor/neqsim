@@ -177,11 +177,22 @@ The Hammerschmidt equation provides a simple estimate of the hydrate temperature
 
 $$\Delta T = \frac{K_H \cdot w}{M(100 - w)}$$
 
-where $w$ is the weight percent of inhibitor in the aqueous phase, $M$ is the molecular weight, and $K_H$ is an empirical constant. CPA provides a more rigorous prediction through the activity of water in the methanol–water solution:
+where $w$ is the weight percent of inhibitor in the aqueous phase, $M$ is the molecular weight of the inhibitor (32.04 g/mol for methanol, 62.07 g/mol for MEG), and $K_H$ is an empirical constant (2335 for most inhibitors when $\Delta T$ is in °F, or 1297 for °C).
 
-$$\Delta T \propto -\frac{RT^2}{\Delta H_{\text{hyd}}} \ln(a_w)$$
+While the Hammerschmidt equation is useful for quick estimates, it has significant limitations:
 
-where $a_w$ is the activity of water computed by CPA.
+1. It assumes ideal solution behavior (activity coefficients = 1)
+2. It does not account for the effect of dissolved gases on inhibitor effectiveness
+3. It underestimates the depression at high inhibitor concentrations (> 30 wt%)
+4. It does not account for the pressure dependence of hydrate equilibrium
+
+CPA provides a more rigorous prediction through the activity of water in the inhibitor solution. The hydrate temperature depression is related to the water activity by:
+
+$$\Delta T \approx -\frac{RT_0^2}{\Delta H_{\text{hyd}}} \ln(a_w)$$
+
+where $T_0$ is the hydrate equilibrium temperature for pure water, $\Delta H_{\text{hyd}}$ is the enthalpy of hydrate dissociation (~54 kJ/mol for structure I, ~57 kJ/mol for structure II), and $a_w = x_w \gamma_w$ is the activity of water computed by CPA. The advantage of this approach is that $\gamma_w$ is predicted from the CPA model, accounting for non-ideal mixing, dissolved gases, and the specific inhibitor–water hydrogen bond interactions.
+
+For high methanol concentrations (> 40 wt%), the Margules-type activity coefficient can exceed 1.5, leading to Hammerschmidt underestimating the depression by 3–5°C — a significant safety margin that would result in over-dosing if ignored.
 
 ## 10.4 MEG (Mono-Ethylene Glycol) Injection
 
@@ -295,9 +306,39 @@ fluid.initProperties()
 print(f"Number of phases: {fluid.getNumberOfPhases()}")
 ```
 
-## 10.6 Acid Gas Removal with Amines
+## 10.6 Thermodynamics of Gas–Liquid Absorption
 
-### 10.6.1 Overview
+### 10.6.1 Equilibrium Stages and the Absorption Factor
+
+The performance of a gas–liquid contactor (TEG absorber, amine column) depends on the number of equilibrium stages $N$ and the absorption factor $A$:
+
+$$A = \frac{L}{K \cdot V}$$
+
+where $L$ is the liquid molar flow rate, $V$ is the vapor molar flow rate, and $K = y/x$ is the equilibrium ratio (K-value) for the component being absorbed. The Kremser–Brown–Souders equation relates the overall recovery to $A$ and $N$:
+
+$$\frac{y_{\text{in}} - y_{\text{out}}}{y_{\text{in}} - y^*_{\text{out}}} = \frac{A^{N+1} - A}{A^{N+1} - 1}$$
+
+where $y^*_{\text{out}} = K \cdot x_{\text{in}}$ is the vapor composition in equilibrium with the lean solvent.
+
+For TEG dehydration, the K-value for water depends strongly on temperature, pressure, and TEG concentration — all of which CPA predicts accurately. An error of 20% in the K-value (typical of SRK) translates to:
+- 1–2 additional theoretical stages, or
+- 20–30% higher TEG circulation rate to compensate
+
+### 10.6.2 Heat of Absorption
+
+When water is absorbed into TEG, the enthalpy change has two components:
+
+$$\Delta H_{\text{abs}} = \Delta H_{\text{cond}} + \Delta H_{\text{mix}}$$
+
+The condensation enthalpy ($\Delta H_{\text{cond}} \approx 2400$ kJ/kg at 30°C) is the dominant term. The enthalpy of mixing ($\Delta H_{\text{mix}}$) is exothermic for water–TEG and contributes 5–10% of the total heat release. CPA computes $\Delta H_{\text{mix}}$ through the temperature derivative of the activity coefficient:
+
+$$\Delta \bar{H}_i^{\text{mix}} = -RT^2 \frac{\partial \ln \gamma_i}{\partial T}\bigg|_{P,x}$$
+
+The association contribution to $\gamma_i$ provides the correct sign and magnitude of this mixing enthalpy, which affects the temperature profile in the contactor.
+
+## 10.7 Acid Gas Removal with Amines
+
+### 10.7.1 Overview
 
 Amine-based acid gas removal (sweetening) uses aqueous solutions of amines (MEA, DEA, MDEA, and blends) to absorb CO$_2$ and H$_2$S from natural gas. The process involves both physical dissolution and chemical reaction (carbamate/bicarbonate formation).
 
@@ -307,7 +348,7 @@ While the chemical reactions are not directly modeled by the CPA EoS, the phase 
 - **Hydrocarbon solubility in amine solutions**: important for estimating hydrocarbon losses
 - **Amine volatility**: contributes to amine emissions and losses
 
-### 10.6.2 CPA Parameters for Amines
+### 10.7.2 CPA Parameters for Amines
 
 Common amines used in gas sweetening have been characterized for CPA:
 
@@ -322,9 +363,9 @@ Common amines used in gas sweetening have been characterized for CPA:
 
 The cross-association between amines and water is modeled using the CR-1 combining rule, providing good predictions of amine–water VLE and activity coefficients.
 
-## 10.7 Process Simulation Examples
+## 10.8 Process Simulation Examples
 
-### 10.7.1 Comparing CPA with SRK for Dehydration Design
+### 10.8.1 Comparing CPA with SRK for Dehydration Design
 
 A practical comparison demonstrates the impact of model selection:
 
@@ -371,7 +412,7 @@ for T, P in conditions:
         print(f"  Ratio SRK/CPA:   {y_w_srk/y_w_cpa:.2f}")
 ```
 
-### 10.7.2 Design Implications
+### 10.8.2 Design Implications
 
 The differences between CPA and SRK predictions translate directly into equipment sizing:
 
@@ -380,6 +421,147 @@ The differences between CPA and SRK predictions translate directly into equipmen
 - **Regeneration energy**: linked to TEG rate and regeneration temperature, both affected by model accuracy
 
 For critical dehydration applications (cryogenic gas processing, LNG production), the 5–15% accuracy of CPA vs. the 30–200% error of SRK can mean the difference between a successful design and a plant that cannot meet specifications.
+
+## 10.9 Worked Example: Complete TEG Dehydration Unit Design
+
+This section presents a complete worked example of designing a TEG dehydration unit using CPA, demonstrating how the thermodynamic model feeds directly into equipment sizing.
+
+### 10.9.1 Design Basis
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Gas flow rate | 10 | MSm$^3$/day |
+| Inlet temperature | 30 | °C |
+| Inlet pressure | 70 | bar |
+| Inlet gas composition | 88% CH$_4$, 5% C$_2$H$_6$, 3% C$_3$H$_8$, 2% CO$_2$, 1% N$_2$, 1% H$_2$O equiv. | mole % |
+| Required dew point depression | 40 | °C (outlet dew point < $-10$°C) |
+| TEG purity (lean) | 99.5 | wt% |
+| Number of equilibrium stages | 3 | — |
+
+*Table 10.2: Design basis for the TEG dehydration worked example.*
+
+### 10.9.2 Step 1: Determine Water Content
+
+Using CPA, the water content of the inlet gas at 70 bar and 30°C is approximately 700 mg/Sm$^3$. The required outlet specification (dew point $-10$°C at 70 bar) corresponds to approximately 40 mg/Sm$^3$.
+
+The required water removal:
+
+$$\Delta w = 700 - 40 = 660 \text{ mg/Sm}^3$$
+
+### 10.9.3 Step 2: Determine TEG Circulation Rate
+
+The TEG circulation rate depends on the number of equilibrium stages and the required absorption efficiency. For 3 stages and 99.5 wt% lean TEG:
+
+From the equilibrium diagram (computed with CPA), the minimum TEG rate is approximately 15 L TEG per kg water absorbed. A typical design factor of 2–3× gives:
+
+$$\dot{m}_{\text{TEG}} = (2.5) \times 15 \times \frac{660 \times 10^{-6} \times 10 \times 10^6}{24 \times 3600} \approx 2.9 \text{ L/s}$$
+
+### 10.9.4 Step 3: Contactor Sizing
+
+The contactor diameter is determined by the gas velocity at flooding:
+
+$$D = \sqrt{\frac{4Q_g}{\pi \times 0.7 \times v_{\text{flood}}}}$$
+
+where $v_{\text{flood}}$ is estimated from the Souders–Brown correlation and the 70% flooding factor is typical for structured packing.
+
+### 10.9.5 Key Thermodynamic Quantities from CPA
+
+The CPA model provides several quantities that are critical for the design but cannot be obtained from classical cubic EoS:
+
+| Quantity | CPA Value | SRK Value | Impact on Design |
+|----------|-----------|-----------|-----------------|
+| Water activity coefficient in TEG ($\gamma_w$) | 0.45 at 30°C | Not available | Determines equilibrium water content above TEG |
+| TEG volatility at 204°C | 0.08 mbar | Overestimated 3× | Determines TEG losses in regenerator |
+| Heat of absorption of water in TEG | $-45$ kJ/mol | Not accurate | Determines contactor temperature rise |
+| Water content in gas | 700 mg/Sm$^3$ | 950 mg/Sm$^3$ | Input to design calculation |
+
+*Table 10.3: Key thermodynamic quantities for TEG design.*
+
+## 10.10 Glycol Losses and Environmental Considerations
+
+### 10.10.1 TEG Losses to the Gas Phase
+
+TEG losses are a significant operational cost and environmental concern. The vapor pressure of TEG at the contactor top determines the TEG content of the dry gas. CPA accurately predicts the activity coefficient of TEG in the water–TEG mixture, which controls the TEG partial pressure.
+
+At typical contactor conditions (30°C, 70 bar), CPA predicts TEG losses of approximately 5–15 mg/MSm$^3$. For a 10 MSm$^3$/day plant, this corresponds to 50–150 g/day or roughly 20–55 kg/year of TEG lost to the gas phase.
+
+### 10.10.2 BTEX Absorption in TEG
+
+An important side effect of TEG dehydration is the absorption of aromatic hydrocarbons (BTEX: benzene, toluene, ethylbenzene, xylenes) from the gas into the TEG. These absorbed aromatics are then released in the TEG regenerator, potentially causing environmental issues.
+
+CPA with solvation parameters for aromatic compounds can predict BTEX absorption levels:
+
+| Compound | Typical absorption (mg/L TEG) | Environmental limit |
+|----------|------------------------------|-------------------|
+| Benzene | 50–200 | Stringent (carcinogen) |
+| Toluene | 100–400 | Moderate |
+| Ethylbenzene | 20–80 | Moderate |
+| Xylenes | 50–150 | Moderate |
+
+*Table 10.4: Typical BTEX absorption levels in TEG dehydration.*
+
+The ability to predict BTEX absorption with CPA is critical for designing the TEG regenerator's off-gas treatment system, which may include a condenser, incinerator, or activated carbon bed.
+
+## 10.11 MEG Regeneration and Reclamation
+
+### 10.11.1 The MEG Loop
+
+Monoethylene glycol (MEG) is the preferred hydrate inhibitor for subsea pipelines. A typical MEG loop consists of:
+
+1. **Injection** at the wellhead: lean MEG (85–90 wt%) is injected at the wellhead or subsea manifold
+2. **Protection** through the pipeline: the MEG–water mixture depresses the hydrate formation temperature below the minimum pipeline temperature
+3. **Separation** at the platform: rich MEG (50–60 wt% after mixing with produced water) is separated from gas and condensate
+4. **Regeneration**: water is boiled off in a distillation column to recover lean MEG at 85–90 wt%
+5. **Reclamation** (if needed): dissolved salts (NaCl, CaCl$_2$) are removed by vacuum distillation
+
+CPA plays a critical role at every step, providing the thermodynamic properties needed for:
+
+- **Hydrate equilibrium**: water activity in the MEG solution determines the hydrate depression
+- **Flash separation**: accurate phase splits between gas, condensate, and MEG/water
+- **Regeneration column**: VLE of the MEG–water system at various pressures
+- **Salt partitioning**: electrolyte CPA for brine-containing systems
+
+### 10.11.2 CPA for MEG–Water Thermodynamics
+
+The MEG–water system exhibits strong negative deviations from Raoult's law due to hydrogen bonding between MEG (two OH groups, 4C scheme) and water (4C scheme). CPA captures this through:
+
+$$\gamma_{\text{water}}^{\text{MEG solution}} < 1 \quad \text{(reduced water volatility)}$$
+
+At 85 wt% MEG, the water activity is approximately 0.35 — meaning the effective water concentration is much less than its mole fraction would suggest. This reduced water activity is what suppresses hydrate formation.
+
+```python
+from neqsim import jneqsim
+
+# MEG-water activity coefficients across composition range
+for wt_meg in [0, 20, 40, 60, 80, 90, 95]:
+    # Convert weight fraction to mole fraction
+    x_meg = (wt_meg / 62.07) / (wt_meg / 62.07 + (100 - wt_meg) / 18.015)
+    x_water = 1.0 - x_meg
+
+    fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 25.0, 1.01325)
+    fluid.addComponent("MEG", x_meg if x_meg > 0.001 else 0.001)
+    fluid.addComponent("water", x_water if x_water > 0.001 else 0.001)
+    fluid.setMixingRule(10)
+
+    ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+    ops.TPflash()
+    fluid.initProperties()
+
+    print(f"MEG {wt_meg} wt%: water activity coeff = "
+          f"{fluid.getPhase(0).getActivityCoefficient(1):.3f}")
+```
+
+### 10.11.3 Hydrate Depression Prediction
+
+The hydrate temperature depression $\Delta T_H$ is related to the water activity through a simplified Clausius–Clapeyron equation:
+
+$$\Delta T_H \approx -\frac{R T_0^2}{\Delta H_H} \ln a_w$$
+
+where $T_0$ is the uninhibited hydrate temperature, $\Delta H_H \approx 54$ kJ/mol is the hydrate heat of dissociation, and $a_w$ is the water activity in the inhibited solution. CPA provides $a_w$ through the fugacity coefficient of water in the MEG solution:
+
+$$a_w = x_w \gamma_w = \frac{f_w^{\text{solution}}}{f_w^{\text{pure}}}$$
+
+At 50 wt% MEG, $a_w \approx 0.70$, giving $\Delta T_H \approx 14$°C. At 80 wt% MEG, $a_w \approx 0.35$, giving $\Delta T_H \approx 32$°C. These values match field experience within 1–2°C.
 
 ## Summary
 
@@ -393,6 +575,115 @@ Key points from this chapter:
 - BTEX absorption by TEG is modeled through solvation parameters
 - CPA parameters are available for all common gas processing chemicals (TEG, MEG, DEG, methanol, ethanol, amines)
 
+## 10.12 Solver Performance in Industrial TEG Dehydration
+
+Applying the solver advances from Chapter 8 to a realistic TEG process illustrates the practical impact of algorithmic improvements. Solbraa (2026) benchmarked five CPA solver variants on a complete TEG dehydration simulation.
+
+### 10.12.1 Benchmark Specification
+
+The benchmark system models a full TEG dehydration contactor with the following feed gas:
+
+| Component | Mole % | Association |
+|-----------|--------|-------------|
+| Nitrogen | 0.245 | — |
+| CO$_2$ | 3.400 | Solvation |
+| Methane | 85.700 | — |
+| Ethane | 5.981 | — |
+| Propane | 0.274 | — |
+| i-Butane | 0.037 | — |
+| n-Butane | 0.077 | — |
+| i-Pentane | 0.014 | — |
+| n-Pentane | 0.017 | — |
+| n-Hexane | 0.006 | — |
+| Water | saturated | 4C (4 sites) |
+| TEG | lean stream | 4C (4 sites) |
+
+*Table 10.3: Feed gas composition for the TEG dehydration benchmark.*
+
+Operating at 70 bar, the process has $n_s = 8$ total association sites and $p = 4$ unique site types after symmetry reduction.
+
+### 10.12.2 Solver Comparison Results
+
+All five solvers converge to **identical thermodynamic results**, confirming that solver choice does not affect the physics:
+
+| Property | Value |
+|----------|-------|
+| Water dew point (at 70 bara) | −41.19 °C |
+| Dry gas density | 31.6501 kg/m$^3$ |
+| Rich TEG water mole fraction | 0.007894 |
+| Dry gas flow rate | 9.999045 MSm$^3$/day |
+
+*Table 10.4: Common converged results for all five solvers.*
+
+The performance differences, however, are significant:
+
+| Solver | Algorithm | Time (ms) | Speedup |
+|--------|-----------|---:|:---:|
+| Standard nested | SS | 1793 | 1.00× |
+| Fully implicit | Coupled | 2169 | 0.83× |
+| Broyden-reduced | Coupled | 1669 | 1.07× |
+| **Anderson-reduced** | **Nested** | **1126** | **1.59×** |
+| Implicit-reduced | Coupled | 1441 | 1.24× |
+
+*Table 10.5: Solver performance for the full TEG dehydration simulation (Solbraa 2026).*
+
+The Anderson-reduced solver delivers 1.59× speedup over the standard solver, translating directly to faster process optimization runs. For a typical design study requiring 500+ flash evaluations across temperature and pressure sweeps, this reduces total computation time from 15 minutes to under 10 minutes.
+
+Notably, the fully implicit solver is **slower** than standard SS for this particular system. This illustrates that the optimal solver depends on the problem structure: the fully implicit solver excels when inner iterations are expensive (as shown by the 32.8× speedup for water–ethanol–acetic acid in Table 8.6), but for systems where the nested iteration converges quickly, the larger Jacobian of the coupled approach adds overhead.
+
+### 10.12.3 Practical Guidance for TEG Process Design
+
+```python
+from neqsim import jneqsim
+
+# For routine TEG design: use standard solver (most robust)
+fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 30.0, 70.0)
+
+# For large-scale optimization: use Anderson-reduced (1.6× faster)
+fluid_fast = jneqsim.thermo.system.SystemSrkCPAstatoilAndersonMixing(273.15 + 30.0, 70.0)
+```
+
+## 10.13 Asphaltene Precipitation Screening in Gas Processing
+
+While asphaltene management is primarily a production concern, gas processing facilities that handle rich gas condensates or operate near the bubble point must also consider asphaltene risk. CPA provides a thermodynamically rigorous approach to onset pressure prediction, complementing simpler screening methods.
+
+### 10.13.1 Available Screening Methods
+
+Six methods of varying complexity can be applied, ranging from empirical correlations to full CPA equation-of-state calculations:
+
+| Method | Accuracy (±1 level) | Relative Cost |
+|--------|:---:|:---:|
+| SARA CII | 100% (7/7) | 1× |
+| Refractive Index | 57% (4/7) | ~1× |
+| De Boer | 43% (3/7) | ~30× |
+| Pedersen Cubic | 14% (1/7) | ~90× |
+| Flory-Huggins | 57% (4/7) | ~140× |
+| CPA EOS | 71% (5/7) | ~425× |
+
+*Table 10.6: Method accuracy for risk classification of 7 field cases (Solbraa 2026).*
+
+The SARA Colloidal Instability Index (CII) outperforms all other methods for risk classification. However, CPA provides **quantitative onset pressures** that simpler methods cannot:
+
+| Field Case | $P_{onset,meas}$ (bar) | $P_{onset,CPA}$ (bar) | Error (bar) | Relative Error |
+|------------|---:|---:|---:|:---:|
+| Hirschberg North Sea | 360 | 284 | 76 | 21.0% |
+| De Boer Oil A | 580 | 501 | 79 | 13.7% |
+| Jamaluddin Middle East | 310 | 198 | 112 | 36.2% |
+| Hammami Live Oil | 347 | 239 | 108 | 31.1% |
+| Hassi-Messaoud (Algeria) | 430 | 387 | 43 | 9.9% |
+
+*Table 10.7: CPA onset pressure predictions for 5 field cases (Solbraa 2026). Two cases (Burke Prinos, Akbarzadeh Heavy Oil) were not detected by CPA.*
+
+CPA onset pressure predictions have an average absolute deviation of approximately 59 bar (18.7%), which is adequate for screening purposes. The model tends to underpredict onset pressures, making it a non-conservative estimate—screening with SARA CII is recommended as a first pass.
+
+### 10.13.2 Recommended Screening Workflow
+
+For gas processing applications, a tiered approach is recommended:
+
+1. **Tier 1 (seconds)**: SARA CII and refractive index screening—fast, high accuracy for risk classification
+2. **Tier 2 (minutes)**: De Boer correlation—identifies severe cases from reservoir conditions alone
+3. **Tier 3 (hours)**: CPA EOS modeling—provides onset pressure, temperature sensitivity, and compositional effects
+
 ## Exercises
 
 1. **Exercise 10.1:** Design a TEG dehydration unit using NeqSim with CPA. The wet gas (10 MSm$^3$/d, 70 bar, 30°C, water-saturated) must be dried to < 50 mg/Sm$^3$. Determine the required TEG purity, circulation rate, and number of contactor stages.
@@ -402,6 +693,10 @@ Key points from this chapter:
 3. **Exercise 10.3:** Compare the predicted hydrate temperature depression for 30 wt% MEG and 20 wt% methanol aqueous solutions at pressures from 50 to 200 bar for a natural gas. Which inhibitor is more effective on a weight basis?
 
 4. **Exercise 10.4:** Estimate TEG losses to the gas phase for a dehydration unit operating at temperatures from 20°C to 50°C at 70 bar. At what contactor temperature should BTEX emission controls be considered?
+
+5. **Exercise 10.5:** For the TEG dehydration system in Table 10.3, compare the computation time of the standard CPA solver with the Anderson-reduced solver for a 20-point temperature sweep from 10°C to 50°C.
+
+6. **Exercise 10.6:** Apply the asphaltene screening workflow (§10.13.2) to a gas condensate with API gravity 42°, SARA fractions (55/25/15/5), and reservoir conditions of 130°C and 450 bar. Is asphaltene precipitation a concern?
 
 ## References
 

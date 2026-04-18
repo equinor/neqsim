@@ -353,9 +353,73 @@ x_co2 = fluid.getPhase("aqueous").getComponent("CO2").getx()
 print(f"CO2 solubility in brine: {x_co2:.4f} mol frac")
 ```
 
-## 11.8 Comparison with Other Models
+## 11.8 Transport Properties of CO$_2$ Mixtures
 
-### 11.8.1 SRK with Huron-Vidal Mixing Rules
+### 11.8.1 Viscosity Prediction
+
+Accurate viscosity prediction is essential for pipeline sizing and pressure drop calculations. The viscosity of dense CO$_2$ varies dramatically with pressure and temperature:
+
+- Near the critical point: viscosity changes by factors of 2–5 over small pressure ranges
+- In the dense/liquid phase: viscosity is 0.05–0.10 mPa·s (much lower than water)
+- Impurities affect viscosity: N$_2$ reduces it, H$_2$O increases it
+
+NeqSim uses the Lohrenz–Bray–Clark (LBC) correlation modified for CO$_2$-dominant systems:
+
+$$(\mu - \mu^*)\xi + 10^{-4} = \sum_{i=0}^{4} a_i \rho_r^i$$
+
+where $\mu^*$ is the dilute gas viscosity, $\xi$ is the viscosity reducing parameter ($T_c^{1/6} / (M^{1/2} P_c^{2/3})$), and $\rho_r = \rho/\rho_c$ is the reduced density. The reduced density is computed from CPA, ensuring consistency between thermodynamic and transport predictions.
+
+### 11.8.2 Thermal Conductivity
+
+The thermal conductivity of CO$_2$ is needed for heat transfer calculations in pipelines (soil–pipe heat exchange) and injection wells (wellbore–formation heat exchange). Like viscosity, it varies strongly near the critical point. NeqSim uses corresponding-states correlations with the density from CPA:
+
+$$\lambda = \lambda_0(T) + \Delta\lambda(\rho) + \Delta\lambda_c$$
+
+where $\lambda_0$ is the dilute gas contribution, $\Delta\lambda(\rho)$ is the residual (density-dependent) contribution, and $\Delta\lambda_c$ is the critical enhancement (significant within ±10% of the critical point).
+
+### 11.8.3 Joule–Thomson Coefficient
+
+The Joule–Thomson (JT) coefficient determines the temperature change during isenthalpic expansion — critical for:
+
+- **Pipeline depressurization**: how much the CO$_2$ cools when pressure drops (terrain effects, valves)
+- **Well shut-in**: temperature changes during pressure equilibration
+- **Choke valves**: temperature drop at the wellhead choke
+
+The JT coefficient is defined as:
+
+$$\mu_{JT} = \left(\frac{\partial T}{\partial P}\right)_H = \frac{1}{C_P}\left[T\left(\frac{\partial V}{\partial T}\right)_P - V\right]$$
+
+For CO$_2$ near the critical point, $\mu_{JT}$ can be very large (5–20 K/bar), meaning small pressure drops cause significant cooling. In the dense liquid phase, $\mu_{JT}$ is smaller (0.5–2 K/bar) but still important over long pipelines.
+
+CPA provides all the derivatives needed to compute $\mu_{JT}$ consistently, including the association contribution to the volume derivative:
+
+$$\left(\frac{\partial V}{\partial T}\right)_P = -\frac{(\partial P/\partial T)_V}{(\partial P/\partial V)_T}$$
+
+where both partial derivatives include the CPA association term contributions derived in Chapter 5.
+
+```python
+from neqsim import jneqsim
+
+# JT coefficient of CO2 at pipeline conditions
+for T_C in [5, 15, 25, 35]:
+    fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(273.15 + T_C, 110.0)
+    fluid.addComponent("CO2", 0.97)
+    fluid.addComponent("nitrogen", 0.02)
+    fluid.addComponent("methane", 0.01)
+    fluid.setMixingRule(10)
+
+    ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+    ops.TPflash()
+    fluid.initProperties()
+
+    jt = fluid.getPhase(0).getJouleThomsonCoefficient()
+    rho = fluid.getDensity("kg/m3")
+    print(f"T={T_C} C, P=110 bar: JT coeff = {jt:.3f} K/bar, rho = {rho:.1f} kg/m3")
+```
+
+## 11.9 Comparison with Other Models
+
+### 11.9.1 SRK with Huron-Vidal Mixing Rules
 
 An alternative to CPA for CO$_2$–water systems is SRK with Huron-Vidal (HV) or Modified Huron-Vidal (MHV2) mixing rules, which embed an activity coefficient model ($g^E$) inside the EoS. This approach can provide good accuracy for VLE but:
 
@@ -363,7 +427,7 @@ An alternative to CPA for CO$_2$–water systems is SRK with Huron-Vidal (HV) or
 - May not extrapolate well outside the fitting range
 - Does not provide a physically consistent picture of the molecular interactions
 
-### 11.8.2 SAFT Variants
+### 11.9.2 SAFT Variants
 
 PC-SAFT and SAFT-VR can also model CO$_2$–water systems. Compared to CPA:
 
@@ -373,7 +437,7 @@ PC-SAFT and SAFT-VR can also model CO$_2$–water systems. Compared to CPA:
 
 CPA offers the best balance of accuracy, simplicity, and computational efficiency for engineering applications.
 
-### 11.8.3 Accuracy Summary
+### 11.9.3 Accuracy Summary
 
 | Property | CPA AAD (%) | SRK AAD (%) | PC-SAFT AAD (%) |
 |----------|-------------|-------------|-----------------|
@@ -384,6 +448,99 @@ CPA offers the best balance of accuracy, simplicity, and computational efficienc
 | CO$_2$–brine solubility | 5–15 | 20–50 | 5–10 |
 
 *Table 11.3: Accuracy comparison for CO$_2$ system properties.*
+
+## 11.10 Worked Example: CO$_2$ Pipeline Design with CPA
+
+This section presents a comprehensive worked example of CO$_2$ pipeline sizing using CPA, illustrating how the thermodynamic model integrates into pipeline engineering.
+
+### 11.10.1 Design Basis
+
+A 150 km onshore CO$_2$ pipeline must transport 5 million tonnes per year (Mt/yr) from a capture plant to a geological storage site. The CO$_2$ stream composition after purification is: CO$_2$ 96%, N$_2$ 2%, methane 1%, water 500 ppm (after dehydration), with trace amounts of H$_2$S and O$_2$.
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Mass flow rate | 5 | Mt/yr = 158.5 kg/s |
+| Inlet pressure | 150 | bar |
+| Minimum pressure (arrival) | 80 | bar |
+| Ground temperature | 8 | °C |
+| Burial depth | 1.0 | m |
+| Maximum allowable velocity | 5 | m/s |
+| Pipeline material | X65 carbon steel | — |
+| Design standard | DNV-ST-F101 | — |
+
+*Table 11.4: CO$_2$ pipeline design basis.*
+
+### 11.10.2 Phase Behavior Analysis
+
+The first step is to confirm that the CO$_2$ remains in the dense phase throughout the pipeline. Using CPA to compute the phase envelope:
+
+```python
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 8.0, 150.0)
+fluid.addComponent("CO2", 0.96)
+fluid.addComponent("nitrogen", 0.02)
+fluid.addComponent("methane", 0.01)
+fluid.addComponent("water", 0.0005)
+fluid.setMixingRule(10)
+
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+rho = fluid.getDensity("kg/m3")
+cp = fluid.getCp("J/molK")
+print(f"Dense phase density: {rho:.1f} kg/m3")
+print(f"Heat capacity: {cp:.1f} J/(mol·K)")
+```
+
+The cricondenbar for this CO$_2$ mixture (with 2% N$_2$ and 1% CH$_4$) is approximately 77–82 bar. Since the minimum pipeline pressure is 80 bar, we must verify that the operating envelope stays above the phase boundary with adequate margin.
+
+### 11.10.3 Density and Viscosity Profiles
+
+CPA provides the density and viscosity along the pipeline, which vary with pressure and temperature. For CO$_2$ in the dense phase at pipeline conditions:
+
+| Location | P (bar) | T (°C) | $\rho$ (kg/m$^3$) | $\mu$ (mPa·s) | Phase |
+|----------|---------|--------|-------------------|---------------|-------|
+| Inlet | 150 | 25 | 890 | 0.072 | Dense |
+| 50 km | 130 | 15 | 905 | 0.082 | Dense |
+| 100 km | 105 | 10 | 860 | 0.065 | Dense |
+| 150 km (arrival) | 85 | 8 | 780 | 0.055 | Dense |
+
+*Table 11.5: CPA-predicted properties along the CO$_2$ pipeline.*
+
+The non-monotonic density behavior reflects the competing effects of decreasing pressure (which reduces density) and decreasing temperature (which increases density for a dense fluid).
+
+### 11.10.4 Impact of Impurities
+
+The presence of N$_2$ and CH$_4$ has a significant effect on the phase envelope and transport properties. CPA allows systematic evaluation:
+
+| Composition | Cricondenbar (bar) | $\rho$ at 100 bar, 10°C (kg/m$^3$) | Phase risk |
+|-------------|-------------------|--------------------------------------|-----------|
+| Pure CO$_2$ | 73.8 (critical P) | 860 | Low |
+| + 2% N$_2$ | 82 | 810 | Moderate |
+| + 2% N$_2$ + 1% CH$_4$ | 85 | 790 | Higher |
+| + 2% N$_2$ + 1% CH$_4$ + 1% H$_2$ | 95 | 750 | Significant |
+
+*Table 11.6: Effect of impurities on CO$_2$ pipeline phase behavior.*
+
+The key insight is that light impurities (N$_2$, H$_2$, CH$_4$) raise the cricondenbar, increasing the minimum operating pressure required to avoid two-phase flow. Hydrogen is particularly problematic because even 1% H$_2$ raises the cricondenbar by ~10 bar. This is critical for "blue hydrogen" CCS projects where the CO$_2$ stream may contain residual hydrogen.
+
+## 11.11 CPA for Carbon Capture Solvents
+
+### 11.11.1 CO$_2$ Solubility in Amine Solutions
+
+While CPA does not model the chemical reaction between CO$_2$ and amines directly (this requires electrolyte or reactive models), it can model the physical solubility of CO$_2$ in amine solutions, which is important for:
+
+- **Rich solvent CO$_2$ loading**: the total CO$_2$ uptake combines chemical and physical absorption
+- **Flash regeneration**: at high temperatures, the chemical equilibrium shifts, and physical solubility becomes more important
+- **Water wash sections**: physical VLE governs amine losses from the absorber
+
+### 11.11.2 CO$_2$ in MEA Solutions
+
+Monoethanolamine (MEA) is an associating molecule with both an amine group (NH$_2$) and a hydroxyl group (OH). CPA can model the MEA–water–CO$_2$ system by treating MEA with a 4C association scheme and using solvation parameters for the CO$_2$–MEA interaction.
+
+The physical solubility of CO$_2$ in 30 wt% MEA at absorber conditions (40°C, 1–2 bar CO$_2$ partial pressure) is approximately 0.01–0.02 mol CO$_2$/mol MEA, compared to a total loading of 0.4–0.5 mol/mol when chemical reaction is included. While the physical contribution is only ~3–5% of the total, it becomes significant at high loadings and elevated pressures encountered in pressurized absorbers.
 
 ## Summary
 

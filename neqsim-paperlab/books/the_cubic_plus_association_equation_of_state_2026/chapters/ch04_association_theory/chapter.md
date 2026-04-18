@@ -176,6 +176,37 @@ $$X_H = X_e = \frac{-1 + \sqrt{1 + 8\rho\Delta}}{4\rho\Delta}$$
 
 These closed-form expressions are valuable for both understanding and computation — they eliminate the need for iterative solution of the site balance equations in pure-component calculations.
 
+### 4.4.5 Limits of the Site Fraction
+
+The behavior of $X_A$ in the two extreme limits is instructive:
+
+**Low density limit** ($\rho \to 0$): $X_A \to 1$. All sites are free because there are no neighboring molecules to bond with. This is the ideal gas limit where association vanishes.
+
+**High density limit** ($\rho \to \infty$): $X_A \to 0$. All sites are bonded because every molecule is surrounded by potential bonding partners. In practice, $X_A$ never reaches exactly zero — even in liquid water at ambient conditions, approximately 10–15% of hydrogen bond sites are free at any instant.
+
+**The crossover density** where $X_A = 0.5$ provides a useful measure of the onset of significant association:
+
+$$\rho^* = \frac{1}{\Delta^{AB}}$$
+
+At densities below $\rho^*$, most sites are free; at densities above $\rho^*$, most sites are bonded. For water at 298 K, $\rho^* \approx 5$ mol/L, well below the actual liquid density of 55.5 mol/L. This confirms that liquid water is strongly associated, with $X_H \approx 0.1$–$0.2$.
+
+### 4.4.6 Temperature Dependence of Association
+
+The fraction of free sites depends on temperature through the association strength $\Delta^{AB}$:
+
+$$\Delta^{AB} \propto \exp\left(\frac{\varepsilon^{AB}}{RT}\right) - 1$$
+
+As temperature increases:
+- The exponential factor decreases (less Boltzmann weight for the bonded state)
+- $\Delta^{AB}$ decreases
+- $X_A$ increases (fewer bonded sites)
+
+This temperature dependence is responsible for many characteristic properties of associating fluids:
+- The large heat capacity of liquid water (breaking hydrogen bonds absorbs energy)
+- The negative thermal expansion coefficient of water below 4°C
+- The unusually high boiling point of water compared to H$_2$S
+- The decreasing viscosity of glycols and alcohols with temperature
+
 ## 4.5 The Helmholtz Energy of Association
 
 ### 4.5.1 The General Expression
@@ -295,6 +326,130 @@ for T_C in [25, 50, 100, 150, 200, 250, 300, 350]:
     print(f"T = {T_C:4d} C, rho = {density:.1f} kg/m3")
 ```
 
+## 4.9 Worked Example: Computing Site Fractions for Water
+
+To illustrate the application of the theory, let us work through the computation of site fractions for pure water at 25°C and 1 bar.
+
+### 4.9.1 Water Association Parameters
+
+Water is modeled with the 4C scheme: two electron-donor sites (denoted $e_1$, $e_2$) and two proton-acceptor sites (denoted $H_1$, $H_2$). By symmetry:
+
+$$X_{e_1} = X_{e_2} = X_e, \quad X_{H_1} = X_{H_2} = X_H$$
+
+The association strength is non-zero only for unlike site types:
+
+$$\Delta^{eH} = g(\rho) \left[\exp\left(\frac{\varepsilon^{eH}}{RT}\right) - 1\right] b_{11} \kappa^{eH} \neq 0$$
+
+$$\Delta^{ee} = \Delta^{HH} = 0$$
+
+With the NeqSim/Equinor parameter set for water: $\varepsilon^{eH}/R = 2003.2$ K and $\kappa^{eH} = 0.0692$.
+
+### 4.9.2 Self-Consistent Solution
+
+The site fraction equations for the 4C scheme reduce to:
+
+$$X_e = \frac{1}{1 + 2\rho X_H \Delta^{eH}}$$
+
+$$X_H = \frac{1}{1 + 2\rho X_e \Delta^{eH}}$$
+
+By symmetry, $X_e = X_H = X$, giving:
+
+$$X = \frac{1}{1 + 2\rho X \Delta^{eH}}$$
+
+This is a quadratic: $2\rho\Delta^{eH}X^2 + X - 1 = 0$, with solution:
+
+$$X = \frac{-1 + \sqrt{1 + 8\rho\Delta^{eH}}}{4\rho\Delta^{eH}}$$
+
+At 25°C and 1 bar, liquid water has a molar density $\rho \approx 55.3$ mol/L. The radial distribution function $g \approx 1.3$ at this density. Evaluating:
+
+$$\frac{\varepsilon^{eH}}{RT} = \frac{2003.2}{298.15} = 6.72$$
+
+$$\exp\left(\frac{\varepsilon^{eH}}{RT}\right) - 1 = e^{6.72} - 1 \approx 830$$
+
+The resulting $X \approx 0.15$, meaning 85% of the sites are bonded — consistent with neutron diffraction measurements showing 3.5–3.8 hydrogen bonds per water molecule out of a maximum of 4.
+
+### 4.9.3 Physical Interpretation
+
+The degree of association $\alpha = 1 - X$ quantifies how many hydrogen bonds have formed:
+
+- $\alpha = 0$ (all $X = 1$): no hydrogen bonds, ideal gas limit
+- $\alpha = 1$ (all $X = 0$): every site bonded, crystalline ice limit
+
+For liquid water at ambient conditions, $\alpha \approx 0.85$ — the hydrogen bond network is extensive but far from complete. This incomplete bonding is what makes water a liquid rather than a solid at room temperature.
+
+The average number of hydrogen bonds per molecule is:
+
+$$\langle n_{\text{HB}} \rangle = \frac{1}{2} \times (\text{number of sites}) \times \alpha = \frac{1}{2} \times 4 \times 0.85 = 1.7 \text{ bonds donated per molecule}$$
+
+or equivalently 3.4 bonds per molecule counting both donated and accepted bonds, in good agreement with experimental values.
+
+## 4.10 Association Schemes for Common Molecules
+
+To aid in practical application, this section catalogs the association schemes used for the most important industrial molecules.
+
+### 4.10.1 Comprehensive Scheme Catalog
+
+| Molecule | Scheme | Sites | Donor | Acceptor | Typical $\varepsilon/R$ (K) | Notes |
+|----------|--------|-------|-------|----------|---------------------------|-------|
+| Water | 4C | 4 | 2 (H) | 2 (O) | 1800–2400 | Tetrahedral network |
+| Methanol | 2B | 2 | 1 (H) | 1 (O) | 2200–2800 | Linear chains |
+| Ethanol | 2B | 2 | 1 (H) | 1 (O) | 2350–2700 | Similar to MeOH |
+| MEG | 4C | 4 | 2 (H) | 2 (O) | 2150–2500 | Two OH groups |
+| DEG | 4C | 4 | 2 (H) | 2 (O) | 2200–2600 | Two OH + ether O |
+| TEG | 4C | 4 | 2 (H) | 2 (O) | 2300–2700 | Two OH + 2 ether O |
+| Acetic acid | 1A | 1 | — | — | 3500–4500 | Strong dimerization |
+| CO$_2$ | Solv. | 1* | 0 | 1 (O) | — | *Solvation only |
+| H$_2$S | 2B/3B | 2–3 | 1 (H) | 1–2 (S) | 400–800 | Weak self-assoc. |
+| Ammonia | 3B | 3 | 1 (H) | 2 (N) | 1200–1800 | Pyramidal structure |
+
+*Table 4.1: Association schemes for common industrial molecules.*
+
+### 4.10.2 Selecting the Right Scheme
+
+The choice of association scheme affects both the accuracy and the number of adjustable parameters:
+
+- **More sites** → more flexible model, but more parameters to fit
+- **Fewer sites** → more constrained, but potentially poor far from the regression data
+
+Guidelines:
+1. Use the scheme that reflects the molecular geometry (e.g., 4C for water with 4 bonding sites)
+2. If multiple schemes give similar fits to pure-component data, prefer the one with better cross-association predictions
+3. For the 1A scheme (acids), the single parameter $\varepsilon^{AA}$ must be large enough to reproduce the strong dimerization constant
+
+## 4.11 From Clusters to Thermodynamics: The Physical Picture
+
+### 4.11.1 The Cluster Expansion Perspective
+
+Wertheim's TPT can be understood through the lens of cluster expansions from statistical mechanics. In a non-associating fluid, the partition function sums over all configurations of interacting molecules. When association is introduced, the configurations can be classified by the bonding pattern — the "graph" of hydrogen bonds in the system.
+
+Wertheim's key insight was to resum this cluster expansion so that the dominant contribution comes from tree-like bonding structures (chains, stars, branched chains) rather than ring structures. This resummation is exact in the limit of single-bond-per-site (the steric incompatibility condition), and the resulting free energy expression involves only the monomer fraction $X_A$ at each site.
+
+The physical picture is:
+
+- At low density (gas phase): most molecules are monomers, with occasional dimers and trimers
+- At moderate density: chains and small clusters form, with the average cluster size growing
+- At high density (liquid phase): an extended network of hydrogen bonds pervades the system, but with many broken bonds due to thermal fluctuations
+
+### 4.11.2 Steric Effects and Bond Saturation
+
+The one-bond-per-site restriction is the central approximation of TPT-1. It captures the saturation of hydrogen bonding: once all sites on a molecule are bonded, no further association can occur regardless of how many potential partners surround it.
+
+This saturation explains several physical phenomena:
+
+- **Water at high pressure**: the hydrogen bond network does not continue to strengthen indefinitely with increasing density. At extreme pressures (> 10 GPa), water's structure changes qualitatively.
+- **Alcohol chain length**: the average chain length in liquid alcohols is 4–8 molecules for methanol and ethanol, not infinite chains, because thermal energy breaks bonds even when all neighbors are potential partners.
+- **Dilute aqueous solutions**: a small amount of solute (e.g., methane in water) can disrupt many hydrogen bonds because the water molecules adjacent to the solute must reorganize their bonding network.
+
+### 4.11.3 Temperature Dependence of Association
+
+The fraction of bonded sites $\alpha = 1 - X$ depends strongly on temperature through the Boltzmann factor in $\Delta^{AB}$. The temperature at which $\alpha$ drops to 0.5 provides a characteristic "association temperature":
+
+$$T^* = \frac{\varepsilon^{AB}}{R \ln(1 + 1/(\rho b \beta))}$$
+
+For water, $T^* \approx 550$ K at liquid densities, which is close to the critical temperature (647 K). This is not a coincidence: the breakdown of the hydrogen bond network is a major factor driving the approach to the critical point in associating fluids.
+
+For weaker associating species (e.g., H$_2$S with $\varepsilon/R \approx 500$ K), $T^*$ is much lower, and association effects on bulk properties are less dramatic — consistent with H$_2$S being a gas at ambient conditions despite having two bonding sites.
+
 ## Summary
 
 Key points from this chapter:
@@ -306,6 +461,84 @@ Key points from this chapter:
 - Association schemes (2B, 3B, 4C, etc.) specify the number and type of sites per molecule
 - The Helmholtz energy from association is $A^{\text{assoc}}/nRT = \sum_i x_i \sum_{A_i} (\ln X_{A_i} - X_{A_i}/2 + 1/2)$
 - Simple schemes have analytical solutions; complex mixtures require iterative solution
+- Site symmetry reduction exploits the equivalence of sites within an association scheme, reducing system dimensionality by up to 75% with no loss of accuracy
+
+## 4.12 Exploiting Site Symmetry: Exact Dimensionality Reduction
+
+### 4.12.1 The Type-Averaging Theorem
+
+A key structural feature of most association schemes is that several individual sites on a molecule are **equivalent by symmetry**. In the 4C scheme for water, for example, the two electron-donor sites are indistinguishable (both lone pairs on oxygen), and the two proton-donor sites are likewise indistinguishable (both O–H bonds). This means $X_{e_1} = X_{e_2}$ and $X_{H_1} = X_{H_2}$ at equilibrium.
+
+Solbraa (2026) proved formally that this equivalence is not merely an approximation but an **exact consequence** of Wertheim's theory. When sites $k$ and $l$ on component $i$ belong to the same type $\alpha$ (i.e., they interact identically with all other sites), then:
+
+$$X_{i,k} = X_{i,l} \equiv \tilde{X}_{i,\alpha} \quad \text{for all } k, l \in \text{type } \alpha$$
+
+This allows replacing the site balance equations in terms of individual site fractions $\{X_{A_i}\}$ (dimension $n_s = \sum_i s_i$) with type-averaged fractions $\{\tilde{X}_{i,\alpha}\}$ (dimension $p = \sum_i p_i$), where $p_i$ is the number of unique site types on component $i$.
+
+### 4.12.2 Dimensionality Reduction for Common Systems
+
+The reduction depends on the molecular symmetry:
+
+| Molecule | Scheme | Sites ($s_i$) | Types ($p_i$) | Multiplicities | Reduction |
+|----------|--------|:---:|:---:|:---|:---:|
+| Water | 4C | 4 | 2 | $m_e = 2, m_H = 2$ | 50% |
+| Methanol | 2B | 2 | 2 | $m_e = 1, m_H = 1$ | 0% |
+| Methanol | 3B | 3 | 2 | $m_e = 2, m_H = 1$ | 33% |
+| MEG | 4C | 4 | 2 | $m_e = 2, m_H = 2$ | 50% |
+| DEG | 4C | 4 | 2 | $m_e = 2, m_H = 2$ | 50% |
+| TEG | 4C | 4 | 2 | $m_e = 2, m_H = 2$ | 50% |
+| Acetic acid | 1A | 1 | 1 | $m = 1$ | 0% |
+| CO$_2$ (solvation) | — | 1 | 1 | $m_e = 1$ | 0% |
+
+*Table 4.2: Dimensionality reduction from site symmetry for common molecules (Solbraa 2026).*
+
+The 2B scheme gains nothing from reduction because both sites are already of different types (one electron donor, one proton donor). The largest benefit comes from the 4C scheme, which is also the most common in industrial applications (water, glycols).
+
+### 4.12.3 Impact on Mixture Calculations
+
+For mixtures, the total dimensions of the site balance system are:
+
+| System | $n_s$ | $p$ | Full dimension | Reduced dimension | Jacobian speedup |
+|--------|:---:|:---:|:---:|:---:|:---:|
+| Pure water (4C) | 4 | 2 | 5 | 3 | 4.6× |
+| Water + methanol (4C+2B) | 6 | 4 | 7 | 5 | 2.7× |
+| Water + MEG (4C+4C) | 8 | 4 | 9 | 5 | 5.8× |
+| Water + MEG + TEG (4C+4C+4C) | 12 | 6 | 13 | 7 | 6.4× |
+| NG + H$_2$O + MEG | 8 | 4 | 9 | 5 | 5.8× |
+| NG + H$_2$O + TEG | 8 | 4 | 9 | 5 | 5.8× |
+
+*Table 4.3: Site balance system dimensions and Jacobian speedup factors for common mixtures (Solbraa 2026). The Jacobian speedup is $((n_s+1)/(p+1))^3$.*
+
+The water–MEG–TEG ternary system — common in gas processing — sees the most dramatic reduction: from 12 individual site fractions to just 6 type-averaged fractions, yielding a 6.4× speedup in the Jacobian factorization.
+
+### 4.12.4 The Reduced Site Balance Equation
+
+In the type-averaged framework, the site balance equation becomes:
+
+$$\tilde{X}_{i,\alpha} = \frac{1}{1 + \rho \sum_j x_j \sum_{\beta \in j} m_{j,\beta} \, \tilde{X}_{j,\beta} \, \tilde{\Delta}_{\alpha\beta}^{ij}}$$
+
+where $m_{j,\beta}$ is the multiplicity of site type $\beta$ on component $j$, and $\tilde{\Delta}_{\alpha\beta}^{ij}$ is the association strength between type-representative sites. This equation has the same structure as the original site balance, but operates in the reduced-dimensional space.
+
+The Helmholtz energy contribution becomes:
+
+$$\frac{A^{\text{assoc}}}{nRT} = \sum_i x_i \sum_{\alpha \in i} m_{i,\alpha} \left(\ln \tilde{X}_{i,\alpha} - \frac{\tilde{X}_{i,\alpha}}{2} + \frac{1}{2}\right)$$
+
+where each type contributes according to its multiplicity $m_{i,\alpha}$. This is exactly equivalent to summing over all individual sites — the reduction is **lossless**.
+
+### 4.12.5 Cross-Association Matrix Structure
+
+The type-averaged association strength matrix for a water (4C) + MEG (4C) system has the block structure:
+
+| | $e_w$ ($m=2$) | $H_w$ ($m=2$) | $e_m$ ($m=2$) | $H_m$ ($m=2$) |
+|---|:---:|:---:|:---:|:---:|
+| $e_w$ ($m=2$) | 0 | $\tilde{\Delta}_{eH}^{ww}$ | 0 | $\tilde{\Delta}_{eH}^{wm}$ |
+| $H_w$ ($m=2$) | $\tilde{\Delta}_{eH}^{ww}$ | 0 | $\tilde{\Delta}_{eH}^{mw}$ | 0 |
+| $e_m$ ($m=2$) | 0 | $\tilde{\Delta}_{eH}^{mw}$ | 0 | $\tilde{\Delta}_{eH}^{mm}$ |
+| $H_m$ ($m=2$) | $\tilde{\Delta}_{eH}^{wm}$ | 0 | $\tilde{\Delta}_{eH}^{mm}$ | 0 |
+
+*Table 4.4: Type-averaged association strength matrix for water + MEG. The zero entries reflect the electron-donor/proton-donor site type restriction: donor–donor interactions are forbidden.*
+
+The sparsity of this matrix — half the entries are zero — further reduces the computational cost of evaluating the site balance and its derivatives.
 
 ## Exercises
 
@@ -316,6 +549,10 @@ Key points from this chapter:
 3. **Exercise 4.3:** A mixture contains 70 mol% water (4C) and 30 mol% methanol (2B) at 25°C and 1 bar. Write out the complete set of site balance equations, identifying all allowed cross-association pairs.
 
 4. **Exercise 4.4:** Calculate and plot the association contribution to the Helmholtz energy for pure water (4C scheme) as a function of temperature from 0°C to 374°C at a fixed density of 55.5 mol/L. Relate the result to the heat of vaporization.
+
+5. **Exercise 4.5:** For a water (4C) + TEG (4C) system, write out the full site balance equations in both the individual-site basis ($n_s = 8$) and the type-averaged basis ($p = 4$). Verify that they yield identical solutions for $\tilde{X}_{i,\alpha}$.
+
+6. **Exercise 4.6:** A water (4C) + methanol (3B) + MEG (4C) mixture has $n_s = 11$ individual sites. Determine the number of unique site types $p$ and the multiplicities $m_{i,\alpha}$ for each component. What is the dimensionality reduction factor?
 
 ## References
 

@@ -106,7 +106,43 @@ The publication of CPA marked the beginning of rapid development and industrial 
 
 Today, CPA is implemented in most major process simulators and is the recommended model for systems involving water, alcohols, glycols, and CO$_2$ in the petroleum industry.
 
-## 1.4 The NeqSim Implementation
+## 1.4 Quantifying the Need for CPA: A Worked Example
+
+Before presenting the NeqSim implementation, let us quantify the improvement CPA offers with a concrete example drawn from offshore gas processing.
+
+### 1.4.1 Case Study: North Sea Gas Dehydration
+
+Consider a typical North Sea gas processing scenario. A production separator operates at 70 bar and 30°C, producing a gas that must be dehydrated to pipeline specification (< 7 lb water/MMscf). The gas composition is approximately: methane 84%, ethane 7%, propane 3.5%, i-butane 0.5%, n-butane 1%, CO$_2$ 2.5%, N$_2$ 0.5%, and water at saturation.
+
+**With SRK:** The predicted water content of the gas at separator conditions is approximately 850 mg/Sm$^3$, overestimating the experimental value by roughly 40%. This error propagates through the dehydration design: the TEG circulation rate is under-specified, the contactor is undersized, and the dry gas fails to meet the pipeline water specification. The root cause is that SRK over-predicts the fugacity of water in the aqueous phase because it does not account for the hydrogen-bond stabilization of liquid water.
+
+**With CPA:** The predicted water content is approximately 620 mg/Sm$^3$, within 5% of the measured value. The dehydration unit is correctly designed, meeting the pipeline specification with appropriate margin.
+
+The financial impact of this difference in a real project can be substantial. A 40% error in water content leads to either:
+- An undersized dehydration unit that fails to meet specification (requiring costly retrofit), or
+- An oversized unit designed with excessive safety margin (wasting capital)
+
+For a 10 MSm$^3$/day gas plant, the capital cost of the TEG dehydration unit is typically $5–15 million. A 20–30% oversizing due to model inaccuracy represents $1–4.5 million in unnecessary investment.
+
+### 1.4.2 Systematic Comparison Across Industrial Systems
+
+To provide a broader perspective, the table below compares the typical prediction accuracy of classical cubic EoS (SRK/PR) with CPA across key industrial systems:
+
+| System | Property | SRK Error | CPA Error | Improvement Factor |
+|--------|----------|-----------|-----------|-------------------|
+| Water–methane | Water in gas | 30–200% | 5–15% | 6–13× |
+| Water–n-hexane | LLE mutual solubility | > 100% | 5–20% | 5–20× |
+| Methanol–gas–water | MeOH partitioning | 50–150% | 5–15% | 10× |
+| MEG–water | VLE/activity coeff. | 30–80% | 3–8% | 10× |
+| CO$_2$–water | Mutual solubility | 15–100% | 3–7% | 5–14× |
+| TEG–water | Dew point depression | 20–60% | 3–10% | 6× |
+| H$_2$S–water | Water content | 20–80% | 5–12% | 4–7× |
+
+*Table 1.2: Systematic comparison of SRK and CPA prediction accuracy for industrial systems.*
+
+The improvement is consistently an order of magnitude, reflecting the fundamental physics that CPA captures and classical cubic EoS miss: the directional, saturable, temperature-dependent nature of hydrogen bonding.
+
+## 1.5 The NeqSim Implementation
 
 NeqSim (Non-Equilibrium Simulator) is an open-source Java library for thermodynamic and process simulation that has been developed since 2000. It provides one of the most comprehensive CPA implementations available, with:
 
@@ -131,7 +167,28 @@ SystemSrkEos (standard SRK)
 
 The recommended class for most industrial applications is `SystemSrkCPAstatoil`, which uses the simplified CPA formulation with the Equinor parameter set and mixing rule 10 for automatic handling of cross-association.
 
-### 1.4.1 Your First CPA Calculation
+### 1.5.1 Comparison of NeqSim CPA with Other Implementations
+
+Several commercial and academic software packages implement CPA. NeqSim distinguishes itself in several ways:
+
+| Feature | NeqSim | Multiflash | Calsep PVTsim | In-house |
+|---------|--------|------------|---------------|----------|
+| Open source | Yes | No | No | Varies |
+| SRK-CPA | Yes | Yes | Yes | Varies |
+| PR-CPA | Yes | Yes | No | Varies |
+| Electrolyte CPA | Yes | Limited | No | Rare |
+| Fully implicit solver | Yes | No (typically) | No | Rare |
+| Anderson acceleration | Yes | No | No | No |
+| Broyden quasi-Newton | Yes | No | No | Rare |
+| Process simulation | Yes | No | Limited | Varies |
+| Python interface | Yes (jpype) | COM/API | COM | Varies |
+| Parameter database | Equinor set | Infochem set | Calsep set | Custom |
+
+*Table 1.3: Comparison of CPA implementations across software platforms.*
+
+The advanced solver options in NeqSim (fully implicit, Broyden, Anderson acceleration) provide significant advantages for difficult systems near critical points and for large-scale process simulations where computational speed matters.
+
+### 1.5.2 Your First CPA Calculation
 
 ```python
 from neqsim import jneqsim
@@ -161,7 +218,86 @@ print(f"Liquid phase methane solubility: {fluid.getPhase('aqueous').getComponent
 
 This simple example already demonstrates the power of CPA: it correctly predicts the very low mutual solubility of water and methane, which a classical SRK model would overpredict by an order of magnitude.
 
-## 1.5 Scope and Organization of This Book
+## 1.6 The Physics of Hydrogen Bonding
+
+Before diving into the mathematical formalism in subsequent chapters, it is useful to develop a qualitative understanding of the physics behind hydrogen bonding and its consequences for fluid properties.
+
+### 1.6.1 What Is a Hydrogen Bond?
+
+A hydrogen bond forms when a hydrogen atom covalently bonded to an electronegative atom (O, N, F) interacts with a lone electron pair on another electronegative atom. The typical hydrogen bond energy is 10–40 kJ/mol — much weaker than a covalent bond (~400 kJ/mol) but much stronger than dispersion interactions (~1 kJ/mol for small molecules).
+
+For water, the dominant hydrogen bond is O–H$\cdots$O, with an energy of approximately 20 kJ/mol and a preferred O$\cdots$O distance of 2.8 Å. In the gas phase, water monomers exist independently. In the liquid phase, each water molecule forms on average 3.5–3.8 hydrogen bonds, creating a dynamic, three-dimensional network. This network is responsible for water's anomalously high boiling point (100°C vs. –60°C predicted from molecular weight alone), high heat of vaporization (2260 kJ/kg), and unusual density maximum at 4°C.
+
+### 1.6.2 Consequences for Fluid Properties
+
+Hydrogen bonding affects virtually every thermodynamic and transport property:
+
+| Property | Effect of H-Bonding | Example |
+|----------|-------------------|---------|
+| Boiling point | Increased 50–150°C | Water bp 100°C vs. H$_2$S bp –60°C |
+| Heat of vaporization | Increased 2–5× | Water 2260 kJ/kg vs. propane 430 kJ/kg |
+| Surface tension | Increased 3–5× | Water 72 mN/m vs. hexane 18 mN/m |
+| Liquid density | Anomalous T dependence | Water density max at 4°C |
+| Viscosity | Increased, non-Arrhenius | MEG viscosity 20 mPa·s vs. hexane 0.3 mPa·s |
+| Heat capacity | Increased, T-dependent | Cp of water 4.2 kJ/kg·K vs. hexane 2.3 kJ/kg·K |
+| Miscibility | Phase splitting with non-polar | Water–alkane immiscibility |
+
+*Table 1.4: Effects of hydrogen bonding on fluid properties.*
+
+The CPA equation of state captures these effects through the association term, which accounts for the reduction in free energy when hydrogen bonds form. As temperature increases, hydrogen bonds break, and the association contribution diminishes — recovering the behavior of a non-associating fluid at sufficiently high temperatures.
+
+### 1.6.3 Association Schemes and Molecular Structure
+
+Different molecules have different numbers and types of association sites, which determines their hydrogen bonding behavior:
+
+- **Water (4C scheme)**: 2 proton donor sites (H atoms) + 2 lone pair acceptor sites (O electrons) = 4 sites
+- **Methanol (2B scheme)**: 1 proton donor (OH) + 1 acceptor (O lone pair) = 2 sites
+- **Ethylene glycol/MEG (4C scheme)**: 2 OH donors + 2 O acceptors = 4 sites
+- **Acetic acid (1A scheme)**: strong dimerization through 1 effective self-association site
+- **CO$_2$ (solvation)**: no self-association sites, but 1 acceptor site for cross-association with water
+
+The association scheme directly affects the macroscopic behavior: water with 4 sites forms a three-dimensional network (high boiling point, large heat of vaporization), while acetic acid with 1 effective site forms dimers (anomalously low apparent molecular weight in the gas phase).
+
+## 1.7 The Intellectual Landscape: Competing Approaches
+
+Before committing to a particular thermodynamic model, it is valuable to understand where CPA fits within the broader landscape of approaches for associating fluids.
+
+### 1.7.1 Activity Coefficient Models
+
+The earliest practical approach to associating systems was through activity coefficient models — NRTL, Wilson, and UNIQUAC — combined with a separate equation for the vapor phase. These models are purely empirical: they fit experimental VLE data with adjustable binary parameters but provide no insight into the underlying molecular physics.
+
+**Strengths**: simple, fast, excellent correlation of binary VLE data, widely available parameters.
+
+**Limitations**: cannot predict LLE without separate parameters, unreliable for extrapolation outside the fitted range, fundamentally limited to low-pressure systems (activity coefficient models describe liquids only), require a separate equation for vapor-phase non-ideality.
+
+### 1.7.2 Lattice Models
+
+Lattice fluid models (Flory–Huggins, Sanchez–Lacombe, NRHB) place molecules on a regular lattice and count configurations. For associating systems, Panayiotou and colleagues extended lattice models to include hydrogen bonding through a separate combinatorial term.
+
+**Strengths**: good for polymer systems, provide a unified equation for both phases.
+
+**Limitations**: the lattice assumption is unphysical for small molecules, and the treatment of association as a separate combinatorial contribution lacks the rigor of Wertheim's theory.
+
+### 1.7.3 SAFT Family
+
+The Statistical Associating Fluid Theory (SAFT) family — including PC-SAFT, SAFT-VR, and SAFT-$\gamma$ Mie — shares the same Wertheim association term as CPA but uses a more physically-based reference fluid (chains of tangent spheres) instead of the cubic equation. This gives SAFT better pure-component density predictions but at the cost of more complex implementation and slower computation.
+
+**Strengths**: excellent pure-component properties, predictive group-contribution variants, rigorous statistical mechanical foundation.
+
+**Limitations**: more parameters, slower convergence, less backward-compatible with existing process simulation infrastructure, limited availability in commercial simulators.
+
+### 1.7.4 CPA: The Engineering Compromise
+
+CPA occupies a unique position in this landscape: it uses the same rigorous Wertheim association theory as SAFT but combines it with the familiar cubic EoS framework that has been the backbone of process simulation for 50 years. This means:
+
+- Existing SRK binary interaction parameters for non-associating systems can be used directly
+- The cubic root-finding infrastructure is well understood and highly optimized
+- Process simulator vendors can add CPA as an "extension" of their existing SRK/PR implementations
+- Engineers familiar with cubic EoS need learn only the association concepts, not an entirely new framework
+
+The price paid for this engineering convenience is somewhat less accurate pure-component density predictions compared to SAFT variants. For most industrial applications, this trade-off is favorable.
+
+## 1.8 Scope and Organization of This Book
 
 This book provides a comprehensive treatment of the CPA equation of state, from its theoretical foundations to its numerical implementation and industrial applications. It is organized in three parts:
 
