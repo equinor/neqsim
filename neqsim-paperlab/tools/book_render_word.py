@@ -1046,9 +1046,40 @@ def render_book_word(book_dir, chapter_filter=None):
             _render_md_to_doc(doc, text)
             _add_page_break(doc)
 
-        # Table of Contents
+        # Table of Contents — static (visible immediately) + field code
         doc.add_heading("Contents", level=1)
+
+        # Static TOC: list parts and chapters with section numbers
+        prev_part = None
+        for toc_ch_num, toc_ch, toc_part in book_builder.iter_chapters(cfg):
+            if toc_part and toc_part != prev_part:
+                p_part = doc.add_paragraph()
+                p_part.paragraph_format.first_line_indent = Cm(0)
+                p_part.paragraph_format.space_before = Pt(12)
+                p_part.paragraph_format.space_after = Pt(2)
+                run_part = p_part.add_run(toc_part)
+                run_part.bold = True
+                run_part.font.size = Pt(11)
+                run_part.font.name = "Times New Roman"
+                run_part.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
+                prev_part = toc_part
+
+            ch_title = toc_ch.get("title", f"Chapter {toc_ch_num}")
+            p_ch = doc.add_paragraph()
+            p_ch.paragraph_format.first_line_indent = Cm(0)
+            p_ch.paragraph_format.left_indent = Cm(0.8)
+            p_ch.paragraph_format.space_before = Pt(1)
+            p_ch.paragraph_format.space_after = Pt(1)
+            run_ch = p_ch.add_run(f"{toc_ch_num}  {ch_title}")
+            run_ch.font.size = Pt(10.5)
+            run_ch.font.name = "Times New Roman"
+
+        # Add Word field code so user can update with page numbers later
+        p_hint = doc.add_paragraph()
+        p_hint.paragraph_format.first_line_indent = Cm(0)
+        p_hint.paragraph_format.space_before = Pt(18)
         _add_toc_field(doc)
+
         _add_page_break(doc)
 
         # Other frontmatter
@@ -1083,6 +1114,9 @@ def render_book_word(book_dir, chapter_filter=None):
         eq_counter.set_chapter(ch_num)
         fig_counter = [1]
 
+        # Each chapter starts on a new page
+        _add_page_break(doc)
+
         ch_dir = book_builder.resolve_chapter_dir(book_dir, ch)
         ch_md = ch_dir / "chapter.md"
 
@@ -1097,7 +1131,11 @@ def render_book_word(book_dir, chapter_filter=None):
 
         text = ch_md.read_text(encoding="utf-8")
         text = _strip_html_comments(text)
-        text = book_builder.strip_heading_numbers(text)
+        # Strip "Chapter N:" prefix — we prepend a clean number below
+        text = re.sub(r'^#\s+Chapter\s+\d+\s*:\s*', '# ', text, flags=re.MULTILINE)
+        # Keep existing sub-section numbers (1.1, 1.2, etc.) for consistent numbering
+        # Prepend chapter number to top-level heading
+        text = re.sub(r'^#\s+(.+)', rf'# {ch_num} \1', text, count=1, flags=re.MULTILINE)
 
         # Resolve citations: \cite{key} -> [N]
         if key_to_num:

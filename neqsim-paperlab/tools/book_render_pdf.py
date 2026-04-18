@@ -333,6 +333,9 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None):
     """
     text = strip_tags_and_comments(text)
 
+    # Strip "Chapter N:" prefix from top-level headings (Typst auto-numbers)
+    text = re.sub(r'^#\s+Chapter\s+\d+\s*:\s*', '# ', text, flags=re.MULTILINE)
+
     # Strip hardcoded section numbers (auto-numbering via Typst)
     text = book_builder.strip_heading_numbers(text)
 
@@ -443,6 +446,12 @@ def render_book_pdf(book_dir, chapter_filter=None):
                 if result.returncode == 0 and typ_frag.exists():
                     frag_text = typ_frag.read_text(encoding="utf-8")
                     frag_text = postprocess_typst(frag_text)
+                    # Wrap in a scope that disables heading numbering
+                    frag_text = (
+                        '#set heading(numbering: none)\n'
+                        + frag_text
+                        + '\n#set heading(numbering: "1.1")\n'
+                    )
                     frontmatter_fragments.append(frag_text)
                 _cleanup(clean_md, typ_frag)
 

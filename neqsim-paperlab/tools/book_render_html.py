@@ -872,6 +872,9 @@ def render_book_html(book_dir, chapter_filter=None):
         if ch_md.exists():
             text = ch_md.read_text(encoding="utf-8")
             text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+            # Strip "Chapter N:" and prepend clean number for consistent style
+            text = re.sub(r'^#\s+Chapter\s+\d+\s*:\s*', '# ', text, flags=re.MULTILINE)
+            text = re.sub(r'^#\s+(.+)', rf'# {ch_num} \1', text, count=1, flags=re.MULTILINE)
             # Resolve citations before converting to HTML
             if bib_entries and all_cited_keys:
                 text, _ = resolve_citations_numbered_html(
