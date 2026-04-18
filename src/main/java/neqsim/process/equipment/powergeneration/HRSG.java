@@ -1,9 +1,15 @@
 package neqsim.process.equipment.powergeneration;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -33,7 +39,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version 1.0
  */
-public class HRSG extends TwoPortEquipment {
+public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
   /** Logger object for class. */
@@ -47,6 +53,16 @@ public class HRSG extends TwoPortEquipment {
   private double heatTransferred = 0.0; // Watts
   private double steamFlowRate = 0.0; // kg/sec
   private double gasOutletTemperature = 0.0; // Kelvin
+
+  /** Design (maximum) heat transfer duty in Watts. Used for capacity constraint calculations. */
+  private double designHeatDutyW = 0.0;
+
+  /** Whether this equipment has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** Storage for capacity constraints. */
+  private final Map<String, CapacityConstraint> capacityConstraints =
+      new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * Constructor for HRSG.
@@ -293,5 +309,199 @@ public class HRSG extends TwoPortEquipment {
    */
   public void setEffectiveness(double effectiveness) {
     this.effectiveness = effectiveness;
+  }
+
+  /**
+   * Get the design (maximum) heat transfer duty.
+   *
+   * @return design heat duty in Watts
+   */
+  public double getDesignHeatDuty() {
+    return designHeatDutyW;
+  }
+
+  /**
+   * Get the design (maximum) heat transfer duty in specified unit.
+   *
+   * @param unit heat unit ("W", "kW", "MW")
+   * @return design heat duty
+   */
+  public double getDesignHeatDuty(String unit) {
+    switch (unit) {
+      case "kW":
+        return designHeatDutyW / 1000.0;
+      case "MW":
+        return designHeatDutyW / 1.0e6;
+      default:
+        return designHeatDutyW;
+    }
+  }
+
+  /**
+   * Set the design (maximum) heat transfer duty.
+   *
+   * @param designHeatDuty design heat duty in Watts
+   */
+  public void setDesignHeatDuty(double designHeatDuty) {
+    this.designHeatDutyW = designHeatDuty;
+    initializeCapacityConstraints();
+  }
+
+  /**
+   * Set the design (maximum) heat transfer duty with unit.
+   *
+   * @param designHeatDuty design heat duty value
+   * @param unit heat unit ("W", "kW", "MW")
+   */
+  public void setDesignHeatDuty(double designHeatDuty, String unit) {
+    switch (unit) {
+      case "kW":
+        this.designHeatDutyW = designHeatDuty * 1000.0;
+        break;
+      case "MW":
+        this.designHeatDutyW = designHeatDuty * 1.0e6;
+        break;
+      default:
+        this.designHeatDutyW = designHeatDuty;
+    }
+    initializeCapacityConstraints();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return Math.abs(heatTransferred);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return designHeatDutyW > 0 ? designHeatDutyW : Math.abs(heatTransferred) * 1.2;
+  }
+
+  /**
+   * Initialize capacity constraints for the HRSG.
+   */
+  private void initializeCapacityConstraints() {
+    capacityConstraints.clear();
+    if (designHeatDutyW > 0) {
+      addCapacityConstraint(
+          new CapacityConstraint("heatDuty", "kW", CapacityConstraint.ConstraintType.HARD)
+              .setDesignValue(designHeatDutyW / 1000.0).setMaxValue(designHeatDutyW / 1000.0 * 1.1)
+              .setWarningThreshold(0.9).setDescription("HRSG heat transfer duty vs design capacity")
+              .setValueSupplier(() -> Math.abs(this.heatTransferred) / 1000.0));
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = c;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util)) {
+        maxUtil = Math.max(maxUtil, util);
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (heatTransferred > 0) {
+      this.designHeatDutyW = Math.abs(heatTransferred) * safetyFactor;
+      initializeCapacityConstraints();
+      autoSized = true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== HRSG Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+    sb.append("\n--- Operating Conditions ---\n");
+    sb.append("Heat Transferred: ")
+        .append(String.format("%.2f kW", Math.abs(heatTransferred) / 1000.0)).append("\n");
+    if (designHeatDutyW > 0) {
+      sb.append("Design Heat Duty: ").append(String.format("%.2f kW", designHeatDutyW / 1000.0))
+          .append("\n");
+      sb.append("Utilization: ")
+          .append(String.format("%.1f%%", Math.abs(heatTransferred) / designHeatDutyW * 100))
+          .append("\n");
+    }
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
   }
 }

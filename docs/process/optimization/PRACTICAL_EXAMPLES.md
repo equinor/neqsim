@@ -25,6 +25,7 @@ This document provides practical examples for using the optimizer plugin archite
   - [Multi-Equipment Process](#multi-equipment-process)
   - [Constraint Monitoring Dashboard](#constraint-monitoring-dashboard)
   - [Eclipse VFP Table Generation](#eclipse-vfp-table-generation)
+  - [Power Generation Capacity Optimization](#power-generation-capacity-optimization)
 - [Python Examples (via JPype)](#python-examples-via-jpype)
   - [Basic Process Optimization](#basic-process-optimization)
   - [Lift Curve Generation](#lift-curve-generation)
@@ -55,46 +56,46 @@ public class SimpleThroughputOptimization {
         gas.addComponent("ethane", 0.10);
         gas.addComponent("propane", 0.05);
         gas.setMixingRule("classic");
-        
+
         // Create process equipment
         Stream feed = new Stream("feed", gas);
         feed.setFlowRate(50000, "kg/hr");
         feed.setPressure(50.0, "bara");
         feed.setTemperature(288.15, "K");
-        
+
         Compressor compressor = new Compressor("Export Compressor", feed);
         compressor.setOutletPressure(150.0);
         compressor.setPolytropicEfficiency(0.78);
-        
+
         Cooler aftercooler = new Cooler("Aftercooler", compressor.getOutletStream());
         aftercooler.setOutTemperature(313.15);
-        
+
         // Build process
         ProcessSystem process = new ProcessSystem();
         process.add(feed);
         process.add(compressor);
         process.add(aftercooler);
         process.run();
-        
+
         // Create optimization engine
         ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-        
+
         // Find maximum throughput
-        ProcessOptimizationEngine.OptimizationResult result = 
+        ProcessOptimizationEngine.OptimizationResult result =
             engine.findMaximumThroughput(
                 50.0,      // inlet pressure (bara)
                 150.0,     // outlet pressure (bara)
                 10000.0,   // min flow rate (kg/hr)
                 200000.0   // max flow rate (kg/hr)
             );
-        
+
         // Print results
         System.out.println("=== Optimization Results ===");
         System.out.println("Maximum throughput: " + result.getOptimalFlowRate() + " kg/hr");
         System.out.println("Feasible: " + result.isFeasible());
         System.out.println("Bottleneck: " + result.getBottleneckEquipment());
         System.out.println("Total power: " + result.getTotalPower() + " kW");
-        
+
         // Print constraint violations if any
         if (!result.getConstraintViolations().isEmpty()) {
             System.out.println("\nConstraint violations:");
@@ -135,44 +136,44 @@ public class MultiEquipmentOptimization {
         wellFluid.addComponent("water", 0.075);
         wellFluid.setMixingRule("classic");
         wellFluid.setMultiPhaseCheck(true);
-        
+
         // Create production train
         Stream wellStream = new Stream("Well Stream", wellFluid);
         wellStream.setFlowRate(100000, "kg/hr");
         wellStream.setPressure(80.0, "bara");
         wellStream.setTemperature(330.0, "K");
-        
+
         // HP Separator
         ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP Separator", wellStream);
-        
+
         // Gas treatment train
         Heater gasHeater = new Heater("Gas Heater", hpSeparator.getGasOutStream());
         gasHeater.setOutTemperature(320.0);
-        
+
         Compressor stage1 = new Compressor("1st Stage Compressor", gasHeater.getOutletStream());
         stage1.setOutletPressure(120.0);
         stage1.setPolytropicEfficiency(0.78);
-        
+
         Cooler intercooler = new Cooler("Intercooler", stage1.getOutletStream());
         intercooler.setOutTemperature(313.15);
-        
+
         Compressor stage2 = new Compressor("2nd Stage Compressor", intercooler.getOutletStream());
         stage2.setOutletPressure(180.0);
         stage2.setPolytropicEfficiency(0.76);
-        
+
         Cooler aftercooler = new Cooler("Aftercooler", stage2.getOutletStream());
         aftercooler.setOutTemperature(313.15);
-        
+
         // Oil treatment train
         Heater oilHeater = new Heater("Oil Heater", hpSeparator.getOilOutStream());
         oilHeater.setOutTemperature(340.0);
-        
+
         Separator lpSeparator = new Separator("LP Separator", oilHeater.getOutletStream());
         lpSeparator.setInternalDiameter(2.0);
-        
+
         Pump exportPump = new Pump("Export Pump", lpSeparator.getLiquidOutStream());
         exportPump.setOutletPressure(20.0);
-        
+
         // Build process
         ProcessSystem process = new ProcessSystem();
         process.add(wellStream);
@@ -186,37 +187,37 @@ public class MultiEquipmentOptimization {
         process.add(lpSeparator);
         process.add(exportPump);
         process.run();
-        
+
         // Create optimization engine
         ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-        
+
         // Evaluate current constraints
         ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();
-        
+
         System.out.println("=== Equipment Utilization Summary ===\n");
-        for (ProcessOptimizationEngine.EquipmentConstraintStatus status : 
+        for (ProcessOptimizationEngine.EquipmentConstraintStatus status :
                 report.getEquipmentStatuses()) {
             String warningFlag = status.isWithinLimits() ? "✓" : "⚠";
             System.out.printf("%s %s: %.1f%% utilization\n",
                 warningFlag,
                 status.getEquipmentName(),
                 status.getUtilization() * 100);
-            
+
             // Show bottleneck constraint for each equipment
             if (status.getBottleneckConstraint() != null) {
                 System.out.printf("   Bottleneck: %s\n", status.getBottleneckConstraint());
             }
         }
-        
+
         // Find bottleneck
         System.out.println("\n=== Process Bottleneck ===");
         String bottleneck = engine.findBottleneckEquipment();
         System.out.println("Bottleneck equipment: " + bottleneck);
-        
+
         // Find maximum throughput
-        ProcessOptimizationEngine.OptimizationResult result = 
+        ProcessOptimizationEngine.OptimizationResult result =
             engine.findMaximumThroughput(80.0, 180.0, 50000.0, 300000.0);
-        
+
         System.out.println("\n=== Maximum Throughput ===");
         System.out.printf("Maximum rate: %.0f kg/hr (%.0f%% of current)\n",
             result.getOptimalFlowRate(),
@@ -238,15 +239,15 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import java.util.*;
 
 public class ConstraintMonitoringDashboard {
-    
+
     private final ProcessSystem process;
     private final EquipmentCapacityStrategyRegistry registry;
-    
+
     public ConstraintMonitoringDashboard(ProcessSystem process) {
         this.process = process;
         this.registry = EquipmentCapacityStrategyRegistry.getInstance();
     }
-    
+
     /**
      * Generate constraint status report for all equipment.
      */
@@ -254,28 +255,28 @@ public class ConstraintMonitoringDashboard {
         System.out.println("╔═══════════════════════════════════════════════════════════════════╗");
         System.out.println("║              EQUIPMENT CONSTRAINT STATUS DASHBOARD                 ║");
         System.out.println("╠═══════════════════════════════════════════════════════════════════╣");
-        
+
         for (int i = 0; i < process.getUnitOperations().size(); i++) {
-            ProcessEquipmentInterface equipment = 
+            ProcessEquipmentInterface equipment =
                 (ProcessEquipmentInterface) process.getUnitOperations().get(i);
-            
+
             EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
             if (strategy == null) {
                 continue;  // Skip equipment without strategy
             }
-            
+
             Map<String, CapacityConstraint> constraints = strategy.getConstraints(equipment);
             if (constraints.isEmpty()) {
                 continue;
             }
-            
+
             // Equipment header
             double maxUtil = strategy.evaluateCapacity(equipment);
             String status = maxUtil <= 0.9 ? "🟢" : (maxUtil <= 1.0 ? "🟡" : "🔴");
             System.out.printf("║ %s %-30s  Max Utilization: %6.1f%%        ║\n",
                 status, equipment.getName(), maxUtil * 100);
             System.out.println("╟───────────────────────────────────────────────────────────────────╢");
-            
+
             // Individual constraints
             for (CapacityConstraint c : constraints.values()) {
                 String bar = createUtilizationBar(c.getUtilization());
@@ -291,12 +292,12 @@ public class ConstraintMonitoringDashboard {
             System.out.println("╟───────────────────────────────────────────────────────────────────╢");
         }
         System.out.println("╚═══════════════════════════════════════════════════════════════════╝");
-        
+
         // Legend
         System.out.println("\nLegend: [H]=HARD limit  [S]=SOFT limit  [D]=DESIGN limit");
         System.out.println("        🟢=OK  🟡=Warning (>90%)  🔴=Exceeded (>100%)");
     }
-    
+
     private String createUtilizationBar(double utilization) {
         int barLength = 15;
         int filled = (int) Math.min(utilization * barLength, barLength);
@@ -317,7 +318,7 @@ public class ConstraintMonitoringDashboard {
         bar.append(String.format("] %5.1f%%", utilization * 100));
         return bar.toString();
     }
-    
+
     private String getConstraintTypeChar(CapacityConstraint.ConstraintType type) {
         switch (type) {
             case HARD: return "[H]";
@@ -326,27 +327,27 @@ public class ConstraintMonitoringDashboard {
             default: return "[ ]";
         }
     }
-    
+
     /**
      * Get equipment that should be investigated for debottlenecking.
      */
     public List<String> getDebottleneckingCandidates() {
         List<String> candidates = new ArrayList<>();
-        
+
         for (int i = 0; i < process.getUnitOperations().size(); i++) {
-            ProcessEquipmentInterface equipment = 
+            ProcessEquipmentInterface equipment =
                 (ProcessEquipmentInterface) process.getUnitOperations().get(i);
-            
+
             EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
             if (strategy != null) {
                 double utilization = strategy.evaluateCapacity(equipment);
                 if (utilization > 0.85) {
-                    candidates.add(String.format("%s (%.1f%%)", 
+                    candidates.add(String.format("%s (%.1f%%)",
                         equipment.getName(), utilization * 100));
                 }
             }
         }
-        
+
         return candidates;
     }
 }
@@ -365,32 +366,32 @@ public class VFPTableGeneration {
     public static void main(String[] args) throws Exception {
         // Create process system (as in previous examples)
         ProcessSystem process = createGasExportProcess();
-        
+
         // Create VFP exporter
         EclipseVFPExporter exporter = new EclipseVFPExporter(process);
         exporter.setTableNumber(1);
-        
+
         // Define parameter ranges
         double[] thp = {20.0, 30.0, 40.0, 50.0, 60.0};           // THP (bara)
         double[] wfr = {0.0, 0.1, 0.2, 0.3, 0.5};                // Water fraction
         double[] gfr = {100.0, 200.0, 500.0, 1000.0, 2000.0};    // GOR (Sm3/Sm3)
         double[] alq = {0.0};                                     // No artificial lift
         double[] flowRates = {
-            5000.0, 10000.0, 20000.0, 50000.0, 
+            5000.0, 10000.0, 20000.0, 50000.0,
             100000.0, 150000.0, 200000.0
         };  // Flow rates (kg/hr)
-        
+
         // Generate VFPPROD table
         String vfpTable = exporter.generateVFPPROD(
             thp, wfr, gfr, alq, flowRates,
             "bara", "kg/hr"
         );
-        
+
         // Write to file
         Path outputPath = Paths.get("VFPPROD_PLATFORM.INC");
         Files.writeString(outputPath, vfpTable);
         System.out.println("VFP table written to: " + outputPath.toAbsolutePath());
-        
+
         // Print summary
         System.out.println("\n=== VFP Table Summary ===");
         System.out.println("Table number: 1");
@@ -398,16 +399,108 @@ public class VFPTableGeneration {
         System.out.println("Water fraction points: " + wfr.length);
         System.out.println("GOR points: " + gfr.length);
         System.out.println("Flow rate points: " + flowRates.length);
-        System.out.println("Total BHP calculations: " + 
+        System.out.println("Total BHP calculations: " +
             (thp.length * wfr.length * gfr.length * flowRates.length));
     }
-    
+
     private static ProcessSystem createGasExportProcess() {
         // ... create process as in previous examples ...
         return new ProcessSystem();
     }
 }
 ```
+
+### Power Generation Capacity Optimization
+
+Optimize fuel allocation for a CHP (combined heat and power) system using capacity constraints on power generation equipment:
+
+```java
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.powergeneration.GasTurbine;
+import neqsim.process.equipment.powergeneration.HRSG;
+import neqsim.process.equipment.powergeneration.SteamTurbine;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
+
+public class PowerGenerationOptimization {
+    public static void main(String[] args) {
+        // Create fuel gas
+        SystemInterface fuelGas = new SystemSrkEos(288.15, 25.0);
+        fuelGas.addComponent("methane", 0.90);
+        fuelGas.addComponent("ethane", 0.05);
+        fuelGas.addComponent("propane", 0.03);
+        fuelGas.addComponent("nitrogen", 0.02);
+        fuelGas.setMixingRule("classic");
+
+        Stream fuel = new Stream("Fuel Gas", fuelGas);
+        fuel.setFlowRate(1500.0, "kg/hr");
+        fuel.setPressure(25.0, "bara");
+        fuel.setTemperature(288.15, "K");
+
+        // Gas turbine with rated capacity
+        GasTurbine gt = new GasTurbine("GT-101", fuel);
+        gt.setRatedPower(30.0, "MW");
+
+        // HRSG recovering exhaust heat
+        HRSG hrsg = new HRSG("HRSG-101", gt.getOutletStream());
+        hrsg.setSteamPressure(40.0);
+        hrsg.setSteamTemperature(400.0, "C");
+        hrsg.setDesignHeatDuty(50.0, "MW");
+
+        // Build and run
+        ProcessSystem chp = new ProcessSystem();
+        chp.add(fuel);
+        chp.add(gt);
+        chp.add(hrsg);
+        chp.run();
+
+        // --- Capacity analysis ---
+
+        // 1. Check utilization of each unit
+        System.out.printf("GT utilization:   %.1f%%%n",
+            gt.getMaxUtilization() * 100);
+        System.out.printf("HRSG utilization: %.1f%%%n",
+            hrsg.getMaxUtilization() * 100);
+
+        // 2. Identify the bottleneck
+        ProcessOptimizationEngine engine = new ProcessOptimizationEngine(chp);
+        ProcessOptimizationEngine.ConstraintReport report =
+            engine.evaluateAllConstraints();
+
+        for (ProcessOptimizationEngine.EquipmentConstraintStatus status :
+                report.getEquipmentStatuses()) {
+            System.out.printf("%s %-15s %.1f%% [%s]%n",
+                status.isWithinLimits() ? "OK" : "!!",
+                status.getEquipmentName(),
+                status.getMaxUtilization() * 100,
+                status.getBottleneckConstraint());
+        }
+
+        // 3. Find maximum fuel rate before any equipment trips
+        ProcessOptimizationEngine.OptimizationResult result =
+            engine.findMaximumThroughput(25.0, 25.0, 100.0, 5000.0);
+        System.out.println("Max fuel rate: " + result.getOptimalFlowRate() + " kg/hr");
+        System.out.println("Bottleneck: " + result.getBottleneckEquipment());
+
+        // 4. Utilization summary across all equipment
+        java.util.Map<String, Double> summary = chp.getCapacityUtilizationSummary();
+        for (java.util.Map.Entry<String, Double> e : summary.entrySet()) {
+            System.out.printf("  %-20s %.1f%%%n", e.getKey(), e.getValue() * 100);
+        }
+    }
+}
+```
+
+**Key points:**
+
+- `setRatedPower()` / `setDesignHeatDuty()` define the design envelope. Without them, `getCapacityMax()` defaults to 120% of the current operating point.
+- `autoSize(1.2)` is a shortcut that sets rated capacity = current duty × safety factor.
+- The `ProcessOptimizationEngine` reads `CapacityConstrainedEquipment` constraints from every unit in the `ProcessSystem`, so power generation equipment participates in plant-wide bottleneck detection alongside compressors, separators, and other equipment.
+- For more on capacity constraints, see the [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK).
+- For power generation equipment details, see [Power Generation Equipment](../equipment/power_generation).
 
 ---
 
@@ -437,45 +530,45 @@ from neqsim.process.util.optimizer import ProcessOptimizationEngine
 
 def create_compression_process():
     """Create a simple gas compression process."""
-    
+
     # Create gas composition
     gas = SystemSrkEos(288.15, 50.0)
     gas.addComponent("methane", 0.85)
     gas.addComponent("ethane", 0.10)
     gas.addComponent("propane", 0.05)
     gas.setMixingRule("classic")
-    
+
     # Create feed stream
     feed = Stream("feed", gas)
     feed.setFlowRate(50000, "kg/hr")
     feed.setPressure(50.0, "bara")
     feed.setTemperature(288.15, "K")
-    
+
     # Create compressor
     compressor = Compressor("Export Compressor", feed)
     compressor.setOutletPressure(150.0)
     compressor.setPolytropicEfficiency(0.78)
-    
+
     # Create aftercooler
     aftercooler = Cooler("Aftercooler", compressor.getOutletStream())
     aftercooler.setOutTemperature(313.15)
-    
+
     # Build process
     process = ProcessSystem()
     process.add(feed)
     process.add(compressor)
     process.add(aftercooler)
     process.run()
-    
+
     return process
 
 
 def optimize_throughput(process):
     """Find maximum throughput for the process."""
-    
+
     # Create optimization engine
     engine = ProcessOptimizationEngine(process)
-    
+
     # Find maximum throughput
     result = engine.findMaximumThroughput(
         50.0,      # inlet pressure (bara)
@@ -483,7 +576,7 @@ def optimize_throughput(process):
         10000.0,   # min flow rate (kg/hr)
         200000.0   # max flow rate (kg/hr)
     )
-    
+
     # Extract results
     return {
         'optimal_flow_rate': result.getOptimalFlowRate(),
@@ -496,10 +589,10 @@ def optimize_throughput(process):
 
 def evaluate_constraints(process):
     """Evaluate all equipment constraints."""
-    
+
     engine = ProcessOptimizationEngine(process)
     report = engine.evaluateAllConstraints()
-    
+
     results = []
     for status in report.getEquipmentStatuses():
         equipment_data = {
@@ -509,7 +602,7 @@ def evaluate_constraints(process):
             'within_limits': status.isWithinLimits(),
             'bottleneck_constraint': status.getBottleneckConstraint()
         }
-        
+
         # Get individual constraints
         constraints = []
         for constraint in status.getConstraints():
@@ -522,7 +615,7 @@ def evaluate_constraints(process):
             })
         equipment_data['constraints'] = constraints
         results.append(equipment_data)
-    
+
     return results
 
 
@@ -530,14 +623,14 @@ def evaluate_constraints(process):
 if __name__ == "__main__":
     # Create process
     process = create_compression_process()
-    
+
     # Optimize throughput
     print("=== Throughput Optimization ===")
     opt_result = optimize_throughput(process)
     print(f"Maximum throughput: {opt_result['optimal_flow_rate']:.0f} kg/hr")
     print(f"Bottleneck: {opt_result['bottleneck']}")
     print(f"Total power: {opt_result['total_power']:.1f} kW")
-    
+
     # Evaluate constraints
     print("\n=== Equipment Constraints ===")
     constraint_report = evaluate_constraints(process)
@@ -565,14 +658,14 @@ import matplotlib.pyplot as plt
 from neqsim.process.util.optimizer import ProcessOptimizationEngine, EclipseVFPExporter
 
 
-def generate_lift_curve_data(process, 
+def generate_lift_curve_data(process,
                               inlet_pressures,
                               outlet_pressures,
                               flow_rates):
     """Generate lift curve data for a range of conditions."""
-    
+
     engine = ProcessOptimizationEngine(process)
-    
+
     results = []
     for p_in in inlet_pressures:
         for p_out in outlet_pressures:
@@ -583,23 +676,23 @@ def generate_lift_curve_data(process,
                     feed = process.getUnit("feed")
                     feed.setPressure(p_in, "bara")
                     feed.setFlowRate(q, "kg/hr")
-                    
+
                     compressor = process.getUnit("Export Compressor")
                     compressor.setOutletPressure(p_out)
-                    
+
                     process.run()
-                    
+
                     # Evaluate constraints
                     report = engine.evaluateAllConstraints()
-                    
+
                     # Get compressor data
                     comp_power = compressor.getPower()
                     comp_efficiency = compressor.getPolytropicEfficiency()
-                    
+
                     # Check feasibility
                     feasible = not report.hasViolations()
                     bottleneck = report.getBottleneckEquipment() if report.hasViolations() else None
-                    
+
                     results.append({
                         'inlet_pressure': p_in,
                         'outlet_pressure': p_out,
@@ -610,7 +703,7 @@ def generate_lift_curve_data(process,
                         'bottleneck': bottleneck,
                         'overall_utilization': report.getOverallUtilization()
                     })
-                    
+
                 except Exception as e:
                     results.append({
                         'inlet_pressure': p_in,
@@ -622,15 +715,15 @@ def generate_lift_curve_data(process,
                         'bottleneck': str(e),
                         'overall_utilization': np.nan
                     })
-    
+
     return pd.DataFrame(results)
 
 
 def plot_operating_envelope(df):
     """Plot the equipment operating envelope from lift curve data."""
-    
+
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    
+
     # Plot 1: Flow rate vs Power (colored by feasibility)
     ax1 = axes[0, 0]
     colors = ['green' if f else 'red' for f in df['feasible']]
@@ -639,7 +732,7 @@ def plot_operating_envelope(df):
     ax1.set_ylabel('Power (kW)')
     ax1.set_title('Power vs Flow Rate')
     ax1.grid(True, alpha=0.3)
-    
+
     # Plot 2: Inlet Pressure vs Max Flow (envelope)
     ax2 = axes[0, 1]
     feasible_df = df[df['feasible']]
@@ -650,7 +743,7 @@ def plot_operating_envelope(df):
     ax2.set_ylabel('Maximum Flow Rate (kg/hr)')
     ax2.set_title('Operating Envelope')
     ax2.grid(True, alpha=0.3)
-    
+
     # Plot 3: Flow rate vs Utilization
     ax3 = axes[1, 0]
     ax3.scatter(df['flow_rate'], df['overall_utilization'] * 100, alpha=0.6)
@@ -661,7 +754,7 @@ def plot_operating_envelope(df):
     ax3.set_title('Utilization vs Flow Rate')
     ax3.legend()
     ax3.grid(True, alpha=0.3)
-    
+
     # Plot 4: Bottleneck distribution
     ax4 = axes[1, 1]
     bottleneck_counts = df[~df['feasible']]['bottleneck'].value_counts()
@@ -671,11 +764,11 @@ def plot_operating_envelope(df):
     else:
         ax4.text(0.5, 0.5, 'All cases feasible', ha='center', va='center')
         ax4.set_title('Bottleneck Distribution')
-    
+
     plt.tight_layout()
     plt.savefig('operating_envelope.png', dpi=150)
     plt.show()
-    
+
     return fig
 
 
@@ -683,26 +776,26 @@ def plot_operating_envelope(df):
 if __name__ == "__main__":
     # Create process
     process = create_compression_process()
-    
+
     # Define parameter ranges
     inlet_pressures = np.linspace(40, 80, 5)
     outlet_pressures = [150.0]  # Fixed outlet
     flow_rates = np.linspace(20000, 150000, 10)
-    
+
     # Generate lift curve data
     print("Generating lift curve data...")
     lift_curve_df = generate_lift_curve_data(
         process, inlet_pressures, outlet_pressures, flow_rates
     )
-    
+
     # Save to CSV
     lift_curve_df.to_csv('lift_curve_data.csv', index=False)
     print(f"Saved {len(lift_curve_df)} data points to lift_curve_data.csv")
-    
+
     # Print summary
     feasible_count = lift_curve_df['feasible'].sum()
     print(f"\nFeasible operating points: {feasible_count}/{len(lift_curve_df)}")
-    
+
     # Plot
     plot_operating_envelope(lift_curve_df)
 ```
@@ -724,20 +817,20 @@ from neqsim.process.equipment.capacity import EquipmentCapacityStrategyRegistry
 
 def analyze_equipment_constraints(process):
     """Detailed analysis of equipment constraints."""
-    
+
     registry = EquipmentCapacityStrategyRegistry.getInstance()
-    
+
     all_constraints = []
-    
+
     for i in range(process.getUnitOperations().size()):
         equipment = process.getUnitOperations().get(i)
         strategy = registry.findStrategy(equipment)
-        
+
         if strategy is None:
             continue
-            
+
         constraints = strategy.getConstraints(equipment)
-        
+
         for name, constraint in constraints.items():
             all_constraints.append({
                 'equipment': str(equipment.getName()),
@@ -751,58 +844,58 @@ def analyze_equipment_constraints(process):
                 'utilization': constraint.getUtilization(),
                 'violated': constraint.isViolated()
             })
-    
+
     return pd.DataFrame(all_constraints)
 
 
 def plot_constraint_dashboard(df):
     """Create a visual dashboard of constraint status."""
-    
+
     # Group by equipment
     equipment_list = df['equipment'].unique()
     n_equipment = len(equipment_list)
-    
+
     fig, axes = plt.subplots(n_equipment, 1, figsize=(12, 3 * n_equipment))
     if n_equipment == 1:
         axes = [axes]
-    
+
     for i, equipment in enumerate(equipment_list):
         ax = axes[i]
         eq_df = df[df['equipment'] == equipment]
-        
+
         # Create horizontal bar chart
         constraints = eq_df['constraint'].values
         utilizations = eq_df['utilization'].values * 100
         violations = eq_df['violated'].values
-        
-        colors = ['red' if v else ('orange' if u > 90 else 'green') 
+
+        colors = ['red' if v else ('orange' if u > 90 else 'green')
                   for u, v in zip(utilizations, violations)]
-        
+
         y_pos = range(len(constraints))
         bars = ax.barh(y_pos, utilizations, color=colors, alpha=0.7)
-        
+
         # Add reference lines
         ax.axvline(x=100, color='red', linestyle='--', linewidth=2, label='Limit')
         ax.axvline(x=90, color='orange', linestyle='--', linewidth=1, label='Warning')
-        
+
         # Labels
         ax.set_yticks(y_pos)
         ax.set_yticklabels(constraints)
         ax.set_xlabel('Utilization (%)')
         ax.set_title(f'{equipment}')
         ax.set_xlim(0, max(120, max(utilizations) * 1.1))
-        
+
         # Add value labels
         for bar, util in zip(bars, utilizations):
             ax.text(bar.get_width() + 2, bar.get_y() + bar.get_height()/2,
                    f'{util:.1f}%', va='center')
-        
+
         ax.grid(True, alpha=0.3, axis='x')
-    
+
     plt.tight_layout()
     plt.savefig('constraint_dashboard.png', dpi=150)
     plt.show()
-    
+
     return fig
 
 
@@ -810,19 +903,19 @@ def plot_constraint_dashboard(df):
 if __name__ == "__main__":
     # Create and run process
     process = create_compression_process()
-    
+
     # Analyze constraints
     print("Analyzing equipment constraints...")
     constraint_df = analyze_equipment_constraints(process)
-    
+
     # Print summary table
     print("\n=== Constraint Summary ===")
     print(constraint_df[['equipment', 'constraint', 'type', 'utilization', 'violated']]
           .to_string(index=False))
-    
+
     # Save to CSV
     constraint_df.to_csv('constraint_analysis.csv', index=False)
-    
+
     # Identify critical constraints
     critical = constraint_df[constraint_df['violated']]
     if len(critical) > 0:
@@ -830,7 +923,7 @@ if __name__ == "__main__":
         for _, row in critical.iterrows():
             print(f"  - {row['equipment']}/{row['constraint']}: "
                   f"{row['current']:.2f} > {row['design']:.2f} {row['unit']}")
-    
+
     # Identify near-limit constraints
     near_limit = constraint_df[(constraint_df['utilization'] > 0.9) & (~constraint_df['violated'])]
     if len(near_limit) > 0:
@@ -838,7 +931,7 @@ if __name__ == "__main__":
         for _, row in near_limit.iterrows():
             print(f"  - {row['equipment']}/{row['constraint']}: "
                   f"{row['utilization']*100:.1f}%")
-    
+
     # Plot dashboard
     plot_constraint_dashboard(constraint_df)
 ```
