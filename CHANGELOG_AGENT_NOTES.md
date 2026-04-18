@@ -9,79 +9,125 @@
 
 ---
 
-## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
+## 2026-04-18 — Systematic Phase-Index Bug Fixes in Two-Phase Flow Transport
 
 ### Summary
 
-Major dynamic simulation feature set: 21 features across controller logic,
-instrumentation realism, equipment dynamics, and numerical infrastructure.
-59 JUnit tests. Full docs at `docs/process/dynamic-simulation-enhancements.md`.
+Comprehensive audit and fix of 29 bugs across the `fluidmechanics` package where
+methods that accept a `phase` or `phaseNum` parameter internally used phase-0 defaults
+for Reynolds number, velocity, or friction factor calculations. This caused all
+liquid-phase (phase 1) transport coefficients to be computed with gas-phase values.
 
-### New Classes
+### What Changed
 
-| Class | Package | Purpose |
-|-------|---------|---------|
-| `SequentialFunctionChart` | `process.controllerdevice` | IEC 61131-3 SFC — startup/shutdown sequences, ESD logic, timed transitions |
-| `OverrideControllerStructure` | `process.controllerdevice.structure` | HIGH_SELECT / LOW_SELECT override control |
-| `SplitRangeControllerStructure` | `process.controllerdevice.structure` | Single controller driving multiple final elements with configurable sub-ranges |
-| `SensorFaultType` | `process.measurementdevice` | Enum: NONE, STUCK_AT_VALUE, LINEAR_DRIFT, BIAS, NOISE_BURST, SATURATION |
+**Round 1 (13 bugs):** Critical fixes in core solver and flow nodes:
+- `NonEquilibriumFluidBoundary`: Prandtl number missing `/getMolarMass()`, heat transfer solver step clamping
+- `ReactiveKrishnaStandartFilmModel`: Per-component enhancement factor scaling
+- `KrishnaStandartFilmModel`: 3 NaN guards (Schmidt, phi matrix, mass transfer inverse)
+- `TwoPhaseFixedStaggeredGridSolver`: `initFinalResults` phase param, sign error, zero guards, velocity/enthalpy phase fixes
+- `InterphaseStratifiedFlow`: Liquid mass transfer floor, friction uses `phase` param, heat/mass transfer use `getReynoldsNumber(phaseNum)`
+- `TwoPhaseFlowNode`: Hydraulic diameter guards, convergence fix, Reynolds viscosity guard, `interphaseFrictionFactor[1]` uses phase 1
 
-### New API on Existing Classes
+**Round 2 (6 bugs):**
+- `TwoPhaseFixedStaggeredGridSolver`: Component conservation uses `getVelocity(phaseNum)`
+- `TwoPhaseFixedStaggeredGridSolver`: Latent heat enthalpy zero-moles guard (2 locations)
+- `InterphaseDropletFlow`: Friction factor uses `phase` parameter
+- `InterphaseSlugFlow`: Friction factor uses `phase` parameter
+- `InterphaseStratifiedFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
 
-**ControllerDeviceInterface / ControllerDeviceBaseClass:**
-- `ControllerMode` enum: `AUTO`, `MANUAL`, `CASCADE`
-- `getMode()` / `setMode(ControllerMode)` — with bumpless transfer on MANUAL→AUTO
-- `getManualOutput()` / `setManualOutput(double)` — direct output in MANUAL mode
-- `setSetpointWeight(double b)` / `getSetpointWeight()` — 2-DOF PID (0.0–1.0)
+**Round 3 (10 bugs):**
+- `InterphaseTransportCoefficientBaseClass`: Base class `calcInterPhaseFrictionFactor` now uses `calcWallFrictionFactor(phase, node)` instead of hardcoded 0
+- `MultiPhaseFlowNode`: `interphaseFrictionFactor[1]` uses phase 1 (same as TwoPhaseFlowNode fix)
+- `InterphaseDropletFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
+- `InterphaseSlugFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
+- `InterphasePipeFlow` (one-phase): All 3 methods use `getReynoldsNumber(phase)` consistently; turbulent branches use `getVelocity(phaseNum)`
+- `InterphaseStirredCellFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
 
-**MeasurementDeviceBaseClass:**
-- `setFirstOrderTimeConstant(double)` / `getFirstOrderTimeConstant()` — transmitter filter (0 = disabled)
-- `setFault(SensorFaultType, double)` / `clearFault()` — sensor fault injection
-- `shelveAlarm(String reason)` / `shelveAlarm(String, double expiry)` — alarm shelving
-- `unshelveAlarm()` / `isAlarmShelved()` — alarm unshelve and query
+### Files Changed
 
-**AlarmState:**
-- `shelve(String reason)` / `shelve(String, double)` — timed alarm shelving
-- `unshelve()` / `isShelved()` / `getShelveReason()` / `getShelveExpiry()`
+| File | Change |
+|------|--------|
+| `NonEquilibriumFluidBoundary.java` | Prandtl fix, step clamping, df==0 guard |
+| `ReactiveKrishnaStandartFilmModel.java` | Enhancement factor diagonal scaling |
+| `KrishnaStandartFilmModel.java` | 3 NaN guards |
+| `TwoPhaseFixedStaggeredGridSolver.java` | Phase params, sign fix, zero guards |
+| `InterphaseStratifiedFlow.java` | Phase params for Re, friction, mass transfer |
+| `TwoPhaseFlowNode.java` | Hydraulic diameter, convergence, friction[1] |
+| `InterphaseDropletFlow.java` | Phase params for friction and Re |
+| `InterphaseSlugFlow.java` | Phase params for friction, heat, mass transfer |
+| `InterphaseTransportCoefficientBaseClass.java` | Base class friction uses phase param |
+| `MultiPhaseFlowNode.java` | `interphaseFrictionFactor[1]` phase fix |
+| `InterphasePipeFlow.java` | Consistent Re and velocity phase usage |
+| `InterphaseStirredCellFlow.java` | Phase params for heat and mass transfer |
 
-**ThrottlingValve:**
-- `setValveDeadband(double)` / `getValveDeadband()` — valve deadband (%)
-- `setValveStiction(double)` / `getValveStiction()` — valve stiction (%)
-- `setValveHysteresis(double)` / `getValveHysteresis()` — valve hysteresis (%)
+### Impact
 
-**Separator:**
-- `setWeirHeight(double)` / `setWeirLength(double)` — weir-controlled liquid outflow (Francis formula)
-- `setBootVolume(double)` — boot (sump) volume
-- `setMistEliminatorDpCoeff(double)` / `setMistEliminatorThickness(double)` — mist eliminator ΔP
-- `getWeirOverflowRate()` / `getMistEliminatorPressureDrop()` — calculated outputs
+Liquid-phase mass transfer, heat transfer, and friction factor calculations now
+use the correct liquid-phase Reynolds number and velocity. This significantly
+affects non-equilibrium pipeline simulations where condensation occurs — the
+liquid film transport was previously computed with gas-phase properties.
 
-**HeatExchanger:**
-- `setDynamicModelEnabled(boolean)` — enable wall + fluid thermal ODE
-- `setWallMass(double)` / `setWallCp(double)` — wall thermal properties
-- `setHeatTransferArea(double)` — heat transfer area (m²)
-- `setShellSideHtc(double)` / `setTubeSideHtc(double)` — side-specific HTCs
-- `setShellHoldupVolume(double)` / `setTubeHoldupVolume(double)` — CSTR fluid holdup
-- `getWallTemperature()` — tracked wall temperature (K)
+### Migration
 
-**DistillationColumn:**
-- `setDynamicColumnEnabled(boolean)` — per-tray liquid holdup (Francis weir)
-- `setTrayWeirHeight(double)` / `setTrayWeirLength(double)` — weir geometry
-- `setDynamicEnergyEnabled(boolean)` — per-tray enthalpy tracking
-- `setTrayDryPressureDrop(double)` — pressure-driven vapor flow
-- `getTrayLiquidHoldup()` / `getTrayEnthalpy()` — per-tray state arrays
+No API changes. All fixes are internal corrections. Results from two-phase
+non-equilibrium simulations will differ from previous versions — this is the
+**correct** behavior. Previous results had incorrect liquid-phase transport.
 
-**ProcessSystem:**
-- `IntegrationMethod` enum: `EXPLICIT_EULER`, `RUNGE_KUTTA_4`
-- `setIntegrationMethod(IntegrationMethod)` / `getIntegrationMethod()`
-- `setAdaptiveTimestepEnabled(boolean)` + `setMinTimestep` / `setMaxTimestep` / `setAdaptiveTimestepTolerance`
-- `runTransientAdaptive(double dt, UUID id)` — returns actual timestep used
-- `setParallelTransientEnabled(boolean)` / `setTransientThreadPoolSize(int)`
+---
 
-### Affected Skills
+## 2026-04-17 — InterphaseDropletFlow: Corrected Mass/Heat Transfer for Dispersed Flow
 
-- `neqsim-dynamic-simulation` — update with new controller modes, SFC, equipment dynamics
-- `neqsim-api-patterns` — add 2-DOF PID, valve nonlinearities, alarm shelving patterns
-- `neqsim-capability-map` — update dynamic simulation capabilities inventory
+### Summary
+
+Fixed and enhanced `InterphaseDropletFlow` — the interphase transport coefficient
+calculator for droplet (mist) and bubble flow regimes. The previous implementation
+erroneously reused stratified flow (Yih-Chen) correlations via copy-paste. The new
+implementation uses physics-appropriate correlations for dispersed particles.
+
+### What Changed
+
+1. **Bug fix:** Mass and heat transfer now use the **particle diameter** (droplet/bubble)
+   as the characteristic length, not the pipe hydraulic diameter. This is the fundamental
+   difference between dispersed and stratified flow transport.
+
+2. **Ranz-Marshall correlation** for continuous phase: `Sh = 2 + 0.6·Re_p^0.5·Sc^0.33`
+   (both mass and heat transfer).
+
+3. **Kronig-Brink model** for dispersed phase interior: `Sh = 17.66` (steady-state limit
+   for internally circulating spheres).
+
+4. **Abramzon-Sirignano (1989) extended film model** — optional correction for
+   evaporating droplets that accounts for Stefan flow (blowing) at the droplet surface.
+   Enabled via `setUseAbramzonSirignano(true)` and `setSpaldingMassTransferNumber(B_M)`.
+
+5. **Particle diameter resolution** from `DropletFlowNode.getAverageDropletDiameter()`
+   and `BubbleFlowNode.getAverageBubbleDiameter()`.
+
+### New/Changed Files
+
+| File | Change |
+|------|--------|
+| `InterphaseDropletFlow.java` | **Rewritten** — Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano |
+| `InterphaseDropletFlowMassTransferTest.java` | **NEW** — 9 tests covering correlations and limits |
+| `condensation_pipeline_equilibrium_vs_nonequilibrium.ipynb` | **NEW** — Example notebook comparing equilibrium vs non-equilibrium pipeline condensation |
+| `docs/fluidmechanics/droplet_flow_correlations.md` | **NEW** — Full documentation of dispersed flow correlations |
+
+### New API Methods on `InterphaseDropletFlow`
+
+| Method | Description |
+|--------|-------------|
+| `setUseAbramzonSirignano(boolean)` | Enable/disable blowing correction |
+| `isUseAbramzonSirignano()` | Query blowing correction state |
+| `setSpaldingMassTransferNumber(double)` | Set B_M for Abramzon-Sirignano |
+| `getSpaldingMassTransferNumber()` | Get current B_M value |
+| `calcAbramzonSirignanoF(double bm)` | Calculate F(B_M) correction function |
+
+### Migration
+
+No breaking API changes. The corrected correlations may produce different mass
+transfer coefficients than before for droplet/bubble flow nodes, but this is a
+**bug fix** — the old values were physically incorrect (using pipe diameter instead
+of particle diameter).
 
 ---
 
@@ -357,7 +403,6 @@ fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
 ---
 
 ## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
-<<<<<<< HEAD
 
 ### Vertical Separator → GasScrubber Mapping
 
@@ -515,8 +560,6 @@ raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
 ---
 
 ## 2026-04-08 — IEC 81346 Reference Designation Support
-=======
->>>>>>> 0a1cdaa75a2293eaa9447f3df1b0ec9460a74c1e
 
 ### Vertical Separator → GasScrubber Mapping
 

@@ -169,7 +169,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
     // Higher interphase friction in slug flow due to intense mixing at slug front
     // Uses Andreussi-Bendiksen correlation framework
-    double baseFriction = calcWallFrictionFactor(0, node);
+    double baseFriction = calcWallFrictionFactor(phase, node);
     double mixingEnhancement = 1.0 + 150.0 * node.getPhaseFraction(1);
     return baseFriction * mixingEnhancement;
   }
@@ -199,7 +199,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   @Override
   public double calcInterphaseHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else {
@@ -220,7 +220,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   @Override
   public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
