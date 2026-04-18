@@ -5,7 +5,11 @@ journal_name: "Computers & Chemical Engineering"
 journal_abbrev: "Comput. Chem. Eng."
 publisher: "Elsevier"
 issn: "0098-1354"
+eissn: "1873-4375"
 url: "https://www.sciencedirect.com/journal/computers-and-chemical-engineering"
+submit_url: "https://www.editorialmanager.com/cace/"
+impact_factor: 3.6
+citescore: 7.1
 scope: >
   Application of computing and systems technology to chemical engineering
   problems. Covers process simulation, optimization, control, AI/ML in

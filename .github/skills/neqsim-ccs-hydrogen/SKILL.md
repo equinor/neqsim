@@ -1,6 +1,7 @@
 ---
 name: neqsim-ccs-hydrogen
 description: "CO2 capture, transport, storage (CCS) and hydrogen systems patterns for NeqSim. USE WHEN: modeling CO2 pipelines, injection wells, impurity effects on phase behavior, CO2 dense phase transport, hydrogen blending, electrolysis, or any CCS/H2 value chain analysis. Covers CO2 phase behavior, impurity management, well integrity, and hydrogen systems."
+last_verified: "2026-07-04"
 ---
 
 # CCS and Hydrogen Systems with NeqSim

@@ -1,6 +1,7 @@
 ---
 name: neqsim-input-validation
 description: "Input validation rules for NeqSim simulations. USE WHEN: setting up thermodynamic systems, process equipment, or running simulations. Catches physically impossible or suspect inputs before simulation runs, saving time and providing corrective guidance."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Input Validation Rules

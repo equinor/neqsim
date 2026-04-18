@@ -1,6 +1,7 @@
 ---
 name: neqsim-power-generation
 description: "Power generation patterns for NeqSim. USE WHEN: modeling gas turbines, steam turbines, HRSG, combined cycle systems, waste heat recovery, or calculating fuel gas consumption and thermal efficiency. Covers GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem classes and heat integration with PinchAnalysis."
+last_verified: "2026-07-04"
 ---
 
 # Power Generation with NeqSim

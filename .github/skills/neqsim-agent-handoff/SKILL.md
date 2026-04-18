@@ -1,6 +1,7 @@
 ---
 name: neqsim-agent-handoff
 description: "Agent-to-agent communication schema for NeqSim. USE WHEN: composing multi-agent pipelines where one agent's output feeds another agent's input. Defines structured result formats for fluid definitions, simulation results, and design outputs that agents can pass to each other."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Agent Handoff Schema

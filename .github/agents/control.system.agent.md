@@ -63,7 +63,7 @@ TemperatureTransmitter TT = new TemperatureTransmitter("TT-100", heater);
 TT.setUnit("C");
 
 // Flow
-FlowRateTransmitter FT = new FlowRateTransmitter("FT-100", stream);
+VolumeFlowTransmitter FT = new VolumeFlowTransmitter("FT-100", stream);
 FT.setUnit("kg/hr");
 ```
 

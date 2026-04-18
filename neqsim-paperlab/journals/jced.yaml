@@ -1,0 +1,136 @@
+# Journal of Chemical & Engineering Data — Journal Profile
+# ACS Publications — ISSN: 0021-9568
+# https://pubs.acs.org/journal/jceaax
+
+journal_name: "Journal of Chemical & Engineering Data"
+journal_abbrev: "J. Chem. Eng. Data"
+publisher: "American Chemical Society (ACS)"
+issn: "0021-9568"
+eissn: "1520-5134"
+url: "https://pubs.acs.org/journal/jceaax"
+submit_url: "https://publish.acs.org/"
+impact_factor: 2.0
+citescore: 3.6
+scope: >
+  Experimental, computational, and correlational studies on the physical,
+  thermodynamic, and transport properties of well-defined materials,
+  including complex mixtures of practical interest. Covers VLE, LLE,
+  SLE, solubility, density, viscosity, thermal conductivity, heat capacity,
+  surface tension, and equation-of-state modeling validated against data.
+
+# Structure
+abstract_words_max: 250
+keywords_min: null  # ACS Topics system
+keywords_max: null
+section_order:
+  - Abstract
+  - TOC Graphic
+  - Introduction
+  - Theory / Modeling Approach
+  - Experimental / Computational Details
+  - Results and Discussion
+  - Conclusions
+  - Associated Content (Supporting Information)
+  - Author Information
+  - Acknowledgements
+  - References
+
+# Formatting
+latex_class: "achemso"
+latex_options: null
+reference_style: "achemso"
+citation_style: "numbered_superscript"  # Superscript numbers: ¹, ², ³⁻⁵
+figure_formats:
+  - "tiff"
+  - "eps"
+  - "pdf"
+  - "png"
+  - "jpeg"
+figure_dpi_min: 300
+figure_width_single_column_in: 3.25
+figure_width_double_column_in: 7.0
+table_style: "acs_standard"
+equation_numbering: "sequential"
+line_numbering_required: false
+double_spacing_required: true
+page_size: "US_Letter"
+
+# Requirements
+toc_graphic_required: true
+toc_graphic_size: "3.25 x 1.75 inches"
+highlights_required: false
+highlights_min: null
+highlights_max: null
+highlights_max_chars_each: null
+graphical_abstract_required: false
+cover_letter_required: false
+conflict_of_interest_required: true
+data_availability_required: false  # Via Supporting Information
+credit_statement_required: false
+orcid_required: true
+supporting_information_encouraged: true
+nomenclature_section: "optional"
+
+# JCED-Specific: Uncertainty Reporting
+uncertainty_reporting: "mandatory"  # NIST TN 1297 / GUM
+uncertainty_notes: >
+  All measured or computed property values MUST include uncertainty
+  estimates. Report expanded uncertainties U(x) with coverage factor k=2
+  (95% confidence). For computational studies, report average absolute
+  deviation (AAD%), maximum deviation, and bias.
+
+# Page/Content Limits
+pages_max: null
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "4000-8000"
+
+# Submission Types
+paper_types:
+  - "Article"
+  - "Review"
+  - "Correlation"      # Short focused correlation studies
+  - "Comment/Reply"
+
+# Peer Review
+peer_review_model: "single_anonymous"
+
+# Reference Format — same as I&EC Research (ACS style)
+# Journal: Author1, A. B.; Author2, C. D. Title. J. Abbrev. Year, Vol, Pages.
+
+# Typical Topics for NeqSim Papers
+relevant_topics:
+  - "Thermodynamic property measurement and prediction"
+  - "Equation of state validation against experimental data"
+  - "Density, viscosity, thermal conductivity modeling"
+  - "VLE/LLE of systems with CO2, H2S, H2, or hydrocarbons"
+  - "Wax appearance temperature and solid-fluid equilibria"
+  - "Surface tension and interfacial properties"
+  - "Water content of natural gas and acid gas systems"
+  - "Property correlations for engineering calculations"
+
+# Distinctive Features
+distinctive_features:
+  - "Premier journal for physical property data — if you have data, JCED is the target"
+  - "Mandatory uncertainty analysis — raises paper rigor"
+  - "Computational papers must validate against experimental data (not just internal benchmarks)"
+  - "Supporting Information ideal for full tabulated datasets (100+ data points)"
+  - "Strong home for SRK/PR/CPA validation studies comparing to NIST/DIPPR"
+
+# Key JCED Policies
+policies:
+  ai_disclosure: "Must disclose AI tools used; AI cannot be listed as author"
+  data_reporting: "Full numerical data must be in tables (not just figures)"
+  uncertainty: "GUM-compliant uncertainty required for all property values"
+  preprints: "Allowed on ChemRxiv and other recognized servers"
+  color_figures: "Free online; may have charges for print"
+
+# Data Reporting Best Practices (mandatory for JCED)
+data_requirements:
+  - "Full numerical data in tables (Supporting Information if large)"
+  - "Deviation plots (experiment - model) are expected"
+  - "Report source and purity of all chemicals"
+  - "State temperature calibration and pressure gauge uncertainties"
+  - "For computational studies: report NIST/DIPPR reference values alongside model predictions"
+  - "AAD% and maximum deviation mandatory for property correlations"

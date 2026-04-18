@@ -1,6 +1,7 @@
 ---
 name: neqsim-java8-rules
 description: "Java 8 compatibility rules for NeqSim. USE WHEN: writing or reviewing any Java code for NeqSim, including tests. Covers forbidden Java 9+ features, replacement patterns, API verification, and JavaDoc requirements. All NeqSim Java code MUST compile with Java 8."
+last_verified: "2026-07-04"
 ---
 
 # Java 8 Compatibility Rules for NeqSim

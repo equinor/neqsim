@@ -593,3 +593,144 @@ Key considerations:
 - Compare with analytical solutions or published design examples
 - Include safety factor sensitivity analysis
 - Report cost estimation uncertainties
+
+---
+
+## Extended Toolchain
+
+PaperLab includes additional tools for publication quality and compliance.
+All tools are accessible via `paperflow.py` subcommands.
+
+### Statistical Tests on Benchmark Results
+
+```bash
+python paperflow.py stats papers/my_paper/
+```
+
+Runs bootstrap confidence intervals, Cohen's d effect sizes, Wilcoxon signed-rank
+tests, and Mann-Whitney U tests on benchmark `summary_*.json` files. Produces
+publication-ready LaTeX and Markdown tables.
+
+### Self-Plagiarism Check
+
+```bash
+python paperflow.py check-plagiarism papers/my_paper/ --doc-threshold 0.35
+```
+
+Uses TF-IDF cosine similarity to compare the manuscript against all other
+`paper.md` files in the `papers/` directory. Detects document-level and
+paragraph-level overlap. Requires `scikit-learn`.
+
+### Reproducibility Manifest
+
+```bash
+python paperflow.py manifest papers/my_paper/
+python paperflow.py verify-manifest papers/my_paper/
+```
+
+Generates SHA-256 hashes of all paper artifacts (manuscript, bibliography,
+results, figures, source code) and captures the computational environment
+(Python, Java, NeqSim version, OS). Use `verify-manifest` before submission
+to ensure no artifacts have been modified since the last build.
+
+### Graphical Abstract
+
+```bash
+python paperflow.py graphical-abstract papers/my_paper/
+```
+
+Generates a composite image (1600x900, 300 DPI) with the best figure from
+`figures/` on the left and title + key highlights on the right. Requires `Pillow`.
+
+### CRediT Author Statement
+
+```bash
+python paperflow.py credit papers/my_paper/
+```
+
+Generates a CRediT (Contributor Roles Taxonomy) author contribution statement
+per NISO Z39.104-2022 with all 14 standard roles. Reads contributor assignments
+from `plan.json` under `credit_contributions`. Validates role names and reports
+uncovered roles.
+
+### Nomenclature Extraction
+
+```bash
+python paperflow.py nomenclature papers/my_paper/
+```
+
+Scans `paper.md` for LaTeX math symbols (`$...$` and `$$...$$`), matches them
+against a built-in database of thermodynamic/process engineering symbols, and
+produces a sorted nomenclature table (Roman letters, Greek letters, subscripted
+symbols) in both Markdown and LaTeX.
+
+### Related Work Comparison Table
+
+```bash
+python paperflow.py related-work papers/my_paper/
+```
+
+Builds a structured comparison table from `literature_map.md` and `plan.json`
+entries. Configurable dimensions (Method, EOS, Systems, Key Result, Limitation).
+Outputs Markdown and LaTeX tables, optionally including a "This work" row.
+
+### LaTeX/PDF Compilation
+
+```bash
+python paperflow.py latex papers/my_paper/ --journal elsevier --output-format both
+```
+
+Compiles `paper.md` to LaTeX/PDF via Pandoc with journal-specific class templates
+(elsarticle, svjour3, achemso, MDPI, generic). Requires `pandoc` on PATH and
+optionally a LaTeX distribution (TeX Live or MiKTeX) for PDF output.
+
+Supported templates: `elsevier`, `springer`, `mdpi`, `acs`, `generic`.
+
+### DOI Verification
+
+```bash
+python paperflow.py verify-dois papers/my_paper/
+```
+
+Sends HTTP HEAD requests to `https://doi.org/{doi}` for every DOI in `refs.bib`
+and reports broken, timeout, or unreachable DOIs. Catches typos in DOI strings
+before submission.
+
+### Enhanced Citation Discovery (Crossref)
+
+```bash
+python paperflow.py suggest-refs papers/my_paper/ --max 15
+```
+
+Now queries **both** Semantic Scholar and Crossref APIs, deduplicates results,
+and merges citation counts from both sources for broader coverage. Crossref
+provides DOI-linked metadata and "is-referenced-by" counts.
+
+### Enhanced Prose Quality
+
+```bash
+python paperflow.py check-prose papers/my_paper/
+```
+
+Now includes **proselint** integration (style and clarity lint), **LanguageTool**
+grammar checking (with false-positive filtering for technical terms), NeqSim
+name-in-abstract enforcement, and body overuse warnings. Scores across 7
+dimensions: readability, sentence structure, active voice, conciseness,
+proselint style, grammar, and algorithm-first compliance.
+
+### Complete Tool Summary
+
+| Command | Purpose | Optional Deps |
+|---------|---------|---------------|
+| `stats` | Statistical tests on benchmarks | scipy |
+| `check-plagiarism` | Self-plagiarism detection | scikit-learn |
+| `manifest` | Reproducibility manifest | — |
+| `verify-manifest` | Verify manifest integrity | — |
+| `graphical-abstract` | Composite graphical abstract | Pillow |
+| `credit` | CRediT author statement | — |
+| `nomenclature` | Symbol nomenclature table | — |
+| `related-work` | Literature comparison table | — |
+| `latex` | LaTeX/PDF via Pandoc | pandoc, TeX distribution |
+| `verify-dois` | DOI resolution check | requests |
+| `suggest-refs` | Citation discovery (S2 + Crossref) | requests |
+| `check-prose` | Prose quality (7 dimensions) | proselint, language-tool-python |

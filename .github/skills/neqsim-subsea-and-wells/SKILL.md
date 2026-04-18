@@ -1,6 +1,7 @@
 ---
 name: neqsim-subsea-and-wells
 description: "Subsea production systems, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Subsea & Wells Skill

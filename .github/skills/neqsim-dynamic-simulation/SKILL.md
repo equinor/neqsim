@@ -1,6 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
+last_verified: "2026-07-04"
 ---
 
 # Dynamic Simulation Guidance
@@ -90,7 +91,7 @@ TT100.setUnit("C");
 process.add(TT100);
 
 // Flow transmitter
-FlowRateTransmitter FT100 = new FlowRateTransmitter("FT-100", feed);
+VolumeFlowTransmitter FT100 = new VolumeFlowTransmitter("FT-100", feed);
 FT100.setUnit("kg/hr");
 process.add(FT100);
 ```

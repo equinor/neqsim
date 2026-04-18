@@ -1,0 +1,155 @@
+# SPE Conference Paper — Journal Profile
+# Society of Petroleum Engineers
+# https://www.spe.org/en/publications/
+
+journal_name: "SPE Conference Paper"
+journal_abbrev: "SPE"
+publisher: "Society of Petroleum Engineers"
+url: "https://www.spe.org/en/publications/"
+submit_url: "https://www.spe.org/en/authors/"
+scope: >
+  Technical papers for SPE conferences and events covering upstream
+  oil and gas: drilling, completions, production, reservoir engineering,
+  flow assurance, facilities, subsea, health/safety/environment, and
+  project management. Papers are peer-reviewed and published in
+  OnePetro (onepetro.org). Top papers may be invited for journal
+  publication in SPE Journal, SPE Reservoir Evaluation & Engineering,
+  SPE Production & Operations, or SPE Drilling & Completion.
+
+# Structure — SPE uses numbered sections, no Keywords or Highlights
+abstract_words_max: 300  # SPE allows longer abstracts
+keywords_min: null  # Not used
+keywords_max: null
+section_order:
+  - Abstract
+  - Introduction
+  - Theory and/or Background
+  - Methodology
+  - Results and Discussion
+  - Conclusions
+  - Nomenclature
+  - Acknowledgements
+  - References
+  - Appendices
+  - SI Metric Conversion Factors
+
+# Formatting
+latex_class: "custom"
+latex_template: "spe-template"  # SPE provides Word template; LaTeX unofficial
+reference_style: "spe"
+citation_style: "numbered"  # (Author Year) in text, numbered in references
+figure_formats:
+  - "tiff"
+  - "png"
+  - "jpeg"
+  - "eps"
+figure_dpi_min: 300
+table_style: "spe_standard"  # SPE uses simple bordered tables
+equation_numbering: "sequential"
+line_numbering_required: false
+double_spacing_required: false
+page_size: "US_Letter"
+font: "Times New Roman"
+font_size: 10
+margins_in: 1.0  # 1 inch all sides
+columns: 2  # Two-column format
+
+# Requirements
+highlights_required: false
+highlights_min: null
+highlights_max: null
+highlights_max_chars_each: null
+graphical_abstract_required: false
+cover_letter_required: false
+conflict_of_interest_required: false
+data_availability_required: false
+credit_statement_required: false
+nomenclature_section: "required"  # SPE expects nomenclature for technical papers
+si_conversion_required: true  # SPE requires SI Metric Conversion Factors appendix
+
+# SPE-Specific Requirements
+spe_number_assigned: true  # SPE assigns a paper number (e.g., SPE-123456-MS)
+oral_presentation_expected: true  # Conference papers are typically presented
+manuscript_type: "MS"  # MS = manuscript (not journal version)
+
+# Page/Content Limits
+pages_max: 20  # Typical limit for conference papers
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "4000-8000"
+
+# Paper Types
+paper_types:
+  - "Technical Paper"     # Standard conference paper
+  - "Case History"        # Field application / case study
+  - "Tutorial Paper"      # Educational / overview
+
+# Key SPE Conferences for NeqSim Topics
+conferences:
+  - name: "SPE Annual Technical Conference and Exhibition (ATCE)"
+    frequency: "Annual"
+    topics: "All petroleum engineering"
+  - name: "Offshore Technology Conference (OTC)"
+    frequency: "Annual (May, Houston)"
+    topics: "Offshore, subsea, deepwater"
+  - name: "SPE International Conference on Oilfield Chemistry"
+    frequency: "Biennial"
+    topics: "Flow assurance, scale, corrosion, chemistry"
+  - name: "SPE Gas & Oil Technology Showcase and Conference (GOTECH)"
+    frequency: "Annual"
+    topics: "Gas processing, LNG, operations"
+  - name: "Abu Dhabi International Petroleum Exhibition and Conference (ADIPEC)"
+    frequency: "Annual"
+    topics: "All petroleum engineering"
+  - name: "SPE Offshore Europe"
+    frequency: "Biennial"
+    topics: "North Sea, subsea, flow assurance"
+
+# Typical Topics for NeqSim Papers
+relevant_topics:
+  - "Flow assurance: hydrate, wax, asphaltene, scale prediction"
+  - "Multiphase pipeline flow modeling"
+  - "Subsea production system design"
+  - "Gas processing and dehydration"
+  - "PVT modeling and fluid characterization"
+  - "Well design and completion optimization"
+  - "Digital twins for production operations"
+  - "CO2 injection and EOR"
+  - "Gas lift optimization"
+  - "Separator design and sizing"
+  - "Compressor performance and anti-surge"
+
+# Distinctive Features
+distinctive_features:
+  - "Largest petroleum engineering society — enormous practitioner readership"
+  - "Conference papers are citable and indexed on OnePetro"
+  - "Case study / field application papers are highly valued"
+  - "Top papers invited for SPE journal upgrade (peer-reviewed)"
+  - "SI Metric Conversion Factors appendix is mandatory"
+  - "Nomenclature section expected for all technical papers"
+  - "Two-column format with 10pt Times New Roman"
+
+# SI Metric Conversion Factors
+# SPE requires this appendix for all papers using non-SI units
+si_conversion_note: >
+  Include a table of SI conversion factors for all non-SI units used in
+  the paper. Example: bbl x 1.589 873 E-01 = m³,
+  ft x 3.048* E-01 = m, psi x 6.894 757 E+00 = kPa.
+  Asterisk (*) denotes exact conversion.
+
+# Key SPE Policies
+policies:
+  ai_disclosure: "Follow individual conference call-for-papers guidance"
+  preprints: "Check specific conference rules"
+  copyright: "SPE retains copyright; authors get personal use rights"
+  presentation: "Paper must be presented at the conference to appear in proceedings"
+
+# Reviewer Expertise
+reviewer_expertise:
+  - "Petroleum engineering and reservoir simulation"
+  - "Flow assurance and pipeline design"
+  - "Subsea production systems"
+  - "Gas processing and facilities engineering"
+  - "Well design and completion"
+  - "Production optimization"

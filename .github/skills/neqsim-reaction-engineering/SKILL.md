@@ -1,6 +1,7 @@
 ---
 name: neqsim-reaction-engineering
 description: "Reaction engineering patterns for NeqSim. USE WHEN: modeling chemical reactors (equilibrium, kinetic, CSTR, PFR), setting up reaction systems, analyzing conversion/selectivity, or designing reactor networks. Covers GibbsReactor (equilibrium), PlugFlowReactor (kinetic PFR), StirredTankReactor (CSTR), KineticReaction setup, and CatalystBed configuration."
+last_verified: "2026-07-04"
 ---
 
 # Reaction Engineering Patterns

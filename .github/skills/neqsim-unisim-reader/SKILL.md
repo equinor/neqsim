@@ -1,6 +1,7 @@
 ---
 name: neqsim-unisim-reader
 description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to NeqSim ProcessSystem / ProcessModule structures. USE WHEN: a user has UniSim/HYSYS simulation files and wants to recreate or compare the model in NeqSim. Covers COM API navigation, component mapping, EOS mapping, operation type mapping, topology reconstruction, sub-flowsheet handling, and result verification."
+last_verified: "2026-07-04"
 ---
 
 # UniSim Design / HYSYS → NeqSim Conversion Skill

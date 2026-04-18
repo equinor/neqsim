@@ -1,6 +1,7 @@
 ---
 name: neqsim-plant-data
 description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, or integrating NeqSim models with operational data. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, and model-vs-plant comparison workflows."
+last_verified: "2026-07-04"
 ---
 
 # Plant Data Integration with Tagreader

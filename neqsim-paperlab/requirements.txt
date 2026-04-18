@@ -26,4 +26,9 @@ bibtexparser>=1.4              # parse/validate refs.bib programmatically
 
 # --- Prose quality & discovery ---
 textstat>=0.7                  # readability metrics (Flesch-Kincaid, Gunning fog, ARI)
-requests>=2.28                 # Semantic Scholar API for citation discovery
+requests>=2.28                 # Semantic Scholar + Crossref API for citation discovery
+proselint>=0.14                # prose linter: clichés, weasel words, mixed metaphors, redundancy
+language-tool-python>=2.7      # grammar/spelling checker (wraps LanguageTool)
+
+# --- Scientific rigor ---
+scikit-learn>=1.0              # TF-IDF for self-plagiarism detection

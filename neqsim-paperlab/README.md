@@ -172,6 +172,44 @@ python paperflow.py diff papers/gibbs_reactor_2026/
 python paperflow.py status papers/gibbs_reactor_2026/
 ```
 
+## Book Production
+
+PaperLab also supports **multi-chapter scientific books** (textbooks, monographs,
+edited volumes). Books follow publisher-specific formatting via YAML profiles
+and reuse the same quality infrastructure as papers.
+
+```bash
+# Create a new book project (Springer, Wiley, CRC, or self-published)
+python paperflow.py book-new "Thermodynamic Modeling with NeqSim" --publisher springer --chapters 12
+
+# Add a chapter to an existing book
+python paperflow.py book-add-chapter books/thermodynamic_modeling_2026/ --title "Cubic EOS" --part 2
+
+# Check project status (word counts, TODOs, page estimates)
+python paperflow.py book-status books/thermodynamic_modeling_2026/
+
+# Preview table of contents
+python paperflow.py book-toc books/thermodynamic_modeling_2026/
+
+# Run quality checks (structure, completeness, consistency, cross-refs, bibliography)
+python paperflow.py book-check books/thermodynamic_modeling_2026/
+
+# Render to HTML (single-page with sidebar navigation)
+python paperflow.py book-render books/thermodynamic_modeling_2026/ --format html
+
+# Render to Word (.docx with TOC, section breaks, part separators)
+python paperflow.py book-render books/thermodynamic_modeling_2026/ --format docx
+
+# Render to PDF (via Typst, uses publisher page size/fonts)
+python paperflow.py book-render books/thermodynamic_modeling_2026/ --format pdf
+
+# Render a single chapter
+python paperflow.py book-render books/thermodynamic_modeling_2026/ --format html --chapter ch03
+```
+
+**Publisher profiles** in `books/_publisher_profiles/` define page size, margins,
+fonts, and page limits for Springer, Wiley, CRC Press, and self-publishing.
+
 ## Directory Structure
 
 ```
@@ -199,8 +237,11 @@ neqsim-paperlab/
 │   └── reviewer_response.agent.md
 ├── skills/                       # Reusable scientific procedures
 │   ├── design_flash_benchmark/SKILL.md
+│   ├── design_reactor_benchmark/SKILL.md
 │   ├── run_flash_experiments/SKILL.md
 │   ├── analyze_convergence/SKILL.md
+│   ├── analyze_gibbs_convergence/SKILL.md
+│   ├── generate_publication_figures/SKILL.md
 │   ├── write_methods_section/SKILL.md
 │   └── journal_formatting/SKILL.md
 ├── tools/                        # Python tooling
@@ -208,6 +249,7 @@ neqsim-paperlab/
 │   ├── neqsim_bootstrap.py         # NeqSim JVM bootstrap (local build)
 │   ├── neqsim_scientific_tools.py  # NeqSim/jpype wrappers
 │   ├── flash_benchmark.py          # Flash benchmark runner
+│   ├── benchmark_chunk_worker.py   # Parallel benchmark chunk processor
 │   ├── figure_style.py             # SciencePlots journal presets & palettes
 │   ├── figure_validator.py         # Figure DPI/format/size validation (Pillow)
 │   ├── bib_validator.py            # Bibliography validation (bibtexparser)
@@ -215,22 +257,50 @@ neqsim-paperlab/
 │   ├── citation_discovery.py       # Suggest missing refs via Semantic Scholar API
 │   ├── revision_diff.py            # Visual HTML diff between manuscript revisions
 │   ├── research_scanner.py         # Codebase paper opportunity scanner
+│   ├── trending_topics.py          # Trending research topic scanner (Semantic Scholar)
 │   ├── daily_scan.py               # CI script for automated daily scan + issue
 │   ├── paper_renderer.py           # LaTeX rendering
+│   ├── latex_pipeline.py           # LaTeX compilation pipeline
 │   ├── word_renderer.py            # Word/OMML rendering
 │   ├── claim_tracer.py             # Evidence audit (all paper types)
 │   ├── render_html.py              # HTML render (legacy, tpflash-specific)
 │   ├── render_html_generic.py      # HTML render (generic, any paper)
-│   └── render_all.py               # Multi-format render dispatcher
+│   ├── render_pdf.py               # PDF render (Typst-based)
+│   ├── render_all.py               # Multi-format render dispatcher
+│   ├── statistical_tests.py        # Statistical tests for benchmark results
+│   ├── nomenclature_extractor.py   # Extract nomenclature from manuscript
+│   ├── related_work_table.py       # Generate related work comparison table
+│   ├── credit_generator.py         # CRediT author contribution table
+│   ├── graphical_abstract.py       # Graphical abstract generator
+│   ├── reproducibility_manifest.py # Submission manifest with checksums
+│   ├── self_plagiarism_checker.py  # Self-plagiarism check across papers
+│   ├── book_builder.py             # Book scaffolding, assembly, TOC, status
+│   ├── book_render_pdf.py          # Book PDF rendering (Typst)
+│   ├── book_render_word.py         # Book Word rendering (python-docx)
+│   ├── book_render_html.py         # Book HTML rendering (sidebar nav)
+│   └── book_checker.py             # Book quality checks
 ├── tests/                        # Pytest test suite
 │   └── test_paperflow.py
 ├── workflows/                    # Workflow definitions
 │   ├── new_paper.yaml
 │   └── revise_paper.yaml
 ├── templates/                    # Document templates
-│   ├── paper_skeleton.md
+│   ├── paper_skeleton.md            # Default paper template
+│   ├── paper_skeleton_comparative.md # Comparative study template
+│   ├── paper_skeleton_data.md       # Data paper template
+│   ├── paper_skeleton_spe.md        # SPE format template
 │   ├── cover_letter.md
-│   └── response_to_reviewers.md
+│   ├── response_to_reviewers.md
+│   ├── supplementary_material.md    # Supplementary material template
+│   ├── book_chapter.md             # Chapter template for books
+│   ├── book_frontmatter/           # Title page, copyright, dedication, preface
+│   └── book_backmatter/            # Glossary, author bio
+├── books/                        # Book projects (one folder per book)
+│   └── _publisher_profiles/        # Publisher YAML configs
+│       ├── springer.yaml
+│       ├── wiley.yaml
+│       ├── crc.yaml
+│       └── self.yaml
 └── papers/                       # Paper projects (one folder per paper)
     └── tpflash_algorithms_2026/
         ├── plan.json               # Research plan + questions
@@ -276,6 +346,24 @@ neqsim-paperlab/
 | `diff` | Visual diff between manuscript revisions | `--revision`, `--old`, `--new` |
 | `revise` | Create revision workspace from reviewer comments | `--comments` (path to comments file) |
 | `status` | Show project completion status | |
+| `list` | List all papers with status and metadata | |
+| `stats` | Statistical tests for benchmark results | |
+| `latex` | Render to LaTeX | `--journal` |
+| `nomenclature` | Extract nomenclature from manuscript | |
+| `related-work` | Generate related work section from refs.bib | |
+| `credit` | Generate CRediT author contribution table | |
+| `graphical-abstract` | Generate graphical abstract | |
+| `manifest` | Create submission manifest (files + checksums) | |
+| `verify-manifest` | Verify submission manifest integrity | |
+| `check-plagiarism` | Self-plagiarism check across papers | |
+| `verify-dois` | Verify DOIs in refs.bib resolve correctly | |
+| **Book Commands** | | |
+| `book-new` | Create a new book project | `--publisher`, `--chapters` |
+| `book-add-chapter` | Add chapter to existing book | `--title`, `--part` |
+| `book-render` | Render book to PDF, Word, or HTML | `--format`, `--chapter` |
+| `book-check` | Run book quality checks | `--check` (structure, completeness, etc.) |
+| `book-status` | Show book project overview | |
+| `book-toc` | Preview table of contents | |
 
 ## Automated Daily Scan (CI/CD)
 
