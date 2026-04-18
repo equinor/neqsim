@@ -363,7 +363,11 @@ def _insert_figure(doc, img_path, caption, chapter_num=None, fig_counter=None):
 
 
 def _render_table_to_doc(doc, table_lines):
-    """Render a markdown pipe table with booktabs-style scientific formatting."""
+    """Render a markdown pipe table with professional scientific formatting.
+
+    Features: header row shading, cell padding, booktabs-style borders,
+    auto-fit width, and alternating row shading for readability.
+    """
     if len(table_lines) < 2:
         return
 
@@ -382,20 +386,43 @@ def _render_table_to_doc(doc, table_lines):
     table = doc.add_table(rows=1 + len(data_rows), cols=n_cols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
+    # Set table to use full available width
+    tbl_el = table._tbl
+    tblPr = tbl_el.tblPr if tbl_el.tblPr is not None else OxmlElement("w:tblPr")
+    tblW = OxmlElement("w:tblW")
+    tblW.set(qn("w:w"), "5000")
+    tblW.set(qn("w:type"), "pct")
+    tblPr.append(tblW)
+
+    # Header row
     for j, cell_text in enumerate(header_cells):
         cell = table.rows[0].cells[j]
+        _apply_cell_padding(cell)
         para = cell.paragraphs[0]
         para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        para.paragraph_format.space_before = Pt(3)
+        para.paragraph_format.space_after = Pt(3)
+        para.paragraph_format.first_line_indent = Cm(0)
         run = para.add_run(cell_text)
         run.bold = True
         run.font.size = Pt(9)
         run.font.name = "Times New Roman"
+        run.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
 
+    # Data rows
     for i, row_data in enumerate(data_rows):
         for j, cell_text in enumerate(row_data):
             cell = table.rows[i + 1].cells[j]
+            _apply_cell_padding(cell)
             para = cell.paragraphs[0]
-            para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            # Right-align numeric-looking cells, left-align text
+            is_numeric = bool(re.match(
+                r'^[\-+]?[\d.,]+[%]?$', cell_text.replace(' ', '')))
+            para.alignment = (WD_ALIGN_PARAGRAPH.RIGHT if is_numeric
+                              else WD_ALIGN_PARAGRAPH.LEFT)
+            para.paragraph_format.space_before = Pt(2)
+            para.paragraph_format.space_after = Pt(2)
+            para.paragraph_format.first_line_indent = Cm(0)
             run = para.add_run(cell_text)
             run.font.size = Pt(9)
             run.font.name = "Times New Roman"
@@ -403,31 +430,72 @@ def _render_table_to_doc(doc, table_lines):
     _apply_booktabs_style(table)
 
 
+def _apply_cell_padding(cell):
+    """Set uniform cell padding for a table cell."""
+    tc = cell._element
+    tcPr = tc.get_or_add_tcPr()
+    mar = OxmlElement("w:tcMar")
+    for side, val in (("top", "40"), ("bottom", "40"),
+                      ("start", "80"), ("end", "80")):
+        el = OxmlElement("w:{0}".format(side))
+        el.set(qn("w:w"), val)
+        el.set(qn("w:type"), "dxa")
+        mar.append(el)
+    tcPr.append(mar)
+
+
 def _apply_booktabs_style(table):
-    """Apply booktabs-style borders: heavy top/bottom, medium header rule."""
+    """Apply booktabs-style borders with header shading.
+
+    - Heavy rule at top and bottom of table
+    - Medium rule below header row
+    - Light gray header background (#E8EDF2)
+    - Subtle alternating row shading for readability
+    - No vertical borders (clean scientific style)
+    """
     thick = "12"
-    medium = "6"
+    medium = "8"
+    n_rows = len(table.rows)
 
     for i, row in enumerate(table.rows):
         for j, cell in enumerate(row.cells):
             tc = cell._element
             tcPr = tc.get_or_add_tcPr()
+
+            # --- Borders ---
             tcBorders = OxmlElement("w:tcBorders")
 
             if i == 0:
+                # Header row: thick top, medium bottom
                 _set_border(tcBorders, "top", thick)
                 _set_border(tcBorders, "bottom", medium)
-            elif i == len(table.rows) - 1:
+            elif i == n_rows - 1:
+                # Last row: thick bottom
                 _set_border(tcBorders, "top", "0", val="none")
                 _set_border(tcBorders, "bottom", thick)
             else:
+                # Interior rows: no horizontal rules
                 _set_border(tcBorders, "top", "0", val="none")
                 _set_border(tcBorders, "bottom", "0", val="none")
 
             _set_border(tcBorders, "left", "0", val="none")
             _set_border(tcBorders, "right", "0", val="none")
-
             tcPr.append(tcBorders)
+
+            # --- Shading ---
+            shd = OxmlElement("w:shd")
+            shd.set(qn("w:val"), "clear")
+            shd.set(qn("w:color"), "auto")
+            if i == 0:
+                # Header row: blue-gray background
+                shd.set(qn("w:fill"), "E8EDF2")
+            elif i % 2 == 0:
+                # Even data rows: very light gray
+                shd.set(qn("w:fill"), "F9F9F9")
+            else:
+                # Odd data rows: white
+                shd.set(qn("w:fill"), "FFFFFF")
+            tcPr.append(shd)
 
 
 def _set_border(borders_element, side, size, val="single"):
@@ -646,25 +714,92 @@ def _clear_and_add_rich(paragraph, text):
 
 
 def _add_code_block(doc, code_text, language=""):
-    """Add a formatted code block to the document."""
-    p = doc.add_paragraph()
-    p.paragraph_format.left_indent = Cm(0.8)
-    p.paragraph_format.right_indent = Cm(0.5)
-    p.paragraph_format.space_before = Pt(6)
-    p.paragraph_format.space_after = Pt(6)
-    p.paragraph_format.first_line_indent = Cm(0)
-    p.paragraph_format.line_spacing = 1.0
+    """Add a formatted code block as a bordered box with proper line breaks.
 
-    pPr = p._element.get_or_add_pPr()
+    Uses a single-cell table to create a visible code box with background
+    shading, thin borders, and monospace font.  Each source line is rendered
+    as a separate run with an explicit line break so Word preserves the
+    original formatting.
+    """
+    # Spacer paragraph before the code box
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.space_before = Pt(2)
+    spacer.paragraph_format.space_after = Pt(0)
+    spacer.paragraph_format.first_line_indent = Cm(0)
+    spacer.paragraph_format.line_spacing = Pt(2)
+
+    # Single-cell table acts as the "code box"
+    tbl = doc.add_table(rows=1, cols=1)
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    # Set table width to use most of the page width
+    tbl_el = tbl._tbl
+    tblPr = tbl_el.tblPr if tbl_el.tblPr is not None else OxmlElement("w:tblPr")
+    tblW = OxmlElement("w:tblW")
+    tblW.set(qn("w:w"), "5000")
+    tblW.set(qn("w:type"), "pct")  # 100% of available width
+    tblPr.append(tblW)
+
+    # Table indent to create visual margin from page edge
+    tblInd = OxmlElement("w:tblInd")
+    tblInd.set(qn("w:w"), "284")  # ~0.5 cm indent
+    tblInd.set(qn("w:type"), "dxa")
+    tblPr.append(tblInd)
+
+    cell = tbl.rows[0].cells[0]
+    tc = cell._element
+    tcPr = tc.get_or_add_tcPr()
+
+    # Cell background shading
     shd = OxmlElement("w:shd")
     shd.set(qn("w:val"), "clear")
     shd.set(qn("w:color"), "auto")
     shd.set(qn("w:fill"), "F5F5F5")
-    pPr.append(shd)
+    tcPr.append(shd)
 
-    run = p.add_run(code_text)
-    run.font.name = "Consolas"
-    run.font.size = Pt(8)
+    # Cell padding (top, bottom, left, right)
+    mar = OxmlElement("w:tcMar")
+    for side, val in (("top", "80"), ("bottom", "80"),
+                      ("start", "140"), ("end", "140")):
+        el = OxmlElement("w:{0}".format(side))
+        el.set(qn("w:w"), val)
+        el.set(qn("w:type"), "dxa")
+        mar.append(el)
+    tcPr.append(mar)
+
+    # Cell borders — thin gray
+    tcBorders = OxmlElement("w:tcBorders")
+    for side in ("top", "bottom", "start", "end"):
+        b = OxmlElement("w:{0}".format(side))
+        b.set(qn("w:val"), "single")
+        b.set(qn("w:sz"), "4")
+        b.set(qn("w:space"), "0")
+        b.set(qn("w:color"), "CCCCCC")
+        tcBorders.append(b)
+    tcPr.append(tcBorders)
+
+    # Write code lines into the cell paragraph
+    para = cell.paragraphs[0]
+    para.paragraph_format.line_spacing = 1.0
+    para.paragraph_format.space_before = Pt(2)
+    para.paragraph_format.space_after = Pt(2)
+    para.paragraph_format.first_line_indent = Cm(0)
+
+    code_lines = code_text.split("\n")
+    for idx, code_line in enumerate(code_lines):
+        run = para.add_run(code_line)
+        run.font.name = "Consolas"
+        run.font.size = Pt(7.5)
+        run.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
+        if idx < len(code_lines) - 1:
+            run.add_break()
+
+    # Spacer paragraph after the code box
+    spacer2 = doc.add_paragraph()
+    spacer2.paragraph_format.space_before = Pt(0)
+    spacer2.paragraph_format.space_after = Pt(2)
+    spacer2.paragraph_format.first_line_indent = Cm(0)
+    spacer2.paragraph_format.line_spacing = Pt(2)
 
 
 def _add_rich_text_with_math(paragraph, text):
