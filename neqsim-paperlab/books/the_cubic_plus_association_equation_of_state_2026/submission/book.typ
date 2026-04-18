@@ -88,7 +88,7 @@ After reading this chapter, the reader will be able to:
 + Identify the key industrial applications that motivated CPA development
 + Set up and run a basic CPA calculation using NeqSim
 
-== 1.1 Why Association Matters
+== Why Association Matters
 <why-association-matters>
 The accurate prediction of thermodynamic properties is the foundation of chemical and petroleum engineering design. For decades, cubic equations of state (EoS) such as the Soave--Redlich--Kwong (SRK) \[1\] and Peng--Robinson (PR) \[2\] equations have served as the workhorses of industrial process simulation. These models excel at describing the phase behavior of hydrocarbon mixtures, where intermolecular interactions are dominated by relatively weak van der Waals (dispersion) forces.
 
@@ -101,7 +101,7 @@ However, a significant class of industrially important fluids exhibits much stro
 
 In the oil and gas industry, these effects have direct engineering consequences. The solubility of water in natural gas determines hydrate formation risks and dehydration requirements. The partitioning of methanol or MEG between hydrocarbon and aqueous phases governs inhibitor dosing rates. The phase behavior of CO$""_2$--water systems controls the design of carbon capture and storage infrastructure. In every case, the accuracy of the thermodynamic model directly impacts capital expenditure, operating costs, and safety.
 
-== 1.2 The Limits of Classical Cubic Equations
+== The Limits of Classical Cubic Equations
 <the-limits-of-classical-cubic-equations>
 To understand why CPA was developed, it is instructive to examine where classical cubic equations fail. Consider the seemingly simple system of water and n-hexane at atmospheric pressure. Experimentally, these two components are nearly immiscible at room temperature, with the mutual solubility of water in n-hexane being on the order of $10^(- 4)$ mole fraction, while the solubility of n-hexane in water is even smaller.
 
@@ -133,9 +133,9 @@ This limitation extends to many systems of industrial importance:
 
 #emph[Table 1.1: Industrial systems where classical cubic equations of state fail due to hydrogen bonding.]
 
-== 1.3 Historical Development
+== Historical Development
 <historical-development>
-=== 1.3.1 Early Association Models (1908--1980)
+=== Early Association Models (1908--1980)
 <early-association-models-19081980>
 The concept that molecules can associate into clusters is not new. As early as 1908, Dolezalek \[3\] proposed a "chemical theory" of solutions in which non-ideal behavior was attributed to the formation of new chemical species through association. In this framework, a dimerizing acid like acetic acid is treated as an equilibrium mixture of monomers and dimers:
 
@@ -143,7 +143,7 @@ $ 2 A harpoons.rtlb A_2 \, quad K = x_(A_2) / x_A^2 $
 
 While conceptually appealing, chemical theory models suffered from several limitations: the number of association species grows combinatorially with the number of components, the equilibrium constants are essentially additional fitting parameters, and the theory does not naturally connect to the equation of state framework used for phase equilibrium calculations.
 
-=== 1.3.2 Statistical Mechanics of Association (1984--1986)
+=== Statistical Mechanics of Association (1984--1986)
 <statistical-mechanics-of-association-19841986>
 A breakthrough came in 1984--1986 when Michael Wertheim published a series of four landmark papers \[4, 5, 6, 7\] that provided a rigorous statistical mechanical framework for describing associating fluids. Wertheim's thermodynamic perturbation theory (TPT) treats association as a perturbation to a reference fluid (typically a hard-sphere or Lennard-Jones fluid) and derives exact expressions for the Helmholtz free energy contribution due to association.
 
@@ -159,7 +159,7 @@ $ frac(A^(upright("assoc")), R T) = sum_i x_i [sum_(A_i) (ln X_(A_i) - X_(A_i) /
 
 This framework is remarkable for its generality --- it can describe self-association (e.g., water--water hydrogen bonds), cross-association (e.g., water--methanol), and solvation (e.g., water--aromatic interactions) within a unified theory.
 
-=== 1.3.3 From SAFT to CPA (1988--1996)
+=== From SAFT to CPA (1988--1996)
 <from-saft-to-cpa-19881996>
 Wertheim's theory was first applied to equation of state development by Chapman, Gubbins, Jackson, and Radosz, who in 1988--1990 developed the #strong[Statistical Associating Fluid Theory] (SAFT) \[8, 9\]. SAFT builds the total Helmholtz free energy from four contributions:
 
@@ -175,7 +175,7 @@ $ P = underbrace(frac(R T, V_m - b) - frac(a \( T \), V_m \( V_m + b \)), uprigh
 
 This hybrid approach preserved the strengths of both components --- the proven accuracy of cubic EoS for hydrocarbons and the rigorous treatment of hydrogen bonding from Wertheim's theory. For non-associating components, CPA reduces exactly to SRK, ensuring backward compatibility with the existing parameter databases.
 
-=== 1.3.4 Industrial Adoption (1996--Present)
+=== Industrial Adoption (1996--Present)
 <industrial-adoption-1996present>
 The publication of CPA marked the beginning of rapid development and industrial adoption:
 
@@ -188,11 +188,11 @@ The publication of CPA marked the beginning of rapid development and industrial 
 
 Today, CPA is implemented in most major process simulators and is the recommended model for systems involving water, alcohols, glycols, and CO$""_2$ in the petroleum industry.
 
-== 1.4 Quantifying the Need for CPA: A Worked Example
+== Quantifying the Need for CPA: A Worked Example
 <quantifying-the-need-for-cpa-a-worked-example>
 Before presenting the NeqSim implementation, let us quantify the improvement CPA offers with a concrete example drawn from offshore gas processing.
 
-=== 1.4.1 Case Study: North Sea Gas Dehydration
+=== Case Study: North Sea Gas Dehydration
 <case-study-north-sea-gas-dehydration>
 Consider a typical North Sea gas processing scenario. A production separator operates at 70 bar and 30°C, producing a gas that must be dehydrated to pipeline specification (\< 7 lb water/MMscf). The gas composition is approximately: methane 84%, ethane 7%, propane 3.5%, i-butane 0.5%, n-butane 1%, CO$""_2$ 2.5%, N$""_2$ 0.5%, and water at saturation.
 
@@ -204,7 +204,7 @@ The financial impact of this difference in a real project can be substantial. A 
 
 For a 10 MSm$""^3$/day gas plant, the capital cost of the TEG dehydration unit is typically \$5--15 million. A 20--30% oversizing due to model inaccuracy represents \$1--4.5 million in unnecessary investment.
 
-=== 1.4.2 Systematic Comparison Across Industrial Systems
+=== Systematic Comparison Across Industrial Systems
 <systematic-comparison-across-industrial-systems>
 To provide a broader perspective, the table below compares the typical prediction accuracy of classical cubic EoS (SRK/PR) with CPA across key industrial systems:
 
@@ -229,7 +229,7 @@ To provide a broader perspective, the table below compares the typical predictio
 
 The improvement is consistently an order of magnitude, reflecting the fundamental physics that CPA captures and classical cubic EoS miss: the directional, saturable, temperature-dependent nature of hydrogen bonding.
 
-== 1.5 The NeqSim Implementation
+== The NeqSim Implementation
 <the-neqsim-implementation>
 NeqSim (Non-Equilibrium Simulator) is an open-source Java library for thermodynamic and process simulation that has been developed since 2000. It provides one of the most comprehensive CPA implementations available, with:
 
@@ -254,7 +254,7 @@ SystemSrkEos (standard SRK)
 
 The recommended class for most industrial applications is `SystemSrkCPAstatoil`, which uses the simplified CPA formulation with the Equinor parameter set and mixing rule 10 for automatic handling of cross-association.
 
-=== 1.5.1 Comparison of NeqSim CPA with Other Implementations
+=== Comparison of NeqSim CPA with Other Implementations
 <comparison-of-neqsim-cpa-with-other-implementations>
 Several commercial and academic software packages implement CPA. NeqSim distinguishes itself in several ways:
 
@@ -282,7 +282,7 @@ Several commercial and academic software packages implement CPA. NeqSim distingu
 
 The advanced solver options in NeqSim (fully implicit, Broyden, Anderson acceleration) provide significant advantages for difficult systems near critical points and for large-scale process simulations where computational speed matters.
 
-=== 1.5.2 Your First CPA Calculation
+=== Your First CPA Calculation
 <your-first-cpa-calculation>
 ```python
 from neqsim import jneqsim
@@ -312,17 +312,17 @@ print(f"Liquid phase methane solubility: {fluid.getPhase('aqueous').getComponent
 
 This simple example already demonstrates the power of CPA: it correctly predicts the very low mutual solubility of water and methane, which a classical SRK model would overpredict by an order of magnitude.
 
-== 1.6 The Physics of Hydrogen Bonding
+== The Physics of Hydrogen Bonding
 <the-physics-of-hydrogen-bonding>
 Before diving into the mathematical formalism in subsequent chapters, it is useful to develop a qualitative understanding of the physics behind hydrogen bonding and its consequences for fluid properties.
 
-=== 1.6.1 What Is a Hydrogen Bond?
+=== What Is a Hydrogen Bond?
 <what-is-a-hydrogen-bond>
 A hydrogen bond forms when a hydrogen atom covalently bonded to an electronegative atom (O, N, F) interacts with a lone electron pair on another electronegative atom. The typical hydrogen bond energy is 10--40 kJ/mol --- much weaker than a covalent bond (\~400 kJ/mol) but much stronger than dispersion interactions (\~1 kJ/mol for small molecules).
 
 For water, the dominant hydrogen bond is O--H$dots.h.c$O, with an energy of approximately 20 kJ/mol and a preferred O$dots.h.c$O distance of 2.8 Å. In the gas phase, water monomers exist independently. In the liquid phase, each water molecule forms on average 3.5--3.8 hydrogen bonds, creating a dynamic, three-dimensional network. This network is responsible for water's anomalously high boiling point (100°C vs.~--60°C predicted from molecular weight alone), high heat of vaporization (2260 kJ/kg), and unusual density maximum at 4°C.
 
-=== 1.6.2 Consequences for Fluid Properties
+=== Consequences for Fluid Properties
 <consequences-for-fluid-properties>
 Hydrogen bonding affects virtually every thermodynamic and transport property:
 
@@ -347,7 +347,7 @@ Hydrogen bonding affects virtually every thermodynamic and transport property:
 
 The CPA equation of state captures these effects through the association term, which accounts for the reduction in free energy when hydrogen bonds form. As temperature increases, hydrogen bonds break, and the association contribution diminishes --- recovering the behavior of a non-associating fluid at sufficiently high temperatures.
 
-=== 1.6.3 Association Schemes and Molecular Structure
+=== Association Schemes and Molecular Structure
 <association-schemes-and-molecular-structure>
 Different molecules have different numbers and types of association sites, which determines their hydrogen bonding behavior:
 
@@ -359,11 +359,11 @@ Different molecules have different numbers and types of association sites, which
 
 The association scheme directly affects the macroscopic behavior: water with 4 sites forms a three-dimensional network (high boiling point, large heat of vaporization), while acetic acid with 1 effective site forms dimers (anomalously low apparent molecular weight in the gas phase).
 
-== 1.7 The Intellectual Landscape: Competing Approaches
+== The Intellectual Landscape: Competing Approaches
 <the-intellectual-landscape-competing-approaches>
 Before committing to a particular thermodynamic model, it is valuable to understand where CPA fits within the broader landscape of approaches for associating fluids.
 
-=== 1.7.1 Activity Coefficient Models
+=== Activity Coefficient Models
 <activity-coefficient-models>
 The earliest practical approach to associating systems was through activity coefficient models --- NRTL, Wilson, and UNIQUAC --- combined with a separate equation for the vapor phase. These models are purely empirical: they fit experimental VLE data with adjustable binary parameters but provide no insight into the underlying molecular physics.
 
@@ -371,7 +371,7 @@ The earliest practical approach to associating systems was through activity coef
 
 #strong[Limitations]: cannot predict LLE without separate parameters, unreliable for extrapolation outside the fitted range, fundamentally limited to low-pressure systems (activity coefficient models describe liquids only), require a separate equation for vapor-phase non-ideality.
 
-=== 1.7.2 Lattice Models
+=== Lattice Models
 <lattice-models>
 Lattice fluid models (Flory--Huggins, Sanchez--Lacombe, NRHB) place molecules on a regular lattice and count configurations. For associating systems, Panayiotou and colleagues extended lattice models to include hydrogen bonding through a separate combinatorial term.
 
@@ -379,7 +379,7 @@ Lattice fluid models (Flory--Huggins, Sanchez--Lacombe, NRHB) place molecules on
 
 #strong[Limitations]: the lattice assumption is unphysical for small molecules, and the treatment of association as a separate combinatorial contribution lacks the rigor of Wertheim's theory.
 
-=== 1.7.3 SAFT Family
+=== SAFT Family
 <saft-family>
 The Statistical Associating Fluid Theory (SAFT) family --- including PC-SAFT, SAFT-VR, and SAFT-$gamma$ Mie --- shares the same Wertheim association term as CPA but uses a more physically-based reference fluid (chains of tangent spheres) instead of the cubic equation. This gives SAFT better pure-component density predictions but at the cost of more complex implementation and slower computation.
 
@@ -387,7 +387,7 @@ The Statistical Associating Fluid Theory (SAFT) family --- including PC-SAFT, SA
 
 #strong[Limitations]: more parameters, slower convergence, less backward-compatible with existing process simulation infrastructure, limited availability in commercial simulators.
 
-=== 1.7.4 CPA: The Engineering Compromise
+=== CPA: The Engineering Compromise
 <cpa-the-engineering-compromise>
 CPA occupies a unique position in this landscape: it uses the same rigorous Wertheim association theory as SAFT but combines it with the familiar cubic EoS framework that has been the backbone of process simulation for 50 years. This means:
 
@@ -398,7 +398,7 @@ CPA occupies a unique position in this landscape: it uses the same rigorous Wert
 
 The price paid for this engineering convenience is somewhat less accurate pure-component density predictions compared to SAFT variants. For most industrial applications, this trade-off is favorable.
 
-== 1.8 Scope and Organization of This Book
+== Scope and Organization of This Book
 <scope-and-organization-of-this-book>
 This book provides a comprehensive treatment of the CPA equation of state, from its theoretical foundations to its numerical implementation and industrial applications. It is organized in three parts:
 
@@ -474,11 +474,11 @@ After reading this chapter, the reader will be able to:
 + Formulate the phase equilibrium problem for vapor--liquid and liquid--liquid systems
 + Compute fugacity coefficients from pressure-explicit equations of state using NeqSim
 
-== 2.1 Fundamental Thermodynamic Relations
+== Fundamental Thermodynamic Relations
 <fundamental-thermodynamic-relations>
 Before presenting the CPA equation of state, we must establish the thermodynamic framework within which it operates. This chapter reviews the essential concepts of chemical potential, fugacity, and phase equilibrium that underpin all equation of state calculations \[17, 18, 19\].
 
-=== 2.1.1 The Gibbs Energy and Chemical Potential
+=== The Gibbs Energy and Chemical Potential
 <the-gibbs-energy-and-chemical-potential>
 For a multicomponent system at constant temperature $T$ and pressure $P$, the Gibbs energy is the fundamental potential:
 
@@ -502,7 +502,7 @@ $ sum_(i = 1)^c n_i thin d mu_i = 0 $
 
 which is a crucial consistency check for any thermodynamic model.
 
-=== 2.1.2 Fugacity and the Fugacity Coefficient
+=== Fugacity and the Fugacity Coefficient
 <fugacity-and-the-fugacity-coefficient>
 While the chemical potential is the thermodynamically rigorous quantity, it has the inconvenience of approaching $- oo$ as the concentration of a component approaches zero. \[20\] introduced the #strong[fugacity] $f_i$ as an alternative measure that behaves like a corrected partial pressure:
 
@@ -522,9 +522,9 @@ $ ln phi_i = frac(1, R T) integral_V^oo [(frac(partial P, partial n_i))_(T \, V 
 
 where $Z = P V \/ \( n R T \)$ is the compressibility factor. This integral is the fundamental connection between an equation of state and phase equilibrium calculations --- every equation of state must provide $\( partial P \/ partial n_i \)_(T \, V)$ to be useful for phase equilibrium.
 
-== 2.2 Phase Equilibrium Conditions
+== Phase Equilibrium Conditions
 <phase-equilibrium-conditions>
-=== 2.2.1 The Equilibrium Criterion
+=== The Equilibrium Criterion
 <the-equilibrium-criterion>
 A closed system at constant $T$ and $P$ reaches equilibrium when the total Gibbs energy is minimized. For a system with $pi$ phases, this leads to the conditions:
 
@@ -542,7 +542,7 @@ or equivalently in terms of fugacity coefficients:
 
 $ x_i^(\( 1 \)) phi_i^(\( 1 \)) = x_i^(\( 2 \)) phi_i^(\( 2 \)) = dots.h.c quad upright("for all ") i $
 
-=== 2.2.2 Vapor--Liquid Equilibrium (VLE)
+=== Vapor--Liquid Equilibrium (VLE)
 <vaporliquid-equilibrium-vle>
 For a two-phase vapor--liquid system, the equilibrium condition gives:
 
@@ -554,7 +554,7 @@ $ K_i = y_i / x_i = phi_i^L / phi_i^V $
 
 These K-factors are the central quantities in flash calculations, which determine the amounts and compositions of coexisting phases at given conditions.
 
-=== 2.2.3 Liquid--Liquid Equilibrium (LLE)
+=== Liquid--Liquid Equilibrium (LLE)
 <liquidliquid-equilibrium-lle>
 For liquid--liquid systems --- of particular importance for CPA applications involving water and hydrocarbons --- the equilibrium condition is:
 
@@ -562,7 +562,7 @@ $ x_i^(L 1) phi_i^(L 1) = x_i^(L 2) phi_i^(L 2) quad upright("for ") i = 1 \, do
 
 LLE calculations are often more numerically challenging than VLE because the two liquid phases can have very different compositions (e.g., water-rich vs.~hydrocarbon-rich) and the objective function has multiple local minima.
 
-=== 2.2.4 Three-Phase Equilibrium (VLLE)
+=== Three-Phase Equilibrium (VLLE)
 <three-phase-equilibrium-vlle>
 Many systems relevant to CPA applications exhibit three-phase vapor--liquid--liquid equilibrium (VLLE). For example, a natural gas--water system at moderate pressures can have a vapor phase, a hydrocarbon-rich liquid phase, and a water-rich liquid phase coexisting simultaneously.
 
@@ -595,9 +595,9 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i}: {phase.getType()}, density = {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
-== 2.3 The Flash Problem
+== The Flash Problem
 <the-flash-problem>
-=== 2.3.1 Isothermal Flash (TP Flash)
+=== Isothermal Flash (TP Flash)
 <isothermal-flash-tp-flash>
 The most common phase equilibrium calculation is the isothermal (TP) flash: given the overall composition $z_i$, temperature $T$, and pressure $P$, determine the number of phases, their amounts, and their compositions.
 
@@ -611,7 +611,7 @@ $ sum_(i = 1)^c frac(z_i \( K_i - 1 \), 1 + beta \( K_i - 1 \)) = 0 $
 
 This single equation in $beta$ is solved iteratively, with the K-factors updated at each step using the equation of state. The \[23\] algorithm provides a robust and efficient solution procedure.
 
-=== 2.3.2 Stability Analysis
+=== Stability Analysis
 <stability-analysis>
 Before performing a flash calculation, it is essential to determine whether the system is stable as a single phase or whether it will split into multiple phases. Michelsen's \[23, 24\] #strong[tangent plane distance] (TPD) criterion provides a rigorous test:
 
@@ -621,7 +621,7 @@ If $upright("TPD") \( upright(bold(w)) \) < 0$ for any trial composition $uprigh
 
 For CPA systems, the stability analysis must account for the dependence of the association term on composition --- the site fractions $X_A$ change with composition and affect the fugacity coefficients. This coupling makes CPA stability analysis more computationally expensive than for classical cubic EoS.
 
-=== 2.3.3 Other Flash Specifications
+=== Other Flash Specifications
 <other-flash-specifications>
 While TP flash is the most common, other specifications are used in process simulation:
 
@@ -664,11 +664,11 @@ ops.dewPointTemperatureFlash()
 print(f"Dew point temperature: {fluid.getTemperature('C'):.2f} C")
 ```
 
-== 2.4 Excess Properties and the Activity Coefficient Connection
+== Excess Properties and the Activity Coefficient Connection
 <excess-properties-and-the-activity-coefficient-connection>
 Understanding excess properties is essential for interpreting CPA results because the association term generates large, physically meaningful excess properties that classical cubic EoS cannot reproduce \[25\].
 
-=== 2.4.1 Excess Properties Defined
+=== Excess Properties Defined
 <excess-properties-defined>
 The excess Gibbs energy $G^E$ measures the departure of a mixture from ideal solution behavior:
 
@@ -684,7 +684,7 @@ Other excess properties follow from the Gibbs energy:
 
 $ H^E = - T^2 frac(partial \( G^E \/ T \), partial T) #scale(x: 240%, y: 240%)[\|]_P \, quad S^E = - frac(partial G^E, partial T) #scale(x: 240%, y: 240%)[\|]_P \, quad V^E = frac(partial G^E, partial P) #scale(x: 240%, y: 240%)[\|]_T $
 
-=== 2.4.2 Why Excess Properties Matter for CPA
+=== Why Excess Properties Matter for CPA
 <why-excess-properties-matter-for-cpa>
 For systems with hydrogen bonding, the excess properties are dramatically different from those of non-associating mixtures:
 
@@ -706,7 +706,7 @@ For systems with hydrogen bonding, the excess properties are dramatically differ
 
 CPA reproduces these large differences through the association term: in water--methanol, unlike cross-association is stronger than self-association, giving negative $G^E$ and $H^E$. In water--hexane, the disruption of water's hydrogen bond network by non-associating hexane gives very large positive $G^E$, driving phase splitting.
 
-=== 2.4.3 Infinite Dilution Activity Coefficients
+=== Infinite Dilution Activity Coefficients
 <infinite-dilution-activity-coefficients>
 The infinite dilution activity coefficient $gamma_i^oo$ is a particularly sensitive test of any thermodynamic model because it probes the interaction of a single solute molecule with pure solvent:
 
@@ -716,9 +716,9 @@ For water in hydrocarbons, $gamma_(upright("water"))^oo$ values range from 200 (
 
 Conversely, $gamma_(upright("hexane"))^oo$ in water is approximately 500--1000, reflecting the disruption of water's hydrogen bond network required to accommodate a non-polar solute --- the so-called #strong[hydrophobic effect].
 
-== 2.5 Thermodynamic Derivatives and Caloric Properties
+== Thermodynamic Derivatives and Caloric Properties
 <thermodynamic-derivatives-and-caloric-properties>
-=== 2.5.1 Residual Properties
+=== Residual Properties
 <residual-properties>
 The residual Helmholtz energy $A^(upright("res"))$ contains all the information needed to compute thermodynamic properties. For a pressure-explicit EoS $P \( T \, V \, upright(bold(n)) \)$, the residual Helmholtz energy is:
 
@@ -732,7 +732,7 @@ $ S^(upright("res")) = - (frac(partial A^(upright("res")), partial T))_(V \, upr
 
 $ mu_i^(upright("res")) = (frac(partial A^(upright("res")), partial n_i))_(T \, V \, n_(j eq.not i)) $
 
-=== 2.5.2 Enthalpy, Entropy, and Heat Capacity
+=== Enthalpy, Entropy, and Heat Capacity
 <enthalpy-entropy-and-heat-capacity>
 The residual enthalpy and entropy are essential for process simulation (heat exchanger design, compressor work, etc.):
 
@@ -742,7 +742,7 @@ $ C_P^(upright("res")) = C_V^(upright("res")) + T frac(\( partial P \/ partial T
 
 For CPA, these derivatives include contributions from both the cubic and association terms, which must be computed consistently. The association contribution to enthalpy is particularly important because the degree of hydrogen bonding changes with temperature --- breaking hydrogen bonds absorbs energy, contributing to the anomalously high heat capacity of water.
 
-=== 2.5.3 Speed of Sound and Compressibility
+=== Speed of Sound and Compressibility
 <speed-of-sound-and-compressibility>
 The speed of sound is important for flow measurement and pipeline design:
 
@@ -750,7 +750,7 @@ $ w = sqrt(C_P / C_V dot.op V^2 / M dot.op (- frac(partial P, partial V))_T) $
 
 where $M$ is the molar mass. CPA provides improved predictions of the speed of sound in associating fluids because it correctly captures the density and compressibility effects of hydrogen bonding.
 
-=== 2.5.4 The Joule--Thomson Coefficient
+=== The Joule--Thomson Coefficient
 <the-joulethomson-coefficient>
 The Joule--Thomson (JT) coefficient describes the temperature change during an isenthalpic expansion (e.g., through a valve or orifice):
 
@@ -764,7 +764,7 @@ where $alpha_P = \( 1 \/ V \) \( partial V \/ partial T \)_P$ is the isobaric th
 
 For associating fluids, the JT coefficient includes contributions from the temperature dependence of hydrogen bonding. As temperature decreases through a valve, association increases (more hydrogen bonds form), which releases energy and partially offsets the cooling. CPA captures this effect through the association contribution to the enthalpy.
 
-=== 2.5.5 Isothermal Compressibility and Thermal Expansion
+=== Isothermal Compressibility and Thermal Expansion
 <isothermal-compressibility-and-thermal-expansion>
 Two additional derivative properties are widely used in engineering:
 
@@ -778,7 +778,7 @@ $ alpha_P = 1 / V (frac(partial V, partial T))_P = - 1 / V frac(\( partial P \/ 
 
 Both quantities require first derivatives of the EoS and are straightforward to compute once the pressure equation and its derivatives are available. For water, the thermal expansion coefficient has an anomalous behavior --- it is negative below 4°C (water contracts upon heating) --- which CPA captures through the temperature dependence of association.
 
-=== 2.5.6 Summary of Derivative Relations
+=== Summary of Derivative Relations
 <summary-of-derivative-relations>
 The following table summarizes all key thermodynamic derivative properties and the EoS derivatives needed to compute them:
 
@@ -806,11 +806,11 @@ The following table summarizes all key thermodynamic derivative properties and t
 
 For CPA, every derivative listed above includes both the cubic (SRK) contribution and the association contribution. The association contribution requires derivatives of the site fractions $X_A$ with respect to temperature, volume, and composition, as detailed in Chapter 5.
 
-== 2.6 The Gibbs Phase Rule and Degrees of Freedom
+== The Gibbs Phase Rule and Degrees of Freedom
 <the-gibbs-phase-rule-and-degrees-of-freedom>
 Before discussing flash calculations and property initialization, it is important to establish the number of independent variables that specify the state of a system \[26\].
 
-=== 2.6.1 Statement of the Phase Rule
+=== Statement of the Phase Rule
 <statement-of-the-phase-rule>
 The Gibbs phase rule states:
 
@@ -820,13 +820,13 @@ where $F$ is the number of degrees of freedom (intensive variables that can be i
 
 For a single-component, single-phase system: $F = 1 - 1 + 2 = 2$ (two variables, e.g., $T$ and $P$, specify the state completely). At the vapor--liquid equilibrium of a pure substance: $F = 1 - 2 + 2 = 1$ (specifying $T$ determines $P^(upright("sat"))$, or vice versa).
 
-=== 2.6.2 Implications for Flash Calculations
+=== Implications for Flash Calculations
 <implications-for-flash-calculations>
 For a $C$-component, two-phase system: $F = C - 2 + 2 = C$. In a TP flash, we specify $T$, $P$, and $C$ feed compositions, which is $C + 2$ specifications (but the compositions sum to 1, so $C + 1$ independent). Since we have $F = C$ degrees of freedom plus the phase rule, the system is fully determined.
 
 For CPA, the number of components $C$ includes all molecular species but not the individual association complexes --- Wertheim's theory eliminates the need to track these explicitly. This is a major advantage over chemical theory approaches, where each complex is treated as a separate species.
 
-== 2.7 Property Initialization in NeqSim
+== Property Initialization in NeqSim
 <property-initialization-in-neqsim>
 A critical practical point when using NeqSim for property calculations: after any flash calculation, you must call `fluid.initProperties()` before reading physical and transport properties. This initializes both thermodynamic properties (from the EoS) and physical properties (viscosity \[27\], thermal conductivity, surface tension):
 
@@ -852,17 +852,17 @@ print(f"Cp: {fluid.getCp('J/molK'):.2f} J/(mol·K)")
 print(f"Speed of sound: {fluid.getSoundSpeed():.1f} m/s")
 ```
 
-== 2.8 Worked Example: The Rachford--Rice Flash Algorithm
+== Worked Example: The Rachford--Rice Flash Algorithm
 <worked-example-the-rachfordrice-flash-algorithm>
 The TP flash calculation is the most fundamental algorithm in phase equilibrium. It determines how a feed of known composition splits into vapor and liquid phases at given temperature and pressure. This section presents the algorithm in detail because it is the foundation upon which all CPA calculations are built.
 
-=== 2.8.1 Problem Statement
+=== Problem Statement
 <problem-statement>
 Given: temperature $T$, pressure $P$, and feed composition $z_i$ ($i = 1 \, dots.h \, C$).
 
 Find: vapor fraction $beta$, vapor composition $y_i$, and liquid composition $x_i$.
 
-=== 2.8.2 The Rachford--Rice Equation
+=== The Rachford--Rice Equation
 <the-rachfordrice-equation>
 At VLE, the K-values (equilibrium ratios) are defined as:
 
@@ -886,7 +886,7 @@ where:
 
 $ g' \( beta \) = - sum_(i = 1)^C frac(z_i \( K_i - 1 \)^2, \[ 1 + beta \( K_i - 1 \) \]^2) $
 
-=== 2.8.3 The Outer Loop: K-Value Update
+=== The Outer Loop: K-Value Update
 <the-outer-loop-k-value-update>
 The K-values depend on the phase compositions (through the fugacity coefficients), which depend on $beta$. The flash algorithm therefore requires an iterative procedure:
 
@@ -900,16 +900,16 @@ The K-values depend on the phase compositions (through the fugacity coefficients
 
 For CPA, step 4 includes solving the site balance equations (Chapter 4) at each outer iteration, adding an inner loop. Chapter 8 discusses efficient solver strategies that avoid this nested iteration.
 
-=== 2.8.4 Convergence Behavior
+=== Convergence Behavior
 <convergence-behavior>
 Near the phase boundary (bubble or dew point), the flash can converge slowly because the K-values change dramatically. Far from the phase boundary (two well-separated phases), convergence is typically rapid (5--10 outer iterations). For CPA, the association term can either help or hinder convergence:
 
 - #strong[Help]: the association term provides a strong driving force for phase splitting in water--hydrocarbon systems, making the flash more robust
 - #strong[Hinder]: near critical points of associating systems, the association term creates steep gradients in the fugacity surface
 
-== 2.9 Gibbs Phase Rule and Degrees of Freedom
+== Gibbs Phase Rule and Degrees of Freedom
 <gibbs-phase-rule-and-degrees-of-freedom>
-=== 2.9.1 The Phase Rule
+=== The Phase Rule
 <the-phase-rule>
 Gibbs' phase rule states that the number of independent intensive variables (degrees of freedom) is:
 
@@ -921,7 +921,7 @@ where $C$ is the number of components and $pi$ is the number of phases. For a bi
 - #strong[Two phases] ($pi = 2$): $F = 2$ --- specifying T and P determines all compositions
 - #strong[Three phases] ($pi = 3$): $F = 1$ --- only one variable is independent (a three-phase line in T--P space)
 
-=== 2.9.2 Implications for CPA Flash Calculations
+=== Implications for CPA Flash Calculations
 <implications-for-cpa-flash-calculations>
 The phase rule determines the structure of the flash problem:
 
@@ -929,7 +929,7 @@ For a #strong[two-phase flash] (TP specification, $pi = 2$), we specify $T$, $P$
 
 For a #strong[three-phase flash] (relevant for water--oil--gas systems), the system has $3 \( C - 1 \) + 2$ unknowns (compositions in three phases plus two phase fractions) and $3 C$ equations ($C$ equilibrium equations per phase pair times 2, plus 3 normalization constraints). The three-phase flash is significantly more challenging numerically and is one of CPA's strong points --- it naturally handles the aqueous phase that forms in water-containing hydrocarbon systems.
 
-=== 2.9.3 Counting Degrees of Freedom with Association
+=== Counting Degrees of Freedom with Association
 <counting-degrees-of-freedom-with-association>
 An important subtlety: association does not change the number of macroscopic degrees of freedom. Although we introduce new variables (site fractions $X_(A_i)$), these are determined by the site balance equations at every state point. They are internal variables, not additional degrees of freedom.
 
@@ -1011,9 +1011,9 @@ After reading this chapter, the reader will be able to:
 + Compute fugacity coefficients from cubic equations of state
 + Explain why cubic EoS fail for associating fluids
 
-== 3.1 The van der Waals Equation
+== The van der Waals Equation
 <the-van-der-waals-equation>
-=== 3.1.1 Physical Basis
+=== Physical Basis
 <physical-basis>
 In 1873, Johannes Diderik van der Waals \[28\] proposed the first equation of state that could describe both the gas and liquid phases:
 
@@ -1028,7 +1028,7 @@ The physical interpretation is straightforward:
 
 Despite its simplicity, the van der Waals equation captures the essential physics of fluid behavior: it predicts a critical point, vapor--liquid coexistence, and the transition from gas-like to liquid-like behavior.
 
-=== 3.1.2 Critical Point Conditions
+=== Critical Point Conditions
 <critical-point-conditions>
 At the critical point, the first and second derivatives of pressure with respect to volume vanish simultaneously:
 
@@ -1040,7 +1040,7 @@ $ a = frac(27 R^2 T_c^2, 64 P_c) \, quad b = frac(R T_c, 8 P_c) \, quad Z_c = fr
 
 The predicted critical compressibility factor of 0.375 is significantly higher than experimental values for most substances (typically 0.23--0.29), indicating that the van der Waals equation overpredicts the critical volume.
 
-=== 3.1.3 The Cubic Nature
+=== The Cubic Nature
 <the-cubic-nature>
 The van der Waals equation can be rewritten as a cubic polynomial in $V_m$:
 
@@ -1048,9 +1048,9 @@ $ V_m^3 - (b + frac(R T, P)) V_m^2 + a / P V_m - frac(a b, P) = 0 $
 
 This cubic nature is fundamental --- it allows the equation to have up to three real roots, corresponding to the vapor, unstable, and liquid volumes. The cubic form also enables analytical solutions and efficient root-finding algorithms \[29\]. Clausius \[30\] proposed an early modification of van der Waals' equation with a temperature-dependent attraction term, anticipating later developments by Redlich--Kwong and Soave.
 
-== 3.2 The Soave--Redlich--Kwong (SRK) Equation
+== The Soave--Redlich--Kwong (SRK) Equation
 <the-soaveredlichkwong-srk-equation>
-=== 3.2.1 Development
+=== Development
 <development>
 In 1949, Redlich and Kwong \[31\] modified the van der Waals attraction term to include a temperature dependence:
 
@@ -1074,7 +1074,7 @@ $ a = 0.42748 frac(R^2 T_c^2, P_c) \, quad b = 0.08664 frac(R T_c, P_c) $
 
 The SRK equation accurately reproduces vapor pressures for a wide range of non-polar and slightly polar substances, making it the standard model in the oil and gas industry for decades. It is also the cubic foundation of the CPA equation of state.
 
-=== 3.2.2 Fugacity Coefficient
+=== Fugacity Coefficient
 <fugacity-coefficient>
 The fugacity coefficient for component $i$ in a mixture described by the SRK equation is:
 
@@ -1092,9 +1092,9 @@ $ a_(i j) = sqrt(a_i a_j) \( 1 - k_(i j) \) $
 
 The binary interaction parameter $k_(i j)$ is the single adjustable parameter available for tuning VLE predictions.
 
-== 3.3 The Peng--Robinson (PR) Equation
+== The Peng--Robinson (PR) Equation
 <the-pengrobinson-pr-equation>
-=== 3.3.1 Formulation
+=== Formulation
 <formulation>
 In 1976, Peng and Robinson \[2\] proposed a modification that improved liquid density predictions:
 
@@ -1110,7 +1110,7 @@ $ m = 0.37464 + 1.54226 omega - 0.26992 omega^2 $
 
 The predicted critical compressibility factor is $Z_c = 0.3074$, closer to experimental values than both van der Waals (0.375) and SRK (0.333).
 
-=== 3.3.2 SRK vs.~PR: When Does It Matter?
+=== SRK vs.~PR: When Does It Matter?
 <srk-vs.-pr-when-does-it-matter>
 The choice between SRK and PR is sometimes debated, but in practice the differences are relatively small for vapor--liquid equilibrium. The main differences are:
 
@@ -1133,7 +1133,7 @@ The choice between SRK and PR is sometimes debated, but in practice the differen
 
 For CPA, the SRK form is used as the cubic foundation because CPA was originally developed with SRK. A PR-based variant (PR-CPA) exists but is less commonly used in the oil and gas industry.
 
-=== 3.3.3 Fugacity from a Cubic EoS
+=== Fugacity from a Cubic EoS
 <fugacity-from-a-cubic-eos>
 The fugacity coefficient of component $i$ in a mixture is derived from the residual chemical potential:
 
@@ -1145,7 +1145,7 @@ $ ln phi_i = b_i / b \( Z - 1 \) - ln \( Z - B \) - A / B (frac(2 sum_j x_j a_(i
 
 where $A = a P \/ \( R^2 T^2 \)$, $B = b P \/ \( R T \)$, and $Z$ is the compressibility factor. This expression provides the thermodynamic backbone that CPA builds upon --- the association contribution adds additional terms to $ln phi_i$ involving the site fractions $X_A$ (Chapter 5).
 
-=== 3.3.4 Cubic Root Selection and Phase Stability
+=== Cubic Root Selection and Phase Stability
 <cubic-root-selection-and-phase-stability>
 The cubic equation in $Z$ can yield one or three real roots. When three real roots exist:
 
@@ -1157,7 +1157,7 @@ The correct root is selected by comparing Gibbs energies. For a single-phase cal
 
 For CPA, root selection is more complex because the association term modifies the pressure--volume relationship. The association contribution always reduces the pressure at a given volume (association is attractive), which can shift the liquid root to smaller volumes and change which root is the global minimum.
 
-=== 3.3.5 Comparison of SRK and PR for Liquid Density
+=== Comparison of SRK and PR for Liquid Density
 <comparison-of-srk-and-pr-for-liquid-density>
 A persistent criticism of SRK is that it overpredicts liquid molar volumes by 5--15% for most compounds. PR was designed to improve this:
 
@@ -1179,9 +1179,9 @@ A persistent criticism of SRK is that it overpredicts liquid molar volumes by 5-
 
 Note that PR tends to #strong[under-predict] volumes for small molecules like water, while SRK consistently #strong[over-predicts]. For CPA, the association term provides an additional volume correction that improves liquid densities for hydrogen-bonding fluids beyond what either cubic EoS achieves alone.
 
-== 3.4 Volume Translation
+== Volume Translation
 <volume-translation>
-=== 3.4.1 The Péneloux Correction
+=== The Péneloux Correction
 <the-péneloux-correction>
 Péneloux et al.~\[33\] proposed a simple volume translation that shifts the molar volume without affecting VLE calculations:
 
@@ -1191,7 +1191,7 @@ where $c_i$ is a component-specific volume shift parameter, typically fitted to 
 
 For the SRK-based CPA in NeqSim, the Péneloux correction significantly improves liquid density predictions. Without volume translation, SRK-CPA may overpredict liquid volumes by 3--10%; with the correction, errors are typically reduced to 1--3%.
 
-=== 3.4.2 Temperature-Dependent Volume Translation
+=== Temperature-Dependent Volume Translation
 <temperature-dependent-volume-translation>
 The Péneloux correction with a constant $c_i$ is accurate near the reference temperature but degrades at other temperatures. Several temperature-dependent correlations have been proposed:
 
@@ -1199,9 +1199,9 @@ $ c_i \( T \) = c_i^0 + c_i^1 \( T - T_(upright("ref")) \) $
 
 or more sophisticated functions involving the reduced temperature $T_r$. NeqSim supports both constant and temperature-dependent volume translation for CPA.
 
-== 3.5 Alpha Functions and Temperature Dependence
+== Alpha Functions and Temperature Dependence
 <alpha-functions-and-temperature-dependence>
-=== 3.5.1 The Soave Alpha Function
+=== The Soave Alpha Function
 <the-soave-alpha-function>
 The original Soave alpha function:
 
@@ -1209,7 +1209,7 @@ $ alpha \( T_r \) = [1 + m \( 1 - sqrt(T_r) \)]^2 $
 
 where $T_r = T \/ T_c$ is the reduced temperature, works well for $T_r < 1$ but can exhibit unphysical behavior at high supercritical temperatures (negative values of $alpha$ for components with high $omega$). Boston and Mathias \[34\] proposed an extrapolation for the supercritical region that is monotonically decreasing and avoids negative $alpha$ values. For heavy hydrocarbons, Gasem et al.~\[35\] developed improved $m$ correlations that better represent vapor pressures of $n$-alkanes.
 
-=== 3.5.2 The Mathias--Copeman Alpha Function
+=== The Mathias--Copeman Alpha Function
 <the-mathiascopeman-alpha-function>
 For improved accuracy, particularly for polar and associating components, the Mathias--Copeman \[36\] alpha function provides additional flexibility:
 
@@ -1221,7 +1221,7 @@ The three parameters $c_1$, $c_2$, $c_3$ are fitted to experimental vapor pressu
 
 In the context of CPA, the alpha function is particularly important for the energy parameter of the cubic term. For associating components, the effective temperature dependence of $a \( T \)$ captures both the changing dispersion interactions and, to some extent, compensates for simplified treatment of the reference term.
 
-=== 3.5.3 The Twu Alpha Function
+=== The Twu Alpha Function
 <the-twu-alpha-function>
 \[37\] proposed an alpha function that is guaranteed to be positive and monotonically decreasing:
 
@@ -1229,7 +1229,7 @@ $ alpha \( T_r \) = T_r^(N \( M - 1 \)) exp [L \( 1 - T_r^(N M) \)] $
 
 This form has better thermodynamic consistency at high temperatures and is used in some CPA implementations.
 
-=== 3.5.4 Thermodynamic Consistency of Alpha Functions
+=== Thermodynamic Consistency of Alpha Functions
 <thermodynamic-consistency-of-alpha-functions>
 An important consideration for any alpha function is thermodynamic consistency. A physically consistent alpha function must satisfy:
 
@@ -1239,9 +1239,9 @@ An important consideration for any alpha function is thermodynamic consistency. 
 
 The Soave alpha function satisfies conditions 1 and 2 for $T_r < \[ 1 + 1 \/ m \]^2$ but violates condition 2 for very high temperatures. The Twu function satisfies all three conditions by construction. For CPA applications, where most calculations involve $T_r < 1$ for the associating components, the Soave function is generally adequate.
 
-== 3.6 Mixing Rules for Cubic EoS
+== Mixing Rules for Cubic EoS
 <mixing-rules-for-cubic-eos>
-=== 3.6.1 Classical van der Waals Mixing Rules
+=== Classical van der Waals Mixing Rules
 <classical-van-der-waals-mixing-rules>
 The standard (one-fluid) mixing rules for cubic EoS are:
 
@@ -1251,7 +1251,7 @@ $ b_m = sum_i x_i b_i $
 
 The binary interaction parameter $k_(i j)$ adjusts the geometric mean combining rule for the attractive parameter. For hydrocarbon--hydrocarbon pairs, $k_(i j)$ is typically small (0--0.05). For CO$""_2$--hydrocarbon pairs, larger values (0.10--0.15) are needed. For water--hydrocarbon pairs, very large values would be needed, and even then the predictions are poor --- this is precisely where CPA adds value.
 
-=== 3.6.2 Limitations for Asymmetric Mixtures
+=== Limitations for Asymmetric Mixtures
 <limitations-for-asymmetric-mixtures>
 The van der Waals mixing rules assume that the interaction between unlike molecules can be described by a simple geometric mean. This works well for mixtures of similar molecules but fails for highly asymmetric mixtures such as:
 
@@ -1261,21 +1261,21 @@ The van der Waals mixing rules assume that the interaction between unlike molecu
 
 More sophisticated mixing rules (Wong--Sandler \[38\], MHV2 \[39\], LCVM \[40\]) have been developed to address these limitations, but they add complexity and additional parameters. CPA takes a different approach: keep the simple van der Waals mixing rules for the cubic part, but add the association term to explicitly account for hydrogen bonding.
 
-== 3.7 Limitations of Cubic EoS for Associating Systems
+== Limitations of Cubic EoS for Associating Systems
 <limitations-of-cubic-eos-for-associating-systems>
 To motivate the need for CPA, let us quantify the failure of classical cubic EoS for associating systems.
 
-=== 3.7.1 Water Vapor Pressure
+=== Water Vapor Pressure
 <water-vapor-pressure>
 Pure water is a severe test for any EoS. The vapor pressure curve spans from 0.006 bar at 0°C to 220.6 bar at the critical point (374°C). While SRK can reproduce the vapor pressure reasonably well with the standard alpha function, the liquid density is overpredicted by 15--20%. This is because the SRK parameters are forced to simultaneously capture the strong hydrogen-bonding interactions (through $a$) and the molecular size (through $b$), but two parameters are insufficient to describe both dispersion and association.
 
-=== 3.7.2 Water Content of Natural Gas
+=== Water Content of Natural Gas
 <water-content-of-natural-gas>
 The water content of natural gas is a critical parameter for pipeline design and hydrate prevention. Experimental data show that the water content of methane at 50°C and 100 bar is approximately 0.0015 mole fraction. SRK with an optimized $k_(i j)$ predicts 0.003--0.005, overestimating by a factor of 2--3.
 
 The reason is clear: SRK does not know that water molecules in the liquid phase are hydrogen-bonded, which dramatically reduces their chemical potential (and hence fugacity) relative to what a non-associating model would predict. The water molecules are "held" in the liquid phase by hydrogen bonds, reducing their tendency to escape into the gas phase.
 
-=== 3.7.3 Mutual Solubilities
+=== Mutual Solubilities
 <mutual-solubilities>
 The water--n-alkane mutual solubilities exhibit characteristic behavior:
 
@@ -1285,9 +1285,9 @@ The water--n-alkane mutual solubilities exhibit characteristic behavior:
 
 Classical cubic EoS with a single $k_(i j)$ cannot reproduce these trends because $k_(i j)$ is essentially a constant correction that cannot capture the temperature-dependent effects of association. CPA resolves this by explicitly accounting for the hydrogen-bond network in the aqueous phase.
 
-== 3.8 The Pressure--Volume Isotherm and Phase Stability
+== The Pressure--Volume Isotherm and Phase Stability
 <the-pressurevolume-isotherm-and-phase-stability>
-=== 3.8.1 Subcritical Isotherms and the van der Waals Loop
+=== Subcritical Isotherms and the van der Waals Loop
 <subcritical-isotherms-and-the-van-der-waals-loop>
 At temperatures below the critical temperature, a cubic EoS produces a characteristic S-shaped (van der Waals loop) isotherm in the $P$--$V_m$ diagram. Between the liquid and vapor volumes, the pressure first decreases (physically reasonable), then increases (mechanically unstable region where $\( partial P \/ partial V_m \)_T > 0$), before decreasing again.
 
@@ -1297,7 +1297,7 @@ $ (frac(partial P, partial V_m))_T < 0 $
 
 The region where this condition is violated ($V_m^(upright("spinodal,L")) < V_m < V_m^(upright("spinodal,V"))$) is the #strong[spinodal region], bounded by the locus of inflection points. Inside the spinodal, the system is unconditionally unstable --- any infinitesimal perturbation causes spontaneous phase separation. The region between the spinodal and the saturation curve (binodal) is #strong[metastable] --- the system is mechanically stable but thermodynamically unstable.
 
-=== 3.8.2 The Maxwell Equal-Area Construction
+=== The Maxwell Equal-Area Construction
 <the-maxwell-equal-area-construction>
 The equilibrium vapor pressure $P^(upright("sat"))$ at a given temperature is determined by the Maxwell equal-area rule: the horizontal line at $P = P^(upright("sat"))$ divides the van der Waals loop into two regions of equal area.
 
@@ -1313,7 +1313,7 @@ This integral represents the net work in a reversible isothermal expansion from 
 
 The Maxwell construction provides physical insight into how cubic EoS predict phase equilibrium: the saturation pressure is not an input but emerges naturally from the shape of the isotherm. Any change to the EoS parameters ($a$, $b$, $alpha$) shifts the isotherm shape and hence the predicted saturation pressure.
 
-=== 3.8.3 Critical Point from the EoS
+=== Critical Point from the EoS
 <critical-point-from-the-eos>
 At the critical point, the van der Waals loop collapses to an inflection point where:
 
@@ -1325,7 +1325,7 @@ $ T_c = frac(a, b R) dot.op 1 / 2.4694 \, quad P_c = a / b^2 dot.op 0.04278 \, q
 
 The fact that SRK predicts $Z_c = 1 \/ 3$ for all substances (compared to experimental values of 0.23--0.29) is a fundamental limitation. CPA modifies the critical behavior by adding the association contribution to the pressure, which changes the critical point location and improves the predicted $Z_c$ for associating fluids (though the improvement is modest).
 
-=== 3.8.4 The Acentric Factor and Its Role
+=== The Acentric Factor and Its Role
 <the-acentric-factor-and-its-role>
 Pitzer's acentric factor $omega$ quantifies the departure of a molecule from simple (spherical, non-polar) fluid behavior:
 
@@ -1335,11 +1335,11 @@ For noble gases and methane, $omega approx 0$. For normal alkanes, $omega$ incre
 
 The fact that $omega$ lumps together shape, polarity, and association effects is precisely why the Soave alpha function cannot fully capture the behavior of associating molecules --- it treats water ($omega = 0.345$) similarly to a moderately non-spherical hydrocarbon like isobutane ($omega = 0.181$), despite the fundamentally different physics.
 
-== 3.9 Worked Example: Computing Properties from SRK
+== Worked Example: Computing Properties from SRK
 <worked-example-computing-properties-from-srk>
 To solidify the concepts, let us work through a complete example of computing thermodynamic properties for pure methane using the SRK equation.
 
-=== 3.9.1 Critical Properties and Parameters
+=== Critical Properties and Parameters
 <critical-properties-and-parameters>
 For methane: $T_c = 190.56$ K, $P_c = 45.99$ bar, $omega = 0.0115$.
 
@@ -1357,7 +1357,7 @@ $ a \( T \) = frac(0.42748 R^2 T_c^2, P_c) alpha = frac(0.42748 times \( 83.14 \
 
 $ b = frac(0.08664 R T_c, P_c) = frac(0.08664 times 83.14 times 190.56, 45.99 times 10^5) $
 
-=== 3.9.2 Solving the Cubic Equation
+=== Solving the Cubic Equation
 <solving-the-cubic-equation>
 At $T = 200$ K and $P = 50$ bar, the SRK equation in terms of $Z = P V \/ \( n R T \)$:
 
@@ -1365,7 +1365,7 @@ $ Z^3 - Z^2 + \( A - B - B^2 \) Z - A B = 0 $
 
 where $A = a P \/ \( R^2 T^2 \)$ and $B = b P \/ \( R T \)$. This cubic equation has either one or three real roots. For a vapor-liquid system at these conditions, there are three real roots: the largest ($Z^V$) corresponds to the vapor, the smallest ($Z^L$) to the liquid.
 
-=== 3.9.3 Computing Fugacity
+=== Computing Fugacity
 <computing-fugacity>
 The fugacity coefficient from SRK is:
 
@@ -1377,7 +1377,7 @@ $ ln phi_i = b_i / b \( Z - 1 \) - ln \( Z - B \) + A / B (b_i / b - frac(2 sum_
 
 This expression is the starting point for the CPA fugacity coefficient derived in Chapter 5, which adds the association contribution.
 
-=== 3.9.4 NeqSim Verification
+=== NeqSim Verification
 <neqsim-verification>
 ```python
 from neqsim import jneqsim
@@ -1466,9 +1466,9 @@ After reading this chapter, the reader will be able to:
 + Compute the association strength $Delta^(A B)$ and understand its components
 + Apply common association schemes (2B, 3B, 4C) to real molecules
 
-== 4.1 The Physics of Hydrogen Bonding
+== The Physics of Hydrogen Bonding
 <the-physics-of-hydrogen-bonding>
-=== 4.1.1 What Is a Hydrogen Bond?
+=== What Is a Hydrogen Bond?
 <what-is-a-hydrogen-bond>
 A hydrogen bond forms when a hydrogen atom covalently bonded to an electronegative atom (the #strong[donor]) interacts with a lone pair of electrons on another electronegative atom (the #strong[acceptor]). The interaction is primarily electrostatic but has a significant covalent component at short distances.
 
@@ -1481,7 +1481,7 @@ The key characteristics of hydrogen bonds that distinguish them from dispersion 
 
 These characteristics mean that hydrogen bonding cannot be adequately described by the mean-field, isotropic attraction captured by the $a$ parameter in cubic equations of state.
 
-=== 4.1.2 Association vs.~Solvation
+=== Association vs.~Solvation
 <association-vs.-solvation>
 Two distinct types of strong specific interactions are relevant for thermodynamic modeling:
 
@@ -1491,9 +1491,9 @@ Two distinct types of strong specific interactions are relevant for thermodynami
 
 Both phenomena are captured within Wertheim's framework by appropriate assignment of association sites.
 
-== 4.2 Wertheim's Thermodynamic Perturbation Theory
+== Wertheim's Thermodynamic Perturbation Theory
 <wertheims-thermodynamic-perturbation-theory>
-=== 4.2.1 The Fundamental Papers
+=== The Fundamental Papers
 <the-fundamental-papers>
 Between 1984 and 1986, Michael Wertheim published a series of four papers \[4, 5, 6, 7\] that laid the foundation for modern association models. The theory is developed in the context of classical statistical mechanics for fluids with anisotropic interactions.
 
@@ -1503,7 +1503,7 @@ $ u \( 1 \, 2 \) = u_(upright("ref")) \( r_12 \) + u_(upright("assoc")) \( 1 \, 
 
 where $u_(upright("ref"))$ is a spherically symmetric reference potential (e.g., hard sphere or Lennard-Jones) that depends only on the center--center distance $r_12$, and $u_(upright("assoc"))$ is the orientation-dependent association interaction that depends on the full configuration (position and orientation) of both molecules.
 
-=== 4.2.2 The Site Model
+=== The Site Model
 <the-site-model>
 Wertheim modeled the anisotropic attraction by placing discrete #strong[association sites] on each molecule. Each site represents a specific location where a hydrogen bond can form. A site $A$ on molecule $i$ can bond with site $B$ on molecule $j$ if and only if the two sites are within a characteristic distance and in a favorable mutual orientation.
 
@@ -1515,7 +1515,7 @@ where $epsilon^(A B)$ is the association energy (well depth) and $r_c^(A B)$ is 
 
 The critical assumption of the theory is that #strong[each site can bond with at most one other site]. This steric incompatibility condition (one-bond-per-site) is what makes Wertheim's theory tractable --- it eliminates the combinatorial explosion of possible bonding configurations that plagued earlier chemical theories.
 
-=== 4.2.3 Graph Theory and Cluster Expansion
+=== Graph Theory and Cluster Expansion
 <graph-theory-and-cluster-expansion>
 Wertheim developed his theory using a graphical expansion of the partition function, analogous to the Mayer cluster expansion \[44\] for simple fluids. The key step is to classify molecular clusters according to the bonding topology:
 
@@ -1526,9 +1526,9 @@ Wertheim developed his theory using a graphical expansion of the partition funct
 
 The one-bond-per-site condition ensures that the cluster expansion can be resummed exactly to first order in the perturbation (first-order thermodynamic perturbation theory, or TPT1). This remarkable result means that the free energy depends only on the #strong[monomer fraction] --- the fraction of molecules not bonded at each site --- rather than on the detailed distribution of cluster sizes.
 
-== 4.3 The Site Balance Equation
+== The Site Balance Equation
 <the-site-balance-equation>
-=== 4.3.1 Derivation
+=== Derivation
 <derivation>
 The central result of Wertheim's TPT1 is an implicit equation for $X_(A_i)$, the fraction of molecules of type $i$ that are #strong[not bonded] at site $A$:
 
@@ -1545,7 +1545,7 @@ Let us examine each term:
 
 This equation has a simple physical interpretation: the probability that site $A$ on molecule $i$ is free (not bonded) equals 1 divided by 1 plus the total concentration of available bonding partners weighted by the association strength. If there are many potential bonding partners with strong interactions ($rho x_j X_(B_j) Delta^(A B)$ is large), then $X_(A_i)$ is small --- most sites are bonded.
 
-=== 4.3.2 The Association Strength
+=== The Association Strength
 <the-association-strength>
 The association strength $Delta^(A_i B_j)$ quantifies the tendency for site $A$ on molecule $i$ to bond with site $B$ on molecule $j$. In the CPA framework, it is given by:
 
@@ -1560,7 +1560,7 @@ where:
 
 The exponential factor $\[ exp \( epsilon^(A B) \/ R T \) - 1 \]$ captures the Boltzmann weighting of the association energy. At low temperatures, this factor is large, meaning strong association. At high temperatures, it approaches $epsilon^(A B) \/ R T$ (weak association limit). The $- 1$ ensures that $Delta arrow.r 0$ as $epsilon^(A B) arrow.r 0$ (no association for non-interacting sites).
 
-=== 4.3.3 The Radial Distribution Function
+=== The Radial Distribution Function
 <the-radial-distribution-function>
 The radial distribution function $g \( rho \)$ describes the probability of finding the center of molecule $j$ at contact distance from molecule $i$, relative to a uniform distribution. For the simplified CPA, a simple expression is used:
 
@@ -1568,9 +1568,9 @@ $ g \( rho \) = frac(1, 1 - 1.9 eta) $
 
 where $eta = b rho \/ 4$ is the packing fraction. This expression, derived from the Carnahan--Starling equation \[45\], provides a good approximation for hard-sphere fluids and captures the key physics: as density increases, the probability of molecular contact increases (because molecules are forced closer together), which enhances the rate of association.
 
-== 4.4 Association Schemes
+== Association Schemes
 <association-schemes>
-=== 4.4.1 Notation
+=== Notation
 <notation>
 Association schemes specify the number and type of sites on each molecule. The standard notation, introduced by \[46, 47\], uses numbers and letters:
 
@@ -1580,7 +1580,7 @@ Association schemes specify the number and type of sites on each molecule. The s
 - #strong[3B]: Three sites --- two identical donors and one acceptor, or vice versa (e.g., alcohol with two lone pairs and one OH)
 - #strong[4C]: Four sites --- two donors and two acceptors (e.g., water)
 
-=== 4.4.2 Common Molecules and Their Schemes
+=== Common Molecules and Their Schemes
 <common-molecules-and-their-schemes>
 #figure(
   align(center)[#table(
@@ -1606,7 +1606,7 @@ Association schemes specify the number and type of sites on each molecule. The s
 
 The choice of association scheme significantly affects the number of pure-component parameters. For a 2B molecule, there are two association parameters ($epsilon$ and $beta$); for a 4C molecule with symmetric sites, the same two parameters apply but the equations are different due to the different number of sites.
 
-=== 4.4.3 Water: The 4C Scheme
+=== Water: The 4C Scheme
 <water-the-4c-scheme>
 Water is the most important associating molecule in process engineering. In the 4C scheme, each water molecule has four association sites:
 
@@ -1623,7 +1623,7 @@ $ X_e = frac(1, 1 + 2 rho X_H Delta^(H e)) $
 
 where $Delta^(H e)$ uses the single pair of association parameters $epsilon^(H e)$ and $beta^(H e)$. These two coupled equations can be solved analytically by substituting one into the other.
 
-=== 4.4.4 Analytical Solutions for Simple Schemes
+=== Analytical Solutions for Simple Schemes
 <analytical-solutions-for-simple-schemes>
 For the 2B scheme (one site of each type), the site balance equations give:
 
@@ -1635,7 +1635,7 @@ $ X_H = X_e = frac(- 1 + sqrt(1 + 8 rho Delta), 4 rho Delta) $
 
 These closed-form expressions are valuable for both understanding and computation --- they eliminate the need for iterative solution of the site balance equations in pure-component calculations.
 
-=== 4.4.5 Limits of the Site Fraction
+=== Limits of the Site Fraction
 <limits-of-the-site-fraction>
 The behavior of $X_A$ in the two extreme limits is instructive:
 
@@ -1649,7 +1649,7 @@ $ rho^(*) = 1 / Delta^(A B) $
 
 At densities below $rho^(*)$, most sites are free; at densities above $rho^(*)$, most sites are bonded. For water at 298 K, $rho^(*) approx 5$ mol/L, well below the actual liquid density of 55.5 mol/L. This confirms that liquid water is strongly associated, with $X_H approx 0.1$--$0.2$.
 
-=== 4.4.6 Temperature Dependence of Association
+=== Temperature Dependence of Association
 <temperature-dependence-of-association>
 The fraction of free sites depends on temperature through the association strength $Delta^(A B)$:
 
@@ -1659,9 +1659,9 @@ As temperature increases: - The exponential factor decreases (less Boltzmann wei
 
 This temperature dependence is responsible for many characteristic properties of associating fluids: - The large heat capacity of liquid water (breaking hydrogen bonds absorbs energy) - The negative thermal expansion coefficient of water below 4°C - The unusually high boiling point of water compared to H$""_2$S - The decreasing viscosity of glycols and alcohols with temperature
 
-== 4.5 The Helmholtz Energy of Association
+== The Helmholtz Energy of Association
 <the-helmholtz-energy-of-association>
-=== 4.5.1 The General Expression
+=== The General Expression
 <the-general-expression>
 Wertheim's TPT1 gives the Helmholtz energy contribution from association as:
 
@@ -1672,7 +1672,7 @@ where the outer sum is over all components and the inner sum is over all associa
 - $ln X_(A_i)$: entropic contribution --- there are fewer configurations when molecules are bonded
 - $- X_(A_i) \/ 2 + 1 \/ 2$: ensures proper normalization and removes double-counting of bonded pairs
 
-=== 4.5.2 Properties of the Association Energy
+=== Properties of the Association Energy
 <properties-of-the-association-energy>
 Several important properties follow from this expression:
 
@@ -1684,7 +1684,7 @@ Several important properties follow from this expression:
 
 + #strong[Temperature dependence]: As temperature increases, $Delta$ decreases, $X_A$ increases, and $A^(upright("assoc"))$ becomes less negative. This is consistent with hydrogen bonds being broken by thermal energy.
 
-=== 4.5.3 Pressure Contribution from Association
+=== Pressure Contribution from Association
 <pressure-contribution-from-association>
 The association contribution to pressure is obtained by differentiation:
 
@@ -1692,9 +1692,9 @@ $ P^(upright("assoc")) = - (frac(partial A^(upright("assoc")), partial V))_(T \,
 
 The derivative $partial X_(A_i) \/ partial V$ requires implicit differentiation of the site balance equations and is non-trivial --- this is one of the computational challenges of CPA relative to pure cubic EoS.
 
-== 4.6 Fugacity Coefficient from Association
+== Fugacity Coefficient from Association
 <fugacity-coefficient-from-association>
-=== 4.6.1 The Chemical Potential Contribution
+=== The Chemical Potential Contribution
 <the-chemical-potential-contribution>
 The association contribution to the chemical potential of component $i$ is:
 
@@ -1702,7 +1702,7 @@ $ frac(mu_i^(upright("assoc")), R T) = sum_(A_i) ln X_(A_i) + rho sum_k x_k sum_
 
 The first term is the direct contribution from the sites on molecule $i$. The second term accounts for the fact that adding molecule $i$ to the mixture changes the association equilibrium of all other species.
 
-=== 4.6.2 Simplification Using the Site Balance
+=== Simplification Using the Site Balance
 <simplification-using-the-site-balance>
 A remarkable simplification occurs when the site balance equation is used. Differentiating the Helmholtz energy while using the stationarity condition (that the site balance equations are satisfied), one obtains:
 
@@ -1710,9 +1710,9 @@ $ frac(mu_i^(upright("assoc")), R T) = sum_(A_i) ln X_(A_i) - 1 / 2 rho sum_k x_
 
 In NeqSim, this is implemented using analytical derivatives of the association strength with respect to composition.
 
-== 4.7 Solution of the Site Balance Equations
+== Solution of the Site Balance Equations
 <solution-of-the-site-balance-equations>
-=== 4.7.1 Successive Substitution
+=== Successive Substitution
 <successive-substitution>
 The simplest approach to solving the coupled site balance equations is successive substitution:
 
@@ -1722,7 +1722,7 @@ The simplest approach to solving the coupled site balance equations is successiv
 
 This method is simple and usually converges in 3--10 iterations for typical conditions. However, it can be slow near critical points or at conditions of very strong association.
 
-=== 4.7.2 Newton's Method
+=== Newton's Method
 <newtons-method>
 For faster convergence, Newton's method can be applied to the residual form of the site balance equations:
 
@@ -1734,13 +1734,13 @@ $ J_(A_i \, B_j) = frac(partial R_(A_i), partial X_(B_j)) = delta_(A_i B_j) + fr
 
 Newton's method typically converges in 2--4 iterations but requires forming and solving the linear system at each step.
 
-=== 4.7.3 Fully Implicit Approach
+=== Fully Implicit Approach
 <fully-implicit-approach>
 In the fully implicit approach used in NeqSim's advanced solvers, the site balance equations are solved simultaneously with the flash equations, rather than as an inner loop. This eliminates the nested iteration structure and can significantly improve overall convergence. Chapter 8 discusses this in detail.
 
-== 4.8 Temperature and Density Dependence of Association
+== Temperature and Density Dependence of Association
 <temperature-and-density-dependence-of-association>
-=== 4.8.1 Effect of Temperature
+=== Effect of Temperature
 <effect-of-temperature>
 As temperature increases:
 
@@ -1750,7 +1750,7 @@ As temperature increases:
 
 This temperature dependence captures the well-known behavior that hydrogen bonds weaken and break at high temperatures. The predicted degree of association ($1 - X_A$) for water at 1 bar decreases from about 0.85 at 25°C to about 0.6 at 100°C and approaches zero near the critical temperature.
 
-=== 4.8.2 Effect of Density
+=== Effect of Density
 <effect-of-density>
 As density increases:
 
@@ -1778,11 +1778,11 @@ for T_C in [25, 50, 100, 150, 200, 250, 300, 350]:
     print(f"T = {T_C:4d} C, rho = {density:.1f} kg/m3")
 ```
 
-== 4.9 Worked Example: Computing Site Fractions for Water
+== Worked Example: Computing Site Fractions for Water
 <worked-example-computing-site-fractions-for-water>
 To illustrate the application of the theory, let us work through the computation of site fractions for pure water at 25°C and 1 bar.
 
-=== 4.9.1 Water Association Parameters
+=== Water Association Parameters
 <water-association-parameters>
 Water is modeled with the 4C scheme: two electron-donor sites (denoted $e_1$, $e_2$) and two proton-acceptor sites (denoted $H_1$, $H_2$). By symmetry:
 
@@ -1796,7 +1796,7 @@ $ Delta^(e e) = Delta^(H H) = 0 $
 
 With the NeqSim/Equinor parameter set for water: $epsilon^(e H) \/ R = 2003.2$ K and $kappa^(e H) = 0.0692$.
 
-=== 4.9.2 Self-Consistent Solution
+=== Self-Consistent Solution
 <self-consistent-solution>
 The site fraction equations for the 4C scheme reduce to:
 
@@ -1820,7 +1820,7 @@ $ exp (frac(epsilon^(e H), R T)) - 1 = e^6.72 - 1 approx 830 $
 
 The resulting $X approx 0.15$, meaning 85% of the sites are bonded --- consistent with neutron diffraction measurements showing 3.5--3.8 hydrogen bonds per water molecule out of a maximum of 4.
 
-=== 4.9.3 Physical Interpretation
+=== Physical Interpretation
 <physical-interpretation>
 The degree of association $alpha = 1 - X$ quantifies how many hydrogen bonds have formed:
 
@@ -1835,11 +1835,11 @@ $ chevron.l n_(upright("HB")) chevron.r = 1 / 2 times \( upright("number of site
 
 or equivalently 3.4 bonds per molecule counting both donated and accepted bonds, in good agreement with experimental values.
 
-== 4.10 Association Schemes for Common Molecules
+== Association Schemes for Common Molecules
 <association-schemes-for-common-molecules>
 To aid in practical application, this section catalogs the association schemes used for the most important industrial molecules.
 
-=== 4.10.1 Comprehensive Scheme Catalog
+=== Comprehensive Scheme Catalog
 <comprehensive-scheme-catalog>
 #figure(
   align(center)[#table(
@@ -1863,7 +1863,7 @@ To aid in practical application, this section catalogs the association schemes u
 
 #emph[Table 4.1: Association schemes for common industrial molecules.]
 
-=== 4.10.2 Selecting the Right Scheme
+=== Selecting the Right Scheme
 <selecting-the-right-scheme>
 The choice of association scheme affects both the accuracy and the number of adjustable parameters:
 
@@ -1872,9 +1872,9 @@ The choice of association scheme affects both the accuracy and the number of adj
 
 Guidelines: 1. Use the scheme that reflects the molecular geometry (e.g., 4C for water with 4 bonding sites) 2. If multiple schemes give similar fits to pure-component data, prefer the one with better cross-association predictions 3. For the 1A scheme (acids), the single parameter $epsilon^(A A)$ must be large enough to reproduce the strong dimerization constant
 
-== 4.11 From Clusters to Thermodynamics: The Physical Picture
+== From Clusters to Thermodynamics: The Physical Picture
 <from-clusters-to-thermodynamics-the-physical-picture>
-=== 4.11.1 The Cluster Expansion Perspective
+=== The Cluster Expansion Perspective
 <the-cluster-expansion-perspective>
 Wertheim's TPT can be understood through the lens of cluster expansions from statistical mechanics. In a non-associating fluid, the partition function sums over all configurations of interacting molecules. When association is introduced, the configurations can be classified by the bonding pattern --- the "graph" of hydrogen bonds in the system.
 
@@ -1886,7 +1886,7 @@ The physical picture is:
 - At moderate density: chains and small clusters form, with the average cluster size growing
 - At high density (liquid phase): an extended network of hydrogen bonds pervades the system, but with many broken bonds due to thermal fluctuations
 
-=== 4.11.2 Steric Effects and Bond Saturation
+=== Steric Effects and Bond Saturation
 <steric-effects-and-bond-saturation>
 The one-bond-per-site restriction is the central approximation of TPT-1. It captures the saturation of hydrogen bonding: once all sites on a molecule are bonded, no further association can occur regardless of how many potential partners surround it.
 
@@ -1896,7 +1896,7 @@ This saturation explains several physical phenomena:
 - #strong[Alcohol chain length]: the average chain length in liquid alcohols is 4--8 molecules for methanol and ethanol, not infinite chains, because thermal energy breaks bonds even when all neighbors are potential partners.
 - #strong[Dilute aqueous solutions]: a small amount of solute (e.g., methane in water) can disrupt many hydrogen bonds because the water molecules adjacent to the solute must reorganize their bonding network.
 
-=== 4.11.3 Temperature Dependence of Association
+=== Temperature Dependence of Association
 <temperature-dependence-of-association-1>
 The fraction of bonded sites $alpha = 1 - X$ depends strongly on temperature through the Boltzmann factor in $Delta^(A B)$. The temperature at which $alpha$ drops to 0.5 provides a characteristic "association temperature":
 
@@ -1919,9 +1919,9 @@ Key points from this chapter:
 - Simple schemes have analytical solutions; complex mixtures require iterative solution
 - Site symmetry reduction exploits the equivalence of sites within an association scheme, reducing system dimensionality by up to 75% with no loss of accuracy
 
-== 4.12 Exploiting Site Symmetry: Exact Dimensionality Reduction
+== Exploiting Site Symmetry: Exact Dimensionality Reduction
 <exploiting-site-symmetry-exact-dimensionality-reduction>
-=== 4.12.1 The Type-Averaging Theorem
+=== The Type-Averaging Theorem
 <the-type-averaging-theorem>
 A key structural feature of most association schemes is that several individual sites on a molecule are #strong[equivalent by symmetry]. In the 4C scheme for water, for example, the two electron-donor sites are indistinguishable (both lone pairs on oxygen), and the two proton-donor sites are likewise indistinguishable (both O--H bonds). This means $X_(e_1) = X_(e_2)$ and $X_(H_1) = X_(H_2)$ at equilibrium.
 
@@ -1931,7 +1931,7 @@ $ X_(i \, k) = X_(i \, l) equiv tilde(X)_(i \, alpha) quad upright("for all ") k
 
 This allows replacing the site balance equations in terms of individual site fractions ${ X_(A_i) }$ (dimension $n_s = sum_i s_i$) with type-averaged fractions ${ tilde(X)_(i \, alpha) }$ (dimension $p = sum_i p_i$), where $p_i$ is the number of unique site types on component $i$.
 
-=== 4.12.2 Dimensionality Reduction for Common Systems
+=== Dimensionality Reduction for Common Systems
 <dimensionality-reduction-for-common-systems>
 The reduction depends on the molecular symmetry:
 
@@ -1957,7 +1957,7 @@ The reduction depends on the molecular symmetry:
 
 The 2B scheme gains nothing from reduction because both sites are already of different types (one electron donor, one proton donor). The largest benefit comes from the 4C scheme, which is also the most common in industrial applications (water, glycols).
 
-=== 4.12.3 Impact on Mixture Calculations
+=== Impact on Mixture Calculations
 <impact-on-mixture-calculations>
 For mixtures, the total dimensions of the site balance system are:
 
@@ -1981,7 +1981,7 @@ For mixtures, the total dimensions of the site balance system are:
 
 The water--MEG--TEG ternary system --- common in gas processing --- sees the most dramatic reduction: from 12 individual site fractions to just 6 type-averaged fractions, yielding a 6.4× speedup in the Jacobian factorization.
 
-=== 4.12.4 The Reduced Site Balance Equation
+=== The Reduced Site Balance Equation
 <the-reduced-site-balance-equation>
 In the type-averaged framework, the site balance equation becomes:
 
@@ -1995,7 +1995,7 @@ $ frac(A^(upright("assoc")), n R T) = sum_i x_i sum_(alpha in i) m_(i \, alpha) 
 
 where each type contributes according to its multiplicity $m_(i \, alpha)$. This is exactly equivalent to summing over all individual sites --- the reduction is #strong[lossless].
 
-=== 4.12.5 Cross-Association Matrix Structure
+=== Cross-Association Matrix Structure
 <cross-association-matrix-structure>
 The type-averaged association strength matrix for a water (4C) + MEG (4C) system has the block structure:
 
@@ -2138,9 +2138,9 @@ After reading this chapter, the reader will be able to:
 + Distinguish between standard CPA and simplified CPA (sCPA)
 + Explain the five pure-component parameters of CPA
 
-== 5.1 The CPA Pressure Equation
+== The CPA Pressure Equation
 <the-cpa-pressure-equation>
-=== 5.1.1 Combining Cubic and Association Terms
+=== Combining Cubic and Association Terms
 <combining-cubic-and-association-terms>
 The CPA equation of state \[12, 49\] writes the pressure as the sum of a classical cubic term and an association term. A comprehensive treatment of CPA theory and applications is given by Kontogeorgis and Folas \[50\]:
 
@@ -2152,7 +2152,7 @@ $ P = frac(R T, V_m - b) - frac(a \( T \), V_m \( V_m + b \)) - 1 / 2 frac(R T, 
 
 The first two terms are the standard SRK equation. The third term is the association contribution, where $g \( rho \)$ is the radial distribution function at contact and $X_(A_i)$ are the site fractions satisfying the site balance equations from Chapter 4.
 
-=== 5.1.2 The Simplified CPA (sCPA)
+=== The Simplified CPA (sCPA)
 <the-simplified-cpa-scpa>
 The original CPA formulation used a hard-sphere reference for the radial distribution function, leading to a complex density dependence in the association term. \[13\] proposed a simplification where the RDF and its derivative are approximated as:
 
@@ -2170,7 +2170,7 @@ $ Delta^(A_i B_j) = g \( rho \) [exp (frac(epsilon^(A_i B_j), R T)) - 1] b_(i j)
 
 with $g \( rho \) = 1 \/ \( 1 - 1.9 eta \)$ and $b_(i j) = \( b_i + b_j \) \/ 2$.
 
-=== 5.1.3 Helmholtz Energy Formulation
+=== Helmholtz Energy Formulation
 <helmholtz-energy-formulation>
 It is often more convenient to work with the Helmholtz energy rather than the pressure equation. The total residual Helmholtz energy for CPA is:
 
@@ -2184,11 +2184,11 @@ $ A^(upright("assoc")) = n R T sum_i x_i sum_(A_i) (ln X_(A_i) - X_(A_i) / 2 + 1
 
 All thermodynamic properties can be derived from this Helmholtz energy by differentiation \[51\].
 
-== 5.2 The Five Pure-Component Parameters
+== The Five Pure-Component Parameters
 <the-five-pure-component-parameters>
 For an associating component in CPA, five parameters must be determined:
 
-=== 5.2.1 Physical Parameters from the Cubic Term
+=== Physical Parameters from the Cubic Term
 <physical-parameters-from-the-cubic-term>
 Three parameters come from the SRK part:
 
@@ -2202,7 +2202,7 @@ $ a \( T \) = a_0 [1 + c_1 (1 - sqrt(T_r))]^2 $
 
 Note that for CPA, the Soave correlation $m = f \( omega \)$ is #strong[not] used. Instead, $c_1$ is fitted directly to experimental data along with the other parameters.
 
-=== 5.2.2 Association Parameters
+=== Association Parameters
 <association-parameters>
 Two parameters describe the hydrogen bonding:
 
@@ -2213,7 +2213,7 @@ Two parameters describe the hydrogen bonding:
 + #strong[$beta^(A B)$]: the association volume (dimensionless). This determines the probability that two molecules at contact distance will be in the correct orientation for bonding. Typical values range from 0.001 to 0.1.
 ]
 
-=== 5.2.3 Non-Associating Components
+=== Non-Associating Components
 <non-associating-components>
 For non-associating components (alkanes, N$""_2$, CO$""_2$, etc.), the association parameters are zero and CPA reduces to SRK. The three cubic parameters are determined from:
 
@@ -2221,9 +2221,9 @@ $ a_0 = 0.42748 frac(R^2 T_c^2, P_c) \, quad b = 0.08664 frac(R T_c, P_c) \, qua
 
 Thus, non-associating components retain their SRK parameters unchanged --- this backward compatibility was a key design goal of CPA.
 
-== 5.3 Fugacity Coefficients
+== Fugacity Coefficients
 <fugacity-coefficients>
-=== 5.3.1 The Complete Expression
+=== The Complete Expression
 <the-complete-expression>
 The fugacity coefficient of component $i$ in a CPA mixture has contributions from both the cubic and association terms:
 
@@ -2239,7 +2239,7 @@ $ ln phi_i^(upright("assoc")) = sum_(A_i) (ln X_(A_i)) + sum_k x_k sum_(A_k) 1 /
 
 The second term arises because adding molecule $i$ to the mixture changes the site fractions of all species.
 
-=== 5.3.2 The Cross-Derivative Challenge
+=== The Cross-Derivative Challenge
 <the-cross-derivative-challenge>
 Computing $partial X_(A_k) \/ partial n_i$ requires implicit differentiation of the site balance equations. Differentiating:
 
@@ -2253,7 +2253,7 @@ where the matrix $M$ and right-hand side $R$ involve the current values of $X$, 
 
 In NeqSim, this linear system is solved analytically for simple association schemes and numerically for complex mixtures. The efficient computation of these derivatives is crucial for the performance of the flash algorithm and is one of the main contributions of the NeqSim implementation.
 
-=== 5.3.3 Verification by Numerical Differentiation
+=== Verification by Numerical Differentiation
 <verification-by-numerical-differentiation>
 When implementing CPA, it is essential to verify the analytical fugacity coefficients against numerical differentiation:
 
@@ -2261,9 +2261,9 @@ $ ln phi_i^(upright("numerical")) = frac(1, R T) frac(partial A^(upright("res"))
 
 This is a critical development practice used in NeqSim's test suite \[48\].
 
-== 5.4 Thermodynamic Derivatives
+== Thermodynamic Derivatives
 <thermodynamic-derivatives>
-=== 5.4.1 Temperature Derivatives
+=== Temperature Derivatives
 <temperature-derivatives>
 The temperature derivative of the Helmholtz energy is needed for entropy and enthalpy:
 
@@ -2273,7 +2273,7 @@ The derivative $partial X_(A_i) \/ partial T$ is computed by differentiating the
 
 $ frac(partial Delta^(A B), partial T) = frac(partial g, partial T) [exp (frac(epsilon, R T)) - 1] b beta + g dot.op (- frac(epsilon, R T^2)) exp (frac(epsilon, R T)) dot.op b beta $
 
-=== 5.4.2 Volume Derivatives
+=== Volume Derivatives
 <volume-derivatives>
 The volume derivative gives the association contribution to pressure:
 
@@ -2285,7 +2285,7 @@ $ frac(partial Delta^(A B), partial V) = frac(partial g, partial V) [exp (frac(e
 
 where $partial g \/ partial V$ depends on the choice of radial distribution function.
 
-=== 5.4.3 Second Derivatives
+=== Second Derivatives
 <second-derivatives>
 Second derivatives are needed for heat capacities, speed of sound, and other caloric properties:
 
@@ -2293,9 +2293,9 @@ $ (frac(partial^2 A^(upright("assoc")), partial T^2))_(V \, upright(bold(n))) \,
 
 These expressions are lengthy but follow directly from differentiating the site balance equations twice. The key challenge is maintaining analytical consistency --- numerical errors in second derivatives propagate into property calculations and can cause convergence problems in flash algorithms.
 
-== 5.5 Enthalpy and Heat Capacity Contributions
+== Enthalpy and Heat Capacity Contributions
 <enthalpy-and-heat-capacity-contributions>
-=== 5.5.1 Residual Enthalpy from Association
+=== Residual Enthalpy from Association
 <residual-enthalpy-from-association>
 The association contribution to the residual enthalpy is:
 
@@ -2307,7 +2307,7 @@ $ H^(upright("assoc")) = - T^2 frac(partial, partial T) (A^(upright("assoc")) / 
 
 The association enthalpy is negative (exothermic) because forming hydrogen bonds releases energy. Its magnitude depends on the degree of association: at low temperatures where most sites are bonded, $H^(upright("assoc"))$ is most negative.
 
-=== 5.5.2 Heat Capacity
+=== Heat Capacity
 <heat-capacity>
 The heat capacity contribution from association is significant for water and alcohols. The association contribution to $C_V$ is:
 
@@ -2315,7 +2315,7 @@ $ C_V^(upright("assoc")) = - T (frac(partial^2 A^(upright("assoc")), partial T^2
 
 This captures the physical effect that breaking hydrogen bonds as temperature increases absorbs energy, contributing to the anomalously high heat capacity of water. CPA predictions of $C_P$ for water are significantly better than SRK because the association term accounts for the energy stored in the hydrogen-bond network.
 
-== 5.6 The PR-CPA Variant
+== The PR-CPA Variant
 <the-pr-cpa-variant>
 While the standard CPA uses SRK as the cubic term, a Peng--Robinson variant has also been developed:
 
@@ -2347,9 +2347,9 @@ for fluid, name in [(fluid_srk, "SRK-CPA"), (fluid_pr, "PR-CPA")]:
     print(f"{name}: density = {rho:.1f} kg/m3")
 ```
 
-== 5.7 Derivative Properties from CPA
+== Derivative Properties from CPA
 <derivative-properties-from-cpa>
-=== 5.7.1 Pressure Derivatives
+=== Pressure Derivatives
 <pressure-derivatives>
 For engineering calculations, the first and second derivatives of pressure with respect to temperature, volume, and composition are needed. Each derivative has contributions from both the cubic and association terms.
 
@@ -2367,7 +2367,7 @@ $ (frac(partial P^(upright("assoc")), partial T))_V = - n R T sum_i x_i sum_(A_i
 
 Computing $partial X_(A_i) \/ partial T$ requires differentiating the implicit site balance equations with respect to temperature, yielding a linear system of equations in the site fraction derivatives.
 
-=== 5.7.2 Fugacity Coefficient with Association
+=== Fugacity Coefficient with Association
 <fugacity-coefficient-with-association>
 The fugacity coefficient of component $i$ in CPA is:
 
@@ -2379,7 +2379,7 @@ $ ln phi_i^(upright("assoc")) = sum_(A_i) (ln X_(A_i) - X_(A_i) / 2 + 1 / 2) + s
 
 The last term accounts for the fact that changing the amount of component $i$ affects the site fractions of all other components through the site balance equations. This coupling term is often the most computationally expensive part of the fugacity calculation.
 
-=== 5.7.3 Residual Enthalpy and Entropy
+=== Residual Enthalpy and Entropy
 <residual-enthalpy-and-entropy>
 The residual enthalpy from CPA includes:
 
@@ -2393,7 +2393,7 @@ $ S^(upright("res,assoc")) = - n R sum_i x_i sum_(A_i) (ln X_(A_i) - X_(A_i) / 2
 
 The first term is always positive (association reduces the number of microscopic configurations), while the enthalpy term is always negative. The net entropy of association is typically negative --- association creates order.
 
-=== 5.7.4 Heat Capacity from CPA
+=== Heat Capacity from CPA
 <heat-capacity-from-cpa>
 The association contribution to the isobaric heat capacity $C_P$ is significant for strongly associating fluids:
 
@@ -2401,9 +2401,9 @@ $ C_P^(upright("assoc")) = (frac(partial H^(upright("assoc")), partial T))_P $
 
 For liquid water, the association contribution accounts for approximately 40% of the total $C_P$, reflecting the energy required to break hydrogen bonds as temperature increases. CPA reproduces this effect quantitatively, while classical cubic EoS underpredict $C_P$ by 15--25%.
 
-== 5.8 Implementation in NeqSim
+== Implementation in NeqSim
 <implementation-in-neqsim>
-=== 5.8.1 Class Hierarchy
+=== Class Hierarchy
 <class-hierarchy>
 The CPA implementation in NeqSim follows a layered architecture with System, Phase, and Component levels:
 
@@ -2413,7 +2413,7 @@ The CPA implementation in NeqSim follows a layered architecture with System, Pha
 
 #strong[Component level] (`neqsim.thermo.component`): - `ComponentSrkCPA` --- fugacity coefficient, association parameters
 
-=== 5.7.2 Parameter Database
+=== Parameter Database
 <parameter-database>
 NeqSim stores CPA parameters in its component database. For each associating component, the database contains:
 
@@ -2436,7 +2436,7 @@ fluid.setMixingRule(10)  # CPA mixing rule with cross-association
 # methane gets standard SRK parameters
 ```
 
-=== 5.7.3 Mixing Rule 10
+=== Mixing Rule 10
 <mixing-rule-10>
 The mixing rule index 10 in NeqSim activates the CPA mixing rules with automatic handling of cross-association. This rule:
 
@@ -2445,15 +2445,15 @@ The mixing rule index 10 in NeqSim activates the CPA mixing rules with automatic
 + Handles solvation between associating and non-self-associating species
 + Manages the site bookkeeping for complex multicomponent mixtures
 
-== 5.9 Worked Example: Step-by-Step CPA Pressure Calculation
+== Worked Example: Step-by-Step CPA Pressure Calculation
 <worked-example-step-by-step-cpa-pressure-calculation>
 This section walks through the computation of pressure from CPA for a pure associating fluid at a given temperature and molar volume, showing how the cubic and association contributions combine.
 
-=== 5.9.1 Problem Setup
+=== Problem Setup
 <problem-setup>
 Compute the CPA pressure for pure water at $T = 373.15$ K and $V_m = 18.8 times 10^(- 6)$ m$""^3$/mol (approximately liquid water at 100°C).
 
-=== 5.9.2 Step 1: Evaluate the SRK Cubic Contribution
+=== Step 1: Evaluate the SRK Cubic Contribution
 <step-1-evaluate-the-srk-cubic-contribution>
 The SRK parameters for CPA-water (Equinor set): $a_0 = 0.12277$ Pa·m$""^6$/mol$""^2$, $b = 1.4515 times 10^(- 5)$ m$""^3$/mol, $c_1 = 0.6736$.
 
@@ -2473,7 +2473,7 @@ $ P^(upright("SRK")) = frac(R T, V_m - b) - frac(a \( T \), V_m \( V_m + b \)) $
 
 $ = frac(8.314 times 373.15, 18.8 times 10^(- 6) - 1.4515 times 10^(- 5)) - frac(0.16648, 18.8 times 10^(- 6) \( 18.8 times 10^(- 6) + 1.4515 times 10^(- 5) \)) $
 
-=== 5.9.3 Step 2: Solve the Site Balance
+=== Step 2: Solve the Site Balance
 <step-2-solve-the-site-balance>
 For water (4C scheme), $X_e = X_H = X$:
 
@@ -2481,7 +2481,7 @@ $ X = frac(- 1 + sqrt(1 + 8 rho Delta), 4 rho Delta) $
 
 where $rho = 1 \/ V_m$ and $Delta$ is computed from the association parameters.
 
-=== 5.9.4 Step 3: Compute the Association Pressure
+=== Step 3: Compute the Association Pressure
 <step-3-compute-the-association-pressure>
 The association contribution to pressure is:
 
@@ -2489,13 +2489,13 @@ $ P^(upright("assoc")) = - frac(R T, V_m) (1 + V_m frac(partial ln g, partial V_
 
 In practice, this derivative is computed numerically in NeqSim via the chain rule, as detailed in Chapter 8.
 
-=== 5.9.5 Step 4: Total CPA Pressure
+=== Step 4: Total CPA Pressure
 <step-4-total-cpa-pressure>
 $ P^(upright("CPA")) = P^(upright("SRK")) + P^(upright("assoc")) $
 
 The association term is always #strong[positive] for the pressure (it increases the total pressure relative to SRK alone) because the association reduces the Helmholtz energy, and $P = - \( partial A \/ partial V \)_T$.
 
-== 5.10 The Simplified CPA (sCPA)
+== The Simplified CPA (sCPA)
 <the-simplified-cpa-scpa-1>
 In the original CPA formulation, the radial distribution function $g \( V_m \)$ is taken from the Carnahan--Starling hard-sphere expression:
 
@@ -2513,7 +2513,7 @@ where $eta = b \/ \( 4 V_m \)$. This simplification:
 
 The NeqSim `SystemSrkCPAstatoil` class uses the sCPA formulation, which is recommended for all industrial applications. The full Carnahan--Starling version is available in `SystemSrkCPA` for research purposes.
 
-=== 5.10.1 Impact on Derivatives
+=== Impact on Derivatives
 <impact-on-derivatives>
 The choice of $g$ affects all derivative properties because the pressure includes a term proportional to $partial g \/ partial V$:
 
@@ -2527,13 +2527,13 @@ $ frac(partial ln g^(upright("sCPA")), partial eta) = frac(1.9, 1 - 1.9 eta) $
 
 The simpler derivative in sCPA propagates through the entire calculation chain (fugacity, enthalpy, heat capacity), reducing both coding complexity and computational cost.
 
-== 5.11 Complete Derivative Chain: From Helmholtz Energy to Engineering Properties
+== Complete Derivative Chain: From Helmholtz Energy to Engineering Properties
 <complete-derivative-chain-from-helmholtz-energy-to-engineering-properties>
 To compute any thermodynamic property from CPA, one follows a systematic derivative chain starting from the residual Helmholtz energy:
 
 $ A^(upright("res")) = A^(upright("SRK")) + A^(upright("assoc")) $
 
-=== 5.11.1 Association Contribution to Helmholtz Energy
+=== Association Contribution to Helmholtz Energy
 <association-contribution-to-helmholtz-energy>
 The association Helmholtz energy is:
 
@@ -2541,7 +2541,7 @@ $ frac(A^(upright("assoc")), n R T) = sum_i x_i sum_(A_i) [ln X_(A_i) - X_(A_i) 
 
 This compact expression contains all the thermodynamic information about the hydrogen-bond network. The factor $\[ ln X_(A_i) - X_(A_i) \/ 2 + 1 \/ 2 \]$ is always non-positive (since $0 lt.eq X_(A_i) lt.eq 1$), confirming that association always reduces the Helmholtz energy --- hydrogen bonds stabilize the system.
 
-=== 5.11.2 Derivatives with Respect to Volume
+=== Derivatives with Respect to Volume
 <derivatives-with-respect-to-volume>
 The association contribution to pressure requires:
 
@@ -2553,7 +2553,7 @@ $ P^(upright("assoc")) = - frac(n R T, 2 V) rho frac(partial ln g, partial rho) 
 
 where $rho = n \/ V$ is the molar density and $g$ is the radial distribution function. The quantity $\( 1 - X_(A_i) \)$ is the fraction of sites of type $A$ on molecule $i$ that are bonded.
 
-=== 5.11.3 Derivatives with Respect to Temperature
+=== Derivatives with Respect to Temperature
 <derivatives-with-respect-to-temperature>
 The enthalpy contribution requires:
 
@@ -2569,7 +2569,7 @@ $ (frac(partial A^(upright("assoc")), partial T))_V = A^(upright("assoc")) / T +
 
 The term $partial X_(A_i) \/ partial T$ captures the fact that hydrogen bonds break as temperature increases. Computing this derivative requires solving a linear system obtained by differentiating the site balance equations with respect to temperature.
 
-=== 5.11.4 The Linear System for Site Fraction Derivatives
+=== The Linear System for Site Fraction Derivatives
 <the-linear-system-for-site-fraction-derivatives>
 Differentiating the site balance equation with respect to any variable $xi$ (which can be $T$, $V$, or $n_j$):
 
@@ -2583,13 +2583,13 @@ $ upright(bold(M))_(\( A_i \) \( B_j \)) = delta_(\( A_i \) \( B_j \)) + X_(A_i)
 
 and the right-hand side depends on $partial Delta \/ partial xi$.
 
-=== 5.11.5 Temperature Derivative of the Association Strength
+=== Temperature Derivative of the Association Strength
 <temperature-derivative-of-the-association-strength>
 $ frac(partial Delta^(A_i B_j), partial T) = Delta^(A_i B_j) [frac(epsilon^(A_i B_j), R T^2) + 1 / g frac(partial g, partial T) + 1 / b_(i j) frac(partial b_(i j), partial T)] $
 
 The dominant term is $epsilon \/ \( R T^2 \)$, which is always positive --- meaning the association strength increases as temperature decreases. This is physically correct: cooling promotes hydrogen bond formation.
 
-=== 5.11.6 Heat Capacity Contribution
+=== Heat Capacity Contribution
 <heat-capacity-contribution>
 The association contribution to $C_V$ requires the second temperature derivative:
 
@@ -2599,7 +2599,7 @@ This involves second derivatives of the site fractions, requiring differentiatio
 
 For water, the association contribution to $C_P$ accounts for approximately 30% of the total heat capacity at 25°C --- explaining why CPA gives significantly better heat capacity predictions than SRK.
 
-== 5.12 Comparison: CPA vs.~SRK for Pure Water
+== Comparison: CPA vs.~SRK for Pure Water
 <comparison-cpa-vs.-srk-for-pure-water>
 To demonstrate the improvement CPA provides, let us compare predictions for pure water:
 
@@ -2628,9 +2628,9 @@ for ModelClass, name in [
     # Experimental: 958.4 kg/m3
 ```
 
-== 5.13 The Fugacity Coefficient: Composition Dependence
+== The Fugacity Coefficient: Composition Dependence
 <the-fugacity-coefficient-composition-dependence>
-=== 5.13.1 General Expression
+=== General Expression
 <general-expression>
 The fugacity coefficient of component $i$ in a CPA mixture is:
 
@@ -2640,7 +2640,7 @@ The SRK contribution is the standard expression from cubic EoS theory. The assoc
 
 $ ln phi_i^(upright("assoc")) = frac(1, R T) (frac(partial n A^(upright("assoc")), partial n_i))_(T \, V \, n_(j eq.not i)) $
 
-=== 5.13.2 The Composition Derivative
+=== The Composition Derivative
 <the-composition-derivative>
 Evaluating $partial \( n A^(upright("assoc")) \) \/ partial n_i$ requires careful application of the chain rule because $A^(upright("assoc"))$ depends on $n_i$ both explicitly (through the sum over components) and implicitly (through $X_(A_j)$, which depends on all compositions).
 
@@ -2650,7 +2650,7 @@ $ ln phi_i^(upright("assoc")) = sum_(A_i) (ln X_(A_i) - X_(A_i) / 2 + 1 / 2) - 1
 
 The first sum runs only over the sites on molecule $i$ --- the direct contribution from molecule $i$'s own bonding state. The second sum runs over all sites on all molecules --- the indirect contribution from how adding molecule $i$ changes the bonding state of every other molecule.
 
-=== 5.13.3 Physical Interpretation
+=== Physical Interpretation
 <physical-interpretation>
 For a non-associating component (e.g., methane) in a mixture with water:
 
@@ -2751,15 +2751,15 @@ After reading this chapter, the reader will be able to:
 + Assess parameter sensitivity and correlation
 + Use pre-fitted CPA parameters from the NeqSim database
 
-== 6.1 The Parameter Estimation Problem
+== The Parameter Estimation Problem
 <the-parameter-estimation-problem>
-=== 6.1.1 What Must Be Fitted?
+=== What Must Be Fitted?
 <what-must-be-fitted>
 For an associating component modeled with CPA, five parameters must be determined simultaneously: $a_0$, $b$, $c_1$, $epsilon \/ R$, and $beta$. Unlike classical cubic EoS where all three parameters are fixed by critical properties and the acentric factor, CPA parameters are obtained by regression against experimental data.
 
 The reason critical property-based correlations are insufficient is that the association parameters ($epsilon$, $beta$) introduce additional degrees of freedom that cannot be determined from $T_c$, $P_c$, and $omega$ alone. The association energy and volume affect properties in ways that are coupled to the cubic parameters --- for example, both $a_0$ and $epsilon$ affect the vapor pressure, and both $b$ and $beta$ affect the liquid density.
 
-=== 6.1.2 Choice of Experimental Data
+=== Choice of Experimental Data
 <choice-of-experimental-data>
 The standard approach uses two types of experimental data for pure components:
 
@@ -2774,7 +2774,7 @@ $ F_(upright("obj")) = sum_(k = 1)^(N_P) (frac(P_k^(upright("calc")) - P_k^(upri
 
 where $w_rho$ is a weighting factor that balances the relative importance of vapor pressure and density data. A typical choice is $w_rho = 1$, giving equal weight to relative errors in both properties.
 
-=== 6.1.3 Temperature Range for Fitting
+=== Temperature Range for Fitting
 <temperature-range-for-fitting>
 The temperature range for fitting is critical. The recommended practice is:
 
@@ -2784,9 +2784,9 @@ The temperature range for fitting is critical. The recommended practice is:
 
 Fitting over too narrow a temperature range leads to parameters that extrapolate poorly. Including data too close to the critical point forces the parameters to compromise accuracy in the subcritical region.
 
-== 6.2 Regression Methodology
+== Regression Methodology
 <regression-methodology>
-=== 6.2.1 The Levenberg--Marquardt Algorithm
+=== The Levenberg--Marquardt Algorithm
 <the-levenbergmarquardt-algorithm>
 The parameter estimation problem is a nonlinear least-squares optimization. The Levenberg--Marquardt (LM) algorithm \[55, 56\] is the most widely used method for this class of problems. It interpolates between the Gauss--Newton method (fast convergence near the solution) and gradient descent (robust far from the solution).
 
@@ -2804,7 +2804,7 @@ $ J_(k j) = frac(partial r_k, partial theta_j) $
 
 and $lambda$ is the damping parameter. When $lambda arrow.r 0$, the LM step approaches the Gauss--Newton step; when $lambda arrow.r oo$, it approaches a small gradient descent step. The LM algorithm adaptively adjusts $lambda$: it is decreased when a step reduces $F$ (more Gauss--Newton) and increased when $F$ increases (more cautious descent).
 
-=== 6.2.2 Computing the Jacobian
+=== Computing the Jacobian
 <computing-the-jacobian>
 The Jacobian elements $partial r_k \/ partial theta_j$ can be computed by:
 
@@ -2821,7 +2821,7 @@ with step sizes $h_j approx 10^(- 4) theta_j$ (central differences for better ac
 
 NeqSim uses finite-difference Jacobians in its parameter estimation tools, which provides flexibility for any objective function formulation.
 
-=== 6.2.3 Convergence Criteria
+=== Convergence Criteria
 <convergence-criteria>
 The LM algorithm terminates when any of the following are satisfied:
 
@@ -2832,7 +2832,7 @@ The LM algorithm terminates when any of the following are satisfied:
 
 Typical tolerances are $epsilon.alt_1 = 10^(- 8)$, $epsilon.alt_2 = 10^(- 6)$, $epsilon.alt_3 = 10^(- 8)$, $n_max = 200$.
 
-=== 6.2.4 Initial Estimates
+=== Initial Estimates
 <initial-estimates>
 Good initial estimates accelerate convergence:
 
@@ -2841,7 +2841,7 @@ Good initial estimates accelerate convergence:
 - $epsilon \/ R$: literature values for similar molecules (1500--3000 K for OH groups)
 - $beta$: typically 0.001--0.1; start with 0.01 for alcohols, 0.04 for water
 
-=== 6.2.5 Grid Search for Global Optimization
+=== Grid Search for Global Optimization
 <grid-search-for-global-optimization>
 A well-known challenge in CPA parameterization is the existence of #strong[multiple parameter sets] that give similar objective function values. This degeneracy arises because:
 
@@ -2857,9 +2857,9 @@ To avoid local minima, the recommended strategy is a #strong[two-level optimizat
 
 This approach has been shown to reliably find the global optimum for all common associating compounds.
 
-== 6.3 Statistical Analysis of Parameter Estimates
+== Statistical Analysis of Parameter Estimates
 <statistical-analysis-of-parameter-estimates>
-=== 6.3.1 Parameter Confidence Intervals
+=== Parameter Confidence Intervals
 <parameter-confidence-intervals>
 The quality of parameter estimates should be assessed using statistical analysis. Near the optimum, the parameter covariance matrix is approximated by:
 
@@ -2871,7 +2871,7 @@ $ theta_j^(*) plus.minus t_(0.025 \, N - p) sqrt(\[ upright("Cov") \( bold(theta
 
 where $t_(0.025 \, N - p)$ is the Student's $t$-value. Large confidence intervals indicate poorly determined parameters.
 
-=== 6.3.2 The Correlation Matrix
+=== The Correlation Matrix
 <the-correlation-matrix>
 The parameter correlation matrix reveals dependencies between parameters:
 
@@ -2898,7 +2898,7 @@ Correlation coefficients close to $plus.minus 1$ indicate that the two parameter
 
 The strong correlation between ($a_0$, $c_1$) and between ($epsilon \/ R$, $beta$) is clearly visible. The $epsilon$--$beta$ anticorrelation means that increasing the bond strength while decreasing the bonding probability produces similar thermodynamic effects --- a fundamental degeneracy in the association model.
 
-=== 6.3.3 Residual Analysis
+=== Residual Analysis
 <residual-analysis>
 A good parameter fit should produce residuals that are:
 
@@ -2908,9 +2908,9 @@ A good parameter fit should produce residuals that are:
 
 If vapor pressure residuals show a systematic trend with temperature (e.g., positive at low $T$ and negative at high $T$), this suggests that the temperature dependence of the CPA model is not perfectly matching the data. In such cases, the Mathias--Copeman alpha function (Chapter 3) can improve the fit.
 
-== 6.4 Physical Interpretation of Parameters
+== Physical Interpretation of Parameters
 <physical-interpretation-of-parameters>
-=== 6.3.1 Association Energy ($epsilon \/ R$)
+=== Association Energy ($epsilon \/ R$)
 <association-energy-varepsilonr>
 The association energy represents the depth of the hydrogen-bond potential well. Typical values:
 
@@ -2933,7 +2933,7 @@ The association energy represents the depth of the hydrogen-bond potential well.
 
 The association energy can be compared with experimental hydrogen-bond enthalpies from spectroscopy \[41\]. For water, the O--H···O bond energy is approximately 20 kJ/mol ($approx 2400$ K in $epsilon \/ k_B$), consistent with CPA parameter values.
 
-=== 6.3.2 Association Volume ($beta$)
+=== Association Volume ($beta$)
 <association-volume-beta>
 The association volume is a dimensionless parameter related to the geometric probability of forming a hydrogen bond when two molecules are at contact distance. It reflects:
 
@@ -2943,7 +2943,7 @@ The association volume is a dimensionless parameter related to the geometric pro
 
 Smaller $beta$ values mean that bonding is geometrically less probable (stricter orientational requirements). Water has a relatively large $beta$ because its tetrahedral structure allows hydrogen bonds over a wide angular range.
 
-=== 6.3.3 The Cubic Parameters in CPA
+=== The Cubic Parameters in CPA
 <the-cubic-parameters-in-cpa>
 The cubic parameters ($a_0$, $b$, $c_1$) in CPA differ from their SRK counterparts because they must work in concert with the association term:
 
@@ -2951,9 +2951,9 @@ The cubic parameters ($a_0$, $b$, $c_1$) in CPA differ from their SRK counterpar
 - #strong[$b$ in CPA is similar] to SRK values, as the molecular size is largely independent of association
 - #strong[$c_1$ in CPA differs] from the Soave $m \( omega \)$ value because the temperature dependence of the cubic term must complement the temperature dependence of the association term
 
-== 6.4 Parameter Tables for Common Components
+== Parameter Tables for Common Components
 <parameter-tables-for-common-components>
-=== 6.4.1 Water
+=== Water
 <water>
 Water is the most important associating component in process engineering. The recommended CPA parameters for water (4C scheme) in the NeqSim/Equinor set are:
 
@@ -3004,7 +3004,7 @@ A cross-validation study \[48\] verified the NeqSim parameter set against the in
 
 The only discrepancy is the $beta$ parameter for methanol and ethanol, which arises from the different association scheme used: NeqSim uses 2B while Igben et al.~used 3B. The 3B scheme distributes the association volume over one additional site, giving $beta_(3 B) approx 2 beta_(2 B)$.
 
-=== 6.4.2 The Effect of Scheme Choice: 4C vs.~2B for Water
+=== The Effect of Scheme Choice: 4C vs.~2B for Water
 <the-effect-of-scheme-choice-4c-vs.-2b-for-water>
 Water is most commonly modeled with the 4C scheme (four sites), but it can also be represented with the simpler 2B scheme (two sites). Both can fit pure-component data equally well, but the parameters differ systematically:
 
@@ -3033,7 +3033,7 @@ The key observations are:
 
 For #strong[pure water], both schemes give comparable results. The difference becomes important for #strong[mixtures]: the 4C scheme correctly captures the cross-association geometry with alcohols (2B) and glycols (4C), while the 2B scheme for water may give incorrect cross-association strengths when combined with partners that have different site architectures.
 
-=== 6.4.3 Alcohols
+=== Alcohols
 <alcohols>
 #figure(
   align(center)[#table(
@@ -3053,7 +3053,7 @@ For #strong[pure water], both schemes give comparable results. The difference be
 
 A clear trend is visible: the cubic parameters ($a_0$, $b$) increase with molecular size while the association energy remains roughly constant along the homologous series, reflecting that the OH group is the same in all cases.
 
-=== 6.4.4 Glycols
+=== Glycols
 <glycols>
 #figure(
   align(center)[#table(
@@ -3072,9 +3072,9 @@ A clear trend is visible: the cubic parameters ($a_0$, $b$) increase with molecu
 
 The decreasing $beta$ along the glycol series reflects the increasing molecular size --- the OH groups become a smaller fraction of the total molecular volume, reducing the geometric probability of hydrogen bonding.
 
-== 6.5 Parameter Sensitivity Analysis
+== Parameter Sensitivity Analysis
 <parameter-sensitivity-analysis>
-=== 6.5.1 Sensitivity of Vapor Pressure
+=== Sensitivity of Vapor Pressure
 <sensitivity-of-vapor-pressure>
 The sensitivity of calculated vapor pressure to each parameter can be quantified by:
 
@@ -3090,7 +3090,7 @@ where $theta_j$ is the $j$-th parameter. For water at 373 K:
 
 The vapor pressure is most sensitive to $a_0$ and $c_1$, consistent with the SRK origin of these parameters.
 
-=== 6.5.2 Sensitivity of Liquid Density
+=== Sensitivity of Liquid Density
 <sensitivity-of-liquid-density>
 For liquid density at 373 K:
 
@@ -3102,7 +3102,7 @@ For liquid density at 373 K:
 
 The liquid density is primarily controlled by $b$, with secondary contributions from the association parameters.
 
-=== 6.5.3 Parameter Correlation
+=== Parameter Correlation
 <parameter-correlation>
 A correlation analysis reveals strong correlations between parameter pairs:
 
@@ -3128,9 +3128,9 @@ print(f"Predicted boiling pressure: {fluid.getPressure('bara'):.4f} bara")
 print(f"Experimental (1 atm): 1.0132 bara")
 ```
 
-== 6.6 Transferability and Generalization
+== Transferability and Generalization
 <transferability-and-generalization>
-=== 6.6.1 Parameter Trends Across Homologous Series
+=== Parameter Trends Across Homologous Series
 <parameter-trends-across-homologous-series>
 One of the most powerful checks on the physical consistency of CPA parameters is their behavior across a homologous series. For the 1-alcohol series (methanol through 1-octanol), clear trends emerge:
 
@@ -3162,14 +3162,14 @@ Several physically meaningful trends are evident:
 
 The near-constancy of $epsilon \/ R$ across the series (within 6%) validates the physical interpretation: the hydrogen bond strength is determined by the local chemistry of the OH group, not by the rest of the molecule.
 
-=== 6.6.2 Group Contribution Approaches
+=== Group Contribution Approaches
 <group-contribution-approaches>
 For components without experimental data for parameter fitting, group contribution methods can provide estimates:
 
 - #strong[GC-CPA]: Predicts CPA parameters from molecular group contributions. The cubic parameters ($a_0$, $b$, $c_1$) are estimated from group increments (CH$""_3$, CH$""_2$, OH, NH$""_2$, etc.), while the association parameters are assigned based on the functional group type
 - #strong[Analogy-based]: Uses parameters from similar molecules with adjusted $a_0$ and $b$ to match the target molecular weight and critical properties
 
-=== 6.6.3 Pseudo-Component Treatment
+=== Pseudo-Component Treatment
 <pseudo-component-treatment>
 For petroleum fractions (C7+ characterization), associating and non-associating contributions must be separated. The recommended approach is:
 
@@ -3179,7 +3179,7 @@ For petroleum fractions (C7+ characterization), associating and non-associating 
 
 This is the approach implemented in NeqSim for reservoir fluid characterization.
 
-=== 6.6.4 Parameter Quality Assessment
+=== Parameter Quality Assessment
 <parameter-quality-assessment>
 Before using CPA parameters in process design, it is important to assess their quality. Key indicators include:
 
@@ -3202,11 +3202,11 @@ Before using CPA parameters in process design, it is important to assess their q
 
 A particularly useful check is to compute the enthalpy of vaporization $Delta H^(upright("vap"))$, which is not used in the regression but is sensitive to the balance between the cubic and association contributions. If $Delta H^(upright("vap"))$ is well-predicted, it confirms that the parameter set correctly partitions the intermolecular energy between dispersion (cubic) and association.
 
-== 6.7 Worked Example: Parameter Estimation for Ethanol
+== Worked Example: Parameter Estimation for Ethanol
 <worked-example-parameter-estimation-for-ethanol>
 To illustrate the regression procedure, let us trace the fitting of CPA parameters for ethanol using the 2B association scheme.
 
-=== 6.7.1 Experimental Data
+=== Experimental Data
 <experimental-data>
 For ethanol, the key experimental data used in the regression are:
 
@@ -3229,7 +3229,7 @@ For ethanol, the key experimental data used in the regression are:
 
 #emph[Table 6.6: Experimental data for ethanol parameter regression.]
 
-=== 6.7.2 Initial Estimates
+=== Initial Estimates
 <initial-estimates-1>
 For the 2B scheme with ethanol:
 
@@ -3243,7 +3243,7 @@ $ c_1^(upright("initial")) = 0.480 + 1.574 \( 0.644 \) - 0.176 \( 0.644 \)^2 = 1
 
 #strong[Association parameters from analogy]: using methanol as a reference molecule and scaling by molecular size, initial estimates are $epsilon \/ R approx 2500$ K and $beta approx 0.02$.
 
-=== 6.7.3 Regression Result
+=== Regression Result
 <regression-result>
 After Levenberg--Marquardt optimization minimizing the combined vapor pressure and density objective:
 
@@ -3266,15 +3266,15 @@ After Levenberg--Marquardt optimization minimizing the combined vapor pressure a
 
 The most significant changes from the initial SRK-based estimates are in $c_1$ (reduced by 48%) and $b$ (reduced by 15%). This reflects the fact that the association term now handles a significant portion of the attractive interactions that $c_1$ and $b$ had to capture alone in SRK.
 
-=== 6.7.4 Fit Quality
+=== Fit Quality
 <fit-quality>
 With the fitted parameters, the AAD in vapor pressure is 0.8% and the AAD in liquid density is 0.6% over the temperature range 25--241°C. The SRK model (without association) gives 2.1% AAD in vapor pressure and 8.5% in liquid density over the same range.
 
-== 6.8 Parameter Sensitivity and Physical Meaning
+== Parameter Sensitivity and Physical Meaning
 <parameter-sensitivity-and-physical-meaning>
 Understanding how each parameter affects predictions is essential for robust fitting and for interpreting results.
 
-=== 6.8.1 Sensitivity Analysis
+=== Sensitivity Analysis
 <sensitivity-analysis>
 #figure(
   align(center)[#table(
@@ -3293,7 +3293,7 @@ Understanding how each parameter affects predictions is essential for robust fit
 
 #emph[Table 6.8: Parameter sensitivity for CPA.]
 
-=== 6.8.2 The Compensation Effect
+=== The Compensation Effect
 <the-compensation-effect>
 The most important practical insight for parameter fitting is the #strong[compensation effect] between $epsilon$ and $beta$: increasing $epsilon$ (stronger bonds) while decreasing $beta$ (fewer bonds) can give a similar total association energy. This creates a valley in the objective function where many parameter combinations give acceptable fits.
 
@@ -3373,9 +3373,9 @@ After reading this chapter, the reader will be able to:
 + Explain the Elliott combining rule and its advantages
 + Configure cross-association in NeqSim using mixing rule 10
 
-== 7.1 Mixing Rules for the Cubic Term
+== Mixing Rules for the Cubic Term
 <mixing-rules-for-the-cubic-term>
-=== 7.1.1 Van der Waals One-Fluid Rules
+=== Van der Waals One-Fluid Rules
 <van-der-waals-one-fluid-rules>
 The cubic part of CPA uses the standard van der Waals one-fluid mixing rules:
 
@@ -3389,7 +3389,7 @@ $ a_(i j) = sqrt(a_i a_j) \( 1 - k_(i j) \) $
 
 The binary interaction parameter $k_(i j)$ is the primary adjustable parameter for tuning VLE predictions \[49, 57\]. For CPA, $k_(i j)$ accounts for deviations in the #strong[non-associating] interactions between unlike molecules --- the associating interactions are handled separately by the cross-association parameters.
 
-=== 7.1.2 Binary Interaction Parameters for CPA
+=== Binary Interaction Parameters for CPA
 <binary-interaction-parameters-for-cpa>
 A key advantage of CPA over classical cubic EoS is that smaller $k_(i j)$ values are needed because the association term captures a significant portion of the non-ideal behavior. For example:
 
@@ -3411,7 +3411,7 @@ A key advantage of CPA over classical cubic EoS is that smaller $k_(i j)$ values
 
 The fact that CPA requires smaller and less temperature-dependent $k_(i j)$ values is a significant practical advantage --- it means the model extrapolates better to conditions outside the range of available experimental data.
 
-=== 7.1.3 Co-Volume Mixing
+=== Co-Volume Mixing
 <co-volume-mixing>
 The arithmetic mean is used for the mixture co-volume:
 
@@ -3425,9 +3425,9 @@ $ b_(i j) = sqrt(b_i b_j) quad upright("(geometric mean, alternative)") $
 
 NeqSim uses the arithmetic mean, which is more common in CPA implementations.
 
-== 7.2 Cross-Association: The Fundamental Challenge
+== Cross-Association: The Fundamental Challenge
 <cross-association-the-fundamental-challenge>
-=== 7.2.1 Self-Association vs.~Cross-Association
+=== Self-Association vs.~Cross-Association
 <self-association-vs.-cross-association>
 When a mixture contains two or more associating species (e.g., water and methanol), hydrogen bonds can form between like molecules (self-association) and between unlike molecules (cross-association):
 
@@ -3437,7 +3437,7 @@ When a mixture contains two or more associating species (e.g., water and methano
 
 The cross-association parameters $epsilon^(H_w O_m)$ and $beta^(H_w O_m)$ are generally not available from pure-component data alone --- they describe interactions between different species. This creates the need for #strong[combining rules] that estimate cross-association parameters from the pure-component values.
 
-=== 7.2.2 The Site Balance in Mixtures
+=== The Site Balance in Mixtures
 <the-site-balance-in-mixtures>
 For a binary mixture of water (4C) and methanol (2B), the site balance equations become:
 
@@ -3459,9 +3459,9 @@ $ X_(O_m) = frac(1, 1 + rho [x_w dot.op 2 X_(H_w) Delta^(H_w O_m) + x_m dot.op X
 
 This is a system of four coupled nonlinear equations that must be solved simultaneously.
 
-== 7.3 Combining Rules for Cross-Association Parameters
+== Combining Rules for Cross-Association Parameters
 <combining-rules-for-cross-association-parameters>
-=== 7.3.1 The CR-1 Rule
+=== The CR-1 Rule
 <the-cr-1-rule>
 The most widely used combining rule in CPA is #strong[CR-1] (Combining Rule 1) \[12\]:
 
@@ -3474,7 +3474,7 @@ CR-1 uses the arithmetic mean for the energy and the geometric mean for the volu
 - The association energy is an intensive quantity (energy per bond), so the arithmetic mean is natural
 - The association volume is related to a probability (geometric factor), for which the geometric mean is appropriate
 
-=== 7.3.2 The CR-2 Rule
+=== The CR-2 Rule
 <the-cr-2-rule>
 An alternative is #strong[CR-2], which uses the geometric mean for both:
 
@@ -3484,7 +3484,7 @@ $ beta^(A_i B_j) = sqrt(beta^(A_i) dot.op beta^(B_j)) $
 
 CR-2 generally gives similar results to CR-1 for molecules with similar association energies but can differ significantly when the energies are very different.
 
-=== 7.3.3 The Elliott Combining Rule (ECR)
+=== The Elliott Combining Rule (ECR)
 <the-elliott-combining-rule-ecr>
 \[58\] proposed a combining rule directly for the association strength:
 
@@ -3492,7 +3492,7 @@ $ Delta^(A_i B_j) = sqrt(Delta^(A_i A_i) dot.op Delta^(B_j B_j)) $
 
 The ECR has the advantage of being simpler (one equation instead of two) and directly relates the cross-association strength to the self-association strengths. It is used in some SAFT implementations but is less common in CPA.
 
-=== 7.3.4 Comparison of Combining Rules
+=== Comparison of Combining Rules
 <comparison-of-combining-rules>
 For the water--methanol system at 25°C:
 
@@ -3513,9 +3513,9 @@ For the water--methanol system at 25°C:
 
 For water--methanol, all combining rules give good results because both molecules have similar association energies. The differences become more pronounced for asymmetric cases.
 
-== 7.4 Solvation: Cross-Association with Non-Self-Associating Species
+== Solvation: Cross-Association with Non-Self-Associating Species
 <solvation-cross-association-with-non-self-associating-species>
-=== 7.4.1 The Solvation Concept
+=== The Solvation Concept
 <the-solvation-concept>
 Some molecules do not self-associate but can form hydrogen bonds with associating molecules. Examples:
 
@@ -3526,7 +3526,7 @@ Some molecules do not self-associate but can form hydrogen bonds with associatin
 
 In CPA, solvation is modeled by assigning #strong[acceptor sites only] to the non-self-associating species. The solvating molecule has $epsilon^(upright("self")) = 0$ and $beta^(upright("self")) = 0$ but non-zero cross-association parameters with the self-associating species.
 
-=== 7.4.2 The Physical Basis of Solvation
+=== The Physical Basis of Solvation
 <the-physical-basis-of-solvation>
 The solvation interaction between CO$""_2$ and water illustrates the physics. The carbon atom in CO$""_2$ has a partial positive charge ($delta^(+)$) flanked by two electronegative oxygen atoms ($delta^(-)$). Water's lone electron pairs on oxygen can donate electron density to the CO$""_2$ carbon, forming a Lewis acid--base complex:
 
@@ -3538,7 +3538,7 @@ This interaction has a typical energy of 10--15 kJ/mol (compared to 20 kJ/mol fo
 - The lower water dew point of CO$""_2$-containing gas (CO$""_2$ "pulls" water into the gas phase)
 - The formation of carbonic acid as the first step in the CO$""_2$ hydration reaction
 
-=== 7.4.3 Implementation of Solvation in CPA
+=== Implementation of Solvation in CPA
 <implementation-of-solvation-in-cpa>
 For CO$""_2$ solvation with water, the approach is:
 
@@ -3550,7 +3550,7 @@ For CO$""_2$ solvation with water, the approach is:
 
 This approach significantly improves the prediction of CO$""_2$ solubility in water and the water content of CO$""_2$-rich phases \[59\].
 
-=== 7.4.4 Modified CR-1 for Solvation
+=== Modified CR-1 for Solvation
 <modified-cr-1-for-solvation>
 When one component does not self-associate ($epsilon_j = 0$, $beta_j = 0$), the CR-1 rule gives:
 
@@ -3566,7 +3566,7 @@ $ beta^(upright("cross")) = beta_(upright("fitted")) quad upright("(fitted to bi
 
 In NeqSim, the solvation parameters are stored in the binary parameter database and are loaded automatically when mixing rule 10 is used.
 
-=== 7.4.5 Solvation Parameter Table
+=== Solvation Parameter Table
 <solvation-parameter-table>
 The following table summarizes the solvation parameters available in NeqSim for common systems:
 
@@ -3587,9 +3587,9 @@ The following table summarizes the solvation parameters available in NeqSim for 
 
 #emph[Table 7.3: Solvation parameters for common pairs in NeqSim CPA.]
 
-== 7.5 Temperature-Dependent Binary Interaction Parameters
+== Temperature-Dependent Binary Interaction Parameters
 <temperature-dependent-binary-interaction-parameters>
-=== 7.5.1 The Need for $k_(i j) \( T \)$
+=== The Need for $k_(i j) \( T \)$
 <the-need-for-k-ijt>
 For some systems, a constant $k_(i j)$ cannot reproduce VLE data over a wide temperature range. This is particularly true for:
 
@@ -3603,13 +3603,13 @@ $ k_(i j) \( T \) = k_(i j)^0 + k_(i j)^1 \( T - T_(upright("ref")) \) $
 
 where $T_(upright("ref"))$ is typically 298.15 K. The parameter $k_(i j)^1$ is fitted to binary VLE data at multiple temperatures.
 
-=== 7.5.2 When Temperature Dependence Is Not Needed
+=== When Temperature Dependence Is Not Needed
 <when-temperature-dependence-is-not-needed>
 For CPA with properly parameterized association, the need for temperature-dependent $k_(i j)$ is reduced compared to classical cubic EoS. This is because the association term already provides a strong, physically-based temperature dependence. In many cases where SRK requires $k_(i j) \( T \)$, CPA with a constant $k_(i j)$ provides equal or better predictions.
 
-== 7.6 The NeqSim Mixing Rule Implementation
+== The NeqSim Mixing Rule Implementation
 <the-neqsim-mixing-rule-implementation>
-=== 7.6.1 Mixing Rule 10
+=== Mixing Rule 10
 <mixing-rule-10>
 NeqSim's mixing rule 10 is the standard CPA mixing rule that handles:
 
@@ -3640,7 +3640,7 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
-=== 7.5.2 The CPAMixingRuleHandler
+=== The CPAMixingRuleHandler
 <the-cpamixingrulehandler>
 In NeqSim's internal architecture, the `CPAMixingRuleHandler` class manages:
 
@@ -3651,9 +3651,9 @@ In NeqSim's internal architecture, the `CPAMixingRuleHandler` class manages:
 
 Two mixing rule types are available: - `CPA_RADOCH`: the standard CPA mixing rule - `PCSAFTA_RADOCH`: a variant compatible with PC-SAFT-style association
 
-== 7.6 Binary Interaction Parameter Fitting
+== Binary Interaction Parameter Fitting
 <binary-interaction-parameter-fitting>
-=== 7.6.1 Fitting $k_(i j)$ for CPA
+=== Fitting $k_(i j)$ for CPA
 <fitting-k-ij-for-cpa>
 The cubic binary interaction parameter $k_(i j)$ in CPA is fitted to binary mixture data:
 
@@ -3665,7 +3665,7 @@ The objective function typically minimizes:
 
 $ F = sum_k (frac(P_k^(upright("calc")) - P_k^(upright("exp")), P_k^(upright("exp"))))^2 + w sum_k (frac(y_(i \, k)^(upright("calc")) - y_(i \, k)^(upright("exp")), y_(i \, k)^(upright("exp"))))^2 $
 
-=== 7.6.2 When to Fit Cross-Association Parameters
+=== When to Fit Cross-Association Parameters
 <when-to-fit-cross-association-parameters>
 For systems where the combining rules give poor results, the cross-association parameters ($epsilon^(upright("cross"))$ and $beta^(upright("cross"))$) can be fitted directly:
 
@@ -3673,7 +3673,7 @@ For systems where the combining rules give poor results, the cross-association p
 + #strong[Highly asymmetric association] (strong acid + weak base): may need fitted $epsilon^(upright("cross"))$
 + #strong[Standard cross-association] (water--methanol, water--MEG): CR-1 usually sufficient
 
-=== 7.6.3 Database of Binary Parameters
+=== Database of Binary Parameters
 <database-of-binary-parameters>
 NeqSim maintains a database of fitted $k_(i j)$ and cross-association parameters for common pairs. Key systems include:
 
@@ -3696,9 +3696,9 @@ NeqSim maintains a database of fitted $k_(i j)$ and cross-association parameters
 
 #emph[Table 7.3: Selected binary parameters in the NeqSim CPA database.]
 
-== 7.7 Multicomponent Mixtures
+== Multicomponent Mixtures
 <multicomponent-mixtures>
-=== 7.7.1 Prediction of Multicomponent Behavior
+=== Prediction of Multicomponent Behavior
 <prediction-of-multicomponent-behavior>
 A major strength of CPA is the prediction of multicomponent behavior from binary parameters alone. For a system with $c$ components, CPA requires only:
 
@@ -3709,7 +3709,7 @@ A major strength of CPA is the prediction of multicomponent behavior from binary
 
 This is particularly valuable for systems like natural gas + water + methanol, where ternary and higher-order data may be scarce.
 
-=== 7.7.2 Competitive Association
+=== Competitive Association
 <competitive-association>
 In multicomponent mixtures, different species compete for hydrogen bonding sites. For example, in a water--methanol--methane system:
 
@@ -3742,17 +3742,17 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): x_MeOH = {x_meoh:.4f}")
 ```
 
-== 7.8 Worked Example: Cross-Association in Water--Methanol
+== Worked Example: Cross-Association in Water--Methanol
 <worked-example-cross-association-in-watermethanol>
 To illustrate the combining rules in practice, let us trace the computation of cross-association parameters for the water--methanol system.
 
-=== 7.8.1 Pure Component Parameters
+=== Pure Component Parameters
 <pure-component-parameters>
 Water (4C scheme): $epsilon^(upright("water")) \/ R = 2003.2$ K, $beta^(upright("water")) = 0.0692$, $b^(upright("water")) = 1.4515 times 10^(- 5)$ m$""^3$/mol.
 
 Methanol (2B scheme): $epsilon^(upright("MeOH")) \/ R = 2625.7$ K, $beta^(upright("MeOH")) = 0.0163$, $b^(upright("MeOH")) = 3.0978 times 10^(- 5)$ m$""^3$/mol.
 
-=== 7.8.2 Applying the CR-1 Combining Rule
+=== Applying the CR-1 Combining Rule
 <applying-the-cr-1-combining-rule>
 The CR-1 rule gives:
 
@@ -3764,13 +3764,13 @@ $ = sqrt(0.0692 times 0.0163) times (frac(sqrt(1.4515 times 3.0978) times 10^(- 
 
 The geometric mean of $beta$ values is $sqrt(0.0692 times 0.0163) = 0.0336$. The size correction factor (the ratio in parentheses) accounts for the asymmetry in molecular size between water and methanol.
 
-=== 7.8.3 Physical Interpretation
+=== Physical Interpretation
 <physical-interpretation>
 The cross-association energy (2314.5 K) is intermediate between water--water (2003.2 K) and methanol--methanol (2625.7 K). This reflects the fact that a water--methanol hydrogen bond is expected to have intermediate strength.
 
 The cross-association volume parameter $beta^(upright("cross")) = 0.0336$ is the geometric mean corrected for molecular size. The size correction ensures that the effective bonding volume accounts for the different molecular sizes.
 
-=== 7.8.4 Impact on Phase Behavior
+=== Impact on Phase Behavior
 <impact-on-phase-behavior>
 The water--methanol system is completely miscible, with strong negative deviations from Raoult's law. CPA with the CR-1 combining rule captures:
 
@@ -3778,7 +3778,7 @@ The water--methanol system is completely miscible, with strong negative deviatio
 + The azeotrope at $x_(upright("MeOH")) approx 0.89$ and 64.5°C
 + The heat of mixing (exothermic, with a minimum near $x_(upright("MeOH")) approx 0.35$)
 
-== 7.9 Summary of Mixing Rule Selection
+== Summary of Mixing Rule Selection
 <summary-of-mixing-rule-selection>
 For practical use, the following decision tree helps select the appropriate mixing rule:
 
@@ -3790,11 +3790,11 @@ For practical use, the following decision tree helps select the appropriate mixi
 
 In NeqSim, mixing rule 10 (`fluid.setMixingRule(10)`) automatically handles cases 1--3 using the pre-fitted parameter database.
 
-== 7.10 Advanced Mixing Rules: Huron--Vidal and Beyond
+== Advanced Mixing Rules: Huron--Vidal and Beyond
 <advanced-mixing-rules-huronvidal-and-beyond>
 While CPA with van der Waals mixing rules handles most oil and gas applications, it is instructive to compare with more sophisticated approaches.
 
-=== 7.10.1 The Huron--Vidal Mixing Rule
+=== The Huron--Vidal Mixing Rule
 <the-huronvidal-mixing-rule>
 Huron and Vidal \[60\] proposed a mixing rule that connects the equation of state to activity coefficient models at infinite pressure:
 
@@ -3804,7 +3804,7 @@ where $G^(E \, oo)$ is the excess Gibbs energy at infinite pressure (from an act
 
 This approach provides much more flexibility for describing highly non-ideal mixtures --- but at the cost of requiring binary NRTL/UNIQUAC parameters (or Wilson \[63\] parameters) instead of a single $k_(i j)$.
 
-=== 7.10.2 The MHV2 and Wong--Sandler Mixing Rules
+=== The MHV2 and Wong--Sandler Mixing Rules
 <the-mhv2-and-wongsandler-mixing-rules>
 \[39\] derived the Modified Huron--Vidal second-order (MHV2) mixing rule that connects the EoS to $G^E$ models at zero pressure rather than infinite pressure:
 
@@ -3812,7 +3812,7 @@ $ q \( a_m \, b_m \) = sum_i x_i q \( a_i \, b_i \) + G^E / C_1 $
 
 The Wong--Sandler \[38\] mixing rule takes a different approach, enforcing the correct second virial coefficient composition dependence while recovering a $G^E$ model at low pressures. Michelsen and Hendriks \[64\] further analyzed the theoretical foundations of these approaches. Both methods provide excellent results for polar/non-ideal systems.
 
-=== 7.10.3 Why CPA Does Not Need Advanced Mixing Rules
+=== Why CPA Does Not Need Advanced Mixing Rules
 <why-cpa-does-not-need-advanced-mixing-rules>
 The key insight is that CPA achieves the flexibility of advanced mixing rules through the association term rather than through the mixing rule itself. Consider the water--hydrocarbon system:
 
@@ -3834,7 +3834,7 @@ The key insight is that CPA achieves the flexibility of advanced mixing rules th
 
 CPA with simple van der Waals mixing rules achieves comparable or better accuracy than SRK with advanced mixing rules, while maintaining a more physically grounded framework and better extrapolation capability.
 
-=== 7.10.4 When Advanced Mixing Rules Might Still Be Needed
+=== When Advanced Mixing Rules Might Still Be Needed
 <when-advanced-mixing-rules-might-still-be-needed>
 There are situations where even CPA with standard mixing rules may benefit from advanced approaches:
 
@@ -3844,9 +3844,9 @@ There are situations where even CPA with standard mixing rules may benefit from 
 
 For these systems, combining CPA's association term with advanced mixing rules (CPA + HV, CPA + NRTL) can provide additional accuracy, though at the cost of significantly more parameters.
 
-== 7.11 Sensitivity Analysis: How Much Does $k_(i j)$ Matter?
+== Sensitivity Analysis: How Much Does $k_(i j)$ Matter?
 <sensitivity-analysis-how-much-does-k-ij-matter>
-=== 7.11.1 The Role of $k_(i j)$ in CPA vs.~Classical EoS
+=== The Role of $k_(i j)$ in CPA vs.~Classical EoS
 <the-role-of-k-ij-in-cpa-vs.-classical-eos>
 In classical cubic EoS, $k_(i j)$ is the only adjustable parameter for each binary pair, so it must carry the entire burden of correcting for non-ideal molecular interactions. In CPA, the association term already accounts for the dominant hydrogen-bonding interaction, and $k_(i j)$ only needs to fine-tune the cubic (dispersion) contribution.
 
@@ -3868,7 +3868,7 @@ This fundamental difference means:
 
 #emph[Table 7.5: Sensitivity of predictions to $k_(i j)$ perturbation.]
 
-=== 7.11.2 Practical Implications
+=== Practical Implications
 <practical-implications>
 The reduced sensitivity of CPA to $k_(i j)$ has important practical consequences:
 
@@ -3876,7 +3876,7 @@ The reduced sensitivity of CPA to $k_(i j)$ has important practical consequences
 + #strong[Extrapolation safety]: small errors in $k_(i j)$ have smaller consequences in CPA, making extrapolation to conditions outside the fitting range safer
 + #strong[Parameter availability]: for systems without experimental data for fitting $k_(i j)$, CPA can still give reasonable results using only the pure-component parameters and combining rules
 
-=== 7.11.3 Temperature Dependence of $k_(i j)$
+=== Temperature Dependence of $k_(i j)$
 <temperature-dependence-of-k-ij>
 For most CPA applications, $k_(i j)$ is treated as temperature-independent. When temperature dependence is needed (over wide ranges, e.g., 0--200°C), a linear correlation is typical:
 
@@ -3943,9 +3943,9 @@ After reading this chapter, the reader will be able to:
 + Analyze convergence properties and diagnose numerical difficulties
 + Select the appropriate solver variant in NeqSim for a given application
 
-== 8.1 Overview of the Numerical Challenge
+== Overview of the Numerical Challenge
 <overview-of-the-numerical-challenge>
-=== 8.1.1 The Nested Iteration Problem
+=== The Nested Iteration Problem
 <the-nested-iteration-problem>
 CPA introduces a fundamental computational challenge that does not exist for classical cubic EoS: the site fractions $X_A$ are implicit functions of temperature, density, and composition \[51, 65\]. In a flash calculation, the overall algorithm has a nested structure:
 
@@ -3953,7 +3953,7 @@ CPA introduces a fundamental computational challenge that does not exist for cla
 
 At each outer iteration, the inner loop must converge to provide consistent fugacity coefficients. This nested iteration can be expensive: if the flash requires 10 outer iterations and each fugacity evaluation requires 5--10 inner iterations to solve the site balance, the total number of EoS evaluations is 50--100, compared to 10 for a non-associating system.
 
-=== 8.1.2 Strategies for Reducing Computational Cost
+=== Strategies for Reducing Computational Cost
 <strategies-for-reducing-computational-cost>
 Three broad strategies exist to reduce the computational cost of CPA calculations:
 
@@ -3963,9 +3963,9 @@ Three broad strategies exist to reduce the computational cost of CPA calculation
 
 NeqSim implements all three strategies through different system classes, allowing the user to choose the best approach for their application.
 
-== 8.2 Successive Substitution for the Site Balance
+== Successive Substitution for the Site Balance
 <successive-substitution-for-the-site-balance>
-=== 8.2.1 The Basic Algorithm
+=== The Basic Algorithm
 <the-basic-algorithm>
 The simplest approach to solve the site balance equations is successive substitution (SS). Starting from an initial guess $X_A^(\( 0 \)) = 1$ (no association), the equations are iterated:
 
@@ -3981,7 +3981,7 @@ for all physical conditions. However, convergence can be slow, particularly at:
 - #strong[High densities]: where the product $rho Delta$ is large
 - #strong[Near critical points]: where multiple competing phases create sensitivity
 
-=== 8.2.2 Convergence Rate
+=== Convergence Rate
 <convergence-rate>
 The successive substitution method converges linearly, with the rate determined by the spectral radius of the Jacobian:
 
@@ -3989,7 +3989,7 @@ $ parallel X^(\( k + 1 \)) - X^(*) parallel lt.eq sigma parallel X^(\( k \)) - X
 
 where $sigma < 1$ is the spectral radius. For typical conditions, $sigma approx 0.3$--$0.7$, meaning convergence in 5--15 iterations to a tolerance of $10^(- 10)$. Near the critical point or at very low temperatures, $sigma$ can approach 1, requiring 50 or more iterations.
 
-=== 8.2.3 Damping and Acceleration
+=== Damping and Acceleration
 <damping-and-acceleration>
 Simple modifications can improve the convergence of successive substitution:
 
@@ -4005,11 +4005,11 @@ $ X^(\( k + 1 \)) = X^(\( k \)) + frac(g^(\( k \)) - X^(\( k \)), 1 - q^(\( k \)
 
 where $q^(\( k \))$ estimates the slope of the iteration map.
 
-== 8.3 Newton's Method for the Site Balance
+== Newton's Method for the Site Balance
 <newtons-method-for-the-site-balance>
 For a comprehensive treatment of Newton-type methods for nonlinear equations, see \[67\] and \[68\].
 
-=== 8.3.1 Formulation
+=== Formulation
 <formulation>
 Newton's method solves the site balance equations by linearizing the residual:
 
@@ -4023,7 +4023,7 @@ where the Jacobian matrix elements are:
 
 $ J_(A_i \, B_j) = frac(partial R_(A_i), partial X_(B_j)) = delta_(A_i B_j) - frac(rho x_j Delta^(A_i B_j), (1 + rho sum_k x_k sum_(C_k) X_(C_k) Delta^(A_i C_k))^2) $
 
-=== 8.3.2 Convergence Properties
+=== Convergence Properties
 <convergence-properties>
 Newton's method converges quadratically near the solution:
 
@@ -4031,7 +4031,7 @@ $ parallel X^(\( k + 1 \)) - X^(*) parallel lt.eq C parallel X^(\( k \)) - X^(*)
 
 This means that once the iterates are close to the solution, convergence is extremely rapid --- typically 2--4 iterations suffice.
 
-=== 8.3.3 Cost Analysis
+=== Cost Analysis
 <cost-analysis>
 For a mixture with $N_s$ total association sites, each Newton step requires:
 
@@ -4040,9 +4040,9 @@ For a mixture with $N_s$ total association sites, each Newton step requires:
 
 For typical mixtures (2--5 associating components, 4--20 total sites), $N_s$ is small and the linear algebra cost is negligible compared to the EoS evaluation.
 
-== 8.4 The Fully Implicit Approach
+== The Fully Implicit Approach
 <the-fully-implicit-approach>
-=== 8.4.1 Motivation
+=== Motivation
 <motivation>
 The standard approach treats the site fractions as an inner loop within the fugacity evaluation. The fully implicit approach eliminates this nested structure by treating $X_A$ as additional unknowns in the flash problem.
 
@@ -4059,7 +4059,7 @@ The fully implicit approach solves all equations simultaneously:
 
 Total: $c + 2 N_s$ equations and unknowns, solved by Newton's method as a single system.
 
-=== 8.4.2 The Augmented Jacobian
+=== The Augmented Jacobian
 <the-augmented-jacobian>
 The Jacobian of the fully implicit system has a block structure:
 
@@ -4067,14 +4067,14 @@ $ upright(bold(J)) = mat(delim: "(", frac(partial upright(bold(F))^(upright("fla
 
 The zero blocks arise because the site balance in one phase does not directly depend on the site fractions in the other phase (they are coupled only through the composition variables).
 
-=== 8.4.3 Advantages of the Fully Implicit Approach
+=== Advantages of the Fully Implicit Approach
 <advantages-of-the-fully-implicit-approach>
 + #strong[No inner loop]: eliminates the nested iteration, reducing the risk of convergence failure
 + #strong[Quadratic convergence] for the entire system, not just the site balance
 + #strong[Better behavior near critical points]: the coupling between association and phase equilibrium is resolved simultaneously
 + #strong[Consistent derivatives]: the Jacobian includes all cross-coupling terms
 
-=== 8.4.4 NeqSim Implementation
+=== NeqSim Implementation
 <neqsim-implementation>
 NeqSim implements the fully implicit approach in `SystemSrkCPAstatoilFullyImplicit`:
 
@@ -4102,13 +4102,13 @@ for fluid, name in [(fluid_std, "Standard"), (fluid_impl, "Fully Implicit")]:
     print(f"{name}: density = {rho:.2f} kg/m3")
 ```
 
-== 8.5 Broyden's Quasi-Newton Method
+== Broyden's Quasi-Newton Method
 <broydens-quasi-newton-method>
-=== 8.5.1 Motivation
+=== Motivation
 <motivation-1>
 Newton's method requires computing and factoring the Jacobian at each step, which involves evaluating many partial derivatives. Broyden's method \[16\] approximates the Jacobian using information from previous iterations, avoiding the need for explicit derivative computation.
 
-=== 8.5.2 The Broyden Update
+=== The Broyden Update
 <the-broyden-update>
 Starting from an initial Jacobian estimate $upright(bold(B))^(\( 0 \))$ (typically the identity matrix or an approximate Jacobian), the Broyden update is:
 
@@ -4120,7 +4120,7 @@ $ Delta upright(bold(X))^(\( k \)) = upright(bold(X))^(\( k + 1 \)) - upright(bo
 
 This rank-1 update preserves the secant condition: $upright(bold(B))^(\( k + 1 \)) Delta upright(bold(X))^(\( k \)) = Delta upright(bold(R))^(\( k \))$.
 
-=== 8.5.3 Convergence Properties
+=== Convergence Properties
 <convergence-properties-1>
 Broyden's method converges superlinearly:
 
@@ -4148,7 +4148,7 @@ The computational advantage comes from the per-step cost reduction \[48\]:
 
 #emph[Table 8.2: Per-step computational cost: full Newton vs.~Broyden update. For systems with $n > 5$ site types, the $O \( n^2 \)$ vs.~$O \( n^3 \)$ difference becomes significant.]
 
-=== 8.5.4 NeqSim Implementation
+=== NeqSim Implementation
 <neqsim-implementation-1>
 ```python
 from neqsim import jneqsim
@@ -4167,9 +4167,9 @@ fluid.initProperties()
 print(f"Density: {fluid.getDensity('kg/m3'):.2f} kg/m3")
 ```
 
-== 8.6 Anderson Acceleration
+== Anderson Acceleration
 <anderson-acceleration>
-=== 8.6.1 The Anderson Mixing Algorithm
+=== The Anderson Mixing Algorithm
 <the-anderson-mixing-algorithm>
 Anderson acceleration \[15\] (also called Anderson mixing or DIIS \[69\] --- Direct Inversion in the Iterative Subspace) is a convergence accelerator that can dramatically speed up fixed-point iterations. Given a sequence of iterates from successive substitution, Anderson acceleration constructs improved estimates by mixing previous iterates.
 
@@ -4181,7 +4181,7 @@ where $tilde(upright(bold(X)))$ are the SS-updated values and the mixing coeffic
 
 $ min_alpha ∥sum_(j = 0)^(m_k) alpha_j upright(bold(R))^(\( k - m_k + j \))∥^2 quad upright("subject to") quad sum_j alpha_j = 1 $
 
-=== 8.6.2 History Depth and Regularization
+=== History Depth and Regularization
 <history-depth-and-regularization>
 The parameter $m$ controls how many previous iterates are used:
 
@@ -4194,7 +4194,7 @@ For numerical stability, regularization is recommended:
 
 $ min_alpha ∥sum_j alpha_j upright(bold(R))^(\( j \))∥^2 + lambda parallel alpha parallel^2 $
 
-=== 8.6.3 Performance Comparison
+=== Performance Comparison
 <performance-comparison>
 A typical benchmark for CPA solvers involves computing the phase equilibrium of a water--methane--CO$""_2$ system at conditions near a phase boundary. Representative iteration counts are:
 
@@ -4217,7 +4217,7 @@ A typical benchmark for CPA solvers involves computing the phase equilibrium of 
 
 Figure 8.12 illustrates the convergence behavior of these solvers for a representative binary system: successive substitution converges linearly (constant slope on semilog scale), Anderson mixing achieves superlinear convergence, and the Broyden solver transitions from initial quadratic convergence to superlinear rank-1 updates. Figure 8.11 compares the overall speedup of the accelerated solvers across the full 11-system benchmark suite.
 
-=== 8.6.4 NeqSim Implementation
+=== NeqSim Implementation
 <neqsim-implementation-2>
 ```python
 from neqsim import jneqsim
@@ -4235,15 +4235,15 @@ fluid.initProperties()
 print(f"Density: {fluid.getDensity('kg/m3'):.2f} kg/m3")
 ```
 
-== 8.7 Reduced-Variable Formulation
+== Reduced-Variable Formulation
 <reduced-variable-formulation>
-=== 8.7.1 Motivation
+=== Motivation
 <motivation-2>
 Working with volume ($V$) as the primary variable (rather than compressibility factor $Z$) can improve numerical stability for CPA. The "reduced-variable" formulation expresses the Helmholtz energy in terms of dimensionless quantities:
 
 $ delta = rho / rho_c quad upright("(reduced density)") \, quad tau = T_c / T quad upright("(inverse reduced temperature)") $
 
-=== 8.7.2 Advantages
+=== Advantages
 <advantages>
 The reduced-variable formulation:
 
@@ -4254,9 +4254,9 @@ The reduced-variable formulation:
 
 NeqSim's advanced CPA solvers use a variant of this approach internally. The site type mapping that enables the dimensionality reduction is illustrated schematically in Figure 8.13.
 
-== 8.8 Convergence Diagnostics and Troubleshooting
+== Convergence Diagnostics and Troubleshooting
 <convergence-diagnostics-and-troubleshooting>
-=== 8.8.1 Common Convergence Issues
+=== Common Convergence Issues
 <common-convergence-issues>
 CPA calculations can fail to converge for several reasons:
 
@@ -4265,7 +4265,7 @@ CPA calculations can fail to converge for several reasons:
 + #strong[Strong association at low temperature]: The site fractions approach zero, creating stiffness
 + #strong[Incompatible initial estimates]: Starting the flash from an inappropriate K-factor estimate
 
-=== 8.8.2 Diagnostic Indicators
+=== Diagnostic Indicators
 <diagnostic-indicators>
 Useful diagnostics include:
 
@@ -4274,7 +4274,7 @@ Useful diagnostics include:
 - #strong[Site fraction bounds]: $X_A$ should always be in $\( 0 \, 1 \]$ --- values outside this range indicate a bug
 - #strong[Material balance]: Total composition should be conserved --- errors \> $10^(- 8)$ indicate a problem
 
-=== 8.8.3 Recovery Strategies
+=== Recovery Strategies
 <recovery-strategies>
 When convergence fails, NeqSim employs automatic recovery strategies:
 
@@ -4283,9 +4283,9 @@ When convergence fails, NeqSim employs automatic recovery strategies:
 + #strong[Try different initialization]: Use Wilson K-factors or stability analysis results
 + #strong[Switch solver]: Try Broyden or Anderson if Newton fails
 
-== 8.9 Case Studies: When Numerical Challenges Arise
+== Case Studies: When Numerical Challenges Arise
 <case-studies-when-numerical-challenges-arise>
-=== 8.9.1 Case Study 1: Water--Methane Near the Cricondenbar
+=== Case Study 1: Water--Methane Near the Cricondenbar
 <case-study-1-watermethane-near-the-cricondenbar>
 Near the maximum pressure of the two-phase region (cricondenbar), the vapor and liquid compositions approach each other, making the flash calculation very difficult. For the water--methane system at 100 bar and temperatures near the cricondenbar (\~$- 80 degree$C):
 
@@ -4295,7 +4295,7 @@ Near the maximum pressure of the two-phase region (cricondenbar), the vapor and 
 
 This is a classic example where solver choice matters for practical calculations --- a process simulator sweeping through conditions may encounter this region unexpectedly.
 
-=== 8.9.2 Case Study 2: MEG--Water at High MEG Concentration
+=== Case Study 2: MEG--Water at High MEG Concentration
 <case-study-2-megwater-at-high-meg-concentration>
 At very high MEG concentrations (\> 99 wt%), the water activity becomes extremely small. This creates numerical challenges:
 
@@ -4305,7 +4305,7 @@ At very high MEG concentrations (\> 99 wt%), the water activity becomes extremel
 
 The Anderson acceleration solver handles this case well because it smooths out the oscillatory behavior that successive substitution exhibits at high MEG concentrations.
 
-=== 8.9.3 Case Study 3: Three-Phase VLLE Flash
+=== Case Study 3: Three-Phase VLLE Flash
 <case-study-3-three-phase-vlle-flash>
 The three-phase flash (vapor--liquid--liquid) for a methane--n-hexane--water system at 30 bar and 25°C demonstrates the importance of stability analysis:
 
@@ -4317,7 +4317,7 @@ The three-phase flash (vapor--liquid--liquid) for a methane--n-hexane--water sys
 
 The fully implicit solver in NeqSim handles three-phase problems naturally by including the additional phase in the coupled equation system.
 
-=== 8.9.4 Performance Guidelines
+=== Performance Guidelines
 <performance-guidelines>
 Based on extensive benchmarking with NeqSim, the following solver selection guidelines are recommended:
 
@@ -4358,9 +4358,9 @@ print(f"Number of phases: {fluid.getNumberOfPhases()}")
 print(f"Gas density: {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
 ```
 
-== 8.9 Performance Optimization
+== Performance Optimization
 <performance-optimization>
-=== 8.9.1 Analytical vs.~Numerical Derivatives
+=== Analytical vs.~Numerical Derivatives
 <analytical-vs.-numerical-derivatives>
 A critical performance factor is the use of analytical derivatives rather than finite differences. For a system with $c$ components and $N_s$ sites:
 
@@ -4369,7 +4369,7 @@ A critical performance factor is the use of analytical derivatives rather than f
 
 The speedup from analytical derivatives is typically 3--10x for mixtures with 5--10 components.
 
-=== 8.9.2 Exploiting Symmetry
+=== Exploiting Symmetry
 <exploiting-symmetry>
 Many association schemes have symmetric sites (e.g., the two proton sites on water are identical). Exploiting this symmetry:
 
@@ -4377,7 +4377,7 @@ Many association schemes have symmetric sites (e.g., the two proton sites on wat
 - Reduces the Jacobian size: halves the number of rows and columns
 - Provides analytical solutions for pure components (see Chapter 4)
 
-=== 8.9.3 Caching and Reuse
+=== Caching and Reuse
 <caching-and-reuse>
 In flash calculations, the fugacity coefficients are evaluated many times at similar conditions. Performance can be improved by:
 
@@ -4385,11 +4385,11 @@ In flash calculations, the fugacity coefficients are evaluated many times at sim
 - #strong[Reusing site fractions] from the previous iteration as initial guesses
 - #strong[Storing intermediate quantities]: $g \( rho \)$, $exp \( epsilon \/ R T \)$, etc.
 
-== 8.10 Comprehensive Benchmark: Solver Performance Across 11 Systems
+== Comprehensive Benchmark: Solver Performance Across 11 Systems
 <comprehensive-benchmark-solver-performance-across-11-systems>
 This section presents systematic benchmark results from \[48\], comparing five CPA solver algorithms across 11 industrially relevant systems with up to 10 components.
 
-=== 8.10.1 Benchmark Systems
+=== Benchmark Systems
 <benchmark-systems>
 #figure(
   align(center)[#table(
@@ -4414,7 +4414,7 @@ This section presents systematic benchmark results from \[48\], comparing five C
 
 #emph[Table 8.5: The 11-system benchmark suite.]
 
-=== 8.10.2 Speedup Results: Fully Implicit (Coupled) Solver
+=== Speedup Results: Fully Implicit (Coupled) Solver
 <speedup-results-fully-implicit-coupled-solver>
 The fully implicit solver eliminates the inner iteration loop by solving the volume, composition, and site fractions simultaneously. Benchmark results show:
 
@@ -4451,7 +4451,7 @@ Key observations:
 - There is no simple monotonic trend between speedup and component count (Figure 8.10), confirming that the speedup depends primarily on the number of association sites and the fraction of associating components
 - Figure 8.9 shows the full distribution of timing ratios, with the interquartile range for most systems lying well below 1.0
 
-=== 8.10.3 Speedup Results: Anderson Acceleration with Site Reduction
+=== Speedup Results: Anderson Acceleration with Site Reduction
 <speedup-results-anderson-acceleration-with-site-reduction>
 Combining Anderson acceleration (§8.6) with the site symmetry reduction from §8.7 gives the best performance for glycol systems:
 
@@ -4473,7 +4473,7 @@ Combining Anderson acceleration (§8.6) with the site symmetry reduction from §
 
 #emph[Table 8.7: Combined Anderson acceleration + site type reduction benchmarks \[48\].]
 
-=== 8.10.4 Solver Selection Recommendations
+=== Solver Selection Recommendations
 <solver-selection-recommendations>
 Based on these comprehensive benchmarks:
 
@@ -4495,7 +4495,7 @@ Based on these comprehensive benchmarks:
 
 #emph[Table 8.8: Best solver by system type.]
 
-=== 8.10.5 An Important Discovery: Solver-Dependent Equilibria
+=== An Important Discovery: Solver-Dependent Equilibria
 <an-important-discovery-solver-dependent-equilibria>
 During benchmarking, a subtle but important phenomenon was discovered: near phase boundaries, nested-family and coupled-family solvers can converge to #strong[distinct equilibria] for certain systems. For the water--methanol system at 350 K:
 
@@ -4517,7 +4517,7 @@ During benchmarking, a subtle but important phenomenon was discovered: near phas
 
 This occurs because the solvers explore different parts of the Gibbs energy surface and can settle into different local minima. Both solutions satisfy the equilibrium conditions to machine precision. This highlights the importance of stability analysis (§8.12) and the need for robustness testing when comparing results from different CPA implementations.
 
-=== 8.10.6 When to Use Each Solver in NeqSim
+=== When to Use Each Solver in NeqSim
 <when-to-use-each-solver-in-neqsim>
 #figure(
   align(center)[#table(
@@ -4535,7 +4535,7 @@ This occurs because the solvers explore different parts of the Gibbs energy surf
 
 #emph[Table 8.10: CPA solver variants in NeqSim and their recommended use cases.]
 
-=== 8.10.7 Detailed Timing Results: All Solvers Across 11 Systems
+=== Detailed Timing Results: All Solvers Across 11 Systems
 <detailed-timing-results-all-solvers-across-11-systems>
 The complete timing results from \[48\] reveal the nuanced performance landscape:
 
@@ -4570,11 +4570,11 @@ Several patterns emerge from this detailed comparison:
 - #strong[The implicit solver can be slower] than standard for NG + water (0.53× speedup) because the larger augmented Jacobian adds overhead when the inner iteration converges quickly
 - #strong[Simple non-associating pure components] show minimal difference between solvers, as the CPA association term is negligible
 
-== 8.11 Worked Example: Diagnosing and Fixing Convergence Failure
+== Worked Example: Diagnosing and Fixing Convergence Failure
 <worked-example-diagnosing-and-fixing-convergence-failure>
 Understanding solver behavior in practice requires examining real cases where convergence is challenging. This section presents a systematic troubleshooting workflow.
 
-=== 8.11.1 Case: Water--CO$""_2$ Near the Three-Phase Line
+=== Case: Water--CO$""_2$ Near the Three-Phase Line
 <case-waterco-2-near-the-three-phase-line>
 The water--CO$""_2$ system at moderate pressures (50--100 bar) and temperatures near 25°C can exhibit vapor--liquid--liquid equilibrium (VLLE). The flash algorithm must simultaneously handle:
 
@@ -4587,7 +4587,7 @@ This three-phase region creates convergence difficulties for two reasons:
 + #strong[Phase identification]: the algorithm must determine that three phases exist, not two
 + #strong[Near-critical CO$""_2$]: the CO$""_2$ liquid and vapor phases have similar densities near the CO$""_2$ critical point (31°C, 73.8 bar)
 
-=== 8.11.2 Troubleshooting Workflow
+=== Troubleshooting Workflow
 <troubleshooting-workflow>
 #strong[Step 1: Enable multi-phase check]
 
@@ -4613,7 +4613,7 @@ The fully implicit solver treats the site fractions as additional variables in t
 
 Start from a slightly different temperature or pressure where convergence is easy, then use the converged result as the initial guess for the difficult condition.
 
-=== 8.11.3 Convergence Metrics
+=== Convergence Metrics
 <convergence-metrics>
 The key metrics to monitor are:
 
@@ -4634,11 +4634,11 @@ The key metrics to monitor are:
 
 #emph[Table 8.3: Convergence metrics and targets for CPA flash calculations.]
 
-== 8.12 Stability Analysis for CPA Systems
+== Stability Analysis for CPA Systems
 <stability-analysis-for-cpa-systems>
 A flash calculation can converge to a false solution (e.g., finding two phases when three exist) if the stability analysis is not performed correctly. This section describes the stability analysis algorithm as implemented in NeqSim.
 
-=== 8.12.1 The Tangent Plane Distance
+=== The Tangent Plane Distance
 <the-tangent-plane-distance>
 For a single-phase system with composition $upright(bold(z))$, the system is stable if the tangent plane distance (TPD) is non-negative for all trial compositions $upright(bold(w))$:
 
@@ -4650,7 +4650,7 @@ $ upright("TPD") \( upright(bold(w)) \) = sum_(i = 1)^C w_i [ln w_i + ln phi_i \
 
 If any trial composition gives $upright("TPD") < 0$, the system is unstable and must split into additional phases.
 
-=== 8.12.2 Special Considerations for Associating Systems
+=== Special Considerations for Associating Systems
 <special-considerations-for-associating-systems>
 For CPA, the stability analysis has additional subtleties:
 
@@ -4664,9 +4664,9 @@ For CPA, the stability analysis has additional subtleties:
   - $w_i = z_i \/ K_i$ (for liquid-like trial phases)
   - Pure water composition (for aqueous trial phases in water-containing systems)
 
-== 8.13 Volume Root-Finding in CPA
+== Volume Root-Finding in CPA
 <volume-root-finding-in-cpa>
-=== 8.13.1 The Challenge
+=== The Challenge
 <the-challenge>
 Unlike classical cubic EoS where the cubic polynomial in $Z$ (or $V$) can be solved analytically, CPA requires iterative volume root-finding because the association term introduces implicit composition and density dependence. The pressure equation:
 
@@ -4674,7 +4674,7 @@ $ P \( V \) = P^(upright("SRK")) \( V \) + P^(upright("assoc")) \( V \, X_A \( V
 
 cannot be solved in closed form because $X_A$ depends on $V$ through the density-dependent association strength $Delta^(A B)$.
 
-=== 8.13.2 Nested vs.~Simultaneous Approaches
+=== Nested vs.~Simultaneous Approaches
 <nested-vs.-simultaneous-approaches>
 #strong[Nested approach]: At each trial volume $V_k$, solve the site balance $X_A \( V_k \)$ to convergence, then evaluate $P \( V_k \)$ and update $V$:
 
@@ -4698,7 +4698,7 @@ $ upright(bold(J)) = mat(delim: "(", partial P \/ partial V, partial P \/ partia
 
 The simultaneous approach converges in fewer iterations but requires more derivatives per iteration. It is the default in NeqSim's fully implicit solver.
 
-=== 8.13.3 Multiple Roots
+=== Multiple Roots
 <multiple-roots>
 At subcritical conditions, CPA produces multiple volume roots analogous to the cubic case. The volume solver must:
 
@@ -4708,7 +4708,7 @@ At subcritical conditions, CPA produces multiple volume roots analogous to the c
 
 For CPA, the association term always reduces the pressure at a given volume (association is attractive), which shifts the liquid root to smaller volumes compared to pure SRK. This can improve liquid density predictions but also creates a narrower convergence basin for the liquid root.
 
-=== 8.13.4 Initial Guess Strategies
+=== Initial Guess Strategies
 <initial-guess-strategies>
 Good initial guesses for the volume root greatly improve convergence:
 
@@ -4873,7 +4873,7 @@ After reading this chapter, the reader will be able to:
 + Assess CPA accuracy against experimental data for key industrial systems
 + Apply CPA for hydrate prediction boundary conditions
 
-== 9.1 Industrial Importance of Water--Hydrocarbon Systems
+== Industrial Importance of Water--Hydrocarbon Systems
 <industrial-importance-of-waterhydrocarbon-systems>
 Water is ubiquitous in oil and gas processing \[17, 70\]. Every reservoir fluid contains dissolved water, and every surface processing facility must handle water in multiple forms:
 
@@ -4891,9 +4891,9 @@ The accuracy of thermodynamic predictions for water--hydrocarbon systems directl
 
 Errors of 50--100% in water content prediction --- common with classical cubic EoS \[71, 72\] --- translate directly into oversized or undersized equipment, incorrect inhibitor dosing, and potential hydrate blockages.
 
-== 9.2 Mutual Solubilities: Water--Alkane Systems
+== Mutual Solubilities: Water--Alkane Systems
 <mutual-solubilities-wateralkane-systems>
-=== 9.2.1 Thermodynamic Framework
+=== Thermodynamic Framework
 <thermodynamic-framework>
 The mutual solubility of water and hydrocarbons is governed by the equality of fugacities at equilibrium. For a two-liquid system (aqueous phase $alpha$ and hydrocarbon phase $beta$):
 
@@ -4913,7 +4913,7 @@ $ x_w^beta approx 1 / gamma_w^beta $
 
 The activity coefficient of water at infinite dilution in the hydrocarbon phase, $gamma_w^(beta \, oo)$, is very large (typically $10^2$--$10^3$), reflecting the enormous thermodynamic penalty of placing a hydrogen-bonding molecule in a non-polar environment. CPA computes this activity coefficient correctly through the association term, while classical cubic EoS underestimate $gamma_w^(beta \, oo)$ by factors of 2--10.
 
-=== 9.2.2 Experimental Behavior
+=== Experimental Behavior
 <experimental-behavior>
 The mutual solubility of water and alkanes exhibits several characteristic features \[70, 74\]:
 
@@ -4921,7 +4921,7 @@ The mutual solubility of water and alkanes exhibits several characteristic featu
 
 #strong[Solubility of alkanes in water:] - Extremely small ($10^(- 5)$--$10^(- 8)$ mole fraction) - Decreases strongly with alkane chain length - Shows a minimum as a function of temperature (around 25°C for light alkanes) - The minimum shifts to higher temperatures for heavier alkanes
 
-=== 9.2.3 Why Classical EoS Fail
+=== Why Classical EoS Fail
 <why-classical-eos-fail>
 Classical cubic EoS (SRK, PR) with a single $k_(i j)$ cannot simultaneously reproduce:
 
@@ -4931,7 +4931,7 @@ Classical cubic EoS (SRK, PR) with a single $k_(i j)$ cannot simultaneously repr
 
 The fundamental reason is that the aqueous phase is dominated by hydrogen bonding, which dramatically reduces the fugacity of water relative to what a non-associating model predicts. A classical EoS with a large positive $k_(i j)$ can match one solubility at one temperature but cannot capture the temperature dependence correctly.
 
-=== 9.2.4 CPA Predictions
+=== CPA Predictions
 <cpa-predictions>
 CPA resolves these difficulties by explicitly modeling the hydrogen-bond network in the aqueous phase. The association term:
 
@@ -4961,7 +4961,7 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): x_water={x_water:.6f}, x_hexane={x_hexane:.6f}")
 ```
 
-=== 9.2.5 Comparison with Experimental Data
+=== Comparison with Experimental Data
 <comparison-with-experimental-data>
 #figure(
   align(center)[#table(
@@ -4980,9 +4980,9 @@ for i in range(fluid.getNumberOfPhases()):
 
 CPA typically reproduces mutual solubilities within 10--30% \[49, 75, 76\], compared to errors of 100--1000% with SRK.
 
-== 9.3 Water Content of Natural Gas
+== Water Content of Natural Gas
 <water-content-of-natural-gas>
-=== 9.3.1 The Engineering Problem
+=== The Engineering Problem
 <the-engineering-problem>
 The water content of natural gas (also called the water dew point or moisture content) is one of the most important parameters in gas processing. Sales gas specifications typically require water content below 7 lb/MMscf (approximately 112 mg/Sm$""^3$) to prevent:
 
@@ -4991,7 +4991,7 @@ The water content of natural gas (also called the water dew point or moisture co
 - Two-phase flow and slugging
 - Ice formation at cryogenic conditions
 
-=== 9.3.2 McKetta--Wehe Chart and Its Limitations
+=== McKetta--Wehe Chart and Its Limitations
 <mckettawehe-chart-and-its-limitations>
 The McKetta--Wehe chart \[77\] has been the industry standard for estimating water content of sweet natural gas since the 1950s. It provides water content as a function of temperature and pressure for pure methane--water systems. Corrections are applied for gas composition (gravity correction) and sour gas content (Maddox correction) \[78, 79\].
 
@@ -5002,7 +5002,7 @@ However, the chart-based approach has significant limitations:
 - Sour gas corrections are unreliable at high H$""_2$S or CO$""_2$ concentrations
 - No treatment of methanol or glycol in the gas phase
 
-=== 9.3.3 Thermodynamic Basis for Water Content Prediction
+=== Thermodynamic Basis for Water Content Prediction
 <thermodynamic-basis-for-water-content-prediction>
 The water content of a gas in equilibrium with liquid water (or an aqueous solution) is determined by the fugacity balance:
 
@@ -5027,7 +5027,7 @@ $ f_w^L \( T \, P \) = P_w^(upright("sat")) \( T \) phi_w^(upright("sat")) \( T 
 
 The improvement of CPA over SRK for water content prediction comes primarily from: - Better $f_w^L$ (association stabilizes liquid water, correctly lowering its fugacity) - Better $phi_w^V$ for sour gas (solvation with CO$""_2$/H$""_2$S captured by cross-association)
 
-=== 9.3.4 CPA Predictions of Water Content
+=== CPA Predictions of Water Content
 <cpa-predictions-of-water-content>
 CPA provides a rigorous, composition-dependent prediction of water content:
 
@@ -5060,7 +5060,7 @@ print(f"Water mole fraction in gas: {y_water:.6f}")
 print(f"Approximate water content: {y_water * 1e6:.0f} ppm(mol)")
 ```
 
-=== 9.3.5 Effect of Gas Composition
+=== Effect of Gas Composition
 <effect-of-gas-composition>
 CPA correctly predicts the effect of gas composition on water content:
 
@@ -5071,7 +5071,7 @@ CPA correctly predicts the effect of gas composition on water content:
 
 These compositional effects are automatically captured by CPA through the association and solvation terms, without the need for empirical corrections.
 
-=== 9.3.6 Water Dew Point Calculations
+=== Water Dew Point Calculations
 <water-dew-point-calculations>
 The water dew point temperature at a given pressure is the temperature at which the first liquid water droplet forms upon cooling. In NeqSim:
 
@@ -5094,9 +5094,9 @@ T_dew = fluid.getTemperature("C")
 print(f"Water dew point: {T_dew:.1f} C at {fluid.getPressure('bara'):.0f} bara")
 ```
 
-== 9.4 Three-Phase Equilibrium: VLLE
+== Three-Phase Equilibrium: VLLE
 <three-phase-equilibrium-vlle>
-=== 9.4.1 Thermodynamic Conditions for VLLE
+=== Thermodynamic Conditions for VLLE
 <thermodynamic-conditions-for-vlle>
 Three-phase vapor--liquid--liquid equilibrium (VLLE) requires the simultaneous satisfaction of fugacity equality across all three phases. For a system with $C$ components and phases $V$, $L_1$ (hydrocarbon liquid), and $L_2$ (aqueous liquid):
 
@@ -5110,7 +5110,7 @@ $ beta_V + beta_(L_1) + beta_(L_2) = 1 $
 
 where $beta$ denotes the molar fraction of each phase. By the Gibbs phase rule, a three-phase system with $C$ components has $C - 1$ degrees of freedom. For a ternary system ($C = 3$), this gives 2 degrees of freedom --- specifying $T$ and $P$ fully determines the equilibrium.
 
-=== 9.4.2 When Three Phases Coexist
+=== When Three Phases Coexist
 <when-three-phases-coexist>
 For natural gas--water systems at moderate conditions (0--100°C, 10--200 bar), three phases can coexist:
 
@@ -5124,7 +5124,7 @@ Three-phase equilibrium is particularly important in:
 - #strong[Pipeline conditions] near the hydrocarbon dew point
 - #strong[Glycol dehydration contactors] (vapor + glycol solution + hydrocarbon condensate)
 
-=== 9.4.3 CPA for VLLE Predictions
+=== CPA for VLLE Predictions
 <cpa-for-vlle-predictions>
 CPA handles three-phase equilibrium naturally --- the same parameters and mixing rules that describe VLE and LLE are used for VLLE. The stability analysis identifies the three-phase region automatically:
 
@@ -5152,9 +5152,9 @@ for i in range(fluid.getNumberOfPhases()):
         print(f"  x_{comp}: {phase.getComponent(comp).getx():.6f}")
 ```
 
-== 9.5 Gas Solubility in Water
+== Gas Solubility in Water
 <gas-solubility-in-water>
-=== 9.5.1 Henry's Law and Its Extensions
+=== Henry's Law and Its Extensions
 <henrys-law-and-its-extensions>
 The solubility of a gas in water at low pressures follows Henry's law \[80\]:
 
@@ -5170,7 +5170,7 @@ $ x_i = frac(y_i phi_i^V P, H_i \( T \) exp [frac(macron(V)_i^oo \( P - P_w^(upr
 
 where $macron(V)_i^oo$ is the partial molar volume of gas $i$ at infinite dilution in water and the exponential is the Krichevsky correction for pressure.
 
-=== 9.5.2 CPA Approach vs.~Henry's Law
+=== CPA Approach vs.~Henry's Law
 <cpa-approach-vs.-henrys-law>
 CPA does not use Henry's law explicitly. Instead, the solubility of gas in water is computed directly from the fugacity equality:
 
@@ -5183,7 +5183,7 @@ The fugacity coefficient in the aqueous phase $phi_i^(L \, upright("aq"))$ inclu
 
 For CO$""_2$ in water, the solvation contribution to the fugacity coefficient reduces $phi_(upright("CO")_2)^(L \, upright("aq"))$, which increases the predicted solubility. This is why CPA with solvation (see Chapter 7) gives much better CO$""_2$ solubility than SRK.
 
-=== 9.5.3 Temperature Dependence of Gas Solubility
+=== Temperature Dependence of Gas Solubility
 <temperature-dependence-of-gas-solubility>
 Gas solubility in water shows a characteristic minimum near 80--100°C for many gases. This is because:
 
@@ -5198,19 +5198,19 @@ where $Delta macron(H)_i^(upright("sol"))$ is the partial molar enthalpy of solu
 
 CPA captures this behavior through the temperature dependence of both the cubic and association contributions to the fugacity coefficient.
 
-== 9.6 Temperature-Dependent LLE: Upper and Lower Critical Solution Temperatures
+== Temperature-Dependent LLE: Upper and Lower Critical Solution Temperatures
 <temperature-dependent-lle-upper-and-lower-critical-solution-temperatures>
-=== 9.6.1 Closed-Loop Behavior
+=== Closed-Loop Behavior
 <closed-loop-behavior>
 Some water--hydrocarbon systems exhibit an upper critical solution temperature (UCST) where the two liquid phases become miscible. For example, water--n-butylamine shows UCST behavior around 125°C. CPA can predict this behavior through the temperature dependence of the association term --- as temperature increases, hydrogen bonds weaken, reducing the thermodynamic penalty of mixing.
 
-=== 9.6.2 Lower Critical Solution Temperature (LCST)
+=== Lower Critical Solution Temperature (LCST)
 <lower-critical-solution-temperature-lcst>
 Certain aqueous systems (e.g., water--poly(ethylene glycol)) exhibit LCST behavior, where a homogeneous solution separates into two phases upon heating. This seemingly counterintuitive behavior occurs because the entropy of mixing decreases at higher temperatures due to the loss of organized hydration structures. CPA captures this through the temperature dependence of $Delta^(A B)$.
 
-== 9.7 Hydrate Boundary Conditions
+== Hydrate Boundary Conditions
 <hydrate-boundary-conditions>
-=== 9.7.1 Connection to Hydrate Prediction
+=== Connection to Hydrate Prediction
 <connection-to-hydrate-prediction>
 Gas hydrates form when water molecules create ice-like cage structures around small gas molecules at elevated pressures and low temperatures. Accurate hydrate prediction requires knowing:
 
@@ -5220,7 +5220,7 @@ Gas hydrates form when water molecules create ice-like cage structures around sm
 
 The van der Waals--Platteeuw model for hydrate prediction uses the fugacity of water in the aqueous phase as a key input. CPA provides this fugacity more accurately than classical EoS because it correctly models the hydrogen-bond network.
 
-=== 9.7.2 Hydrate Prediction in NeqSim
+=== Hydrate Prediction in NeqSim
 <hydrate-prediction-in-neqsim>
 ```python
 from neqsim import jneqsim
@@ -5242,9 +5242,9 @@ T_hydrate = fluid.getTemperature("C")
 print(f"Hydrate formation temperature: {T_hydrate:.1f} C at 100 bara")
 ```
 
-== 9.8 Validation Against Experimental Data
+== Validation Against Experimental Data
 <validation-against-experimental-data>
-=== 9.8.1 Systematic Assessment
+=== Systematic Assessment
 <systematic-assessment>
 CPA has been extensively validated against experimental data for water--hydrocarbon systems. The following summary covers the key systems:
 
@@ -5265,7 +5265,7 @@ CPA has been extensively validated against experimental data for water--hydrocar
 
 #emph[Table 9.2: Comparison of CPA and SRK accuracy for water--hydrocarbon systems.]
 
-=== 9.8.2 Regions of Poorer Accuracy
+=== Regions of Poorer Accuracy
 <regions-of-poorer-accuracy>
 CPA predictions are less accurate in certain regions:
 
@@ -5274,11 +5274,11 @@ CPA predictions are less accurate in certain regions:
 - #strong[Aromatic systems]: benzene--water requires solvation parameters that may not always be available
 - #strong[Heavy oils]: limited validation data for asphaltene-containing systems
 
-== 9.9 Worked Example: Water Content of a Natural Gas Pipeline
+== Worked Example: Water Content of a Natural Gas Pipeline
 <worked-example-water-content-of-a-natural-gas-pipeline>
 This section presents a complete worked example of computing the water content of a natural gas at pipeline conditions, comparing CPA predictions with the standard McKetta--Wehe chart used in industry.
 
-=== 9.9.1 Problem Statement
+=== Problem Statement
 <problem-statement>
 A natural gas pipeline operates at 80 bar and 25°C. The gas composition is: methane 88%, ethane 5%, propane 3%, n-butane 1%, CO$""_2$ 2%, and N$""_2$ 1%. Determine:
 
@@ -5286,7 +5286,7 @@ A natural gas pipeline operates at 80 bar and 25°C. The gas composition is: met
 + The water dew point temperature at 80 bar
 + How sensitive the water content is to temperature
 
-=== 9.9.2 Analytical Framework
+=== Analytical Framework
 <analytical-framework>
 The water content of a gas at saturation is determined by the fugacity equality:
 
@@ -5298,7 +5298,7 @@ $ y_(upright("water")) P phi_(upright("water"))^V approx P_(upright("water"))^(u
 
 The exponential is the #strong[Poynting correction] factor, which accounts for the effect of pressure on the liquid fugacity. At 80 bar and 25°C, the Poynting correction is approximately 1.04 --- a 4% increase that becomes significant at higher pressures.
 
-=== 9.9.3 NeqSim Solution
+=== NeqSim Solution
 <neqsim-solution>
 ```python
 from neqsim import jneqsim
@@ -5330,13 +5330,13 @@ T_dew = fluid.getTemperature("C")
 print(f"Water dew point: {T_dew:.1f} C at 80 bar")
 ```
 
-=== 9.9.4 Comparison with the McKetta--Wehe Chart
+=== Comparison with the McKetta--Wehe Chart
 <comparison-with-the-mckettawehe-chart>
 The McKetta--Wehe chart (GPSA Engineering Data Book) is the industry-standard correlation for water content of natural gas. At 25°C and 80 bar, the chart gives approximately 600--650 mg/Sm$""^3$. CPA typically predicts values within 5% of this range, while SRK overpredicts by 30--50%.
 
 The advantage of CPA over the correlation chart is that CPA: - Accounts for the effect of gas composition (heavy hydrocarbons reduce water content) - Handles the presence of CO$""_2$ and H$""_2$S (which increase water content) - Provides consistent thermodynamic derivatives for process design - Works seamlessly in dynamic simulations and optimization
 
-=== 9.9.5 Temperature Sensitivity Analysis
+=== Temperature Sensitivity Analysis
 <temperature-sensitivity-analysis>
 The water content of natural gas increases exponentially with temperature, approximately following:
 
@@ -5364,11 +5364,11 @@ where $A$, $B$, $C$ are constants. A 10°C increase in temperature roughly doubl
 
 #emph[Table 9.3: Water content of typical North Sea gas at 80 bar as a function of temperature.]
 
-== 9.10 The Microscopic Origin of Water--Hydrocarbon Immiscibility
+== The Microscopic Origin of Water--Hydrocarbon Immiscibility
 <the-microscopic-origin-of-waterhydrocarbon-immiscibility>
 Understanding #emph[why] water and hydrocarbons are immiscible provides physical insight that helps interpret CPA results and identify model limitations.
 
-=== 9.10.1 The Thermodynamic Driving Force
+=== The Thermodynamic Driving Force
 <the-thermodynamic-driving-force>
 Mixing of water and a hydrocarbon at constant $T$ and $P$ requires $Delta G_(upright("mix")) < 0$, where:
 
@@ -5381,7 +5381,7 @@ For ideal solutions, $Delta H_(upright("mix")) = 0$ and $Delta S_(upright("mix")
 
 The combination of positive $Delta H_(upright("mix"))$ and negative $Delta S_(upright("mix"))^E$ gives a strongly positive $Delta G_(upright("mix"))$, driving phase separation.
 
-=== 9.10.2 How CPA Captures This Physics
+=== How CPA Captures This Physics
 <how-cpa-captures-this-physics>
 In CPA, the association term directly models the cost of disrupting water's hydrogen bond network:
 
@@ -5392,7 +5392,7 @@ In CPA, the association term directly models the cost of disrupting water's hydr
 
 The SRK cubic term, by contrast, treats all intermolecular interactions as a mean-field dispersion --- it has no mechanism to distinguish between a water molecule surrounded by other water molecules (highly bonded) and a water molecule adjacent to a hydrocarbon (poorly bonded).
 
-=== 9.10.3 The Hydrophobic Hydration Shell
+=== The Hydrophobic Hydration Shell
 <the-hydrophobic-hydration-shell>
 Molecular dynamics simulations show that water molecules adjacent to non-polar solutes reorganize their hydrogen-bond network to avoid "wasting" bonding sites that face the solute. This reorganization:
 
@@ -5402,7 +5402,7 @@ Molecular dynamics simulations show that water molecules adjacent to non-polar s
 
 This explains the seemingly paradoxical experimental observation that small gas molecules (methane, ethane) dissolve in water with $Delta H_(upright("sol")) < 0$ (exothermic) but $Delta S_(upright("sol")) lt.double 0$ (strongly entropy-driven immiscibility). CPA captures this partially through the radial distribution function $g \( rho \)$ at contact, which increases near hydrophobic solutes.
 
-=== 9.10.4 Practical Implications for Process Design
+=== Practical Implications for Process Design
 <practical-implications-for-process-design>
 The molecular-level understanding has direct engineering consequences:
 
@@ -5497,7 +5497,7 @@ After reading this chapter, the reader will be able to:
 + Design MEG injection systems with CPA-based predictions
 + Apply CPA for polar chemical injection in oil and gas processing
 
-== 10.1 Introduction to Gas Processing with CPA
+== Introduction to Gas Processing with CPA
 <introduction-to-gas-processing-with-cpa>
 Gas processing operations frequently involve polar chemicals \[78, 79, 81\]: glycols for dehydration, methanol and MEG for hydrate inhibition, amines for acid gas removal. These chemicals form hydrogen bonds with water and with each other, making CPA the natural thermodynamic model for these applications.
 
@@ -5510,9 +5510,9 @@ Classical cubic EoS with conventional mixing rules cannot accurately predict:
 
 CPA handles all these aspects through its explicit treatment of hydrogen bonding, making it the preferred model for gas processing design.
 
-== 10.2 TEG Dehydration
+== TEG Dehydration
 <teg-dehydration>
-=== 10.2.1 Process Description
+=== Process Description
 <process-description>
 Triethylene glycol (TEG) dehydration is the most common method for removing water from natural gas. The process consists of:
 
@@ -5524,7 +5524,7 @@ Triethylene glycol (TEG) dehydration is the most common method for removing wate
 
 Typical specifications: - Water content in dry gas: \< 7 lb/MMscf (pipeline) or \< 1 ppmv (cryogenic processing) - TEG circulation rate: 2--5 gallons TEG per lb of water removed - Regeneration temperature: 185--204°C (depending on TEG purity target) - TEG purity: 98.5--99.99 wt% (depending on application)
 
-=== 10.2.2 Why CPA Is Important for TEG Design
+=== Why CPA Is Important for TEG Design
 <why-cpa-is-important-for-teg-design>
 The key thermodynamic properties that determine TEG dehydration performance are:
 
@@ -5535,7 +5535,7 @@ The key thermodynamic properties that determine TEG dehydration performance are:
 
 CPA accurately models the water--TEG system because it captures the hydrogen bonding between water's OH groups and TEG's three ether oxygens and two hydroxyl groups. The association scheme for TEG in CPA is typically 4C (two proton donor sites and two proton acceptor sites).
 
-=== 10.2.3 TEG Dehydration Simulation with NeqSim
+=== TEG Dehydration Simulation with NeqSim
 <teg-dehydration-simulation-with-neqsim>
 ```python
 from neqsim import jneqsim
@@ -5578,7 +5578,7 @@ teg_stream.setPressure(70.0, "bara")
 print("TEG dehydration streams configured with CPA")
 ```
 
-=== 10.2.4 Prediction of Dry Gas Water Content
+=== Prediction of Dry Gas Water Content
 <prediction-of-dry-gas-water-content>
 The achievable water content of the dry gas depends on:
 
@@ -5606,9 +5606,9 @@ CPA predicts the equilibrium water content above TEG solutions accurately:
 
 #emph[Table 10.1: Water content of gas in equilibrium with TEG solutions (representative values).]
 
-== 10.3 Methanol Injection for Hydrate Inhibition
+== Methanol Injection for Hydrate Inhibition
 <methanol-injection-for-hydrate-inhibition>
-=== 10.3.1 The Methanol Partitioning Problem
+=== The Methanol Partitioning Problem
 <the-methanol-partitioning-problem>
 Methanol is widely used as a thermodynamic hydrate inhibitor in subsea gas production \[82\]. The dosing rate must account for methanol that partitions into three phases:
 
@@ -5618,7 +5618,7 @@ Methanol is widely used as a thermodynamic hydrate inhibitor in subsea gas produ
 
 Accurate prediction of methanol partitioning is critical: under-dosing leads to hydrate blockage, while over-dosing wastes expensive chemical and creates downstream problems (methanol in sales gas, in produced water).
 
-=== 10.3.2 CPA for Methanol Partitioning
+=== CPA for Methanol Partitioning
 <cpa-for-methanol-partitioning>
 Methanol (3B association scheme: one OH donor, one OH acceptor, one electron pair) is a strong self-associating compound that also cross-associates with water. CPA with the binary parameters for methanol--water, methanol--methane, and methanol--hydrocarbons provides accurate three-phase partitioning:
 
@@ -5649,7 +5649,7 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): x_MeOH = {x_meoh:.6f}")
 ```
 
-=== 10.3.3 Effect of Pressure and Temperature on Methanol Partitioning
+=== Effect of Pressure and Temperature on Methanol Partitioning
 <effect-of-pressure-and-temperature-on-methanol-partitioning>
 CPA predictions show:
 
@@ -5657,7 +5657,7 @@ CPA predictions show:
 - #strong[Condensate-phase methanol losses] are relatively insensitive to pressure but increase with the amount of C$""_5$+ present
 - #strong[At typical pipeline conditions] (80--150 bar, 4--20°C): 1--5% of injected methanol is lost to the gas, 2--8% to condensate
 
-=== 10.3.4 Hydrate Inhibition Effectiveness
+=== Hydrate Inhibition Effectiveness
 <hydrate-inhibition-effectiveness>
 The Hammerschmidt equation \[83\] provides a simple estimate of the hydrate temperature depression:
 
@@ -5680,9 +5680,9 @@ where $T_0$ is the hydrate equilibrium temperature for pure water, $Delta H_(upr
 
 For high methanol concentrations (\> 40 wt%), the Margules-type activity coefficient can exceed 1.5, leading to Hammerschmidt underestimating the depression by 3--5°C --- a significant safety margin that would result in over-dosing if ignored.
 
-== 10.4 MEG (Mono-Ethylene Glycol) Injection
+== MEG (Mono-Ethylene Glycol) Injection
 <meg-mono-ethylene-glycol-injection>
-=== 10.4.1 Advantages Over Methanol
+=== Advantages Over Methanol
 <advantages-over-methanol>
 MEG (mono-ethylene glycol, also called ethylene glycol or EG) has several advantages over methanol for long-distance subsea gas transport:
 
@@ -5693,7 +5693,7 @@ MEG (mono-ethylene glycol, also called ethylene glycol or EG) has several advant
 
 The main disadvantage is higher viscosity and lower hydrate suppression per unit weight, requiring higher injection rates.
 
-=== 10.4.2 CPA for MEG Systems
+=== CPA for MEG Systems
 <cpa-for-meg-systems>
 MEG (4C association scheme) forms strong hydrogen bonds with water. CPA accurately predicts \[86\]:
 
@@ -5727,7 +5727,7 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): x_MEG={x_meg:.6f}, x_water={x_water:.6f}")
 ```
 
-=== 10.4.3 Rich vs.~Lean MEG Properties
+=== Rich vs.~Lean MEG Properties
 <rich-vs.-lean-meg-properties>
 The viscosity and density of MEG--water solutions vary strongly with concentration and temperature. These physical properties are important for:
 
@@ -5737,9 +5737,9 @@ The viscosity and density of MEG--water solutions vary strongly with concentrati
 
 CPA, combined with the physical property correlations in NeqSim, provides these properties as a function of composition and conditions.
 
-== 10.5 Glycol Losses and Emissions
+== Glycol Losses and Emissions
 <glycol-losses-and-emissions>
-=== 10.5.1 Sources of Glycol Loss
+=== Sources of Glycol Loss
 <sources-of-glycol-loss>
 Glycol losses in gas processing occur through several mechanisms:
 
@@ -5750,7 +5750,7 @@ Glycol losses in gas processing occur through several mechanisms:
 
 CPA predicts the first three mechanisms through phase equilibrium calculations. The degradation losses are kinetic and must be estimated separately.
 
-=== 10.5.2 TEG Vaporization Losses
+=== TEG Vaporization Losses
 <teg-vaporization-losses>
 TEG vaporization losses increase exponentially with temperature:
 
@@ -5772,7 +5772,7 @@ TEG vaporization losses increase exponentially with temperature:
 
 These losses, while small on a per-volume basis, can amount to significant TEG consumption and downstream contamination over a year of operation.
 
-=== 10.5.3 BTEX Absorption by TEG
+=== BTEX Absorption by TEG
 <btex-absorption-by-teg>
 TEG absorbs aromatic hydrocarbons (benzene, toluene, ethylbenzene, xylenes --- BTEX) from the gas, which are then emitted during regeneration. This is a significant environmental concern:
 
@@ -5799,9 +5799,9 @@ fluid.initProperties()
 print(f"Number of phases: {fluid.getNumberOfPhases()}")
 ```
 
-== 10.6 Thermodynamics of Gas--Liquid Absorption
+== Thermodynamics of Gas--Liquid Absorption
 <thermodynamics-of-gasliquid-absorption>
-=== 10.6.1 Equilibrium Stages and the Absorption Factor
+=== Equilibrium Stages and the Absorption Factor
 <equilibrium-stages-and-the-absorption-factor>
 The performance of a gas--liquid contactor (TEG absorber, amine column) depends on the number of equilibrium stages $N$ and the absorption factor $A$:
 
@@ -5815,7 +5815,7 @@ where $y_(upright("out"))^(*) = K dot.op x_(upright("in"))$ is the vapor composi
 
 For TEG dehydration, the K-value for water depends strongly on temperature, pressure, and TEG concentration --- all of which CPA predicts accurately. An error of 20% in the K-value (typical of SRK) translates to: - 1--2 additional theoretical stages, or - 20--30% higher TEG circulation rate to compensate
 
-=== 10.6.2 Heat of Absorption
+=== Heat of Absorption
 <heat-of-absorption>
 When water is absorbed into TEG, the enthalpy change has two components:
 
@@ -5827,9 +5827,9 @@ $ Delta macron(H)_i^(upright("mix")) = - R T^2 frac(partial ln gamma_i, partial 
 
 The association contribution to $gamma_i$ provides the correct sign and magnitude of this mixing enthalpy, which affects the temperature profile in the contactor.
 
-== 10.7 Acid Gas Removal with Amines
+== Acid Gas Removal with Amines
 <acid-gas-removal-with-amines>
-=== 10.7.1 Overview
+=== Overview
 <overview>
 Amine-based acid gas removal (sweetening) uses aqueous solutions of amines (MEA, DEA, MDEA, and blends) to absorb CO$""_2$ and H$""_2$S from natural gas. The process involves both physical dissolution and chemical reaction (carbamate/bicarbonate formation).
 
@@ -5839,7 +5839,7 @@ While the chemical reactions are not directly modeled by the CPA EoS, the phase 
 - #strong[Hydrocarbon solubility in amine solutions]: important for estimating hydrocarbon losses
 - #strong[Amine volatility]: contributes to amine emissions and losses
 
-=== 10.7.2 CPA Parameters for Amines
+=== CPA Parameters for Amines
 <cpa-parameters-for-amines>
 Common amines used in gas sweetening have been characterized for CPA:
 
@@ -5861,9 +5861,9 @@ Common amines used in gas sweetening have been characterized for CPA:
 
 The cross-association between amines and water is modeled using the CR-1 combining rule, providing good predictions of amine--water VLE and activity coefficients.
 
-== 10.8 Process Simulation Examples
+== Process Simulation Examples
 <process-simulation-examples>
-=== 10.8.1 Comparing CPA with SRK for Dehydration Design
+=== Comparing CPA with SRK for Dehydration Design
 <comparing-cpa-with-srk-for-dehydration-design>
 A practical comparison demonstrates the impact of model selection:
 
@@ -5910,7 +5910,7 @@ for T, P in conditions:
         print(f"  Ratio SRK/CPA:   {y_w_srk/y_w_cpa:.2f}")
 ```
 
-=== 10.8.2 Design Implications
+=== Design Implications
 <design-implications>
 The differences between CPA and SRK predictions translate directly into equipment sizing:
 
@@ -5920,11 +5920,11 @@ The differences between CPA and SRK predictions translate directly into equipmen
 
 For critical dehydration applications (cryogenic gas processing, LNG production), the 5--15% accuracy of CPA vs.~the 30--200% error of SRK can mean the difference between a successful design and a plant that cannot meet specifications.
 
-== 10.9 Worked Example: Complete TEG Dehydration Unit Design
+== Worked Example: Complete TEG Dehydration Unit Design
 <worked-example-complete-teg-dehydration-unit-design>
 This section presents a complete worked example of designing a TEG dehydration unit using CPA, demonstrating how the thermodynamic model feeds directly into equipment sizing.
 
-=== 10.9.1 Design Basis
+=== Design Basis
 <design-basis>
 #figure(
   align(center)[#table(
@@ -5945,7 +5945,7 @@ This section presents a complete worked example of designing a TEG dehydration u
 
 #emph[Table 10.2: Design basis for the TEG dehydration worked example.]
 
-=== 10.9.2 Step 1: Determine Water Content
+=== Step 1: Determine Water Content
 <step-1-determine-water-content>
 Using CPA, the water content of the inlet gas at 70 bar and 30°C is approximately 700 mg/Sm$""^3$. The required outlet specification (dew point $- 10$°C at 70 bar) corresponds to approximately 40 mg/Sm$""^3$.
 
@@ -5953,7 +5953,7 @@ The required water removal:
 
 $ Delta w = 700 - 40 = 660 upright(" mg/Sm")^3 $
 
-=== 10.9.3 Step 2: Determine TEG Circulation Rate
+=== Step 2: Determine TEG Circulation Rate
 <step-2-determine-teg-circulation-rate>
 The TEG circulation rate depends on the number of equilibrium stages and the required absorption efficiency. For 3 stages and 99.5 wt% lean TEG:
 
@@ -5961,7 +5961,7 @@ From the equilibrium diagram (computed with CPA), the minimum TEG rate is approx
 
 $ dot(m)_(upright("TEG")) = \( 2.5 \) times 15 times frac(660 times 10^(- 6) times 10 times 10^6, 24 times 3600) approx 2.9 upright(" L/s") $
 
-=== 10.9.4 Step 3: Contactor Sizing
+=== Step 3: Contactor Sizing
 <step-3-contactor-sizing>
 The contactor diameter is determined by the gas velocity at flooding:
 
@@ -5969,7 +5969,7 @@ $ D = sqrt(frac(4 Q_g, pi times 0.7 times v_(upright("flood")))) $
 
 where $v_(upright("flood"))$ is estimated from the Souders--Brown correlation and the 70% flooding factor is typical for structured packing.
 
-=== 10.9.5 Key Thermodynamic Quantities from CPA
+=== Key Thermodynamic Quantities from CPA
 <key-thermodynamic-quantities-from-cpa>
 The CPA model provides several quantities that are critical for the design but cannot be obtained from classical cubic EoS:
 
@@ -5989,15 +5989,15 @@ The CPA model provides several quantities that are critical for the design but c
 
 #emph[Table 10.3: Key thermodynamic quantities for TEG design.]
 
-== 10.10 Glycol Losses and Environmental Considerations
+== Glycol Losses and Environmental Considerations
 <glycol-losses-and-environmental-considerations>
-=== 10.10.1 TEG Losses to the Gas Phase
+=== TEG Losses to the Gas Phase
 <teg-losses-to-the-gas-phase>
 TEG losses are a significant operational cost and environmental concern \[87, 88\]. The vapor pressure of TEG at the contactor top determines the TEG content of the dry gas. CPA accurately predicts the activity coefficient of TEG in the water--TEG mixture \[89\], which controls the TEG partial pressure.
 
 At typical contactor conditions (30°C, 70 bar), CPA predicts TEG losses of approximately 5--15 mg/MSm$""^3$. For a 10 MSm$""^3$/day plant, this corresponds to 50--150 g/day or roughly 20--55 kg/year of TEG lost to the gas phase.
 
-=== 10.10.2 BTEX Absorption in TEG
+=== BTEX Absorption in TEG
 <btex-absorption-in-teg>
 An important side effect of TEG dehydration is the absorption of aromatic hydrocarbons (BTEX: benzene, toluene, ethylbenzene, xylenes) from the gas into the TEG. These absorbed aromatics are then released in the TEG regenerator, potentially causing environmental issues.
 
@@ -6021,9 +6021,9 @@ CPA with solvation parameters for aromatic compounds can predict BTEX absorption
 
 The ability to predict BTEX absorption with CPA is critical for designing the TEG regenerator's off-gas treatment system, which may include a condenser, incinerator, or activated carbon bed.
 
-== 10.11 MEG Regeneration and Reclamation
+== MEG Regeneration and Reclamation
 <meg-regeneration-and-reclamation>
-=== 10.11.1 The MEG Loop
+=== The MEG Loop
 <the-meg-loop>
 Monoethylene glycol (MEG) is the preferred hydrate inhibitor for subsea pipelines. A typical MEG loop consists of:
 
@@ -6040,7 +6040,7 @@ CPA plays a critical role at every step, providing the thermodynamic properties 
 - #strong[Regeneration column]: VLE of the MEG--water system at various pressures
 - #strong[Salt partitioning]: electrolyte CPA for brine-containing systems
 
-=== 10.11.2 CPA for MEG--Water Thermodynamics
+=== CPA for MEG--Water Thermodynamics
 <cpa-for-megwater-thermodynamics>
 The MEG--water system exhibits strong negative deviations from Raoult's law due to hydrogen bonding between MEG (two OH groups, 4C scheme) and water (4C scheme). CPA captures this through:
 
@@ -6070,7 +6070,7 @@ for wt_meg in [0, 20, 40, 60, 80, 90, 95]:
           f"{fluid.getPhase(0).getActivityCoefficient(1):.3f}")
 ```
 
-=== 10.11.3 Hydrate Depression Prediction
+=== Hydrate Depression Prediction
 <hydrate-depression-prediction>
 The hydrate temperature depression $Delta T_H$ is related to the water activity through a simplified Clausius--Clapeyron equation:
 
@@ -6094,11 +6094,11 @@ Key points from this chapter:
 - BTEX absorption by TEG is modeled through solvation parameters
 - CPA parameters are available for all common gas processing chemicals (TEG, MEG, DEG, methanol, ethanol, amines)
 
-== 10.12 Solver Performance in Industrial TEG Dehydration
+== Solver Performance in Industrial TEG Dehydration
 <solver-performance-in-industrial-teg-dehydration>
 Applying the solver advances from Chapter 8 to a realistic TEG process illustrates the practical impact of algorithmic improvements. \[48\] benchmarked five CPA solver variants on a complete TEG dehydration simulation.
 
-=== 10.12.1 Benchmark Specification
+=== Benchmark Specification
 <benchmark-specification>
 The benchmark system models a full TEG dehydration contactor with the following feed gas:
 
@@ -6128,7 +6128,7 @@ The benchmark system models a full TEG dehydration contactor with the following 
 
 Operating at 70 bar, the process has $n_s = 8$ total association sites and $p = 4$ unique site types after symmetry reduction.
 
-=== 10.12.2 Solver Comparison Results
+=== Solver Comparison Results
 <solver-comparison-results>
 All five solvers converge to #strong[identical thermodynamic results], confirming that solver choice does not affect the physics:
 
@@ -6167,7 +6167,7 @@ The performance differences, however, are significant:
 
 #emph[Table 10.5: Solver performance for the full TEG dehydration simulation \[48\].]
 
-=== 10.12.3 Flash-Level Benchmarks
+=== Flash-Level Benchmarks
 <flash-level-benchmarks>
 The process-level results above include overhead from the distillation column solver. To isolate the CPA solver performance, flash-level benchmarks across a (T, P) grid provide a cleaner comparison \[48\]:
 
@@ -6193,7 +6193,7 @@ The process-level results above include overhead from the distillation column so
 
 The flash-level benchmarks confirm the process-level finding: the NG + TEG system benefits most from the accelerated solvers, with the implicit-reduced algorithm delivering 1.95× speedup. The site symmetry reduction from $n_s = 8$ to $p = 4$ is the primary driver, as both TEG and water share the 4C scheme with identical multiplicity structure.
 
-=== 10.12.4 Practical Guidance for TEG Process Design
+=== Practical Guidance for TEG Process Design
 <practical-guidance-for-teg-process-design>
 ```python
 from neqsim import jneqsim
@@ -6205,11 +6205,11 @@ fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 30.0, 70.0)
 fluid_fast = jneqsim.thermo.system.SystemSrkCPAstatoilAndersonMixing(273.15 + 30.0, 70.0)
 ```
 
-== 10.13 Asphaltene Precipitation Screening in Gas Processing
+== Asphaltene Precipitation Screening in Gas Processing
 <asphaltene-precipitation-screening-in-gas-processing>
 While asphaltene management is primarily a production concern, gas processing facilities that handle rich gas condensates or operate near the bubble point must also consider asphaltene risk. CPA provides a thermodynamically rigorous approach to onset pressure prediction, complementing simpler screening methods.
 
-=== 10.13.1 Available Screening Methods
+=== Available Screening Methods
 <available-screening-methods>
 Six methods of varying complexity can be applied, ranging from empirical correlations to full CPA equation-of-state calculations:
 
@@ -6252,7 +6252,7 @@ The SARA Colloidal Instability Index (CII) outperforms all other methods for ris
 
 CPA onset pressure predictions have an average absolute deviation of approximately 59 bar (18.7%), which is adequate for screening purposes. The model tends to underpredict onset pressures, making it a non-conservative estimate---screening with SARA CII is recommended as a first pass.
 
-=== 10.13.2 Recommended Screening Workflow
+=== Recommended Screening Workflow
 <recommended-screening-workflow>
 For gas processing applications, a tiered approach is recommended:
 
@@ -6337,7 +6337,7 @@ After reading this chapter, the reader will be able to:
 + Model H$""_2$S--water--hydrocarbon systems for sour gas processing
 + Evaluate CPA accuracy for acid gas systems against experimental data
 
-== 11.1 The Growing Importance of CO$""_2$ Modeling
+== The Growing Importance of CO$""_2$ Modeling
 <the-growing-importance-of-co-2-modeling>
 Carbon capture and storage (CCS) has emerged as one of the most important industrial applications for accurate CO$""_2$ thermodynamic modeling. The entire CCS value chain --- capture, compression, transport, and injection --- requires reliable predictions of:
 
@@ -6349,9 +6349,9 @@ Carbon capture and storage (CCS) has emerged as one of the most important indust
 
 CPA is uniquely suited for these applications because CO$""_2$ forms Lewis acid--base interactions with water \[59, 91\] --- a type of solvation that is naturally modeled by CPA's cross-association framework.
 
-== 11.2 CO$""_2$--Water Phase Behavior
+== CO$""_2$--Water Phase Behavior
 <co-2water-phase-behavior>
-=== 11.2.1 Experimental Observations
+=== Experimental Observations
 <experimental-observations>
 The CO$""_2$--water system is one of the most extensively studied binary systems in thermodynamics \[92, 93\]. Key features include:
 
@@ -6359,7 +6359,7 @@ The CO$""_2$--water system is one of the most extensively studied binary systems
 
 #strong[Water solubility in CO$""_2$:] - Very low (\< 1 mol%) at conditions relevant for CCS - Shows a minimum as a function of pressure at constant temperature - The minimum corresponds to the transition from gas-like to liquid-like CO$""_2$
 
-=== 11.2.2 The Solvation Approach in CPA
+=== The Solvation Approach in CPA
 <the-solvation-approach-in-cpa>
 CO$""_2$ does not self-associate --- it has no proton donor sites. However, it acts as a Lewis acid and can accept hydrogen bonds from water. In CPA, this is modeled by assigning an electron acceptor site to CO$""_2$ that can interact with water's proton donor sites:
 
@@ -6367,7 +6367,7 @@ $ Delta^(A_(upright("H")_2 upright("O")) B_(upright("CO")_2)) = g \( rho \) [exp
 
 The solvation parameters ($epsilon_(upright("cross"))$, $beta_(upright("cross"))$) are fitted to CO$""_2$--water mutual solubility data \[94\].
 
-=== 11.2.3 CPA Predictions vs.~Experimental Data
+=== CPA Predictions vs.~Experimental Data
 <cpa-predictions-vs.-experimental-data>
 ```python
 from neqsim import jneqsim
@@ -6400,7 +6400,7 @@ for T in temperatures:
                   f"x_water in CO2 = {y_w_co2:.6f}")
 ```
 
-=== 11.2.4 Accuracy Assessment
+=== Accuracy Assessment
 <accuracy-assessment>
 #figure(
   align(center)[#table(
@@ -6422,9 +6422,9 @@ for T in temperatures:
 
 CPA typically achieves 3--7% accuracy for CO$""_2$ solubility in water, compared to 15--30% for SRK with a temperature-independent $k_(i j)$.
 
-== 11.3 Effect of Impurities on CO$""_2$ Phase Behavior
+== Effect of Impurities on CO$""_2$ Phase Behavior
 <effect-of-impurities-on-co-2-phase-behavior>
-=== 11.3.1 Why Impurities Matter
+=== Why Impurities Matter
 <why-impurities-matter>
 Industrial CO$""_2$ streams from capture processes are never pure. Depending on the capture technology and source:
 
@@ -6452,7 +6452,7 @@ Even small amounts of impurities significantly affect:
 - #strong[Density]: reduced in the dense phase, affecting pipeline capacity
 - #strong[Critical point]: shifted to higher pressures and lower temperatures
 
-=== 11.3.2 CPA Predictions for Impure CO$""_2$
+=== CPA Predictions for Impure CO$""_2$
 <cpa-predictions-for-impure-co-2>
 ```python
 from neqsim import jneqsim
@@ -6485,7 +6485,7 @@ for fluid, label in [(fluid_pure, "Pure CO2"),
     print(f"{label}: density = {rho:.1f} kg/m3 at 25 C, 80 bar")
 ```
 
-=== 11.3.3 Impact on Pipeline Design
+=== Impact on Pipeline Design
 <impact-on-pipeline-design>
 For CCS pipeline design, the minimum operating pressure must keep the CO$""_2$ in single-phase (dense phase) throughout the pipeline \[95, 96\]. Impurities raise this minimum:
 
@@ -6495,9 +6495,9 @@ For CCS pipeline design, the minimum operating pressure must keep the CO$""_2$ i
 
 CPA provides the phase boundary predictions needed to set these operating pressures correctly.
 
-== 11.4 CCS Pipeline Design
+== CCS Pipeline Design
 <ccs-pipeline-design>
-=== 11.4.1 Dense Phase Transport
+=== Dense Phase Transport
 <dense-phase-transport>
 CCS pipelines operate in the "dense phase" \[97, 98, 99\] --- supercritical or compressed liquid CO$""_2$ --- to maximize transport capacity. The pipeline must be designed to prevent two-phase flow, which causes:
 
@@ -6506,7 +6506,7 @@ CCS pipelines operate in the "dense phase" \[97, 98, 99\] --- supercritical or c
 - Corrosion acceleration at the gas-liquid interface
 - Flow measurement difficulties at custody transfer points
 
-=== 11.4.2 Water Specification
+=== Water Specification
 <water-specification>
 A critical specification for CCS pipelines is the water content of the CO$""_2$ stream. Free water in the presence of CO$""_2$ creates carbonic acid, which is highly corrosive to carbon steel:
 
@@ -6531,7 +6531,7 @@ T_wdp = fluid.getTemperature("C")
 print(f"Water dew point of CO2 with 1000 ppm water: {T_wdp:.1f} C at 110 bar")
 ```
 
-=== 11.4.3 Pipeline Hydraulics with CPA
+=== Pipeline Hydraulics with CPA
 <pipeline-hydraulics-with-cpa>
 For pipeline hydraulic calculations, CPA provides:
 
@@ -6564,9 +6564,9 @@ print(f"  Viscosity: {mu*1000:.4f} mPa.s")
 print(f"  Cp: {cp:.1f} J/(mol K)")
 ```
 
-== 11.5 CO$""_2$ Injection Well Analysis
+== CO$""_2$ Injection Well Analysis
 <co-2-injection-well-analysis>
-=== 11.5.1 Wellbore Flow
+=== Wellbore Flow
 <wellbore-flow>
 CO$""_2$ injection wells present unique thermodynamic challenges:
 
@@ -6575,7 +6575,7 @@ CO$""_2$ injection wells present unique thermodynamic challenges:
 - #strong[Hydrate risk]: if water is present, hydrates can form in the wellbore
 - #strong[Formation compatibility]: the injected CO$""_2$ must be compatible with the formation fluids
 
-=== 11.5.2 CO$""_2$ Phase in the Wellbore
+=== CO$""_2$ Phase in the Wellbore
 <co-2-phase-in-the-wellbore>
 The pressure increases downhole (hydrostatic head), while the temperature increases (geothermal gradient). Whether the CO$""_2$ remains in single phase depends on:
 
@@ -6586,7 +6586,7 @@ The pressure increases downhole (hydrostatic head), while the temperature increa
 
 CPA, integrated with wellbore hydraulic models in NeqSim, can track the phase state of CO$""_2$ throughout the wellbore.
 
-=== 11.5.3 Shutdown and Restart
+=== Shutdown and Restart
 <shutdown-and-restart>
 During a well shutdown, the CO$""_2$ column cools toward the geothermal gradient temperature. This can cause:
 
@@ -6596,9 +6596,9 @@ During a well shutdown, the CO$""_2$ column cools toward the geothermal gradient
 
 Restart requires careful pressure management to avoid rapid decompression and two-phase flow.
 
-== 11.6 H$""_2$S--Water--Hydrocarbon Systems
+== H$""_2$S--Water--Hydrocarbon Systems
 <h-2swaterhydrocarbon-systems>
-=== 11.6.1 H$""_2$S Solvation
+=== H$""_2$S Solvation
 <h-2s-solvation>
 Like CO$""_2$, H$""_2$S interacts with water through hydrogen bonding. However, H$""_2$S can act as both a proton donor and a proton acceptor:
 
@@ -6610,13 +6610,13 @@ This dual character makes H$""_2$S modeling more challenging than CO$""_2$. In C
 - #strong[3B scheme]: two acceptor sites (sulfur lone pairs) + one donor site (SH)
 - #strong[Solvation]: cross-association parameters with water
 
-=== 11.6.2 Sour Gas Water Content
+=== Sour Gas Water Content
 <sour-gas-water-content>
 Sour gas (containing H$""_2$S and CO$""_2$) has higher water content than sweet gas at the same conditions. This is because both acid gases enhance the water-carrying capacity of the gas through solvation interactions. The effect is additive at low acid gas concentrations but non-linear at high concentrations.
 
 CPA captures this effect naturally through the cross-association terms.
 
-=== 11.6.3 CPA Predictions for Sour Systems
+=== CPA Predictions for Sour Systems
 <cpa-predictions-for-sour-systems>
 ```python
 from neqsim import jneqsim
@@ -6647,9 +6647,9 @@ for fluid, label in [(fluid_sweet, "Sweet gas"), (fluid_sour, "Sour gas (10% CO2
         print(f"{label}: water in gas = {y_water:.6f} ({y_water*1e6:.0f} ppm)")
 ```
 
-== 11.7 CO$""_2$--Brine Systems
+== CO$""_2$--Brine Systems
 <co-2brine-systems>
-=== 11.7.1 Importance for Storage Capacity
+=== Importance for Storage Capacity
 <importance-for-storage-capacity>
 CO$""_2$ geological storage involves injection into saline aquifers or depleted hydrocarbon reservoirs. The solubility of CO$""_2$ in formation brine determines:
 
@@ -6657,7 +6657,7 @@ CO$""_2$ geological storage involves injection into saline aquifers or depleted 
 - #strong[Injectivity]: dissolved CO$""_2$ reduces brine viscosity and changes wettability
 - #strong[Pressure evolution]: dissolved CO$""_2$ changes the compressibility of the brine
 
-=== 11.7.2 The Salting-Out Effect
+=== The Salting-Out Effect
 <the-salting-out-effect>
 Dissolved salts (NaCl, CaCl$""_2$, KCl) reduce the solubility of CO$""_2$ in water through the salting-out effect. This can reduce CO$""_2$ solubility by 20--50% for typical formation brines (50,000--250,000 mg/L TDS).
 
@@ -6683,9 +6683,9 @@ x_co2 = fluid.getPhase("aqueous").getComponent("CO2").getx()
 print(f"CO2 solubility in brine: {x_co2:.4f} mol frac")
 ```
 
-== 11.8 Comparison with Other Models
+== Comparison with Other Models
 <comparison-with-other-models>
-=== 11.8.1 SRK with Huron-Vidal Mixing Rules
+=== SRK with Huron-Vidal Mixing Rules
 <srk-with-huron-vidal-mixing-rules>
 An alternative to CPA for CO$""_2$--water systems is SRK with Huron-Vidal (HV) or Modified Huron-Vidal (MHV2) mixing rules, which embed an activity coefficient model ($g^E$) inside the EoS. This approach can provide good accuracy for VLE but:
 
@@ -6693,7 +6693,7 @@ An alternative to CPA for CO$""_2$--water systems is SRK with Huron-Vidal (HV) o
 - May not extrapolate well outside the fitting range
 - Does not provide a physically consistent picture of the molecular interactions
 
-=== 11.8.2 SAFT Variants
+=== SAFT Variants
 <saft-variants>
 PC-SAFT and SAFT-VR can also model CO$""_2$--water systems. Compared to CPA:
 
@@ -6703,7 +6703,7 @@ PC-SAFT and SAFT-VR can also model CO$""_2$--water systems. Compared to CPA:
 
 CPA offers the best balance of accuracy, simplicity, and computational efficiency for engineering applications.
 
-=== 11.8.3 Effect of Temperature on CO$""_2$--Water Phase Behavior
+=== Effect of Temperature on CO$""_2$--Water Phase Behavior
 <effect-of-temperature-on-co-2water-phase-behavior>
 The CO$""_2$--water system exhibits complex phase behavior that changes dramatically with temperature:
 
@@ -6715,7 +6715,7 @@ The CO$""_2$--water system exhibits complex phase behavior that changes dramatic
 
 CPA captures all these regimes because the solvation term correctly models the temperature dependence of the CO$""_2$--water interaction, while the cubic part handles the pressure--volume behavior.
 
-=== 11.8.4 Accuracy Summary
+=== Accuracy Summary
 <accuracy-summary>
 #figure(
   align(center)[#table(
@@ -6734,11 +6734,11 @@ CPA captures all these regimes because the solvation term correctly models the t
 
 #emph[Table 11.3: Accuracy comparison for CO$""_2$ system properties.]
 
-== 11.9 Transport Properties of CO$""_2$ Mixtures
+== Transport Properties of CO$""_2$ Mixtures
 <transport-properties-of-co-2-mixtures>
 Accurate prediction of transport properties (viscosity, thermal conductivity) is essential for pipeline sizing, heat exchanger design, and injection well analysis.
 
-=== 11.9.1 Viscosity Prediction
+=== Viscosity Prediction
 <viscosity-prediction>
 The Lohrenz--Bray--Clark (LBC) correlation is widely used for CO$""_2$ mixture viscosity:
 
@@ -6746,7 +6746,7 @@ $ \( mu - mu^(*) \) xi + 10^(- 4) = sum_(i = 0)^4 a_i rho_r^i $
 
 where $mu^(*)$ is the dilute gas viscosity, $xi$ is the viscosity reducing parameter, $rho_r$ is the reduced density, and $a_i$ are universal constants. CPA provides the density needed for this correlation through the pressure equation.
 
-=== 11.9.2 Thermal Conductivity
+=== Thermal Conductivity
 <thermal-conductivity>
 The thermal conductivity of CO$""_2$ mixtures follows a three-term correlation:
 
@@ -6754,7 +6754,7 @@ $ lambda = lambda^0 \( T \) + Delta lambda \( rho \) + Delta lambda_c $
 
 where $lambda^0$ is the dilute-gas contribution, $Delta lambda \( rho \)$ is the density-dependent excess, and $Delta lambda_c$ is the critical enhancement. The critical enhancement can be very large near the CO$""_2$ critical point.
 
-=== 11.9.3 Joule--Thomson Coefficient
+=== Joule--Thomson Coefficient
 <joulethomson-coefficient>
 The JT coefficient determines temperature changes during isenthalpic expansion --- critical for pipeline pressure drops and valve operations:
 
@@ -6782,11 +6782,11 @@ for T_C in [5, 15, 25, 35]:
     print(f"T={T_C} C, P=110 bar: JT coeff = {jt:.3f} K/bar, rho = {rho:.1f} kg/m3")
 ```
 
-== 11.10 Worked Example: CO$""_2$ Pipeline Design with CPA
+== Worked Example: CO$""_2$ Pipeline Design with CPA
 <worked-example-co-2-pipeline-design-with-cpa>
 This section presents a comprehensive worked example of CO$""_2$ pipeline sizing using CPA, illustrating how the thermodynamic model integrates into pipeline engineering.
 
-=== 11.10.1 Design Basis
+=== Design Basis
 <design-basis>
 A 150 km onshore CO$""_2$ pipeline must transport 5 million tonnes per year (Mt/yr) from a capture plant to a geological storage site. The CO$""_2$ stream composition after purification is: CO$""_2$ 96%, N$""_2$ 2%, methane 1%, water 500 ppm (after dehydration), with trace amounts of H$""_2$S and O$""_2$.
 
@@ -6810,7 +6810,7 @@ A 150 km onshore CO$""_2$ pipeline must transport 5 million tonnes per year (Mt/
 
 #emph[Table 11.4: CO$""_2$ pipeline design basis.]
 
-=== 11.10.2 Phase Behavior Analysis
+=== Phase Behavior Analysis
 <phase-behavior-analysis>
 The first step is to confirm that the CO$""_2$ remains in the dense phase throughout the pipeline:
 
@@ -6834,7 +6834,7 @@ print(f"Dense phase density: {rho:.1f} kg/m3")
 
 The cricondenbar for this CO$""_2$ mixture (with 2% N$""_2$ and 1% CH$""_4$) is approximately 77--82 bar. Since the minimum pipeline pressure is 80 bar, we must verify adequate margin above the phase boundary.
 
-=== 11.10.3 Density and Viscosity Profiles
+=== Density and Viscosity Profiles
 <density-and-viscosity-profiles>
 CPA provides the density and viscosity along the pipeline:
 
@@ -6854,7 +6854,7 @@ CPA provides the density and viscosity along the pipeline:
 
 #emph[Table 11.5: CPA-predicted properties along the CO$""_2$ pipeline.]
 
-=== 11.10.4 Impact of Impurities
+=== Impact of Impurities
 <impact-of-impurities>
 The presence of N$""_2$ and CH$""_4$ significantly affects the phase envelope:
 
@@ -6876,13 +6876,13 @@ The presence of N$""_2$ and CH$""_4$ significantly affects the phase envelope:
 
 Hydrogen is particularly problematic --- even 1% H$""_2$ raises the cricondenbar by \~10 bar. This is critical for "blue hydrogen" CCS projects.
 
-== 11.11 CPA for Carbon Capture Solvents
+== CPA for Carbon Capture Solvents
 <cpa-for-carbon-capture-solvents>
-=== 11.11.1 CO$""_2$ Solubility in Amine Solutions
+=== CO$""_2$ Solubility in Amine Solutions
 <co-2-solubility-in-amine-solutions>
 While CPA does not model the chemical reaction between CO$""_2$ and amines directly, it can model the physical solubility of CO$""_2$ in amine solutions, which is important for rich solvent loading and flash regeneration.
 
-=== 11.11.2 CO$""_2$ in MEA Solutions
+=== CO$""_2$ in MEA Solutions
 <co-2-in-mea-solutions>
 Monoethanolamine (MEA) is an associating molecule with both an amine group (NH$""_2$) and a hydroxyl group (OH). CPA can model the MEA--water--CO$""_2$ system by treating MEA with a 4C association scheme and using solvation parameters for the CO$""_2$--MEA interaction.
 
@@ -6973,9 +6973,9 @@ After reading this chapter, the reader will be able to:
 + Identify current research frontiers in association modeling
 + Evaluate which model is best suited for a given application
 
-== 12.1 Electrolyte CPA (e-CPA)
+== Electrolyte CPA (e-CPA)
 <electrolyte-cpa-e-cpa>
-=== 12.1.1 Motivation
+=== Motivation
 <motivation>
 Many industrial applications involve electrolyte solutions:
 
@@ -6987,7 +6987,7 @@ Many industrial applications involve electrolyte solutions:
 
 Standard CPA does not account for electrostatic interactions between ions. Electrolyte CPA (e-CPA) adds an ionic contribution to the Helmholtz energy.
 
-=== 12.1.2 The e-CPA Framework
+=== The e-CPA Framework
 <the-e-cpa-framework>
 The total Helmholtz energy in e-CPA is:
 
@@ -7021,7 +7021,7 @@ $ mu_i^(upright("elec")) = mu_i^(upright("Born")) + mu_i^(upright("MSA")) = (fra
 
 These derivatives include contributions from the composition dependence of $epsilon_r$ and $Gamma$, making the implementation non-trivial but straightforward.
 
-=== 12.1.3 NeqSim Implementation
+=== NeqSim Implementation
 <neqsim-implementation>
 NeqSim implements electrolyte CPA through the `SystemElectrolyteCPAstatoil` class \[14, 105\]:
 
@@ -7047,7 +7047,7 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): density = {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
-=== 12.1.4 Applications of e-CPA
+=== Applications of e-CPA
 <applications-of-e-cpa>
 #strong[Scale prediction:] Scale formation occurs when the solubility product of a mineral (e.g., BaSO$""_4$, CaCO$""_3$) is exceeded \[106\]. e-CPA provides accurate activity coefficients of ions in complex brines, enabling reliable scale risk assessment.
 
@@ -7055,9 +7055,9 @@ for i in range(fluid.getNumberOfPhases()):
 
 #strong[Gas solubility in brine:] The salting-out effect \[107\] reduces gas solubility in brine by 20--60% compared to pure water. e-CPA captures this effect through the ion-solvent interactions.
 
-== 12.2 Group-Contribution Approaches: GC-CPA
+== Group-Contribution Approaches: GC-CPA
 <group-contribution-approaches-gc-cpa>
-=== 12.2.1 The Parameter Problem
+=== The Parameter Problem
 <the-parameter-problem>
 CPA requires pure-component parameters ($a_0$, $b$, $c_1$, $epsilon$, $beta$) for each substance. These parameters are fitted to vapor pressure and liquid density data, which requires:
 
@@ -7067,7 +7067,7 @@ CPA requires pure-component parameters ($a_0$, $b$, $c_1$, $epsilon$, $beta$) fo
 
 For complex chemicals, pharmaceutical compounds, or new molecules, experimental data may be unavailable. Group-contribution (GC) methods address this by estimating parameters from molecular structure.
 
-=== 12.2.2 GC-CPA Methodology
+=== GC-CPA Methodology
 <gc-cpa-methodology>
 In GC-CPA, the five CPA parameters are estimated by summing contributions from functional groups:
 
@@ -7081,15 +7081,15 @@ where $Theta$ is any CPA parameter, $n_i$ is the number of groups of type $i$, a
 
 The group interaction parameters for cross-association are also estimated from group-group parameters, enabling fully predictive mixture calculations.
 
-=== 12.2.3 Accuracy of GC-CPA
+=== Accuracy of GC-CPA
 <accuracy-of-gc-cpa>
 GC-CPA predictions are typically within: - Vapor pressure: 5--15% AAD (compared to 0.5--2% for fitted CPA) - Liquid density: 2--5% AAD (compared to 0.5--1% for fitted CPA) - VLE: 10--30% AAD in $k_(i j)$ prediction (compared to 3--10% for fitted binary parameters)
 
 The reduced accuracy is the price of predictive capability. For screening studies or when no experimental data is available, GC-CPA provides valuable initial estimates.
 
-== 12.3 CPA Compared with SAFT Variants
+== CPA Compared with SAFT Variants
 <cpa-compared-with-saft-variants>
-=== 12.3.1 Historical Context
+=== Historical Context
 <historical-context>
 CPA and SAFT emerged from the same theoretical foundation --- Wertheim's thermodynamic perturbation theory --- but took different implementation paths:
 
@@ -7098,7 +7098,7 @@ CPA and SAFT emerged from the same theoretical foundation --- Wertheim's thermod
 
 Several SAFT variants have been developed, each with different choices for the reference and perturbation terms.
 
-=== 12.3.2 PC-SAFT (Perturbed Chain SAFT)
+=== PC-SAFT (Perturbed Chain SAFT)
 <pc-saft-perturbed-chain-saft>
 PC-SAFT \[10, 108\] is the most widely used SAFT variant in industrial applications. Key differences from CPA:
 
@@ -7122,7 +7122,7 @@ PC-SAFT \[10, 108\] is the most widely used SAFT variant in industrial applicati
 
 #emph[Table 12.1: Comparison of CPA and PC-SAFT features.]
 
-=== 12.3.3 Accuracy Comparison
+=== Accuracy Comparison
 <accuracy-comparison>
 For systems relevant to oil and gas processing:
 
@@ -7149,13 +7149,13 @@ For systems relevant to oil and gas processing:
 
 PC-SAFT tends to be more accurate for pure-component properties (especially density and derivative properties), while CPA and PC-SAFT perform similarly for mixture VLE. CPA's advantage is its simplicity, speed, and compatibility with existing cubic EoS infrastructure.
 
-=== 12.3.4 When to Choose CPA vs.~PC-SAFT
+=== When to Choose CPA vs.~PC-SAFT
 <when-to-choose-cpa-vs.-pc-saft>
 #strong[Choose CPA when:] - Existing SRK/PR databases and infrastructure are available - Speed is critical (process simulation with many flash calls) - The application involves primarily VLE of associating mixtures - Backward compatibility with non-associating systems is important
 
 #strong[Choose PC-SAFT when:] - Accuracy of liquid density and derivative properties is paramount - Polymer or long-chain molecules are involved - A fully molecular-based model is preferred for consistency - The application involves high-pressure systems near the critical region
 
-=== 12.3.5 SAFT-VR Mie and SAFT-$gamma$ Mie
+=== SAFT-VR Mie and SAFT-$gamma$ Mie
 <saft-vr-mie-and-saft-gamma-mie>
 More recent SAFT variants use the Mie potential \[110, 111\] (a generalized Lennard-Jones potential with variable attractive and repulsive exponents) as the basis for the monomer reference term:
 
@@ -7193,9 +7193,9 @@ This approach enables fully predictive calculations for complex molecules. For e
 
 The trade-off is significantly higher computational cost (5--20× slower than CPA) and greater implementation complexity.
 
-== 12.4 Unified Mixing Rule CPA (UMR-CPA)
+== Unified Mixing Rule CPA (UMR-CPA)
 <unified-mixing-rule-cpa-umr-cpa>
-=== 12.4.1 Concept
+=== Concept
 <concept>
 The Unified Mixing Rule (UMR) approach \[114\] combines CPA with an activity coefficient model through a modified mixing rule. Instead of using van der Waals one-fluid mixing rules for the energy parameter $a$:
 
@@ -7207,21 +7207,21 @@ $ a = b (sum_i x_i a_i / b_i + g^E / C) $
 
 where $g^E$ is the excess Gibbs energy from an activity coefficient model (typically UNIFAC) and $C$ is a constant.
 
-=== 12.4.2 Advantages
+=== Advantages
 <advantages>
 UMR-CPA combines the strengths of: - #strong[CPA]: handles association (hydrogen bonding) rigorously \[115\] - #strong[UNIFAC] \[116\]: provides predictive capability for non-associating interactions through group contributions
 
 This is particularly powerful for: - Systems with both polar and non-polar components - Multi-component mixtures where binary parameters are unavailable - Screening studies requiring rapid evaluation of many candidates
 
-=== 12.4.3 Limitations
+=== Limitations
 <limitations>
 - More complex than standard CPA (two models combined)
 - May have inconsistencies between the UNIFAC groups and CPA association
 - Limited validation for extreme conditions (very high P or T)
 
-== 12.5 Asphaltene and Heavy Oil Modeling
+== Asphaltene and Heavy Oil Modeling
 <asphaltene-and-heavy-oil-modeling>
-=== 12.5.1 The Asphaltene Challenge
+=== The Asphaltene Challenge
 <the-asphaltene-challenge>
 Asphaltenes are the heaviest, most polar fraction of crude oil. They cause operational problems:
 
@@ -7231,7 +7231,7 @@ Asphaltenes are the heaviest, most polar fraction of crude oil. They cause opera
 
 Predicting asphaltene stability requires modeling the balance between solvation by the aromatic fraction and precipitation driven by pressure depletion, compositional changes, or mixing.
 
-=== 12.5.2 CPA for Asphaltenes
+=== CPA for Asphaltenes
 <cpa-for-asphaltenes>
 CPA can model asphaltenes \[117, 118\] by:
 
@@ -7241,15 +7241,15 @@ CPA can model asphaltenes \[117, 118\] by:
 
 The association framework in CPA is natural for asphaltenes because: - Self-association drives aggregation (modeled by the site balance equation) - The onset of precipitation corresponds to a liquid-liquid phase split - Pressure depletion reduces the association strength (density effect)
 
-=== 12.5.3 Current Status
+=== Current Status
 <current-status>
 CPA asphaltene modeling is an active research area. Key challenges: - Asphaltene characterization is inherently uncertain - The association scheme and parameters are not unique - Polydispersity of asphaltenes is difficult to represent - Limited validation data under reservoir conditions
 
 NeqSim provides the framework for asphaltene modeling through its CPA implementation, but specific asphaltene characterization methods are still being developed.
 
-== 12.6 Quantum-Chemical Inputs to CPA
+== Quantum-Chemical Inputs to CPA
 <quantum-chemical-inputs-to-cpa>
-=== 12.6.1 COSMO-RS and COSMO-SAC
+=== COSMO-RS and COSMO-SAC
 <cosmo-rs-and-cosmo-sac>
 Quantum-chemical methods such as COSMO-RS (Conductor-like Screening Model for Real Solvents) can provide:
 
@@ -7259,7 +7259,7 @@ Quantum-chemical methods such as COSMO-RS (Conductor-like Screening Model for Re
 
 Using quantum-chemical inputs reduces the reliance on experimental data for parameter fitting and provides a more physically based parameterization.
 
-=== 12.6.2 Molecular Simulation
+=== Molecular Simulation
 <molecular-simulation>
 Molecular dynamics and Monte Carlo simulations can provide:
 
@@ -7269,9 +7269,9 @@ Molecular dynamics and Monte Carlo simulations can provide:
 
 The combination of molecular simulation with CPA is a promising approach for systems where experimental data is scarce.
 
-== 12.7 Machine Learning and CPA
+== Machine Learning and CPA
 <machine-learning-and-cpa>
-=== 12.7.1 Parameter Prediction
+=== Parameter Prediction
 <parameter-prediction>
 Machine learning (ML) models trained on existing CPA parameter databases can predict parameters for new compounds:
 
@@ -7279,7 +7279,7 @@ Machine learning (ML) models trained on existing CPA parameter databases can pre
 - #strong[Transfer learning]: fine-tune models trained on large datasets (e.g., SAFT parameters) for CPA
 - #strong[Bayesian optimization]: efficiently explore the parameter space for new compound fitting
 
-=== 12.7.2 Surrogate Models
+=== Surrogate Models
 <surrogate-models>
 For applications requiring millions of flash calculations (e.g., reservoir simulation), CPA can be too slow. ML surrogate models trained on CPA results can provide:
 
@@ -7287,7 +7287,7 @@ For applications requiring millions of flash calculations (e.g., reservoir simul
 - Accuracy of 0.1--1% for interpolation within the training range
 - Automatic differentiation for gradient-based optimization
 
-=== 12.7.3 Hybrid Approaches
+=== Hybrid Approaches
 <hybrid-approaches>
 The most promising direction combines physics-based CPA with data-driven corrections:
 
@@ -7295,9 +7295,9 @@ $ P = P^(upright("CPA")) \( T \, V \, upright(bold(n)) \) + delta P^(upright("ML
 
 where $delta P^(upright("ML"))$ is a neural network correction term trained on the residual between CPA predictions and experimental data. This preserves the physical consistency of CPA while improving accuracy in specific regions.
 
-== 12.8 Hydrogen Systems
+== Hydrogen Systems
 <hydrogen-systems>
-=== 12.8.1 The Hydrogen Economy
+=== The Hydrogen Economy
 <the-hydrogen-economy>
 The transition to clean energy is driving interest in hydrogen as an energy carrier. CPA is relevant for:
 
@@ -7306,7 +7306,7 @@ The transition to clean energy is driving interest in hydrogen as an energy carr
 - #strong[Green hydrogen]: electrolysis water management
 - #strong[Hydrogen storage]: in salt caverns, depleted reservoirs (H$""_2$--brine--rock interactions)
 
-=== 12.8.2 CPA for H$""_2$ Systems
+=== CPA for H$""_2$ Systems
 <cpa-for-h-2-systems>
 Hydrogen is a non-associating, quantum gas (significant quantum corrections needed below \~100 K) that interacts weakly with water. CPA models H$""_2$:
 
@@ -7340,9 +7340,9 @@ if fluid.hasPhaseType("gas"):
     print(f"Water in gas: {y_water*1e6:.0f} ppm(mol)")
 ```
 
-== 12.9 Future Research Directions
+== Future Research Directions
 <future-research-directions>
-=== 12.9.1 Multiscale Modeling
+=== Multiscale Modeling
 <multiscale-modeling>
 The future of association modeling lies in connecting molecular-level understanding with engineering-scale predictions:
 
@@ -7351,7 +7351,7 @@ The future of association modeling lies in connecting molecular-level understand
 + #strong[CPA/SAFT] → engineering-scale phase equilibrium and properties
 + #strong[Process simulation] → plant design and optimization
 
-=== 12.9.2 Complex Association Networks
+=== Complex Association Networks
 <complex-association-networks>
 Current CPA implementations assume pairwise association. Real systems can exhibit:
 
@@ -7361,7 +7361,7 @@ Current CPA implementations assume pairwise association. Real systems can exhibi
 
 Future CPA extensions may incorporate these effects through more detailed site models.
 
-=== 12.9.3 Non-Equilibrium Systems
+=== Non-Equilibrium Systems
 <non-equilibrium-systems>
 Real processes involve non-equilibrium conditions where association kinetics matter:
 
@@ -7371,7 +7371,7 @@ Real processes involve non-equilibrium conditions where association kinetics mat
 
 Coupling CPA with kinetic models for association processes is a frontier research area.
 
-=== 12.9.4 Integration with Digital Twins
+=== Integration with Digital Twins
 <integration-with-digital-twins>
 Process digital twins require real-time thermodynamic predictions. CPA's combination of accuracy and speed makes it well-suited for:
 
@@ -7381,11 +7381,11 @@ Process digital twins require real-time thermodynamic predictions. CPA's combina
 
 NeqSim's automation API, combined with CPA, provides a ready-made foundation for digital twin applications.
 
-== 12.10 Comprehensive Comparison: CPA vs.~Alternative Models
+== Comprehensive Comparison: CPA vs.~Alternative Models
 <comprehensive-comparison-cpa-vs.-alternative-models>
 To aid practitioners in model selection, this section provides a detailed comparison of CPA with the main alternative thermodynamic models for associating systems.
 
-=== 12.10.1 Performance by Application Domain
+=== Performance by Application Domain
 <performance-by-application-domain>
 #figure(
   align(center)[#table(
@@ -7409,7 +7409,7 @@ To aid practitioners in model selection, this section provides a detailed compar
 
 #emph[Table 12.4: Qualitative comparison of thermodynamic models by application domain (★ = poor to ★★★★★ = excellent).]
 
-=== 12.10.2 Parameter Requirements
+=== Parameter Requirements
 <parameter-requirements>
 #figure(
   align(center)[#table(
@@ -7431,7 +7431,7 @@ To aid practitioners in model selection, this section provides a detailed compar
 
 CPA's key advantage is that it uses the same 3 parameters ($T_c$, $P_c$, $omega$) as classical cubic EoS for non-associating components. This means the extensive parameter databases developed for SRK/PR over decades can be used directly --- only the associating components need the 5 CPA-specific parameters.
 
-=== 12.10.3 When Not to Use CPA
+=== When Not to Use CPA
 <when-not-to-use-cpa>
 Despite its strengths, CPA is not the best choice for all systems:
 
@@ -7441,9 +7441,9 @@ Despite its strengths, CPA is not the best choice for all systems:
 + #strong[Quantum fluids] (H$""_2$, He at very low temperatures): require quantum corrections not in CPA
 + #strong[Multifunctional molecules] with complex association patterns: SAFT-$gamma$ Mie with its group-contribution approach may be more predictive
 
-== 12.11 The Road Ahead: CPA in 2030 and Beyond
+== The Road Ahead: CPA in 2030 and Beyond
 <the-road-ahead-cpa-in-2030-and-beyond>
-=== 12.11.1 Current Research Frontiers
+=== Current Research Frontiers
 <current-research-frontiers>
 Active research areas in CPA development include:
 
@@ -7453,7 +7453,7 @@ Active research areas in CPA development include:
 
 #strong[Automated EoS selection]: Given a set of components and conditions, an expert system could automatically select the best EoS (SRK, CPA, PC-SAFT, electrolyte CPA) based on the system characteristics. NeqSim's class hierarchy is designed to facilitate this.
 
-=== 12.11.2 The CCS and Hydrogen Economy
+=== The CCS and Hydrogen Economy
 <the-ccs-and-hydrogen-economy>
 The transition to low-carbon energy creates new demands for thermodynamic modeling:
 
@@ -7464,7 +7464,7 @@ The transition to low-carbon energy creates new demands for thermodynamic modeli
 
 CPA is well-positioned for these applications because it handles the key molecular interactions (hydrogen bonding in water/ammonia/amines, solvation with CO$""_2$, non-associating gases H$""_2$/N$""_2$/CH$""_4$) within a single thermodynamic framework.
 
-=== 12.11.3 Towards Autonomous Process Design
+=== Towards Autonomous Process Design
 <towards-autonomous-process-design>
 The combination of CPA with modern AI and optimization tools points toward autonomous process design:
 
@@ -7476,9 +7476,9 @@ The combination of CPA with modern AI and optimization tools points toward auton
 
 NeqSim's automation API (`ProcessAutomation`) and the agentic infrastructure (`AgentSession`, `TaskResultValidator`) provide the technical foundation for this vision. The CPA equation of state, with its balance of rigor, accuracy, and computational efficiency, is ideally suited as the thermodynamic engine in such autonomous workflows.
 
-== 12.12 Detailed Formulation of Electrolyte CPA (e-CPA)
+== Detailed Formulation of Electrolyte CPA (e-CPA)
 <detailed-formulation-of-electrolyte-cpa-e-cpa>
-=== 12.12.1 The Born and Debye--Hückel Contributions
+=== The Born and Debye--Hückel Contributions
 <the-born-and-debyehückel-contributions>
 Electrolyte CPA extends the standard CPA Helmholtz energy with two additional terms that account for ionic interactions:
 
@@ -7500,7 +7500,7 @@ $ kappa^2 = frac(e^2 N_A, epsilon_0 epsilon_r k_B T V) sum_i n_i z_i^2 $
 
 and $d_s$ is the closest approach distance for ions.
 
-=== 12.12.2 The Dielectric Constant Model
+=== The Dielectric Constant Model
 <the-dielectric-constant-model>
 A critical input to e-CPA is the relative permittivity $epsilon_r$ of the solvent mixture. For pure water, $epsilon_r$ varies from 87 (0°C) to 55 (100°C). For MEG--water mixtures, $epsilon_r$ decreases as MEG content increases.
 
@@ -7512,7 +7512,7 @@ where $alpha_i^(upright("pol"))$ is the polarizability volume and $f \( T \)$ is
 
 The coupling between $epsilon_r$ and the fluid state (through volume and composition) means that the electrostatic terms contribute to the equation of state and the chemical potentials, affecting both the pressure and the fugacities.
 
-=== 12.12.3 Applications of e-CPA
+=== Applications of e-CPA
 <applications-of-e-cpa-1>
 #figure(
   align(center)[#table(
@@ -7533,7 +7533,7 @@ The coupling between $epsilon_r$ and the fluid state (through volume and composi
 
 The salting-out effect --- reduced gas solubility in brine compared to pure water --- is of major practical importance for CO$""_2$ storage in saline aquifers and natural gas processing of sour water. Standard CPA cannot reproduce this effect because it has no mechanism for the ion--solvent interactions that modify the solvent's ability to dissolve gases.
 
-=== 12.12.4 Ion-Specific Parameters: The Advanced e-CPA
+=== Ion-Specific Parameters: The Advanced e-CPA
 <ion-specific-parameters-the-advanced-e-cpa>
 A significant improvement to e-CPA was proposed by \[48\], who introduced #strong[ion-specific] short-range interaction parameters $W_0$ in the Debye--Hückel term. In the standard formulation, the $W_0$ parameter is a single salt-specific value. The advanced formulation allows each ion to have its own $W_0$, fitted to mean ionic activity coefficient data.
 
@@ -7580,7 +7580,7 @@ An important finding from this work is that #strong[the Born solvation contribut
 
 This means that efforts to improve e-CPA should focus on the Debye--Hückel term and the ion-specific $W_0$ parameters rather than on refining the Born model.
 
-=== 12.12.5 Chloride Ion Transferability
+=== Chloride Ion Transferability
 <chloride-ion-transferability>
 A key question for predictive capabilities is whether ion-specific parameters are transferable across different salts. Examining the Cl$""^(-)$ parameters across four chloride salts:
 
@@ -7629,11 +7629,11 @@ for salt_molality in [0.0, 1.0, 2.0, 4.0]:
               f"{x_co2:.5f}")
 ```
 
-== 12.13 Mineral Scale Prediction with e-CPA
+== Mineral Scale Prediction with e-CPA
 <mineral-scale-prediction-with-e-cpa>
 Mineral scale deposition --- the precipitation of sparingly soluble salts such as BaSO$""_4$ (barite), CaCO$""_3$ (calcite), and CaSO$""_4$ (anhydrite) --- is one of the most costly flow assurance challenges in oil and gas production. Scale forms when incompatible waters mix: for example, when sulfate-rich seawater contacts barium-rich formation water during waterflooding.
 
-=== 12.13.1 Thermodynamic Framework for Scale Prediction
+=== Thermodynamic Framework for Scale Prediction
 <thermodynamic-framework-for-scale-prediction>
 The solubility product of a mineral salt M$""_nu$A$""_mu$ in aqueous solution is:
 
@@ -7647,7 +7647,7 @@ where $Q$ is the ion activity product of the actual solution. When SI \> 0, the 
 
 The accuracy of scale prediction depends critically on the accuracy of the activity coefficients $gamma_i$, which is where e-CPA's advantage over simpler models becomes decisive.
 
-=== 12.13.2 Comparison of Activity Coefficient Models
+=== Comparison of Activity Coefficient Models
 <comparison-of-activity-coefficient-models>
 Three approaches are commonly used for activity coefficients in scale prediction:
 
@@ -7659,7 +7659,7 @@ Three approaches are commonly used for activity coefficients in scale prediction
 
 For oilfield brines with total dissolved solids (TDS) of 50,000--200,000 mg/L (ionic strength 0.8--3.4 molal), e-CPA provides accuracy comparable to Pitzer while offering the advantage of consistent temperature and pressure dependence without additional empirical correlations.
 
-=== 12.13.3 Practical Scale Prediction Workflow
+=== Practical Scale Prediction Workflow
 <practical-scale-prediction-workflow>
 ```python
 from neqsim import jneqsim
