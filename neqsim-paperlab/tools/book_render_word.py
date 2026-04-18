@@ -786,49 +786,120 @@ def render_book_word(book_dir, chapter_filter=None):
     all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
     key_to_num = build_key_to_num(all_cited_keys)
 
-    # Title page
+    # Title page — professional layout from config
     if not chapter_filter:
-        title_md = book_dir / "frontmatter" / "title_page.md"
-        if title_md.exists():
-            text = _strip_html_comments(title_md.read_text(encoding="utf-8"))
-            _render_md_to_doc(doc, text)
-        else:
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.paragraph_format.space_before = Pt(120)
-            p.paragraph_format.first_line_indent = Cm(0)
-            run = p.add_run(cfg.get("title", "Untitled"))
-            run.bold = True
-            run.font.size = Pt(24)
-            run.font.name = "Times New Roman"
+        # Top spacing
+        p_spacer = doc.add_paragraph()
+        p_spacer.paragraph_format.space_before = Pt(100)
+        p_spacer.paragraph_format.space_after = Pt(0)
+        p_spacer.paragraph_format.first_line_indent = Cm(0)
 
-            subtitle = cfg.get("subtitle", "")
-            if subtitle:
-                p2 = doc.add_paragraph()
-                p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                p2.paragraph_format.first_line_indent = Cm(0)
-                run2 = p2.add_run(subtitle)
-                run2.font.size = Pt(14)
-                run2.font.name = "Times New Roman"
-                run2.italic = True
+        # Decorative top rule
+        p_rule_top = doc.add_paragraph()
+        p_rule_top.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_rule_top.paragraph_format.first_line_indent = Cm(0)
+        p_rule_top.paragraph_format.space_after = Pt(24)
+        rule_run = p_rule_top.add_run("\u2500" * 40)
+        rule_run.font.size = Pt(10)
+        rule_run.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
 
-            authors = cfg.get("authors", [])
-            if authors:
-                p3 = doc.add_paragraph()
-                p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                p3.paragraph_format.space_before = Pt(36)
-                p3.paragraph_format.first_line_indent = Cm(0)
-                for a in authors:
-                    run_name = p3.add_run(a.get("name", ""))
-                    run_name.font.size = Pt(14)
-                    run_name.font.name = "Times New Roman"
-                    aff = a.get("affiliation", "")
-                    if aff:
-                        p3.add_run("\n")
-                        run_aff = p3.add_run(aff)
-                        run_aff.font.size = Pt(11)
-                        run_aff.font.name = "Times New Roman"
-                        run_aff.italic = True
+        # Title
+        p_title = doc.add_paragraph()
+        p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_title.paragraph_format.first_line_indent = Cm(0)
+        p_title.paragraph_format.space_after = Pt(12)
+        run_title = p_title.add_run(cfg.get("title", "Untitled"))
+        run_title.bold = True
+        run_title.font.size = Pt(26)
+        run_title.font.name = "Times New Roman"
+        run_title.font.color.rgb = RGBColor(0x0D, 0x3B, 0x66)
+
+        # Subtitle
+        subtitle = cfg.get("subtitle", "")
+        if subtitle:
+            p_sub = doc.add_paragraph()
+            p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_sub.paragraph_format.first_line_indent = Cm(0)
+            p_sub.paragraph_format.space_after = Pt(36)
+            run_sub = p_sub.add_run(subtitle)
+            run_sub.font.size = Pt(14)
+            run_sub.font.name = "Times New Roman"
+            run_sub.italic = True
+            run_sub.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+
+        # Decorative middle rule
+        p_rule_mid = doc.add_paragraph()
+        p_rule_mid.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_rule_mid.paragraph_format.first_line_indent = Cm(0)
+        p_rule_mid.paragraph_format.space_after = Pt(36)
+        mid_run = p_rule_mid.add_run("\u2500" * 20)
+        mid_run.font.size = Pt(8)
+        mid_run.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
+
+        # Authors
+        authors = cfg.get("authors", [])
+        for a in authors:
+            p_auth = doc.add_paragraph()
+            p_auth.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_auth.paragraph_format.first_line_indent = Cm(0)
+            p_auth.paragraph_format.space_after = Pt(4)
+            run_name = p_auth.add_run(a.get("name", ""))
+            run_name.font.size = Pt(16)
+            run_name.font.name = "Times New Roman"
+            run_name.font.color.rgb = RGBColor(0x22, 0x22, 0x22)
+
+            aff = a.get("affiliation", "")
+            if aff:
+                p_aff = doc.add_paragraph()
+                p_aff.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_aff.paragraph_format.first_line_indent = Cm(0)
+                p_aff.paragraph_format.space_after = Pt(24)
+                run_aff = p_aff.add_run(aff)
+                run_aff.font.size = Pt(11)
+                run_aff.font.name = "Times New Roman"
+                run_aff.italic = True
+                run_aff.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+
+        # Edition and year
+        edition = cfg.get("edition", "")
+        year = cfg.get("year", "")
+        if edition or year:
+            p_ed = doc.add_paragraph()
+            p_ed.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_ed.paragraph_format.first_line_indent = Cm(0)
+            p_ed.paragraph_format.space_after = Pt(6)
+            ed_text = ""
+            if edition:
+                ed_text += f"{edition} Edition"
+            if year:
+                if ed_text:
+                    ed_text += "  \u00b7  "
+                ed_text += str(year)
+            run_ed = p_ed.add_run(ed_text)
+            run_ed.font.size = Pt(10)
+            run_ed.font.name = "Times New Roman"
+            run_ed.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+
+        # Publisher
+        publisher = cfg.get("publisher", "")
+        if publisher:
+            p_pub = doc.add_paragraph()
+            p_pub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_pub.paragraph_format.first_line_indent = Cm(0)
+            p_pub.paragraph_format.space_before = Pt(24)
+            pub_display = publisher.title() if publisher.islower() else publisher
+            run_pub = p_pub.add_run(pub_display.upper())
+            run_pub.font.size = Pt(11)
+            run_pub.font.name = "Times New Roman"
+            run_pub.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
+
+        # Decorative bottom rule
+        p_rule_bot = doc.add_paragraph()
+        p_rule_bot.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_rule_bot.paragraph_format.first_line_indent = Cm(0)
+        bot_run = p_rule_bot.add_run("\u2500" * 40)
+        bot_run.font.size = Pt(10)
+        bot_run.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
 
         _add_page_break(doc)
 

@@ -193,10 +193,203 @@ main ul, main ol {{
   line-height: 1.7;
 }}
 
+/* ── Professional frontmatter pages ── */
+
+.title-page {{
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  position: relative;
+  page-break-after: always;
+}}
+.title-page::before {{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(90deg, #0d3b66, #1a5276, #2980b9, #1a5276, #0d3b66);
+}}
+.title-page::after {{
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0d3b66, #1a5276, #2980b9, #1a5276, #0d3b66);
+}}
+.title-page .tp-decoration {{
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 2rem;
+  position: relative;
+}}
+.title-page .tp-decoration svg {{
+  width: 100%;
+  height: 100%;
+}}
+.title-page .tp-title {{
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #0d3b66;
+  line-height: 1.25;
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.02em;
+  max-width: 600px;
+}}
+.title-page .tp-subtitle {{
+  font-size: 1.15rem;
+  color: #555;
+  font-style: italic;
+  margin-bottom: 2.5rem;
+  max-width: 500px;
+  line-height: 1.5;
+}}
+.title-page .tp-rule {{
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #1a5276, transparent);
+  margin: 0 auto 2.5rem;
+}}
+.title-page .tp-author {{
+  font-size: 1.3rem;
+  color: #222;
+  margin-bottom: 0.3rem;
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}}
+.title-page .tp-affiliation {{
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 2rem;
+}}
+.title-page .tp-edition {{
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 0.3rem;
+}}
+.title-page .tp-year {{
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 2rem;
+}}
+.title-page .tp-publisher {{
+  font-size: 1rem;
+  color: #444;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+}}
+
+.half-title-page {{
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem;
+  page-break-after: always;
+}}
+.half-title-page .htp-title {{
+  font-size: 1.6rem;
+  color: #1a5276;
+  font-weight: bold;
+  letter-spacing: -0.01em;
+}}
+
+.copyright-page {{
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem 3rem 4rem;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.8;
+  page-break-after: always;
+}}
+.copyright-page .cp-title {{
+  font-weight: bold;
+  color: #222;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}}
+.copyright-page p {{
+  margin-bottom: 0.8rem;
+  text-align: left;
+}}
+.copyright-page .cp-isbn {{
+  font-family: 'Consolas', monospace;
+  color: #444;
+}}
+
+.dedication-page {{
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 3rem;
+  page-break-after: always;
+}}
+.dedication-page p {{
+  font-style: italic;
+  color: #555;
+  font-size: 1.05rem;
+  max-width: 400px;
+  line-height: 1.8;
+}}
+
+section.part-header {{
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  page-break-before: always;
+  page-break-after: always;
+}}
+section.part-header h1 {{
+  font-size: 1.6rem;
+  color: #1a5276;
+  border-top: none;
+  padding-top: 0;
+  letter-spacing: 0.05em;
+  font-variant: small-caps;
+  position: relative;
+}}
+section.part-header h1::after {{
+  content: '';
+  display: block;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #1a5276, transparent);
+  margin: 1rem auto 0;
+}}
+
 /* Responsive */
 @media (max-width: 900px) {{
   nav.sidebar {{ display: none; }}
   main {{ padding: 1rem; }}
+  .title-page .tp-title {{ font-size: 1.6rem; }}
+  .title-page .tp-decoration {{ width: 80px; height: 80px; }}
+}}
+
+@media print {{
+  nav.sidebar {{ display: none; }}
+  body {{ background: #fff; }}
+  main {{ max-width: 100%; padding: 0; }}
+  .title-page {{ min-height: auto; padding: 8rem 2rem; }}
+  .title-page::before, .title-page::after {{ display: none; }}
 }}
 </style>
 </head>
@@ -209,6 +402,161 @@ def _esc(text):
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace('"', "&quot;"))
+
+
+# ---------------------------------------------------------------------------
+# Professional frontmatter page generators
+# ---------------------------------------------------------------------------
+
+_BOOK_ICON_SVG = (
+    '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+    '<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">'
+    '<stop offset="0%" style="stop-color:#0d3b66;stop-opacity:1"/>'
+    '<stop offset="100%" style="stop-color:#2980b9;stop-opacity:1"/>'
+    '</linearGradient></defs>'
+    '<circle cx="60" cy="60" r="56" fill="none" stroke="url(#g1)" stroke-width="3"/>'
+    '<circle cx="60" cy="60" r="48" fill="none" stroke="#1a5276" stroke-width="1" '
+    'stroke-dasharray="4,4" opacity="0.4"/>'
+    # Stylized atom / network nodes representing AI + physics
+    '<circle cx="60" cy="38" r="6" fill="#0d3b66"/>'
+    '<circle cx="38" cy="72" r="6" fill="#2980b9"/>'
+    '<circle cx="82" cy="72" r="6" fill="#2980b9"/>'
+    '<circle cx="60" cy="60" r="8" fill="#1a5276"/>'
+    '<line x1="60" y1="38" x2="60" y2="60" stroke="#1a5276" stroke-width="2"/>'
+    '<line x1="38" y1="72" x2="60" y2="60" stroke="#1a5276" stroke-width="2"/>'
+    '<line x1="82" y1="72" x2="60" y2="60" stroke="#1a5276" stroke-width="2"/>'
+    '<line x1="60" y1="38" x2="38" y2="72" stroke="#0d3b66" stroke-width="1" '
+    'opacity="0.3"/>'
+    '<line x1="60" y1="38" x2="82" y2="72" stroke="#0d3b66" stroke-width="1" '
+    'opacity="0.3"/>'
+    '<line x1="38" y1="72" x2="82" y2="72" stroke="#0d3b66" stroke-width="1" '
+    'opacity="0.3"/>'
+    # Small satellite dots for "agent" feel
+    '<circle cx="49" cy="49" r="2.5" fill="#2980b9" opacity="0.6"/>'
+    '<circle cx="71" cy="49" r="2.5" fill="#2980b9" opacity="0.6"/>'
+    '<circle cx="49" cy="66" r="2.5" fill="#0d3b66" opacity="0.6"/>'
+    '<circle cx="71" cy="66" r="2.5" fill="#0d3b66" opacity="0.6"/>'
+    '</svg>'
+)
+
+
+def _generate_title_page(cfg):
+    """Generate a professional graphical title page from book config."""
+    title = cfg.get("title", "Untitled")
+    subtitle = cfg.get("subtitle", "")
+    authors = cfg.get("authors", [])
+    edition = cfg.get("edition", "")
+    year = cfg.get("year", "")
+    publisher = cfg.get("publisher", "")
+
+    parts = ['<section id="title_page" class="title-page">']
+    parts.append(f'<div class="tp-decoration">{_BOOK_ICON_SVG}</div>')
+    parts.append(f'<div class="tp-title">{_esc(title)}</div>')
+    if subtitle:
+        parts.append(f'<div class="tp-subtitle">{_esc(subtitle)}</div>')
+    parts.append('<div class="tp-rule"></div>')
+    for a in authors:
+        name = a.get("name", "")
+        aff = a.get("affiliation", "")
+        parts.append(f'<div class="tp-author">{_esc(name)}</div>')
+        if aff:
+            parts.append(f'<div class="tp-affiliation">{_esc(aff)}</div>')
+    if edition:
+        parts.append(f'<div class="tp-edition">{_esc(edition)} Edition</div>')
+    if year:
+        parts.append(f'<div class="tp-year">{_esc(str(year))}</div>')
+    if publisher:
+        parts.append(f'<div class="tp-publisher">{_esc(publisher)}</div>')
+    parts.append("</section>")
+    return "\n".join(parts)
+
+
+def _generate_half_title(cfg):
+    """Generate a half-title page (just the title, minimal)."""
+    title = cfg.get("title", "Untitled")
+    return (
+        '<section class="half-title-page">'
+        f'<div class="htp-title">{_esc(title)}</div>'
+        '</section>'
+    )
+
+
+def _generate_copyright_page(cfg, book_dir):
+    """Generate a professional copyright page."""
+    title = cfg.get("title", "Untitled")
+    subtitle = cfg.get("subtitle", "")
+    authors = cfg.get("authors", [])
+    year = cfg.get("year", "")
+    isbn = cfg.get("isbn", "")
+    publisher = cfg.get("publisher", "")
+
+    author_names = ", ".join(a.get("name", "") for a in authors)
+
+    # Try to read custom copyright text
+    cp_path = book_dir / "frontmatter" / "copyright.md"
+    custom_text = ""
+    if cp_path.exists():
+        raw = cp_path.read_text(encoding="utf-8").strip()
+        # Skip if it's just the template placeholder
+        if "TODO" not in raw and len(raw) > 50:
+            custom_text = raw
+
+    parts = ['<section id="copyright" class="copyright-page">']
+    parts.append('<div>')
+    full_title = title
+    if subtitle:
+        full_title += f": {subtitle}"
+    parts.append(f'<p class="cp-title">{_esc(full_title)}</p>')
+    if author_names:
+        parts.append(f'<p>Copyright &copy; {_esc(str(year))} Equinor ASA and the '
+                      'Norwegian University of Science and Technology (NTNU). '
+                      'All rights reserved.</p>')
+    parts.append(
+        '<p>This work is the intellectual property of Equinor ASA and NTNU. '
+        'No part of this publication may be reproduced, stored in a '
+        'retrieval system, or transmitted, in any form or by any means, '
+        'electronic, mechanical, photocopying, recording, or otherwise, '
+        'without the prior written permission of Equinor ASA and NTNU.</p>'
+    )
+    if isbn:
+        parts.append(f'<p class="cp-isbn">ISBN {_esc(isbn)}</p>')
+    if publisher:
+        pub_display = publisher.title() if publisher.islower() else publisher
+        parts.append(f'<p>Published by {_esc(pub_display)}</p>')
+    parts.append(
+        '<p>The NeqSim library is open-source software released under the '
+        'Apache License 2.0. All code examples in this book are available at '
+        '<a href="https://github.com/equinor/neqsim">'
+        'https://github.com/equinor/neqsim</a> '
+        'and may be freely used and modified under the terms of that '
+        'license.</p>'
+    )
+    parts.append(
+        '<p style="margin-top: 1.5rem; font-size: 0.8rem; color: #999;">'
+        'Typeset using NeqSim PaperLab</p>'
+    )
+    parts.append('</div>')
+    parts.append('</section>')
+    return "\n".join(parts)
+
+
+def _generate_dedication_page(book_dir):
+    """Generate a dedication page from dedication.md content."""
+    ded_path = book_dir / "frontmatter" / "dedication.md"
+    if not ded_path.exists():
+        return ""
+    text = ded_path.read_text(encoding="utf-8").strip()
+    if not text or "TODO" in text:
+        return ""
+    # Strip markdown heading if present
+    text = re.sub(r"^##?\s+.*\n*", "", text).strip()
+    # Remove surrounding italics markers
+    text = re.sub(r"^\*(.+)\*$", r"\1", text, flags=re.DOTALL)
+    return (
+        '<section id="dedication" class="dedication-page">'
+        f'<p>{text}</p>'
+        '</section>'
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -455,9 +803,28 @@ def render_book_html(book_dir, chapter_filter=None):
 
     parts.append("<main>")
 
-    # Frontmatter
+    # Frontmatter — professional pages from config, then remaining .md files
     if not chapter_filter:
+        # Half-title page
+        parts.append(_generate_half_title(cfg))
+
+        # Full title page with graphical decoration
+        parts.append(_generate_title_page(cfg))
+
+        # Copyright page
+        parts.append(_generate_copyright_page(cfg, book_dir))
+
+        # Dedication page
+        ded_html = _generate_dedication_page(book_dir)
+        if ded_html:
+            parts.append(ded_html)
+
+        # Remaining frontmatter (preface, etc.) — skip title_page, copyright,
+        # dedication since we generated them above
+        _skip = {"title_page", "copyright", "dedication"}
         for fm in cfg.get("frontmatter", []):
+            if fm in _skip:
+                continue
             fm_path = book_dir / "frontmatter" / f"{fm}.md"
             if fm_path.exists():
                 text = fm_path.read_text(encoding="utf-8")
