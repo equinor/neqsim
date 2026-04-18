@@ -5,10 +5,13 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.costestimation.separator.SeparatorCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.SeparatorInterface;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -27,6 +30,8 @@ import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(SeparatorMechanicalDesign.class);
   /**
    * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107 for mesh demister.
    */
@@ -199,21 +204,21 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
           .readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
     } else {
-      System.out.println("material plate design codes specified......");
+      logger.info("no material plate design codes specified");
     }
     if (getDesignStandard().containsKey("pressure vessel design code")) {
-      System.out.println("pressure vessel code standard: "
-          + getDesignStandard().get("pressure vessel design code").getStandardName());
+      logger.info("pressure vessel code standard: {}",
+          getDesignStandard().get("pressure vessel design code").getStandardName());
       wallThickness =
           ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
               .calcWallThickness();
     } else {
-      System.out.println("no pressure vessel code standard specified......");
+      logger.info("no pressure vessel code standard specified");
     }
 
     if (getDesignStandard().containsKey("separator process design")) {
-      System.out.println("separator process design: "
-          + getDesignStandard().get("separator process design").getStandardName());
+      logger.info("separator process design: {}",
+          getDesignStandard().get("separator process design").getStandardName());
       gasLoadFactor =
           ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
               .getGasLoadFactor();
@@ -225,7 +230,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
     } else {
-      System.out.println("no separator process design specified......");
+      logger.info("no separator process design specified");
     }
   }
 
@@ -547,6 +552,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // Synchronize design parameters back to separator
     separator.setDesignGasLoadFactor(gasLoadFactor);
     separator.setDesignLiquidLevelFraction(1.0 - Fg);
+    // Synchronize inlet nozzle diameter if set
+    if (inletNozzleID > 0) {
+      separator.setInletPipeDiameter(inletNozzleID);
+    }
   }
 
   /**
@@ -1780,6 +1789,306 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public void setDemisterType(String type) {
     this.demisterType = type;
+  }
+
+  // ============================================================================
+  // Bridge Methods — MechanicalDesign as gateway to Separator physical config
+  // ============================================================================
+
+  /**
+   * Sets the inlet pipe diameter on the separator's performance calculator. This affects the
+   * droplet size distribution generated from inlet pipe flow regime correlations.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator's performance calculator.
+   * </p>
+   *
+   * @param diameter inlet pipe internal diameter [m]
+   */
+  public void setInletPipeDiameter(double diameter) {
+    this.inletNozzleID = diameter;
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setInletPipeDiameter(diameter);
+    }
+  }
+
+  /**
+   * Gets the inlet pipe diameter.
+   *
+   * @return inlet pipe internal diameter [m]
+   */
+  public double getInletPipeDiameter() {
+    if (getProcessEquipment() instanceof Separator) {
+      SeparatorPerformanceCalculator perf =
+          ((Separator) getProcessEquipment()).getPerformanceCalculator();
+      if (perf != null) {
+        return perf.getInletPipeDiameter();
+      }
+    }
+    return inletNozzleID;
+  }
+
+  /**
+   * Sets the inlet device type for the separator's enhanced entrainment calculation.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator's performance calculator.
+   * </p>
+   *
+   * @param deviceType the inlet device type
+   */
+  public void setInletDeviceType(InletDeviceModel.InletDeviceType deviceType) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setInletDeviceType(deviceType);
+    }
+  }
+
+  /**
+   * Sets the gas-liquid interfacial tension for DSD generation in the enhanced model.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator's performance calculator.
+   * </p>
+   *
+   * @param sigma interfacial tension [N/m]
+   */
+  public void setGasLiquidSurfaceTension(double sigma) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setGasLiquidSurfaceTension(sigma);
+    }
+  }
+
+  /**
+   * Adds a separator section (e.g., vane pack, mesh pad, manway, valve, nozzle) to the underlying
+   * separator. Sections define the internals of the separator vessel.
+   *
+   * <p>
+   * This is a bridge method: separator internals should be configured via MechanicalDesign, which
+   * delegates to the separator's section list.
+   * </p>
+   *
+   * @param name section name
+   * @param type section type ("vane", "meshpad", "manway", "valve", "nozzle")
+   */
+  public void addSeparatorSection(String name, String type) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).addSeparatorSection(name, type);
+    }
+  }
+
+  /**
+   * Gets the separator sections from the underlying separator.
+   *
+   * @return list of separator sections
+   */
+  public java.util.ArrayList<SeparatorSection> getSeparatorSections() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getSeparatorSections();
+    }
+    return new java.util.ArrayList<SeparatorSection>();
+  }
+
+  /**
+   * Gets a separator section by index.
+   *
+   * @param index section index
+   * @return the separator section at the given index
+   */
+  public SeparatorSection getSeparatorSection(int index) {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getSeparatorSection(index);
+    }
+    return null;
+  }
+
+  /**
+   * Gets a separator section by name.
+   *
+   * @param name section name
+   * @return the separator section with the given name, or null if not found
+   */
+  public SeparatorSection getSeparatorSection(String name) {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getSeparatorSection(name);
+    }
+    return null;
+  }
+
+  /**
+   * Sets the weir height for dynamic liquid overflow control (Francis weir model). Also updates the
+   * internal {@code weirFraction} to keep both representations in sync.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param height weir height in meters (must be positive)
+   */
+  public void setWeirHeightAbsolute(double height) {
+    if (getProcessEquipment() instanceof Separator) {
+      Separator sep = (Separator) getProcessEquipment();
+      sep.setWeirHeight(height);
+      double id = sep.getInternalDiameter();
+      if (id > 0) {
+        this.weirFraction = height / id;
+      }
+    } else {
+      if (innerDiameter > 0) {
+        this.weirFraction = height / innerDiameter;
+      }
+    }
+  }
+
+  /**
+   * Gets the weir height from the separator (absolute value set for dynamic simulation).
+   *
+   * @return weir height in meters
+   */
+  public double getWeirHeightAbsolute() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getWeirHeight();
+    }
+    return getWeirHeight();
+  }
+
+  /**
+   * Sets the weir crest length for dynamic liquid overflow control (Francis weir model).
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param length weir crest length in meters
+   */
+  public void setWeirLength(double length) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setWeirLength(length);
+    }
+  }
+
+  /**
+   * Gets the weir crest length from the separator.
+   *
+   * @return weir length in meters
+   */
+  public double getWeirLength() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getWeirLength();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the boot (sump) volume for water/heavy liquid collection.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param volume boot volume in cubic meters
+   */
+  public void setBootVolume(double volume) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setBootVolume(volume);
+    }
+  }
+
+  /**
+   * Gets the boot (sump) volume from the separator.
+   *
+   * @return boot volume in cubic meters
+   */
+  public double getBootVolume() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getBootVolume();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the mist eliminator pressure drop coefficient for dynamic simulation. The coefficient is
+   * used as: dP = coeff * 0.5 * rho_gas * v_gas^2.
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation. The coefficient corresponds to the Euler
+   * number used in {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal}.
+   * </p>
+   *
+   * @param coefficient the dimensionless pressure drop coefficient (Euler number)
+   */
+  public void setMistEliminatorDpCoeff(double coefficient) {
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setMistEliminatorDpCoeff(coefficient);
+    }
+  }
+
+  /**
+   * Gets the mist eliminator pressure drop coefficient from the separator.
+   *
+   * @return the dimensionless pressure drop coefficient
+   */
+  public double getMistEliminatorDpCoeff() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getMistEliminatorDpCoeff();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the mist eliminator thickness on the separator for dynamic simulation. Accepts thickness
+   * in meters. Also updates the local {@code demisterThickness} field (stored in mm).
+   *
+   * <p>
+   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * delegates to the separator for dynamic simulation.
+   * </p>
+   *
+   * @param thicknessMeters the mist eliminator thickness in meters
+   */
+  public void setMistEliminatorThickness(double thicknessMeters) {
+    this.demisterThickness = thicknessMeters * 1000.0; // Store in mm locally
+    if (getProcessEquipment() instanceof Separator) {
+      ((Separator) getProcessEquipment()).setMistEliminatorThickness(thicknessMeters);
+    }
+  }
+
+  /**
+   * Gets the mist eliminator thickness from the separator.
+   *
+   * @return thickness in meters
+   */
+  public double getMistEliminatorThickness() {
+    if (getProcessEquipment() instanceof Separator) {
+      return ((Separator) getProcessEquipment()).getMistEliminatorThickness();
+    }
+    return demisterThickness / 1000.0; // Convert mm to m
+  }
+
+  /**
+   * Configures the mist eliminator from a
+   * {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal} design object.
+   * Pushes the Euler number as the dynamic pressure drop coefficient and the thickness to the
+   * separator.
+   *
+   * <p>
+   * This connects the design-phase demister model to the runtime dynamic simulation, keeping the
+   * two in sync.
+   * </p>
+   *
+   * @param demistingInternal the demisting internal design object
+   */
+  public void applyDemistingInternal(
+      neqsim.process.mechanicaldesign.separator.internals.DemistingInternal demistingInternal) {
+    setMistEliminatorDpCoeff(demistingInternal.getEuNumber());
+    setMistEliminatorThickness(demistingInternal.getThickness());
+    this.demisterType = demistingInternal.getType();
   }
 
   // ============================================================================

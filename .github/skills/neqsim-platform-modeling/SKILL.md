@@ -212,7 +212,6 @@ well_stream.setPressure(process_input.hp_pressure, "bara")
 operations.add(well_stream)
 
 hp_separator = ThreePhaseSeparator("HP Separator", well_stream)
-hp_separator.setInternalDiameter(3.9)  # Not required but useful for gas load factor
 operations.add(hp_separator)
 
 # === Oil letdown to Second Stage ===
@@ -226,7 +225,6 @@ inlet_oil_mixer.addStream(oil_heater_to_mp.getOutStream())
 
 # === Second Stage (MP) Separator ===
 mp_separator = ThreePhaseSeparator("MP Separator", inlet_oil_mixer.getOutletStream())
-mp_separator.setInternalDiameter(4.5)
 operations.add(mp_separator)
 
 # === Oil letdown to Third Stage ===
@@ -237,13 +235,45 @@ operations.add(oil_to_lp)
 
 # === Third Stage (LP) Separator ===
 lp_separator = Separator("LP Separator", oil_to_lp.getOutletStream())
-lp_separator.setInternalDiameter(4.1)
 operations.add(lp_separator)
 
 # Oil export pump
 oil_pump = Pump("Oil Export Pump", lp_separator.getLiquidOutStream())
 oil_pump.setOutletPressure(process_input.oil_export_pressure + 1.01325)  # barg to bara
 operations.add(oil_pump)
+```
+
+### 3.2.1 Separator Physical Configuration via MechanicalDesign
+
+Physical dimensions (vessel ID, nozzle sizes), internals (demister type,
+inlet device), and design parameters (K-factor, retention time) are set via
+`SeparatorMechanicalDesign` — NOT directly on the `Separator`. This follows
+the same pattern used for wells, pipelines, and compressors in NeqSim.
+
+Call `initMechanicalDesign()` **after** the process has been `run()` so the
+design calculation has access to process conditions.
+
+```python
+# After operations.run():
+hp_separator.initMechanicalDesign()
+hp_design = hp_separator.getMechanicalDesign()
+hp_design.setMaxOperationPressure(85.0)
+hp_design.setMaxOperationTemperature(273.15 + 80.0)
+hp_design.setGasLoadFactor(0.107)       # K-factor [m/s]
+hp_design.setRetentionTime(180.0)       # Liquid retention [s]
+hp_design.setInletNozzleID(0.356)       # 14-inch inlet [m]
+hp_design.setDemisterType("wire_mesh")
+hp_design.readDesignSpecifications()
+hp_design.calcDesign()
+
+# Repeat for other separators
+mp_separator.initMechanicalDesign()
+mp_design = mp_separator.getMechanicalDesign()
+mp_design.setMaxOperationPressure(25.0)
+mp_design.setGasLoadFactor(0.107)
+mp_design.setRetentionTime(120.0)
+mp_design.readDesignSpecifications()
+mp_design.calcDesign()
 ```
 
 ### 3.3 Heater as T/P Setter

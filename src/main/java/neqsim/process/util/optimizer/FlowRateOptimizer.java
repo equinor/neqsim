@@ -1012,12 +1012,12 @@ public class FlowRateOptimizer implements Serializable {
   /**
    * Evaluates process and captures power data for each compressor.
    *
-   * @param flowRate the flow rate value to evaluate
-   * @param flowRateUnit the unit of the flow rate
-   * @param inletPressure the inlet pressure value
-   * @param pressureUnit the unit of the pressure
-   * @param point the operating point to populate with results
-   * @return the outlet pressure after process evaluation
+   * @param flowRate the inlet flow rate
+   * @param flowRateUnit the unit for flow rate
+   * @param inletPressure the inlet pressure
+   * @param pressureUnit the unit for pressure
+   * @param point the operating point to store compressor data in
+   * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessWithPower(double flowRate, String flowRateUnit,
       double inletPressure, String pressureUnit, ProcessOperatingPoint point) {

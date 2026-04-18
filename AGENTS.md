@@ -394,6 +394,51 @@ process.add(sep);
 process.run();
 ```
 
+### Separator mechanical design (physical configuration)
+
+Physical dimensions, internals, and design parameters are configured through
+`SeparatorMechanicalDesign` — NOT directly on `Separator`. This follows the
+same pattern used for wells, pipelines, compressors, and heat exchangers.
+Bridge methods delegate to the Separator's performance calculator:
+
+```java
+// After process.run():
+sep.initMechanicalDesign();
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+design.setMaxOperationPressure(85.0);
+design.setGasLoadFactor(0.107);       // K-factor [m/s]
+design.setRetentionTime(120.0);       // Liquid retention [s]
+design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
+design.setDemisterType("wire_mesh");
+
+// Bridge methods — inlet pipe, inlet device, sections
+design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD [m]
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.addSeparatorSection("Demister", "meshpad");
+
+// Bridge methods — dynamic internals
+design.setWeirHeightAbsolute(0.30);   // Weir height [m]
+design.setWeirLength(1.5);            // Weir crest length [m]
+design.setBootVolume(2.0);            // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);  // Euler number for dP
+design.setMistEliminatorThickness(0.15); // Demister thickness [m]
+
+design.readDesignSpecifications();
+design.calcDesign();
+String json = design.toJson();
+```
+
+**Internals classes** (`mechanicaldesign.separator.internals`):
+- `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,
+  carry-over model for wire mesh / vane pack / cyclone demisting devices
+- `DemistingInternalWithDrainage` — adds drainage section efficiency
+
+**Primary separation** (`mechanicaldesign.separator.primaryseparation`):
+- `PrimarySeparation` — inlet momentum, bulk separation, carry-over
+- `InletVane` (6000 Pa, 85%), `InletVaneWithMeshpad` (92%+mesh),
+  `InletCyclones` (8000 Pa, 95%)
+
 ### Stream introspection
 
 Every `ProcessEquipmentInterface` exposes its connected streams:

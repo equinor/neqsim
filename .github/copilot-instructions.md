@@ -911,24 +911,83 @@ List<Map<String, Object>> bom = design.getCalculator().generateBillOfMaterials()
 
 ### Example Usage Pattern
 
-```java
-// Initialize equipment
-Separator separator = new Separator("HP Separator", feed);
-separator.initMechanicalDesign();
+**IMPORTANT: MechanicalDesign is the gateway for all physical configuration.**
+Physical dimensions (vessel diameter, nozzle sizes), internals (demister pads,
+inlet devices, separator sections), and design parameters (K-factor, retention
+time, foam allowance) are all configured through `SeparatorMechanicalDesign` —
+NOT directly on the `Separator` process equipment class. The `Separator` class
+is for process simulation (flash calculations, entrainment); the
+`SeparatorMechanicalDesign` class owns the physical vessel design.
 
-// Configure design
+```java
+// 1. Create and run the process equipment
+Separator separator = new Separator("HP Separator", feed);
+processSystem.add(separator);
+processSystem.run();
+
+// 2. Initialize and configure mechanical design
+separator.initMechanicalDesign();
 SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+
+// 3. Set design envelope
 design.setMaxOperationPressure(85.0);
 design.setMaxOperationTemperature(273.15 + 80.0);
-design.setMaterialGrade("SA-516-70");
-design.setDesignStandardCode("ASME-VIII-Div1");
 design.setCompanySpecificDesignStandards("OperatorA");
 
-// Calculate and report
+// 4. Configure vessel physical parameters via MechanicalDesign
+design.setGasLoadFactor(0.107);          // K-factor for Souders-Brown [m/s]
+design.setRetentionTime(120.0);          // Liquid retention time [s]
+design.setFg(0.5);                       // Gas area fraction
+design.setInletNozzleID(0.254);          // 10-inch inlet nozzle [m]
+design.setDemisterType("wire_mesh");     // Demister type
+design.setDemisterPressureDrop(1.5);     // Demister dP [mbar]
+design.setFoamAllowanceFactor(1.0);      // Foam allowance (1.0 = no foam)
+
+// 4b. Bridge methods — entrainment internals (delegate to Separator)
+design.setInletPipeDiameter(0.254);      // Inlet pipe ID for DSD generation [m]
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.setGasLiquidSurfaceTension(0.020); // Interfacial tension [N/m]
+design.addSeparatorSection("Demister", "meshpad");
+
+// 4c. Bridge methods — dynamic internals (delegate to Separator)
+design.setWeirHeightAbsolute(0.30);      // Weir height [m] (also syncs weirFraction)
+design.setWeirLength(1.5);               // Weir crest length [m]
+design.setBootVolume(2.0);               // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);  // Euler number for dP calc
+design.setMistEliminatorThickness(0.15); // Demister pad thickness [m]
+// Or apply from a DemistingInternal design object:
+// design.applyDemistingInternal(new DemistingInternal("WireMesh", "wire_mesh"));
+
+// 5. Load standards and calculate
 design.readDesignSpecifications();
 design.calcDesign();
 String jsonReport = design.toJson();
 ```
+
+### Separator MechanicalDesign Architecture
+
+| Layer | Class | Responsibility |
+|-------|-------|---------------|
+| Process simulation | `Separator` | Flash calculation, phase split, entrainment calculation |
+| Physical design | `SeparatorMechanicalDesign` | Vessel sizing, nozzles, internals, demister, levels, standards. **Bridge methods** delegate to Separator for entrainment (`setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`, `setMistEliminatorDpCoeff`, `setMistEliminatorThickness`, `applyDemistingInternal`) |
+| Demisting internals | `DemistingInternal`, `DemistingInternalWithDrainage` | Eu-number pressure drop, Souders-Brown max velocity, carry-over model (`mechanicaldesign.separator.internals`) |
+| Primary separation | `PrimarySeparation`, `InletVane`, `InletVaneWithMeshpad`, `InletCyclones` | Inlet momentum, bulk separation efficiency, carry-over (`mechanicaldesign.separator.primaryseparation`) |
+| Design standards | `SeparatorDesignStandard` | K-factor, retention time, design codes (API 12J, NORSOK P-001) |
+| Entrainment physics | `SeparatorPerformanceCalculator` | DSD, grade efficiency, inlet device models |
+
+The `SeparatorMechanicalDesign` owns: vessel dimensions (ID, length, wall
+thickness), nozzle sizes (inlet, gas outlet, oil outlet, water outlet), liquid
+levels (HHLL/HLL/NLL/LLL/LLLL), demister/mist eliminator parameters, inlet
+device K-factor, gas load factor, retention time, foam allowance, and
+entrainment performance results. Bridge methods delegate to the Separator,
+keeping MechanicalDesign as the single gateway for all physical configuration:
+entrainment bridges (`setInletPipeDiameter`, `setInletDeviceType`,
+`addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals
+bridges (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`,
+`setMistEliminatorDpCoeff`, `setMistEliminatorThickness`,
+`applyDemistingInternal`). When `calcDesign()` is called, it reads process
+conditions from the `Separator`, applies design standards, and calculates the
+physical vessel.
 
 ## Well Mechanical Design Pattern
 

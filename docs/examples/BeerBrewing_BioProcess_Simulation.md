@@ -169,38 +169,11 @@ Classpath:
   2. C:\Users\ESOL\Documents\GitHub\neqsim2\src\main\resources
   3. C:\Users\ESOL\Documents\GitHub\neqsim2\target\neqsim-3.4.0.jar
 
-<<<<<<< HEAD
-Error: ---------------------------------------------------------------------------
-AttributeError                            Traceback (most recent call last)
-Cell In[40], line 11
-      8 ns = neqsim_init(recompile=True)
-     10 # Import standard NeqSim classes into namespace
----> 11 ns = neqsim_classes(ns)
-     13 # Extract standard classes into local scope (so rest of notebook works unchanged)
-     14 SystemSrkCPAstatoil  = ns.SystemSrkCPAstatoil
-
-File ~\Documents\GitHub\neqsim2\devtools\neqsim_dev_setup.py:152, in neqsim_classes(ns)
-    149 JClass = jpype.JClass
-    151 # Thermo systems
---> 152 ns.SystemSrkEos = JClass("neqsim.thermo.system.SystemSrkEos")
-    153 ns.SystemPrEos = JClass("neqsim.thermo.system.SystemPrEos")
-    154 ns.SystemSrkCPAstatoil = JClass("neqsim.thermo.system.SystemSrkCPAstatoil")
-
-AttributeError: 'NoneType' object has no attribute 'SystemSrkEos'
-Error: The Kernel crashed while executing code in the current cell or a previous cell.
-
-Please review the code in the cell(s) to identify a possible cause of the failure.
-
-Click <a href='https://aka.ms/vscodeJupyterKernelCrash'>here</a> for more info.
-
-View Jupyter <a href='command:jupyter.viewOutput'>log</a> for further details.
-=======
 JVM started: C:\Users\ESOL\graalvm\graalvm-jdk-25.0.1+8.1\bin\server\jvm.dll
 Ready — call neqsim_classes(ns) to import classes
 All NeqSim classes imported OK
 NeqSim loaded via devtools. Extended component database enabled.
 Bio-processing classes available: Fermenter, EnzymeTreatment, StoichiometricReaction
->>>>>>> ec1c592f7acf626f2c4b23309157201167c2a2a6
 ```
 
 </details>
