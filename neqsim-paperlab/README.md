@@ -233,6 +233,7 @@ neqsim-paperlab/
 │   ├── benchmark.agent.md
 │   ├── validation.agent.md
 │   ├── scientific_writer.agent.md
+│   ├── figure_generator.agent.md
 │   ├── journal_formatter.agent.md
 │   └── reviewer_response.agent.md
 ├── skills/                       # Reusable scientific procedures
@@ -404,6 +405,7 @@ appear (or when `force=true` is set).
 | `run_flash_experiments` | Executing NeqSim flash calculations in batch |
 | `analyze_convergence` | Interpreting convergence metrics, stability analysis |
 | `analyze_gibbs_convergence` | Analyzing Gibbs reactor convergence, Jacobian conditioning, element balance |
+| `generate_publication_figures` | Producing publication-ready matplotlib figures |
 | `write_methods_section` | Drafting the Methods section with proper math notation |
 | `journal_formatting` | Applying journal-specific formatting rules |
 
