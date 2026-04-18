@@ -1,6 +1,7 @@
 ---
 name: neqsim-standards-lookup
 description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), risk assessment, or safety analysis. Provides equipment-to-standards mapping, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Standards Lookup

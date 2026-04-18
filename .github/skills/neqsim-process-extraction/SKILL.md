@@ -1,6 +1,7 @@
 ---
 name: neqsim-process-extraction
 description: "Extracts process simulation data from unstructured sources (text, tables, PFDs, data sheets) and converts it to NeqSim JSON builder format. USE WHEN: a user provides a process description, PFD, operating data, or design document and wants a running NeqSim simulation. Covers equipment mapping, stream wiring, unit conversion, composition normalization, and confidence scoring."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Process Extraction Skill

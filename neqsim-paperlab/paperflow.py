@@ -28,14 +28,89 @@ from pathlib import Path
 
 PAPERLAB_ROOT = Path(__file__).parent
 PAPERS_DIR = PAPERLAB_ROOT / "papers"
+BOOKS_DIR = PAPERLAB_ROOT / "books"
 JOURNALS_DIR = PAPERLAB_ROOT / "journals"
 TOOLS_DIR = PAPERLAB_ROOT / "tools"
+
+# Canonical status values — used by cmd_list and for validation
+VALID_STATUSES = [
+    "planning", "benchmarking", "drafting", "draft_complete",
+    "formatted", "submitted", "revision", "accepted", "published",
+]
+
+# Map ad-hoc status strings to canonical values
+_STATUS_ALIASES = {
+    "draft": "drafting",
+    "draft_v2": "drafting",
+    "draft_in_progress": "drafting",
+    "first draft": "drafting",
+    "DRAFT": "drafting",
+    "FIRST DRAFT": "drafting",
+}
+
+
+def normalize_status(raw):
+    """Return canonical status for *raw*, or raw.lower() if unrecognized."""
+    if raw in VALID_STATUSES:
+        return raw
+    return _STATUS_ALIASES.get(raw, _STATUS_ALIASES.get(raw.lower() if raw else "", raw))
+
+
+def cmd_list(args):
+    """List all papers with status, journal, type, and word count."""
+    if not PAPERS_DIR.exists():
+        print("No papers directory found.")
+        return
+
+    rows = []
+    for d in sorted(PAPERS_DIR.iterdir()):
+        if not d.is_dir():
+            continue
+        plan_path = d / "plan.json"
+        if not plan_path.exists():
+            continue
+        try:
+            with open(plan_path, encoding="utf-8") as f:
+                plan = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            rows.append((d.name, "BROKEN", "", "", ""))
+            continue
+        journal = plan.get("target_journal", "")
+        status = plan.get("status", "")
+        ptype = plan.get("paper_type", "")
+        # word count from paper.md
+        paper_md = d / "paper.md"
+        wc = ""
+        if paper_md.exists():
+            try:
+                text = paper_md.read_text(encoding="utf-8")
+                wc = str(len(text.split()))
+            except OSError:
+                pass
+        rows.append((d.name, status, journal, ptype, wc))
+
+    if not rows:
+        print("No papers found.")
+        return
+
+    # Column widths
+    headers = ("Paper", "Status", "Journal", "Type", "Words")
+    widths = [max(len(h), max((len(str(r[i])) for r in rows), default=0))
+              for i, h in enumerate(headers)]
+    fmt = "  ".join(f"{{:<{w}}}" for w in widths)
+
+    print(fmt.format(*headers))
+    print(fmt.format(*("-" * w for w in widths)))
+    for row in rows:
+        print(fmt.format(*row))
+    print(f"\n{len(rows)} papers total")
 
 
 def cmd_new(args):
     """Create a new paper project."""
     title = args.title
     journal = args.journal
+    paper_type = getattr(args, "paper_type", None)
     topic = args.topic or title.lower().replace(" ", "_")[:40]
     year = datetime.now().strftime("%Y")
 
@@ -64,6 +139,7 @@ def cmd_new(args):
     plan = {
         "title": title,
         "target_journal": journal,
+        "paper_type": paper_type,
         "created": datetime.now().isoformat(),
         "status": "planning",
         "novelty_statement": "TODO: What is new about this work?",
@@ -177,8 +253,17 @@ def cmd_new(args):
     with open(paper_dir / "benchmark_config.json", "w") as f:
         json.dump(benchmark_config, f, indent=2)
 
-    # Create paper skeleton
-    paper_template = PAPERLAB_ROOT / "templates" / "paper_skeleton.md"
+    # Create paper skeleton — select template by paper_type
+    _TEMPLATE_MAP = {
+        "comparative": "paper_skeleton_comparative.md",
+        "data": "paper_skeleton_data.md",
+    }
+    # SPE journal always uses the SPE template
+    if journal and "spe" in journal.lower():
+        skeleton_name = "paper_skeleton_spe.md"
+    else:
+        skeleton_name = _TEMPLATE_MAP.get(paper_type, "paper_skeleton.md")
+    paper_template = PAPERLAB_ROOT / "templates" / skeleton_name
     if paper_template.exists():
         template_text = paper_template.read_text(encoding="utf-8")
         paper_text = template_text.replace("{{TITLE}}", title)
@@ -1141,32 +1226,345 @@ def cmd_diff(args):
 
 
 def cmd_scan(args):
-    """Scan the NeqSim codebase for scientific paper opportunities."""
+    """Scan for scientific paper opportunities (trending or codebase)."""
     sys.path.insert(0, str(TOOLS_DIR))
-    from research_scanner import scan_opportunities, print_scan_report
 
-    # Resolve repo root: two levels up from paperlab
-    repo_root = args.repo or str(PAPERLAB_ROOT.parent)
+    scan_dir = PAPERS_DIR / "_research_scan"
+    scan_dir.mkdir(parents=True, exist_ok=True)
 
-    report = scan_opportunities(
-        repo_root,
-        since_days=args.since,
-        top_n=args.top,
-        check_literature=args.literature,
+    if getattr(args, "trending", False) or not getattr(args, "legacy", False):
+        # ── Trending mode (default) ──
+        from trending_topics import (
+            daily_suggestion,
+            format_daily_suggestion,
+            generate_markdown_suggestion,
+            scan_trending,
+        )
+
+        if getattr(args, "full", False):
+            # Full trending scan
+            report = scan_trending(top_n=args.top, rate_limit_delay=1.2)
+            for i, opp in enumerate(report["opportunities"], 1):
+                ip = opp.get("inspiring_paper", {})
+                print(f"  {i:3d}. [{opp['trend_score']:3d}] [{opp['domain']}] "
+                      f"{opp['title']}")
+                print(f"       Inspired by: {ip.get('title', 'N/A')[:60]}")
+            output_path = args.output or str(scan_dir / "trending_opportunities.json")
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(report, f, indent=2, default=str)
+            print(f"\n  Saved to: {output_path}")
+        else:
+            # Daily pick (default)
+            pick = daily_suggestion(
+                history_dir=str(scan_dir),
+                scan_kwargs={"top_n": 30, "rate_limit_delay": 1.2},
+            )
+            if not pick:
+                print("  No trending suggestions (API may be unavailable).")
+                print("  Try: paperflow scan --legacy")
+                return
+            print(format_daily_suggestion(pick))
+
+            output_path = args.output or str(scan_dir / "daily_suggestion.json")
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(pick, f, indent=2, default=str)
+            md_path = scan_dir / "daily_suggestion.md"
+            with open(str(md_path), "w", encoding="utf-8") as f:
+                f.write(generate_markdown_suggestion(pick))
+            print(f"\n  Saved to: {output_path}")
+    else:
+        # ── Legacy codebase mode ──
+        from research_scanner import scan_opportunities, print_scan_report
+
+        repo_root = args.repo or str(PAPERLAB_ROOT.parent)
+        report = scan_opportunities(
+            repo_root,
+            since_days=args.since,
+            top_n=args.top,
+            check_literature=args.literature,
+        )
+        print_scan_report(report, verbose=args.verbose)
+
+        output_path = args.output or str(scan_dir / "opportunities.json")
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, default=str)
+        print(f"\n  Saved to: {output_path}")
+
+
+def cmd_stats(args):
+    """Run statistical tests on benchmark results."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from statistical_tests import analyze_benchmarks, print_stats_report
+
+    report = analyze_benchmarks(str(paper_dir))
+    print_stats_report(report)
+
+
+def cmd_check_plagiarism(args):
+    """Check manuscript for self-plagiarism against other papers."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from self_plagiarism_checker import check_self_plagiarism, print_plagiarism_report
+
+    report = check_self_plagiarism(
+        str(paper_dir),
+        doc_threshold=args.doc_threshold,
+        para_threshold=args.para_threshold,
     )
+    print_plagiarism_report(report)
 
-    print_scan_report(report, verbose=args.verbose)
+    max_sim = report.get("max_document_similarity", 0)
+    if max_sim > args.doc_threshold:
+        print(f"\nDocument similarity {max_sim:.2f} exceeds threshold ({args.doc_threshold}).")
+        sys.exit(1)
 
-    # Optionally save to file
-    output_path = args.output
-    if not output_path:
-        scan_dir = PAPERS_DIR / "_research_scan"
-        scan_dir.mkdir(parents=True, exist_ok=True)
-        output_path = str(scan_dir / "opportunities.json")
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, default=str)
-    print(f"\n  Saved to: {output_path}")
+def cmd_manifest(args):
+    """Generate a reproducibility manifest for the paper."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from reproducibility_manifest import generate_manifest, print_manifest_report
+
+    report = generate_manifest(str(paper_dir))
+    print_manifest_report(report)
+
+
+def cmd_verify_manifest(args):
+    """Verify an existing reproducibility manifest."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from reproducibility_manifest import verify_manifest, print_manifest_report
+
+    report = verify_manifest(str(paper_dir))
+    print_manifest_report(report)
+
+    if not report.get("all_match", True):
+        print("\nManifest verification FAILED — artifacts have changed.")
+        sys.exit(1)
+
+
+def cmd_graphical_abstract(args):
+    """Generate a graphical abstract from paper artifacts."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from graphical_abstract import generate_graphical_abstract, print_abstract_report
+
+    report = generate_graphical_abstract(str(paper_dir))
+    print_abstract_report(report)
+
+
+def cmd_credit(args):
+    """Generate CRediT author contribution statement."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from credit_generator import generate_credit, print_credit_report
+
+    contributors = None
+    if args.contributors:
+        contributors = json.loads(args.contributors)
+
+    report = generate_credit(str(paper_dir), contributors=contributors)
+    print_credit_report(report)
+
+
+def cmd_nomenclature(args):
+    """Extract nomenclature table from manuscript."""
+    paper_dir = Path(args.paper_dir)
+    paper_path = paper_dir / "paper.md"
+
+    if not paper_path.exists():
+        print(f"Error: paper.md not found in {paper_dir}")
+        sys.exit(1)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from nomenclature_extractor import extract_nomenclature, print_nomenclature_report
+
+    report = extract_nomenclature(str(paper_path))
+    print_nomenclature_report(report)
+
+
+def cmd_related_work(args):
+    """Generate related work comparison table."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from related_work_table import generate_related_work_table, print_related_work_report
+
+    report = generate_related_work_table(str(paper_dir))
+    print_related_work_report(report)
+
+
+def cmd_latex(args):
+    """Compile manuscript to LaTeX/PDF via Pandoc."""
+    paper_dir = Path(args.paper_dir)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from latex_pipeline import compile_latex, print_latex_report
+
+    report = compile_latex(
+        str(paper_dir),
+        journal=args.journal or "generic",
+        output_format=args.output_format or "both",
+        engine=args.engine,
+    )
+    print_latex_report(report)
+
+
+def cmd_verify_dois(args):
+    """Verify DOIs in bibliography resolve correctly."""
+    paper_dir = Path(args.paper_dir)
+    bib_path = paper_dir / "refs.bib"
+
+    if not bib_path.exists():
+        print(f"Error: refs.bib not found in {paper_dir}")
+        sys.exit(1)
+
+    sys.path.insert(0, str(TOOLS_DIR))
+    from bib_validator import verify_dois, print_doi_report
+
+    results = verify_dois(str(bib_path))
+    print_doi_report(results)
+
+    broken = sum(1 for r in results if r["status"] == "broken")
+    if broken > 0:
+        print(f"\n{broken} broken DOI(s) found.")
+        sys.exit(1)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Book commands
+# ═══════════════════════════════════════════════════════════════════════════
+
+def cmd_book_new(args):
+    """Create a new book project."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_builder import create_book_project
+
+    try:
+        book_dir = create_book_project(
+            title=args.title,
+            publisher=args.publisher,
+            n_chapters=args.chapters,
+            books_dir=BOOKS_DIR,
+        )
+        print(f"Book project created: {book_dir}")
+        print(f"  Publisher: {args.publisher}")
+        print(f"  Chapters:  {args.chapters}")
+        print(f"\nNext steps:")
+        print(f"  1. Edit book.yaml to set authors, titles, parts")
+        print(f"  2. Write chapters in chapters/chNN/chapter.md")
+        print(f"  3. Run: python paperflow.py book-status {book_dir}")
+    except FileExistsError as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+
+def cmd_book_add_chapter(args):
+    """Add a chapter to an existing book."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_builder import add_chapter
+
+    try:
+        ch_dir = add_chapter(
+            book_dir=args.book_dir,
+            title=args.title,
+            part_index=args.part - 1,  # CLI is 1-based, internal is 0-based
+        )
+        print(f"Chapter added: {ch_dir}")
+    except (FileNotFoundError, IndexError, ValueError) as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+
+def cmd_book_render(args):
+    """Render book to PDF, Word, or HTML."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+
+    fmt = args.out_format
+    chapter = getattr(args, "chapter", None)
+
+    if fmt == "pdf":
+        from book_render_pdf import render_book_pdf
+        result = render_book_pdf(args.book_dir, chapter_filter=chapter)
+    elif fmt == "docx":
+        from book_render_word import render_book_word
+        result = render_book_word(args.book_dir, chapter_filter=chapter)
+    elif fmt == "html":
+        from book_render_html import render_book_html
+        result = render_book_html(args.book_dir, chapter_filter=chapter)
+    else:
+        print(f"Unknown format: {fmt}")
+        sys.exit(1)
+
+    if result is None:
+        print("Render failed.")
+        sys.exit(1)
+
+
+def cmd_book_check(args):
+    """Run quality checks on a book."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_checker import run_checks, format_issues
+
+    checks = [args.check] if args.check != "all" else None
+    issues = run_checks(args.book_dir, checks=checks)
+    print(format_issues(issues))
+
+    errors = sum(1 for i in issues if i["severity"] == "error")
+    if errors > 0:
+        sys.exit(1)
+
+
+def cmd_book_status(args):
+    """Show book project status overview."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_builder import get_book_status
+
+    try:
+        status = get_book_status(args.book_dir)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+    print(f"\nBook: {status['title']}")
+    print(f"Publisher: {status['publisher']}")
+    print(f"Chapters:  {status['total_chapters']}")
+    print(f"Words:     {status['total_words']:,}")
+    print(f"Est pages: ~{status['estimated_pages']}")
+    print(f"TODOs:     {status['total_todos']}")
+    print(f"Figures:   {status['total_figures']}")
+    print(f"Notebooks: {status['total_notebooks']}")
+
+    print(f"\n{'Ch':>3}  {'Words':>7}  {'TODOs':>5}  {'Figs':>4}  {'NBs':>3}  {'Pages':>5}  Title")
+    print(f"{'─' * 3}  {'─' * 7}  {'─' * 5}  {'─' * 4}  {'─' * 3}  {'─' * 5}  {'─' * 30}")
+    for ch in status["chapters"]:
+        mark = "✓" if ch["exists"] and ch["todo_count"] == 0 else "·"
+        print(f"{ch['number']:3d}  {ch['word_count']:7,}  {ch['todo_count']:5d}  "
+              f"{ch['figure_count']:4d}  {ch['notebook_count']:3d}  "
+              f"~{ch['estimated_pages']:4d}  {mark} {ch['title']}")
+
+
+def cmd_book_toc(args):
+    """Preview table of contents."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_builder import load_book_config, generate_toc, format_toc
+
+    try:
+        cfg = load_book_config(args.book_dir)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+    toc = generate_toc(args.book_dir)
+    print(f"\nTable of Contents — {cfg.get('title', 'Untitled')}\n")
+    print(format_toc(toc))
 
 
 def main():
@@ -1189,6 +1587,13 @@ Examples:
     p_new.add_argument("title", help="Paper title")
     p_new.add_argument("--journal", required=True, help="Target journal profile name")
     p_new.add_argument("--topic", help="Topic slug (default: derived from title)")
+    p_new.add_argument("--paper-type", dest="paper_type",
+                       choices=["comparative", "characterization", "method",
+                                "application", "data", "review"],
+                       help="Paper type (selects manuscript template)")
+
+    # list
+    subparsers.add_parser("list", help="List all papers with status and metadata")
 
     # benchmark
     p_bench = subparsers.add_parser("benchmark", help="Run benchmark suite")
@@ -1266,24 +1671,137 @@ Examples:
     p_diff.add_argument("--old", help="Explicit path to old version")
     p_diff.add_argument("--new", help="Explicit path to new version")
 
-    # scan — discover paper opportunities in the NeqSim codebase
+    # scan — discover paper opportunities (trending by default)
     p_scan = subparsers.add_parser("scan",
-                                    help="Scan NeqSim codebase for paper opportunities")
+                                    help="Find paper opportunities from trending research")
+    p_scan.add_argument("--trending", action="store_true", default=True,
+                        help="Search trending academic topics (default)")
+    p_scan.add_argument("--full", action="store_true",
+                        help="Show all trending opportunities (not just daily pick)")
+    p_scan.add_argument("--legacy", action="store_true",
+                        help="Use old codebase scanner instead of trending")
     p_scan.add_argument("--since", type=int, default=180,
-                        help="Look-back window in days (default: 180)")
+                        help="Look-back window in days for legacy scan (default: 180)")
     p_scan.add_argument("--top", type=int, default=15,
                         help="Max opportunities to show (default: 15)")
     p_scan.add_argument("--literature", action="store_true",
-                        help="Cross-check Semantic Scholar for novelty")
+                        help="Cross-check Semantic Scholar (legacy mode)")
     p_scan.add_argument("--verbose", "-v", action="store_true",
                         help="Show detailed info for each opportunity")
-    p_scan.add_argument("--output", help="Custom output path for opportunities.json")
+    p_scan.add_argument("--output", help="Custom output path for results JSON")
     p_scan.add_argument("--repo", help="Path to NeqSim repo root (default: auto-detect)")
+
+    # stats — statistical tests on benchmark results
+    p_stats = subparsers.add_parser("stats",
+                                     help="Run statistical tests on benchmark results")
+    p_stats.add_argument("paper_dir", help="Paper directory")
+
+    # check-plagiarism — self-plagiarism detection
+    p_plag = subparsers.add_parser("check-plagiarism",
+                                    help="Check manuscript for self-plagiarism against other papers")
+    p_plag.add_argument("paper_dir", help="Paper directory")
+    p_plag.add_argument("--doc-threshold", type=float, default=0.35,
+                        help="Document similarity threshold (default: 0.35)")
+    p_plag.add_argument("--para-threshold", type=float, default=0.50,
+                        help="Paragraph similarity threshold (default: 0.50)")
+
+    # manifest — generate reproducibility manifest
+    p_manifest = subparsers.add_parser("manifest",
+                                        help="Generate reproducibility manifest")
+    p_manifest.add_argument("paper_dir", help="Paper directory")
+
+    # verify-manifest — verify existing manifest
+    p_vmanifest = subparsers.add_parser("verify-manifest",
+                                         help="Verify reproducibility manifest")
+    p_vmanifest.add_argument("paper_dir", help="Paper directory")
+
+    # graphical-abstract — generate graphical abstract
+    p_gabstract = subparsers.add_parser("graphical-abstract",
+                                         help="Generate graphical abstract from paper artifacts")
+    p_gabstract.add_argument("paper_dir", help="Paper directory")
+
+    # credit — CRediT author contribution statement
+    p_credit = subparsers.add_parser("credit",
+                                      help="Generate CRediT author contribution statement")
+    p_credit.add_argument("paper_dir", help="Paper directory")
+    p_credit.add_argument("--contributors", help="JSON dict of author→roles (overrides plan.json)")
+
+    # nomenclature — extract nomenclature table
+    p_nomen = subparsers.add_parser("nomenclature",
+                                     help="Extract nomenclature table from manuscript symbols")
+    p_nomen.add_argument("paper_dir", help="Paper directory")
+
+    # related-work — comparison table from literature
+    p_relwork = subparsers.add_parser("related-work",
+                                       help="Generate related work comparison table")
+    p_relwork.add_argument("paper_dir", help="Paper directory")
+
+    # latex — compile to LaTeX/PDF via Pandoc
+    p_latex = subparsers.add_parser("latex",
+                                     help="Compile manuscript to LaTeX/PDF via Pandoc")
+    p_latex.add_argument("paper_dir", help="Paper directory")
+    p_latex.add_argument("--journal", help="Journal template (elsevier, springer, mdpi, acs, generic)")
+    p_latex.add_argument("--output-format", choices=["pdf", "tex", "both"], default="both",
+                         help="Output format (default: both)")
+    p_latex.add_argument("--engine", help="LaTeX engine (pdflatex, xelatex, lualatex)")
+
+    # verify-dois — check DOIs resolve
+    p_dois = subparsers.add_parser("verify-dois",
+                                    help="Verify DOIs in refs.bib resolve correctly")
+    p_dois.add_argument("paper_dir", help="Paper directory")
+
+    # ── Book commands ──────────────────────────────────────────────────
+
+    # book-new — create a new book project
+    p_bnew = subparsers.add_parser("book-new",
+                                    help="Create a new book project")
+    p_bnew.add_argument("title", help="Book title")
+    p_bnew.add_argument("--publisher", default="self",
+                        choices=["springer", "wiley", "crc", "self"],
+                        help="Publisher profile (default: self)")
+    p_bnew.add_argument("--chapters", type=int, default=8,
+                        help="Number of initial chapters (default: 8)")
+
+    # book-add-chapter — add a chapter to an existing book
+    p_bach = subparsers.add_parser("book-add-chapter",
+                                    help="Add a chapter to an existing book")
+    p_bach.add_argument("book_dir", help="Book directory")
+    p_bach.add_argument("--title", required=True, help="Chapter title")
+    p_bach.add_argument("--part", type=int, default=1,
+                        help="Part number (1-based, default: 1)")
+
+    # book-render — render book to PDF, Word, or HTML
+    p_brender = subparsers.add_parser("book-render",
+                                       help="Render book to PDF, Word, or HTML")
+    p_brender.add_argument("book_dir", help="Book directory")
+    p_brender.add_argument("--format", dest="out_format", default="html",
+                           choices=["pdf", "docx", "html"],
+                           help="Output format (default: html)")
+    p_brender.add_argument("--chapter", help="Render single chapter (dir name)")
+
+    # book-check — run quality checks
+    p_bcheck = subparsers.add_parser("book-check",
+                                      help="Run quality checks on a book")
+    p_bcheck.add_argument("book_dir", help="Book directory")
+    p_bcheck.add_argument("--check", default="all",
+                          help="Check to run (all, structure, completeness, etc.)")
+
+    # book-status — overview of book project
+    p_bstatus = subparsers.add_parser("book-status",
+                                       help="Show book project status overview")
+    p_bstatus.add_argument("book_dir", help="Book directory")
+
+    # book-toc — preview table of contents
+    p_btoc = subparsers.add_parser("book-toc",
+                                    help="Preview table of contents")
+    p_btoc.add_argument("book_dir", help="Book directory")
 
     args = parser.parse_args()
 
     if args.command == "new":
         cmd_new(args)
+    elif args.command == "list":
+        cmd_list(args)
     elif args.command == "benchmark":
         cmd_benchmark(args)
     elif args.command == "figures":
@@ -1314,6 +1832,38 @@ Examples:
         cmd_diff(args)
     elif args.command == "scan":
         cmd_scan(args)
+    elif args.command == "stats":
+        cmd_stats(args)
+    elif args.command == "check-plagiarism":
+        cmd_check_plagiarism(args)
+    elif args.command == "manifest":
+        cmd_manifest(args)
+    elif args.command == "verify-manifest":
+        cmd_verify_manifest(args)
+    elif args.command == "graphical-abstract":
+        cmd_graphical_abstract(args)
+    elif args.command == "credit":
+        cmd_credit(args)
+    elif args.command == "nomenclature":
+        cmd_nomenclature(args)
+    elif args.command == "related-work":
+        cmd_related_work(args)
+    elif args.command == "latex":
+        cmd_latex(args)
+    elif args.command == "verify-dois":
+        cmd_verify_dois(args)
+    elif args.command == "book-new":
+        cmd_book_new(args)
+    elif args.command == "book-add-chapter":
+        cmd_book_add_chapter(args)
+    elif args.command == "book-render":
+        cmd_book_render(args)
+    elif args.command == "book-check":
+        cmd_book_check(args)
+    elif args.command == "book-status":
+        cmd_book_status(args)
+    elif args.command == "book-toc":
+        cmd_book_toc(args)
     else:
         parser.print_help()
 

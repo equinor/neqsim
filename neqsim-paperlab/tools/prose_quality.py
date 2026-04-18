@@ -2,7 +2,8 @@
 Prose Quality Analyzer — Sentence-level writing feedback for scientific manuscripts.
 
 Checks readability (Flesch-Kincaid), sentence length, passive voice,
-hedging language, and academic style metrics.
+hedging language, academic style metrics, advanced prose linting (proselint),
+grammar/spelling (LanguageTool), and NeqSim-mention enforcement.
 
 Usage::
 
@@ -21,6 +22,18 @@ try:
     _HAS_TEXTSTAT = True
 except ImportError:
     _HAS_TEXTSTAT = False
+
+try:
+    import proselint
+    _HAS_PROSELINT = True
+except ImportError:
+    _HAS_PROSELINT = False
+
+try:
+    import language_tool_python
+    _HAS_LANGTOOL = True
+except ImportError:
+    _HAS_LANGTOOL = False
 
 
 # ── Passive voice patterns ────────────────────────────────────────────
@@ -295,6 +308,111 @@ def analyze_prose(paper_path, max_sentence_words=35, target_grade=12.0):
             "suggestions": wordy_found[:10],
         })
 
+    # ── NeqSim-in-abstract enforcement ────────────────────────────────
+    abstract_match = re.search(
+        r'## Abstract\s*\n(.*?)(?=\n## |\n---)',
+        raw_text, re.DOTALL | re.IGNORECASE)
+    if abstract_match:
+        abstract_text = abstract_match.group(1)
+        neqsim_in_abstract = len(re.findall(r'\bNeqSim\b', abstract_text, re.IGNORECASE))
+        report["neqsim_mentions"] = {"abstract": neqsim_in_abstract}
+        if neqsim_in_abstract > 0:
+            report["issues"].append({
+                "type": "NEQSIM_IN_ABSTRACT",
+                "severity": "WARNING",
+                "message": (f"Abstract mentions 'NeqSim' {neqsim_in_abstract} time(s). "
+                           f"Guidelines require zero — use 'the algorithm' or "
+                           f"'an open-source thermodynamic library' instead."),
+            })
+        else:
+            report["issues"].append({
+                "type": "NEQSIM_IN_ABSTRACT",
+                "severity": "OK",
+                "message": "Abstract correctly avoids mentioning NeqSim",
+            })
+
+    # ── NeqSim in body (algorithm-first check) ───────────────────────
+    # Exclude Acknowledgements/Data Availability from body
+    body_for_neqsim = re.sub(
+        r'## (?:Acknowledgements?|Data Availability).*$', '',
+        raw_text, flags=re.DOTALL | re.IGNORECASE)
+    body_neqsim_count = len(re.findall(r'\bNeqSim\b', body_for_neqsim))
+    report.setdefault("neqsim_mentions", {})["body"] = body_neqsim_count
+    if body_neqsim_count > 3:
+        report["issues"].append({
+            "type": "NEQSIM_OVERUSE",
+            "severity": "WARNING",
+            "message": (f"NeqSim mentioned {body_neqsim_count} times in body text "
+                       f"(aim for ≤3). Use algorithm-first language."),
+        })
+
+    # ── Proselint — advanced prose linting ────────────────────────────
+    proselint_issues = []
+    if _HAS_PROSELINT:
+        try:
+            suggestions = proselint.tools.lint(body)
+            for s in suggestions:
+                proselint_issues.append({
+                    "check": s[0],
+                    "message": s[1],
+                    "line": s[2],
+                    "col": s[3],
+                })
+        except Exception:
+            pass  # Graceful degradation
+
+    report["proselint"] = {
+        "available": _HAS_PROSELINT,
+        "issue_count": len(proselint_issues),
+        "issues": proselint_issues[:20],  # Cap at 20 for readability
+    }
+    if proselint_issues:
+        report["issues"].append({
+            "type": "PROSELINT",
+            "severity": "INFO" if len(proselint_issues) < 10 else "WARNING",
+            "count": len(proselint_issues),
+            "message": (f"proselint found {len(proselint_issues)} style issues "
+                       f"(clichés, redundancy, weasel words, etc.)"),
+            "examples": [p["message"] for p in proselint_issues[:5]],
+        })
+
+    # ── LanguageTool — grammar & spelling ─────────────────────────────
+    grammar_issues = []
+    if _HAS_LANGTOOL:
+        try:
+            tool = language_tool_python.LanguageTool('en-US')
+            matches = tool.check(body)
+            for m in matches:
+                grammar_issues.append({
+                    "rule": m.ruleId,
+                    "message": m.message,
+                    "context": m.context,
+                    "replacements": m.replacements[:3] if m.replacements else [],
+                    "category": m.category,
+                })
+            tool.close()
+        except Exception:
+            pass  # Graceful degradation
+
+    report["grammar"] = {
+        "available": _HAS_LANGTOOL,
+        "issue_count": len(grammar_issues),
+        "issues": grammar_issues[:20],
+    }
+    if grammar_issues:
+        # Filter out false positives common in scientific text
+        real_issues = [g for g in grammar_issues
+                      if g["rule"] not in ("MORFOLOGIK_RULE_EN_US",
+                                           "UPPERCASE_SENTENCE_START")]
+        if real_issues:
+            report["issues"].append({
+                "type": "GRAMMAR",
+                "severity": "INFO" if len(real_issues) < 5 else "WARNING",
+                "count": len(real_issues),
+                "message": (f"LanguageTool found {len(real_issues)} grammar/style issues"),
+                "examples": [g["message"] for g in real_issues[:5]],
+            })
+
     # ── Summary scores (0-100) ────────────────────────────────────────
     # Readability score
     read_score = 100
@@ -322,12 +440,31 @@ def analyze_prose(paper_path, max_sentence_words=35, target_grade=12.0):
     wordy_total = sum(w["count"] for w in wordy_found)
     concise_score = max(0, 100 - wordy_total * 5 - hedge_count * 3)
 
-    overall = round((read_score + sent_score + passive_score + concise_score) / 4)
+    # Proselint score (deducts for style issues)
+    proselint_count = len(proselint_issues)
+    proselint_score = max(0, 100 - proselint_count * 4)
+
+    # Grammar score
+    grammar_real = len([g for g in grammar_issues
+                       if g.get("rule") not in ("MORFOLOGIK_RULE_EN_US",
+                                                "UPPERCASE_SENTENCE_START")])
+    grammar_score = max(0, 100 - grammar_real * 5)
+
+    # Algorithm-first score (penalize NeqSim overuse)
+    neqsim_abstract = report.get("neqsim_mentions", {}).get("abstract", 0)
+    neqsim_body = report.get("neqsim_mentions", {}).get("body", 0)
+    algo_first_score = max(0, 100 - neqsim_abstract * 30 - max(0, neqsim_body - 3) * 10)
+
+    overall = round((read_score + sent_score + passive_score + concise_score +
+                     proselint_score + grammar_score + algo_first_score) / 7)
     report["summary_scores"] = {
         "readability": round(read_score),
         "sentence_structure": round(sent_score),
         "active_voice": round(passive_score),
         "conciseness": round(concise_score),
+        "proselint_style": round(proselint_score),
+        "grammar": round(grammar_score),
+        "algorithm_first": round(algo_first_score),
         "overall": overall,
     }
 
@@ -393,5 +530,18 @@ def print_prose_report(report):
             bar = "█" * bar_len + "░" * (20 - bar_len)
             label = key.replace("_", " ").title()
             print(f"    {label:20s} {bar} {val}")
+
+    # Tool availability hints
+    proselint_info = report.get("proselint", {})
+    grammar_info = report.get("grammar", {})
+    hints = []
+    if not proselint_info.get("available"):
+        hints.append("proselint not installed — 'pip install proselint' for deeper style checks")
+    if not grammar_info.get("available"):
+        hints.append("language-tool-python not installed — 'pip install language-tool-python' for grammar")
+    if hints:
+        print("  Hints:")
+        for h in hints:
+            print(f"    [i] {h}")
 
     print()

@@ -1,0 +1,18 @@
+# CRC Press / Taylor & Francis publisher profile
+name: CRC Press
+trim_size: "156x234mm"
+margins:
+  top: "25mm"
+  bottom: "25mm"
+  inner: "20mm"
+  outer: "15mm"
+font:
+  family: "New Computer Modern"
+  size: "10pt"
+line_spacing: 1.2
+chapter_heading_style: "numbered"
+part_pages: true
+running_headers: true
+page_numbers: "bottom-center"
+max_pages: 500
+isbn_prefix: "978-1"

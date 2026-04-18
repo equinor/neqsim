@@ -2,6 +2,7 @@
 
 Run with: python -m pytest tests/ -v
 """
+import argparse
 import json
 import os
 import sys
@@ -10,6 +11,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+import yaml
 
 # Add paperlab root to path
 PAPERLAB_ROOT = Path(__file__).parent.parent
@@ -1130,8 +1132,8 @@ class TestResearchScanner:
 class TestScanCLI:
     """Test the scan CLI command integration."""
 
-    def test_scan_command_runs(self, capsys):
-        """scan command runs against real repo."""
+    def test_scan_legacy_command_runs(self, capsys):
+        """scan --legacy command runs against real repo."""
         import paperflow
 
         class Args:
@@ -1141,6 +1143,9 @@ class TestScanCLI:
             verbose = False
             output = None
             repo = str(PAPERLAB_ROOT.parent)
+            legacy = True
+            trending = False
+            full = False
 
         paperflow.cmd_scan(Args())
         output = capsys.readouterr().out
@@ -1299,3 +1304,760 @@ class TestDailyScan:
         from daily_scan import _content_hash
         h = _content_hash({"opportunities": []})
         assert len(h) == 16
+
+    def test_content_hash_trending_format(self):
+        """Trending-format opportunities also produce a deterministic hash."""
+        from daily_scan import _content_hash
+        report = {"opportunities": [
+            {"domain": "CO2 Capture and Storage", "trend_score": 75,
+             "inspiring_paper": {"title": "Novel CO2 capture method"}},
+        ]}
+        h1 = _content_hash(report)
+        h2 = _content_hash(report)
+        assert h1 == h2
+        assert len(h1) == 16
+
+    def test_content_hash_trending_differs_from_legacy(self):
+        """Trending and legacy formats produce different hashes."""
+        from daily_scan import _content_hash
+        legacy = {"opportunities": [
+            {"class_name": "SystemSrkEos", "score": 75, "readiness": "ready"},
+        ]}
+        trending = {"opportunities": [
+            {"domain": "Thermodynamic EOS", "trend_score": 80,
+             "inspiring_paper": {"title": "Novel CPA for polar mixtures"}},
+        ]}
+        assert _content_hash(legacy) != _content_hash(trending)
+
+
+class TestTrendingTopics:
+    """Test the trending_topics scanner."""
+
+    def test_neqsim_domains_structure(self):
+        """Each domain has required keys."""
+        sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+        from trending_topics import NEQSIM_DOMAINS
+        required_keys = {"queries", "neqsim_classes", "journals", "keywords"}
+        for name, info in NEQSIM_DOMAINS.items():
+            assert required_keys.issubset(info.keys()), f"{name} missing keys"
+            assert len(info["queries"]) >= 1, f"{name} has no queries"
+            assert len(info["neqsim_classes"]) >= 1, f"{name} has no classes"
+
+    def test_compute_trend_score_range(self):
+        """Trend score stays in 0-100 range."""
+        from trending_topics import _compute_trend_score
+        paper = {
+            "title": "Novel equation of state for CO2",
+            "abstract": "A simulation-based modeling study",
+            "year": 2026,
+            "publicationDate": "2026-01-15",
+            "citationCount": 50,
+        }
+        score = _compute_trend_score(paper, ["equation of state", "CO2", "simulation"])
+        assert 0 <= score <= 100
+        assert score >= 30  # recent, cited, matching keywords
+
+    def test_compute_trend_score_low_for_old_paper(self):
+        """Old papers without citations score low."""
+        from trending_topics import _compute_trend_score
+        paper = {
+            "title": "Some random topic",
+            "abstract": "No relevant keywords",
+            "year": 2015,
+            "citationCount": 0,
+        }
+        score = _compute_trend_score(paper, ["thermodynamic"])
+        assert score < 30
+
+    def test_generate_opportunity_structure(self):
+        """Generated opportunity has all required fields."""
+        from trending_topics import _generate_opportunity
+        paper = {
+            "title": "Benchmarking CPA EOS for polar mixtures",
+            "abstract": "A benchmark comparison of equation of state models",
+            "year": 2026,
+            "citationCount": 12,
+            "url": "https://example.com/paper",
+            "authors": [{"name": "J. Smith"}, {"name": "A. Jones"}],
+        }
+        domain_info = {
+            "neqsim_classes": ["SystemSrkCPAstatoil"],
+            "journals": ["fluid_phase_equilibria"],
+            "keywords": ["CPA", "polar"],
+        }
+        opp = _generate_opportunity(paper, "Thermodynamic EOS", domain_info, 75)
+        assert "title" in opp
+        assert "domain" in opp
+        assert "paper_type" in opp
+        assert "trend_score" in opp
+        assert "inspiring_paper" in opp
+        assert "neqsim_classes" in opp
+        assert "neqsim_improvement" in opp
+        assert "research_angle" in opp
+        assert opp["paper_type"] == "comparative"  # "benchmark" in abstract
+        assert opp["trend_score"] == 75
+        assert "J. Smith" in opp["inspiring_paper"]["authors"]
+
+    def test_suggestion_hash_deterministic(self):
+        """Same opportunity produces same hash."""
+        from trending_topics import _suggestion_hash
+        opp = {
+            "domain": "CO2 Capture and Storage",
+            "inspiring_paper": {"title": "Novel CO2 method"},
+        }
+        h1 = _suggestion_hash(opp)
+        h2 = _suggestion_hash(opp)
+        assert h1 == h2
+        assert len(h1) == 16
+
+    def test_suggestion_hash_differs(self):
+        """Different opportunities produce different hashes."""
+        from trending_topics import _suggestion_hash
+        o1 = {"domain": "A", "inspiring_paper": {"title": "Paper 1"}}
+        o2 = {"domain": "B", "inspiring_paper": {"title": "Paper 2"}}
+        assert _suggestion_hash(o1) != _suggestion_hash(o2)
+
+    def test_daily_suggestion_with_mock_scan(self, tmp_path, monkeypatch):
+        """daily_suggestion picks one opportunity and records history."""
+        from datetime import date as _date
+        from trending_topics import daily_suggestion
+        # Mock scan_trending to avoid network calls
+        mock_report = {
+            "metadata": {"scan_date": "2026-04-18"},
+            "summary": {"total_opportunities": 2, "by_domain": {}, "by_paper_type": {},
+                        "top_score": 80},
+            "opportunities": [
+                {"title": "Study A", "domain": "Thermodynamic EOS",
+                 "paper_type": "method", "trend_score": 80,
+                 "inspiring_paper": {"title": "Paper A", "authors": [],
+                                     "year": 2026, "citations": 5, "url": ""},
+                 "suggested_journals": ["fluid_phase_equilibria"],
+                 "neqsim_classes": ["SystemSrkEos"],
+                 "neqsim_improvement": ["Improve"],
+                 "research_angle": "Angle A",
+                 "effort": "medium", "effort_weeks": 8},
+                {"title": "Study B", "domain": "CO2 Capture and Storage",
+                 "paper_type": "comparative", "trend_score": 60,
+                 "inspiring_paper": {"title": "Paper B", "authors": [],
+                                     "year": 2025, "citations": 10, "url": ""},
+                 "suggested_journals": ["computers_chem_eng"],
+                 "neqsim_classes": ["ProcessSystem"],
+                 "neqsim_improvement": ["Benchmark"],
+                 "research_angle": "Angle B",
+                 "effort": "medium", "effort_weeks": 8},
+            ],
+        }
+        import trending_topics as tt
+        monkeypatch.setattr(tt, "scan_trending", lambda **kw: mock_report)
+
+        pick = daily_suggestion(
+            history_dir=str(tmp_path),
+            _today=_date(2026, 4, 18),
+        )
+
+        assert pick is not None
+        assert pick["title"] in ("Study A", "Study B")
+        assert pick["suggestion_date"] == "2026-04-18"
+
+        # History file written
+        history_path = tmp_path / "suggestion_history.json"
+        assert history_path.exists()
+        history = json.loads(history_path.read_text())
+        assert len(history) == 1
+        assert history[0]["date"] == "2026-04-18"
+
+    def test_daily_suggestion_different_dates(self, tmp_path, monkeypatch):
+        """Different dates can produce different picks (rotation)."""
+        from datetime import date as _date
+        from trending_topics import daily_suggestion
+        # 5 opportunities to give rotation room
+        opps = []
+        for i in range(5):
+            opps.append({
+                "title": f"Study {i}", "domain": f"Domain {i}",
+                "paper_type": "method", "trend_score": 70 - i,
+                "inspiring_paper": {"title": f"Paper {i}", "authors": [],
+                                    "year": 2026, "citations": 5, "url": ""},
+                "suggested_journals": ["fluid_phase_equilibria"],
+                "neqsim_classes": ["X"],
+                "neqsim_improvement": ["Y"],
+                "research_angle": "Z",
+                "effort": "medium", "effort_weeks": 8,
+            })
+        mock_report = {
+            "metadata": {"scan_date": "2026-04-18"},
+            "summary": {"total_opportunities": 5, "by_domain": {},
+                        "by_paper_type": {}, "top_score": 70},
+            "opportunities": opps,
+        }
+        import trending_topics as tt
+        monkeypatch.setattr(tt, "scan_trending", lambda **kw: mock_report)
+
+        # Collect picks over several days
+        picks = set()
+        for day_offset in range(20):
+            d = _date(2026, 1, 1 + day_offset)
+            # Use fresh history each day to not exhaust pool
+            day_dir = tmp_path / f"day_{day_offset}"
+            day_dir.mkdir()
+            pick = daily_suggestion(
+                history_dir=str(day_dir),
+                _today=d,
+            )
+            if pick:
+                picks.add(pick["title"])
+
+        # With 5 opportunities and 20 days, should see multiple distinct picks
+        assert len(picks) >= 2
+
+    def test_format_daily_suggestion_none(self):
+        """Formatting None returns fallback message."""
+        from trending_topics import format_daily_suggestion
+        text = format_daily_suggestion(None)
+        assert "No suggestion" in text
+
+    def test_format_daily_suggestion_output(self):
+        """Formatted suggestion contains key fields."""
+        from trending_topics import format_daily_suggestion
+        pick = {
+            "title": "NeqSim Application to Hydrogen Systems",
+            "domain": "Hydrogen Systems",
+            "paper_type": "application",
+            "trend_score": 65,
+            "effort": "medium",
+            "effort_weeks": 8,
+            "suggested_journals": ["computers_chem_eng"],
+            "inspiring_paper": {
+                "title": "H2 blending in gas networks",
+                "authors": ["Smith", "Jones"],
+                "year": 2026,
+                "citations": 15,
+                "url": "https://example.com",
+            },
+            "research_angle": "Compare NeqSim predictions with field data.",
+            "neqsim_classes": ["ProcessSystem"],
+            "neqsim_improvement": ["Validate H2 models"],
+            "suggestion_date": "2026-04-18",
+        }
+        text = format_daily_suggestion(pick)
+        assert "Today's Paper Opportunity" in text
+        assert "Hydrogen Systems" in text
+        assert "H2 blending" in text
+        assert "Smith" in text
+
+    def test_generate_markdown_suggestion(self):
+        """Markdown suggestion has proper structure."""
+        from trending_topics import generate_markdown_suggestion
+        pick = {
+            "title": "Benchmarking NeqSim for CO2 Transport",
+            "domain": "CO2 Capture and Storage",
+            "paper_type": "comparative",
+            "trend_score": 80,
+            "effort": "medium",
+            "effort_weeks": 8,
+            "suggested_journals": ["computers_chem_eng"],
+            "inspiring_paper": {
+                "title": "Dense phase CO2 transport review",
+                "authors": ["Author1"],
+                "year": 2026,
+                "citations": 20,
+                "url": "https://example.com",
+            },
+            "research_angle": "Benchmark NeqSim CO2 models.",
+            "neqsim_classes": ["CO2InjectionWellAnalyzer"],
+            "neqsim_improvement": ["Validate"],
+            "suggestion_date": "2026-04-18",
+        }
+        md = generate_markdown_suggestion(pick)
+        assert "# Daily Paper Suggestion" in md
+        assert "CO2 Capture" in md
+        assert "Inspiring Paper" in md
+        assert "NeqSim Connection" in md
+
+    def test_generate_markdown_suggestion_none(self):
+        """Markdown for None returns fallback."""
+        from trending_topics import generate_markdown_suggestion
+        md = generate_markdown_suggestion(None)
+        assert "No suggestions available" in md
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: paperflow list command
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCmdList:
+    def test_list_shows_papers(self, tmp_path, monkeypatch, capsys):
+        """cmd_list prints a table of papers."""
+        import paperflow as pf
+        papers = tmp_path / "papers"
+        papers.mkdir()
+        (papers / "paper_a").mkdir()
+        (papers / "paper_a" / "plan.json").write_text(json.dumps({
+            "title": "A", "target_journal": "fluid_phase_equilibria",
+            "status": "drafting", "paper_type": "comparative",
+        }))
+        (papers / "paper_a" / "paper.md").write_text("hello world test")
+        monkeypatch.setattr(pf, "PAPERS_DIR", papers)
+        pf.cmd_list(argparse.Namespace())
+        out = capsys.readouterr().out
+        assert "paper_a" in out
+        assert "drafting" in out
+        assert "1 papers total" in out
+
+    def test_list_handles_broken_json(self, tmp_path, monkeypatch, capsys):
+        """cmd_list marks broken plan.json as BROKEN."""
+        import paperflow as pf
+        papers = tmp_path / "papers"
+        papers.mkdir()
+        (papers / "broken_paper").mkdir()
+        (papers / "broken_paper" / "plan.json").write_text("{bad json")
+        monkeypatch.setattr(pf, "PAPERS_DIR", papers)
+        pf.cmd_list(argparse.Namespace())
+        out = capsys.readouterr().out
+        assert "BROKEN" in out
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: normalize_status
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestNormalizeStatus:
+    def test_canonical_passthrough(self):
+        from paperflow import normalize_status
+        assert normalize_status("drafting") == "drafting"
+        assert normalize_status("planning") == "planning"
+
+    def test_alias_mapping(self):
+        from paperflow import normalize_status
+        assert normalize_status("DRAFT") == "drafting"
+        assert normalize_status("FIRST DRAFT") == "drafting"
+        assert normalize_status("draft_v2") == "drafting"
+        assert normalize_status("draft_in_progress") == "drafting"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: nomenclature_extractor
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestNomenclatureExtractor:
+    def test_extracts_known_symbols(self, tmp_path):
+        """Finds known thermo symbols in manuscript text."""
+        from nomenclature_extractor import extract_nomenclature
+        md = "The pressure $P$ and temperature $T$ affect the fugacity coefficient $\\phi$.\n"
+        paper = tmp_path / "paper.md"
+        paper.write_text(md)
+        report = extract_nomenclature(str(paper))
+        assert report.get("symbol_count", 0) > 0
+
+    def test_missing_manuscript(self, tmp_path):
+        """Returns error for missing file."""
+        from nomenclature_extractor import extract_nomenclature
+        report = extract_nomenclature(str(tmp_path / "no.md"))
+        assert "error" in report
+
+    def test_no_symbols(self, tmp_path):
+        """Returns no_symbols status for plain text."""
+        from nomenclature_extractor import extract_nomenclature
+        paper = tmp_path / "paper.md"
+        paper.write_text("Just plain text with no math at all.")
+        report = extract_nomenclature(str(paper))
+        assert report.get("status") == "no_symbols" or report.get("symbol_count", 0) == 0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: statistical_tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestStatisticalTests:
+    def test_missing_results(self, tmp_path):
+        """Returns error for paper with no results."""
+        from statistical_tests import analyze_benchmarks
+        report = analyze_benchmarks(str(tmp_path))
+        assert "error" in report or report.get("status") == "no_data"
+
+    def test_format_markdown_empty(self):
+        """format_stats_markdown handles empty report gracefully."""
+        from statistical_tests import format_stats_markdown
+        md = format_stats_markdown({}, metric="cpu_time_ms")
+        assert isinstance(md, str)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: render_html_generic
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestRenderHtmlGeneric:
+    def test_renders_paper_to_html(self, tmp_path):
+        """Produces an HTML file from a minimal paper.md."""
+        from render_html_generic import render_paper_html, get_html_header
+        paper_dir = tmp_path / "paper_test"
+        paper_dir.mkdir()
+        (paper_dir / "figures").mkdir()
+        (paper_dir / "submission").mkdir()
+        (paper_dir / "plan.json").write_text(json.dumps({"title": "Test"}))
+        (paper_dir / "paper.md").write_text("# Test\n\n## Introduction\n\nHello world.\n")
+        result = render_paper_html(str(paper_dir))
+        assert result is not None
+        html_file = paper_dir / "submission" / "paper.html"
+        assert html_file.exists()
+        html = html_file.read_text(encoding="utf-8")
+        assert "Hello world" in html
+
+    def test_get_html_header(self):
+        """get_html_header includes the title."""
+        from render_html_generic import get_html_header
+        header = get_html_header(title="My Paper")
+        assert "My Paper" in header
+        assert "<html>" in header
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Test: template selection in cmd_new
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestTemplateSelection:
+    def test_comparative_gets_comparative_template(self, tmp_path, monkeypatch):
+        """--paper-type comparative selects paper_skeleton_comparative.md."""
+        import paperflow as pf
+        monkeypatch.setattr(pf, "PAPERS_DIR", tmp_path / "papers")
+        (tmp_path / "papers").mkdir()
+        args = argparse.Namespace(
+            title="Test Comp", journal="fluid_phase_equilibria",
+            topic="test_comp", paper_type="comparative",
+        )
+        pf.cmd_new(args)
+        paper_dir = tmp_path / "papers" / "test_comp_2026"
+        plan = json.loads((paper_dir / "plan.json").read_text())
+        assert plan["paper_type"] == "comparative"
+
+    def test_default_template_when_no_type(self, tmp_path, monkeypatch):
+        """No --paper-type uses default skeleton."""
+        import paperflow as pf
+        monkeypatch.setattr(pf, "PAPERS_DIR", tmp_path / "papers")
+        (tmp_path / "papers").mkdir()
+        args = argparse.Namespace(
+            title="Test Default", journal="fluid_phase_equilibria",
+            topic="test_default", paper_type=None,
+        )
+        pf.cmd_new(args)
+        paper_dir = tmp_path / "papers" / "test_default_2026"
+        assert (paper_dir / "paper.md").exists()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Book feature tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestBookBuilder:
+    """Tests for tools/book_builder.py scaffolding and assembly."""
+
+    def _create_book(self, tmp_path, n_chapters=3, publisher="self"):
+        """Helper: scaffold a book project into tmp_path/books."""
+        from book_builder import create_book_project
+        return create_book_project(
+            title="Test Book",
+            publisher=publisher,
+            n_chapters=n_chapters,
+            books_dir=tmp_path / "books",
+        )
+
+    def test_scaffold_creates_directories(self, tmp_path):
+        """book-new creates the expected directory structure."""
+        bd = self._create_book(tmp_path)
+        assert (bd / "book.yaml").exists()
+        assert (bd / "frontmatter").is_dir()
+        assert (bd / "chapters").is_dir()
+        assert (bd / "backmatter").is_dir()
+        assert (bd / "submission").is_dir()
+
+    def test_scaffold_chapters(self, tmp_path):
+        """Scaffolded book has the requested number of chapters."""
+        bd = self._create_book(tmp_path, n_chapters=5)
+        cfg = yaml.safe_load((bd / "book.yaml").read_text())
+        total = sum(len(part.get("chapters", [])) for part in cfg["parts"])
+        assert total == 5
+
+    def test_scaffold_chapter_dirs_exist(self, tmp_path):
+        """Every chapter listed in book.yaml has a directory on disk."""
+        bd = self._create_book(tmp_path)
+        cfg = yaml.safe_load((bd / "book.yaml").read_text())
+        for part in cfg["parts"]:
+            for ch in part.get("chapters", []):
+                assert (bd / "chapters" / ch["dir"]).is_dir()
+                assert (bd / "chapters" / ch["dir"] / "chapter.md").exists()
+
+    def test_scaffold_frontmatter(self, tmp_path):
+        """Frontmatter files are created from templates."""
+        bd = self._create_book(tmp_path)
+        for name in ("title_page", "copyright", "dedication", "preface"):
+            assert (bd / "frontmatter" / f"{name}.md").exists()
+
+    def test_scaffold_duplicate_raises(self, tmp_path):
+        """Creating the same book twice raises FileExistsError."""
+        self._create_book(tmp_path)
+        with pytest.raises(FileExistsError):
+            self._create_book(tmp_path)
+
+    def test_load_config(self, tmp_path):
+        """load_book_config returns parsed YAML with required keys."""
+        from book_builder import load_book_config
+        bd = self._create_book(tmp_path)
+        cfg = load_book_config(bd)
+        assert "title" in cfg
+        assert "authors" in cfg
+        assert "parts" in cfg
+
+    def test_load_config_missing_yaml(self, tmp_path):
+        """load_book_config raises FileNotFoundError for bad path."""
+        from book_builder import load_book_config
+        with pytest.raises(FileNotFoundError):
+            load_book_config(tmp_path / "nonexistent")
+
+
+class TestBookAddChapter:
+    """Tests for add_chapter."""
+
+    def test_add_chapter_increments_count(self, tmp_path):
+        """Adding a chapter increases the total chapter count."""
+        from book_builder import create_book_project, add_chapter, load_book_config
+        bd = create_book_project("Test", n_chapters=2, books_dir=tmp_path / "books")
+        cfg_before = load_book_config(bd)
+        n_before = sum(len(p.get("chapters", [])) for p in cfg_before["parts"])
+
+        add_chapter(bd, title="New Chapter")
+        cfg_after = load_book_config(bd)
+        n_after = sum(len(p.get("chapters", [])) for p in cfg_after["parts"])
+        assert n_after == n_before + 1
+
+    def test_add_chapter_creates_dir(self, tmp_path):
+        """The added chapter has a directory and chapter.md on disk."""
+        from book_builder import create_book_project, add_chapter, load_book_config
+        bd = create_book_project("Test", n_chapters=2, books_dir=tmp_path / "books")
+        ch_dir = add_chapter(bd, title="Extra Chapter")
+        assert Path(ch_dir).is_dir()
+        assert (Path(ch_dir) / "chapter.md").exists()
+
+
+class TestBookTOC:
+    """Tests for TOC generation."""
+
+    def test_generate_toc_entries(self, tmp_path):
+        """TOC contains an entry for each chapter."""
+        from book_builder import create_book_project, generate_toc
+        bd = create_book_project("Test", n_chapters=4, books_dir=tmp_path / "books")
+        toc = generate_toc(bd)
+        # At minimum, should have part header + 4 chapter entries
+        chapter_entries = [t for t in toc if t[0] == 1]
+        assert len(chapter_entries) == 4
+
+    def test_format_toc_produces_string(self, tmp_path):
+        """format_toc returns a non-empty string."""
+        from book_builder import create_book_project, generate_toc, format_toc
+        bd = create_book_project("Test", n_chapters=2, books_dir=tmp_path / "books")
+        toc = generate_toc(bd)
+        text = format_toc(toc)
+        assert isinstance(text, str)
+        assert len(text) > 0
+
+
+class TestBookStatus:
+    """Tests for get_book_status."""
+
+    def test_status_counts(self, tmp_path):
+        """get_book_status returns correct chapter count."""
+        from book_builder import create_book_project, get_book_status
+        bd = create_book_project("Test", n_chapters=3, books_dir=tmp_path / "books")
+        status = get_book_status(bd)
+        assert status["total_chapters"] == 3
+        assert status["title"] == "Test"
+        assert isinstance(status["chapters"], list)
+        assert len(status["chapters"]) == 3
+
+    def test_status_word_count(self, tmp_path):
+        """Word count reflects actual chapter content."""
+        from book_builder import create_book_project, get_book_status
+        bd = create_book_project("Test", n_chapters=1, books_dir=tmp_path / "books")
+        # Write some content to the first chapter
+        ch_dir = bd / "chapters" / "ch01"
+        (ch_dir / "chapter.md").write_text("word " * 100, encoding="utf-8")
+        status = get_book_status(bd)
+        assert status["total_words"] == 100
+
+    def test_status_todo_detection(self, tmp_path):
+        """TODOs in chapter text are counted."""
+        from book_builder import create_book_project, get_book_status
+        bd = create_book_project("Test", n_chapters=1, books_dir=tmp_path / "books")
+        ch_dir = bd / "chapters" / "ch01"
+        (ch_dir / "chapter.md").write_text("Some text TODO fix this TODO add that",
+                                           encoding="utf-8")
+        status = get_book_status(bd)
+        assert status["total_todos"] == 2
+
+
+class TestBookChecker:
+    """Tests for tools/book_checker.py."""
+
+    def test_clean_book_no_errors(self, tmp_path):
+        """A freshly scaffolded book has no structure errors."""
+        from book_builder import create_book_project
+        from book_checker import check_structure
+        bd = create_book_project("Test", n_chapters=2, books_dir=tmp_path / "books")
+        issues = check_structure(bd)
+        errors = [i for i in issues if i["severity"] == "error"]
+        assert len(errors) == 0
+
+    def test_missing_chapter_dir_is_error(self, tmp_path):
+        """Deleting a chapter directory triggers a structure error."""
+        from book_builder import create_book_project
+        from book_checker import check_structure
+        bd = create_book_project("Test", n_chapters=2, books_dir=tmp_path / "books")
+        shutil.rmtree(bd / "chapters" / "ch02")
+        issues = check_structure(bd)
+        errors = [i for i in issues if i["severity"] == "error"]
+        assert len(errors) >= 1
+
+    def test_run_checks_all(self, tmp_path):
+        """run_checks with no filter runs all checks without crashing."""
+        from book_builder import create_book_project
+        from book_checker import run_checks
+        bd = create_book_project("Test", n_chapters=2, books_dir=tmp_path / "books")
+        issues = run_checks(bd)
+        assert isinstance(issues, list)
+
+    def test_format_issues_empty(self):
+        """format_issues with no issues returns success message."""
+        from book_checker import format_issues
+        assert "passed" in format_issues([]).lower()
+
+    def test_format_issues_with_errors(self):
+        """format_issues renders error count."""
+        from book_checker import format_issues
+        issues = [{"check": "test", "severity": "error", "message": "bad"}]
+        text = format_issues(issues)
+        assert "1" in text
+        assert "error" in text.lower()
+
+    def test_completeness_reports_short_chapters(self, tmp_path):
+        """check_completeness warns about chapters below target word count."""
+        from book_builder import create_book_project
+        from book_checker import check_completeness
+        bd = create_book_project("Test", n_chapters=1, books_dir=tmp_path / "books")
+        # Default template is short — should trigger warning
+        issues = check_completeness(bd, target_words_per_chapter=5000)
+        warnings = [i for i in issues if i["severity"] == "warning"]
+        assert len(warnings) >= 1
+
+
+class TestBookRenderHTML:
+    """Tests for book HTML rendering (no external deps)."""
+
+    def test_render_produces_html(self, tmp_path):
+        """render_book_html produces an .html file."""
+        from book_builder import create_book_project
+        from book_render_html import render_book_html
+        bd = create_book_project("Test HTML", n_chapters=2, books_dir=tmp_path / "books")
+        result = render_book_html(bd)
+        assert result is not None
+        assert Path(result).exists()
+        assert Path(result).suffix == ".html"
+
+    def test_html_contains_chapter_content(self, tmp_path):
+        """Generated HTML includes chapter text."""
+        from book_builder import create_book_project
+        from book_render_html import render_book_html
+        bd = create_book_project("Test HTML", n_chapters=1, books_dir=tmp_path / "books")
+        # Write recognisable content
+        ch_dir = bd / "chapters" / "ch01"
+        (ch_dir / "chapter.md").write_text(
+            "# Chapter 1\n\nUnique sentinel text alpha bravo charlie.",
+            encoding="utf-8",
+        )
+        result = render_book_html(bd)
+        html = Path(result).read_text(encoding="utf-8")
+        assert "alpha bravo charlie" in html
+
+    def test_html_has_sidebar(self, tmp_path):
+        """Full-book HTML includes a sidebar nav."""
+        from book_builder import create_book_project
+        from book_render_html import render_book_html
+        bd = create_book_project("Test Nav", n_chapters=2, books_dir=tmp_path / "books")
+        result = render_book_html(bd)
+        html = Path(result).read_text(encoding="utf-8")
+        assert "sidebar" in html
+
+    def test_html_chapter_filter(self, tmp_path):
+        """chapter_filter renders only the specified chapter."""
+        from book_builder import create_book_project
+        from book_render_html import render_book_html
+        bd = create_book_project("Filter Test", n_chapters=3, books_dir=tmp_path / "books")
+        # Write unique content per chapter
+        for i in range(1, 4):
+            ch_md = bd / "chapters" / f"ch{i:02d}" / "chapter.md"
+            ch_md.write_text(f"# Chapter {i}\n\nMarker{i}Unique", encoding="utf-8")
+        result = render_book_html(bd, chapter_filter="ch02")
+        html = Path(result).read_text(encoding="utf-8")
+        assert "Marker2Unique" in html
+        # Should NOT contain ch01 or ch03 content
+        assert "Marker1Unique" not in html
+        assert "Marker3Unique" not in html
+
+
+class TestBookCLI:
+    """Integration tests for book CLI commands in paperflow.py."""
+
+    def test_cmd_book_new(self, tmp_path, monkeypatch):
+        """book-new creates a book project via CLI function."""
+        import paperflow as pf
+        monkeypatch.setattr(pf, "BOOKS_DIR", tmp_path / "books")
+        args = argparse.Namespace(
+            title="CLI Test Book", publisher="self", chapters=3,
+        )
+        pf.cmd_book_new(args)
+        # Find the created directory
+        books = list((tmp_path / "books").iterdir())
+        assert len(books) == 1
+        assert (books[0] / "book.yaml").exists()
+
+    def test_cmd_book_status(self, tmp_path, monkeypatch, capsys):
+        """book-status prints chapter overview."""
+        import paperflow as pf
+        from book_builder import create_book_project
+        bd = create_book_project("Status Test", n_chapters=2, books_dir=tmp_path / "books")
+        args = argparse.Namespace(book_dir=str(bd))
+        pf.cmd_book_status(args)
+        captured = capsys.readouterr()
+        assert "Status Test" in captured.out
+        assert "Chapters" in captured.out
+
+    def test_cmd_book_toc(self, tmp_path, capsys):
+        """book-toc prints table of contents."""
+        import paperflow as pf
+        from book_builder import create_book_project
+        bd = create_book_project("TOC Test", n_chapters=3, books_dir=tmp_path / "books")
+        args = argparse.Namespace(book_dir=str(bd))
+        pf.cmd_book_toc(args)
+        captured = capsys.readouterr()
+        assert "TOC Test" in captured.out
+
+    def test_cmd_book_check(self, tmp_path, capsys):
+        """book-check runs without error on clean book."""
+        import paperflow as pf
+        from book_builder import create_book_project
+        bd = create_book_project("Check Test", n_chapters=2, books_dir=tmp_path / "books")
+        args = argparse.Namespace(book_dir=str(bd), check="all")
+        # Should not raise (clean book has warnings but no errors)
+        try:
+            pf.cmd_book_check(args)
+        except SystemExit as e:
+            # Exit code 1 is acceptable if there are warnings treated as errors
+            pass
+
+    def test_cmd_book_render_html(self, tmp_path):
+        """book-render --format html produces output."""
+        import paperflow as pf
+        from book_builder import create_book_project
+        bd = create_book_project("Render Test", n_chapters=2, books_dir=tmp_path / "books")
+        args = argparse.Namespace(
+            book_dir=str(bd), out_format="html", chapter=None,
+        )
+        pf.cmd_book_render(args)

@@ -3301,6 +3301,23 @@ def setup_workspace():
             _write_file(path, content)
             created = True
 
+    # Overlay tracked canonical templates from devtools/task_template/ if present.
+    # These are the authoritative versions of files like generate_report.py and
+    # starter notebooks.  They override the embedded strings above so that
+    # improvements made to devtools/task_template/ automatically propagate to
+    # new tasks without updating the embedded strings in this script.
+    canonical_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "task_template")
+    if os.path.isdir(canonical_dir):
+        for root, _dirs, files in os.walk(canonical_dir):
+            for fname in files:
+                src = os.path.join(root, fname)
+                rel = os.path.relpath(src, canonical_dir)
+                dst = os.path.join(TEMPLATE_DIR, rel)
+                # Always overwrite with canonical version
+                _write_file(dst, open(src, "r", encoding="utf-8").read())
+                created = True
+
     return created
 
 

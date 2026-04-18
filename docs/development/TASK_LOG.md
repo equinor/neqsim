@@ -15,7 +15,7 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 ```
 ### YYYY-MM-DD — Short task title
-**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design)
+**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)
 **Keywords:** comma, separated, search, terms
 **Solution:** Where the code lives (test file, notebook, source file)
 **Notes:** Key decisions, gotchas, or results worth remembering
@@ -26,6 +26,199 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 ## Log
 
 <!-- Add new entries at the top. Most recent first. -->
+
+### 2026-07-04 — Compressor Sealing
+**Type:** B (Process)
+**Keywords:** bacalhau, bics, components, compressor, connected, equipment, flow, fpso, model, pr78
+**Solution:** task_solve/2026-07-04 Compressor sealing/
+**Notes:** The unified NeqSim model replicates the Bacalhau FPSO process in a single connected ProcessSystem. Temperature MAE is 11.7%, flow MAE 9.5%, MW MAE 14.6%. Seal gas JT at 48 bar gives 15.8C (UniSim: 18.2C, -2.3C difference), confirming 1.
+
+### 2026-04-16 — Asgard A Full Process Model with Plant Data Integration
+**Type:** B (Process)
+**Keywords:** appropriate, asgard, both, compression, converged, data, explicitly, full, integration, liquid
+**Solution:** task_solve/2026-04-16_asgard_a_full_process_model_with_plant_data_integration/step2_analysis/01_asgard_a_detailed_process_model.ipynb, task_solve/2026-04-16_asgard_a_full_process_model_with_plant_data_integration/step2_analysis/01_asgard_a_process_model.ipynb, task_solve/2026-04-16_asgard_a_full_process_model_with_plant_data_integration/step2_analysis/02_asgard_a_full_process_with_recycles.ipynb
+**Notes:** Full Åsgard A process model with recycles converged. Scrubber liquids recycled to appropriate separation stages. Both RI trains modeled explicitly. Total compression power: 62.9 MW.
+
+### 2026-04-16 — Smeaheia CO2 Injection - Hydrogen Accumulation in Wells
+**Type:** B (Process)
+**Keywords:** accumulation, hydrogen, injection, smeaheia, wells
+**Solution:** task_solve/2026-04-16_smeaheia_co2_injection_hydrogen_accumulation_in_wells/step2_analysis/01_h2_accumulation_analysis.ipynb
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-16 — Smeaheia CO2 Injection Hydrogen Accumulation Risk Assessment
+**Type:** B (Process)
+**Keywords:** accumulation, assessment, bara, classic, component, conditions, critical, dense, drops, equation
+**Solution:** task_solve/2026-04-16_smeaheia_co2_injection_hydrogen_accumulation_risk_assessment/step2_analysis/01_hydrogen_accumulation_analysis.ipynb, task_solve/2026-04-16_smeaheia_co2_injection_hydrogen_accumulation_risk_assessment/step2_analysis/02_plant_comparison_report.ipynb
+**Notes:** The Smeaheia CO2 injection well operates safely in dense single phase under all normal operating conditions (110-200 bara, 4-45°C).
+
+### 2026-04-13 — Elemental sulfur deposition in gas turbine Heidrun
+**Type:** B (Process)
+**Keywords:** approximately, assumed, causes, cooling, deposition, drop, elemental, fuel, heidrun, huron
+**Solution:** task_solve/2026-04-13_elemental_sulfur_deposition_in_gas_turbine_heidrun/step2_analysis/01_sulfur_deposition_heidrun.ipynb
+**Notes:** NeqSim thermodynamic modelling shows the S₈ deposition onset temperature is approximately 4°C at 40 bar for the assumed Heidrun fuel gas (20 ppm H₂S). A 20-bar pressure drop causes ~10.5°C JT cooling, giving an outlet of 19.
+
+### 2026-04-13 — FLNG feedgas process design and analysis
+**Type:** F (Design)
+**Keywords:** achieved, amine, benzene, both, case, cases, comp, component, design, essentially
+**Solution:** task_solve/2026-04-13_flng_feedgas_process_design_and_analysis/step2_analysis/01_flng_process.ipynb
+**Notes:** 1. CO2 removal to 50 ppm achieved for both Lean and Rich cases via amine unit (modelled as component splitter). 2.
+
+### 2026-04-10 — Oseberg Grane crude oil blending into Sture blend
+**Type:** B (Process)
+**Keywords:** blend, blending, crude, decreases, e300, exceed, fluid, fraction, grane, gravity
+**Solution:** task_solve/2026-04-10_oseberg_grane_crude_oil_blending_into_sture_blend/step2_analysis/01_oseberg_grane_sture_blending_2030.ipynb
+**Notes:** The Oseberg-Grane blend API gravity decreases monotonically with increasing Grane fraction. To maintain the historical Sture Blend specification of ~37° API, the Grane fraction should not exceed the interpolated threshold.
+
+### 2026-04-10 — Out of Zone Injection - NeqSim Implementation Discussion
+**Type:** E (Feature)
+**Keywords:** discussion, implementation, injection, zone
+**Solution:** task_solve/2026-04-10_out_of_zone_injection_neqsim_implementation_discussion/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-09 — MIMEE NeqSim Code Review - Methane Emissions
+**Type:** E (Feature)
+**Keywords:** code, emissions, methane, mimee, review
+**Solution:** task_solve/2026-04-09_mimee_neqsim_code_review_methane_emissions/step2_analysis/01_reference_implementation.ipynb, task_solve/2026-04-09_mimee_neqsim_code_review_methane_emissions/step2_analysis/02_detailed_method_comparison.ipynb, task_solve/2026-04-09_mimee_neqsim_code_review_methane_emissions/step2_analysis/04_gas_composition_sensitivity.ipynb
+**Notes:** Key results: deviation average percent: 38.0; deviation range percent: 8.4% to 80.1%; offshore norge equivalent temp C: 60-65; crossover temp C: ~40; neqsim factor at 20C g per m3 bar: 25.21.
+
+### 2026-04-08 — R510 SG Condensation UniSim NeqSim Comparison
+**Type:** D (Standards)
+**Keywords:** carcara, characterization, comparison, component, components, compositions, condensation, e300, equinor, feed
+**Solution:** task_solve/2026-04-08_r510_sg_condensation_unisim_neqsim_comparison/step2_analysis/01_comparison.ipynb
+**Notes:** The E300 import successfully reproduces the UniSim 31-component fluid characterization in NeqSim. Molecular weights match to within 0.3% for all 12 streams tested (feed, gas, oil compositions). The feed flash vapour fraction differs by 3.
+
+### 2026-04-08 — R510 SG condensation UniSim to NeqSim conversion
+**Type:** B (Process)
+**Keywords:** condensation, conversion, r510, unisim
+**Solution:** task_solve/2026-04-08_r510_sg_condensation_unisim_to_neqsim_conversion/step2_analysis/01_unisim_neqsim_comparison.ipynb
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-08 — Troll A early phase sprint paper
+**Type:** B (Process)
+**Keywords:** early, paper, phase, sprint, troll
+**Solution:** task_solve/2026-04-08_troll_a_early_phase_sprint_paper/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-07 — Bacalhau compressor dry gas seal condensation analysis
+**Type:** B (Process)
+**Keywords:** alkane, bacalhau, caused, causes, components, compressor, condensation, continuous, during, envelope
+**Solution:** task_solve/2026-04-07_bacalhau_compressor_dry_gas_seal_condensation_analysis/step2_analysis/01_seal_gas_condensation_analysis.ipynb, task_solve/2026-04-07_bacalhau_compressor_dry_gas_seal_condensation_analysis/step2_analysis/02_seal_gas_system_process_model.ipynb, task_solve/2026-04-07_bacalhau_compressor_dry_gas_seal_condensation_analysis/step2_analysis/03_dry_gas_seal_analyzer_java.ipynb
+**Notes:** The dry gas seal failures on the GIC (BCL-304/E, 3rd stage) are caused by TWO condensation mechanisms: (1) PRIMARY — continuous seal leakage during standstill causes gas to expand isenthalpically from 421 barg to 1.
+
+### 2026-04-07 — Bacalhau Injection Compressor Dry Gas Seal Failure Analysis
+**Type:** B (Process)
+**Keywords:** bacalhau, compressor, failure, injection, seal
+**Solution:** task_solve/2026-04-07_bacalhau_injection_compressor_dry_gas_seal_failure_analysis/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-06 — Advanced Electrolyte EOS Development and Scientific Paper
+**Type:** A (Property)
+**Keywords:** advanced, average, calculation, corrected, counter, cross, development, dilution, discovered, electrolyte
+**Solution:** task_solve/2026-04-06_advanced_electrolyte_eos_development_and_scientific_paper/step2_analysis/01_electrolyte_model_comparison.ipynb
+**Notes:** Discovered fundamental reference state bug in getActivityCoefficient(k): counter-ions retained in reference, weakening DH ~3x. Corrected 2-arg calculation reduces average MAE from 16.9% to 4.2%. Cross-ion Cl- W0 consistency improved from 6x to 1.
+
+### 2026-04-06 — TEG Dehydration Sizing for 50 MMSCFD Wet Gas
+**Type:** B (Process)
+**Keywords:** dehydration, mmscfd, sizing
+**Solution:** task_solve/2026-04-06_teg_dehydration_sizing_for_50_mmscfd_wet_gas/step2_analysis/01_TEG_dehydration_sizing.ipynb
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-05 — Wax Formation Models Comparison and Improvement
+**Type:** D (Standards)
+**Keywords:** comparison, formation, improvement, models
+**Solution:** task_solve/2026-04-05_wax_formation_models_comparison_and_improvement/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-03-30 — NeqSim Library Review - High Impact Fixes and Updates
+**Type:** E (Feature)
+**Keywords:** fixes, high, impact, library, review, updates
+**Solution:** task_solve/2026-03-30_neqsim_library_review_high_impact_fixes_and_updates/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-03-27 — Hydrogen Blending in Norwegian Export Gas Quality Analysis
+**Type:** B (Process)
+**Keywords:** binding, blending, compositions, constraint, density, export, fraction, hydrogen, index, lean
+**Solution:** task_solve/2026-03-27_hydrogen_blending_in_norwegian_export_gas_quality_analysis/step2_analysis/01_h2_blending_gas_quality.ipynb
+**Notes:** Relative density — not the Wobbe index — is the binding constraint for H₂ blending in Norwegian export gas. Lean gas (Troll-type) tolerates max ~8 mol% H₂ before violating EN 16726 rel. density limit (0.555); medium gas ~18%; rich gas ~27%.
+
+### 2026-03-27 — Kristin Process Model from Existing Simulator
+**Type:** B (Process)
+**Keywords:** compression, compressors, condensate, existing, export, feed, five, handle, kristin, model
+**Solution:** task_solve/2026-03-27_kristin_process_model_from_existing_simulator/step2_analysis/01_kristin_process_model.ipynb
+**Notes:** The Kristin process model runs successfully in NeqSim with PR EOS. Feed of 100,000 kg/hr is separated into export gas and export oil. Five compressors handle recompression and export compression.
+
+### 2026-03-26 — Smeaheia CO2 injection hydrogen accumulation in wells
+**Type:** B (Process)
+**Keywords:** accumulation, bara, bulk, component, enrichment, factors, hydrogen, injection, mixing, phase
+**Solution:** task_solve/2026-03-26_smeaheia_co2_injection_hydrogen_accumulation_in_wells/step2_analysis/01_hydrogen_accumulation_analysis.ipynb
+**Notes:** Hydrogen accumulation in the gas phase is a REAL thermodynamic phenomenon. At T=4 C the two-phase region spans 42-58 bara. H2 enrichment factors reach 5-8x (3.9-5.9 mol% H2 in gas vs 0.75% in bulk). K_H2 = 11.9 at 50 bara.
+
+### 2026-03-24 — NeqSim Pseudo-Component Characterization Documentation
+**Type:** E (Feature)
+**Keywords:** characterization, component, documentation, pseudo
+**Solution:** task_solve/2026-03-24_neqsim_pseudo_component_characterization_documentation/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-03-24 — Snohvit Probabilistic NPV Monte Carlo Analysis
+**Type:** G (Workflow)
+**Keywords:** analytical, appraisal, carlo, field, function, hvit, influential, model, monte, musd
+**Solution:** task_solve/2026-03-24_snohvit_probabilistic_npv_monte_carlo_analysis/step2_analysis/01_snohvit_mc_npv.ipynb
+**Notes:** The Snøhvit field NPV has a P50 of 135 MUSD with a P90-P10 range of -1505 to 1866 MUSD. The most influential uncertainty is Gas price Pg (Spearman ρ = +0.747). The appraisal well analysis shows a net VoI of -88 MUSD; recommendation: DO NOT DRILL.
+
+### 2026-03-23 — FLNG Class A Concept Study Offshore Tanzania 3000m
+**Type:** G (Workflow)
+**Keywords:** benchmarks, c3mr, capex, challenges, class, concept, contr, depth, economic, faces
+**Solution:** task_solve/2026-03-23_flng_class_a_concept_study_offshore_tanzania_3000m/step2_analysis/01_reservoir_fluid_pvt.ipynb, task_solve/2026-03-23_flng_class_a_concept_study_offshore_tanzania_3000m/step2_analysis/02_flng_process_simulation.ipynb, task_solve/2026-03-23_flng_class_a_concept_study_offshore_tanzania_3000m/step2_analysis/03_capex_economics.ipynb
+**Notes:** The FLNG Tanzania concept at 3000m water depth faces significant economic challenges. Total CAPEX of $6201M ($1772/tonne) is at the upper end of FLNG benchmarks.
+
+### 2026-03-23 — Smeaheia CO2 injection hydrogen accumulation analysis
+**Type:** B (Process)
+**Keywords:** accumulation, beckm, concern, confirmed, cross, engineering, feasibility, four, gerg, hydrogen
+**Solution:** task_solve/2026-03-23_smeaheia_co2_injection_hydrogen_accumulation_analysis/step2_analysis/01_hydrogen_accumulation_analysis.ipynb, task_solve/2026-03-23_smeaheia_co2_injection_hydrogen_accumulation_analysis/step2_analysis/02_wellbore_simulation.ipynb, task_solve/2026-03-23_smeaheia_co2_injection_hydrogen_accumulation_analysis/step2_analysis/03_nip_enhanced_analysis.ipynb
+**Notes:** Hydrogen accumulation in the gas phase is a CONFIRMED engineering concern for Smeaheia, validated by four independent EOS models and cross-referenced with the Smeaheia feasibility study which itself identified two-phase CO₂ risk at the Beta structure...
+
+### 2026-03-21 — compressor_train_analysis
+**Type:** B (Process)
+**Keywords:** above, assessed, baseline, booster, capex, compressor, compressordesignfeasibilityreport, east, extends, feasibility
+**Solution:** task_solve/2026-03-21_compressor_train_analysis/step2_analysis/Pablos_flowasscalcs.ipynb, task_solve/2026-03-21_compressor_train_analysis/step2_analysis/Untitled-1.ipynb, task_solve/2026-03-21_compressor_train_analysis/step2_analysis/Untitled-2.ipynb
+**Notes:** The booster compressor + precooler installation is FEASIBLE and extends Troll East production from 2041 to 2050 (+9 years). Incremental recovery of 131 GSm³ (107% above baseline) at a CAPEX of ~$36M. Value of incremental gas at 1.
+
+### 2026-03-20 — H2 properties data comparison
+**Type:** D (Standards)
+**Keywords:** aard, agrees, closely, compared, comparison, data, densitometer, density, enhanced, experimental
+**Solution:** task_solve/2026-03-20_h2_properties_data_comparison/step2_analysis/01_h2_density_comparison.ipynb
+**Notes:** Overall AARD: REFPROP=1.8408%, NeqSim Std GERG-2008=2.0790%, NeqSim GERG-2008-H2=2.2120%, NeqSim SRK=1.9948%. NeqSim standard GERG-2008 agrees closely with REFPROP (AARD=0.6221%).
+
+### 2026-03-19 — Utsira Nord Floating Wind Class A Concept Study
+**Type:** G (Workflow)
+**Keywords:** class, commercial, concept, cost, costs, current, farm, floati, floating, foundation
+**Solution:** task_solve/2026-03-19_utsira_nord_floating_wind_class_a_concept_study/step2_analysis/01_design_basis_and_site.ipynb, task_solve/2026-03-19_utsira_nord_floating_wind_class_a_concept_study/step2_analysis/02_wind_resource_and_aep.ipynb, task_solve/2026-03-19_utsira_nord_floating_wind_class_a_concept_study/step2_analysis/03_electrical_system_design.ipynb
+**Notes:** The project LCOE of ~2141 NOK/MWh (202 EUR/MWh) reflects the pre-commercial cost level of floating offshore wind. At current costs, the project requires substantial government CfD/subsidy support (~2000 NOK/MWh) to achieve economic viability.
+
+### 2026-03-18 — umoe_composites_300bar_cng_tank_filling_temperature
+**Type:** B (Process)
+**Keywords:** approximately, classic, composites, filling, hours, lean, limit, maximum, methane, mixing
+**Solution:** task_solve/2026-03-18_umoe_composites_300bar_cng_tank_filling_temperature/step2_analysis/01_filling_simulation.ipynb, task_solve/2026-03-18_umoe_composites_300bar_cng_tank_filling_temperature/step2_analysis/02_literature_review.ipynb, task_solve/2026-03-18_umoe_composites_300bar_cng_tank_filling_temperature/step2_analysis/03_benchmark_validation.ipynb
+**Notes:** Filling the Umoe Composites 300 bar Type IV tank from 20.0 to 300.0 bar at 247.5 Sm3/day takes approximately 52 hours. The maximum gas temperature reaches 31.0 C, which is within the ISO 11119-3 limit of 85.0 C with a margin of 54.0 C.
+
+### 2026-03-12 — turboexpander modification evaluation for future operation
+**Type:** B (Process)
+**Keywords:** across, barg, below, class, declining, decreases, drops, evaluation, feasible, future
+**Solution:** task_solve/2026-03-12_turboexpander_modification_evaluation_for_future_operation/step2_analysis/01_tex_performance.ipynb, task_solve/2026-03-12_turboexpander_modification_evaluation_for_future_operation/step2_analysis/02_seal_gas_condensation.ipynb, task_solve/2026-03-12_turboexpander_modification_evaluation_for_future_operation/step2_analysis/03_uncertainty_risk.ipynb
+**Notes:** TEX PERFORMANCE: Feasible 2025-2029 (inlet P > 48 barg). Infeasible from 2030 when pressure ratio drops below ~1.05. Speed DECREASES from ~6950 to ~4500 rpm â€” no overspeed risk. TEX provides 5-8 degC advantage over JT valve through 2029.
+
+### 2026-03-11 — TPG4230 Field Development and Operations Learning Material
+**Type:** G (Workflow)
+**Keywords:** aspects, assurance, chain, characterization, complete, compress, course, covering, covers, design
+**Solution:** task_solve/2026-03-11_tpg4230_field_development_and_operations_learning_material/step2_analysis/Module_01_Introduction_and_Value_Chain.ipynb, task_solve/2026-03-11_tpg4230_field_development_and_operations_learning_material/step2_analysis/Module_02_Flow_Performance.ipynb, task_solve/2026-03-11_tpg4230_field_development_and_operations_learning_material/step2_analysis/Module_03_Oil_Gas_Processing.ipynb
+**Notes:** The learning material covers all key aspects of field development: reservoir fluid characterization, production flow performance, oil and gas processing, flow assurance, separator design, gas compression and pipeline hydraulics, production scheduling...
+
+### 2026-03-07 — Ultima Thule Field Development - Class A Study
+**Type:** G (Workflow)
+**Keywords:** class, development, field, study, thule, ultima
+**Solution:** task_solve/2026-03-07_UltimaThule_ClassA_study/
+**Notes:** Task folder created; analysis in progress.
+
 
 ### 2025-07-24 — Process Optimization Enhancements: NIP-03, NIP-06, NIP-08, NIP-09 Implementation
 **Type:** E (Feature)

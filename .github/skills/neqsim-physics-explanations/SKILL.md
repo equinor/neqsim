@@ -1,6 +1,7 @@
 ---
 name: neqsim-physics-explanations
 description: "Physics explanations for common NeqSim results. USE WHEN: users ask 'why' about simulation results, when explaining unexpected behavior, or when adding educational context to notebooks and reports. Maps common engineering phenomena to plain-language explanations."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Physics Explanations

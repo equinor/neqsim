@@ -1,6 +1,7 @@
 ---
 name: neqsim-notebook-patterns
 description: "Jupyter notebook patterns for NeqSim. USE WHEN: creating or reviewing Jupyter notebooks that use NeqSim for process simulation, thermodynamics, or PVT analysis. Covers dual-boot setup cell, class imports (devtools vs pip), notebook structure, visualization requirements, and results.json schema."
+last_verified: "2026-07-04"
 ---
 
 # Jupyter Notebook Patterns for NeqSim

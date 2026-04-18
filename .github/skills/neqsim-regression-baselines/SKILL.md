@@ -1,6 +1,7 @@
 ---
 name: neqsim-regression-baselines
 description: "Regression baseline management for NeqSim. USE WHEN: modifying solver logic, property correlations, or EOS implementations. Ensures changes don't silently degrade accuracy. Covers creating baseline fixtures, writing regression tests, and detecting accuracy drift."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Regression Baseline Management

@@ -31,6 +31,7 @@ except ImportError:
 
 _S2_SEARCH_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 _S2_FIELDS = "title,authors,year,citationCount,externalIds,abstract,url"
+_CROSSREF_SEARCH_URL = "https://api.crossref.org/works"
 _MIN_CITATIONS = 10  # Only suggest well-cited papers
 
 
@@ -123,6 +124,68 @@ def _search_semantic_scholar(query, limit=10):
         return []
 
 
+def _search_crossref(query, limit=10):
+    """Search Crossref API for papers matching a query.
+
+    Crossref provides DOI-linked metadata and is-referenced-by counts.
+    Free tier, polite pool: include mailto for faster responses.
+    """
+    if not _HAS_REQUESTS:
+        return []
+
+    params = {
+        "query": query[:256],
+        "rows": limit,
+        "select": "DOI,title,author,published-print,is-referenced-by-count,URL,type",
+        "sort": "is-referenced-by-count",
+        "order": "desc",
+    }
+    headers = {
+        "User-Agent": "NeqSimPaperLab/1.0 (mailto:neqsim@example.com)",
+    }
+
+    try:
+        resp = requests.get(
+            _CROSSREF_SEARCH_URL, params=params, headers=headers, timeout=15)
+        if resp.status_code != 200:
+            return []
+
+        data = resp.json()
+        items = data.get("message", {}).get("items", [])
+        results = []
+        for item in items:
+            title_parts = item.get("title", [])
+            title = title_parts[0] if title_parts else ""
+            authors_raw = item.get("author", [])
+            if len(authors_raw) > 2:
+                author_str = (
+                    f"{authors_raw[0].get('family', '?')}, {authors_raw[0].get('given', '')} et al.")
+            elif len(authors_raw) == 2:
+                a1 = f"{authors_raw[0].get('family', '?')}, {authors_raw[0].get('given', '')}"
+                a2 = f"{authors_raw[1].get('family', '?')}, {authors_raw[1].get('given', '')}"
+                author_str = f"{a1} and {a2}"
+            elif authors_raw:
+                author_str = f"{authors_raw[0].get('family', '?')}, {authors_raw[0].get('given', '')}"
+            else:
+                author_str = "Unknown"
+
+            pub_date = item.get("published-print", {}).get("date-parts", [[None]])
+            year = pub_date[0][0] if pub_date and pub_date[0] else None
+
+            results.append({
+                "title": title,
+                "authors": author_str,
+                "year": year,
+                "citation_count": item.get("is-referenced-by-count", 0),
+                "doi": item.get("DOI", ""),
+                "url": item.get("URL", ""),
+                "relevance_source": "crossref",
+            })
+        return results
+    except (requests.RequestException, json.JSONDecodeError, KeyError):
+        return []
+
+
 def suggest_citations(paper_dir, max_suggestions=15, min_citations=None):
     """Suggest potentially-missing citations for a manuscript.
 
@@ -159,7 +222,7 @@ def suggest_citations(paper_dir, max_suggestions=15, min_citations=None):
 
     existing_titles = _get_existing_refs(paper_dir)
 
-    # Search for each query
+    # Search for each query (Semantic Scholar)
     all_papers = {}
     for query in queries[:4]:  # Limit to 4 queries to stay within rate limits
         papers = _search_semantic_scholar(query, limit=15)
@@ -169,8 +232,16 @@ def suggest_citations(paper_dir, max_suggestions=15, min_citations=None):
                 all_papers[pid] = paper
         time.sleep(1.0)  # Rate limiting
 
-    # Filter and rank
+    # Also search Crossref for each query
+    crossref_results = []
+    for query in queries[:3]:  # Crossref allows fewer queries
+        cr_papers = _search_crossref(query, limit=10)
+        crossref_results.extend(cr_papers)
+        time.sleep(0.5)
+
+    # Filter and rank Semantic Scholar results
     suggestions = []
+    seen_titles = set()
     for pid, paper in all_papers.items():
         title = (paper.get("title") or "").strip()
         if not title:
@@ -210,6 +281,20 @@ def suggest_citations(paper_dir, max_suggestions=15, min_citations=None):
             "url": paper.get("url", ""),
             "relevance_source": "semantic_scholar",
         })
+        seen_titles.add(title.lower())
+
+    # Merge Crossref results (deduplicate against S2 and existing refs)
+    for cr in crossref_results:
+        title = (cr.get("title") or "").strip()
+        if not title:
+            continue
+        if title.lower() in existing_titles or title.lower() in seen_titles:
+            continue
+        cr_citations = cr.get("citation_count", 0) or 0
+        if cr_citations < min_citations:
+            continue
+        suggestions.append(cr)
+        seen_titles.add(title.lower())
 
     # Sort by citation count (most cited first)
     suggestions.sort(key=lambda x: x["citation_count"], reverse=True)

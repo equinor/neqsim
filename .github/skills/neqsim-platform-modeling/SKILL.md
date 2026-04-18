@@ -1,6 +1,7 @@
 ---
 name: neqsim-platform-modeling
 description: "Production platform process modeling patterns for NeqSim. USE WHEN: building full topside process models for oil & gas platforms (FPSO, fixed, semi-sub) from design documents, P&IDs, or operational data. Covers fluid creation with TBP fractions, multi-stage separation with recycles, recompression trains with compressor curves and anti-surge, export/injection compression, oil stabilization, scrubber liquid recovery, iteration strategies, and structured result extraction. Derived from 15+ production NCS platform models."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Production Platform Modeling

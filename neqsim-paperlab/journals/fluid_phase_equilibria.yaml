@@ -6,7 +6,11 @@ journal_name: "Fluid Phase Equilibria"
 journal_abbrev: "Fluid Phase Equilib."
 publisher: "Elsevier"
 issn: "0378-3812"
+eissn: "1879-0224"
 url: "https://www.sciencedirect.com/journal/fluid-phase-equilibria"
+submit_url: "https://www.editorialmanager.com/fpe/"
+impact_factor: 3.1
+citescore: 5.3
 scope: >
   Experimental and theoretical studies of equilibrium and transport properties
   of fluids and fluid mixtures. Covers equations of state, molecular simulation,

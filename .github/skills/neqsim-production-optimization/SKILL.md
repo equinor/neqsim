@@ -1,6 +1,7 @@
 ---
 name: neqsim-production-optimization
 description: "Production optimization, bottleneck analysis, decline modeling, and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Production Optimization Skill

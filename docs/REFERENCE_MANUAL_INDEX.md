@@ -96,6 +96,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                                 | Development environment setup |
 | Productization Roadmap | [docs/development/PRODUCTIZATION_ROADMAP.md](development/PRODUCTIZATION_ROADMAP)              | Adoption, trust, contributor scaling plan |
 | Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index)                                                    | Validation against NIST and published data |
+| Consolidated Benchmarks | [docs/benchmarks/consolidated_benchmarks.md](benchmarks/consolidated_benchmarks)          | All benchmark results from task-solving studies |
 
 ### Chapter 5: Quick Start Examples
 
@@ -934,6 +935,11 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Task Solving Guide**             | [docs/development/TASK_SOLVING_GUIDE.md](development/TASK_SOLVING_GUIDE)                         | **Step-by-step workflow for solving engineering tasks**                               |
 | **Code Patterns**                  | [docs/development/CODE_PATTERNS.md](development/CODE_PATTERNS)                                   | **Copy-paste starters for common coding tasks**                                       |
 | **Task Log**                       | [docs/development/TASK_LOG.md](development/TASK_LOG)                                             | **Searchable log of all solved tasks**                                                |
+| **Lessons Learned**                | [docs/development/LESSONS_LEARNED.md](development/LESSONS_LEARNED)                               | **Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas)**           |
+| **Workflow Review**                | [docs/development/WORKFLOW_REVIEW.md](development/WORKFLOW_REVIEW)                               | **Comparative review: NeqSim task solver vs commercial tools and AI frameworks**      |
+| Build Guide                        | [docs/development/BUILD.md](development/BUILD)                                                   | Build system, Maven profiles, packaging                                               |
+| Getting Started (Developer)        | [docs/development/GETTING_STARTED_DEVELOPER.md](development/GETTING_STARTED_DEVELOPER)           | Quick-start guide for new contributors                                                |
+| Project Structure Recommendations  | [docs/development/PROJECT_STRUCTURE_RECOMMENDATIONS.md](development/PROJECT_STRUCTURE_RECOMMENDATIONS) | Recommended package layout and module boundaries                                 |
 
 ### Chapter 50: Testing
 

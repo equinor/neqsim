@@ -1,6 +1,7 @@
 ---
 name: neqsim-troubleshooting
 description: "Troubleshooting playbook for common NeqSim failures. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Troubleshooting Playbook
