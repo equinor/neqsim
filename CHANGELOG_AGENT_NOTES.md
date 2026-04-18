@@ -9,7 +9,191 @@
 
 ---
 
-## 2026-04-18 — Systematic Phase-Index Bug Fixes in Two-Phase Flow Transport
+## 2026-04-17 — Process Optimization Enhancements: Rate-Based Absorber, SQP Optimizer, Flow Correlations, Multi-Variable Adjuster
+
+### Summary
+
+Five new classes and one enum addition for improved process simulation fidelity
+and optimization capability. These close key gaps identified in a reservoir-to-market
+process optimization review comparing NeqSim to commercial simulators.
+
+### New Classes
+
+#### 1. RateBasedAbsorber (`neqsim.process.equipment.absorber`)
+
+Rate-based (non-equilibrium) absorption column with rigorous mass transfer
+calculations. Two mass transfer correlations and three enhancement factor models.
+
+| Method | Description |
+|--------|-------------|
+| `setMassTransferModel(MassTransferModel)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
+| `setEnhancementModel(EnhancementModel)` | `NONE`, `HATTA_PSEUDO_FIRST_ORDER`, `VAN_KREVELEN_HOFTIJZER` |
+| `setColumnDiameter(double)` | Column diameter in metres |
+| `setPackedHeight(double)` | Packed height in metres |
+| `setPackingSpecificArea(double)` | Packing specific area (m2/m3) |
+| `setPackingVoidFraction(double)` | Packing void fraction |
+| `setPackingNominalSize(double)` | Packing nominal size (m) |
+| `setPackingCriticalSurfaceTension(double)` | Packing critical surface tension (N/m) |
+| `setReactionRateConstant(double)` | Pseudo-first-order reaction rate constant (1/s) |
+| `setStoichiometricRatio(double)` | Stoichiometric ratio for VKH model |
+| `setBilletSchultesConstants(double, double)` | Cl and Cv for Billet-Schultes |
+| `getOverallKGa()` / `getOverallKLa()` | Overall mass transfer coefficients |
+| `getWettedArea()` | Wetted area from correlation |
+| `getHeightOfTransferUnit()` / `getNumberOfTransferUnits()` | HTU/NTU |
+| `getStageResults()` | List of `StageResult` with per-stage detail |
+
+**Extends:** `SimpleAbsorber`
+**Test:** `RateBasedAbsorberTest` (6 tests)
+
+#### 2. SQPoptimizer (`neqsim.process.util.optimizer`)
+
+Full Sequential Quadratic Programming NLP solver with damped BFGS Hessian
+update, active-set QP sub-problem, L1 exact penalty merit function, and
+Armijo backtracking line search.
+
+| Method | Description |
+|--------|-------------|
+| `setObjectiveFunction(ObjectiveFunc)` | Set objective f(x) |
+| `addEqualityConstraint(ConstraintFunc)` | Add c(x) = 0 constraint |
+| `addInequalityConstraint(ConstraintFunc)` | Add h(x) >= 0 constraint |
+| `setVariableBounds(double[], double[])` | Lower/upper bounds on variables |
+| `solve(double[])` | Solve from initial point; returns `OptimizationResult` |
+| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls |
+| `setFiniteDifferenceStep(double)` | Step for central-difference gradients |
+
+**Inner interfaces:** `ObjectiveFunc`, `ConstraintFunc`
+**Inner class:** `OptimizationResult` — `isConverged()`, `getOptimalPoint()`, `getOptimalValue()`, `getIterations()`, `getKktError()`
+**Enum added:** `ProcessOptimizationEngine.SearchAlgorithm.SEQUENTIAL_QUADRATIC_PROGRAMMING`
+**Test:** `SQPoptimizerTest` (5 tests)
+
+#### 3. PipeHagedornBrown (`neqsim.process.equipment.pipeline`)
+
+Hagedorn-Brown (1965) empirical holdup correlation for vertical/near-vertical
+multiphase pipe flow. Best suited for oil production wells.
+
+| Method | Description |
+|--------|-------------|
+| `setLength(double)` / `setDiameter(double)` / `setAngle(double)` | Geometry |
+| `setNumberOfIncrements(int)` | Discretization segments |
+| `setWallRoughness(double)` | Absolute roughness (m) |
+| `getOutletSuperficialVelocity()` | Gas superficial velocity at outlet |
+| `getLiquidHoldupProfile()` | `double[]` holdup along pipe |
+| `getFlowPatternDescription()` | Descriptive string |
+| `getPressureProfile()` / `getTemperatureProfile()` | `double[]` profiles |
+
+**Extends:** `Pipeline`
+**Test:** `PipeHagedornBrownTest` (3 tests)
+
+#### 4. PipeMukherjeeAndBrill (`neqsim.process.equipment.pipeline`)
+
+Mukherjee-Brill (1985) all-inclination holdup and friction correlation. Handles
+horizontal, uphill, and downhill flows with flow pattern detection.
+
+| Method | Description |
+|--------|-------------|
+| `getFlowPattern()` | Returns outlet flow pattern as String: STRATIFIED, SLUG, ANNULAR, BUBBLE, SINGLE_PHASE |
+| `getFlowPatternEnum()` | Returns `FlowPattern` enum |
+| `getLiquidHoldup()` | Scalar outlet liquid holdup |
+| `getFlowPatternProfile()` | `List<String>` pattern at each increment |
+| Same geometry methods as PipeHagedornBrown | — |
+
+**Extends:** `Pipeline`
+**Test:** `PipeMukherjeeAndBrillTest` (5 tests)
+
+#### 5. MultiVariableAdjuster (`neqsim.process.equipment.util`)
+
+Simultaneous multi-variable adjuster using damped successive substitution.
+Solves N equations in N unknowns (target specifications) by adjusting N
+process variables simultaneously.
+
+| Method | Description |
+|--------|-------------|
+| `addAdjustedVariable(ProcessEquipmentInterface, String, String)` | Variable to manipulate |
+| `addTargetSpecification(ProcessEquipmentInterface, String, double, String)` | Target to satisfy |
+| `setVariableBounds(int, double, double)` | Bounds on adjusted variable |
+| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls |
+| `isConverged()` / `getIterations()` / `getMaxResidual()` | Solution status |
+| `getNumberOfVariables()` | Number of adjusted variables |
+
+**Test:** `MultiVariableAdjusterTest` (4 tests)
+
+### Agents/Skills Affected
+
+- `neqsim-api-patterns` skill — add rate-based absorber, SQP optimizer, flow correlation, multi-variable adjuster patterns
+- `neqsim-capability-map` skill — update mass transfer, optimization, and multiphase flow sections
+- `@solve.process` agent — can now use RateBasedAbsorber and MultiVariableAdjuster
+- `@mechanical.design` agent — PipeHagedornBrown/PipeMukherjeeAndBrill for well tubing design
+
+---
+
+## 2026-04-17 — Universal Capacity Constraints for All Equipment
+
+### Summary
+
+Capacity constraint methods are now available on ALL 144+ equipment types via
+`ProcessEquipmentBaseClass`. Previously, only ~60 equipment classes implementing
+`CapacityConstrainedEquipment` could participate in bottleneck analysis and
+optimization. Now any equipment can have constraints added at runtime.
+
+Six new capacity strategies were added (18 total built-in), covering reactors,
+power generation, subsea equipment, filters/adsorbers, electrolyzers, and wells.
+
+### New API on ProcessEquipmentBaseClass
+
+All equipment now inherits these methods (no need to cast or check interface):
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `addCapacityConstraint(CapacityConstraint)` | `void` | Add a constraint to any equipment |
+| `getCapacityConstraints()` | `Map<String, CapacityConstraint>` | Get all constraints (unmodifiable) |
+| `getBottleneckConstraint()` | `CapacityConstraint` | Most limiting enabled constraint |
+| `isCapacityExceeded()` | `boolean` | Any enabled constraint violated |
+| `isHardLimitExceeded()` | `boolean` | Any HARD constraint exceeded |
+| `getMaxUtilization()` | `double` | Highest utilization ratio (fraction) |
+| `getMaxUtilizationPercent()` | `double` | Highest utilization as percentage |
+| `getAvailableMargin()` | `double` | Headroom on bottleneck (fraction) |
+| `getAvailableMarginPercent()` | `double` | Headroom as percentage |
+| `isNearCapacityLimit()` | `boolean` | Any constraint above warning threshold |
+| `getUtilizationSummary()` | `Map<String, Double>` | All constraint utilizations |
+| `getConstraintEvaluationReport()` | `String` | Multi-line diagnostic report |
+
+### Updated ProcessSystem Methods
+
+These methods now iterate over ALL equipment (not just `CapacityConstrainedEquipment`):
+
+- `findBottleneck()` — returns `BottleneckResult` for the most-utilized equipment
+- `isAnyEquipmentOverloaded()` — checks all equipment for capacity exceedance
+- `isAnyHardLimitExceeded()` — checks all equipment for HARD limit violations
+- `getCapacityUtilizationSummary()` — map of all equipment utilizations
+- `getEquipmentNearCapacityLimit()` — list of equipment near their limits
+
+### New Capacity Strategy Classes (6 new, 18 total)
+
+| Class | Equipment Types |
+|-------|----------------|
+| `ReactorCapacityStrategy` | GibbsReactor, PlugFlowReactor, StirredTankReactor |
+| `PowerGenerationCapacityStrategy` | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem |
+| `SubseaEquipmentCapacityStrategy` | SubseaWell, SubseaTree |
+| `FilterAdsorberCapacityStrategy` | Filter, SulfurFilter, CharCoalFilter, SimpleAdsorber |
+| `ElectrolyzerCapacityStrategy` | Electrolyzer, CO2Electrolyzer |
+| `WellFlowCapacityStrategy` | WellFlow |
+
+### Migration Notes
+
+- **No breaking changes** — existing code using `CapacityConstrainedEquipment` still works
+- For new code, prefer using `ProcessEquipmentInterface` methods directly
+- `ProcessEquipmentBaseClass.initializeDefaultConstraints()` is a protected hook
+  for subclasses to set up default constraints (called lazily)
+- Constraint map is `transient` (not serialized) — reconstructed on first access
+
+### Affected Skills
+
+- `neqsim-api-patterns` — add universal constraint patterns
+- `neqsim-capability-map` — update optimization capabilities
+
+---
+
+## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
 
 ### Summary
 

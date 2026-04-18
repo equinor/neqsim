@@ -44,6 +44,7 @@ import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.MultiVariableAdjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.equipment.util.Setter;
@@ -1159,7 +1160,7 @@ public class ProcessSystem extends SimulationBaseClass {
       return cachedHasAdjusters;
     }
     for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof Adjuster) {
+      if (unit instanceof Adjuster || unit instanceof MultiVariableAdjuster) {
         cachedHasAdjusters = true;
         return true;
       }
@@ -1417,6 +1418,12 @@ public class ProcessSystem extends SimulationBaseClass {
         for (ProcessEquipmentInterface unit : iterativeSection) {
           if (unit instanceof Adjuster) {
             if (!((Adjuster) unit).solved()) {
+              isConverged = false;
+              break;
+            }
+          }
+          if (unit instanceof MultiVariableAdjuster) {
+            if (!((MultiVariableAdjuster) unit).solved()) {
               isConverged = false;
               break;
             }
@@ -2004,6 +2011,12 @@ public class ProcessSystem extends SimulationBaseClass {
             break;
           }
         }
+        if (unit instanceof MultiVariableAdjuster) {
+          if (!((MultiVariableAdjuster) unit).solved()) {
+            isConverged = false;
+            break;
+          }
+        }
       }
     } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
         && !Thread.currentThread().isInterrupted());
@@ -2436,6 +2449,12 @@ public class ProcessSystem extends SimulationBaseClass {
         ProcessEquipmentInterface unit = executionOrder.get(i);
         if (unit instanceof Adjuster) {
           if (!((Adjuster) unit).solved()) {
+            isConverged = false;
+            break;
+          }
+        }
+        if (unit instanceof MultiVariableAdjuster) {
+          if (!((MultiVariableAdjuster) unit).solved()) {
             isConverged = false;
             break;
           }
@@ -5391,8 +5410,9 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * This method extends {@link #getBottleneck()} by returning detailed information about which
-   * specific constraint is limiting the bottleneck equipment. Only works for equipment that
-   * implements {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment}.
+   * specific constraint is limiting the bottleneck equipment. Uses the universal constraint API on
+   * {@link ProcessEquipmentInterface} so ALL equipment types are checked, not just those
+   * implementing CapacityConstrainedEquipment.
    * </p>
    *
    * <p>
@@ -5404,22 +5424,23 @@ public class ProcessSystem extends SimulationBaseClass {
    * @see #getBottleneck()
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
-    neqsim.process.equipment.capacity.CapacityConstrainedEquipment bottleneckEquipment = null;
+    ProcessEquipmentInterface bottleneckEquipment = null;
     neqsim.process.equipment.capacity.CapacityConstraint limitingConstraint = null;
     double maxUtil = 0.0;
 
-    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
       // Skip equipment with capacity analysis disabled
-      if (!equip.isCapacityAnalysisEnabled()) {
+      if (unit instanceof ProcessEquipmentBaseClass
+          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
         continue;
       }
       neqsim.process.equipment.capacity.CapacityConstraint constraint =
-          equip.getBottleneckConstraint();
+          unit.getBottleneckConstraint();
       if (constraint != null && constraint.isEnabled()) {
         double util = constraint.getUtilization();
         if (!Double.isNaN(util) && util > maxUtil) {
           maxUtil = util;
-          bottleneckEquipment = equip;
+          bottleneckEquipment = unit;
           limitingConstraint = constraint;
         }
       }
@@ -5428,22 +5449,27 @@ public class ProcessSystem extends SimulationBaseClass {
     if (bottleneckEquipment == null) {
       return neqsim.process.equipment.capacity.BottleneckResult.empty();
     }
-    return new neqsim.process.equipment.capacity.BottleneckResult(
-        (ProcessEquipmentInterface) bottleneckEquipment, limitingConstraint, maxUtil);
+    return new neqsim.process.equipment.capacity.BottleneckResult(bottleneckEquipment,
+        limitingConstraint, maxUtil);
   }
 
   /**
    * Checks if any equipment in the process is overloaded (exceeds design capacity).
    *
    * <p>
-   * Only equipment with capacity analysis enabled is checked.
+   * All equipment with capacity constraints is checked, not just those implementing
+   * CapacityConstrainedEquipment. Only equipment with capacity analysis enabled is checked.
    * </p>
    *
    * @return true if any equipment has capacity utilization above 100%
    */
   public boolean isAnyEquipmentOverloaded() {
-    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      if (equip.isCapacityAnalysisEnabled() && equip.isCapacityExceeded()) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof ProcessEquipmentBaseClass
+          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+        continue;
+      }
+      if (unit.isCapacityExceeded()) {
         return true;
       }
     }
@@ -5455,15 +5481,18 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage,
-   * such as maximum compressor speed or surge limits. Only equipment with capacity analysis enabled
-   * is checked.
+   * such as maximum compressor speed or surge limits. All equipment is checked.
    * </p>
    *
    * @return true if any HARD constraint is exceeded
    */
   public boolean isAnyHardLimitExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      if (equip.isCapacityAnalysisEnabled() && equip.isHardLimitExceeded()) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof ProcessEquipmentBaseClass
+          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+        continue;
+      }
+      if (unit.isHardLimitExceeded()) {
         return true;
       }
     }
@@ -5471,25 +5500,24 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Gets a summary of capacity utilization for all constrained equipment.
+   * Gets a summary of capacity utilization for all equipment with constraints.
    *
    * <p>
    * Returns a map of equipment names to their maximum constraint utilization. Only equipment with
-   * capacity analysis enabled is included. Useful for displaying overall process capacity status.
+   * capacity analysis enabled and at least one enabled constraint is included.
    * </p>
    *
    * @return map of equipment name to utilization percentage
    */
   public java.util.Map<String, Double> getCapacityUtilizationSummary() {
     java.util.Map<String, Double> summary = new java.util.LinkedHashMap<>();
-    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      // Skip equipment with capacity analysis disabled
-      if (!equip.isCapacityAnalysisEnabled()) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof ProcessEquipmentBaseClass
+          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
         continue;
       }
-      ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
-      double util = equip.getMaxUtilization();
-      if (!Double.isNaN(util)) {
+      double util = unit.getMaxUtilization();
+      if (!Double.isNaN(util) && util > 0.0) {
         summary.put(unit.getName(), util * 100.0);
       }
     }
@@ -5501,17 +5529,20 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Returns equipment where at least one constraint is above its warning threshold (typically 90%
-   * of design). Only equipment with capacity analysis enabled is included. Useful for identifying
-   * potential future bottlenecks.
+   * of design). All equipment is checked.
    * </p>
    *
    * @return list of equipment names that are near capacity limits
    */
   public java.util.List<String> getEquipmentNearCapacityLimit() {
     java.util.List<String> nearLimit = new java.util.ArrayList<>();
-    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      if (equip.isCapacityAnalysisEnabled() && equip.isNearCapacityLimit()) {
-        nearLimit.add(((ProcessEquipmentInterface) equip).getName());
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof ProcessEquipmentBaseClass
+          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+        continue;
+      }
+      if (unit.isNearCapacityLimit()) {
+        nearLimit.add(unit.getName());
       }
     }
     return nearLimit;
