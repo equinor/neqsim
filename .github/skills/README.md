@@ -48,42 +48,161 @@ Each skill folder contains a `SKILL.md` file with verified patterns, rules, and 
 
 ---
 
-## Creating a New Skill
+## How to Contribute a Skill
 
-1. Create a folder: `.github/skills/neqsim-<skill-name>/`
-2. Add a `SKILL.md` file with:
-   - Clear title and description
-   - "USE WHEN" trigger conditions
-   - Domain-specific patterns, rules, and code templates
-   - Common pitfalls and their fixes
-3. Register the skill in `copilot-instructions.md` under the `<skills>` section
-4. Update this README with the new entry
-5. Reference the skill from relevant agent files
+Contributing a skill is the **easiest way to improve NeqSim's agentic system**.
+You don't need to write Java — skills are markdown files with domain knowledge,
+code patterns, and troubleshooting guidance that AI agents use to solve
+engineering tasks better.
 
-### Skill File Template
+### Who should contribute skills?
+
+- **Petroleum engineers** — share workflows for PVT, flow assurance, reservoir
+- **Process engineers** — share equipment design patterns, operating procedures
+- **Researchers** — share thermodynamic model guidance, validation approaches
+- **Anyone** who has solved a NeqSim task and wants to save others time
+
+### Step-by-step
+
+> **Want to see a finished example first?** Read
+> [`neqsim-input-validation/SKILL.md`](neqsim-input-validation/SKILL.md) — it's
+> ~140 lines, well-structured, and shows the repeating "table → corrective action →
+> code" pattern that most skills follow. A good skill to model yours after.
+
+**1. Scaffold the skill:**
+
+```bash
+python devtools/new_skill.py "my-topic"
+python devtools/new_skill.py "my-topic" --description "Short description of what it covers"
+```
+
+This creates `.github/skills/neqsim-my-topic/SKILL.md` with a structured
+template including all required sections.
+
+**2. Fill in the template:**
+
+Edit the generated `SKILL.md`. The most important sections are:
+
+- **When to Use** — trigger conditions so agents know when to load this skill
+- **Code Patterns** — copy-paste Java/Python code that works with NeqSim's API
+- **Common Mistakes** — what goes wrong and how to fix it
+
+**3. Verify your code patterns:**
+
+Every code example must work against NeqSim's actual API. Test by:
+- Running the Java code as a JUnit test
+- Running the Python code in a notebook with `from neqsim import jneqsim`
+- Checking method names exist: `grep_search` or `file_search` in the source
+
+**4. Register the skill:**
+
+- Add an entry to the **Skill Index** table in this README
+- Add a `<skill>` entry in `.github/copilot-instructions.md` under the `<skills>` section
+- Add a row to the **Skills Reference** table in `AGENTS.md`
+
+**5. Submit a PR:**
+
+- One skill per PR
+- Title: `[Skill] Add neqsim-my-topic skill`
+- AI-assisted PRs are welcome — mark as `[AI-Assisted]` in the title
+
+### What makes a great skill?
+
+| Quality | Example |
+|---------|---------|
+| Specific trigger conditions | "USE WHEN: predicting hydrate formation temperature" |
+| Tested code patterns | Java 8 code that compiles and runs against NeqSim API |
+| Real engineering context | "Wire mesh demisters have K-factor 0.107 m/s per NORSOK" |
+| Common mistakes with fixes | "Calling getViscosity() without initProperties() returns zero" |
+| Reference to standards | "Per API 521 Section 5.2, fire case heat flux is..." |
+
+### When to contribute to core vs. keep personal
+
+See `VISION_AGENTS.md` for the full policy. Quick rule:
+
+- **Core skill** — references NeqSim Java classes, useful to multiple users, verified
+- **Personal skill** — company-specific workflow, experimental, doesn't need NeqSim internals
+
+### Publishing a community skill (hosted in your own repo)
+
+If your skill doesn't belong in core, you can publish it to the community catalog
+with a single command:
+
+```bash
+python devtools/install_skill.py publish your-username/neqsim-my-skill
+```
+
+This validates your `SKILL.md`, auto-generates a catalog entry, and opens a draft
+PR to add it to `community-skills.yaml`. Others can then install it with:
+
+```bash
+python devtools/install_skill.py install neqsim-my-skill
+```
+
+### List existing skills
+
+```bash
+python devtools/new_skill.py --list                   # core skills (in-repo)
+python devtools/install_skill.py list                  # community skills (catalog)
+```
+
+---
+
+## Creating a New Skill (Quick Reference)
+
+1. Run `python devtools/new_skill.py "name"` to scaffold
+2. Edit `.github/skills/neqsim-<name>/SKILL.md`
+3. Test all code patterns against the actual API
+4. Register in `copilot-instructions.md`, `AGENTS.md`, and this README
+5. Submit PR with `[Skill]` prefix
+
+### Skill File Format
+
+Skills use YAML frontmatter + structured markdown:
 
 ```markdown
-# Skill Name
+---
+name: neqsim-my-topic
+description: "Short description. USE WHEN: trigger condition."
+last_verified: "2026-04-18"
+---
 
-> **USE WHEN:** [describe trigger conditions]
+# NeqSim My Topic
 
-## Quick Reference
+Summary of what this skill covers.
 
-[1-paragraph summary of what this skill provides]
+## When to Use This Skill
 
-## Patterns
+- When the user asks about X
+- When a task involves Y
 
-### Pattern 1: [Name]
-[Code template or rule]
+## Key Concepts
 
-### Pattern 2: [Name]
-[Code template or rule]
+Brief domain explanation.
 
-## Common Pitfalls
+## NeqSim Code Patterns
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| ... | ... | ... |
+### Pattern: Basic Setup
+
+\```java
+// Java 8 compatible
+SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
+\```
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Forgot initProperties() | Call fluid.initProperties() after flash |
+
+## Validation Checklist
+
+- [ ] Code compiles with Java 8
+- [ ] Results validated against reference data
+
+## References
+
+- Standard or paper reference
 ```
 
 ---

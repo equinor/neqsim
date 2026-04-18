@@ -15,7 +15,12 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start">Quick Start</a> · <a href="#-what-can-you-do-with-neqsim">Use Cases</a> · <a href="#-use-neqsim-in-java">Java</a> · <a href="#-use-neqsim-in-python">Python</a> · <a href="#-agentic-engineering--mcp-server">AI / MCP</a> · <a href="https://equinor.github.io/neqsim/">Docs</a> · <a href="https://github.com/equinor/neqsim/discussions">Community</a>
+  <a href="https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=equinor/neqsim"><img src="https://img.shields.io/badge/Open_in-Codespaces-blue?logo=github" alt="Open in Codespaces"></a>
+  <a href="https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL"><img src="https://img.shields.io/badge/Open_in-Colab-F9AB00?logo=googlecolab" alt="Open in Colab"></a>
+</p>
+
+<p align="center">
+  <a href="#-quick-start">Quick Start</a> · <a href="#-what-can-you-do-with-neqsim">Use Cases</a> · <a href="#-agentic-engineering--mcp-server">AI / MCP</a> · <a href="#-use-neqsim-in-java">Java</a> · <a href="#-use-neqsim-in-python">Python</a> · <a href="#-develop--contribute">Contribute</a> · <a href="https://equinor.github.io/neqsim/">Docs</a>
 </p>
 
 ---
@@ -42,13 +47,11 @@ Use it from **Java**, **Python**, **Jupyter notebooks**, **.NET**, **MATLAB**, o
 | **Mechanical design** | Wall thickness, weight estimation, cost analysis for pipelines, vessels, wells (SURF) |
 | **Field development** | Production forecasting, concept screening, NPV/IRR economics, Monte Carlo uncertainty |
 
-See the [NeqSim Java Wiki](https://github.com/equinor/neqsim/wiki) for how to use the NeqSim API.
-Additional pages are available in the [local wiki](docs/wiki/index.md), including the [distillation column solver guide](docs/wiki/distillation_column.md) with six algorithms, mathematical formulations, and usage examples.
-NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file. Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions).
+See the [full documentation](https://equinor.github.io/neqsim/), [Java Wiki](https://github.com/equinor/neqsim/wiki), or ask questions in [Discussions](https://github.com/equinor/neqsim/discussions).
 
 ## 🚀 Quick Start
 
-### Python — try it now
+### Python — try it in 30 seconds
 
 ```bash
 pip install neqsim
@@ -110,52 +113,6 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m³");
 ```
 
 The agent scopes the task, builds a NeqSim simulation, validates results, and generates a Word + HTML report — no coding required.
-
----
-
-## ✨ Hero Demos
-
-### Demo 1 — Natural-language dew point via MCP
-
-> **You:** "What is the dew point temperature of 85% methane, 10% ethane, 5% propane at 50 bara?"
-
-The LLM calls NeqSim's `runFlash` tool and responds with a rigorous answer:
-
-> **LLM:** "The dew point temperature is **-42.3°C** at 50 bara (SRK equation of state,
-> converged in 12 iterations). Below this temperature, liquid will begin to condense."
-
-No coding. No GUI. Just a question and a physics-backed answer with provenance.
-
-### Demo 2 — JSON flowsheet → results with provenance
-
-Send a 10-line JSON process definition to the `runProcess` MCP tool:
-
-```json
-{
-  "fluid": { "model": "SRK", "temperature": 303.15, "pressure": 80.0,
-             "mixingRule": "classic",
-             "components": { "methane": 0.80, "ethane": 0.12, "propane": 0.05, "n-butane": 0.03 } },
-  "process": [
-    { "type": "Stream", "name": "feed", "properties": { "flowRate": [50000.0, "kg/hr"] } },
-    { "type": "Separator", "name": "HP Sep", "inlet": "feed" },
-    { "type": "Compressor", "name": "Comp", "inlet": "HP Sep.gasOut",
-      "properties": { "outletPressure": [150.0, "bara"] } }
-  ]
-}
-```
-
-Get back compressor power, outlet temperature, phase compositions — plus EOS model,
-convergence status, and warnings.
-
-### Demo 3 — Engineering study → professional report
-
-```
-@solve.task TEG dehydration sizing for 50 MMSCFD wet gas
-```
-
-The agent creates a task folder, runs NeqSim simulations, generates matplotlib
-figures, validates against standards, and produces a Word + HTML report — complete
-with uncertainty analysis and risk evaluation.
 
 ---
 
@@ -291,105 +248,37 @@ Explore **30+ Jupyter notebooks** in [`examples/notebooks/`](examples/notebooks/
 
 ## 🤖 Agentic Engineering & MCP Server
 
-LLMs are excellent at engineering reasoning but hallucinate physics. NeqSim is exact on thermodynamics but needs context. **Together, they form a complete engineering system.**
-
-![Separation of Concerns: Reasoning vs. Physics](docs/assets/images/separation_of_concerns.svg)
-
-### How NeqSim compares for engineering workflows
-
-| Aspect | Manual Coding | Commercial Simulators | Agentic NeqSim |
-|--------|--------------|----------------------|----------------|
-| **Learning curve** | Steep (learn API) | Moderate (learn GUI) | **Low (natural language)** |
-| **Standards compliance** | Manual lookup | Some built-in | **Agent loads applicable standards** |
-| **Reproducibility** | Good (code) | Poor (GUI state lost) | **Excellent (notebook + task folder)** |
-| **Report generation** | Manual | Manual export | **Automated Word + HTML** |
-| **Physics rigor** | Full control | Vendor-validated | **Full (same NeqSim engine)** |
+LLMs reason well but hallucinate physics. NeqSim is exact on thermodynamics but needs context. **Together, they form a complete engineering system.** The LLM reasons. NeqSim computes. Provenance proves it.
 
 ### MCP Server — give any LLM access to rigorous thermodynamics
 
-The [NeqSim MCP Server](neqsim-mcp-server/) lets **any MCP-compatible client** (VS Code Copilot, Claude Desktop, Cursor, etc.) run real calculations:
-
-**Install in seconds** — pick jar or Docker:
+The [NeqSim MCP Server](neqsim-mcp-server/) lets any MCP-compatible client (VS Code Copilot, Claude Desktop, Cursor, etc.) run real calculations. Install in seconds:
 
 ```bash
-# Jar (requires Java 17+) — replace VERSION with the latest release, e.g. 3.7.0
-curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
-
 # Docker (no Java needed)
 docker pull ghcr.io/equinor/neqsim-mcp-server:latest
 ```
 
-Then point your LLM client at `java -jar neqsim-mcp-server-*.jar` or `docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest`. See [full setup guide](neqsim-mcp-server/#install-from-github-release-3-steps).
+| Ask the LLM | MCP Tool |
+|---|---|
+| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | `runFlash` |
+| *"How does density change from 0 to 50 °C at 80 bara?"* | `runBatch` |
+| *"Phase envelope for this natural gas"* | `getPhaseEnvelope` |
+| *"Simulate gas through a separator then compressor to 120 bara"* | `runProcess` |
 
-| Ask the LLM | What happens | MCP Tool |
-|---|---|---|
-| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | Flash calculation via NeqSim | `runFlash` |
-| *"How does density change from 0 to 50 °C at 80 bara?"* | Multi-point sensitivity sweep | `runBatch` |
-| *"Get density, viscosity, and Cp from 10 to 100 bara"* | Property table across a range | `getPropertyTable` |
-| *"Phase envelope for this natural gas"* | Bubble/dew point curve | `getPhaseEnvelope` |
-| *"Simulate gas through a separator then compressor to 120 bara"* | Full process simulation | `runProcess` |
-| *"What can NeqSim calculate?"* | Capabilities discovery | `getCapabilities` |
-
-**Quick path (no flowsheet needed):** For single properties, sensitivity studies, and
-phase boundaries, use `runFlash`, `runBatch`, `getPropertyTable`, or `getPhaseEnvelope`.
-These return results directly with provenance metadata (EOS model, assumptions, limitations).
-
-**Full simulation path:** For multi-equipment flowsheets, use `runProcess` with a JSON
-process definition. See the [MCP Server docs](neqsim-mcp-server/) or the
-[getting-started tutorial](docs/integration/mcp_getting_started.md).
-
-### Why trust this answer? — every result includes provenance
-
-Unlike generic LLM guesses, every NeqSim MCP response tells you *why* you should trust it:
-
-```json
-{
-  "status": "success",
-  "provenance": {
-    "model": "SRK",
-    "flashType": "TP",
-    "convergence": { "converged": true, "iterations": 8 },
-    "assumptions": ["Classic van der Waals mixing rule"],
-    "limitations": ["SRK may underpredict liquid density by 5-15%"],
-    "recommendedCrossChecks": ["Compare with GERG-2008 for high-pressure gas"]
-  },
-  "fluid": {
-    "properties": {
-      "gas": {
-        "density": { "value": 62.3, "unit": "kg/m3" },
-        "compressibilityFactor": { "value": 0.88 }
-      }
-    }
-  }
-}
-```
-
-**The LLM reasons. NeqSim computes. Provenance proves it.**
+Every response includes provenance metadata (EOS model, convergence, assumptions, limitations). See the [MCP Server docs](neqsim-mcp-server/) and [setup guide](neqsim-mcp-server/#install-from-github-release-3-steps).
 
 ### AI task-solving workflow
 
-**With VS Code + GitHub Copilot Chat:**
-
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve.task TEG dehydration sizing for 50 MMSCFD wet gas
 ```
 
-**Without Copilot (script-based):**
-
-```bash
-pip install -e devtools/
-python devtools/new_task.py "hydrate formation temperature" --type A
-```
-
-The workflow creates a task folder, researches the topic, builds and runs simulations, validates results, and generates a professional report. See the [step-by-step tutorial](docs/tutorials/solve-engineering-task.md) or the [full workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
+The agent creates a task folder, runs NeqSim simulations, validates results, and generates a Word + HTML report — no coding required. See the [tutorial](docs/tutorials/solve-engineering-task.md) or [workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
 
 ---
 
 ## ☕ Use NeqSim in Java
-
-### Add as a Maven dependency
-
-**From Maven Central** (simplest):
 
 ```xml
 <dependency>
@@ -399,10 +288,10 @@ The workflow creates a task folder, researches the topic, builds and runs simula
 </dependency>
 ```
 
-**From GitHub Packages** (latest snapshots):
+The Quick Start above shows the core pattern (create fluid → flash → read properties). For process simulation, add equipment to a `ProcessSystem` and call `run()` — see the [Java Getting Started Guide](docs/java-getting-started.md) for full examples.
 
 <details>
-<summary>Show GitHub Packages setup</summary>
+<summary>GitHub Packages setup (latest snapshots)</summary>
 
 1. Configure authentication in your Maven `settings.xml`:
 
@@ -428,46 +317,7 @@ The workflow creates a task folder, researches the topic, builds and runs simula
 ```
 </details>
 
-### Java code example — process simulation
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.processmodel.ProcessSystem;
-
-// Define fluid
-SystemSrkEos fluid = new SystemSrkEos(273.15 + 30.0, 80.0);
-fluid.addComponent("methane", 0.80);
-fluid.addComponent("ethane", 0.12);
-fluid.addComponent("propane", 0.05);
-fluid.addComponent("n-butane", 0.03);
-fluid.setMixingRule("classic");
-
-// Build flowsheet
-Stream feed = new Stream("Feed", fluid);
-feed.setFlowRate(50000.0, "kg/hr");
-
-Separator separator = new Separator("HP Sep", feed);
-Compressor compressor = new Compressor("Comp", separator.getGasOutStream());
-compressor.setOutletPressure(150.0);
-
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(separator);
-process.add(compressor);
-process.run();
-
-System.out.println("Power: " + compressor.getPower("kW") + " kW");
-```
-
-### Learn more
-
-- **[Complete Java Getting Started Guide](docs/java-getting-started.md)** — Prerequisites, IDE setup, EOS selection, flash types, project structure, and contributor conventions
-- [NeqSim JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) — Full API reference
-- [Java Wiki & examples](https://github.com/equinor/neqsim/wiki) — Usage patterns and guides
-- [NeqSim Colab demo (Java)](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL) — Try interactively
+**Learn more:** [Java Getting Started Guide](docs/java-getting-started.md) · [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) · [Wiki](https://github.com/equinor/neqsim/wiki) · [Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL)
 
 ---
 
@@ -595,21 +445,55 @@ For details see [docs/modules.md](docs/modules.md).
 ### Contributing
 
 We welcome contributions of all kinds — bug fixes, new models, examples, documentation, and notebook recipes.
+**AI-assisted PRs are first-class contributions** — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — Code of conduct and PR process
+**New here?** Three commands to get started:
+
+```bash
+git clone https://github.com/equinor/neqsim.git && cd neqsim
+pip install -e devtools/    # one-time: registers the `neqsim` command
+neqsim onboard             # interactive setup (Java, Maven, build, Python, agents)
+```
+
+Or skip local setup entirely: **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=equinor/neqsim)** — everything pre-installed in the browser.
+
+Then explore and contribute:
+
+```bash
+neqsim try                 # interactive playground — experiment with NeqSim instantly
+neqsim contribute          # guided wizard — picks the right path for you
+neqsim doctor              # quick diagnostic if something isn't working
+```
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Code of conduct, PR process, AI-assisted contributions
+- [VISION_AGENTS.md](VISION_AGENTS.md) — What belongs in the agentic system (core vs. community)
 - [Developer setup guide](docs/DEVELOPER_SETUP.md) — Build, test, and project structure
 - [Contributing structure](docs/contributing-structure.md) — Where to place code, tests, and resources
-- [Interactive Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7) — Getting started as a developer
 
 #### Where to start
 
+**Skills** are markdown files containing engineering knowledge (code patterns, design rules, troubleshooting tips) that AI agents load automatically when solving related tasks. Contributing a skill is the easiest way to make the agentic system smarter — no Java required.
+
 | # | First Contribution | Difficulty | What to do |
 |---|---|---|---|
-| 1 | Add a NIST validation benchmark | Easy | Compare NeqSim flash results to NIST data in `docs/benchmarks/` |
-| 2 | Create a Jupyter notebook example | Medium | Add a worked example to `examples/notebooks/` |
-| 3 | Add an MCP example to the catalog | Easy | Add a new entry in `ExampleCatalog.java` |
-| 4 | Fix a broken doc link | Easy | Search `docs/**/*.md` for dead links and fix them |
-| 5 | Add a unit test for existing equipment | Medium | Add tests under `src/test/java/neqsim/` |
+| 1 | **Contribute a skill** | Easy | Write a SKILL.md with domain knowledge — `neqsim new-skill "name"` ([guide](.github/skills/README.md#how-to-contribute-a-skill), [example skill](.github/skills/neqsim-input-validation/SKILL.md)) |
+| 2 | Add a NIST validation benchmark | Easy | Compare NeqSim flash results to NIST data in `docs/benchmarks/` |
+| 3 | Create a Jupyter notebook example | Medium | Add a worked example to `examples/notebooks/` |
+| 4 | Add an MCP example to the catalog | Easy | Add a new entry in `ExampleCatalog.java` |
+| 5 | Fix a broken doc link | Easy | Search `docs/**/*.md` for dead links and fix them |
+| 6 | Add a unit test for existing equipment | Medium | Add tests under `src/test/java/neqsim/` |
+
+#### Community Skill Catalog
+
+Browse and install community-contributed skills — or publish your own:
+
+```bash
+neqsim install-skill list                    # browse the catalog
+neqsim install-skill install <name>          # install a skill
+neqsim install-skill publish user/repo-name  # publish yours (creates a draft PR)
+```
+
+See [community-skills.yaml](community-skills.yaml) for the full catalog and [.github/skills/README.md](.github/skills/README.md) for the skill contribution guide.
 
 All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 
