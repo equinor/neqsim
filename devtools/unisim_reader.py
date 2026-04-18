@@ -1780,7 +1780,7 @@ class UniSimToNeqSim:
 
         status = 'SUCCESS' if is_success else ('ERROR' if is_error else 'PARTIAL')
         print(f"\n{'='*60}")
-        print(f"  UniSim → NeqSim Automatic Build: {status}")
+        print(f"  UniSim -> NeqSim Automatic Build: {status}")
         print(f"{'='*60}")
 
         if is_success or not is_error:

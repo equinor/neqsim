@@ -16,29 +16,43 @@ import textwrap
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-DEMO_CODE = textwrap.dedent("""\
+# Preamble to suppress Java 21+ native access warnings from JPype.
+# Must start JVM with the flag before 'import neqsim' which eagerly starts it.
+_JVM_PREAMBLE = textwrap.dedent("""\
+    import jpype, os, importlib.util
+    if not jpype.isJVMStarted():
+        _spec = importlib.util.find_spec("neqsim")
+        _neqsim_dir = os.path.dirname(_spec.origin) if _spec else ""
+        _jar_dir = os.path.join(_neqsim_dir, "lib", "java11", "*")
+        if not os.path.isdir(os.path.join(_neqsim_dir, "lib", "java11")):
+            _jar_dir = os.path.join(_neqsim_dir, "lib", "java8", "*")
+        jpype.startJVM("--enable-native-access=ALL-UNNAMED",
+                       classpath=[_jar_dir], convertStrings=False)
+""")
+
+DEMO_CODE = _JVM_PREAMBLE + textwrap.dedent("""\
     from neqsim import jneqsim
 
-    # ── Create a natural gas fluid ──────────────────────────────────
+    # -- Create a natural gas fluid ------------------------------------
     fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)
     fluid.addComponent("methane", 0.85)
     fluid.addComponent("ethane", 0.10)
     fluid.addComponent("propane", 0.05)
     fluid.setMixingRule("classic")
 
-    # ── Flash calculation ───────────────────────────────────────────
+    # -- Flash calculation -----------------------------------------------
     ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
     ops.TPflash()
     fluid.initProperties()
 
-    # ── Read results ────────────────────────────────────────────────
+    # -- Read results ----------------------------------------------------
     gas = fluid.getPhase("gas")
     print()
-    print("  Natural gas at 25 °C, 60 bara")
-    print("  ─────────────────────────────────────")
-    print("  Density:            {:.2f} kg/m³".format(gas.getDensity("kg/m3")))
-    print("  Viscosity:          {:.6f} kg/(m·s)".format(gas.getViscosity("kg/msec")))
-    print("  Thermal cond.:      {:.4f} W/(m·K)".format(gas.getThermalConductivity("W/mK")))
+    print("  Natural gas at 25 C, 60 bara")
+    print("  -------------------------------------")
+    print("  Density:            {:.2f} kg/m3".format(gas.getDensity("kg/m3")))
+    print("  Viscosity:          {:.6f} kg/(m*s)".format(gas.getViscosity("kg/msec")))
+    print("  Thermal cond.:      {:.4f} W/(m*K)".format(gas.getThermalConductivity("W/mK")))
     print("  Z-factor:           {:.4f}".format(gas.getZ()))
     print("  Molar mass:         {:.4f} kg/mol".format(fluid.getMolarMass("kg/mol")))
     print("  Number of phases:   {}".format(fluid.getNumberOfPhases()))
@@ -68,10 +82,9 @@ def main():
 
     demo_mode = "--demo" in args
 
-    # Check neqsim is importable
-    try:
-        import neqsim  # noqa: F401
-    except ImportError:
+    # Check neqsim is importable (without starting JVM)
+    import importlib.util
+    if importlib.util.find_spec("neqsim") is None:
         print("  [!!] neqsim is not installed.")
         print("       Install it:  pip install neqsim")
         print("       Then retry:  neqsim try")
@@ -79,12 +92,12 @@ def main():
 
     print()
     print("  NeqSim Interactive Playground")
-    print("  ─────────────────────────────")
-    print("  Setting up a sample fluid (natural gas, SRK EOS, 25 °C, 60 bara)...")
+    print("  -----------------------------")
+    print("  Setting up a sample fluid (natural gas, SRK EOS, 25 C, 60 bara)...")
     print()
 
     # Build the startup code that the REPL will execute
-    startup = DEMO_CODE if demo_mode else textwrap.dedent("""\
+    startup = DEMO_CODE if demo_mode else _JVM_PREAMBLE + textwrap.dedent("""\
         from neqsim import jneqsim
 
         fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)
@@ -112,12 +125,14 @@ def main():
     # Write a temp startup file
     import tempfile
     startup_file = os.path.join(tempfile.gettempdir(), "neqsim_try_startup.py")
-    with open(startup_file, "w") as f:
+    with open(startup_file, "w", encoding="utf-8") as f:
         f.write(startup)
 
     # Launch interactive Python with the startup file
     os.environ["PYTHONSTARTUP"] = startup_file
-    os.execv(sys.executable, [sys.executable, "-i", startup_file])
+    os.environ["PYTHONUTF8"] = "1"
+    import subprocess
+    sys.exit(subprocess.call([sys.executable, "-i", startup_file]))
 
 
 if __name__ == "__main__":

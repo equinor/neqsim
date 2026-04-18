@@ -125,7 +125,7 @@ class ConsistencyChecker:
         print(f"Found {len(self.notebooks)} notebooks:")
         for nb in self.notebooks:
             print(f"  - {nb.relative_to(self.task_dir)}")
-        print(f"Results JSON: {'✓' if self.results_json.exists() else '✗'}")
+        print(f"Results JSON: {'[OK]' if self.results_json.exists() else '[X]'}")
         print()
 
     def _extract_from_notebooks(self):
@@ -444,7 +444,7 @@ class ConsistencyChecker:
         print(f"\n{'='*70}")
         print("CONSISTENCY CHECK SUMMARY")
         print(f"{'='*70}")
-        print(f"Status: {'✓ PASS' if report['status'] == 'PASS' else '✗ FAIL'}")
+        print(f"Status: {'PASS' if report['status'] == 'PASS' else 'FAIL'}")
         print(f"Notebooks checked: {report['summary']['notebooks_checked']}")
         print(f"Values extracted: {report['summary']['values_extracted']}")
         print(f"\nIssues found:")
@@ -452,16 +452,16 @@ class ConsistencyChecker:
         print(f"  Warnings: {report['summary']['warnings']}")
 
         if self.inconsistencies:
-            print(f"\n{'─'*70}")
+            print(f"\n{'-'*70}")
             print("DETAILS:")
             for i, issue in enumerate(self.inconsistencies, 1):
-                icon = {'critical': '🔴', 'warning': '🟡', 'info': '🔵'}[issue.severity]
+                icon = {'critical': '[!!]', 'warning': '[!]', 'info': '[i]'}[issue.severity]
                 print(f"\n{icon} Issue {i}: {issue.type}")
                 print(f"   {issue.description}")
                 print(f"   Sources: {', '.join(issue.sources)}")
                 if issue.values:
                     print(f"   Values: {issue.values}")
-                print(f"   → {issue.recommendation}")
+                print(f"   -> {issue.recommendation}")
 
         return report
 

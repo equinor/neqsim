@@ -175,7 +175,9 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         for i, cp in enumerate(classpath, 1):
             print(f"  {i}. {cp}")
 
-    jpype.startJVM(classpath=classpath, convertStrings=True)
+    # Suppress Java 21+ restricted method warnings from JPype native access
+    jvm_args = ["--enable-native-access=ALL-UNNAMED"]
+    jpype.startJVM(*jvm_args, classpath=classpath, convertStrings=True)
     if verbose:
         print(f"\nJVM started: {jpype.getDefaultJVMPath()}")
 

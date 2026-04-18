@@ -53,7 +53,7 @@ def _pause(msg="Press Enter to continue..."):
 def _contribute_skill():
     """Walk through creating and submitting a skill."""
     print()
-    print("  ── Contribute a Skill ──────────────────────────────────────")
+    print("  -- Contribute a Skill --------------------------------------")
     print()
     print("  Skills are markdown files containing engineering knowledge")
     print("  (code patterns, design rules, troubleshooting tips) that AI")
@@ -107,7 +107,7 @@ def _contribute_skill():
 def _contribute_notebook():
     """Walk through creating a Jupyter notebook example."""
     print()
-    print("  ── Contribute a Notebook ───────────────────────────────────")
+    print("  -- Contribute a Notebook -----------------------------------")
     print()
     print("  Notebook examples go in examples/notebooks/ and show how to")
     print("  use NeqSim for a specific task (flash calculation, process")
@@ -149,7 +149,7 @@ def _contribute_notebook():
 def _contribute_benchmark():
     """Walk through adding a validation benchmark."""
     print()
-    print("  ── Contribute a Benchmark ──────────────────────────────────")
+    print("  -- Contribute a Benchmark ----------------------------------")
     print()
     print("  Benchmarks compare NeqSim calculations against reference")
     print("  data (NIST, published literature, other simulators).")
@@ -171,7 +171,7 @@ def _contribute_benchmark():
 def _contribute_bugfix():
     """Walk through the bug fix / feature contribution path."""
     print()
-    print("  ── Contribute a Bug Fix or Feature ─────────────────────────")
+    print("  -- Contribute a Bug Fix or Feature -------------------------")
     print()
     print("  Steps:")
     print("    1. Check existing issues: github.com/equinor/neqsim/issues")
@@ -197,7 +197,7 @@ def _contribute_bugfix():
 def _contribute_doc_fix():
     """Walk through fixing documentation."""
     print()
-    print("  ── Fix Documentation ──────────────────────────────────────")
+    print("  -- Fix Documentation --------------------------------------")
     print()
     print("  Documentation lives in docs/ (350+ markdown pages).")
     print()
@@ -246,7 +246,7 @@ def main():
         return
 
     print()
-    print("  ── NeqSim Contribution Guide ──────────────────────────────")
+    print("  -- NeqSim Contribution Guide ------------------------------")
     print("  What would you like to contribute?")
 
     choice = _ask("", PATHS)
