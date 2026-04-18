@@ -221,6 +221,9 @@ public class EclipseVFPExporter implements Serializable {
    *   1  1  1  1  BHP1  BHP2  ... /
    *   2  1  1  1  BHP1  BHP2  ... /
    * </pre>
+   *
+   * @param out the appendable to write VFPPROD content to
+   * @throws IOException if an I/O error occurs during writing
    */
   private void writeVFPPRODContent(Appendable out) throws IOException {
     // Header comments
@@ -264,6 +267,9 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes VFPINJ to a writer.
+   *
+   * @param writer the buffered writer to write VFPINJ content to
+   * @throws IOException if an I/O error occurs during writing
    */
   private void writeVFPINJ(BufferedWriter writer) throws IOException {
     StringBuilder sb = new StringBuilder();
@@ -547,6 +553,13 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Gets a BHP value from the table.
+   *
+   * @param iFlow the flow rate index
+   * @param iTHP the tubing head pressure index
+   * @param iWC the water cut index
+   * @param iGOR the gas-oil ratio index
+   * @param iALQ the artificial lift quantity index
+   * @return the BHP value at the specified indices
    */
   private double getBHPValue(int iFlow, int iTHP, int iWC, int iGOR, int iALQ) {
     if (BHPTable != null && iFlow < BHPTable.length && iTHP < BHPTable[iFlow].length
@@ -604,6 +617,10 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Finds the closest index in an array.
+   *
+   * @param array the array to search
+   * @param value the value to find the closest index for
+   * @return the index of the closest matching element
    */
   private int findIndex(double[] array, double value) {
     if (array == null || array.length == 0) {
