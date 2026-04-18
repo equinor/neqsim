@@ -859,6 +859,12 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void setDebyeDipoleMoment(double debyeDipoleMoment) {
+    this.debyeDipoleMoment = debyeDipoleMoment;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public final double getIonicCharge() {
     return ionicCharge;
   }
