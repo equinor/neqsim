@@ -11,8 +11,24 @@ compile, and immediately test from Python without rebuilding a JAR.
 pip install -e devtools/
 ```
 
-This installs `neqsim_dev_setup` as an editable package so every notebook in
-the venv can import it — no `sys.path` hacks needed.
+This installs `neqsim_dev_setup` as an editable package and registers the **`neqsim` CLI**
+so every notebook in the venv can import it — no `sys.path` hacks needed.
+
+### The `neqsim` CLI
+
+After installation you get a single `neqsim` command:
+
+```bash
+neqsim try               # interactive playground — explore NeqSim in 30 seconds
+neqsim onboard           # interactive setup wizard
+neqsim doctor            # check your environment is healthy
+neqsim contribute        # guided wizard for your first contribution
+neqsim new-task TITLE    # create a task-solving workspace
+neqsim new-skill NAME    # scaffold a new AI skill
+neqsim install-skill CMD # manage community skills (list/search/install/remove)
+```
+
+Run `neqsim --help` for the full list.
 
 ## Usage (any notebook, any directory)
 
@@ -50,9 +66,16 @@ for a full explanation of the architecture and internals.
 
 | File | Purpose |
 |------|---------|
+| `neqsim_cli.py` | **Unified CLI entry point** — dispatches `neqsim try`, `neqsim onboard`, etc. |
+| `neqsim_try.py` | Interactive playground — drops into a Python REPL with a sample fluid ready |
+| `neqsim_contribute.py` | Guided contribution wizard — walks new contributors through their first PR |
 | `neqsim_dev_setup.py` | JVM bootstrap, class imports, compile + kernel restart |
 | `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) |
 | `new_task.py` | Create task-solving folders for the 4-step AI workflow |
+| `new_skill.py` | Scaffold a new skill for the agentic system (`neqsim new-skill "name"`) |
+| `install_skill.py` | Install community skills from `community-skills.yaml` catalog to `~/.neqsim/skills/` |
+| `neqsim_doctor.py` | Diagnostic tool — checks Java, Maven, JAR, Python, agents, skills, cross-tool configs |
+| `onboard.py` | Interactive onboarding wizard — walks new contributors through full environment setup |
 | `consistency_checker.py` | **Pre-report quality gate.** Extracts numerical values from notebooks and results.json, detects inconsistencies (numerical mismatches, scope mismatches, contradictory claims). Run before `generate_report.py`. Produces `consistency_report.json`. |
 | `unisim_reader.py` | UniSim/HYSYS .usc COM reader → NeqSim Python/notebook/EOT/JSON. 45+ op types, port-specific forward refs, auto-recycle wiring. |
 | `test_unisim_outputs.py` | 14 pytest tests for all UniSim converter output modes (no COM needed) |
