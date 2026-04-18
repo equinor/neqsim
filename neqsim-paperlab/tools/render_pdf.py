@@ -140,6 +140,9 @@ def postprocess_typst(typ_text):
 
     - Replace fixed-percentage column widths with auto-sizing so that
       math-heavy table columns are not squeezed.
+    - Replace underscores in Typst labels with hyphens (Typst labels
+      cannot contain underscores).
+    - Remove BibTeX case-protection braces that pandoc leaves in text.
     """
 
     def fix_columns(m):
@@ -151,6 +154,32 @@ def postprocess_typst(typ_text):
         fix_columns,
         typ_text,
     )
+
+    # Fix underscores in Typst labels: <some_label> -> <some-label>
+    # Pandoc generates labels from headings; labels cannot contain underscores.
+    # Labels may contain letters, digits, hyphens, dots, and underscores.
+    def fix_label(m):
+        return '<' + m.group(1).replace('_', '-') + '>'
+
+    typ_text = re.sub(r'<([a-zA-Z][a-zA-Z0-9_.:-]*_[a-zA-Z0-9_.:-]*)>', fix_label, typ_text)
+
+    # Remove BibTeX case-protection braces that survive pandoc conversion.
+    # These are bare { } in text that Typst interprets as content blocks.
+    # Matched pairs like {K}, {CO$_2$}, {CPA} -> strip braces, keep content.
+    typ_text = re.sub(r'\{([^{}\n]{1,80})\}', r'\1', typ_text)
+    # Unmatched orphan { in text lines (e.g. from truncated references).
+    # Process line-by-line: remove bare { on lines that are NOT Typst code.
+    out_lines = []
+    in_code = False
+    for line in typ_text.split('\n'):
+        s = line.lstrip()
+        if s.startswith('```'):
+            in_code = not in_code
+        if not in_code and not s.startswith('#') and '{' in line:
+            line = line.replace('{', '').replace('}', '')
+        out_lines.append(line)
+    typ_text = '\n'.join(out_lines)
+
     return typ_text
 
 

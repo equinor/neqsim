@@ -578,6 +578,8 @@ The results across five representative salts demonstrate substantial accuracy im
 
 *Table 12.7: Ion-specific $W_0$ parameters and accuracy improvement for the advanced e-CPA \cite{Solbraa2026}. MAE is mean absolute error for $\gamma_\pm$ from 0.001 to 6 molal.*
 
+The improvement is visualized in Figure 12.8, which shows the parity plot of predicted vs. experimental mean ionic activity coefficients for all five salts. Figure 12.9 shows the corrected parity plot after applying the ion-specific $W_0$ parameters, and Figure 12.10 compares the standard e-CPA and advanced e-CPA predictions across all salts simultaneously.
+
 The improvement is most dramatic for Na$_2$SO$_4$ (92% reduction in MAE) and CaCl$_2$ (73%), which are the salts most poorly described by the standard approach. Note the sign reversal for CaCl$_2$: the divalent Ca$^{2+}$ cation has a negative $W_0$, reflecting its stronger hydration shell that modifies the local solvent structure differently from monovalent cations.
 
 An important finding from this work is that **the Born solvation contribution is negligible** for activity coefficients. Although the Born term contributes significantly to the raw fugacity coefficient $\ln \varphi_i$, these contributions cancel exactly when computing the activity coefficient $\gamma_i = \varphi_i / \varphi_i^\infty$:
@@ -755,3 +757,15 @@ Key points from this chapter:
 ![Figure 12.7: Ex03 Model Selection](figures/fig_ch12_ex03_model_selection.png)
 
 *Figure 12.7: Ex03 Model Selection*
+
+![Figure 12.8: All salts gamma comparison](figures/fig_ch12_08_all_salts_gamma_comparison.png)
+
+*Figure 12.8: Comparison of predicted vs. experimental mean ionic activity coefficients ($\gamma_\pm$) for all five salts \cite{Solbraa2026}. The standard e-CPA (left) shows systematic deviations for CaCl$_2$ and Na$_2$SO$_4$, while the advanced e-CPA with ion-specific $W_0$ parameters (right) dramatically improves agreement.*
+
+![Figure 12.9: Corrected parity plot](figures/fig_ch12_09_corrected_parity_plot.png)
+
+*Figure 12.9: Parity plot for mean ionic activity coefficients after applying ion-specific $W_0$ corrections \cite{Solbraa2026}. Points cluster near the diagonal, indicating excellent agreement between predicted and experimental values.*
+
+![Figure 12.10: Parity plot gamma](figures/fig_ch12_10_parity_plot_gamma.png)
+
+*Figure 12.10: Overall parity comparison of $\gamma_\pm$ predictions across all salt systems and concentrations \cite{Solbraa2026}. Average MAE reduces from 16.9% (standard e-CPA) to 4.2% (advanced e-CPA), a 75% improvement.*

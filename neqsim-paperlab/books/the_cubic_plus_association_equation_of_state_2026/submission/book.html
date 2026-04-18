@@ -4618,6 +4618,46 @@ for fluid, name in [(fluid_std, &quot;Standard&quot;), (fluid_impl, &quot;Fully 
 <p>Broyden's method converges superlinearly:</p>
 <p>$$\|X^{(k+1)} - X^<em>\| \leq C_k \|X^{(k)} - X^</em>\|$$</p>
 <p>where $C_k \to 0$ as $k \to \infty$. This is faster than linear (successive substitution) but slower than quadratic (Newton). In practice, Broyden's method typically converges in 4–8 iterations, comparable to Newton but without the cost of explicit Jacobian computation.</p>
+<p>The computational advantage comes from the per-step cost reduction [<a href="#ref-48" class="cite">48</a>]:</p>
+<table>
+<thead><tr>
+<th>Operation</th>
+<th>Full Newton</th>
+<th>Broyden</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Jacobian construction</td>
+<td>$O(n^2)$</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Linear solve (GE)</td>
+<td>$O(n^3/3)$</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Jacobian inversion</td>
+<td>$O(n^3)$</td>
+<td>— (stored)</td>
+</tr>
+<tr>
+<td>Sherman–Morrison update</td>
+<td>—</td>
+<td>$O(n^2)$</td>
+</tr>
+<tr>
+<td>Matrix-vector product</td>
+<td>—</td>
+<td>$O(n^2)$</td>
+</tr>
+<tr>
+<td><strong>Total per step</strong></td>
+<td><strong>$O(n^3)$</strong></td>
+<td><strong>$O(n^2)$</strong></td>
+</tr>
+</tbody></table>
+<p><em>Table 8.2: Per-step computational cost: full Newton vs. Broyden update. For systems with $n > 5$ site types, the $O(n^2)$ vs. $O(n^3)$ difference becomes significant.</em></p>
 <h3 id="8-5-4-neqsim-implementation">8.5.4 NeqSim Implementation</h3>
 <pre><code class="language-python">
 from neqsim import jneqsim
@@ -4722,6 +4762,7 @@ print(f&quot;Density: {fluid.getDensity('kg/m3'):.2f} kg/m3&quot;)
 </tr>
 </tbody></table>
 <p><em>Table 8.1: Typical iteration counts for different CPA solver strategies.</em></p>
+<p>Figure 8.12 illustrates the convergence behavior of these solvers for a representative binary system: successive substitution converges linearly (constant slope on semilog scale), Anderson mixing achieves superlinear convergence, and the Broyden solver transitions from initial quadratic convergence to superlinear rank-1 updates. Figure 8.11 compares the overall speedup of the accelerated solvers across the full 11-system benchmark suite.</p>
 <h3 id="8-6-4-neqsim-implementation">8.6.4 NeqSim Implementation</h3>
 <pre><code class="language-python">
 from neqsim import jneqsim
@@ -4776,7 +4817,7 @@ print(f&quot;Density: {fluid.getDensity('kg/m3'):.2f} kg/m3&quot;)
 <li>Simplifies the computation of second derivatives for caloric properties</li>
 <li>Reduces round-off errors in the association term at extreme conditions</li>
 </ol>
-<p>NeqSim's advanced CPA solvers use a variant of this approach internally.</p>
+<p>NeqSim's advanced CPA solvers use a variant of this approach internally. The site type mapping that enables the dimensionality reduction is illustrated schematically in Figure 8.13.</p>
 <h2 id="8-8-convergence-diagnostics-and-troubleshooting">8.8 Convergence Diagnostics and Troubleshooting</h2>
 <h3 id="8-8-1-common-convergence-issues">8.8.1 Common Convergence Issues</h3>
 <p>CPA calculations can fail to converge for several reasons:</p>
@@ -5125,10 +5166,13 @@ print(f&quot;Gas density: {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3&
 <p><em>Table 8.6: Speedup of the fully implicit solver vs. standard nested solver [<a href="#ref-48" class="cite">48</a>]. All systems show zero thermodynamic accuracy loss.</em></p>
 <p>Key observations:</p>
 <ul>
-<li><strong>Speedup range: 1.9× to 32.8×</strong> depending on the system</li>
+<li><strong>Speedup range: 1.9× to 32.8×</strong> depending on the system (see Figure 8.5 for a visual comparison)</li>
 <li><strong>Zero accuracy loss</strong>: the implicit solver converges to the same thermodynamic solution with machine-precision agreement</li>
-<li><strong>Speedup increases with the number of association sites</strong> ($n_s$) because eliminating the inner loop saves more iterations when the site balance is expensive</li>
+<li><strong>Speedup increases with the number of association sites</strong> ($n_s$) because eliminating the inner loop saves more iterations when the site balance is expensive (see Figure 8.8)</li>
 <li>The exceptional 32.8× for the ternary associating system reflects the compounding effect of multiple associating species requiring many inner iterations in the nested solver</li>
+<li>The speedup is consistent across (T, P) conditions — Figures 8.6 and 8.7 show heatmaps of the time ratio across the phase space for pure water and the 10-component oil–gas–water–MEG system respectively</li>
+<li>There is no simple monotonic trend between speedup and component count (Figure 8.10), confirming that the speedup depends primarily on the number of association sites and the fraction of associating components</li>
+<li>Figure 8.9 shows the full distribution of timing ratios, with the interquartile range for most systems lying well below 1.0</li>
 </ul>
 <h3 id="8-10-3-speedup-results-anderson-acceleration-with-site-reduction">8.10.3 Speedup Results: Anderson Acceleration with Site Reduction</h3>
 <p>Combining Anderson acceleration (§8.6) with the site symmetry reduction from §8.7 gives the best performance for glycol systems:</p>
@@ -5298,6 +5342,128 @@ print(f&quot;Gas density: {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3&
 </tr>
 </tbody></table>
 <p><em>Table 8.10: CPA solver variants in NeqSim and their recommended use cases.</em></p>
+<h3 id="8-10-7-detailed-timing-results-all-solvers-across-11-systems">8.10.7 Detailed Timing Results: All Solvers Across 11 Systems</h3>
+<p>The complete timing results from [<a href="#ref-48" class="cite">48</a>] reveal the nuanced performance landscape:</p>
+<table>
+<thead><tr>
+<th>System</th>
+<th>Standard (ms)</th>
+<th>Implicit (ms)</th>
+<th>Broyden (ms)</th>
+<th>Anderson (ms)</th>
+<th>$S_B$</th>
+<th>$S_A$</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Pure water</td>
+<td>185.9</td>
+<td>117.4</td>
+<td><strong>73.4</strong></td>
+<td>87.0</td>
+<td>2.53</td>
+<td>2.14</td>
+</tr>
+<tr>
+<td>Pure methanol</td>
+<td>70.1</td>
+<td>51.1</td>
+<td>64.3</td>
+<td>76.8</td>
+<td>1.09</td>
+<td>0.91</td>
+</tr>
+<tr>
+<td>Pure ethanol</td>
+<td>62.8</td>
+<td>61.9</td>
+<td>65.2</td>
+<td>58.5</td>
+<td>0.96</td>
+<td>1.07</td>
+</tr>
+<tr>
+<td>Pure acetic acid</td>
+<td>56.6</td>
+<td>66.4</td>
+<td>50.8</td>
+<td>49.7</td>
+<td>1.11</td>
+<td>1.14</td>
+</tr>
+<tr>
+<td>Water–methanol</td>
+<td>329.2</td>
+<td>109.1</td>
+<td>117.1</td>
+<td><strong>77.5</strong></td>
+<td>2.81</td>
+<td><strong>4.25</strong></td>
+</tr>
+<tr>
+<td>Water–ethanol</td>
+<td>66.3</td>
+<td>44.7</td>
+<td>74.9</td>
+<td>88.4</td>
+<td>0.88</td>
+<td>0.75</td>
+</tr>
+<tr>
+<td>Water–acetic acid</td>
+<td>45.2</td>
+<td>61.7</td>
+<td>81.2</td>
+<td>40.7</td>
+<td>0.56</td>
+<td>1.11</td>
+</tr>
+<tr>
+<td>Water–EtOH–AcOH</td>
+<td>99.2</td>
+<td>60.2</td>
+<td>71.3</td>
+<td>61.3</td>
+<td>1.39</td>
+<td>1.62</td>
+</tr>
+<tr>
+<td>NG + water</td>
+<td>173.1</td>
+<td>324.8</td>
+<td>146.5</td>
+<td><strong>127.3</strong></td>
+<td>1.18</td>
+<td>1.36</td>
+</tr>
+<tr>
+<td>NG + water + MEG</td>
+<td>299.8</td>
+<td>307.3</td>
+<td>253.3</td>
+<td><strong>170.6</strong></td>
+<td>1.18</td>
+<td>1.76</td>
+</tr>
+<tr>
+<td>NG + water + TEG</td>
+<td>342.9</td>
+<td>212.5</td>
+<td>264.4</td>
+<td><strong>188.7</strong></td>
+<td>1.30</td>
+<td>1.82</td>
+</tr>
+</tbody></table>
+<p><em>Table 8.11: Complete benchmark timing (ms for 20 repetitions) across all solvers and systems [<a href="#ref-48" class="cite">48</a>]. $S_B$: Broyden speedup over standard; $S_A$: Anderson speedup over standard. Bold = fastest solver per system.</em></p>
+<p>Several patterns emerge from this detailed comparison:</p>
+<ul>
+<li><strong>No single solver dominates</strong>: the best solver varies by system type</li>
+<li><strong>Broyden excels for pure water</strong> (2.53× speedup) where the 4C scheme benefits from the efficient rank-1 Jacobian updates</li>
+<li><strong>Anderson dominates for mixtures with glycols</strong> (1.76–1.82× for NG + glycol systems) where the site reduction from 8→4 types compounds with the accelerated convergence</li>
+<li><strong>The implicit solver can be slower</strong> than standard for NG + water (0.53× speedup) because the larger augmented Jacobian adds overhead when the inner iteration converges quickly</li>
+<li><strong>Simple non-associating pure components</strong> show minimal difference between solvers, as the CPA association term is negligible</li>
+</ul>
 <h2 id="8-11-worked-example-diagnosing-and-fixing-convergence-failure">8.11 Worked Example: Diagnosing and Fixing Convergence Failure</h2>
 <p>Understanding solver behavior in practice requires examining real cases where convergence is challenging. This section presents a systematic troubleshooting workflow.</p>
 <h3 id="8-11-1-case-water-co-2-near-the-three-phase-line">8.11.1 Case: Water–CO$_2$ Near the Three-Phase Line</h3>
@@ -5517,6 +5683,42 @@ repeat:
 <figcaption>Figure 8.4: 04 Multi System Benchmark</figcaption>
 </figure>
 <p><em>Figure 8.4: 04 Multi System Benchmark</em></p>
+<figure><img src="figures/fig_ch08_05_implicit_speedup_bar.png" alt="Figure 8.5: Implicit solver speedup across 11 systems"/>
+<figcaption>Figure 8.5: Implicit solver speedup across 11 systems</figcaption>
+</figure>
+<p><em>Figure 8.5: Speedup factor (standard/implicit time) for all 11 fluid systems [<a href="#ref-48" class="cite">48</a>]. Blue bars: paper systems; orange bars: extended industrial systems. The dashed line at 1.0 indicates break-even. Speedups range from 1.9× (natural gas + water) to 32.8× (water–ethanol–acetic acid).</em></p>
+<figure><img src="figures/fig_ch08_06_implicit_heatmap_water.png" alt="Figure 8.6: Implicit solver heatmap for pure water"/>
+<figcaption>Figure 8.6: Implicit solver heatmap for pure water</figcaption>
+</figure>
+<p><em>Figure 8.6: Implicit/standard time ratio across the (T, P) grid for pure water [<a href="#ref-48" class="cite">48</a>]. Green regions indicate the implicit algorithm is faster; red regions indicate the standard is faster. The dashed contour marks the break-even line.</em></p>
+<figure><img src="figures/fig_ch08_07_implicit_heatmap_oil_gas.png" alt="Figure 8.7: Implicit solver heatmap for oil-gas-water-MEG"/>
+<figcaption>Figure 8.7: Implicit solver heatmap for oil-gas-water-MEG</figcaption>
+</figure>
+<p><em>Figure 8.7: Implicit/standard time ratio for the 10-component oil–gas–water–MEG system [<a href="#ref-48" class="cite">48</a>]. The implicit algorithm is faster over nearly the entire grid, with the strongest advantage at high temperatures.</em></p>
+<figure><img src="figures/fig_ch08_08_speedup_vs_sites.png" alt="Figure 8.8: Speedup vs. number of association sites"/>
+<figcaption>Figure 8.8: Speedup vs. number of association sites</figcaption>
+</figure>
+<p><em>Figure 8.8: Speedup factor vs. total number of association sites ($n_s$) [<a href="#ref-48" class="cite">48</a>]. Point size is proportional to the speedup factor. Systems with 8 association sites span a wide range (2.8–32.8×) depending on the fraction of associating components.</em></p>
+<figure><img src="figures/fig_ch08_09_ratio_distribution.png" alt="Figure 8.9: Distribution of timing ratios"/>
+<figcaption>Figure 8.9: Distribution of timing ratios</figcaption>
+</figure>
+<p><em>Figure 8.9: Distribution of timing ratios (implicit/standard) across all (T, P) conditions for each system [<a href="#ref-48" class="cite">48</a>]. The red dashed line at r = 1.0 marks break-even. The interquartile range for most systems lies well below 1.0.</em></p>
+<figure><img src="figures/fig_ch08_10_speedup_vs_ncomp.png" alt="Figure 8.10: Speedup vs. number of components"/>
+<figcaption>Figure 8.10: Speedup vs. number of components</figcaption>
+</figure>
+<p><em>Figure 8.10: Speedup factor vs. number of components ($N_c$) [<a href="#ref-48" class="cite">48</a>]. There is no simple monotonic trend, confirming that speedup depends primarily on the number of association sites rather than total component count.</em></p>
+<figure><img src="figures/fig_ch08_11_accel_speedup_barchart.png" alt="Figure 8.11: Accelerated solver speedup comparison"/>
+<figcaption>Figure 8.11: Accelerated solver speedup comparison</figcaption>
+</figure>
+<p><em>Figure 8.11: Speedup of accelerated CPA solvers over the standard nested solver across 11 fluid systems [<a href="#ref-48" class="cite">48</a>]. The Anderson solver achieves the largest peak speedup (4.2× for water–methanol) while the Broyden solver provides the most consistent improvement.</em></p>
+<figure><img src="figures/fig_ch08_12_convergence_trace.png" alt="Figure 8.12: Convergence trace comparison"/>
+<figcaption>Figure 8.12: Convergence trace comparison</figcaption>
+</figure>
+<p><em>Figure 8.12: Convergence behavior of inner-loop CPA solvers for a binary associating system [<a href="#ref-48" class="cite">48</a>]. Successive substitution converges linearly; Anderson mixing achieves superlinear convergence; Broyden shows initial quadratic convergence followed by superlinear rank-1 updates.</em></p>
+<figure><img src="figures/fig_ch08_13_site_type_mapping.png" alt="Figure 8.13: Site type mapping schematic"/>
+<figcaption>Figure 8.13: Site type mapping schematic</figcaption>
+</figure>
+<p><em>Figure 8.13: Site type mapping schematic [<a href="#ref-48" class="cite">48</a>]. (a) Water 4C scheme: 4 individual sites reduce to 2 unique types with multiplicity $m = 2$. (b) NG + H$_2$O + MEG system: 8 total sites reduce to 4 types, shrinking the Jacobian from $9 \times 9$ to $5 \times 5$.</em></p>
 </section>
 <section class="part-header"><h1>Part III: Applications and Validation</h1></section>
 <section id="chapter-9">
@@ -7471,9 +7673,113 @@ for wt_meg in [0, 20, 40, 60, 80, 90, 95]:
 </tr>
 </tbody></table>
 <p><em>Table 10.5: Solver performance for the full TEG dehydration simulation [<a href="#ref-48" class="cite">48</a>].</em></p>
-<p>The Anderson-reduced solver delivers 1.59× speedup over the standard solver, translating directly to faster process optimization runs. For a typical design study requiring 500+ flash evaluations across temperature and pressure sweeps, this reduces total computation time from 15 minutes to under 10 minutes.</p>
-<p>Notably, the fully implicit solver is <strong>slower</strong> than standard SS for this particular system. This illustrates that the optimal solver depends on the problem structure: the fully implicit solver excels when inner iterations are expensive (as shown by the 32.8× speedup for water–ethanol–acetic acid in Table 8.6), but for systems where the nested iteration converges quickly, the larger Jacobian of the coupled approach adds overhead.</p>
-<h3 id="10-12-3-practical-guidance-for-teg-process-design">10.12.3 Practical Guidance for TEG Process Design</h3>
+<h3 id="10-12-3-flash-level-benchmarks">10.12.3 Flash-Level Benchmarks</h3>
+<p>The process-level results above include overhead from the distillation column solver. To isolate the CPA solver performance, flash-level benchmarks across a (T, P) grid provide a cleaner comparison [<a href="#ref-48" class="cite">48</a>]:</p>
+<table>
+<thead><tr>
+<th>System</th>
+<th>$n_s$</th>
+<th>$p$</th>
+<th>Std (ms)</th>
+<th>Impl (ms)</th>
+<th>Red (ms)</th>
+<th>And+R (ms)</th>
+<th>Impl+R (ms)</th>
+<th>Speedup</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Pure water</td>
+<td>4</td>
+<td>2</td>
+<td>105</td>
+<td>76</td>
+<td>83</td>
+<td>84</td>
+<td>76</td>
+<td>1.39×</td>
+</tr>
+<tr>
+<td>Pure methanol</td>
+<td>2</td>
+<td>2</td>
+<td>68</td>
+<td>51</td>
+<td>48</td>
+<td>45</td>
+<td>49</td>
+<td>1.51×</td>
+</tr>
+<tr>
+<td>Water–methanol</td>
+<td>6</td>
+<td>4</td>
+<td>102</td>
+<td>75</td>
+<td>90</td>
+<td>98</td>
+<td>88</td>
+<td>1.36×</td>
+</tr>
+<tr>
+<td>Water–ethanol</td>
+<td>6</td>
+<td>4</td>
+<td>81</td>
+<td>70</td>
+<td>70</td>
+<td>72</td>
+<td>78</td>
+<td>1.16×</td>
+</tr>
+<tr>
+<td>Water–EtOH–AcOH</td>
+<td>8</td>
+<td>6</td>
+<td>112</td>
+<td>94</td>
+<td>111</td>
+<td>108</td>
+<td>129</td>
+<td>1.19×</td>
+</tr>
+<tr>
+<td>NG + water</td>
+<td>4</td>
+<td>2</td>
+<td>228</td>
+<td>176</td>
+<td>157</td>
+<td>151</td>
+<td>163</td>
+<td>1.51×</td>
+</tr>
+<tr>
+<td><strong>NG + water + MEG</strong></td>
+<td><strong>8</strong></td>
+<td><strong>4</strong></td>
+<td><strong>353</strong></td>
+<td><strong>227</strong></td>
+<td><strong>216</strong></td>
+<td><strong>213</strong></td>
+<td><strong>211</strong></td>
+<td><strong>1.67×</strong></td>
+</tr>
+<tr>
+<td><strong>NG + water + TEG</strong></td>
+<td><strong>8</strong></td>
+<td><strong>4</strong></td>
+<td><strong>402</strong></td>
+<td><strong>239</strong></td>
+<td><strong>216</strong></td>
+<td><strong>230</strong></td>
+<td><strong>206</strong></td>
+<td><strong>1.95×</strong></td>
+</tr>
+</tbody></table>
+<p><em>Table 10.6a: Flash-level benchmark results [<a href="#ref-48" class="cite">48</a>]. $n_s$: total association sites; $p$: unique site types. Std: standard nested; Impl: fully implicit; Red: Broyden-reduced; And+R: Anderson-reduced; Impl+R: implicit-reduced. Speedup of best solver vs standard.</em></p>
+<p>The flash-level benchmarks confirm the process-level finding: the NG + TEG system benefits most from the accelerated solvers, with the implicit-reduced algorithm delivering 1.95× speedup. The site symmetry reduction from $n_s = 8$ to $p = 4$ is the primary driver, as both TEG and water share the 4C scheme with identical multiplicity structure.</p>
+<h3 id="10-12-4-practical-guidance-for-teg-process-design">10.12.4 Practical Guidance for TEG Process Design</h3>
 <pre><code class="language-python">
 from neqsim import jneqsim
 
@@ -9490,6 +9796,7 @@ if fluid.hasPhaseType(&quot;gas&quot;):
 </tr>
 </tbody></table>
 <p><em>Table 12.7: Ion-specific $W_0$ parameters and accuracy improvement for the advanced e-CPA [<a href="#ref-48" class="cite">48</a>]. MAE is mean absolute error for $\gamma_\pm$ from 0.001 to 6 molal.</em></p>
+<p>The improvement is visualized in Figure 12.8, which shows the parity plot of predicted vs. experimental mean ionic activity coefficients for all five salts. Figure 12.9 shows the corrected parity plot after applying the ion-specific $W_0$ parameters, and Figure 12.10 compares the standard e-CPA and advanced e-CPA predictions across all salts simultaneously.</p>
 <p>The improvement is most dramatic for Na$_2$SO$_4$ (92% reduction in MAE) and CaCl$_2$ (73%), which are the salts most poorly described by the standard approach. Note the sign reversal for CaCl$_2$: the divalent Ca$^{2+}$ cation has a negative $W_0$, reflecting its stronger hydration shell that modifies the local solvent structure differently from monovalent cations.</p>
 <p>An important finding from this work is that <strong>the Born solvation contribution is negligible</strong> for activity coefficients. Although the Born term contributes significantly to the raw fugacity coefficient $\ln \varphi_i$, these contributions cancel exactly when computing the activity coefficient $\gamma_i = \varphi_i / \varphi_i^\infty$:</p>
 <table>
@@ -9775,6 +10082,18 @@ for sw_frac in [0.1, 0.3, 0.5, 0.7, 0.9]:
 <figcaption>Figure 12.7: Ex03 Model Selection</figcaption>
 </figure>
 <p><em>Figure 12.7: Ex03 Model Selection</em></p>
+<figure><img src="figures/fig_ch12_08_all_salts_gamma_comparison.png" alt="Figure 12.8: All salts gamma comparison"/>
+<figcaption>Figure 12.8: All salts gamma comparison</figcaption>
+</figure>
+<p><em>Figure 12.8: Comparison of predicted vs. experimental mean ionic activity coefficients ($\gamma_\pm$) for all five salts [<a href="#ref-48" class="cite">48</a>]. The standard e-CPA (left) shows systematic deviations for CaCl$_2$ and Na$_2$SO$_4$, while the advanced e-CPA with ion-specific $W_0$ parameters (right) dramatically improves agreement.</em></p>
+<figure><img src="figures/fig_ch12_09_corrected_parity_plot.png" alt="Figure 12.9: Corrected parity plot"/>
+<figcaption>Figure 12.9: Corrected parity plot</figcaption>
+</figure>
+<p><em>Figure 12.9: Parity plot for mean ionic activity coefficients after applying ion-specific $W_0$ corrections [<a href="#ref-48" class="cite">48</a>]. Points cluster near the diagonal, indicating excellent agreement between predicted and experimental values.</em></p>
+<figure><img src="figures/fig_ch12_10_parity_plot_gamma.png" alt="Figure 12.10: Parity plot gamma"/>
+<figcaption>Figure 12.10: Parity plot gamma</figcaption>
+</figure>
+<p><em>Figure 12.10: Overall parity comparison of $\gamma_\pm$ predictions across all salt systems and concentrations [<a href="#ref-48" class="cite">48</a>]. Average MAE reduces from 16.9% (standard e-CPA) to 4.2% (advanced e-CPA), a 75% improvement.</em></p>
 </section>
 <section id="glossary">
 <h2 id="glossary">Glossary</h2>

@@ -170,7 +170,22 @@ This creates the scaffold with empty chapters (`ch01` through `ch12`).
    See `PAPER_WRITING_GUIDELINES.md` "MANDATORY: Literature Review and Citation
    Collection First" for the complete workflow and quality rules.
 
-6. **Create chapter content** — each `chapter.md` uses markdown with:
+6. **Import content from PaperLab papers (MANDATORY)** — Before writing each
+   chapter, check `papers/` for papers that cover the same topic:
+   ```bash
+   grep -rl "chapter_keyword" papers/*/paper.md papers/*/plan.json
+   ```
+   For each matching paper:
+   - **Copy figures** from `papers/<paper>/figures/*.png` to `chapters/chNN/figures/`
+   - **Copy tables** (markdown) from `paper.md` into `chapter.md`
+   - **Incorporate results** — numerical benchmarks, validation data, performance comparisons
+   - **Adapt text** — expand paper explanations for the book's broader audience
+   - **Reuse equations** — copy LaTeX from paper.md, ensure notation matches book nomenclature
+
+   This step ensures the book benefits from the detailed research already done
+   in PaperLab papers. See `PAPER_WRITING_GUIDELINES.md` for the full workflow.
+
+7. **Create chapter content** — each `chapter.md` uses markdown with:
    - `$$...$$` for display equations (rendered as OMML in Word, KaTeX in HTML)
    - `$...$` for inline math
    - `\cite{key}` tags for every claim, equation origin, and data source

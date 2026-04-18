@@ -627,11 +627,26 @@ The performance differences, however, are significant:
 
 *Table 10.5: Solver performance for the full TEG dehydration simulation \cite{Solbraa2026}.*
 
-The Anderson-reduced solver delivers 1.59× speedup over the standard solver, translating directly to faster process optimization runs. For a typical design study requiring 500+ flash evaluations across temperature and pressure sweeps, this reduces total computation time from 15 minutes to under 10 minutes.
+### 10.12.3 Flash-Level Benchmarks
 
-Notably, the fully implicit solver is **slower** than standard SS for this particular system. This illustrates that the optimal solver depends on the problem structure: the fully implicit solver excels when inner iterations are expensive (as shown by the 32.8× speedup for water–ethanol–acetic acid in Table 8.6), but for systems where the nested iteration converges quickly, the larger Jacobian of the coupled approach adds overhead.
+The process-level results above include overhead from the distillation column solver. To isolate the CPA solver performance, flash-level benchmarks across a (T, P) grid provide a cleaner comparison \cite{Solbraa2026}:
 
-### 10.12.3 Practical Guidance for TEG Process Design
+| System | $n_s$ | $p$ | Std (ms) | Impl (ms) | Red (ms) | And+R (ms) | Impl+R (ms) | Speedup |
+|--------|:---:|:---:|---:|---:|---:|---:|---:|:---:|
+| Pure water | 4 | 2 | 105 | 76 | 83 | 84 | 76 | 1.39× |
+| Pure methanol | 2 | 2 | 68 | 51 | 48 | 45 | 49 | 1.51× |
+| Water–methanol | 6 | 4 | 102 | 75 | 90 | 98 | 88 | 1.36× |
+| Water–ethanol | 6 | 4 | 81 | 70 | 70 | 72 | 78 | 1.16× |
+| Water–EtOH–AcOH | 8 | 6 | 112 | 94 | 111 | 108 | 129 | 1.19× |
+| NG + water | 4 | 2 | 228 | 176 | 157 | 151 | 163 | 1.51× |
+| **NG + water + MEG** | **8** | **4** | **353** | **227** | **216** | **213** | **211** | **1.67×** |
+| **NG + water + TEG** | **8** | **4** | **402** | **239** | **216** | **230** | **206** | **1.95×** |
+
+*Table 10.6a: Flash-level benchmark results \cite{Solbraa2026}. $n_s$: total association sites; $p$: unique site types. Std: standard nested; Impl: fully implicit; Red: Broyden-reduced; And+R: Anderson-reduced; Impl+R: implicit-reduced. Speedup of best solver vs standard.*
+
+The flash-level benchmarks confirm the process-level finding: the NG + TEG system benefits most from the accelerated solvers, with the implicit-reduced algorithm delivering 1.95× speedup. The site symmetry reduction from $n_s = 8$ to $p = 4$ is the primary driver, as both TEG and water share the 4C scheme with identical multiplicity structure.
+
+### 10.12.4 Practical Guidance for TEG Process Design
 
 ```python
 from neqsim import jneqsim

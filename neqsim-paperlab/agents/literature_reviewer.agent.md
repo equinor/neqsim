@@ -154,7 +154,18 @@ is much larger and the process differs:
    as PaperLab papers represent focused deep-dives into topics that a book
    chapter will cover at a higher level. Reuse their carefully curated refs.
 
-5. **Per-chapter citation plan** — Before any chapter is written, the agent
+5. **Import paper content into book chapters** — Beyond citations, check each
+   paper for **figures, tables, results, and text** that can be reused in the
+   book. Create a paper-to-chapter mapping table:
+   ```
+   | Chapter | Paper | Assets to import |
+   |---------|-------|------------------|
+   | Ch 8    | implicit_cpa_performance_2026 | 6 figs, speedup tables |
+   ```
+   Copy figures to `chapters/chNN/figures/`, adapt tables and text for the
+   book's audience. See PAPER_WRITING_GUIDELINES.md for the full workflow.
+
+6. **Per-chapter citation plan** — Before any chapter is written, the agent
    should provide a list of 10–20 refs.bib keys that the chapter author
    should cite, organized by section within the chapter.
 

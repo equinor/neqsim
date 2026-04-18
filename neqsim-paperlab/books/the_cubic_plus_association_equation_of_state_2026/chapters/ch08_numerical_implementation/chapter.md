@@ -201,6 +201,19 @@ $$\|X^{(k+1)} - X^*\| \leq C_k \|X^{(k)} - X^*\|$$
 
 where $C_k \to 0$ as $k \to \infty$. This is faster than linear (successive substitution) but slower than quadratic (Newton). In practice, Broyden's method typically converges in 4–8 iterations, comparable to Newton but without the cost of explicit Jacobian computation.
 
+The computational advantage comes from the per-step cost reduction \cite{Solbraa2026}:
+
+| Operation | Full Newton | Broyden |
+|-----------|------------|---------|
+| Jacobian construction | $O(n^2)$ | — |
+| Linear solve (GE) | $O(n^3/3)$ | — |
+| Jacobian inversion | $O(n^3)$ | — (stored) |
+| Sherman–Morrison update | — | $O(n^2)$ |
+| Matrix-vector product | — | $O(n^2)$ |
+| **Total per step** | **$O(n^3)$** | **$O(n^2)$** |
+
+*Table 8.2: Per-step computational cost: full Newton vs. Broyden update. For systems with $n > 5$ site types, the $O(n^2)$ vs. $O(n^3)$ difference becomes significant.*
+
 ### 8.5.4 NeqSim Implementation
 
 ```python
@@ -261,6 +274,8 @@ A typical benchmark for CPA solvers involves computing the phase equilibrium of 
 
 *Table 8.1: Typical iteration counts for different CPA solver strategies.*
 
+Figure 8.12 illustrates the convergence behavior of these solvers for a representative binary system: successive substitution converges linearly (constant slope on semilog scale), Anderson mixing achieves superlinear convergence, and the Broyden solver transitions from initial quadratic convergence to superlinear rank-1 updates. Figure 8.11 compares the overall speedup of the accelerated solvers across the full 11-system benchmark suite.
+
 ### 8.6.4 NeqSim Implementation
 
 ```python
@@ -296,7 +311,7 @@ The reduced-variable formulation:
 3. Simplifies the computation of second derivatives for caloric properties
 4. Reduces round-off errors in the association term at extreme conditions
 
-NeqSim's advanced CPA solvers use a variant of this approach internally.
+NeqSim's advanced CPA solvers use a variant of this approach internally. The site type mapping that enables the dimensionality reduction is illustrated schematically in Figure 8.13.
 
 ## 8.8 Convergence Diagnostics and Troubleshooting
 
@@ -466,10 +481,13 @@ The fully implicit solver eliminates the inner iteration loop by solving the vol
 
 Key observations:
 
-- **Speedup range: 1.9× to 32.8×** depending on the system
+- **Speedup range: 1.9× to 32.8×** depending on the system (see Figure 8.5 for a visual comparison)
 - **Zero accuracy loss**: the implicit solver converges to the same thermodynamic solution with machine-precision agreement
-- **Speedup increases with the number of association sites** ($n_s$) because eliminating the inner loop saves more iterations when the site balance is expensive
+- **Speedup increases with the number of association sites** ($n_s$) because eliminating the inner loop saves more iterations when the site balance is expensive (see Figure 8.8)
 - The exceptional 32.8× for the ternary associating system reflects the compounding effect of multiple associating species requiring many inner iterations in the nested solver
+- The speedup is consistent across (T, P) conditions — Figures 8.6 and 8.7 show heatmaps of the time ratio across the phase space for pure water and the 10-component oil–gas–water–MEG system respectively
+- There is no simple monotonic trend between speedup and component count (Figure 8.10), confirming that the speedup depends primarily on the number of association sites and the fraction of associating components
+- Figure 8.9 shows the full distribution of timing ratios, with the interquartile range for most systems lying well below 1.0
 
 ### 8.10.3 Speedup Results: Anderson Acceleration with Site Reduction
 
@@ -526,6 +544,34 @@ This occurs because the solvers explore different parts of the Gibbs energy surf
 | Anderson | `SystemSrkCPAstatoilAndersonMixing` | Weakly convergent systems | Tuning of history depth |
 
 *Table 8.10: CPA solver variants in NeqSim and their recommended use cases.*
+
+### 8.10.7 Detailed Timing Results: All Solvers Across 11 Systems
+
+The complete timing results from \cite{Solbraa2026} reveal the nuanced performance landscape:
+
+| System | Standard (ms) | Implicit (ms) | Broyden (ms) | Anderson (ms) | $S_B$ | $S_A$ |
+|--------|---:|---:|---:|---:|:---:|:---:|
+| Pure water | 185.9 | 117.4 | **73.4** | 87.0 | 2.53 | 2.14 |
+| Pure methanol | 70.1 | 51.1 | 64.3 | 76.8 | 1.09 | 0.91 |
+| Pure ethanol | 62.8 | 61.9 | 65.2 | 58.5 | 0.96 | 1.07 |
+| Pure acetic acid | 56.6 | 66.4 | 50.8 | 49.7 | 1.11 | 1.14 |
+| Water–methanol | 329.2 | 109.1 | 117.1 | **77.5** | 2.81 | **4.25** |
+| Water–ethanol | 66.3 | 44.7 | 74.9 | 88.4 | 0.88 | 0.75 |
+| Water–acetic acid | 45.2 | 61.7 | 81.2 | 40.7 | 0.56 | 1.11 |
+| Water–EtOH–AcOH | 99.2 | 60.2 | 71.3 | 61.3 | 1.39 | 1.62 |
+| NG + water | 173.1 | 324.8 | 146.5 | **127.3** | 1.18 | 1.36 |
+| NG + water + MEG | 299.8 | 307.3 | 253.3 | **170.6** | 1.18 | 1.76 |
+| NG + water + TEG | 342.9 | 212.5 | 264.4 | **188.7** | 1.30 | 1.82 |
+
+*Table 8.11: Complete benchmark timing (ms for 20 repetitions) across all solvers and systems \cite{Solbraa2026}. $S_B$: Broyden speedup over standard; $S_A$: Anderson speedup over standard. Bold = fastest solver per system.*
+
+Several patterns emerge from this detailed comparison:
+
+- **No single solver dominates**: the best solver varies by system type
+- **Broyden excels for pure water** (2.53× speedup) where the 4C scheme benefits from the efficient rank-1 Jacobian updates
+- **Anderson dominates for mixtures with glycols** (1.76–1.82× for NG + glycol systems) where the site reduction from 8→4 types compounds with the accelerated convergence
+- **The implicit solver can be slower** than standard for NG + water (0.53× speedup) because the larger augmented Jacobian adds overhead when the inner iteration converges quickly
+- **Simple non-associating pure components** show minimal difference between solvers, as the CPA association term is negligible
 
 ## 8.11 Worked Example: Diagnosing and Fixing Convergence Failure
 
@@ -721,3 +767,39 @@ Key points from this chapter:
 ![Figure 8.4: 04 Multi System Benchmark](figures/fig_ch08_04_multi_system_benchmark.png)
 
 *Figure 8.4: 04 Multi System Benchmark*
+
+![Figure 8.5: Implicit solver speedup across 11 systems](figures/fig_ch08_05_implicit_speedup_bar.png)
+
+*Figure 8.5: Speedup factor (standard/implicit time) for all 11 fluid systems \cite{Solbraa2026}. Blue bars: paper systems; orange bars: extended industrial systems. The dashed line at 1.0 indicates break-even. Speedups range from 1.9× (natural gas + water) to 32.8× (water–ethanol–acetic acid).*
+
+![Figure 8.6: Implicit solver heatmap for pure water](figures/fig_ch08_06_implicit_heatmap_water.png)
+
+*Figure 8.6: Implicit/standard time ratio across the (T, P) grid for pure water \cite{Solbraa2026}. Green regions indicate the implicit algorithm is faster; red regions indicate the standard is faster. The dashed contour marks the break-even line.*
+
+![Figure 8.7: Implicit solver heatmap for oil-gas-water-MEG](figures/fig_ch08_07_implicit_heatmap_oil_gas.png)
+
+*Figure 8.7: Implicit/standard time ratio for the 10-component oil–gas–water–MEG system \cite{Solbraa2026}. The implicit algorithm is faster over nearly the entire grid, with the strongest advantage at high temperatures.*
+
+![Figure 8.8: Speedup vs. number of association sites](figures/fig_ch08_08_speedup_vs_sites.png)
+
+*Figure 8.8: Speedup factor vs. total number of association sites ($n_s$) \cite{Solbraa2026}. Point size is proportional to the speedup factor. Systems with 8 association sites span a wide range (2.8–32.8×) depending on the fraction of associating components.*
+
+![Figure 8.9: Distribution of timing ratios](figures/fig_ch08_09_ratio_distribution.png)
+
+*Figure 8.9: Distribution of timing ratios (implicit/standard) across all (T, P) conditions for each system \cite{Solbraa2026}. The red dashed line at r = 1.0 marks break-even. The interquartile range for most systems lies well below 1.0.*
+
+![Figure 8.10: Speedup vs. number of components](figures/fig_ch08_10_speedup_vs_ncomp.png)
+
+*Figure 8.10: Speedup factor vs. number of components ($N_c$) \cite{Solbraa2026}. There is no simple monotonic trend, confirming that speedup depends primarily on the number of association sites rather than total component count.*
+
+![Figure 8.11: Accelerated solver speedup comparison](figures/fig_ch08_11_accel_speedup_barchart.png)
+
+*Figure 8.11: Speedup of accelerated CPA solvers over the standard nested solver across 11 fluid systems \cite{Solbraa2026}. The Anderson solver achieves the largest peak speedup (4.2× for water–methanol) while the Broyden solver provides the most consistent improvement.*
+
+![Figure 8.12: Convergence trace comparison](figures/fig_ch08_12_convergence_trace.png)
+
+*Figure 8.12: Convergence behavior of inner-loop CPA solvers for a binary associating system \cite{Solbraa2026}. Successive substitution converges linearly; Anderson mixing achieves superlinear convergence; Broyden shows initial quadratic convergence followed by superlinear rank-1 updates.*
+
+![Figure 8.13: Site type mapping schematic](figures/fig_ch08_13_site_type_mapping.png)
+
+*Figure 8.13: Site type mapping schematic \cite{Solbraa2026}. (a) Water 4C scheme: 4 individual sites reduce to 2 unique types with multiplicity $m = 2$. (b) NG + H$_2$O + MEG system: 8 total sites reduce to 4 types, shrinking the Jacobian from $9 \times 9$ to $5 \times 5$.*

@@ -132,6 +132,58 @@ PaperLab papers share a common knowledge base. When writing a new paper or book:
    }
    ```
 
+### MANDATORY: Reuse Content from PaperLab Papers
+
+PaperLab papers are deep-dive research artifacts. When writing a **book**, the
+corresponding paper is often a richer, more detailed treatment of the same topic.
+**You MUST check for relevant papers and import their content into book chapters.**
+
+**What to import:**
+
+| Asset | How to reuse |
+|---|---|
+| **Figures** (PNG/PDF in `papers/*/figures/`) | Copy to chapter `figures/` dir, reference in chapter.md |
+| **Tables** (markdown in `papers/*/paper.md`) | Copy table markdown into chapter.md, adapt caption for book context |
+| **Results & data** (numerical values, benchmarks) | Incorporate into chapter narrative with proper attribution |
+| **Text & explanations** (paragraphs, derivations) | Adapt and expand for book audience (more background, less jargon) |
+| **Equations** (LaTeX in paper.md) | Reuse exact LaTeX, ensure notation matches book nomenclature |
+| **Code examples** (Python/Java in paper) | Include as code blocks or move to chapter notebooks |
+
+**Workflow for each book chapter:**
+
+1. **Identify matching papers** — Before writing chapter N, search `papers/` for
+   papers that cover the same topic:
+   ```bash
+   # Search paper titles and content for chapter keywords
+   grep -rl "keyword" papers/*/paper.md papers/*/plan.json
+   ```
+2. **Read the paper(s)** — Understand what figures, tables, and results exist.
+3. **Copy figures** — Copy relevant PNGs to the chapter's `figures/` directory:
+   ```bash
+   cp papers/<paper>/figures/relevant_fig.png books/<book>/chapters/chNN/figures/
+   ```
+4. **Adapt tables** — Copy markdown tables from paper.md into chapter.md.
+   Expand captions and add book-level context (the book reader needs more
+   background than a journal reader).
+5. **Weave results into narrative** — Don't just paste; integrate the paper's
+   findings into the book's flow with additional explanation and context.
+6. **Credit the paper** — If the paper is published or under review, cite it.
+   If it's internal PaperLab work, note it as "from our detailed study" with
+   a `\cite{}` to the paper's own refs where applicable.
+
+**Paper-to-chapter mapping (update per book):**
+
+When starting a book project, create a mapping table in the book's notes or
+preface showing which papers feed into which chapters. Example:
+
+| Chapter | Relevant PaperLab paper(s) | Assets to import |
+|---|---|---|
+| Ch 8: Numerical Implementation | `implicit_cpa_performance_2026` | 6 figs, speedup tables |
+| Ch 8: Numerical Implementation | `accelerated_cpa_solvers_2026` | convergence tables, barchart |
+| Ch 4: Association Theory | `site_symmetry_reduction_wertheim_2026` | symmetry tables |
+| Ch 10: Gas Processing | `teg_cpa_solvers_2026_2026` | TEG benchmark tables |
+| Ch 12: Advanced Topics | `electrolyte_cpa_advanced_2026` | parity plots, salt tables |
+
 ### Literature Quality Rules
 
 - **ALWAYS cite the original source**, not a secondary reference or review

@@ -59,6 +59,24 @@ Before writing ANY chapter content, you MUST build a comprehensive bibliography:
 See PAPER_WRITING_GUIDELINES.md "MANDATORY: Literature Review and Citation
 Collection First" section for the complete workflow and reference targets.
 
+### 0.5. Import Content from Relevant PaperLab Papers (DO THIS BEFORE WRITING)
+
+After building refs.bib and before writing chapters, **check `papers/` for
+papers that cover the same topics as each chapter** and import their assets:
+
+1. **Search for matching papers**:
+   ```bash
+   grep -rl "chapter_keyword" papers/*/paper.md papers/*/plan.json
+   ```
+2. **Copy figures** from `papers/<paper>/figures/` to `chapters/chNN/figures/`
+3. **Copy tables** (markdown) from paper.md into chapter.md
+4. **Incorporate results and data** — weave paper findings into chapter narrative
+5. **Adapt text** — expand paper explanations for book audience (more background)
+6. **Create a paper-to-chapter mapping table** to track what was imported from where
+
+See PAPER_WRITING_GUIDELINES.md "MANDATORY: Reuse Content from PaperLab Papers"
+for the complete workflow.
+
 ### 1. Create New Book Projects
 
 When asked to create a new book:
@@ -71,16 +89,19 @@ When asked to create a new book:
 2. **Immediately rename** the chapter directories to descriptive names
 3. **Edit book.yaml** — set real chapter titles, organize into parts
 4. **Build refs.bib BEFORE writing chapters** — deep literature review first
-5. **Fill frontmatter** — title_page.md, preface.md at minimum
-6. Verify by running: `python paperflow.py book-toc books/<dir>/`
+5. **Import content from relevant PaperLab papers** — figures, tables, results
+6. **Fill frontmatter** — title_page.md, preface.md at minimum
+7. Verify by running: `python paperflow.py book-toc books/<dir>/`
 
 ### 2. Write Chapter Content
 
 For each chapter you write:
 
-1. **Review relevant refs.bib entries** for this chapter's topic
-2. **Read the chapter template** structure from the skill
-3. **Write chapter.md** with:
+1. **Check for matching PaperLab papers** — search `papers/` for papers on
+   the same topic. Import their figures, tables, results, and key text.
+2. **Review relevant refs.bib entries** for this chapter's topic
+3. **Read the chapter template** structure from the skill
+4. **Write chapter.md** with:
    - Section headings using `## N.M Title` numbering
    - Display equations in `$$...$$` blocks
    - Inline math in `$...$`
