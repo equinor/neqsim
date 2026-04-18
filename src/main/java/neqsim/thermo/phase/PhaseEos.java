@@ -115,8 +115,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
               pt);
         } catch (Exception ex) {
-          // reraise IsNaNException and TooManyIterationsException as RuntimeException
-          throw new RuntimeException(ex);
+          if (getNumberOfMolesInPhase() < 1e-10) {
+            // Degenerate phase with near-zero moles: use ideal gas fallback
+            molarVolume = R * temperature / pressure;
+          } else {
+            throw new RuntimeException(ex);
+          }
         }
       }
 

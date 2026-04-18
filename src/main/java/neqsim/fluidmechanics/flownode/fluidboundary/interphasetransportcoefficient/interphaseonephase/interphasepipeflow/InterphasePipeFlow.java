@@ -39,7 +39,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
   /** {@inheritDoc} */
   @Override
   public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
       return 64.0 / node.getReynoldsNumber(phase);
     } else {
       return Math.pow((1.0 / (-1.8 * Math.log10(6.9 / node.getReynoldsNumber(phase)
@@ -51,7 +51,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
   @Override
   public double calcWallHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getGeometry().getDiameter()
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     }
@@ -61,7 +61,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
           / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
           / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
-          * node.getVelocity();
+          * node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
     }
@@ -71,11 +71,11 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
   @Override
   public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getGeometry().getDiameter() / schmidtNumber
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
-      double temp = node.getVelocity();
+      double temp = node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0)
           * temp;
     }
