@@ -1499,6 +1499,9 @@ def cmd_book_render(args):
     elif fmt == "html":
         from book_render_html import render_book_html
         result = render_book_html(args.book_dir, chapter_filter=chapter)
+    elif fmt == "odf":
+        from book_render_odf import render_book_odf
+        result = render_book_odf(args.book_dir, chapter_filter=chapter)
     else:
         print(f"Unknown format: {fmt}")
         sys.exit(1)
@@ -1565,6 +1568,109 @@ def cmd_book_toc(args):
     toc = generate_toc(args.book_dir)
     print(f"\nTable of Contents — {cfg.get('title', 'Untitled')}\n")
     print(format_toc(toc))
+
+
+def cmd_book_draft(args):
+    """Generate draft chapter content from chapter_outlines.yaml.
+
+    Reads the structured outlines and produces full chapter.md files with
+    sections, equations, code examples, tables, and figures.
+    """
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_builder import draft_all_chapters, draft_chapter, load_book_config
+
+    book_dir = Path(args.book_dir)
+    force = getattr(args, "force", False)
+    chapter = getattr(args, "chapter", None)
+
+    outlines_path = book_dir / "chapter_outlines.yaml"
+    if not outlines_path.exists():
+        print(f"Error: chapter_outlines.yaml not found in {book_dir}")
+        print("Create this file with structured outlines for each chapter.")
+        sys.exit(1)
+
+    if chapter:
+        # Draft a single chapter
+        from book_builder import load_chapter_outline
+        outlines = load_chapter_outline(book_dir)
+        if chapter not in outlines:
+            print(f"Error: No outline found for chapter '{chapter}'")
+            sys.exit(1)
+        path = draft_chapter(book_dir, chapter, outlines[chapter], force=force)
+        words = len(path.read_text(encoding="utf-8").split()) if path.exists() else 0
+        print(f"Drafted: {chapter} ({words:,} words)")
+    else:
+        # Draft all chapters
+        drafted = draft_all_chapters(book_dir, force=force)
+        if not drafted:
+            print("No chapters drafted. Check chapter_outlines.yaml has entries "
+                  "matching chapter dir names in book.yaml.")
+            sys.exit(1)
+
+        total_words = 0
+        for ch_name, path in drafted:
+            words = len(path.read_text(encoding="utf-8").split()) if path.exists() else 0
+            total_words += words
+            print(f"  Drafted: {ch_name} ({words:,} words)")
+
+        print(f"\n{len(drafted)} chapters drafted ({total_words:,} total words, "
+              f"~{total_words // 250} pages)")
+        print(f"\nNext steps:")
+        print(f"  1. Review chapters in {book_dir / 'chapters'}")
+        print(f"  2. Run: python paperflow.py book-status {book_dir}")
+        print(f"  3. Run: python paperflow.py book-check {book_dir}")
+
+
+def cmd_book_run_notebooks(args):
+    """Run book notebooks via devtools (no JAR packaging needed)."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_notebook_runner import run_book_notebooks, compile_neqsim
+
+    chapter = getattr(args, "chapter", None)
+    compile_first = getattr(args, "compile", True)
+    timeout = getattr(args, "timeout", 600)
+    stop_on_error = getattr(args, "stop_on_error", False)
+    update_chapters = getattr(args, "update_chapters", False)
+
+    results = run_book_notebooks(
+        args.book_dir,
+        chapter_filter=chapter,
+        compile_first=compile_first,
+        timeout=timeout,
+        stop_on_error=stop_on_error,
+    )
+
+    if update_chapters:
+        from book_notebook_runner import update_all_chapters_with_figures
+        print("\nUpdating chapters with generated figures...")
+        injected = update_all_chapters_with_figures(args.book_dir, chapter)
+        if not injected:
+            print("  No new figures to inject.")
+
+    failed = sum(1 for r in results if r.get("errors") or r.get("error"))
+    if failed > 0:
+        sys.exit(1)
+
+
+def cmd_book_build(args):
+    """Full book build: compile -> run notebooks -> update chapters -> check -> render."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_notebook_runner import build_book
+
+    summary = build_book(
+        args.book_dir,
+        output_format=getattr(args, "out_format", "html"),
+        compile_first=getattr(args, "compile", True),
+        run_notebooks=not getattr(args, "skip_notebooks", False),
+        update_chapters=True,
+        check_quality=True,
+        timeout=getattr(args, "timeout", 600),
+        stop_on_error=getattr(args, "stop_on_error", False),
+    )
+
+    nb_info = summary.get("steps", {}).get("notebooks", {})
+    if isinstance(nb_info, dict) and nb_info.get("failed", 0) > 0:
+        sys.exit(1)
 
 
 def main():
@@ -1775,7 +1881,7 @@ Examples:
                                        help="Render book to PDF, Word, or HTML")
     p_brender.add_argument("book_dir", help="Book directory")
     p_brender.add_argument("--format", dest="out_format", default="html",
-                           choices=["pdf", "docx", "html"],
+                           choices=["pdf", "docx", "html", "odf"],
                            help="Output format (default: html)")
     p_brender.add_argument("--chapter", help="Render single chapter (dir name)")
 
@@ -1795,6 +1901,44 @@ Examples:
     p_btoc = subparsers.add_parser("book-toc",
                                     help="Preview table of contents")
     p_btoc.add_argument("book_dir", help="Book directory")
+
+    # book-draft — generate chapter drafts from outlines
+    p_bdraft = subparsers.add_parser("book-draft",
+                                      help="Generate draft chapters from chapter_outlines.yaml")
+    p_bdraft.add_argument("book_dir", help="Book directory")
+    p_bdraft.add_argument("--chapter", help="Draft a single chapter (dir name)")
+    p_bdraft.add_argument("--force", action="store_true",
+                          help="Overwrite existing chapter content")
+
+    # book-run-notebooks — execute book notebooks via devtools
+    p_bnb = subparsers.add_parser("book-run-notebooks",
+                                   help="Run book notebooks via devtools (no JAR packaging)")
+    p_bnb.add_argument("book_dir", help="Book directory")
+    p_bnb.add_argument("--chapter", help="Run only this chapter's notebooks")
+    p_bnb.add_argument("--no-compile", dest="compile", action="store_false",
+                        default=True, help="Skip Maven compilation")
+    p_bnb.add_argument("--timeout", type=int, default=600,
+                        help="Per-notebook timeout in seconds (default: 600)")
+    p_bnb.add_argument("--stop-on-error", action="store_true",
+                        help="Stop on first notebook error")
+    p_bnb.add_argument("--update-chapters", action="store_true",
+                        help="Inject generated figures into chapter.md files")
+
+    # book-build — full build pipeline (compile -> notebooks -> render)
+    p_bbuild = subparsers.add_parser("book-build",
+                                      help="Full build: compile, run notebooks, check, render")
+    p_bbuild.add_argument("book_dir", help="Book directory")
+    p_bbuild.add_argument("--format", dest="out_format", default="html",
+                           choices=["html", "docx", "pdf", "odf", "all"],
+                           help="Output format (default: html)")
+    p_bbuild.add_argument("--no-compile", dest="compile", action="store_false",
+                           default=True, help="Skip Maven compilation")
+    p_bbuild.add_argument("--skip-notebooks", action="store_true",
+                           help="Skip notebook execution (use existing outputs)")
+    p_bbuild.add_argument("--timeout", type=int, default=600,
+                           help="Per-notebook timeout in seconds (default: 600)")
+    p_bbuild.add_argument("--stop-on-error", action="store_true",
+                           help="Stop on first notebook error")
 
     args = parser.parse_args()
 
@@ -1864,6 +2008,12 @@ Examples:
         cmd_book_status(args)
     elif args.command == "book-toc":
         cmd_book_toc(args)
+    elif args.command == "book-draft":
+        cmd_book_draft(args)
+    elif args.command == "book-run-notebooks":
+        cmd_book_run_notebooks(args)
+    elif args.command == "book-build":
+        cmd_book_build(args)
     else:
         parser.print_help()
 

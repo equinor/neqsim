@@ -142,17 +142,41 @@ main pre code {{
 }}
 main table {{
   border-collapse: collapse;
-  margin: 1rem auto;
+  margin: 1.5rem auto;
   font-size: 0.9rem;
+  width: auto;
 }}
 main th, main td {{
-  border: 1px solid #ccc;
-  padding: 0.5rem 0.8rem;
+  padding: 0.45rem 1rem;
   text-align: left;
+  border-left: none;
+  border-right: none;
+}}
+main thead tr {{
+  border-top: 2px solid #222;
+  border-bottom: 1px solid #222;
+}}
+main tbody tr:last-child {{
+  border-bottom: 2px solid #222;
 }}
 main th {{
-  background: #f0f0f0;
   font-weight: bold;
+  color: #1a1a1a;
+}}
+main figure {{
+  margin: 1.5rem auto;
+  text-align: center;
+}}
+main figcaption {{
+  font-size: 0.88rem;
+  color: #444;
+  margin-top: 0.4rem;
+  font-style: italic;
+  text-align: center;
+}}
+main .katex-display {{
+  margin: 1.2rem 0;
+  font-size: 1.05em;
 }}
 main blockquote {{
   border-left: 4px solid #1a5276;

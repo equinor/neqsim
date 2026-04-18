@@ -83,6 +83,10 @@ neqsim-paperlab/papers/*/
 !neqsim-paperlab/papers/gibbs_minimization_2026/
 !neqsim-paperlab/papers/tpflash_algorithms_2026/
 !neqsim-paperlab/papers/implicit_cpa_performance_2026/
+
+# Book lab — ignore all book folders by default, then whitelist tracked ones
+neqsim-paperlab/books/*/
+!neqsim-paperlab/books/the_cubic_plus_association_equation_of_state_2026/
 # Temp Word lock files
 ~$*.docx
 
