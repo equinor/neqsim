@@ -961,6 +961,7 @@ def render_book_word(book_dir, chapter_filter=None):
 
         text = ch_md.read_text(encoding="utf-8")
         text = _strip_html_comments(text)
+        text = book_builder.strip_heading_numbers(text)
 
         # Resolve citations: \cite{key} -> [N]
         if key_to_num:

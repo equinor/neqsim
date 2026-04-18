@@ -170,6 +170,9 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None):
     """
     text = strip_tags_and_comments(text)
 
+    # Strip hardcoded section numbers (auto-numbering via Typst)
+    text = book_builder.strip_heading_numbers(text)
+
     # Resolve citations
     if key_to_num:
         text = resolve_citations_numbered_plain(text, key_to_num)

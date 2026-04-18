@@ -290,6 +290,31 @@ def resolve_chapter_dir(book_dir, ch_dict):
     return Path(book_dir) / "chapters" / ch_dict["dir"]
 
 
+# Regex that matches a leading section number like "1.1 " or "1.3.3 " at the
+# start of a heading's text (after the ``#`` markers have been removed).
+_HEADING_NUM_RE = re.compile(r"^\d+(?:\.\d+)+\s+")
+
+
+def strip_heading_numbers(text):
+    """Remove hardcoded section numbers from markdown headings.
+
+    Headings authored as ``## 1.3 Title`` become ``## Title`` so that
+    renderers with automatic outline numbering (ODF, Typst/PDF, Word)
+    do not produce duplicated numbers like "1.4.3 1.3.3 Title".
+
+    Only ``##``, ``###``, and ``####`` headings are affected — the
+    top-level ``#`` heading is left untouched because the book builder
+    already handles chapter-title numbering separately.
+    """
+    def _strip(m):
+        hashes = m.group(1)
+        body = m.group(2)
+        body = _HEADING_NUM_RE.sub("", body)
+        return f"{hashes} {body}"
+
+    return re.sub(r"^(#{2,4})\s+(.+)", _strip, text, flags=re.MULTILINE)
+
+
 # ---------------------------------------------------------------------------
 # Assembly
 # ---------------------------------------------------------------------------
