@@ -1035,6 +1035,27 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setCpC(cpc);
       getPhase(i).getComponent(componentName).setCpD(cpd);
     }
+    // Estimate Lennard-Jones parameters from critical properties using
+    // Tee-Gotoh-Stewart correlation (Poling et al., 2001, Eq. 9-4.2 and 9-4.3).
+    // The temp DB insert hardcodes water's LJ params (sigma=1.8, eps/k=809.1)
+    // for all TBP fractions, which gives incorrect gas diffusion coefficients.
+    if (TC > 0 && PC > 0) {
+      double pcAtm = PC / 1.01325;
+      double ljSigma = (2.3551 - 0.087 * acs) * Math.pow(TC / pcAtm, 1.0 / 3.0);
+      double ljEpsOverK = TC * (0.7915 + 0.1693 * acs * acs);
+      for (int i = 0; i < numberOfPhases; i++) {
+        getPhase(i).getComponent(componentName).setLennardJonesMolecularDiameter(ljSigma);
+        getPhase(i).getComponent(componentName).setLennardJonesEnergyParameter(ljEpsOverK);
+      }
+    }
+    // Override water's dipole moment (1.8 Debye) and viscosity association factor
+    // (0.076) from the temp DB insert. Hydrocarbons are non-polar (dipole ~ 0)
+    // and have no association correction. These affect Chung and FrictionTheory
+    // viscosity models through the Fc correction factor.
+    for (int i = 0; i < numberOfPhases; i++) {
+      getPhase(i).getComponent(componentName).setDebyeDipoleMoment(0.0);
+      getPhase(i).getComponent(componentName).setViscosityAssociationFactor(0.0);
+    }
   }
 
   /** {@inheritDoc} */
@@ -1182,6 +1203,21 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setCpB(cpb);
       getPhase(i).getComponent(componentName).setCpC(cpc);
       getPhase(i).getComponent(componentName).setCpD(cpd);
+    }
+    // Estimate Lennard-Jones parameters from critical properties using
+    // Tee-Gotoh-Stewart correlation (Poling et al., 2001, Eq. 9-4.2 and 9-4.3).
+    if (TC > 0 && PC > 0) {
+      double pcAtm = PC / 1.01325;
+      double ljSigma = (2.3551 - 0.087 * acs) * Math.pow(TC / pcAtm, 1.0 / 3.0);
+      double ljEpsOverK = TC * (0.7915 + 0.1693 * acs * acs);
+      for (int i = 0; i < numberOfPhases; i++) {
+        getPhase(i).getComponent(componentName).setLennardJonesMolecularDiameter(ljSigma);
+        getPhase(i).getComponent(componentName).setLennardJonesEnergyParameter(ljEpsOverK);
+      }
+    }
+    for (int i = 0; i < numberOfPhases; i++) {
+      getPhase(i).getComponent(componentName).setDebyeDipoleMoment(0.0);
+      getPhase(i).getComponent(componentName).setViscosityAssociationFactor(0.0);
     }
   }
 

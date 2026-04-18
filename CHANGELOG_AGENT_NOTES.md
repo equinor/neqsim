@@ -9,6 +9,70 @@
 
 ---
 
+## 2026-04-17 — Diffusion Coefficient Model Fixes and Validation
+
+### Summary
+
+Major bug fixes and accuracy improvements to all diffusion coefficient models
+(gas and liquid). Added 6 new model names to `setDiffusionCoefficientModel()`.
+All models validated against published experimental data (Marrero & Mason 1972,
+Poling 2001). Full docs at `docs/physical_properties/diffusivity_models.md`.
+
+### Bug Fixes
+
+| Bug | File(s) | Impact |
+|-----|---------|--------|
+| Fuller constant 10x too large (`1.013e-2` → `1.013e-3`) | `FullerSchettlerGiddingsDiffusivity` | Gas D values were 10x too high |
+| Critical volume unit conversion (`Vc * 1e3` removed) | `FullerSchettlerGiddingsDiffusivity`, `SiddiqiLucasMethod`, `WilkeChangDiffusivity`, `TynCalusDiffusivity`, `HaydukMinhasDiffusivity` | Fallback molar volumes were 1000x too large |
+| HaydukMinhas volume formula inverted (`Vc * 1e6 / 0.285` → `0.285 * Vc^1.048`) | `HaydukMinhasDiffusivity` | Completely wrong liquid D values |
+| Gas LJ parameters from DB unsuitable for diffusion | `Diffusivity` (gas base class) | Chapman-Enskog/Wilke-Lee gave ~60% error |
+
+### New Features
+
+- **Diffusion-specific LJ parameter table** — ~35 common components from Poling (2001)
+  and Bird, Stewart, Lightfoot (2002). Automatically overrides DB LJ parameters for
+  gas diffusion calculations in Chapman-Enskog and Wilke-Lee models.
+- **`"Chapman-Enskog"` model name** — Added to `setDiffusionCoefficientModel()` for
+  explicit selection of the base Chapman-Enskog gas diffusion model.
+
+### New/Updated Model Names for `setDiffusionCoefficientModel()`
+
+| Model String | Phase | Class | Status |
+|---|---|---|---|
+| `"Chapman-Enskog"` | Gas | `Diffusivity` | **NEW** |
+| `"Wilke Lee"` | Gas | `WilkeLeeDiffusivity` | Existing (fixed) |
+| `"Fuller-Schettler-Giddings"` | Gas | `FullerSchettlerGiddingsDiffusivity` | Existing (fixed) |
+| `"Siddiqi Lucas"` | Liquid | `SiddiqiLucasMethod` | Existing (fixed) |
+| `"Wilke-Chang"` | Liquid | `WilkeChangDiffusivity` | Existing (fixed) |
+| `"Tyn-Calus"` | Liquid | `TynCalusDiffusivity` | Existing (fixed) |
+| `"Hayduk-Minhas"` | Liquid | `HaydukMinhasDiffusivity` | Existing (fixed) |
+| `"CSP"` | Gas/Liquid | `CorrespondingStatesDiffusivity` | Unchanged |
+| `"High Pressure"` | Liquid | `HighPressureDiffusivity` | Unchanged |
+| `"Alkanol amine"` | Aqueous | `AmineDiffusivity` | Unchanged |
+
+### Validation Results (298 K, 1 atm)
+
+Gas models (vs Marrero & Mason 1972, Poling 2001):
+- CH₄-N₂: Chapman-Enskog 0.7%, Fuller 2.0%, Wilke-Lee 5.0%
+- CO₂-N₂: Chapman-Enskog 7.4%, Fuller 2.7%, Wilke-Lee 0.3%
+
+Liquid models (CO₂ in water vs Poling 2001):
+- Wilke-Chang 10%, Hayduk-Minhas 15%, Siddiqi-Lucas 31%
+
+### Test Classes
+
+- `DiffusivityExperimentalValidationTest` — 13 tests validating all models against experimental data
+- `AllDiffusivityModelsTest` — 17 tests (existing, all pass)
+- `DiffusivityModelsTest` — 15 tests (existing, all pass)
+
+### Affected Skills
+
+- `neqsim-api-patterns` — Update diffusivity model examples
+- `neqsim-flow-assurance` — May reference diffusion models for corrosion/mass transfer
+
+---
+
+## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
 ## 2026-04-17 — Process Optimization Enhancements: Rate-Based Absorber, SQP Optimizer, Flow Correlations, Multi-Variable Adjuster
 
 ### Summary
