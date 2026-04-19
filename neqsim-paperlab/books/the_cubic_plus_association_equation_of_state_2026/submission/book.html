@@ -168,10 +168,203 @@ main ul, main ol {
   line-height: 1.7;
 }
 
+/* ── Professional frontmatter pages ── */
+
+.title-page {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  position: relative;
+  page-break-after: always;
+}
+.title-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(90deg, #0d3b66, #1a5276, #2980b9, #1a5276, #0d3b66);
+}
+.title-page::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0d3b66, #1a5276, #2980b9, #1a5276, #0d3b66);
+}
+.title-page .tp-decoration {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 2rem;
+  position: relative;
+}
+.title-page .tp-decoration svg {
+  width: 100%;
+  height: 100%;
+}
+.title-page .tp-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #0d3b66;
+  line-height: 1.25;
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.02em;
+  max-width: 600px;
+}
+.title-page .tp-subtitle {
+  font-size: 1.15rem;
+  color: #555;
+  font-style: italic;
+  margin-bottom: 2.5rem;
+  max-width: 500px;
+  line-height: 1.5;
+}
+.title-page .tp-rule {
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #1a5276, transparent);
+  margin: 0 auto 2.5rem;
+}
+.title-page .tp-author {
+  font-size: 1.3rem;
+  color: #222;
+  margin-bottom: 0.3rem;
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}
+.title-page .tp-affiliation {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+.title-page .tp-edition {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 0.3rem;
+}
+.title-page .tp-year {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 2rem;
+}
+.title-page .tp-publisher {
+  font-size: 1rem;
+  color: #444;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.half-title-page {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem;
+  page-break-after: always;
+}
+.half-title-page .htp-title {
+  font-size: 1.6rem;
+  color: #1a5276;
+  font-weight: bold;
+  letter-spacing: -0.01em;
+}
+
+.copyright-page {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem 3rem 4rem;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.8;
+  page-break-after: always;
+}
+.copyright-page .cp-title {
+  font-weight: bold;
+  color: #222;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+.copyright-page p {
+  margin-bottom: 0.8rem;
+  text-align: left;
+}
+.copyright-page .cp-isbn {
+  font-family: 'Consolas', monospace;
+  color: #444;
+}
+
+.dedication-page {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 3rem;
+  page-break-after: always;
+}
+.dedication-page p {
+  font-style: italic;
+  color: #555;
+  font-size: 1.05rem;
+  max-width: 400px;
+  line-height: 1.8;
+}
+
+section.part-header {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  page-break-before: always;
+  page-break-after: always;
+}
+section.part-header h1 {
+  font-size: 1.6rem;
+  color: #1a5276;
+  border-top: none;
+  padding-top: 0;
+  letter-spacing: 0.05em;
+  font-variant: small-caps;
+  position: relative;
+}
+section.part-header h1::after {
+  content: '';
+  display: block;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #1a5276, transparent);
+  margin: 1rem auto 0;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   nav.sidebar { display: none; }
   main { padding: 1rem; }
+  .title-page .tp-title { font-size: 1.6rem; }
+  .title-page .tp-decoration { width: 80px; height: 80px; }
+}
+
+@media print {
+  nav.sidebar { display: none; }
+  body { background: #fff; }
+  main { max-width: 100%; padding: 0; }
+  .title-page { min-height: auto; padding: 8rem 2rem; }
+  .title-page::before, .title-page::after { display: none; }
 }
 </style>
 </head>
@@ -200,36 +393,30 @@ main ul, main ol {
 </ul>
 </nav>
 <main>
-<section id="title_page">
-<h1 id="the-cubic-plus-association-equation-of-state-cpa-eos">The Cubic Plus Association Equation of State (CPA-EoS)</h1>
-<h2 id="from-fundamentals-to-industrial-applications">From Fundamentals to Industrial Applications</h2>
-<p>---</p>
-<p><em><em>Even Solbraa</em></em></p>
-<p>Equinor ASA / NeqSim Project</p>
-<p>---</p>
-<p><em>1st Edition</em></p>
-<p><em>2026</em></p>
-<p>Springer</p>
+<section class="half-title-page"><div class="htp-title">The Cubic Plus Association Equation of State (CPA-EoS)</div></section>
+<section id="title_page" class="title-page">
+<div class="tp-decoration"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0d3b66;stop-opacity:1"/><stop offset="100%" style="stop-color:#2980b9;stop-opacity:1"/></linearGradient><linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#2980b9;stop-opacity:0.3"/><stop offset="100%" style="stop-color:#0d3b66;stop-opacity:0.3"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="none" stroke="url(#g1)" stroke-width="3"/><circle cx="60" cy="60" r="48" fill="none" stroke="#1a5276" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.3"/><circle cx="60" cy="60" r="47" fill="url(#g2)"/><line x1="60" y1="30" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/><line x1="34" y1="75" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/><line x1="86" y1="75" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/><line x1="60" y1="30" x2="34" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/><line x1="60" y1="30" x2="86" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/><line x1="34" y1="75" x2="86" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/><circle cx="60" cy="18" r="2" fill="#2980b9" opacity="0.5"/><circle cx="24" cy="80" r="2" fill="#2980b9" opacity="0.5"/><circle cx="96" cy="80" r="2" fill="#2980b9" opacity="0.5"/><circle cx="95" cy="38" r="2" fill="#0d3b66" opacity="0.4"/><circle cx="25" cy="38" r="2" fill="#0d3b66" opacity="0.4"/><circle cx="60" cy="60" r="10" fill="#1a5276"/><circle cx="60" cy="60" r="6" fill="#fff" opacity="0.15"/><circle cx="60" cy="30" r="7" fill="#0d3b66"/><circle cx="34" cy="75" r="7" fill="#2980b9"/><circle cx="86" cy="75" r="7" fill="#2980b9"/><circle cx="58" cy="28" r="2" fill="#fff" opacity="0.25"/><circle cx="32" cy="73" r="2" fill="#fff" opacity="0.25"/><circle cx="84" cy="73" r="2" fill="#fff" opacity="0.25"/><circle cx="47" cy="45" r="3" fill="#2980b9" opacity="0.55"/><circle cx="73" cy="45" r="3" fill="#2980b9" opacity="0.55"/><circle cx="47" cy="68" r="3" fill="#0d3b66" opacity="0.55"/><circle cx="73" cy="68" r="3" fill="#0d3b66" opacity="0.55"/></svg></div>
+<div class="tp-title">The Cubic Plus Association Equation of State (CPA-EoS)</div>
+<div class="tp-subtitle">From Fundamentals to Industrial Applications</div>
+<div class="tp-rule"></div>
+<div class="tp-author">Even Solbraa</div>
+<div class="tp-affiliation">Equinor ASA / NeqSim Project</div>
+<div class="tp-edition">1st Edition</div>
+<div class="tp-year">2026</div>
+<div class="tp-publisher">Equinor ASA and NTNU</div>
 </section>
-<hr/>
-<section id="copyright">
-<p><em><em>The Cubic Plus Association Equation of State (CPA-EoS): From Fundamentals to Industrial Applications</em></em></p>
-<p>Copyright &copy; 2026 Even Solbraa</p>
-<p>All rights reserved. No part of this publication may be reproduced, stored in a retrieval system, or transmitted, in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the prior permission of the publisher.</p>
-<p>Published by Springer Nature Switzerland AG</p>
-<p>ISBN 000-0-000-00000-0 (Hardcover) ISBN 000-0-000-00000-0 (eBook)</p>
-<p>The use of general descriptive names, registered names, trademarks, service marks, etc. in this publication does not imply, even in the absence of a specific statement, that such names are exempt from the relevant protective laws and regulations and therefore free for general use.</p>
-<p>The software examples in this book use NeqSim, an open-source thermodynamic and process simulation library available at https://github.com/equinor/neqsim under the Apache 2.0 license.</p>
-<p>ISBN:</p>
-<p>Published by Springer</p>
-<p><em>Typeset using NeqSim PaperLab</em></p>
+<section id="copyright" class="copyright-page">
+<div>
+<p class="cp-title">The Cubic Plus Association Equation of State (CPA-EoS): From Fundamentals to Industrial Applications</p>
+<p>Copyright &copy; 2026 Equinor ASA and the Norwegian University of Science and Technology (NTNU). All rights reserved.</p>
+<p>This work is the intellectual property of Equinor ASA and NTNU. No part of this publication may be reproduced, stored in a retrieval system, or transmitted, in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of Equinor ASA and NTNU.</p>
+<p>Published by Equinor ASA and NTNU</p>
+<p>The NeqSim library is open-source software released under the Apache License 2.0. All code examples in this book are available at <a href="https://github.com/equinor/neqsim">https://github.com/equinor/neqsim</a> and may be freely used and modified under the terms of that license.</p>
+<p style="margin-top: 1.5rem; font-size: 0.8rem; color: #999;">Typeset using NeqSim PaperLab</p>
+</div>
 </section>
-<hr/>
-<section id="dedication">
-<p><em>To all engineers and scientists working to advance thermodynamic modeling</em></p>
-<p><em>for a more sustainable energy future.</em></p>
-</section>
-<hr/>
+<section id="dedication" class="dedication-page"><p>To all engineers and scientists working to advance thermodynamic modeling*
+*for a more sustainable energy future.</p></section>
 <section id="preface">
 <h2 id="preface">Preface</h2>
 <p>The Cubic Plus Association (CPA) equation of state occupies a unique position in applied thermodynamics. It bridges the gap between the classical cubic equations of state — trusted workhorses of the oil and gas industry for half a century — and the more rigorous but complex molecular-based SAFT models. Since its introduction by Kontogeorgis and colleagues in 1996, CPA has become the preferred thermodynamic model for systems involving hydrogen bonding: water–hydrocarbon equilibria, gas dehydration, hydrate prediction, methanol and glycol injection, and carbon capture and storage.</p>
@@ -274,7 +461,7 @@ pip install neqsim
 <hr/>
 <section class="part-header"><h1>Part I: Foundations</h1></section>
 <section id="chapter-1">
-<h1 id="introduction-and-historical-context">Introduction and Historical Context</h1>
+<h1 id="1-introduction-and-historical-context">1 Introduction and Historical Context</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -766,7 +953,7 @@ print(f&quot;Liquid phase methane solubility: {fluid.getPhase('aqueous').getComp
 <p><em>Figure 1.4: Ex01 Z Methane</em></p>
 </section>
 <section id="chapter-2">
-<h1 id="thermodynamic-foundations">Thermodynamic Foundations</h1>
+<h1 id="2-thermodynamic-foundations">2 Thermodynamic Foundations</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -1311,7 +1498,7 @@ print(f&quot;Speed of sound: {fluid.getSoundSpeed():.1f} m/s&quot;)
 <p><em>Figure 2.1: Ex03 Gibbs Mixing</em></p>
 </section>
 <section id="chapter-3">
-<h1 id="classical-cubic-equations-of-state">Classical Cubic Equations of State</h1>
+<h1 id="3-classical-cubic-equations-of-state">3 Classical Cubic Equations of State</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -1676,7 +1863,7 @@ print(f&quot;Fugacity coefficient = {fug:.4f}&quot;)
 <p><em>Figure 3.4: 04 Volume Translation</em></p>
 </section>
 <section id="chapter-4">
-<h1 id="association-theory-wertheim-s-thermodynamic-perturbation-theory">Association Theory: Wertheim's Thermodynamic Perturbation Theory</h1>
+<h1 id="4-association-theory-wertheim-s-thermodynamic-perturbation-theory">4 Association Theory: Wertheim's Thermodynamic Perturbation Theory</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -2441,7 +2628,7 @@ for T_C in [25, 50, 100, 150, 200, 250, 300, 350]:
 </section>
 <section class="part-header"><h1>Part II: The CPA Model</h1></section>
 <section id="chapter-5">
-<h1 id="the-cpa-equation-of-state-complete-formulation">The CPA Equation of State: Complete Formulation</h1>
+<h1 id="5-the-cpa-equation-of-state-complete-formulation">5 The CPA Equation of State: Complete Formulation</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -2933,7 +3120,7 @@ for ModelClass, name in [
 <p><em>Figure 5.6: Ex03 Eps Sensitivity</em></p>
 </section>
 <section id="chapter-6">
-<h1 id="pure-component-parameters">Pure Component Parameters</h1>
+<h1 id="6-pure-component-parameters">6 Pure Component Parameters</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -3820,7 +4007,7 @@ print(f&quot;Experimental (1 atm): 1.0132 bara&quot;)
 <p><em>Figure 6.5: Ex03 Compensating Params</em></p>
 </section>
 <section id="chapter-7">
-<h1 id="mixing-rules-and-cross-association">Mixing Rules and Cross-Association</h1>
+<h1 id="7-mixing-rules-and-cross-association">7 Mixing Rules and Cross-Association</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -4444,7 +4631,7 @@ for i in range(fluid.getNumberOfPhases()):
 <p><em>Figure 7.3: 03 Kij Sensitivity</em></p>
 </section>
 <section id="chapter-8">
-<h1 id="numerical-implementation">Numerical Implementation</h1>
+<h1 id="8-numerical-implementation">8 Numerical Implementation</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -5722,7 +5909,7 @@ repeat:
 </section>
 <section class="part-header"><h1>Part III: Applications and Validation</h1></section>
 <section id="chapter-9">
-<h1 id="water-hydrocarbon-systems">Water–Hydrocarbon Systems</h1>
+<h1 id="9-water-hydrocarbon-systems">9 Water–Hydrocarbon Systems</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -6586,7 +6773,7 @@ print(f&quot;Water dew point: {T_dew:.1f} C at 80 bar&quot;)
 <p><em>Figure 9.5: Ex02 Solubility</em></p>
 </section>
 <section id="chapter-10">
-<h1 id="gas-processing-and-chemical-injection">Gas Processing and Chemical Injection</h1>
+<h1 id="10-gas-processing-and-chemical-injection">10 Gas Processing and Chemical Injection</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -7947,7 +8134,7 @@ fluid_fast = jneqsim.thermo.system.SystemSrkCPAstatoilAndersonMixing(273.15 + 30
 <p><em>Figure 10.6: Ex03 Meg Activity</em></p>
 </section>
 <section id="chapter-11">
-<h1 id="co-2-and-acid-gas-systems">CO$_2$ and Acid Gas Systems</h1>
+<h1 id="11-co-2-and-acid-gas-systems">11 CO$_2$ and Acid Gas Systems</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>
@@ -8950,7 +9137,7 @@ print(f&quot;Dense phase density: {rho:.1f} kg/m3&quot;)
 <p><em>Figure 11.6: Ex03 N2 Impurity</em></p>
 </section>
 <section id="chapter-12">
-<h1 id="advanced-topics-and-future-directions">Advanced Topics and Future Directions</h1>
+<h1 id="12-advanced-topics-and-future-directions">12 Advanced Topics and Future Directions</h1>
 <h2 id="learning-objectives">Learning Objectives</h2>
 <p>After reading this chapter, the reader will be able to:</p>
 <ol>

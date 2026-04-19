@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <strong>Open-source process engineering toolkit — thermodynamics, process simulation, and AI-assisted design in one library.</strong>
+  <strong>Industrial Agentic Engineering with NeqSim<br>AI Agents for Engineering Task Solving in Industry</strong>
 </p>
 
 <p align="center">

@@ -1,12 +1,12 @@
 ---
 layout: default
 title: NeqSim Documentation
-description: "NeqSim documentation home page. Navigate to thermodynamics, process simulation, PVT analysis, physical properties, standards, field development, safety, and risk modules."
+description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engineering Task Solving in Industry."
 ---
 
 # NeqSim Documentation
 
-**NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation developed at [NTNU](https://www.ntnu.edu/).
+**Industrial Agentic Engineering with NeqSim** — AI Agents for Engineering Task Solving in Industry. NeqSim (Non-Equilibrium Simulator) is a comprehensive Java library developed at [NTNU](https://www.ntnu.edu/).
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>

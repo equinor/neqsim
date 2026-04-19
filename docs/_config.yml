@@ -2,9 +2,9 @@
 # See: https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll
 
 # Site settings
-title: NeqSim Documentation
+title: "NeqSim: Industrial Agentic Engineering"
 description: >-
-  Comprehensive Java library for thermodynamic, physical property, and process simulation.
+  AI Agents for Engineering Task Solving in Industry.
   NeqSim provides tools for PVT analysis, phase equilibria, transport properties, and
   full process simulation.
 baseurl: "/neqsim" # the subpath of your site, e.g. /neqsim for https://equinor.github.io/neqsim

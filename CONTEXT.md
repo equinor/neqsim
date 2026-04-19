@@ -1,6 +1,7 @@
-# NeqSim — Fast Context for Task Solving
+# NeqSim — Industrial Agentic Engineering
 
-> **Purpose:** Get oriented in 60 seconds. This file is the single entry point for anyone
+> **AI Agents for Engineering Task Solving in Industry.**
+> Get oriented in 60 seconds. This file is the single entry point for anyone
 > (human or AI) solving engineering tasks inside the NeqSim repo.
 
 ## Solve a Task (Start Here)

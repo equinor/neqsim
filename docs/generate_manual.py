@@ -994,7 +994,7 @@ def main():
     output_file = generate_manual(
         sections=sections,
         title="NeqSim Reference Manual",
-        subtitle="Complete Technical Documentation",
+        subtitle="AI Agents for Engineering Task Solving in Industry",
         version="3.4.0",
         output_file="neqsim_reference_manual.html"
     )
