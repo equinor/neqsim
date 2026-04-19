@@ -20,35 +20,36 @@ Each skill folder contains a `SKILL.md` file with verified patterns, rules, and 
 
 ## Skill Index
 
-| Skill | Description | Primary Agents |
-|-------|-------------|----------------|
-| `neqsim-agent-handoff` | Structured schemas for passing results between agents in multi-agent pipelines | router, solve.task |
-| `neqsim-api-patterns` | Core NeqSim API patterns — EOS selection, fluid creation, flash, property access, equipment setup | All agents |
-| `neqsim-capability-map` | Structured inventory of NeqSim capabilities by engineering discipline, gap identification | capability.scout, solve.task |
-| `neqsim-ccs-hydrogen` | CO2 capture/transport/storage and hydrogen systems — phase behavior, impurity management, injection wells | ccs.hydrogen |
-| `neqsim-distillation-design` | Distillation column design — solver selection, feed tray rules, convergence, internals sizing | process.model, solve.task |
-| `neqsim-dynamic-simulation` | Dynamic/transient simulation — runTransient, PID controllers, transmitters, depressurization | control.system, safety.depressuring |
-| `neqsim-electrolyte-systems` | Electrolyte/brine chemistry — CPA electrolyte EOS, ions, scale risk, MEG/DEG injection | thermo.fluid, flow.assurance |
-| `neqsim-eos-regression` | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization | pvt.simulation, thermo.fluid |
-| `neqsim-field-development` | Field development workflows — concept selection, tieback analysis, production forecasting, lifecycle management | field.development |
-| `neqsim-field-economics` | Oil & gas economics — NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation, Monte Carlo | field.development, solve.task |
-| `neqsim-flow-assurance` | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing | flow.assurance |
-| `neqsim-input-validation` | Pre-simulation input validation — T, P, composition checks, component name verification | All simulation agents |
-| `neqsim-java8-rules` | Java 8 compatibility rules — forbidden Java 9+ features, replacement patterns, JavaDoc requirements | neqsim.test, All Java-writing agents |
-| `neqsim-notebook-patterns` | Jupyter notebook patterns — dual-boot setup, class imports, structure, visualization, results.json | notebook.example, solve.task, solve.process |
-| `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena for educational context | All agents (educational mode) |
-| `neqsim-plant-data` | Plant historian integration — tagreader API (PI/IP.21), tag mapping, digital twin loops, data quality | plant.data |
-| `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration | process.model, solve.task |
-| `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format | extract.process |
-| `neqsim-production-optimization` | Production optimization — decline curves, bottleneck analysis, gas lift, network optimization | field.development, solve.task |
-| `neqsim-reaction-engineering` | Chemical reactor patterns — GibbsReactor, PFR, CSTR, kinetics, AnaerobicDigester, bioprocessing | reaction.engineering |
-| `neqsim-regression-baselines` | Regression baseline management — creating fixtures, regression tests, detecting accuracy drift | neqsim.test |
-| `neqsim-standards-lookup` | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking | mechanical.design, solve.task, gas.quality |
-| `neqsim-stid-retriever` | Engineering document retrieval — local dirs, manual upload, pluggable backends, relevance filtering | technical.reader, solve.task |
-| `neqsim-subsea-and-wells` | Subsea systems and well design — SURF cost estimation, casing design, tieback analysis | field.development, mechanical.design |
-| `neqsim-technical-document-reading` | Technical document reading — PDF/Word/Excel extraction, P&ID topology, vendor datasheets, image analysis | technical.reader |
-| `neqsim-troubleshooting` | Troubleshooting playbook — flash non-convergence, recycle divergence, zero values, phase ID issues | All simulation agents |
-| `neqsim-unisim-reader` | UniSim/HYSYS conversion — COM reader, component/EOS mapping, topology reconstruction, sub-flowsheets | unisim.reader |
+| Skill                                              | Description                                                                                                                                   | Primary Agents                              |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `neqsim-agent-handoff`                             | Structured schemas for passing results between agents in multi-agent pipelines                                                                | router, solve.task                          |
+| `neqsim-api-patterns`                              | Core NeqSim API patterns — EOS selection, fluid creation, flash, property access, equipment setup                                             | All agents                                  |
+| `neqsim-capability-map`                            | Structured inventory of NeqSim capabilities by engineering discipline, gap identification                                                     | capability.scout, solve.task                |
+| `neqsim-ccs-hydrogen`                              | CO2 capture/transport/storage and hydrogen systems — phase behavior, impurity management, injection wells                                     | ccs.hydrogen                                |
+| `neqsim-distillation-design`                       | Distillation column design — solver selection, feed tray rules, convergence, internals sizing                                                 | process.model, solve.task                   |
+| `neqsim-dynamic-simulation`                        | Dynamic/transient simulation — runTransient, PID controllers, transmitters, depressurization                                                  | control.system, safety.depressuring         |
+| `neqsim-electrolyte-systems`                       | Electrolyte/brine chemistry — CPA electrolyte EOS, ions, scale risk, MEG/DEG injection                                                        | thermo.fluid, flow.assurance                |
+| `neqsim-eos-regression`                            | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization                                                          | pvt.simulation, thermo.fluid                |
+| `neqsim-field-development`                         | Field development workflows — concept selection, tieback analysis, production forecasting, lifecycle management                               | field.development                           |
+| `neqsim-field-economics`                           | Oil & gas economics — NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation, Monte Carlo                                      | field.development, solve.task               |
+| `neqsim-flow-assurance`                            | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing                                                   | flow.assurance                              |
+| `neqsim-input-validation`                          | Pre-simulation input validation — T, P, composition checks, component name verification                                                       | All simulation agents                       |
+| `neqsim-java8-rules`                               | Java 8 compatibility rules — forbidden Java 9+ features, replacement patterns, JavaDoc requirements                                           | neqsim.test, All Java-writing agents        |
+| `neqsim-notebook-patterns`                         | Jupyter notebook patterns — dual-boot setup, class imports, structure, visualization, results.json                                            | notebook.example, solve.task, solve.process |
+| `neqsim-physics-explanations`                      | Plain-language explanations of engineering phenomena for educational context                                                                  | All agents (educational mode)               |
+| `neqsim-plant-data`                                | Plant historian integration — tagreader API (PI/IP.21), tag mapping, digital twin loops, data quality                                         | plant.data                                  |
+| `neqsim-model-calibration-and-data-reconciliation` | Digital twin calibration and data reconciliation — bounded parameter tuning, steady-state windowing, residual diagnostics, validation metrics | plant.data, solve.task                      |
+| `neqsim-power-generation`                          | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration                                                       | process.model, solve.task                   |
+| `neqsim-process-extraction`                        | Extract process data from text/tables/PFDs into NeqSim JSON builder format                                                                    | extract.process                             |
+| `neqsim-production-optimization`                   | Production optimization — decline curves, bottleneck analysis, gas lift, network optimization                                                 | field.development, solve.task               |
+| `neqsim-reaction-engineering`                      | Chemical reactor patterns — GibbsReactor, PFR, CSTR, kinetics, AnaerobicDigester, bioprocessing                                               | reaction.engineering                        |
+| `neqsim-regression-baselines`                      | Regression baseline management — creating fixtures, regression tests, detecting accuracy drift                                                | neqsim.test                                 |
+| `neqsim-standards-lookup`                          | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking                                         | mechanical.design, solve.task, gas.quality  |
+| `neqsim-stid-retriever`                            | Engineering document retrieval — local dirs, manual upload, pluggable backends, relevance filtering                                           | technical.reader, solve.task                |
+| `neqsim-subsea-and-wells`                          | Subsea systems and well design — SURF cost estimation, casing design, tieback analysis                                                        | field.development, mechanical.design        |
+| `neqsim-technical-document-reading`                | Technical document reading — PDF/Word/Excel extraction, P&ID topology, vendor datasheets, image analysis                                      | technical.reader                            |
+| `neqsim-troubleshooting`                           | Troubleshooting playbook — flash non-convergence, recycle divergence, zero values, phase ID issues                                            | All simulation agents                       |
+| `neqsim-unisim-reader`                             | UniSim/HYSYS conversion — COM reader, component/EOS mapping, topology reconstruction, sub-flowsheets                                          | unisim.reader                               |
 
 ---
 
@@ -112,13 +113,13 @@ Every code example must work against NeqSim's actual API. Test by:
 
 ### What makes a great skill?
 
-| Quality | Example |
-|---------|---------|
-| Specific trigger conditions | "USE WHEN: predicting hydrate formation temperature" |
-| Tested code patterns | Java 8 code that compiles and runs against NeqSim API |
-| Real engineering context | "Wire mesh demisters have K-factor 0.107 m/s per NORSOK" |
-| Common mistakes with fixes | "Calling getViscosity() without initProperties() returns zero" |
-| Reference to standards | "Per API 521 Section 5.2, fire case heat flux is..." |
+| Quality                     | Example                                                        |
+| --------------------------- | -------------------------------------------------------------- |
+| Specific trigger conditions | "USE WHEN: predicting hydrate formation temperature"           |
+| Tested code patterns        | Java 8 code that compiles and runs against NeqSim API          |
+| Real engineering context    | "Wire mesh demisters have K-factor 0.107 m/s per NORSOK"       |
+| Common mistakes with fixes  | "Calling getViscosity() without initProperties() returns zero" |
+| Reference to standards      | "Per API 521 Section 5.2, fire case heat flux is..."           |
 
 ### When to contribute to core vs. keep personal
 
@@ -195,8 +196,8 @@ SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
+| Mistake                 | Fix                                     |
+| ----------------------- | --------------------------------------- |
 | Forgot initProperties() | Call fluid.initProperties() after flash |
 
 ## Validation Checklist
