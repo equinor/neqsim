@@ -74,7 +74,7 @@ task_solve/YYYY-MM-DD_task_slug/
 Or point to an existing directory when creating the task:
 
 ```bash
-python devtools/new_task.py "compressor analysis" --type B \
+neqsim new-task "compressor analysis" --type B \
     --refs-dir "/path/to/existing/docs"
 ```
 

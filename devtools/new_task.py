@@ -5,11 +5,11 @@ This script lives in devtools/ (tracked in git) and is always available
 after cloning. It auto-creates the task_solve/ folder structure on first run.
 
 Usage:
-    python devtools/new_task.py "JT cooling for rich gas"
-    python devtools/new_task.py "TEG dehydration sizing" --type B
-    python devtools/new_task.py "hydrate formation temperature" --type A --author "Your Name"
-    python devtools/new_task.py --setup              # just create task_solve/ without a task
-    python devtools/new_task.py --list               # list existing tasks
+    neqsim new-task "JT cooling for rich gas"
+    neqsim new-task "TEG dehydration sizing" --type B
+    neqsim new-task "hydrate formation temperature" --type A --author "Your Name"
+    neqsim new-task --setup              # just create task_solve/ without a task
+    neqsim new-task --list               # list existing tasks
 """
 import os
 import shutil
@@ -60,7 +60,7 @@ in one session. You solve advanced engineering tasks while simultaneously
 improving the NeqSim toolbox.
 
 > **Alternative:** If you prefer a manual step-by-step approach, run
-> `python devtools/new_task.py "your task"` and follow the prompts in the
+> `neqsim new-task "your task"` and follow the prompts in the
 > generated README.
 
 ---
@@ -108,7 +108,7 @@ gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 You're solving a task AND improving the NeqSim codebase. When the API is
 missing something, you add it mid-task — new methods, equipment, or models.
 
-1. Type: `@solve.task add JT coefficient method` (or run `python devtools/new_task.py` for manual control)
+1. Type: `@solve.task add JT coefficient method` (or run `neqsim new-task` for manual control)
 2. Work through all 3 steps — the agent flags API gaps as it goes
 3. Add the missing Java code, rebuild, and the notebook picks it up immediately
 4. Promote reusable code back into `src/main/`, `src/test/`, or `examples/`
@@ -131,7 +131,7 @@ coding agent that can read files and run commands can drive the workflow.
 
 **How to start a task from OpenAI Codex (or any AI agent):**
 
-1. Run the setup: `python devtools/new_task.py "your task" --type B`
+1. Run the setup: `neqsim new-task "your task" --type B`
 2. Point the agent to the guide:
    ```
    Read docs/development/TASK_SOLVING_GUIDE.md for the full workflow.
@@ -143,7 +143,7 @@ coding agent that can read files and run commands can drive the workflow.
    and runs the report generator — same output, different tool.
 
 **What works everywhere** (no VS Code required):
-- `python devtools/new_task.py` — creates task folders
+- `neqsim new-task` — creates task folders
 - `task_spec.md` — scope document (plain markdown)
 - Jupyter notebooks — work in any Python environment
 - `python step3_report/generate_report.py` — generates Word + HTML
@@ -3401,7 +3401,7 @@ def create_task(title, task_type="B", author=""):
 def list_tasks():
     """List existing task folders."""
     if not os.path.exists(TASK_SOLVE_DIR):
-        print("No task_solve/ folder yet. Run: python devtools/new_task.py --setup")
+        print("No task_solve/ folder yet. Run: neqsim new-task --setup")
         return
 
     entries = sorted(os.listdir(TASK_SOLVE_DIR))
@@ -3412,7 +3412,7 @@ def list_tasks():
     ]
 
     if not tasks:
-        print("No tasks yet. Create one with: python devtools/new_task.py \"your task\"")
+        print("No tasks yet. Create one with: neqsim new-task \"your task\"")
     else:
         print("Tasks in task_solve/:")
         for t in tasks:
@@ -3437,7 +3437,7 @@ def main():
             print("Created task_solve/ workspace with README and template.")
         else:
             print("task_solve/ workspace already exists.")
-        print("\nCreate a task: python devtools/new_task.py \"your task title\"")
+        print("\nCreate a task: neqsim new-task \"your task title\"")
         return
 
     if sys.argv[1] == "--list":

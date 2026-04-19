@@ -109,7 +109,7 @@ any AI tool or no AI at all.
 Run the task creation script:
 
 ```powershell
-python devtools/new_task.py "hydrate formation temperature for wet gas" --type A --author "Your Name"
+neqsim new-task "hydrate formation temperature for wet gas" --type A --author "Your Name"
 ```
 
 This creates a folder like:
@@ -143,7 +143,7 @@ task_solve/
 | **G** — Workflow | Multi-discipline study | Field development, design basis |
 
 > **Tip:** The script auto-creates `task_solve/` on first run. Run
-> `python devtools/new_task.py --list` to see existing tasks.
+> `neqsim new-task --list` to see existing tasks.
 
 ---
 
@@ -512,7 +512,7 @@ Give it a one-shot prompt:
 
 ```
 Read AGENTS.md for project instructions.
-Create a task: python devtools/new_task.py "hydrate temperature" --type A
+Create a task: neqsim new-task "hydrate temperature" --type A
 Follow the 3-step workflow in the generated README.
 Save results.json and generate the Word + HTML report.
 Create a PR with the outputs.

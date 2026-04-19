@@ -626,7 +626,7 @@ task_solve/              # Your local work area (gitignored)
 
 ### B. Solve an Engineering Task
 1. Use AI workflow: [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE.md)
-2. Or manually: `python devtools/new_task.py "Your task description"`
+2. Or manually: `neqsim new-task "Your task description"`
 3. Work through steps 1-3 in `task_solve/<your_task>/`
 4. Promote useful outputs to main repo
 

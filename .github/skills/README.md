@@ -3,6 +3,10 @@
 Skills are reusable knowledge packages that agents load automatically when relevant.
 Each skill folder contains a `SKILL.md` file with verified patterns, rules, and domain knowledge.
 
+> **Full documentation:** See the [Skills Guide](../../docs/integration/skills_guide.md)
+> for the complete walkthrough — creating core, community, and private skills, the
+> SKILL.md format, requirements checklist, CLI commands, and worked examples.
+
 ## How Skills Work
 
 1. An agent receives a user request
@@ -72,8 +76,8 @@ engineering tasks better.
 **1. Scaffold the skill:**
 
 ```bash
-python devtools/new_skill.py "my-topic"
-python devtools/new_skill.py "my-topic" --description "Short description of what it covers"
+neqsim new-skill "my-topic"
+neqsim new-skill "my-topic" --description "Short description of what it covers"
 ```
 
 This creates `.github/skills/neqsim-my-topic/SKILL.md` with a structured
@@ -129,28 +133,28 @@ If your skill doesn't belong in core, you can publish it to the community catalo
 with a single command:
 
 ```bash
-python devtools/install_skill.py publish your-username/neqsim-my-skill
+neqsim skill publish your-username/neqsim-my-skill
 ```
 
 This validates your `SKILL.md`, auto-generates a catalog entry, and opens a draft
 PR to add it to `community-skills.yaml`. Others can then install it with:
 
 ```bash
-python devtools/install_skill.py install neqsim-my-skill
+neqsim skill install neqsim-my-skill
 ```
 
 ### List existing skills
 
 ```bash
-python devtools/new_skill.py --list                   # core skills (in-repo)
-python devtools/install_skill.py list                  # community skills (catalog)
+neqsim new-skill --list                   # core skills (in-repo)
+neqsim skill list                          # community skills (catalog)
 ```
 
 ---
 
 ## Creating a New Skill (Quick Reference)
 
-1. Run `python devtools/new_skill.py "name"` to scaffold
+1. Run `neqsim new-skill "name"` to scaffold
 2. Edit `.github/skills/neqsim-<name>/SKILL.md`
 3. Test all code patterns against the actual API
 4. Register in `copilot-instructions.md`, `AGENTS.md`, and this README

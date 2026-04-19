@@ -25,10 +25,60 @@ neqsim doctor            # check your environment is healthy
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim new-skill NAME    # scaffold a new AI skill
-neqsim install-skill CMD # manage community skills (list/search/install/remove)
+neqsim skill CMD         # manage community/private skills (list/search/install/remove/publish)
 ```
 
 Run `neqsim --help` for the full list.
+
+### Troubleshooting: `neqsim` not found
+
+If `neqsim` is not recognized after `pip install -e devtools/`, the Python
+Scripts directory is not on your PATH.
+
+**Using a virtual environment (easiest — always works):**
+```bash
+python -m venv .venv
+# Windows:  .venv\Scripts\Activate.ps1
+# macOS/Linux:  source .venv/bin/activate
+pip install -e devtools/
+neqsim --help   # works immediately — venv puts scripts on PATH
+```
+
+**Windows (PowerShell) — without venv:**
+```powershell
+# Check where pip installed it:
+python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+
+# Add it permanently (typical path for Python 3.12):
+$scripts = [System.IO.Path]::Combine($env:APPDATA, 'Python', 'Python312', 'Scripts')
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$scripts", "User")
+# Restart your terminal for the change to take effect.
+```
+
+**Linux / macOS — without venv:**
+```bash
+# The scripts directory is usually ~/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
+# Add the line above to ~/.bashrc or ~/.zshrc to make it permanent.
+
+# macOS with Homebrew Python: scripts may be at
+#   /opt/homebrew/bin/ (Apple Silicon) or /usr/local/bin/ (Intel)
+# Check with: python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+```
+
+**GitHub Codespaces:**
+
+The devcontainer automatically installs the CLI and configures PATH.
+If `neqsim` is not found, run:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Alternative — run without PATH (works everywhere):**
+```bash
+python -m neqsim_cli          # runs the CLI module directly
+python devtools/neqsim_cli.py  # runs the script file directly
+```
 
 ## Usage (any notebook, any directory)
 
@@ -73,7 +123,7 @@ for a full explanation of the architecture and internals.
 | `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) |
 | `new_task.py` | Create task-solving folders for the 4-step AI workflow |
 | `new_skill.py` | Scaffold a new skill for the agentic system (`neqsim new-skill "name"`) |
-| `install_skill.py` | Install community skills from `community-skills.yaml` catalog to `~/.neqsim/skills/` |
+| `install_skill.py` | Community/private skill manager — `neqsim skill list/search/install/remove/publish` |
 | `neqsim_doctor.py` | Diagnostic tool — checks Java, Maven, JAR, Python, agents, skills, cross-tool configs |
 | `onboard.py` | Interactive onboarding wizard — walks new contributors through full environment setup |
 | `consistency_checker.py` | **Pre-report quality gate.** Extracts numerical values from notebooks and results.json, detects inconsistencies (numerical mismatches, scope mismatches, contradictory claims). Run before `generate_report.py`. Produces `consistency_report.json`. |
@@ -98,7 +148,7 @@ script automatically and handles all 4 steps:
 **Manual alternative:**
 
 ```bash
-python devtools/new_task.py "JT cooling for rich gas" --type A
-python devtools/new_task.py --list    # list existing tasks
-python devtools/new_task.py --setup   # create task_solve/ without a task
+neqsim new-task "JT cooling for rich gas" --type A
+neqsim new-task --list    # list existing tasks
+neqsim new-task --setup   # create task_solve/ without a task
 ```

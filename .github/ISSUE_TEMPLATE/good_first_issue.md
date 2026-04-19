@@ -36,7 +36,7 @@ assignees: ''
 <!-- Check the type(s) that apply. -->
 
 - [ ] Java code (requires Java 8 — see `AGENTS.md`)
-- [ ] Skill (markdown in `.github/skills/` — use `python devtools/new_skill.py`)
+- [ ] Skill (markdown in `.github/skills/` — use `neqsim new-skill`)
 - [ ] Agent definition (`.github/agents/*.agent.md`)
 - [ ] Notebook example (`examples/notebooks/`)
 - [ ] Documentation (`docs/`)

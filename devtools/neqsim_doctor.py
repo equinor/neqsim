@@ -5,8 +5,8 @@ Checks that your environment is correctly set up for NeqSim development and
 agentic workflows. Reports issues with actionable fix suggestions.
 
 Usage:
-    python devtools/neqsim_doctor.py          # run all checks
-    python devtools/neqsim_doctor.py --fix     # attempt auto-fixes where possible
+    neqsim doctor          # run all checks
+    neqsim doctor --fix    # attempt auto-fixes where possible
 
 Inspired by OpenClaw's `openclaw doctor` pattern.
 """

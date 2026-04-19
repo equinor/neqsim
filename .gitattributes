@@ -1,25 +1,26 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Auto detect text files and normalize to LF in the repo.
+# Working-tree line endings are determined by the OS (core.autocrlf).
+* text=auto eol=lf
 
-# Shell scripts must always have LF line endings (critical for Codespaces/Linux)
-*.sh text eol=lf
-mvnw text eol=lf
-
-# Windows batch files must have CRLF
+# Windows batch files must have CRLF (they break with LF)
 *.bat text eol=crlf
 *.cmd text eol=crlf
 mvnw.cmd text eol=crlf
 
+# Java source files
+*.java text diff=java eol=lf
+*.properties text eol=lf
+*.xml text eol=lf
+*.csv text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+mvnw text eol=lf
+
 # Maven wrapper properties
 .mvn/wrapper/maven-wrapper.properties text eol=lf
-
-# Java source files
-*.java text diff=java
-*.properties text
-*.xml text
-*.csv text
-*.json text
-*.md text
 
 # Binary files
 *.jar binary

@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""Install community skills from the NeqSim skill catalog.
+"""Install community and private skills from NeqSim skill catalogs.
 
 Usage:
-    python devtools/install_skill.py list              # list catalog
-    python devtools/install_skill.py search <query>    # search by name/tag
-    python devtools/install_skill.py install <name>    # install a skill
-    python devtools/install_skill.py installed          # show installed skills
-    python devtools/install_skill.py remove <name>     # remove an installed skill
-    python devtools/install_skill.py info <name>       # show skill details
-    python devtools/install_skill.py publish <repo>    # publish your skill to catalog
+    neqsim skill list              # list all catalogs
+    neqsim skill list --private    # list private catalog only
+    neqsim skill search <query>    # search by name/tag
+    neqsim skill install <name>    # install a skill
+    neqsim skill installed         # show installed skills
+    neqsim skill remove <name>     # remove an installed skill
+    neqsim skill info <name>       # show skill details
+    neqsim skill publish <repo>    # publish your skill to catalog
+    neqsim skill private-init      # create private catalog template
 
 Skills are installed to ~/.neqsim/skills/<name>/SKILL.md so they don't
 pollute the core repo. AI tools can be configured to read from that path.
-"""
+
+Private skills are listed in ~/.neqsim/private-skills.yaml (gitignored,
+never committed). They support local file paths, network shares, and
+private GitHub repos.
+"""""
 
 import argparse
 import json
@@ -29,25 +35,107 @@ except ImportError:
 # ── Paths ──────────────────────────────────────────────────────────────
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOG_FILE = REPO_ROOT / "community-skills.yaml"
+PRIVATE_CATALOG_FILE = Path.home() / ".neqsim" / "private-skills.yaml"
 INSTALL_DIR = Path.home() / ".neqsim" / "skills"
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
 
+# ── Private catalog template ───────────────────────────────────────────
+PRIVATE_CATALOG_TEMPLATE = """\
+# Private / Internal Skill Catalog
+#
+# This file lists skills that are private to your organisation.
+# It is stored at ~/.neqsim/private-skills.yaml and should NEVER
+# be committed to a public repository.
+#
+# Skills can be sourced from:
+#   - Local file paths (source: local)
+#   - Network shares (source: local, with UNC path)
+#   - Private GitHub repos (source: github, requires GITHUB_TOKEN)
+#   - Internal Git servers (source: url, with direct URL)
+#
+# Install with: neqsim skill install <name>
 
-def load_catalog():
-    """Load the community-skills.yaml catalog."""
-    if not CATALOG_FILE.exists():
-        print(f"  [!!] Catalog not found: {CATALOG_FILE}")
-        sys.exit(1)
+catalog_version: "1.0"
+last_updated: "{today}"
+organisation: "your-company"
 
-    text = CATALOG_FILE.read_text(encoding="utf-8")
+skills:
+  # ── Local file path ──
+  # - name: neqsim-company-stid
+  #   description: "STID document retrieval for our installations"
+  #   author: "your-name"
+  #   source: local
+  #   path: "C:/Users/you/.neqsim/skills/neqsim-company-stid/SKILL.md"
+  #   tags: [stid, documents, internal]
 
-    if yaml is not None:
-        data = yaml.safe_load(text)
-    else:
-        # Minimal YAML-like parser for the simple catalog format
-        data = _parse_catalog_fallback(text)
+  # ── Network share ──
+  # - name: neqsim-company-standards
+  #   description: "Company TR requirements for equipment design"
+  #   author: "engineering-team"
+  #   source: local
+  #   path: "//server/share/neqsim-skills/neqsim-company-standards/SKILL.md"
+  #   tags: [standards, tr, internal]
 
-    return data.get("skills", [])
+  # ── Private GitHub repo ──
+  # - name: neqsim-plant-data-mapping
+  #   description: "PI tag mappings for our platforms"
+  #   author: "data-team"
+  #   source: github
+  #   repo: "your-org/neqsim-plant-skills"
+  #   path: "skills/neqsim-plant-data-mapping/SKILL.md"
+  #   tags: [pi, historian, plant-data]
+
+  # ── Direct URL (internal Git server, Azure DevOps, etc.) ──
+  # - name: neqsim-internal-workflow
+  #   description: "Internal simulation workflow for project X"
+  #   author: "project-team"
+  #   source: url
+  #   url: "https://git.internal.company.com/raw/repo/main/SKILL.md"
+  #   tags: [workflow, internal]
+"""
+
+
+def load_catalog(private_only=False):
+    """Load skill catalogs. Merges community + private by default."""
+    skills = []
+
+    # Load community catalog (unless private-only requested)
+    if not private_only and CATALOG_FILE.exists():
+        text = CATALOG_FILE.read_text(encoding="utf-8")
+        if yaml is not None:
+            data = yaml.safe_load(text)
+        else:
+            data = _parse_catalog_fallback(text)
+        for s in data.get("skills", []):
+            s["_source"] = "community"
+            skills.append(s)
+
+    # Load private catalog if it exists
+    if PRIVATE_CATALOG_FILE.exists():
+        text = PRIVATE_CATALOG_FILE.read_text(encoding="utf-8")
+        if yaml is not None:
+            data = yaml.safe_load(text) or {}
+        else:
+            data = _parse_catalog_fallback(text)
+        for s in (data.get("skills") or []):
+            s["_source"] = "private"
+            skills.append(s)
+
+    if not skills:
+        if private_only:
+            if not PRIVATE_CATALOG_FILE.exists():
+                print(f"  [!!] Private catalog not found: {PRIVATE_CATALOG_FILE}")
+                print(f"  Run: neqsim skill private-init")
+            else:
+                print(f"\n  Private catalog has no skills yet.")
+                print(f"  Edit: {PRIVATE_CATALOG_FILE}")
+                print(f"  Uncomment and fill in the template entries.\n")
+            sys.exit(1)
+        else:
+            print(f"  [!!] No catalogs found.")
+            sys.exit(1)
+
+    return skills
 
 
 def _parse_catalog_fallback(text):
@@ -95,14 +183,20 @@ def save_manifest(manifest):
 def cmd_list(skills, args):
     """List all skills in the catalog."""
     manifest = load_manifest()
-    print(f"\n  Community Skill Catalog ({len(skills)} skills)\n")
-    print(f"  {'Name':<35} {'Tags':<25} {'Installed'}")
-    print(f"  {'-'*35} {'-'*25} {'-'*9}")
-    for s in skills:
+    private_only = getattr(args, "private", False)
+    source_filter = "private" if private_only else None
+    filtered = [s for s in skills if not source_filter or s.get("_source") == source_filter]
+
+    label = "Private" if private_only else "All"
+    print(f"\n  {label} Skill Catalog ({len(filtered)} skills)\n")
+    print(f"  {'Name':<35} {'Source':<10} {'Tags':<20} {'Installed'}")
+    print(f"  {'-'*35} {'-'*10} {'-'*20} {'-'*9}")
+    for s in filtered:
         name = s.get("name", "?")
+        source = s.get("_source", "?")
         tags = ", ".join(s.get("tags", [])) if isinstance(s.get("tags"), list) else str(s.get("tags", ""))
         installed = "yes" if name in manifest else ""
-        print(f"  {name:<35} {tags:<25} {installed}")
+        print(f"  {name:<35} {source:<10} {tags:<20} {installed}")
     print()
 
 
@@ -142,11 +236,19 @@ def cmd_info(skills, args):
         sys.exit(1)
 
     manifest = load_manifest()
+    source = skill.get("_source", "community")
     print(f"\n  Skill: {skill.get('name')}")
+    print(f"  Source: {source}")
     print(f"  Description: {skill.get('description', '-')}")
     print(f"  Author: {skill.get('author', '-')}")
-    print(f"  Repo: https://github.com/{skill.get('repo', '-')}")
-    print(f"  Path: {skill.get('path', 'SKILL.md')}")
+    src_type = skill.get("source", "github")
+    if src_type == "local":
+        print(f"  Path: {skill.get('path', '-')}")
+    elif src_type == "url":
+        print(f"  URL: {skill.get('url', '-')}")
+    else:
+        print(f"  Repo: https://github.com/{skill.get('repo', '-')}")
+        print(f"  Path: {skill.get('path', 'SKILL.md')}")
     tags = skill.get("tags", [])
     print(f"  Tags: {', '.join(tags) if isinstance(tags, list) else tags}")
     print(f"  Installed: {'yes' if name in manifest else 'no'}")
@@ -155,13 +257,78 @@ def cmd_info(skills, args):
     print()
 
 
+def _install_from_local(skill, dest_file):
+    """Install a skill from a local file path or network share."""
+    import shutil
+    src_path = Path(skill["path"])
+    if not src_path.exists():
+        print(f"  [!!] Source file not found: {src_path}")
+        sys.exit(1)
+    shutil.copy2(str(src_path), str(dest_file))
+    print(f"  [OK] Copied from: {src_path}")
+
+
+def _install_from_url(skill, dest_file):
+    """Install a skill from a direct URL (internal Git, Azure DevOps, etc.)."""
+    import urllib.request
+    import urllib.error
+    url = skill.get("url", "")
+    if not url:
+        print(f"  [!!] No URL specified for '{skill.get('name')}'.")
+        sys.exit(1)
+    print(f"  Downloading: {url}")
+
+    req = urllib.request.Request(url)
+    # Support token-based auth via environment variable
+    token = os.environ.get("PRIVATE_SKILL_TOKEN", "")
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+
+    with urllib.request.urlopen(req) as resp:
+        dest_file.write_bytes(resp.read())
+
+
+def _install_from_github(skill, dest_file):
+    """Install a skill from a GitHub repo (public or private)."""
+    import urllib.request
+    import urllib.error
+
+    repo = skill.get("repo", "")
+    path = skill.get("path", "SKILL.md")
+    if not repo:
+        print(f"  [!!] No repo specified for '{skill.get('name')}'.")
+        sys.exit(1)
+
+    raw_url = f"https://raw.githubusercontent.com/{repo}/main/{path}"
+    print(f"  Downloading: {raw_url}")
+
+    req = urllib.request.Request(raw_url)
+    # Private repos need GITHUB_TOKEN
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        req.add_header("Authorization", f"token {token}")
+
+    try:
+        with urllib.request.urlopen(req) as resp:
+            dest_file.write_bytes(resp.read())
+    except urllib.error.HTTPError:
+        # Try 'master' branch if 'main' fails
+        raw_url_master = f"https://raw.githubusercontent.com/{repo}/master/{path}"
+        print(f"  Retrying: {raw_url_master}")
+        req2 = urllib.request.Request(raw_url_master)
+        if token:
+            req2.add_header("Authorization", f"token {token}")
+        with urllib.request.urlopen(req2) as resp:
+            dest_file.write_bytes(resp.read())
+
+
 def cmd_install(skills, args):
-    """Install a skill from the catalog."""
+    """Install a skill from the catalog (community or private)."""
     name = args.name
     skill = next((s for s in skills if s.get("name") == name), None)
     if not skill:
         print(f"\n  Skill '{name}' not found in catalog.")
-        print(f"  Run: python devtools/install_skill.py list\n")
+        print(f"  Run: neqsim skill list\n")
         sys.exit(1)
 
     manifest = load_manifest()
@@ -170,46 +337,35 @@ def cmd_install(skills, args):
         print(f"  Use --force to reinstall.\n")
         return
 
-    repo = skill.get("repo", "")
-    path = skill.get("path", "SKILL.md")
-
-    if not repo:
-        print(f"\n  [!!] No repo specified for '{name}'.\n")
-        sys.exit(1)
-
-    # Download the SKILL.md from GitHub raw
-    raw_url = f"https://raw.githubusercontent.com/{repo}/main/{path}"
-    print(f"\n  Downloading: {raw_url}")
+    dest_dir = INSTALL_DIR / name
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_file = dest_dir / "SKILL.md"
 
     try:
-        import urllib.request
-        import urllib.error
+        source_type = skill.get("source", "github")
+        print(f"\n  Installing '{name}' (source: {source_type})...")
 
-        dest_dir = INSTALL_DIR / name
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        dest_file = dest_dir / "SKILL.md"
+        if source_type == "local":
+            _install_from_local(skill, dest_file)
+        elif source_type == "url":
+            _install_from_url(skill, dest_file)
+        else:
+            _install_from_github(skill, dest_file)
 
-        try:
-            urllib.request.urlretrieve(raw_url, str(dest_file))
-        except urllib.error.HTTPError:
-            # Try 'master' branch if 'main' fails
-            raw_url_master = f"https://raw.githubusercontent.com/{repo}/master/{path}"
-            print(f"  Retrying: {raw_url_master}")
-            urllib.request.urlretrieve(raw_url_master, str(dest_file))
-
-        # Verify we got a real file (not a 404 HTML page)
+        # Verify we got a real SKILL.md
         content = dest_file.read_text(encoding="utf-8", errors="replace")
         if len(content) < 20 or "<html" in content.lower()[:200]:
             dest_file.unlink()
             dest_dir.rmdir()
             print(f"  [!!] Downloaded content doesn't look like a SKILL.md file.")
-            print(f"  Check repo/path: {repo} / {path}\n")
             sys.exit(1)
 
         manifest[name] = {
             "path": str(dest_file),
-            "repo": repo,
-            "remote_path": path,
+            "source": skill.get("_source", "community"),
+            "source_type": source_type,
+            "repo": skill.get("repo", ""),
+            "remote_path": skill.get("path", ""),
             "author": skill.get("author", ""),
         }
         save_manifest(manifest)
@@ -229,7 +385,7 @@ def cmd_installed(skills, args):
     if not manifest:
         print("\n  No community skills installed.")
         print(f"  Install dir: {INSTALL_DIR}")
-        print(f"  Run: python devtools/install_skill.py list\n")
+        print(f"  Run: neqsim skill list\n")
         return
 
     print(f"\n  Installed Community Skills ({len(manifest)}):\n")
@@ -405,7 +561,7 @@ def cmd_publish(skills, args):
             f"**Author:** @{author}\n"
             f"**Description:** {description}\n"
             f"**Tags:** {', '.join(tags)}\n\n"
-            f"Auto-generated by `python devtools/install_skill.py publish`.\n"
+            f"Auto-generated by `neqsim skill publish`.\n"
         )
         result = subprocess.run(
             ["gh", "pr", "create", "--draft",
@@ -424,6 +580,22 @@ def cmd_publish(skills, args):
         print(f"  [!!] Git error: {e}")
         print(f"  The catalog entry was saved. Create the branch/PR manually.")
 
+
+def cmd_private_init(skills, args):
+    """Create the private skill catalog template at ~/.neqsim/private-skills.yaml."""
+    if PRIVATE_CATALOG_FILE.exists():
+        print(f"\n  Private catalog already exists: {PRIVATE_CATALOG_FILE}")
+        print(f"  Edit it to add your private skills.\n")
+        return
+
+    from datetime import date
+    content = PRIVATE_CATALOG_TEMPLATE.format(today=date.today().isoformat())
+    PRIVATE_CATALOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PRIVATE_CATALOG_FILE.write_text(content, encoding="utf-8")
+    print(f"\n  [OK] Created private catalog: {PRIVATE_CATALOG_FILE}")
+    print(f"  Edit it to add your internal/company skills.")
+    print(f"  Then: neqsim skill list --private\n")
+
     print()
 
 
@@ -431,21 +603,33 @@ def cmd_publish(skills, args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Install community skills from the NeqSim skill catalog.",
+        description="Install community and private skills from NeqSim skill catalogs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
             Examples:
-              python devtools/install_skill.py list
-              python devtools/install_skill.py search "flow assurance"
-              python devtools/install_skill.py install neqsim-example-skill
-              python devtools/install_skill.py installed
-              python devtools/install_skill.py remove neqsim-example-skill
-              python devtools/install_skill.py publish user/neqsim-my-skill
+              neqsim skill list
+              neqsim skill list --private
+              neqsim skill search "flow assurance"
+              neqsim skill install neqsim-example-skill
+              neqsim skill installed
+              neqsim skill remove neqsim-example-skill
+              neqsim skill publish user/neqsim-my-skill
+              neqsim skill private-init
+
+            Private skills:
+              neqsim skill private-init    # create ~/.neqsim/private-skills.yaml
+              # Edit the file to add your private skills, then:
+              neqsim skill list --private   # verify entries
+              neqsim skill install <name>   # install from any catalog
+
+            Private repos require GITHUB_TOKEN env var.
+            Internal URLs can use PRIVATE_SKILL_TOKEN env var.
         """),
     )
     sub = parser.add_subparsers(dest="command")
 
-    sub.add_parser("list", help="List all skills in the catalog")
+    p_list = sub.add_parser("list", help="List all skills in the catalog")
+    p_list.add_argument("--private", action="store_true", help="List private catalog only")
 
     p_search = sub.add_parser("search", help="Search skills by keyword")
     p_search.add_argument("query", help="Search term")
@@ -467,12 +651,20 @@ def main():
     p_publish.add_argument("--path", default="SKILL.md", help="Path to SKILL.md in the repo")
     p_publish.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
 
+    sub.add_parser("private-init", help="Create private catalog template at ~/.neqsim/")
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
         sys.exit(0)
 
-    skills = load_catalog()
+    # private-init doesn't need catalog loaded
+    if args.command == "private-init":
+        cmd_private_init([], args)
+        return
+
+    private_only = getattr(args, "private", False)
+    skills = load_catalog(private_only=private_only)
 
     commands = {
         "list": cmd_list,

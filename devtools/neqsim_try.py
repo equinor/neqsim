@@ -26,8 +26,16 @@ _JVM_PREAMBLE = textwrap.dedent("""\
         _jar_dir = os.path.join(_neqsim_dir, "lib", "java11", "*")
         if not os.path.isdir(os.path.join(_neqsim_dir, "lib", "java11")):
             _jar_dir = os.path.join(_neqsim_dir, "lib", "java8", "*")
-        jpype.startJVM("--enable-native-access=ALL-UNNAMED",
-                       classpath=[_jar_dir], convertStrings=False)
+        import subprocess as _sp, re as _re
+        _jvm_args = []
+        try:
+            _ver = _sp.check_output(["java", "-version"], stderr=_sp.STDOUT, text=True)
+            _m = _re.search(r'"(\\d+)', _ver)
+            if _m and int(_m.group(1)) >= 22:
+                _jvm_args.append("--enable-native-access=ALL-UNNAMED")
+        except Exception:
+            pass
+        jpype.startJVM(*_jvm_args, classpath=[_jar_dir], convertStrings=False)
 """)
 
 DEMO_CODE = _JVM_PREAMBLE + textwrap.dedent("""\

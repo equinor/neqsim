@@ -8,7 +8,7 @@ argument-hint: "Describe the engineering task — e.g., 'JT cooling for rich gas
 
 **Before writing ANY files, notes, notebooks, or analysis, you MUST:**
 
-1. **Run** `python devtools/new_task.py "TASK TITLE" --type X --author "Agent"` in the terminal
+1. **Run** `neqsim new-task "TASK TITLE" --type X --author "Agent"` in the terminal
 2. **Confirm** the folder `task_solve/YYYY-MM-DD_task_slug/` was created
 3. **Read** the generated `task_solve/YYYY-MM-DD_task_slug/README.md`
 
@@ -417,7 +417,7 @@ user: "Step 1 is complete. Please start a new conversation and say
 
 3. **Create the task folder (DO THIS NOW — non-negotiable):**
    ```
-   Run in terminal: python devtools/new_task.py "TASK TITLE" --type X --author "Agent"
+   Run in terminal: neqsim new-task "TASK TITLE" --type X --author "Agent"
    ```
    This creates `task_solve/YYYY-MM-DD_task_slug/` with all subfolders.
    **ALL subsequent files MUST go inside this folder. Do NOT proceed without it.**
@@ -1865,7 +1865,7 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 ## 8 ── CRITICAL RULES
 
 0. **NeqSim API first.** Every thermodynamic property, flash calculation, process simulation, and equipment sizing must use NeqSim Java classes (via `jneqsim` gateway or JUnit tests). Never substitute a simplified Python correlation, regression, or hand-formula when a NeqSim class exists for the same calculation. Search the Java source first. If no class exists, that is a gap — see Rule 20.
-1. **Create the `task_solve/` folder FIRST — this is non-negotiable.** Always run `python devtools/new_task.py "TITLE" --type X --author "Agent"` before writing any files. ALL deliverables (task_spec.md, notebooks, notes.md, results.json, figures/) MUST be placed inside the generated `task_solve/YYYY-MM-DD_task_slug/` folder. Never write analysis files to the workspace root, `examples/`, or any other location. If the folder was not created, STOP and create it now.
+1. **Create the `task_solve/` folder FIRST — this is non-negotiable.** Always run `neqsim new-task "TITLE" --type X --author "Agent"` before writing any files. ALL deliverables (task_spec.md, notebooks, notes.md, results.json, figures/) MUST be placed inside the generated `task_solve/YYYY-MM-DD_task_slug/` folder. Never write analysis files to the workspace root, `examples/`, or any other location. If the folder was not created, STOP and create it now.
 2. **Scale to the task.** Quick tasks get minimal ceremony. Comprehensive tasks get full documentation. Don't over-engineer a simple property lookup or under-deliver a field development study.
 3. **Fill in the task spec.** Standards, methods, and deliverables must be defined in `task_spec.md` before analysis. For Quick scale, only essential fields.
 4. **Deep analysis before code (when applicable).** For high-consequence Design/Development tasks, write `analysis.md` before coding. For Screening tasks, a condensed analysis in notes.md is sufficient.

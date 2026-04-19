@@ -248,7 +248,7 @@ def main():
 
     if not os.path.isdir(task_dir):
         print("ERROR: Task directory does not exist: {}".format(task_dir))
-        print("Create it first: python devtools/new_task.py \"your task\"")
+        print("Create it first: neqsim new-task \"your task\"")
         sys.exit(1)
 
     os.makedirs(references_dir, exist_ok=True)

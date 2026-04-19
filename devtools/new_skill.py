@@ -5,9 +5,9 @@ Creates a skill folder under .github/skills/ with a SKILL.md template
 following the established format (YAML frontmatter + structured sections).
 
 Usage:
-    python devtools/new_skill.py "neqsim-my-topic"
-    python devtools/new_skill.py "neqsim-my-topic" --description "Short description"
-    python devtools/new_skill.py --list              # list existing skills
+    neqsim new-skill "neqsim-my-topic"
+    neqsim new-skill "neqsim-my-topic" --description "Short description"
+    neqsim new-skill --list              # list existing skills
 
 Inspired by OpenClaw's skill-creator pattern: make it trivial for domain
 experts to package their workflows as reusable knowledge for AI agents.
@@ -28,8 +28,14 @@ COPILOT_INSTRUCTIONS = os.path.join(
 
 SKILL_TEMPLATE = '''---
 name: {name}
+version: "1.0.0"
 description: "{description}"
 last_verified: "{today}"
+requires:
+  # python_packages: []   # e.g. [tagreader, pandas]
+  # java_packages: []     # e.g. [commons-math3]
+  # env: []               # e.g. [PI_WEB_API_URL]
+  # network: []           # e.g. [equinor-vpn]
 ---
 
 # {title}
@@ -171,13 +177,22 @@ def create_skill(name, description=None):
         topic_placeholder=topic_placeholder,
     )
 
+    # Also generate a CHANGELOG.md for version tracking
+    changelog_file = os.path.join(skill_dir, "CHANGELOG.md")
+    changelog = "# {name} Changelog\n\n## 1.0.0 ({today})\n\n- Initial release\n".format(
+        name=name, today=date.today().isoformat()
+    )
+
     os.makedirs(skill_dir, exist_ok=True)
     with open(skill_file, "w", encoding="utf-8") as f:
         f.write(content)
+    with open(changelog_file, "w", encoding="utf-8") as f:
+        f.write(changelog)
 
     print("Created skill: {name}".format(name=name))
     print("  Folder: {path}".format(path=skill_dir))
     print("  File:   {file}".format(file=skill_file))
+    print("  Changelog: {file}".format(file=changelog_file))
     print()
     print("Next steps:")
     print("  1. Edit {file} with your domain knowledge".format(file=skill_file))
@@ -194,14 +209,14 @@ def create_skill(name, description=None):
 def print_usage():
     """Print usage information."""
     print("Usage:")
-    print('  python devtools/new_skill.py "neqsim-my-topic"')
-    print('  python devtools/new_skill.py "neqsim-my-topic" --description "Short desc"')
-    print("  python devtools/new_skill.py --list")
+    print('  neqsim new-skill "neqsim-my-topic"')
+    print('  neqsim new-skill "neqsim-my-topic" --description "Short desc"')
+    print("  neqsim new-skill --list")
     print()
     print("Examples:")
-    print('  python devtools/new_skill.py "neqsim-lng-operations"')
-    print('  python devtools/new_skill.py "pump-design" --description "Pump sizing and design per API 610"')
-    print('  python devtools/new_skill.py "dehydration" --description "TEG/DEG dehydration patterns"')
+    print('  neqsim new-skill "neqsim-lng-operations"')
+    print('  neqsim new-skill "pump-design" --description "Pump sizing and design per API 610"')
+    print('  neqsim new-skill "dehydration" --description "TEG/DEG dehydration patterns"')
 
 
 def main():

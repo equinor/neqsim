@@ -175,8 +175,17 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         for i, cp in enumerate(classpath, 1):
             print(f"  {i}. {cp}")
 
-    # Suppress Java 21+ restricted method warnings from JPype native access
-    jvm_args = ["--enable-native-access=ALL-UNNAMED"]
+    # Suppress Java 22+ restricted method warnings from JPype native access
+    # Only add the flag if the JVM supports it (Java 22+)
+    jvm_args = []
+    import subprocess, re
+    try:
+        _ver = subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT, text=True)
+        _m = re.search(r'"(\d+)', _ver)
+        if _m and int(_m.group(1)) >= 22:
+            jvm_args.append("--enable-native-access=ALL-UNNAMED")
+    except Exception:
+        pass
     jpype.startJVM(*jvm_args, classpath=classpath, convertStrings=True)
     if verbose:
         print(f"\nJVM started: {jpype.getDefaultJVMPath()}")

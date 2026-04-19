@@ -49,9 +49,9 @@ HTML reports — all in one session.
 
 1. **Run the setup script** (auto-creates `task_solve/` on first use):
    ```powershell
-   python devtools/new_task.py "JT cooling for rich gas"
-   python devtools/new_task.py "TEG dehydration sizing" --type B --author "Your Name"
-   python devtools/new_task.py "field development study" --type G --author "Your Name"
+   neqsim new-task "JT cooling for rich gas"
+   neqsim new-task "TEG dehydration sizing" --type B --author "Your Name"
+   neqsim new-task "field development study" --type G --author "Your Name"
    ```
 2. **Open the generated README** — it has AI prompts ready to paste for each step
 3. **Work through Steps 1–3**, saving artifacts in the corresponding subfolder
@@ -1217,7 +1217,7 @@ If you're a process engineer (not a developer):
 
 Alternatively, for manual control:
 
-1. Run: `python devtools/new_task.py "your question" --type B`
+1. Run: `neqsim new-task "your question" --type B`
 2. Open Copilot Chat and paste the prompts from the generated README
 3. Run `python step3_report/generate_report.py` to create Word + HTML reports
 
@@ -1235,7 +1235,7 @@ coding agent that can read files and run commands can follow the same workflow.
 
 1. **Create the task folder** (from terminal):
    ```bash
-   python devtools/new_task.py "your task" --type B
+   neqsim new-task "your task" --type B
    ```
 
 2. **Point the agent to the workflow** — paste this prompt:
@@ -1259,7 +1259,7 @@ coding agent that can read files and run commands can follow the same workflow.
 
 | Component | How to Use | Works In |
 |-----------|-----------|----------|
-| `python devtools/new_task.py` | Creates task folders | Any terminal |
+| `neqsim new-task` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
 | Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
 | `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
@@ -1302,7 +1302,7 @@ Task: [describe your task, e.g. "hydrate formation temperature for wet gas at 10
 
 Instructions:
 1. Read AGENTS.md for project guidance
-2. Run: python devtools/new_task.py "[task title]" --type [A-G]
+2. Run: neqsim new-task "[task title]" --type [A-G]
 3. Fill step1_scope_and_research/task_spec.md with standards and methods
 4. Create a Jupyter notebook in step2_analysis/ using NeqSim (pip install neqsim)
 5. Run the notebook and validate results

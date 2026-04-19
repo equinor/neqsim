@@ -812,6 +812,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Agents & Skills Reference** | [docs/integration/ai_agents_reference.md](integration/ai_agents_reference) | **Complete catalog of all 16 agents and 14 skills with commands and examples** |
 | **Agentic Workflow Examples** | [docs/integration/ai_workflow_examples.md](integration/ai_workflow_examples) | **NEW: Step-by-step walkthroughs of agent-driven engineering workflows** |
 | **Agentic Java Classes** | [docs/integration/ai_agentic_classes.md](integration/ai_agentic_classes) | **TaskResultValidator, SimulationQualityGate, AgentSession, AgentFeedbackCollector — Java infrastructure for AI-driven simulation QA** |
+| **Skills Guide** | [docs/integration/skills_guide.md](integration/skills_guide) | **Creating, using, and managing skills — core, community, and local private skills with STID and plant data examples** |
 
 ### Chapter 43: Sustainability & Emissions
 

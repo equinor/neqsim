@@ -163,7 +163,7 @@ The agent creates a task folder, researches the topic, builds a simulation, vali
 
 #### Manual Alternative
 ```bash
-python devtools/new_task.py "Your task description" --type B
+neqsim new-task "Your task description" --type B
 ```
 
 Then follow the workflow in `task_solve/<your_task>/README.md`:
@@ -271,6 +271,30 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 4. **Test compilation**: `javac YourExample.java`
 
 **See**: [notebook.example.agent.md](../../.github/agents/notebook.example.agent.md) for guidelines.
+
+### E. Contribute a Skill
+
+Skills are the **easiest** way to contribute — no Java required. You write a markdown
+file with domain knowledge, code patterns, and common mistakes that AI agents use to
+solve engineering tasks.
+
+**Core skill** (shipped with NeqSim):
+```bash
+neqsim new-skill "my-topic"      # scaffold SKILL.md
+# Edit .github/skills/neqsim-my-topic/SKILL.md
+# Register in README + copilot-instructions.md
+# Submit PR
+```
+
+**Community skill** (hosted in your own repo):
+```bash
+# 1. Create SKILL.md in your GitHub repo
+# 2. Publish to the catalog:
+neqsim skill publish your-username/your-repo
+```
+
+**See**: [Skills Guide](../integration/skills_guide.md) for the full walkthrough
+including SKILL.md format, requirements checklist, and private/team skills.
 
 ---
 
@@ -497,7 +521,7 @@ Once you're comfortable with the basics:
 ./mvnw checkstyle:check
 
 # Create task
-python devtools/new_task.py "Task description"
+neqsim new-task "Task description"
 
 # Update branch
 git fetch origin && git rebase origin/master

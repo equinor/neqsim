@@ -138,7 +138,7 @@ For Quick tasks, proceed directly with reasonable assumptions.
 ### Step 2: Create Task Folder
 
 ```bash
-python devtools/new_task.py "field development title" --type F --author "Field Development Agent"
+neqsim new-task "field development title" --type F --author "Field Development Agent"
 ```
 
 If the user provides reference documents (PVT reports, design basis, field data):
