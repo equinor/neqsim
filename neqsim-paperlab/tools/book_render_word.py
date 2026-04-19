@@ -509,6 +509,100 @@ def _set_border(borders_element, side, size, val="single"):
 
 
 # ---------------------------------------------------------------------------
+# Numbered list numbering helper
+# ---------------------------------------------------------------------------
+
+def _create_fresh_numbered_list(doc):
+    """Create a new abstract numbering definition so each ordered list restarts at 1.
+
+    Returns the numId (as string) that can be applied to paragraph XML.
+    The built-in 'List Number' style shares a single numbering instance,
+    which causes Word to continue numbering across separate lists.
+    """
+    numbering_part = doc.part.numbering_part
+    numbering_el = numbering_part._element
+
+    # Find highest existing abstractNumId
+    max_abstract = -1
+    for an in numbering_el.findall(qn("w:abstractNum")):
+        aid = int(an.get(qn("w:abstractNumId")))
+        if aid > max_abstract:
+            max_abstract = aid
+    new_abstract_id = max_abstract + 1
+
+    # Find highest existing numId
+    max_num = 0
+    for n in numbering_el.findall(qn("w:num")):
+        nid = int(n.get(qn("w:numId")))
+        if nid > max_num:
+            max_num = nid
+    new_num_id = max_num + 1
+
+    # Create abstract numbering: simple decimal, start at 1
+    abstract_num = OxmlElement("w:abstractNum")
+    abstract_num.set(qn("w:abstractNumId"), str(new_abstract_id))
+    lvl = OxmlElement("w:lvl")
+    lvl.set(qn("w:ilvl"), "0")
+    start = OxmlElement("w:start")
+    start.set(qn("w:val"), "1")
+    lvl.append(start)
+    num_fmt = OxmlElement("w:numFmt")
+    num_fmt.set(qn("w:val"), "decimal")
+    lvl.append(num_fmt)
+    lvl_text = OxmlElement("w:lvlText")
+    lvl_text.set(qn("w:val"), "%1.")
+    lvl.append(lvl_text)
+    lvl_jc = OxmlElement("w:lvlJc")
+    lvl_jc.set(qn("w:val"), "left")
+    lvl.append(lvl_jc)
+    # Indentation: hanging indent for number
+    pPr = OxmlElement("w:pPr")
+    ind = OxmlElement("w:ind")
+    ind.set(qn("w:left"), "720")
+    ind.set(qn("w:hanging"), "360")
+    pPr.append(ind)
+    lvl.append(pPr)
+    # Font for numbers
+    rPr = OxmlElement("w:rPr")
+    rFonts = OxmlElement("w:rFonts")
+    rFonts.set(qn("w:ascii"), "Times New Roman")
+    rFonts.set(qn("w:hAnsi"), "Times New Roman")
+    rPr.append(rFonts)
+    lvl.append(rPr)
+    abstract_num.append(lvl)
+
+    # Insert before <w:num> elements
+    first_num = numbering_el.find(qn("w:num"))
+    if first_num is not None:
+        first_num.addprevious(abstract_num)
+    else:
+        numbering_el.append(abstract_num)
+
+    # Create num element referencing the abstract
+    num_el = OxmlElement("w:num")
+    num_el.set(qn("w:numId"), str(new_num_id))
+    abstract_ref = OxmlElement("w:abstractNumId")
+    abstract_ref.set(qn("w:val"), str(new_abstract_id))
+    num_el.append(abstract_ref)
+    numbering_el.append(num_el)
+
+    return str(new_num_id)
+
+
+def _apply_numbered_list_to_para(paragraph, num_id):
+    """Apply a specific numbering definition to a paragraph."""
+    pPr = paragraph._element.get_or_add_pPr()
+    numPr = OxmlElement("w:numPr")
+    ilvl = OxmlElement("w:ilvl")
+    ilvl.set(qn("w:val"), "0")
+    numPr.append(ilvl)
+    numId_el = OxmlElement("w:numId")
+    numId_el.set(qn("w:val"), num_id)
+    numPr.append(numId_el)
+    pPr.append(numPr)
+
+
+# ---------------------------------------------------------------------------
 # Markdown -> Word conversion (with equation support)
 # ---------------------------------------------------------------------------
 
@@ -661,14 +755,24 @@ def _render_md_to_doc(doc, md_text, chapter_num=None, figures_dir=None,
             i += 1
             continue
 
-        # Numbered list
+        # Numbered list — collect all consecutive items and apply fresh numbering
         num_match = re.match(r"^(\d+)\.\s+(.+)", stripped)
         if num_match:
-            text = num_match.group(2)
-            p = doc.add_paragraph(style="List Number")
-            p.paragraph_format.first_line_indent = Cm(0)
-            _clear_and_add_rich(p, text)
-            i += 1
+            num_id = _create_fresh_numbered_list(doc)
+            while i < len(lines):
+                s = lines[i].strip()
+                nm = re.match(r"^(\d+)\.\s+(.+)", s)
+                if not nm:
+                    break
+                text = nm.group(2)
+                p = doc.add_paragraph()
+                p.paragraph_format.first_line_indent = Cm(0)
+                p.paragraph_format.left_indent = Cm(1.27)
+                p.paragraph_format.space_before = Pt(1)
+                p.paragraph_format.space_after = Pt(1)
+                _apply_numbered_list_to_para(p, num_id)
+                _clear_and_add_rich(p, text)
+                i += 1
             continue
 
         # Table
@@ -754,27 +858,27 @@ def _add_code_block(doc, code_text, language=""):
     shd = OxmlElement("w:shd")
     shd.set(qn("w:val"), "clear")
     shd.set(qn("w:color"), "auto")
-    shd.set(qn("w:fill"), "F5F5F5")
+    shd.set(qn("w:fill"), "F0F0F0")
     tcPr.append(shd)
 
     # Cell padding (top, bottom, left, right)
     mar = OxmlElement("w:tcMar")
-    for side, val in (("top", "80"), ("bottom", "80"),
-                      ("start", "140"), ("end", "140")):
+    for side, val in (("top", "100"), ("bottom", "100"),
+                      ("start", "180"), ("end", "180")):
         el = OxmlElement("w:{0}".format(side))
         el.set(qn("w:w"), val)
         el.set(qn("w:type"), "dxa")
         mar.append(el)
     tcPr.append(mar)
 
-    # Cell borders — thin gray
+    # Cell borders — visible gray
     tcBorders = OxmlElement("w:tcBorders")
     for side in ("top", "bottom", "start", "end"):
         b = OxmlElement("w:{0}".format(side))
         b.set(qn("w:val"), "single")
-        b.set(qn("w:sz"), "4")
+        b.set(qn("w:sz"), "6")
         b.set(qn("w:space"), "0")
-        b.set(qn("w:color"), "CCCCCC")
+        b.set(qn("w:color"), "B0B0B0")
         tcBorders.append(b)
     tcPr.append(tcBorders)
 
@@ -790,7 +894,7 @@ def _add_code_block(doc, code_text, language=""):
     for idx, code_line in enumerate(code_lines):
         run = para.add_run(code_line)
         run.font.name = "Consolas"
-        run.font.size = Pt(7.5)
+        run.font.size = Pt(8.5)
         run.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
         if idx < len(code_lines) - 1:
             run.add_break()
