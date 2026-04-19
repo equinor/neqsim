@@ -44,8 +44,8 @@
 				"chat.agent.maxRequests": 2500,
 				// Terminal
 				"terminal.integrated.defaultProfile.linux": "bash",
-				// Python / Jupyter
-				"python.defaultInterpreterPath": "/usr/local/python/current/bin/python3",
+				// Python / Jupyter — use PATH-resolved name so it works regardless of install location
+				"python.defaultInterpreterPath": "python3",
 				"jupyter.notebookFileRoot": "${workspaceFolder}"
 			},
 			"extensions": [
