@@ -9,7 +9,7 @@ Usage:
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
     neqsim new-skill NAME    Scaffold a new AI skill
-    neqsim install-skill CMD Manage community skills (list/search/install/remove)
+    neqsim skill CMD         Manage skills (list/search/install/remove/private-init)
 
 Run `neqsim <command> --help` for per-command options.
 """
@@ -46,9 +46,13 @@ COMMANDS = {
         "module": "new_skill",
         "desc": "Scaffold a new AI skill",
     },
+    "skill": {
+        "module": "install_skill",
+        "desc": "Manage skills (list/search/install/remove/private-init)",
+    },
     "install-skill": {
         "module": "install_skill",
-        "desc": "Manage community skills (list/search/install/remove)",
+        "desc": "(alias for 'skill') Manage skills",
     },
 }
 

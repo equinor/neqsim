@@ -14,7 +14,7 @@ The fastest way to solve an engineering task is the `@solve.task` Copilot agent:
 
 It creates a `task_solve/` folder, researches the topic, builds a simulation,
 validates results, and generates a Word report — all in one session. The script
-alternative is `python devtools/new_task.py "your task"`. See
+alternative is `neqsim new-task "your task"`. See
 `docs/tutorials/solve-engineering-task.md` for a hands-on tutorial or
 `docs/development/TASK_SOLVING_GUIDE.md` for the full reference.
 
@@ -91,8 +91,9 @@ src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
 .github/agents/          19 Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
-.github/skills/          19 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
-devtools/                neqsim_dev_setup.py for Jupyter development
+.github/skills/          28 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
+community-skills.yaml    Community skill catalog — external skills installable via `neqsim skill install`
+devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task/skill tools, UniSim reader
 ```
 
 ## Build & Test (30 seconds)

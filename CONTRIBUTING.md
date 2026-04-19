@@ -16,6 +16,9 @@ neqsim onboard --check     # non-interactive diagnostic
 neqsim doctor              # detailed environment health check
 ```
 
+> **`neqsim` not found?** Your Python Scripts directory may not be on PATH.
+> See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found) for fix instructions.
+
 See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. community contributions.
 
 ## Pull Request Process
@@ -61,11 +64,12 @@ to contribute — domain experts can submit:
 
 ```bash
 neqsim new-skill "skill-name"                          # scaffold a core skill
-neqsim install-skill publish user/neqsim-my-skill      # publish a community skill
+neqsim skill publish user/neqsim-my-skill              # publish a community skill
 ```
 
-See [.github/skills/README.md](.github/skills/README.md) for the full skill contribution guide
-and [community-skills.yaml](community-skills.yaml) for the community catalog.
+See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough
+(core, community, and private skills), [.github/skills/README.md](.github/skills/README.md)
+for the quick contribution guide, and [community-skills.yaml](community-skills.yaml) for the community catalog.
 
 ## Style guideline
 

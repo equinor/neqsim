@@ -584,7 +584,7 @@ See `AGENTS.md` "Jupyter Notebook Creation Guidelines" section for common class 
 > Past solved tasks are indexed in `docs/development/TASK_LOG.md` — search before starting from scratch.
 
 **Key rules (always apply):**
-1. **Create task folder FIRST:** `python devtools/new_task.py "title" --type X --author "Name"`
+1. **Create task folder FIRST:** `neqsim new-task "title" --type X --author "Name"`
 2. **All output goes to** `task_solve/YYYY-MM-DD_slug/` — never to `examples/`, `docs/`, or workspace root
 3. **All downloaded documents** go inside the task folder at `step1_scope_and_research/references/`
 4. Follow the 3-step workflow: **Scope & Research** → **Analysis & Evaluation** → **Report**

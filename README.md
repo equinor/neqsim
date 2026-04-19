@@ -455,6 +455,10 @@ pip install -e devtools/    # one-time: registers the `neqsim` command
 neqsim onboard             # interactive setup (Java, Maven, build, Python, agents)
 ```
 
+> **Tip:** Using a virtual environment (`python -m venv .venv` then activate it) avoids
+> PATH issues on all platforms. See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found)
+> if `neqsim` is not found, or use `python -m neqsim_cli` as a fallback.
+
 Or skip local setup entirely: **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=equinor/neqsim)** — everything pre-installed in the browser.
 
 Then explore and contribute:
@@ -488,12 +492,14 @@ neqsim doctor              # quick diagnostic if something isn't working
 Browse and install community-contributed skills — or publish your own:
 
 ```bash
-neqsim install-skill list                    # browse the catalog
-neqsim install-skill install <name>          # install a skill
-neqsim install-skill publish user/repo-name  # publish yours (creates a draft PR)
+neqsim skill list                    # browse the catalog
+neqsim skill install <name>          # install a skill
+neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
 
-See [community-skills.yaml](community-skills.yaml) for the full catalog and [.github/skills/README.md](.github/skills/README.md) for the skill contribution guide.
+See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
+[community-skills.yaml](community-skills.yaml) for the catalog, and
+[.github/skills/README.md](.github/skills/README.md) for the quick contribution guide.
 
 All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 

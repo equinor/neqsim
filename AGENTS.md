@@ -51,7 +51,7 @@ self-contained and portable.
 
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
-   python devtools/new_task.py "your task title" --type B --author "Name"
+   neqsim new-task "your task title" --type B --author "Name"
    ```
    Types: A=Property, B=Process, C=PVT, D=Standards, E=Feature, F=Design, G=Workflow
 

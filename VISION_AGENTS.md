@@ -46,7 +46,7 @@ invocation — keep them lean.
 - Is used by multiple agents
 - Requires testing against NeqSim's actual API (not just general knowledge)
 
-**Keep as community skill** (future registry / user workspace) when the skill:
+**Keep as community skill** (`community-skills.yaml` / user's own repo) when the skill:
 
 - Covers a narrow workflow (e.g., "my company's TEG sizing procedure")
 - Is specific to one user's environment (plant historian tags, company standards)
@@ -86,7 +86,7 @@ invocation — keep them lean.
 
 ### For skills
 
-1. Use `python devtools/new_skill.py "name"` to scaffold
+1. Use `neqsim new-skill "name"` to scaffold
 2. Fill in all sections — especially code patterns and common mistakes
 3. Test every code pattern against NeqSim's actual API
 4. Register in `.github/copilot-instructions.md` and `.github/skills/README.md`
@@ -123,11 +123,11 @@ Currently all skills live in `.github/skills/`. The long-term plan:
    skills hosted in external repos — machine-readable, searchable
 3. **Phase 3 (done)**: CLI tool to install community skills to user workspace:
    ```bash
-   python devtools/install_skill.py list              # browse catalog
-   python devtools/install_skill.py search "topic"    # search by keyword
-   python devtools/install_skill.py install <name>    # download to ~/.neqsim/skills/
-   python devtools/install_skill.py installed          # show installed
-   python devtools/install_skill.py remove <name>     # uninstall
+   neqsim skill list              # browse catalog
+   neqsim skill search "topic"    # search by keyword
+   neqsim skill install <name>    # download to ~/.neqsim/skills/
+   neqsim skill installed          # show installed
+   neqsim skill remove <name>     # uninstall
    ```
 4. **Phase 4 (future)**: Web UI / GitHub Action to auto-test community skills
    against NeqSim's API before publishing to the catalog

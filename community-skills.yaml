@@ -1,7 +1,7 @@
 # NeqSim Community Skill Catalog
 #
 # Machine-readable listing of community-contributed skills hosted outside
-# the core repo. Install with: python devtools/install_skill.py install <name>
+# the core repo. Install with: neqsim skill install <name>
 #
 # To add your skill: submit a PR adding an entry to this file.
 # See VISION_AGENTS.md for core vs. community guidelines.

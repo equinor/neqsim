@@ -6,9 +6,9 @@ the project, installs the Python package, verifies the agent system, and
 runs a quick simulation to confirm everything works.
 
 Usage:
-    python devtools/onboard.py           # interactive walkthrough
-    python devtools/onboard.py --check   # just check, don't fix anything
-    python devtools/onboard.py --skip-build  # skip Maven build (if already built)
+    neqsim onboard           # interactive walkthrough
+    neqsim onboard --check   # just check, don't fix anything
+    neqsim onboard --skip-build  # skip Maven build (if already built)
 
 Inspired by OpenClaw's `openclaw onboard` pattern.
 """
@@ -420,15 +420,15 @@ def step_done(results):
     if passed == total:
         print("  Your environment is ready! Here's what to try next:")
         print()
-        print("  1. Run the doctor:     python devtools/neqsim_doctor.py")
-        print("  2. Create a task:      python devtools/new_task.py \"My task\"")
-        print("  3. Create a skill:     python devtools/new_skill.py \"my-topic\"")
+        print("  1. Run the doctor:     neqsim doctor")
+        print("  2. Create a task:      neqsim new-task \"My task\"")
+        print("  3. Create a skill:     neqsim new-skill \"my-topic\"")
         print("  4. Use an agent:       @solve.task JT cooling for rich gas")
         print("  5. Read the docs:      AGENTS.md, CONTEXT.md, CONTRIBUTING.md")
     else:
         print("  Some steps had issues — see the [!!] items above.")
         print("  Fix them and run this wizard again, or use:")
-        print("    python devtools/neqsim_doctor.py")
+        print("    neqsim doctor")
         print("  for a detailed diagnostic.")
 
     print()
@@ -446,9 +446,9 @@ def main():
 
     if "--help" in args or "-h" in args:
         print("Usage:")
-        print("  python devtools/onboard.py            # interactive walkthrough")
-        print("  python devtools/onboard.py --check    # just check, don't fix")
-        print("  python devtools/onboard.py --skip-build  # skip Maven build")
+        print("  neqsim onboard            # interactive walkthrough")
+        print("  neqsim onboard --check    # just check, don't fix")
+        print("  neqsim onboard --skip-build  # skip Maven build")
         sys.exit(0)
 
     results = []
