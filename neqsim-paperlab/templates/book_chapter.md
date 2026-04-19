@@ -3,6 +3,9 @@
 <!-- Chapter metadata -->
 <!-- Notebooks: -->
 <!-- Estimated pages: 20-30 -->
+<!-- UNIT CONVENTION: SI units throughout. Temperature in K (°C for practical discussion),
+     pressure in Pa/kPa/MPa (bar acceptable), density in kg/m³, energy in J/kJ.
+     See PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)". -->
 
 ## Learning Objectives
 

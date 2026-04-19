@@ -7,7 +7,7 @@ retrieval system, or transmitted, in any form or by any means, electronic,
 mechanical, photocopying, recording, or otherwise, without the prior permission
 of the publisher.
 
-Published by Springer Nature Switzerland AG
+Published by Equinor ASA and the Norwegian University of Science and Technology (NTNU)
 
 ISBN 000-0-000-00000-0 (Hardcover)
 ISBN 000-0-000-00000-0 (eBook)
@@ -21,9 +21,7 @@ The software examples in this book use NeqSim, an open-source thermodynamic and
 process simulation library available at https://github.com/equinor/neqsim under
 the Apache 2.0 license.
 
-ISBN:
-
-Published by Springer
+Published by Equinor ASA and NTNU
 
 
 

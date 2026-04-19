@@ -177,6 +177,8 @@ Design validation against analytical solutions or published design examples.
 - DO keep the study focused — one clear contribution, not five half-baked ones
 - DO identify risks and fallback plans
 - DO include a cross-validation axis in every plan
+- DO use SI units in all plan specifications (K for temperature, Pa/kPa for pressure,
+  kg/m³ for density, etc.) — see PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)"
 
 ## Output Location
 

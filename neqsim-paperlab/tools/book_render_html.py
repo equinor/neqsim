@@ -226,8 +226,8 @@ main ul, main ol {{
   background: linear-gradient(90deg, #0d3b66, #1a5276, #2980b9, #1a5276, #0d3b66);
 }}
 .title-page .tp-decoration {{
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
   margin: 0 auto 2rem;
   position: relative;
 }}
@@ -382,7 +382,7 @@ section.part-header h1::after {{
   nav.sidebar {{ display: none; }}
   main {{ padding: 1rem; }}
   .title-page .tp-title {{ font-size: 1.6rem; }}
-  .title-page .tp-decoration {{ width: 80px; height: 80px; }}
+  .title-page .tp-decoration {{ width: 100px; height: 100px; }}
 }}
 
 @media print {{
@@ -409,7 +409,8 @@ def _esc(text):
 # Professional frontmatter page generators
 # ---------------------------------------------------------------------------
 
-_BOOK_ICON_SVG = (
+# Default emblem: generic network diagram (used when cover.emblem != "molecular")
+_BOOK_ICON_SVG_NETWORK = (
     '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
     '<defs>'
     '<linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">'
@@ -421,44 +422,137 @@ _BOOK_ICON_SVG = (
     '<stop offset="100%" style="stop-color:#0d3b66;stop-opacity:0.3"/>'
     '</linearGradient>'
     '</defs>'
-    # Outer ring
     '<circle cx="60" cy="60" r="56" fill="none" stroke="url(#g1)" stroke-width="3"/>'
-    # Inner dashed ring
     '<circle cx="60" cy="60" r="48" fill="none" stroke="#1a5276" stroke-width="0.8" '
     'stroke-dasharray="3,3" opacity="0.3"/>'
-    # Subtle background fill
     '<circle cx="60" cy="60" r="47" fill="url(#g2)"/>'
-    # Network connections (behind nodes)
     '<line x1="60" y1="30" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/>'
     '<line x1="34" y1="75" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/>'
     '<line x1="86" y1="75" x2="60" y2="60" stroke="#1a5276" stroke-width="2.2"/>'
     '<line x1="60" y1="30" x2="34" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/>'
     '<line x1="60" y1="30" x2="86" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/>'
     '<line x1="34" y1="75" x2="86" y2="75" stroke="#0d3b66" stroke-width="1.2" opacity="0.35"/>'
-    # Outer orbit dots
     '<circle cx="60" cy="18" r="2" fill="#2980b9" opacity="0.5"/>'
     '<circle cx="24" cy="80" r="2" fill="#2980b9" opacity="0.5"/>'
     '<circle cx="96" cy="80" r="2" fill="#2980b9" opacity="0.5"/>'
     '<circle cx="95" cy="38" r="2" fill="#0d3b66" opacity="0.4"/>'
     '<circle cx="25" cy="38" r="2" fill="#0d3b66" opacity="0.4"/>'
-    # Central node (AI core)
     '<circle cx="60" cy="60" r="10" fill="#1a5276"/>'
     '<circle cx="60" cy="60" r="6" fill="#fff" opacity="0.15"/>'
-    # Primary nodes
     '<circle cx="60" cy="30" r="7" fill="#0d3b66"/>'
     '<circle cx="34" cy="75" r="7" fill="#2980b9"/>'
     '<circle cx="86" cy="75" r="7" fill="#2980b9"/>'
-    # Node highlights
     '<circle cx="58" cy="28" r="2" fill="#fff" opacity="0.25"/>'
     '<circle cx="32" cy="73" r="2" fill="#fff" opacity="0.25"/>'
     '<circle cx="84" cy="73" r="2" fill="#fff" opacity="0.25"/>'
-    # Interstitial satellite dots
     '<circle cx="47" cy="45" r="3" fill="#2980b9" opacity="0.55"/>'
     '<circle cx="73" cy="45" r="3" fill="#2980b9" opacity="0.55"/>'
     '<circle cx="47" cy="68" r="3" fill="#0d3b66" opacity="0.55"/>'
     '<circle cx="73" cy="68" r="3" fill="#0d3b66" opacity="0.55"/>'
     '</svg>'
 )
+
+# CPA molecular association emblem: molecules with association sites
+# connected by dashed hydrogen-bond lines, within a subtle outer ring
+_BOOK_ICON_SVG_MOLECULAR = (
+    '<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">'
+    '<defs>'
+    '<linearGradient id="mg1" x1="0%" y1="0%" x2="100%" y2="100%">'
+    '<stop offset="0%" style="stop-color:#0d3b66;stop-opacity:1"/>'
+    '<stop offset="100%" style="stop-color:#2980b9;stop-opacity:1"/>'
+    '</linearGradient>'
+    '<linearGradient id="mg2" x1="0%" y1="100%" x2="100%" y2="0%">'
+    '<stop offset="0%" style="stop-color:#2980b9;stop-opacity:0.08"/>'
+    '<stop offset="100%" style="stop-color:#0d3b66;stop-opacity:0.08"/>'
+    '</linearGradient>'
+    '</defs>'
+    # Outer ring — EoS framework
+    '<circle cx="80" cy="80" r="75" fill="none" stroke="url(#mg1)" stroke-width="2.5"/>'
+    '<circle cx="80" cy="80" r="70" fill="none" stroke="#1a5276" stroke-width="0.6" '
+    'stroke-dasharray="2,4" opacity="0.25"/>'
+    '<circle cx="80" cy="80" r="69" fill="url(#mg2)"/>'
+    # ── Hydrogen bonds (dashed, behind molecules) ──
+    # A(donor) → C(acceptor): red-tinted dashed line
+    '<line x1="93" y1="38" x2="113" y2="92" stroke="#c0392b" stroke-width="1.8" '
+    'stroke-dasharray="5,3" opacity="0.55"/>'
+    # A(acceptor) → B(donor): blue-tinted dashed line
+    '<line x1="67" y1="38" x2="47" y2="92" stroke="#2980b9" stroke-width="1.8" '
+    'stroke-dasharray="5,3" opacity="0.55"/>'
+    # B → D: weak dotted interaction
+    '<line x1="52" y1="95" x2="70" y2="80" stroke="#7f8c8d" stroke-width="1" '
+    'stroke-dasharray="2,3" opacity="0.4"/>'
+    # C → D: weak dotted interaction
+    '<line x1="108" y1="95" x2="90" y2="80" stroke="#7f8c8d" stroke-width="1" '
+    'stroke-dasharray="2,3" opacity="0.4"/>'
+    # B → C: weak inter-molecular
+    '<line x1="55" y1="104" x2="105" y2="104" stroke="#1a5276" stroke-width="0.8" '
+    'stroke-dasharray="3,4" opacity="0.25"/>'
+    # ── Molecule A: Water (top center) ──
+    '<circle cx="80" cy="30" r="16" fill="#e8f0f8" stroke="#0d3b66" stroke-width="2.2"/>'
+    # Donor site (bottom-left of A)
+    '<circle cx="67" cy="40" r="4.5" fill="#c0392b"/>'
+    # Acceptor site (bottom-right of A)
+    '<circle cx="93" cy="40" r="4.5" fill="#2980b9"/>'
+    # Label
+    '<text x="80" y="30" text-anchor="middle" dominant-baseline="central" '
+    'font-family="serif" font-size="8" font-weight="bold" fill="#0d3b66">'
+    'H&#x2082;O</text>'
+    # ── Molecule B: MEG (bottom-left) ──
+    '<circle cx="44" cy="100" r="16" fill="#eaf0f5" stroke="#1a5276" stroke-width="2.2"/>'
+    # Donor site (upper-right of B)
+    '<circle cx="56" cy="90" r="4.5" fill="#c0392b"/>'
+    # Acceptor site (bottom of B)
+    '<circle cx="44" cy="117" r="4.5" fill="#2980b9"/>'
+    # Label
+    '<text x="44" y="101" text-anchor="middle" dominant-baseline="central" '
+    'font-family="serif" font-size="7" font-weight="bold" fill="#1a5276">'
+    'MEG</text>'
+    # ── Molecule C: Methanol (bottom-right) ──
+    '<circle cx="116" cy="100" r="16" fill="#e8f2fa" stroke="#2980b9" stroke-width="2.2"/>'
+    # Acceptor site (upper-left of C)
+    '<circle cx="104" cy="90" r="4.5" fill="#2980b9"/>'
+    # Donor site (bottom of C)
+    '<circle cx="116" cy="117" r="4.5" fill="#c0392b"/>'
+    # Label
+    '<text x="116" y="101" text-anchor="middle" dominant-baseline="central" '
+    'font-family="serif" font-size="6.5" font-weight="bold" fill="#2980b9">'
+    'MeOH</text>'
+    # ── Molecule D: Methane (center, non-associating) ──
+    '<circle cx="80" cy="78" r="12" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="1.5"/>'
+    '<text x="80" y="78" text-anchor="middle" dominant-baseline="central" '
+    'font-family="serif" font-size="6.5" font-weight="bold" fill="#7f8c8d">'
+    'CH&#x2084;</text>'
+    # ── Small satellite molecules (non-associating) ──
+    '<circle cx="30" cy="55" r="7" fill="#dfe6e9" stroke="#95a5a6" stroke-width="1"/>'
+    '<text x="30" y="56" text-anchor="middle" dominant-baseline="central" '
+    'font-family="serif" font-size="4.5" fill="#95a5a6">C&#x2082;</text>'
+    '<circle cx="130" cy="55" r="7" fill="#dfe6e9" stroke="#95a5a6" stroke-width="1"/>'
+    '<text x="130" y="56" text-anchor="middle" dominant-baseline="central" '
+    'font-family="serif" font-size="4.5" fill="#95a5a6">C&#x2083;</text>'
+    # ── Legend: tiny association site key ──
+    '<circle cx="27" cy="145" r="3" fill="#c0392b"/>'
+    '<text x="33" y="146" font-family="sans-serif" font-size="5" fill="#555">'
+    'donor</text>'
+    '<circle cx="55" cy="145" r="3" fill="#2980b9"/>'
+    '<text x="61" y="146" font-family="sans-serif" font-size="5" fill="#555">'
+    'acceptor</text>'
+    '<line x1="82" y1="145" x2="96" y2="145" stroke="#c0392b" stroke-width="1.5" '
+    'stroke-dasharray="4,2" opacity="0.6"/>'
+    '<text x="99" y="146" font-family="sans-serif" font-size="5" fill="#555">'
+    'H-bond</text>'
+    '</svg>'
+)
+
+_BOOK_ICON_SVG = _BOOK_ICON_SVG_NETWORK  # default for backwards compatibility
+
+
+def _get_book_icon_svg(cfg):
+    """Return the appropriate SVG emblem based on book config."""
+    cover = cfg.get("cover", {})
+    emblem = cover.get("emblem", "network") if isinstance(cover, dict) else "network"
+    if emblem == "molecular":
+        return _BOOK_ICON_SVG_MOLECULAR
+    return _BOOK_ICON_SVG_NETWORK
 
 
 def _generate_title_page(cfg):
@@ -470,8 +564,10 @@ def _generate_title_page(cfg):
     year = cfg.get("year", "")
     publisher = cfg.get("publisher", "")
 
+    icon_svg = _get_book_icon_svg(cfg)
+
     parts = ['<section id="title_page" class="title-page">']
-    parts.append(f'<div class="tp-decoration">{_BOOK_ICON_SVG}</div>')
+    parts.append(f'<div class="tp-decoration">{icon_svg}</div>')
     parts.append(f'<div class="tp-title">{_esc(title)}</div>')
     if subtitle:
         parts.append(f'<div class="tp-subtitle">{_esc(subtitle)}</div>')

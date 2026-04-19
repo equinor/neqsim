@@ -97,6 +97,16 @@ The Methods section MUST describe enough detail to reproduce:
 - Hardware specification for timing results
 - Test case generation method (with random seed if applicable)
 
+### Rule 5: SI Units (MANDATORY)
+
+All physical quantities MUST use SI units as defined in PAPER_WRITING_GUIDELINES.md:
+- Equations: SI base or coherent derived units (K, Pa, J, kg, m, mol)
+- Tables: Column headers with SI units — e.g., `T (K)`, `P (kPa)`, `ρ (kg/m³)`
+- Figures: Axis labels with SI units — e.g., `Temperature (K)`, `Pressure (MPa)`
+- Text: Report SI first; field-specific alternatives in parentheses only if needed
+- Temperature in K for equations and thermodynamics; °C acceptable for practical discussion
+- NEVER use °F, psi, BTU, lb, ft, or other imperial units as primary units
+
 ## Figures-First Writing Strategy
 
 From the TPflash paper experience: **design your figures first, then write

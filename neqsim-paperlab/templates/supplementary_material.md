@@ -76,7 +76,7 @@ JVM flags (if any).
 TODO: Include complete results not shown in the main paper.
 For data papers, this is where the full property dataset goes.
 
-| Case ID | $T$ (K) | $P$ (bar) | Result | Deviation (%) |
+| Case ID | $T$ (K) | $P$ (kPa) | Result | Deviation (%) |
 |:---|---:|---:|---:|---:|
 | 1 | | | | |
 | 2 | | | | |
@@ -84,7 +84,7 @@ For data papers, this is where the full property dataset goes.
 
 ### Table S2. Pure-component parameters
 
-| Component | $T_c$ (K) | $P_c$ (bar) | $\omega$ | Source |
+| Component | $T_c$ (K) | $P_c$ (kPa) | $\omega$ | Source |
 |:---|---:|---:|---:|:---|
 | | | | | |
 

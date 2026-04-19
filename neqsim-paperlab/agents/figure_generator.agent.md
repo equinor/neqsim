@@ -62,6 +62,9 @@ Before generating any figure, read these skills:
 - **Both PNG + PDF**: `save_fig(fig, "fig01.png", formats=["pdf"])`
 - **No alpha channel** in final PNG (some journals reject RGBA)
 - **Short labels** in diagrams — long descriptions go in caption
+- **SI units on all axes** — use K, Pa (kPa, MPa), kg/m³, J/mol, etc.
+  See PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)" for the full table.
+  NEVER use °F, psi, BTU, lb, ft, or other imperial units on figure axes
 
 ## Conceptual Diagram Rules
 

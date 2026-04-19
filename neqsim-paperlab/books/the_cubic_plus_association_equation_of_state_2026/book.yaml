@@ -10,6 +10,9 @@ publisher: "Equinor ASA and NTNU"
 language: "en"
 isbn: ""
 
+cover:
+  emblem: "molecular"  # "molecular" = CPA association diagram, "network" = generic nodes
+
 settings:
   page_size: "b5"
   font_size: 10

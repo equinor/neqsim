@@ -2,6 +2,9 @@
 
 # {{TITLE}}
 
+<!-- UNIT CONVENTION: SI units throughout. Temperature in K, pressure in Pa/kPa/MPa,
+     density in kg/m³, energy in J/kJ. See PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)". -->
+
 **Author1**, SPE, Affiliation1; **Author2**, SPE, Affiliation2
 
 Copyright 20XX, Society of Petroleum Engineers

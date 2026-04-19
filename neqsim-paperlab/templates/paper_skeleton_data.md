@@ -4,6 +4,8 @@
 <!-- Paper Type: Data / Property Correlation Paper -->
 <!-- Generated: {{DATE}} -->
 <!-- Status: DRAFT -->
+<!-- UNIT CONVENTION: SI units throughout. Temperature in K, pressure in Pa/kPa/MPa,
+     density in kg/m³, energy in J/kJ. See PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)". -->
 
 ## Highlights
 

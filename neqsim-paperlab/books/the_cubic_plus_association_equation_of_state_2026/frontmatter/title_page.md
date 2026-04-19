@@ -2,6 +2,18 @@
 
 ## From Fundamentals to Industrial Applications
 
+<!-- This file is human-readable documentation only.
+     The title page is generated programmatically from book.yaml
+     by the PDF (Typst), HTML, and Word renderers.
+     The CPA molecular association emblem is controlled by
+     cover.emblem: "molecular" in book.yaml. -->
+
+---
+
+*[CPA Molecular Association Emblem]*
+*Molecules (H₂O, MEG, MeOH, CH₄) with association sites*
+*connected by dashed hydrogen-bond lines*
+
 ---
 
 **Even Solbraa**
@@ -10,8 +22,8 @@ Equinor ASA / NeqSim Project
 
 ---
 
-*1st Edition*
+*A Molecular Thermodynamics Treatise*
 
-*2026*
+*1st Edition  ·  2026*
 
-Springer
+EQUINOR ASA AND NTNU

@@ -108,6 +108,135 @@ def build_book_typst_preamble(cfg, profile=None):
     isbn = cfg.get("isbn", "")
     isbn_typst = "\n\n  ISBN {}\n".format(isbn) if isbn else ""
 
+    # Select emblem style based on cover config
+    cover = cfg.get("cover", {})
+    emblem_style = cover.get("emblem", "network") if isinstance(cover, dict) else "network"
+
+    if emblem_style == "molecular":
+        emblem_typst = r'''  // Decorative emblem — CPA molecular association diagram
+  // Molecules with association sites connected by dashed hydrogen-bond lines.
+  #align(center)[
+    #box(width: 4.6cm, height: 4.6cm)[
+      // Outer ring — equation of state framework
+      #place(center + horizon)[
+        #circle(radius: 2.2cm, fill: none, stroke: 1.8pt + rgb("#0d3b66"))
+      ]
+      #place(center + horizon)[
+        #circle(radius: 2.0cm, fill: none, stroke: 0.5pt + rgb("#1a5276").lighten(50%))
+      ]
+
+      // ── Molecule A (top-center, water-like) ──
+      #place(center + top, dx: 0cm, dy: 0.55cm)[
+        #circle(radius: 0.36cm, fill: rgb("#0d3b66").lighten(85%), stroke: 1.6pt + rgb("#0d3b66"))
+      ]
+      // Donor site (top-left of molecule A)
+      #place(center + top, dx: -0.28cm, dy: 0.32cm)[
+        #circle(radius: 0.1cm, fill: rgb("#c0392b"))
+      ]
+      // Acceptor site (top-right of molecule A)
+      #place(center + top, dx: 0.28cm, dy: 0.32cm)[
+        #circle(radius: 0.1cm, fill: rgb("#2980b9"))
+      ]
+
+      // ── Molecule B (bottom-left, glycol-like) ──
+      #place(left + bottom, dx: 0.55cm, dy: -0.85cm)[
+        #circle(radius: 0.36cm, fill: rgb("#1a5276").lighten(85%), stroke: 1.6pt + rgb("#1a5276"))
+      ]
+      // Donor site (upper-right of molecule B)
+      #place(left + bottom, dx: 0.86cm, dy: -1.12cm)[
+        #circle(radius: 0.1cm, fill: rgb("#c0392b"))
+      ]
+      // Acceptor site (lower of molecule B)
+      #place(left + bottom, dx: 0.55cm, dy: -0.58cm)[
+        #circle(radius: 0.1cm, fill: rgb("#2980b9"))
+      ]
+
+      // ── Molecule C (bottom-right, methanol-like) ──
+      #place(right + bottom, dx: -0.55cm, dy: -0.85cm)[
+        #circle(radius: 0.36cm, fill: rgb("#2980b9").lighten(85%), stroke: 1.6pt + rgb("#2980b9"))
+      ]
+      // Acceptor site (upper-left of molecule C)
+      #place(right + bottom, dx: -0.86cm, dy: -1.12cm)[
+        #circle(radius: 0.1cm, fill: rgb("#2980b9"))
+      ]
+      // Donor site (lower of molecule C)
+      #place(right + bottom, dx: -0.55cm, dy: -0.58cm)[
+        #circle(radius: 0.1cm, fill: rgb("#c0392b"))
+      ]
+
+      // ── Molecule D (center, hydrocarbon — no association sites) ──
+      #place(center + horizon, dy: 0.2cm)[
+        #circle(radius: 0.28cm, fill: rgb("#7f8c8d").lighten(70%), stroke: 1.2pt + rgb("#7f8c8d"))
+      ]
+
+      // ── Small satellite molecules (non-associating species) ──
+      #place(left + horizon, dx: 0.38cm, dy: -0.25cm)[
+        #circle(radius: 0.15cm, fill: rgb("#bdc3c7"), stroke: 0.8pt + rgb("#95a5a6"))
+      ]
+      #place(right + horizon, dx: -0.38cm, dy: -0.25cm)[
+        #circle(radius: 0.15cm, fill: rgb("#bdc3c7"), stroke: 0.8pt + rgb("#95a5a6"))
+      ]
+
+      // ── Hydrogen bonds (dashed lines between association sites) ──
+      // A donor → C acceptor
+      #place(center + top, dy: 0.9cm)[
+        #line(start: (0.28cm, 0cm), end: (1.05cm, 1.65cm),
+              stroke: (paint: rgb("#c0392b").lighten(20%), thickness: 1.2pt, dash: "dashed"))
+      ]
+      // A acceptor → B donor
+      #place(center + top, dy: 0.9cm)[
+        #line(start: (-0.28cm, 0cm), end: (-1.05cm, 1.65cm),
+              stroke: (paint: rgb("#2980b9").lighten(20%), thickness: 1.2pt, dash: "dashed"))
+      ]
+      // B donor → D (weak interaction)
+      #place(center + horizon, dy: 0.1cm)[
+        #line(start: (-0.7cm, 0.55cm), end: (-0.3cm, 0.2cm),
+              stroke: (paint: rgb("#7f8c8d").lighten(30%), thickness: 0.8pt, dash: "dotted"))
+      ]
+      // C acceptor → D (weak interaction)
+      #place(center + horizon, dy: 0.1cm)[
+        #line(start: (0.7cm, 0.55cm), end: (0.3cm, 0.2cm),
+              stroke: (paint: rgb("#7f8c8d").lighten(30%), thickness: 0.8pt, dash: "dotted"))
+      ]
+
+      // ── Labels (tiny, subtle) ──
+      #place(center + top, dx: 0cm, dy: 0.12cm)[
+        #text(size: 5pt, fill: rgb("#0d3b66").lighten(20%), weight: "bold")[H#sub[2]O]
+      ]
+      #place(left + bottom, dx: 0.32cm, dy: -0.42cm)[
+        #text(size: 5pt, fill: rgb("#1a5276").lighten(20%), weight: "bold")[MEG]
+      ]
+      #place(right + bottom, dx: -0.28cm, dy: -0.42cm)[
+        #text(size: 5pt, fill: rgb("#2980b9").lighten(20%), weight: "bold")[MeOH]
+      ]
+      #place(center + horizon, dy: 0.62cm)[
+        #text(size: 4.5pt, fill: rgb("#7f8c8d"), weight: "bold")[CH#sub[4]]
+      ]
+    ]
+  ]'''
+    else:
+        emblem_typst = r'''  // Decorative geometric emblem (network)
+  #align(center)[
+    #box(width: 2.8cm, height: 2.8cm)[
+      #circle(radius: 1.35cm, fill: none, stroke: 2pt + rgb("#0d3b66"))
+      #place(center + horizon)[
+        #circle(radius: 1.1cm, fill: none, stroke: 0.6pt + rgb("#1a5276").lighten(40%))
+      ]
+      #place(center + horizon)[
+        #circle(radius: 0.22cm, fill: rgb("#1a5276"))
+      ]
+      #place(center + top, dy: 0.4cm)[
+        #circle(radius: 0.16cm, fill: rgb("#0d3b66"))
+      ]
+      #place(left + bottom, dx: 0.45cm, dy: -0.5cm)[
+        #circle(radius: 0.16cm, fill: rgb("#2980b9"))
+      ]
+      #place(right + bottom, dx: -0.45cm, dy: -0.5cm)[
+        #circle(radius: 0.16cm, fill: rgb("#2980b9"))
+      ]
+    ]
+  ]'''
+
     return rf'''// Book styling — auto-generated by book_render_pdf.py
 #set document(
   title: "{title}",
@@ -194,31 +323,7 @@ def build_book_typst_preamble(cfg, profile=None):
 
   #v(0.8cm)
 
-  // Decorative geometric emblem (AI + physics network)
-  #align(center)[
-    #box(width: 2.8cm, height: 2.8cm)[
-      #circle(radius: 1.35cm, fill: none, stroke: 2pt + rgb("#0d3b66"))
-      #place(center + horizon)[
-        #circle(radius: 1.1cm, fill: none, stroke: 0.6pt + rgb("#1a5276").lighten(40%))
-      ]
-      // Central node
-      #place(center + horizon)[
-        #circle(radius: 0.22cm, fill: rgb("#1a5276"))
-      ]
-      // Top node
-      #place(center + top, dy: 0.4cm)[
-        #circle(radius: 0.16cm, fill: rgb("#0d3b66"))
-      ]
-      // Bottom-left node
-      #place(left + bottom, dx: 0.45cm, dy: -0.5cm)[
-        #circle(radius: 0.16cm, fill: rgb("#2980b9"))
-      ]
-      // Bottom-right node
-      #place(right + bottom, dx: -0.45cm, dy: -0.5cm)[
-        #circle(radius: 0.16cm, fill: rgb("#2980b9"))
-      ]
-    ]
-  ]
+{emblem_typst}
 
   #v(0.6cm)
 

@@ -206,6 +206,102 @@ should be able reproduce the work in any language or framework.
 
 ---
 
+## SI Units (MANDATORY)
+
+**All papers and books produced by PaperLab MUST use SI units as the default unit system.**
+This is a non-negotiable requirement for scientific rigor and international consistency.
+
+### Required SI Units
+
+| Quantity | SI Unit | Symbol | NEVER use |
+|----------|---------|--------|-----------|
+| Temperature | kelvin | K | °F, °R |
+| Pressure | pascal (or kPa, MPa) | Pa | psi, psia, psig, atm, mmHg, inHg |
+| Length | metre (or mm, cm, km) | m | ft, in, miles |
+| Mass | kilogram (or g, kg, tonne) | kg | lb, lbm, oz |
+| Volume | cubic metre (or L, mL) | m³ | gal, bbl, ft³ |
+| Flow rate (mass) | kg/s (or kg/h, t/h) | kg/s | lb/h, lb/min |
+| Flow rate (volume) | m³/s (or m³/h, L/min) | m³/s | gal/min, bbl/d (see exceptions) |
+| Energy | joule (or kJ, MJ) | J | BTU, cal, kcal |
+| Power | watt (or kW, MW) | W | hp, BTU/h |
+| Density | kg/m³ | kg/m³ | lb/ft³, g/cc |
+| Viscosity (dynamic) | Pa·s (or mPa·s) | Pa·s | cP, lb/(ft·s) |
+| Viscosity (kinematic) | m²/s (or mm²/s) | m²/s | cSt, ft²/s |
+| Thermal conductivity | W/(m·K) | W/(m·K) | BTU/(h·ft·°F) |
+| Heat capacity | J/(mol·K) or J/(kg·K) | J/(mol·K) | BTU/(lb·°F), cal/(g·°C) |
+| Molar mass | kg/mol (or g/mol) | kg/mol | lb/lbmol |
+| Surface tension | N/m (or mN/m) | N/m | dyn/cm |
+
+### Acceptable Derived and Practical Units
+
+These non-base-SI units are widely accepted in scientific literature and may be used:
+
+| Quantity | Acceptable unit | When to use |
+|----------|----------------|-------------|
+| Temperature | °C (Celsius) | When reporting practical operating conditions alongside K |
+| Pressure | bar, bara | Common in process engineering; 1 bar = 100 kPa exactly |
+| Volume | L (litre) | For liquid volumes in practical contexts |
+| Time | min, h, d, yr | For process timescales (not fundamental equations) |
+| Concentration | mol/L (M) | For solution chemistry |
+| Amount | kmol | For process-scale molar flows |
+| Energy | kWh | For electrical energy comparisons |
+
+### Rules for Unit Usage
+
+1. **Equations**: All equations MUST use SI base or coherent derived units.
+   Variables in equations represent SI quantities unless explicitly noted.
+
+2. **Tables**: Column headers MUST include SI units in parentheses.
+   Example: `T (K)`, `P (kPa)`, `ρ (kg/m³)`, `μ (mPa·s)`.
+
+3. **Figures**: Axis labels MUST include SI units in parentheses.
+   Example: `Temperature (K)`, `Pressure (MPa)`, `Density (kg/m³)`.
+
+4. **Dual units**: When field-specific context requires it (e.g., comparing
+   with industry data in imperial units), report SI first with the alternative
+   in parentheses: "The pipeline operates at 10 MPa (1450 psi)."
+
+5. **Temperature**: Use K (kelvin) in equations and thermodynamic calculations.
+   Use °C for practical operating conditions and discussions. NEVER use °F or °R.
+
+6. **Pressure**: Use Pa, kPa, or MPa. The unit "bar" is acceptable in tables
+   and figures for engineering context. NEVER use psi, atm, or mmHg as primary units.
+
+7. **Nomenclature sections**: Define all symbols with their SI units.
+
+8. **NeqSim code examples**: When showing NeqSim API calls in papers or books,
+   use SI-compatible units in the method parameters:
+   ```python
+   # GOOD: Temperature in K, pressure in bar (SI-compatible)
+   fluid = SystemSrkEos(298.15, 50.0)  # T in K, P in bar
+
+   # GOOD: Flow rate in SI
+   stream.setFlowRate(100.0, "kg/hr")
+   ```
+
+### Conversion Quick Reference
+
+| From | To SI | Factor |
+|------|-------|--------|
+| °F → K | K = (°F + 459.67) × 5/9 | |
+| psi → kPa | × 6.89476 | |
+| bar → kPa | × 100 | |
+| atm → kPa | × 101.325 | |
+| BTU → kJ | × 1.05506 | |
+| hp → kW | × 0.7457 | |
+| lb → kg | × 0.45359 | |
+| ft → m | × 0.3048 | |
+| bbl → m³ | × 0.158987 | |
+| cP → mPa·s | × 1 (numerically equal) | |
+
+### Oil & Gas Industry Exception
+
+In petroleum engineering contexts (reserve reports, production data), these
+industry-standard units may appear alongside SI when comparing with published
+field data: bbl/d, MMSCF/d, BOPD. **Always report the SI equivalent first.**
+
+---
+
 ## What Goes WHERE
 
 ### Main Body (Sections 1–6): Algorithm & Science ONLY
@@ -339,7 +435,7 @@ and during `paperflow.py format`. The checks use the target journal's profile
 - [ ] **No vertical rules**: Use three-line style (header rule, separator, bottom rule); no `||` double pipes
 - [ ] **Numbering**: Tables are numbered sequentially with no gaps
 - [ ] **In-text references**: Every table is referenced in manuscript text (`Table N`)
-- [ ] **Units in headers**: Physical quantities include units in column headers (e.g., `T (K)`, `P (bar)`)
+- [ ] **Units in headers**: Physical quantities include SI units in column headers (e.g., `T (K)`, `P (kPa)`, `ρ (kg/m³)`) — see "SI Units (MANDATORY)" section
 - [ ] **Significant figures**: Results should use appropriate significant figures (not excessive precision)
 
 ### Highlights Checklist (if required by journal)

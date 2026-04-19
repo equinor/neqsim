@@ -109,11 +109,28 @@ For each chapter you write:
    - Figure references: `![Caption](figures/name.png)`
    - Markdown tables with data
    - Code blocks with language specifiers
+   - **SI units throughout** — see "SI Units" rule below
 3. **Create companion notebooks** that generate figures
 4. **Verify equation syntax** — all LaTeX must be valid for:
    - `latex2mathml` (Word rendering)
    - KaTeX (HTML rendering)
    - Typst (PDF rendering)
+
+### 2.5. SI Units (MANDATORY)
+
+**All book content MUST use SI units as the default unit system.** This is
+non-negotiable. See PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)" for
+the full reference table.
+
+Key rules for books:
+- **Equations**: Use K, Pa, J, kg, m, mol — SI base or coherent derived units
+- **Tables**: Column headers with SI units — e.g., `T (K)`, `P (kPa)`, `ρ (kg/m³)`
+- **Figures**: Axis labels with SI units — e.g., `Temperature (K)`, `Pressure (MPa)`
+- **Code examples**: Use SI-compatible units in NeqSim API calls (K, bar, kg/s)
+- **Temperature**: K in equations; °C acceptable for practical discussion. NEVER °F
+- **Pressure**: Pa, kPa, or MPa. "bar" is acceptable. NEVER psi or atm as primary
+- **Nomenclature**: Define all symbols with their SI units in the nomenclature section
+- **Dual units**: If field data uses non-SI, report SI first with alternative in parentheses
 
 ### 3. Create Computational Notebooks
 
@@ -227,10 +244,10 @@ Present results with figures from the chapter notebooks:
 
 Table of computed results:
 
-| T (K) | P (bar) | x_water | y_water |
+| T (K) | P (kPa) | x_water | y_water |
 |-------|---------|---------|---------|
-| 298.15 | 50.0 | 0.9998 | 0.0012 |
-| 323.15 | 50.0 | 0.9997 | 0.0018 |
+| 298.15 | 5000 | 0.9998 | 0.0012 |
+| 323.15 | 5000 | 0.9997 | 0.0018 |
 
 ## N.5 Summary
 

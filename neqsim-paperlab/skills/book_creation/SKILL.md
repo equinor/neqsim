@@ -251,10 +251,10 @@ Use standard markdown tables. The Word renderer applies booktabs-style
 formatting (horizontal rules only, no vertical lines):
 
 ```markdown
-| Component | Tc (K) | Pc (bar) | ω |
+| Component | Tc (K) | Pc (kPa) | ω |
 |-----------|--------|----------|------|
-| Methane   | 190.56 | 45.99    | 0.0115 |
-| Ethane    | 305.32 | 48.72    | 0.0995 |
+| Methane   | 190.56 | 4599     | 0.0115 |
+| Ethane    | 305.32 | 4872     | 0.0995 |
 ```
 
 ### Code Blocks

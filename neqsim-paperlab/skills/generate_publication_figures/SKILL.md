@@ -6,6 +6,22 @@ Create matplotlib figures that meet journal submission standards: correct fonts,
 compact sizes, consistent styling, readable labels, and high DPI. Based on
 lessons learned from the CPA and TPflash papers (Fluid Phase Equilibria 2026).
 
+## SI Units (MANDATORY)
+
+**All figure axis labels MUST use SI units.** See PAPER_WRITING_GUIDELINES.md
+"SI Units (MANDATORY)" for the full reference.
+
+| Axis label examples (GOOD) | NEVER use |
+|---|---|
+| `Temperature (K)` or `$T$ (K)` | `Temperature (°F)` |
+| `Pressure (kPa)` or `$P$ (MPa)` | `Pressure (psi)` or `Pressure (atm)` |
+| `Density (kg/m³)` or `$\rho$ (kg/m$^3$)` | `Density (lb/ft³)` |
+| `Viscosity (mPa·s)` | `Viscosity (cP)` — numerically equal but use SI name |
+| `Flow rate (kg/s)` | `Flow rate (lb/h)` |
+| `Energy (kJ/mol)` | `Energy (BTU/lbmol)` |
+
+"bar" is acceptable for pressure axes in engineering contexts (1 bar = 100 kPa).
+
 ## When to Use
 
 - Creating figures for any scientific paper in the paperlab
@@ -116,7 +132,7 @@ im2 = ax2.pcolormesh(T_grid, P_grid, metric_grid_b, cmap="RdYlGn", shading="auto
 
 for ax, title in zip([ax1, ax2], ["Method A", "Method B"]):
     ax.set_xlabel("$T$ (K)")
-    ax.set_ylabel("$P$ (bar)")
+    ax.set_ylabel("$P$ (kPa)")
     ax.set_title(title, fontsize=9)
 
 # Shared colorbar
@@ -273,7 +289,7 @@ Before finalizing any figure:
 - [ ] **No label overlap**: Check scatter plots, bar charts, annotations
 - [ ] **Log scale if range > 10×**: Box plots, timing, any wide-range data
 - [ ] **Consistent colors**: Same color = same method/category across all figures
-- [ ] **Axes labeled with units**: Every axis has label + unit in parentheses
+- [ ] **Axes labeled with SI units**: Every axis has label + SI unit in parentheses (K, Pa, kg/m³, etc.)
 - [ ] **Grid lines**: Dashed, alpha < 0.5, behind data
 - [ ] **No excessive whitespace**: Use `bbox_inches="tight"` and compact figsize
 - [ ] **Legend readable**: `frameon=False`, placed to minimize overlap with data

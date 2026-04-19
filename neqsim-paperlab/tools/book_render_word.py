@@ -1034,14 +1034,50 @@ def render_book_word(book_dir, chapter_filter=None):
         p_spacer.paragraph_format.space_after = Pt(0)
         p_spacer.paragraph_format.first_line_indent = Cm(0)
 
-        # Decorative top rule
+        # Decorative top rule (double line effect)
         p_rule_top = doc.add_paragraph()
         p_rule_top.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p_rule_top.paragraph_format.first_line_indent = Cm(0)
-        p_rule_top.paragraph_format.space_after = Pt(24)
+        p_rule_top.paragraph_format.space_after = Pt(6)
         rule_run = p_rule_top.add_run("\u2500" * 40)
         rule_run.font.size = Pt(10)
-        rule_run.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
+        rule_run.font.color.rgb = RGBColor(0x0D, 0x3B, 0x66)
+
+        # Thin secondary rule
+        p_rule_top2 = doc.add_paragraph()
+        p_rule_top2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_rule_top2.paragraph_format.first_line_indent = Cm(0)
+        p_rule_top2.paragraph_format.space_after = Pt(18)
+        rule_run2 = p_rule_top2.add_run("\u2500" * 40)
+        rule_run2.font.size = Pt(4)
+        rule_run2.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
+
+        # Molecular association emblem (Unicode: molecule-like symbol cluster)
+        cover = cfg.get("cover", {})
+        emblem_type = cover.get("emblem", "network") if isinstance(cover, dict) else "network"
+        if emblem_type == "molecular":
+            p_emblem = doc.add_paragraph()
+            p_emblem.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_emblem.paragraph_format.first_line_indent = Cm(0)
+            p_emblem.paragraph_format.space_after = Pt(6)
+            # Molecular association motif using chemistry symbols
+            emblem_run = p_emblem.add_run(
+                "\u25CB\u2013\u2013\u2013\u25CF\u00b7\u00b7\u00b7"
+                "\u25CB\u2013\u2013\u2013\u25CF"
+            )
+            emblem_run.font.size = Pt(16)
+            emblem_run.font.color.rgb = RGBColor(0x0D, 0x3B, 0x66)
+
+            # Descriptive tagline
+            p_tag = doc.add_paragraph()
+            p_tag.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_tag.paragraph_format.first_line_indent = Cm(0)
+            p_tag.paragraph_format.space_after = Pt(18)
+            tag_run = p_tag.add_run("A Molecular Thermodynamics Treatise")
+            tag_run.font.size = Pt(9)
+            tag_run.font.name = "Times New Roman"
+            tag_run.italic = True
+            tag_run.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
 
         # Title
         p_title = doc.add_paragraph()
@@ -1133,13 +1169,21 @@ def render_book_word(book_dir, chapter_filter=None):
             run_pub.font.name = "Times New Roman"
             run_pub.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
 
-        # Decorative bottom rule
+        # Decorative bottom rule (double line to match top)
+        p_rule_bot2 = doc.add_paragraph()
+        p_rule_bot2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_rule_bot2.paragraph_format.first_line_indent = Cm(0)
+        p_rule_bot2.paragraph_format.space_after = Pt(4)
+        bot_run2 = p_rule_bot2.add_run("\u2500" * 40)
+        bot_run2.font.size = Pt(4)
+        bot_run2.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
+
         p_rule_bot = doc.add_paragraph()
         p_rule_bot.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p_rule_bot.paragraph_format.first_line_indent = Cm(0)
         bot_run = p_rule_bot.add_run("\u2500" * 40)
         bot_run.font.size = Pt(10)
-        bot_run.font.color.rgb = RGBColor(0x1A, 0x52, 0x76)
+        bot_run.font.color.rgb = RGBColor(0x0D, 0x3B, 0x66)
 
         _add_page_break(doc)
 
