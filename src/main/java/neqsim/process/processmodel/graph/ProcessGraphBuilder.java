@@ -23,6 +23,7 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.splitter.SplitterInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Calculator;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -326,6 +327,63 @@ public final class ProcessGraphBuilder {
 
       // Also check for inlet streams via reflection
       collectConsumedStreamsAndCreateEdges(unit, graph, streamToProducer);
+    }
+
+    // Third pass: add signal edges for Calculator units.
+    // Calculator reads from inputVariable equipment and writes to outputVariable
+    // equipment via signal connections (not physical streams). Without these edges
+    // the graph partitioner cannot order Calculator correctly, causing stale inputs
+    // and recycle non-convergence.
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof Calculator) {
+        Calculator calc = (Calculator) unit;
+        ProcessNode calcNode = graph.getNode(calc);
+        if (calcNode == null) {
+          continue;
+        }
+
+        // Signal edges: each input variable equipment -> Calculator
+        for (ProcessEquipmentInterface inputEquip : calc.getInputVariable()) {
+          if (inputEquip == null) {
+            continue;
+          }
+          ProcessNode inputNode = graph.getNode(inputEquip);
+          if (inputNode != null && inputNode != calcNode) {
+            boolean edgeExists = false;
+            for (ProcessEdge edge : inputNode.getOutgoingEdges()) {
+              if (edge.getTarget() == calcNode) {
+                edgeExists = true;
+                break;
+              }
+            }
+            if (!edgeExists) {
+              graph.addSignalEdge(inputNode, calcNode,
+                  "signal:" + inputEquip.getName() + "->" + calc.getName(),
+                  ProcessEdge.EdgeType.SIGNAL);
+            }
+          }
+        }
+
+        // Signal edge: Calculator -> output variable equipment
+        ProcessEquipmentInterface outputEquip = calc.getOutputVariable();
+        if (outputEquip != null) {
+          ProcessNode outputNode = graph.getNode(outputEquip);
+          if (outputNode != null && outputNode != calcNode) {
+            boolean edgeExists = false;
+            for (ProcessEdge edge : calcNode.getOutgoingEdges()) {
+              if (edge.getTarget() == outputNode) {
+                edgeExists = true;
+                break;
+              }
+            }
+            if (!edgeExists) {
+              graph.addSignalEdge(calcNode, outputNode,
+                  "signal:" + calc.getName() + "->" + outputEquip.getName(),
+                  ProcessEdge.EdgeType.SIGNAL);
+            }
+          }
+        }
+      }
     }
 
     return graph;

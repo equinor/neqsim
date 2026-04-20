@@ -1112,9 +1112,13 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runOptimized(UUID id) {
     if (hasAdjusters() || hasCalculators()) {
       // Adjusters and Calculators create implicit feedback loops via signal
-      // connections (not stream connections). The graph partitioner only sees
-      // stream edges, so parallel execution can produce wrong orderings for
-      // these units. Sequential execution ensures correct evaluation order.
+      // connections. Signal edges for Calculator are now added to the graph by
+      // ProcessGraphBuilder, but the graph still has coverage gaps for outlet
+      // streams of complex multi-output equipment (SimpleTEGAbsorber, 3-phase
+      // Separator, DistillationColumn, Stripper). Those outlet streams appear as
+      // graph sources, causing Calculator to read stale values at the wrong
+      // topological level. Until that broader graph-coverage work is done,
+      // Calculator-containing processes must run sequentially.
       runSequential(id);
     } else if (hasRecycles()) {
       // Process has Recycle units. Use hybrid execution which parallelizes the
