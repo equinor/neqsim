@@ -533,6 +533,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Serialization   | [docs/simulation/process_serialization.md](simulation/process_serialization)                   | Save/load process models                                             |
 | Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
 | Process Automation API  | [docs/simulation/process_automation.md](simulation/process_automation)                         | String-addressable API for reading/writing simulation variables       |
+| Operating Envelope Agent | [docs/process/operating-envelope-agent.md](process/operating-envelope-agent)                   | AI advisory system for monitoring margins, predicting trips, and recommending mitigations |
 
 ---
 
