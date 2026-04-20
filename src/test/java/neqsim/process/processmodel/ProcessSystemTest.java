@@ -126,7 +126,11 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testOptimizedExecutionSetting() {
-    // Default is false (sequential) for maximum backward compatibility; parallel is opt-in
+    // Default is true (parallel) for best performance; sequential is opt-out
+    Assertions.assertTrue(p.isUseOptimizedExecution());
+
+    // Disable optimized execution
+    p.setUseOptimizedExecution(false);
     Assertions.assertFalse(p.isUseOptimizedExecution());
 
     // Enable optimized execution

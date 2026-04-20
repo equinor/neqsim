@@ -44,6 +44,7 @@ import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.MultiVariableAdjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
@@ -153,7 +154,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve correct mass
    * balance.
    */
-  private boolean useOptimizedExecution = false;
+  private boolean useOptimizedExecution = true;
 
   /**
    * Transient listener for simulation progress callbacks. Used for real-time visualization in
@@ -1109,10 +1110,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    */
   public void runOptimized(UUID id) {
-    if (hasAdjusters()) {
-      // Adjusters create implicit feedback loops (they modify upstream variables
-      // and read downstream targets). Sequential execution ensures correct
-      // evaluation order for adjuster convergence.
+    if (hasAdjusters() || hasCalculators()) {
+      // Adjusters and Calculators create implicit feedback loops via signal
+      // connections (not stream connections). The graph partitioner only sees
+      // stream edges, so parallel execution can produce wrong orderings for
+      // these units. Sequential execution ensures correct evaluation order.
       runSequential(id);
     } else if (hasRecycles()) {
       // Process has Recycle units. Use hybrid execution which parallelizes the
@@ -1166,6 +1168,26 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     cachedHasAdjusters = false;
+    return false;
+  }
+
+  /**
+   * Checks if the process contains any Calculator units.
+   *
+   * <p>
+   * Calculator units read input streams and write to an output stream property using signal
+   * connections rather than physical stream connections. They create implicit feedback loops that
+   * the graph-based partitioner does not detect, so parallel execution cannot place them correctly.
+   * </p>
+   *
+   * @return true if there are any Calculator units in the process
+   */
+  public boolean hasCalculators() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Calculator) {
+        return true;
+      }
+    }
     return false;
   }
 
