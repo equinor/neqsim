@@ -298,6 +298,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves)             | Compressor performance curves                     |
 | Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign)               | Compressor mechanical design                      |
 | Compressor Feasibility | [docs/process/compressor_design_feasibility.md](process/compressor_design_feasibility) | Feasibility report: mechanical, cost, suppliers, curves |
+| Maintenance Deferral   | [docs/process/maintenance-deferral-framework.md](process/maintenance-deferral-framework) | Equipment degradation, health assessment, deferral decisions, plant coordination |
 | Pumps             | [docs/process/equipment/pumps.md](process/equipment/pumps)                                     | Pump models                                       |
 | Pump Guide        | [docs/wiki/pump_usage_guide.md](wiki/pump_usage_guide)                                         | Pump usage guide                                  |
 | Pump Theory       | [docs/wiki/pump_theory_and_implementation.md](wiki/pump_theory_and_implementation)             | Pump theory                                       |
