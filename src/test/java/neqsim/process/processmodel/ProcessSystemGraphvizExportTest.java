@@ -158,7 +158,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
   }
 
   private String readString(Path path) throws IOException {
-    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8).replace("\r\n", "\n");
   }
 
   private ProcessSystem createExampleProcess() {
