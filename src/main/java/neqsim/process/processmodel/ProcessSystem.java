@@ -1110,15 +1110,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    */
   public void runOptimized(UUID id) {
-    if (hasAdjusters() || hasCalculators()) {
-      // Adjusters and Calculators create implicit feedback loops via signal
-      // connections. Signal edges for Calculator are now added to the graph by
-      // ProcessGraphBuilder, but the graph still has coverage gaps for outlet
-      // streams of complex multi-output equipment (SimpleTEGAbsorber, 3-phase
-      // Separator, DistillationColumn, Stripper). Those outlet streams appear as
-      // graph sources, causing Calculator to read stale values at the wrong
-      // topological level. Until that broader graph-coverage work is done,
-      // Calculator-containing processes must run sequentially.
+    if (hasAdjusters()) {
+      // Adjusters create implicit feedback loops via signal connections and
+      // iterate on a target variable. The graph partitioner cannot represent
+      // that iterative coupling, so adjuster-containing systems must run
+      // sequentially to ensure correct evaluation order.
       runSequential(id);
     } else if (hasRecycles()) {
       // Process has Recycle units. Use hybrid execution which parallelizes the
@@ -1384,11 +1380,26 @@ public class ProcessSystem extends SimulationBaseClass {
       firstIterativeLevel = firstAdjusterLevel;
     }
     if (firstIterativeLevel >= 0) {
-      // Build list of remaining units in topological order
-      List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
+      // Collect all equipment at or after the first iterative level as a set
+      // for quick membership checks.
+      java.util.Set<ProcessEquipmentInterface> iterativeSet = new java.util.HashSet<>();
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
         for (ProcessNode node : levels.get(levelIdx)) {
-          iterativeSection.add(node.getEquipment());
+          iterativeSet.add(node.getEquipment());
+        }
+      }
+
+      // Build the iterative section in INSERTION order (not topological order).
+      // Successive-substitution convergence of recycle loops depends on the
+      // execution order of units; using insertion order matches the sequential
+      // run path and the order the user designed the flowsheet. Topological
+      // level order can produce a different fixed point or fail to converge,
+      // especially when Calculator / Recycle / adjuster signal couplings place
+      // the absorber or tear stream at a non-intuitive level.
+      List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (iterativeSet.contains(unit)) {
+          iterativeSection.add(unit);
         }
       }
 

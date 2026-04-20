@@ -188,14 +188,98 @@ public final class ProcessGraphBuilder {
         }
       }
 
+      // Separators produce gas and liquid outlet streams.
+      // Covers Separator, ThreePhaseSeparator, SimpleAbsorber, SimpleTEGAbsorber,
+      // GasScrubber, and any other subclass that exposes the standard outlet API.
+      if (unit instanceof neqsim.process.equipment.separator.Separator) {
+        neqsim.process.equipment.separator.Separator sep =
+            (neqsim.process.equipment.separator.Separator) unit;
+        try {
+          StreamInterface gasOut = sep.getGasOutStream();
+          if (gasOut != null) {
+            streamToProducer.put(gasOut, unit);
+          }
+        } catch (Exception ex) {
+          // Some subclasses may throw if not yet configured; ignore.
+        }
+        try {
+          StreamInterface liqOut = sep.getLiquidOutStream();
+          if (liqOut != null) {
+            streamToProducer.put(liqOut, unit);
+          }
+        } catch (Exception ex) {
+          // ignore
+        }
+      }
+
+      // ThreePhaseSeparator additionally produces water and oil outlet streams.
+      if (unit instanceof neqsim.process.equipment.separator.ThreePhaseSeparator) {
+        neqsim.process.equipment.separator.ThreePhaseSeparator tps =
+            (neqsim.process.equipment.separator.ThreePhaseSeparator) unit;
+        try {
+          StreamInterface waterOut = tps.getWaterOutStream();
+          if (waterOut != null) {
+            streamToProducer.put(waterOut, unit);
+          }
+        } catch (Exception ex) {
+          // ignore
+        }
+        try {
+          StreamInterface oilOut = tps.getOilOutStream();
+          if (oilOut != null) {
+            streamToProducer.put(oilOut, unit);
+          }
+        } catch (Exception ex) {
+          // ignore
+        }
+      }
+
+      // DistillationColumn produces gas (top) and liquid (bottoms) outlet streams.
+      if (unit instanceof neqsim.process.equipment.distillation.DistillationColumn) {
+        neqsim.process.equipment.distillation.DistillationColumn col =
+            (neqsim.process.equipment.distillation.DistillationColumn) unit;
+        try {
+          StreamInterface gasOut = col.getGasOutStream();
+          if (gasOut != null) {
+            streamToProducer.put(gasOut, unit);
+          }
+        } catch (Exception ex) {
+          // ignore
+        }
+        try {
+          StreamInterface liqOut = col.getLiquidOutStream();
+          if (liqOut != null) {
+            streamToProducer.put(liqOut, unit);
+          }
+        } catch (Exception ex) {
+          // ignore
+        }
+      }
+
       // Also check for common outlet method patterns
       collectProducedStreams(unit, streamToProducer);
     }
 
     // Second pass: identify stream consumers and create edges
     for (ProcessEquipmentInterface unit : units) {
-      // Skip stream units - they don't consume other streams (typically)
+      // Stream units wrap another upstream stream via setStream(..). When a
+      // Stream is constructed as `new Stream("x", someEquipment.getGasOutStream())`
+      // its internal `stream` field points to the upstream producer's outlet.
+      // Create an edge from that producer to this wrapping Stream so the graph
+      // partitioner places the wrapping Stream AFTER its source equipment.
       if (unit instanceof StreamInterface) {
+        try {
+          java.lang.reflect.Field streamField = findField(unit.getClass(), "stream");
+          if (streamField != null) {
+            streamField.setAccessible(true);
+            Object wrapped = streamField.get(unit);
+            if (wrapped instanceof StreamInterface && wrapped != unit) {
+              createEdgeFromProducer(graph, streamToProducer, wrapped, unit);
+            }
+          }
+        } catch (Exception ex) {
+          // Ignore; Stream without wrapped source is a genuine feed.
+        }
         continue;
       }
 
