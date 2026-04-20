@@ -328,10 +328,18 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       }
       thermoSystem = stream.getFluid();
     }
-    if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure
-        && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / getFluid().getFlowRate("kg/hr") < 1e-6
-        && Arrays.equals(getFluid().getMolarComposition(), lastComposition)) {
+    // If fluid isn't initialised yet (e.g. output stream not yet populated) we must run.
+    SystemInterface fluid = getFluid();
+    if (fluid == null || lastComposition == null) {
+      return true;
+    }
+    double flow = fluid.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastFlowRate <= 0.0) {
+      return true;
+    }
+    if (fluid.getTemperature() == lastTemperature && fluid.getPressure() == lastPressure
+        && Math.abs(flow - lastFlowRate) / flow < 1e-6
+        && Arrays.equals(fluid.getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;

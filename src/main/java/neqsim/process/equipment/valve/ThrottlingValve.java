@@ -180,6 +180,10 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    if (thermoSystem == null || getInletStream() == null
+        || getInletStream().getThermoSystem() == null) {
+      return true;
+    }
     if (getInletStream().getThermoSystem().getTemperature() == thermoSystem.getTemperature()
         && getInletStream().getThermoSystem().getPressure() == thermoSystem.getPressure()
         && getInletStream().getThermoSystem().getFlowRate("kg/hr") == thermoSystem
