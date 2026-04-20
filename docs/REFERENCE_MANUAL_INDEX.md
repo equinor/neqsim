@@ -255,7 +255,6 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | DEXPI Architecture    | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | DEXPI integration         |
 | Simulation Hooks      | [docs/process/simulation-hooks-and-events.md](process/simulation-hooks-and-events)                                         | Lifecycle hooks, ProcessEventBus, auto-validation for ProcessSystem and ProcessModel |
 | **UniSim/HYSYS Conversion** | [docs/process/unisim-to-neqsim-conversion.md](process/unisim-to-neqsim-conversion)                                  | **Convert UniSim Design (.usc) models to NeqSim and export NeqSim back to UniSim — COM automation, mapping tables, topology reconstruction, verification** |
-| **Decision Support**  | [docs/process/decision-support.md](process/decision-support)                                                               | **Engineering decision support for control room operators — structured queries, simulation-backed recommendations, audit trail** |
 
 ### Chapter 13: Streams & Mixers
 
