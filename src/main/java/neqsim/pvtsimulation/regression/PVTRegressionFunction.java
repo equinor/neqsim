@@ -123,6 +123,12 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculate CCE property value.
+   *
+   * @param fluid the thermodynamic system
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in K
+   * @param propertyIndex the property index (0=relative volume, 1=Y-factor)
+   * @return the calculated property value
    */
   private double calculateCCEValue(SystemInterface fluid, double pressure, double temperature,
       int propertyIndex) {
@@ -145,6 +151,12 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculate CVD property value.
+   *
+   * @param fluid the thermodynamic system
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in K
+   * @param propertyIndex the property index (0=liquid dropout, 1=Z-factor)
+   * @return the calculated property value
    */
   private double calculateCVDValue(SystemInterface fluid, double pressure, double temperature,
       int propertyIndex) {

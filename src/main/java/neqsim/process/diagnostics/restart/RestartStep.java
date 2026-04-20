@@ -32,7 +32,7 @@ public class RestartStep implements Serializable {
     SETPOINT_CHANGE("Setpoint change"),
     /** Wait for a specific duration. */
     WAIT_DURATION("Wait for duration"),
-    /** Wait for a condition to be met (e.g. level > 30%). */
+    /** Wait for a condition to be met (e.g. level &gt; 30%). */
     WAIT_CONDITION("Wait for condition"),
     /** Manual operator action required. */
     OPERATOR_ACTION("Operator action"),

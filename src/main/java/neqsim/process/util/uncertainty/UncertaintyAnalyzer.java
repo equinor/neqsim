@@ -196,6 +196,8 @@ public class UncertaintyAnalyzer {
 
   /**
    * Calculates the sensitivity matrix using finite differences.
+   *
+   * @return the calculated sensitivity matrix
    */
   private SensitivityMatrix calculateSensitivityMatrix() {
     String[] inputs = inputUncertainties.keySet().toArray(new String[0]);

@@ -216,6 +216,11 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
 
   /**
    * Refines the onset pressure using bisection.
+   *
+   * @param high the upper pressure bound
+   * @param low the lower pressure bound
+   * @param ops the thermodynamic operations instance
+   * @return the refined onset pressure
    */
   private double refinePressure(double high, double low, ThermodynamicOperations ops) {
     double mid;
@@ -243,6 +248,8 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
 
   /**
    * Checks if asphaltene precipitation has occurred.
+   *
+   * @return true if asphaltene precipitation is detected
    */
   private boolean checkForAsphaltenePrecipitation() {
     if (system.hasPhaseType("solid")) {

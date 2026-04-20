@@ -182,6 +182,8 @@ public class WhitsonPVTReader {
 
   /**
    * Parse a parameter line (key-value pair).
+   *
+   * @param line the line to parse
    */
   private void parseParameterLine(String line) {
     String[] parts = line.split("\t");
@@ -234,6 +236,8 @@ public class WhitsonPVTReader {
 
   /**
    * Parse a component data line.
+   *
+   * @param line the line to parse
    */
   private void parseComponentLine(String line) {
     String[] parts = line.split("\t");
@@ -270,6 +274,10 @@ public class WhitsonPVTReader {
 
   /**
    * Parse a BIP matrix row.
+   *
+   * @param line the line to parse
+   * @param numComponents the number of components
+   * @param bipRows the list of BIP rows to add to
    */
   private void parseBipLine(String line, int numComponents, List<double[]> bipRows) {
     String[] parts = line.split("\t");
@@ -287,6 +295,9 @@ public class WhitsonPVTReader {
 
   /**
    * Parse a double value, handling empty or invalid strings.
+   *
+   * @param value the string value to parse
+   * @return the parsed double, or 0.0 if invalid
    */
   private double parseDouble(String value) {
     if (value == null || value.trim().isEmpty() || value.equals("NA")) {
@@ -371,6 +382,8 @@ public class WhitsonPVTReader {
 
   /**
    * Create the appropriate EOS system based on parsed EOS type.
+   *
+   * @return the configured EOS system
    */
   private SystemInterface createEosSystem() {
     double T = 288.15; // 15°C
@@ -390,6 +403,10 @@ public class WhitsonPVTReader {
 
   /**
    * Add a component to the fluid with all properties from the parameter file.
+   *
+   * @param fluid the thermodynamic system
+   * @param comp the component data
+   * @param moles the number of moles
    */
   private void addComponentToFluid(SystemInterface fluid, ComponentData comp, double moles) {
     String name = comp.name;
@@ -527,6 +544,9 @@ public class WhitsonPVTReader {
 
   /**
    * Map Whitson component names to NeqSim standard names.
+   *
+   * @param name the Whitson component name
+   * @return the NeqSim standard component name
    */
   private String mapToStandardName(String name) {
     switch (name.toUpperCase()) {
