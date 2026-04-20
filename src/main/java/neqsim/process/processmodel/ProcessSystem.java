@@ -1621,7 +1621,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
         // Single unit at this level - run directly (no thread pool overhead)
         ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
-        if (!(unit instanceof Setter)) {
+        if (!(unit instanceof Setter) && unit.needRecalculation()) {
           try {
             runUnitProfiled(unit, id);
           } catch (Exception ex) {
@@ -1632,7 +1632,7 @@ public class ProcessSystem extends SimulationBaseClass {
         // Single group with multiple units sharing input streams - run sequentially
         for (ProcessNode node : levelGroups.get(0)) {
           ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter)) {
+          if (!(unit instanceof Setter) && unit.needRecalculation()) {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
@@ -1646,7 +1646,7 @@ public class ProcessSystem extends SimulationBaseClass {
         for (List<ProcessNode> group : levelGroups) {
           if (group.size() == 1) {
             final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
-            if (!(unitToRun instanceof Setter)) {
+            if (!(unitToRun instanceof Setter) && unitToRun.needRecalculation()) {
               final UUID calcId = id;
               futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
                 try {
@@ -1663,7 +1663,7 @@ public class ProcessSystem extends SimulationBaseClass {
             futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
               for (ProcessNode node : groupToRun) {
                 ProcessEquipmentInterface unit = node.getEquipment();
-                if (!(unit instanceof Setter)) {
+                if (!(unit instanceof Setter) && unit.needRecalculation()) {
                   try {
                     runUnitProfiled(unit, calcId);
                   } catch (Exception ex) {
