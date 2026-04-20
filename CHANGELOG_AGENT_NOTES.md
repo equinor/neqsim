@@ -9,6 +9,56 @@
 
 ---
 
+## 2026-04-20 — Post-Trip Root Cause Analysis & Restart Optimisation
+
+### Summary
+
+New `neqsim.process.diagnostics` package with automated trip detection, root cause
+analysis, failure propagation tracing, and optimised restart sequencing. Integrates
+with `ProcessSystem` via lazy-initialised `getTripEventDetector()`.
+
+### New Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `TripType` | `diagnostics` | Enum with 12 trip categories (COMPRESSOR_SURGE, HIGH_PRESSURE, etc.) |
+| `TripEvent` | `diagnostics` | Immutable trip record with Builder pattern |
+| `UnifiedEventTimeline` | `diagnostics` | Chronological event collector with filtering |
+| `ProcessStateSnapshot` | `diagnostics` | Before/after thermodynamic state capture via lifecycle states |
+| `TripEventDetector` | `diagnostics` | Monitors ProcessSystem during dynamic simulation |
+| `TripHypothesis` | `diagnostics` | Abstract base for root cause hypotheses |
+| `HypothesisResult` | `diagnostics` | Scored result with confidence levels |
+| `FailurePropagationTracer` | `diagnostics` | Traces failure chains through flowsheet topology |
+| `RootCauseReport` | `diagnostics` | Aggregated JSON/text analysis report |
+| `RootCauseAnalyzer` | `diagnostics` | Orchestrator — registers and runs hypotheses |
+| `HydrateFormationHypothesis` | `diagnostics.hypothesis` | Checks temperature vs hydrate curve |
+| `LiquidCarryOverHypothesis` | `diagnostics.hypothesis` | Checks liquid in gas outlets |
+| `CompressorSurgeHypothesis` | `diagnostics.hypothesis` | Checks operating point vs surge line |
+| `SeparatorFloodingHypothesis` | `diagnostics.hypothesis` | Checks level, gas velocity, momentum |
+| `HighPressureHypothesis` | `diagnostics.hypothesis` | Checks pressure vs design limits |
+| `InstrumentFailureHypothesis` | `diagnostics.hypothesis` | Checks sensor drift, frozen values |
+| `RestartReadiness` | `diagnostics.restart` | Pre-restart constraint check result |
+| `RestartConstraintChecker` | `diagnostics.restart` | Evaluates equipment constraints |
+| `RestartStep` | `diagnostics.restart` | Single restart action with 8 action types |
+| `RestartSequence` | `diagnostics.restart` | Ordered step list with duration estimate |
+| `RestartSequenceGenerator` | `diagnostics.restart` | Builds sequence from trip + root cause |
+| `RestartSimulator` | `diagnostics.restart` | Executes sequence via runTransient() |
+| `RestartSimulationResult` | `diagnostics.restart` | Outcome with step records |
+| `RestartOptimiser` | `diagnostics.restart` | Reorders steps to minimise MTTR |
+
+### ProcessSystem Changes
+
+- Added `getTripEventDetector()` method (lazy-initialised, transient field)
+- No breaking changes to existing API
+
+### Agent/Skill Impact
+
+- New capability for dynamic simulation agents
+- `neqsim-dynamic-simulation` skill should be updated to reference diagnostics package
+- `neqsim-troubleshooting` skill can leverage root cause hypotheses
+
+---
+
 ## 2026-04-17 — Diffusion Coefficient Model Fixes and Validation
 
 ### Summary
