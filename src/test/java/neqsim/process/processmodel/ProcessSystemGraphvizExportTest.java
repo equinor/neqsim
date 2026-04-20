@@ -30,6 +30,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Integration style regression test for the Graphviz export of a complex process model.
  */
 public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
+  private static final Path FIXTURE_DIR =
+      Paths.get("src", "test", "java", "neqsim", "process", "processmodel");
+
   @Test
   public void exportGraphvizForComplexOilProcess(@TempDir Path tempDir) throws IOException {
     ProcessSystem process = createExampleProcess();
@@ -38,8 +41,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     process.exportToGraphviz(dotFile.toString());
 
     String dot = readString(dotFile);
-    String expectedDot = readString(Paths.get("src", "test", "java", "neqsim", "process",
-        "processmodel", "example-process.dot"));
+    String expectedDot = readString(FIXTURE_DIR.resolve("example-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(), "Graphviz export differs from expected fixture");
 
     assertTrue(dot.contains("\"well stream\""), "well stream node missing");
@@ -115,8 +117,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     process.exportToGraphviz(dotFile.toString());
 
     String dot = readString(dotFile);
-    String expectedDot = readString(Paths.get("src", "test", "java", "neqsim", "process",
-        "processmodel", "three-phase-separator-process.dot"));
+    String expectedDot = readString(FIXTURE_DIR.resolve("three-phase-separator-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(),
         "Graphviz export differs from expected three-phase fixture");
 
@@ -140,8 +141,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     process.exportToGraphviz(dotFile.toString());
 
     String dot = readString(dotFile);
-    String expectedDot = readString(Paths.get("src", "test", "java", "neqsim", "process",
-        "processmodel", "anti-surge-process.dot"));
+    String expectedDot = readString(FIXTURE_DIR.resolve("anti-surge-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(),
         "Graphviz export differs from expected anti-surge fixture");
 
