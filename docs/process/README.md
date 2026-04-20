@@ -47,7 +47,6 @@ This documentation is organized into the following sections:
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim and export back to UniSim |
-| [decision-support.md](decision-support) | **Decision support** — operator queries, simulation-backed recommendations, audit trail |
 
 ### Process Design Guide
 
