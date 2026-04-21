@@ -595,7 +595,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized EosMixingRuleHandler clone() {
+  public EosMixingRuleHandler clone() {
     EosMixingRuleHandler clonedSystem = null;
     try {
       clonedSystem = (EosMixingRuleHandler) super.clone();

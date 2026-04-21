@@ -117,7 +117,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized Phase clone() {
+  public Phase clone() {
     Phase clonedPhase = null;
 
     try {

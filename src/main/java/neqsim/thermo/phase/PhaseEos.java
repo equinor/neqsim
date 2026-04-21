@@ -44,7 +44,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized PhaseEos clone() {
+  public PhaseEos clone() {
     PhaseEos clonedPhase = null;
     try {
       clonedPhase = (PhaseEos) super.clone();
@@ -52,12 +52,17 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // Note: This is a shallow copy for mixSelect and mixRule.
-    // The cloned phase shares the same mixing rule handler as the original.
-    // For thread-safe parallel execution, synchronization must be used when
-    // accessing shared mixing rule state.
-    // Deep copy was attempted but caused issues with CPA mixing rules where
-    // getMixingRule(int) doesn't fully initialize the mixing rule parameters.
+    // Thread-safety contract: mixSelect and mixRule are shared (shallow) with the
+    // parent. This is safe for concurrent flashing on parent and clone because the
+    // interaction-parameter matrices (intparam, intparamT, HVDij, NRTLDij,
+    // WSintparam,
+    // NRTLalpha, ...) are written exclusively by setMixingRule() during fluid setup
+    // and are treated as read-only during flash calculations. Callers MUST NOT
+    // invoke setMixingRule() on a fluid (or any of its clones) while another thread
+    // is performing a flash on a sibling clone. EosMixingRuleHandler.clone() is
+    // available for callers that need fully-independent matrix copies (e.g., when
+    // tuning kij in parallel); it is intentionally not invoked here to keep clone()
+    // cheap on the hot path.
     return clonedPhase;
   }
 

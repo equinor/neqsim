@@ -560,7 +560,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized Component clone() {
+  public Component clone() {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
