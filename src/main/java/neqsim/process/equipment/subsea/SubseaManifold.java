@@ -16,7 +16,8 @@ import neqsim.thermo.system.SystemInterface;
  * Subsea Production Manifold equipment class.
  *
  * <p>
- * A subsea manifold gathers production from multiple wells and routes it to flowlines for transport
+ * A subsea manifold gathers production from multiple wells and routes it to
+ * flowlines for transport
  * to the host facility. Key features include:
  * </p>
  * <ul>
@@ -280,7 +281,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
   /**
    * Constructor with name and number of slots.
    *
-   * @param name equipment name
+   * @param name          equipment name
    * @param numberOfSlots number of well slots
    */
   public SubseaManifold(String name, int numberOfSlots) {
@@ -319,7 +320,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
    * Add well stream with well name.
    *
    * @param wellStream well inlet stream
-   * @param wellName well name
+   * @param wellName   well name
    * @return slot number assigned
    */
   public int addWellStream(StreamInterface wellStream, String wellName) {
@@ -331,8 +332,8 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
         skid.setActive(true);
 
         // Create production valve
-        ThrottlingValve prodValve =
-            new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Prod", wellStream);
+        ThrottlingValve prodValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Prod",
+            wellStream);
         prodValve.setPercentValveOpening(100.0);
         skid.setProductionValve(prodValve);
 
@@ -485,7 +486,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
   /**
    * Apply pressure drop to stream.
    *
-   * @param stream stream to modify
+   * @param stream       stream to modify
    * @param pressureDrop pressure drop in bar
    */
   private void applyPressureDrop(StreamInterface stream, double pressureDrop) {
@@ -514,6 +515,33 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
    */
   public StreamInterface getTestStream() {
     return testStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    java.util.List<StreamInterface> in = new java.util.ArrayList<>();
+    if (valveSkids != null) {
+      for (ValveSkid skid : valveSkids) {
+        if (skid != null && skid.getConnectedStream() != null) {
+          in.add(skid.getConnectedStream());
+        }
+      }
+    }
+    return in;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (productionStream != null) {
+      out.add(productionStream);
+    }
+    if (testStream != null) {
+      out.add(testStream);
+    }
+    return out;
   }
 
   /**

@@ -263,6 +263,26 @@ public final class ProcessGraphBuilder {
 
       // Also check for common outlet method patterns
       collectProducedStreams(unit, streamToProducer);
+
+      // Uniform catch-all: any equipment that overrides getOutletStreams() on
+      // ProcessEquipmentInterface reports its outlets directly. This covers
+      // multiport equipment (ComponentSplitter, PlugFlowReactor, BiogasUpgrader,
+      // FermentationReactor, PyrolysisReactor, BiomassGasifier, AnaerobicDigester,
+      // AmmoniaSynthesisReactor, SimpleAmineAbsorber, LNGAgeingScenario, PLEM,
+      // LoopedPipeNetwork, ...) and any future equipment without needing a
+      // bespoke branch. Using putIfAbsent preserves earlier explicit mappings.
+      try {
+        List<StreamInterface> reportedOutlets = unit.getOutletStreams();
+        if (reportedOutlets != null) {
+          for (StreamInterface out : reportedOutlets) {
+            if (out != null) {
+              streamToProducer.putIfAbsent(out, unit);
+            }
+          }
+        }
+      } catch (Exception ex) {
+        // Some equipment may throw if not yet configured; ignore.
+      }
     }
 
     // Pass 1b: Stream units default to producing themselves, but only if no
@@ -456,6 +476,23 @@ public final class ProcessGraphBuilder {
 
       // Also check for inlet streams via reflection
       collectConsumedStreamsAndCreateEdges(unit, graph, streamToProducer);
+
+      // Uniform catch-all: any equipment that overrides getInletStreams() on
+      // ProcessEquipmentInterface reports its inlets directly. This covers
+      // multiport equipment and any future equipment without needing a
+      // bespoke branch. createEdgeFromProducer dedupes edges internally.
+      try {
+        List<StreamInterface> reportedInlets = unit.getInletStreams();
+        if (reportedInlets != null) {
+          for (StreamInterface in : reportedInlets) {
+            if (in != null) {
+              createEdgeFromProducer(graph, streamToProducer, in, unit);
+            }
+          }
+        }
+      } catch (Exception ex) {
+        // Some equipment may throw if not yet configured; ignore.
+      }
     }
 
     // Third pass: add signal edges for Calculator units.
