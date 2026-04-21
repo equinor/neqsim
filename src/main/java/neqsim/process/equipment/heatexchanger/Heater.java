@@ -321,19 +321,28 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       return true;
     }
     SystemInterface inFluid = inStream.getFluid();
+    // Cheap scalar checks first - avoid the composition array walk if any fail.
+    if (inFluid.getTemperature() != lastTemperature || inFluid.getPressure() != lastPressure
+        || lastDuty != getDuty() || lastOutPressure != pressureOut
+        || lastOutTemperature != temperatureOut || getPressureDrop() != lastPressureDrop) {
+      return true;
+    }
     double inFlow = inFluid.getFlowRate("kg/hr");
-    if (inFlow <= 0.0 || lastFlowRate <= 0.0) {
+    if (inFlow <= 0.0 || lastFlowRate <= 0.0 || Math.abs(inFlow - lastFlowRate) / inFlow >= 1e-6) {
       return true;
     }
-    if (inFluid.getTemperature() == lastTemperature && inFluid.getPressure() == lastPressure
-        && Math.abs(inFlow - lastFlowRate) / inFlow < 1e-6 && lastDuty == getDuty()
-        && lastOutPressure == pressureOut && lastOutTemperature == temperatureOut
-        && getPressureDrop() == lastPressureDrop
-        && java.util.Arrays.equals(inFluid.getMolarComposition(), lastComposition)) {
-      return false;
-    } else {
+    // Allocation-free composition comparison.
+    neqsim.thermo.phase.PhaseInterface ph0 = inFluid.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastComposition.length) {
       return true;
     }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastComposition[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
