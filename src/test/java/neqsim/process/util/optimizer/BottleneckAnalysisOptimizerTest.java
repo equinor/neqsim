@@ -802,15 +802,25 @@ public class BottleneckAnalysisOptimizerTest {
           String.format("Bottleneck utilization: %.2f%%", result.getBottleneckUtilization() * 100));
     }
 
-    // Apply optimal values and print final state
+    // Apply optimal values and print final state.
+    // Apply via the ManipulatedVariable setters in the same order the optimizer
+    // used so that the clamping logic inside the setters matches what the
+    // optimizer evaluated; recomputing splits directly here can diverge from the
+    // actual split factors the optimizer tested.
     double optimalFlow = result.getDecisionVariables().getOrDefault("totalFlow", originalFlow);
     double optimalSplit1 = result.getDecisionVariables().getOrDefault("split1", 0.333);
     double optimalSplit2 = result.getDecisionVariables().getOrDefault("split2", 0.333);
-    double optimalSplit3 = 1.0 - optimalSplit1 - optimalSplit2;
-
-    inletStream.setFlowRate(optimalFlow, "kg/hr");
-    compressorSplitter.setSplitFactors(new double[] {optimalSplit1, optimalSplit2, optimalSplit3});
+    for (ManipulatedVariable variable : variables) {
+      Double value = result.getDecisionVariables().get(variable.getName());
+      if (value != null) {
+        variable.apply(processSystem, value);
+      }
+    }
     processSystem.run();
+    double[] finalSplits = compressorSplitter.getSplitFactors();
+    double optimalSplit3 = finalSplits[2];
+    optimalSplit1 = finalSplits[0];
+    optimalSplit2 = finalSplits[1];
 
     System.out.println("\n=== OPTIMIZED STATE ===");
     System.out.println(String.format("Optimal total flow: %.0f kg/hr", optimalFlow));
