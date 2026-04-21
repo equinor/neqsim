@@ -17,13 +17,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Multi-effect evaporator for concentration of solutions.
  *
  * <p>
- * Models a series of evaporator effects at decreasing pressures. Each effect uses the vapor from
- * the previous effect as the heating medium, achieving significant steam economy. Commonly used in
+ * Models a series of evaporator effects at decreasing pressures. Each effect
+ * uses the vapor from
+ * the previous effect as the heating medium, achieving significant steam
+ * economy. Commonly used in
  * sugar refining, dairy processing, and bio-product concentration.
  * </p>
  *
  * <p>
- * The model performs sequential flash calculations at decreasing pressures, removing vapor at each
+ * The model performs sequential flash calculations at decreasing pressures,
+ * removing vapor at each
  * stage to concentrate the liquid product.
  * </p>
  *
@@ -100,7 +103,7 @@ public class MultiEffectEvaporator extends ProcessEquipmentBaseClass {
   /**
    * Constructor for MultiEffectEvaporator with inlet stream.
    *
-   * @param name name of the evaporator
+   * @param name        name of the evaporator
    * @param inletStream the feed stream
    */
   public MultiEffectEvaporator(String name, StreamInterface inletStream) {
@@ -145,6 +148,28 @@ public class MultiEffectEvaporator extends ProcessEquipmentBaseClass {
    */
   public StreamInterface getVaporCondensateStream() {
     return vaporCondensateStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    if (inletStream == null) {
+      return java.util.Collections.emptyList();
+    }
+    return java.util.Collections.singletonList(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (concentrateStream != null) {
+      out.add(concentrateStream);
+    }
+    if (vaporCondensateStream != null) {
+      out.add(vaporCondensateStream);
+    }
+    return out;
   }
 
   /**
@@ -279,8 +304,7 @@ public class MultiEffectEvaporator extends ProcessEquipmentBaseClass {
     for (int i = 0; i < numberOfEffects; i++) {
       double fraction = (double) i / (numberOfEffects - 1);
       // Geometric interpolation
-      double pressure =
-          firstEffectPressure * Math.pow(lastEffectPressure / firstEffectPressure, fraction);
+      double pressure = firstEffectPressure * Math.pow(lastEffectPressure / firstEffectPressure, fraction);
       effectPressures.add(pressure);
     }
   }

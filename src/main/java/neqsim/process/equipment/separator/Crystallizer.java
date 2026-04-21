@@ -15,14 +15,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Crystallizer for producing solid crystals from solution.
  *
  * <p>
- * Models a crystallization process where dissolved solutes are brought out of solution as solid
- * crystals. Supports cooling crystallization (reducing temperature), evaporative crystallization
+ * Models a crystallization process where dissolved solutes are brought out of
+ * solution as solid
+ * crystals. Supports cooling crystallization (reducing temperature),
+ * evaporative crystallization
  * (removing solvent), and anti-solvent crystallization.
  * </p>
  *
  * <p>
- * The crystallizer operates by flashing the feed at reduced temperature and/or pressure to
- * concentrate the solution beyond the saturation point, causing crystallization. NeqSim's solid
+ * The crystallizer operates by flashing the feed at reduced temperature and/or
+ * pressure to
+ * concentrate the solution beyond the saturation point, causing
+ * crystallization. NeqSim's solid
  * phase equilibrium capabilities (TPSolidflash) are leveraged when available.
  * </p>
  *
@@ -98,7 +102,7 @@ public class Crystallizer extends ProcessEquipmentBaseClass {
   /**
    * Constructor for Crystallizer with inlet stream.
    *
-   * @param name name of the crystallizer
+   * @param name        name of the crystallizer
    * @param inletStream the feed stream
    */
   public Crystallizer(String name, StreamInterface inletStream) {
@@ -145,6 +149,28 @@ public class Crystallizer extends ProcessEquipmentBaseClass {
     return motherLiquorStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    if (inletStream == null) {
+      return java.util.Collections.emptyList();
+    }
+    return java.util.Collections.singletonList(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (crystalStream != null) {
+      out.add(crystalStream);
+    }
+    if (motherLiquorStream != null) {
+      out.add(motherLiquorStream);
+    }
+    return out;
+  }
+
   /**
    * Set the crystallization type.
    *
@@ -176,7 +202,7 @@ public class Crystallizer extends ProcessEquipmentBaseClass {
    * Set the outlet temperature with unit.
    *
    * @param temperature temperature value
-   * @param unit temperature unit ("K", "C", "F")
+   * @param unit        temperature unit ("K", "C", "F")
    */
   public void setOutletTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

@@ -13,16 +13,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Liquid-liquid extractor for separation of components between two immiscible liquid phases.
+ * Liquid-liquid extractor for separation of components between two immiscible
+ * liquid phases.
  *
  * <p>
- * Models a single-stage or multi-stage liquid-liquid extraction unit. Takes a feed stream and a
- * solvent stream, mixes them, and performs a liquid-liquid equilibrium (LLE) flash to separate into
+ * Models a single-stage or multi-stage liquid-liquid extraction unit. Takes a
+ * feed stream and a
+ * solvent stream, mixes them, and performs a liquid-liquid equilibrium (LLE)
+ * flash to separate into
  * extract (solvent-rich) and raffinate (feed-rich) phases.
  * </p>
  *
  * <p>
- * Leverages NeqSim's built-in LLE flash capabilities for thermodynamically rigorous phase
+ * Leverages NeqSim's built-in LLE flash capabilities for thermodynamically
+ * rigorous phase
  * separation.
  * </p>
  *
@@ -87,8 +91,8 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
   /**
    * Constructor for LiquidLiquidExtractor with feed and solvent streams.
    *
-   * @param name name of the extractor
-   * @param feedStream the feed stream
+   * @param name          name of the extractor
+   * @param feedStream    the feed stream
    * @param solventStream the solvent stream
    */
   public LiquidLiquidExtractor(String name, StreamInterface feedStream,
@@ -165,6 +169,32 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
    */
   public StreamInterface getRaffinateStream() {
     return raffinateStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    java.util.List<StreamInterface> in = new java.util.ArrayList<>();
+    if (feedStream != null) {
+      in.add(feedStream);
+    }
+    if (solventStream != null) {
+      in.add(solventStream);
+    }
+    return in;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (extractStream != null) {
+      out.add(extractStream);
+    }
+    if (raffinateStream != null) {
+      out.add(raffinateStream);
+    }
+    return out;
   }
 
   /**

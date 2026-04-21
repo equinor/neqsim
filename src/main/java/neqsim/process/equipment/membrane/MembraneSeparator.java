@@ -11,8 +11,10 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Simple membrane separation unit with one inlet stream and two outlet streams (retentate and
- * permeate). Each component can be assigned a permeate fraction representing the fraction of that
+ * Simple membrane separation unit with one inlet stream and two outlet streams
+ * (retentate and
+ * permeate). Each component can be assigned a permeate fraction representing
+ * the fraction of that
  * component transported to the permeate side.
  *
  * @author esol
@@ -45,8 +47,9 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Constructor for MembraneSeparator.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public MembraneSeparator(String name, StreamInterface inletStream) {
     this(name);
@@ -58,14 +61,13 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Setter for the field <code>inletStream</code>.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
-    this.permeateStream =
-        new Stream(getName() + " permeate", inletStream.getThermoSystem().clone());
-    this.retentateStream =
-        new Stream(getName() + " retentate", inletStream.getThermoSystem().clone());
+    this.permeateStream = new Stream(getName() + " permeate", inletStream.getThermoSystem().clone());
+    this.retentateStream = new Stream(getName() + " retentate", inletStream.getThermoSystem().clone());
   }
 
   /**
@@ -99,6 +101,28 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
     return retentateStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    if (inletStream == null) {
+      return java.util.Collections.emptyList();
+    }
+    return java.util.Collections.singletonList(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (permeateStream != null) {
+      out.add(permeateStream);
+    }
+    if (retentateStream != null) {
+      out.add(retentateStream);
+    }
+    return out;
+  }
+
   /**
    * Set membrane area used for permeability calculations.
    *
@@ -120,7 +144,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   /**
    * Specify permeability coefficient for a component.
    *
-   * @param component component name
+   * @param component    component name
    * @param permeability permeability in mol/(m2*s*Pa)
    */
   public void setPermeability(String component, double permeability) {
@@ -148,7 +172,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Specify permeate fraction for a component.
    *
    * @param component component name
-   * @param fraction permeate fraction (0-1)
+   * @param fraction  permeate fraction (0-1)
    */
   public void setPermeateFraction(String component, double fraction) {
     permeateFractions.put(component, Math.max(0.0, Math.min(1.0, fraction)));
@@ -192,11 +216,9 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
         permeateStream.getThermoSystem().addComponent(name, molesPerm);
       }
 
-      ThermodynamicOperations opsRet =
-          new ThermodynamicOperations(retentateStream.getThermoSystem());
+      ThermodynamicOperations opsRet = new ThermodynamicOperations(retentateStream.getThermoSystem());
       opsRet.TPflash();
-      ThermodynamicOperations opsPerm =
-          new ThermodynamicOperations(permeateStream.getThermoSystem());
+      ThermodynamicOperations opsPerm = new ThermodynamicOperations(permeateStream.getThermoSystem());
       opsPerm.TPflash();
 
       retentateStream.setCalculationIdentifier(id);

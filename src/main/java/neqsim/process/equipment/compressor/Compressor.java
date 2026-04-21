@@ -537,13 +537,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (thermoSystem == null) {
+    if (thermoSystem == null || inStream == null || inStream.getThermoSystem() == null) {
       return true;
     }
     if (inStream.getThermoSystem().getTemperature() == thermoSystem.getTemperature()
         && inStream.getThermoSystem().getPressure() == thermoSystem.getPressure()
         && inStream.getThermoSystem().getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")
-        && Math.abs(pressure - outStream.getPressure(pressureUnit)) < 1e-6) {
+        && Math.abs(pressure - outStream.getPressure(pressureUnit)) < 1e-6
+        && java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(),
+            thermoSystem.getMolarComposition())) {
       return false;
     }
     return true;

@@ -28,6 +28,8 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   private double approachToSaturation = 1.0;
 
   protected double oldInletFlowRate = 0.0;
+  /** Cached inlet composition for needRecalculation check. */
+  protected double[] lastComposition = null;
 
   /**
    * Constructor for StreamSaturatorUtil with name only.
@@ -74,10 +76,15 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     if (outStream == null || inStream == null) {
       return true;
     }
+    if (lastComposition == null || inStream.getFlowRate("kg/hr") <= 0.0) {
+      return true;
+    }
     if (inStream.getTemperature() == outStream.getTemperature()
         && inStream.getPressure() == outStream.getPressure()
         && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate)
-            / inStream.getFlowRate("kg/hr") < 1e-3) {
+            / inStream.getFlowRate("kg/hr") < 1e-3
+        && java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(),
+            lastComposition)) {
       return false;
     } else {
       return true;
@@ -114,6 +121,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
     outStream.setThermoSystem(thermoSystem);
     oldInletFlowRate = inStream.getFlowRate("kg/hr");
+    lastComposition = inStream.getThermoSystem().getMolarComposition().clone();
     setCalculationIdentifier(id);
   }
 

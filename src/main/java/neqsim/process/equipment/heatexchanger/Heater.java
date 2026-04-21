@@ -79,6 +79,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   protected double lastOutTemperature = 0.0;
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
+  protected double[] lastComposition = null;
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
   HeatExchangerElectricalDesign electricalDesign;
@@ -316,15 +317,19 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (inStream == null) {
+    if (inStream == null || inStream.getFluid() == null || lastComposition == null) {
       return true;
     }
-    if (inStream.getFluid().getTemperature() == lastTemperature
-        && inStream.getFluid().getPressure() == lastPressure
-        && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / inStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && lastDuty == getDuty() && lastOutPressure == pressureOut
-        && lastOutTemperature == temperatureOut && getPressureDrop() == lastPressureDrop) {
+    SystemInterface inFluid = inStream.getFluid();
+    double inFlow = inFluid.getFlowRate("kg/hr");
+    if (inFlow <= 0.0 || lastFlowRate <= 0.0) {
+      return true;
+    }
+    if (inFluid.getTemperature() == lastTemperature && inFluid.getPressure() == lastPressure
+        && Math.abs(inFlow - lastFlowRate) / inFlow < 1e-6 && lastDuty == getDuty()
+        && lastOutPressure == pressureOut && lastOutTemperature == temperatureOut
+        && getPressureDrop() == lastPressureDrop
+        && java.util.Arrays.equals(inFluid.getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -347,6 +352,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       lastOutPressure = pressureOut;
       lastOutTemperature = temperatureOut;
       lastPressureDrop = pressureDrop;
+      lastComposition = inStream.getFluid().getMolarComposition().clone();
       setCalculationIdentifier(id);
       return;
     }
@@ -398,6 +404,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     lastOutPressure = pressureOut;
     lastOutTemperature = temperatureOut;
     lastPressureDrop = pressureDrop;
+    lastComposition = inStream.getFluid().getMolarComposition().clone();
     setCalculationIdentifier(id);
   }
 

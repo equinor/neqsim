@@ -114,6 +114,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   private double lastInStream2FlowRate = 0.0;
   /** Cached UA value for needRecalculation check. */
   private double lastUAvalue = 0.0;
+  /** Cached inlet stream 2 composition for needRecalculation check. */
+  private double[] lastInStream2Composition = null;
 
   // Dynamic simulation fields
   /** Metal wall mass in kg. */
@@ -475,6 +477,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     if (flow2 > 0 && Math.abs(flow2 - lastInStream2FlowRate) / flow2 > 1e-6) {
       return true;
     }
+    if (lastInStream2Composition == null || !java.util.Arrays
+        .equals(inStream[1].getThermoSystem().getMolarComposition(), lastInStream2Composition)) {
+      return true;
+    }
     return false;
   }
 
@@ -503,6 +509,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     lastOutPressure = pressureOut;
     lastOutTemperature = temperatureOut;
     lastPressureDrop = getPressureDrop();
+    // Composition tracking for both streams
+    if (inStream[0] != null && inStream[0].getThermoSystem() != null) {
+      lastComposition = inStream[0].getThermoSystem().getMolarComposition().clone();
+    }
+    if (inStream[1] != null && inStream[1].getThermoSystem() != null) {
+      lastInStream2Composition = inStream[1].getThermoSystem().getMolarComposition().clone();
+    }
   }
 
   /** {@inheritDoc} */
