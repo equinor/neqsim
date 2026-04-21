@@ -1,7 +1,9 @@
 package neqsim;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -9,14 +11,14 @@ import neqsim.integration.EOSComparison;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
@@ -906,9 +908,9 @@ public class DocExamplesCompilationTest {
 
   /**
    * Gas scrubber mechanical design + TR3500 conformity check example from
-   * docs/process/equipment/separators.md. Verifies the full API path used by the Kollsnes
-   * scrubber performance task (GasScrubber → initMechanicalDesign →
-   * GasScrubberMechanicalDesign setters → setConformityRules("TR3500") → checkConformity()).
+   * docs/process/equipment/separators.md. Verifies the full API path used by the Kollsnes scrubber
+   * performance task (GasScrubber → initMechanicalDesign → GasScrubberMechanicalDesign setters →
+   * setConformityRules("TR3500") → checkConformity()).
    */
   @Test
   public void testGasScrubberConformityCheckDoc() {
@@ -951,8 +953,7 @@ public class DocExamplesCompilationTest {
     proc.add(scrubber);
     proc.run();
 
-    neqsim.process.mechanicaldesign.separator.conformity.ConformityReport rep =
-        d.checkConformity();
+    neqsim.process.mechanicaldesign.separator.conformity.ConformityReport rep = d.checkConformity();
     assertNotNull(rep, "Conformity report must not be null");
     assertFalse(rep.getResults().isEmpty(), "Report must contain at least one check");
     for (neqsim.process.mechanicaldesign.separator.conformity.ConformityResult r : rep

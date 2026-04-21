@@ -208,13 +208,13 @@ void setEntrainment(double val, String specType, String specifiedStream,
                     String phaseFrom, String phaseTo)
 ```
 
-| Parameter | Description | Values |
-|-----------|-------------|--------|
-| `val` | Fraction of the source phase to entrain | 0.0 to 1.0 (e.g., 0.05 = 5%) |
-| `specType` | Basis for the fraction | `"mole"`, `"mass"`, or `"volume"` |
-| `specifiedStream` | Reference stream for the fraction | `"feed"` or `"product"` |
-| `phaseFrom` | Phase being entrained (source) | `"gas"`, `"oil"`, `"aqueous"` |
-| `phaseTo` | Phase receiving the entrainment (destination) | `"gas"`, `"oil"`, `"aqueous"`, `"liquid"` |
+| Parameter         | Description                                   | Values                                    |
+| ----------------- | --------------------------------------------- | ----------------------------------------- |
+| `val`             | Fraction of the source phase to entrain       | 0.0 to 1.0 (e.g., 0.05 = 5%)              |
+| `specType`        | Basis for the fraction                        | `"mole"`, `"mass"`, or `"volume"`         |
+| `specifiedStream` | Reference stream for the fraction             | `"feed"` or `"product"`                   |
+| `phaseFrom`       | Phase being entrained (source)                | `"gas"`, `"oil"`, `"aqueous"`             |
+| `phaseTo`         | Phase receiving the entrainment (destination) | `"gas"`, `"oil"`, `"aqueous"`, `"liquid"` |
 
 ### Specification Type (`specType`)
 
@@ -231,11 +231,11 @@ void setEntrainment(double val, String specType, String specifiedStream,
 
 The `Separator` class supports three entrainment paths:
 
-| From Phase | To Phase | Description |
-|------------|----------|-------------|
-| `"oil"` | `"gas"` | Oil droplets carried over into the gas outlet |
-| `"aqueous"` | `"gas"` | Water droplets carried over into the gas outlet |
-| `"gas"` | `"liquid"` | Gas bubbles carried under into the liquid outlet |
+| From Phase  | To Phase   | Description                                      |
+| ----------- | ---------- | ------------------------------------------------ |
+| `"oil"`     | `"gas"`    | Oil droplets carried over into the gas outlet    |
+| `"aqueous"` | `"gas"`    | Water droplets carried over into the gas outlet  |
+| `"gas"`     | `"liquid"` | Gas bubbles carried under into the liquid outlet |
 
 ```java
 Separator separator = new Separator("HP Sep", feed);
@@ -258,14 +258,14 @@ separator.run();
 
 The `ThreePhaseSeparator` supports six entrainment paths covering all phase-to-phase combinations:
 
-| From Phase | To Phase | Description |
-|------------|----------|-------------|
-| `"oil"` | `"gas"` | Oil droplets in gas outlet |
-| `"aqueous"` | `"gas"` | Water droplets in gas outlet |
-| `"gas"` | `"oil"` | Gas bubbles in oil outlet |
-| `"gas"` | `"aqueous"` | Gas bubbles in water outlet |
-| `"oil"` | `"aqueous"` | Oil droplets in water outlet |
-| `"aqueous"` | `"oil"` | Water droplets in oil outlet (water-in-oil) |
+| From Phase  | To Phase    | Description                                 |
+| ----------- | ----------- | ------------------------------------------- |
+| `"oil"`     | `"gas"`     | Oil droplets in gas outlet                  |
+| `"aqueous"` | `"gas"`     | Water droplets in gas outlet                |
+| `"gas"`     | `"oil"`     | Gas bubbles in oil outlet                   |
+| `"gas"`     | `"aqueous"` | Gas bubbles in water outlet                 |
+| `"oil"`     | `"aqueous"` | Oil droplets in water outlet                |
+| `"aqueous"` | `"oil"`     | Water droplets in oil outlet (water-in-oil) |
 
 ```java
 ThreePhaseSeparator separator = new ThreePhaseSeparator("1st Stage Sep", feed);
@@ -420,23 +420,23 @@ Horizontal separators have specific geometry parameters for sizing and level cal
 
 ### Vessel Geometry
 
-| Parameter | Method | Description | Unit |
-|-----------|--------|-------------|------|
-| Internal Diameter | `setInternalDiameter(value)` | Vessel ID (meters) | m |
-| Length | `setLength(value, unit)` | Tan-to-tan length | m |
-| L/D Ratio | `getLengthDiameterRatio()` | Length to diameter ratio (design target: 3-5) | - |
+| Parameter         | Method                       | Description                                   | Unit |
+| ----------------- | ---------------------------- | --------------------------------------------- | ---- |
+| Internal Diameter | `setInternalDiameter(value)` | Vessel ID (meters)                            | m    |
+| Length            | `setLength(value, unit)`     | Tan-to-tan length                             | m    |
+| L/D Ratio         | `getLengthDiameterRatio()`   | Length to diameter ratio (design target: 3-5) | -    |
 
 ### Liquid Levels (Horizontal Separators)
 
 Liquid levels are defined as percentages of internal diameter (ID). The mechanical design calculates absolute heights.
 
-| Level | Method | Description | Default % of ID |
-|-------|--------|-------------|-----------------|
-| HHLL | `getHHLL()` | High-High Liquid Level (alarm/shutdown) | 75% |
-| HLL | `getHLL()` | High Liquid Level (K-value reference) | 70% |
-| NLL | `getNLL()` | Normal Liquid Level (design point) | 50% |
-| LLL | `getLLL()` | Low Liquid Level (control warning) | 30% |
-| LLLL | `getLLLL()` | Low-Low Liquid Level (alarm/shutdown) | 25% |
+| Level | Method      | Description                             | Default % of ID |
+| ----- | ----------- | --------------------------------------- | --------------- |
+| HHLL  | `getHHLL()` | High-High Liquid Level (alarm/shutdown) | 75%             |
+| HLL   | `getHLL()`  | High Liquid Level (K-value reference)   | 70%             |
+| NLL   | `getNLL()`  | Normal Liquid Level (design point)      | 50%             |
+| LLL   | `getLLL()`  | Low Liquid Level (control warning)      | 30%             |
+| LLLL  | `getLLLL()` | Low-Low Liquid Level (alarm/shutdown)   | 25%             |
 
 ```java
 // Configure liquid levels (percentage of internal diameter)
@@ -457,10 +457,10 @@ double hllAbsolute = design.getHLL();
 
 For horizontal separators, effective lengths define zones for gas-liquid separation.
 
-| Parameter | Method | Description |
-|-----------|--------|-------------|
-| Gas Effective Length | `getGasEffectiveLength()` | Length for gas separation (inlet to outlet nozzle) |
-| Liquid Effective Length | `getLiquidEffectiveLength()` | Length for liquid settling |
+| Parameter               | Method                       | Description                                        |
+| ----------------------- | ---------------------------- | -------------------------------------------------- |
+| Gas Effective Length    | `getGasEffectiveLength()`    | Length for gas separation (inlet to outlet nozzle) |
+| Liquid Effective Length | `getLiquidEffectiveLength()` | Length for liquid settling                         |
 
 ```java
 // Get effective lengths for capacity calculations
@@ -501,11 +501,11 @@ Three-phase separators have additional interface level parameters for oil-water 
 
 ### Interface Levels
 
-| Level | Method | Description | Default % of ID |
-|-------|--------|-------------|-----------------|
-| HIL | `getHIL()` | High Interface Level | 45% |
-| NIL | `getNIL()` | Normal Interface Level (design point) | 40% |
-| LIL | `getLIL()` | Low Interface Level | 35% |
+| Level | Method     | Description                           | Default % of ID |
+| ----- | ---------- | ------------------------------------- | --------------- |
+| HIL   | `getHIL()` | High Interface Level                  | 45%             |
+| NIL   | `getNIL()` | Normal Interface Level (design point) | 40%             |
+| LIL   | `getLIL()` | Low Interface Level                   | 35%             |
 
 ```java
 // Configure interface levels
@@ -556,11 +556,11 @@ Gas scrubbers (vertical separators) focus on gas phase quality with minimal liqu
 
 ### Key Parameters
 
-| Parameter | Method | Description |
-|-----------|--------|-------------|
-| Internal Diameter | `setInternalDiameter(value)` | Vessel ID |
-| Height | `setSeparatorLength(value)` | Tan-to-tan height (meters) |
-| K-value | `calcKValueAtHLL()` | Souders-Brown coefficient |
+| Parameter         | Method                       | Description                |
+| ----------------- | ---------------------------- | -------------------------- |
+| Internal Diameter | `setInternalDiameter(value)` | Vessel ID                  |
+| Height            | `setSeparatorLength(value)`  | Tan-to-tan height (meters) |
+| K-value           | `calcKValueAtHLL()`          | Souders-Brown coefficient  |
 
 ### Automatic Constraint Configuration
 
@@ -598,13 +598,13 @@ NeqSim separators include a constraint system for performance monitoring and cap
 
 ### Available Constraints
 
-| Constraint Type | Parameter | Limit | Standard Reference |
-|-----------------|-----------|-------|-------------------|
-| K-value (Souders-Brown) | Gas load factor at HLL | < 0.15 m/s | Equinor TR3500, API 12J |
-| Droplet Cut Size | Minimum removed droplet | < 150 µm | Industry practice |
-| Inlet Momentum Flux | ρv² at inlet nozzle | < 16,000 Pa | Equinor revamp criteria |
-| Oil Retention Time | Oil phase residence | ≥ 3 min | API 12J |
-| Water Retention Time | Water phase residence | ≥ 3 min | API 12J |
+| Constraint Type         | Parameter               | Limit       | Standard Reference      |
+| ----------------------- | ----------------------- | ----------- | ----------------------- |
+| K-value (Souders-Brown) | Gas load factor at HLL  | < 0.15 m/s  | Equinor TR3500, API 12J |
+| Droplet Cut Size        | Minimum removed droplet | < 150 µm    | Industry practice       |
+| Inlet Momentum Flux     | ρv² at inlet nozzle     | < 16,000 Pa | Equinor revamp criteria |
+| Oil Retention Time      | Oil phase residence     | ≥ 3 min     | API 12J                 |
+| Water Retention Time    | Water phase residence   | ≥ 3 min     | API 12J                 |
 
 ### Performance Calculation Methods
 
@@ -673,14 +673,14 @@ Different separator types and applications require different constraint sets. Ne
 
 ### Pre-Configured Constraint Sets
 
-| Method | Constraints Enabled | Use Case |
-|--------|---------------------|----------|
-| `useAllConstraints()` | All 5 constraints | Full process separator analysis |
-| `useEquinorConstraints()` | K-value, Droplet, Momentum, Oil RT, Water RT | Equinor TR3500 compliance |
-| `useAPIConstraints()` | K-value, Oil RT, Water RT | API 12J compliance |
-| `useGasScrubberConstraints()` | K-value only | Gas scrubbers, inlet separators |
-| `useGasCapacityConstraints()` | K-value, Droplet, Momentum | Gas-focused analysis |
-| `useLiquidCapacityConstraints()` | Oil RT, Water RT | Liquid-focused analysis |
+| Method                           | Constraints Enabled                          | Use Case                        |
+| -------------------------------- | -------------------------------------------- | ------------------------------- |
+| `useAllConstraints()`            | All 5 constraints                            | Full process separator analysis |
+| `useEquinorConstraints()`        | K-value, Droplet, Momentum, Oil RT, Water RT | Equinor TR3500 compliance       |
+| `useAPIConstraints()`            | K-value, Oil RT, Water RT                    | API 12J compliance              |
+| `useGasScrubberConstraints()`    | K-value only                                 | Gas scrubbers, inlet separators |
+| `useGasCapacityConstraints()`    | K-value, Droplet, Momentum                   | Gas-focused analysis            |
+| `useLiquidCapacityConstraints()` | Oil RT, Water RT                             | Liquid-focused analysis         |
 
 ### Usage Examples
 
@@ -959,30 +959,30 @@ Example JSON output:
 
 ### Equinor TR3500 Requirements
 
-| Parameter | Requirement | Description |
-|-----------|-------------|-------------|
-| K-value | ≤ 0.15 m/s | Souders-Brown at HLL |
-| Droplet cut size | ≤ 150 µm | At HLL conditions |
-| Inlet momentum | ≤ 16,000 Pa | For revamp assessment |
-| Retention time | ≥ 3 min | For oil and water phases |
+| Parameter        | Requirement | Description              |
+| ---------------- | ----------- | ------------------------ |
+| K-value          | ≤ 0.15 m/s  | Souders-Brown at HLL     |
+| Droplet cut size | ≤ 150 µm    | At HLL conditions        |
+| Inlet momentum   | ≤ 16,000 Pa | For revamp assessment    |
+| Retention time   | ≥ 3 min     | For oil and water phases |
 
 ### API 12J Guidelines
 
-| Parameter | Requirement | Description |
-|-----------|-------------|-------------|
-| K-value | ≤ 0.107 m/s | More conservative for oilfield use |
-| Liquid retention | ≥ 3 min | Oil and water phases |
-| L/D ratio | 3:1 to 5:1 | Horizontal separator design |
+| Parameter        | Requirement | Description                        |
+| ---------------- | ----------- | ---------------------------------- |
+| K-value          | ≤ 0.107 m/s | More conservative for oilfield use |
+| Liquid retention | ≥ 3 min     | Oil and water phases               |
+| L/D ratio        | 3:1 to 5:1  | Horizontal separator design        |
 
 ### Application by Equipment Type
 
-| Equipment | Primary Constraints | Secondary Constraints |
-|-----------|--------------------|-----------------------|
-| Two-Phase Separator | K-value, Oil RT | Droplet, Momentum |
-| Three-Phase Separator | K-value, Oil RT, Water RT | Droplet, Momentum |
-| Gas Scrubber | K-value only | - |
-| Inlet Separator | K-value, Momentum | - |
-| Test Separator | Oil RT, Water RT | K-value |
+| Equipment             | Primary Constraints       | Secondary Constraints |
+| --------------------- | ------------------------- | --------------------- |
+| Two-Phase Separator   | K-value, Oil RT           | Droplet, Momentum     |
+| Three-Phase Separator | K-value, Oil RT, Water RT | Droplet, Momentum     |
+| Gas Scrubber          | K-value only              | -                     |
+| Inlet Separator       | K-value, Momentum         | -                     |
+| Test Separator        | Oil RT, Water RT          | K-value               |
 
 ---
 
@@ -1104,13 +1104,13 @@ an installed scrubber against the vendor design basis.
 `TR3500RuleSet` evaluates five checks with **fixed** limits — do not modify
 these unless you are defining a new rule set:
 
-| Check | Limit | Units | Description |
-|-------|-------|-------|-------------|
-| `k-factor` | 0.15 | m/s | Vessel gas-load factor (Souders–Brown) |
-| `inlet-momentum` | 15 000 | Pa | Inlet nozzle ρv² |
-| `mesh-k-value` | 0.27 | m/s | K-value at the demister mesh cross-section |
-| `drainage-head` | vessel-specific | mm | Required vs available drainage height |
-| `cyclone-dp-to-drain` | 50 | mbar | Cyclone ΔP from inlet to drain chamber |
+| Check                 | Limit           | Units | Description                                |
+| --------------------- | --------------- | ----- | ------------------------------------------ |
+| `k-factor`            | 0.15            | m/s   | Vessel gas-load factor (Souders–Brown)     |
+| `inlet-momentum`      | 15 000          | Pa    | Inlet nozzle ρv²                           |
+| `mesh-k-value`        | 0.27            | m/s   | K-value at the demister mesh cross-section |
+| `drainage-head`       | vessel-specific | mm    | Required vs available drainage height      |
+| `cyclone-dp-to-drain` | 50              | mbar  | Cyclone ΔP from inlet to drain chamber     |
 
 Each check returns a `ConformityResult` with status `PASS`, `WARNING` (≥ 90 %
 of limit), or `FAIL` (over limit).
