@@ -154,8 +154,8 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Minimum number of units required for dataflow scheduling (vs level-based
    * parallel) in {@link #runOptimized(UUID)}. Below this threshold the
-   * {@link CompletableFuture} overhead outweighs the straggler-elimination
-   * benefit.
+   * {@link java.util.concurrent.CompletableFuture} overhead outweighs the
+   * straggler-elimination benefit.
    */
   private static final int DATAFLOW_UNIT_THRESHOLD = 8;
   /** Whether to use graph-based execution order instead of insertion order. */
