@@ -44,7 +44,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized PhaseEos clone() {
+  public PhaseEos clone() {
     PhaseEos clonedPhase = null;
     try {
       clonedPhase = (PhaseEos) super.clone();
@@ -52,12 +52,17 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // Note: This is a shallow copy for mixSelect and mixRule.
-    // The cloned phase shares the same mixing rule handler as the original.
-    // For thread-safe parallel execution, synchronization must be used when
-    // accessing shared mixing rule state.
-    // Deep copy was attempted but caused issues with CPA mixing rules where
-    // getMixingRule(int) doesn't fully initialize the mixing rule parameters.
+    // Thread-safety contract: mixSelect and mixRule are shared (shallow) with the
+    // parent. This is safe for concurrent flashing on parent and clone because the
+    // interaction-parameter matrices (intparam, intparamT, HVDij, NRTLDij,
+    // WSintparam,
+    // NRTLalpha, ...) are written exclusively by setMixingRule() during fluid setup
+    // and are treated as read-only during flash calculations. Callers MUST NOT
+    // invoke setMixingRule() on a fluid (or any of its clones) while another thread
+    // is performing a flash on a sibling clone. EosMixingRuleHandler.clone() is
+    // available for callers that need fully-independent matrix copies (e.g., when
+    // tuning kij in parallel); it is intentionally not invoked here to keep clone()
+    // cheap on the hot path.
     return clonedPhase;
   }
 
@@ -229,13 +234,13 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * molarVolume2.
    * </p>
    *
-   * @param pressure a double
+   * @param pressure    a double
    * @param temperature a double
-   * @param A a double
-   * @param B a double
-   * @param pt the PhaseType of the phase
+   * @param A           a double
+   * @param B           a double
+   * @param pt          the PhaseType of the phase
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException if any.
+   * @throws neqsim.util.exception.IsNaNException             if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
@@ -317,12 +322,13 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * Analytic molar volume solver for cubic equations of state. Used as a fallback when the
+   * Analytic molar volume solver for cubic equations of state. Used as a fallback
+   * when the
    * numerical solver does not converge.
    *
-   * @param pressure system pressure
+   * @param pressure    system pressure
    * @param temperature system temperature
-   * @param pt phase type (gas or liquid)
+   * @param pt          phase type (gas or liquid)
    * @return molar volume [m3/mol * 1e5]
    * @throws neqsim.util.exception.IsNaNException if no real roots are found
    */
@@ -548,10 +554,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * calcAT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -564,10 +570,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * calcATT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -1312,8 +1318,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     for (int i = 0; i < numberOfComponents; i++) {
-      matrix[i][numberOfComponents] =
-          (FBT + FBD * AT) * Bi[i] + FDT * Ai[i] + FD * componentArray[i].getAiT(); // dFdndT
+      matrix[i][numberOfComponents] = (FBT + FBD * AT) * Bi[i] + FDT * Ai[i] + FD * componentArray[i].getAiT(); // dFdndT
       matrix[numberOfComponents][i] = matrix[i][numberOfComponents];
 
       matrix[i][numberOfComponents + 1] = FnV + FBV * Bi[i] + FDV * Ai[i]; // dFdndV
