@@ -27,10 +27,12 @@ import neqsim.process.equipment.util.Calculator;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Builder class for constructing a {@link ProcessGraph} from a {@link ProcessSystem}.
+ * Builder class for constructing a {@link ProcessGraph} from a
+ * {@link ProcessSystem}.
  *
  * <p>
- * This class discovers stream connections between equipment units and produces an explicit graph
+ * This class discovers stream connections between equipment units and produces
+ * an explicit graph
  * structure that enables topology-based calculation order derivation.
  * </p>
  *
@@ -81,11 +83,16 @@ public final class ProcessGraphBuilder {
     // Build a map from stream objects to units that produce them (as outputs)
     Map<Object, ProcessEquipmentInterface> streamToProducer = new IdentityHashMap<>();
 
-    // First pass: identify stream producers
+    // First pass: identify stream producers.
+    // We process non-Stream equipment FIRST so that streams produced by real
+    // equipment (e.g., Recycle.setOutletStream, Splitter outputs) take priority
+    // over "Stream produces itself" mappings. This ensures a Stream used as the
+    // outlet of a Recycle is correctly linked back to the Recycle in the graph,
+    // which is required for cycle detection and recycle convergence.
     for (ProcessEquipmentInterface unit : units) {
-      // Stream units produce themselves
       if (unit instanceof StreamInterface) {
-        streamToProducer.put(unit, unit);
+        // Defer Stream self-registration to pass 1b below.
+        continue;
       }
 
       // TwoPort equipment produces outStream
@@ -96,7 +103,8 @@ public final class ProcessGraphBuilder {
         }
       }
 
-      // Splitters produce split streams - use reflection since getSplitStream array not in
+      // Splitters produce split streams - use reflection since getSplitStream array
+      // not in
       // interface
       if (unit instanceof SplitterInterface) {
         collectSplitStreams(unit, streamToProducer);
@@ -192,8 +200,7 @@ public final class ProcessGraphBuilder {
       // Covers Separator, ThreePhaseSeparator, SimpleAbsorber, SimpleTEGAbsorber,
       // GasScrubber, and any other subclass that exposes the standard outlet API.
       if (unit instanceof neqsim.process.equipment.separator.Separator) {
-        neqsim.process.equipment.separator.Separator sep =
-            (neqsim.process.equipment.separator.Separator) unit;
+        neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
         try {
           StreamInterface gasOut = sep.getGasOutStream();
           if (gasOut != null) {
@@ -214,8 +221,7 @@ public final class ProcessGraphBuilder {
 
       // ThreePhaseSeparator additionally produces water and oil outlet streams.
       if (unit instanceof neqsim.process.equipment.separator.ThreePhaseSeparator) {
-        neqsim.process.equipment.separator.ThreePhaseSeparator tps =
-            (neqsim.process.equipment.separator.ThreePhaseSeparator) unit;
+        neqsim.process.equipment.separator.ThreePhaseSeparator tps = (neqsim.process.equipment.separator.ThreePhaseSeparator) unit;
         try {
           StreamInterface waterOut = tps.getWaterOutStream();
           if (waterOut != null) {
@@ -236,8 +242,7 @@ public final class ProcessGraphBuilder {
 
       // DistillationColumn produces gas (top) and liquid (bottoms) outlet streams.
       if (unit instanceof neqsim.process.equipment.distillation.DistillationColumn) {
-        neqsim.process.equipment.distillation.DistillationColumn col =
-            (neqsim.process.equipment.distillation.DistillationColumn) unit;
+        neqsim.process.equipment.distillation.DistillationColumn col = (neqsim.process.equipment.distillation.DistillationColumn) unit;
         try {
           StreamInterface gasOut = col.getGasOutStream();
           if (gasOut != null) {
@@ -260,14 +265,29 @@ public final class ProcessGraphBuilder {
       collectProducedStreams(unit, streamToProducer);
     }
 
+    // Pass 1b: Stream units default to producing themselves, but only if no
+    // real producer has already claimed them (e.g., a Recycle's outlet).
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof StreamInterface) {
+        streamToProducer.putIfAbsent(unit, unit);
+      }
+    }
+
     // Second pass: identify stream consumers and create edges
     for (ProcessEquipmentInterface unit : units) {
-      // Stream units wrap another upstream stream via setStream(..). When a
-      // Stream is constructed as `new Stream("x", someEquipment.getGasOutStream())`
-      // its internal `stream` field points to the upstream producer's outlet.
-      // Create an edge from that producer to this wrapping Stream so the graph
-      // partitioner places the wrapping Stream AFTER its source equipment.
+      // Stream units may be produced by other equipment (e.g.,
+      // Recycle.setOutletStream,
+      // or a Stream wrapping another upstream Stream via setStream). In both cases
+      // create an edge from the producer to this Stream so the graph partitioner
+      // places it AFTER its source equipment, and so recycle cycles are detected
+      // when the outlet stream of a Recycle is registered as its own unit.
       if (unit instanceof StreamInterface) {
+        // Case 1: this stream is registered as an outlet of another equipment.
+        ProcessEquipmentInterface producer = streamToProducer.get(unit);
+        if (producer != null && producer != unit) {
+          createEdgeFromProducer(graph, streamToProducer, unit, unit);
+        }
+        // Case 2: Stream wraps another upstream Stream via the `stream` field.
         try {
           java.lang.reflect.Field streamField = findField(unit.getClass(), "stream");
           if (streamField != null) {
@@ -291,9 +311,28 @@ public final class ProcessGraphBuilder {
         }
       }
 
-      // Mixers consume multiple streams - use reflection since getStream(i) not in interface
+      // Mixers consume multiple streams - use reflection since getStream(i) not in
+      // interface
       if (unit instanceof MixerInterface) {
         collectMixerInputStreamsAndCreateEdges(unit, graph, streamToProducer);
+      }
+
+      // Recycle units consume input streams via addStream(..). They hold inputs
+      // in a `streams` ArrayList identical to Mixer, but Recycle does not
+      // implement MixerInterface. Without explicit handling, edges feeding a
+      // Recycle are missing and recycle cycles are not detected by the graph,
+      // causing Phase 2 iteration to be skipped entirely.
+      if (unit instanceof neqsim.process.equipment.util.Recycle) {
+        collectMixerInputStreamsAndCreateEdges(unit, graph, streamToProducer);
+      }
+
+      // DistillationColumn consumes feed streams attached to its trays via
+      // getTray(n).addStream(..) and addFeedStream(..). Each tray extends Mixer
+      // and holds the feeds in a `streams` ArrayList. Walk all trays to collect
+      // edges so downstream recycles (e.g., a reboil gas recycle) correctly
+      // participate in cycle detection.
+      if (unit instanceof neqsim.process.equipment.distillation.DistillationColumn) {
+        collectDistillationFeedsAndCreateEdges(unit, graph, streamToProducer);
       }
 
       // HeatExchangers consume two input streams
@@ -320,6 +359,12 @@ public final class ProcessGraphBuilder {
             break; // No more streams
           }
         }
+        // Some multi-stream HX (e.g., LNGHeatExchanger) defer registering input
+        // streams via a `pendingStreams` list until run() is called. At graph
+        // build time those streams are not yet visible through getInStream(),
+        // so scan the pendingStreams field directly to create the dependency
+        // edges required for correct execution order in parallel mode.
+        collectPendingStreamsAndCreateEdges(unit, graph, streamToProducer);
       }
 
       // TurboExpanderCompressor consumes expander and compressor feed streams
@@ -474,10 +519,11 @@ public final class ProcessGraphBuilder {
   }
 
   /**
-   * Collects split streams from a Splitter via reflection. Uses the splitStream field or
+   * Collects split streams from a Splitter via reflection. Uses the splitStream
+   * field or
    * getSplitStream(int) method.
    *
-   * @param unit the splitter unit to collect streams from
+   * @param unit             the splitter unit to collect streams from
    * @param streamToProducer map to store stream to producer associations
    */
   private static void collectSplitStreams(ProcessEquipmentInterface unit,
@@ -517,11 +563,12 @@ public final class ProcessGraphBuilder {
   }
 
   /**
-   * Collects input streams from a Mixer and creates edges. Uses reflection since getStream(int) is
+   * Collects input streams from a Mixer and creates edges. Uses reflection since
+   * getStream(int) is
    * not in MixerInterface.
    *
-   * @param unit the mixer unit to collect streams from
-   * @param graph the process graph to add edges to
+   * @param unit             the mixer unit to collect streams from
+   * @param graph            the process graph to add edges to
    * @param streamToProducer map of stream to producer associations
    */
   private static void collectMixerInputStreamsAndCreateEdges(ProcessEquipmentInterface unit,
@@ -566,7 +613,7 @@ public final class ProcessGraphBuilder {
   /**
    * Finds a field in the class hierarchy.
    *
-   * @param clazz the class to search in (including superclasses)
+   * @param clazz     the class to search in (including superclasses)
    * @param fieldName the name of the field to find
    * @return the Field object, or null if not found
    */
@@ -583,9 +630,86 @@ public final class ProcessGraphBuilder {
   }
 
   /**
+   * Creates edges from producers to a unit for any streams listed in the unit's
+   * {@code pendingStreams} field. Used by multi-stream heat exchangers (e.g.,
+   * LNGHeatExchanger) that defer registering input streams until {@code run()}.
+   *
+   * @param unit             the process equipment unit holding the pendingStreams
+   *                         list
+   * @param graph            the process graph to add edges to
+   * @param streamToProducer map of stream-to-producer relationships
+   */
+  private static void collectPendingStreamsAndCreateEdges(ProcessEquipmentInterface unit,
+      ProcessGraph graph, Map<Object, ProcessEquipmentInterface> streamToProducer) {
+    try {
+      Field pendingField = findField(unit.getClass(), "pendingStreams");
+      if (pendingField == null) {
+        return;
+      }
+      pendingField.setAccessible(true);
+      Object value = pendingField.get(unit);
+      if (value instanceof java.util.List) {
+        for (Object s : (java.util.List<?>) value) {
+          if (s instanceof StreamInterface) {
+            createEdgeFromProducer(graph, streamToProducer, s, unit);
+          }
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Could not access pendingStreams for {}: {}", unit.getName(), ex.getMessage());
+    }
+  }
+
+  /**
+   * Creates edges from producers to a DistillationColumn for every feed stream
+   * attached to any tray (via {@code getTray(n).addStream(..)} or
+   * {@code addFeedStream(..)}). Each tray extends Mixer and holds its feeds in
+   * a {@code streams} ArrayList; we walk the column's {@code trays} list and
+   * read each tray's {@code streams} field via reflection.
+   *
+   * @param unit             the DistillationColumn unit
+   * @param graph            the process graph to add edges to
+   * @param streamToProducer map of stream-to-producer relationships
+   */
+  private static void collectDistillationFeedsAndCreateEdges(ProcessEquipmentInterface unit,
+      ProcessGraph graph, Map<Object, ProcessEquipmentInterface> streamToProducer) {
+    try {
+      Field traysField = findField(unit.getClass(), "trays");
+      if (traysField == null) {
+        return;
+      }
+      traysField.setAccessible(true);
+      Object traysValue = traysField.get(unit);
+      if (!(traysValue instanceof java.util.List)) {
+        return;
+      }
+      for (Object tray : (java.util.List<?>) traysValue) {
+        if (tray == null) {
+          continue;
+        }
+        Field streamsField = findField(tray.getClass(), "streams");
+        if (streamsField == null) {
+          continue;
+        }
+        streamsField.setAccessible(true);
+        Object streamsValue = streamsField.get(tray);
+        if (streamsValue instanceof java.util.List) {
+          for (Object s : (java.util.List<?>) streamsValue) {
+            if (s instanceof StreamInterface) {
+              createEdgeFromProducer(graph, streamToProducer, s, unit);
+            }
+          }
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Could not walk distillation trays for {}: {}", unit.getName(), ex.getMessage());
+    }
+  }
+
+  /**
    * Collects streams produced by a unit via common getter methods.
    *
-   * @param unit the process equipment unit to analyze
+   * @param unit             the process equipment unit to analyze
    * @param streamToProducer map to store stream-to-producer relationships
    */
   private static void collectProducedStreams(ProcessEquipmentInterface unit,
@@ -638,8 +762,8 @@ public final class ProcessGraphBuilder {
   /**
    * Collects streams consumed by a unit and creates edges.
    *
-   * @param unit the process equipment unit to analyze
-   * @param graph the process graph to add edges to
+   * @param unit             the process equipment unit to analyze
+   * @param graph            the process graph to add edges to
    * @param streamToProducer map of stream-to-producer relationships
    */
   private static void collectConsumedStreamsAndCreateEdges(ProcessEquipmentInterface unit,
@@ -684,10 +808,10 @@ public final class ProcessGraphBuilder {
   /**
    * Scans fields for inlet streams.
    *
-   * @param unit the process equipment unit to scan
-   * @param graph the process graph to add edges to
+   * @param unit             the process equipment unit to scan
+   * @param graph            the process graph to add edges to
    * @param streamToProducer map of stream-to-producer relationships
-   * @param visited set of already visited streams to avoid duplicates
+   * @param visited          set of already visited streams to avoid duplicates
    */
   private static void scanFieldsForInletStreams(ProcessEquipmentInterface unit, ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Set<Object> visited) {
@@ -729,7 +853,8 @@ public final class ProcessGraphBuilder {
           }
         }
 
-        // Handle Mixer fields that contain inlet streams (like Separator.inletStreamMixer)
+        // Handle Mixer fields that contain inlet streams (like
+        // Separator.inletStreamMixer)
         if (MixerInterface.class.isAssignableFrom(field.getType())) {
           try {
             if (!field.isAccessible()) {
@@ -745,8 +870,7 @@ public final class ProcessGraphBuilder {
                 Object streamsValue = streamsField.get(mixer);
                 if (streamsValue instanceof java.util.List) {
                   @SuppressWarnings("unchecked")
-                  java.util.List<StreamInterface> streams =
-                      (java.util.List<StreamInterface>) streamsValue;
+                  java.util.List<StreamInterface> streams = (java.util.List<StreamInterface>) streamsValue;
                   for (StreamInterface inletStream : streams) {
                     if (inletStream != null && !visited.contains(inletStream)) {
                       visited.add(inletStream);
@@ -768,10 +892,10 @@ public final class ProcessGraphBuilder {
   /**
    * Creates an edge from the producer of a stream to the consumer.
    *
-   * @param graph the process graph to add the edge to
+   * @param graph            the process graph to add the edge to
    * @param streamToProducer map of stream-to-producer relationships
-   * @param stream the stream object connecting producer to consumer
-   * @param consumer the consuming process equipment unit
+   * @param stream           the stream object connecting producer to consumer
+   * @param consumer         the consuming process equipment unit
    */
   private static void createEdgeFromProducer(ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Object stream,
@@ -790,8 +914,7 @@ public final class ProcessGraphBuilder {
           }
         }
         if (!edgeExists) {
-          StreamInterface streamIface =
-              stream instanceof StreamInterface ? (StreamInterface) stream : null;
+          StreamInterface streamIface = stream instanceof StreamInterface ? (StreamInterface) stream : null;
           graph.addEdge(sourceNode, targetNode, streamIface);
         }
       }
@@ -801,7 +924,7 @@ public final class ProcessGraphBuilder {
   /**
    * Safely invokes a method on a process equipment unit.
    *
-   * @param unit the process equipment instance to invoke the method on
+   * @param unit   the process equipment instance to invoke the method on
    * @param method the method to invoke
    * @return the result of the method invocation, or null if an exception occurs
    */
