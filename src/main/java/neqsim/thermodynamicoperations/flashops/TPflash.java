@@ -72,24 +72,28 @@ public class TPflash extends Flash {
    */
   public void sucsSubs() {
     deviation = 0;
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
+    int nc = phase0.getNumberOfComponents();
 
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-          || system.getPhase(0).getComponent(i).isIsIon()) {
-        Kold = system.getPhase(0).getComponent(i).getK();
-        system.getPhase(0).getComponent(i).setK(1.0e-40);
-        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+    for (i = 0; i < nc; i++) {
+      neqsim.thermo.component.ComponentInterface comp0 = phase0.getComponent(i);
+      neqsim.thermo.component.ComponentInterface comp1 = phase1.getComponent(i);
+      if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
+        Kold = comp0.getK();
+        comp0.setK(1.0e-40);
+        comp1.setK(comp0.getK());
       } else {
-        Kold = system.getPhase(0).getComponent(i).getK();
-        system.getPhase(0).getComponent(i)
-            .setK(system.getPhase(1).getComponent(i).getFugacityCoefficient()
-                / system.getPhase(0).getComponent(i).getFugacityCoefficient() * presdiff);
-        if (Double.isNaN(system.getPhase(0).getComponent(i).getK())) {
-          system.getPhase(0).getComponent(i).setK(Kold);
+        Kold = comp0.getK();
+        double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        comp0.setK(Knew);
+        if (Double.isNaN(Knew)) {
+          comp0.setK(Kold);
           system.init(1);
+          Knew = comp0.getK();
         }
-        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
-        deviation += Math.abs(Math.log(system.getPhase(0).getComponent(i).getK()) - Math.log(Kold));
+        comp1.setK(Knew);
+        deviation += Math.abs(Math.log(Knew / Kold));
       }
     }
 
@@ -158,17 +162,22 @@ public class TPflash extends Flash {
       useGDEM = mu1 > 0 && mu2 > 0 && mu1 < 1.5 && mu2 < 1.5;
     }
 
+    neqsim.thermo.phase.PhaseInterface ph0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface ph1 = system.getPhase(1);
     if (!useGDEM) {
+      double lambdaFactor = lambda / (1.0 - lambda);
       for (i = 0; i < nc; i++) {
-        lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
-        system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-        system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+        lnK[i] += lambdaFactor * deltalnK[i];
+        double expK = Math.exp(lnK[i]);
+        ph0.getComponent(i).setK(expK);
+        ph1.getComponent(i).setK(expK);
       }
     } else {
       for (i = 0; i < nc; i++) {
         lnK[i] += mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
-        system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-        system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+        double expK = Math.exp(lnK[i]);
+        ph0.getComponent(i).setK(expK);
+        ph1.getComponent(i).setK(expK);
       }
     }
     double oldBeta = system.getBeta();
@@ -190,8 +199,9 @@ public class TPflash extends Flash {
       logger.debug("accselerateSucsSubs init failed, reverting: {}", initEx.getMessage());
       System.arraycopy(savedLnK, 0, lnK, 0, nc);
       for (i = 0; i < nc; i++) {
-        system.getPhase(0).getComponent(i).setK(Math.exp(savedLnK[i]));
-        system.getPhase(1).getComponent(i).setK(Math.exp(savedLnK[i]));
+        double expK = Math.exp(savedLnK[i]);
+        ph0.getComponent(i).setK(expK);
+        ph1.getComponent(i).setK(expK);
       }
       system.setBeta(oldBeta);
       system.calc_x_y();
@@ -205,12 +215,15 @@ public class TPflash extends Flash {
    * </p>
    */
   public void setNewK() {
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
+    int nc = phase0.getNumberOfComponents();
+    for (i = 0; i < nc; i++) {
       lnOldOldOldK[i] = lnOldOldK[i];
       lnOldOldK[i] = lnOldK[i];
       lnOldK[i] = lnK[i];
-      lnK[i] = Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-          - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient());
+      lnK[i] = Math.log(phase1.getComponent(i).getFugacityCoefficient()
+          / phase0.getComponent(i).getFugacityCoefficient());
 
       oldoldDeltalnK[i] = lnOldOldK[i] - lnOldOldOldK[i];
       oldDeltalnK[i] = lnOldK[i] - lnOldOldK[i];
@@ -224,10 +237,14 @@ public class TPflash extends Flash {
    * </p>
    */
   public void resetK() {
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
+    int nc = phase0.getNumberOfComponents();
+    for (i = 0; i < nc; i++) {
       lnK[i] = lnOldK[i];
-      system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-      system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      double expK = Math.exp(lnK[i]);
+      phase0.getComponent(i).setK(expK);
+      phase1.getComponent(i).setK(expK);
     }
     try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
