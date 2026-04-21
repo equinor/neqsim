@@ -1196,15 +1196,14 @@ public class ProcessSystem extends SimulationBaseClass {
       // Calculator-containing processes must run sequentially.
       runSequential(id);
     } else if (hasRecycles()) {
-      // Process has Recycle units. Use hybrid execution which parallelizes the
-      // feed-forward levels before the recycle section and iterates on the rest.
-      try {
-        runHybrid(id);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        logger.warn("Hybrid execution interrupted, falling back to sequential");
-        runSequential(id);
-      }
+      // Process has Recycle units. runHybrid() uses needRecalculation() to skip
+      // unit re-runs on subsequent iterations, which converges to a slightly
+      // different fixed point than runSequential() for tightly coupled loops
+      // (e.g., OilGasProcessTest, GlycolRigTest water-balance). Until hybrid
+      // convergence is proven bit-identical to sequential, route recycle systems
+      // to sequential to preserve correctness. The feed-forward phase of hybrid
+      // was a minor win; real speedup comes from recycle-free parallel trains.
+      runSequential(id);
     } else if (hasMultiInputEquipment()) {
       // Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
       // recycles or adjusters. The graph correctly places multi-input equipment
