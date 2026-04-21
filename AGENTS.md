@@ -382,6 +382,24 @@ double viscosity = fluid.getPhase("gas").getViscosity("kg/msec");
 double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK");
 ```
 
+### Phase envelope (CRITICAL: branch labels are swapped)
+
+When using `calcPTphaseEnvelope(true, 1.0)` (bubblePointFirst=true), the getter
+method names are SWAPPED — `getBubblePointTemperatures()` returns physically DEW
+curve data and vice versa. **Always classify branches by physical reasoning:**
+
+```python
+branch_A_T = np.array(envelope.getBubblePointTemperatures())
+branch_B_T = np.array(envelope.getDewPointTemperatures())
+# The DEW curve always has the higher max temperature (contains cricondentherm)
+if branch_A_T.max() > branch_B_T.max():
+    dew_T = branch_A_T   # "bubble" getter returns dew data (swapped!)
+    bub_T = branch_B_T
+else:
+    dew_T = branch_B_T
+    bub_T = branch_A_T
+```
+
 ### Process simulation
 
 ```java

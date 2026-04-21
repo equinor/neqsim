@@ -900,6 +900,81 @@ String instrJson = instrGen.toJson();
 
 Tag numbering convention: PT-100+, TT-200+, LT-300+, FT-400+ (ISA-5.1).
 
+## Phase Envelope Calculation and Interpretation
+
+### Calculating a PT Phase Envelope
+
+```java
+SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 50.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.calcPTphaseEnvelope(true, 1.0);  // bubblePointFirst=true, lowPres=1.0 bara
+
+// Access envelope data via the operation object
+PTPhaseEnvelopeMichelsen envelope = (PTPhaseEnvelopeMichelsen) ops.getOperation();
+double[] cricondenBar = envelope.getCricondenBar();    // [T_K, P_bara, 0]
+double[] cricondenTherm = envelope.getCricondenTherm(); // [T_K, P_bara, 0]
+double critT = envelope.getCriticalTemperature();       // Kelvin
+double critP = envelope.getCriticalPressure();          // bara
+```
+
+### CRITICAL: Branch Classification Bug with bubblePointFirst=true
+
+**When using `calcPTphaseEnvelope(true, 1.0)` (bubblePointFirst=true), the NeqSim
+Michelsen algorithm stores the envelope branches with SWAPPED labels:**
+
+- `getBubblePointTemperatures()` / `getBubblePointPressures()` → actually the **DEW** curve (right side, higher T, includes cricondentherm)
+- `getDewPointTemperatures()` / `getDewPointPressures()` → actually the **BUBBLE** curve (left side, lower T)
+
+**Root cause:** The algorithm initializes `isDewPhase=true` regardless of the
+`bubblePointFirst` flag. When starting from the bubble side, initial points go
+into the dew list. At the critical point, `isDewPhase` flips, sending post-CP
+points (the actual dew side) into the bubble list.
+
+**Always determine which branch is which using physical reasoning:**
+
+```python
+branch_A_T = np.array(envelope.getBubblePointTemperatures())
+branch_A_P = np.array(envelope.getBubblePointPressures())
+branch_B_T = np.array(envelope.getDewPointTemperatures())
+branch_B_P = np.array(envelope.getDewPointPressures())
+
+# The DEW curve always contains the cricondentherm (maximum temperature)
+if branch_A_T.max() > branch_B_T.max():
+    dew_T, dew_P = branch_A_T, branch_A_P
+    bub_T, bub_P = branch_B_T, branch_B_P
+else:
+    dew_T, dew_P = branch_B_T, branch_B_P
+    bub_T, bub_P = branch_A_T, branch_A_P
+```
+
+### Phase Envelope Physical Interpretation
+
+**Bubble point curve** (left side of envelope):
+- Boundary between subcooled liquid and two-phase region
+- At the bubble point, the first infinitesimal bubble of vapor forms
+- Crossing from left to right: liquid → two-phase
+
+**Dew point curve** (right side of envelope):
+- Boundary between superheated vapor and two-phase region
+- At the dew point, the first infinitesimal drop of liquid forms
+- Crossing from right to left: vapor → two-phase
+
+**Key points on the envelope:**
+- **Critical point**: Where bubble and dew curves meet; liquid and vapor become indistinguishable
+- **Cricondenbar**: Maximum pressure on the envelope (above this, no two-phase region exists at any T)
+- **Cricondentherm**: Maximum temperature on the envelope (above this, no liquid forms at any P); always on the DEW curve side
+- For **lean gas** (mostly methane): cricondenbar and cricondentherm are both on the dew curve side, close to the critical point
+- For **rich gas/condensate**: the envelope is wider; cricondentherm extends to significantly higher temperatures
+
+**Retrograde condensation region** (between cricondenbar and cricondentherm on the dew curve):
+- Reducing pressure at constant T causes MORE liquid to form (counter-intuitive)
+- This is critical for gas condensate reservoirs and pipeline design
+
 ## Documentation Code Verification
 
 When writing code examples for documentation (markdown guides, cookbook recipes, tutorials):

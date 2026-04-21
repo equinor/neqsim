@@ -136,3 +136,28 @@ when accurate liquid density is important (pipeline sizing, tank volumes).
 Call `fluid.setMultiPhaseCheck(true)` before the flash. Without this,
 the solver only checks for gas/liquid equilibrium and may miss a second liquid
 phase (aqueous). This is especially important for CPA systems with water.
+
+### "How do I read a phase envelope correctly?"
+A PT phase envelope has two branches meeting at the critical point:
+- **Bubble point curve** (left/lower-T side): boundary between liquid and two-phase.
+  At a bubble point, the liquid just starts producing the first tiny bubble of vapor.
+- **Dew point curve** (right/higher-T side): boundary between vapor and two-phase.
+  At a dew point, the vapor just starts producing the first tiny drop of liquid.
+- **Cricondentherm** (max T on envelope): always on the dew curve. Above this temperature,
+  no liquid can form at any pressure.
+- **Cricondenbar** (max P on envelope): above this pressure, no two-phase region exists.
+  For lean natural gas, this is also on the dew curve side.
+- **Retrograde region**: between cricondenbar and cricondentherm on the dew curve,
+  where REDUCING pressure causes MORE liquid (counter-intuitive).
+
+For lean gas (mostly methane), the envelope is narrow and shifted to very low
+temperatures (-150 to -30 °C). For rich gas/condensate, the envelope is wider
+and extends to higher temperatures.
+
+### "Why are NeqSim phase envelope branch labels swapped?"
+When using `calcPTphaseEnvelope(true, 1.0)` (bubblePointFirst=true), the Michelsen
+continuation algorithm starts `isDewPhase=true` regardless of the starting side.
+Points traced from the bubble side go into the "dew" list. At the critical point
+the flag flips, so the actual dew-side data goes into the "bubble" list. **Always
+classify branches by checking which one has the higher max temperature (= dew curve)
+rather than trusting the method names.**
