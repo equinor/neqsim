@@ -232,8 +232,16 @@ public class ImprovedVUflashQfunc extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // Enable K-value warm-start for inner TPflash iterations driven by the
+    // outer V/U convergence loop.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+    try {
+      tpFlash.run();
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

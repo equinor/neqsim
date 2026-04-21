@@ -156,8 +156,16 @@ public class PVflash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // Enable K-value warm-start for inner TPflash iterations. Outer PV loop
+    // converges on T via volume residual, so inner SS-path drift is absorbed.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+    try {
+      tpFlash.run();
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

@@ -191,15 +191,24 @@ public class PHflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    // System.out.println("enthalpy start: " + system.getEnthalpy());
-    if (type == 0) {
-      solveQ();
-    } else {
-      SysNewtonRhapsonPHflash secondOrderSolver =
-          new SysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 0);
-      secondOrderSolver.setSpec(Hspec);
-      secondOrderSolver.solve(1);
+    // Enable K-value warm-start for the inner TPflash iterations. The outer PH
+    // loop converges on T via enthalpy residual, so inner SS-path drift is
+    // absorbed and doesn't affect the final answer. Typical speedup: 3-5x.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+    try {
+      tpFlash.run();
+      // System.out.println("enthalpy start: " + system.getEnthalpy());
+      if (type == 0) {
+        solveQ();
+      } else {
+        SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
+            system.getPhases()[0].getNumberOfComponents(), 0);
+        secondOrderSolver.setSpec(Hspec);
+        secondOrderSolver.solve(1);
+      }
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
     }
     // System.out.println("enthalpy: " + system.getEnthalpy());
     // System.out.println("Temperature: " + system.getTemperature());

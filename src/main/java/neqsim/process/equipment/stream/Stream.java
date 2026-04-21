@@ -433,7 +433,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     lastComposition = thermoSystem.getMolarComposition();
 
     if (stream != null) {
-      thermoSystem.initProperties();
+      // initProperties() already called above at line ~428; the duplicate call here
+      // was pure overhead on every Stream.run() invocation.
       stream.setFluid(thermoSystem);
     }
     // logger.info("number of phases: " + thermoSystem.getNumberOfPhases());

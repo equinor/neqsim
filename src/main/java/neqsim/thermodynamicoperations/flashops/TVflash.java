@@ -246,8 +246,17 @@ public class TVflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // Enable K-value warm-start inside the outer TV-flash iteration. Outer
+    // loop converges on P via volume residual, so inner SS-path drift is
+    // absorbed. Restored on exit.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+    try {
+      tpFlash.run();
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */
