@@ -1090,6 +1090,128 @@ section for full details.
 
 ---
 
+## Gas Scrubber Mechanical Design and Conformity Checking
+
+A `GasScrubber` has a dedicated `GasScrubberMechanicalDesign` that exposes the
+physical internals (inlet device, primary mesh pad, demisting cyclones,
+vane pack, drain pipe, level alarms). After running the process, a
+**TR3500 conformity check** can be run to evaluate the equipment against
+the Equinor TR3500 rule set — this is the recommended workflow for checking
+an installed scrubber against the vendor design basis.
+
+### The TR3500 rule set
+
+`TR3500RuleSet` evaluates five checks with **fixed** limits — do not modify
+these unless you are defining a new rule set:
+
+| Check | Limit | Units | Description |
+|-------|-------|-------|-------------|
+| `k-factor` | 0.15 | m/s | Vessel gas-load factor (Souders–Brown) |
+| `inlet-momentum` | 15 000 | Pa | Inlet nozzle ρv² |
+| `mesh-k-value` | 0.27 | m/s | K-value at the demister mesh cross-section |
+| `drainage-head` | vessel-specific | mm | Required vs available drainage height |
+| `cyclone-dp-to-drain` | 50 | mbar | Cyclone ΔP from inlet to drain chamber |
+
+Each check returns a `ConformityResult` with status `PASS`, `WARNING` (≥ 90 %
+of limit), or `FAIL` (over limit).
+
+### Workflow
+
+```java
+// 1. Create the scrubber and attach the feed stream
+GasScrubber scrubber = new GasScrubber("25-VA301", feed);
+scrubber.setInternalDiameter(2.900);          // from GA drawing
+scrubber.setSeparatorLength(4.230);
+scrubber.setOrientation("vertical");
+
+// 2. Initialise the mechanical design (configure internals on the design, NOT on the scrubber)
+scrubber.initMechanicalDesign();
+GasScrubberMechanicalDesign d =
+    (GasScrubberMechanicalDesign) scrubber.getMechanicalDesign();
+
+// 3. Physical geometry
+d.setMaxOperationPressure(100.0);
+d.setInletNozzleID((762.0 - 2 * 62.75) / 1000.0);   // 30" OD, 62.75 mm wall → ID
+d.setInletDevice("schoepentoeter");
+d.setMeshPad(Math.PI / 4.0 * 2.9 * 2.9, 250.0);     // area [m²], thickness [mm]
+d.setDemistingCyclones(256, 0.110, 3.287, 0.943);    // n, ID [m], deck elev [m], length [m]
+d.setDrainPipeDiameterM(8 * 25.4 / 1000.0);
+d.setLaHHElevationM(0.930);
+d.setLaHElevationM(0.830);
+
+// 4. Choose a rule set and run the conformity check after the process is solved
+d.setConformityRules("TR3500");
+process.run();
+ConformityReport rep = d.checkConformity();
+
+System.out.println(rep.toTextReport());
+for (ConformityResult r : rep.getResults()) {
+    System.out.printf("%s: %.4g  limit=%.4g  %s%n",
+        r.getCheckName(), r.getActualValue(), r.getLimitValue(), r.getStatus());
+}
+```
+
+### Python equivalent
+
+```python
+from neqsim import jneqsim as js
+
+scrubber = js.process.equipment.separator.GasScrubber("25-VA301", feed)
+scrubber.setInternalDiameter(2.900)
+scrubber.setSeparatorLength(4.230)
+scrubber.initMechanicalDesign()
+d = scrubber.getMechanicalDesign()
+d.setInletNozzleID(0.6365)
+d.setMeshPad(6.605, 250.0)
+d.setDemistingCyclones(256, 0.110, 3.287, 0.943)
+d.setConformityRules("TR3500")
+process.run()
+report = d.checkConformity()
+for r in report.getResults():
+    print(r.getCheckName(), float(r.getActualValue()),
+          float(r.getLimitValue()), r.getStatus())
+```
+
+### Running conformity at multiple operating points
+
+The mechanical design is **fixed per vessel** — only the feed state changes
+between cases. This makes multi-case screening efficient (build the design
+once, loop over T / P / flow):
+
+```java
+d.setConformityRules("TR3500");
+for (OperatingCase c : cases) {
+    feed.setTemperature(c.tCelsius, "C");
+    feed.setPressure(c.pBara, "bara");
+    feed.setFlowRate(c.massKgHr, "kg/hr");
+    process.run();
+    ConformityReport r = d.checkConformity();
+    // record r.getResults() — each ConformityResult exposes
+    // getCheckName(), getActualValue(), getLimitValue(), getStatus()
+}
+```
+
+See the Kollsnes reference task under `task_solve/` for an end-to-end
+example that runs 33 (scrubber × operating case) combinations through this
+workflow and emits a 9-table performance report — one table per scrubber
+per train — matching the format of the standard Sulzer
+`Scrubber calculations Rev02_SNA` spreadsheet.
+
+### Important constraints when using the scrubber API
+
+- **Always** initialise the mechanical design via `scrubber.initMechanicalDesign()`
+  before configuring internals. Calling setters before init will not persist.
+- **Do not** try to set internals directly on the `GasScrubber` — they live on
+  `GasScrubberMechanicalDesign`. Geometry (`ID`, `TTL`, orientation) is on the
+  scrubber itself because it's shared with the flow solver.
+- **Never modify the TR3500 limits** (K = 0.15, ρv² = 15 000 Pa, mesh-K = 0.27).
+  Define a new `ConformityRuleSet` subclass if you need a different basis
+  (e.g. a vendor-swirldeck-relaxed rule set).
+- Re-run `process.run()` between each `feed.set…` call; `checkConformity()`
+  reads values from the current fluid state, not from cached inputs.
+
+---
+
 ## Related Documentation
 
 - [Process Package](../) - Package overview

@@ -27,6 +27,20 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-04-21 — Kollsnes scrubber 9-table performance deliverable
+**Type:** F (Design) / G (Workflow)
+**Keywords:** scrubber, GasScrubberMechanicalDesign, TR3500, ConformityReport, Kollsnes, VA301, VA302, VA303, Sulzer reference spreadsheet, mesh pad, demisting cyclones, inlet momentum, k-factor, historic peak
+**Solution:**
+- `task_solve/2026-04-20_kollsnes_scrubber_performance_analysis/step2_analysis/06_scrubber_tables.ipynb` — 33 (scrubber × case) conformity runs + 9 reference-style tables + Excel/HTML export (private task folder)
+- Docs: `docs/process/equipment/separators.md` — new section "Gas Scrubber Mechanical Design and Conformity Checking" with Java+Python workflow, multi-case screening pattern, and usage constraints
+- Test: `DocExamplesCompilationTest#testGasScrubberConformityCheckDoc` verifies the documented API path end-to-end
+**Notes:**
+- 11 cases (9 normal + 2 historic peaks; Tog1-H1 dropped because PIC5063A is missing in the long-history export — per user instruction "If you are missing data, best would be to disregard that historic point")
+- Output layout mirrors the Sulzer `Scrubber calculations Rev02_SNA 27B-VG60` spreadsheet: one table per (scrubber × train), columns = operating cases, rows grouped into Process conditions / Geometry / Process results / Conformity
+- TR3500 conformity outcome across 33 combos: k-factor FAIL 33/33 (expected for swirldeck-fitted vessels); inlet-momentum FAIL 21/PASS 11/WARN 1; mesh-k PASS 22/WARN 11; drainage-head PASS 33/33; cyclone-dp PASS 27/WARN 6
+- **Never modify the TR3500 limits** (K=0.15, ρv²=15000, mesh-K=0.27) — define a new `ConformityRuleSet` subclass instead
+- Efficiency and carry-over rows are deferred — table schema already reserves placeholder rows
+
 ### 2026-07-04 — Compressor Sealing
 **Type:** B (Process)
 **Keywords:** bacalhau, bics, components, compressor, connected, equipment, flow, fpso, model, pr78
