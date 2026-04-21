@@ -55,6 +55,10 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Constructor for OptimizedVUflash.
+   *
+   * @param system the thermodynamic system
+   * @param Vspec the specified volume
+   * @param Uspec the specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -65,6 +69,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Validates inputs with fast checks.
+   *
+   * @return true if inputs are valid
    */
   private boolean validateInputs() {
     return Vspec > 0 && Double.isFinite(Uspec);
@@ -100,17 +106,29 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Optimized derivative calculations with safety checks.
+   *
+   * @return the dQ/dP derivative value
    */
   private double calcdQdP() {
     return system.getPressure() * (system.getVolume() - Vspec)
         / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
   }
 
+  /**
+   * Calculates dQ/dT derivative.
+   *
+   * @return the dQ/dT derivative value
+   */
   private double calcdQdT() {
     return (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
         / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
   }
 
+  /**
+   * Calculates dQ/dPP derivative.
+   *
+   * @return the dQ/dPP derivative value
+   */
   private double calcdQdPP() {
     double dVdP = system.getdVdPtn();
     double dQdVV = (system.getVolume() - Vspec)
@@ -125,6 +143,11 @@ public class OptimizedVUflash extends Flash {
     return dQdVV;
   }
 
+  /**
+   * Calculates dQ/dTT derivative.
+   *
+   * @return the dQ/dTT derivative value
+   */
   private double calcdQdTT() {
     double dQdT_val = calcdQdT();
     double dQdTT = -system.getCp()
@@ -140,6 +163,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * High-performance solver with adaptive convergence and line search.
+   *
+   * @return the converged pressure
    */
   public double solveQ() {
     if (!validateInputs()) {
@@ -202,7 +227,8 @@ public class OptimizedVUflash extends Flash {
         // Single TP flash per iteration
         tpFlash.run();
 
-        // Calculate convergence metrics - check BOTH iteration variable changes AND specification errors
+        // Calculate convergence metrics - check BOTH iteration variable changes AND specification
+        // errors
         double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
         double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
         double totalError = presError + tempError;
@@ -210,8 +236,7 @@ public class OptimizedVUflash extends Flash {
         // Also check actual volume and energy specification errors
         double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
         double hTarget = Uspec + system.getPressure() * Vspec;
-        double hErr = Math.abs((system.getEnthalpy() - hTarget)
-            / Math.max(Math.abs(hTarget), 1.0));
+        double hErr = Math.abs((system.getEnthalpy() - hTarget) / Math.max(Math.abs(hTarget), 1.0));
 
         // Early termination only if BOTH iteration convergence AND specification errors are small
         if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {

@@ -292,6 +292,8 @@ public class PVTRegression {
 
   /**
    * Create the regression function with initial parameters.
+   *
+   * @return the configured PVT regression function
    */
   private PVTRegressionFunction createRegressionFunction() {
     double[] initialGuess = new double[regressionParameters.size()];
@@ -314,6 +316,9 @@ public class PVTRegression {
 
   /**
    * Add CCE samples to the sample list.
+   *
+   * @param sampleList the list to add CCE samples to
+   * @param function the PVT regression function to clone for each sample
    */
   private void addCCESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CCE, 1.0);
@@ -331,6 +336,9 @@ public class PVTRegression {
 
   /**
    * Add CVD samples to the sample list.
+   *
+   * @param sampleList the list to add CVD samples to
+   * @param function the PVT regression function to clone for each sample
    */
   private void addCVDSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CVD, 1.0);
@@ -412,6 +420,8 @@ public class PVTRegression {
 
   /**
    * Apply optimized parameters to the tuned fluid.
+   *
+   * @param optimizedParams the optimized parameter values
    */
   private void applyOptimizedParameters(double[] optimizedParams) {
     tunedFluid = baseFluid.clone();
@@ -428,6 +438,8 @@ public class PVTRegression {
 
   /**
    * Calculate objective function values for each experiment type.
+   *
+   * @return map of experiment type to objective function value
    */
   private Map<ExperimentType, Double> calculateObjectiveValues() {
     Map<ExperimentType, Double> objectives = new HashMap<>();
@@ -566,6 +578,11 @@ public class PVTRegression {
 
   /**
    * Calculate uncertainty analysis from the optimization results.
+   *
+   * @param optimizer the Levenberg-Marquardt optimizer
+   * @param function the PVT regression function
+   * @param finalChiSquare the final chi-square value
+   * @return the uncertainty analysis results
    */
   private UncertaintyAnalysis calculateUncertainty(LevenbergMarquardt optimizer,
       PVTRegressionFunction function, double finalChiSquare) {

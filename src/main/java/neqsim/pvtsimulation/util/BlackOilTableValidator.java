@@ -104,6 +104,10 @@ public final class BlackOilTableValidator {
 
   /**
    * Validate Bo array for monotonicity and physical bounds.
+   *
+   * @param pressures the pressure array
+   * @param Bo the oil formation volume factor array
+   * @param result the validation result to add findings to
    */
   private static void validateBoArray(double[] pressures, double[] Bo, ValidationResult result) {
     // Check for positive values
@@ -130,6 +134,10 @@ public final class BlackOilTableValidator {
 
   /**
    * Validate Rs array for monotonicity and physical bounds.
+   *
+   * @param pressures the pressure array
+   * @param Rs the solution gas-oil ratio array
+   * @param result the validation result to add findings to
    */
   private static void validateRsArray(double[] pressures, double[] Rs, ValidationResult result) {
     // Check for non-negative values
@@ -160,6 +168,10 @@ public final class BlackOilTableValidator {
 
   /**
    * Validate Bg array for monotonicity and physical bounds.
+   *
+   * @param pressures the pressure array
+   * @param Bg the gas formation volume factor array
+   * @param result the validation result to add findings to
    */
   private static void validateBgArray(double[] pressures, double[] Bg, ValidationResult result) {
     // Check for positive values where Bg is defined
@@ -191,6 +203,10 @@ public final class BlackOilTableValidator {
 
   /**
    * Validate oil viscosity array.
+   *
+   * @param pressures the pressure array
+   * @param oilVisc the oil viscosity array
+   * @param result the validation result to add findings to
    */
   private static void validateOilViscosityArray(double[] pressures, double[] oilVisc,
       ValidationResult result) {

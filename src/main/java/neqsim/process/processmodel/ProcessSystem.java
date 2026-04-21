@@ -90,6 +90,7 @@ public class ProcessSystem extends SimulationBaseClass {
   List<ControllerDeviceInterface> controllerDevices = new ArrayList<ControllerDeviceInterface>(0);
   private List<ProcessConnection> connections = new ArrayList<ProcessConnection>(0);
   private ProcessAlarmManager alarmManager = new ProcessAlarmManager();
+  private transient neqsim.process.diagnostics.TripEventDetector tripEventDetector;
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
@@ -3441,6 +3442,25 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public ProcessAlarmManager getAlarmManager() {
     return alarmManager;
+  }
+
+  /**
+   * Returns the trip event detector for post-trip root cause analysis.
+   *
+   * <p>
+   * The detector monitors the process during dynamic simulation and captures trip events, process
+   * state snapshots, and event timelines for root cause analysis. It is lazily initialised on first
+   * access.
+   * </p>
+   *
+   * @return the trip event detector
+   */
+  public neqsim.process.diagnostics.TripEventDetector getTripEventDetector() {
+    if (tripEventDetector == null) {
+      tripEventDetector = new neqsim.process.diagnostics.TripEventDetector(this);
+      tripEventDetector.initialize();
+    }
+    return tripEventDetector;
   }
 
   /**

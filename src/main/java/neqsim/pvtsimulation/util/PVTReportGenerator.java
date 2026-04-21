@@ -484,6 +484,8 @@ public class PVTReportGenerator {
 
   /**
    * Generate composition table.
+   *
+   * @return the composition table as markdown string
    */
   private String generateCompositionTable() {
     StringBuilder sb = new StringBuilder();
@@ -501,6 +503,8 @@ public class PVTReportGenerator {
 
   /**
    * Generate CCE results table.
+   *
+   * @return the CCE results table as markdown string
    */
   private String generateCCETable() {
     StringBuilder sb = new StringBuilder();
@@ -525,6 +529,8 @@ public class PVTReportGenerator {
 
   /**
    * Generate DLE results table.
+   *
+   * @return the DLE results table as markdown string
    */
   private String generateDLETable() {
     StringBuilder sb = new StringBuilder();
@@ -552,6 +558,8 @@ public class PVTReportGenerator {
 
   /**
    * Generate CVD results table.
+   *
+   * @return the CVD results table as markdown string
    */
   private String generateCVDTable() {
     StringBuilder sb = new StringBuilder();
@@ -579,6 +587,8 @@ public class PVTReportGenerator {
 
   /**
    * Generate statistics section.
+   *
+   * @return the statistics section as markdown string
    */
   private String generateStatistics() {
     StringBuilder sb = new StringBuilder();

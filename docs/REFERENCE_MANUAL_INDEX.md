@@ -495,6 +495,12 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Dynamic Simulation Guide**      | [docs/process/dynamic-simulation.md](process/dynamic-simulation)                                           | **DynamicProcessHelper utility — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation, configurable PID tuning, flow and temperature control loops** |
 | **Dynamic Simulation Enhancements** | [docs/process/dynamic-simulation-enhancements.md](process/dynamic-simulation-enhancements)               | **Advanced dynamic features: controller modes (AUTO/MANUAL/CASCADE), bumpless transfer, 2-DOF PID, SFC sequencing (IEC 61131-3), override/split-range control, sensor fault injection, transmitter filtering, alarm shelving, valve nonlinearities (deadband/stiction/hysteresis), separator internals (weir, mist eliminator), HX thermal ODE (wall + CSTR holdup), distillation MESH dynamics, adaptive time stepping, parallel transient, RK4 integration** |
 
+### Chapter 26b: Post-Trip Diagnostics & Restart
+
+| Document                                  | Path                                                                                                                         | Description                                                                                                                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Post-Trip Root Cause Analysis & Restart** | [docs/process/diagnostics/post-trip-root-cause-analysis.md](process/diagnostics/post-trip-root-cause-analysis) | **Automated trip detection, root cause analysis with ranked hypotheses (hydrate, surge, flooding, high pressure, instrument failure), failure propagation tracing, and optimised restart sequencing (MTTR minimisation)** |
+
 ### Chapter 23b: Cost Estimation
 
 | Document                        | Path                                                                                                                                         | Description                                                                                                 |

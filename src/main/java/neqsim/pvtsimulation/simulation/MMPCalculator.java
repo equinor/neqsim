@@ -199,6 +199,9 @@ public class MMPCalculator extends BasePVTsimulation {
 
   /**
    * Simplified slim-tube recovery simulation.
+   *
+   * @param pressure the pressure in bara
+   * @return the oil recovery fraction (0 to 1)
    */
   private double simulateSlimTubeRecovery(double pressure) {
     // Initialize systems
@@ -313,6 +316,11 @@ public class MMPCalculator extends BasePVTsimulation {
 
   /**
    * Interpolate MMP from recovery curve.
+   *
+   * @param p the pressure array
+   * @param rec the recovery array
+   * @param threshold the recovery threshold for MMP determination
+   * @return the interpolated MMP in bara
    */
   private double interpolateMMP(double[] p, double[] rec, double threshold) {
     for (int i = 1; i < p.length; i++) {
@@ -336,6 +344,8 @@ public class MMPCalculator extends BasePVTsimulation {
 
   /**
    * Determine miscibility mechanism from tie-line analysis.
+   *
+   * @return the determined miscibility mechanism
    */
   private MiscibilityMechanism determineMechanism() {
     if (Double.isNaN(mmp)) {
@@ -404,6 +414,9 @@ public class MMPCalculator extends BasePVTsimulation {
 
   /**
    * Calculate key tie-line length at given pressure.
+   *
+   * @param pressure the pressure in bara
+   * @return the key tie-line length
    */
   private double calculateKeyTieLineLength(double pressure) {
     // Mix oil and gas at 50:50 and flash

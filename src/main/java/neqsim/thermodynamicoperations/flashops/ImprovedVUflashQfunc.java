@@ -42,6 +42,10 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Constructor for ImprovedVUflashQfunc.
+   *
+   * @param system the thermodynamic system
+   * @param Vspec the specified volume
+   * @param Uspec the specified internal energy
    */
   public ImprovedVUflashQfunc(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -52,6 +56,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Validates inputs before running VU flash.
+   *
+   * @return true if inputs are valid
    */
   private boolean validateInputs() {
     if (Vspec <= 0) {
@@ -67,6 +73,10 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Validates pressure and temperature bounds.
+   *
+   * @param pressure the pressure to check
+   * @param temperature the temperature to check
+   * @return true if within valid bounds
    */
   private boolean isWithinBounds(double pressure, double temperature) {
     return pressure >= MIN_PRESSURE && pressure <= MAX_PRESSURE && temperature >= MIN_TEMPERATURE
@@ -75,6 +85,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative with safety checks.
+   *
+   * @return the dQ/dPP derivative value
    */
   public double calcdQdPP() {
     double dVdP = system.getdVdPtn();
@@ -92,6 +104,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative with safety checks.
+   *
+   * @return the dQ/dTT derivative value
    */
   public double calcdQdTT() {
     double dQdT_val = calcdQdT();
@@ -108,6 +122,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative.
+   *
+   * @return the dQ/dT derivative value
    */
   public double calcdQdT() {
     double dQdT = (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
@@ -117,6 +133,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative.
+   *
+   * @return the dQ/dP derivative value
    */
   public double calcdQdP() {
     double dQdP = system.getPressure() * (system.getVolume() - Vspec)
@@ -126,6 +144,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Enhanced solver with better convergence and bounds checking.
+   *
+   * @return the converged pressure
    */
   public double solveQ() {
     if (!validateInputs()) {

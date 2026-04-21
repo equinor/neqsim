@@ -298,6 +298,10 @@ public class AsphalteneMethodComparison {
 
   /**
    * Truncates a string to specified length.
+   *
+   * @param s the string to truncate
+   * @param maxLength the maximum allowed length
+   * @return the truncated string
    */
   private String truncate(String s, int maxLength) {
     if (s == null) {
