@@ -59,6 +59,24 @@ public class PVFflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is enabled only for the
+    // subsequent inner TPflash iterations within the outer vapor-fraction
+    // search (runs dozens of TPflashes at nearby T values).
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      runInternal();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
+  }
+
+  /**
+   * Internal implementation of the PVF flash. The public {@link #run()} wraps this method to enable
+   * K-value warm-start for the inner TPflash loop.
+   */
+  private void runInternal() {
     // Handle pure liquid (bubble point) and pure vapor (dew point) as special cases
     if (vaporFractionSpec <= 0.0) {
       runBubblePoint();
@@ -70,7 +88,9 @@ public class PVFflash extends Flash {
     }
 
     // General case: iterate on temperature to match the specified vapor fraction
+    // (first TPflash cold, subsequent internal calls warm)
     tpFlash.run();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     system.init(2);
 
     double tempLow = estimateLowTemperature();

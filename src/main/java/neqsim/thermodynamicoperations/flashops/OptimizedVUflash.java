@@ -202,7 +202,8 @@ public class OptimizedVUflash extends Flash {
         // Single TP flash per iteration
         tpFlash.run();
 
-        // Calculate convergence metrics - check BOTH iteration variable changes AND specification errors
+        // Calculate convergence metrics - check BOTH iteration variable changes AND specification
+        // errors
         double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
         double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
         double totalError = presError + tempError;
@@ -210,8 +211,7 @@ public class OptimizedVUflash extends Flash {
         // Also check actual volume and energy specification errors
         double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
         double hTarget = Uspec + system.getPressure() * Vspec;
-        double hErr = Math.abs((system.getEnthalpy() - hTarget)
-            / Math.max(Math.abs(hTarget), 1.0));
+        double hErr = Math.abs((system.getEnthalpy() - hTarget) / Math.max(Math.abs(hTarget), 1.0));
 
         // Early termination only if BOTH iteration convergence AND specification errors are small
         if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
@@ -261,9 +261,18 @@ public class OptimizedVUflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Minimal TP flash for initialization
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent iterations.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      // Minimal TP flash for initialization
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

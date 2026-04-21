@@ -586,7 +586,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
-    thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
     getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
