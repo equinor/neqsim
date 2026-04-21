@@ -468,18 +468,28 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     if (inStream[1].getThermoSystem() == null) {
       return true;
     }
-    if (inStream[1].getThermoSystem().getTemperature() != lastInStream2Temperature
-        || inStream[1].getThermoSystem().getPressure() != lastInStream2Pressure
-        || UAvalue != lastUAvalue) {
+    SystemInterface sys2 = inStream[1].getThermoSystem();
+    if (sys2.getTemperature() != lastInStream2Temperature
+        || sys2.getPressure() != lastInStream2Pressure || UAvalue != lastUAvalue) {
       return true;
     }
-    double flow2 = inStream[1].getThermoSystem().getFlowRate("kg/hr");
+    double flow2 = sys2.getFlowRate("kg/hr");
     if (flow2 > 0 && Math.abs(flow2 - lastInStream2FlowRate) / flow2 > 1e-6) {
       return true;
     }
-    if (lastInStream2Composition == null || !java.util.Arrays
-        .equals(inStream[1].getThermoSystem().getMolarComposition(), lastInStream2Composition)) {
+    if (lastInStream2Composition == null) {
       return true;
+    }
+    // Allocation-free composition comparison.
+    neqsim.thermo.phase.PhaseInterface ph0 = sys2.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastInStream2Composition.length) {
+      return true;
+    }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastInStream2Composition[i]) {
+        return true;
+      }
     }
     return false;
   }

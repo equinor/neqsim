@@ -7,7 +7,6 @@
 package neqsim.process.equipment.stream;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +54,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastPressure = 0.0;
   protected double lastFlowRate = 0.0;
   protected double[] lastComposition = null;
+  /** Cached specification for skip-if-unchanged check in {@link #run(UUID)}. */
+  protected String lastSpecification = null;
 
   /**
    * Constructor for Stream.
@@ -332,17 +333,31 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (fluid == null || lastComposition == null) {
       return true;
     }
+    // Specification change (e.g., TP -> PH) produces a different flash even with same inputs.
+    if (!java.util.Objects.equals(getSpecification(), lastSpecification)) {
+      return true;
+    }
+    // Cheap scalar checks first - avoid allocating the composition array if any fail.
+    if (fluid.getTemperature() != lastTemperature || fluid.getPressure() != lastPressure) {
+      return true;
+    }
     double flow = fluid.getFlowRate("kg/hr");
-    if (flow <= 0.0 || lastFlowRate <= 0.0) {
+    if (flow <= 0.0 || lastFlowRate <= 0.0 || Math.abs(flow - lastFlowRate) / flow >= 1e-6) {
       return true;
     }
-    if (fluid.getTemperature() == lastTemperature && fluid.getPressure() == lastPressure
-        && Math.abs(flow - lastFlowRate) / flow < 1e-6
-        && Arrays.equals(fluid.getMolarComposition(), lastComposition)) {
-      return false;
-    } else {
+    // Allocation-free composition comparison: read component z() values directly against
+    // the cached array instead of calling getMolarComposition() which allocates a double[].
+    neqsim.thermo.phase.PhaseInterface ph0 = fluid.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastComposition.length) {
       return true;
     }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastComposition[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
@@ -360,6 +375,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       lastTemperature = thermoSystem.getTemperature();
       lastPressure = thermoSystem.getPressure();
       lastComposition = thermoSystem.getMolarComposition();
+      lastSpecification = getSpecification();
 
       if (stream != null) {
         stream.setFluid(thermoSystem);
@@ -431,6 +447,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     lastTemperature = thermoSystem.getTemperature();
     lastPressure = thermoSystem.getPressure();
     lastComposition = thermoSystem.getMolarComposition();
+    lastSpecification = getSpecification();
 
     if (stream != null) {
       // initProperties() already called above at line ~428; the duplicate call here
