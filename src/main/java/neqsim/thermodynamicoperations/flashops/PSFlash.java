@@ -127,15 +127,16 @@ public class PSFlash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Enable K-value warm-start for the inner TPflash iterations inside this
-    // outer PS-flash loop. This is always safe: the outer loop converges on T
-    // (via Q-function or Newton), so any SS-path differences in the inner
-    // TPflash are absorbed. Typical speedup: 3-5x on heavy multi-component
-    // fluids. Restored on exit so it doesn't leak to downstream user code.
+    // First TPflash runs COLD (Wilson initial K) so that stale K from a
+    // previous unrelated flash (at different P/T) does not bias the solution.
+    // Then enable K-value warm-start only for subsequent TPflash iterations
+    // within this outer PS-flash loop — safe because the outer loop converges
+    // on T, absorbing inner SS-path differences. Typical speedup: 3-5x.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
 
       if (type == 0) {
         solveQ();

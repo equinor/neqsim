@@ -191,13 +191,16 @@ public class PHflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Enable K-value warm-start for the inner TPflash iterations. The outer PH
-    // loop converges on T via enthalpy residual, so inner SS-path drift is
-    // absorbed and doesn't affect the final answer. Typical speedup: 3-5x.
+    // First TPflash runs COLD (Wilson initial K) so that stale K from a
+    // previous unrelated flash (at different P/T) does not bias the solution.
+    // Then enable K-value warm-start only for subsequent TPflash iterations
+    // within this outer PH-flash loop — safe because the outer loop converges
+    // on T via enthalpy residual. Typical speedup: 3-5x.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       // System.out.println("enthalpy start: " + system.getEnthalpy());
       if (type == 0) {
         solveQ();

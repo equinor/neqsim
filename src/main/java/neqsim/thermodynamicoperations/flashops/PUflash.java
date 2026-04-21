@@ -106,12 +106,14 @@ public class PUflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Enable K-value warm-start for inner TPflash iterations. Outer PU loop
-    // converges on T via internal energy residual.
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer PU loop.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       // System.out.println("internal energy start: " + system.getInternalEnergy());
       solveQ();
     } finally {

@@ -94,12 +94,14 @@ public class QfuncFlash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Enable K-value warm-start for inner TPflash iterations driven by the
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent iterations driven by the
     // second-order PH/PS Newton-Raphson solver.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       logger.info("entropy: " + system.getEntropy());
       SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
           system.getPhases()[0].getNumberOfComponents(), type);

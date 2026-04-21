@@ -261,13 +261,14 @@ public class OptimizedVUflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Enable K-value warm-start for inner TPflash iterations. Outer loop
-    // converges on T via internal-energy/volume residuals.
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent iterations.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       // Minimal TP flash for initialization
       tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       solveQ();
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
