@@ -94,7 +94,16 @@ public class GasScrubber extends Separator {
   /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
+    // Preserve existing geometry when re-initializing
+    double prevDiameter = getInternalDiameter();
+    double prevLength = getSeparatorLength();
     separatorMechanicalDesign = new GasScrubberMechanicalDesign(this);
+    if (prevDiameter > 0) {
+      separatorMechanicalDesign.setInnerDiameter(prevDiameter);
+    }
+    if (prevLength > 0) {
+      separatorMechanicalDesign.setTantanLength(prevLength);
+    }
   }
 
   /** {@inheritDoc} */
