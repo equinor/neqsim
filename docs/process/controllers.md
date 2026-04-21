@@ -205,10 +205,37 @@ import neqsim.process.equipment.util.AccelerationMethod;
 recycle.setTolerance(1e-6);
 recycle.setMaximumIterations(100);
 
-// Acceleration methods
+// Acceleration methods (default is DIRECT_SUBSTITUTION)
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
-// Options: DIRECT_SUBSTITUTION, WEGSTEIN, BROYDEN
 ```
+
+### Choosing an Acceleration Method
+
+| Method | When to use | Typical speedup | Risk |
+|---|---|---|---|
+| `DIRECT_SUBSTITUTION` *(default)* | Short loops (≤ 5 iterations), well-damped systems, debugging | baseline | none |
+| `WEGSTEIN` | Single-variable recycle loops, slowly converging composition loops | 2–3× fewer outer iterations | bounded; may under-relax when slope ≈ 1 |
+| `BROYDEN` | Tightly coupled multi-recycle systems, absorber/regenerator trains | 3–5× on hard cases | higher memory, needs stable first 2–3 iterations |
+
+**Default behaviour.** Recycles use `DIRECT_SUBSTITUTION` out of the box — acceleration is opt-in. For existing models validated against a specific convergence trace, leave the default.
+
+**What Wegstein accelerates.** The current implementation accelerates **composition only**. Temperature, pressure, and flow are handled by the normal mixing/flash logic. For recycles where T or P is the slowly-converging variable, Wegstein provides little benefit.
+
+**Safety bounds.** Wegstein's q-factor is clamped to `[-5, 0]` and applied only after a 2-iteration warm-up (`wegsteinDelayIterations`). This prevents oscillation but means Wegstein has no effect on loops that converge in ≤ 2 iterations.
+
+### Applying to a Whole Flowsheet
+
+Instead of setting acceleration per `Recycle`, use the bulk setters:
+
+```java
+// All Recycle units in a single ProcessSystem
+int updated = process.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+
+// All Recycle units across all areas of a ProcessModel
+int total = plant.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+```
+
+Both methods return the count of `Recycle` units updated. Safe to call before or after `run()`; takes effect on the next iteration.
 
 ---
 
