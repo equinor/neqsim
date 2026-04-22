@@ -115,6 +115,7 @@ neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.pu
 neqsim.process
 neqsim.process.advisory
 neqsim.process.alarm
+neqsim.process.automation
 neqsim.process.calibration
 neqsim.process.conditionmonitor
 neqsim.process.controllerdevice
@@ -165,6 +166,9 @@ neqsim.process.equipment.filter
 neqsim.process.equipment.flare
 neqsim.process.equipment.flare.dto
 neqsim.process.equipment.heatexchanger
+neqsim.process.equipment.heatexchanger.heatintegration
+neqsim.process.equipment.iec81346
+neqsim.process.equipment.lng
 neqsim.process.equipment.manifold
 neqsim.process.equipment.membrane
 neqsim.process.equipment.mixer
@@ -178,6 +182,7 @@ neqsim.process.equipment.pump
 neqsim.process.equipment.reactor
 neqsim.process.equipment.reservoir
 neqsim.process.equipment.separator
+neqsim.process.equipment.separator.entrainment
 neqsim.process.equipment.separator.sectiontype
 neqsim.process.equipment.splitter
 neqsim.process.equipment.stream
@@ -243,6 +248,8 @@ neqsim.process.mechanicaldesign.powergeneration
 neqsim.process.mechanicaldesign.pump
 neqsim.process.mechanicaldesign.reactor
 neqsim.process.mechanicaldesign.separator
+neqsim.process.mechanicaldesign.separator.internals
+neqsim.process.mechanicaldesign.separator.primaryseparation
 neqsim.process.mechanicaldesign.separator.sectiontype
 neqsim.process.mechanicaldesign.splitter
 neqsim.process.mechanicaldesign.subsea
@@ -250,6 +257,7 @@ neqsim.process.mechanicaldesign.tank
 neqsim.process.mechanicaldesign.torg
 neqsim.process.mechanicaldesign.valve
 neqsim.process.mechanicaldesign.valve.choke
+neqsim.process.mechanicaldesign.watertreatment
 neqsim.process.ml
 neqsim.process.ml.controllers
 neqsim.process.ml.examples
@@ -257,6 +265,7 @@ neqsim.process.ml.multiagent
 neqsim.process.ml.surrogate
 neqsim.process.mpc
 neqsim.process.processmodel
+neqsim.process.processmodel.biorefinery
 neqsim.process.processmodel.dexpi
 neqsim.process.processmodel.diagram
 neqsim.process.processmodel.graph
@@ -344,11 +353,13 @@ neqsim.thermo.util.Vega
 neqsim.thermodynamicoperations
 neqsim.thermodynamicoperations.chemicalequilibrium
 neqsim.thermodynamicoperations.flashops
+neqsim.thermodynamicoperations.flashops.reactiveflash
 neqsim.thermodynamicoperations.flashops.saturationops
 neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves
 neqsim.thermodynamicoperations.propertygenerator
 neqsim.util
+neqsim.util.agentic
 neqsim.util.annotation
 neqsim.util.database
 neqsim.util.exception
