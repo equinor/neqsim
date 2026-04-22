@@ -973,14 +973,14 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double sqrtAi = Math.sqrt(compArray[compNumb].getaT());
+      double sqrtAi = ((neqsim.thermo.component.ComponentEos) compArray[compNumb]).sqrtAT;
       Ai = 0.0;
       for (int j = 0; j < numbcomp; j++) {
         double nj = compArray[j].getNumberOfMolesInPhase();
         if (nj < 1e-100) {
           continue;
         }
-        Ai += nj * Math.sqrt(compArray[j].getaT());
+        Ai += nj * ((neqsim.thermo.component.ComponentEos) compArray[j]).sqrtAT;
       }
 
       return 2.0 * sqrtAi * Ai;
@@ -1056,7 +1056,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      aij = Math.sqrt(compArray[compNumb].getaT() * compArray[compNumbj].getaT());
+      aij = ((neqsim.thermo.component.ComponentEos) compArray[compNumb]).sqrtAT
+          * ((neqsim.thermo.component.ComponentEos) compArray[compNumbj]).sqrtAT;
 
       return 2.0 * aij;
     }
@@ -1184,14 +1185,15 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         int numbcomp) {
       ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double sqrtAi = Math.sqrt(comp[compNumb].getaT());
+      double sqrtAi = ((neqsim.thermo.component.ComponentEos) comp[compNumb]).sqrtAT;
       double sum = 0.0;
       for (int j = 0; j < numbcomp; j++) {
         double nj = comp[j].getNumberOfMolesInPhase();
         if (nj < 1e-100) {
           continue;
         }
-        double aij = sqrtAi * Math.sqrt(comp[j].getaT()) * (1.0 - getkij(temperature, compNumb, j));
+        double aij = sqrtAi * ((neqsim.thermo.component.ComponentEos) comp[j]).sqrtAT
+            * (1.0 - getkij(temperature, compNumb, j));
         sum += nj * aij;
       }
       return 2.0 * sum;
@@ -1272,7 +1274,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         double pressure, int numbcomp) {
       double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-      aij = Math.sqrt(compArray[compNumb].getaT() * compArray[compNumbj].getaT())
+      aij = ((neqsim.thermo.component.ComponentEos) compArray[compNumb]).sqrtAT
+          * ((neqsim.thermo.component.ComponentEos) compArray[compNumbj]).sqrtAT
           * (1.0 - getkij(temperature, compNumb, compNumbj));
       return 2.0 * aij;
     }

@@ -4,11 +4,13 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -56,6 +58,24 @@ import neqsim.process.processmodel.ProcessSystem;
  */
 public final class ProcessGraphBuilder {
   private static final Logger logger = LogManager.getLogger(ProcessGraphBuilder.class);
+
+  // ---------------------------------------------------------------------
+  // Per-class reflection caches
+  //
+  // Building a ProcessGraph requires classifying every zero-arg getter and
+  // every field on every equipment class as "producer" / "consumer" / "other"
+  // based on substring matches against the method or field name. Doing this
+  // with String.toLowerCase() + many .contains() calls on every buildGraph()
+  // invocation shows up as ~7% of wall-clock time on medium flowsheets
+  // (JFR profile, 2026-04-22). The classification is a pure function of the
+  // equipment Class, so we cache it.
+  //
+  // Thread-safety: ConcurrentHashMap + computeIfAbsent. Value arrays are
+  // immutable (written once, then only read), so no additional sync needed.
+  // ---------------------------------------------------------------------
+  private static final Map<Class<?>, Method[]> PRODUCER_METHODS = new ConcurrentHashMap<>();
+  private static final Map<Class<?>, Method[]> CONSUMER_METHODS = new ConcurrentHashMap<>();
+  private static final Map<Class<?>, Field[]> INLET_FIELDS = new ConcurrentHashMap<>();
 
   private ProcessGraphBuilder() {
     // Static utility class
@@ -751,30 +771,8 @@ public final class ProcessGraphBuilder {
    */
   private static void collectProducedStreams(ProcessEquipmentInterface unit,
       Map<Object, ProcessEquipmentInterface> streamToProducer) {
-    for (Method method : unit.getClass().getMethods()) {
-      if (method.getDeclaringClass() == Object.class || method.getParameterCount() != 0) {
-        continue;
-      }
-
-      String methodName = method.getName().toLowerCase();
+    for (Method method : getProducerMethods(unit.getClass())) {
       Class<?> returnType = method.getReturnType();
-
-      // Check if this is an outlet method
-      boolean isOutlet = methodName.contains("outlet") || methodName.contains("outstream")
-          || methodName.contains("product") || methodName.contains("split")
-          || methodName.contains("mixed") || methodName.contains("discharge")
-          || methodName.contains("bottom") || methodName.contains("top")
-          || methodName.contains("gasout") || methodName.contains("liquidout")
-          || methodName.contains("vaporout") || methodName.contains("waterout");
-
-      // Skip inlet methods
-      boolean isInlet = methodName.contains("inlet") || methodName.contains("instream")
-          || methodName.contains("feed");
-
-      if (!isOutlet || isInlet) {
-        continue;
-      }
-
       if (StreamInterface.class.isAssignableFrom(returnType)) {
         Object result = invokeMethod(unit, method);
         if (result instanceof StreamInterface) {
@@ -797,6 +795,49 @@ public final class ProcessGraphBuilder {
   }
 
   /**
+   * Returns the cached list of zero-argument methods on {@code cls} whose
+   * name classifies as a producer (outlet) and that return a StreamInterface
+   * (or array of StreamInterface). Computed once per Class.
+   *
+   * @param cls equipment class to inspect
+   * @return filtered producer methods for {@code cls}
+   */
+  private static Method[] getProducerMethods(Class<?> cls) {
+    Method[] cached = PRODUCER_METHODS.get(cls);
+    if (cached != null) {
+      return cached;
+    }
+    List<Method> out = new ArrayList<>();
+    for (Method method : cls.getMethods()) {
+      if (method.getDeclaringClass() == Object.class || method.getParameterCount() != 0) {
+        continue;
+      }
+      String methodName = method.getName().toLowerCase();
+      boolean isOutlet = methodName.contains("outlet") || methodName.contains("outstream")
+          || methodName.contains("product") || methodName.contains("split")
+          || methodName.contains("mixed") || methodName.contains("discharge")
+          || methodName.contains("bottom") || methodName.contains("top")
+          || methodName.contains("gasout") || methodName.contains("liquidout")
+          || methodName.contains("vaporout") || methodName.contains("waterout");
+      boolean isInlet = methodName.contains("inlet") || methodName.contains("instream")
+          || methodName.contains("feed");
+      if (!isOutlet || isInlet) {
+        continue;
+      }
+      Class<?> returnType = method.getReturnType();
+      if (StreamInterface.class.isAssignableFrom(returnType)) {
+        out.add(method);
+      } else if (returnType.isArray()
+          && StreamInterface.class.isAssignableFrom(returnType.getComponentType())) {
+        out.add(method);
+      }
+    }
+    Method[] arr = out.toArray(new Method[0]);
+    PRODUCER_METHODS.putIfAbsent(cls, arr);
+    return arr;
+  }
+
+  /**
    * Collects streams consumed by a unit and creates edges.
    *
    * @param unit             the process equipment unit to analyze
@@ -807,39 +848,53 @@ public final class ProcessGraphBuilder {
       ProcessGraph graph, Map<Object, ProcessEquipmentInterface> streamToProducer) {
     Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    for (Method method : unit.getClass().getMethods()) {
-      if (method.getDeclaringClass() == Object.class || method.getParameterCount() != 0) {
-        continue;
-      }
-
-      String methodName = method.getName().toLowerCase();
-      Class<?> returnType = method.getReturnType();
-
-      // Check if this is an inlet method
-      boolean isInlet = methodName.contains("inlet") || methodName.contains("instream")
-          || methodName.contains("feed") || methodName.contains("input")
-          || methodName.contains("suction");
-
-      // Skip outlet methods for consumption detection
-      boolean isOutlet = methodName.contains("outlet") || methodName.contains("outstream")
-          || methodName.contains("product") || methodName.contains("split")
-          || methodName.contains("mixed") || methodName.contains("discharge");
-
-      if (!isInlet || isOutlet) {
-        continue;
-      }
-
-      if (StreamInterface.class.isAssignableFrom(returnType)) {
-        Object result = invokeMethod(unit, method);
-        if (result instanceof StreamInterface && !visited.contains(result)) {
-          visited.add(result);
-          createEdgeFromProducer(graph, streamToProducer, result, unit);
-        }
+    for (Method method : getConsumerMethods(unit.getClass())) {
+      Object result = invokeMethod(unit, method);
+      if (result instanceof StreamInterface && !visited.contains(result)) {
+        visited.add(result);
+        createEdgeFromProducer(graph, streamToProducer, result, unit);
       }
     }
 
     // Also scan fields for streams named as inlets
     scanFieldsForInletStreams(unit, graph, streamToProducer, visited);
+  }
+
+  /**
+   * Returns the cached list of zero-argument methods on {@code cls} whose
+   * name classifies as a consumer (inlet) and that return a StreamInterface.
+   * Computed once per Class.
+   *
+   * @param cls equipment class to inspect
+   * @return filtered consumer methods for {@code cls}
+   */
+  private static Method[] getConsumerMethods(Class<?> cls) {
+    Method[] cached = CONSUMER_METHODS.get(cls);
+    if (cached != null) {
+      return cached;
+    }
+    List<Method> out = new ArrayList<>();
+    for (Method method : cls.getMethods()) {
+      if (method.getDeclaringClass() == Object.class || method.getParameterCount() != 0) {
+        continue;
+      }
+      String methodName = method.getName().toLowerCase();
+      boolean isInlet = methodName.contains("inlet") || methodName.contains("instream")
+          || methodName.contains("feed") || methodName.contains("input")
+          || methodName.contains("suction");
+      boolean isOutlet = methodName.contains("outlet") || methodName.contains("outstream")
+          || methodName.contains("product") || methodName.contains("split")
+          || methodName.contains("mixed") || methodName.contains("discharge");
+      if (!isInlet || isOutlet) {
+        continue;
+      }
+      if (StreamInterface.class.isAssignableFrom(method.getReturnType())) {
+        out.add(method);
+      }
+    }
+    Method[] arr = out.toArray(new Method[0]);
+    CONSUMER_METHODS.putIfAbsent(cls, arr);
+    return arr;
   }
 
   /**
@@ -852,78 +907,90 @@ public final class ProcessGraphBuilder {
    */
   private static void scanFieldsForInletStreams(ProcessEquipmentInterface unit, ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Set<Object> visited) {
-    Class<?> type = unit.getClass();
+    for (Field field : getInletFields(unit.getClass())) {
+      try {
+        Class<?> fieldType = field.getType();
+
+        if (StreamInterface.class.isAssignableFrom(fieldType)) {
+          Object value = field.get(unit);
+          if (value instanceof StreamInterface && !visited.contains(value)) {
+            visited.add(value);
+            createEdgeFromProducer(graph, streamToProducer, value, unit);
+          }
+        } else if (MixerInterface.class.isAssignableFrom(fieldType)) {
+          Object mixer = field.get(unit);
+          if (mixer instanceof MixerInterface) {
+            Field streamsField = findField(mixer.getClass(), "streams");
+            if (streamsField != null) {
+              streamsField.setAccessible(true);
+              Object streamsValue = streamsField.get(mixer);
+              if (streamsValue instanceof java.util.List) {
+                @SuppressWarnings("unchecked")
+                java.util.List<StreamInterface> streams = (java.util.List<StreamInterface>) streamsValue;
+                for (StreamInterface inletStream : streams) {
+                  if (inletStream != null && !visited.contains(inletStream)) {
+                    visited.add(inletStream);
+                    createEdgeFromProducer(graph, streamToProducer, inletStream, unit);
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (Exception e) {
+        // Ignore inaccessible fields
+      }
+    }
+  }
+
+  /**
+   * Returns the cached list of non-static declared fields (walking the class
+   * hierarchy up to {@code Object}) on {@code cls} whose name classifies as
+   * an inlet and whose type is either a {@link StreamInterface} or a
+   * {@link MixerInterface}. Fields are returned already made accessible.
+   * Computed once per Class.
+   *
+   * @param cls equipment class to inspect
+   * @return filtered inlet fields for {@code cls}
+   */
+  private static Field[] getInletFields(Class<?> cls) {
+    Field[] cached = INLET_FIELDS.get(cls);
+    if (cached != null) {
+      return cached;
+    }
+    List<Field> out = new ArrayList<>();
+    Class<?> type = cls;
     while (type != null && type != Object.class) {
       for (Field field : type.getDeclaredFields()) {
         if (Modifier.isStatic(field.getModifiers())) {
           continue;
         }
-
         String fieldName = field.getName().toLowerCase();
-
-        // Check if this looks like an inlet field
         boolean isInlet = fieldName.equals("instream") || fieldName.contains("inlet")
             || fieldName.contains("feed") || fieldName.contains("inletstream");
-
-        // Skip outlet fields
         boolean isOutlet = fieldName.contains("outlet") || fieldName.equals("outstream")
             || fieldName.contains("product") || fieldName.contains("mixed");
-
         if (!isInlet || isOutlet) {
           continue;
         }
-
-        // Handle StreamInterface fields
-        if (StreamInterface.class.isAssignableFrom(field.getType())) {
-          try {
-            if (!field.isAccessible()) {
-              field.setAccessible(true);
-            }
-
-            Object value = field.get(unit);
-            if (value instanceof StreamInterface && !visited.contains(value)) {
-              visited.add(value);
-              createEdgeFromProducer(graph, streamToProducer, value, unit);
-            }
-          } catch (Exception e) {
-            // Ignore inaccessible fields
-          }
+        Class<?> fieldType = field.getType();
+        if (!StreamInterface.class.isAssignableFrom(fieldType)
+            && !MixerInterface.class.isAssignableFrom(fieldType)) {
+          continue;
         }
-
-        // Handle Mixer fields that contain inlet streams (like
-        // Separator.inletStreamMixer)
-        if (MixerInterface.class.isAssignableFrom(field.getType())) {
-          try {
-            if (!field.isAccessible()) {
-              field.setAccessible(true);
-            }
-
-            Object mixer = field.get(unit);
-            if (mixer instanceof MixerInterface) {
-              // Get streams from this internal mixer
-              Field streamsField = findField(mixer.getClass(), "streams");
-              if (streamsField != null) {
-                streamsField.setAccessible(true);
-                Object streamsValue = streamsField.get(mixer);
-                if (streamsValue instanceof java.util.List) {
-                  @SuppressWarnings("unchecked")
-                  java.util.List<StreamInterface> streams = (java.util.List<StreamInterface>) streamsValue;
-                  for (StreamInterface inletStream : streams) {
-                    if (inletStream != null && !visited.contains(inletStream)) {
-                      visited.add(inletStream);
-                      createEdgeFromProducer(graph, streamToProducer, inletStream, unit);
-                    }
-                  }
-                }
-              }
-            }
-          } catch (Exception e) {
-            // Ignore inaccessible fields
-          }
+        try {
+          field.setAccessible(true);
+        } catch (Exception ignored) {
+          // Field may not be accessible; skip rather than cache an unusable entry.
+          continue;
         }
+        out.add(field);
       }
       type = type.getSuperclass();
     }
+    Field[] arr = out.toArray(new Field[0]);
+    INLET_FIELDS.putIfAbsent(cls, arr);
+    return arr;
   }
 
   /**
