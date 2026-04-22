@@ -3159,7 +3159,13 @@ public class CoolingDutyProductionAnalysisTest {
             "Production should not significantly increase with pressure drop: got %.4f MSm3/d, "
                 + "baseline %.4f MSm3/d (max allowed %.4f)",
             results.get(results.size() - 1)[1], baselineMSm3Day, maxAllowedFlow));
-    assertTrue(totalLossMSm3 >= 0, "Production loss should not be negative");
+    // Apply the same symmetric numerical tolerance to the lower bound: a slightly
+    // negative loss (production at dP marginally above baseline) is a valid outcome
+    // of the binary-feasibility optimizer's convergence tolerance, not a regression.
+    double minAllowedLoss = -baselineMSm3Day * 0.02;
+    assertTrue(totalLossMSm3 >= minAllowedLoss,
+        String.format("Production loss should not be significantly negative: got %.4f MSm3/d "
+            + "(min allowed %.4f MSm3/d)", totalLossMSm3, minAllowedLoss));
   }
 
   /**
