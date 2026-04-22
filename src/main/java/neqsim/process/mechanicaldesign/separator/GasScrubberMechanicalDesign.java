@@ -7,8 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.SeparatorInterface;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.mechanicaldesign.designstandards.GasScrubberDesignStandard;
 import neqsim.process.mechanicaldesign.separator.conformity.ConformityReport;
@@ -90,8 +90,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /** LA(L) — Low level alarm elevation from BTL [m]. */
   private double laLElevationM = 0.0;
   /**
-   * LA(H) — High level alarm elevation from BTL [m]. Required for cyclone
-   * drainage calc.
+   * LA(H) — High level alarm elevation from BTL [m]. Required for cyclone drainage calc.
    */
   private double laHElevationM = 0.0;
   /** LA(HH) — High-High level alarm elevation from BTL [m]. */
@@ -105,8 +104,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Constructor for GasScrubberMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -120,10 +118,12 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       logger.info("gas scrubber process design: {}",
           getDesignStandard().get("gas scrubber process design").getStandardName());
-      gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getGasLoadFactor();
-      volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getVolumetricDesignFactor();
+      gasLoadFactor =
+          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+              .getGasLoadFactor();
+      volumeSafetyFactor =
+          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+              .getVolumetricDesignFactor();
     } else {
       logger.info("no gas scrubber process design specified");
     }
@@ -192,15 +192,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " +
-     * getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
-     * " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " +
-     * moduleLength +
-     * " height " + moduleHeight + " meter.");
-     * System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);
@@ -244,12 +240,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the conformity standard to use for checking.
    *
    * <p>
-   * This also enables the corresponding capacity constraints on the scrubber,
-   * so that the optimizer and capacity reporting use the same criteria.
+   * This also enables the corresponding capacity constraints on the scrubber, so that the optimizer
+   * and capacity reporting use the same criteria.
    * </p>
    *
-   * @param standardName the standard identifier: "TR3500", "API-12J",
-   *                     "Shell-DEP", "NORSOK-P002"
+   * @param standardName the standard identifier: "TR3500", "API-12J", "Shell-DEP", "NORSOK-P002"
    */
   public void setConformityRules(String standardName) {
     this.conformityRuleSet = ConformityRuleSet.create(standardName);
@@ -263,9 +258,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Runs all applicable conformity checks using the current operating state.
    *
    * <p>
-   * The scrubber must have been run (process simulation) before calling this
-   * method, so that
-   * the fluid state reflects current operating conditions.
+   * The scrubber must have been run (process simulation) before calling this method, so that the
+   * fluid state reflects current operating conditions.
    * </p>
    *
    * @return a conformity report with all check results
@@ -292,14 +286,12 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Sets the inlet device type by name string.
    *
    * <p>
-   * Accepted names (case-insensitive): "schoepentoeter", "inlet_vane",
-   * "inlet_cyclone",
+   * Accepted names (case-insensitive): "schoepentoeter", "inlet_vane", "inlet_cyclone",
    * "deflector_plate", "half_pipe", "impingement_plate", "none".
    * </p>
    *
    * @param deviceTypeName the inlet device type name
-   * @throws IllegalArgumentException if the name does not match any known device
-   *                                  type
+   * @throws IllegalArgumentException if the name does not match any known device type
    */
   public void setInletDevice(String deviceTypeName) {
     InletDeviceModel.InletDeviceType matched = null;
@@ -370,7 +362,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    *
    * @param numberOfCyclones number of demisting cyclones
    * @param cycloneDiameterM demisting cyclone inner diameter [m]
-   * @param deckElevationM   cyclone deck elevation from bottom of vessel [m]
+   * @param deckElevationM cyclone deck elevation from bottom of vessel [m]
    */
   public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM,
       double deckElevationM) {
@@ -385,8 +377,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    *
    * @param numberOfCyclones number of demisting cyclones
    * @param cycloneDiameterM demisting cyclone inner diameter [m]
-   * @param deckElevationM   cyclone deck elevation from bottom of vessel [m]
-   * @param cycloneLengthM   cyclone tube length [m]
+   * @param deckElevationM cyclone deck elevation from bottom of vessel [m]
+   * @param cycloneLengthM cyclone tube length [m]
    */
   public void setDemistingCyclones(int numberOfCyclones, double cycloneDiameterM,
       double deckElevationM, double cycloneLengthM) {
@@ -500,7 +492,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Configures the mesh pad.
    *
-   * @param areaM2      mesh pad area [m2]
+   * @param areaM2 mesh pad area [m2]
    * @param thicknessMm mesh pad thickness [mm]
    */
   public void setMeshPad(double areaM2, double thicknessMm) {
@@ -631,8 +623,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Sets the LA(H) — High level alarm elevation from BTL. Required when demisting
-   * cyclones are
+   * Sets the LA(H) — High level alarm elevation from BTL. Required when demisting cyclones are
    * present for drainage height conformity check.
    *
    * @param elevationM LA(H) elevation [m]
@@ -669,8 +660,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Sets the HHLL elevation from bottom of vessel. Kept for backward
-   * compatibility; prefer
+   * Sets the HHLL elevation from bottom of vessel. Kept for backward compatibility; prefer
    * {@link #setLaHElevationM(double)} for drainage calculations.
    *
    * @param elevationM HHLL elevation [m]
@@ -682,8 +672,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Gets the HHLL elevation from bottom of vessel. Kept for backward
-   * compatibility.
+   * Gets the HHLL elevation from bottom of vessel. Kept for backward compatibility.
    *
    * @return HHLL elevation [m]
    * @deprecated use {@link #getLaHHElevationM()} instead
@@ -698,8 +687,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   // ============================================================================
 
   /**
-   * {@inheritDoc} Overrides to populate scrubber-specific parameters (internals,
-   * elevations) into
+   * {@inheritDoc} Overrides to populate scrubber-specific parameters (internals, elevations) into
    * the JSON response.
    */
   @Override
@@ -782,10 +770,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Generates a formatted text report of the scrubber mechanical design
-   * configuration. Shows
-   * vessel geometry, internals, elevations, and liquid levels in a readable table
-   * format.
+   * Generates a formatted text report of the scrubber mechanical design configuration. Shows vessel
+   * geometry, internals, elevations, and liquid levels in a readable table format.
    *
    * @return formatted text report string
    */
@@ -812,8 +798,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     appendRow(sb, "Orientation", sep.getOrientation());
     appendRow(sb, "Inlet Nozzle ID", String.format("%.1f mm", getInletNozzleID() * 1000.0));
     if (getGasOutletNozzleID() > 0) {
-      appendRow(sb, "Gas Outlet Nozzle ID", String.format("%.1f mm",
-          getGasOutletNozzleID() * 1000.0));
+      appendRow(sb, "Gas Outlet Nozzle ID",
+          String.format("%.1f mm", getGasOutletNozzleID() * 1000.0));
     }
 
     // Internals
@@ -823,8 +809,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (hasInletCyclones) {
       appendRow(sb, "Inlet Device", "Inlet Cyclones");
       appendRow(sb, "  Count", String.valueOf(numberOfInletCyclones));
-      appendRow(sb, "  Cyclone Diameter", String.format("%.0f mm",
-          inletCycloneDiameterM * 1000.0));
+      appendRow(sb, "  Cyclone Diameter", String.format("%.0f mm", inletCycloneDiameterM * 1000.0));
     } else {
       appendRow(sb, "Inlet Device", "Schoepentoeter / Inlet Vane (via Separator)");
     }
@@ -840,16 +825,15 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (hasDemistingCyclones) {
       appendRow(sb, "Demisting Cyclones", "Installed");
       appendRow(sb, "  Count", String.valueOf(numberOfDemistingCyclones));
-      appendRow(sb, "  Cyclone Diameter", String.format("%.0f mm",
-          demistingCycloneDiameterM * 1000.0));
-      appendRow(sb, "  Deck Elevation (BTL)", String.format("%.0f mm",
-          cycloneDeckElevationM * 1000.0));
+      appendRow(sb, "  Cyclone Diameter",
+          String.format("%.0f mm", demistingCycloneDiameterM * 1000.0));
+      appendRow(sb, "  Deck Elevation (BTL)",
+          String.format("%.0f mm", cycloneDeckElevationM * 1000.0));
       appendRow(sb, "  Euler Number", String.format("%.1f", cycloneEulerNumber));
       appendRow(sb, "  DP to Drain", String.format("%.0f %%", cycloneDpToDrainPct));
     }
     if (drainPipeDiameterM > 0) {
-      appendRow(sb, "Drain Pipe Equiv. ID", String.format("%.1f mm",
-          drainPipeDiameterM * 1000.0));
+      appendRow(sb, "Drain Pipe Equiv. ID", String.format("%.1f mm", drainPipeDiameterM * 1000.0));
     }
 
     // Liquid levels
@@ -868,8 +852,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (laHHElevationM > 0) {
       appendRow(sb, "LA(HH)", String.format("%.0f mm", laHHElevationM * 1000.0));
     }
-    if (laLLElevationM == 0 && laLElevationM == 0 && laHElevationM == 0
-        && laHHElevationM == 0) {
+    if (laLLElevationM == 0 && laLElevationM == 0 && laHElevationM == 0 && laHHElevationM == 0) {
       appendRow(sb, "(none set)", "");
     }
 
@@ -880,8 +863,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
       sb.append(sep2).append('\n');
       double drainageHeight = (cycloneDeckElevationM - laHHElevationM) * 1000.0;
       appendRow(sb, "Reference Level", "LA(HH) (most conservative)");
-      appendRow(sb, "Cyclone Deck Bottom", String.format("%.0f mm",
-          cycloneDeckElevationM * 1000.0));
+      appendRow(sb, "Cyclone Deck Bottom",
+          String.format("%.0f mm", cycloneDeckElevationM * 1000.0));
       appendRow(sb, "LA(HH)", String.format("%.0f mm", laHHElevationM * 1000.0));
       appendRow(sb, "Height Available", String.format("%.0f mm", drainageHeight));
     }
@@ -894,7 +877,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /**
    * Appends a formatted row to the text report.
    *
-   * @param sb    the StringBuilder to append to
+   * @param sb the StringBuilder to append to
    * @param label the row label
    * @param value the row value
    */
