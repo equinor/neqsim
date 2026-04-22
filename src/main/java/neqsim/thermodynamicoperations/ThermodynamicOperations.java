@@ -2483,6 +2483,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Return the PT phase envelope as a list of contiguous branch segments.
+   *
+   * <p>
+   * Preferred over the flat {@code get("dewT")} / {@code get("bubT")} arrays for plotting and
+   * machine-readable export. Each segment is a polyline with a uniform phase type (DEW or BUBBLE)
+   * and contains no NaN. Available after a successful call to any
+   * {@code calcPTphaseEnvelope(...)} overload that uses the Michelsen tracer.
+   * </p>
+   *
+   * @return unmodifiable list of envelope segments, or an empty list if the last-run operation
+   *         does not produce segment data (e.g. legacy envelope implementations)
+   */
+  public java.util.List<neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment> getEnvelopeSegments() {
+    OperationInterface op = getOperation();
+    if (op instanceof neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) {
+      return ((neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) op)
+          .getSegments();
+    }
+    return java.util.Collections.emptyList();
+  }
+
+  /**
    * <p>
    * Getter for the field <code>operation</code>.
    * </p>

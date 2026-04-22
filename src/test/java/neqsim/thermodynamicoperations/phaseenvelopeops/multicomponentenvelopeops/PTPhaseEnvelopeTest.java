@@ -77,6 +77,11 @@ public class PTPhaseEnvelopeTest {
     // Cricondenbar should be ~47 bar for N2/CO2/methane
     double maxP = 0.0;
     for (double p : dewPointPressures) {
+      if (Double.isNaN(p)) {
+        // NaN is a branch-break sentinel inserted by the tracer when the
+        // dew curve crosses a critical point or a restart pass begins.
+        continue;
+      }
       assertTrue(p > 0.0, "Pressure should be positive, got: " + p);
       if (p > maxP) {
         maxP = p;

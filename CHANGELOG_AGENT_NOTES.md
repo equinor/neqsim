@@ -9,6 +9,68 @@
 
 ---
 
+## 2026-04-22 — PT Phase Envelope: NaN Branch-Break Sentinels + Structured Segments API
+
+### Summary
+
+Two improvements to `PTPhaseEnvelopeMichelsen` (the default PT phase envelope
+tracer). Both are backward-compatible. Full docs at
+`docs/pvtsimulation/phase_envelope_guide.md`.
+
+### Bug Fix — NaN branch-break sentinels
+
+The Michelsen tracer uses a two-pass algorithm and can cross several critical
+points. Previously, points from disjoint envelope segments were all appended
+to the same flat `dewT` / `bubT` arrays with no separator, causing plotters
+(e.g. matplotlib) to draw spurious straight lines across the two-phase region
+at every branch transition.
+
+Fix: a `NaN` sentinel is now inserted into all ten per-point arrays
+(`dewT`, `dewP`, `dewH`, `dewDens`, `dewS`, `bubT`, `bubP`, `bubH`, `bubDens`,
+`bubS`) at every branch transition (pass restart, first critical point flip,
+second critical point flip). Matplotlib renders `NaN` as a polyline gap.
+
+**Migration for consumers that iterate the flat arrays:** skip `NaN` entries
+or use the new structured segment API below. The cricondentherm/cricondenbar
+getters and point counts (excluding `NaN`) are unchanged.
+
+### New Feature — Structured segments API
+
+New class:
+`neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment`
+
+- Immutable polyline with `PhaseType` enum (`DEW` or `BUBBLE`) and T/P/H/density/entropy arrays.
+- Never contains `NaN`.
+
+New accessor on `PTPhaseEnvelopeMichelsen`:
+
+```java
+List<EnvelopeSegment> segments = michelsen.getSegments();
+```
+
+New convenience method on `ThermodynamicOperations`:
+
+```java
+List<EnvelopeSegment> segments = ops.getEnvelopeSegments();
+// Returns empty list for legacy (non-Michelsen) envelope implementations.
+```
+
+Python usage:
+
+```python
+for seg in ops.getEnvelopeSegments():
+    T = list(seg.getTemperatures())
+    P = list(seg.getPressures())
+    plt.plot([t - 273.15 for t in T], P, label=str(seg.getPhaseType()))
+```
+
+### Agent / Skill Updates
+
+- `neqsim-api-patterns` — prefer `getEnvelopeSegments()` over flat arrays for new code.
+- `neqsim-troubleshooting` — "kinks/teleports in phase envelope plot" → use segments API or skip `NaN` in flat arrays.
+
+---
+
 ## 2026-04-17 — Diffusion Coefficient Model Fixes and Validation
 
 ### Summary
