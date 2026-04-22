@@ -150,7 +150,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   private double waterOutletNozzleID = 0.0;
 
   // ============================================================================
-  // Entrainment Performance Results (populated from SeparatorPerformanceCalculator)
+  // Entrainment Performance Results (populated from
+  // SeparatorPerformanceCalculator)
   // ============================================================================
 
   /** Whether detailed entrainment calculation was used. */
@@ -547,9 +548,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   @Override
   public void setDesign() {
     Separator separator = (Separator) getProcessEquipment();
+    // Geometry is stored in MechanicalDesign; Separator delegates to us.
+    // We still call setInternalDiameter/setSeparatorLength to trigger side effects
+    // (liquidLevel update, holdup volume recalculation).
     separator.setInternalDiameter(innerDiameter);
     separator.setSeparatorLength(tantanLength);
-    // Synchronize design parameters back to separator
+    // Synchronize process parameters
     separator.setDesignGasLoadFactor(gasLoadFactor);
     separator.setDesignLiquidLevelFraction(1.0 - Fg);
     // Synchronize inlet nozzle diameter if set
