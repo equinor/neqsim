@@ -55,6 +55,9 @@ The Michelsen continuation method traces the envelope as two logical branches se
 | Cricondenbar | `cricondenbar` | `[T(K), P(bara)]` at maximum pressure |
 | Cricondentherm | `cricondentherm` | `[T(K), P(bara)]` at maximum temperature |
 
+> **Branch-break sentinels.** The tracer runs up to two passes and may cross several critical points. At every branch transition it inserts a `NaN` value into the flat arrays (`dewT`, `dewP`, `dewH`, `dewDens`, `dewS`, `bubT`, `bubP`, `bubH`, `bubDens`, `bubS`). `matplotlib` renders `NaN` as a polyline gap, so the disjoint segments are drawn as separate lines instead of being stitched together with a spurious straight line across the two-phase region. When you iterate the flat arrays yourself, skip `NaN` entries or use the structured segment API below.
+
+
 ---
 
 ## Quick Phase Envelope Calculation
@@ -235,6 +238,50 @@ System.out.println("Bubble curve points: " + bubT.length);
 
 ---
 
+## Structured Segments API (Preferred for Plotting)
+
+The flat `get("dewT")` / `get("bubT")` arrays use `NaN` values as branch-break sentinels. For plotting, machine-readable export, or any code that needs to reason about individual branches, use the structured segment API instead. Each segment is a polyline with uniform phase type (`DEW` or `BUBBLE`) and contains no `NaN`.
+
+### Java
+
+```java
+import java.util.List;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment;
+
+ops.calcPTphaseEnvelope();
+
+List<EnvelopeSegment> segments = ops.getEnvelopeSegments();
+for (EnvelopeSegment seg : segments) {
+  double[] T = seg.getTemperatures();   // Kelvin
+  double[] P = seg.getPressures();      // bara
+  double[] H = seg.getEnthalpies();     // kJ/kg
+  double[] D = seg.getDensities();      // kg/m3
+  double[] S = seg.getEntropies();      // kJ/kg/K
+  System.out.printf("%s segment: %d points%n", seg.getPhaseType(), seg.size());
+}
+```
+
+### Python
+
+```python
+ops.calcPTphaseEnvelope()
+
+for seg in ops.getEnvelopeSegments():
+    T = list(seg.getTemperatures())
+    P = list(seg.getPressures())
+    phase = str(seg.getPhaseType())  # "DEW" or "BUBBLE"
+    plt.plot([t - 273.15 for t in T], P, label=phase)
+```
+
+**Key guarantees:**
+- Each segment contains ≥ 1 point and never contains `NaN`.
+- `seg.getPhaseType()` returns `EnvelopeSegment.PhaseType.DEW` or `BUBBLE`.
+- The sum of segment sizes (per phase type) equals the non-`NaN` count in the flat arrays.
+- The list is empty for legacy envelope implementations (non-Michelsen).
+
+---
+
+
 ## Plotting Phase Envelopes
 
 ### With Matplotlib (Python)
@@ -258,7 +305,8 @@ fluid.setMixingRule("classic")
 ops = ThermodynamicOperations(fluid)
 ops.calcPTphaseEnvelope()
 
-# Get envelope data
+# Get envelope data. Flat arrays contain NaN sentinels at branch transitions;
+# matplotlib renders NaN as a polyline gap, which is exactly what we want.
 dewT = np.array(list(ops.get("dewT"))) - 273.15  # Convert to °C
 dewP = np.array(list(ops.get("dewP")))
 bubT = np.array(list(ops.get("bubT"))) - 273.15

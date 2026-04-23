@@ -549,13 +549,18 @@ public class PTPhaseEnvelopeRobustnessTest {
     assertEquals(dewT.length, dewP.length, "dewT and dewP should have equal lengths");
 
     // All temperatures should be physically reasonable (50-600 K)
+    // NaN entries are branch-break sentinels (inserted at critical-point crossings
+    // and restart passes so plotters render disjoint polylines).
     for (int i = 0; i < dewT.length; i++) {
+      if (Double.isNaN(dewT[i])) {
+        assertTrue(Double.isNaN(dewP[i]),
+            "dewT[" + i + "] and dewP[" + i + "] must both be NaN at branch breaks");
+        continue;
+      }
       assertTrue(dewT[i] > 50.0 && dewT[i] < 600.0,
           "dewT[" + i + "]=" + dewT[i] + " should be in 50-600 K range");
       assertTrue(dewP[i] > 0.0 && dewP[i] < 2000.0,
           "dewP[" + i + "]=" + dewP[i] + " should be in 0-2000 bar range");
-      assertTrue(!Double.isNaN(dewT[i]), "No NaN in dewT");
-      assertTrue(!Double.isNaN(dewP[i]), "No NaN in dewP");
     }
   }
 
@@ -591,11 +596,17 @@ public class PTPhaseEnvelopeRobustnessTest {
     assertTrue(dewDens.length > 0, "Should have dew density data points");
     assertTrue(dewS.length > 0, "Should have dew entropy data points");
 
-    // Density should be positive
+    // Density should be positive (NaN entries are branch-break sentinels).
     for (int i = 0; i < dewDens.length; i++) {
+      if (Double.isNaN(dewDens[i])) {
+        continue;
+      }
       assertTrue(dewDens[i] > 0.0, "Dew density[" + i + "]=" + dewDens[i] + " should be positive");
     }
     for (int i = 0; i < bubDens.length; i++) {
+      if (Double.isNaN(bubDens[i])) {
+        continue;
+      }
       assertTrue(bubDens[i] > 0.0,
           "Bubble density[" + i + "]=" + bubDens[i] + " should be positive");
     }
