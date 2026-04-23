@@ -9,6 +9,98 @@
 
 ---
 
+## 2026-04-20 — Gas Scrubber Mechanical Design: Internals Configuration & Conformity Checking
+
+### Summary
+
+Major expansion of `GasScrubberMechanicalDesign` with ~40 new public methods for
+configuring scrubber internals (inlet devices, demisting cyclones, mesh pads, vane
+packs, drain pipes, level alarms) and a new conformity-checking package for
+automated design verification against Equinor TR3500. Geometry fields moved from
+`Separator` to `SeparatorMechanicalDesign` so physical dimensions are owned by the
+mechanical design layer. Bug fixes for autoSize liquid level and drainage-head
+formula.
+
+### Bug Fixes
+
+| Bug | File(s) | Impact |
+|-----|---------|--------|
+| `autoSize()` used runtime `liquidLevel` (0 before sim) instead of `designLiquidLevelFraction` | `SeparatorMechanicalDesign` | Auto-sized vessel had wrong liquid height |
+| Drainage-head formula had spurious ×100 factor | `GasScrubberMechanicalDesign` | Drainage head was 100x too large |
+| Geometry fields on `Separator` could go stale relative to `MechanicalDesign` | `Separator`, `SeparatorMechanicalDesign` | Inconsistent diameter/length after design changes |
+
+### Architecture Changes
+
+| Change | Details |
+|--------|---------|
+| **Geometry ownership moved to MechanicalDesign** | `innerDiameter` and `tantanLength` now live on `SeparatorMechanicalDesign`; `Separator` delegates via computed getters. Eliminates dual-state inconsistency. |
+| **`GasScrubber.initMechanicalDesign()` preserves geometry** | Re-initialising no longer resets previously configured internals. |
+| **Derived fields replaced with computed methods** | Gas/liquid area fractions, velocities etc. are computed on the fly rather than stored. |
+
+### New Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `ConformityResult` | `mechanicaldesign.separator.conformity` | Single rule check result (PASS/WARNING/FAIL, 90% warning threshold) |
+| `ConformityReport` | `mechanicaldesign.separator.conformity` | Collection of results with `isConforming()`, `toTextReport()` |
+| `ConformityRuleSet` | `mechanicaldesign.separator.conformity` | Abstract base + `TR3500RuleSet` (5 checks: K-factor, inlet momentum, drainage head, cyclone-dp-to-drain, mesh-K) |
+
+### New Methods on `GasScrubberMechanicalDesign`
+
+| Method | Description |
+|--------|-------------|
+| `setInletDevice(String)` | Case-insensitive inlet device selection (e.g. `"schoepentoeter"`, `"inlet_vane"`) |
+| `setInletCyclones(n, diam)` | Configure inlet cyclone count and diameter |
+| `setDemistingCyclones(n, diam, deckElev)` | 3-arg: cyclone count, diameter, deck elevation |
+| `setDemistingCyclones(n, diam, deckElev, length)` | 4-arg: adds cyclone length |
+| `setMeshPad(area, thickness)` | Mesh pad area (m²) and thickness (mm) |
+| `setVanePack(area)` | Vane pack area (m²) |
+| `setDrainPipeDiameterM(diam)` | Drain/down-comer pipe diameter |
+| `setLaLLElevationM()` / `setLaLElevationM()` / `setLaHElevationM()` / `setLaHHElevationM()` | Level alarm elevations |
+| `setHhllElevationM()` | High-high liquid level elevation |
+| `setCycloneDeckElevationM()` / `setCycloneLengthM()` / `setCycloneEulerNumber()` / `setCycloneDpToDrainPct()` | Cyclone parameters |
+| `setConformityRules(String)` | Load a conformity rule set (e.g. `"TR3500"`) |
+| `checkConformity()` | Run all loaded rules, returns `ConformityReport` |
+| `getConformityStandard()` | Get currently loaded standard name |
+| `toTextReport()` | Full text report of internals configuration and conformity |
+| `getResponse()` | Structured `SeparatorMechanicalDesignResponse` with all design data |
+
+### Usage Example
+
+```java
+GasScrubber scrubber = new GasScrubber("V-301", feedStream);
+scrubber.setInternalDiameter(2.9);
+scrubber.setLength(4.23);
+ProcessSystem process = new ProcessSystem();
+process.add(feedStream);
+process.add(scrubber);
+process.run();
+
+scrubber.initMechanicalDesign();
+GasScrubberMechanicalDesign design =
+    (GasScrubberMechanicalDesign) scrubber.getMechanicalDesign();
+design.setMaxOperationPressure(110.0);
+design.setInletDevice("schoepentoeter");
+design.setDemistingCyclones(256, 0.110, 3.287, 0.943);
+design.setMeshPad(6.605, 150.0);
+design.setDrainPipeDiameterM(0.2032);
+design.setConformityRules("TR3500");
+design.calcDesign();
+
+ConformityReport report = design.checkConformity();
+System.out.println(report.toTextReport());
+System.out.println("Conforming: " + report.isConforming());
+```
+
+### Test Classes
+
+- `KollsnesScrubberDesignTest` — 4 tests covering full internals configuration and conformity checking
+- `SeparatorTest` — 10 existing tests (all pass, no regressions)
+
+### Affected Skills / Agents
+
+- `neqsim-api-patterns` — Add scrubber internals configuration pattern
+- `neqsim-standards-lookup` — Add TR3500 to standards database
 ## 2026-04-22 — PT Phase Envelope: NaN Branch-Break Sentinels + Structured Segments API
 
 ### Summary

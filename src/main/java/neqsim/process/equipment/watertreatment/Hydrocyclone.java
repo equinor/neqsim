@@ -260,6 +260,11 @@ public class Hydrocyclone extends Separator {
   /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
+    // Initialize the base Separator mechanical design first so the Separator
+    // constructor (which sets geometry defaults right after calling
+    // initMechanicalDesign()) does not hit a NullPointerException on the
+    // separatorMechanicalDesign field.
+    super.initMechanicalDesign();
     hydrocycloneMechanicalDesign = new HydrocycloneMechanicalDesign(this);
   }
 
