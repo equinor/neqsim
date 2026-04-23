@@ -318,4 +318,57 @@ class TPFlashTest {
     assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P="
         + pressure + " bara — stability analysis is inconsistent near boundary");
   }
+
+  /**
+   * Regression test for the c91e99c TPflash post-convergence stability re-check that was reverted
+   * in PR #2112. That commit introduced speckled/noisy phase identification in the low-temperature
+   * region (110-200 K) of a methane/n-heptane binary with PR EOS and kij=0.05-0.06.
+   *
+   * <p>
+   * The test scans a 30x30 T,P grid over T in [110, 200] K and P in [50, 180] bara and counts how
+   * many grid cells are classified as 2-phase. The v3.7.0 baseline produces 592 two-phase cells;
+   * the c91e99c regression dropped this to 137. Any future change that drops this count below 500
+   * likely reintroduces a flash regression of the same family.
+   * </p>
+   */
+  @Test
+  void testMethaneHeptaneLowTemperatureGridParity() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(150.0, 100.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("n-heptane", 30.0);
+    fluid.setMixingRule("classic");
+    ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+        1, 0.06);
+    ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+        1, 0.06);
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    int nT = 30;
+    int nP = 30;
+    int twoPhaseCount = 0;
+    for (int iT = 0; iT < nT; iT++) {
+      double T = 110.0 + iT * (200.0 - 110.0) / (nT - 1);
+      for (int iP = 0; iP < nP; iP++) {
+        double P = 50.0 + iP * (180.0 - 50.0) / (nP - 1);
+        fluid.setTemperature(T, "K");
+        fluid.setPressure(P, "bara");
+        try {
+          ops.TPflash();
+          if (fluid.getNumberOfPhases() >= 2) {
+            twoPhaseCount++;
+          }
+        } catch (Exception ignored) {
+          // convergence failure counted as single-phase
+        }
+      }
+    }
+
+    // v3.7.0 baseline: 592/900. c91e99c regression dropped to 137/900.
+    // Require at least 500 to flag any future regression of the same family.
+    assertTrue(twoPhaseCount >= 500,
+        "Low-T methane/nC7 two-phase region shrank: " + twoPhaseCount + "/900 cells 2-phase "
+            + "(v3.7.0 baseline = 592). Possible TPflash stability regression.");
+  }
 }
