@@ -33,7 +33,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SeparatorMechanicalDesign.class);
   /**
-   * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107 for mesh demister.
+   * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107
+   * for mesh demister.
    */
   double gasLoadFactor = 0.107;
   /**
@@ -41,7 +42,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   double volumeSafetyFactor = 1.0;
   /**
-   * Gas area fraction (1 - liquid level fraction). Default 0.5 for 50% liquid level.
+   * Gas area fraction (1 - liquid level fraction). Default 0.5 for 50% liquid
+   * level.
    */
   double Fg = 0.5;
   /** Liquid retention time in seconds. Default 120s (2 minutes). */
@@ -150,7 +152,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   private double waterOutletNozzleID = 0.0;
 
   // ============================================================================
-  // Entrainment Performance Results (populated from SeparatorPerformanceCalculator)
+  // Entrainment Performance Results (populated from
+  // SeparatorPerformanceCalculator)
   // ============================================================================
 
   /** Whether detailed entrainment calculation was used. */
@@ -189,7 +192,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Constructor for SeparatorMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -209,9 +213,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("pressure vessel design code")) {
       logger.info("pressure vessel code standard: {}",
           getDesignStandard().get("pressure vessel design code").getStandardName());
-      wallThickness =
-          ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-              .calcWallThickness();
+      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+          .calcWallThickness();
     } else {
       logger.info("no pressure vessel code standard specified");
     }
@@ -219,13 +222,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("separator process design")) {
       logger.info("separator process design: {}",
           getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor =
-          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-              .getGasLoadFactor();
+      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+          .getGasLoadFactor();
       Fg = ((SeparatorDesignStandard) getDesignStandard().get("separator process design")).getFg();
-      volumeSafetyFactor =
-          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-              .getVolumetricDesignFactor();
+      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+          .getVolumetricDesignFactor();
       retentionTime = 120.0; // ((SeparatorDesignStandard)
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
@@ -241,7 +242,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"Name", "Value", "Unit"};
+    String[] names = { "Name", "Value", "Unit" };
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
@@ -356,8 +357,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
-    double bubVelocity =
-        9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
+    double bubVelocity = 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
     double Ar = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
         / 1e5 / bubVelocity;
     double Daim = Math.sqrt(Ar / 4.0);
@@ -393,11 +393,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // }
 
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " +
+     * getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
+     * " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
-     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " +
+     * moduleLength +
+     * " height " + moduleHeight + " meter.");
+     * System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);
@@ -432,8 +436,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Performs the sizing calculations without reading design specifications. This method is called
-   * by autoSize() after design specs have been read and any user overrides have been applied.
+   * Performs the sizing calculations without reading design specifications. This
+   * method is called
+   * by autoSize() after design specs have been read and any user overrides have
+   * been applied.
    */
   public void performSizingCalculations() {
     Separator separator = (Separator) getProcessEquipment();
@@ -448,8 +454,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double totalSkidWeight = 0.0;
     double materialsCost = 0.0;
 
-    double gasDensity =
-        separator.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double gasDensity = separator.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
 
     double liqDensity = getDefaultLiquidDensity();
     double liqViscosity = getDefaultLiquidViscosity();
@@ -459,8 +464,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     }
 
     // Apply safety factor to flow
-    maxDesignVolumeFlow =
-        volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5;
+    maxDesignVolumeFlow = volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5;
 
     // Souders-Brown equation for max gas velocity
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
@@ -547,9 +551,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   @Override
   public void setDesign() {
     Separator separator = (Separator) getProcessEquipment();
+    // Geometry is stored in MechanicalDesign; Separator delegates to us.
+    // We still call setInternalDiameter/setSeparatorLength to trigger side effects
+    // (liquidLevel update, holdup volume recalculation).
     separator.setInternalDiameter(innerDiameter);
     separator.setSeparatorLength(tantanLength);
-    // Synchronize design parameters back to separator
+    // Synchronize process parameters
     separator.setDesignGasLoadFactor(gasLoadFactor);
     separator.setDesignLiquidLevelFraction(1.0 - Fg);
     // Synchronize inlet nozzle diameter if set
@@ -562,7 +569,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * Returns a separator-specific response with additional fields for vessel sizing, internals, and
+   * Returns a separator-specific response with additional fields for vessel
+   * sizing, internals, and
    * process design data.
    * </p>
    */
@@ -595,7 +603,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Set gas load factor (K-factor).
    *
-   * @param gasLoadFactor gas load factor [m/s], typically 0.07-0.15 for horizontal separators
+   * @param gasLoadFactor gas load factor [m/s], typically 0.07-0.15 for
+   *                      horizontal separators
    */
   public void setGasLoadFactor(double gasLoadFactor) {
     this.gasLoadFactor = gasLoadFactor;
@@ -658,7 +667,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ==================== Liquid Level Calculations ====================
 
   /**
-   * Calculate the High-High Liquid Level (HHLL) in meters. HHLL is the maximum safe operating level
+   * Calculate the High-High Liquid Level (HHLL) in meters. HHLL is the maximum
+   * safe operating level
    * before emergency shutdown.
    *
    * @return HHLL height in meters
@@ -668,7 +678,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the High Liquid Level (HLL) in meters. HLL triggers high level alarm.
+   * Calculate the High Liquid Level (HLL) in meters. HLL triggers high level
+   * alarm.
    *
    * @return HLL height in meters
    */
@@ -677,7 +688,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Normal Liquid Level (NLL) in meters. NLL is the target operating level during
+   * Calculate the Normal Liquid Level (NLL) in meters. NLL is the target
+   * operating level during
    * normal operation.
    *
    * @return NLL height in meters
@@ -696,7 +708,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Low-Low Liquid Level (LLLL) in meters. LLLL triggers emergency shutdown to
+   * Calculate the Low-Low Liquid Level (LLLL) in meters. LLLL triggers emergency
+   * shutdown to
    * prevent pump dry-running.
    *
    * @return LLLL height in meters
@@ -706,7 +719,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the weir height in meters. The weir separates oil and water compartments in
+   * Calculate the weir height in meters. The weir separates oil and water
+   * compartments in
    * three-phase separators.
    *
    * @return weir height in meters
@@ -716,7 +730,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the High Interface Level (HIL) in meters. HIL is the high oil/water interface level
+   * Calculate the High Interface Level (HIL) in meters. HIL is the high oil/water
+   * interface level
    * alarm point.
    *
    * @return HIL height in meters
@@ -726,7 +741,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Normal Interface Level (NIL) in meters. NIL is the target oil/water interface
+   * Calculate the Normal Interface Level (NIL) in meters. NIL is the target
+   * oil/water interface
    * level.
    *
    * @return NIL height in meters
@@ -736,7 +752,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Low Interface Level (LIL) in meters. LIL is the low oil/water interface level
+   * Calculate the Low Interface Level (LIL) in meters. LIL is the low oil/water
+   * interface level
    * alarm point.
    *
    * @return LIL height in meters
@@ -748,7 +765,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ==================== Effective Length Calculations ====================
 
   /**
-   * Calculate effective length for liquid separation. This is typically: TanTan length - inlet
+   * Calculate effective length for liquid separation. This is typically: TanTan
+   * length - inlet
    * device length - weir plate distance.
    *
    * @return effective liquid separation length in meters
@@ -763,7 +781,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate effective length for gas separation. This is typically: TanTan length - inlet device
+   * Calculate effective length for gas separation. This is typically: TanTan
+   * length - inlet device
    * length - demister position.
    *
    * @return effective gas separation length in meters
@@ -797,7 +816,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate liquid volume at a given level height for horizontal cylindrical vessel.
+   * Calculate liquid volume at a given level height for horizontal cylindrical
+   * vessel.
    *
    * @param levelHeight liquid level height in meters
    * @return liquid volume in m³
@@ -815,7 +835,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate surge volume between NLL and HLL. This volume provides time buffer for control system
+   * Calculate surge volume between NLL and HLL. This volume provides time buffer
+   * for control system
    * response.
    *
    * @return surge volume in m³
@@ -844,7 +865,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ==================== Nozzle Size Calculations ====================
 
   /**
-   * Calculate inlet nozzle diameter based on inlet momentum. Uses API 12J recommendations for
+   * Calculate inlet nozzle diameter based on inlet momentum. Uses API 12J
+   * recommendations for
    * maximum momentum.
    *
    * @return inlet nozzle ID in meters
@@ -904,7 +926,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate gas outlet nozzle diameter. Based on gas velocity limit (typically 15-20 m/s).
+   * Calculate gas outlet nozzle diameter. Based on gas velocity limit (typically
+   * 15-20 m/s).
    *
    * @return gas outlet nozzle ID in meters
    */
@@ -924,7 +947,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate oil outlet nozzle diameter. Based on liquid velocity limit (typically 1-2 m/s).
+   * Calculate oil outlet nozzle diameter. Based on liquid velocity limit
+   * (typically 1-2 m/s).
    *
    * @return oil outlet nozzle ID in meters
    */
@@ -1206,13 +1230,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Configure liquid levels based on provided values (heights in meters). Automatically calculates
+   * Configure liquid levels based on provided values (heights in meters).
+   * Automatically calculates
    * fractions based on internal diameter.
    *
    * @param hhll High-High Liquid Level in meters
-   * @param hll High Liquid Level in meters
-   * @param nll Normal Liquid Level in meters
-   * @param lll Low Liquid Level in meters
+   * @param hll  High Liquid Level in meters
+   * @param nll  Normal Liquid Level in meters
+   * @param lll  Low Liquid Level in meters
    */
   public void setLiquidLevelsFromHeights(double hhll, double hll, double nll, double lll) {
     if (innerDiameter > 0) {
@@ -1226,9 +1251,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Configure interface levels for three-phase separator based on heights.
    *
-   * @param hil High Interface Level in meters
-   * @param nil Normal Interface Level in meters
-   * @param lil Low Interface Level in meters
+   * @param hil  High Interface Level in meters
+   * @param nil  Normal Interface Level in meters
+   * @param lil  Low Interface Level in meters
    * @param weir Weir height in meters
    */
   public void setInterfaceLevelsFromHeights(double hil, double nil, double lil, double weir) {
@@ -1241,7 +1266,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate all level fractions based on the actual internal diameter. Uses typical design ratios
+   * Calculate all level fractions based on the actual internal diameter. Uses
+   * typical design ratios
    * from API 12J and NORSOK.
    */
   public void calculateDefaultLevelFractions() {
@@ -1264,12 +1290,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ====================
 
   /**
-   * Configure all separator dimensions from an existing pre-designed separator. This allows
+   * Configure all separator dimensions from an existing pre-designed separator.
+   * This allows
    * importing a complete design from external sources (e.g., vendor data).
    *
-   * @param id Inner diameter in meters
+   * @param id           Inner diameter in meters
    * @param tanTanLength Tan-tan length in meters
-   * @param wallThick Wall thickness in meters
+   * @param wallThick    Wall thickness in meters
    */
   public void setFromExistingDesign(double id, double tanTanLength, double wallThick) {
     this.innerDiameter = id;
@@ -1279,18 +1306,19 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Configure all separator dimensions and levels from an existing design. This is the
+   * Configure all separator dimensions and levels from an existing design. This
+   * is the
    * comprehensive method for importing a complete pre-designed separator.
    *
-   * @param id Inner diameter in meters
+   * @param id           Inner diameter in meters
    * @param tanTanLength Tan-tan length in meters
-   * @param wallThick Wall thickness in meters
-   * @param lEffLiquid Effective length for liquid separation in meters
-   * @param lEffGas Effective length for gas separation in meters
-   * @param inletNozzle Inlet nozzle ID in meters
-   * @param gasNozzle Gas outlet nozzle ID in meters
-   * @param oilNozzle Oil outlet nozzle ID in meters
-   * @param waterNozzle Water outlet nozzle ID in meters (0 for two-phase)
+   * @param wallThick    Wall thickness in meters
+   * @param lEffLiquid   Effective length for liquid separation in meters
+   * @param lEffGas      Effective length for gas separation in meters
+   * @param inletNozzle  Inlet nozzle ID in meters
+   * @param gasNozzle    Gas outlet nozzle ID in meters
+   * @param oilNozzle    Oil outlet nozzle ID in meters
+   * @param waterNozzle  Water outlet nozzle ID in meters (0 for two-phase)
    */
   public void setFromExistingDesign(double id, double tanTanLength, double wallThick,
       double lEffLiquid, double lEffGas, double inletNozzle, double gasNozzle, double oilNozzle,
@@ -1305,13 +1333,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Configure all liquid levels from heights in meters. Automatically calculates fractions based on
+   * Configure all liquid levels from heights in meters. Automatically calculates
+   * fractions based on
    * internal diameter.
    *
    * @param hhll High-High Liquid Level in meters
-   * @param hll High Liquid Level in meters
-   * @param nll Normal Liquid Level in meters
-   * @param lll Low Liquid Level in meters
+   * @param hll  High Liquid Level in meters
+   * @param nll  Normal Liquid Level in meters
+   * @param lll  Low Liquid Level in meters
    * @param llll Low-Low Liquid Level in meters
    */
   public void setAllLiquidLevelsFromHeights(double hhll, double hll, double nll, double lll,
@@ -1326,22 +1355,23 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Set all design parameters from a Python-style dictionary-like specification. This method
+   * Set all design parameters from a Python-style dictionary-like specification.
+   * This method
    * mirrors the Python dict format: {'ID': 3.154, 'L': 13.1, ...}.
    *
-   * @param id Inner diameter in meters
-   * @param length Tan-tan length in meters
-   * @param lEffLiquid Effective length for liquid separation in meters
-   * @param lEffGas Effective length for gas separation in meters
+   * @param id            Inner diameter in meters
+   * @param length        Tan-tan length in meters
+   * @param lEffLiquid    Effective length for liquid separation in meters
+   * @param lEffGas       Effective length for gas separation in meters
    * @param inletNozzleId Inlet nozzle ID in meters
-   * @param hhll HHLL height in meters
-   * @param hll HLL height in meters
-   * @param nll NLL height in meters
-   * @param lll LLL height in meters
-   * @param weir Weir height in meters
-   * @param hil HIL height in meters
-   * @param nil NIL height in meters
-   * @param lil LIL height in meters
+   * @param hhll          HHLL height in meters
+   * @param hll           HLL height in meters
+   * @param nll           NLL height in meters
+   * @param lll           LLL height in meters
+   * @param weir          Weir height in meters
+   * @param hil           HIL height in meters
+   * @param nil           NIL height in meters
+   * @param lil           LIL height in meters
    */
   public void setFromDesignSpec(double id, double length, double lEffLiquid, double lEffGas,
       double inletNozzleId, double hhll, double hll, double nll, double lll, double weir,
@@ -1796,11 +1826,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ============================================================================
 
   /**
-   * Sets the inlet pipe diameter on the separator's performance calculator. This affects the
+   * Sets the inlet pipe diameter on the separator's performance calculator. This
+   * affects the
    * droplet size distribution generated from inlet pipe flow regime correlations.
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator's performance calculator.
    * </p>
    *
@@ -1820,8 +1852,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public double getInletPipeDiameter() {
     if (getProcessEquipment() instanceof Separator) {
-      SeparatorPerformanceCalculator perf =
-          ((Separator) getProcessEquipment()).getPerformanceCalculator();
+      SeparatorPerformanceCalculator perf = ((Separator) getProcessEquipment()).getPerformanceCalculator();
       if (perf != null) {
         return perf.getInletPipeDiameter();
       }
@@ -1830,10 +1861,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the inlet device type for the separator's enhanced entrainment calculation.
+   * Sets the inlet device type for the separator's enhanced entrainment
+   * calculation.
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator's performance calculator.
    * </p>
    *
@@ -1846,10 +1879,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the gas-liquid interfacial tension for DSD generation in the enhanced model.
+   * Sets the gas-liquid interfacial tension for DSD generation in the enhanced
+   * model.
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator's performance calculator.
    * </p>
    *
@@ -1862,11 +1897,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Adds a separator section (e.g., vane pack, mesh pad, manway, valve, nozzle) to the underlying
+   * Adds a separator section (e.g., vane pack, mesh pad, manway, valve, nozzle)
+   * to the underlying
    * separator. Sections define the internals of the separator vessel.
    *
    * <p>
-   * This is a bridge method: separator internals should be configured via MechanicalDesign, which
+   * This is a bridge method: separator internals should be configured via
+   * MechanicalDesign, which
    * delegates to the separator's section list.
    * </p>
    *
@@ -1918,11 +1955,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the weir height for dynamic liquid overflow control (Francis weir model). Also updates the
+   * Sets the weir height for dynamic liquid overflow control (Francis weir
+   * model). Also updates the
    * internal {@code weirFraction} to keep both representations in sync.
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator for dynamic simulation.
    * </p>
    *
@@ -1944,7 +1983,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Gets the weir height from the separator (absolute value set for dynamic simulation).
+   * Gets the weir height from the separator (absolute value set for dynamic
+   * simulation).
    *
    * @return weir height in meters
    */
@@ -1956,10 +1996,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the weir crest length for dynamic liquid overflow control (Francis weir model).
+   * Sets the weir crest length for dynamic liquid overflow control (Francis weir
+   * model).
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator for dynamic simulation.
    * </p>
    *
@@ -1987,7 +2029,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Sets the boot (sump) volume for water/heavy liquid collection.
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator for dynamic simulation.
    * </p>
    *
@@ -2012,13 +2055,17 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the mist eliminator pressure drop coefficient for dynamic simulation. The coefficient is
+   * Sets the mist eliminator pressure drop coefficient for dynamic simulation.
+   * The coefficient is
    * used as: dP = coeff * 0.5 * rho_gas * v_gas^2.
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
-   * delegates to the separator for dynamic simulation. The coefficient corresponds to the Euler
-   * number used in {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal}.
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
+   * delegates to the separator for dynamic simulation. The coefficient
+   * corresponds to the Euler
+   * number used in
+   * {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal}.
    * </p>
    *
    * @param coefficient the dimensionless pressure drop coefficient (Euler number)
@@ -2042,11 +2089,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the mist eliminator thickness on the separator for dynamic simulation. Accepts thickness
-   * in meters. Also updates the local {@code demisterThickness} field (stored in mm).
+   * Sets the mist eliminator thickness on the separator for dynamic simulation.
+   * Accepts thickness
+   * in meters. Also updates the local {@code demisterThickness} field (stored in
+   * mm).
    *
    * <p>
-   * This is a bridge method: physical configuration should be set via MechanicalDesign, which
+   * This is a bridge method: physical configuration should be set via
+   * MechanicalDesign, which
    * delegates to the separator for dynamic simulation.
    * </p>
    *
@@ -2073,12 +2123,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
   /**
    * Configures the mist eliminator from a
-   * {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal} design object.
-   * Pushes the Euler number as the dynamic pressure drop coefficient and the thickness to the
+   * {@link neqsim.process.mechanicaldesign.separator.internals.DemistingInternal}
+   * design object.
+   * Pushes the Euler number as the dynamic pressure drop coefficient and the
+   * thickness to the
    * separator.
    *
    * <p>
-   * This connects the design-phase demister model to the runtime dynamic simulation, keeping the
+   * This connects the design-phase demister model to the runtime dynamic
+   * simulation, keeping the
    * two in sync.
    * </p>
    *
@@ -2127,9 +2180,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the terminal settling velocity for a droplet using Stokes' law.
    *
-   * @param dropletDiameterUm droplet diameter in micrometers
-   * @param continuousDensity density of continuous phase in kg/m³
-   * @param dispersedDensity density of dispersed phase in kg/m³
+   * @param dropletDiameterUm   droplet diameter in micrometers
+   * @param continuousDensity   density of continuous phase in kg/m³
+   * @param dispersedDensity    density of dispersed phase in kg/m³
    * @param continuousViscosity viscosity of continuous phase in Pa·s
    * @return terminal velocity in m/s
    */
@@ -2144,7 +2197,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the maximum allowable gas velocity using Souders-Brown equation.
    *
-   * @param gasDensity gas density in kg/m³
+   * @param gasDensity    gas density in kg/m³
    * @param liquidDensity liquid density in kg/m³
    * @return maximum gas velocity in m/s
    */
@@ -2164,16 +2217,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Loads process design parameters from the TechnicalRequirements_Process database.
+   * Loads process design parameters from the TechnicalRequirements_Process
+   * database.
    */
   public void loadProcessDesignParameters() {
     try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database =
-            new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-                + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
-                + "'")) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+            + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
+            + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -2259,7 +2311,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Validates that the actual retention time meets minimum requirements.
    *
    * @param actualRetentionMinutes actual retention time in minutes
-   * @param isOil true for oil retention, false for water retention
+   * @param isOil                  true for oil retention, false for water
+   *                               retention
    * @return true if retention time is sufficient
    */
   public boolean validateRetentionTime(double actualRetentionMinutes, boolean isOil) {
@@ -2271,7 +2324,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Validates that the droplet diameter is appropriate for separation.
    *
    * @param actualDropletDiameterUm actual droplet diameter in micrometers
-   * @param isGasLiquid true for gas-liquid separation, false for liquid-liquid
+   * @param isGasLiquid             true for gas-liquid separation, false for
+   *                                liquid-liquid
    * @return true if droplet diameter is at or above design diameter
    */
   public boolean validateDropletDiameter(double actualDropletDiameterUm, boolean isGasLiquid) {
@@ -2423,13 +2477,17 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ============================================================================
 
   /**
-   * Populates entrainment performance fields from the Separator's PerformanceCalculator. Called
-   * automatically at the end of {@link #calcDesign()} and {@link #performSizingCalculations()} if
+   * Populates entrainment performance fields from the Separator's
+   * PerformanceCalculator. Called
+   * automatically at the end of {@link #calcDesign()} and
+   * {@link #performSizingCalculations()} if
    * the separator has detailed entrainment calculation enabled.
    *
    * <p>
-   * If the separator does not have detailed entrainment enabled, all entrainment fields remain at
-   * their default values (fractions = 0, calibration factors = 1, booleans = false).
+   * If the separator does not have detailed entrainment enabled, all entrainment
+   * fields remain at
+   * their default values (fractions = 0, calibration factors = 1, booleans =
+   * false).
    * </p>
    */
   private void populateEntrainmentResults() {
@@ -2476,7 +2534,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Performs comprehensive validation of separator design against process requirements.
+   * Performs comprehensive validation of separator design against process
+   * requirements.
    *
    * @return ValidationResult with status and any issues found
    */
