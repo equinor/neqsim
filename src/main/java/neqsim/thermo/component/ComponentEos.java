@@ -58,6 +58,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double aT = 1;
 
+  /** Cached {@code Math.sqrt(aT)} for use by mixing-rule inner loops. Kept in sync with aT by init(). */
+  public double sqrtAT = 1;
+
   public double aDiffT = 0;
 
   public double Bi = 0;
@@ -144,6 +147,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     a = calca();
     b = calcb();
     aT = a * alpha(temp);
+    sqrtAT = aT > 0 ? Math.sqrt(aT) : 0.0;
     if (initType >= 2) {
       aDiffT = diffaT(temp);
       aDiffDiffT = diffdiffaT(temp);

@@ -1550,8 +1550,23 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       system.setPressure(pressureOut);
       if (!runIsothermal) {
+        double inletTempBeforeHeat = system.getTemperature();
+        double analyticalDeltaT = calcTemperatureDifference(system);
         enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
-        // testOps.PHflash(enthalpyInlet);
+        // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
+        // or to other unphysical values) on some JVM/locale combinations, e.g. for
+        // pure-water increments at borderline turbulent Re. If the enthalpy round-trip
+        // produced a temperature outside the physically allowed analytical band
+        // [Tin, Tin + dT_analytical], fall back to the analytical solution and re-init.
+        double Tafter = system.getTemperature();
+        double Tanalytical = inletTempBeforeHeat + analyticalDeltaT;
+        double bandLow = Math.min(inletTempBeforeHeat, Tanalytical) - 1.0;
+        double bandHigh = Math.max(inletTempBeforeHeat, Tanalytical) + 1.0;
+        if (Tafter < 100.0 || Tafter > 2000.0 || Tafter < bandLow || Tafter > bandHigh) {
+          system.setTemperature(Tanalytical);
+          testOps.TPflash();
+          enthalpyInlet = system.getEnthalpy();
+        }
         temperatureProfile.add(system.getTemperature());
       } else {
         testOps.TPflash();
