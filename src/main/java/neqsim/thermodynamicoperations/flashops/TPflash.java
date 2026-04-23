@@ -276,6 +276,33 @@ public class TPflash extends Flash {
       return;
     }
 
+    // Warm-start safety: if the previous flash converged to 3+ phases, the
+    // K-values stored on phase[0]/phase[1] only describe the gas ↔ HC-liquid
+    // split and are blind to the aqueous (or second liquid) phase. Using them
+    // as initial guesses in the 2-phase loop below gives a poor restart for
+    // components that distributed mostly to the 3rd phase (water, glycols,
+    // methanol in CPA / electrolyte systems). Force Wilson K for this single
+    // TPflash call in that case; warm-start remains enabled for the normal
+    // 2-phase recycle-loop path where it is both correct and fast.
+    final boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    final boolean disableWarmStart = prevWarmStart && system.getNumberOfPhases() > 2;
+    if (disableWarmStart) {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+    }
+    try {
+      runInternal();
+    } finally {
+      if (disableWarmStart) {
+        neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
+      }
+    }
+  }
+
+  /**
+   * Internal flash body; the public {@link #run()} wraps this with a warm-start guard for systems
+   * carrying a stale 3-phase state.
+   */
+  private void runInternal() {
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
