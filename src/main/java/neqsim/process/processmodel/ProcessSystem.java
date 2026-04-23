@@ -4025,39 +4025,157 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
-   * getEntropyProduction.
-   * </p>
+   * Sum of the entropy production across all unit operations in this process system. Individual
+   * entries are <em>not</em> logged to avoid flooding stdout on large flowsheets; iterate with
+   * {@link #getUnitOperations()} if per-unit detail is required.
    *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @param unit target unit passed straight through to
+   *        {@link ProcessEquipmentInterface#getEntropyProduction(String)}
+   * @return total entropy production
    */
   public double getEntropyProduction(String unit) {
     double entropyProduction = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
       entropyProduction += unitOperations.get(i).getEntropyProduction(unit);
-      System.out.println("unit " + unitOperations.get(i).getName() + " entropy production "
-          + unitOperations.get(i).getEntropyProduction(unit));
     }
     return entropyProduction;
   }
 
   /**
-   * <p>
-   * getExergyChange.
-   * </p>
+   * Net change in stream exergy (outlet minus inlet) aggregated over all unit operations, using
+   * this system's {@link #getSurroundingTemperature() surrounding temperature} as the dead state.
+   * The returned value is in the requested {@code unit} (supported values:
+   * {@code J, kJ, MJ, W, kW, MW}); unknown units fall back to J.
    *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @param unit energy / power unit of the returned value
+   * @return total exergy change across all units in the requested unit
    */
   public double getExergyChange(String unit) {
-    double exergyChange = 0.0;
+    return getExergyChange(unit, getSurroundingTemperature());
+  }
+
+  /**
+   * Net change in stream exergy aggregated over all unit operations using an explicit surrounding
+   * temperature.
+   *
+   * @param unit energy / power unit of the returned value
+   * @param surroundingTemperature dead-state temperature in K
+   * @return total exergy change across all units
+   */
+  public double getExergyChange(String unit, double surroundingTemperature) {
+    double exergyChangeJ = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
-      exergyChange += unitOperations.get(i).getExergyChange("J", getSurroundingTemperature());
-      System.out.println("unit " + unitOperations.get(i).getName() + " exergy change  "
-          + unitOperations.get(i).getExergyChange("J", getSurroundingTemperature()));
+      exergyChangeJ += unitOperations.get(i).getExergyChange("J", surroundingTemperature);
     }
-    return exergyChange;
+    return convertEnergy(exergyChangeJ, unit);
+  }
+
+  /**
+   * Total exergy destruction rate aggregated over all unit operations, using this system's
+   * {@link #getSurroundingTemperature() surrounding temperature}.
+   *
+   * @param unit energy / power unit of the returned value
+   * @return total exergy destruction in the requested unit
+   */
+  public double getExergyDestruction(String unit) {
+    return getExergyDestruction(unit, getSurroundingTemperature());
+  }
+
+  /**
+   * Total exergy destruction rate aggregated over all unit operations using an explicit surrounding
+   * temperature.
+   *
+   * @param unit energy / power unit of the returned value
+   * @param surroundingTemperature dead-state temperature in K
+   * @return total exergy destruction in the requested unit
+   */
+  public double getExergyDestruction(String unit, double surroundingTemperature) {
+    double destructionJ = 0.0;
+    for (int i = 0; i < unitOperations.size(); i++) {
+      destructionJ += unitOperations.get(i).getExergyDestruction("J", surroundingTemperature);
+    }
+    return convertEnergy(destructionJ, unit);
+  }
+
+  /**
+   * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} with one entry per
+   * unit operation. Useful for identifying exergy-destruction hot spots on large flowsheets.
+   *
+   * @return a new report using this system's surrounding temperature
+   */
+  public neqsim.process.util.exergy.ExergyAnalysisReport getExergyAnalysis() {
+    return getExergyAnalysis(getSurroundingTemperature());
+  }
+
+  /**
+   * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} with one entry per
+   * unit operation using an explicit dead-state temperature.
+   *
+   * @param surroundingTemperature dead-state temperature in K
+   * @return a new report
+   */
+  public neqsim.process.util.exergy.ExergyAnalysisReport getExergyAnalysis(
+      double surroundingTemperature) {
+    neqsim.process.util.exergy.ExergyAnalysisReport report =
+        new neqsim.process.util.exergy.ExergyAnalysisReport(surroundingTemperature);
+    populateExergyAnalysis(report, surroundingTemperature, null);
+    return report;
+  }
+
+  /**
+   * Populate an existing report with entries for this process system. Intended to be called by
+   * {@link neqsim.process.processmodel.ProcessModel#getExergyAnalysis()} so that multi-area
+   * aggregation keeps area labels on every row.
+   *
+   * @param report report instance to append to
+   * @param surroundingTemperature dead-state temperature in K
+   * @param areaName optional area name tag; may be {@code null}
+   */
+  public void populateExergyAnalysis(neqsim.process.util.exergy.ExergyAnalysisReport report,
+      double surroundingTemperature, String areaName) {
+    if (report == null) {
+      return;
+    }
+    for (int i = 0; i < unitOperations.size(); i++) {
+      ProcessEquipmentInterface op = unitOperations.get(i);
+      double dEJ = 0.0;
+      double dDestJ = 0.0;
+      try {
+        dEJ = op.getExergyChange("J", surroundingTemperature);
+      } catch (RuntimeException ex) {
+        logger.debug("getExergyChange failed for {}: {}", op.getName(), ex.getMessage());
+      }
+      try {
+        dDestJ = op.getExergyDestruction("J", surroundingTemperature);
+      } catch (RuntimeException ex) {
+        logger.debug("getExergyDestruction failed for {}: {}", op.getName(), ex.getMessage());
+      }
+      report.addEntry(new neqsim.process.util.exergy.ExergyAnalysisReport.Entry(op.getName(),
+          op.getClass().getSimpleName(), areaName, dEJ, dDestJ));
+    }
+  }
+
+  /**
+   * Convert a value in Joules to the requested unit.
+   *
+   * @param valueJ value in Joules (or watts, treated identically)
+   * @param unit target unit: J, kJ, MJ, W, kW, MW (unknown falls back to J)
+   * @return converted value
+   */
+  private static double convertEnergy(double valueJ, String unit) {
+    if (unit == null) {
+      return valueJ;
+    }
+    if ("J".equals(unit) || "W".equals(unit)) {
+      return valueJ;
+    }
+    if ("kJ".equals(unit) || "kW".equals(unit)) {
+      return valueJ / 1.0e3;
+    }
+    if ("MJ".equals(unit) || "MW".equals(unit)) {
+      return valueJ / 1.0e6;
+    }
+    return valueJ;
   }
 
   /**
