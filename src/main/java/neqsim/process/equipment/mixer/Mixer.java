@@ -206,8 +206,8 @@ public class Mixer extends ProcessEquipmentBaseClass
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            break;
           }
         }
 
