@@ -391,7 +391,50 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * @return a double
    */
   public default double getExergyChange(String unit) {
-    return 0.0;
+    return getExergyChange(unit, 288.15);
+  }
+
+  /**
+   * Exergy destruction rate of the unit operation, based on the universal relation
+   * {@code E_destroyed = T0 * S_gen} where {@code S_gen} is the entropy generation across the unit
+   * and {@code T0} is the surrounding ("dead state") temperature. The returned value is always
+   * non-negative.
+   *
+   * <p>
+   * The default implementation uses {@link #getEntropyProduction(String)} expressed in J/K. For
+   * adiabatic equipment (valves, separators, mixers, compressors, pumps) this gives the exact
+   * exergy destruction. For units with heat crossing the boundary at a known source temperature
+   * (heaters, coolers), override this method to include the Carnot-weighted heat exergy.
+   * </p>
+   *
+   * @param unit target unit, one of J, kJ, MJ, W, kW, MW
+   * @param surroundingTemperature surrounding (dead-state) temperature in K
+   * @return non-negative exergy destruction rate in the requested unit
+   */
+  public default double getExergyDestruction(String unit, double surroundingTemperature) {
+    double sGenJperK = getEntropyProduction("J/K");
+    double destructionJ = Math.max(0.0, surroundingTemperature * sGenJperK);
+    if (unit == null || "J".equals(unit) || "W".equals(unit)) {
+      return destructionJ;
+    }
+    if ("kJ".equals(unit) || "kW".equals(unit)) {
+      return destructionJ / 1.0e3;
+    }
+    if ("MJ".equals(unit) || "MW".equals(unit)) {
+      return destructionJ / 1.0e6;
+    }
+    return destructionJ;
+  }
+
+  /**
+   * Exergy destruction rate with a default surrounding temperature of 288.15 K (15 degC). See
+   * {@link #getExergyDestruction(String, double)} for details.
+   *
+   * @param unit target unit
+   * @return exergy destruction in the requested unit
+   */
+  public default double getExergyDestruction(String unit) {
+    return getExergyDestruction(unit, 288.15);
   }
 
   /**
