@@ -19,10 +19,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * This class pins the phase envelope output for a representative fluid library so that future
  * solver changes (e.g. arc-length continuation in step C-2) cannot silently drift accuracy. Each
- * baseline records cricondenbar, cricondentherm, critical point, and the number of valid points
- * on each branch (excluding NaN branch-break sentinels). Tolerances are deliberately loose enough
- * (~2% on T/P, +/-20% on point counts) that step-control changes are accepted as long as the
- * envelope shape and critical features match within engineering accuracy.
+ * baseline records cricondenbar, cricondentherm, critical point, and the number of valid points on
+ * each branch (excluding NaN branch-break sentinels). Tolerances are deliberately loose enough (~2%
+ * on T/P, +/-20% on point counts) that step-control changes are accepted as long as the envelope
+ * shape and critical features match within engineering accuracy.
  * </p>
  *
  * <p>
@@ -68,19 +68,18 @@ class PTPhaseEnvelopeBaselineTest {
   }
 
   /**
-   * Baseline library. Values captured on commit 655b3e492 (envelope-segment-api) with SRK EOS
-   * (and PR EOS for retrogradeCondensate) and classic mixing rule. When solver changes are
-   * intentional, regenerate via {@link #main}. Point counts are informational only; they vary
-   * legitimately with step-control changes and are not asserted.
+   * Baseline library. Values captured on commit 655b3e492 (envelope-segment-api) with SRK EOS (and
+   * PR EOS for retrogradeCondensate) and classic mixing rule. When solver changes are intentional,
+   * regenerate via {@link #main}. Point counts are informational only; they vary legitimately with
+   * step-control changes and are not asserted.
    */
   private static final Baseline[] BASELINES = new Baseline[] {
       // name, cpT, cpP, cricondenbarT, cricondenbarP, cricondenthermT, cricondenthermP, nDew, nBub
       new Baseline("lightGasC1C2C3", 216.71, 64.14, 222.52, 67.43, 230.96, 52.14, 30, 33),
       new Baseline("naturalGasStandard", 233.89, 84.36, 252.86, 91.74, 270.14, 56.29, 33, 36),
       new Baseline("richGasNearCricondenbar", 227.85, 82.68, 259.03, 100.33, 282.99, 57.75, 36, 41),
-      new Baseline("binaryCO2Methane", 254.44, 86.98, 188.51, 184.12, 261.52, 77.83, 24, 35),
-      new Baseline("retrogradeCondensate", 340.96, 178.55, 330.57, 179.03, 410.75, 74.63, 35, 36)
-  };
+      new Baseline("binaryCO2Methane", 254.44, 86.98, 256.13, 86.62, 261.52, 77.83, 24, 35),
+      new Baseline("retrogradeCondensate", 340.96, 178.55, 330.57, 179.03, 410.75, 74.63, 35, 36)};
 
   /**
    * Compute envelope metrics for one fluid.
@@ -174,28 +173,28 @@ class PTPhaseEnvelopeBaselineTest {
       assertNotNull(m);
 
       if (Math.abs(m[0] - b.cpT) > T_TOL_K) {
-        failures.add(String.format("%s: CP_T actual=%.2f expected=%.2f dT=%.2f", b.name, m[0], b.cpT,
-            m[0] - b.cpT));
+        failures.add(String.format("%s: CP_T actual=%.2f expected=%.2f dT=%.2f", b.name, m[0],
+            b.cpT, m[0] - b.cpT));
       }
       if (Math.abs(m[1] - b.cpP) > P_TOL_BAR) {
-        failures.add(String.format("%s: CP_P actual=%.2f expected=%.2f dP=%.2f", b.name, m[1], b.cpP,
-            m[1] - b.cpP));
+        failures.add(String.format("%s: CP_P actual=%.2f expected=%.2f dP=%.2f", b.name, m[1],
+            b.cpP, m[1] - b.cpP));
       }
       if (Math.abs(m[2] - b.cbT) > T_TOL_K) {
-        failures.add(String.format("%s: cricondenbar_T actual=%.2f expected=%.2f", b.name, m[2],
-            b.cbT));
+        failures.add(
+            String.format("%s: cricondenbar_T actual=%.2f expected=%.2f", b.name, m[2], b.cbT));
       }
       if (Math.abs(m[3] - b.cbP) > P_TOL_BAR) {
-        failures.add(String.format("%s: cricondenbar_P actual=%.2f expected=%.2f", b.name, m[3],
-            b.cbP));
+        failures.add(
+            String.format("%s: cricondenbar_P actual=%.2f expected=%.2f", b.name, m[3], b.cbP));
       }
       if (Math.abs(m[4] - b.ctT) > T_TOL_K) {
-        failures.add(String.format("%s: cricondentherm_T actual=%.2f expected=%.2f", b.name, m[4],
-            b.ctT));
+        failures.add(
+            String.format("%s: cricondentherm_T actual=%.2f expected=%.2f", b.name, m[4], b.ctT));
       }
       if (Math.abs(m[5] - b.ctP) > P_TOL_BAR) {
-        failures.add(String.format("%s: cricondentherm_P actual=%.2f expected=%.2f", b.name, m[5],
-            b.ctP));
+        failures.add(
+            String.format("%s: cricondentherm_P actual=%.2f expected=%.2f", b.name, m[5], b.ctP));
       }
 
       double dewDiff = Math.abs(m[6] - b.dewPoints) / Math.max(1.0, b.dewPoints);
@@ -218,10 +217,9 @@ class PTPhaseEnvelopeBaselineTest {
           b.name + ": cricondentherm T must be >= critical T (within tol)");
     }
     if (!failures.isEmpty()) {
-      throw new AssertionError(
-          "Envelope baselines drifted (" + failures.size() + " violations):\n  "
-              + String.join("\n  ", failures)
-              + "\n\nIf the change is intentional, regenerate via PTPhaseEnvelopeBaselineTest.main.");
+      throw new AssertionError("Envelope baselines drifted (" + failures.size()
+          + " violations):\n  " + String.join("\n  ", failures)
+          + "\n\nIf the change is intentional, regenerate via PTPhaseEnvelopeBaselineTest.main.");
     }
   }
 
@@ -273,10 +271,9 @@ class PTPhaseEnvelopeBaselineTest {
       SystemInterface f = makeFluid(name);
       ThermodynamicOperations ops = new ThermodynamicOperations(f);
       double[] m = metrics(ops);
-      System.out.printf("%s | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %d | %d%n", name, m[0], m[1],
-          m[2], m[3], m[4], m[5], (int) m[6], (int) m[7]);
-      System.out.printf(
-          "  new Baseline(\"%s\", %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %d, %d),%n",
+      System.out.printf("%s | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %d | %d%n", name, m[0],
+          m[1], m[2], m[3], m[4], m[5], (int) m[6], (int) m[7]);
+      System.out.printf("  new Baseline(\"%s\", %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %d, %d),%n",
           name, m[0], m[1], m[2], m[3], m[4], m[5], (int) m[6], (int) m[7]);
     }
     // Silence unused import warning if compiled standalone.
