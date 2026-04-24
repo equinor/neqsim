@@ -770,13 +770,21 @@ public class BottleneckAnalysisOptimizerTest {
     // Configuration: Use NELDER_MEAD with strict utilization limit
     // The key is defaultUtilizationLimit(1.0) which means feasible only if all <=
     // 100%
-    OptimizationConfig config =
-        new OptimizationConfig(originalFlow * 0.95, originalFlow * 1.05).rateUnit("kg/hr")
-            .tolerance(originalFlow * 0.002).maxIterations(60).defaultUtilizationLimit(1.0) // Strict:
-                                                                                            // must
-                                                                                            // be <=
-                                                                                            // 100%
-            .searchMode(SearchMode.PARTICLE_SWARM_SCORE).rejectInvalidSimulations(true);
+    OptimizationConfig config = new OptimizationConfig(originalFlow * 0.95, originalFlow * 1.05)
+        .rateUnit("kg/hr").tolerance(originalFlow * 0.002).maxIterations(60)
+        .defaultUtilizationLimit(1.0) // Strict:
+                                      // must
+                                      // be <=
+                                      // 100%
+        .searchMode(SearchMode.PARTICLE_SWARM_SCORE).rejectInvalidSimulations(true).randomSeed(42L); // Fixed
+                                                                                                     // seed
+                                                                                                     // for
+                                                                                                     // deterministic
+                                                                                                     // PSO
+                                                                                                     // (prevents
+                                                                                                     // flaky
+                                                                                                     // utilization
+                                                                                                     // checks)
 
     // Objective: maximize throughput (score = flow rate)
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
