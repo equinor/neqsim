@@ -1013,8 +1013,13 @@ public abstract class Flash extends BaseOperation {
           && !system.getModelName().contains("CPA")) {
         retryFoundInstability = amplifiedKStabilityRetry();
       }
-      // Pure-component trials catch LLE instability (Wilson K fails at T << Tc)
-      if (!retryFoundInstability && doLLESupplementaryCheck) {
+      // Pure-component trials catch LLE instability (Wilson K fails at T << Tc).
+      // Skip when standard stability analysis gives a clear "stable" verdict
+      // (both tm values comfortably positive), since the expensive trials
+      // (3 components x 80 iterations x init(1) each) rarely find instability
+      // in that regime.
+      if (!retryFoundInstability && doLLESupplementaryCheck
+          && (tm[0] < 1.0 || tm[1] < 1.0 || ambiguousStability)) {
         retryFoundInstability = pureComponentStabilityTrials();
       }
       if (retryFoundInstability) {
