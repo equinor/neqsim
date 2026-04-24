@@ -878,35 +878,54 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @return a boolean
    */
   public boolean solveX2(int maxIter) {
-    double err = .0;
-    double totalVolume = getTotalVolume();
+    final int n = totalNumberOfAccociationSites;
+    if (n == 0) {
+      return true;
+    }
+    final double totalVolume = getTotalVolume();
+    final double invV = 1.0 / totalVolume;
+
+    // Cache into primitive arrays to eliminate O(N^2) virtual calls, casts, and array
+    // dereferences from the inner loop. Preserves Gauss-Seidel semantics: the site value
+    // written in outer iteration i is visible to sites i+1..n-1 within the same sweep.
+    ComponentSrkCPA[] comps = new ComponentSrkCPA[n];
+    double[] xArr = new double[n];
+    double[] nMoles = new double[n];
+    int[] siteIdx = new int[n];
+    for (int k = 0; k < n; k++) {
+      ComponentSrkCPA c = (ComponentSrkCPA) componentArray[moleculeNumber[k]];
+      comps[k] = c;
+      siteIdx[k] = assSiteNumber[k];
+      xArr[k] = c.getXsite()[assSiteNumber[k]];
+      nMoles[k] = c.getNumberOfMolesInPhase();
+    }
+
+    double err = 0.0;
     int iter = 0;
-    // if (delta == null) {
-    // initCPAMatrix(1);
-    double old = 0.0;
-    double neeval = 0.0;
-    // }
     do {
       iter++;
       err = 0.0;
-      for (int i = 0; i < totalNumberOfAccociationSites; i++) {
-        old = ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).getXsite()[assSiteNumber[i]];
-        neeval = 0.0;
-        for (int j = 0; j < totalNumberOfAccociationSites; j++) {
-          neeval += componentArray[moleculeNumber[j]].getNumberOfMolesInPhase() * delta[i][j]
-              * ((ComponentSrkCPA) componentArray[moleculeNumber[j]]).getXsite()[assSiteNumber[j]];
+      for (int i = 0; i < n; i++) {
+        final double old = xArr[i];
+        final double[] deltaRow = delta[i];
+        double sum = 0.0;
+        for (int j = 0; j < n; j++) {
+          sum += nMoles[j] * deltaRow[j] * xArr[j];
         }
-        neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
-        ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i], neeval);
+        double neeval = 1.0 / (1.0 + invV * sum);
+        xArr[i] = neeval;
         err += Math.abs((old - neeval) / neeval);
       }
     } while (Math.abs(err) > 1e-12 && iter < maxIter);
-    // System.out.println("iter " + iter);
+
+    // Write back once, after convergence (or max iterations).
+    for (int k = 0; k < n; k++) {
+      comps[k].setXsite(siteIdx[k], xArr[k]);
+    }
+
     if (Math.abs(err) < 1e-12) {
       return true;
     } else {
-      // System.out.println("did not solve for Xi in iterations: " + iter);
-      // System.out.println("error: " + err);
       return false;
     }
   }
