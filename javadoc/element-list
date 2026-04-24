@@ -248,6 +248,7 @@ neqsim.process.mechanicaldesign.powergeneration
 neqsim.process.mechanicaldesign.pump
 neqsim.process.mechanicaldesign.reactor
 neqsim.process.mechanicaldesign.separator
+neqsim.process.mechanicaldesign.separator.conformity
 neqsim.process.mechanicaldesign.separator.internals
 neqsim.process.mechanicaldesign.separator.primaryseparation
 neqsim.process.mechanicaldesign.separator.sectiontype
@@ -291,6 +292,7 @@ neqsim.process.sustainability
 neqsim.process.util
 neqsim.process.util.event
 neqsim.process.util.example
+neqsim.process.util.exergy
 neqsim.process.util.export
 neqsim.process.util.fielddevelopment
 neqsim.process.util.fire
