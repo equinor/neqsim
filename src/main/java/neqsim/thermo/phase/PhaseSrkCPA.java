@@ -5,8 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
-import org.ejml.interfaces.linsol.LinearSolverDense;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -73,11 +71,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   private SimpleMatrix KlkMatrix = null;
   private SimpleMatrix hessianMatrix = null;
   private SimpleMatrix hessianInvers = null;
-  /**
-   * Cached LU factorization of {@code hessianMatrix}. Reused instead of computing an explicit
-   * inverse and multiplying; saves ~N back-substitutions per call in the CPA hot path.
-   */
-  private transient LinearSolverDense<DMatrixRMaj> hessianLU = null;
   private SimpleMatrix KlkVMatrix = null;
   private DMatrixRMaj corr2Matrix = null;
   private DMatrixRMaj corr3Matrix = null;
@@ -380,7 +373,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
     // dXdV
     SimpleMatrix KlkVMatrixksi = KlkVMatrix.mult(ksiMatrix);
-    SimpleMatrix XV = applyHessianInv(KlkVMatrixksi);
+    SimpleMatrix XV = hessianInvers.mult(KlkVMatrixksi);
     SimpleMatrix XVtranspose = XV.transpose();
 
     FCPA = mVector.transpose().mult(uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5)))
@@ -423,7 +416,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
     // dFCPAdTdV = tempMatrixTV.get(0, 0);
     // dXdT
-    SimpleMatrix XT = applyHessianInv(KlkTMatrixTImesKsi);
+    SimpleMatrix XT = hessianInvers.mult(KlkTMatrixTImesKsi);
     // dQdTdT
     SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
         .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
@@ -477,7 +470,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       // System.out.println("temp4 matrix");
       // tempMatrix4.print(10, 10);
       // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-      SimpleMatrix tempMatrix6 = applyHessianInv(tempMatrix5); // .scale(-1.0);
+      SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
       // System.out.println("dXdni");
       // tempMatrix4.print(10, 10);
       // tempMatrix5.print(10, 10);
@@ -800,20 +793,14 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         }
       }
 
-      // Factorize the Hessian once via LU. Previously we computed an explicit inverse
-      // (hessianMatrix.invert()) and then multiplied it against each RHS; this was the
-      // dominant CPA hot-spot in JFR profiles (~25-30% of PhaseSrkCPA self-time on TEG
-      // workloads). LU + solve avoids building the N-column inverse and avoids the extra
-      // SimpleMatrix wrapping/allocation.
-      if (hessianLU == null) {
-        hessianLU = LinearSolverFactory_DDRM.lu(totalNumberOfAccociationSites);
-      }
-      if (!hessianLU.setA(hessianMatrix.getMatrix())) {
+      // ksiMatrix = new SimpleMatrix(ksi);
+      // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
+      try {
+        hessianInvers = hessianMatrix.invert();
+      } catch (Exception ex) {
+        // logger.error(ex.getMessage(), ex);
         return false;
       }
-      // Keep hessianInvers null in the new path; any caller that needs the explicit
-      // inverse will use applyHessianInv(SimpleMatrix) which calls LU solve.
-      hessianInvers = null;
       if (solvedX) {
         // System.out.println("solvedX ");
         return true;
@@ -822,7 +809,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       DMatrixRMaj mat2 = ksiMatrix.getMatrix();
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
-      hessianLU.solve(corr3Matrix, corr4Matrix);
+      CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
       // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
       // corrMatrix =
       // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
@@ -856,20 +843,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   }
 
   /**
-   * Applies the inverse of the CPA Hessian to a right-hand-side matrix by reusing the cached LU
-   * factorization computed in {@link #solveX()}. Semantically equivalent to
-   * {@code hessianInvers.mult(rhs)} but avoids ever building the explicit inverse.
-   *
-   * @param rhs the right-hand-side matrix (one or more columns)
-   * @return a newly-allocated SimpleMatrix containing {@code H^{-1} * rhs}
-   */
-  private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
-    DMatrixRMaj out = new DMatrixRMaj(rhs.numRows(), rhs.numCols());
-    hessianLU.solve(rhs.getDDRM(), out);
-    return SimpleMatrix.wrap(out);
-  }
-
-  /**
    * <p>
    * solveX2.
    * </p>
@@ -878,54 +851,35 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @return a boolean
    */
   public boolean solveX2(int maxIter) {
-    final int n = totalNumberOfAccociationSites;
-    if (n == 0) {
-      return true;
-    }
-    final double totalVolume = getTotalVolume();
-    final double invV = 1.0 / totalVolume;
-
-    // Cache into primitive arrays to eliminate O(N^2) virtual calls, casts, and array
-    // dereferences from the inner loop. Preserves Gauss-Seidel semantics: the site value
-    // written in outer iteration i is visible to sites i+1..n-1 within the same sweep.
-    ComponentSrkCPA[] comps = new ComponentSrkCPA[n];
-    double[] xArr = new double[n];
-    double[] nMoles = new double[n];
-    int[] siteIdx = new int[n];
-    for (int k = 0; k < n; k++) {
-      ComponentSrkCPA c = (ComponentSrkCPA) componentArray[moleculeNumber[k]];
-      comps[k] = c;
-      siteIdx[k] = assSiteNumber[k];
-      xArr[k] = c.getXsite()[assSiteNumber[k]];
-      nMoles[k] = c.getNumberOfMolesInPhase();
-    }
-
-    double err = 0.0;
+    double err = .0;
+    double totalVolume = getTotalVolume();
     int iter = 0;
+    // if (delta == null) {
+    // initCPAMatrix(1);
+    double old = 0.0;
+    double neeval = 0.0;
+    // }
     do {
       iter++;
       err = 0.0;
-      for (int i = 0; i < n; i++) {
-        final double old = xArr[i];
-        final double[] deltaRow = delta[i];
-        double sum = 0.0;
-        for (int j = 0; j < n; j++) {
-          sum += nMoles[j] * deltaRow[j] * xArr[j];
+      for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+        old = ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).getXsite()[assSiteNumber[i]];
+        neeval = 0.0;
+        for (int j = 0; j < totalNumberOfAccociationSites; j++) {
+          neeval += componentArray[moleculeNumber[j]].getNumberOfMolesInPhase() * delta[i][j]
+              * ((ComponentSrkCPA) componentArray[moleculeNumber[j]]).getXsite()[assSiteNumber[j]];
         }
-        double neeval = 1.0 / (1.0 + invV * sum);
-        xArr[i] = neeval;
+        neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
+        ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i], neeval);
         err += Math.abs((old - neeval) / neeval);
       }
     } while (Math.abs(err) > 1e-12 && iter < maxIter);
-
-    // Write back once, after convergence (or max iterations).
-    for (int k = 0; k < n; k++) {
-      comps[k].setXsite(siteIdx[k], xArr[k]);
-    }
-
+    // System.out.println("iter " + iter);
     if (Math.abs(err) < 1e-12) {
       return true;
     } else {
+      // System.out.println("did not solve for Xi in iterations: " + iter);
+      // System.out.println("error: " + err);
       return false;
     }
   }
