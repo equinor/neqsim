@@ -2626,6 +2626,29 @@ public class TPmultiflash extends TPflash {
           }
         }
       }
+
+      // Composition-based trivial solution detection: two phases of the SAME
+      // PhaseType with essentially identical mole-fraction vectors are
+      // non-converged numerical duplicates. Restricting to same PhaseType
+      // avoids removing legitimate near-critical V/L pairs (issue #1980).
+      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+        for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+          if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
+            continue;
+          }
+          double maxCompDiff = 0.0;
+          for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+            maxCompDiff = Math.max(maxCompDiff, Math.abs(system.getPhase(i).getComponent(k).getx()
+                - system.getPhase(j).getComponent(k).getx()));
+          }
+          if (maxCompDiff < 1.0e-6) {
+            system.removePhaseKeepTotalComposition(j);
+            doStabilityAnalysis = false;
+            hasRemovedPhase = true;
+            j--; // adjust index after removal
+          }
+        }
+      }
       /*
        * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
        * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 &&
