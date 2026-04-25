@@ -38,6 +38,20 @@ Documentation for separator equipment in NeqSim process simulation.
 - `GasScrubber` - Vertical gas scrubbing separator (K-value constrained)
 - `GasScrubberSimple` - Simplified gas scrubber model
 
+### Feature status
+
+| Feature                                                 | Class / package                                           | Status     |
+|---------------------------------------------------------|-----------------------------------------------------------|------------|
+| Two-phase / three-phase / scrubber simulation           | `Separator`, `ThreePhaseSeparator`, `GasScrubber`         | Stable     |
+| Mechanical design (geometry, weight, cost)              | `SeparatorMechanicalDesign`, `GasScrubberMechanicalDesign`| Stable     |
+| Internals catalogue (mesh, vane, cyclones, inlet device)| `entrainment.*`, `sectiontype.*`                          | Stable     |
+| TR3500 conformity rule set                              | `conformity.ConformityRuleSet`                            | Stable     |
+| Drainage-head check (mm + % of available)               | `GasScrubberMechanicalDesign.computeDrainageHead()`       | Stable     |
+| Capacity constraint framework                           | `equipment.capacity.CapacityConstraint`                   | Stable     |
+| Constraint **source** flag (provenance)                 | `CapacityConstraint.ConstraintSource`                     | New        |
+| Empirical carry-over constraint (calibrated)            | `EmpiricalCarryOverConstraint`                            | New (stub) |
+| Optimizer integration (bottleneck, max throughput)      | `ProductionOptimizer`, `ProcessOptimizationEngine`        | Stable     |
+
 ---
 
 ## Separator Types
@@ -1209,6 +1223,98 @@ per train — matching the format of the standard Sulzer
   (e.g. a vendor-swirldeck-relaxed rule set).
 - Re-run `process.run()` between each `feed.set…` call; `checkConformity()`
   reads values from the current fluid state, not from cached inputs.
+
+---
+
+## Constraint Sources: Conformity vs. User Rules vs. Empirical
+
+Every `CapacityConstraint` carries a **`ConstraintSource`** that tells consumers
+(optimiser, capacity reports, dashboards) where the limit value originated.
+Severity (`HARD` / `SOFT` / `ADVISORY`) controls how the optimiser reacts to a
+violation; source records *why the constraint exists in the first place*. The
+two are independent.
+
+| Source                | Typical severity | Meaning                                                                                                       |
+|-----------------------|------------------|---------------------------------------------------------------------------------------------------------------|
+| `CONFORMITY_STANDARD` | `SOFT`           | Limit comes from a published standard or company TR (TR3500, API 12J, NORSOK P-002, Shell DEP, ISO, ASME).    |
+| `USER_RULE`           | varies           | Defined by operations / asset team — e.g., a max compressor speed for vibration management.                   |
+| `PROCESS_EMPIRICAL`   | `HARD`           | Calibrated against observed plant behaviour (e.g., downstream carry-over correlated to scrubber gas rate).    |
+| `VENDOR_DATASHEET`    | `HARD`           | OEM mechanical / surge / overspeed limit.                                                                     |
+| `AUTO_SIZE`           | `SOFT`           | Generated automatically by `equipment.autoSize(...)`.                                                         |
+| `DEFAULT`             | -                | Built-in fallback when no provenance has been declared.                                                       |
+
+### Default behaviour for `setConformityRules("TR3500")`
+
+Calling `scrubber.getMechanicalDesign().setConformityRules("TR3500")` now:
+
+1. Enables the matching constraints (`gasLoadFactor`, `kValue`, `inletMomentum`,
+   …) on the underlying `Separator`.
+2. Tags each enabled constraint with
+   `ConstraintSource.CONFORMITY_STANDARD` and a reference string
+   (`"Conformity rule set: TR3500"`).
+3. Sets severity to `SOFT` — TR3500 conformity is **visible but
+   non-binding** for the optimiser by default. Asset owners can elevate any
+   specific check to `HARD` if their internal policy requires it:
+
+```java
+scrubber.getCapacityConstraints().get("kValue")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD);
+```
+
+### Hard, binding constraints from empirical observations
+
+The **hard** constraint that actually limits production on most field cases is
+not a standard's K-factor; it is an empirical relationship between an operating
+variable (gas rate, suction pressure) and a downstream consequence — typically
+liquid carry-over from the last scrubber accumulating in the suction drum of a
+compressor or expander downstream.
+
+`EmpiricalCarryOverConstraint` packages this pattern as a piecewise-linear
+correlation calibrated against measured points (e.g., suction-drum level
+instrumentation):
+
+```java
+import neqsim.process.equipment.capacity.EmpiricalCarryOverConstraint;
+
+double[] gasRate    = { 2.0, 3.0, 4.5, 5.5 };  // Am³/s at scrubber gas outlet
+double[] carryOver  = { 0.0, 0.5, 3.0, 12.0 }; // kg/h observed downstream
+double  maxCarry    = 5.0;                     // kg/h hard limit
+
+EmpiricalCarryOverConstraint co = EmpiricalCarryOverConstraint.fromObservations(
+    "carryOver", "kg/h",
+    () -> scrubber.getThermoSystem().getPhase(0).getFlowRate("m3/sec"),
+    gasRate, carryOver, maxCarry);
+co.setSource(CapacityConstraint.ConstraintSource.PROCESS_EMPIRICAL,
+             "Suction drum LT-2103, May–Aug 2025");
+scrubber.addCapacityConstraint(co);
+```
+
+Behaviour:
+
+- Default severity is `HARD` and source is `PROCESS_EMPIRICAL`.
+- Below the lowest calibration point the value clamps to the first observation;
+  above the highest the slope of the last segment is used for conservative
+  extrapolation.
+- The constraint integrates with `findBottleneck()`,
+  `ProcessConstraintEvaluator`, and the production optimiser — exactly like any
+  other `CapacityConstraint`.
+
+### Choosing what is binding
+
+A reasonable default for a gas-export train is:
+
+| Layer            | Source                | Severity   | Effect on optimiser            |
+|------------------|-----------------------|------------|--------------------------------|
+| TR3500 K-factor  | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block       |
+| TR3500 inlet ρv² | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block       |
+| Drainage head %  | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block       |
+| Carry-over kg/h  | `PROCESS_EMPIRICAL`   | `HARD`     | **Binds capacity**             |
+| Compressor surge | `VENDOR_DATASHEET`    | `CRITICAL` | Stops optimisation immediately |
+
+This separation lets you produce a single capacity report that shows *what
+limits production today* (the empirical / vendor constraints) and *what would
+limit production if conformity were enforced* (the standards-driven
+constraints).
 
 ---
 

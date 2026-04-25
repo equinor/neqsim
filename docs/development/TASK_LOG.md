@@ -27,6 +27,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-04-22 — Kollsnes scrubber drainage-head method + standardised comparison plots + dual reports
+**Type:** F (Design) / E (Feature)
+**Keywords:** scrubber, drainage head, GasScrubberMechanicalDesign, computeDrainageHead, DrainageHeadResult, TR3500, ConformityRuleSet, mesh dP, cyclone dP, comparison plots, MSm3/d, Kollsnes
+**Solution:**
+- `src/main/java/neqsim/process/mechanicaldesign/separator/DrainageHeadResult.java` — new value class (mesh dP, cyclone dP-to-drain, total dP, required mm, available mm, %)
+- `src/main/java/neqsim/process/mechanicaldesign/separator/GasScrubberMechanicalDesign.java` — new `computeDrainageHead()` returns `DrainageHeadResult`; `getResponse()` extended with `drainageHead` map
+- `src/main/java/neqsim/process/mechanicaldesign/separator/conformity/ConformityRuleSet.java` — TR3500 emits `drainage-head` (mm), `drainage-head-pct` (% of available), `cyclone-dp-to-drain` (mbar)
+- `task_solve/2026-04-20_kollsnes_scrubber_performance_analysis/step2_analysis/06_scrubber_tables.ipynb` — MSm³/d via `n·Vm·24/1e6`; standardised five-metric comparison plots (k, cyclone momentum, drainage %, P, Q in MSm³/d); UTF-8-safe HTML output
+- `task_solve/.../step3_report/generate_scrubber_reports.py` — produces `Report_detailed.html` (full 9 tables + drainage analysis + comparison figures) and `Report_summary.html` (1-page exec brief); writes `results.json`
+**Notes:**
+- Required Maven build via Adoptium-JDK because the Adoptium-JRE `java.exe` lacks `javac`. Set `JAVA_HOME=C:\Users\pdup\AppData\Roaming\Code\User\globalStorage\pleiades.java-extension-pack-jdk\java\latest` before launching plexus-classworlds.
+- Drainage check: `h_req = (dp_mesh + dp_cyc·f_to_drain) / ((ρ_liq − ρ_gas)·g)` vs `h_avail = z_cyc_deck − z_HHLL`. Default `eu_mesh = 0.5` if `mistEliminatorDpCoeff` not set.
+- Conformity headline (33 cases): k-factor FAIL 33/33; drainage-head-pct PASS 33/33 (worst 29.9 % at VAx02 / Tog 3 / Historic peak). Drainage is NOT the limiting failure mode — re-entrainment is.
+- Two new figures (`scrubber_comparison_bars.png`, `scrubber_flow_vs_drainage.png`) are mandatory for any future scrubber comparison.
+- jinja2 was missing on the agent box — pandas `.style` accessor requires it. `pip install --user jinja2`.
+
 ### 2026-04-21 — Kollsnes scrubber 9-table performance deliverable
 **Type:** F (Design) / G (Workflow)
 **Keywords:** scrubber, GasScrubberMechanicalDesign, TR3500, ConformityReport, Kollsnes, VA301, VA302, VA303, Sulzer reference spreadsheet, mesh pad, demisting cyclones, inlet momentum, k-factor, historic peak

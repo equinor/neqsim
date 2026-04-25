@@ -253,10 +253,27 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    */
   public void setConformityRules(String standardName) {
     this.conformityRuleSet = ConformityRuleSet.create(standardName);
-    // Enable matching capacity constraints on the separator
+    // Enable matching capacity constraints on the separator and tag them with
+    // their provenance so downstream consumers (optimizers, reports) can tell
+    // a standards-driven limit from a user rule or empirical correlation.
     Separator sep = (Separator) getProcessEquipment();
     List<String> constraintNames = conformityRuleSet.getConstraintNames(this);
     sep.enableConstraints(constraintNames.toArray(new String[0]));
+    String reference = "Conformity rule set: " + conformityRuleSet.getName();
+    for (String n : constraintNames) {
+      neqsim.process.equipment.capacity.CapacityConstraint c = sep.getCapacityConstraints().get(n);
+      if (c != null) {
+        c.setSource(
+            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSource.CONFORMITY_STANDARD,
+            reference);
+        // Conformity-driven constraints are informational by default — visible
+        // in capacity reports but do not block the optimizer unless the asset
+        // owner explicitly elevates them. Hard / binding constraints should
+        // come from PROCESS_EMPIRICAL or VENDOR_DATASHEET sources.
+        c.setSeverity(
+            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity.SOFT);
+      }
+    }
   }
 
   /**
@@ -694,6 +711,96 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   // ============================================================================
+  // Drainage head calculation (mesh-pad + cyclone dP -> clear-liquid column)
+  // ============================================================================
+
+  /**
+   * Computes the drainage head breakdown at the current operating state.
+   *
+   * <p>
+   * The total pressure drop the liquid film must balance to drain from the
+   * cyclone bank back into the vessel bulk is:
+   * </p>
+   *
+   * <pre>
+   * dP_total = dP_mesh + dP_cyclone_to_drain
+   * </pre>
+   *
+   * <p>
+   * where the mesh pad pressure drop uses the stored Euler coefficient
+   * (<i>dP_mesh = Eu · 0.5 · rho_g · v_mesh²</i>, defaulting to 0.5 for standard
+   * knitmesh if unset) and the cyclone fraction reaching the drain chamber
+   * uses <i>cycloneDpToDrainPct</i>. The equivalent clear-liquid head accounts
+   * for the gas column buoyancy:
+   * </p>
+   *
+   * <pre>
+   * h_required = dP_total / ((rho_L - rho_G) · g)
+   * </pre>
+   *
+   * <p>
+   * The available drainage elevation is the geometric distance from the
+   * cyclone deck down to LA(HH).
+   * </p>
+   *
+   * @return a {@link DrainageHeadResult} holding the breakdown, or a result
+   *         with {@code NaN} percentage if the geometry or fluid state is
+   *         incomplete
+   * @throws IllegalStateException if the equipment is not a {@link Separator}
+   */
+  public DrainageHeadResult computeDrainageHead() {
+    Separator sep = (Separator) getProcessEquipment();
+    neqsim.thermo.system.SystemInterface fluid = sep.getThermoSystem();
+    if (fluid == null) {
+      return new DrainageHeadResult(0, 0, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+    }
+    fluid.initPhysicalProperties();
+
+    double rhoGas = fluid.getPhase(0).getPhysicalProperties().getDensity();
+    double gasFlowM3s = fluid.getPhase(0).getFlowRate("m3/sec");
+
+    double rhoLiq = 1000.0;
+    if (fluid.getNumberOfPhases() >= 2) {
+      if (fluid.hasPhaseType("oil")) {
+        rhoLiq = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+      } else if (fluid.hasPhaseType("aqueous")) {
+        rhoLiq = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+      }
+    }
+    double g = 9.81;
+
+    // Mesh pad pressure drop
+    double meshDp = 0.0;
+    if (hasMeshPad && meshPadAreaM2 > 0) {
+      double vMesh = gasFlowM3s / meshPadAreaM2;
+      double euMesh = getMistEliminatorDpCoeff();
+      if (euMesh <= 0) {
+        euMesh = 0.5; // default for standard knitmesh
+      }
+      meshDp = euMesh * 0.5 * rhoGas * vMesh * vMesh;
+    }
+
+    // Cyclone pressure drop reaching the drain chamber
+    double cycDp = 0.0;
+    if (hasDemistingCyclones && numberOfDemistingCyclones > 0
+        && demistingCycloneDiameterM > 0) {
+      double cycArea = numberOfDemistingCyclones * Math.PI
+          * Math.pow(demistingCycloneDiameterM / 2.0, 2);
+      double vCyc = cycArea > 0 ? gasFlowM3s / cycArea : 0.0;
+      double momentum = rhoGas * vCyc * vCyc;
+      double cycDpTotal = cycloneEulerNumber * momentum;
+      cycDp = cycDpTotal * cycloneDpToDrainPct / 100.0;
+    }
+
+    double totalDp = meshDp + cycDp;
+    double rhoDelta = rhoLiq - rhoGas;
+    double requiredMm = rhoDelta > 0 ? totalDp / (rhoDelta * g) * 1000.0 : Double.NaN;
+    double availableMm = (cycloneDeckElevationM - laHHElevationM) * 1000.0;
+
+    return new DrainageHeadResult(meshDp, cycDp, requiredMm, availableMm, rhoGas, rhoLiq);
+  }
+
+  // ============================================================================
   // Reporting
   // ============================================================================
 
@@ -776,6 +883,19 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (hasDemistingCyclones && laHHElevationM > 0) {
       double drainageHeight = cycloneDeckElevationM - laHHElevationM;
       resp.addSpecificParameter("drainageHeightAvailable_mm", drainageHeight * 1000.0);
+      try {
+        DrainageHeadResult dh = computeDrainageHead();
+        Map<String, Object> dhMap = new LinkedHashMap<String, Object>();
+        dhMap.put("meshDp_Pa", dh.getMeshDpPa());
+        dhMap.put("cycloneDpToDrain_Pa", dh.getCycloneDpToDrainPa());
+        dhMap.put("totalDp_Pa", dh.getTotalDpPa());
+        dhMap.put("requiredHead_mm", dh.getRequiredHeadMm());
+        dhMap.put("availableHead_mm", dh.getAvailableHeadMm());
+        dhMap.put("percentOfAvailable", dh.getPercentOfAvailable());
+        resp.addSpecificParameter("drainageHead", dhMap);
+      } catch (Exception ex) {
+        // fluid not ready — skip
+      }
     }
 
     return resp;

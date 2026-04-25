@@ -96,6 +96,65 @@ public class CapacityConstraint implements Serializable {
     ADVISORY
   }
 
+  /**
+   * Provenance of a capacity constraint — tells downstream consumers (optimizers,
+   * reports, dashboards) where the limit value originated. Unlike
+   * {@link ConstraintSeverity} which controls how violations are handled, the source
+   * tells <em>why</em> the constraint exists.
+   *
+   * <p>
+   * Recommended pairings:
+   * </p>
+   * <ul>
+   * <li>{@link #CONFORMITY_STANDARD} — typically SOFT/ADVISORY (informational, do not block
+   * production unless company policy requires it)</li>
+   * <li>{@link #USER_RULE} — severity chosen by operations</li>
+   * <li>{@link #PROCESS_EMPIRICAL} — typically HARD (calibrated against observed plant behaviour
+   * such as downstream carry-over, fouling rate, vibration)</li>
+   * <li>{@link #VENDOR_DATASHEET} — typically HARD (mechanical / surge / overspeed limits)</li>
+   * <li>{@link #AUTO_SIZE} — design point from {@code autoSize()}; usually SOFT</li>
+   * <li>{@link #DEFAULT} — built-in fallback when no explicit source is recorded</li>
+   * </ul>
+   */
+  public enum ConstraintSource {
+    /**
+     * Constraint comes from an industry / company standard (TR3500, API 12J, NORSOK P-002,
+     * Shell DEP, ISO, ASME, DNV ...). The exact standard is recorded in
+     * {@link #getSourceReference()}.
+     */
+    CONFORMITY_STANDARD,
+
+    /**
+     * Constraint defined by user / operations / asset team — e.g., a maximum compressor speed
+     * imposed for vibration management, or a separator load factor derived from operational
+     * experience.
+     */
+    USER_RULE,
+
+    /**
+     * Constraint derived from empirical observations of plant behaviour. Typical use cases are
+     * piecewise-linear correlations between an operating variable (rate, pressure) and a
+     * downstream consequence (carry-over, fouling, scale rate) calibrated from historian data.
+     */
+    PROCESS_EMPIRICAL,
+
+    /**
+     * Constraint comes from a vendor / OEM datasheet (compressor surge curve, valve trim Cv,
+     * mechanical overspeed, sealing pressure). Usually HARD.
+     */
+    VENDOR_DATASHEET,
+
+    /**
+     * Constraint generated automatically by an {@code autoSize()} call on the equipment.
+     */
+    AUTO_SIZE,
+
+    /**
+     * Default fallback — used by built-in constraints where no provenance has been declared.
+     */
+    DEFAULT
+  }
+
   /** Name of the constraint (e.g., "speed", "gasLoadFactor"). */
   private final String name;
 
@@ -110,6 +169,16 @@ public class CapacityConstraint implements Serializable {
 
   /** Severity level for optimization (CRITICAL, HARD, SOFT, ADVISORY). */
   private ConstraintSeverity severity = ConstraintSeverity.HARD;
+
+  /** Provenance of the constraint (where the limit came from). */
+  private ConstraintSource source = ConstraintSource.DEFAULT;
+
+  /**
+   * Free-text reference identifying the source — e.g., the standard ID
+   * ("Equinor TR3500"), the user / asset that imposed the rule, or the historian
+   * tag set used to fit an empirical correlation. Optional.
+   */
+  private String sourceReference = "";
 
   /** Design/rated value for this constraint. */
   private double designValue = Double.MAX_VALUE;
@@ -239,6 +308,49 @@ public class CapacityConstraint implements Serializable {
    */
   public ConstraintSeverity getSeverity() {
     return severity;
+  }
+
+  /**
+   * Sets the source / provenance of this constraint.
+   *
+   * @param source where the constraint value originated
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSource(ConstraintSource source) {
+    this.source = source == null ? ConstraintSource.DEFAULT : source;
+    return this;
+  }
+
+  /**
+   * Sets the source together with a free-text reference identifier.
+   *
+   * @param source where the constraint value originated
+   * @param sourceReference free-text identifier (e.g., "Equinor TR3500", historian tag set,
+   *        operator name)
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSource(ConstraintSource source, String sourceReference) {
+    this.source = source == null ? ConstraintSource.DEFAULT : source;
+    this.sourceReference = sourceReference == null ? "" : sourceReference;
+    return this;
+  }
+
+  /**
+   * Gets the source / provenance of this constraint.
+   *
+   * @return the source (never null; defaults to {@link ConstraintSource#DEFAULT})
+   */
+  public ConstraintSource getSource() {
+    return source;
+  }
+
+  /**
+   * Gets the free-text source reference (standard ID, operator, historian tag, etc.).
+   *
+   * @return the reference string (empty if none set)
+   */
+  public String getSourceReference() {
+    return sourceReference;
   }
 
   /**

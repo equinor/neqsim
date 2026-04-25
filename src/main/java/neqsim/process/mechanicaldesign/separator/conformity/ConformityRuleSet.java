@@ -215,34 +215,37 @@ public abstract class ConformityRuleSet implements Serializable {
 
       // --- Demisting cyclones checks ---
       if (design.hasDemistingCyclones()) {
-        // Drainage head check
+        // Drainage head check — required liquid column (mesh dP + cyclone dP)
+        // vs available elevation between cyclone deck and LA(HH)
         double cycloneDeckBottom = design.getCycloneDeckElevationM();
         double laHH = design.getLaHHElevationM();
         if (cycloneDeckBottom > 0 && laHH > 0) {
-          double drainageHead = (cycloneDeckBottom - laHH) * 1000.0; // m to mm
+          neqsim.process.mechanicaldesign.separator.DrainageHeadResult dh = design
+              .computeDrainageHead();
 
-          // Required drainage from cyclone dP
-          int nCyclones = design.getNumberOfDemistingCyclones();
-          double cycloneDiameter = design.getDemistingCycloneDiameterM();
-          double cycloneArea = nCyclones * Math.PI * Math.pow(cycloneDiameter / 2.0, 2);
-          double gasMomentumPerCyclone = cycloneArea > 0
-              ? gasDensity * Math.pow(gasFlowM3s / cycloneArea, 2)
-              : 0;
-          double cycloneDpTotal = design.getCycloneEulerNumber() * gasMomentumPerCyclone;
-          double cycloneDpToDrain = cycloneDpTotal * design.getCycloneDpToDrainPct() / 100.0;
-          double requiredDrainage = liquidDensity > 0 ? cycloneDpToDrain / (liquidDensity * 9.81) * 1000.0 : 0;
-
+          // Primary check: required head vs available head
           report.addResult(new ConformityResult("drainage-head", getName(), "demisting-cyclones",
-              drainageHead, requiredDrainage, "mm", ConformityResult.LimitDirection.MINIMUM,
-              "Available drainage head above LA(HH) vs required"));
+              dh.getRequiredHeadMm(), dh.getAvailableHeadMm(), "mm",
+              ConformityResult.LimitDirection.MAXIMUM,
+              "Required liquid column (mesh+cyclone dP) vs available elevation"));
+
+          // Secondary check: percent of available (governing metric for comparisons)
+          report.addResult(new ConformityResult("drainage-head-pct", getName(),
+              "demisting-cyclones",
+              dh.getPercentOfAvailable(), 100.0, "%",
+              ConformityResult.LimitDirection.MAXIMUM,
+              "Drainage head required as % of available elevation"));
 
           // Cyclone dP to drain
           report.addResult(new ConformityResult("cyclone-dp-to-drain", getName(),
               "demisting-cyclones",
-              cycloneDpToDrain / 100.0, 50.0, "mbar", ConformityResult.LimitDirection.MAXIMUM,
-              "Cyclone pressure drop available to drain"));
+              dh.getCycloneDpToDrainPa() / 100.0, 50.0, "mbar",
+              ConformityResult.LimitDirection.MAXIMUM,
+              "Cyclone pressure drop reaching the drain chamber"));
         } else {
           report.addResult(ConformityResult.notApplicable("drainage-head", getName(),
+              "Cyclone deck or LA(HH) elevation not set"));
+          report.addResult(ConformityResult.notApplicable("drainage-head-pct", getName(),
               "Cyclone deck or LA(HH) elevation not set"));
         }
       }
