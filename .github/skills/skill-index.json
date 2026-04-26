@@ -318,6 +318,102 @@
   "optimizing production rates": [
     "neqsim-production-optimization"
   ],
+  "optimization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "optimize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "minimize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "maximize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "doe": [
+    "neqsim-optimization-and-doe"
+  ],
+  "design of experiments": [
+    "neqsim-optimization-and-doe"
+  ],
+  "monte carlo": [
+    "neqsim-optimization-and-doe"
+  ],
+  "uncertainty quantification": [
+    "neqsim-optimization-and-doe"
+  ],
+  "p10 p50 p90": [
+    "neqsim-optimization-and-doe"
+  ],
+  "tornado diagram": [
+    "neqsim-optimization-and-doe"
+  ],
+  "pareto front": [
+    "neqsim-optimization-and-doe"
+  ],
+  "multi-objective": [
+    "neqsim-optimization-and-doe"
+  ],
+  "sensitivity analysis": [
+    "neqsim-optimization-and-doe"
+  ],
+  "constrained nlp": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nonlinear programming": [
+    "neqsim-optimization-and-doe"
+  ],
+  "sqp": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nelder mead": [
+    "neqsim-optimization-and-doe"
+  ],
+  "particle swarm": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bfgs": [
+    "neqsim-optimization-and-doe"
+  ],
+  "golden section": [
+    "neqsim-optimization-and-doe"
+  ],
+  "throughput maximization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bottleneck": [
+    "neqsim-optimization-and-doe"
+  ],
+  "debottleneck": [
+    "neqsim-optimization-and-doe"
+  ],
+  "parameter sweep": [
+    "neqsim-optimization-and-doe"
+  ],
+  "batch study": [
+    "neqsim-optimization-and-doe"
+  ],
+  "scipy bridge": [
+    "neqsim-optimization-and-doe"
+  ],
+  "pyomo": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nlopt": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bayesian optimization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "trade-off": [
+    "neqsim-optimization-and-doe"
+  ],
+  "lift curve": [
+    "neqsim-optimization-and-doe"
+  ],
+  "vfp table": [
+    "neqsim-optimization-and-doe"
+  ],
   "or analyzing column performance": [
     "neqsim-distillation-design"
   ],
