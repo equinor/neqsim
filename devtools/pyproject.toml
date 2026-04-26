@@ -11,6 +11,12 @@ dependencies = ["jpype1"]
 
 [project.optional-dependencies]
 pdf = ["pymupdf>=1.22.0"]
+ocr = [
+    "pymupdf>=1.22.0",
+    "ocrmypdf>=15.0.0",
+    "pytesseract>=0.3.10",
+    "pdf2image>=1.16.0",
+]
 
 [project.scripts]
 neqsim = "neqsim_cli:main"

@@ -14,6 +14,25 @@
   "a user provides engineering documents": [
     "neqsim-technical-document-reading"
   ],
+  "ocr": [
+    "neqsim-pdf-ocr"
+  ],
+  "ocrmypdf": [
+    "neqsim-pdf-ocr"
+  ],
+  "scanned pdf": [
+    "neqsim-pdf-ocr"
+  ],
+  "tesseract": [
+    "neqsim-pdf-ocr"
+  ],
+  "extract text from p&id": [
+    "neqsim-pdf-ocr",
+    "neqsim-technical-document-reading"
+  ],
+  "extract tags from drawing": [
+    "neqsim-pdf-ocr"
+  ],
   "analyzing conversion/selectivity": [
     "neqsim-reaction-engineering"
   ],
