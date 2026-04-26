@@ -2631,21 +2631,33 @@ public class TPmultiflash extends TPflash {
       // PhaseType with essentially identical mole-fraction vectors are
       // non-converged numerical duplicates. Restricting to same PhaseType
       // avoids removing legitimate near-critical V/L pairs (issue #1980).
-      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-        for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
-          if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
-            continue;
-          }
-          double maxCompDiff = 0.0;
-          for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-            maxCompDiff = Math.max(maxCompDiff, Math.abs(system.getPhase(i).getComponent(k).getx()
-                - system.getPhase(j).getComponent(k).getx()));
-          }
-          if (maxCompDiff < 1.0e-6) {
-            system.removePhaseKeepTotalComposition(j);
-            doStabilityAnalysis = false;
-            hasRemovedPhase = true;
-            j--; // adjust index after removal
+      //
+      // Restricted to CPA-family models only (issue #2117): for non-CPA EOS
+      // (PR, SRK, UMR-PR-UMC, ...) near-critical V/L and multi-liquid systems
+      // can transiently look like duplicates during stability iteration but
+      // later separate physically (e.g. SimpleReservoirTest.testRun2 with
+      // SystemPrEos, TPFlashTest.testRun5 with SystemUMRPRUMCEos). The
+      // duplicate-phase symptom is specific to CPA association in TEG/MEG
+      // /water-rich flowsheets.
+      String modelName = system.getModelName();
+      boolean isCpaModel = modelName != null && modelName.contains("CPA");
+      if (isCpaModel) {
+        for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+          for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+            if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
+              continue;
+            }
+            double maxCompDiff = 0.0;
+            for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+              maxCompDiff = Math.max(maxCompDiff, Math.abs(system.getPhase(i).getComponent(k).getx()
+                  - system.getPhase(j).getComponent(k).getx()));
+            }
+            if (maxCompDiff < 1.0e-6) {
+              system.removePhaseKeepTotalComposition(j);
+              doStabilityAnalysis = false;
+              hasRemovedPhase = true;
+              j--; // adjust index after removal
+            }
           }
         }
       }
