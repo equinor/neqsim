@@ -1,0 +1,88 @@
+name: Task quality gate
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "task_solve/**"
+      - "devtools/validate_task_results.py"
+      - "devtools/consistency_checker.py"
+      - ".github/workflows/task_quality_gate.yml"
+
+jobs:
+  validate:
+    name: Validate results.json + consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Determine changed task folders
+        id: changed
+        shell: bash
+        run: |
+          set -e
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          # All files changed in this PR, restricted to task_solve/
+          changed=$(git diff --name-only "$base" "$head" -- 'task_solve/**' || true)
+          echo "Changed files under task_solve/:"
+          echo "$changed"
+          # Reduce to unique top-level task folders task_solve/<slug>
+          folders=$(echo "$changed" \
+            | awk -F/ 'NF>=2 && $1=="task_solve" {print $1"/"$2}' \
+            | sort -u)
+          echo "Task folders touched:"
+          echo "$folders"
+          # Persist for later steps via env file
+          {
+            echo "changed_files<<EOF"
+            echo "$changed"
+            echo "EOF"
+            echo "task_folders<<EOF"
+            echo "$folders"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Validate results.json schema
+        if: steps.changed.outputs.changed_files != ''
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.changed_files }}
+        run: |
+          python devtools/validate_task_results.py --changed
+
+      - name: Run consistency checker on each touched task folder
+        if: steps.changed.outputs.task_folders != ''
+        shell: bash
+        run: |
+          set -e
+          status=0
+          while IFS= read -r folder; do
+            [ -z "$folder" ] && continue
+            if [ -d "$folder" ]; then
+              # Only run if a results.json exists in the folder
+              if find "$folder" -maxdepth 2 -name results.json -print -quit | grep -q .; then
+                echo "::group::consistency_checker $folder"
+                if ! python devtools/consistency_checker.py "$folder"; then
+                  status=1
+                fi
+                echo "::endgroup::"
+              else
+                echo "Skipping $folder (no results.json yet)"
+              fi
+            fi
+          done <<< "${{ steps.changed.outputs.task_folders }}"
+          exit "$status"
+
+      - name: No-op note
+        if: steps.changed.outputs.changed_files == ''
+        run: echo "No task_solve changes detected — quality gate is a no-op."
