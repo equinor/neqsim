@@ -42,6 +42,8 @@ Analyze the request and match it to one or more agents:
 | UniSim, HYSYS, .usc file, convert simulation | `@unisim.reader` | `@process.model` for NeqSim model build |
 | Control system, PID, controller tuning, dynamic, transient | `@control.system` | `@process.model` for base simulation |
 | Optimization, minimize, maximize, "best", trade-off, Pareto, DoE, sensitivity, Monte Carlo, P10/P50/P90, tornado, SQP, Nelder-Mead, particle swarm, parameter sweep, debottleneck | `@optimize` | `@process.model` to build the flowsheet first; `@solve.task` to wrap into report |
+| Literature search, find papers, fetch standards, retrieve internal docs (STID, vendor data sheets), build references manifest | `@literature.scout` | feeds notes.md and references/ inside the task folder; pairs with `@capability.scout` and `@solve.task` |
+| Review my task, audit results.json, is this ready to merge, quality-gate a task folder | `@review` | wraps validate_task_results.py + consistency_checker.py + figure-traceability check |
 
 ## Disambiguating "Solve / Build / Extract" Agents
 

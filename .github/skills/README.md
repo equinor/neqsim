@@ -16,6 +16,24 @@ Each skill folder contains a `SKILL.md` file with verified patterns, rules, and 
 
 **Skills are read-only** — agents consume them but don't modify them.
 
+## Discovering the right skill
+
+Two complementary mechanisms exist:
+
+1. **Semantic search (preferred for new tasks).** Run
+   `python devtools/skill_search.py "<your task title>" --top 5`. The script
+   ranks every SKILL.md by TF-IDF cosine similarity over the front-matter
+   `description`. Add or sharpen a skill's `description` to improve recall.
+2. **Keyword index (`skill-index.json`).** A curated short-list mapping
+   common phrases ("ocr", "fuel gas", "wax inhibitor") to skills. Useful for
+   well-known queries; **not** intended to enumerate every keyword. New
+   skills do not need exhaustive keyword entries — rely on `skill_search.py`
+   to surface them.
+
+CI (`.github/workflows/skills_agents_lint.yml`) verifies that every skill has
+valid YAML front-matter and that every entry in `skill-index.json` points to
+a skill that exists.
+
 ---
 
 ## Skill Index

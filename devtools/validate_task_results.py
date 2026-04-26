@@ -125,6 +125,38 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
     return errors, warnings
 
 
+def check_capability_assessment(task_folder: Path) -> List[str]:
+    """Return warning list if capability_assessment.md is missing or empty.
+
+    Mandatory for Standard/Comprehensive tasks; the validator emits a warning
+    rather than an error so Quick tasks are not blocked.
+    """
+    warnings: List[str] = []
+    cap = task_folder / "step1_scope_and_research" / "capability_assessment.md"
+    if not cap.exists():
+        warnings.append(
+            f"{task_folder.name}: capability_assessment.md is missing — run @capability.scout (mandatory for Standard/Comprehensive)"
+        )
+        return warnings
+    try:
+        text = cap.read_text(encoding="utf-8")
+    except OSError:
+        warnings.append(f"{task_folder.name}: capability_assessment.md is unreadable")
+        return warnings
+    # Strip the template scaffolding to detect actual content
+    stripped = "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("<!--")
+    )
+    # Heuristic: must have at least one non-empty table row beyond the header
+    if "| 1 |" in stripped and stripped.count("| 1 |") == 1 and "|  |" in stripped:
+        # Looks like the unfilled template — only template placeholders
+        if all(s in stripped for s in ["| 1 |  |", "| 2 |  |"]):
+            warnings.append(
+                f"{task_folder.name}: capability_assessment.md is the unfilled template — populate sections 2 and 3"
+            )
+    return warnings
+
+
 def find_results_files(roots: List[Path]) -> List[Path]:
     out: List[Path] = []
     for root in roots:
@@ -211,10 +243,16 @@ def main() -> int:
     total_errors = 0
     total_warnings = 0
     failures: List[str] = []
+    capability_warnings_seen: set = set()
 
     for f in files:
         rel = f.relative_to(repo_root) if f.is_absolute() else f
         errors, warnings = validate_file(f)
+        # Add capability_assessment check (once per task folder)
+        task_folder = f.parent
+        if str(task_folder) not in capability_warnings_seen:
+            capability_warnings_seen.add(str(task_folder))
+            warnings.extend(check_capability_assessment(task_folder))
         total_errors += len(errors)
         total_warnings += len(warnings)
         if errors or warnings:
