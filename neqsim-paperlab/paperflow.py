@@ -1622,6 +1622,9 @@ def cmd_book_render(args):
     elif fmt == "odf":
         from book_render_odf import render_book_odf
         result = render_book_odf(args.book_dir, chapter_filter=chapter)
+    elif fmt == "epub":
+        from book_render_epub import render_book_epub
+        result = render_book_epub(args.book_dir, chapter_filter=chapter)
     else:
         print(f"Unknown format: {fmt}")
         sys.exit(1)
@@ -1629,6 +1632,88 @@ def cmd_book_render(args):
     if result is None:
         print("Render failed.")
         sys.exit(1)
+
+
+def cmd_book_preview(args):
+    """Start a live HTML preview server."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_preview import serve
+    serve(args.book_dir, port=args.port, open_browser=not args.no_open)
+
+
+def cmd_book_enrich_bib(args):
+    """Validate / enrich refs.bib via the Crossref API."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from bib_enrich import enrich_bibfile
+    from pathlib import Path as _P
+
+    bib_path = _P(args.book_dir) / "refs.bib"
+    if not bib_path.exists():
+        print(f"refs.bib not found in {args.book_dir}")
+        sys.exit(1)
+    enrich_bibfile(bib_path, in_place=args.in_place,
+                   min_score=args.min_score, limit=args.limit)
+
+
+def cmd_book_index(args):
+    """Generate the back-of-book index from @index markers."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_index import write_index
+    write_index(args.book_dir, force=not args.no_force)
+
+
+def cmd_book_citation(args):
+    """Generate the 'How to cite NeqSim' backmatter from CITATION.cff."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_citation_block import write_citation_appendix
+    from pathlib import Path as _P
+    cff = _P(args.cff) if args.cff else (PAPERLAB_ROOT.parent / "CITATION.cff")
+    write_citation_appendix(args.book_dir, cff_path=cff)
+
+
+def cmd_book_revision_diff(args):
+    """Generate a track-changes report between two git revisions."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_revision_diff import write_diff_report
+    write_diff_report(args.book_dir, args.ref_old, args.ref_new,
+                      out_path=args.out)
+
+
+def cmd_book_render_xml(args):
+    """Render JATS or DocBook XML."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_render_xml import render_book_jats, render_book_docbook
+    if args.fmt == "jats":
+        render_book_jats(args.book_dir)
+    else:
+        render_book_docbook(args.book_dir)
+
+
+def cmd_book_prose_review(args):
+    """Run offline prose-review check on every chapter."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_prose_review import check_prose_review, format_prose_report
+    rep = check_prose_review(args.book_dir)
+    text = format_prose_report(rep)
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Fallback for Windows cp1252 consoles: strip non-ASCII for stdout
+        print(text.encode("ascii", errors="replace").decode("ascii"))
+    if args.write:
+        from pathlib import Path as _P
+        out = _P(args.book_dir) / "submission" / "prose_review.md"
+        out.parent.mkdir(exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        print(f"\nReport written to {out}")
+
+
+def cmd_paper_render_journal(args):
+    """Render a paper for a specific journal class (IEEE / ACS / Elsevier ...)."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from paper_journal_render import render_paper_journal
+    render_paper_journal(args.paper_dir, journal=args.journal, out=args.out)
+
 
 
 def cmd_book_check(args):
@@ -2066,7 +2151,7 @@ Examples:
                                     help="Create a new book project")
     p_bnew.add_argument("title", help="Book title")
     p_bnew.add_argument("--publisher", default="self",
-                        choices=["springer", "wiley", "crc", "self"],
+                        choices=["springer", "wiley", "crc", "self", "ntnu"],
                         help="Publisher profile (default: self)")
     p_bnew.add_argument("--chapters", type=int, default=8,
                         help="Number of initial chapters (default: 8)")
@@ -2084,9 +2169,74 @@ Examples:
                                        help="Render book to PDF, Word, or HTML")
     p_brender.add_argument("book_dir", help="Book directory")
     p_brender.add_argument("--format", dest="out_format", default="html",
-                           choices=["pdf", "docx", "html", "odf"],
+                           choices=["pdf", "docx", "html", "odf", "epub"],
                            help="Output format (default: html)")
     p_brender.add_argument("--chapter", help="Render single chapter (dir name)")
+
+    # book-preview — live HTML preview server
+    p_bprev = subparsers.add_parser("book-preview",
+                                     help="Live HTML preview with auto-reload")
+    p_bprev.add_argument("book_dir", help="Book directory")
+    p_bprev.add_argument("--port", type=int, default=8765,
+                          help="HTTP port (default: 8765)")
+    p_bprev.add_argument("--no-open", action="store_true",
+                          help="Do not open browser automatically")
+
+    # book-enrich-bib — Crossref DOI validation/enrichment for refs.bib
+    p_bbib = subparsers.add_parser("book-enrich-bib",
+                                    help="Validate and enrich refs.bib via Crossref")
+    p_bbib.add_argument("book_dir", help="Book directory")
+    p_bbib.add_argument("--in-place", action="store_true",
+                         help="Overwrite refs.bib (default: writes refs.enriched.bib)")
+    p_bbib.add_argument("--min-score", type=float, default=70.0,
+                         help="Minimum title match score 0-100 (default: 70)")
+    p_bbib.add_argument("--limit", type=int, default=None,
+                         help="Process at most N entries (default: all)")
+
+    # book-index — back-of-book index from @index markers
+    p_bidx = subparsers.add_parser("book-index",
+                                    help="Generate back-of-book index from @index markers")
+    p_bidx.add_argument("book_dir", help="Book directory")
+    p_bidx.add_argument("--no-force", action="store_true",
+                        help="Don't overwrite hand-edited index")
+
+    # book-citation — emit 'How to cite NeqSim' from CITATION.cff
+    p_bcite = subparsers.add_parser("book-citation",
+                                     help="Generate citation block from CITATION.cff")
+    p_bcite.add_argument("book_dir", help="Book directory")
+    p_bcite.add_argument("--cff", default=None,
+                          help="Path to CITATION.cff (default: repo root)")
+
+    # book-revision-diff — track changes between two git refs
+    p_brev = subparsers.add_parser("book-revision-diff",
+                                    help="Diff book content between two git revisions")
+    p_brev.add_argument("book_dir", help="Book directory")
+    p_brev.add_argument("ref_old", help="Old git ref (branch, tag, commit)")
+    p_brev.add_argument("ref_new", help="New git ref (branch, tag, commit)")
+    p_brev.add_argument("--out", default=None, help="Output path")
+
+    # book-render-xml — JATS / DocBook
+    p_bxml = subparsers.add_parser("book-render-xml",
+                                    help="Render JATS or DocBook XML")
+    p_bxml.add_argument("book_dir", help="Book directory")
+    p_bxml.add_argument("--fmt", choices=["jats", "docbook"], default="jats",
+                         help="XML flavour (default: jats)")
+
+    # book-prose-review — offline writing-style linter
+    p_bprose = subparsers.add_parser("book-prose-review",
+                                      help="Offline prose-review (passive voice, weasel words, ...)")
+    p_bprose.add_argument("book_dir", help="Book directory")
+    p_bprose.add_argument("--write", action="store_true",
+                           help="Also write submission/prose_review.md")
+
+    # paper-render-journal — IEEE / ACS / Elsevier / Springer / RSC
+    p_pj = subparsers.add_parser("paper-render-journal",
+                                  help="Render paper for a specific journal class")
+    p_pj.add_argument("paper_dir", help="Paper directory")
+    p_pj.add_argument("--journal", required=True,
+                      choices=["ieee", "acs", "elsevier", "springer", "rsc"],
+                      help="Target journal class")
+    p_pj.add_argument("--out", default=None, help="Output .tex path")
 
     # book-check — run quality checks
     p_bcheck = subparsers.add_parser("book-check",
@@ -2219,6 +2369,22 @@ Examples:
         cmd_book_add_chapter(args)
     elif args.command == "book-render":
         cmd_book_render(args)
+    elif args.command == "book-preview":
+        cmd_book_preview(args)
+    elif args.command == "book-enrich-bib":
+        cmd_book_enrich_bib(args)
+    elif args.command == "book-index":
+        cmd_book_index(args)
+    elif args.command == "book-citation":
+        cmd_book_citation(args)
+    elif args.command == "book-revision-diff":
+        cmd_book_revision_diff(args)
+    elif args.command == "book-render-xml":
+        cmd_book_render_xml(args)
+    elif args.command == "book-prose-review":
+        cmd_book_prose_review(args)
+    elif args.command == "paper-render-journal":
+        cmd_paper_render_journal(args)
     elif args.command == "book-check":
         cmd_book_check(args)
     elif args.command == "book-status":

@@ -33,6 +33,17 @@ neqsim-paperlab/skills/book_creation/SKILL.md
 This contains the complete reference for book.yaml structure, equation handling,
 figure management, build commands, and troubleshooting.
 
+When the book contains any quantitative claim derived from a NeqSim
+simulation (i.e., almost always for NeqSim-related books), ALSO load:
+
+```
+neqsim-paperlab/skills/neqsim_in_writing/SKILL.md
+```
+
+It defines the dual-boot setup cell, claim-to-test linkage, equation-to-Java
+method cross-references, units enforcement, and notebook-driven figure /
+results-table injection.
+
 ---
 
 ## Your Responsibilities
@@ -167,6 +178,78 @@ After every build:
 2. Open `submission/book.html` — verify equations render with KaTeX
 3. Open `submission/book.docx` — verify native OMML equations
 4. Run quality checks: `python paperflow.py book-check books/<dir>/`
+
+### 6. Professional Typesetting (MANDATORY before final PDF)
+
+PaperLab's PDF renderer (`tools/book_render_pdf.py`) emits a Typst preamble
+that produces a publisher-quality book. You are responsible for verifying the
+final PDF meets professional typesetting standards. See section "7a.
+Professional Typesetting" of `skills/book_creation/SKILL.md` for the full
+reference.
+
+After running `book-render --format pdf`, open `submission/book.pdf` and
+verify ALL of the following:
+
+- [ ] Publisher profile in `books/_publisher_profiles/<name>.yaml` matches the
+      `publisher:` field of `book.yaml`. If not, the renderer falls back to
+      A4 / generic margins.
+- [ ] `trim_size` matches the chosen book format (e.g. `155x235mm` for B5
+      Springer monographs, `178x254mm` for Wiley royal octavo).
+- [ ] Chapter 1 starts on a recto (right-hand) page.
+- [ ] Even-page running header is left-aligned, odd-page is right-aligned;
+      both display the chapter title in tracked smallcaps.
+- [ ] The cover/title page does not show a running header.
+- [ ] Each chapter opens with a "Chapter N" smallcaps line, a thin coloured
+      rule, and a coloured chapter title.
+- [ ] Equations are numbered `(chapter.eq)` and the counter resets at every
+      chapter.
+- [ ] Tables use booktabs style — only thin top + bottom horizontal rules,
+      no vertical rules; table text is 9 pt.
+- [ ] The reference list is hanging-indented with bold reference numbers.
+- [ ] Body paragraphs are justified, hyphenated, with first-line indent
+      (except after headings); no rivers or large word gaps.
+
+If any check fails, fix `tools/book_render_pdf.py`
+(`build_book_typst_preamble`) — never edit the generated `submission/book.typ`
+by hand.
+
+### 7. NeqSim Claim Validation (MANDATORY for any quantitative statement)
+
+Every numeric value, equation prediction, or qualitative behavioral claim that
+depends on NeqSim must trace to a runnable artifact. See
+`skills/neqsim_in_writing/SKILL.md` for the full pattern. Minimum acceptance
+criteria for every chapter:
+
+- [ ] Notebook starts with the dual-boot setup cell.
+- [ ] Every quantitative claim in prose carries an `<!-- @neqsim:claim ... -->`
+      block linking to a JUnit test or regression baseline.
+- [ ] Every equation that NeqSim implements numerically carries an
+      `<!-- @neqsim:eq method=... -->` marker.
+- [ ] Every figure has descriptive alt text (passes the accessibility gate)
+      and a `<!-- @neqsim:figure source=... cell=... -->` marker.
+- [ ] Every results table is wrapped in `<!-- @neqsim:table id=... -->` /
+      `<!-- @neqsim:table-end -->` markers, regenerated from the notebook.
+- [ ] Symbols used in prose appear in `nomenclature.yaml` with consistent SI
+      units; NeqSim getter/setter calls in the notebook use matching unit
+      strings.
+- [ ] Worked examples have a corresponding regression-baseline JUnit test in
+      `src/test/java/neqsim/book/<book_slug>/`.
+
+### 8. Pre-Render Workflow Steps
+
+In addition to running notebooks, build, and check, two new steps are
+mandatory before the final render:
+
+1. **Live preview during writing** — keep
+   `paperflow.py book-preview books/<dir>` running in a side terminal. It
+   re-renders HTML on every save and pushes a browser reload via SSE.
+2. **Bibliography enrichment** — before any final render, run
+   `paperflow.py book-enrich-bib books/<dir>` to validate every DOI against
+   Crossref, attach DOIs to entries that are missing one, and surface
+   title/year mismatches. Fix the warnings before rendering.
+3. **Format coverage** — render PDF, EPUB, DOCX, and HTML for every release
+   candidate. EPUB enforces accessibility rigorously; if it builds cleanly the
+   other formats almost always pass too.
 
 ---
 

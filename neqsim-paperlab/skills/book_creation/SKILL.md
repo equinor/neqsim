@@ -437,6 +437,94 @@ the chapter directory.
 **Cause**: Missing `pandoc` or `typst` package.
 **Fix**: Install pandoc (system package) and `pip install typst`.
 
+### Issue: Typst PDF compile fails with `unexpected underscore`
+
+**Cause**: Bibliography entries from `refs.bib` contain LaTeX-style fragments
+such as `$_2$`, `{CO`, or `\textit{...}`. When inserted into a Typst content
+block these `$...$` segments are read as math mode, where a leading `_` has no
+base.
+**Fix**: The bibliography renderer in `tools/book_render_pdf.py` escapes
+`\ # $ { } _ * @ < > [ ] \``. Do not remove that escape table. If you add a
+new bibliography style, make sure the entry text is escaped before being
+embedded into a `#par[...]` block.
+
+### Issue: Typst PDF compile fails with `expected alignment or auto, found string`
+
+**Cause**: `#set page(binding: "left")` no longer accepts a string in Typst
+0.14. The keyword expects an alignment value (`left` / `right`).
+**Fix**: Use `binding: left` (no quotes) in the generated preamble.
+
+---
+
+## 7a. Professional Typesetting
+
+The PDF renderer (`tools/book_render_pdf.py`, function
+`build_book_typst_preamble`) emits a Typst preamble that produces a
+publisher-quality book layout. When you modify the preamble, preserve the
+following features and verify against the checklist below.
+
+### Layout Features Built In
+
+| Feature                | Implementation in preamble                                   |
+| ---------------------- | ------------------------------------------------------------ |
+| Trim size              | Parsed from publisher profile `trim_size: "WxHmm"`            |
+| Two-sided binding      | `binding: left` + `inside`/`outside` margins                  |
+| Running headers        | `#set page(header: context { ... })`, querying nearest level-1 heading; suppressed on page 1; left-aligned on even pages, right-aligned on odd pages, in tracked smallcaps |
+| Chapter opener         | Smallcaps "Chapter N", thin colored rule, large coloured chapter title (level-1 `#show` rule) |
+| Chapter forced to recto | `pagebreak(weak: true, to: "odd")` inside the level-1 rule  |
+| Equation numbering     | `(chapter.eq)` via `#set math.equation(numbering: ...)` and counter reset at each level-1 heading |
+| Booktabs tables        | `#set table(stroke: none, ...)` plus a `#show table:` rule that wraps tables in a block with thin top/bottom rules and 9 pt text |
+| Microtypography        | `#set text(hyphenate: true, ligatures: true, number-type: "lining")` and justified paragraphs with `leading: 0.78em` |
+| First-line indent      | `#set par(first-line-indent: (amount: 1.2em, all: false))`   |
+| Hanging-indent bib     | Bib block sets `hanging-indent: 1.6em` and emits each entry as `#par[#text(weight: "bold")[[N]] #h(0.5em) text]` |
+| Special-char escaping  | Bib entries escape `\ # $ { } _ * @ < > [ ] \`` to avoid Typst math/code triggers |
+
+### Typesetting Quality Checklist (run before final PDF render)
+
+1. Publisher profile (`books/_publisher_profiles/<name>.yaml`) exists for the
+   value of `publisher:` in `book.yaml`. If missing, the renderer falls back
+   to A4 / generic margins — set the profile explicitly.
+2. `trim_size` follows the format `"WxHmm"` (e.g. `"155x235mm"`).
+3. `font` is installed on the host (default `"New Computer Modern"`). On
+   Windows, install via the New Computer Modern release zip.
+4. After running `book-render --format pdf`, open the PDF and verify:
+   - Chapter 1 starts on a recto (right-hand) page.
+   - Even-page header shows the chapter title left-aligned; odd-page header
+     shows it right-aligned; both in smallcaps.
+   - Page 1 (title page) has no running header.
+   - Each chapter opener shows the smallcaps "Chapter N" line, a thin
+     coloured rule, and the chapter title set in the heading colour.
+   - Equation labels read `(1.1)`, `(2.1)`, ... and reset at every chapter.
+   - Tables show only thin top + bottom rules (booktabs style); no vertical
+     rules.
+   - Reference list is indented hanging-style, with bold reference numbers.
+   - Body text is justified with hyphenation; no rivers or large gaps.
+5. Run the consistency checker:
+
+   ```bash
+   python paperflow.py book-check books/<book_dir>
+   ```
+
+6. The generated `submission/book.typ` is a build artifact. Do **not** edit it
+   by hand — change `tools/book_render_pdf.py` and re-render.
+
+### Modifying the Preamble Safely
+
+If you add new Typst rules to `build_book_typst_preamble`:
+
+1. The function returns an f-string; literal `{` and `}` must be doubled
+   (`{{` / `}}`).
+2. Test with the smallest book first: `python paperflow.py book-render books/<small_book> --format pdf`.
+3. If compilation fails with a misleading message (e.g. `unexpected
+   underscore` from a bib entry), bisect by chapter — write `_test.typ`
+   inside `submission/` so figure paths still resolve.
+4. Typst 0.14 syntax notes:
+   - `binding:` takes an alignment, not a string.
+   - `#set page(width: ..., height: ...)` uses keyword args, not a tuple.
+   - `pagebreak(to: ...)` accepts `"odd"` / `"even"` strings or omit the arg.
+   - Use `query(heading.where(level: 1).before(here()))` for running headers
+     (avoid shadowing the built-in `here` function with a local variable).
+
 ---
 
 ## 8. Workflow for Iterative Chapter Writing
@@ -474,8 +562,72 @@ For notebook development:
 | `tools/book_render_word.py` | Word renderer (OMML equations, TOC, booktabs tables) |
 | `tools/book_render_pdf.py` | PDF renderer (Pandoc → Typst pipeline) |
 | `tools/book_render_odf.py` | ODF renderer (Unicode math fallback) |
-| `tools/book_checker.py` | Quality checks (structure, completeness, consistency) |
+| `tools/book_render_epub.py` | EPUB 3 renderer (Pandoc → epub3 pipeline) |
+| `tools/book_preview.py` | Live HTML preview server with auto-reload |
+| `tools/book_checker.py` | Quality checks (structure, completeness, consistency, accessibility) |
+| `tools/bib_enrich.py` | Crossref DOI validation / enrichment for refs.bib |
+| `tools/book_pdfx_postpass.py` | PDF/X-1a or PDF/A conversion via Ghostscript |
 | `tools/math_utils.py` | LaTeX → OMML/Unicode conversion |
+
+### 9a. Live preview while writing
+
+```bash
+python paperflow.py book-preview books/<book_dir>
+# opens http://127.0.0.1:8765 ; auto-reloads on every chapter.md or book.yaml save
+```
+
+### 9b. CSL citations
+
+Add to `book.yaml`:
+
+```yaml
+bibliography:
+  file: refs.bib
+  csl: styles/elsevier-harvard.csl   # any CSL 1.0.2 file
+```
+
+The PDF, HTML and EPUB renderers will route citations through Pandoc's
+`--citeproc` engine when both files exist.
+
+### 9c. EPUB output
+
+```bash
+python paperflow.py book-render books/<book_dir> --format epub
+# requires pandoc on PATH; reads book.yaml metadata + cover.png if present
+```
+
+### 9d. Crossref bibliography enrichment
+
+```bash
+python paperflow.py book-enrich-bib books/<book_dir>            # writes refs.enriched.bib
+python paperflow.py book-enrich-bib books/<book_dir> --in-place # overwrites refs.bib
+```
+
+Validates every DOI, warns on title/year mismatches, and adds DOIs to
+entries that don't have one when Crossref's top match exceeds the
+threshold.
+
+### 9e. PDF/X-1a or PDF/A conversion
+
+If a publisher profile sets:
+
+```yaml
+print_specs:
+  pdf_standard: PDF/X-1a:2003
+  color_profile: CMYK
+```
+
+then the PDF renderer automatically post-processes `book.pdf` with
+Ghostscript. The original is kept as `book.pre-pdfx.pdf`.
+
+### 9f. NeqSim integration for scientific writing
+
+For chapters that defend numbers via NeqSim simulation, load the companion
+skill `skills/neqsim_in_writing/SKILL.md`. It covers the dual-boot setup
+cell, claim-to-test linkage (`@neqsim:claim`), equation-to-Java method
+cross-references (`@neqsim:eq`), units enforcement against
+`nomenclature.yaml`, and notebook-driven figure / results-table injection
+(`@neqsim:figure`, `@neqsim:table`).
 
 ---
 

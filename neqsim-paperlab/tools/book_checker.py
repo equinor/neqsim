@@ -279,6 +279,93 @@ def check_page_estimate(book_dir, max_pages=None):
 # Aggregate check runner
 # ---------------------------------------------------------------------------
 
+def check_accessibility(book_dir):
+    """Accessibility gate: alt text, language tag, table headers, code-block language.
+
+    Conforms to WCAG 2.1 AA + EPUB Accessibility 1.1 essentials:
+
+    * every figure must have non-empty alt text,
+    * book.yaml must declare ``language:``,
+    * tables must have a header row (markdown ``|---|`` separator),
+    * fenced code blocks must declare a language for screen-reader hints.
+    """
+    book_dir = Path(book_dir)
+    cfg = book_builder.load_book_config(book_dir)
+    issues = []
+
+    if not cfg.get("language"):
+        issues.append({
+            "check": "accessibility",
+            "severity": "warning",
+            "message": "book.yaml: missing 'language:' tag (e.g., language: en) "
+                       "— required for WCAG 3.1.1 and EPUB metadata",
+        })
+
+    fig_re = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+    table_block_re = re.compile(r"(?ms)^(\|[^\n]+\|)\s*$")
+    fence_re = re.compile(r"^```([A-Za-z0-9_+\-]*)\s*$")
+
+    for ch_num, ch, _part in book_builder.iter_chapters(cfg):
+        ch_dir = book_builder.resolve_chapter_dir(book_dir, ch)
+        ch_md = ch_dir / "chapter.md"
+        if not ch_md.exists():
+            continue
+        text = ch_md.read_text(encoding="utf-8")
+        loc = f"Chapter {ch_num} ({ch['dir']})"
+
+        # 1. Alt text on every figure
+        for m in fig_re.finditer(text):
+            alt = m.group(1).strip()
+            target = m.group(2)
+            if not alt or alt.lower() in ("image", "figure", "fig"):
+                issues.append({
+                    "check": "accessibility",
+                    "severity": "warning",
+                    "message": f"{loc}: figure has empty/generic alt text → {target}",
+                })
+
+        # 2. Tables need a header separator row
+        lines = text.splitlines()
+        in_code = False
+        for i, line in enumerate(lines):
+            if line.strip().startswith("```"):
+                in_code = not in_code
+                continue
+            if in_code:
+                continue
+            if line.lstrip().startswith("|") and i + 1 < len(lines):
+                nxt = lines[i + 1].strip()
+                # Header separator row of the form |---|---| or | :--- | :---: |
+                if not re.match(r"^\|?\s*:?-{2,}.*\|", nxt):
+                    # Only flag start-of-table rows (avoid every body row)
+                    prev = lines[i - 1].strip() if i > 0 else ""
+                    if not prev.startswith("|"):
+                        issues.append({
+                            "check": "accessibility",
+                            "severity": "warning",
+                            "message": f"{loc}: table near line {i + 1} has no header "
+                                       f"separator row — screen readers cannot announce columns",
+                        })
+
+        # 3. Fenced code blocks should declare a language
+        for i, line in enumerate(lines):
+            m = fence_re.match(line.strip())
+            if m and m.group(1) == "":
+                # closing fence is also "```"; only flag opening fences by toggling
+                # Use a coarse heuristic: count fences before this position
+                count_before = sum(1 for ln in lines[:i] if ln.strip().startswith("```"))
+                if count_before % 2 == 0:  # this is an opening fence
+                    issues.append({
+                        "check": "accessibility",
+                        "severity": "info",
+                        "message": f"{loc}: fenced code block at line {i + 1} has no "
+                                   f"language tag (use ```python, ```java, etc.)",
+                    })
+                    break  # one note per chapter is enough
+
+    return issues
+
+
 ALL_CHECKS = {
     "structure": check_structure,
     "completeness": check_completeness,
@@ -287,6 +374,7 @@ ALL_CHECKS = {
     "bibliography": check_bibliography,
     "figures": check_figures,
     "page_estimate": check_page_estimate,
+    "accessibility": check_accessibility,
 }
 
 
@@ -335,6 +423,7 @@ def format_issues(issues):
     lines = []
     errors = [i for i in issues if i["severity"] == "error"]
     warnings = [i for i in issues if i["severity"] == "warning"]
+    infos = [i for i in issues if i["severity"] == "info"]
 
     if errors:
         lines.append(f"\n  ERRORS ({len(errors)}):")
@@ -346,5 +435,10 @@ def format_issues(issues):
         for issue in warnings:
             lines.append(f"    [{issue['check']}] {issue['message']}")
 
-    lines.append(f"\n  Summary: {len(errors)} error(s), {len(warnings)} warning(s)")
+    if infos:
+        lines.append(f"\n  INFO ({len(infos)}):")
+        for issue in infos:
+            lines.append(f"    [{issue['check']}] {issue['message']}")
+
+    lines.append(f"\n  Summary: {len(errors)} error(s), {len(warnings)} warning(s), {len(infos)} info")
     return "\n".join(lines)

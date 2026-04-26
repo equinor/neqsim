@@ -126,11 +126,13 @@ main img {{
   margin: 1rem auto;
 }}
 main pre {{
-  background: #f5f5f5;
-  padding: 1rem;
-  border-radius: 4px;
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  padding: 0.9rem 1.1rem;
+  border-radius: 6px;
   overflow-x: auto;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
   margin: 1rem 0;
 }}
 main code {{
@@ -143,6 +145,9 @@ main code {{
 main pre code {{
   background: none;
   padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre;
 }}
 main table {{
   border-collapse: collapse;
@@ -717,7 +722,6 @@ def _md_to_html(md_text):
 
         if in_code:
             html_parts.append(_esc(line))
-            html_parts.append("\n")
             i += 1
             continue
 
