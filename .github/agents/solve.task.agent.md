@@ -256,6 +256,28 @@ The framework also draws on:
 
 Your deliverable is a populated task folder under `task_solve/`.
 
+### Preflight (mandatory before Step 1 work)
+
+Before writing any task content, do these three things in order:
+
+1. **Route check.** If the task spans multiple disciplines (e.g. process +
+   economics + safety), invoke `@router` first to confirm which specialist
+   agents to compose. For single-discipline tasks, skip.
+2. **Skill discovery.** Run
+   `python devtools/skill_search.py "<task title>" --top 5` and load the
+   top-3 SKILL.md files with `read_file`.
+3. **Repo memory scan.** List `/memories/repo/*.md` via the `memory` tool.
+   Read any whose filename contains a keyword from the task title — this
+   surfaces prior solved tasks and known gotchas before you reinvent them.
+4. **Capability assessment.** Invoke `@capability.scout` and write the
+   result to `step1_scope_and_research/capability_assessment.md`. The
+   CI quality gate warns if this artifact is missing or unfilled.
+5. **Literature scout** (Standard/Comprehensive only). Invoke
+   `@literature.scout` to populate `step1_scope_and_research/references/`
+   and the `## Literature & Reference Documents` section of `notes.md`.
+
+Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map
+
 ---
 
 ## 1.5 ── CONTEXT WINDOW RESILIENCE (checkpoint & resume)

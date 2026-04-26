@@ -170,7 +170,7 @@ charts, identify equipment layouts, and analyze engineering drawings. Requires `
 **Handling scanned PDFs:**
 - If `extract_text()` returns empty, the PDF is likely scanned/image-based
 - First try `pdf_to_figures.py` to render pages as images, then use `view_image` for AI reading
-- Use OCR as fallback: `pytesseract` + `pdf2image`
+- Use OCR as fallback: `pytesseract` + `pdf2image`, or run `devtools/pdf_ocr.py` (auto-detects scanned PDFs and falls back to OCR — see the [`neqsim-pdf-ocr`](../neqsim-pdf-ocr/SKILL.md) skill for P&ID tag extraction and OCRmyPDF usage)
 - Flag to user: "This appears to be a scanned document. OCR extraction may have errors."
 
 ### 2.2 Word Document Extraction

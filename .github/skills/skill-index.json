@@ -14,6 +14,25 @@
   "a user provides engineering documents": [
     "neqsim-technical-document-reading"
   ],
+  "ocr": [
+    "neqsim-pdf-ocr"
+  ],
+  "ocrmypdf": [
+    "neqsim-pdf-ocr"
+  ],
+  "scanned pdf": [
+    "neqsim-pdf-ocr"
+  ],
+  "tesseract": [
+    "neqsim-pdf-ocr"
+  ],
+  "extract text from p&id": [
+    "neqsim-pdf-ocr",
+    "neqsim-technical-document-reading"
+  ],
+  "extract tags from drawing": [
+    "neqsim-pdf-ocr"
+  ],
   "analyzing conversion/selectivity": [
     "neqsim-reaction-engineering"
   ],
@@ -299,6 +318,102 @@
   "optimizing production rates": [
     "neqsim-production-optimization"
   ],
+  "optimization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "optimize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "minimize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "maximize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "doe": [
+    "neqsim-optimization-and-doe"
+  ],
+  "design of experiments": [
+    "neqsim-optimization-and-doe"
+  ],
+  "monte carlo": [
+    "neqsim-optimization-and-doe"
+  ],
+  "uncertainty quantification": [
+    "neqsim-optimization-and-doe"
+  ],
+  "p10 p50 p90": [
+    "neqsim-optimization-and-doe"
+  ],
+  "tornado diagram": [
+    "neqsim-optimization-and-doe"
+  ],
+  "pareto front": [
+    "neqsim-optimization-and-doe"
+  ],
+  "multi-objective": [
+    "neqsim-optimization-and-doe"
+  ],
+  "sensitivity analysis": [
+    "neqsim-optimization-and-doe"
+  ],
+  "constrained nlp": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nonlinear programming": [
+    "neqsim-optimization-and-doe"
+  ],
+  "sqp": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nelder mead": [
+    "neqsim-optimization-and-doe"
+  ],
+  "particle swarm": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bfgs": [
+    "neqsim-optimization-and-doe"
+  ],
+  "golden section": [
+    "neqsim-optimization-and-doe"
+  ],
+  "throughput maximization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bottleneck": [
+    "neqsim-optimization-and-doe"
+  ],
+  "debottleneck": [
+    "neqsim-optimization-and-doe"
+  ],
+  "parameter sweep": [
+    "neqsim-optimization-and-doe"
+  ],
+  "batch study": [
+    "neqsim-optimization-and-doe"
+  ],
+  "scipy bridge": [
+    "neqsim-optimization-and-doe"
+  ],
+  "pyomo": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nlopt": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bayesian optimization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "trade-off": [
+    "neqsim-optimization-and-doe"
+  ],
+  "lift curve": [
+    "neqsim-optimization-and-doe"
+  ],
+  "vfp table": [
+    "neqsim-optimization-and-doe"
+  ],
   "or analyzing column performance": [
     "neqsim-distillation-design"
   ],
@@ -553,5 +668,79 @@
   ],
   "writing java": [
     "neqsim-api-patterns"
-  ]
+  ],
+  "hazop": ["neqsim-process-safety"],
+  "lopa": ["neqsim-process-safety"],
+  "sil": ["neqsim-process-safety"],
+  "sil determination": ["neqsim-process-safety"],
+  "safety integrity level": ["neqsim-process-safety"],
+  "bow tie": ["neqsim-process-safety"],
+  "bowtie": ["neqsim-process-safety"],
+  "risk matrix": ["neqsim-process-safety"],
+  "iec 61508": ["neqsim-process-safety"],
+  "iec 61511": ["neqsim-process-safety"],
+  "alarp": ["neqsim-process-safety"],
+  "process safety": ["neqsim-process-safety"],
+  "hazard analysis": ["neqsim-process-safety"],
+  "pinch analysis": ["neqsim-heat-integration"],
+  "heat integration": ["neqsim-heat-integration"],
+  "composite curve": ["neqsim-heat-integration"],
+  "grand composite": ["neqsim-heat-integration"],
+  "mer": ["neqsim-heat-integration"],
+  "minimum energy requirement": ["neqsim-heat-integration"],
+  "delta tmin": ["neqsim-heat-integration"],
+  "heat exchanger network": ["neqsim-heat-integration"],
+  "hen synthesis": ["neqsim-heat-integration"],
+  "energy targeting": ["neqsim-heat-integration"],
+  "capex": ["neqsim-equipment-cost-estimation"],
+  "equipment cost": ["neqsim-equipment-cost-estimation"],
+  "cost estimation": ["neqsim-equipment-cost-estimation"],
+  "cepci": ["neqsim-equipment-cost-estimation"],
+  "turton correlation": ["neqsim-equipment-cost-estimation"],
+  "bare module": ["neqsim-equipment-cost-estimation"],
+  "aace class": ["neqsim-equipment-cost-estimation"],
+  "lang factor": ["neqsim-equipment-cost-estimation"],
+  "purchased equipment cost": ["neqsim-equipment-cost-estimation"],
+  "psv sizing": ["neqsim-relief-flare-network"],
+  "relief valve": ["neqsim-relief-flare-network"],
+  "pressure safety valve": ["neqsim-relief-flare-network"],
+  "api 520": ["neqsim-relief-flare-network"],
+  "api 521": ["neqsim-relief-flare-network"],
+  "api 526": ["neqsim-relief-flare-network"],
+  "api 537": ["neqsim-relief-flare-network"],
+  "flare radiation": ["neqsim-relief-flare-network"],
+  "flare network": ["neqsim-relief-flare-network"],
+  "fire case": ["neqsim-relief-flare-network"],
+  "relief load": ["neqsim-relief-flare-network"],
+  "operating envelope": ["neqsim-controllability-operability"],
+  "operability": ["neqsim-controllability-operability"],
+  "turndown": ["neqsim-controllability-operability"],
+  "control valve sizing": ["neqsim-controllability-operability"],
+  "isa 75": ["neqsim-controllability-operability"],
+  "iec 60534": ["neqsim-controllability-operability"],
+  "rangeability": ["neqsim-controllability-operability"],
+  "startup sequence": ["neqsim-controllability-operability"],
+  "shutdown sequence": ["neqsim-controllability-operability"],
+  "recycle stability": ["neqsim-controllability-operability"],
+  "controllability": ["neqsim-controllability-operability"],
+  "utility specification": ["neqsim-utilities-specification"],
+  "steam levels": ["neqsim-utilities-specification"],
+  "cooling water": ["neqsim-utilities-specification"],
+  "instrument air": ["neqsim-utilities-specification"],
+  "fuel gas": ["neqsim-utilities-specification"],
+  "nitrogen blanketing": ["neqsim-utilities-specification"],
+  "wobbe index": ["neqsim-utilities-specification"],
+  "demin water": ["neqsim-utilities-specification"],
+  "utility duty": ["neqsim-utilities-specification"],
+  "norsok u-001": ["neqsim-utilities-specification"],
+  "results.json": ["neqsim-professional-reporting"],
+  "report schema": ["neqsim-professional-reporting"],
+  "professional report": ["neqsim-professional-reporting"],
+  "executive summary": ["neqsim-professional-reporting"],
+  "traceability": ["neqsim-professional-reporting"],
+  "katex": ["neqsim-professional-reporting"],
+  "citation": ["neqsim-professional-reporting"],
+  "deliverable quality": ["neqsim-professional-reporting"],
+  "report figures": ["neqsim-professional-reporting"],
+  "uncertainty disclosure": ["neqsim-professional-reporting"]
 }

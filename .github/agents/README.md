@@ -20,12 +20,15 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 |-------|---------|----------|
 | **neqsim.help** | `@neqsim.help <description>` | **Routes requests** to the right specialist agent. Use when unsure which agent to pick. |
 | **capability.scout** | `@capability.scout <description>` | **Assesses capabilities** needed for a task, checks NeqSim coverage, identifies gaps, plans implementations, recommends skills. |
+| **literature.scout** | `@literature.scout <topic>` | **Pulls papers, standards, and internal docs** into `step1_scope_and_research/references/`, writes a manifest, summarises into `notes.md`. |
+| **review** | `@review <task folder>` | **Pre-PR quality gate** — runs schema validator, consistency checker, capability/figure-traceability/repo-memory audits. Read-only. |
 
 **Examples:**
 ```
 @neqsim.help I need to size a pipeline and check for hydrates
 @capability.scout Can NeqSim handle acid gas injection with H2S corrosion and well design?
-@capability.scout TEG dehydration with BTEX emissions and cost estimation
+@literature.scout wax inhibitor injection for subsea tieback
+@review task_solve/2026-04-26_co2_pipeline_sizing/
 ```
 
 ---

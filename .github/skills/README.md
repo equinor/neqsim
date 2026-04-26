@@ -16,6 +16,24 @@ Each skill folder contains a `SKILL.md` file with verified patterns, rules, and 
 
 **Skills are read-only** — agents consume them but don't modify them.
 
+## Discovering the right skill
+
+Two complementary mechanisms exist:
+
+1. **Semantic search (preferred for new tasks).** Run
+   `python devtools/skill_search.py "<your task title>" --top 5`. The script
+   ranks every SKILL.md by TF-IDF cosine similarity over the front-matter
+   `description`. Add or sharpen a skill's `description` to improve recall.
+2. **Keyword index (`skill-index.json`).** A curated short-list mapping
+   common phrases ("ocr", "fuel gas", "wax inhibitor") to skills. Useful for
+   well-known queries; **not** intended to enumerate every keyword. New
+   skills do not need exhaustive keyword entries — rely on `skill_search.py`
+   to surface them.
+
+CI (`.github/workflows/skills_agents_lint.yml`) verifies that every skill has
+valid YAML front-matter and that every entry in `skill-index.json` points to
+a skill that exists.
+
 ---
 
 ## Skill Index
@@ -26,30 +44,39 @@ Each skill folder contains a `SKILL.md` file with verified patterns, rules, and 
 | `neqsim-api-patterns`                              | Core NeqSim API patterns — EOS selection, fluid creation, flash, property access, equipment setup                                             | All agents                                  |
 | `neqsim-capability-map`                            | Structured inventory of NeqSim capabilities by engineering discipline, gap identification                                                     | capability.scout, solve.task                |
 | `neqsim-ccs-hydrogen`                              | CO2 capture/transport/storage and hydrogen systems — phase behavior, impurity management, injection wells                                     | ccs.hydrogen                                |
+| `neqsim-controllability-operability`               | Operability — operating envelope mapping, turndown, control-valve sizing (ISA-75), startup/shutdown sequencing, recycle stability             | control.system, process.model, solve.task   |
 | `neqsim-distillation-design`                       | Distillation column design — solver selection, feed tray rules, convergence, internals sizing                                                 | process.model, solve.task                   |
 | `neqsim-dynamic-simulation`                        | Dynamic/transient simulation — runTransient, PID controllers, transmitters, depressurization                                                  | control.system, safety.depressuring         |
 | `neqsim-electrolyte-systems`                       | Electrolyte/brine chemistry — CPA electrolyte EOS, ions, scale risk, MEG/DEG injection                                                        | thermo.fluid, flow.assurance                |
 | `neqsim-eos-regression`                            | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization                                                          | pvt.simulation, thermo.fluid                |
+| `neqsim-equipment-cost-estimation`                 | Equipment-level CAPEX — Turton/Peters/Ulrich correlations, CEPCI escalation, AACE class, bare-module → grass-roots stackup                    | solve.task, mechanical.design, field.development |
 | `neqsim-field-development`                         | Field development workflows — concept selection, tieback analysis, production forecasting, lifecycle management                               | field.development                           |
 | `neqsim-field-economics`                           | Oil & gas economics — NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation, Monte Carlo                                      | field.development, solve.task               |
 | `neqsim-flow-assurance`                            | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing                                                   | flow.assurance                              |
+| `neqsim-heat-integration`                          | Pinch analysis & HEN — composite curves, ΔTmin, MER, grand composite, retrofit diagnostics                                                    | process.model, solve.task                   |
 | `neqsim-input-validation`                          | Pre-simulation input validation — T, P, composition checks, component name verification                                                       | All simulation agents                       |
 | `neqsim-java8-rules`                               | Java 8 compatibility rules — forbidden Java 9+ features, replacement patterns, JavaDoc requirements                                           | neqsim.test, All Java-writing agents        |
 | `neqsim-notebook-patterns`                         | Jupyter notebook patterns — dual-boot setup, class imports, structure, visualization, results.json                                            | notebook.example, solve.task, solve.process |
+| `neqsim-optimization-and-doe`                      | Process flowsheet optimization & DoE — SQP, Nelder-Mead, Particle Swarm, Pareto, Monte Carlo, BatchStudy, SciPy/Pyomo bridge                  | optimize, solve.task, process.model         |
+| `neqsim-pdf-ocr`                                   | OCR text extraction from scanned PDFs and P&IDs — OCRmyPDF, Tesseract, pytesseract, tag-pattern post-filtering                                | technical.reader, solve.task                |
 | `neqsim-physics-explanations`                      | Plain-language explanations of engineering phenomena for educational context                                                                  | All agents (educational mode)               |
 | `neqsim-plant-data`                                | Plant historian integration — tagreader API (PI/IP.21), tag mapping, digital twin loops, data quality                                         | plant.data                                  |
 | `neqsim-model-calibration-and-data-reconciliation` | Digital twin calibration and data reconciliation — bounded parameter tuning, steady-state windowing, residual diagnostics, validation metrics | plant.data, solve.task                      |
 | `neqsim-power-generation`                          | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration                                                       | process.model, solve.task                   |
 | `neqsim-process-extraction`                        | Extract process data from text/tables/PFDs into NeqSim JSON builder format                                                                    | extract.process                             |
+| `neqsim-process-safety`                            | Process safety — HAZOP guidewords, LOPA worksheets, SIL determination (IEC 61508/61511), bow-tie, risk matrix                                 | solve.task, safety.depressuring             |
 | `neqsim-production-optimization`                   | Production optimization — decline curves, bottleneck analysis, gas lift, network optimization                                                 | field.development, solve.task               |
+| `neqsim-professional-reporting`                    | Deliverable quality — `results.json` schema, traceability, KaTeX math, citations, uncertainty disclosure                                      | All agents                                  |
 | `neqsim-reaction-engineering`                      | Chemical reactor patterns — GibbsReactor, PFR, CSTR, kinetics, AnaerobicDigester, bioprocessing                                               | reaction.engineering                        |
 | `neqsim-regression-baselines`                      | Regression baseline management — creating fixtures, regression tests, detecting accuracy drift                                                | neqsim.test                                 |
+| `neqsim-relief-flare-network`                      | Relief & flare design — PSV sizing API 520/521, fire heat input, flare radiation API 537, header back-pressure & Mach                         | safety.depressuring, mechanical.design      |
 | `neqsim-standards-lookup`                          | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking                                         | mechanical.design, solve.task, gas.quality  |
 | `neqsim-stid-retriever`                            | Engineering document retrieval — local dirs, manual upload, pluggable backends, relevance filtering                                           | technical.reader, solve.task                |
 | `neqsim-subsea-and-wells`                          | Subsea systems and well design — SURF cost estimation, casing design, tieback analysis                                                        | field.development, mechanical.design        |
 | `neqsim-technical-document-reading`                | Technical document reading — PDF/Word/Excel extraction, P&ID topology, vendor datasheets, image analysis                                      | technical.reader                            |
 | `neqsim-troubleshooting`                           | Troubleshooting playbook — flash non-convergence, recycle divergence, zero values, phase ID issues                                            | All simulation agents                       |
 | `neqsim-unisim-reader`                             | UniSim/HYSYS conversion — COM reader, component/EOS mapping, topology reconstruction, sub-flowsheets                                          | unisim.reader                               |
+| `neqsim-utilities-specification`                   | Utilities — steam HP/MP/LP, cooling water, instrument air, fuel gas, N₂, demin, refrigeration sizing & specs                                  | process.model, solve.task                   |
 
 ---
 
