@@ -253,6 +253,76 @@ mandatory before the final render:
 
 ---
 
+## Long-form Drafting Pipeline (1000-page books from one command)
+
+For full-length books (hundreds of pages), the legacy `book-draft` command
+is **not** sufficient — it only stamps `content_guidance` strings into
+markdown. Use the orchestrated pipeline instead:
+
+```bash
+# 1. Scaffold (existing)
+python paperflow.py book-create books/my_book "My Book Title" "Author"
+
+# 2. Edit books/my_book/book.yaml — set chapter titles + target_pages
+
+# 3. Expand chapters into fine-grained section outlines (LLM call per chapter)
+python paperflow.py book-expand-outline books/my_book \
+    --provider litellm --model gpt-4o --target-pages 30
+
+# 4. Edit books/my_book/chapter_outlines.yaml manually if desired
+#    (key_points, must_cite keys, target_words per section)
+
+# 5. Draft every section — long-running, checkpointed, resumable
+python paperflow.py book-write books/my_book \
+    --provider litellm --model gpt-4o --no-confirm
+
+# Resume after Ctrl-C / crash / rate limit:
+python paperflow.py book-write books/my_book   # --resume is the default
+
+# Redraft a specific section:
+python paperflow.py book-write books/my_book --section 4.3 --no-resume
+
+# 6. Build figures from notebooks + render
+python paperflow.py book-build books/my_book --format html
+```
+
+### Scale and runtime
+
+A 1000-page book = roughly 800 sections of ~500 words each. At ~30–60 s
+per LLM call this is **8–15 hours of unattended runtime**. The pipeline
+checkpoints to `.book_write_progress.json` after every section, so you
+can interrupt freely and resume.
+
+### Architectural notes
+
+- **One LLM call per section** — keeps each call within the reliable
+  output budget. Quality is much higher than asking for a whole chapter.
+- **Continuity** — each call receives the last paragraph of the
+  previous section to prevent duplication and maintain flow.
+- **Citation discipline** — refs.bib excerpt is passed in every call.
+  Build a comprehensive `refs.bib` BEFORE running `book-write` (see
+  Section 0 above).
+- **Stitching** — after all sections are drafted, the orchestrator
+  optionally calls the LLM once per chapter to write a 200–350-word
+  introduction and 150–250-word summary, then assembles
+  `chapters/<dir>/chapter.md`.
+
+### Cost guidance
+
+`book-write` prints a cost estimate before starting. A 1000-page book at
+mid-range pricing ($2.50/Mtok in, $10/Mtok out) is roughly $15–25 in API
+fees. Use `--dry-run` to see the plan without spending tokens.
+
+### Per-section subagent
+
+The `tools/book_writer.py` orchestrator does not literally invoke the
+`section-writer` subagent — it inlines the same prompt directly into
+each LLM call for efficiency. The `agents/section_writer.agent.md` file
+is provided for **interactive** use (Copilot / Claude Code agent mode)
+when a human wants to draft or rewrite a single section.
+
+---
+
 ## Equation Writing Rules
 
 ### Display Equations

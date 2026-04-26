@@ -1869,6 +1869,91 @@ def cmd_book_draft(args):
         print(f"  3. Run: python paperflow.py book-check {book_dir}")
 
 
+def cmd_book_expand_outline(args):
+    """Expand book.yaml chapters into a fine-grained chapter_outlines.yaml."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_writer import expand_outlines
+
+    chapters = args.chapter or None
+    expand_outlines(
+        Path(args.book_dir),
+        provider=args.provider,
+        model=args.model,
+        chapters=chapters,
+        force=args.force,
+        target_pages_default=args.target_pages,
+    )
+
+
+def cmd_book_write(args):
+    """Long-running orchestrator: draft every section of the book.
+
+    One LLM call per section; checkpoints to .book_write_progress.json so
+    interrupted runs can be resumed with --resume (default).
+    """
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_writer import (
+        write_book, expand_outlines, _load_chapter_specs, estimate_book_cost,
+    )
+
+    book_dir = Path(args.book_dir)
+    outlines_path = book_dir / "chapter_outlines.yaml"
+
+    # Auto-expand outlines if missing (unless user opted out)
+    if not outlines_path.exists() and not args.no_auto_expand:
+        print("chapter_outlines.yaml not found — expanding outlines first...")
+        expand_outlines(
+            book_dir,
+            provider=args.provider, model=args.model,
+            chapters=args.chapter or None,
+            force=False,
+            target_pages_default=args.target_pages,
+        )
+
+    specs = _load_chapter_specs(book_dir)
+    if args.chapter:
+        specs = [c for c in specs if c.dir in args.chapter]
+    est = estimate_book_cost(specs)
+    print("\nDrafting plan:")
+    print(f"  chapters         : {est['n_chapters']}")
+    print(f"  sections         : {est['n_sections']}")
+    print(f"  target words     : {est['target_words']:,}")
+    print(f"  approx pages     : {est['approx_pages']}")
+    print(f"  est. tokens in   : {est['tokens_in']:,}")
+    print(f"  est. tokens out  : {est['tokens_out']:,}")
+    print(f"  est. USD (~mid)  : ${est['usd_estimate']}")
+    print()
+
+    if args.dry_run:
+        print("Dry run — no LLM calls made.")
+        return
+
+    if args.confirm and est["n_sections"] > 50:
+        try:
+            ans = input(f"Proceed with {est['n_sections']} LLM calls? [y/N] ")
+        except EOFError:
+            ans = "n"
+        if ans.strip().lower() not in ("y", "yes"):
+            print("Aborted.")
+            return
+
+    summary = write_book(
+        book_dir,
+        provider=args.provider,
+        model=args.model,
+        chapters=args.chapter or None,
+        sections=args.section or None,
+        resume=args.resume,
+        stop_on_error=args.stop_on_error,
+        skip_stitch=args.skip_stitch,
+        max_tokens_per_section=args.max_tokens,
+        sleep_between=args.sleep,
+    )
+    print("\nSummary:")
+    print(json.dumps(summary, indent=2))
+    print(f"\nNext: python paperflow.py book-build {book_dir} --skip-notebooks --no-compile --format html")
+
+
 def cmd_book_run_notebooks(args):
     """Run book notebooks via devtools (no JAR packaging needed)."""
     sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
@@ -2263,6 +2348,64 @@ Examples:
     p_bdraft.add_argument("--force", action="store_true",
                           help="Overwrite existing chapter content")
 
+    # book-expand-outline — LLM expands book.yaml into fine-grained sections
+    p_bexp = subparsers.add_parser(
+        "book-expand-outline",
+        help="LLM-expand book.yaml chapter titles into a fine-grained "
+             "chapter_outlines.yaml (one section per ~800 words).",
+    )
+    p_bexp.add_argument("book_dir", help="Book directory")
+    p_bexp.add_argument("--chapter", action="append", default=None,
+                        help="Restrict to chapter dir(s); repeatable")
+    p_bexp.add_argument("--provider", default="litellm",
+                        choices=["litellm", "openai", "anthropic"],
+                        help="LLM provider (default: litellm)")
+    p_bexp.add_argument("--model", default="gpt-4o",
+                        help="LLM model (default: gpt-4o)")
+    p_bexp.add_argument("--force", action="store_true",
+                        help="Overwrite existing per-chapter sections")
+    p_bexp.add_argument("--target-pages", type=int, default=25,
+                        help="Default target_pages when not in book.yaml "
+                             "(default: 25)")
+
+    # book-write — long-running drafting orchestrator (1000-page-capable)
+    p_bw = subparsers.add_parser(
+        "book-write",
+        help="Draft every section of the book with one LLM call per section. "
+             "Long-running, checkpointed, resumable. Hours of runtime is "
+             "expected for full-length books.",
+    )
+    p_bw.add_argument("book_dir", help="Book directory")
+    p_bw.add_argument("--chapter", action="append", default=None,
+                      help="Restrict to chapter dir(s); repeatable")
+    p_bw.add_argument("--section", action="append", default=None,
+                      help="Restrict to section id(s) like 4.3; repeatable")
+    p_bw.add_argument("--provider", default="litellm",
+                      choices=["litellm", "openai", "anthropic"])
+    p_bw.add_argument("--model", default="gpt-4o")
+    p_bw.add_argument("--no-resume", dest="resume", action="store_false",
+                      default=True,
+                      help="Re-draft sections already marked done")
+    p_bw.add_argument("--stop-on-error", action="store_true",
+                      help="Halt on first failed section")
+    p_bw.add_argument("--skip-stitch", action="store_true",
+                      help="Only draft section files; do not assemble chapter.md")
+    p_bw.add_argument("--no-auto-expand", action="store_true",
+                      help="Do not auto-run book-expand-outline if "
+                           "chapter_outlines.yaml is missing")
+    p_bw.add_argument("--target-pages", type=int, default=25,
+                      help="Default target_pages for auto-expand (default: 25)")
+    p_bw.add_argument("--max-tokens", type=int, default=4000,
+                      help="Output budget per section (default: 4000)")
+    p_bw.add_argument("--sleep", type=float, default=0.0,
+                      help="Seconds to sleep between LLM calls (rate-limit dodge)")
+    p_bw.add_argument("--dry-run", action="store_true",
+                      help="Print plan and cost estimate; make no LLM calls")
+    p_bw.add_argument("--confirm", action="store_true", default=True,
+                      help="Ask for confirmation before > 50 calls (default on)")
+    p_bw.add_argument("--no-confirm", dest="confirm", action="store_false",
+                      help="Skip the confirmation prompt")
+
     # book-run-notebooks — execute book notebooks via devtools
     p_bnb = subparsers.add_parser("book-run-notebooks",
                                    help="Run book notebooks via devtools (no JAR packaging)")
@@ -2393,6 +2536,10 @@ Examples:
         cmd_book_toc(args)
     elif args.command == "book-draft":
         cmd_book_draft(args)
+    elif args.command == "book-expand-outline":
+        cmd_book_expand_outline(args)
+    elif args.command == "book-write":
+        cmd_book_write(args)
     elif args.command == "book-run-notebooks":
         cmd_book_run_notebooks(args)
     elif args.command == "book-build":
