@@ -293,6 +293,41 @@ main ul, main ol {{
   font-weight: 600;
 }}
 
+/* Image-cover variant: full-bleed front-cover artwork */
+.title-page.cover-image {{
+  padding: 0;
+  background: #0d3b66;
+  min-height: 100vh;
+  align-items: stretch;
+  justify-content: flex-start;
+}}
+.title-page.cover-image::before,
+.title-page.cover-image::after {{
+  display: none;
+}}
+.title-page.cover-image img.cover-art {{
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100vh;
+  object-fit: contain;
+  margin: 0 auto;
+  background: #0d3b66;
+}}
+.title-page.cover-image .cover-publisher {{
+  position: absolute;
+  bottom: 1.2rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #ffffff;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}}
+
 .half-title-page {{
   min-height: 60vh;
   display: flex;
@@ -643,7 +678,9 @@ def _render_inline_figure(entry, section_topic, n_label):
     )
 
 
-def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8):
+def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
+                            book_dir=None, seen_files=None,
+                            seen_hashes=None):
     """Insert lecture figures inline between H2 sections of chapter markdown.
 
     Distributes figures roughly evenly across the chapter's top-level sections
@@ -651,7 +688,45 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8):
     block with a contextual caption derived from the section heading it
     follows. Returns the modified markdown text (mixed markdown + HTML; the
     HTML <figure> blocks are passed through by the markdown parser).
+
+    seen_files / seen_hashes are mutable sets shared across chapters used
+    to prevent the same image (by relative path or by byte-hash) from
+    being injected twice anywhere in the book.
     """
+    if not entries:
+        return md_text
+
+    # Cross-chapter dedup: drop entries whose file path was already used
+    # elsewhere in the book or whose bytes match an already-injected image.
+    if seen_files is None:
+        seen_files = set()
+    if seen_hashes is None:
+        seen_hashes = set()
+
+    import hashlib
+
+    def _file_hash(rel_path):
+        if not book_dir:
+            return None
+        try:
+            p = book_dir / rel_path
+            if p.is_file():
+                return hashlib.md5(p.read_bytes()).hexdigest()
+        except Exception:
+            return None
+        return None
+
+    deduped = []
+    for e in entries:
+        f = e.get("file", "")
+        if not f or f in seen_files:
+            continue
+        h = _file_hash(f)
+        if h and h in seen_hashes:
+            seen_files.add(f)  # still mark path as consumed
+            continue
+        deduped.append(e)
+    entries = deduped
     if not entries:
         return md_text
 
@@ -677,6 +752,16 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8):
     if not entries:
         return md_text
     selected = sorted(entries, key=_area, reverse=True)[:max_figures]
+
+    # Record the chosen images in the cross-chapter dedup sets so later
+    # chapters can't re-use them.
+    for e in selected:
+        f = e.get("file", "")
+        if f:
+            seen_files.add(f)
+        h = _file_hash(f)
+        if h:
+            seen_hashes.add(h)
 
     # Find H2 sections.
     h2_re = re.compile(r"^## +(.+?)$", flags=re.MULTILINE)
@@ -874,8 +959,13 @@ def _get_book_icon_svg(cfg):
     return _BOOK_ICON_SVG_NETWORK
 
 
-def _generate_title_page(cfg):
-    """Generate a professional graphical title page from book config."""
+def _generate_title_page(cfg, book_dir=None):
+    """Generate a professional title page.
+
+    If ``figures/front_cover.png`` (or front_cover.jpg) exists in the book
+    directory, render it as a full-bleed cover image with the publisher
+    line below. Otherwise fall back to the SVG emblem layout.
+    """
     title = cfg.get("title", "Untitled")
     subtitle = cfg.get("subtitle", "")
     authors = cfg.get("authors", [])
@@ -883,8 +973,32 @@ def _generate_title_page(cfg):
     year = cfg.get("year", "")
     publisher = cfg.get("publisher", "")
 
-    icon_svg = _get_book_icon_svg(cfg)
+    # Locate a cover image if available.
+    cover_rel = None
+    if book_dir is not None:
+        for name in ("front_cover.png", "front_cover.jpg",
+                     "front_cover.jpeg", "cover.png", "cover.jpg"):
+            p = book_dir / "figures" / name
+            if p.is_file():
+                cover_rel = f"figures/{name}"
+                break
 
+    if cover_rel:
+        # Image-cover layout: full-bleed cover image + publisher banner.
+        parts = ['<section id="title_page" class="title-page cover-image">']
+        parts.append(
+            f'<img class="cover-art" src="{_esc(cover_rel)}" '
+            f'alt="{_esc(title)} — front cover"/>'
+        )
+        if publisher:
+            parts.append(
+                f'<div class="cover-publisher">{_esc(publisher)}</div>'
+            )
+        parts.append("</section>")
+        return "\n".join(parts)
+
+    # Fallback: SVG emblem layout (legacy).
+    icon_svg = _get_book_icon_svg(cfg)
     parts = ['<section id="title_page" class="title-page">']
     parts.append(f'<div class="tp-decoration">{icon_svg}</div>')
     parts.append(f'<div class="tp-title">{_esc(title)}</div>')
@@ -1255,6 +1369,10 @@ def render_book_html(book_dir, chapter_filter=None):
     # Collect all cited keys across chapters (global numbering)
     all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
 
+    # Cross-chapter de-dup state for lecture-figure injection.
+    _seen_lecture_files: set = set()
+    _seen_lecture_hashes: set = set()
+
     # Load lecture-figure manifest (if produced by extract_lecture_figures.py).
     lecture_manifest_path = (book_dir / "figures" / "lectures" / "auto"
                              / "manifest.json")
@@ -1299,7 +1417,7 @@ def render_book_html(book_dir, chapter_filter=None):
         parts.append(_generate_half_title(cfg))
 
         # Full title page with graphical decoration
-        parts.append(_generate_title_page(cfg))
+        parts.append(_generate_title_page(cfg, book_dir))
 
         # Copyright page
         parts.append(_generate_copyright_page(cfg, book_dir))
@@ -1405,7 +1523,10 @@ def render_book_html(book_dir, chapter_filter=None):
             inline_entries = lecture_entries_by_chapter.get(ch["dir"], [])
             if inline_entries:
                 text = _inject_lecture_figures(
-                    text, inline_entries, ch_num, max_figures=8)
+                    text, inline_entries, ch_num, max_figures=8,
+                    book_dir=book_dir,
+                    seen_files=_seen_lecture_files,
+                    seen_hashes=_seen_lecture_hashes)
             parts.append(_md_to_html(text))
         else:
             parts.append("<p><em>Content not yet written.</em></p>")
