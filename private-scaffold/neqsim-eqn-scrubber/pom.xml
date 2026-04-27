@@ -46,19 +46,11 @@
   </dependencies>
 
   <!--
-    Private artifactory — replace URL when registering this repo internally.
-    Gitignored credentials live in ~/.m2/settings.xml.
+    Distribution: this plug-in is consumed by `git clone` + `mvn install`
+    into the consumer's local Maven cache. No Artifactory / Maven Central
+    publication. If a shared internal Maven repository is added later, put
+    its <distributionManagement> block here.
   -->
-  <distributionManagement>
-    <repository>
-      <id>equinor-private-releases</id>
-      <url>https://artifactory.equinor.com/neqsim-private-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>equinor-private-snapshots</id>
-      <url>https://artifactory.equinor.com/neqsim-private-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 
   <build>
     <plugins>

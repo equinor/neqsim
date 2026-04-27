@@ -32,15 +32,15 @@ private plug-in.
 
 ## How users consume it
 
-1. Add the private Artifactory repo to their `~/.m2/settings.xml`:
+Distribution is via `git clone` + `mvn install` into the consumer's local
+Maven cache. There is no Artifactory or Maven Central publication.
 
-   ```xml
-   <repositories>
-     <repository>
-       <id>equinor-private</id>
-       <url>https://artifactory.equinor.com/neqsim-private</url>
-     </repository>
-   </repositories>
+1. Clone and install once (requires Equinor GitHub access):
+
+   ```bash
+   git clone https://github.com/equinor/neqsim-eqn-scrubber.git
+   cd neqsim-eqn-scrubber
+   mvn install
    ```
 
 2. Add a dependency to their project's `pom.xml`:
@@ -49,7 +49,7 @@ private plug-in.
    <dependency>
      <groupId>com.equinor.neqsim</groupId>
      <artifactId>neqsim-eqn-scrubber</artifactId>
-     <version>1.0.0</version>
+     <version>1.0.0-SNAPSHOT</version>
    </dependency>
    ```
 
@@ -83,8 +83,9 @@ must load them from a separate location controlled by the
 
 ## Releasing
 
-Releases are tagged in this repo and published to the Equinor Artifactory
-private repo. CI is configured in `.azure-pipelines.yml`.
+Releases are cut by tagging this repo (`v1.0.0`, etc.). Consumers pick up
+new versions by pulling and re-running `mvn install`. CI is configured in
+`.azure-pipelines.yml` (build + test only — no publish step).
 
 ## Maintainers
 

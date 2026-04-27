@@ -8,14 +8,18 @@ beyond the SPI scaffolding currently checked in.
 ## How to extract this scaffold to its own repo
 
 ```bash
-cd c:\Appl\projects\neqsim\private-scaffold
-git init neqsim-eqn-scrubber
-cd neqsim-eqn-scrubber
-git remote add origin <internal-equinor-git-url>
+cd c:\Appl\projects\neqsim\private-scaffold\neqsim-eqn-scrubber
+git init
+git branch -M main
+git remote add origin https://github.com/equinor/neqsim-eqn-scrubber.git
 git add .
 git commit -m "Initial commit: NeqSim EQN scrubber plug-in scaffold"
 git push -u origin main
 ```
+
+The target repo `equinor/neqsim-eqn-scrubber` should be created on
+github.com/equinor first, with visibility set to **Internal** (so any
+Equinor org member can clone & `mvn install` without per-person invites).
 
 After that, **delete `private-scaffold/` from the public NeqSim repo** so
 no part of it ever ships in the public build:
