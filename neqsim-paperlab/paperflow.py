@@ -2394,8 +2394,12 @@ Examples:
     p_bexp.add_argument("--chapter", action="append", default=None,
                         help="Restrict to chapter dir(s); repeatable")
     p_bexp.add_argument("--provider", default="litellm",
-                        choices=["litellm", "openai", "anthropic"],
-                        help="LLM provider (default: litellm)")
+                        choices=["litellm", "openai", "anthropic",
+                                 "github", "copilot-bridge"],
+                        help="LLM provider (default: litellm). "
+                             "`github` uses `gh auth token` (no API key); "
+                             "`copilot-bridge` delegates to a running "
+                             "VS Code Copilot Chat agent via files.")
     p_bexp.add_argument("--model", default="gpt-4o",
                         help="LLM model (default: gpt-4o)")
     p_bexp.add_argument("--force", action="store_true",
@@ -2432,7 +2436,8 @@ Examples:
     p_bw.add_argument("--section", action="append", default=None,
                       help="Restrict to section id(s) like 4.3; repeatable")
     p_bw.add_argument("--provider", default="litellm",
-                      choices=["litellm", "openai", "anthropic"])
+                      choices=["litellm", "openai", "anthropic",
+                               "github", "copilot-bridge"])
     p_bw.add_argument("--model", default="gpt-4o")
     p_bw.add_argument("--no-resume", dest="resume", action="store_false",
                       default=True,
@@ -2469,7 +2474,8 @@ Examples:
     p_bpn.add_argument("--chapter", action="append", default=None,
                        help="Restrict to chapter dir(s); repeatable")
     p_bpn.add_argument("--provider", default="litellm",
-                       choices=["litellm", "openai", "anthropic"])
+                       choices=["litellm", "openai", "anthropic",
+                                "github", "copilot-bridge"])
     p_bpn.add_argument("--model", default="gpt-4o")
     p_bpn.add_argument("--force", action="store_true",
                        help="Overwrite existing notebook files")

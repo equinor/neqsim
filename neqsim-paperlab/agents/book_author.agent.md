@@ -355,6 +355,38 @@ notebooks and refine them by hand. `book-plan-notebooks` will skip any
 notebook that already exists, so manual edits survive subsequent
 re-plans. Run with `--force` to regenerate.
 
+### LLM provider — no API key required
+
+The pipeline supports two **key-free** providers in addition to the
+SDK-based ones (litellm / openai / anthropic):
+
+| Provider          | Auth                                  | When to use                          |
+|-------------------|---------------------------------------|--------------------------------------|
+| `litellm`         | `OPENAI_API_KEY` or similar in env    | Unattended overnight runs.           |
+| `github`          | `gh auth login` (one-time, no key)    | GitHub Models via your GitHub auth;  |
+|                   |                                       | rate-limited but free.               |
+| `copilot-bridge`  | None — uses an in-IDE Copilot agent   | Interactive VS Code work: the       |
+|                   |                                       | running Copilot Chat session IS the |
+|                   |                                       | LLM, no API key, no extra cost.     |
+
+`copilot-bridge` works via files. `paperflow` writes each prompt to
+`.llm_bridge/pending/<id>.json` and polls `.llm_bridge/done/<id>.json`.
+The Copilot agent answers with `bridge_serve.py`:
+
+```bash
+python neqsim-paperlab/tools/bridge_serve.py list
+python neqsim-paperlab/tools/bridge_serve.py show <id>
+python neqsim-paperlab/tools/bridge_serve.py answer <id> reply.md
+```
+
+Example invocation routing everything through the running Copilot
+session — no API key needed:
+
+```bash
+python paperflow.py book-write books/my_book \
+    --provider copilot-bridge --chapter ch01_introduction
+```
+
 ### Scale and runtime
 
 A 1000-page book = roughly 800 sections of ~500 words each. At ~30–60 s

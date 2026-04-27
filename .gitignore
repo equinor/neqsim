@@ -128,3 +128,7 @@ run_notebook.py
 token_cache.bin
 .gitignore
 neqsim_profile.jfr
+
+# paperlab copilot-bridge LLM file exchange
+.llm_bridge/
+

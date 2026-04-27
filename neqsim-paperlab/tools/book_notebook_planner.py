@@ -60,6 +60,7 @@ from book_writer import (
     _load_chapter_specs,
     DEFAULT_PAGE_WORDS,
 )
+from figure_templates import render as render_figure_code
 
 
 PROGRESS_FILENAME = ".book_notebook_plan_progress.json"
@@ -353,9 +354,9 @@ def _build_fallback_cells(plan: NotebookPlan) -> List[Dict[str, str]]:
         })
         cells.append({
             "type": "code",
-            "source": _FALLBACK_FIGURE_CODE.format(
+            "source": render_figure_code(
+                caption=fig.get("caption", "") or "",
                 file=fig.get("file", "figure.png"),
-                caption=(fig.get("caption", "") or "").replace('"', "'"),
             ),
         })
     cells.append({
