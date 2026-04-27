@@ -1497,6 +1497,46 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 
 ---
 
+## Private extensions
+
+The 7-stage chain documented above is the **public, open-source** physics-based
+model. NeqSim also supports loading **private, proprietary entrainment
+plug-ins** at runtime — they are not part of the public NeqSim distribution
+and are not built into the JAR you get from Maven Central or `pip install
+neqsim`.
+
+### Approach (4) — Pi-number with EQN scrubber testing database
+
+Equinor maintains a closed-source plug-in that correlates carry-over against
+dimensionless π-groups regressed from the in-house **EQN full-scale scrubber
+test database**. It accepts the same vessel and internals inputs as the
+public 7-stage model (approach (3) in
+[separators.md](separators.md#choosing-an-entrainment--carry-over-model))
+but replaces the predictive chain with an empirical fit valid inside the test
+envelope, and returns confidence bands tied to the rig data.
+
+**Distribution model.** The plug-in is shipped as a separate signed JAR
+inside the Equinor Artifactory; only Equinor users with database access can
+resolve it. It is wired into NeqSim through a `ServiceLoader` SPI hook on
+`Separator` / `GasScrubber` so the public NeqSim core has no compile-time or
+runtime dependency on it. If the plug-in is on the classpath it is picked up
+automatically; if not, the call falls back to approach (3) or raises a clear
+"plug-in not available" error depending on configuration.
+
+**Public API surface.** Only the *interface* lives in the public repo
+(method signatures and a no-op default implementation), so user code that
+targets approach (4) compiles against the public NeqSim — it just won't
+produce EQN-correlated results unless the private plug-in is on the
+classpath. The π-group definitions, regression coefficients and the test
+database itself stay in the private repo.
+
+> The implementation strategy (SPI interface in public NeqSim, signed
+> private JAR, ServiceLoader auto-discovery) is described inline in the
+> source comments of `EnhancedEntrainmentProvider` for maintainers — no
+> public API documentation is published for the private plug-in.
+
+---
+
 ## Related Documentation
 
 - [Separator Equipment](separators.md) — Base separator documentation, entrainment specification, design constraints

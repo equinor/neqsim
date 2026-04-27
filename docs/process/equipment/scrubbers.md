@@ -55,10 +55,12 @@ System.out.println(d.toTextReport());
 // Run the TR3500 rule set and print PASS / WARN / FAIL for every check
 System.out.println(d.checkConformity().toTextReport());
 
-// Carry-over model — pick one of the three options described in separators.md
+// Carry-over model — pick one of the four options described in separators.md
 // (1) Default: nothing to do.
 // (2) User-specified: scrubber.setEntrainment(0.001, "volume", "feed", "oil", "gas");
-// (3) Physics-based: scrubber.setEnhancedEntrainmentCalculation(true);
+// (3) Physics-based 7-stage chain: scrubber.setEnhancedEntrainmentCalculation(true);
+// (4) Pi-number with EQN scrubber testing database (Equinor-internal, private
+//     plug-in — same geometry inputs as (3), correlation from full-scale test rig).
 ```
 
 For everything beyond this stub, follow the links above into

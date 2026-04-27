@@ -62,7 +62,7 @@ drums** (this page is also the entry point for the gas-scrubber API; see
 
 ## Choosing an entrainment / carry-over model
 
-NeqSim offers **three approaches** for representing imperfect gas/liquid
+NeqSim offers **four approaches** for representing imperfect gas/liquid
 separation. They are mutually exclusive on a given separator — pick one.
 Detailed mechanics for the user-specified path live in
 [Entrainment](#entrainment) further down; the physics-based path is fully
@@ -74,6 +74,7 @@ documented in
 | (1) | **Ideal flash (default)**             | Nothing — just `new Separator(...)`.                                            | Perfect equilibrium split. Zero carry-over either way.                                                                                                           | First-pass mass balance, EOS testing, screening.                      |
 | (2) | **User-specified fractions**          | Carry-over fractions per phase pair via `setEntrainment(val, basis, ref, from, to)`. | Equilibrium flash plus the user fraction transferred between outlets.                                                                                            | Calibration to plant data, sensitivity scans, PFD-level studies.      |
 | (3) | **Physics-based (enhanced) model**    | Vessel geometry + internals (mesh / vane / cyclone / inlet device). Enabled via `setEnhancedEntrainmentCalculation(true)`. | A 7-stage chain: flow-regime prediction → droplet-size distribution → inlet-device transformation → gravity settling cut-size → mist-eliminator grade efficiency → liquid-liquid (3-phase). Returns carry-over kg/h, K-factor, flooding margin, and demister utilisation. | Mechanical / FEED design, internals selection, vendor comparison, MySep-style studies. |
+| (4) | **Pi-number with EQN scrubber testing database** *(private / proprietary)* | Same geometry / internals inputs as (3), plus access to the internal Equinor (EQN) scrubber testing database. Distributed as a closed-source plug-in — not part of the public NeqSim build. | Carry-over correlated against dimensionless π-groups regressed from full-scale EQN test-rig data. Returns carry-over kg/h with confidence bands tied to the test envelope. | Equinor-internal scrubber benchmarking and operating-envelope decisions where the EQN test database is the reference. |
 
 ### When to choose which
 
@@ -83,6 +84,13 @@ documented in
 - Need to know **whether a wire-mesh / vane pack / cyclone deck will hold up
   at higher throughput**, or to compare a vendor proposal? Use (3) — that
   is what the enhanced model is for.
+- Working **inside Equinor** and want carry-over benchmarked against the
+  in-house full-scale **EQN scrubber test database**? Use (4) — same vessel
+  inputs as (3), but the carry-over correlation comes from regressed
+  π-groups fitted to proprietary test-rig data. The plug-in is not part of
+  the public NeqSim distribution; see
+  [Enhanced Separator Entrainment Modeling — private extensions](separator-entrainment-modeling.md#private-extensions)
+  for how it is loaded at runtime.
 
 ### One-liner examples
 
