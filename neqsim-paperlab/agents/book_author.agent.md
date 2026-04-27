@@ -282,9 +282,78 @@ python paperflow.py book-write books/my_book   # --resume is the default
 # Redraft a specific section:
 python paperflow.py book-write books/my_book --section 4.3 --no-resume
 
+# 5b. (Optional but recommended for 1000-page books) auto-generate one
+#     Jupyter notebook per (section, figure-group) declared in the outline.
+python paperflow.py book-plan-notebooks books/my_book \
+    --provider litellm --model gpt-4o
+
 # 6. Build figures from notebooks + render
 python paperflow.py book-build books/my_book --format html
 ```
+
+### Figure handling
+
+The pipeline supports figures through **four** complementary mechanisms —
+use them in order for a fully autonomous 1000-page book:
+
+1. **Outline-declared figures (preferred)** — each section in
+   `chapter_outlines.yaml` may carry a `figures` list with
+   `file`, `caption`, and `notebook` for each plot. The LLM is then
+   instructed to insert `![<caption>](figures/<file>)` inline at the
+   point where the figure is first discussed. Example:
+
+   ```yaml
+   sections:
+     - id: "4.3"
+       heading: "4.3 Worked example: gas dehydration"
+       target_words: 1200
+       key_points: [...]
+       figures:
+         - file: "4_3_water_dewpoint.png"
+           caption: "Predicted water dew-point of the dehydrated gas."
+           notebook: "4_3_dehydration.ipynb"
+   ```
+
+2. **Auto-generated notebooks** — `book-plan-notebooks` reads the outline
+   and, for every unique `(section, notebook)` pair, calls the LLM to
+   produce a runnable Jupyter notebook at
+   `chapters/<dir>/notebooks/<notebook>.ipynb`. Each generated notebook
+   uses `from neqsim import jneqsim`, builds a fluid / process appropriate
+   to the section, and saves each declared PNG to `../figures/<file>`.
+   Existing notebooks are skipped unless `--force`. Use `--no-llm` for a
+   deterministic offline fallback (generic NeqSim density plot per
+   figure) — useful in CI.
+
+3. **Auto-discovery** — at stitch time, `book_writer.stitch_chapter()`
+   scans `chapters/<dir>/figures/*.png` and appends any PNGs not already
+   referenced inline to a `## Figures` section at the end of `chapter.md`.
+   This guarantees every plot the notebooks produced ends up in the book
+   even if the outline did not declare it.
+
+4. **Notebook execution** — figures are produced by running the chapter
+   notebooks under `chapters/<dir>/notebooks/` via
+   `python paperflow.py book-run-notebooks <book_dir>` or as part of
+   `book-build` (which runs notebooks then renders).
+
+**Recommended order (full autonomous loop):**
+
+```bash
+# (a) plan sections + figures
+python paperflow.py book-expand-outline books/my_book
+# (b) generate notebook stubs for every figure declared in the outline
+python paperflow.py book-plan-notebooks books/my_book
+# (c) draft prose with inline figure refs
+python paperflow.py book-write books/my_book --no-confirm
+# (d) execute notebooks → produces figures/*.png on disk
+python paperflow.py book-run-notebooks books/my_book
+# (e) render — picks up figures and orphans
+python paperflow.py book-build books/my_book --format html
+```
+
+The first time through, expect to inspect a handful of LLM-generated
+notebooks and refine them by hand. `book-plan-notebooks` will skip any
+notebook that already exists, so manual edits survive subsequent
+re-plans. Run with `--force` to regenerate.
 
 ### Scale and runtime
 

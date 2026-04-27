@@ -68,6 +68,7 @@ class SectionSpec:
     target_words: int = DEFAULT_WORDS_PER_SECTION
     key_points: List[str] = field(default_factory=list)
     must_cite: List[str] = field(default_factory=list)
+    figures: List[Dict[str, str]] = field(default_factory=list)
     notes: str = ""
 
 
@@ -134,6 +135,14 @@ Each entry MUST have:
   target_words  : integer, 300–1500, summing across the chapter to ≈{target_words}
   key_points    : list of 3–6 short bullets the section must cover
   must_cite     : list of refs.bib keys the section should cite (use [] if unsure)
+  figures       : list of figure entries (or [] if none). Each entry has
+                    file    : filename under chapters/<dir>/figures/, e.g.
+                              "phase_envelope.png". Use snake_case.
+                    caption : one-sentence caption.
+                    notebook: the notebook (under chapters/<dir>/notebooks/)
+                              that should produce this PNG, e.g. "4_3_envelope.ipynb".
+                  Plan 1–3 figures for theoretical/method sections and 2–4 for
+                  worked-example sections; introductions and summaries usually [].
 
 Also produce:
 
@@ -155,6 +164,17 @@ sections:
     key_points:
       - ...
     must_cite: []
+    figures: []
+  - id: "{ch_num}.4"
+    heading: "{ch_num}.4 Worked example"
+    target_words: 1200
+    key_points:
+      - ...
+    must_cite: [some_ref]
+    figures:
+      - file: "{ch_num}_4_phase_envelope.png"
+        caption: "Phase envelope of the example mixture."
+        notebook: "{ch_num}_4_envelope.ipynb"
 ```
 """
 
@@ -290,8 +310,14 @@ a graduate-level engineering textbook. Follow these strict rules:
    in order; close with a one-sentence bridge to the next section if logical.
 7. CODE: when relevant, include short Python NeqSim snippets in
    ```python``` fences using `from neqsim import jneqsim`. SI / bar / K only.
-8. LENGTH: hit the target word count within ±15%.
-9. OUTPUT: return ONLY the section markdown, starting with the section heading
+8. FIGURES: if a `figures` list is provided, you MUST insert each figure at the
+   point in the prose where it is first discussed, using the exact markdown
+   form `![<caption>](figures/<file>)` on its own line, with a sentence above
+   that introduces it ("Figure X.Y shows ...") and a sentence below that
+   interprets it. Do NOT invent figures that are not in the list. Do NOT add
+   `<figure>` HTML or LaTeX `\\begin{figure}` — markdown only.
+9. LENGTH: hit the target word count within ±15%.
+10. OUTPUT: return ONLY the section markdown, starting with the section heading
    `## <heading>`. No prefatory text, no closing remarks, no JSON wrapper.
 """
 
@@ -308,6 +334,11 @@ Section key points (cover all):
 Suggested citations (use any that fit; you may also cite other keys present
 in the refs.bib excerpt below):
 {must_cite_block}
+
+Figures to embed in this section (insert each as
+`![<caption>](figures/<file>)` at the point where it is first discussed; if
+the list is empty, do not invent any figure references):
+{figures_block}
 
 Continuity — last paragraph of the previous section (do NOT repeat it,
 but pick up the thread):
@@ -353,6 +384,25 @@ def _safe_id(sec_id: str) -> str:
     return sec_id.replace(".", "_").replace("/", "_")
 
 
+def discover_chapter_figures(book_dir: Path, ch_dir: str) -> List[str]:
+    """List PNG files already present under ``chapters/<ch_dir>/figures/``.
+
+    These are typically produced by chapter notebooks. The result is used as a
+    fallback when ``chapter_outlines.yaml`` does not assign figures to specific
+    sections \u2014 every discovered PNG will then be appended to ``chapter.md``
+    in a `## Figures` section by ``stitch_chapter``.
+    """
+    fig_dir = book_dir / "chapters" / ch_dir / "figures"
+    if not fig_dir.exists():
+        return []
+    return sorted(p.name for p in fig_dir.glob("*.png"))
+
+
+def _figures_referenced_in_text(text: str) -> set:
+    """Return the set of figure filenames already referenced via ``![...](figures/foo.png)``."""
+    return set(re.findall(r"!\[[^\]]*\]\(figures/([^)]+)\)", text))
+
+
 def write_section(
     book_dir: Path,
     ch_spec: ChapterSpec,
@@ -378,6 +428,14 @@ def write_section(
     must_cite_block = ", ".join(sec.must_cite) if sec.must_cite else "(none specified)"
     objectives_block = "\n".join(f"  - {o}" for o in ch_spec.learning_objectives) or "  - (none)"
 
+    if sec.figures:
+        figures_block = "\n".join(
+            f"  - file: {f.get('file','')}  caption: {f.get('caption','')}"
+            for f in sec.figures
+        )
+    else:
+        figures_block = "  (none — do not insert any figure references)"
+
     user = _SECTION_USER_TEMPLATE.format(
         book_title=book_title,
         ch_num=ch_spec.number,
@@ -387,6 +445,7 @@ def write_section(
         target_words=sec.target_words,
         key_points_block=key_points_block,
         must_cite_block=must_cite_block,
+        figures_block=figures_block,
         prev_tail=prev_tail,
         objectives_block=objectives_block,
         refs_excerpt=refs_excerpt,
@@ -514,6 +573,24 @@ def stitch_chapter(
         parts.append("## Chapter summary\n")
         parts.append(summary.strip() + "\n")
 
+    # Figure injection: append any PNGs in figures/ that aren't already
+    # referenced inline. This preserves figure inclusion when the LLM didn't
+    # cite them (e.g. outline had no figures field) or when notebooks were
+    # run after drafting and produced additional plots.
+    drafted_text = "\n".join(parts)
+    referenced = _figures_referenced_in_text(drafted_text)
+    on_disk = discover_chapter_figures(book_dir, ch_spec.dir)
+    orphan = [f for f in on_disk if f not in referenced]
+    if orphan:
+        parts.append("## Figures\n")
+        parts.append(
+            "The following figures, generated by this chapter's notebooks, "
+            "are referenced in the analyses above:\n"
+        )
+        for fname in orphan:
+            stem = fname.rsplit(".", 1)[0].replace("_", " ")
+            parts.append(f"![{stem}](figures/{fname})\n")
+
     out = ch_dir_path / "chapter.md"
     out.write_text("\n".join(parts), encoding="utf-8")
     return out
@@ -543,6 +620,7 @@ def _load_chapter_specs(book_dir: Path) -> List[ChapterSpec]:
                     target_words=int(s.get("target_words", DEFAULT_WORDS_PER_SECTION)),
                     key_points=list(s.get("key_points", []) or []),
                     must_cite=list(s.get("must_cite", []) or []),
+                    figures=list(s.get("figures", []) or []),
                     notes=s.get("notes", "") or "",
                 )
             )

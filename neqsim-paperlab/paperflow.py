@@ -1897,6 +1897,30 @@ def cmd_book_expand_local(args):
     )
 
 
+def cmd_book_plan_notebooks(args):
+    """LLM-generate one ``.ipynb`` per (section, notebook_filename) group.
+
+    Reads ``chapter_outlines.yaml`` and, for every section that lists
+    figures with a ``notebook`` field, produces a runnable Jupyter notebook
+    under ``chapters/<ch>/notebooks/`` that saves each PNG to
+    ``../figures/<file>``. Existing notebooks are skipped unless
+    ``--force``.
+    """
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_notebook_planner import plan_book_notebooks
+
+    plan_book_notebooks(
+        Path(args.book_dir),
+        provider=args.provider,
+        model=args.model,
+        chapter_filter=args.chapter or None,
+        force=args.force,
+        use_llm=not args.no_llm,
+        max_tokens=args.max_tokens,
+        dry_run=args.dry_run,
+    )
+
+
 def cmd_book_write(args):
     """Long-running orchestrator: draft every section of the book.
 
@@ -2433,6 +2457,31 @@ Examples:
     p_bw.add_argument("--no-confirm", dest="confirm", action="store_false",
                       help="Skip the confirmation prompt")
 
+    # book-plan-notebooks — LLM-generate notebook stubs from outline figures
+    p_bpn = subparsers.add_parser(
+        "book-plan-notebooks",
+        help="LLM-generate one Jupyter notebook per section/figure-group "
+             "declared in chapter_outlines.yaml. Each notebook saves its "
+             "PNG figures to ../figures/ so book-run-notebooks then "
+             "executes them and book-build picks them up.",
+    )
+    p_bpn.add_argument("book_dir", help="Book directory")
+    p_bpn.add_argument("--chapter", action="append", default=None,
+                       help="Restrict to chapter dir(s); repeatable")
+    p_bpn.add_argument("--provider", default="litellm",
+                       choices=["litellm", "openai", "anthropic"])
+    p_bpn.add_argument("--model", default="gpt-4o")
+    p_bpn.add_argument("--force", action="store_true",
+                       help="Overwrite existing notebook files")
+    p_bpn.add_argument("--no-llm", action="store_true",
+                       help="Skip LLM calls; emit deterministic fallback "
+                            "notebooks (offline / CI mode)")
+    p_bpn.add_argument("--max-tokens", type=int, default=4000,
+                       help="Output budget per notebook (default: 4000)")
+    p_bpn.add_argument("--dry-run", action="store_true",
+                       help="Print the plan only; make no LLM calls and "
+                            "write no files")
+
     # book-run-notebooks — execute book notebooks via devtools
     p_bnb = subparsers.add_parser("book-run-notebooks",
                                    help="Run book notebooks via devtools (no JAR packaging)")
@@ -2569,6 +2618,8 @@ Examples:
         cmd_book_expand_local(args)
     elif args.command == "book-write":
         cmd_book_write(args)
+    elif args.command == "book-plan-notebooks":
+        cmd_book_plan_notebooks(args)
     elif args.command == "book-run-notebooks":
         cmd_book_run_notebooks(args)
     elif args.command == "book-build":

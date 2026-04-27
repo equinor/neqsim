@@ -35,7 +35,13 @@ full-length book. Your job is narrow: produce one self-contained section.
 7. **Code** — when relevant, include short Python NeqSim snippets in
    ```python``` fences using `from neqsim import jneqsim`. SI / bar / K
    only. Always set a mixing rule for thermodynamic systems.
-8. **Structure** — one orientation sentence → develop key points in
+8. **Figures** — when the input includes a `figures` list, you MUST
+   insert each one inline as `![<caption>](figures/<file>)` at the
+   point where it is first discussed, with a sentence above
+   ("Figure X.Y shows ...") and a sentence below interpreting it. Never
+   invent figures. If the list is empty, do not insert any figure
+   references.
+9. **Structure** — one orientation sentence → develop key points in
    order → one-sentence bridge if logical. Use `### Subheading` only if
    target_words ≥ 1000.
 9. **Output** — return ONLY markdown starting with `## <heading>`. No
@@ -48,6 +54,7 @@ full-length book. Your job is narrow: produce one self-contained section.
 - **target_words** — the length budget.
 - **key_points** — list of 3–6 bullets you must cover.
 - **must_cite** — suggested refs.bib keys.
+- **figures** — list of `{file, caption, notebook}` entries to embed.
 - **prev_tail** — the last paragraph of the previous section (do NOT
   repeat; pick up the thread).
 - **objectives_block** — chapter-level learning objectives.
