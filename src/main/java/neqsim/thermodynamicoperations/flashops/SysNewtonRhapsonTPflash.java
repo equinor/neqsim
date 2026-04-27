@@ -94,6 +94,33 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
+   * Number of components this solver was sized for. Used by the caller to detect when the cached
+   * instance is stale (e.g. after solid precipitation removed a component).
+   *
+   * @return number of components
+   */
+  public int getNumberOfComponents() {
+    return numberOfComponents;
+  }
+
+  /**
+   * Re-bind this solver to a (possibly updated) system reference and refresh the cached feed
+   * composition, without re-allocating the EJML matrices. The component count must match — call
+   * {@link #getNumberOfComponents()} first.
+   *
+   * @param system system to solve
+   */
+  public void setSystem(SystemInterface system) {
+    this.system = system;
+    if (z == null || z.length != numberOfComponents) {
+      z = new double[numberOfComponents];
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      z[i] = system.getPhase(0).getComponent(i).getz();
+    }
+  }
+
+  /**
    * <p>
    * Setter for the field <code>fvec</code>.
    * </p>
