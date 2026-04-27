@@ -112,6 +112,20 @@ public class EntrainmentProviderSpiTest {
   }
 
   /**
+   * The built-in provider must declare an SPI api version no higher than
+   * the registry's {@code CURRENT_API_VERSION}.
+   */
+  @Test
+  public void builtInApiVersionWithinSupportedRange() {
+    EnhancedEntrainmentProvider p =
+        EntrainmentProviderRegistry.find(BuiltInSevenStageProvider.ID);
+    assertTrue(p.getApiVersion() <= EntrainmentProviderRegistry.CURRENT_API_VERSION,
+        "built-in provider api version must be <= CURRENT_API_VERSION");
+    assertTrue(p.getApiVersion() >= 1,
+        "api version is 1-based");
+  }
+
+  /**
    * The {@link EntrainmentResult} contract — provider id and version are
    * stamped, numerical fields default to NaN until the calculator wiring
    * is finalised.

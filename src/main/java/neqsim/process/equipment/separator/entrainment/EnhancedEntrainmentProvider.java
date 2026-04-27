@@ -62,6 +62,30 @@ import neqsim.process.equipment.separator.Separator;
 public interface EnhancedEntrainmentProvider {
 
   /**
+   * SPI revision implemented by this provider. The default is
+   * {@code 1} — the revision that ships with the first public release of
+   * this interface. When the SPI gains semantic capabilities that an old
+   * provider cannot express, public NeqSim bumps {@code CURRENT_API_VERSION}
+   * and providers built against the new revision override this method to
+   * return the higher value. The {@code EntrainmentProviderRegistry}
+   * refuses providers that declare an api version higher than the core
+   * supports, so version mismatches fail loudly at registration rather
+   * than silently at runtime.
+   *
+   * <p>
+   * Adding new {@code default} methods to this interface alone does
+   * <i>not</i> require an api-version bump — only changes that affect what
+   * a provider must compute or return.
+   *
+   * @return the SPI revision this provider was built against; the
+   *         current public revision is
+   *         {@link EntrainmentProviderRegistry#CURRENT_API_VERSION}
+   */
+  default int getApiVersion() {
+    return 1;
+  }
+
+  /**
    * Returns the globally unique, stable identifier of this provider.
    *
    * <p>

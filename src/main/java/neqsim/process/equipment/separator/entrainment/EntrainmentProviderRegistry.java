@@ -33,6 +33,13 @@ import java.util.ServiceLoader;
 public final class EntrainmentProviderRegistry {
 
   /**
+   * SPI revision supported by this build of public NeqSim. Providers
+   * declaring a higher {@link EnhancedEntrainmentProvider#getApiVersion()}
+   * are rejected at lookup time so version mismatches fail loudly.
+   */
+  public static final int CURRENT_API_VERSION = 1;
+
+  /**
    * Private constructor — this is a static utility class.
    */
   private EntrainmentProviderRegistry() {}
@@ -58,6 +65,12 @@ public final class EntrainmentProviderRegistry {
     for (Iterator<EnhancedEntrainmentProvider> it = loader.iterator(); it.hasNext();) {
       EnhancedEntrainmentProvider p = it.next();
       if (id.equals(p.getId())) {
+        if (p.getApiVersion() > CURRENT_API_VERSION) {
+          throw new IllegalStateException("Entrainment provider '" + id
+              + "' requires SPI api version " + p.getApiVersion()
+              + " but this build of NeqSim supports up to " + CURRENT_API_VERSION
+              + ". Upgrade NeqSim core or use an older plug-in build.");
+        }
         return p;
       }
       if (available.length() > 0) {
