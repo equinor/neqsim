@@ -179,7 +179,11 @@ def find_cited_keys(body: str) -> List[str]:
 # Block builders
 # ---------------------------------------------------------------------------
 
-def build_theory(ch_dir_name: str, theory_pack: Dict) -> str:
+def build_theory(
+    ch_dir_name: str,
+    theory_pack: Dict,
+    bib: Optional[Dict[str, Dict[str, str]]] = None,
+) -> str:
     """Build a 'Theoretical foundations and literature' block.
 
     Reads from chapter_theory.yaml entry. Renders equations as $$ KaTeX
@@ -237,11 +241,66 @@ def build_theory(ch_dir_name: str, theory_pack: Dict) -> str:
             "bibliography."
         )
         lines.append("")
+        bib = bib or {}
         for k in cites:
-            lines.append(f"- `\\cite{{{k}}}`")
+            entry = bib.get(k, {})
+            title = entry.get("title", "").replace("{", "").replace("}", "").strip()
+            author = entry.get("author", "").replace("{", "").replace("}", "").replace(" and ", "; ")
+            year = entry.get("year", "").strip()
+            if title:
+                first_author = author.split(";")[0].strip() if author else ""
+                bits = [b for b in [first_author, year] if b]
+                tag = f" ({', '.join(bits)})" if bits else ""
+                lines.append(f"- `\\cite{{{k}}}` — *{title}*{tag}.")
+            else:
+                lines.append(f"- `\\cite{{{k}}}`")
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+_BOILERPLATE_RE = re.compile(
+    r"this notebook is auto-generated|replace any placeholder|all figures? "
+    r"written to|produces? the figures? referenced",
+    re.IGNORECASE,
+)
+
+
+def _summarise_notebook(data: dict) -> Tuple[str, List[str], List[str]]:
+    """Return (title, descriptions, output_figures) for a notebook.
+
+    - title: text of the first H1 markdown heading, or empty.
+    - descriptions: section subheadings (H2) found in markdown cells, with
+      "Figure — " prefixes stripped, used to describe what the calculation
+      produces.
+    - output_figures: file names (basename) of any png/svg/pdf written by the
+      code cells (detected via string literals).
+    """
+    title = ""
+    descriptions: List[str] = []
+    figures: List[str] = []
+    for cell in data.get("cells", []):
+        ctype = cell.get("cell_type")
+        src = "".join(cell.get("source", []))
+        if ctype == "markdown":
+            if not title:
+                m = re.search(r"^#\s+(.+)$", src, re.MULTILINE)
+                if m:
+                    title = m.group(1).strip()
+            for fm in re.finditer(r"^##\s+(.+?)\s*$", src, re.MULTILINE):
+                desc = fm.group(1).strip().rstrip(".")
+                # Strip leading "Figure — " or "Figure - " labels
+                desc = re.sub(r"^Figure\s*[—\-–]\s*", "", desc, flags=re.I)
+                if desc and not _BOILERPLATE_RE.search(desc):
+                    descriptions.append(desc)
+        elif ctype == "code":
+            for m in re.finditer(
+                r"""['"]([\w./\-]+\.(?:png|svg|pdf))['"]""", src
+            ):
+                fname = Path(m.group(1)).name
+                if fname not in figures:
+                    figures.append(fname)
+    return title, descriptions, figures
 
 
 def build_worked_examples(ch_dir: Path) -> str:
@@ -253,11 +312,12 @@ def build_worked_examples(ch_dir: Path) -> str:
         return ""
     lines = ["## Worked examples and computer experiments", ""]
     lines.append(
-        "Each example below is provided as a runnable Jupyter notebook in the "
-        "chapter's `notebooks/` folder. The notebooks have been verified to "
-        "execute end-to-end against the current NeqSim release; readers are "
-        "encouraged to reproduce the numerical results, vary parameters, and "
-        "extend the cases as part of the chapter exercises."
+        "Each example below summarises a computational case provided as a "
+        "runnable Jupyter notebook. We describe what the calculation does, "
+        "what assumptions enter, and what the numerical result tells us "
+        "about the underlying physics; the full source listings, including "
+        "all NeqSim API calls and plotting code, are collected in "
+        "**Appendix A — Computational notebooks** at the back of the book."
     )
     lines.append("")
     for i, nb in enumerate(notebooks, 1):
@@ -265,41 +325,47 @@ def build_worked_examples(ch_dir: Path) -> str:
             data = json.loads(nb.read_text(encoding="utf-8"))
         except Exception:
             continue
-        title = nb.stem.replace("_", " ")
-        # Try to get the notebook's first markdown cell heading
-        for cell in data.get("cells", []):
-            if cell.get("cell_type") == "markdown":
-                src = "".join(cell.get("source", []))
-                m = re.search(r"^#\s+(.+)$", src, re.MULTILINE)
-                if m:
-                    title = m.group(1).strip()
-                    break
-        # Extract first python code cell preview
-        preview: Optional[str] = None
-        for cell in data.get("cells", []):
-            if cell.get("cell_type") == "code":
-                src = "".join(cell.get("source", []))
-                lines_p = [ln for ln in src.splitlines() if ln.strip()]
-                preview = "\n".join(lines_p[:6])
-                break
+        title, descriptions, figures = _summarise_notebook(data)
+        if not title:
+            title = nb.stem.replace("_", " ")
+        short_title = title
+        for sep in (" — ", " -- ", " - "):
+            if sep in short_title:
+                short_title = short_title.split(sep)[-1].strip()
+        short_title = re.sub(r"^\d+(\.\d+)*\s+", "", short_title).strip()
         rel = nb.relative_to(ch_dir).as_posix()
-        lines.append(f"**Example {i}: {title}** — see [`{rel}`]({rel}).")
-        if preview:
+        lines.append(f"**Example {i}. {short_title}**")
+        lines.append("")
+        if descriptions:
+            topic = descriptions[0]
+            topic_lc = topic[0].lower() + topic[1:] if topic else ""
+            lines.append(
+                f"This example computes {topic_lc}. The notebook builds the "
+                f"input data, runs the calculation, and renders the results "
+                f"as figures that are reproduced in the chapter."
+            )
+            if len(descriptions) > 1:
+                rest = "; ".join(
+                    (d[0].lower() + d[1:]) for d in descriptions[1:]
+                )
+                lines.append("")
+                lines.append(f"Additional outputs cover {rest}.")
+        else:
+            lines.append(
+                f"This example reproduces the numerical case associated "
+                f"with section *{short_title}*. The notebook builds the "
+                f"inputs, runs the calculation, and renders the results."
+            )
+        if figures:
             lines.append("")
-            # Use 'text' fence so verify_snippets / executors do not try to
-            # run an out-of-context preview. Full runnable code lives in the
-            # notebook itself.
-            lines.append("```text")
-            lines.append("# preview (first lines of the notebook)")
-            lines.append(preview)
-            lines.append("```")
+            fig_list = ", ".join(f"`{f}`" for f in figures)
+            lines.append(f"*Output figures:* {fig_list}.")
         lines.append("")
         lines.append(
-            f"_Suggested investigation:_ run the notebook unchanged to reproduce "
-            f"the textbook numbers, then sweep one input variable across a "
-            f"realistic range and discuss how the output responds. Compare "
-            f"trends with the qualitative behaviour described in the chapter "
-            f"text and identify the dominant physical mechanism."
+            f"*Reference:* the full notebook listing is in "
+            f"**Appendix A** under `chapters/{ch_dir.name}/{rel}`. "
+            f"Run it as-is to reproduce the textbook numbers, then vary one "
+            f"input to explore the dominant physical mechanism."
         )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
@@ -391,7 +457,7 @@ def build_further_reading(
         for key in cited:
             entry = bib.get(key, {})
             title = entry.get("title", "").replace("{", "").replace("}", "")
-            author = entry.get("author", "").replace(" and ", "; ")
+            author = entry.get("author", "").replace("{", "").replace("}", "").replace(" and ", "; ")
             year = entry.get("year", "")
             if title:
                 authors = author.split(";")[0].strip() if author else ""
@@ -475,7 +541,7 @@ def expand_chapter(
 
     blocks: List[str] = []
     pack = (theory_packs or {}).get(ch_dir.name)
-    th = build_theory(ch_dir.name, pack or {})
+    th = build_theory(ch_dir.name, pack or {}, bib)
     if th:
         blocks.append(th)
     we = build_worked_examples(ch_dir)
@@ -534,6 +600,92 @@ def expand_book(
             print(f"  {ch.name}: {tag}")
     action = "stripped" if strip_only else "expanded"
     print(f"\n{action} {touched} chapter(s); total added words: {total_added}")
+
+    # Regenerate the notebooks appendix in the backmatter (idempotent).
+    if not strip_only and not chapters:
+        try:
+            n = build_notebooks_appendix(book_dir, chapter_index)
+            print(f"  notebooks appendix: {n} notebook(s) listed")
+        except Exception as exc:  # pragma: no cover
+            print(f"  notebooks appendix: skipped ({exc})")
+
+
+def build_notebooks_appendix(
+    book_dir: Path,
+    chapter_index: List[Tuple[int, str, str]],
+) -> int:
+    """Write backmatter/notebooks_appendix.md listing every chapter notebook.
+
+    Each notebook gets its title, a one-line summary derived from markdown
+    cells, the list of output figures, and the relative path. The file is
+    overwritten on every run so it stays in sync with the chapter notebooks.
+    """
+    backmatter = book_dir / "backmatter"
+    backmatter.mkdir(exist_ok=True)
+    out_path = backmatter / "notebooks_appendix.md"
+
+    lines: List[str] = []
+    lines.append("# Appendix A — Computational notebooks")
+    lines.append("")
+    lines.append(
+        "This appendix lists every Jupyter notebook bundled with the book, "
+        "grouped by chapter. The notebooks are the authoritative source for "
+        "the numerical results discussed in the *Worked examples and "
+        "computer experiments* sections; the chapter prose summarises what "
+        "each calculation does, while the listings here let the reader run, "
+        "modify, and extend the cases."
+    )
+    lines.append("")
+    lines.append(
+        "All notebooks execute end-to-end against the public NeqSim release "
+        "installed via `pip install neqsim`. Paths are given relative to the "
+        "book root."
+    )
+    lines.append("")
+
+    total = 0
+    for ch_num, ch_title, ch_dir_name in chapter_index:
+        ch_dir = book_dir / "chapters" / ch_dir_name
+        nb_dir = ch_dir / "notebooks"
+        if not nb_dir.is_dir():
+            continue
+        notebooks = sorted(nb_dir.glob("*.ipynb"))
+        if not notebooks:
+            continue
+        lines.append(f"## Chapter {ch_num}. {ch_title}")
+        lines.append("")
+        for nb in notebooks:
+            try:
+                data = json.loads(nb.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            title, descriptions, figures = _summarise_notebook(data)
+            if not title:
+                title = nb.stem.replace("_", " ")
+            short_title = title
+            for sep in (" — ", " -- ", " - "):
+                if sep in short_title:
+                    short_title = short_title.split(sep)[-1].strip()
+            short_title = re.sub(
+                r"^\d+(\.\d+)*\s+", "", short_title
+            ).strip()
+            rel = nb.relative_to(book_dir).as_posix()
+            lines.append(f"**{short_title}**")
+            lines.append("")
+            if descriptions:
+                summary = "; ".join(descriptions)
+                lines.append(f"Computes {summary[0].lower() + summary[1:]}.")
+            if figures:
+                fig_list = ", ".join(f"`{f}`" for f in figures)
+                lines.append("")
+                lines.append(f"Output figures: {fig_list}.")
+            lines.append("")
+            lines.append(f"Notebook: `{rel}`.")
+            lines.append("")
+            total += 1
+    out_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    return total
+
 
 
 def main(argv: Optional[List[str]] = None) -> int:
