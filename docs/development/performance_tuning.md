@@ -23,15 +23,16 @@ loop (`PSflash`, `PHflash`, `PVflash`, `PUflash`, `TVflash`, `PVFflash`,
 The flag is scoped with try/finally + ThreadLocal so it never leaks out and
 never interferes with concurrent flashes.
 
-For **process flowsheets with recycle loops** you can additionally enable
-warm-start globally to propagate K across recycle iterations. The preferred
-API is on `ProcessSystem` itself (scoped, no leak across runs):
+For **process flowsheets with recycle loops** warm-start is **enabled by
+default** (since 2026-04-27) — K propagates across recycle iterations
+automatically. The flag is scoped to `ProcessSystem.run()` via try/finally
+so it never leaks. To disable (for bit-exact reproduction of pre-2026-04-27
+results or when debugging flash convergence):
 
 ```java
-// Preferred — scoped to this ProcessSystem.run() only, restored in finally
 ProcessSystem process = new ProcessSystem();
 // ... build flowsheet ...
-process.setUseFlashWarmStart(true);
+process.setUseFlashWarmStart(false); // opt out — default is true
 process.run();
 ```
 
