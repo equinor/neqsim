@@ -1885,6 +1885,18 @@ def cmd_book_expand_outline(args):
     )
 
 
+def cmd_book_expand_local(args):
+    """Augment chapter.md files with non-LLM, deterministic content blocks."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_local_expander import expand_book
+
+    expand_book(
+        Path(args.book_dir),
+        chapters=args.chapter or None,
+        strip_only=args.strip,
+    )
+
+
 def cmd_book_write(args):
     """Long-running orchestrator: draft every section of the book.
 
@@ -2368,6 +2380,21 @@ Examples:
                         help="Default target_pages when not in book.yaml "
                              "(default: 25)")
 
+    # book-expand-local — non-LLM expansion (no API keys required)
+    p_blocal = subparsers.add_parser(
+        "book-expand-local",
+        help="Augment every chapter.md with deterministic content blocks "
+             "(worked examples linked to notebooks, self-test questions, "
+             "key-terms glossary, chapter summary, further reading) — "
+             "without any LLM call. Idempotent.",
+    )
+    p_blocal.add_argument("book_dir", help="Book directory")
+    p_blocal.add_argument("--chapter", action="append", default=None,
+                          help="Restrict to chapter dir(s); repeatable")
+    p_blocal.add_argument("--strip", action="store_true",
+                          help="Remove previously injected blocks instead "
+                               "of adding new ones")
+
     # book-write — long-running drafting orchestrator (1000-page-capable)
     p_bw = subparsers.add_parser(
         "book-write",
@@ -2538,6 +2565,8 @@ Examples:
         cmd_book_draft(args)
     elif args.command == "book-expand-outline":
         cmd_book_expand_outline(args)
+    elif args.command == "book-expand-local":
+        cmd_book_expand_local(args)
     elif args.command == "book-write":
         cmd_book_write(args)
     elif args.command == "book-run-notebooks":

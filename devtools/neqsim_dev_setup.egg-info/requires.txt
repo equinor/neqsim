@@ -1,4 +1,10 @@
 jpype1
 
+[ocr]
+pymupdf>=1.22.0
+ocrmypdf>=15.0.0
+pytesseract>=0.3.10
+pdf2image>=1.16.0
+
 [pdf]
 pymupdf>=1.22.0
