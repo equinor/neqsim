@@ -213,7 +213,27 @@ separator.setWaterOutletFlowFraction(0.9);
 
 ## Entrainment
 
-Entrainment models imperfect separation by transferring a fraction of one phase into another outlet stream. Both `Separator` and `ThreePhaseSeparator` support entrainment specification through the `setEntrainment()` method.
+Entrainment models imperfect separation by transferring a fraction of one phase
+into another outlet stream (e.g., liquid carry-over in the gas outlet, gas
+carry-under in the liquid outlet).
+
+NeqSim supports **two ways** of providing this fraction. They are mutually
+exclusive on a given separator — pick one:
+
+| Mode                     | Source of the fraction                                              | When to use                                                                                              | API                                              |
+|--------------------------|---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|--------------------------------------------------|
+| **User-specified**       | You provide a fixed fraction (e.g., 5 % oil-in-gas) per phase pair. | Fast PFD-level mass balance, calibration to plant data, sensitivity scans where carry-over is an input.  | `separator.setEntrainment(...)` — see below.     |
+| **Computed by NeqSim**   | Derived from droplet-size distribution + vessel geometry + internals via the 7-stage performance chain (flow regime → DSD → inlet device → gravity section → mist eliminator → liquid-liquid). | Mechanical design, internals selection, what-if studies on geometry/internals, comparing to MySep/ProSep style tools. | `separator.setEnhancedEntrainmentCalculation(true)` — see [Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md). |
+
+The **user-specified** path is documented in this section. The **computed** path
+is documented in detail in
+[Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md);
+when enabled it overrides the user fractions and instead returns physics-based
+carry-over numbers (kg/h of each phase) plus K-factor and flooding margin.
+
+> **Default behaviour.** If you do nothing, the separator runs an ideal flash
+> with **zero entrainment** in either direction. You opt into one of the two
+> modes above explicitly.
 
 ### Method Signature
 
