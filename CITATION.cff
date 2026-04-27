@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use NeqSim in a publication, please cite it using these metadata."
+title: "NeqSim: A library for thermodynamic and process simulation"
+abstract: >
+  NeqSim is an open-source Java library for thermodynamic, fluid, and process
+  simulation. It supports cubic, CPA, GERG-2008, and PC-SAFT equations of
+  state; full process flowsheets; PVT lab simulation; mechanical design; and
+  field-development workflows.
+type: software
+authors:
+  - family-names: Solbraa
+    given-names: Even
+    affiliation: "Equinor / NTNU"
+    orcid: "https://orcid.org/0000-0002-0203-3863"
+  - name: "NeqSim contributors"
+repository-code: "https://github.com/equinor/neqsim"
+url: "https://equinor.github.io/neqsim/"
+license: Apache-2.0
+keywords:
+  - thermodynamics
+  - process-simulation
+  - equation-of-state
+  - PVT
+  - oil-and-gas
+  - CCS
+version: "3.7.0"
+date-released: "2026-04-01"

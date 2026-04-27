@@ -1622,6 +1622,9 @@ def cmd_book_render(args):
     elif fmt == "odf":
         from book_render_odf import render_book_odf
         result = render_book_odf(args.book_dir, chapter_filter=chapter)
+    elif fmt == "epub":
+        from book_render_epub import render_book_epub
+        result = render_book_epub(args.book_dir, chapter_filter=chapter)
     else:
         print(f"Unknown format: {fmt}")
         sys.exit(1)
@@ -1629,6 +1632,88 @@ def cmd_book_render(args):
     if result is None:
         print("Render failed.")
         sys.exit(1)
+
+
+def cmd_book_preview(args):
+    """Start a live HTML preview server."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_preview import serve
+    serve(args.book_dir, port=args.port, open_browser=not args.no_open)
+
+
+def cmd_book_enrich_bib(args):
+    """Validate / enrich refs.bib via the Crossref API."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from bib_enrich import enrich_bibfile
+    from pathlib import Path as _P
+
+    bib_path = _P(args.book_dir) / "refs.bib"
+    if not bib_path.exists():
+        print(f"refs.bib not found in {args.book_dir}")
+        sys.exit(1)
+    enrich_bibfile(bib_path, in_place=args.in_place,
+                   min_score=args.min_score, limit=args.limit)
+
+
+def cmd_book_index(args):
+    """Generate the back-of-book index from @index markers."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_index import write_index
+    write_index(args.book_dir, force=not args.no_force)
+
+
+def cmd_book_citation(args):
+    """Generate the 'How to cite NeqSim' backmatter from CITATION.cff."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_citation_block import write_citation_appendix
+    from pathlib import Path as _P
+    cff = _P(args.cff) if args.cff else (PAPERLAB_ROOT.parent / "CITATION.cff")
+    write_citation_appendix(args.book_dir, cff_path=cff)
+
+
+def cmd_book_revision_diff(args):
+    """Generate a track-changes report between two git revisions."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_revision_diff import write_diff_report
+    write_diff_report(args.book_dir, args.ref_old, args.ref_new,
+                      out_path=args.out)
+
+
+def cmd_book_render_xml(args):
+    """Render JATS or DocBook XML."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_render_xml import render_book_jats, render_book_docbook
+    if args.fmt == "jats":
+        render_book_jats(args.book_dir)
+    else:
+        render_book_docbook(args.book_dir)
+
+
+def cmd_book_prose_review(args):
+    """Run offline prose-review check on every chapter."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_prose_review import check_prose_review, format_prose_report
+    rep = check_prose_review(args.book_dir)
+    text = format_prose_report(rep)
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Fallback for Windows cp1252 consoles: strip non-ASCII for stdout
+        print(text.encode("ascii", errors="replace").decode("ascii"))
+    if args.write:
+        from pathlib import Path as _P
+        out = _P(args.book_dir) / "submission" / "prose_review.md"
+        out.parent.mkdir(exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        print(f"\nReport written to {out}")
+
+
+def cmd_paper_render_journal(args):
+    """Render a paper for a specific journal class (IEEE / ACS / Elsevier ...)."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from paper_journal_render import render_paper_journal
+    render_paper_journal(args.paper_dir, journal=args.journal, out=args.out)
+
 
 
 def cmd_book_check(args):
@@ -1782,6 +1867,127 @@ def cmd_book_draft(args):
         print(f"  1. Review chapters in {book_dir / 'chapters'}")
         print(f"  2. Run: python paperflow.py book-status {book_dir}")
         print(f"  3. Run: python paperflow.py book-check {book_dir}")
+
+
+def cmd_book_expand_outline(args):
+    """Expand book.yaml chapters into a fine-grained chapter_outlines.yaml."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_writer import expand_outlines
+
+    chapters = args.chapter or None
+    expand_outlines(
+        Path(args.book_dir),
+        provider=args.provider,
+        model=args.model,
+        chapters=chapters,
+        force=args.force,
+        target_pages_default=args.target_pages,
+    )
+
+
+def cmd_book_expand_local(args):
+    """Augment chapter.md files with non-LLM, deterministic content blocks."""
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_local_expander import expand_book
+
+    expand_book(
+        Path(args.book_dir),
+        chapters=args.chapter or None,
+        strip_only=args.strip,
+    )
+
+
+def cmd_book_plan_notebooks(args):
+    """LLM-generate one ``.ipynb`` per (section, notebook_filename) group.
+
+    Reads ``chapter_outlines.yaml`` and, for every section that lists
+    figures with a ``notebook`` field, produces a runnable Jupyter notebook
+    under ``chapters/<ch>/notebooks/`` that saves each PNG to
+    ``../figures/<file>``. Existing notebooks are skipped unless
+    ``--force``.
+    """
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_notebook_planner import plan_book_notebooks
+
+    plan_book_notebooks(
+        Path(args.book_dir),
+        provider=args.provider,
+        model=args.model,
+        chapter_filter=args.chapter or None,
+        force=args.force,
+        use_llm=not args.no_llm,
+        max_tokens=args.max_tokens,
+        dry_run=args.dry_run,
+    )
+
+
+def cmd_book_write(args):
+    """Long-running orchestrator: draft every section of the book.
+
+    One LLM call per section; checkpoints to .book_write_progress.json so
+    interrupted runs can be resumed with --resume (default).
+    """
+    sys.path.insert(0, str(PAPERLAB_ROOT / "tools"))
+    from book_writer import (
+        write_book, expand_outlines, _load_chapter_specs, estimate_book_cost,
+    )
+
+    book_dir = Path(args.book_dir)
+    outlines_path = book_dir / "chapter_outlines.yaml"
+
+    # Auto-expand outlines if missing (unless user opted out)
+    if not outlines_path.exists() and not args.no_auto_expand:
+        print("chapter_outlines.yaml not found — expanding outlines first...")
+        expand_outlines(
+            book_dir,
+            provider=args.provider, model=args.model,
+            chapters=args.chapter or None,
+            force=False,
+            target_pages_default=args.target_pages,
+        )
+
+    specs = _load_chapter_specs(book_dir)
+    if args.chapter:
+        specs = [c for c in specs if c.dir in args.chapter]
+    est = estimate_book_cost(specs)
+    print("\nDrafting plan:")
+    print(f"  chapters         : {est['n_chapters']}")
+    print(f"  sections         : {est['n_sections']}")
+    print(f"  target words     : {est['target_words']:,}")
+    print(f"  approx pages     : {est['approx_pages']}")
+    print(f"  est. tokens in   : {est['tokens_in']:,}")
+    print(f"  est. tokens out  : {est['tokens_out']:,}")
+    print(f"  est. USD (~mid)  : ${est['usd_estimate']}")
+    print()
+
+    if args.dry_run:
+        print("Dry run — no LLM calls made.")
+        return
+
+    if args.confirm and est["n_sections"] > 50:
+        try:
+            ans = input(f"Proceed with {est['n_sections']} LLM calls? [y/N] ")
+        except EOFError:
+            ans = "n"
+        if ans.strip().lower() not in ("y", "yes"):
+            print("Aborted.")
+            return
+
+    summary = write_book(
+        book_dir,
+        provider=args.provider,
+        model=args.model,
+        chapters=args.chapter or None,
+        sections=args.section or None,
+        resume=args.resume,
+        stop_on_error=args.stop_on_error,
+        skip_stitch=args.skip_stitch,
+        max_tokens_per_section=args.max_tokens,
+        sleep_between=args.sleep,
+    )
+    print("\nSummary:")
+    print(json.dumps(summary, indent=2))
+    print(f"\nNext: python paperflow.py book-build {book_dir} --skip-notebooks --no-compile --format html")
 
 
 def cmd_book_run_notebooks(args):
@@ -2066,7 +2272,7 @@ Examples:
                                     help="Create a new book project")
     p_bnew.add_argument("title", help="Book title")
     p_bnew.add_argument("--publisher", default="self",
-                        choices=["springer", "wiley", "crc", "self"],
+                        choices=["springer", "wiley", "crc", "self", "ntnu"],
                         help="Publisher profile (default: self)")
     p_bnew.add_argument("--chapters", type=int, default=8,
                         help="Number of initial chapters (default: 8)")
@@ -2084,9 +2290,74 @@ Examples:
                                        help="Render book to PDF, Word, or HTML")
     p_brender.add_argument("book_dir", help="Book directory")
     p_brender.add_argument("--format", dest="out_format", default="html",
-                           choices=["pdf", "docx", "html", "odf"],
+                           choices=["pdf", "docx", "html", "odf", "epub"],
                            help="Output format (default: html)")
     p_brender.add_argument("--chapter", help="Render single chapter (dir name)")
+
+    # book-preview — live HTML preview server
+    p_bprev = subparsers.add_parser("book-preview",
+                                     help="Live HTML preview with auto-reload")
+    p_bprev.add_argument("book_dir", help="Book directory")
+    p_bprev.add_argument("--port", type=int, default=8765,
+                          help="HTTP port (default: 8765)")
+    p_bprev.add_argument("--no-open", action="store_true",
+                          help="Do not open browser automatically")
+
+    # book-enrich-bib — Crossref DOI validation/enrichment for refs.bib
+    p_bbib = subparsers.add_parser("book-enrich-bib",
+                                    help="Validate and enrich refs.bib via Crossref")
+    p_bbib.add_argument("book_dir", help="Book directory")
+    p_bbib.add_argument("--in-place", action="store_true",
+                         help="Overwrite refs.bib (default: writes refs.enriched.bib)")
+    p_bbib.add_argument("--min-score", type=float, default=70.0,
+                         help="Minimum title match score 0-100 (default: 70)")
+    p_bbib.add_argument("--limit", type=int, default=None,
+                         help="Process at most N entries (default: all)")
+
+    # book-index — back-of-book index from @index markers
+    p_bidx = subparsers.add_parser("book-index",
+                                    help="Generate back-of-book index from @index markers")
+    p_bidx.add_argument("book_dir", help="Book directory")
+    p_bidx.add_argument("--no-force", action="store_true",
+                        help="Don't overwrite hand-edited index")
+
+    # book-citation — emit 'How to cite NeqSim' from CITATION.cff
+    p_bcite = subparsers.add_parser("book-citation",
+                                     help="Generate citation block from CITATION.cff")
+    p_bcite.add_argument("book_dir", help="Book directory")
+    p_bcite.add_argument("--cff", default=None,
+                          help="Path to CITATION.cff (default: repo root)")
+
+    # book-revision-diff — track changes between two git refs
+    p_brev = subparsers.add_parser("book-revision-diff",
+                                    help="Diff book content between two git revisions")
+    p_brev.add_argument("book_dir", help="Book directory")
+    p_brev.add_argument("ref_old", help="Old git ref (branch, tag, commit)")
+    p_brev.add_argument("ref_new", help="New git ref (branch, tag, commit)")
+    p_brev.add_argument("--out", default=None, help="Output path")
+
+    # book-render-xml — JATS / DocBook
+    p_bxml = subparsers.add_parser("book-render-xml",
+                                    help="Render JATS or DocBook XML")
+    p_bxml.add_argument("book_dir", help="Book directory")
+    p_bxml.add_argument("--fmt", choices=["jats", "docbook"], default="jats",
+                         help="XML flavour (default: jats)")
+
+    # book-prose-review — offline writing-style linter
+    p_bprose = subparsers.add_parser("book-prose-review",
+                                      help="Offline prose-review (passive voice, weasel words, ...)")
+    p_bprose.add_argument("book_dir", help="Book directory")
+    p_bprose.add_argument("--write", action="store_true",
+                           help="Also write submission/prose_review.md")
+
+    # paper-render-journal — IEEE / ACS / Elsevier / Springer / RSC
+    p_pj = subparsers.add_parser("paper-render-journal",
+                                  help="Render paper for a specific journal class")
+    p_pj.add_argument("paper_dir", help="Paper directory")
+    p_pj.add_argument("--journal", required=True,
+                      choices=["ieee", "acs", "elsevier", "springer", "rsc"],
+                      help="Target journal class")
+    p_pj.add_argument("--out", default=None, help="Output .tex path")
 
     # book-check — run quality checks
     p_bcheck = subparsers.add_parser("book-check",
@@ -2112,6 +2383,110 @@ Examples:
     p_bdraft.add_argument("--chapter", help="Draft a single chapter (dir name)")
     p_bdraft.add_argument("--force", action="store_true",
                           help="Overwrite existing chapter content")
+
+    # book-expand-outline — LLM expands book.yaml into fine-grained sections
+    p_bexp = subparsers.add_parser(
+        "book-expand-outline",
+        help="LLM-expand book.yaml chapter titles into a fine-grained "
+             "chapter_outlines.yaml (one section per ~800 words).",
+    )
+    p_bexp.add_argument("book_dir", help="Book directory")
+    p_bexp.add_argument("--chapter", action="append", default=None,
+                        help="Restrict to chapter dir(s); repeatable")
+    p_bexp.add_argument("--provider", default="litellm",
+                        choices=["litellm", "openai", "anthropic",
+                                 "github", "copilot-bridge"],
+                        help="LLM provider (default: litellm). "
+                             "`github` uses `gh auth token` (no API key); "
+                             "`copilot-bridge` delegates to a running "
+                             "VS Code Copilot Chat agent via files.")
+    p_bexp.add_argument("--model", default="gpt-4o",
+                        help="LLM model (default: gpt-4o)")
+    p_bexp.add_argument("--force", action="store_true",
+                        help="Overwrite existing per-chapter sections")
+    p_bexp.add_argument("--target-pages", type=int, default=25,
+                        help="Default target_pages when not in book.yaml "
+                             "(default: 25)")
+
+    # book-expand-local — non-LLM expansion (no API keys required)
+    p_blocal = subparsers.add_parser(
+        "book-expand-local",
+        help="Augment every chapter.md with deterministic content blocks "
+             "(worked examples linked to notebooks, self-test questions, "
+             "key-terms glossary, chapter summary, further reading) — "
+             "without any LLM call. Idempotent.",
+    )
+    p_blocal.add_argument("book_dir", help="Book directory")
+    p_blocal.add_argument("--chapter", action="append", default=None,
+                          help="Restrict to chapter dir(s); repeatable")
+    p_blocal.add_argument("--strip", action="store_true",
+                          help="Remove previously injected blocks instead "
+                               "of adding new ones")
+
+    # book-write — long-running drafting orchestrator (1000-page-capable)
+    p_bw = subparsers.add_parser(
+        "book-write",
+        help="Draft every section of the book with one LLM call per section. "
+             "Long-running, checkpointed, resumable. Hours of runtime is "
+             "expected for full-length books.",
+    )
+    p_bw.add_argument("book_dir", help="Book directory")
+    p_bw.add_argument("--chapter", action="append", default=None,
+                      help="Restrict to chapter dir(s); repeatable")
+    p_bw.add_argument("--section", action="append", default=None,
+                      help="Restrict to section id(s) like 4.3; repeatable")
+    p_bw.add_argument("--provider", default="litellm",
+                      choices=["litellm", "openai", "anthropic",
+                               "github", "copilot-bridge"])
+    p_bw.add_argument("--model", default="gpt-4o")
+    p_bw.add_argument("--no-resume", dest="resume", action="store_false",
+                      default=True,
+                      help="Re-draft sections already marked done")
+    p_bw.add_argument("--stop-on-error", action="store_true",
+                      help="Halt on first failed section")
+    p_bw.add_argument("--skip-stitch", action="store_true",
+                      help="Only draft section files; do not assemble chapter.md")
+    p_bw.add_argument("--no-auto-expand", action="store_true",
+                      help="Do not auto-run book-expand-outline if "
+                           "chapter_outlines.yaml is missing")
+    p_bw.add_argument("--target-pages", type=int, default=25,
+                      help="Default target_pages for auto-expand (default: 25)")
+    p_bw.add_argument("--max-tokens", type=int, default=4000,
+                      help="Output budget per section (default: 4000)")
+    p_bw.add_argument("--sleep", type=float, default=0.0,
+                      help="Seconds to sleep between LLM calls (rate-limit dodge)")
+    p_bw.add_argument("--dry-run", action="store_true",
+                      help="Print plan and cost estimate; make no LLM calls")
+    p_bw.add_argument("--confirm", action="store_true", default=True,
+                      help="Ask for confirmation before > 50 calls (default on)")
+    p_bw.add_argument("--no-confirm", dest="confirm", action="store_false",
+                      help="Skip the confirmation prompt")
+
+    # book-plan-notebooks — LLM-generate notebook stubs from outline figures
+    p_bpn = subparsers.add_parser(
+        "book-plan-notebooks",
+        help="LLM-generate one Jupyter notebook per section/figure-group "
+             "declared in chapter_outlines.yaml. Each notebook saves its "
+             "PNG figures to ../figures/ so book-run-notebooks then "
+             "executes them and book-build picks them up.",
+    )
+    p_bpn.add_argument("book_dir", help="Book directory")
+    p_bpn.add_argument("--chapter", action="append", default=None,
+                       help="Restrict to chapter dir(s); repeatable")
+    p_bpn.add_argument("--provider", default="litellm",
+                       choices=["litellm", "openai", "anthropic",
+                                "github", "copilot-bridge"])
+    p_bpn.add_argument("--model", default="gpt-4o")
+    p_bpn.add_argument("--force", action="store_true",
+                       help="Overwrite existing notebook files")
+    p_bpn.add_argument("--no-llm", action="store_true",
+                       help="Skip LLM calls; emit deterministic fallback "
+                            "notebooks (offline / CI mode)")
+    p_bpn.add_argument("--max-tokens", type=int, default=4000,
+                       help="Output budget per notebook (default: 4000)")
+    p_bpn.add_argument("--dry-run", action="store_true",
+                       help="Print the plan only; make no LLM calls and "
+                            "write no files")
 
     # book-run-notebooks — execute book notebooks via devtools
     p_bnb = subparsers.add_parser("book-run-notebooks",
@@ -2219,6 +2594,22 @@ Examples:
         cmd_book_add_chapter(args)
     elif args.command == "book-render":
         cmd_book_render(args)
+    elif args.command == "book-preview":
+        cmd_book_preview(args)
+    elif args.command == "book-enrich-bib":
+        cmd_book_enrich_bib(args)
+    elif args.command == "book-index":
+        cmd_book_index(args)
+    elif args.command == "book-citation":
+        cmd_book_citation(args)
+    elif args.command == "book-revision-diff":
+        cmd_book_revision_diff(args)
+    elif args.command == "book-render-xml":
+        cmd_book_render_xml(args)
+    elif args.command == "book-prose-review":
+        cmd_book_prose_review(args)
+    elif args.command == "paper-render-journal":
+        cmd_paper_render_journal(args)
     elif args.command == "book-check":
         cmd_book_check(args)
     elif args.command == "book-status":
@@ -2227,6 +2618,14 @@ Examples:
         cmd_book_toc(args)
     elif args.command == "book-draft":
         cmd_book_draft(args)
+    elif args.command == "book-expand-outline":
+        cmd_book_expand_outline(args)
+    elif args.command == "book-expand-local":
+        cmd_book_expand_local(args)
+    elif args.command == "book-write":
+        cmd_book_write(args)
+    elif args.command == "book-plan-notebooks":
+        cmd_book_plan_notebooks(args)
     elif args.command == "book-run-notebooks":
         cmd_book_run_notebooks(args)
     elif args.command == "book-build":

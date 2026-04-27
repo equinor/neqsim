@@ -126,11 +126,13 @@ main img {{
   margin: 1rem auto;
 }}
 main pre {{
-  background: #f5f5f5;
-  padding: 1rem;
-  border-radius: 4px;
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  padding: 0.9rem 1.1rem;
+  border-radius: 6px;
   overflow-x: auto;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
   margin: 1rem 0;
 }}
 main code {{
@@ -143,6 +145,9 @@ main code {{
 main pre code {{
   background: none;
   padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre;
 }}
 main table {{
   border-collapse: collapse;
@@ -288,6 +293,41 @@ main ul, main ol {{
   font-weight: 600;
 }}
 
+/* Image-cover variant: full-bleed front-cover artwork */
+.title-page.cover-image {{
+  padding: 0;
+  background: #0d3b66;
+  min-height: 100vh;
+  align-items: stretch;
+  justify-content: flex-start;
+}}
+.title-page.cover-image::before,
+.title-page.cover-image::after {{
+  display: none;
+}}
+.title-page.cover-image img.cover-art {{
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100vh;
+  object-fit: contain;
+  margin: 0 auto;
+  background: #0d3b66;
+}}
+.title-page.cover-image .cover-publisher {{
+  position: absolute;
+  bottom: 1.2rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #ffffff;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}}
+
 .half-title-page {{
   min-height: 60vh;
   display: flex;
@@ -350,7 +390,7 @@ main ul, main ol {{
 }}
 
 section.part-header {{
-  min-height: 50vh;
+  min-height: 60vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -358,23 +398,147 @@ section.part-header {{
   text-align: center;
   page-break-before: always;
   page-break-after: always;
+  padding: 4rem 2rem;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  margin: 2rem 0;
+}}
+section.part-header .part-eyebrow {{
+  font-size: 0.85rem;
+  color: #1a5276;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
 }}
 section.part-header h1 {{
-  font-size: 1.6rem;
-  color: #1a5276;
+  font-size: 2.1rem;
+  color: #0d3b66;
   border-top: none;
   padding-top: 0;
-  letter-spacing: 0.05em;
-  font-variant: small-caps;
-  position: relative;
+  margin: 0;
+  letter-spacing: -0.01em;
+  max-width: 700px;
+  line-height: 1.25;
 }}
 section.part-header h1::after {{
   content: '';
   display: block;
-  width: 100px;
+  width: 140px;
   height: 2px;
   background: linear-gradient(90deg, transparent, #1a5276, transparent);
-  margin: 1rem auto 0;
+  margin: 1.4rem auto 0;
+}}
+
+/* ── Chapter opener (book-style chapter heading with hero illustration) ── */
+section.chapter > .chapter-opener {{
+  margin: 2.5rem 0 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  page-break-before: always;
+}}
+.chapter-opener .ch-eyebrow {{
+  font-size: 0.8rem;
+  color: #1a5276;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}}
+.chapter-opener .ch-number {{
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 4.5rem;
+  font-weight: 300;
+  color: #1a5276;
+  line-height: 1;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.04em;
+}}
+.chapter-opener h1.ch-title {{
+  font-size: 2rem;
+  color: #0d3b66;
+  border-top: none;
+  padding-top: 0;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}}
+.chapter-opener .ch-rule {{
+  width: 90px;
+  height: 2px;
+  background: #1a5276;
+  margin: 0.8rem 0 1.4rem;
+  border: none;
+}}
+.chapter-opener figure.ch-hero {{
+  margin: 1.5rem 0 0;
+  text-align: center;
+}}
+.chapter-opener figure.ch-hero img {{
+  max-width: 100%;
+  max-height: 360px;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}}
+.chapter-opener figure.ch-hero figcaption {{
+  font-size: 0.85rem;
+  color: #555;
+  font-style: italic;
+  margin-top: 0.6rem;
+  text-align: center;
+}}
+
+/* Drop cap on first paragraph after chapter opener */
+section.chapter > .chapter-opener + p::first-letter {{
+  font-size: 3.2rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: bold;
+  color: #1a5276;
+  float: left;
+  line-height: 0.9;
+  margin: 0.15rem 0.5rem 0 0;
+}}
+
+/* Inline lecture figures (auto-extracted from course slide decks) */
+figure.lecture-fig {{
+  margin: 1.8rem auto;
+  padding: 0.9rem 1rem 0.7rem;
+  background: #fafbfc;
+  border-left: 3px solid #1a5276;
+  border-radius: 0 4px 4px 0;
+  max-width: 92%;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}}
+figure.lecture-fig img {{
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  width: auto;
+  height: auto;
+  margin: 0 auto 0.5rem;
+  background: #fff;
+}}
+figure.lecture-fig figcaption {{
+  font-size: 0.86rem;
+  color: #444;
+  line-height: 1.45;
+  text-align: left;
+  padding: 0 0.2rem;
+}}
+figure.lecture-fig figcaption strong {{
+  color: #0d3b66;
+  margin-right: 0.3rem;
+}}
+figure.lecture-fig figcaption .fig-source {{
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #777;
+  font-style: italic;
 }}
 
 /* Responsive */
@@ -403,6 +567,246 @@ def _esc(text):
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace('"', "&quot;"))
+
+
+# Filenames whose names suggest a generic / decorative chapter-opener
+# illustration. We prefer these over plot-style figures when available.
+_HERO_HINT_RE = re.compile(
+    r"(s01|01_|_overview|overview|hero|cover|opener|map|layout|gates|"
+    r"value_chain|envelope|topic_map|regulatory_hierarchy|cashflow|"
+    r"decline|aace_classes|tbp_curve|water_depth|well_cost|pfd|"
+    r"separator|teg_contactor|hydrate|cycle|profile)",
+    re.IGNORECASE,
+)
+
+
+def _chapter_hero_html(ch_dir, ch_title):
+    """Pick a lead illustration from chapter figures and return <figure> HTML.
+
+    Prefers files whose names match common 'opener' hints (e.g. *_s01_*,
+    overview, layout); falls back to the alphabetically-first PNG/SVG.
+    Returns an empty string when no figure exists.
+    """
+    fig_dir = ch_dir / "figures"
+    if not fig_dir.is_dir():
+        return ""
+    candidates = sorted(
+        f for f in fig_dir.iterdir()
+        if f.suffix.lower() in (".png", ".svg", ".jpg", ".jpeg", ".webp")
+    )
+    if not candidates:
+        return ""
+    hero = next((f for f in candidates if _HERO_HINT_RE.search(f.name)),
+                candidates[0])
+    rel = f"../figures/{hero.name}"
+    return (
+        '<figure class="ch-hero">'
+        f'<img src="{rel}" alt="{_esc(ch_title)} — chapter illustration"/>'
+        f'<figcaption>{_esc(ch_title)}</figcaption>'
+        '</figure>'
+    )
+
+
+# Maximum lecture figures injected per chapter (some chapters have 70+ raw
+# extractions; capping keeps the chapter readable).
+_MAX_INLINE_FIGS_PER_CHAPTER = 8
+
+
+def _humanise_deck(name: str) -> str:
+    """Turn 'Flow_Performance_handouts.pdf' into a readable title fragment."""
+    stem = re.sub(r"\.(pdf|pptx)$", "", name, flags=re.IGNORECASE)
+    stem = stem.replace("_", " ").replace("-", " ")
+    stem = re.sub(r"\s+handouts?$", "", stem, flags=re.IGNORECASE)
+    stem = re.sub(r"\s+", " ", stem).strip()
+    return stem or name
+
+
+def _figure_discussion(entry, section_topic):
+    """Generate a short contextual discussion paragraph for a lecture figure.
+
+    When the manifest carries the slide's own title and bullet text (extracted
+    from the PPTX/PDF), use them so the caption reflects what the lecturer
+    actually wrote on the slide. Falls back to a deck-level reference when
+    slide text is unavailable.
+    """
+    deck = _humanise_deck(entry.get("source", ""))
+    page = entry.get("page")
+    where = f"slide {page}" if page else "the slide deck"
+    slide_title = (entry.get("slide_title") or "").strip()
+    slide_body = (entry.get("slide_body") or "").strip()
+
+    parts = []
+    # Use slide bullets/body as the discussion. Skip the slide *title*
+    # because lecturers often write it in ALL CAPS as a divider banner
+    # ("IDENTIFICATION OF BUSINESS CASE - TASKS") which reads poorly inline.
+    if slide_body:
+        # Convert bullet-separator into commas for prose flow.
+        prose = slide_body.replace(" \u2022 ", "; ")
+        parts.append(_esc(prose))
+    elif slide_title:
+        # No body text but we have a title — use it as a short caption,
+        # title-cased so it doesn't shout.
+        title = slide_title
+        if title.isupper():
+            title = title.title()
+        parts.append(_esc(title) + ".")
+    if section_topic:
+        parts.append(
+            f"This supports the discussion of &ldquo;"
+            f"{_esc(section_topic)}&rdquo; in this chapter."
+        )
+    parts.append(
+        f"<span class=\"fig-source\">Source: <em>{_esc(deck)}</em>, "
+        f"{where}.</span>"
+    )
+    return " ".join(parts)
+
+
+def _render_inline_figure(entry, section_topic, n_label):
+    """Render a single inline lecture figure with discussion caption."""
+    rel = "../" + entry["file"]
+    deck = _humanise_deck(entry.get("source", ""))
+    return (
+        '<figure class="lecture-fig">'
+        f'<img src="{_esc(rel)}" loading="lazy" '
+        f'alt="Lecture figure {n_label} from {_esc(deck)}"/>'
+        '<figcaption>'
+        f'<strong>Lecture figure {n_label}.</strong> '
+        f'{_figure_discussion(entry, section_topic)}'
+        '</figcaption>'
+        '</figure>'
+    )
+
+
+def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
+                            book_dir=None, seen_files=None,
+                            seen_hashes=None):
+    """Insert lecture figures inline between H2 sections of chapter markdown.
+
+    Distributes figures roughly evenly across the chapter's top-level sections
+    (lines starting with '## '). Each figure is rendered as an HTML <figure>
+    block with a contextual caption derived from the section heading it
+    follows. Returns the modified markdown text (mixed markdown + HTML; the
+    HTML <figure> blocks are passed through by the markdown parser).
+
+    seen_files / seen_hashes are mutable sets shared across chapters used
+    to prevent the same image (by relative path or by byte-hash) from
+    being injected twice anywhere in the book.
+    """
+    if not entries:
+        return md_text
+
+    # Cross-chapter dedup: drop entries whose file path was already used
+    # elsewhere in the book or whose bytes match an already-injected image.
+    if seen_files is None:
+        seen_files = set()
+    if seen_hashes is None:
+        seen_hashes = set()
+
+    import hashlib
+
+    def _file_hash(rel_path):
+        if not book_dir:
+            return None
+        try:
+            p = book_dir / rel_path
+            if p.is_file():
+                return hashlib.md5(p.read_bytes()).hexdigest()
+        except Exception:
+            return None
+        return None
+
+    deduped = []
+    for e in entries:
+        f = e.get("file", "")
+        if not f or f in seen_files:
+            continue
+        h = _file_hash(f)
+        if h and h in seen_hashes:
+            seen_files.add(f)  # still mark path as consumed
+            continue
+        deduped.append(e)
+    entries = deduped
+    if not entries:
+        return md_text
+
+    # Largest images first, then cap at max_figures.
+    def _area(e):
+        return int(e.get("width", 0)) * int(e.get("height", 0))
+
+    # Drop figures with no real slide text — they're almost always pure
+    # decorative images (cover photos, dividers, logos that survived the
+    # logo filter). A figure with only a 1–2 word slide title and no body
+    # is also dropped.
+    def _has_text(e):
+        body = (e.get("slide_body") or "").strip()
+        title = (e.get("slide_title") or "").strip()
+        if len(body) >= 20:
+            return True
+        # Title-only: keep if it's a meaningful phrase (≥3 words and ≥15 chars).
+        if title and len(title) >= 15 and len(title.split()) >= 3:
+            return True
+        return False
+
+    entries = [e for e in entries if _has_text(e)]
+    if not entries:
+        return md_text
+    selected = sorted(entries, key=_area, reverse=True)[:max_figures]
+
+    # Record the chosen images in the cross-chapter dedup sets so later
+    # chapters can't re-use them.
+    for e in selected:
+        f = e.get("file", "")
+        if f:
+            seen_files.add(f)
+        h = _file_hash(f)
+        if h:
+            seen_hashes.add(h)
+
+    # Find H2 sections.
+    h2_re = re.compile(r"^## +(.+?)$", flags=re.MULTILINE)
+    headings = [(m.start(), m.end(), m.group(1).strip())
+                for m in h2_re.finditer(md_text)]
+
+    if not headings:
+        # No subsections — append figures at end of chapter.
+        blocks = [
+            _render_inline_figure(
+                e, "", f"{ch_num}.{i + 1}")
+            for i, e in enumerate(selected)
+        ]
+        return md_text + "\n\n" + "\n\n".join(blocks) + "\n\n"
+
+    # Compute section spans: each H2 owns text from its end up to the next H2.
+    spans = []
+    for i, (h_start, h_end, title) in enumerate(headings):
+        end = headings[i + 1][0] if i + 1 < len(headings) else len(md_text)
+        spans.append((h_end, end, title))
+
+    # Allocate figures to sections, round-robin.
+    n_sec = len(spans)
+    alloc = [[] for _ in range(n_sec)]
+    for i, e in enumerate(selected):
+        alloc[i % n_sec].append(e)
+
+    # Walk md_text and rebuild with figures inserted at the END of each
+    # section (before the next H2 / end of text).
+    out_parts = []
+    cursor = 0
+    fig_counter = 0
+    for (sec_start, sec_end, title), figs in zip(spans, alloc):
+        # Emit text up to end of this section.
+        out_parts.append(md_text[cursor:sec_end])
+        cursor = sec_end
+        # Inline figures for this section.
+        for e in figs:
+            fig_counter += 1
+            label = f"{ch_num}.{fig_counter}"
+            block = _render_inline_figure(e, title, label)
+            out_parts.append("\n\n" + block + "\n\n")
+    # Tail (anything after the last section span — usually empty).
+    out_parts.append(md_text[cursor:])
+    return "".join(out_parts)
 
 
 # ---------------------------------------------------------------------------
@@ -555,8 +959,13 @@ def _get_book_icon_svg(cfg):
     return _BOOK_ICON_SVG_NETWORK
 
 
-def _generate_title_page(cfg):
-    """Generate a professional graphical title page from book config."""
+def _generate_title_page(cfg, book_dir=None):
+    """Generate a professional title page.
+
+    If ``figures/front_cover.png`` (or front_cover.jpg) exists in the book
+    directory, render it as a full-bleed cover image with the publisher
+    line below. Otherwise fall back to the SVG emblem layout.
+    """
     title = cfg.get("title", "Untitled")
     subtitle = cfg.get("subtitle", "")
     authors = cfg.get("authors", [])
@@ -564,8 +973,32 @@ def _generate_title_page(cfg):
     year = cfg.get("year", "")
     publisher = cfg.get("publisher", "")
 
-    icon_svg = _get_book_icon_svg(cfg)
+    # Locate a cover image if available.
+    cover_rel = None
+    if book_dir is not None:
+        for name in ("front_cover.png", "front_cover.jpg",
+                     "front_cover.jpeg", "cover.png", "cover.jpg"):
+            p = book_dir / "figures" / name
+            if p.is_file():
+                cover_rel = f"figures/{name}"
+                break
 
+    if cover_rel:
+        # Image-cover layout: full-bleed cover image + publisher banner.
+        parts = ['<section id="title_page" class="title-page cover-image">']
+        parts.append(
+            f'<img class="cover-art" src="{_esc(cover_rel)}" '
+            f'alt="{_esc(title)} — front cover"/>'
+        )
+        if publisher:
+            parts.append(
+                f'<div class="cover-publisher">{_esc(publisher)}</div>'
+            )
+        parts.append("</section>")
+        return "\n".join(parts)
+
+    # Fallback: SVG emblem layout (legacy).
+    icon_svg = _get_book_icon_svg(cfg)
     parts = ['<section id="title_page" class="title-page">']
     parts.append(f'<div class="tp-decoration">{icon_svg}</div>')
     parts.append(f'<div class="tp-title">{_esc(title)}</div>')
@@ -717,7 +1150,6 @@ def _md_to_html(md_text):
 
         if in_code:
             html_parts.append(_esc(line))
-            html_parts.append("\n")
             i += 1
             continue
 
@@ -766,8 +1198,23 @@ def _md_to_html(md_text):
                 close_list()
                 html_parts.append("<ul>")
                 in_list = "ul"
-            html_parts.append(f"<li>{_inline_fmt(stripped[2:])}</li>")
+            item_text = stripped[2:]
             i += 1
+            # Fold indented continuation lines into the same <li>
+            while i < len(lines):
+                cont = lines[i]
+                cont_stripped = cont.strip()
+                if not cont_stripped:
+                    break
+                if cont.startswith(" ") or cont.startswith("\t"):
+                    if (cont_stripped.startswith("- ") or cont_stripped.startswith("* ")
+                            or re.match(r"^\d+\.\s", cont_stripped)):
+                        break
+                    item_text += " " + cont_stripped
+                    i += 1
+                    continue
+                break
+            html_parts.append(f"<li>{_inline_fmt(item_text)}</li>")
             continue
 
         # Numbered list
@@ -777,8 +1224,23 @@ def _md_to_html(md_text):
                 close_list()
                 html_parts.append("<ol>")
                 in_list = "ol"
-            html_parts.append(f"<li>{_inline_fmt(nm.group(1))}</li>")
+            item_text = nm.group(1)
             i += 1
+            # Fold indented continuation lines into the same <li>
+            while i < len(lines):
+                cont = lines[i]
+                cont_stripped = cont.strip()
+                if not cont_stripped:
+                    break
+                if cont.startswith(" ") or cont.startswith("\t"):
+                    if (cont_stripped.startswith("- ") or cont_stripped.startswith("* ")
+                            or re.match(r"^\d+\.\s", cont_stripped)):
+                        break
+                    item_text += " " + cont_stripped
+                    i += 1
+                    continue
+                break
+            html_parts.append(f"<li>{_inline_fmt(item_text)}</li>")
             continue
 
         # Table (pipe-delimited)
@@ -907,6 +1369,35 @@ def render_book_html(book_dir, chapter_filter=None):
     # Collect all cited keys across chapters (global numbering)
     all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
 
+    # Cross-chapter de-dup state for lecture-figure injection.
+    _seen_lecture_files: set = set()
+    _seen_lecture_hashes: set = set()
+
+    # Load lecture-figure manifest (if produced by extract_lecture_figures.py).
+    lecture_manifest_path = (book_dir / "figures" / "lectures" / "auto"
+                             / "manifest.json")
+    lecture_entries_by_chapter: dict = {}
+    if lecture_manifest_path.exists():
+        try:
+            import json as _json
+            mf = _json.loads(
+                lecture_manifest_path.read_text(encoding="utf-8"))
+            # Build chapter -> [entry,...] using the entry list (so we keep
+            # source/page info, not just the file path).
+            id_to_entry = {e["id"]: e for e in mf.get("entries", [])}
+            for slug, files in mf.get("by_chapter", {}).items():
+                entries = []
+                for fp in files:
+                    # match by file -> id
+                    for e in mf["entries"]:
+                        if e["file"] == fp:
+                            entries.append(e)
+                            break
+                lecture_entries_by_chapter[slug] = entries
+        except Exception as exc:
+            print(f"  ! could not load lecture manifest: {exc}")
+            lecture_entries_by_chapter = {}
+
     # Build HTML
     parts = []
     parts.append(_html_head(title))
@@ -926,7 +1417,7 @@ def render_book_html(book_dir, chapter_filter=None):
         parts.append(_generate_half_title(cfg))
 
         # Full title page with graphical decoration
-        parts.append(_generate_title_page(cfg))
+        parts.append(_generate_title_page(cfg, book_dir))
 
         # Copyright page
         parts.append(_generate_copyright_page(cfg, book_dir))
@@ -958,19 +1449,67 @@ def render_book_html(book_dir, chapter_filter=None):
             continue
 
         if not chapter_filter and part_title and part_title != prev_part:
-            parts.append(f'<section class="part-header"><h1>{_esc(part_title)}</h1></section>')
+            # Split "Part I — Foundations of Field Development" into eyebrow + title.
+            eyebrow, sep, title = part_title.partition(" — ")
+            if not sep:
+                eyebrow, sep, title = part_title.partition(" - ")
+            if sep:
+                pe_html = f'<div class="part-eyebrow">{_esc(eyebrow.strip())}</div>'
+                pt_html = f'<h1>{_esc(title.strip())}</h1>'
+            else:
+                pe_html = ''
+                pt_html = f'<h1>{_esc(part_title)}</h1>'
+            parts.append(
+                f'<section class="part-header">{pe_html}{pt_html}</section>'
+            )
             prev_part = part_title
 
         ch_dir = book_builder.resolve_chapter_dir(book_dir, ch)
         ch_md = ch_dir / "chapter.md"
 
-        parts.append(f'<section id="chapter-{ch_num}">')
+        parts.append(f'<section class="chapter" id="chapter-{ch_num}">')
+
+        # Build the chapter opener (eyebrow + number + title + rule + hero).
+        ch_title = ch.get("title", "Untitled")
+        hero_html = _chapter_hero_html(ch_dir, ch_title)
+        opener_html = (
+            '<div class="chapter-opener">'
+            '<div class="ch-eyebrow">Chapter</div>'
+            f'<div class="ch-number">{ch_num}</div>'
+            f'<h1 class="ch-title">{_esc(ch_title)}</h1>'
+            '<hr class="ch-rule"/>'
+            f'{hero_html}'
+            '</div>'
+        )
+        parts.append(opener_html)
+
         if ch_md.exists():
             text = ch_md.read_text(encoding="utf-8")
+            # Strip UTF-8 BOM if present so leading-anchor regexes match.
+            text = text.lstrip("\ufeff")
             text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
-            # Strip "Chapter N:" and prepend clean number for consistent style
-            text = re.sub(r'^#\s+Chapter\s+\d+\s*:\s*', '# ', text, flags=re.MULTILINE)
-            text = re.sub(r'^#\s+(.+)', rf'# {ch_num} \1', text, count=1, flags=re.MULTILINE)
+            # Strip leading YAML front matter (chapter_authors, estimated_pages,
+            # notebooks, etc. — internal metadata, not for the reader).
+            text = re.sub(r'^---\s*\n.*?\n---\s*\n+', '', text,
+                          count=1, flags=re.DOTALL)
+            # The chapter opener above has replaced the markdown H1, so strip
+            # the first H1 heading from the chapter prose to avoid duplication.
+            text = re.sub(
+                r'^#\s+(?:Chapter\s+\d+\s*:\s*)?.+\n+',
+                '',
+                text,
+                count=1,
+                flags=re.MULTILINE,
+            )
+            # Strip the leading "Material drawn from..." / "Lectured by..."
+            # source blockquote that immediately follows the H1 — internal
+            # provenance note, not reader-facing.
+            text = re.sub(
+                r'^\s*(?:>[^\n]*\n){1,6}\s*\n',
+                '',
+                text,
+                count=1,
+            )
             # Resolve citations before converting to HTML
             if bib_entries and all_cited_keys:
                 text, _ = resolve_citations_numbered_html(
@@ -978,10 +1517,20 @@ def render_book_html(book_dir, chapter_filter=None):
             # Strip empty "## References" sections (will be rendered at end)
             text = re.sub(
                 r'##\s+References\s*\n?(?:\s*\n)*', '', text)
+            # Inject auto-extracted lecture figures inline between sections,
+            # each wrapped in a <figure> with a discussion caption tied to
+            # the surrounding heading.
+            inline_entries = lecture_entries_by_chapter.get(ch["dir"], [])
+            if inline_entries:
+                text = _inject_lecture_figures(
+                    text, inline_entries, ch_num, max_figures=8,
+                    book_dir=book_dir,
+                    seen_files=_seen_lecture_files,
+                    seen_hashes=_seen_lecture_hashes)
             parts.append(_md_to_html(text))
         else:
-            parts.append(f"<h1>Chapter {ch_num}: {_esc(ch.get('title', 'Untitled'))}</h1>")
             parts.append("<p><em>Content not yet written.</em></p>")
+
         parts.append("</section>")
 
     # Backmatter
@@ -1020,9 +1569,24 @@ def render_book_html(book_dir, chapter_filter=None):
                 if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"):
                     shutil.copy2(str(img_file), str(figures_out / img_file.name))
 
+    # Copy auto-extracted lecture figures preserving the per-chapter
+    # subdirectory so manifest paths (figures/lectures/auto/<slug>/<file>)
+    # resolve from submission/book.html (one level under book root).
+    lectures_src = book_dir / "figures" / "lectures"
+    if lectures_src.is_dir():
+        lectures_dst = figures_out / "lectures"
+        if lectures_dst.exists():
+            shutil.rmtree(lectures_dst)
+        shutil.copytree(str(lectures_src), str(lectures_dst))
+
+    # Rewrite "../../figures/..." (chapter-section relative) to "../figures/..."
+    # so that submission/book.html (one level under book root) resolves correctly.
+    html_text = "\n".join(parts)
+    html_text = html_text.replace('src="../../figures/', 'src="../figures/')
+
     out_name = "book.html" if not chapter_filter else f"{chapter_filter}.html"
     out_path = submission_dir / out_name
-    out_path.write_text("\n".join(parts), encoding="utf-8")
+    out_path.write_text(html_text, encoding="utf-8")
 
     size_kb = out_path.stat().st_size / 1024
     print(f"[book_render_html] HTML generated: {out_path}  ({size_kb:.0f} KB)")

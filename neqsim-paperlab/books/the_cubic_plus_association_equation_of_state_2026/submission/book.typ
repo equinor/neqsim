@@ -7,75 +7,439 @@
 // Pandoc compatibility
 #let horizontalrule = line(length: 100%, stroke: 0.5pt + luma(180))
 
+// ── Page geometry ──
+// Trim size and margins come from the publisher profile.
+// Two-sided books use "inside"/"outside" so the binding margin alternates.
 #set page(
-  paper: "a4",
-  margin: (top: 25mm, bottom: 25mm, inside: 20mm, outside: 15mm),
+  width: 170mm, height: 240mm,
+  margin: (top: 28mm, bottom: 28mm, inside: 28mm, outside: 20mm),
+  binding: left,
   numbering: "1",
   number-align: center,
+  header: context {
+    let pn = counter(page).get().first()
+    if pn <= 1 { return [] }
+    let chapters = query(heading.where(level: 1).before(here()))
+    if chapters.len() == 0 { return [] }
+    let title = chapters.last().body
+    set text(size: 8.5pt, fill: luma(110), tracking: 0.5pt)
+    if calc.even(pn) {
+      align(left)[#smallcaps[#title]]
+    } else {
+      align(right)[#smallcaps[#title]]
+    }
+  },
 )
 
+// ── Text & language ──
 #set text(
   font: "New Computer Modern",
-  size: 10pt,
+  size: 11pt,
   lang: "en",
+  hyphenate: true,
+  number-type: "lining",
+  ligatures: true,
 )
 
+// ── Paragraph typography ──
+// Justified, controlled leading, first-line indent except after headings.
 #set par(
   justify: true,
   leading: 0.78em,
+  first-line-indent: (amount: 1.2em, all: false),
+  spacing: 0.65em,
 )
 
+// ── Heading numbering ──
 #set heading(numbering: "1.1")
 
+// Reset equation counter at every chapter (level-1 heading)
 #show heading.where(level: 1): it => {
-  pagebreak(weak: true)
-  v(3em)
-  block(text(weight: "bold", size: 18pt, it))
+  counter(math.equation).update(0)
+  pagebreak(weak: true, to: "odd")
   v(1.5em)
+  block[
+    #text(size: 9pt, tracking: 2pt, fill: luma(120), weight: "regular")[
+      #smallcaps[Chapter #counter(heading).display("1")]
+    ]
+    #v(0.4em)
+    #line(length: 35%, stroke: 1pt + rgb("#0058A3"))
+    #v(0.6em)
+    #text(weight: "bold", size: 22pt, fill: rgb("#0058A3"))[#it.body]
+  ]
+  v(2em)
 }
 
 #show heading.where(level: 2): it => {
-  v(1.2em)
-  block(text(weight: "bold", size: 14pt, it))
-  v(0.6em)
-}
-
-#show heading.where(level: 3): it => {
-  v(0.8em)
-  block(text(weight: "bold", size: 12pt, it))
+  v(1.4em)
+  block(text(weight: "bold", size: 13pt, fill: rgb("#1a5276"))[#it])
   v(0.4em)
 }
 
-#show heading.where(level: 4): it => {
-  v(0.6em)
-  block(text(weight: "bold", size: 11pt, it))
+#show heading.where(level: 3): it => {
+  v(1.0em)
+  block(text(weight: "bold", size: 11.5pt)[#it])
   v(0.3em)
 }
 
-// Equation numbering
-#set math.equation(numbering: "(1.1)")
+#show heading.where(level: 4): it => {
+  v(0.7em)
+  block(text(weight: "semibold", style: "italic", size: 11pt)[#it])
+  v(0.2em)
+}
 
-// Table styling
+// ── Equation numbering ──
+// Display as (chapter.eq) with the chapter number coming from the heading
+// counter. The counter is reset by the level-1 #show rule above.
+#set math.equation(numbering: n => {
+  let chs = counter(heading).get()
+  let ch = if chs.len() > 0 { chs.first() } else { 0 }
+  "(" + str(ch) + "." + str(n) + ")"
+}, supplement: [Eq.])
+
+// ── Tables: booktabs style (top / mid / bottom horizontal rules only) ──
+// Stroke is applied via show rule on the first/last row hlines from pandoc.
 #set table(
-  stroke: 0.5pt + luma(160),
-  inset: 6pt,
+  stroke: none,
+  inset: (x: 8pt, y: 5pt),
 )
 
-// Code block styling
+// Booktabs-style horizontal rules: thicker at top and bottom, thin under
+// the header row. Pandoc emits standard #table; we recolor the outer rules.
+#show table: it => {
+  set text(size: 9pt)
+  block(breakable: false, stroke: (top: 1pt + black, bottom: 1pt + black), it)
+}
+
+// ── Figures ──
+#show figure: it => {
+  v(0.5em)
+  align(center)[#it.body]
+  v(0.3em)
+  align(center)[
+    #set text(size: 9pt, style: "italic", fill: luma(80))
+    #it.caption
+  ]
+  v(0.8em)
+}
+
+// ── Code blocks ──
 #show raw.where(block: true): it => {
-  set text(size: 7.5pt)
+  set text(size: 8.5pt, font: "DejaVu Sans Mono")
   block(
     width: 100%,
-    inset: 8pt,
-    fill: luma(245),
+    inset: 9pt,
+    fill: luma(247),
     radius: 3pt,
+    stroke: (left: 2.5pt + rgb("#1a5276")),
+    breakable: true,
     it
   )
 }
 
+#show raw.where(block: false): it => {
+  box(
+    fill: luma(244),
+    inset: (x: 3pt, y: 1pt),
+    outset: (y: 1pt),
+    radius: 2pt,
+    text(size: 0.92em, font: "DejaVu Sans Mono")[#it]
+  )
+}
+
+// ── Block quotes ──
+#show quote.where(block: true): it => {
+  block(
+    inset: (left: 12pt, y: 6pt),
+    stroke: (left: 2pt + rgb("#1a5276").lighten(20%)),
+    text(style: "italic", fill: luma(70))[#it.body]
+  )
+}
+
+// ── Title Page ──
+#page(numbering: none, margin: (top: 3cm, bottom: 3cm, left: 2.5cm, right: 2.5cm))[
+  #v(1fr)
+
+  // Top decorative rule
+  #align(center)[
+    #line(length: 85%, stroke: 2.5pt + rgb("#0058A3"))
+  ]
+
+  #v(0.8cm)
+
+  // Decorative emblem — CPA molecular association diagram
+  // Molecules with association sites connected by dashed hydrogen-bond lines.
+  #align(center)[
+    #box(width: 4.6cm, height: 4.6cm)[
+      // Outer ring — equation of state framework
+      #place(center + horizon)[
+        #circle(radius: 2.2cm, fill: none, stroke: 1.8pt + rgb("#0058A3"))
+      ]
+      #place(center + horizon)[
+        #circle(radius: 2.0cm, fill: none, stroke: 0.5pt + rgb("#1a5276").lighten(50%))
+      ]
+
+      // ── Molecule A (top-center, water-like) ──
+      #place(center + top, dx: 0cm, dy: 0.55cm)[
+        #circle(radius: 0.36cm, fill: rgb("#0058A3").lighten(85%), stroke: 1.6pt + rgb("#0058A3"))
+      ]
+      // Donor site (top-left of molecule A)
+      #place(center + top, dx: -0.28cm, dy: 0.32cm)[
+        #circle(radius: 0.1cm, fill: rgb("#c0392b"))
+      ]
+      // Acceptor site (top-right of molecule A)
+      #place(center + top, dx: 0.28cm, dy: 0.32cm)[
+        #circle(radius: 0.1cm, fill: rgb("#2980b9"))
+      ]
+
+      // ── Molecule B (bottom-left, glycol-like) ──
+      #place(left + bottom, dx: 0.55cm, dy: -0.85cm)[
+        #circle(radius: 0.36cm, fill: rgb("#1a5276").lighten(85%), stroke: 1.6pt + rgb("#1a5276"))
+      ]
+      // Donor site (upper-right of molecule B)
+      #place(left + bottom, dx: 0.86cm, dy: -1.12cm)[
+        #circle(radius: 0.1cm, fill: rgb("#c0392b"))
+      ]
+      // Acceptor site (lower of molecule B)
+      #place(left + bottom, dx: 0.55cm, dy: -0.58cm)[
+        #circle(radius: 0.1cm, fill: rgb("#2980b9"))
+      ]
+
+      // ── Molecule C (bottom-right, methanol-like) ──
+      #place(right + bottom, dx: -0.55cm, dy: -0.85cm)[
+        #circle(radius: 0.36cm, fill: rgb("#2980b9").lighten(85%), stroke: 1.6pt + rgb("#2980b9"))
+      ]
+      // Acceptor site (upper-left of molecule C)
+      #place(right + bottom, dx: -0.86cm, dy: -1.12cm)[
+        #circle(radius: 0.1cm, fill: rgb("#2980b9"))
+      ]
+      // Donor site (lower of molecule C)
+      #place(right + bottom, dx: -0.55cm, dy: -0.58cm)[
+        #circle(radius: 0.1cm, fill: rgb("#c0392b"))
+      ]
+
+      // ── Molecule D (center, hydrocarbon — no association sites) ──
+      #place(center + horizon, dy: 0.2cm)[
+        #circle(radius: 0.28cm, fill: rgb("#7f8c8d").lighten(70%), stroke: 1.2pt + rgb("#7f8c8d"))
+      ]
+
+      // ── Small satellite molecules (non-associating species) ──
+      #place(left + horizon, dx: 0.38cm, dy: -0.25cm)[
+        #circle(radius: 0.15cm, fill: rgb("#bdc3c7"), stroke: 0.8pt + rgb("#95a5a6"))
+      ]
+      #place(right + horizon, dx: -0.38cm, dy: -0.25cm)[
+        #circle(radius: 0.15cm, fill: rgb("#bdc3c7"), stroke: 0.8pt + rgb("#95a5a6"))
+      ]
+
+      // ── Hydrogen bonds (dashed lines between association sites) ──
+      // A donor → C acceptor
+      #place(center + top, dy: 0.9cm)[
+        #line(start: (0.28cm, 0cm), end: (1.05cm, 1.65cm),
+              stroke: (paint: rgb("#c0392b").lighten(20%), thickness: 1.2pt, dash: "dashed"))
+      ]
+      // A acceptor → B donor
+      #place(center + top, dy: 0.9cm)[
+        #line(start: (-0.28cm, 0cm), end: (-1.05cm, 1.65cm),
+              stroke: (paint: rgb("#2980b9").lighten(20%), thickness: 1.2pt, dash: "dashed"))
+      ]
+      // B donor → D (weak interaction)
+      #place(center + horizon, dy: 0.1cm)[
+        #line(start: (-0.7cm, 0.55cm), end: (-0.3cm, 0.2cm),
+              stroke: (paint: rgb("#7f8c8d").lighten(30%), thickness: 0.8pt, dash: "dotted"))
+      ]
+      // C acceptor → D (weak interaction)
+      #place(center + horizon, dy: 0.1cm)[
+        #line(start: (0.7cm, 0.55cm), end: (0.3cm, 0.2cm),
+              stroke: (paint: rgb("#7f8c8d").lighten(30%), thickness: 0.8pt, dash: "dotted"))
+      ]
+
+      // ── Labels (tiny, subtle) ──
+      #place(center + top, dx: 0cm, dy: 0.12cm)[
+        #text(size: 5pt, fill: rgb("#0058A3").lighten(20%), weight: "bold")[H#sub[2]O]
+      ]
+      #place(left + bottom, dx: 0.32cm, dy: -0.42cm)[
+        #text(size: 5pt, fill: rgb("#1a5276").lighten(20%), weight: "bold")[MEG]
+      ]
+      #place(right + bottom, dx: -0.28cm, dy: -0.42cm)[
+        #text(size: 5pt, fill: rgb("#2980b9").lighten(20%), weight: "bold")[MeOH]
+      ]
+      #place(center + horizon, dy: 0.62cm)[
+        #text(size: 4.5pt, fill: rgb("#7f8c8d"), weight: "bold")[CH#sub[4]]
+      ]
+    ]
+  ]
+
+  #v(0.6cm)
+
+  // Title
+  #align(center)[
+    #text(size: 24pt, weight: "bold", fill: rgb("#0058A3"), tracking: -0.3pt)[
+      The Cubic Plus Association Equation of State (CPA-EoS)
+    ]
+  ]
+
+  #v(0.4cm)
+
+  // Subtitle
+  #align(center)[
+    #text(size: 12pt, style: "italic", fill: luma(100))[
+      From Fundamentals to Industrial Applications
+    ]
+  ]
+
+  #v(0.6cm)
+
+  // Decorative middle rule
+  #align(center)[
+    #line(length: 40%, stroke: 1pt + rgb("#1a5276").lighten(30%))
+  ]
+
+  #v(0.8cm)
+
+  // Authors
+    #align(center)[#text(size: 14pt, fill: luma(40), tracking: 1pt)[#smallcaps[Even Solbraa]]]
+  #align(center)[#text(size: 10pt, style: "italic", fill: luma(110))[Equinor ASA / NeqSim Project]]
+  #v(0.3cm)
+
+
+  #v(1fr)
+
+  // Edition and year
+  #align(center)[
+    #text(size: 9pt, fill: luma(130))[
+      1st Edition  ·  2026
+    ]
+  ]
+
+  #v(0.3cm)
+
+  // Publisher
+  #align(center)[
+    #text(size: 10pt, fill: luma(80), tracking: 2pt, weight: "semibold")[
+      NTNU
+    ]
+  ]
+
+  #v(0.5cm)
+
+  // Bottom decorative rule
+  #align(center)[
+    #line(length: 85%, stroke: 2.5pt + rgb("#0058A3"))
+  ]
+
+  #v(0.5cm)
+]
+
+#pagebreak()
+
+// ── Copyright Page ──
+#page(numbering: none, margin: (top: 2.5cm, bottom: 3cm, left: 3cm, right: 3cm))[
+  #v(1fr)
+
+  #text(weight: "bold", size: 9.5pt)[The Cubic Plus Association Equation of State (CPA-EoS): From Fundamentals to Industrial Applications]
+
+  #v(0.5cm)
+
+  #set text(size: 8.5pt, fill: luma(80))
+  #set par(justify: false, leading: 0.8em)
+
+  Copyright \u00a9 2026 Equinor ASA and the Norwegian University of Science and Technology (NTNU). All rights reserved.
+
+  #v(0.3cm)
+
+  This work is the intellectual property of Equinor ASA and NTNU. No part of this publication may be reproduced, stored in a retrieval system, or transmitted, in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of Equinor ASA and NTNU.
+
+  #v(0.3cm)
+
+  The NeqSim library is open-source software released under the Apache License 2.0. All code examples in this book are available at #link("https://github.com/equinor/neqsim")[github.com/equinor/neqsim] and may be freely used and modified under the terms of that license.
+
+  #v(0.5cm)
+
+  Published by NTNU
+
+  #v(0.8cm)
+
+  #text(size: 7.5pt, fill: luma(160))[Typeset using NeqSim PaperLab]
+]
+
+#pagebreak()
+
 // ── Table of Contents ──
 #outline(title: "Table of Contents", depth: 3)
 #pagebreak()
+
+#page(numbering: none)[
+  #v(1fr)
+  #align(center)[
+    #text(style: "italic", fill: luma(100), size: 11pt)[To all engineers and scientists working to advance thermodynamic modeling*
+*for a more sustainable energy future.]
+  ]
+  #v(1fr)
+]
+
+
+#set heading(numbering: none)
+== Preface
+<preface>
+The Cubic Plus Association (CPA) equation of state occupies a unique position in applied thermodynamics. It bridges the gap between the classical cubic equations of state --- trusted workhorses of the oil and gas industry for half a century --- and the more rigorous but complex molecular-based SAFT models. Since its introduction by Kontogeorgis and colleagues in 1996, CPA has become the preferred thermodynamic model for systems involving hydrogen bonding: water--hydrocarbon equilibria, gas dehydration, hydrate prediction, methanol and glycol injection, and carbon capture and storage.
+
+This book grew out of two decades of practical experience implementing and applying CPA within the NeqSim thermodynamic library. NeqSim, an open-source Java toolkit for thermodynamic and process simulation, contains one of the most comprehensive CPA implementations available --- including four different solver variants, extensive parameter databases, and integration with full process simulation capabilities. Every equation, table, and prediction in this book can be reproduced by the reader using NeqSim's Python interface.
+
+The book is intended for three audiences:
+
++ #strong[Graduate students] in chemical engineering and thermodynamics who need a thorough grounding in association models
++ #strong[Practicing engineers] in oil and gas, CCS, and chemical processing who need to understand when and how to apply CPA
++ #strong[Researchers] developing new applications or extensions of association models
+
+=== How to Use This Book
+<how-to-use-this-book>
+The book is organized in three parts. #strong[Part I (Chapters 1--4)] covers the foundations: thermodynamic principles, classical cubic equations of state, and the statistical mechanical theory of association. These chapters assume knowledge of undergraduate thermodynamics but are otherwise self-contained. #strong[Part II (Chapters 5--8)] presents the CPA model itself: its formulation, parameterization, mixing rules, and numerical implementation in NeqSim. #strong[Part III (Chapters 9--12)] covers applications: water--hydrocarbon systems, gas processing, CO$""_2$ and acid gas systems, and advanced topics including electrolyte CPA and comparisons with PC-SAFT.
+
+Each chapter includes: - #strong[Learning objectives] at the beginning - #strong[NeqSim code examples] (Python) that can be run immediately - #strong[Tables] comparing CPA predictions with experimental data and other models - #strong[Exercises] ranging from computational to conceptual - #strong[A summary] of key points
+
+=== Software Requirements
+<software-requirements>
+All code examples use the `neqsim` Python package, which wraps the Java library via jpype. Install with:
+
+```bash
+pip install neqsim
+```
+
+The NeqSim source code is available at https:\/\/github.com/equinor/neqsim.
+
+=== Acknowledgments
+<acknowledgments>
+I am grateful to the NeqSim community and to colleagues at Equinor for many years of collaborative work on thermodynamic modeling. Special thanks to Georgios Kontogeorgis and his group at DTU for their foundational work on CPA, and to the many researchers whose experimental data and theoretical insights made this book possible.
+
+Even Solbraa Stavanger, 2026 All figures are generated from Jupyter notebooks included with the book source, ensuring full reproducibility.
+
+=== Prerequisites
+<prerequisites>
+Readers should have a working knowledge of:
+
+- Thermodynamics fundamentals
+- Python programming
+- Basic chemical engineering concepts
+
+=== Acknowledgements
+<acknowledgements>
+TODO: Thank contributors, reviewers, institutions, and funding sources.
+
+#set heading(numbering: "1.1")
+
+
+#page(numbering: none)[
+  #v(1fr)
+  #align(center)[
+    #text(size: 20pt, weight: "bold", fill: rgb("#1a5276"), tracking: 0.5pt)[#smallcaps[Part I: Foundations]]
+  ]
+  #align(center)[
+    #v(0.5cm)
+    #line(length: 30%, stroke: 1pt + rgb("#1a5276").lighten(30%))
+  ]
+  #v(1fr)
+]
+
 
 = Introduction and Historical Context
 <introduction-and-historical-context>
@@ -2124,6 +2488,19 @@ The sparsity of this matrix --- half the entries are zero --- further reduces th
 )
 
 #emph[Figure 4.1: 03 Cpa Vs Srk Water]
+
+
+#page(numbering: none)[
+  #v(1fr)
+  #align(center)[
+    #text(size: 20pt, weight: "bold", fill: rgb("#1a5276"), tracking: 0.5pt)[#smallcaps[Part II: The CPA Model]]
+  ]
+  #align(center)[
+    #v(0.5cm)
+    #line(length: 30%, stroke: 1pt + rgb("#1a5276").lighten(30%))
+  ]
+  #v(1fr)
+]
 
 
 = The CPA Equation of State: Complete Formulation
@@ -4859,6 +5236,19 @@ Key points from this chapter:
 )
 
 #emph[Figure 8.13: Site type mapping schematic \[48\]. (a) Water 4C scheme: 4 individual sites reduce to 2 unique types with multiplicity $m = 2$. (b) NG + H$""_2$O + MEG system: 8 total sites reduce to 4 types, shrinking the Jacobian from $9 times 9$ to $5 times 5$.]
+
+
+#page(numbering: none)[
+  #v(1fr)
+  #align(center)[
+    #text(size: 20pt, weight: "bold", fill: rgb("#1a5276"), tracking: 0.5pt)[#smallcaps[Part III: Applications and Validation]]
+  ]
+  #align(center)[
+    #v(0.5cm)
+    #line(length: 30%, stroke: 1pt + rgb("#1a5276").lighten(30%))
+  ]
+  #v(1fr)
+]
 
 
 = Water--Hydrocarbon Systems
@@ -7801,244 +8191,248 @@ Key points from this chapter:
 
 #heading("References", level: 1)
 
-[1] Soave, "Equilibrium constants from a modified Redlich-Kwong," Chemical Engineering Science, vol. 27, pp. 1197--1203, 1972.
+#set par(justify: false, first-line-indent: 0pt, hanging-indent: 1.6em, leading: 0.6em)
 
-[2] Peng and Robinson, "A new two-constant equation of state," Industrial & Engineering Chemistry Fundamentals, vol. 15, pp. 59--64, 1976.
+#set text(size: 9pt)
 
-[3] Dolezalek, "\"U," Zeitschrift f\"u, vol. 64, pp. 727--747, 1908.
+#par[#text(weight: "bold")[[1]] #h(0.5em) Soave, "Equilibrium constants from a modified \{Redlich-Kwong," Chemical Engineering Science, vol. 27, pp. 1197--1203, 1972.]
 
-[4] Wertheim, "Fluids with highly directional attractive forces. I," Journal of Statistical Physics, vol. 35, pp. 19--34, 1984.
+#par[#text(weight: "bold")[[2]] #h(0.5em) Peng and Robinson, "A new two-constant equation of state," Industrial & Engineering Chemistry Fundamentals, vol. 15, pp. 59--64, 1976.]
 
-[5] Wertheim, "Fluids with highly directional attractive forces. II," Journal of Statistical Physics, vol. 35, pp. 35--47, 1984.
+#par[#text(weight: "bold")[[3]] #h(0.5em) Dolezalek, "\{\\"U," Zeitschrift f\{\\"u, vol. 64, pp. 727--747, 1908.]
 
-[6] Wertheim, "Fluids with highly directional attractive forces. III," Journal of Statistical Physics, vol. 42, pp. 459--476, 1986.
+#par[#text(weight: "bold")[[4]] #h(0.5em) Wertheim, "Fluids with highly directional attractive forces. \{I," Journal of Statistical Physics, vol. 35, pp. 19--34, 1984.]
 
-[7] Wertheim, "Fluids with highly directional attractive forces. IV," Journal of Statistical Physics, vol. 42, pp. 477--492, 1986.
+#par[#text(weight: "bold")[[5]] #h(0.5em) Wertheim, "Fluids with highly directional attractive forces. \{II," Journal of Statistical Physics, vol. 35, pp. 35--47, 1984.]
 
-[8] Chapman et al., "Phase equilibria of associating fluids: chain molecules with multiple bonding sites," Molecular Physics, vol. 65, pp. 1057--1079, 1988.
+#par[#text(weight: "bold")[[6]] #h(0.5em) Wertheim, "Fluids with highly directional attractive forces. \{III," Journal of Statistical Physics, vol. 42, pp. 459--476, 1986.]
 
-[9] Chapman et al., "New reference equation of state for associating liquids," Industrial & Engineering Chemistry Research, vol. 29, pp. 1709--1721, 1990.
+#par[#text(weight: "bold")[[7]] #h(0.5em) Wertheim, "Fluids with highly directional attractive forces. \{IV," Journal of Statistical Physics, vol. 42, pp. 477--492, 1986.]
 
-[10] Gross and Sadowski, "Perturbed-chain SAFT," Industrial & Engineering Chemistry Research, vol. 40, pp. 1244--1260, 2001.
+#par[#text(weight: "bold")[[8]] #h(0.5em) Chapman et al., "Phase equilibria of associating fluids: chain molecules with multiple bonding sites," Molecular Physics, vol. 65, pp. 1057--1079, 1988.]
 
-[11] Gil-Villegas et al., "Statistical associating fluid theory for chain molecules with attractive potentials of variable range," The Journal of Chemical Physics, vol. 106, pp. 4168--4186, 1997.
+#par[#text(weight: "bold")[[9]] #h(0.5em) Chapman et al., "New reference equation of state for associating liquids," Industrial & Engineering Chemistry Research, vol. 29, pp. 1709--1721, 1990.]
 
-[12] Kontogeorgis et al., "An equation of state for associating fluids," Industrial & Engineering Chemistry Research, vol. 35, pp. 4310--4318, 1996.
+#par[#text(weight: "bold")[[10]] #h(0.5em) Gross and Sadowski, "Perturbed-chain \{SAFT," Industrial & Engineering Chemistry Research, vol. 40, pp. 1244--1260, 2001.]
 
-[13] Kontogeorgis et al., "Multicomponent phase equilibrium calculations for water-methanol-alkane mixtures," Fluid Phase Equilibria, vol. 158--160, pp. 201--209, 1999.
+#par[#text(weight: "bold")[[11]] #h(0.5em) Gil-Villegas et al., "Statistical associating fluid theory for chain molecules with attractive potentials of variable range," The Journal of Chemical Physics, vol. 106, pp. 4168--4186, 1997.]
 
-[14] Maribo-Mogensen et al., "An electrolyte CPA," Industrial & Engineering Chemistry Research, vol. 51, pp. 5353--5363, 2012.
+#par[#text(weight: "bold")[[12]] #h(0.5em) Kontogeorgis et al., "An equation of state for associating fluids," Industrial & Engineering Chemistry Research, vol. 35, pp. 4310--4318, 1996.]
 
-[15] Anderson, "Iterative procedures for nonlinear integral equations," Journal of the ACM, vol. 12, pp. 547--560, 1965.
+#par[#text(weight: "bold")[[13]] #h(0.5em) Kontogeorgis et al., "Multicomponent phase equilibrium calculations for water-methanol-alkane mixtures," Fluid Phase Equilibria, vol. 158--160, pp. 201--209, 1999.]
 
-[16] Broyden, "A class of methods for solving nonlinear simultaneous equations," Mathematics of Computation, vol. 19, pp. 577--593, 1965.
+#par[#text(weight: "bold")[[14]] #h(0.5em) Maribo-Mogensen et al., "An electrolyte \{CPA," Industrial & Engineering Chemistry Research, vol. 51, pp. 5353--5363, 2012.]
 
-[17] Prausnitz et al., "Molecular Thermodynamics of Fluid-Phase Equilibria," Prentice Hall, 1999.
+#par[#text(weight: "bold")[[15]] #h(0.5em) Anderson, "Iterative procedures for nonlinear integral equations," Journal of the ACM, vol. 12, pp. 547--560, 1965.]
 
-[18] Smith et al., "Introduction to Chemical Engineering Thermodynamics," McGraw-Hill, 2005.
+#par[#text(weight: "bold")[[16]] #h(0.5em) Broyden, "A class of methods for solving nonlinear simultaneous equations," Mathematics of Computation, vol. 19, pp. 577--593, 1965.]
 
-[19] Tester and Modell, "Thermodynamics and Its Applications," Prentice Hall, 1997.
+#par[#text(weight: "bold")[[17]] #h(0.5em) Prausnitz et al., "Molecular Thermodynamics of Fluid-Phase Equilibria," Prentice Hall, 1999.]
 
-[20] Lewis, "The law of physico-chemical change," Proceedings of the American Academy of Arts and Sciences, vol. 37, pp. 49--69, 1901.
+#par[#text(weight: "bold")[[18]] #h(0.5em) Smith et al., "Introduction to Chemical Engineering Thermodynamics," McGraw-Hill, 2005.]
 
-[21] Poling et al., "The Properties of Gases and Liquids," McGraw-Hill, 2001.
+#par[#text(weight: "bold")[[19]] #h(0.5em) Tester and Modell, "Thermodynamics and Its Applications," Prentice Hall, 1997.]
 
-[22] Rachford and Rice, "Procedure for use of electronic digital computers in calculating flash vaporization hydrocarbon equilibrium," Journal of Petroleum Technology, vol. 4, pp. 19, 1952.
+#par[#text(weight: "bold")[[20]] #h(0.5em) Lewis, "The law of physico-chemical change," Proceedings of the American Academy of Arts and Sciences, vol. 37, pp. 49--69, 1901.]
 
-[23] Michelsen, "The isothermal flash problem. Part I," Fluid Phase Equilibria, vol. 9, pp. 1--19, 1982.
+#par[#text(weight: "bold")[[21]] #h(0.5em) Poling et al., "The Properties of Gases and Liquids," McGraw-Hill, 2001.]
 
-[24] Michelsen, "The isothermal flash problem. Part II," Fluid Phase Equilibria, vol. 9, pp. 21--40, 1982.
+#par[#text(weight: "bold")[[22]] #h(0.5em) Rachford and Rice, "Procedure for use of electronic digital computers in calculating flash vaporization hydrocarbon equilibrium," Journal of Petroleum Technology, vol. 4, pp. 19, 1952.]
 
-[25] Sandler, "Chemical, Biochemical, and Engineering Thermodynamics," John Wiley & Sons, 2006.
+#par[#text(weight: "bold")[[23]] #h(0.5em) Michelsen, "The isothermal flash problem. \{Part I," Fluid Phase Equilibria, vol. 9, pp. 1--19, 1982.]
 
-[26] Gibbs, "On the equilibrium of heterogeneous substances," Transactions of the Connecticut Academy of Arts and Sciences, vol. 3, pp. 108--248, 1876.
+#par[#text(weight: "bold")[[24]] #h(0.5em) Michelsen, "The isothermal flash problem. \{Part II," Fluid Phase Equilibria, vol. 9, pp. 21--40, 1982.]
 
-[27] Lohrenz et al., "Calculating viscosities of reservoir fluids from their compositions," Journal of Petroleum Technology, vol. 16, pp. 1171--1176, 1964.
+#par[#text(weight: "bold")[[25]] #h(0.5em) Sandler, "Chemical, Biochemical, and Engineering Thermodynamics," John Wiley & Sons, 2006.]
 
-[28] van der Waals, "Over de Continu\"iteit van den Gas- en Vloeistoftoestand," 1873.
+#par[#text(weight: "bold")[[26]] #h(0.5em) Gibbs, "On the equilibrium of heterogeneous substances," Transactions of the Connecticut Academy of Arts and Sciences, vol. 3, pp. 108--248, 1876.]
 
-[29] Walas, "Phase Equilibria in Chemical Engineering," Butterworth-Heinemann, 1985.
+#par[#text(weight: "bold")[[27]] #h(0.5em) Lohrenz et al., "Calculating viscosities of reservoir fluids from their compositions," Journal of Petroleum Technology, vol. 16, pp. 1171--1176, 1964.]
 
-[30] Clausius, "Ueber das Verhalten der Kohlens\"aure in Bezug auf Druck, Volumen und Temperatur," Annalen der Physik, vol. 245, pp. 337--357, 1880.
+#par[#text(weight: "bold")[[28]] #h(0.5em) van der Waals, "Over de Continu\\"iteit van den Gas- en Vloeistoftoestand," 1873.]
 
-[31] Redlich and Kwong, "On the thermodynamics of solutions. V," Chemical Reviews, vol. 44, pp. 233--244, 1949.
+#par[#text(weight: "bold")[[29]] #h(0.5em) Walas, "Phase Equilibria in Chemical Engineering," Butterworth-Heinemann, 1985.]
 
-[32] Pitzer, "The volumetric and thermodynamic properties of fluids. I," Journal of the American Chemical Society, vol. 77, pp. 3427--3433, 1955.
+#par[#text(weight: "bold")[[30]] #h(0.5em) Clausius, "Ueber das Verhalten der Kohlens\\"aure in Bezug auf Druck, Volumen und Temperatur," Annalen der Physik, vol. 245, pp. 337--357, 1880.]
 
-[33] P\'e, "A consistent correction for Redlich-Kwong-Soave," Fluid Phase Equilibria, vol. 8, pp. 7--23, 1982.
+#par[#text(weight: "bold")[[31]] #h(0.5em) Redlich and Kwong, "On the thermodynamics of solutions. \{V," Chemical Reviews, vol. 44, pp. 233--244, 1949.]
 
-[34] Boston and Mathias, "Phase equilibria in a third-generation process simulator," Proceedings of the 2nd International Conference on Phase Equilibria and Fluid Properties in the Chemical Industry, 1980.
+#par[#text(weight: "bold")[[32]] #h(0.5em) Pitzer, "The volumetric and thermodynamic properties of fluids. \{I," Journal of the American Chemical Society, vol. 77, pp. 3427--3433, 1955.]
 
-[35] Gasem et al., "A modified temperature dependence for the Peng-Robinson," Fluid Phase Equilibria, vol. 181, pp. 113--125, 2001.
+#par[#text(weight: "bold")[[33]] #h(0.5em) P\\'e, "A consistent correction for \{Redlich-Kwong-Soave," Fluid Phase Equilibria, vol. 8, pp. 7--23, 1982.]
 
-[36] Mathias and Copeman, "Extension of the Peng-Robinson," Fluid Phase Equilibria, vol. 13, pp. 91--108, 1983.
+#par[#text(weight: "bold")[[34]] #h(0.5em) Boston and Mathias, "Phase equilibria in a third-generation process simulator," Proceedings of the 2nd International Conference on Phase Equilibria and Fluid Properties in the Chemical Industry, 1980.]
 
-[37] Twu et al., "A cubic equation of state with a new alpha function and a new mixing rule," Fluid Phase Equilibria, vol. 69, pp. 33--50, 1991.
+#par[#text(weight: "bold")[[35]] #h(0.5em) Gasem et al., "A modified temperature dependence for the \{Peng-Robinson," Fluid Phase Equilibria, vol. 181, pp. 113--125, 2001.]
 
-[38] Wong and Sandler, "A theoretically correct mixing rule for cubic equations of state," AIChE Journal, vol. 38, pp. 671--680, 1992.
+#par[#text(weight: "bold")[[36]] #h(0.5em) Mathias and Copeman, "Extension of the \{Peng-Robinson," Fluid Phase Equilibria, vol. 13, pp. 91--108, 1983.]
 
-[39] Michelsen, "A modified Huron-Vidal," Fluid Phase Equilibria, vol. 60, pp. 213--219, 1990.
+#par[#text(weight: "bold")[[37]] #h(0.5em) Twu et al., "A cubic equation of state with a new alpha function and a new mixing rule," Fluid Phase Equilibria, vol. 69, pp. 33--50, 1991.]
 
-[40] Boukouvalas et al., "Prediction of vapor-liquid equilibrium with the LCVM model: a linear combination of the Vidal and Michelsen mixing rules coupled with the original UNIFAC and the t-mPR equation of state," Fluid Phase Equilibria, vol. 92, pp. 75--106, 1994.
+#par[#text(weight: "bold")[[38]] #h(0.5em) Wong and Sandler, "A theoretically correct mixing rule for cubic equations of state," AIChE Journal, vol. 38, pp. 671--680, 1992.]
 
-[41] Jeffrey, "An Introduction to Hydrogen Bonding," Oxford University Press, 1997.
+#par[#text(weight: "bold")[[39]] #h(0.5em) Michelsen, "A modified \{Huron-Vidal," Fluid Phase Equilibria, vol. 60, pp. 213--219, 1990.]
 
-[42] Pauling, "The Nature of the Chemical Bond," Cornell University Press, 1960.
+#par[#text(weight: "bold")[[40]] #h(0.5em) Boukouvalas et al., "\{Prediction of vapor-liquid equilibrium with the LCVM model: a linear combination of the Vidal and Michelsen mixing rules coupled with the original UNIFAC and the t-mPR equation of state," Fluid Phase Equilibria, vol. 92, pp. 75--106, 1994.]
 
-[43] Eisenberg and Kauzmann, "The Structure and Properties of Water," Oxford University Press, 1969.
+#par[#text(weight: "bold")[[41]] #h(0.5em) Jeffrey, "An Introduction to Hydrogen Bonding," Oxford University Press, 1997.]
 
-[44] Mayer and Mayer, "Statistical Mechanics," John Wiley & Sons, 1940.
+#par[#text(weight: "bold")[[42]] #h(0.5em) Pauling, "The Nature of the Chemical Bond," Cornell University Press, 1960.]
 
-[45] Carnahan and Starling, "Equation of state for nonattracting rigid spheres," The Journal of Chemical Physics, vol. 51, pp. 635--636, 1969.
+#par[#text(weight: "bold")[[43]] #h(0.5em) Eisenberg and Kauzmann, "The Structure and Properties of Water," Oxford University Press, 1969.]
 
-[46] Huang and Radosz, "Equation of state for small, large, polydisperse, and associating molecules," Industrial & Engineering Chemistry Research, vol. 29, pp. 2284--2294, 1990.
+#par[#text(weight: "bold")[[44]] #h(0.5em) Mayer and Mayer, "Statistical Mechanics," John Wiley & Sons, 1940.]
 
-[47] Huang and Radosz, "Equation of state for small, large, polydisperse, and associating molecules: extension to fluid mixtures," Industrial & Engineering Chemistry Research, vol. 30, pp. 1994--2005, 1991.
+#par[#text(weight: "bold")[[45]] #h(0.5em) Carnahan and Starling, "Equation of state for nonattracting rigid spheres," The Journal of Chemical Physics, vol. 51, pp. 635--636, 1969.]
 
-[48] Solbraa, "The Cubic Plus Association Equation of State (CPA-EoS," NeqSim Press, 2026.
+#par[#text(weight: "bold")[[46]] #h(0.5em) Huang and Radosz, "Equation of state for small, large, polydisperse, and associating molecules," Industrial & Engineering Chemistry Research, vol. 29, pp. 2284--2294, 1990.]
 
-[49] Kontogeorgis et al., "Ten years with the CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4855--4868, 2006.
+#par[#text(weight: "bold")[[47]] #h(0.5em) Huang and Radosz, "Equation of state for small, large, polydisperse, and associating molecules: extension to fluid mixtures," Industrial & Engineering Chemistry Research, vol. 30, pp. 1994--2005, 1991.]
 
-[50] Kontogeorgis and Folas, "Thermodynamic Models for Industrial Applications: From Classical and Advanced Mixing Rules to Association Theories," John Wiley & Sons, 2010.
+#par[#text(weight: "bold")[[48]] #h(0.5em) Solbraa, "The Cubic Plus Association Equation of State (\{CPA-EoS," NeqSim Press, 2026.]
 
-[51] Michelsen and Mollerup, "Thermodynamic Models: Fundamentals & Computational Aspects," Tie-Line Publications, 2007.
+#par[#text(weight: "bold")[[49]] #h(0.5em) Kontogeorgis et al., "Ten years with the \{CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4855--4868, 2006.]
 
-[52] AIChE DIPPR Project 801, "Evaluated Standard Thermophysical Property Values," Brigham Young University, 2016.
+#par[#text(weight: "bold")[[50]] #h(0.5em) Kontogeorgis and Folas, "Thermodynamic Models for Industrial Applications: From Classical and Advanced Mixing Rules to Association Theories," John Wiley & Sons, 2010.]
 
-[53] National Institute of Standards and Technology, "NIST," 2023.
+#par[#text(weight: "bold")[[51]] #h(0.5em) Michelsen and Mollerup, "Thermodynamic Models: Fundamentals & Computational Aspects," Tie-Line Publications, 2007.]
 
-[54] Span and Wagner, "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K," Journal of Physical and Chemical Reference Data, vol. 25, pp. 1509--1596, 1996.
+#par[#text(weight: "bold")[[52]] #h(0.5em) AIChE DIPPR Project 801, "Evaluated Standard Thermophysical Property Values," Brigham Young University, 2016.]
 
-[55] Levenberg, "A method for the solution of certain non-linear problems in least squares," Quarterly of Applied Mathematics, vol. 2, pp. 164--168, 1944.
+#par[#text(weight: "bold")[[53]] #h(0.5em) National Institute of Standards and Technology, "\{NIST," 2023.]
 
-[56] Marquardt, "An algorithm for least-squares estimation of nonlinear parameters," Journal of the Society for Industrial and Applied Mathematics, vol. 11, pp. 431--441, 1963.
+#par[#text(weight: "bold")[[54]] #h(0.5em) Span and Wagner, "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 \{K," Journal of Physical and Chemical Reference Data, vol. 25, pp. 1509--1596, 1996.]
 
-[57] Kontogeorgis et al., "Ten years with the CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4869--4878, 2006.
+#par[#text(weight: "bold")[[55]] #h(0.5em) Levenberg, "A method for the solution of certain non-linear problems in least squares," Quarterly of Applied Mathematics, vol. 2, pp. 164--168, 1944.]
 
-[58] Elliott et al., "A simple equation of state for non-spherical and associating molecules," Industrial & Engineering Chemistry Research, vol. 29, pp. 1476--1485, 1990.
+#par[#text(weight: "bold")[[56]] #h(0.5em) Marquardt, "An algorithm for least-squares estimation of nonlinear parameters," Journal of the Society for Industrial and Applied Mathematics, vol. 11, pp. 431--441, 1963.]
 
-[59] Tsivintzelis et al., "Modeling phase equilibria for acid gas mixtures using the CPA," AIChE Journal, vol. 56, pp. 2965--2982, 2010.
+#par[#text(weight: "bold")[[57]] #h(0.5em) Kontogeorgis et al., "Ten years with the \{CPA," Industrial & Engineering Chemistry Research, vol. 45, pp. 4869--4878, 2006.]
 
-[60] Huron, "New mixing rules in simple equations of state for representing vapour-liquid equilibria of strongly non-ideal mixtures," Fluid Phase Equilibria, vol. 3, pp. 255--271, 1979.
+#par[#text(weight: "bold")[[58]] #h(0.5em) Elliott et al., "A simple equation of state for non-spherical and associating molecules," Industrial & Engineering Chemistry Research, vol. 29, pp. 1476--1485, 1990.]
 
-[61] Renon and Prausnitz, "Local compositions in thermodynamic excess functions for liquid mixtures," AIChE Journal, vol. 14, pp. 135--144, 1968.
+#par[#text(weight: "bold")[[59]] #h(0.5em) Tsivintzelis et al., "Modeling phase equilibria for acid gas mixtures using the \{CPA," AIChE Journal, vol. 56, pp. 2965--2982, 2010.]
 
-[62] Abrams and Prausnitz, "Statistical thermodynamics of liquid mixtures: A new expression for the excess Gibbs energy of partly or completely miscible systems," AIChE Journal, vol. 21, pp. 116--128, 1975.
+#par[#text(weight: "bold")[[60]] #h(0.5em) Huron, "New mixing rules in simple equations of state for representing vapour-liquid equilibria of strongly non-ideal mixtures," Fluid Phase Equilibria, vol. 3, pp. 255--271, 1979.]
 
-[63] Wilson, "Vapor-liquid equilibrium. XI," Journal of the American Chemical Society, vol. 86, pp. 127--130, 1964.
+#par[#text(weight: "bold")[[61]] #h(0.5em) Renon and Prausnitz, "Local compositions in thermodynamic excess functions for liquid mixtures," AIChE Journal, vol. 14, pp. 135--144, 1968.]
 
-[64] Michelsen and Hendriks, "Physical properties from association models," Fluid Phase Equilibria, vol. 180, pp. 165--174, 2001.
+#par[#text(weight: "bold")[[62]] #h(0.5em) Abrams and Prausnitz, "\{Statistical thermodynamics of liquid mixtures: A new expression for the excess Gibbs energy of partly or completely miscible systems," AIChE Journal, vol. 21, pp. 116--128, 1975.]
 
-[65] von Solms et al., "Applying association theories to polar fluids," Industrial & Engineering Chemistry Research, vol. 43, pp. 1803--1806, 2004.
+#par[#text(weight: "bold")[[63]] #h(0.5em) Wilson, "Vapor-liquid equilibrium. \{XI," Journal of the American Chemical Society, vol. 86, pp. 127--130, 1964.]
 
-[66] Wegstein, "Accelerating convergence of iterative processes," Communications of the ACM, vol. 1, pp. 9--13, 1958.
+#par[#text(weight: "bold")[[64]] #h(0.5em) Michelsen and Hendriks, "Physical properties from association models," Fluid Phase Equilibria, vol. 180, pp. 165--174, 2001.]
 
-[67] Dennis and Mor\'e, "Quasi-Newton," SIAM Review, vol. 19, pp. 46--89, 1977.
+#par[#text(weight: "bold")[[65]] #h(0.5em) von Solms et al., "Applying association theories to polar fluids," Industrial & Engineering Chemistry Research, vol. 43, pp. 1803--1806, 2004.]
 
-[68] Ortega and Rheinboldt, "Iterative Solution of Nonlinear Equations in Several Variables," Academic Press, 1970.
+#par[#text(weight: "bold")[[66]] #h(0.5em) Wegstein, "Accelerating convergence of iterative processes," Communications of the ACM, vol. 1, pp. 9--13, 1958.]
 
-[69] Pulay, "Convergence acceleration of iterative sequences. The," Chemical Physics Letters, vol. 73, pp. 393--398, 1980.
+#par[#text(weight: "bold")[[67]] #h(0.5em) Dennis and Mor\\'e, "Quasi-\{Newton," SIAM Review, vol. 19, pp. 46--89, 1977.]
 
-[70] Tsonopoulos, "Thermodynamic analysis of the mutual solubilities of normal alkanes and water," Fluid Phase Equilibria, vol. 156, pp. 21--33, 1999.
+#par[#text(weight: "bold")[[68]] #h(0.5em) Ortega and Rheinboldt, "Iterative Solution of Nonlinear Equations in Several Variables," Academic Press, 1970.]
 
-[71] Bukacek, "Equilibrium moisture content of natural gases," Institute of Gas Technology Research Bulletin, vol. 8, 1955.
+#par[#text(weight: "bold")[[69]] #h(0.5em) Pulay, "Convergence acceleration of iterative sequences. \{The," Chemical Physics Letters, vol. 73, pp. 393--398, 1980.]
 
-[72] Olds et al., "Phase equilibria in hydrocarbon systems: Composition of the dew-point gas of the methane-water system," Industrial & Engineering Chemistry, vol. 34, pp. 1223--1227, 1942.
+#par[#text(weight: "bold")[[70]] #h(0.5em) Tsonopoulos, "Thermodynamic analysis of the mutual solubilities of normal alkanes and water," Fluid Phase Equilibria, vol. 156, pp. 21--33, 1999.]
 
-[73] Raoult, "Loi g\'en\'erale des tensions de vapeur des dissolvants," Comptes Rendus de l'Acad\'emie des Sciences, vol. 104, pp. 1430--1433, 1887.
+#par[#text(weight: "bold")[[71]] #h(0.5em) Bukacek, "Equilibrium moisture content of natural gases," Institute of Gas Technology Research Bulletin, vol. 8, 1955.]
 
-[74] Tsonopoulos and Wilson, "High-temperature mutual solubilities of hydrocarbons and water. Part I," AIChE Journal, vol. 29, pp. 990--999, 1983.
+#par[#text(weight: "bold")[[72]] #h(0.5em) Olds et al., "Phase equilibria in hydrocarbon systems: Composition of the dew-point gas of the methane-water system," Industrial & Engineering Chemistry, vol. 34, pp. 1223--1227, 1942.]
 
-[75] Derawi et al., "Extension of the cubic-plus-association equation of state to glycol-water cross-associating systems," Industrial & Engineering Chemistry Research, vol. 42, pp. 1470--1477, 2003.
+#par[#text(weight: "bold")[[73]] #h(0.5em) Raoult, "Loi g\\'en\\'erale des tensions de vapeur des dissolvants," Comptes Rendus de l'Acad\\'emie des Sciences, vol. 104, pp. 1430--1433, 1887.]
 
-[76] Folas et al., "Application of the cubic-plus-association (CPA," Industrial & Engineering Chemistry Research, vol. 44, pp. 3823--3833, 2005.
+#par[#text(weight: "bold")[[74]] #h(0.5em) Tsonopoulos and Wilson, "High-temperature mutual solubilities of hydrocarbons and water. \{Part I," AIChE Journal, vol. 29, pp. 990--999, 1983.]
 
-[77] McKetta and Wehe, "Use this chart for water content of natural gases," Petroleum Refiner, vol. 37, pp. 153--154, 1958.
+#par[#text(weight: "bold")[[75]] #h(0.5em) Derawi et al., "Extension of the cubic-plus-association equation of state to glycol-water cross-associating systems," Industrial & Engineering Chemistry Research, vol. 42, pp. 1470--1477, 2003.]
 
-[78] Gas Processors Suppliers Association, "Engineering Data Book," GPSA, 2012.
+#par[#text(weight: "bold")[[76]] #h(0.5em) Folas et al., "Application of the cubic-plus-association (\{CPA," Industrial & Engineering Chemistry Research, vol. 44, pp. 3823--3833, 2005.]
 
-[79] Campbell, "Gas Conditioning and Processing, Volume 2: The Equipment Modules," Campbell Petroleum Series, 2014.
+#par[#text(weight: "bold")[[77]] #h(0.5em) McKetta and Wehe, "Use this chart for water content of natural gases," Petroleum Refiner, vol. 37, pp. 153--154, 1958.]
 
-[80] Henry, "Experiments on the quantity of gases absorbed by water, at different temperatures, and under different pressures," Philosophical Transactions of the Royal Society of London, vol. 93, pp. 29--42, 1803.
+#par[#text(weight: "bold")[[78]] #h(0.5em) Gas Processors Suppliers Association, "Engineering Data Book," GPSA, 2012.]
 
-[81] Kidnay et al., "Fundamentals of Natural Gas Processing," CRC Press, 2011.
+#par[#text(weight: "bold")[[79]] #h(0.5em) Campbell, "Gas Conditioning and Processing, Volume 2: The Equipment Modules," Campbell Petroleum Series, 2014.]
 
-[82] Folas et al., "Application of the cubic-plus-association (CPA," Industrial & Engineering Chemistry Research, vol. 46, pp. 3622--3632, 2007.
+#par[#text(weight: "bold")[[80]] #h(0.5em) Henry, "Experiments on the quantity of gases absorbed by water, at different temperatures, and under different pressures," Philosophical Transactions of the Royal Society of London, vol. 93, pp. 29--42, 1803.]
 
-[83] Hammerschmidt, "Formation of gas hydrates in natural gas transmission lines," Industrial & Engineering Chemistry, vol. 26, pp. 851--855, 1934.
+#par[#text(weight: "bold")[[81]] #h(0.5em) Kidnay et al., "Fundamentals of Natural Gas Processing," CRC Press, 2011.]
 
-[84] Sloan and Koh, "Clathrate Hydrates of Natural Gases," CRC Press, 2008.
+#par[#text(weight: "bold")[[82]] #h(0.5em) Folas et al., "Application of the cubic-plus-association (\{CPA," Industrial & Engineering Chemistry Research, vol. 46, pp. 3622--3632, 2007.]
 
-[85] van der Waals and Platteeuw, "Clathrate solutions," Advances in Chemical Physics, vol. 2, pp. 1--57, 1959.
+#par[#text(weight: "bold")[[83]] #h(0.5em) Hammerschmidt, "Formation of gas hydrates in natural gas transmission lines," Industrial & Engineering Chemistry, vol. 26, pp. 851--855, 1934.]
 
-[86] Westman et al., "Vapor-liquid equilibrium data for the carbon dioxide and nitrogen (CO₂ + N₂," Fluid Phase Equilibria, vol. 421, pp. 67--87, 2016.
+#par[#text(weight: "bold")[[84]] #h(0.5em) Sloan and Koh, "Clathrate Hydrates of Natural Gases," CRC Press, 2008.]
 
-[87] Folas et al., "Application of the cubic-plus-association equation of state to mixtures with polar chemicals and high pressures," Industrial & Engineering Chemistry Research, vol. 45, pp. 1527--1538, 2006.
+#par[#text(weight: "bold")[[85]] #h(0.5em) van der Waals and Platteeuw, "Clathrate solutions," Advances in Chemical Physics, vol. 2, pp. 1--57, 1959.]
 
-[88] Oliveira and Coutinho, "Mutual solubilities of hydrocarbons and water with the CPA," Fluid Phase Equilibria, vol. 258, pp. 58--66, 2007.
+#par[#text(weight: "bold")[[86]] #h(0.5em) Westman et al., "Vapor-liquid equilibrium data for the carbon dioxide and nitrogen (\{CO\$\_2\$ + N\$\_2\$," Fluid Phase Equilibria, vol. 421, pp. 67--87, 2016.]
 
-[89] von Solms et al., "Computational and physical performance of a modified PC-SAFT," Industrial & Engineering Chemistry Research, vol. 42, pp. 1098--1105, 2003.
+#par[#text(weight: "bold")[[87]] #h(0.5em) Folas et al., "Application of the cubic-plus-association equation of state to mixtures with polar chemicals and high pressures," Industrial & Engineering Chemistry Research, vol. 45, pp. 1527--1538, 2006.]
 
-[90] Parrish et al., "Phase behavior of the triethylene glycol-water system and dehydration/regeneration design for extremely low dew point requirements," Proceedings of the 65th Annual GPA Convention, 1986.
+#par[#text(weight: "bold")[[88]] #h(0.5em) Oliveira and Coutinho, "Mutual solubilities of hydrocarbons and water with the \{CPA," Fluid Phase Equilibria, vol. 258, pp. 58--66, 2007.]
 
-[91] Tsivintzelis and Kontogeorgis, "Modelling phase equilibria for acid gas mixtures using the CPA," Journal of Supercritical Fluids, vol. 84, pp. generalized, 2014.
+#par[#text(weight: "bold")[[89]] #h(0.5em) von Solms et al., "Computational and physical performance of a modified \{PC-SAFT," Industrial & Engineering Chemistry Research, vol. 42, pp. 1098--1105, 2003.]
 
-[92] Duan and Sun, "An improved model calculating CO₂," Chemical Geology, vol. 193, pp. 257--271, 2003.
+#par[#text(weight: "bold")[[90]] #h(0.5em) Parrish et al., "Phase behavior of the triethylene glycol-water system and dehydration/regeneration design for extremely low dew point requirements," Proceedings of the 65th Annual GPA Convention, 1986.]
 
-[93] Spycher et al., "CO₂-H₂O," Geochimica et Cosmochimica Acta, vol. 67, pp. 3015--3031, 2003.
+#par[#text(weight: "bold")[[91]] #h(0.5em) Tsivintzelis and Kontogeorgis, "Modelling phase equilibria for acid gas mixtures using the \{CPA," Journal of Supercritical Fluids, vol. 84, pp. generalized, 2014.]
 
-[94] Austegard et al., "Thermodynamic models for calculating mutual solubilities in H₂O-CO₂-CH₄," Chemical Engineering Research and Design, vol. 84, pp. 781--794, 2006.
+#par[#text(weight: "bold")[[92]] #h(0.5em) Duan and Sun, "An improved model calculating \{CO\$\_2\$," Chemical Geology, vol. 193, pp. 257--271, 2003.]
 
-[95] DNV GL, "DNV-RP-F104," 2021.
+#par[#text(weight: "bold")[[93]] #h(0.5em) Spycher et al., "\{CO\$\_2\$-H\$\_2\$O," Geochimica et Cosmochimica Acta, vol. 67, pp. 3015--3031, 2003.]
 
-[96] International Organization for Standardization, "ISO 27913," 2016.
+#par[#text(weight: "bold")[[94]] #h(0.5em) Austegard et al., "Thermodynamic models for calculating mutual solubilities in \{H\$\_2\$O-CO\$\_2\$-CH\$\_4\$," Chemical Engineering Research and Design, vol. 84, pp. 781--794, 2006.]
 
-[97] de Visser et al., "Dynamis CO₂ quality recommendations," International Journal of Greenhouse Gas Control, vol. 2, pp. 478--484, 2008.
+#par[#text(weight: "bold")[[95]] #h(0.5em) DNV GL, "\{DNV-RP-F104," 2021.]
 
-[98] Li et al., "Hydrate formation during CO₂," International Journal of Greenhouse Gas Control, vol. 24, pp. 40--46, 2014.
+#par[#text(weight: "bold")[[96]] #h(0.5em) International Organization for Standardization, "\{ISO 27913," 2016.]
 
-[99] Knoope et al., "Improved cost models for optimizing CO₂," International Journal of Greenhouse Gas Control, vol. 22, pp. 25--46, 2014.
+#par[#text(weight: "bold")[[97]] #h(0.5em) de Visser et al., "\{Dynamis CO\$\_2\$ quality recommendations," International Journal of Greenhouse Gas Control, vol. 2, pp. 478--484, 2008.]
 
-[100] de Waard and Milliams, "Carbonic acid corrosion of steel," Corrosion, vol. 31, pp. 177--181, 1975.
+#par[#text(weight: "bold")[[98]] #h(0.5em) Li et al., "Hydrate formation during \{CO\$\_2\$," International Journal of Greenhouse Gas Control, vol. 24, pp. 40--46, 2014.]
 
-[101] Born, "Volumen und Hydratationsw\"arme der Ionen," Zeitschrift f\"u, vol. 1, pp. 45--48, 1920.
+#par[#text(weight: "bold")[[99]] #h(0.5em) Knoope et al., "Improved cost models for optimizing \{CO\$\_2\$," International Journal of Greenhouse Gas Control, vol. 22, pp. 25--46, 2014.]
 
-[102] Blum, "Mean spherical model for asymmetric electrolytes. I," Molecular Physics, vol. 30, pp. 1529--1535, 1975.
+#par[#text(weight: "bold")[[100]] #h(0.5em) de Waard and Milliams, "Carbonic acid corrosion of steel," Corrosion, vol. 31, pp. 177--181, 1975.]
 
-[103] Ornstein and Zernike, "Accidental deviations of density and opalescence at the critical point of a single substance," Proceedings of the Royal Netherlands Academy of Arts and Sciences, vol. 17, pp. 793--806, 1914.
+#par[#text(weight: "bold")[[101]] #h(0.5em) Born, "Volumen und Hydratationsw\\"arme der Ionen," Zeitschrift f\{\\"u, vol. 1, pp. 45--48, 1920.]
 
-[104] Debye and H\"u, "Zur Theorie der Elektrolyte," Physikalische Zeitschrift, vol. 24, pp. 185--206, 1923.
+#par[#text(weight: "bold")[[102]] #h(0.5em) Blum, "Mean spherical model for asymmetric electrolytes. \{I," Molecular Physics, vol. 30, pp. 1529--1535, 1975.]
 
-[105] Maribo-Mogensen et al., "Modeling of dielectric properties of complex fluids with an equation of state," The Journal of Physical Chemistry B, vol. 117, pp. 3389--3397, 2013.
+#par[#text(weight: "bold")[[103]] #h(0.5em) Ornstein and Zernike, "Accidental deviations of density and opalescence at the critical point of a single substance," Proceedings of the Royal Netherlands Academy of Arts and Sciences, vol. 17, pp. 793--806, 1914.]
 
-[106] Stumm and Morgan, "Aquatic Chemistry: Chemical Equilibria and Rates in Natural Waters," John Wiley & Sons, 1996.
+#par[#text(weight: "bold")[[104]] #h(0.5em) Debye and H\\"u, "Zur Theorie der Elektrolyte," Physikalische Zeitschrift, vol. 24, pp. 185--206, 1923.]
 
-[107] Setschenow, "\"U," Zeitschrift f\"u, vol. 4, pp. 117--125, 1889.
+#par[#text(weight: "bold")[[105]] #h(0.5em) Maribo-Mogensen et al., "Modeling of dielectric properties of complex fluids with an equation of state," The Journal of Physical Chemistry B, vol. 117, pp. 3389--3397, 2013.]
 
-[108] Gross and Sadowski, "Application of the perturbed-chain SAFT," Industrial & Engineering Chemistry Research, vol. 41, pp. 5510--5515, 2002.
+#par[#text(weight: "bold")[[106]] #h(0.5em) Stumm and Morgan, "Aquatic Chemistry: Chemical Equilibria and Rates in Natural Waters," John Wiley & Sons, 1996.]
 
-[109] Barker and Henderson, "Perturbation theory and equation of state for fluids. II," The Journal of Chemical Physics, vol. 47, pp. 4714--4721, 1967.
+#par[#text(weight: "bold")[[107]] #h(0.5em) Setschenow, "\{\\"U," Zeitschrift f\{\\"u, vol. 4, pp. 117--125, 1889.]
 
-[110] Mie, "Zur kinetischen Theorie der einatomigen K\"orper," Annalen der Physik, vol. 316, pp. 657--697, 1903.
+#par[#text(weight: "bold")[[108]] #h(0.5em) Gross and Sadowski, "Application of the perturbed-chain \{SAFT," Industrial & Engineering Chemistry Research, vol. 41, pp. 5510--5515, 2002.]
 
-[111] Lennard-Jones, "On the determination of molecular fields," Proceedings of the Royal Society of London. Series A, vol. 106, pp. 463--477, 1924.
+#par[#text(weight: "bold")[[109]] #h(0.5em) Barker and Henderson, "Perturbation theory and equation of state for fluids. \{II," The Journal of Chemical Physics, vol. 47, pp. 4714--4721, 1967.]
 
-[112] Papaioannou et al., "Group contribution methodology based on the statistical associating fluid theory for heteronuclear molecules formed from Mie," The Journal of Chemical Physics, vol. 140, pp. 054107, 2014.
+#par[#text(weight: "bold")[[110]] #h(0.5em) Mie, "\{Zur kinetischen Theorie der einatomigen K\\"orper," Annalen der Physik, vol. 316, pp. 657--697, 1903.]
 
-[113] Lafitte et al., "Accurate statistical associating fluid theory for chain molecules formed from Mie," The Journal of Chemical Physics, vol. 139, pp. 154504, 2013.
+#par[#text(weight: "bold")[[111]] #h(0.5em) Lennard-Jones, "On the determination of molecular fields," Proceedings of the Royal Society of London. Series A, vol. 106, pp. 463--477, 1924.]
 
-[114] Voutsas et al., "Universal mixing rule for cubic equations of state applicable to symmetric and asymmetric systems: results with the Peng-Robinson equation of state," Industrial & Engineering Chemistry Research, vol. 43, pp. 6238--6246, 2004.
+#par[#text(weight: "bold")[[112]] #h(0.5em) Papaioannou et al., "Group contribution methodology based on the statistical associating fluid theory for heteronuclear molecules formed from \{Mie," The Journal of Chemical Physics, vol. 140, pp. 054107, 2014.]
 
-[115] Panayiotou and Sanchez, "Hydrogen bonding in fluids: An equation-of-state approach," The Journal of Physical Chemistry, vol. 95, pp. 10090--10097, 1991.
+#par[#text(weight: "bold")[[113]] #h(0.5em) Lafitte et al., "Accurate statistical associating fluid theory for chain molecules formed from \{Mie," The Journal of Chemical Physics, vol. 139, pp. 154504, 2013.]
 
-[116] Fredenslund et al., "Group-contribution estimation of activity coefficients in nonideal liquid mixtures," AIChE Journal, vol. 21, pp. 1086--1099, 1975.
+#par[#text(weight: "bold")[[114]] #h(0.5em) Voutsas et al., "\{Universal mixing rule for cubic equations of state applicable to symmetric and asymmetric systems: results with the Peng-Robinson equation of state," Industrial & Engineering Chemistry Research, vol. 43, pp. 6238--6246, 2004.]
 
-[117] Li and Firoozabadi, "Modeling asphaltene precipitation by n-alkanes from heavy oils and bitumens using cubic-plus-association equation of state," Energy & Fuels, vol. 24, pp. 1106--1113, 2010.
+#par[#text(weight: "bold")[[115]] #h(0.5em) Panayiotou and Sanchez, "Hydrogen bonding in fluids: An equation-of-state approach," The Journal of Physical Chemistry, vol. 95, pp. 10090--10097, 1991.]
 
-[118] Arya et al., "Determination of asphaltene onset conditions using the cubic plus association equation of state," Fluid Phase Equilibria, vol. 400, pp. 8--19, 2016.
+#par[#text(weight: "bold")[[116]] #h(0.5em) Fredenslund et al., "\{Group-contribution estimation of activity coefficients in nonideal liquid mixtures," AIChE Journal, vol. 21, pp. 1086--1099, 1975.]
 
-[119] Flory, "Thermodynamics of high polymer solutions," The Journal of Chemical Physics, vol. 10, pp. 51--61, 1942.
+#par[#text(weight: "bold")[[117]] #h(0.5em) Li and Firoozabadi, "Modeling asphaltene precipitation by n-alkanes from heavy oils and bitumens using cubic-plus-association equation of state," Energy & Fuels, vol. 24, pp. 1106--1113, 2010.]
 
-[120] Huggins, "Solutions of long chain compounds," The Journal of Chemical Physics, vol. 9, pp. 440, 1941.
+#par[#text(weight: "bold")[[118]] #h(0.5em) Arya et al., "Determination of asphaltene onset conditions using the cubic plus association equation of state," Fluid Phase Equilibria, vol. 400, pp. 8--19, 2016.]
 
-[121] Sanchez and Lacombe, "An elementary molecular theory of classical fluids. Pure," The Journal of Physical Chemistry, vol. 80, pp. 2352--2362, 1976.
+#par[#text(weight: "bold")[[119]] #h(0.5em) Flory, "Thermodynamics of high polymer solutions," The Journal of Chemical Physics, vol. 10, pp. 51--61, 1942.]
+
+#par[#text(weight: "bold")[[120]] #h(0.5em) Huggins, "Solutions of long chain compounds," The Journal of Chemical Physics, vol. 9, pp. 440, 1941.]
+
+#par[#text(weight: "bold")[[121]] #h(0.5em) Sanchez and Lacombe, "An elementary molecular theory of classical fluids. \{Pure," The Journal of Physical Chemistry, vol. 80, pp. 2352--2362, 1976.]

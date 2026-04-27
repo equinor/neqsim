@@ -33,6 +33,17 @@ neqsim-paperlab/skills/book_creation/SKILL.md
 This contains the complete reference for book.yaml structure, equation handling,
 figure management, build commands, and troubleshooting.
 
+When the book contains any quantitative claim derived from a NeqSim
+simulation (i.e., almost always for NeqSim-related books), ALSO load:
+
+```
+neqsim-paperlab/skills/neqsim_in_writing/SKILL.md
+```
+
+It defines the dual-boot setup cell, claim-to-test linkage, equation-to-Java
+method cross-references, units enforcement, and notebook-driven figure /
+results-table injection.
+
 ---
 
 ## Your Responsibilities
@@ -167,6 +178,249 @@ After every build:
 2. Open `submission/book.html` — verify equations render with KaTeX
 3. Open `submission/book.docx` — verify native OMML equations
 4. Run quality checks: `python paperflow.py book-check books/<dir>/`
+
+### 6. Professional Typesetting (MANDATORY before final PDF)
+
+PaperLab's PDF renderer (`tools/book_render_pdf.py`) emits a Typst preamble
+that produces a publisher-quality book. You are responsible for verifying the
+final PDF meets professional typesetting standards. See section "7a.
+Professional Typesetting" of `skills/book_creation/SKILL.md` for the full
+reference.
+
+After running `book-render --format pdf`, open `submission/book.pdf` and
+verify ALL of the following:
+
+- [ ] Publisher profile in `books/_publisher_profiles/<name>.yaml` matches the
+      `publisher:` field of `book.yaml`. If not, the renderer falls back to
+      A4 / generic margins.
+- [ ] `trim_size` matches the chosen book format (e.g. `155x235mm` for B5
+      Springer monographs, `178x254mm` for Wiley royal octavo).
+- [ ] Chapter 1 starts on a recto (right-hand) page.
+- [ ] Even-page running header is left-aligned, odd-page is right-aligned;
+      both display the chapter title in tracked smallcaps.
+- [ ] The cover/title page does not show a running header.
+- [ ] Each chapter opens with a "Chapter N" smallcaps line, a thin coloured
+      rule, and a coloured chapter title.
+- [ ] Equations are numbered `(chapter.eq)` and the counter resets at every
+      chapter.
+- [ ] Tables use booktabs style — only thin top + bottom horizontal rules,
+      no vertical rules; table text is 9 pt.
+- [ ] The reference list is hanging-indented with bold reference numbers.
+- [ ] Body paragraphs are justified, hyphenated, with first-line indent
+      (except after headings); no rivers or large word gaps.
+
+If any check fails, fix `tools/book_render_pdf.py`
+(`build_book_typst_preamble`) — never edit the generated `submission/book.typ`
+by hand.
+
+### 7. NeqSim Claim Validation (MANDATORY for any quantitative statement)
+
+Every numeric value, equation prediction, or qualitative behavioral claim that
+depends on NeqSim must trace to a runnable artifact. See
+`skills/neqsim_in_writing/SKILL.md` for the full pattern. Minimum acceptance
+criteria for every chapter:
+
+- [ ] Notebook starts with the dual-boot setup cell.
+- [ ] Every quantitative claim in prose carries an `<!-- @neqsim:claim ... -->`
+      block linking to a JUnit test or regression baseline.
+- [ ] Every equation that NeqSim implements numerically carries an
+      `<!-- @neqsim:eq method=... -->` marker.
+- [ ] Every figure has descriptive alt text (passes the accessibility gate)
+      and a `<!-- @neqsim:figure source=... cell=... -->` marker.
+- [ ] Every results table is wrapped in `<!-- @neqsim:table id=... -->` /
+      `<!-- @neqsim:table-end -->` markers, regenerated from the notebook.
+- [ ] Symbols used in prose appear in `nomenclature.yaml` with consistent SI
+      units; NeqSim getter/setter calls in the notebook use matching unit
+      strings.
+- [ ] Worked examples have a corresponding regression-baseline JUnit test in
+      `src/test/java/neqsim/book/<book_slug>/`.
+
+### 8. Pre-Render Workflow Steps
+
+In addition to running notebooks, build, and check, two new steps are
+mandatory before the final render:
+
+1. **Live preview during writing** — keep
+   `paperflow.py book-preview books/<dir>` running in a side terminal. It
+   re-renders HTML on every save and pushes a browser reload via SSE.
+2. **Bibliography enrichment** — before any final render, run
+   `paperflow.py book-enrich-bib books/<dir>` to validate every DOI against
+   Crossref, attach DOIs to entries that are missing one, and surface
+   title/year mismatches. Fix the warnings before rendering.
+3. **Format coverage** — render PDF, EPUB, DOCX, and HTML for every release
+   candidate. EPUB enforces accessibility rigorously; if it builds cleanly the
+   other formats almost always pass too.
+
+---
+
+## Long-form Drafting Pipeline (1000-page books from one command)
+
+For full-length books (hundreds of pages), the legacy `book-draft` command
+is **not** sufficient — it only stamps `content_guidance` strings into
+markdown. Use the orchestrated pipeline instead:
+
+```bash
+# 1. Scaffold (existing)
+python paperflow.py book-create books/my_book "My Book Title" "Author"
+
+# 2. Edit books/my_book/book.yaml — set chapter titles + target_pages
+
+# 3. Expand chapters into fine-grained section outlines (LLM call per chapter)
+python paperflow.py book-expand-outline books/my_book \
+    --provider litellm --model gpt-4o --target-pages 30
+
+# 4. Edit books/my_book/chapter_outlines.yaml manually if desired
+#    (key_points, must_cite keys, target_words per section)
+
+# 5. Draft every section — long-running, checkpointed, resumable
+python paperflow.py book-write books/my_book \
+    --provider litellm --model gpt-4o --no-confirm
+
+# Resume after Ctrl-C / crash / rate limit:
+python paperflow.py book-write books/my_book   # --resume is the default
+
+# Redraft a specific section:
+python paperflow.py book-write books/my_book --section 4.3 --no-resume
+
+# 5b. (Optional but recommended for 1000-page books) auto-generate one
+#     Jupyter notebook per (section, figure-group) declared in the outline.
+python paperflow.py book-plan-notebooks books/my_book \
+    --provider litellm --model gpt-4o
+
+# 6. Build figures from notebooks + render
+python paperflow.py book-build books/my_book --format html
+```
+
+### Figure handling
+
+The pipeline supports figures through **four** complementary mechanisms —
+use them in order for a fully autonomous 1000-page book:
+
+1. **Outline-declared figures (preferred)** — each section in
+   `chapter_outlines.yaml` may carry a `figures` list with
+   `file`, `caption`, and `notebook` for each plot. The LLM is then
+   instructed to insert `![<caption>](figures/<file>)` inline at the
+   point where the figure is first discussed. Example:
+
+   ```yaml
+   sections:
+     - id: "4.3"
+       heading: "4.3 Worked example: gas dehydration"
+       target_words: 1200
+       key_points: [...]
+       figures:
+         - file: "4_3_water_dewpoint.png"
+           caption: "Predicted water dew-point of the dehydrated gas."
+           notebook: "4_3_dehydration.ipynb"
+   ```
+
+2. **Auto-generated notebooks** — `book-plan-notebooks` reads the outline
+   and, for every unique `(section, notebook)` pair, calls the LLM to
+   produce a runnable Jupyter notebook at
+   `chapters/<dir>/notebooks/<notebook>.ipynb`. Each generated notebook
+   uses `from neqsim import jneqsim`, builds a fluid / process appropriate
+   to the section, and saves each declared PNG to `../figures/<file>`.
+   Existing notebooks are skipped unless `--force`. Use `--no-llm` for a
+   deterministic offline fallback (generic NeqSim density plot per
+   figure) — useful in CI.
+
+3. **Auto-discovery** — at stitch time, `book_writer.stitch_chapter()`
+   scans `chapters/<dir>/figures/*.png` and appends any PNGs not already
+   referenced inline to a `## Figures` section at the end of `chapter.md`.
+   This guarantees every plot the notebooks produced ends up in the book
+   even if the outline did not declare it.
+
+4. **Notebook execution** — figures are produced by running the chapter
+   notebooks under `chapters/<dir>/notebooks/` via
+   `python paperflow.py book-run-notebooks <book_dir>` or as part of
+   `book-build` (which runs notebooks then renders).
+
+**Recommended order (full autonomous loop):**
+
+```bash
+# (a) plan sections + figures
+python paperflow.py book-expand-outline books/my_book
+# (b) generate notebook stubs for every figure declared in the outline
+python paperflow.py book-plan-notebooks books/my_book
+# (c) draft prose with inline figure refs
+python paperflow.py book-write books/my_book --no-confirm
+# (d) execute notebooks → produces figures/*.png on disk
+python paperflow.py book-run-notebooks books/my_book
+# (e) render — picks up figures and orphans
+python paperflow.py book-build books/my_book --format html
+```
+
+The first time through, expect to inspect a handful of LLM-generated
+notebooks and refine them by hand. `book-plan-notebooks` will skip any
+notebook that already exists, so manual edits survive subsequent
+re-plans. Run with `--force` to regenerate.
+
+### LLM provider — no API key required
+
+The pipeline supports two **key-free** providers in addition to the
+SDK-based ones (litellm / openai / anthropic):
+
+| Provider          | Auth                                  | When to use                          |
+|-------------------|---------------------------------------|--------------------------------------|
+| `litellm`         | `OPENAI_API_KEY` or similar in env    | Unattended overnight runs.           |
+| `github`          | `gh auth login` (one-time, no key)    | GitHub Models via your GitHub auth;  |
+|                   |                                       | rate-limited but free.               |
+| `copilot-bridge`  | None — uses an in-IDE Copilot agent   | Interactive VS Code work: the       |
+|                   |                                       | running Copilot Chat session IS the |
+|                   |                                       | LLM, no API key, no extra cost.     |
+
+`copilot-bridge` works via files. `paperflow` writes each prompt to
+`.llm_bridge/pending/<id>.json` and polls `.llm_bridge/done/<id>.json`.
+The Copilot agent answers with `bridge_serve.py`:
+
+```bash
+python neqsim-paperlab/tools/bridge_serve.py list
+python neqsim-paperlab/tools/bridge_serve.py show <id>
+python neqsim-paperlab/tools/bridge_serve.py answer <id> reply.md
+```
+
+Example invocation routing everything through the running Copilot
+session — no API key needed:
+
+```bash
+python paperflow.py book-write books/my_book \
+    --provider copilot-bridge --chapter ch01_introduction
+```
+
+### Scale and runtime
+
+A 1000-page book = roughly 800 sections of ~500 words each. At ~30–60 s
+per LLM call this is **8–15 hours of unattended runtime**. The pipeline
+checkpoints to `.book_write_progress.json` after every section, so you
+can interrupt freely and resume.
+
+### Architectural notes
+
+- **One LLM call per section** — keeps each call within the reliable
+  output budget. Quality is much higher than asking for a whole chapter.
+- **Continuity** — each call receives the last paragraph of the
+  previous section to prevent duplication and maintain flow.
+- **Citation discipline** — refs.bib excerpt is passed in every call.
+  Build a comprehensive `refs.bib` BEFORE running `book-write` (see
+  Section 0 above).
+- **Stitching** — after all sections are drafted, the orchestrator
+  optionally calls the LLM once per chapter to write a 200–350-word
+  introduction and 150–250-word summary, then assembles
+  `chapters/<dir>/chapter.md`.
+
+### Cost guidance
+
+`book-write` prints a cost estimate before starting. A 1000-page book at
+mid-range pricing ($2.50/Mtok in, $10/Mtok out) is roughly $15–25 in API
+fees. Use `--dry-run` to see the plan without spending tokens.
+
+### Per-section subagent
+
+The `tools/book_writer.py` orchestrator does not literally invoke the
+`section-writer` subagent — it inlines the same prompt directly into
+each LLM call for efficiency. The `agents/section_writer.agent.md` file
+is provided for **interactive** use (Copilot / Claude Code agent mode)
+when a human wants to draft or rewrite a single section.
 
 ---
 
