@@ -83,9 +83,12 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   /** Restart threshold parameter alpha (supercritical detection). */
   static final double RESTART_ALPHA = 0.1;
 
-  // --- Site type mapping (transient, rebuilt each molarVolume call) ---
+  // --- Site type mapping (transient, cached across molarVolume calls;
+  // rebuilt only when the number of association sites changes) ---
   /** Number of unique site types for the current system. */
   private transient int numTypes = -1;
+  /** Cached ns used to build the current map (-1 = invalid). */
+  private transient int cachedNs = -1;
   /** Maps individual site index to type index. */
   private transient int[] siteToType;
   /** Representative individual site index for each type. */
@@ -94,6 +97,17 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   private transient int[] typeMult;
   /** Component index for each type. */
   private transient int[] typeCompIdx;
+
+  // --- Per-iteration work arrays for the reduced Newton solver (cached) ---
+  private transient double[] workRedSum = null;
+  private transient double[] workXSiteFullRead = null;
+  private transient double[] workXType = null;
+  private transient double[] workTMoles = null;
+  private transient double[] workResidual = null;
+  private transient double[][] workJacobian = null;
+  private transient double[] workDx = null;
+  private transient int workNewtonP = 0;
+  private transient int workNewtonNs = 0;
 
   // --- Profiling counters ---
   /** Number of molarVolume calls. */
@@ -133,6 +147,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     try {
       clonedPhase = (PhaseSrkCPAfullyImplicitReduced) super.clone();
       clonedPhase.numTypes = -1;
+      clonedPhase.cachedNs = -1;
       clonedPhase.siteToType = null;
       clonedPhase.typeRepSite = null;
       clonedPhase.typeMult = null;
@@ -144,6 +159,15 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       clonedPhase.workKlkKsi = null;
       clonedPhase.workXV = null;
       clonedPhase.workP = 0;
+      clonedPhase.workRedSum = null;
+      clonedPhase.workXSiteFullRead = null;
+      clonedPhase.workXType = null;
+      clonedPhase.workTMoles = null;
+      clonedPhase.workResidual = null;
+      clonedPhase.workJacobian = null;
+      clonedPhase.workDx = null;
+      clonedPhase.workNewtonP = 0;
+      clonedPhase.workNewtonNs = 0;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -154,6 +178,11 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, moles, molesInPhase, compNumber);
+    // Component set changed: invalidate cached type map and Newton work arrays.
+    cachedNs = -1;
+    numTypes = -1;
+    workNewtonP = 0;
+    workNewtonNs = 0;
   }
 
   /**
@@ -177,15 +206,20 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
-    // Build site type map early so initCPAMatrix(1) works even for gas-phase
-    // fallback
-    calcDelta();
-    buildSiteTypeMap(ns);
-
-    // Gas phase: nested solver (weak association, but initCPAMatrix override is
-    // active)
+    // Gas phase: defer to nested solver (the parent's initCPAMatrix(1)
+    // override on the cached type map gives the same volume derivatives;
+    // skip the redundant calcDelta + buildSiteTypeMap up front).
     if (pt == PhaseType.GAS) {
       return super.molarVolume(pressure, temperature, A, B, pt);
+    }
+
+    // Build site type map only when invalid for current ns (cached otherwise)
+    if (cachedNs != ns || siteToType == null) {
+      calcDelta();
+      buildSiteTypeMap(ns);
+      cachedNs = ns;
+    } else {
+      calcDelta();
     }
 
     callCount++;
@@ -207,6 +241,19 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     int p = numTypes;
     int dim = p + 1;
 
+    // --- Ensure Newton work arrays are sized correctly (cached across calls) ---
+    if (workNewtonP != p || workNewtonNs != ns) {
+      workRedSum = new double[p];
+      workXSiteFullRead = new double[ns];
+      workXType = new double[p];
+      workTMoles = new double[p];
+      workResidual = new double[dim];
+      workJacobian = new double[dim][dim];
+      workDx = new double[dim];
+      workNewtonP = p;
+      workNewtonNs = ns;
+    }
+
     // --- Initial guess for zeta = B/(n*V) ---
     double zeta;
     if (pt == PhaseType.GAS) {
@@ -224,10 +271,10 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     gcpav = calc_lngV();
     updateDeltaWithG(ns);
 
-    double[] xSiteFull = new double[ns];
+    double[] xSiteFull = workXSiteFullRead;
     readXsiteFromComponents(xSiteFull, ns);
 
-    double[] xType = new double[p];
+    double[] xType = workXType;
     boolean needsInit = false;
     for (int t = 0; t < p; t++) {
       double val = xSiteFull[typeRepSite[t]];
@@ -250,15 +297,15 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     }
 
     // Cache moles per type
-    double[] tMoles = new double[p];
+    double[] tMoles = workTMoles;
     for (int t = 0; t < p; t++) {
       tMoles[t] = componentArray[typeCompIdx[t]].getNumberOfMolesInPhase();
     }
 
-    // --- Pre-allocate work arrays ---
-    double[] residual = new double[dim];
-    double[][] jacobian = new double[dim][dim];
-    double[] dx = new double[dim];
+    // --- Reuse pre-allocated work arrays ---
+    double[] residual = workResidual;
+    double[][] jacobian = workJacobian;
+    double[] dx = workDx;
 
     int iterations = 0;
     boolean converged = false;
@@ -311,7 +358,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       dFCPAdVdV = -0.5 * sumFVV;
 
       // --- Build reduced residual ---
-      double[] redSum = new double[p];
+      double[] redSum = workRedSum;
       for (int a = 0; a < p; a++) {
         double s = 0.0;
         for (int b = 0; b < p; b++) {
