@@ -1,0 +1,21 @@
+{
+  "_comment": "EQN scrubber pi-number regression coefficients. Numbers only — no raw test rows. Equinor-internal.",
+  "version": "1.0.0",
+  "pi_coefficients": {
+    "_pi1_geometry": 0.0,
+    "_pi2_momentum": 0.0,
+    "_pi3_density_ratio": 0.0,
+    "_pi4_weber": 0.0
+  },
+  "residual_standard_error_log10": 0.0,
+  "envelope": {
+    "vessel_id_min_m": 0.5,
+    "vessel_id_max_m": 4.0,
+    "nozzle_id_min_m": 0.05,
+    "nozzle_id_max_m": 1.0,
+    "gas_density_min_kg_m3": 1.0,
+    "gas_density_max_kg_m3": 200.0,
+    "surface_tension_min_N_m": 0.005,
+    "surface_tension_max_N_m": 0.030
+  }
+}

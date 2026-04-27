@@ -276,6 +276,15 @@ public class Separator extends ProcessEquipmentBaseClass
   private boolean useDetailedEntrainmentCalculation = false;
 
   /**
+   * Pluggable entrainment / carry-over provider selected via
+   * {@link #setEntrainmentProvider(String)}. When null, the built-in
+   * {@code SeparatorPerformanceCalculator} chain is used. Marked transient
+   * because providers loaded via {@code ServiceLoader} may not be
+   * {@link java.io.Serializable}.
+   */
+  private transient neqsim.process.equipment.separator.entrainment.EnhancedEntrainmentProvider entrainmentProvider;
+
+  /**
    * Constructor for Separator.
    *
    * @param name Name of separator
@@ -1201,6 +1210,43 @@ public class Separator extends ProcessEquipmentBaseClass
   public boolean isEnhancedEntrainmentCalculation() {
     return useDetailedEntrainmentCalculation && performanceCalculator != null
         && performanceCalculator.isUseEnhancedCalculation();
+  }
+
+  /**
+   * Selects a pluggable entrainment / carry-over provider by id. The provider
+   * is looked up via
+   * {@link neqsim.process.equipment.separator.entrainment.EntrainmentProviderRegistry}
+   * which delegates to {@link java.util.ServiceLoader}; private plug-ins
+   * (such as the Equinor π-number plug-in {@code "eqn-pi-v1"}) are picked up
+   * automatically when their JAR is on the classpath. Pass {@code null} to
+   * clear the selection and fall back to the built-in
+   * {@code SeparatorPerformanceCalculator} chain.
+   *
+   * @param providerId the provider id, e.g. {@code "neqsim-7stage"} or
+   *        {@code "eqn-pi-v1"}; pass {@code null} to clear
+   * @throws IllegalStateException if {@code providerId} is non-null and no
+   *         matching provider is registered (typically because the
+   *         providing JAR is not on the classpath)
+   */
+  public void setEntrainmentProvider(String providerId) {
+    if (providerId == null) {
+      this.entrainmentProvider = null;
+      return;
+    }
+    this.entrainmentProvider =
+        neqsim.process.equipment.separator.entrainment.EntrainmentProviderRegistry
+            .find(providerId);
+  }
+
+  /**
+   * Returns the active pluggable entrainment provider, or {@code null} if
+   * none has been selected (in which case the built-in
+   * {@code SeparatorPerformanceCalculator} chain is used).
+   *
+   * @return the active provider or {@code null}
+   */
+  public neqsim.process.equipment.separator.entrainment.EnhancedEntrainmentProvider getEntrainmentProvider() {
+    return entrainmentProvider;
   }
 
   /**
