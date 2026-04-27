@@ -2553,6 +2553,7 @@ public class TPmultiflash extends TPflash {
           system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
+          i--; // indices shift after removal — re-check the (new) phase at i
         }
       }
 

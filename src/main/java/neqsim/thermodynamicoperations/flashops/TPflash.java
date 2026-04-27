@@ -567,9 +567,16 @@ public class TPflash extends Flash {
         } else if (iterations >= activeNewtonLimit
             && (!system.doEnhancedMultiPhaseCheck() || deviation < 0.05) && Math
                 .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
-          if (iterations == activeNewtonLimit || secondOrderSolver == null) {
+          // Recreate the second-order solver only when needed: never created yet, or the
+          // component count changed (e.g. solid precipitation removed a component, or the
+          // flash instance is being reused on a different system). Avoids re-allocating
+          // Jacobian / EJML buffers every time iterations reaches the Newton trigger.
+          if (secondOrderSolver == null || secondOrderSolver
+              .getNumberOfComponents() != system.getPhases()[0].getNumberOfComponents()) {
             secondOrderSolver = new SysNewtonRhapsonTPflash(system, 2,
                 system.getPhases()[0].getNumberOfComponents());
+          } else {
+            secondOrderSolver.setSystem(system);
           }
           try {
             deviation = secondOrderSolver.solve();
@@ -662,6 +669,7 @@ public class TPflash extends Flash {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
         system.removePhase(i);
+        i--; // indices shift after removal — re-check the (new) phase at i
       }
     }
     system.orderByDensity();
