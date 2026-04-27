@@ -5,6 +5,19 @@ description: "Physics-based separator performance modeling with droplet size dis
 
 # Enhanced Separator Entrainment Modeling
 
+> **Where this fits.** This page documents **approach (3)** — the physics-based
+> entrainment model — from the entrainment-model summary in the main
+> separator reference.
+>
+> - Main separator API, separator types (two-phase, three-phase, gas
+>   scrubber), TR3500 conformity, capacity constraints:
+>   [Separator Equipment](separators.md).
+> - Side-by-side comparison of the three available approaches (ideal flash,
+>   user-specified fractions, physics-based):
+>   [Choosing an entrainment / carry-over model](separators.md#choosing-an-entrainment--carry-over-model).
+> - Looking specifically for a **gas scrubber / knockout drum**?
+>   [Gas Scrubbers](scrubbers.md).
+
 Physics-based, inlet-to-outlet separator performance calculation using open-literature
 correlations. This is an optional enhancement to the standard NeqSim separator that
 computes entrainment from first principles rather than user-specified fractions.

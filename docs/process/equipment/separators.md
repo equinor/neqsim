@@ -6,10 +6,14 @@ keywords: "separator, two-phase, three-phase, gas-oil-water, test separator, scr
 
 # Separator Equipment
 
-Documentation for separator equipment in NeqSim process simulation.
+Documentation for separator equipment in NeqSim process simulation —
+**two-phase separators, three-phase separators, and gas scrubbers / knockout
+drums** (this page is also the entry point for the gas-scrubber API; see
+[`scrubbers.md`](scrubbers.md) for a vocabulary-first redirect).
 
 ## Table of Contents
 - [Overview](#overview)
+- [Choosing an entrainment / carry-over model](#choosing-an-entrainment--carry-over-model)
 - [Separator Types](#separator-types)
 - [Three-Phase Separator in Detail](#three-phase-separator-in-detail)
 - [Entrainment](#entrainment)
@@ -20,11 +24,13 @@ Documentation for separator equipment in NeqSim process simulation.
 - [Constraint Selection Methods](#constraint-selection-methods)
 - [Usage Examples](#usage-examples)
 - [Design Calculations](#design-calculations)
+- [Constraint Sources: Conformity vs. User Rules vs. Empirical](#constraint-sources-conformity-vs-user-rules-vs-empirical)
 
-> **Enhanced Entrainment Modeling:** For physics-based separator performance
-> calculations using droplet size distributions, flow regime prediction,
-> inlet device modeling, grade efficiency curves, and internals databases,
-> see the [Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md) guide.
+> **Looking for the physics-based / DSD / grade-efficiency model?** It is one
+> of the three approaches summarised in
+> [Choosing an entrainment / carry-over model](#choosing-an-entrainment--carry-over-model)
+> below. The full reference for that mode lives in the companion guide
+> [Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md).
 
 ---
 
@@ -51,6 +57,57 @@ Documentation for separator equipment in NeqSim process simulation.
 | Constraint **source** flag (provenance)                 | `CapacityConstraint.ConstraintSource`                     | New        |
 | Empirical carry-over constraint (calibrated)            | `EmpiricalCarryOverConstraint`                            | New (stub) |
 | Optimizer integration (bottleneck, max throughput)      | `ProductionOptimizer`, `ProcessOptimizationEngine`        | Stable     |
+
+---
+
+## Choosing an entrainment / carry-over model
+
+NeqSim offers **three approaches** for representing imperfect gas/liquid
+separation. They are mutually exclusive on a given separator — pick one.
+Detailed mechanics for the user-specified path live in
+[Entrainment](#entrainment) further down; the physics-based path is fully
+documented in
+[Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md).
+
+| #   | Approach                              | What you provide                                                                | What NeqSim returns                                                                                                                                              | Best for                                                              |
+|-----|---------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| (1) | **Ideal flash (default)**             | Nothing — just `new Separator(...)`.                                            | Perfect equilibrium split. Zero carry-over either way.                                                                                                           | First-pass mass balance, EOS testing, screening.                      |
+| (2) | **User-specified fractions**          | Carry-over fractions per phase pair via `setEntrainment(val, basis, ref, from, to)`. | Equilibrium flash plus the user fraction transferred between outlets.                                                                                            | Calibration to plant data, sensitivity scans, PFD-level studies.      |
+| (3) | **Physics-based (enhanced) model**    | Vessel geometry + internals (mesh / vane / cyclone / inlet device). Enabled via `setEnhancedEntrainmentCalculation(true)`. | A 7-stage chain: flow-regime prediction → droplet-size distribution → inlet-device transformation → gravity settling cut-size → mist-eliminator grade efficiency → liquid-liquid (3-phase). Returns carry-over kg/h, K-factor, flooding margin, and demister utilisation. | Mechanical / FEED design, internals selection, vendor comparison, MySep-style studies. |
+
+### When to choose which
+
+- Just need a **mass balance**? Use (1) — the default.
+- Have **measured carry-over** at a few operating points? Use (2) — match the
+  fractions, then use the same `setEntrainment` calls in scenario sweeps.
+- Need to know **whether a wire-mesh / vane pack / cyclone deck will hold up
+  at higher throughput**, or to compare a vendor proposal? Use (3) — that
+  is what the enhanced model is for.
+
+### One-liner examples
+
+```java
+Separator sep = new Separator("HP Sep", feed);
+sep.setInternalDiameter(2.0);
+sep.setSeparatorLength(6.0);
+
+// (1) Ideal flash — do nothing extra.
+
+// (2) User-specified: 5 mass% liquid carry-over into the gas.
+sep.setEntrainment(0.05, "mass", "feed", "oil", "gas");
+
+// (3) Physics-based: enable the 7-stage chain.
+sep.setEnhancedEntrainmentCalculation(true);
+
+sep.run();
+```
+
+The TR3500 conformity rule set (vessel K-factor, inlet ρv², mesh-K, drainage
+head) and the capacity-constraint framework
+([Constraint Sources](#constraint-sources-conformity-vs-user-rules-vs-empirical))
+are **orthogonal** to this choice — they apply to all three modes and tell you
+whether the geometry / internals you picked are acceptable per a standard or
+your own empirical limit.
 
 ---
 
@@ -213,27 +270,17 @@ separator.setWaterOutletFlowFraction(0.9);
 
 ## Entrainment
 
-Entrainment models imperfect separation by transferring a fraction of one phase
-into another outlet stream (e.g., liquid carry-over in the gas outlet, gas
-carry-under in the liquid outlet).
-
-NeqSim supports **two ways** of providing this fraction. They are mutually
-exclusive on a given separator — pick one:
-
-| Mode                     | Source of the fraction                                              | When to use                                                                                              | API                                              |
-|--------------------------|---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| **User-specified**       | You provide a fixed fraction (e.g., 5 % oil-in-gas) per phase pair. | Fast PFD-level mass balance, calibration to plant data, sensitivity scans where carry-over is an input.  | `separator.setEntrainment(...)` — see below.     |
-| **Computed by NeqSim**   | Derived from droplet-size distribution + vessel geometry + internals via the 7-stage performance chain (flow regime → DSD → inlet device → gravity section → mist eliminator → liquid-liquid). | Mechanical design, internals selection, what-if studies on geometry/internals, comparing to MySep/ProSep style tools. | `separator.setEnhancedEntrainmentCalculation(true)` — see [Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md). |
-
-The **user-specified** path is documented in this section. The **computed** path
-is documented in detail in
-[Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md);
-when enabled it overrides the user fractions and instead returns physics-based
-carry-over numbers (kg/h of each phase) plus K-factor and flooding margin.
+This section documents **approach (2) — user-specified fractions** from the
+[entrainment-model summary above](#choosing-an-entrainment--carry-over-model).
+It transfers a user-supplied fraction of one phase into another outlet (e.g.,
+oil-in-gas, water-in-gas, gas-in-liquid). For approach (1) you do nothing;
+for approach (3) see
+[Enhanced Separator Entrainment Modeling](separator-entrainment-modeling.md).
 
 > **Default behaviour.** If you do nothing, the separator runs an ideal flash
-> with **zero entrainment** in either direction. You opt into one of the two
-> modes above explicitly.
+> with **zero entrainment** in either direction. You opt into a non-ideal
+> mode explicitly via `setEntrainment(...)` (this section) or
+> `setEnhancedEntrainmentCalculation(true)` (the physics-based path).
 
 ### Method Signature
 

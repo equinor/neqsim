@@ -20,7 +20,9 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Separators | [separators.md](separators) | 2-phase and 3-phase separators, scrubbers |
+| Separators | [separators.md](separators) | 2-phase and 3-phase separators, scrubbers — main reference |
+| Gas Scrubbers | [scrubbers.md](scrubbers) | Vocabulary-first redirect for KO drums / suction scrubbers |
+| Enhanced Entrainment | [separator-entrainment-modeling.md](separator-entrainment-modeling) | Physics-based DSD / grade-efficiency model |
 | Distillation | [distillation.md](distillation) | Distillation columns |
 | Absorbers | [absorbers.md](absorbers) | Absorption/stripping columns |
 | Membranes | [membranes.md](membranes) | Membrane separation units |
