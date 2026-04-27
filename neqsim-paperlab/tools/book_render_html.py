@@ -816,11 +816,79 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
         end = headings[i + 1][0] if i + 1 < len(headings) else len(md_text)
         spans.append((h_end, end, title))
 
-    # Allocate figures to sections, round-robin.
+    # Allocate figures to sections by keyword overlap between the slide
+    # text (title+body) and each section title+body. Sections that look
+    # like generic admin blocks (Learning objectives, Self-test, Summary,
+    # Exercises, Theoretical foundations, Worked examples, Key terms,
+    # Further reading, Chapter summary) are excluded from being a target
+    # so figures land in the technical sections that actually discuss
+    # them. Falls back to round-robin only when no section scores > 0.
     n_sec = len(spans)
+    _stop = {
+        "the", "a", "an", "and", "or", "for", "of", "to", "in", "on",
+        "at", "by", "with", "from", "is", "are", "as", "this", "that",
+        "be", "it", "its", "we", "you", "your", "their", "ref", "https",
+        "www", "com", "slide", "fig", "figure",
+    }
+    _admin_keywords = (
+        "learning objectives", "self-test", "self test", "exercises",
+        "summary", "key terms", "further reading", "chapter summary",
+        "theoretical foundations", "worked examples and computer experiments",
+        "annotated bibliography", "literature review", "key equations",
+        "discussion",
+    )
+
+    def _tokenise(s):
+        if not s:
+            return set()
+        return {
+            t for t in re.findall(r"[a-zA-Z][a-zA-Z0-9]+", s.lower())
+            if len(t) > 2 and t not in _stop
+        }
+
+    def _is_admin(title):
+        tl = title.lower()
+        return any(k in tl for k in _admin_keywords)
+
+    section_kws = []
+    for (s_start, s_end, title) in spans:
+        body = md_text[s_start:s_end]
+        section_kws.append(_tokenise(title + " " + body))
+
     alloc = [[] for _ in range(n_sec)]
-    for i, e in enumerate(selected):
-        alloc[i % n_sec].append(e)
+
+    def _score(entry, idx):
+        title = spans[idx][2]
+        if _is_admin(title):
+            return -1
+        slide_kws = _tokenise(
+            (entry.get("slide_title") or "") + " " +
+            (entry.get("slide_body") or "")
+        )
+        if not slide_kws:
+            return 0
+        title_kws = _tokenise(title)
+        sec_body_kws = section_kws[idx]
+        score = 0
+        for kw in slide_kws:
+            if kw in title_kws:
+                score += 3
+            elif kw in sec_body_kws:
+                score += 1
+        return score
+
+    for e in selected:
+        scores = [(_score(e, i), -len(alloc[i]), i) for i in range(n_sec)]
+        scores.sort(reverse=True)
+        best_score, _, best_idx = scores[0]
+        if best_score <= 0:
+            # No keyword hit anywhere — pick the least-loaded non-admin section.
+            non_admin = [i for i in range(n_sec) if not _is_admin(spans[i][2])]
+            if non_admin:
+                best_idx = min(non_admin, key=lambda i: len(alloc[i]))
+            else:
+                best_idx = min(range(n_sec), key=lambda i: len(alloc[i]))
+        alloc[best_idx].append(e)
 
     # Walk md_text and rebuild with figures inserted at the END of each
     # section (before the next H2 / end of text).
