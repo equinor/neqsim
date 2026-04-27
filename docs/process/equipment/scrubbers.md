@@ -49,6 +49,9 @@ d.setConformityRules("TR3500");
 // Inspect the converged process result (T, P, flows for each outlet stream)
 scrubber.displayResult();
 
+// Print the full mechanical-design report (vessel, internals, weights, sizing)
+System.out.println(d.toTextReport());
+
 // Run the TR3500 rule set and print PASS / WARN / FAIL for every check
 System.out.println(d.checkConformity().toTextReport());
 
