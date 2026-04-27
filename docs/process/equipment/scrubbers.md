@@ -46,6 +46,12 @@ d.setDemistingCyclones(256, 0.110, 3.287, 0.943);
 d.setInletDevice("schoepentoeter");
 d.setConformityRules("TR3500");
 
+// Inspect the converged process result (T, P, flows for each outlet stream)
+scrubber.displayResult();
+
+// Run the TR3500 rule set and print PASS / WARN / FAIL for every check
+System.out.println(d.checkConformity().toTextReport());
+
 // Carry-over model — pick one of the three options described in separators.md
 // (1) Default: nothing to do.
 // (2) User-specified: scrubber.setEntrainment(0.001, "volume", "feed", "oil", "gas");
