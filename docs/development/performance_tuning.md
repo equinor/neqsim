@@ -18,7 +18,8 @@ This guide explains each flag, its impact, and when to use it.
 **You probably don't need to do anything.** Since 2026-04-21 warm-start is
 applied automatically inside all iterative flashes that wrap a TPflash outer
 loop (`PSflash`, `PHflash`, `PVflash`, `PUflash`, `TVflash`, `PVFflash`,
-`PHsolidFlash`, `OptimizedVUflash`, `ImprovedVUflashQfunc`, `QfuncFlash`).
+`PVrefluxflash`, `PHsolidFlash`, `OptimizedVUflash`, `ImprovedVUflashQfunc`,
+`QfuncFlash`).
 The flag is scoped with try/finally + ThreadLocal so it never leaks out and
 never interferes with concurrent flashes.
 
