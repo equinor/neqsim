@@ -683,11 +683,6 @@ def _figure_discussion(entry, section_topic):
         if title.isupper():
             title = title.title()
         parts.append(_esc(title) + ".")
-    if section_topic:
-        parts.append(
-            f"This supports the discussion of &ldquo;"
-            f"{_esc(section_topic)}&rdquo; in this chapter."
-        )
     parts.append(
         f"<span class=\"fig-source\">Source: <em>{_esc(deck)}</em>, "
         f"{where}.</span>"
@@ -749,15 +744,64 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
             return None
         return None
 
+    def _phash(rel_path):
+        """8x8 average-hash perceptual fingerprint (64-bit int) or None."""
+        if not book_dir:
+            return None
+        try:
+            from PIL import Image
+        except ImportError:
+            return None
+        try:
+            p = book_dir / rel_path
+            if not p.is_file():
+                return None
+            img = Image.open(p).convert("L").resize((8, 8))
+            px = list(img.getdata())
+            avg = sum(px) / len(px)
+            bits = 0
+            for v in px:
+                bits = (bits << 1) | (1 if v >= avg else 0)
+            return bits
+        except Exception:
+            return None
+
+    def _phash_dup(h, threshold=5):
+        """True if h is within Hamming distance ``threshold`` of any seen phash."""
+        if h is None:
+            return False
+        for prev in seen_hashes:
+            # seen_hashes mixes md5 strings and phash ints — only compare ints.
+            if isinstance(prev, int) and bin(h ^ prev).count("1") <= threshold:
+                return True
+        return False
+
     deduped = []
+    local_md5 = set()
+    local_phash = []
     for e in entries:
         f = e.get("file", "")
         if not f or f in seen_files:
             continue
         h = _file_hash(f)
-        if h and h in seen_hashes:
+        if h and (h in seen_hashes or h in local_md5):
             seen_files.add(f)  # still mark path as consumed
             continue
+        ph = _phash(f)
+        if ph is not None:
+            if _phash_dup(ph):
+                seen_files.add(f)
+                continue
+            if any(bin(ph ^ q).count("1") <= 5 for q in local_phash):
+                seen_files.add(f)
+                continue
+        # Stash both hashes so later chapters skip this image.
+        e["_md5"] = h
+        e["_phash"] = ph
+        if h:
+            local_md5.add(h)
+        if ph is not None:
+            local_phash.append(ph)
         deduped.append(e)
     entries = deduped
     if not entries:
@@ -787,14 +831,19 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
     selected = sorted(entries, key=_area, reverse=True)[:max_figures]
 
     # Record the chosen images in the cross-chapter dedup sets so later
-    # chapters can't re-use them.
+    # chapters can't re-use them (by path, by md5, and by perceptual hash).
     for e in selected:
         f = e.get("file", "")
         if f:
             seen_files.add(f)
-        h = _file_hash(f)
+        h = e.get("_md5") or _file_hash(f)
         if h:
             seen_hashes.add(h)
+        ph = e.get("_phash")
+        if ph is None:
+            ph = _phash(f)
+        if ph is not None:
+            seen_hashes.add(ph)
 
     # Find H2 sections.
     h2_re = re.compile(r"^## +(.+?)$", flags=re.MULTILINE)
