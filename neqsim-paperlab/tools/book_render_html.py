@@ -541,6 +541,39 @@ figure.lecture-fig figcaption .fig-source {{
   font-style: italic;
 }}
 
+/* Worked-example callout */
+.worked-example {{
+  background: #f7faff;
+  border: 1px solid #d6e4f5;
+  border-left: 4px solid #1a5276;
+  border-radius: 0 6px 6px 0;
+  padding: 0.85rem 1.15rem 0.7rem;
+  margin: 1.4rem 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}}
+.worked-example h4 {{
+  margin: 0 0 0.45rem 0;
+  font-size: 1.02rem;
+  color: #0d3b66;
+  border: none;
+  padding: 0;
+}}
+.worked-example p {{
+  margin: 0.35rem 0;
+  font-size: 0.95rem;
+}}
+.worked-example .we-meta {{
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.45rem;
+}}
+.worked-example .we-meta code {{
+  background: #eaf1fb;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}}
+
 /* Responsive */
 @media (max-width: 900px) {{
   nav.sidebar {{ display: none; }}
@@ -980,7 +1013,10 @@ def _generate_title_page(cfg, book_dir=None):
                      "front_cover.jpeg", "cover.png", "cover.jpg"):
             p = book_dir / "figures" / name
             if p.is_file():
-                cover_rel = f"figures/{name}"
+                # The rendered HTML lives in <book_dir>/submission/, so the
+                # cover image (in <book_dir>/figures/) is one level up — use
+                # the same `../figures/...` prefix that lecture figures use.
+                cover_rel = f"../figures/{name}"
                 break
 
     if cover_rel:
@@ -1185,8 +1221,14 @@ def _md_to_html(md_text):
             i += 1
             continue
 
-        # Italic caption: *Figure ...*
-        if stripped.startswith("*") and stripped.endswith("*") and len(stripped) > 2:
+        # Italic caption: *Figure ...*  (must be a single * on each side, not ** ... **)
+        if (
+            stripped.startswith("*")
+            and stripped.endswith("*")
+            and len(stripped) > 2
+            and not stripped.startswith("**")
+            and not stripped.endswith("**")
+        ):
             close_list()
             html_parts.append(f"<p><em>{_inline_fmt(stripped[1:-1])}</em></p>")
             i += 1
@@ -1251,6 +1293,26 @@ def _md_to_html(md_text):
                 table_lines.append(lines[i].strip())
                 i += 1
             html_parts.append(_render_table(table_lines))
+            continue
+
+        # Raw HTML block passthrough (e.g. <div class="worked-example">...</div>)
+        html_block_m = re.match(r"^<(div|section|aside|figure|table)\b", stripped)
+        if html_block_m:
+            close_list()
+            tag = html_block_m.group(1)
+            depth = 0
+            block_lines = []
+            open_re = re.compile(rf"<{tag}\b", re.IGNORECASE)
+            close_re = re.compile(rf"</{tag}\s*>", re.IGNORECASE)
+            while i < len(lines):
+                cur = lines[i]
+                depth += len(open_re.findall(cur))
+                depth -= len(close_re.findall(cur))
+                block_lines.append(cur)
+                i += 1
+                if depth <= 0:
+                    break
+            html_parts.append("\n".join(block_lines))
             continue
 
         # Paragraph
@@ -1413,8 +1475,17 @@ def render_book_html(book_dir, chapter_filter=None):
 
     # Frontmatter — professional pages from config, then remaining .md files
     if not chapter_filter:
-        # Half-title page
-        parts.append(_generate_half_title(cfg))
+        # Half-title page — suppressed when a full-bleed cover image is used,
+        # since the cover artwork already carries the title prominently.
+        _has_cover_image = False
+        if book_dir is not None:
+            for _name in ("front_cover.png", "front_cover.jpg",
+                          "front_cover.jpeg", "cover.png", "cover.jpg"):
+                if (book_dir / "figures" / _name).is_file():
+                    _has_cover_image = True
+                    break
+        if not _has_cover_image:
+            parts.append(_generate_half_title(cfg))
 
         # Full title page with graphical decoration
         parts.append(_generate_title_page(cfg, book_dir))
@@ -1437,6 +1508,12 @@ def render_book_html(book_dir, chapter_filter=None):
             if fm_path.exists():
                 text = fm_path.read_text(encoding="utf-8")
                 text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+                # Resolve \cite{key} → numbered links so frontmatter
+                # (preface, acknowledgements, etc.) renders citations the
+                # same way chapters do.
+                if bib_entries and all_cited_keys:
+                    text, _ = resolve_citations_numbered_html(
+                        text, bib_entries, all_cited_keys)
                 parts.append(f'<section id="{fm}">')
                 parts.append(_md_to_html(text))
                 parts.append("</section>")
@@ -1469,16 +1546,16 @@ def render_book_html(book_dir, chapter_filter=None):
 
         parts.append(f'<section class="chapter" id="chapter-{ch_num}">')
 
-        # Build the chapter opener (eyebrow + number + title + rule + hero).
+        # Build the chapter opener (eyebrow + number + title + rule).
+        # Hero illustration intentionally omitted — chapter-level decorative
+        # images are not part of this book's design.
         ch_title = ch.get("title", "Untitled")
-        hero_html = _chapter_hero_html(ch_dir, ch_title)
         opener_html = (
             '<div class="chapter-opener">'
             '<div class="ch-eyebrow">Chapter</div>'
             f'<div class="ch-number">{ch_num}</div>'
             f'<h1 class="ch-title">{_esc(ch_title)}</h1>'
             '<hr class="ch-rule"/>'
-            f'{hero_html}'
             '</div>'
         )
         parts.append(opener_html)
