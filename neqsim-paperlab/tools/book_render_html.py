@@ -602,6 +602,88 @@ def _esc(text):
                 .replace('"', "&quot;"))
 
 
+def _number_headings(md_text, chapter_num):
+    """Prepend section numbers to ##/###/#### headings.
+
+    Numbering scheme (textbook style):
+      ## Title       -> ## <chapter>.<sec> Title           (e.g. 3.1)
+      ### Title      -> ### <chapter>.<sec>.<sub> Title    (e.g. 3.1.2)
+      #### Title     -> #### <chapter>.<sec>.<sub>.<sss>   (e.g. 3.1.2.1)
+
+    Behaviour:
+
+    * If the chapter already has manually-numbered headings (e.g. ``## 3.4
+      Title``), those numbers are preserved verbatim and unnumbered headings
+      are left unnumbered. This keeps existing in-chapter cross-references
+      (``§3.4``) valid and matches the convention that conventional sections
+      such as *Learning Objectives*, *Summary* or *Exercises* often remain
+      unnumbered.
+    * If no heading in the chapter has a leading section number, every
+      ``##`` / ``###`` / ``####`` heading is numbered sequentially.
+
+    Headings inside fenced code blocks are skipped.
+    """
+    sec_pat = re.compile(r"^(#{2,4})\s+(.+?)\s*$")
+    existing_num = re.compile(r"^\d+(?:\.\d+)+\b")
+    fence_pat = re.compile(r"^\s*(?:```|~~~)")
+
+    # First pass: detect whether the chapter already uses manual numbering.
+    has_manual = False
+    in_fence = False
+    for line in md_text.split("\n"):
+        if fence_pat.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        m = sec_pat.match(line)
+        if m and existing_num.match(m.group(2)):
+            has_manual = True
+            break
+
+    if has_manual:
+        # Preserve existing numbering exactly as authored.
+        return md_text
+
+    # Otherwise, number sequentially from 1.
+    sec = sub = ssub = 0
+    in_fence = False
+    out = []
+    for line in md_text.split("\n"):
+        if fence_pat.match(line):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if in_fence:
+            out.append(line)
+            continue
+        m = sec_pat.match(line)
+        if not m:
+            out.append(line)
+            continue
+        hashes, body = m.group(1), m.group(2)
+        if hashes == "##":
+            sec += 1
+            sub = 0
+            ssub = 0
+            num = f"{chapter_num}.{sec}"
+        elif hashes == "###":
+            if sec == 0:
+                sec = 1
+            sub += 1
+            ssub = 0
+            num = f"{chapter_num}.{sec}.{sub}"
+        else:  # ####
+            if sec == 0:
+                sec = 1
+            if sub == 0:
+                sub = 1
+            ssub += 1
+            num = f"{chapter_num}.{sec}.{sub}.{ssub}"
+        out.append(f"{hashes} {num} {body}")
+    return "\n".join(out)
+
+
 # Filenames whose names suggest a generic / decorative chapter-opener
 # illustration. We prefer these over plot-style figures when available.
 _HERO_HINT_RE = re.compile(
@@ -1273,6 +1355,12 @@ def _md_to_html(md_text):
     inline code, and tables.  Math delimiters ($...$, $$...$$) are left
     intact for KaTeX auto-render.
     """
+    # Safety-net: convert stray LaTeX text-mode sub/superscript commands
+    # (``\textsubscript{2}`` / ``\textsuperscript{3}``) into HTML so they
+    # don't render literally in tables or paragraphs.
+    md_text = re.sub(r"\\textsubscript\{([^{}]*)\}", r"<sub>\1</sub>", md_text)
+    md_text = re.sub(r"\\textsuperscript\{([^{}]*)\}", r"<sup>\1</sup>", md_text)
+
     lines = md_text.split("\n")
     html_parts = []
     i = 0
@@ -1721,6 +1809,8 @@ def render_book_html(book_dir, chapter_filter=None):
                     book_dir=book_dir,
                     seen_files=_seen_lecture_files,
                     seen_hashes=_seen_lecture_hashes)
+            # Auto-number ##/###/#### headings (textbook style: 3.1, 3.1.2)
+            text = _number_headings(text, ch_num)
             parts.append(_md_to_html(text))
         else:
             parts.append("<p><em>Content not yet written.</em></p>")
