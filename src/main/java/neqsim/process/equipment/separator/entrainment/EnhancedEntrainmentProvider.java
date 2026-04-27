@@ -22,9 +22,24 @@ import neqsim.process.equipment.separator.Separator;
  * that requested it gets a clear error.
  *
  * <p>
+ * <b>Public / private split policy.</b> The public NeqSim repo holds the
+ * maximum amount of structure that does not leak proprietary content:
+ * SPI interface, method signatures, result / applicability data classes,
+ * registry plumbing, and provider <i>ids</i> (the string {@code "eqn-pi-v1"}
+ * is public; the correlation behind it is not). Only the numerical
+ * implementation, regression coefficients, validity envelopes, vendor-tagged
+ * data and correctness tests live in the private repo. Public and private
+ * are kept architecturally aligned — same package layout, same class names
+ * where possible — so a maintainer reading the public source can see
+ * <i>what</i> approach (4) requires and returns without being able to
+ * reproduce <i>how</i> it computes.
+ *
+ * <p>
  * <b>Stability contract.</b> This interface is API-stable. Existing methods
  * will not change signature; new capabilities are added only as
- * {@code default} methods so existing implementations keep compiling.
+ * {@code default} methods so existing implementations (including private
+ * plug-ins) keep compiling against new public NeqSim releases without
+ * recompilation.
  *
  * <p>
  * <b>Implementer responsibilities.</b> An implementation must:
