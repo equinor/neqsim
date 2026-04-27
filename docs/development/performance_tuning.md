@@ -24,10 +24,21 @@ The flag is scoped with try/finally + ThreadLocal so it never leaks out and
 never interferes with concurrent flashes.
 
 For **process flowsheets with recycle loops** you can additionally enable
-warm-start globally to propagate K across recycle iterations:
+warm-start globally to propagate K across recycle iterations. The preferred
+API is on `ProcessSystem` itself (scoped, no leak across runs):
 
 ```java
-// Java — enable globally for the current thread
+// Preferred — scoped to this ProcessSystem.run() only, restored in finally
+ProcessSystem process = new ProcessSystem();
+// ... build flowsheet ...
+process.setUseFlashWarmStart(true);
+process.run();
+```
+
+Or set the global flag manually:
+
+```java
+// Java — enable globally for the current thread (you manage the lifetime)
 ThermodynamicModelSettings.setUseWarmStartKValues(true);
 ```
 
@@ -114,6 +125,58 @@ point) call `TPflash` dozens of times with only small changes in `T` or `P`
 between calls. With warm-start, each inner `TPflash` converges in 1-2
 successive-substitution steps instead of 5-10.
 
+#### How PH/PS flashes use warm-start internally
+
+Both `PHflash` and `PSFlash` are Newton-on-temperature loops wrapping an inner
+`TPflash`:
+
+```
+solveQ() {                          // outer Newton on T (3-8 steps typically)
+  do {
+    T_new = T_old - f(T)/f'(T)
+    system.setTemperature(T_new)
+    tpFlash.run()                   // inner SS loop on K (5-10 steps cold,
+                                    // 1-3 steps warm)
+  } while (error > 1e-8)
+}
+```
+
+Their `run()` method uses a **cold-first-then-warm** pattern (see
+`PHflash.java:193-214`, `PSFlash.java:129-150`):
+
+```java
+boolean prevWarm = ThermodynamicModelSettings.isUseWarmStartKValues();
+try {
+  ThermodynamicModelSettings.setUseWarmStartKValues(false);
+  tpFlash.run();                    // first inner flash: cold (Wilson seed)
+  ThermodynamicModelSettings.setUseWarmStartKValues(true);
+  solveQ();                         // outer Newton: every inner flash warm
+} finally {
+  ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+}
+```
+
+This means **PS/PHflash already get the inner-loop benefit automatically**,
+even when the global flag is off. The first inner flash is forced cold to
+guard against stale K from an unrelated previous flash at very different T/P;
+all subsequent Newton iterations reuse the previous step's converged K.
+
+The global flag (or `ProcessSystem.setUseFlashWarmStart(true)`) adds the
+**cross-call benefit**: when the same separator's PSflash is called repeatedly
+(e.g., inside a recycle iteration), the K values stored on the `Component`
+objects from the previous call seed the next call's `solveQ()` loop. The
+explicit cold-first-flash inside `run()` caps this gain at ~10-20% per call.
+
+**Per-flash gain in our benchmark** (`WarmStartFlashSpeedupTest`):
+
+| Flash | Outer-level gain | Mechanism |
+|-------|-----------------:|-----------|
+| `PHflash` | ~+18% | More Newton steps → more inner flashes benefit |
+| `PSFlash` | ~+5-10% | Fewer Newton steps → cold-first-flash dominates |
+| `TPflash` (1000×) | +14% | Direct inner-loop reuse |
+
+
+
 **Benchmark results (heavy 13-component gas with water, `ThermoHotspotBreakdownTest`):**
 
 | Task | Cold (default) | Warm (`-Dneqsim.warmStartK=true`) | Speedup |
@@ -155,8 +218,22 @@ try {
 }
 ```
 
-Note: the flag is global (static), not per-system. All `SystemInterface`
-instances in the JVM share the same setting.
+Note: the underlying `ThermodynamicModelSettings` flag is global (static, per
+thread via ThreadLocal), not per-system. All `SystemInterface` instances on
+the current thread share the same setting. Prefer
+`ProcessSystem.setUseFlashWarmStart(true)` — it manages this scope safely
+with try/finally so the flag never leaks past `run()`.
+
+### Phase-regime safety
+
+Warm-start is automatically rejected per-component when:
+
+- `K = 1.0` exactly (untouched/default → fall back to Wilson)
+- `|K − 1.0| < 1e-3` (near-trivial → previous call was likely single-phase;
+  fall back to Wilson to allow detection of a new phase split)
+- `K < 1e-20` or non-finite
+- Component is an ion (always reset to `K = 1e-40`)
+- TPflash detects > 2 phases (force Wilson reseed for stability)
 
 ---
 
