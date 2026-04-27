@@ -9,6 +9,78 @@
 
 ---
 
+## 2026-04-27 — Flash Warm-Start: New `ProcessSystem.setUseFlashWarmStart()` API
+
+### Summary
+
+Warm-start K-values are now exposed at the `ProcessSystem` level as a scoped,
+opt-in flag. When enabled, the iterative TPflash inside every fluid evaluation
+re-uses the previously converged K-values as the initial estimate instead of
+seeding from Wilson on every call. The flag is applied via
+`ThermodynamicModelSettings.setUseWarmStartKValues(true)` for the duration of
+`run(UUID)` and restored afterwards (try/finally), so it never leaks to other
+code on the same thread.
+
+### New API on `ProcessSystem`
+
+| Method | Description |
+|--------|-------------|
+| `setUseFlashWarmStart(boolean)` | Enable/disable warm-start for the duration of `run()` |
+| `isUseFlashWarmStart()` | Returns the current setting |
+
+### New API on `ProcessModel`
+
+| Method | Description |
+|--------|-------------|
+| `setUseFlashWarmStart(boolean)` | Propagates the warm-start flag to every registered `ProcessSystem` and applies to any area added afterwards |
+| `isUseFlashWarmStart()` | Returns the model-level setting |
+
+**Default:** `false` (historical behaviour preserved). Recycle-heavy
+flowsheets are sensitive to the flash trajectory and warm-start can shift the
+converged fixed point — opt in deliberately.
+
+### Usage
+
+```java
+// Single ProcessSystem
+ProcessSystem process = new ProcessSystem();
+// ... build flowsheet ...
+process.setUseFlashWarmStart(true);
+process.run();   // 10–20% wall-time reduction on recycle-heavy flowsheets
+
+// Multi-area ProcessModel
+ProcessModel plant = new ProcessModel();
+plant.add("separation", separationArea);
+plant.add("compression", compressionArea);
+plant.setUseFlashWarmStart(true); // applies to both areas
+plant.run();
+```
+
+### Inner-loop benefit (automatic, no opt-in needed)
+
+`PHflash`, `PSFlash`, `PVflash`, `PUflash`, `TVflash`, `PVFflash`,
+`PVrefluxflash`, `PHsolidFlash`, `OptimizedVUflash`, `ImprovedVUflashQfunc`,
+`QfuncFlash`, `THflash`, `TSFlash`, `TUflash`, `VHflashQfunc`, `VSflash`,
+`VUflashQfunc`, and `TVfractionFlash` already use a cold-first-then-warm
+pattern internally (since 2026-04-21 / 2026-04-27). The first inner TPflash
+runs cold (Wilson seed) to guard against stale K, all subsequent Newton
+iterations re-use the previous step's converged K. This benefit is automatic
+and does not require any flag.
+
+### Skills/Agents to update
+
+- `neqsim-troubleshooting` — mention `setUseFlashWarmStart(true)` as a
+  performance lever for recycle-heavy flowsheets.
+- `neqsim-platform-modeling` — recommend opt-in for large topside models
+  with multiple recycles.
+
+### Reference
+
+- Full guide: [`docs/development/performance_tuning.md`](docs/development/performance_tuning.md)
+- PRs: #2124, #2125
+
+---
+
 ## 2026-04-20 — Gas Scrubber Mechanical Design: Internals Configuration & Conformity Checking
 
 ### Summary

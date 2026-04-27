@@ -23,17 +23,31 @@ loop (`PSflash`, `PHflash`, `PVflash`, `PUflash`, `TVflash`, `PVFflash`,
 The flag is scoped with try/finally + ThreadLocal so it never leaks out and
 never interferes with concurrent flashes.
 
-For **process flowsheets with recycle loops** warm-start is **enabled by
-default** (since 2026-04-27) — K propagates across recycle iterations
-automatically. The flag is scoped to `ProcessSystem.run()` via try/finally
-so it never leaks. To disable (for bit-exact reproduction of pre-2026-04-27
-results or when debugging flash convergence):
+For **process flowsheets with recycle loops** warm-start is **opt-in** at the
+`ProcessSystem` level (default `false`, since recycle-heavy flowsheets are
+sensitive to the flash trajectory and warm-start can shift the converged fixed
+point). When enabled, K propagates across recycle iterations automatically.
+The flag is scoped to `ProcessSystem.run()` via try/finally so it never leaks
+out of the run:
 
 ```java
 ProcessSystem process = new ProcessSystem();
 // ... build flowsheet ...
-process.setUseFlashWarmStart(false); // opt out — default is true
+process.setUseFlashWarmStart(true); // opt in — default is false
 process.run();
+```
+
+For **multi-area models** (`ProcessModel`), use the model-level setter to
+propagate warm-start to every registered `ProcessSystem` in one call. The
+setting is applied to all currently registered areas and to any area added
+afterwards via `model.add(name, processSystem)`:
+
+```java
+ProcessModel plant = new ProcessModel();
+plant.add("separation", separationArea);
+plant.add("compression", compressionArea);
+plant.setUseFlashWarmStart(true); // applies to both areas
+plant.run();
 ```
 
 Or set the global flag manually:
@@ -49,10 +63,11 @@ java -Dneqsim.warmStartK=true -jar your-app.jar
 ```
 
 Expected gain: **3-5× faster** `PSflash` / `PHflash` (automatic),
-**1.5× faster** process flowsheets with recycle loops (opt-in). No impact on
-single `TPflash` calls from a cold start (the first flash still uses the
-Wilson initial guess). CME/CVD and other chained independent `TPflash` PVT
-workflows are unaffected — warm-start is NOT enabled for plain `TPflash`.
+**1.5× faster** process flowsheets with recycle loops (opt-in via
+`process.setUseFlashWarmStart(true)`). No impact on single `TPflash` calls
+from a cold start (the first flash still uses the Wilson initial guess).
+CME/CVD and other chained independent `TPflash` PVT workflows are unaffected
+— warm-start is NOT enabled for plain `TPflash`.
 
 ---
 

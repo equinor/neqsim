@@ -194,12 +194,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * K-values as a warm start instead of seeding from Wilson on every call. This is applied via
    * {@code ThermodynamicModelSettings.setUseWarmStartKValues(true)} for the duration of
    * {@link #run(java.util.UUID)} and restored afterwards (try/finally), so flowsheet-level usage
-   * does not leak into other code on the same thread. Default is true — warm-start is correctness-
-   * preserving (results match cold-start to better than 1e-4 K) and recycle-heavy flowsheets gain
-   * ~10–20% wall-time. Disable via {@link #setUseFlashWarmStart(boolean)} for bit-exact
-   * reproduction of pre-2026-04 results or when debugging flash-convergence issues.
+   * does not leak into other code on the same thread. Default is {@code false} (historical
+   * behaviour) — recycle-heavy flowsheets are sensitive to flash trajectory and warm-start can
+   * shift the converged fixed point. Opt in via {@link #setUseFlashWarmStart(boolean)} for 10–20%
+   * wall-time reduction on flowsheets that re-flash near-identical conditions.
    */
-  private boolean useFlashWarmStart = true;
+  private boolean useFlashWarmStart = false;
 
   /**
    * When true, per-unit execution timing is recorded during simulation. After run() completes, call
