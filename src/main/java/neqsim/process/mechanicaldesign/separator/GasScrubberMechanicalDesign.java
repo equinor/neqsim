@@ -48,7 +48,12 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   private int numberOfDemistingCyclones = 0;
   /** Demisting cyclone inner diameter [m]. */
   private double demistingCycloneDiameterM = 0.0;
-  /** Cyclone deck elevation from bottom of vessel [m]. */
+  /**
+   * Cyclone deck elevation from BTL [m] — elevation of the BOTTOM of the
+   * cyclone tubes (= top face of the deck plate, the gas-inlet face of the
+   * cyclones). Top of cyclone tubes is at deckElevation + cycloneLength;
+   * see {@link #getCycloneTopElevation()}.
+   */
   private double cycloneDeckElevationM = 0.0;
   /** Cyclone tube length [m]. */
   private double cycloneLengthM = 0.0;
@@ -439,18 +444,21 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Gets the cyclone deck elevation.
+   * Gets the cyclone deck elevation. This is the BOTTOM of the cyclone tubes,
+   * i.e. the gas-inlet face of the demisting cyclones, measured from the
+   * Bottom Tangent Line.
    *
-   * @return deck elevation from bottom of vessel [m]
+   * @return deck (cyclone tube bottom) elevation from BTL [m]
    */
   public double getCycloneDeckElevationM() {
     return cycloneDeckElevationM;
   }
 
   /**
-   * Sets the cyclone deck elevation.
+   * Sets the cyclone deck elevation. This is the BOTTOM of the cyclone tubes
+   * (= top face of the deck plate), measured from the Bottom Tangent Line.
    *
-   * @param elevationM deck elevation from bottom of vessel [m]
+   * @param elevationM deck (cyclone tube bottom) elevation from BTL [m]
    */
   public void setCycloneDeckElevationM(double elevationM) {
     this.cycloneDeckElevationM = elevationM;
@@ -472,6 +480,21 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    */
   public void setCycloneLengthM(double lengthM) {
     this.cycloneLengthM = lengthM;
+  }
+
+  /**
+   * Gets the elevation of the TOP of the cyclone tubes (gas-outlet face of
+   * the demisting cyclones), measured from the Bottom Tangent Line. This is
+   * the convenience derived value {@code cycloneDeckElevation + cycloneLength}.
+   *
+   * @return cyclone tube top elevation from BTL [m]; 0.0 if either deck or
+   *         length is not set
+   */
+  public double getCycloneTopElevation() {
+    if (cycloneDeckElevationM <= 0.0 || cycloneLengthM <= 0.0) {
+      return 0.0;
+    }
+    return cycloneDeckElevationM + cycloneLengthM;
   }
 
   /**

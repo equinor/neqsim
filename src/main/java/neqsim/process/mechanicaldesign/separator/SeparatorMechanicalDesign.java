@@ -141,6 +141,40 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Distance from inlet to gas demister [m]. */
   private double inletToGasDemister = 0.0;
 
+  // ============================================================================
+  // Internals elevations (added 2026-04 for entrainment plug-ins)
+  //
+  // Reference frame: all elevations are in metres from the Bottom Tangent Line
+  // (BTL) of the vessel, positive upward.
+  //
+  // For each internal we store the elevation of the GAS-FACING SURFACE that is
+  // most relevant to free-path / vertical-distance calculations:
+  //   - Inlet nozzle:  centreline elevation
+  //   - Inlet device:  TOP face of the device (the surface gas leaves through)
+  //   - Mesh pad / vane pack: BOTTOM face (the surface gas enters through);
+  //     the corresponding TOP elevation is derived = bottom + thickness.
+  //   - Cyclones (in GasScrubberMechanicalDesign):
+  //         cycloneDeckElevation = BOTTOM of the cyclone tubes
+  //         (= top face of the deck plate, i.e. the gas-inlet face of the
+  //         cyclones); cycloneTopElevation = deck + cycloneLength.
+  //
+  // Defaults are 0.0, which means "not set" — callers must check before use.
+  // The convenience getter getInletDeviceTopElevationOrDefault() returns
+  // (inletNozzleElevation + inletNozzleID/2) when the inlet device top is
+  // not explicitly set, matching the standard inlet-vane assumption that the
+  // device occupies the upper half of the inlet nozzle bore.
+  // ============================================================================
+  /** Inlet nozzle centreline elevation from BTL [m]. */
+  private double inletNozzleElevation = 0.0;
+  /**
+   * Inlet device top face elevation from BTL [m]. The free-path height for
+   * carry-over correlations is measured from this surface up to the bottom of
+   * the next gas-side internal (mesh pad / vane pack / cyclone deck).
+   */
+  private double inletDeviceTopElevation = 0.0;
+  /** Mesh pad bottom face elevation from BTL [m]. */
+  private double meshPadBottomElevation = 0.0;
+
   // Nozzle sizes
   /** Inlet nozzle internal diameter [m]. */
   private double inletNozzleID = 0.0;
@@ -1447,6 +1481,121 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public double getInletToGasDemister() {
     return inletToGasDemister;
+  }
+
+  // ============================================================================
+  // Internals elevation accessors (see field block above for reference frame).
+  // All values are metres from the Bottom Tangent Line (BTL), positive upward.
+  // ============================================================================
+
+  /**
+   * Sets the inlet nozzle centreline elevation.
+   *
+   * @param elevationM centreline elevation from BTL [m]
+   */
+  public void setInletNozzleElevation(double elevationM) {
+    this.inletNozzleElevation = elevationM;
+  }
+
+  /**
+   * Gets the inlet nozzle centreline elevation.
+   *
+   * @return centreline elevation from BTL [m]; 0.0 if not set
+   */
+  public double getInletNozzleElevation() {
+    return inletNozzleElevation;
+  }
+
+  /**
+   * Sets the inlet device top face elevation. This is the surface gas leaves
+   * through (e.g. top of an inlet vane), measured from the Bottom Tangent
+   * Line.
+   *
+   * @param elevationM top face elevation from BTL [m]
+   */
+  public void setInletDeviceTopElevation(double elevationM) {
+    this.inletDeviceTopElevation = elevationM;
+  }
+
+  /**
+   * Gets the inlet device top face elevation as explicitly stored.
+   * Returns 0.0 when not set; use {@link #getInletDeviceTopElevationOrDefault()}
+   * to get the default-derived value.
+   *
+   * @return top face elevation from BTL [m]; 0.0 if not set
+   */
+  public double getInletDeviceTopElevation() {
+    return inletDeviceTopElevation;
+  }
+
+  /**
+   * Gets the inlet device top face elevation, falling back to a default when
+   * not explicitly set. The default assumes a standard inlet vane that fills
+   * the upper half of the nozzle bore: top elevation = nozzle centreline +
+   * nozzle ID / 2.
+   *
+   * @return top face elevation from BTL [m]; explicit value if set, else
+   *         {@code inletNozzleElevation + inletNozzleID / 2.0} when both are
+   *         positive, else 0.0
+   */
+  public double getInletDeviceTopElevationOrDefault() {
+    if (inletDeviceTopElevation > 0.0) {
+      return inletDeviceTopElevation;
+    }
+    if (inletNozzleElevation > 0.0 && inletNozzleID > 0.0) {
+      return inletNozzleElevation + inletNozzleID / 2.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the mesh pad bottom face elevation. This is the surface gas enters
+   * through, measured from the Bottom Tangent Line.
+   *
+   * @param elevationM bottom face elevation from BTL [m]
+   */
+  public void setMeshPadBottomElevation(double elevationM) {
+    this.meshPadBottomElevation = elevationM;
+  }
+
+  /**
+   * Gets the mesh pad bottom face elevation.
+   *
+   * @return bottom face elevation from BTL [m]; 0.0 if not set
+   */
+  public double getMeshPadBottomElevation() {
+    return meshPadBottomElevation;
+  }
+
+  /**
+   * Gets the mesh pad top face elevation, derived as bottom elevation plus
+   * mesh pad thickness ({@link #getDemisterThickness()} converted from mm to
+   * m).
+   *
+   * @return top face elevation from BTL [m]; 0.0 if bottom not set
+   */
+  public double getMeshPadTopElevation() {
+    if (meshPadBottomElevation <= 0.0) {
+      return 0.0;
+    }
+    return meshPadBottomElevation + getDemisterThickness() / 1000.0;
+  }
+
+  /**
+   * Gets the free-path height between the inlet device top face and the mesh
+   * pad bottom face. This is the vertical distance available for primary
+   * gravity separation and droplet entrainment / carry-over correlations.
+   *
+   * @return mesh pad bottom elevation minus inlet device top elevation [m];
+   *         0.0 if either elevation is unset or the result is non-positive
+   */
+  public double getFreePathHeightAboveInletDevice() {
+    double topInlet = getInletDeviceTopElevationOrDefault();
+    if (topInlet <= 0.0 || meshPadBottomElevation <= 0.0) {
+      return 0.0;
+    }
+    double h = meshPadBottomElevation - topInlet;
+    return h > 0.0 ? h : 0.0;
   }
 
   /**
