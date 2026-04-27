@@ -100,6 +100,7 @@ Before starting any field development task, load these skills by reading them:
 4. **`neqsim-production-optimization`** — Production forecasting, optimization, decline curves
 5. **`neqsim-api-patterns`** — NeqSim API patterns for fluids and process simulation
 6. **`neqsim-input-validation`** — Validate inputs before simulation
+7. **`neqsim-equipment-cost-estimation`** — Class-3/4 CAPEX for individual equipment (vessels, compressors, HX), feeds the project economics model
 
 Additional skills as needed:
 - **`neqsim-physics-explanations`** — For educational context

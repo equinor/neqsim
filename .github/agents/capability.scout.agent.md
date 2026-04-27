@@ -173,6 +173,7 @@ Based on the task requirements, recommend which existing skills should be loaded
 | `neqsim-agent-handoff` | When composing multi-agent pipelines |
 | `neqsim-java8-rules` | When writing any Java code |
 | `neqsim-capability-map` | When checking what NeqSim can do |
+| `neqsim-process-safety` | When the task includes hazard ID, LOPA, SIL, or risk evaluation |
 
 ### Step 7: Produce the Structured Output
 

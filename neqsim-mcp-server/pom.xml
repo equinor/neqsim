@@ -14,7 +14,7 @@
         <quarkus.version>3.33.1</quarkus.version>
         <mcp-server.version>1.11.0</mcp-server.version>
         <!-- Keep in sync with ../pom.xml <revision> property -->
-        <neqsim.version>3.7.0</neqsim.version>
+        <neqsim.version>3.9.0</neqsim.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

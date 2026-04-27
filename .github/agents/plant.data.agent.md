@@ -299,5 +299,6 @@ Live Digital Twin             — Continuous self-tuning model
 - [Data Reconciliation & Parameter Estimation](../docs/calibration/data_reconciliation_parameter_estimation.md)
 - [NeqSim API Patterns](../.github/skills/neqsim-api-patterns/SKILL.md)
 - [Plant Data Skill](../.github/skills/neqsim-plant-data/SKILL.md) — Tagreader API reference and patterns
+- [Model Calibration & Data Reconciliation Skill](../.github/skills/neqsim-model-calibration-and-data-reconciliation/SKILL.md) — Bounded parameter tuning, residual diagnostics, train/validation reporting
 - [tagreader-python](https://github.com/equinor/tagreader-python)
 - [NeqSimAPI](https://neqsimapi.app.radix.equinor.com/docs)

@@ -31,7 +31,7 @@ Each row lists the skills an agent declares via a
 | `router.agent.md` | neqsim help | _(none declared)_ |
 | `safety.depressuring.agent.md` | run neqsim safety and depressuring simulation | _(none declared)_ |
 | `solve.process.agent.md` | solve process simulation task | _(none declared)_ |
-| `solve.task.agent.md` | solve engineering task | `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-troubleshooting`, `neqsim-input-validation`, `neqsim-capability-map` |
+| `solve.task.agent.md` | solve engineering task | `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-troubleshooting`, `neqsim-input-validation`, `neqsim-capability-map`, `neqsim-platform-modeling` |
 | `technical.reader.agent.md` | read technical documents | _(none declared)_ |
 | `thermo.fluid.agent.md` | create a neqsim thermodynamic fluid | _(none declared)_ |
 | `unisim.reader.agent.md` | read unisim to neqsim | _(none declared)_ |

@@ -105,6 +105,9 @@ double minColdUtility = pinch.getMinColdUtility();
 - Java 8 rules: See `neqsim-java8-rules` skill
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
 - Distillation design: See `neqsim-distillation-design` skill for column setup and solver selection
+- Heat integration: See `neqsim-heat-integration` skill for pinch analysis and HEN synthesis
+- Controllability: See `neqsim-controllability-operability` skill for turndown, control valve sizing, and operability checks
+- Platform modeling: See `neqsim-platform-modeling` skill for full topside flowsheet patterns (multi-stage separation, recompression, anti-surge)
 - Standards: See `neqsim-standards-lookup` skill for equipment design standards
 - Dynamic simulation: See `neqsim-dynamic-simulation` skill for transient analysis
 - Troubleshooting: See `neqsim-troubleshooting` skill for convergence recovery
