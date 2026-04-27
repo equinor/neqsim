@@ -75,6 +75,45 @@ stages:
     validation:
       - HTML diff report exists and is non-empty
 
+  - name: "adversarial_review"
+    agent: "adversarial_reviewer"
+    description: "Internal hostile review of the revised draft before submission"
+    inputs:
+      - revision_N/paper_rN.md
+      - revision_N/claims_manifest_rN.json
+      - approved_claims.json
+      - results.json
+    outputs:
+      - revision_N/adversarial_review.md
+      - revision_N/required_fixes.json
+    validation:
+      - required_fixes.json has zero items with severity=BLOCKER and status=OPEN
+
+  - name: "quality_rubric_check"
+    agent: "reviewer_response"
+    description: >
+      Structured human checkpoint. Author scores the revised draft on a
+      five-axis rubric. Submission is blocked unless every axis scores >= 3
+      and the replication gate passes.
+    inputs:
+      - revision_N/paper_rN.md
+      - revision_N/adversarial_review.md
+      - revision_N/required_fixes.json
+    outputs:
+      - revision_N/quality_rubric.json
+    rubric:
+      novelty:          "1-5 — is the contribution genuinely new?"
+      evidence:         "1-5 — does every claim trace to data?"
+      framing:          "1-5 — does abstract/intro/discussion tell a story?"
+      discussion_depth: "1-5 — does discussion explain mechanism + scope + falsifiability?"
+      figure_narrative: "1-5 — does every figure follow obs/mech/impl/rec?"
+      replication:      "pass/fail — does paperlab_replication_gate pass on this commit?"
+    validation:
+      - All five numeric axes >= 3
+      - replication == pass
+      - All BLOCKER items in required_fixes.json marked status=ADDRESSED
+    gate: "human_approval"
+
   - name: "draft_response"
     agent: "reviewer_response"
     description: "Write response-to-reviewers letter"

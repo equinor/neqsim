@@ -541,6 +541,39 @@ figure.lecture-fig figcaption .fig-source {{
   font-style: italic;
 }}
 
+/* Worked-example callout */
+.worked-example {{
+  background: #f7faff;
+  border: 1px solid #d6e4f5;
+  border-left: 4px solid #1a5276;
+  border-radius: 0 6px 6px 0;
+  padding: 0.85rem 1.15rem 0.7rem;
+  margin: 1.4rem 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}}
+.worked-example h4 {{
+  margin: 0 0 0.45rem 0;
+  font-size: 1.02rem;
+  color: #0d3b66;
+  border: none;
+  padding: 0;
+}}
+.worked-example p {{
+  margin: 0.35rem 0;
+  font-size: 0.95rem;
+}}
+.worked-example .we-meta {{
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.45rem;
+}}
+.worked-example .we-meta code {{
+  background: #eaf1fb;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}}
+
 /* Responsive */
 @media (max-width: 900px) {{
   nav.sidebar {{ display: none; }}
@@ -567,6 +600,88 @@ def _esc(text):
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace('"', "&quot;"))
+
+
+def _number_headings(md_text, chapter_num):
+    """Prepend section numbers to ##/###/#### headings.
+
+    Numbering scheme (textbook style):
+      ## Title       -> ## <chapter>.<sec> Title           (e.g. 3.1)
+      ### Title      -> ### <chapter>.<sec>.<sub> Title    (e.g. 3.1.2)
+      #### Title     -> #### <chapter>.<sec>.<sub>.<sss>   (e.g. 3.1.2.1)
+
+    Behaviour:
+
+    * If the chapter already has manually-numbered headings (e.g. ``## 3.4
+      Title``), those numbers are preserved verbatim and unnumbered headings
+      are left unnumbered. This keeps existing in-chapter cross-references
+      (``§3.4``) valid and matches the convention that conventional sections
+      such as *Learning Objectives*, *Summary* or *Exercises* often remain
+      unnumbered.
+    * If no heading in the chapter has a leading section number, every
+      ``##`` / ``###`` / ``####`` heading is numbered sequentially.
+
+    Headings inside fenced code blocks are skipped.
+    """
+    sec_pat = re.compile(r"^(#{2,4})\s+(.+?)\s*$")
+    existing_num = re.compile(r"^\d+(?:\.\d+)+\b")
+    fence_pat = re.compile(r"^\s*(?:```|~~~)")
+
+    # First pass: detect whether the chapter already uses manual numbering.
+    has_manual = False
+    in_fence = False
+    for line in md_text.split("\n"):
+        if fence_pat.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        m = sec_pat.match(line)
+        if m and existing_num.match(m.group(2)):
+            has_manual = True
+            break
+
+    if has_manual:
+        # Preserve existing numbering exactly as authored.
+        return md_text
+
+    # Otherwise, number sequentially from 1.
+    sec = sub = ssub = 0
+    in_fence = False
+    out = []
+    for line in md_text.split("\n"):
+        if fence_pat.match(line):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if in_fence:
+            out.append(line)
+            continue
+        m = sec_pat.match(line)
+        if not m:
+            out.append(line)
+            continue
+        hashes, body = m.group(1), m.group(2)
+        if hashes == "##":
+            sec += 1
+            sub = 0
+            ssub = 0
+            num = f"{chapter_num}.{sec}"
+        elif hashes == "###":
+            if sec == 0:
+                sec = 1
+            sub += 1
+            ssub = 0
+            num = f"{chapter_num}.{sec}.{sub}"
+        else:  # ####
+            if sec == 0:
+                sec = 1
+            if sub == 0:
+                sub = 1
+            ssub += 1
+            num = f"{chapter_num}.{sec}.{sub}.{ssub}"
+        out.append(f"{hashes} {num} {body}")
+    return "\n".join(out)
 
 
 # Filenames whose names suggest a generic / decorative chapter-opener
@@ -650,11 +765,6 @@ def _figure_discussion(entry, section_topic):
         if title.isupper():
             title = title.title()
         parts.append(_esc(title) + ".")
-    if section_topic:
-        parts.append(
-            f"This supports the discussion of &ldquo;"
-            f"{_esc(section_topic)}&rdquo; in this chapter."
-        )
     parts.append(
         f"<span class=\"fig-source\">Source: <em>{_esc(deck)}</em>, "
         f"{where}.</span>"
@@ -716,15 +826,64 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
             return None
         return None
 
+    def _phash(rel_path):
+        """8x8 average-hash perceptual fingerprint (64-bit int) or None."""
+        if not book_dir:
+            return None
+        try:
+            from PIL import Image
+        except ImportError:
+            return None
+        try:
+            p = book_dir / rel_path
+            if not p.is_file():
+                return None
+            img = Image.open(p).convert("L").resize((8, 8))
+            px = list(img.getdata())
+            avg = sum(px) / len(px)
+            bits = 0
+            for v in px:
+                bits = (bits << 1) | (1 if v >= avg else 0)
+            return bits
+        except Exception:
+            return None
+
+    def _phash_dup(h, threshold=5):
+        """True if h is within Hamming distance ``threshold`` of any seen phash."""
+        if h is None:
+            return False
+        for prev in seen_hashes:
+            # seen_hashes mixes md5 strings and phash ints — only compare ints.
+            if isinstance(prev, int) and bin(h ^ prev).count("1") <= threshold:
+                return True
+        return False
+
     deduped = []
+    local_md5 = set()
+    local_phash = []
     for e in entries:
         f = e.get("file", "")
         if not f or f in seen_files:
             continue
         h = _file_hash(f)
-        if h and h in seen_hashes:
+        if h and (h in seen_hashes or h in local_md5):
             seen_files.add(f)  # still mark path as consumed
             continue
+        ph = _phash(f)
+        if ph is not None:
+            if _phash_dup(ph):
+                seen_files.add(f)
+                continue
+            if any(bin(ph ^ q).count("1") <= 5 for q in local_phash):
+                seen_files.add(f)
+                continue
+        # Stash both hashes so later chapters skip this image.
+        e["_md5"] = h
+        e["_phash"] = ph
+        if h:
+            local_md5.add(h)
+        if ph is not None:
+            local_phash.append(ph)
         deduped.append(e)
     entries = deduped
     if not entries:
@@ -754,14 +913,19 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
     selected = sorted(entries, key=_area, reverse=True)[:max_figures]
 
     # Record the chosen images in the cross-chapter dedup sets so later
-    # chapters can't re-use them.
+    # chapters can't re-use them (by path, by md5, and by perceptual hash).
     for e in selected:
         f = e.get("file", "")
         if f:
             seen_files.add(f)
-        h = _file_hash(f)
+        h = e.get("_md5") or _file_hash(f)
         if h:
             seen_hashes.add(h)
+        ph = e.get("_phash")
+        if ph is None:
+            ph = _phash(f)
+        if ph is not None:
+            seen_hashes.add(ph)
 
     # Find H2 sections.
     h2_re = re.compile(r"^## +(.+?)$", flags=re.MULTILINE)
@@ -783,11 +947,79 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
         end = headings[i + 1][0] if i + 1 < len(headings) else len(md_text)
         spans.append((h_end, end, title))
 
-    # Allocate figures to sections, round-robin.
+    # Allocate figures to sections by keyword overlap between the slide
+    # text (title+body) and each section title+body. Sections that look
+    # like generic admin blocks (Learning objectives, Self-test, Summary,
+    # Exercises, Theoretical foundations, Worked examples, Key terms,
+    # Further reading, Chapter summary) are excluded from being a target
+    # so figures land in the technical sections that actually discuss
+    # them. Falls back to round-robin only when no section scores > 0.
     n_sec = len(spans)
+    _stop = {
+        "the", "a", "an", "and", "or", "for", "of", "to", "in", "on",
+        "at", "by", "with", "from", "is", "are", "as", "this", "that",
+        "be", "it", "its", "we", "you", "your", "their", "ref", "https",
+        "www", "com", "slide", "fig", "figure",
+    }
+    _admin_keywords = (
+        "learning objectives", "self-test", "self test", "exercises",
+        "summary", "key terms", "further reading", "chapter summary",
+        "theoretical foundations", "worked examples and computer experiments",
+        "annotated bibliography", "literature review", "key equations",
+        "discussion",
+    )
+
+    def _tokenise(s):
+        if not s:
+            return set()
+        return {
+            t for t in re.findall(r"[a-zA-Z][a-zA-Z0-9]+", s.lower())
+            if len(t) > 2 and t not in _stop
+        }
+
+    def _is_admin(title):
+        tl = title.lower()
+        return any(k in tl for k in _admin_keywords)
+
+    section_kws = []
+    for (s_start, s_end, title) in spans:
+        body = md_text[s_start:s_end]
+        section_kws.append(_tokenise(title + " " + body))
+
     alloc = [[] for _ in range(n_sec)]
-    for i, e in enumerate(selected):
-        alloc[i % n_sec].append(e)
+
+    def _score(entry, idx):
+        title = spans[idx][2]
+        if _is_admin(title):
+            return -1
+        slide_kws = _tokenise(
+            (entry.get("slide_title") or "") + " " +
+            (entry.get("slide_body") or "")
+        )
+        if not slide_kws:
+            return 0
+        title_kws = _tokenise(title)
+        sec_body_kws = section_kws[idx]
+        score = 0
+        for kw in slide_kws:
+            if kw in title_kws:
+                score += 3
+            elif kw in sec_body_kws:
+                score += 1
+        return score
+
+    for e in selected:
+        scores = [(_score(e, i), -len(alloc[i]), i) for i in range(n_sec)]
+        scores.sort(reverse=True)
+        best_score, _, best_idx = scores[0]
+        if best_score <= 0:
+            # No keyword hit anywhere — pick the least-loaded non-admin section.
+            non_admin = [i for i in range(n_sec) if not _is_admin(spans[i][2])]
+            if non_admin:
+                best_idx = min(non_admin, key=lambda i: len(alloc[i]))
+            else:
+                best_idx = min(range(n_sec), key=lambda i: len(alloc[i]))
+        alloc[best_idx].append(e)
 
     # Walk md_text and rebuild with figures inserted at the END of each
     # section (before the next H2 / end of text).
@@ -980,7 +1212,10 @@ def _generate_title_page(cfg, book_dir=None):
                      "front_cover.jpeg", "cover.png", "cover.jpg"):
             p = book_dir / "figures" / name
             if p.is_file():
-                cover_rel = f"figures/{name}"
+                # The rendered HTML lives in <book_dir>/submission/, so the
+                # cover image (in <book_dir>/figures/) is one level up — use
+                # the same `../figures/...` prefix that lecture figures use.
+                cover_rel = f"../figures/{name}"
                 break
 
     if cover_rel:
@@ -1120,6 +1355,12 @@ def _md_to_html(md_text):
     inline code, and tables.  Math delimiters ($...$, $$...$$) are left
     intact for KaTeX auto-render.
     """
+    # Safety-net: convert stray LaTeX text-mode sub/superscript commands
+    # (``\textsubscript{2}`` / ``\textsuperscript{3}``) into HTML so they
+    # don't render literally in tables or paragraphs.
+    md_text = re.sub(r"\\textsubscript\{([^{}]*)\}", r"<sub>\1</sub>", md_text)
+    md_text = re.sub(r"\\textsuperscript\{([^{}]*)\}", r"<sup>\1</sup>", md_text)
+
     lines = md_text.split("\n")
     html_parts = []
     i = 0
@@ -1185,8 +1426,14 @@ def _md_to_html(md_text):
             i += 1
             continue
 
-        # Italic caption: *Figure ...*
-        if stripped.startswith("*") and stripped.endswith("*") and len(stripped) > 2:
+        # Italic caption: *Figure ...*  (must be a single * on each side, not ** ... **)
+        if (
+            stripped.startswith("*")
+            and stripped.endswith("*")
+            and len(stripped) > 2
+            and not stripped.startswith("**")
+            and not stripped.endswith("**")
+        ):
             close_list()
             html_parts.append(f"<p><em>{_inline_fmt(stripped[1:-1])}</em></p>")
             i += 1
@@ -1251,6 +1498,26 @@ def _md_to_html(md_text):
                 table_lines.append(lines[i].strip())
                 i += 1
             html_parts.append(_render_table(table_lines))
+            continue
+
+        # Raw HTML block passthrough (e.g. <div class="worked-example">...</div>)
+        html_block_m = re.match(r"^<(div|section|aside|figure|table)\b", stripped)
+        if html_block_m:
+            close_list()
+            tag = html_block_m.group(1)
+            depth = 0
+            block_lines = []
+            open_re = re.compile(rf"<{tag}\b", re.IGNORECASE)
+            close_re = re.compile(rf"</{tag}\s*>", re.IGNORECASE)
+            while i < len(lines):
+                cur = lines[i]
+                depth += len(open_re.findall(cur))
+                depth -= len(close_re.findall(cur))
+                block_lines.append(cur)
+                i += 1
+                if depth <= 0:
+                    break
+            html_parts.append("\n".join(block_lines))
             continue
 
         # Paragraph
@@ -1413,8 +1680,17 @@ def render_book_html(book_dir, chapter_filter=None):
 
     # Frontmatter — professional pages from config, then remaining .md files
     if not chapter_filter:
-        # Half-title page
-        parts.append(_generate_half_title(cfg))
+        # Half-title page — suppressed when a full-bleed cover image is used,
+        # since the cover artwork already carries the title prominently.
+        _has_cover_image = False
+        if book_dir is not None:
+            for _name in ("front_cover.png", "front_cover.jpg",
+                          "front_cover.jpeg", "cover.png", "cover.jpg"):
+                if (book_dir / "figures" / _name).is_file():
+                    _has_cover_image = True
+                    break
+        if not _has_cover_image:
+            parts.append(_generate_half_title(cfg))
 
         # Full title page with graphical decoration
         parts.append(_generate_title_page(cfg, book_dir))
@@ -1437,6 +1713,12 @@ def render_book_html(book_dir, chapter_filter=None):
             if fm_path.exists():
                 text = fm_path.read_text(encoding="utf-8")
                 text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+                # Resolve \cite{key} → numbered links so frontmatter
+                # (preface, acknowledgements, etc.) renders citations the
+                # same way chapters do.
+                if bib_entries and all_cited_keys:
+                    text, _ = resolve_citations_numbered_html(
+                        text, bib_entries, all_cited_keys)
                 parts.append(f'<section id="{fm}">')
                 parts.append(_md_to_html(text))
                 parts.append("</section>")
@@ -1469,16 +1751,16 @@ def render_book_html(book_dir, chapter_filter=None):
 
         parts.append(f'<section class="chapter" id="chapter-{ch_num}">')
 
-        # Build the chapter opener (eyebrow + number + title + rule + hero).
+        # Build the chapter opener (eyebrow + number + title + rule).
+        # Hero illustration intentionally omitted — chapter-level decorative
+        # images are not part of this book's design.
         ch_title = ch.get("title", "Untitled")
-        hero_html = _chapter_hero_html(ch_dir, ch_title)
         opener_html = (
             '<div class="chapter-opener">'
             '<div class="ch-eyebrow">Chapter</div>'
             f'<div class="ch-number">{ch_num}</div>'
             f'<h1 class="ch-title">{_esc(ch_title)}</h1>'
             '<hr class="ch-rule"/>'
-            f'{hero_html}'
             '</div>'
         )
         parts.append(opener_html)
@@ -1527,6 +1809,8 @@ def render_book_html(book_dir, chapter_filter=None):
                     book_dir=book_dir,
                     seen_files=_seen_lecture_files,
                     seen_hashes=_seen_lecture_hashes)
+            # Auto-number ##/###/#### headings (textbook style: 3.1, 3.1.2)
+            text = _number_headings(text, ch_num)
             parts.append(_md_to_html(text))
         else:
             parts.append("<p><em>Content not yet written.</em></p>")

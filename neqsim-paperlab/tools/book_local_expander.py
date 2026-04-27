@@ -334,39 +334,39 @@ def build_worked_examples(ch_dir: Path) -> str:
                 short_title = short_title.split(sep)[-1].strip()
         short_title = re.sub(r"^\d+(\.\d+)*\s+", "", short_title).strip()
         rel = nb.relative_to(ch_dir).as_posix()
-        lines.append(f"**Example {i}. {short_title}**")
+        # Emit as a styled HTML callout (passthrough block)
         lines.append("")
+        lines.append('<div class="worked-example">')
+        lines.append(f"<h4>Example {i} — {short_title}</h4>")
         if descriptions:
             topic = descriptions[0]
             topic_lc = topic[0].lower() + topic[1:] if topic else ""
             lines.append(
-                f"This example computes {topic_lc}. The notebook builds the "
-                f"input data, runs the calculation, and renders the results "
-                f"as figures that are reproduced in the chapter."
+                f"<p>Computes {topic_lc}.</p>"
             )
             if len(descriptions) > 1:
                 rest = "; ".join(
                     (d[0].lower() + d[1:]) for d in descriptions[1:]
                 )
-                lines.append("")
-                lines.append(f"Additional outputs cover {rest}.")
+                lines.append(f"<p>Additional outputs: {rest}.</p>")
         else:
             lines.append(
-                f"This example reproduces the numerical case associated "
-                f"with section *{short_title}*. The notebook builds the "
-                f"inputs, runs the calculation, and renders the results."
+                f"<p>Reproduces the numerical case associated with "
+                f"<em>{short_title}</em>.</p>"
             )
+        meta_bits = []
         if figures:
-            lines.append("")
-            fig_list = ", ".join(f"`{f}`" for f in figures)
-            lines.append(f"*Output figures:* {fig_list}.")
-        lines.append("")
-        lines.append(
-            f"*Reference:* the full notebook listing is in "
-            f"**Appendix A** under `chapters/{ch_dir.name}/{rel}`. "
-            f"Run it as-is to reproduce the textbook numbers, then vary one "
-            f"input to explore the dominant physical mechanism."
+            fig_list = ", ".join(f"<code>{f}</code>" for f in figures)
+            meta_bits.append(f"<strong>Outputs:</strong> {fig_list}")
+        meta_bits.append(
+            f"<strong>Notebook:</strong> "
+            f"<code>chapters/{ch_dir.name}/{rel}</code> "
+            f"(full listing in Appendix A)"
         )
+        lines.append(
+            '<p class="we-meta">' + " &middot; ".join(meta_bits) + "</p>"
+        )
+        lines.append("</div>")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
