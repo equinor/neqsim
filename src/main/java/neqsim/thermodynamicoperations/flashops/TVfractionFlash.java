@@ -230,50 +230,60 @@ public class TVfractionFlash extends Flash {
     int phaseSearchAttempts = 0;
     final int MAX_PHASE_SEARCH_ATTEMPTS = 20;
 
-    tpFlash.run();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for the subsequent pressure-search and Newton
+    // iterations driven by solveQ.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
 
-    // Check for initial flash failure
-    if (stateHasUncountableNumbers(system)) {
-      logger.debug("TVfractionFlash: initial flash produced invalid state, aborting");
-      system.setPressure(initialPressure);
-      return;
-    }
-
-    // Try to establish two-phase state if needed
-    if (system.getNumberOfPhases() == 1 || !system.hasPhaseType("gas")) {
-      while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
-        phaseSearchAttempts++;
-        system.setPressure(system.getPressure() * 0.9);
-
-        // Check for pressure getting too low
-        if (system.getPressure() < 1e-6) {
-          logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
-          system.setPressure(initialPressure);
-          return;
-        }
-
-        tpFlash.run();
-
-        if (stateHasUncountableNumbers(system)) {
-          logger.debug("TVfractionFlash: invalid state during phase search, aborting");
-          system.setPressure(initialPressure);
-          return;
-        }
-
-        if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
-          break;
-        }
-      }
-
-      if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
-        logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
-            MAX_PHASE_SEARCH_ATTEMPTS);
+      // Check for initial flash failure
+      if (stateHasUncountableNumbers(system)) {
+        logger.debug("TVfractionFlash: initial flash produced invalid state, aborting");
         system.setPressure(initialPressure);
         return;
       }
-    }
 
-    solveQ();
+      // Try to establish two-phase state if needed
+      if (system.getNumberOfPhases() == 1 || !system.hasPhaseType("gas")) {
+        while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
+          phaseSearchAttempts++;
+          system.setPressure(system.getPressure() * 0.9);
+
+          // Check for pressure getting too low
+          if (system.getPressure() < 1e-6) {
+            logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
+            system.setPressure(initialPressure);
+            return;
+          }
+
+          tpFlash.run();
+
+          if (stateHasUncountableNumbers(system)) {
+            logger.debug("TVfractionFlash: invalid state during phase search, aborting");
+            system.setPressure(initialPressure);
+            return;
+          }
+
+          if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
+            break;
+          }
+        }
+
+        if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
+          logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
+              MAX_PHASE_SEARCH_ATTEMPTS);
+          system.setPressure(initialPressure);
+          return;
+        }
+      }
+
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */
