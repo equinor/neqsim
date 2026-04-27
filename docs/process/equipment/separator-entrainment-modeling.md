@@ -1507,28 +1507,34 @@ neqsim`.
 
 ### Approach (4) — Pi-number with EQN scrubber testing database
 
-Equinor maintains a closed-source plug-in that correlates carry-over against
-dimensionless π-groups regressed from the in-house **EQN full-scale scrubber
-test database**. It accepts the same vessel and internals inputs as the
-public 7-stage model (approach (3) in
+Equinor maintains a closed-source plug-in that computes the primary-separation
+efficiency from an empirical equation of the form **Efficiency = f(π)**, where
+π is a dimensionless group built from operating conditions (gas velocity,
+phase densities, surface tension) and vessel geometry (vessel ID, inlet
+nozzle ID, free-path heights above the inlet device and above the mesh
+pad, design liquid level, internals shape factor). The equation is
+calibrated against the in-house **EQN full-scale scrubber test database**.
+It accepts the same vessel and internals inputs as the public 7-stage model
+(approach (3) in
 [separators.md](separators.md#choosing-an-entrainment--carry-over-model))
-but replaces the predictive chain with an empirical fit valid inside the test
-envelope, and returns confidence bands tied to the rig data.
+but replaces the predictive chain with the empirical π-equation, valid
+inside the test envelope.
 
 **Distribution model.** The plug-in is shipped as a separate signed JAR
-inside the Equinor Artifactory; only Equinor users with database access can
-resolve it. It is wired into NeqSim through a `ServiceLoader` SPI hook on
-`Separator` / `GasScrubber` so the public NeqSim core has no compile-time or
-runtime dependency on it. If the plug-in is on the classpath it is picked up
-automatically; if not, the call falls back to approach (3) or raises a clear
-"plug-in not available" error depending on configuration.
+inside Equinor's GitHub organisation (`equinor/neqsim-eqn-scrubber`); only
+Equinor users with org access can clone and `mvn install` it. It is wired
+into NeqSim through a `ServiceLoader` SPI hook on `Separator` /
+`GasScrubber` so the public NeqSim core has no compile-time or runtime
+dependency on it. If the plug-in is on the classpath it is picked up
+automatically; if not, the call falls back to approach (3) or raises a
+clear "plug-in not available" error depending on configuration.
 
 **Public API surface.** Only the *interface* lives in the public repo
-(method signatures and a no-op default implementation), so user code that
-targets approach (4) compiles against the public NeqSim — it just won't
-produce EQN-correlated results unless the private plug-in is on the
-classpath. The π-group definitions, regression coefficients and the test
-database itself stay in the private repo.
+(method signatures and a built-in default implementation), so user code
+that targets approach (4) compiles against the public NeqSim — it just
+won't produce EQN-correlated results unless the private plug-in is on
+the classpath. The π-group definition, the f(π) functional form and the
+test database itself stay in the private repo.
 
 > The implementation strategy (SPI interface in public NeqSim, signed
 > private JAR, ServiceLoader auto-discovery) is described inline in the

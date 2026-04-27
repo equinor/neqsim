@@ -14,22 +14,24 @@ import java.io.Serializable;
  * Units are SI:
  * <ul>
  *   <li>Carry-over rates: kg/h</li>
- *   <li>Confidence band: kg/h (one-sigma standard error of the carry-over rate)</li>
+ *   <li>Confidence band: kg/h (one-sigma uncertainty estimate on the
+ *       carry-over rate, when the provider can supply one)</li>
  * </ul>
  *
  * <p>
  * Fields that a provider cannot supply are returned as {@link Double#NaN}.
  * In particular, the built-in 7-stage chain returns NaN for
- * {@link #getConfidenceBandKgPerHr()}; the π-number plug-in returns a finite
- * number derived from the regression's residual standard error.
+ * {@link #getConfidenceBandKgPerHr()}; providers that have a documented
+ * uncertainty model (e.g. the π-number plug-in scaled against the EQN
+ * test envelope) return a finite number.
  *
  * <p>
  * <b>Droplet-size data.</b> The unified result intentionally does not
  * carry droplet-size distribution or d50, because empirical large-scale
- * regressions (such as the EQN π-number plug-in) do not produce them.
- * Providers that compute droplet size internally (e.g. the built-in
- * 7-stage chain) expose it through their own API, not through this
- * cross-provider result schema.
+ * correlations (such as the EQN π-number plug-in, which uses
+ * Efficiency = f(π)) do not produce them. Providers that compute droplet
+ * size internally (e.g. the built-in 7-stage chain) expose it through
+ * their own API, not through this cross-provider result schema.
  *
  * @author NeqSim
  * @version 1.0
@@ -58,8 +60,9 @@ public final class EntrainmentResult implements Serializable {
    *        {@link Double#NaN} if not computed
    * @param gasInLiquidKgPerHr gas carry-under into the liquid outlet(s)
    *        [kg/h], or {@link Double#NaN} if not computed
-   * @param confidenceBandKgPerHr one-sigma confidence band on the carry-over
-   *        [kg/h], or {@link Double#NaN} if the provider cannot supply one
+   * @param confidenceBandKgPerHr one-sigma uncertainty estimate on the
+   *        carry-over [kg/h], or {@link Double#NaN} if the provider cannot
+   *        supply one
    */
   public EntrainmentResult(String providerId, String providerVersion, double oilInGasKgPerHr,
       double waterInGasKgPerHr, double gasInLiquidKgPerHr,

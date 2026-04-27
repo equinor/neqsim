@@ -23,8 +23,9 @@ import neqsim.process.equipment.separator.Separator;
  * <b>Applicability.</b> The 7-stage chain has no hard validity envelope —
  * it is a predictive model. {@link #checkApplicability(Separator)}
  * therefore always returns {@link EntrainmentApplicability#ok()}. Provider
- * implementations that are empirical regressions (such as the EQN
- * π-number plug-in) override this and report out-of-range diagnostics.
+ * implementations that are empirical correlations bounded by a test
+ * database (such as the EQN π-number plug-in) override this and report
+ * out-of-range diagnostics.
  *
  * <p>
  * <b>Confidence band.</b> The 7-stage chain does not produce a statistical

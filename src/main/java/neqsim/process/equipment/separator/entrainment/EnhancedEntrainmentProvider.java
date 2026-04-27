@@ -12,11 +12,11 @@ import neqsim.process.equipment.separator.Separator;
  * <b>Why this interface exists.</b> NeqSim ships with a single open-source
  * "built-in" entrainment model — the 7-stage physics-based chain documented in
  * {@code separator-entrainment-modeling.md}. Some operators have additional,
- * proprietary correlations (e.g. Equinor's π-number regression fitted to the
- * EQN scrubber test database) that cannot be open-sourced because they
- * embed vendor or test-rig data. This SPI allows such providers to be
- * delivered as separate, signed JARs that depend on public NeqSim only at
- * the SPI level — no fork, no patching, no public disclosure of the
+ * proprietary correlations (e.g. Equinor's π-number empirical equation
+ * derived from the EQN scrubber test database) that cannot be open-sourced
+ * because they embed vendor or test-rig data. This SPI allows such providers
+ * to be delivered as separate, signed JARs that depend on public NeqSim only
+ * at the SPI level — no fork, no patching, no public disclosure of the
  * proprietary content. If a private provider JAR is on the classpath
  * {@link java.util.ServiceLoader} discovers it automatically; if not, code
  * that requested it gets a clear error.
@@ -27,7 +27,7 @@ import neqsim.process.equipment.separator.Separator;
  * SPI interface, method signatures, result / applicability data classes,
  * registry plumbing, and provider <i>ids</i> (the string {@code "eqn-pi-v1"}
  * is public; the correlation behind it is not). Only the numerical
- * implementation, regression coefficients, validity envelopes, vendor-tagged
+ * implementation, model parameters, validity envelopes, vendor-tagged
  * data and correctness tests live in the private repo. Public and private
  * are kept architecturally aligned — same package layout, same class names
  * where possible — so a maintainer reading the public source can see
@@ -117,8 +117,8 @@ public interface EnhancedEntrainmentProvider {
    * <p>
    * Implementations must inspect the geometry, internals selection and
    * operating conditions of {@code separator} and report any input that
-   * falls outside their regression / validity envelope. The aggregate
-   * applicability flag is true only if every input is in range.
+   * falls outside their validity envelope. The aggregate applicability
+   * flag is true only if every input is in range.
    *
    * @param separator the separator whose entrainment is to be computed; must
    *        not be null

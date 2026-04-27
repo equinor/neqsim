@@ -22,7 +22,7 @@ import java.util.List;
 public final class EntrainmentApplicability implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  /** True if every input is inside the provider's regression / validity envelope. */
+  /** True if every input is inside the provider's validity envelope. */
   private final boolean applicable;
 
   /** Human-readable diagnostics, one per out-of-range input. Never null. */
