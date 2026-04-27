@@ -268,6 +268,15 @@ def collect_all_cited_keys_from_chapters(book_dir, cfg):
     import book_builder
 
     all_keys = []
+    # Frontmatter (preface, acknowledgements, etc.) — scan first so cite
+    # numbers in the preface come out as [1], [2], … in reading order.
+    for fm in cfg.get("frontmatter", []):
+        fm_path = book_dir / "frontmatter" / f"{fm}.md"
+        if fm_path.exists():
+            text = fm_path.read_text(encoding="utf-8")
+            for key in collect_cited_keys(text):
+                if key not in all_keys:
+                    all_keys.append(key)
     for ch_num, ch, part_title in book_builder.iter_chapters(cfg):
         ch_dir = book_builder.resolve_chapter_dir(book_dir, ch)
         ch_md = ch_dir / "chapter.md"

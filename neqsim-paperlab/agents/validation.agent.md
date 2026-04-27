@@ -111,21 +111,138 @@ A valid improvement claim requires:
 - Better in at least one regime
 - Not significantly worse in any regime (or the regression is documented)
 
+## Advanced Statistics (mandatory for top-tier journals)
+
+Plain p-values are not enough for a top-tier submission. Apply these in
+addition to the basic tests above. The decision logic below references
+the *corrected* p-values and the bootstrap CIs.
+
+### Bootstrap confidence intervals
+
+For every reported effect size (median speedup, convergence-rate
+difference, AAD%), report a 95% bias-corrected and accelerated (BCa)
+bootstrap CI with at least 1000 resamples. Pair the resamples for
+paired data:
+
+```python
+import numpy as np
+from scipy import stats
+
+def paired_bootstrap_ci(x, y, n=1000, alpha=0.05, stat=np.median):
+    diffs = np.asarray(x) - np.asarray(y)
+    rng = np.random.default_rng(42)
+    boots = np.array([stat(rng.choice(diffs, size=len(diffs), replace=True))
+                      for _ in range(n)])
+    lo = np.percentile(boots, 100 * alpha / 2)
+    hi = np.percentile(boots, 100 * (1 - alpha / 2))
+    return float(lo), float(hi)
+```
+
+A claim whose 95% CI crosses zero is downgraded to
+`INSUFFICIENT_EVIDENCE` even if its raw p-value is below 0.05.
+
+### Multiple-comparison correction
+
+When the paper makes more than one primary comparison (e.g. baseline vs
+candidate across several regimes, several EOS, or several metrics),
+correct the family of tests:
+
+- **Headline / confirmatory claims** (anything in the abstract or
+  conclusions): Holm-Bonferroni. Sort the p-values ascending; reject
+  H_i while p_i < α / (m - i + 1).
+- **Exploratory claims** (regime breakdowns, secondary metrics):
+  Benjamini-Hochberg with FDR = 0.10. Sort ascending; reject H_i while
+  p_i ≤ (i / m) · 0.10.
+
+Report the corrected p-value as `p_corrected` alongside the raw p-value.
+Use scipy:
+
+```python
+from statsmodels.stats.multitest import multipletests
+reject, p_corrected, _, _ = multipletests(pvalues,
+                                          alpha=0.05,
+                                          method='holm')      # confirmatory
+# or method='fdr_bh' for exploratory
+```
+
+### Mixed-effects models for paired data
+
+When cases are nested (e.g. several pressures per composition, several
+EOS per fluid family), a paired Wilcoxon understates the dependence
+structure. Fit a mixed-effects model with the grouping variable as a
+random intercept:
+
+```python
+import statsmodels.formula.api as smf
+df['delta_iters'] = df['iters_baseline'] - df['iters_candidate']
+m = smf.mixedlm("delta_iters ~ 1", df, groups=df["composition_family"]).fit()
+print(m.summary())
+fixed_effect_p = m.pvalues['Intercept']
+```
+
+Use the fixed-effect p-value as the headline statistic; this is the
+correct denominator for "the candidate is better, averaged over fluids".
+
+### Cross-validation by composition family / EOS / regime
+
+Split the test set by group (composition family, EOS, regime) and
+report the effect within each fold. A robust claim survives in ≥ 80%
+of folds. A claim that wins overall but fails in > 20% of folds is
+downgraded to `APPROVED_WITH_CAVEAT` with the failing folds listed.
+
+### Posterior predictive checks (Type 4 accuracy claims)
+
+For accuracy claims against external data (NIST, lab measurements),
+fit a Bayesian regression of predicted vs measured and report the
+posterior 95% predictive interval. A claim of "AAD < 2%" passes only
+if the upper bound of the posterior predictive AAD is < 2% across
+the validation set.
+
+```python
+import pymc as pm
+with pm.Model() as model:
+    sigma = pm.HalfNormal("sigma", 1.0)
+    mu = pm.Normal("mu", 0, 1)
+    pm.Normal("obs", mu=mu, sigma=sigma, observed=residuals)
+    idata = pm.sample(1000, tune=1000, chains=4, target_accept=0.95)
+```
+
 ## Decision Logic
 
-For each proposed claim:
+For each proposed claim, after applying bootstrap, MCC, and (where
+applicable) mixed-effects and cross-validation:
 
 ```
-IF p-value < 0.05 AND effect_size > threshold AND no_regime_regression:
+IF  p_corrected < 0.05
+AND CI_low > 0 (or CI_high < 0 for "lower is better")
+AND effect_size > threshold
+AND no_regime_regression
+AND cv_pass_fraction >= 0.8:
     status = "APPROVED"
-ELIF p-value < 0.05 AND effect_size > threshold AND has_regime_regression:
+
+ELIF p_raw < 0.05 AND p_corrected >= 0.05
+AND CI_low > 0 AND effect_size > threshold:
+    status = "APPROVED_WITH_CORRECTION"
+    caveat = "Survives raw test but fails Holm-Bonferroni; report as exploratory"
+
+ELIF p_corrected < 0.05 AND has_regime_regression:
     status = "APPROVED_WITH_CAVEAT"
     caveat = "Improvement in X regime but regression in Y regime"
-ELIF p-value >= 0.05:
+
+ELIF p_corrected < 0.05 AND cv_pass_fraction < 0.8:
+    status = "APPROVED_WITH_CAVEAT"
+    caveat = "Wins overall but fails in folds: [list]"
+
+ELIF p_corrected >= 0.05 OR CI_crosses_zero:
     status = "INSUFFICIENT_EVIDENCE"
+
 ELSE:
     status = "REJECTED"
 ```
+
+The `APPROVED_WITH_CORRECTION` status is allowed in the body of the
+paper but **not** in the abstract or conclusions. The
+`adversarial-reviewer` agent enforces this.
 
 ## Output: approved_claims.json
 
