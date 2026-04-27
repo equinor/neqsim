@@ -193,10 +193,21 @@ public class VHflashQfunc extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    // logger.info("internaleng: " + system.getInternalEnergy());
-    // logger.info("volume: " + system.getVolume());
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer VH-flash loop — safe because
+    // the outer loop converges on T,P via volume/enthalpy residuals.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      // logger.info("internaleng: " + system.getInternalEnergy());
+      // logger.info("volume: " + system.getVolume());
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

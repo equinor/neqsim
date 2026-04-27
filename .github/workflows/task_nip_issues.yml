@@ -51,7 +51,7 @@ jobs:
 
       - name: Open one GitHub issue per new NIP file
         if: steps.detect.outputs.files != ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           NIP_FILES: ${{ steps.detect.outputs.files }}
         with:

@@ -93,9 +93,12 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
   /** Outer loop convergence tolerance. */
   private static final double OUTER_TOL = 1.0e-10;
 
-  // --- Site type mapping (transient, rebuilt each molarVolume call) ---
+  // --- Site type mapping (transient, cached across molarVolume calls;
+  // rebuilt only when the number of association sites changes) ---
   /** Number of unique site types for the current system. */
   private transient int numTypes = -1;
+  /** Cached ns used to build the current map (-1 = invalid). */
+  private transient int cachedNs = -1;
   /** Maps individual site index to type index. */
   private transient int[] siteToType;
   /** Representative individual site index for each type. */
@@ -113,6 +116,28 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
   private transient double[] workKlkKsi = null;
   private transient double[] workXV = null;
   private transient int workP = 0;
+
+  // --- Work arrays for outer molarVolume + inner Anderson loop (cached) ---
+  private transient double[] workXSiteFull = null;
+  private transient double[] workXTypeOuter = null;
+  private transient double[] workTMolesOuter = null;
+  private transient double[][] workInnerKlk = null;
+  private transient double[] workInnerXCurr = null;
+  private transient double[] workInnerFX = null;
+  private transient double[] workInnerGCurr = null;
+  private transient double[] workInnerXNew = null;
+  private transient double[] workInnerGPrev = null;
+  private transient double[] workInnerXPrev = null;
+  private transient double[][] workInnerGHist = null;
+  private transient double[][] workInnerXHist = null;
+  private transient int workOuterP = 0;
+  private transient int workOuterNs = 0;
+
+  /**
+   * When true, {@code initCPAMatrix(1)} skips the {@code updateDeltaWithG(ns)} call. Set by the
+   * Halley outer loop where delta has just been refreshed; cleared on exit.
+   */
+  private transient boolean skipDeltaUpdateInInitCPA = false;
 
   // --- Profiling counters ---
   /** Total molarVolume calls. */
@@ -194,6 +219,7 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
       clonedPhase = (PhaseSrkCPAandersonReduced) super.clone();
       // Transient fields are rebuilt as needed
       clonedPhase.numTypes = -1;
+      clonedPhase.cachedNs = -1;
       clonedPhase.siteToType = null;
       clonedPhase.typeRepSite = null;
       clonedPhase.typeMult = null;
@@ -205,6 +231,20 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
       clonedPhase.workKlkKsi = null;
       clonedPhase.workXV = null;
       clonedPhase.workP = 0;
+      clonedPhase.workXSiteFull = null;
+      clonedPhase.workXTypeOuter = null;
+      clonedPhase.workTMolesOuter = null;
+      clonedPhase.workInnerKlk = null;
+      clonedPhase.workInnerXCurr = null;
+      clonedPhase.workInnerFX = null;
+      clonedPhase.workInnerGCurr = null;
+      clonedPhase.workInnerXNew = null;
+      clonedPhase.workInnerGPrev = null;
+      clonedPhase.workInnerXPrev = null;
+      clonedPhase.workInnerGHist = null;
+      clonedPhase.workInnerXHist = null;
+      clonedPhase.workOuterP = 0;
+      clonedPhase.workOuterNs = 0;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -215,6 +255,11 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, moles, molesInPhase, compNumber);
+    // Component set changed: invalidate cached type map and work arrays.
+    cachedNs = -1;
+    numTypes = -1;
+    workOuterP = 0;
+    workOuterNs = 0;
   }
 
   /**
@@ -238,9 +283,20 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
 
-    // Build site type map early so initCPAMatrix(1) works even for gas-phase fallback.
-    calcDelta();
-    buildSiteTypeMap(ns);
+    // Gas phase: defer to nested base solver (avoids redundant calcDelta +
+    // buildSiteTypeMap when we are not going to take the reduced path).
+    if (pt == PhaseType.GAS) {
+      return super.molarVolume(pressure, temperature, A, B, pt);
+    }
+
+    // Build site type map only when invalid for current ns (cached otherwise)
+    if (cachedNs != ns || siteToType == null) {
+      calcDelta();
+      buildSiteTypeMap(ns);
+      cachedNs = ns;
+    } else {
+      calcDelta();
+    }
 
     // If no reduction possible, fall back to the unreduced Anderson solver path from parent
     if (numTypes == ns || numTypes < 1) {
@@ -255,6 +311,24 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     }
 
     int p = numTypes;
+
+    // --- Ensure outer/inner work arrays are sized correctly (cached across calls) ---
+    if (workOuterP != p || workOuterNs != ns) {
+      workXSiteFull = new double[ns];
+      workXTypeOuter = new double[p];
+      workTMolesOuter = new double[p];
+      workInnerKlk = new double[p][p];
+      workInnerXCurr = new double[p];
+      workInnerFX = new double[p];
+      workInnerGCurr = new double[p];
+      workInnerXNew = new double[p];
+      workInnerGPrev = new double[p];
+      workInnerXPrev = new double[p];
+      workInnerGHist = new double[ANDERSON_M][p];
+      workInnerXHist = new double[ANDERSON_M][p];
+      workOuterP = p;
+      workOuterNs = ns;
+    }
 
     // --- Initial guess for BonV ---
     double BonVold;
@@ -274,24 +348,35 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     gcpav = calc_lngV();
     updateDeltaWithG(ns);
 
-    // Initialize site fractions with a few SS steps in full space
-    solveX2(10);
-
-    // Read reduced site fractions from converged individual sites
-    double[] xSiteFull = new double[ns];
+    // Read current site fractions; only run a 10-step full-space SS warm-up if
+    // any reduced-type fraction is out of valid range (cold start).
+    double[] xSiteFull = workXSiteFull;
     readXsiteFromComponents(xSiteFull, ns);
-    double[] xType = new double[p];
+    double[] xType = workXTypeOuter;
+    boolean coldStart = false;
     for (int t = 0; t < p; t++) {
       double val = xSiteFull[typeRepSite[t]];
       if (val <= 1.0e-15 || val >= 1.0 || Double.isNaN(val)) {
-        val = 0.5;
+        coldStart = true;
+        break;
       }
       xType[t] = val;
+    }
+    if (coldStart) {
+      for (int t = 0; t < p; t++) {
+        xType[t] = 0.5;
+      }
+      expandAndSetSiteFractions(xType, ns);
+      solveX2(10);
+      readXsiteFromComponents(xSiteFull, ns);
+      for (int t = 0; t < p; t++) {
+        xType[t] = xSiteFull[typeRepSite[t]];
+      }
     }
     expandAndSetSiteFractions(xType, ns);
 
     // Cache moles per type
-    double[] tMoles = new double[p];
+    double[] tMoles = workTMolesOuter;
     for (int t = 0; t < p; t++) {
       tMoles[t] = componentArray[typeCompIdx[t]].getNumberOfMolesInPhase();
     }
@@ -324,8 +409,15 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
 
       hcpatot = calc_hCPA();
 
-      // Compute CPA pressure derivatives using reduced-dimension implicit function theorem
-      initCPAMatrix(1);
+      // Compute CPA pressure derivatives using reduced-dimension implicit function theorem.
+      // updateDeltaWithG(ns) was just called above before solveXAndersonReduced; skip the
+      // duplicate call inside initCPAMatrix(1).
+      skipDeltaUpdateInInitCPA = true;
+      try {
+        initCPAMatrix(1);
+      } finally {
+        skipDeltaUpdateInInitCPA = false;
+      }
 
       // --- Outer step: Halley iteration for volume ---
       double h = BonV - Btemp / numberOfMolesInPhase * dFdV()
@@ -418,10 +510,10 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     double totalVol = getTotalVolume();
     double invV = 1.0 / totalVol;
 
-    // Read current reduced site fractions
-    double[] xSiteFull = new double[ns];
+    // Read current reduced site fractions (use cached buffers)
+    double[] xSiteFull = workXSiteFull;
     readXsiteFromComponents(xSiteFull, ns);
-    double[] xCurr = new double[p];
+    double[] xCurr = workInnerXCurr;
     for (int t = 0; t < p; t++) {
       xCurr[t] = xSiteFull[typeRepSite[t]];
       if (xCurr[t] <= 1.0e-15 || xCurr[t] >= 1.0 || Double.isNaN(xCurr[t])) {
@@ -430,19 +522,22 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     }
 
     // Pre-compute reduced interaction kernel: klk[a][b] = m_b * n_b * delta(rep_a,rep_b) / V
-    double[][] klk = new double[p][p];
+    double[][] klk = workInnerKlk;
     for (int a = 0; a < p; a++) {
       for (int b = 0; b < p; b++) {
         klk[a][b] = typeMult[b] * tMoles[b] * delta[typeRepSite[a]][typeRepSite[b]] * invV;
       }
     }
 
-    // Anderson history storage (dimension p instead of ns)
+    // Anderson history storage (cached, dimension p)
     int m = ANDERSON_M;
-    double[][] gHist = new double[m][p];
-    double[][] xHist = new double[m][p];
-    double[] gPrev = new double[p];
-    double[] xPrev = new double[p];
+    double[][] gHist = workInnerGHist;
+    double[][] xHist = workInnerXHist;
+    double[] gPrev = workInnerGPrev;
+    double[] xPrev = workInnerXPrev;
+    double[] fX = workInnerFX;
+    double[] gCurr = workInnerGCurr;
+    double[] xNewBuf = workInnerXNew;
     int histLen = 0;
     boolean hasPrev = false;
 
@@ -452,7 +547,6 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
       iterations++;
 
       // One SS step on reduced types: compute f(x)
-      double[] fX = new double[p];
       for (int a = 0; a < p; a++) {
         double sumAB = 0.0;
         for (int b = 0; b < p; b++) {
@@ -462,7 +556,6 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
       }
 
       // Residual: g = f(x) - x
-      double[] gCurr = new double[p];
       double maxG = 0.0;
       for (int a = 0; a < p; a++) {
         gCurr[a] = fX[a] - xCurr[a];
@@ -492,15 +585,15 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
         double[] gamma = solveAndersonLeastSquares(gHist, gCurr, p, histLen);
 
         // x_{k+1} = (x_curr + g_curr) - sum_i gamma_i * (xHist[i] + gHist[i])
-        xNew = new double[p];
         for (int a = 0; a < p; a++) {
-          xNew[a] = xCurr[a] + gCurr[a];
+          xNewBuf[a] = xCurr[a] + gCurr[a];
           for (int i = 0; i < histLen; i++) {
-            xNew[a] -= gamma[i] * (xHist[i][a] + gHist[i][a]);
+            xNewBuf[a] -= gamma[i] * (xHist[i][a] + gHist[i][a]);
           }
           // Clamp to valid range
-          xNew[a] = Math.max(1.0e-15, Math.min(1.0, xNew[a]));
+          xNewBuf[a] = Math.max(1.0e-15, Math.min(1.0, xNewBuf[a]));
         }
+        xNew = xNewBuf;
       } else {
         // First iteration: plain SS step
         xNew = fX;
@@ -763,7 +856,9 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     // Update delta with current g-function (critical: base class initCPAMatrix does
     // this but the reduced override must do it explicitly to avoid stale delta when
     // called from code paths that update gcpa without calling updateDeltaWithG)
-    updateDeltaWithG(ns);
+    if (!skipDeltaUpdateInInitCPA) {
+      updateDeltaWithG(ns);
+    }
 
     double gv = getGcpav();
     double fV = gv - 1.0 / totalVolume;
@@ -771,8 +866,9 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     double fVVV =
         fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
 
-    // Read reduced site fractions and moles
-    double[] xSiteFull = new double[ns];
+    // Read reduced site fractions and moles (reuse cached buffer if available)
+    double[] xSiteFull =
+        (workXSiteFull != null && workXSiteFull.length == ns) ? workXSiteFull : new double[ns];
     readXsiteFromComponents(xSiteFull, ns);
     for (int t = 0; t < p; t++) {
       workKsi[t] = xSiteFull[typeRepSite[t]];

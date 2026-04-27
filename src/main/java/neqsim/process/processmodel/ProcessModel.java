@@ -58,6 +58,14 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private boolean autoValidate = false;
 
+  /**
+   * When true, every ProcessSystem registered with this model has flash warm-start enabled for the
+   * duration of its run (via {@link ProcessSystem#setUseFlashWarmStart(boolean)}). Default is
+   * {@code false}. Setting this flag updates all currently registered ProcessSystems and applies to
+   * any ProcessSystem added afterwards.
+   */
+  private boolean useFlashWarmStart = false;
+
   /** Whether automatic checkpointing is enabled during model execution. */
   private boolean checkpointEnabled = false;
 
@@ -220,6 +228,39 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setUseOptimizedExecution(boolean useOptimizedExecution) {
     this.useOptimizedExecution = useOptimizedExecution;
+  }
+
+  /**
+   * Enable or disable flash warm-start K-values for every ProcessSystem in this model.
+   *
+   * <p>
+   * When enabled, the iterative TPflash inside every fluid evaluation re-uses the previously
+   * converged K-values as the initial estimate instead of seeding from Wilson on every call. This
+   * is delegated to {@link ProcessSystem#setUseFlashWarmStart(boolean)} on every currently
+   * registered ProcessSystem and is also applied to any ProcessSystem added afterwards via
+   * {@link #add(String, ProcessSystem)}. Each ProcessSystem manages the underlying
+   * {@code ThermodynamicModelSettings} flag with try/finally inside its own {@code run()} so the
+   * setting never leaks past the model run. Default is {@code false} (historical behaviour) —
+   * recycle-heavy multi-area models are sensitive to flash trajectory and warm-start can shift the
+   * converged fixed point.
+   * </p>
+   *
+   * @param useWarmStart true to enable warm-start across all ProcessSystems in this model
+   */
+  public void setUseFlashWarmStart(boolean useWarmStart) {
+    this.useFlashWarmStart = useWarmStart;
+    for (ProcessSystem p : processes.values()) {
+      p.setUseFlashWarmStart(useWarmStart);
+    }
+  }
+
+  /**
+   * Returns whether flash warm-start is enabled for the ProcessSystems in this model.
+   *
+   * @return true if warm-start K-values are propagated to every ProcessSystem in this model
+   */
+  public boolean isUseFlashWarmStart() {
+    return useFlashWarmStart;
   }
 
   /**
@@ -438,6 +479,9 @@ public class ProcessModel implements Runnable, Serializable {
       throw new IllegalArgumentException("A process with the given name already exists");
     }
     process.setName(name);
+    if (useFlashWarmStart) {
+      process.setUseFlashWarmStart(true);
+    }
     processes.put(name, process);
     return true;
   }
