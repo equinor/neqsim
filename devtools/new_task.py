@@ -1508,7 +1508,7 @@ def _add_inline_math_runs(paragraph, text):
     non-math segments become regular text runs.
     """
     import re as _re
-    parts = _re.split(r'(?<!\$)(\$(?!\$).+?\$(?!\$))', text)
+    parts = _re.split(r'(?<!\\$)(\\$(?!\\$).+?\\$(?!\\$))', text)
     for part in parts:
         if not part:
             continue
@@ -1523,7 +1523,7 @@ def _add_inline_math_runs(paragraph, text):
                 run.font.name = 'Cambria Math'
         else:
             # Formatted text with **bold**
-            fmt_parts = _re.split(r'(\*\*.+?\*\*)', part)
+            fmt_parts = _re.split(r'(\\*\\*.+?\\*\\*)', part)
             for fp in fmt_parts:
                 if not fp:
                     continue
@@ -3393,8 +3393,11 @@ def setup_workspace():
     canonical_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  "task_template")
     if os.path.isdir(canonical_dir):
-        for root, _dirs, files in os.walk(canonical_dir):
+        for root, dirs, files in os.walk(canonical_dir):
+            dirs[:] = [dirname for dirname in dirs if dirname != "__pycache__"]
             for fname in files:
+                if fname.endswith((".pyc", ".pyo")):
+                    continue
                 src = os.path.join(root, fname)
                 rel = os.path.relpath(src, canonical_dir)
                 dst = os.path.join(TEMPLATE_DIR, rel)
@@ -3658,7 +3661,11 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         sys.exit(1)
 
     # Copy template
-    shutil.copytree(TEMPLATE_DIR, task_dir)
+    shutil.copytree(
+        TEMPLATE_DIR,
+        task_dir,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
 
     # Seed explicit task-depth configuration before the agent starts planning.
     _seed_study_config(task_dir, title, task_type, scale, report_depth,
