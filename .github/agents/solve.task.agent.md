@@ -401,6 +401,36 @@ into conversation-sized chunks. After Phase 0 + Step 1, checkpoint and tell the
 user: "Step 1 is complete. Please start a new conversation and say
 `@solve.task resume task_solve/YYYY-MM-DD_slug` to continue with Step 2."
 
+### MANDATORY: Read `study_config.yaml` before planning notebooks
+
+Every new task folder contains `study_config.yaml`. It is the explicit input
+contract for task inputs, document sources, task depth, notebook plan, report
+detail, and quality gates.
+
+After creating the task folder and before writing `task_spec.md` or creating
+notebooks:
+
+1. Read `task_solve/YYYY-MM-DD_slug/study_config.yaml`.
+2. If `study.scale`, `report.depth`, `notebooks.plan`, `inputs.documents`, or
+  `quality_gates` are set to anything other than `auto`, treat those values as
+  higher priority than scale inferred from the prompt.
+3. If `inputs.documents_required` is true or `inputs.documents` lists source
+  files, verify the files are under `step1_scope_and_research/references/`,
+  classify them, extract relevant engineering data, normalize units/component
+  names, validate the values, and record the extraction in Step 1 notes or
+  structured JSON before building notebooks.
+4. For Comprehensive / Development tasks, do not invent a notebook plan until
+  `notebooks.plan` has been read. Create or execute the configured notebooks in
+  order, and checkpoint after each notebook.
+5. If a required configured notebook, report section, benchmark, uncertainty
+  analysis, risk register, figure discussion, or consistency check cannot be
+  produced, record the reason in `progress.json`, `results.json` limitations,
+  and the final report.
+6. Before Step 3, run `python step3_report/generate_report.py`; the report
+  generator reads `study_config.yaml` and warns about missing configured
+  deliverables. Fix warnings marked as required before finalizing unless the
+  user explicitly accepts the limitation.
+
 ---
 
 ## 2 ── WORKFLOW (follow this exactly)
@@ -458,8 +488,16 @@ user: "Step 1 is complete. Please start a new conversation and say
 
 3. **Create the task folder (DO THIS NOW — non-negotiable):**
    ```
-   Run in terminal: neqsim new-task "TASK TITLE" --type X --author "Agent"
+  Run in terminal: neqsim new-task "TASK TITLE" --type X --author "Agent"
    ```
+  Use explicit depth inputs when the user requests a deep study, for example:
+  ```
+  neqsim new-task "TASK TITLE" --type G --author "Agent" --scale comprehensive --report-depth detailed --notebooks 5
+  ```
+  Or pass a fully authored configuration:
+  ```
+  neqsim new-task "TASK TITLE" --type G --author "Agent" --config-file path/to/study_config.yaml
+  ```
    This creates `task_solve/YYYY-MM-DD_task_slug/` with all subfolders.
    **ALL subsequent files MUST go inside this folder. Do NOT proceed without it.**
 

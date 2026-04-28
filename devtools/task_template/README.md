@@ -18,6 +18,7 @@ to new tasks without updating the embedded strings in `new_task.py`.
 
 ```
 task_template/
+  study_config.yaml              # Explicit depth/notebook/report configuration
   step1_scope_and_research/
     analysis.md                  # Deep analysis template (Step 1.5)
     neqsim_improvements.md       # NIP proposal template

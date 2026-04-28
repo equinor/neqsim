@@ -73,6 +73,7 @@ task_solve/
 ├── README.md                                        ← workflow overview
 ├── TASK_TEMPLATE/                                   ← copy this to start
 │   ├── README.md                                    ← task checklist
+│   ├── study_config.yaml                            ← scale, notebooks, report depth, quality gates
 │   ├── step1_scope_and_research/task_spec.md         ← standards, methods, deliverables
 │   ├── step1_scope_and_research/notes.md             ← literature, sources
 │   ├── step1_scope_and_research/references/          ← PDFs, standards, lab reports
@@ -98,6 +99,135 @@ based on the task:
 
 You control depth through your request — mentioning standards, deliverables,
 and acceptance criteria naturally increases analysis depth.
+
+### Explicit Study Configuration
+
+For repeatable deep studies, configure task depth explicitly instead of relying
+only on prompt wording. Every new task folder includes `study_config.yaml`; it
+is the input contract for scale, notebook plan, report detail, and quality
+gates. The task solver reads it before creating notebooks or reports.
+
+Use CLI options for the common cases:
+
+```powershell
+# Comprehensive study with detailed report and five planned notebooks
+neqsim new-task "field development study" --type G --scale comprehensive --report-depth detailed --notebooks 5
+
+# Explicit notebook filenames
+neqsim new-task "flow assurance study" --type G --scale comprehensive --notebooks "01_basis.ipynb,02_hydrates.ipynb,03_pipeline.ipynb,04_risk.ipynb"
+
+# Fully authored configuration file
+neqsim new-task "concept selection" --type G --config-file path\to\study_config.yaml
+```
+
+The generated `study_config.yaml` has this structure:
+
+```yaml
+study:
+  title: "Field development study"
+  task_type: "G"
+  scale: comprehensive      # auto | quick | standard | comprehensive
+  mode: development         # auto | screening | design | development
+  aace_class: 2
+  fel_stage: FEL-3
+  deliverable_mode: report-first
+
+notebooks:
+  required: true
+  execution_required: true
+  minimum_count: 5
+  plan:
+    - file: 01_scope_basis_and_fluid.ipynb
+      purpose: Define basis, fluid, EOS, and assumptions.
+    - file: 02_process_simulation.ipynb
+      purpose: Build and run the NeqSim process model.
+    - file: 03_benchmark_validation.ipynb
+      purpose: Compare key outputs against independent references.
+    - file: 04_uncertainty_and_risk.ipynb
+      purpose: Monte Carlo, tornado sensitivity, and risk register.
+    - file: 05_report_tables_and_figures.ipynb
+      purpose: Prepare final tables, figures, and results.json.
+
+report:
+  formats:
+    - docx
+    - html
+  depth: detailed          # auto | brief | standard | detailed
+  include_paper: false
+  required_sections:
+    - executive_summary
+    - scope_and_standards
+    - methodology
+    - results
+    - discussion
+    - validation
+    - benchmark_validation
+    - uncertainty
+    - risk_assessment
+    - conclusions
+    - references
+
+quality_gates:
+  require_results_json: true
+  benchmark_validation: required
+  uncertainty_analysis: required
+  risk_register: required
+  figure_discussion: required
+  consistency_checker: required
+  minimum_figures: 8
+  notebook_execution: required
+```
+
+The report generator reads this file together with `task_spec.md` and
+`results.json`. If required input documents, notebooks, report sections,
+figures, benchmark validation, uncertainty analysis, risk register, or
+consistency checks are missing, `python step3_report/generate_report.py` prints
+warnings and includes them in the generated report. Treat required warnings as
+blockers unless the task owner explicitly accepts the limitation.
+
+### Document-Based Task Input
+
+Yes — task input can be provided as documents. Use the form that matches the
+kind of input:
+
+| Input type | Where it goes | Typical use |
+|------------|---------------|-------------|
+| Text or markdown prompt | `--prompt-file path\to\request.md` | Long task descriptions, acceptance criteria, assumptions |
+| Study configuration | `--config-file path\to\study_config.yaml` | Scale, notebook plan, report depth, required quality gates |
+| Engineering documents | `step1_scope_and_research/references/` | Design basis PDFs, data sheets, P&IDs, stream tables, lab reports, standards |
+| Extracted figures/pages | `figures/` | PDF pages, P&ID images, compressor maps, phase envelopes |
+
+Example:
+
+```powershell
+neqsim new-task "pipeline concept study" --type G --scale comprehensive --prompt-file path\to\task_request.md
+Copy-Item path\to\DesignBasis.pdf task_solve\YYYY-MM-DD_pipeline_concept_study\step1_scope_and_research\references\
+Copy-Item path\to\StreamTable.xlsx task_solve\YYYY-MM-DD_pipeline_concept_study\step1_scope_and_research\references\
+```
+
+For document-heavy tasks, list the expected inputs in `study_config.yaml`:
+
+```yaml
+inputs:
+  prompt_file: task_request.md
+  documents_required: true
+  document_extraction_required: required
+  documents:
+    - path: step1_scope_and_research/references/DesignBasis.pdf
+      role: design_basis
+      required: true
+      extraction: classify_extract_normalize_validate
+    - path: step1_scope_and_research/references/StreamTable.xlsx
+      role: heat_and_mass_balance
+      required: true
+      extraction: classify_extract_normalize_validate
+```
+
+The task solver should classify each document, extract the relevant engineering
+data, normalize units and component names, validate the extracted values, and
+record the result in `step1_scope_and_research/notes.md`, `task_spec.md`, or a
+structured JSON file used by the notebooks. Keep all source documents inside
+the task folder so the study remains reproducible.
 
 ---
 
