@@ -907,7 +907,31 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
             return True
         return False
 
-    entries = [e for e in entries if _has_text(e)]
+    # Drop deck cover/title pages. PDF page 1 (or PPTX slide 1) is almost
+    # always a title card ("Flow Assurance and / Introduction to Processing")
+    # — short body that survives _has_text but contributes no engineering
+    # content. Heuristic: drop any entry on the first page/slide whose body
+    # is shorter than ~10 words, OR whose body looks like a course intro
+    # phrase ("Introduction to ...", "Course ...", "Lecture ...").
+    _TITLE_BODY_RE = re.compile(
+        r"^\s*(introduction to|introduksjon|course|lecture|module|"
+        r"chapter|outline|agenda|contents|table of contents|welcome)\b",
+        re.IGNORECASE,
+    )
+
+    def _is_title_page(e):
+        page = e.get("page")
+        if page not in (0, 1):
+            return False
+        body = (e.get("slide_body") or "").strip()
+        body_words = len(body.split())
+        if body_words < 10:
+            return True
+        if _TITLE_BODY_RE.match(body):
+            return True
+        return False
+
+    entries = [e for e in entries if _has_text(e) and not _is_title_page(e)]
     if not entries:
         return md_text
     selected = sorted(entries, key=_area, reverse=True)[:max_figures]

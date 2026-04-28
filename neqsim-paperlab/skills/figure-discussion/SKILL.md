@@ -130,13 +130,15 @@ figure→claim chain:
 ]
 ```
 
-Required keys:
+Required keys (always):
 - `figure` — filename in `figures/`
 - `observation`, `mechanism`, `implication`, `recommendation` — each ≤ 3 sentences
-- `linked_results` — keys in `results.json["key_results"]`
-- `linked_claim_id` — claim ID from `approved_claims.json` (Type 1 only)
-- `neqsim_classes` — Java classes used (for traceability)
-- `equation_refs` — equation numbers in the paper
+
+Optional keys (include when applicable):
+- `linked_results` — keys in `results.json["key_results"]` (required for task reports)
+- `linked_claim_id` — claim ID from `approved_claims.json` (required for Type 1 papers only; omit for book chapters and Type 2 deliverables that have no claims manifest)
+- `neqsim_classes` — Java classes used (for traceability; recommended whenever a NeqSim class produced the figure)
+- `equation_refs` — equation numbers in the paper (omit for book chapters that do not number equations)
 
 ---
 
@@ -177,12 +179,12 @@ discussion section. The remaining half is the cross-figure synthesis
 `paperflow.py iterate --check evidence` audits:
 - Every figure in `paper.md` / `chapter.md` has a discussion block.
 - Every block has all four parts.
-- `linked_claim_id` exists in `approved_claims.json` (Type 1).
-- `linked_results` keys exist in `results.json["key_results"]`.
-- `neqsim_classes` strings match real classes in `src/main/java/`.
+- `linked_claim_id` exists in `approved_claims.json` (Type 1 papers only — skipped when no claims manifest is present, e.g. book chapters, Type 2 task reports).
+- `linked_results` keys exist in `results.json["key_results"]` when `results.json` is present.
+- `neqsim_classes` strings match real classes in `src/main/java/` when supplied.
 - No anti-pattern phrases (configurable list).
 
-A failing check is a `BLOCKER` for `journal-formatter` packaging.
+A failing check is a `BLOCKER` for `journal-formatter` packaging (Type 1). For book builds and task reports, a failing check is a `WARNING` — the build proceeds but the issue is logged for the next iteration.
 
 ---
 

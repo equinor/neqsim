@@ -71,7 +71,7 @@ What do you want to do?
 | `benchmark-runner` | Experiments | Java code, test matrices | `results.json`, JUnit fixtures | `design_flash_benchmark`, `design_reactor_benchmark`, `run_flash_experiments` |
 | `validation-agent` | Statistical gating | `results.json` | `approved_claims.json` | `analyze_convergence`, `analyze_gibbs_convergence` |
 | `figure-generator` | Plots & diagrams | `results.json`, captions | `figures/*.png`, `figures/*.pdf` | `generate_publication_figures` |
-| `scientific-writer` | Manuscript prose | plan, results, approved claims | `paper.md`, `claims_manifest.json` | `write_methods_section`, `neqsim_in_writing`, `figure_discussion` |
+| `scientific-writer` | Manuscript prose | plan, results, approved claims | `paper.md`, `claims_manifest.json` | `write_methods_section`, `neqsim_in_writing`, `figure-discussion` |
 | `section-writer` | One section at a time | section spec, chapter context | a single markdown section | — |
 | `narrative-framer` | Abstract / intro / discussion as story | `paper.md`, `gap_statement.md`, `approved_claims.json` | edits to abstract+intro+discussion, `narrative_notes.md` | — |
 | `adversarial-reviewer` | Hostile pre-submission critique | `paper.md`, `approved_claims.json`, `results.json` | `adversarial_review.md`, `required_fixes.json` | — |
