@@ -118,6 +118,110 @@ public class PSFlash extends QfuncFlash {
   }
 
   /**
+   * Bisection fallback for solveQ. Used when Newton on T fails to drive the entropy residual below
+   * the convergence tolerance — typically because the EOS gives an ill-conditioned Cp (wrong cubic
+   * root, near-saturation, or a pure associating fluid on a non-associating EOS).
+   *
+   * <p>
+   * Brackets the target T by probing outward from the current temperature, then bisects until the
+   * residual is below tolerance or the bracket collapses. Always converges if a solution exists in
+   * the probed range, because S(T,P) is monotonically increasing in T for a stable single phase at
+   * fixed pressure (Cp &gt; 0). Slower than Newton but guaranteed bounded.
+   *
+   * @return final temperature after bisection
+   */
+  private double bisectSolveQ() {
+    final double tMinAbs = 50.0;
+    final double tMaxAbs = 5000.0;
+    double tStart = system.getTemperature();
+    if (!Double.isFinite(tStart) || tStart < tMinAbs) {
+      tStart = 300.0;
+    }
+
+    double tLo = Math.max(tMinAbs, tStart * 0.5);
+    double tHi = Math.min(tMaxAbs, tStart * 2.0);
+
+    double rLo = evalResidualAt(tLo);
+    double rHi = evalResidualAt(tHi);
+    if (Double.isNaN(rLo) || Double.isNaN(rHi)) {
+      // EOS solver outright failed at probe points; restore start and give up.
+      system.setTemperature(tStart);
+      tpFlash.run();
+      system.init(2);
+      return tStart;
+    }
+
+    // Expand outward until residuals have opposite sign (or limits reached).
+    int expand = 0;
+    while (rLo * rHi > 0 && expand < 8) {
+      if (Math.abs(rLo) < Math.abs(rHi)) {
+        tLo = Math.max(tMinAbs, tLo * 0.5);
+        rLo = evalResidualAt(tLo);
+      } else {
+        tHi = Math.min(tMaxAbs, tHi * 1.5);
+        rHi = evalResidualAt(tHi);
+      }
+      if (Double.isNaN(rLo) || Double.isNaN(rHi)) {
+        break;
+      }
+      expand++;
+    }
+
+    if (rLo * rHi > 0 || Double.isNaN(rLo) || Double.isNaN(rHi)) {
+      // Could not bracket — leave at the better of the two endpoints.
+      double tBest = Math.abs(rLo) < Math.abs(rHi) ? tLo : tHi;
+      system.setTemperature(tBest);
+      tpFlash.run();
+      system.init(2);
+      return tBest;
+    }
+
+    // Bisect.
+    for (int i = 0; i < 80; i++) {
+      double tMid = 0.5 * (tLo + tHi);
+      double rMid = evalResidualAt(tMid);
+      if (Double.isNaN(rMid)) {
+        // EOS hiccup at midpoint — pull bracket toward the better side.
+        tMid = 0.5 * (tLo + tMid);
+        rMid = evalResidualAt(tMid);
+        if (Double.isNaN(rMid)) {
+          break;
+        }
+      }
+      if (Math.abs(rMid) < 1e-6 || (tHi - tLo) < 1e-4) {
+        return tMid;
+      }
+      if (rMid * rLo < 0) {
+        tHi = tMid;
+        rHi = rMid;
+      } else {
+        tLo = tMid;
+        rLo = rMid;
+      }
+    }
+    return system.getTemperature();
+  }
+
+  /**
+   * Sets temperature, runs TP-flash, and returns the entropy residual (Sspec - S). Returns
+   * Double.NaN if the EOS solver fails at this temperature.
+   *
+   * @param t temperature in Kelvin
+   * @return entropy residual or NaN
+   */
+  private double evalResidualAt(double t) {
+    system.setTemperature(t);
+    try {
+      tpFlash.run();
+      system.init(2);
+    } catch (Exception ex) {
+      return Double.NaN;
+    }
+    double r = calcdQdT();
+    return Double.isFinite(r) ? r : Double.NaN;
+  }
+
+  /**
    * <p>
    * onPhaseSolve.
    * </p>
@@ -140,6 +244,17 @@ public class PSFlash extends QfuncFlash {
 
       if (type == 0) {
         solveQ();
+        // Bisection fallback: if Newton on T failed to drive the entropy residual below a
+        // reasonable tolerance, re-solve with a guaranteed-convergent bracket-and-bisect.
+        // This catches cases where the EOS returns a wrong cubic root (e.g., a strongly-
+        // associating pure fluid on a non-associating cubic EOS like PR/SRK), where Cp can
+        // be wrong-signed or unrealistically small and the Newton step blows up. The
+        // tolerance is generous to avoid invoking bisection on healthy normal cases.
+        double residual = Math.abs(calcdQdT());
+        double tol = Math.max(1.0e-3, 1.0e-4 * Math.abs(Sspec));
+        if (!Double.isFinite(residual) || residual > tol) {
+          bisectSolveQ();
+        }
       } else {
         SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
             system.getPhases()[0].getNumberOfComponents(), 1);
