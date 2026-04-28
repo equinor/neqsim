@@ -114,7 +114,7 @@ severity `BLOCKER` / `MAJOR` / `MINOR` / `NIT`.
 - Does every figure have a caption that stands alone (a reader looking
   only at figures could understand the result)?
 - Does every figure tie to a claim and to a NeqSim mechanism via the
-  `figure_discussion` skill contract (observation / mechanism /
+  `figure-discussion` skill contract (observation / mechanism /
   implication / recommendation)?
 - Are there too many figures? Top journals expect 4–7 main figures.
 - Are axes labelled with units? Are colour choices colour-blind safe?
