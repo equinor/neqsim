@@ -87,7 +87,7 @@ self-contained and portable.
 
    **Step 2 — Analysis & Evaluation**
    - Create a Jupyter notebook in `step2_analysis/` using NeqSim
-   - Use the dual-boot setup cell (see below)
+  - Use the devtools setup cell (see below) so workspace Java classes load from `target/classes`
    - Run all cells, validate results against acceptance criteria
    - **MANDATORY: Include detailed results table** with all key outputs and units
    - **MANDATORY: Include at least 2-3 matplotlib figures** (profiles, sensitivities, comparisons) with axis labels, units, titles, legends, and grids
@@ -164,25 +164,40 @@ self-contained and portable.
    - Documentation fixes go in the **same PR** as the task outputs so
      reviewers see the full context of what was learned.
 
-### Dual-boot notebook cell (use in every notebook)
+### Devtools notebook cell (use in every task notebook)
+
+Task notebooks and runner workflows must use `neqsim_dev_setup.py` so Java
+classes come from the workspace (`target/classes`) instead of the installed
+Python `neqsim` package. This makes new Java classes available without copying
+a packaged JAR into `site-packages/neqsim/lib/java11/`.
 
 ```python
-import importlib, subprocess, sys
+import os
+import sys
+from pathlib import Path
 
-try:
-    from neqsim_dev_setup import neqsim_init, neqsim_classes
-    ns = neqsim_init(recompile=False)
-    ns = neqsim_classes(ns)
-    NEQSIM_MODE = "devtools"
-    print("NeqSim loaded via devtools (local dev mode)")
-except Exception:
-    try:
-        import neqsim
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "neqsim"])
-    from neqsim import jneqsim
-    NEQSIM_MODE = "pip"
-    print("NeqSim loaded via pip package")
+
+def find_neqsim_project_root():
+  env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+  candidates = []
+  if env_root:
+    candidates.append(Path(env_root).resolve())
+  cwd = Path.cwd().resolve()
+  candidates.extend([cwd] + list(cwd.parents))
+  for candidate in candidates:
+    if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
+      return candidate
+  raise RuntimeError("Could not find NeqSim project root. Set NEQSIM_PROJECT_ROOT.")
+
+
+PROJECT_ROOT = find_neqsim_project_root()
+sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+from neqsim_dev_setup import neqsim_init, neqsim_classes
+
+ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
+ns = neqsim_classes(ns)
+NEQSIM_MODE = "devtools"
 ```
 
 ### Follow-up Questions (ASK BEFORE STARTING)
@@ -296,8 +311,7 @@ with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
 
 # ── Programmatic quality gate: validate results.json ──
-import jpype
-TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+TaskResultValidator = ns.JClass("neqsim.util.agentic.TaskResultValidator")
 
 with open(str(TASK_DIR / "results.json"), "r") as f:
     json_str = f.read()
@@ -600,11 +614,10 @@ byte[] bytes = modelState.toCompressedBytes();
 ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
 ```
 
-### Python (Jupyter) fluid
+### Python (Jupyter) fluid in task notebooks
 
 ```python
-from neqsim import jneqsim
-fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)
+fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
 fluid.addComponent("methane", 0.85)
 fluid.setMixingRule("classic")
 ```
@@ -620,27 +633,31 @@ from neqsim_runner.agent_bridge import AgentBridge
 bridge = AgentBridge(task_dir="task_solve/2026-04-08_my_task")
 
 # Submit a notebook (default: mode="execute" produces executed .ipynb with outputs)
-job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", max_retries=3)
+job_ids = [bridge.submit_notebook("step2_analysis/notebook.ipynb", max_retries=3)]
 
-# Or use mode="script" to convert to .py (lighter, no .ipynb output)
-job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", mode="script")
+# Alternative: use mode="script" to convert to .py (lighter, no .ipynb output)
+# job_ids = [bridge.submit_notebook("step2_analysis/notebook.ipynb", mode="script")]
 
-# Or submit a standalone script
-job_id = bridge.submit_script("run_sim.py", args={"pressure": 60.0})
+# Alternative: submit a standalone script
+# job_ids = [bridge.submit_script("run_sim.py", args={"pressure": 60.0})]
 
-# Or submit a parametric sweep (each case = own subprocess + JVM)
-cases = [{"pressure": p} for p in [30, 60, 90, 120]]
-job_ids = bridge.submit_parametric_sweep("run_case.py", cases)
+# Alternative: submit a parametric sweep (each case = own subprocess + JVM)
+# cases = [{"pressure": p} for p in [30, 60, 90, 120]]
+# job_ids = bridge.submit_parametric_sweep("run_case.py", cases)
 
 # Run all (supervisor handles retry/recovery)
-bridge.run_all()
+bridge.run_all(max_parallel=1)
+
+summary = bridge.summary()
+if summary["failed"] or summary["pending"]:
+    raise RuntimeError("NeqSim Runner jobs did not all complete successfully")
 
 # Read results
-results = bridge.get_results(job_id)
-bridge.copy_results_to_task(job_id)
+results = bridge.get_results(job_ids[0])
+bridge.merge_results_to_task(job_ids)
 
 # Get the executed notebook (with cell outputs, plots, etc.)
-executed_nb = bridge.get_executed_notebook(job_id)
+executed_nb = bridge.get_executed_notebook(job_ids[0])
 ```
 
 CLI equivalent: `python -m neqsim_runner go my_sim.py --args '{"pressure": 60}'`
@@ -687,10 +704,9 @@ for (ErrorDetail w : result.getWarnings()) {
 ```
 
 ```python
-# Python equivalent
+# Python equivalent inside task notebooks/runner jobs
 import json
-from neqsim import jneqsim
-ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+ProcessSystem = ns.ProcessSystem
 result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
 if not result.isError():
     process = result.getProcessSystem()
@@ -798,11 +814,10 @@ in `process.equipment.pipeline`; `ImpurityMonitor` in `process.measurementdevice
 ### Python (Jupyter) — CO2 well analysis
 
 ```python
-import jpype
-CO2InjectionWellAnalyzer = jpype.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
-TransientWellbore = jpype.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
-CO2FlowCorrections = jpype.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
-ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
+CO2InjectionWellAnalyzer = ns.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
+TransientWellbore = ns.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
+CO2FlowCorrections = ns.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
+ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 ```
 
 ## Key Paths
@@ -936,18 +951,17 @@ This policy applies to ALL agents that produce code for documentation.
 
 ## Notebook Execution Verification (Mandatory)
 
-**Every Jupyter notebook MUST be executed cell-by-cell after creation and all cells must pass.**
+**Every Jupyter notebook MUST be executed after creation and all cells must pass.**
 Notebooks that have not been run are NOT considered complete.
 
 Workflow:
-1. **Build and deploy the latest JAR** before running notebooks that use new/modified classes:
+1. **Compile latest workspace classes** before running notebooks that use new/modified classes:
    ```bash
-   ./mvnw package -DskipTests -Dmaven.javadoc.skip=true  # Linux/Mac
-   mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"  # Windows
-   # Copy JAR to Python neqsim package lib/java11/ directory
+  ./mvnw compile  # Linux/Mac
+  mvnw.cmd compile  # Windows
    ```
-2. **Configure the notebook kernel** and start it
-3. **Run every code cell in order** — cell 1 first, then cell 2, etc.
+2. **Use the devtools setup cell** (`neqsim_dev_setup.py`, `ns.*`) in the first code cell
+3. **Run every code cell in order** — use NeqSim Runner by default for task notebooks
 4. **If any cell fails**, fix the code in that cell and re-run before continuing
 5. **Common runtime errors**:
    - `AttributeError` — method doesn't exist; read the Java source for correct name

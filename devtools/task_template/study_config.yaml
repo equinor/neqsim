@@ -31,6 +31,14 @@ inputs:
 notebooks:
   required: true
   execution_required: true
+  execution_engine: neqsim_runner  # neqsim_runner | interactive | auto
+  runner_mode: execute             # execute | script
+  runner_max_retries: 3
+  runner_timeout_seconds: 3600
+  runner_max_parallel: 1           # JVM-heavy jobs should stay serial by default
+  runner_merge_results: true       # Merge multi-notebook results.json updates
+  require_successful_jobs: true    # Report gate warns on failed/timed-out jobs
+  isolated_subprocess: true
   minimum_count: 1
   plan:
     - file: 01_main_analysis.ipynb

@@ -7,7 +7,7 @@ Usage in any notebook::
     ns = neqsim_init(recompile=True)   # cell 1: start JVM
     ns = neqsim_classes(ns)            # cell 2: import classes
 
-    # Use classes
+    # Use classes from target/classes, with dependencies from target JAR or Maven classpath
     fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
 
 Re-running the init cell after editing Java code will compile, restart
@@ -86,6 +86,43 @@ def _run_compile(root):
         raise RuntimeError("Maven compile failed — see output above")
 
 
+def _has_compiled_classes(classes_dir):
+    """Return True when target/classes contains compiled Java classes."""
+    return classes_dir.exists() and any(classes_dir.rglob("*.class"))
+
+
+def _build_dependency_classpath(root):
+    """Build and return Maven runtime dependency classpath entries."""
+    target_dir = root / "target"
+    target_dir.mkdir(exist_ok=True)
+    classpath_file = target_dir / "neqsim-dev-classpath.txt"
+    if not classpath_file.exists():
+        print("Building Maven dependency classpath... ", end="", flush=True)
+        mvnw = root / "mvnw.cmd" if os.name == "nt" else root / "mvnw"
+        result = subprocess.run(
+            [
+                str(mvnw),
+                "-q",
+                "dependency:build-classpath",
+                f"-Dmdep.outputFile={classpath_file}",
+                f"-Dmdep.pathSeparator={os.pathsep}",
+                "-DincludeScope=runtime",
+            ],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            print("FAILED")
+            print(result.stdout)
+            print(result.stderr)
+            raise RuntimeError("Maven dependency classpath generation failed")
+        print("OK")
+    text = classpath_file.read_text(encoding="utf-8").strip()
+    return [entry for entry in text.split(os.pathsep) if entry]
+
+
 def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbose=True):
     """
     Start the JVM with the NeqSim project classpath.
@@ -143,11 +180,11 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
             ns.JClass = jpype.JClass
             return ns
 
-    if recompile:
-        _run_compile(root)
-
     classes_dir = root / "target" / "classes"
     resources_dir = root / "src" / "main" / "resources"
+
+    if recompile or not _has_compiled_classes(classes_dir):
+        _run_compile(root)
 
     # The shade plugin produces the shaded JAR as the main artifact
     # (neqsim-X.Y.Z.jar) and renames the original to original-neqsim-X.Y.Z.jar.
@@ -159,14 +196,15 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         and "-sources" not in j.name
         and "-javadoc" not in j.name
     ]
-    if not shaded_jars:
-        raise FileNotFoundError(
-            f"No NeqSim JAR found in {root / 'target'}. "
-            "Run: mvnw.cmd package -DskipTests"
-        )
-    shaded_jar = shaded_jars[-1]
-
-    classpath = [str(classes_dir), str(resources_dir), str(shaded_jar)]
+    classpath = [str(classes_dir), str(resources_dir)]
+    if shaded_jars:
+        # Use the existing shaded JAR for dependencies when available. Fresh
+        # NeqSim classes still come first from target/classes.
+        classpath.append(str(shaded_jars[-1]))
+    else:
+        # No package step required: target/classes supplies NeqSim classes and
+        # Maven supplies runtime dependency JARs directly.
+        classpath.extend(_build_dependency_classpath(root))
     if extra_classpath:
         classpath.extend(extra_classpath)
 

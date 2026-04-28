@@ -19,12 +19,32 @@ def main():
     output_dir = job_spec.get("output_dir", ".")
     timeout = job_spec.get("timeout", 3600)
     project_root = job_spec.get("project_root")
+    require_devtools = bool(job_spec.get("require_devtools", True))
 
     os.makedirs(output_dir, exist_ok=True)
 
     # -- Set environment for the Jupyter kernel --
     if project_root:
         os.environ["NEQSIM_PROJECT_ROOT"] = project_root
+        os.environ["NEQSIM_REQUIRE_DEVTOOLS"] = "1"
+        devtools_path = os.path.join(project_root, "devtools")
+        pythonpath = os.environ.get("PYTHONPATH", "")
+        path_entries = [entry for entry in pythonpath.split(os.pathsep) if entry]
+        if devtools_path not in path_entries:
+            os.environ["PYTHONPATH"] = os.pathsep.join([devtools_path] + path_entries)
+        if devtools_path not in sys.path:
+            sys.path.insert(0, devtools_path)
+    elif require_devtools:
+        error_msg = (
+            "NeqSim notebook execution requires devtools mode, but project_root is missing. "
+            "Use AgentBridge from inside the NeqSim repository or pass project_root."
+        )
+        print(f"ERROR: {error_msg}", file=sys.stderr)
+        with open(os.path.join(output_dir, "_status.json"), "w", encoding="utf-8") as f:
+            json.dump({"status": "failed", "error": error_msg,
+                       "timestamp": __import__("datetime").datetime.now(
+                           __import__("datetime").timezone.utc).isoformat()}, f, indent=2)
+        sys.exit(2)
     # Pass job args so the kernel can read them
     job_args = job_spec.get("args", {})
     os.environ["NEQSIM_JOB_ARGS"] = json.dumps(job_args)

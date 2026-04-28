@@ -113,8 +113,8 @@ This agent's value comes from two things — and both depend on NeqSim:
 
 1. **Use the NeqSim Java API for all technical calculations.** Every
    thermodynamic property, phase equilibrium, process simulation, and
-   equipment sizing must be computed through NeqSim's Java classes
-   (via the `jneqsim` Python gateway or directly in Java tests). Never
+  equipment sizing must be computed through NeqSim's Java classes
+  (via `neqsim_dev_setup.py`/`ns.*` in task notebooks or directly in Java tests). Never
    substitute simplified Python correlations when a NeqSim class exists
    for the calculation. The rigour of the answer comes from the rigour
    of the underlying thermodynamic engine.
@@ -342,7 +342,7 @@ progress.set_next_action("Create main notebook: 01_compression_analysis.ipynb")
 
 # Store expensive-to-derive context
 progress.store_context("api_methods", {
-    "compressor_class": "jneqsim.process.equipment.compressor.Compressor",
+    "compressor_class": "neqsim.process.equipment.compressor.Compressor",
     "power_method": "getPower('kW')",
     "polytropicEff_method": "getPolytropicEfficiency()",
 })
@@ -818,9 +818,23 @@ condensed analysis section in notes and proceed.
      See `neqsim-stid-retriever` skill § "Iterative Retrieval During Analysis"
 
 9. **Create a Jupyter notebook** in `step2_analysis/`:
-   - Use the dual-boot setup pattern (devtools + pip fallback)
+   - Create notebooks with VS Code notebook tools, `nbformat`, or valid `.ipynb`
+     JSON. Raw JSON notebooks must be nbformat v4, keep cells in the top-level
+     `cells` array, and include `metadata.language` for every cell. When editing
+     existing notebooks, preserve existing `metadata.id` values.
+   - Use the devtools setup pattern from `neqsim-notebook-patterns`: import
+     `neqsim_dev_setup`, call `neqsim_init(project_root=PROJECT_ROOT, ...)`,
+     then use classes through `ns.*` or `ns.JClass(...)`
+   - Do not use `from neqsim import jneqsim` in task notebooks or runner jobs;
+     that can use the installed Python package instead of workspace Java classes
+   - The first setup cell must set `NEQSIM_MODE = "devtools"` and fail if the
+     project root cannot be found
    - Follow the notebook structure from the `@solve.process` agent
    - Include clear markdown cells explaining each step
+   - Avoid interactive prompts, hidden kernel state, and shell-specific commands;
+     every code cell must run from a fresh kernel in order
+   - Load existing task-level `results.json` before adding notebook-specific
+     results so multi-notebook runner merge preserves prior outputs
    - **Results & Figures (proportional requirement):**
      - Quick: at least one clear results table and at least one informative figure when visualization adds value
      - Standard/Comprehensive: detailed results tables and typically 2-3+ informative figures
@@ -897,79 +911,81 @@ condensed analysis section in notes and proceed.
    - For **Type G (Workflow)** tasks: create multiple notebooks, numbered sequentially
      (e.g., `01_reservoir_fluid.ipynb`, `02_pipeline_sizing.ipynb`, etc.)
 
-10. **Run every cell** using notebook tools. Fix errors immediately.
+10. **Execute notebooks with supervised runner by default.** Fix errors immediately.
 
-10a. **Choose execution method — decision rule (MANDATORY):**
+10a. **Notebook execution method — default rule (MANDATORY):**
 
-    Before executing any notebook, classify the task and pick the method:
+    The default execution engine for task notebooks is `neqsim_runner`, as
+    configured by `notebooks.execution_engine: neqsim_runner` in
+    `study_config.yaml`. This runs notebooks in isolated subprocesses with
+    their own JVMs, retry handling, persisted job state, and no manual kernel
+    restart loop.
 
-    **Use `run_notebook_cell` (interactive)** when ALL of these are true:
-    - Quick or Screening scale (single notebook, no sweeps)
-    - Total expected runtime < 5 minutes
-    - No parametric sweep or Monte Carlo
-    - No previous JVM/kernel crash in this session
-
-    **Use `neqsim_runner` (headless)** when ANY of these are true:
-    - Standard or Comprehensive scale (multi-notebook deliverable)
-    - Parametric sweep with > 3 cases
-    - Monte Carlo with N > 50 iterations
+    **Use `neqsim_runner` (headless/supervised) unless `study_config.yaml`
+    explicitly sets `notebooks.execution_engine: interactive`.** This is
+    mandatory when ANY of these are true:
+    - Standard or Comprehensive scale
+    - More than one notebook
+    - Parametric sweep or Monte Carlo
     - Any notebook expected to run > 5 minutes
-    - A previous cell or notebook failed due to JVM crash, kernel death,
-      or `RuntimeError: JVM cannot be restarted` in this session
-    - Task requires uncertainty analysis or benchmark validation notebooks
-      (these almost always benefit from isolation and retry)
+    - Benchmark validation, uncertainty, or risk notebooks are required
+    - Prior JVM crash, kernel death, hanging cell, or `RuntimeError: JVM cannot be restarted`
 
-    **Escalation rule:** If you start with interactive cells and hit a JVM
-    crash or kernel death, **immediately switch** to the runner for all
-    remaining notebooks in this task. Do not attempt to restart the kernel
-    and retry interactively — that wastes context window.
+    **Use `run_notebook_cell` (interactive) only for quick debugging** when ALL
+    of these are true:
+    - `study_config.yaml` sets `notebooks.execution_engine: interactive`, or the
+      user explicitly asks for interactive notebook debugging
+    - Quick or Screening scale
+    - Single notebook, no sweep, no Monte Carlo
+    - Expected runtime < 5 minutes
+    - No prior JVM/kernel crash or hanging cell in this session
+
+    **Escalation rule:** If interactive execution hits a JVM crash, kernel death,
+    hanging cell, or `RuntimeError: JVM cannot be restarted`, immediately switch
+    to `neqsim_runner` for all remaining notebooks. Do not keep restarting the
+    VS Code kernel and retrying interactively.
 
     **Runner usage:**
 
     ```python
-    # In a notebook cell or standalone script:
+    # In a standalone script or notebook orchestration cell:
     import sys; sys.path.insert(0, str(TASK_DIR.parent.parent / "devtools"))
     from neqsim_runner.agent_bridge import AgentBridge
 
     bridge = AgentBridge(task_dir=str(TASK_DIR))
-
-    # Option A: Submit the current notebook as a headless job
-    # Default mode="execute" produces an executed .ipynb with all cell outputs
-    job_id = bridge.submit_notebook(
+    planned_notebooks = [
         "step2_analysis/01_analysis.ipynb",
-        max_retries=3, timeout_seconds=3600,
-    )
+        "step2_analysis/02_benchmark_validation.ipynb",
+    ]
 
-    # Option B: Convert notebook to .py script (lighter, no .ipynb output)
-    job_id = bridge.submit_notebook(
-        "step2_analysis/01_analysis.ipynb",
-        mode="script",
-        max_retries=3, timeout_seconds=3600,
-    )
+    # Default mode="execute" produces an executed .ipynb with all cell outputs.
+    # Each run happens in an isolated subprocess with its own JVM.
+    job_ids = [
+        bridge.submit_notebook(notebook_path, mode="execute",
+                               max_retries=3, timeout_seconds=3600)
+        for notebook_path in planned_notebooks
+    ]
 
-    # Option C: Submit a standalone simulation script
-    job_id = bridge.submit_script(
-        "step2_analysis/run_simulation.py",
-        args={"pressure": 60.0, "temperature": 25.0},
-    )
+    # Run all jobs (supervisor handles retry/recovery automatically).
+    # Keep max_parallel=1 unless the task owner explicitly accepts parallel JVM load.
+    bridge.run_all(max_parallel=1)
 
-    # Option D: Parametric sweep (each case = separate job with retry)
-    cases = [{"pressure": p, "temp": t} for p in [30, 60, 90] for t in [15, 25, 40]]
-    job_ids = bridge.submit_parametric_sweep(
-        "step2_analysis/run_case.py", cases,
-        max_retries=2, timeout_seconds=600,
-    )
+    summary = bridge.summary()
+    print(summary)
+    if summary["failed"] or summary["pending"]:
+        raise RuntimeError("NeqSim Runner jobs did not all complete successfully")
 
-    # Run all jobs (supervisor handles retry/recovery automatically)
-    bridge.run_all()
-
-    # Collect results back into results.json
-    bridge.copy_results_to_task(job_id)
-    print(bridge.summary())
+    # Merge multi-notebook outputs instead of overwriting earlier results.
+    bridge.merge_results_to_task(job_ids)
 
     # Get the executed notebook (only for mode="execute")
-    executed_nb = bridge.get_executed_notebook(job_id)
+    executed_nb = bridge.get_executed_notebook(job_ids[0])
     ```
+
+    For script-only workloads, use `bridge.submit_script()` or
+    `bridge.submit_parametric_sweep()` instead of `submit_notebook()`. For
+    lighter notebook jobs that do not need executed `.ipynb` outputs, set
+    `mode="script"`, but keep the same success check and merge step.
 
     **When to use the runner vs interactive notebook:**
 
@@ -984,10 +1000,13 @@ condensed analysis section in notes and proceed.
     | Need interactive debugging | No | Yes |
     | Need executed .ipynb with outputs | Yes (mode="execute") | Yes |
 
-    The runner writes all outputs to `task_dir/runner_output/`. Use
-    `bridge.copy_results_to_task()` to merge back into the task workflow.
-    When using `mode="execute"`, the original notebook is also updated
-    in place with cell outputs.
+    The runner writes outputs to `task_dir/runner_output/` and job state to
+    `task_dir/runner.db`. Use `bridge.merge_results_to_task(job_ids)` for
+    multi-notebook workflows so later notebooks do not overwrite earlier
+    `results.json` content. The report generator inspects `runner.db` and warns
+    if planned notebooks have no successful runner job. When using
+    `mode="execute"`, the original notebook is backed up and updated in place
+    with cell outputs.
 
 10b. **Equipment feasibility checks** — for any task involving compressors,
     heat exchangers, coolers, or heaters, run a Design Feasibility Report after
@@ -995,7 +1014,8 @@ condensed analysis section in notes and proceed.
 
     ```python
     # Compressor feasibility
-    CompressorFeasibility = jneqsim.process.mechanicaldesign.compressor.CompressorDesignFeasibilityReport
+    CompressorFeasibility = ns.JClass(
+      "neqsim.process.mechanicaldesign.compressor.CompressorDesignFeasibilityReport")
     report = CompressorFeasibility(compressor)
     report.setDriverType("gas-turbine")
     report.setCompressorType("centrifugal")
@@ -1010,7 +1030,8 @@ condensed analysis section in notes and proceed.
     }
 
     # Heat exchanger / cooler / heater feasibility
-    HXFeasibility = jneqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport
+    HXFeasibility = ns.JClass(
+      "neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport")
     hx_report = HXFeasibility(heat_exchanger)
     hx_report.setExchangerType("shell-and-tube")
     hx_report.generateReport()
@@ -1195,8 +1216,7 @@ condensed analysis section in notes and proceed.
 
     ```python
     # ── Programmatic quality gate: validate results.json ──
-    import jpype
-    TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+    TaskResultValidator = ns.JClass("neqsim.util.agentic.TaskResultValidator")
 
     with open(str(TASK_DIR / "results.json"), "r") as f:
         json_str = f.read()
@@ -1711,36 +1731,23 @@ When a task involves economic evaluation (NPV, IRR, cash flow, breakeven):
 
 ## 4 ── NOTEBOOK SETUP PATTERN
 
-See the `neqsim-notebook-patterns` skill for the complete dual-boot setup cell,
-class import patterns, and notebook structure template.
+See the `neqsim-notebook-patterns` skill for the complete devtools setup cell,
+`ns.*`/`ns.JClass(...)` import patterns, and notebook structure template.
 
 ### Loading Custom Java Classes in Notebooks
 
-When using newly created NeqSim Java classes from Python notebooks, the JAR in
-the Python `neqsim` package may not contain them yet. Use this pattern:
+When using newly created NeqSim Java classes from Python notebooks, do not rely
+on the installed Python `neqsim` package. Use the task setup cell to load local
+workspace classes, then resolve additional classes through `ns.JClass(...)`:
 
 ```python
-import jpype
-
-# First try loading the class normally
-try:
-    MyClass = jpype.JClass("neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
-except Exception:
-    # Fallback: add the local build JAR to the classpath
-    import glob, pathlib
-    jar_pattern = str(pathlib.Path("target") / "neqsim-*-shaded.jar")
-    jars = glob.glob(jar_pattern)
-    if jars:
-        jpype.addClassPath(jars[0])
-        MyClass = jpype.JClass("neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
-    else:
-        raise RuntimeError("Build the project first: mvnw.cmd package -DskipTests")
+MyClass = ns.JClass("neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
 ```
 
-**Common JAR classpath issues:**
-- Old JAR versions in Python site-packages may shadow the local build
-- After building new classes, always run `mvnw.cmd package -DskipTests` before using in notebooks
-- Use `jpype.JClass()` for explicit class loading when `jneqsim` gateway doesn't expose the class
+**Common classpath issues:**
+- Old JAR versions in Python site-packages can shadow workspace changes when using `jneqsim`
+- Task notebooks should call `neqsim_init(project_root=PROJECT_ROOT, recompile=False, ...)`
+- Use `ns.JClass()` for explicit class loading when `neqsim_classes(ns)` does not preload the class
 
 ---
 
@@ -1970,7 +1977,7 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 
 ## 8 ── CRITICAL RULES
 
-0. **NeqSim API first.** Every thermodynamic property, flash calculation, process simulation, and equipment sizing must use NeqSim Java classes (via `jneqsim` gateway or JUnit tests). Never substitute a simplified Python correlation, regression, or hand-formula when a NeqSim class exists for the same calculation. Search the Java source first. If no class exists, that is a gap — see Rule 20.
+0. **NeqSim API first.** Every thermodynamic property, flash calculation, process simulation, and equipment sizing must use NeqSim Java classes (via `neqsim_dev_setup.py`/`ns.*` in task notebooks or JUnit tests). Never substitute a simplified Python correlation, regression, or hand-formula when a NeqSim class exists for the same calculation. Search the Java source first. If no class exists, that is a gap — see Rule 20.
 1. **Create the `task_solve/` folder FIRST — this is non-negotiable.** Always run `neqsim new-task "TITLE" --type X --author "Agent"` before writing any files. ALL deliverables (task_spec.md, notebooks, notes.md, results.json, figures/) MUST be placed inside the generated `task_solve/YYYY-MM-DD_task_slug/` folder. Never write analysis files to the workspace root, `examples/`, or any other location. If the folder was not created, STOP and create it now.
 2. **Scale to the task.** Quick tasks get minimal ceremony. Comprehensive tasks get full documentation. Don't over-engineer a simple property lookup or under-deliver a field development study.
 3. **Fill in the task spec.** Standards, methods, and deliverables must be defined in `task_spec.md` before analysis. For Quick scale, only essential fields.
@@ -1990,7 +1997,7 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 16. **Notebooks used for teaching must have theory cells.** When the task has educational value, include: (a) governing equations with LaTeX rendering, (b) explanation of why each parameter matters, (c) 2-3 exercises for the reader, (d) academic references. This applies especially to Type G workflow tasks.
 17. **After first draft, always self-review calculations.** Before delivering, re-read every formula cell and check: correct signs (revenue positive, cost negative in cash flow), no double-counting (CAPEX in both investment and operating cost), correct time indexing (year-0 vs year-1), tax model matches the jurisdiction's actual law.
 18. **Units matter.** Kelvin for constructors, unit strings for setters. Always state units in output.
-19. **No `pip install neqsim` for local dev.** Use `pip install -e devtools/` pattern. The dual-boot cell handles both cases.
+19. **No `pip install neqsim` for local task notebooks.** Use `neqsim_dev_setup.py` and `ns.*`/`ns.JClass(...)` so runner jobs use workspace Java classes.
 20. **Extend NeqSim when gaps are found.** When a task needs a capability NeqSim lacks, don't just work around it — write a NIP in `neqsim_improvements.md`, and when feasible within the session, implement the new Java class with complete JavaDoc and JUnit tests. This is a primary output of the agent, not a side activity. For minor one-off gaps, document the limitation and Python workaround used.
 21. **Engineering interpretation matters.** Reports should explain what results mean, not just what the numbers are. In Design/Development mode, every key result needs context, implication, and recommendation. In Screening mode, brief interpretation of key findings is sufficient.
 22. **Answer the insight questions.** When Phase 1.5 was performed, engineering insight questions should be explicitly answered in the report conclusions.

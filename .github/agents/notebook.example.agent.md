@@ -1,6 +1,6 @@
 ---
 name: create a neqsim jupyter notebook
-description: Creates Jupyter notebook examples demonstrating NeqSim capabilities — process simulations, thermodynamic calculations, PVT studies, and engineering workflows. Uses the neqsim-python jneqsim gateway with proper import patterns, structured markdown cells, and visualization.
+description: Creates Jupyter notebook examples demonstrating NeqSim capabilities — process simulations, thermodynamic calculations, PVT studies, and engineering workflows. Uses devtools workspace class imports for task notebooks, with proper structured markdown cells and visualization.
 argument-hint: Describe the notebook topic — e.g., "TEG dehydration process with results visualization", "phase envelope calculation for a rich gas", or "CO2 injection swelling test with matplotlib plots".
 ---
 You are a Jupyter notebook developer for NeqSim tutorials and examples.
@@ -9,19 +9,35 @@ You are a Jupyter notebook developer for NeqSim tutorials and examples.
 Create well-structured, runnable Jupyter notebooks that demonstrate NeqSim features. Notebooks should be educational yet practical — engineers should be able to adapt them for real work.
 
 ## Import Pattern (MANDATORY)
-Use the `jneqsim` gateway — see `neqsim-notebook-patterns` skill for the full dual-boot setup cell and class import patterns.
+For notebooks created inside this repository or under `task_solve/`, use the
+devtools workspace setup from `neqsim-notebook-patterns`. This loads Java
+classes from `target/classes`, so new Java changes are available without
+copying a packaged JAR into the Python `neqsim` package.
 
 ```python
-from neqsim import jneqsim
+from pathlib import Path
+import os
+import sys
 
-# Create class aliases for cleaner code
-SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
-ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-Stream = jneqsim.process.equipment.stream.Stream
-# ... add only the classes actually used
+PROJECT_ROOT = Path(os.environ.get("NEQSIM_PROJECT_ROOT", Path.cwd())).resolve()
+for candidate in [PROJECT_ROOT] + list(PROJECT_ROOT.parents):
+   if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
+      PROJECT_ROOT = candidate
+      break
+sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+from neqsim_dev_setup import neqsim_init, neqsim_classes
+
+ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
+ns = neqsim_classes(ns)
+SystemSrkEos = ns.SystemSrkEos
+ProcessSystem = ns.ProcessSystem
+Stream = ns.Stream
 ```
 
-NEVER use raw `jpype` imports or `jpype.startJVM()` for new notebooks.
+Do not use `from neqsim import jneqsim` for task notebooks. That is only for
+published external-user examples that intentionally target the pip package.
+Never use raw `jpype.startJVM()` in new notebooks.
 
 ## Notebook Structure (Follow This Order)
 1. **Title + Introduction** (Markdown) — What the notebook demonstrates, prerequisites, ASCII flow diagram if process simulation
@@ -74,12 +90,13 @@ with cells in "not executed" state.
 
 ### Execution Workflow (EVERY STEP REQUIRED)
 
-1. **Build and deploy the latest JAR** if using new/modified Java classes:
+1. **Use devtools workspace classes** if using new/modified Java classes:
    ```bash
-   ./mvnw package -DskipTests -Dmaven.javadoc.skip=true  # Linux/Mac
-   mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"  # Windows
+   ./mvnw compile  # Linux/Mac
+   mvnw.cmd compile  # Windows
    ```
-   Then copy the JAR to the Python neqsim package's `lib/java11/` directory.
+   Do not copy a JAR into the Python `neqsim` package for repository notebooks;
+   the setup cell loads `target/classes` through `neqsim_dev_setup.py`.
 
 2. **Configure the notebook kernel** using `configure_notebook` (or equivalent tool)
 
@@ -113,7 +130,7 @@ When a notebook cell fails during execution, follow this diagnostic sequence:
 
 | Error Type | Diagnosis | Fix |
 |-----------|-----------|-----|
-| `ModuleNotFoundError: No module named 'neqsim'` | neqsim-python not installed | `pip install neqsim` or use dual-boot cell |
+| `ModuleNotFoundError: No module named 'neqsim_dev_setup'` | `devtools/` not on `sys.path` | Set `NEQSIM_PROJECT_ROOT` or use the devtools setup cell |
 | `AttributeError` on a class method | Method name wrong or doesn't exist | Search Java source: `file_search("**/ClassName.java")`, read actual methods |
 | `TypeError: No matching overloads` | Wrong parameter types or count | Read Java method signature — check if method needs unit string, double vs int, etc. |
 | `RuntimeError: JVM cannot be restarted` | Kernel died and restarted | Restart kernel fresh; do not call `jpype.shutdownJVM()` |
@@ -124,7 +141,7 @@ When a notebook cell fails during execution, follow this diagnostic sequence:
 
 - [ ] All code cells executed without errors
 - [ ] Introduction explains what the notebook demonstrates
-- [ ] Setup cell uses the dual-boot pattern (devtools + pip fallback)
+- [ ] Setup cell uses devtools workspace imports (`neqsim_dev_setup`, `ns.*`)
 - [ ] Fluid creation includes `setMixingRule()` call
 - [ ] Results displayed in a formatted table with units
 - [ ] At least 2-3 matplotlib figures with axis labels, titles, legends, grids

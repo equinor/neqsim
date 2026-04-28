@@ -3,7 +3,7 @@ Isolated subprocess worker for NeqSim simulations.
 
 Each job runs in a fresh Python process with its own JVM. The worker:
 1. Reads the job spec from a JSON file (path in NEQSIM_JOB_FILE env)
-2. Starts the JVM via neqsim_dev_setup or pip neqsim
+2. Starts the JVM via neqsim_dev_setup using workspace Java classes
 3. Executes the user's simulation script
 4. Writes results to the output directory
 5. Exits cleanly (JVM dies with the process)
@@ -43,6 +43,26 @@ _WORKER_BOOTSTRAP = _load_bootstrap("script_executor.py")
 _NOTEBOOK_EXECUTOR = _load_bootstrap("notebook_executor.py")
 
 
+def _detect_project_root(seed_path=None):
+    """Find the NeqSim repository root for devtools runner jobs."""
+    candidates = []
+    if seed_path:
+        seed = Path(seed_path).resolve()
+        candidates.append(seed if seed.is_dir() else seed.parent)
+    candidates.append(Path.cwd().resolve())
+    candidates.append(Path(__file__).resolve().parent)
+
+    seen = set()
+    for candidate in candidates:
+        for path in [candidate] + list(candidate.parents):
+            if path in seen:
+                continue
+            seen.add(path)
+            if (path / "pom.xml").exists() and (path / "devtools" / "neqsim_dev_setup.py").exists():
+                return path
+    return None
+
+
 class WorkerProcess:
     """
     Manages a single worker subprocess that executes a NeqSim job.
@@ -59,12 +79,13 @@ class WorkerProcess:
 
     def __init__(self, job, project_root=None, output_base=None):
         self.job = job
-        self.project_root = str(project_root) if project_root else None
         self.output_base = Path(output_base) if output_base else Path("task_solve") / "runner_output"
         self.process = None
         self._bootstrap_file = None
         self._log_stdout = None
         self._log_stderr = None
+        detected_root = project_root or _detect_project_root(job.script)
+        self.project_root = str(detected_root) if detected_root else None
 
     def _prepare(self):
         """Prepare the job's working directory and spec file."""
@@ -86,6 +107,7 @@ class WorkerProcess:
             "output_dir": str(job_dir / "output"),
             "checkpoint_path": str(job_dir / "checkpoint.json"),
             "timeout": self.job.timeout_seconds,
+            "require_devtools": True,
         }
         if self.project_root:
             spec["project_root"] = self.project_root

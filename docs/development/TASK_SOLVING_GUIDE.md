@@ -141,6 +141,14 @@ intake:
 notebooks:
   required: true
   execution_required: true
+  execution_engine: neqsim_runner  # neqsim_runner | interactive | auto
+  runner_mode: execute             # execute | script
+  runner_max_retries: 3
+  runner_timeout_seconds: 3600
+  runner_max_parallel: 1           # JVM-heavy jobs should stay serial by default
+  runner_merge_results: true       # Merge multi-notebook results.json updates
+  require_successful_jobs: true    # Report gate warns on failed/timed-out jobs
+  isolated_subprocess: true
   minimum_count: 5
   plan:
     - file: 01_scope_basis_and_fluid.ipynb
@@ -190,6 +198,30 @@ figures, benchmark validation, uncertainty analysis, risk register, or
 consistency checks are missing, `python step3_report/generate_report.py` prints
 warnings and includes them in the generated report. Treat required warnings as
 blockers unless the task owner explicitly accepts the limitation.
+
+By default, task notebooks use **NeqSim Runner** (`execution_engine:
+neqsim_runner`) instead of a shared VS Code/Jupyter kernel. Each notebook run is
+submitted through `neqsim_runner.agent_bridge.AgentBridge`, executed in an
+isolated subprocess with its own JVM, retried on failure, and recorded in
+`runner.db`/`runner_output/`. This avoids manual kernel restart loops and the
+common `RuntimeError: JVM cannot be restarted` problem. Multi-notebook tasks
+merge runner outputs into one `results.json` instead of overwriting previous
+results, and the report gate checks `runner.db` for failed, timed-out, or
+missing notebook jobs. Use `execution_engine: interactive` only for quick
+debugging notebooks.
+
+Task notebooks must load NeqSim with `devtools/neqsim_dev_setup.py`, not
+`from neqsim import jneqsim`. The setup cell should find `NEQSIM_PROJECT_ROOT`,
+put `<repo>/devtools` on `sys.path`, call `neqsim_init(project_root=PROJECT_ROOT,
+recompile=False, ...)`, and use classes from `ns.*` or `ns.JClass(...)`. This
+loads workspace Java classes from `target/classes`, so newly edited classes are
+available without copying a packaged JAR into the Python `neqsim` package.
+
+Notebook files should be created with VS Code notebook tools, `nbformat`, or
+valid nbformat v4 JSON. When editing existing notebooks, preserve existing cell
+metadata, including `metadata.id`; when generating raw JSON, include
+`metadata.language` on each cell. Every notebook must run from a fresh kernel in
+order with no interactive prompts or hidden state.
 
 ### Intake Gate: Add Information Before Work Continues
 
@@ -1068,7 +1100,7 @@ Put a test in `src/test/java/neqsim/<matching_package>/`. Tests are:
 Put a notebook in `examples/notebooks/` with:
 - Clear title and description
 - Colab badge for one-click running from a browser
-- Dual-boot setup cell (works with both `devtools` and `pip install neqsim`)
+- Devtools setup cell for repository/task notebooks (`neqsim_dev_setup.py`, `ns.*`)
 - Markdown cells explaining the engineering reasoning
 - **Save all figures to disk** — every plot should be saved as a PNG/SVG file
   alongside the notebook so results survive kernel restarts and can be reused
@@ -1296,8 +1328,11 @@ fully scalable, editable, and print-quality. No images, no blurry screenshots.
 
 **Dependencies:**
 ```
-pip install python-docx matplotlib latex2mathml lxml neqsim
+pip install python-docx matplotlib latex2mathml lxml
 ```
+
+Use `neqsim_dev_setup.py` for local NeqSim Java classes in notebooks; do not
+install the released `neqsim` package for repository task calculations.
 
 ---
 
@@ -1326,7 +1361,7 @@ pip install python-docx matplotlib latex2mathml lxml neqsim
 | Hardcoded exchange rates in formulas | Rate change requires editing every formula | Define `USD_TO_NOK = 10.5` as a variable; reference throughout |
 | Missing loss carry-forward in tax model | Tax paid in loss years, wrong NPV | Track cumulative tax loss per pool; only pay tax when taxable income > 0 |
 | Formula from memory without verification | Incorrect equations compound through calculation | Always verify governing equations against the applicable standard or textbook |
-| Old JAR in Python site-packages | `jpype.JClass()` loads stale class | Remove old JARs; rebuild with `mvnw.cmd package -DskipTests`; use `jpype.addClassPath()` for local JAR |
+| Old JAR in Python site-packages | `from neqsim import jneqsim` loads stale class | Use the devtools setup cell and `ns.JClass()` so notebooks load workspace classes from `target/classes` |
 | Report generator missing sections | Benchmark/uncertainty/risk data in results.json but absent from report | Add rendering to `build_sections()`, `build_word_report()`, AND `build_html_report()` for each data section |
 | Figure captions only from main notebook | Benchmark/uncertainty figures show generic captions | Add ALL figure filenames to `results.json["figure_captions"]` from every notebook |
 | Stale numbers in MANUAL_SECTIONS | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update MANUAL_SECTIONS when parameters change |
@@ -1436,7 +1471,7 @@ coding agent that can read files and run commands can follow the same workflow.
 |-----------|-----------|----------|
 | `neqsim new-task` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
-| Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
+| Jupyter notebooks | Simulation code | NeqSim Runner by default; JupyterLab/Colab for interactive debugging |
 | `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
 | `python generate_report.py --paper` | Also produces Paper.docx + Paper.html (only when requested) | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
@@ -1447,7 +1482,7 @@ coding agent that can read files and run commands can follow the same workflow.
 |---------|---------|-------------|
 | `@solve.task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
 | Specialist agents (`@thermo.fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
-| Notebook cell execution | Run cells from chat | Run notebooks in JupyterLab or via `jupyter execute` |
+| Notebook cell execution | Run cells from chat | Use `neqsim_runner` for task notebooks; JupyterLab/Colab for quick debugging |
 
 ### Tips for Non-VS-Code AI Tools
 
@@ -1456,8 +1491,8 @@ coding agent that can read files and run commands can follow the same workflow.
 - **Claude Code**: Same approach — give it the workflow prompt and task folder path.
 - **Cursor**: Supports custom instructions — paste the agent instructions from
   `.github/agents/solve.task.agent.md` into Cursor's rules.
-- **Google Colab + AI**: Use `pip install neqsim` instead of `pip install -e devtools/`.
-  The dual-boot setup cell in notebooks handles this automatically.
+- **Google Colab + AI**: Published external examples may use `pip install neqsim`,
+  but local task notebooks and runner workflows must use `neqsim_dev_setup.py`.
 
 ### End-to-End with OpenAI Codex (Solve Task + Create PR)
 
@@ -1479,7 +1514,7 @@ Instructions:
 1. Read AGENTS.md for project guidance
 2. Run: neqsim new-task "[task title]" --type [A-G]
 3. Fill step1_scope_and_research/task_spec.md with standards and methods
-4. Create a Jupyter notebook in step2_analysis/ using NeqSim (pip install neqsim)
+4. Create a Jupyter notebook in step2_analysis/ using NeqSim devtools setup
 5. Run the notebook and validate results
 6. Save plots to figures/
 7. Update and run step3_report/generate_report.py
@@ -1503,7 +1538,7 @@ Instructions:
 | `gh pr create` | Via Codex's GitHub integration | Via local `gh` CLI |
 | Network access | Restricted (sandbox) | Sandboxed but configurable |
 | `AGENTS.md` | Read automatically | Read automatically |
-| NeqSim mode | `pip install neqsim` (released) | `pip install -e devtools/` (local dev) |
+| NeqSim mode | `pip install neqsim` (released, external examples) | `neqsim_dev_setup.py` (local task notebooks) |
 
 **Key difference:** Codex Cloud uses the released `neqsim` PyPI package, so it
 can solve tasks using the existing API but cannot extend the Java source code

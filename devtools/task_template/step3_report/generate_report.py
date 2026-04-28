@@ -30,6 +30,7 @@ import glob
 import json
 import base64
 import io
+import sqlite3
 from datetime import date
 
 try:
@@ -437,6 +438,114 @@ def _required_section_available(section, results, task_spec):
     return True
 
 
+def _load_runner_jobs(runner_db_path):
+    """Return runner job rows from runner.db or an error message."""
+    try:
+        connection = sqlite3.connect(runner_db_path, timeout=5.0)
+        connection.row_factory = sqlite3.Row
+        try:
+            rows = connection.execute(
+                "SELECT job_id, script, job_type, status, error_message "
+                "FROM jobs ORDER BY created_at"
+            ).fetchall()
+        finally:
+            connection.close()
+    except sqlite3.Error as error:
+        return [], str(error)
+    return [dict(row) for row in rows], None
+
+
+def _runner_script_name(job_row):
+    """Return the basename of a runner job script path."""
+    return os.path.basename(str(job_row.get("script") or ""))
+
+
+def _runner_status_summary(job_rows):
+    """Return a compact status summary for report warnings."""
+    counts = {}
+    for job_row in job_rows:
+        status = str(job_row.get("status") or "unknown")
+        counts[status] = counts.get(status, 0) + 1
+    return ", ".join(["{}={}".format(status, counts[status])
+                      for status in sorted(counts)])
+
+
+def _validate_runner_execution(notebooks, planned_notebooks, existing_notebooks):
+    """Return warnings for incomplete NeqSim Runner notebook execution."""
+    warnings = []
+    execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
+    notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
+    require_successful_jobs = _as_bool(notebooks.get("require_successful_jobs", True))
+    if not (notebook_execution_required and execution_engine == "neqsim_runner"):
+        return warnings
+    if not existing_notebooks:
+        return warnings
+
+    runner_output_path = os.path.join(TASK_DIR, "runner_output")
+    runner_db_path = os.path.join(TASK_DIR, "runner.db")
+    if not os.path.exists(runner_output_path):
+        warnings.append("Notebook execution engine is neqsim_runner, but runner_output/ is missing.")
+    if not os.path.exists(runner_db_path):
+        warnings.append("Notebook execution engine is neqsim_runner, but runner.db is missing.")
+        return warnings
+
+    job_rows, load_error = _load_runner_jobs(runner_db_path)
+    if load_error:
+        warnings.append("Could not inspect runner.db for notebook status: {}".format(
+            load_error))
+        return warnings
+    if not job_rows:
+        warnings.append("runner.db exists, but it contains no recorded runner jobs.")
+        return warnings
+
+    expected_notebooks = planned_notebooks or [os.path.basename(path)
+                                               for path in existing_notebooks]
+    expected_script_names = set()
+    for notebook_file in expected_notebooks:
+        notebook_name = os.path.basename(str(notebook_file))
+        expected_script_names.add(notebook_name)
+        expected_script_names.add(os.path.splitext(notebook_name)[0] + ".py")
+
+    notebook_rows = []
+    for row in job_rows:
+        job_type = str(row.get("job_type") or "script")
+        script_name = _runner_script_name(row)
+        if job_type == "notebook" or script_name in expected_script_names:
+            notebook_rows.append(row)
+    if not notebook_rows:
+        warnings.append(
+            "runner.db contains jobs ({}), but none match the planned notebooks.".format(
+                _runner_status_summary(job_rows)))
+        return warnings
+
+    if require_successful_jobs:
+        unsuccessful = [row for row in notebook_rows
+                        if str(row.get("status") or "") != "success"]
+        if unsuccessful:
+            details = []
+            for row in unsuccessful[:5]:
+                details.append("{}={} ({})".format(
+                    row.get("job_id"), row.get("status"), _runner_script_name(row)))
+            if len(unsuccessful) > 5:
+                details.append("... {} more".format(len(unsuccessful) - 5))
+            warnings.append("NeqSim Runner notebook jobs are not all successful: {}.".format(
+                "; ".join(details)))
+
+        successful_notebooks = set([_runner_script_name(row) for row in notebook_rows
+                                    if str(row.get("status") or "") == "success"])
+        for notebook_file in expected_notebooks:
+            notebook_name = os.path.basename(str(notebook_file))
+            script_name = os.path.splitext(notebook_name)[0] + ".py"
+            notebook_path = os.path.join(TASK_DIR, "step2_analysis", str(notebook_file))
+            if (os.path.exists(notebook_path)
+                    and notebook_name not in successful_notebooks
+                    and script_name not in successful_notebooks):
+                warnings.append(
+                    "Planned notebook has no successful runner job: step2_analysis/{}".format(
+                        notebook_file))
+    return warnings
+
+
 def validate_study_config(config, results, task_spec):
     """Return warnings for missing deliverables required by study_config.yaml."""
     if not config:
@@ -483,6 +592,9 @@ def validate_study_config(config, results, task_spec):
         if not os.path.exists(notebook_path):
             warnings.append("Planned notebook is missing: step2_analysis/{}".format(
                 notebook_file))
+
+    warnings.extend(_validate_runner_execution(notebooks, planned_notebooks,
+                                               existing_notebooks))
 
     if _as_bool(quality_gates.get("require_results_json", False)) and not results:
         warnings.append("quality_gates.require_results_json is true, but results.json is missing.")
