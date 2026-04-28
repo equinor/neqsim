@@ -1133,10 +1133,19 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               double oleTemp = getThermoSystem().getTemperature();
               thermoOps.PSflash(entropy);
               if (Math.abs(getThermoSystem().getEntropy() - entropy) > 1e-3) {
+                // PSflash diverged (common with associating fluids such as water/MEG/TEG
+                // on cubic EOS, or near phase boundaries). Recover by holding the
+                // temperature from the previous step and TP-flashing at the new pressure.
+                // We do NOT 'continue' here — skipping the step would (1) leave the
+                // property profile shorter than numberOfCompressorCalcSteps, breaking
+                // index-based access, and (2) drop the polytropic enthalpy increment
+                // for that pressure interval. Falling through with the recovered state
+                // degenerates this single step to an approximately isothermal
+                // compression, which is a safe fallback that keeps the profile
+                // consistent and the energy bookkeeping monotonic.
                 getThermoSystem().setTemperature(oleTemp);
                 thermoOps.TPflash();
                 getThermoSystem().init(2);
-                continue;
               }
             }
             double newEnt = getThermoSystem().getEnthalpy();

@@ -237,6 +237,23 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
         "Outlet temperature should be above inlet temperature");
     assertTrue(waterMassFraction > 0.0 && waterMassFraction < 10.0,
         "Water mass fraction should be reasonable");
+
+    // Regression test: property profile length must equal numberOfCompressorCalcSteps.
+    // Previously, when PSflash diverged inside a step (common with water/MEG on cubic
+    // EOS), the loop did 'continue' and skipped propertyProfile.addFluid(), producing
+    // a profile shorter than requested and breaking index-based access in user code.
+    int profileLength = compressor1.getPropertyProfile().getFluid().size();
+    assertEquals(10, profileLength,
+        "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
+
+    // Pressure must increase monotonically across the profile.
+    double pPrev = feedStream.getPressure("bara");
+    for (int i = 0; i < profileLength; i++) {
+      double pStep = compressor1.getPropertyProfile().getFluid().get(i).getPressure("bara");
+      assertTrue(pStep >= pPrev - 1e-6,
+          "Profile pressure must be monotonically increasing (step " + i + ")");
+      pPrev = pStep;
+    }
   }
 
   /**
