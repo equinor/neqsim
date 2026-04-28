@@ -1133,10 +1133,59 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               double oleTemp = getThermoSystem().getTemperature();
               thermoOps.PSflash(entropy);
               if (Math.abs(getThermoSystem().getEntropy() - entropy) > 1e-3) {
-                getThermoSystem().setTemperature(oleTemp);
+                // PSflash diverged (common with associating fluids such as water/MEG/TEG
+                // on cubic EOS, or near phase boundaries — the PS Newton becomes
+                // ill-conditioned because dS/dT|_P is large and the Jacobian gets stiff).
+                // Recover by solving S(T, P_new) = entropy_target via 1D Newton on T at
+                // fixed pressure. TPflash is much more robust than PSflash for these
+                // fluids, so this yields correct isentropic compression for any EOS
+                // rather than degrading the step to isothermal.
+                // We do NOT 'continue' — skipping the step would leave the property
+                // profile shorter than numberOfCompressorCalcSteps and drop the
+                // polytropic enthalpy increment for that pressure interval.
+                double tGuess = oleTemp;
+                double bestT = oleTemp;
+                double bestErr = Double.MAX_VALUE;
+                getThermoSystem().setTemperature(tGuess);
                 thermoOps.TPflash();
+                for (int psIter = 0; psIter < 30; psIter++) {
+                  getThermoSystem().init(2);
+                  double sCur = getThermoSystem().getEntropy();
+                  double residual = sCur - entropy;
+                  if (Math.abs(residual) < Math.abs(bestErr)) {
+                    bestErr = residual;
+                    bestT = tGuess;
+                  }
+                  if (Math.abs(residual) < 1e-4) {
+                    break;
+                  }
+                  double cp = getThermoSystem().getCp();
+                  if (cp <= 0.0 || !Double.isFinite(cp)) {
+                    break;
+                  }
+                  // dS/dT|_P = Cp / T (total, J/K^2)
+                  double dT = -residual / (cp / tGuess);
+                  // Limit step to ±50 K for stability
+                  if (dT > 50.0) {
+                    dT = 50.0;
+                  } else if (dT < -50.0) {
+                    dT = -50.0;
+                  }
+                  tGuess += dT;
+                  if (tGuess < 50.0) {
+                    tGuess = 50.0;
+                  }
+                  getThermoSystem().setTemperature(tGuess);
+                  thermoOps.TPflash();
+                  if (Math.abs(dT) < 1e-3) {
+                    break;
+                  }
+                }
+                if (Math.abs(getThermoSystem().getEntropy() - entropy) > Math.abs(bestErr)) {
+                  getThermoSystem().setTemperature(bestT);
+                  thermoOps.TPflash();
+                }
                 getThermoSystem().init(2);
-                continue;
               }
             }
             double newEnt = getThermoSystem().getEnthalpy();
