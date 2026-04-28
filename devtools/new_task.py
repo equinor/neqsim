@@ -3414,6 +3414,25 @@ def normalize_scale(scale):
     return aliases.get(value, "")
 
 
+def normalize_intake_pause(intake_pause):
+    """Normalize intake pause settings used by agents and CLI users."""
+    if not intake_pause:
+        return ""
+    value = intake_pause.strip().lower()
+    aliases = {
+        "auto": "auto",
+        "always": "always",
+        "yes": "always",
+        "true": "always",
+        "on": "always",
+        "never": "never",
+        "no": "never",
+        "false": "never",
+        "off": "never",
+    }
+    return aliases.get(value, "")
+
+
 def _yaml_quote(value):
     """Return a simple double-quoted YAML scalar."""
     text = str(value).replace("\\", "\\\\").replace('"', '\\"')
@@ -3519,7 +3538,7 @@ def _replace_notebook_plan(content, notebook_files):
 
 
 def _apply_study_config_overrides(content, title, task_type, scale,
-                                  report_depth, notebooks):
+                                  report_depth, notebooks, intake_pause):
     """Apply CLI/default values to study_config.yaml content."""
     content = _replace_section_key(content, "study", "title", _yaml_quote(title))
     content = _replace_section_key(content, "study", "task_type", _yaml_quote(task_type))
@@ -3544,6 +3563,12 @@ def _apply_study_config_overrides(content, title, task_type, scale,
     if report_depth:
         content = _replace_section_key(content, "report", "depth", report_depth.strip().lower())
 
+    normalized_intake_pause = normalize_intake_pause(intake_pause)
+    if normalized_intake_pause:
+        content = _replace_section_key(content, "intake",
+                                       "pause_after_folder_creation",
+                                       normalized_intake_pause)
+
     notebook_files = _notebook_files_from_option(notebooks)
     if not notebook_files and normalized_scale:
         notebook_files = _default_notebook_plan(normalized_scale)
@@ -3555,7 +3580,7 @@ def _apply_study_config_overrides(content, title, task_type, scale,
 
 
 def _seed_study_config(task_dir, title, task_type, scale, report_depth,
-                       notebooks, config_file):
+                       notebooks, config_file, intake_pause):
     """Create or update study_config.yaml for a new task."""
     config_path = os.path.join(task_dir, "study_config.yaml")
     if config_file:
@@ -3573,13 +3598,14 @@ def _seed_study_config(task_dir, title, task_type, scale, report_depth,
         content = STUDY_CONFIG
 
     content = _apply_study_config_overrides(content, title, task_type, scale,
-                                            report_depth, notebooks)
+                                            report_depth, notebooks, intake_pause)
     with open(config_path, "w", encoding="utf-8") as config:
         config.write(content)
 
 
 def create_task(title, task_type="B", author="", prompt="", scale="",
-                report_depth="", notebooks="", config_file=""):
+                report_depth="", notebooks="", config_file="",
+                intake_pause=""):
     """Create a new task folder from the template.
 
     Parameters
@@ -3601,6 +3627,8 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         Optional notebook plan as a count or comma-separated notebook files.
     config_file : str
         Optional path to a study_config.yaml file to copy into the task.
+    intake_pause : str
+        Optional intake pause setting: auto, always, or never.
     """
     # Ensure workspace exists
     if not os.path.exists(TEMPLATE_DIR):
@@ -3626,7 +3654,7 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
 
     # Seed explicit task-depth configuration before the agent starts planning.
     _seed_study_config(task_dir, title, task_type, scale, report_depth,
-                       notebooks, config_file)
+                       notebooks, config_file, intake_pause)
 
     # Fill in the README
     readme_path = os.path.join(task_dir, "README.md")
@@ -3702,6 +3730,17 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
 
     print("Created: task_solve/{}".format(folder_name))
     print("")
+    print("Task input can be added before analysis starts:")
+    print("  Config: task_solve/{}/study_config.yaml".format(folder_name))
+    print("  Prompt/log: task_solve/{}/user_input.md".format(folder_name))
+    print("  Document input: task_solve/{}/step1_scope_and_research/references/".format(
+        folder_name))
+    print("  Supported documents include PDFs, Word files, Excel stream tables,")
+    print("  P&IDs, vendor data sheets, standards, and lab reports.")
+    intake_setting = normalize_intake_pause(intake_pause) or "auto"
+    if intake_setting == "always":
+        print("  Intake pause: requested - wait for user confirmation before notebooks.")
+    print("")
     print("Next steps (pick one):")
     print("")
     print("  Recommended - Let Copilot do everything:")
@@ -3769,6 +3808,7 @@ def main():
     report_depth = ""
     notebooks = ""
     config_file = ""
+    intake_pause = ""
 
     i = 2
     while i < len(sys.argv):
@@ -3797,6 +3837,9 @@ def main():
         elif sys.argv[i] == "--notebooks" and i + 1 < len(sys.argv):
             notebooks = sys.argv[i + 1]
             i += 2
+        elif sys.argv[i] == "--intake-pause" and i + 1 < len(sys.argv):
+            intake_pause = sys.argv[i + 1]
+            i += 2
         elif sys.argv[i] == "--config-file" and i + 1 < len(sys.argv):
             config_file = sys.argv[i + 1]
             i += 2
@@ -3814,8 +3857,14 @@ def main():
         print("Using scale auto-detection in study_config.yaml.")
         scale = ""
 
+    if intake_pause and not normalize_intake_pause(intake_pause):
+        print("WARNING: Unknown intake pause '{}'. Valid: auto, always, never.".format(
+            intake_pause))
+        print("Using intake pause auto-detection in study_config.yaml.")
+        intake_pause = ""
+
     create_task(title, task_type, author, prompt, scale, report_depth,
-                notebooks, config_file)
+                notebooks, config_file, intake_pause)
 
 
 if __name__ == "__main__":

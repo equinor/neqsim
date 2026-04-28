@@ -163,8 +163,13 @@ The agent creates a task folder, researches the topic, builds a simulation, vali
 
 #### Manual Alternative
 ```bash
-neqsim new-task "Your task description" --type B
+neqsim new-task "Your task description" --type B --intake-pause always
 ```
+
+The intake pause creates the folder first, then lets you edit
+`study_config.yaml`, add details to `user_input.md`, or place document inputs
+such as PDFs, Excel stream tables, P&IDs, and data sheets in
+`step1_scope_and_research/references/` before notebooks are created.
 
 Then follow the workflow in `task_solve/<your_task>/README.md`:
 - **Step 1**: Scope & Research (standards, methods, deliverables)
@@ -521,7 +526,7 @@ Once you're comfortable with the basics:
 ./mvnw checkstyle:check
 
 # Create task
-neqsim new-task "Task description"
+neqsim new-task "Task description" --intake-pause always
 
 # Update branch
 git fetch origin && git rebase origin/master

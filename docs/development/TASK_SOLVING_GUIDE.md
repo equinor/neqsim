@@ -73,7 +73,7 @@ task_solve/
 ├── README.md                                        ← workflow overview
 ├── TASK_TEMPLATE/                                   ← copy this to start
 │   ├── README.md                                    ← task checklist
-│   ├── study_config.yaml                            ← scale, notebooks, report depth, quality gates
+│   ├── study_config.yaml                            ← intake, document inputs, scale, notebooks, report depth, quality gates
 │   ├── step1_scope_and_research/task_spec.md         ← standards, methods, deliverables
 │   ├── step1_scope_and_research/notes.md             ← literature, sources
 │   ├── step1_scope_and_research/references/          ← PDFs, standards, lab reports
@@ -111,7 +111,7 @@ Use CLI options for the common cases:
 
 ```powershell
 # Comprehensive study with detailed report and five planned notebooks
-neqsim new-task "field development study" --type G --scale comprehensive --report-depth detailed --notebooks 5
+neqsim new-task "field development study" --type G --scale comprehensive --report-depth detailed --notebooks 5 --intake-pause always
 
 # Explicit notebook filenames
 neqsim new-task "flow assurance study" --type G --scale comprehensive --notebooks "01_basis.ipynb,02_hydrates.ipynb,03_pipeline.ipynb,04_risk.ipynb"
@@ -131,6 +131,12 @@ study:
   aace_class: 2
   fel_stage: FEL-3
   deliverable_mode: report-first
+
+intake:
+  pause_after_folder_creation: always  # auto | always | never
+  ask_for_missing_info: true
+  allow_user_file_drop: true
+  confirm_before_notebooks: true
 
 notebooks:
   required: true
@@ -184,6 +190,33 @@ figures, benchmark validation, uncertainty analysis, risk register, or
 consistency checks are missing, `python step3_report/generate_report.py` prints
 warnings and includes them in the generated report. Treat required warnings as
 blockers unless the task owner explicitly accepts the limitation.
+
+### Intake Gate: Add Information Before Work Continues
+
+When a task starts, the first action is to create the task folder. For detailed
+or document-heavy work, use `--intake-pause always` so the solver stops after
+folder creation and gives you a chance to add information before analysis
+begins:
+
+```powershell
+neqsim new-task "compressor seal condensation study" --type G --scale comprehensive --intake-pause always
+```
+
+The solver then reports the created paths and waits for confirmation before it
+creates notebooks. Document input is possible at this point: drop source files
+into the references folder and list required ones in `study_config.yaml`.
+
+| Path | What you can add |
+|------|------------------|
+| `task_solve/YYYY-MM-DD_slug/study_config.yaml` | Scale, notebook names, report depth, intake behavior, required documents |
+| `task_solve/YYYY-MM-DD_slug/user_input.md` | Extra written instructions, assumptions, acceptance criteria |
+| `task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/` | PDFs, Word files, Excel tables, P&IDs, vendor data sheets, standards |
+
+`pause_after_folder_creation: auto` pauses for Standard/Comprehensive tasks when
+method-critical values or required documents are missing. `always` forces the
+pause even if enough data appears to be present. `never` allows the solver to
+continue with documented assumptions unless a missing value would invalidate the
+calculation method.
 
 ### Document-Based Task Input
 
@@ -1342,12 +1375,17 @@ If you're a process engineer (not a developer):
 
 1. Open VS Code with the NeqSim repo
 2. Open Copilot Chat and type: `@solve.task your engineering question`
-3. The agent creates the folder, runs simulations, and hands back results + reports
+3. The agent creates the folder, runs the intake gate, then hands back results + reports
 4. Find Word and HTML reports in `task_solve/.../step3_report/`
+
+For document-heavy studies, ask for an intake pause or create the task manually
+with `--intake-pause always`. During the pause you can add PDFs, Word files,
+Excel stream tables, P&IDs, vendor data sheets, standards, or lab reports to
+`step1_scope_and_research/references/` before notebooks are created.
 
 Alternatively, for manual control:
 
-1. Run: `neqsim new-task "your question" --type B`
+1. Run: `neqsim new-task "your question" --type B --intake-pause always`
 2. Open Copilot Chat and paste the prompts from the generated README
 3. Run `python step3_report/generate_report.py` to create Word + HTML reports
 
@@ -1364,15 +1402,22 @@ coding agent that can read files and run commands can follow the same workflow.
 ### Quick Start for Any AI Agent
 
 1. **Create the task folder** (from terminal):
-   ```bash
-   neqsim new-task "your task" --type B
-   ```
+
+    ```bash
+    neqsim new-task "your task" --type B --intake-pause always
+    ```
+
+    The intake pause is optional, but useful when the task starts from design
+    documents or you want to edit `study_config.yaml` before analysis begins.
 
 2. **Point the agent to the workflow** — paste this prompt:
    ```
    I'm working in the NeqSim repo (Java thermodynamics + process simulation).
    Read docs/development/TASK_SOLVING_GUIDE.md for the task-solving workflow.
-   Read the task README at task_solve/YYYY-MM-DD_your_task/README.md.
+    Read the task README at task_solve/YYYY-MM-DD_your_task/README.md.
+    Document input is possible: place source files in
+    task_solve/YYYY-MM-DD_your_task/step1_scope_and_research/references/ before
+    notebooks are created.
 
    Follow the 3-step workflow:
    1. Fill in step1_scope_and_research/task_spec.md (standards, methods, deliverables)

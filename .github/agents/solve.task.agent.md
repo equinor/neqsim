@@ -411,22 +411,35 @@ After creating the task folder and before writing `task_spec.md` or creating
 notebooks:
 
 1. Read `task_solve/YYYY-MM-DD_slug/study_config.yaml`.
-2. If `study.scale`, `report.depth`, `notebooks.plan`, `inputs.documents`, or
-  `quality_gates` are set to anything other than `auto`, treat those values as
-  higher priority than scale inferred from the prompt.
-3. If `inputs.documents_required` is true or `inputs.documents` lists source
+2. Apply the intake gate before continuing:
+   - If `intake.pause_after_folder_creation` is `always`, pause and ask the
+     user to add or confirm missing task inputs before Step 1 work.
+   - If it is `auto`, pause for Standard/Comprehensive tasks when method-critical
+     values, required documents, or a fully authored config are missing.
+   - If it is `never`, continue with explicit assumptions unless a missing input
+     would make the calculation method invalid.
+   - When pausing, tell the user the task folder path, the `study_config.yaml`
+     path, and the `step1_scope_and_research/references/` drop folder. Explicitly
+     say that document input is possible, including PDFs, Word files, Excel
+     stream tables, P&IDs, vendor data sheets, standards, and lab reports. Do
+     not create notebooks until the user confirms to continue or the required
+     files are present.
+3. If `study.scale`, `report.depth`, `notebooks.plan`, `inputs.documents`, or
+   `quality_gates` are set to anything other than `auto`, treat those values as
+   higher priority than scale inferred from the prompt.
+4. If `inputs.documents_required` is true or `inputs.documents` lists source
   files, verify the files are under `step1_scope_and_research/references/`,
   classify them, extract relevant engineering data, normalize units/component
   names, validate the values, and record the extraction in Step 1 notes or
   structured JSON before building notebooks.
-4. For Comprehensive / Development tasks, do not invent a notebook plan until
+5. For Comprehensive / Development tasks, do not invent a notebook plan until
   `notebooks.plan` has been read. Create or execute the configured notebooks in
   order, and checkpoint after each notebook.
-5. If a required configured notebook, report section, benchmark, uncertainty
+6. If a required configured notebook, report section, benchmark, uncertainty
   analysis, risk register, figure discussion, or consistency check cannot be
   produced, record the reason in `progress.json`, `results.json` limitations,
   and the final report.
-6. Before Step 3, run `python step3_report/generate_report.py`; the report
+7. Before Step 3, run `python step3_report/generate_report.py`; the report
   generator reads `study_config.yaml` and warns about missing configured
   deliverables. Fix warnings marked as required before finalizing unless the
   user explicitly accepts the limitation.
@@ -487,21 +500,35 @@ notebooks:
    For Quick-scale tasks, skip questions and proceed directly.
 
 3. **Create the task folder (DO THIS NOW — non-negotiable):**
-   ```
-  Run in terminal: neqsim new-task "TASK TITLE" --type X --author "Agent"
-   ```
-  Use explicit depth inputs when the user requests a deep study, for example:
-  ```
-  neqsim new-task "TASK TITLE" --type G --author "Agent" --scale comprehensive --report-depth detailed --notebooks 5
-  ```
-  Or pass a fully authored configuration:
-  ```
-  neqsim new-task "TASK TITLE" --type G --author "Agent" --config-file path/to/study_config.yaml
-  ```
+
+    ```
+    Run in terminal: neqsim new-task "TASK TITLE" --type X --author "Agent"
+    ```
+
+    Use explicit depth inputs when the user requests a deep study, for example:
+
+    ```
+    neqsim new-task "TASK TITLE" --type G --author "Agent" --scale comprehensive --report-depth detailed --notebooks 5 --intake-pause always
+    ```
+
+    Or pass a fully authored configuration:
+
+    ```
+    neqsim new-task "TASK TITLE" --type G --author "Agent" --config-file path/to/study_config.yaml
+    ```
    This creates `task_solve/YYYY-MM-DD_task_slug/` with all subfolders.
    **ALL subsequent files MUST go inside this folder. Do NOT proceed without it.**
 
-4. **Read the generated README** at `task_solve/YYYY-MM-DD_task_slug/README.md` to confirm the folder structure.
+4. **Run the intake gate before Step 1 work:**
+   - Read `study_config.yaml`.
+   - Tell the user the task folder exists.
+   - Ask for missing method-critical values or invite them to add documents to
+     `step1_scope_and_research/references/` and edit `study_config.yaml`.
+   - Explicitly say that document input is possible for the task.
+   - Continue only after confirmation when `--intake-pause always` was used or
+     required inputs are missing.
+
+5. **Read the generated README** at `task_solve/YYYY-MM-DD_task_slug/README.md` to confirm the folder structure.
 
    **CHECKPOINT (Phase 0):** After creating the task folder and classifying:
    ```python
