@@ -8,6 +8,8 @@ Usage:
     neqsim new-task "JT cooling for rich gas"
     neqsim new-task "TEG dehydration sizing" --type B
     neqsim new-task "hydrate formation temperature" --type A --author "Your Name"
+    neqsim new-task "task title" --prompt "verbatim user request"
+    neqsim new-task "task title" --prompt-file path/to/request.txt
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
 """
@@ -3321,13 +3323,31 @@ def setup_workspace():
     return created
 
 
-def create_task(title, task_type="B", author=""):
-    """Create a new task folder from the template."""
+def create_task(title, task_type="B", author="", prompt=""):
+    """Create a new task folder from the template.
+
+    Parameters
+    ----------
+    title : str
+        Short task title (used for slug and headings).
+    task_type : str
+        One of A/B/C/D/E/F/G — see TASK_TYPES.
+    author : str
+        Optional author name written into README and report.
+    prompt : str
+        Optional verbatim user request. Written into user_input.md so the
+        task can be reproduced from the original chat input.
+    """
     # Ensure workspace exists
     if not os.path.exists(TEMPLATE_DIR):
         print("Setting up task_solve/ workspace for the first time...")
         setup_workspace()
         print("")
+    else:
+        # Always refresh the canonical overlay so updates to
+        # devtools/task_template/ propagate to new tasks without requiring
+        # a full --setup re-run.
+        setup_workspace()
 
     today = date.today().isoformat()
     folder_name = "{}_{}".format(today, slugify(title))
@@ -3382,6 +3402,35 @@ def create_task(title, task_type="B", author=""):
         report = report.replace('AUTHOR = ""', 'AUTHOR = "{}"'.format(author))
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
+
+    # Seed user_input.md with the original user request so the task can be
+    # reproduced from the same chat input. The agent should append clarifying
+    # Q&A and follow-up instructions to this file as the conversation evolves.
+    user_input_path = os.path.join(task_dir, "user_input.md")
+    if os.path.exists(user_input_path):
+        try:
+            with open(user_input_path, "r", encoding="utf-8") as f:
+                ui = f.read()
+            from datetime import datetime
+            stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            ui = ui.replace("**Date/Time:** YYYY-MM-DD HH:MM",
+                            "**Date/Time:** {}".format(stamp))
+            if prompt:
+                marker = "<!-- ORIGINAL_USER_PROMPT -->"
+                placeholder_block = (
+                    "<!-- ORIGINAL_USER_PROMPT -->\n"
+                    "[Paste the user's original prompt here, verbatim. "
+                    "Do not paraphrase, summarise,\nor \"clean up\" wording. "
+                    "Include code blocks, file paths, numbers, units, and\n"
+                    "typos as given.]"
+                )
+                if placeholder_block in ui:
+                    ui = ui.replace(placeholder_block,
+                                    marker + "\n" + prompt.strip())
+            with open(user_input_path, "w", encoding="utf-8") as f:
+                f.write(ui)
+        except Exception as e:
+            print("  WARNING: could not seed user_input.md ({})".format(e))
 
     print("Created: task_solve/{}".format(folder_name))
     print("")
@@ -3447,6 +3496,7 @@ def main():
     title = sys.argv[1]
     task_type = "B"
     author = ""
+    prompt = ""
 
     i = 2
     while i < len(sys.argv):
@@ -3455,6 +3505,16 @@ def main():
             i += 2
         elif sys.argv[i] == "--author" and i + 1 < len(sys.argv):
             author = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--prompt" and i + 1 < len(sys.argv):
+            prompt = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--prompt-file" and i + 1 < len(sys.argv):
+            try:
+                with open(sys.argv[i + 1], "r", encoding="utf-8") as f:
+                    prompt = f.read()
+            except Exception as e:
+                print("WARNING: could not read --prompt-file: {}".format(e))
             i += 2
         else:
             i += 1
@@ -3465,7 +3525,7 @@ def main():
         print("Using type B (Process) as default.")
         task_type = "B"
 
-    create_task(title, task_type, author)
+    create_task(title, task_type, author, prompt)
 
 
 if __name__ == "__main__":

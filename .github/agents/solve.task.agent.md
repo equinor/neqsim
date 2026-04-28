@@ -8,15 +8,19 @@ argument-hint: "Describe the engineering task — e.g., 'JT cooling for rich gas
 
 **Before writing ANY files, notes, notebooks, or analysis, you MUST:**
 
-1. **Run** `neqsim new-task "TASK TITLE" --type X --author "Agent"` in the terminal
+1. **Run** `neqsim new-task "TASK TITLE" --type X --author "Agent" --prompt "<verbatim user request>"` in the terminal
+   - Pass the user's original chat message verbatim via `--prompt` (or use `--prompt-file path.txt` for long inputs).
+   - This populates `user_input.md` so the task can be reproduced later.
 2. **Confirm** the folder `task_solve/YYYY-MM-DD_task_slug/` was created
 3. **Read** the generated `task_solve/YYYY-MM-DD_task_slug/README.md`
+4. **Open `user_input.md`** and verify section 1 contains the original prompt. If it is empty (e.g. you forgot `--prompt`), paste the verbatim user message there now.
 
 **ALL deliverables go inside this `task_solve/` folder.** The folder structure is:
 
 ```
 task_solve/YYYY-MM-DD_task_slug/
 ├── README.md                          ← Update with results
+├── user_input.md                      ← Verbatim user prompt + Q&A + follow-ups (REPRODUCIBILITY LOG)
 ├── results.json                       ← Save key results here
 ├── figures/                           ← All PNG figures
 ├── step1_scope_and_research/
@@ -33,6 +37,21 @@ task_solve/YYYY-MM-DD_task_slug/
 ```
 
 **If you skip this step, the entire workflow is broken.** Do it NOW, before anything else.
+
+### ⚠️ MANDATORY: Keep `user_input.md` up to date through the whole conversation
+
+`user_input.md` is the **reproducibility log** — anyone re-running this task
+should be able to recover the exact starting input from it.
+
+**Whenever the user provides new information during the task, append it to
+`user_input.md` immediately and verbatim:**
+
+- Answers to your clarifying questions → append to **section 2 (Q&A)**
+- Mid-task corrections, scope changes, or new constraints → append to **section 3 (Follow-up)**
+- Any value you assume because the user did not specify it → record it in **section 4 (Inferred Assumptions)** with justification
+
+Do NOT paraphrase, summarise, or "clean up" the user's wording. Paste it as
+given. Never delete previous entries — only append.
 
 ### ⚠️ MANDATORY: All downloaded documents go INSIDE the task folder
 
