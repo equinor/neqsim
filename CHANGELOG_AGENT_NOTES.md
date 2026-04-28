@@ -298,7 +298,6 @@ Liquid models (CO₂ in water vs Poling 2001):
 
 ---
 
-## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
 ## 2026-04-17 — Process Optimization Enhancements: Rate-Based Absorber, SQP Optimizer, Flow Correlations, Multi-Variable Adjuster
 
 ### Summary
@@ -483,7 +482,7 @@ These methods now iterate over ALL equipment (not just `CapacityConstrainedEquip
 
 ---
 
-## 2026-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
+## 2025-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
 
 ### Summary
 

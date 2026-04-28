@@ -405,6 +405,14 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-stid-retriever` | Retrieving vendor/engineering documents | Local dirs, manual upload, retrieval backends, relevance filtering |
 | `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost | Casing design, tieback analysis, cost estimation |
 | `neqsim-unisim-reader` | UniSim/HYSYS conversion tasks | COM reader, component/EOS mapping, topology reconstruction |
+| `neqsim-controllability-operability` | Operability, turndown, control valve sizing | ISA-75 valve sizing, startup/shutdown, recycle stability |
+| `neqsim-equipment-cost-estimation` | Equipment-level CAPEX (AACE Class 3/4) | Turton/Peters/Ulrich correlations, CEPCI escalation, material/pressure factors |
+| `neqsim-heat-integration` | Pinch analysis, heat-recovery, MER targeting | Composite curves, ΔTmin selection, HEN synthesis, retrofit |
+| `neqsim-model-calibration-and-data-reconciliation` | Tuning models against plant data | Bounded optimization, residual diagnostics, train/validation reports |
+| `neqsim-platform-modeling` | Topside platform process modeling | Multi-stage separation, recompression, anti-surge, scrubber recycles |
+| `neqsim-process-safety` | HAZOP, LOPA, SIL, bow-tie, risk matrix | IEC 61508/61511, NORSOK Z-013, quantitative risk evaluation |
+| `neqsim-relief-flare-network` | PSV sizing, flare loads, radiation | API 520/521/537, fire case, header back-pressure & Mach |
+| `neqsim-utilities-specification` | Steam, cooling water, instrument air, fuel gas | NORSOK U-001, ISA-7.0.01, utility duty consolidation |
 
 ### API Changelog
 

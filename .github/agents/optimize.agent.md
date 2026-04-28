@@ -10,6 +10,7 @@ ALWAYS read these skills before proceeding:
 
 - `.github/skills/neqsim-optimization-and-doe/SKILL.md` — decision tree, all 30 optimizer classes, code patterns
 - `.github/skills/neqsim-api-patterns/SKILL.md` — fluid creation, flash, equipment
+- `.github/skills/neqsim-heat-integration/SKILL.md` — when objective involves utility cost or energy efficiency
 - `.github/skills/neqsim-java8-rules/SKILL.md` — Java 8 compatibility
 - `.github/skills/neqsim-notebook-patterns/SKILL.md` — when delivering notebook output
 - `.github/skills/neqsim-professional-reporting/SKILL.md` — when delivering a task report
