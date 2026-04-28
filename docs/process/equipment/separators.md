@@ -93,6 +93,11 @@ documented in
   [Enhanced Separator Entrainment Modeling — private extensions](separator-entrainment-modeling.md#private-extensions)
   for how it is loaded at runtime.
 
+> **Plugging in your own model.** The same `ServiceLoader`-based extension
+> point is open to any organisation. See
+> [Private / proprietary entrainment providers](private-extensions.md) for
+> the generic pattern (SPI, registration, build, distribute).
+
 ### One-liner examples
 
 ```java

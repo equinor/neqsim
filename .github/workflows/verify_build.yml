@@ -135,3 +135,36 @@ jobs:
           python-version: '3.12'
       - name: Check agent-skill references
         run: python devtools/verify_agent_skill_refs.py
+
+  verify_no_private_artifacts:
+    name: Guard against private artefacts in tracked files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Fail on tracked binary artefacts
+        # Reject tracked .jar/.war/.docx/.xlsx files. These extensions are
+        # reserved for build outputs or private content. The neqsim-paperlab/
+        # tree is allow-listed because it intentionally tracks paper and book
+        # submission documents. There is no token denylist here — a denylist
+        # of private identifiers would itself leak them.
+        run: |
+          set -euo pipefail
+          tracked=$(git ls-files \
+            | grep -E '\.(jar|war|docx|xlsx)$' \
+            | grep -v -E '^neqsim-paperlab/' \
+            || true)
+          if [ -n "$tracked" ]; then
+            echo "ERROR: tracked binary artefacts detected outside neqsim-paperlab/:"
+            echo "$tracked"
+            echo ""
+            echo "Remove the file(s) and add an entry to .gitignore."
+            exit 1
+          fi
+          echo "OK: no tracked .jar/.war/.docx/.xlsx files outside neqsim-paperlab/."
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

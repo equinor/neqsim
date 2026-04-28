@@ -1541,6 +1541,14 @@ test database itself stay in the private repo.
 > source comments of `EnhancedEntrainmentProvider` for maintainers — no
 > public API documentation is published for the private plug-in.
 
+### Generic extension pattern
+
+The same `ServiceLoader`-based SPI is open to any organisation that wants
+to plug in a proprietary entrainment / carry-over model. For the generic
+pattern — interface contract, registration, build, distribute, authoring
+checklist — see
+[Private / proprietary entrainment providers](private-extensions.md).
+
 ---
 
 ## Related Documentation

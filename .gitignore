@@ -128,3 +128,26 @@ run_notebook.py
 token_cache.bin
 .gitignore
 neqsim_profile.jfr
+
+# ─────────────────────────────────────────────────────────────────────
+# Private leakage hardening
+# Office / report binaries — never commit unless explicitly negated below
+*.docx
+*.xlsx
+*.pdf
+
+# Negations for legitimately tracked binaries (paper / book submissions
+# and figures). Add new exceptions one path at a time — never relax the
+# globs above.
+!neqsim-paperlab/**/*.docx
+!neqsim-paperlab/**/*.pdf
+
+# IDE module files
+*.iml
+
+# Jupyter checkpoints
+**/.ipynb_checkpoints/
+
+# Private / internal working directories — must never be committed
+internal/
+private/

@@ -135,3 +135,43 @@ Most contributions will need to add production code, automated tests, and possib
 * Examples, demos, and notebooks should stay out of the production package tree. Use `examples/` for runnable samples and `notebooks/` for exploratory work.
 
 For a concise overview of where to place new files, see [docs/contributing-structure.md](docs/contributing-structure.md).
+
+## Working alongside private forks / plug-ins
+
+Many NeqSim contributors also work on private forks or proprietary plug-ins
+(e.g. organisation-specific entrainment, EOS, or correlation models built on
+the public SPIs). These rules keep the public repo clean and protect both
+public users and private repos:
+
+- **Public PRs depend on public APIs only.** Never add a dependency on a
+  private artefact (private jar, internal Artifactory URL, internal Git URL)
+  to this repo's `pom.xml`, build scripts, CI workflows, or documentation.
+- **No private content in public surfaces.** Do not paste snippets, file
+  paths, identifiers, coefficients, equation forms, plot images, or report
+  excerpts from private repos into PRs, issues, commit messages, code
+  comments, or AI assistant prompts attached to this repo.
+- **Open public and private repos in separate VS Code windows**, never as a
+  multi-root workspace. Workspace settings, search history, and AI assistant
+  context are window-scoped, so mixing them is the easiest way to leak a
+  private path or filename through autocomplete.
+- **Use neutral placeholders in code and docs.** Examples must use names
+  like `my-org-model-v1`, `com.example.myorg`, `private-entrainment-model`.
+  No real private provider id, class name, branch name, vendor name, or
+  coefficient may appear in this repo.
+- **Scan staged diffs before pushing.** Run `git diff --staged` and
+  visually scan for anything that looks proprietary (internal URLs, vendor
+  identifiers, paths under `private/` or `internal/`, document filenames).
+  A `gitleaks` pre-commit hook is recommended:
+
+  ```bash
+  pip install pre-commit
+  pre-commit install
+  ```
+
+  with a `.pre-commit-config.yaml` referencing the upstream `gitleaks` hook.
+
+- **Build and distribute private plug-ins from their own repos.** See
+  [Private / proprietary entrainment providers](docs/process/equipment/private-extensions.md)
+  for the public extension pattern (SPI + `ServiceLoader` + `provided`-scope
+  NeqSim dependency).
+
