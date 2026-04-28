@@ -12,6 +12,7 @@ Usage:
     neqsim new-task "task title" --prompt-file path/to/request.txt
     neqsim new-task "field study" --scale comprehensive --report-depth detailed
     neqsim new-task "field study" --notebooks "01_basis.ipynb,02_model.ipynb"
+    neqsim new-task "field study" --intake-pause always
     neqsim new-task "field study" --config-file study_config.yaml
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
@@ -927,6 +928,12 @@ STUDY_CONFIG = "\n".join([
     "  aace_class: auto     # auto | 5 | 4 | 3 | 2 | 1",
     "  fel_stage: auto      # auto | FEL-1 | FEL-2 | FEL-3",
     "  deliverable_mode: auto  # auto | answer-first | notebook-first | report-first",
+    "",
+    "intake:",
+    "  pause_after_folder_creation: auto  # auto | always | never",
+    "  ask_for_missing_info: true",
+    "  allow_user_file_drop: true",
+    "  confirm_before_notebooks: true",
     "",
     "inputs:",
     "  prompt_file: \"\"       # Optional text/markdown file used as the original task prompt.",

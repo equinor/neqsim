@@ -12,6 +12,12 @@ study:
   fel_stage: auto      # auto | FEL-1 | FEL-2 | FEL-3
   deliverable_mode: auto  # auto | answer-first | notebook-first | report-first
 
+intake:
+  pause_after_folder_creation: auto  # auto | always | never
+  ask_for_missing_info: true
+  allow_user_file_drop: true
+  confirm_before_notebooks: true
+
 inputs:
   prompt_file: ""       # Optional text/markdown file used as the original task prompt.
   documents_required: false
