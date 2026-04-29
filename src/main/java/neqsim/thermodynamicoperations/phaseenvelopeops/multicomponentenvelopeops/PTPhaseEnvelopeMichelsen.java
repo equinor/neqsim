@@ -79,6 +79,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private static final int MAX_ENVELOPE_ITERATIONS = 9980;
   /** Maximum points per quality line. */
   private static final int MAX_QUALITY_LINE_POINTS = 5000;
+  /** Mole fraction below which a component is treated as absent and removed. */
+  private static final double ZERO_FRACTION_THRESHOLD = 1e-12;
 
   // --- Configuration ---
   private double maxPressure = 1000.0;
@@ -186,6 +188,37 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   }
 
   /**
+   * Removes components whose overall mole fraction is below
+   * {@link #ZERO_FRACTION_THRESHOLD} from the working system. The system is cloned first so that
+   * the caller's original object is not modified.
+   *
+   * <p>
+   * Zero-fraction components cause singular Jacobians in
+   * {@link SysNewtonRhapsonPhaseEnvelope} because the continuation equations contain terms like
+   * {@code x_i / z_i} (see line 263 of SysNewtonRhapsonPhaseEnvelope). Removing them before
+   * tracing prevents division-by-zero and silent degenerate envelopes.
+   * </p>
+   */
+  private void filterZeroFractionComponents() {
+    List<String> zeroNames = new ArrayList<String>();
+    for (int i = 0; i < system.getNumberOfComponents(); i++) {
+      if (system.getComponent(i).getz() < ZERO_FRACTION_THRESHOLD) {
+        zeroNames.add(system.getComponent(i).getComponentName());
+      }
+    }
+    if (zeroNames.isEmpty()) {
+      return;
+    }
+    logger.warn("Phase envelope: removing {} component(s) with z < {}: {}",
+        zeroNames.size(), ZERO_FRACTION_THRESHOLD, zeroNames);
+    SystemInterface filtered = system.clone();
+    for (String name : zeroNames) {
+      filtered.removeComponent(name);
+    }
+    this.system = filtered;
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
@@ -197,6 +230,12 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    */
   @Override
   public void run() {
+    // NIP-03: Remove zero-fraction components before tracing to prevent singular
+    // Jacobians in the Newton-Raphson solver (division by z in the continuation
+    // equations). Components with z < ZERO_FRACTION_THRESHOLD are removed from a
+    // clone of the system. The original system reference is not modified.
+    filterZeroFractionComponents();
+
     double initialTemp = system.getTemperature();
     double initialPres = system.getPressure();
 
@@ -1190,6 +1229,48 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    */
   public double[] getCricondenBar() {
     return cricondenBar;
+  }
+
+  /**
+   * Returns a structured result object summarising the outcome of the phase envelope calculation.
+   *
+   * <p>
+   * The result includes convergence status ({@code CONVERGED}, {@code DEGENERATE}, {@code EMPTY},
+   * {@code NOT_RUN}), number of traced points on each branch, cricondenbar/cricondentherm values,
+   * and a diagnostic message.
+   * </p>
+   *
+   * @return a {@link PhaseEnvelopeResult} describing the calculation outcome
+   */
+  public PhaseEnvelopeResult getEnvelopeResult() {
+    int bubCount = bubblePointTemperatures.size();
+    int dewCount = dewPointTemperatures.size();
+    int totalPoints = bubCount + dewCount;
+
+    double ccbP = cricondenBar != null && cricondenBar.length > 1 ? cricondenBar[1] : 0.0;
+    double ccbT = cricondenBar != null && cricondenBar.length > 0 ? cricondenBar[0] : 0.0;
+    double cctP = cricondenTherm != null && cricondenTherm.length > 1 ? cricondenTherm[1] : 0.0;
+    double cctT = cricondenTherm != null && cricondenTherm.length > 0 ? cricondenTherm[0] : 0.0;
+
+    PhaseEnvelopeResult.Status status;
+    String message;
+
+    if (totalPoints == 0) {
+      status = PhaseEnvelopeResult.Status.EMPTY;
+      message = "No envelope points were traced. Check fluid composition and starting conditions.";
+    } else if (totalPoints <= 2) {
+      status = PhaseEnvelopeResult.Status.DEGENERATE;
+      message = "Only " + totalPoints
+          + " point(s) traced — envelope is likely degenerate. "
+          + "This may be caused by zero-fraction components (now handled automatically), "
+          + "near-pure fluids, or extreme conditions.";
+    } else {
+      status = PhaseEnvelopeResult.Status.CONVERGED;
+      message = "Envelope traced successfully with " + totalPoints + " points ("
+          + bubCount + " bubble, " + dewCount + " dew).";
+    }
+
+    return new PhaseEnvelopeResult(status, message, bubCount, dewCount, ccbP, ccbT, cctP, cctT);
   }
 
   /**

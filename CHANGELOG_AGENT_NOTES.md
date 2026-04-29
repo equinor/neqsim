@@ -9,6 +9,60 @@
 
 ---
 
+## 2026-04-29 — Phase Envelope Improvements: z=0 Robustness, GC Dictionary, Deprecation Warning
+
+### Summary
+
+Six improvements from the phase-envelope discrepancy investigation
+(task `2026-04-27_phase_envelope_algorithm_discrepancy`):
+
+1. **z=0 component robustness (NIP-03):** `PTPhaseEnvelopeMichelsen.run()` now
+   automatically removes components with mole fraction below 1e-12 before tracing.
+   Previously, zero-fraction components caused singular Jacobians in the
+   Newton-Raphson solver, producing silent degenerate envelopes (0 or 1 point).
+   A warning is logged listing the removed components.
+
+2. **`calcPTphaseEnvelope2()` deprecation warning (NIP-02):** The deprecated
+   method now logs a one-shot warning on first call, informing users that it
+   delegates to `calcPTphaseEnvelope()` (Michelsen). The legacy
+   `PTphaseEnvelopeNew2` tracer was removed in commit 043252b85 (PR #1942,
+   2026-03-21) but the delegation was silent until now.
+
+3. **`PhaseEnvelopeResult` status object (NIP-04):** New class
+   `neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PhaseEnvelopeResult`
+   provides structured status reporting (`CONVERGED`, `DEGENERATE`, `EMPTY`)
+   with cricondenbar/cricondentherm fields and diagnostic messages. Access via
+   `PTPhaseEnvelopeMichelsen.getEnvelopeResult()`.
+
+4. **GC component dictionary (NIP-01):** New resource file
+   `src/main/resources/neqsim/data/gc_component_aliases.csv` and Java class
+   `neqsim.thermo.util.componentmapping.GcComponentMap` for translating GC
+   analyser labels to NeqSim component names. Handles case-insensitive matching,
+   whitespace tolerance, and co-elution group identification.
+
+5. **Regression test fixture (NIP-05):** New test
+   `PhaseEnvelopeZeroFractionRegressionTest` exercises a synthetic multi-component
+   UMR-PRU fluid (anonymised, not from any real field) with zero-fraction
+   components to pin the NIP-03 fix.
+
+### Migration
+
+- **`calcPTphaseEnvelope2()`**: Replace with `calcPTphaseEnvelope()`.
+  The deprecated wrapper still works but now emits a warning.
+- **Zero-fraction fluids**: No code change needed — the tracer now handles
+  them automatically. If you were pre-filtering z=0 components before calling
+  `calcPTphaseEnvelope()`, that workaround is no longer necessary (but harmless
+  to keep).
+
+### New classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `GcComponentMap` | `neqsim.thermo.util.componentmapping` | GC label → NeqSim name resolution |
+| `PhaseEnvelopeResult` | `neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops` | Structured envelope status |
+
+---
+
 ## 2026-04-20 — Gas Scrubber Mechanical Design: Internals Configuration & Conformity Checking
 
 ### Summary

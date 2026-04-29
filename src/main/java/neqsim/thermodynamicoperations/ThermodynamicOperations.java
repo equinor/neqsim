@@ -95,6 +95,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   private transient Thread thermoOperationThread = new Thread();
   private OperationInterface operation = null;
 
+  /** Flag to emit the calcPTphaseEnvelope2 deprecation warning only once. */
+  private static volatile boolean envelope2WarningShown = false;
+
   SystemInterface system = null;
   boolean writeFile = false;
   String fileName = null;
@@ -2150,6 +2153,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   @Deprecated
   public void calcPTphaseEnvelope2() {
+    if (!envelope2WarningShown) {
+      envelope2WarningShown = true;
+      logger.warn(
+          "calcPTphaseEnvelope2() is deprecated and now delegates to calcPTphaseEnvelope(). "
+              + "The legacy PTphaseEnvelopeNew2 tracer was removed in PR #1942 (2026-03-21). "
+              + "Replace calls with calcPTphaseEnvelope() to silence this warning.");
+    }
     calcPTphaseEnvelope();
   }
 
