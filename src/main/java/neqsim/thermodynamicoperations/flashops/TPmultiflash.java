@@ -201,7 +201,7 @@ public class TPmultiflash extends TPflash {
         }
         if (i == j) {
           double reg = 1.0e-3;
-          if (system.doEnhancedMultiPhaseCheck()) {
+          if (shouldApplyEnhancedMultiPhaseCheck()) {
             double absDiag = Math.abs(Qmatrix[i][j]);
             double beta = Math.abs(system.getPhase(i).getBeta());
             // Keep strong regularization for near-singular small-beta phases,
@@ -243,7 +243,7 @@ public class TPmultiflash extends TPflash {
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
-        if (system.doEnhancedMultiPhaseCheck()) {
+        if (shouldApplyEnhancedMultiPhaseCheck()) {
           for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
             Qmatrix[kk][kk] += 1.0e-2;
           }
@@ -630,7 +630,7 @@ public class TPmultiflash extends TPflash {
     boolean wilsonStableByMargin = !skipWilsonKTrials && bothWilsonTrialsConverged
         && Double.isFinite(minWilsonTm) && minWilsonTm > 0.25;
     boolean skipPureComponentTrials = (wilsonStableByTrivial || wilsonStableByMargin)
-        && !system.doEnhancedMultiPhaseCheck() && !polarComponentPresent;
+        && !shouldApplyEnhancedMultiPhaseCheck() && !polarComponentPresent;
 
     // --- Fallback: Pure-component trials for cases Wilson K trials miss ---
     // (e.g., LLE detection where K-values don't capture polarity-driven splits)
@@ -2265,7 +2265,8 @@ public class TPmultiflash extends TPflash {
       // phases, try enhanced version which uses Wilson K-value initial guesses and tests both
       // vapor-like and liquid-like trial phases for more robust detection of liquid-liquid
       // equilibria (e.g., sour gas, CO2 systems)
-      if (system.doEnhancedMultiPhaseCheck() && !multiPhaseTest && system.getNumberOfPhases() < 3) {
+      if (shouldApplyEnhancedMultiPhaseCheck() && !multiPhaseTest
+          && system.getNumberOfPhases() < 3) {
         stabilityAnalysisEnhanced();
       }
     }
@@ -2461,8 +2462,9 @@ public class TPmultiflash extends TPflash {
       // After flash converges, check for additional phases (three-phase detection)
       // This is particularly important for systems like CO2/H2S/hydrocarbon mixtures
       // that may exhibit vapor-liquid-liquid equilibrium
-      if (system.doMultiPhaseCheck() && system.getNumberOfPhases() >= 2
-          && system.getNumberOfPhases() < 3 && !postFlashStabilityChecked) {
+      if ((shouldApplyEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck())
+          && system.getNumberOfPhases() >= 2 && system.getNumberOfPhases() < 3
+          && !postFlashStabilityChecked) {
         postFlashStabilityChecked = true;
         int oldNumPhases = system.getNumberOfPhases();
         stabilityAnalysisEnhanced();

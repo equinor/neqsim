@@ -542,7 +542,7 @@ public class TPflash extends Flash {
 
         int activeNewtonLimit = newtonLimit;
         int activeAccelerateInterval = accelerateInterval;
-        if (system.doEnhancedMultiPhaseCheck()) {
+        if (shouldApplyEnhancedMultiPhaseCheck()) {
           if (deviation < 5e-4) {
             activeNewtonLimit = 8;
             activeAccelerateInterval = 3;
@@ -565,7 +565,7 @@ public class TPflash extends Flash {
             sucsSubs();
           }
         } else if (iterations >= activeNewtonLimit
-            && (!system.doEnhancedMultiPhaseCheck() || deviation < 0.05) && Math
+            && (!shouldApplyEnhancedMultiPhaseCheck() || deviation < 0.05) && Math
                 .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
           // Recreate the second-order solver only when needed: never created yet, or the
           // component count changed (e.g. solid precipitation removed a component, or the
