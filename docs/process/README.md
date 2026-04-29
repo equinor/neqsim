@@ -47,6 +47,7 @@ This documentation is organized into the following sections:
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim and export back to UniSim |
+| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 
 ### Process Design Guide
@@ -179,6 +180,7 @@ This documentation is organized into the following sections:
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
+| **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |

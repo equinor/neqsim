@@ -2711,6 +2711,30 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
+   * Calculate the total equivalent length from all fittings using this pipe's actual internal
+   * diameter.
+   *
+   * @return equivalent length from fittings in meters
+   */
+  @Override
+  public double getEquivalentLength() {
+    if (!useFittings || fittings.isEmpty()) {
+      return 0.0;
+    }
+    return fittings.getTotalEquivalentLength(insideDiameter);
+  }
+
+  /**
+   * Get the effective pipe length used for pressure-drop calculations.
+   *
+   * @return straight pipe length plus fittings equivalent length in meters
+   */
+  @Override
+  public double getEffectiveLength() {
+    return totalLength + getEquivalentLength();
+  }
+
+  /**
    * Get the flow regime as an enum.
    *
    * @return flow regime enum value

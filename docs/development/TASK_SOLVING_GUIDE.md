@@ -415,6 +415,13 @@ Run the checklist:
 
 Add an entry to `docs/development/TASK_LOG.md`:
 
+**Privacy rule:** Task log entries are public/reusable memory. Do not include
+company/operator names, field/facility/asset names, equipment tag numbers,
+internal document names, private system names, access diagnostics, or task folder
+slugs containing those details. Use generic descriptors such as `confidential
+offshore gas platform`, `private task folder (redacted)`, or
+`operator-specific technical requirement`.
+
 ```markdown
 ### 2026-03-01 — Joule-Thomson cooling for rich gas at 200 bar
 **Type:** A (Property)

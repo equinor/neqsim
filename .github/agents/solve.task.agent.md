@@ -1639,6 +1639,11 @@ Document the independent check in `step2_analysis/notes.md` under a
     - Documentation fixes go in the **same PR** as the task outputs.
 
 22. **Draft a task log entry** (but don't write to the file directly):
+    - Treat `TASK_LOG.md` as public/reusable memory. Redact company/operator names,
+      field/facility/asset names, equipment tag numbers, internal document names,
+      private system names, access diagnostics, and task folder slugs containing
+      those details. Use generic descriptors and `private task folder (redacted)`
+      for confidential task outputs.
     ```
     ### YYYY-MM-DD — Task Title
     **Type:** X (TypeName)

@@ -1,6 +1,6 @@
 ---
 name: neqsim-stid-retriever
-description: "Retrieves engineering documents (compressor curves, mechanical drawings, data sheets, vendor docs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, or as-built documentation for process equipment."
+description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, or as-built documentation for process equipment."
 last_verified: "2026-07-04"
 ---
 
@@ -151,6 +151,7 @@ docs = retrieve_documents(
 | `PF` | PFD | Process flow overview |
 | `IN` | Instrument Data Sheet | Control system design |
 | `SP` | Specification | Material/piping requirements |
+| `LL` | Line list / route table | Piping hydraulic route models with `PipingRouteBuilder` |
 
 ### Relevance Scoring
 
@@ -178,7 +179,7 @@ DOC_RELEVANCE = {
         'DS': 1.0, 'AA': 0.9, 'PI': 0.8, 'MD': 0.6, 'IN': 0.7,
     },
     'pipeline_design': {
-        'DS': 1.0, 'SP': 0.9, 'CE': 0.7, 'MD': 0.6,
+        'LL': 1.0, 'DS': 1.0, 'SP': 0.9, 'PI': 0.8, 'CE': 0.7, 'MD': 0.6,
     },
     'general': {
         'DS': 1.0, 'CE': 0.9, 'AA': 0.7, 'PI': 0.7, 'MD': 0.6,
@@ -287,6 +288,29 @@ The task solver uses this manifest to:
 ---
 
 ## Task Solver Integration
+
+### Route-Level Piping Hydraulics
+
+When retrieved STID documents include line lists, E3D route tables, stress
+isometrics, or P&IDs with enough line geometry, hand off the extracted route to
+`PipingRouteBuilder` for the NeqSim hydraulic model. This is the preferred path
+for compressor suction/discharge pressure-drop studies and debottlenecking tasks.
+
+Required extraction fields:
+
+| Field | Purpose |
+|-------|---------|
+| `segment_id` | Stable line-list row id or generated route segment id |
+| `from_node`, `to_node` | Equipment/nozzle/node topology |
+| `length`, `length_unit` | Straight pipe length |
+| `internal_diameter`, `diameter_unit` | Hydraulic diameter for `PipeBeggsAndBrills` |
+| `wall_thickness`, `wall_thickness_unit` | Optional metadata and generated pipe wall thickness |
+| `elevation_change`, `elevation_unit` | Static head contribution |
+| `minor_losses` | Fittings/valves/reducers as K values |
+| `source_ref` | Drawing number, page, row, or isometric reference |
+
+Save the extracted route table and `route.toJson()` in the task folder. See
+`docs/process/piping_route_builder.md` for the full builder workflow.
 
 ### In task_spec.md
 

@@ -604,6 +604,12 @@ See `AGENTS.md` "Jupyter Notebook Creation Guidelines" section for common class 
 
 ### Task Log Entry Format
 
+**Privacy rule:** Task log entries are public/reusable memory. Do not include
+company/operator names, field/facility/asset names, equipment tag numbers,
+internal document names, private system names, access diagnostics, or task folder
+slugs containing those details. Use generic descriptors and `private task folder
+(redacted)` for confidential task outputs.
+
 ```markdown
 ### YYYY-MM-DD — Short task title
 **Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow) | G (Workflow)
