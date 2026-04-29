@@ -149,6 +149,63 @@ The stream object performs the simulation wiring. The `ProcessConnection`
 records are topology metadata for exports, graph inspection, DEXPI-style
 handoffs, and agent traceability.
 
+## Direct Line-List And CSV Import
+
+Use `fromLineListRows(...)`, `addLineListRows(...)`, or `addLineListRow(...)`
+when a STID/E3D/P&ID extraction already has one map per route row. Column names
+are normalized, so common spreadsheet headers such as `Line Number`, `From Node`,
+`Length [m]`, `Internal diameter [mm]`, `Wall thickness [mm]`, `NPS`, and
+`Minor losses` can be used directly.
+
+```java
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import neqsim.process.equipment.pipeline.routing.PipingRouteBuilder;
+
+Map<String, String> row = new LinkedHashMap<String, String>();
+row.put("Line Number", "ROUTE-010-S1");
+row.put("From Node", "Inlet manifold");
+row.put("To Node", "Valve skid");
+row.put("Length [m]", "120.0");
+row.put("Internal diameter [mm]", "508.0");
+row.put("Wall thickness [mm]", "12.7");
+row.put("Elevation change [m]", "-2.0");
+row.put("Roughness [micrometer]", "45.0");
+row.put("Minor losses", "gate valve:0.15; long-radius bend=0.20");
+
+PipingRouteBuilder route = PipingRouteBuilder.fromLineListRows(Arrays.asList(row));
+```
+
+For CSV exports, use `fromCsv(path)` for a UTF-8 file or `fromCsvLines(lines)`
+when another extraction tool already has the file content in memory. The CSV
+parser supports quoted cells, which is useful for fitting lists containing
+commas or semicolon-separated K values.
+
+```java
+PipingRouteBuilder route = PipingRouteBuilder.fromCsv(csvPath);
+```
+
+The importer recognizes these common column families:
+
+| Data | Example aliases |
+|------|-----------------|
+| Segment id | `segment_id`, `line_number`, `line_no`, `route_segment`, `tag` |
+| From node | `from_node`, `upstream_node`, `source`, `from_equipment` |
+| To node | `to_node`, `downstream_node`, `target`, `to_equipment` |
+| Length | `length`, `length_m`, `straight_length`, `run_length` |
+| Diameter | `internal_diameter`, `internal_diameter_mm`, `nominal_size`, `NPS` |
+| Wall thickness | `wall_thickness`, `wall_thickness_mm`, `schedule_wall_thickness` |
+| Elevation | `elevation_change`, `elevation_change_m`, `static_head` |
+| Roughness | `roughness`, `roughness_mm`, `pipe_wall_roughness` |
+| Minor losses | `minor_losses`, `fittings`, `valves`, `k_value`, `gate_valve_k` |
+
+Unit-bearing headers such as `Length [m]` or `Internal diameter (mm)` are
+accepted. Inline values such as `25 m` or `45 micrometer` are also accepted.
+`NPS`, `nominal_size`, and `nominal_pipe_size` default to inches when no unit is
+specified. Prefer a calculated internal diameter column when wall schedule,
+corrosion allowance, or lining thickness is known.
+
 ## STID Extraction Handoff
 
 When reading STID P&IDs, E3D exports, stress isometrics, or line-list Excel
@@ -184,8 +241,10 @@ specific drawing rows.
 }
 ```
 
-Then convert each row with `addSegment(...)`, `setSegmentWallThickness(...)`,
-`setSegmentElevationChange(...)`, and `addMinorLoss(...)`.
+The neutral structure can be passed to `fromLineListRows(...)` row-by-row after
+JSON parsing, or converted manually with `addSegment(...)`,
+`setSegmentWallThickness(...)`, `setSegmentElevationChange(...)`, and
+`addMinorLoss(...)` when custom preprocessing is needed.
 
 ## STID Workflow Checklist
 
@@ -193,9 +252,9 @@ Then convert each row with `addSegment(...)`, `setSegmentWallThickness(...)`,
   under `step1_scope_and_research/references/` and `figures/`.
 - Extract line sizes, route order, fittings, valves, reducers, strainers, and
   elevations with source page/row references.
-- Convert nominal pipe size and schedule to internal diameter before calling
-  `addSegment(...)`. If only nominal size is available, document the internal
-  diameter assumption.
+- Prefer calculated internal diameter from nominal size, schedule, corrosion
+  allowance, and lining thickness. If only `NPS` is available, the importer
+  treats it as inches and the assumption must be documented.
 - Convert every fitting, valve, tee, reducer, and equipment-entry loss to a K
   value or equivalent `L/D` basis. Keep the K source in notes.
 - For route-only checks, run `route.build(feedStream)`. For a route inside a

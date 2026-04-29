@@ -1,6 +1,10 @@
 package neqsim.process.equipment.pipeline.routing;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -8,6 +12,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -38,6 +44,67 @@ public class PipingRouteBuilder implements Serializable {
   private static final long serialVersionUID = 1000L;
   /** Default Darcy friction factor used for converting K values to L/D values. */
   private static final double DEFAULT_MINOR_LOSS_FRICTION_FACTOR = 0.02;
+  /** Pattern for values written as a number with an optional unit suffix. */
+  private static final Pattern NUMBER_WITH_OPTIONAL_UNIT = Pattern
+      .compile("^\\s*([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)\\s*([A-Za-z_/]+)?\\s*$");
+  /** Segment identifier column aliases. */
+  private static final String[] SEGMENT_ID_COLUMNS = {"segment_id", "segmentid", "segment",
+      "line_number", "line_no", "line", "row_id", "route_segment", "pipe_segment"};
+  /** Upstream node column aliases. */
+  private static final String[] FROM_NODE_COLUMNS = {"from_node", "from", "upstream_node",
+      "upstream", "source_node", "source", "start_node", "start", "from_equipment"};
+  /** Downstream node column aliases. */
+  private static final String[] TO_NODE_COLUMNS = {"to_node", "to", "downstream_node", "downstream",
+      "target_node", "target", "destination", "end_node", "end", "to_equipment"};
+  /** Straight length column aliases. */
+  private static final String[] LENGTH_COLUMNS =
+      {"length", "straight_length", "pipe_length", "run_length", "segment_length"};
+  /** Straight length unit column aliases. */
+  private static final String[] LENGTH_UNIT_COLUMNS = {"length_unit", "straight_length_unit",
+      "pipe_length_unit", "run_length_unit", "segment_length_unit"};
+  /** Hydraulic diameter column aliases. */
+  private static final String[] DIAMETER_COLUMNS = {"nominal_diameter", "nominal_bore",
+      "nominal_size", "nominal_pipe_size", "nps", "internal_diameter", "inner_diameter",
+      "inside_diameter", "hydraulic_diameter", "diameter", "bore", "id"};
+  /** Hydraulic diameter unit column aliases. */
+  private static final String[] DIAMETER_UNIT_COLUMNS =
+      {"diameter_unit", "nominal_diameter_unit", "nominal_bore_unit", "nominal_size_unit",
+          "nominal_pipe_size_unit", "nps_unit", "internal_diameter_unit", "inner_diameter_unit",
+          "inside_diameter_unit", "hydraulic_diameter_unit", "bore_unit", "id_unit"};
+  /** Optional wall thickness column aliases. */
+  private static final String[] WALL_THICKNESS_COLUMNS =
+      {"wall_thickness", "thickness", "pipe_wall_thickness", "schedule_wall_thickness"};
+  /** Optional wall thickness unit column aliases. */
+  private static final String[] WALL_THICKNESS_UNIT_COLUMNS = {"wall_thickness_unit",
+      "thickness_unit", "pipe_wall_thickness_unit", "schedule_wall_thickness_unit"};
+  /** Optional elevation-change column aliases. */
+  private static final String[] ELEVATION_CHANGE_COLUMNS = {"elevation_change", "delta_elevation",
+      "elevation_delta", "height_change", "vertical_rise", "rise"};
+  /** Optional elevation unit column aliases. */
+  private static final String[] ELEVATION_UNIT_COLUMNS = {"elevation_unit", "elevation_change_unit",
+      "delta_elevation_unit", "height_change_unit", "rise_unit"};
+  /** Optional wall roughness column aliases. */
+  private static final String[] ROUGHNESS_COLUMNS =
+      {"roughness", "pipe_wall_roughness", "wall_roughness", "absolute_roughness"};
+  /** Optional wall roughness unit column aliases. */
+  private static final String[] ROUGHNESS_UNIT_COLUMNS = {"roughness_unit",
+      "pipe_wall_roughness_unit", "wall_roughness_unit", "absolute_roughness_unit"};
+  /** Minor-loss list column aliases. */
+  private static final String[] MINOR_LOSS_LIST_COLUMNS =
+      {"minor_losses", "minor_loss_list", "fittings", "valves", "fittings_and_valves", "k_values"};
+  /** Minor-loss description column aliases. */
+  private static final String[] MINOR_LOSS_TYPE_COLUMNS =
+      {"fitting_type", "minor_loss_type", "loss_type", "valve_type", "fitting", "valve"};
+  /** Minor-loss K-value column aliases. */
+  private static final String[] MINOR_LOSS_K_COLUMNS =
+      {"k_value", "k", "minor_loss_k", "minor_loss_coefficient", "resistance_coefficient",
+          "resistance_k", "total_k", "k_total", "sum_k"};
+  /** Unit suffixes recognized in suffixed table headers. */
+  private static final String[] LENGTH_UNIT_SUFFIXES = {"m", "meter", "meters", "metre", "metres",
+      "km", "kilometer", "kilometers", "kilometre", "kilometres", "cm", "centimeter", "centimeters",
+      "centimetre", "centimetres", "mm", "millimeter", "millimeters", "millimetre", "millimetres",
+      "um", "micrometer", "micrometers", "micrometre", "micrometres", "micron", "microns", "in",
+      "inch", "inches", "ft", "foot", "feet"};
 
   private final List<RouteSegment> segments = new ArrayList<RouteSegment>();
   private double defaultPipeWallRoughnessMeters = 1.0e-5;
@@ -50,6 +117,119 @@ public class PipingRouteBuilder implements Serializable {
    * Creates an empty piping route builder.
    */
   public PipingRouteBuilder() {}
+
+  /**
+   * Creates a route builder from structured line-list rows.
+   *
+   * <p>
+   * Column names are matched case-insensitively after normalizing spaces, hyphens, brackets, and
+   * punctuation to underscores. Common aliases such as {@code line_number}, {@code from_node},
+   * {@code to_node}, {@code length_m}, {@code internal_diameter_mm}, {@code wall_thickness_mm},
+   * {@code elevation_change_m}, and {@code minor_losses} are accepted. Units can be supplied either
+   * as separate unit columns or as suffixes in the header/value.
+   * </p>
+   *
+   * @param rows line-list rows, each represented as a column-name to cell-value map
+   * @return populated route builder
+   * @throws IllegalArgumentException if required columns are missing or any row contains invalid
+   *         values
+   * @throws NullPointerException if {@code rows} is null
+   */
+  public static PipingRouteBuilder fromLineListRows(List<Map<String, String>> rows) {
+    return new PipingRouteBuilder().addLineListRows(rows);
+  }
+
+  /**
+   * Creates a route builder from a comma-separated line-list file.
+   *
+   * <p>
+   * The first non-empty row is interpreted as the header. Subsequent non-empty rows are parsed as
+   * line-list rows and passed to {@link #fromLineListRows(List)}. Quoted fields and escaped double
+   * quotes are supported for simple engineering CSV exports.
+   * </p>
+   *
+   * @param csvPath path to a UTF-8 CSV file containing route rows
+   * @return populated route builder
+   * @throws IOException if the file cannot be read
+   * @throws IllegalArgumentException if the CSV structure or values are invalid
+   * @throws NullPointerException if {@code csvPath} is null
+   */
+  public static PipingRouteBuilder fromCsv(Path csvPath) throws IOException {
+    Objects.requireNonNull(csvPath, "csvPath");
+    return fromCsvLines(Files.readAllLines(csvPath, StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Creates a route builder from CSV lines.
+   *
+   * @param csvLines CSV lines, with the first non-empty line used as the header
+   * @return populated route builder
+   * @throws IllegalArgumentException if the CSV structure or values are invalid
+   * @throws NullPointerException if {@code csvLines} is null
+   */
+  public static PipingRouteBuilder fromCsvLines(List<String> csvLines) {
+    return fromLineListRows(parseCsvRows(csvLines));
+  }
+
+  /**
+   * Adds multiple structured line-list rows.
+   *
+   * @param rows line-list rows, each represented as a column-name to cell-value map
+   * @return this builder for chaining
+   * @throws IllegalArgumentException if required columns are missing or any row contains invalid
+   *         values
+   * @throws NullPointerException if {@code rows} is null
+   */
+  public PipingRouteBuilder addLineListRows(List<Map<String, String>> rows) {
+    Objects.requireNonNull(rows, "rows");
+    for (Map<String, String> row : rows) {
+      addLineListRow(row);
+    }
+    return this;
+  }
+
+  /**
+   * Adds one structured line-list row.
+   *
+   * <p>
+   * Required fields are upstream node, downstream node, straight length, and hydraulic diameter.
+   * Segment id, wall thickness, roughness, elevation change, and minor losses are optional. When
+   * the segment id is omitted, the builder generates ids using the same {@code S1}, {@code S2}
+   * pattern as {@link #addSegment(String, String, double, String, double, String)}.
+   * </p>
+   *
+   * @param row line-list row represented as a column-name to cell-value map
+   * @return this builder for chaining
+   * @throws IllegalArgumentException if required columns are missing or values are invalid
+   * @throws NullPointerException if {@code row} is null
+   */
+  public PipingRouteBuilder addLineListRow(Map<String, String> row) {
+    Map<String, String> normalizedRow = normalizeRow(row);
+    String segmentId = getOptionalValue(normalizedRow, SEGMENT_ID_COLUMNS);
+    String fromNode = getRequiredValue(normalizedRow, FROM_NODE_COLUMNS, "fromNode");
+    String toNode = getRequiredValue(normalizedRow, TO_NODE_COLUMNS, "toNode");
+    Quantity length =
+        readRequiredQuantity(normalizedRow, LENGTH_COLUMNS, LENGTH_UNIT_COLUMNS, "m", "length");
+    Quantity diameter = readRequiredQuantity(normalizedRow, DIAMETER_COLUMNS, DIAMETER_UNIT_COLUMNS,
+        "m", "nominalDiameter");
+
+    if (segmentId == null) {
+      addSegment(fromNode, toNode, length.value, length.unit, diameter.value, diameter.unit);
+    } else {
+      addSegment(segmentId, fromNode, toNode, length.value, length.unit, diameter.value,
+          diameter.unit);
+    }
+
+    RouteSegment segment = segments.get(segments.size() - 1);
+    applyOptionalQuantity(normalizedRow, WALL_THICKNESS_COLUMNS, WALL_THICKNESS_UNIT_COLUMNS, "m",
+        "wallThickness", segment.getSegmentId());
+    applyOptionalQuantity(normalizedRow, ELEVATION_CHANGE_COLUMNS, ELEVATION_UNIT_COLUMNS, "m",
+        "elevationChange", segment.getSegmentId());
+    applyOptionalQuantity(normalizedRow, ROUGHNESS_COLUMNS, ROUGHNESS_UNIT_COLUMNS, "m",
+        "roughness", segment.getSegmentId());
+    applyMinorLosses(normalizedRow, segment.getSegmentId());
+    return this;
+  }
 
   /**
    * Adds one route segment and assigns a generated segment id such as {@code S1}.
@@ -432,6 +612,409 @@ public class PipingRouteBuilder implements Serializable {
   }
 
   /**
+   * Parses CSV lines into table rows.
+   *
+   * @param csvLines CSV lines with a header row
+   * @return list of row maps keyed by header text
+   * @throws IllegalArgumentException if no header row is present
+   * @throws NullPointerException if {@code csvLines} is null
+   */
+  private static List<Map<String, String>> parseCsvRows(List<String> csvLines) {
+    Objects.requireNonNull(csvLines, "csvLines");
+    int headerLineIndex = -1;
+    List<String> headers = null;
+    for (int i = 0; i < csvLines.size(); i++) {
+      String line = csvLines.get(i);
+      if (line != null && !line.trim().isEmpty()) {
+        headerLineIndex = i;
+        headers = parseCsvLine(line);
+        break;
+      }
+    }
+    if (headers == null || headers.isEmpty()) {
+      throw new IllegalArgumentException("CSV line list must contain a header row");
+    }
+
+    List<Map<String, String>> rows = new ArrayList<Map<String, String>>();
+    for (int i = headerLineIndex + 1; i < csvLines.size(); i++) {
+      String line = csvLines.get(i);
+      if (line == null || line.trim().isEmpty()) {
+        continue;
+      }
+      List<String> values = parseCsvLine(line);
+      Map<String, String> row = new LinkedHashMap<String, String>();
+      for (int column = 0; column < headers.size(); column++) {
+        String value = column < values.size() ? values.get(column) : "";
+        row.put(headers.get(column), value);
+      }
+      rows.add(row);
+    }
+    return rows;
+  }
+
+  /**
+   * Parses one CSV line.
+   *
+   * @param line line text
+   * @return parsed fields
+   * @throws IllegalArgumentException if the row contains an unclosed quote
+   */
+  private static List<String> parseCsvLine(String line) {
+    List<String> fields = new ArrayList<String>();
+    StringBuilder field = new StringBuilder();
+    boolean inQuotes = false;
+    for (int i = 0; i < line.length(); i++) {
+      char character = line.charAt(i);
+      if (character == '"') {
+        if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+          field.append('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (character == ',' && !inQuotes) {
+        fields.add(field.toString().trim());
+        field.setLength(0);
+      } else {
+        field.append(character);
+      }
+    }
+    if (inQuotes) {
+      throw new IllegalArgumentException("CSV line contains an unclosed quoted field: " + line);
+    }
+    fields.add(field.toString().trim());
+    return fields;
+  }
+
+  /**
+   * Normalizes a line-list row's column names.
+   *
+   * @param row raw row map
+   * @return normalized row map
+   * @throws NullPointerException if {@code row} is null
+   */
+  private static Map<String, String> normalizeRow(Map<String, String> row) {
+    Objects.requireNonNull(row, "row");
+    Map<String, String> normalizedRow = new LinkedHashMap<String, String>();
+    for (Map.Entry<String, String> entry : row.entrySet()) {
+      String normalizedKey = normalizeColumnName(entry.getKey());
+      if (normalizedKey.isEmpty()) {
+        continue;
+      }
+      String value = entry.getValue() == null ? "" : entry.getValue();
+      if (!normalizedRow.containsKey(normalizedKey) || normalizedRow.get(normalizedKey).isEmpty()) {
+        normalizedRow.put(normalizedKey, value);
+      }
+    }
+    return normalizedRow;
+  }
+
+  /**
+   * Normalizes a column name for alias matching.
+   *
+   * @param columnName raw column name
+   * @return lower-case column name with punctuation collapsed to underscores
+   */
+  private static String normalizeColumnName(String columnName) {
+    if (columnName == null) {
+      return "";
+    }
+    StringBuilder builder = new StringBuilder();
+    boolean previousWasSeparator = false;
+    String lowerCase = columnName.toLowerCase(Locale.ROOT);
+    for (int i = 0; i < lowerCase.length(); i++) {
+      char character = lowerCase.charAt(i);
+      if (Character.isLetterOrDigit(character)) {
+        builder.append(character);
+        previousWasSeparator = false;
+      } else if (!previousWasSeparator && builder.length() > 0) {
+        builder.append('_');
+        previousWasSeparator = true;
+      }
+    }
+    int length = builder.length();
+    if (length > 0 && builder.charAt(length - 1) == '_') {
+      builder.setLength(length - 1);
+    }
+    return builder.toString();
+  }
+
+  /**
+   * Returns a required value from a normalized row.
+   *
+   * @param normalizedRow normalized row map
+   * @param aliases accepted column aliases
+   * @param fieldName field name for error messages
+   * @return non-blank row value
+   * @throws IllegalArgumentException if no alias has a non-blank value
+   */
+  private static String getRequiredValue(Map<String, String> normalizedRow, String[] aliases,
+      String fieldName) {
+    String value = getOptionalValue(normalizedRow, aliases);
+    if (value == null) {
+      throw new IllegalArgumentException("Missing required line-list field: " + fieldName);
+    }
+    return value;
+  }
+
+  /**
+   * Returns an optional value from a normalized row.
+   *
+   * @param normalizedRow normalized row map
+   * @param aliases accepted column aliases
+   * @return non-blank row value, or null when absent
+   */
+  private static String getOptionalValue(Map<String, String> normalizedRow, String[] aliases) {
+    for (String alias : aliases) {
+      String value = normalizedRow.get(normalizeColumnName(alias));
+      if (value != null && !value.trim().isEmpty()) {
+        return value.trim();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Reads a required length-like quantity from a normalized row.
+   *
+   * @param normalizedRow normalized row map
+   * @param valueAliases accepted value column aliases
+   * @param unitAliases accepted unit column aliases
+   * @param defaultUnit default unit when the table omits a unit
+   * @param fieldName field name for error messages
+   * @return parsed quantity
+   * @throws IllegalArgumentException if no value exists or the value is invalid
+   */
+  private static Quantity readRequiredQuantity(Map<String, String> normalizedRow,
+      String[] valueAliases, String[] unitAliases, String defaultUnit, String fieldName) {
+    Quantity quantity =
+        readOptionalQuantity(normalizedRow, valueAliases, unitAliases, defaultUnit, fieldName);
+    if (quantity == null) {
+      throw new IllegalArgumentException("Missing required line-list field: " + fieldName);
+    }
+    return quantity;
+  }
+
+  /**
+   * Reads an optional length-like quantity from a normalized row.
+   *
+   * @param normalizedRow normalized row map
+   * @param valueAliases accepted value column aliases
+   * @param unitAliases accepted unit column aliases
+   * @param defaultUnit default unit when the table omits a unit
+   * @param fieldName field name for error messages
+   * @return parsed quantity, or null when no matching value exists
+   */
+  private static Quantity readOptionalQuantity(Map<String, String> normalizedRow,
+      String[] valueAliases, String[] unitAliases, String defaultUnit, String fieldName) {
+    for (String alias : valueAliases) {
+      String normalizedAlias = normalizeColumnName(alias);
+      String value = normalizedRow.get(normalizedAlias);
+      if (value != null && !value.trim().isEmpty()) {
+        String explicitUnit = getOptionalValue(normalizedRow, unitAliases);
+        return parseQuantity(value, explicitUnit,
+            getDefaultUnitForAlias(normalizedAlias, defaultUnit), fieldName);
+      }
+      for (String unitSuffix : LENGTH_UNIT_SUFFIXES) {
+        String key = normalizedAlias + "_" + normalizeColumnName(unitSuffix);
+        String suffixedValue = normalizedRow.get(key);
+        if (suffixedValue != null && !suffixedValue.trim().isEmpty()) {
+          return parseQuantity(suffixedValue, unitSuffix, unitSuffix, fieldName);
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets a field-specific default unit for an alias.
+   *
+   * @param normalizedAlias normalized alias text
+   * @param defaultUnit caller-supplied default unit
+   * @return default unit for the alias
+   */
+  private static String getDefaultUnitForAlias(String normalizedAlias, String defaultUnit) {
+    if ("nps".equals(normalizedAlias) || "nominal_size".equals(normalizedAlias)
+        || "nominal_pipe_size".equals(normalizedAlias)) {
+      return "inch";
+    }
+    return defaultUnit;
+  }
+
+  /**
+   * Parses a quantity value that may include an inline unit.
+   *
+   * @param value raw source value
+   * @param explicitUnit unit from a separate unit column, may be null
+   * @param defaultUnit default unit when no other unit is available
+   * @param fieldName field name for error messages
+   * @return parsed quantity
+   * @throws IllegalArgumentException if the value or unit is invalid
+   */
+  private static Quantity parseQuantity(String value, String explicitUnit, String defaultUnit,
+      String fieldName) {
+    String cleanValue = requireText(value, fieldName);
+    Matcher matcher = NUMBER_WITH_OPTIONAL_UNIT.matcher(cleanValue);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(
+          fieldName + " must be a number with optional unit: " + value);
+    }
+    double numericValue;
+    try {
+      numericValue = Double.parseDouble(matcher.group(1));
+    } catch (NumberFormatException error) {
+      throw new IllegalArgumentException(fieldName + " is not a valid number: " + value, error);
+    }
+    requireFinite(numericValue, fieldName);
+    String inlineUnit = matcher.group(2);
+    String unit =
+        explicitUnit != null ? explicitUnit : inlineUnit != null ? inlineUnit : defaultUnit;
+    convertLengthToMeters(numericValue, unit);
+    return new Quantity(numericValue, unit);
+  }
+
+  /**
+   * Applies an optional route quantity to the active segment.
+   *
+   * @param normalizedRow normalized row map
+   * @param valueAliases accepted value column aliases
+   * @param unitAliases accepted unit column aliases
+   * @param defaultUnit default unit when omitted
+   * @param quantityType quantity type: wallThickness, elevationChange, or roughness
+   * @param segmentId segment id
+   */
+  private void applyOptionalQuantity(Map<String, String> normalizedRow, String[] valueAliases,
+      String[] unitAliases, String defaultUnit, String quantityType, String segmentId) {
+    Quantity quantity =
+        readOptionalQuantity(normalizedRow, valueAliases, unitAliases, defaultUnit, quantityType);
+    if (quantity == null) {
+      return;
+    }
+    if ("wallThickness".equals(quantityType)) {
+      setSegmentWallThickness(segmentId, quantity.value, quantity.unit);
+    } else if ("elevationChange".equals(quantityType)) {
+      setSegmentElevationChange(segmentId, quantity.value, quantity.unit);
+    } else if ("roughness".equals(quantityType)) {
+      setSegmentPipeWallRoughness(segmentId, quantity.value, quantity.unit);
+    }
+  }
+
+  /**
+   * Applies minor-loss columns from a normalized row.
+   *
+   * @param normalizedRow normalized row map
+   * @param segmentId target segment id
+   */
+  private void applyMinorLosses(Map<String, String> normalizedRow, String segmentId) {
+    String minorLossType = getOptionalValue(normalizedRow, MINOR_LOSS_TYPE_COLUMNS);
+    Double minorLossK = readOptionalKValue(normalizedRow, MINOR_LOSS_K_COLUMNS);
+    if (minorLossK != null) {
+      addMinorLoss(segmentId, minorLossType == null ? "minor loss" : minorLossType,
+          minorLossK.doubleValue());
+    }
+
+    applyNamedMinorLoss(normalizedRow, segmentId, "valve",
+        new String[] {"valve_k", "valve_loss_k"});
+    applyNamedMinorLoss(normalizedRow, segmentId, "fitting",
+        new String[] {"fittings_k", "fitting_loss_k"});
+    applyNamedMinorLoss(normalizedRow, segmentId, "bend", new String[] {"bend_k", "elbow_k"});
+    applyNamedMinorLoss(normalizedRow, segmentId, "tee", new String[] {"tee_k"});
+    applyNamedMinorLoss(normalizedRow, segmentId, "strainer", new String[] {"strainer_k"});
+    applyNamedMinorLoss(normalizedRow, segmentId, "reducer",
+        new String[] {"reducer_k", "expander_k"});
+
+    String minorLossList = getOptionalValue(normalizedRow, MINOR_LOSS_LIST_COLUMNS);
+    if (minorLossList != null) {
+      addMinorLossList(segmentId, minorLossList);
+    }
+  }
+
+  /**
+   * Applies one named optional K-value column.
+   *
+   * @param normalizedRow normalized row map
+   * @param segmentId target segment id
+   * @param fittingType fitting type label
+   * @param aliases accepted K-value column aliases
+   */
+  private void applyNamedMinorLoss(Map<String, String> normalizedRow, String segmentId,
+      String fittingType, String[] aliases) {
+    Double kValue = readOptionalKValue(normalizedRow, aliases);
+    if (kValue != null) {
+      addMinorLoss(segmentId, fittingType, kValue.doubleValue());
+    }
+  }
+
+  /**
+   * Reads an optional K value from a normalized row.
+   *
+   * @param normalizedRow normalized row map
+   * @param aliases accepted K-value column aliases
+   * @return K value, or null when absent
+   */
+  private static Double readOptionalKValue(Map<String, String> normalizedRow, String[] aliases) {
+    String value = getOptionalValue(normalizedRow, aliases);
+    if (value == null) {
+      return null;
+    }
+    return Double.valueOf(parseKValue(value, aliases[0]));
+  }
+
+  /**
+   * Parses and adds a list of K-value minor losses.
+   *
+   * @param segmentId target segment id
+   * @param minorLossList minor-loss list text
+   */
+  private void addMinorLossList(String segmentId, String minorLossList) {
+    String[] entries = minorLossList.split("[;|]");
+    for (String entry : entries) {
+      String cleanEntry = entry.trim();
+      if (cleanEntry.isEmpty()) {
+        continue;
+      }
+      int separatorIndex = Math.max(cleanEntry.lastIndexOf(':'), cleanEntry.lastIndexOf('='));
+      if (separatorIndex < 0) {
+        separatorIndex = cleanEntry.lastIndexOf(' ');
+      }
+      if (separatorIndex < 0) {
+        addMinorLoss(segmentId, "minor loss", parseKValue(cleanEntry, "minorLoss"));
+      } else {
+        String fittingType = cleanEntry.substring(0, separatorIndex).trim();
+        String kValueText = cleanEntry.substring(separatorIndex + 1).trim();
+        addMinorLoss(segmentId, fittingType.isEmpty() ? "minor loss" : fittingType,
+            parseKValue(kValueText, "minorLoss"));
+      }
+    }
+  }
+
+  /**
+   * Parses a non-negative K value.
+   *
+   * @param value raw value text
+   * @param fieldName field name for error messages
+   * @return parsed K value
+   * @throws IllegalArgumentException if the value is invalid or negative
+   */
+  private static double parseKValue(String value, String fieldName) {
+    String cleanValue = requireText(value, fieldName);
+    Matcher matcher = NUMBER_WITH_OPTIONAL_UNIT.matcher(cleanValue);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(fieldName + " must be a dimensionless K value: " + value);
+    }
+    String inlineUnit = matcher.group(2);
+    if (inlineUnit != null && !"dimensionless".equalsIgnoreCase(inlineUnit)) {
+      throw new IllegalArgumentException(
+          fieldName + " must be dimensionless, got unit: " + inlineUnit);
+    }
+    try {
+      return requireNonNegative(Double.parseDouble(matcher.group(1)), fieldName);
+    } catch (NumberFormatException error) {
+      throw new IllegalArgumentException(fieldName + " is not a valid K value: " + value, error);
+    }
+  }
+
+  /**
    * Requires a non-empty text value.
    *
    * @param value text value to validate
@@ -530,6 +1113,28 @@ public class PipingRouteBuilder implements Serializable {
       return value * 0.3048;
     }
     throw new IllegalArgumentException("Unsupported length unit: " + unit);
+  }
+
+  /**
+   * Parsed value and unit from a line-list cell.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static class Quantity {
+    private final double value;
+    private final String unit;
+
+    /**
+     * Creates a parsed quantity.
+     *
+     * @param value numeric source value
+     * @param unit source unit text
+     */
+    private Quantity(double value, String unit) {
+      this.value = value;
+      this.unit = unit;
+    }
   }
 
   /**

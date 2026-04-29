@@ -4,7 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
@@ -139,6 +147,74 @@ class PipingRouteBuilderTest {
         .getUnit("Pipe ROUTE-001-S2 separator outlet to compressor scrubber");
     assertTrue(lastPipe.getOutletStream().getPressure("bara") < feed.getPressure("bara"));
     assertTrue(route.toJson().contains("ROUTE-001-S1"));
+  }
+
+  /**
+   * Verifies import from structured STID/E3D-style line-list rows with unit-bearing headers.
+   */
+  @Test
+  void testFromLineListRowsImportsStructuredTable() {
+    Map<String, String> row1 = new LinkedHashMap<String, String>();
+    row1.put("Line Number", "ROUTE-010-S1");
+    row1.put("From Node", "Inlet manifold");
+    row1.put("To Node", "Valve skid");
+    row1.put("Length [m]", "120.0");
+    row1.put("Internal diameter [mm]", "508.0");
+    row1.put("Wall thickness [mm]", "12.7");
+    row1.put("Elevation change [m]", "-2.0");
+    row1.put("Roughness [micrometer]", "45.0");
+    row1.put("Minor losses", "gate valve:0.15; long-radius bend=0.20");
+
+    Map<String, String> row2 = new LinkedHashMap<String, String>();
+    row2.put("segment_id", "ROUTE-010-S2");
+    row2.put("from_node", "Valve skid");
+    row2.put("to_node", "Compressor suction scrubber");
+    row2.put("length", "25 m");
+    row2.put("NPS", "8");
+    row2.put("fitting_type", "strainer");
+    row2.put("k_value", "0.8");
+
+    PipingRouteBuilder route = PipingRouteBuilder.fromLineListRows(Arrays.asList(row1, row2));
+
+    assertEquals(2, route.getSegments().size());
+    PipingRouteBuilder.RouteSegment first = route.getSegment("ROUTE-010-S1");
+    PipingRouteBuilder.RouteSegment second = route.getSegment("ROUTE-010-S2");
+    assertNotNull(first);
+    assertNotNull(second);
+    assertEquals(120.0, first.getLengthMeters(), 1.0e-12);
+    assertEquals(0.508, first.getNominalDiameterMeters(), 1.0e-12);
+    assertEquals(0.0127, first.getWallThicknessMeters(), 1.0e-12);
+    assertEquals(-2.0, first.getElevationChangeMeters(), 1.0e-12);
+    assertEquals(45.0e-6, first.getPipeWallRoughnessMeters(), 1.0e-12);
+    assertEquals(0.35, first.getTotalKValue(), 1.0e-12);
+    assertEquals(17.5, first.getTotalEquivalentLengthRatio(), 1.0e-12);
+    assertEquals(0.2032, second.getNominalDiameterMeters(), 1.0e-12);
+    assertEquals(0.8, second.getTotalKValue(), 1.0e-12);
+  }
+
+  /**
+   * Verifies import from a UTF-8 CSV line-list file with quoted minor-loss cells.
+   *
+   * @param tempDir temporary directory provided by JUnit
+   * @throws IOException if the temporary CSV file cannot be written or read
+   */
+  @Test
+  void testFromCsvImportsQuotedMinorLossList(@TempDir Path tempDir) throws IOException {
+    Path csvPath = tempDir.resolve("route.csv");
+    Files.write(csvPath,
+        Arrays.asList("segment_id,from_node,to_node,length_m,internal_diameter_mm,minor_losses",
+            "S1,A,B,100,200,\"gate valve:0.20; bend:0.10\""),
+        StandardCharsets.UTF_8);
+
+    PipingRouteBuilder route = PipingRouteBuilder.fromCsv(csvPath);
+
+    assertEquals(1, route.getSegments().size());
+    PipingRouteBuilder.RouteSegment segment = route.getSegment("S1");
+    assertNotNull(segment);
+    assertEquals(100.0, segment.getLengthMeters(), 1.0e-12);
+    assertEquals(0.2, segment.getNominalDiameterMeters(), 1.0e-12);
+    assertEquals(0.30, segment.getTotalKValue(), 1.0e-12);
+    assertEquals(15.0, segment.getTotalEquivalentLengthRatio(), 1.0e-12);
   }
 
   /**

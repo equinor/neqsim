@@ -40,7 +40,7 @@ requirement`, or `confidential compressor route`.
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** PipingRouteBuilder, STID, E3D, line list, piping route, pressure drop, PipeBeggsAndBrills, fittings, K-value, equivalent length
 **Solution:** `src/main/java/neqsim/process/equipment/pipeline/routing/PipingRouteBuilder.java`, `src/test/java/neqsim/process/equipment/pipeline/routing/PipingRouteBuilderTest.java`, `docs/process/piping_route_builder.md`
-**Notes:** Added a high-level builder that converts serial line-list rows with from/to nodes, pipe length, hydraulic diameter, wall thickness, roughness, elevation change, and fitting/valve K values into a `ProcessSystem` of Beggs-and-Brill pipe segments. Future STID/E3D/P&ID hydraulic tasks should extract route rows first, then use `PipingRouteBuilder` instead of hand-assembling pipe units; export `route.toJson()` for traceability and reuse.
+**Notes:** Added a high-level builder that converts serial line-list rows with from/to nodes, pipe length, hydraulic diameter, wall thickness, roughness, elevation change, and fitting/valve K values into a `ProcessSystem` of Beggs-and-Brill pipe segments. It now imports structured row maps and UTF-8 CSV line-list exports directly via `fromLineListRows`, `fromCsv`, and `fromCsvLines`, including normalized STID/E3D-style headers and quoted minor-loss lists. Future STID/E3D/P&ID hydraulic tasks should extract route rows first, then use `PipingRouteBuilder` instead of hand-assembling pipe units; export `route.toJson()` for traceability and reuse.
 
 ### 2026-04-28 — Confidential upstream compressor pressure-drop analysis
 **Type:** B (Process)
