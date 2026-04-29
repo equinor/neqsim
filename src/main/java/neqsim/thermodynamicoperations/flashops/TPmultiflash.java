@@ -201,7 +201,7 @@ public class TPmultiflash extends TPflash {
         }
         if (i == j) {
           double reg = 1.0e-3;
-          if (system.doEnhancedMultiPhaseCheck()) {
+          if (shouldApplyEnhancedMultiPhaseCheck()) {
             double absDiag = Math.abs(Qmatrix[i][j]);
             double beta = Math.abs(system.getPhase(i).getBeta());
             // Keep strong regularization for near-singular small-beta phases,
@@ -243,7 +243,7 @@ public class TPmultiflash extends TPflash {
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
-        if (system.doEnhancedMultiPhaseCheck()) {
+        if (shouldApplyEnhancedMultiPhaseCheck()) {
           for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
             Qmatrix[kk][kk] += 1.0e-2;
           }
@@ -427,16 +427,6 @@ public class TPmultiflash extends TPflash {
     // so z/K heavily enriches them, creating a trial similar to pure-component heavy trials.
     // Skip when all Wilson K ≈ 1 (near-critical) — these trials produce trivial initial
     // guesses. The pure-component trials below still run and provide independent checks.
-    // Track Wilson trial outcomes for short-circuit decision:
-    // - bothWilsonTrialsConverged: both trials finished without init failure and within maxiter
-    // - noneTrialsWereTrivial: neither Wilson trial collapsed to a trivial solution
-    // - minWilsonTm: the smallest (most negative / most unstable) non-trivial tmVal seen
-    // When Wilson trials are well-behaved AND tmVal is comfortably positive, the pure-
-    // component fallback trials below are overwhelmingly unnecessary work. We gate the
-    // skip conservatively (see post-loop decision) to avoid losing LLE detection.
-    boolean bothWilsonTrialsConverged = !skipWilsonKTrials;
-    boolean noneWilsonTrialsWereTrivial = !skipWilsonKTrials;
-    double minWilsonTm = Double.POSITIVE_INFINITY;
     for (int trial = 0; !skipWilsonKTrials && trial < 2; trial++) {
       // Initialize trial composition from Wilson K
       for (int i = 0; i < numComp; i++) {
@@ -526,11 +516,7 @@ public class TPmultiflash extends TPflash {
       } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
 
       if (trialInitFailed) {
-        bothWilsonTrialsConverged = false;
         continue;
-      }
-      if (iter >= maxiter) {
-        bothWilsonTrialsConverged = false;
       }
 
       // Calculate tangent plane distance and check for instability
@@ -548,12 +534,6 @@ public class TPmultiflash extends TPflash {
       }
 
       boolean isTrivial = Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4;
-
-      if (isTrivial) {
-        noneWilsonTrialsWereTrivial = false;
-      } else if (tmVal < minWilsonTm) {
-        minWilsonTm = tmVal;
-      }
 
       if (!isTrivial && tmVal < -1e-8 && iter < maxiter) {
         // Unstable — add new phase and return
@@ -586,51 +566,10 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // --- Fast-path short-circuit: skip pure-component trials when Wilson K trials ---
-    // are conclusively stable.
-    //
-    // Pure-component trials below are a fallback for cases where Wilson K initial
-    // guesses are poor (near-critical, polar LLE). When BOTH Wilson trials converged,
-    // neither hit a trivial solution, and the best (min) tm value is comfortably
-    // positive, the feed is clearly stable — running N×(pure-component × 150 iters)
-    // of additional stability SS iterations is wasted work.
-    //
-    // Gates that force the full pure-component pass (conservative):
-    // - Wilson K ≈ 1 for all components (near-critical) — Wilson trials are
-    // unreliable here (handled earlier by skipWilsonKTrials).
-    // - doEnhancedMultiPhaseCheck() is enabled — explicit opt-in to rigorous LLE.
-    // - Polar components (water, glycols, amines, alcohols) present — these drive
-    // LLE that Wilson K models badly. Keep pure trials for them.
-    // - Best tm margin is small (< 0.25) — near phase boundary, be safe.
-    // - Any Wilson trial failed to converge or gave trivial solution.
-    boolean polarComponentPresent = false;
-    for (int i = 0; i < numComp; i++) {
-      if (system.getPhase(0).getComponent(i).getz() < 1e-50) {
-        continue;
-      }
-      String cn = system.getPhase(0).getComponent(i).getComponentName();
-      if (cn == null) {
-        continue;
-      }
-      String lc = cn.toLowerCase();
-      if (lc.equals("water") || lc.equals("methanol") || lc.equals("ethanol")
-          || lc.equals("MEG".toLowerCase()) || lc.equals("DEG".toLowerCase())
-          || lc.equals("TEG".toLowerCase()) || lc.equals("MDEA".toLowerCase())
-          || lc.equals("DEA".toLowerCase()) || lc.equals("MEA".toLowerCase())) {
-        polarComponentPresent = true;
-        break;
-      }
-    }
-    // Stability verdict from Wilson trials:
-    // - Both trivial → feed is a local Gibbs minimum (classical Michelsen criterion)
-    // - A non-trivial trial with clearly positive tm (> 0.25) → stable with margin
-    // - Anything else (marginal, failed, near-critical) → let pure-component trials run
-    boolean wilsonStableByTrivial =
-        !skipWilsonKTrials && bothWilsonTrialsConverged && !Double.isFinite(minWilsonTm);
-    boolean wilsonStableByMargin = !skipWilsonKTrials && bothWilsonTrialsConverged
-        && Double.isFinite(minWilsonTm) && minWilsonTm > 0.25;
-    boolean skipPureComponentTrials = (wilsonStableByTrivial || wilsonStableByMargin)
-        && !system.doEnhancedMultiPhaseCheck() && !polarComponentPresent;
+    // Wilson K trial phases can report a comfortable positive TPD while pure-component
+    // trial phases still find hydrocarbon liquid-liquid splits. Always keep the
+    // pure-component fallback in TPmultiflash so ordinary multiphase scans retain the
+    // same LLE coverage as the 3.7.x flash implementation.
 
     // --- Fallback: Pure-component trials for cases Wilson K trials miss ---
     // (e.g., LLE detection where K-values don't capture polarity-driven splits)
@@ -669,9 +608,6 @@ public class TPmultiflash extends TPflash {
     }
     // boolean checkdForHCmix = false;
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
-      if (skipPureComponentTrials) {
-        break;
-      }
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
@@ -2265,7 +2201,8 @@ public class TPmultiflash extends TPflash {
       // phases, try enhanced version which uses Wilson K-value initial guesses and tests both
       // vapor-like and liquid-like trial phases for more robust detection of liquid-liquid
       // equilibria (e.g., sour gas, CO2 systems)
-      if (system.doEnhancedMultiPhaseCheck() && !multiPhaseTest && system.getNumberOfPhases() < 3) {
+      if (shouldApplyEnhancedMultiPhaseCheck() && !multiPhaseTest
+          && system.getNumberOfPhases() < 3) {
         stabilityAnalysisEnhanced();
       }
     }

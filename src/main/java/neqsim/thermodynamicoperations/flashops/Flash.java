@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
@@ -690,7 +691,7 @@ public abstract class Flash extends BaseOperation {
     // Use strict compatibility gating: enable non-trivial filtering for enhanced/LLE-auto
     // contexts, keep legacy tm-reset behavior for baseline default mode.
     boolean useNonTrivialFiltering =
-        system.doEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
+        shouldApplyEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
     if (useNonTrivialFiltering) {
       for (int trialPhase = 0; trialPhase < 2; trialPhase++) {
         double dotProduct = 0.0;
@@ -799,7 +800,7 @@ public abstract class Flash extends BaseOperation {
     if (lightComp >= 0) {
       trialSet.add(Integer.valueOf(lightComp));
     }
-    if (system.doEnhancedMultiPhaseCheck()) {
+    if (shouldApplyEnhancedMultiPhaseCheck()) {
       int dominantComp = -1;
       double dominantZ = -1.0;
       for (int ic = 0; ic < numComp; ic++) {
@@ -983,6 +984,69 @@ public abstract class Flash extends BaseOperation {
     }
 
     return system.isChemicalSystem() && system.doEnhancedMultiPhaseCheck();
+  }
+
+  /**
+   * Determines whether enhanced multiphase stability numerics should be applied.
+   *
+   * <p>
+   * Enhanced checks are intended for systems where ordinary Wilson K-value stability analysis is
+   * known to miss polar, associating, electrolyte, or sour-fluid liquid splits. Hydrocarbon-only
+   * PR/SRK mixtures are handled by the ordinary multiphase flash path; applying the enhanced
+   * numerical filters there can create isolated phase-map artifacts near phase boundaries.
+   * </p>
+   *
+   * @return true if enhanced stability checks are enabled and the active mixture contains
+   *         components that need the enhanced path
+   */
+  protected boolean shouldApplyEnhancedMultiPhaseCheck() {
+    if (system == null || !system.doEnhancedMultiPhaseCheck()) {
+      return false;
+    }
+    if (system.isChemicalSystem()) {
+      return true;
+    }
+    String modelName = system.getModelName() == null ? "" : system.getModelName();
+    String lowerModelName = modelName.toLowerCase();
+    if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")
+        || lowerModelName.contains("pitzer")) {
+      return true;
+    }
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      ComponentInterface component = system.getPhase(0).getComponent(i);
+      if (component.getz() < 1.0e-50) {
+        continue;
+      }
+      String componentName = component.getComponentName();
+      if (componentName == null) {
+        continue;
+      }
+      String lowerComponentName = componentName.toLowerCase();
+      if (isEnhancedStabilityComponent(lowerComponentName)) {
+        return true;
+      }
+      if (!component.isHydrocarbon() && !component.isInert()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether a component name is associated with enhanced multiphase stability behavior.
+   *
+   * @param lowerComponentName component name converted to lower case
+   * @return true if the component should keep enhanced multiphase stability checks active
+   */
+  private boolean isEnhancedStabilityComponent(String lowerComponentName) {
+    return lowerComponentName.equals("water") || lowerComponentName.equals("co2")
+        || lowerComponentName.equals("carbon dioxide") || lowerComponentName.equals("h2s")
+        || lowerComponentName.equals("hydrogen sulfide") || lowerComponentName.equals("methanol")
+        || lowerComponentName.equals("ethanol") || lowerComponentName.equals("meg")
+        || lowerComponentName.equals("deg") || lowerComponentName.equals("teg")
+        || lowerComponentName.equals("mea") || lowerComponentName.equals("dea")
+        || lowerComponentName.equals("mdea") || lowerComponentName.equals("ammonia")
+        || lowerComponentName.equals("nh3") || lowerComponentName.equals("so2");
   }
 
   /**

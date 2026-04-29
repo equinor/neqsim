@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -370,5 +372,114 @@ class TPFlashTest {
     assertTrue(twoPhaseCount >= 500,
         "Low-T methane/nC7 two-phase region shrank: " + twoPhaseCount + "/900 cells 2-phase "
             + "(v3.7.0 baseline = 592). Possible TPflash stability regression.");
+  }
+
+  /**
+   * Regression test for speckled phase-map failures in the methane/n-heptane PR binary. The scan
+   * covers the gas-oil dome shoulder where the phase map previously showed isolated wrong cells. A
+   * failed spot is counted when a grid cell has a different phase signature than all four cardinal
+   * neighbors, and those neighbors agree with each other.
+   */
+  @Test
+  void testMethaneHeptanePhaseMapFailedSpotCountDoesNotIncrease() {
+    SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+
+    int temperaturePoints = 32;
+    int pressurePoints = 28;
+    int[][] phaseSignatures = new int[pressurePoints][temperaturePoints];
+    int failedFlashCount = 0;
+
+    for (int pressureIndex = 0; pressureIndex < pressurePoints; pressureIndex++) {
+      double pressure = 120.0 + pressureIndex * (230.0 - 120.0) / (pressurePoints - 1);
+      for (int temperatureIndex = 0; temperatureIndex < temperaturePoints; temperatureIndex++) {
+        double temperature = 360.0 + temperatureIndex * (470.0 - 360.0) / (temperaturePoints - 1);
+        fluid.setPressure(pressure, "bara");
+        fluid.setTemperature(temperature, "K");
+        try {
+          operations.TPflash();
+          phaseSignatures[pressureIndex][temperatureIndex] = phaseMapSignature(fluid);
+        } catch (Exception ex) {
+          failedFlashCount++;
+          phaseSignatures[pressureIndex][temperatureIndex] = -1;
+        }
+      }
+    }
+
+    int isolatedSpots = countIsolatedPhaseMapSpots(phaseSignatures);
+
+    assertEquals(0, failedFlashCount,
+        "TPflash should not throw while scanning the methane/nC7 phase-map shoulder");
+    assertEquals(0, isolatedSpots, "Phase-map failed spots increased: " + isolatedSpots
+        + " isolated cells in the methane/nC7 gas-oil shoulder grid");
+  }
+
+  /**
+   * Creates the methane/n-heptane PR system used for phase-map spot regression tests.
+   *
+   * @return configured methane/n-heptane PR thermodynamic system
+   */
+  private SystemInterface createMethaneHeptanePhaseMapFluid() {
+    double binaryInteractionParameter = 0.05;
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(400.0, 170.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("n-heptane", 30.0);
+    fluid.setMixingRule("classic");
+    ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+        1, binaryInteractionParameter);
+    ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+        1, binaryInteractionParameter);
+    fluid.setMultiPhaseCheck(true);
+    return fluid;
+  }
+
+  /**
+   * Creates a compact phase signature from phase count and phase types.
+   *
+   * @param fluid thermodynamic system after a flash calculation
+   * @return integer signature for comparing neighboring phase-map cells
+   */
+  private int phaseMapSignature(SystemInterface fluid) {
+    int signature = fluid.getNumberOfPhases() * 100;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      PhaseType phaseType = fluid.getPhase(phaseIndex).getType();
+      if (phaseType == PhaseType.GAS) {
+        signature += 1;
+      } else if (phaseType == PhaseType.OIL) {
+        signature += 2;
+      } else if (phaseType == PhaseType.LIQUID) {
+        signature += 4;
+      } else if (phaseType == PhaseType.AQUEOUS) {
+        signature += 8;
+      } else {
+        signature += 16;
+      }
+    }
+    return signature;
+  }
+
+  /**
+   * Counts isolated one-cell holes or islands in a phase-map signature grid.
+   *
+   * @param phaseSignatures pressure-major grid of phase signatures
+   * @return number of isolated phase-map spots
+   */
+  private int countIsolatedPhaseMapSpots(int[][] phaseSignatures) {
+    int isolatedSpots = 0;
+    for (int pressureIndex = 1; pressureIndex < phaseSignatures.length - 1; pressureIndex++) {
+      for (int temperatureIndex = 1; temperatureIndex < phaseSignatures[pressureIndex].length
+          - 1; temperatureIndex++) {
+        int center = phaseSignatures[pressureIndex][temperatureIndex];
+        int lowerPressure = phaseSignatures[pressureIndex - 1][temperatureIndex];
+        int higherPressure = phaseSignatures[pressureIndex + 1][temperatureIndex];
+        int lowerTemperature = phaseSignatures[pressureIndex][temperatureIndex - 1];
+        int higherTemperature = phaseSignatures[pressureIndex][temperatureIndex + 1];
+        if (center != lowerPressure && lowerPressure == higherPressure
+            && lowerPressure == lowerTemperature && lowerPressure == higherTemperature) {
+          isolatedSpots++;
+        }
+      }
+    }
+    return isolatedSpots;
   }
 }
