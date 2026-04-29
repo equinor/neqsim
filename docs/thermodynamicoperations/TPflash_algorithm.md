@@ -1642,7 +1642,8 @@ Commercial process simulators do not publish all implementation details, but pub
 - The `Nielsen2023` Rachford-Rice option improves numerical robustness near difficult beta limits.
 - The Newton solver uses fugacity derivatives, matrix preallocation, diagonal regularization, and line-search damping, which are all aligned with mature simulator practice.
 - Pure-component fallback trials improve LLE/VLLE detection where Wilson K-based trials can report positive TPD even though a liquid-liquid split exists.
-- Explicit multiphase hydrocarbon flashes now retry a local lower-temperature seed before accepting a single-phase endpoint, and keep the retry only if it gives a lower-Gibbs multiphase result.
+- Explicit multiphase hydrocarbon flashes now retry a local lower-temperature seed before accepting an ambiguous single-phase endpoint, and keep the retry only if it gives a lower-Gibbs multiphase result.
+- A cheap post-flash K-envelope gate skips that rescue for clearly single-phase hydrocarbon endpoints, preserving ordinary `setMultiPhaseCheck(true)` speed.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
 ### 6.3 Recommended Improvements
@@ -1652,7 +1653,7 @@ Commercial process simulators do not publish all implementation details, but pub
 | 1 | Do not treat a failed stability analysis as stable without a conservative fallback | Implemented for failed stability gates; partial TPD failures now keep the supplementary fallback path when usable TPD values exist | A failed TPD solve can hide a real phase split and create missing or isolated phase-map regions |
 | 2 | Add structured flash diagnostics | Partially implemented with stability outcome, failure message, and recorded TPD values; a fuller object should add per-trial telemetry | Expose beta, SSI iterations, Newton iterations, trial seeds, TPD minima, fallback path, phase additions, and phase removals for tests and debugging |
 | 3 | Add a rigorous phase-map mode | Not implemented | Use continuation or negative-flash style tracing for property maps where topological smoothness matters more than single-call speed |
-| 4 | Add final global stability certification after `TPmultiflash` cleanup | Partially implemented for hydrocarbon single-phase endpoints through a local lower-temperature seed and lower-Gibbs acceptance check; full global certification is still not implemented | Re-run TPD against the final phase set to verify no additional stable phase remains |
+| 4 | Add final global stability certification after `TPmultiflash` cleanup | Partially implemented for ambiguous hydrocarbon single-phase endpoints through a K-envelope gate, local lower-temperature seed, and lower-Gibbs acceptance check; full global certification is still not implemented | Re-run TPD against the final phase set to verify no additional stable phase remains |
 | 5 | Keep pure-component LLE trials in the multiphase path | Implemented in the current multiphase stability path | Wilson-positive TPD trials do not rule out hydrocarbon LLE or polarity-driven liquid splits |
 | 6 | Separate fast process flash from authoritative phase-map flash | Not implemented | Process simulation and phase-boundary generation have different robustness and performance needs |
 | 7 | Update documentation whenever solver thresholds change | Implemented for the current TPflash thresholds | Algorithm descriptions should match the active values in `TPflash.java` and `TPmultiflash.java` |

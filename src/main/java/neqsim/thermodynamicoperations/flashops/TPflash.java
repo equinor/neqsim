@@ -24,6 +24,22 @@ public class TPflash extends Flash {
   static Logger logger = LogManager.getLogger(TPflash.class);
   /** Local lower-temperature seed step for multiphase endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_TEMPERATURE_STEP = 2.0;
+  /** Lower sum(zK) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_LOWER_LIMIT = 0.95;
+  /** Upper sum(zK) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT = 1.05;
+  /** Lower sum(z/K) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT = 1.05;
+  /** Upper sum(z/K) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT = 2.0;
+  /** Lower sum(zK) bound for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_LOWER_LIMIT = 0.95;
+  /** Upper sum(zK) bound for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_UPPER_LIMIT = 1.20;
+  /** Minimum sum(z/K) bound for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT = 5.0;
+  /** Minimum log K spread for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT = 3.0;
   /** Guard preventing recursive rescue attempts while the local seed flash is running. */
   private static final ThreadLocal<Boolean> MULTIPHASE_RESCUE_ACTIVE = new ThreadLocal<Boolean>() {
     @Override
@@ -506,6 +522,7 @@ public class TPflash extends Flash {
         } catch (Exception ex) {
           logger.debug("Post-stability init failed: {}", ex.getMessage());
         }
+        rescueSinglePhaseMultiphaseEndpoint();
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {
@@ -698,6 +715,7 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.warn("Final init after orderByDensity failed: " + ex.getMessage());
     }
+    rescueSinglePhaseMultiphaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -797,7 +815,43 @@ public class TPflash extends Flash {
         hasHydrocarbon = true;
       }
     }
-    return hasHydrocarbon;
+    return hasHydrocarbon && hasPotentialMultiphaseEndpoint(phaseType);
+  }
+
+  /**
+   * Checks whether stored K-values indicate a nearby split worth a local endpoint rescue.
+   *
+   * @param phaseType phase type of the current single-phase endpoint
+   * @return true when the endpoint is close enough to a potential phase split to retry
+   */
+  private boolean hasPotentialMultiphaseEndpoint(PhaseType phaseType) {
+    double sumZK = 0.0;
+    double sumZOverK = 0.0;
+    double maxAbsLogK = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents();
+        componentIndex++) {
+      double z = system.getPhase(0).getComponent(componentIndex).getz();
+      if (z < 1.0e-50) {
+        continue;
+      }
+      double kValue = system.getPhase(0).getComponent(componentIndex).getK();
+      if (kValue <= 0.0 || Double.isNaN(kValue) || Double.isInfinite(kValue)) {
+        return true;
+      }
+      sumZK += z * kValue;
+      sumZOverK += z / kValue;
+      maxAbsLogK = Math.max(maxAbsLogK, Math.abs(Math.log(kValue)));
+    }
+    if (phaseType == PhaseType.GAS) {
+      return sumZK > MULTIPHASE_RESCUE_GAS_SUM_Z_K_LOWER_LIMIT
+          && sumZK < MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT
+          && sumZOverK > MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT
+          && sumZOverK < MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT;
+    }
+    return sumZK > MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_LOWER_LIMIT
+        && sumZK < MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_UPPER_LIMIT
+        && sumZOverK > MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT
+        && maxAbsLogK > MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT;
   }
 
   /**
