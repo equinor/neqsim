@@ -828,8 +828,8 @@ public class TPflash extends Flash {
     double sumZK = 0.0;
     double sumZOverK = 0.0;
     double maxAbsLogK = 0.0;
-    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
       double z = system.getPhase(0).getComponent(componentIndex).getz();
       if (z < 1.0e-50) {
         continue;
