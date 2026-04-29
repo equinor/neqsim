@@ -572,11 +572,15 @@ Before finalizing documentation with links:
 > **Full patterns are in the `neqsim-notebook-patterns` skill.** Load it before creating notebooks.
 
 **Key rules (always apply):**
-- Use `from neqsim import jneqsim` for imports (NOT direct jpype)
+- Use `devtools/neqsim_dev_setup.py` for task notebooks and runner workflows:
+   call `neqsim_init(project_root=PROJECT_ROOT, ...)`, then use classes through
+   `ns.*` or `ns.JClass(...)`. Do not use `from neqsim import jneqsim` in
+   repository task notebooks because it can load a stale installed package.
 - Temperature in **Kelvin**, pressure in **bara** by default in Java API
 - **Always** set mixing rule: `fluid.setMixingRule("classic")`
 - Call `fluid.initProperties()` after flash before reading transport properties
-- **Every notebook MUST be executed cell-by-cell** — unexecuted notebooks are incomplete
+- **Every notebook MUST be executed** — use NeqSim Runner by default for task
+   notebooks; unexecuted notebooks are incomplete
 - Include **2-3 matplotlib figures** with axis labels, units, titles, legends, grids
 - Save results to `results.json` in the task folder
 
@@ -599,6 +603,12 @@ See `AGENTS.md` "Jupyter Notebook Creation Guidelines" section for common class 
 9. **After completing:** Add entry to `docs/development/TASK_LOG.md`
 
 ### Task Log Entry Format
+
+**Privacy rule:** Task log entries are public/reusable memory. Do not include
+company/operator names, field/facility/asset names, equipment tag numbers,
+internal document names, private system names, access diagnostics, or task folder
+slugs containing those details. Use generic descriptors and `private task folder
+(redacted)` for confidential task outputs.
 
 ```markdown
 ### YYYY-MM-DD — Short task title

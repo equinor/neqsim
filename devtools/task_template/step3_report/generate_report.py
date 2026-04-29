@@ -8,6 +8,7 @@ Usage:
     python step3_report/generate_report.py --paper-only  # Scientific paper only
 
 This script AUTO-READS data from the task folder:
+    - study_config.yaml                    -> defines depth, notebook plan, quality gates
   - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
   - results.json (task root)               -> populates Results + Validation
   - figures/*.png                          -> embeds all plots
@@ -29,6 +30,7 @@ import glob
 import json
 import base64
 import io
+import sqlite3
 from datetime import date
 
 try:
@@ -61,6 +63,7 @@ PAPER_DOCX_FILE = os.path.join(REPORT_DIR, "Paper.docx")
 PAPER_HTML_FILE = os.path.join(REPORT_DIR, "Paper.html")
 RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
 TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
+STUDY_CONFIG_FILE = os.path.join(TASK_DIR, "study_config.yaml")
 
 # ── Configuration (edit these) ───────────────────────────
 TITLE = "Task Report"           # <-- Change to your task title
@@ -167,6 +170,190 @@ def load_task_spec():
     return content
 
 
+def _strip_yaml_comment(line):
+    """Strip YAML comments while preserving hashes inside quoted strings."""
+    result = []
+    quote = None
+    for character in line:
+        if character in ('"', "'"):
+            if quote == character:
+                quote = None
+            elif quote is None:
+                quote = character
+        if character == "#" and quote is None:
+            break
+        result.append(character)
+    return "".join(result).rstrip()
+
+
+def _parse_yaml_value(value):
+    """Parse the simple scalar values used by study_config.yaml."""
+    cleaned = _strip_yaml_comment(value).strip()
+    if not cleaned:
+        return ""
+    if ((cleaned.startswith('"') and cleaned.endswith('"'))
+            or (cleaned.startswith("'") and cleaned.endswith("'"))):
+        return cleaned[1:-1]
+    lowered = cleaned.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    try:
+        return int(cleaned)
+    except ValueError:
+        return cleaned
+
+
+def _section_lines(config_text, section):
+    """Return lines belonging to a top-level YAML section."""
+    lines = config_text.splitlines()
+    section_marker = "{}:".format(section)
+    capturing = False
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped == section_marker and not line.startswith(" "):
+            capturing = True
+            continue
+        if capturing and stripped and not line.startswith(" "):
+            break
+        if capturing:
+            result.append(line)
+    return result
+
+
+def _parse_section_scalars(lines):
+    """Parse scalar keys directly under a YAML section."""
+    parsed = {}
+    child_indents = [len(line) - len(line.lstrip()) for line in lines
+                     if line.strip() and line.startswith(" ")]
+    if not child_indents:
+        return parsed
+    child_indent = min(child_indents)
+    for line in lines:
+        cleaned = _strip_yaml_comment(line)
+        if not cleaned.strip() or not cleaned.startswith(" "):
+            continue
+        indent = len(cleaned) - len(cleaned.lstrip())
+        if indent != child_indent:
+            continue
+        if ":" not in cleaned:
+            continue
+        key, value = cleaned.strip().split(":", 1)
+        value = value.strip()
+        if value:
+            parsed[key] = _parse_yaml_value(value)
+    return parsed
+
+
+def _parse_scalar_list(lines, key):
+    """Parse a scalar list under an indented YAML key."""
+    values = []
+    capturing = False
+    key_indent = 0
+    for line in lines:
+        cleaned = _strip_yaml_comment(line)
+        stripped = cleaned.strip()
+        if stripped == "{}:".format(key):
+            capturing = True
+            key_indent = len(cleaned) - len(cleaned.lstrip())
+            continue
+        if capturing:
+            indent = len(cleaned) - len(cleaned.lstrip())
+            if stripped and indent <= key_indent:
+                break
+            if stripped.startswith("- "):
+                values.append(_parse_yaml_value(stripped[2:]))
+    return values
+
+
+def _parse_notebook_plan(lines):
+    """Parse notebooks.plan entries from study_config.yaml."""
+    plan = []
+    current = None
+    capturing = False
+    plan_indent = 0
+    for line in lines:
+        cleaned = _strip_yaml_comment(line)
+        stripped = cleaned.strip()
+        if stripped == "plan:":
+            capturing = True
+            plan_indent = len(cleaned) - len(cleaned.lstrip())
+            continue
+        if capturing:
+            indent = len(cleaned) - len(cleaned.lstrip())
+            if stripped and indent <= plan_indent:
+                break
+            if stripped.startswith("- file:"):
+                if current:
+                    plan.append(current)
+                current = {"file": _parse_yaml_value(stripped.split(":", 1)[1])}
+            elif current and stripped.startswith("purpose:"):
+                current["purpose"] = _parse_yaml_value(stripped.split(":", 1)[1])
+    if current:
+        plan.append(current)
+    return plan
+
+
+def _parse_mapping_list(lines, key):
+    """Parse a list of simple mappings under an indented YAML key."""
+    values = []
+    current = None
+    capturing = False
+    key_indent = 0
+    for line in lines:
+        cleaned = _strip_yaml_comment(line)
+        stripped = cleaned.strip()
+        if stripped == "{}:".format(key):
+            capturing = True
+            key_indent = len(cleaned) - len(cleaned.lstrip())
+            continue
+        if capturing:
+            indent = len(cleaned) - len(cleaned.lstrip())
+            if stripped and indent <= key_indent:
+                break
+            if not stripped:
+                continue
+            if stripped.startswith("- "):
+                if current:
+                    values.append(current)
+                current = {}
+                item = stripped[2:].strip()
+                if ":" in item:
+                    item_key, item_value = item.split(":", 1)
+                    current[item_key.strip()] = _parse_yaml_value(item_value)
+            elif current is not None and ":" in stripped:
+                item_key, item_value = stripped.split(":", 1)
+                current[item_key.strip()] = _parse_yaml_value(item_value)
+    if current:
+        values.append(current)
+    return values
+
+
+def load_study_config():
+    """Load study_config.yaml and return the subset used by this generator."""
+    if not os.path.exists(STUDY_CONFIG_FILE):
+        print("  No study_config.yaml found (using inferred task depth)")
+        return {}
+    with open(STUDY_CONFIG_FILE, "r", encoding="utf-8") as config_file:
+        text = config_file.read()
+    config = {}
+    for section in ["study", "inputs", "notebooks", "report", "quality_gates"]:
+        lines = _section_lines(text, section)
+        config[section] = _parse_section_scalars(lines)
+    config["report"]["formats"] = _parse_scalar_list(
+        _section_lines(text, "report"), "formats")
+    config["report"]["required_sections"] = _parse_scalar_list(
+        _section_lines(text, "report"), "required_sections")
+    config["notebooks"]["plan"] = _parse_notebook_plan(
+        _section_lines(text, "notebooks"))
+    config["inputs"]["documents"] = _parse_mapping_list(
+        _section_lines(text, "inputs"), "documents")
+    print("  Loaded study_config.yaml")
+    return config
+
+
 def extract_spec_section(spec_text, heading):
     """Extract a section from task_spec.md by heading."""
     if not spec_text:
@@ -187,6 +374,258 @@ def extract_spec_section(spec_text, heading):
     if text and "| | | |" not in text and "[e.g.," not in text:
         return text
     return ""
+
+
+def _as_bool(value):
+    """Interpret YAML-like values as booleans."""
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in ("true", "yes", "required")
+
+
+def _as_int(value, default=0):
+    """Interpret YAML-like values as integers."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _is_required(value):
+    """Return true when a config value means required."""
+    return str(value).strip().lower() == "required" or value is True
+
+
+def _manual_section_filled(name):
+    """Return true when a manual section has been filled in."""
+    content = MANUAL_SECTIONS.get(name, "")
+    return bool(content and not content.lstrip().startswith("["))
+
+
+def _required_section_available(section, results, task_spec):
+    """Check whether a configured report section has enough input data."""
+    normalized = str(section).strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized == "executive_summary":
+        return True
+    if normalized in ("scope", "scope_and_standards"):
+        if not task_spec:
+            return False
+        return bool(extract_spec_section(task_spec, "Applicable Standards")
+                    or extract_spec_section(task_spec, "Calculation Methods")
+                    or extract_spec_section(task_spec, "Acceptance Criteria")
+                    or extract_spec_section(task_spec, "Operating Envelope"))
+    if normalized in ("methodology", "approach"):
+        return bool((results and results.get("approach"))
+                    or _manual_section_filled("approach"))
+    if normalized == "results":
+        return bool(results and results.get("key_results"))
+    if normalized == "discussion":
+        return bool(results and results.get("figure_discussion"))
+    if normalized == "validation":
+        return bool(results and results.get("validation"))
+    if normalized == "benchmark_validation":
+        return bool(results and results.get("benchmark_validation"))
+    if normalized in ("uncertainty", "uncertainty_analysis"):
+        return bool(results and results.get("uncertainty"))
+    if normalized in ("risk", "risk_assessment", "risk_evaluation"):
+        return bool(results and (results.get("risk_evaluation") or results.get("risks")))
+    if normalized in ("conclusion", "conclusions", "conclusions_and_recommendations"):
+        return bool((results and results.get("conclusions"))
+                    or _manual_section_filled("conclusions"))
+    if normalized == "references":
+        return bool((results and results.get("references"))
+                    or _manual_section_filled("references"))
+    return True
+
+
+def _load_runner_jobs(runner_db_path):
+    """Return runner job rows from runner.db or an error message."""
+    try:
+        connection = sqlite3.connect(runner_db_path, timeout=5.0)
+        connection.row_factory = sqlite3.Row
+        try:
+            rows = connection.execute(
+                "SELECT job_id, script, job_type, status, error_message "
+                "FROM jobs ORDER BY created_at"
+            ).fetchall()
+        finally:
+            connection.close()
+    except sqlite3.Error as error:
+        return [], str(error)
+    return [dict(row) for row in rows], None
+
+
+def _runner_script_name(job_row):
+    """Return the basename of a runner job script path."""
+    return os.path.basename(str(job_row.get("script") or ""))
+
+
+def _runner_status_summary(job_rows):
+    """Return a compact status summary for report warnings."""
+    counts = {}
+    for job_row in job_rows:
+        status = str(job_row.get("status") or "unknown")
+        counts[status] = counts.get(status, 0) + 1
+    return ", ".join(["{}={}".format(status, counts[status])
+                      for status in sorted(counts)])
+
+
+def _validate_runner_execution(notebooks, planned_notebooks, existing_notebooks):
+    """Return warnings for incomplete NeqSim Runner notebook execution."""
+    warnings = []
+    execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
+    notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
+    require_successful_jobs = _as_bool(notebooks.get("require_successful_jobs", True))
+    if not (notebook_execution_required and execution_engine == "neqsim_runner"):
+        return warnings
+    if not existing_notebooks:
+        return warnings
+
+    runner_output_path = os.path.join(TASK_DIR, "runner_output")
+    runner_db_path = os.path.join(TASK_DIR, "runner.db")
+    if not os.path.exists(runner_output_path):
+        warnings.append("Notebook execution engine is neqsim_runner, but runner_output/ is missing.")
+    if not os.path.exists(runner_db_path):
+        warnings.append("Notebook execution engine is neqsim_runner, but runner.db is missing.")
+        return warnings
+
+    job_rows, load_error = _load_runner_jobs(runner_db_path)
+    if load_error:
+        warnings.append("Could not inspect runner.db for notebook status: {}".format(
+            load_error))
+        return warnings
+    if not job_rows:
+        warnings.append("runner.db exists, but it contains no recorded runner jobs.")
+        return warnings
+
+    expected_notebooks = planned_notebooks or [os.path.basename(path)
+                                               for path in existing_notebooks]
+    expected_script_names = set()
+    for notebook_file in expected_notebooks:
+        notebook_name = os.path.basename(str(notebook_file))
+        expected_script_names.add(notebook_name)
+        expected_script_names.add(os.path.splitext(notebook_name)[0] + ".py")
+
+    notebook_rows = []
+    for row in job_rows:
+        job_type = str(row.get("job_type") or "script")
+        script_name = _runner_script_name(row)
+        if job_type == "notebook" or script_name in expected_script_names:
+            notebook_rows.append(row)
+    if not notebook_rows:
+        warnings.append(
+            "runner.db contains jobs ({}), but none match the planned notebooks.".format(
+                _runner_status_summary(job_rows)))
+        return warnings
+
+    if require_successful_jobs:
+        unsuccessful = [row for row in notebook_rows
+                        if str(row.get("status") or "") != "success"]
+        if unsuccessful:
+            details = []
+            for row in unsuccessful[:5]:
+                details.append("{}={} ({})".format(
+                    row.get("job_id"), row.get("status"), _runner_script_name(row)))
+            if len(unsuccessful) > 5:
+                details.append("... {} more".format(len(unsuccessful) - 5))
+            warnings.append("NeqSim Runner notebook jobs are not all successful: {}.".format(
+                "; ".join(details)))
+
+        successful_notebooks = set([_runner_script_name(row) for row in notebook_rows
+                                    if str(row.get("status") or "") == "success"])
+        for notebook_file in expected_notebooks:
+            notebook_name = os.path.basename(str(notebook_file))
+            script_name = os.path.splitext(notebook_name)[0] + ".py"
+            notebook_path = os.path.join(TASK_DIR, "step2_analysis", str(notebook_file))
+            if (os.path.exists(notebook_path)
+                    and notebook_name not in successful_notebooks
+                    and script_name not in successful_notebooks):
+                warnings.append(
+                    "Planned notebook has no successful runner job: step2_analysis/{}".format(
+                        notebook_file))
+    return warnings
+
+
+def validate_study_config(config, results, task_spec):
+    """Return warnings for missing deliverables required by study_config.yaml."""
+    if not config:
+        return []
+
+    warnings = []
+    inputs = config.get("inputs", {})
+    notebooks = config.get("notebooks", {})
+    report = config.get("report", {})
+    quality_gates = config.get("quality_gates", {})
+
+    documents = inputs.get("documents", [])
+    documents_required = _as_bool(inputs.get("documents_required", False))
+    if documents_required and not documents:
+        warnings.append("inputs.documents_required is true, but no input documents are listed.")
+    for document in documents:
+        document_path = document.get("path")
+        document_required = documents_required or _as_bool(document.get("required", False))
+        if not document_path or not document_required:
+            continue
+        if os.path.isabs(str(document_path)):
+            resolved_path = str(document_path)
+        else:
+            resolved_path = os.path.join(TASK_DIR, str(document_path))
+        if not os.path.exists(resolved_path):
+            warnings.append("Required input document path is missing: {}".format(document_path))
+        elif os.path.isdir(resolved_path):
+            files = [name for name in os.listdir(resolved_path)
+                     if os.path.isfile(os.path.join(resolved_path, name))]
+            if not files:
+                warnings.append("Required input document directory is empty: {}".format(
+                    document_path))
+
+    planned_notebooks = [entry.get("file") for entry in notebooks.get("plan", [])
+                         if entry.get("file")]
+    existing_notebooks = glob.glob(os.path.join(TASK_DIR, "step2_analysis", "*.ipynb"))
+    minimum_count = _as_int(notebooks.get("minimum_count"), 0)
+    if minimum_count and len(existing_notebooks) < minimum_count:
+        warnings.append(
+            "Configured notebook minimum is {}, but {} notebook(s) exist.".format(
+                minimum_count, len(existing_notebooks)))
+    for notebook_file in planned_notebooks:
+        notebook_path = os.path.join(TASK_DIR, "step2_analysis", notebook_file)
+        if not os.path.exists(notebook_path):
+            warnings.append("Planned notebook is missing: step2_analysis/{}".format(
+                notebook_file))
+
+    warnings.extend(_validate_runner_execution(notebooks, planned_notebooks,
+                                               existing_notebooks))
+
+    if _as_bool(quality_gates.get("require_results_json", False)) and not results:
+        warnings.append("quality_gates.require_results_json is true, but results.json is missing.")
+    if _is_required(quality_gates.get("benchmark_validation")) and not (
+            results and results.get("benchmark_validation")):
+        warnings.append("Benchmark validation is required, but results.json has no benchmark_validation section.")
+    if _is_required(quality_gates.get("uncertainty_analysis")) and not (
+            results and results.get("uncertainty")):
+        warnings.append("Uncertainty analysis is required, but results.json has no uncertainty section.")
+    if _is_required(quality_gates.get("risk_register")) and not (
+            results and (results.get("risk_evaluation") or results.get("risks"))):
+        warnings.append("Risk register is required, but results.json has no risk_evaluation or risks section.")
+    if _is_required(quality_gates.get("figure_discussion")) and not (
+            results and results.get("figure_discussion")):
+        warnings.append("Figure discussion is required, but results.json has no figure_discussion section.")
+    if _is_required(quality_gates.get("consistency_checker")):
+        consistency_path = os.path.join(TASK_DIR, "consistency_report.json")
+        if not os.path.exists(consistency_path):
+            warnings.append("Consistency checker is required, but consistency_report.json is missing.")
+
+    minimum_figures = _as_int(quality_gates.get("minimum_figures"), 0)
+    figure_count = len(glob.glob(os.path.join(FIG_DIR, "*.png")))
+    if minimum_figures and figure_count < minimum_figures:
+        warnings.append("Configured figure minimum is {}, but {} PNG figure(s) exist.".format(
+            minimum_figures, figure_count))
+
+    for section in report.get("required_sections", []):
+        if not _required_section_available(section, results, task_spec):
+            warnings.append("Required report section lacks source data: {}".format(section))
+
+    return warnings
 
 
 def _md_table_to_html(lines):
@@ -1153,9 +1592,11 @@ def add_discussion_word(doc, results):
 # Build sections (auto-populated where possible)
 # ══════════════════════════════════════════════════════════
 
-def build_sections(results, task_spec):
+def build_sections(results, task_spec, study_config_warnings=None):
     """Build report sections, auto-populating from results.json and task_spec.md."""
     sections = []
+    if study_config_warnings is None:
+        study_config_warnings = []
 
     # 1. Executive Summary
     sections.append({
@@ -1244,6 +1685,15 @@ def build_sections(results, task_spec):
 
     # N+1. Benchmark Validation (if data available)
     next_num = next_validation_num + 1
+
+    if study_config_warnings:
+        warning_lines = ["- {}".format(warning) for warning in study_config_warnings]
+        sections.append({
+            "heading": "{}. Study Configuration Warnings".format(next_num),
+            "content": "\n".join(warning_lines),
+        })
+        next_num += 1
+
     if results and results.get("benchmark_validation"):
         sections.append({
             "heading": "{}. Benchmark Validation".format(next_num),
@@ -2662,12 +3112,19 @@ if __name__ == "__main__":
     print("")
 
     # Auto-read task data
+    study_config = load_study_config()
     results = load_results()
     task_spec = load_task_spec()
+    study_config_warnings = validate_study_config(study_config, results, task_spec)
+    if study_config_warnings:
+        print("")
+        print("Study configuration warnings:")
+        for warning in study_config_warnings:
+            print("  - {}".format(warning))
 
     if not paper_only:
         # Build report sections and generate technical report
-        sections = build_sections(results, task_spec)
+        sections = build_sections(results, task_spec, study_config_warnings)
         print("")
         build_word_report(sections, results)
         build_html_report(sections, results)

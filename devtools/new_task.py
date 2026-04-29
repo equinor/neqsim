@@ -10,6 +10,10 @@ Usage:
     neqsim new-task "hydrate formation temperature" --type A --author "Your Name"
     neqsim new-task "task title" --prompt "verbatim user request"
     neqsim new-task "task title" --prompt-file path/to/request.txt
+    neqsim new-task "field study" --scale comprehensive --report-depth detailed
+    neqsim new-task "field study" --notebooks "01_basis.ipynb,02_model.ipynb"
+    neqsim new-task "field study" --intake-pause always
+    neqsim new-task "field study" --config-file study_config.yaml
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
 """
@@ -912,6 +916,83 @@ Pick a starting composition or define your own. All values in mol%.
 > C7+ fractions, use the `@thermo.fluid` agent or define TBP/plus fractions.
 """
 
+STUDY_CONFIG = "\n".join([
+    "# Study configuration for NeqSim task solver.",
+    "# Values here override scale inferred from the prompt when an agent plans the task.",
+    "",
+    "study:",
+    "  title: \"[Title]\"",
+    "  task_type: \"B\"",
+    "  scale: auto          # auto | quick | standard | comprehensive",
+    "  mode: auto           # auto | screening | design | development",
+    "  aace_class: auto     # auto | 5 | 4 | 3 | 2 | 1",
+    "  fel_stage: auto      # auto | FEL-1 | FEL-2 | FEL-3",
+    "  deliverable_mode: auto  # auto | answer-first | notebook-first | report-first",
+    "",
+    "intake:",
+    "  pause_after_folder_creation: auto  # auto | always | never",
+    "  ask_for_missing_info: true",
+    "  allow_user_file_drop: true",
+    "  confirm_before_notebooks: true",
+    "",
+    "inputs:",
+    "  prompt_file: \"\"       # Optional text/markdown file used as the original task prompt.",
+    "  documents_required: false",
+    "  document_extraction_required: auto  # auto | required | optional | skip",
+    "  documents:",
+    "    - path: step1_scope_and_research/references/",
+    "      role: reference_documents",
+    "      required: false",
+    "      extraction: classify_extract_normalize_validate",
+    "",
+    "notebooks:",
+    "  required: true",
+    "  execution_required: true",
+    "  execution_engine: neqsim_runner  # neqsim_runner | interactive | auto",
+    "  runner_mode: execute             # execute | script",
+    "  runner_max_retries: 3",
+    "  runner_timeout_seconds: 3600",
+    "  runner_max_parallel: 1           # JVM-heavy jobs should stay serial by default",
+    "  runner_merge_results: true       # Merge multi-notebook results.json updates",
+    "  require_successful_jobs: true    # Report gate warns on failed/timed-out jobs",
+    "  isolated_subprocess: true",
+    "  minimum_count: 1",
+    "  plan:",
+    "    - file: 01_main_analysis.ipynb",
+    "      purpose: Main NeqSim model, result extraction, figures, and results.json.",
+    "    - file: 02_benchmark_validation.ipynb",
+    "      purpose: Independent benchmark checks when required by scale or scope.",
+    "    - file: 03_uncertainty_and_risk.ipynb",
+    "      purpose: Monte Carlo, tornado sensitivity, and risk register when applicable.",
+    "",
+    "report:",
+    "  formats:",
+    "    - docx",
+    "    - html",
+    "  depth: auto          # auto | brief | standard | detailed",
+    "  include_paper: false",
+    "  required_sections:",
+    "    - executive_summary",
+    "    - scope_and_standards",
+    "    - methodology",
+    "    - results",
+    "    - discussion",
+    "    - validation",
+    "    - conclusions",
+    "    - references",
+    "",
+    "quality_gates:",
+    "  require_results_json: true",
+    "  benchmark_validation: auto     # auto | required | optional | skip",
+    "  uncertainty_analysis: auto     # auto | required | optional | skip",
+    "  risk_register: auto            # auto | required | optional | skip",
+    "  figure_discussion: required    # required | optional | skip",
+    "  consistency_checker: required  # required | optional | skip",
+    "  minimum_figures: 2",
+    "  notebook_execution: required   # required | optional | skip",
+    "",
+])
+
 STEP2_NOTES = """# Step 2: Analysis & Validation Notes
 
 ## Analysis Log
@@ -1427,7 +1508,7 @@ def _add_inline_math_runs(paragraph, text):
     non-math segments become regular text runs.
     """
     import re as _re
-    parts = _re.split(r'(?<!\$)(\$(?!\$).+?\$(?!\$))', text)
+    parts = _re.split(r'(?<!\\$)(\\$(?!\\$).+?\\$(?!\\$))', text)
     for part in parts:
         if not part:
             continue
@@ -1442,7 +1523,7 @@ def _add_inline_math_runs(paragraph, text):
                 run.font.name = 'Cambria Math'
         else:
             # Formatted text with **bold**
-            fmt_parts = _re.split(r'(\*\*.+?\*\*)', part)
+            fmt_parts = _re.split(r'(\\*\\*.+?\\*\\*)', part)
             for fp in fmt_parts:
                 if not fp:
                     continue
@@ -3289,6 +3370,7 @@ def setup_workspace():
     # Template structure
     template_files = {
         os.path.join(TEMPLATE_DIR, "README.md"): TASK_README,
+        os.path.join(TEMPLATE_DIR, "study_config.yaml"): STUDY_CONFIG,
         os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "task_spec.md"): TASK_SPEC,
         os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "notes.md"): STEP1_NOTES,
         os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "references", "README.md"): REFERENCES_README,
@@ -3311,8 +3393,11 @@ def setup_workspace():
     canonical_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  "task_template")
     if os.path.isdir(canonical_dir):
-        for root, _dirs, files in os.walk(canonical_dir):
+        for root, dirs, files in os.walk(canonical_dir):
+            dirs[:] = [dirname for dirname in dirs if dirname != "__pycache__"]
             for fname in files:
+                if fname.endswith((".pyc", ".pyo")):
+                    continue
                 src = os.path.join(root, fname)
                 rel = os.path.relpath(src, canonical_dir)
                 dst = os.path.join(TEMPLATE_DIR, rel)
@@ -3323,7 +3408,215 @@ def setup_workspace():
     return created
 
 
-def create_task(title, task_type="B", author="", prompt=""):
+def normalize_scale(scale):
+    """Normalize task scale names used by agents and CLI users."""
+    if not scale:
+        return ""
+    value = scale.strip().lower()
+    aliases = {
+        "auto": "auto",
+        "quick": "quick",
+        "screening": "quick",
+        "standard": "standard",
+        "design": "standard",
+        "comprehensive": "comprehensive",
+        "development": "comprehensive",
+    }
+    return aliases.get(value, "")
+
+
+def normalize_intake_pause(intake_pause):
+    """Normalize intake pause settings used by agents and CLI users."""
+    if not intake_pause:
+        return ""
+    value = intake_pause.strip().lower()
+    aliases = {
+        "auto": "auto",
+        "always": "always",
+        "yes": "always",
+        "true": "always",
+        "on": "always",
+        "never": "never",
+        "no": "never",
+        "false": "never",
+        "off": "never",
+    }
+    return aliases.get(value, "")
+
+
+def _yaml_quote(value):
+    """Return a simple double-quoted YAML scalar."""
+    text = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    text = text.replace("\r", " ").replace("\n", " ")
+    return '"{}"'.format(text)
+
+
+def _replace_section_key(content, section, key, value):
+    """Replace an indented YAML key inside a top-level section."""
+    lines = content.splitlines()
+    in_section = False
+    section_marker = "{}:".format(section)
+    key_marker = "{}:".format(key)
+    for line_index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped == section_marker and not line.startswith(" "):
+            in_section = True
+            continue
+        if in_section and stripped and not line.startswith(" "):
+            in_section = False
+        if in_section and stripped.startswith(key_marker):
+            indent = line[:len(line) - len(line.lstrip())]
+            lines[line_index] = "{}{}: {}".format(indent, key, value)
+            return "\n".join(lines) + "\n"
+    return content
+
+
+def _scale_defaults(scale):
+    """Return default mode, AACE class, FEL stage, and report depth for a scale."""
+    defaults = {
+        "quick": ("screening", "5", "FEL-1", "brief"),
+        "standard": ("design", "3", "FEL-2", "standard"),
+        "comprehensive": ("development", "2", "FEL-3", "detailed"),
+    }
+    return defaults.get(scale, ("auto", "auto", "auto", "auto"))
+
+
+def _notebook_files_from_option(notebooks):
+    """Parse --notebooks as either a count or comma/semicolon-separated files."""
+    if not notebooks:
+        return []
+    text = notebooks.strip()
+    if text.isdigit():
+        count = max(1, int(text))
+        return ["{:02d}_analysis.ipynb".format(number)
+                for number in range(1, count + 1)]
+    filenames = []
+    for item in text.replace(";", ",").split(","):
+        filename = item.strip()
+        if not filename:
+            continue
+        if not filename.lower().endswith(".ipynb"):
+            filename += ".ipynb"
+        filenames.append(filename)
+    return filenames
+
+
+def _default_notebook_plan(scale):
+    """Return a default notebook plan for explicit task scales."""
+    if scale == "quick":
+        return ["01_main_analysis.ipynb"]
+    if scale == "standard":
+        return ["01_main_analysis.ipynb", "02_benchmark_validation.ipynb"]
+    if scale == "comprehensive":
+        return [
+            "01_scope_basis_and_fluid.ipynb",
+            "02_process_simulation.ipynb",
+            "03_benchmark_validation.ipynb",
+            "04_uncertainty_and_risk.ipynb",
+            "05_report_tables_and_figures.ipynb",
+        ]
+    return []
+
+
+def _replace_notebook_plan(content, notebook_files):
+    """Replace the notebooks.plan list in the YAML config."""
+    if not notebook_files:
+        return content
+    lines = content.splitlines()
+    updated = []
+    line_index = 0
+    while line_index < len(lines):
+        line = lines[line_index]
+        updated.append(line)
+        if line.strip() == "plan:":
+            plan_indent = len(line) - len(line.lstrip())
+            line_index += 1
+            while line_index < len(lines):
+                next_line = lines[line_index]
+                next_indent = len(next_line) - len(next_line.lstrip())
+                if next_line.strip() and next_indent <= plan_indent:
+                    break
+                line_index += 1
+            item_indent = " " * (plan_indent + 2)
+            field_indent = " " * (plan_indent + 4)
+            for number, filename in enumerate(notebook_files, 1):
+                updated.append("{}- file: {}".format(item_indent, _yaml_quote(filename)))
+                updated.append("{}purpose: Notebook {} from configured task plan.".format(
+                    field_indent, number))
+            continue
+        line_index += 1
+    return "\n".join(updated) + "\n"
+
+
+def _apply_study_config_overrides(content, title, task_type, scale,
+                                  report_depth, notebooks, intake_pause):
+    """Apply CLI/default values to study_config.yaml content."""
+    content = _replace_section_key(content, "study", "title", _yaml_quote(title))
+    content = _replace_section_key(content, "study", "task_type", _yaml_quote(task_type))
+
+    normalized_scale = normalize_scale(scale)
+    if normalized_scale:
+        mode, aace_class, fel_stage, default_depth = _scale_defaults(normalized_scale)
+        content = _replace_section_key(content, "study", "scale", normalized_scale)
+        content = _replace_section_key(content, "study", "mode", mode)
+        content = _replace_section_key(content, "study", "aace_class", aace_class)
+        content = _replace_section_key(content, "study", "fel_stage", fel_stage)
+        if not report_depth:
+            report_depth = default_depth
+        if normalized_scale == "comprehensive":
+            content = _replace_section_key(content, "quality_gates",
+                                           "benchmark_validation", "required")
+            content = _replace_section_key(content, "quality_gates",
+                                           "uncertainty_analysis", "required")
+            content = _replace_section_key(content, "quality_gates",
+                                           "risk_register", "required")
+
+    if report_depth:
+        content = _replace_section_key(content, "report", "depth", report_depth.strip().lower())
+
+    normalized_intake_pause = normalize_intake_pause(intake_pause)
+    if normalized_intake_pause:
+        content = _replace_section_key(content, "intake",
+                                       "pause_after_folder_creation",
+                                       normalized_intake_pause)
+
+    notebook_files = _notebook_files_from_option(notebooks)
+    if not notebook_files and normalized_scale:
+        notebook_files = _default_notebook_plan(normalized_scale)
+    if notebook_files:
+        content = _replace_section_key(content, "notebooks", "minimum_count",
+                                       str(len(notebook_files)))
+        content = _replace_notebook_plan(content, notebook_files)
+    return content
+
+
+def _seed_study_config(task_dir, title, task_type, scale, report_depth,
+                       notebooks, config_file, intake_pause):
+    """Create or update study_config.yaml for a new task."""
+    config_path = os.path.join(task_dir, "study_config.yaml")
+    if config_file:
+        source_path = os.path.abspath(config_file)
+        try:
+            with open(source_path, "r", encoding="utf-8") as source:
+                content = source.read()
+        except Exception as error:
+            print("  WARNING: could not read --config-file: {}".format(error))
+            content = STUDY_CONFIG
+    elif os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as existing:
+            content = existing.read()
+    else:
+        content = STUDY_CONFIG
+
+    content = _apply_study_config_overrides(content, title, task_type, scale,
+                                            report_depth, notebooks, intake_pause)
+    with open(config_path, "w", encoding="utf-8") as config:
+        config.write(content)
+
+
+def create_task(title, task_type="B", author="", prompt="", scale="",
+                report_depth="", notebooks="", config_file="",
+                intake_pause=""):
     """Create a new task folder from the template.
 
     Parameters
@@ -3337,6 +3630,16 @@ def create_task(title, task_type="B", author="", prompt=""):
     prompt : str
         Optional verbatim user request. Written into user_input.md so the
         task can be reproduced from the original chat input.
+    scale : str
+        Optional task scale override: quick, standard, or comprehensive.
+    report_depth : str
+        Optional report detail override: brief, standard, or detailed.
+    notebooks : str
+        Optional notebook plan as a count or comma-separated notebook files.
+    config_file : str
+        Optional path to a study_config.yaml file to copy into the task.
+    intake_pause : str
+        Optional intake pause setting: auto, always, or never.
     """
     # Ensure workspace exists
     if not os.path.exists(TEMPLATE_DIR):
@@ -3358,7 +3661,15 @@ def create_task(title, task_type="B", author="", prompt=""):
         sys.exit(1)
 
     # Copy template
-    shutil.copytree(TEMPLATE_DIR, task_dir)
+    shutil.copytree(
+        TEMPLATE_DIR,
+        task_dir,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
+
+    # Seed explicit task-depth configuration before the agent starts planning.
+    _seed_study_config(task_dir, title, task_type, scale, report_depth,
+                       notebooks, config_file, intake_pause)
 
     # Fill in the README
     readme_path = os.path.join(task_dir, "README.md")
@@ -3434,6 +3745,17 @@ def create_task(title, task_type="B", author="", prompt=""):
 
     print("Created: task_solve/{}".format(folder_name))
     print("")
+    print("Task input can be added before analysis starts:")
+    print("  Config: task_solve/{}/study_config.yaml".format(folder_name))
+    print("  Prompt/log: task_solve/{}/user_input.md".format(folder_name))
+    print("  Document input: task_solve/{}/step1_scope_and_research/references/".format(
+        folder_name))
+    print("  Supported documents include PDFs, Word files, Excel stream tables,")
+    print("  P&IDs, vendor data sheets, standards, and lab reports.")
+    intake_setting = normalize_intake_pause(intake_pause) or "auto"
+    if intake_setting == "always":
+        print("  Intake pause: requested - wait for user confirmation before notebooks.")
+    print("")
     print("Next steps (pick one):")
     print("")
     print("  Recommended - Let Copilot do everything:")
@@ -3497,6 +3819,11 @@ def main():
     task_type = "B"
     author = ""
     prompt = ""
+    scale = ""
+    report_depth = ""
+    notebooks = ""
+    config_file = ""
+    intake_pause = ""
 
     i = 2
     while i < len(sys.argv):
@@ -3516,6 +3843,21 @@ def main():
             except Exception as e:
                 print("WARNING: could not read --prompt-file: {}".format(e))
             i += 2
+        elif sys.argv[i] == "--scale" and i + 1 < len(sys.argv):
+            scale = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--report-depth" and i + 1 < len(sys.argv):
+            report_depth = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--notebooks" and i + 1 < len(sys.argv):
+            notebooks = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--intake-pause" and i + 1 < len(sys.argv):
+            intake_pause = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--config-file" and i + 1 < len(sys.argv):
+            config_file = sys.argv[i + 1]
+            i += 2
         else:
             i += 1
 
@@ -3525,7 +3867,19 @@ def main():
         print("Using type B (Process) as default.")
         task_type = "B"
 
-    create_task(title, task_type, author, prompt)
+    if scale and not normalize_scale(scale):
+        print("WARNING: Unknown scale '{}'. Valid: quick, standard, comprehensive.".format(scale))
+        print("Using scale auto-detection in study_config.yaml.")
+        scale = ""
+
+    if intake_pause and not normalize_intake_pause(intake_pause):
+        print("WARNING: Unknown intake pause '{}'. Valid: auto, always, never.".format(
+            intake_pause))
+        print("Using intake pause auto-detection in study_config.yaml.")
+        intake_pause = ""
+
+    create_task(title, task_type, author, prompt, scale, report_depth,
+                notebooks, config_file, intake_pause)
 
 
 if __name__ == "__main__":

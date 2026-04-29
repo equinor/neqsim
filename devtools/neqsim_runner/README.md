@@ -40,6 +40,11 @@ from neqsim_runner.agent_bridge import AgentBridge
 
 bridge = AgentBridge(task_dir="task_solve/2026-04-08_my_task")
 
+# AgentBridge auto-detects the NeqSim project root and runner workers expose
+# NEQSIM_PROJECT_ROOT plus <repo>/devtools to notebooks. Task notebooks should
+# use neqsim_dev_setup/ns.* so workspace Java classes are loaded directly from
+# target/classes.
+
 # Submit a notebook — produces an executed .ipynb with all cell outputs
 job_id = bridge.submit_notebook(
     "step2_analysis/01_analysis.ipynb",
@@ -48,13 +53,16 @@ job_id = bridge.submit_notebook(
 )
 
 # Run all pending jobs (blocking, with automatic retry)
-bridge.run_all()
+bridge.run_all(max_parallel=1)
 
 # Get executed notebook and results
 executed_nb = bridge.get_executed_notebook(job_id)
 results = bridge.get_results(job_id)
-bridge.copy_results_to_task(job_id)
-print(bridge.summary())
+summary = bridge.summary()
+if summary["failed"] or summary["pending"]:
+    raise RuntimeError("NeqSim Runner jobs did not all complete successfully")
+bridge.merge_results_to_task([job_id])
+print(summary)
 ```
 
 ### CLI
@@ -133,9 +141,33 @@ job_ids = bridge.submit_parametric_sweep(
     "run_case.py", cases,
     max_retries=2, timeout_seconds=600,
 )
-bridge.run_all()
+bridge.run_all(max_parallel=1)
 all_results = bridge.collect_results()
 ```
+
+## Results Collection for Task Reports
+
+Use `merge_results_to_task()` for task folders with more than one notebook. It
+loads the existing task-level `results.json`, recursively merges dictionaries,
+appends list entries without exact duplicates, and writes the combined file back
+to the task root. This prevents a benchmark or uncertainty notebook from
+overwriting results created by the main analysis notebook.
+
+```python
+job_ids = [
+    bridge.submit_notebook("step2_analysis/01_main_analysis.ipynb"),
+    bridge.submit_notebook("step2_analysis/02_benchmark_validation.ipynb"),
+]
+bridge.run_all(max_parallel=1)
+summary = bridge.summary()
+if summary["failed"] or summary["pending"]:
+    raise RuntimeError("NeqSim Runner jobs did not all complete successfully")
+bridge.merge_results_to_task(job_ids)
+```
+
+`copy_results_to_task(job_id)` still exists for single-job workflows, but it
+overwrites the destination by default. Use `copy_results_to_task(job_id,
+merge=True)` when preserving existing task-level results matters.
 
 ## Writing Job Scripts
 

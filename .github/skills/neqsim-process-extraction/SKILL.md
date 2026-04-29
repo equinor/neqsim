@@ -1,6 +1,6 @@
 ---
 name: neqsim-process-extraction
-description: "Extracts process simulation data from unstructured sources (text, tables, PFDs, data sheets) and converts it to NeqSim JSON builder format. USE WHEN: a user provides a process description, PFD, operating data, or design document and wants a running NeqSim simulation. Covers equipment mapping, stream wiring, unit conversion, composition normalization, and confidence scoring."
+description: "Extracts process simulation data from unstructured sources (text, tables, PFDs, data sheets, STID/E3D line lists) and converts it to NeqSim JSON builder format or PipingRouteBuilder route models. USE WHEN: a user provides a process description, PFD, operating data, line-list table, or design document and wants a running NeqSim simulation. Covers equipment mapping, stream wiring, route hydraulics, unit conversion, composition normalization, and confidence scoring."
 last_verified: "2026-07-04"
 ---
 
@@ -15,6 +15,12 @@ accepted by `ProcessSystem.fromJson()` and `ProcessSystem.fromJsonAndRun()`.
 >
 > The JSON schema is finite and well-defined. `ProcessSystem.fromJson()` handles all
 > NeqSim API calls deterministically. Errors come back as structured, actionable messages.
+>
+> **Exception for route hydraulics:** When the source is a STID/E3D/P&ID/stress-isometric
+> line-list table with serial pipe segments, use
+> `neqsim.process.equipment.pipeline.routing.PipingRouteBuilder` rather than the generic
+> JSON process builder. The route builder preserves line-list segment metadata, K-value
+> minor losses, elevations, and explicit connection topology.
 >
 > **Architecture decision (MANDATORY):** Before assembling JSON, classify the process
 > complexity. Small/medium processes (≤ ~15 units, single recycle loop) use a single
@@ -133,6 +139,18 @@ Use the **longest matching keyword** to avoid false matches.
 | Natural Language Synonyms | NeqSim `type` |
 |---------------------------|---------------|
 | pump, centrifugal pump, export pump, booster pump, injection pump, feed pump, charge pump, transfer pump, multiphase pump | `Pump` |
+
+### Piping Routes
+
+| Natural Language Synonyms | NeqSim target |
+|---------------------------|---------------|
+| line list, line-list, route table, STID route, E3D route, stress isometric, pipe run list, serial piping route, compressor suction route, compressor discharge route | `PipingRouteBuilder` |
+
+`PipingRouteBuilder` is not a JSON equipment type. It is a Java/Python-accessible
+builder for serial route hydraulics. Use it when the input table has from/to
+nodes, pipe lengths, sizes, elevations, fittings, valves, and K values. Extract
+the route rows first, then build the route model and export `route.toJson()` for
+traceability.
 
 ### Mixing & Splitting
 
@@ -312,6 +330,37 @@ The first inlet becomes the feed stream; the second is set via `setFeedStream(1,
 |----------|------|---------|-------------|
 | `length` | number (m) | — | Pipe length in meters |
 | `diameter` | number (m) | — | Pipe inner diameter in meters |
+
+### Route-Level Piping Line Lists
+
+When the source has a line-list or stress-isometric table, extract these fields
+before constructing the route:
+
+| Extracted field | Required | Notes |
+|-----------------|----------|-------|
+| `segment_id` | Yes | Line number, row id, or generated `S1`, `S2` |
+| `from_node`, `to_node` | Yes | Equipment tag, nozzle, tee, manifold, or route node |
+| `length`, `length_unit` | Yes | Straight pipe length, not equivalent length |
+| `internal_diameter`, `diameter_unit` | Yes | Convert NPS/schedule to internal diameter first |
+| `wall_thickness`, `wall_thickness_unit` | No | Store if schedule or stress iso gives it |
+| `elevation_change`, `elevation_unit` | No | Positive uphill, negative downhill |
+| `roughness`, `roughness_unit` | No | Use default roughness when only piping class is known |
+| `minor_losses` | No | Fittings/valves as `{type, k_value}` rows |
+| `source_ref` | Yes | Drawing/page/row reference for traceability |
+
+Route extraction workflow:
+
+1. Sort rows in hydraulic flow order from upstream to downstream.
+2. Convert NPS/schedule to internal diameter before calling `addSegment(...)`.
+3. Convert every valve, bend, tee, reducer, strainer, and entry/exit loss to K.
+4. For a route-only study, build the route with `PipingRouteBuilder.build(feedStream)`
+  and run the returned `ProcessSystem`.
+5. For a full plant model, call `route.addToProcessSystem(process, inletStream)`
+  and pass the returned outlet stream to the downstream equipment. Use the overload
+  with source-equipment metadata when the inlet is an upstream equipment outlet stream.
+6. Save `route.toJson()` and pressure-drop results in the task folder.
+
+Reference guide: `docs/process/piping_route_builder.md`.
 
 ---
 

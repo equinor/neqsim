@@ -16,6 +16,8 @@ Run with::
 
 import random
 import json
+import os
+import sys
 
 # ── Import job helpers (works both inside runner and standalone) ──
 try:
@@ -41,20 +43,30 @@ def run_single_simulation(pressure_bara, temperature_c, flow_kg_hr):
     This is where the actual NeqSim work happens — each call gets a fresh
     JVM context (the worker subprocess handles JVM lifecycle).
     """
-    from neqsim import jneqsim
+    runtime_ns = globals().get("ns")
+    if runtime_ns is None:
+        project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+        if not project_root:
+            raise RuntimeError(
+                "Run this example through NeqSim Runner from the repository or set NEQSIM_PROJECT_ROOT."
+            )
+        sys.path.insert(0, os.path.join(project_root, "devtools"))
+        from neqsim_dev_setup import neqsim_init, neqsim_classes
+        runtime_ns = neqsim_classes(
+            neqsim_init(project_root=project_root, recompile=False, verbose=True))
 
     # Build fluid
-    fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + temperature_c, pressure_bara)
+    fluid = runtime_ns.SystemSrkEos(273.15 + temperature_c, pressure_bara)
     fluid.addComponent("methane", 0.85)
     fluid.addComponent("ethane", 0.10)
     fluid.addComponent("propane", 0.05)
     fluid.setMixingRule("classic")
 
     # Build process
-    ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-    Stream = jneqsim.process.equipment.stream.Stream
-    Separator = jneqsim.process.equipment.separator.Separator
-    Compressor = jneqsim.process.equipment.compressor.Compressor
+    ProcessSystem = runtime_ns.ProcessSystem
+    Stream = runtime_ns.Stream
+    Separator = runtime_ns.Separator
+    Compressor = runtime_ns.Compressor
 
     process = ProcessSystem()
 

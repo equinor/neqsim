@@ -652,6 +652,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Well & Choke", "simulation/well_and_choke_simulation.md"),
             ("Well Allocation", "process/equipment/well_allocation.md"),
             ("Pipelines", "process/equipment/pipelines.md"),
+            ("Piping Route Builder", "process/piping_route_builder.md"),
             ("Pipeline Simulation", "process/equipment/pipeline_simulation.md"),
             ("TwoFluidPipe Model", "process/TWOFLUIDPIPE_MODEL.md"),
             ("TwoFluidPipe OLGA Comparison", "wiki/two_fluid_model_olga_comparison.md"),

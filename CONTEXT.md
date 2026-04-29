@@ -39,6 +39,8 @@ src/main/java/neqsim/
   process/equipment/     33 equipment packages:
     stream/ separator/ compressor/ pump/ valve/ heatexchanger/
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
+    pipeline/routing/     PipingRouteBuilder — STID/E3D line-list route
+                          hydraulics to serial PipeBeggsAndBrills models
     well/ reservoir/ membrane/ ejector/ filter/ flare/
     subsea/              SubseaWell, SubseaTree (subsea equipment)
     heatexchanger/heatintegration/  PinchAnalysis, HeatStream (Linnhoff method)

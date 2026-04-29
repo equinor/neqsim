@@ -12,6 +12,7 @@ Documentation for pipeline equipment in NeqSim.
 >
 > For detailed documentation on all pipeline types, the `PipeLineInterface`, flow regime detection, heat transfer, profile methods, and complete examples, see:
 > - [Pipeline Simulation Guide](pipeline_simulation) - Complete simulation documentation
+> - [Route-Level Piping Hydraulic Builder](../piping_route_builder) - STID/E3D line-list route hydraulics with `PipingRouteBuilder`
 > - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress analysis, cost estimation
 > - [Topside Piping Design](../topside_piping_design) - **Platform piping with velocity, support spacing, vibration (AIV/FIV)**
 > - [Riser Mechanical Design](../riser_mechanical_design) - Riser design with catenary, VIV, fatigue
@@ -42,6 +43,15 @@ Documentation for pipeline equipment in NeqSim.
 | `TwoPhasePipeLine`   | Two-phase pipeline                                               | -   | -        |
 | `TopsidePiping`      | Topside/platform piping with service types and mechanical design | ✅   | ✅        |
 | `Riser`              | Subsea risers (SCR, TTR, Flexible, Lazy-Wave)                    | -   | -        |
+
+`PipingRouteBuilder` in `neqsim.process.equipment.pipeline.routing` is not a
+pipe unit itself. It is a high-level builder that converts STID/E3D line-list
+rows into a serial `ProcessSystem` of `PipeBeggsAndBrills` units. Use
+`build(feedStream)` for route-only studies, or `addToProcessSystem(process,
+inletStream)` to insert the generated route into a larger process simulation
+and feed the returned outlet stream into downstream equipment. Use it before
+manual pipe assembly when the source data is a route table with from/to nodes,
+lengths, sizes, fittings, valves, and elevations.
 
 For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/).
 

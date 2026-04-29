@@ -19,6 +19,8 @@ def main():
     job_args = job_spec.get("args", {})
     output_dir = job_spec.get("output_dir", ".")
     checkpoint_path = job_spec.get("checkpoint_path")
+    project_root = job_spec.get("project_root")
+    require_devtools = bool(job_spec.get("require_devtools", True))
 
     # -- Validate script exists --
     if not os.path.exists(script_path):
@@ -42,17 +44,25 @@ def main():
 
     # -- Initialize NeqSim JVM --
     try:
-        # Try devtools first (local dev), then pip package
-        project_root = job_spec.get("project_root")
+        # Task runner workflows must use devtools so workspace Java classes are
+        # available without packaging/copying a JAR into neqsim-python.
         if project_root:
-            sys.path.insert(0, os.path.join(project_root, "devtools"))
+            devtools_path = os.path.join(project_root, "devtools")
+            if devtools_path not in sys.path:
+                sys.path.insert(0, devtools_path)
+            os.environ["NEQSIM_PROJECT_ROOT"] = project_root
+            os.environ["NEQSIM_REQUIRE_DEVTOOLS"] = "1"
             from neqsim_dev_setup import neqsim_init, neqsim_classes
             ns = neqsim_init(project_root=project_root, recompile=False, verbose=True)
             ns = neqsim_classes(ns)
             os.environ["NEQSIM_MODE"] = "devtools"
+        elif require_devtools:
+            raise RuntimeError(
+                "NeqSim Runner requires devtools mode, but project_root is missing. "
+                "Use AgentBridge from inside the NeqSim repository or pass project_root."
+            )
         else:
-            from neqsim import jneqsim  # noqa: F401
-            os.environ["NEQSIM_MODE"] = "pip"
+            raise RuntimeError("NeqSim Runner pip mode is disabled for repository task workflows.")
         print(f"NeqSim initialized (mode: {os.environ['NEQSIM_MODE']})")
     except Exception as e:
         print(f"ERROR: Failed to initialize NeqSim: {e}", file=sys.stderr)
@@ -76,7 +86,11 @@ def main():
             "JOB_ARGS": job_args,
             "OUTPUT_DIR": output_dir,
             "CHECKPOINT_PATH": checkpoint_path,
+            "NEQSIM_MODE": os.environ.get("NEQSIM_MODE"),
         }
+        if "ns" in locals():
+            script_globals["ns"] = ns
+            script_globals["JClass"] = ns.JClass
 
         with open(script_path, "r", encoding="utf-8") as f:
             code = compile(f.read(), script_path, "exec")

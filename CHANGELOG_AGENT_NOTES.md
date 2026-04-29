@@ -9,6 +9,63 @@
 
 ---
 
+## 2026-04-29 — Route-Level Piping Hydraulic Builder for STID Line Lists
+
+### Summary
+
+`PipingRouteBuilder` converts STID/E3D/P&ID/stress-isometric line-list rows into
+a serial `ProcessSystem` with one `PipeBeggsAndBrills` unit per route segment.
+It stores from/to nodes, straight length, hydraulic diameter, wall thickness,
+roughness, elevation change, and K-value minor losses. Minor losses are converted
+to equivalent length ratio by `K / f_D`, with default Darcy friction factor
+`0.02` and a configurable `setMinorLossFrictionFactor(...)` assumption. Routes
+can be run standalone with `build(feedStream)` or inserted into a larger plant
+model with `addToProcessSystem(process, inletStream)`, which returns the last
+pipe outlet stream for downstream equipment.
+
+### New API
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `PipingRouteBuilder` | `neqsim.process.equipment.pipeline.routing` | Build route-level pipe hydraulic models from line-list tables |
+| `PipingRouteBuilder.RouteSegment` | same | Route segment metadata, total K, total equivalent L/D, generated pipe name |
+| `PipingRouteBuilder.MinorLoss` | same | K-value fitting/valve loss converted to equivalent L/D |
+
+Important methods:
+
+- `build(StreamInterface inletStream)` creates a standalone route `ProcessSystem`.
+- `addToProcessSystem(ProcessSystem process, StreamInterface inletStream)` adds
+  only the generated pipe units to an existing process and returns the final
+  pipe outlet stream.
+- `addToProcessSystem(ProcessSystem process, StreamInterface inletStream,
+  String sourceEquipmentName, String sourcePortName)` preserves explicit source
+  equipment/port metadata when the route starts from an upstream equipment outlet.
+
+### Agent Usage
+
+- For STID, E3D, P&ID, or stress-isometric tasks where the source has line-list
+  rows with lengths, sizes, fittings, valves, elevations, and equipment nodes,
+  use `PipingRouteBuilder` instead of hand-assembling individual pipes.
+- In full plant simulations, pass an upstream `StreamInterface` into
+  `addToProcessSystem(...)` and feed the returned outlet stream into downstream
+  process equipment constructors.
+- Preserve source document/page/row references in the task notes and export
+  `route.toJson()` into task results for later reuse.
+- Use looped-network tools for branched or ring-main hydraulics; this builder is
+  for serial routes and serial branches.
+
+### Reference
+
+- Full guide: [`docs/process/piping_route_builder.md`](docs/process/piping_route_builder.md)
+- Focused tests: `PipingRouteBuilderTest`
+
+### Skills/Agents Updated
+
+- `neqsim-api-patterns`
+- `neqsim-process-extraction`
+- `neqsim-stid-retriever`
+- `neqsim-technical-document-reading`
+
 ## 2026-04-27 — Flash Warm-Start: New `ProcessSystem.setUseFlashWarmStart()` API
 
 ### Summary
@@ -88,10 +145,10 @@ and does not require any flag.
 Major expansion of `GasScrubberMechanicalDesign` with ~40 new public methods for
 configuring scrubber internals (inlet devices, demisting cyclones, mesh pads, vane
 packs, drain pipes, level alarms) and a new conformity-checking package for
-automated design verification against Equinor TR3500. Geometry fields moved from
-`Separator` to `SeparatorMechanicalDesign` so physical dimensions are owned by the
-mechanical design layer. Bug fixes for autoSize liquid level and drainage-head
-formula.
+automated design verification against an operator-specific technical requirement.
+Geometry fields moved from `Separator` to `SeparatorMechanicalDesign` so physical
+dimensions are owned by the mechanical design layer. Bug fixes for autoSize liquid
+level and drainage-head formula.
 
 ### Bug Fixes
 
@@ -115,7 +172,7 @@ formula.
 |-------|---------|---------|
 | `ConformityResult` | `mechanicaldesign.separator.conformity` | Single rule check result (PASS/WARNING/FAIL, 90% warning threshold) |
 | `ConformityReport` | `mechanicaldesign.separator.conformity` | Collection of results with `isConforming()`, `toTextReport()` |
-| `ConformityRuleSet` | `mechanicaldesign.separator.conformity` | Abstract base + `TR3500RuleSet` (5 checks: K-factor, inlet momentum, drainage head, cyclone-dp-to-drain, mesh-K) |
+| `ConformityRuleSet` | `mechanicaldesign.separator.conformity` | Abstract base plus operator-specific rule sets for K-factor, inlet momentum, drainage head, cyclone-dp-to-drain, and mesh-K checks |
 
 ### New Methods on `GasScrubberMechanicalDesign`
 
@@ -131,7 +188,7 @@ formula.
 | `setLaLLElevationM()` / `setLaLElevationM()` / `setLaHElevationM()` / `setLaHHElevationM()` | Level alarm elevations |
 | `setHhllElevationM()` | High-high liquid level elevation |
 | `setCycloneDeckElevationM()` / `setCycloneLengthM()` / `setCycloneEulerNumber()` / `setCycloneDpToDrainPct()` | Cyclone parameters |
-| `setConformityRules(String)` | Load a conformity rule set (e.g. `"TR3500"`) |
+| `setConformityRules(String)` | Load a conformity rule set by key |
 | `checkConformity()` | Run all loaded rules, returns `ConformityReport` |
 | `getConformityStandard()` | Get currently loaded standard name |
 | `toTextReport()` | Full text report of internals configuration and conformity |
@@ -156,7 +213,7 @@ design.setInletDevice("schoepentoeter");
 design.setDemistingCyclones(256, 0.110, 3.287, 0.943);
 design.setMeshPad(6.605, 150.0);
 design.setDrainPipeDiameterM(0.2032);
-design.setConformityRules("TR3500");
+design.setConformityRules("operator-specific-key");
 design.calcDesign();
 
 ConformityReport report = design.checkConformity();
@@ -166,13 +223,13 @@ System.out.println("Conforming: " + report.isConforming());
 
 ### Test Classes
 
-- `KollsnesScrubberDesignTest` — 4 tests covering full internals configuration and conformity checking
+- Operator-specific scrubber design tests — 4 tests covering full internals configuration and conformity checking
 - `SeparatorTest` — 10 existing tests (all pass, no regressions)
 
 ### Affected Skills / Agents
 
 - `neqsim-api-patterns` — Add scrubber internals configuration pattern
-- `neqsim-standards-lookup` — Add TR3500 to standards database
+- `neqsim-standards-lookup` — Add operator-specific conformity rules to standards database
 ## 2026-04-22 — PT Phase Envelope: NaN Branch-Break Sentinels + Structured Segments API
 
 ### Summary

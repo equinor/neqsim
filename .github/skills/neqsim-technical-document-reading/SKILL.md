@@ -36,6 +36,7 @@ When a document is provided, classify it first:
 | **Well Test Report** | Choke sizes, flow rates vs time, GOR, water cut | Flow rates, compositions, reservoir P/T, productivity |
 | **P&ID / PFD Description** | Equipment tags, line numbers, instrument tags, connectivity | Topology, instrumentation, control philosophy |
 | **Piping Specification** | Material classes, pressure ratings, wall schedules | Pipe sizes, materials, ratings, corrosion allowance |
+| **Line List / Piping Route Table** | Tabular line numbers, NPS, schedule, from/to nodes, straight length, fittings, valves, elevations | Route segments for `PipingRouteBuilder`: segment id, nodes, internal diameter, wall thickness, length, elevation, K values, source refs |
 | **Inspection Report** | Thickness measurements, corrosion rates, anomaly locations | Wall thickness, corrosion rate, remaining life |
 | **Material Certificate** | Heat numbers, SMYS/SMTS, chemical composition, Charpy values | Mechanical properties, chemical analysis, grade |
 | **Standards Document** | ISO/API/ASME/DNV/NORSOK header, normative references | Design formulas, factors, limits, test requirements |
@@ -84,6 +85,11 @@ DOCUMENT_SIGNATURES = {
     "piping_spec": [
         r"(?i)piping\s+class", r"(?i)material\s+class",
         r"(?i)line\s+class", r"(?i)pressure\s+rating"
+    ],
+    "line_list_route_table": [
+        r"(?i)line\s*list", r"(?i)route\s*table",
+        r"(?i)stress\s*iso(metric)?", r"(?i)from\s+node.*to\s+node",
+        r"(?i)nominal\s+(size|diameter)", r"(?i)straight\s+length"
     ],
     "engineering_drawing_pid": [
         r"(?i)piping\s+.*instrument.*diagram", r"(?i)P&ID",
@@ -716,6 +722,7 @@ Convert visual observations into the standard extraction result JSON format
 | Drawing Type | What to Look For | Key Data to Extract |
 |-------------|-----------------|---------------------|
 | **P&ID (Piping & Instrumentation)** | Equipment symbols, instrument bubbles, line numbers, valve symbols, piping class annotations | Equipment tags + types, valve tags + types (gate/globe/ball/check), instrument tags + functions, line numbers + sizes + ratings, control loops, interlock references |
+| **Line List / Stress Isometric** | Rows with line numbers, from/to nodes, NPS/schedule, lengths, elevations, fittings, valves | Ordered route segments for `PipingRouteBuilder`, including internal diameter assumptions, K values, and source refs |
 | **Mechanical Arrangement (GA)** | Plan/section/elevation views, dimension lines, nozzle positions, structural supports | Overall dimensions (L×W×H), nozzle sizes + orientations, standpipe lengths + bore sizes, access platform locations, foundation bolt patterns |
 | **Vendor API Datasheet (image)** | API format tables (610/614/617/692), operating conditions, seal/bearing details | Design T/P, seal type, shaft speed, gas supply requirements, leakage rates, material specs, utility requirements |
 | **Compressor/Pump Performance Map** | Head vs flow curves, efficiency lines, surge line, stonewall, rated point marker | Rated head/flow/power, surge point, maximum continuous speed, efficiency at rated/off-design, operating window boundaries |
@@ -764,9 +771,21 @@ PID_EXTRACTION = {
          "type": "seal_gas_supply"},
         {"from": "BCL-304/D.primary_vent", "to": "VB26-0180",
          "type": "seal_vent", "destination": "Flare/Vent"},
+    ],
+    "route_segments": [
+        {"segment_id": "26-G1H-001-S1", "from_node": "FLT-26110", "to_node": "XV-S26102.05",
+         "line_number": "26-G1H-001", "size_inch": 0.75,
+         "internal_diameter_m": 0.019, "length_m": 4.5,
+         "elevation_change_m": 0.0,
+         "minor_losses": [{"type": "ball valve", "k_value": 0.05}],
+         "source_ref": "P&ID page 1, line 26-G1H-001"}
     ]
 }
 ```
+
+For route pressure-drop work, pass `route_segments` to
+`neqsim.process.equipment.pipeline.routing.PipingRouteBuilder` and save
+`route.toJson()` with the task results.
 
 #### 3.7.4 Vendor API Datasheet Image Extraction
 

@@ -375,6 +375,49 @@ pipe.setDiameter(0.508);   // meters (20 inch)
 Stream out = pipe.getOutletStream();
 ```
 
+### Route-Level Piping From STID/E3D Line Lists
+
+For route pressure-drop tasks based on STID P&IDs, E3D exports, stress
+isometrics, or line-list tables, prefer `PipingRouteBuilder` over manually
+creating many pipe units. It creates a serial `ProcessSystem` with one
+`PipeBeggsAndBrills` unit per segment and stores explicit material connection
+metadata.
+
+```java
+PipingRouteBuilder route = new PipingRouteBuilder()
+    .setDefaultPipeWallRoughness(45.0, "micrometer")
+    .setMinorLossFrictionFactor(0.02)
+    .addSegment("S1", "Manifold", "Valve Station", 100.0, "m", 0.2, "m")
+    .setSegmentWallThickness("S1", 8.0, "mm")
+    .addMinorLoss("S1", "manual valve", 1.0)
+    .addSegment("S2", "Valve Station", "Compressor Scrubber", 25.0, "m", 8.0, "inch")
+    .addMinorLoss("Valve Station->Compressor Scrubber", "long-radius bend", 0.3);
+
+ProcessSystem routeProcess = route.build(feedStream);
+routeProcess.run();
+String routeJson = route.toJson();
+```
+
+To embed the extracted route in a larger flowsheet, add it to the existing
+`ProcessSystem` and use the returned outlet stream as the inlet to downstream
+equipment:
+
+```java
+ProcessSystem process = new ProcessSystem("Full plant process");
+process.add(feedStream);
+StreamInterface routeOutlet = route.addToProcessSystem(process, feedStream);
+Cooler downstreamCooler = new Cooler("Downstream cooler", routeOutlet);
+process.add(downstreamCooler);
+process.run();
+```
+
+If the route starts from an upstream equipment outlet, use the overload with
+source-equipment metadata: `route.addToProcessSystem(process, sep.getGasOutStream(),
+"HP Sep", "gasOut")`.
+
+Always preserve source document/page/row references in the task notes and export
+`route.toJson()` in the task results so later STID work can reuse the route.
+
 ### Recycle (Detailed)
 
 Recycles enable iterative convergence of process loops. The `ProcessSystem`
