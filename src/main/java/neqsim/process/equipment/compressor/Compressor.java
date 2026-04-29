@@ -862,6 +862,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           polytropicFluidHead =
               (getCompressorChart().getHeadUnit().equals("meter")) ? polytropicHead / 1000.0 * 9.81
                   : polytropicHead;
+          // Apply performance degradation (fouling reduces deliverable head)
+          polytropicFluidHead = polytropicFluidHead * degradationFactor * (1.0 - foulingFactor);
           if (polytropicFluidHead <= 0.0) {
             polytropicFluidHead = 0.0001;
           }
@@ -1046,6 +1048,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
             polytropicFluidHead = polytropicHead;
             polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
           }
+          // Apply performance degradation (fouling reduces deliverable head)
+          polytropicFluidHead = polytropicFluidHead * degradationFactor * (1.0 - foulingFactor);
+          polytropicHeadMeter = polytropicHeadMeter * degradationFactor * (1.0 - foulingFactor);
           double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
               * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
               / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
@@ -1096,6 +1101,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           thermoOps.PHflashVega(hout);
         }
       } else {
+        // Apply degradation to polytropic efficiency for non-chart calculation paths
+        double savedPolytropicEfficiency = polytropicEfficiency;
+        polytropicEfficiency = polytropicEfficiency * degradationFactor;
         if (polytropicMethod.equals("detailed")) {
           // TODO: add detailed output of compressor calculations
           int numbersteps = numberOfCompressorCalcSteps;
@@ -1334,6 +1342,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
             thermoOps.PHflashVega(hout);
           }
         }
+        // Restore original polytropic efficiency after degraded calculation
+        polytropicEfficiency = savedPolytropicEfficiency;
       }
     } else {
       getThermoSystem().setPressure(pressure, pressureUnit);
@@ -1351,25 +1361,27 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       }
       // double densOutIdeal = getThermoSystem().getDensity();
       double newEnt = getThermoSystem().getEnthalpy();
+      // Apply degradation to isentropic efficiency for non-chart calculation path
+      double effectiveIsentropicEfficiency = isentropicEfficiency * degradationFactor;
       if (!powerSet) {
-        dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
+        dH = (getThermoSystem().getEnthalpy() - hinn) / effectiveIsentropicEfficiency;
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] gergProps;
           gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
           newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-          dH = (newEnt - hinn) / isentropicEfficiency;
+          dH = (newEnt - hinn) / effectiveIsentropicEfficiency;
         }
         if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] LeachmanProps;
           LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
           newEnt = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-          dH = (newEnt - hinn) / isentropicEfficiency;
+          dH = (newEnt - hinn) / effectiveIsentropicEfficiency;
         }
         if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] VegaProps;
           VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
           newEnt = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-          dH = (newEnt - hinn) / isentropicEfficiency;
+          dH = (newEnt - hinn) / effectiveIsentropicEfficiency;
         }
       }
       double hout = hinn + dH;
@@ -4027,6 +4039,39 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    */
   public double getEffectivePolytropicEfficiency() {
     return polytropicEfficiency * degradationFactor;
+  }
+
+  /**
+   * Apply a compressor washing operation to recover performance lost due to fouling. The washing
+   * method determines the fraction of fouling that is recovered.
+   *
+   * @param washingMethod the washing method to apply
+   * @see CompressorWashing.WashingMethod
+   */
+  public void applyWashing(CompressorWashing.WashingMethod washingMethod) {
+    double recoveryFraction = washingMethod.getRecoveryEffectiveness();
+    foulingFactor = foulingFactor * (1.0 - recoveryFraction);
+  }
+
+  /**
+   * Increment the operating hours counter and optionally update the fouling factor based on a
+   * simple linear fouling model.
+   *
+   * @param hours hours to add
+   * @param foulingRatePerHour rate of fouling increase per operating hour (dimensionless/hr)
+   */
+  public void incrementOperatingHours(double hours, double foulingRatePerHour) {
+    operatingHours += hours;
+    foulingFactor = Math.min(1.0, foulingFactor + hours * foulingRatePerHour);
+  }
+
+  /**
+   * Increment the operating hours counter without modifying fouling.
+   *
+   * @param hours hours to add
+   */
+  public void incrementOperatingHours(double hours) {
+    operatingHours += hours;
   }
 
   // Event firing methods
