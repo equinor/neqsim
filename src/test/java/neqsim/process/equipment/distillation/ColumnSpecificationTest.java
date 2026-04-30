@@ -284,6 +284,9 @@ public class ColumnSpecificationTest {
     assertTrue(column.getCondenser().isSetOutTemperature(),
         "Product specifications should activate the outer solve and set a condenser temperature");
     assertTrue(column.getLastIterationCount() > 0);
+    assertTrue(Double.isFinite(column.getLastTopSpecificationResidual()));
+    assertTrue(Math.abs(column.getLastTopSpecificationResidual()) <= column.getTopSpecification()
+        .getTolerance());
   }
 
   /**

@@ -190,6 +190,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastMassResidual = 0.0;
   /** Last recorded relative enthalpy residual. */
   private double lastEnergyResidual = 0.0;
+  /** Last reported top specification residual. */
+  private double lastTopSpecificationResidual = 0.0;
+  /** Last reported bottom specification residual. */
+  private double lastBottomSpecificationResidual = 0.0;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
 
@@ -489,9 +493,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     applyDirectSpecifications();
     if (hasAdjustableSpecifications()) {
       solveWithSpecifications(id);
+      updateSpecificationResiduals();
       return;
     }
     solveInner(id);
+    updateSpecificationResiduals();
   }
 
   /** Apply specifications that map directly to condenser or reboiler controls. */
@@ -543,6 +549,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification);
   }
 
+  /** Update the stored residuals for the currently configured column specifications. */
+  private void updateSpecificationResiduals() {
+    lastTopSpecificationResidual = evaluateSpecErrorSafely(topSpecification);
+    lastBottomSpecificationResidual = evaluateSpecErrorSafely(bottomSpecification);
+  }
+
+  /**
+   * Evaluate a specification residual for diagnostics without interrupting a solve.
+   *
+   * @param spec the specification to evaluate
+   * @return current residual, zero for no specification, or {@code Double.NaN} if unavailable
+   */
+  private double evaluateSpecErrorSafely(ColumnSpecification spec) {
+    if (spec == null) {
+      return 0.0;
+    }
+    try {
+      return evaluateSpecError(spec);
+    } catch (Exception ex) {
+      logger.debug("Could not evaluate column specification residual", ex);
+      return Double.NaN;
+    }
+  }
+
   /**
    * Check whether a single column specification is satisfied.
    *
@@ -561,28 +591,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveSelectedSolver(UUID id) {
-    switch (solverType) {
-      case DAMPED_SUBSTITUTION:
-        solveSequential(id, relaxationFactor);
-        break;
-      case INSIDE_OUT:
-        solveInsideOut(id);
-        break;
-      case WEGSTEIN:
-        solveWegstein(id);
-        break;
-      case SUM_RATES:
-        solveSumRates(id);
-        break;
-      case NEWTON:
-        solveNewton(id);
-        break;
-      case DIRECT_SUBSTITUTION:
-      default:
-        solveSequential(id, 1.0);
-        break;
-    }
+  private ColumnSolveResult solveSelectedSolver(UUID id) {
+    return ColumnSolverFactory.create(solverType).solve(this, id);
   }
 
   /**
@@ -654,6 +664,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Evaluate specification errors
       double topError = adjustTop ? evaluateSpecError(topSpecification) : 0.0;
       double bottomError = adjustBottom ? evaluateSpecError(bottomSpecification) : 0.0;
+      lastTopSpecificationResidual = topError;
+      lastBottomSpecificationResidual = bottomError;
 
       logger.info("Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}", outerIter,
           topError, bottomError, adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
@@ -751,6 +763,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void solveInner(UUID id) {
     solveSelectedSolver(id);
+  }
+
+  /**
+   * Solve using direct substitution.
+   *
+   * @param id calculation identifier
+   */
+  void solveDirectSubstitution(UUID id) {
+    solveSequential(id, 1.0);
+  }
+
+  /**
+   * Solve using damped substitution and the configured relaxation factor.
+   *
+   * @param id calculation identifier
+   */
+  void solveDampedSubstitution(UUID id) {
+    solveSequential(id, relaxationFactor);
   }
 
   /**
@@ -1506,7 +1536,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveInsideOut(UUID id) {
+  void solveInsideOut(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2262,15 +2292,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Solve the column using the adaptive sequential substitution scheme with a damped starting step.
-   *
-   * @param id calculation identifier
-   */
-  private void runDamped(UUID id) {
-    solveSequential(id, relaxationFactor);
-  }
-
-  /**
    * Solve the column using Wegstein acceleration of successive substitution.
    *
    * <p>
@@ -2282,7 +2303,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveWegstein(UUID id) {
+  void solveWegstein(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2464,7 +2485,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveSumRates(UUID id) {
+  void solveSumRates(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2626,7 +2647,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveNewton(UUID id) {
+  void solveNewton(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -3240,6 +3261,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public double getLastEnergyResidual() {
     return lastEnergyResidual;
+  }
+
+  /**
+   * Retrieve the latest top specification residual.
+   *
+   * @return top specification residual as current value minus target value
+   */
+  public double getLastTopSpecificationResidual() {
+    return lastTopSpecificationResidual;
+  }
+
+  /**
+   * Retrieve the latest bottom specification residual.
+   *
+   * @return bottom specification residual as current value minus target value
+   */
+  public double getLastBottomSpecificationResidual() {
+    return lastBottomSpecificationResidual;
+  }
+
+  /**
+   * Retrieve the largest absolute active specification residual.
+   *
+   * @return maximum absolute top or bottom specification residual
+   */
+  public double getLastSpecificationResidual() {
+    return Math.max(Math.abs(lastTopSpecificationResidual),
+        Math.abs(lastBottomSpecificationResidual));
   }
 
   /**

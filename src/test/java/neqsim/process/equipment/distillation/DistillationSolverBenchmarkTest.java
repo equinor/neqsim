@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -207,6 +208,53 @@ public class DistillationSolverBenchmarkTest {
 
     column.setSolverType(DistillationColumn.SolverType.WEGSTEIN);
     assertEquals(DistillationColumn.SolverType.WEGSTEIN, column.getSolverType());
+  }
+
+  /**
+   * Test that every public solver enum has a mapped solver strategy.
+   */
+  @Test
+  public void solverFactoryCoversAllSolverTypes() {
+    for (DistillationColumn.SolverType solverType : DistillationColumn.SolverType.values()) {
+      ColumnSolver solver = ColumnSolverFactory.create(solverType);
+      assertNotNull(solver, solverType.name() + " should have a solver strategy");
+      assertEquals(solverType, solver.getSolverType());
+    }
+  }
+
+  /**
+   * Test component material closure for the standard deethanizer benchmark.
+   */
+  @Test
+  public void componentMaterialBalancesCloseOnDeethanizer() {
+    Stream feed = new Stream("component_balance_feed", createDeethanizerFeed().clone());
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("component_balance_column", 5, true, false);
+    column.addFeedStream(feed, 5);
+    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.setMaxNumberOfIterations(50);
+    column.run();
+
+    assertTrue(column.solved(), "Component balance case should converge");
+
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
+        "n-butane", "i-pentane", "n-pentane", "n-hexane", "n-heptane"};
+
+    for (int i = 0; i < componentNames.length; i++) {
+      String componentName = componentNames[i];
+      double feedFlow = feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+      double productFlow =
+          column.getGasOutStream().getFluid().getComponent(componentName).getTotalFlowRate("mol/hr")
+              + column.getLiquidOutStream().getFluid().getComponent(componentName)
+                  .getTotalFlowRate("mol/hr");
+      double tolerance = Math.max(1.0e-8, Math.abs(feedFlow) * 5.0e-2);
+      assertEquals(feedFlow, productFlow, tolerance,
+          componentName + " component flow should close across products");
+    }
   }
 
   /**
