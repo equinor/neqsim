@@ -145,8 +145,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
           newParameters.set(0, i, sampleSet.getSample(0).getFunction().getUpperBound(i));
         }
       }
-      System.out.println("bounds checked - errors: " + errors);
-      System.out.println(okstring);
+      logger.debug("bounds checked - errors: {}{}", errors,
+          okstring.trim().isEmpty() ? "" : "\n" + okstring);
     }
   }
 
@@ -348,7 +348,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public void calcCoVarianceMatrix() {
     double old = multiFactor;
     multiFactor = 0.0;
-    calcAlphaMatrix();
+    alpha = calcAlphaMatrix();
     coVarianceMatrix = new Matrix(alpha).inverse();
     multiFactor = old;
   }
