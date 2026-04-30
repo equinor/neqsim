@@ -14,6 +14,7 @@ Guide for distillation column modeling and design in NeqSim.
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
 
 // Create feed
 SystemInterface feed = new SystemSrkEos(273.15 + 50.0, 15.0);
@@ -36,7 +37,7 @@ column.addFeedStream(feedStream, 8);  // Feed on stage 8
 
 // Specifications
 column.setCondenserTemperature(273.15 - 30.0);  // Kelvin
-column.getReboiler().setReboilerDuty(1e6);       // Watts
+column.getReboiler().setHeatInput(1e6);          // Watts
 // OR set reflux ratio:
 // column.getCondenser().setRefluxRatio(2.5);
 
@@ -46,14 +47,17 @@ column.run();
 ## Solver Selection
 
 ```java
-// Standard (default) — Newton-Raphson stage-by-stage
-column.setSolverType(DistillationColumn.SolverType.Standard);
+// Direct substitution (default) - robust sequential tray sweeps
+column.setSolverType(DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
 
 // Inside-Out — faster for ideal/near-ideal systems
 column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
 
-// Damped — for difficult convergence
-column.setSolverType(DistillationColumn.SolverType.Standard);
+// Damped substitution - for difficult convergence
+column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+
+// MESH residual monitor - for residual auditing and Newton polishing
+column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
 // Adjust max iterations
 column.setMaxNumberOfIterations(200);
 ```
@@ -62,11 +66,12 @@ column.setMaxNumberOfIterations(200);
 
 | System Type | Recommended Solver | Notes |
 |------------|-------------------|-------|
-| Ideal HC (demethanizer, deethanizer) | Inside-Out | Fast, robust |
-| Non-ideal (alcohols, water) | Standard | Better for non-ideal K-values |
-| Absorbers (no condenser/reboiler) | Standard | Inside-Out needs reflux |
-| Wide-boiling (C1 to C20+) | Standard with damping | Increase iterations |
-| Cryogenic (< -100°C) | Standard | Careful with phase identification |
+| Ideal HC (demethanizer, deethanizer) | `INSIDE_OUT` | Fast, robust |
+| Non-ideal (alcohols, water) | `DAMPED_SUBSTITUTION` or `DIRECT_SUBSTITUTION` | More conservative for non-ideal K-values |
+| Absorbers (no condenser/reboiler) | `SUM_RATES` or `DIRECT_SUBSTITUTION` | Flow-corrected updates can help absorber/stripper cases |
+| Wide-boiling (C1 to C20+) | `DAMPED_SUBSTITUTION` | Increase iterations and monitor residuals |
+| Cryogenic (< -100°C) | `INSIDE_OUT` with residual diagnostics | Careful with phase identification |
+| Solver audit / residual convergence | `MESH_RESIDUAL` | Records material, equilibrium, summation, energy, and specification residuals |
 
 ## Column Specification Combinations
 
@@ -74,7 +79,7 @@ column.setMaxNumberOfIterations(200);
 |------------|---------|---------|
 | Reboiler duty | Condenser temperature | Most common |
 | Reboiler duty | Reflux ratio | Alternative |
-| Bottom product rate | Condenser temperature | Product-based |
+| Top product purity | Reboiler duty | Product-quality control |
 | Bottom temperature | Reflux ratio | Direct T control |
 
 ```java
@@ -82,15 +87,15 @@ column.setMaxNumberOfIterations(200);
 
 // Pattern 1: Condenser T + Reboiler duty
 column.setCondenserTemperature(273.15 - 30.0);
-column.getReboiler().setReboilerDuty(1.5e6);
+column.getReboiler().setHeatInput(1.5e6);
 
 // Pattern 2: Reflux ratio + Reboiler duty
 column.getCondenser().setRefluxRatio(3.0);
-column.getReboiler().setReboilerDuty(2.0e6);
+column.getReboiler().setHeatInput(2.0e6);
 
-// Pattern 3: Product rates
-column.getCondenser().setDistillateFlowRate(5000.0, "kg/hr");
-column.getReboiler().setReboilerDuty(1.5e6);
+// Pattern 3: Product quality plus boilup ratio
+column.setTopProductPurity("ethane", 0.98);
+column.setReboilerBoilupRatio(2.0);
 ```
 
 ## Reading Column Results
@@ -107,7 +112,7 @@ Stream overhead = (Stream) column.getGasOutStream();
 Stream bottoms = (Stream) column.getLiquidOutStream();
 
 // Stage temperatures and compositions
-for (int stage = 0; stage < column.getNumberOfStages(); stage++) {
+for (int stage = 0; stage < column.getTrays().size(); stage++) {
     double stageTemp = column.getTray(stage).getTemperature() - 273.15;
     // Composition on each stage
 }
@@ -165,7 +170,7 @@ $$
 | Problem | Solution |
 |---------|----------|
 | Column does not converge | Increase max iterations to 200-500 |
-| Oscillating temperature profile | Reduce condenser/reboiler specs, use Standard solver |
+| Oscillating temperature profile | Reduce condenser/reboiler specs, use `DAMPED_SUBSTITUTION` or `MESH_RESIDUAL` |
 | Wrong product split | Check feed tray location and specifications |
 | Negative flows on stages | Too many stages or wrong specifications |
 | Condenser too cold | Check if subcooled liquid is physical (binary dewpoint) |
