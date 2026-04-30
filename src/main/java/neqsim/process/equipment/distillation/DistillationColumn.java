@@ -99,7 +99,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /** Sum-rates tearing method with flow correction. */
     SUM_RATES,
     /** Newton-Raphson tray-temperature correction accelerator, not a full MESH Newton solver. */
-    NEWTON
+    NEWTON,
+    /** MESH residual-monitored solve with inside-out initialization and Newton polishing. */
+    MESH_RESIDUAL
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
@@ -194,6 +196,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastTopSpecificationResidual = 0.0;
   /** Last reported bottom specification residual. */
   private double lastBottomSpecificationResidual = 0.0;
+  /** Latest MESH residual diagnostics. */
+  private transient ColumnMeshResidual lastMeshResidual = null;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
 
@@ -494,10 +498,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (hasAdjustableSpecifications()) {
       solveWithSpecifications(id);
       updateSpecificationResiduals();
+      updateMeshResiduals();
       return;
     }
     solveInner(id);
     updateSpecificationResiduals();
+    updateMeshResiduals();
   }
 
   /** Apply specifications that map directly to condenser or reboiler controls. */
@@ -553,6 +559,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void updateSpecificationResiduals() {
     lastTopSpecificationResidual = evaluateSpecErrorSafely(topSpecification);
     lastBottomSpecificationResidual = evaluateSpecErrorSafely(bottomSpecification);
+  }
+
+  /** Update the stored specification residuals for package-level diagnostics. */
+  void updateSpecificationResidualDiagnostics() {
+    updateSpecificationResiduals();
+  }
+
+  /** Update the stored MESH residual diagnostics for the current column state. */
+  private void updateMeshResiduals() {
+    lastMeshResidual = ColumnMeshResidualEvaluator.evaluate(this);
   }
 
   /**
@@ -781,6 +797,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   void solveDampedSubstitution(UUID id) {
     solveSequential(id, relaxationFactor);
+  }
+
+  /**
+   * Solve using inside-out initialization and temperature-Newton polishing while reporting MESH
+   * residual diagnostics.
+   *
+   * @param id calculation identifier
+   */
+  void solveMeshResidual(UUID id) {
+    solveInsideOut(id);
+    updateMeshResiduals();
+    if (lastMeshResidual == null || !lastMeshResidual.isFinite()
+        || lastMeshResidual.getInfinityNorm() > 1.0) {
+      logger.debug("MESH residual monitor requested Newton polish; residual={}",
+          lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm());
+      solveNewton(id);
+      updateMeshResiduals();
+    }
   }
 
   /**
@@ -3289,6 +3323,88 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public double getLastSpecificationResidual() {
     return Math.max(Math.abs(lastTopSpecificationResidual),
         Math.abs(lastBottomSpecificationResidual));
+  }
+
+  /**
+   * Retrieve the latest MESH residual vector infinity norm.
+   *
+   * @return maximum absolute MESH residual, or {@code Double.NaN} if no solve has been run
+   */
+  public double getLastMeshResidualNorm() {
+    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
+  }
+
+  /**
+   * Retrieve the latest MESH material residual infinity norm.
+   *
+   * @return maximum absolute component material residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshMaterialResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.MATERIAL);
+  }
+
+  /**
+   * Retrieve the latest MESH equilibrium residual infinity norm.
+   *
+   * @return maximum absolute equilibrium residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshEquilibriumResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.EQUILIBRIUM);
+  }
+
+  /**
+   * Retrieve the latest MESH summation residual infinity norm.
+   *
+   * @return maximum absolute summation residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshSummationResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
+  }
+
+  /**
+   * Retrieve the latest MESH energy residual infinity norm.
+   *
+   * @return maximum absolute energy residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshEnergyResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.ENERGY);
+  }
+
+  /**
+   * Retrieve the latest MESH specification residual infinity norm.
+   *
+   * @return maximum absolute specification residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshSpecificationResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.SPECIFICATION);
+  }
+
+  /**
+   * Retrieve a copy of the latest MESH residual vector.
+   *
+   * @return residual vector copy, or an empty array if no solve has been run
+   */
+  public double[] getLastMeshResidualVector() {
+    return lastMeshResidual == null ? new double[0] : lastMeshResidual.getValues();
+  }
+
+  /**
+   * Retrieve the latest internal MESH residual diagnostics.
+   *
+   * @return latest residual diagnostics, or null if no solve has been run
+   */
+  ColumnMeshResidual getLastMeshResidual() {
+    return lastMeshResidual;
+  }
+
+  /**
+   * Get a MESH residual norm by equation type.
+   *
+   * @param equationType equation type to inspect
+   * @return infinity norm for that equation type, or {@code Double.NaN} if unavailable
+   */
+  private double getLastMeshResidualNorm(ColumnMeshEquationType equationType) {
+    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm(equationType);
   }
 
   /**

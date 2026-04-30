@@ -27,6 +27,8 @@ final class ColumnSolverFactory {
   private static final ColumnSolver SUM_RATES = new SumRatesSolver();
   /** Temperature Newton strategy. */
   private static final ColumnSolver NEWTON = new TemperatureNewtonSolver();
+  /** MESH residual-monitored strategy. */
+  private static final ColumnSolver MESH_RESIDUAL = new MeshResidualSolver();
 
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
@@ -49,6 +51,8 @@ final class ColumnSolverFactory {
         return SUM_RATES;
       case NEWTON:
         return NEWTON;
+      case MESH_RESIDUAL:
+        return MESH_RESIDUAL;
       case DIRECT_SUBSTITUTION:
       default:
         return DIRECT;
@@ -148,6 +152,22 @@ final class ColumnSolverFactory {
     @Override
     public DistillationColumn.SolverType getSolverType() {
       return DistillationColumn.SolverType.NEWTON;
+    }
+  }
+
+  /** MESH residual-monitored adapter. */
+  private static final class MeshResidualSolver implements ColumnSolver {
+    /** {@inheritDoc} */
+    @Override
+    public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.solveMeshResidual(id);
+      return ColumnSolveResult.from(column, getSolverType());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public DistillationColumn.SolverType getSolverType() {
+      return DistillationColumn.SolverType.MESH_RESIDUAL;
     }
   }
 }
