@@ -406,6 +406,84 @@ class UniSimOperation:
     properties: Dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class UniSimOperationHandler:
+    """Mapping policy for one UniSim operation type.
+
+    The converter keeps NeqSim's physical model classes native and records
+    UniSim-specific behavior in this adapter registry.  ``strategy`` describes
+    why an operation maps to its target: native physics, adapter placeholder,
+    reference-only specification logic, controller/comment-only support, or
+    column internals.  ``stream_role`` tells topology reconstruction whether
+    material stream feeds/products should create producer-consumer edges.
+    """
+    neqsim_type: Optional[str]
+    strategy: str
+    stream_role: str
+    note: str = ''
+
+    @property
+    def is_material_stream_operation(self) -> bool:
+        """Return True if the operation should define material topology."""
+        return self.stream_role == 'material'
+
+
+def _build_unisim_operation_handlers(
+        operation_type_map: Dict[str, str]) -> Dict[str, UniSimOperationHandler]:
+    """Build operation mapping metadata from the type map.
+
+    Args:
+        operation_type_map: UniSim operation type to NeqSim type mapping.
+
+    Returns:
+        Mapping from normalized UniSim type name to operation handler metadata.
+    """
+    adapter_ops = frozenset(('balanceop', 'virtualstreamop', 'templateop'))
+    reference_ops = frozenset(('adjust', 'setop', 'spreadsheetop'))
+    controller_ops = frozenset(('pidfbcontrolop', 'surgecontroller',
+                                'logicalop', 'selectop'))
+    column_internal_ops = frozenset(('partialcondenser', 'totalcondenser',
+                                     'condenser3op', 'traysection',
+                                     'bpreboiler'))
+    skipped_utility_ops = frozenset(('blowdowngenesimop',))
+
+    handlers: Dict[str, UniSimOperationHandler] = {}
+    for type_name, neqsim_type in operation_type_map.items():
+        strategy = 'native'
+        stream_role = 'material'
+        note = 'Native NeqSim equipment is used for the physical model.'
+        if type_name in adapter_ops:
+            strategy = 'adapter'
+            note = ('UniSim-specific topology or placeholder behavior is '
+                    'preserved through an adapter block.')
+        elif type_name in reference_ops:
+            strategy = 'reference'
+            stream_role = 'reference'
+            note = ('Specification or spreadsheet logic is represented by a '
+                    'reference object instead of material topology.')
+        elif type_name in controller_ops:
+            strategy = 'control'
+            stream_role = 'none'
+            note = ('Control or logical behavior is generated as comments or '
+                    'controller metadata, not as material equipment.')
+        elif type_name in column_internal_ops:
+            strategy = 'column_internal'
+            stream_role = 'none'
+            note = ('Column internals inform column configuration and are not '
+                    'standalone material equipment.')
+        elif type_name in skipped_utility_ops:
+            strategy = 'skip'
+            stream_role = 'none'
+            note = 'Non-physical UniSim utility operation.'
+        handlers[type_name] = UniSimOperationHandler(
+            neqsim_type=neqsim_type,
+            strategy=strategy,
+            stream_role=stream_role,
+            note=note,
+        )
+    return handlers
+
+
 @dataclass
 class UniSimFlowsheet:
     """A complete flowsheet (main or sub-flowsheet)."""
@@ -507,6 +585,7 @@ class UniSimReader:
         'spreadsheetop': 'SpreadsheetBlock',
         'templateop': 'SubFlowsheet',
         'absorberop': 'Absorber',
+        'virtualstreamop': 'UnisimCalculator',
         # Reactor subtypes — map to specific NeqSim reactor classes
         'reactorop': 'GibbsReactor',
         'pfreactorop': 'PlugFlowReactor',
@@ -532,14 +611,46 @@ class UniSimReader:
         'traysection': 'ColumnInternals',
         'bpreboiler': 'ColumnInternals',
         # Utility / logic ops
-        'balanceop': 'Adjuster',
+        'balanceop': 'UnisimCalculator',
         'logicalop': 'LogicalOp',
         'selectop': 'LogicalOp',
+        'blowdowngenesimop': 'BlowdownGeneSim',
     }
+
+    OPERATION_HANDLERS = _build_unisim_operation_handlers(OPERATION_TYPE_MAP)
 
     # Set of all reactor NeqSim types (for generic handling)
     REACTOR_TYPES = frozenset(('GibbsReactor', 'PlugFlowReactor',
                                'StirredTankReactor'))
+
+    @classmethod
+    def get_operation_handler(
+            cls, type_name: str) -> Optional[UniSimOperationHandler]:
+        """Return the operation handler for a UniSim operation type.
+
+        Args:
+            type_name: UniSim internal operation type name.
+
+        Returns:
+            Handler metadata, or ``None`` when the type is not known.
+        """
+        return cls.OPERATION_HANDLERS.get((type_name or '').lower())
+
+    @classmethod
+    def is_material_stream_operation(cls, type_name: str) -> bool:
+        """Return True if this operation should define material topology.
+
+        Unknown operation types are treated as material stream operations so
+        skipped stream-carrying blocks remain visible as converter warnings.
+
+        Args:
+            type_name: UniSim internal operation type name.
+
+        Returns:
+            True when feeds/products should be used for topology edges.
+        """
+        handler = cls.get_operation_handler(type_name)
+        return handler is None or handler.is_material_stream_operation
 
     # UniSim component name → NeqSim component name mapping
     COMPONENT_NAME_MAP = {
@@ -1870,13 +1981,49 @@ class UniSimToNeqSim:
         - Horizontal 2-phase flashtank → Separator (default)
         - sep3op always → ThreePhaseSeparator (regardless of orientation)
         """
-        base_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
-        if base_type is None:
+        handler = UniSimReader.get_operation_handler(op.type_name)
+        if handler is None or handler.neqsim_type is None:
             return None
+        base_type = handler.neqsim_type
         # Vertical 2-phase separator → GasScrubber
         if base_type == 'Separator' and op.properties.get('detected_vertical'):
             return 'GasScrubber'
         return base_type
+
+    def _build_operation_mapping_summary(self) -> List[Dict[str, Any]]:
+        """Build a compact operation mapping summary for JSON traceability.
+
+        Returns:
+            List of mapping records, one per UniSim operation type present in
+            the imported model.
+        """
+        type_counts: Dict[str, int] = {}
+        for op in self.model.all_operations():
+            type_name = (op.type_name or '').lower()
+            type_counts[type_name] = type_counts.get(type_name, 0) + 1
+
+        summary: List[Dict[str, Any]] = []
+        for type_name in sorted(type_counts):
+            handler = UniSimReader.get_operation_handler(type_name)
+            if handler is None:
+                summary.append({
+                    'unisimType': type_name,
+                    'neqsimType': None,
+                    'strategy': 'unsupported',
+                    'streamRole': 'material',
+                    'count': type_counts[type_name],
+                    'note': 'No converter mapping is registered.',
+                })
+            else:
+                summary.append({
+                    'unisimType': type_name,
+                    'neqsimType': handler.neqsim_type,
+                    'strategy': handler.strategy,
+                    'streamRole': handler.stream_role,
+                    'count': type_counts[type_name],
+                    'note': handler.note,
+                })
+        return summary
 
     def to_json(self, include_subflowsheets: bool = True,
                 full_mode: bool = True) -> Dict:
@@ -1898,6 +2045,7 @@ class UniSimToNeqSim:
             '_source': f'UniSim: {self.model.file_name}',
             '_unisim_property_package': (self.model.fluid_packages[0].property_package
                                         if self.model.fluid_packages else 'Unknown'),
+            '_unisim_operation_mapping': self._build_operation_mapping_summary(),
         }
 
         # Map fluid/EOS
@@ -2345,13 +2493,9 @@ class UniSimToNeqSim:
         # Build stream→operation connectivity map across all flowsheets
         stream_producer = {}  # stream_name → (operation_name, port)
         stream_consumer = {}  # stream_name → [(operation_name, port)]
-        # Operation types that do not actually produce/consume streams
-        _NON_STREAM_OPS = {'spreadsheetop', 'virtualstreamop',
-                           'blowdowngenesimop'}
-
         for op in all_operations:
             op_type = getattr(op, 'type_name', '') or ''
-            if op_type in _NON_STREAM_OPS:
+            if not UniSimReader.is_material_stream_operation(op_type):
                 continue  # skip non-physical operations
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
@@ -2527,6 +2671,10 @@ class UniSimToNeqSim:
             tol = op.properties.get('tolerance')
             if tol is not None:
                 props['tolerance'] = tol
+
+        elif neqsim_type == 'UnisimCalculator':
+            props['sourceOperationType'] = op.type_name
+            props['calculationMode'] = 'passThrough'
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor → emit as ComponentSplitter
@@ -3004,15 +3152,13 @@ class UniSimToNeqSim:
         # which streams are produced and which are true external feeds.
         # Sub-flowsheet consumer/producer info is needed to avoid
         # creating spurious feed-stream declarations.
-        _NON_STREAM_OPS = {'spreadsheetop', 'virtualstreamop',
-                           'blowdowngenesimop'}
         stream_producer: dict = {}
         _all_ops_flat = list(flowsheet.operations)
         for sf in flowsheet.sub_flowsheets:
             _all_ops_flat.extend(sf.operations)
         for op in _all_ops_flat:
             op_type = getattr(op, 'type_name', '') or ''
-            if op_type in _NON_STREAM_OPS:
+            if not UniSimReader.is_material_stream_operation(op_type):
                 continue
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
@@ -3020,7 +3166,7 @@ class UniSimToNeqSim:
         external_feeds: set = set()
         for op in _all_ops_flat:
             op_type = getattr(op, 'type_name', '') or ''
-            if op_type in _NON_STREAM_OPS:
+            if not UniSimReader.is_material_stream_operation(op_type):
                 continue
             for s in op.feeds:
                 if s not in stream_producer:
@@ -3202,6 +3348,7 @@ class UniSimToNeqSim:
         'SetPoint = jneqsim.process.equipment.util.SetPoint',
         'StreamSaturatorUtil = jneqsim.process.equipment.util.StreamSaturatorUtil',
         'SpreadsheetBlock = jneqsim.process.equipment.util.SpreadsheetBlock',
+        'UnisimCalculator = jneqsim.process.equipment.util.UnisimCalculator',
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
         'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
         'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
@@ -3538,6 +3685,15 @@ class UniSimToNeqSim:
             lines.append(
                 f'{v} = StreamSaturatorUtil("{op.name}", {ref_expr})')
 
+        elif neqsim_type == 'UnisimCalculator':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else None
+            if ref_expr is None:
+                lines.append(f'{v} = UnisimCalculator("{op.name}")')
+            else:
+                lines.append(f'{v} = UnisimCalculator("{op.name}", {ref_expr})')
+            lines.append(f'{v}.setSourceOperationType("{op.type_name}")')
+            lines.append(f'{v}.setCalculationMode("passThrough")')
+
         elif neqsim_type == 'SpreadsheetBlock':
             lines.append(f'{v} = SpreadsheetBlock("{op.name}")')
             # Wire inlet stream imports if available
@@ -3846,6 +4002,9 @@ class UniSimToNeqSim:
         """
         stream_producer: dict = {}
         for op in sf.operations:
+            op_type = getattr(op, 'type_name', '') or ''
+            if not UniSimReader.is_material_stream_operation(op_type):
+                continue
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
         # Also include parent stream_producer for cross-flowsheet refs
@@ -3855,6 +4014,9 @@ class UniSimToNeqSim:
 
         external_feeds: set = set()
         for op in sf.operations:
+            op_type = getattr(op, 'type_name', '') or ''
+            if not UniSimReader.is_material_stream_operation(op_type):
+                continue
             for s in op.feeds:
                 if s not in stream_producer:
                     external_feeds.add(s)
@@ -4227,6 +4389,10 @@ class UniSimToNeqSim:
             return (f'**{op.name}** performs user-defined calculations via '
                     f'imported stream variables and formula cells.')
 
+        elif neqsim_type == 'UnisimCalculator':
+            return (f'**{op.name}** preserves a UniSim calculator, balance, '
+                    f'or virtual stream block as a pass-through topology node.')
+
         elif neqsim_type == 'SubFlowsheet':
             return (f'**{op.name}** encapsulates a nested sub-process that '
                     f'runs as an independent module within the main flowsheet.')
@@ -4306,7 +4472,7 @@ class UniSimToNeqSim:
             'Absorber': 'absorber',
             'DistillationColumn': 'column',
             'StreamSaturatorUtil': 'utility', 'SpreadsheetBlock': 'utility',
-            'SubFlowsheet': 'utility',
+            'UnisimCalculator': 'utility', 'SubFlowsheet': 'utility',
             'PIDController': 'controller', 'LogicalOp': 'controller',
             'Adjuster': 'utility', 'SetPoint': 'utility',
         }

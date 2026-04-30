@@ -1,6 +1,6 @@
 ---
 name: neqsim-unisim-reader
-description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to NeqSim ProcessSystem / ProcessModule structures. USE WHEN: a user has UniSim/HYSYS simulation files and wants to recreate or compare the model in NeqSim. Covers COM API navigation, component mapping, EOS mapping, operation type mapping, topology reconstruction, sub-flowsheet handling, and result verification."
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to NeqSim ProcessSystem / ProcessModule structures. USE WHEN: a user has UniSim/HYSYS simulation files and wants to recreate or compare the model in NeqSim. Covers COM API navigation, component mapping, E300 fluid transfer, operation-handler registry strategy, topology reconstruction, sub-flowsheet handling, and result verification."
 last_verified: "2026-07-04"
 ---
 
@@ -393,6 +393,27 @@ result = converter.build_and_run()
 
 UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types:
 
+### Mapping Architecture
+
+`devtools/unisim_reader.py` uses a typed `UniSimOperationHandler` registry. Do
+not add scattered local skip lists or one physical NeqSim class per UniSim name.
+The registry records:
+
+| Field | Meaning |
+|-------|---------|
+| `neqsim_type` | Target NeqSim type or converter pseudo-type |
+| `strategy` | `native`, `adapter`, `reference`, `control`, `column_internal`, or `skip` |
+| `stream_role` | `material`, `reference`, or `none` for topology reconstruction |
+| `note` | Human-readable rationale written to JSON mapping summaries |
+
+**Policy:** Native physical UniSim operations map to native NeqSim equipment.
+UniSim-specific topology placeholders use `UnisimCalculator`; spreadsheets and
+set/adjust logic are reference objects; controllers and logical operations do
+not create material topology edges; column internals configure the column rather
+than becoming standalone equipment. Generated JSON includes
+`_unisim_operation_mapping` so imported cases can audit the strategy used for
+each UniSim operation type present in the model.
+
 ### Core Process Equipment
 
 | UniSim TypeName | NeqSim Type | Description |
@@ -413,8 +434,9 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 | `adjust` | `Adjuster` | Process variable adjuster |
 | `setop` | `SetPoint` | Set variable/propagation |
 | `saturateop` | `StreamSaturatorUtil` | Stream saturator |
-| `spreadsheetop` | `Spreadsheet` | Spreadsheet calculator (skipped in code gen) |
-| `templateop` | `SubFlowsheet` | Sub-flowsheet template |
+| `spreadsheetop` | `SpreadsheetBlock` | Spreadsheet calculator/reference block; formulas need explicit import/export cell extraction |
+| `templateop` | `SubFlowsheet` / `UnisimCalculator` | Sub-flowsheet template or interface placeholder; JSON factory aliases placeholder builds to `UnisimCalculator` |
+| `virtualstreamop` | `UnisimCalculator` | Virtual stream/topology adapter with pass-through outlet |
 
 ### Columns & Absorbers
 
@@ -466,16 +488,23 @@ UniSim internal operation type names (from `op.TypeName`) mapped to NeqSim types
 |-----------------|-------------|-------------|
 | `pidfbcontrolop` | `PIDController` | PID feedback controller |
 | `surgecontroller` | `SurgeController` | Surge controller (skipped) |
-| `balanceop` | `BalanceOp` | Balance utility |
+| `balanceop` | `UnisimCalculator` | Balance/topology adapter with pass-through outlet and source-operation metadata |
 | `logicalop` | `LogicalOp` | Logic operation (skipped) |
 | `selectop` | `LogicalOp` | Selector (skipped) |
 
-### Operations Always Skipped in Code Generation
+### Handler Strategies and Skipped Operations
 
-The following `SKIPPED_NEQSIM_TYPES` are recognized but produce only
-comment lines — they have no standalone NeqSim representation:
+The handler registry determines whether material topology is created. The
+following types are recognized but do not become standalone material equipment:
+
 - `SurgeController` — Compressor surge control logic
 - `ColumnInternals` — Sub-parts of column operations (condenser, reboiler, tray sections)
+- `LogicalOp` — logical/select operations produce comments or controller metadata
+- `BlowdownGeneSim` — non-physical UniSim utility operation
+
+Use `UniSimReader.is_material_stream_operation(type_name)` when modifying
+topology reconstruction. Unknown operation types are treated as material stream
+operations so skipped stream-carrying blocks remain visible as warnings.
 
 ---
 
@@ -1127,41 +1156,46 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
     or manual tuning may be needed
 13. **Compressor efficiency** — COM extraction sometimes returns `None` even when
     the UniSim model has efficiency data; defaults to 75% isentropic
-14. **Spreadsheet operations** — produce a skip comment; no calculation logic transferred
-15. **Logical / balance operations** — produce skip comments
-16. **DistillationColumn solver divergence** — NeqSim's sequential-substitution and
+14. **Spreadsheet operations** — represented as `SpreadsheetBlock`, but formula
+   fidelity depends on extracting import/export cells and formulas from COM.
+15. **Logical operations** — produce comments/controller metadata; no executable
+   process logic is transferred.
+16. **Balance, virtual-stream, and template placeholders** — represented through
+   `UnisimCalculator`/`SubFlowsheet` adapters to preserve topology. This solves
+   structural build gaps but not detailed specification or formula semantics.
+17. **DistillationColumn solver divergence** — NeqSim's sequential-substitution and
     inside-out column solvers diverge for C3/C4-rich (NGL-range) feeds at low
     pressure. Feeds with < 30% methane and significant C3+ fractions will not
     converge. Lighter feeds (e.g. deethanizer with 51% CH4) converge reliably.
     Build the column **outside** the `ProcessSystem` to avoid re-run divergence.
     See the TUTOR1 notebook for a worked example.
-17. **HeatExchanger pressure drops** — NeqSim `HeatExchanger` does not model
+18. **HeatExchanger pressure drops** — NeqSim `HeatExchanger` does not model
     pressure drops; outlet pressures equal inlet pressures. UniSim models
     typically include 0.5–1.0 bar pressure drop per side. This causes small
     temperature deviations in downstream equipment.
-18. **HeatExchanger UA tuning** — The `HeatExchanger.setUAvalue()` parameter
+19. **HeatExchanger UA tuning** — The `HeatExchanger.setUAvalue()` parameter
     must be tuned to match UniSim's heat duty. Counter-current heat balance
     differences between UniSim and NeqSim typically produce 1–2°C deviation
     on outlet temperatures.
-19. **Full ProcessModel timeout** — Large models with 5+ sub-flowsheets, 10+
+20. **Full ProcessModel timeout** — Large models with 5+ sub-flowsheets, 10+
     recycles, and Adjusters may time out during `plant.run()` even with relaxed
     recycle tolerances. Root cause is typically the combination of Adjuster
     iteration, absorber column convergence, and multi-area coordination.
     **Workaround**: Test individual ProcessSystem areas or connected sub-paths
     first, then build up incrementally. The connected main-path approach (no
     recycles, manual feed data) runs in < 1 second for even large models.
-20. **Separator liquid MW deviation** — When UniSim separators have
+21. **Separator liquid MW deviation** — When UniSim separators have
     `has_water_product=False` (2-product), the NeqSim `Separator` includes
     water in the liquid phase. This causes liquid MW to be lower than UniSim's
     value (water dilutes the MW). Using `ThreePhaseSeparator` overcorrects by
     removing ALL water. Expect 20-40% liquid MW deviation at low/medium
     pressures. Gas MW and temperatures are much more accurate.
-21. **Utility sub-flowsheets excluded** — In `full_mode=True`, sub-flowsheets
+22. **Utility sub-flowsheets excluded** — In `full_mode=True`, sub-flowsheets
     classified as "utility" (no shared streams with process flowsheet) are
     excluded. This is correct for heating/cooling medium loops but may
     miss utility systems that interact with process streams through
     non-standard connections.
-22. **E300 fluid parity is necessary but not sufficient** — A full-fluid E300
+23. **E300 fluid parity is necessary but not sufficient** — A full-fluid E300
    route fixes component-property transfer, but it does not reconcile UniSim
    virtual streams, spreadsheet/balance calculations, template units, or
    sub-flowsheet interface wiring. Keep the verification report split into
@@ -1412,3 +1446,23 @@ This is the first full-mode verified conversion with sub-flowsheet classificatio
    5% for most equipment. Use temperature as the primary validation metric;
    MW and flow deviations are often caused by liquid-phase water handling
    rather than thermodynamic model errors.
+
+### Operation Handler Registry Lessons Learned
+
+For large UniSim conversions, do **not** implement every UniSim operation as a
+separate UniSim-named NeqSim equipment class. Keep the core physical API native
+to NeqSim and extend the converter registry instead:
+
+1. Add or update the `UniSimOperationHandler` entry with the correct
+   `strategy` and `stream_role`.
+2. Use native NeqSim equipment for real process physics.
+3. Use `UnisimCalculator` for stream-carrying balance, virtual-stream, and
+   template-interface placeholders when equations are not yet extracted.
+4. Use `SpreadsheetBlock` for spreadsheet formulas once import/export cells are
+   known.
+5. Promote an adapter to a real NeqSim equipment class only when equations,
+   ports, properties, and regression tests are clear.
+
+Validate registry changes with `python devtools/test_unisim_outputs.py`. The
+suite includes pure-Python checks for output modes, E300 transfer, operation
+handler strategy, and JSON `_unisim_operation_mapping` summaries.

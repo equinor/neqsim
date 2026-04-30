@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.SpreadsheetBlock;
+import neqsim.process.equipment.util.UnisimCalculator;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -598,5 +599,43 @@ class JsonProcessBuilderTest {
     assertNotNull(process.getUnit("adj"), "Adjuster should exist");
     assertNotNull(process.getUnit("comp"), "Compressor should exist");
     assertNotNull(process.getUnit("cooler"), "Cooler should exist");
+  }
+
+  @Test
+  void testBuildWithUnisimCalculatorPassThrough() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"UnisimCalculator\", \"name\": \"BAL-1\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"sourceOperationType\": \"balanceop\","
+        + "                    \"calculationMode\": \"passThrough\"}},"
+        + "  {\"type\": \"Splitter\", \"name\": \"TEE-104\"," + "   \"inlet\": \"BAL-1.outlet\","
+        + "   \"properties\": {\"splitNumber\": 2}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    assertNotNull(process.getUnit("BAL-1"));
+    assertNotNull(process.getUnit("TEE-104"));
+    assertNotNull(process.resolveStreamReference("BAL-1.outlet"));
+    assertNotNull(process.resolveStreamReference("TEE-104.split0"));
+    UnisimCalculator calculator = (UnisimCalculator) process.getUnit("BAL-1");
+    assertEquals("balanceop", calculator.getSourceOperationType());
+  }
+
+  @Test
+  void testBuildSubFlowsheetAliasAsUnisimCalculator() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 1.0}" + "}," + "\"process\": ["
+        + "  {\"type\": \"SubFlowsheet\", \"name\": \"Luva\","
+        + "   \"properties\": {\"sourceOperationType\": \"templateop\"}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    assertNotNull(result.getProcessSystem().getUnit("Luva"));
+    assertTrue(result.getProcessSystem().getUnit("Luva") instanceof UnisimCalculator);
   }
 }

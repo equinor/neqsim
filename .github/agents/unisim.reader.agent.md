@@ -1,6 +1,6 @@
 ---
 name: read unisim to neqsim
-description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (45+ types including reactors, columns, controllers), streams, sub-flowsheets, and topology. Handles recycle loops with port-specific forward reference placeholders. Generates Python scripts, Jupyter notebooks, EOT simulators, and JSON. Verifies converted models by comparing UniSim vs NeqSim stream results."
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (45+ typed operation handlers including reactors, columns, controllers, adapters), streams, sub-flowsheets, and topology. Handles E300 full-fluid transfer, registry-driven operation mapping, recycle loops with port-specific forward reference placeholders, Python scripts, Jupyter notebooks, EOT simulators, JSON, and UniSim-vs-NeqSim verification."
 argument-hint: "Provide the path to a .usc file — e.g., \"read C:\\Models\\GasPlant.usc and build a NeqSim model\", \"convert all UniSim cases in C:\\Cases\\ to NeqSim\", \"compare UniSim and NeqSim results for a platform model\"."
 ---
 
@@ -72,6 +72,15 @@ in kPa and converted to bara, and missing `AcentricFactor` is handled with
 package vectors or Edmister fallback. The generated code loads the fluid via
 `EclipseFluidReadWrite.read()` for lossless transfer of hypothetical/pseudo
 component properties.
+
+**Operation handler registry:** Operation mapping is controlled by
+`UniSimOperationHandler` metadata in `devtools/unisim_reader.py`, not by one-off
+skip lists or a parallel UniSim equipment hierarchy. Review
+`_unisim_operation_mapping` in generated JSON. Physical equipment should map to
+native NeqSim classes, stream-carrying placeholder logic (`balanceop`,
+`virtualstreamop`, template interfaces) should use `UnisimCalculator` adapters,
+spreadsheets should use `SpreadsheetBlock`, and control/logical/column-internal
+types should not create material topology edges.
 
 ### Step 3: Handle Component Mapping
 
@@ -226,10 +235,11 @@ For models built via `to_python()`:
 # Run the script, then compare manually or load as a module
 ```
 
-**Note on partial models:** Large UniSim models (100+ operations) rarely convert
-100% — some operations are skipped (Set, Adjust, Spreadsheet, custom sub-flowsheets).
-Report both the match rate (e.g., "67/181 units built") and the stream comparison
-for the successfully-built equipment.
+**Note on partial models:** Large UniSim models (100+ operations) may build
+structurally while still failing numerical verification. Report both the
+operation mapping status (native/adapter/reference/control/internal/skip from
+`_unisim_operation_mapping`) and the stream comparison for successfully-built
+equipment.
 Report fluid transfer separately from process verification: `E300 exported`,
 `E300 loaded in build route`, `structural build status`, and `numerical stream
 verification status` are distinct gates.
@@ -250,9 +260,9 @@ If deviations exceed acceptable ranges, investigate:
 4. Check EOS — PR vs SRK differences?
 5. Check equipment specs — efficiency, pressure, temperature set correctly?
 6. Check for hypothetical components affecting phase behavior
-7. Check skipped UniSim logic — virtual streams, spreadsheets, balance blocks,
-  template operations, and sub-flowsheet interface streams can dominate errors
-  even when E300 fluid parity is correct.
+7. Check registry strategies and unresolved logic — virtual-stream adapters,
+  spreadsheets, balance blocks, template operations, and sub-flowsheet interface
+  streams can dominate errors even when E300 fluid parity is correct.
 
 ### Step 7: Report
 
@@ -322,10 +332,37 @@ with UniSimReader(visible=False) as reader:
   prerequisite for serious verification, but unresolved virtual-stream,
   spreadsheet, balance, template, and sub-flowsheet-interface logic can still
   prevent the NeqSim model from matching UniSim.
+13. **Use the operation handler registry** — add new UniSim type behavior through
+  `UniSimOperationHandler` with explicit `strategy` and `stream_role`. Do not
+  add local `_NON_STREAM_OPS` lists.
+14. **Do not mirror UniSim class names blindly** — keep native NeqSim physical
+  classes for physics and use adapters (`UnisimCalculator`, `SpreadsheetBlock`)
+  for UniSim-specific topology/specification placeholders until equations and
+  tests justify a real NeqSim implementation.
 
 ---
 
 ## Important Implementation Notes (Lessons Learned)
+
+### Operation Handler Registry
+
+`devtools/unisim_reader.py` centralizes operation policy in
+`UniSimOperationHandler` records with `neqsim_type`, `strategy`, `stream_role`,
+and `note` fields. The strategies are:
+
+| Strategy | Use |
+|----------|-----|
+| `native` | Physical UniSim operation maps to native NeqSim equipment |
+| `adapter` | Stream-carrying placeholder preserved with `UnisimCalculator` or sub-flowsheet interface behavior |
+| `reference` | Adjust, set, or spreadsheet logic that references streams/equipment but does not create material topology |
+| `control` | Controller/logical behavior generated as comments or controller metadata |
+| `column_internal` | Condenser/reboiler/tray parts used to configure a column |
+| `skip` | Non-physical utility operation |
+
+When adding support for a new UniSim type, update the registry first, then add
+conversion logic only where the selected strategy needs it. Validate with
+`python devtools/test_unisim_outputs.py` and inspect `_unisim_operation_mapping`
+in generated JSON.
 
 ### Forward Reference Placeholders for Separators and HeatExchangers
 

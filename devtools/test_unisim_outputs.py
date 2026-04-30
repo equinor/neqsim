@@ -233,11 +233,14 @@ def _build_e300_test_model(tmpdir):
                         'C7+': 0.04,
                     },
                 ),
+                UniSimStreamData('Balanced Gas', temperature_C=42.0, pressure_bara=92.0),
+                UniSimStreamData('Virtual Gas', temperature_C=42.0, pressure_bara=92.0),
             ],
             operations=[
                 UniSimOperation('Spreadsheet 1', 'spreadsheetop', feeds=['Feed Gas']),
                 UniSimOperation(
                     'Balance 1', 'balanceop',
+                    feeds=['Feed Gas'], products=['Balanced Gas'],
                     properties={
                         'adjusted_object_name': 'Feed Gas',
                         'adjusted_variable': 'flowRate',
@@ -245,6 +248,10 @@ def _build_e300_test_model(tmpdir):
                         'target_variable': 'pressure',
                         'target_value': 92.0,
                     },
+                ),
+                UniSimOperation(
+                    'Virtual 1', 'virtualstreamop',
+                    feeds=['Feed Gas'], products=['Virtual Gas'],
                 ),
                 UniSimOperation('Logic 1', 'logicalop'),
             ],
@@ -522,6 +529,40 @@ def test_to_json():
     return result
 
 
+def test_operation_handler_registry_documents_mapping_strategy():
+    """Verify UniSim operation mapping policy is explicit and typed."""
+    balance_handler = UniSimReader.get_operation_handler('balanceop')
+    assert balance_handler is not None
+    assert balance_handler.neqsim_type == 'UnisimCalculator'
+    assert balance_handler.strategy == 'adapter'
+    assert balance_handler.stream_role == 'material'
+    assert UniSimReader.is_material_stream_operation('balanceop')
+
+    virtual_handler = UniSimReader.get_operation_handler('virtualstreamop')
+    assert virtual_handler is not None
+    assert virtual_handler.neqsim_type == 'UnisimCalculator'
+    assert virtual_handler.strategy == 'adapter'
+    assert UniSimReader.is_material_stream_operation('virtualstreamop')
+
+    spreadsheet_handler = UniSimReader.get_operation_handler('spreadsheetop')
+    assert spreadsheet_handler is not None
+    assert spreadsheet_handler.neqsim_type == 'SpreadsheetBlock'
+    assert spreadsheet_handler.strategy == 'reference'
+    assert spreadsheet_handler.stream_role == 'reference'
+    assert not UniSimReader.is_material_stream_operation('spreadsheetop')
+
+    logic_handler = UniSimReader.get_operation_handler('logicalop')
+    assert logic_handler is not None
+    assert logic_handler.strategy == 'control'
+    assert logic_handler.stream_role == 'none'
+    assert not UniSimReader.is_material_stream_operation('logicalop')
+
+    assert UniSimReader.get_operation_handler('unknownop') is None
+    assert UniSimReader.is_material_stream_operation('unknownop')
+
+    print("  PASS")
+
+
 def test_missing_acentric_factor_uses_edmister_fallback():
     """Verify missing UniSim AcentricFactor does not block E300 export."""
     reader = UniSimReader()
@@ -589,17 +630,36 @@ def test_e300_fluid_package_export_and_usage():
         assert result['fluids'][result['fluidPackages'][0]['fluidRef']]['e300FilePath'] == \
             fluid_package.e300_file_path
 
+        mapping_by_type = {
+            item['unisimType']: item
+            for item in result['_unisim_operation_mapping']
+        }
+        assert mapping_by_type['balanceop']['strategy'] == 'adapter'
+        assert mapping_by_type['balanceop']['neqsimType'] == 'UnisimCalculator'
+        assert mapping_by_type['virtualstreamop']['strategy'] == 'adapter'
+        assert mapping_by_type['virtualstreamop']['streamRole'] == 'material'
+        assert mapping_by_type['spreadsheetop']['strategy'] == 'reference'
+        assert mapping_by_type['logicalop']['streamRole'] == 'none'
+
         py_code = converter.to_python()
         assert 'EclipseFluidReadWrite.read' in py_code
+        assert 'UnisimCalculator' in py_code
         assert 'addComponent' not in py_code.split('# Process definition')[0]
 
         process = result['process']
         types_by_name = {entry['name']: entry['type'] for entry in process}
         assert types_by_name.get('Spreadsheet 1') == 'SpreadsheetBlock'
-        assert types_by_name.get('Balance 1') == 'Adjuster'
+        assert types_by_name.get('Balance 1') == 'UnisimCalculator'
+        assert types_by_name.get('Virtual 1') == 'UnisimCalculator'
         assert 'Logic 1' not in types_by_name
         spreadsheet_entry = next(e for e in process if e['name'] == 'Spreadsheet 1')
         assert 'inlet' not in spreadsheet_entry
+        balance_entry = next(e for e in process if e['name'] == 'Balance 1')
+        assert balance_entry['inlet'] == 'Feed Gas'
+        assert balance_entry['properties']['sourceOperationType'] == 'balanceop'
+        virtual_entry = next(e for e in process if e['name'] == 'Virtual 1')
+        assert virtual_entry['inlet'] == 'Feed Gas'
+        assert virtual_entry['properties']['sourceOperationType'] == 'virtualstreamop'
 
     print("  PASS")
 
@@ -646,6 +706,8 @@ if __name__ == "__main__":
         ("to_eot_notebook", test_to_eot_notebook),
         ("code_consistency", test_code_consistency),
         ("to_json", test_to_json),
+        ("operation_handler_registry_documents_mapping_strategy",
+         test_operation_handler_registry_documents_mapping_strategy),
         ("missing_acentric_factor_uses_edmister_fallback",
          test_missing_acentric_factor_uses_edmister_fallback),
         ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),

@@ -47,6 +47,7 @@ import neqsim.process.equipment.util.GORfitter;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.util.SpreadsheetBlock;
+import neqsim.process.equipment.util.UnisimCalculator;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
@@ -114,6 +115,13 @@ public final class EquipmentFactory {
       case "spreadsheet":
       case "spreadsheetblock":
         return createEquipment(name, EquipmentEnum.SpreadsheetBlock);
+      case "unisimcalculator":
+      case "unisim_calculator":
+      case "unisimcalculatorblock":
+      case "virtualstreamop":
+      case "balanceop":
+      case "subflowsheet":
+        return createEquipment(name, EquipmentEnum.UnisimCalculator);
       case "distillationcolumn":
       case "column":
         return createEquipment(name, EquipmentEnum.DistillationColumn);
@@ -177,6 +185,8 @@ public final class EquipmentFactory {
         return new Calculator(name);
       case SpreadsheetBlock:
         return new SpreadsheetBlock(name);
+      case UnisimCalculator:
+        return new UnisimCalculator(name);
       case Expander:
         return new Expander(name);
       case SimpleTEGAbsorber:
