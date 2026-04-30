@@ -7,6 +7,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +55,11 @@ public abstract class Flash extends BaseOperation {
   double tmLimit = -1e-8;
   private static final double LOG_MIN_EXP = Math.log(Double.MIN_NORMAL);
   private static final double LOG_MAX_EXP = Math.log(Double.MAX_VALUE);
+  private static final String STABILITY_OUTCOME_NOT_EVALUATED = "not evaluated";
+  private String lastStabilityOutcome = STABILITY_OUTCOME_NOT_EVALUATED;
+  private boolean lastStabilityAnalysisFailed = false;
+  private String lastStabilityAnalysisFailureMessage = "";
+  private double[] lastTangentPlaneDistances = new double[0];
 
   protected double safeExp(double value) {
     if (Double.isNaN(value)) {
@@ -66,6 +72,82 @@ public abstract class Flash extends BaseOperation {
       return Double.MAX_VALUE;
     }
     return Math.exp(value);
+  }
+
+  /**
+   * Resets the diagnostic fields before a new stability decision is attempted.
+   */
+  protected void resetStabilityDiagnostics() {
+    lastStabilityOutcome = STABILITY_OUTCOME_NOT_EVALUATED;
+    lastStabilityAnalysisFailed = false;
+    lastStabilityAnalysisFailureMessage = "";
+    lastTangentPlaneDistances = new double[0];
+  }
+
+  /**
+   * Records the high-level outcome of the most recent stability decision.
+   *
+   * @param outcome short text describing the stability path and decision
+   */
+  protected void recordStabilityOutcome(String outcome) {
+    lastStabilityOutcome = outcome == null ? STABILITY_OUTCOME_NOT_EVALUATED : outcome;
+  }
+
+  /**
+   * Records that a stability calculation failed and stores its diagnostic message.
+   *
+   * @param exception exception raised during stability analysis or stability gating
+   */
+  protected void recordStabilityAnalysisFailure(Exception exception) {
+    lastStabilityAnalysisFailed = true;
+    lastStabilityAnalysisFailureMessage = exception == null ? "" : exception.getMessage();
+  }
+
+  /**
+   * Stores the current tangent-plane-distance values for diagnostics.
+   */
+  protected void recordTangentPlaneDistances() {
+    if (tm == null) {
+      lastTangentPlaneDistances = new double[0];
+    } else {
+      lastTangentPlaneDistances = Arrays.copyOf(tm, tm.length);
+    }
+  }
+
+  /**
+   * Gets the high-level outcome of the most recent stability decision.
+   *
+   * @return stability outcome text
+   */
+  public String getLastStabilityOutcome() {
+    return lastStabilityOutcome;
+  }
+
+  /**
+   * Checks whether the most recent stability analysis failed before reaching a decision.
+   *
+   * @return true if the last stability analysis or stability gate threw an exception
+   */
+  public boolean hasLastStabilityAnalysisFailed() {
+    return lastStabilityAnalysisFailed;
+  }
+
+  /**
+   * Gets the failure message from the most recent failed stability analysis.
+   *
+   * @return failure message, or an empty string if no failure has been recorded
+   */
+  public String getLastStabilityAnalysisFailureMessage() {
+    return lastStabilityAnalysisFailureMessage;
+  }
+
+  /**
+   * Gets the tangent-plane-distance values from the most recent stability analysis.
+   *
+   * @return copy of the recorded tangent-plane-distance values
+   */
+  public double[] getLastTangentPlaneDistances() {
+    return Arrays.copyOf(lastTangentPlaneDistances, lastTangentPlaneDistances.length);
   }
 
   int lowestGibbsEnergyPhase = 0;
@@ -1057,13 +1139,21 @@ public abstract class Flash extends BaseOperation {
    * @return a boolean
    */
   public boolean stabilityCheck() {
+    resetStabilityDiagnostics();
     boolean stable = false;
     lowestGibbsEnergyPhase = findLowestGibbsEnergyPhase();
     if (system.getPhase(lowestGibbsEnergyPhase).getNumberOfComponents() > 1) {
       try {
         stabilityAnalysis();
+        recordTangentPlaneDistances();
       } catch (Exception ex) {
         logger.debug("Stability analysis did not converge: {}", ex.getMessage());
+        recordStabilityAnalysisFailure(ex);
+        if (tm == null || tm.length < 2) {
+          recordStabilityOutcome("stability analysis failed - continuing TPflash iteration");
+          return false;
+        }
+        recordTangentPlaneDistances();
       }
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
@@ -1087,6 +1177,7 @@ public abstract class Flash extends BaseOperation {
         retryFoundInstability = pureComponentStabilityTrials();
       }
       if (retryFoundInstability) {
+        recordStabilityOutcome("unstable - supplementary stability trial");
         // Supplementary trial found instability - calculate beta and init for two-phase
         RachfordRice rachfordRice = new RachfordRice();
         try {
@@ -1102,6 +1193,11 @@ public abstract class Flash extends BaseOperation {
         system.init(1);
         stable = false;
       } else {
+        if (lastStabilityAnalysisFailed) {
+          recordStabilityOutcome("stable after supplementary fallback");
+        } else {
+          recordStabilityOutcome("stable");
+        }
         stable = true;
         system.init(0);
         system.setNumberOfPhases(1);
@@ -1116,6 +1212,7 @@ public abstract class Flash extends BaseOperation {
         }
       }
     } else {
+      recordStabilityOutcome("unstable - tangent plane distance");
       RachfordRice rachfordRice = new RachfordRice();
       try {
         system.setBeta(

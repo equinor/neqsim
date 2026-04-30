@@ -22,6 +22,31 @@ public class TPflash extends Flash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPflash.class);
+  /** Local lower-temperature seed step for multiphase endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_TEMPERATURE_STEP = 2.0;
+  /** Lower sum(zK) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_LOWER_LIMIT = 0.95;
+  /** Upper sum(zK) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT = 1.05;
+  /** Lower sum(z/K) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT = 1.05;
+  /** Upper sum(z/K) bound for gas endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT = 2.0;
+  /** Lower sum(zK) bound for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_LOWER_LIMIT = 0.95;
+  /** Upper sum(zK) bound for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_UPPER_LIMIT = 1.20;
+  /** Minimum sum(z/K) bound for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT = 5.0;
+  /** Minimum log K spread for liquid endpoint rescue. */
+  private static final double MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT = 3.0;
+  /** Guard preventing recursive rescue attempts while the local seed flash is running. */
+  private static final ThreadLocal<Boolean> MULTIPHASE_RESCUE_ACTIVE = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
 
   SystemInterface clonedSystem;
   double presdiff = 1.0;
@@ -303,6 +328,7 @@ public class TPflash extends Flash {
    * carrying a stale 3-phase state.
    */
   private void runInternal() {
+    resetStabilityDiagnostics();
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
@@ -463,16 +489,24 @@ public class TPflash extends Flash {
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
       boolean isStable;
       try {
-        isStable = system.checkStability() && stabilityCheck();
+        if (system.checkStability()) {
+          isStable = stabilityCheck();
+        } else {
+          recordStabilityOutcome("skipped by system setting");
+          isStable = false;
+        }
       } catch (Exception ex) {
-        logger.debug("Stability check failed, treating as stable: {}", ex.getMessage());
-        isStable = true;
+        logger.debug("Stability check failed, continuing TPflash iteration: {}", ex.getMessage());
+        recordStabilityAnalysisFailure(ex);
+        recordStabilityOutcome("stability check failed - continuing TPflash iteration");
+        isStable = false;
       }
       if (isStable) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
           operation.run();
+          rescueSinglePhaseMultiphaseEndpoint();
         }
         if (solidCheck) {
           this.solidPhaseFlash();
@@ -488,6 +522,7 @@ public class TPflash extends Flash {
         } catch (Exception ex) {
           logger.debug("Post-stability init failed: {}", ex.getMessage());
         }
+        rescueSinglePhaseMultiphaseEndpoint();
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {
@@ -633,6 +668,7 @@ public class TPflash extends Flash {
     if (system.doMultiPhaseCheck()) {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
+      rescueSinglePhaseMultiphaseEndpoint();
     } else {
       try {
         // Checks if gas or oil is the most stable phase
@@ -672,12 +708,14 @@ public class TPflash extends Flash {
         i--; // indices shift after removal — re-check the (new) phase at i
       }
     }
+    rescueSinglePhaseMultiphaseEndpoint();
     system.orderByDensity();
     try {
       system.init(1);
     } catch (Exception ex) {
       logger.warn("Final init after orderByDensity failed: " + ex.getMessage());
     }
+    rescueSinglePhaseMultiphaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -695,6 +733,195 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
+  }
+
+  /**
+   * Retries a single-phase hydrocarbon endpoint with a nearby multiphase seed.
+   *
+   * <p>
+   * Near phase boundaries the cold Wilson-seeded TP flash may converge to a local one-phase
+   * endpoint even though a nearby two-phase seed converges to a lower-Gibbs solution at the target
+   * pressure and temperature. This guarded retry is only used when the user has explicitly enabled
+   * multiphase checking and the ordinary TPmultiflash cleanup still leaves one hydrocarbon phase.
+   * </p>
+   */
+  private void rescueSinglePhaseMultiphaseEndpoint() {
+    if (!shouldRunMultiphaseEndpointRescue()) {
+      return;
+    }
+
+    double targetTemperature = system.getTemperature();
+    double targetPressure = system.getPressure();
+    system.init(1);
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      double seedTemperature =
+          Math.max(1.0, targetTemperature - MULTIPHASE_RESCUE_TEMPERATURE_STEP);
+      candidate.setTemperature(seedTemperature, "K");
+      candidate.setPressure(targetPressure, "bara");
+      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      if (candidate.getNumberOfPhases() < 2) {
+        return;
+      }
+      candidate.setTemperature(targetTemperature, "K");
+      candidate.setPressure(targetPressure, "bara");
+      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
+        copyFlashStateFrom(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Multiphase endpoint rescue failed: {}", ex.getMessage());
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
+      MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
+    }
+  }
+
+  /**
+   * Checks if the endpoint rescue should run for the current flash result.
+   *
+   * @return true when the result is a single hydrocarbon phase from an explicit multiphase flash
+   */
+  private boolean shouldRunMultiphaseEndpointRescue() {
+    if (MULTIPHASE_RESCUE_ACTIVE.get().booleanValue() || !system.doMultiPhaseCheck()
+        || system.getNumberOfPhases() != 1 || system.getPhase(0).getNumberOfComponents() <= 1
+        || system.isChemicalSystem() || system.hasIons()) {
+      return false;
+    }
+    PhaseType phaseType = system.getPhase(0).getType();
+    if (!(phaseType == PhaseType.GAS || phaseType == PhaseType.OIL
+        || phaseType == PhaseType.LIQUID)) {
+      return false;
+    }
+    boolean hasHydrocarbon = false;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
+      if (system.getPhase(0).getComponent(componentIndex).getz() < 1.0e-50) {
+        continue;
+      }
+      if ("water"
+          .equalsIgnoreCase(system.getPhase(0).getComponent(componentIndex).getComponentName())) {
+        return false;
+      }
+      if (!system.getPhase(0).getComponent(componentIndex).isHydrocarbon()
+          && !system.getPhase(0).getComponent(componentIndex).isInert()) {
+        return false;
+      }
+      if (system.getPhase(0).getComponent(componentIndex).isHydrocarbon()) {
+        hasHydrocarbon = true;
+      }
+    }
+    return hasHydrocarbon && hasPotentialMultiphaseEndpoint(phaseType);
+  }
+
+  /**
+   * Checks whether stored K-values indicate a nearby split worth a local endpoint rescue.
+   *
+   * @param phaseType phase type of the current single-phase endpoint
+   * @return true when the endpoint is close enough to a potential phase split to retry
+   */
+  private boolean hasPotentialMultiphaseEndpoint(PhaseType phaseType) {
+    double sumZK = 0.0;
+    double sumZOverK = 0.0;
+    double maxAbsLogK = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
+      double z = system.getPhase(0).getComponent(componentIndex).getz();
+      if (z < 1.0e-50) {
+        continue;
+      }
+      double kValue = system.getPhase(0).getComponent(componentIndex).getK();
+      if (kValue <= 0.0 || Double.isNaN(kValue) || Double.isInfinite(kValue)) {
+        return true;
+      }
+      sumZK += z * kValue;
+      sumZOverK += z / kValue;
+      maxAbsLogK = Math.max(maxAbsLogK, Math.abs(Math.log(kValue)));
+    }
+    if (phaseType == PhaseType.GAS) {
+      return sumZK > MULTIPHASE_RESCUE_GAS_SUM_Z_K_LOWER_LIMIT
+          && sumZK < MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT
+          && sumZOverK > MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT
+          && sumZOverK < MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT;
+    }
+    return sumZK > MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_LOWER_LIMIT
+        && sumZK < MULTIPHASE_RESCUE_LIQUID_SUM_Z_K_UPPER_LIMIT
+        && sumZOverK > MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT
+        && maxAbsLogK > MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT;
+  }
+
+  /**
+   * Checks if a candidate should replace the current single-phase endpoint.
+   *
+   * @param candidate candidate system produced by the local seed retry
+   * @param referenceGibbsEnergy Gibbs energy of the original one-phase endpoint
+   * @return true when the candidate is multiphase and has a lower Gibbs energy
+   */
+  private boolean isLowerGibbsMultiphaseCandidate(SystemInterface candidate,
+      double referenceGibbsEnergy) {
+    if (candidate.getNumberOfPhases() < 2) {
+      return false;
+    }
+    double betaTotal = 0.0;
+    for (int phaseIndex = 0; phaseIndex < candidate.getNumberOfPhases(); phaseIndex++) {
+      if (candidate.getBeta(phaseIndex) <= 10.0 * phaseFractionMinimumLimit) {
+        return false;
+      }
+      betaTotal += candidate.getBeta(phaseIndex);
+    }
+    if (Math.abs(betaTotal - 1.0) > 1.0e-6 || !hasDistinctPhaseCompositions(candidate)) {
+      return false;
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    return candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
+  }
+
+  /**
+   * Checks whether candidate phases have meaningfully different compositions.
+   *
+   * @param candidate candidate system to inspect
+   * @return true when all phase pairs have distinct active-component compositions
+   */
+  private boolean hasDistinctPhaseCompositions(SystemInterface candidate) {
+    for (int firstPhase = 0; firstPhase < candidate.getNumberOfPhases(); firstPhase++) {
+      for (int secondPhase = firstPhase + 1; secondPhase < candidate
+          .getNumberOfPhases(); secondPhase++) {
+        double l1Difference = 0.0;
+        for (int componentIndex = 0; componentIndex < candidate.getPhase(0)
+            .getNumberOfComponents(); componentIndex++) {
+          if (candidate.getPhase(0).getComponent(componentIndex).getz() > 1.0e-50) {
+            l1Difference +=
+                Math.abs(candidate.getPhase(firstPhase).getComponent(componentIndex).getx()
+                    - candidate.getPhase(secondPhase).getComponent(componentIndex).getx());
+          }
+        }
+        if (l1Difference < 1.0e-4) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Copies phase composition, type, and beta state from a lower-Gibbs candidate.
+   *
+   * @param source source system whose converged flash state should replace the current state
+   */
+  private void copyFlashStateFrom(SystemInterface source) {
+    system.setNumberOfPhases(source.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < source.getNumberOfPhases(); phaseIndex++) {
+      system.setPhaseIndex(phaseIndex, phaseIndex);
+      system.setPhase(source.getPhase(phaseIndex).clone(), phaseIndex);
+      system.setPhaseType(phaseIndex, source.getPhase(phaseIndex).getType());
+      system.setBeta(phaseIndex, source.getBeta(phaseIndex));
+    }
+    system.normalizeBeta();
+    system.init(1);
   }
 
   /** {@inheritDoc} */

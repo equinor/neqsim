@@ -1,6 +1,6 @@
 ---
 title: "TPflash Algorithm Documentation"
-description: "The Temperature-Pressure (TP) flash calculation is a fundamental operation in chemical engineering thermodynamics. Given a mixture composition, temperature, and pressure, the TP flash determines:"
+description: "Temperature-pressure flash algorithm reference for NeqSim, covering VLE, VLLE, LLE, Rachford-Rice, tangent-plane stability analysis, Newton refinement, multiphase flash workflow, performance, and robustness recommendations."
 ---
 
 # TPflash Algorithm Documentation
@@ -52,7 +52,12 @@ NeqSim implements the classical Michelsen flash algorithm with stability analysi
    - [5.2 EJML Matrix Operations](#52-ejml-matrix-operations)
    - [5.3 Wilson K Early Exit](#53-wilson-k-early-exit)
    - [5.4 Two-Stage Trial Strategy](#54-two-stage-trial-strategy)
-6. [References](#6-references)
+6. [State-of-the-Art Comparison and Recommendations](#6-state-of-the-art-comparison-and-recommendations)
+    - [6.1 Current Position](#61-current-position)
+    - [6.2 Strengths](#62-strengths)
+    - [6.3 Recommended Improvements](#63-recommended-improvements)
+    - [6.4 Regression and Benchmark Coverage](#64-regression-and-benchmark-coverage)
+7. [References](#7-references)
 
 ---
 
@@ -134,8 +139,9 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │ STEP 6: MAIN ITERATION LOOP                                                     │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  Parameters:                                                                    │
-│     • accelerateInterval = 7 (use DEM every 7 iterations)                       │
-│     • newtonLimit = 20 (switch to Newton after 20 SSI iterations)               │
+│     • accelerateInterval = 5 (use DEM every 5 iterations)                       │
+│     • newtonLimit = 12 (switch to Newton after 12 SSI iterations)               │
+│     • Enhanced multiphase systems may lower these thresholds adaptively          │
 │     • maxNumberOfIterations = 50 (default)                                      │
 │     • convergence tolerance = 1e-10                                             │
 │                                                                                 │
@@ -144,14 +150,14 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  │   DO (inner loop):                                                           │
 │  │   │   iterations++                                                           │
 │  │   │                                                                          │
-│  │   │   IF iterations < 20 (or chemical system, or no fugacity derivatives):   │
-│  │   │   │   IF timeFromLastGibbsFail > 6 AND iterations % 7 == 0:              │
+│  │   │   IF iterations < 12 (or chemical system, or no fugacity derivatives):   │
+│  │   │   │   IF timeFromLastGibbsFail > 6 AND iterations % 5 == 0:              │
 │  │   │   │       → accselerateSucsSubs()  [DEM acceleration]                    │
 │  │   │   │   ELSE:                                                              │
 │  │   │   │       → sucsSubs()  [standard SSI]                                   │
 │  │   │   │                                                                      │
-│  │   │   ELSE IF iterations >= 20:                                              │
-│  │   │   │   IF iterations == 20:                                               │
+│  │   │   ELSE IF iterations >= 12:                                              │
+│  │   │   │   IF solver is new or component count changed:                       │
 │  │   │   │       → Create SysNewtonRhapsonTPflash solver                        │
 │  │   │   │   → secondOrderSolver.solve()  [Newton-Raphson]                      │
 │  │   │   │                                                                      │
@@ -198,8 +204,9 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
-| `accelerateInterval` | 7 | Apply DEM every 7th iteration |
-| `newtonLimit` | 20 | Switch to Newton-Raphson after 20 SSI iterations |
+| `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |
+| `newtonLimit` | 12 | Switch to Newton-Raphson after 12 SSI iterations when derivatives are available |
+| Enhanced multiphase adaptation | 3-4 / 8-10 | Lower acceleration and Newton thresholds when enhanced stability checks are active and the SSI deviation is already small |
 | `maxNumberOfIterations` | 50 | Maximum iterations per convergence loop |
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
@@ -1612,7 +1619,62 @@ The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the ma
 
 ---
 
-## 6. References
+## 6. State-of-the-Art Comparison and Recommendations
+
+### 6.1 Current Position
+
+NeqSim uses the same core algorithm family as modern equation-of-state simulators: Michelsen tangent-plane-distance stability analysis, Rachford-Rice phase-fraction solution, successive substitution, accelerated substitution, and Newton refinement. The current implementation is therefore not an ad hoc flash calculation; it is a classical industrial thermodynamics workflow with several modern robustness upgrades.
+
+Commercial process simulators do not publish all implementation details, but published state-of-the-art practice generally adds stronger global phase discovery, more formal fallback handling, continuation methods for phase-boundary tracing, and richer convergence diagnostics around the same theoretical foundation.
+
+| Area | Current NeqSim implementation | State-of-the-art expectation |
+|------|-------------------------------|------------------------------|
+| Two-phase VLE | Wilson K, Rachford-Rice, SSI, DEM, Newton refinement | Same core sequence, typically with extensive fallback telemetry |
+| Rachford-Rice | Nielsen 2023 reformulation with Michelsen 2001 option | Robust transformed formulations with bracketing safeguards |
+| Stability analysis | Michelsen TPD, Wilson K trials, amplified K retry, pure-component trials | Systematic multi-start TPD minimization with traceable trial outcomes |
+| Multiphase flash | Phase addition plus Q-function minimization and cleanup | Global phase-set search, phase deletion, and final global stability certification |
+| Critical-region behavior | Amplified K trials and heuristic gates | Continuation, negative flash, and critical-region classifiers |
+| Diagnostics | Mainly logging and final phase result | Structured flash report with iteration counts, seeds, TPD minima, and fallback reasons |
+
+### 6.2 Strengths
+
+- The ordinary VLE flash path follows the accepted Michelsen/Mollerup method and is suitable for normal process-simulation use.
+- The `Nielsen2023` Rachford-Rice option improves numerical robustness near difficult beta limits.
+- The Newton solver uses fugacity derivatives, matrix preallocation, diagonal regularization, and line-search damping, which are all aligned with mature simulator practice.
+- Pure-component fallback trials improve LLE/VLLE detection where Wilson K-based trials can report positive TPD even though a liquid-liquid split exists.
+- Explicit multiphase hydrocarbon flashes now retry a local lower-temperature seed before accepting an ambiguous single-phase endpoint, and keep the retry only if it gives a lower-Gibbs multiphase result.
+- A cheap post-flash K-envelope gate skips that rescue for clearly single-phase hydrocarbon endpoints, preserving ordinary `setMultiPhaseCheck(true)` speed.
+- Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
+
+### 6.3 Recommended Improvements
+
+| Priority | Recommendation | Status | Rationale |
+|----------|----------------|--------|-----------|
+| 1 | Do not treat a failed stability analysis as stable without a conservative fallback | Implemented for failed stability gates; partial TPD failures now keep the supplementary fallback path when usable TPD values exist | A failed TPD solve can hide a real phase split and create missing or isolated phase-map regions |
+| 2 | Add structured flash diagnostics | Partially implemented with stability outcome, failure message, and recorded TPD values; a fuller object should add per-trial telemetry | Expose beta, SSI iterations, Newton iterations, trial seeds, TPD minima, fallback path, phase additions, and phase removals for tests and debugging |
+| 3 | Add a rigorous phase-map mode | Not implemented | Use continuation or negative-flash style tracing for property maps where topological smoothness matters more than single-call speed |
+| 4 | Add final global stability certification after `TPmultiflash` cleanup | Partially implemented for ambiguous hydrocarbon single-phase endpoints through a K-envelope gate, local lower-temperature seed, and lower-Gibbs acceptance check; full global certification is still not implemented | Re-run TPD against the final phase set to verify no additional stable phase remains |
+| 5 | Keep pure-component LLE trials in the multiphase path | Implemented in the current multiphase stability path | Wilson-positive TPD trials do not rule out hydrocarbon LLE or polarity-driven liquid splits |
+| 6 | Separate fast process flash from authoritative phase-map flash | Not implemented | Process simulation and phase-boundary generation have different robustness and performance needs |
+| 7 | Update documentation whenever solver thresholds change | Implemented for the current TPflash thresholds | Algorithm descriptions should match the active values in `TPflash.java` and `TPmultiflash.java` |
+
+### 6.4 Regression and Benchmark Coverage
+
+Recommended regression coverage should include both numerical convergence and phase-map topology:
+
+| Test category | Recommended cases | Acceptance signal |
+|---------------|-------------------|-------------------|
+| Ordinary TPflash speed | Natural-gas SRK/PR mixtures with and without `setMultiPhaseCheck(true)` | Median runtime does not regress outside a defined tolerance |
+| Phase-map topology | Methane/n-heptane PR grid with hydrocarbon LLE region | No failed flash points and no isolated one-cell phase regions |
+| Known phase-map spot cells | Methane/n-heptane PR cells at 78.5/194, 81/194, 186/424, and 191/418 bara/K | Each cold-start flash converges to gas-oil instead of an isolated one-phase island |
+| Critical-region robustness | Rich gas near cricondenbar and cricondentherm | No false single-phase result when TPD finds instability |
+| Polar/VLLE systems | Water, CO2, H2S, methanol, glycols, and CPA/electrolyte examples | Correct aqueous/oil/gas phase count and stable final split |
+| Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
+| Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
+
+---
+
+## 7. References
 
 ### Primary References
 

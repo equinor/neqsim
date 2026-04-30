@@ -16,6 +16,24 @@ class TPFlashTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 
+  /** Test double that forces the TPflash stability gate to fail. */
+  private static final class ThrowingStabilityTPflash extends TPflash {
+    /**
+     * Creates a TPflash test double for a thermodynamic system.
+     *
+     * @param system thermodynamic system used by the flash calculation
+     */
+    private ThrowingStabilityTPflash(SystemInterface system) {
+      super(system);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean stabilityCheck() {
+      throw new RuntimeException("synthetic stability failure");
+    }
+  }
+
   /**
    * @throws java.lang.Exception
    */
@@ -412,6 +430,63 @@ class TPFlashTest {
         "TPflash should not throw while scanning the methane/nC7 phase-map shoulder");
     assertEquals(0, isolatedSpots, "Phase-map failed spots increased: " + isolatedSpots
         + " isolated cells in the methane/nC7 gas-oil shoulder grid");
+  }
+
+  /**
+   * Verifies the known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge
+   * to the lower-Gibbs gas-oil split from a cold start.
+   */
+  @Test
+  void testMethaneHeptaneKnownPhaseMapSpotsResolveToGasOil() {
+    double[][] spotConditions =
+        new double[][] {{78.5, 194.0}, {81.0, 194.0}, {186.0, 424.0}, {191.0, 418.0}};
+
+    for (int spotIndex = 0; spotIndex < spotConditions.length; spotIndex++) {
+      SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      fluid.setPressure(spotConditions[spotIndex][0], "bara");
+      fluid.setTemperature(spotConditions[spotIndex][1], "K");
+
+      operations.TPflash();
+
+      assertEquals(2, fluid.getNumberOfPhases(),
+          "Known methane/nC7 phase-map spot should resolve to two phases at P="
+              + spotConditions[spotIndex][0] + " bara, T=" + spotConditions[spotIndex][1] + " K");
+      assertTrue(fluid.hasPhaseType(PhaseType.GAS),
+          "Known methane/nC7 phase-map spot should contain a gas phase");
+      assertTrue(fluid.hasPhaseType(PhaseType.OIL),
+          "Known methane/nC7 phase-map spot should contain an oil phase");
+    }
+  }
+
+  /**
+   * Verifies that a failed stability check is no longer treated as a stable single-phase verdict.
+   * The flash should fall back to the ordinary iteration path and expose diagnostics describing the
+   * conservative fallback.
+   */
+  @Test
+  void testFailedStabilityCheckFallsBackToIteration() {
+    SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(423.15, 5.0);
+    gas.addComponent("nitrogen", 1.0);
+    gas.addComponent("CO2", 2.0);
+    gas.addComponent("methane", 80.0);
+    gas.addComponent("ethane", 6.0);
+    gas.addComponent("propane", 3.0);
+    gas.addComponent("i-butane", 1.5);
+    gas.addComponent("n-butane", 2.0);
+    gas.addComponent("i-pentane", 1.0);
+    gas.addComponent("n-pentane", 0.8);
+    gas.addComponent("n-hexane", 0.5);
+    gas.setMixingRule("classic");
+
+    ThrowingStabilityTPflash flash = new ThrowingStabilityTPflash(gas);
+    flash.run();
+
+    assertTrue(flash.hasLastStabilityAnalysisFailed(),
+        "Synthetic stability failure should be visible in TPflash diagnostics");
+    assertTrue(flash.getLastStabilityOutcome().contains("continuing TPflash iteration"),
+        "TPflash should report the conservative iteration fallback");
+    assertTrue(gas.getNumberOfPhases() >= 1, "Fallback iteration should leave a valid phase set");
   }
 
   /**
