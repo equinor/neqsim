@@ -47,8 +47,13 @@ public class EclipseFluidReadWrite {
     if (name == null) {
       return null;
     }
-    String normalized = name.trim().replace(" ", "").replace("_", "").replace("-", "")
-        .toUpperCase();
+    String trimmedName = name.trim();
+    // PVTsim E300 files use uppercase IC4/IC5 for characterized pseudo-fractions.
+    if ("IC4".equals(trimmedName) || "IC5".equals(trimmedName)) {
+      return null;
+    }
+    String normalized =
+        name.trim().replace(" ", "").replace("_", "").replace("-", "").toUpperCase();
     switch (normalized) {
       case "C1":
       case "METHANE":

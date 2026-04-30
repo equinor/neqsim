@@ -886,8 +886,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1095.3504, 1.1);
     Assertions.assertEquals(napthaLiquidToDeethanizer.getFlowRate("m3/hr"), 16.60364, 1.1);
 
-    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
-        * gasfromDeethanizerSeparator.LCV() / 1e6, 17.61828466, 0.1);
+    Assertions.assertEquals(17.61828466, gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
+        * gasfromDeethanizerSeparator.LCV() / 1e6, 0.1);
 
     Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 47.24077, 0.1);
     Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 68.2539, 0.1);
