@@ -12,6 +12,7 @@ The parameter fitting subsystem provides robust nonlinear regression capabilitie
 - [Levenberg-Marquardt Algorithm](#levenberg-marquardt-algorithm)
 - [Creating Objective Functions](#creating-objective-functions)
 - [Sample Data Management](#sample-data-management)
+- [Experimental Fitting Workflow](#experimental-fitting-workflow)
 - [Parameter Bounds](#parameter-bounds)
 - [Convergence and Diagnostics](#convergence-and-diagnostics)
 - [Statistical Output](#statistical-output)
@@ -101,26 +102,26 @@ The `solve()` method:
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 public class MyFittingFunction extends LevenbergMarquardtFunction {
-    
+
     public MyFittingFunction() {
         // Initialize parameter count
-        params = new double[2];
+        params = new double[3];
     }
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         // dependentValues: independent variables from SampleValue
         // params[]: fitting parameters
-        
+
         double x = dependentValues[0];
         double y = dependentValues[1];
-        
+
         // Model equation: z = a * exp(-b * x) + c * y
         double calculated = params[0] * Math.exp(-params[1] * x) + params[2] * y;
-        
+
         return calculated;
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -134,34 +135,34 @@ For thermodynamic fitting, functions can include system and thermoOps:
 
 ```java
 public class VLEFittingFunction extends LevenbergMarquardtFunction {
-    
+
     public VLEFittingFunction(SystemInterface system, ThermodynamicOperations thermoOps) {
         this.system = system;
         this.thermoOps = thermoOps;
         params = new double[1];  // One kij parameter
     }
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double T = dependentValues[0];  // Temperature [K]
         double P = dependentValues[1];  // Pressure [bar]
-        
+
         // Set kij from fitting parameter
         system.getPhase(0).getMixingRule()
             .setBinaryInteractionParameter(0, 1, params[0]);
         system.getPhase(1).getMixingRule()
             .setBinaryInteractionParameter(0, 1, params[0]);
-        
+
         // Set conditions and flash
         system.setTemperature(T);
         system.setPressure(P);
         system.init(0);
         thermoOps.TPflash();
-        
+
         // Return calculated property (e.g., liquid composition)
         return system.getPhase(1).getComponent(0).getx();
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -237,6 +238,89 @@ int n = sampleSet.getLength();
 | `getSample(i)` | Get sample at index i |
 | `getLength()` | Number of samples |
 | `createNewNormalDistributedSet()` | Clone with randomized values (for Monte Carlo) |
+
+---
+
+## Experimental Fitting Workflow
+
+For new fitting work, prefer the higher-level experimental workflow classes. They keep measured
+values, standard deviations, independent-variable names, units, references, and residual metrics in
+one place while still using the existing `SampleSet` and `LevenbergMarquardt` optimizer underneath.
+
+### Core Classes
+
+| Class | Purpose |
+|-------|---------|
+| `ExperimentalDataPoint` | Immutable measured value, standard deviation, independent variables, reference, and description |
+| `ExperimentalDataSet` | Metadata-aware collection of data points that converts to `SampleSet` |
+| `ParameterFittingStudy` | Configures the function, initial guess, bounds, optimizer, and result metrics |
+| `ParameterFittingStudy.Result` | Final parameters, residuals, RMSE, weighted RMSE, and `LevenbergMarquardtResult` |
+
+### Binary-Interaction Style Example
+
+The example below fits one parameter named `kij` to synthetic binary VLE-style data. A real
+thermodynamic fitting function can replace the surrogate function and use the same data-set and
+study workflow.
+
+```java
+import neqsim.statistics.parameterfitting.ExperimentalDataSet;
+import neqsim.statistics.parameterfitting.ParameterFittingStudy;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
+
+class BinaryInteractionSurrogateFunction extends LevenbergMarquardtFunction {
+    @Override
+    public double calcValue(double[] dependentValues) {
+        double temperature = dependentValues[0];
+        double liquidMethaneFraction = dependentValues[1];
+        return liquidMethaneFraction + params[0] * liquidMethaneFraction
+            * (1.0 - liquidMethaneFraction) + 1.0e-4 * (temperature - 250.0);
+    }
+
+    @Override
+    public void setFittingParams(int i, double value) {
+        params[i] = value;
+    }
+}
+
+ExperimentalDataSet dataSet = new ExperimentalDataSet(
+    "synthetic VLE",
+    "vapor methane fraction",
+    "-",
+    new String[] {"temperature", "liquid methane fraction"},
+    new String[] {"K", "-"});
+
+dataSet.addPoint(0.6288, 0.001, new double[] {250.0, 0.60}, "synthetic", "VLE point");
+dataSet.addPoint(0.6778, 0.001, new double[] {255.0, 0.65}, "synthetic", "VLE point");
+dataSet.addPoint(0.7262, 0.001, new double[] {260.0, 0.70}, "synthetic", "VLE point");
+dataSet.addPoint(0.7740, 0.001, new double[] {265.0, 0.75}, "synthetic", "VLE point");
+dataSet.addPoint(0.8212, 0.001, new double[] {270.0, 0.80}, "synthetic", "VLE point");
+
+ParameterFittingStudy.Result result = new ParameterFittingStudy(
+    dataSet,
+    new BinaryInteractionSurrogateFunction())
+        .setInitialGuess(new double[] {0.0})
+        .setParameterNames(new String[] {"kij"})
+        .setParameterBounds(new double[][] {{-0.5, 0.5}})
+        .setMaxNumberOfIterations(40)
+        .fit();
+
+double fittedKij = result.getFittedParameter("kij");
+double rmse = result.getRootMeanSquareError();
+```
+
+The fitted `kij` is available by name, and the full optimizer diagnostics are still available via
+`result.getOptimizerResult()`.
+
+### Train and Validation Split
+
+Use `ExperimentalDataSet.split(trainingFraction)` to keep a reproducible training and validation
+partition before fitting and reporting predictive error.
+
+```java
+ExperimentalDataSet[] split = dataSet.split(0.75);
+ExperimentalDataSet trainingData = split[0];
+ExperimentalDataSet validationData = split[1];
+```
 
 ---
 
@@ -416,7 +500,7 @@ Ridders' method:
 Parameters in implementation:
 - `CON = 1.4` - step reduction factor
 - `NTAB = 10` - maximum extrapolation iterations
-- Initial step size `h = 0.01`
+- Initial step size `h = abs(parameter)/1000`, with `1.0e-10` fallback for zero-valued parameters
 
 ---
 
@@ -427,17 +511,17 @@ Parameters in implementation:
 ```java
 // Fit: y = a*x^2 + b*x + c
 public class PolynomialFunction extends LevenbergMarquardtFunction {
-    
+
     public PolynomialFunction() {
         params = new double[3];
     }
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double x = dependentValues[0];
         return params[0]*x*x + params[1]*x + params[2];
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -519,17 +603,17 @@ opt.runMonteCarloSimulation(50);
 ```java
 // Fit Antoine equation: ln(Psat) = A - B/(C + T)
 public class AntoineFunction extends LevenbergMarquardtFunction {
-    
+
     public AntoineFunction() {
         params = new double[3];
     }
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double T = dependentValues[0];  // Temperature in K
         return Math.exp(params[0] - params[1]/(params[2] + T));
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

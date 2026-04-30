@@ -45,6 +45,9 @@ statistics/
 │   ├── StatisticsInterface.java        # Interface definition
 │   ├── SampleSet.java                  # Collection of experimental points
 │   ├── SampleValue.java                # Single experimental data point
+│   ├── ExperimentalDataPoint.java      # Metadata-rich immutable data point
+│   ├── ExperimentalDataSet.java        # Data set with units and conversion to SampleSet
+│   ├── ParameterFittingStudy.java      # High-level fitting workflow and result metrics
 │   ├── BaseFunction.java               # Abstract objective function
 │   ├── FunctionInterface.java          # Function interface
 │   ├── NumericalDerivative.java        # Numerical differentiation
@@ -80,7 +83,7 @@ Detailed guides for each major subsystem:
 
 | Guide | Description |
 |-------|-------------|
-| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, creating objective functions, bounds |
+| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, experimental data workflow, bounds |
 | [Monte Carlo Simulation](monte_carlo_simulation) | Uncertainty propagation, confidence intervals, distribution sampling |
 | [Data Analysis](data_analysis) | Data smoothing, filtering, statistical measures |
 
@@ -118,6 +121,21 @@ sampleSet.add(sample3);
 // Or from array
 SampleValue[] samples = {sample1, sample2, sample3};
 SampleSet sampleSet = new SampleSet(samples);
+```
+
+### Experimental Data Sets
+
+`ExperimentalDataSet` adds names, units, references, and a direct path into the optimizer:
+
+```java
+ExperimentalDataSet dataSet = new ExperimentalDataSet(
+    "linear calibration",
+    "response",
+    "-",
+    new String[] {"x"},
+    new String[] {"-"});
+dataSet.addPoint(1.0, 0.1, new double[] {1.0});
+dataSet.addPoint(3.0, 0.1, new double[] {2.0});
 ```
 
 ### Objective Functions
@@ -196,6 +214,19 @@ System.out.println("Fitted parameters: " + Arrays.toString(fittedParams));
 // 7. Display results
 optimizer.displayCurveFit();
 optimizer.displayResult();
+```
+
+### Higher-Level Experimental Workflow
+
+```java
+ParameterFittingStudy.Result result = new ParameterFittingStudy(dataSet, function)
+    .setInitialGuess(new double[] {0.5, 0.0})
+    .setParameterNames(new String[] {"slope", "intercept"})
+    .setMaxNumberOfIterations(30)
+    .run();
+
+double slope = result.getFittedParameter("slope");
+double rmse = result.getRootMeanSquareError();
 ```
 
 ### With Monte Carlo Uncertainty
