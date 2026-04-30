@@ -25,6 +25,7 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyModViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalproperties.methods.gasphysicalproperties.conductivity.ChungConductivityMethod;
@@ -246,7 +247,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new FrictionTheoryViscosityMethod(this);
     } else if ("LBC".equals(model)) {
       viscosityCalc = new LBCViscosityMethod(this);
-    } else if ("PFCT".equals(model)) {
+    } else if ("PFCT".equals(model) || "CSP".equals(model)) {
       viscosityCalc = new PFCTViscosityMethodMod86(this);
     } else if ("PFCT-Heavy-Oil".equals(model)) {
       viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
@@ -322,8 +323,67 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * @return true if using PFCT viscosity model
    */
   public boolean isPFCTViscosityModel() {
-    return viscosityCalc instanceof PFCTViscosityMethodMod86
+    return viscosityCalc instanceof PFCTViscosityMethod
+        || viscosityCalc instanceof PFCTViscosityMethodMod86
         || viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
+  }
+
+  /**
+   * Set CSP viscosity correction factors for the active PFCT/Pedersen viscosity model.
+   *
+   * @param correctionFactors array of four correction factors for temperature, pressure, molar mass
+   *        and alpha terms
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  public void setCspViscosityCorrectionFactors(double[] correctionFactors) {
+    if (viscosityCalc instanceof PFCTViscosityMethod) {
+      ((PFCTViscosityMethod) viscosityCalc).setCspViscosityCorrectionFactors(correctionFactors);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
+      ((PFCTViscosityMethodMod86) viscosityCalc)
+          .setCspViscosityCorrectionFactors(correctionFactors);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
+      ((PFCTViscosityMethodHeavyOil) viscosityCalc)
+          .setCspViscosityCorrectionFactors(correctionFactors);
+    } else {
+      throw new IllegalStateException("Current viscosity model is not PFCT/CSP");
+    }
+  }
+
+  /**
+   * Set one CSP viscosity correction factor for the active PFCT/Pedersen viscosity model.
+   *
+   * @param index correction factor index, from 0 to 3
+   * @param value finite correction factor value
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  public void setCspViscosityCorrectionFactor(int index, double value) {
+    if (viscosityCalc instanceof PFCTViscosityMethod) {
+      ((PFCTViscosityMethod) viscosityCalc).setCspViscosityCorrectionFactor(index, value);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
+      ((PFCTViscosityMethodMod86) viscosityCalc).setCspViscosityCorrectionFactor(index, value);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
+      ((PFCTViscosityMethodHeavyOil) viscosityCalc).setCspViscosityCorrectionFactor(index, value);
+    } else {
+      throw new IllegalStateException("Current viscosity model is not PFCT/CSP");
+    }
+  }
+
+  /**
+   * Get CSP viscosity correction factors from the active PFCT/Pedersen viscosity model.
+   *
+   * @return array of four correction factors, or null if the current model is not PFCT/CSP
+   */
+  public double[] getCspViscosityCorrectionFactors() {
+    if (viscosityCalc instanceof PFCTViscosityMethod) {
+      return ((PFCTViscosityMethod) viscosityCalc).getCspViscosityCorrectionFactors();
+    } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
+      return ((PFCTViscosityMethodMod86) viscosityCalc).getCspViscosityCorrectionFactors();
+    } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
+      return ((PFCTViscosityMethodHeavyOil) viscosityCalc).getCspViscosityCorrectionFactors();
+    }
+    return null;
   }
 
   /**

@@ -1,7 +1,11 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -80,6 +84,53 @@ public class PFCTViscosityMethodTest extends neqsim.NeqSimTest {
 
     assertEquals(gasPFCT, gasPFCTHeavy, 0.05 * gasPFCT);
     assertEquals(oilPFCT, oilPFCTHeavy, 0.05 * oilPFCT);
+  }
+
+  @Test
+  void cspCorrectionFactorsRoundTripAndChangeViscosity() {
+    double T = 300.0; // K
+    double P = 100.0; // bar(a)
+    testSystem = new neqsim.thermo.system.SystemSrkEos(T, P);
+    testSystem.addComponent("methane", 0.5);
+    testSystem.addComponent("nC10", 0.5);
+    testSystem.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+    ops.TPflash();
+
+    PhysicalProperties properties = testSystem.getPhase("gas").getPhysicalProperties();
+    properties.setViscosityModel("CSP");
+    assertArrayEquals(new double[] {1.0, 1.0, 1.0, 1.0},
+        properties.getCspViscosityCorrectionFactors(), 1.0e-12);
+
+    testSystem.initProperties();
+    double baseViscosity = testSystem.getPhase("gas").getPhysicalProperties().getViscosity();
+
+    properties.setCspViscosityCorrectionFactors(new double[] {0.6232, 1.1507, 1.0, 1.0});
+    testSystem.initProperties();
+    double correctedViscosity = testSystem.getPhase("gas").getPhysicalProperties().getViscosity();
+
+    assertNotEquals(baseViscosity, correctedViscosity, 1.0e-12);
+    assertArrayEquals(new double[] {0.6232, 1.1507, 1.0, 1.0},
+        properties.getCspViscosityCorrectionFactors(), 1.0e-12);
+  }
+
+  @Test
+  void cspCorrectionFactorsValidateInput() {
+    testSystem = new neqsim.thermo.system.SystemSrkEos(300.0, 10.0);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+    ops.TPflash();
+
+    PhysicalProperties properties = testSystem.getPhase("gas").getPhysicalProperties();
+    properties.setViscosityModel("PFCT");
+
+    assertThrows(IllegalArgumentException.class,
+        () -> properties.setCspViscosityCorrectionFactors(new double[] {1.0, 1.0, 1.0}));
+    assertThrows(IllegalArgumentException.class,
+        () -> properties.setCspViscosityCorrectionFactor(4, 1.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> properties.setCspViscosityCorrectionFactor(0, Double.NaN));
   }
 }
 
