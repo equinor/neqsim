@@ -1,9 +1,11 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -247,6 +249,59 @@ public class ColumnSpecificationTest {
     // Allow tolerance since we're solving iteratively
     assertTrue(ethaneInTop > 0.1,
         "Ethane mole fraction in top product should be significant, got: " + ethaneInTop);
+  }
+
+  /**
+   * Test that a product specification dispatches the run through the specification adjustment loop.
+   */
+  @Test
+  public void productSpecificationActivatesOuterSolve() {
+    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 50.0, 10.0);
+    testSystem.addComponent("propane", 0.5);
+    testSystem.addComponent("n-butane", 0.5);
+    testSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("specDispatchFeed", testSystem);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("SpecDispatchColumn", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.setTopProductPurity("propane", 0.8);
+    column.getTopSpecification().setTolerance(1.0);
+    column.getTopSpecification().setMaxIterations(3);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setMaxNumberOfIterations(30);
+
+    assertFalse(column.getCondenser().isSetOutTemperature());
+
+    column.run();
+
+    assertTrue(column.getCondenser().isSetOutTemperature(),
+        "Product specifications should activate the outer solve and set a condenser temperature");
+    assertTrue(column.getLastIterationCount() > 0);
+  }
+
+  /**
+   * Test that solved() rejects a column with mass residual above the configured tolerance.
+   *
+   * @throws Exception if reflective field access fails
+   */
+  @Test
+  public void solvedRequiresMassBalanceTolerance() throws Exception {
+    DistillationColumn column = new DistillationColumn("SolvedContractColumn", 1, true, true);
+    column.setError(0.0);
+    column.setMassBalanceTolerance(1.0e-3);
+
+    Field massResidual = DistillationColumn.class.getDeclaredField("lastMassResidual");
+    massResidual.setAccessible(true);
+    massResidual.setDouble(column, 1.0e-2);
+
+    assertFalse(column.solved(), "A low temperature residual must not hide mass imbalance");
   }
 
   /**

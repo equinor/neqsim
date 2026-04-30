@@ -98,7 +98,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     WEGSTEIN,
     /** Sum-rates tearing method with flow correction. */
     SUM_RATES,
-    /** Newton-Raphson simultaneous temperature correction. */
+    /** Newton-Raphson tray-temperature correction accelerator, not a full MESH Newton solver. */
     NEWTON
   }
 
@@ -486,6 +486,82 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void run(UUID id) {
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
+    applyDirectSpecifications();
+    if (hasAdjustableSpecifications()) {
+      solveWithSpecifications(id);
+      return;
+    }
+    solveInner(id);
+  }
+
+  /** Apply specifications that map directly to condenser or reboiler controls. */
+  private void applyDirectSpecifications() {
+    applyDirectSpecification(topSpecification);
+    applyDirectSpecification(bottomSpecification);
+  }
+
+  /**
+   * Apply a specification that does not require an outer iteration.
+   *
+   * @param spec the specification to apply
+   */
+  private void applyDirectSpecification(ColumnSpecification spec) {
+    if (spec == null) {
+      return;
+    }
+
+    if (spec.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO) {
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
+        getCondenser().setRefluxRatio(spec.getTargetValue());
+      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
+        getReboiler().setRefluxRatio(spec.getTargetValue());
+      }
+    } else if (spec.getType() == ColumnSpecification.SpecificationType.DUTY) {
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
+        getCondenser().setHeatInput(spec.getTargetValue());
+      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
+        getReboiler().setHeatInput(spec.getTargetValue());
+      }
+    }
+  }
+
+  /**
+   * Check whether any configured column specification requires iterative adjustment.
+   *
+   * @return {@code true} when an active product/recovery/flow specification is present
+   */
+  private boolean hasAdjustableSpecifications() {
+    return needsAdjustment(topSpecification) || needsAdjustment(bottomSpecification);
+  }
+
+  /**
+   * Check whether all active column specifications are within their configured tolerance.
+   *
+   * @return {@code true} if all specifications are satisfied
+   */
+  private boolean specificationsSatisfied() {
+    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification);
+  }
+
+  /**
+   * Check whether a single column specification is satisfied.
+   *
+   * @param spec the specification to evaluate
+   * @return {@code true} if no residual check is needed or the residual is within tolerance
+   */
+  private boolean specificationSatisfied(ColumnSpecification spec) {
+    if (spec == null || !needsAdjustment(spec)) {
+      return true;
+    }
+    return Math.abs(evaluateSpecError(spec)) <= spec.getTolerance();
+  }
+
+  /**
+   * Solve the column using the currently selected inner solver.
+   *
+   * @param id calculation identifier
+   */
+  private void solveSelectedSolver(UUID id) {
     switch (solverType) {
       case DAMPED_SUBSTITUTION:
         solveSequential(id, relaxationFactor);
@@ -674,27 +750,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   private void solveInner(UUID id) {
-    switch (solverType) {
-      case DAMPED_SUBSTITUTION:
-        solveSequential(id, relaxationFactor);
-        break;
-      case INSIDE_OUT:
-        solveInsideOut(id);
-        break;
-      case WEGSTEIN:
-        solveWegstein(id);
-        break;
-      case SUM_RATES:
-        solveSumRates(id);
-        break;
-      case NEWTON:
-        solveNewton(id);
-        break;
-      case DIRECT_SUBSTITUTION:
-      default:
-        solveSequential(id, 1.0);
-        break;
-    }
+    solveSelectedSolver(id);
   }
 
   /**
@@ -3139,7 +3195,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < getEffectiveTemperatureTolerance());
+    boolean temperatureSolved = err < getEffectiveTemperatureTolerance();
+    boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
+    boolean energySolved = !enforceEnergyBalanceTolerance
+        || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
+    return temperatureSolved && massSolved && energySolved && specificationsSatisfied();
   }
 
   void setError(double err) {
@@ -4503,11 +4563,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Update column outlet streams from top and bottom trays
     if (trays.size() > 0) {
-      StreamInterface gasOut = trays.get(0).getGasOutStream();
+      StreamInterface gasOut = trays.get(nTrays - 1).getGasOutStream();
       if (gasOut != null && gasOut.getThermoSystem() != null) {
         gasOutStream.setThermoSystem(gasOut.getThermoSystem().clone());
       }
-      StreamInterface liqOut = trays.get(nTrays - 1).getLiquidOutStream();
+      StreamInterface liqOut = trays.get(0).getLiquidOutStream();
       if (liqOut != null && liqOut.getThermoSystem() != null) {
         liquidOutStream.setThermoSystem(liqOut.getThermoSystem().clone());
       }
