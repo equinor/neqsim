@@ -166,18 +166,21 @@ def _build_e300_test_model(tmpdir):
         _component('Nitrogen', 4, 126.20, 33.95, 0.037, 28.014, 77.36, 0.090),
         _component('OilPseudo*', 5, 640.0, 20.0, 0.720, 180.0, 520.0, 0.700,
                    volume_shift=0.045, parachor=240.0),
+        _component('C7+', 6, 700.0, 18.0, 0.850, 230.0, 570.0, 0.850,
+               volume_shift=0.055, parachor=290.0),
     ]
     bips = [[0.0 for _ in components] for _ in components]
     bips[1][0] = bips[0][1] = 0.011
     bips[3][0] = bips[0][3] = 0.095
     bips[5][0] = bips[0][5] = 0.020
+    bips[6][0] = bips[0][6] = 0.025
 
     fluid_package = UniSimFluidPackage(
         name='PR-LK Basis',
         property_package='Peng-Robinson - LK',
         components=components,
         bips=bips,
-        reference_composition=[0.74, 0.08, 0.04, 0.05, 0.03, 0.06],
+        reference_composition=[0.70, 0.08, 0.04, 0.05, 0.03, 0.06, 0.04],
     )
     fluid_package.write_e300(os.path.join(tmpdir, 'pr_lk_basis.e300'))
 
@@ -194,6 +197,7 @@ def _build_e300_test_model(tmpdir):
                     composition={
                         'Methane': 0.74, 'Ethane': 0.08, 'n-Butane': 0.04,
                         'CO2': 0.05, 'Nitrogen': 0.03, 'OilPseudo*': 0.06,
+                        'C7+': 0.04,
                     },
                 ),
             ],
@@ -213,6 +217,29 @@ def _build_e300_test_model(tmpdir):
             ],
         ),
     )
+
+
+def _build_multi_e300_test_model(tmpdir):
+    """Create a model with two exported E300 fluid packages."""
+    model = _build_e300_test_model(tmpdir)
+
+    water_components = [
+        _component('Water', 0, 647.10, 220.64, 0.344, 18.015, 373.15, 0.056),
+        _component('Methane', 1, 190.56, 45.99, 0.011, 16.043, 111.66, 0.099),
+    ]
+    water_bips = [[0.0 for _ in water_components] for _ in water_components]
+    water_bips[0][1] = water_bips[1][0] = 0.120
+
+    water_package = UniSimFluidPackage(
+        name='Water Service Basis',
+        property_package='SRK',
+        components=water_components,
+        bips=water_bips,
+        reference_composition=[0.95, 0.05],
+    )
+    water_package.write_e300(os.path.join(tmpdir, 'water_service_basis.e300'))
+    model.fluid_packages.append(water_package)
+    return model
 
 
 def test_to_python():
@@ -477,6 +504,7 @@ def test_e300_fluid_package_export_and_usage():
         assert 'C4' in e300_text
         assert 'N2' in e300_text
         assert 'OilPseudo*' in e300_text
+        assert 'C7plus' in e300_text
         assert 'BIC' in e300_text
         assert '0.0950' in e300_text
         assert 'PARACHOR' in e300_text
@@ -489,6 +517,11 @@ def test_e300_fluid_package_export_and_usage():
         assert fluid['e300FilePath'] == fluid_package.e300_file_path
         assert fluid['componentCount'] == len(fluid_package.components)
         assert fluid['componentNames'][:5] == ['C1', 'C2', 'C4', 'CO2', 'N2']
+        assert fluid['componentNames'][-1] == 'C7plus'
+        assert len(result['fluidPackages']) == 1
+        assert result['fluidPackages'][0]['e300FilePath'] == fluid_package.e300_file_path
+        assert result['fluids'][result['fluidPackages'][0]['fluidRef']]['e300FilePath'] == \
+            fluid_package.e300_file_path
 
         py_code = converter.to_python()
         assert 'EclipseFluidReadWrite.read' in py_code
@@ -505,6 +538,38 @@ def test_e300_fluid_package_export_and_usage():
     print("  PASS")
 
 
+def test_all_fluid_packages_are_exposed_as_e300():
+    """Verify every UniSim fluid package becomes a named E300 fluid."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model = _build_multi_e300_test_model(tmpdir)
+        converter = UniSimToNeqSim(model)
+        result = converter.to_json()
+
+        assert len(model.fluid_packages) == 2
+        assert len(result['fluidPackages']) == 2
+        assert len(result['fluids']) == 2
+        assert result['fluid']['e300FilePath'] == model.fluid_packages[0].e300_file_path
+
+        e300_paths = [fp.e300_file_path for fp in model.fluid_packages]
+        assert len(set(e300_paths)) == len(model.fluid_packages)
+        for e300_path in e300_paths:
+            assert e300_path is not None
+            assert os.path.exists(e300_path)
+
+        for package_entry in result['fluidPackages']:
+            fluid_ref = package_entry['fluidRef']
+            assert fluid_ref in result['fluids']
+            assert package_entry['e300FilePath'] == result['fluids'][fluid_ref]['e300FilePath']
+            assert os.path.exists(package_entry['e300FilePath'])
+
+        py_code = converter.to_python()
+        assert py_code.count('EclipseFluidReadWrite.read') >= 2
+        for e300_path in e300_paths:
+            assert e300_path.replace('\\', '/') in py_code
+
+    print("  PASS")
+
+
 if __name__ == "__main__":
     tests = [
         ("to_python", test_to_python),
@@ -516,6 +581,7 @@ if __name__ == "__main__":
         ("code_consistency", test_code_consistency),
         ("to_json", test_to_json),
         ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),
+        ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
     ]
     passed = 0
     failed = 0

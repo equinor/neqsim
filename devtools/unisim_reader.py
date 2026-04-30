@@ -136,7 +136,9 @@ class UniSimFluidPackage:
             candidate_normalized = candidate_normalized.replace('-', '').lower()
             if normalized == candidate_normalized:
                 return e300_name
-        return component_name.replace('/', '_')
+        safe_name = component_name.strip().replace('/', '_').replace('\\', '_')
+        safe_name = safe_name.replace('+', 'plus').replace(' ', '_')
+        return safe_name
 
     @staticmethod
     def _estimate_parachor(component: UniSimComponent) -> float:
@@ -687,6 +689,19 @@ class UniSimReader:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    @staticmethod
+    def _safe_file_stem(name: str, fallback: str) -> str:
+        """Return a filesystem-safe stem for generated export files."""
+        safe_name = str(name or fallback).strip()
+        safe_name = safe_name.replace('+', 'plus')
+        safe_name = safe_name.replace('/', '_').replace('\\', '_')
+        safe_name = safe_name.replace(' ', '_')
+        safe_name = ''.join(
+            ch if ch.isalnum() or ch in ('_', '-') else '_'
+            for ch in safe_name)
+        safe_name = safe_name.strip('_')
+        return safe_name or fallback
+
     def read(self, usc_path: str, extract_streams: bool = True,
              export_e300: bool = True, e300_output_dir: Optional[str] = None
              ) -> UniSimModel:
@@ -744,19 +759,26 @@ class UniSimReader:
             os.makedirs(e300_output_dir, exist_ok=True)
             base_name = os.path.splitext(os.path.basename(usc_path))[0]
 
-            # Get composition from first feed stream for reference
-            ref_comp = self._get_reference_composition(model)
-
+            used_paths = set()
             for idx, fp in enumerate(model.fluid_packages):
                 if fp.has_critical_properties:
                     # Set reference composition on the fluid package
+                    ref_comp = self._get_reference_composition(model, fp)
                     if ref_comp and len(ref_comp) == len(fp.components):
                         fp.reference_composition = ref_comp
                     # Generate E300 filename
-                    safe_name = fp.name.replace(' ', '_').replace('/', '_')
+                    safe_name = self._safe_file_stem(
+                        fp.name, f'fluid_package_{idx + 1}')
                     e300_path = os.path.join(
                         e300_output_dir,
                         f'{base_name}_{safe_name}.e300')
+                    suffix = 2
+                    while os.path.normcase(e300_path) in used_paths:
+                        e300_path = os.path.join(
+                            e300_output_dir,
+                            f'{base_name}_{safe_name}_{suffix}.e300')
+                        suffix += 1
+                    used_paths.add(os.path.normcase(e300_path))
                     try:
                         fp.write_e300(e300_path)
                         logger.info(f"Exported E300: {e300_path}")
@@ -775,7 +797,9 @@ class UniSimReader:
         return model
 
     @staticmethod
-    def _get_reference_composition(model: UniSimModel) -> Optional[List[float]]:
+    def _get_reference_composition(model: UniSimModel,
+                                   fluid_package: Optional[UniSimFluidPackage] = None
+                                   ) -> Optional[List[float]]:
         """Get mole fraction composition from the first feed stream.
 
         Returns a list of mole fractions in the same order as the fluid
@@ -783,7 +807,7 @@ class UniSimReader:
         """
         if not model.flowsheet or not model.fluid_packages:
             return None
-        fp = model.fluid_packages[0]
+        fp = fluid_package or model.fluid_packages[0]
         comp_names = fp.component_names
 
         # Find a stream with composition data
@@ -1799,6 +1823,16 @@ class UniSimToNeqSim:
 
         # Map fluid/EOS
         result['fluid'] = self._build_fluid_section()
+        fluid_sections = self._build_fluid_package_sections()
+        if fluid_sections:
+            result['fluidPackages'] = []
+            result['fluids'] = {}
+            for index, (fluid_ref, section) in enumerate(fluid_sections):
+                result['fluids'][fluid_ref] = section
+                package_entry = dict(section)
+                package_entry['fluidRef'] = fluid_ref
+                package_entry['isDefault'] = (index == 0)
+                result['fluidPackages'].append(package_entry)
 
         # Determine which sub-flowsheets to include
         if full_mode:
@@ -2079,8 +2113,62 @@ class UniSimToNeqSim:
                 first = False
         print(f"{'='*80}\n")
 
-    def _build_fluid_section(self) -> Dict:
-        """Build the fluid section from the first fluid package.
+    @staticmethod
+    def _fluid_package_ref_name(fp: UniSimFluidPackage, index: int) -> str:
+        """Return a stable JSON fluid reference for a UniSim fluid package."""
+        safe_name = str(fp.name or f'fluidPackage{index + 1}').strip()
+        safe_name = safe_name.replace('+', 'plus')
+        safe_name = safe_name.replace('/', '_').replace('\\', '_')
+        safe_name = safe_name.replace(' ', '_').replace('-', '_')
+        safe_name = ''.join(
+            ch if ch.isalnum() or ch == '_' else '_'
+            for ch in safe_name)
+        safe_name = safe_name.strip('_')
+        if not safe_name:
+            safe_name = f'fluidPackage{index + 1}'
+        if safe_name[0].isdigit():
+            safe_name = f'fluid_{safe_name}'
+        return safe_name
+
+    def _build_fluid_package_sections(self) -> List[Tuple[str, Dict]]:
+        """Build named fluid sections for every extracted UniSim package."""
+        sections = []
+        used_refs = set()
+        for index, fp in enumerate(self.model.fluid_packages):
+            fluid_ref = self._fluid_package_ref_name(fp, index)
+            base_ref = fluid_ref
+            suffix = 2
+            while fluid_ref in used_refs:
+                fluid_ref = f'{base_ref}_{suffix}'
+                suffix += 1
+            used_refs.add(fluid_ref)
+            sections.append((fluid_ref, self._build_fluid_section(index)))
+        return sections
+
+    def _map_property_package_to_eos(self, property_package: str) -> str:
+        """Map a UniSim property package name to the closest NeqSim EOS."""
+        eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(property_package)
+        if eos is None:
+            pp_lower = property_package.lower()
+            for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
+                if key.lower() in pp_lower or pp_lower.startswith(key.lower()):
+                    eos = val
+                    break
+        return eos or 'SRK'
+
+    def _reference_conditions(self) -> Tuple[float, float]:
+        """Return representative temperature and pressure for fluid creation."""
+        ref_temp_K, ref_P_bara = 298.15, 1.0
+        feed_stream = self._find_feed_stream()
+        if feed_stream:
+            if feed_stream.temperature_C is not None:
+                ref_temp_K = feed_stream.temperature_C + 273.15
+            if feed_stream.pressure_bara is not None:
+                ref_P_bara = feed_stream.pressure_bara
+        return ref_temp_K, ref_P_bara
+
+    def _build_fluid_section(self, package_index: int = 0) -> Dict:
+        """Build the fluid section from one UniSim fluid package.
 
         If the fluid package has an E300 file (exported during read()),
         the E300 path is included in the fluid section. This is the
@@ -2093,27 +2181,14 @@ class UniSimToNeqSim:
             return {'model': 'SRK', 'temperature': 298.15, 'pressure': 1.0,
                     'mixingRule': 'classic', 'components': {'methane': 1.0}}
 
-        fp = self.model.fluid_packages[0]
+        fp = self.model.fluid_packages[package_index]
 
         # --- E300 route (preferred) ---
         if fp.e300_file_path and os.path.exists(fp.e300_file_path):
-            eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(fp.property_package)
-            if eos is None:
-                pp_lower = fp.property_package.lower()
-                for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
-                    if key.lower() in pp_lower or pp_lower.startswith(
-                            key.lower()):
-                        eos = val
-                        break
-                if eos is None:
-                    eos = 'PR'
-            ref_temp_K, ref_P_bara = 298.15, 1.0
-            feed_stream = self._find_feed_stream()
-            if feed_stream:
-                if feed_stream.temperature_C is not None:
-                    ref_temp_K = feed_stream.temperature_C + 273.15
-                if feed_stream.pressure_bara is not None:
-                    ref_P_bara = feed_stream.pressure_bara
+            eos = self._map_property_package_to_eos(fp.property_package)
+            if eos == 'SRK' and 'peng' in fp.property_package.lower():
+                eos = 'PR'
+            ref_temp_K, ref_P_bara = self._reference_conditions()
             return {
                 'model': eos,
                 'temperature': ref_temp_K,
@@ -2125,24 +2200,14 @@ class UniSimToNeqSim:
             }
 
         # --- Fallback: manual component mapping ---
-        eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(fp.property_package)
-        if eos is None:
-            # Try partial/prefix match (e.g. "DBR Amine Package (v2011.1)")
-            pp_lower = fp.property_package.lower()
-            for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
-                if key.lower() in pp_lower or pp_lower.startswith(key.lower()):
-                    eos = val
-                    break
-            if eos is None:
-                eos = 'SRK'
+        eos = self._map_property_package_to_eos(fp.property_package)
         if eos == 'SRK' and fp.property_package not in ('SRK', 'Soave-Redlich-Kwong'):
             self._assumptions.append(
                 f"Mapped '{fp.property_package}' → SRK (closest NeqSim equivalent)")
 
         # Find a feed stream to get initial composition
         composition = {}
-        ref_temp_K = 298.15
-        ref_P_bara = 1.0
+        ref_temp_K, ref_P_bara = self._reference_conditions()
 
         # Look for the first stream with a valid composition
         feed_stream = self._find_feed_stream()
@@ -3075,14 +3140,32 @@ class UniSimToNeqSim:
         # E300 route (preferred when available)
         e300_path = fluid.get('e300FilePath')
         if e300_path:
-            escaped_path = e300_path.replace('\\', '/')
-            lines.append(f'E300_FILE = r"{escaped_path}"')
-            lines.append(f'fluid = EclipseFluidReadWrite.read(E300_FILE)')
-            lines.append(f'fluid.setTemperature({fluid.get("temperature", 298.15)}, "K")')
-            lines.append(f'fluid.setPressure({fluid.get("pressure", 1.0)}, "bara")')
-            pkg_name = fluid.get('fluidPackageName', '')
-            n_comp = fluid.get('componentCount', '?')
-            lines.append(f'# Loaded from E300: {pkg_name} ({n_comp} components)')
+            e300_sections = [
+                (ref, section)
+                for ref, section in self._build_fluid_package_sections()
+                if section.get('e300FilePath')
+            ]
+            if not e300_sections:
+                e300_sections = [('default', fluid)]
+            lines.append('fluid_packages = {}')
+            for fluid_ref, section in e300_sections:
+                escaped_path = section['e300FilePath'].replace('\\', '/')
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"] = '
+                    f'EclipseFluidReadWrite.read(r"{escaped_path}")')
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"].setTemperature('
+                    f'{section.get("temperature", 298.15)}, "K")')
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"].setPressure('
+                    f'{section.get("pressure", 1.0)}, "bara")')
+                pkg_name = section.get('fluidPackageName', fluid_ref)
+                n_comp = section.get('componentCount', '?')
+                lines.append(
+                    f'# Loaded from E300: {pkg_name} ({n_comp} components)')
+            default_ref = e300_sections[0][0]
+            lines.append(f'fluid = fluid_packages["{default_ref}"]')
+            lines.append(f'# Default fluid package: {default_ref}')
             return lines
 
         # Fallback: manual fluid creation
