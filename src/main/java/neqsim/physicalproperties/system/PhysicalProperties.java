@@ -351,6 +351,17 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
+   * Set CSP viscosity parameters for the active PFCT/Pedersen viscosity model.
+   *
+   * @param parameters array of four CSP viscosity parameters
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  public void setCspViscosityParameters(double[] parameters) {
+    setCspViscosityCorrectionFactors(parameters);
+  }
+
+  /**
    * Set one CSP viscosity correction factor for the active PFCT/Pedersen viscosity model.
    *
    * @param index correction factor index, from 0 to 3
@@ -371,6 +382,18 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
+   * Set one CSP viscosity parameter for the active PFCT/Pedersen viscosity model.
+   *
+   * @param index parameter index, from 0 to 3
+   * @param value finite parameter value
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  public void setCspViscosityParameter(int index, double value) {
+    setCspViscosityCorrectionFactor(index, value);
+  }
+
+  /**
    * Get CSP viscosity correction factors from the active PFCT/Pedersen viscosity model.
    *
    * @return array of four correction factors, or null if the current model is not PFCT/CSP
@@ -384,6 +407,15 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       return ((PFCTViscosityMethodHeavyOil) viscosityCalc).getCspViscosityCorrectionFactors();
     }
     return null;
+  }
+
+  /**
+   * Get CSP viscosity parameters from the active PFCT/Pedersen viscosity model.
+   *
+   * @return array of four CSP viscosity parameters, or null if the current model is not PFCT/CSP
+   */
+  public double[] getCspViscosityParameters() {
+    return getCspViscosityCorrectionFactors();
   }
 
   /**
