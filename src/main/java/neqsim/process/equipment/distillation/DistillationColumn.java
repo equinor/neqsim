@@ -68,6 +68,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
   /** Recommended base enthalpy balance tolerance for adaptive defaults. */
   private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
+  /** Default scaled MESH residual tolerance when residual gating is enabled. */
+  private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -79,6 +81,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
   /** Enthalpy balance convergence tolerance. */
   private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+  /** Scaled MESH residual convergence tolerance. */
+  private double meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
   /** Track whether temperature tolerance has been manually overridden. */
   private boolean temperatureToleranceCustomized = false;
   /** Track whether mass balance tolerance has been manually overridden. */
@@ -125,6 +129,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double maxEnergyRelaxationWeight = 10.0;
   /** Control whether energy residual must satisfy tolerance before convergence. */
   private boolean enforceEnergyBalanceTolerance = false;
+  /** Control whether the MESH residual vector must satisfy tolerance before convergence. */
+  private boolean enforceMeshResidualTolerance = false;
   private boolean doMultiPhaseCheck = true;
 
   /**
@@ -3254,7 +3260,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
     boolean energySolved = !enforceEnergyBalanceTolerance
         || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
-    return temperatureSolved && massSolved && energySolved && specificationsSatisfied();
+    return temperatureSolved && massSolved && energySolved && meshResidualsSatisfied()
+        && specificationsSatisfied();
+  }
+
+  /**
+   * Check whether the latest MESH residual satisfies the optional convergence gate.
+   *
+   * @return {@code true} if MESH residual gating is disabled or the latest residual is acceptable
+   */
+  private boolean meshResidualsSatisfied() {
+    if (!enforceMeshResidualTolerance || lastMeshResidual == null) {
+      return true;
+    }
+    return lastMeshResidual.isFinite()
+        && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance;
   }
 
   void setError(double err) {
@@ -3444,12 +3464,40 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Control whether the latest MESH residual vector must satisfy tolerance during convergence
+   * checks.
+   *
+   * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
+   */
+  public void setEnforceMeshResidualTolerance(boolean enforce) {
+    this.enforceMeshResidualTolerance = enforce;
+  }
+
+  /**
+   * Check if convergence requires the latest MESH residual vector to satisfy tolerance.
+   *
+   * @return {@code true} if MESH residuals are part of the convergence check
+   */
+  public boolean isEnforceMeshResidualTolerance() {
+    return enforceMeshResidualTolerance;
+  }
+
+  /**
    * Access the configured relative enthalpy balance tolerance.
    *
    * @return enthalpy balance tolerance
    */
   public double getEnthalpyBalanceTolerance() {
     return getEffectiveEnthalpyBalanceTolerance();
+  }
+
+  /**
+   * Access the configured scaled MESH residual tolerance.
+   *
+   * @return MESH residual tolerance
+   */
+  public double getMeshResidualTolerance() {
+    return meshResidualTolerance;
   }
 
   /**
@@ -3700,6 +3748,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set the scaled MESH residual tolerance used when MESH residual gating is enabled.
+   *
+   * @param tol positive finite tolerance
+   * @throws IllegalArgumentException if the tolerance is not positive and finite
+   */
+  public void setMeshResidualTolerance(double tol) {
+    if (!Double.isFinite(tol) || tol <= 0.0) {
+      throw new IllegalArgumentException("MESH residual tolerance must be positive and finite");
+    }
+    this.meshResidualTolerance = tol;
+  }
+
+  /**
    * Restore adaptive default tolerances, discarding manual overrides.
    */
   public void resetToleranceOverrides() {
@@ -3709,6 +3770,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
     massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
     enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+    meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
+    enforceMeshResidualTolerance = false;
   }
 
   /**

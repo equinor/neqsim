@@ -3,6 +3,7 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -330,6 +331,29 @@ public class DistillationSolverBenchmarkTest {
     assertNotNull(column.getLastMeshResidual(), "MESH residual solver should record diagnostics");
     assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
         "MESH residual solver should report a finite norm");
+  }
+
+  /**
+   * Test optional convergence gating on the full MESH residual norm.
+   */
+  @Test
+  public void meshResidualToleranceCanBeEnforced() {
+    DistillationColumn column = runDeethanizer(DistillationColumn.SolverType.MESH_RESIDUAL);
+    double residualNorm = column.getLastMeshResidualNorm();
+    double permissiveTolerance = Math.max(1.0, residualNorm * 2.0 + 1.0);
+
+    assertFalse(column.isEnforceMeshResidualTolerance(),
+        "MESH residual gating should be disabled by default");
+    column.setMeshResidualTolerance(permissiveTolerance);
+    column.setEnforceMeshResidualTolerance(true);
+
+    assertEquals(permissiveTolerance, column.getMeshResidualTolerance(), 0.0,
+        "Configured MESH tolerance should be retained");
+    assertTrue(column.isEnforceMeshResidualTolerance(),
+        "MESH residual gating should be enabled after setter call");
+    assertTrue(column.solved(), "Permissive MESH residual gate should keep the solve converged");
+    assertThrows(IllegalArgumentException.class, () -> column.setMeshResidualTolerance(0.0));
+    assertThrows(IllegalArgumentException.class, () -> column.setMeshResidualTolerance(Double.NaN));
   }
 
   /**
