@@ -18,6 +18,7 @@ This guide documents the viscosity calculation methods available in NeqSim for g
   - [Reference Fluid Methods](#reference-fluid-methods)
 - [Model Selection Guide](#model-selection-guide)
 - [Tuning Parameters](#tuning-parameters)
+    - [CSP PFCT Parameter Tuning](#csp-pfct-parameter-tuning)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -111,7 +112,7 @@ fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("friction theory
 
 **Custom constants (for other EoS):**
 ```java
-FrictionTheoryViscosityMethod viscModel = 
+FrictionTheoryViscosityMethod viscModel =
     (FrictionTheoryViscosityMethod) fluid.getPhase("oil")
         .getPhysicalProperties().getViscosityModel();
 
@@ -124,6 +125,8 @@ viscModel.setFrictionTheoryConstants(kapac, kaprc, kaprrc, kapa, kapr, kaprr);
 ### PFCT (Pedersen)
 
 The Pedersen Friction Corresponding States Theory uses methane as a reference fluid with shape factors for mixture calculations.
+
+The model can be selected with either `"PFCT"` or `"CSP"`. The `"CSP"` alias is intended for PVT workflows and external reports that label the Pedersen/PFCT viscosity model as CSP viscosity.
 
 **Classes:**
 - `PFCTViscosityMethodMod86` - Standard Pedersen method (1987)
@@ -143,11 +146,15 @@ where:
 - Petroleum mixtures with characterized fractions
 - Heavy oil systems (use `"PFCT-Heavy-Oil"`)
 - Wide-range predictions
+- PVT viscosity matching with four CSP correction factors
 
 **Usage:**
 ```java
 // Standard Pedersen
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT");
+
+// Equivalent CSP alias
+fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("CSP");
 
 // Heavy oil variant
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT-Heavy-Oil");
@@ -262,7 +269,7 @@ The LBC method is commonly tuned to match laboratory viscosity data:
 
 ```java
 // Get current parameters
-LBCViscosityMethod lbc = (LBCViscosityMethod) 
+LBCViscosityMethod lbc = (LBCViscosityMethod)
     fluid.getPhase("oil").getPhysicalProperties().getViscosityModel();
 
 // Set all 5 parameters
@@ -278,6 +285,21 @@ fluid.getPhase("oil").getPhysicalProperties().setLbcParameter(0, 0.105);
 2. Run flash and calculate properties
 3. Adjust parameters to minimize error
 4. Validate at other conditions
+
+### CSP PFCT Parameter Tuning
+
+The PFCT/CSP viscosity model exposes four dimensionless CSP correction factors. All factors default to `1.0`, preserving the historical NeqSim calculation unless a user supplies tuned values. External PVT tools may report fitted vectors such as `0.6232`, `1.1507`, `1.0000`, `1.0000`; these can be supplied directly as the four-value CSP viscosity parameter vector.
+
+| Index | Regression parameter | Corrected PFCT term |
+|-------|----------------------|---------------------|
+| 0 | `VISCOSITY_CSP_1` | Critical-temperature scaling exponent |
+| 1 | `VISCOSITY_CSP_2` | Critical-pressure scaling exponent |
+| 2 | `VISCOSITY_CSP_3` | Molar-mass scaling exponent |
+| 3 | `VISCOSITY_CSP_4` | Alpha/molecular-weight correction exponent |
+
+Use `PhysicalProperties.setCspViscosityParameters(double[])` to set all four parameters, `setCspViscosityParameter(int, double)` to tune one parameter, and `getCspViscosityParameters()` to read the active values. The longer `setCspViscosityCorrectionFactors` and `getCspViscosityCorrectionFactors` names are equivalent aliases.
+
+For automated fitting, add viscosity measurements to `PVTRegression` with `addViscosityData(...)`, then register `RegressionParameter.VISCOSITY_CSP_1` through `VISCOSITY_CSP_4` individually or call `addCspViscosityRegressionParameters()` to fit all four together. Viscosity observations are expected in Pa s and can target gas, oil, liquid, aqueous, or water phases.
 
 ---
 
@@ -321,10 +343,10 @@ for (String model : models) {
     SystemInterface fluid = createFluid();
     ops.TPflash();
     fluid.initPhysicalProperties();
-    
+
     fluid.getPhase("oil").getPhysicalProperties().setViscosityModel(model);
     fluid.initPhysicalProperties();
-    
+
     double visc = fluid.getPhase("oil").getViscosity("cP");
     System.out.println(model + ": " + visc + " cP");
 }
@@ -341,11 +363,11 @@ double[] temps = {300, 320, 340, 360, 380, 400};  // K
 for (double T : temps) {
     SystemInterface fluid = baseFluid.clone();
     fluid.setTemperature(T, "K");
-    
+
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
-    
+
     double visc = fluid.getPhase("oil").getViscosity("cP");
     System.out.println("T=" + (T-273.15) + "°C: " + visc + " cP");
 }

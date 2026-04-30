@@ -55,6 +55,7 @@ public class PVTRegression {
   private List<CVDDataPoint> cvdData = new ArrayList<>();
   private List<DLEDataPoint> dleData = new ArrayList<>();
   private List<SeparatorDataPoint> separatorData = new ArrayList<>();
+  private List<ViscosityDataPoint> viscosityData = new ArrayList<>();
 
   // Regression parameters
   private List<RegressionParameterConfig> regressionParameters = new ArrayList<>();
@@ -165,6 +166,38 @@ public class PVTRegression {
   }
 
   /**
+   * Add viscosity experimental data at one temperature.
+   *
+   * @param pressures pressure values in bara
+   * @param viscosities dynamic viscosity values in Pa s
+   * @param temperature experiment temperature in K
+   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
+   */
+  public void addViscosityData(double[] pressures, double[] viscosities, double temperature,
+      String phaseName) {
+    for (int i = 0; i < pressures.length; i++) {
+      viscosityData
+          .add(new ViscosityDataPoint(pressures[i], temperature, viscosities[i], phaseName));
+    }
+  }
+
+  /**
+   * Add viscosity experimental data at individual pressure and temperature points.
+   *
+   * @param pressures pressure values in bara
+   * @param temperatures temperature values in K
+   * @param viscosities dynamic viscosity values in Pa s
+   * @param phaseName phase name: gas, oil, liquid, aqueous, or water
+   */
+  public void addViscosityData(double[] pressures, double[] temperatures, double[] viscosities,
+      String phaseName) {
+    for (int i = 0; i < pressures.length; i++) {
+      viscosityData
+          .add(new ViscosityDataPoint(pressures[i], temperatures[i], viscosities[i], phaseName));
+    }
+  }
+
+  /**
    * Add a regression parameter with bounds.
    *
    * @param parameter the parameter type to regress
@@ -187,6 +220,16 @@ public class PVTRegression {
     double[] defaults = parameter.getDefaultBounds();
     regressionParameters
         .add(new RegressionParameterConfig(parameter, defaults[0], defaults[1], defaults[2]));
+  }
+
+  /**
+   * Add all four CSP viscosity correction factors as regression parameters.
+   */
+  public void addCspViscosityRegressionParameters() {
+    addRegressionParameter(RegressionParameter.VISCOSITY_CSP_1);
+    addRegressionParameter(RegressionParameter.VISCOSITY_CSP_2);
+    addRegressionParameter(RegressionParameter.VISCOSITY_CSP_3);
+    addRegressionParameter(RegressionParameter.VISCOSITY_CSP_4);
   }
 
   /**
@@ -236,14 +279,15 @@ public class PVTRegression {
       throw new IllegalStateException("No regression parameters defined");
     }
 
-    if (cceData.isEmpty() && cvdData.isEmpty() && dleData.isEmpty() && separatorData.isEmpty()) {
+    if (cceData.isEmpty() && cvdData.isEmpty() && dleData.isEmpty() && separatorData.isEmpty()
+        && viscosityData.isEmpty()) {
       throw new IllegalStateException("No experimental data provided");
     }
 
     if (verbose) {
       logger.info("Starting PVT regression with {} parameters", regressionParameters.size());
-      logger.info("Data points: CCE={}, CVD={}, DLE={}, Separator={}", cceData.size(),
-          cvdData.size(), dleData.size(), separatorData.size());
+      logger.info("Data points: CCE={}, CVD={}, DLE={}, Separator={}, Viscosity={}", cceData.size(),
+          cvdData.size(), dleData.size(), separatorData.size(), viscosityData.size());
     }
 
     // Create sample set for Levenberg-Marquardt
@@ -255,6 +299,7 @@ public class PVTRegression {
     addCVDSamples(sampleList, function);
     addDLESamples(sampleList, function);
     addSeparatorSamples(sampleList, function);
+    addViscositySamples(sampleList, function);
 
     SampleSet sampleSet = new SampleSet(sampleList);
 
@@ -264,8 +309,11 @@ public class PVTRegression {
     optimizer.setSampleSet(sampleSet);
     optimizer.solve();
 
+    double[] optimizedParams = optimizer.getSample(0).getFunction().getFittingParams().clone();
+    function.setFittingParams(optimizedParams);
+
     // Apply optimized parameters to fluid
-    applyOptimizedParameters(function.getFittingParams());
+    applyOptimizedParameters(optimizedParams);
 
     // Calculate final objective function values
     Map<ExperimentType, Double> objectiveValues = calculateObjectiveValues();
@@ -277,13 +325,13 @@ public class PVTRegression {
     UncertaintyAnalysis uncertainty = calculateUncertainty(optimizer, function, finalChiSquare);
 
     lastResult = new RegressionResult(tunedFluid.clone(), objectiveValues, regressionParameters,
-        uncertainty, function.getFittingParams(), finalChiSquare);
+        uncertainty, optimizedParams, finalChiSquare);
 
     if (verbose) {
       logger.info("Regression completed. Final chi-square: {}", finalChiSquare);
       for (int i = 0; i < regressionParameters.size(); i++) {
         logger.info("Parameter {}: {} = {}", i, regressionParameters.get(i).getParameter().name(),
-            function.getFittingParams()[i]);
+            optimizedParams[i]);
       }
     }
 
@@ -411,6 +459,26 @@ public class PVTRegression {
   }
 
   /**
+   * Add viscosity samples to the sample list.
+   *
+   * @param sampleList the list to add viscosity samples to
+   * @param function the PVT regression function to clone for each sample
+   */
+  private void addViscositySamples(ArrayList<SampleValue> sampleList,
+      PVTRegressionFunction function) {
+    double weight = experimentWeights.getOrDefault(ExperimentType.VISCOSITY, 1.0);
+    for (ViscosityDataPoint point : viscosityData) {
+      double[] dependentValues = {point.getPressure(), point.getTemperature(),
+          ExperimentType.VISCOSITY.ordinal(), point.getPhaseIndex()};
+      double standardDeviation = Math.max(Math.abs(point.getViscosity()) * 0.02, 1.0e-10) / weight;
+      SampleValue sample =
+          new SampleValue(point.getViscosity(), standardDeviation, dependentValues);
+      sample.setFunction(function.clone());
+      sampleList.add(sample);
+    }
+  }
+
+  /**
    * Apply optimized parameters to the tuned fluid.
    */
   private void applyOptimizedParameters(double[] optimizedParams) {
@@ -443,6 +511,9 @@ public class PVTRegression {
     }
     if (!separatorData.isEmpty()) {
       objectives.put(ExperimentType.SEPARATOR, calculateSeparatorObjective());
+    }
+    if (!viscosityData.isEmpty()) {
+      objectives.put(ExperimentType.VISCOSITY, calculateViscosityObjective());
     }
 
     return objectives;
@@ -565,12 +636,38 @@ public class PVTRegression {
   }
 
   /**
+   * Calculate normalized viscosity objective.
+   *
+   * @return average squared relative viscosity deviation
+   */
+  private double calculateViscosityObjective() {
+    double objective = 0.0;
+    if (viscosityData.isEmpty()) {
+      return 0.0;
+    }
+
+    PVTRegressionFunction function = new PVTRegressionFunction(tunedFluid.clone(),
+        new ArrayList<RegressionParameterConfig>(), experimentWeights);
+    for (ViscosityDataPoint point : viscosityData) {
+      double[] dependentValues = {point.getPressure(), point.getTemperature(),
+          ExperimentType.VISCOSITY.ordinal(), point.getPhaseIndex()};
+      double calcViscosity = function.calcValue(dependentValues);
+      if (point.getViscosity() > 0.0) {
+        objective += Math.pow((calcViscosity - point.getViscosity()) / point.getViscosity(), 2.0);
+      }
+    }
+
+    return objective / viscosityData.size();
+  }
+
+  /**
    * Calculate uncertainty analysis from the optimization results.
    */
   private UncertaintyAnalysis calculateUncertainty(LevenbergMarquardt optimizer,
       PVTRegressionFunction function, double finalChiSquare) {
     int nParams = regressionParameters.size();
-    int nData = cceData.size() + 2 * cvdData.size() + 3 * dleData.size() + 2 * separatorData.size();
+    int nData = cceData.size() + 2 * cvdData.size() + 3 * dleData.size() + 2 * separatorData.size()
+        + viscosityData.size();
 
     double[] parameterValues = function.getFittingParams();
     double[] standardErrors = new double[nParams];
@@ -663,6 +760,15 @@ public class PVTRegression {
   }
 
   /**
+   * Get the viscosity data points.
+   *
+   * @return list of viscosity data points
+   */
+  public List<ViscosityDataPoint> getViscosityData() {
+    return viscosityData;
+  }
+
+  /**
    * Clear all experimental data.
    */
   public void clearData() {
@@ -670,6 +776,7 @@ public class PVTRegression {
     cvdData.clear();
     dleData.clear();
     separatorData.clear();
+    viscosityData.clear();
   }
 
   /**

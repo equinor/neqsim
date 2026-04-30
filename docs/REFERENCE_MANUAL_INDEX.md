@@ -1010,7 +1010,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Document          | Path                                                                           | Description            |
 | ----------------- | ------------------------------------------------------------------------------ | ---------------------- |
 | Statistics        | [docs/statistics/README.md](statistics/)                                       | Statistics module      |
-| Parameter Fitting | [docs/statistics/parameter_fitting.md](statistics/parameter_fitting)           | Parameter fitting      |
+| Parameter Fitting | [docs/statistics/parameter_fitting.md](statistics/parameter_fitting)           | Detailed parameter fitting guide with legacy API, CSV/YAML data files, specs, robust objectives, validation, and reports      |
 | Monte Carlo       | [docs/statistics/monte_carlo_simulation.md](statistics/monte_carlo_simulation) | Monte Carlo simulation |
 | Data Analysis     | [docs/statistics/data_analysis.md](statistics/data_analysis)                   | Data analysis          |
 

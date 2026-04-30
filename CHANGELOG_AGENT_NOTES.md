@@ -45,6 +45,35 @@ keeps the residual diagnostics central to the solve path.
 - `docs/process/equipment/distillation.md`
 - `docs/wiki/distillation_column.md`
 - `.github/skills/neqsim-distillation-design/SKILL.md`
+## 2026-04-30 — CSP/PFCT Viscosity Parameter Fitting
+
+### Summary
+
+The PFCT/Pedersen viscosity model now exposes four tunable CSP viscosity
+correction factors. `PhysicalProperties.setViscosityModel("CSP")` is an alias for
+the standard PFCT/Pedersen viscosity model, and the four-parameter vector can be
+read or written with `setCspViscosityParameters`, `setCspViscosityParameter`, and
+`getCspViscosityParameters`. The longer `*CorrectionFactors` accessors are
+equivalent.
+
+### Agent Guidance
+
+- Use `"PFCT"` or `"CSP"` for the standard Pedersen corresponding-states
+  viscosity model; use `"PFCT-Heavy-Oil"` for the heavy-oil variant.
+- The four CSP viscosity parameters default to `1.0`. Supplying values such as
+  `0.6232`, `1.1507`, `1.0000`, `1.0000` preserves the external four-value order.
+- For regression, add viscosity observations with `PVTRegression.addViscosityData(...)`
+  and register `RegressionParameter.VISCOSITY_CSP_1` through
+  `VISCOSITY_CSP_4`, or call `addCspViscosityRegressionParameters()`.
+- Viscosity observations are in Pa s. Supported phase names are `gas`, `vapor`,
+  `oil`, `liquid`, `aqueous`, and `water`.
+- After TP flashes used for viscosity matching, call `fluid.initProperties()` so
+  physical properties are initialized before viscosity is read.
+
+### Reference
+
+- Viscosity reference: [`docs/physical_properties/viscosity_models.md`](docs/physical_properties/viscosity_models.md)
+- PVT regression guide: [`docs/pvtsimulation/fluid_characterization_mathematics.md`](docs/pvtsimulation/fluid_characterization_mathematics.md)
 
 ## 2026-04-30 — UniSim Reader: Operation Handler Registry
 
