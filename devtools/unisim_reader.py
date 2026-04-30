@@ -1802,6 +1802,10 @@ class UniSimToNeqSim:
                 jneqsim.thermo.util.readwrite.EclipseFluidReadWrite)
             try:
                 fluid = EclipseFluidReadWrite.read(e300_path)
+                if fluid_section.get('temperature') is not None:
+                    fluid.setTemperature(float(fluid_section['temperature']), "K")
+                if fluid_section.get('pressure') is not None:
+                    fluid.setPressure(float(fluid_section['pressure']), "bara")
                 if verbose:
                     n_comp = fluid.getNumberOfComponents()
                     print(f"  Fluid loaded from E300: {e300_path}")
@@ -1851,15 +1855,8 @@ class UniSimToNeqSim:
                 'match_summary': Overall match statistics
                 'warnings': List of converter + build warnings
         """
-        from neqsim import jneqsim
-        ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-
         # Step 1: Build and run
-        json_str = self.to_neqsim_json_str()
-        result = ProcessSystem.fromJsonAndRun(json_str)
-
-        if verbose:
-            self._print_build_summary(result)
+        result = self.build_and_run(verbose=verbose)
 
         # Step 2: Compare with UniSim reference data
         comparison_points = self.get_comparison_points()
@@ -2738,7 +2735,7 @@ class UniSimToNeqSim:
 
         Returns a dict with:
           fluid        – fluid spec dict from _build_fluid_section()
-          eos_class    – 'SystemPrEos' or 'SystemSrkEos'
+          eos_class    – NeqSim thermodynamic system class name
           flowsheet    – the main UniSimFlowsheet (or None)
           all_ops      – flat list of all operations
           all_streams  – flat list of all material streams
@@ -2750,7 +2747,12 @@ class UniSimToNeqSim:
           used_vars    – mutable set for tracking used var names
         """
         fluid = self._build_fluid_section()
-        eos_class = 'SystemPrEos' if fluid['model'] == 'PR' else 'SystemSrkEos'
+        if fluid['model'] == 'PR_LK':
+            eos_class = 'SystemPrLeeKeslerEos'
+        elif fluid['model'] == 'PR':
+            eos_class = 'SystemPrEos'
+        else:
+            eos_class = 'SystemSrkEos'
 
         flowsheet = self.model.flowsheet
         if not flowsheet:
@@ -3003,8 +3005,10 @@ class UniSimToNeqSim:
         e300_path = fluid.get('e300FilePath')
         if e300_path:
             escaped_path = e300_path.replace('\\', '/')
-            lines.append(f'E300_FILE = r"{e300_path}"')
+            lines.append(f'E300_FILE = r"{escaped_path}"')
             lines.append(f'fluid = EclipseFluidReadWrite.read(E300_FILE)')
+            lines.append(f'fluid.setTemperature({fluid.get("temperature", 298.15)}, "K")')
+            lines.append(f'fluid.setPressure({fluid.get("pressure", 1.0)}, "bara")')
             pkg_name = fluid.get('fluidPackageName', '')
             n_comp = fluid.get('componentCount', '?')
             lines.append(f'# Loaded from E300: {pkg_name} ({n_comp} components)')
