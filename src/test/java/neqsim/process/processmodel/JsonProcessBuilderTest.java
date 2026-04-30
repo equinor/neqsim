@@ -5,9 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.SpreadsheetBlock;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -104,6 +108,45 @@ class JsonProcessBuilderTest {
     ProcessSystem process = result.getProcessSystem();
     assertNotNull(process.getUnit("gasFeed"));
     assertNotNull(process.getUnit("oilFeed"));
+  }
+
+  @Test
+  void testBuildWithE300FluidPath() throws Exception {
+    Path e300File = Files.createTempFile("neqsim-json-e300", ".e300");
+    String e300 = "METRIC\n" + "\n" + "NCOMPS\n" + "2 /\n" + "\n" + "EOS\n"
+        + "PR /\n" + "PRLKCORR\n" + "\n" + "CNAMES\n" + "C1\n" + "OilPseudo* /\n"
+        + "\n" + "TCRIT\n" + "190.560\n" + "640.000 /\n" + "\n" + "PCRIT\n"
+        + "45.9900\n" + "20.0000 /\n" + "\n" + "ACF\n" + "0.011000\n"
+        + "0.720000 /\n" + "\n" + "MW\n" + "16.043\n" + "180.000 /\n" + "\n"
+        + "PARACHOR\n" + "77.000\n" + "240.000 /\n" + "\n" + "SSHIFT\n"
+        + "0.000000\n" + "0.045000 /\n" + "\n" + "ZI\n" + "0.8500000000\n"
+        + "0.1500000000 /\n" + "\n" + "BIC\n" + "0.0200 /\n";
+    Files.write(e300File, e300.getBytes(StandardCharsets.UTF_8));
+    String e300Path = e300File.toAbsolutePath().toString().replace("\\", "\\\\");
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"PR_LK\"," + "  \"temperature\": 310.15,"
+        + "  \"pressure\": 50.0," + "  \"e300FilePath\": \"" + e300Path + "\"" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    Stream feed = (Stream) result.getProcessSystem().getUnit("feed");
+    assertEquals(2, feed.getFluid().getNumberOfComponents());
+    assertEquals(50.0, feed.getFluid().getPressure(), 1e-12);
+  }
+
+  @Test
+  void testBuildWithSpreadsheetBlock() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 1.0}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"},"
+        + "  {\"type\": \"SpreadsheetBlock\", \"name\": \"calc\"}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    assertTrue(result.getProcessSystem().getUnit("calc") instanceof SpreadsheetBlock);
   }
 
   @Test

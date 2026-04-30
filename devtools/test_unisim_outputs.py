@@ -138,6 +138,83 @@ def _build_test_model():
     )
 
 
+def _component(name, index, tc, pc, omega, mw, tboil=None, vcrit=None,
+               volume_shift=None, parachor=None):
+    """Create a synthetic UniSim component with E300 properties."""
+    return UniSimComponent(
+        name=name,
+        index=index,
+        is_hypothetical=name.endswith('*'),
+        tc_K=tc,
+        pc_bara=pc,
+        acentric_factor=omega,
+        mw=mw,
+        tboil_K=tboil,
+        vcrit_m3_kgmol=vcrit,
+        volume_shift=volume_shift,
+        parachor=parachor,
+    )
+
+
+def _build_e300_test_model(tmpdir):
+    """Create a model with an exported PR-LK E300 fluid package."""
+    components = [
+        _component('Methane', 0, 190.56, 45.99, 0.011, 16.043, 111.66, 0.099),
+        _component('Ethane', 1, 305.32, 48.72, 0.099, 30.070, 184.55, 0.148),
+        _component('n-Butane', 2, 425.12, 37.96, 0.200, 58.124, 272.65, 0.255),
+        _component('CO2', 3, 304.13, 73.77, 0.225, 44.010, 194.67, 0.094),
+        _component('Nitrogen', 4, 126.20, 33.95, 0.037, 28.014, 77.36, 0.090),
+        _component('OilPseudo*', 5, 640.0, 20.0, 0.720, 180.0, 520.0, 0.700,
+                   volume_shift=0.045, parachor=240.0),
+    ]
+    bips = [[0.0 for _ in components] for _ in components]
+    bips[1][0] = bips[0][1] = 0.011
+    bips[3][0] = bips[0][3] = 0.095
+    bips[5][0] = bips[0][5] = 0.020
+
+    fluid_package = UniSimFluidPackage(
+        name='PR-LK Basis',
+        property_package='Peng-Robinson - LK',
+        components=components,
+        bips=bips,
+        reference_composition=[0.74, 0.08, 0.04, 0.05, 0.03, 0.06],
+    )
+    fluid_package.write_e300(os.path.join(tmpdir, 'pr_lk_basis.e300'))
+
+    return UniSimModel(
+        file_path=r'C:\test\E300GasPlant.usc',
+        file_name='E300GasPlant.usc',
+        fluid_packages=[fluid_package],
+        flowsheet=UniSimFlowsheet(
+            name='Main',
+            material_streams=[
+                UniSimStreamData(
+                    'Feed Gas', temperature_C=42.0, pressure_bara=92.0,
+                    mass_flow_kgh=25000.0,
+                    composition={
+                        'Methane': 0.74, 'Ethane': 0.08, 'n-Butane': 0.04,
+                        'CO2': 0.05, 'Nitrogen': 0.03, 'OilPseudo*': 0.06,
+                    },
+                ),
+            ],
+            operations=[
+                UniSimOperation('Spreadsheet 1', 'spreadsheetop', feeds=['Feed Gas']),
+                UniSimOperation(
+                    'Balance 1', 'balanceop',
+                    properties={
+                        'adjusted_object_name': 'Feed Gas',
+                        'adjusted_variable': 'flowRate',
+                        'target_object_name': 'Feed Gas',
+                        'target_variable': 'pressure',
+                        'target_value': 92.0,
+                    },
+                ),
+                UniSimOperation('Logic 1', 'logicalop'),
+            ],
+        ),
+    )
+
+
 def test_to_python():
     model = _build_test_model()
     converter = UniSimToNeqSim(model)
@@ -385,6 +462,49 @@ def test_to_json():
     return result
 
 
+def test_e300_fluid_package_export_and_usage():
+    """Verify UniSim fluid packages export to E300 and are consumed as E300."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model = _build_e300_test_model(tmpdir)
+        fluid_package = model.fluid_packages[0]
+        with open(fluid_package.e300_file_path, encoding='utf-8') as e300_file:
+            e300_text = e300_file.read()
+
+        assert 'PRLKCORR' in e300_text
+        assert 'PRCORR' not in e300_text
+        assert 'C1' in e300_text
+        assert 'C2' in e300_text
+        assert 'C4' in e300_text
+        assert 'N2' in e300_text
+        assert 'OilPseudo*' in e300_text
+        assert 'BIC' in e300_text
+        assert '0.0950' in e300_text
+        assert 'PARACHOR' in e300_text
+        assert 'SSHIFT' in e300_text
+
+        converter = UniSimToNeqSim(model)
+        result = converter.to_json()
+        fluid = result['fluid']
+        assert fluid['model'] == 'PR_LK'
+        assert fluid['e300FilePath'] == fluid_package.e300_file_path
+        assert fluid['componentCount'] == len(fluid_package.components)
+        assert fluid['componentNames'][:5] == ['C1', 'C2', 'C4', 'CO2', 'N2']
+
+        py_code = converter.to_python()
+        assert 'EclipseFluidReadWrite.read' in py_code
+        assert 'addComponent' not in py_code.split('# Process definition')[0]
+
+        process = result['process']
+        types_by_name = {entry['name']: entry['type'] for entry in process}
+        assert types_by_name.get('Spreadsheet 1') == 'SpreadsheetBlock'
+        assert types_by_name.get('Balance 1') == 'Adjuster'
+        assert 'Logic 1' not in types_by_name
+        spreadsheet_entry = next(e for e in process if e['name'] == 'Spreadsheet 1')
+        assert 'inlet' not in spreadsheet_entry
+
+    print("  PASS")
+
+
 if __name__ == "__main__":
     tests = [
         ("to_python", test_to_python),
@@ -395,6 +515,7 @@ if __name__ == "__main__":
         ("to_eot_notebook", test_to_eot_notebook),
         ("code_consistency", test_code_consistency),
         ("to_json", test_to_json),
+        ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),
     ]
     passed = 0
     failed = 0
