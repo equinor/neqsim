@@ -31,6 +31,44 @@ from typing import Dict, List, Optional, Tuple, Any
 
 logger = logging.getLogger(__name__)
 
+# Names recognized by EclipseFluidReadWrite as database components or common
+# aliases. Components not listed here are intentionally kept as named TBP
+# pseudo-fractions so UniSim oil/hypothetical characterization parameters are
+# preserved from the E300 property tables.
+E300_COMPONENT_NAME_MAP = {
+    'Nitrogen': 'N2', 'N2': 'N2',
+    'CO2': 'CO2', 'CarbonDioxide': 'CO2', 'Carbon Dioxide': 'CO2',
+    'Methane': 'C1', 'C1': 'C1',
+    'Ethane': 'C2', 'C2': 'C2',
+    'Propane': 'C3', 'C3': 'C3',
+    'i-Butane': 'iC4', 'iC4': 'iC4', 'Isobutane': 'iC4',
+    'n-Butane': 'C4', 'nC4': 'C4', 'C4': 'C4',
+    'i-Pentane': 'iC5', 'iC5': 'iC5', 'Isopentane': 'iC5',
+    'n-Pentane': 'C5', 'nC5': 'C5', 'C5': 'C5',
+    'n-Hexane': 'C6', 'nC6': 'C6', 'C6': 'C6',
+    'n-Heptane': 'nC7', 'nC7': 'nC7',
+    'n-Octane': 'nC8', 'nC8': 'nC8',
+    'n-Nonane': 'nC9', 'nC9': 'nC9',
+    'n-Decane': 'nC10', 'nC10': 'nC10',
+    'nC11': 'nC11', 'nC12': 'nC12', 'nC13': 'nC13', 'nC14': 'nC14',
+    'nC15': 'nC15', 'nC16': 'nC16', 'nC17': 'nC17', 'nC18': 'nC18',
+    'nC19': 'nC19', 'nC20': 'nC20',
+    'H2O': 'H2O', 'Water': 'H2O',
+    'H2S': 'H2S', 'Hydrogen Sulfide': 'H2S', 'Hydrogen Sulphide': 'H2S',
+    'Hydrogen': 'H2', 'H2': 'H2',
+    'Oxygen': 'O2', 'O2': 'O2',
+    'Argon': 'Ar', 'Ar': 'Ar',
+    'Helium': 'He', 'He': 'He',
+    'CO': 'CO', 'CarbonMonoxide': 'CO', 'Carbon Monoxide': 'CO',
+    'Methanol': 'MeOH', 'MeOH': 'MeOH',
+    'EGlycol': 'MEG', 'MEG': 'MEG',
+    'DEGlycol': 'DEG', 'DEG': 'DEG',
+    'TEGlycol': 'TEG', 'TEG': 'TEG',
+    'Benzene': 'benzene', 'Toluene': 'toluene',
+    'E-Benzene': 'ethylbenzene', 'Ethylbenzene': 'ethylbenzene',
+    'm-Xylene': 'm-Xylene', 'o-Xylene': 'o-Xylene', 'p-Xylene': 'p-Xylene',
+}
+
 # ---------------------------------------------------------------------------
 # Data classes for the extracted UniSim model
 # ---------------------------------------------------------------------------
@@ -82,9 +120,29 @@ class UniSimFluidPackage:
 
     @property
     def has_critical_properties(self) -> bool:
-        """True if at least one component has Tc, Pc, MW extracted."""
-        return any(c.tc_K is not None and c.pc_bara is not None
-                   and c.mw is not None for c in self.components)
+        """True if every component has the core E300 critical properties."""
+        return bool(self.components) and all(
+            c.tc_K is not None and c.pc_bara is not None and c.mw is not None
+            for c in self.components)
+
+    @staticmethod
+    def _e300_component_name(component_name: str) -> str:
+        """Return the E300/NeqSim component name for a UniSim component name."""
+        if component_name in E300_COMPONENT_NAME_MAP:
+            return E300_COMPONENT_NAME_MAP[component_name]
+        compact = component_name.replace(' ', '').replace('_', '-').replace('--', '-')
+        if compact in E300_COMPONENT_NAME_MAP:
+            return E300_COMPONENT_NAME_MAP[compact]
+        return component_name.replace('/', '_')
+
+    @staticmethod
+    def _estimate_parachor(component: UniSimComponent) -> float:
+        """Estimate parachor when UniSim does not expose one explicitly."""
+        if component.parachor is not None:
+            return component.parachor
+        if component.mw is None or component.mw <= 0.0:
+            return 0.0
+        return 4.0 * component.mw ** 0.77
 
     def write_e300(self, output_path: str,
                    composition: Optional[List[float]] = None,
@@ -106,8 +164,11 @@ class UniSimFluidPackage:
             The output_path written to.
         """
         if not self.has_critical_properties:
+            missing = [c.name for c in self.components
+                       if c.tc_K is None or c.pc_bara is None or c.mw is None]
             raise ValueError(
-                f"Fluid package '{self.name}' has no critical properties. "
+                f"Fluid package '{self.name}' is missing E300 critical "
+                f"properties for: {', '.join(missing) or 'all components'}. "
                 f"Extract via COM first (UniSimReader with extract_properties=True).")
 
         n = len(self.components)
@@ -115,7 +176,10 @@ class UniSimFluidPackage:
         if zi is None:
             zi = [1.0 / n] * n
 
-        eos_keyword = 'PR' if 'peng' in self.property_package.lower() else 'SRK'
+        package_lower = self.property_package.lower()
+        eos_keyword = 'PR' if 'peng' in package_lower else 'SRK'
+        use_pr_lk = eos_keyword == 'PR' and (
+            'lk' in package_lower or 'lee' in package_lower or 'kesler' in package_lower)
 
         def _write_section(lines, keyword, values, fmt, comment=None):
             """Write a section with trailing / on the last value."""
@@ -156,7 +220,7 @@ class UniSimFluidPackage:
         lines.append(f'{eos_keyword}  /')
         lines.append('')
         if eos_keyword == 'PR':
-            lines.append('PRCORR')
+            lines.append('PRLKCORR' if use_pr_lk else 'PRCORR')
             lines.append('')
         lines.append('-- Reservoir temperature (C)')
         lines.append('RTEMP')
@@ -171,10 +235,11 @@ class UniSimFluidPackage:
         lines.append('-- Component names')
         lines.append('CNAMES')
         for i, c in enumerate(self.components):
+            e300_name = self._e300_component_name(c.name)
             if i == n - 1:
-                lines.append(f'{c.name}   /')
+                lines.append(f'{e300_name}   /')
             else:
-                lines.append(c.name)
+                lines.append(e300_name)
         lines.append('')
 
         # TCRIT (K)
@@ -238,30 +303,31 @@ class UniSimFluidPackage:
                           'Critical Z-factor')
             lines.append('')
 
-        # SSHIFT (volume translation at reservoir conditions)
-        if any(c.volume_shift is not None for c in self.components):
-            vs_vals = [c.volume_shift if c.volume_shift is not None else 0.0
-                      for c in self.components]
-            _write_section(lines, 'SSHIFT', vs_vals, '   {:.6f}',
-                          'Volume Translation')
-            lines.append('')
+        # SSHIFT (volume translation at reservoir conditions). Always emit so
+        # zero shifts remain explicit and the E300 component ordering is fully
+        # reproducible.
+        vs_vals = [c.volume_shift if c.volume_shift is not None else 0.0
+                   for c in self.components]
+        _write_section(lines, 'SSHIFT', vs_vals, '   {:.6f}',
+                       'Volume Translation')
+        lines.append('')
 
-        # PARACHOR
-        if any(c.parachor is not None for c in self.components):
-            par_vals = [c.parachor if c.parachor is not None else 0.0
-                       for c in self.components]
-            _write_section(lines, 'PARACHOR', par_vals, '    {:.3f}', 'Parachor')
-            lines.append('')
+        # PARACHOR. UniSim does not expose this consistently for all fluid
+        # packages, so use the extracted value when available and a molecular-
+        # weight based estimate only as an explicit fallback.
+        par_vals = [self._estimate_parachor(c) for c in self.components]
+        _write_section(lines, 'PARACHOR', par_vals, '    {:.3f}', 'Parachor')
+        lines.append('')
 
         # ZI (mole fractions)
         _write_section(lines, 'ZI', zi, '   {:.10f}', 'Mole Fractions')
         lines.append('')
 
         # BIC (lower triangular matrix)
-        if self.bips and len(self.bips) == n:
-            _write_bic_section(lines, 'BIC', self.bips, n,
-                              'Binary Interaction Coefficients (lower triangular)')
-            lines.append('')
+        bips = self.bips if self.bips and len(self.bips) == n else [[0.0] * n for _ in range(n)]
+        _write_bic_section(lines, 'BIC', bips, n,
+                           'Binary Interaction Coefficients (lower triangular)')
+        lines.append('')
 
         # BICS (surface-condition BIPs)
         if self.bips_surface and len(self.bips_surface) == n:
@@ -290,7 +356,8 @@ class UniSimFluidPackage:
 
         self.e300_file_path = output_path
         logger.info(f"Wrote E300 fluid file: {output_path} "
-                    f"({n} components, EOS={eos_keyword})")
+                    f"({n} components, EOS={eos_keyword}"
+                    f"{'-LK' if use_pr_lk else ''})")
         return output_path
 
 
