@@ -229,17 +229,28 @@ for i in range(n):
     comp = fp.Components.Item(i)
     name = comp.Name
     mw = comp.MolecularWeight.GetValue()
-    tc = comp.CriticalTemperature.GetValue("C")   # °C
-    pc = comp.CriticalPressure.GetValue("bar")     # bar
-    nbp = comp.NormalBoilingPt.GetValue("C")       # °C
+    # Prefer native UniSim units and convert explicitly.
+    # Some COM surfaces return misleading values when requesting alternate units.
+    tc = comp.CriticalTemperature.GetValue("C") + 273.15   # K
+    pc = comp.CriticalPressure.GetValue("kPa") * 0.01      # bara
+    nbp = comp.NormalBoilingPt.GetValue("C") + 273.15      # K
     vc = comp.CriticalVolume.GetValue("m3/kgmole") # m3/kmol
     # Acentric factor — not directly available via .AcentricFactor
     # Use Edmister correlation: w = (3/7) * log10(Pc/1.01325) / (Tc/Tbp - 1) - 1
 ```
 
 **Notes:**
+- UniSim component collections can be 0-based or 1-based depending on the COM
+   collection surface. If `Components.Item(i)` fails, retry `Components.Item(i+1)`
+   before dropping the component.
+- For component critical properties, request `CriticalTemperature` and
+   `NormalBoilingPoint` in `C` first and convert to K; request `CriticalPressure`
+   in `kPa` first and convert to bara. Sanity-check known components after export:
+   methane Tc ≈ 190.7 K and Pc ≈ 46.4 bara; water Tc ≈ 647.3 K and Pc ≈ 221 bara.
 - Acentric factor is NOT directly accessible via COM for all property packages.
-  `comp.AcentricFactor` may not exist. Use the Edmister correlation as fallback.
+   `comp.AcentricFactor` may not exist. Try property-package vectors
+   (`AcentricFactor`, `AcentricFactors`, `Omega`, `ACF`) first, then use the
+   Edmister correlation as fallback when Tc, Pc, and normal boiling point exist.
 - Parachor can sometimes be read via `pp.Parachor.Values` (same pattern as Kij).
 - Volume shift: `pp.VolumShift.Values` (note the UniSim spelling: "VolumShift",
   not "VolumeShift").
@@ -252,7 +263,7 @@ for loading into NeqSim via `EclipseFluidReadWrite.read()`:
 **Required E300 sections** (NeqSim reader will crash without these):
 - `CNAMES` — component names
 - `TCRIT` — critical temperatures (K)
-- `PCRIT` — critical pressures (atm)
+- `PCRIT` — critical pressures (bar/bara as used by NeqSim's E300 writer)
 - `ACF` — acentric factors
 - `MW` — molecular weights (g/mol)
 - `TBOIL` — normal boiling points (K)
@@ -340,11 +351,11 @@ it extracts critical properties from each component in each fluid package via CO
 then writes an E300 file per fluid package to the output directory.
 
 **COM properties extracted per component:**
-- `component.CriticalTemperature` → Tc (K)
-- `component.CriticalPressure` → Pc (kPa → bara, divide by 100)
-- `component.AcentricFactor` → omega
+- `component.CriticalTemperature` → Tc (request C first, convert to K)
+- `component.CriticalPressure` → Pc (request kPa first, convert to bara)
+- `component.AcentricFactor` / package vector / Edmister fallback → omega
 - `component.MolecularWeight` → MW (g/mol)
-- `component.NormalBoilingPoint` → Tboil (K)
+- `component.NormalBoilingPoint` → Tboil (request C first, convert to K)
 - `component.CriticalVolume` → Vcrit (m³/kgmol)
 
 **BIPs extracted via:** `FluidPackage.PropertyPackage.GetBIP(i, j)` or
@@ -1101,7 +1112,12 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
 6. **Control logic** — PID controllers produce TODO comments, not functional controllers
 7. **Custom correlations** — UniSim's user-defined correlations not transferred
 8. **Performance curves** — compressor/pump performance maps not extracted
-9. **Multiple fluid packages** — only the first fluid package used for composition
+9. **Multiple fluid packages** — the reader exports one E300 file per fluid
+   package, but most generated ProcessSystem builds still use the default
+   process fluid unless per-stream or per-sub-flowsheet package assignment is
+   explicitly wired. Treat multi-package models as verified only after the
+   generated JSON/Python shows the expected `e300FilePath` for each area and
+   the build route loads E300 through `EclipseFluidReadWrite.read(...)`.
 10. **Absorber columns** — single-feed only; multi-feed absorbers show a TODO.
     Glycol/TEG contactors (name contains "glyc", "teg", or "dehydrat") are
     modeled as `ComponentSplitter` for water removal instead of `DistillationColumn`
@@ -1145,6 +1161,12 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
     excluded. This is correct for heating/cooling medium loops but may
     miss utility systems that interact with process streams through
     non-standard connections.
+22. **E300 fluid parity is necessary but not sufficient** — A full-fluid E300
+   route fixes component-property transfer, but it does not reconcile UniSim
+   virtual streams, spreadsheet/balance calculations, template units, or
+   sub-flowsheet interface wiring. Keep the verification report split into
+   separate statuses for fluid export/use, structural build, and numerical
+   stream matching.
 
 ---
 

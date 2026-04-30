@@ -9,6 +9,36 @@
 
 ---
 
+## 2026-04-30 — UniSim Reader: Robust E300 Fluid-Package Extraction
+
+### Summary
+
+The UniSim-to-NeqSim conversion workflow now treats E300 full-fluid transfer as
+a separate verification gate from structural process build and numerical stream
+matching. `UniSimReader` can recover fluid packages when `comp.AcentricFactor`
+is missing by using property-package vectors or the Edmister fallback from Tc,
+Pc, and normal boiling point.
+
+### Agent Guidance
+
+- Request UniSim component critical temperature and normal boiling point in
+  `C`, then convert to K.
+- Request critical pressure in `kPa`, then convert to bara.
+- Sanity-check exported E300 files with known components: methane should be
+  about 190.7 K / 46.4 bara, water about 647.3 K / 221 bara.
+- Report four separate gates: E300 exported, E300 loaded in the NeqSim build
+  route, structural build status, and numerical stream verification status.
+- Do not treat E300 fluid parity as full process parity. Virtual streams,
+  spreadsheet/balance logic, template operations, compressor curves, and
+  sub-flowsheet interface wiring can still dominate stream deviations.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `docs/process/unisim-to-neqsim-conversion.md`
+- `devtools/README.md`
+
 ## 2026-04-29 — Route-Level Piping Hydraulic Builder for STID Line Lists
 
 ### Summary

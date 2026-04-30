@@ -65,9 +65,13 @@ main flowsheet) become separate `ProcessSystem` areas composed into a
 `classify_subflowsheets()` and `get_process_subflowsheets()` internally.
 
 **E300 fluid export:** When `export_e300=True` (default), the reader extracts
-Tc, Pc, omega, MW, and BIPs from UniSim COM and writes E300 files. The
-generated code loads the fluid via `EclipseFluidReadWrite.read()` for lossless
-transfer of hypothetical/pseudo component properties.
+Tc, Pc, omega, MW, and BIPs from UniSim COM and writes E300 files. Use the
+skill guidance for robust COM extraction: critical temperature and boiling point
+are requested in Celsius and converted to Kelvin, critical pressure is requested
+in kPa and converted to bara, and missing `AcentricFactor` is handled with
+package vectors or Edmister fallback. The generated code loads the fluid via
+`EclipseFluidReadWrite.read()` for lossless transfer of hypothetical/pseudo
+component properties.
 
 ### Step 3: Handle Component Mapping
 
@@ -226,6 +230,9 @@ For models built via `to_python()`:
 100% — some operations are skipped (Set, Adjust, Spreadsheet, custom sub-flowsheets).
 Report both the match rate (e.g., "67/181 units built") and the stream comparison
 for the successfully-built equipment.
+Report fluid transfer separately from process verification: `E300 exported`,
+`E300 loaded in build route`, `structural build status`, and `numerical stream
+verification status` are distinct gates.
 
 Expected acceptable deviations:
 - Temperature: < 3 °C
@@ -235,10 +242,17 @@ Expected acceptable deviations:
 - Compressor power: < 10%
 
 If deviations exceed acceptable ranges, investigate:
-1. Check component mapping — missing components?
-2. Check EOS — PR vs SRK differences?
-3. Check equipment specs — efficiency, pressure, temperature set correctly?
-4. Check for hypothetical components affecting phase behavior
+1. Check E300 export/use — were all expected fluid packages exported and loaded
+  with `EclipseFluidReadWrite.read(...)`?
+2. Check component/property sanity — methane Tc/Pc and water Tc/Pc should be in
+  expected Kelvin/bara ranges; acentric factors should not be missing.
+3. Check component mapping — missing components or wrong fluid package per area?
+4. Check EOS — PR vs SRK differences?
+5. Check equipment specs — efficiency, pressure, temperature set correctly?
+6. Check for hypothetical components affecting phase behavior
+7. Check skipped UniSim logic — virtual streams, spreadsheets, balance blocks,
+  template operations, and sub-flowsheet interface streams can dominate errors
+  even when E300 fluid parity is correct.
 
 ### Step 7: Report
 
@@ -304,6 +318,10 @@ with UniSimReader(visible=False) as reader:
 9. **Detect separator type accurately** — a `flashtank` with a `WaterProduct` is auto-promoted to `ThreePhaseSeparator`; a vertical `flashtank` maps to `GasScrubber`
 10. **Extract entrainment settings** — the reader extracts liquid carryover, gas carry-under, water-in-oil, and oil-in-water fractions from UniSim COM and generates `setEntrainment()` calls in the output code
 11. **Detect separator orientation** — vertical separators use `GasScrubber` in NeqSim (extends `Separator` with K-value sizing), horizontal use `Separator`
+12. **Separate E300 parity from model parity** — full-fluid E300 import is a
+  prerequisite for serious verification, but unresolved virtual-stream,
+  spreadsheet, balance, template, and sub-flowsheet-interface logic can still
+  prevent the NeqSim model from matching UniSim.
 
 ---
 

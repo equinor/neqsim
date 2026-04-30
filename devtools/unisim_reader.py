@@ -23,6 +23,7 @@ Usage:
 """
 
 import json
+import math
 import os
 import time
 import logging
@@ -927,7 +928,16 @@ class UniSimReader:
         component_collection = fp.Components
         number_of_components = component_collection.Count
         for component_index in range(number_of_components):
-            comp = component_collection.Item(component_index)
+            try:
+                comp = component_collection.Item(component_index)
+            except Exception:
+                try:
+                    comp = component_collection.Item(component_index + 1)
+                except Exception as exc:
+                    logger.warning(
+                        f"Could not read component [{component_index}] in "
+                        f"fluid package '{pkg.name}': {exc}")
+                    continue
             component_name = self._safe_get(comp, 'name', None)
             if component_name is None:
                 component_name = self._safe_get(comp, 'Name', f'Comp_{component_index}')
@@ -937,35 +947,74 @@ class UniSimReader:
                 is_hypothetical=str(component_name).endswith('*'),
             )
             if extract_properties:
-                self._populate_component_properties(comp, extracted_component)
+                try:
+                    self._populate_component_properties(comp, extracted_component)
+                except Exception as exc:
+                    logger.warning(
+                        f"Could not read scalar properties for component "
+                        f"'{extracted_component.name}' in fluid package "
+                        f"'{pkg.name}': {exc}")
             pkg.components.append(extracted_component)
 
         if extract_properties:
-            pkg.bips = self._extract_bips(fp, number_of_components)
+            pkg.bips = self._extract_bips(fp, len(pkg.components))
             self._populate_property_package_vectors(fp, pkg)
+            for extracted_component in pkg.components:
+                self._apply_component_property_fallbacks(extracted_component)
         return pkg
 
     def _populate_component_properties(self, comp, extracted_component: UniSimComponent):
         """Populate a UniSimComponent with scalar properties from COM."""
         extracted_component.tc_K = self._extract_quantity(
-            comp, ['CriticalTemperature'], [('K', 1.0, 0.0), ('C', 1.0, 273.15),
-                                           (None, 1.0, 0.0)])
+            comp, ['CriticalTemperature'], [('C', 1.0, 273.15), ('K', 1.0, 0.0),
+                                           (None, 1.0, 273.15)])
         extracted_component.pc_bara = self._extract_quantity(
-            comp, ['CriticalPressure'], [('bar', 1.0, 0.0), ('bara', 1.0, 0.0),
-                                        ('kPa', 0.01, 0.0), (None, 0.01, 0.0)])
+            comp, ['CriticalPressure'], [('kPa', 0.01, 0.0), ('bar', 1.0, 0.0),
+                                        ('bara', 1.0, 0.0), (None, 0.01, 0.0)])
         extracted_component.acentric_factor = self._extract_quantity(
             comp, ['AcentricFactor', 'AcentricityFactor', 'Omega'], [(None, 1.0, 0.0)])
         extracted_component.mw = self._extract_quantity(
             comp, ['MolecularWeight'], [(None, 1.0, 0.0), ('kg/kmol', 1.0, 0.0)])
         extracted_component.tboil_K = self._extract_quantity(
             comp, ['NormalBoilingPoint', 'NormalBoilingPt', 'BoilingPoint'],
-            [('K', 1.0, 0.0), ('C', 1.0, 273.15), (None, 1.0, 0.0)])
+            [('C', 1.0, 273.15), ('K', 1.0, 0.0), (None, 1.0, 273.15)])
         extracted_component.vcrit_m3_kgmol = self._extract_quantity(
             comp, ['CriticalVolume'], [(None, 1.0, 0.0), ('m3/kgmole', 1.0, 0.0)])
         extracted_component.parachor = self._extract_quantity(
             comp, ['Parachor'], [(None, 1.0, 0.0)])
         extracted_component.zcrit = self._extract_quantity(
             comp, ['CriticalZFactor', 'CriticalCompressibility'], [(None, 1.0, 0.0)])
+        self._apply_component_property_fallbacks(extracted_component)
+
+    def _apply_component_property_fallbacks(self, component: UniSimComponent):
+        """Populate derived component properties that UniSim may not expose."""
+        if component.acentric_factor is not None:
+            return
+        omega = self._estimate_acentric_factor(component)
+        if omega is not None:
+            component.acentric_factor = omega
+            logger.debug(
+                "Estimated acentric factor for %s from Edmister correlation: %.6f",
+                component.name, omega)
+
+    @staticmethod
+    def _estimate_acentric_factor(component: UniSimComponent) -> Optional[float]:
+        """Estimate omega from critical properties using Edmister correlation."""
+        if (component.tc_K is None or component.pc_bara is None
+                or component.tboil_K is None):
+            return None
+        if component.tc_K <= 0.0 or component.pc_bara <= 0.0 or component.tboil_K <= 0.0:
+            return None
+        denominator = component.tc_K / component.tboil_K - 1.0
+        if denominator <= 0.0:
+            return None
+        try:
+            omega = (3.0 / 7.0) * math.log10(component.pc_bara / 1.01325) / denominator - 1.0
+        except (ValueError, ZeroDivisionError):
+            return None
+        if not math.isfinite(omega) or omega < -0.5 or omega > 2.0:
+            return None
+        return omega
 
     def _populate_property_package_vectors(self, fp, pkg: UniSimFluidPackage):
         """Populate component vectors exposed by the UniSim property package."""
@@ -974,6 +1023,9 @@ class UniSimReader:
         except Exception:
             return
         vector_specs = [
+            ('acentric_factor', ['AcentricFactor', 'AcentricFactors',
+                                 'AcentricityFactor', 'AcentricityFactors',
+                                 'Omega', 'Omegas', 'ACF']),
             ('volume_shift', ['VolumShift', 'VolumeShift', 'VolumeShifts', 'SSHIFT']),
             ('parachor', ['Parachor', 'Parachors']),
             ('omegaa', ['OmegaA', 'OMEGAA']),
@@ -1741,16 +1793,43 @@ class UniSimReader:
     @staticmethod
     def _safe_getval(prop, unit=None, default=None):
         """Safely get value from a UniSim property object."""
+        direct_value = UniSimReader._clean_scalar_value(prop)
+        if direct_value is not None:
+            return direct_value
         try:
             if unit:
                 val = prop.GetValue(unit)
             else:
                 val = prop.GetValue()
-            if val is not None and val > -30000:  # UniSim uses -32767 for empty
-                return float(val)
-            return default
+            cleaned = UniSimReader._clean_scalar_value(val)
+            if cleaned is not None:
+                return cleaned
         except Exception:
-            return default
+            pass
+        for attribute_name in ('Value', 'Values'):
+            try:
+                val = getattr(prop, attribute_name)
+                if callable(val):
+                    val = val()
+                if isinstance(val, (list, tuple)):
+                    continue
+                cleaned = UniSimReader._clean_scalar_value(val)
+                if cleaned is not None:
+                    return cleaned
+            except Exception:
+                pass
+        return default
+
+    @staticmethod
+    def _clean_scalar_value(value) -> Optional[float]:
+        """Return a finite scalar value, ignoring UniSim empty sentinels."""
+        try:
+            cleaned = float(value)
+        except (TypeError, ValueError):
+            return None
+        if cleaned <= -30000.0 or not math.isfinite(cleaned):
+            return None
+        return cleaned
 
 
 # ---------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 No COM / UniSim installation needed — constructs test data in-memory.
 """
 import json
+import math
 import os
 import sys
 import tempfile
@@ -12,7 +13,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from unisim_reader import (
     UniSimModel, UniSimFluidPackage, UniSimComponent,
     UniSimFlowsheet, UniSimStreamData, UniSimOperation,
-    UniSimToNeqSim,
+    UniSimReader, UniSimToNeqSim,
 )
 
 
@@ -154,6 +155,38 @@ def _component(name, index, tc, pc, omega, mw, tboil=None, vcrit=None,
         volume_shift=volume_shift,
         parachor=parachor,
     )
+
+
+class _FakeQuantity:
+    """Small stand-in for a UniSim COM quantity object."""
+
+    def __init__(self, values_by_unit):
+        self.values_by_unit = values_by_unit
+
+    def GetValue(self, unit=None):
+        """Return the configured value for the requested unit."""
+        key = unit if unit in self.values_by_unit else None
+        if key in self.values_by_unit:
+            return self.values_by_unit[key]
+        raise AttributeError(unit)
+
+
+class _FakeComponentWithoutAcentricFactor:
+    """Component whose UniSim COM surface lacks AcentricFactor."""
+
+    name = 'Methane'
+    Name = 'Methane'
+    CriticalTemperature = _FakeQuantity({'K': 190.56})
+    CriticalPressure = _FakeQuantity({'bar': 45.99})
+    MolecularWeight = _FakeQuantity({None: 16.043})
+    NormalBoilingPt = _FakeQuantity({'K': 111.66})
+    CriticalVolume = _FakeQuantity({'m3/kgmole': 0.099})
+
+    def __getattr__(self, attribute_name):
+        """Raise the same style of missing-property error seen in COM."""
+        if attribute_name == 'AcentricFactor':
+            raise AttributeError('Item.AcentricFactor')
+        raise AttributeError(attribute_name)
 
 
 def _build_e300_test_model(tmpdir):
@@ -489,6 +522,39 @@ def test_to_json():
     return result
 
 
+def test_missing_acentric_factor_uses_edmister_fallback():
+    """Verify missing UniSim AcentricFactor does not block E300 export."""
+    reader = UniSimReader()
+    extracted_component = UniSimComponent('Methane', 0)
+    reader._populate_component_properties(
+        _FakeComponentWithoutAcentricFactor(), extracted_component)
+
+    expected_omega = ((3.0 / 7.0)
+                      * math.log10(extracted_component.pc_bara / 1.01325)
+                      / (extracted_component.tc_K / extracted_component.tboil_K - 1.0)
+                      - 1.0)
+    assert extracted_component.tc_K == 190.56
+    assert extracted_component.pc_bara == 45.99
+    assert extracted_component.mw == 16.043
+    assert extracted_component.acentric_factor is not None
+    assert abs(extracted_component.acentric_factor - expected_omega) < 1e-12
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fluid_package = UniSimFluidPackage(
+            name='COM Missing Acentric',
+            property_package='Peng-Robinson',
+            components=[extracted_component],
+        )
+        e300_path = fluid_package.write_e300(
+            os.path.join(tmpdir, 'missing_acentric.e300'))
+        with open(e300_path, encoding='utf-8') as e300_file:
+            e300_text = e300_file.read()
+
+    assert 'ACF' in e300_text
+    assert f'{expected_omega:.6f}' in e300_text
+    print("  PASS")
+
+
 def test_e300_fluid_package_export_and_usage():
     """Verify UniSim fluid packages export to E300 and are consumed as E300."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -580,6 +646,8 @@ if __name__ == "__main__":
         ("to_eot_notebook", test_to_eot_notebook),
         ("code_consistency", test_code_consistency),
         ("to_json", test_to_json),
+        ("missing_acentric_factor_uses_edmister_fallback",
+         test_missing_acentric_factor_uses_edmister_fallback),
         ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),
         ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
     ]
