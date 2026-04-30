@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-04-30 — Confidential gas compressor suction route screening
+**Type:** B (Process) / G (Workflow)
+**Keywords:** gas route, compressor suction, P&ID, STID, tagreader, PipingRouteBuilder, pressure drop, velocity, K-value, live production rate
+**Solution:** `private task folder (redacted)`
+**Notes:** Retrieved route P&IDs, extracted STID line diameters/design conditions, read a live reference-volume production tag, and ran a gas-only `PipingRouteBuilder` screening model. Reusable lesson: validate historian units before choosing the flow basis; if a likely flow tag reports a non-flow unit, prefer a nearby metering/reference-volume tag with valid units and log the rejected tag.
+
 ### 2026-04-29 — Route-level piping hydraulic builder for STID line lists
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** PipingRouteBuilder, STID, E3D, line list, piping route, pressure drop, PipeBeggsAndBrills, fittings, K-value, equivalent length
