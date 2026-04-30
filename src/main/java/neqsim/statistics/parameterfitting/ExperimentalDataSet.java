@@ -1,5 +1,7 @@
 package neqsim.statistics.parameterfitting;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -229,6 +231,82 @@ public final class ExperimentalDataSet implements Serializable {
    */
   public List<ExperimentalDataPoint> getPoints() {
     return Collections.unmodifiableList(new ArrayList<ExperimentalDataPoint>(points));
+  }
+
+  /**
+   * Reads an experimental data set from a CSV file.
+   *
+   * @param file CSV file with a header row
+   * @param name data set name
+   * @param responseName response name and default measured-value column
+   * @param responseUnit response unit used in the resulting data set
+   * @param dependentVariableNames independent variable names and default column names
+   * @param dependentVariableUnits independent variable units used in the resulting data set
+   * @return experimental data set
+   * @throws IOException if the file cannot be read
+   */
+  public static ExperimentalDataSet fromCsv(File file, String name, String responseName,
+      String responseUnit, String[] dependentVariableNames, String[] dependentVariableUnits)
+      throws IOException {
+    return ExperimentalDataReader.fromCsv(file, name, responseName, responseUnit,
+        dependentVariableNames, dependentVariableUnits);
+  }
+
+  /**
+   * Reads an experimental data set from a CSV file using explicit mapping options.
+   *
+   * @param file CSV file with a header row
+   * @param options CSV mapping options
+   * @return experimental data set
+   * @throws IOException if the file cannot be read
+   */
+  public static ExperimentalDataSet fromCsv(File file, ExperimentalDataReader.CsvOptions options)
+      throws IOException {
+    return ExperimentalDataReader.fromCsv(file, options);
+  }
+
+  /**
+   * Reads an experimental data set from JSON text.
+   *
+   * @param json JSON text
+   * @return experimental data set
+   * @throws IOException if parsing fails
+   */
+  public static ExperimentalDataSet fromJson(String json) throws IOException {
+    return ExperimentalDataReader.fromJson(json);
+  }
+
+  /**
+   * Reads an experimental data set from a JSON file.
+   *
+   * @param file JSON file
+   * @return experimental data set
+   * @throws IOException if reading or parsing fails
+   */
+  public static ExperimentalDataSet fromJson(File file) throws IOException {
+    return ExperimentalDataReader.fromJson(file);
+  }
+
+  /**
+   * Reads an experimental data set from YAML text.
+   *
+   * @param yaml YAML text
+   * @return experimental data set
+   * @throws IOException if parsing fails
+   */
+  public static ExperimentalDataSet fromYaml(String yaml) throws IOException {
+    return ExperimentalDataReader.fromYaml(yaml);
+  }
+
+  /**
+   * Reads an experimental data set from a YAML file.
+   *
+   * @param file YAML file
+   * @return experimental data set
+   * @throws IOException if reading or parsing fails
+   */
+  public static ExperimentalDataSet fromYaml(File file) throws IOException {
+    return ExperimentalDataReader.fromYaml(file);
   }
 
   /**

@@ -21,7 +21,7 @@ The NeqSim statistics package provides tools for parameter fitting, uncertainty 
 
 The statistics package supports:
 
-1. **Parameter Fitting** - Nonlinear regression using Levenberg-Marquardt algorithm
+1. **Parameter Fitting** - Nonlinear regression using Levenberg-Marquardt, robust objectives, reusable specs, and CSV/YAML experimental data sets
 2. **Monte Carlo Simulation** - Uncertainty propagation and confidence intervals
 3. **Data Analysis** - Smoothing, filtering, and statistical analysis
 4. **Experimental Data Management** - Sample sets and experimental equipment modeling
@@ -47,7 +47,16 @@ statistics/
 │   ├── SampleValue.java                # Single experimental data point
 │   ├── ExperimentalDataPoint.java      # Metadata-rich immutable data point
 │   ├── ExperimentalDataSet.java        # Data set with units and conversion to SampleSet
+│   ├── ExperimentalDataReader.java     # CSV, JSON, YAML readers with unit conversion
+│   ├── ExperimentalDataDownloader.java # Cached URL download helper for data files
+│   ├── FittingParameter.java           # Named parameter with bounds, unit, transform, prior
+│   ├── ParameterTransform.java         # LINEAR, LOG, LOG10, LOGISTIC parameter spaces
+│   ├── ParameterFittingSpec.java       # Serializable fitting setup in JSON/YAML
+│   ├── ObjectiveFunctionType.java      # Weighted and robust objective choices
 │   ├── ParameterFittingStudy.java      # High-level fitting workflow and result metrics
+│   ├── ParameterFittingReport.java     # JSON and Markdown fit report
+│   ├── ParameterUpdateAdapter.java     # Bridge from fitted values to model parameters
+│   ├── BinaryInteractionParameterAdapter.java # SystemInterface kij adapter
 │   ├── BaseFunction.java               # Abstract objective function
 │   ├── FunctionInterface.java          # Function interface
 │   ├── NumericalDerivative.java        # Numerical differentiation
@@ -83,7 +92,7 @@ Detailed guides for each major subsystem:
 
 | Guide | Description |
 |-------|-------------|
-| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, experimental data workflow, bounds |
+| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, experimental data workflow, CSV/YAML files, robust objectives, specs, bounds, validation, and reports |
 | [Monte Carlo Simulation](monte_carlo_simulation) | Uncertainty propagation, confidence intervals, distribution sampling |
 | [Data Analysis](data_analysis) | Data smoothing, filtering, statistical measures |
 
@@ -137,6 +146,10 @@ ExperimentalDataSet dataSet = new ExperimentalDataSet(
 dataSet.addPoint(1.0, 0.1, new double[] {1.0});
 dataSet.addPoint(3.0, 0.1, new double[] {2.0});
 ```
+
+### Fitting Specifications
+
+`ParameterFittingSpec` stores parameter definitions, bounds, transforms, robust objective choices, multi-start settings, and optional validation split configuration in Java, JSON, or YAML. Example files are provided in `docs/statistics/examples/` and are verified by unit tests.
 
 ### Objective Functions
 

@@ -79,7 +79,7 @@ public abstract class BaseFunction implements FunctionInterface {
   /** {@inheritDoc} */
   @Override
   public void setInitialGuess(double[] guess) {
-    System.out.println("start fitting " + guess.length + " parameter(s)...");
+    logger.debug("Start fitting {} parameter(s)", guess.length);
     params = new double[guess.length];
     System.arraycopy(guess, 0, params, 0, guess.length);
   }
