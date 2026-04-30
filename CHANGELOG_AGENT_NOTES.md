@@ -9,6 +9,74 @@
 
 ---
 
+## 2026-04-30 — UniSim Reader: Operation Handler Registry
+
+### Summary
+
+The UniSim-to-NeqSim converter now centralizes operation mapping in a typed
+`UniSimOperationHandler` registry. Each UniSim `TypeName` records a NeqSim target
+type, strategy (`native`, `adapter`, `reference`, `control`, `column_internal`,
+or `skip`), stream role, and explanatory note. Generated JSON includes
+`_unisim_operation_mapping` so imported cases can audit whether operation types
+were mapped to native NeqSim physics, adapters, reference objects, control
+metadata, column internals, skipped utilities, or unsupported types.
+
+### Agent Guidance
+
+- Do not implement one UniSim-named NeqSim class for every UniSim operation.
+  Keep physical equipment native to NeqSim and add UniSim compatibility through
+  the converter registry and factory aliases.
+- Add new UniSim type behavior by extending `UniSimOperationHandler` metadata
+  first, including `strategy` and `stream_role`.
+- Use `UniSimReader.is_material_stream_operation(type_name)` for topology
+  reconstruction; do not add local `_NON_STREAM_OPS` lists.
+- Preserve stream-carrying placeholder logic (`balanceop`, `virtualstreamop`,
+  template interfaces) with `UnisimCalculator` until equations/properties are
+  clear enough for a real NeqSim class and tests.
+- Use `SpreadsheetBlock` for spreadsheet formula/import/export behavior when
+  cells are extractable; logical/control operations should not create material
+  topology edges.
+- Validate changes with `python devtools/test_unisim_outputs.py`; the suite now
+  checks handler strategy and `_unisim_operation_mapping` JSON summaries.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `docs/process/unisim-to-neqsim-conversion.md`
+- `devtools/README.md`
+- `AGENTS.md`
+
+## 2026-04-30 — UniSim Reader: Robust E300 Fluid-Package Extraction
+
+### Summary
+
+The UniSim-to-NeqSim conversion workflow now treats E300 full-fluid transfer as
+a separate verification gate from structural process build and numerical stream
+matching. `UniSimReader` can recover fluid packages when `comp.AcentricFactor`
+is missing by using property-package vectors or the Edmister fallback from Tc,
+Pc, and normal boiling point.
+
+### Agent Guidance
+
+- Request UniSim component critical temperature and normal boiling point in
+  `C`, then convert to K.
+- Request critical pressure in `kPa`, then convert to bara.
+- Sanity-check exported E300 files with known components: methane should be
+  about 190.7 K / 46.4 bara, water about 647.3 K / 221 bara.
+- Report four separate gates: E300 exported, E300 loaded in the NeqSim build
+  route, structural build status, and numerical stream verification status.
+- Do not treat E300 fluid parity as full process parity. Virtual streams,
+  spreadsheet/balance logic, template operations, compressor curves, and
+  sub-flowsheet interface wiring can still dominate stream deviations.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `docs/process/unisim-to-neqsim-conversion.md`
+- `devtools/README.md`
+
 ## 2026-04-29 — Route-Level Piping Hydraulic Builder for STID Line Lists
 
 ### Summary

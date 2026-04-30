@@ -31,6 +31,7 @@ import neqsim.thermo.system.SystemPrLeeKeslerEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
+import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 
 /**
  * Builds a {@link ProcessSystem} from a JSON definition string.
@@ -296,16 +297,24 @@ public class JsonProcessBuilder {
       String model =
           fluidDef.has("model") ? fluidDef.get("model").getAsString().toUpperCase() : "SRK";
 
-      SystemInterface fluid = createFluidByModel(model, temperature, pressure);
-      if (fluid == null) {
-        errors.add(new SimulationResult.ErrorDetail("UNKNOWN_MODEL",
-            "Unknown thermodynamic model: " + model, null,
-            "Use one of: SRK, PR, PR_LK, CPA, GERG2008, PCSAFT, UMRPRU"));
-        return null;
+      SystemInterface fluid;
+      if (fluidDef.has("e300FilePath")) {
+        String e300FilePath = fluidDef.get("e300FilePath").getAsString();
+        fluid = EclipseFluidReadWrite.read(e300FilePath);
+        fluid.setTemperature(temperature, "K");
+        fluid.setPressure(pressure, "bara");
+      } else {
+        fluid = createFluidByModel(model, temperature, pressure);
+        if (fluid == null) {
+          errors.add(new SimulationResult.ErrorDetail("UNKNOWN_MODEL",
+              "Unknown thermodynamic model: " + model, null,
+              "Use one of: SRK, PR, PR_LK, CPA, GERG2008, PCSAFT, UMRPRU"));
+          return null;
+        }
       }
 
       // Add standard database components
-      if (fluidDef.has("components")) {
+      if (!fluidDef.has("e300FilePath") && fluidDef.has("components")) {
         JsonObject components = fluidDef.getAsJsonObject("components");
         for (Map.Entry<String, JsonElement> comp : components.entrySet()) {
           fluid.addComponent(comp.getKey(), comp.getValue().getAsDouble());
@@ -313,7 +322,7 @@ public class JsonProcessBuilder {
       }
 
       // Add characterized (TBP/plus) components with full properties
-      if (fluidDef.has("characterizedComponents")) {
+      if (!fluidDef.has("e300FilePath") && fluidDef.has("characterizedComponents")) {
         JsonArray charComps = fluidDef.getAsJsonArray("characterizedComponents");
         for (int i = 0; i < charComps.size(); i++) {
           JsonObject cc = charComps.get(i).getAsJsonObject();
@@ -349,12 +358,14 @@ public class JsonProcessBuilder {
       }
 
       // Set mixing rule
-      String mixingRule =
-          fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
-      fluid.setMixingRule(mixingRule);
+      if (!fluidDef.has("e300FilePath")) {
+        String mixingRule =
+            fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
+        fluid.setMixingRule(mixingRule);
+      }
 
       // Apply binary interaction parameters (BICs)
-      if (fluidDef.has("binaryInteractionParameters")) {
+      if (!fluidDef.has("e300FilePath") && fluidDef.has("binaryInteractionParameters")) {
         // Build a mapping from exported names to actual system names
         // addTBPfraction appends "_PC" to component names
         Map<String, String> nameMap = new HashMap<>();

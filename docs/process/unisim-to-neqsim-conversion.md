@@ -1,6 +1,6 @@
 ---
 title: "UniSim Design to NeqSim Conversion Guide"
-description: "Complete guide for converting Honeywell UniSim Design (.usc) process models to NeqSim ProcessSystem simulations and exporting NeqSim models back to UniSim. Covers COM automation, component mapping, EOS mapping, topology reconstruction, verification, and troubleshooting."
+description: "Complete guide for converting Honeywell UniSim Design (.usc) process models to NeqSim ProcessSystem simulations and exporting NeqSim models back to UniSim. Covers COM automation, component mapping, E300 fluid transfer, operation-handler registry strategy, topology reconstruction, verification, and troubleshooting."
 keywords: "UniSim, HYSYS, Aspen HYSYS, converter, conversion, COM, usc file, process model import, process model export, UniSim to NeqSim, NeqSim to UniSim, model migration"
 ---
 
@@ -9,6 +9,7 @@ keywords: "UniSim, HYSYS, Aspen HYSYS, converter, conversion, COM, usc file, pro
 This guide covers the complete workflow for converting process simulation models between **Honeywell UniSim Design** (or Aspen HYSYS) and **NeqSim**. It includes:
 
 - Reading `.usc` files and extracting process data via Windows COM automation
+- Transferring UniSim fluid packages as Eclipse E300 full-fluid files
 - Converting UniSim models to NeqSim `ProcessSystem` simulations
 - Multiple output formats: JSON, Python scripts, Jupyter notebooks, EOT simulators
 - Exporting NeqSim models back to UniSim `.usc` files
@@ -130,7 +131,7 @@ reader.close()
 
 **Extracted data includes:**
 
-- **Fluid packages**: EOS type, component list, property package name
+- **Fluid packages**: EOS type, component list, property package name, and E300 export paths
 - **Material streams**: Temperature, pressure, flow rate, composition, density, molecular weight, vapour fraction, enthalpy
 - **Energy streams**: Heat flow
 - **Unit operations**: Type, feed/product connections, type-specific properties (efficiency, outlet pressure, duty, etc.)
@@ -189,7 +190,51 @@ for s in model.flowsheet.material_streams:
             print(f"  {comp}: {frac:.4f}")
 ```
 
-#### 3. Converting to NeqSim
+#### 3. Full-Fluid Transfer with E300
+
+For serious UniSim-to-NeqSim verification, use the E300 full-fluid route. The
+reader exports one E300 file per UniSim fluid package by default and the
+generated build route loads the fluid with `EclipseFluidReadWrite.read(...)`
+before calling `ProcessSystem.fromJsonAndRun(json, fluid)`. This preserves
+critical properties, molecular weights, acentric factors, binary interaction
+coefficients, volume shifts, parachors, and pseudo-component properties that
+component-name mapping alone cannot reproduce.
+
+Important checks after E300 export:
+
+| Check | Expected Result |
+|-------|-----------------|
+| E300 files written | One file per extracted UniSim fluid package |
+| Generated JSON/Python | Contains the expected `e300FilePath` for the process fluid or area |
+| Build route | Uses `EclipseFluidReadWrite.read(...)`, not a component-name fallback fluid |
+| Methane sanity check | Critical temperature about 190.7 K and critical pressure about 46.4 bara |
+| Water sanity check | Critical temperature about 647.3 K and critical pressure about 221 bara |
+| Missing acentric factors | Filled from package vectors or Edmister fallback when Tc, Pc, and boiling point exist |
+
+E300 fluid parity is necessary but not sufficient for full model parity. Large
+UniSim models can still require reconciliation of virtual streams, spreadsheets,
+balance blocks, template operations, sub-flowsheet interface streams, compressor
+curves, and control logic before numerical stream matching is accepted.
+
+#### 3.1 Operation Handler Registry
+
+The converter does not create one NeqSim class for every UniSim operation name.
+Instead, `devtools/unisim_reader.py` uses a typed `UniSimOperationHandler`
+registry. Each UniSim `TypeName` has:
+
+| Field | Meaning |
+|-------|---------|
+| `neqsim_type` | Target NeqSim equipment type or converter pseudo-type |
+| `strategy` | `native`, `adapter`, `reference`, `control`, `column_internal`, or `skip` |
+| `stream_role` | `material`, `reference`, or `none` for topology reconstruction |
+| `note` | Rationale included in generated JSON mapping summaries |
+
+Generated JSON includes `_unisim_operation_mapping`, which lists each UniSim
+operation type present in the imported case, the selected NeqSim type, strategy,
+stream role, count, and note. This is the audit trail for why an operation was
+mapped to native NeqSim physics, an adapter, a reference object, or comments.
+
+#### 4. Converting to NeqSim
 
 The `UniSimToNeqSim` converter offers multiple output formats:
 
@@ -279,7 +324,7 @@ with open("eot_demo.ipynb", "w") as f:
     json.dump(nb, f, indent=1)
 ```
 
-#### 4. Command-Line Interface
+#### 5. Command-Line Interface
 
 ```bash
 # Print model summary
@@ -531,15 +576,31 @@ A warning is logged when a fallback mapping is used.
 
 #### Skipped Operations
 
-These operations are recognized but produce comment lines only:
+The handler registry separates reference/control/internal operations from
+material topology. These operations are recognized but do not become standalone
+physical equipment:
 
 | UniSim TypeName | Reason |
 |-----------------|--------|
-| `spreadsheetop` | Calculation-only, no process equivalent |
-| `pidfbcontrolop` | Control logic, produces TODO comment |
+| `spreadsheetop` | `SpreadsheetBlock` reference object; formulas need import/export cell extraction |
+| `pidfbcontrolop` | Control logic, produces controller metadata or TODO comment |
 | `surgecontroller` | Surge control, no standalone NeqSim equivalent |
 | `partialcondenser` / `totalcondenser` / `traysection` / `bpreboiler` | Column internals (part of `DistillationColumn`) |
-| `logicalop` / `selectop` / `balanceop` | Logic operations |
+| `logicalop` / `selectop` | Logic operations |
+
+The following stream-carrying UniSim placeholders are not skipped; they preserve
+topology through adapters:
+
+| UniSim TypeName | NeqSim Type | Purpose |
+|-----------------|-------------|---------|
+| `balanceop` | `UnisimCalculator` | Balance/topology pass-through with source-operation metadata |
+| `virtualstreamop` | `UnisimCalculator` | Virtual stream pass-through with an outlet stream for downstream wiring |
+| `templateop` | `SubFlowsheet` / `UnisimCalculator` | Process sub-flowsheet or placeholder interface; JSON factory aliases placeholder builds to `UnisimCalculator` |
+
+When modifying topology reconstruction, use
+`UniSimReader.is_material_stream_operation(type_name)` rather than adding local
+non-stream lists. Unknown operation types are treated as material operations so
+stream-carrying unsupported blocks remain visible as warnings.
 
 ---
 
@@ -646,11 +707,27 @@ plant.add("DPC_Unit", dpc_process)
 plant.run()
 ```
 
+When sub-flowsheets use different fluid packages, verify that each process area
+is assigned the intended E300 file. A model can build structurally while still
+using the wrong default fluid in one area, so report the fluid-package mapping
+explicitly in the conversion summary.
+
 ---
 
 ## Verification
 
 Always verify the converted model by comparing UniSim and NeqSim stream results.
+Keep the verification split into separate gates:
+
+| Gate | Meaning |
+|------|---------|
+| E300 exported | UniSim fluid packages were extracted and written as E300 files |
+| E300 loaded | The NeqSim build route loaded those files with `EclipseFluidReadWrite.read(...)` |
+| Structural build | NeqSim units were created and wired, possibly with warnings |
+| Numerical stream verification | Stream T/P/flow/property deviations are within acceptance limits |
+
+Do not mark a conversion as verified only because the E300 files loaded or the
+process built. Those are prerequisites for the final numerical comparison.
 
 ### Using the Comparator
 
@@ -798,6 +875,9 @@ This prints all fluid packages, components, streams, operations, and their prope
 | `-32767` values | UniSim empty marker | Already filtered by reader (`val > -30000`) |
 | COM timeout | Large model loading | Increase `time.sleep()` after `.Open()` |
 | Wrong component count | Multiple fluid packages | Check which fluid package the stream uses |
+| Critical properties off by factors | UniSim COM returned unexpected units | Request critical temperature and boiling point in C, critical pressure in kPa, then convert explicitly |
+| Missing acentric factor | `comp.AcentricFactor` absent on COM object | Use property-package vectors or Edmister fallback from Tc, Pc, and normal boiling point |
+| E300 build succeeds but stream errors remain large | Process logic/topology mismatch | Check `_unisim_operation_mapping`, then reconcile virtual stream adapters, spreadsheets, balance blocks, template operations, and sub-flowsheet interfaces |
 | Missing operations | Sub-flowsheet not recursed | Use `model.all_operations()` |
 | Composition doesn't sum to 1.0 | Hypothetical components excluded | Re-normalize after filtering |
 | Compressor outlet T too low | Efficiency defaulted to 100% | Reader defaults to 75% if COM returns None |
@@ -872,8 +952,8 @@ if not result.isError():
 
 | File | Purpose |
 |------|---------|
-| `devtools/unisim_reader.py` | Core module: `UniSimReader`, `UniSimToNeqSim`, `UniSimComparator` |
+| `devtools/unisim_reader.py` | Core module: `UniSimReader`, `UniSimToNeqSim`, `UniSimComparator`, and the `UniSimOperationHandler` registry |
 | `devtools/unisim_writer.py` | Reverse direction: `UniSimWriter` — NeqSim JSON to `.usc` |
 | `devtools/explore_unisim_com.py` | Diagnostic tool: dump COM object model from any `.usc` file |
-| `devtools/test_unisim_outputs.py` | 14 pytest tests for all output modes (no COM needed) |
+| `devtools/test_unisim_outputs.py` | Pure-Python regression tests for output modes, E300 fluid export, operation handler strategy, and mapping summaries (no COM needed) |
 | `examples/notebooks/unisim_to_neqsim_conversion.ipynb` | Example notebook with test cases |

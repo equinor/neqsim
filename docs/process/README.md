@@ -46,7 +46,7 @@ This documentation is organized into the following sections:
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
-| [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim and export back to UniSim |
+| [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
 | [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 
