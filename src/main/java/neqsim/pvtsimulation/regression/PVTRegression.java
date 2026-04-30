@@ -647,7 +647,7 @@ public class PVTRegression {
     }
 
     PVTRegressionFunction function = new PVTRegressionFunction(tunedFluid.clone(),
-      new ArrayList<RegressionParameterConfig>(), experimentWeights);
+        new ArrayList<RegressionParameterConfig>(), experimentWeights);
     for (ViscosityDataPoint point : viscosityData) {
       double[] dependentValues = {point.getPressure(), point.getTemperature(),
           ExperimentType.VISCOSITY.ordinal(), point.getPhaseIndex()};
