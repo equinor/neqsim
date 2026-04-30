@@ -2,6 +2,8 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -66,7 +68,7 @@ public class DistillationSolverBenchmarkTest {
     DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
         DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
-        DistillationColumn.SolverType.NEWTON};
+        DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.MESH_RESIDUAL};
 
     double[] gasFlows = new double[solvers.length];
     double[] liquidFlows = new double[solvers.length];
@@ -157,7 +159,8 @@ public class DistillationSolverBenchmarkTest {
   public void allSolversHandleSimpleBinarySystem() {
     DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
-        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON};
+        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
+        DistillationColumn.SolverType.MESH_RESIDUAL};
 
     for (DistillationColumn.SolverType solver : solvers) {
       SystemInterface sys = new SystemSrkEos(298.15, 5.0);
@@ -207,6 +210,150 @@ public class DistillationSolverBenchmarkTest {
 
     column.setSolverType(DistillationColumn.SolverType.WEGSTEIN);
     assertEquals(DistillationColumn.SolverType.WEGSTEIN, column.getSolverType());
+  }
+
+  /**
+   * Test that every public solver enum has a mapped solver strategy.
+   */
+  @Test
+  public void solverFactoryCoversAllSolverTypes() {
+    for (DistillationColumn.SolverType solverType : DistillationColumn.SolverType.values()) {
+      ColumnSolver solver = ColumnSolverFactory.create(solverType);
+      assertNotNull(solver, solverType.name() + " should have a solver strategy");
+      assertEquals(solverType, solver.getSolverType());
+    }
+  }
+
+  /**
+   * Test component material closure for the standard deethanizer benchmark.
+   */
+  @Test
+  public void componentMaterialBalancesCloseOnDeethanizer() {
+    Stream feed = new Stream("component_balance_feed", createDeethanizerFeed().clone());
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("component_balance_column", 5, true, false);
+    column.addFeedStream(feed, 5);
+    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.setMaxNumberOfIterations(50);
+    column.run();
+
+    assertTrue(column.solved(), "Component balance case should converge");
+
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
+        "n-butane", "i-pentane", "n-pentane", "n-hexane", "n-heptane"};
+
+    for (int i = 0; i < componentNames.length; i++) {
+      String componentName = componentNames[i];
+      double feedFlow = feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+      double productFlow =
+          column.getGasOutStream().getFluid().getComponent(componentName).getTotalFlowRate("mol/hr")
+              + column.getLiquidOutStream().getFluid().getComponent(componentName)
+                  .getTotalFlowRate("mol/hr");
+      double tolerance = Math.max(1.0e-8, Math.abs(feedFlow) * 5.0e-2);
+      assertEquals(feedFlow, productFlow, tolerance,
+          componentName + " component flow should close across products");
+    }
+  }
+
+  /**
+   * Test that MESH residual diagnostics have the expected structure on the standard deethanizer.
+   */
+  @Test
+  public void meshResidualVectorIsFiniteOnSolvedDeethanizer() {
+    DistillationColumn column = runDeethanizer(DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
+
+    ColumnMeshResidual residual = column.getLastMeshResidual();
+    int trayCount = column.getTrays().size();
+    int componentCount = column.getGasOutStream().getThermoSystem().getNumberOfComponents();
+
+    assertNotNull(residual, "MESH residual diagnostics should be recorded after a run");
+    assertTrue(residual.size() > 0, "MESH residual vector should contain equations");
+    assertTrue(residual.isFinite(), "MESH residual values should be finite");
+    assertTrue(Double.isFinite(residual.getInfinityNorm()), "MESH residual norm should be finite");
+    assertEquals(residual.size(), column.getLastMeshResidualVector().length,
+        "Public residual vector should match internal residual size");
+    assertEquals(trayCount * componentCount, residual.count(ColumnMeshEquationType.MATERIAL),
+        "Material residual count should match tray-component equations");
+    assertEquals(trayCount, residual.count(ColumnMeshEquationType.ENERGY),
+        "Energy residual count should match tray count");
+    assertTrue(residual.count(ColumnMeshEquationType.EQUILIBRIUM) > 0,
+        "Equilibrium residuals should be present");
+    assertTrue(residual.count(ColumnMeshEquationType.SUMMATION) > 0,
+        "Summation residuals should be present");
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
+        "Public MESH residual norm should be finite");
+    assertTrue(Double.isFinite(column.getLastMeshMaterialResidualNorm()),
+        "Public material residual norm should be finite");
+    assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()),
+        "Public energy residual norm should be finite");
+  }
+
+  /**
+   * Test that active column specifications are included in the MESH residual vector.
+   */
+  @Test
+  public void meshResidualIncludesSpecificationResiduals() {
+    Stream feed = new Stream("mesh_spec_feed", createDeethanizerFeed().clone());
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("mesh_spec_column", 5, true, false);
+    column.addFeedStream(feed, 5);
+    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.setTopSpecification(
+        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+            ColumnSpecification.ProductLocation.TOP, 1.5));
+    column.run();
+
+    ColumnMeshResidual residual = column.getLastMeshResidual();
+    assertNotNull(residual, "MESH residual diagnostics should be recorded after a spec solve");
+    assertTrue(residual.isFinite(), "Specification residual vector should be finite");
+    assertTrue(residual.count(ColumnMeshEquationType.SPECIFICATION) >= 1,
+        "Active specifications should contribute residual equations");
+    assertTrue(Double.isFinite(column.getLastMeshSpecificationResidualNorm()),
+        "Public specification residual norm should be finite");
+  }
+
+  /**
+   * Test that the MESH residual-monitored solver mode runs and records diagnostics.
+   */
+  @Test
+  public void meshResidualSolverRunsOnDeethanizer() {
+    DistillationColumn column = runDeethanizer(DistillationColumn.SolverType.MESH_RESIDUAL);
+
+    assertTrue(column.solved(), "MESH residual-monitored solver should converge");
+    assertNotNull(column.getLastMeshResidual(), "MESH residual solver should record diagnostics");
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
+        "MESH residual solver should report a finite norm");
+  }
+
+  /**
+   * Test optional convergence gating on the full MESH residual norm.
+   */
+  @Test
+  public void meshResidualToleranceCanBeEnforced() {
+    DistillationColumn column = runDeethanizer(DistillationColumn.SolverType.MESH_RESIDUAL);
+    double residualNorm = column.getLastMeshResidualNorm();
+    double permissiveTolerance = Math.max(1.0, residualNorm * 2.0 + 1.0);
+
+    assertFalse(column.isEnforceMeshResidualTolerance(),
+        "MESH residual gating should be disabled by default");
+    column.setMeshResidualTolerance(permissiveTolerance);
+    column.setEnforceMeshResidualTolerance(true);
+
+    assertEquals(permissiveTolerance, column.getMeshResidualTolerance(), 0.0,
+        "Configured MESH tolerance should be retained");
+    assertTrue(column.isEnforceMeshResidualTolerance(),
+        "MESH residual gating should be enabled after setter call");
+    assertTrue(column.solved(), "Permissive MESH residual gate should keep the solve converged");
+    assertThrows(IllegalArgumentException.class, () -> column.setMeshResidualTolerance(0.0));
+    assertThrows(IllegalArgumentException.class, () -> column.setMeshResidualTolerance(Double.NaN));
   }
 
   /**

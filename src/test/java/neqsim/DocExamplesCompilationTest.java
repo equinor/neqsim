@@ -9,6 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.integration.EOSComparison;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
@@ -291,6 +292,82 @@ public class DocExamplesCompilationTest {
     // Check property deviations as in doc
     double densityDev = result.getMaxDeviation("density");
     assertTrue(densityDev >= 0);
+  }
+
+  /**
+   * DistillationColumn usage from docs/process/equipment/distillation.md.
+   */
+  @Test
+  public void testDistillationColumnDoc() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(216.0, 30.0);
+    fluid.addComponent("nitrogen", 1.67366E-3);
+    fluid.addComponent("CO2", 1.06819E-4);
+    fluid.addComponent("methane", 5.14168E-1);
+    fluid.addComponent("ethane", 1.92528E-1);
+    fluid.addComponent("propane", 1.70001E-1);
+    fluid.addComponent("i-butane", 3.14561E-2);
+    fluid.addComponent("n-butane", 5.58678E-2);
+    fluid.addComponent("i-pentane", 1.29573E-2);
+    fluid.addComponent("n-pentane", 1.23719E-2);
+    fluid.addComponent("n-hexane", 5.12878E-3);
+    fluid.addComponent("n-heptane", 1.0E-2);
+    fluid.setMixingRule("classic");
+
+    Stream apiFeed = new Stream("doc distillation api feed", fluid.clone());
+    apiFeed.setFlowRate(100.0, "kg/hr");
+    apiFeed.run();
+
+    DistillationColumn apiColumn = new DistillationColumn("Doc API Column", 10, true, true);
+    apiColumn.addFeedStream(apiFeed, 5);
+    apiColumn.setCondenserTemperature(273.15 + 40.0);
+    apiColumn.setReboilerTemperature(273.15 + 120.0);
+    apiColumn.setTopPressure(15.0);
+    apiColumn.setBottomPressure(16.0);
+    apiColumn.setCondenserRefluxRatio(3.0);
+    apiColumn.getCondenser().setHeatInput(-5000000.0);
+    apiColumn.getReboiler().setHeatInput(6000000.0);
+    apiColumn.setReboilerBoilupRatio(2.5);
+    apiColumn.setMaxNumberOfIterations(50);
+    apiColumn.setTemperatureTolerance(0.01);
+    apiColumn.setMassBalanceTolerance(0.05);
+    apiColumn.setEnthalpyBalanceTolerance(0.05);
+    apiColumn.setRelaxationFactor(0.5);
+    apiColumn.setMeshResidualTolerance(10.0);
+    apiColumn.setEnforceMeshResidualTolerance(true);
+    apiColumn.setSolverType(DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
+
+    assertNotNull(apiColumn.getCondenser());
+    assertNotNull(apiColumn.getReboiler());
+    assertEquals(10.0, apiColumn.getMeshResidualTolerance(), 0.0);
+    assertTrue(apiColumn.isEnforceMeshResidualTolerance());
+
+    Stream runFeed = new Stream("doc distillation run feed", fluid.clone());
+    runFeed.setFlowRate(100.0, "kg/hr");
+    runFeed.run();
+
+    DistillationColumn column = new DistillationColumn("Doc MESH Deethanizer", 5, true, false);
+    column.addFeedStream(runFeed, 5);
+    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.setMaxNumberOfIterations(50);
+    column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+    column.run();
+
+    assertTrue(column.solved());
+    assertNotNull(column.getGasOutStream());
+    assertNotNull(column.getLiquidOutStream());
+    assertTrue(column.getTrays().size() > 0);
+    assertTrue(Double.isFinite(column.getTray(0).getTemperature()));
+    assertTrue(Double.isFinite(column.getTray(0).getVaporFlowRate("kg/hr")));
+    assertTrue(Double.isFinite(column.getTray(0).getLiquidFlowRate("kg/hr")));
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshMaterialResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshEquilibriumResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshSummationResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshSpecificationResidualNorm()));
+    assertTrue(column.getLastMeshResidualVector().length > 0);
   }
 
   /**

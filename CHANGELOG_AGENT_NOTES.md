@@ -9,6 +9,42 @@
 
 ---
 
+## 2026-04-30 — Distillation Column MESH Residual Diagnostics
+
+### Summary
+
+`DistillationColumn` now records a scaled MESH residual vector after every run. The residual
+diagnostics group material, equilibrium, summation, energy, and active specification equations.
+A new `SolverType.MESH_RESIDUAL` entry uses inside-out initialization with Newton polishing and
+keeps the residual diagnostics central to the solve path.
+
+### New API
+
+| Method | Description |
+|--------|-------------|
+| `getLastMeshResidualNorm()` | Full scaled MESH residual infinity norm |
+| `getLastMeshMaterialResidualNorm()` | Component material residual norm |
+| `getLastMeshEquilibriumResidualNorm()` | Fugacity-equilibrium residual norm |
+| `getLastMeshSummationResidualNorm()` | Vapor/liquid summation residual norm |
+| `getLastMeshEnergyResidualNorm()` | Tray energy residual norm |
+| `getLastMeshSpecificationResidualNorm()` | Active specification residual norm |
+| `getLastMeshResidualVector()` | Copy of the full residual vector |
+| `setMeshResidualTolerance(double)` | Configure the optional MESH residual convergence tolerance |
+| `setEnforceMeshResidualTolerance(boolean)` | Include the latest MESH residual norm in `solved()` |
+
+### Agent Guidance
+
+- Use `SolverType.MESH_RESIDUAL` when a task needs explicit MESH residual auditing.
+- Do not describe `SolverType.NEWTON` as a full simultaneous MESH Newton solver; it is a
+  tray-temperature correction accelerator.
+- The MESH residual gate is disabled by default for backward compatibility. Enable it only when
+  the task requires residual-vector convergence as part of the acceptance criteria.
+
+### Affected Guidance
+
+- `docs/process/equipment/distillation.md`
+- `docs/wiki/distillation_column.md`
+- `.github/skills/neqsim-distillation-design/SKILL.md`
 ## 2026-04-30 — CSP/PFCT Viscosity Parameter Fitting
 
 ### Summary

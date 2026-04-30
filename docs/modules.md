@@ -22,7 +22,7 @@ This document provides an overview of the seven foundational modules that make u
 ## Unit operations
 - **Location:** `process/equipment`
 - **Features:** library of process equipment including separators, heat exchangers, valves and other common unit operations.
-- **Distillation columns:** six solver algorithms (direct substitution, damped, inside-out, Wegstein, sum-rates, Newton) with convergence diagnostics and Murphree efficiency support. See [distillation column docs](wiki/distillation_column.md).
+- **Distillation columns:** seven solver algorithms (direct substitution, damped, inside-out, Wegstein, sum-rates, Newton temperature correction, and MESH residual monitoring) with convergence diagnostics and Murphree efficiency support. See [distillation column docs](wiki/distillation_column.md).
 
 ## Chemical reactions routines
 - **Location:** `chemicalreactions`

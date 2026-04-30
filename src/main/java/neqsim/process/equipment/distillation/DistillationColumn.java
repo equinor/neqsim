@@ -68,6 +68,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
   /** Recommended base enthalpy balance tolerance for adaptive defaults. */
   private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
+  /** Default scaled MESH residual tolerance when residual gating is enabled. */
+  private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -79,6 +81,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
   /** Enthalpy balance convergence tolerance. */
   private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+  /** Scaled MESH residual convergence tolerance. */
+  private double meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
   /** Track whether temperature tolerance has been manually overridden. */
   private boolean temperatureToleranceCustomized = false;
   /** Track whether mass balance tolerance has been manually overridden. */
@@ -98,8 +102,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     WEGSTEIN,
     /** Sum-rates tearing method with flow correction. */
     SUM_RATES,
-    /** Newton-Raphson simultaneous temperature correction. */
-    NEWTON
+    /** Newton-Raphson tray-temperature correction accelerator, not a full MESH Newton solver. */
+    NEWTON,
+    /** MESH residual-monitored solve with inside-out initialization and Newton polishing. */
+    MESH_RESIDUAL
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
@@ -123,6 +129,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double maxEnergyRelaxationWeight = 10.0;
   /** Control whether energy residual must satisfy tolerance before convergence. */
   private boolean enforceEnergyBalanceTolerance = false;
+  /** Control whether the MESH residual vector must satisfy tolerance before convergence. */
+  private boolean enforceMeshResidualTolerance = false;
   private boolean doMultiPhaseCheck = true;
 
   /**
@@ -190,6 +198,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastMassResidual = 0.0;
   /** Last recorded relative enthalpy residual. */
   private double lastEnergyResidual = 0.0;
+  /** Last reported top specification residual. */
+  private double lastTopSpecificationResidual = 0.0;
+  /** Last reported bottom specification residual. */
+  private double lastBottomSpecificationResidual = 0.0;
+  /** Latest MESH residual diagnostics. */
+  private transient ColumnMeshResidual lastMeshResidual = null;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
 
@@ -486,27 +500,121 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void run(UUID id) {
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
-    switch (solverType) {
-      case DAMPED_SUBSTITUTION:
-        solveSequential(id, relaxationFactor);
-        break;
-      case INSIDE_OUT:
-        solveInsideOut(id);
-        break;
-      case WEGSTEIN:
-        solveWegstein(id);
-        break;
-      case SUM_RATES:
-        solveSumRates(id);
-        break;
-      case NEWTON:
-        solveNewton(id);
-        break;
-      case DIRECT_SUBSTITUTION:
-      default:
-        solveSequential(id, 1.0);
-        break;
+    applyDirectSpecifications();
+    if (hasAdjustableSpecifications()) {
+      solveWithSpecifications(id);
+      updateSpecificationResiduals();
+      updateMeshResiduals();
+      return;
     }
+    solveInner(id);
+    updateSpecificationResiduals();
+    updateMeshResiduals();
+  }
+
+  /** Apply specifications that map directly to condenser or reboiler controls. */
+  private void applyDirectSpecifications() {
+    applyDirectSpecification(topSpecification);
+    applyDirectSpecification(bottomSpecification);
+  }
+
+  /**
+   * Apply a specification that does not require an outer iteration.
+   *
+   * @param spec the specification to apply
+   */
+  private void applyDirectSpecification(ColumnSpecification spec) {
+    if (spec == null) {
+      return;
+    }
+
+    if (spec.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO) {
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
+        getCondenser().setRefluxRatio(spec.getTargetValue());
+      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
+        getReboiler().setRefluxRatio(spec.getTargetValue());
+      }
+    } else if (spec.getType() == ColumnSpecification.SpecificationType.DUTY) {
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
+        getCondenser().setHeatInput(spec.getTargetValue());
+      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
+        getReboiler().setHeatInput(spec.getTargetValue());
+      }
+    }
+  }
+
+  /**
+   * Check whether any configured column specification requires iterative adjustment.
+   *
+   * @return {@code true} when an active product/recovery/flow specification is present
+   */
+  private boolean hasAdjustableSpecifications() {
+    return needsAdjustment(topSpecification) || needsAdjustment(bottomSpecification);
+  }
+
+  /**
+   * Check whether all active column specifications are within their configured tolerance.
+   *
+   * @return {@code true} if all specifications are satisfied
+   */
+  private boolean specificationsSatisfied() {
+    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification);
+  }
+
+  /** Update the stored residuals for the currently configured column specifications. */
+  private void updateSpecificationResiduals() {
+    lastTopSpecificationResidual = evaluateSpecErrorSafely(topSpecification);
+    lastBottomSpecificationResidual = evaluateSpecErrorSafely(bottomSpecification);
+  }
+
+  /** Update the stored specification residuals for package-level diagnostics. */
+  void updateSpecificationResidualDiagnostics() {
+    updateSpecificationResiduals();
+  }
+
+  /** Update the stored MESH residual diagnostics for the current column state. */
+  private void updateMeshResiduals() {
+    lastMeshResidual = ColumnMeshResidualEvaluator.evaluate(this);
+  }
+
+  /**
+   * Evaluate a specification residual for diagnostics without interrupting a solve.
+   *
+   * @param spec the specification to evaluate
+   * @return current residual, zero for no specification, or {@code Double.NaN} if unavailable
+   */
+  private double evaluateSpecErrorSafely(ColumnSpecification spec) {
+    if (spec == null) {
+      return 0.0;
+    }
+    try {
+      return evaluateSpecError(spec);
+    } catch (Exception ex) {
+      logger.debug("Could not evaluate column specification residual", ex);
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Check whether a single column specification is satisfied.
+   *
+   * @param spec the specification to evaluate
+   * @return {@code true} if no residual check is needed or the residual is within tolerance
+   */
+  private boolean specificationSatisfied(ColumnSpecification spec) {
+    if (spec == null || !needsAdjustment(spec)) {
+      return true;
+    }
+    return Math.abs(evaluateSpecError(spec)) <= spec.getTolerance();
+  }
+
+  /**
+   * Solve the column using the currently selected inner solver.
+   *
+   * @param id calculation identifier
+   */
+  private ColumnSolveResult solveSelectedSolver(UUID id) {
+    return ColumnSolverFactory.create(solverType).solve(this, id);
   }
 
   /**
@@ -578,6 +686,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Evaluate specification errors
       double topError = adjustTop ? evaluateSpecError(topSpecification) : 0.0;
       double bottomError = adjustBottom ? evaluateSpecError(bottomSpecification) : 0.0;
+      lastTopSpecificationResidual = topError;
+      lastBottomSpecificationResidual = bottomError;
 
       logger.info("Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}", outerIter,
           topError, bottomError, adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
@@ -674,26 +784,42 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   private void solveInner(UUID id) {
-    switch (solverType) {
-      case DAMPED_SUBSTITUTION:
-        solveSequential(id, relaxationFactor);
-        break;
-      case INSIDE_OUT:
-        solveInsideOut(id);
-        break;
-      case WEGSTEIN:
-        solveWegstein(id);
-        break;
-      case SUM_RATES:
-        solveSumRates(id);
-        break;
-      case NEWTON:
-        solveNewton(id);
-        break;
-      case DIRECT_SUBSTITUTION:
-      default:
-        solveSequential(id, 1.0);
-        break;
+    solveSelectedSolver(id);
+  }
+
+  /**
+   * Solve using direct substitution.
+   *
+   * @param id calculation identifier
+   */
+  void solveDirectSubstitution(UUID id) {
+    solveSequential(id, 1.0);
+  }
+
+  /**
+   * Solve using damped substitution and the configured relaxation factor.
+   *
+   * @param id calculation identifier
+   */
+  void solveDampedSubstitution(UUID id) {
+    solveSequential(id, relaxationFactor);
+  }
+
+  /**
+   * Solve using inside-out initialization and temperature-Newton polishing while reporting MESH
+   * residual diagnostics.
+   *
+   * @param id calculation identifier
+   */
+  void solveMeshResidual(UUID id) {
+    solveInsideOut(id);
+    updateMeshResiduals();
+    if (lastMeshResidual == null || !lastMeshResidual.isFinite()
+        || lastMeshResidual.getInfinityNorm() > 1.0) {
+      logger.debug("MESH residual monitor requested Newton polish; residual={}",
+          lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm());
+      solveNewton(id);
+      updateMeshResiduals();
     }
   }
 
@@ -1450,7 +1576,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveInsideOut(UUID id) {
+  void solveInsideOut(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2206,15 +2332,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Solve the column using the adaptive sequential substitution scheme with a damped starting step.
-   *
-   * @param id calculation identifier
-   */
-  private void runDamped(UUID id) {
-    solveSequential(id, relaxationFactor);
-  }
-
-  /**
    * Solve the column using Wegstein acceleration of successive substitution.
    *
    * <p>
@@ -2226,7 +2343,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveWegstein(UUID id) {
+  void solveWegstein(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2408,7 +2525,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveSumRates(UUID id) {
+  void solveSumRates(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2570,7 +2687,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveNewton(UUID id) {
+  void solveNewton(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -3139,7 +3256,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < getEffectiveTemperatureTolerance());
+    boolean temperatureSolved = err < getEffectiveTemperatureTolerance();
+    boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
+    boolean energySolved = !enforceEnergyBalanceTolerance
+        || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
+    return temperatureSolved && massSolved && energySolved && meshResidualsSatisfied()
+        && specificationsSatisfied();
+  }
+
+  /**
+   * Check whether the latest MESH residual satisfies the optional convergence gate.
+   *
+   * @return {@code true} if MESH residual gating is disabled or the latest residual is acceptable
+   */
+  private boolean meshResidualsSatisfied() {
+    if (!enforceMeshResidualTolerance || lastMeshResidual == null) {
+      return true;
+    }
+    return lastMeshResidual.isFinite()
+        && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance;
   }
 
   void setError(double err) {
@@ -3183,6 +3318,116 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve the latest top specification residual.
+   *
+   * @return top specification residual as current value minus target value
+   */
+  public double getLastTopSpecificationResidual() {
+    return lastTopSpecificationResidual;
+  }
+
+  /**
+   * Retrieve the latest bottom specification residual.
+   *
+   * @return bottom specification residual as current value minus target value
+   */
+  public double getLastBottomSpecificationResidual() {
+    return lastBottomSpecificationResidual;
+  }
+
+  /**
+   * Retrieve the largest absolute active specification residual.
+   *
+   * @return maximum absolute top or bottom specification residual
+   */
+  public double getLastSpecificationResidual() {
+    return Math.max(Math.abs(lastTopSpecificationResidual),
+        Math.abs(lastBottomSpecificationResidual));
+  }
+
+  /**
+   * Retrieve the latest MESH residual vector infinity norm.
+   *
+   * @return maximum absolute MESH residual, or {@code Double.NaN} if no solve has been run
+   */
+  public double getLastMeshResidualNorm() {
+    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
+  }
+
+  /**
+   * Retrieve the latest MESH material residual infinity norm.
+   *
+   * @return maximum absolute component material residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshMaterialResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.MATERIAL);
+  }
+
+  /**
+   * Retrieve the latest MESH equilibrium residual infinity norm.
+   *
+   * @return maximum absolute equilibrium residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshEquilibriumResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.EQUILIBRIUM);
+  }
+
+  /**
+   * Retrieve the latest MESH summation residual infinity norm.
+   *
+   * @return maximum absolute summation residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshSummationResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
+  }
+
+  /**
+   * Retrieve the latest MESH energy residual infinity norm.
+   *
+   * @return maximum absolute energy residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshEnergyResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.ENERGY);
+  }
+
+  /**
+   * Retrieve the latest MESH specification residual infinity norm.
+   *
+   * @return maximum absolute specification residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshSpecificationResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.SPECIFICATION);
+  }
+
+  /**
+   * Retrieve a copy of the latest MESH residual vector.
+   *
+   * @return residual vector copy, or an empty array if no solve has been run
+   */
+  public double[] getLastMeshResidualVector() {
+    return lastMeshResidual == null ? new double[0] : lastMeshResidual.getValues();
+  }
+
+  /**
+   * Retrieve the latest internal MESH residual diagnostics.
+   *
+   * @return latest residual diagnostics, or null if no solve has been run
+   */
+  ColumnMeshResidual getLastMeshResidual() {
+    return lastMeshResidual;
+  }
+
+  /**
+   * Get a MESH residual norm by equation type.
+   *
+   * @param equationType equation type to inspect
+   * @return infinity norm for that equation type, or {@code Double.NaN} if unavailable
+   */
+  private double getLastMeshResidualNorm(ColumnMeshEquationType equationType) {
+    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm(equationType);
+  }
+
+  /**
    * Retrieve the duration of the most recent solve in seconds.
    *
    * @return solve time in seconds
@@ -3219,12 +3464,40 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Control whether the latest MESH residual vector must satisfy tolerance during convergence
+   * checks.
+   *
+   * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
+   */
+  public void setEnforceMeshResidualTolerance(boolean enforce) {
+    this.enforceMeshResidualTolerance = enforce;
+  }
+
+  /**
+   * Check if convergence requires the latest MESH residual vector to satisfy tolerance.
+   *
+   * @return {@code true} if MESH residuals are part of the convergence check
+   */
+  public boolean isEnforceMeshResidualTolerance() {
+    return enforceMeshResidualTolerance;
+  }
+
+  /**
    * Access the configured relative enthalpy balance tolerance.
    *
    * @return enthalpy balance tolerance
    */
   public double getEnthalpyBalanceTolerance() {
     return getEffectiveEnthalpyBalanceTolerance();
+  }
+
+  /**
+   * Access the configured scaled MESH residual tolerance.
+   *
+   * @return MESH residual tolerance
+   */
+  public double getMeshResidualTolerance() {
+    return meshResidualTolerance;
   }
 
   /**
@@ -3475,6 +3748,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set the scaled MESH residual tolerance used when MESH residual gating is enabled.
+   *
+   * @param tol positive finite tolerance
+   * @throws IllegalArgumentException if the tolerance is not positive and finite
+   */
+  public void setMeshResidualTolerance(double tol) {
+    if (!Double.isFinite(tol) || tol <= 0.0) {
+      throw new IllegalArgumentException("MESH residual tolerance must be positive and finite");
+    }
+    this.meshResidualTolerance = tol;
+  }
+
+  /**
    * Restore adaptive default tolerances, discarding manual overrides.
    */
   public void resetToleranceOverrides() {
@@ -3484,6 +3770,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
     massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
     enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+    meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
+    enforceMeshResidualTolerance = false;
   }
 
   /**
@@ -4503,11 +4791,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Update column outlet streams from top and bottom trays
     if (trays.size() > 0) {
-      StreamInterface gasOut = trays.get(0).getGasOutStream();
+      StreamInterface gasOut = trays.get(nTrays - 1).getGasOutStream();
       if (gasOut != null && gasOut.getThermoSystem() != null) {
         gasOutStream.setThermoSystem(gasOut.getThermoSystem().clone());
       }
-      StreamInterface liqOut = trays.get(nTrays - 1).getLiquidOutStream();
+      StreamInterface liqOut = trays.get(0).getLiquidOutStream();
       if (liqOut != null && liqOut.getThermoSystem() != null) {
         liquidOutStream.setThermoSystem(liqOut.getThermoSystem().clone());
       }

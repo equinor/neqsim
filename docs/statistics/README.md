@@ -21,7 +21,7 @@ The NeqSim statistics package provides tools for parameter fitting, uncertainty 
 
 The statistics package supports:
 
-1. **Parameter Fitting** - Nonlinear regression using Levenberg-Marquardt algorithm
+1. **Parameter Fitting** - Nonlinear regression using Levenberg-Marquardt, robust objectives, reusable specs, and CSV/YAML experimental data sets
 2. **Monte Carlo Simulation** - Uncertainty propagation and confidence intervals
 3. **Data Analysis** - Smoothing, filtering, and statistical analysis
 4. **Experimental Data Management** - Sample sets and experimental equipment modeling
@@ -45,6 +45,18 @@ statistics/
 │   ├── StatisticsInterface.java        # Interface definition
 │   ├── SampleSet.java                  # Collection of experimental points
 │   ├── SampleValue.java                # Single experimental data point
+│   ├── ExperimentalDataPoint.java      # Metadata-rich immutable data point
+│   ├── ExperimentalDataSet.java        # Data set with units and conversion to SampleSet
+│   ├── ExperimentalDataReader.java     # CSV, JSON, YAML readers with unit conversion
+│   ├── ExperimentalDataDownloader.java # Cached URL download helper for data files
+│   ├── FittingParameter.java           # Named parameter with bounds, unit, transform, prior
+│   ├── ParameterTransform.java         # LINEAR, LOG, LOG10, LOGISTIC parameter spaces
+│   ├── ParameterFittingSpec.java       # Serializable fitting setup in JSON/YAML
+│   ├── ObjectiveFunctionType.java      # Weighted and robust objective choices
+│   ├── ParameterFittingStudy.java      # High-level fitting workflow and result metrics
+│   ├── ParameterFittingReport.java     # JSON and Markdown fit report
+│   ├── ParameterUpdateAdapter.java     # Bridge from fitted values to model parameters
+│   ├── BinaryInteractionParameterAdapter.java # SystemInterface kij adapter
 │   ├── BaseFunction.java               # Abstract objective function
 │   ├── FunctionInterface.java          # Function interface
 │   ├── NumericalDerivative.java        # Numerical differentiation
@@ -80,7 +92,7 @@ Detailed guides for each major subsystem:
 
 | Guide | Description |
 |-------|-------------|
-| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, creating objective functions, bounds |
+| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, experimental data workflow, CSV/YAML files, robust objectives, specs, bounds, validation, and reports |
 | [Monte Carlo Simulation](monte_carlo_simulation) | Uncertainty propagation, confidence intervals, distribution sampling |
 | [Data Analysis](data_analysis) | Data smoothing, filtering, statistical measures |
 
@@ -119,6 +131,25 @@ sampleSet.add(sample3);
 SampleValue[] samples = {sample1, sample2, sample3};
 SampleSet sampleSet = new SampleSet(samples);
 ```
+
+### Experimental Data Sets
+
+`ExperimentalDataSet` adds names, units, references, and a direct path into the optimizer:
+
+```java
+ExperimentalDataSet dataSet = new ExperimentalDataSet(
+    "linear calibration",
+    "response",
+    "-",
+    new String[] {"x"},
+    new String[] {"-"});
+dataSet.addPoint(1.0, 0.1, new double[] {1.0});
+dataSet.addPoint(3.0, 0.1, new double[] {2.0});
+```
+
+### Fitting Specifications
+
+`ParameterFittingSpec` stores parameter definitions, bounds, transforms, robust objective choices, multi-start settings, and optional validation split configuration in Java, JSON, or YAML. Example files are provided in `docs/statistics/examples/` and are verified by unit tests.
 
 ### Objective Functions
 
@@ -196,6 +227,19 @@ System.out.println("Fitted parameters: " + Arrays.toString(fittedParams));
 // 7. Display results
 optimizer.displayCurveFit();
 optimizer.displayResult();
+```
+
+### Higher-Level Experimental Workflow
+
+```java
+ParameterFittingStudy.Result result = new ParameterFittingStudy(dataSet, function)
+    .setInitialGuess(new double[] {0.5, 0.0})
+    .setParameterNames(new String[] {"slope", "intercept"})
+    .setMaxNumberOfIterations(30)
+    .run();
+
+double slope = result.getFittedParameter("slope");
+double rmse = result.getRootMeanSquareError();
 ```
 
 ### With Monte Carlo Uncertainty
