@@ -108,6 +108,81 @@ public class RateBasedPackedColumnTest {
     Assertions.assertTrue(column.toJson().contains("heatBalanceResidualW"));
   }
 
+    @Test
+    public void testEquationOrientedColumnSolverSolvesColumnWideResiduals() {
+    Stream gas = createGasStream("eo gas with CO2", 0.10);
+    Stream liquid = createLiquidStream("eo lean liquid", 0.0);
+    double inletGasCo2 = moleFraction(gas.getThermoSystem(), "CO2");
+
+    RateBasedPackedColumn column = configuredColumn(gas, liquid, 6.0);
+    column.setNumberOfSegments(3);
+    column.setColumnSolver(RateBasedPackedColumn.ColumnSolver.EQUATION_ORIENTED);
+    column.setMaxColumnResidualIterations(2);
+    column.setColumnHomotopySteps(1);
+    column.setColumnResidualTolerance(1.0e-5);
+    column.run();
+
+    double outletGasCo2 = moleFraction(column.getGasOutStream().getThermoSystem(), "CO2");
+    Assertions.assertEquals(RateBasedPackedColumn.ColumnSolver.EQUATION_ORIENTED,
+      column.getColumnSolver());
+    Assertions.assertTrue(outletGasCo2 < inletGasCo2,
+      "Equation-oriented solve should preserve CO2 absorption direction");
+    Assertions.assertTrue(Double.isFinite(column.getLastColumnResidualNorm()));
+    Assertions.assertTrue(Double.isFinite(column.getLastGasComponentBalanceResidual()));
+    Assertions.assertTrue(Double.isFinite(column.getLastLiquidComponentBalanceResidual()));
+    Assertions.assertTrue(column.getLastColumnResidualIterations() >= 0);
+    Assertions.assertEquals(RateBasedPackedColumn.ColumnSolver.EQUATION_ORIENTED.name(),
+      column.getSegmentResults().get(0).getSegmentSolver());
+    assertComponentBalance(gas.getThermoSystem(), liquid.getThermoSystem(),
+      column.getGasOutStream().getThermoSystem(), column.getLiquidOutStream().getThermoSystem(),
+      "CO2", 1.0e-4);
+    Assertions.assertTrue(column.toJson().contains("columnResidualNorm"));
+    Assertions.assertTrue(column.toJson().contains("gasComponentBalanceResidualMolPerSec"));
+    }
+
+    @Test
+    public void testEquationOrientedTegAndStructuredPackingBenchmarkBands() {
+    Stream wetGas = createWetNaturalGasStream("eo wet natural gas");
+    Stream leanTeg = createLeanTegStream("eo lean TEG circulation", 50.0);
+    double inletGasWaterKgHr = componentMassFlowKgPerHour(wetGas.getThermoSystem(), "water");
+
+    RateBasedPackedColumn column =
+      new RateBasedPackedColumn("EO TEG structured packing benchmark", wetGas, leanTeg);
+    column.setColumnDiameter(1.2);
+    column.setPackedHeight(10.0);
+    column.setNumberOfSegments(3);
+    column.setMaxIterations(10);
+    column.setPackingType("Mellapak-250Y");
+    column.setTransferComponents("water");
+    column.setMassTransferCorrectionFactor(20.0);
+    column.setColumnSolver(RateBasedPackedColumn.ColumnSolver.EQUATION_ORIENTED);
+    column.setMaxColumnResidualIterations(1);
+    column.setColumnHomotopySteps(1);
+    column.setConvergenceTolerance(1.0e-8);
+
+    column.run();
+
+    double outletGasWaterKgHr =
+      componentMassFlowKgPerHour(column.getGasOutStream().getThermoSystem(), "water");
+    double waterRemovedKgHr = inletGasWaterKgHr - outletGasWaterKgHr;
+    double tegLiterPerKgWaterRemoved =
+      leanTeg.getFlowRate("kg/hr") / 1.125 / Math.max(waterRemovedKgHr, 1.0e-12);
+    RateBasedPackedColumn.SegmentResult firstSegment = column.getSegmentResults().get(0);
+
+    Assertions.assertTrue(waterRemovedKgHr > 0.0,
+      "Equation-oriented TEG benchmark should remove water from gas");
+    Assertions.assertTrue(tegLiterPerKgWaterRemoved > 10.0 && tegLiterPerKgWaterRemoved < 60.0,
+      "TEG circulation should stay within an engineering absorber benchmark band, was "
+        + tegLiterPerKgWaterRemoved + " L/kg water removed");
+    Assertions.assertTrue(firstSegment.getWettedArea() > 25.0 && firstSegment.getWettedArea() < 300.0,
+      "Structured packing wetted area should be in a realistic Mellapak range");
+    Assertions.assertTrue(firstSegment.getPressureDropPerMeter() >= 0.0);
+    Assertions.assertTrue(firstSegment.getPercentFlood() >= 0.0);
+    assertComponentBalance(wetGas.getThermoSystem(), leanTeg.getThermoSystem(),
+      column.getGasOutStream().getThermoSystem(), column.getLiquidOutStream().getThermoSystem(),
+      "water", 1.0e-5);
+    }
+
   @Test
   public void testCanDisableExplicitHeatTransfer() {
     RateBasedPackedColumn column = configuredColumn(createGasStream("warm gas", 0.10),

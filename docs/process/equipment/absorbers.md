@@ -415,6 +415,7 @@ The model combines existing NeqSim functionality:
 - A Maxwell-Stefan matrix film model can correct component film coefficients using NeqSim binary diffusivities and phase composition.
 - A Chilton-Colburn analogy can calculate explicit interphase heat transfer from the same packed-bed film data.
 - An optional simultaneous segment residual solver couples component fluxes, interface temperature, interface equilibrium, and segment enthalpy targets.
+- An optional column-wide equation-oriented solver couples all segment fluxes, outlet temperatures, interface temperatures, component balances, and energy residuals in one damped Newton system.
 - `PackingSpecificationLibrary` resolves built-in and CSV-backed packing data from `designdata/Packing.csv`.
 
 Positive component transfer means gas-to-liquid absorption. Negative transfer means liquid-to-gas stripping.
@@ -438,6 +439,33 @@ r_Q = h_g A_v V (T_g - T_i) + \sum_i N_i \bar{H}_{i,g}^{I} - h_l A_v V (T_i - T_
 $$
 
 where $N_i$ is the segment molar transfer rate, $N_{i,MS}$ is the Maxwell-Stefan film prediction, $T_i$ is the interface temperature, $A_v V$ is the wetted interfacial area in the segment, and $\bar{H}_{i,g}^{I}$ and $\bar{H}_{i,l}^{I}$ are interface component molar enthalpies. After the material transfer is applied, the gas and liquid outlet states are driven toward their segment enthalpy targets using PH flash calculations. If a trial interface flash or PH flash enters an invalid thermodynamic state, the solver falls back to bulk-phase interface data or a bounded temperature initialization so the column solve remains stable.
+
+### Column-Wide Equation-Oriented Solver
+
+The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. For research-grade absorber and stripper studies, `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
+
+The equation-oriented residual vector includes:
+
+- one Maxwell-Stefan flux residual per transferred component and segment;
+- one interfacial heat-balance residual per segment;
+- gas and liquid energy residuals expressed as outlet temperature errors against enthalpy targets;
+- gas and liquid component-balance residual diagnostics for every transferred component and segment.
+
+The Jacobian is assembled in a sparse row/column structure from finite-difference perturbations and solved as a damped least-squares Newton step. Homotopy ramps the transport equations from a mild continuation factor to the full Maxwell-Stefan/heat-transfer residual system. The JSON report exposes `columnSolver`, `columnResidualNorm`, `columnResidualIterations`, gas and liquid component-balance residuals, and the column energy-balance residual.
+
+```java
+column.setColumnSolver(RateBasedPackedColumn.ColumnSolver.EQUATION_ORIENTED);
+column.setColumnResidualTolerance(1.0e-5);
+column.setMaxColumnResidualIterations(8);
+column.setColumnHomotopySteps(3);
+column.run();
+
+double residual = column.getLastColumnResidualNorm();
+double gasBalance = column.getLastGasComponentBalanceResidual();
+double liquidBalance = column.getLastLiquidComponentBalanceResidual();
+```
+
+Keep the fixed-point solver for routine screening and production workflows. Use the equation-oriented solver when coupled heat and mass transfer, interface equilibrium, and whole-column balance residuals are part of the study acceptance criteria.
 
 Use this model when these details matter:
 
@@ -530,6 +558,8 @@ Typical absorber practice is about 15-40 L TEG/kg H2O removed, as also noted in 
 | Interface equilibrium | Segment results expose gas/liquid interface compositions and K-ratios. |
 | Heat transfer | Segment results expose heat-transfer coefficients and heat-transfer rate. |
 | Simultaneous residuals | Optional residual mode exposes flux residuals, heat-balance residuals, and enthalpy-balance diagnostics. |
+| Column equation-oriented solve | Optional column-wide solver exposes residual norm, component-balance diagnostics, and structured-packing TEG benchmark bands. |
+| Structured-packing distillation | Mellapak-style HETP, pressure drop, and flood fraction remain inside broad published design bands. |
 | Packed height | Taller packing gives stronger absorption for the same inlet streams. |
 | Zero height | A packed height of zero gives no molar transfer. |
 | Material balance | Selected transferred components are conserved across gas and liquid outlets. |
@@ -574,6 +604,10 @@ for (RateBasedPackedColumn.SegmentResult segment : column.getSegmentResults()) {
 | `setTransferComponents(String...)` | Optional component whitelist; empty means all components |
 | `setMassTransferCorrelation(MassTransferCorrelation)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
 | `setFilmModel(FilmModel)` | `MAXWELL_STEFAN_MATRIX` or `OVERALL_TWO_RESISTANCE` |
+| `setColumnSolver(ColumnSolver)` | `FIXED_POINT_PROFILE` for the robust default or `EQUATION_ORIENTED` for the column-wide residual solve |
+| `setColumnResidualTolerance(double)` | Normalized residual tolerance for the column-wide residual norm |
+| `setMaxColumnResidualIterations(int)` | Maximum damped Newton iterations per homotopy step |
+| `setColumnHomotopySteps(int)` | Number of continuation steps for the equation-oriented solve |
 | `setSegmentSolver(SegmentSolver)` | `SEQUENTIAL_EXPLICIT` for robust default profile stepping or `SIMULTANEOUS_RESIDUAL` for coupled segment residuals |
 | `setSegmentResidualTolerance(double)` | Convergence tolerance for the simultaneous residual norm |
 | `setMaxSegmentResidualIterations(int)` | Maximum Newton iterations for each simultaneous segment solve |

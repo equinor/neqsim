@@ -171,6 +171,7 @@ counter-current segment calculations with bidirectional mass transfer.
 - **Maxwell-Stefan matrix film option** using NeqSim binary diffusivities and phase composition
 - **Explicit interphase heat transfer** using Chilton-Colburn heat and mass transfer analogy
 - **Optional simultaneous segment solver** with Maxwell-Stefan flux residuals, interface-temperature residuals, and PH-flash enthalpy targets
+- **Optional column-wide equation-oriented solver** with global segment flux and temperature unknowns, sparse-pattern Newton steps, damping, and homotopy continuation
 - **TEG dehydration validation** with water-removal checks against typical circulation ratios
 - **Distillation mode** with condenser + reboiler for packed distillation
 - **Auto-sizing** of column diameter from flood fraction
@@ -255,13 +256,15 @@ The default heat-transfer path is `HeatTransferModel.CHILTON_COLBURN_ANALOGY`. I
 
 The robust default segment solver is `SegmentSolver.SEQUENTIAL_EXPLICIT`. Advanced users can enable `SegmentSolver.SIMULTANEOUS_RESIDUAL` to solve the component transfer rates and interface temperature in one damped residual system. That mode evaluates Maxwell-Stefan flux residuals, computes interface equilibrium and component molar enthalpies at the trial interface temperature, applies PH-flash enthalpy targets after the material transfer, and records residual diagnostics in each `SegmentResult`. Trial interface flashes and PH flashes are guarded with bounded fallback states so thermodynamic failures do not abort the counter-current column profile.
 
+The robust default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. Advanced users can enable `ColumnSolver.EQUATION_ORIENTED` to start from the fixed-point profile and solve the packed section as one column-wide residual problem. The unknowns are all segment component fluxes, gas outlet temperatures, liquid outlet temperatures, and interface temperatures. Gas and liquid compositions and molar flows are reconstructed from the full-column material balances during each residual evaluation. The residual vector includes Maxwell-Stefan flux equations, interfacial heat balance, gas and liquid enthalpy target errors, and component-balance diagnostics. A sparse row/column Jacobian is assembled by finite differences and solved with damped least-squares Newton steps across homotopy continuation factors. JSON output includes `columnSolver`, `columnResidualNorm`, `columnResidualIterations`, component-balance residuals, and column energy-balance diagnostics.
+
 For TEG dehydration, the recommended setup is a CPA glycol/water system, water-only transfer via `setTransferComponents("water")`, and structured packing such as `Mellapak-250Y` for compact contactors. In addition to outlet water content, check the circulation efficiency:
 
 $$
 R_{TEG} = \frac{\dot{m}_{TEG} / \rho_{TEG}}{\dot{m}_{H2O,removed}}
 $$
 
-Typical TEG absorber practice is about 15-40 L TEG/kg H2O removed, equivalent to roughly 0.02-0.07 kg water removed per kg TEG circulated for lean TEG density near 1.125 kg/L. The focused `RateBasedPackedColumnTest` suite includes this check along with absorption, stripping, interface equilibrium output, explicit heat-transfer output, simultaneous residual diagnostics, height sensitivity, zero-height transfer, material balance, stream introspection, and JSON reporting tests.
+Typical TEG absorber practice is about 15-40 L TEG/kg H2O removed, equivalent to roughly 0.02-0.07 kg water removed per kg TEG circulated for lean TEG density near 1.125 kg/L. The focused `RateBasedPackedColumnTest` suite includes this check along with absorption, stripping, interface equilibrium output, explicit heat-transfer output, simultaneous residual diagnostics, equation-oriented column residual diagnostics, structured-packing TEG benchmark bands, height sensitivity, zero-height transfer, material balance, stream introspection, and JSON reporting tests. `PackingSpecificationLibraryTest` also checks Mellapak-style distillation HETP, pressure drop, and flood fraction against broad published design bands.
 
 More detail is available in the [absorbers and strippers guide](equipment/absorbers.md#rate-based-packed-column) and the [TEG dehydration tutorial](../tutorials/teg_dehydration_tutorial.md).
 

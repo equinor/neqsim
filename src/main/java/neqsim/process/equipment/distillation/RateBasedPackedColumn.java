@@ -137,6 +137,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /** Segment solver used for heat, mass, and interface-equilibrium coupling. */
   private SegmentSolver segmentSolver = SegmentSolver.SEQUENTIAL_EXPLICIT;
 
+  /** Column-level profile solver used for counter-current coupling. */
+  private ColumnSolver columnSolver = ColumnSolver.FIXED_POINT_PROFILE;
+
   /** Global correction factor for interphase heat-transfer coefficients. */
   private double heatTransferCorrectionFactor = 1.0;
 
@@ -148,6 +151,30 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
 
   /** Normalized residual tolerance for the simultaneous segment solver. */
   private double segmentResidualTolerance = 1.0e-6;
+
+  /** Maximum Newton iterations for the column-wide equation-oriented solver. */
+  private int maxColumnResidualIterations = 8;
+
+  /** Number of homotopy continuation steps for the equation-oriented solver. */
+  private int columnHomotopySteps = 3;
+
+  /** Normalized residual tolerance for the column-wide equation-oriented solver. */
+  private double columnResidualTolerance = 1.0e-6;
+
+  /** Last equation-oriented residual norm. */
+  private double lastColumnResidualNorm = Double.NaN;
+
+  /** Last equation-oriented Newton iteration count. */
+  private int lastColumnResidualIterations = 0;
+
+  /** Last maximum gas component-balance residual in mol/s. */
+  private double lastGasComponentBalanceResidual = Double.NaN;
+
+  /** Last maximum liquid component-balance residual in mol/s. */
+  private double lastLiquidComponentBalanceResidual = Double.NaN;
+
+  /** Last maximum column energy-balance residual in W-equivalent stream basis. */
+  private double lastColumnEnergyBalanceResidual = Double.NaN;
 
   /**
    * Mass-transfer correlation options for the packed-column film coefficients.
@@ -189,6 +216,16 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     SEQUENTIAL_EXPLICIT,
     /** Solve mass-transfer flux residuals and interfacial heat balance simultaneously. */
     SIMULTANEOUS_RESIDUAL
+  }
+
+  /**
+   * Column-level profile solver options.
+   */
+  public enum ColumnSolver {
+    /** Fixed-point counter-current liquid profile iteration. */
+    FIXED_POINT_PROFILE,
+    /** Equation-oriented column-wide damped Newton solve with homotopy continuation. */
+    EQUATION_ORIENTED
   }
 
   /**
@@ -596,6 +633,28 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Set the column-level profile solver.
+   *
+   * @param columnSolver column solver to use
+   * @throws IllegalArgumentException if the column solver is null
+   */
+  public void setColumnSolver(ColumnSolver columnSolver) {
+    if (columnSolver == null) {
+      throw new IllegalArgumentException("columnSolver can not be null");
+    }
+    this.columnSolver = columnSolver;
+  }
+
+  /**
+   * Get the active column-level profile solver.
+   *
+   * @return active column solver
+   */
+  public ColumnSolver getColumnSolver() {
+    return columnSolver;
+  }
+
+  /**
    * Set the global interphase heat-transfer correction factor.
    *
    * @param correctionFactor correction factor, must be positive
@@ -678,6 +737,115 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    */
   public double getSegmentResidualTolerance() {
     return segmentResidualTolerance;
+  }
+
+  /**
+   * Set the maximum Newton iterations for the column-wide equation-oriented solver.
+   *
+   * @param maxColumnResidualIterations maximum Newton iterations, must be at least one
+   * @throws IllegalArgumentException if the iteration count is below one
+   */
+  public void setMaxColumnResidualIterations(int maxColumnResidualIterations) {
+    if (maxColumnResidualIterations < 1) {
+      throw new IllegalArgumentException("maxColumnResidualIterations must be at least one");
+    }
+    this.maxColumnResidualIterations = maxColumnResidualIterations;
+  }
+
+  /**
+   * Get the maximum Newton iterations for the column-wide equation-oriented solver.
+   *
+   * @return maximum Newton iterations
+   */
+  public int getMaxColumnResidualIterations() {
+    return maxColumnResidualIterations;
+  }
+
+  /**
+   * Set the number of homotopy continuation steps for the equation-oriented solver.
+   *
+   * @param columnHomotopySteps number of continuation steps, must be at least one
+   * @throws IllegalArgumentException if the step count is below one
+   */
+  public void setColumnHomotopySteps(int columnHomotopySteps) {
+    if (columnHomotopySteps < 1) {
+      throw new IllegalArgumentException("columnHomotopySteps must be at least one");
+    }
+    this.columnHomotopySteps = columnHomotopySteps;
+  }
+
+  /**
+   * Get the number of homotopy continuation steps for the equation-oriented solver.
+   *
+   * @return homotopy continuation steps
+   */
+  public int getColumnHomotopySteps() {
+    return columnHomotopySteps;
+  }
+
+  /**
+   * Set the normalized residual tolerance for the column-wide equation-oriented solver.
+   *
+   * @param columnResidualTolerance normalized tolerance, must be positive
+   * @throws IllegalArgumentException if the tolerance is not positive
+   */
+  public void setColumnResidualTolerance(double columnResidualTolerance) {
+    validatePositive(columnResidualTolerance, "columnResidualTolerance");
+    this.columnResidualTolerance = columnResidualTolerance;
+  }
+
+  /**
+   * Get the normalized residual tolerance for the column-wide equation-oriented solver.
+   *
+   * @return normalized column residual tolerance
+   */
+  public double getColumnResidualTolerance() {
+    return columnResidualTolerance;
+  }
+
+  /**
+   * Get the last column-wide equation-oriented residual norm.
+   *
+   * @return last normalized column residual norm
+   */
+  public double getLastColumnResidualNorm() {
+    return lastColumnResidualNorm;
+  }
+
+  /**
+   * Get the last column-wide Newton iteration count.
+   *
+   * @return last column residual iterations
+   */
+  public int getLastColumnResidualIterations() {
+    return lastColumnResidualIterations;
+  }
+
+  /**
+   * Get the maximum gas component-balance residual from the last equation-oriented solve.
+   *
+   * @return gas component-balance residual in mol/s
+   */
+  public double getLastGasComponentBalanceResidual() {
+    return lastGasComponentBalanceResidual;
+  }
+
+  /**
+   * Get the maximum liquid component-balance residual from the last equation-oriented solve.
+   *
+   * @return liquid component-balance residual in mol/s
+   */
+  public double getLastLiquidComponentBalanceResidual() {
+    return lastLiquidComponentBalanceResidual;
+  }
+
+  /**
+   * Get the maximum column energy-balance residual from the last equation-oriented solve.
+   *
+   * @return energy-balance residual in W-equivalent stream basis
+   */
+  public double getLastColumnEnergyBalanceResidual() {
+    return lastColumnEnergyBalanceResidual;
   }
 
   /**
@@ -865,6 +1033,22 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    */
   private CounterCurrentSolution solveCounterCurrentProfile(SystemInterface gasIn,
       SystemInterface liquidIn) {
+    if (columnSolver == ColumnSolver.EQUATION_ORIENTED && packedHeight > 0.0) {
+      return solveEquationOrientedProfile(gasIn, liquidIn);
+    }
+    return solveFixedPointProfile(gasIn, liquidIn);
+  }
+
+  /**
+   * Solve the counter-current profile by fixed-point liquid profile iteration.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @return converged counter-current solution
+   */
+  private CounterCurrentSolution solveFixedPointProfile(SystemInterface gasIn,
+      SystemInterface liquidIn) {
+    resetColumnResidualDiagnostics();
     List<SystemInterface> liquidEntering = initializeLiquidProfile(liquidIn);
     SystemInterface previousGasOutlet = null;
     SystemInterface previousLiquidOutlet = null;
@@ -885,6 +1069,584 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     acceptSolution(solution);
     return solution;
+  }
+
+  /**
+   * Reset column-wide residual diagnostics for non-equation-oriented profile solves.
+   */
+  private void resetColumnResidualDiagnostics() {
+    lastColumnResidualNorm = Double.NaN;
+    lastColumnResidualIterations = 0;
+    lastGasComponentBalanceResidual = Double.NaN;
+    lastLiquidComponentBalanceResidual = Double.NaN;
+    lastColumnEnergyBalanceResidual = Double.NaN;
+  }
+
+  /**
+   * Solve the full packed section with a column-wide equation-oriented residual system.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @return equation-oriented counter-current solution
+   */
+  private CounterCurrentSolution solveEquationOrientedProfile(SystemInterface gasIn,
+      SystemInterface liquidIn) {
+    CounterCurrentSolution seed = solveFixedPointProfile(gasIn, liquidIn);
+    List<String> components = getTransferComponentList(gasIn, liquidIn);
+    if (components.isEmpty()) {
+      return seed;
+    }
+    double[] unknowns = createColumnUnknowns(seed, components);
+    ColumnResidualEvaluation evaluation = null;
+    int totalIterations = 0;
+    for (int step = 1; step <= columnHomotopySteps; step++) {
+      double homotopyFactor = ((double) step) / columnHomotopySteps;
+      evaluation = solveColumnResiduals(gasIn, liquidIn, components, unknowns, homotopyFactor);
+      unknowns = evaluation.unknowns;
+      totalIterations += evaluation.iterations;
+    }
+    evaluation = evaluateColumnResidual(gasIn, liquidIn, components, unknowns, 1.0,
+        totalIterations);
+    lastColumnResidualNorm = evaluation.norm;
+    lastColumnResidualIterations = totalIterations;
+    lastGasComponentBalanceResidual = evaluation.maxGasComponentBalanceResidual;
+    lastLiquidComponentBalanceResidual = evaluation.maxLiquidComponentBalanceResidual;
+    lastColumnEnergyBalanceResidual = evaluation.maxEnergyBalanceResidual;
+    lastIterationCount = Math.max(1, totalIterations);
+    lastConvergenceResidual = evaluation.norm;
+    acceptSolution(evaluation.solution);
+    return evaluation.solution;
+  }
+
+  /**
+   * Create a column-wide unknown vector from an existing profile solution.
+   *
+   * @param seed seed profile solution
+   * @param components active transfer components
+   * @return unknown vector containing segment fluxes, interface temperatures, and outlet temperatures
+   */
+  private double[] createColumnUnknowns(CounterCurrentSolution seed, List<String> components) {
+    int blockSize = columnUnknownBlockSize(components);
+    double[] unknowns = new double[numberOfSegments * blockSize];
+    for (int segment = 0; segment < numberOfSegments; segment++) {
+      SegmentResult result = seed.segmentResults.get(Math.min(segment, seed.segmentResults.size() - 1));
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        Double transfer = result.componentMoleTransfer.get(components.get(componentIndex));
+        unknowns[columnFluxIndex(segment, componentIndex, components)] =
+            transfer == null ? 0.0 : transfer.doubleValue();
+      }
+      unknowns[columnInterfaceTemperatureIndex(segment, components)] =
+          finitePositive(result.interfaceTemperatureK, 0.5 * (result.gasTemperatureK
+              + result.liquidTemperatureK));
+      unknowns[columnGasOutletTemperatureIndex(segment, components)] =
+          finitePositive(result.gasTemperatureK, 300.0);
+      unknowns[columnLiquidOutletTemperatureIndex(segment, components)] =
+          finitePositive(result.liquidTemperatureK, 300.0);
+    }
+    return unknowns;
+  }
+
+  /**
+   * Solve the column-wide residual equations at one homotopy continuation factor.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @param initialUnknowns initial unknown vector
+   * @param homotopyFactor continuation factor from zero to one
+   * @return best residual evaluation found
+   */
+  private ColumnResidualEvaluation solveColumnResiduals(SystemInterface gasIn,
+      SystemInterface liquidIn, List<String> components, double[] initialUnknowns,
+      double homotopyFactor) {
+    double[] unknowns = clampColumnUnknowns(initialUnknowns, gasIn, liquidIn, components);
+    ColumnResidualEvaluation best = evaluateColumnResidual(gasIn, liquidIn, components, unknowns,
+        homotopyFactor, 0);
+    for (int iteration = 0; iteration < maxColumnResidualIterations; iteration++) {
+      if (best.norm <= columnResidualTolerance) {
+        return best.withIterations(iteration);
+      }
+      Matrix step = calculateColumnResidualStep(gasIn, liquidIn, components, unknowns, best,
+          homotopyFactor);
+      if (step == null) {
+        return best.withIterations(iteration);
+      }
+      boolean improved = false;
+      double[] bestUnknowns = unknowns;
+      ColumnResidualEvaluation bestCandidate = best;
+      double damping = 1.0;
+      for (int lineSearch = 0; lineSearch < 10; lineSearch++) {
+        double[] candidateUnknowns = applyColumnResidualStep(unknowns, step, damping, gasIn,
+            liquidIn, components);
+        ColumnResidualEvaluation candidate = evaluateColumnResidual(gasIn, liquidIn, components,
+            candidateUnknowns, homotopyFactor, iteration + 1);
+        if (candidate.norm < bestCandidate.norm) {
+          bestUnknowns = candidateUnknowns;
+          bestCandidate = candidate;
+          improved = true;
+          break;
+        }
+        damping *= 0.5;
+      }
+      if (!improved) {
+        return best.withIterations(iteration);
+      }
+      unknowns = bestUnknowns;
+      best = bestCandidate;
+    }
+    return best.withIterations(maxColumnResidualIterations);
+  }
+
+  /**
+   * Evaluate the full column residual vector for the equation-oriented solver.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @param unknowns column unknown vector
+   * @param homotopyFactor continuation factor from zero to one
+   * @param iterations iteration count represented by this evaluation
+   * @return column residual evaluation
+   */
+  private ColumnResidualEvaluation evaluateColumnResidual(SystemInterface gasIn,
+      SystemInterface liquidIn, List<String> components, double[] unknowns, double homotopyFactor,
+      int iterations) {
+    double[] boundedUnknowns = clampColumnUnknowns(unknowns, gasIn, liquidIn, components);
+    ColumnState state = buildColumnState(gasIn, liquidIn, components, boundedUnknowns);
+    List<Double> residuals = new ArrayList<Double>();
+    List<SegmentResult> results = new ArrayList<SegmentResult>();
+    double maxFluxResidual = 0.0;
+    double maxHeatResidual = 0.0;
+    double maxEnergyResidual = 0.0;
+    double maxGasBalanceResidual = 0.0;
+    double maxLiquidBalanceResidual = 0.0;
+    double segmentHeight = packedHeight / numberOfSegments;
+    for (int segment = 0; segment < numberOfSegments; segment++) {
+      SystemInterface gas = state.gasEntering.get(segment).clone();
+      SystemInterface liquid = state.liquidEntering.get(segment).clone();
+      TransportSnapshot snapshot = calculateTransportSnapshot(gas, liquid, segmentHeight);
+      double interfaceTemperature = boundedUnknowns[columnInterfaceTemperatureIndex(segment,
+          components)];
+      InterfaceEquilibrium equilibrium = calculateInterfaceEquilibrium(gas, liquid,
+          interfaceTemperature);
+      Map<String, Double> componentTransfers = new LinkedHashMap<String, Double>();
+      double gasMassEnthalpy = 0.0;
+      double liquidMassEnthalpy = 0.0;
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        String component = components.get(componentIndex);
+        double transfer = boundedUnknowns[columnFluxIndex(segment, componentIndex, components)];
+        double predictedTransfer = calculateUnboundedComponentTransfer(component, gas, liquid,
+            snapshot, equilibrium) * homotopyFactor;
+        predictedTransfer = limitTransfer(component, predictedTransfer, gas, liquid);
+        double fluxResidual = transfer - predictedTransfer;
+        residuals.add(Double.valueOf(fluxResidual / transferResidualScale(component,
+            predictedTransfer, gas, liquid)));
+        maxFluxResidual = Math.max(maxFluxResidual, Math.abs(fluxResidual));
+        componentTransfers.put(component, transfer);
+        gasMassEnthalpy += transfer * equilibrium.getGasMolarEnthalpy(component);
+        liquidMassEnthalpy += transfer * equilibrium.getLiquidMolarEnthalpy(component);
+      }
+      double segmentVolume = Math.PI * columnDiameter * columnDiameter / 4.0 * packedHeight
+          / numberOfSegments;
+      double gasSensibleHeat = snapshot.gasHeatTransferCoefficient * segmentVolume
+          * (gas.getTemperature() - interfaceTemperature);
+      double liquidSensibleHeat = snapshot.liquidHeatTransferCoefficient * segmentVolume
+          * (interfaceTemperature - liquid.getTemperature());
+      double heatResidual = gasSensibleHeat + gasMassEnthalpy - liquidSensibleHeat
+          - liquidMassEnthalpy;
+      residuals.add(Double.valueOf(heatResidual / heatResidualScale(gasSensibleHeat,
+          liquidSensibleHeat, gasMassEnthalpy, liquidMassEnthalpy)));
+      maxHeatResidual = Math.max(maxHeatResidual, Math.abs(heatResidual));
+
+      SystemInterface gasOutletTarget = state.gasLeaving.get(segment).clone();
+      SystemInterface liquidOutletTarget = state.liquidLeaving.get(segment).clone();
+      double gasTargetEnthalpy = gas.getEnthalpy() - gasSensibleHeat - gasMassEnthalpy;
+      double liquidTargetEnthalpy = liquid.getEnthalpy() + liquidSensibleHeat + liquidMassEnthalpy;
+      double gasTargetTemperature = estimateTemperatureForTargetEnthalpy(gasOutletTarget,
+          gasTargetEnthalpy);
+      double liquidTargetTemperature = estimateTemperatureForTargetEnthalpy(liquidOutletTarget,
+          liquidTargetEnthalpy);
+      double gasTemperatureResidual = state.gasLeaving.get(segment).getTemperature()
+          - gasTargetTemperature;
+      double liquidTemperatureResidual = state.liquidLeaving.get(segment).getTemperature()
+          - liquidTargetTemperature;
+        double gasEnthalpyResidual = state.gasLeaving.get(segment).getEnthalpy()
+          - gasTargetEnthalpy;
+        double liquidEnthalpyResidual = state.liquidLeaving.get(segment).getEnthalpy()
+          - liquidTargetEnthalpy;
+      residuals.add(Double.valueOf(gasTemperatureResidual / 10.0));
+      residuals.add(Double.valueOf(liquidTemperatureResidual / 10.0));
+      maxEnergyResidual = Math.max(maxEnergyResidual,
+          Math.max(Math.abs(gasEnthalpyResidual), Math.abs(liquidEnthalpyResidual)));
+
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        String component = components.get(componentIndex);
+        double transfer = componentTransfers.get(component).doubleValue();
+        double gasBalance = componentMoles(state.gasLeaving.get(segment), component)
+            - (componentMoles(gas, component) - transfer);
+        double liquidBalance = componentMoles(state.liquidLeaving.get(segment), component)
+            - (componentMoles(liquid, component) + transfer);
+        residuals.add(Double.valueOf(gasBalance / transferResidualScale(component, transfer, gas,
+            liquid)));
+        residuals.add(Double.valueOf(liquidBalance / transferResidualScale(component, transfer,
+            gas, liquid)));
+        maxGasBalanceResidual = Math.max(maxGasBalanceResidual, Math.abs(gasBalance));
+        maxLiquidBalanceResidual = Math.max(maxLiquidBalanceResidual, Math.abs(liquidBalance));
+      }
+
+      double totalTransfer = 0.0;
+      for (Double value : componentTransfers.values()) {
+        totalTransfer += value.doubleValue();
+      }
+      double segmentEnergyResidual = state.gasLeaving.get(segment).getEnthalpy()
+          + state.liquidLeaving.get(segment).getEnthalpy() - gas.getEnthalpy()
+          - liquid.getEnthalpy();
+      SegmentResult result = new SegmentResult(segment + 1, (segment + 0.5) * segmentHeight,
+          state.gasLeaving.get(segment).getTemperature(),
+          state.liquidLeaving.get(segment).getTemperature(),
+          state.gasLeaving.get(segment).getPressure(),
+          state.liquidLeaving.get(segment).getPressure(),
+          state.gasLeaving.get(segment).getTotalNumberOfMoles(),
+          state.liquidLeaving.get(segment).getTotalNumberOfMoles(), snapshot.gasDensity,
+          snapshot.liquidDensity, snapshot.gasViscosity, snapshot.liquidViscosity,
+          snapshot.gasDiffusivity, snapshot.liquidDiffusivity, snapshot.wettedArea, snapshot.kGa,
+          snapshot.kLa, snapshot.gasHeatTransferCoefficient, snapshot.liquidHeatTransferCoefficient,
+          snapshot.overallHeatTransferCoefficient, interfaceTemperature, liquidSensibleHeat,
+          snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer, componentTransfers,
+          equilibrium.gasMoleFractions, equilibrium.liquidMoleFractions,
+          equilibrium.equilibriumRatios, ColumnSolver.EQUATION_ORIENTED.name(), iterations,
+          maxFluxResidual, heatResidual, segmentEnergyResidual);
+      results.add(result);
+    }
+    double[] residualArray = toPrimitiveArray(residuals);
+    CounterCurrentSolution solution = new CounterCurrentSolution(state.gasOutlet, state.liquidOutlet,
+        state.liquidLeaving, results);
+    return new ColumnResidualEvaluation(boundedUnknowns, residualArray, residualNorm(residualArray),
+        solution, iterations, maxFluxResidual, maxHeatResidual, maxEnergyResidual,
+        maxGasBalanceResidual, maxLiquidBalanceResidual);
+  }
+
+  /**
+   * Calculate one sparse-pattern Newton step for the column residual equations.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @param unknowns current column unknown vector
+   * @param evaluation current residual evaluation
+   * @param homotopyFactor continuation factor from zero to one
+   * @return Newton step, or null if the least-squares solve fails
+   */
+  private Matrix calculateColumnResidualStep(SystemInterface gasIn, SystemInterface liquidIn,
+      List<String> components, double[] unknowns, ColumnResidualEvaluation evaluation,
+      double homotopyFactor) {
+    int residualCount = evaluation.normalizedResiduals.length;
+    int variableCount = unknowns.length;
+    SparseJacobian sparseJacobian = new SparseJacobian(residualCount, variableCount);
+    for (int variable = 0; variable < variableCount; variable++) {
+      double step = columnResidualVariableStep(unknowns, variable, components.size());
+      double[] shifted = unknowns.clone();
+      shifted[variable] += step;
+      shifted = clampColumnUnknowns(shifted, gasIn, liquidIn, components);
+      double actualStep = shifted[variable] - unknowns[variable];
+      if (Math.abs(actualStep) < 1.0e-20) {
+        shifted = unknowns.clone();
+        shifted[variable] -= step;
+        shifted = clampColumnUnknowns(shifted, gasIn, liquidIn, components);
+        actualStep = shifted[variable] - unknowns[variable];
+      }
+      if (Math.abs(actualStep) < 1.0e-20) {
+        sparseJacobian.set(variable % residualCount, variable, 1.0);
+      } else {
+        ColumnResidualEvaluation shiftedEvaluation = evaluateColumnResidual(gasIn, liquidIn,
+            components, shifted, homotopyFactor, evaluation.iterations);
+        for (int row = 0; row < residualCount; row++) {
+          double derivative = (shiftedEvaluation.normalizedResiduals[row]
+              - evaluation.normalizedResiduals[row]) / actualStep;
+          if (Math.abs(derivative) > 1.0e-14 && Double.isFinite(derivative)) {
+            sparseJacobian.set(row, variable, derivative);
+          }
+        }
+      }
+    }
+    try {
+      Matrix jacobian = sparseJacobian.toDenseMatrix();
+      Matrix normalMatrix = jacobian.transpose().times(jacobian)
+          .plus(Matrix.identity(variableCount, variableCount).times(1.0e-10));
+      double[][] rhsValues = new double[residualCount][1];
+      for (int row = 0; row < residualCount; row++) {
+        rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+      }
+      Matrix normalRhs = jacobian.transpose().times(new Matrix(rhsValues));
+      return normalMatrix.solve(normalRhs);
+    } catch (RuntimeException ex) {
+      return null;
+    }
+  }
+
+  /**
+   * Apply a damped column residual step and clamp to physical bounds.
+   *
+   * @param unknowns current unknown vector
+   * @param step Newton step
+   * @param damping damping factor from zero to one
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @return bounded candidate unknowns
+   */
+  private double[] applyColumnResidualStep(double[] unknowns, Matrix step, double damping,
+      SystemInterface gasIn, SystemInterface liquidIn, List<String> components) {
+    double[] candidate = unknowns.clone();
+    for (int i = 0; i < candidate.length; i++) {
+      candidate[i] += damping * step.get(i, 0);
+    }
+    return clampColumnUnknowns(candidate, gasIn, liquidIn, components);
+  }
+
+  /**
+   * Build gas and liquid segment states from column-wide flux and temperature unknowns.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @param unknowns bounded column unknown vector
+   * @return reconstructed column state
+   */
+  private ColumnState buildColumnState(SystemInterface gasIn, SystemInterface liquidIn,
+      List<String> components, double[] unknowns) {
+    List<SystemInterface> gasEntering = new ArrayList<SystemInterface>();
+    List<SystemInterface> gasLeaving = new ArrayList<SystemInterface>();
+    SystemInterface gasCurrent = gasIn.clone();
+    flashAndInitialize(gasCurrent);
+    for (int segment = 0; segment < numberOfSegments; segment++) {
+      gasEntering.add(gasCurrent.clone());
+      SystemInterface gasOutlet = gasCurrent.clone();
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        double transfer = unknowns[columnFluxIndex(segment, componentIndex, components)];
+        addComponentDelta(gasOutlet, components.get(componentIndex), -transfer);
+      }
+      gasOutlet.setTemperature(unknowns[columnGasOutletTemperatureIndex(segment, components)]);
+      flashAndInitialize(gasOutlet);
+      gasLeaving.add(gasOutlet);
+      gasCurrent = gasOutlet.clone();
+    }
+
+    List<SystemInterface> liquidEntering = new ArrayList<SystemInterface>();
+    List<SystemInterface> liquidLeaving = new ArrayList<SystemInterface>();
+    for (int segment = 0; segment < numberOfSegments; segment++) {
+      liquidEntering.add(null);
+      liquidLeaving.add(null);
+    }
+    SystemInterface liquidCurrent = liquidIn.clone();
+    flashAndInitialize(liquidCurrent);
+    for (int segment = numberOfSegments - 1; segment >= 0; segment--) {
+      liquidEntering.set(segment, liquidCurrent.clone());
+      SystemInterface liquidOutlet = liquidCurrent.clone();
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        double transfer = unknowns[columnFluxIndex(segment, componentIndex, components)];
+        addComponentDelta(liquidOutlet, components.get(componentIndex), transfer);
+      }
+      liquidOutlet
+          .setTemperature(unknowns[columnLiquidOutletTemperatureIndex(segment, components)]);
+      flashAndInitialize(liquidOutlet);
+      liquidLeaving.set(segment, liquidOutlet);
+      liquidCurrent = liquidOutlet.clone();
+    }
+    return new ColumnState(gasEntering, gasLeaving, liquidEntering, liquidLeaving,
+        gasLeaving.get(numberOfSegments - 1).clone(), liquidLeaving.get(0).clone());
+  }
+
+  /**
+   * Clamp column unknowns to inventory and temperature limits.
+   *
+   * @param unknowns column unknown vector
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @param components active transfer components
+   * @return clamped unknown vector
+   */
+  private double[] clampColumnUnknowns(double[] unknowns, SystemInterface gasIn,
+      SystemInterface liquidIn, List<String> components) {
+    double[] bounded = unknowns.clone();
+    Map<String, Double> gasAvailable = componentInventoryMap(gasIn, components);
+    for (int segment = 0; segment < numberOfSegments; segment++) {
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        int index = columnFluxIndex(segment, componentIndex, components);
+        if (!Double.isFinite(bounded[index])) {
+          bounded[index] = 0.0;
+        }
+        String component = components.get(componentIndex);
+        if (bounded[index] > 0.0) {
+          double available = Math.max(0.0, gasAvailable.get(component).doubleValue()
+              * maxTransferFractionPerSegment);
+          bounded[index] = Math.min(bounded[index], available);
+          gasAvailable.put(component, Double.valueOf(Math.max(0.0,
+              gasAvailable.get(component).doubleValue() - bounded[index])));
+        }
+      }
+    }
+    Map<String, Double> liquidAvailable = componentInventoryMap(liquidIn, components);
+    for (int segment = numberOfSegments - 1; segment >= 0; segment--) {
+      for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
+        int index = columnFluxIndex(segment, componentIndex, components);
+        String component = components.get(componentIndex);
+        if (bounded[index] < 0.0) {
+          double available = Math.max(0.0, liquidAvailable.get(component).doubleValue()
+              * maxTransferFractionPerSegment);
+          bounded[index] = -Math.min(-bounded[index], available);
+          liquidAvailable.put(component, Double.valueOf(Math.max(0.0,
+              liquidAvailable.get(component).doubleValue() + bounded[index])));
+        }
+      }
+    }
+    for (int segment = 0; segment < numberOfSegments; segment++) {
+      clampColumnTemperatureUnknown(bounded, columnInterfaceTemperatureIndex(segment, components),
+          gasIn, liquidIn);
+      clampColumnTemperatureUnknown(bounded, columnGasOutletTemperatureIndex(segment, components),
+          gasIn, liquidIn);
+      clampColumnTemperatureUnknown(bounded,
+          columnLiquidOutletTemperatureIndex(segment, components), gasIn, liquidIn);
+    }
+    return bounded;
+  }
+
+  /**
+   * Clamp one column temperature unknown.
+   *
+   * @param unknowns unknown vector to update
+   * @param index temperature unknown index
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   */
+  private void clampColumnTemperatureUnknown(double[] unknowns, int index, SystemInterface gasIn,
+      SystemInterface liquidIn) {
+    if (!Double.isFinite(unknowns[index])) {
+      unknowns[index] = 0.5 * (gasIn.getTemperature() + liquidIn.getTemperature());
+    }
+    double minTemperature = Math.max(1.0, Math.min(gasIn.getTemperature(), liquidIn.getTemperature())
+        - 150.0);
+    double maxTemperature = Math.max(gasIn.getTemperature(), liquidIn.getTemperature()) + 150.0;
+    unknowns[index] = clamp(unknowns[index], minTemperature, maxTemperature);
+  }
+
+  /**
+   * Build a component inventory map for active components.
+   *
+   * @param system thermodynamic system
+   * @param components active transfer components
+   * @return component moles by component name
+   */
+  private Map<String, Double> componentInventoryMap(SystemInterface system,
+      List<String> components) {
+    Map<String, Double> inventory = new LinkedHashMap<String, Double>();
+    for (int i = 0; i < components.size(); i++) {
+      String component = components.get(i);
+      inventory.put(component, Double.valueOf(componentMoles(system, component)));
+    }
+    return inventory;
+  }
+
+  /**
+   * Add a bounded component delta to a system.
+   *
+   * @param system system to update
+   * @param component component name
+   * @param deltaMoles component delta in mol/s stream basis
+   */
+  private void addComponentDelta(SystemInterface system, String component, double deltaMoles) {
+    double boundedDelta = deltaMoles;
+    if (deltaMoles < 0.0) {
+      boundedDelta = -Math.min(-deltaMoles, componentMoles(system, component) * 0.999999);
+    }
+    if (Math.abs(boundedDelta) > 0.0) {
+      system.addComponent(component, boundedDelta);
+    }
+  }
+
+  /**
+   * Get the column unknown block size per segment.
+   *
+   * @param components active transfer components
+   * @return unknown count per segment
+   */
+  private int columnUnknownBlockSize(List<String> components) {
+    return components.size() + 3;
+  }
+
+  /**
+   * Get the unknown index for a segment component flux.
+   *
+   * @param segment segment index
+   * @param componentIndex component index
+   * @param components active transfer components
+   * @return flux unknown index
+   */
+  private int columnFluxIndex(int segment, int componentIndex, List<String> components) {
+    return segment * columnUnknownBlockSize(components) + componentIndex;
+  }
+
+  /**
+   * Get the unknown index for a segment interface temperature.
+   *
+   * @param segment segment index
+   * @param components active transfer components
+   * @return interface-temperature unknown index
+   */
+  private int columnInterfaceTemperatureIndex(int segment, List<String> components) {
+    return segment * columnUnknownBlockSize(components) + components.size();
+  }
+
+  /**
+   * Get the unknown index for a segment gas outlet temperature.
+   *
+   * @param segment segment index
+   * @param components active transfer components
+   * @return gas outlet temperature unknown index
+   */
+  private int columnGasOutletTemperatureIndex(int segment, List<String> components) {
+    return segment * columnUnknownBlockSize(components) + components.size() + 1;
+  }
+
+  /**
+   * Get the unknown index for a segment liquid outlet temperature.
+   *
+   * @param segment segment index
+   * @param components active transfer components
+   * @return liquid outlet temperature unknown index
+   */
+  private int columnLiquidOutletTemperatureIndex(int segment, List<String> components) {
+    return segment * columnUnknownBlockSize(components) + components.size() + 2;
+  }
+
+  /**
+   * Calculate finite-difference step size for a column unknown.
+   *
+   * @param unknowns current unknown vector
+   * @param variable variable index
+   * @param componentCount number of component flux unknowns per segment
+   * @return finite-difference step
+   */
+  private double columnResidualVariableStep(double[] unknowns, int variable, int componentCount) {
+    int localIndex = variable % (componentCount + 3);
+    if (localIndex >= componentCount) {
+      return Math.max(1.0e-3, Math.abs(unknowns[variable]) * 1.0e-5);
+    }
+    return Math.max(1.0e-8, Math.abs(unknowns[variable]) * 1.0e-4);
+  }
+
+  /**
+   * Convert a boxed residual list to a primitive array.
+   *
+   * @param values residual values
+   * @return primitive residual array
+   */
+  private double[] toPrimitiveArray(List<Double> values) {
+    double[] array = new double[values.size()];
+    for (int i = 0; i < values.size(); i++) {
+      array[i] = values.get(i).doubleValue();
+    }
+    return array;
   }
 
   /**
@@ -3142,6 +3904,163 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
   }
 
+  /** Internal column state reconstructed from equation-oriented unknowns. */
+  private static class ColumnState {
+    /** Gas entering each segment from bottom to top. */
+    private final List<SystemInterface> gasEntering;
+    /** Gas leaving each segment from bottom to top. */
+    private final List<SystemInterface> gasLeaving;
+    /** Liquid entering each segment from bottom to top. */
+    private final List<SystemInterface> liquidEntering;
+    /** Liquid leaving each segment from bottom to top. */
+    private final List<SystemInterface> liquidLeaving;
+    /** Column gas outlet. */
+    private final SystemInterface gasOutlet;
+    /** Column liquid outlet. */
+    private final SystemInterface liquidOutlet;
+
+    /**
+     * Create a reconstructed column state.
+     *
+     * @param gasEntering gas systems entering each segment
+     * @param gasLeaving gas systems leaving each segment
+     * @param liquidEntering liquid systems entering each segment
+     * @param liquidLeaving liquid systems leaving each segment
+     * @param gasOutlet column gas outlet system
+     * @param liquidOutlet column liquid outlet system
+     */
+    private ColumnState(List<SystemInterface> gasEntering, List<SystemInterface> gasLeaving,
+        List<SystemInterface> liquidEntering, List<SystemInterface> liquidLeaving,
+        SystemInterface gasOutlet, SystemInterface liquidOutlet) {
+      this.gasEntering = gasEntering;
+      this.gasLeaving = gasLeaving;
+      this.liquidEntering = liquidEntering;
+      this.liquidLeaving = liquidLeaving;
+      this.gasOutlet = gasOutlet;
+      this.liquidOutlet = liquidOutlet;
+    }
+  }
+
+  /** Internal sparse Jacobian assembled by the equation-oriented column solver. */
+  private static class SparseJacobian {
+    /** Row count. */
+    private final int rows;
+    /** Column count. */
+    private final int columns;
+    /** Sparse matrix values keyed by row then column. */
+    private final Map<Integer, Map<Integer, Double>> values =
+        new LinkedHashMap<Integer, Map<Integer, Double>>();
+
+    /**
+     * Create a sparse Jacobian.
+     *
+     * @param rows number of residual rows
+     * @param columns number of unknown columns
+     */
+    private SparseJacobian(int rows, int columns) {
+      this.rows = rows;
+      this.columns = columns;
+    }
+
+    /**
+     * Set a sparse matrix entry.
+     *
+     * @param row row index
+     * @param column column index
+     * @param value matrix value
+     */
+    private void set(int row, int column, double value) {
+      Map<Integer, Double> rowValues = values.get(Integer.valueOf(row));
+      if (rowValues == null) {
+        rowValues = new LinkedHashMap<Integer, Double>();
+        values.put(Integer.valueOf(row), rowValues);
+      }
+      rowValues.put(Integer.valueOf(column), Double.valueOf(value));
+    }
+
+    /**
+     * Convert the sparse matrix to a dense matrix for the available linear solver.
+     *
+     * @return dense matrix representation
+     */
+    private Matrix toDenseMatrix() {
+      double[][] dense = new double[rows][columns];
+      for (Map.Entry<Integer, Map<Integer, Double>> rowEntry : values.entrySet()) {
+        int row = rowEntry.getKey().intValue();
+        for (Map.Entry<Integer, Double> columnEntry : rowEntry.getValue().entrySet()) {
+          dense[row][columnEntry.getKey().intValue()] = columnEntry.getValue().doubleValue();
+        }
+      }
+      return new Matrix(dense);
+    }
+  }
+
+  /** Internal residual evaluation container for the equation-oriented column solver. */
+  private static class ColumnResidualEvaluation {
+    /** Bounded unknown vector used in the evaluation. */
+    private final double[] unknowns;
+    /** Normalized residual vector. */
+    private final double[] normalizedResiduals;
+    /** Infinity norm of normalized residuals. */
+    private final double norm;
+    /** Counter-current solution represented by the unknown vector. */
+    private final CounterCurrentSolution solution;
+    /** Newton iteration count. */
+    private final int iterations;
+    /** Maximum Maxwell-Stefan flux residual in mol/s. */
+    private final double maxFluxResidual;
+    /** Maximum interfacial heat residual in W. */
+    private final double maxHeatResidual;
+    /** Maximum segment energy residual in W-equivalent stream basis. */
+    private final double maxEnergyBalanceResidual;
+    /** Maximum gas component-balance residual in mol/s. */
+    private final double maxGasComponentBalanceResidual;
+    /** Maximum liquid component-balance residual in mol/s. */
+    private final double maxLiquidComponentBalanceResidual;
+
+    /**
+     * Create a column residual evaluation.
+     *
+     * @param unknowns bounded unknown vector
+     * @param normalizedResiduals normalized residual vector
+     * @param norm infinity norm of normalized residuals
+     * @param solution counter-current solution represented by the unknown vector
+     * @param iterations Newton iteration count
+     * @param maxFluxResidual maximum flux residual in mol/s
+     * @param maxHeatResidual maximum heat residual in W
+     * @param maxEnergyBalanceResidual maximum energy residual in W-equivalent stream basis
+     * @param maxGasComponentBalanceResidual maximum gas component-balance residual in mol/s
+     * @param maxLiquidComponentBalanceResidual maximum liquid component-balance residual in mol/s
+     */
+    private ColumnResidualEvaluation(double[] unknowns, double[] normalizedResiduals, double norm,
+        CounterCurrentSolution solution, int iterations, double maxFluxResidual,
+        double maxHeatResidual, double maxEnergyBalanceResidual,
+        double maxGasComponentBalanceResidual, double maxLiquidComponentBalanceResidual) {
+      this.unknowns = unknowns.clone();
+      this.normalizedResiduals = normalizedResiduals.clone();
+      this.norm = norm;
+      this.solution = solution;
+      this.iterations = iterations;
+      this.maxFluxResidual = maxFluxResidual;
+      this.maxHeatResidual = maxHeatResidual;
+      this.maxEnergyBalanceResidual = maxEnergyBalanceResidual;
+      this.maxGasComponentBalanceResidual = maxGasComponentBalanceResidual;
+      this.maxLiquidComponentBalanceResidual = maxLiquidComponentBalanceResidual;
+    }
+
+    /**
+     * Return a copy with an updated iteration count.
+     *
+     * @param iterations updated iteration count
+     * @return residual evaluation with updated iteration count
+     */
+    private ColumnResidualEvaluation withIterations(int iterations) {
+      return new ColumnResidualEvaluation(unknowns, normalizedResiduals, norm, solution, iterations,
+          maxFluxResidual, maxHeatResidual, maxEnergyBalanceResidual,
+          maxGasComponentBalanceResidual, maxLiquidComponentBalanceResidual);
+    }
+  }
+
   /** Internal residual evaluation container for the simultaneous segment solver. */
   private static class SegmentResidualEvaluation {
     /** Interface equilibrium used in the residual evaluation. */
@@ -3216,12 +4135,26 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     private final String filmModel;
     /** Heat-transfer model name. */
     private final String heatTransferModel;
+    /** Column solver name. */
+    private final String columnSolver;
+    /** Segment solver name. */
+    private final String segmentSolver;
     /** Heat-transfer correction factor. */
     private final double heatTransferCorrectionFactor;
     /** Last iteration count. */
     private final int iterationCount;
     /** Last residual in mol/s. */
     private final double convergenceResidualMolPerSec;
+    /** Last equation-oriented column residual norm. */
+    private final double columnResidualNorm;
+    /** Last equation-oriented column Newton iteration count. */
+    private final int columnResidualIterations;
+    /** Last gas component-balance residual in mol/s. */
+    private final double gasComponentBalanceResidualMolPerSec;
+    /** Last liquid component-balance residual in mol/s. */
+    private final double liquidComponentBalanceResidualMolPerSec;
+    /** Last column energy-balance residual in W-equivalent stream basis. */
+    private final double columnEnergyBalanceResidualW;
     /** Total absolute transfer in mol/s. */
     private final double totalAbsoluteMolarTransferMolPerSec;
     /** Component transfer totals in mol/s. */
@@ -3244,9 +4177,18 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       this.massTransferCorrelation = column.getMassTransferCorrelation().name();
       this.filmModel = column.getFilmModel().name();
       this.heatTransferModel = column.getHeatTransferModel().name();
+        this.columnSolver = column.getColumnSolver().name();
+        this.segmentSolver = column.getSegmentSolver().name();
       this.heatTransferCorrectionFactor = column.getHeatTransferCorrectionFactor();
       this.iterationCount = column.getLastIterationCount();
       this.convergenceResidualMolPerSec = column.getLastConvergenceResidual();
+        this.columnResidualNorm = column.getLastColumnResidualNorm();
+        this.columnResidualIterations = column.getLastColumnResidualIterations();
+        this.gasComponentBalanceResidualMolPerSec =
+          column.getLastGasComponentBalanceResidual();
+        this.liquidComponentBalanceResidualMolPerSec =
+          column.getLastLiquidComponentBalanceResidual();
+        this.columnEnergyBalanceResidualW = column.getLastColumnEnergyBalanceResidual();
       this.totalAbsoluteMolarTransferMolPerSec = column.getTotalAbsoluteMolarTransfer();
       this.componentTransferMolPerSec =
           new LinkedHashMap<String, Double>(column.getComponentTransferTotals());
