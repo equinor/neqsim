@@ -1873,9 +1873,12 @@ def render_book_html(book_dir, chapter_filter=None):
     for _ch_num, ch, _pt in book_builder.iter_chapters(cfg):
         ch_fig_dir = book_builder.resolve_chapter_dir(book_dir, ch) / "figures"
         if ch_fig_dir.is_dir():
-            for img_file in ch_fig_dir.iterdir():
+            for img_file in ch_fig_dir.rglob("*"):
                 if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"):
-                    shutil.copy2(str(img_file), str(figures_out / img_file.name))
+                    rel_img = img_file.relative_to(ch_fig_dir)
+                    out_img = figures_out / rel_img
+                    out_img.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(str(img_file), str(out_img))
 
     # Copy auto-extracted lecture figures preserving the per-chapter
     # subdirectory so manifest paths (figures/lectures/auto/<slug>/<file>)

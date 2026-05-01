@@ -1558,6 +1558,229 @@ def cmd_generate_context(args):
     print(f"\nContexts saved to {output_file}")
 
 
+def cmd_book_source_inventory(args):
+    """Inventory course/source files for a book."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_source_inventory
+
+    manifest = build_source_inventory(
+        args.book_dir,
+        args.source_root,
+        hash_limit_mb=getattr(args, "hash_limit_mb", 20.0),
+    )
+    print(f"Source inventory written for {manifest['total_files']} files.")
+    print(f"  JSON: {Path(args.book_dir) / 'source_manifest.json'}")
+    print(f"  Markdown: {Path(args.book_dir) / 'source_manifest.md'}")
+
+
+def cmd_book_figure_dossier(args):
+    """Build a book-level figure dossier."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_figure_dossier
+
+    dossier = build_figure_dossier(
+        args.book_dir,
+        source_root=getattr(args, "source_root", None),
+        use_vision=getattr(args, "vision", False),
+        provider=getattr(args, "provider", "openai"),
+        model=getattr(args, "model", "gpt-4o"),
+    )
+    summary = dossier["summary"]
+    print(f"Figure dossier written for {dossier['figure_count']} figures.")
+    print(f"  Missing files: {summary['missing_files']}")
+    print(f"  Without discussion: {summary['without_discussion']}")
+    print(f"  Weak captions: {summary['weak_captions']}")
+    print(f"  JSON: {Path(args.book_dir) / 'figure_dossier.json'}")
+    print(f"  HTML: {Path(args.book_dir) / 'figure_dossier.html'}")
+
+
+def cmd_book_apply_figure_context(args):
+    """Apply reviewed figure context from figure_dossier.json."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import apply_figure_context
+
+    result = apply_figure_context(
+        args.book_dir,
+        reviewed_only=getattr(args, "reviewed_only", True),
+        dry_run=getattr(args, "dry_run", False),
+    )
+    action = "Would insert" if result["dry_run"] else "Inserted"
+    print(f"{action} {result['inserted']} discussion block(s).")
+    for changed in result["changed"]:
+        print(f"  {changed['chapter']}: {changed['inserted']}")
+
+
+def cmd_book_coverage_audit(args):
+    """Audit source coverage against the book coverage matrix."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_coverage_audit
+
+    audit = build_coverage_audit(args.book_dir, args.source_root)
+    print(f"Coverage audit written: {Path(args.book_dir) / 'coverage_audit.md'}")
+    print(f"  Lecture folders: {len(audit['lecture_folders'])}")
+    print(f"  Unmapped lecture folders: {len(audit['unmapped_lecture_folders'])}")
+    print(f"  Exercise PDFs: {audit['exercise_pdf_count']}")
+    print(f"  Exam PDFs: {audit['exam_pdf_count']}")
+
+
+def cmd_book_lecture_topic_coverage(args):
+    """Build lecture-deck topic coverage and optionally patch chapter checkpoints."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_lecture_topic_coverage
+
+    report = build_lecture_topic_coverage(
+        args.book_dir,
+        apply_checkpoints=getattr(args, "apply", False),
+        max_topics_per_deck=getattr(args, "max_topics_per_deck", 120),
+    )
+    summary = report["summary"]
+    print(f"Lecture topic coverage written: {Path(args.book_dir) / 'lecture_topic_coverage.md'}")
+    if getattr(args, "apply", False):
+        print(f"  Chapter checkpoints updated and appendix written: {Path(args.book_dir) / 'backmatter' / 'lecture_coverage.md'}")
+    print(f"  Lecture decks: {summary['lecture_decks']}")
+    print(f"  Slide topics: {summary['topics']}")
+    print(f"  Covered slide topics: {summary['covered_topics']}")
+    print(f"  Topics needing review: {summary['topics_needing_review']}")
+    print(f"  Coverage: {summary['coverage_pct']}%")
+
+
+def cmd_book_lecture_figure_plan(args):
+    """Build a review plan for lecture slides that should become chapter figures."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_lecture_figure_plan
+
+    report = build_lecture_figure_plan(
+        args.book_dir,
+        max_slides_per_deck=getattr(args, "max_slides_per_deck", 12),
+    )
+    summary = report["summary"]
+    print(f"Lecture figure plan written: {Path(args.book_dir) / 'lecture_figure_plan.md'}")
+    print(f"  Lecture decks: {summary['lecture_decks']}")
+    print(f"  Candidate slides: {summary['candidate_slides']}")
+    print(f"  Rendered candidate slides: {summary['rendered_candidate_slides']}")
+
+
+def cmd_book_evidence_check(args):
+    """Run the book evidence and figure-context release gate."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_evidence_report
+
+    report = build_evidence_report(args.book_dir)
+    summary = report["summary"]
+    print(f"Evidence report written: {Path(args.book_dir) / 'evidence_report.md'}")
+    print(f"  Issues: {report['issue_count']}")
+    print(f"  Errors: {summary.get('error', 0)}")
+    print(f"  Warnings: {summary.get('warning', 0)}")
+    print(f"  Info: {summary.get('info', 0)}")
+    if getattr(args, "strict", False) and summary.get("error", 0) + summary.get("warning", 0) > 0:
+        sys.exit(1)
+
+
+def cmd_book_conciseness_audit(args):
+    """Detect repeated text/figures and propose chapter consolidation."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_conciseness_audit
+
+    audit = build_conciseness_audit(
+        args.book_dir,
+        min_words=getattr(args, "min_words", 18),
+        paragraph_similarity_threshold=getattr(args, "paragraph_similarity", 0.82),
+        chapter_similarity_threshold=getattr(args, "chapter_similarity", 0.44),
+        max_pairs=getattr(args, "max_pairs", 80),
+    )
+    summary = audit["summary"]
+    print(f"Conciseness audit written: {Path(args.book_dir) / 'conciseness_audit.md'}")
+    print(f"  Words: {summary['word_count']:,}")
+    print(f"  Exact duplicate paragraph groups: {summary['exact_duplicate_paragraph_groups']}")
+    print(f"  Near-duplicate paragraph pairs: {summary['near_duplicate_paragraph_pairs']}")
+    print(f"  Duplicate figure groups: {summary['duplicate_figure_groups']}")
+    print(f"  Repeated heading groups: {summary['repeated_heading_groups']}")
+    print(f"  Merge candidates: {summary['chapter_merge_candidates']}")
+    print(f"  Suggested target chapters: {summary['suggested_target_chapters']}")
+
+
+def cmd_book_apply_conciseness(args):
+    """Apply safe conciseness edits to generated book appendices."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import apply_conciseness_edits
+
+    result = apply_conciseness_edits(
+        args.book_dir,
+        min_block_words=getattr(args, "min_block_words", 250),
+        max_topics=getattr(args, "max_topics", 10),
+        dry_run=getattr(args, "dry_run", False),
+    )
+    action = "Would compress" if result["dry_run"] else "Compressed"
+    print(f"{action} {result['chapters_changed']} generated lecture-topic block(s).")
+    print(f"  Words before: {result['words_before']:,}")
+    print(f"  Words after: {result['words_after']:,}")
+    print(f"  Removed words: {result['removed_words']:,}")
+    for changed in result["changed"]:
+        print(f"  {changed['chapter']}: -{changed['removed_words']} words")
+
+
+def cmd_book_skill_stack_plan(args):
+    """Build a systematic skill-stack adoption plan for a book."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_skill_stack_plan
+
+    plan = build_skill_stack_plan(args.book_dir)
+    summary = plan["summary"]
+    print(f"Skill-stack plan written: {Path(args.book_dir) / 'skill_stack_plan.md'}")
+    print(f"  Ready dimensions: {summary['dimensions_ready']} / {summary['dimensions_total']}")
+    print(f"  Figures: {summary['figures']}")
+    print(f"  Notebooks: {summary['notebooks']}")
+
+
+def cmd_book_standards_map(args):
+    """Build a standards-to-chapter map for a book."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_standards_map
+
+    report = build_standards_map(args.book_dir)
+    summary = report["summary"]
+    print(f"Standards map written: {Path(args.book_dir) / 'standards_map.md'}")
+    print(f"  Chapters with standards: {summary['chapters_with_standards']}")
+    print(f"  Unique standards: {summary['unique_standards']}")
+
+
+def cmd_book_exam_alignment(args):
+    """Build an exam and exercise alignment report for a book."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_exam_alignment
+
+    report = build_exam_alignment(args.book_dir, source_root=getattr(args, "source_root", None))
+    summary = report["summary"]
+    print(f"Exam alignment written: {Path(args.book_dir) / 'exam_alignment.md'}")
+    print(f"  Exam source files: {summary['exam_source_files']}")
+    print(f"  Exercise source files: {summary['exercise_source_files']}")
+    print(f"  Topics needing review: {summary['topics_needing_review']}")
+
+
+def cmd_book_source_pdf_html_plan(args):
+    """Build a source PDF-to-HTML conversion plan."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_source_pdf_html_plan
+
+    plan = build_source_pdf_html_plan(args.book_dir, source_root=getattr(args, "source_root", None))
+    print(f"Source PDF-to-HTML plan written: {Path(args.book_dir) / 'source_pdf_html_plan.md'}")
+    print(f"  PDF files: {plan['summary']['pdf_files']}")
+    for area, count in sorted(plan["summary"]["areas"].items()):
+        print(f"  {area}: {count}")
+
+
+def cmd_book_knowledge_graph(args):
+    """Build a book knowledge graph from available book artifacts."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import build_book_knowledge_graph
+
+    graph = build_book_knowledge_graph(args.book_dir)
+    summary = graph["summary"]
+    print(f"Book knowledge graph written: {Path(args.book_dir) / 'book_knowledge_graph.html'}")
+    print(f"  Nodes: {summary['nodes']}")
+    print(f"  Edges: {summary['edges']}")
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Book commands
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2371,6 +2594,123 @@ Examples:
                                        help="Show book project status overview")
     p_bstatus.add_argument("book_dir", help="Book directory")
 
+    # book-source-inventory — source provenance manifest for course/book material
+    p_bsrc = subparsers.add_parser("book-source-inventory",
+                                    help="Inventory source files for a course book")
+    p_bsrc.add_argument("book_dir", help="Book directory")
+    p_bsrc.add_argument("--source-root", required=True,
+                        help="Root folder containing lectures, exercises, exams, graphics")
+    p_bsrc.add_argument("--hash-limit-mb", type=float, default=20.0,
+                        help="Hash files up to this size in MB (default: 20)")
+
+    # book-figure-dossier — figure context and review dossier
+    p_bfigdos = subparsers.add_parser("book-figure-dossier",
+                                       help="Build a book-level figure dossier")
+    p_bfigdos.add_argument("book_dir", help="Book directory")
+    p_bfigdos.add_argument("--source-root", default=None,
+                           help="Optional source root recorded in the dossier")
+    p_bfigdos.add_argument("--vision", action="store_true",
+                           help="Use configured LLM vision provider for generated context")
+    p_bfigdos.add_argument("--provider", default="openai",
+                           choices=["openai", "anthropic", "ollama"],
+                           help="LLM provider when --vision is used")
+    p_bfigdos.add_argument("--model", default="gpt-4o",
+                           help="LLM model when --vision is used")
+
+    # book-apply-figure-context — insert reviewed context from dossier
+    p_bapply = subparsers.add_parser("book-apply-figure-context",
+                                      help="Insert reviewed figure context into chapters")
+    p_bapply.add_argument("book_dir", help="Book directory")
+    p_bapply.add_argument("--reviewed-only", dest="reviewed_only", action="store_true",
+                          default=True, help="Apply only approved dossier records (default)")
+    p_bapply.add_argument("--include-draft", dest="reviewed_only", action="store_false",
+                          help="Also apply draft/non-approved dossier records")
+    p_bapply.add_argument("--dry-run", action="store_true",
+                          help="Report insertions without editing chapters")
+
+    # book-coverage-audit — source coverage vs coverage matrix
+    p_bcov = subparsers.add_parser("book-coverage-audit",
+                                    help="Audit source coverage against coverage_matrix.md")
+    p_bcov.add_argument("book_dir", help="Book directory")
+    p_bcov.add_argument("--source-root", required=True,
+                        help="Root folder containing lectures, exercises, exams, graphics")
+
+    # book-lecture-topic-coverage — slide-topic coverage from lecture decks
+    p_blec = subparsers.add_parser("book-lecture-topic-coverage",
+                                    help="Audit lecture-deck slide topics against mapped chapters")
+    p_blec.add_argument("book_dir", help="Book directory")
+    p_blec.add_argument("--apply", action="store_true",
+                        help="Insert or replace chapter lecture-coverage checkpoints")
+    p_blec.add_argument("--max-topics-per-deck", type=int, default=120,
+                        help="Maximum slide topics to list per deck in chapter checkpoints")
+
+    # book-lecture-figure-plan — candidate slide figures for chapter enrichment
+    p_blecfig = subparsers.add_parser("book-lecture-figure-plan",
+                                       help="Plan lecture slides to promote into chapter figures")
+    p_blecfig.add_argument("book_dir", help="Book directory")
+    p_blecfig.add_argument("--max-slides-per-deck", type=int, default=12,
+                           help="Maximum candidate figure slides to report per deck")
+
+    # book-evidence-check — release-gate evidence checks
+    p_bev = subparsers.add_parser("book-evidence-check",
+                                   help="Run evidence, caption, and figure-discussion checks")
+    p_bev.add_argument("book_dir", help="Book directory")
+    p_bev.add_argument("--strict", action="store_true",
+                       help="Exit non-zero when errors or warnings are present")
+
+    # book-conciseness-audit — repeated text/figure detection and restructure plan
+    p_bconcise = subparsers.add_parser("book-conciseness-audit",
+                                        help="Detect repeated text/figures and chapter merge candidates")
+    p_bconcise.add_argument("book_dir", help="Book directory")
+    p_bconcise.add_argument("--min-words", type=int, default=18,
+                            help="Minimum paragraph token count to analyze (default: 18)")
+    p_bconcise.add_argument("--paragraph-similarity", type=float, default=0.82,
+                            help="Near-duplicate paragraph threshold (default: 0.82)")
+    p_bconcise.add_argument("--chapter-similarity", type=float, default=0.44,
+                            help="Adjacent chapter merge threshold (default: 0.44)")
+    p_bconcise.add_argument("--max-pairs", type=int, default=80,
+                            help="Maximum near-duplicate paragraph pairs to report (default: 80)")
+
+    # book-apply-conciseness — compress generated lecture-topic appendices
+    p_bapplyconcise = subparsers.add_parser("book-apply-conciseness",
+                                             help="Compress generated lecture-topic appendices")
+    p_bapplyconcise.add_argument("book_dir", help="Book directory")
+    p_bapplyconcise.add_argument("--min-block-words", type=int, default=250,
+                                 help="Only compress blocks with at least this many words")
+    p_bapplyconcise.add_argument("--max-topics", type=int, default=10,
+                                 help="Maximum source-topic headings to retain per chapter")
+    p_bapplyconcise.add_argument("--dry-run", action="store_true",
+                                 help="Report changes without editing chapters")
+
+    # book-skill-stack-plan — systematic use of skills for book improvement
+    p_bskill = subparsers.add_parser("book-skill-stack-plan",
+                                      help="Build a systematic skill-stack plan for a book")
+    p_bskill.add_argument("book_dir", help="Book directory")
+
+    # book-standards-map — chapter-to-standards map
+    p_bstd = subparsers.add_parser("book-standards-map",
+                                    help="Build a standards-to-chapter map")
+    p_bstd.add_argument("book_dir", help="Book directory")
+
+    # book-exam-alignment — exam and exercise coverage map
+    p_bexam = subparsers.add_parser("book-exam-alignment",
+                                     help="Build an exam and exercise alignment report")
+    p_bexam.add_argument("book_dir", help="Book directory")
+    p_bexam.add_argument("--source-root", default=None,
+                         help="Optional source root when source_manifest.json is unavailable")
+
+    # book-source-pdf-html-plan — source PDF conversion plan
+    p_bpdfhtml = subparsers.add_parser("book-source-pdf-html-plan",
+                                        help="Plan source PDF-to-HTML conversion")
+    p_bpdfhtml.add_argument("book_dir", help="Book directory")
+    p_bpdfhtml.add_argument("--source-root", default=None,
+                            help="Optional source root when source_manifest.json is unavailable")
+
+    # book-knowledge-graph — graph chapters, skills, figures, standards, sources
+    p_bgraph = subparsers.add_parser("book-knowledge-graph",
+                                      help="Build a book knowledge graph")
+    p_bgraph.add_argument("book_dir", help="Book directory")
+
     # book-toc — preview table of contents
     p_btoc = subparsers.add_parser("book-toc",
                                     help="Preview table of contents")
@@ -2614,6 +2954,34 @@ Examples:
         cmd_book_check(args)
     elif args.command == "book-status":
         cmd_book_status(args)
+    elif args.command == "book-source-inventory":
+        cmd_book_source_inventory(args)
+    elif args.command == "book-figure-dossier":
+        cmd_book_figure_dossier(args)
+    elif args.command == "book-apply-figure-context":
+        cmd_book_apply_figure_context(args)
+    elif args.command == "book-coverage-audit":
+        cmd_book_coverage_audit(args)
+    elif args.command == "book-lecture-topic-coverage":
+        cmd_book_lecture_topic_coverage(args)
+    elif args.command == "book-lecture-figure-plan":
+        cmd_book_lecture_figure_plan(args)
+    elif args.command == "book-evidence-check":
+        cmd_book_evidence_check(args)
+    elif args.command == "book-conciseness-audit":
+        cmd_book_conciseness_audit(args)
+    elif args.command == "book-apply-conciseness":
+        cmd_book_apply_conciseness(args)
+    elif args.command == "book-skill-stack-plan":
+        cmd_book_skill_stack_plan(args)
+    elif args.command == "book-standards-map":
+        cmd_book_standards_map(args)
+    elif args.command == "book-exam-alignment":
+        cmd_book_exam_alignment(args)
+    elif args.command == "book-source-pdf-html-plan":
+        cmd_book_source_pdf_html_plan(args)
+    elif args.command == "book-knowledge-graph":
+        cmd_book_knowledge_graph(args)
     elif args.command == "book-toc":
         cmd_book_toc(args)
     elif args.command == "book-draft":
