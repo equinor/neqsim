@@ -1,6 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Capability Map
@@ -191,6 +192,28 @@ transport properties (viscosity, thermal conductivity, density).
 | `FurnaceBurner` | Combustion | `process.equipment.reactor` |
 | `SulfurDepositionAnalyser` | S8 deposition analysis | `process.equipment.reactor` |
 | `AmmoniaSynthesisReactor` | NH3 synthesis | `process.equipment.reactor` |
+| `AnaerobicDigester` | Biogas production (AD) | `process.equipment.reactor` |
+| `FermentationReactor` | Monod/Contois/substrate-inhibited kinetics | `process.equipment.reactor` |
+| `BiogasUpgrader` | Biogas upgrading (membrane, PSA, amine, water scrub) | `process.equipment.splitter` |
+| `BiomassGasifier` | Thermochemical gasification | `process.equipment.reactor` |
+| `PyrolysisReactor` | Fast/slow/flash pyrolysis | `process.equipment.reactor` |
+
+### Biorefinery Modules (Pre-built)
+
+| Class | Type | Package |
+|-------|------|--------|
+| `BiogasToGridModule` | AD → upgrading → compression → grid | `process.processmodel.biorefinery` |
+| `GasificationSynthesisModule` | Biomass gasification + Fischer-Tropsch | `process.processmodel.biorefinery` |
+| `WasteToEnergyCHPModule` | AD → gas engine CHP | `process.processmodel.biorefinery` |
+
+### Sustainability & Cost
+
+| Class | Type | Package |
+|-------|------|--------|
+| `SustainabilityMetrics` | CO₂eq tracking, carbon intensity, EROI | `process.util.fielddevelopment` |
+| `BiomassCharacterization` | Biomass properties (proximate, ultimate, HHV) | `thermo.characterization` |
+| `BiorefineryCostEstimator` | CAPEX/OPEX for biorefinery equipment | `process.mechanicaldesign` |
+
 ### Measurement Devices & Instrumentation
 
 | Class | Type | Package |
@@ -310,7 +333,13 @@ transport properties (viscosity, thermal conductivity, density).
 | Class | Equipment | Package |
 |-------|----------|---------|
 | `MechanicalDesign` | Base class | `process.mechanicaldesign` |
-| `SeparatorMechanicalDesign` | Separator sizing | `process.mechanicaldesign.separator` |
+| `SeparatorMechanicalDesign` | Separator vessel sizing, K-factor, demister config, nozzle sizing, liquid levels (HHLL/HLL/NLL/LLL/LLLL), inlet device, foam allowance, retention time, entrainment performance, design validation. **Gateway for all separator physical configuration.** Bridge methods: entrainment (`setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`, `setMistEliminatorDpCoeff`, `setMistEliminatorThickness`, `applyDemistingInternal`). | `process.mechanicaldesign.separator` |
+| `DemistingInternal` | Demisting internal sizing — Souders-Brown max gas velocity, Eu-number pressure drop, carry-over model. Types: wire mesh, vane pack, cyclone. | `process.mechanicaldesign.separator.internals` |
+| `DemistingInternalWithDrainage` | Demisting internal with drainage section — reduces carry-over by drainage efficiency factor. | `process.mechanicaldesign.separator.internals` |
+| `PrimarySeparation` | Inlet device base — inlet momentum (rho*v^2), momentum limit checking, liquid carry-over with degradation. | `process.mechanicaldesign.separator.primaryseparation` |
+| `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
+| `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + mesh pad capture). | `process.mechanicaldesign.separator.primaryseparation` |
+| `InletCyclones` | Inlet cyclone cluster (8000 Pa max momentum, 95% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
 | `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
@@ -415,6 +444,24 @@ transport properties (viscosity, thermal conductivity, density).
 
 ---
 
+## I-bis. Bioprocessing & Bioenergy
+
+| Capability | Implementation | Notes |
+|-----------|---------------|-------|
+| Anaerobic digestion | `AnaerobicDigester` | Substrate-specific biogas yields (food waste, sewage, manure, crop residue) |
+| Fermentation kinetics | `FermentationReactor` | Monod, Contois, substrate-inhibited; batch, fed-batch, continuous |
+| Biogas upgrading | `BiogasUpgrader` | Water scrubbing, amine, PSA, membrane; auto CH4/CO2 split |
+| Biomass gasification | `BiomassGasifier` | Air/oxygen/steam; syngas composition from biomass properties |
+| Pyrolysis | `PyrolysisReactor` | Fast, slow, flash; bio-oil, char, gas yields |
+| Sustainability / LCA | `SustainabilityMetrics` | CO₂eq (IPCC AR6 GWP), carbon intensity, EROI, renewable fraction |
+| Biomass characterization | `BiomassCharacterization` | Proximate, ultimate analysis; HHV correlations |
+| Biorefinery costing | `BiorefineryCostEstimator` | Equipment-level CAPEX/OPEX estimation |
+| Biogas-to-grid chain | `BiogasToGridModule` | Pre-built: AD → upgrading → compression → grid |
+| Gasification + FT | `GasificationSynthesisModule` | Pre-built: biomass → syngas → Fischer-Tropsch liquids |
+| Waste-to-energy CHP | `WasteToEnergyCHPModule` | Pre-built: AD → gas engine with electrical + thermal output |
+
+---
+
 ## J. Known Gaps and Limitations
 
 ### Major Gaps (commonly requested but missing or incomplete)
@@ -434,7 +481,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
 | **Detailed flare modeling** | No radiation / noise model | Source term only |
-| **Full pipeline network** | Basic looped network solver | Limited to simple networks |
+| **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 
 ### EOS Limitations
 
@@ -496,6 +543,13 @@ transport properties (viscosity, thermal conductivity, density).
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
 | Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |
+| Biogas production? | ✅ | `AnaerobicDigester` |
+| Fermentation kinetics? | ✅ | `FermentationReactor` (Monod/Contois) |
+| Biogas upgrading? | ✅ | `BiogasUpgrader` (4 technologies) |
+| Biomass gasification? | ✅ | `BiomassGasifier` |
+| Sustainability / LCA? | ✅ | `SustainabilityMetrics` |
+| Biogas-to-grid module? | ✅ | `BiogasToGridModule` |
+| Waste-to-energy CHP? | ✅ | `WasteToEnergyCHPModule` |
 | Rate-based column? | ❌ | Not available |
 | Scale prediction? | ❌ | Not available |
 | Detailed HX design? | ❌ | Use duty + LMTD |

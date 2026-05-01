@@ -87,6 +87,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    *
    * @return the isotherm type enum value
    */
+  @Override
   public abstract IsothermType getIsothermType();
 
   /**
@@ -137,6 +138,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    *
    * @return total surface excess in mol/kg adsorbent
    */
+  @Override
   public double getTotalSurfaceExcess() {
     return totalSurfaceExcess;
   }
@@ -266,6 +268,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    *
    * @return true if calcAdsorption has been called
    */
+  @Override
   public boolean isCalculated() {
     return calculated;
   }

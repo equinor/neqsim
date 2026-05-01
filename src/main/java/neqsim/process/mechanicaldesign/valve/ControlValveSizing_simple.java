@@ -30,6 +30,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ControlValveSizing_simple extends ControlValveSizing {
 
+  private static final long serialVersionUID = 1L;
   /** Discharge coefficient for production chokes (typical value). */
   private double Cd = 0.85;
 
@@ -39,7 +40,6 @@ public class ControlValveSizing_simple extends ControlValveSizing {
    * </p>
    */
   public ControlValveSizing_simple() {
-    super();
   }
 
   /**

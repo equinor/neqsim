@@ -29,7 +29,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  * </ul>
  *
  * <h2>Architecture Overview</h2>
- * 
+ *
  * <pre>
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │                      FieldProductionScheduler                                │
@@ -63,31 +63,31 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  * </pre>
  *
  * <h2>Example Usage - Basic Field Scheduling</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoirs and facility
  * SimpleReservoir gasField = new SimpleReservoir("Gas Field");
  * gasField.setReservoirFluid(gasFluid, 5.0e9, 1.0, 1.0e7);
  * gasField.addGasProducer("GP-1");
  * gasField.addGasProducer("GP-2");
- * 
+ *
  * ProcessSystem facility = createFacilityModel();
- * 
+ *
  * // Create scheduler
  * FieldProductionScheduler scheduler = new FieldProductionScheduler("Offshore Field");
  * scheduler.addReservoir(gasField);
  * scheduler.setFacility(facility);
- * 
+ *
  * // Set production targets
  * scheduler.setPlateauRate(10.0, "MSm3/day");
  * scheduler.setPlateauDuration(5.0, "years");
  * scheduler.setMinimumRate(1.0, "MSm3/day");
- * 
+ *
  * // Run forecast
  * ProductionSchedule schedule = scheduler.generateSchedule(LocalDate.of(2025, 1, 1), 20.0, // years
  *     30.0 // days per step
  * );
- * 
+ *
  * // Review results
  * System.out.println(schedule.toMarkdownTable());
  * System.out.println("Cumulative gas: " + schedule.getCumulativeGas("GSm3") + " GSm3");
@@ -95,16 +95,16 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  * }</pre>
  *
  * <h2>Example Usage - With Economics</h2>
- * 
+ *
  * <pre>{@code
  * // Add economic parameters
  * scheduler.setGasPrice(8.0, "USD/MMBtu");
  * scheduler.setOilPrice(70.0, "USD/bbl");
  * scheduler.setDiscountRate(0.10);  // 10% per year
  * scheduler.setOperatingCost(5.0e6, "USD/year");
- * 
+ *
  * ProductionSchedule schedule = scheduler.generateSchedule(...);
- * 
+ *
  * System.out.println("Gross revenue: $" + schedule.getGrossRevenue() / 1e9 + "B");
  * System.out.println("NPV: $" + schedule.getNPV() / 1e6 + "M");
  * }</pre>

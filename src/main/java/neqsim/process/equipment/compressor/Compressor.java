@@ -383,6 +383,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     this.pressure = pressure;
     this.pressureUnit = unit;
@@ -437,17 +438,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     StreamInterface out = getOutletStream();
     if (out != null) {
       state.put("flow",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
       state.put("pressure",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getPressure(pressureUnit), pressureUnit));
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(
-              out.getTemperature(temperatureUnit), temperatureUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
     }
-    state.put("power",
-        ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
     return state;
   }
 
@@ -539,6 +536,23 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (thermoSystem == null || inStream == null || inStream.getThermoSystem() == null) {
+      return true;
+    }
+    if (inStream.getThermoSystem().getTemperature() == thermoSystem.getTemperature()
+        && inStream.getThermoSystem().getPressure() == thermoSystem.getPressure()
+        && inStream.getThermoSystem().getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")
+        && Math.abs(pressure - outStream.getPressure(pressureUnit)) < 1e-6
+        && java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(),
+            thermoSystem.getMolarComposition())) {
+      return false;
+    }
+    return true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
 
@@ -572,7 +586,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
-    thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
     getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
@@ -1120,10 +1133,59 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               double oleTemp = getThermoSystem().getTemperature();
               thermoOps.PSflash(entropy);
               if (Math.abs(getThermoSystem().getEntropy() - entropy) > 1e-3) {
-                getThermoSystem().setTemperature(oleTemp);
+                // PSflash diverged (common with associating fluids such as water/MEG/TEG
+                // on cubic EOS, or near phase boundaries — the PS Newton becomes
+                // ill-conditioned because dS/dT|_P is large and the Jacobian gets stiff).
+                // Recover by solving S(T, P_new) = entropy_target via 1D Newton on T at
+                // fixed pressure. TPflash is much more robust than PSflash for these
+                // fluids, so this yields correct isentropic compression for any EOS
+                // rather than degrading the step to isothermal.
+                // We do NOT 'continue' — skipping the step would leave the property
+                // profile shorter than numberOfCompressorCalcSteps and drop the
+                // polytropic enthalpy increment for that pressure interval.
+                double tGuess = oleTemp;
+                double bestT = oleTemp;
+                double bestErr = Double.MAX_VALUE;
+                getThermoSystem().setTemperature(tGuess);
                 thermoOps.TPflash();
+                for (int psIter = 0; psIter < 30; psIter++) {
+                  getThermoSystem().init(2);
+                  double sCur = getThermoSystem().getEntropy();
+                  double residual = sCur - entropy;
+                  if (Math.abs(residual) < Math.abs(bestErr)) {
+                    bestErr = residual;
+                    bestT = tGuess;
+                  }
+                  if (Math.abs(residual) < 1e-4) {
+                    break;
+                  }
+                  double cp = getThermoSystem().getCp();
+                  if (cp <= 0.0 || !Double.isFinite(cp)) {
+                    break;
+                  }
+                  // dS/dT|_P = Cp / T (total, J/K^2)
+                  double dT = -residual / (cp / tGuess);
+                  // Limit step to ±50 K for stability
+                  if (dT > 50.0) {
+                    dT = 50.0;
+                  } else if (dT < -50.0) {
+                    dT = -50.0;
+                  }
+                  tGuess += dT;
+                  if (tGuess < 50.0) {
+                    tGuess = 50.0;
+                  }
+                  getThermoSystem().setTemperature(tGuess);
+                  thermoOps.TPflash();
+                  if (Math.abs(dT) < 1e-3) {
+                    break;
+                  }
+                }
+                if (Math.abs(getThermoSystem().getEntropy() - entropy) > Math.abs(bestErr)) {
+                  getThermoSystem().setTemperature(bestT);
+                  thermoOps.TPflash();
+                }
                 getThermoSystem().init(2);
-                continue;
               }
             }
             double newEnt = getThermoSystem().getEnthalpy();
@@ -2482,6 +2544,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double outTemperature) {
     setOutletTemperature(outTemperature);
@@ -4949,7 +5012,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     if (getMechanicalDesign() != null) {
       sb.append("\n--- Mechanical Design ---\n");
-      CompressorMechanicalDesign mechDesign = (CompressorMechanicalDesign) getMechanicalDesign();
+      CompressorMechanicalDesign mechDesign = getMechanicalDesign();
       sb.append("Number of Stages: ").append(mechDesign.getNumberOfStages()).append("\n");
       sb.append("Impeller Diameter: ")
           .append(String.format("%.0f mm", mechDesign.getImpellerDiameter())).append("\n");
@@ -4982,7 +5045,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     }
 
     if (getMechanicalDesign() != null) {
-      CompressorMechanicalDesign mechDesign = (CompressorMechanicalDesign) getMechanicalDesign();
+      CompressorMechanicalDesign mechDesign = getMechanicalDesign();
       Map<String, Object> mechReport = new LinkedHashMap<String, Object>();
       mechReport.put("numberOfStages", mechDesign.getNumberOfStages());
       mechReport.put("impellerDiameter_mm", mechDesign.getImpellerDiameter());

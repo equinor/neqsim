@@ -57,6 +57,9 @@ double_spacing_required: true
 
 # Requirements
 highlights_required: false
+highlights_min: null
+highlights_max: null
+highlights_max_chars_each: null
 graphical_abstract_required: false  # Optional but encouraged
 toc_entry_required: false
 cover_letter_required: true

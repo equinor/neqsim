@@ -1,12 +1,12 @@
 ---
 layout: default
 title: NeqSim Documentation
-description: "NeqSim documentation home page. Navigate to thermodynamics, process simulation, PVT analysis, physical properties, standards, field development, safety, and risk modules."
+description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engineering Task Solving in Industry."
 ---
 
 # NeqSim Documentation
 
-**NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation developed at [NTNU](https://www.ntnu.edu/).
+**Industrial Agentic Engineering with NeqSim** — AI Agents for Engineering Task Solving in Industry. NeqSim (Non-Equilibrium Simulator) is a comprehensive Java library developed at [NTNU](https://www.ntnu.edu/).
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>
@@ -69,6 +69,15 @@ description: "NeqSim documentation home page. Navigate to thermodynamics, proces
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="risk/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Risk Simulation</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equipment failure, Monte Carlo analysis</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="risk/sis-integration.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>SIS/SIF Integration</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">IEC 61508/61511, LOPA, SIL verification</span></li>
 <li style="padding: 0.5rem 0;"><a href="risk/bowtie-analysis.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Bow-Tie Analysis</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Barrier analysis, threat visualization</span></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #e8eaf6 0%, #ffffff 100%); border: 2px solid #3f51b5; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #3f51b5; color: #24292e; font-size: 1.25rem;">🤖 AI-Assisted Engineering</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="tutorials/solve-engineering-task.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Solve an Engineering Task</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From problem statement to validated report — no coding required</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="development/TASK_SOLVING_GUIDE.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Task Solving Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Multi-agent workflow with validation and report generation</span></li>
+<li style="padding: 0.5rem 0;"><a href="development/WORKFLOW_REVIEW.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>How It Compares</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">NeqSim vs commercial tools and AI frameworks</span></li>
 </ul>
 </div>
 
@@ -192,7 +201,8 @@ System.out.println("Compressibility: " + gas.getZ());
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="examples/ProducedWaterEmissions_Tutorial.html">🌱 Emissions & Sustainability</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">CO₂, methane, nmVOC virtual measurement, Norwegian methods</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="process/COST_ESTIMATION_FRAMEWORK.html">💰 Cost Estimation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">CAPEX, OPEX, financial metrics (NPV, ROI)</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="examples/">💡 Examples</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Tutorials, Jupyter notebooks, code samples</td></tr>
-<tr><td style="padding: 0.875rem 1rem; background: #f6f8fa;"><a href="development/README.html">🔧 Development</a></td><td style="padding: 0.875rem 1rem; background: #f6f8fa;">Contributing guidelines, developer setup</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="tutorials/solve-engineering-task.html">🤖 AI-Assisted Engineering</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Multi-agent task solver: simulation, validation, and report generation</td></tr>
+<tr><td style="padding: 0.875rem 1rem; background: #fff;"><a href="development/README.html">🔧 Development</a></td><td style="padding: 0.875rem 1rem; background: #fff;">Contributing guidelines, developer setup</td></tr>
 </tbody>
 </table>
 </div>

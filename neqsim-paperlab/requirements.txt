@@ -18,6 +18,7 @@ python-docx>=0.8.11            # Word (.docx) output
 latex2mathml>=3.0              # LaTeX -> MathML -> OMML equation pipeline
 lxml>=4.9                      # XML manipulation for OMML equations
 Jinja2>=3.1                    # HTML report templating
+typst>=0.12                    # PDF rendering via typst compiler (also needs pandoc on PATH)
 pyyaml>=6.0                    # journal profile configs
 
 # --- Bibliography ---
@@ -25,4 +26,16 @@ bibtexparser>=1.4              # parse/validate refs.bib programmatically
 
 # --- Prose quality & discovery ---
 textstat>=0.7                  # readability metrics (Flesch-Kincaid, Gunning fog, ARI)
-requests>=2.28                 # Semantic Scholar API for citation discovery
+requests>=2.28                 # Semantic Scholar + Crossref API for citation discovery
+proselint>=0.14                # prose linter: clichés, weasel words, mixed metaphors, redundancy
+language-tool-python>=2.7      # grammar/spelling checker (wraps LanguageTool)
+
+# --- Scientific rigor ---
+scikit-learn>=1.0              # TF-IDF for self-plagiarism detection
+
+# --- Figure & result evaluation (optional — graceful degradation) ---
+# pyiqa>=0.1.15                # no-reference image quality (BRISQUE, NIQE, MUSIQ); needs torch
+# pytesseract>=0.3.13          # OCR for reading figure axis labels/legends
+# litellm>=1.83                # unified LLM gateway (OpenAI, Anthropic, local) for figure critique
+# openai>=2.0                  # OpenAI GPT-4o vision API for figure evaluation
+# anthropic>=0.30              # Anthropic Claude vision API (alternative provider)

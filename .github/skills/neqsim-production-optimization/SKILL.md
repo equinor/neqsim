@@ -1,6 +1,7 @@
 ---
 name: neqsim-production-optimization
 description: "Production optimization, bottleneck analysis, decline modeling, and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Production Optimization Skill
@@ -140,6 +141,49 @@ network.setTargetTotalRate(50000.0);  // Sm3/d
 result = network.solve();
 double requiredManifoldP = result.getManifoldPressure();
 ```
+
+### LoopedPipeNetwork (Advanced)
+
+Full NR-GGA production network solver with IPR, chokes, tubing VLP, Beggs-Brill
+multiphase, compressors, artificial lift, water/sand/corrosion/emissions:
+
+```java
+LoopedPipeNetwork net = new LoopedPipeNetwork("Gathering");
+net.setFluidTemplate(gas);
+net.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+net.setMaxIterations(500);
+net.setTolerance(500.0);
+
+// Wells with IPR
+net.addSourceNode("R1", 230.0, 0.0);
+net.addJunctionNode("MF1");
+net.addWellIPR("R1", "MF1", "W1", 5e-13, true);
+
+// Artificial lift
+net.setGasLift("W1", 500.0);             // kg/hr
+net.setESP("W2", 80.0, 0.55);            // kW, efficiency
+
+// Water, sand, corrosion tracking
+net.setWaterCut("W1", 0.15);
+net.setSandRate("W1", 3.0);              // kg/hr
+net.setCorrosiveGas("trunk", 0.035, 0.002);  // CO2, H2S mol frac
+net.setCorrosionModel("trunk", "NORSOK");     // NORSOK M-506
+
+// GHG emissions
+net.setCO2EmissionFactor(2.75);
+net.setMethaneSlipFactor(0.02);
+
+net.run();
+
+// Post-run analysis
+Map<String, double[]> sand = net.calculateSandTransport();
+Map<String, double[]> corr = net.calculateCorrosion();
+Map<String, double[]> em = net.calculateEmissions();
+double annualCO2 = net.getAnnualCO2EmissionsTonnes();
+```
+
+See [production_well_networks.md](docs/process/equipment/production_well_networks.md)
+for full API documentation of all features.
 
 ---
 

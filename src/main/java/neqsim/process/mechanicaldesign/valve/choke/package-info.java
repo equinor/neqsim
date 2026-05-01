@@ -27,7 +27,7 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Create a two-phase fluid
  * SystemInterface fluid = new SystemSrkEos(300.0, 100.0);
@@ -58,7 +58,7 @@
  * These models integrate with the {@link neqsim.process.equipment.valve.ThrottlingValve} unit
  * operation for process simulation:
  * </p>
- * 
+ *
  * <pre>
  * // Create production choke using ThrottlingValve
  * ThrottlingValve choke = new ThrottlingValve("Production Choke", wellStream);

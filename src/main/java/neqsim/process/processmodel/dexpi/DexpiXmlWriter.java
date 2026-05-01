@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -732,7 +731,7 @@ public final class DexpiXmlWriter {
    */
   private static String formatMechValue(double value) {
     if (Math.abs(value - Math.round(value)) < 0.01) {
-      return String.valueOf((long) Math.round(value));
+      return String.valueOf(Math.round(value));
     }
     return String.format(Locale.ROOT, "%.1f", value);
   }

@@ -366,7 +366,7 @@ public class MechanicalDesignReport implements java.io.Serializable {
    * <p>
    * Usage example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * MechanicalDesignReport report = new MechanicalDesignReport(process);

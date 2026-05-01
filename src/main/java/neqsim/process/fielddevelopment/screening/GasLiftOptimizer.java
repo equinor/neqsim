@@ -48,25 +48,25 @@ import java.util.Map;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * GasLiftOptimizer optimizer = new GasLiftOptimizer();
- * 
+ *
  * // Add wells with their performance curves
  * optimizer.addWell("Well-1", performanceCurve1, 50000.0); // Max 50 MSm³/d injection
  * optimizer.addWell("Well-2", performanceCurve2, 40000.0);
  * optimizer.addWell("Well-3", performanceCurve3, 60000.0);
- * 
+ *
  * // Set total available gas
  * optimizer.setAvailableGas(100000.0, "Sm3/d");
- * 
+ *
  * // Set compression constraints
  * optimizer.setMaxCompressionPower(5000.0); // kW
  * optimizer.setCompressionEfficiency(0.75);
- * 
+ *
  * // Optimize
  * AllocationResult result = optimizer.optimize();
- * 
+ *
  * System.out.println("Total oil production: " + result.totalOilRate + " Sm³/d");
  * for (WellAllocation alloc : result.allocations) {
  *   System.out.println(

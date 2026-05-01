@@ -3,13 +3,10 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
-import com.google.gson.GsonBuilder;
-import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.util.report.ReportConfig;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
+import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Duty-controlled fired heater with thermal efficiency modeling.
@@ -295,6 +292,7 @@ public class FiredHeater extends Heater {
    *
    * @return JSON string with heater performance data
    */
+  @Override
   public String toJson() {
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("equipmentType", "FiredHeater");

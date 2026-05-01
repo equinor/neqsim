@@ -17,8 +17,8 @@ public class GERG2008 {
   // Variables containing the common parameters in the GERG-2008 equations
   double RGERG;
   int NcGERG = 21;
-  int MaxFlds = 21;
-  int MaxMdl = 10;
+  int MaxFlds = 22;
+  int MaxMdl = 14;
   int MaxTrmM = 12;
   int MaxTrmP = 24;
   double epsilon = 1e-15;
@@ -960,7 +960,9 @@ public class GERG2008 {
 
     // Exponents in pure fluid equations
     for (int i = 1; i <= MaxFlds; ++i) {
-      Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+      if (Dc[i] > epsilon) {
+        Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+      }
       Tc2[i] = Math.sqrt(Tc[i]);
       coik[i][1] = 0;
       doik[i][1] = 1;
@@ -3163,12 +3165,12 @@ public class GERG2008 {
     btij[20][21] = 1;
     gtij[20][21] = 1; // He-Ar
 
-    for (int i = 1; i <= MaxFlds; ++i) {
+    for (int i = 1; i <= NcGERG; ++i) {
       bvij[i][i] = 1;
       btij[i][i] = 1;
       gvij[i][i] = 1 / Dc[i];
       gtij[i][i] = Tc[i];
-      for (int j = i + 1; j <= MaxFlds; ++j) {
+      for (int j = i + 1; j <= NcGERG; ++j) {
         gvij[i][j] = gvij[i][j] * bvij[i][j] * Math.pow(Vc3[i] + Vc3[j], 3);
         gtij[i][j] = gtij[i][j] * btij[i][j] * Tc2[i] * Tc2[j];
         bvij[i][j] = Math.pow(bvij[i][j], 2);
@@ -3187,7 +3189,7 @@ public class GERG2008 {
     // Ideal gas terms
     T0 = 298.15;
     d0 = 101.325 / RGERG / T0;
-    for (int i = 1; i <= MaxFlds; ++i) {
+    for (int i = 1; i <= NcGERG; ++i) {
       n0i[i][3] = n0i[i][3] - 1;
       n0i[i][2] = n0i[i][2] + T0;
       for (int j = 1; j <= 7; ++j) {

@@ -20,9 +20,9 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <p>
- * References: Eckert, J.S. Chem. Eng. Prog. (1970); Leva, M. Chem. Eng. Prog. (1954); Onda, K.
- * J. Chem. Eng. Japan (1968); Kister, H.Z. "Distillation Design" (1992); Billet, R. "Packed
- * Towers" (1995).
+ * References: Eckert, J.S. Chem. Eng. Prog. (1970); Leva, M. Chem. Eng. Prog. (1954); Onda, K. J.
+ * Chem. Eng. Japan (1968); Kister, H.Z. "Distillation Design" (1992); Billet, R. "Packed Towers"
+ * (1995).
  * </p>
  *
  * @author NeqSim
@@ -301,14 +301,14 @@ public class PackingHydraulicsCalculator implements Serializable {
 
     // === Wetted area (Onda) ===
     // aw/a = 1 - exp(-1.45 * (sigma_c/sigma)^0.75 * (uL*a*rhoL/(muL*g))^0.1
-    //        * (uL^2*a/g)^(-0.05) * (uL^2*rhoL/(sigma*a))^0.2)
+    // * (uL^2*a/g)^(-0.05) * (uL^2*rhoL/(sigma*a))^0.2)
     double reL = uL * liquidDensity / (liquidViscosity * specificSurfaceArea); // Modified Re_L
     double frL = uL * uL * specificSurfaceArea / g;
     double weL = uL * uL * liquidDensity / (surfaceTension * specificSurfaceArea);
     double sigmaRatio = criticalSurfaceTension / surfaceTension;
 
-    double exponent = -1.45 * Math.pow(sigmaRatio, 0.75)
-        * Math.pow(reL, 0.1) * Math.pow(frL, -0.05) * Math.pow(weL, 0.2);
+    double exponent = -1.45 * Math.pow(sigmaRatio, 0.75) * Math.pow(reL, 0.1) * Math.pow(frL, -0.05)
+        * Math.pow(weL, 0.2);
     double awRatio = 1.0 - Math.exp(exponent);
     awRatio = Math.max(awRatio, 0.2);
     awRatio = Math.min(awRatio, 1.0);
@@ -319,15 +319,16 @@ public class PackingHydraulicsCalculator implements Serializable {
     // Simplified for engineering use:
     double reV = gV / (specificSurfaceArea * vaporViscosity);
     double scV = vaporViscosity / (vaporDensity * vaporDiffusivity);
-    double dp = nominalSize / 1000.0;
+    double dp = getEffectivePackingDiameter();
 
     // kG*a = C * (a * D_G / dp^2) * Re_V^0.7 * Sc_V^(1/3)
     double cKg = 5.23; // Onda constant for metal packing
-    kGa = cKg * (specificSurfaceArea * vaporDiffusivity / (dp * dp))
-        * Math.pow(reV, 0.7) * Math.pow(scV, 1.0 / 3.0);
+    kGa = cKg * (specificSurfaceArea * vaporDiffusivity / (dp * dp)) * Math.pow(reV, 0.7)
+        * Math.pow(scV, 1.0 / 3.0);
 
     // === Liquid-phase mass transfer coefficient (Onda) ===
-    // kL * (rho_L / (mu_L * g))^(1/3) = 0.0051 * (L/(aw*mu_L))^(2/3) * (mu_L/(rho_L*D_L))^(-1/2) * (a*dp)^0.4
+    // kL * (rho_L / (mu_L * g))^(1/3) = 0.0051 * (L/(aw*mu_L))^(2/3) * (mu_L/(rho_L*D_L))^(-1/2) *
+    // (a*dp)^0.4
     double reL2 = gL / (wettedArea * liquidViscosity);
     double scL = liquidViscosity / (liquidDensity * liquidDiffusivity);
 
@@ -341,8 +342,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Calculate HETP from mass transfer coefficients.
    *
    * <p>
-   * Uses the two-resistance model: 1/KOG = 1/kG + m/kL, then HTU_OG = G/(KOG * a * P), and HETP
-   * = HTU_OG * ln(lambda) / (lambda - 1), where lambda = m * G_m / L_m is the stripping factor.
+   * Uses the two-resistance model: 1/KOG = 1/kG + m/kL, then HTU_OG = G/(KOG * a * P), and HETP =
+   * HTU_OG * ln(lambda) / (lambda - 1), where lambda = m * G_m / L_m is the stripping factor.
    * </p>
    */
   private void calculateHETP() {
@@ -368,7 +369,7 @@ public class PackingHydraulicsCalculator implements Serializable {
     // HTU_L = L_V / (kL * a * rho_L)
     htuL = gL / kLa;
 
-    // Stripping factor lambda = m * V_m / L_m  (approximate m ≈ 1 for middle of column)
+    // Stripping factor lambda = m * V_m / L_m (approximate m ≈ 1 for middle of column)
     // Use a typical stripping factor of ~1.0 for distillation
     double lambda = 1.0;
 
@@ -417,13 +418,33 @@ public class PackingHydraulicsCalculator implements Serializable {
   }
 
   /**
+   * Get effective packing diameter for mass-transfer correlations.
+   *
+   * <p>
+   * Random packings normally provide a nominal size. Structured packings often do not, so an
+   * equivalent hydraulic diameter {@code 4 epsilon / a} is used as a finite fallback.
+   * </p>
+   *
+   * @return effective packing diameter in metres
+   */
+  private double getEffectivePackingDiameter() {
+    if (nominalSize > 0.0) {
+      return nominalSize / 1000.0;
+    }
+    if (specificSurfaceArea > 0.0 && voidFraction > 0.0) {
+      return Math.max(4.0 * voidFraction / specificSurfaceArea, 1.0e-4);
+    }
+    return 0.025;
+  }
+
+  /**
    * Check minimum liquid wetting rate.
    */
   private void calculateWettingCheck() {
     // Minimum wetting rate: MWR = 1.5e-5 m3/(m2.s) for unglazed ceramic
     // MWR = 5e-5 for metal, plastic
     if ("structured".equalsIgnoreCase(packingCategory)) {
-      minimumWettingRate = 2.5e-5; // m3/(m2.s)  — structured more sensitive
+      minimumWettingRate = 2.5e-5; // m3/(m2.s) — structured more sensitive
     } else {
       minimumWettingRate = 5.0e-5; // m3/(m2.s) — random packing typical
     }
@@ -436,8 +457,8 @@ public class PackingHydraulicsCalculator implements Serializable {
 
     wettingOk = actualRate >= minimumWettingRate;
     if (!wettingOk) {
-      logger.warn("Liquid rate below minimum wetting rate for packing. "
-          + "Actual: " + actualRate + " m3/(m2.s), Min: " + minimumWettingRate);
+      logger.warn("Liquid rate below minimum wetting rate for packing. " + "Actual: " + actualRate
+          + " m3/(m2.s), Min: " + minimumWettingRate);
     }
   }
 
@@ -492,9 +513,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * @return standard diameter [m]
    */
   private double roundToStandardDiameter(double diameter) {
-    double[] standardSizes = {0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5,
-        1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0,
-        5.5, 6.0, 7.0, 8.0};
+    double[] standardSizes = {0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8,
+        2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0};
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
         return stdSize;
@@ -509,143 +529,60 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Set packing to a standard random packing type.
    *
    * <p>
-   * Supported presets: "Pall-Ring-25", "Pall-Ring-38", "Pall-Ring-50", "Raschig-Ring-25",
-   * "Raschig-Ring-50", "IMTP-25", "IMTP-40", "IMTP-50", "Berl-Saddle-25", "Berl-Saddle-50".
+   * Supported presets are provided by {@link PackingSpecificationLibrary}. The old hard-coded names
+   * remain available, and additional entries can be supplied through
+   * {@code designdata/Packing.csv}.
    * </p>
    *
    * @param preset packing name preset
    */
   public void setPackingPreset(String preset) {
-    packingCategory = "random";
-    switch (preset) {
-      case "Pall-Ring-25":
-        specificSurfaceArea = 210.0;
-        voidFraction = 0.94;
-        packingFactor = 157.0;
-        nominalSize = 25.0;
-        break;
-      case "Pall-Ring-38":
-        specificSurfaceArea = 164.0;
-        voidFraction = 0.95;
-        packingFactor = 92.0;
-        nominalSize = 38.0;
-        break;
-      case "Pall-Ring-50":
-        specificSurfaceArea = 120.0;
-        voidFraction = 0.96;
-        packingFactor = 66.0;
-        nominalSize = 50.0;
-        break;
-      case "Raschig-Ring-25":
-        specificSurfaceArea = 190.0;
-        voidFraction = 0.68;
-        packingFactor = 580.0;
-        nominalSize = 25.0;
-        break;
-      case "Raschig-Ring-50":
-        specificSurfaceArea = 95.0;
-        voidFraction = 0.74;
-        packingFactor = 155.0;
-        nominalSize = 50.0;
-        break;
-      case "IMTP-25":
-        specificSurfaceArea = 226.0;
-        voidFraction = 0.97;
-        packingFactor = 134.0;
-        nominalSize = 25.0;
-        break;
-      case "IMTP-40":
-        specificSurfaceArea = 151.0;
-        voidFraction = 0.97;
-        packingFactor = 79.0;
-        nominalSize = 40.0;
-        break;
-      case "IMTP-50":
-        specificSurfaceArea = 102.0;
-        voidFraction = 0.98;
-        packingFactor = 56.0;
-        nominalSize = 50.0;
-        break;
-      case "Berl-Saddle-25":
-        specificSurfaceArea = 260.0;
-        voidFraction = 0.68;
-        packingFactor = 360.0;
-        nominalSize = 25.0;
-        break;
-      case "Berl-Saddle-50":
-        specificSurfaceArea = 105.0;
-        voidFraction = 0.72;
-        packingFactor = 150.0;
-        nominalSize = 50.0;
-        break;
-      default:
-        logger.warn("Unknown packing preset: " + preset + ". Using Pall-Ring-50 defaults.");
-        break;
+    PackingSpecification specification = PackingSpecificationLibrary.get(preset);
+    if (specification == null) {
+      logger.warn("Unknown packing preset: " + preset + ". Using Pall-Ring-50 defaults.");
+      specification = PackingSpecificationLibrary.getOrDefault("Pall-Ring-50");
     }
-    packingName = preset;
+    setPackingSpecification(specification);
   }
 
   /**
    * Set packing to a standard structured packing type.
    *
    * <p>
-   * Supported presets: "Mellapak-125Y", "Mellapak-250Y", "Mellapak-350Y", "Mellapak-500Y",
-   * "Flexipac-1Y", "Flexipac-2Y", "Flexipac-3Y".
+   * Supported presets are provided by {@link PackingSpecificationLibrary}. The old hard-coded names
+   * remain available, and additional entries can be supplied through
+   * {@code designdata/Packing.csv}.
    * </p>
    *
    * @param preset structured packing name preset
    */
   public void setStructuredPackingPreset(String preset) {
-    packingCategory = "structured";
-    switch (preset) {
-      case "Mellapak-125Y":
-        specificSurfaceArea = 125.0;
-        voidFraction = 0.99;
-        packingFactor = 33.0;
-        nominalSize = 0.0;
-        break;
-      case "Mellapak-250Y":
-        specificSurfaceArea = 250.0;
-        voidFraction = 0.98;
-        packingFactor = 66.0;
-        nominalSize = 0.0;
-        break;
-      case "Mellapak-350Y":
-        specificSurfaceArea = 350.0;
-        voidFraction = 0.97;
-        packingFactor = 105.0;
-        nominalSize = 0.0;
-        break;
-      case "Mellapak-500Y":
-        specificSurfaceArea = 500.0;
-        voidFraction = 0.96;
-        packingFactor = 180.0;
-        nominalSize = 0.0;
-        break;
-      case "Flexipac-1Y":
-        specificSurfaceArea = 135.0;
-        voidFraction = 0.99;
-        packingFactor = 36.0;
-        nominalSize = 0.0;
-        break;
-      case "Flexipac-2Y":
-        specificSurfaceArea = 220.0;
-        voidFraction = 0.98;
-        packingFactor = 60.0;
-        nominalSize = 0.0;
-        break;
-      case "Flexipac-3Y":
-        specificSurfaceArea = 340.0;
-        voidFraction = 0.97;
-        packingFactor = 100.0;
-        nominalSize = 0.0;
-        break;
-      default:
-        logger.warn("Unknown structured packing preset: " + preset
-            + ". Using Mellapak-250Y defaults.");
-        break;
+    PackingSpecification specification = PackingSpecificationLibrary.get(preset);
+    if (specification == null) {
+      logger
+          .warn("Unknown structured packing preset: " + preset + ". Using Mellapak-250Y defaults.");
+      specification = PackingSpecificationLibrary.getOrDefault("Mellapak-250Y");
     }
-    packingName = preset;
+    setPackingSpecification(specification);
+  }
+
+  /**
+   * Apply a reusable packing specification.
+   *
+   * @param specification packing specification to apply
+   * @throws IllegalArgumentException if the specification is null
+   */
+  public void setPackingSpecification(PackingSpecification specification) {
+    if (specification == null) {
+      throw new IllegalArgumentException("packing specification can not be null");
+    }
+    packingCategory = specification.getCategory();
+    packingName = specification.getName();
+    specificSurfaceArea = specification.getSpecificSurfaceArea();
+    voidFraction = specification.getVoidFraction();
+    packingFactor = specification.getPackingFactor();
+    nominalSize = specification.getNominalSizeMm();
+    criticalSurfaceTension = specification.getCriticalSurfaceTension();
   }
 
   // ========================== Getters and Setters ==========================

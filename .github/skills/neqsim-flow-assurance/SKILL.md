@@ -1,6 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion, pipeline hydraulics, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+last_verified: "2026-07-04"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -260,6 +261,42 @@ double pCO2 = fluid.getPhase("gas").getComponent("CO2").getx()
 // Lower pH (more acidic) → higher corrosion rate
 // Water cut affects wetting: >30% water cut → higher risk
 ```
+
+### Network-Level Corrosion (LoopedPipeNetwork)
+
+For production gathering networks, `LoopedPipeNetwork` has inline corrosion
+models that compute rates per element during network solution:
+
+```java
+// de Waard-Milliams (default) or NORSOK M-506
+net.setCorrosiveGas("trunk", 0.035, 0.002);  // CO2 mol%, H2S mol%
+net.setCorrosionModel("trunk", "NORSOK");     // "DEWAARD" or "NORSOK"
+net.setMinAllowableWallLife(20.0);            // years
+
+net.run();
+Map<String, double[]> corr = net.calculateCorrosion();
+// Per element: [0] = rate (mm/yr), [1] = pCO2 (bar), [2] = wall life (yr)
+List<String> violations = net.getCorrosionViolations();
+```
+
+Models: de Waard-Milliams (log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2))
+and NORSOK M-506 (Vcorr = Kt * fCO2^0.62 * (S/19)^0.146).
+
+### Network-Level Sand Erosion (DNV RP O501)
+
+```java
+net.setSandRate("W1", 3.0);             // kg/hr
+net.setMaxAllowableSandRate(10.0);
+net.setMaxAllowableErosionRate(5.0);    // mm/yr
+
+net.run();
+Map<String, double[]> sand = net.calculateSandTransport();
+// Per element: [0] = rate, [1] = concentration, [2] = erosion, [3] = deposition
+List<String> violations = net.getSandViolations();
+```
+
+Erosion per DNV RP O501: E = K * Csand * v^2.6 * dp^0.2.
+Deposition flagged when v < 1 m/s.
 
 ## 6. Thermal Analysis
 

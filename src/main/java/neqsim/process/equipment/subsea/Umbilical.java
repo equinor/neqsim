@@ -477,6 +477,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public UmbilicalMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new UmbilicalMechanicalDesign(this);
@@ -487,6 +488,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new UmbilicalMechanicalDesign(this);
   }

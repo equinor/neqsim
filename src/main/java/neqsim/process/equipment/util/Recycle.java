@@ -259,20 +259,15 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
               .equals(componentName)) {
             gotComponent = true;
             index =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-            // compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-            // .getComponentName();
+                mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            break;
           }
         }
 
         if (gotComponent) {
-          // logger.info("adding moles starting....");
           mixedStream.getThermoSystem().addComponent(index, moles);
-          // mixedStream.getThermoSystem().init_x_y();
-          // logger.info("adding moles finished");
         } else {
-          logger.warn("ikke gaa hit");
-          mixedStream.getThermoSystem().addComponent(index, moles);
+          mixedStream.getThermoSystem().addComponent(componentName, moles);
         }
       }
     }

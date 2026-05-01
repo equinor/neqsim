@@ -3,6 +3,8 @@
 <!-- Target Journal: {{JOURNAL}} -->
 <!-- Generated: {{DATE}} -->
 <!-- Status: DRAFT -->
+<!-- UNIT CONVENTION: SI units throughout. Temperature in K, pressure in Pa/kPa/MPa,
+     density in kg/m³, energy in J/kJ. See PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)". -->
 
 ## Highlights
 
@@ -110,11 +112,11 @@ TODO: Pseudocode of modified algorithm.
 
 TODO: Describe the benchmark configuration.
 
-| Fluid family | Components | $T$ range (K) | $P$ range (bar) | Cases |
+| Fluid family | Components | $T$ range (K) | $P$ range (kPa) | Cases |
 |:---|:---|---:|---:|---:|
-| Lean gas | CH₄/C₂/C₃/N₂/CO₂ | 200–400 | 1–200 | 500 |
-| Rich gas | CH₄–C₅/N₂/CO₂ | 220–450 | 5–300 | 500 |
-| Gas condensate | CH₄–C₁₀/N₂/CO₂ | 250–500 | 10–500 | 500 |
+| Lean gas | CH₄/C₂/C₃/N₂/CO₂ | 200–400 | 100–20000 | 500 |
+| Rich gas | CH₄–C₅/N₂/CO₂ | 220–450 | 500–30000 | 500 |
+| Gas condensate | CH₄–C₁₀/N₂/CO₂ | 250–500 | 1000–50000 | 500 |
 
 ### 4.2 Performance metrics
 

@@ -36,17 +36,49 @@ The paper type determines the plan structure, benchmark design, and claims pipel
 
 Given a paper topic and target journal, you produce:
 
-1. **plan.json** — The master research plan (includes paper_type field)
-2. **outline.md** — Manuscript section outline with key points per section
-3. **benchmark_config.json** — Experiment design for computational studies
+1. **refs.bib** — Comprehensive bibliography (MUST be produced FIRST)
+2. **literature_map.md** — Structured overview of prior work
+3. **plan.json** — The master research plan (includes paper_type field)
+4. **outline.md** — Manuscript section outline with key points per section
+5. **benchmark_config.json** — Experiment design for computational studies
 
 ## Workflow
+
+### Step 0: Deep Literature Review (MANDATORY FIRST STEP)
+
+**Before creating plan.json or any other artifact, you MUST complete a thorough
+literature review.** This is non-negotiable — no plan can be created without
+understanding the prior work landscape.
+
+1. **Survey the field** — Identify 5–10 key review papers and seminal works.
+2. **Build refs.bib** — Collect BibTeX entries for ALL potentially relevant works.
+   Aim for 2× the expected citation count (you'll prune later). Include:
+   - Foundational/seminal papers (must-cite classics)
+   - Recent advances (last 5 years)
+   - Competing methods and alternative approaches
+   - Experimental data sources for validation
+   - Textbooks providing background theory
+3. **Mine existing PaperLab papers** — Search `papers/*/refs.bib` for related
+   citations already verified by previous PaperLab work. Reuse BibTeX entries
+   with consistent keys:
+   ```bash
+   grep -rl "keyword" papers/*/refs.bib
+   ```
+4. **Produce literature_map.md** — Organize by theme, identify each work's
+   contribution, limitations, and relevance to the proposed research.
+5. **Write gap_statement.md** — Articulate what's missing and why it matters.
+
+Only AFTER the literature review is complete should you proceed to Step 1.
+
+See PAPER_WRITING_GUIDELINES.md "MANDATORY: Literature Review and Citation
+Collection First" for reference targets and quality rules.
 
 ### Step 1: Understand the Topic
 
 - Read the relevant NeqSim source code to understand current implementation
 - Identify what exists, what's missing, what could be improved
 - Map the algorithmic landscape (what methods exist in literature vs NeqSim)
+- Cross-reference findings with literature_map.md from Step 0
 
 ### Step 2: Define Research Questions
 
@@ -55,6 +87,7 @@ For each research question:
 - Explain why it matters
 - Describe how NeqSim can answer it
 - Define the acceptance criterion
+- Link to relevant prior work from the literature review
 
 ### Step 3: Design the Study
 
@@ -144,6 +177,8 @@ Design validation against analytical solutions or published design examples.
 - DO keep the study focused — one clear contribution, not five half-baked ones
 - DO identify risks and fallback plans
 - DO include a cross-validation axis in every plan
+- DO use SI units in all plan specifications (K for temperature, Pa/kPa for pressure,
+  kg/m³ for density, etc.) — see PAPER_WRITING_GUIDELINES.md "SI Units (MANDATORY)"
 
 ## Output Location
 

@@ -68,6 +68,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
   /** Recommended base enthalpy balance tolerance for adaptive defaults. */
   private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
+  /** Default scaled MESH residual tolerance when residual gating is enabled. */
+  private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -79,6 +81,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
   /** Enthalpy balance convergence tolerance. */
   private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+  /** Scaled MESH residual convergence tolerance. */
+  private double meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
   /** Track whether temperature tolerance has been manually overridden. */
   private boolean temperatureToleranceCustomized = false;
   /** Track whether mass balance tolerance has been manually overridden. */
@@ -98,8 +102,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     WEGSTEIN,
     /** Sum-rates tearing method with flow correction. */
     SUM_RATES,
-    /** Newton-Raphson simultaneous temperature correction. */
-    NEWTON
+    /** Newton-Raphson tray-temperature correction accelerator, not a full MESH Newton solver. */
+    NEWTON,
+    /** MESH residual-monitored solve with inside-out initialization and Newton polishing. */
+    MESH_RESIDUAL
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
@@ -123,7 +129,28 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double maxEnergyRelaxationWeight = 10.0;
   /** Control whether energy residual must satisfy tolerance before convergence. */
   private boolean enforceEnergyBalanceTolerance = false;
+  /** Control whether the MESH residual vector must satisfy tolerance before convergence. */
+  private boolean enforceMeshResidualTolerance = false;
   private boolean doMultiPhaseCheck = true;
+
+  /**
+   * When {@code true}, trays in the reactive section use {@link ReactiveTray} (simultaneous
+   * chemical + phase equilibrium via the Modified RAND method) instead of standard VLE
+   * {@link SimpleTray}. Set this before the first {@link #run()} call.
+   */
+  private boolean reactive = false;
+
+  /**
+   * First tray index (0-based, inclusive) of the reactive section. A value of {@code -1} means all
+   * middle trays (i.e. excluding reboiler/condenser) are reactive.
+   */
+  private int reactiveStartTray = -1;
+
+  /**
+   * Last tray index (0-based, inclusive) of the reactive section. A value of {@code -1} means all
+   * middle trays are reactive.
+   */
+  private int reactiveEndTray = -1;
 
   /**
    * Flag tracking whether the column has been solved at least once. Used to seed the sequential
@@ -171,6 +198,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastMassResidual = 0.0;
   /** Last recorded relative enthalpy residual. */
   private double lastEnergyResidual = 0.0;
+  /** Last reported top specification residual. */
+  private double lastTopSpecificationResidual = 0.0;
+  /** Last reported bottom specification residual. */
+  private double lastBottomSpecificationResidual = 0.0;
+  /** Latest MESH residual diagnostics. */
+  private transient ColumnMeshResidual lastMeshResidual = null;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
 
@@ -219,6 +252,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private int innerLoopSteps = 3;
 
+  // ============ Dynamic Simulation Fields ============
+  /** Whether the dynamic tray model is enabled for transient simulation. */
+  private boolean dynamicColumnEnabled = false;
+  /** Liquid holdup per tray in moles. Indexed by tray number. */
+  private transient double[] trayLiquidHoldup = null;
+  /** Weir height on each tray in metres. */
+  private double trayWeirHeight = 0.05;
+  /** Weir length (crest length) on each tray in metres. */
+  private double trayWeirLength = 1.0;
+  /** Per-tray enthalpy in J. Indexed by tray number. Null until initialized. */
+  private transient double[] trayEnthalpy = null;
+  /** Dry tray pressure drop in Pa per tray — for vapor hydraulic model. */
+  private double trayDryPressureDrop = 0.0;
+  /** Whether per-tray energy balance is active (uses PH flash instead of TP). */
+  private boolean dynamicEnergyEnabled = false;
+
   /**
    * <p>
    * Constructor for DistillationColumn.
@@ -246,7 +295,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Then the middle "simple" trays
     for (int i = 0; i < numberOfTraysLocal; i++) {
-      trays.add(new SimpleTray("SimpleTray" + (i + 1)));
+      trays.add(createMiddleTray("SimpleTray" + (i + 1), i));
     }
 
     // If user sets hasCondenser, add it at the top
@@ -451,27 +500,121 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void run(UUID id) {
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
-    switch (solverType) {
-      case DAMPED_SUBSTITUTION:
-        solveSequential(id, relaxationFactor);
-        break;
-      case INSIDE_OUT:
-        solveInsideOut(id);
-        break;
-      case WEGSTEIN:
-        solveWegstein(id);
-        break;
-      case SUM_RATES:
-        solveSumRates(id);
-        break;
-      case NEWTON:
-        solveNewton(id);
-        break;
-      case DIRECT_SUBSTITUTION:
-      default:
-        solveSequential(id, 1.0);
-        break;
+    applyDirectSpecifications();
+    if (hasAdjustableSpecifications()) {
+      solveWithSpecifications(id);
+      updateSpecificationResiduals();
+      updateMeshResiduals();
+      return;
     }
+    solveInner(id);
+    updateSpecificationResiduals();
+    updateMeshResiduals();
+  }
+
+  /** Apply specifications that map directly to condenser or reboiler controls. */
+  private void applyDirectSpecifications() {
+    applyDirectSpecification(topSpecification);
+    applyDirectSpecification(bottomSpecification);
+  }
+
+  /**
+   * Apply a specification that does not require an outer iteration.
+   *
+   * @param spec the specification to apply
+   */
+  private void applyDirectSpecification(ColumnSpecification spec) {
+    if (spec == null) {
+      return;
+    }
+
+    if (spec.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO) {
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
+        getCondenser().setRefluxRatio(spec.getTargetValue());
+      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
+        getReboiler().setRefluxRatio(spec.getTargetValue());
+      }
+    } else if (spec.getType() == ColumnSpecification.SpecificationType.DUTY) {
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
+        getCondenser().setHeatInput(spec.getTargetValue());
+      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
+        getReboiler().setHeatInput(spec.getTargetValue());
+      }
+    }
+  }
+
+  /**
+   * Check whether any configured column specification requires iterative adjustment.
+   *
+   * @return {@code true} when an active product/recovery/flow specification is present
+   */
+  private boolean hasAdjustableSpecifications() {
+    return needsAdjustment(topSpecification) || needsAdjustment(bottomSpecification);
+  }
+
+  /**
+   * Check whether all active column specifications are within their configured tolerance.
+   *
+   * @return {@code true} if all specifications are satisfied
+   */
+  private boolean specificationsSatisfied() {
+    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification);
+  }
+
+  /** Update the stored residuals for the currently configured column specifications. */
+  private void updateSpecificationResiduals() {
+    lastTopSpecificationResidual = evaluateSpecErrorSafely(topSpecification);
+    lastBottomSpecificationResidual = evaluateSpecErrorSafely(bottomSpecification);
+  }
+
+  /** Update the stored specification residuals for package-level diagnostics. */
+  void updateSpecificationResidualDiagnostics() {
+    updateSpecificationResiduals();
+  }
+
+  /** Update the stored MESH residual diagnostics for the current column state. */
+  private void updateMeshResiduals() {
+    lastMeshResidual = ColumnMeshResidualEvaluator.evaluate(this);
+  }
+
+  /**
+   * Evaluate a specification residual for diagnostics without interrupting a solve.
+   *
+   * @param spec the specification to evaluate
+   * @return current residual, zero for no specification, or {@code Double.NaN} if unavailable
+   */
+  private double evaluateSpecErrorSafely(ColumnSpecification spec) {
+    if (spec == null) {
+      return 0.0;
+    }
+    try {
+      return evaluateSpecError(spec);
+    } catch (Exception ex) {
+      logger.debug("Could not evaluate column specification residual", ex);
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Check whether a single column specification is satisfied.
+   *
+   * @param spec the specification to evaluate
+   * @return {@code true} if no residual check is needed or the residual is within tolerance
+   */
+  private boolean specificationSatisfied(ColumnSpecification spec) {
+    if (spec == null || !needsAdjustment(spec)) {
+      return true;
+    }
+    return Math.abs(evaluateSpecError(spec)) <= spec.getTolerance();
+  }
+
+  /**
+   * Solve the column using the currently selected inner solver.
+   *
+   * @param id calculation identifier
+   */
+  private ColumnSolveResult solveSelectedSolver(UUID id) {
+    return ColumnSolverFactory.create(solverType).solve(this, id);
   }
 
   /**
@@ -543,6 +686,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Evaluate specification errors
       double topError = adjustTop ? evaluateSpecError(topSpecification) : 0.0;
       double bottomError = adjustBottom ? evaluateSpecError(bottomSpecification) : 0.0;
+      lastTopSpecificationResidual = topError;
+      lastBottomSpecificationResidual = bottomError;
 
       logger.info("Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}", outerIter,
           topError, bottomError, adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
@@ -639,26 +784,42 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   private void solveInner(UUID id) {
-    switch (solverType) {
-      case DAMPED_SUBSTITUTION:
-        solveSequential(id, relaxationFactor);
-        break;
-      case INSIDE_OUT:
-        solveInsideOut(id);
-        break;
-      case WEGSTEIN:
-        solveWegstein(id);
-        break;
-      case SUM_RATES:
-        solveSumRates(id);
-        break;
-      case NEWTON:
-        solveNewton(id);
-        break;
-      case DIRECT_SUBSTITUTION:
-      default:
-        solveSequential(id, 1.0);
-        break;
+    solveSelectedSolver(id);
+  }
+
+  /**
+   * Solve using direct substitution.
+   *
+   * @param id calculation identifier
+   */
+  void solveDirectSubstitution(UUID id) {
+    solveSequential(id, 1.0);
+  }
+
+  /**
+   * Solve using damped substitution and the configured relaxation factor.
+   *
+   * @param id calculation identifier
+   */
+  void solveDampedSubstitution(UUID id) {
+    solveSequential(id, relaxationFactor);
+  }
+
+  /**
+   * Solve using inside-out initialization and temperature-Newton polishing while reporting MESH
+   * residual diagnostics.
+   *
+   * @param id calculation identifier
+   */
+  void solveMeshResidual(UUID id) {
+    solveInsideOut(id);
+    updateMeshResiduals();
+    if (lastMeshResidual == null || !lastMeshResidual.isFinite()
+        || lastMeshResidual.getInfinityNorm() > 1.0) {
+      logger.debug("MESH residual monitor requested Newton polish; residual={}",
+          lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm());
+      solveNewton(id);
+      updateMeshResiduals();
     }
   }
 
@@ -863,7 +1024,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Middle trays
       int simpleTrays = n - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
       for (int i = 0; i < simpleTrays; i++) {
-        SimpleTray tray = new SimpleTray("SimpleTray" + (i + 1));
+        SimpleTray tray = createMiddleTray("SimpleTray" + (i + 1), i);
         tray.setMultiPhaseCheck(doMultiPhaseCheck);
         trays.add(tray);
         trayCount++;
@@ -1415,7 +1576,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveInsideOut(UUID id) {
+  void solveInsideOut(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2171,15 +2332,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Solve the column using the adaptive sequential substitution scheme with a damped starting step.
-   *
-   * @param id calculation identifier
-   */
-  private void runDamped(UUID id) {
-    solveSequential(id, relaxationFactor);
-  }
-
-  /**
    * Solve the column using Wegstein acceleration of successive substitution.
    *
    * <p>
@@ -2191,7 +2343,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveWegstein(UUID id) {
+  void solveWegstein(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2373,7 +2525,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveSumRates(UUID id) {
+  void solveSumRates(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2535,7 +2687,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param id calculation identifier
    */
-  private void solveNewton(UUID id) {
+  void solveNewton(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -2954,7 +3106,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int change = tempNumberOfTrays - oldNumberOfTrays;
     if (change > 0) {
       for (int i = 0; i < change; i++) {
-        trays.add(1, new SimpleTray("SimpleTray" + (oldNumberOfTrays + i + 1)));
+        trays.add(1,
+            createMiddleTray("SimpleTray" + (oldNumberOfTrays + i + 1), oldNumberOfTrays + i));
       }
     } else if (change < 0) {
       for (int i = 0; i > change; i--) {
@@ -2964,6 +3117,89 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     numberOfTrays = tempNumberOfTrays;
     setDoInitializion(true);
     init();
+  }
+
+  /**
+   * Create a middle tray (between reboiler and condenser). Sets the reactive flash flag when the
+   * column is in reactive mode and the tray index falls inside the reactive section.
+   *
+   * @param name the tray name
+   * @param middleTrayIndex 0-based index among the middle trays (excluding reboiler/condenser)
+   * @return a new SimpleTray with reactive flash configured
+   */
+  private SimpleTray createMiddleTray(String name, int middleTrayIndex) {
+    SimpleTray tray = new SimpleTray(name);
+    if (reactive && isInReactiveSection(middleTrayIndex)) {
+      tray.setUseReactiveFlash(true);
+    }
+    return tray;
+  }
+
+  /**
+   * Check whether a middle-tray index falls inside the reactive section.
+   *
+   * @param middleTrayIndex 0-based index among middle trays
+   * @return {@code true} when the tray should use reactive flash
+   */
+  private boolean isInReactiveSection(int middleTrayIndex) {
+    if (reactiveStartTray < 0 || reactiveEndTray < 0) {
+      return true; // all middle trays are reactive
+    }
+    return middleTrayIndex >= reactiveStartTray && middleTrayIndex <= reactiveEndTray;
+  }
+
+  /**
+   * Enable or disable reactive distillation for all middle trays. When enabled, middle trays use
+   * {@link ReactiveTray} (simultaneous chemical + phase equilibrium via the Modified RAND method).
+   * Can be called after construction; existing trays will be replaced.
+   *
+   * @param reactive {@code true} to enable reactive distillation
+   */
+  public void setReactive(boolean reactive) {
+    this.reactive = reactive;
+    this.reactiveStartTray = -1;
+    this.reactiveEndTray = -1;
+    replaceMiddleTrays();
+  }
+
+  /**
+   * Enable reactive distillation on a specific section of middle trays. Tray indices are 0-based
+   * among the middle trays (excluding reboiler/condenser). For example, in a column with reboiler +
+   * 10 middle trays + condenser, {@code setReactive(true, 3, 7)} makes trays 4–8 (1-based) of the
+   * middle section reactive.
+   *
+   * @param reactive {@code true} to enable reactive distillation
+   * @param startTray first reactive middle-tray index (0-based, inclusive)
+   * @param endTray last reactive middle-tray index (0-based, inclusive)
+   */
+  public void setReactive(boolean reactive, int startTray, int endTray) {
+    this.reactive = reactive;
+    this.reactiveStartTray = startTray;
+    this.reactiveEndTray = endTray;
+    replaceMiddleTrays();
+  }
+
+  /**
+   * Update the reactive flash flag on middle trays to match the current reactive mode
+   * configuration. Called automatically by {@link #setReactive}.
+   */
+  private void replaceMiddleTrays() {
+    int start = hasReboiler ? 1 : 0;
+    int end = hasCondenser ? trays.size() - 1 : trays.size();
+    for (int i = start; i < end; i++) {
+      int middleIndex = i - start;
+      boolean shouldBeReactive = reactive && isInReactiveSection(middleIndex);
+      trays.get(i).setUseReactiveFlash(shouldBeReactive);
+    }
+  }
+
+  /**
+   * Check whether reactive distillation mode is enabled.
+   *
+   * @return {@code true} when the column has reactive trays
+   */
+  public boolean isReactive() {
+    return reactive;
   }
 
   /**
@@ -3020,7 +3256,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < getEffectiveTemperatureTolerance());
+    boolean temperatureSolved = err < getEffectiveTemperatureTolerance();
+    boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
+    boolean energySolved = !enforceEnergyBalanceTolerance
+        || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
+    return temperatureSolved && massSolved && energySolved && meshResidualsSatisfied()
+        && specificationsSatisfied();
+  }
+
+  /**
+   * Check whether the latest MESH residual satisfies the optional convergence gate.
+   *
+   * @return {@code true} if MESH residual gating is disabled or the latest residual is acceptable
+   */
+  private boolean meshResidualsSatisfied() {
+    if (!enforceMeshResidualTolerance || lastMeshResidual == null) {
+      return true;
+    }
+    return lastMeshResidual.isFinite()
+        && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance;
   }
 
   void setError(double err) {
@@ -3064,6 +3318,116 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve the latest top specification residual.
+   *
+   * @return top specification residual as current value minus target value
+   */
+  public double getLastTopSpecificationResidual() {
+    return lastTopSpecificationResidual;
+  }
+
+  /**
+   * Retrieve the latest bottom specification residual.
+   *
+   * @return bottom specification residual as current value minus target value
+   */
+  public double getLastBottomSpecificationResidual() {
+    return lastBottomSpecificationResidual;
+  }
+
+  /**
+   * Retrieve the largest absolute active specification residual.
+   *
+   * @return maximum absolute top or bottom specification residual
+   */
+  public double getLastSpecificationResidual() {
+    return Math.max(Math.abs(lastTopSpecificationResidual),
+        Math.abs(lastBottomSpecificationResidual));
+  }
+
+  /**
+   * Retrieve the latest MESH residual vector infinity norm.
+   *
+   * @return maximum absolute MESH residual, or {@code Double.NaN} if no solve has been run
+   */
+  public double getLastMeshResidualNorm() {
+    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
+  }
+
+  /**
+   * Retrieve the latest MESH material residual infinity norm.
+   *
+   * @return maximum absolute component material residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshMaterialResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.MATERIAL);
+  }
+
+  /**
+   * Retrieve the latest MESH equilibrium residual infinity norm.
+   *
+   * @return maximum absolute equilibrium residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshEquilibriumResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.EQUILIBRIUM);
+  }
+
+  /**
+   * Retrieve the latest MESH summation residual infinity norm.
+   *
+   * @return maximum absolute summation residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshSummationResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
+  }
+
+  /**
+   * Retrieve the latest MESH energy residual infinity norm.
+   *
+   * @return maximum absolute energy residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshEnergyResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.ENERGY);
+  }
+
+  /**
+   * Retrieve the latest MESH specification residual infinity norm.
+   *
+   * @return maximum absolute specification residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshSpecificationResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.SPECIFICATION);
+  }
+
+  /**
+   * Retrieve a copy of the latest MESH residual vector.
+   *
+   * @return residual vector copy, or an empty array if no solve has been run
+   */
+  public double[] getLastMeshResidualVector() {
+    return lastMeshResidual == null ? new double[0] : lastMeshResidual.getValues();
+  }
+
+  /**
+   * Retrieve the latest internal MESH residual diagnostics.
+   *
+   * @return latest residual diagnostics, or null if no solve has been run
+   */
+  ColumnMeshResidual getLastMeshResidual() {
+    return lastMeshResidual;
+  }
+
+  /**
+   * Get a MESH residual norm by equation type.
+   *
+   * @param equationType equation type to inspect
+   * @return infinity norm for that equation type, or {@code Double.NaN} if unavailable
+   */
+  private double getLastMeshResidualNorm(ColumnMeshEquationType equationType) {
+    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm(equationType);
+  }
+
+  /**
    * Retrieve the duration of the most recent solve in seconds.
    *
    * @return solve time in seconds
@@ -3100,12 +3464,40 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Control whether the latest MESH residual vector must satisfy tolerance during convergence
+   * checks.
+   *
+   * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
+   */
+  public void setEnforceMeshResidualTolerance(boolean enforce) {
+    this.enforceMeshResidualTolerance = enforce;
+  }
+
+  /**
+   * Check if convergence requires the latest MESH residual vector to satisfy tolerance.
+   *
+   * @return {@code true} if MESH residuals are part of the convergence check
+   */
+  public boolean isEnforceMeshResidualTolerance() {
+    return enforceMeshResidualTolerance;
+  }
+
+  /**
    * Access the configured relative enthalpy balance tolerance.
    *
    * @return enthalpy balance tolerance
    */
   public double getEnthalpyBalanceTolerance() {
     return getEffectiveEnthalpyBalanceTolerance();
+  }
+
+  /**
+   * Access the configured scaled MESH residual tolerance.
+   *
+   * @return MESH residual tolerance
+   */
+  public double getMeshResidualTolerance() {
+    return meshResidualTolerance;
   }
 
   /**
@@ -3356,6 +3748,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set the scaled MESH residual tolerance used when MESH residual gating is enabled.
+   *
+   * @param tol positive finite tolerance
+   * @throws IllegalArgumentException if the tolerance is not positive and finite
+   */
+  public void setMeshResidualTolerance(double tol) {
+    if (!Double.isFinite(tol) || tol <= 0.0) {
+      throw new IllegalArgumentException("MESH residual tolerance must be positive and finite");
+    }
+    this.meshResidualTolerance = tol;
+  }
+
+  /**
    * Restore adaptive default tolerances, discarding manual overrides.
    */
   public void resetToleranceOverrides() {
@@ -3365,6 +3770,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
     massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
     enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+    meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
+    enforceMeshResidualTolerance = false;
   }
 
   /**
@@ -3603,7 +4010,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     gasSystem.init(1);
 
     if (trays.get(trayIndex) instanceof SimpleTray) {
-      ((SimpleTray) trays.get(trayIndex)).setCachedGasOutStream(new Stream("", gasSystem));
+      trays.get(trayIndex).setCachedGasOutStream(new Stream("", gasSystem));
     }
   }
 
@@ -4063,6 +4470,339 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public static Builder builder(String name) {
     return new Builder(name);
+  }
+
+  // ============ Dynamic Column Getters/Setters ============
+
+  /**
+   * Enables or disables the dynamic tray-by-tray model for transient simulation.
+   *
+   * @param enabled true to enable dynamic column model
+   */
+  public void setDynamicColumnEnabled(boolean enabled) {
+    this.dynamicColumnEnabled = enabled;
+  }
+
+  /**
+   * Returns whether the dynamic tray-by-tray model is enabled.
+   *
+   * @return true if dynamic column model is active
+   */
+  public boolean isDynamicColumnEnabled() {
+    return dynamicColumnEnabled;
+  }
+
+  /**
+   * Sets the weir height for all trays (used in Francis weir overflow).
+   *
+   * @param weirHeight weir height in metres
+   */
+  public void setTrayWeirHeight(double weirHeight) {
+    this.trayWeirHeight = Math.max(0.0, weirHeight);
+  }
+
+  /**
+   * Gets the weir height for all trays.
+   *
+   * @return weir height in metres
+   */
+  public double getTrayWeirHeight() {
+    return trayWeirHeight;
+  }
+
+  /**
+   * Sets the weir crest length for all trays.
+   *
+   * @param weirLength weir length in metres
+   */
+  public void setTrayWeirLength(double weirLength) {
+    this.trayWeirLength = Math.max(0.0, weirLength);
+  }
+
+  /**
+   * Gets the weir crest length for all trays.
+   *
+   * @return weir length in metres
+   */
+  public double getTrayWeirLength() {
+    return trayWeirLength;
+  }
+
+  /**
+   * Returns the liquid holdup array (moles per tray). May be null if dynamic model has not been
+   * initialized.
+   *
+   * @return array of liquid holdups indexed by tray number, or null
+   */
+  public double[] getTrayLiquidHoldup() {
+    return trayLiquidHoldup;
+  }
+
+  /**
+   * Returns the per-tray enthalpy array in J. May be null if energy balance has not been
+   * initialized.
+   *
+   * @return array of tray enthalpies indexed by tray number, or null
+   */
+  public double[] getTrayEnthalpy() {
+    return trayEnthalpy;
+  }
+
+  /**
+   * Sets the dry tray pressure drop per tray in Pa. Used in the dynamic vapor hydraulic model to
+   * compute vapor flow rate as a function of pressure difference between trays.
+   *
+   * @param dpPa dry tray pressure drop in Pascals (positive value)
+   */
+  public void setTrayDryPressureDrop(double dpPa) {
+    this.trayDryPressureDrop = Math.max(0.0, dpPa);
+  }
+
+  /**
+   * Returns the dry tray pressure drop per tray in Pa.
+   *
+   * @return dry tray pressure drop in Pa
+   */
+  public double getTrayDryPressureDrop() {
+    return trayDryPressureDrop;
+  }
+
+  /**
+   * Enables or disables the per-tray energy balance in dynamic mode. When enabled, each tray's
+   * enthalpy is tracked and PH flash is used for re-equilibration instead of TP flash.
+   *
+   * @param enabled true to enable energy-balanced trays
+   */
+  public void setDynamicEnergyEnabled(boolean enabled) {
+    this.dynamicEnergyEnabled = enabled;
+  }
+
+  /**
+   * Returns whether the per-tray energy balance is enabled.
+   *
+   * @return true if energy-balanced trays are active
+   */
+  public boolean isDynamicEnergyEnabled() {
+    return dynamicEnergyEnabled;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Dynamic distillation column model. When {@code dynamicColumnEnabled} is true, performs a single
+   * forward-Euler integration step on each tray's liquid holdup using the MESH equations. Liquid
+   * leaving each tray is calculated using the Francis weir overflow formula.
+   * </p>
+   *
+   * @param dt time step in seconds
+   * @param id calculation identifier
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (!dynamicColumnEnabled || trays.isEmpty()) {
+      // Fall back to steady-state solve
+      if (getCalculateSteadyState()) {
+        run(id);
+      }
+      increaseTime(dt);
+      return;
+    }
+
+    int nTrays = trays.size();
+
+    // Initialize liquid holdups on first call
+    if (trayLiquidHoldup == null || trayLiquidHoldup.length != nTrays) {
+      trayLiquidHoldup = new double[nTrays];
+      for (int i = 0; i < nTrays; i++) {
+        SystemInterface trayFluid = trays.get(i).getThermoSystem();
+        if (trayFluid != null) {
+          trayLiquidHoldup[i] = trayFluid.getTotalNumberOfMoles();
+        } else {
+          trayLiquidHoldup[i] = 100.0; // default
+        }
+      }
+    }
+
+    // Initialize per-tray enthalpy on first call (when energy balance enabled)
+    if (dynamicEnergyEnabled && (trayEnthalpy == null || trayEnthalpy.length != nTrays)) {
+      trayEnthalpy = new double[nTrays];
+      for (int i = 0; i < nTrays; i++) {
+        SystemInterface trayFluid = trays.get(i).getThermoSystem();
+        if (trayFluid != null) {
+          trayEnthalpy[i] = trayFluid.getEnthalpy();
+        }
+      }
+    }
+
+    // Francis weir coefficient (SI)
+    double cWeir = 1.84;
+
+    // Pre-compute overflow rates for all trays so downstream trays can
+    // read the correct liquid-in from the tray above
+    double[] overflowMolRate = new double[nTrays];
+    double[] liquidMolarVol = new double[nTrays];
+    double trayArea = Math.PI / 4.0 * internalDiameter * internalDiameter;
+    for (int i = 0; i < nTrays; i++) {
+      SystemInterface trayFluid = trays.get(i).getThermoSystem();
+      liquidMolarVol[i] = 1.0e-4; // default m3/mol
+      if (trayFluid != null && (trayFluid.hasPhaseType("aqueous") || trayFluid.hasPhaseType("oil")
+          || trayFluid.getNumberOfPhases() > 1)) {
+        double liquidDensity = trayFluid.getPhase(1).getDensity("mol/m3");
+        if (liquidDensity > 0) {
+          liquidMolarVol[i] = 1.0 / liquidDensity;
+        }
+      }
+      double liquidVolume = trayLiquidHoldup[i] * liquidMolarVol[i];
+      double liquidHeight = trayArea > 0 ? liquidVolume / trayArea : 0.0;
+      double howOverWeir = Math.max(0.0, liquidHeight - trayWeirHeight);
+      double overflowVol = cWeir * trayWeirLength * Math.pow(howOverWeir, 1.5);
+      overflowMolRate[i] = overflowVol / liquidMolarVol[i];
+    }
+
+    // For each tray (top to bottom), compute flows and update holdup
+    for (int i = 0; i < nTrays; i++) {
+      SimpleTray tray = trays.get(i);
+      SystemInterface trayFluid = tray.getThermoSystem();
+      if (trayFluid == null) {
+        continue;
+      }
+
+      double liquidOutRate = overflowMolRate[i];
+
+      // Vapor in-flow from tray below
+      double vaporInRate = 0.0;
+      if (i < nTrays - 1) {
+        SystemInterface belowFluid = trays.get(i + 1).getThermoSystem();
+        if (belowFluid != null && belowFluid.getNumberOfPhases() > 0) {
+          if (trayDryPressureDrop > 0.0) {
+            // Pressure-driven vapor hydraulic: vapor rises if pressure below exceeds
+            // pressure above by more than the tray resistance (dry DP + liquid head).
+            double liquidHeight =
+                trayArea > 0 ? trayLiquidHoldup[i] * liquidMolarVol[i] / trayArea : 0.0;
+            double liquidHeadPa =
+                liquidHeight * 9.81 * (liquidMolarVol[i] > 0 ? 1.0 / liquidMolarVol[i] : 800.0);
+            double totalTrayDp = trayDryPressureDrop + liquidHeadPa;
+            double pBelow = belowFluid.getPressure("Pa");
+            double pAbove = trayFluid.getPressure("Pa");
+            double dpAvailable = pBelow - pAbove;
+            if (dpAvailable > 0.0 && totalTrayDp > 0.0) {
+              // Vapor flow proportional to sqrt of available DP fraction
+              double vaporMoles = belowFluid.getPhase(0).getNumberOfMolesInPhase();
+              double dpRatio = Math.min(dpAvailable / totalTrayDp, 2.0);
+              vaporInRate = vaporMoles * Math.sqrt(dpRatio) / Math.max(dt, 0.001);
+            }
+          } else {
+            // Original simplified model: all vapor rises in one timestep
+            vaporInRate = belowFluid.getPhase(0).getNumberOfMolesInPhase() / Math.max(dt, 0.001);
+          }
+        }
+      }
+
+      // Liquid in-flow from tray above (use pre-computed overflow)
+      double liquidInRate = (i > 0) ? overflowMolRate[i - 1] : 0.0;
+
+      // Feed stream contribution
+      double feedRate = 0.0;
+      double feedEnthalpy = 0.0;
+      List<StreamInterface> trayFeeds = feedStreams.get(i);
+      if (trayFeeds != null) {
+        for (StreamInterface feedStream : trayFeeds) {
+          if (feedStream.getThermoSystem() != null) {
+            double fMoles =
+                feedStream.getThermoSystem().getTotalNumberOfMoles() / Math.max(dt, 0.001);
+            feedRate += fMoles;
+            if (dynamicEnergyEnabled) {
+              feedEnthalpy += feedStream.getThermoSystem().getEnthalpy() / Math.max(dt, 0.001);
+            }
+          }
+        }
+      }
+
+      // Vapor production rate from this tray
+      double vaporOutRate = 0.0;
+      if (trayFluid.getNumberOfPhases() > 0) {
+        vaporOutRate = trayFluid.getPhase(0).getNumberOfMolesInPhase() / Math.max(dt, 0.001);
+      }
+
+      // Forward Euler holdup update: dn/dt = Lin + Vin + F - Lout - Vout
+      double dHoldup = (liquidInRate + vaporInRate + feedRate - liquidOutRate - vaporOutRate) * dt;
+      trayLiquidHoldup[i] = Math.max(0.0, trayLiquidHoldup[i] + dHoldup);
+
+      // --- Re-flash the tray ---
+      if (dynamicEnergyEnabled && trayEnthalpy != null) {
+        // Energy-balance mode: compute enthalpy flows and use PH flash
+        double hLiqIn = 0.0;
+        if (i > 0 && liquidInRate > 0) {
+          SystemInterface aboveFluid = trays.get(i - 1).getThermoSystem();
+          if (aboveFluid != null && aboveFluid.getNumberOfPhases() > 1) {
+            double molarH = aboveFluid.getPhase(1).getEnthalpy()
+                / Math.max(aboveFluid.getPhase(1).getNumberOfMolesInPhase(), 1.0);
+            hLiqIn = liquidInRate * molarH;
+          }
+        }
+        double hVapIn = 0.0;
+        if (i < nTrays - 1 && vaporInRate > 0) {
+          SystemInterface belowFluid = trays.get(i + 1).getThermoSystem();
+          if (belowFluid != null && belowFluid.getNumberOfPhases() > 0) {
+            double molarH = belowFluid.getPhase(0).getEnthalpy()
+                / Math.max(belowFluid.getPhase(0).getNumberOfMolesInPhase(), 1.0);
+            hVapIn = vaporInRate * molarH;
+          }
+        }
+        double hLiqOut = 0.0;
+        if (liquidOutRate > 0 && trayFluid.getNumberOfPhases() > 1) {
+          double molarH = trayFluid.getPhase(1).getEnthalpy()
+              / Math.max(trayFluid.getPhase(1).getNumberOfMolesInPhase(), 1.0);
+          hLiqOut = liquidOutRate * molarH;
+        }
+        double hVapOut = 0.0;
+        if (vaporOutRate > 0 && trayFluid.getNumberOfPhases() > 0) {
+          double molarH = trayFluid.getPhase(0).getEnthalpy()
+              / Math.max(trayFluid.getPhase(0).getNumberOfMolesInPhase(), 1.0);
+          hVapOut = vaporOutRate * molarH;
+        }
+        double dEnthalpy = (hLiqIn + hVapIn + feedEnthalpy - hLiqOut - hVapOut) * dt;
+        trayEnthalpy[i] += dEnthalpy;
+
+        // PH flash: set tray fluid to tracked enthalpy
+        try {
+          neqsim.thermodynamicoperations.ThermodynamicOperations trayOps =
+              new neqsim.thermodynamicoperations.ThermodynamicOperations(trayFluid);
+          trayOps.PHflash(trayEnthalpy[i]);
+        } catch (Exception ex) {
+          logger.warn("Dynamic tray " + i + " PH flash failed: " + ex.getMessage());
+          // Fallback to TP flash
+          try {
+            tray.run(id);
+          } catch (Exception ex2) {
+            logger.warn("Dynamic tray " + i + " TP flash fallback failed: " + ex2.getMessage());
+          }
+        }
+      } else {
+        // Default: TP flash (original behavior)
+        try {
+          tray.run(id);
+        } catch (Exception ex) {
+          logger.warn("Dynamic tray " + i + " flash failed: " + ex.getMessage());
+        }
+      }
+    }
+
+    // Update column outlet streams from top and bottom trays
+    if (trays.size() > 0) {
+      StreamInterface gasOut = trays.get(nTrays - 1).getGasOutStream();
+      if (gasOut != null && gasOut.getThermoSystem() != null) {
+        gasOutStream.setThermoSystem(gasOut.getThermoSystem().clone());
+      }
+      StreamInterface liqOut = trays.get(0).getLiquidOutStream();
+      if (liqOut != null && liqOut.getThermoSystem() != null) {
+        liquidOutStream.setThermoSystem(liqOut.getThermoSystem().clone());
+      }
+    }
+
+    increaseTime(dt);
+    setCalculationIdentifier(id);
   }
 
   /**

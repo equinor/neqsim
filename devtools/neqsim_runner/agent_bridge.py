@@ -30,12 +30,15 @@ Usage from an LLM agent::
         args={"pressure": 60.0, "temperature": 25.0},
     )
 
-    # Run all pending jobs (blocking)
-    bridge.run_all()
+    # Run all pending jobs (blocking, serial by default for JVM safety)
+    bridge.run_all(max_parallel=1)
 
     # Check results
     status = bridge.get_status(job_id)
     results = bridge.get_results(job_id)
+
+    # Merge into task-level results.json without discarding earlier notebooks
+    bridge.merge_results_to_task([job_id])
 
     # Get results for a multi-job sweep
     all_results = bridge.collect_results()
@@ -368,19 +371,89 @@ class AgentBridge:
             "detail": counts,
         }
 
-    def copy_results_to_task(self, job_id, filename="results.json"):
+    def copy_results_to_task(self, job_id, filename="results.json", merge=False):
         """
-        Copy a job's results.json into the task_solve root (overwriting).
+        Copy a job's results.json into the task_solve root.
 
-        This is the final step — makes the runner output available to
-        the report generator.
+        By default this preserves the historic overwrite behavior. Use
+        ``merge=True`` for multi-notebook task workflows so later notebooks do
+        not accidentally discard results written by earlier notebooks.
+
+        Parameters
+        ----------
+        job_id : str
+            The completed job ID whose results should be copied.
+        filename : str
+            Destination filename in the task root.
+        merge : bool
+            Merge into an existing destination JSON instead of overwriting.
+
+        Returns
+        -------
+        str
+            Path to the written destination file.
         """
+        if merge:
+            return self.merge_results_to_task([job_id], filename=filename)
+
         results = self.get_results(job_id)
         if results is None:
             raise RuntimeError(f"No results available for {job_id}")
         dest = self.task_dir / filename
         with open(dest, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2)
+        return str(dest)
+
+    def merge_results_to_task(self, job_ids=None, filename="results.json"):
+        """
+        Merge one or more job results into the task root results.json.
+
+        This is the safe default for task folders with multiple notebooks:
+        dictionaries are merged recursively, lists are appended without exact
+        duplicate entries, and scalar values from later jobs override earlier
+        values. Existing task-level results are loaded first and preserved.
+
+        Parameters
+        ----------
+        job_ids : str or list of str, optional
+            Job IDs to merge. Defaults to jobs submitted by this bridge, or job
+            IDs recorded in ``progress.json`` when resuming.
+        filename : str
+            Destination filename in the task root.
+
+        Returns
+        -------
+        str
+            Path to the written destination file.
+
+        Raises
+        ------
+        RuntimeError
+            If a requested job has no readable results.json.
+        """
+        if job_ids is None:
+            job_ids = list(self._job_ids)
+            if not job_ids:
+                job_ids = self.progress.get_job_ids()
+        elif isinstance(job_ids, str):
+            job_ids = [job_ids]
+
+        dest = self.task_dir / filename
+        merged = {}
+        if dest.exists():
+            with open(dest, "r", encoding="utf-8") as results_file:
+                existing = json.load(results_file)
+            if isinstance(existing, dict):
+                merged = existing
+
+        for job_id in job_ids:
+            results = self.get_results(job_id)
+            if results is None:
+                raise RuntimeError(f"No results available for {job_id}")
+            merged = _merge_json_values(merged, results)
+
+        with open(dest, "w", encoding="utf-8") as results_file:
+            json.dump(merged, results_file, indent=2)
         return str(dest)
 
     def _submit(self, script, args, max_retries, timeout_seconds, workdir=None,
@@ -446,7 +519,7 @@ def _notebook_to_script(notebook_path):
     - Code cells are extracted as-is
     - Markdown cells become block comments
     - IPython magics (%matplotlib, !) are commented out
-    - The dual-boot setup cell is replaced with direct pip import
+    - The devtools setup cell is replaced with direct devtools import
     - Interactive display calls are replaced with file saves
 
     Parameters
@@ -495,6 +568,27 @@ def _notebook_to_script(notebook_path):
     return script_path
 
 
+def _merge_json_values(base_value, update_value):
+    """Recursively merge JSON-compatible values for task results."""
+    if isinstance(base_value, dict) and isinstance(update_value, dict):
+        merged = dict(base_value)
+        for key, value in update_value.items():
+            if key in merged:
+                merged[key] = _merge_json_values(merged[key], value)
+            else:
+                merged[key] = value
+        return merged
+
+    if isinstance(base_value, list) and isinstance(update_value, list):
+        merged_list = list(base_value)
+        for item in update_value:
+            if item not in merged_list:
+                merged_list.append(item)
+        return merged_list
+
+    return update_value
+
+
 def _process_code_cell(source):
     """
     Process a code cell for headless execution.
@@ -504,37 +598,30 @@ def _process_code_cell(source):
     - Shell commands (! lines → comments)
     - Interactive Display calls
     - matplotlib inline → agg backend
-    - The dual-boot setup cell → simplified import
+    - The devtools setup cell → simplified import
     """
     lines = source.split("\n")
     output = []
 
-    # Detect if this is the dual-boot setup cell
+    # Detect if this is the devtools setup cell
     is_setup_cell = any("neqsim_dev_setup" in line or "NEQSIM_MODE" in line
                         for line in lines)
 
     if is_setup_cell:
         # Replace with a simpler headless-compatible version
         output.append("# -- NeqSim setup (headless) --")
-        output.append("import os, sys, subprocess")
-        output.append("try:")
-        output.append("    # Try devtools first")
-        output.append("    project_root = os.environ.get('NEQSIM_PROJECT_ROOT')")
-        output.append("    if project_root:")
-        output.append("        sys.path.insert(0, os.path.join(project_root, 'devtools'))")
-        output.append("        from neqsim_dev_setup import neqsim_init, neqsim_classes")
-        output.append("        ns = neqsim_init(project_root=project_root, recompile=False, verbose=False)")
-        output.append("        ns = neqsim_classes(ns)")
-        output.append("        print('NeqSim loaded via devtools')")
-        output.append("    else:")
-        output.append("        raise ImportError('no devtools')")
-        output.append("except (ImportError, Exception):")
-        output.append("    try:")
-        output.append("        import neqsim")
-        output.append("    except ImportError:")
-        output.append("        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-q', 'neqsim'])")
-        output.append("    from neqsim import jneqsim")
-        output.append("    print('NeqSim loaded via pip')")
+        output.append("import os, sys")
+        output.append("project_root = os.environ.get('NEQSIM_PROJECT_ROOT')")
+        output.append("if not project_root:")
+        output.append("    raise RuntimeError('NEQSIM_PROJECT_ROOT is required for task notebook execution')")
+        output.append("devtools_path = os.path.join(project_root, 'devtools')")
+        output.append("if devtools_path not in sys.path:")
+        output.append("    sys.path.insert(0, devtools_path)")
+        output.append("from neqsim_dev_setup import neqsim_init, neqsim_classes")
+        output.append("ns = neqsim_init(project_root=project_root, recompile=False, verbose=False)")
+        output.append("ns = neqsim_classes(ns)")
+        output.append("NEQSIM_MODE = 'devtools'")
+        output.append("print('NeqSim loaded via devtools workspace classes')")
         return "\n".join(output)
 
     for line in lines:

@@ -77,6 +77,12 @@ public class WellMechanicalDesign extends MechanicalDesign {
   /** Cost estimator. */
   private transient WellCostEstimator costEstimator;
 
+  /** Standards-based data source for loading design parameters from CSV. */
+  private transient WellMechanicalDesignDataSource dataSource;
+
+  /** Well barrier schematic for NORSOK D-010 validation. */
+  private WellBarrierSchematic barrierSchematic;
+
   // ============ Design Results ============
   /** Production casing required wall thickness in mm. */
   private double productionCasingWallThickness = 0.0;
@@ -161,8 +167,31 @@ public class WellMechanicalDesign extends MechanicalDesign {
   /** {@inheritDoc} */
   @Override
   public void readDesignSpecifications() {
-    // Initialize calculator with well parameters
-    getCalculator();
+    // Initialize calculator and data source
+    WellDesignCalculator calc = getCalculator();
+    WellMechanicalDesignDataSource ds = getDataSource();
+
+    // Load design factors from standards CSV (NORSOK D-010)
+    boolean isInjector = well.isInjector();
+    ds.loadNorskD010DesignFactors(calc, isInjector);
+    calc.setInjectionWell(isInjector);
+
+    // Load barrier requirements from standards
+    java.util.Map<String, Double> barrierReqs = ds.loadBarrierRequirements();
+
+    // Configure barrier schematic
+    barrierSchematic = new WellBarrierSchematic();
+    barrierSchematic.setWellType(well.getWellType().name());
+    if (barrierReqs.containsKey("minPrimaryElements")) {
+      barrierSchematic.setMinimumElements(barrierReqs.get("minPrimaryElements").intValue(),
+          barrierReqs.get("minSecondaryElements").intValue());
+    }
+    if (barrierReqs.containsKey("dhsvRequired")) {
+      barrierSchematic.setDhsvRequired(barrierReqs.get("dhsvRequired") > 0.5 && !isInjector);
+    }
+    if (barrierReqs.containsKey("isvRequiredInjector")) {
+      barrierSchematic.setIsvRequired(barrierReqs.get("isvRequiredInjector") > 0.5 && isInjector);
+    }
   }
 
   /** {@inheritDoc} */
@@ -171,6 +200,9 @@ public class WellMechanicalDesign extends MechanicalDesign {
     if (well == null) {
       return;
     }
+
+    // Load standards-based design factors
+    readDesignSpecifications();
 
     WellDesignCalculator calc = getCalculator();
     calc.setMeasuredDepth(well.getMeasuredDepth());
@@ -224,47 +256,113 @@ public class WellMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Verify well barriers per NORSOK D-010.
+   * Verify well barriers per NORSOK D-010 using the barrier schematic model.
+   *
+   * <p>
+   * If a {@link WellBarrierSchematic} has been configured (via
+   * {@link #readDesignSpecifications()}), validation uses the schematic model with element-level
+   * checking. Otherwise falls back to the legacy count-based check.
+   * </p>
    */
   private void verifyWellBarriers() {
     barrierNotes.clear();
     barrierIssueCount = 0;
 
-    // Primary barrier check
-    if (well.getPrimaryBarrierElements() < 2) {
-      barrierNotes.add("WARNING: Primary barrier requires minimum 2 elements (NORSOK D-010)");
-      barrierIssueCount++;
-    }
+    if (barrierSchematic != null && barrierSchematic.getPrimaryEnvelope() != null) {
+      // Use schematic-based validation
+      buildDefaultBarrierElements();
+      barrierSchematic.validate();
 
-    // Secondary barrier check
-    if (well.getSecondaryBarrierElements() < 2) {
-      barrierNotes.add("WARNING: Secondary barrier requires minimum 2 elements (NORSOK D-010)");
-      barrierIssueCount++;
-    }
-
-    // DHSV check for subsea wells
-    if (!well.hasDHSV() && well.isProducer()) {
-      barrierNotes.add("WARNING: DHSV (SSSV) required for subsea production wells (NORSOK D-010)");
-      barrierIssueCount++;
-    }
-
-    // Annulus monitoring
-    barrierNotes.add("INFO: Annular pressure monitoring required per NORSOK D-010 Section 9");
-
-    // Two-barrier principle
-    if (well.getPrimaryBarrierElements() >= 2 && well.getSecondaryBarrierElements() >= 2
-        && (well.hasDHSV() || !well.isProducer())) {
-      barrierVerificationPassed = true;
-      barrierNotes.add("PASS: Two-barrier principle satisfied per NORSOK D-010");
+      for (String issue : barrierSchematic.getIssues()) {
+        barrierNotes.add(issue);
+        if (issue.startsWith("FAIL:") || issue.startsWith("WARNING:")) {
+          barrierIssueCount++;
+        }
+      }
+      barrierVerificationPassed = barrierSchematic.isPassed();
     } else {
-      barrierVerificationPassed = false;
-      barrierNotes.add("FAIL: Two-barrier principle NOT satisfied — review well design");
+      // Legacy count-based validation
+      if (well.getPrimaryBarrierElements() < 2) {
+        barrierNotes.add("WARNING: Primary barrier requires minimum 2 elements (NORSOK D-010)");
+        barrierIssueCount++;
+      }
+      if (well.getSecondaryBarrierElements() < 2) {
+        barrierNotes.add("WARNING: Secondary barrier requires minimum 2 elements (NORSOK D-010)");
+        barrierIssueCount++;
+      }
+      if (!well.hasDHSV() && well.isProducer()) {
+        barrierNotes
+            .add("WARNING: DHSV (SSSV) required for subsea production wells (NORSOK D-010)");
+        barrierIssueCount++;
+      }
+      barrierNotes.add("INFO: Annular pressure monitoring required per NORSOK D-010 Section 9");
+
+      if (well.getPrimaryBarrierElements() >= 2 && well.getSecondaryBarrierElements() >= 2
+          && (well.hasDHSV() || !well.isProducer())) {
+        barrierVerificationPassed = true;
+        barrierNotes.add("PASS: Two-barrier principle satisfied per NORSOK D-010");
+      } else {
+        barrierVerificationPassed = false;
+        barrierNotes.add("FAIL: Two-barrier principle NOT satisfied — review well design");
+      }
     }
+  }
+
+  /**
+   * Build default barrier elements from the SubseaWell configuration.
+   *
+   * <p>
+   * Populates the primary and secondary envelopes based on the well type and whether DHSV/ISV are
+   * present. This provides a default element set when barriers are not explicitly configured.
+   * </p>
+   */
+  private void buildDefaultBarrierElements() {
+    BarrierEnvelope primary = new BarrierEnvelope("Primary");
+    BarrierEnvelope secondary = new BarrierEnvelope("Secondary");
+
+    // Primary envelope: tubing, safety valve, tree
+    primary.addElement(new BarrierElement(BarrierElement.ElementType.TUBING, "Production Tubing"));
+    if (well.hasDHSV() && well.isProducer()) {
+      primary.addElement(new BarrierElement(BarrierElement.ElementType.DHSV, "DHSV (SSSV)"));
+    }
+    if (well.isInjector()) {
+      // ISV required per NORSOK D-010 Table 36
+      primary
+          .addElement(new BarrierElement(BarrierElement.ElementType.ISV, "Injection Safety Valve"));
+      primary
+          .addElement(new BarrierElement(BarrierElement.ElementType.PACKER, "Production Packer"));
+    }
+    primary.addElement(new BarrierElement(BarrierElement.ElementType.WELLHEAD, "Tubing Hanger"));
+    primary.addElement(
+        new BarrierElement(BarrierElement.ElementType.XMAS_TREE, "Xmas Tree / Master Valve"));
+
+    // Secondary envelope: casing, cement, wellhead
+    secondary
+        .addElement(new BarrierElement(BarrierElement.ElementType.CASING, "Production Casing"));
+    secondary
+        .addElement(new BarrierElement(BarrierElement.ElementType.CASING_CEMENT, "Casing Cement"));
+    secondary.addElement(new BarrierElement(BarrierElement.ElementType.WELLHEAD, "Casing Hanger"));
+
+    // Add additional barrier elements from well configuration counts
+    int extraPrimary = well.getPrimaryBarrierElements() - primary.getElementCount();
+    for (int i = 0; i < extraPrimary; i++) {
+      primary.addElement(new BarrierElement(BarrierElement.ElementType.PLUG,
+          "Additional primary element " + (i + 1)));
+    }
+    int extraSecondary = well.getSecondaryBarrierElements() - secondary.getElementCount();
+    for (int i = 0; i < extraSecondary; i++) {
+      secondary.addElement(new BarrierElement(BarrierElement.ElementType.PLUG,
+          "Additional secondary element " + (i + 1)));
+    }
+
+    barrierSchematic.setPrimaryEnvelope(primary);
+    barrierSchematic.setSecondaryEnvelope(secondary);
   }
 
   /**
    * Calculate cost estimate for the well.
    */
+  @Override
   public void calculateCostEstimate() {
     WellCostEstimator ce = getCostEstimator();
 
@@ -306,6 +404,27 @@ public class WellMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Get the standards data source, creating if needed.
+   *
+   * @return the data source
+   */
+  public WellMechanicalDesignDataSource getDataSource() {
+    if (dataSource == null) {
+      dataSource = new WellMechanicalDesignDataSource();
+    }
+    return dataSource;
+  }
+
+  /**
+   * Get the well barrier schematic.
+   *
+   * @return barrier schematic, or null if not yet configured
+   */
+  public WellBarrierSchematic getBarrierSchematic() {
+    return barrierSchematic;
+  }
+
+  /**
    * Get cost breakdown.
    *
    * @return map of cost categories
@@ -322,6 +441,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     return getCostEstimator().generateBillOfMaterials(well);
   }
@@ -453,7 +573,37 @@ public class WellMechanicalDesign extends MechanicalDesign {
       notesArray.add(note);
     }
     barriers.add("notes", notesArray);
+
+    // Include schematic detail if available
+    if (barrierSchematic != null) {
+      barriers.addProperty("primaryElementCount",
+          barrierSchematic.getPrimaryEnvelope().getElementCount());
+      barriers.addProperty("primaryFunctionalCount",
+          barrierSchematic.getPrimaryEnvelope().getFunctionalElementCount());
+      barriers.addProperty("secondaryElementCount",
+          barrierSchematic.getSecondaryEnvelope().getElementCount());
+      barriers.addProperty("secondaryFunctionalCount",
+          barrierSchematic.getSecondaryEnvelope().getFunctionalElementCount());
+    }
     jsonObj.add("barrierVerification", barriers);
+
+    // Applied standards
+    JsonArray standardsArray = new JsonArray();
+    List<String> dsStandards = new ArrayList<String>();
+    if (dataSource != null) {
+      dsStandards = dataSource.getAppliedStandards();
+      for (String std : dsStandards) {
+        standardsArray.add(std);
+      }
+    }
+    if (barrierSchematic != null) {
+      for (String std : barrierSchematic.getAppliedStandards()) {
+        if (!dsStandards.contains(std)) {
+          standardsArray.add(std);
+        }
+      }
+    }
+    jsonObj.add("appliedStandards", standardsArray);
 
     // Cost estimation
     JsonObject cost = new JsonObject();

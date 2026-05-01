@@ -1,0 +1,3 @@
+case_id,modeled_oil_in_gas,modeled_water_in_gas,modeled_gas_in_oil,modeled_gas_in_water,modeled_oil_in_water,modeled_water_in_oil,measured_oil_in_gas,measured_water_in_gas,measured_gas_in_oil,measured_gas_in_water,measured_oil_in_water,measured_water_in_oil
+example_case_1,0.010,0.010,0.020,0.020,0.030,0.030,0.015,0.015,0.010,0.010,0.060,0.060
+example_case_2,0.020,0.020,0.010,0.010,0.040,0.040,0.030,0.030,0.005,0.005,0.080,0.080

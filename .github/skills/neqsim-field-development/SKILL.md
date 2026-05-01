@@ -1,6 +1,7 @@
 ---
 name: neqsim-field-development
 description: "Field development workflows, concept selection, and integrated project evaluation using NeqSim. USE WHEN: performing field development studies, concept screening, tieback analysis, production forecasting, or integrated field planning. Covers the full lifecycle from discovery through operations with NeqSim's field development classes."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Field Development Skill

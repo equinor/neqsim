@@ -300,6 +300,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
    *
    * @return outlet temperature [K]
    */
+  @Override
   public double getOutletTemperature() {
     return outletTemperature;
   }

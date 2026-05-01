@@ -1,7 +1,6 @@
 package neqsim.process.mechanicaldesign.distillation;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -11,7 +10,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
  * Mechanical design class for distillation columns.
- * 
+ *
  * <p>
  * Handles design calculations for tray-based and packed distillation columns including:
  * </p>

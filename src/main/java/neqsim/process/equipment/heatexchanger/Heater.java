@@ -79,6 +79,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   protected double lastOutTemperature = 0.0;
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
+  protected double[] lastComposition = null;
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
   HeatExchangerElectricalDesign electricalDesign;
@@ -248,6 +249,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    *
    * @param pressure Pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     setOutPressure = true;
     this.pressureUnit = "bara";
@@ -269,6 +271,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    *
    * @param temperature Temperature in Kelvin
    */
+  @Override
   public void setOutletTemperature(double temperature) {
     setTemperature = true;
     setEnergyInput = false;
@@ -284,6 +287,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * @param temperature Temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double temperature) {
     setOutletTemperature(temperature);
@@ -313,19 +317,32 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (inStream == null) {
+    if (inStream == null || inStream.getFluid() == null || lastComposition == null) {
       return true;
     }
-    if (inStream.getFluid().getTemperature() == lastTemperature
-        && inStream.getFluid().getPressure() == lastPressure
-        && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / inStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && lastDuty == getDuty() && lastOutPressure == pressureOut
-        && lastOutTemperature == temperatureOut && getPressureDrop() == lastPressureDrop) {
-      return false;
-    } else {
+    SystemInterface inFluid = inStream.getFluid();
+    // Cheap scalar checks first - avoid the composition array walk if any fail.
+    if (inFluid.getTemperature() != lastTemperature || inFluid.getPressure() != lastPressure
+        || lastDuty != getDuty() || lastOutPressure != pressureOut
+        || lastOutTemperature != temperatureOut || getPressureDrop() != lastPressureDrop) {
       return true;
     }
+    double inFlow = inFluid.getFlowRate("kg/hr");
+    if (inFlow <= 0.0 || lastFlowRate <= 0.0 || Math.abs(inFlow - lastFlowRate) / inFlow >= 1e-6) {
+      return true;
+    }
+    // Allocation-free composition comparison.
+    neqsim.thermo.phase.PhaseInterface ph0 = inFluid.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastComposition[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
@@ -344,10 +361,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       lastOutPressure = pressureOut;
       lastOutTemperature = temperatureOut;
       lastPressureDrop = pressureDrop;
+      lastComposition = inStream.getFluid().getMolarComposition().clone();
       setCalculationIdentifier(id);
       return;
     }
-    system.init(3);
+    // Use init(2) instead of init(3) - only need enthalpy (from init level 2), not composition
+    // derivatives (level 3). The clone from the inlet already has valid thermodynamic state.
+    system.init(2);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {
       energyInput = -energyStream.getDuty();
@@ -393,6 +413,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     lastOutPressure = pressureOut;
     lastOutTemperature = temperatureOut;
     lastPressureDrop = pressureDrop;
+    lastComposition = inStream.getFluid().getMolarComposition().clone();
     setCalculationIdentifier(id);
   }
 

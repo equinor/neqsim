@@ -12,8 +12,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * LNG storage tank model with boil-off gas (BOG) generation.
  *
  * <p>
- * Models an LNG storage tank (membrane or Moss sphere type) with heat ingress through insulation,
- * generating a boil-off gas (BOG) stream. The BOG rate depends on tank geometry, insulation
+ * Models an LNG storage tank (membrane or Moss sphere type) with heat ingress
+ * through insulation,
+ * generating a boil-off gas (BOG) stream. The BOG rate depends on tank
+ * geometry, insulation
  * properties, ambient temperature, and LNG composition.
  * </p>
  *
@@ -27,7 +29,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <p>
- * Typical boil-off rates are 0.05 - 0.15 %/day of total LNG volume for modern insulated tanks.
+ * Typical boil-off rates are 0.05 - 0.15 %/day of total LNG volume for modern
+ * insulated tanks.
  * </p>
  *
  * @author NeqSim
@@ -100,7 +103,7 @@ public class LNGTank extends Tank {
   /**
    * Constructor for LNGTank with an inlet LNG stream.
    *
-   * @param name name of the LNG tank
+   * @param name        name of the LNG tank
    * @param inletStream inlet LNG stream
    */
   public LNGTank(String name, StreamInterface inletStream) {
@@ -162,7 +165,7 @@ public class LNGTank extends Tank {
    * Set the ambient temperature surrounding the tank.
    *
    * @param temperature ambient temperature value
-   * @param unit temperature unit ("K", "C")
+   * @param unit        temperature unit ("K", "C")
    */
   public void setAmbientTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -282,6 +285,19 @@ public class LNGTank extends Tank {
 
   /** {@inheritDoc} */
   @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (bogStream != null) {
+      out.add(bogStream);
+    }
+    if (lngProductStream != null) {
+      out.add(lngProductStream);
+    }
+    return out;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     // Run the parent Tank logic first
     super.run(id);
@@ -296,8 +312,7 @@ public class LNGTank extends Tank {
     lngTemperature = inletFluid.getTemperature("K");
 
     // Calculate heat ingress: Q = U * A * (T_amb - T_LNG)
-    heatIngress =
-        overallHeatTransferCoeff * tankSurfaceArea * (ambientTemperature - lngTemperature);
+    heatIngress = overallHeatTransferCoeff * tankSurfaceArea * (ambientTemperature - lngTemperature);
     if (heatIngress < 0) {
       heatIngress = 0.0;
     }

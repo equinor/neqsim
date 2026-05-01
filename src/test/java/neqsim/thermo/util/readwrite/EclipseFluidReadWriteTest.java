@@ -190,7 +190,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(0.9780559630, testSystem.getBeta(0), 1e-6);
     // testSystem.prettyPrint();
     // String fileName = "OLGAneqsim.tab";
-    // testOps.OLGApropTable(273.15 + 20, 273.15 + 100.0, 20, 1.0, 100.0, 20, fileName, 1);
+    // testOps.OLGApropTable(273.15 + 20, 273.15 + 100.0, 20, 1.0, 100.0, 20,
+    // fileName, 1);
   }
 
   @Test
@@ -225,7 +226,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // testSystem.prettyPrint();
 
     // neqsim.thermo.util.readwrite.TablePrinter.printTable(
-    // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    // (((PhaseEos)
+    // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
     double[][] paramsPhase0 =
         ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
     double[][] paramsPhase1 =
@@ -378,7 +380,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value: OMEGAA from file (0.45724) now applied instead of default
+    // Updated expected value: OMEGAA from file (0.45724) now applied instead of
+    // default
     // (0.45724333333)
     Assertions.assertEquals(-4639.239569750378, ent, 1e-3);
 
@@ -688,7 +691,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // separationProcess.run();
 
     // assertFalse(secondStageCompressor.isSurge(), "compressor is surge");
-    // assertFalse(secondStageCompressor.isStoneWall(), "compressor is stone wall limited");
+    // assertFalse(secondStageCompressor.isStoneWall(), "compressor is stone wall
+    // limited");
 
     System.out.println(
         "compressor polytropic head end " + secondStageCompressor.getPolytropicFluidHead());
@@ -816,7 +820,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
     debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
     debutanizer.getCondenser().setRefluxRatio(0.1);
-    // debutanizer.getCondenser().setSeparation_with_liquid_reflux(true, 2000.0, "kg/hr");
+    // debutanizer.getCondenser().setSeparation_with_liquid_reflux(true, 2000.0,
+    // "kg/hr");
     debutanizer.getCondenser().setTotalCondenser(true);
     debutanizer.setTopPressure(8.4);
     debutanizer.setBottomPressure(8.4);
@@ -881,8 +886,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1095.3504, 1.1);
     Assertions.assertEquals(napthaLiquidToDeethanizer.getFlowRate("m3/hr"), 16.60364, 1.1);
 
-    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
-        * gasfromDeethanizerSeparator.LCV() / 1e6, 17.61828466, 0.1);
+    Assertions.assertEquals(17.61828466, gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
+        * gasfromDeethanizerSeparator.LCV() / 1e6, 0.1);
 
     Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 47.24077, 0.1);
     Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 68.2539, 0.1);
@@ -984,7 +989,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    */
   @Test
   void testLBCCOEFReading() throws IOException {
-    // example.e300 contains LBCCOEF with values: 0.1084806 -0.0295031 0.1130421 -0.0553108
+    // example.e300 contains LBCCOEF with values: 0.1084806 -0.0295031 0.1130421
+    // -0.0553108
     // 0.0093324
     testSystem = EclipseFluidReadWrite.read(example);
     testSystem.setPressure(100.0, "bara");
@@ -1178,7 +1184,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   @Test
   void testReadPvtSimReferenceFormat() throws IOException {
     // Read the PVTsim Nova reference E300 format with all sections:
-    // OMEGAA, OMEGAB, TBOIL, VCRIT, ZCRIT, SSHIFT, PARACHOR, BICS, PEDERSEN, SSHIFTS
+    // OMEGAA, OMEGAB, TBOIL, VCRIT, ZCRIT, SSHIFT, PARACHOR, BICS, PEDERSEN,
+    // SSHIFTS
     String pvtsimFile = file.getAbsolutePath() + "/pvtsim_reference.e300";
     testSystem = EclipseFluidReadWrite.read(pvtsimFile);
 
@@ -1211,11 +1218,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // Component order: N2(0), CO2(1), C1(2), ...
     // BIC row 0: kij(N2,CO2) = 0.0
     // BIC row 1: kij(N2,C1) = 0.025, kij(CO2,C1) = 0.105
-    double kij_n2_co2 = ((PhaseEos) testSystem.getPhase(0)).getMixingRule()
-        .getBinaryInteractionParameter(0, 1);
+    double kij_n2_co2 =
+        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(0, 1);
     assertEquals(0.0, kij_n2_co2, 1e-4);
-    double kij_co2_c1 = ((PhaseEos) testSystem.getPhase(0)).getMixingRule()
-        .getBinaryInteractionParameter(1, 2);
+    double kij_co2_c1 =
+        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(1, 2);
     assertEquals(0.105, kij_co2_c1, 1e-4);
 
     // Verify SSHIFTS (volume correction) were loaded for all 17 components.

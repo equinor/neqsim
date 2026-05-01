@@ -381,6 +381,7 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaJumperMechanicalDesign(this);
   }

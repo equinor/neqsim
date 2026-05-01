@@ -35,17 +35,17 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
- * 
+ *
  * // Define what we want to compute
  * analyzer.withInput("feed", "flowRate").withInput("feed", "temperature")
  *     .withOutput("product", "temperature").withOutput("product", "pressure");
- * 
+ *
  * // Compute sensitivities (uses Broyden Jacobian if available)
  * SensitivityMatrix result = analyzer.compute();
- * 
+ *
  * // Query specific sensitivity
  * double dT_dFlow = result.getSensitivity("product.temperature", "feed.flowRate");
  * </pre>
@@ -342,6 +342,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Finds the RecycleController for this process system.
+   *
+   * @return the RecycleController if found, or null if no recycles exist
    */
   private RecycleController findRecycleController() {
     // Look for recycle equipment and get its controller
@@ -363,6 +365,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Creates a RecycleController from recycles in the process.
+   *
+   * @return a new RecycleController initialized with process recycles, or null if none found
    */
   private RecycleController createRecycleController() {
     RecycleController controller = new RecycleController();
@@ -380,6 +384,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Computes sensitivities directly from Broyden Jacobian.
+   *
+   * @param result the sensitivity matrix to populate
+   * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeFromBroyden(SensitivityMatrix result, boolean[][] computed) {
     // Build mapping from variable names to Jacobian indices
@@ -416,6 +423,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Computes sensitivities using chain rule through tear streams.
+   *
+   * @param result the sensitivity matrix to populate
+   * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaChainRule(SensitivityMatrix result, boolean[][] computed) {
     // For non-tear outputs, we can use:
@@ -479,6 +489,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Computes remaining sensitivities via finite differences.
+   *
+   * @param result the sensitivity matrix to populate
+   * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaFiniteDifferences(SensitivityMatrix result, boolean[][] computed) {
     // Get baseline outputs
@@ -601,6 +614,9 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Finds equipment by name in the process system.
+   *
+   * @param name the equipment name to search for
+   * @return the equipment interface, or null if not found
    */
   private ProcessEquipmentInterface findEquipment(String name) {
     for (Object unit : processSystem.getUnitOperations()) {
@@ -616,6 +632,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Gets a property value from equipment using reflection.
+   *
+   * @param equipment the process equipment to read from
+   * @param property the property name
+   * @param unit the unit string, or null
+   * @return the property value, or NaN if not found
    */
   private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property,
       String unit) {
@@ -661,6 +682,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Gets standard properties that are common across equipment types.
+   *
+   * @param equipment the process equipment to read from
+   * @param property the property name (e.g., temperature, pressure, flowrate)
+   * @param unit the unit string, or null for default units
+   * @return the property value, or NaN if not found
    */
   private double getStandardProperty(ProcessEquipmentInterface equipment, String property,
       String unit) {
@@ -695,6 +721,13 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Calls a method with optional unit parameter.
+   *
+   * @param equipment the process equipment to call the method on
+   * @param methodName the name of the method to invoke
+   * @param unit the unit string to pass, or null to use default
+   * @param defaultUnit the default unit if unit is null
+   * @return the result of the method call as a double
+   * @throws Exception if the method invocation fails
    */
   private double callMethodWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName,
       String unit, String defaultUnit) throws Exception {
@@ -722,6 +755,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Sets a property value on equipment using reflection.
+   *
+   * @param equipment the process equipment to set the property on
+   * @param property the property name to set
+   * @param value the value to set
+   * @param unit the unit string for the value, or null
    */
   private void setPropertyOnEquipment(ProcessEquipmentInterface equipment, String property,
       double value, String unit) {

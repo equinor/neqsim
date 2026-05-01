@@ -216,6 +216,36 @@ separator.runTransient(dt, id);
 double newLevel = separator.getLiquidLevel();
 ```
 
+#### Entrainment in Transient Mode
+
+When enhanced entrainment calculation is enabled, the separator recalculates entrainment
+fractions at every timestep using the live post-flash vessel state. Outlet stream
+compositions are modified via a cloned system, preserving the vessel mass balance:
+
+```java
+Separator separator = new Separator("V-100", feed);
+separator.setInternalDiameter(2.0);
+separator.setSeparatorLength(5.0);
+separator.setLiquidLevel(0.5);
+separator.setEnhancedEntrainmentCalculation(true);  // Enable physics-based entrainment
+separator.setCalculateSteadyState(false);
+separator.run();
+
+UUID id = UUID.randomUUID();
+for (int step = 0; step < 3600; step++) {
+    separator.runTransient(1.0, id);
+    // Outlet gas now contains entrained liquid computed from DSD + vessel geometry
+    double oilInGas = separator.getPerformanceCalculator().getOilInGasFraction();
+}
+```
+
+The same applies to `ThreePhaseSeparator`, which tracks all six entrainment paths
+(oil-in-gas, water-in-gas, gas-in-oil, gas-in-water, oil-in-water, water-in-oil).
+
+For the complete calculation chain, calibration options, and internals database, see the
+[Enhanced Separator Entrainment Modeling](../process/equipment/separator-entrainment-modeling.md#dynamic-simulation-integration)
+guide.
+
 ### Pipelines (PipeBeggsAndBrills)
 
 ```java
@@ -702,6 +732,7 @@ for (int step = 0; step < 600; step++) {
 - [Compressor Dynamic Features](../process/equipment/compressor_curves#dynamic-simulation-features) - State machines, events
 - [Controllers](../process/controllers) - PID control for dynamics
 - [Separators](../process/equipment/separators) - Level tracking
+- [Separator Entrainment Modeling](../process/equipment/separator-entrainment-modeling#dynamic-simulation-integration) - Physics-based entrainment in transient mode
 
 ### Interactive Notebooks (Google Colab)
 
@@ -717,6 +748,7 @@ These Colab notebooks provide hands-on dynamic simulation examples:
 ### Local Examples
 - [Transient Slug Separator Control](../examples/transient_slug_separator_control_example)
 - [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.ipynb)
+- [Dynamic Separator Entrainment](../../examples/notebooks/separator_dynamic_entrainment.ipynb) - Transient entrainment with physics-based model
 
 ### Process Logic
 - [Process Logic Framework](process_logic_framework) - runTransient integration

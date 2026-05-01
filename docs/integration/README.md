@@ -27,6 +27,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [ai_agentic_programming_intro.md](ai_agentic_programming_intro) | **Introduction to agentic engineering with NeqSim — concepts, architecture, getting started** |
 | [ai_agents_reference.md](ai_agents_reference) | **Complete catalog of all 16 AI agents and 14 skills** |
 | [ai_workflow_examples.md](ai_workflow_examples) | **Step-by-step walkthroughs of agent-driven engineering workflows** |
+| [skills_guide.md](skills_guide) | **Creating, using, and managing skills — core, community, and local private** |
 
 ### Control Systems
 

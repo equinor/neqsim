@@ -335,6 +335,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    *
    * @return JSON string with all BAHX design data
    */
+  @Override
   public String toJson() {
     Map<String, Object> report = new LinkedHashMap<String, Object>();
 
@@ -602,6 +603,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    *
    * @return module length in m
    */
+  @Override
   public double getModuleLength() {
     return coreLengthM + 2.0;
   }
@@ -611,6 +613,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    *
    * @return module width in m
    */
+  @Override
   public double getModuleWidth() {
     return coreWidthM + 0.8;
   }
@@ -620,6 +623,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    *
    * @return module height in m
    */
+  @Override
   public double getModuleHeight() {
     return coreHeightM + 0.5;
   }

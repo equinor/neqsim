@@ -15,7 +15,6 @@ import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
@@ -292,6 +291,8 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Calculates baseline (normal operation) values.
+   *
+   * @param result the result object to populate with baseline values
    */
   private void calculateBaseline(ProductionImpactResult result) {
     if (cachedBaselineProduction == null) {
@@ -382,6 +383,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Identifies equipment affected by the failure.
+   *
+   * @param process the process system to analyze
+   * @param failedEquipment the name of the failed equipment
+   * @param result the result object to populate with affected equipment
    */
   private void identifyAffectedEquipment(ProcessSystem process, String failedEquipment,
       ProductionImpactResult result) {
@@ -401,6 +406,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Optimizes operation with failed equipment.
+   *
+   * @param failedProcess the process system with the failed equipment
+   * @param failedEquipment the name of the failed equipment
+   * @param result the production impact result to update with optimized values
    */
   private void optimizeDegradedOperation(ProcessSystem failedProcess, String failedEquipment,
       ProductionImpactResult result) {
@@ -456,6 +465,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Gets the production rate from a process system.
+   *
+   * @param process the process system to get production rate from
+   * @return the production rate in kg/hr, or 0.0 if unavailable
    */
   private double getProductionRate(ProcessSystem process) {
     if (productStreamName == null) {
@@ -485,6 +497,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Gets the total power consumption from a process system.
+   *
+   * @param process the process system to get total power from
+   * @return the total power consumption in kW
    */
   private double getTotalPower(ProcessSystem process) {
     double totalPower = 0.0;

@@ -19,16 +19,16 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create a platform with spare gas capacity
  * HostFacility platform = HostFacility.builder("Troll A").location(60.6, 3.7).waterDepth(330)
  *     .gasCapacity(40.0, "MSm3/d").gasUtilization(0.85).minTieInPressure(80).maxTieInPressure(150)
  *     .build();
- * 
+ *
  * // Check spare capacity
  * double spareGas = platform.getSpareGasCapacity(); // ~6 MSm3/d
- * 
+ *
  * // Check if discovery can be accommodated
  * if (platform.canAcceptGasRate(2.0)) {
  *   System.out.println("Tieback feasible");

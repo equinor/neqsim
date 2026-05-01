@@ -674,7 +674,7 @@ process.run();
 
 // 5. Check utilization (should be ~83% with 1.2 safety factor)
 Map<String, Double> utilization = process.getCapacityUtilizationSummary();
-utilization.forEach((name, util) -> 
+utilization.forEach((name, util) ->
     System.out.println(name + ": " + util + "% utilized")
 );
 ```
@@ -818,9 +818,9 @@ StringBuilder report = new StringBuilder();
 for (ProcessEquipmentInterface equip : process.getEquipmentList()) {
     MechanicalDesign design = equip.getMechanicalDesign();
     design.calcDesign();
-    
+
     if (design instanceof SeparatorMechanicalDesign) {
-        SeparatorMechanicalDesign.SeparatorValidationResult result = 
+        SeparatorMechanicalDesign.SeparatorValidationResult result =
             ((SeparatorMechanicalDesign) design).validateDesignComprehensive();
         if (!result.isValid()) {
             allValid = false;
@@ -864,7 +864,7 @@ pipe.setMaxDesignVelocity(15.0);  // Max 15 m/s
 // After running, check constraints
 Map<String, CapacityConstraint> constraints = separator.getCapacityConstraints();
 for (CapacityConstraint c : constraints.values()) {
-    System.out.println(c.getName() + ": " + 
+    System.out.println(c.getName() + ": " +
         (c.getUtilization() * 100) + "% of design");
 }
 ```
@@ -906,7 +906,7 @@ List<String> nearLimit = process.getEquipmentNearCapacityLimit();
 
 ## See Also
 
-- [AutoSizeable Interface](../src/main/java/neqsim/process/design/AutoSizeable.java)
+- [AutoSizeable Interface](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/design/AutoSizeable.java)
 - [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK)
 - [Mechanical Design Framework](mechanical_design)
 - [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS)

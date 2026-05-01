@@ -18,6 +18,7 @@ Documentation for power generation equipment in NeqSim, including gas turbines, 
 - [Solar Panel](#solar-panel)
 - [Battery Storage](#battery-storage)
 - [Usage Examples](#usage-examples)
+- [Capacity Constraints and Optimization](#capacity-constraints-and-optimization)
 - [Related Documentation](#related-documentation)
 
 ---
@@ -532,8 +533,226 @@ System.out.println("Total renewable power: " + totalGeneration / 1e6 + " MW");
 
 ---
 
+## Capacity Constraints and Optimization
+
+All four core power generation equipment types (`GasTurbine`, `SteamTurbine`, `HRSG`, `CombinedCycleSystem`) implement the `CapacityConstrainedEquipment` and `AutoSizeable` interfaces. This enables rated-capacity tracking, bottleneck detection, and integration with the plant-wide `ProcessOptimizationEngine`.
+
+### Interfaces
+
+| Interface | Purpose |
+|-----------|---------|
+| `CapacityConstrainedEquipment` | Tracks operating point vs rated capacity, detects violations |
+| `AutoSizeable` | Sets rated capacity from current operating point with a safety factor |
+
+### Setting Rated Capacity
+
+Each equipment type has a rated capacity field that defines its design limit:
+
+```java
+// Gas turbine — rated power
+GasTurbine gt = new GasTurbine("GT-1", fuelStream);
+gt.setRatedPower(30.0, "MW");  // 30 MW design rating
+
+// Steam turbine — rated power
+SteamTurbine st = new SteamTurbine("ST-1", steamStream);
+st.setRatedPower(15.0, "MW");
+
+// HRSG — design heat duty
+HRSG hrsg = new HRSG("HRSG-1", gt.getOutletStream());
+hrsg.setDesignHeatDuty(50.0, "MW");
+
+// Combined cycle — rated total power
+CombinedCycleSystem cc = new CombinedCycleSystem("CC-1", fuelStream);
+cc.setRatedTotalPower(45.0, "MW");
+```
+
+### Auto-Sizing
+
+When design ratings are not known, auto-size from the current operating point:
+
+```java
+// Run the process first to establish operating conditions
+process.run();
+
+// Auto-size with a 20% safety margin (factor = 1.2)
+gt.autoSize(1.2);
+st.autoSize(1.2);
+hrsg.autoSize(1.2);
+cc.autoSize(1.2);
+
+// Check sizing results
+System.out.println(gt.getSizingReport());
+System.out.println(gt.isAutoSized());  // true
+```
+
+### Querying Capacity
+
+After running and setting rated capacity (manually or via auto-size), query the operating margin:
+
+```java
+// Current operating duty vs maximum
+double duty = gt.getCapacityDuty();  // current power output (W)
+double max = gt.getCapacityMax();    // rated power (W)
+
+// Utilization fraction (0-1, where 1.0 = at capacity)
+double utilization = gt.getMaxUtilization();
+
+// Check if any constraint is violated
+boolean exceeded = gt.isCapacityExceeded();    // soft or hard limit
+boolean hardTrip = gt.isHardLimitExceeded();   // hard limit only
+
+// Get the most-loaded constraint
+CapacityConstraint bottleneck = gt.getBottleneckConstraint();
+if (bottleneck != null) {
+    System.out.println(bottleneck.getName() + ": " + bottleneck.getUtilization());
+}
+
+// Iterate all constraints
+for (Map.Entry<String, CapacityConstraint> entry :
+        gt.getCapacityConstraints().entrySet()) {
+    System.out.println(entry.getKey() + " -> " + entry.getValue().getUtilization());
+}
+```
+
+### Adding Custom Constraints
+
+The built-in constraint (power or heat duty) covers the primary capacity limit. Add additional constraints for operational envelopes:
+
+```java
+import neqsim.process.equipment.capacity.CapacityConstraint;
+
+// Add an exhaust temperature limit to the gas turbine
+gt.addCapacityConstraint(
+    new CapacityConstraint("exhaustTemp", "C", CapacityConstraint.ConstraintType.HARD)
+        .setDesignValue(550.0)
+        .setMaxValue(600.0)
+        .setWarningThreshold(0.90)
+        .setDescription("Exhaust gas temperature limit")
+        .setValueSupplier(() -> gt.getOutletStream().getTemperature("C")));
+
+// Remove a constraint by name
+gt.removeCapacityConstraint("exhaustTemp");
+
+// Clear all constraints
+gt.clearCapacityConstraints();
+```
+
+### Integration with ProcessOptimizationEngine
+
+The `ProcessOptimizationEngine` reads capacity constraints from all equipment in a `ProcessSystem` to find the plant-wide maximum throughput and identify bottlenecks.
+
+#### Bottleneck Detection
+
+```java
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+
+// Build a combined heat and power system
+ProcessSystem chp = new ProcessSystem();
+chp.add(fuelStream);
+chp.add(gt);
+chp.add(hrsg);
+chp.run();
+
+// Set rated capacities
+gt.setRatedPower(30.0, "MW");
+hrsg.setDesignHeatDuty(50.0, "MW");
+
+// Evaluate constraints across the entire process
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(chp);
+ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();
+
+for (ProcessOptimizationEngine.EquipmentConstraintStatus status :
+        report.getEquipmentStatuses()) {
+    System.out.printf("%s %s: %.1f%% utilization%n",
+        status.isWithinLimits() ? "OK" : "!!",
+        status.getEquipmentName(),
+        status.getMaxUtilization() * 100);
+}
+```
+
+#### Maximum Throughput Optimization
+
+Find how much fuel gas the system can handle before hitting a capacity limit:
+
+```java
+ProcessOptimizationEngine.OptimizationResult result =
+    engine.findMaximumThroughput(
+        25.0,       // inlet pressure (bara)
+        25.0,       // outlet pressure (bara — no compression)
+        100.0,      // min fuel flow (kg/hr)
+        10000.0     // max fuel flow (kg/hr)
+    );
+
+System.out.println("Max fuel rate: " + result.getOptimalFlowRate() + " kg/hr");
+System.out.println("Bottleneck: " + result.getBottleneckEquipment());
+System.out.println("Total power at max: " + result.getTotalPower() + " kW");
+```
+
+#### Capacity Utilization Summary
+
+For a quick overview of all equipment headroom in the process:
+
+```java
+Map<String, Double> utilization = chp.getCapacityUtilizationSummary();
+for (Map.Entry<String, Double> entry : utilization.entrySet()) {
+    System.out.printf("%-25s %.1f%%%n", entry.getKey(), entry.getValue() * 100);
+}
+// Example output:
+// GT-1                      72.3%
+// HRSG-1                    65.8%
+```
+
+### Python (Jupyter) Example
+
+```python
+from neqsim import jneqsim
+
+# Create fuel gas
+gas = jneqsim.thermo.system.SystemSrkEos(288.15, 25.0)
+gas.addComponent("methane", 0.90)
+gas.addComponent("ethane", 0.05)
+gas.addComponent("propane", 0.03)
+gas.addComponent("nitrogen", 0.02)
+gas.setMixingRule("classic")
+
+Stream = jneqsim.process.equipment.stream.Stream
+GasTurbine = jneqsim.process.equipment.powergeneration.GasTurbine
+HRSG = jneqsim.process.equipment.powergeneration.HRSG
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+
+fuel = Stream("Fuel Gas", gas)
+fuel.setFlowRate(1000.0, "kg/hr")
+
+gt = GasTurbine("GT-1", fuel)
+hrsg = HRSG("HRSG-1", gt.getOutletStream())
+hrsg.setSteamPressure(40.0)
+
+process = ProcessSystem()
+process.add(fuel)
+process.add(gt)
+process.add(hrsg)
+process.run()
+
+# Auto-size with 20% margin
+gt.autoSize(1.2)
+hrsg.autoSize(1.2)
+
+# Check utilization
+print(f"GT utilization:   {gt.getMaxUtilization() * 100:.1f}%")
+print(f"HRSG utilization: {hrsg.getMaxUtilization() * 100:.1f}%")
+print(f"GT capacity exceeded: {gt.isCapacityExceeded()}")
+
+# Sizing report
+print(gt.getSizingReport())
+```
+
+---
+
 ## Related Documentation
 
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Equipment capacity limits and bottleneck detection
+- [Optimization Overview](../optimization/OPTIMIZATION_OVERVIEW) - When to use which optimizer
+- [Optimization Practical Examples](../optimization/PRACTICAL_EXAMPLES) - Java and Python optimization code samples
 - [Heat Integration (Pinch Analysis)](heat_integration) - Minimum utility targeting
 - [Electrolyzers](electrolyzers) - Hydrogen production
 - [Compressors](compressors) - Gas compression

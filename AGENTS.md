@@ -38,11 +38,20 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 this folder. Never write task analysis files to `examples/`, docs, or the
 workspace root.
 
+### ⚠️ MANDATORY: All downloaded documents go INSIDE the task folder
+
+**All documents retrieved during a task — STID drawings, PI historian exports,
+vendor datasheets, P&IDs, literature PDFs — MUST be saved to
+`step1_scope_and_research/references/` within the task folder.** Never save
+task-related files to workspace-level directories like `output/` or `figures/`.
+Converted PNGs go to the task's `figures/` directory. This ensures tasks are
+self-contained and portable.
+
 ### Step-by-step
 
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
-   python devtools/new_task.py "your task title" --type B --author "Name"
+   neqsim new-task "your task title" --type B --author "Name"
    ```
    Types: A=Property, B=Process, C=PVT, D=Standards, E=Feature, F=Design, G=Workflow
 
@@ -52,6 +61,13 @@ workspace root.
 
    **Step 1 — Scope & Research**
    - Fill `step1_scope_and_research/task_spec.md` (standards, methods, deliverables, acceptance criteria)
+   - **Run `@capability.scout` and write the result to** `step1_scope_and_research/capability_assessment.md` (mandatory for Standard/Comprehensive). The validator will warn if this artifact is missing or unfilled.
+   - **Discover the right skills** via semantic search:
+     ```bash
+     python devtools/skill_search.py "<your task title>" --top 5
+     ```
+     Load the top-3 skills before starting analysis.
+   - **Pull literature and internal docs** via `@literature.scout`. PDFs land in `step1_scope_and_research/references/`; manifest in `references/manifest.json`; summaries appended to `notes.md`.
    - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
    - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
    - **Extract figures from PDFs** using `devtools/pdf_to_figures.py`:
@@ -71,7 +87,7 @@ workspace root.
 
    **Step 2 — Analysis & Evaluation**
    - Create a Jupyter notebook in `step2_analysis/` using NeqSim
-   - Use the dual-boot setup cell (see below)
+  - Use the devtools setup cell (see below) so workspace Java classes load from `target/classes`
    - Run all cells, validate results against acceptance criteria
    - **MANDATORY: Include detailed results table** with all key outputs and units
    - **MANDATORY: Include at least 2-3 matplotlib figures** (profiles, sensitivities, comparisons) with axis labels, units, titles, legends, and grids
@@ -102,6 +118,14 @@ workspace root.
        Cost, Schedule, HSE, Regulatory), using ISO 31000 5×5 matrix
      - Saves `uncertainty` and `risk_evaluation` results to `results.json`
    - **Save results.json** in the task root (see pattern below)
+
+   **Step 2.5 — Consistency Check (MANDATORY before report)**
+   - Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
+   - The tool extracts numerical values from all notebooks and results.json
+   - Detects inconsistencies: numerical mismatches, scope mismatches (e.g., volumetric vs mass-based), contradictory claims
+   - Produces `consistency_report.json` in the task folder
+   - **Fix any CRITICAL issues before generating the report**
+   - Common issues: external study data measuring different quantities than notebook calculations
 
    **Step 3 — Report**
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
@@ -140,25 +164,40 @@ workspace root.
    - Documentation fixes go in the **same PR** as the task outputs so
      reviewers see the full context of what was learned.
 
-### Dual-boot notebook cell (use in every notebook)
+### Devtools notebook cell (use in every task notebook)
+
+Task notebooks and runner workflows must use `neqsim_dev_setup.py` so Java
+classes come from the workspace (`target/classes`) instead of the installed
+Python `neqsim` package. This makes new Java classes available without copying
+a packaged JAR into `site-packages/neqsim/lib/java11/`.
 
 ```python
-import importlib, subprocess, sys
+import os
+import sys
+from pathlib import Path
 
-try:
-    from neqsim_dev_setup import neqsim_init, neqsim_classes
-    ns = neqsim_init(recompile=False)
-    ns = neqsim_classes(ns)
-    NEQSIM_MODE = "devtools"
-    print("NeqSim loaded via devtools (local dev mode)")
-except ImportError:
-    try:
-        import neqsim
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "neqsim"])
-    from neqsim import jneqsim
-    NEQSIM_MODE = "pip"
-    print("NeqSim loaded via pip package")
+
+def find_neqsim_project_root():
+  env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+  candidates = []
+  if env_root:
+    candidates.append(Path(env_root).resolve())
+  cwd = Path.cwd().resolve()
+  candidates.extend([cwd] + list(cwd.parents))
+  for candidate in candidates:
+    if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
+      return candidate
+  raise RuntimeError("Could not find NeqSim project root. Set NEQSIM_PROJECT_ROOT.")
+
+
+PROJECT_ROOT = find_neqsim_project_root()
+sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+from neqsim_dev_setup import neqsim_init, neqsim_classes
+
+ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
+ns = neqsim_classes(ns)
+NEQSIM_MODE = "devtools"
 ```
 
 ### Follow-up Questions (ASK BEFORE STARTING)
@@ -272,8 +311,7 @@ with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
 
 # ── Programmatic quality gate: validate results.json ──
-import jpype
-TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+TaskResultValidator = ns.JClass("neqsim.util.agentic.TaskResultValidator")
 
 with open(str(TASK_DIR / "results.json"), "r") as f:
     json_str = f.read()
@@ -293,6 +331,41 @@ if report.getWarningCount() > 0:
 
 assert report.isValid(), "results.json failed validation — fix errors above"
 ```
+
+### Iterative Updates to results.json
+
+When working iteratively with continuous updates:
+
+1. **Load before Modifying** — Always read existing results.json before adding new data:
+   ```python
+   results_path = TASK_DIR / "results.json"
+   if results_path.exists():
+       with open(results_path, "r") as f:
+           results = json.load(f)
+   else:
+       results = {}
+   ```
+
+2. **Use dict.update() for New Data** — Merge new results without losing existing:
+   ```python
+   results["key_results"] = {**results.get("key_results", {}), "new_result": 42.5}
+   results["figure_captions"] = {**results.get("figure_captions", {}), "new_plot.png": "Caption"}
+   ```
+
+3. **Append to Lists** — For discussion, tables, equations:
+   ```python
+   results.setdefault("figure_discussion", []).append(new_discussion)
+   results.setdefault("tables", []).append(new_table)
+   ```
+
+4. **Run Consistency Check** before report generation:
+   ```bash
+   python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
+   ```
+
+5. **Regenerate Report** — The report generator dynamically includes sections based on
+   what's present in results.json. Adding `uncertainty` or `risk_evaluation` automatically
+   creates those sections in the report.
 
 The report generator auto-reads this file to populate Results and Validation sections.
 - **key_results**: Rendered as styled table with auto-detected units (use suffixes like `_C`, `_bar`, `_kg`, `_hours`)
@@ -330,6 +403,24 @@ double viscosity = fluid.getPhase("gas").getViscosity("kg/msec");
 double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK");
 ```
 
+### Phase envelope (CRITICAL: branch labels are swapped)
+
+When using `calcPTphaseEnvelope(true, 1.0)` (bubblePointFirst=true), the getter
+method names are SWAPPED — `getBubblePointTemperatures()` returns physically DEW
+curve data and vice versa. **Always classify branches by physical reasoning:**
+
+```python
+branch_A_T = np.array(envelope.getBubblePointTemperatures())
+branch_B_T = np.array(envelope.getDewPointTemperatures())
+# The DEW curve always has the higher max temperature (contains cricondentherm)
+if branch_A_T.max() > branch_B_T.max():
+    dew_T = branch_A_T   # "bubble" getter returns dew data (swapped!)
+    bub_T = branch_B_T
+else:
+    dew_T = branch_B_T
+    bub_T = branch_A_T
+```
+
 ### Process simulation
 
 ```java
@@ -341,6 +432,51 @@ process.add(feed);
 process.add(sep);
 process.run();
 ```
+
+### Separator mechanical design (physical configuration)
+
+Physical dimensions, internals, and design parameters are configured through
+`SeparatorMechanicalDesign` — NOT directly on `Separator`. This follows the
+same pattern used for wells, pipelines, compressors, and heat exchangers.
+Bridge methods delegate to the Separator's performance calculator:
+
+```java
+// After process.run():
+sep.initMechanicalDesign();
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+design.setMaxOperationPressure(85.0);
+design.setGasLoadFactor(0.107);       // K-factor [m/s]
+design.setRetentionTime(120.0);       // Liquid retention [s]
+design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
+design.setDemisterType("wire_mesh");
+
+// Bridge methods — inlet pipe, inlet device, sections
+design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD [m]
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.addSeparatorSection("Demister", "meshpad");
+
+// Bridge methods — dynamic internals
+design.setWeirHeightAbsolute(0.30);   // Weir height [m]
+design.setWeirLength(1.5);            // Weir crest length [m]
+design.setBootVolume(2.0);            // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);  // Euler number for dP
+design.setMistEliminatorThickness(0.15); // Demister thickness [m]
+
+design.readDesignSpecifications();
+design.calcDesign();
+String json = design.toJson();
+```
+
+**Internals classes** (`mechanicaldesign.separator.internals`):
+- `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,
+  carry-over model for wire mesh / vane pack / cyclone demisting devices
+- `DemistingInternalWithDrainage` — adds drainage section efficiency
+
+**Primary separation** (`mechanicaldesign.separator.primaryseparation`):
+- `PrimarySeparation` — inlet momentum, bulk separation, carry-over
+- `InletVane` (6000 Pa, 85%), `InletVaneWithMeshpad` (92%+mesh),
+  `InletCyclones` (8000 Pa, 95%)
 
 ### Stream introspection
 
@@ -478,11 +614,10 @@ byte[] bytes = modelState.toCompressedBytes();
 ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
 ```
 
-### Python (Jupyter) fluid
+### Python (Jupyter) fluid in task notebooks
 
 ```python
-from neqsim import jneqsim
-fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)
+fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
 fluid.addComponent("methane", 0.85)
 fluid.setMixingRule("classic")
 ```
@@ -498,27 +633,31 @@ from neqsim_runner.agent_bridge import AgentBridge
 bridge = AgentBridge(task_dir="task_solve/2026-04-08_my_task")
 
 # Submit a notebook (default: mode="execute" produces executed .ipynb with outputs)
-job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", max_retries=3)
+job_ids = [bridge.submit_notebook("step2_analysis/notebook.ipynb", max_retries=3)]
 
-# Or use mode="script" to convert to .py (lighter, no .ipynb output)
-job_id = bridge.submit_notebook("step2_analysis/notebook.ipynb", mode="script")
+# Alternative: use mode="script" to convert to .py (lighter, no .ipynb output)
+# job_ids = [bridge.submit_notebook("step2_analysis/notebook.ipynb", mode="script")]
 
-# Or submit a standalone script
-job_id = bridge.submit_script("run_sim.py", args={"pressure": 60.0})
+# Alternative: submit a standalone script
+# job_ids = [bridge.submit_script("run_sim.py", args={"pressure": 60.0})]
 
-# Or submit a parametric sweep (each case = own subprocess + JVM)
-cases = [{"pressure": p} for p in [30, 60, 90, 120]]
-job_ids = bridge.submit_parametric_sweep("run_case.py", cases)
+# Alternative: submit a parametric sweep (each case = own subprocess + JVM)
+# cases = [{"pressure": p} for p in [30, 60, 90, 120]]
+# job_ids = bridge.submit_parametric_sweep("run_case.py", cases)
 
 # Run all (supervisor handles retry/recovery)
-bridge.run_all()
+bridge.run_all(max_parallel=1)
+
+summary = bridge.summary()
+if summary["failed"] or summary["pending"]:
+    raise RuntimeError("NeqSim Runner jobs did not all complete successfully")
 
 # Read results
-results = bridge.get_results(job_id)
-bridge.copy_results_to_task(job_id)
+results = bridge.get_results(job_ids[0])
+bridge.merge_results_to_task(job_ids)
 
 # Get the executed notebook (with cell outputs, plots, etc.)
-executed_nb = bridge.get_executed_notebook(job_id)
+executed_nb = bridge.get_executed_notebook(job_ids[0])
 ```
 
 CLI equivalent: `python -m neqsim_runner go my_sim.py --args '{"pressure": 60}'`
@@ -565,10 +704,9 @@ for (ErrorDetail w : result.getWarnings()) {
 ```
 
 ```python
-# Python equivalent
+# Python equivalent inside task notebooks/runner jobs
 import json
-from neqsim import jneqsim
-ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+ProcessSystem = ns.ProcessSystem
 result = ProcessSystem.fromJsonAndRun(json.dumps(neqsim_json))
 if not result.isError():
     process = result.getProcessSystem()
@@ -676,89 +814,110 @@ in `process.equipment.pipeline`; `ImpurityMonitor` in `process.measurementdevice
 ### Python (Jupyter) — CO2 well analysis
 
 ```python
-import jpype
-CO2InjectionWellAnalyzer = jpype.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
-TransientWellbore = jpype.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
-CO2FlowCorrections = jpype.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
-ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
+CO2InjectionWellAnalyzer = ns.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
+TransientWellbore = ns.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
+CO2FlowCorrections = ns.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
+ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 ```
 
 ## Key Paths
 
-| Path | Purpose |
-|------|---------|
-| `src/main/java/neqsim/` | Main source (thermo, process, pvt, standards) |
-| `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
-| `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
-| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult |
-| `src/main/java/neqsim/process/automation/` | ProcessAutomation (string-addressable variable API), AutomationDiagnostics (fuzzy matching, auto-correction, physical validation, learning), SimulationVariable (INPUT/OUTPUT descriptor) |
-| `src/main/java/neqsim/process/processmodel/lifecycle/` | ProcessSystemState, ProcessModelState — JSON lifecycle snapshots, version comparison, compressed transfer |
-| `devtools/unisim_reader.py` | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ op types, port-specific forward refs, auto-recycle wiring. **Default E300 fluid export**: `read(export_e300=True)` extracts Tc, Pc, omega, MW, BIPs from COM and writes E300 files for all fluid packages. `build_and_run()` auto-loads E300 fluids via `EclipseFluidReadWrite.read()` and `ProcessSystem.fromJsonAndRun(json, fluid)`. **Full mode default**: `full_mode=True` (all 4 methods) auto-classifies sub-flowsheets as process/utility, includes only process SFs in ProcessModel. Verified with TUTOR1.usc (11/13 streams match) and R510 SG Condensation (31 comp, 250 ops, 8 SFs: 78% isolated match, 71% connected). |
-| `devtools/test_unisim_outputs.py` | 14 tests for all UniSim converter output modes (no COM needed — synthetic models) |
-| `examples/notebooks/tutor1_gas_processing.ipynb` | End-to-end UniSim→NeqSim verification: TUTOR1 gas processing (7 comp, PR EOS, 13 ops). Reference for conversion workflows. |
-| `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
-| `src/main/java/neqsim/process/mechanicaldesign/` | Engineering deliverables (StudyClass, InstrumentScheduleGenerator, etc.) |
-| `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` | HX thermal-hydraulic design (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
-| `src/main/java/neqsim/process/equipment/subsea/` | SubseaWell, SubseaTree equipment |
-| `src/main/java/neqsim/process/equipment/pipeline/` | Pipe flow, TwoFluidPipe, CO2InjectionWellAnalyzer, TransientWellbore |
-| `src/main/java/neqsim/process/measurementdevice/` | Transmitters (PT, TT, LT, FT), AlarmConfig, ImpurityMonitor |
-| `examples/notebooks/` | Jupyter notebook examples |
-| `devtools/new_task.py` | Task-solving script |
-| `devtools/neqsim_runner/` | Supervised simulation runner — isolated subprocess per job, auto-retry, checkpoint/resume, SQLite state. Use `AgentBridge` for task-solving integration. |
-| `devtools/pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`. |
-| `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
-| `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
-| `docs/development/TASK_LOG.md` | Past solved tasks (search before starting) |
-| `.github/agents/solve.task.agent.md` | Detailed agent instructions |
-| `.github/agents/router.agent.md` | Request routing and multi-agent composition |
-| `.github/agents/capability.scout.agent.md` | Capability assessment, gap analysis, implementation planning |
-| `.github/agents/field.development.agent.md` | Field development studies, concept selection, economics |
-| `.github/agents/engineering.deliverables.agent.md` | Engineering deliverables (PFD, instruments, fire, noise, etc.) |
-| `.github/agents/extract.process.agent.md` | Extract process info from documents → NeqSim JSON / ProcessModule → simulation |
-| `src/main/java/neqsim/process/fielddevelopment/` | Field development workflows, economics, screening |
-| `src/main/java/neqsim/process/util/fielddevelopment/` | Production profiles, scheduling, DCF calculator |
-| `docs/fielddevelopment/` | Field development documentation |
-| `CHANGELOG_AGENT_NOTES.md` | API changes agents need to know about |
-| `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` | Pinch analysis (PinchAnalysis, HeatStream) for heat integration |
-| `src/main/java/neqsim/process/equipment/powergeneration/` | Power generation (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
-| `src/main/java/neqsim/util/agentic/` | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession) |
-| `.github/agents/reaction.engineering.agent.md` | Reaction engineering systems design |
-| `.github/agents/control.system.agent.md` | Control system and instrumentation design |
-| `.github/agents/emissions.environmental.agent.md` | Emissions calculation and environmental compliance |
-| `.github/agents/ccs.hydrogen.agent.md` | CCS value chain and hydrogen systems (CO2 transport, injection, H2 blending) |
-| `.github/agents/technical.reader.agent.md` | Read technical documents (PDF, Word, Excel) and engineering images (P&IDs, mechanical drawings, vendor datasheets, performance maps, phase envelopes) — extract equipment data, compositions, requirements, stream tables, piping topology, dimensions, and operating conditions |
+| Path                                                                    | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/java/neqsim/`                                                 | Main source (thermo, process, pvt, standards)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/test/java/neqsim/`                                                 | JUnit 5 tests (mirrors src structure)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `src/main/java/neqsim/process/equipment/`                               | ProcessEquipmentInterface, MultiPortEquipment, stream introspection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `src/main/java/neqsim/process/processmodel/`                            | ProcessSystem, ProcessConnection, ProcessElementInterface, JsonProcessBuilder, SimulationResult                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `src/main/java/neqsim/process/automation/`                              | ProcessAutomation (string-addressable variable API), AutomationDiagnostics (fuzzy matching, auto-correction, physical validation, learning), SimulationVariable (INPUT/OUTPUT descriptor)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `src/main/java/neqsim/process/processmodel/lifecycle/`                  | ProcessSystemState, ProcessModelState — JSON lifecycle snapshots, version comparison, compressed transfer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `devtools/unisim_reader.py`                                             | UniSim COM reader → NeqSim Python/notebook/EOT/JSON (UniSimReader, UniSimToNeqSim, UniSimComparator). 45+ typed operation handlers via `UniSimOperationHandler`, port-specific forward refs, auto-recycle wiring. **Default E300 fluid export**: `read(export_e300=True)` extracts Tc, Pc, omega, MW, BIPs from COM and writes E300 files for all fluid packages. `build_and_run()` auto-loads E300 fluids via `EclipseFluidReadWrite.read()` and `ProcessSystem.fromJsonAndRun(json, fluid)`. Generated JSON includes `_unisim_operation_mapping` for native/adapter/reference/control/internal/skip traceability. **Full mode default**: `full_mode=True` (all 4 methods) auto-classifies sub-flowsheets as process/utility, includes only process SFs in ProcessModel. Verified with TUTOR1.usc (11/13 streams match) and R510 SG Condensation (31 comp, 250 ops, 8 SFs: 78% isolated match, 71% connected). |
+| `devtools/test_unisim_outputs.py`                                       | Pure-Python tests for UniSim converter output modes, E300 fluid export, operation handler registry strategy, and JSON mapping summaries (no COM needed — synthetic models)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `examples/notebooks/tutor1_gas_processing.ipynb`                        | End-to-end UniSim→NeqSim verification: TUTOR1 gas processing (7 comp, PR EOS, 13 ops). Reference for conversion workflows.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `src/main/java/neqsim/process/mechanicaldesign/subsea/`                 | Well & SURF design, cost estimation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `src/main/java/neqsim/process/mechanicaldesign/`                        | Engineering deliverables (StudyClass, InstrumentScheduleGenerator, etc.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/`          | HX thermal-hydraulic design (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `src/main/java/neqsim/process/equipment/subsea/`                        | SubseaWell, SubseaTree equipment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `src/main/java/neqsim/process/equipment/pipeline/`                      | Pipe flow, TwoFluidPipe, CO2InjectionWellAnalyzer, TransientWellbore                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `src/main/java/neqsim/process/measurementdevice/`                       | Transmitters (PT, TT, LT, FT), AlarmConfig, ImpurityMonitor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `examples/notebooks/`                                                   | Jupyter notebook examples                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `devtools/new_task.py`                                                  | Task-solving script                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `devtools/neqsim_runner/`                                               | Supervised simulation runner — isolated subprocess per job, auto-retry, checkpoint/resume, SQLite state. Use `AgentBridge` for task-solving integration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `devtools/pdf_to_figures.py`                                            | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `devtools/skill_search.py`                                              | Semantic skill retrieval — TF-IDF + cosine over every SKILL.md `description`. Run `python devtools/skill_search.py "<task title>" --top 5` at the start of a task to load the right skills. Falls back to Jaccard tokens if scikit-learn is missing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `devtools/validate_task_results.py`                                     | CI gate that mirrors `TaskResultValidator` rules in pure Python. Modes: positional, `--all`, `--changed` (reads `CHANGED_FILES`). Also warns when `step1_scope_and_research/capability_assessment.md` is missing or unfilled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `.github/workflows/task_quality_gate.yml`                               | PR gate: runs `validate_task_results.py` + `consistency_checker.py` on changed task folders only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `.github/workflows/task_nip_issues.yml`                                 | On push to master, opens one labelled GitHub issue per newly added `neqsim_improvements.md` (deduped by title).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `step1_scope_and_research/capability_assessment.md` (per task)          | Mandatory artifact for Standard/Comprehensive tasks: capability requirements matrix, NeqSim coverage check, gap implementation plan, skills to load. Auto-scaffolded into every new task by `new_task.py`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `.github/agents/literature.scout.agent.md`                              | Literature & internal-database scout — pulls papers, standards, and STID/vendor docs into `step1_scope_and_research/references/`, writes `references/manifest.json`, summarises into `notes.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `.github/agents/review.agent.md`                                        | Review agent — grades a task folder before PR (schema, consistency, capability_assessment, notebook execution, figure traceability, repo-memory hits). Read-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `devtools/verify_skills_agents.py`                                      | CI lint for `.github/skills/` and `.github/agents/` — enforces YAML front-matter, validates `skill-index.json` references, flags orphan skills.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `devtools/generate_agent_skill_map.py`                                  | Auto-generates `docs/development/AGENT_SKILL_MAP.md` from `Loaded skills:` lines in agent files. CI fails if the map is stale.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `.github/workflows/skills_agents_lint.yml`                              | PR/push gate that runs the verifier and the map generator; ensures skill↔agent linkage stays accurate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `docs/development/TASK_SOLVING_GUIDE.md`                                | Full workflow guide                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `docs/development/CODE_PATTERNS.md`                                     | Copy-paste code starters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `docs/development/TASK_LOG.md`                                          | Past solved tasks (search before starting)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `.github/agents/solve.task.agent.md`                                    | Detailed agent instructions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `.github/agents/router.agent.md`                                        | Request routing and multi-agent composition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `.github/agents/capability.scout.agent.md`                              | Capability assessment, gap analysis, implementation planning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `.github/agents/field.development.agent.md`                             | Field development studies, concept selection, economics                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `.github/agents/engineering.deliverables.agent.md`                      | Engineering deliverables (PFD, instruments, fire, noise, etc.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `.github/agents/extract.process.agent.md`                               | Extract process info from documents → NeqSim JSON / ProcessModule → simulation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `src/main/java/neqsim/process/fielddevelopment/`                        | Field development workflows, economics, screening                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `src/main/java/neqsim/process/util/fielddevelopment/`                   | Production profiles, scheduling, DCF calculator                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `docs/fielddevelopment/`                                                | Field development documentation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `CHANGELOG_AGENT_NOTES.md`                                              | API changes agents need to know about                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` | Pinch analysis (PinchAnalysis, HeatStream) for heat integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `src/main/java/neqsim/process/equipment/powergeneration/`               | Power generation (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `src/main/java/neqsim/util/agentic/`                                    | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `.github/agents/reaction.engineering.agent.md`                          | Reaction engineering systems design                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `.github/agents/control.system.agent.md`                                | Control system and instrumentation design                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `.github/agents/emissions.environmental.agent.md`                       | Emissions calculation and environmental compliance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `.github/agents/ccs.hydrogen.agent.md`                                  | CCS value chain and hydrogen systems (CO2 transport, injection, H2 blending)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `.github/agents/technical.reader.agent.md`                              | Read technical documents (PDF, Word, Excel) and engineering images (P&IDs, mechanical drawings, vendor datasheets, performance maps, phase envelopes) — extract equipment data, compositions, requirements, stream tables, piping topology, dimensions, and operating conditions                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ## Skills Reference
 
 Skills are reusable knowledge packages loaded automatically by agents:
 
-| Skill | Purpose |
-|-------|---------|
-| `neqsim-api-patterns` | EOS selection, fluid creation, flash, equipment patterns |
-| `neqsim-java8-rules` | Forbidden Java 9+ features, replacement patterns |
-| `neqsim-notebook-patterns` | Jupyter notebook structure, visualization, performance estimation |
-| `neqsim-troubleshooting` | Recovery strategies for convergence failures, zero values, phase issues |
-| `neqsim-input-validation` | Pre-simulation checks (T, P, composition, component names) |
-| `neqsim-regression-baselines` | Baseline management for preventing accuracy drift |
-| `neqsim-standards-lookup` | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking in results.json |
-| `neqsim-agent-handoff` | Structured schemas for multi-agent result passing (includes lifecycle state handoff) |
-| `neqsim-physics-explanations` | Plain-language explanations of engineering phenomena |
-| `neqsim-capability-map` | Structured inventory of NeqSim capabilities by discipline |
-| `neqsim-field-development` | Field development workflows, concept selection, lifecycle management |
-| `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation |
-| `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost, tieback analysis |
-| `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, network optimization |
-| `neqsim-process-extraction` | Extract process data from text/tables/PFDs into NeqSim JSON builder format |
-| `neqsim-unisim-reader` | UniSim COM reader — component/EOS/operation mapping, topology reconstruction, forward refs, verification. **Default E300 fluid export** for lossless transfer of critical properties (Tc, Pc, omega, MW, BIPs) including hypothetical/pseudo components. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, HeatExchanger UA tuning notes, separator 2-phase/3-phase auto-detection (flashtank with WaterProduct promoted to ThreePhaseSeparator), orientation detection (vertical → GasScrubber, horizontal → Separator), and entrainment extraction (liquid carryover, gas carry-under, water-in-oil, oil-in-water). |
-| `neqsim-eos-regression` | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization, scipy optimization |
-| `neqsim-reaction-engineering` | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed |
-| `neqsim-dynamic-simulation` | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization |
-| `neqsim-distillation-design` | Distillation column design — solver selection, feed tray rules, convergence, internals sizing |
-| `neqsim-electrolyte-systems` | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection |
-| `neqsim-flow-assurance` | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing |
-| `neqsim-ccs-hydrogen` | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending |
-| `neqsim-power-generation` | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration |
-| `neqsim-technical-document-reading` | Read technical documents and engineering images — PDF/Word/Excel extraction, P&ID topology, vendor datasheet parsing, image analysis with view_image, performance map digitization, figure discussion generation |
+| Skill                                              | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `neqsim-api-patterns`                              | EOS selection, fluid creation, flash, equipment patterns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `neqsim-java8-rules`                               | Forbidden Java 9+ features, replacement patterns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `neqsim-notebook-patterns`                         | Jupyter notebook structure, visualization, performance estimation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `neqsim-optimization-and-doe`                      | Process flowsheet optimization & DoE — decision tree across the 30 NeqSim optimizer classes (ProcessOptimizationEngine, ProductionOptimizer, SQPoptimizer, MultiObjectiveOptimizer, MonteCarloSimulator, BatchStudy, ProcessSimulationEvaluator, DesignOptimizer), SciPy/Pyomo/BoTorch bridging, sensitivity, Pareto, uncertainty                                                                                                                                                                                                                                                                                                                                       |
+| `neqsim-pdf-ocr`                                   | OCR text extraction from scanned PDFs and P&IDs — OCRmyPDF + Tesseract + pytesseract, tag-pattern post-filtering, P&ID-tuned settings (400 DPI, sparse PSM)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `neqsim-troubleshooting`                           | Recovery strategies for convergence failures, zero values, phase issues                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `neqsim-input-validation`                          | Pre-simulation checks (T, P, composition, component names)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `neqsim-regression-baselines`                      | Baseline management for preventing accuracy drift                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `neqsim-standards-lookup`                          | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking in results.json                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `neqsim-agent-handoff`                             | Structured schemas for multi-agent result passing (includes lifecycle state handoff)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `neqsim-physics-explanations`                      | Plain-language explanations of engineering phenomena                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `neqsim-capability-map`                            | Structured inventory of NeqSim capabilities by discipline                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `neqsim-model-calibration-and-data-reconciliation` | Digital twin model calibration and data reconciliation — bounded parameter tuning, steady-state windowing, residual diagnostics, train/validation reporting                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `neqsim-field-development`                         | Field development workflows, concept selection, lifecycle management                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `neqsim-field-economics`                           | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `neqsim-subsea-and-wells`                          | Subsea systems, well design, SURF cost, tieback analysis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `neqsim-production-optimization`                   | Decline curves, bottleneck analysis, gas lift, network optimization                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `neqsim-process-extraction`                        | Extract process data from text/tables/PFDs into NeqSim JSON builder format                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `neqsim-unisim-reader`                             | UniSim COM reader — component/EOS/operation-handler registry mapping, topology reconstruction, forward refs, verification. **Default E300 fluid export** for lossless transfer of critical properties (Tc, Pc, omega, MW, BIPs) including hypothetical/pseudo components. Uses `UniSimOperationHandler` strategies (`native`, `adapter`, `reference`, `control`, `column_internal`, `skip`) and `_unisim_operation_mapping` JSON summaries; balance/virtual/template placeholders use `UnisimCalculator` adapters. Includes TUTOR1 verified reference case, DistillationColumn solver limitations for NGL-rich feeds, HeatExchanger UA tuning notes, separator 2-phase/3-phase auto-detection (flashtank with WaterProduct promoted to ThreePhaseSeparator), orientation detection (vertical → GasScrubber, horizontal → Separator), and entrainment extraction (liquid carryover, gas carry-under, water-in-oil, oil-in-water). |
+| `neqsim-eos-regression`                            | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization, scipy optimization                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `neqsim-reaction-engineering`                      | Reactor patterns — GibbsReactor, PlugFlowReactor, StirredTankReactor, KineticReaction, CatalystBed, **AnaerobicDigester, FermentationReactor, BiogasUpgrader, biorefinery modules**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `neqsim-dynamic-simulation`                        | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `neqsim-distillation-design`                       | Distillation column design — solver selection, feed tray rules, convergence, internals sizing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `neqsim-electrolyte-systems`                       | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `neqsim-flow-assurance`                            | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `neqsim-ccs-hydrogen`                              | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `neqsim-power-generation`                          | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `neqsim-platform-modeling`                         | Production platform process modeling — multi-stage separation, recompression with compressor curves and anti-surge, export/injection compression, scrubber liquid recycles, Cv valve flow, iteration strategies, structured result extraction. Derived from 15+ NCS platform models                                                                                                                                                                                                                                                                                                                                                                                    |
+| `neqsim-technical-document-reading`                | Read technical documents and engineering images — PDF/Word/Excel extraction, P&ID topology, vendor datasheet parsing, image analysis with view_image, performance map digitization, figure discussion generation                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `neqsim-stid-retriever`                            | Retrieve engineering documents (compressor curves, mechanical drawings, data sheets) for tasks. Supports local dirs, manual upload, pluggable retrieval backends (configured via gitignored `devtools/doc_retrieval_config.yaml`). Includes relevance filtering by task type and retrieval manifests for traceability                                                                                                                                                                                                                                                                                                                                                  |
+| `neqsim-process-safety`                            | HAZOP guidewords, LOPA worksheets via `LOPAResult`, SIL determination via `SafetyInstrumentedFunction` (IEC 61508/61511), bow-tie via `BowTieModel`/`BowTieAnalyzer`, 5×5 risk matrix via `RiskMatrix` (NORSOK Z-013, CCPS, API 754) |
+| `neqsim-heat-integration`                          | Pinch analysis with `PinchAnalysis` — composite & grand composite curves, ΔTmin selection, MER targeting, retrofit diagnostics, auto-extract via `PinchAnalysis.fromProcessSystem(process, dTmin)` |
+| `neqsim-equipment-cost-estimation`                 | Equipment-level CAPEX via `CostEstimationCalculator` — Turton/Peters/Ulrich correlations, CEPCI escalation (2019→2025), material/pressure factors, AACE class 1–5, Cp→Cbm→Ctm→Cgr stackup |
+| `neqsim-relief-flare-network`                      | PSV sizing per API 520 (gas/liquid/two-phase) via `ReliefValveSizing`, API 521 fire heat input, flare radiation API 537 via `Flare.estimateRadiationHeatFlux`, header back-pressure & Mach checks |
+| `neqsim-controllability-operability`               | Operating envelope mapping, turndown analysis, control valve sizing per ISA-75/IEC 60534 via `ThrottlingValve`, startup/shutdown sequences, recycle stability diagnostics |
+| `neqsim-utilities-specification`                   | Steam levels (HP/MP/LP), cooling water (ΔT 10–15 °C), instrument air (≤ −40 °C dew point), fuel gas (Wobbe Index), N₂, demin water, refrigeration; per NORSOK U-001, ISA-7.0.01 |
+| `neqsim-professional-reporting`                    | Deliverable quality — `results.json` master schema, figure→discussion→linked_results traceability, KaTeX math, citations, AACE class declaration, uncertainty disclosure (P10/P50/P90), risk register, benchmark validation |
 
 ## API Verification (Mandatory)
 
@@ -792,18 +951,17 @@ This policy applies to ALL agents that produce code for documentation.
 
 ## Notebook Execution Verification (Mandatory)
 
-**Every Jupyter notebook MUST be executed cell-by-cell after creation and all cells must pass.**
+**Every Jupyter notebook MUST be executed after creation and all cells must pass.**
 Notebooks that have not been run are NOT considered complete.
 
 Workflow:
-1. **Build and deploy the latest JAR** before running notebooks that use new/modified classes:
+1. **Compile latest workspace classes** before running notebooks that use new/modified classes:
    ```bash
-   ./mvnw package -DskipTests -Dmaven.javadoc.skip=true  # Linux/Mac
-   mvnw.cmd package -DskipTests "-Dmaven.javadoc.skip=true"  # Windows
-   # Copy JAR to Python neqsim package lib/java11/ directory
+  ./mvnw compile  # Linux/Mac
+  mvnw.cmd compile  # Windows
    ```
-2. **Configure the notebook kernel** and start it
-3. **Run every code cell in order** — cell 1 first, then cell 2, etc.
+2. **Use the devtools setup cell** (`neqsim_dev_setup.py`, `ns.*`) in the first code cell
+3. **Run every code cell in order** — use NeqSim Runner by default for task notebooks
 4. **If any cell fails**, fix the code in that cell and re-run before continuing
 5. **Common runtime errors**:
    - `AttributeError` — method doesn't exist; read the Java source for correct name

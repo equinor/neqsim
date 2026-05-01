@@ -201,7 +201,7 @@ public class TPmultiflash extends TPflash {
         }
         if (i == j) {
           double reg = 1.0e-3;
-          if (system.doEnhancedMultiPhaseCheck()) {
+          if (shouldApplyEnhancedMultiPhaseCheck()) {
             double absDiag = Math.abs(Qmatrix[i][j]);
             double beta = Math.abs(system.getPhase(i).getBeta());
             // Keep strong regularization for near-singular small-beta phases,
@@ -243,7 +243,7 @@ public class TPmultiflash extends TPflash {
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
-        if (system.doEnhancedMultiPhaseCheck()) {
+        if (shouldApplyEnhancedMultiPhaseCheck()) {
           for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
             Qmatrix[kk][kk] += 1.0e-2;
           }
@@ -565,6 +565,11 @@ public class TPmultiflash extends TPflash {
         return;
       }
     }
+
+    // Wilson K trial phases can report a comfortable positive TPD while pure-component
+    // trial phases still find hydrocarbon liquid-liquid splits. Always keep the
+    // pure-component fallback in TPmultiflash so ordinary multiphase scans retain the
+    // same LLE coverage as the 3.7.x flash implementation.
 
     // --- Fallback: Pure-component trials for cases Wilson K trials miss ---
     // (e.g., LLE detection where K-values don't capture polarity-driven splits)
@@ -2121,7 +2126,7 @@ public class TPmultiflash extends TPflash {
       return false;
     }
 
-    system.addPhase();;
+    system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.OIL);
 
@@ -2196,7 +2201,8 @@ public class TPmultiflash extends TPflash {
       // phases, try enhanced version which uses Wilson K-value initial guesses and tests both
       // vapor-like and liquid-like trial phases for more robust detection of liquid-liquid
       // equilibria (e.g., sour gas, CO2 systems)
-      if (system.doEnhancedMultiPhaseCheck() && !multiPhaseTest && system.getNumberOfPhases() < 3) {
+      if (shouldApplyEnhancedMultiPhaseCheck() && !multiPhaseTest
+          && system.getNumberOfPhases() < 3) {
         stabilityAnalysisEnhanced();
       }
     }
@@ -2484,6 +2490,7 @@ public class TPmultiflash extends TPflash {
           system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
+          i--; // indices shift after removal — re-check the (new) phase at i
         }
       }
 
@@ -2553,6 +2560,41 @@ public class TPmultiflash extends TPflash {
               }
               doStabilityAnalysis = false;
               hasRemovedPhase = true;
+            }
+          }
+        }
+      }
+
+      // Composition-based trivial solution detection: two phases of the SAME
+      // PhaseType with essentially identical mole-fraction vectors are
+      // non-converged numerical duplicates. Restricting to same PhaseType
+      // avoids removing legitimate near-critical V/L pairs (issue #1980).
+      //
+      // Restricted to CPA-family models only (issue #2117): for non-CPA EOS
+      // (PR, SRK, UMR-PR-UMC, ...) near-critical V/L and multi-liquid systems
+      // can transiently look like duplicates during stability iteration but
+      // later separate physically (e.g. SimpleReservoirTest.testRun2 with
+      // SystemPrEos, TPFlashTest.testRun5 with SystemUMRPRUMCEos). The
+      // duplicate-phase symptom is specific to CPA association in TEG/MEG
+      // /water-rich flowsheets.
+      String modelName = system.getModelName();
+      boolean isCpaModel = modelName != null && modelName.contains("CPA");
+      if (isCpaModel) {
+        for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+          for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+            if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
+              continue;
+            }
+            double maxCompDiff = 0.0;
+            for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+              maxCompDiff = Math.max(maxCompDiff, Math.abs(system.getPhase(i).getComponent(k).getx()
+                  - system.getPhase(j).getComponent(k).getx()));
+            }
+            if (maxCompDiff < 1.0e-6) {
+              system.removePhaseKeepTotalComposition(j);
+              doStabilityAnalysis = false;
+              hasRemovedPhase = true;
+              j--; // adjust index after removal
             }
           }
         }

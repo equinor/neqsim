@@ -465,10 +465,14 @@ def render_word(paper_dir):
     if has_omml:
         print("  [INFO] Native Word equations enabled (LaTeX → MathML → OMML)")
     else:
-        print("  [WARN] latex2mathml/lxml/MML2OMML.XSL not available; equations as italic text")
+        print("  [WARN] OMML equations unavailable — equations rendered as italic text")
+        print("         Fix: pip install latex2mathml lxml  (and ensure MS Office is installed)")
 
     from docx.oxml.ns import qn as _qn
-    from lxml import etree as _etree
+    try:
+        from lxml import etree as _etree
+    except ImportError:
+        from xml.etree import ElementTree as _etree
 
     doc = Document()
 
@@ -518,6 +522,17 @@ def render_word(paper_dir):
     # -- Title --
     p = doc.add_heading(title, level=0)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    # -- Generation date --
+    from datetime import datetime
+    dp = doc.add_paragraph()
+    dp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    dp.paragraph_format.space_before = Pt(0)
+    dp.paragraph_format.space_after = Pt(12)
+    run = dp.add_run(datetime.now().strftime("%B %d, %Y"))
+    run.font.size = Pt(10)
+    run.font.name = 'Times New Roman'
+    run.font.color.rgb = RGBColor(100, 100, 100)
 
     # -- Process each section --
 
@@ -1059,6 +1074,17 @@ def main():
     tex_file = render_latex(paper_dir)
     if tex_file:
         print(f"  [OK] LaTeX: {tex_file}")
+
+    # PDF (via typst)
+    try:
+        from render_pdf import render_pdf
+        pdf_file = render_pdf(paper_dir)
+        if pdf_file:
+            print(f"  [OK] PDF:   {pdf_file}  ({pdf_file.stat().st_size:,} bytes)")
+    except ImportError:
+        print("  [SKIP] PDF: typst or pandoc not available")
+    except Exception as exc:
+        print(f"  [WARN] PDF: {exc}")
 
     print("=" * 50)
     print("Done.")

@@ -2,7 +2,6 @@ package neqsim.process.equipment.compressor;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -118,9 +117,9 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
     if (useAftercooler) {
       aftercooler = new Cooler(getName() + " aftercooler", compressor.getOutletStream());
       aftercooler.setOutTemperature(aftercoolerTemperature);
-      setOutletStream((Stream) aftercooler.getOutletStream());
+      setOutletStream(aftercooler.getOutletStream());
     } else {
-      setOutletStream((Stream) compressor.getOutletStream());
+      setOutletStream(compressor.getOutletStream());
     }
   }
 
@@ -264,6 +263,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
    * @param unit temperature unit ("C" or "K")
    * @return outlet temperature
    */
+  @Override
   public double getOutletTemperature(String unit) {
     StreamInterface outStr = getOutletStream();
     if (outStr == null || outStr.getThermoSystem() == null) {

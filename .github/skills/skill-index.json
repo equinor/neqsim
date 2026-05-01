@@ -1,0 +1,746 @@
+{
+  "a simulation fails to converge": [
+    "neqsim-troubleshooting"
+  ],
+  "a task needs vendor performance data": [
+    "neqsim-stid-retriever"
+  ],
+  "a user has unisim/hysys simulation files": [
+    "neqsim-unisim-reader"
+  ],
+  "a user provides a process description": [
+    "neqsim-process-extraction"
+  ],
+  "a user provides engineering documents": [
+    "neqsim-technical-document-reading"
+  ],
+  "ocr": [
+    "neqsim-pdf-ocr"
+  ],
+  "ocrmypdf": [
+    "neqsim-pdf-ocr"
+  ],
+  "scanned pdf": [
+    "neqsim-pdf-ocr"
+  ],
+  "tesseract": [
+    "neqsim-pdf-ocr"
+  ],
+  "extract text from p&id": [
+    "neqsim-pdf-ocr",
+    "neqsim-technical-document-reading"
+  ],
+  "extract tags from drawing": [
+    "neqsim-pdf-ocr"
+  ],
+  "analyzing conversion/selectivity": [
+    "neqsim-reaction-engineering"
+  ],
+  "analyzing gas lift allocation": [
+    "neqsim-production-optimization"
+  ],
+  "analyzing pressure/level dynamics": [
+    "neqsim-dynamic-simulation"
+  ],
+  "asme": [
+    "neqsim-standards-lookup"
+  ],
+  "aspen ip": [
+    "neqsim-plant-data"
+  ],
+  "asphaltene stability": [
+    "neqsim-flow-assurance"
+  ],
+  "assessing gaps for engineering tasks": [
+    "neqsim-capability-map"
+  ],
+  "astm)": [
+    "neqsim-standards-lookup"
+  ],
+  "boosters": [
+    "neqsim-subsea-and-wells"
+  ],
+  "building cost estimates (capex/opex)": [
+    "neqsim-field-economics"
+  ],
+  "building full topside process models for oil & gas platforms (fpso": [
+    "neqsim-platform-modeling"
+  ],
+  "calculating project economics (npv": [
+    "neqsim-field-economics"
+  ],
+  "characterizing c7+ fractions": [
+    "neqsim-eos-regression"
+  ],
+  "checking what neqsim can do": [
+    "neqsim-capability-map"
+  ],
+  "co2 dense phase transport": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "co2/h2s corrosion": [
+    "neqsim-flow-assurance"
+  ],
+  "co2/h2s in aqueous systems": [
+    "neqsim-electrolyte-systems"
+  ],
+  "combined cycle systems": [
+    "neqsim-power-generation"
+  ],
+  "compare the model in neqsim": [
+    "neqsim-unisim-reader"
+  ],
+  "composing multi-agent pipelines where one agent's output feeds another agent's input": [
+    "neqsim-agent-handoff"
+  ],
+  "compressor maps": [
+    "neqsim-technical-document-reading"
+  ],
+  "concept screening": [
+    "neqsim-field-development"
+  ],
+  "control loops": [
+    "neqsim-dynamic-simulation"
+  ],
+  "creating": [
+    "neqsim-notebook-patterns"
+  ],
+  "cstr": [
+    "neqsim-reaction-engineering"
+  ],
+  "cvd": [
+    "neqsim-eos-regression"
+  ],
+  "design basis": [
+    "neqsim-technical-document-reading"
+  ],
+  "designing subsea fields": [
+    "neqsim-subsea-and-wells"
+  ],
+  "dl)": [
+    "neqsim-eos-regression"
+  ],
+  "dnv": [
+    "neqsim-standards-lookup"
+  ],
+  "electrolysis": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "engineering task requires standards compliance (api": [
+    "neqsim-standards-lookup"
+  ],
+  "estimating well costs": [
+    "neqsim-subsea-and-wells"
+  ],
+  "evaluating ior/eor options": [
+    "neqsim-production-optimization"
+  ],
+  "evaluating tax regimes (norwegian ncs": [
+    "neqsim-field-economics"
+  ],
+  "explaining unexpected behavior": [
+    "neqsim-physics-explanations"
+  ],
+  "fitting pvt data (cme": [
+    "neqsim-eos-regression"
+  ],
+  "fixed": [
+    "neqsim-platform-modeling"
+  ],
+  "forecasting production profiles": [
+    "neqsim-production-optimization"
+  ],
+  "generic)": [
+    "neqsim-field-economics"
+  ],
+  "hrsg": [
+    "neqsim-power-generation"
+  ],
+  "hydrate inhibitor dosing": [
+    "neqsim-electrolyte-systems"
+  ],
+  "hydrogen blending": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "identifying facility bottlenecks": [
+    "neqsim-production-optimization"
+  ],
+  "images \u2014 equipment data sheets": [
+    "neqsim-technical-document-reading"
+  ],
+  "impurity effects on phase behavior": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "including tests": [
+    "neqsim-java8-rules"
+  ],
+  "injection wells": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "inspection reports": [
+    "neqsim-technical-document-reading"
+  ],
+  "irr": [
+    "neqsim-field-economics"
+  ],
+  "iso": [
+    "neqsim-standards-lookup"
+  ],
+  "kinetic": [
+    "neqsim-reaction-engineering"
+  ],
+  "manifolds": [
+    "neqsim-subsea-and-wells"
+  ],
+  "matching saturation pressures": [
+    "neqsim-eos-regression"
+  ],
+  "mechanical drawings": [
+    "neqsim-stid-retriever"
+  ],
+  "meg/deg injection": [
+    "neqsim-electrolyte-systems"
+  ],
+  "modeling chemical reactors (equilibrium": [
+    "neqsim-reaction-engineering"
+  ],
+  "modeling co2 pipelines": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "modeling gas turbines": [
+    "neqsim-power-generation"
+  ],
+  "modeling produced water": [
+    "neqsim-electrolyte-systems"
+  ],
+  "modeling startup/shutdown": [
+    "neqsim-dynamic-simulation"
+  ],
+  "modifying solver logic": [
+    "neqsim-regression-baselines"
+  ],
+  "needs structured data for process simulation": [
+    "neqsim-technical-document-reading"
+  ],
+  "neqsim-agent-handoff": [
+    "neqsim-agent-handoff"
+  ],
+  "neqsim-api-patterns": [
+    "neqsim-api-patterns"
+  ],
+  "neqsim-capability-map": [
+    "neqsim-capability-map"
+  ],
+  "neqsim-ccs-hydrogen": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "neqsim-distillation-design": [
+    "neqsim-distillation-design"
+  ],
+  "neqsim-dynamic-simulation": [
+    "neqsim-dynamic-simulation"
+  ],
+  "neqsim-electrolyte-systems": [
+    "neqsim-electrolyte-systems"
+  ],
+  "neqsim-eos-regression": [
+    "neqsim-eos-regression"
+  ],
+  "neqsim-field-development": [
+    "neqsim-field-development"
+  ],
+  "neqsim-field-economics": [
+    "neqsim-field-economics"
+  ],
+  "neqsim-flow-assurance": [
+    "neqsim-flow-assurance"
+  ],
+  "neqsim-input-validation": [
+    "neqsim-input-validation"
+  ],
+  "neqsim-java8-rules": [
+    "neqsim-java8-rules"
+  ],
+  "neqsim-model-calibration-and-data-reconciliation": [
+    "neqsim-model-calibration-and-data-reconciliation"
+  ],
+  "neqsim-notebook-patterns": [
+    "neqsim-notebook-patterns"
+  ],
+  "neqsim-physics-explanations": [
+    "neqsim-physics-explanations"
+  ],
+  "neqsim-plant-data": [
+    "neqsim-plant-data"
+  ],
+  "neqsim-platform-modeling": [
+    "neqsim-platform-modeling"
+  ],
+  "neqsim-power-generation": [
+    "neqsim-power-generation"
+  ],
+  "neqsim-process-extraction": [
+    "neqsim-process-extraction"
+  ],
+  "neqsim-production-optimization": [
+    "neqsim-production-optimization"
+  ],
+  "neqsim-reaction-engineering": [
+    "neqsim-reaction-engineering"
+  ],
+  "neqsim-regression-baselines": [
+    "neqsim-regression-baselines"
+  ],
+  "neqsim-standards-lookup": [
+    "neqsim-standards-lookup"
+  ],
+  "neqsim-stid-retriever": [
+    "neqsim-stid-retriever"
+  ],
+  "neqsim-subsea-and-wells": [
+    "neqsim-subsea-and-wells"
+  ],
+  "neqsim-technical-document-reading": [
+    "neqsim-technical-document-reading"
+  ],
+  "neqsim-troubleshooting": [
+    "neqsim-troubleshooting"
+  ],
+  "neqsim-unisim-reader": [
+    "neqsim-unisim-reader"
+  ],
+  "norsok": [
+    "neqsim-standards-lookup"
+  ],
+  "operating data": [
+    "neqsim-process-extraction"
+  ],
+  "optimizing production rates": [
+    "neqsim-production-optimization"
+  ],
+  "optimization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "optimize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "minimize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "maximize": [
+    "neqsim-optimization-and-doe"
+  ],
+  "doe": [
+    "neqsim-optimization-and-doe"
+  ],
+  "design of experiments": [
+    "neqsim-optimization-and-doe"
+  ],
+  "monte carlo": [
+    "neqsim-optimization-and-doe"
+  ],
+  "uncertainty quantification": [
+    "neqsim-optimization-and-doe"
+  ],
+  "p10 p50 p90": [
+    "neqsim-optimization-and-doe"
+  ],
+  "tornado diagram": [
+    "neqsim-optimization-and-doe"
+  ],
+  "pareto front": [
+    "neqsim-optimization-and-doe"
+  ],
+  "multi-objective": [
+    "neqsim-optimization-and-doe"
+  ],
+  "sensitivity analysis": [
+    "neqsim-optimization-and-doe"
+  ],
+  "constrained nlp": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nonlinear programming": [
+    "neqsim-optimization-and-doe"
+  ],
+  "sqp": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nelder mead": [
+    "neqsim-optimization-and-doe"
+  ],
+  "particle swarm": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bfgs": [
+    "neqsim-optimization-and-doe"
+  ],
+  "golden section": [
+    "neqsim-optimization-and-doe"
+  ],
+  "throughput maximization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bottleneck": [
+    "neqsim-optimization-and-doe"
+  ],
+  "debottleneck": [
+    "neqsim-optimization-and-doe"
+  ],
+  "parameter sweep": [
+    "neqsim-optimization-and-doe"
+  ],
+  "batch study": [
+    "neqsim-optimization-and-doe"
+  ],
+  "scipy bridge": [
+    "neqsim-optimization-and-doe"
+  ],
+  "pyomo": [
+    "neqsim-optimization-and-doe"
+  ],
+  "nlopt": [
+    "neqsim-optimization-and-doe"
+  ],
+  "bayesian optimization": [
+    "neqsim-optimization-and-doe"
+  ],
+  "trade-off": [
+    "neqsim-optimization-and-doe"
+  ],
+  "lift curve": [
+    "neqsim-optimization-and-doe"
+  ],
+  "vfp table": [
+    "neqsim-optimization-and-doe"
+  ],
+  "or analyzing column performance": [
+    "neqsim-distillation-design"
+  ],
+  "or any ccs/h2 value chain analysis": [
+    "neqsim-ccs-hydrogen"
+  ],
+  "or any system with ions": [
+    "neqsim-electrolyte-systems"
+  ],
+  "or as-built documentation for process equipment": [
+    "neqsim-stid-retriever"
+  ],
+  "or building validation reports for calibrated simulations": [
+    "neqsim-model-calibration-and-data-reconciliation"
+  ],
+  "or calculating fuel gas consumption": [
+    "neqsim-power-generation"
+  ],
+  "or chemical inhibitor dosing": [
+    "neqsim-flow-assurance"
+  ],
+  "or configuring subsea equipment (trees": [
+    "neqsim-subsea-and-wells"
+  ],
+  "or design document": [
+    "neqsim-process-extraction"
+  ],
+  "or designing reactor networks": [
+    "neqsim-reaction-engineering"
+  ],
+  "or electrolytes": [
+    "neqsim-electrolyte-systems"
+  ],
+  "or eos implementations": [
+    "neqsim-regression-baselines"
+  ],
+  "or gives zero/nan values": [
+    "neqsim-troubleshooting"
+  ],
+  "or integrated field planning": [
+    "neqsim-field-development"
+  ],
+  "or operational data": [
+    "neqsim-platform-modeling"
+  ],
+  "or property retrieval": [
+    "neqsim-api-patterns"
+  ],
+  "or pvt analysis": [
+    "neqsim-notebook-patterns"
+  ],
+  "or routing work to the right agent": [
+    "neqsim-capability-map"
+  ],
+  "or running monte carlo sensitivity analysis on economic outcomes": [
+    "neqsim-field-economics"
+  ],
+  "or running multi-scenario production comparisons": [
+    "neqsim-production-optimization"
+  ],
+  "or running simulations": [
+    "neqsim-input-validation"
+  ],
+  "or safety analysis": [
+    "neqsim-standards-lookup"
+  ],
+  "or setting up measurement devices": [
+    "neqsim-dynamic-simulation"
+  ],
+  "or validating eos predictions against lab measurements": [
+    "neqsim-eos-regression"
+  ],
+  "or when adding educational context to notebooks": [
+    "neqsim-physics-explanations"
+  ],
+  "p&id descriptions": [
+    "neqsim-technical-document-reading"
+  ],
+  "p&ids": [
+    "neqsim-platform-modeling"
+  ],
+  "payback)": [
+    "neqsim-field-economics"
+  ],
+  "performing blowdown/depressurization": [
+    "neqsim-dynamic-simulation"
+  ],
+  "performing casing design": [
+    "neqsim-subsea-and-wells"
+  ],
+  "performing field development studies": [
+    "neqsim-field-development"
+  ],
+  "pfd": [
+    "neqsim-process-extraction"
+  ],
+  "pfr)": [
+    "neqsim-reaction-engineering"
+  ],
+  "phase envelopes \u2014": [
+    "neqsim-technical-document-reading"
+  ],
+  "pipeline hydraulics": [
+    "neqsim-flow-assurance"
+  ],
+  "planning implementations": [
+    "neqsim-capability-map"
+  ],
+  "predicting hydrate formation": [
+    "neqsim-flow-assurance"
+  ],
+  "process equipment": [
+    "neqsim-input-validation"
+  ],
+  "process simulation": [
+    "neqsim-api-patterns"
+  ],
+  "produces unexpected results": [
+    "neqsim-troubleshooting"
+  ],
+  "production forecasting": [
+    "neqsim-field-development"
+  ],
+  "property correlations": [
+    "neqsim-regression-baselines"
+  ],
+  "python code that uses neqsim for thermodynamic calculations": [
+    "neqsim-api-patterns"
+  ],
+  "reading data from osisoft pi": [
+    "neqsim-plant-data"
+  ],
+  "reconciling noisy measurements": [
+    "neqsim-model-calibration-and-data-reconciliation"
+  ],
+  "reducing model-vs-plant mismatch": [
+    "neqsim-model-calibration-and-data-reconciliation"
+  ],
+  "reports": [
+    "neqsim-physics-explanations"
+  ],
+  "reviewing any java code for neqsim": [
+    "neqsim-java8-rules"
+  ],
+  "reviewing jupyter notebooks that use neqsim for process simulation": [
+    "neqsim-notebook-patterns"
+  ],
+  "risers)": [
+    "neqsim-subsea-and-wells"
+  ],
+  "risk assessment": [
+    "neqsim-standards-lookup"
+  ],
+  "running tieback comparisons": [
+    "neqsim-subsea-and-wells"
+  ],
+  "running transient simulations": [
+    "neqsim-dynamic-simulation"
+  ],
+  "salts": [
+    "neqsim-electrolyte-systems"
+  ],
+  "scale prediction": [
+    "neqsim-electrolyte-systems"
+  ],
+  "selecting internals (trays/packing)": [
+    "neqsim-distillation-design"
+  ],
+  "semi-sub) from design documents": [
+    "neqsim-platform-modeling"
+  ],
+  "setting up distillation columns": [
+    "neqsim-distillation-design"
+  ],
+  "setting up reaction systems": [
+    "neqsim-reaction-engineering"
+  ],
+  "setting up thermodynamic systems": [
+    "neqsim-input-validation"
+  ],
+  "sizing columns": [
+    "neqsim-distillation-design"
+  ],
+  "sizing flowlines": [
+    "neqsim-subsea-and-wells"
+  ],
+  "slug flow": [
+    "neqsim-flow-assurance"
+  ],
+  "standards": [
+    "neqsim-technical-document-reading"
+  ],
+  "steam turbines": [
+    "neqsim-power-generation"
+  ],
+  "technical requirements": [
+    "neqsim-technical-document-reading"
+  ],
+  "thermal analysis": [
+    "neqsim-flow-assurance"
+  ],
+  "thermal efficiency": [
+    "neqsim-power-generation"
+  ],
+  "thermodynamics": [
+    "neqsim-notebook-patterns"
+  ],
+  "throws exceptions": [
+    "neqsim-troubleshooting"
+  ],
+  "tieback analysis": [
+    "neqsim-field-development"
+  ],
+  "troubleshooting convergence": [
+    "neqsim-distillation-design"
+  ],
+  "tuning binary interaction parameters (kij)": [
+    "neqsim-eos-regression"
+  ],
+  "tuning pid controllers": [
+    "neqsim-dynamic-simulation"
+  ],
+  "tuning process model parameters from historian data": [
+    "neqsim-model-calibration-and-data-reconciliation"
+  ],
+  "umbilicals": [
+    "neqsim-subsea-and-wells"
+  ],
+  "users ask 'why' about simulation results": [
+    "neqsim-physics-explanations"
+  ],
+  "vendor drawings": [
+    "neqsim-technical-document-reading"
+  ],
+  "wants a running neqsim simulation": [
+    "neqsim-process-extraction"
+  ],
+  "wants to recreate": [
+    "neqsim-unisim-reader"
+  ],
+  "waste heat recovery": [
+    "neqsim-power-generation"
+  ],
+  "wax appearance": [
+    "neqsim-flow-assurance"
+  ],
+  "well test reports": [
+    "neqsim-technical-document-reading"
+  ],
+  "writing": [
+    "neqsim-java8-rules"
+  ],
+  "writing java": [
+    "neqsim-api-patterns"
+  ],
+  "hazop": ["neqsim-process-safety"],
+  "lopa": ["neqsim-process-safety"],
+  "sil": ["neqsim-process-safety"],
+  "sil determination": ["neqsim-process-safety"],
+  "safety integrity level": ["neqsim-process-safety"],
+  "bow tie": ["neqsim-process-safety"],
+  "bowtie": ["neqsim-process-safety"],
+  "risk matrix": ["neqsim-process-safety"],
+  "iec 61508": ["neqsim-process-safety"],
+  "iec 61511": ["neqsim-process-safety"],
+  "alarp": ["neqsim-process-safety"],
+  "process safety": ["neqsim-process-safety"],
+  "hazard analysis": ["neqsim-process-safety"],
+  "pinch analysis": ["neqsim-heat-integration"],
+  "heat integration": ["neqsim-heat-integration"],
+  "composite curve": ["neqsim-heat-integration"],
+  "grand composite": ["neqsim-heat-integration"],
+  "mer": ["neqsim-heat-integration"],
+  "minimum energy requirement": ["neqsim-heat-integration"],
+  "delta tmin": ["neqsim-heat-integration"],
+  "heat exchanger network": ["neqsim-heat-integration"],
+  "hen synthesis": ["neqsim-heat-integration"],
+  "energy targeting": ["neqsim-heat-integration"],
+  "capex": ["neqsim-equipment-cost-estimation"],
+  "equipment cost": ["neqsim-equipment-cost-estimation"],
+  "cost estimation": ["neqsim-equipment-cost-estimation"],
+  "cepci": ["neqsim-equipment-cost-estimation"],
+  "turton correlation": ["neqsim-equipment-cost-estimation"],
+  "bare module": ["neqsim-equipment-cost-estimation"],
+  "aace class": ["neqsim-equipment-cost-estimation"],
+  "lang factor": ["neqsim-equipment-cost-estimation"],
+  "purchased equipment cost": ["neqsim-equipment-cost-estimation"],
+  "psv sizing": ["neqsim-relief-flare-network"],
+  "relief valve": ["neqsim-relief-flare-network"],
+  "pressure safety valve": ["neqsim-relief-flare-network"],
+  "api 520": ["neqsim-relief-flare-network"],
+  "api 521": ["neqsim-relief-flare-network"],
+  "api 526": ["neqsim-relief-flare-network"],
+  "api 537": ["neqsim-relief-flare-network"],
+  "flare radiation": ["neqsim-relief-flare-network"],
+  "flare network": ["neqsim-relief-flare-network"],
+  "fire case": ["neqsim-relief-flare-network"],
+  "relief load": ["neqsim-relief-flare-network"],
+  "operating envelope": ["neqsim-controllability-operability"],
+  "operability": ["neqsim-controllability-operability"],
+  "turndown": ["neqsim-controllability-operability"],
+  "control valve sizing": ["neqsim-controllability-operability"],
+  "isa 75": ["neqsim-controllability-operability"],
+  "iec 60534": ["neqsim-controllability-operability"],
+  "rangeability": ["neqsim-controllability-operability"],
+  "startup sequence": ["neqsim-controllability-operability"],
+  "shutdown sequence": ["neqsim-controllability-operability"],
+  "recycle stability": ["neqsim-controllability-operability"],
+  "controllability": ["neqsim-controllability-operability"],
+  "utility specification": ["neqsim-utilities-specification"],
+  "steam levels": ["neqsim-utilities-specification"],
+  "cooling water": ["neqsim-utilities-specification"],
+  "instrument air": ["neqsim-utilities-specification"],
+  "fuel gas": ["neqsim-utilities-specification"],
+  "nitrogen blanketing": ["neqsim-utilities-specification"],
+  "wobbe index": ["neqsim-utilities-specification"],
+  "demin water": ["neqsim-utilities-specification"],
+  "utility duty": ["neqsim-utilities-specification"],
+  "norsok u-001": ["neqsim-utilities-specification"],
+  "results.json": ["neqsim-professional-reporting"],
+  "report schema": ["neqsim-professional-reporting"],
+  "professional report": ["neqsim-professional-reporting"],
+  "executive summary": ["neqsim-professional-reporting"],
+  "traceability": ["neqsim-professional-reporting"],
+  "katex": ["neqsim-professional-reporting"],
+  "citation": ["neqsim-professional-reporting"],
+  "deliverable quality": ["neqsim-professional-reporting"],
+  "report figures": ["neqsim-professional-reporting"],
+  "uncertainty disclosure": ["neqsim-professional-reporting"]
+}

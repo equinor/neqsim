@@ -111,6 +111,55 @@ public class ComponentPCSAFT extends ComponentSrk {
     // System.out.println("fugacity " + getFugacityCoefficient());
   }
 
+  /**
+   * Initializes only the PC-SAFT specific component derivative quantities from the current phase
+   * state. Unlike {@link #Finit}, this method does not call super.Finit() and therefore avoids
+   * triggering dFdNdV/dFdNdN computation, which is essential for preventing infinite recursion when
+   * those methods are implemented numerically.
+   *
+   * @param phase the phase to compute quantities for
+   * @param numberOfComponents number of components in the phase
+   * @param temp temperature in K
+   * @param pres pressure in bara
+   */
+  void initSAFTDerivatives(PhaseInterface phase, int numberOfComponents, double temp, double pres) {
+    setDnSAFTdi(calcdnSAFTdi(phase, numberOfComponents, temp, pres));
+    setDghsSAFTdi(calcdghsSAFTdi(phase, numberOfComponents, temp, pres));
+    setDlogghsSAFTdi(1.0 / ((PhasePCSAFT) phase).getGhsSAFT() * getDghsSAFTdi());
+    setDmSAFTdi(calcdmSAFTdi(phase, numberOfComponents, temp, pres));
+    setdahsSAFTdi(calcdahsSAFTdi(phase, numberOfComponents, temp, pres));
+
+    F1dispVolTermdn = 1.0 * ThermodynamicConstantsInterface.avagadroNumber
+        / ((PhasePCSAFT) phase).getVolumeSAFT();
+    F2dispVolTermdn = F1dispVolTermdn;
+    F1dispSumTermdn = calcF1dispSumTermdn(phase, numberOfComponents, temp, pres);
+    F2dispSumTermdn = calcF2dispSumTermdn(phase, numberOfComponents, temp, pres);
+    F1dispI1dn = ((PhasePCSAFT) phase).calcF1dispI1dN() * getDnSAFTdi()
+        + ((PhasePCSAFT) phase).calcF1dispI1dm() * getDmSAFTdi();
+    F2dispI2dn = ((PhasePCSAFT) phase).calcF2dispI2dN() * getDnSAFTdi()
+        + ((PhasePCSAFT) phase).calcF2dispI2dm() * getDmSAFTdi();
+    F2dispZHCdn = ((PhasePCSAFT) phase).getF2dispZHCdN() * getDnSAFTdi()
+        + ((PhasePCSAFT) phase).getF2dispZHCdm() * getDmSAFTdi();
+  }
+
+  /**
+   * Reinitializes PC-SAFT quantities on a perturbed phase clone. Calls volInit() on the phase and
+   * then initSAFTDerivatives() on each component, without triggering the full Finit chain.
+   *
+   * @param perturbedPhase the cloned and perturbed phase
+   * @param numberOfComponents number of components
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
+   */
+  private static void reinitSAFTOnPhase(PhasePCSAFT perturbedPhase, int numberOfComponents,
+      double temperature, double pressure) {
+    perturbedPhase.volInit();
+    for (int i = 0; i < numberOfComponents; i++) {
+      ((ComponentPCSAFT) perturbedPhase.getComponent(i)).initSAFTDerivatives(perturbedPhase,
+          numberOfComponents, temperature, pressure);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -236,35 +285,100 @@ public class ComponentPCSAFT extends ComponentSrk {
     if (h == 0) {
       h = 1e-6;
     }
-    PhasePCSAFT plus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT plus = ((PhasePCSAFT) phase).clone();
     plus.setTemperature(temperature + h);
     for (int i = 0; i < numberOfComponents; i++) {
       ((ComponentPCSAFT) plus.getComponent(i)).init(plus.getTemperature(), pressure,
           plus.getNumberOfMolesInPhase(), 1.0, 0);
     }
-    plus.volInit();
-    for (int i = 0; i < numberOfComponents; i++) {
-      ((ComponentPCSAFT) plus.getComponent(i)).Finit(plus, plus.getTemperature(), pressure,
-          plus.getNumberOfMolesInPhase(), 1.0, numberOfComponents, 0);
-    }
+    reinitSAFTOnPhase(plus, numberOfComponents, plus.getTemperature(), pressure);
     double dFplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
         numberOfComponents, plus.getTemperature(), pressure);
 
-    PhasePCSAFT minus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    PhasePCSAFT minus = ((PhasePCSAFT) phase).clone();
     minus.setTemperature(temperature - h);
     for (int i = 0; i < numberOfComponents; i++) {
       ((ComponentPCSAFT) minus.getComponent(i)).init(minus.getTemperature(), pressure,
           minus.getNumberOfMolesInPhase(), 1.0, 0);
     }
-    minus.volInit();
-    for (int i = 0; i < numberOfComponents; i++) {
-      ((ComponentPCSAFT) minus.getComponent(i)).Finit(minus, minus.getTemperature(), pressure,
-          minus.getNumberOfMolesInPhase(), 1.0, numberOfComponents, 0);
-    }
+    reinitSAFTOnPhase(minus, numberOfComponents, minus.getTemperature(), pressure);
     double dFminus = ((ComponentPCSAFT) minus.getComponent(getComponentNumber())).dFdN(minus,
         numberOfComponents, minus.getTemperature(), pressure);
 
     return (dFplus - dFminus) / (2.0 * h);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Computes the cross-derivative of the reduced residual Helmholtz energy with respect to moles of
+   * component i and total volume using numerical central difference. This derivative is essential
+   * for computing partial molar volumes and fugacity coefficient derivatives with respect to
+   * pressure.
+   * </p>
+   */
+  @Override
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    double totalVolume = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
+    double h = totalVolume * 1.0e-6;
+    if (h < 1.0e-10) {
+      h = 1.0e-10;
+    }
+
+    PhasePCSAFT plus = ((PhasePCSAFT) phase).clone();
+    plus.setMolarVolume((totalVolume + h) / phase.getNumberOfMolesInPhase());
+    reinitSAFTOnPhase(plus, numberOfComponents, temperature, pressure);
+    double dFdNplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
+        numberOfComponents, temperature, pressure);
+
+    PhasePCSAFT minus = ((PhasePCSAFT) phase).clone();
+    minus.setMolarVolume((totalVolume - h) / phase.getNumberOfMolesInPhase());
+    reinitSAFTOnPhase(minus, numberOfComponents, temperature, pressure);
+    double dFdNminus = ((ComponentPCSAFT) minus.getComponent(getComponentNumber())).dFdN(minus,
+        numberOfComponents, temperature, pressure);
+
+    return (dFdNplus - dFdNminus) / (2.0 * h);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Computes the second cross-derivative of the reduced residual Helmholtz energy with respect to
+   * moles of components i and j using numerical central difference at constant volume and
+   * temperature. This derivative is essential for Newton-Raphson flash convergence and stability
+   * analysis.
+   * </p>
+   */
+  @Override
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    double nj = phase.getComponent(j).getNumberOfMolesInPhase();
+    double h = Math.max(Math.abs(nj) * 1.0e-6, 1.0e-10);
+    double totalVolume = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
+    double totalMoles = phase.getNumberOfMolesInPhase();
+
+    PhasePCSAFT plus = ((PhasePCSAFT) phase).clone();
+    plus.getComponent(j).setNumberOfMolesInPhase(nj + h);
+    double newTotalPlus = totalMoles + h;
+    plus.numberOfMolesInPhase = newTotalPlus;
+    plus.setMolarVolume(totalVolume / newTotalPlus);
+    reinitSAFTOnPhase(plus, numberOfComponents, temperature, pressure);
+    double dFdNplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
+        numberOfComponents, temperature, pressure);
+
+    PhasePCSAFT minus = ((PhasePCSAFT) phase).clone();
+    minus.getComponent(j).setNumberOfMolesInPhase(nj - h);
+    double newTotalMinus = totalMoles - h;
+    minus.numberOfMolesInPhase = newTotalMinus;
+    minus.setMolarVolume(totalVolume / newTotalMinus);
+    reinitSAFTOnPhase(minus, numberOfComponents, temperature, pressure);
+    double dFdNminus = ((ComponentPCSAFT) minus.getComponent(getComponentNumber())).dFdN(minus,
+        numberOfComponents, temperature, pressure);
+
+    return (dFdNplus - dFdNminus) / (2.0 * h);
   }
 
   /**

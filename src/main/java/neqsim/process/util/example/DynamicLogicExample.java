@@ -16,7 +16,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Example demonstrating how to create process logic completely dynamically at runtime without any
  * pre-compiled logic sequences.
- * 
+ *
  * <p>
  * This shows:
  * </p>

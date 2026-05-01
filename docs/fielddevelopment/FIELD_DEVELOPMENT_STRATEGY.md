@@ -135,10 +135,10 @@ package neqsim.process.fielddevelopment.economics;
 
 /**
  * Norwegian Continental Shelf petroleum tax model.
- * 
+ *
  * Implements:
  * - 22% corporate tax
- * - 56% special petroleum tax  
+ * - 56% special petroleum tax
  * - Uplift deductions
  * - Loss carry-forward
  */
@@ -146,21 +146,21 @@ public class NorwegianTaxModel {
     private static final double CORPORATE_TAX_RATE = 0.22;
     private static final double PETROLEUM_TAX_RATE = 0.56;
     private static final double TOTAL_MARGINAL_RATE = 0.78;
-    
+
     private double upliftRate = 0.055; // 5.5% per year for 4 years
     private int upliftYears = 4;
-    
-    public TaxResult calculateTax(double grossRevenue, double opex, 
+
+    public TaxResult calculateTax(double grossRevenue, double opex,
                                    double depreciation, double uplift) {
         // Corporate tax base
         double corporateTaxBase = grossRevenue - opex - depreciation;
         double corporateTax = Math.max(0, corporateTaxBase * CORPORATE_TAX_RATE);
-        
+
         // Special petroleum tax base (with uplift)
         double specialTaxBase = grossRevenue - opex - depreciation - uplift;
         double specialTax = Math.max(0, specialTaxBase * PETROLEUM_TAX_RATE);
-        
-        return new TaxResult(corporateTax, specialTax, 
+
+        return new TaxResult(corporateTax, specialTax,
                             corporateTax + specialTax);
     }
 }
@@ -177,7 +177,7 @@ package neqsim.process.fielddevelopment.economics;
 public class CashFlowEngine {
     private NorwegianTaxModel taxModel;
     private TariffModel tariffModel;
-    
+
     public CashFlowResult generateCashFlow(
         ProductionForecast production,
         CapexSchedule capex,
@@ -187,10 +187,10 @@ public class CashFlowEngine {
     ) {
         // Year-by-year cash flow with tax
     }
-    
+
     public double calculateNPV(CashFlowResult cashFlow, double discountRate);
     public double calculateIRR(CashFlowResult cashFlow);
-    public double calculateBreakevenPrice(CashFlowResult cashFlow, 
+    public double calculateBreakevenPrice(CashFlowResult cashFlow,
                                           double targetNPV);
     public double calculatePaybackPeriod(CashFlowResult cashFlow);
 }
@@ -207,7 +207,7 @@ package neqsim.process.fielddevelopment.tieback;
 
 /**
  * Analyzes tie-back options for marginal field development.
- * 
+ *
  * Considers:
  * - Distance to host
  * - Host spare capacity (gas, oil, water handling)
@@ -215,25 +215,25 @@ package neqsim.process.fielddevelopment.tieback;
  * - Cost comparison
  */
 public class TiebackAnalyzer {
-    
-    public TiebackReport analyze(FieldConcept discovery, 
+
+    public TiebackReport analyze(FieldConcept discovery,
                                   List<HostFacility> hosts) {
         List<TiebackOption> options = new ArrayList<>();
-        
+
         for (HostFacility host : hosts) {
             TiebackOption option = evaluateTieback(discovery, host);
             if (option.isFeasible()) {
                 options.add(option);
             }
         }
-        
+
         // Rank by NPV
         options.sort(Comparator.comparing(TiebackOption::getNpv).reversed());
-        
+
         return new TiebackReport(discovery, options);
     }
-    
-    private TiebackOption evaluateTieback(FieldConcept discovery, 
+
+    private TiebackOption evaluateTieback(FieldConcept discovery,
                                            HostFacility host) {
         // 1. Check distance and water depth
         // 2. Screen flow assurance (hydrate, wax in flowline)
@@ -258,29 +258,29 @@ public class HostFacility {
     private double latitude;
     private double longitude;
     private double waterDepth;
-    
+
     // Capacity constraints
     private double gasCapacityMSm3d;
     private double oilCapacityBopd;
     private double waterCapacityM3d;
     private double liquidCapacityM3d;
-    
+
     // Current utilization
     private double gasUtilization;
     private double oilUtilization;
     private double waterUtilization;
-    
+
     // Tie-in points
     private double minTieInPressureBara;
     private double maxTieInPressureBara;
-    
+
     // Associated process system (optional)
     private ProcessSystem facility;
-    
+
     public double getSpareGasCapacity() {
         return gasCapacityMSm3d * (1.0 - gasUtilization);
     }
-    
+
     public boolean canAccept(FieldConcept discovery) {
         // Check if host has capacity for new tieback
     }
@@ -293,7 +293,7 @@ public class HostFacility {
 
 #### 3.1 Enhance Existing FieldProductionScheduler
 
-Add to [FieldProductionScheduler.java](src/main/java/neqsim/process/util/fielddevelopment/FieldProductionScheduler.java):
+Add to [FieldProductionScheduler.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/fielddevelopment/FieldProductionScheduler.java):
 
 ```java
 // Norwegian Tax Integration
@@ -338,7 +338,7 @@ package neqsim.process.fielddevelopment.portfolio;
 
 /**
  * Optimizes capital allocation across a portfolio of opportunities.
- * 
+ *
  * Considers:
  * - Capital budget constraints
  * - Risk diversification
@@ -349,11 +349,11 @@ public class PortfolioOptimizer {
     private List<FieldAsset> assets;
     private double annualCapexBudget;
     private double maxPortfolioRisk;
-    
+
     public InvestmentSchedule optimize(int planningHorizon) {
         // Mixed-integer programming for optimal phasing
     }
-    
+
     public PortfolioReport analyze() {
         // Risk-return analysis
         // Efficient frontier
@@ -375,16 +375,16 @@ package neqsim.process.util.fielddevelopment;
 public class PipelineNetwork {
     private List<PipelineSegment> segments;
     private List<Node> nodes;
-    
-    public void addSegment(String from, String to, 
+
+    public void addSegment(String from, String to,
                            double lengthKm, double diameterInches,
                            double roughness, boolean insulated);
-    
+
     public void addNode(String name, NodeType type);
-    
+
     public NetworkResult solve(Map<String, Double> sourceRates,
                                Map<String, Double> sinkPressures);
-    
+
     public FlowAssuranceReport screenFlowAssurance(double seabedTempC);
 }
 ```
@@ -433,7 +433,7 @@ TiebackReport report = analyzer.analyze(discovery, hosts);
 // 4. Review results
 System.out.println(report.getSummary());
 TiebackOption best = report.getBestOption();
-System.out.println("Best option: " + best.getHostName() + 
+System.out.println("Best option: " + best.getHostName() +
                    ", NPV: " + best.getNpvMUSD() + " MUSD");
 ```
 
@@ -471,7 +471,7 @@ scheduler.setTaxModel(new NorwegianTaxModel());
 
 // 5. Generate schedule
 ProductionSchedule schedule = scheduler.generateSchedule(
-    LocalDate.of(2026, 1, 1), 
+    LocalDate.of(2026, 1, 1),
     20.0,  // years
     365.0  // annual steps
 );
@@ -480,7 +480,7 @@ ProductionSchedule schedule = scheduler.generateSchedule(
 System.out.println("Cumulative Gas: " + schedule.getCumulativeGas("GSm3") + " GSm3");
 System.out.println("Pre-tax NPV: " + schedule.getPreTaxNPV("MUSD") + " MUSD");
 System.out.println("After-tax NPV: " + schedule.getAfterTaxNPV("MUSD") + " MUSD");
-System.out.println("Breakeven gas price: " + 
+System.out.println("Breakeven gas price: " +
     scheduler.calculateBreakevenGasPrice() + " USD/Sm3");
 ```
 

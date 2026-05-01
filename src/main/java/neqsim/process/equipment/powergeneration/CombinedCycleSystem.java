@@ -1,11 +1,16 @@
 package neqsim.process.equipment.powergeneration;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.StreamInterface;
 import com.google.gson.GsonBuilder;
 
@@ -42,7 +47,8 @@ import com.google.gson.GsonBuilder;
  * @author Even Solbraa
  * @version 1.0
  */
-public class CombinedCycleSystem extends TwoPortEquipment {
+public class CombinedCycleSystem extends TwoPortEquipment
+    implements CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
   /** Logger object for class. */
@@ -71,6 +77,16 @@ public class CombinedCycleSystem extends TwoPortEquipment {
   private double totalPower = 0.0; // W
   private double fuelEnergyInput = 0.0; // W (LHV basis)
   private double overallEfficiency = 0.0;
+
+  /** Rated (maximum) total power output in Watts. Used for capacity constraint calculations. */
+  private double ratedTotalPowerW = 0.0;
+
+  /** Whether this equipment has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** Storage for capacity constraints. */
+  private final Map<String, CapacityConstraint> capacityConstraints =
+      new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * Constructor for CombinedCycleSystem.
@@ -214,6 +230,7 @@ public class CombinedCycleSystem extends TwoPortEquipment {
    *
    * @return JSON with all combined-cycle results
    */
+  @Override
   public String toJson() {
     Map<String, Object> results = new HashMap<>();
     results.put("gasTurbinePower_MW", gasTurbinePower / 1.0e6);
@@ -316,5 +333,205 @@ public class CombinedCycleSystem extends TwoPortEquipment {
    */
   public void setHrsgEffectiveness(double effectiveness) {
     this.hrsgEffectiveness = effectiveness;
+  }
+
+  /**
+   * Get the rated (maximum) total power output.
+   *
+   * @return rated total power in Watts
+   */
+  public double getRatedTotalPower() {
+    return ratedTotalPowerW;
+  }
+
+  /**
+   * Get the rated (maximum) total power output in specified unit.
+   *
+   * @param unit power unit ("W", "kW", "MW", "hp")
+   * @return rated total power
+   */
+  public double getRatedTotalPower(String unit) {
+    switch (unit) {
+      case "kW":
+        return ratedTotalPowerW / 1000.0;
+      case "MW":
+        return ratedTotalPowerW / 1.0e6;
+      case "hp":
+        return ratedTotalPowerW / 745.7;
+      default:
+        return ratedTotalPowerW;
+    }
+  }
+
+  /**
+   * Set the rated (maximum) total power output.
+   *
+   * @param ratedPower rated total power in Watts
+   */
+  public void setRatedTotalPower(double ratedPower) {
+    this.ratedTotalPowerW = ratedPower;
+    initializeCapacityConstraints();
+  }
+
+  /**
+   * Set the rated (maximum) total power output with unit.
+   *
+   * @param ratedPower rated total power value
+   * @param unit power unit ("W", "kW", "MW", "hp")
+   */
+  public void setRatedTotalPower(double ratedPower, String unit) {
+    switch (unit) {
+      case "kW":
+        this.ratedTotalPowerW = ratedPower * 1000.0;
+        break;
+      case "MW":
+        this.ratedTotalPowerW = ratedPower * 1.0e6;
+        break;
+      case "hp":
+        this.ratedTotalPowerW = ratedPower * 745.7;
+        break;
+      default:
+        this.ratedTotalPowerW = ratedPower;
+    }
+    initializeCapacityConstraints();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return Math.abs(totalPower);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return ratedTotalPowerW > 0 ? ratedTotalPowerW : Math.abs(totalPower) * 1.2;
+  }
+
+  /**
+   * Initialize capacity constraints for the combined-cycle system.
+   */
+  private void initializeCapacityConstraints() {
+    capacityConstraints.clear();
+    if (ratedTotalPowerW > 0) {
+      addCapacityConstraint(
+          new CapacityConstraint("totalPower", "kW", CapacityConstraint.ConstraintType.HARD)
+              .setDesignValue(ratedTotalPowerW / 1000.0)
+              .setMaxValue(ratedTotalPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
+              .setDescription("Combined-cycle total power output vs rated capacity")
+              .setValueSupplier(() -> Math.abs(this.totalPower) / 1000.0));
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = c;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util)) {
+        maxUtil = Math.max(maxUtil, util);
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (totalPower > 0) {
+      this.ratedTotalPowerW = Math.abs(totalPower) * safetyFactor;
+      initializeCapacityConstraints();
+      autoSized = true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Combined Cycle System Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+    sb.append("\n--- Operating Conditions ---\n");
+    sb.append("Total Power: ").append(String.format("%.2f kW", Math.abs(totalPower) / 1000.0))
+        .append("\n");
+    if (ratedTotalPowerW > 0) {
+      sb.append("Rated Total Power: ").append(String.format("%.2f kW", ratedTotalPowerW / 1000.0))
+          .append("\n");
+      sb.append("Utilization: ")
+          .append(String.format("%.1f%%", Math.abs(totalPower) / ratedTotalPowerW * 100))
+          .append("\n");
+    }
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
   }
 }

@@ -1,6 +1,7 @@
 ---
 name: neqsim-troubleshooting
 description: "Troubleshooting playbook for common NeqSim failures. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Troubleshooting Playbook
@@ -175,6 +176,28 @@ T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperat
 | `ClassCastException` in equipment | Wrong stream type connection | Verify equipment constructors take `StreamInterface` |
 | `java.sql.SQLException` | Component not in database | Check spelling, verify against COMP.csv |
 | `StackOverflowError` in recycle | Infinite loop in process topology | Check for circular references without a Recycle unit |
+
+## Phase Envelope Branch Labels Swapped
+
+**Symptom**: When plotting a phase envelope calculated with `calcPTphaseEnvelope(true, 1.0)`,
+the bubble and dew curves appear swapped — the "bubble" array has higher temperatures
+(cricondentherm) which is physically the dew side, and vice versa.
+
+**Cause**: The Michelsen continuation algorithm always starts with `isDewPhase=true`
+regardless of the `bubblePointFirst` flag. When tracing from the bubble side first,
+initial points go into the dew list. At the critical point the flag flips, so actual
+dew-side data ends up in the bubble list.
+
+**Fix**: Classify branches by physical reasoning, NOT by method names:
+```python
+# The DEW curve always contains the cricondentherm (maximum temperature)
+if np.array(envelope.getBubblePointTemperatures()).max() > np.array(envelope.getDewPointTemperatures()).max():
+    dew_T = np.array(envelope.getBubblePointTemperatures())  # swapped!
+    bub_T = np.array(envelope.getDewPointTemperatures())     # swapped!
+else:
+    dew_T = np.array(envelope.getDewPointTemperatures())
+    bub_T = np.array(envelope.getBubblePointTemperatures())
+```
 
 ## When All Else Fails
 

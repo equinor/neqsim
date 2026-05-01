@@ -10,6 +10,7 @@ import pytest
 from neqsim_runner.models import Job, JobStatus, InvalidTransitionError
 from neqsim_runner.store import JobStore
 from neqsim_runner.progress import TaskProgress
+from neqsim_runner.agent_bridge import AgentBridge
 
 
 # ── Fixtures ──
@@ -225,6 +226,24 @@ class TestWorkerBootstrap:
         from neqsim_runner.worker import _NOTEBOOK_EXECUTOR
         assert "Could not save partial notebook" in _NOTEBOOK_EXECUTOR
 
+    def test_runner_bootstraps_require_devtools(self):
+        from neqsim_runner.worker import _WORKER_BOOTSTRAP, _NOTEBOOK_EXECUTOR
+        assert "NEQSIM_REQUIRE_DEVTOOLS" in _WORKER_BOOTSTRAP
+        assert "from neqsim import jneqsim" not in _WORKER_BOOTSTRAP
+        assert "pip mode is disabled" in _WORKER_BOOTSTRAP
+        assert "PYTHONPATH" in _NOTEBOOK_EXECUTOR
+        assert "NEQSIM_PROJECT_ROOT" in _NOTEBOOK_EXECUTOR
+
+    def test_notebook_script_setup_uses_devtools_only(self):
+        from neqsim_runner.agent_bridge import _process_code_cell
+        processed = _process_code_cell(
+            "from neqsim_dev_setup import neqsim_init\nNEQSIM_MODE = 'devtools'\n"
+        )
+        assert "NEQSIM_PROJECT_ROOT" in processed
+        assert "neqsim_dev_setup" in processed
+        assert "jneqsim" not in processed
+        assert "pip install" not in processed
+
 
 class TestWorkerProcess:
     def test_log_handles_stored(self):
@@ -239,6 +258,76 @@ class TestWorkerProcess:
     def test_close_logs_method_exists(self):
         from neqsim_runner.worker import WorkerProcess
         assert hasattr(WorkerProcess, "_close_logs")
+
+
+class TestAgentBridgeResults:
+    def _store_completed_job(self, bridge, tmp_dir, results, script_name):
+        script_path = tmp_dir / script_name
+        script_path.write_text("print('ok')\n", encoding="utf-8")
+        job = Job(str(script_path), job_type="notebook")
+        result_dir = bridge.output_dir / job.job_id / "output"
+        result_dir.mkdir(parents=True)
+        with open(result_dir / "results.json", "w", encoding="utf-8") as results_file:
+            json.dump(results, results_file, indent=2)
+        job.status = JobStatus.SUCCESS
+        job.result_path = str(result_dir)
+        bridge.store.save_job(job)
+        bridge._job_ids.append(job.job_id)
+        bridge.progress.add_job_id(job.job_id)
+        return job.job_id
+
+    def test_merge_results_to_task_preserves_prior_notebook_outputs(self, tmp_dir):
+        task_dir = tmp_dir / "task_solve" / "2026-04-28_merge"
+        task_dir.mkdir(parents=True)
+        bridge = AgentBridge(task_dir=task_dir, project_root=tmp_dir)
+
+        with open(task_dir / "results.json", "w", encoding="utf-8") as results_file:
+            json.dump({"key_results": {"base_case": 1}, "figure_discussion": []},
+                      results_file)
+
+        first_job = self._store_completed_job(
+            bridge,
+            tmp_dir,
+            {"key_results": {"power_kW": 42.0},
+             "figure_discussion": [{"figure": "power.png"}]},
+            "first.ipynb",
+        )
+        second_job = self._store_completed_job(
+            bridge,
+            tmp_dir,
+            {"key_results": {"temperature_C": 15.0},
+             "figure_discussion": [{"figure": "temperature.png"}]},
+            "second.ipynb",
+        )
+
+        bridge.merge_results_to_task([first_job, second_job])
+
+        with open(task_dir / "results.json", encoding="utf-8") as results_file:
+            merged = json.load(results_file)
+        assert merged["key_results"]["base_case"] == 1
+        assert merged["key_results"]["power_kW"] == 42.0
+        assert merged["key_results"]["temperature_C"] == 15.0
+        assert {entry["figure"] for entry in merged["figure_discussion"]} == {
+            "power.png", "temperature.png"}
+
+    def test_copy_results_to_task_can_merge(self, tmp_dir):
+        task_dir = tmp_dir / "task_solve" / "2026-04-28_copy_merge"
+        task_dir.mkdir(parents=True)
+        bridge = AgentBridge(task_dir=task_dir, project_root=tmp_dir)
+        with open(task_dir / "results.json", "w", encoding="utf-8") as results_file:
+            json.dump({"key_results": {"existing": 1}}, results_file)
+
+        job_id = self._store_completed_job(
+            bridge,
+            tmp_dir,
+            {"key_results": {"new_value": 2}},
+            "merge.ipynb",
+        )
+        bridge.copy_results_to_task(job_id, merge=True)
+
+        with open(task_dir / "results.json", encoding="utf-8") as results_file:
+            merged = json.load(results_file)
+        assert merged["key_results"] == {"existing": 1, "new_value": 2}
 
 
 # ── Bootstrap File Loading Tests ──

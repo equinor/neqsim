@@ -1,22 +1,25 @@
 package neqsim;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.integration.EOSComparison;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
@@ -289,6 +292,82 @@ public class DocExamplesCompilationTest {
     // Check property deviations as in doc
     double densityDev = result.getMaxDeviation("density");
     assertTrue(densityDev >= 0);
+  }
+
+  /**
+   * DistillationColumn usage from docs/process/equipment/distillation.md.
+   */
+  @Test
+  public void testDistillationColumnDoc() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(216.0, 30.0);
+    fluid.addComponent("nitrogen", 1.67366E-3);
+    fluid.addComponent("CO2", 1.06819E-4);
+    fluid.addComponent("methane", 5.14168E-1);
+    fluid.addComponent("ethane", 1.92528E-1);
+    fluid.addComponent("propane", 1.70001E-1);
+    fluid.addComponent("i-butane", 3.14561E-2);
+    fluid.addComponent("n-butane", 5.58678E-2);
+    fluid.addComponent("i-pentane", 1.29573E-2);
+    fluid.addComponent("n-pentane", 1.23719E-2);
+    fluid.addComponent("n-hexane", 5.12878E-3);
+    fluid.addComponent("n-heptane", 1.0E-2);
+    fluid.setMixingRule("classic");
+
+    Stream apiFeed = new Stream("doc distillation api feed", fluid.clone());
+    apiFeed.setFlowRate(100.0, "kg/hr");
+    apiFeed.run();
+
+    DistillationColumn apiColumn = new DistillationColumn("Doc API Column", 10, true, true);
+    apiColumn.addFeedStream(apiFeed, 5);
+    apiColumn.setCondenserTemperature(273.15 + 40.0);
+    apiColumn.setReboilerTemperature(273.15 + 120.0);
+    apiColumn.setTopPressure(15.0);
+    apiColumn.setBottomPressure(16.0);
+    apiColumn.setCondenserRefluxRatio(3.0);
+    apiColumn.getCondenser().setHeatInput(-5000000.0);
+    apiColumn.getReboiler().setHeatInput(6000000.0);
+    apiColumn.setReboilerBoilupRatio(2.5);
+    apiColumn.setMaxNumberOfIterations(50);
+    apiColumn.setTemperatureTolerance(0.01);
+    apiColumn.setMassBalanceTolerance(0.05);
+    apiColumn.setEnthalpyBalanceTolerance(0.05);
+    apiColumn.setRelaxationFactor(0.5);
+    apiColumn.setMeshResidualTolerance(10.0);
+    apiColumn.setEnforceMeshResidualTolerance(true);
+    apiColumn.setSolverType(DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
+
+    assertNotNull(apiColumn.getCondenser());
+    assertNotNull(apiColumn.getReboiler());
+    assertEquals(10.0, apiColumn.getMeshResidualTolerance(), 0.0);
+    assertTrue(apiColumn.isEnforceMeshResidualTolerance());
+
+    Stream runFeed = new Stream("doc distillation run feed", fluid.clone());
+    runFeed.setFlowRate(100.0, "kg/hr");
+    runFeed.run();
+
+    DistillationColumn column = new DistillationColumn("Doc MESH Deethanizer", 5, true, false);
+    column.addFeedStream(runFeed, 5);
+    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.setMaxNumberOfIterations(50);
+    column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+    column.run();
+
+    assertTrue(column.solved());
+    assertNotNull(column.getGasOutStream());
+    assertNotNull(column.getLiquidOutStream());
+    assertTrue(column.getTrays().size() > 0);
+    assertTrue(Double.isFinite(column.getTray(0).getTemperature()));
+    assertTrue(Double.isFinite(column.getTray(0).getVaporFlowRate("kg/hr")));
+    assertTrue(Double.isFinite(column.getTray(0).getLiquidFlowRate("kg/hr")));
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshMaterialResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshEquilibriumResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshSummationResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastMeshSpecificationResidualNorm()));
+    assertTrue(column.getLastMeshResidualVector().length > 0);
   }
 
   /**
@@ -902,5 +981,62 @@ public class DocExamplesCompilationTest {
         0.0); // inclination radians (horizontal)
     assertNotNull(result, "Andreussi-Persen result should not be null");
     assertTrue(result.frictionFactor >= 0, "Friction factor should be non-negative");
+  }
+
+  /**
+   * Gas scrubber mechanical design + TR3500 conformity check example from
+   * docs/process/equipment/separators.md. Verifies the full API path used by the Kollsnes scrubber
+   * performance task (GasScrubber → initMechanicalDesign → GasScrubberMechanicalDesign setters →
+   * setConformityRules("TR3500") → checkConformity()).
+   */
+  @Test
+  public void testGasScrubberConformityCheckDoc() {
+    // Build a simple natural-gas feed
+    neqsim.thermo.system.SystemSrkEos fluid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 80.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("n-butane", 0.02);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.setTemperature(40.0, "C");
+    feed.setPressure(80.0, "bara");
+
+    neqsim.process.equipment.separator.GasScrubber scrubber =
+        new neqsim.process.equipment.separator.GasScrubber("25-VA301", feed);
+    scrubber.setInternalDiameter(2.900);
+    scrubber.setSeparatorLength(4.230);
+    scrubber.setOrientation("vertical");
+    scrubber.initMechanicalDesign();
+
+    neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign d =
+        (neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign) scrubber
+            .getMechanicalDesign();
+    d.setMaxOperationPressure(100.0);
+    d.setInletNozzleID((762.0 - 2 * 62.75) / 1000.0);
+    d.setInletDevice("schoepentoeter");
+    d.setMeshPad(Math.PI / 4.0 * 2.9 * 2.9, 250.0);
+    d.setDemistingCyclones(256, 0.110, 3.287, 0.943);
+    d.setDrainPipeDiameterM(8 * 25.4 / 1000.0);
+    d.setLaHHElevationM(0.930);
+    d.setLaHElevationM(0.830);
+    d.setConformityRules("TR3500");
+
+    ProcessSystem proc = new ProcessSystem();
+    proc.add(feed);
+    proc.add(scrubber);
+    proc.run();
+
+    neqsim.process.mechanicaldesign.separator.conformity.ConformityReport rep = d.checkConformity();
+    assertNotNull(rep, "Conformity report must not be null");
+    assertFalse(rep.getResults().isEmpty(), "Report must contain at least one check");
+    for (neqsim.process.mechanicaldesign.separator.conformity.ConformityResult r : rep
+        .getResults()) {
+      assertNotNull(r.getCheckName());
+      assertNotNull(r.getStatus());
+    }
   }
 }

@@ -37,6 +37,138 @@ public class EclipseFluidReadWrite {
   public static String pseudoName = "";
 
   /**
+   * Maps common E300 component aliases to NeqSim database component names.
+   *
+   * @param name component name read from the E300 {@code CNAMES} section
+   * @return NeqSim database component name, or {@code null} when the component should be treated as
+   *         a characterized TBP pseudo-fraction
+   */
+  private static String mapE300ComponentName(String name) {
+    if (name == null) {
+      return null;
+    }
+    String trimmedName = name.trim();
+    // PVTsim E300 files use uppercase IC4/IC5 for characterized pseudo-fractions.
+    if ("IC4".equals(trimmedName) || "IC5".equals(trimmedName)) {
+      return null;
+    }
+    String normalized =
+        name.trim().replace(" ", "").replace("_", "").replace("-", "").toUpperCase();
+    switch (normalized) {
+      case "C1":
+      case "METHANE":
+        return "methane";
+      case "C2":
+      case "ETHANE":
+        return "ethane";
+      case "C3":
+      case "PROPANE":
+        return "propane";
+      case "IC4":
+      case "IBUTANE":
+      case "ISOBUTANE":
+        return "i-butane";
+      case "C4":
+      case "NC4":
+      case "NBUTANE":
+        return "n-butane";
+      case "IC5":
+      case "IPENTANE":
+      case "ISOPENTANE":
+        return "i-pentane";
+      case "C5":
+      case "NC5":
+      case "NPENTANE":
+        return "n-pentane";
+      case "C6":
+      case "NC6":
+      case "NHEXANE":
+        return "n-hexane";
+      case "NC7":
+      case "NHEPTANE":
+        return "n-heptane";
+      case "NC8":
+      case "NOCTANE":
+        return "n-octane";
+      case "NC9":
+      case "NNONANE":
+        return "n-nonane";
+      case "NC10":
+      case "NDECANE":
+        return "nC10";
+      case "NC11":
+        return "nC11";
+      case "NC12":
+        return "nC12";
+      case "NC13":
+        return "nC13";
+      case "NC14":
+        return "nC14";
+      case "NC15":
+        return "nC15";
+      case "NC16":
+        return "nC16";
+      case "NC17":
+        return "nC17";
+      case "NC18":
+        return "nC18";
+      case "NC19":
+        return "nC19";
+      case "NC20":
+        return "nC20";
+      case "N2":
+      case "NITROGEN":
+        return "nitrogen";
+      case "CO2":
+      case "CARBONDIOXIDE":
+        return "CO2";
+      case "H2O":
+      case "WATER":
+        return "water";
+      case "H2S":
+      case "HYDROGENSULFIDE":
+      case "HYDROGENSULPHIDE":
+        return "H2S";
+      case "H2":
+      case "HYDROGEN":
+        return "hydrogen";
+      case "O2":
+      case "OXYGEN":
+        return "oxygen";
+      case "AR":
+      case "ARGON":
+        return "argon";
+      case "HE":
+      case "HELIUM":
+        return "helium";
+      case "CO":
+      case "CARBONMONOXIDE":
+        return "CO";
+      case "MEOH":
+      case "METHANOL":
+        return "methanol";
+      case "MEG":
+      case "EGLYCOL":
+        return "MEG";
+      case "DEG":
+      case "DEGLYCOL":
+        return "DEG";
+      case "TEG":
+      case "TEGLYCOL":
+        return "TEG";
+      case "BENZENE":
+        return "benzene";
+      case "TOLUENE":
+        return "toluene";
+      case "ETHYLBENZENE":
+      case "EBENZENE":
+        return "ethylbenzene";
+      default:
+        return null;
+    }
+  }
+
+  /**
    * <p>
    * setComposition.
    * </p>
@@ -158,6 +290,11 @@ public class EclipseFluidReadWrite {
   /**
    * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS
    * keyword in file is ignored). Otherwise the EOS keyword drives fluid creation.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param forcedFluid optional pre-created fluid to populate (null to auto-create from EOS
+   *        keyword)
+   * @return the populated fluid system
    */
   private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid) {
     File file = new File(inputFile);
@@ -483,51 +620,14 @@ public class EclipseFluidReadWrite {
         }
       }
       for (int counter = 0; counter < names.size(); counter++) {
-        String name = names.get(counter);
-        if (name.equals("C1") || TC.get(counter) < 00.0) {
-          name = "methane";
+        String name = mapE300ComponentName(names.get(counter));
+        if (name != null) {
           fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C2") || TC.get(counter) < 00.0) {
-          name = "ethane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("N2") || TC.get(counter) < 00.0) {
-          name = "nitrogen";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("iC4") || TC.get(counter) < 00.0) {
-          name = "i-butane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C4") || TC.get(counter) < 00.0) {
-          name = "n-butane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("iC5") || TC.get(counter) < 00.0) {
-          name = "i-pentane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C5") || TC.get(counter) < 00.0) {
-          name = "n-pentane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C6") || TC.get(counter) < 00.0) {
-          name = "n-hexane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C3") || TC.get(counter) < 00.0) {
-          name = "propane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
-          name = "CO2";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.trim().equals("H2O") || TC.get(counter) < 00.0) {
-          name = "water";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (TC.get(counter) >= 00.0) {
-          name = names.get(counter);
-          Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
-          fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
-          name = name + "_PC";
         } else {
           name = names.get(counter);
           Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
           fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
           name = name + "_PC";
-          // fluid.changeComponentName(name+"_PC", names.get(counter));
         }
         // fluid.addComponent(name, ZI.get(counter));
         for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {
@@ -1050,51 +1150,14 @@ public class EclipseFluidReadWrite {
 
       for (String fluidName : fluidNames) {
         for (int counter = 0; counter < names.size(); counter++) {
-          String name = names.get(counter);
-          if (name.equals("C1") || TC.get(counter) < 00.0) {
-            name = "methane";
+          String name = mapE300ComponentName(names.get(counter));
+          if (name != null) {
             fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("C2") || TC.get(counter) < 00.0) {
-            name = "ethane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("N2") || TC.get(counter) < 00.0) {
-            name = "nitrogen";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("iC4") || TC.get(counter) < 00.0) {
-            name = "i-butane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("C4") || TC.get(counter) < 00.0) {
-            name = "n-butane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("iC5") || TC.get(counter) < 00.0) {
-            name = "i-pentane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("C5") || TC.get(counter) < 00.0) {
-            name = "n-pentane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("C6") || TC.get(counter) < 00.0) {
-            name = "n-hexane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("C3") || TC.get(counter) < 00.0) {
-            name = "propane";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
-            name = "CO2";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (name.trim().equals("H2O") || TC.get(counter) < 00.0) {
-            name = "water";
-            fluid.addComponent(name, ZI.get(counter));
-          } else if (TC.get(counter) >= 0.0) {
-            name = names.get(counter);
-            Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
-            fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
-            name = name + "_PC";
           } else {
             name = names.get(counter);
             Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
             fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
             name = name + "_PC";
-            // fluid.changeComponentName(name+"_PC", names.get(counter));
           }
           // fluid.addComponent(name, ZI.get(counter));
           for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {

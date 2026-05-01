@@ -63,12 +63,12 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
 
   /**
    * Get remediation advice for this exception.
-   * 
+   *
    * <p>
    * Returns a hint on how to properly initialize the system. AI agents can use this to
    * self-correct.
    * </p>
-   * 
+   *
    * @return remediation advice string
    */
   public String getRemediation() {

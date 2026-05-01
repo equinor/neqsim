@@ -33,6 +33,7 @@ This document provides a high-level introduction to the process optimization cap
 | Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
+| Solve constrained NLP (equality + inequality) | `SQPoptimizer` | [SQP Optimizer](sqp_optimizer) |
 | Calibrate model parameters to data | `BatchParameterEstimator` | [README.md](./ |
 | Load optimization config from YAML/JSON | `ProductionOptimizationSpecLoader` | [YAML Spec Format](#yaml-specification-files) |
 
@@ -55,6 +56,7 @@ This document provides a high-level introduction to the process optimization cap
 | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | ProcessSimulationEvaluator for Python/SciPy integration |
 | [README.md](./ | BatchParameterEstimator for Levenberg-Marquardt calibration |
 | [Optimizer Guide](../../util/optimizer_guide) | Detailed API reference for all optimizer classes |
+| [SQP Optimizer](sqp_optimizer) | Sequential Quadratic Programming — constrained NLP with BFGS + active-set QP |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment constraints and bottleneck detection |
 
 ---
@@ -86,16 +88,19 @@ NeqSim provides three main levels of optimization capability:
 │                                     ▼                                        │
 │                   LEVEL 1: Equipment Constraint Layer                        │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │            EquipmentCapacityStrategyRegistry (Plugin System)             ││
+│  │            EquipmentCapacityStrategyRegistry (18 Built-in Strategies)    ││
 │  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐            ││
-│  │  │Compressor  │ │ Separator  │ │   Pump     │ │  Expander  │ + custom   ││
-│  │  │ Strategy   │ │  Strategy  │ │ Strategy   │ │  Strategy  │            ││
+│  │  │Compressor  │ │ Separator  │ │   Pump     │ │  Reactor   │            ││
+│  │  │ Strategy   │ │  Strategy  │ │ Strategy   │ │  Strategy  │ + custom   ││
+│  │  │Pipe, Valve │ │  HX, Tank  │ │ Expander   │ │ PowerGen   │            ││
+│  │  │Mixer, Split│ │  Ejector   │ │ Distill.   │ │ Subsea,Well│            ││
 │  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘            ││
 │  └─────────────────────────────────────────────────────────────────────────┘│
 │                                     │                                        │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │                    CapacityConstraint                                    ││
-│  │  (utilization ratio, design vs operating values, severity levels)       ││
+│  │         ProcessEquipmentBaseClass (Universal Constraint Storage)         ││
+│  │  All 144+ equipment types inherit: addCapacityConstraint(),              ││
+│  │  getMaxUtilization(), isCapacityExceeded(), getBottleneckConstraint()    ││
 │  └─────────────────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -110,7 +115,7 @@ NeqSim provides three main levels of optimization capability:
 
 **Best for:**
 - Maximum throughput calculations
-- Pressure-constrained optimization  
+- Pressure-constrained optimization
 - Lift curve generation
 - Equipment bottleneck analysis
 - Integration with ProcessSystem/ProcessModule
@@ -169,8 +174,8 @@ OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
 
 // Define objectives
 List<OptimizationObjective> objectives = Arrays.asList(
-    new OptimizationObjective("throughput", 
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 
+    new OptimizationObjective("throughput",
+        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE)
 );
 
@@ -262,13 +267,13 @@ Equipment constraints define operating limits. Each equipment type has a strateg
 | Valve | Cv capacity, choke conditions |
 
 > **⚠️ Important**: Most equipment constraints are **disabled by default** for backward compatibility. The optimizer automatically falls back to traditional capacity methods (`getCapacityMax()`/`getCapacityDuty()`) when no enabled constraints exist. To use multi-constraint capacity analysis, you must explicitly enable constraints:
-> 
+>
 > ```java
 > separator.useEquinorConstraints();  // Enable Equinor TR3500 constraints
 > // OR
 > separator.enableConstraints();       // Enable all constraints
 > ```
-> 
+>
 > See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK#important-constraints-disabled-by-default) for details.
 
 ### Utilization Ratio
@@ -420,7 +425,7 @@ engine.setSearchAlgorithm(SearchAlgorithm.GOLDEN_SECTION);
 
 OptimizationResult result = engine.findMaximumThroughput(
     50.0,      // inlet pressure
-    100.0,     // outlet pressure  
+    100.0,     // outlet pressure
     10000.0,   // min flow
     200000.0   // max flow
 );
@@ -483,13 +488,13 @@ scenarios:
     maxIterations: 30
     searchMode: "GOLDEN_SECTION_SCORE"
     utilizationMarginFraction: 0.05
-    
+
     objectives:
       - name: "throughput"
         weight: 1.0
         type: "MAXIMIZE"
         metric: "throughputMetric"   # Key in metrics map
-    
+
     constraints:
       - name: "maxPower"
         metric: "powerMetric"

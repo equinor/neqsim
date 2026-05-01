@@ -1,14 +1,14 @@
 ---
 title: "Distillation column algorithm"
-description: "This document describes the mathematical model and solver implementations that power the"
+description: "Mathematical model, solver implementations, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
 ---
 
 # Distillation column algorithm
 
 This document describes the mathematical model and solver implementations that power the
-`DistillationColumn` class in NeqSim. The class maps directly to the files
-`src/main/java/neqsim/process/equipment/distillation/DistillationColumn.java` and
-`DistillationColumnMatrixSolver.java`.
+`DistillationColumn` class in NeqSim. The implementation is centered on
+`src/main/java/neqsim/process/equipment/distillation/DistillationColumn.java` and the
+package-local solver and residual helper classes in the same package.
 
 ## Governing equations
 
@@ -75,8 +75,10 @@ stability.
 | `DIRECT_SUBSTITUTION` | `solveSequential()` | Classic two-sweep sequential substitution (liquids down, vapours up) with adaptive relaxation on temperatures and streams. | Converges robustly for well-behaved systems; default choice. |
 | `DAMPED_SUBSTITUTION` | `runDamped()` | Same equations as direct substitution but starts with a user-defined fixed relaxation factor before enabling adaptation. | Useful for stiff columns where the default step overshoots. |
 | `INSIDE_OUT` | `solveInsideOut()` | Quadrat-structure inside-out method: streams are relaxed against previous iterates while tray properties update using enthalpy-driven temperature corrections. | Balances mass/energy less frequently to reduce cost and supports a polishing phase for tight tolerances. |
-| `BROYDEN` (experimental) | `runBroyden()` | Applies a secant correction on tray temperatures, effectively mixing current and previous deltas. | Handy for rapid feasibility studies but less stable than inside-out. |
-| `MATRIX_SOLVER` | `DistillationColumnMatrixSolver.solve()` | Builds component flow equations into a TDMA system, blends constant molar overflow (CMO) estimates with sum-rate flows, then updates temperatures via the log-Newton scheme above. | Eliminates explicit stream tearing by solving component balances directly; still refines temperatures iteratively. |
+| `WEGSTEIN` | `solveWegstein()` | Wegstein acceleration on the sequential temperature map after direct-substitution warm-up. | Speeds up well-conditioned fixed-point problems. |
+| `SUM_RATES` | `solveSumRates()` | Flow-corrected tearing method that adjusts relaxation from tray sum-rate behavior. | Useful for absorber and stripper style columns. |
+| `NEWTON` | `solveNewton()` | Finite-difference Newton correction on tray temperatures with line search. | A tray-temperature accelerator, not a full simultaneous MESH Newton solver. |
+| `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization, MESH residual evaluation, and Newton polishing if the residual monitor detects a poor residual state. | Best for auditing MESH residuals and preparing cases for future rigorous residual-driven solvers. |
 
 ### Sequential substitution details
 
@@ -85,8 +87,8 @@ stability.
 - Convergence metric: average absolute temperature change.
 - Relaxation policy: decreases when combined residual (temperature, mass, energy) grows by
   more than 5 %, increases when it shrinks by more than 2 %.
-- Default tolerances were tightened in recent iterations (temperature to 0.01 K, mass/energy to
-  1e-4 relative) to prevent premature termination when using highly non-ideal feeds.
+- Adaptive default tolerances scale with column complexity. The base values are 4e-3 K for
+  temperature and 1.6e-2 relative for mass and energy residuals unless the user overrides them.
 
 ## Complete usage example
 
@@ -163,6 +165,18 @@ Once any solver converges, the top gas outlet (`gasOutStream`) and bottom liquid
 are exposed through getters such as `getLastIterationCount()`, `getLastMassResidual()`, and
 `getLastEnergyResidual()`.
 
+Every `run()` also records a scaled MESH residual vector for the final column state. The vector is
+assembled by `ColumnMeshResidualEvaluator` from a `ColumnMeshState` snapshot and groups equations
+as material, equilibrium, summation, energy, and specification residuals. Public diagnostics expose
+the full norm and group norms through `getLastMeshResidualNorm()`,
+`getLastMeshMaterialResidualNorm()`, `getLastMeshEquilibriumResidualNorm()`,
+`getLastMeshSummationResidualNorm()`, `getLastMeshEnergyResidualNorm()`, and
+`getLastMeshSpecificationResidualNorm()`.
+
+By default, the MESH residual vector is diagnostic only. `setEnforceMeshResidualTolerance(true)`
+makes `solved()` require the latest residual norm to be finite and less than
+`getMeshResidualTolerance()`, which is configured with `setMeshResidualTolerance(double)`.
+
 ## MESH equations
 
 Each equilibrium stage $j$ in a column with $N$ stages and $n_c$ components satisfies:
@@ -194,7 +208,8 @@ Rather than solving these equations algebraically, NeqSim uses a **tray-by-tray 
 | `INSIDE_OUT` | Three-sweep IO with stripping factor correction and K-value tracking | Multi-feed, general-purpose, debugging |
 | `WEGSTEIN` | Wegstein acceleration of successive substitution | Fast convergence on well-posed problems |
 | `SUM_RATES` | Flow-corrected tearing method | Absorbers and strippers |
-| `NEWTON` | Newton-Raphson simultaneous temperature correction | Difficult convergence, many-stage columns |
+| `NEWTON` | Newton-Raphson tray-temperature correction accelerator | Difficult temperature convergence cases |
+| `MESH_RESIDUAL` | Inside-out initialization with MESH residual diagnostics and Newton polishing | Residual auditing and future rigorous solver preparation |
 
 ### Solver mathematics
 
@@ -214,11 +229,17 @@ with $q$ bounded to $[-2, 0]$ (more conservative than the classical $[-5, 0]$) t
 
 $$\alpha_{eff} = \alpha \cdot \theta, \quad \theta = \frac{1}{\bar{r}}, \quad \bar{r} = \frac{1}{N}\sum_{j=1}^{N} \frac{L_j^{out} + V_j^{out}}{F_j^{in}}$$
 
-**NEWTON** treats all $N$ tray temperatures as simultaneous variables. The residual is $f_i(\mathbf{T}) = T_i^{sweep} - T_i$ and the Jacobian is computed by finite-difference perturbation ($\epsilon = 0.1$ K):
+**NEWTON** treats all $N$ tray temperatures as simultaneous variables for a temperature-correction
+accelerator. The residual is $f_i(\mathbf{T}) = T_i^{sweep} - T_i$ and the Jacobian is computed by finite-difference perturbation ($\epsilon = 0.1$ K):
 
 $$J_{ij} \approx \frac{f_i(\mathbf{T} + \epsilon \mathbf{e}_j) - f_i(\mathbf{T})}{\epsilon}$$
 
 A line search ($\lambda = 1, 0.5, 0.25, 0.125$) controls step size, and 2–3 warm-up direct substitution iterations establish the convergence basin.
+
+**MESH_RESIDUAL** starts from `INSIDE_OUT`, evaluates the scaled MESH residual vector, and runs
+`NEWTON` polishing when the residual vector is non-finite or above the monitor threshold. It does
+not change the public meaning of `NEWTON`; instead, it provides a solver entry point that is
+explicitly organized around residual diagnostics.
 
 ### Example: selecting a solver
 
@@ -236,6 +257,7 @@ column.getLastIterationCount();        // number of iterations
 column.getLastTemperatureResidual();   // avg temperature change (K)
 column.getLastMassResidual();          // relative mass balance error
 column.getLastEnergyResidual();        // relative enthalpy balance error
+column.getLastMeshResidualNorm();      // full scaled MESH residual infinity norm
 column.getLastSolveTimeSeconds();      // wall-clock time
 column.getConvergenceHistory();        // per-iteration [temp, mass, energy] (IO adds K-value residual as 4th element)
 ```
@@ -247,6 +269,8 @@ All solvers use three residual metrics:
 1. **Temperature**: $\varepsilon_T = \frac{1}{N}\sum_{j=1}^{N} |T_j^{new} - T_j^{old}|$ (K)
 2. **Mass balance**: $\varepsilon_M = \max\!\Big(\max_j \frac{|M_j^{in} - M_j^{out}|}{M_j^{in}},\; \frac{\sum|M_j^{in}-M_j^{out}|}{\sum M_j^{in}}\Big)$
 3. **Energy balance**: analogous per-tray and column-wide relative error
+4. **Optional MESH residual**: infinity norm of the scaled material, equilibrium, summation,
+   energy, and specification residual vector
 
 Tolerances scale with column complexity:
 

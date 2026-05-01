@@ -9,9 +9,14 @@ package neqsim.physicalproperties.system;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyType;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.FrictionTheoryConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
@@ -20,13 +25,19 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyModViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalproperties.methods.gasphysicalproperties.conductivity.ChungConductivityMethod;
+import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.FullerSchettlerGiddingsDiffusivity;
 import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.WilkeLeeDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Costald;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.AmineDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HaydukMinhasDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HighPressureDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.TynCalusDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.WilkeChangDiffusivity;
 import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
@@ -204,8 +215,18 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
               this);
     } else if ("Chung".equals(model)) {
       conductivityCalc = new ChungConductivityMethod(this);
+    } else if ("Chung-dense".equals(model)) {
+      conductivityCalc = new ChungDenseConductivityMethod(this);
     } else if ("CO2Model".equals(model)) {
       conductivityCalc = new CO2ConductivityMethod(this);
+    } else if ("friction theory".equals(model)) {
+      conductivityCalc = new FrictionTheoryConductivityMethod(this);
+    } else if ("Filippov".equals(model)) {
+      conductivityCalc = new FilippovConductivityMethod(this);
+    } else if ("WaterModel".equals(model)) {
+      conductivityCalc = new WaterConductivityMethod(this);
+    } else if ("H2Model".equals(model)) {
+      conductivityCalc = new HydrogenConductivityMethod(this);
     } else {
       conductivityCalc = new PFCTConductivityMethodMod86(this);
     }
@@ -226,7 +247,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new FrictionTheoryViscosityMethod(this);
     } else if ("LBC".equals(model)) {
       viscosityCalc = new LBCViscosityMethod(this);
-    } else if ("PFCT".equals(model)) {
+    } else if ("PFCT".equals(model) || "CSP".equals(model)) {
       viscosityCalc = new PFCTViscosityMethodMod86(this);
     } else if ("PFCT-Heavy-Oil".equals(model)) {
       viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
@@ -302,8 +323,99 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    * @return true if using PFCT viscosity model
    */
   public boolean isPFCTViscosityModel() {
-    return viscosityCalc instanceof PFCTViscosityMethodMod86
+    return viscosityCalc instanceof PFCTViscosityMethod
+        || viscosityCalc instanceof PFCTViscosityMethodMod86
         || viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
+  }
+
+  /**
+   * Set CSP viscosity correction factors for the active PFCT/Pedersen viscosity model.
+   *
+   * @param correctionFactors array of four correction factors for temperature, pressure, molar mass
+   *        and alpha terms
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  public void setCspViscosityCorrectionFactors(double[] correctionFactors) {
+    if (viscosityCalc instanceof PFCTViscosityMethod) {
+      ((PFCTViscosityMethod) viscosityCalc).setCspViscosityCorrectionFactors(correctionFactors);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
+      ((PFCTViscosityMethodMod86) viscosityCalc)
+          .setCspViscosityCorrectionFactors(correctionFactors);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
+      ((PFCTViscosityMethodHeavyOil) viscosityCalc)
+          .setCspViscosityCorrectionFactors(correctionFactors);
+    } else {
+      throw new IllegalStateException("Current viscosity model is not PFCT/CSP");
+    }
+  }
+
+  /**
+   * Set CSP viscosity parameters for the active PFCT/Pedersen viscosity model.
+   *
+   * @param parameters array of four CSP viscosity parameters
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  public void setCspViscosityParameters(double[] parameters) {
+    setCspViscosityCorrectionFactors(parameters);
+  }
+
+  /**
+   * Set one CSP viscosity correction factor for the active PFCT/Pedersen viscosity model.
+   *
+   * @param index correction factor index, from 0 to 3
+   * @param value finite correction factor value
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  public void setCspViscosityCorrectionFactor(int index, double value) {
+    if (viscosityCalc instanceof PFCTViscosityMethod) {
+      ((PFCTViscosityMethod) viscosityCalc).setCspViscosityCorrectionFactor(index, value);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
+      ((PFCTViscosityMethodMod86) viscosityCalc).setCspViscosityCorrectionFactor(index, value);
+    } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
+      ((PFCTViscosityMethodHeavyOil) viscosityCalc).setCspViscosityCorrectionFactor(index, value);
+    } else {
+      throw new IllegalStateException("Current viscosity model is not PFCT/CSP");
+    }
+  }
+
+  /**
+   * Set one CSP viscosity parameter for the active PFCT/Pedersen viscosity model.
+   *
+   * @param index parameter index, from 0 to 3
+   * @param value finite parameter value
+   * @throws IllegalStateException if the current viscosity model is not PFCT/CSP
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  public void setCspViscosityParameter(int index, double value) {
+    setCspViscosityCorrectionFactor(index, value);
+  }
+
+  /**
+   * Get CSP viscosity correction factors from the active PFCT/Pedersen viscosity model.
+   *
+   * @return array of four correction factors, or null if the current model is not PFCT/CSP
+   */
+  public double[] getCspViscosityCorrectionFactors() {
+    if (viscosityCalc instanceof PFCTViscosityMethod) {
+      return ((PFCTViscosityMethod) viscosityCalc).getCspViscosityCorrectionFactors();
+    } else if (viscosityCalc instanceof PFCTViscosityMethodMod86) {
+      return ((PFCTViscosityMethodMod86) viscosityCalc).getCspViscosityCorrectionFactors();
+    } else if (viscosityCalc instanceof PFCTViscosityMethodHeavyOil) {
+      return ((PFCTViscosityMethodHeavyOil) viscosityCalc).getCspViscosityCorrectionFactors();
+    }
+    return null;
+  }
+
+  /**
+   * Get CSP viscosity parameters from the active PFCT/Pedersen viscosity model.
+   *
+   * @return array of four CSP viscosity parameters, or null if the current model is not PFCT/CSP
+   */
+  public double[] getCspViscosityParameters() {
+    return getCspViscosityCorrectionFactors();
   }
 
   /**
@@ -316,12 +428,31 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   public void setDiffusionCoefficientModel(String model) {
     if ("CSP".equals(model)) {
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
+    } else if ("Chapman-Enskog".equals(model)) {
+      neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel =
+          new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+      ceModel.setUseDiffusionLJOverride(true);
+      diffusivityCalc = ceModel;
     } else if ("Wilke Lee".equals(model)) {
-      diffusivityCalc = new WilkeLeeDiffusivity(this);
+      WilkeLeeDiffusivity wlModel = new WilkeLeeDiffusivity(this);
+      wlModel.setUseDiffusionLJOverride(true);
+      diffusivityCalc = wlModel;
     } else if ("Siddiqi Lucas".equals(model)) {
-      diffusivityCalc = new SiddiqiLucasMethod(this);
+      SiddiqiLucasMethod slModel = new SiddiqiLucasMethod(this);
+      slModel.setAutoSelectCorrelation(true);
+      diffusivityCalc = slModel;
     } else if ("Alkanol amine".equals(model)) {
       diffusivityCalc = new AmineDiffusivity(this);
+    } else if ("Fuller-Schettler-Giddings".equals(model)) {
+      diffusivityCalc = new FullerSchettlerGiddingsDiffusivity(this);
+    } else if ("Wilke-Chang".equals(model)) {
+      diffusivityCalc = new WilkeChangDiffusivity(this);
+    } else if ("Tyn-Calus".equals(model)) {
+      diffusivityCalc = new TynCalusDiffusivity(this);
+    } else if ("Hayduk-Minhas".equals(model)) {
+      diffusivityCalc = new HaydukMinhasDiffusivity(this);
+    } else if ("High Pressure".equals(model)) {
+      diffusivityCalc = new HighPressureDiffusivity(this);
     }
   }
 

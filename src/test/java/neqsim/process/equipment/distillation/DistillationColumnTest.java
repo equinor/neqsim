@@ -620,4 +620,42 @@ public class DistillationColumnTest {
     assertTrue(massBalanceError2 < 5.0, "Run2 mass balance error " + massBalanceError2
         + "% exceeds 5% limit. " + "Feed=" + feedFlow + " Ovhd=" + ovhd2 + " Btms=" + btms2);
   }
+
+  /**
+   * Regression test: dynamic column outlets use the same top/bottom orientation as steady-state.
+   */
+  @Test
+  public void transientOutletMappingMatchesSteadyStateOrientation() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 50.0, 10.0);
+    fluid.addComponent("propane", 0.5);
+    fluid.addComponent("n-butane", 0.5);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    Stream feed = new Stream("transientMappingFeed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(273.15 + 50.0);
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("TransientMappingColumn", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.run();
+
+    column.setDynamicColumnEnabled(true);
+    column.runTransient(1.0, UUID.randomUUID());
+
+    double topGasTemperature =
+        column.getTray(column.getTrays().size() - 1).getGasOutStream().getTemperature("K");
+    double bottomLiquidTemperature = column.getTray(0).getLiquidOutStream().getTemperature("K");
+
+    assertEquals(topGasTemperature, column.getGasOutStream().getTemperature("K"), 1.0e-6);
+    assertEquals(bottomLiquidTemperature, column.getLiquidOutStream().getTemperature("K"), 1.0e-6);
+  }
 }

@@ -190,6 +190,10 @@ stages:
       - "paperflow.py check-prose — prose quality scoring after drafting"
       - "paperflow.py suggest-refs — discover missing references"
       - "paperflow.py validate-bib — check bibliography completeness"
+      - "paperflow.py stats — statistical tests on benchmark results"
+      - "paperflow.py nomenclature — extract symbol nomenclature table"
+      - "paperflow.py related-work — generate comparison table from literature"
+      - "paperflow.py credit — generate CRediT author statement"
     validation:
       - All sections present per journal profile
       - No unlinked quantitative claims
@@ -213,6 +217,11 @@ stages:
       - "paperflow.py validate-figures — check figure DPI, format, size, color"
       - "paperflow.py validate-bib — check bibliography completeness"
       - "paperflow.py check-prose — final prose quality verification"
+      - "paperflow.py verify-dois — verify DOIs in refs.bib resolve"
+      - "paperflow.py latex — compile to LaTeX/PDF via Pandoc"
+      - "paperflow.py graphical-abstract — generate graphical abstract"
+      - "paperflow.py manifest — generate reproducibility manifest"
+      - "paperflow.py check-plagiarism — self-plagiarism detection"
     outputs:
       - submission/paper.tex
       - submission/paper.pdf

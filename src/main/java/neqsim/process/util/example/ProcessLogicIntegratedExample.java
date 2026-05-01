@@ -418,6 +418,7 @@ public class ProcessLogicIntegratedExample {
    * </pre>
    */
   private static class GradualPressureReductionLogic implements ProcessLogic {
+    private static final long serialVersionUID = 1L;
     private final String name;
     private final ControlValve valve;
     private final double targetOpening;

@@ -87,6 +87,8 @@ public class PhaseGERG2008Eos extends PhaseEos {
     this.gergModelType = modelType;
     if (modelType == GERG2008Type.HYDROGEN_ENHANCED) {
       thermoPropertyModelName = "GERG2008-H2 Eos";
+    } else if (modelType == GERG2008Type.AMMONIA_EXTENDED) {
+      thermoPropertyModelName = "GERG2008-NH3 Eos";
     } else {
       thermoPropertyModelName = "GERG2008 Eos";
     }

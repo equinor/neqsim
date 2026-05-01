@@ -49,9 +49,9 @@ HTML reports — all in one session.
 
 1. **Run the setup script** (auto-creates `task_solve/` on first use):
    ```powershell
-   python devtools/new_task.py "JT cooling for rich gas"
-   python devtools/new_task.py "TEG dehydration sizing" --type B --author "Your Name"
-   python devtools/new_task.py "field development study" --type G --author "Your Name"
+   neqsim new-task "JT cooling for rich gas"
+   neqsim new-task "TEG dehydration sizing" --type B --author "Your Name"
+   neqsim new-task "field development study" --type G --author "Your Name"
    ```
 2. **Open the generated README** — it has AI prompts ready to paste for each step
 3. **Work through Steps 1–3**, saving artifacts in the corresponding subfolder
@@ -73,6 +73,7 @@ task_solve/
 ├── README.md                                        ← workflow overview
 ├── TASK_TEMPLATE/                                   ← copy this to start
 │   ├── README.md                                    ← task checklist
+│   ├── study_config.yaml                            ← intake, document inputs, scale, notebooks, report depth, quality gates
 │   ├── step1_scope_and_research/task_spec.md         ← standards, methods, deliverables
 │   ├── step1_scope_and_research/notes.md             ← literature, sources
 │   ├── step1_scope_and_research/references/          ← PDFs, standards, lab reports
@@ -98,6 +99,200 @@ based on the task:
 
 You control depth through your request — mentioning standards, deliverables,
 and acceptance criteria naturally increases analysis depth.
+
+### Explicit Study Configuration
+
+For repeatable deep studies, configure task depth explicitly instead of relying
+only on prompt wording. Every new task folder includes `study_config.yaml`; it
+is the input contract for scale, notebook plan, report detail, and quality
+gates. The task solver reads it before creating notebooks or reports.
+
+Use CLI options for the common cases:
+
+```powershell
+# Comprehensive study with detailed report and five planned notebooks
+neqsim new-task "field development study" --type G --scale comprehensive --report-depth detailed --notebooks 5 --intake-pause always
+
+# Explicit notebook filenames
+neqsim new-task "flow assurance study" --type G --scale comprehensive --notebooks "01_basis.ipynb,02_hydrates.ipynb,03_pipeline.ipynb,04_risk.ipynb"
+
+# Fully authored configuration file
+neqsim new-task "concept selection" --type G --config-file path\to\study_config.yaml
+```
+
+The generated `study_config.yaml` has this structure:
+
+```yaml
+study:
+  title: "Field development study"
+  task_type: "G"
+  scale: comprehensive      # auto | quick | standard | comprehensive
+  mode: development         # auto | screening | design | development
+  aace_class: 2
+  fel_stage: FEL-3
+  deliverable_mode: report-first
+
+intake:
+  pause_after_folder_creation: always  # auto | always | never
+  ask_for_missing_info: true
+  allow_user_file_drop: true
+  confirm_before_notebooks: true
+
+notebooks:
+  required: true
+  execution_required: true
+  execution_engine: neqsim_runner  # neqsim_runner | interactive | auto
+  runner_mode: execute             # execute | script
+  runner_max_retries: 3
+  runner_timeout_seconds: 3600
+  runner_max_parallel: 1           # JVM-heavy jobs should stay serial by default
+  runner_merge_results: true       # Merge multi-notebook results.json updates
+  require_successful_jobs: true    # Report gate warns on failed/timed-out jobs
+  isolated_subprocess: true
+  minimum_count: 5
+  plan:
+    - file: 01_scope_basis_and_fluid.ipynb
+      purpose: Define basis, fluid, EOS, and assumptions.
+    - file: 02_process_simulation.ipynb
+      purpose: Build and run the NeqSim process model.
+    - file: 03_benchmark_validation.ipynb
+      purpose: Compare key outputs against independent references.
+    - file: 04_uncertainty_and_risk.ipynb
+      purpose: Monte Carlo, tornado sensitivity, and risk register.
+    - file: 05_report_tables_and_figures.ipynb
+      purpose: Prepare final tables, figures, and results.json.
+
+report:
+  formats:
+    - docx
+    - html
+  depth: detailed          # auto | brief | standard | detailed
+  include_paper: false
+  required_sections:
+    - executive_summary
+    - scope_and_standards
+    - methodology
+    - results
+    - discussion
+    - validation
+    - benchmark_validation
+    - uncertainty
+    - risk_assessment
+    - conclusions
+    - references
+
+quality_gates:
+  require_results_json: true
+  benchmark_validation: required
+  uncertainty_analysis: required
+  risk_register: required
+  figure_discussion: required
+  consistency_checker: required
+  minimum_figures: 8
+  notebook_execution: required
+```
+
+The report generator reads this file together with `task_spec.md` and
+`results.json`. If required input documents, notebooks, report sections,
+figures, benchmark validation, uncertainty analysis, risk register, or
+consistency checks are missing, `python step3_report/generate_report.py` prints
+warnings and includes them in the generated report. Treat required warnings as
+blockers unless the task owner explicitly accepts the limitation.
+
+By default, task notebooks use **NeqSim Runner** (`execution_engine:
+neqsim_runner`) instead of a shared VS Code/Jupyter kernel. Each notebook run is
+submitted through `neqsim_runner.agent_bridge.AgentBridge`, executed in an
+isolated subprocess with its own JVM, retried on failure, and recorded in
+`runner.db`/`runner_output/`. This avoids manual kernel restart loops and the
+common `RuntimeError: JVM cannot be restarted` problem. Multi-notebook tasks
+merge runner outputs into one `results.json` instead of overwriting previous
+results, and the report gate checks `runner.db` for failed, timed-out, or
+missing notebook jobs. Use `execution_engine: interactive` only for quick
+debugging notebooks.
+
+Task notebooks must load NeqSim with `devtools/neqsim_dev_setup.py`, not
+`from neqsim import jneqsim`. The setup cell should find `NEQSIM_PROJECT_ROOT`,
+put `<repo>/devtools` on `sys.path`, call `neqsim_init(project_root=PROJECT_ROOT,
+recompile=False, ...)`, and use classes from `ns.*` or `ns.JClass(...)`. This
+loads workspace Java classes from `target/classes`, so newly edited classes are
+available without copying a packaged JAR into the Python `neqsim` package.
+
+Notebook files should be created with VS Code notebook tools, `nbformat`, or
+valid nbformat v4 JSON. When editing existing notebooks, preserve existing cell
+metadata, including `metadata.id`; when generating raw JSON, include
+`metadata.language` on each cell. Every notebook must run from a fresh kernel in
+order with no interactive prompts or hidden state.
+
+### Intake Gate: Add Information Before Work Continues
+
+When a task starts, the first action is to create the task folder. For detailed
+or document-heavy work, use `--intake-pause always` so the solver stops after
+folder creation and gives you a chance to add information before analysis
+begins:
+
+```powershell
+neqsim new-task "compressor seal condensation study" --type G --scale comprehensive --intake-pause always
+```
+
+The solver then reports the created paths and waits for confirmation before it
+creates notebooks. Document input is possible at this point: drop source files
+into the references folder and list required ones in `study_config.yaml`.
+
+| Path | What you can add |
+|------|------------------|
+| `task_solve/YYYY-MM-DD_slug/study_config.yaml` | Scale, notebook names, report depth, intake behavior, required documents |
+| `task_solve/YYYY-MM-DD_slug/user_input.md` | Extra written instructions, assumptions, acceptance criteria |
+| `task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/` | PDFs, Word files, Excel tables, P&IDs, vendor data sheets, standards |
+
+`pause_after_folder_creation: auto` pauses for Standard/Comprehensive tasks when
+method-critical values or required documents are missing. `always` forces the
+pause even if enough data appears to be present. `never` allows the solver to
+continue with documented assumptions unless a missing value would invalidate the
+calculation method.
+
+### Document-Based Task Input
+
+Yes — task input can be provided as documents. Use the form that matches the
+kind of input:
+
+| Input type | Where it goes | Typical use |
+|------------|---------------|-------------|
+| Text or markdown prompt | `--prompt-file path\to\request.md` | Long task descriptions, acceptance criteria, assumptions |
+| Study configuration | `--config-file path\to\study_config.yaml` | Scale, notebook plan, report depth, required quality gates |
+| Engineering documents | `step1_scope_and_research/references/` | Design basis PDFs, data sheets, P&IDs, stream tables, lab reports, standards |
+| Extracted figures/pages | `figures/` | PDF pages, P&ID images, compressor maps, phase envelopes |
+
+Example:
+
+```powershell
+neqsim new-task "pipeline concept study" --type G --scale comprehensive --prompt-file path\to\task_request.md
+Copy-Item path\to\DesignBasis.pdf task_solve\YYYY-MM-DD_pipeline_concept_study\step1_scope_and_research\references\
+Copy-Item path\to\StreamTable.xlsx task_solve\YYYY-MM-DD_pipeline_concept_study\step1_scope_and_research\references\
+```
+
+For document-heavy tasks, list the expected inputs in `study_config.yaml`:
+
+```yaml
+inputs:
+  prompt_file: task_request.md
+  documents_required: true
+  document_extraction_required: required
+  documents:
+    - path: step1_scope_and_research/references/DesignBasis.pdf
+      role: design_basis
+      required: true
+      extraction: classify_extract_normalize_validate
+    - path: step1_scope_and_research/references/StreamTable.xlsx
+      role: heat_and_mass_balance
+      required: true
+      extraction: classify_extract_normalize_validate
+```
+
+The task solver should classify each document, extract the relevant engineering
+data, normalize units and component names, validate the extracted values, and
+record the result in `step1_scope_and_research/notes.md`, `task_spec.md`, or a
+structured JSON file used by the notebooks. Keep all source documents inside
+the task folder so the study remains reproducible.
 
 ---
 
@@ -219,6 +414,13 @@ Run the checklist:
 ### Phase 5: Log
 
 Add an entry to `docs/development/TASK_LOG.md`:
+
+**Privacy rule:** Task log entries are public/reusable memory. Do not include
+company/operator names, field/facility/asset names, equipment tag numbers,
+internal document names, private system names, access diagnostics, or task folder
+slugs containing those details. Use generic descriptors such as `confidential
+offshore gas platform`, `private task folder (redacted)`, or
+`operator-specific technical requirement`.
 
 ```markdown
 ### 2026-03-01 — Joule-Thomson cooling for rich gas at 200 bar
@@ -729,6 +931,10 @@ The workflow enforces quality gates between steps:
 - Figures saved to `figures/` as PNG
 - **Benchmark validation notebook** exists with comparison table and deviation plot
 - `benchmark_validation` section populated in results.json
+- **Consistency check PASSED**: Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
+  to detect inconsistencies across notebooks. Fix CRITICAL issues before generating reports.
+  Common issues: numerical mismatches, scope mismatches (volumetric vs mass-based calculations),
+  contradictory conclusions, or external study data measuring different quantities than notebooks.
 
 ### Structured Validation
 
@@ -901,7 +1107,7 @@ Put a test in `src/test/java/neqsim/<matching_package>/`. Tests are:
 Put a notebook in `examples/notebooks/` with:
 - Clear title and description
 - Colab badge for one-click running from a browser
-- Dual-boot setup cell (works with both `devtools` and `pip install neqsim`)
+- Devtools setup cell for repository/task notebooks (`neqsim_dev_setup.py`, `ns.*`)
 - Markdown cells explaining the engineering reasoning
 - **Save all figures to disk** — every plot should be saved as a PNG/SVG file
   alongside the notebook so results survive kernel restarts and can be reused
@@ -1129,8 +1335,11 @@ fully scalable, editable, and print-quality. No images, no blurry screenshots.
 
 **Dependencies:**
 ```
-pip install python-docx matplotlib latex2mathml lxml neqsim
+pip install python-docx matplotlib latex2mathml lxml
 ```
+
+Use `neqsim_dev_setup.py` for local NeqSim Java classes in notebooks; do not
+install the released `neqsim` package for repository task calculations.
 
 ---
 
@@ -1159,7 +1368,7 @@ pip install python-docx matplotlib latex2mathml lxml neqsim
 | Hardcoded exchange rates in formulas | Rate change requires editing every formula | Define `USD_TO_NOK = 10.5` as a variable; reference throughout |
 | Missing loss carry-forward in tax model | Tax paid in loss years, wrong NPV | Track cumulative tax loss per pool; only pay tax when taxable income > 0 |
 | Formula from memory without verification | Incorrect equations compound through calculation | Always verify governing equations against the applicable standard or textbook |
-| Old JAR in Python site-packages | `jpype.JClass()` loads stale class | Remove old JARs; rebuild with `mvnw.cmd package -DskipTests`; use `jpype.addClassPath()` for local JAR |
+| Old JAR in Python site-packages | `from neqsim import jneqsim` loads stale class | Use the devtools setup cell and `ns.JClass()` so notebooks load workspace classes from `target/classes` |
 | Report generator missing sections | Benchmark/uncertainty/risk data in results.json but absent from report | Add rendering to `build_sections()`, `build_word_report()`, AND `build_html_report()` for each data section |
 | Figure captions only from main notebook | Benchmark/uncertainty figures show generic captions | Add ALL figure filenames to `results.json["figure_captions"]` from every notebook |
 | Stale numbers in MANUAL_SECTIONS | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update MANUAL_SECTIONS when parameters change |
@@ -1208,12 +1417,17 @@ If you're a process engineer (not a developer):
 
 1. Open VS Code with the NeqSim repo
 2. Open Copilot Chat and type: `@solve.task your engineering question`
-3. The agent creates the folder, runs simulations, and hands back results + reports
+3. The agent creates the folder, runs the intake gate, then hands back results + reports
 4. Find Word and HTML reports in `task_solve/.../step3_report/`
+
+For document-heavy studies, ask for an intake pause or create the task manually
+with `--intake-pause always`. During the pause you can add PDFs, Word files,
+Excel stream tables, P&IDs, vendor data sheets, standards, or lab reports to
+`step1_scope_and_research/references/` before notebooks are created.
 
 Alternatively, for manual control:
 
-1. Run: `python devtools/new_task.py "your question" --type B`
+1. Run: `neqsim new-task "your question" --type B --intake-pause always`
 2. Open Copilot Chat and paste the prompts from the generated README
 3. Run `python step3_report/generate_report.py` to create Word + HTML reports
 
@@ -1230,15 +1444,22 @@ coding agent that can read files and run commands can follow the same workflow.
 ### Quick Start for Any AI Agent
 
 1. **Create the task folder** (from terminal):
-   ```bash
-   python devtools/new_task.py "your task" --type B
-   ```
+
+    ```bash
+    neqsim new-task "your task" --type B --intake-pause always
+    ```
+
+    The intake pause is optional, but useful when the task starts from design
+    documents or you want to edit `study_config.yaml` before analysis begins.
 
 2. **Point the agent to the workflow** — paste this prompt:
    ```
    I'm working in the NeqSim repo (Java thermodynamics + process simulation).
    Read docs/development/TASK_SOLVING_GUIDE.md for the task-solving workflow.
-   Read the task README at task_solve/YYYY-MM-DD_your_task/README.md.
+    Read the task README at task_solve/YYYY-MM-DD_your_task/README.md.
+    Document input is possible: place source files in
+    task_solve/YYYY-MM-DD_your_task/step1_scope_and_research/references/ before
+    notebooks are created.
 
    Follow the 3-step workflow:
    1. Fill in step1_scope_and_research/task_spec.md (standards, methods, deliverables)
@@ -1255,9 +1476,9 @@ coding agent that can read files and run commands can follow the same workflow.
 
 | Component | How to Use | Works In |
 |-----------|-----------|----------|
-| `python devtools/new_task.py` | Creates task folders | Any terminal |
+| `neqsim new-task` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
-| Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
+| Jupyter notebooks | Simulation code | NeqSim Runner by default; JupyterLab/Colab for interactive debugging |
 | `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
 | `python generate_report.py --paper` | Also produces Paper.docx + Paper.html (only when requested) | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
@@ -1268,7 +1489,7 @@ coding agent that can read files and run commands can follow the same workflow.
 |---------|---------|-------------|
 | `@solve.task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
 | Specialist agents (`@thermo.fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
-| Notebook cell execution | Run cells from chat | Run notebooks in JupyterLab or via `jupyter execute` |
+| Notebook cell execution | Run cells from chat | Use `neqsim_runner` for task notebooks; JupyterLab/Colab for quick debugging |
 
 ### Tips for Non-VS-Code AI Tools
 
@@ -1277,8 +1498,8 @@ coding agent that can read files and run commands can follow the same workflow.
 - **Claude Code**: Same approach — give it the workflow prompt and task folder path.
 - **Cursor**: Supports custom instructions — paste the agent instructions from
   `.github/agents/solve.task.agent.md` into Cursor's rules.
-- **Google Colab + AI**: Use `pip install neqsim` instead of `pip install -e devtools/`.
-  The dual-boot setup cell in notebooks handles this automatically.
+- **Google Colab + AI**: Published external examples may use `pip install neqsim`,
+  but local task notebooks and runner workflows must use `neqsim_dev_setup.py`.
 
 ### End-to-End with OpenAI Codex (Solve Task + Create PR)
 
@@ -1298,9 +1519,9 @@ Task: [describe your task, e.g. "hydrate formation temperature for wet gas at 10
 
 Instructions:
 1. Read AGENTS.md for project guidance
-2. Run: python devtools/new_task.py "[task title]" --type [A-G]
+2. Run: neqsim new-task "[task title]" --type [A-G]
 3. Fill step1_scope_and_research/task_spec.md with standards and methods
-4. Create a Jupyter notebook in step2_analysis/ using NeqSim (pip install neqsim)
+4. Create a Jupyter notebook in step2_analysis/ using NeqSim devtools setup
 5. Run the notebook and validate results
 6. Save plots to figures/
 7. Update and run step3_report/generate_report.py
@@ -1324,7 +1545,7 @@ Instructions:
 | `gh pr create` | Via Codex's GitHub integration | Via local `gh` CLI |
 | Network access | Restricted (sandbox) | Sandboxed but configurable |
 | `AGENTS.md` | Read automatically | Read automatically |
-| NeqSim mode | `pip install neqsim` (released) | `pip install -e devtools/` (local dev) |
+| NeqSim mode | `pip install neqsim` (released, external examples) | `neqsim_dev_setup.py` (local task notebooks) |
 
 **Key difference:** Codex Cloud uses the released `neqsim` PyPI package, so it
 can solve tasks using the existing API but cannot extend the Java source code

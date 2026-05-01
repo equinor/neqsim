@@ -7,10 +7,12 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
@@ -53,6 +55,11 @@ public abstract class Flash extends BaseOperation {
   double tmLimit = -1e-8;
   private static final double LOG_MIN_EXP = Math.log(Double.MIN_NORMAL);
   private static final double LOG_MAX_EXP = Math.log(Double.MAX_VALUE);
+  private static final String STABILITY_OUTCOME_NOT_EVALUATED = "not evaluated";
+  private String lastStabilityOutcome = STABILITY_OUTCOME_NOT_EVALUATED;
+  private boolean lastStabilityAnalysisFailed = false;
+  private String lastStabilityAnalysisFailureMessage = "";
+  private double[] lastTangentPlaneDistances = new double[0];
 
   protected double safeExp(double value) {
     if (Double.isNaN(value)) {
@@ -65,6 +72,82 @@ public abstract class Flash extends BaseOperation {
       return Double.MAX_VALUE;
     }
     return Math.exp(value);
+  }
+
+  /**
+   * Resets the diagnostic fields before a new stability decision is attempted.
+   */
+  protected void resetStabilityDiagnostics() {
+    lastStabilityOutcome = STABILITY_OUTCOME_NOT_EVALUATED;
+    lastStabilityAnalysisFailed = false;
+    lastStabilityAnalysisFailureMessage = "";
+    lastTangentPlaneDistances = new double[0];
+  }
+
+  /**
+   * Records the high-level outcome of the most recent stability decision.
+   *
+   * @param outcome short text describing the stability path and decision
+   */
+  protected void recordStabilityOutcome(String outcome) {
+    lastStabilityOutcome = outcome == null ? STABILITY_OUTCOME_NOT_EVALUATED : outcome;
+  }
+
+  /**
+   * Records that a stability calculation failed and stores its diagnostic message.
+   *
+   * @param exception exception raised during stability analysis or stability gating
+   */
+  protected void recordStabilityAnalysisFailure(Exception exception) {
+    lastStabilityAnalysisFailed = true;
+    lastStabilityAnalysisFailureMessage = exception == null ? "" : exception.getMessage();
+  }
+
+  /**
+   * Stores the current tangent-plane-distance values for diagnostics.
+   */
+  protected void recordTangentPlaneDistances() {
+    if (tm == null) {
+      lastTangentPlaneDistances = new double[0];
+    } else {
+      lastTangentPlaneDistances = Arrays.copyOf(tm, tm.length);
+    }
+  }
+
+  /**
+   * Gets the high-level outcome of the most recent stability decision.
+   *
+   * @return stability outcome text
+   */
+  public String getLastStabilityOutcome() {
+    return lastStabilityOutcome;
+  }
+
+  /**
+   * Checks whether the most recent stability analysis failed before reaching a decision.
+   *
+   * @return true if the last stability analysis or stability gate threw an exception
+   */
+  public boolean hasLastStabilityAnalysisFailed() {
+    return lastStabilityAnalysisFailed;
+  }
+
+  /**
+   * Gets the failure message from the most recent failed stability analysis.
+   *
+   * @return failure message, or an empty string if no failure has been recorded
+   */
+  public String getLastStabilityAnalysisFailureMessage() {
+    return lastStabilityAnalysisFailureMessage;
+  }
+
+  /**
+   * Gets the tangent-plane-distance values from the most recent stability analysis.
+   *
+   * @return copy of the recorded tangent-plane-distance values
+   */
+  public double[] getLastTangentPlaneDistances() {
+    return Arrays.copyOf(lastTangentPlaneDistances, lastTangentPlaneDistances.length);
   }
 
   int lowestGibbsEnergyPhase = 0;
@@ -690,7 +773,7 @@ public abstract class Flash extends BaseOperation {
     // Use strict compatibility gating: enable non-trivial filtering for enhanced/LLE-auto
     // contexts, keep legacy tm-reset behavior for baseline default mode.
     boolean useNonTrivialFiltering =
-        system.doEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
+        shouldApplyEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
     if (useNonTrivialFiltering) {
       for (int trialPhase = 0; trialPhase < 2; trialPhase++) {
         double dotProduct = 0.0;
@@ -799,7 +882,7 @@ public abstract class Flash extends BaseOperation {
     if (lightComp >= 0) {
       trialSet.add(Integer.valueOf(lightComp));
     }
-    if (system.doEnhancedMultiPhaseCheck()) {
+    if (shouldApplyEnhancedMultiPhaseCheck()) {
       int dominantComp = -1;
       double dominantZ = -1.0;
       for (int ic = 0; ic < numComp; ic++) {
@@ -986,6 +1069,69 @@ public abstract class Flash extends BaseOperation {
   }
 
   /**
+   * Determines whether enhanced multiphase stability numerics should be applied.
+   *
+   * <p>
+   * Enhanced checks are intended for systems where ordinary Wilson K-value stability analysis is
+   * known to miss polar, associating, electrolyte, or sour-fluid liquid splits. Hydrocarbon-only
+   * PR/SRK mixtures are handled by the ordinary multiphase flash path; applying the enhanced
+   * numerical filters there can create isolated phase-map artifacts near phase boundaries.
+   * </p>
+   *
+   * @return true if enhanced stability checks are enabled and the active mixture contains
+   *         components that need the enhanced path
+   */
+  protected boolean shouldApplyEnhancedMultiPhaseCheck() {
+    if (system == null || !system.doEnhancedMultiPhaseCheck()) {
+      return false;
+    }
+    if (system.isChemicalSystem()) {
+      return true;
+    }
+    String modelName = system.getModelName() == null ? "" : system.getModelName();
+    String lowerModelName = modelName.toLowerCase();
+    if (modelName.contains("CPA") || lowerModelName.contains("electrolyte")
+        || lowerModelName.contains("pitzer")) {
+      return true;
+    }
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      ComponentInterface component = system.getPhase(0).getComponent(i);
+      if (component.getz() < 1.0e-50) {
+        continue;
+      }
+      String componentName = component.getComponentName();
+      if (componentName == null) {
+        continue;
+      }
+      String lowerComponentName = componentName.toLowerCase();
+      if (isEnhancedStabilityComponent(lowerComponentName)) {
+        return true;
+      }
+      if (!component.isHydrocarbon() && !component.isInert()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether a component name is associated with enhanced multiphase stability behavior.
+   *
+   * @param lowerComponentName component name converted to lower case
+   * @return true if the component should keep enhanced multiphase stability checks active
+   */
+  private boolean isEnhancedStabilityComponent(String lowerComponentName) {
+    return lowerComponentName.equals("water") || lowerComponentName.equals("co2")
+        || lowerComponentName.equals("carbon dioxide") || lowerComponentName.equals("h2s")
+        || lowerComponentName.equals("hydrogen sulfide") || lowerComponentName.equals("methanol")
+        || lowerComponentName.equals("ethanol") || lowerComponentName.equals("meg")
+        || lowerComponentName.equals("deg") || lowerComponentName.equals("teg")
+        || lowerComponentName.equals("mea") || lowerComponentName.equals("dea")
+        || lowerComponentName.equals("mdea") || lowerComponentName.equals("ammonia")
+        || lowerComponentName.equals("nh3") || lowerComponentName.equals("so2");
+  }
+
+  /**
    * <p>
    * stabilityCheck.
    * </p>
@@ -993,13 +1139,21 @@ public abstract class Flash extends BaseOperation {
    * @return a boolean
    */
   public boolean stabilityCheck() {
+    resetStabilityDiagnostics();
     boolean stable = false;
     lowestGibbsEnergyPhase = findLowestGibbsEnergyPhase();
     if (system.getPhase(lowestGibbsEnergyPhase).getNumberOfComponents() > 1) {
       try {
         stabilityAnalysis();
+        recordTangentPlaneDistances();
       } catch (Exception ex) {
         logger.debug("Stability analysis did not converge: {}", ex.getMessage());
+        recordStabilityAnalysisFailure(ex);
+        if (tm == null || tm.length < 2) {
+          recordStabilityOutcome("stability analysis failed - continuing TPflash iteration");
+          return false;
+        }
+        recordTangentPlaneDistances();
       }
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
@@ -1013,11 +1167,17 @@ public abstract class Flash extends BaseOperation {
           && !system.getModelName().contains("CPA")) {
         retryFoundInstability = amplifiedKStabilityRetry();
       }
-      // Pure-component trials catch LLE instability (Wilson K fails at T << Tc)
-      if (!retryFoundInstability && doLLESupplementaryCheck) {
+      // Pure-component trials catch LLE instability (Wilson K fails at T << Tc).
+      // Skip when standard stability analysis gives a clear "stable" verdict
+      // (both tm values comfortably positive), since the expensive trials
+      // (3 components x 80 iterations x init(1) each) rarely find instability
+      // in that regime.
+      if (!retryFoundInstability && doLLESupplementaryCheck
+          && (tm[0] < 1.0 || tm[1] < 1.0 || ambiguousStability)) {
         retryFoundInstability = pureComponentStabilityTrials();
       }
       if (retryFoundInstability) {
+        recordStabilityOutcome("unstable - supplementary stability trial");
         // Supplementary trial found instability - calculate beta and init for two-phase
         RachfordRice rachfordRice = new RachfordRice();
         try {
@@ -1033,6 +1193,11 @@ public abstract class Flash extends BaseOperation {
         system.init(1);
         stable = false;
       } else {
+        if (lastStabilityAnalysisFailed) {
+          recordStabilityOutcome("stable after supplementary fallback");
+        } else {
+          recordStabilityOutcome("stable");
+        }
         stable = true;
         system.init(0);
         system.setNumberOfPhases(1);
@@ -1047,6 +1212,7 @@ public abstract class Flash extends BaseOperation {
         }
       }
     } else {
+      recordStabilityOutcome("unstable - tangent plane distance");
       RachfordRice rachfordRice = new RachfordRice();
       try {
         system.setBeta(

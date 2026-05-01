@@ -5,8 +5,8 @@ description: "This PR addresses a comprehensive review request for NeqSim's Oil 
 
 # Pull Request: Hardy Cross Looped Network Solver & O&G Review Update
 
-**Date:** January 31, 2026  
-**Author:** NeqSim Development Team  
+**Date:** January 31, 2026
+**Author:** NeqSim Development Team
 **Type:** Feature Addition & Documentation Enhancement
 
 ---
@@ -98,10 +98,10 @@ A complete implementation of the classic Hardy Cross iterative method for solvin
 
 | File | Description |
 |------|-------------|
-| [NetworkLoop.java](../src/main/java/neqsim/process/equipment/network/NetworkLoop.java) | Represents an independent loop with pipe members and flow directions |
-| [LoopDetector.java](../src/main/java/neqsim/process/equipment/network/LoopDetector.java) | DFS spanning tree algorithm for detecting independent loops |
-| [LoopedPipeNetwork.java](../src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java) | Main network class with Hardy Cross solver |
-| [LoopedPipeNetworkTest.java](../src/test/java/neqsim/process/equipment/network/LoopedPipeNetworkTest.java) | Unit tests for loop detection and solver |
+| [NetworkLoop.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/NetworkLoop.java) | Represents an independent loop with pipe members and flow directions |
+| [LoopDetector.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/LoopDetector.java) | DFS spanning tree algorithm for detecting independent loops |
+| [LoopedPipeNetwork.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java) | Main network class with Hardy Cross solver |
+| [LoopedPipeNetworkTest.java](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/equipment/network/LoopedPipeNetworkTest.java) | Unit tests for loop detection and solver |
 
 ### 2. Compressor Washing System (NEW)
 
@@ -109,8 +109,8 @@ Models compressor fouling and washing (online/offline) for performance recovery.
 
 | File | Description |
 |------|-------------|
-| [CompressorWashing.java](../src/main/java/neqsim/process/equipment/compressor/CompressorWashing.java) | Fouling model with online/offline washing |
-| [CompressorWashingTest.java](../src/test/java/neqsim/process/equipment/compressor/CompressorWashingTest.java) | Unit tests (18 tests) |
+| [CompressorWashing.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/CompressorWashing.java) | Fouling model with online/offline washing |
+| [CompressorWashingTest.java](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/equipment/compressor/CompressorWashingTest.java) | Unit tests (18 tests) |
 
 **Key Features:**
 - **Fouling Types**: Salt, hydrocarbon, particulate, corrosion, biological
@@ -124,8 +124,8 @@ Models instrument air/plant air systems per ISO 8573-1.
 
 | File | Description |
 |------|-------------|
-| [UtilityAirSystem.java](../src/main/java/neqsim/process/equipment/util/UtilityAirSystem.java) | Complete utility air system model |
-| [UtilityAirSystemTest.java](../src/test/java/neqsim/process/equipment/util/UtilityAirSystemTest.java) | Unit tests (17 tests) |
+| [UtilityAirSystem.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/util/UtilityAirSystem.java) | Complete utility air system model |
+| [UtilityAirSystemTest.java](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/equipment/util/UtilityAirSystemTest.java) | Unit tests (17 tests) |
 
 **Key Features:**
 - **Air Quality Classes**: ISO 8573-1 Classes 1-5 (breathing air to service air)
@@ -139,8 +139,8 @@ Models fuel gas conditioning for gas turbines, heaters, and other consumers.
 
 | File | Description |
 |------|-------------|
-| [FuelGasSystem.java](../src/main/java/neqsim/process/equipment/util/FuelGasSystem.java) | Fuel gas conditioning system |
-| [FuelGasSystemTest.java](../src/test/java/neqsim/process/equipment/util/FuelGasSystemTest.java) | Unit tests (18 tests) |
+| [FuelGasSystem.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/util/FuelGasSystem.java) | Fuel gas conditioning system |
+| [FuelGasSystemTest.java](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/equipment/util/FuelGasSystemTest.java) | Unit tests (18 tests) |
 
 **Key Features:**
 - **Consumer Types**: Gas turbine, fired heater, flare pilot, hot oil heater

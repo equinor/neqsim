@@ -7,7 +7,7 @@ Usage in any notebook::
     ns = neqsim_init(recompile=True)   # cell 1: start JVM
     ns = neqsim_classes(ns)            # cell 2: import classes
 
-    # Use classes
+    # Use classes from target/classes, with dependencies from target JAR or Maven classpath
     fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
 
 Re-running the init cell after editing Java code will compile, restart
@@ -20,8 +20,49 @@ import os
 import types
 
 
-# ── Project root (auto-detected: this file lives in <project>/devtools/) ──
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# ── Project root detection ──
+# Priority order:
+# 1. Explicit project_root parameter (in neqsim_init)
+# 2. NEQSIM_PROJECT_ROOT environment variable
+# 3. Walk upward from this file's location (works when devtools/ is in the repo)
+# 4. Walk upward from CWD (works when notebook is inside the repo)
+# 5. Well-known default paths
+
+
+def _find_project_root():
+    """Auto-detect the neqsim project root by searching for pom.xml + mvnw."""
+    # From env var
+    env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+    if env_root:
+        p = Path(env_root)
+        if (p / "pom.xml").exists():
+            return p
+
+    # Walk up from this file (works when installed in <repo>/devtools/)
+    candidates = [Path(__file__).resolve().parent.parent]
+
+    # Walk up from CWD (works when notebook is run from inside the repo)
+    cwd = Path.cwd().resolve()
+    candidates.append(cwd)
+    for parent in cwd.parents:
+        candidates.append(parent)
+        if len(parent.parts) <= 2:
+            break  # stop at drive root
+
+    # Well-known default paths
+    candidates.append(Path.home() / "Documents" / "GitHub" / "neqsim2")
+    candidates.append(Path.home() / "Documents" / "GitHub" / "neqsim")
+
+    for c in candidates:
+        if (c / "pom.xml").exists() and (
+            (c / "mvnw.cmd").exists() or (c / "mvnw").exists()
+        ):
+            return c
+
+    return None
+
+
+_PROJECT_ROOT = _find_project_root() or Path(__file__).resolve().parent.parent
 
 
 def _run_compile(root):
@@ -43,6 +84,43 @@ def _run_compile(root):
         print(result.stdout)
         print(result.stderr)
         raise RuntimeError("Maven compile failed — see output above")
+
+
+def _has_compiled_classes(classes_dir):
+    """Return True when target/classes contains compiled Java classes."""
+    return classes_dir.exists() and any(classes_dir.rglob("*.class"))
+
+
+def _build_dependency_classpath(root):
+    """Build and return Maven runtime dependency classpath entries."""
+    target_dir = root / "target"
+    target_dir.mkdir(exist_ok=True)
+    classpath_file = target_dir / "neqsim-dev-classpath.txt"
+    if not classpath_file.exists():
+        print("Building Maven dependency classpath... ", end="", flush=True)
+        mvnw = root / "mvnw.cmd" if os.name == "nt" else root / "mvnw"
+        result = subprocess.run(
+            [
+                str(mvnw),
+                "-q",
+                "dependency:build-classpath",
+                f"-Dmdep.outputFile={classpath_file}",
+                f"-Dmdep.pathSeparator={os.pathsep}",
+                "-DincludeScope=runtime",
+            ],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            print("FAILED")
+            print(result.stdout)
+            print(result.stderr)
+            raise RuntimeError("Maven dependency classpath generation failed")
+        print("OK")
+    text = classpath_file.read_text(encoding="utf-8").strip()
+    return [entry for entry in text.split(os.pathsep) if entry]
 
 
 def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbose=True):
@@ -73,6 +151,16 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     """
     root = Path(project_root) if project_root else _PROJECT_ROOT
 
+    # Validate the root has a pom.xml
+    if not (root / "pom.xml").exists():
+        raise FileNotFoundError(
+            f"NeqSim project root not found at {root}. "
+            "Set NEQSIM_PROJECT_ROOT env var or pass project_root= parameter."
+        )
+
+    if verbose:
+        print(f"NeqSim project root: {root}")
+
     # If JVM is already running, handle based on recompile flag
     if jpype.isJVMStarted():
         if recompile:
@@ -92,11 +180,11 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
             ns.JClass = jpype.JClass
             return ns
 
-    if recompile:
-        _run_compile(root)
-
     classes_dir = root / "target" / "classes"
     resources_dir = root / "src" / "main" / "resources"
+
+    if recompile or not _has_compiled_classes(classes_dir):
+        _run_compile(root)
 
     # The shade plugin produces the shaded JAR as the main artifact
     # (neqsim-X.Y.Z.jar) and renames the original to original-neqsim-X.Y.Z.jar.
@@ -108,14 +196,15 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         and "-sources" not in j.name
         and "-javadoc" not in j.name
     ]
-    if not shaded_jars:
-        raise FileNotFoundError(
-            f"No NeqSim JAR found in {root / 'target'}. "
-            "Run: mvnw.cmd package -DskipTests"
-        )
-    shaded_jar = shaded_jars[-1]
-
-    classpath = [str(classes_dir), str(resources_dir), str(shaded_jar)]
+    classpath = [str(classes_dir), str(resources_dir)]
+    if shaded_jars:
+        # Use the existing shaded JAR for dependencies when available. Fresh
+        # NeqSim classes still come first from target/classes.
+        classpath.append(str(shaded_jars[-1]))
+    else:
+        # No package step required: target/classes supplies NeqSim classes and
+        # Maven supplies runtime dependency JARs directly.
+        classpath.extend(_build_dependency_classpath(root))
     if extra_classpath:
         classpath.extend(extra_classpath)
 
@@ -124,7 +213,18 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         for i, cp in enumerate(classpath, 1):
             print(f"  {i}. {cp}")
 
-    jpype.startJVM(classpath=classpath, convertStrings=True)
+    # Suppress Java 22+ restricted method warnings from JPype native access
+    # Only add the flag if the JVM supports it (Java 22+)
+    jvm_args = []
+    import subprocess, re
+    try:
+        _ver = subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT, text=True)
+        _m = re.search(r'"(\d+)', _ver)
+        if _m and int(_m.group(1)) >= 22:
+            jvm_args.append("--enable-native-access=ALL-UNNAMED")
+    except Exception:
+        pass
+    jpype.startJVM(*jvm_args, classpath=classpath, convertStrings=True)
     if verbose:
         print(f"\nJVM started: {jpype.getDefaultJVMPath()}")
 
@@ -214,6 +314,32 @@ def neqsim_classes(ns):
     )
     ns.StirredTankReactor = JClass(
         "neqsim.process.equipment.reactor.StirredTankReactor"
+    )
+
+    # Bioprocessing / bioenergy
+    ns.AnaerobicDigester = JClass(
+        "neqsim.process.equipment.reactor.AnaerobicDigester"
+    )
+    ns.FermentationReactor = JClass(
+        "neqsim.process.equipment.reactor.FermentationReactor"
+    )
+    ns.BiomassCharacterization = JClass(
+        "neqsim.thermo.characterization.BiomassCharacterization"
+    )
+    ns.BiogasUpgrader = JClass(
+        "neqsim.process.equipment.splitter.BiogasUpgrader"
+    )
+    ns.SustainabilityMetrics = JClass(
+        "neqsim.process.util.fielddevelopment.SustainabilityMetrics"
+    )
+    ns.BiogasToGridModule = JClass(
+        "neqsim.process.processmodel.biorefinery.BiogasToGridModule"
+    )
+    ns.WasteToEnergyCHPModule = JClass(
+        "neqsim.process.processmodel.biorefinery.WasteToEnergyCHPModule"
+    )
+    ns.GasificationSynthesisModule = JClass(
+        "neqsim.process.processmodel.biorefinery.GasificationSynthesisModule"
     )
 
     print("All NeqSim classes imported OK")

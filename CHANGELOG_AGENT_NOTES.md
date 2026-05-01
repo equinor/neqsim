@@ -9,6 +9,1131 @@
 
 ---
 
+## 2026-04-30 — Distillation Column MESH Residual Diagnostics
+
+### Summary
+
+`DistillationColumn` now records a scaled MESH residual vector after every run. The residual
+diagnostics group material, equilibrium, summation, energy, and active specification equations.
+A new `SolverType.MESH_RESIDUAL` entry uses inside-out initialization with Newton polishing and
+keeps the residual diagnostics central to the solve path.
+
+### New API
+
+| Method | Description |
+|--------|-------------|
+| `getLastMeshResidualNorm()` | Full scaled MESH residual infinity norm |
+| `getLastMeshMaterialResidualNorm()` | Component material residual norm |
+| `getLastMeshEquilibriumResidualNorm()` | Fugacity-equilibrium residual norm |
+| `getLastMeshSummationResidualNorm()` | Vapor/liquid summation residual norm |
+| `getLastMeshEnergyResidualNorm()` | Tray energy residual norm |
+| `getLastMeshSpecificationResidualNorm()` | Active specification residual norm |
+| `getLastMeshResidualVector()` | Copy of the full residual vector |
+| `setMeshResidualTolerance(double)` | Configure the optional MESH residual convergence tolerance |
+| `setEnforceMeshResidualTolerance(boolean)` | Include the latest MESH residual norm in `solved()` |
+
+### Agent Guidance
+
+- Use `SolverType.MESH_RESIDUAL` when a task needs explicit MESH residual auditing.
+- Do not describe `SolverType.NEWTON` as a full simultaneous MESH Newton solver; it is a
+  tray-temperature correction accelerator.
+- The MESH residual gate is disabled by default for backward compatibility. Enable it only when
+  the task requires residual-vector convergence as part of the acceptance criteria.
+
+### Affected Guidance
+
+- `docs/process/equipment/distillation.md`
+- `docs/wiki/distillation_column.md`
+- `.github/skills/neqsim-distillation-design/SKILL.md`
+## 2026-04-30 — CSP/PFCT Viscosity Parameter Fitting
+
+### Summary
+
+The PFCT/Pedersen viscosity model now exposes four tunable CSP viscosity
+correction factors. `PhysicalProperties.setViscosityModel("CSP")` is an alias for
+the standard PFCT/Pedersen viscosity model, and the four-parameter vector can be
+read or written with `setCspViscosityParameters`, `setCspViscosityParameter`, and
+`getCspViscosityParameters`. The longer `*CorrectionFactors` accessors are
+equivalent.
+
+### Agent Guidance
+
+- Use `"PFCT"` or `"CSP"` for the standard Pedersen corresponding-states
+  viscosity model; use `"PFCT-Heavy-Oil"` for the heavy-oil variant.
+- The four CSP viscosity parameters default to `1.0`. Supplying values such as
+  `0.6232`, `1.1507`, `1.0000`, `1.0000` preserves the external four-value order.
+- For regression, add viscosity observations with `PVTRegression.addViscosityData(...)`
+  and register `RegressionParameter.VISCOSITY_CSP_1` through
+  `VISCOSITY_CSP_4`, or call `addCspViscosityRegressionParameters()`.
+- Viscosity observations are in Pa s. Supported phase names are `gas`, `vapor`,
+  `oil`, `liquid`, `aqueous`, and `water`.
+- After TP flashes used for viscosity matching, call `fluid.initProperties()` so
+  physical properties are initialized before viscosity is read.
+
+### Reference
+
+- Viscosity reference: [`docs/physical_properties/viscosity_models.md`](docs/physical_properties/viscosity_models.md)
+- PVT regression guide: [`docs/pvtsimulation/fluid_characterization_mathematics.md`](docs/pvtsimulation/fluid_characterization_mathematics.md)
+
+## 2026-04-30 — UniSim Reader: Operation Handler Registry
+
+### Summary
+
+The UniSim-to-NeqSim converter now centralizes operation mapping in a typed
+`UniSimOperationHandler` registry. Each UniSim `TypeName` records a NeqSim target
+type, strategy (`native`, `adapter`, `reference`, `control`, `column_internal`,
+or `skip`), stream role, and explanatory note. Generated JSON includes
+`_unisim_operation_mapping` so imported cases can audit whether operation types
+were mapped to native NeqSim physics, adapters, reference objects, control
+metadata, column internals, skipped utilities, or unsupported types.
+
+### Agent Guidance
+
+- Do not implement one UniSim-named NeqSim class for every UniSim operation.
+  Keep physical equipment native to NeqSim and add UniSim compatibility through
+  the converter registry and factory aliases.
+- Add new UniSim type behavior by extending `UniSimOperationHandler` metadata
+  first, including `strategy` and `stream_role`.
+- Use `UniSimReader.is_material_stream_operation(type_name)` for topology
+  reconstruction; do not add local `_NON_STREAM_OPS` lists.
+- Preserve stream-carrying placeholder logic (`balanceop`, `virtualstreamop`,
+  template interfaces) with `UnisimCalculator` until equations/properties are
+  clear enough for a real NeqSim class and tests.
+- Use `SpreadsheetBlock` for spreadsheet formula/import/export behavior when
+  cells are extractable; logical/control operations should not create material
+  topology edges.
+- Validate changes with `python devtools/test_unisim_outputs.py`; the suite now
+  checks handler strategy and `_unisim_operation_mapping` JSON summaries.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `docs/process/unisim-to-neqsim-conversion.md`
+- `devtools/README.md`
+- `AGENTS.md`
+
+## 2026-04-30 — UniSim Reader: Robust E300 Fluid-Package Extraction
+
+### Summary
+
+The UniSim-to-NeqSim conversion workflow now treats E300 full-fluid transfer as
+a separate verification gate from structural process build and numerical stream
+matching. `UniSimReader` can recover fluid packages when `comp.AcentricFactor`
+is missing by using property-package vectors or the Edmister fallback from Tc,
+Pc, and normal boiling point.
+
+### Agent Guidance
+
+- Request UniSim component critical temperature and normal boiling point in
+  `C`, then convert to K.
+- Request critical pressure in `kPa`, then convert to bara.
+- Sanity-check exported E300 files with known components: methane should be
+  about 190.7 K / 46.4 bara, water about 647.3 K / 221 bara.
+- Report four separate gates: E300 exported, E300 loaded in the NeqSim build
+  route, structural build status, and numerical stream verification status.
+- Do not treat E300 fluid parity as full process parity. Virtual streams,
+  spreadsheet/balance logic, template operations, compressor curves, and
+  sub-flowsheet interface wiring can still dominate stream deviations.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-unisim-reader/SKILL.md`
+- `.github/agents/unisim.reader.agent.md`
+- `docs/process/unisim-to-neqsim-conversion.md`
+- `devtools/README.md`
+
+## 2026-04-29 — Route-Level Piping Hydraulic Builder for STID Line Lists
+
+### Summary
+
+`PipingRouteBuilder` converts STID/E3D/P&ID/stress-isometric line-list rows into
+a serial `ProcessSystem` with one `PipeBeggsAndBrills` unit per route segment.
+It stores from/to nodes, straight length, hydraulic diameter, wall thickness,
+roughness, elevation change, and K-value minor losses. Minor losses are converted
+to equivalent length ratio by `K / f_D`, with default Darcy friction factor
+`0.02` and a configurable `setMinorLossFrictionFactor(...)` assumption. Routes
+can be run standalone with `build(feedStream)` or inserted into a larger plant
+model with `addToProcessSystem(process, inletStream)`, which returns the last
+pipe outlet stream for downstream equipment.
+
+### New API
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `PipingRouteBuilder` | `neqsim.process.equipment.pipeline.routing` | Build route-level pipe hydraulic models from line-list tables |
+| `PipingRouteBuilder.RouteSegment` | same | Route segment metadata, total K, total equivalent L/D, generated pipe name |
+| `PipingRouteBuilder.MinorLoss` | same | K-value fitting/valve loss converted to equivalent L/D |
+
+Important methods:
+
+- `build(StreamInterface inletStream)` creates a standalone route `ProcessSystem`.
+- `addToProcessSystem(ProcessSystem process, StreamInterface inletStream)` adds
+  only the generated pipe units to an existing process and returns the final
+  pipe outlet stream.
+- `addToProcessSystem(ProcessSystem process, StreamInterface inletStream,
+  String sourceEquipmentName, String sourcePortName)` preserves explicit source
+  equipment/port metadata when the route starts from an upstream equipment outlet.
+
+### Agent Usage
+
+- For STID, E3D, P&ID, or stress-isometric tasks where the source has line-list
+  rows with lengths, sizes, fittings, valves, elevations, and equipment nodes,
+  use `PipingRouteBuilder` instead of hand-assembling individual pipes.
+- In full plant simulations, pass an upstream `StreamInterface` into
+  `addToProcessSystem(...)` and feed the returned outlet stream into downstream
+  process equipment constructors.
+- Preserve source document/page/row references in the task notes and export
+  `route.toJson()` into task results for later reuse.
+- Use looped-network tools for branched or ring-main hydraulics; this builder is
+  for serial routes and serial branches.
+
+### Reference
+
+- Full guide: [`docs/process/piping_route_builder.md`](docs/process/piping_route_builder.md)
+- Focused tests: `PipingRouteBuilderTest`
+
+### Skills/Agents Updated
+
+- `neqsim-api-patterns`
+- `neqsim-process-extraction`
+- `neqsim-stid-retriever`
+- `neqsim-technical-document-reading`
+
+## 2026-04-27 — Flash Warm-Start: New `ProcessSystem.setUseFlashWarmStart()` API
+
+### Summary
+
+Warm-start K-values are now exposed at the `ProcessSystem` level as a scoped,
+opt-in flag. When enabled, the iterative TPflash inside every fluid evaluation
+re-uses the previously converged K-values as the initial estimate instead of
+seeding from Wilson on every call. The flag is applied via
+`ThermodynamicModelSettings.setUseWarmStartKValues(true)` for the duration of
+`run(UUID)` and restored afterwards (try/finally), so it never leaks to other
+code on the same thread.
+
+### New API on `ProcessSystem`
+
+| Method | Description |
+|--------|-------------|
+| `setUseFlashWarmStart(boolean)` | Enable/disable warm-start for the duration of `run()` |
+| `isUseFlashWarmStart()` | Returns the current setting |
+
+### New API on `ProcessModel`
+
+| Method | Description |
+|--------|-------------|
+| `setUseFlashWarmStart(boolean)` | Propagates the warm-start flag to every registered `ProcessSystem` and applies to any area added afterwards |
+| `isUseFlashWarmStart()` | Returns the model-level setting |
+
+**Default:** `false` (historical behaviour preserved). Recycle-heavy
+flowsheets are sensitive to the flash trajectory and warm-start can shift the
+converged fixed point — opt in deliberately.
+
+### Usage
+
+```java
+// Single ProcessSystem
+ProcessSystem process = new ProcessSystem();
+// ... build flowsheet ...
+process.setUseFlashWarmStart(true);
+process.run();   // 10–20% wall-time reduction on recycle-heavy flowsheets
+
+// Multi-area ProcessModel
+ProcessModel plant = new ProcessModel();
+plant.add("separation", separationArea);
+plant.add("compression", compressionArea);
+plant.setUseFlashWarmStart(true); // applies to both areas
+plant.run();
+```
+
+### Inner-loop benefit (automatic, no opt-in needed)
+
+`PHflash`, `PSFlash`, `PVflash`, `PUflash`, `TVflash`, `PVFflash`,
+`PVrefluxflash`, `PHsolidFlash`, `OptimizedVUflash`, `ImprovedVUflashQfunc`,
+`QfuncFlash`, `THflash`, `TSFlash`, `TUflash`, `VHflashQfunc`, `VSflash`,
+`VUflashQfunc`, and `TVfractionFlash` already use a cold-first-then-warm
+pattern internally (since 2026-04-21 / 2026-04-27). The first inner TPflash
+runs cold (Wilson seed) to guard against stale K, all subsequent Newton
+iterations re-use the previous step's converged K. This benefit is automatic
+and does not require any flag.
+
+### Skills/Agents to update
+
+- `neqsim-troubleshooting` — mention `setUseFlashWarmStart(true)` as a
+  performance lever for recycle-heavy flowsheets.
+- `neqsim-platform-modeling` — recommend opt-in for large topside models
+  with multiple recycles.
+
+### Reference
+
+- Full guide: [`docs/development/performance_tuning.md`](docs/development/performance_tuning.md)
+- PRs: #2124, #2125
+
+---
+
+## 2026-04-20 — Gas Scrubber Mechanical Design: Internals Configuration & Conformity Checking
+
+### Summary
+
+Major expansion of `GasScrubberMechanicalDesign` with ~40 new public methods for
+configuring scrubber internals (inlet devices, demisting cyclones, mesh pads, vane
+packs, drain pipes, level alarms) and a new conformity-checking package for
+automated design verification against an operator-specific technical requirement.
+Geometry fields moved from `Separator` to `SeparatorMechanicalDesign` so physical
+dimensions are owned by the mechanical design layer. Bug fixes for autoSize liquid
+level and drainage-head formula.
+
+### Bug Fixes
+
+| Bug | File(s) | Impact |
+|-----|---------|--------|
+| `autoSize()` used runtime `liquidLevel` (0 before sim) instead of `designLiquidLevelFraction` | `SeparatorMechanicalDesign` | Auto-sized vessel had wrong liquid height |
+| Drainage-head formula had spurious ×100 factor | `GasScrubberMechanicalDesign` | Drainage head was 100x too large |
+| Geometry fields on `Separator` could go stale relative to `MechanicalDesign` | `Separator`, `SeparatorMechanicalDesign` | Inconsistent diameter/length after design changes |
+
+### Architecture Changes
+
+| Change | Details |
+|--------|---------|
+| **Geometry ownership moved to MechanicalDesign** | `innerDiameter` and `tantanLength` now live on `SeparatorMechanicalDesign`; `Separator` delegates via computed getters. Eliminates dual-state inconsistency. |
+| **`GasScrubber.initMechanicalDesign()` preserves geometry** | Re-initialising no longer resets previously configured internals. |
+| **Derived fields replaced with computed methods** | Gas/liquid area fractions, velocities etc. are computed on the fly rather than stored. |
+
+### New Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `ConformityResult` | `mechanicaldesign.separator.conformity` | Single rule check result (PASS/WARNING/FAIL, 90% warning threshold) |
+| `ConformityReport` | `mechanicaldesign.separator.conformity` | Collection of results with `isConforming()`, `toTextReport()` |
+| `ConformityRuleSet` | `mechanicaldesign.separator.conformity` | Abstract base plus operator-specific rule sets for K-factor, inlet momentum, drainage head, cyclone-dp-to-drain, and mesh-K checks |
+
+### New Methods on `GasScrubberMechanicalDesign`
+
+| Method | Description |
+|--------|-------------|
+| `setInletDevice(String)` | Case-insensitive inlet device selection (e.g. `"schoepentoeter"`, `"inlet_vane"`) |
+| `setInletCyclones(n, diam)` | Configure inlet cyclone count and diameter |
+| `setDemistingCyclones(n, diam, deckElev)` | 3-arg: cyclone count, diameter, deck elevation |
+| `setDemistingCyclones(n, diam, deckElev, length)` | 4-arg: adds cyclone length |
+| `setMeshPad(area, thickness)` | Mesh pad area (m²) and thickness (mm) |
+| `setVanePack(area)` | Vane pack area (m²) |
+| `setDrainPipeDiameterM(diam)` | Drain/down-comer pipe diameter |
+| `setLaLLElevationM()` / `setLaLElevationM()` / `setLaHElevationM()` / `setLaHHElevationM()` | Level alarm elevations |
+| `setHhllElevationM()` | High-high liquid level elevation |
+| `setCycloneDeckElevationM()` / `setCycloneLengthM()` / `setCycloneEulerNumber()` / `setCycloneDpToDrainPct()` | Cyclone parameters |
+| `setConformityRules(String)` | Load a conformity rule set by key |
+| `checkConformity()` | Run all loaded rules, returns `ConformityReport` |
+| `getConformityStandard()` | Get currently loaded standard name |
+| `toTextReport()` | Full text report of internals configuration and conformity |
+| `getResponse()` | Structured `SeparatorMechanicalDesignResponse` with all design data |
+
+### Usage Example
+
+```java
+GasScrubber scrubber = new GasScrubber("V-301", feedStream);
+scrubber.setInternalDiameter(2.9);
+scrubber.setLength(4.23);
+ProcessSystem process = new ProcessSystem();
+process.add(feedStream);
+process.add(scrubber);
+process.run();
+
+scrubber.initMechanicalDesign();
+GasScrubberMechanicalDesign design =
+    (GasScrubberMechanicalDesign) scrubber.getMechanicalDesign();
+design.setMaxOperationPressure(110.0);
+design.setInletDevice("schoepentoeter");
+design.setDemistingCyclones(256, 0.110, 3.287, 0.943);
+design.setMeshPad(6.605, 150.0);
+design.setDrainPipeDiameterM(0.2032);
+design.setConformityRules("operator-specific-key");
+design.calcDesign();
+
+ConformityReport report = design.checkConformity();
+System.out.println(report.toTextReport());
+System.out.println("Conforming: " + report.isConforming());
+```
+
+### Test Classes
+
+- Operator-specific scrubber design tests — 4 tests covering full internals configuration and conformity checking
+- `SeparatorTest` — 10 existing tests (all pass, no regressions)
+
+### Affected Skills / Agents
+
+- `neqsim-api-patterns` — Add scrubber internals configuration pattern
+- `neqsim-standards-lookup` — Add operator-specific conformity rules to standards database
+## 2026-04-22 — PT Phase Envelope: NaN Branch-Break Sentinels + Structured Segments API
+
+### Summary
+
+Two improvements to `PTPhaseEnvelopeMichelsen` (the default PT phase envelope
+tracer). Both are backward-compatible. Full docs at
+`docs/pvtsimulation/phase_envelope_guide.md`.
+
+### Bug Fix — NaN branch-break sentinels
+
+The Michelsen tracer uses a two-pass algorithm and can cross several critical
+points. Previously, points from disjoint envelope segments were all appended
+to the same flat `dewT` / `bubT` arrays with no separator, causing plotters
+(e.g. matplotlib) to draw spurious straight lines across the two-phase region
+at every branch transition.
+
+Fix: a `NaN` sentinel is now inserted into all ten per-point arrays
+(`dewT`, `dewP`, `dewH`, `dewDens`, `dewS`, `bubT`, `bubP`, `bubH`, `bubDens`,
+`bubS`) at every branch transition (pass restart, first critical point flip,
+second critical point flip). Matplotlib renders `NaN` as a polyline gap.
+
+**Migration for consumers that iterate the flat arrays:** skip `NaN` entries
+or use the new structured segment API below. The cricondentherm/cricondenbar
+getters and point counts (excluding `NaN`) are unchanged.
+
+### New Feature — Structured segments API
+
+New class:
+`neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment`
+
+- Immutable polyline with `PhaseType` enum (`DEW` or `BUBBLE`) and T/P/H/density/entropy arrays.
+- Never contains `NaN`.
+
+New accessor on `PTPhaseEnvelopeMichelsen`:
+
+```java
+List<EnvelopeSegment> segments = michelsen.getSegments();
+```
+
+New convenience method on `ThermodynamicOperations`:
+
+```java
+List<EnvelopeSegment> segments = ops.getEnvelopeSegments();
+// Returns empty list for legacy (non-Michelsen) envelope implementations.
+```
+
+Python usage:
+
+```python
+for seg in ops.getEnvelopeSegments():
+    T = list(seg.getTemperatures())
+    P = list(seg.getPressures())
+    plt.plot([t - 273.15 for t in T], P, label=str(seg.getPhaseType()))
+```
+
+### Agent / Skill Updates
+
+- `neqsim-api-patterns` — prefer `getEnvelopeSegments()` over flat arrays for new code.
+- `neqsim-troubleshooting` — "kinks/teleports in phase envelope plot" → use segments API or skip `NaN` in flat arrays.
+
+---
+
+## 2026-04-17 — Diffusion Coefficient Model Fixes and Validation
+
+### Summary
+
+Major bug fixes and accuracy improvements to all diffusion coefficient models
+(gas and liquid). Added 6 new model names to `setDiffusionCoefficientModel()`.
+All models validated against published experimental data (Marrero & Mason 1972,
+Poling 2001). Full docs at `docs/physical_properties/diffusivity_models.md`.
+
+### Bug Fixes
+
+| Bug | File(s) | Impact |
+|-----|---------|--------|
+| Fuller constant 10x too large (`1.013e-2` → `1.013e-3`) | `FullerSchettlerGiddingsDiffusivity` | Gas D values were 10x too high |
+| Critical volume unit conversion (`Vc * 1e3` removed) | `FullerSchettlerGiddingsDiffusivity`, `SiddiqiLucasMethod`, `WilkeChangDiffusivity`, `TynCalusDiffusivity`, `HaydukMinhasDiffusivity` | Fallback molar volumes were 1000x too large |
+| HaydukMinhas volume formula inverted (`Vc * 1e6 / 0.285` → `0.285 * Vc^1.048`) | `HaydukMinhasDiffusivity` | Completely wrong liquid D values |
+| Gas LJ parameters from DB unsuitable for diffusion | `Diffusivity` (gas base class) | Chapman-Enskog/Wilke-Lee gave ~60% error |
+
+### New Features
+
+- **Diffusion-specific LJ parameter table** — ~35 common components from Poling (2001)
+  and Bird, Stewart, Lightfoot (2002). Automatically overrides DB LJ parameters for
+  gas diffusion calculations in Chapman-Enskog and Wilke-Lee models.
+- **`"Chapman-Enskog"` model name** — Added to `setDiffusionCoefficientModel()` for
+  explicit selection of the base Chapman-Enskog gas diffusion model.
+
+### New/Updated Model Names for `setDiffusionCoefficientModel()`
+
+| Model String | Phase | Class | Status |
+|---|---|---|---|
+| `"Chapman-Enskog"` | Gas | `Diffusivity` | **NEW** |
+| `"Wilke Lee"` | Gas | `WilkeLeeDiffusivity` | Existing (fixed) |
+| `"Fuller-Schettler-Giddings"` | Gas | `FullerSchettlerGiddingsDiffusivity` | Existing (fixed) |
+| `"Siddiqi Lucas"` | Liquid | `SiddiqiLucasMethod` | Existing (fixed) |
+| `"Wilke-Chang"` | Liquid | `WilkeChangDiffusivity` | Existing (fixed) |
+| `"Tyn-Calus"` | Liquid | `TynCalusDiffusivity` | Existing (fixed) |
+| `"Hayduk-Minhas"` | Liquid | `HaydukMinhasDiffusivity` | Existing (fixed) |
+| `"CSP"` | Gas/Liquid | `CorrespondingStatesDiffusivity` | Unchanged |
+| `"High Pressure"` | Liquid | `HighPressureDiffusivity` | Unchanged |
+| `"Alkanol amine"` | Aqueous | `AmineDiffusivity` | Unchanged |
+
+### Validation Results (298 K, 1 atm)
+
+Gas models (vs Marrero & Mason 1972, Poling 2001):
+- CH₄-N₂: Chapman-Enskog 0.7%, Fuller 2.0%, Wilke-Lee 5.0%
+- CO₂-N₂: Chapman-Enskog 7.4%, Fuller 2.7%, Wilke-Lee 0.3%
+
+Liquid models (CO₂ in water vs Poling 2001):
+- Wilke-Chang 10%, Hayduk-Minhas 15%, Siddiqi-Lucas 31%
+
+### Test Classes
+
+- `DiffusivityExperimentalValidationTest` — 13 tests validating all models against experimental data
+- `AllDiffusivityModelsTest` — 17 tests (existing, all pass)
+- `DiffusivityModelsTest` — 15 tests (existing, all pass)
+
+### Affected Skills
+
+- `neqsim-api-patterns` — Update diffusivity model examples
+- `neqsim-flow-assurance` — May reference diffusion models for corrosion/mass transfer
+
+---
+
+## 2026-04-17 — Process Optimization Enhancements: Rate-Based Absorber, SQP Optimizer, Flow Correlations, Multi-Variable Adjuster
+
+### Summary
+
+Five new classes and one enum addition for improved process simulation fidelity
+and optimization capability. These close key gaps identified in a reservoir-to-market
+process optimization review comparing NeqSim to commercial simulators.
+
+### New Classes
+
+#### 1. RateBasedAbsorber (`neqsim.process.equipment.absorber`)
+
+Rate-based (non-equilibrium) absorption column with rigorous mass transfer
+calculations. Two mass transfer correlations and three enhancement factor models.
+
+| Method | Description |
+|--------|-------------|
+| `setMassTransferModel(MassTransferModel)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
+| `setEnhancementModel(EnhancementModel)` | `NONE`, `HATTA_PSEUDO_FIRST_ORDER`, `VAN_KREVELEN_HOFTIJZER` |
+| `setColumnDiameter(double)` | Column diameter in metres |
+| `setPackedHeight(double)` | Packed height in metres |
+| `setPackingSpecificArea(double)` | Packing specific area (m2/m3) |
+| `setPackingVoidFraction(double)` | Packing void fraction |
+| `setPackingNominalSize(double)` | Packing nominal size (m) |
+| `setPackingCriticalSurfaceTension(double)` | Packing critical surface tension (N/m) |
+| `setReactionRateConstant(double)` | Pseudo-first-order reaction rate constant (1/s) |
+| `setStoichiometricRatio(double)` | Stoichiometric ratio for VKH model |
+| `setBilletSchultesConstants(double, double)` | Cl and Cv for Billet-Schultes |
+| `getOverallKGa()` / `getOverallKLa()` | Overall mass transfer coefficients |
+| `getWettedArea()` | Wetted area from correlation |
+| `getHeightOfTransferUnit()` / `getNumberOfTransferUnits()` | HTU/NTU |
+| `getStageResults()` | List of `StageResult` with per-stage detail |
+
+**Extends:** `SimpleAbsorber`
+**Test:** `RateBasedAbsorberTest` (6 tests)
+
+#### 2. SQPoptimizer (`neqsim.process.util.optimizer`)
+
+Full Sequential Quadratic Programming NLP solver with damped BFGS Hessian
+update, active-set QP sub-problem, L1 exact penalty merit function, and
+Armijo backtracking line search.
+
+| Method | Description |
+|--------|-------------|
+| `setObjectiveFunction(ObjectiveFunc)` | Set objective f(x) |
+| `addEqualityConstraint(ConstraintFunc)` | Add c(x) = 0 constraint |
+| `addInequalityConstraint(ConstraintFunc)` | Add h(x) >= 0 constraint |
+| `setVariableBounds(double[], double[])` | Lower/upper bounds on variables |
+| `solve(double[])` | Solve from initial point; returns `OptimizationResult` |
+| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls |
+| `setFiniteDifferenceStep(double)` | Step for central-difference gradients |
+
+**Inner interfaces:** `ObjectiveFunc`, `ConstraintFunc`
+**Inner class:** `OptimizationResult` — `isConverged()`, `getOptimalPoint()`, `getOptimalValue()`, `getIterations()`, `getKktError()`
+**Enum added:** `ProcessOptimizationEngine.SearchAlgorithm.SEQUENTIAL_QUADRATIC_PROGRAMMING`
+**Test:** `SQPoptimizerTest` (5 tests)
+
+#### 3. PipeHagedornBrown (`neqsim.process.equipment.pipeline`)
+
+Hagedorn-Brown (1965) empirical holdup correlation for vertical/near-vertical
+multiphase pipe flow. Best suited for oil production wells.
+
+| Method | Description |
+|--------|-------------|
+| `setLength(double)` / `setDiameter(double)` / `setAngle(double)` | Geometry |
+| `setNumberOfIncrements(int)` | Discretization segments |
+| `setWallRoughness(double)` | Absolute roughness (m) |
+| `getOutletSuperficialVelocity()` | Gas superficial velocity at outlet |
+| `getLiquidHoldupProfile()` | `double[]` holdup along pipe |
+| `getFlowPatternDescription()` | Descriptive string |
+| `getPressureProfile()` / `getTemperatureProfile()` | `double[]` profiles |
+
+**Extends:** `Pipeline`
+**Test:** `PipeHagedornBrownTest` (3 tests)
+
+#### 4. PipeMukherjeeAndBrill (`neqsim.process.equipment.pipeline`)
+
+Mukherjee-Brill (1985) all-inclination holdup and friction correlation. Handles
+horizontal, uphill, and downhill flows with flow pattern detection.
+
+| Method | Description |
+|--------|-------------|
+| `getFlowPattern()` | Returns outlet flow pattern as String: STRATIFIED, SLUG, ANNULAR, BUBBLE, SINGLE_PHASE |
+| `getFlowPatternEnum()` | Returns `FlowPattern` enum |
+| `getLiquidHoldup()` | Scalar outlet liquid holdup |
+| `getFlowPatternProfile()` | `List<String>` pattern at each increment |
+| Same geometry methods as PipeHagedornBrown | — |
+
+**Extends:** `Pipeline`
+**Test:** `PipeMukherjeeAndBrillTest` (5 tests)
+
+#### 5. MultiVariableAdjuster (`neqsim.process.equipment.util`)
+
+Simultaneous multi-variable adjuster using damped successive substitution.
+Solves N equations in N unknowns (target specifications) by adjusting N
+process variables simultaneously.
+
+| Method | Description |
+|--------|-------------|
+| `addAdjustedVariable(ProcessEquipmentInterface, String, String)` | Variable to manipulate |
+| `addTargetSpecification(ProcessEquipmentInterface, String, double, String)` | Target to satisfy |
+| `setVariableBounds(int, double, double)` | Bounds on adjusted variable |
+| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls |
+| `isConverged()` / `getIterations()` / `getMaxResidual()` | Solution status |
+| `getNumberOfVariables()` | Number of adjusted variables |
+
+**Test:** `MultiVariableAdjusterTest` (4 tests)
+
+### Agents/Skills Affected
+
+- `neqsim-api-patterns` skill — add rate-based absorber, SQP optimizer, flow correlation, multi-variable adjuster patterns
+- `neqsim-capability-map` skill — update mass transfer, optimization, and multiphase flow sections
+- `@solve.process` agent — can now use RateBasedAbsorber and MultiVariableAdjuster
+- `@mechanical.design` agent — PipeHagedornBrown/PipeMukherjeeAndBrill for well tubing design
+
+---
+
+## 2026-04-17 — Universal Capacity Constraints for All Equipment
+
+### Summary
+
+Capacity constraint methods are now available on ALL 144+ equipment types via
+`ProcessEquipmentBaseClass`. Previously, only ~60 equipment classes implementing
+`CapacityConstrainedEquipment` could participate in bottleneck analysis and
+optimization. Now any equipment can have constraints added at runtime.
+
+Six new capacity strategies were added (18 total built-in), covering reactors,
+power generation, subsea equipment, filters/adsorbers, electrolyzers, and wells.
+
+### New API on ProcessEquipmentBaseClass
+
+All equipment now inherits these methods (no need to cast or check interface):
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `addCapacityConstraint(CapacityConstraint)` | `void` | Add a constraint to any equipment |
+| `getCapacityConstraints()` | `Map<String, CapacityConstraint>` | Get all constraints (unmodifiable) |
+| `getBottleneckConstraint()` | `CapacityConstraint` | Most limiting enabled constraint |
+| `isCapacityExceeded()` | `boolean` | Any enabled constraint violated |
+| `isHardLimitExceeded()` | `boolean` | Any HARD constraint exceeded |
+| `getMaxUtilization()` | `double` | Highest utilization ratio (fraction) |
+| `getMaxUtilizationPercent()` | `double` | Highest utilization as percentage |
+| `getAvailableMargin()` | `double` | Headroom on bottleneck (fraction) |
+| `getAvailableMarginPercent()` | `double` | Headroom as percentage |
+| `isNearCapacityLimit()` | `boolean` | Any constraint above warning threshold |
+| `getUtilizationSummary()` | `Map<String, Double>` | All constraint utilizations |
+| `getConstraintEvaluationReport()` | `String` | Multi-line diagnostic report |
+
+### Updated ProcessSystem Methods
+
+These methods now iterate over ALL equipment (not just `CapacityConstrainedEquipment`):
+
+- `findBottleneck()` — returns `BottleneckResult` for the most-utilized equipment
+- `isAnyEquipmentOverloaded()` — checks all equipment for capacity exceedance
+- `isAnyHardLimitExceeded()` — checks all equipment for HARD limit violations
+- `getCapacityUtilizationSummary()` — map of all equipment utilizations
+- `getEquipmentNearCapacityLimit()` — list of equipment near their limits
+
+### New Capacity Strategy Classes (6 new, 18 total)
+
+| Class | Equipment Types |
+|-------|----------------|
+| `ReactorCapacityStrategy` | GibbsReactor, PlugFlowReactor, StirredTankReactor |
+| `PowerGenerationCapacityStrategy` | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem |
+| `SubseaEquipmentCapacityStrategy` | SubseaWell, SubseaTree |
+| `FilterAdsorberCapacityStrategy` | Filter, SulfurFilter, CharCoalFilter, SimpleAdsorber |
+| `ElectrolyzerCapacityStrategy` | Electrolyzer, CO2Electrolyzer |
+| `WellFlowCapacityStrategy` | WellFlow |
+
+### Migration Notes
+
+- **No breaking changes** — existing code using `CapacityConstrainedEquipment` still works
+- For new code, prefer using `ProcessEquipmentInterface` methods directly
+- `ProcessEquipmentBaseClass.initializeDefaultConstraints()` is a protected hook
+  for subclasses to set up default constraints (called lazily)
+- Constraint map is `transient` (not serialized) — reconstructed on first access
+
+### Affected Skills
+
+- `neqsim-api-patterns` — add universal constraint patterns
+- `neqsim-capability-map` — update optimization capabilities
+
+---
+
+## 2025-07-14 — Dynamic Process Simulation Enhancements (PR #2064)
+
+### Summary
+
+Comprehensive audit and fix of 29 bugs across the `fluidmechanics` package where
+methods that accept a `phase` or `phaseNum` parameter internally used phase-0 defaults
+for Reynolds number, velocity, or friction factor calculations. This caused all
+liquid-phase (phase 1) transport coefficients to be computed with gas-phase values.
+
+### What Changed
+
+**Round 1 (13 bugs):** Critical fixes in core solver and flow nodes:
+- `NonEquilibriumFluidBoundary`: Prandtl number missing `/getMolarMass()`, heat transfer solver step clamping
+- `ReactiveKrishnaStandartFilmModel`: Per-component enhancement factor scaling
+- `KrishnaStandartFilmModel`: 3 NaN guards (Schmidt, phi matrix, mass transfer inverse)
+- `TwoPhaseFixedStaggeredGridSolver`: `initFinalResults` phase param, sign error, zero guards, velocity/enthalpy phase fixes
+- `InterphaseStratifiedFlow`: Liquid mass transfer floor, friction uses `phase` param, heat/mass transfer use `getReynoldsNumber(phaseNum)`
+- `TwoPhaseFlowNode`: Hydraulic diameter guards, convergence fix, Reynolds viscosity guard, `interphaseFrictionFactor[1]` uses phase 1
+
+**Round 2 (6 bugs):**
+- `TwoPhaseFixedStaggeredGridSolver`: Component conservation uses `getVelocity(phaseNum)`
+- `TwoPhaseFixedStaggeredGridSolver`: Latent heat enthalpy zero-moles guard (2 locations)
+- `InterphaseDropletFlow`: Friction factor uses `phase` parameter
+- `InterphaseSlugFlow`: Friction factor uses `phase` parameter
+- `InterphaseStratifiedFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
+
+**Round 3 (10 bugs):**
+- `InterphaseTransportCoefficientBaseClass`: Base class `calcInterPhaseFrictionFactor` now uses `calcWallFrictionFactor(phase, node)` instead of hardcoded 0
+- `MultiPhaseFlowNode`: `interphaseFrictionFactor[1]` uses phase 1 (same as TwoPhaseFlowNode fix)
+- `InterphaseDropletFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
+- `InterphaseSlugFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
+- `InterphasePipeFlow` (one-phase): All 3 methods use `getReynoldsNumber(phase)` consistently; turbulent branches use `getVelocity(phaseNum)`
+- `InterphaseStirredCellFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `NonEquilibriumFluidBoundary.java` | Prandtl fix, step clamping, df==0 guard |
+| `ReactiveKrishnaStandartFilmModel.java` | Enhancement factor diagonal scaling |
+| `KrishnaStandartFilmModel.java` | 3 NaN guards |
+| `TwoPhaseFixedStaggeredGridSolver.java` | Phase params, sign fix, zero guards |
+| `InterphaseStratifiedFlow.java` | Phase params for Re, friction, mass transfer |
+| `TwoPhaseFlowNode.java` | Hydraulic diameter, convergence, friction[1] |
+| `InterphaseDropletFlow.java` | Phase params for friction and Re |
+| `InterphaseSlugFlow.java` | Phase params for friction, heat, mass transfer |
+| `InterphaseTransportCoefficientBaseClass.java` | Base class friction uses phase param |
+| `MultiPhaseFlowNode.java` | `interphaseFrictionFactor[1]` phase fix |
+| `InterphasePipeFlow.java` | Consistent Re and velocity phase usage |
+| `InterphaseStirredCellFlow.java` | Phase params for heat and mass transfer |
+
+### Impact
+
+Liquid-phase mass transfer, heat transfer, and friction factor calculations now
+use the correct liquid-phase Reynolds number and velocity. This significantly
+affects non-equilibrium pipeline simulations where condensation occurs — the
+liquid film transport was previously computed with gas-phase properties.
+
+### Migration
+
+No API changes. All fixes are internal corrections. Results from two-phase
+non-equilibrium simulations will differ from previous versions — this is the
+**correct** behavior. Previous results had incorrect liquid-phase transport.
+
+---
+
+## 2026-04-17 — InterphaseDropletFlow: Corrected Mass/Heat Transfer for Dispersed Flow
+
+### Summary
+
+Fixed and enhanced `InterphaseDropletFlow` — the interphase transport coefficient
+calculator for droplet (mist) and bubble flow regimes. The previous implementation
+erroneously reused stratified flow (Yih-Chen) correlations via copy-paste. The new
+implementation uses physics-appropriate correlations for dispersed particles.
+
+### What Changed
+
+1. **Bug fix:** Mass and heat transfer now use the **particle diameter** (droplet/bubble)
+   as the characteristic length, not the pipe hydraulic diameter. This is the fundamental
+   difference between dispersed and stratified flow transport.
+
+2. **Ranz-Marshall correlation** for continuous phase: `Sh = 2 + 0.6·Re_p^0.5·Sc^0.33`
+   (both mass and heat transfer).
+
+3. **Kronig-Brink model** for dispersed phase interior: `Sh = 17.66` (steady-state limit
+   for internally circulating spheres).
+
+4. **Abramzon-Sirignano (1989) extended film model** — optional correction for
+   evaporating droplets that accounts for Stefan flow (blowing) at the droplet surface.
+   Enabled via `setUseAbramzonSirignano(true)` and `setSpaldingMassTransferNumber(B_M)`.
+
+5. **Particle diameter resolution** from `DropletFlowNode.getAverageDropletDiameter()`
+   and `BubbleFlowNode.getAverageBubbleDiameter()`.
+
+### New/Changed Files
+
+| File | Change |
+|------|--------|
+| `InterphaseDropletFlow.java` | **Rewritten** — Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano |
+| `InterphaseDropletFlowMassTransferTest.java` | **NEW** — 9 tests covering correlations and limits |
+| `condensation_pipeline_equilibrium_vs_nonequilibrium.ipynb` | **NEW** — Example notebook comparing equilibrium vs non-equilibrium pipeline condensation |
+| `docs/fluidmechanics/droplet_flow_correlations.md` | **NEW** — Full documentation of dispersed flow correlations |
+
+### New API Methods on `InterphaseDropletFlow`
+
+| Method | Description |
+|--------|-------------|
+| `setUseAbramzonSirignano(boolean)` | Enable/disable blowing correction |
+| `isUseAbramzonSirignano()` | Query blowing correction state |
+| `setSpaldingMassTransferNumber(double)` | Set B_M for Abramzon-Sirignano |
+| `getSpaldingMassTransferNumber()` | Get current B_M value |
+| `calcAbramzonSirignanoF(double bm)` | Calculate F(B_M) correction function |
+
+### Migration
+
+No breaking API changes. The corrected correlations may produce different mass
+transfer coefficients than before for droplet/bubble flow nodes, but this is a
+**bug fix** — the old values were physically incorrect (using pipe diameter instead
+of particle diameter).
+
+---
+
+## 2026-04-17 — Separator MechanicalDesign Bridge Methods & Internals Classes
+
+### Summary
+
+MechanicalDesign is now the single gateway for ALL separator physical
+configuration. Four changes:
+
+1. **Bridge methods on SeparatorMechanicalDesign** — New methods that delegate
+   to the Separator process equipment:
+   - `setInletPipeDiameter(double)` / `getInletPipeDiameter()` — sets inlet
+     pipe diameter on the performance calculator for DSD generation
+   - `setInletDeviceType(InletDeviceModel.InletDeviceType)` — sets inlet
+     device (INLET_VANE, INLET_CYCLONE, etc.)
+   - `setGasLiquidSurfaceTension(double)` — sets interfacial tension for DSD
+   - `addSeparatorSection(String, String)` — adds vane/meshpad/nozzle/manway
+     sections
+   - `getSeparatorSections()` / `getSeparatorSection(int)` /
+     `getSeparatorSection(String)` — read sections
+   - `setDesign()` now also pushes `inletNozzleID` back to Separator
+
+2. **New `internals/` package** (`process.mechanicaldesign.separator.internals`):
+   - `DemistingInternal` — base class for wire mesh, vane pack, cyclone
+     demisting devices. Calculates Souders-Brown max gas velocity, Euler-number
+     pressure drop, and exponential liquid carry-over model.
+   - `DemistingInternalWithDrainage` — adds drainage section efficiency
+     (reduces carry-over by drainage factor).
+
+3. **New `primaryseparation/` package**
+   (`process.mechanicaldesign.separator.primaryseparation`):
+   - `PrimarySeparation` — base class for inlet devices: inlet momentum
+     (rho*v^2), momentum limit checking, liquid carry-over with degradation.
+   - `InletVane` — inlet vane (6000 Pa max momentum, 85% efficiency)
+   - `InletVaneWithMeshpad` — inlet vane + downstream mesh pad (92% + mesh
+     pad capture)
+   - `InletCyclones` — inlet cyclone cluster (8000 Pa, 95% efficiency)
+
+4. **Logging cleanup** — Replaced `System.out.println` with log4j2 `logger`
+   in `SeparatorMechanicalDesign`, `GasScrubberMechanicalDesign`, and
+   `GasScrubberSimple`.
+
+### Migration
+
+**Before (setting inlet pipe diameter directly on Separator):**
+```java
+separator.setInletPipeDiameter(0.254);
+```
+
+**After (set via MechanicalDesign — preferred):**
+```java
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.setInletPipeDiameter(0.254);
+```
+
+Both paths still work — the old Separator methods remain for backward
+compatibility. But all new code should use the MechanicalDesign gateway.
+
+### Agents/Skills affected
+
+- `neqsim-api-patterns` — updated with bridge method examples
+- `neqsim-capability-map` — added internals and primaryseparation packages
+- `copilot-instructions.md` / `AGENTS.md` — updated architecture table and
+  example code
+
+---
+
+## 2026-04-17 — Dynamic Internals Bridge Methods on SeparatorMechanicalDesign
+
+### Summary
+
+Extended the MechanicalDesign gateway with bridge methods for separator dynamic
+simulation parameters (weir, boot, mist eliminator). These delegate to the
+corresponding `Separator` fields used by `runTransient()`:
+
+- `setWeirHeightAbsolute(double)` / `getWeirHeightAbsolute()` — sets weir
+  height [m] on Separator, also syncs `weirFraction` from inner diameter
+- `setWeirLength(double)` / `getWeirLength()` — weir crest length [m]
+- `setBootVolume(double)` / `getBootVolume()` — boot/sump volume [m3]
+- `setMistEliminatorDpCoeff(double)` / `getMistEliminatorDpCoeff()` — Euler
+  number for mist eliminator dP calculation (dP = Eu * 0.5 * rho * v^2)
+- `setMistEliminatorThickness(double)` / `getMistEliminatorThickness()` —
+  demister pad thickness [m] (converts to/from MechanicalDesign mm storage)
+- `applyDemistingInternal(DemistingInternal)` — convenience method that pushes
+  Eu number and thickness from a design object to the dynamic Separator
+
+### Naming note
+
+`setWeirHeightAbsolute` is used (not `setWeirHeight`) because the existing
+`getWeirHeight()` in SeparatorMechanicalDesign returns `weirFraction * ID`
+(design-phase calculated value), not the absolute dynamic height.
+
+### Migration
+
+**Before (setting dynamic params directly on Separator):**
+```java
+separator.setWeirHeight(0.30);
+separator.setMistEliminatorDpCoeff(150.0);
+```
+
+**After (set via MechanicalDesign — preferred):**
+```java
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+design.setWeirHeightAbsolute(0.30);
+design.setMistEliminatorDpCoeff(150.0);
+// Or push from a design object:
+design.applyDemistingInternal(new DemistingInternal("WireMesh", "wire_mesh"));
+```
+
+### Agents/Skills affected
+
+- `neqsim-api-patterns` — added dynamic bridge method examples
+- `copilot-instructions.md` / `AGENTS.md` — updated code examples and
+  architecture table with full bridge method list
+
+---
+
+## 2026-04-13 — MCP Server: Professional-Use Improvements (48 Tools)
+
+### Summary
+
+Five improvements for professional engineering use:
+
+1. **Build coordination** — `neqsim-mcp-server/pom.xml` now has a `local-dev` Maven
+   profile (`-Plocal-dev`) that resolves NeqSim from local `~/.m2/` using SNAPSHOT
+   version. Keeps MCP server and core in sync during development.
+
+2. **HTTP/SSE transport** — Added `quarkus-mcp-server-sse` dependency alongside
+   existing STDIO. SSE endpoint at `http://localhost:8080/mcp` with CORS for
+   `localhost:3000` and `localhost:5173`. Web-based clients can now connect
+   without STDIO subprocess management.
+
+3. **NIST benchmark validation** — New `BenchmarkValidationTest.java` (7 tests)
+   validates accuracy claims against reference data: methane density vs NIST
+   (±2%), ISO 6976 GCV (±0.5%), separator mass balance (<0.1%), VLE phase check,
+   dew point range, and trust report completeness.
+
+4. **Full E2E test coverage** — `test_mcp_server.py` expanded from 19 to 48 tool
+   coverage. All three tiers tested: Tier 1 (21 core), Tier 2 (13 advanced),
+   Tier 3 (14 experimental), plus governance tools.
+
+5. **Task workflow bridge** — New `bridgeTaskWorkflow` tool + `TaskWorkflowBridge`
+   runner. Converts MCP tool output to `task_solve/` `results.json` format.
+   Actions: `toResultsJson`, `getSchema`. Classified as Tier 3 EXPERIMENTAL /
+   ADVISORY category. Enables end-to-end MCP → task-solving → report pipeline.
+
+### New/Changed Files
+
+| File | Change |
+|------|--------|
+| `neqsim-mcp-server/pom.xml` | Added `local-dev` profile, SSE dependency |
+| `neqsim-mcp-server/src/main/resources/application.properties` | Added HTTP/SSE/CORS config |
+| `src/main/java/neqsim/mcp/runners/TaskWorkflowBridge.java` | **NEW** — results.json bridge |
+| `src/main/java/neqsim/mcp/runners/IndustrialProfile.java` | Added `bridgeTaskWorkflow` to EXPERIMENTAL + ADVISORY |
+| `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java` | Added `bridgeTaskWorkflow` tool method |
+| `src/test/java/neqsim/mcp/runners/BenchmarkValidationTest.java` | **NEW** — 7 NIST benchmark tests |
+| `src/test/java/neqsim/mcp/runners/IndustrialProfileTest.java` | Updated tier size assertions (13→14 experimental) |
+| `neqsim-mcp-server/test_mcp_server.py` | Expanded from 19 to 48 tool E2E coverage |
+
+### Tool Count
+
+- Total: **48** tools (was 47)
+- Tier 1 (TRUSTED_CORE): 21
+- Tier 2 (ENGINEERING_ADVANCED): 13
+- Tier 3 (EXPERIMENTAL): 14 (was 13, added `bridgeTaskWorkflow`)
+
+---
+
+## 2026-07-13 — MCP Server: 42 Tools, 9 Prompts, 11 Resources
+
+### MCP Server Expansion Summary
+
+The NeqSim MCP Server has expanded from 8 basic tools to a comprehensive
+engineering simulation platform:
+
+**42 @Tool methods** in `NeqSimTools.java`:
+- 9 core thermodynamic tools (flash, batch, property table, phase envelope, validation, search, capabilities, example, schema)
+- 8 automation tools (list units, list variables, get/set variable, save/compare state, diagnose, learning report)
+- 3 analysis tools (cross-validation, parametric study, property table)
+- 8 domain-specific tools (PVT, flow assurance, standards, pipeline, reservoir, field economics, dynamic, bioprocess)
+- 7 session/workflow tools (session, task solver, workflow, validation, report, plugin, progress)
+- 7 platform tools (streaming, visualization, multi-server composition, security, state persistence, validation profiles, data catalog)
+
+**9 @Prompt guided workflows** in `NeqSimPrompts.java`:
+- gas processing, PVT study, flow assurance, field development, CCS, TEG dehydration, biorefinery, dynamic simulation, pipeline sizing
+
+**11 resource endpoints** in `NeqSimResources.java` (4 static + 7 templates):
+- example-catalog, schema-catalog, components, components/{name}, standards, standards/{code}, models, materials/{type}, data-tables, examples/{category}/{name}, schemas/{tool}/{type}
+
+### New Runner Classes (in `src/main/java/neqsim/mcp/runners/`)
+
+| Runner | Purpose |
+|--------|---------|
+| `PVTRunner` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR, viscosity) |
+| `FlowAssuranceRunner` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown |
+| `StandardsRunner` | Gas/oil quality per 22 industry standards |
+| `PipelineRunner` | Multiphase pipeline flow (Beggs & Brill) |
+| `ReservoirRunner` | Material balance reservoir simulation |
+| `FieldDevelopmentRunner` | NPV, IRR, cash flow, fiscal regimes, decline curves |
+| `DynamicRunner` | Transient simulation with auto-instrumented PID controllers |
+| `BioprocessRunner` | Anaerobic digestion, fermentation, gasification, pyrolysis |
+| `CrossValidationRunner` | Multi-EOS cross-validation |
+| `ParametricStudyRunner` | Multi-variable parametric sweeps |
+| `SessionRunner` | Persistent simulation sessions (create/modify/run/snapshot/restore) |
+| `TaskSolverRunner` | Engineering task solving from high-level descriptions |
+| `EngineeringValidator` | Design rule validation against standards |
+| `ReportRunner` | Structured engineering report generation |
+| `McpRunnerPlugin` | Plugin interface for custom runners |
+| `PluginRegistry` | Plugin lifecycle management |
+| `ProgressTracker` | Long-running simulation progress tracking |
+| `StreamingRunner` | Async simulation with incremental polling |
+| `VisualizationRunner` | SVG/Mermaid/HTML visualization generation |
+| `CompositionRunner` | Multi-server MCP orchestration |
+| `SecurityRunner` | API key management, rate limiting, audit logging |
+| `StatePersistenceRunner` | Simulation state save/load/compare across restarts |
+| `ValidationProfileRunner` | Jurisdiction-specific validation (NCS, UKCS, GoM, Brazil, generic) |
+| `DataCatalogRunner` | Database browsing (components, standards, materials, EOS models) |
+
+### Key Architecture Points
+
+- All runners follow the stateless `Runner.run(String json) → String json` pattern
+- Runners live in neqsim core (`src/main/java/neqsim/mcp/runners/`)
+- MCP server is a thin Quarkus wrapper (`neqsim-mcp-server/`)
+- Each runner can be used independently from REST, CLI, or other MCP frameworks
+- New runners are added by implementing the runner + adding a @Tool method to NeqSimTools.java
+
+### Documentation Updated
+
+- `neqsim-mcp-server/README.md` — Full rewrite with all 42 tools, 11 resources, 9 prompts
+- `neqsim-mcp-server/MCP_CONTRACT.md` — Added Session/Workflow tools (stable), Platform tools (experimental), Resources
+- `CHANGELOG_AGENT_NOTES.md` — This entry
+
+---
+
+## 2026-04-12 — Bioprocessing & Bioenergy: Phases 5–7
+
+### New Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `FermentationReactor` | `process.equipment.reactor` | Monod/Contois/substrate-inhibited kinetics; batch, fed-batch, continuous modes. Extends `Fermenter`. |
+| `SustainabilityMetrics` | `process.util.fielddevelopment` | CO₂eq tracking (IPCC AR6 GWP), carbon intensity (kgCO₂/MWh), EROI, renewable energy fraction, fossil fuel displacement |
+| `BiogasToGridModule` | `process.processmodel.biorefinery` | Pre-built: AnaerobicDigester → BiogasUpgrader → Compressor → Cooler → grid injection |
+| `GasificationSynthesisModule` | `process.processmodel.biorefinery` | Pre-built: BiomassGasifier → gas cleaning → Fischer-Tropsch synthesis |
+| `WasteToEnergyCHPModule` | `process.processmodel.biorefinery` | Pre-built: AnaerobicDigester → gas engine CHP with electrical + thermal output |
+
+### Key API Patterns
+
+```java
+// FermentationReactor
+FermentationReactor reactor = new FermentationReactor("FR-1", sugarFeed);
+reactor.setKineticModel(FermentationReactor.KineticModel.MONOD);
+reactor.setOperationMode(FermentationReactor.OperationMode.CONTINUOUS);
+reactor.setMaxSpecificGrowthRate(0.30);  // NOT setMuMax()
+reactor.setResidenceTime(10.0, "hr");    // requires unit string
+reactor.setFeedingRate(50.0);            // NOT setFedBatchFeedRate()
+reactor.setFeedSubstrateConcentration(200.0);  // NOT setFedBatchFeedConcentration()
+reactor.run();
+Map<String, Object> results = reactor.getResults();
+
+// BiogasUpgrader enum methods
+BiogasUpgrader.UpgradingTechnology tech = BiogasUpgrader.UpgradingTechnology.MEMBRANE;
+tech.getMethaneRecovery();       // NOT getCh4Recovery()
+tech.getCo2RemovalEfficiency();  // NOT getCo2Removal()
+
+// SustainabilityMetrics
+SustainabilityMetrics metrics = new SustainabilityMetrics();
+metrics.setBiogasProductionNm3PerYear(3_000_000.0);
+metrics.calculate();
+metrics.getCarbonIntensityKgCO2PerMWh();
+
+// BiogasToGridModule
+BiogasToGridModule btg = new BiogasToGridModule("BTG");
+btg.setFeedStream(wasteStream);
+btg.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
+btg.setUpgradingTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
+btg.setGridPressureBara(40.0);
+btg.run();
+Map<String, Object> results = btg.getResults();
+```
+
+### Common Mistakes (from testing)
+
+- `getCh4Recovery()` → use `getMethaneRecovery()`
+- `getCo2Removal()` → use `getCo2RemovalEfficiency()`
+- `setMuMax()` → use `setMaxSpecificGrowthRate()`
+- `setResidenceTime(10.0)` → use `setResidenceTime(10.0, "hr")` (unit required)
+- `GasificationSynthesisModule` constructor takes `(String name)` only — set biomass via `setBiomass(BiomassCharacterization, feedRateKgPerHr)`
+
+### Skills/Agents Updated
+
+- `neqsim-capability-map` — added Section I-bis (Bioprocessing & Bioenergy) + quick lookup entries
+- `neqsim-reaction-engineering` — added Bioprocessing Reactors section
+- `copilot-instructions.md` — added bioprocessing class import paths
+- `AGENTS.md` — updated reaction-engineering skill description
+- `CONTEXT.md` — added bioprocessing to equipment and where-to-find tables
+- `neqsim_dev_setup.py` — added all bioprocessing classes to `neqsim_classes()`
+
+### Existing Classes (Phases 1–3, prior sessions)
+
+| Class | Package | Tests |
+|-------|---------|-------|
+| `BiomassCharacterization` | `thermo.characterization` | 12 tests |
+| `AnaerobicDigester` | `process.equipment.reactor` | 10 tests |
+| `BiomassGasifier` | `process.equipment.reactor` | 8 tests |
+| `PyrolysisReactor` | `process.equipment.reactor` | 8 tests |
+| `BiogasUpgrader` | `process.equipment.splitter` | 10 tests |
+| `BiorefineryCostEstimator` | `process.mechanicaldesign` | 18 tests |
+
+---
+
+## 2026-07-12 — LoopedPipeNetwork: 6 Advanced Production Features
+
+### New Capabilities in `LoopedPipeNetwork`
+
+Six production network features added to `neqsim.process.equipment.network.LoopedPipeNetwork`:
+
+1. **Artificial Lift** — Gas lift (`setGasLift`), ESP (`setESP`), jet pump (`setJetPump`), rod pump (`setRodPump`) with `ArtificialLiftType` enum. Pressure boost applied in NR-GGA solver.
+2. **Large-Scale Networks** — 120+ wells with 6 manifolds converge in 15-20 iterations (< 0.1 s). Schur complement keeps matrix size proportional to loops, not elements.
+3. **Water Handling** — `setWaterCut`, `addWaterInjection(src, res, name, rate)`, `setWaterBreakthrough(elem, btWC, finalWC, currentWC)`, `calculateWaterBalance()`.
+4. **Sand/Solids Tracking** — `setSandRate`, `calculateSandTransport()` per DNV RP O501, `getSandViolations()`, configurable erosion/sand rate limits.
+5. **Corrosion & Integrity** — `setCorrosiveGas(elem, co2, h2s)`, `setCorrosionModel(elem, "NORSOK")`, `calculateCorrosion()` with de Waard-Milliams and NORSOK M-506 models, wall life, `getCorrosionViolations()`.
+6. **GHG Emissions** — `setCO2EmissionFactor`, `setMethaneSlipFactor`, `calculateEmissions()`, `getTotalCO2Emissions()`, `getAnnualCO2EmissionsTonnes()`, `getEmissionsIntensity()`. Defaults: EF=2.75, slip=2%, GWP(CH4)=28 (IPCC AR5).
+
+### Affected Skills/Agents
+
+- **neqsim-capability-map**: Updated — no longer "limited to simple networks"
+- **neqsim-production-optimization**: Added LoopedPipeNetwork section with advanced API
+- **neqsim-flow-assurance**: Added network-level corrosion (de Waard/NORSOK) and sand erosion (DNV RP O501) patterns
+- **emissions agent**: Added LoopedPipeNetwork emissions tracking section
+
+### Documentation
+
+- `docs/process/equipment/production_well_networks.md` — 6 new sections with API, formulas, and examples
+- `examples/notebooks/production_network_advanced_features.ipynb` — 25-cell notebook demonstrating all features
+- 96 unit tests in `LoopedPipeNetworkTest.java`
+
+---
+
 ## 2026-07-08 — UniSim Reader: Default E300 Fluid Export
 
 ### E300 is Now the Default Fluid Transfer Route
@@ -59,7 +1184,6 @@ fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
 ---
 
 ## 2026-07-08 — UniSim Reader: Orientation Detection (GasScrubber)
-<<<<<<< HEAD
 
 ### Vertical Separator → GasScrubber Mapping
 
@@ -217,8 +1341,6 @@ raw = kij_obj.Values      # tuple-of-tuples (n×n symmetric matrix)
 ---
 
 ## 2026-04-08 — IEC 81346 Reference Designation Support
-=======
->>>>>>> 0a1cdaa75a2293eaa9447f3df1b0ec9460a74c1e
 
 ### Vertical Separator → GasScrubber Mapping
 

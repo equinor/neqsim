@@ -22,6 +22,12 @@ try:
 except ImportError:
     _HAS_BIBTEX = False
 
+try:
+    import requests as _requests
+    _HAS_REQUESTS = True
+except ImportError:
+    _HAS_REQUESTS = False
+
 
 # Required fields by entry type (BibTeX standard)
 _REQUIRED_FIELDS = {
@@ -143,6 +149,99 @@ def validate_bibliography(bib_path, manuscript_path=None):
         issues.extend(_cross_check_manuscript(manuscript_path, seen_keys))
 
     return issues
+
+
+def verify_dois(bib_path, timeout=10):
+    """Verify that DOIs in a BibTeX file resolve correctly.
+
+    Sends HTTP HEAD requests to https://doi.org/{doi} and checks for
+    a valid redirect (HTTP 302/301 → 200).
+
+    Parameters
+    ----------
+    bib_path : str or Path
+        Path to the .bib file.
+    timeout : int
+        Request timeout in seconds per DOI.
+
+    Returns
+    -------
+    list of dict
+        Each dict has keys: key, doi, status (ok/broken/timeout/missing).
+    """
+    bib_path = Path(bib_path)
+    results = []
+
+    if not _HAS_REQUESTS:
+        return [{"key": "-", "doi": "-", "status": "skipped",
+                 "message": "requests package not installed"}]
+
+    if not bib_path.exists():
+        return [{"key": "-", "doi": "-", "status": "error",
+                 "message": f"File not found: {bib_path}"}]
+
+    bib_text = bib_path.read_text(encoding="utf-8")
+
+    # Extract DOIs with their entry keys
+    import re as _re
+    entries = _re.findall(
+        r'@\w+\{(\w+),.*?doi\s*=\s*\{([^}]+)\}', bib_text, _re.DOTALL | _re.IGNORECASE)
+
+    if not entries:
+        return [{"key": "-", "doi": "-", "status": "info",
+                 "message": "No DOIs found in bibliography"}]
+
+    for key, doi in entries:
+        doi = doi.strip()
+        url = f"https://doi.org/{doi}"
+        try:
+            resp = _requests.head(url, timeout=timeout, allow_redirects=True)
+            if resp.status_code == 200:
+                results.append({"key": key, "doi": doi, "status": "ok"})
+            elif resp.status_code == 404:
+                results.append({"key": key, "doi": doi, "status": "broken",
+                                "message": f"DOI not found (404): {doi}"})
+            else:
+                results.append({"key": key, "doi": doi, "status": "warning",
+                                "message": f"Unexpected status {resp.status_code} for {doi}"})
+        except _requests.Timeout:
+            results.append({"key": key, "doi": doi, "status": "timeout",
+                            "message": f"Timeout resolving DOI: {doi}"})
+        except _requests.RequestException as e:
+            results.append({"key": key, "doi": doi, "status": "error",
+                            "message": f"Error resolving DOI {doi}: {e}"})
+
+    return results
+
+
+def print_doi_report(results):
+    """Print a formatted DOI verification report.
+
+    Parameters
+    ----------
+    results : list of dict
+        Results from verify_dois().
+    """
+    ok = sum(1 for r in results if r["status"] == "ok")
+    broken = sum(1 for r in results if r["status"] == "broken")
+    other = len(results) - ok - broken
+
+    print("=" * 60)
+    print("DOI VERIFICATION REPORT")
+    print("=" * 60)
+    print(f"  Checked: {len(results)}  OK: {ok}  Broken: {broken}  Other: {other}")
+    print()
+
+    for r in results:
+        if r["status"] == "ok":
+            icon = "[OK]"
+        elif r["status"] == "broken":
+            icon = "[!!]"
+        else:
+            icon = "[??]"
+        msg = r.get("message", r["doi"])
+        print(f"  {icon} [{r['key']}] {msg}")
+    print()
 
 
 def _cross_check_manuscript(manuscript_path, bib_keys):

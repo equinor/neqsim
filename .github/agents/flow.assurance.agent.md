@@ -80,6 +80,13 @@ PipeFlowNetwork network = new PipeFlowNetwork("field network");
 // Solve network pressure balance
 ```
 
+### LoopedPipeNetwork (Advanced Production Networks)
+Full NR-GGA solver for 100+ well gathering networks with integrated flow
+assurance: corrosion (de Waard-Milliams / NORSOK M-506), sand erosion (DNV RP
+O501), artificial lift, water handling, and GHG emissions. See
+`docs/process/equipment/production_well_networks.md` and the
+`neqsim-flow-assurance` skill for code patterns.
+
 ## Phase Envelope with Safety Curves
 Calculate phase envelope with hydrate, wax, and cricondenbar/cricondentherm:
 ```java

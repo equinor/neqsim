@@ -237,6 +237,23 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
         "Outlet temperature should be above inlet temperature");
     assertTrue(waterMassFraction > 0.0 && waterMassFraction < 10.0,
         "Water mass fraction should be reasonable");
+
+    // Regression test: property profile length must equal numberOfCompressorCalcSteps.
+    // Previously, when PSflash diverged inside a step (common with water/MEG on cubic
+    // EOS), the loop did 'continue' and skipped propertyProfile.addFluid(), producing
+    // a profile shorter than requested and breaking index-based access in user code.
+    int profileLength = compressor1.getPropertyProfile().getFluid().size();
+    assertEquals(10, profileLength,
+        "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
+
+    // Pressure must increase monotonically across the profile.
+    double pPrev = feedStream.getPressure("bara");
+    for (int i = 0; i < profileLength; i++) {
+      double pStep = compressor1.getPropertyProfile().getFluid().get(i).getPressure("bara");
+      assertTrue(pStep >= pPrev - 1e-6,
+          "Profile pressure must be monotonically increasing (step " + i + ")");
+      pPrev = pStep;
+    }
   }
 
   /**
@@ -297,5 +314,55 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     // More water should reduce outlet temperature (evaporative cooling)
     assertTrue(outletTemperatures[2] < outletTemperatures[0],
         "Higher wash rate should reduce outlet temperature");
+  }
+
+  /**
+   * Regression test for pure-associating-fluid robustness on a cubic EOS.
+   *
+   * <p>
+   * Pure MEG on PR EOS makes the PSflash Newton ill-conditioned (single component, strong
+   * association). Before the Newton-fallback fix, the detailed polytropic loop produced
+   * non-physical outlet conditions (T &lt; -200 C, density &gt; 10000 kg/m3). After the fix the
+   * recovery path solves S(T,P)=S_target via 1D Newton on T at fixed P (using TPflash, which is
+   * robust for these fluids), so the outlet must be physical for any EOS.
+   */
+  @Test
+  void testPureMEGCompressionOnPREos() {
+    SystemInterface megFluid = new SystemPrEos(300.0, 5.0);
+    megFluid.addComponent("MEG", 1.0);
+    megFluid.setMixingRule("classic");
+
+    Stream feed = new Stream("MEG feed", megFluid);
+    feed.setTemperature(300.0, "K");
+    feed.setPressure(5.0, "bara");
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Compressor compressor = new Compressor("MEG compressor", feed);
+    compressor.setOutletPressure(50.0);
+    compressor.setPolytropicEfficiency(0.75);
+    compressor.setUsePolytropicCalc(true);
+    compressor.setPolytropicMethod("detailed");
+    compressor.setNumberOfCompressorCalcSteps(10);
+    compressor.getPropertyProfile().setActive(true);
+
+    ProcessSystem processOps = new ProcessSystem();
+    processOps.add(feed);
+    processOps.add(compressor);
+    processOps.run();
+
+    double tOut = compressor.getOutletStream().getTemperature("C");
+    double rhoOut = compressor.getOutletStream().getFluid().getDensity("kg/m3");
+    int profileLength = compressor.getPropertyProfile().getFluid().size();
+
+    System.out.println("Pure MEG on PR: outlet T = " + tOut + " C, rho = " + rhoOut + " kg/m3");
+
+    // Outlet must be physical: T above inlet (compression heats), finite, not catastrophic.
+    assertTrue(Double.isFinite(tOut), "Outlet temperature must be finite");
+    assertTrue(tOut > 20.0, "Outlet T must be above inlet (26.85 C) — got " + tOut + " C");
+    assertTrue(tOut < 500.0, "Outlet T must be physically bounded — got " + tOut + " C");
+    assertTrue(Double.isFinite(rhoOut) && rhoOut > 0.0 && rhoOut < 5000.0,
+        "Outlet density must be in physical range — got " + rhoOut + " kg/m3");
+    assertEquals(10, profileLength,
+        "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
   }
 }

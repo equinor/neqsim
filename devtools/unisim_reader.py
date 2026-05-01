@@ -23,6 +23,7 @@ Usage:
 """
 
 import json
+import math
 import os
 import time
 import logging
@@ -30,6 +31,44 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 
 logger = logging.getLogger(__name__)
+
+# Names recognized by EclipseFluidReadWrite as database components or common
+# aliases. Components not listed here are intentionally kept as named TBP
+# pseudo-fractions so UniSim oil/hypothetical characterization parameters are
+# preserved from the E300 property tables.
+E300_COMPONENT_NAME_MAP = {
+    'Nitrogen': 'N2', 'N2': 'N2',
+    'CO2': 'CO2', 'CarbonDioxide': 'CO2', 'Carbon Dioxide': 'CO2',
+    'Methane': 'C1', 'C1': 'C1',
+    'Ethane': 'C2', 'C2': 'C2',
+    'Propane': 'C3', 'C3': 'C3',
+    'i-Butane': 'iC4', 'iC4': 'iC4', 'Isobutane': 'iC4',
+    'n-Butane': 'C4', 'nC4': 'C4', 'C4': 'C4',
+    'i-Pentane': 'iC5', 'iC5': 'iC5', 'Isopentane': 'iC5',
+    'n-Pentane': 'C5', 'nC5': 'C5', 'C5': 'C5',
+    'n-Hexane': 'C6', 'nC6': 'C6', 'C6': 'C6',
+    'n-Heptane': 'nC7', 'nC7': 'nC7',
+    'n-Octane': 'nC8', 'nC8': 'nC8',
+    'n-Nonane': 'nC9', 'nC9': 'nC9',
+    'n-Decane': 'nC10', 'nC10': 'nC10',
+    'nC11': 'nC11', 'nC12': 'nC12', 'nC13': 'nC13', 'nC14': 'nC14',
+    'nC15': 'nC15', 'nC16': 'nC16', 'nC17': 'nC17', 'nC18': 'nC18',
+    'nC19': 'nC19', 'nC20': 'nC20',
+    'H2O': 'H2O', 'Water': 'H2O',
+    'H2S': 'H2S', 'Hydrogen Sulfide': 'H2S', 'Hydrogen Sulphide': 'H2S',
+    'Hydrogen': 'H2', 'H2': 'H2',
+    'Oxygen': 'O2', 'O2': 'O2',
+    'Argon': 'Ar', 'Ar': 'Ar',
+    'Helium': 'He', 'He': 'He',
+    'CO': 'CO', 'CarbonMonoxide': 'CO', 'Carbon Monoxide': 'CO',
+    'Methanol': 'MeOH', 'MeOH': 'MeOH',
+    'EGlycol': 'MEG', 'MEG': 'MEG',
+    'DEGlycol': 'DEG', 'DEG': 'DEG',
+    'TEGlycol': 'TEG', 'TEG': 'TEG',
+    'Benzene': 'benzene', 'Toluene': 'toluene',
+    'E-Benzene': 'ethylbenzene', 'Ethylbenzene': 'ethylbenzene',
+    'm-Xylene': 'm-Xylene', 'o-Xylene': 'o-Xylene', 'p-Xylene': 'p-Xylene',
+}
 
 # ---------------------------------------------------------------------------
 # Data classes for the extracted UniSim model
@@ -82,9 +121,34 @@ class UniSimFluidPackage:
 
     @property
     def has_critical_properties(self) -> bool:
-        """True if at least one component has Tc, Pc, MW extracted."""
-        return any(c.tc_K is not None and c.pc_bara is not None
-                   and c.mw is not None for c in self.components)
+        """True if every component has the core E300 critical properties."""
+        return bool(self.components) and all(
+            c.tc_K is not None and c.pc_bara is not None and c.mw is not None
+            for c in self.components)
+
+    @staticmethod
+    def _e300_component_name(component_name: str) -> str:
+        """Return the E300/NeqSim component name for a UniSim component name."""
+        if component_name in E300_COMPONENT_NAME_MAP:
+            return E300_COMPONENT_NAME_MAP[component_name]
+        normalized = component_name.replace(' ', '').replace('_', '').replace('-', '').lower()
+        for candidate_name, e300_name in E300_COMPONENT_NAME_MAP.items():
+            candidate_normalized = candidate_name.replace(' ', '').replace('_', '')
+            candidate_normalized = candidate_normalized.replace('-', '').lower()
+            if normalized == candidate_normalized:
+                return e300_name
+        safe_name = component_name.strip().replace('/', '_').replace('\\', '_')
+        safe_name = safe_name.replace('+', 'plus').replace(' ', '_')
+        return safe_name
+
+    @staticmethod
+    def _estimate_parachor(component: UniSimComponent) -> float:
+        """Estimate parachor when UniSim does not expose one explicitly."""
+        if component.parachor is not None:
+            return component.parachor
+        if component.mw is None or component.mw <= 0.0:
+            return 0.0
+        return 4.0 * component.mw ** 0.77
 
     def write_e300(self, output_path: str,
                    composition: Optional[List[float]] = None,
@@ -106,8 +170,11 @@ class UniSimFluidPackage:
             The output_path written to.
         """
         if not self.has_critical_properties:
+            missing = [c.name for c in self.components
+                       if c.tc_K is None or c.pc_bara is None or c.mw is None]
             raise ValueError(
-                f"Fluid package '{self.name}' has no critical properties. "
+                f"Fluid package '{self.name}' is missing E300 critical "
+                f"properties for: {', '.join(missing) or 'all components'}. "
                 f"Extract via COM first (UniSimReader with extract_properties=True).")
 
         n = len(self.components)
@@ -115,7 +182,10 @@ class UniSimFluidPackage:
         if zi is None:
             zi = [1.0 / n] * n
 
-        eos_keyword = 'PR' if 'peng' in self.property_package.lower() else 'SRK'
+        package_lower = self.property_package.lower()
+        eos_keyword = 'PR' if 'peng' in package_lower else 'SRK'
+        use_pr_lk = eos_keyword == 'PR' and (
+            'lk' in package_lower or 'lee' in package_lower or 'kesler' in package_lower)
 
         def _write_section(lines, keyword, values, fmt, comment=None):
             """Write a section with trailing / on the last value."""
@@ -156,7 +226,7 @@ class UniSimFluidPackage:
         lines.append(f'{eos_keyword}  /')
         lines.append('')
         if eos_keyword == 'PR':
-            lines.append('PRCORR')
+            lines.append('PRLKCORR' if use_pr_lk else 'PRCORR')
             lines.append('')
         lines.append('-- Reservoir temperature (C)')
         lines.append('RTEMP')
@@ -171,10 +241,11 @@ class UniSimFluidPackage:
         lines.append('-- Component names')
         lines.append('CNAMES')
         for i, c in enumerate(self.components):
+            e300_name = self._e300_component_name(c.name)
             if i == n - 1:
-                lines.append(f'{c.name}   /')
+                lines.append(f'{e300_name}   /')
             else:
-                lines.append(c.name)
+                lines.append(e300_name)
         lines.append('')
 
         # TCRIT (K)
@@ -238,30 +309,30 @@ class UniSimFluidPackage:
                           'Critical Z-factor')
             lines.append('')
 
-        # SSHIFT (volume translation at reservoir conditions)
-        if any(c.volume_shift is not None for c in self.components):
-            vs_vals = [c.volume_shift if c.volume_shift is not None else 0.0
-                      for c in self.components]
-            _write_section(lines, 'SSHIFT', vs_vals, '   {:.6f}',
-                          'Volume Translation')
-            lines.append('')
+        # SSHIFT (volume translation at reservoir conditions). Always emit so
+        # zero shifts remain explicit and the component ordering is reproducible.
+        vs_vals = [c.volume_shift if c.volume_shift is not None else 0.0
+                   for c in self.components]
+        _write_section(lines, 'SSHIFT', vs_vals, '   {:.6f}',
+                       'Volume Translation')
+        lines.append('')
 
-        # PARACHOR
-        if any(c.parachor is not None for c in self.components):
-            par_vals = [c.parachor if c.parachor is not None else 0.0
-                       for c in self.components]
-            _write_section(lines, 'PARACHOR', par_vals, '    {:.3f}', 'Parachor')
-            lines.append('')
+        # PARACHOR. UniSim does not expose this consistently for all fluid
+        # packages, so use the extracted value when available and a molecular-
+        # weight based estimate only as an explicit fallback.
+        par_vals = [self._estimate_parachor(c) for c in self.components]
+        _write_section(lines, 'PARACHOR', par_vals, '    {:.3f}', 'Parachor')
+        lines.append('')
 
         # ZI (mole fractions)
         _write_section(lines, 'ZI', zi, '   {:.10f}', 'Mole Fractions')
         lines.append('')
 
         # BIC (lower triangular matrix)
-        if self.bips and len(self.bips) == n:
-            _write_bic_section(lines, 'BIC', self.bips, n,
-                              'Binary Interaction Coefficients (lower triangular)')
-            lines.append('')
+        bips = self.bips if self.bips and len(self.bips) == n else [[0.0] * n for _ in range(n)]
+        _write_bic_section(lines, 'BIC', bips, n,
+                           'Binary Interaction Coefficients (lower triangular)')
+        lines.append('')
 
         # BICS (surface-condition BIPs)
         if self.bips_surface and len(self.bips_surface) == n:
@@ -290,7 +361,8 @@ class UniSimFluidPackage:
 
         self.e300_file_path = output_path
         logger.info(f"Wrote E300 fluid file: {output_path} "
-                    f"({n} components, EOS={eos_keyword})")
+                    f"({n} components, EOS={eos_keyword}"
+                    f"{'-LK' if use_pr_lk else ''})")
         return output_path
 
 
@@ -332,6 +404,84 @@ class UniSimOperation:
     energy_products: List[str] = field(default_factory=list)
     # Type-specific properties
     properties: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class UniSimOperationHandler:
+    """Mapping policy for one UniSim operation type.
+
+    The converter keeps NeqSim's physical model classes native and records
+    UniSim-specific behavior in this adapter registry.  ``strategy`` describes
+    why an operation maps to its target: native physics, adapter placeholder,
+    reference-only specification logic, controller/comment-only support, or
+    column internals.  ``stream_role`` tells topology reconstruction whether
+    material stream feeds/products should create producer-consumer edges.
+    """
+    neqsim_type: Optional[str]
+    strategy: str
+    stream_role: str
+    note: str = ''
+
+    @property
+    def is_material_stream_operation(self) -> bool:
+        """Return True if the operation should define material topology."""
+        return self.stream_role == 'material'
+
+
+def _build_unisim_operation_handlers(
+        operation_type_map: Dict[str, str]) -> Dict[str, UniSimOperationHandler]:
+    """Build operation mapping metadata from the type map.
+
+    Args:
+        operation_type_map: UniSim operation type to NeqSim type mapping.
+
+    Returns:
+        Mapping from normalized UniSim type name to operation handler metadata.
+    """
+    adapter_ops = frozenset(('balanceop', 'virtualstreamop', 'templateop'))
+    reference_ops = frozenset(('adjust', 'setop', 'spreadsheetop'))
+    controller_ops = frozenset(('pidfbcontrolop', 'surgecontroller',
+                                'logicalop', 'selectop'))
+    column_internal_ops = frozenset(('partialcondenser', 'totalcondenser',
+                                     'condenser3op', 'traysection',
+                                     'bpreboiler'))
+    skipped_utility_ops = frozenset(('blowdowngenesimop',))
+
+    handlers: Dict[str, UniSimOperationHandler] = {}
+    for type_name, neqsim_type in operation_type_map.items():
+        strategy = 'native'
+        stream_role = 'material'
+        note = 'Native NeqSim equipment is used for the physical model.'
+        if type_name in adapter_ops:
+            strategy = 'adapter'
+            note = ('UniSim-specific topology or placeholder behavior is '
+                    'preserved through an adapter block.')
+        elif type_name in reference_ops:
+            strategy = 'reference'
+            stream_role = 'reference'
+            note = ('Specification or spreadsheet logic is represented by a '
+                    'reference object instead of material topology.')
+        elif type_name in controller_ops:
+            strategy = 'control'
+            stream_role = 'none'
+            note = ('Control or logical behavior is generated as comments or '
+                    'controller metadata, not as material equipment.')
+        elif type_name in column_internal_ops:
+            strategy = 'column_internal'
+            stream_role = 'none'
+            note = ('Column internals inform column configuration and are not '
+                    'standalone material equipment.')
+        elif type_name in skipped_utility_ops:
+            strategy = 'skip'
+            stream_role = 'none'
+            note = 'Non-physical UniSim utility operation.'
+        handlers[type_name] = UniSimOperationHandler(
+            neqsim_type=neqsim_type,
+            strategy=strategy,
+            stream_role=stream_role,
+            note=note,
+        )
+    return handlers
 
 
 @dataclass
@@ -432,9 +582,10 @@ class UniSimReader:
         'pipeseg': 'AdiabaticPipe',
         'fractop': 'DistillationColumn',
         'saturateop': 'StreamSaturatorUtil',
-        'spreadsheetop': 'Spreadsheet',
+        'spreadsheetop': 'SpreadsheetBlock',
         'templateop': 'SubFlowsheet',
         'absorberop': 'Absorber',
+        'virtualstreamop': 'UnisimCalculator',
         # Reactor subtypes — map to specific NeqSim reactor classes
         'reactorop': 'GibbsReactor',
         'pfreactorop': 'PlugFlowReactor',
@@ -460,14 +611,46 @@ class UniSimReader:
         'traysection': 'ColumnInternals',
         'bpreboiler': 'ColumnInternals',
         # Utility / logic ops
-        'balanceop': 'BalanceOp',
+        'balanceop': 'UnisimCalculator',
         'logicalop': 'LogicalOp',
         'selectop': 'LogicalOp',
+        'blowdowngenesimop': 'BlowdownGeneSim',
     }
+
+    OPERATION_HANDLERS = _build_unisim_operation_handlers(OPERATION_TYPE_MAP)
 
     # Set of all reactor NeqSim types (for generic handling)
     REACTOR_TYPES = frozenset(('GibbsReactor', 'PlugFlowReactor',
                                'StirredTankReactor'))
+
+    @classmethod
+    def get_operation_handler(
+            cls, type_name: str) -> Optional[UniSimOperationHandler]:
+        """Return the operation handler for a UniSim operation type.
+
+        Args:
+            type_name: UniSim internal operation type name.
+
+        Returns:
+            Handler metadata, or ``None`` when the type is not known.
+        """
+        return cls.OPERATION_HANDLERS.get((type_name or '').lower())
+
+    @classmethod
+    def is_material_stream_operation(cls, type_name: str) -> bool:
+        """Return True if this operation should define material topology.
+
+        Unknown operation types are treated as material stream operations so
+        skipped stream-carrying blocks remain visible as converter warnings.
+
+        Args:
+            type_name: UniSim internal operation type name.
+
+        Returns:
+            True when feeds/products should be used for topology edges.
+        """
+        handler = cls.get_operation_handler(type_name)
+        return handler is None or handler.is_material_stream_operation
 
     # UniSim component name → NeqSim component name mapping
     COMPONENT_NAME_MAP = {
@@ -556,8 +739,8 @@ class UniSimReader:
         'Peng-Robinson': 'PR',
         'Peng Robinson': 'PR',
         'PengRobinson': 'PR',
-        'Peng-Robinson - LK': 'PR',
-        'Peng Robinson - LK': 'PR',
+        'Peng-Robinson - LK': 'PR_LK',
+        'Peng Robinson - LK': 'PR_LK',
         'SRK': 'SRK',
         'Soave-Redlich-Kwong': 'SRK',
         'CPA': 'CPA',
@@ -565,7 +748,7 @@ class UniSimReader:
         'ASME Steam': 'SRK',  # Will only have water
         'GERG 2008': 'GERG2008',
         'MBWR': 'SRK',  # fallback
-        'Lee-Kesler-Plocker': 'SRK',  # fallback
+        'Lee-Kesler-Plocker': 'PR_LK',
         'NRTL': 'SRK',  # approx
         'Glycol Package': 'CPA',
         'COMPropertyPkg': 'SRK',  # COM extension; fallback
@@ -618,6 +801,19 @@ class UniSimReader:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    @staticmethod
+    def _safe_file_stem(name: str, fallback: str) -> str:
+        """Return a filesystem-safe stem for generated export files."""
+        safe_name = str(name or fallback).strip()
+        safe_name = safe_name.replace('+', 'plus')
+        safe_name = safe_name.replace('/', '_').replace('\\', '_')
+        safe_name = safe_name.replace(' ', '_')
+        safe_name = ''.join(
+            ch if ch.isalnum() or ch in ('_', '-') else '_'
+            for ch in safe_name)
+        safe_name = safe_name.strip('_')
+        return safe_name or fallback
+
     def read(self, usc_path: str, extract_streams: bool = True,
              export_e300: bool = True, e300_output_dir: Optional[str] = None
              ) -> UniSimModel:
@@ -660,7 +856,7 @@ class UniSimReader:
 
         # Extract fluid packages (with critical properties for E300 export)
         model.fluid_packages = self._extract_fluid_packages(
-            case.BasisManager, extract_properties=export_e300)
+            case.BasisManager, extract_properties=export_e300, case=case)
         comp_names = (model.fluid_packages[0].component_names
                       if model.fluid_packages else [])
 
@@ -675,19 +871,26 @@ class UniSimReader:
             os.makedirs(e300_output_dir, exist_ok=True)
             base_name = os.path.splitext(os.path.basename(usc_path))[0]
 
-            # Get composition from first feed stream for reference
-            ref_comp = self._get_reference_composition(model)
-
+            used_paths = set()
             for idx, fp in enumerate(model.fluid_packages):
                 if fp.has_critical_properties:
                     # Set reference composition on the fluid package
+                    ref_comp = self._get_reference_composition(model, fp)
                     if ref_comp and len(ref_comp) == len(fp.components):
                         fp.reference_composition = ref_comp
                     # Generate E300 filename
-                    safe_name = fp.name.replace(' ', '_').replace('/', '_')
+                    safe_name = self._safe_file_stem(
+                        fp.name, f'fluid_package_{idx + 1}')
                     e300_path = os.path.join(
                         e300_output_dir,
                         f'{base_name}_{safe_name}.e300')
+                    suffix = 2
+                    while os.path.normcase(e300_path) in used_paths:
+                        e300_path = os.path.join(
+                            e300_output_dir,
+                            f'{base_name}_{safe_name}_{suffix}.e300')
+                        suffix += 1
+                    used_paths.add(os.path.normcase(e300_path))
                     try:
                         fp.write_e300(e300_path)
                         logger.info(f"Exported E300: {e300_path}")
@@ -706,7 +909,9 @@ class UniSimReader:
         return model
 
     @staticmethod
-    def _get_reference_composition(model: UniSimModel) -> Optional[List[float]]:
+    def _get_reference_composition(model: UniSimModel,
+                                   fluid_package: Optional[UniSimFluidPackage] = None
+                                   ) -> Optional[List[float]]:
         """Get mole fraction composition from the first feed stream.
 
         Returns a list of mole fractions in the same order as the fluid
@@ -714,7 +919,7 @@ class UniSimReader:
         """
         if not model.flowsheet or not model.fluid_packages:
             return None
-        fp = model.fluid_packages[0]
+        fp = fluid_package or model.fluid_packages[0]
         comp_names = fp.component_names
 
         # Find a stream with composition data
@@ -740,7 +945,8 @@ class UniSimReader:
         return models
 
     def _extract_fluid_packages(self, basis,
-                                extract_properties: bool = True
+                                extract_properties: bool = True,
+                                case=None
                                 ) -> List[UniSimFluidPackage]:
         """Extract all fluid packages from BasisManager.
 
@@ -749,75 +955,243 @@ class UniSimReader:
             extract_properties: If True, extract critical properties (Tc, Pc,
                 acentric factor, MW, BIPs) for each component. These are
                 needed for E300 export. Set False for faster extraction.
+            case: Optional SimulationCase COM object used for flowsheet-level
+                fluid package fallbacks when BasisManager does not enumerate
+                the active package.
         """
         packages = []
-        try:
-            for i in range(basis.FluidPackages.Count):
-                fp = basis.FluidPackages.Item(i)
-                pkg = UniSimFluidPackage(
-                    name=self._safe_get(fp, 'name', f'FP_{i}'),
-                    property_package=self._safe_get(fp, 'PropertyPackageName', 'Unknown'),
-                )
-                n_comps = fp.Components.Count
-                for j in range(n_comps):
-                    comp = fp.Components.Item(j)
-                    comp_name = self._safe_get(comp, 'name', f'Comp_{j}')
-                    uc = UniSimComponent(
-                        name=comp_name,
-                        index=j,
-                        is_hypothetical=comp_name.endswith('*'),
-                    )
-                    if extract_properties:
-                        uc.tc_K = self._safe_getval(
-                            comp.CriticalTemperature, None, None)
-                        uc.pc_bara = self._safe_getval(
-                            comp.CriticalPressure, None, None)
-                        # UniSim stores Pc in kPa internally; convert to bara
-                        if uc.pc_bara is not None:
-                            uc.pc_bara = uc.pc_bara / 100.0
-                        uc.acentric_factor = self._safe_getval(
-                            comp.AcentricFactor, None, None)
-                        uc.mw = self._safe_getval(
-                            comp.MolecularWeight, None, None)
-                        uc.tboil_K = self._safe_getval(
-                            comp.NormalBoilingPoint, None, None)
-                        uc.vcrit_m3_kgmol = self._safe_getval(
-                            comp.CriticalVolume, None, None)
-                        # Additional properties (may not be available in all
-                        # UniSim versions or for all component types)
-                        try:
-                            uc.parachor = self._safe_getval(
-                                comp.Parachor, None, None)
-                        except Exception:
-                            pass
-                        try:
-                            uc.zcrit = self._safe_getval(
-                                comp.CriticalZFactor, None, None)
-                        except Exception:
-                            pass
-                    pkg.components.append(uc)
+        for package_index, fluid_package in enumerate(
+                self._iter_fluid_package_objects(basis, case)):
+            try:
+                packages.append(self._extract_single_fluid_package(
+                    fluid_package, package_index, extract_properties))
+            except Exception as exc:
+                logger.warning(
+                    f"Error extracting fluid package [{package_index}]: {exc}")
+        if not packages:
+            logger.warning("No UniSim fluid packages were extracted")
+        return packages
 
-                # Extract BIPs if properties requested
-                if extract_properties:
-                    pkg.bips = self._extract_bips(fp, n_comps)
-                    # Try extracting volume shift and EOS parameters from
-                    # property package (these vary by UniSim version)
+    def _iter_fluid_package_objects(self, basis, case=None) -> List[Any]:
+        """Return unique UniSim fluid package COM objects from known paths."""
+        packages = []
+        seen = set()
+
+        def add_package(fluid_package):
+            if fluid_package is None:
+                return
+            name = str(self._safe_get(fluid_package, 'name',
+                                      self._safe_get(fluid_package, 'Name', '<unnamed>')))
+            package_name = str(self._safe_get(fluid_package, 'PropertyPackageName', ''))
+            key = f'{name}|{package_name}'
+            if key not in seen:
+                seen.add(key)
+                packages.append(fluid_package)
+
+        for source in [basis, self._safe_get(case, 'BasisManager', None) if case else None]:
+            try:
+                collection = source.FluidPackages
+                for package_index in range(collection.Count):
                     try:
-                        pp = fp.PropertyPackage
-                        for j, uc in enumerate(pkg.components):
-                            try:
-                                vs = pp.GetVolumeShift(j)
-                                if vs is not None:
-                                    uc.volume_shift = float(vs)
-                            except Exception:
-                                pass
+                        add_package(collection.Item(package_index))
+                    except Exception:
+                        try:
+                            add_package(collection.Item(package_index + 1))
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+            try:
+                add_package(source.FluidPackage)
+            except Exception:
+                pass
+
+        if case is not None:
+            try:
+                add_package(case.Flowsheet.FluidPackage)
+            except Exception:
+                pass
+            try:
+                subflowsheets = case.Flowsheet.Flowsheets
+                for flowsheet_index in range(subflowsheets.Count):
+                    try:
+                        add_package(subflowsheets.Item(flowsheet_index).FluidPackage)
                     except Exception:
                         pass
-
-                packages.append(pkg)
-        except Exception as e:
-            logger.error(f"Error extracting fluid packages: {e}")
+            except Exception:
+                pass
         return packages
+
+    def _extract_single_fluid_package(self, fp, package_index: int,
+                                      extract_properties: bool) -> UniSimFluidPackage:
+        """Extract one UniSim fluid package COM object."""
+        package_name = self._safe_get(fp, 'name', None)
+        if package_name is None:
+            package_name = self._safe_get(fp, 'Name', f'FP_{package_index}')
+        property_package_name = self._safe_get(fp, 'PropertyPackageName', None)
+        if property_package_name is None:
+            property_package = self._safe_get(fp, 'PropertyPackage', None)
+            property_package_name = self._safe_get(property_package, 'Name', 'Unknown')
+        pkg = UniSimFluidPackage(
+            name=str(package_name),
+            property_package=str(property_package_name),
+        )
+        component_collection = fp.Components
+        number_of_components = component_collection.Count
+        for component_index in range(number_of_components):
+            try:
+                comp = component_collection.Item(component_index)
+            except Exception:
+                try:
+                    comp = component_collection.Item(component_index + 1)
+                except Exception as exc:
+                    logger.warning(
+                        f"Could not read component [{component_index}] in "
+                        f"fluid package '{pkg.name}': {exc}")
+                    continue
+            component_name = self._safe_get(comp, 'name', None)
+            if component_name is None:
+                component_name = self._safe_get(comp, 'Name', f'Comp_{component_index}')
+            extracted_component = UniSimComponent(
+                name=str(component_name),
+                index=component_index,
+                is_hypothetical=str(component_name).endswith('*'),
+            )
+            if extract_properties:
+                try:
+                    self._populate_component_properties(comp, extracted_component)
+                except Exception as exc:
+                    logger.warning(
+                        f"Could not read scalar properties for component "
+                        f"'{extracted_component.name}' in fluid package "
+                        f"'{pkg.name}': {exc}")
+            pkg.components.append(extracted_component)
+
+        if extract_properties:
+            pkg.bips = self._extract_bips(fp, len(pkg.components))
+            self._populate_property_package_vectors(fp, pkg)
+            for extracted_component in pkg.components:
+                self._apply_component_property_fallbacks(extracted_component)
+        return pkg
+
+    def _populate_component_properties(self, comp, extracted_component: UniSimComponent):
+        """Populate a UniSimComponent with scalar properties from COM."""
+        extracted_component.tc_K = self._extract_quantity(
+            comp, ['CriticalTemperature'], [('C', 1.0, 273.15), ('K', 1.0, 0.0),
+                                           (None, 1.0, 273.15)])
+        extracted_component.pc_bara = self._extract_quantity(
+            comp, ['CriticalPressure'], [('kPa', 0.01, 0.0), ('bar', 1.0, 0.0),
+                                        ('bara', 1.0, 0.0), (None, 0.01, 0.0)])
+        extracted_component.acentric_factor = self._extract_quantity(
+            comp, ['AcentricFactor', 'AcentricityFactor', 'Omega'], [(None, 1.0, 0.0)])
+        extracted_component.mw = self._extract_quantity(
+            comp, ['MolecularWeight'], [(None, 1.0, 0.0), ('kg/kmol', 1.0, 0.0)])
+        extracted_component.tboil_K = self._extract_quantity(
+            comp, ['NormalBoilingPoint', 'NormalBoilingPt', 'BoilingPoint'],
+            [('C', 1.0, 273.15), ('K', 1.0, 0.0), (None, 1.0, 273.15)])
+        extracted_component.vcrit_m3_kgmol = self._extract_quantity(
+            comp, ['CriticalVolume'], [(None, 1.0, 0.0), ('m3/kgmole', 1.0, 0.0)])
+        extracted_component.parachor = self._extract_quantity(
+            comp, ['Parachor'], [(None, 1.0, 0.0)])
+        extracted_component.zcrit = self._extract_quantity(
+            comp, ['CriticalZFactor', 'CriticalCompressibility'], [(None, 1.0, 0.0)])
+        self._apply_component_property_fallbacks(extracted_component)
+
+    def _apply_component_property_fallbacks(self, component: UniSimComponent):
+        """Populate derived component properties that UniSim may not expose."""
+        if component.acentric_factor is not None:
+            return
+        omega = self._estimate_acentric_factor(component)
+        if omega is not None:
+            component.acentric_factor = omega
+            logger.debug(
+                "Estimated acentric factor for %s from Edmister correlation: %.6f",
+                component.name, omega)
+
+    @staticmethod
+    def _estimate_acentric_factor(component: UniSimComponent) -> Optional[float]:
+        """Estimate omega from critical properties using Edmister correlation."""
+        if (component.tc_K is None or component.pc_bara is None
+                or component.tboil_K is None):
+            return None
+        if component.tc_K <= 0.0 or component.pc_bara <= 0.0 or component.tboil_K <= 0.0:
+            return None
+        denominator = component.tc_K / component.tboil_K - 1.0
+        if denominator <= 0.0:
+            return None
+        try:
+            omega = (3.0 / 7.0) * math.log10(component.pc_bara / 1.01325) / denominator - 1.0
+        except (ValueError, ZeroDivisionError):
+            return None
+        if not math.isfinite(omega) or omega < -0.5 or omega > 2.0:
+            return None
+        return omega
+
+    def _populate_property_package_vectors(self, fp, pkg: UniSimFluidPackage):
+        """Populate component vectors exposed by the UniSim property package."""
+        try:
+            property_package = fp.PropertyPackage
+        except Exception:
+            return
+        vector_specs = [
+            ('acentric_factor', ['AcentricFactor', 'AcentricFactors',
+                                 'AcentricityFactor', 'AcentricityFactors',
+                                 'Omega', 'Omegas', 'ACF']),
+            ('volume_shift', ['VolumShift', 'VolumeShift', 'VolumeShifts', 'SSHIFT']),
+            ('parachor', ['Parachor', 'Parachors']),
+            ('omegaa', ['OmegaA', 'OMEGAA']),
+            ('omegab', ['OmegaB', 'OMEGAB']),
+            ('sshifts', ['VolumShiftSurface', 'VolumeShiftSurface', 'SSHIFTS']),
+        ]
+        for attribute_name, candidate_names in vector_specs:
+            values = self._extract_package_vector(property_package, candidate_names,
+                                                  len(pkg.components))
+            if values is None:
+                continue
+            for component_index, value in enumerate(values):
+                if value is not None:
+                    setattr(pkg.components[component_index], attribute_name, value)
+        for component_index, extracted_component in enumerate(pkg.components):
+            if extracted_component.volume_shift is not None:
+                continue
+            try:
+                volume_shift = property_package.GetVolumeShift(component_index)
+                if volume_shift is not None:
+                    extracted_component.volume_shift = float(volume_shift)
+            except Exception:
+                pass
+
+    def _extract_quantity(self, obj, attribute_names: List[str], unit_specs) -> Optional[float]:
+        """Extract a numeric UniSim property using a list of attributes and units."""
+        for attribute_name in attribute_names:
+            prop = self._safe_get(obj, attribute_name, None)
+            if prop is None:
+                continue
+            for unit, scale, offset in unit_specs:
+                value = self._safe_getval(prop, unit, None)
+                if value is not None:
+                    return value * scale + offset
+        return None
+
+    def _extract_package_vector(self, property_package, candidate_names: List[str],
+                                expected_length: int) -> Optional[List[Optional[float]]]:
+        """Extract a one-dimensional vector from UniSim property package aliases."""
+        for candidate_name in candidate_names:
+            holder = self._safe_get(property_package, candidate_name, None)
+            if holder is None:
+                continue
+            raw_values = self._safe_get(holder, 'Values', holder)
+            try:
+                values = list(raw_values)
+            except Exception:
+                continue
+            if len(values) < expected_length:
+                continue
+            cleaned = []
+            for component_index in range(expected_length):
+                cleaned.append(self._clean_matrix_value(values[component_index]))
+            return cleaned
+        return None
 
     def _extract_bips(self, fp_com, n_comps: int) -> Optional[List[List[float]]]:
         """Extract binary interaction parameters from a fluid package.
@@ -826,37 +1200,98 @@ class UniSimReader:
         component i and j. Returns None if extraction fails.
         """
         try:
-            # UniSim stores BIPs on the property package object
-            pp = fp_com.PropertyPackage
-            bips = [[0.0] * n_comps for _ in range(n_comps)]
-            for i in range(n_comps):
-                for j in range(i):
-                    try:
-                        val = pp.GetBIP(i, j)
-                        if val is not None:
-                            bips[i][j] = float(val)
-                            bips[j][i] = float(val)
-                    except Exception:
-                        pass
-            return bips
-        except Exception as e:
-            logger.warning(f"Could not extract BIPs: {e}")
-            # Try alternative COM paths for BIPs
-            try:
-                pp = fp_com.PropertyPackage
-                bip_matrix = pp.BinaryInteractionParameters
-                if bip_matrix is not None:
-                    bips = [[0.0] * n_comps for _ in range(n_comps)]
-                    for i in range(n_comps):
-                        for j in range(n_comps):
-                            try:
-                                bips[i][j] = float(bip_matrix(i, j))
-                            except Exception:
-                                pass
-                    return bips
-            except Exception:
-                pass
+            property_package = fp_com.PropertyPackage
+        except Exception as exc:
+            logger.warning(f"Could not access property package for BIPs: {exc}")
+            return [[0.0] * n_comps for _ in range(n_comps)]
+
+        for holder_name in ['Kij', 'Kijs', 'BinaryInteractionParameters']:
+            holder = self._safe_get(property_package, holder_name, None)
+            if holder is None:
+                continue
+            raw_values = self._safe_get(holder, 'Values', holder)
+            bips = self._matrix_from_raw_values(raw_values, n_comps)
+            if bips is not None:
+                return bips
+
+        bips = [[0.0] * n_comps for _ in range(n_comps)]
+        found_value = False
+        for row_index in range(n_comps):
+            for column_index in range(row_index):
+                try:
+                    value = self._clean_matrix_value(
+                        property_package.GetBIP(row_index, column_index))
+                    if value is not None:
+                        bips[row_index][column_index] = value
+                        bips[column_index][row_index] = value
+                        found_value = True
+                except Exception:
+                    pass
+        return bips if found_value else [[0.0] * n_comps for _ in range(n_comps)]
+
+    @staticmethod
+    def _clean_matrix_value(value) -> Optional[float]:
+        """Return a finite COM numeric value, treating UniSim sentinels as zero."""
+        try:
+            cleaned = float(value)
+        except Exception:
             return None
+        if cleaned < -30000.0:
+            return 0.0
+        return cleaned
+
+    def _matrix_from_raw_values(self, raw_values, size: int) -> Optional[List[List[float]]]:
+        """Convert common UniSim matrix representations to a square matrix."""
+        try:
+            values = list(raw_values)
+        except Exception:
+            return None
+        if not values:
+            return None
+        matrix = [[0.0] * size for _ in range(size)]
+        first_value = values[0]
+        if isinstance(first_value, (list, tuple)):
+            if len(values) < size:
+                return None
+            for row_index in range(size):
+                row_values = list(values[row_index])
+                for column_index in range(min(size, len(row_values))):
+                    cleaned = self._clean_matrix_value(row_values[column_index])
+                    if cleaned is not None and row_index != column_index:
+                        matrix[row_index][column_index] = cleaned
+            self._symmetrize_lower_triangle(matrix, size)
+            return matrix
+        if len(values) >= size * size:
+            for row_index in range(size):
+                for column_index in range(size):
+                    cleaned = self._clean_matrix_value(values[row_index * size + column_index])
+                    if cleaned is not None and row_index != column_index:
+                        matrix[row_index][column_index] = cleaned
+            self._symmetrize_lower_triangle(matrix, size)
+            return matrix
+        expected_lower_count = size * (size - 1) // 2
+        if len(values) >= expected_lower_count:
+            value_index = 0
+            for row_index in range(1, size):
+                for column_index in range(row_index):
+                    cleaned = self._clean_matrix_value(values[value_index])
+                    if cleaned is not None:
+                        matrix[row_index][column_index] = cleaned
+                        matrix[column_index][row_index] = cleaned
+                    value_index += 1
+            return matrix
+        return None
+
+    @staticmethod
+    def _symmetrize_lower_triangle(matrix: List[List[float]], size: int):
+        """Mirror the populated half of a square matrix to the other half."""
+        for row_index in range(size):
+            for column_index in range(row_index):
+                value = matrix[row_index][column_index]
+                if value == 0.0:
+                    value = matrix[column_index][row_index]
+                matrix[row_index][column_index] = value
+                matrix[column_index][row_index] = value
 
     def _extract_flowsheet(self, fs, comp_names: List[str],
                            extract_streams: bool) -> UniSimFlowsheet:
@@ -1469,16 +1904,43 @@ class UniSimReader:
     @staticmethod
     def _safe_getval(prop, unit=None, default=None):
         """Safely get value from a UniSim property object."""
+        direct_value = UniSimReader._clean_scalar_value(prop)
+        if direct_value is not None:
+            return direct_value
         try:
             if unit:
                 val = prop.GetValue(unit)
             else:
                 val = prop.GetValue()
-            if val is not None and val > -30000:  # UniSim uses -32767 for empty
-                return float(val)
-            return default
+            cleaned = UniSimReader._clean_scalar_value(val)
+            if cleaned is not None:
+                return cleaned
         except Exception:
-            return default
+            pass
+        for attribute_name in ('Value', 'Values'):
+            try:
+                val = getattr(prop, attribute_name)
+                if callable(val):
+                    val = val()
+                if isinstance(val, (list, tuple)):
+                    continue
+                cleaned = UniSimReader._clean_scalar_value(val)
+                if cleaned is not None:
+                    return cleaned
+            except Exception:
+                pass
+        return default
+
+    @staticmethod
+    def _clean_scalar_value(value) -> Optional[float]:
+        """Return a finite scalar value, ignoring UniSim empty sentinels."""
+        try:
+            cleaned = float(value)
+        except (TypeError, ValueError):
+            return None
+        if cleaned <= -30000.0 or not math.isfinite(cleaned):
+            return None
+        return cleaned
 
 
 # ---------------------------------------------------------------------------
@@ -1519,13 +1981,49 @@ class UniSimToNeqSim:
         - Horizontal 2-phase flashtank → Separator (default)
         - sep3op always → ThreePhaseSeparator (regardless of orientation)
         """
-        base_type = UniSimReader.OPERATION_TYPE_MAP.get(op.type_name)
-        if base_type is None:
+        handler = UniSimReader.get_operation_handler(op.type_name)
+        if handler is None or handler.neqsim_type is None:
             return None
+        base_type = handler.neqsim_type
         # Vertical 2-phase separator → GasScrubber
         if base_type == 'Separator' and op.properties.get('detected_vertical'):
             return 'GasScrubber'
         return base_type
+
+    def _build_operation_mapping_summary(self) -> List[Dict[str, Any]]:
+        """Build a compact operation mapping summary for JSON traceability.
+
+        Returns:
+            List of mapping records, one per UniSim operation type present in
+            the imported model.
+        """
+        type_counts: Dict[str, int] = {}
+        for op in self.model.all_operations():
+            type_name = (op.type_name or '').lower()
+            type_counts[type_name] = type_counts.get(type_name, 0) + 1
+
+        summary: List[Dict[str, Any]] = []
+        for type_name in sorted(type_counts):
+            handler = UniSimReader.get_operation_handler(type_name)
+            if handler is None:
+                summary.append({
+                    'unisimType': type_name,
+                    'neqsimType': None,
+                    'strategy': 'unsupported',
+                    'streamRole': 'material',
+                    'count': type_counts[type_name],
+                    'note': 'No converter mapping is registered.',
+                })
+            else:
+                summary.append({
+                    'unisimType': type_name,
+                    'neqsimType': handler.neqsim_type,
+                    'strategy': handler.strategy,
+                    'streamRole': handler.stream_role,
+                    'count': type_counts[type_name],
+                    'note': handler.note,
+                })
+        return summary
 
     def to_json(self, include_subflowsheets: bool = True,
                 full_mode: bool = True) -> Dict:
@@ -1547,10 +2045,21 @@ class UniSimToNeqSim:
             '_source': f'UniSim: {self.model.file_name}',
             '_unisim_property_package': (self.model.fluid_packages[0].property_package
                                         if self.model.fluid_packages else 'Unknown'),
+            '_unisim_operation_mapping': self._build_operation_mapping_summary(),
         }
 
         # Map fluid/EOS
         result['fluid'] = self._build_fluid_section()
+        fluid_sections = self._build_fluid_package_sections()
+        if fluid_sections:
+            result['fluidPackages'] = []
+            result['fluids'] = {}
+            for index, (fluid_ref, section) in enumerate(fluid_sections):
+                result['fluids'][fluid_ref] = section
+                package_entry = dict(section)
+                package_entry['fluidRef'] = fluid_ref
+                package_entry['isDefault'] = (index == 0)
+                result['fluidPackages'].append(package_entry)
 
         # Determine which sub-flowsheets to include
         if full_mode:
@@ -1623,6 +2132,10 @@ class UniSimToNeqSim:
                 jneqsim.thermo.util.readwrite.EclipseFluidReadWrite)
             try:
                 fluid = EclipseFluidReadWrite.read(e300_path)
+                if fluid_section.get('temperature') is not None:
+                    fluid.setTemperature(float(fluid_section['temperature']), "K")
+                if fluid_section.get('pressure') is not None:
+                    fluid.setPressure(float(fluid_section['pressure']), "bara")
                 if verbose:
                     n_comp = fluid.getNumberOfComponents()
                     print(f"  Fluid loaded from E300: {e300_path}")
@@ -1635,6 +2148,8 @@ class UniSimToNeqSim:
                     del neqsim_json['fluid']['fluidPackageName']
                 if 'componentCount' in neqsim_json.get('fluid', {}):
                     del neqsim_json['fluid']['componentCount']
+                if 'componentNames' in neqsim_json.get('fluid', {}):
+                    del neqsim_json['fluid']['componentNames']
 
                 json_str = json.dumps(neqsim_json, indent=2)
                 result = ProcessSystem.fromJsonAndRun(json_str, fluid)
@@ -1672,15 +2187,8 @@ class UniSimToNeqSim:
                 'match_summary': Overall match statistics
                 'warnings': List of converter + build warnings
         """
-        from neqsim import jneqsim
-        ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-
         # Step 1: Build and run
-        json_str = self.to_neqsim_json_str()
-        result = ProcessSystem.fromJsonAndRun(json_str)
-
-        if verbose:
-            self._print_build_summary(result)
+        result = self.build_and_run(verbose=verbose)
 
         # Step 2: Compare with UniSim reference data
         comparison_points = self.get_comparison_points()
@@ -1780,7 +2288,7 @@ class UniSimToNeqSim:
 
         status = 'SUCCESS' if is_success else ('ERROR' if is_error else 'PARTIAL')
         print(f"\n{'='*60}")
-        print(f"  UniSim → NeqSim Automatic Build: {status}")
+        print(f"  UniSim -> NeqSim Automatic Build: {status}")
         print(f"{'='*60}")
 
         if is_success or not is_error:
@@ -1832,8 +2340,62 @@ class UniSimToNeqSim:
                 first = False
         print(f"{'='*80}\n")
 
-    def _build_fluid_section(self) -> Dict:
-        """Build the fluid section from the first fluid package.
+    @staticmethod
+    def _fluid_package_ref_name(fp: UniSimFluidPackage, index: int) -> str:
+        """Return a stable JSON fluid reference for a UniSim fluid package."""
+        safe_name = str(fp.name or f'fluidPackage{index + 1}').strip()
+        safe_name = safe_name.replace('+', 'plus')
+        safe_name = safe_name.replace('/', '_').replace('\\', '_')
+        safe_name = safe_name.replace(' ', '_').replace('-', '_')
+        safe_name = ''.join(
+            ch if ch.isalnum() or ch == '_' else '_'
+            for ch in safe_name)
+        safe_name = safe_name.strip('_')
+        if not safe_name:
+            safe_name = f'fluidPackage{index + 1}'
+        if safe_name[0].isdigit():
+            safe_name = f'fluid_{safe_name}'
+        return safe_name
+
+    def _build_fluid_package_sections(self) -> List[Tuple[str, Dict]]:
+        """Build named fluid sections for every extracted UniSim package."""
+        sections = []
+        used_refs = set()
+        for index, fp in enumerate(self.model.fluid_packages):
+            fluid_ref = self._fluid_package_ref_name(fp, index)
+            base_ref = fluid_ref
+            suffix = 2
+            while fluid_ref in used_refs:
+                fluid_ref = f'{base_ref}_{suffix}'
+                suffix += 1
+            used_refs.add(fluid_ref)
+            sections.append((fluid_ref, self._build_fluid_section(index)))
+        return sections
+
+    def _map_property_package_to_eos(self, property_package: str) -> str:
+        """Map a UniSim property package name to the closest NeqSim EOS."""
+        eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(property_package)
+        if eos is None:
+            pp_lower = property_package.lower()
+            for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
+                if key.lower() in pp_lower or pp_lower.startswith(key.lower()):
+                    eos = val
+                    break
+        return eos or 'SRK'
+
+    def _reference_conditions(self) -> Tuple[float, float]:
+        """Return representative temperature and pressure for fluid creation."""
+        ref_temp_K, ref_P_bara = 298.15, 1.0
+        feed_stream = self._find_feed_stream()
+        if feed_stream:
+            if feed_stream.temperature_C is not None:
+                ref_temp_K = feed_stream.temperature_C + 273.15
+            if feed_stream.pressure_bara is not None:
+                ref_P_bara = feed_stream.pressure_bara
+        return ref_temp_K, ref_P_bara
+
+    def _build_fluid_section(self, package_index: int = 0) -> Dict:
+        """Build the fluid section from one UniSim fluid package.
 
         If the fluid package has an E300 file (exported during read()),
         the E300 path is included in the fluid section. This is the
@@ -1846,27 +2408,14 @@ class UniSimToNeqSim:
             return {'model': 'SRK', 'temperature': 298.15, 'pressure': 1.0,
                     'mixingRule': 'classic', 'components': {'methane': 1.0}}
 
-        fp = self.model.fluid_packages[0]
+        fp = self.model.fluid_packages[package_index]
 
         # --- E300 route (preferred) ---
         if fp.e300_file_path and os.path.exists(fp.e300_file_path):
-            eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(fp.property_package)
-            if eos is None:
-                pp_lower = fp.property_package.lower()
-                for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
-                    if key.lower() in pp_lower or pp_lower.startswith(
-                            key.lower()):
-                        eos = val
-                        break
-                if eos is None:
-                    eos = 'PR'
-            ref_temp_K, ref_P_bara = 298.15, 1.0
-            feed_stream = self._find_feed_stream()
-            if feed_stream:
-                if feed_stream.temperature_C is not None:
-                    ref_temp_K = feed_stream.temperature_C + 273.15
-                if feed_stream.pressure_bara is not None:
-                    ref_P_bara = feed_stream.pressure_bara
+            eos = self._map_property_package_to_eos(fp.property_package)
+            if eos == 'SRK' and 'peng' in fp.property_package.lower():
+                eos = 'PR'
+            ref_temp_K, ref_P_bara = self._reference_conditions()
             return {
                 'model': eos,
                 'temperature': ref_temp_K,
@@ -1874,27 +2423,18 @@ class UniSimToNeqSim:
                 'e300FilePath': fp.e300_file_path,
                 'fluidPackageName': fp.name,
                 'componentCount': len(fp.components),
+                'componentNames': [fp._e300_component_name(c.name) for c in fp.components],
             }
 
         # --- Fallback: manual component mapping ---
-        eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(fp.property_package)
-        if eos is None:
-            # Try partial/prefix match (e.g. "DBR Amine Package (v2011.1)")
-            pp_lower = fp.property_package.lower()
-            for key, val in UniSimReader.PROPERTY_PACKAGE_MAP.items():
-                if key.lower() in pp_lower or pp_lower.startswith(key.lower()):
-                    eos = val
-                    break
-            if eos is None:
-                eos = 'SRK'
+        eos = self._map_property_package_to_eos(fp.property_package)
         if eos == 'SRK' and fp.property_package not in ('SRK', 'Soave-Redlich-Kwong'):
             self._assumptions.append(
                 f"Mapped '{fp.property_package}' → SRK (closest NeqSim equivalent)")
 
         # Find a feed stream to get initial composition
         composition = {}
-        ref_temp_K = 298.15
-        ref_P_bara = 1.0
+        ref_temp_K, ref_P_bara = self._reference_conditions()
 
         # Look for the first stream with a valid composition
         feed_stream = self._find_feed_stream()
@@ -1953,13 +2493,9 @@ class UniSimToNeqSim:
         # Build stream→operation connectivity map across all flowsheets
         stream_producer = {}  # stream_name → (operation_name, port)
         stream_consumer = {}  # stream_name → [(operation_name, port)]
-        # Operation types that do not actually produce/consume streams
-        _NON_STREAM_OPS = {'spreadsheetop', 'virtualstreamop',
-                           'blowdowngenesimop'}
-
         for op in all_operations:
             op_type = getattr(op, 'type_name', '') or ''
-            if op_type in _NON_STREAM_OPS:
+            if not UniSimReader.is_material_stream_operation(op_type):
                 continue  # skip non-physical operations
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
@@ -2020,8 +2556,11 @@ class UniSimToNeqSim:
                 f"Unsupported operation type '{op.type_name}': '{op.name}' — skipped")
             return None
 
-        # Skip utility/control operations that don't have NeqSim equivalents
-        if neqsim_type in ('SurgeController', 'ColumnInternals'):
+        # Skip utility/control operations that do not have JSON-builder
+        # equivalents. Generated Python still emits comments for some of these.
+        if neqsim_type in self.SKIPPED_NEQSIM_TYPES or neqsim_type in ('PIDController', 'LogicalOp'):
+            self._warnings.append(
+                f"Skipped non-physical operation '{op.name}' ({neqsim_type})")
             return None
 
         entry = {
@@ -2030,7 +2569,8 @@ class UniSimToNeqSim:
         }
 
         # Wire inlet(s)
-        if op.feeds:
+        reference_only_types = ('Adjuster', 'SetPoint', 'SpreadsheetBlock')
+        if op.feeds and neqsim_type not in reference_only_types:
             # For multi-inlet equipment (Mixer, HeatExchanger), use inlets array
             if neqsim_type in ('Mixer', 'HeatExchanger') and len(op.feeds) >= 2:
                 entry['inlets'] = []
@@ -2131,6 +2671,10 @@ class UniSimToNeqSim:
             tol = op.properties.get('tolerance')
             if tol is not None:
                 props['tolerance'] = tol
+
+        elif neqsim_type == 'UnisimCalculator':
+            props['sourceOperationType'] = op.type_name
+            props['calculationMode'] = 'passThrough'
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor → emit as ComponentSplitter
@@ -2555,7 +3099,7 @@ class UniSimToNeqSim:
 
         Returns a dict with:
           fluid        – fluid spec dict from _build_fluid_section()
-          eos_class    – 'SystemPrEos' or 'SystemSrkEos'
+          eos_class    – NeqSim thermodynamic system class name
           flowsheet    – the main UniSimFlowsheet (or None)
           all_ops      – flat list of all operations
           all_streams  – flat list of all material streams
@@ -2567,7 +3111,12 @@ class UniSimToNeqSim:
           used_vars    – mutable set for tracking used var names
         """
         fluid = self._build_fluid_section()
-        eos_class = 'SystemPrEos' if fluid['model'] == 'PR' else 'SystemSrkEos'
+        if fluid['model'] == 'PR_LK':
+            eos_class = 'SystemPrLeeKeslerEos'
+        elif fluid['model'] == 'PR':
+            eos_class = 'SystemPrEos'
+        else:
+            eos_class = 'SystemSrkEos'
 
         flowsheet = self.model.flowsheet
         if not flowsheet:
@@ -2603,15 +3152,13 @@ class UniSimToNeqSim:
         # which streams are produced and which are true external feeds.
         # Sub-flowsheet consumer/producer info is needed to avoid
         # creating spurious feed-stream declarations.
-        _NON_STREAM_OPS = {'spreadsheetop', 'virtualstreamop',
-                           'blowdowngenesimop'}
         stream_producer: dict = {}
         _all_ops_flat = list(flowsheet.operations)
         for sf in flowsheet.sub_flowsheets:
             _all_ops_flat.extend(sf.operations)
         for op in _all_ops_flat:
             op_type = getattr(op, 'type_name', '') or ''
-            if op_type in _NON_STREAM_OPS:
+            if not UniSimReader.is_material_stream_operation(op_type):
                 continue
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
@@ -2619,7 +3166,7 @@ class UniSimToNeqSim:
         external_feeds: set = set()
         for op in _all_ops_flat:
             op_type = getattr(op, 'type_name', '') or ''
-            if op_type in _NON_STREAM_OPS:
+            if not UniSimReader.is_material_stream_operation(op_type):
                 continue
             for s in op.feeds:
                 if s not in stream_producer:
@@ -2775,7 +3322,6 @@ class UniSimToNeqSim:
 
     SKIPPED_NEQSIM_TYPES = frozenset((
         'SurgeController', 'ColumnInternals',
-        'Spreadsheet',         # non-physical: monitoring spreadsheets
         'BlowdownGeneSim',     # non-physical: EO utility
     ))
 
@@ -2802,6 +3348,7 @@ class UniSimToNeqSim:
         'SetPoint = jneqsim.process.equipment.util.SetPoint',
         'StreamSaturatorUtil = jneqsim.process.equipment.util.StreamSaturatorUtil',
         'SpreadsheetBlock = jneqsim.process.equipment.util.SpreadsheetBlock',
+        'UnisimCalculator = jneqsim.process.equipment.util.UnisimCalculator',
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
         'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
         'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
@@ -2819,12 +3366,32 @@ class UniSimToNeqSim:
         # E300 route (preferred when available)
         e300_path = fluid.get('e300FilePath')
         if e300_path:
-            escaped_path = e300_path.replace('\\', '/')
-            lines.append(f'E300_FILE = r"{e300_path}"')
-            lines.append(f'fluid = EclipseFluidReadWrite.read(E300_FILE)')
-            pkg_name = fluid.get('fluidPackageName', '')
-            n_comp = fluid.get('componentCount', '?')
-            lines.append(f'# Loaded from E300: {pkg_name} ({n_comp} components)')
+            e300_sections = [
+                (ref, section)
+                for ref, section in self._build_fluid_package_sections()
+                if section.get('e300FilePath')
+            ]
+            if not e300_sections:
+                e300_sections = [('default', fluid)]
+            lines.append('fluid_packages = {}')
+            for fluid_ref, section in e300_sections:
+                escaped_path = section['e300FilePath'].replace('\\', '/')
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"] = '
+                    f'EclipseFluidReadWrite.read(r"{escaped_path}")')
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"].setTemperature('
+                    f'{section.get("temperature", 298.15)}, "K")')
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"].setPressure('
+                    f'{section.get("pressure", 1.0)}, "bara")')
+                pkg_name = section.get('fluidPackageName', fluid_ref)
+                n_comp = section.get('componentCount', '?')
+                lines.append(
+                    f'# Loaded from E300: {pkg_name} ({n_comp} components)')
+            default_ref = e300_sections[0][0]
+            lines.append(f'fluid = fluid_packages["{default_ref}"]')
+            lines.append(f'# Default fluid package: {default_ref}')
             return lines
 
         # Fallback: manual fluid creation
@@ -3118,7 +3685,16 @@ class UniSimToNeqSim:
             lines.append(
                 f'{v} = StreamSaturatorUtil("{op.name}", {ref_expr})')
 
-        elif neqsim_type == 'Spreadsheet':
+        elif neqsim_type == 'UnisimCalculator':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else None
+            if ref_expr is None:
+                lines.append(f'{v} = UnisimCalculator("{op.name}")')
+            else:
+                lines.append(f'{v} = UnisimCalculator("{op.name}", {ref_expr})')
+            lines.append(f'{v}.setSourceOperationType("{op.type_name}")')
+            lines.append(f'{v}.setCalculationMode("passThrough")')
+
+        elif neqsim_type == 'SpreadsheetBlock':
             lines.append(f'{v} = SpreadsheetBlock("{op.name}")')
             # Wire inlet stream imports if available
             if inlet_refs:
@@ -3179,7 +3755,7 @@ class UniSimToNeqSim:
                         f'# Sub-flowsheet "{op.name}" has no extractable '
                         f'operations — add equipment manually')
 
-        elif neqsim_type == 'BalanceOp':
+        elif neqsim_type == 'Adjuster' and op.type_name == 'balanceop':
             lines.append(f'{v} = Adjuster("{op.name}")')
             # Use same logic as Adjuster with extracted properties
             adj_obj = op.properties.get('adjusted_object_name')
@@ -3426,6 +4002,9 @@ class UniSimToNeqSim:
         """
         stream_producer: dict = {}
         for op in sf.operations:
+            op_type = getattr(op, 'type_name', '') or ''
+            if not UniSimReader.is_material_stream_operation(op_type):
+                continue
             for s in op.products:
                 stream_producer[s] = (op.name, 'outlet')
         # Also include parent stream_producer for cross-flowsheet refs
@@ -3435,6 +4014,9 @@ class UniSimToNeqSim:
 
         external_feeds: set = set()
         for op in sf.operations:
+            op_type = getattr(op, 'type_name', '') or ''
+            if not UniSimReader.is_material_stream_operation(op_type):
+                continue
             for s in op.feeds:
                 if s not in stream_producer:
                     external_feeds.add(s)
@@ -3803,15 +4385,19 @@ class UniSimToNeqSim:
             return (f'**{op.name}** saturates the stream with water vapour '
                     f'(or another phase) at its current conditions.')
 
-        elif neqsim_type == 'Spreadsheet':
+        elif neqsim_type == 'SpreadsheetBlock':
             return (f'**{op.name}** performs user-defined calculations via '
                     f'imported stream variables and formula cells.')
+
+        elif neqsim_type == 'UnisimCalculator':
+            return (f'**{op.name}** preserves a UniSim calculator, balance, '
+                    f'or virtual stream block as a pass-through topology node.')
 
         elif neqsim_type == 'SubFlowsheet':
             return (f'**{op.name}** encapsulates a nested sub-process that '
                     f'runs as an independent module within the main flowsheet.')
 
-        elif neqsim_type == 'BalanceOp':
+        elif neqsim_type == 'Adjuster' and op.type_name == 'balanceop':
             return (f'**{op.name}** adjusts a process variable to satisfy '
                     f'a mass or energy balance constraint.')
 
@@ -3885,8 +4471,8 @@ class UniSimToNeqSim:
             'StirredTankReactor': 'reactor',
             'Absorber': 'absorber',
             'DistillationColumn': 'column',
-            'StreamSaturatorUtil': 'utility', 'Spreadsheet': 'utility',
-            'SubFlowsheet': 'utility', 'BalanceOp': 'utility',
+            'StreamSaturatorUtil': 'utility', 'SpreadsheetBlock': 'utility',
+            'UnisimCalculator': 'utility', 'SubFlowsheet': 'utility',
             'PIDController': 'controller', 'LogicalOp': 'controller',
             'Adjuster': 'utility', 'SetPoint': 'utility',
         }
@@ -4649,11 +5235,26 @@ class UniSimToNeqSim:
         # ---- fluid helper ----
         _a('def _get_fluid():')
         _a(f'    """Create the thermodynamic fluid (mapped from UniSim)."""')
-        eos_neqsim = f'neqsim.thermo.system.{"SystemPrEos" if fluid["model"] == "PR" else "SystemSrkEos"}'
-        _a(f'    fluid = {eos_neqsim}()')
-        for comp, frac in fluid.get('components', {}).items():
-            _a(f'    fluid.addComponent("{comp}", {frac})')
-        _a(f'    fluid.setMixingRule("{fluid.get("mixingRule", "classic")}")')
+        if fluid.get('e300FilePath'):
+            escaped_path = fluid['e300FilePath'].replace('\\', '\\\\')
+            _a('    EclipseFluidReadWrite = '
+               'neqsim.thermo.util.readwrite.EclipseFluidReadWrite')
+            _a(f'    fluid = EclipseFluidReadWrite.read(r"{escaped_path}")')
+            _a(f'    fluid.setTemperature({fluid.get("temperature", 298.15)}, "K")')
+            _a(f'    fluid.setPressure({fluid.get("pressure", 1.0)}, "bara")')
+        else:
+            model = fluid.get('model')
+            if model == 'PR_LK':
+                eos_class_name = 'SystemPrLeeKeslerEos'
+            elif model == 'PR':
+                eos_class_name = 'SystemPrEos'
+            else:
+                eos_class_name = 'SystemSrkEos'
+            eos_neqsim = f'neqsim.thermo.system.{eos_class_name}'
+            _a(f'    fluid = {eos_neqsim}()')
+            for comp, frac in fluid.get('components', {}).items():
+                _a(f'    fluid.addComponent("{comp}", {frac})')
+            _a(f'    fluid.setMixingRule("{fluid.get("mixingRule", "classic")}")')
         if fluid.get('multiPhaseCheck'):
             _a('    fluid.setMultiPhaseCheck(True)')
         _a('    return fluid')
@@ -4920,13 +5521,14 @@ class UniSimToNeqSim:
         fluid = self._build_fluid_section()
         pp_name = (self.model.fluid_packages[0].property_package
                    if self.model.fluid_packages else 'Unknown')
+        component_count = fluid.get('componentCount', len(fluid.get('components', {})))
 
         _md(f'# EOT Simulator: {self.model.file_name}\n\n'
             f'Auto-generated ProcessPilot / EOT simulator from UniSim model.\n\n'
             f'| Property | Value |\n|----------|-------|\n'
             f'| UniSim Property Package | {pp_name} |\n'
             f'| NeqSim EOS | {fluid["model"]} |\n'
-            f'| Components | {len(fluid.get("components", {}))} |\n')
+            f'| Components | {component_count} |\n')
 
         _md('## Simulator Class\n\n'
             'The cell below contains the complete simulator. It subclasses '

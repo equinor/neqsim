@@ -153,7 +153,7 @@ public class PipeFlowSystem
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.runTransient(3600.0, 60.0); // 1 hour simulation with 60s time steps
    * </pre>
@@ -199,7 +199,7 @@ public class PipeFlowSystem
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.runTransientClosedOutlet(600.0, 30.0); // 10 min with outlet closed
    * </pre>
@@ -245,7 +245,7 @@ public class PipeFlowSystem
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.runTransientControlledOutletVelocity(600.0, 30.0, 2.5); // Outlet at 2.5 m/s
    * </pre>
@@ -299,7 +299,7 @@ public class PipeFlowSystem
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.runTransientControlledOutletPressure(600.0, 30.0, 50.0); // Outlet at 50 bar
    * </pre>

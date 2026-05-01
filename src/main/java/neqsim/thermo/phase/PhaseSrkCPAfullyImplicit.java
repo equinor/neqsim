@@ -79,7 +79,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
    * Constructor for PhaseSrkCPAfullyImplicit.
    */
   public PhaseSrkCPAfullyImplicit() {
-    super();
     thermoPropertyModelName = "SRK-CPA-EoS-FullyImplicit";
   }
 
@@ -196,8 +195,19 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
 
     int iterations = 0;
     boolean converged = false;
-    boolean restartTriggered = false;
-    double initialResidual = 0.0;
+
+    // --- Adaptive damping and stagnation tracking ---
+    double damping = 1.0;
+    double prevMaxResidual = Double.MAX_VALUE;
+    int stallCount = 0;
+    int restartCount = 0;
+    int ssRecoveryCount = 0;
+
+    // Best solution tracking (use if we get close but don't fully converge)
+    double bestMaxResidual = Double.MAX_VALUE;
+    double bestZeta = zeta;
+    double[] bestXsite = new double[ns];
+    System.arraycopy(xSite, 0, bestXsite, 0, ns);
 
     do {
       iterations++;
@@ -225,8 +235,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       updateDeltaWithG();
 
       // --- Compute CPA pressure derivatives directly (NO solveX/initCPAMatrix) ---
-      // dFCPAdV = -0.5 * sum_ij X_i * Klk_ij * (gcpav - 1/V) * X_j
-      // where Klk_ij = m_i * m_j / V * delta_ij
       double gdv1 = gcpav - 1.0 / totalVol;
       double gdv2 = gdv1 * gdv1;
       double totalVol2 = totalVol * totalVol;
@@ -244,15 +252,10 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
         }
       }
 
-      // Store into parent's fields so dFdV()/dFdVdV() return correct values
       dFCPAdV = -0.5 * sumFV;
       dFCPAdVdV = -0.5 * sumFVV;
-      // Note: the XV correction term in dFCPAdVdV is omitted during iteration.
-      // In the coupled system, dX/dV is captured implicitly through the off-diagonal
-      // Jacobian entries, so the approximate Jacobian still converges.
 
       // --- Build residual vector ---
-      // R_k = X_k - 1/(1 + (1/V)*sum_j(m_j * delta_kj * X_j))
       for (int k = 0; k < ns; k++) {
         double sumKJ = 0.0;
         for (int j = 0; j < ns; j++) {
@@ -261,7 +264,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
         residual[k] = xSite[k] - 1.0 / (1.0 + sumKJ / totalVol);
       }
 
-      // R_{ns+1} = pressure residual in BonV form
       double h = zeta - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       residual[ns] = h;
@@ -271,16 +273,69 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       for (int i = 0; i < dim; i++) {
         maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
       }
-      if (iterations == 1) {
-        initialResidual = maxResidual;
-      }
       if (maxResidual < CONVERGENCE_TOL && iterations > 1) {
         converged = true;
         break;
       }
 
+      // Track best solution found
+      if (maxResidual < bestMaxResidual) {
+        bestMaxResidual = maxResidual;
+        bestZeta = zeta;
+        System.arraycopy(xSite, 0, bestXsite, 0, ns);
+      }
+
+      // --- Adaptive damping: track residual improvement ---
+      if (maxResidual > prevMaxResidual * 0.999 && iterations > 2) {
+        stallCount++;
+        damping = Math.max(0.1, damping * 0.5);
+      } else {
+        stallCount = 0;
+        damping = Math.min(1.0, damping * 1.5);
+      }
+      prevMaxResidual = maxResidual;
+
+      // --- Stagnation recovery: SS iterations to re-stabilize ---
+      if (stallCount >= 4 && ssRecoveryCount < 3) {
+        ssRecoveryCount++;
+        stallCount = 0;
+        damping = 1.0;
+        setXsiteOnComponents(xSite);
+        solveX2(5);
+        readXsiteFromComponents(xSite);
+        continue;
+      }
+
+      // --- Multi-restart with different initial guesses ---
+      if (stallCount >= 6 && restartCount < 2) {
+        restartCount++;
+        stallCount = 0;
+        damping = 1.0;
+        prevMaxResidual = Double.MAX_VALUE;
+        if (restartCount == 1) {
+          // Restart 1: opposite phase initial guess
+          if (pt == PhaseType.GAS) {
+            zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else {
+            zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
+          }
+        } else {
+          // Restart 2: midpoint
+          zeta = 0.3;
+        }
+        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
+        for (int i = 0; i < ns; i++) {
+          xSite[i] = 0.5;
+        }
+        molarVol = Btemp / (numberOfMolesInPhase * zeta);
+        setMolarVolume(molarVol);
+        setXsiteOnComponents(xSite);
+        solveX2(10);
+        readXsiteFromComponents(xSite);
+        continue;
+      }
+
       // --- Build Jacobian ---
-      // dR_k/dX_j = delta_kj_kronecker + X_k^2 * m_j * Delta_kj / V
       for (int k = 0; k < ns; k++) {
         double xk2 = xSite[k] * xSite[k];
         for (int j = 0; j < ns; j++) {
@@ -289,15 +344,12 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
         }
       }
 
-      // dR_k/d(zeta): derivative of association residual w.r.t. normalized density
       double dVdZeta = -Btemp / (numberOfMolesInPhase * zeta * zeta);
       for (int k = 0; k < ns; k++) {
         double xk2 = xSite[k] * xSite[k];
         double sumDeriv = 0.0;
         for (int j = 0; j < ns; j++) {
           double deltaKJ = delta[k][j];
-          // d(delta)/dV = delta * gcpav (since delta = deltaNog * g, d(delta)/dV = deltaNog *
-          // dg/dV)
           double dDeltadV = deltaKJ * gcpav;
           sumDeriv +=
               siteMoles[j] * xSite[j] * (dDeltadV * totalVol - deltaKJ) / (totalVol * totalVol);
@@ -305,12 +357,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
         jacobian[k][ns] = xk2 * sumDeriv * dVdZeta;
       }
 
-      // dR_{ns+1}/dX_k: pressure residual derivative w.r.t. site fractions
-      // h = zeta - B/nMol * dFdV - P*B/(nMol*R*T)
-      // dFCPAdV = -0.5 * sum_ij Xi * Klk_ij * gdv1 * Xj
-      // d(dFCPAdV)/dXk = -sum_j Klk_kj * gdv1 * Xj = -(mk/V) * gdv1 * sum_j mj*delta_kj*Xj
-      // dh/dXk = -B/nMol * cpaon * d(dFCPAdV)/dXk
-      // = B/nMol * cpaon * (mk/V) * gdv1 * sum_j mj*delta_kj*Xj
       for (int k = 0; k < ns; k++) {
         double sumJ = 0.0;
         for (int j = 0; j < ns; j++) {
@@ -320,7 +366,6 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
             Btemp / numberOfMolesInPhase * cpaon * (siteMoles[k] / totalVol) * gdv1 * sumJ;
       }
 
-      // dR_{ns+1}/d(zeta): diagonal entry
       double BonV2 = zeta * zeta;
       jacobian[ns][ns] = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
 
@@ -330,12 +375,19 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       }
       boolean solveOk = solveLinearSystem(jacobian, dx, dim);
       if (!solveOk) {
-        fallbackCount++;
-        return super.molarVolume(pressure, temperature, A, B, pt);
+        // Singular Jacobian: try SS recovery before fallback
+        if (ssRecoveryCount < 3) {
+          ssRecoveryCount++;
+          setXsiteOnComponents(xSite);
+          solveX2(10);
+          readXsiteFromComponents(xSite);
+          continue;
+        }
+        break;
       }
 
-      // --- Step limiting ---
-      double maxStep = 1.0;
+      // --- Step limiting with adaptive damping ---
+      double maxStep = damping;
       for (int k = 0; k < ns; k++) {
         double proposedX = xSite[k] + maxStep * dx[k];
         if (proposedX < 1.0e-15) {
@@ -368,27 +420,14 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       zeta += maxStep * dx[ns];
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
 
-      // --- Restart criterion (supercritical detection) ---
-      if (iterations > 20 && maxResidual > 0.1 && !restartTriggered) {
-        restartTriggered = true;
-        if (pt == PhaseType.GAS) {
-          zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
-        } else {
-          zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
-        }
-        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
-        for (int i = 0; i < ns; i++) {
-          xSite[i] = 0.5;
-        }
-      }
-
     } while (iterations < MAX_IMPLICIT_ITERATIONS);
 
     if (!converged) {
       fallbackCount++;
       if (logger.isDebugEnabled()) {
-        logger.debug("Implicit non-convergence: ns=" + ns + " pt=" + pt + " iters=" + iterations
-            + " zeta=" + zeta + " P=" + pressure + " T=" + temperature);
+        logger.debug(
+            "Implicit non-convergence: ns=" + ns + " pt=" + pt + " iters=" + iterations + " zeta="
+                + zeta + " bestRes=" + bestMaxResidual + " P=" + pressure + " T=" + temperature);
       }
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -486,111 +525,12 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       return;
     }
 
-    if (type > 1) {
-      // Delegate to parent for temperature/composition derivatives.
-      // Need hessianInvers populated by solveX().
-      solveX();
-      super.initCPAMatrix(type);
-      return;
-    }
-
-    // --- Type 1: compute volume derivatives from scratch ---
-    ensureWorkArrays(ns);
-
-    double totalVolume = getTotalVolume();
-    double totalVolume2 = totalVolume * totalVolume;
-    double totalVolume3 = totalVolume2 * totalVolume;
-
-    double gv = getGcpav();
-    double fV = gv - 1.0 / totalVolume;
-    double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;
-    double fVVV =
-        fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
-
-    // Read site fractions (ksi) and mole counts (m) from components
-    int idx = 0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      double ni = componentArray[i].getNumberOfMolesInPhase();
-      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        workKsi[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
-        workM[idx] = ni;
-        idx++;
-      }
-    }
-
-    // Build Klk[i][j] = m_i * m_j / V * delta[i][j]
-    double invV = 1.0 / totalVolume;
-    for (int i = 0; i < ns; i++) {
-      double miV = workM[i] * invV;
-      for (int j = i; j < ns; j++) {
-        double k = miV * workM[j] * delta[i][j];
-        workKlk[i][j] = k;
-        workKlk[j][i] = k;
-      }
-    }
-
-    // Compute klkKsi = Klk * ksi (single matrix-vector product)
-    for (int i = 0; i < ns; i++) {
-      double s = 0;
-      for (int j = 0; j < ns; j++) {
-        s += workKlk[i][j] * workKsi[j];
-      }
-      workKlkKsi[i] = s;
-    }
-
-    // Build Hessian: H[i][j] = -m[i]/(ksi[i]^2) * delta(i,j) - Klk[i][j]
-    // Need a copy since GE destroys it
-    for (int i = 0; i < ns; i++) {
-      for (int j = 0; j < ns; j++) {
-        workHess[i][j] = -workKlk[i][j];
-      }
-      workHess[i][i] -= workM[i] / (workKsi[i] * workKsi[i]);
-    }
-
-    // Solve H * XV = fV * klkKsi
-    for (int i = 0; i < ns; i++) {
-      workXV[i] = fV * workKlkKsi[i];
-    }
-    solveLinearSystem(workHess, workXV, ns);
-
-    // --- Compute dot products needed by all derivatives ---
-    double dotKsiKlkKsi = 0; // ksi' * Klk * ksi
-    double dotKlkKsiXV = 0; // klkKsi' * XV
-    double fcpa = 0;
-    for (int i = 0; i < ns; i++) {
-      dotKsiKlkKsi += workKsi[i] * workKlkKsi[i];
-      dotKlkKsiXV += workKlkKsi[i] * workXV[i];
-      fcpa += workM[i] * (Math.log(workKsi[i]) - workKsi[i] / 2.0 + 0.5);
-    }
-    FCPA = fcpa;
-
-    // dFCPAdV = -0.5 * fV * ksi' * Klk * ksi
-    dFCPAdV = -0.5 * fV * dotKsiKlkKsi;
-
-    // dFCPAdVdV = -0.5 * fVV * ksi'*Klk*ksi - fV * klkKsi'*XV
-    dFCPAdVdV = -0.5 * fVV * dotKsiKlkKsi - fV * dotKlkKsiXV;
-
-    // dFCPAdVdVdV:
-    // = -0.5 * fVVV * ksi'*Klk*ksi - 3*fVV * klkKsi'*XV
-    // - 3*fV * XV'*Klk*XV + (sum XV*Q) * (sum XV^2) where Q[i]=2m[i]/ksi[i]^3
-    double dotXVKlkXV = 0;
-    for (int i = 0; i < ns; i++) {
-      double s = 0;
-      for (int j = 0; j < ns; j++) {
-        s += workKlk[i][j] * workXV[j];
-      }
-      dotXVKlkXV += workXV[i] * s;
-    }
-
-    double sumQXV = 0;
-    double sumXV2 = 0;
-    for (int i = 0; i < ns; i++) {
-      sumQXV += workXV[i] * 2.0 * workM[i] / (workKsi[i] * workKsi[i] * workKsi[i]);
-      sumXV2 += workXV[i] * workXV[i];
-    }
-
-    dFCPAdVdVdV = -0.5 * fVVV * dotKsiKlkKsi - 3.0 * fVV * dotKlkKsiXV - 3.0 * fV * dotXVKlkXV
-        + sumQXV * sumXV2;
+    // Delegate all types to parent implementation.
+    // For type 1 and type > 1, the parent uses solveX() + EJML matrix operations.
+    // This ensures numerical consistency with the standard solver when computing
+    // CPA derivatives for post-convergence finalization and gas-phase fallback.
+    solveX();
+    super.initCPAMatrix(type);
   }
 
   /** {@inheritDoc} */

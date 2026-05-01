@@ -1,6 +1,5 @@
 package neqsim.process.mechanicaldesign.compressor;
 
-import java.util.List;
 import java.util.Map;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
@@ -138,7 +137,6 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
    * Default constructor.
    */
   public CompressorMechanicalDesignResponse() {
-    super();
     setEquipmentType("Compressor");
     setDesignStandard("API 617");
   }

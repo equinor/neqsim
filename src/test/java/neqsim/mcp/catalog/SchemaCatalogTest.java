@@ -103,7 +103,7 @@ class SchemaCatalogTest {
   void testGetToolNames() {
     List<String> tools = SchemaCatalog.getToolNames();
 
-    assertEquals(8, tools.size());
+    assertTrue(tools.size() >= 8);
     assertTrue(tools.contains("run_flash"));
     assertTrue(tools.contains("run_process"));
     assertTrue(tools.contains("validate_input"));

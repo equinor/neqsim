@@ -45,6 +45,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
 import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyFlashInterface;
@@ -182,8 +183,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
-    operation =
-        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    if (system instanceof neqsim.thermo.system.SystemSAFTVRMie) {
+      // SAFT-VR Mie uses a specialized TPflash with separate volume solvers per phase
+      // for improved robustness with the non-cubic EOS.
+      // Standard bubble/dew point algorithms use the standard init(1) path which works
+      // via the overridden molarVolume() and dFdN/dFdNdT/dFdNdV derivatives.
+      operation = new neqsim.thermodynamicoperations.flashops.TPflashSAFT(system,
+          system.doSolidPhaseCheck());
+    } else {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    }
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
@@ -396,6 +406,64 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           new neqsim.thermodynamicoperations.chemicalequilibrium.ChemicalEquilibrium(system);
       getOperation().run();
     }
+  }
+
+  /**
+   * Solve simultaneous chemical and phase equilibrium at constant T, P using the modified RAND
+   * (non-stoichiometric) method.
+   *
+   * <p>
+   * The method minimizes total Gibbs energy subject to element balance constraints without
+   * requiring explicit reaction stoichiometry. It automatically determines the number of
+   * independent reactions from the formula matrix (element-component mapping) and handles
+   * single-phase chemical equilibrium, VLE, and VLLE with simultaneous reactions in all phases.
+   * </p>
+   *
+   * <p>
+   * If no element data is available for the components (no independent reactions detected), the
+   * method falls back to a standard TP flash.
+   * </p>
+   */
+  public void reactiveTPflash() {
+    operation =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash(system);
+    getOperation().run();
+  }
+
+  /**
+   * Reactive multiphase PH flash: finds the equilibrium temperature, phase split, and composition
+   * at a given pressure P and total enthalpy H_spec, with simultaneous chemical and phase
+   * equilibrium.
+   *
+   * <p>
+   * Uses a nested approach: Newton-Raphson on 1/T (outer loop) wraps the Modified RAND reactive TP
+   * flash (inner loop). Suitable for systems with gas-phase reactions (WGS, SMR, NH3 synthesis),
+   * ionic equilibria, and multiphase reactive systems.
+   * </p>
+   *
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard)
+   */
+  public void reactivePHflash(double Hspec, int type) {
+    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(
+        system, Hspec, type);
+    getOperation().run();
+  }
+
+  /**
+   * Reactive multiphase PS flash: finds the equilibrium temperature, phase split, and composition
+   * at a given pressure P and total entropy S_spec, with simultaneous chemical and phase
+   * equilibrium.
+   *
+   * @param Sspec specified total entropy in J/K
+   */
+  public void reactivePSflash(double Sspec) {
+    neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash phflash =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system,
+            0.0, 0);
+    phflash.setEntropySpec(Sspec);
+    operation = phflash;
+    getOperation().run();
   }
 
   /**
@@ -1904,6 +1972,47 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Computes the capillary dew point temperature at the current system pressure.
+   *
+   * <p>
+   * The capillary dew point accounts for the Young-Laplace pressure difference across the curved
+   * gas-liquid interface in a pore or capillary. This shifts the dew point to a higher temperature
+   * than the bulk (flat-interface) dew point.
+   * </p>
+   *
+   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   */
+  public void capillaryDewPointTemperatureFlash(double poreRadiusM) throws IsNaNException {
+    ConstantDutyFlashInterface operation = new CapillaryDewPointFlash(system, poreRadiusM);
+    operation.run();
+    if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "capillaryDewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
+    }
+  }
+
+  /**
+   * Computes the capillary dew point temperature with a specified contact angle.
+   *
+   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @param contactAngleRad the contact angle in radians (0 = perfect wetting)
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   */
+  public void capillaryDewPointTemperatureFlash(double poreRadiusM, double contactAngleRad)
+      throws IsNaNException {
+    ConstantDutyFlashInterface operation =
+        new CapillaryDewPointFlash(system, poreRadiusM, contactAngleRad);
+    operation.run();
+    if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "capillaryDewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
+    }
+  }
+
+  /**
    * <p>
    * dewPointPressureFlashHC.
    * </p>
@@ -2371,6 +2480,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public double[] get(String name, double[] defaultValue) {
     return getOperation().get(name, defaultValue);
+  }
+
+  /**
+   * Return the PT phase envelope as a list of contiguous branch segments.
+   *
+   * <p>
+   * Preferred over the flat {@code get("dewT")} / {@code get("bubT")} arrays for plotting and
+   * machine-readable export. Each segment is a polyline with a uniform phase type (DEW or BUBBLE)
+   * and contains no NaN. Available after a successful call to any
+   * {@code calcPTphaseEnvelope(...)} overload that uses the Michelsen tracer.
+   * </p>
+   *
+   * @return unmodifiable list of envelope segments, or an empty list if the last-run operation
+   *         does not produce segment data (e.g. legacy envelope implementations)
+   */
+  public java.util.List<neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment> getEnvelopeSegments() {
+    OperationInterface op = getOperation();
+    if (op instanceof neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) {
+      return ((neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) op)
+          .getSegments();
+    }
+    return java.util.Collections.emptyList();
   }
 
   /**

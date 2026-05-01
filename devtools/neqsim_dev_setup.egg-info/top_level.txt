@@ -1,1 +1,2 @@
+neqsim_cli
 neqsim_dev_setup

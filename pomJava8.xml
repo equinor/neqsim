@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.7.0</revision>
+		<revision>3.9.1</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -297,7 +297,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.14.1</version>
+				<version>3.14.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>

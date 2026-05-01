@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -13,6 +15,24 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPFlashTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
+
+  /** Test double that forces the TPflash stability gate to fail. */
+  private static final class ThrowingStabilityTPflash extends TPflash {
+    /**
+     * Creates a TPflash test double for a thermodynamic system.
+     *
+     * @param system thermodynamic system used by the flash calculation
+     */
+    private ThrowingStabilityTPflash(SystemInterface system) {
+      super(system);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean stabilityCheck() {
+      throw new RuntimeException("synthetic stability failure");
+    }
+  }
 
   /**
    * @throws java.lang.Exception
@@ -317,5 +337,224 @@ class TPFlashTest {
 
     assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P="
         + pressure + " bara — stability analysis is inconsistent near boundary");
+  }
+
+  /**
+   * Regression test for the c91e99c TPflash post-convergence stability re-check that was reverted
+   * in PR #2112. That commit introduced speckled/noisy phase identification in the low-temperature
+   * region (110-200 K) of a methane/n-heptane binary with PR EOS and kij=0.05-0.06.
+   *
+   * <p>
+   * The test scans a 30x30 T,P grid over T in [110, 200] K and P in [50, 180] bara and counts how
+   * many grid cells are classified as 2-phase. The v3.7.0 baseline produces 592 two-phase cells;
+   * the c91e99c regression dropped this to 137. Any future change that drops this count below 500
+   * likely reintroduces a flash regression of the same family.
+   * </p>
+   */
+  @Test
+  void testMethaneHeptaneLowTemperatureGridParity() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(150.0, 100.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("n-heptane", 30.0);
+    fluid.setMixingRule("classic");
+    ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+        1, 0.06);
+    ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+        1, 0.06);
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    int nT = 30;
+    int nP = 30;
+    int twoPhaseCount = 0;
+    for (int iT = 0; iT < nT; iT++) {
+      double T = 110.0 + iT * (200.0 - 110.0) / (nT - 1);
+      for (int iP = 0; iP < nP; iP++) {
+        double P = 50.0 + iP * (180.0 - 50.0) / (nP - 1);
+        fluid.setTemperature(T, "K");
+        fluid.setPressure(P, "bara");
+        try {
+          ops.TPflash();
+          if (fluid.getNumberOfPhases() >= 2) {
+            twoPhaseCount++;
+          }
+        } catch (Exception ignored) {
+          // convergence failure counted as single-phase
+        }
+      }
+    }
+
+    // v3.7.0 baseline: 592/900. c91e99c regression dropped to 137/900.
+    // Require at least 500 to flag any future regression of the same family.
+    assertTrue(twoPhaseCount >= 500,
+        "Low-T methane/nC7 two-phase region shrank: " + twoPhaseCount + "/900 cells 2-phase "
+            + "(v3.7.0 baseline = 592). Possible TPflash stability regression.");
+  }
+
+  /**
+   * Regression test for speckled phase-map failures in the methane/n-heptane PR binary. The scan
+   * covers the gas-oil dome shoulder where the phase map previously showed isolated wrong cells. A
+   * failed spot is counted when a grid cell has a different phase signature than all four cardinal
+   * neighbors, and those neighbors agree with each other.
+   */
+  @Test
+  void testMethaneHeptanePhaseMapFailedSpotCountDoesNotIncrease() {
+    SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+
+    int temperaturePoints = 32;
+    int pressurePoints = 28;
+    int[][] phaseSignatures = new int[pressurePoints][temperaturePoints];
+    int failedFlashCount = 0;
+
+    for (int pressureIndex = 0; pressureIndex < pressurePoints; pressureIndex++) {
+      double pressure = 120.0 + pressureIndex * (230.0 - 120.0) / (pressurePoints - 1);
+      for (int temperatureIndex = 0; temperatureIndex < temperaturePoints; temperatureIndex++) {
+        double temperature = 360.0 + temperatureIndex * (470.0 - 360.0) / (temperaturePoints - 1);
+        fluid.setPressure(pressure, "bara");
+        fluid.setTemperature(temperature, "K");
+        try {
+          operations.TPflash();
+          phaseSignatures[pressureIndex][temperatureIndex] = phaseMapSignature(fluid);
+        } catch (Exception ex) {
+          failedFlashCount++;
+          phaseSignatures[pressureIndex][temperatureIndex] = -1;
+        }
+      }
+    }
+
+    int isolatedSpots = countIsolatedPhaseMapSpots(phaseSignatures);
+
+    assertEquals(0, failedFlashCount,
+        "TPflash should not throw while scanning the methane/nC7 phase-map shoulder");
+    assertEquals(0, isolatedSpots, "Phase-map failed spots increased: " + isolatedSpots
+        + " isolated cells in the methane/nC7 gas-oil shoulder grid");
+  }
+
+  /**
+   * Verifies the known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge
+   * to the lower-Gibbs gas-oil split from a cold start.
+   */
+  @Test
+  void testMethaneHeptaneKnownPhaseMapSpotsResolveToGasOil() {
+    double[][] spotConditions =
+        new double[][] {{78.5, 194.0}, {81.0, 194.0}, {186.0, 424.0}, {191.0, 418.0}};
+
+    for (int spotIndex = 0; spotIndex < spotConditions.length; spotIndex++) {
+      SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      fluid.setPressure(spotConditions[spotIndex][0], "bara");
+      fluid.setTemperature(spotConditions[spotIndex][1], "K");
+
+      operations.TPflash();
+
+      assertEquals(2, fluid.getNumberOfPhases(),
+          "Known methane/nC7 phase-map spot should resolve to two phases at P="
+              + spotConditions[spotIndex][0] + " bara, T=" + spotConditions[spotIndex][1] + " K");
+      assertTrue(fluid.hasPhaseType(PhaseType.GAS),
+          "Known methane/nC7 phase-map spot should contain a gas phase");
+      assertTrue(fluid.hasPhaseType(PhaseType.OIL),
+          "Known methane/nC7 phase-map spot should contain an oil phase");
+    }
+  }
+
+  /**
+   * Verifies that a failed stability check is no longer treated as a stable single-phase verdict.
+   * The flash should fall back to the ordinary iteration path and expose diagnostics describing the
+   * conservative fallback.
+   */
+  @Test
+  void testFailedStabilityCheckFallsBackToIteration() {
+    SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(423.15, 5.0);
+    gas.addComponent("nitrogen", 1.0);
+    gas.addComponent("CO2", 2.0);
+    gas.addComponent("methane", 80.0);
+    gas.addComponent("ethane", 6.0);
+    gas.addComponent("propane", 3.0);
+    gas.addComponent("i-butane", 1.5);
+    gas.addComponent("n-butane", 2.0);
+    gas.addComponent("i-pentane", 1.0);
+    gas.addComponent("n-pentane", 0.8);
+    gas.addComponent("n-hexane", 0.5);
+    gas.setMixingRule("classic");
+
+    ThrowingStabilityTPflash flash = new ThrowingStabilityTPflash(gas);
+    flash.run();
+
+    assertTrue(flash.hasLastStabilityAnalysisFailed(),
+        "Synthetic stability failure should be visible in TPflash diagnostics");
+    assertTrue(flash.getLastStabilityOutcome().contains("continuing TPflash iteration"),
+        "TPflash should report the conservative iteration fallback");
+    assertTrue(gas.getNumberOfPhases() >= 1, "Fallback iteration should leave a valid phase set");
+  }
+
+  /**
+   * Creates the methane/n-heptane PR system used for phase-map spot regression tests.
+   *
+   * @return configured methane/n-heptane PR thermodynamic system
+   */
+  private SystemInterface createMethaneHeptanePhaseMapFluid() {
+    double binaryInteractionParameter = 0.05;
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(400.0, 170.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("n-heptane", 30.0);
+    fluid.setMixingRule("classic");
+    ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0,
+        1, binaryInteractionParameter);
+    ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0,
+        1, binaryInteractionParameter);
+    fluid.setMultiPhaseCheck(true);
+    return fluid;
+  }
+
+  /**
+   * Creates a compact phase signature from phase count and phase types.
+   *
+   * @param fluid thermodynamic system after a flash calculation
+   * @return integer signature for comparing neighboring phase-map cells
+   */
+  private int phaseMapSignature(SystemInterface fluid) {
+    int signature = fluid.getNumberOfPhases() * 100;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      PhaseType phaseType = fluid.getPhase(phaseIndex).getType();
+      if (phaseType == PhaseType.GAS) {
+        signature += 1;
+      } else if (phaseType == PhaseType.OIL) {
+        signature += 2;
+      } else if (phaseType == PhaseType.LIQUID) {
+        signature += 4;
+      } else if (phaseType == PhaseType.AQUEOUS) {
+        signature += 8;
+      } else {
+        signature += 16;
+      }
+    }
+    return signature;
+  }
+
+  /**
+   * Counts isolated one-cell holes or islands in a phase-map signature grid.
+   *
+   * @param phaseSignatures pressure-major grid of phase signatures
+   * @return number of isolated phase-map spots
+   */
+  private int countIsolatedPhaseMapSpots(int[][] phaseSignatures) {
+    int isolatedSpots = 0;
+    for (int pressureIndex = 1; pressureIndex < phaseSignatures.length - 1; pressureIndex++) {
+      for (int temperatureIndex = 1; temperatureIndex < phaseSignatures[pressureIndex].length
+          - 1; temperatureIndex++) {
+        int center = phaseSignatures[pressureIndex][temperatureIndex];
+        int lowerPressure = phaseSignatures[pressureIndex - 1][temperatureIndex];
+        int higherPressure = phaseSignatures[pressureIndex + 1][temperatureIndex];
+        int lowerTemperature = phaseSignatures[pressureIndex][temperatureIndex - 1];
+        int higherTemperature = phaseSignatures[pressureIndex][temperatureIndex + 1];
+        if (center != lowerPressure && lowerPressure == higherPressure
+            && lowerPressure == lowerTemperature && lowerPressure == higherTemperature) {
+          isolatedSpots++;
+        }
+      }
+    }
+    return isolatedSpots;
   }
 }

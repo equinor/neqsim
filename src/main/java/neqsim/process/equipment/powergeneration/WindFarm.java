@@ -1,7 +1,5 @@
 package neqsim.process.equipment.powergeneration;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 
@@ -24,11 +22,11 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * <pre>{@code
  * WindFarm farm = new WindFarm("Dogger Bank", 100);
  * farm.setRatedPowerPerTurbine(15.0e6); // 15 MW
- * farm.setRotorDiameter(236.0);         // meters
- * farm.setHubHeight(135.0);             // meters
+ * farm.setRotorDiameter(236.0); // meters
+ * farm.setHubHeight(135.0); // meters
  * farm.setWindSpeed(10.5);
  * farm.run();
- * double totalPower = farm.getPower();  // Watts
+ * double totalPower = farm.getPower(); // Watts
  * }</pre>
  *
  * @author esol
@@ -193,8 +191,8 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     }
     // Hours per year * number of turbines * losses
     double hoursPerYear = 8760.0;
-    aep = aep * hoursPerYear * numberOfTurbines * (1.0 - wakeLossFactor)
-        * availabilityFactor * (1.0 - electricalLossFactor);
+    aep = aep * hoursPerYear * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
+        * (1.0 - electricalLossFactor);
     return aep;
   }
 
@@ -257,8 +255,8 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     double singlePower = calculateTurbinePower(windSpeed);
 
     // Apply farm-level losses
-    power = singlePower * numberOfTurbines * (1.0 - wakeLossFactor)
-        * availabilityFactor * (1.0 - electricalLossFactor);
+    power = singlePower * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
+        * (1.0 - electricalLossFactor);
 
     // Update capacity factor
     double totalRated = ratedPowerPerTurbine * numberOfTurbines;

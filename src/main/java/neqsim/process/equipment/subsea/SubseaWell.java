@@ -309,6 +309,7 @@ public class SubseaWell extends TwoPortEquipment {
   /**
    * Initialize mechanical design for this well.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new WellMechanicalDesign(this);
   }

@@ -256,7 +256,7 @@ regression.addRegressionParameter(RegressionParameter.VISCOSITY_PEDERSEN_ALPHA);
 
 // Custom bounds (optional)
 regression.addRegressionParameter(
-    RegressionParameter.BIP_METHANE_C7PLUS, 
+    RegressionParameter.BIP_METHANE_C7PLUS,
     0.0,    // lower bound
     0.15,   // upper bound
     0.05    // initial guess
@@ -373,7 +373,7 @@ System.out.println(eclipseContent);
 The exporter produces standard Eclipse keywords:
 
 - **PVTO** - Live oil PVT table (Rs, P, Bo, viscosity)
-- **PVTG** - Wet gas PVT table (Rv, P, Bg, viscosity)  
+- **PVTG** - Wet gas PVT table (Rv, P, Bg, viscosity)
 - **PVTW** - Water PVT properties
 - **DENSITY** - Stock tank densities (oil, water, gas)
 
@@ -442,7 +442,7 @@ String cceCSV = report.generateCCECSV();
 // DLE data
 String dleCSV = report.generateDLECSV();
 
-// CVD data  
+// CVD data
 String cvdCSV = report.generateCVDCSV();
 
 // Viscosity data
@@ -498,7 +498,7 @@ sepTest.addSeparatorStage(1.01325, 15.0, "Stock Tank");
 sepTest.run();
 
 // Optimize first stage pressure/temperature
-MultiStageSeparatorTest.OptimizationResult optResult = 
+MultiStageSeparatorTest.OptimizationResult optResult =
     sepTest.optimizeFirstStageSeparator(
         5.0, 80.0, 16,    // pressure: min, max, steps
         20.0, 60.0, 9     // temperature: min, max, steps
@@ -512,7 +512,7 @@ System.out.println("GOR at optimum: " + optResult.getGorAtOptimum() + " SmÂ³/SmÂ
 
 ## Complete Example
 
-See [PVTRegressionTest.java](../src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java) for working examples.
+See [PVTRegressionTest.java](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java) for working examples.
 
 ## Related Documentation
 

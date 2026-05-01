@@ -38,10 +38,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   double velocity = 1.0;
   double pipeWallRoughness = 1e-5;
 
-  /** Elevation at pipe inlet in meters. */
-  private double inletElevation = 0;
-  /** Elevation at pipe outlet in meters. */
-  private double outletElevation = 0;
   double dH = 0.0;
   String flowPattern = "unknown";
   String pipeSpecification = "AP02";
@@ -73,6 +69,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * @param nominalDiameter a double
    * @param pipeSec a {@link java.lang.String} object
    */
+  @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     pipeSpecification = pipeSec;
     insideDiameter = nominalDiameter / 1000.0;
@@ -91,6 +88,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @param temperature outlet temperature in Kelvin
    */
+  @Override
   public void setOutletTemperature(double temperature) {
     setTemperature = true;
     this.temperatureOut = temperature;
@@ -103,6 +101,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @param pressure outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     setPressureOut = true;
     this.pressureOut = pressure;
@@ -176,7 +175,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * <p>
    * calcFlow.
    * </p>
-   * 
+   *
    * <p>
    * Calculates the flow rate required to achieve the specified outlet pressure using bisection
    * iteration. This method iteratively adjusts the flow rate until the calculated outlet pressure
@@ -407,6 +406,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @return the length
    */
+  @Override
   public double getLength() {
     return length;
   }
@@ -418,6 +418,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @param length the length to set
    */
+  @Override
   public void setLength(double length) {
     this.length = length;
   }
@@ -429,6 +430,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @return the diameter
    */
+  @Override
   public double getDiameter() {
     return insideDiameter;
   }
@@ -440,6 +442,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @param diameter the diameter to set
    */
+  @Override
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
@@ -451,6 +454,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @return the pipeWallRoughness
    */
+  @Override
   public double getPipeWallRoughness() {
     return pipeWallRoughness;
   }
@@ -462,52 +466,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    *
    * @param pipeWallRoughness the pipeWallRoughness to set
    */
+  @Override
   public void setPipeWallRoughness(double pipeWallRoughness) {
     this.pipeWallRoughness = pipeWallRoughness;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>inletElevation</code>.
-   * </p>
-   *
-   * @return the inletElevation
-   */
-  public double getInletElevation() {
-    return inletElevation;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>inletElevation</code>.
-   * </p>
-   *
-   * @param inletElevation the inletElevation to set
-   */
-  public void setInletElevation(double inletElevation) {
-    this.inletElevation = inletElevation;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>outletElevation</code>.
-   * </p>
-   *
-   * @return the outletElevation
-   */
-  public double getOutletElevation() {
-    return outletElevation;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>outletElevation</code>.
-   * </p>
-   *
-   * @param outletElevation the outletElevation to set
-   */
-  public void setOutletElevation(double outletElevation) {
-    this.outletElevation = outletElevation;
   }
 
   /**

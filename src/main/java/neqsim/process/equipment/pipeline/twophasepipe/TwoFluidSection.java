@@ -179,7 +179,6 @@ public class TwoFluidSection extends PipeSection {
    * Default constructor.
    */
   public TwoFluidSection() {
-    super();
   }
 
   /**
@@ -1027,6 +1026,7 @@ public class TwoFluidSection extends PipeSection {
    *
    * @return Accumulated liquid volume (m³)
    */
+  @Override
   public double getAccumulatedLiquidVolume() {
     return accumulatedLiquidVolume;
   }
@@ -1036,6 +1036,7 @@ public class TwoFluidSection extends PipeSection {
    *
    * @param volume Accumulated liquid volume (m³)
    */
+  @Override
   public void setAccumulatedLiquidVolume(double volume) {
     this.accumulatedLiquidVolume = Math.max(0, volume);
   }

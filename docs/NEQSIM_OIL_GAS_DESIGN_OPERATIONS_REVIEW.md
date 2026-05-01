@@ -50,7 +50,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
   - Diffusion coefficients
   - Sound velocity
 
-**Code Example Location:** [src/main/java/neqsim/thermo/system](../src/main/java/neqsim/thermo/system)
+**Code Example Location:** [src/main/java/neqsim/thermo/system](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/system)
 
 ### 1.2 Process Equipment Library (Very Good)
 
@@ -75,8 +75,8 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - Auto-sizing capabilities for separators, compressors, pumps
 
 **Code Locations:**
-- Equipment: [src/main/java/neqsim/process/equipment](../src/main/java/neqsim/process/equipment)
-- Compressor charts: [src/main/java/neqsim/process/equipment/compressor](../src/main/java/neqsim/process/equipment/compressor)
+- Equipment: [src/main/java/neqsim/process/equipment](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment)
+- Compressor charts: [src/main/java/neqsim/process/equipment/compressor](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor)
 
 ### 1.3 Mechanical Design Framework (Very Good)
 
@@ -106,7 +106,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
   - Equinor TR1400-series for pipelines
   - Design factor overrides
 
-**Code Location:** [src/main/java/neqsim/process/mechanicaldesign](../src/main/java/neqsim/process/mechanicaldesign)
+**Code Location:** [src/main/java/neqsim/process/mechanicaldesign](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/mechanicaldesign)
 
 ### 1.4 Safety Systems (Very Good)
 
@@ -130,9 +130,9 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - Condition-based reliability
 
 **Code Locations:**
-- Safety: [src/main/java/neqsim/process/safety](../src/main/java/neqsim/process/safety)
-- Fire: [src/main/java/neqsim/process/util/fire](../src/main/java/neqsim/process/util/fire)
-- Risk: [src/main/java/neqsim/process/safety/risk](../src/main/java/neqsim/process/safety/risk)
+- Safety: [src/main/java/neqsim/process/safety](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety)
+- Fire: [src/main/java/neqsim/process/util/fire](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/fire)
+- Risk: [src/main/java/neqsim/process/safety/risk](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk)
 
 ### 1.5 Gas Quality & Standards (Very Good)
 
@@ -145,7 +145,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - **GERG-2004/2008:** Reference equation of state
 - **UK ICF SI:** UK gas quality specifications
 
-**Code Location:** [src/main/java/neqsim/standards/gasquality](../src/main/java/neqsim/standards/gasquality)
+**Code Location:** [src/main/java/neqsim/standards/gasquality](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/standards/gasquality)
 
 ### 1.6 ProcessSystem & Flowsheet Management (Very Good)
 
@@ -158,7 +158,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - JSON/reporting output
 - Measurement history tracking
 
-**Code Location:** [src/main/java/neqsim/process/processmodel](../src/main/java/neqsim/process/processmodel)
+**Code Location:** [src/main/java/neqsim/process/processmodel](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/processmodel)
 
 ---
 
@@ -202,7 +202,7 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 
 **Note:** Slug flow is well-handled via TwoFluidPipe + SlugTracker (see Pipeline section)
 
-**Code Location:** [src/main/java/neqsim/pvtsimulation/flowassurance](../src/main/java/neqsim/pvtsimulation/flowassurance)
+**Code Location:** [src/main/java/neqsim/pvtsimulation/flowassurance](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/pvtsimulation/flowassurance)
 
 ### 2.2 Pipeline & Multiphase Flow (Very Good)
 
@@ -242,7 +242,7 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 - ❌ No OPC-UA/OPC-DA connectors built-in
 - ❌ Limited tuning guidance
 
-**Code Location:** [src/main/java/neqsim/process/mpc](../src/main/java/neqsim/process/mpc)
+**Code Location:** [src/main/java/neqsim/process/mpc](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/mpc)
 
 ### 2.4 Field Development Tools (Good, Needs Enhancement)
 
@@ -266,7 +266,7 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 | **VFP Table Export**   | VFPPROD/VFPINJ for Eclipse coupling                       | ✓ Implemented |
 | **Tubing Performance** | Integration with PipeBeggsAndBrills for VLP               | ✓ Implemented |
 
-**Code Location:** [src/main/java/neqsim/process/equipment/reservoir/WellFlow.java](../src/main/java/neqsim/process/equipment/reservoir/WellFlow.java)
+**Code Location:** [src/main/java/neqsim/process/equipment/reservoir/WellFlow.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/reservoir/WellFlow.java)
 
 **Reservoir Coupling:**
 - VFP table generation for Eclipse 100/E300
@@ -275,13 +275,13 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 - Network deliverability constraints
 - Schedule keywords for time-varying constraints
 
-**Code Location:** [src/main/java/neqsim/process/fielddevelopment/reservoir/ReservoirCouplingExporter.java](../src/main/java/neqsim/process/fielddevelopment/reservoir/ReservoirCouplingExporter.java)
+**Code Location:** [src/main/java/neqsim/process/fielddevelopment/reservoir/ReservoirCouplingExporter.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/fielddevelopment/reservoir/ReservoirCouplingExporter.java)
 
 **Limitations:**
 - ⚠️ No internal decline curve analysis (use external reservoir models)
 - ⚠️ No offshore logistics/marine operations
 
-**Code Location:** [src/main/java/neqsim/process/fielddevelopment](../src/main/java/neqsim/process/fielddevelopment)
+**Code Location:** [src/main/java/neqsim/process/fielddevelopment](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/fielddevelopment)
 
 ---
 
@@ -316,16 +316,16 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 
 | Driver Type        | Class                                                                                                       | Capabilities                                                             |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Gas Turbine**    | [GasTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/GasTurbineDriver.java)       | Ambient derating (temp/altitude), part-load efficiency, fuel consumption |
-| **Electric Motor** | [ElectricMotorDriver](../src/main/java/neqsim/process/equipment/compressor/driver/ElectricMotorDriver.java) | VFD speed control, efficiency curves, power factor                       |
-| **Steam Turbine**  | [SteamTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/SteamTurbineDriver.java)   | Extraction/condensing, steam rate curves                                 |
+| **Gas Turbine**    | [GasTurbineDriver](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/driver/GasTurbineDriver.java)       | Ambient derating (temp/altitude), part-load efficiency, fuel consumption |
+| **Electric Motor** | [ElectricMotorDriver](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/driver/ElectricMotorDriver.java) | VFD speed control, efficiency curves, power factor                       |
+| **Steam Turbine**  | [SteamTurbineDriver](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/driver/SteamTurbineDriver.java)   | Extraction/condensing, steam rate curves                                 |
 
 **Condition Monitoring (Implemented):**
 
 | Feature                | Class                                                                                                               | Description                                    |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| **Vibration Analysis** | [FlowInducedVibrationAnalyser](../src/main/java/neqsim/process/measurementdevice/FlowInducedVibrationAnalyser.java) | LOF/FRMS methods, support arrangement modeling |
-| **Health Monitoring**  | [ConditionBasedReliability](../src/main/java/neqsim/process/safety/risk/condition/ConditionBasedReliability.java)   | Multi-indicator health index, RUL estimation   |
+| **Vibration Analysis** | [FlowInducedVibrationAnalyser](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/measurementdevice/FlowInducedVibrationAnalyser.java) | LOF/FRMS methods, support arrangement modeling |
+| **Health Monitoring**  | [ConditionBasedReliability](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk/condition/ConditionBasedReliability.java)   | Multi-indicator health index, RUL estimation   |
 | **Degradation Models** | `DegradationModel` enum                                                                                             | Linear, Exponential, Weibull, ML-based         |
 
 **Condition Indicators Supported:**
@@ -349,11 +349,11 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 
 | System           | Class/Package                                                                               | Capabilities                                                                | Status |
 | ---------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------ |
-| **Flare Stack**  | [FlareStack](../src/main/java/neqsim/process/equipment/flare/FlareStack.java)               | Radiation modeling (Point Source, Chamberlain), tip backpressure, emissions | ★★★★☆  |
-| **Flare**        | [Flare](../src/main/java/neqsim/process/equipment/flare/Flare.java)                         | Basic flare equipment, mass balance                                         | ★★★☆☆  |
-| **Gas Turbine**  | [GasTurbine](../src/main/java/neqsim/process/equipment/powergeneration/GasTurbine.java)     | Power generation, fuel consumption, emissions                               | ★★★★☆  |
-| **Fuel Cell**    | [FuelCell](../src/main/java/neqsim/process/equipment/powergeneration/FuelCell.java)         | Hydrogen/natural gas fuel cells                                             | ★★★☆☆  |
-| **Electrolyzer** | [Electrolyzer](../src/main/java/neqsim/process/equipment/powergeneration/Electrolyzer.java) | Water electrolysis for H2 production                                        | ★★★☆☆  |
+| **Flare Stack**  | [FlareStack](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/flare/FlareStack.java)               | Radiation modeling (Point Source, Chamberlain), tip backpressure, emissions | ★★★★☆  |
+| **Flare**        | [Flare](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/flare/Flare.java)                         | Basic flare equipment, mass balance                                         | ★★★☆☆  |
+| **Gas Turbine**  | [GasTurbine](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/powergeneration/GasTurbine.java)     | Power generation, fuel consumption, emissions                               | ★★★★☆  |
+| **Fuel Cell**    | [FuelCell](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/powergeneration/FuelCell.java)         | Hydrogen/natural gas fuel cells                                             | ★★★☆☆  |
+| **Electrolyzer** | [Electrolyzer](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/powergeneration/Electrolyzer.java) | Water electrolysis for H2 production                                        | ★★★☆☆  |
 | **Solar/Wind**   | `powergeneration` package                                                                   | Basic renewable energy models                                               | ★★☆☆☆  |
 
 **Flare System Capabilities:**
@@ -364,7 +364,7 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 - **Air/Steam Assist:** Optional assisted flaring
 - **Atmospheric Effects:** Wind tilt, transmissivity
 
-**Code Location:** [src/main/java/neqsim/process/equipment/flare](../src/main/java/neqsim/process/equipment/flare)
+**Code Location:** [src/main/java/neqsim/process/equipment/flare](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/flare)
 
 **Partially Implemented:**
 - ⚠️ Flare header hydraulics (use PipeBeggsAndBrills for piping)
@@ -426,7 +426,7 @@ calculator.setMixtureDensity(rhoMix);
 double erosionalVelocity = calculator.calculateErosionalVelocity();
 ```
 
-**Code Location:** [src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java](../src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java)
+**Code Location:** [src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java)
 
 ### 4.2 Medium Priority (Enhances Capability)
 
@@ -648,9 +648,9 @@ neqsim/
 ### Looped Pipeline Network Solver
 
 **Classes:**
-- [LoopedPipeNetwork](../src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java) - Main network class with Hardy Cross solver
-- [LoopDetector](../src/main/java/neqsim/process/equipment/network/LoopDetector.java) - DFS spanning tree loop detection
-- [NetworkLoop](../src/main/java/neqsim/process/equipment/network/NetworkLoop.java) - Loop representation
+- [LoopedPipeNetwork](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java) - Main network class with Hardy Cross solver
+- [LoopDetector](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/LoopDetector.java) - DFS spanning tree loop detection
+- [NetworkLoop](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/NetworkLoop.java) - Loop representation
 
 **Key Features:**
 - Automatic loop detection using graph theory
@@ -676,31 +676,31 @@ network.run();
 ### Compressor Driver Framework
 
 **Classes:**
-- [GasTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/GasTurbineDriver.java)
-- [ElectricMotorDriver](../src/main/java/neqsim/process/equipment/compressor/driver/ElectricMotorDriver.java)
-- [SteamTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/SteamTurbineDriver.java)
+- [GasTurbineDriver](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/driver/GasTurbineDriver.java)
+- [ElectricMotorDriver](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/driver/ElectricMotorDriver.java)
+- [SteamTurbineDriver](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/compressor/driver/SteamTurbineDriver.java)
 
 ### Condition-Based Reliability
 
-**Class:** [ConditionBasedReliability](../src/main/java/neqsim/process/safety/risk/condition/ConditionBasedReliability.java)
+**Class:** [ConditionBasedReliability](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk/condition/ConditionBasedReliability.java)
 
 **Indicator Types:** VIBRATION, TEMPERATURE, PRESSURE, FLOW, CURRENT, WEAR, CORROSION, EFFICIENCY, ACOUSTIC, OIL_ANALYSIS
 
 ### Flow-Induced Vibration Analysis
 
-**Class:** [FlowInducedVibrationAnalyser](../src/main/java/neqsim/process/measurementdevice/FlowInducedVibrationAnalyser.java)
+**Class:** [FlowInducedVibrationAnalyser](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/measurementdevice/FlowInducedVibrationAnalyser.java)
 
 **Methods:** LOF (Likelihood of Failure), FRMS (Fatigue Reduced Modulus of Safety)
 
 ### Reservoir Coupling
 
-**Class:** [ReservoirCouplingExporter](../src/main/java/neqsim/process/fielddevelopment/reservoir/ReservoirCouplingExporter.java)
+**Class:** [ReservoirCouplingExporter](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/fielddevelopment/reservoir/ReservoirCouplingExporter.java)
 
 **Export Formats:** Eclipse 100, E300 Compositional, Intersect, CSV
 
 ### Well Performance (IPR)
 
-**Class:** [WellFlow](../src/main/java/neqsim/process/equipment/reservoir/WellFlow.java)
+**Class:** [WellFlow](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/reservoir/WellFlow.java)
 
 **IPR Models:** PRODUCTION_INDEX, VOGEL, FETKOVICH, BACKPRESSURE, TABLE
 

@@ -466,6 +466,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @return equivalent length in meters
    */
+  @Override
   public double getEquivalentLength() {
     double diameter = getDiameter();
     double leq = getLength();
@@ -566,6 +567,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @return insulation thickness in meters
    */
+  @Override
   public double getInsulationThickness() {
     return insulationThickness;
   }
@@ -575,6 +577,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @param insulationThickness insulation thickness in meters
    */
+  @Override
   public void setInsulationThickness(double insulationThickness) {
     this.insulationThickness = insulationThickness;
   }
@@ -890,6 +893,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @return ambient temperature in Celsius
    */
+  @Override
   public double getAmbientTemperature() {
     return ambientTemperature;
   }
@@ -899,6 +903,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @param ambientTemperature ambient temperature in Celsius
    */
+  @Override
   public void setAmbientTemperature(double ambientTemperature) {
     this.ambientTemperature = ambientTemperature;
   }

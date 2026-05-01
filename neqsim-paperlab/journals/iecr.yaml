@@ -57,6 +57,9 @@ page_size: "US_Letter"  # 8.5 x 11 inches (NOT A4)
 toc_graphic_required: true  # Table of Contents graphic is MANDATORY
 toc_graphic_size: "3.25 x 1.75 inches"
 highlights_required: false
+highlights_min: null
+highlights_max: null
+highlights_max_chars_each: null
 graphical_abstract_required: false  # TOC graphic serves this purpose
 cover_letter_required: false  # Not explicitly required
 conflict_of_interest_required: true

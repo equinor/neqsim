@@ -137,6 +137,9 @@ When extending for new equipment:
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+- Cost estimation: See `neqsim-equipment-cost-estimation` skill for Class-3/4 CAPEX (Turton/Peters/Ulrich correlations, CEPCI escalation, material/pressure factors)
+- Subsea & wells: See `neqsim-subsea-and-wells` skill for well casing design (API 5C3) and SURF cost
+- Standards: See `neqsim-standards-lookup` skill for equipment-to-standards mapping
 
 ## Code Verification for Documentation
 When producing code that will appear in documentation or examples, write a JUnit test

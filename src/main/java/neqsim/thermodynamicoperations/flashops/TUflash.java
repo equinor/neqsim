@@ -92,6 +92,7 @@ public class TUflash extends QfuncFlash {
    *
    * @return converged pressure in bar
    */
+  @Override
   public double solveQ() {
     double oldPres = system.getPressure();
     double nyPres = system.getPressure();
@@ -141,7 +142,7 @@ public class TUflash extends QfuncFlash {
       }
 
       // Newton step with damping
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
       double deltaP = -factor * dU / dUdP;
 
       // Limit step size
@@ -174,8 +175,19 @@ public class TUflash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer TU-flash loop — safe because
+    // the outer loop converges on P via internal-energy residual.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

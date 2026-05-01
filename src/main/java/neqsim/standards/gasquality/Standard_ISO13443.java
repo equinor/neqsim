@@ -1,6 +1,5 @@
 package neqsim.standards.gasquality;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**

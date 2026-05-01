@@ -34,7 +34,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * SystemInterface fluid = new SystemSrkEos(373.15, 200.0);

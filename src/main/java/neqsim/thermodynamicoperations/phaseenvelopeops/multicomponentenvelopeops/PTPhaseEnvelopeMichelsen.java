@@ -20,7 +20,9 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -121,6 +123,9 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private double[] bubEnthalpyArray = new double[0];
   private double[] bubDensityArray = new double[0];
   private double[] bubEntropyArray = new double[0];
+
+  /** Structured per-branch view of the envelope (built after run). */
+  private List<EnvelopeSegment> segments = Collections.emptyList();
 
   // --- Critical point and characteristic points ---
   private double[] cricondenTherm = new double[3];
@@ -231,6 +236,12 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
         bubblePointFirst = !bubblePointFirst;
         isDewPhase = false;
         kValuesDivergedAfterCP = false;
+
+        // Insert NaN "break" markers so plotters do not draw a straight line
+        // from the last first-pass point to the first second-pass point
+        // (the two passes cover disjoint parts of the envelope and must be
+        // rendered as separate polylines).
+        addBranchBreak();
 
         // Reset K-values using Wilson correlation
         resetKValuesWithWilson();
@@ -351,6 +362,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
             nonLinSolver.calcCrit();
             criticalPoints.add(new double[] {system.getTC(), system.getPC()});
             kValuesDivergedAfterCP = false;
+            addBranchBreak();
           }
         } else {
           // Track K-value divergence after CP: K-values must move significantly
@@ -373,6 +385,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
               nonLinSolver.calcCrit();
               criticalPoints.add(new double[] {system.getTC(), system.getPC()});
               kValuesDivergedAfterCP = false;
+              addBranchBreak();
             }
           }
         }
@@ -881,7 +894,27 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   }
 
   /**
-   * Convert all ArrayList results to primitive arrays for efficient access via get().
+   * Insert a NaN sentinel into every per-point list so that plotting libraries render the dew and
+   * bubble curves as disjoint polylines across branch transitions (primary-to-restart pass and
+   * critical-point crossings). Without this break plotters draw a spurious straight line across
+   * the two-phase region.
+   */
+  private void addBranchBreak() {
+    dewPointTemperatures.add(Double.NaN);
+    dewPointPressures.add(Double.NaN);
+    dewPointEnthalpies.add(Double.NaN);
+    dewPointDensities.add(Double.NaN);
+    dewPointEntropies.add(Double.NaN);
+    bubblePointTemperatures.add(Double.NaN);
+    bubblePointPressures.add(Double.NaN);
+    bubblePointEnthalpies.add(Double.NaN);
+    bubblePointDensities.add(Double.NaN);
+    bubblePointEntropies.add(Double.NaN);
+  }
+
+  /**
+   * Convert all ArrayList results to primitive arrays for efficient access via get(), and build
+   * the structured per-branch segment list.
    */
   private void buildOutputArrays() {
     dewTempArray = toDoubleArray(dewPointTemperatures);
@@ -895,6 +928,64 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     bubEnthalpyArray = toDoubleArray(bubblePointEnthalpies);
     bubDensityArray = toDoubleArray(bubblePointDensities);
     bubEntropyArray = toDoubleArray(bubblePointEntropies);
+
+    segments = buildSegments();
+  }
+
+  /**
+   * Split the NaN-delimited per-point arrays into contiguous branch segments.
+   *
+   * @return unmodifiable list of dew and bubble segments in the order they were traced
+   */
+  private List<EnvelopeSegment> buildSegments() {
+    ArrayList<EnvelopeSegment> out = new ArrayList<EnvelopeSegment>();
+    extractSegmentsInto(out, EnvelopeSegment.PhaseType.DEW, dewTempArray, dewPresArray,
+        dewEnthalpyArray, dewDensityArray, dewEntropyArray);
+    extractSegmentsInto(out, EnvelopeSegment.PhaseType.BUBBLE, bubTempArray, bubPresArray,
+        bubEnthalpyArray, bubDensityArray, bubEntropyArray);
+    return Collections.unmodifiableList(out);
+  }
+
+  /**
+   * Append every contiguous non-NaN run of a flat branch array as a segment.
+   *
+   * @param out list to append to
+   * @param type phase type for the segments being extracted
+   * @param T temperatures (possibly containing NaN break sentinels)
+   * @param P pressures, same length as T
+   * @param H mass enthalpies, same length as T
+   * @param D mass densities, same length as T
+   * @param S mass entropies, same length as T
+   */
+  private static void extractSegmentsInto(ArrayList<EnvelopeSegment> out,
+      EnvelopeSegment.PhaseType type, double[] T, double[] P, double[] H, double[] D, double[] S) {
+    int i = 0;
+    int n = T.length;
+    while (i < n) {
+      // skip leading NaN sentinels
+      while (i < n && Double.isNaN(T[i])) {
+        i++;
+      }
+      int start = i;
+      while (i < n && !Double.isNaN(T[i])) {
+        i++;
+      }
+      int len = i - start;
+      if (len <= 0) {
+        continue;
+      }
+      double[] segT = new double[len];
+      double[] segP = new double[len];
+      double[] segH = new double[len];
+      double[] segD = new double[len];
+      double[] segS = new double[len];
+      System.arraycopy(T, start, segT, 0, len);
+      System.arraycopy(P, start, segP, 0, len);
+      System.arraycopy(H, start, segH, 0, len);
+      System.arraycopy(D, start, segD, 0, len);
+      System.arraycopy(S, start, segS, 0, len);
+      out.add(new EnvelopeSegment(type, segT, segP, segH, segD, segS));
+    }
   }
 
   /**
@@ -1131,6 +1222,27 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   @Override
   public double[][] getPoints(int i) {
     return new double[][] {dewTempArray, dewPresArray, bubTempArray, bubPresArray};
+  }
+
+  /**
+   * Return the envelope as a list of contiguous branch segments.
+   *
+   * <p>
+   * Preferred over the flat {@link #get(String)} arrays for plotting, machine-readable export, and
+   * any code that needs to reason about individual dew / bubble branches. Each segment is a
+   * polyline with uniform phase type (dew or bubble) and never contains NaN.
+   * </p>
+   *
+   * <p>
+   * The flat arrays returned by {@code get("dewT")}, {@code get("dewP")}, etc. remain available for
+   * backward compatibility and use NaN sentinels as branch-break markers.
+   * </p>
+   *
+   * @return unmodifiable list of segments (possibly empty if the envelope trace produced no
+   *         points)
+   */
+  public List<EnvelopeSegment> getSegments() {
+    return segments;
   }
 
   /** {@inheritDoc} */

@@ -11,6 +11,8 @@ Run with::
 """
 
 import json
+import os
+import sys
 
 try:
     from neqsim_runner.job_helpers import get_args, save_result
@@ -25,15 +27,25 @@ def main():
     temp_c = args.get("temperature_C", 25.0)
     pressure = args.get("pressure_bara", 60.0)
 
-    from neqsim import jneqsim
+    runtime_ns = globals().get("ns")
+    if runtime_ns is None:
+        project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+        if not project_root:
+            raise RuntimeError(
+                "Run this example through NeqSim Runner from the repository or set NEQSIM_PROJECT_ROOT."
+            )
+        sys.path.insert(0, os.path.join(project_root, "devtools"))
+        from neqsim_dev_setup import neqsim_init, neqsim_classes
+        runtime_ns = neqsim_classes(
+            neqsim_init(project_root=project_root, recompile=False, verbose=True))
 
-    fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + temp_c, pressure)
+    fluid = runtime_ns.SystemSrkEos(273.15 + temp_c, pressure)
     fluid.addComponent("methane", 0.85)
     fluid.addComponent("ethane", 0.10)
     fluid.addComponent("propane", 0.05)
     fluid.setMixingRule("classic")
 
-    ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+    ops = runtime_ns.ThermodynamicOperations(fluid)
     ops.TPflash()
     fluid.initProperties()
 

@@ -1,0 +1,4 @@
+temperature_C,pressure_psi,response,standardDeviation,reference,description
+25.0,14.5037738,5.0,0.1,synthetic,row one
+50.0,29.0075476,7.5,0.1,synthetic,row two
+75.0,43.5113214,10.0,0.1,synthetic,row three

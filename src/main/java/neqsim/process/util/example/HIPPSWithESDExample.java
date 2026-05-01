@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Example demonstrating HIPPS (High Integrity Pressure Protection System) with ESD escalation.
- * 
+ *
  * <p>
  * This example shows a layered safety approach:
  * <ol>
@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>ESD activates at 98% MAOP as backup if HIPPS fails</li>
  * <li>If HIPPS trips but pressure remains high, escalation to ESD occurs after 5 seconds</li>
  * </ol>
- * 
+ *
  * <p>
  * Key safety features demonstrated:
  * <ul>

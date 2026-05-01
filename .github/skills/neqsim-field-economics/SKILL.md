@@ -1,6 +1,7 @@
 ---
 name: neqsim-field-economics
 description: "Oil & gas field economics, NPV, IRR, cash flow, and fiscal regime modeling with NeqSim. USE WHEN: calculating project economics (NPV, IRR, payback), evaluating tax regimes (Norwegian NCS, UK, generic), building cost estimates (CAPEX/OPEX), or running Monte Carlo sensitivity analysis on economic outcomes."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim Field Economics Skill

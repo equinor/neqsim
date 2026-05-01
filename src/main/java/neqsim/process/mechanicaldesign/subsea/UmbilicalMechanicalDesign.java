@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -228,6 +227,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the umbilical.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -273,6 +273,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();

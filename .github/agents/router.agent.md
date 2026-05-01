@@ -41,6 +41,54 @@ Analyze the request and match it to one or more agents:
 | Reactor, reaction, equilibrium, kinetic, CSTR, PFR, catalyst | `@reaction.engineering` | `@thermo.fluid` for reaction chemistry |
 | UniSim, HYSYS, .usc file, convert simulation | `@unisim.reader` | `@process.model` for NeqSim model build |
 | Control system, PID, controller tuning, dynamic, transient | `@control.system` | `@process.model` for base simulation |
+| Optimization, minimize, maximize, "best", trade-off, Pareto, DoE, sensitivity, Monte Carlo, P10/P50/P90, tornado, SQP, Nelder-Mead, particle swarm, parameter sweep, debottleneck | `@optimize` | `@process.model` to build the flowsheet first; `@solve.task` to wrap into report |
+| Literature search, find papers, fetch standards, retrieve internal docs (STID, vendor data sheets), build references manifest | `@literature.scout` | feeds notes.md and references/ inside the task folder; pairs with `@capability.scout` and `@solve.task` |
+| Review my task, audit results.json, is this ready to merge, quality-gate a task folder | `@review` | wraps validate_task_results.py + consistency_checker.py + figure-traceability check |
+
+## Disambiguating "Solve / Build / Extract" Agents
+
+These five agents have overlapping vocabularies. Apply the decision tree **in order**:
+
+### Step 1 — Is the input a **document** (text, table, PFD, P&ID, datasheet)?
+→ **`@extract.process`** — converts unstructured engineering text into NeqSim
+JSON / `ProcessModule` builder format. Output: a runnable model + extraction report.
+Hand off to `@process.model` afterwards if simulation is needed.
+
+### Step 2 — Is the deliverable a **formal report** (executive summary,
+risk register, uncertainty analysis, references, traceability to results.json)?
+→ **`@solve.task`** — runs the full 3-step `task_solve/YYYY-MM-DD_slug/`
+workflow with benchmark validation and the consistency checker. Use this for
+FEED memos, design basis, regulatory submissions, audited deliverables.
+Loads `neqsim-professional-reporting` skill.
+
+### Step 3 — Is the deliverable a **field-level study** with NPV, concept
+selection, life-of-field production profile, fiscal regime, or multi-discipline
+trade-off?
+→ **`@field.development`** — invokes `solve.task` internally for the report
+shell but adds `neqsim-field-economics`, `neqsim-subsea-and-wells`,
+`neqsim-field-development` skills. Use this when the question is "should we
+develop this field, and how?"
+
+### Step 4 — Is the request a **quick simulation / notebook** ("show me a
+notebook that runs", "demonstrate", "example") with no formal report needed?
+→ **`@solve.process`** — fast path: build the flowsheet, run it, hand back a
+working notebook. No risk register, no uncertainty disclosure, no consistency
+checker.
+
+### Step 5 — Default: **build a process model** without a report wrapper.
+→ **`@process.model`** — pure process engineering: pick equipment, configure
+streams, run, return numbers. Used as the upstream stage for many composite
+pipelines (e.g. process → mechanical, process → safety, process → plant.data).
+
+### Mnemonic
+
+```
+document?            → extract.process
+formal report?       → solve.task
+field-level study?   → field.development
+quick notebook?      → solve.process
+just build & run?    → process.model
+```
 
 ## Multi-Agent Composition Rules
 

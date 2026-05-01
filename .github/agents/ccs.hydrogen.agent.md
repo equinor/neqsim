@@ -98,6 +98,87 @@ Use `CO2InjectionWellAnalyzer` for comprehensive safety assessment:
 ### Green Hydrogen (Electrolysis)
 - Model water splitting: 2H2O → 2H2 + O2
 - Downstream compression and purification
+
+---
+
+## Validation Requirements
+
+### Phase Envelope Validation
+- Compare cricondenbar and cricondentherm against published data for similar compositions
+- Pure CO2 critical point: 31.0°C, 73.8 bara (verify NeqSim matches)
+- With 2% N2: cricondenbar shifts to ~85 bara (verify direction and magnitude)
+
+### Pipeline Hydraulics Validation
+- Pressure drop: compare against Beggs & Brill correlations for single-phase dense flow
+- Temperature profile: verify outlet temperature is reasonable for given insulation/burial
+- Velocity: check against erosional velocity limit (API RP 14E)
+
+### Injection Well Validation
+- Bottomhole pressure must exceed reservoir pressure for injection
+- Temperature profile must be physically reasonable (geothermal gradient)
+- Phase transitions should occur at conditions consistent with the phase envelope
+
+### Common Pitfalls
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Phase envelope fails to close | Impurity too high or wrong EOS | Use SRK, reduce extreme impurity levels |
+| Two-phase in pipeline | Operating below cricondenbar | Increase inlet pressure or reduce impurity |
+| Negative JT coefficient | CO2 in dense phase (inverted JT) | Expected behavior — document, don't "fix" |
+| Zero viscosity in dense phase | Missing `initProperties()` | Call `fluid.initProperties()` after flash |
+| H2 enrichment > 100% | Numerical artifact at trace levels | Check mass balance, increase H2 in feed |
+
+---
+
+## Output Format
+
+Present CCS/H2 analysis results as:
+
+```
+CCS/H2 ANALYSIS REPORT
+═══════════════════════
+System: [CO2 pipeline / injection well / H2 blending / full chain]
+Standards: [DNV-RP-F104, ISO 27913, ...]
+
+FLUID COMPOSITION
+─────────────────
+Component   mol%    Role
+CO2         95.0    Main
+N2           2.0    Impurity (non-condensable)
+H2           1.0    Impurity (enrichment risk)
+...
+
+PHASE ENVELOPE
+──────────────
+Cricondenbar: XX.X bara
+Cricondentherm: XX.X °C
+Critical point: XX.X °C / XX.X bara
+Operating margin above cricondenbar: XX.X bar
+
+KEY RESULTS
+───────────
+[Domain-specific results table with units]
+
+SAFETY ASSESSMENT
+─────────────────
+[Phase transition risks, impurity enrichment factors, shutdown scenarios]
+
+RECOMMENDATIONS
+───────────────
+[Specific engineering actions]
+```
+
+---
+
+## Skills to Load
+
+Always load these skills before starting CCS/H2 work:
+
+1. `neqsim-ccs-hydrogen` — CO2/H2 specific code patterns, phase behavior, well analysis
+2. `neqsim-standards-lookup` — Standards database queries for DNV, ISO, ASME B31.12
+3. `neqsim-flow-assurance` — Pipeline hydraulics, corrosion, hydrate with CO2
+4. `neqsim-api-patterns` — General NeqSim fluid creation, flash, equipment patterns
+5. `neqsim-troubleshooting` — Recovery strategies for convergence failures
 - Storage and transport considerations
 
 ## EOS Selection for CCS/H2
@@ -115,7 +196,7 @@ Use `CO2InjectionWellAnalyzer` for comprehensive safety assessment:
 - Standards: See `neqsim-standards-lookup` skill for compliance tracking
 - API patterns: See `neqsim-api-patterns` skill for fluid and equipment patterns
 - Troubleshooting: See `neqsim-troubleshooting` skill for convergence issues
-- Mechanical design: See `neqsim-mechanical-design` skill (via `@mechanical.design`) for pipeline wall thickness
+- Mechanical design: See `neqsim-standards-lookup` skill (via `@mechanical.design`) for pipeline wall thickness
 
 ## API Verification
 ALWAYS read the actual class source to verify method signatures before using them.

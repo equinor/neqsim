@@ -495,9 +495,5 @@ for plant-wide equipment identification.
 
 ## See Also
 
-- [DEXPI Export](../process/dexpi-export.md) — How to export process models to
-  DEXPI XML with IEC 81346 attributes
-- [ProcessAutomation API](../process/automation-api.md) — String-addressable
-  variable access including IEC 81346 addresses
-- [Equipment Types](../process/equipment-types.md) — NeqSim equipment type
-  classification
+- [Process Equipment Documentation](../process/README.md) — NeqSim process equipment overview
+- [Equipment Design Parameters](../process/EQUIPMENT_DESIGN_PARAMETERS.md) — Equipment design and sizing parameters

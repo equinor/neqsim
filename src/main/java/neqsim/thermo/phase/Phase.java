@@ -27,14 +27,19 @@ import neqsim.util.exception.InvalidInputException;
  * Abstract Phase class. All Phase classes shall subclass this class.
  *
  * <p>
- * From wiki: A phase is a region of a space (a thermodynamic system), in neqsim named a
- * SystemInterface, throughout which all physical properties of a material are essentially uniform.
+ * From wiki: A phase is a region of a space (a thermodynamic system), in neqsim
+ * named a
+ * SystemInterface, throughout which all physical properties of a material are
+ * essentially uniform.
  * A SystemInterface can contain a single or multiple PhaseInterface objects.
  *
- * See PhaseType for the types of Phases that NeqSim is aware of. See also StateOfMatter.
+ * See PhaseType for the types of Phases that NeqSim is aware of. See also
+ * StateOfMatter.
  *
- * In NeqSim, there are multiple Phase classes, each representing a specific set of Equations Of
- * State. Phases have corresponding Component classes and System classes to ensure same EoS is used
+ * In NeqSim, there are multiple Phase classes, each representing a specific set
+ * of Equations Of
+ * State. Phases have corresponding Component classes and System classes to
+ * ensure same EoS is used
  * throughout.
  * </p>
  *
@@ -47,7 +52,8 @@ public abstract class Phase implements PhaseInterface {
   static Logger logger = LogManager.getLogger(Phase.class);
 
   /**
-   * Inverse of water molality (1/55.51 mol/kg). Used for converting activity coefficients from mole
+   * Inverse of water molality (1/55.51 mol/kg). Used for converting activity
+   * coefficients from mole
    * fraction scale to molality scale: γ_m = γ_x * x_w / 55.51
    */
   private static final double INV_WATER_MOLALITY = 1.0 / 55.51;
@@ -74,13 +80,15 @@ public abstract class Phase implements PhaseInterface {
 
   /**
    * Mole fraction of this phase of system.
-   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB! numberOfMolesInSystem is
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB!
+   * numberOfMolesInSystem is
    * not known to the phase.
    */
   double beta = 1.0;
 
   /**
-   * Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
+   * Number of moles in phase.
+   * <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
    * numberOfMolesInSystem is not known to the phase.
    */
   public double numberOfMolesInPhase = 0;
@@ -109,7 +117,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized Phase clone() {
+  public Phase clone() {
     Phase clonedPhase = null;
 
     try {
@@ -139,8 +147,8 @@ public abstract class Phase implements PhaseInterface {
    * NB! Does not actually add component to componentarray.
    * </p>
    *
-   * @param name Name of component to add.
-   * @param moles Number of moles of component to add to phase.
+   * @param name       Name of component to add.
+   * @param moles      Number of moles of component to add to phase.
    * @param compNumber component number in fluid
    */
   public void addComponent(String name, double moles, int compNumber) {
@@ -242,7 +250,8 @@ public abstract class Phase implements PhaseInterface {
       String msg = "will lead to negative number of moles in phase." + newPhaseMoles;
       /*
        * neqsim.util.exception.InvalidInputException ex = new
-       * neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+       * neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn",
+       * msg);
        */
       logger.debug(msg);
       dn = -numberOfMolesInPhase;
@@ -350,8 +359,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getTemperature(String unit) {
-    neqsim.util.unit.TemperatureUnit tempConversion =
-        new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
+    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
     return tempConversion.getValue(unit);
   }
 
@@ -364,8 +372,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public final double getPressure(String unit) {
-    neqsim.util.unit.PressureUnit presConversion =
-        new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
     return presConversion.getValue(unit);
   }
 
@@ -586,11 +593,11 @@ public abstract class Phase implements PhaseInterface {
    * calcA.
    * </p>
    *
-   * @param comp a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param comp        a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
@@ -1056,11 +1063,13 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Calculates the heat capacity at constant pressure (Cp) in the specified units. {@inheritDoc}
+   * Calculates the heat capacity at constant pressure (Cp) in the specified
+   * units. {@inheritDoc}
    */
   @Override
   public double getCp(String unit) {
-    // The reference heat capacity (refCp) is the total heat capacity for the phase in J/K.
+    // The reference heat capacity (refCp) is the total heat capacity for the phase
+    // in J/K.
     double refCp = getCp();
 
     switch (unit) {
@@ -1068,7 +1077,8 @@ public abstract class Phase implements PhaseInterface {
         // No conversion needed as the base unit is J/K.
         return refCp;
       case "J/molK":
-        // To get molar heat capacity, divide the total heat capacity by the number of moles.
+        // To get molar heat capacity, divide the total heat capacity by the number of
+        // moles.
         if (getNumberOfMolesInPhase() == 0) {
           throw new ArithmeticException(
               "Number of moles in phase cannot be zero for J/molK conversion.");
@@ -1081,7 +1091,8 @@ public abstract class Phase implements PhaseInterface {
         }
         return refCp / getNumberOfMolesInPhase() / 1000.0;
       case "J/kgK": {
-        // To get specific heat capacity, divide the total heat capacity by the total mass.
+        // To get specific heat capacity, divide the total heat capacity by the total
+        // mass.
         // Total mass = moles in phase * molar mass (in kg/mol).
         double totalMass = getNumberOfMolesInPhase() * getMolarMass();
         if (totalMass == 0) {
@@ -1126,11 +1137,13 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Calculates the heat capacity at constant volume (Cv) in the specified units. {@inheritDoc}
+   * Calculates the heat capacity at constant volume (Cv) in the specified units.
+   * {@inheritDoc}
    */
   @Override
   public double getCv(String unit) {
-    // The reference heat capacity (refCv) is the total heat capacity for the phase in J/K.
+    // The reference heat capacity (refCv) is the total heat capacity for the phase
+    // in J/K.
     double refCv = getCv();
 
     switch (unit) {
@@ -1138,7 +1151,8 @@ public abstract class Phase implements PhaseInterface {
         // No conversion needed as the base unit is J/K.
         return refCv;
       case "J/molK":
-        // To get molar heat capacity, divide the total heat capacity by the number of moles.
+        // To get molar heat capacity, divide the total heat capacity by the number of
+        // moles.
         if (getNumberOfMolesInPhase() == 0) {
           throw new ArithmeticException(
               "Number of moles in phase cannot be zero for J/molK conversion.");
@@ -1151,7 +1165,8 @@ public abstract class Phase implements PhaseInterface {
         }
         return refCv / getNumberOfMolesInPhase() / 1000.0;
       case "J/kgK": {
-        // To get specific heat capacity, divide the total heat capacity by the total mass.
+        // To get specific heat capacity, divide the total heat capacity by the total
+        // mass.
         // Total mass = moles in phase * molar mass (in kg/mol).
         double totalMass = getNumberOfMolesInPhase() * getMolarMass();
         if (totalMass == 0) {
@@ -1212,7 +1227,8 @@ public abstract class Phase implements PhaseInterface {
    */
   @Override
   public double getEnthalpy(String unit) {
-    // The reference enthalpy (refEnthalpy) is the total enthalpy for the phase in Joules.
+    // The reference enthalpy (refEnthalpy) is the total enthalpy for the phase in
+    // Joules.
     double refEnthalpy = getEnthalpy();
 
     switch (unit) {
@@ -1273,7 +1289,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getInternalEnergy(String unit) {
-    // The reference internal energy (refInternalEnergy) is the total internal energy for the phase
+    // The reference internal energy (refInternalEnergy) is the total internal
+    // energy for the phase
     // in Joules.
     double refInternalEnergy = getInternalEnergy();
 
@@ -1535,7 +1552,7 @@ public abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1588,7 +1605,7 @@ public abstract class Phase implements PhaseInterface {
    * getLogPureComponentFugacity.
    * </p>
    *
-   * @param k a int
+   * @param k    a int
    * @param pure a boolean
    * @return a double
    */
@@ -1746,7 +1763,8 @@ public abstract class Phase implements PhaseInterface {
 
     // Conversion from mole fraction to molality scale:
     // From a_i = γ_x * x_i = γ_m * m_i / m° and m_i = (x_i / x_w) * (1000 / M_w)
-    // we get: γ_m = γ_x * x_w / 55.51 (where 55.51 mol/kg is molality of pure water)
+    // we get: γ_m = γ_x * x_w / 55.51 (where 55.51 mol/kg is molality of pure
+    // water)
     // Note: This conversion is independent of total molality and component i
     if (scale.equalsIgnoreCase("molality")) {
       return gammaX * xWater * INV_WATER_MOLALITY;
@@ -1797,9 +1815,12 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the mean ionic activity coefficient on the molality scale. NeqSim uses the
-   * unsymmetric convention for ions (γ → 1 as x → 0, i.e., infinite dilution reference state). The
-   * conversion from unsymmetric mole fraction scale (γ±,x) to molality scale (γ±,m) is:
+   * Calculates the mean ionic activity coefficient on the molality scale. NeqSim
+   * uses the
+   * unsymmetric convention for ions (γ → 1 as x → 0, i.e., infinite dilution
+   * reference state). The
+   * conversion from unsymmetric mole fraction scale (γ±,x) to molality scale
+   * (γ±,m) is:
    * </p>
    *
    * <pre>
@@ -1807,14 +1828,18 @@ public abstract class Phase implements PhaseInterface {
    * </pre>
    *
    * <p>
-   * This relationship arises because the unsymmetric standard state (infinite dilution) already
-   * incorporates the 1/55.51 factor that would appear in the symmetric convention. For the
-   * symmetric convention (γ → 1 as x → 1), the full formula would be: γ±,m = γ±,x(sym) * x_water /
+   * This relationship arises because the unsymmetric standard state (infinite
+   * dilution) already
+   * incorporates the 1/55.51 factor that would appear in the symmetric
+   * convention. For the
+   * symmetric convention (γ → 1 as x → 1), the full formula would be: γ±,m =
+   * γ±,x(sym) * x_water /
    * 55.51
    * </p>
    *
    * <p>
-   * Reference: Robinson, R.A. and Stokes, R.H. "Electrolyte Solutions", 2nd ed., Butterworths,
+   * Reference: Robinson, R.A. and Stokes, R.H. "Electrolyte Solutions", 2nd ed.,
+   * Butterworths,
    * London, 1965, Appendix 8.10.
    * </p>
    */
@@ -1830,7 +1855,8 @@ public abstract class Phase implements PhaseInterface {
 
     double xWater = getComponent(watNumb).getx();
 
-    // Get activity coefficients on mole fraction scale, raised to stoichiometric powers
+    // Get activity coefficients on mole fraction scale, raised to stoichiometric
+    // powers
     // For electrolyte C_ν+ A_ν-: γ± = (γ+^ν+ * γ-^ν-)^(1/(ν+ + ν-))
     double nuPlus = Math.abs(getComponent(comp2).getIonicCharge()); // stoichiometric coeff of comp1
     double nuMinus = Math.abs(getComponent(comp1).getIonicCharge()); // stoichiometric coeff of
@@ -1862,7 +1888,8 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the osmotic coefficient using the Robinson &amp; Stokes (1965) definition on the
+   * Calculates the osmotic coefficient using the Robinson &amp; Stokes (1965)
+   * definition on the
    * molality scale. The formula used is mathematically equivalent to:
    * </p>
    *
@@ -1879,7 +1906,8 @@ public abstract class Phase implements PhaseInterface {
    * </pre>
    *
    * <p>
-   * where a_w is water activity, x_w is water mole fraction, and Σx_i is sum of ion mole fractions.
+   * where a_w is water activity, x_w is water mole fraction, and Σx_i is sum of
+   * ion mole fractions.
    * </p>
    */
   @Override
@@ -2192,7 +2220,8 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Default uses activity-based pH since NeqSim's chemical reaction equilibrium constants are
+   * Default uses activity-based pH since NeqSim's chemical reaction equilibrium
+   * constants are
    * defined on the mole fraction scale.
    * </p>
    */
@@ -2216,14 +2245,15 @@ public abstract class Phase implements PhaseInterface {
       return getpH_molality();
     }
     if (method.equalsIgnoreCase("activity")) {
-      return getpH_activity();
     }
-    // Default to activity (consistent with mole fraction-based equilibrium constants)
+    // Default to activity (consistent with mole fraction-based equilibrium
+    // constants)
     return getpH_activity();
   }
 
   /**
-   * Calculate pH based on molarity (mol/L) with molarity-scale activity coefficient.
+   * Calculate pH based on molarity (mol/L) with molarity-scale activity
+   * coefficient.
    *
    * @return pH value: -log10(gamma_c * [H3O+]) where [H3O+] is in mol/L
    */
@@ -2255,10 +2285,12 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Calculate pH based on molality (IUPAC standard: mol H3O+ / kg water) with molality-scale
+   * Calculate pH based on molality (IUPAC standard: mol H3O+ / kg water) with
+   * molality-scale
    * activity coefficient.
    *
-   * @return pH value: -log10(gamma_m * m_H3O+ / m_standard) where m_standard = 1 mol/kg
+   * @return pH value: -log10(gamma_m * m_H3O+ / m_standard) where m_standard = 1
+   *         mol/kg
    */
   private double getpH_molality() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -2299,7 +2331,8 @@ public abstract class Phase implements PhaseInterface {
   /**
    * Calculate pH based on activity (mole fraction * activity coefficient).
    *
-   * @return pH value based on H3O+ activity, or NaN if result is physically unrealistic
+   * @return pH value based on H3O+ activity, or NaN if result is physically
+   *         unrealistic
    */
   private double getpH_activity() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -2309,8 +2342,7 @@ public abstract class Phase implements PhaseInterface {
           watNumb = getComponent("water").getComponentNumber();
         }
 
-        double gamma =
-            watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
+        double gamma = watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
 
         double activity = componentArray[i].getx() * gamma;
         // Check for numerically invalid activity (essentially zero or numerical noise)
@@ -2414,7 +2446,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
-      String[][] mixRule, double[][] intparam) {}
+      String[][] mixRule, double[][] intparam) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -2780,8 +2813,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.getDensity();
   }
 
@@ -2789,8 +2822,10 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * If no hydrogenType is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure.
    * </p>
    */
   @Override
@@ -2828,8 +2863,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.propertiesLeachman();
   }
 
@@ -2837,8 +2872,10 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * If no hydrogentype is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure.
    * </p>
    */
   @Override
@@ -2876,8 +2913,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public doubleW[] getAlpha0_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.getAlpha0_Leachman();
   }
 
@@ -2885,8 +2922,10 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * If no hydrogentype is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure.
    * </p>
    */
   @Override
@@ -2924,8 +2963,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public doubleW[][] getAlphares_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.getAlphares_Leachman();
   }
 
@@ -2933,8 +2972,10 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * If no hydrogentype is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure.
    * </p>
    */
   @Override
@@ -2972,8 +3013,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_AGA8() {
-    neqsim.thermo.util.gerg.NeqSimAGA8Detail test =
-        new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
+    neqsim.thermo.util.gerg.NeqSimAGA8Detail test = new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
     return test.getDensity();
   }
 

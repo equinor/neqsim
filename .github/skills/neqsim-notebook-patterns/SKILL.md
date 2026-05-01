@@ -1,133 +1,173 @@
 ---
 name: neqsim-notebook-patterns
-description: "Jupyter notebook patterns for NeqSim. USE WHEN: creating or reviewing Jupyter notebooks that use NeqSim for process simulation, thermodynamics, or PVT analysis. Covers dual-boot setup cell, class imports (devtools vs pip), notebook structure, visualization requirements, and results.json schema."
+description: "Jupyter notebook patterns for NeqSim. USE WHEN: creating or reviewing Jupyter notebooks that use NeqSim for process simulation, thermodynamics, or PVT analysis. Covers devtools workspace setup, class imports, notebook structure, visualization requirements, and results.json schema."
+last_verified: "2026-07-04"
 ---
 
 # Jupyter Notebook Patterns for NeqSim
 
-Standard patterns for creating Jupyter notebooks that use NeqSim via the Python gateway.
+Standard patterns for creating Jupyter notebooks that use workspace NeqSim Java classes via devtools.
 
-## Dual-Boot Setup Cell (Use in Every Notebook)
+## Devtools Setup Cell (Use in Every Task Notebook)
 
-This cell works both locally (with devtools compiled classes) and in Google Colab:
+Task notebooks under `task_solve/` MUST load NeqSim through
+`devtools/neqsim_dev_setup.py`. This puts workspace Java classes from
+`target/classes` on the JVM classpath, so new or modified Java classes are
+available without copying a packaged JAR into the `neqsim` Python package.
 
 ```python
-import importlib, subprocess, sys
+import os
+import sys
+from pathlib import Path
 
-try:
-    from neqsim_dev_setup import neqsim_init, neqsim_classes
-    ns = neqsim_init(recompile=False)
-    ns = neqsim_classes(ns)
-    NEQSIM_MODE = "devtools"
-    print("NeqSim loaded via devtools (local dev mode)")
-except ImportError:
-    try:
-        import neqsim
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "neqsim"])
-    from neqsim import jneqsim
-    NEQSIM_MODE = "pip"
-    print("NeqSim loaded via pip package")
+
+def find_neqsim_project_root():
+    env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root).resolve())
+    cwd = Path.cwd().resolve()
+    candidates.extend([cwd] + list(cwd.parents))
+    for candidate in candidates:
+        if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
+            return candidate
+    raise RuntimeError("Could not find NeqSim project root. Set NEQSIM_PROJECT_ROOT.")
+
+
+PROJECT_ROOT = find_neqsim_project_root()
+sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+from neqsim_dev_setup import neqsim_init, neqsim_classes
+
+ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
+ns = neqsim_classes(ns)
+NEQSIM_MODE = "devtools"
+print("NeqSim loaded via devtools workspace classes")
 ```
 
 ## Class Import Cell
 
 ```python
-if NEQSIM_MODE == "devtools":
-    # Classes already on ns.* from neqsim_classes()
-    pass
-else:
-    ns = type('ns', (), {})()  # simple namespace
-    ns.SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
-    ns.ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-    ns.Stream = jneqsim.process.equipment.stream.Stream
-    ns.Separator = jneqsim.process.equipment.separator.Separator
-    ns.Compressor = jneqsim.process.equipment.compressor.Compressor
-    ns.Cooler = jneqsim.process.equipment.heatexchanger.Cooler
-    ns.Heater = jneqsim.process.equipment.heatexchanger.Heater
-    ns.ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
-    ns.Mixer = jneqsim.process.equipment.mixer.Mixer
-    ns.Splitter = jneqsim.process.equipment.splitter.Splitter
-    # ... add only classes used in this notebook
+# Classes are already available on ns from neqsim_classes(ns):
+SystemSrkEos = ns.SystemSrkEos
+ProcessSystem = ns.ProcessSystem
+Stream = ns.Stream
+Separator = ns.Separator
+Compressor = ns.Compressor
+Cooler = ns.Cooler
+Heater = ns.Heater
+ThrottlingValve = ns.ThrottlingValve
+Mixer = ns.Mixer
+Splitter = ns.Splitter
 ```
 
-### Alternative: Simple `jneqsim` Import (Non-devtools Notebooks)
-
-```python
-from neqsim import jneqsim
-
-SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
-ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-Stream = jneqsim.process.equipment.stream.Stream
-# ... add only classes used
-```
-
-NEVER use raw `jpype` imports or `jpype.startJVM()` for new notebooks.
+Do not use `from neqsim import jneqsim` in task notebooks or runner workflows.
+That imports the installed Python package and can miss workspace Java changes.
+Only published Colab-style examples outside `task_solve/` may use `jneqsim` as
+an external-user pattern.
 
 ## Common Class Paths
 
 ```python
-# Thermo systems
-jneqsim.thermo.system.SystemSrkEos
-jneqsim.thermo.system.SystemPrEos
-jneqsim.thermo.system.SystemSrkCPAstatoil
-jneqsim.thermo.system.SystemGERG2008Eos
-jneqsim.thermodynamicoperations.ThermodynamicOperations
+# Preloaded aliases from neqsim_classes(ns)
+ns.SystemSrkEos
+ns.SystemPrEos
+ns.SystemSrkCPAstatoil
+ns.ThermodynamicOperations
+ns.ProcessSystem
+ns.Stream
+ns.Separator
+ns.ThreePhaseSeparator
+ns.Compressor
+ns.Heater
+ns.Cooler
+ns.HeatExchanger
+ns.ThrottlingValve
+ns.Mixer
+ns.Splitter
+ns.AdiabaticPipe
+ns.PipeBeggsAndBrills
+ns.DistillationColumn
+ns.Expander
+ns.Recycle
+ns.Adjuster
+ns.ProcessModel    # Named collection of ProcessSystems
+ns.ProcessModule   # Legacy — prefer ProcessModel
 
-# Process equipment
-jneqsim.process.processmodel.ProcessSystem
-jneqsim.process.equipment.stream.Stream
-jneqsim.process.equipment.separator.Separator
-jneqsim.process.equipment.separator.ThreePhaseSeparator
-jneqsim.process.equipment.compressor.Compressor
-jneqsim.process.equipment.heatexchanger.Heater
-jneqsim.process.equipment.heatexchanger.Cooler
-jneqsim.process.equipment.heatexchanger.HeatExchanger
-jneqsim.process.equipment.valve.ThrottlingValve
-jneqsim.process.equipment.mixer.Mixer
-jneqsim.process.equipment.splitter.Splitter
-jneqsim.process.equipment.pipeline.AdiabaticPipe
-jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
-jneqsim.process.equipment.distillation.DistillationColumn
-jneqsim.process.equipment.expander.Expander
-jneqsim.process.equipment.util.Recycle
-jneqsim.process.equipment.util.Adjuster
-
-# Multi-area plant management
-jneqsim.process.processmodel.ProcessModel    # Named collection of ProcessSystems
-jneqsim.process.processmodel.ProcessModule   # Legacy — prefer ProcessModel
-
-# Load additional classes via JClass (devtools) or full path (pip)
-# ns.DistillationColumn = ns.JClass("neqsim.process.equipment.distillation.DistillationColumn")
+# Load additional classes by fully qualified Java class name
+SystemGERG2008Eos = ns.JClass("neqsim.thermo.system.SystemGERG2008Eos")
 ```
 
-### Loading Custom / NIP Classes via jpype.JClass
+### Loading Custom / NIP Classes via ns.JClass
 
 Some newer classes (CO2 injection well analysis, impurity monitoring, transient
-wellbore) are not exposed through the `jneqsim` gateway. Load them with `jpype.JClass()`:
+wellbore) may not be preloaded by `neqsim_classes(ns)`. Load them with
+`ns.JClass()`:
 
 ```python
-import jpype
-
 # CO2 injection well analysis classes
-CO2InjectionWellAnalyzer = jpype.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
-TransientWellbore = jpype.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
-CO2FlowCorrections = jpype.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
-ImpurityMonitor = jpype.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
+CO2InjectionWellAnalyzer = ns.JClass("neqsim.process.equipment.pipeline.CO2InjectionWellAnalyzer")
+TransientWellbore = ns.JClass("neqsim.process.equipment.pipeline.TransientWellbore")
+CO2FlowCorrections = ns.JClass("neqsim.process.equipment.pipeline.CO2FlowCorrections")
+ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 ```
-
-In **devtools mode**, use `ns.JClass()` instead of `jpype.JClass()`.
 
 ## Notebook Structure (Follow This Order)
 
 1. **Title + Introduction** (Markdown) — What the notebook demonstrates. ASCII flow diagram if process simulation. Colab badge.
-2. **Setup and Imports** (Code) — Dual-boot cell + class imports
+2. **Setup and Imports** (Code) — devtools setup cell + class imports
 3. **Fluid Creation** (Code) — Temperature in Kelvin, set mixing rule
 4. **Process Building** (Code + Markdown) — Build flowsheet step by step with explanatory markdown between cells
 5. **Run Simulation** (Code) — Single `process.run()` call
 6. **Results Extraction** (Code) — Key results in formatted table with units (pandas DataFrame or f-strings)
 7. **Visualization** (Code) — **MANDATORY: at least 2-3 matplotlib figures**
 8. **Summary & Next Steps** (Markdown) — Key takeaways
+
+## Notebook File Safety
+
+- Create notebooks with VS Code notebook tools, `nbformat`, or valid `.ipynb`
+    JSON. Do not hand-write partial JSON fragments.
+- When generating raw notebook JSON, use nbformat v4, keep cells in the
+    top-level `cells` array, and include `metadata.language` on each cell.
+- When editing an existing notebook, preserve existing cell metadata, including
+    `metadata.id`, so notebook diffs and editor state remain stable.
+- Avoid interactive prompts, shell-specific commands, and hidden state. Every
+    code cell must run from a fresh kernel in order.
+- Results cells must load existing task-level `results.json`, update only their
+    own keys, and write it back. Runner collection then uses
+    `bridge.merge_results_to_task(job_ids)` to preserve multi-notebook outputs.
+
+## Execution Default for Task Notebooks
+
+For notebooks inside `task_solve/`, use **NeqSim Runner** by default instead of
+manual cell-by-cell execution in a shared VS Code/Jupyter kernel. The runner
+executes each notebook in an isolated subprocess with its own JVM, records state
+in `runner.db`, writes outputs under `runner_output/`, and retries failed jobs.
+This avoids kernel-restart loops and `RuntimeError: JVM cannot be restarted`.
+
+```python
+import sys
+sys.path.insert(0, str(TASK_DIR.parent.parent / "devtools"))
+from neqsim_runner.agent_bridge import AgentBridge
+
+bridge = AgentBridge(task_dir=str(TASK_DIR))
+job_ids = []
+job_ids.append(bridge.submit_notebook(
+    "step2_analysis/01_main_analysis.ipynb",
+    mode="execute",
+    max_retries=3,
+    timeout_seconds=3600,
+))
+bridge.run_all(max_parallel=1)
+summary = bridge.summary()
+if summary["failed"] or summary["pending"]:
+    raise RuntimeError("NeqSim Runner jobs did not all complete successfully")
+bridge.merge_results_to_task(job_ids)
+```
+
+Use interactive notebook cells only for quick debugging or tiny Screening tasks
+where `study_config.yaml` explicitly sets `notebooks.execution_engine:
+interactive`.
 
 ### Colab Badge
 
@@ -192,11 +232,11 @@ production models for large platforms.
 ### Pattern: Functions Returning ProcessSystem
 
 ```python
-ProcessModel = jneqsim.process.processmodel.ProcessModel
+ProcessModel = ns.ProcessModel
 
 def create_well_feed_model(inp):
     """Each area is a function returning a ProcessSystem."""
-    well_process = jneqsim.process.processmodel.ProcessSystem()
+    well_process = ns.ProcessSystem()
     feed = Stream("feed", fluid)
     feed.setFlowRate(inp.flow_rate, "kg/hr")
     well_process.add(feed)
@@ -206,7 +246,7 @@ def create_well_feed_model(inp):
     return well_process
 
 def create_separation_process(inp, feed_stream):
-    sep_process = jneqsim.process.processmodel.ProcessSystem()
+    sep_process = ns.ProcessSystem()
     separator = ThreePhaseSeparator("1st stage", feed_stream)
     sep_process.add(separator)
     # ... more equipment
@@ -306,9 +346,8 @@ t = plant_auto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "
 JSON snapshots for reproducibility and version comparison in notebooks:
 
 ```python
-import jpype
-ProcessSystemState = jpype.JClass("neqsim.process.processmodel.lifecycle.ProcessSystemState")
-ProcessModelState = jpype.JClass("neqsim.process.processmodel.lifecycle.ProcessModelState")
+ProcessSystemState = ns.JClass("neqsim.process.processmodel.lifecycle.ProcessSystemState")
+ProcessModelState = ns.JClass("neqsim.process.processmodel.lifecycle.ProcessModelState")
 
 # Save state
 state = ProcessSystemState.fromProcessSystem(process)
@@ -372,8 +411,7 @@ Step 3 if validation fails.
 
 ```python
 # ── Programmatic quality gate ──
-import jpype
-TaskResultValidator = jpype.JClass("neqsim.util.agentic.TaskResultValidator")
+TaskResultValidator = ns.JClass("neqsim.util.agentic.TaskResultValidator")
 
 with open(str(TASK_DIR / "results.json"), "r") as f:
     json_str = f.read()

@@ -45,7 +45,6 @@ public class GERG2008H2 extends GERG2008 {
    * Default constructor for GERG2008H2.
    */
   public GERG2008H2() {
-    super();
   }
 
   /**

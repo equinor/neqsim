@@ -150,20 +150,20 @@ The reaction matrix relates reactions to components through stoichiometric coeff
 public double[][] createReactionMatrix(PhaseInterface phase, ComponentInterface[] components) {
     // Store components for reference potential calculations
     this.refPotComponents = components;
-    
+
     // Create matrices:
     // reacMatrix[reactions][components] - stoichiometric coefficients
     // reacGMatrix[reactions][components+1] - includes RT*ln(K) in last column
-    
+
     reacMatrix = new double[chemicalReactionList.size()][components.length];
     reacGMatrix = new double[chemicalReactionList.size()][components.length + 1];
-    
+
     for each reaction:
         for each component:
             if component is in reaction:
                 reacMatrix[reaction][component] = stoichiometric_coefficient
                 reacGMatrix[reaction][component] = stoichiometric_coefficient
-        
+
         // Last column: -RT*ln(K) term for the reaction
         // Sign is NEGATIVE to match equilibrium: Σ(ν_i * μ_i) = -RT*ln(K)
         reacGMatrix[reaction][last] = -R * T * ln(K)
@@ -189,14 +189,14 @@ public double[][] calcAmatrix() {
     // Dimensions: (elements + 1) × components
     // Extra row for ionic charge balance
     double[][] A = new double[elements.length + 1][components.length];
-    
+
     for each component j:
         for each element i:
             A[i][j] = number of atoms of element i in component j
-        
+
         // Last row: ionic charge for electroneutrality
         A[elements.length][j] = components[j].getIonicCharge();
-    
+
     return A;
 }
 ```
@@ -239,17 +239,17 @@ public double[] calcReferencePotentials() {
     // Find linearly independent columns (components)
     ArrayList<Integer> independentColumns = new ArrayList<>();
     ArrayList<Integer> dependentColumns = new ArrayList<>();
-    
+
     for each column j:
         // Try adding this column to the independent set
         if (nextMat.rank() > currentRank):
             independentColumns.add(j)
         else:
             dependentColumns.add(j)
-    
+
     // Solve: A_indep * μ_indep = -B (where B = RT*ln(K))
     Matrix solv = currentMat.solve(Bmatrix.times(-1.0));
-    
+
     // Propagate to dependent components using reaction stoichiometry
     for each dependent component:
         // Find reaction where all other components are known
@@ -277,26 +277,26 @@ $$n_i \geq 0 \quad \text{(non-negative moles)}$$
 ```java
 public double[] generateInitialEstimates(SystemInterface system, double[] bVector,
         double inertMoles, int phaseNum) {
-    
+
     // Objective: minimize sum(μ_i/RT * n_i)
     double[] v = new double[components.length + 1];
     for (i = 0; i < components.length; i++) {
         v[i + 1] = chemRefPot[i] / (R * T);
     }
     LinearObjectiveFunction f = new LinearObjectiveFunction(v, 0.0);
-    
+
     // Constraints: A*n = b (element balance)
     List<LinearConstraint> cons = new ArrayList<>();
     for each element j:
         cons.add(new LinearConstraint(A_row_j, Relationship.EQ, bVector[j]));
-    
+
     // Solve using Apache Commons Math SimplexSolver
     SimplexSolver solver = new SimplexSolver();
     PointValuePair optimal = solver.optimize(
-        new MaxIter(1000), f, consSet, GoalType.MINIMIZE, 
+        new MaxIter(1000), f, consSet, GoalType.MINIMIZE,
         new NonNegativeConstraint(true)
     );
-    
+
     return optimal.getPoint();
 }
 ```
@@ -339,33 +339,33 @@ $$\Delta n_i = \frac{1}{n_i} \left( \sum_j a_{ji} \lambda_j - \mu_i \right) + n_
 public void chemSolve() {
     // Protect against n_t = 0
     n_t = Math.max(MIN_MOLES, system.getPhase(phasenumb).getNumberOfMolesInPhase());
-    
+
     // Build M-matrix: M_ij = δ_ij/n_i
     for (i = 0; i < NSPEC; i++) {
         n_mol[i] = component[i].getNumberOfMolesInPhase();
         for (k = 0; k < NSPEC; k++) {
             M_matrix[i][k] = (i == k) ? (1.0 / n_mol[i]) : 0.0;
-            
+
             // Optional: add fugacity coefficient derivatives for non-ideal mixtures
             if (useFugacityDerivatives) {
                 M_matrix[i][k] += dlnφ_i/dn_k;  // Non-ideal contribution
             }
         }
     }
-    
+
     // Calculate chemical potentials: μ_i/RT = μ_ref + ln(n_i/n_t) + ln(γ_i)
     for (i = 0; i < NSPEC; i++) {
         chem_pot[i] = chem_ref[i] + Math.log(n_mol[i]/n_t) + logactivity[i];
     }
-    
+
     // Build AMA matrix: A * M^-1 * A^T
     M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
     AMA_matrix = A_Jama_matrix.times(M_inv_AT);
-    
+
     // Build AMU vector: A * M^-1 * μ
     M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
     AMU_matrix = A_Jama_matrix.times(M_inv_mu);
-    
+
     // Assemble and solve the Newton system
     // [AMA  b^T] [λ]   [AMμ]
     // [b    0  ] [τ] = [n·μ]
@@ -373,12 +373,12 @@ public void chemSolve() {
     A_solve.setMatrix(0, NELE-1, NELE, NELE, b_matrix.transpose());
     A_solve.setMatrix(NELE, NELE, 0, NELE-1, b_matrix);
     A_solve.set(NELE, NELE, 0.0);
-    
+
     b_solve.setMatrix(0, NELE-1, 0, 0, AMU_matrix);
     b_solve.setMatrix(NELE, NELE, 0, 0, n·μ);
-    
+
     x_solve = A_solve.solve(b_solve);  // [λ; τ]
-    
+
     // Calculate mole updates: Δn = M^-1(A^T·λ - μ) + n·τ
     dn_matrix = M^-1 * (A^T * λ - μ) + n * τ;
 }
@@ -390,27 +390,27 @@ public void chemSolve() {
 public boolean solve() {
     double error = 1e10;
     int p = 0;
-    
+
     do {
         p++;
         chemSolve();  // Calculate Newton step
-        
+
         double step = step();  // Calculate damping factor
-        
+
         // Update moles and calculate error
         for (i = 0; i < NSPEC; i++) {
             error += |Δn_i / n_i|;
             n_mol[i] = Δn_i * step + current_moles;
         }
-        
+
         if (error <= errOld) {
             updateMoles();  // Apply to phase
             system.init(1, phasenumb);  // Reinitialize thermodynamics
             calcRefPot();  // Update activity coefficients
         }
-        
+
     } while (error > tolerance && p < MAX_ITERATIONS);
-    
+
     return converged;
 }
 ```
@@ -463,16 +463,16 @@ public boolean solveChemEq(int phaseNum, int type) {
     // Find reactive phase (aqueous/liquid only)
     int reactivePhase = getReactivePhaseIndex();
     if (reactivePhase < 0) return false;  // Skip if no aqueous phase
-    
+
     // Reinitialize if phase changed
     if (this.phase != phaseNum) {
         reinitializeForReactivePhase(phaseNum);
     }
-    
+
     // Update element balance based on current composition
     nVector = calcNVector();
     bVector = calcBVector();
-    
+
     // Type 0: LP initial estimate (firsttime or forced)
     if (firsttime || type == 0) {
         newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
@@ -481,7 +481,7 @@ public boolean solveChemEq(int phaseNum, int type) {
             firsttime = false;
         }
     }
-    
+
     // Newton solver refinement
     solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
     return solver.solve();
@@ -732,8 +732,8 @@ if (h3oTooLow && ohTooLow) {
 
 1. Smith, W.R. and Missen, R.W., "Chemical Reaction Equilibrium Analysis: Theory and Algorithms", Wiley (1982)
 2. Michelsen, M.L. and Mollerup, J.M., "Thermodynamic Models: Fundamentals & Computational Aspects", Tie-Line Publications (2007)
-3. NeqSim Source Code: [ChemicalReactionOperations.java](../src/main/java/neqsim/chemicalreactions/ChemicalReactionOperations.java)
-4. NeqSim Source Code: [ChemicalEquilibrium.java](../src/main/java/neqsim/chemicalreactions/chemicalequilibrium/ChemicalEquilibrium.java)
+3. NeqSim Source Code: [ChemicalReactionOperations.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/chemicalreactions/ChemicalReactionOperations.java)
+4. NeqSim Source Code: [ChemicalEquilibrium.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/chemicalreactions/chemicalequilibrium/ChemicalEquilibrium.java)
 
 ---
 

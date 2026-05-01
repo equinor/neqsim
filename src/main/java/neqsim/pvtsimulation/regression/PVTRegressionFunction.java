@@ -46,6 +46,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    *
    * @param bounds 2D array [nParams][2] with [lower, upper] bounds
    */
+  @Override
   public void setBounds(double[][] bounds) {
     this.bounds = bounds;
   }
@@ -115,6 +116,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
         double reservoirTemperature = dependentValues.length > 4 ? dependentValues[4] : temperature;
         return calculateSeparatorValue(tunedFluid, pressure, temperature, propertyIndex,
             reservoirTemperature);
+      case VISCOSITY:
+        return calculateViscosityValue(tunedFluid, pressure, temperature, propertyIndex);
       default:
         return 0.0;
     }
@@ -166,6 +169,12 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculate DLE property value.
+   *
+   * @param fluid the thermodynamic system to use for calculation
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in Kelvin
+   * @param propertyIndex the property index (0=Rs, 1=Bo, 2=Oil density)
+   * @return the calculated DLE property value
    */
   private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature,
       int propertyIndex) {
@@ -191,6 +200,13 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculate separator test property value.
+   *
+   * @param fluid the thermodynamic system to use for calculation
+   * @param separatorPressure the separator pressure in bara
+   * @param separatorTemperature the separator temperature in Kelvin
+   * @param propertyIndex the property index (0=GOR, etc.)
+   * @param reservoirTemperature the reservoir temperature in Kelvin
+   * @return the calculated separator property value
    */
   private double calculateSeparatorValue(SystemInterface fluid, double separatorPressure,
       double separatorTemperature, int propertyIndex, double reservoirTemperature) {
@@ -232,6 +248,52 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
         return 1.0;
       default:
         return 0.0;
+    }
+  }
+
+  /**
+   * Calculate viscosity property value.
+   *
+   * @param fluid the thermodynamic system to use for calculation
+   * @param pressure the pressure in bara
+   * @param temperature the temperature in Kelvin
+   * @param propertyIndex phase index mapping, 0=gas, 1=oil/liquid, 2=aqueous/water, 3=phase zero
+   * @return calculated dynamic viscosity in Pa s
+   */
+  private double calculateViscosityValue(SystemInterface fluid, double pressure, double temperature,
+      int propertyIndex) {
+    fluid.setTemperature(temperature);
+    fluid.setPressure(pressure);
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+      thermoOps.TPflash();
+      fluid.initProperties();
+    } catch (Exception e) {
+      return 0.0;
+    }
+
+    switch (propertyIndex) {
+      case 0:
+        return fluid.hasPhaseType("gas")
+            ? fluid.getPhase("gas").getPhysicalProperties().getViscosity()
+            : 0.0;
+      case 1:
+        if (fluid.hasPhaseType("oil")) {
+          return fluid.getPhase("oil").getPhysicalProperties().getViscosity();
+        }
+        return fluid.hasPhaseType("liquid")
+            ? fluid.getPhase("liquid").getPhysicalProperties().getViscosity()
+            : 0.0;
+      case 2:
+        if (fluid.hasPhaseType("aqueous")) {
+          return fluid.getPhase("aqueous").getPhysicalProperties().getViscosity();
+        }
+        return fluid.hasPhaseType("water")
+            ? fluid.getPhase("water").getPhysicalProperties().getViscosity()
+            : 0.0;
+      default:
+        return fluid.getPhase(0).getPhysicalProperties().getViscosity();
     }
   }
 

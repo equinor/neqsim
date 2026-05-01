@@ -1,0 +1,75 @@
+# Study configuration for NeqSim task solver.
+# This file is the explicit input contract for task depth, notebook planning,
+# report detail, and quality gates. Values here override scale inferred from
+# the prompt when an agent plans the task.
+
+study:
+  title: "[Title]"
+  task_type: "B"
+  scale: auto          # auto | quick | standard | comprehensive
+  mode: auto           # auto | screening | design | development
+  aace_class: auto     # auto | 5 | 4 | 3 | 2 | 1
+  fel_stage: auto      # auto | FEL-1 | FEL-2 | FEL-3
+  deliverable_mode: auto  # auto | answer-first | notebook-first | report-first
+
+intake:
+  pause_after_folder_creation: auto  # auto | always | never
+  ask_for_missing_info: true
+  allow_user_file_drop: true
+  confirm_before_notebooks: true
+
+inputs:
+  prompt_file: ""       # Optional text/markdown file used as the original task prompt.
+  documents_required: false
+  document_extraction_required: auto  # auto | required | optional | skip
+  documents:
+    - path: step1_scope_and_research/references/
+      role: reference_documents
+      required: false
+      extraction: classify_extract_normalize_validate
+
+notebooks:
+  required: true
+  execution_required: true
+  execution_engine: neqsim_runner  # neqsim_runner | interactive | auto
+  runner_mode: execute             # execute | script
+  runner_max_retries: 3
+  runner_timeout_seconds: 3600
+  runner_max_parallel: 1           # JVM-heavy jobs should stay serial by default
+  runner_merge_results: true       # Merge multi-notebook results.json updates
+  require_successful_jobs: true    # Report gate warns on failed/timed-out jobs
+  isolated_subprocess: true
+  minimum_count: 1
+  plan:
+    - file: 01_main_analysis.ipynb
+      purpose: Main NeqSim model, result extraction, figures, and results.json.
+    - file: 02_benchmark_validation.ipynb
+      purpose: Independent benchmark checks when required by scale or scope.
+    - file: 03_uncertainty_and_risk.ipynb
+      purpose: Monte Carlo, tornado sensitivity, and risk register when applicable.
+
+report:
+  formats:
+    - docx
+    - html
+  depth: auto          # auto | brief | standard | detailed
+  include_paper: false
+  required_sections:
+    - executive_summary
+    - scope_and_standards
+    - methodology
+    - results
+    - discussion
+    - validation
+    - conclusions
+    - references
+
+quality_gates:
+  require_results_json: true
+  benchmark_validation: auto     # auto | required | optional | skip
+  uncertainty_analysis: auto     # auto | required | optional | skip
+  risk_register: auto            # auto | required | optional | skip
+  figure_discussion: required    # required | optional | skip
+  consistency_checker: required  # required | optional | skip
+  minimum_figures: 2
+  notebook_execution: required   # required | optional | skip

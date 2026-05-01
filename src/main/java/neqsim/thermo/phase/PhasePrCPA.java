@@ -237,6 +237,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_hCPA() {
     double htot = 0.0;
     double tot = 0.0;
@@ -316,6 +317,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_g() {
     double g = (2.0 - getb() / 4.0 / getMolarVolume())
         / (2.0 * Math.pow(1.0 - getb() / 4.0 / getMolarVolume(), 3.0));
@@ -341,6 +343,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_lngV() {
     double gv = 0.0;
     gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume()
@@ -365,6 +368,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_lngVV() {
     double gvv = 0.0;
     gvv = 2.0
@@ -384,6 +388,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_lngVVV() {
     double gvvv = 0.0;
     gvvv = 4.0

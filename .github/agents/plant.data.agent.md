@@ -1,7 +1,7 @@
 ---
 name: integrate neqsim with plant data
 description: "Helps connect NeqSim process simulations to real plant data via tagreader (PI/IP.21 historians). Covers tag mapping, data reading, model-vs-plant comparison, digital twin loops, and continuous model tuning. Use when integrating NeqSim with operational data."
-argument-hint: "Describe the plant data integration — e.g., 'connect compressor model to PI historian tags', 'compare separator simulation to plant data', 'build a digital twin loop for a gas processing train', or 'read Troll A compressor data from Aspen IP.21'."
+argument-hint: "Describe the plant data integration — e.g., 'connect compressor model to PI historian tags', 'compare separator simulation to plant data', 'build a digital twin loop for a gas processing train', or 'read compressor data from Aspen IP.21'."
 ---
 
 You are a plant data integration specialist for NeqSim. Your job is to help users
@@ -64,8 +64,8 @@ pi_sources = tagreader.list_sources("piwebapi")
 aspen_sources = tagreader.list_sources("aspenone")
 
 # Connect to a data source
-c = tagreader.IMSClient("PINO", "piwebapi")    # PI Web API
-# c = tagreader.IMSClient("TRA", "aspenone")   # Aspen IP.21
+c = tagreader.IMSClient("MY_PI_SOURCE", "piwebapi")    # PI Web API
+# c = tagreader.IMSClient("MY_ASPEN_SOURCE", "aspenone")   # Aspen IP.21
 c.connect()
 ```
 
@@ -75,16 +75,16 @@ Create a dictionary mapping logical process parameters to historian tag names:
 
 ```python
 TAG_MAP = {
-    'inlet_pressure':    'PLANT-20PT0118.PV',
-    'inlet_temperature': 'PLANT-20TT0124.PV',
-    'comp_suction_P':    'PLANT-35PT3601A.PV',
-    'comp_discharge_P':  'PLANT-35PT3601B.PV',
-    'comp_suction_T':    'PLANT-35TT3601A.PV',
-    'comp_discharge_T':  'PLANT-35TT3601B.PV',
-    'comp_power':        'PLANT-35JI3191F000.PV',
-    'comp_speed':        'PLANT-35SI3152.PV',
-    'comp_flow':         'PLANT-35FT3601.PV',
-    'export_pressure':   'PLANT-27PT0004.PV',
+    'inlet_pressure':    'PLANT-20PT0201.PV',
+    'inlet_temperature': 'PLANT-20TT0201.PV',
+    'comp_suction_P':    'PLANT-35PT0101A.PV',
+    'comp_discharge_P':  'PLANT-35PT0101B.PV',
+    'comp_suction_T':    'PLANT-35TT0101A.PV',
+    'comp_discharge_T':  'PLANT-35TT0101B.PV',
+    'comp_power':        'PLANT-35JI0101.PV',
+    'comp_speed':        'PLANT-35SI0101.PV',
+    'comp_flow':         'PLANT-35FT0101.PV',
+    'export_pressure':   'PLANT-27PT0301.PV',
 }
 ```
 
@@ -169,8 +169,8 @@ df_results = pd.DataFrame(results)
 
 | Source Type | Constructor | Protocol |
 |-------------|------------|----------|
-| OSIsoft PI | `IMSClient("PINO", "piwebapi")` | PI Web API |
-| Aspen IP.21 | `IMSClient("TRA", "aspenone")` | Aspen One |
+| OSIsoft PI | `IMSClient("MY_PI_SOURCE", "piwebapi")` | PI Web API |
+| Aspen IP.21 | `IMSClient("MY_ASPEN_SOURCE", "aspenone")` | Aspen One |
 
 ### Read Types
 
@@ -299,5 +299,6 @@ Live Digital Twin             — Continuous self-tuning model
 - [Data Reconciliation & Parameter Estimation](../docs/calibration/data_reconciliation_parameter_estimation.md)
 - [NeqSim API Patterns](../.github/skills/neqsim-api-patterns/SKILL.md)
 - [Plant Data Skill](../.github/skills/neqsim-plant-data/SKILL.md) — Tagreader API reference and patterns
+- [Model Calibration & Data Reconciliation Skill](../.github/skills/neqsim-model-calibration-and-data-reconciliation/SKILL.md) — Bounded parameter tuning, residual diagnostics, train/validation reporting
 - [tagreader-python](https://github.com/equinor/tagreader-python)
 - [NeqSimAPI](https://neqsimapi.app.radix.equinor.com/docs)

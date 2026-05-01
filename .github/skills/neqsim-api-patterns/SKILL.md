@@ -1,6 +1,7 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
+last_verified: "2026-07-04"
 ---
 
 # NeqSim API Patterns
@@ -171,6 +172,61 @@ Stream gasOut = sep.getGasOutStream();
 Stream liqOut = sep.getLiquidOutStream();
 ```
 
+### Separator Mechanical Design (Physical Configuration)
+
+Physical dimensions, internals, and design parameters are configured through
+`SeparatorMechanicalDesign` — NOT directly on `Separator`. The `Separator`
+class handles process simulation (flash, entrainment); `SeparatorMechanicalDesign`
+owns the physical vessel design.
+
+```java
+// After process.run():
+sep.initMechanicalDesign();
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+
+// Design envelope
+design.setMaxOperationPressure(85.0);           // bara
+design.setMaxOperationTemperature(273.15 + 80); // K
+
+// Vessel sizing parameters (configured via MechanicalDesign)
+design.setGasLoadFactor(0.107);       // K-factor [m/s]
+design.setRetentionTime(120.0);       // Liquid retention [s]
+design.setFg(0.5);                    // Gas area fraction
+
+// Nozzle diameters (set via MechanicalDesign, NOT on Separator)
+design.setInletNozzleID(0.254);       // 10-inch inlet nozzle [m]
+design.setGasOutletNozzleID(0.20);    // Gas outlet [m]
+design.setOilOutletNozzleID(0.15);    // Oil outlet [m]
+
+// Demister/mist eliminator parameters
+design.setDemisterType("wire_mesh");  // "wire_mesh", "vane_pack", "cyclone"
+design.setDemisterPressureDrop(1.5);  // [mbar]
+design.setDemisterThickness(150.0);   // [mm]
+design.setFoamAllowanceFactor(1.0);   // 1.0 = no foam
+
+// Bridge methods — entrainment internals (delegate to Separator)
+design.setInletPipeDiameter(0.254);   // Inlet pipe ID for DSD generation [m]
+design.setInletDeviceType(InletDeviceModel.InletDeviceType.INLET_VANE);
+design.setGasLiquidSurfaceTension(0.020); // Interfacial tension [N/m]
+design.addSeparatorSection("Demister", "meshpad");
+
+// Bridge methods — dynamic internals (delegate to Separator)
+design.setWeirHeightAbsolute(0.30);   // Weir height [m] (syncs weirFraction)
+design.setWeirLength(1.5);            // Weir crest length [m]
+design.setBootVolume(2.0);            // Boot/sump volume [m3]
+design.setMistEliminatorDpCoeff(150.0);  // Euler number for dP calc
+design.setMistEliminatorThickness(0.15); // Demister pad thickness [m]
+
+// Run design calculation
+design.readDesignSpecifications();
+design.calcDesign();
+String report = design.toJson();
+
+// Results: design.getInnerDiameter(), design.getTantanLength(),
+//          design.getWallThickness(), design.getInletNozzleID(), etc.
+```
+
 ### Compressor
 
 ```java
@@ -318,6 +374,49 @@ pipe.setLength(50000.0);   // meters
 pipe.setDiameter(0.508);   // meters (20 inch)
 Stream out = pipe.getOutletStream();
 ```
+
+### Route-Level Piping From STID/E3D Line Lists
+
+For route pressure-drop tasks based on STID P&IDs, E3D exports, stress
+isometrics, or line-list tables, prefer `PipingRouteBuilder` over manually
+creating many pipe units. It creates a serial `ProcessSystem` with one
+`PipeBeggsAndBrills` unit per segment and stores explicit material connection
+metadata.
+
+```java
+PipingRouteBuilder route = new PipingRouteBuilder()
+    .setDefaultPipeWallRoughness(45.0, "micrometer")
+    .setMinorLossFrictionFactor(0.02)
+    .addSegment("S1", "Manifold", "Valve Station", 100.0, "m", 0.2, "m")
+    .setSegmentWallThickness("S1", 8.0, "mm")
+    .addMinorLoss("S1", "manual valve", 1.0)
+    .addSegment("S2", "Valve Station", "Compressor Scrubber", 25.0, "m", 8.0, "inch")
+    .addMinorLoss("Valve Station->Compressor Scrubber", "long-radius bend", 0.3);
+
+ProcessSystem routeProcess = route.build(feedStream);
+routeProcess.run();
+String routeJson = route.toJson();
+```
+
+To embed the extracted route in a larger flowsheet, add it to the existing
+`ProcessSystem` and use the returned outlet stream as the inlet to downstream
+equipment:
+
+```java
+ProcessSystem process = new ProcessSystem("Full plant process");
+process.add(feedStream);
+StreamInterface routeOutlet = route.addToProcessSystem(process, feedStream);
+Cooler downstreamCooler = new Cooler("Downstream cooler", routeOutlet);
+process.add(downstreamCooler);
+process.run();
+```
+
+If the route starts from an upstream equipment outlet, use the overload with
+source-equipment metadata: `route.addToProcessSystem(process, sep.getGasOutStream(),
+"HP Sep", "gasOut")`.
+
+Always preserve source document/page/row references in the task notes and export
+`route.toJson()` in the task results so later STID work can reuse the route.
 
 ### Recycle (Detailed)
 
@@ -843,6 +942,81 @@ String instrJson = instrGen.toJson();
 ```
 
 Tag numbering convention: PT-100+, TT-200+, LT-300+, FT-400+ (ISA-5.1).
+
+## Phase Envelope Calculation and Interpretation
+
+### Calculating a PT Phase Envelope
+
+```java
+SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 50.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.calcPTphaseEnvelope(true, 1.0);  // bubblePointFirst=true, lowPres=1.0 bara
+
+// Access envelope data via the operation object
+PTPhaseEnvelopeMichelsen envelope = (PTPhaseEnvelopeMichelsen) ops.getOperation();
+double[] cricondenBar = envelope.getCricondenBar();    // [T_K, P_bara, 0]
+double[] cricondenTherm = envelope.getCricondenTherm(); // [T_K, P_bara, 0]
+double critT = envelope.getCriticalTemperature();       // Kelvin
+double critP = envelope.getCriticalPressure();          // bara
+```
+
+### CRITICAL: Branch Classification Bug with bubblePointFirst=true
+
+**When using `calcPTphaseEnvelope(true, 1.0)` (bubblePointFirst=true), the NeqSim
+Michelsen algorithm stores the envelope branches with SWAPPED labels:**
+
+- `getBubblePointTemperatures()` / `getBubblePointPressures()` → actually the **DEW** curve (right side, higher T, includes cricondentherm)
+- `getDewPointTemperatures()` / `getDewPointPressures()` → actually the **BUBBLE** curve (left side, lower T)
+
+**Root cause:** The algorithm initializes `isDewPhase=true` regardless of the
+`bubblePointFirst` flag. When starting from the bubble side, initial points go
+into the dew list. At the critical point, `isDewPhase` flips, sending post-CP
+points (the actual dew side) into the bubble list.
+
+**Always determine which branch is which using physical reasoning:**
+
+```python
+branch_A_T = np.array(envelope.getBubblePointTemperatures())
+branch_A_P = np.array(envelope.getBubblePointPressures())
+branch_B_T = np.array(envelope.getDewPointTemperatures())
+branch_B_P = np.array(envelope.getDewPointPressures())
+
+# The DEW curve always contains the cricondentherm (maximum temperature)
+if branch_A_T.max() > branch_B_T.max():
+    dew_T, dew_P = branch_A_T, branch_A_P
+    bub_T, bub_P = branch_B_T, branch_B_P
+else:
+    dew_T, dew_P = branch_B_T, branch_B_P
+    bub_T, bub_P = branch_A_T, branch_A_P
+```
+
+### Phase Envelope Physical Interpretation
+
+**Bubble point curve** (left side of envelope):
+- Boundary between subcooled liquid and two-phase region
+- At the bubble point, the first infinitesimal bubble of vapor forms
+- Crossing from left to right: liquid → two-phase
+
+**Dew point curve** (right side of envelope):
+- Boundary between superheated vapor and two-phase region
+- At the dew point, the first infinitesimal drop of liquid forms
+- Crossing from right to left: vapor → two-phase
+
+**Key points on the envelope:**
+- **Critical point**: Where bubble and dew curves meet; liquid and vapor become indistinguishable
+- **Cricondenbar**: Maximum pressure on the envelope (above this, no two-phase region exists at any T)
+- **Cricondentherm**: Maximum temperature on the envelope (above this, no liquid forms at any P); always on the DEW curve side
+- For **lean gas** (mostly methane): cricondenbar and cricondentherm are both on the dew curve side, close to the critical point
+- For **rich gas/condensate**: the envelope is wider; cricondentherm extends to significantly higher temperatures
+
+**Retrograde condensation region** (between cricondenbar and cricondentherm on the dew curve):
+- Reducing pressure at constant T causes MORE liquid to form (counter-intuitive)
+- This is critical for gas condensate reservoirs and pipeline design
 
 ## Documentation Code Verification
 

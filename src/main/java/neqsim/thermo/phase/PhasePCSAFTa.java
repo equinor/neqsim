@@ -125,7 +125,42 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    return super.dFdTdV();
+    return super.dFdTdV() + cpaon * dFCPAdTdV();
+  }
+
+  /**
+   * Computes the cross-derivative of the CPA association Helmholtz energy contribution with respect
+   * to temperature and volume using numerical central difference in volume.
+   *
+   * @return the CPA contribution to d2F/dTdV
+   */
+  public double dFCPAdTdV() {
+    double totalV = getTotalVolume();
+    double h = totalV * 1.0e-6;
+    if (h < 1.0e-10) {
+      h = 1.0e-10;
+    }
+    // Perturb volume up
+    PhasePCSAFTa plus = this.clone();
+    double molarVolPlus = (totalV + h) / numberOfMolesInPhase;
+    plus.setMolarVolume(molarVolPlus);
+    plus.volInit();
+    plus.solveX();
+    plus.hcpatot = plus.calc_hCPA();
+    plus.hcpatotdT = plus.calc_hCPAdT();
+    double dFdTplus = plus.dFCPAdT();
+
+    // Perturb volume down
+    PhasePCSAFTa minus = this.clone();
+    double molarVolMinus = (totalV - h) / numberOfMolesInPhase;
+    minus.setMolarVolume(molarVolMinus);
+    minus.volInit();
+    minus.solveX();
+    minus.hcpatot = minus.calc_hCPA();
+    minus.hcpatotdT = minus.calc_hCPAdT();
+    double dFdTminus = minus.dFCPAdT();
+
+    return (dFdTplus - dFdTminus) / (2.0 * h);
   }
 
   /** {@inheritDoc} */
@@ -242,6 +277,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
    *
    * @return a double
    */
+  @Override
   public double calc_hCPA() {
     double htot = 0.0;
     double tot = 0.0;

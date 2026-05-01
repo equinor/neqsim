@@ -1,6 +1,7 @@
-# NeqSim — Fast Context for Task Solving
+# NeqSim — Industrial Agentic Engineering
 
-> **Purpose:** Get oriented in 60 seconds. This file is the single entry point for anyone
+> **AI Agents for Engineering Task Solving in Industry.**
+> Get oriented in 60 seconds. This file is the single entry point for anyone
 > (human or AI) solving engineering tasks inside the NeqSim repo.
 
 ## Solve a Task (Start Here)
@@ -13,7 +14,7 @@ The fastest way to solve an engineering task is the `@solve.task` Copilot agent:
 
 It creates a `task_solve/` folder, researches the topic, builds a simulation,
 validates results, and generates a Word report — all in one session. The script
-alternative is `python devtools/new_task.py "your task"`. See
+alternative is `neqsim new-task "your task"`. See
 `docs/tutorials/solve-engineering-task.md` for a hands-on tutorial or
 `docs/development/TASK_SOLVING_GUIDE.md` for the full reference.
 
@@ -25,7 +26,7 @@ runs the full workflow including PR creation.
 
 Java library for thermodynamic fluid properties and process simulation.
 Developed at NTNU, maintained by Equinor. Apache-2.0 license.
-`com.equinor.neqsim:neqsim` version 3.4.0 — **must compile with Java 8**.
+`com.equinor.neqsim:neqsim` version 3.7.0 — **must compile with Java 8**.
 
 ## Repo Map
 
@@ -38,6 +39,8 @@ src/main/java/neqsim/
   process/equipment/     33 equipment packages:
     stream/ separator/ compressor/ pump/ valve/ heatexchanger/
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
+    pipeline/routing/     PipingRouteBuilder — STID/E3D line-list route
+                          hydraulics to serial PipeBeggsAndBrills models
     well/ reservoir/ membrane/ ejector/ filter/ flare/
     subsea/              SubseaWell, SubseaTree (subsea equipment)
     heatexchanger/heatintegration/  PinchAnalysis, HeatStream (Linnhoff method)
@@ -90,8 +93,9 @@ src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
 .github/agents/          19 Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
-.github/skills/          19 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
-devtools/                neqsim_dev_setup.py for Jupyter development
+.github/skills/          28 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
+community-skills.yaml    Community skill catalog — external skills installable via `neqsim skill install`
+devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task/skill tools, UniSim reader
 ```
 
 ## Build & Test (30 seconds)
@@ -118,7 +122,7 @@ devtools/                neqsim_dev_setup.py for Jupyter development
 
 # Package JAR + copy to Python
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.3.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+Copy-Item target\neqsim-3.7.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\ -Force
 ```
 
 ## Code Patterns — Copy-Paste Starters
@@ -281,6 +285,9 @@ System.out.println(design.toJson());
 | Heat exchanger | `heatexchanger` | `Cooler`, `Heater`, `HeatExchanger` |
 | Heat integration | `heatexchanger.heatintegration` | `PinchAnalysis`, `HeatStream` |
 | Power generation | `powergeneration` | `GasTurbine`, `SteamTurbine`, `HRSG`, `CombinedCycleSystem` |
+| Bioprocessing reactors | `reactor` | `AnaerobicDigester`, `FermentationReactor`, `BiomassGasifier`, `PyrolysisReactor` |
+| Biogas upgrading | `splitter` | `BiogasUpgrader` (4 technologies: membrane, PSA, amine, water scrub) |
+| Biorefinery modules | `processmodel.biorefinery` | `BiogasToGridModule`, `GasificationSynthesisModule`, `WasteToEnergyCHPModule` |
 | Pipeline | `pipeline` | `AdiabaticPipe`, `PipeBeggsAndBrills` |
 | Mixer | `mixer` | `Mixer` |
 | Splitter | `splitter` | `Splitter` |
@@ -314,6 +321,7 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | HX thermal-hydraulic design | `src/main/java/neqsim/process/mechanicaldesign/heatexchanger/` (ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis) |
 | Heat integration / pinch analysis | `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` (PinchAnalysis, HeatStream) |
 | Power generation (combined cycle) | `src/main/java/neqsim/process/equipment/powergeneration/` (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
+| Bioprocessing / bioenergy | `src/main/java/neqsim/process/equipment/reactor/` (AnaerobicDigester, FermentationReactor, BiomassGasifier, PyrolysisReactor), `splitter/BiogasUpgrader`, `processmodel/biorefinery/` (BiogasToGridModule, GasificationSynthesisModule, WasteToEnergyCHPModule), `util/fielddevelopment/SustainabilityMetrics`, `thermo/characterization/BiomassCharacterization` |
 | Agentic QA & validation | `src/main/java/neqsim/util/agentic/` (TaskResultValidator, SimulationQualityGate, AgentSession) |
 | Automation API (string-addressed variables) | `src/main/java/neqsim/process/automation/` (ProcessAutomation, SimulationVariable) |
 | Lifecycle state / save-restore | `src/main/java/neqsim/process/processmodel/lifecycle/` (ProcessSystemState, ProcessModelState) |

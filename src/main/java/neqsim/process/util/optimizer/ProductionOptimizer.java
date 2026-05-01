@@ -1767,17 +1767,31 @@ public class ProductionOptimizer {
       return metric.applyAsDouble(result);
     }
 
-    /** Convenience KPI for reporting optimal rate. */
+    /**
+     * Convenience KPI for reporting optimal rate.
+     *
+     * @param unitLabel the unit label for the rate (e.g. "kg/hr")
+     * @return a ScenarioKpi that extracts the optimal rate
+     */
     public static ScenarioKpi optimalRate(String unitLabel) {
       return new ScenarioKpi("optimalRate", unitLabel, OptimizationResult::getOptimalRate);
     }
 
-    /** Convenience KPI for reporting solver score. */
+    /**
+     * Convenience KPI for reporting solver score.
+     *
+     * @return a ScenarioKpi that extracts the optimization score
+     */
     public static ScenarioKpi score() {
       return new ScenarioKpi("score", null, OptimizationResult::getScore);
     }
 
-    /** KPI that returns a specific objective value by name. */
+    /**
+     * KPI that returns a specific objective value by name.
+     *
+     * @param objectiveName the name of the objective to extract
+     * @return a ScenarioKpi that extracts the named objective value
+     */
     public static ScenarioKpi objectiveValue(String objectiveName) {
       return new ScenarioKpi(objectiveName, null,
           result -> result.getObjectiveValues().getOrDefault(objectiveName, Double.NaN));
@@ -2818,7 +2832,12 @@ public class ProductionOptimizer {
         additionalConstraints);
   }
 
-  /** Render a compact Markdown table describing utilization per unit. */
+  /**
+   * Render a compact Markdown table describing utilization per unit.
+   *
+   * @param records the utilization records to render
+   * @return a Markdown-formatted table string
+   */
   public static String formatUtilizationTable(List<UtilizationRecord> records) {
     StringBuilder sb = new StringBuilder();
     sb.append("| Equipment | Duty | Capacity | Utilization | Limit |\n");
@@ -2833,7 +2852,13 @@ public class ProductionOptimizer {
     return sb.toString();
   }
 
-  /** Render scenario KPIs and bottleneck information side-by-side. */
+  /**
+   * Render scenario KPIs and bottleneck information side-by-side.
+   *
+   * @param comparison the scenario comparison result
+   * @param kpis the KPI definitions to include
+   * @return a Markdown-formatted comparison table string
+   */
   public static String formatScenarioComparisonTable(ScenarioComparisonResult comparison,
       List<ScenarioKpi> kpis) {
     Objects.requireNonNull(comparison, "comparison");
@@ -2910,6 +2935,9 @@ public class ProductionOptimizer {
   /**
    * Build utilization series for each equipment across the provided iteration history to facilitate
    * charting or CSV export.
+   *
+   * @param iterationHistory the iteration history to process
+   * @return a list of utilization series, one per equipment
    */
   public static List<UtilizationSeries> buildUtilizationSeries(
       List<IterationRecord> iterationHistory) {
@@ -2949,6 +2977,9 @@ public class ProductionOptimizer {
 
   /**
    * Render a compact Markdown timeline showing bottlenecks across iterations.
+   *
+   * @param iterationHistory the iteration history to render
+   * @return a Markdown-formatted timeline table string
    */
   public static String formatUtilizationTimeline(List<IterationRecord> iterationHistory) {
     StringBuilder sb = new StringBuilder();
@@ -2983,6 +3014,10 @@ public class ProductionOptimizer {
   /**
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a
    * concise summary (max rate, limiting equipment, utilization margin).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to vary
+   * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
   public OptimizationSummary quickOptimize(ProcessSystem process, StreamInterface feedStream) {
     return quickOptimize(process, feedStream, "kg/hr", Collections.emptyList());
@@ -2991,6 +3026,12 @@ public class ProductionOptimizer {
   /**
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a
    * concise summary (max rate, limiting equipment, utilization margin).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to vary
+   * @param rateUnit the unit for flow rate (e.g., "kg/hr")
+   * @param constraints the optimization constraints to enforce
+   * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
   public OptimizationSummary quickOptimize(ProcessSystem process, StreamInterface feedStream,
       String rateUnit, List<OptimizationConstraint> constraints) {
@@ -3473,6 +3514,14 @@ public class ProductionOptimizer {
    * via central differences for better accuracy. The search direction is the negative gradient
    * (steepest ascent since we maximize feasibility score).
    * </p>
+   *
+   * @param process the process system to optimize
+   * @param variables the manipulated variables with bounds
+   * @param config the optimization configuration
+   * @param objectives the optimization objectives
+   * @param constraints the optimization constraints
+   * @param iterationHistory list to record iteration progress
+   * @return the optimization result with best found point
    */
   private OptimizationResult gradientDescentSearch(ProcessSystem process,
       List<ManipulatedVariable> variables, OptimizationConfig config,

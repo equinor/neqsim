@@ -98,7 +98,7 @@ public class ComponentElectrolyteCPAAdvanced extends ComponentElectrolyteCPAstat
         // XBorni = z^2 / (2 * rBorn_meters)
         // Factor 2 converts from 1/(8*pi*eps0*rBorn) convention to parent's
         // 1/(4*pi*eps0*sigma) convention
-        XBorni = (double) (ionicCharge * ionicCharge) / (2.0 * rBorn * 1e-10);
+        XBorni = ionicCharge * ionicCharge / (2.0 * rBorn * 1e-10);
       }
     }
   }

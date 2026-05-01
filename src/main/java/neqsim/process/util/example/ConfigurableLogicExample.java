@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * Example demonstrating how to create process logic from external configuration without any
  * pre-compilation - logic is loaded from text/JSON-like format at runtime.
- * 
+ *
  * <p>
  * This demonstrates:
  * </p>

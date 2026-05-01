@@ -29,6 +29,173 @@ this paper is accepted?"** If the answer is "nothing," the paper is out of scope
 
 ---
 
+## MANDATORY: Literature Review and Citation Collection First
+
+**Before writing a single sentence of a paper or book chapter, you MUST complete a
+deep literature review and build a comprehensive bibliography.** This is the
+non-negotiable first step for every paper and every book project.
+
+### Why Literature First?
+
+A book or paper with sparse references signals shallow scholarship. Readers (and
+reviewers) judge depth by the breadth and quality of the bibliography:
+
+| Project type | Minimum references | Target references |
+|---|---|---|
+| Journal paper | 30 | 40–60 |
+| Conference paper | 15 | 25–40 |
+| Book (full) | 100 | 150–300+ |
+| Book chapter | 15 per chapter | 20–40 per chapter |
+
+### Literature Review Workflow (Papers)
+
+**Step 0 — before plan.json, before any writing:**
+
+1. **Survey the field** — Identify 5–10 key review papers and seminal works
+   in the topic area. Read abstracts and introductions to map the landscape.
+2. **Build refs.bib** — Collect BibTeX entries for ALL potentially relevant works.
+   Aim for 2× the minimum count (you'll prune later). Include:
+   - Foundational/seminal papers (the "must-cite" classics)
+   - Recent advances (last 5 years)
+   - Competing methods and alternative approaches
+   - Experimental data sources used for validation
+   - Textbooks that provide background theory
+3. **Check existing PaperLab papers** — Search `papers/*/refs.bib` for related
+   citations. Reuse BibTeX entries from other PaperLab papers when relevant.
+   This ensures consistency across the project and avoids duplicating effort:
+   ```bash
+   grep -rl "keyword" papers/*/refs.bib
+   ```
+4. **Produce literature_map.md** — Use the literature-reviewer agent or write
+   manually. Organize by theme, not chronologically.
+5. **Identify gaps** — Write gap_statement.md articulating what's missing.
+
+Only AFTER steps 1–5 should you create `plan.json` and begin writing.
+
+### Literature Review Workflow (Books)
+
+**Step 0 — before writing any chapter:**
+
+1. **Build a comprehensive master refs.bib** at the book root with ALL references
+   across all chapters. Aim for 100+ entries minimum for a full book. Organize
+   the bib file into clearly commented sections by topic area:
+   ```bibtex
+   % ─── Foundational thermodynamics ───
+   @book{Prausnitz1999, ... }
+   @book{SmithVanNess2005, ... }
+
+   % ─── Equations of state ───
+   @article{Soave1972, ... }
+   @article{PengRobinson1976, ... }
+
+   % ─── Association theory ───
+   @article{Wertheim1984, ... }
+   ```
+2. **Mine existing PaperLab papers for citations** — Every paper in `papers/`
+   has a `refs.bib`. Extract relevant entries for the book. This is a major
+   source of high-quality, pre-verified references:
+   ```bash
+   # Find all refs.bib files
+   find papers/ -name "refs.bib" -exec grep -l "CPA\|association\|equation.of.state" {} \;
+   ```
+3. **Ensure coverage per chapter** — Each chapter should cite at least 10–20
+   unique references. Before writing a chapter, identify which refs.bib entries
+   belong to that chapter's topic.
+4. **Cite as you write** — Every factual claim, historical attribution, method
+   description, and data source gets a `\cite{}` tag. Do not write "as shown in
+   the literature" — cite the specific work.
+5. **After all chapters are written**, run the bibliography validation:
+   ```bash
+   python paperflow.py validate-bib books/<book_dir>/
+   ```
+   Verify: no orphan bib entries (every entry is cited), no unresolved cite tags,
+   references are numbered sequentially.
+
+### Cross-Referencing PaperLab Papers
+
+PaperLab papers share a common knowledge base. When writing a new paper or book:
+
+1. **Search existing paper bibliographies** for relevant entries:
+   - `papers/implicit_cpa_performance_2026/refs.bib` — CPA algorithm references
+   - `papers/tpflash_algorithms_2026/refs.bib` — Flash algorithm references
+   - `papers/gibbs_minimization_2026/refs.bib` — Chemical equilibrium references
+   - `papers/electrolyte_cpa_advanced_2026/refs.bib` — Electrolyte references
+   - `papers/thermal_conductivity_methods_2026/refs.bib` — Transport property references
+   - (and all others in `papers/`)
+2. **Use consistent BibTeX keys** across papers and books. If `Michelsen1982a`
+   is used in one paper, use the same key everywhere.
+3. **Cite PaperLab papers themselves** when they are published or under review:
+   ```bibtex
+   @article{OurTPflash2026,
+     title = {Systematic Characterization of a Hybrid Flash Algorithm},
+     ...
+   }
+   ```
+
+### MANDATORY: Reuse Content from PaperLab Papers
+
+PaperLab papers are deep-dive research artifacts. When writing a **book**, the
+corresponding paper is often a richer, more detailed treatment of the same topic.
+**You MUST check for relevant papers and import their content into book chapters.**
+
+**What to import:**
+
+| Asset | How to reuse |
+|---|---|
+| **Figures** (PNG/PDF in `papers/*/figures/`) | Copy to chapter `figures/` dir, reference in chapter.md |
+| **Tables** (markdown in `papers/*/paper.md`) | Copy table markdown into chapter.md, adapt caption for book context |
+| **Results & data** (numerical values, benchmarks) | Incorporate into chapter narrative with proper attribution |
+| **Text & explanations** (paragraphs, derivations) | Adapt and expand for book audience (more background, less jargon) |
+| **Equations** (LaTeX in paper.md) | Reuse exact LaTeX, ensure notation matches book nomenclature |
+| **Code examples** (Python/Java in paper) | Include as code blocks or move to chapter notebooks |
+
+**Workflow for each book chapter:**
+
+1. **Identify matching papers** — Before writing chapter N, search `papers/` for
+   papers that cover the same topic:
+   ```bash
+   # Search paper titles and content for chapter keywords
+   grep -rl "keyword" papers/*/paper.md papers/*/plan.json
+   ```
+2. **Read the paper(s)** — Understand what figures, tables, and results exist.
+3. **Copy figures** — Copy relevant PNGs to the chapter's `figures/` directory:
+   ```bash
+   cp papers/<paper>/figures/relevant_fig.png books/<book>/chapters/chNN/figures/
+   ```
+4. **Adapt tables** — Copy markdown tables from paper.md into chapter.md.
+   Expand captions and add book-level context (the book reader needs more
+   background than a journal reader).
+5. **Weave results into narrative** — Don't just paste; integrate the paper's
+   findings into the book's flow with additional explanation and context.
+6. **Credit the paper** — If the paper is published or under review, cite it.
+   If it's internal PaperLab work, note it as "from our detailed study" with
+   a `\cite{}` to the paper's own refs where applicable.
+
+**Paper-to-chapter mapping (update per book):**
+
+When starting a book project, create a mapping table in the book's notes or
+preface showing which papers feed into which chapters. Example:
+
+| Chapter | Relevant PaperLab paper(s) | Assets to import |
+|---|---|---|
+| Ch 8: Numerical Implementation | `implicit_cpa_performance_2026` | 6 figs, speedup tables |
+| Ch 8: Numerical Implementation | `accelerated_cpa_solvers_2026` | convergence tables, barchart |
+| Ch 4: Association Theory | `site_symmetry_reduction_wertheim_2026` | symmetry tables |
+| Ch 10: Gas Processing | `teg_cpa_solvers_2026_2026` | TEG benchmark tables |
+| Ch 12: Advanced Topics | `electrolyte_cpa_advanced_2026` | parity plots, salt tables |
+
+### Literature Quality Rules
+
+- **ALWAYS cite the original source**, not a secondary reference or review
+- **DO NOT fabricate references** — if unsure, mark as `[VERIFY]` and confirm later
+- **Include both classic AND recent** (last 5 years) references
+- **Every equation** should cite its origin (who derived it first)
+- **Every dataset** should cite its source (NIST, DIPPR, original experiment)
+- **Every method** should cite the paper that introduced it
+- **Every historical claim** should cite a primary source ("van der Waals proposed..." → cite van der Waals 1873)
+
+---
+
 ## Core Writing Principle
 
 **Papers are about algorithms, methods, and scientific contributions — not about NeqSim as a software product.**
@@ -36,6 +203,102 @@ this paper is accepted?"** If the answer is "nothing," the paper is out of scope
 NeqSim is the implementation vehicle, not the subject. The reader should learn about
 thermodynamic algorithms, numerical methods, and chemical engineering science. They
 should be able reproduce the work in any language or framework.
+
+---
+
+## SI Units (MANDATORY)
+
+**All papers and books produced by PaperLab MUST use SI units as the default unit system.**
+This is a non-negotiable requirement for scientific rigor and international consistency.
+
+### Required SI Units
+
+| Quantity | SI Unit | Symbol | NEVER use |
+|----------|---------|--------|-----------|
+| Temperature | kelvin | K | °F, °R |
+| Pressure | pascal (or kPa, MPa) | Pa | psi, psia, psig, atm, mmHg, inHg |
+| Length | metre (or mm, cm, km) | m | ft, in, miles |
+| Mass | kilogram (or g, kg, tonne) | kg | lb, lbm, oz |
+| Volume | cubic metre (or L, mL) | m³ | gal, bbl, ft³ |
+| Flow rate (mass) | kg/s (or kg/h, t/h) | kg/s | lb/h, lb/min |
+| Flow rate (volume) | m³/s (or m³/h, L/min) | m³/s | gal/min, bbl/d (see exceptions) |
+| Energy | joule (or kJ, MJ) | J | BTU, cal, kcal |
+| Power | watt (or kW, MW) | W | hp, BTU/h |
+| Density | kg/m³ | kg/m³ | lb/ft³, g/cc |
+| Viscosity (dynamic) | Pa·s (or mPa·s) | Pa·s | cP, lb/(ft·s) |
+| Viscosity (kinematic) | m²/s (or mm²/s) | m²/s | cSt, ft²/s |
+| Thermal conductivity | W/(m·K) | W/(m·K) | BTU/(h·ft·°F) |
+| Heat capacity | J/(mol·K) or J/(kg·K) | J/(mol·K) | BTU/(lb·°F), cal/(g·°C) |
+| Molar mass | kg/mol (or g/mol) | kg/mol | lb/lbmol |
+| Surface tension | N/m (or mN/m) | N/m | dyn/cm |
+
+### Acceptable Derived and Practical Units
+
+These non-base-SI units are widely accepted in scientific literature and may be used:
+
+| Quantity | Acceptable unit | When to use |
+|----------|----------------|-------------|
+| Temperature | °C (Celsius) | When reporting practical operating conditions alongside K |
+| Pressure | bar, bara | Common in process engineering; 1 bar = 100 kPa exactly |
+| Volume | L (litre) | For liquid volumes in practical contexts |
+| Time | min, h, d, yr | For process timescales (not fundamental equations) |
+| Concentration | mol/L (M) | For solution chemistry |
+| Amount | kmol | For process-scale molar flows |
+| Energy | kWh | For electrical energy comparisons |
+
+### Rules for Unit Usage
+
+1. **Equations**: All equations MUST use SI base or coherent derived units.
+   Variables in equations represent SI quantities unless explicitly noted.
+
+2. **Tables**: Column headers MUST include SI units in parentheses.
+   Example: `T (K)`, `P (kPa)`, `ρ (kg/m³)`, `μ (mPa·s)`.
+
+3. **Figures**: Axis labels MUST include SI units in parentheses.
+   Example: `Temperature (K)`, `Pressure (MPa)`, `Density (kg/m³)`.
+
+4. **Dual units**: When field-specific context requires it (e.g., comparing
+   with industry data in imperial units), report SI first with the alternative
+   in parentheses: "The pipeline operates at 10 MPa (1450 psi)."
+
+5. **Temperature**: Use K (kelvin) in equations and thermodynamic calculations.
+   Use °C for practical operating conditions and discussions. NEVER use °F or °R.
+
+6. **Pressure**: Use Pa, kPa, or MPa. The unit "bar" is acceptable in tables
+   and figures for engineering context. NEVER use psi, atm, or mmHg as primary units.
+
+7. **Nomenclature sections**: Define all symbols with their SI units.
+
+8. **NeqSim code examples**: When showing NeqSim API calls in papers or books,
+   use SI-compatible units in the method parameters:
+   ```python
+   # GOOD: Temperature in K, pressure in bar (SI-compatible)
+   fluid = SystemSrkEos(298.15, 50.0)  # T in K, P in bar
+
+   # GOOD: Flow rate in SI
+   stream.setFlowRate(100.0, "kg/hr")
+   ```
+
+### Conversion Quick Reference
+
+| From | To SI | Factor |
+|------|-------|--------|
+| °F → K | K = (°F + 459.67) × 5/9 | |
+| psi → kPa | × 6.89476 | |
+| bar → kPa | × 100 | |
+| atm → kPa | × 101.325 | |
+| BTU → kJ | × 1.05506 | |
+| hp → kW | × 0.7457 | |
+| lb → kg | × 0.45359 | |
+| ft → m | × 0.3048 | |
+| bbl → m³ | × 0.158987 | |
+| cP → mPa·s | × 1 (numerically equal) | |
+
+### Oil & Gas Industry Exception
+
+In petroleum engineering contexts (reserve reports, production data), these
+industry-standard units may appear alongside SI when comparing with published
+field data: bbl/d, MMSCF/d, BOPD. **Always report the SI equivalent first.**
 
 ---
 
@@ -172,7 +435,7 @@ and during `paperflow.py format`. The checks use the target journal's profile
 - [ ] **No vertical rules**: Use three-line style (header rule, separator, bottom rule); no `||` double pipes
 - [ ] **Numbering**: Tables are numbered sequentially with no gaps
 - [ ] **In-text references**: Every table is referenced in manuscript text (`Table N`)
-- [ ] **Units in headers**: Physical quantities include units in column headers (e.g., `T (K)`, `P (bar)`)
+- [ ] **Units in headers**: Physical quantities include SI units in column headers (e.g., `T (K)`, `P (kPa)`, `ρ (kg/m³)`) — see "SI Units (MANDATORY)" section
 - [ ] **Significant figures**: Results should use appropriate significant figures (not excessive precision)
 
 ### Highlights Checklist (if required by journal)
@@ -362,7 +625,34 @@ python paperflow.py format papers/<slug>/ --journal <journal_name>
 ```
 
 This produces **both** `submission/paper.tex` (LaTeX) and `submission/paper.docx`
-(Word) in a single invocation.
+(Word) in a single invocation. A typeset **PDF** is also generated when the
+`typst` Python package and `pandoc` are available.
+
+### PDF Document Quality
+
+The PDF renderer (`tools/render_pdf.py`) produces publication-quality PDFs with
+properly typeset math equations, numbered automatically by typst.  The pipeline:
+
+```
+paper.md  →  strip \tag{} + HTML comments
+          →  pandoc --to typst
+          →  add academic preamble (A4, New Computer Modern 11pt, equation numbering)
+          →  fix table column widths (auto-sizing instead of pandoc's percentages)
+          →  typst.compile()  →  submission/paper.pdf
+```
+
+Key features:
+- **Math equations** rendered natively by typst (fractions, subscripts, Greek, etc.)
+- **Auto-numbered equations** via `math.equation(numbering: "(1)")`
+- **Tables** use auto column widths so math-heavy cells are not squeezed
+- **ASCII-art figures** in code blocks are preserved with monospace styling
+- **Title and author** extracted from `plan.json` or `paper.md` automatically
+
+The PDF can also be generated standalone:
+
+```bash
+python tools/render_pdf.py papers/<slug>/
+```
 
 ### Word Document Quality
 
@@ -383,8 +673,11 @@ fall back to Unicode text rendering (Greek letters, operators).
 ### Required Python Packages
 
 ```
-pip install python-docx latex2mathml lxml pyyaml
+pip install python-docx latex2mathml lxml pyyaml typst
 ```
+
+Also ensure **pandoc ≥ 3.0** is installed and on PATH (https://pandoc.org).
+Pandoc is needed for both LaTeX and PDF rendering.
 
 ### 2. Keep the claims pipeline proportional to the paper type
 
@@ -563,3 +856,144 @@ Key considerations:
 - Compare with analytical solutions or published design examples
 - Include safety factor sensitivity analysis
 - Report cost estimation uncertainties
+
+---
+
+## Extended Toolchain
+
+PaperLab includes additional tools for publication quality and compliance.
+All tools are accessible via `paperflow.py` subcommands.
+
+### Statistical Tests on Benchmark Results
+
+```bash
+python paperflow.py stats papers/my_paper/
+```
+
+Runs bootstrap confidence intervals, Cohen's d effect sizes, Wilcoxon signed-rank
+tests, and Mann-Whitney U tests on benchmark `summary_*.json` files. Produces
+publication-ready LaTeX and Markdown tables.
+
+### Self-Plagiarism Check
+
+```bash
+python paperflow.py check-plagiarism papers/my_paper/ --doc-threshold 0.35
+```
+
+Uses TF-IDF cosine similarity to compare the manuscript against all other
+`paper.md` files in the `papers/` directory. Detects document-level and
+paragraph-level overlap. Requires `scikit-learn`.
+
+### Reproducibility Manifest
+
+```bash
+python paperflow.py manifest papers/my_paper/
+python paperflow.py verify-manifest papers/my_paper/
+```
+
+Generates SHA-256 hashes of all paper artifacts (manuscript, bibliography,
+results, figures, source code) and captures the computational environment
+(Python, Java, NeqSim version, OS). Use `verify-manifest` before submission
+to ensure no artifacts have been modified since the last build.
+
+### Graphical Abstract
+
+```bash
+python paperflow.py graphical-abstract papers/my_paper/
+```
+
+Generates a composite image (1600x900, 300 DPI) with the best figure from
+`figures/` on the left and title + key highlights on the right. Requires `Pillow`.
+
+### CRediT Author Statement
+
+```bash
+python paperflow.py credit papers/my_paper/
+```
+
+Generates a CRediT (Contributor Roles Taxonomy) author contribution statement
+per NISO Z39.104-2022 with all 14 standard roles. Reads contributor assignments
+from `plan.json` under `credit_contributions`. Validates role names and reports
+uncovered roles.
+
+### Nomenclature Extraction
+
+```bash
+python paperflow.py nomenclature papers/my_paper/
+```
+
+Scans `paper.md` for LaTeX math symbols (`$...$` and `$$...$$`), matches them
+against a built-in database of thermodynamic/process engineering symbols, and
+produces a sorted nomenclature table (Roman letters, Greek letters, subscripted
+symbols) in both Markdown and LaTeX.
+
+### Related Work Comparison Table
+
+```bash
+python paperflow.py related-work papers/my_paper/
+```
+
+Builds a structured comparison table from `literature_map.md` and `plan.json`
+entries. Configurable dimensions (Method, EOS, Systems, Key Result, Limitation).
+Outputs Markdown and LaTeX tables, optionally including a "This work" row.
+
+### LaTeX/PDF Compilation
+
+```bash
+python paperflow.py latex papers/my_paper/ --journal elsevier --output-format both
+```
+
+Compiles `paper.md` to LaTeX/PDF via Pandoc with journal-specific class templates
+(elsarticle, svjour3, achemso, MDPI, generic). Requires `pandoc` on PATH and
+optionally a LaTeX distribution (TeX Live or MiKTeX) for PDF output.
+
+Supported templates: `elsevier`, `springer`, `mdpi`, `acs`, `generic`.
+
+### DOI Verification
+
+```bash
+python paperflow.py verify-dois papers/my_paper/
+```
+
+Sends HTTP HEAD requests to `https://doi.org/{doi}` for every DOI in `refs.bib`
+and reports broken, timeout, or unreachable DOIs. Catches typos in DOI strings
+before submission.
+
+### Enhanced Citation Discovery (Crossref)
+
+```bash
+python paperflow.py suggest-refs papers/my_paper/ --max 15
+```
+
+Now queries **both** Semantic Scholar and Crossref APIs, deduplicates results,
+and merges citation counts from both sources for broader coverage. Crossref
+provides DOI-linked metadata and "is-referenced-by" counts.
+
+### Enhanced Prose Quality
+
+```bash
+python paperflow.py check-prose papers/my_paper/
+```
+
+Now includes **proselint** integration (style and clarity lint), **LanguageTool**
+grammar checking (with false-positive filtering for technical terms), NeqSim
+name-in-abstract enforcement, and body overuse warnings. Scores across 7
+dimensions: readability, sentence structure, active voice, conciseness,
+proselint style, grammar, and algorithm-first compliance.
+
+### Complete Tool Summary
+
+| Command | Purpose | Optional Deps |
+|---------|---------|---------------|
+| `stats` | Statistical tests on benchmarks | scipy |
+| `check-plagiarism` | Self-plagiarism detection | scikit-learn |
+| `manifest` | Reproducibility manifest | — |
+| `verify-manifest` | Verify manifest integrity | — |
+| `graphical-abstract` | Composite graphical abstract | Pillow |
+| `credit` | CRediT author statement | — |
+| `nomenclature` | Symbol nomenclature table | — |
+| `related-work` | Literature comparison table | — |
+| `latex` | LaTeX/PDF via Pandoc | pandoc, TeX distribution |
+| `verify-dois` | DOI resolution check | requests |
+| `suggest-refs` | Citation discovery (S2 + Crossref) | requests |
+| `check-prose` | Prose quality (7 dimensions) | proselint, language-tool-python |

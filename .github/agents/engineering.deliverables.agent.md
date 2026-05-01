@@ -243,3 +243,10 @@ Before using any deliverable class:
 2. **Read** constructor and method signatures
 3. **Do NOT assume convenience methods** — check first
 4. **Test with JUnit** if creating documentation examples
+
+## Shared Skills
+- Heat integration: See `neqsim-heat-integration` skill for pinch analysis (drives utility level selection)
+- Utilities specification: See `neqsim-utilities-specification` skill for steam levels, cooling water, instrument air, fuel gas, N₂, demin water, refrigeration
+- Cost estimation: See `neqsim-equipment-cost-estimation` skill for AACE Class-3/4 CAPEX of individual equipment
+- Standards: See `neqsim-standards-lookup` skill for equipment-to-standards mapping
+- Process safety: See `neqsim-process-safety` skill for HAZOP/LOPA/SIL deliverables

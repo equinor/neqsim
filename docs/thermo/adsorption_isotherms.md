@@ -469,7 +469,7 @@ where $[P]$ is the parachor.
 
 ## Parameter Database
 
-All isotherm parameters are stored in [`AdsorptionParameters.csv`](../../src/main/resources/data/AdsorptionParameters.csv) and loaded automatically when `calcAdsorption()` is called.
+All isotherm parameters are stored in [`AdsorptionParameters.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/AdsorptionParameters.csv) and loaded automatically when `calcAdsorption()` is called.
 
 ### Database Schema
 

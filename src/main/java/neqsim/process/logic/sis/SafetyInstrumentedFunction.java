@@ -54,6 +54,7 @@ import neqsim.process.logic.ProcessLogic;
  * @version 1.0
  */
 public class SafetyInstrumentedFunction implements ProcessLogic {
+  private static final long serialVersionUID = 1L;
   private final String name;
   private final VotingLogic votingLogic;
   private final transient List<Detector> detectors = new ArrayList<>();

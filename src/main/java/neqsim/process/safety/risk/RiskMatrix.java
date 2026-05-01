@@ -31,21 +31,21 @@ import neqsim.process.util.optimizer.ProductionImpactResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * RiskMatrix matrix = new RiskMatrix(processSystem);
  * matrix.setProductPrice(500.0, "USD/tonne");
  * matrix.setDowntimeCostPerHour(10000.0);
- * 
+ *
  * // Build risk matrix for all equipment
  * matrix.buildRiskMatrix();
- * 
+ *
  * // Get risk assessment for specific equipment
  * RiskAssessment risk = matrix.getRiskAssessment("HP Compressor");
  * System.out.println("Risk Level: " + risk.getRiskLevel());
  * System.out.println("Annual Cost: $" + risk.getAnnualRiskCost());
- * 
+ *
  * // Get matrix data for visualization
  * String json = matrix.toJson();
  * }

@@ -6,10 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.risk.RiskEvent;
 import neqsim.process.safety.risk.RiskModel;
-import neqsim.process.safety.risk.RiskResult;
 
 /**
  * Risk model integrated with Safety Instrumented Systems (SIS).
@@ -25,7 +23,7 @@ import neqsim.process.safety.risk.RiskResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * SISIntegratedRiskModel model = new SISIntegratedRiskModel("Process Risk Study");

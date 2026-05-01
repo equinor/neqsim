@@ -109,7 +109,14 @@ any AI tool or no AI at all.
 Run the task creation script:
 
 ```powershell
-python devtools/new_task.py "hydrate formation temperature for wet gas" --type A --author "Your Name"
+neqsim new-task "hydrate formation temperature for wet gas" --type A --author "Your Name"
+```
+
+For detailed or document-heavy studies, ask the workflow to pause after folder
+creation so you can add input files before notebooks are created:
+
+```powershell
+neqsim new-task "compressor seal condensation study" --type G --scale comprehensive --intake-pause always
 ```
 
 This creates a folder like:
@@ -118,6 +125,8 @@ This creates a folder like:
 task_solve/
 └── 2026-03-07_hydrate_formation_temperature_for_wet_gas/
     ├── README.md                          # Task checklist with AI prompts
+    ├── study_config.yaml                   # Intake, document inputs, runner execution, notebooks, report depth
+    ├── user_input.md                       # Original prompt, follow-up answers, assumptions
     ├── results.json                       # (created later by your notebook)
     ├── figures/                           # Saved plots
     ├── step1_scope_and_research/
@@ -129,6 +138,16 @@ task_solve/
     └── step3_report/
         └── generate_report.py             # Produces Word + HTML reports
 ```
+
+Document input is possible at this point. Add PDFs, Word files, Excel stream
+tables, P&IDs, vendor data sheets, standards, or lab reports to
+`step1_scope_and_research/references/`. For required documents, list them in
+`study_config.yaml` so the report generator can warn if they are missing.
+Task notebooks use NeqSim Runner by default, so notebook execution happens in
+isolated subprocesses with separate JVMs instead of relying on manual kernel
+restarts in VS Code or Jupyter. Multi-notebook results are merged into the
+task-level `results.json`, and report generation warns if `runner.db` shows
+missing, failed, or timed-out planned notebook jobs.
 
 **Task types:**
 
@@ -143,7 +162,7 @@ task_solve/
 | **G** — Workflow | Multi-discipline study | Field development, design basis |
 
 > **Tip:** The script auto-creates `task_solve/` on first run. Run
-> `python devtools/new_task.py --list` to see existing tasks.
+> `neqsim new-task --list` to see existing tasks.
 
 ---
 
@@ -512,7 +531,7 @@ Give it a one-shot prompt:
 
 ```
 Read AGENTS.md for project instructions.
-Create a task: python devtools/new_task.py "hydrate temperature" --type A
+Create a task: neqsim new-task "hydrate temperature" --type A
 Follow the 3-step workflow in the generated README.
 Save results.json and generate the Word + HTML report.
 Create a PR with the outputs.
