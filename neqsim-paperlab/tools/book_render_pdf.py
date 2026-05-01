@@ -546,7 +546,8 @@ def build_book_typst_preamble(cfg, profile=None):
 # Chapter preprocessing
 # ---------------------------------------------------------------------------
 
-def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None):
+def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None,
+                        chapter_dir=None, submission_dir=None):
     """Clean chapter markdown for typst conversion.
 
     - Strip HTML comments and \\tag{}
@@ -571,10 +572,44 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None):
     # Rewrite relative figure paths: figures/foo.png -> figures_chNN/foo.png
     if figures_dir:
         text = re.sub(
-            r"!\[([^\]]*)\]\(figures/([^)]+)\)",
+            r"!\[(.*?)\]\(figures/([^)]+)\)",
             rf"![\1](figures_ch{ch_num:02d}/\2)",
             text,
+            flags=re.DOTALL,
         )
+
+    # Typst's Python compiler sandboxes file reads to the compiled document
+    # tree. Lecture figures referenced as ../../figures/... therefore need to
+    # be copied into submission/ and rewritten before Pandoc converts Markdown
+    # to Typst.
+    if chapter_dir is not None and submission_dir is not None:
+        chapter_dir = Path(chapter_dir)
+        submission_dir = Path(submission_dir)
+        shared_fig_dir = submission_dir / "figures"
+        shared_fig_dir.mkdir(parents=True, exist_ok=True)
+
+        def _rewrite_external_image(match):
+            alt = match.group(1)
+            target = match.group(2).strip()
+            target_lower = target.lower()
+            if (target_lower.startswith("http://")
+                    or target_lower.startswith("https://")
+                    or target_lower.startswith("data:")
+                    or target.startswith("figures_ch")):
+                return match.group(0)
+
+            source = (chapter_dir / target).resolve()
+            if not source.exists() or not source.is_file():
+                return match.group(0)
+
+            safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", target.replace("\\", "/"))
+            safe_name = safe_name.strip("._")
+            dest = shared_fig_dir / f"ch{ch_num:02d}_{safe_name}"
+            shutil.copy2(source, dest)
+            return f"![{alt}](figures/{dest.name})"
+
+        text = re.sub(r"!\[(.*?)\]\(([^)]+)\)", _rewrite_external_image, text,
+                      flags=re.DOTALL)
 
     return text
 
@@ -738,7 +773,9 @@ def render_book_pdf(book_dir, chapter_filter=None):
         text = _preprocess_chapter(
             text, ch_num,
             figures_dir=fig_src if fig_src.exists() else None,
-            key_to_num=key_to_num if key_to_num else None)
+            key_to_num=key_to_num if key_to_num else None,
+            chapter_dir=ch_dir,
+            submission_dir=submission_dir)
 
         # Write cleaned markdown to temp file
         clean_md = submission_dir / f"_ch{ch_num:02d}_clean.md"

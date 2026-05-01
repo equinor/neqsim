@@ -1948,6 +1948,243 @@ class TestBookChecker:
         assert len(warnings) >= 1
 
 
+class TestBookImprovementTools:
+    """Tests for book-improvement source, figure, and evidence tooling."""
+
+    def test_source_inventory_skips_dependency_cache(self, tmp_path):
+        """source inventory includes course files and skips dependency caches."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_source_inventory
+
+        bd = create_book_project("Improve Test", n_chapters=1, books_dir=tmp_path / "books")
+        source_root = tmp_path / "source"
+        (source_root / "lectures").mkdir(parents=True)
+        (source_root / "lectures" / "intro.pdf").write_text("pdf", encoding="utf-8")
+        (source_root / ".venv" / "Lib" / "site-packages").mkdir(parents=True)
+        (source_root / ".venv" / "Lib" / "site-packages" / "noise.py").write_text(
+            "skip", encoding="utf-8")
+
+        manifest = build_source_inventory(bd, source_root)
+
+        assert manifest["total_files"] == 1
+        assert manifest["skipped_files"] == 1
+        assert manifest["summary"]["by_area"] == {"lectures": 1}
+        assert (bd / "source_manifest.json").exists()
+
+    def test_figure_dossier_and_evidence_gate(self, tmp_path):
+        """figure dossier records missing discussion and evidence gate reports it."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_evidence_report, build_figure_dossier
+
+        bd = create_book_project("Figure Test", n_chapters=1, books_dir=tmp_path / "books")
+        chapter_dir = bd / "chapters" / "ch01"
+        (chapter_dir / "figures" / "plot.png").write_bytes(b"not a real image")
+        (chapter_dir / "chapter.md").write_text(
+            "# Chapter 1\n\n## Section\n\n"
+            "![Figure 1.1: Pressure profile for the example pipeline.](figures/plot.png)\n\n"
+            "Text after figure.\n",
+            encoding="utf-8",
+        )
+
+        dossier = build_figure_dossier(bd)
+        report = build_evidence_report(bd)
+
+        assert dossier["figure_count"] == 1
+        assert dossier["summary"]["missing_files"] == 0
+        assert dossier["summary"]["without_discussion"] == 1
+        assert any(issue["category"] == "figure_discussion" for issue in report["issues"])
+        assert (bd / "figure_dossier.json").exists()
+        assert (bd / "evidence_report.json").exists()
+
+    def test_coverage_audit_maps_known_lectures(self, tmp_path):
+        """coverage audit maps lecture folders by title and flags extra lectures."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_coverage_audit
+
+        bd = create_book_project("Coverage Test", n_chapters=1, books_dir=tmp_path / "books")
+        (bd / "coverage_matrix.md").write_text(
+            "| Date | Lecture title | Chapter(s) |\n"
+            "|------|---------------|------------|\n"
+            "| 16-01-2026 | Flow Performance in Production Systems | ch04 |\n",
+            encoding="utf-8",
+        )
+        source_root = tmp_path / "source"
+        (source_root / "lectures" / "16-01-2026 - Flow Performance in Production Systems").mkdir(
+            parents=True)
+        (source_root / "lectures" / "28-04-2026 - Review of Mathematics").mkdir(parents=True)
+
+        audit = build_coverage_audit(bd, source_root)
+
+        assert len(audit["lecture_folders"]) == 2
+        assert len(audit["unmapped_lecture_folders"]) == 1
+        assert "Review of Mathematics" in audit["unmapped_lecture_folders"][0]["source"]
+
+    def test_conciseness_audit_detects_repeated_text_and_figures(self, tmp_path):
+        """conciseness audit finds repeated paragraphs and duplicated figures."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_conciseness_audit
+
+        bd = create_book_project("Concise Test", n_chapters=2, books_dir=tmp_path / "books")
+        repeated = (
+            "This production system explanation repeats the same engineering message about "
+            "pressure drop, capacity, facilities, operating envelopes, and field development "
+            "choices. It should be written once and cross referenced instead of repeated."
+        )
+        for idx in (1, 2):
+            chapter_dir = bd / "chapters" / f"ch{idx:02d}"
+            (chapter_dir / "figures" / "shared.png").write_bytes(b"shared image")
+            (chapter_dir / "chapter.md").write_text(
+                f"# Chapter {idx}\n\n## Shared Topic\n\n{repeated}\n\n"
+                "![Shared figure caption.](figures/shared.png)\n",
+                encoding="utf-8",
+            )
+
+        audit = build_conciseness_audit(bd, min_words=10, paragraph_similarity_threshold=0.9)
+
+        assert audit["summary"]["exact_duplicate_paragraph_groups"] >= 1
+        assert audit["summary"]["duplicate_figure_groups"] >= 1
+        assert audit["summary"]["chapter_merge_candidates"] >= 1
+        assert (bd / "conciseness_audit.json").exists()
+        assert (bd / "conciseness_audit.md").exists()
+
+    def test_apply_conciseness_compresses_generated_appendix(self, tmp_path):
+        """apply conciseness replaces long generated lecture-topic blocks."""
+        from book_builder import create_book_project
+        from book_improvement_tools import apply_conciseness_edits
+
+        bd = create_book_project("Apply Concise Test", n_chapters=1, books_dir=tmp_path / "books")
+        chapter_md = bd / "chapters" / "ch01" / "chapter.md"
+        repeated_sentence = "This generated slide text repeats background process material. " * 35
+        chapter_md.write_text(
+            "# Chapter 1\n\nMain text.\n\n"
+            "<!-- LECTURE_TOPICS_START -->\n"
+            "## Further topics covered in the course\n\n"
+            "**Repeated topic one.** " + repeated_sentence + "\n\n"
+            "**Repeated topic two.** " + repeated_sentence + "\n"
+            "<!-- LECTURE_TOPICS_END -->\n",
+            encoding="utf-8",
+        )
+
+        result = apply_conciseness_edits(bd, min_block_words=20, max_topics=2)
+        text = chapter_md.read_text(encoding="utf-8")
+
+        assert result["chapters_changed"] == 1
+        assert result["removed_words"] > 0
+        assert "Repeated topic one" in text
+        assert "generated source appendix has been condensed" in text
+
+    def test_skill_stack_artifacts_build_from_book_sources(self, tmp_path):
+        """skill-stack, standards, exam, source, and graph artifacts are written."""
+        from book_builder import create_book_project
+        from book_improvement_tools import (
+            build_book_knowledge_graph,
+            build_exam_alignment,
+            build_skill_stack_plan,
+            build_source_inventory,
+            build_source_pdf_html_plan,
+            build_standards_map,
+        )
+
+        bd = create_book_project("Skill Stack Test", n_chapters=2, books_dir=tmp_path / "books")
+        ch01 = bd / "chapters" / "ch01" / "chapter.md"
+        ch01.write_text(
+            "# Chapter 1\n\n"
+            "## Learning Objectives\n\n"
+            "- Explain separator and subsea well design standards.\n\n"
+            "## Exercises\n\n"
+            "1. Check a separator against NORSOK and API guidance.\n\n"
+            "The chapter covers separator, subsea, well, safety, and CO2 topics.\n",
+            encoding="utf-8",
+        )
+        source_root = tmp_path / "source"
+        (source_root / "exams").mkdir(parents=True)
+        (source_root / "exams" / "exam_2026.pdf").write_text("exam", encoding="utf-8")
+        (source_root / "exercises").mkdir(parents=True)
+        (source_root / "exercises" / "exercise_01.pdf").write_text("exercise", encoding="utf-8")
+        (source_root / "lectures").mkdir(parents=True)
+        (source_root / "lectures" / "lecture_01.pdf").write_text("lecture", encoding="utf-8")
+
+        build_source_inventory(bd, source_root)
+        standards = build_standards_map(bd)
+        exam = build_exam_alignment(bd)
+        pdf_plan = build_source_pdf_html_plan(bd)
+        skill_plan = build_skill_stack_plan(bd)
+        graph = build_book_knowledge_graph(bd)
+
+        assert standards["summary"]["unique_standards"] >= 1
+        assert exam["summary"]["exam_source_files"] == 1
+        assert exam["summary"]["exercise_source_files"] == 1
+        assert pdf_plan["summary"]["pdf_files"] == 3
+        assert skill_plan["summary"]["dimensions_total"] >= 5
+        assert graph["summary"]["nodes"] > 2
+        assert graph["summary"]["edges"] > 1
+        assert (bd / "skill_stack_plan.md").exists()
+        assert (bd / "standards_map.md").exists()
+        assert (bd / "exam_alignment.md").exists()
+        assert (bd / "source_pdf_html_plan.md").exists()
+        assert (bd / "book_knowledge_graph.html").exists()
+
+    def test_lecture_topic_coverage_applies_chapter_checkpoint(self, tmp_path):
+        """lecture topic coverage writes report, checkpoint, and appendix."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_lecture_topic_coverage
+
+        bd = create_book_project("Lecture Coverage Test", n_chapters=1, books_dir=tmp_path / "books")
+        manifest = [
+            {
+                "lecture": "09-01-2026 Intro",
+                "chapter": "ch01",
+                "pptx": "intro.pptx",
+                "slides": [
+                    {"idx": 1, "title": "Field development value chain", "body": ["reservoir", "facilities"]},
+                    {"idx": 2, "title": "Decision gates and PUD", "body": ["DG1", "DG2", "approval"]},
+                ],
+            }
+        ]
+        (bd / "_lecture_topic_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        report = build_lecture_topic_coverage(bd, apply_checkpoints=True)
+        chapter_text = (bd / "chapters" / "ch01" / "chapter.md").read_text(encoding="utf-8")
+
+        assert report["summary"]["lecture_decks"] == 1
+        assert report["summary"]["topics_needing_review"] == 0
+        assert "Lecture coverage checkpoint" in chapter_text
+        assert "Field development value chain" in chapter_text
+        assert (bd / "lecture_topic_coverage.md").exists()
+        assert (bd / "backmatter" / "lecture_coverage.md").exists()
+
+    def test_lecture_figure_plan_reports_rendered_candidates(self, tmp_path):
+        """lecture figure plan finds figure-like slides and rendered PNG paths."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_lecture_figure_plan
+
+        bd = create_book_project("Lecture Figure Test", n_chapters=1, books_dir=tmp_path / "books")
+        manifest = [
+            {
+                "lecture": "10-03-2026 - Offshore Structures",
+                "chapter": "ch01",
+                "pptx": "Offshore structures_March.pptx",
+                "slides": [
+                    {"idx": 1, "title": "Topics in this lecture", "body": ["agenda"]},
+                    {"idx": 2, "title": "Platform types", "body": ["bottom fixed", "floaters", "photos"]},
+                    {"idx": 3, "title": "Natural periods of motion matter", "body": ["loads", "response"]},
+                ],
+            }
+        ]
+        (bd / "_lecture_topic_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        cache = bd / "_pptx_slides_cache" / "10-03-2026 - Offshore Structures"
+        cache.mkdir(parents=True)
+        (cache / "Offshore structures_March__slide_002.png").write_bytes(b"png")
+
+        report = build_lecture_figure_plan(bd, max_slides_per_deck=4)
+
+        assert report["summary"]["lecture_decks"] == 1
+        assert report["summary"]["candidate_slides"] >= 2
+        assert report["summary"]["rendered_candidate_slides"] == 1
+        assert any(row["rendered"] for row in report["decks"][0]["candidates"])
+        assert (bd / "lecture_figure_plan.md").exists()
+
+
 class TestBookRenderHTML:
     """Tests for book HTML rendering (no external deps)."""
 
@@ -1976,6 +2213,24 @@ class TestBookRenderHTML:
         html = Path(result).read_text(encoding="utf-8")
         assert "alpha bravo charlie" in html
 
+    def test_html_copies_nested_chapter_figures(self, tmp_path):
+        """Nested chapter figure folders are copied to submission/figures."""
+        from book_builder import create_book_project
+        from book_render_html import render_book_html
+        bd = create_book_project("Nested Figure Test", n_chapters=1, books_dir=tmp_path / "books")
+        ch_dir = bd / "chapters" / "ch01"
+        nested = ch_dir / "figures" / "lecture" / "slides"
+        nested.mkdir(parents=True)
+        (nested / "slide.png").write_bytes(b"png")
+        (ch_dir / "chapter.md").write_text(
+            "# Chapter 1\n\n![Nested lecture figure.](figures/lecture/slides/slide.png)\n",
+            encoding="utf-8",
+        )
+
+        render_book_html(bd)
+
+        assert (bd / "submission" / "figures" / "lecture" / "slides" / "slide.png").exists()
+
     def test_html_has_sidebar(self, tmp_path):
         """Full-book HTML includes a sidebar nav."""
         from book_builder import create_book_project
@@ -2000,6 +2255,37 @@ class TestBookRenderHTML:
         # Should NOT contain ch01 or ch03 content
         assert "Marker1Unique" not in html
         assert "Marker3Unique" not in html
+
+
+class TestBookRenderPDFPreprocess:
+    """Tests for PDF preprocessing helpers."""
+
+    def test_external_lecture_figure_is_copied_into_submission(self, tmp_path):
+        """external lecture figures are rewritten inside the Typst sandbox."""
+        from book_render_pdf import _preprocess_chapter
+
+        book_dir = tmp_path / "book"
+        chapter_dir = book_dir / "chapters" / "ch04"
+        source_fig = book_dir / "figures" / "lectures" / "ch04" / "slide.png"
+        submission_dir = book_dir / "submission"
+        chapter_dir.mkdir(parents=True)
+        source_fig.parent.mkdir(parents=True)
+        source_fig.write_bytes(b"fake image")
+
+        text = (
+            "![Caption with citation [1]]"
+            "(../../figures/lectures/ch04/slide.png)\n"
+        )
+        processed = _preprocess_chapter(
+            text,
+            4,
+            chapter_dir=chapter_dir,
+            submission_dir=submission_dir,
+        )
+
+        assert "../../figures" not in processed
+        assert "figures/ch04_figures_lectures_ch04_slide.png" in processed
+        assert (submission_dir / "figures" / "ch04_figures_lectures_ch04_slide.png").exists()
 
 
 class TestBookCLI:
