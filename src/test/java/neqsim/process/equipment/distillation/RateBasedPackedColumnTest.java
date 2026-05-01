@@ -81,6 +81,34 @@ public class RateBasedPackedColumnTest {
   }
 
   @Test
+  public void testSimultaneousResidualSolverConservesEnthalpy() {
+    Stream gas = createGasStream("simultaneous warm gas", 0.10);
+    Stream liquid = createLiquidStream("simultaneous cool liquid", 0.0);
+    double inletTotalEnthalpy =
+        gas.getThermoSystem().getEnthalpy() + liquid.getThermoSystem().getEnthalpy();
+
+    RateBasedPackedColumn column = configuredColumn(gas, liquid, 6.0);
+    column.setSegmentSolver(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL);
+    column.setSegmentResidualTolerance(1.0e-5);
+    column.run();
+
+    RateBasedPackedColumn.SegmentResult firstSegment = column.getSegmentResults().get(0);
+    double outletTotalEnthalpy = column.getGasOutStream().getThermoSystem().getEnthalpy()
+        + column.getLiquidOutStream().getThermoSystem().getEnthalpy();
+    double relativeEnthalpyError = Math.abs(outletTotalEnthalpy - inletTotalEnthalpy)
+        / Math.max(Math.abs(inletTotalEnthalpy), 1.0);
+
+    Assertions.assertEquals(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL.name(),
+        firstSegment.getSegmentSolver());
+    Assertions.assertTrue(firstSegment.getResidualIterations() >= 0);
+    Assertions.assertTrue(Double.isFinite(firstSegment.getMaxFluxResidualMolPerSec()));
+    Assertions.assertTrue(Double.isFinite(firstSegment.getHeatBalanceResidualW()));
+    Assertions.assertTrue(relativeEnthalpyError < 1.0e-5,
+        "Simultaneous residual solver should conserve total gas/liquid enthalpy");
+    Assertions.assertTrue(column.toJson().contains("heatBalanceResidualW"));
+  }
+
+  @Test
   public void testCanDisableExplicitHeatTransfer() {
     RateBasedPackedColumn column = configuredColumn(createGasStream("warm gas", 0.10),
         createLiquidStream("cool liquid", 0.0), 6.0);

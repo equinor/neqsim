@@ -170,6 +170,7 @@ counter-current segment calculations with bidirectional mass transfer.
 - **Rate-based non-equilibrium mode** with segment profiles, bidirectional transfer, and interface equilibrium
 - **Maxwell-Stefan matrix film option** using NeqSim binary diffusivities and phase composition
 - **Explicit interphase heat transfer** using Chilton-Colburn heat and mass transfer analogy
+- **Optional simultaneous segment solver** with Maxwell-Stefan flux residuals, interface-temperature residuals, and PH-flash enthalpy targets
 - **TEG dehydration validation** with water-removal checks against typical circulation ratios
 - **Distillation mode** with condenser + reboiler for packed distillation
 - **Auto-sizing** of column diameter from flood fraction
@@ -252,13 +253,15 @@ The default mass-transfer path is `FilmModel.MAXWELL_STEFAN_MATRIX`. This assemb
 
 The default heat-transfer path is `HeatTransferModel.CHILTON_COLBURN_ANALOGY`. It derives gas- and liquid-side heat-transfer coefficients from the packed-bed mass-transfer coefficients, phase heat capacities, viscosities, diffusivities, and thermal conductivities, then applies explicit gas-liquid heat exchange in every segment before re-flashing the outlet states.
 
+The robust default segment solver is `SegmentSolver.SEQUENTIAL_EXPLICIT`. Advanced users can enable `SegmentSolver.SIMULTANEOUS_RESIDUAL` to solve the component transfer rates and interface temperature in one damped residual system. That mode evaluates Maxwell-Stefan flux residuals, computes interface equilibrium and component molar enthalpies at the trial interface temperature, applies PH-flash enthalpy targets after the material transfer, and records residual diagnostics in each `SegmentResult`. Trial interface flashes and PH flashes are guarded with bounded fallback states so thermodynamic failures do not abort the counter-current column profile.
+
 For TEG dehydration, the recommended setup is a CPA glycol/water system, water-only transfer via `setTransferComponents("water")`, and structured packing such as `Mellapak-250Y` for compact contactors. In addition to outlet water content, check the circulation efficiency:
 
 $$
 R_{TEG} = \frac{\dot{m}_{TEG} / \rho_{TEG}}{\dot{m}_{H2O,removed}}
 $$
 
-Typical TEG absorber practice is about 15-40 L TEG/kg H2O removed, equivalent to roughly 0.02-0.07 kg water removed per kg TEG circulated for lean TEG density near 1.125 kg/L. The focused `RateBasedPackedColumnTest` suite includes this check along with absorption, stripping, interface equilibrium output, explicit heat-transfer output, height sensitivity, zero-height transfer, material balance, stream introspection, and JSON reporting tests.
+Typical TEG absorber practice is about 15-40 L TEG/kg H2O removed, equivalent to roughly 0.02-0.07 kg water removed per kg TEG circulated for lean TEG density near 1.125 kg/L. The focused `RateBasedPackedColumnTest` suite includes this check along with absorption, stripping, interface equilibrium output, explicit heat-transfer output, simultaneous residual diagnostics, height sensitivity, zero-height transfer, material balance, stream introspection, and JSON reporting tests.
 
 More detail is available in the [absorbers and strippers guide](equipment/absorbers.md#rate-based-packed-column) and the [TEG dehydration tutorial](../tutorials/teg_dehydration_tutorial.md).
 

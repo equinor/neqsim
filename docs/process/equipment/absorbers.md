@@ -414,6 +414,7 @@ The model combines existing NeqSim functionality:
 - `PackingHydraulicsCalculator` provides wetted area, pressure drop, flooding fraction, and volumetric film coefficients.
 - A Maxwell-Stefan matrix film model can correct component film coefficients using NeqSim binary diffusivities and phase composition.
 - A Chilton-Colburn analogy can calculate explicit interphase heat transfer from the same packed-bed film data.
+- An optional simultaneous segment residual solver couples component fluxes, interface temperature, interface equilibrium, and segment enthalpy targets.
 - `PackingSpecificationLibrary` resolves built-in and CSV-backed packing data from `designdata/Packing.csv`.
 
 Positive component transfer means gas-to-liquid absorption. Negative transfer means liquid-to-gas stripping.
@@ -425,6 +426,18 @@ The packed section is discretized into axial segments. For each segment, the mod
 The default film model is `MAXWELL_STEFAN_MATRIX`. It mirrors the structure of the Krishna-Standart film model used in the fluid-mechanics package: binary diffusion coefficients from NeqSim physical properties are assembled into a multicomponent resistance matrix and inverted to obtain component-specific film coefficients. If binary diffusion data are missing or the matrix is ill-conditioned, the model falls back to robust effective diffusivities.
 
 The default heat-transfer model is `CHILTON_COLBURN_ANALOGY`. It converts gas- and liquid-side mass-transfer coefficients into volumetric heat-transfer coefficients using phase density, heat capacity, viscosity, diffusivity, and thermal conductivity. Segment heat transfer is explicit and rate-limited to avoid overshooting the thermal approach; final segment states are re-flashed after material and heat transfer.
+
+The default segment solver is `SEQUENTIAL_EXPLICIT`, which keeps the established robust counter-current profile behaviour. For detailed studies, set `SegmentSolver.SIMULTANEOUS_RESIDUAL` to solve component transfer rates and interface temperature together. The simultaneous residual vector contains one Maxwell-Stefan flux residual per transferred component plus an interfacial heat-balance residual:
+
+$$
+r_i = N_i - N_{i,MS}
+$$
+
+$$
+r_Q = h_g A_v V (T_g - T_i) + \sum_i N_i \bar{H}_{i,g}^{I} - h_l A_v V (T_i - T_l) - \sum_i N_i \bar{H}_{i,l}^{I}
+$$
+
+where $N_i$ is the segment molar transfer rate, $N_{i,MS}$ is the Maxwell-Stefan film prediction, $T_i$ is the interface temperature, $A_v V$ is the wetted interfacial area in the segment, and $\bar{H}_{i,g}^{I}$ and $\bar{H}_{i,l}^{I}$ are interface component molar enthalpies. After the material transfer is applied, the gas and liquid outlet states are driven toward their segment enthalpy targets using PH flash calculations. If a trial interface flash or PH flash enters an invalid thermodynamic state, the solver falls back to bulk-phase interface data or a bounded temperature initialization so the column solve remains stable.
 
 Use this model when these details matter:
 
@@ -516,6 +529,7 @@ Typical absorber practice is about 15-40 L TEG/kg H2O removed, as also noted in 
 | TEG circulation | Water removed per TEG circulation is within the typical 15-40 L/kg range. |
 | Interface equilibrium | Segment results expose gas/liquid interface compositions and K-ratios. |
 | Heat transfer | Segment results expose heat-transfer coefficients and heat-transfer rate. |
+| Simultaneous residuals | Optional residual mode exposes flux residuals, heat-balance residuals, and enthalpy-balance diagnostics. |
 | Packed height | Taller packing gives stronger absorption for the same inlet streams. |
 | Zero height | A packed height of zero gives no molar transfer. |
 | Material balance | Selected transferred components are conserved across gas and liquid outlets. |
@@ -535,7 +549,7 @@ The packing library supports aliases such as `pall ring 50`, `Pall-Ring-50`, `Me
 
 ### Segment Profiles
 
-Per-segment results include temperature, pressure, diffusivities, wetted area, `kGa`, `kLa`, pressure drop, flooding fraction, and component transfer.
+Per-segment results include temperature, pressure, diffusivities, wetted area, `kGa`, `kLa`, pressure drop, flooding fraction, component transfer, interface compositions, heat-transfer rate, and residual diagnostics when the simultaneous solver is used.
 
 ```java
 for (RateBasedPackedColumn.SegmentResult segment : column.getSegmentResults()) {
@@ -560,6 +574,9 @@ for (RateBasedPackedColumn.SegmentResult segment : column.getSegmentResults()) {
 | `setTransferComponents(String...)` | Optional component whitelist; empty means all components |
 | `setMassTransferCorrelation(MassTransferCorrelation)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
 | `setFilmModel(FilmModel)` | `MAXWELL_STEFAN_MATRIX` or `OVERALL_TWO_RESISTANCE` |
+| `setSegmentSolver(SegmentSolver)` | `SEQUENTIAL_EXPLICIT` for robust default profile stepping or `SIMULTANEOUS_RESIDUAL` for coupled segment residuals |
+| `setSegmentResidualTolerance(double)` | Convergence tolerance for the simultaneous residual norm |
+| `setMaxSegmentResidualIterations(int)` | Maximum Newton iterations for each simultaneous segment solve |
 | `setMassTransferCorrectionFactor(double)` | Multiplier for effective segment transfer, useful for calibration and sensitivity studies |
 | `setHeatTransferModel(HeatTransferModel)` | `CHILTON_COLBURN_ANALOGY` or `NONE` |
 | `setHeatTransferCorrectionFactor(double)` | Multiplier for interphase heat-transfer coefficients |

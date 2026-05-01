@@ -134,11 +134,20 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /** Heat-transfer model used for interphase heat exchange. */
   private HeatTransferModel heatTransferModel = HeatTransferModel.CHILTON_COLBURN_ANALOGY;
 
+  /** Segment solver used for heat, mass, and interface-equilibrium coupling. */
+  private SegmentSolver segmentSolver = SegmentSolver.SEQUENTIAL_EXPLICIT;
+
   /** Global correction factor for interphase heat-transfer coefficients. */
   private double heatTransferCorrectionFactor = 1.0;
 
   /** Maximum fraction of the available thermal approach transferred in one segment. */
   private double maxHeatTransferFractionPerSegment = 0.50;
+
+  /** Maximum Newton iterations for the simultaneous segment residual solve. */
+  private int maxSegmentResidualIterations = 12;
+
+  /** Normalized residual tolerance for the simultaneous segment solver. */
+  private double segmentResidualTolerance = 1.0e-6;
 
   /**
    * Mass-transfer correlation options for the packed-column film coefficients.
@@ -170,6 +179,16 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     NONE,
     /** Use Chilton-Colburn heat and mass transfer analogy from packed-bed film coefficients. */
     CHILTON_COLBURN_ANALOGY
+  }
+
+  /**
+   * Segment-level coupling options.
+   */
+  public enum SegmentSolver {
+    /** Apply mass transfer and heat transfer sequentially, then re-flash the segment outlets. */
+    SEQUENTIAL_EXPLICIT,
+    /** Solve mass-transfer flux residuals and interfacial heat balance simultaneously. */
+    SIMULTANEOUS_RESIDUAL
   }
 
   /**
@@ -555,6 +574,28 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Set the segment solver used for heat and mass coupling.
+   *
+   * @param segmentSolver segment solver to use
+   * @throws IllegalArgumentException if the segment solver is null
+   */
+  public void setSegmentSolver(SegmentSolver segmentSolver) {
+    if (segmentSolver == null) {
+      throw new IllegalArgumentException("segmentSolver can not be null");
+    }
+    this.segmentSolver = segmentSolver;
+  }
+
+  /**
+   * Get the active segment solver.
+   *
+   * @return active segment solver
+   */
+  public SegmentSolver getSegmentSolver() {
+    return segmentSolver;
+  }
+
+  /**
    * Set the global interphase heat-transfer correction factor.
    *
    * @param correctionFactor correction factor, must be positive
@@ -595,6 +636,48 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    */
   public double getMaxHeatTransferFractionPerSegment() {
     return maxHeatTransferFractionPerSegment;
+  }
+
+  /**
+   * Set the maximum iterations for the simultaneous segment residual solver.
+   *
+   * @param maxSegmentResidualIterations maximum residual iterations, must be at least one
+   * @throws IllegalArgumentException if the iteration count is below one
+   */
+  public void setMaxSegmentResidualIterations(int maxSegmentResidualIterations) {
+    if (maxSegmentResidualIterations < 1) {
+      throw new IllegalArgumentException("maxSegmentResidualIterations must be at least one");
+    }
+    this.maxSegmentResidualIterations = maxSegmentResidualIterations;
+  }
+
+  /**
+   * Get the maximum iterations for the simultaneous segment residual solver.
+   *
+   * @return maximum residual iterations
+   */
+  public int getMaxSegmentResidualIterations() {
+    return maxSegmentResidualIterations;
+  }
+
+  /**
+   * Set the normalized residual tolerance for the simultaneous segment solver.
+   *
+   * @param segmentResidualTolerance normalized tolerance, must be positive
+   * @throws IllegalArgumentException if the tolerance is not positive
+   */
+  public void setSegmentResidualTolerance(double segmentResidualTolerance) {
+    validatePositive(segmentResidualTolerance, "segmentResidualTolerance");
+    this.segmentResidualTolerance = segmentResidualTolerance;
+  }
+
+  /**
+   * Get the normalized residual tolerance for the simultaneous segment solver.
+   *
+   * @return normalized residual tolerance
+   */
+  public double getSegmentResidualTolerance() {
+    return segmentResidualTolerance;
   }
 
   /**
@@ -902,6 +985,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     flashAndInitialize(liquid);
 
     double segmentHeight = packedHeight / numberOfSegments;
+    if (segmentHeight > 0.0 && segmentSolver == SegmentSolver.SIMULTANEOUS_RESIDUAL
+        && heatTransferModel != HeatTransferModel.NONE) {
+      return calculateSimultaneousResidualSegment(segment, gas, liquid, segmentHeight);
+    }
+
+    double inletTotalEnthalpy = gas.getEnthalpy() + liquid.getEnthalpy();
     Map<String, Double> componentTransfers = new LinkedHashMap<String, Double>();
     TransportSnapshot snapshot = calculateTransportSnapshot(gas, liquid, segmentHeight);
     InterfaceEquilibrium interfaceEquilibrium =
@@ -936,7 +1025,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
         snapshot.overallHeatTransferCoefficient, interfaceEquilibrium.interfaceTemperatureK,
         heatTransferRate, snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer,
         componentTransfers, interfaceEquilibrium.gasMoleFractions,
-        interfaceEquilibrium.liquidMoleFractions, interfaceEquilibrium.equilibriumRatios);
+        interfaceEquilibrium.liquidMoleFractions, interfaceEquilibrium.equilibriumRatios,
+        SegmentSolver.SEQUENTIAL_EXPLICIT.name(), 0, 0.0, 0.0,
+        gas.getEnthalpy() + liquid.getEnthalpy() - inletTotalEnthalpy);
     return new SegmentComputation(gas, liquid, result);
   }
 
@@ -1019,6 +1110,24 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   private double calculateComponentTransfer(String component, SystemInterface gas,
       SystemInterface liquid, TransportSnapshot snapshot,
       InterfaceEquilibrium interfaceEquilibrium) {
+    double transfer =
+        calculateUnboundedComponentTransfer(component, gas, liquid, snapshot, interfaceEquilibrium);
+    return limitTransfer(component, transfer, gas, liquid);
+  }
+
+  /**
+   * Calculate the unbounded Maxwell-Stefan film transfer rate for one component.
+   *
+   * @param component component name
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot for the segment
+   * @param interfaceEquilibrium interface equilibrium data
+   * @return unbounded transfer rate in mol/s, positive from gas to liquid
+   */
+  private double calculateUnboundedComponentTransfer(String component, SystemInterface gas,
+      SystemInterface liquid, TransportSnapshot snapshot,
+      InterfaceEquilibrium interfaceEquilibrium) {
     PhaseInterface gasPhase = getGasPhase(gas);
     PhaseInterface liquidPhase = getLiquidPhase(liquid);
     double kValue = interfaceEquilibrium.getEquilibriumRatio(component);
@@ -1050,8 +1159,391 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     double segmentVolume =
         Math.PI * columnDiameter * columnDiameter / 4.0 * packedHeight / numberOfSegments;
-    double transfer = transferDensity * segmentVolume;
-    return limitTransfer(component, transfer, gas, liquid);
+    return transferDensity * segmentVolume;
+  }
+
+  /**
+   * Calculate one segment using simultaneous flux and interfacial energy residuals.
+   *
+   * @param segment segment index from bottom, zero based
+   * @param gas gas system entering the segment
+   * @param liquid liquid system entering the segment
+   * @param segmentHeight segment height in metres
+   * @return segment computation with outlet systems and residual diagnostics
+   */
+  private SegmentComputation calculateSimultaneousResidualSegment(int segment, SystemInterface gas,
+      SystemInterface liquid, double segmentHeight) {
+    double inletTotalEnthalpy = gas.getEnthalpy() + liquid.getEnthalpy();
+    TransportSnapshot snapshot = calculateTransportSnapshot(gas, liquid, segmentHeight);
+    List<String> components = getTransferComponentList(gas, liquid);
+    SegmentResidualEvaluation evaluation = solveSegmentResiduals(gas, liquid, snapshot, components);
+
+    Map<String, Double> componentTransfers = new LinkedHashMap<String, Double>();
+    for (int i = 0; i < components.size(); i++) {
+      String component = components.get(i);
+      Double transferValue = evaluation.componentTransfers.get(component);
+      double transfer = transferValue == null ? 0.0 : transferValue.doubleValue();
+      if (Math.abs(transfer) > 0.0) {
+        applyComponentTransfer(component, transfer, gas, liquid);
+        componentTransfers.put(component, transfer);
+      }
+    }
+    flashAndInitialize(gas);
+    flashAndInitialize(liquid);
+    applyEnthalpyTarget(gas, evaluation.gasTargetEnthalpy);
+    applyEnthalpyTarget(liquid, inletTotalEnthalpy - gas.getEnthalpy());
+
+    double totalTransfer = 0.0;
+    for (Double value : componentTransfers.values()) {
+      totalTransfer += value.doubleValue();
+    }
+    double enthalpyBalanceResidual = gas.getEnthalpy() + liquid.getEnthalpy() - inletTotalEnthalpy;
+    SegmentResult result = new SegmentResult(segment + 1, (segment + 0.5) * segmentHeight,
+        gas.getTemperature(), liquid.getTemperature(), gas.getPressure(), liquid.getPressure(),
+        gas.getTotalNumberOfMoles(), liquid.getTotalNumberOfMoles(), snapshot.gasDensity,
+        snapshot.liquidDensity, snapshot.gasViscosity, snapshot.liquidViscosity,
+        snapshot.gasDiffusivity, snapshot.liquidDiffusivity, snapshot.wettedArea, snapshot.kGa,
+        snapshot.kLa, snapshot.gasHeatTransferCoefficient, snapshot.liquidHeatTransferCoefficient,
+        snapshot.overallHeatTransferCoefficient,
+        evaluation.interfaceEquilibrium.interfaceTemperatureK, evaluation.heatTransferRateW,
+        snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer, componentTransfers,
+        evaluation.interfaceEquilibrium.gasMoleFractions,
+        evaluation.interfaceEquilibrium.liquidMoleFractions,
+        evaluation.interfaceEquilibrium.equilibriumRatios,
+        SegmentSolver.SIMULTANEOUS_RESIDUAL.name(), evaluation.iterations,
+        evaluation.maxFluxResidualMolPerSec, evaluation.heatBalanceResidualW,
+        enthalpyBalanceResidual);
+    return new SegmentComputation(gas, liquid, result);
+  }
+
+  /**
+   * Solve the simultaneous residual equations for a segment.
+   *
+   * @param gas gas system entering the segment
+   * @param liquid liquid system entering the segment
+   * @param snapshot transport snapshot for the segment
+   * @param components active transfer components
+   * @return best residual evaluation found
+   */
+  private SegmentResidualEvaluation solveSegmentResiduals(SystemInterface gas,
+      SystemInterface liquid, TransportSnapshot snapshot, List<String> components) {
+    double[] unknowns = createInitialResidualUnknowns(gas, liquid, snapshot, components);
+    SegmentResidualEvaluation best =
+        evaluateSegmentResidual(gas, liquid, snapshot, components, unknowns, 0);
+    for (int iteration = 0; iteration < maxSegmentResidualIterations; iteration++) {
+      if (best.norm <= segmentResidualTolerance) {
+        return best;
+      }
+      Matrix step = calculateResidualStep(gas, liquid, snapshot, components, unknowns, best);
+      if (step == null) {
+        return best;
+      }
+      boolean improved = false;
+      double[] bestUnknowns = unknowns;
+      SegmentResidualEvaluation bestCandidate = best;
+      double damping = 1.0;
+      for (int lineSearch = 0; lineSearch < 8; lineSearch++) {
+        double[] candidateUnknowns =
+            applyResidualStep(unknowns, step, damping, gas, liquid, components);
+        SegmentResidualEvaluation candidate = evaluateSegmentResidual(gas, liquid, snapshot,
+            components, candidateUnknowns, iteration + 1);
+        if (candidate.norm < bestCandidate.norm) {
+          bestUnknowns = candidateUnknowns;
+          bestCandidate = candidate;
+          improved = true;
+          break;
+        }
+        damping *= 0.5;
+      }
+      if (!improved) {
+        return best;
+      }
+      unknowns = bestUnknowns;
+      best = bestCandidate;
+    }
+    return best;
+  }
+
+  /**
+   * Create initial guesses for component transfers and interface temperature.
+   *
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot
+   * @param components active transfer components
+   * @return residual unknown vector
+   */
+  private double[] createInitialResidualUnknowns(SystemInterface gas, SystemInterface liquid,
+      TransportSnapshot snapshot, List<String> components) {
+    double[] unknowns = new double[components.size() + 1];
+    InterfaceEquilibrium equilibrium = calculateInterfaceEquilibrium(gas, liquid, snapshot);
+    for (int i = 0; i < components.size(); i++) {
+      unknowns[i] =
+          calculateComponentTransfer(components.get(i), gas, liquid, snapshot, equilibrium);
+    }
+    unknowns[components.size()] = snapshot.interfaceTemperatureK;
+    return clampResidualUnknowns(unknowns, gas, liquid, components);
+  }
+
+  /**
+   * Evaluate normalized residuals for the simultaneous segment equations.
+   *
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot
+   * @param components active transfer components
+   * @param unknowns residual unknown vector
+   * @param iterations iteration count represented by the evaluation
+   * @return residual evaluation
+   */
+  private SegmentResidualEvaluation evaluateSegmentResidual(SystemInterface gas,
+      SystemInterface liquid, TransportSnapshot snapshot, List<String> components,
+      double[] unknowns, int iterations) {
+    double[] boundedUnknowns = clampResidualUnknowns(unknowns, gas, liquid, components);
+    double interfaceTemperature = boundedUnknowns[components.size()];
+    InterfaceEquilibrium equilibrium =
+        calculateInterfaceEquilibrium(gas, liquid, interfaceTemperature);
+    double[] residuals = new double[components.size() + 1];
+    Map<String, Double> componentTransfers = new LinkedHashMap<String, Double>();
+    double maxFluxResidual = 0.0;
+    for (int i = 0; i < components.size(); i++) {
+      String component = components.get(i);
+      double proposedTransfer = boundedUnknowns[i];
+      double predictedTransfer =
+          calculateUnboundedComponentTransfer(component, gas, liquid, snapshot, equilibrium);
+      predictedTransfer = limitTransfer(component, predictedTransfer, gas, liquid);
+      double fluxResidual = proposedTransfer - predictedTransfer;
+      residuals[i] =
+          fluxResidual / transferResidualScale(component, predictedTransfer, gas, liquid);
+      maxFluxResidual = Math.max(maxFluxResidual, Math.abs(fluxResidual));
+      componentTransfers.put(component, proposedTransfer);
+    }
+
+    double segmentVolume =
+        Math.PI * columnDiameter * columnDiameter / 4.0 * packedHeight / numberOfSegments;
+    double gasSensibleHeat = snapshot.gasHeatTransferCoefficient * segmentVolume
+        * (gas.getTemperature() - interfaceTemperature);
+    double liquidSensibleHeat = snapshot.liquidHeatTransferCoefficient * segmentVolume
+        * (interfaceTemperature - liquid.getTemperature());
+    double gasMassEnthalpy = 0.0;
+    double liquidMassEnthalpy = 0.0;
+    for (int i = 0; i < components.size(); i++) {
+      String component = components.get(i);
+      double transfer = componentTransfers.get(component).doubleValue();
+      gasMassEnthalpy += transfer * equilibrium.getGasMolarEnthalpy(component);
+      liquidMassEnthalpy += transfer * equilibrium.getLiquidMolarEnthalpy(component);
+    }
+    double heatBalanceResidual =
+        gasSensibleHeat + gasMassEnthalpy - liquidSensibleHeat - liquidMassEnthalpy;
+    residuals[components.size()] = heatBalanceResidual / heatResidualScale(gasSensibleHeat,
+        liquidSensibleHeat, gasMassEnthalpy, liquidMassEnthalpy);
+    double gasTargetEnthalpy = gas.getEnthalpy() - gasSensibleHeat - gasMassEnthalpy;
+    double liquidTargetEnthalpy = liquid.getEnthalpy() + liquidSensibleHeat + liquidMassEnthalpy;
+    return new SegmentResidualEvaluation(equilibrium, componentTransfers, residuals,
+        residualNorm(residuals), maxFluxResidual, heatBalanceResidual, liquidSensibleHeat,
+        gasTargetEnthalpy, liquidTargetEnthalpy, iterations);
+  }
+
+  /**
+   * Calculate a Newton step for normalized segment residuals.
+   *
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param snapshot transport snapshot
+   * @param components active transfer components
+   * @param unknowns current unknown vector
+   * @param evaluation current residual evaluation
+   * @return Newton step, or null if the linear solve fails
+   */
+  private Matrix calculateResidualStep(SystemInterface gas, SystemInterface liquid,
+      TransportSnapshot snapshot, List<String> components, double[] unknowns,
+      SegmentResidualEvaluation evaluation) {
+    int dimension = unknowns.length;
+    double[][] jacobian = new double[dimension][dimension];
+    for (int variable = 0; variable < dimension; variable++) {
+      double step = residualVariableStep(unknowns, variable, components.size());
+      double[] shifted = unknowns.clone();
+      shifted[variable] += step;
+      shifted = clampResidualUnknowns(shifted, gas, liquid, components);
+      double actualStep = shifted[variable] - unknowns[variable];
+      if (Math.abs(actualStep) < 1.0e-20) {
+        shifted = unknowns.clone();
+        shifted[variable] -= step;
+        shifted = clampResidualUnknowns(shifted, gas, liquid, components);
+        actualStep = shifted[variable] - unknowns[variable];
+      }
+      if (Math.abs(actualStep) < 1.0e-20) {
+        jacobian[variable][variable] = 1.0;
+      } else {
+        SegmentResidualEvaluation shiftedEvaluation = evaluateSegmentResidual(gas, liquid, snapshot,
+            components, shifted, evaluation.iterations);
+        for (int row = 0; row < dimension; row++) {
+          jacobian[row][variable] =
+              (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
+                  / actualStep;
+        }
+      }
+    }
+    double[][] rhsValues = new double[dimension][1];
+    for (int row = 0; row < dimension; row++) {
+      rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+    }
+    try {
+      return new Matrix(jacobian).solve(new Matrix(rhsValues));
+    } catch (RuntimeException ex) {
+      return null;
+    }
+  }
+
+  /**
+   * Apply a damped residual step and clamp the unknowns to physical bounds.
+   *
+   * @param unknowns current unknowns
+   * @param step Newton step
+   * @param damping damping factor from zero to one
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param components active transfer components
+   * @return bounded candidate unknowns
+   */
+  private double[] applyResidualStep(double[] unknowns, Matrix step, double damping,
+      SystemInterface gas, SystemInterface liquid, List<String> components) {
+    double[] candidate = unknowns.clone();
+    for (int i = 0; i < candidate.length; i++) {
+      candidate[i] += damping * step.get(i, 0);
+    }
+    return clampResidualUnknowns(candidate, gas, liquid, components);
+  }
+
+  /**
+   * Clamp residual unknowns to available component inventory and temperature bounds.
+   *
+   * @param unknowns unknown vector to clamp
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param components active transfer components
+   * @return clamped unknown vector
+   */
+  private double[] clampResidualUnknowns(double[] unknowns, SystemInterface gas,
+      SystemInterface liquid, List<String> components) {
+    double[] bounded = unknowns.clone();
+    for (int i = 0; i < components.size(); i++) {
+      if (!Double.isFinite(bounded[i])) {
+        bounded[i] = 0.0;
+      }
+      bounded[i] = limitTransfer(components.get(i), bounded[i], gas, liquid);
+    }
+    double minimumTemperature =
+        Math.max(1.0, Math.min(gas.getTemperature(), liquid.getTemperature()) - 100.0);
+    double maximumTemperature = Math.max(gas.getTemperature(), liquid.getTemperature()) + 100.0;
+    if (!Double.isFinite(bounded[components.size()])) {
+      bounded[components.size()] = 0.5 * (gas.getTemperature() + liquid.getTemperature());
+    }
+    bounded[components.size()] =
+        clamp(bounded[components.size()], minimumTemperature, maximumTemperature);
+    return bounded;
+  }
+
+  /**
+   * Calculate finite-difference step size for a residual unknown.
+   *
+   * @param unknowns current unknown vector
+   * @param variable variable index
+   * @param componentCount number of component transfer unknowns
+   * @return finite-difference step
+   */
+  private double residualVariableStep(double[] unknowns, int variable, int componentCount) {
+    if (variable == componentCount) {
+      return Math.max(1.0e-3, Math.abs(unknowns[variable]) * 1.0e-5);
+    }
+    return Math.max(1.0e-8, Math.abs(unknowns[variable]) * 1.0e-4);
+  }
+
+  /**
+   * Calculate the transfer residual scaling for one component.
+   *
+   * @param component component name
+   * @param predictedTransfer predicted transfer rate in mol/s
+   * @param gas gas system
+   * @param liquid liquid system
+   * @return positive residual scaling in mol/s
+   */
+  private double transferResidualScale(String component, double predictedTransfer,
+      SystemInterface gas, SystemInterface liquid) {
+    double inventory = Math.max(componentMoles(gas, component), componentMoles(liquid, component));
+    return Math.max(1.0e-10,
+        Math.max(Math.abs(predictedTransfer), inventory * maxTransferFractionPerSegment * 1.0e-4));
+  }
+
+  /**
+   * Calculate heat residual scaling.
+   *
+   * @param gasSensibleHeat gas-side sensible heat rate in W
+   * @param liquidSensibleHeat liquid-side sensible heat rate in W
+   * @param gasMassEnthalpy gas-side transferred component enthalpy rate in W
+   * @param liquidMassEnthalpy liquid-side transferred component enthalpy rate in W
+   * @return positive residual scaling in W
+   */
+  private double heatResidualScale(double gasSensibleHeat, double liquidSensibleHeat,
+      double gasMassEnthalpy, double liquidMassEnthalpy) {
+    return Math.max(1.0, Math.abs(gasSensibleHeat) + Math.abs(liquidSensibleHeat)
+        + Math.abs(gasMassEnthalpy) + Math.abs(liquidMassEnthalpy));
+  }
+
+  /**
+   * Calculate infinity norm of normalized residuals.
+   *
+   * @param residuals normalized residual array
+   * @return maximum absolute residual
+   */
+  private double residualNorm(double[] residuals) {
+    double norm = 0.0;
+    for (int i = 0; i < residuals.length; i++) {
+      norm = Math.max(norm, Math.abs(residuals[i]));
+    }
+    return norm;
+  }
+
+  /**
+   * Apply a total enthalpy target by pressure-enthalpy flash.
+   *
+   * @param system thermodynamic system to flash
+   * @param targetEnthalpy target total enthalpy in J or W-equivalent stream basis
+   */
+  private void applyEnthalpyTarget(SystemInterface system, double targetEnthalpy) {
+    try {
+      ThermodynamicOperations operations = new ThermodynamicOperations(system);
+      operations.PHflash(targetEnthalpy);
+      system.initProperties();
+    } catch (RuntimeException ex) {
+      double estimatedTemperature = estimateTemperatureForTargetEnthalpy(system, targetEnthalpy);
+      system.setTemperature(estimatedTemperature);
+      try {
+        flashAndInitialize(system);
+      } catch (RuntimeException innerException) {
+        system.setTemperature(clamp(system.getTemperature(), 250.0, 500.0));
+        system.init(3);
+        system.initProperties();
+      }
+    }
+  }
+
+  /**
+   * Estimate a temperature for an enthalpy target if PH flash fails.
+   *
+   * @param system thermodynamic system
+   * @param targetEnthalpy target total enthalpy in J or W-equivalent stream basis
+   * @return estimated temperature in kelvin
+   */
+  private double estimateTemperatureForTargetEnthalpy(SystemInterface system,
+      double targetEnthalpy) {
+    double heatCapacity = Math.max(1.0, system.getCp("J/K"));
+    double estimatedTemperature =
+        system.getTemperature() + (targetEnthalpy - system.getEnthalpy()) / heatCapacity;
+    if (!Double.isFinite(estimatedTemperature)) {
+      return system.getTemperature();
+    }
+    return clamp(estimatedTemperature, 1.0, 1500.0);
   }
 
   /**
@@ -1102,13 +1594,22 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     Map<String, Double> gasFractions = new LinkedHashMap<String, Double>();
     Map<String, Double> liquidFractions = new LinkedHashMap<String, Double>();
     Map<String, Double> ratios = new LinkedHashMap<String, Double>();
+    Map<String, Double> gasMolarEnthalpies = new LinkedHashMap<String, Double>();
+    Map<String, Double> liquidMolarEnthalpies = new LinkedHashMap<String, Double>();
     SystemInterface mixed = gas.clone();
     addSystemComponents(mixed, liquid);
     mixed.setTemperature(snapshot.interfaceTemperatureK);
     mixed.setPressure(0.5 * (gas.getPressure() + liquid.getPressure()));
-    flashAndInitialize(mixed);
-    PhaseInterface gasPhase = getGasPhase(mixed);
-    PhaseInterface liquidPhase = getLiquidPhase(mixed);
+    PhaseInterface gasPhase;
+    PhaseInterface liquidPhase;
+    try {
+      flashAndInitialize(mixed);
+      gasPhase = getGasPhase(mixed);
+      liquidPhase = getLiquidPhase(mixed);
+    } catch (RuntimeException ex) {
+      gasPhase = getGasPhase(gas);
+      liquidPhase = getLiquidPhase(liquid);
+    }
     List<String> allComponents = getTransferComponentList(gas, liquid);
     for (int i = 0; i < allComponents.size(); i++) {
       String component = allComponents.get(i);
@@ -1116,6 +1617,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       double y = moleFraction(gasPhase, component);
       gasFractions.put(component, y);
       liquidFractions.put(component, x);
+      gasMolarEnthalpies.put(component, componentMolarEnthalpy(gasPhase, component,
+          snapshot.interfaceTemperatureK, phaseMolarEnthalpy(gasPhase)));
+      liquidMolarEnthalpies.put(component, componentMolarEnthalpy(liquidPhase, component,
+          snapshot.interfaceTemperatureK, phaseMolarEnthalpy(liquidPhase)));
       if (x > 1.0e-12 && y >= 0.0) {
         ratios.put(component, Math.max(1.0e-12, y / x));
       } else {
@@ -1123,7 +1628,23 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       }
     }
     return new InterfaceEquilibrium(snapshot.interfaceTemperatureK, gasFractions, liquidFractions,
-        ratios);
+        ratios, gasMolarEnthalpies, liquidMolarEnthalpies);
+  }
+
+  /**
+   * Calculate interface equilibrium at a specified temperature.
+   *
+   * @param gas gas system
+   * @param liquid liquid system
+   * @param interfaceTemperatureK interface temperature in kelvin
+   * @return interface equilibrium data
+   */
+  private InterfaceEquilibrium calculateInterfaceEquilibrium(SystemInterface gas,
+      SystemInterface liquid, double interfaceTemperatureK) {
+    TransportSnapshot snapshot = new TransportSnapshot(0.0, 0.0, 0.0, 0.0, DEFAULT_GAS_DIFFUSIVITY,
+        DEFAULT_LIQUID_DIFFUSIVITY, 0.0, 0.0, 0.0, DEFAULT_GAS_HEAT_CAPACITY,
+        DEFAULT_LIQUID_HEAT_CAPACITY, 0.0, 0.0, 0.0, interfaceTemperatureK, 0.0, 0.0);
+    return calculateInterfaceEquilibrium(gas, liquid, snapshot);
   }
 
   /**
@@ -1346,6 +1867,39 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       double molarMass = finitePositive(phase.getMolarMass(), 0.020);
       return finitePositive(phase.getCp() / (moles * molarMass), fallback);
     }
+  }
+
+  /**
+   * Get phase molar enthalpy.
+   *
+   * @param phase phase to inspect
+   * @return molar enthalpy in J/mol
+   */
+  private double phaseMolarEnthalpy(PhaseInterface phase) {
+    double moles = finitePositive(phase.getNumberOfMolesInPhase(), 1.0);
+    return phase.getEnthalpy() / moles;
+  }
+
+  /**
+   * Get component molar enthalpy at an interface temperature.
+   *
+   * @param phase phase to inspect
+   * @param component component name
+   * @param temperature temperature in kelvin
+   * @param fallback fallback molar enthalpy in J/mol
+   * @return component molar enthalpy in J/mol
+   */
+  private double componentMolarEnthalpy(PhaseInterface phase, String component, double temperature,
+      double fallback) {
+    if (phase == null || component == null || !phase.hasComponent(component)) {
+      return fallback;
+    }
+    ComponentInterface componentObject = phase.getComponent(component);
+    double componentMoles = componentObject.getNumberOfMolesInPhase();
+    if (Math.abs(componentMoles) < 1.0e-30) {
+      return fallback;
+    }
+    return componentObject.getEnthalpy(temperature) / componentMoles;
   }
 
   /**
@@ -1945,6 +2499,21 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     /** Interface gas-to-liquid equilibrium ratios by component. */
     private final Map<String, Double> interfaceEquilibriumRatios;
 
+    /** Segment solver used to calculate this result. */
+    private final String segmentSolver;
+
+    /** Iterations used by the simultaneous residual solver. */
+    private final int residualIterations;
+
+    /** Maximum component flux residual in mol/s. */
+    private final double maxFluxResidualMolPerSec;
+
+    /** Interfacial heat-balance residual in W. */
+    private final double heatBalanceResidualW;
+
+    /** Total outlet enthalpy-balance residual in W-equivalent stream basis. */
+    private final double enthalpyBalanceResidualW;
+
     /**
      * Create a segment result.
      *
@@ -1977,6 +2546,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param interfaceGasMoleFractions gas-side interface mole fractions by component
      * @param interfaceLiquidMoleFractions liquid-side interface mole fractions by component
      * @param interfaceEquilibriumRatios interface equilibrium ratios by component
+     * @param segmentSolver segment solver name
+     * @param residualIterations residual solver iterations
+     * @param maxFluxResidualMolPerSec maximum component flux residual in mol/s
+     * @param heatBalanceResidualW interfacial heat-balance residual in W
+     * @param enthalpyBalanceResidualW total outlet enthalpy-balance residual in W-equivalent stream
+     *        basis
      */
     public SegmentResult(int segmentNumber, double heightFromBottom, double gasTemperatureK,
         double liquidTemperatureK, double gasPressureBar, double liquidPressureBar,
@@ -1989,7 +2564,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
         double netMolarTransfer, Map<String, Double> componentMoleTransfer,
         Map<String, Double> interfaceGasMoleFractions,
         Map<String, Double> interfaceLiquidMoleFractions,
-        Map<String, Double> interfaceEquilibriumRatios) {
+        Map<String, Double> interfaceEquilibriumRatios, String segmentSolver,
+        int residualIterations, double maxFluxResidualMolPerSec, double heatBalanceResidualW,
+        double enthalpyBalanceResidualW) {
       this.segmentNumber = segmentNumber;
       this.heightFromBottom = heightFromBottom;
       this.gasTemperatureK = gasTemperatureK;
@@ -2021,6 +2598,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
           new LinkedHashMap<String, Double>(interfaceLiquidMoleFractions);
       this.interfaceEquilibriumRatios =
           new LinkedHashMap<String, Double>(interfaceEquilibriumRatios);
+      this.segmentSolver = segmentSolver;
+      this.residualIterations = residualIterations;
+      this.maxFluxResidualMolPerSec = maxFluxResidualMolPerSec;
+      this.heatBalanceResidualW = heatBalanceResidualW;
+      this.enthalpyBalanceResidualW = enthalpyBalanceResidualW;
     }
 
     /**
@@ -2283,6 +2865,51 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     public Map<String, Double> getInterfaceEquilibriumRatios() {
       return Collections.unmodifiableMap(interfaceEquilibriumRatios);
     }
+
+    /**
+     * Get the segment solver used for this result.
+     *
+     * @return segment solver name
+     */
+    public String getSegmentSolver() {
+      return segmentSolver;
+    }
+
+    /**
+     * Get residual solver iteration count.
+     *
+     * @return residual solver iterations
+     */
+    public int getResidualIterations() {
+      return residualIterations;
+    }
+
+    /**
+     * Get maximum Maxwell-Stefan flux residual.
+     *
+     * @return maximum component flux residual in mol/s
+     */
+    public double getMaxFluxResidualMolPerSec() {
+      return maxFluxResidualMolPerSec;
+    }
+
+    /**
+     * Get interfacial heat-balance residual.
+     *
+     * @return heat-balance residual in W
+     */
+    public double getHeatBalanceResidualW() {
+      return heatBalanceResidualW;
+    }
+
+    /**
+     * Get total enthalpy-balance residual across gas and liquid outlets.
+     *
+     * @return enthalpy-balance residual in W-equivalent stream basis
+     */
+    public double getEnthalpyBalanceResidualW() {
+      return enthalpyBalanceResidualW;
+    }
   }
 
   /** Internal segment computation container. */
@@ -2431,6 +3058,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     private final Map<String, Double> liquidMoleFractions;
     /** Gas-to-liquid equilibrium ratios. */
     private final Map<String, Double> equilibriumRatios;
+    /** Gas-side interface component molar enthalpies. */
+    private final Map<String, Double> gasMolarEnthalpies;
+    /** Liquid-side interface component molar enthalpies. */
+    private final Map<String, Double> liquidMolarEnthalpies;
 
     /**
      * Create interface equilibrium data.
@@ -2439,13 +3070,18 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param gasMoleFractions gas-side mole fractions by component
      * @param liquidMoleFractions liquid-side mole fractions by component
      * @param equilibriumRatios gas-to-liquid equilibrium ratios by component
+     * @param gasMolarEnthalpies gas-side component molar enthalpies by component
+     * @param liquidMolarEnthalpies liquid-side component molar enthalpies by component
      */
     private InterfaceEquilibrium(double interfaceTemperatureK, Map<String, Double> gasMoleFractions,
-        Map<String, Double> liquidMoleFractions, Map<String, Double> equilibriumRatios) {
+        Map<String, Double> liquidMoleFractions, Map<String, Double> equilibriumRatios,
+        Map<String, Double> gasMolarEnthalpies, Map<String, Double> liquidMolarEnthalpies) {
       this.interfaceTemperatureK = interfaceTemperatureK;
       this.gasMoleFractions = new LinkedHashMap<String, Double>(gasMoleFractions);
       this.liquidMoleFractions = new LinkedHashMap<String, Double>(liquidMoleFractions);
       this.equilibriumRatios = new LinkedHashMap<String, Double>(equilibriumRatios);
+      this.gasMolarEnthalpies = new LinkedHashMap<String, Double>(gasMolarEnthalpies);
+      this.liquidMolarEnthalpies = new LinkedHashMap<String, Double>(liquidMolarEnthalpies);
     }
 
     /**
@@ -2481,6 +3117,82 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     private double getEquilibriumRatio(String component) {
       Double value = equilibriumRatios.get(component);
       return value == null ? 1.0 : value.doubleValue();
+    }
+
+    /**
+     * Get gas-side component molar enthalpy at the interface.
+     *
+     * @param component component name
+     * @return gas-side molar enthalpy in J/mol
+     */
+    private double getGasMolarEnthalpy(String component) {
+      Double value = gasMolarEnthalpies.get(component);
+      return value == null ? 0.0 : value.doubleValue();
+    }
+
+    /**
+     * Get liquid-side component molar enthalpy at the interface.
+     *
+     * @param component component name
+     * @return liquid-side molar enthalpy in J/mol
+     */
+    private double getLiquidMolarEnthalpy(String component) {
+      Double value = liquidMolarEnthalpies.get(component);
+      return value == null ? 0.0 : value.doubleValue();
+    }
+  }
+
+  /** Internal residual evaluation container for the simultaneous segment solver. */
+  private static class SegmentResidualEvaluation {
+    /** Interface equilibrium used in the residual evaluation. */
+    private final InterfaceEquilibrium interfaceEquilibrium;
+    /** Proposed component transfers in mol/s. */
+    private final Map<String, Double> componentTransfers;
+    /** Normalized residual vector. */
+    private final double[] normalizedResiduals;
+    /** Infinity norm of the normalized residual vector. */
+    private final double norm;
+    /** Maximum component flux residual in mol/s. */
+    private final double maxFluxResidualMolPerSec;
+    /** Interfacial heat-balance residual in W. */
+    private final double heatBalanceResidualW;
+    /** Sensible heat transferred to the liquid side in W. */
+    private final double heatTransferRateW;
+    /** Gas outlet enthalpy target in J or W-equivalent stream basis. */
+    private final double gasTargetEnthalpy;
+    /** Liquid outlet enthalpy target in J or W-equivalent stream basis. */
+    private final double liquidTargetEnthalpy;
+    /** Residual iterations used for this evaluation. */
+    private final int iterations;
+
+    /**
+     * Create a residual evaluation.
+     *
+     * @param interfaceEquilibrium interface equilibrium data
+     * @param componentTransfers proposed component transfers in mol/s
+     * @param normalizedResiduals normalized residual vector
+     * @param norm infinity norm of normalized residuals
+     * @param maxFluxResidualMolPerSec maximum component flux residual in mol/s
+     * @param heatBalanceResidualW interfacial heat-balance residual in W
+     * @param heatTransferRateW sensible heat transferred to liquid in W
+     * @param gasTargetEnthalpy gas outlet enthalpy target in J or W-equivalent stream basis
+     * @param liquidTargetEnthalpy liquid outlet enthalpy target in J or W-equivalent stream basis
+     * @param iterations residual iterations used for this evaluation
+     */
+    private SegmentResidualEvaluation(InterfaceEquilibrium interfaceEquilibrium,
+        Map<String, Double> componentTransfers, double[] normalizedResiduals, double norm,
+        double maxFluxResidualMolPerSec, double heatBalanceResidualW, double heatTransferRateW,
+        double gasTargetEnthalpy, double liquidTargetEnthalpy, int iterations) {
+      this.interfaceEquilibrium = interfaceEquilibrium;
+      this.componentTransfers = new LinkedHashMap<String, Double>(componentTransfers);
+      this.normalizedResiduals = normalizedResiduals.clone();
+      this.norm = norm;
+      this.maxFluxResidualMolPerSec = maxFluxResidualMolPerSec;
+      this.heatBalanceResidualW = heatBalanceResidualW;
+      this.heatTransferRateW = heatTransferRateW;
+      this.gasTargetEnthalpy = gasTargetEnthalpy;
+      this.liquidTargetEnthalpy = liquidTargetEnthalpy;
+      this.iterations = iterations;
     }
   }
 
