@@ -17,6 +17,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
+import neqsim.process.mechanicaldesign.heatexchanger.FoulingModel;
 import neqsim.process.util.monitor.HXResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -116,6 +117,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   private double lastUAvalue = 0.0;
   /** Cached inlet stream 2 composition for needRecalculation check. */
   private double[] lastInStream2Composition = null;
+
+  /** Dynamic fouling model for time-dependent UA degradation. */
+  private transient FoulingModel foulingModel = null;
 
   // Dynamic simulation fields
   /** Metal wall mass in kg. */
@@ -616,7 +620,18 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
         }
       }
 
-      NTU = UAvalue / Cmin;
+      // Apply fouling model to reduce effective UA if configured
+      double effectiveUA = UAvalue;
+      if (foulingModel != null) {
+        double foulingResistance = foulingModel.getFoulingResistance();
+        if (foulingResistance > 0.0 && ratingArea > 0.0) {
+          // UA_fouled = 1 / (1/UA_clean + Rf/A) ... simplified: UA_eff = UA / (1 + UA*Rf/A)
+          // More precisely: 1/UA_eff = 1/UA_clean + Rf (when Rf in m2K/W and A cancels)
+          effectiveUA = 1.0 / (1.0 / UAvalue + foulingResistance);
+        }
+      }
+
+      NTU = effectiveUA / Cmin;
 
       thermalEffectiveness = calcThermalEffectivenes(NTU, Cr);
       // double corrected_Entalphy = dEntalphy; // *
@@ -698,6 +713,40 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    */
   public void setUAvalue(double UAvalue) {
     this.UAvalue = UAvalue;
+  }
+
+  /**
+   * Gets the fouling model for this heat exchanger.
+   *
+   * @return the fouling model, or null if not configured
+   */
+  public FoulingModel getFoulingModel() {
+    return foulingModel;
+  }
+
+  /**
+   * Sets a fouling model to degrade the effective UA over time.
+   *
+   * @param foulingModel the fouling model to use
+   */
+  public void setFoulingModel(FoulingModel foulingModel) {
+    this.foulingModel = foulingModel;
+  }
+
+  /**
+   * Gets the effective UA accounting for fouling degradation.
+   *
+   * @return effective UA value in W/K
+   */
+  public double getEffectiveUA() {
+    if (foulingModel == null) {
+      return UAvalue;
+    }
+    double foulingResistance = foulingModel.getFoulingResistance();
+    if (foulingResistance > 0.0) {
+      return 1.0 / (1.0 / UAvalue + foulingResistance);
+    }
+    return UAvalue;
   }
 
   /**
