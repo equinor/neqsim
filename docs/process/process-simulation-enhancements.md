@@ -155,30 +155,38 @@ print(f"Area:      {ac.getRequiredArea():.1f} m2")
 
 ## 2. Packed Column
 
-**Class:** `neqsim.process.equipment.distillation.PackedColumn`
+**Classes:** `neqsim.process.equipment.distillation.PackedColumn`, `neqsim.process.equipment.distillation.RateBasedPackedColumn`
 
-A dedicated packed column (absorber/contactor/stripper) that wraps
-`DistillationColumn` and adds packing-specific functionality via
-`PackingHydraulicsCalculator`.
+`PackedColumn` wraps `DistillationColumn` and adds HETP-based packing hydraulics.
+`RateBasedPackedColumn` is the non-equilibrium absorber/stripper model for
+counter-current segment calculations with bidirectional mass transfer.
 
 ### Features
 
 - **HETP-based staging** from packed bed height
 - **Packing hydraulics** (flooding, pressure drop, mass transfer coefficients)
-- **17 packing presets** (Pall Ring, Raschig, IMTP, Mellapak, Flexipac, etc.)
+- **Registry-backed packing data** (Pall Ring, Raschig, IMTP, Mellapak, Flexipac, etc.)
 - **Absorber/contactor mode** (no condenser/reboiler) for amine/TEG service
+- **Rate-based non-equilibrium mode** with segment profiles, bidirectional transfer, and interface equilibrium
+- **Maxwell-Stefan matrix film option** using NeqSim binary diffusivities and phase composition
+- **Explicit interphase heat transfer** using Chilton-Colburn heat and mass transfer analogy
+- **TEG dehydration validation** with water-removal checks against typical circulation ratios
 - **Distillation mode** with condenser + reboiler for packed distillation
 - **Auto-sizing** of column diameter from flood fraction
 - **JSON report** with complete packing configuration and hydraulic results
 
-### Packing Presets Available
+### Packing Data Available
+
+Packing data comes from `PackingSpecificationLibrary`, which combines built-in entries with
+`designdata/Packing.csv`. Names are resolved with forgiving aliases such as `pall ring 50`,
+`Mellapak250Y`, and `IMTP 70`.
 
 | Random | Structured |
 |--------|------------|
-| Pall-Ring-25, Pall-Ring-38, Pall-Ring-50 | Mellapak-125Y, Mellapak-250Y, Mellapak-500Y |
+| Pall-Ring-25, Pall-Ring-38, Pall-Ring-50 | Mellapak-125Y, Mellapak-250Y, Mellapak-350Y, Mellapak-500Y |
 | Raschig-Ring-25, Raschig-Ring-50 | Flexipac-1Y, Flexipac-2Y, Flexipac-3Y |
 | IMTP-25, IMTP-40, IMTP-50, IMTP-70 | Sulzer-BX, Sulzer-CY |
-| Berl-Saddle-25, Berl-Saddle-38 | |
+| Berl-Saddle-25, Berl-Saddle-38, Berl-Saddle-50 | |
 | Intalox-Saddle-25 | |
 
 ### Java Example (TEG Contactor)
@@ -235,6 +243,24 @@ System.out.println("Packing DP:     " + contactor.getPackingPressureDrop("mbar")
 System.out.println("Hydraulics OK:  " + contactor.isHydraulicsOk());
 System.out.println("JSON:\n" + contactor.toJson());
 ```
+
+### Rate-Based Packed Column Details
+
+Use `RateBasedPackedColumn` when the design question depends on film-rate limitations, local absorption/stripping direction, heat effects, or packed-bed hydraulic diagnostics. It solves a counter-current packed section as axial segments, using flash calculations for interface equilibrium, `PackingHydraulicsCalculator` for wetted area, pressure drop, flooding fraction, `kGa`, and `kLa`, and NeqSim physical-property diffusivities for the default Maxwell-Stefan matrix film correction.
+
+The default mass-transfer path is `FilmModel.MAXWELL_STEFAN_MATRIX`. This assembles a multicomponent film resistance matrix from binary diffusion coefficients and phase mole fractions, following the same Krishna-Standart/Maxwell-Stefan structure used by the fluid-mechanics non-equilibrium boundary models. The simpler `OVERALL_TWO_RESISTANCE` model remains available for screening and backward comparisons.
+
+The default heat-transfer path is `HeatTransferModel.CHILTON_COLBURN_ANALOGY`. It derives gas- and liquid-side heat-transfer coefficients from the packed-bed mass-transfer coefficients, phase heat capacities, viscosities, diffusivities, and thermal conductivities, then applies explicit gas-liquid heat exchange in every segment before re-flashing the outlet states.
+
+For TEG dehydration, the recommended setup is a CPA glycol/water system, water-only transfer via `setTransferComponents("water")`, and structured packing such as `Mellapak-250Y` for compact contactors. In addition to outlet water content, check the circulation efficiency:
+
+$$
+R_{TEG} = \frac{\dot{m}_{TEG} / \rho_{TEG}}{\dot{m}_{H2O,removed}}
+$$
+
+Typical TEG absorber practice is about 15-40 L TEG/kg H2O removed, equivalent to roughly 0.02-0.07 kg water removed per kg TEG circulated for lean TEG density near 1.125 kg/L. The focused `RateBasedPackedColumnTest` suite includes this check along with absorption, stripping, interface equilibrium output, explicit heat-transfer output, height sensitivity, zero-height transfer, material balance, stream introspection, and JSON reporting tests.
+
+More detail is available in the [absorbers and strippers guide](equipment/absorbers.md#rate-based-packed-column) and the [TEG dehydration tutorial](../tutorials/teg_dehydration_tutorial.md).
 
 ---
 

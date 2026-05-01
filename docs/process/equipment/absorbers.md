@@ -1,6 +1,6 @@
 ---
 title: Absorbers and Strippers
-description: "Documentation for mass transfer columns in NeqSim: TEG dehydration with Fs-factor sizing, amine gas sweetening (MDEA/DEA/MEA), rate-based absorber with Onda and Billet-Schultes mass transfer correlations, simple absorber models, and water stripping."
+description: "Documentation for mass transfer columns in NeqSim: rate-based packed absorber and stripper modeling, TEG dehydration with Fs-factor sizing, amine gas sweetening (MDEA/DEA/MEA), simple absorber models, and water stripping."
 ---
 
 # Absorbers and Strippers
@@ -14,7 +14,8 @@ Documentation for mass transfer columns in NeqSim.
 - [Simple Absorber](#simple-absorber)
 - [Simple TEG Absorber](#simple-teg-absorber)
 - [Simple Amine Absorber](#simple-amine-absorber)
-- [Rate-Based Absorber](#rate-based-absorber)
+- [Rate-Based Packed Column](#rate-based-packed-column)
+- [Legacy Rate-Based Absorber](#legacy-rate-based-absorber)
 - [Examples](#examples)
 
 ---
@@ -30,10 +31,11 @@ Documentation for mass transfer columns in NeqSim.
 | `SimpleTEGAbsorber`     | TEG dehydration with Fs-factor sizing                 |
 | `SimpleAmineAbsorber`   | Amine gas sweetening (MDEA, DEA, MEA)                 |
 | `WaterStripperColumn`   | Water stripping column                                |
-| `RateBasedAbsorber`     | Rate-based absorber with mass transfer correlations   |
+| `RateBasedPackedColumn` | Counter-current packed absorber/stripper with segment profiles |
+| `RateBasedAbsorber`     | Legacy first-pass gas-to-liquid rate absorber with enhancement factors |
 | `H2SScavenger`          | H2S scavenger model                                   |
 
-Absorbers transfer components from gas to liquid phase, while strippers transfer from liquid to gas.
+Absorbers transfer components from gas to liquid phase, while strippers transfer from liquid to gas. Use `RateBasedPackedColumn` when the transfer direction may reverse locally, when packing hydraulics matter, or when segment-by-segment profiles are needed.
 
 ---
 
@@ -42,8 +44,8 @@ Absorbers transfer components from gas to liquid phase, while strippers transfer
 The absorber classes in NeqSim model gas-liquid contactors where components transfer
 from the gas phase into a liquid solvent. The `SimpleAbsorber` is the base class
 providing equilibrium-stage calculations. For TEG dehydration use `SimpleTEGAbsorber`;
-for amine gas sweetening use `SimpleAmineAbsorber`; for rigorous mass transfer use
-`RateBasedAbsorber`.
+for amine gas sweetening use `SimpleAmineAbsorber`; for non-equilibrium packed-column
+mass transfer use `RateBasedPackedColumn`.
 
 ### Basic Usage (SimpleAbsorber)
 
@@ -401,22 +403,189 @@ Stream cleanGas = (Stream) waterWash.getGasOutStream();
 
 ---
 
-## Rate-Based Absorber
+## Rate-Based Packed Column
 
-`RateBasedAbsorber` extends `SimpleAbsorber` with rigorous mass transfer calculations
-using published correlations. Unlike the equilibrium-stage models above, the rate-based
-approach computes actual mass transfer rates through gas and liquid film resistances,
-giving more physically meaningful predictions of column performance.
+`RateBasedPackedColumn` is the recommended non-equilibrium packed-column model for physical absorption and stripping. The gas enters the bottom, the liquid enters the top, and the packed section is solved as counter-current axial segments.
+
+The model combines existing NeqSim functionality:
+
+- Thermodynamic flashes provide the segment equilibrium driving force.
+- Physical-property models provide effective gas and liquid diffusivities after `initProperties()`.
+- `PackingHydraulicsCalculator` provides wetted area, pressure drop, flooding fraction, and volumetric film coefficients.
+- A Maxwell-Stefan matrix film model can correct component film coefficients using NeqSim binary diffusivities and phase composition.
+- A Chilton-Colburn analogy can calculate explicit interphase heat transfer from the same packed-bed film data.
+- `PackingSpecificationLibrary` resolves built-in and CSV-backed packing data from `designdata/Packing.csv`.
+
+Positive component transfer means gas-to-liquid absorption. Negative transfer means liquid-to-gas stripping.
+
+### Model Scope and Solver
+
+The packed section is discretized into axial segments. For each segment, the model estimates an interface temperature, runs a local flash calculation at the interface to obtain gas and liquid equilibrium compositions, applies gas- and liquid-film transport coefficients from the packing hydraulics model, and transfers the selected components between phases. A fixed-point counter-current iteration updates the liquid profile from top to bottom and the gas profile from bottom to top until the liquid profile change is below the configured tolerance.
+
+The default film model is `MAXWELL_STEFAN_MATRIX`. It mirrors the structure of the Krishna-Standart film model used in the fluid-mechanics package: binary diffusion coefficients from NeqSim physical properties are assembled into a multicomponent resistance matrix and inverted to obtain component-specific film coefficients. If binary diffusion data are missing or the matrix is ill-conditioned, the model falls back to robust effective diffusivities.
+
+The default heat-transfer model is `CHILTON_COLBURN_ANALOGY`. It converts gas- and liquid-side mass-transfer coefficients into volumetric heat-transfer coefficients using phase density, heat capacity, viscosity, diffusivity, and thermal conductivity. Segment heat transfer is explicit and rate-limited to avoid overshooting the thermal approach; final segment states are re-flashed after material and heat transfer.
+
+Use this model when these details matter:
+
+- component transfer can be limited by film rates instead of equilibrium stages;
+- absorption and stripping may both occur in different parts of the packed bed;
+- packing type, wetted area, pressure drop, and flooding fraction are part of the engineering question;
+- segment profiles are needed for diagnostics, scale-up, or model calibration.
+
+For quick screening where only a stage efficiency or approach-to-equilibrium factor is available, `SimpleAbsorber`, `SimpleTEGAbsorber`, or `SimpleAmineAbsorber` remain faster and easier to parameterize.
+
+### Basic Usage
+
+```java
+import neqsim.process.equipment.distillation.RateBasedPackedColumn;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemInterface gasFluid = new SystemSrkEos(313.15, 50.0);
+gasFluid.addComponent("methane", 0.90);
+gasFluid.addComponent("CO2", 0.10);
+gasFluid.setMixingRule("classic");
+
+Stream gasIn = new Stream("gas in", gasFluid);
+gasIn.setFlowRate(1000.0, "kg/hr");
+gasIn.run();
+
+SystemInterface liquidFluid = new SystemSrkEos(303.15, 50.0);
+liquidFluid.addComponent("water", 1.0);
+liquidFluid.addComponent("CO2", 0.0);
+liquidFluid.setMixingRule("classic");
+
+Stream liquidIn = new Stream("lean liquid", liquidFluid);
+liquidIn.setFlowRate(2000.0, "kg/hr");
+liquidIn.run();
+
+RateBasedPackedColumn column = new RateBasedPackedColumn("CO2 packed absorber", gasIn, liquidIn);
+column.setColumnDiameter(1.0);
+column.setPackedHeight(6.0);
+column.setNumberOfSegments(4);
+column.setPackingType("Pall-Ring-50");
+column.setTransferComponents("CO2");
+column.run();
+
+double co2Transfer = column.getComponentTransferTotals().get("CO2");
+Stream treatedGas = (Stream) column.getGasOutStream();
+Stream richLiquid = (Stream) column.getLiquidOutStream();
+String reportJson = column.toJson();
+```
+
+The API used above is covered by `RateBasedPackedColumnTest`.
+
+### TEG Dehydration Guidance
+
+For natural gas dehydration with triethylene glycol, use a CPA-based thermodynamic system for both the wet gas and lean TEG streams so water-glycol interactions are represented consistently. The focused tests use `SystemSrkCPAstatoil`, call `createDatabase(true)`, and set CPA mixing rule `10` before running the streams.
+
+Recommended setup checks:
+
+| Check | Guidance |
+|-------|----------|
+| Transfer components | Use `setTransferComponents("water")` for dehydration so methane, glycol, and heavier hydrocarbons do not move unless intentionally modelled. |
+| Packing | Structured packing such as `Mellapak-250Y` is a good default for compact TEG contactors; random packing can be used for retrofit studies. |
+| Packed height | Increase `setPackedHeight(...)` or `setNumberOfSegments(...)` when outlet water is sensitive to discretization. |
+| Solvent circulation | Check the circulation ratio against typical TEG absorber practice, not only the outlet water content. |
+| Mass-transfer correction | Treat `setMassTransferCorrectionFactor(...)` as a calibration or design-margin parameter until plant/vendor data are available. |
+| Heat transfer | Leave `CHILTON_COLBURN_ANALOGY` enabled when gas and lean TEG temperatures differ; disable only for isothermal sensitivity studies. |
+
+### TEG Circulation Ratio
+
+The TEG dehydration regression test now checks that the model gives a typical water-removal efficiency for a synthetic packed contactor. The design metric is usually reported as liquid TEG circulation per water removed:
+
+$$
+R_{TEG} = \frac{\dot{m}_{TEG} / \rho_{TEG}}{\dot{m}_{H2O,removed}}
+$$
+
+where $R_{TEG}$ is in L TEG/kg H2O, $\dot{m}_{TEG}$ is the lean TEG circulation in kg/hr, $\rho_{TEG}$ is the lean TEG density in kg/L, and $\dot{m}_{H2O,removed}$ is the water removed from the gas in kg/hr.
+
+Typical absorber practice is about 15-40 L TEG/kg H2O removed, as also noted in the [TEG dehydration tutorial](../../tutorials/teg_dehydration_tutorial.md). With a lean TEG density near 1.125 kg/L, that corresponds to approximately 0.02-0.07 kg water removed per kg TEG circulated. Values outside this band should prompt a review of wet-gas water loading, lean TEG rate, packing height, mass-transfer factor, and thermodynamic setup.
+
+### Validation Coverage
+
+`RateBasedPackedColumnTest` exercises the behaviours that are most important for a reusable non-equilibrium model:
+
+| Test area | What is checked |
+|-----------|-----------------|
+| Absorption | CO2 decreases in gas and total CO2 transfer is positive. |
+| Stripping | CO2 increases in gas and total CO2 transfer is negative. |
+| TEG dehydration | Water moves from wet natural gas to lean TEG using CPA thermodynamics. |
+| TEG circulation | Water removed per TEG circulation is within the typical 15-40 L/kg range. |
+| Interface equilibrium | Segment results expose gas/liquid interface compositions and K-ratios. |
+| Heat transfer | Segment results expose heat-transfer coefficients and heat-transfer rate. |
+| Packed height | Taller packing gives stronger absorption for the same inlet streams. |
+| Zero height | A packed height of zero gives no molar transfer. |
+| Material balance | Selected transferred components are conserved across gas and liquid outlets. |
+| Reporting | Outlet stream introspection and JSON reports include segment transfer data. |
+
+### Packing Data
+
+The packing library supports aliases such as `pall ring 50`, `Pall-Ring-50`, `Mellapak250Y`, and `IMTP 70`. It combines built-in data with the `designdata/Packing.csv` table.
+
+| Random packing examples | Structured packing examples |
+|-------------------------|-----------------------------|
+| Pall-Ring-25, Pall-Ring-38, Pall-Ring-50 | Mellapak-125Y, Mellapak-250Y, Mellapak-350Y, Mellapak-500Y |
+| Raschig-Ring-25, Raschig-Ring-50 | Flexipac-1Y, Flexipac-2Y, Flexipac-3Y |
+| IMTP-25, IMTP-40, IMTP-50, IMTP-70 | Sulzer-BX, Sulzer-CY |
+| Berl-Saddle-25, Berl-Saddle-38, Berl-Saddle-50 | |
+| Intalox-Saddle-25 | |
+
+### Segment Profiles
+
+Per-segment results include temperature, pressure, diffusivities, wetted area, `kGa`, `kLa`, pressure drop, flooding fraction, and component transfer.
+
+```java
+for (RateBasedPackedColumn.SegmentResult segment : column.getSegmentResults()) {
+    System.out.printf("Segment %d: kGa=%.4f  kLa=%.4f  CO2 transfer=%.6g mol/s%n",
+        segment.getSegmentNumber(),
+        segment.getKGa(),
+        segment.getKLa(),
+        segment.getComponentMoleTransfer().get("CO2"));
+}
+```
+
+### Key Methods
+
+| Method | Description |
+|--------|-------------|
+| `setGasInStream(StreamInterface)` / `addGasInStream(StreamInterface)` | Gas feed entering the bottom |
+| `setLiquidInStream(StreamInterface)` / `addLiquidInStream(StreamInterface)` | Liquid feed entering the top |
+| `setColumnDiameter(double)` | Column internal diameter in metres |
+| `setPackedHeight(double)` | Packed bed height in metres |
+| `setNumberOfSegments(int)` | Axial discretization |
+| `setPackingType(String)` | Packing name or alias from the packing library |
+| `setTransferComponents(String...)` | Optional component whitelist; empty means all components |
+| `setMassTransferCorrelation(MassTransferCorrelation)` | `ONDA_1968` or `BILLET_SCHULTES_1999` |
+| `setFilmModel(FilmModel)` | `MAXWELL_STEFAN_MATRIX` or `OVERALL_TWO_RESISTANCE` |
+| `setMassTransferCorrectionFactor(double)` | Multiplier for effective segment transfer, useful for calibration and sensitivity studies |
+| `setHeatTransferModel(HeatTransferModel)` | `CHILTON_COLBURN_ANALOGY` or `NONE` |
+| `setHeatTransferCorrectionFactor(double)` | Multiplier for interphase heat-transfer coefficients |
+| `setMaxIterations(int)` | Maximum counter-current profile iterations |
+| `setConvergenceTolerance(double)` | Liquid-profile convergence tolerance |
+| `getGasOutStream()` / `getLiquidOutStream()` | Treated gas and rich liquid outlet streams |
+| `getSegmentResults()` | Segment profile from bottom to top |
+| `getComponentTransferTotals()` | Total component transfer, positive for absorption |
+| `getTotalAbsoluteMolarTransfer()` | Sum of absolute transferred molar rates across all selected components |
+| `toJson()` | Complete rate-based column report |
+
+## Legacy Rate-Based Absorber
+
+`RateBasedAbsorber` extends `SimpleAbsorber` with first-pass gas-to-liquid mass transfer calculations
+using published correlations and optional reactive enhancement factors. For new packed absorber and stripper studies, prefer `RateBasedPackedColumn` because it uses the shared packing library, physical-property diffusivities, segment profiles, and bidirectional transfer.
 
 ### When to Use Rate-Based vs Equilibrium
 
-| Factor | Equilibrium (SimpleAbsorber) | Rate-Based (RateBasedAbsorber) |
-|--------|------------------------------|-------------------------------|
-| Speed | Fast | Moderate |
-| Input data | Minimal (efficiency) | Packing type, column diameter, packed height |
-| Physical basis | Assumed HETP/efficiency | Film theory with correlations |
-| Reactive systems | Manual adjustment | Enhancement factor models |
-| Use case | Screening, quick estimates | Detailed design, packing selection, scale-up |
+| Factor | Equilibrium (`SimpleAbsorber`) | Packed non-equilibrium (`RateBasedPackedColumn`) | Legacy rate-based (`RateBasedAbsorber`) |
+|--------|--------------------------------|--------------------------------------------------|-----------------------------------------|
+| Speed | Fast | Moderate | Moderate |
+| Input data | Stage efficiency or approach factor | Packing type, diameter, packed height, transfer components | Packing type, column diameter, packed height |
+| Physical basis | Assumed HETP/efficiency | Counter-current film transfer with local flash driving forces | Film theory with correlations |
+| Transfer direction | Usually gas-to-liquid by service assumption | Bidirectional by component and segment | Primarily gas-to-liquid |
+| Diagnostics | Overall outlet streams | Segment profile, hydraulics, transfer totals, JSON report | Stage profile and enhancement factors |
+| Use case | Screening, quick estimates | TEG, amine, water wash, and physical absorber/stripper studies where packing and profiles matter | Legacy studies using enhancement-factor APIs |
 
 ### Mass Transfer Models
 

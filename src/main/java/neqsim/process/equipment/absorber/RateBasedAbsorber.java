@@ -865,5 +865,77 @@ public class RateBasedAbsorber extends SimpleAbsorber {
 
     /** Total moles transferred in this stage [mol/s]. */
     public double molesTransferred;
+
+    /**
+     * Get the stage number.
+     *
+     * @return stage number, one based
+     */
+    public int getStageNumber() {
+      return stageNumber;
+    }
+
+    /**
+     * Get the stage temperature.
+     *
+     * @return stage temperature in kelvin
+     */
+    public double getTemperature() {
+      return temperature;
+    }
+
+    /**
+     * Get the stage pressure.
+     *
+     * @return stage pressure in pascal
+     */
+    public double getPressure() {
+      return pressure;
+    }
+
+    /**
+     * Get the gas-side volumetric mass-transfer coefficient.
+     *
+     * @return gas-side KGa in 1/s
+     */
+    public double getKGa() {
+      return kGa;
+    }
+
+    /**
+     * Get the liquid-side volumetric mass-transfer coefficient.
+     *
+     * @return liquid-side KLa in 1/s
+     */
+    public double getKLa() {
+      return kLa;
+    }
+
+    /**
+     * Get the wetted packing area.
+     *
+     * @return wetted area in m2/m3
+     */
+    public double getWettedArea() {
+      return wettedArea;
+    }
+
+    /**
+     * Get the enhancement factor.
+     *
+     * @return reaction enhancement factor
+     */
+    public double getEnhancementFactor() {
+      return enhancementFactor;
+    }
+
+    /**
+     * Get the total moles transferred in this stage.
+     *
+     * @return moles transferred in mol/s
+     */
+    public double getMolesTransferred() {
+      return molesTransferred;
+    }
   }
 }
