@@ -2674,7 +2674,7 @@ Examples:
                                     help="Audit lecture-deck slide topics against mapped chapters")
     p_blec.add_argument("book_dir", help="Book directory")
     p_blec.add_argument("--apply", action="store_true",
-                        help="Insert or replace chapter lecture-coverage checkpoints")
+                        help="Deprecated no-op; write audit files without inserting chapter slide checklists")
     p_blec.add_argument("--max-topics-per-deck", type=int, default=120,
                         help="Maximum slide topics to list per deck in chapter checkpoints")
 

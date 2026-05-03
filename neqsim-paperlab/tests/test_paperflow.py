@@ -2237,11 +2237,12 @@ class TestBookImprovementTools:
         chapter_text = (bd / "chapters" / "ch01" / "chapter.md").read_text(encoding="utf-8")
 
         assert report["summary"]["lecture_decks"] == 1
-        assert report["summary"]["topics_needing_review"] == 0
-        assert "Lecture coverage checkpoint" in chapter_text
-        assert "Field development value chain" in chapter_text
+        assert report["checkpoint_application_requested"] is True
+        assert report["applied_checkpoints"] is False
+        assert "Lecture coverage checkpoint" not in chapter_text
+        assert "Field development value chain" not in chapter_text
         assert (bd / "lecture_topic_coverage.md").exists()
-        assert (bd / "backmatter" / "lecture_coverage.md").exists()
+        assert not (bd / "backmatter" / "lecture_coverage.md").exists()
 
     def test_lecture_figure_plan_reports_rendered_candidates(self, tmp_path):
         """lecture figure plan finds figure-like slides and rendered PNG paths."""

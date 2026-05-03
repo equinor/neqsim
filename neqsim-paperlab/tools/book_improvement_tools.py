@@ -940,22 +940,15 @@ def build_lecture_topic_coverage(book_dir: Path | str, apply_checkpoints: bool =
                                  max_topics_per_deck: int = 120) -> Dict:
     """Build a slide-topic coverage report from ``_lecture_topic_manifest.json``.
 
-    When ``apply_checkpoints`` is true, concise lecture-coverage checkpoint blocks
-    are inserted into the mapped chapters before coverage is scored. This makes
-    the book carry the lecture provenance explicitly without expanding full slide
-    text into the main chapter narrative.
+    ``apply_checkpoints`` is retained for command-line compatibility, but it no
+    longer writes slide checklists into reader-facing chapters. Coverage details
+    stay in the generated audit files and appendix material.
     """
     book_dir = Path(book_dir)
     manifest = _load_lecture_topic_manifest(book_dir)
     chapters = _collect_chapter_records(book_dir)
     chapter_lookup = _chapter_lookup(chapters)
     grouped_decks = _group_lecture_decks_by_chapter(manifest, chapter_lookup)
-
-    if apply_checkpoints:
-        _apply_lecture_coverage_checkpoints(book_dir, chapters, grouped_decks,
-                                            max_topics_per_deck=max_topics_per_deck)
-        chapters = _collect_chapter_records(book_dir)
-        chapter_lookup = _chapter_lookup(chapters)
 
     deck_rows = []
     total_topics = 0
@@ -993,7 +986,8 @@ def build_lecture_topic_coverage(book_dir: Path | str, apply_checkpoints: bool =
     report = {
         "generated_at": _now_iso(),
         "book_dir": str(book_dir),
-        "applied_checkpoints": apply_checkpoints,
+        "applied_checkpoints": False,
+        "checkpoint_application_requested": apply_checkpoints,
         "summary": {
             "lecture_decks": len(deck_rows),
             "chapters_with_lecture_decks": len(grouped_decks),
@@ -1008,7 +1002,6 @@ def build_lecture_topic_coverage(book_dir: Path | str, apply_checkpoints: bool =
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     (book_dir / "lecture_topic_coverage.md").write_text(
         _format_lecture_topic_coverage_md(report), encoding="utf-8")
-    _write_lecture_coverage_appendix(book_dir, report)
     return report
 
 
@@ -1236,66 +1229,6 @@ def _keyword_coverage_score(keywords: List[str], chapter_text: str) -> float:
     return len([keyword for keyword in keywords if keyword in chapter_tokens]) / float(len(keywords))
 
 
-def _apply_lecture_coverage_checkpoints(book_dir: Path, chapters: List[Dict],
-                                        grouped_decks: Dict[str, List[Dict]],
-                                        max_topics_per_deck: int) -> None:
-    """Insert or replace lecture-coverage checkpoint blocks in mapped chapters."""
-    chapter_by_dir = {chapter["dir"]: chapter for chapter in chapters}
-    for chapter_dir_name, decks in grouped_decks.items():
-        chapter = chapter_by_dir.get(chapter_dir_name)
-        if chapter is None:
-            continue
-        chapter_md = chapter["chapter_dir"] / "chapter.md"
-        text = chapter_md.read_text(encoding="utf-8")
-        block = _format_lecture_checkpoint_block(decks, max_topics_per_deck=max_topics_per_deck)
-        start_marker = "<!-- LECTURE_COVERAGE_START -->"
-        end_marker = "<!-- LECTURE_COVERAGE_END -->"
-        start = text.find(start_marker)
-        end = text.find(end_marker)
-        if start >= 0 and end > start:
-            end += len(end_marker)
-            new_text = text[:start] + block + text[end:]
-        else:
-            lecture_topics_start = text.find("<!-- LECTURE_TOPICS_START -->")
-            insertion = block + "\n"
-            if lecture_topics_start >= 0:
-                new_text = text[:lecture_topics_start] + insertion + text[lecture_topics_start:]
-            else:
-                new_text = text.rstrip() + "\n\n" + insertion
-        chapter_md.write_text(new_text, encoding="utf-8")
-
-
-def _format_lecture_checkpoint_block(decks: List[Dict], max_topics_per_deck: int) -> str:
-    """Render a concise chapter-level lecture coverage checkpoint."""
-    lines = [
-        "<!-- LECTURE_COVERAGE_START -->",
-        "## Lecture coverage checkpoint",
-        "",
-        "This checkpoint records the mapped lecture-deck topics covered by this chapter. It is intentionally concise: the chapter prose explains the engineering logic, while the checkpoint preserves source traceability back to the lecture material.",
-        "",
-    ]
-    for deck in decks:
-        title = deck.get("lecture", "Lecture")
-        pptx = deck.get("pptx", "")
-        lines.append(f"**{title} — {pptx}.**")
-        lines.append("")
-        topics = []
-        for slide in deck.get("slides", []):
-            topic = _slide_topic(slide)
-            if not topic:
-                continue
-            keywords = _topic_keywords(topic + " " + " ".join(slide.get("body", [])), limit=5)
-            suffix = f" Key terms: {', '.join(keywords)}." if keywords else ""
-            topics.append(f"- Slide {slide.get('idx', 0)}: {topic}.{suffix}")
-        for item in topics[:max_topics_per_deck]:
-            lines.append(item)
-        if len(topics) > max_topics_per_deck:
-            lines.append(f"- Additional slide topics retained in `lecture_topic_coverage.json`: {len(topics) - max_topics_per_deck}.")
-        lines.append("")
-    lines.append("<!-- LECTURE_COVERAGE_END -->")
-    return "\n".join(lines) + "\n"
-
-
 def _format_lecture_topic_coverage_md(report: Dict) -> str:
     """Render lecture topic coverage as Markdown."""
     summary = report["summary"]
@@ -1339,32 +1272,34 @@ def _format_lecture_topic_coverage_md(report: Dict) -> str:
 
 
 def _write_lecture_coverage_appendix(book_dir: Path, report: Dict) -> None:
-    """Write a concise backmatter appendix for lecture source traceability."""
+    """Write a concise root-level lecture coverage audit from report."""
     lines = [
-        "# Lecture Coverage and Source Traceability",
+        "# Lecture Source Coverage Audit",
         "",
-        "This appendix records how the lecture decks are covered in the textbook. The detailed slide-topic checklist is generated in each mapped chapter under `Lecture coverage checkpoint`, while this appendix provides the course-level audit view.",
+        "This internal audit records how the source material is covered in the textbook. Reader-facing chapters present the material as integrated engineering prose and curated figures.",
         "",
         "## Coverage Summary",
         "",
-        f"- Lecture decks: {report['summary']['lecture_decks']}",
-        f"- Slide topics: {report['summary']['topics']}",
-        f"- Covered slide topics: {report['summary']['covered_topics']}",
+        f"- Source groups: {report['summary']['lecture_decks']}",
+        f"- Topic groups: {report['summary']['topics']}",
+        f"- Covered topic groups: {report['summary']['covered_topics']}",
         f"- Coverage: {report['summary']['coverage_pct']}%",
         "",
-        "## Lecture Deck Map",
+        "## Chapter Coverage",
         "",
-        "| Chapter | Lecture | Deck | Slide topics | Coverage |",
-        "|---------|---------|------|-------------:|---------:|",
+        "| Chapter | Topic groups | Coverage |",
+        "|---------|-------------:|---------:|",
     ]
+    by_chapter: Dict[str, Dict[str, int]] = {}
     for deck in report["decks"]:
-        pct = round((deck["covered_topic_count"] / deck["topic_count"]) * 100.0, 1) if deck["topic_count"] else 100.0
-        lines.append(
-            f"| {deck['chapter']} | {deck['lecture']} | {deck['pptx']} | "
-            f"{deck['topic_count']} | {pct}% |")
-    appendix = book_dir / "backmatter" / "lecture_coverage.md"
-    appendix.parent.mkdir(parents=True, exist_ok=True)
-    appendix.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        row = by_chapter.setdefault(deck["chapter"], {"topics": 0, "covered": 0})
+        row["topics"] += deck["topic_count"]
+        row["covered"] += deck["covered_topic_count"]
+    for chapter, row in sorted(by_chapter.items()):
+        pct = round((row["covered"] / row["topics"]) * 100.0, 1) if row["topics"] else 100.0
+        lines.append(f"| {chapter} | {row['topics']} | {pct}% |")
+    audit = book_dir / "lecture_source_coverage_audit.md"
+    audit.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def build_evidence_report(book_dir: Path | str) -> Dict:

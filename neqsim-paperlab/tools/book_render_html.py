@@ -533,13 +533,6 @@ figure.lecture-fig figcaption strong {{
   color: #0d3b66;
   margin-right: 0.3rem;
 }}
-figure.lecture-fig figcaption .fig-source {{
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
-  color: #777;
-  font-style: italic;
-}}
 
 p.figure-discussion {{
     max-width: 92%;
@@ -770,6 +763,7 @@ def _figure_summary(entry):
         prose = re.sub(r"\bB\s*\?\?", "B", prose)
         prose = re.sub(r"\?{2,}|!{2,}", "", prose)
         prose = re.sub(r"(-?\d+(?:\.\d+)?)\s*;\s*o\s*;\s*C\b", r"\1 °C", prose)
+        prose = re.sub(r"\b(?:Source|Ref)\s*:\s*[^.;]+[.;]?", "", prose, flags=re.IGNORECASE)
         prose = re.sub(r"\s+([,.;:])", r"\1", prose)
         prose = re.sub(r"\s*;\s*", "; ", prose)
         prose = re.sub(r"\s+", " ", prose).strip()
@@ -814,13 +808,12 @@ def _figure_text_reference(entry, section_topic, n_label):
 def _render_inline_figure(entry, section_topic, n_label):
     """Render a single inline lecture figure with discussion caption."""
     rel = "../" + entry["file"]
-    deck = _humanise_deck(entry.get("source", ""))
     return (
         '<div class="figure-inset">' +
         _figure_text_reference(entry, section_topic, n_label) +
         '<figure class="lecture-fig">'
         f'<img src="{_esc(rel)}" loading="lazy" '
-        f'alt="Figure {n_label} from {_esc(deck)}"/>'
+        f'alt="Figure {n_label}"/>'
         '<figcaption>'
         f'<strong>Figure {n_label}.</strong> '
         f'{_figure_discussion(entry, section_topic)}'
@@ -1707,9 +1700,9 @@ def render_book_html(book_dir, chapter_filter=None):
         cfg.get("settings", {}).get("inject_lecture_figures", False))
 
     # Load lecture-figure manifest only when explicitly enabled. Auto-extracted
-    # slide images can contain OCR artifacts, decorative placeholders, or stale
-    # numbering, so production books should rely on curated chapter figures by
-    # default.
+    # slide images can contain OCR artifacts, duplicate labels, decorative
+    # placeholders, or stale source text, so production books should rely on
+    # curated chapter figures by default.
     lecture_manifest_path = (book_dir / "figures" / "lectures" / "auto"
                              / "manifest.json")
     lecture_entries_by_chapter: dict = {}
