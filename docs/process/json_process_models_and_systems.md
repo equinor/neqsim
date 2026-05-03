@@ -292,3 +292,50 @@ coverage continues to evolve. For advanced behavior, you can:
 - build core topology from JSON, then refine in Java/Python API calls
 - export back using `process.toJson()` for traceability
 - use lifecycle snapshots (`ProcessSystemState`/`ProcessModelState`) for full-state persistence
+
+
+
+## 11. JSON + optimization loop example (process + sizing variables)
+
+You can tune both process variables and equipment sizing variables directly from JSON payloads.
+A common pattern is:
+
+1. Optimizer proposes a payload (e.g., separator pressure + mechanical design knobs).
+2. Validate JSON with `ProcessSystem.validateJson(...)`.
+3. Build/run with `ProcessSystem.fromJsonAndRun(...)`.
+4. Evaluate objective (energy, CAPEX proxy, emissions, etc.).
+
+Example payload fragment:
+
+```json
+{
+  "process": [
+    {"type": "Separator", "name": "HP Sep", "inlet": "feed",
+      "properties": {
+        "pressure": [70.0, "bara"],
+        "mechanicalDesign": {
+          "gasLoadFactor": 0.107,
+          "retentionTime": 120.0,
+          "calcDesign": true
+        }
+      }
+    }
+  ]
+}
+```
+
+Python pseudo-loop:
+
+```python
+for candidate in candidates:
+    payload = make_payload(candidate)
+    report = ns.ProcessSystem.validateJson(payload)
+    if not report.isValid():
+        continue
+    result = ns.ProcessSystem.fromJsonAndRun(payload)
+    if not result.isSuccess():
+        continue
+    process = result.getProcessSystem()
+    # Example objective: combine process KPI + design KPI
+    score = objective(process)
+```

@@ -656,4 +656,27 @@ class JsonProcessBuilderTest {
         result.getProcessSystem().getConnections().get(0).getType());
   }
 
+
+  @Test
+  void testBuildWithMechanicalDesignPayload() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "},"
+        + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\", \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"Sep\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"mechanicalDesign\": {\"gasLoadFactor\": 0.107, \"retentionTime\": 120.0}}}"
+        + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    neqsim.process.equipment.separator.Separator sep =
+        (neqsim.process.equipment.separator.Separator) result.getProcessSystem().getUnit("Sep");
+    sep.initMechanicalDesign();
+    neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign design =
+        (neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign) sep.getMechanicalDesign();
+    assertEquals(0.107, design.getGasLoadFactor(), 1e-12);
+    assertEquals(120.0, design.getRetentionTime(), 1e-12);
+  }
+
 }
