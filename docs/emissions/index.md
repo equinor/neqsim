@@ -868,7 +868,7 @@ NeqSim includes a built-in `ProductionOptimizer` class that can be extended for 
 
 ```java
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer;
 
 // Create process system
 ProcessSystem process = new ProcessSystem();

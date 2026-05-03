@@ -16,6 +16,7 @@ This document provides a high-level introduction to the process optimization cap
 - [Key Concepts](#key-concepts)
 - [Search Algorithms](#search-algorithms)
 - [Python Usage via JPype](#python-usage-via-jpype)
+- [Getting Started](#getting-started)
 - [Complete Examples](#complete-examples)
 - [Related Documentation](#related-documentation)
 
@@ -34,8 +35,21 @@ This document provides a high-level introduction to the process optimization cap
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
 | Solve constrained NLP (equality + inequality) | `SQPoptimizer` | [SQP Optimizer](sqp_optimizer) |
-| Calibrate model parameters to data | `BatchParameterEstimator` | [README.md](./ |
+| Calibrate model parameters to data | `BatchParameterEstimator` | [Data Reconciliation and Steady-State Detection](data-reconciliation) |
 | Load optimization config from YAML/JSON | `ProductionOptimizationSpecLoader` | [YAML Spec Format](#yaml-specification-files) |
+
+---
+
+
+## Getting Started
+
+If you are new to process optimization in NeqSim, begin with:
+
+1. [Getting Started](getting-started)
+2. [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS)
+3. [Constraint Framework](constraint-framework)
+
+This sequence covers base-run requirements, optimizer selection, and safe variable access through `ProcessAutomation`.
 
 ---
 
@@ -54,7 +68,7 @@ This document provides a high-level introduction to the process optimization cap
 | [Batch Studies](batch-studies) | Parallel parameter sweeps and sensitivity analysis |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curve tables |
 | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | ProcessSimulationEvaluator for Python/SciPy integration |
-| [README.md](./ | BatchParameterEstimator for Levenberg-Marquardt calibration |
+| [Getting Started](getting-started) | Step-by-step first optimization workflow for process models/systems |
 | [Optimizer Guide](../../util/optimizer_guide) | Detailed API reference for all optimizer classes |
 | [SQP Optimizer](sqp_optimizer) | Sequential Quadratic Programming — constrained NLP with BFGS + active-set QP |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment constraints and bottleneck detection |
@@ -547,7 +561,7 @@ for (ScenarioRequest scenario : scenarios) {
 | `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization) |
-| `BatchParameterEstimator` | Model calibration | `solve()` | [README.md](./ |
+| `BatchParameterEstimator` | Model calibration | `solve()` | [Data Reconciliation and Steady-State Detection](data-reconciliation) |
 | `ProductionOptimizationSpecLoader` | YAML/JSON config loading | `load()` | [YAML Format](#yaml-specification-files) |
 
 ---
