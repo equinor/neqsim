@@ -4954,6 +4954,11 @@ public class ProcessSystem extends SimulationBaseClass {
     return new JsonProcessBuilder().build(json);
   }
 
+  public static ProcessJsonValidator.ValidationReport validateJson(String json) {
+    return ProcessJsonValidator.validate(json);
+  }
+
+
   /**
    * Exports this ProcessSystem to the JSON schema consumed by {@link JsonProcessBuilder}.
    *

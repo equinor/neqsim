@@ -260,6 +260,38 @@ public class JsonProcessBuilder {
       namedEquipment.remove(removeName);
     }
 
+
+
+    // Step 2b: Optional explicit topology metadata connections
+    if (root.has("connections") && root.get("connections").isJsonArray()) {
+      JsonArray connectionsArray = root.getAsJsonArray("connections");
+      for (int i = 0; i < connectionsArray.size(); i++) {
+        try {
+          JsonObject conn = connectionsArray.get(i).getAsJsonObject();
+          String from = conn.has("from") ? conn.get("from").getAsString() : null;
+          String to = conn.has("to") ? conn.get("to").getAsString() : null;
+          if (from == null || to == null || from.trim().isEmpty() || to.trim().isEmpty()) {
+            warnings.add("Skipping connections[" + i + "] - requires non-empty 'from' and 'to'");
+            continue;
+          }
+          String sourcePort = conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
+          String targetPort = conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
+          ProcessConnection.ConnectionType type = ProcessConnection.ConnectionType.MATERIAL;
+          if (conn.has("type")) {
+            try {
+              type = ProcessConnection.ConnectionType.valueOf(conn.get("type").getAsString().toUpperCase());
+            } catch (Exception ex) {
+              warnings.add("connections[" + i + "] has unknown type '" + conn.get("type").getAsString()
+                  + "' - defaulting to MATERIAL");
+            }
+          }
+          process.connect(from, sourcePort, to, targetPort, type);
+        } catch (Exception ex) {
+          warnings.add("Failed to parse connections[" + i + "]: " + ex.getMessage());
+        }
+      }
+    }
+
     // Step 4: Optionally run
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {
@@ -984,8 +1016,38 @@ public class JsonProcessBuilder {
         applyEntrainment((Separator) equipment, entry.getValue());
         continue;
       }
+      if ("mechanicalDesign".equals(propName) && entry.getValue().isJsonObject()) {
+        applyMechanicalDesignProperties(equipment, entry.getValue().getAsJsonObject());
+        continue;
+      }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
+    }
+  }
+
+  private void applyMechanicalDesignProperties(ProcessEquipmentInterface equipment, JsonObject mdProps) {
+    try {
+      equipment.initMechanicalDesign();
+      Object design = equipment.getMechanicalDesign();
+      if (design == null) {
+        warnings.add("Mechanical design not available for " + equipment.getName());
+        return;
+      }
+      for (Map.Entry<String, JsonElement> entry : mdProps.entrySet()) {
+        String key = entry.getKey();
+        if ("calcDesign".equalsIgnoreCase(key) || "readDesignSpecifications".equalsIgnoreCase(key)) {
+          continue;
+        }
+        applyPropertyObject(design, equipment.getName(), key, entry.getValue());
+      }
+      if (mdProps.has("readDesignSpecifications") && mdProps.get("readDesignSpecifications").getAsBoolean()) {
+        invokeNoArg(design, equipment.getName(), "readDesignSpecifications");
+      }
+      if (mdProps.has("calcDesign") && mdProps.get("calcDesign").getAsBoolean()) {
+        invokeNoArg(design, equipment.getName(), "calcDesign");
+      }
+    } catch (Exception e) {
+      warnings.add("Error applying mechanicalDesign on " + equipment.getName() + ": " + e.getMessage());
     }
   }
 
@@ -1099,6 +1161,11 @@ public class JsonProcessBuilder {
    */
   private void applyProperty(ProcessEquipmentInterface equipment, String propName,
       JsonElement value) {
+    applyPropertyObject(equipment, equipment.getName(), propName, value);
+  }
+
+  private void applyPropertyObject(Object target, String targetName, String propName,
+      JsonElement value) {
     String setterName = "set" + Character.toUpperCase(propName.charAt(0)) + propName.substring(1);
 
     try {
@@ -1109,37 +1176,45 @@ public class JsonProcessBuilder {
           double numValue = arr.get(0).getAsDouble();
           String unit = arr.get(1).getAsString();
           java.lang.reflect.Method method =
-              equipment.getClass().getMethod(setterName, double.class, String.class);
-          method.invoke(equipment, numValue, unit);
+              target.getClass().getMethod(setterName, double.class, String.class);
+          method.invoke(target, numValue, unit);
         }
       } else if (value.isJsonPrimitive()) {
         if (value.getAsJsonPrimitive().isNumber()) {
           // Try double setter first
           try {
             java.lang.reflect.Method method =
-                equipment.getClass().getMethod(setterName, double.class);
-            method.invoke(equipment, value.getAsDouble());
+                target.getClass().getMethod(setterName, double.class);
+            method.invoke(target, value.getAsDouble());
           } catch (NoSuchMethodException e) {
             // Try int setter
-            java.lang.reflect.Method method = equipment.getClass().getMethod(setterName, int.class);
-            method.invoke(equipment, value.getAsInt());
+            java.lang.reflect.Method method = target.getClass().getMethod(setterName, int.class);
+            method.invoke(target, value.getAsInt());
           }
         } else if (value.getAsJsonPrimitive().isBoolean()) {
           java.lang.reflect.Method method =
-              equipment.getClass().getMethod(setterName, boolean.class);
-          method.invoke(equipment, value.getAsBoolean());
+              target.getClass().getMethod(setterName, boolean.class);
+          method.invoke(target, value.getAsBoolean());
         } else if (value.getAsJsonPrimitive().isString()) {
           java.lang.reflect.Method method =
-              equipment.getClass().getMethod(setterName, String.class);
-          method.invoke(equipment, value.getAsString());
+              target.getClass().getMethod(setterName, String.class);
+          method.invoke(target, value.getAsString());
         }
       }
     } catch (NoSuchMethodException e) {
-      warnings.add("Property '" + propName + "' not found on " + equipment.getName() + " (tried "
+      warnings.add("Property '" + propName + "' not found on " + targetName + " (tried "
           + setterName + ")");
     } catch (Exception e) {
-      warnings.add(
-          "Error setting '" + propName + "' on " + equipment.getName() + ": " + e.getMessage());
+      warnings.add("Error setting '" + propName + "' on " + targetName + ": " + e.getMessage());
+    }
+  }
+
+  private void invokeNoArg(Object target, String targetName, String methodName) {
+    try {
+      java.lang.reflect.Method method = target.getClass().getMethod(methodName);
+      method.invoke(target);
+    } catch (Exception e) {
+      warnings.add("Error invoking '" + methodName + "' on " + targetName + ": " + e.getMessage());
     }
   }
 
