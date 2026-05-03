@@ -173,8 +173,16 @@ main th {{
   color: #1a1a1a;
 }}
 main figure {{
-  margin: 1.5rem auto;
-  text-align: center;
+    margin: 1.5rem auto;
+    text-align: center;
+}}
+main figure.numbered-figure {{
+    max-width: 82%;
+}}
+main figure.numbered-figure img {{
+    max-width: 100%;
+    max-height: 460px;
+    object-fit: contain;
 }}
 main figcaption {{
   font-size: 0.88rem;
@@ -588,10 +596,11 @@ p.figure-discussion em {{
 
 /* Responsive */
 @media (max-width: 900px) {{
-  nav.sidebar {{ display: none; }}
-  main {{ padding: 1rem; }}
-  .title-page .tp-title {{ font-size: 1.6rem; }}
-  .title-page .tp-decoration {{ width: 100px; height: 100px; }}
+    nav.sidebar {{ display: none; }}
+    main {{ padding: 1rem; }}
+    main figure.numbered-figure {{ max-width: 100%; }}
+    .title-page .tp-title {{ font-size: 1.6rem; }}
+    .title-page .tp-decoration {{ width: 100px; height: 100px; }}
 }}
 
 @media print {{
@@ -1476,7 +1485,13 @@ def _md_to_html(md_text):
             close_list()
             caption = img_m.group(1)
             src = img_m.group(2)
-            html_parts.append(f'<figure><img src="{_esc(src)}" alt="{_esc(caption)}"/>')
+            fig_class = (
+                ' class="numbered-figure"'
+                if caption.strip().lower().startswith("figure ") else ""
+            )
+            html_parts.append(
+                f'<figure{fig_class}><img src="{_esc(src)}" alt="{_esc(caption)}"/>'
+            )
             if caption:
                 html_parts.append(f"<figcaption>{_inline_fmt(caption)}</figcaption>")
             html_parts.append("</figure>")
@@ -1928,6 +1943,19 @@ def render_book_html(book_dir, chapter_filter=None):
         if lectures_dst.exists():
             shutil.rmtree(lectures_dst)
         shutil.copytree(str(lectures_src), str(lectures_dst))
+
+    # Copy backmatter asset folders so links such as
+    # review_exam_preparation_assets/figures/example.png resolve from
+    # submission/book.html and can be embedded into standalone HTML.
+    backmatter_dir = book_dir / "backmatter"
+    if backmatter_dir.is_dir():
+        for asset_dir in backmatter_dir.iterdir():
+            if not asset_dir.is_dir() or not asset_dir.name.endswith("_assets"):
+                continue
+            asset_dst = submission_dir / asset_dir.name
+            if asset_dst.exists():
+                shutil.rmtree(asset_dst)
+            shutil.copytree(str(asset_dir), str(asset_dst))
 
     # Rewrite "../../figures/..." (chapter-section relative) to "../figures/..."
     # so that submission/book.html (one level under book root) resolves correctly.
