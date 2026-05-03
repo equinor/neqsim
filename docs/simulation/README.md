@@ -46,6 +46,22 @@ This folder contains guides for advanced process simulation topics including pro
 | [differentiable_thermodynamics.md](differentiable_thermodynamics) | Auto-differentiation for optimization |
 | [INTEGRATED_WORKFLOW_GUIDE.md](INTEGRATED_WORKFLOW_GUIDE) | Integrated workflow guide |
 
+
+### Process Automation Deep Dives
+
+| Document | Description |
+|----------|-------------|
+| [automation/address_resolution_guide.md](automation/address_resolution_guide) | How string addresses are parsed and resolved |
+| [automation/variable_catalog_patterns.md](automation/variable_catalog_patterns) | Building typed variable catalogs for tooling |
+| [automation/unit_conversion_matrix.md](automation/unit_conversion_matrix) | Practical unit conversion usage patterns |
+| [automation/safe_accessor_response_schema.md](automation/safe_accessor_response_schema) | JSON payload contract for safe accessors |
+| [automation/diagnostics_playbook.md](automation/diagnostics_playbook) | Operating `AutomationDiagnostics` in production |
+| [automation/multi_area_addressing_patterns.md](automation/multi_area_addressing_patterns) | Area-qualified addressing for ProcessModel |
+| [automation/input_validation_and_bounds.md](automation/input_validation_and_bounds) | Bounds checks and input validation practices |
+| [automation/automation_for_optimizers.md](automation/automation_for_optimizers) | Optimizer loop patterns with ProcessAutomation |
+| [automation/automation_for_digital_twins.md](automation/automation_for_digital_twins) | Digital twin integration patterns |
+| [automation/automation_troubleshooting.md](automation/automation_troubleshooting) | Troubleshooting checklist and failure modes |
+
 ### Equipment Modeling
 
 | Document | Description |

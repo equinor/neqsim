@@ -537,6 +537,16 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Serialization   | [docs/simulation/process_serialization.md](simulation/process_serialization)                   | Save/load process models                                             |
 | Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
 | Process Automation API  | [docs/simulation/process_automation.md](simulation/process_automation)                         | String-addressable API for reading/writing simulation variables       |
+| Automation Address Resolution Guide | [docs/simulation/automation/address_resolution_guide.md](simulation/automation/address_resolution_guide) | How ProcessAutomation parses and resolves string addresses |
+| Automation Variable Catalog Patterns | [docs/simulation/automation/variable_catalog_patterns.md](simulation/automation/variable_catalog_patterns) | Building INPUT/OUTPUT catalogs from SimulationVariable metadata |
+| Automation Unit Conversion Matrix | [docs/simulation/automation/unit_conversion_matrix.md](simulation/automation/unit_conversion_matrix) | Unit handling patterns for read/write automation flows |
+| Safe Accessor Response Schema | [docs/simulation/automation/safe_accessor_response_schema.md](simulation/automation/safe_accessor_response_schema) | JSON response contract for get/set safe accessors |
+| Automation Diagnostics Playbook | [docs/simulation/automation/diagnostics_playbook.md](simulation/automation/diagnostics_playbook) | Operating diagnostics, correction learning, and quality tracking |
+| Multi-Area Addressing Patterns | [docs/simulation/automation/multi_area_addressing_patterns.md](simulation/automation/multi_area_addressing_patterns) | Area-qualified addressing conventions for ProcessModel |
+| Automation Input Validation and Bounds | [docs/simulation/automation/input_validation_and_bounds.md](simulation/automation/input_validation_and_bounds) | Physical bounds checks and guarded write practices |
+| ProcessAutomation for Optimizers | [docs/simulation/automation/automation_for_optimizers.md](simulation/automation/automation_for_optimizers) | Optimization-loop patterns for variable set/get workflows |
+| ProcessAutomation for Digital Twins | [docs/simulation/automation/automation_for_digital_twins.md](simulation/automation/automation_for_digital_twins) | Digital twin integration architecture using string addresses |
+| Automation Troubleshooting | [docs/simulation/automation/automation_troubleshooting.md](simulation/automation/automation_troubleshooting) | Common automation failures and recovery checklist |
 
 ---
 
