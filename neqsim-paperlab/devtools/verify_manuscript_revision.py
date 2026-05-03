@@ -108,6 +108,58 @@ def check_exercises_are_final(entries: list[dict]) -> list[str]:
     return errors
 
 
+def check_display_math_blocks() -> list[str]:
+    """Check display-math blocks for Markdown constructs that render as raw text."""
+    errors: list[str] = []
+    markdown_files = sorted((BOOK_ROOT / "chapters").glob("**/*.md"))
+    markdown_files.extend(sorted((BOOK_ROOT / "backmatter").glob("**/*.md")))
+    list_item_re = re.compile(r"\s*[-*+]\s+")
+    numbered_item_re = re.compile(r"\s*\d+\.\s+")
+    aligned_re = re.compile(r"\\begin\{(?:aligned|array|split|gathered|matrix|cases)\}")
+    for path in markdown_files:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        delimiter_lines = [index for index, line in enumerate(lines, start=1) if line.strip() == "$$"]
+        if len(delimiter_lines) % 2:
+            errors.append(
+                "Odd number of display-math delimiters: "
+                f"{path.relative_to(BOOK_ROOT)}")
+        in_block = False
+        block_start = 0
+        block_lines: list[str] = []
+        for index, line in enumerate(lines, start=1):
+            if line.strip() == "$$":
+                if not in_block:
+                    in_block = True
+                    block_start = index
+                    block_lines = []
+                    continue
+                content = "\n".join(block_lines)
+                problems: list[str] = []
+                if not content.strip():
+                    problems.append("empty display math")
+                if any(list_item_re.match(block_line) for block_line in block_lines):
+                    problems.append("list marker inside display math")
+                if any(numbered_item_re.match(block_line) for block_line in block_lines):
+                    problems.append("numbered list marker inside display math")
+                if re.search(r"\n\s*\n", content):
+                    problems.append("blank line inside display math")
+                if r"\\" in content and not aligned_re.search(content):
+                    problems.append("line break outside aligned math environment")
+                for problem in problems:
+                    errors.append(
+                        f"{problem}: {path.relative_to(BOOK_ROOT)} line {block_start}")
+                in_block = False
+                block_start = 0
+                block_lines = []
+            elif in_block:
+                block_lines.append(line)
+        if in_block:
+            errors.append(
+                "Unclosed display-math block: "
+                f"{path.relative_to(BOOK_ROOT)} line {block_start}")
+    return errors
+
+
 def check_notebooks(entries: list[dict]) -> list[str]:
     """Check chapter-listed notebooks exist and target repaired notebooks executed."""
     errors: list[str] = []
@@ -171,6 +223,7 @@ def main() -> int:
         "backmatter": check_backmatter(config),
         "chapter_pedagogy": check_chapter_pedagogy(entries),
         "exercises_are_final": check_exercises_are_final(entries),
+        "display_math_blocks": check_display_math_blocks(),
         "notebooks": check_notebooks(entries),
         "figure_paths": check_figure_paths(entries),
     }
