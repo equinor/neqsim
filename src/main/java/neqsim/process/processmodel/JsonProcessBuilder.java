@@ -260,6 +260,38 @@ public class JsonProcessBuilder {
       namedEquipment.remove(removeName);
     }
 
+
+
+    // Step 2b: Optional explicit topology metadata connections
+    if (root.has("connections") && root.get("connections").isJsonArray()) {
+      JsonArray connectionsArray = root.getAsJsonArray("connections");
+      for (int i = 0; i < connectionsArray.size(); i++) {
+        try {
+          JsonObject conn = connectionsArray.get(i).getAsJsonObject();
+          String from = conn.has("from") ? conn.get("from").getAsString() : null;
+          String to = conn.has("to") ? conn.get("to").getAsString() : null;
+          if (from == null || to == null || from.trim().isEmpty() || to.trim().isEmpty()) {
+            warnings.add("Skipping connections[" + i + "] - requires non-empty 'from' and 'to'");
+            continue;
+          }
+          String sourcePort = conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
+          String targetPort = conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
+          ProcessConnection.ConnectionType type = ProcessConnection.ConnectionType.MATERIAL;
+          if (conn.has("type")) {
+            try {
+              type = ProcessConnection.ConnectionType.valueOf(conn.get("type").getAsString().toUpperCase());
+            } catch (Exception ex) {
+              warnings.add("connections[" + i + "] has unknown type '" + conn.get("type").getAsString()
+                  + "' - defaulting to MATERIAL");
+            }
+          }
+          process.connect(from, sourcePort, to, targetPort, type);
+        } catch (Exception ex) {
+          warnings.add("Failed to parse connections[" + i + "]: " + ex.getMessage());
+        }
+      }
+    }
+
     // Step 4: Optionally run
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {

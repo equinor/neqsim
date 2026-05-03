@@ -638,4 +638,22 @@ class JsonProcessBuilderTest {
     assertNotNull(result.getProcessSystem().getUnit("Luva"));
     assertTrue(result.getProcessSystem().getUnit("Luva") instanceof UnisimCalculator);
   }
+
+  @Test
+  void testBuildWithExplicitConnectionsMetadata() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 1.0}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"},"
+        + "  {\"type\": \"Separator\", \"name\": \"Sep\", \"inlet\": \"feed\"}" + "],"
+        + "\"connections\": ["
+        + "  {\"from\": \"feed\", \"to\": \"Sep\", \"sourcePort\": \"outlet\", \"targetPort\": \"inlet\", \"type\": \"MATERIAL\"}"
+        + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    assertEquals(1, result.getProcessSystem().getConnections().size());
+    assertEquals(ProcessConnection.ConnectionType.MATERIAL,
+        result.getProcessSystem().getConnections().get(0).getType());
+  }
+
 }
