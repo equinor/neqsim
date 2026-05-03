@@ -1996,6 +1996,89 @@ class TestBookImprovementTools:
         assert (bd / "figure_dossier.json").exists()
         assert (bd / "evidence_report.json").exists()
 
+    def test_normalize_figures_numbers_references_and_discussion(self, tmp_path):
+        """figure normalizer adds labels and discussion references."""
+        from book_builder import create_book_project
+        from book_improvement_tools import (
+            build_evidence_report,
+            build_figure_dossier,
+            normalize_figure_references,
+        )
+
+        bd = create_book_project("Normalize Figure Test", n_chapters=1,
+                                 books_dir=tmp_path / "books")
+        chapter_dir = bd / "chapters" / "ch01"
+        (chapter_dir / "figures" / "plot.png").write_bytes(b"not a real image")
+        (chapter_dir / "chapter.md").write_text(
+            "# Chapter 1\n\n## Section\n\n"
+            "Figure 1.9 shows the pressure profile used in the example.\n\n"
+            "![Pressure profile for the example pipeline.](figures/plot.png)\n\n"
+            "*Figure 9.9 - Old caption.*\n\n"
+            "**Discussion.** *Observation.* The pressure drops along the line. "
+            "*Mechanism.* Friction converts mechanical energy to heat. "
+            "*Implication.* Arrival pressure limits production. "
+            "*Recommendation.* Check the profile before selecting diameter.\n",
+            encoding="utf-8",
+        )
+
+        result = normalize_figure_references(bd)
+        text = (chapter_dir / "chapter.md").read_text(encoding="utf-8")
+        dossier = build_figure_dossier(bd)
+        report = build_evidence_report(bd)
+
+        assert result["caption_updates"] == 1
+        assert result["discussion_updates"] == 1
+        assert result["reference_updates"] == 1
+        assert result["duplicate_captions_removed"] == 1
+        assert "Figure 1.1 shows the pressure profile" in text
+        assert "![Figure 1.1: Pressure profile for the example pipeline.]" in text
+        assert "**Discussion (Figure 1.1).**" in text
+        assert "Figure 9.9" not in text
+        assert dossier["summary"]["without_number"] == 0
+        assert dossier["summary"]["without_reference"] == 0
+        assert not any(issue["category"] == "figure_number" for issue in report["issues"])
+        assert not any(issue["category"] == "figure_reference" for issue in report["issues"])
+
+    def test_normalize_figures_keeps_chapter_openers_unnumbered(self, tmp_path):
+        """figure normalizer keeps decorative chapter openers out of numbering."""
+        from book_builder import create_book_project
+        from book_improvement_tools import build_figure_dossier, normalize_figure_references
+
+        bd = create_book_project("Decorative Opener Test", n_chapters=1,
+                                 books_dir=tmp_path / "books")
+        chapter_dir = bd / "chapters" / "ch01"
+        cover_dir = bd / "figures" / "lectures" / "covers"
+        cover_dir.mkdir(parents=True)
+        (cover_dir / "front.png").write_bytes(b"not a real image")
+        (chapter_dir / "figures" / "plot.png").write_bytes(b"not a real image")
+        (chapter_dir / "chapter.md").write_text(
+            "# Chapter 1\n\n"
+            "![Figure 1.1: Opening art (course cover illustration)]"
+            "(../../figures/lectures/covers/front.png)\n\n"
+            "## Section\n\n"
+            "Figure 1.2 shows the verified result.\n\n"
+            "![Figure 1.2: Verified result plot.](figures/plot.png)\n\n"
+            "**Discussion (Figure 1.2).** *Observation.* The result is stable. "
+            "*Mechanism.* The model converges. *Implication.* The design can be compared. "
+            "*Recommendation.* Use the result in the next sizing step.\n",
+            encoding="utf-8",
+        )
+
+        result = normalize_figure_references(bd)
+        text = (chapter_dir / "chapter.md").read_text(encoding="utf-8")
+        dossier = build_figure_dossier(bd)
+
+        assert result["caption_updates"] == 2
+        assert "![Opening art](../../figures/lectures/covers/front.png)" in text
+        assert "Figure 1.2" not in text
+        assert "Figure 1.1 shows the verified result" in text
+        assert "![Figure 1.1: Verified result plot.]" in text
+        assert "**Discussion (Figure 1.1).**" in text
+        assert dossier["summary"]["without_number"] == 0
+        assert dossier["figures"][0]["exempt"] is True
+        assert dossier["figures"][0]["figure_label"] == ""
+        assert dossier["figures"][1]["figure_label"] == "Figure 1.1"
+
     def test_coverage_audit_maps_known_lectures(self, tmp_path):
         """coverage audit maps lecture folders by title and flags extra lectures."""
         from book_builder import create_book_project
@@ -2116,6 +2199,13 @@ class TestBookImprovementTools:
         assert exam["summary"]["exercise_source_files"] == 1
         assert pdf_plan["summary"]["pdf_files"] == 3
         assert skill_plan["summary"]["dimensions_total"] >= 5
+        dimension_names = {item["dimension"] for item in skill_plan["dimensions"]}
+        assert "student_readability" in dimension_names
+        assert "chapter_flow" in dimension_names
+        assert "typesetting_release" in dimension_names
+        chapter_skills = set(skill_plan["chapter_profiles"][0]["skills"])
+        assert "paperlab_student_readability" in chapter_skills
+        assert "paperlab_chapter_flow_editor" in chapter_skills
         assert graph["summary"]["nodes"] > 2
         assert graph["summary"]["edges"] > 1
         assert (bd / "skill_stack_plan.md").exists()

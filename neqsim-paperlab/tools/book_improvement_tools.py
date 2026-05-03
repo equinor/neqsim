@@ -56,6 +56,12 @@ NOTEBOOK_EXTENSIONS = {".ipynb"}
 FIGURE_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^(#{2,3})\s+(.+)$", re.MULTILINE)
 DISCUSSION_RE = re.compile(r"\*Observation\.\*|\*Mechanism\.\*|Discussion \(Figure", re.IGNORECASE)
+FIGURE_NUMBER_RE = re.compile(r"\bFigure\s+\d+(?:\.\d+)+\b", re.IGNORECASE)
+FIGURE_PREFIX_RE = re.compile(
+    r"^\s*Figure\s+\d+(?:\.\d+)+\s*(?:[:.\-\u2013\u2014])?\s*", re.IGNORECASE)
+ITALIC_FIGURE_LINE_RE = re.compile(
+    r"\n{1,2}\*\s*Figure\s+\d+(?:\.\d+)+[^\n]*\*\s*\n", re.IGNORECASE)
+DISCUSSION_HEADING_RE = re.compile(r"\*\*Discussion(?:\s*\([^)]*\))?\.\*\*", re.IGNORECASE)
 CONCISENESS_BOILERPLATE_MARKERS = (
     "generated source appendix has been condensed",
     "full provenance is retained in coverage matrix",
@@ -291,6 +297,155 @@ def _has_nearby_discussion(text: str, end_pos: int) -> bool:
     return bool(DISCUSSION_RE.search(window))
 
 
+def _expected_figure_label(chapter_number: int, figure_index: int) -> str:
+    """Return the expected chapter-scoped figure label."""
+    return f"Figure {chapter_number}.{figure_index}"
+
+
+def _same_chapter_figure_labels(text: str, chapter_number: int) -> List[str]:
+    """Return figure labels in text that belong to the current chapter."""
+    labels = []
+    pattern = re.compile(r"\bFigure\s+(" + re.escape(str(chapter_number))
+                         + r"\.\d+)\b", re.IGNORECASE)
+    for match in pattern.finditer(text):
+        labels.append(f"Figure {match.group(1)}")
+    return labels
+
+
+def _preceding_paragraph(text: str, start_pos: int) -> str:
+    """Return the paragraph immediately preceding a figure position."""
+    before = text[max(0, start_pos - 1800):start_pos]
+    parts = re.split(r"\n\s*\n", before)
+    for part in reversed(parts):
+        if part.strip():
+            return part
+    return ""
+
+
+def _build_reference_relabel_map(text: str, chapter_number: int,
+                                 matches: List[re.Match]) -> Dict[str, str]:
+    """Map stale nearby prose references onto chapter-sequential figure labels."""
+    label_map: Dict[str, str] = {}
+    figure_index = 0
+    for match in matches:
+        caption = match.group(1).strip()
+        target = match.group(2).strip()
+        line = _line_number(text, match.start())
+        if _is_cover_or_decorative(target, caption, line):
+            continue
+        figure_index += 1
+        expected_label = _expected_figure_label(chapter_number, figure_index)
+        caption_label_match = FIGURE_NUMBER_RE.search(caption)
+        if caption_label_match:
+            old_label = caption_label_match.group(0)
+            if old_label != expected_label and old_label not in label_map:
+                label_map[old_label] = expected_label
+        paragraph = _preceding_paragraph(text, match.start())
+        labels = _same_chapter_figure_labels(paragraph, chapter_number)
+        if not labels:
+            continue
+        old_label = labels[0]
+        if old_label == expected_label:
+            continue
+        if old_label not in label_map:
+            label_map[old_label] = expected_label
+    return label_map
+
+
+def _relabel_prose_figure_references(text: str, label_map: Dict[str, str]) -> Tuple[str, int]:
+    """Update figure references in prose while leaving captions and headings intact."""
+    if not label_map:
+        return text, 0
+    pattern = re.compile(r"\b(" + "|".join(re.escape(label) for label in label_map)
+                         + r")\b", re.IGNORECASE)
+    updates = 0
+    lines = []
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        if stripped.startswith("![") or stripped.startswith("**Discussion"):
+            lines.append(line)
+            continue
+
+        def _replace(match: re.Match) -> str:
+            nonlocal updates
+            matched = match.group(1)
+            for old_label, new_label in label_map.items():
+                if matched.lower() == old_label.lower():
+                    updates += 1
+                    return new_label
+            return matched
+
+        lines.append(pattern.sub(_replace, line))
+    return "".join(lines), updates
+
+
+def _caption_has_figure_number(caption: str, expected_label: str) -> bool:
+    """Return true when a caption includes its expected figure number."""
+    return bool(re.search(r"\b" + re.escape(expected_label) + r"\b", caption, re.IGNORECASE))
+
+
+def _figure_reference_present(text: str, start_pos: int, end_pos: int,
+                              expected_label: str) -> bool:
+    """Return true when nearby prose or discussion refers to a figure label."""
+    next_heading = re.search(r"\n##\s+", text[end_pos:])
+    next_figure = re.search(r"\n!\[", text[end_pos:])
+    stop = len(text)
+    for match in (next_heading, next_figure):
+        if match:
+            stop = min(stop, end_pos + match.start())
+    before = text[max(0, start_pos - 1800):start_pos]
+    after = text[end_pos:min(stop, end_pos + 2500)]
+    reference_text = before + "\n" + after
+    return bool(re.search(r"\b" + re.escape(expected_label) + r"\b", reference_text,
+                          re.IGNORECASE))
+
+
+def _numbered_caption(caption: str, expected_label: str) -> str:
+    """Return caption text with the expected figure label as prefix."""
+    body = FIGURE_PREFIX_RE.sub("", caption).strip()
+    if not body:
+        body = "Illustration supporting the surrounding discussion."
+    return f"{expected_label}: {body}"
+
+
+def _decorative_caption(caption: str) -> str:
+    """Return an unnumbered caption for decorative chapter-opening figures."""
+    body = FIGURE_PREFIX_RE.sub("", caption).strip()
+    body = re.sub(r"\s*\((?:course\s+)?cover illustration\)\s*", " ", body,
+                  flags=re.IGNORECASE)
+    body = re.sub(r"\s+", " ", body).strip(" .")
+    if not body:
+        return "Chapter opening illustration"
+    return body
+
+
+def _normalise_discussion_heading(text: str, start_pos: int, end_pos: int,
+                                  expected_label: str) -> Tuple[str, bool]:
+    """Ensure the discussion heading after a figure names the expected label."""
+    next_heading = re.search(r"\n##\s+", text[end_pos:])
+    next_figure = re.search(r"\n!\[", text[end_pos:])
+    stop = len(text)
+    for match in (next_heading, next_figure):
+        if match:
+            stop = min(stop, end_pos + match.start())
+    window_end = min(stop, end_pos + 2500)
+    window = text[end_pos:window_end]
+    match = DISCUSSION_HEADING_RE.search(window)
+    if not match:
+        observation_match = re.search(r"(\n\s*)\*Observation\.\*", window, re.IGNORECASE)
+        if not observation_match:
+            return text, False
+        absolute_start = end_pos + observation_match.start(1) + len(observation_match.group(1))
+        replacement = f"**Discussion ({expected_label}).**\n"
+        return text[:absolute_start] + replacement + text[absolute_start:], True
+    replacement = f"**Discussion ({expected_label}).**"
+    absolute_start = end_pos + match.start()
+    absolute_end = end_pos + match.end()
+    if text[absolute_start:absolute_end] == replacement:
+        return text, False
+    return text[:absolute_start] + replacement + text[absolute_end:], True
+
+
 def _is_cover_or_decorative(target: str, caption: str, line_number: int) -> bool:
     """Return true for cover/decorative figures exempt from discussion blocks."""
     lower = f"{target} {caption}".lower()
@@ -325,7 +480,9 @@ def _caption_quality(caption: str) -> str:
     clean = caption.strip()
     if len(clean) < 28:
         return "weak"
-    if re.search(r"\bS\d{2}\b|[_-]|\bFig(?:ure)?\s*\d+(?:\.\d+)?\s*[:\-]\s*[A-Za-z0-9 ]{1,20}$", clean):
+    if re.search(r"\bS\d{2}\b|[_]{2,}|\b(?:IMG|DSC|Slide|Screenshot)\b", clean, re.IGNORECASE):
+        return "review"
+    if re.search(r"\bFig(?:ure)?\s*\d+(?:\.\d+)?\s*[:\-]\s*[A-Za-z0-9 ]{1,20}$", clean):
         return "review"
     return "ok"
 
@@ -379,6 +536,7 @@ def build_figure_dossier(book_dir: Path | str, source_root: Optional[Path | str]
             vision_by_chapter["_error"] = {"message": str(exc)}
 
     for ch_num, chapter, chapter_dir, text in _chapter_texts(book_dir):
+        figure_index = 0
         for match in FIGURE_RE.finditer(text):
             caption = match.group(1).strip()
             target = match.group(2).strip()
@@ -389,7 +547,18 @@ def build_figure_dossier(book_dir: Path | str, source_root: Optional[Path | str]
             file_name = Path(target).name
             source_meta = source_lookup.get(file_name, {})
             exempt = _is_cover_or_decorative(target, caption, line)
+            if exempt:
+                current_figure_index = 0
+                figure_label = ""
+            else:
+                figure_index += 1
+                current_figure_index = figure_index
+                figure_label = _expected_figure_label(ch_num, current_figure_index)
             nearby_discussion = _has_nearby_discussion(text, match.end())
+            caption_has_number = (False if exempt else
+                                  _caption_has_figure_number(caption, figure_label))
+            reference_present = (False if exempt else _figure_reference_present(
+                text, match.start(), match.end(), figure_label))
             vision = vision_by_chapter.get(chapter["dir"], {}).get(file_name, {})
             record = {
                 "figure": file_name,
@@ -398,10 +567,14 @@ def build_figure_dossier(book_dir: Path | str, source_root: Optional[Path | str]
                 "exists": exists,
                 "chapter": chapter["dir"],
                 "chapter_number": ch_num,
+                "figure_index": current_figure_index,
+                "figure_label": figure_label,
                 "line": line,
                 "section": section,
                 "visual_type": _visual_type(target, caption),
                 "caption": caption,
+                "caption_has_number": caption_has_number,
+                "reference_present": reference_present,
                 "caption_quality": _caption_quality(caption),
                 "discussion_present": nearby_discussion,
                 "exempt": exempt,
@@ -426,6 +599,8 @@ def build_figure_dossier(book_dir: Path | str, source_root: Optional[Path | str]
         "summary": {
             "missing_files": sum(1 for record in records if not record["exists"]),
             "without_discussion": sum(1 for record in records if not record["discussion_present"] and not record["exempt"]),
+            "without_number": sum(1 for record in records if not record["caption_has_number"] and not record["exempt"]),
+            "without_reference": sum(1 for record in records if not record["reference_present"] and not record["exempt"]),
             "weak_captions": sum(1 for record in records if record["caption_quality"] != "ok"),
             "exempt": sum(1 for record in records if record["exempt"]),
         },
@@ -469,7 +644,7 @@ th {{ background: #f3f3f3; }}
 <body>
 <h1>Figure Dossier</h1>
 <p>Generated: {generated}</p>
-<p>Figures: {count}; missing: {missing}; without discussion: {without_discussion}; weak captions: {weak}</p>
+<p>Figures: {count}; missing: {missing}; without discussion: {without_discussion}; without number: {without_number}; without reference: {without_reference}; weak captions: {weak}</p>
 <table>
 <thead><tr><th>Chapter</th><th>Section</th><th>Figure</th><th>Type</th><th>Caption</th><th>Status</th><th>Caption text</th></tr></thead>
 <tbody>
@@ -483,6 +658,8 @@ th {{ background: #f3f3f3; }}
         count=dossier["figure_count"],
         missing=dossier["summary"]["missing_files"],
         without_discussion=dossier["summary"]["without_discussion"],
+        without_number=dossier["summary"].get("without_number", 0),
+        without_reference=dossier["summary"].get("without_reference", 0),
         weak=dossier["summary"]["weak_captions"],
         rows="\n".join(rows),
     )
@@ -533,10 +710,98 @@ def apply_figure_context(book_dir: Path | str, reviewed_only: bool = True,
     return {"dry_run": dry_run, "changed": changed, "inserted": sum(c["inserted"] for c in changed)}
 
 
+def normalize_figure_references(book_dir: Path | str, dry_run: bool = False) -> Dict:
+    """Normalize chapter Markdown figures to numbered captions and references.
+
+    The pass numbers non-decorative figures in chapter order as ``Figure N.M``,
+    leaves decorative chapter-opening figures unnumbered, removes an
+    immediately following duplicate italic caption line, and rewrites nearby
+    discussion headings to ``Discussion (Figure N.M)``. It only edits Markdown
+    image figures already present in ``chapter.md`` files.
+    """
+    book_dir = Path(book_dir)
+    changed: List[Dict] = []
+    for ch_num, chapter, chapter_dir, text in _chapter_texts(book_dir):
+        matches = list(FIGURE_RE.finditer(text))
+        if not matches:
+            continue
+        new_text = text
+        label_map = _build_reference_relabel_map(text, ch_num, matches)
+        caption_updates = 0
+        discussion_updates = 0
+        reference_updates = 0
+        duplicate_captions_removed = 0
+        figure_labels: Dict[int, str] = {}
+        figure_index = 0
+        for match in matches:
+            caption = match.group(1).strip()
+            target = match.group(2).strip()
+            line = _line_number(text, match.start())
+            if _is_cover_or_decorative(target, caption, line):
+                continue
+            figure_index += 1
+            figure_labels[match.start()] = _expected_figure_label(ch_num, figure_index)
+
+        for match in reversed(matches):
+            caption = match.group(1).strip()
+            target = match.group(2).strip()
+            line = _line_number(text, match.start())
+            exempt = _is_cover_or_decorative(target, caption, line)
+            if exempt:
+                normalized_caption = _decorative_caption(caption)
+            else:
+                figure_label = figure_labels[match.start()]
+                normalized_caption = _numbered_caption(caption, figure_label)
+            image_markdown = f"![{normalized_caption}]({target})"
+
+            if caption != normalized_caption:
+                caption_updates += 1
+            new_text = new_text[:match.start()] + image_markdown + new_text[match.end():]
+
+            image_end = match.start() + len(image_markdown)
+            duplicate_match = ITALIC_FIGURE_LINE_RE.match(new_text, image_end)
+            if duplicate_match:
+                new_text = new_text[:duplicate_match.start()] + "\n\n" + new_text[duplicate_match.end():]
+                duplicate_captions_removed += 1
+
+            if not exempt:
+                normalised_text, updated = _normalise_discussion_heading(
+                    new_text, match.start(), image_end, figure_label)
+                if updated:
+                    discussion_updates += 1
+                    new_text = normalised_text
+
+        new_text, reference_updates = _relabel_prose_figure_references(new_text, label_map)
+
+        if new_text != text:
+            chapter_md = chapter_dir / "chapter.md"
+            if not dry_run:
+                chapter_md.write_text(new_text, encoding="utf-8")
+            changed.append({
+                "chapter": chapter["dir"],
+                "figures": len(matches),
+                "caption_updates": caption_updates,
+                "discussion_updates": discussion_updates,
+                "reference_updates": reference_updates,
+                "duplicate_captions_removed": duplicate_captions_removed,
+            })
+    return {
+        "dry_run": dry_run,
+        "changed": changed,
+        "chapters_changed": len(changed),
+        "figures_checked": sum(item["figures"] for item in changed),
+        "caption_updates": sum(item["caption_updates"] for item in changed),
+        "discussion_updates": sum(item["discussion_updates"] for item in changed),
+        "reference_updates": sum(item["reference_updates"] for item in changed),
+        "duplicate_captions_removed": sum(item["duplicate_captions_removed"] for item in changed),
+    }
+
+
 def _discussion_block(record: Dict) -> str:
     """Render a Markdown discussion block from a dossier record."""
+    label = record.get("figure_label") or record["figure"]
     return (
-        f"**Discussion ({record['figure']}).**\n"
+        f"**Discussion ({label}).**\n"
         f"*Observation.* {record['observation']}\n"
         f"*Mechanism.* {record['mechanism']}\n"
         f"*Implication.* {record['implication']}\n"
@@ -1135,6 +1400,18 @@ def build_evidence_report(book_dir: Path | str) -> Dict:
                 "category": "figure_discussion",
                 "message": f"{location}: non-cover figure lacks nearby discussion: {record['figure']}",
             })
+        if not record["exempt"] and not record.get("caption_has_number", False):
+            issues.append({
+                "severity": "warning",
+                "category": "figure_number",
+                "message": f"{location}: caption lacks expected figure number {record['figure_label']}: {record['caption']}",
+            })
+        if not record["exempt"] and not record.get("reference_present", False):
+            issues.append({
+                "severity": "warning",
+                "category": "figure_reference",
+                "message": f"{location}: nearby text does not reference {record['figure_label']}: {record['figure']}",
+            })
         if record["caption_quality"] != "ok":
             issues.append({
                 "severity": "info",
@@ -1180,31 +1457,43 @@ def _format_evidence_report_md(report: Dict) -> str:
 
 
 CHAPTER_SKILL_RULES = [
-    (range(1, 3), ["neqsim-field-development", "neqsim-capability-map"],
+    (range(1, 3), ["neqsim-field-development", "neqsim-capability-map",
+                   "paperlab_student_readability", "paperlab_chapter_flow_editor"],
      "Link reservoir, wells, facilities, exports, economics, regulation, and operations."),
     (range(3, 5), ["neqsim-api-patterns", "neqsim-eos-regression",
-                   "neqsim-physics-explanations", "figure-discussion"],
+                   "neqsim-physics-explanations", "figure-discussion",
+                   "paperlab_scientific_traceability_audit"],
      "Tie PVT and flow-performance figures to equations, operating points, and notebooks."),
     (range(5, 11), ["neqsim-platform-modeling", "neqsim-flow-assurance",
                     "neqsim-distillation-design", "neqsim-electrolyte-systems",
-                    "neqsim-controllability-operability"],
+                    "neqsim-controllability-operability", "paperlab_student_readability",
+                    "paperlab_chapter_flow_editor"],
      "Strengthen process-train logic, flow assurance, dehydration, and operability checks."),
     (range(11, 15), ["neqsim-subsea-and-wells", "neqsim-power-generation",
                      "neqsim-utilities-specification", "neqsim-standards-lookup",
-                     "neqsim-equipment-cost-estimation"],
+                     "neqsim-equipment-cost-estimation",
+                     "paperlab_scientific_traceability_audit"],
      "Add standards-backed equipment checks, electrification context, and cost drivers."),
     (range(15, 21), ["neqsim-model-calibration-and-data-reconciliation",
                      "neqsim-production-optimization", "neqsim-optimization-and-doe",
-                     "neqsim-field-economics"],
+                     "neqsim-field-economics", "paperlab_scientific_traceability_audit"],
      "Add uncertainty workflows, ensemble updating, optimization, and economic framing."),
-    (range(21, 22), ["neqsim-standards-lookup", "neqsim-process-safety"],
+    (range(21, 22), ["neqsim-standards-lookup", "neqsim-process-safety",
+                     "paperlab_scientific_traceability_audit"],
      "Build a standards-to-chapter table with NCS regulatory traceability."),
     (range(22, 24), ["neqsim-ccs-hydrogen", "neqsim-technical-document-reading",
-                     "neqsim-standards-lookup"],
+                     "neqsim-standards-lookup", "paperlab_scientific_traceability_audit"],
      "Deepen gas quality, CO2 impurity, injection, line-pack, and hydrogen sections."),
     (range(24, 27), ["neqsim_in_writing", "neqsim-professional-reporting",
-                     "technical_figure_understanding", "paperlab-exam-alignment"],
+                     "technical_figure_understanding", "paperlab-exam-alignment",
+                     "paperlab_student_readability", "paperlab_scientific_traceability_audit",
+                     "paperlab_book_typesetting_release"],
      "Make computational workflow auditable and align review questions with exams."),
+    (range(27, 31), ["neqsim-field-development", "neqsim-field-economics",
+                     "neqsim-professional-reporting", "paperlab_student_readability",
+                     "paperlab_chapter_flow_editor",
+                     "paperlab_scientific_traceability_audit"],
+     "Keep the solved case thread consistent from design basis to final decision."),
 ]
 
 STANDARD_RULES = [
@@ -1245,12 +1534,30 @@ def build_skill_stack_plan(book_dir: Path | str) -> Dict:
     standards_map = _load_json(book_dir / "standards_map.json")
     exam_alignment = _load_json(book_dir / "exam_alignment.json")
     source_plan = _load_json(book_dir / "source_pdf_html_plan.json")
+    conciseness = _load_json(book_dir / "conciseness_audit.json")
 
     claim_markers = sum(chapter["text"].count("@neqsim:claim") for chapter in chapters)
     figure_markers = sum(chapter["text"].count("@neqsim:figure") for chapter in chapters)
     eq_markers = sum(chapter["text"].count("@neqsim:eq") for chapter in chapters)
     notebook_count = sum(len(list(chapter["chapter_dir"].rglob("*.ipynb"))) for chapter in chapters)
     figure_summary = figure_dossier.get("summary", {})
+    learning_objectives = sum(
+        1 for chapter in chapters
+        if re.search(r"^##+\s+(?:\d+(?:\.\d+)*\s+)?Learning Objectives",
+                     chapter["text"], re.IGNORECASE | re.MULTILINE))
+    exercise_sections = sum(
+        1 for chapter in chapters
+        if re.search(r"^##+\s+(?:\d+(?:\.\d+)*\s+)?Exercises",
+                     chapter["text"], re.IGNORECASE | re.MULTILINE))
+    summary_sections = sum(
+        1 for chapter in chapters
+        if re.search(r"^##+\s+(?:\d+(?:\.\d+)*\s+)?(?:Chapter\s+)?Summary",
+                     chapter["text"], re.IGNORECASE | re.MULTILINE))
+    conciseness_summary = conciseness.get("summary", {}) if conciseness else {}
+    rendered_outputs = [
+        name for name in ["book.html", "book.docx", "book.pdf", "book.odt"]
+        if (book_dir / "submission" / name).exists()
+    ]
 
     dimensions = [
         _dimension_record(
@@ -1262,11 +1569,29 @@ def build_skill_stack_plan(book_dir: Path | str) -> Dict:
             "Prioritize the top non-cover figures in figure_dossier.json for reviewed discussion blocks."),
         _dimension_record(
             "traceability",
-            ["neqsim-professional-reporting", "neqsim_in_writing", "neqsim-notebook-patterns"],
+            ["paperlab_scientific_traceability_audit", "neqsim-professional-reporting",
+             "neqsim_in_writing", "neqsim-notebook-patterns"],
             claim_markers > 0 and figure_markers > 0,
             f"Found {claim_markers} claim markers, {figure_markers} figure markers, "
             f"{eq_markers} equation markers, and {notebook_count} notebooks.",
             "Add @neqsim:claim, @neqsim:figure, and @neqsim:eq markers for high-value numerical claims."),
+        _dimension_record(
+            "student_readability",
+            ["paperlab_student_readability", "paperlab-exam-alignment"],
+            bool(chapters) and learning_objectives == len(chapters)
+            and summary_sections == len(chapters) and exercise_sections >= max(1, len(chapters) - 4),
+            f"Learning objectives in {learning_objectives}/{len(chapters)} chapters; "
+            f"summaries in {summary_sections}/{len(chapters)}; exercises in "
+            f"{exercise_sections}/{len(chapters)}.",
+            "Review chapters missing objectives, summaries, or exercises with paperlab_student_readability."),
+        _dimension_record(
+            "chapter_flow",
+            ["paperlab_chapter_flow_editor"],
+            bool(conciseness)
+            and conciseness_summary.get("exact_duplicate_paragraph_groups", 1) == 0
+            and conciseness_summary.get("near_duplicate_paragraph_pairs", 1) == 0,
+            _conciseness_status(conciseness),
+            "Use the conciseness audit to review merge candidates and move audit metadata out of the reading path."),
         _dimension_record(
             "standards_mapping",
             ["neqsim-standards-lookup", "neqsim-process-safety", "neqsim-subsea-and-wells"],
@@ -1291,6 +1616,12 @@ def build_skill_stack_plan(book_dir: Path | str) -> Dict:
             bool(source_plan),
             _artifact_status(source_plan, "source_pdf_html_plan.json"),
             "Run book-source-pdf-html-plan for searchable source conversion and figure extraction."),
+        _dimension_record(
+            "typesetting_release",
+            ["paperlab_book_typesetting_release"],
+            len(rendered_outputs) == 4,
+            f"Rendered release outputs present: {', '.join(rendered_outputs) if rendered_outputs else 'none'}.",
+            "Render and inspect HTML, PDF, DOCX, and ODF before release."),
     ]
 
     chapter_profiles = [_chapter_skill_profile(chapter) for chapter in chapters]
@@ -1535,6 +1866,19 @@ def _artifact_status(data: Optional[Dict], artifact: str) -> str:
         generated = data.get("generated_at", "unknown time")
         return f"{artifact} exists (generated {generated})."
     return f"{artifact} has not been generated yet."
+
+
+def _conciseness_status(data: Optional[Dict]) -> str:
+    """Return a short status string for chapter-flow readiness."""
+    if not data:
+        return "conciseness_audit.json has not been generated yet."
+    summary = data.get("summary", {})
+    return (
+        "conciseness_audit.json exists; "
+        f"{summary.get('exact_duplicate_paragraph_groups', 0)} exact duplicate groups, "
+        f"{summary.get('near_duplicate_paragraph_pairs', 0)} near-duplicate pairs, "
+        f"{summary.get('chapter_merge_candidates', 0)} merge candidates."
+    )
 
 
 def _load_json(path: Path) -> Optional[Dict]:

@@ -1589,6 +1589,8 @@ def cmd_book_figure_dossier(args):
     print(f"Figure dossier written for {dossier['figure_count']} figures.")
     print(f"  Missing files: {summary['missing_files']}")
     print(f"  Without discussion: {summary['without_discussion']}")
+    print(f"  Without number: {summary.get('without_number', 0)}")
+    print(f"  Without reference: {summary.get('without_reference', 0)}")
     print(f"  Weak captions: {summary['weak_captions']}")
     print(f"  JSON: {Path(args.book_dir) / 'figure_dossier.json'}")
     print(f"  HTML: {Path(args.book_dir) / 'figure_dossier.html'}")
@@ -1608,6 +1610,31 @@ def cmd_book_apply_figure_context(args):
     print(f"{action} {result['inserted']} discussion block(s).")
     for changed in result["changed"]:
         print(f"  {changed['chapter']}: {changed['inserted']}")
+
+
+def cmd_book_normalize_figures(args):
+    """Normalize book figures to numbered captions and discussion references."""
+    sys.path.insert(0, str(TOOLS_DIR))
+    from book_improvement_tools import normalize_figure_references
+
+    result = normalize_figure_references(
+        args.book_dir,
+        dry_run=getattr(args, "dry_run", False),
+    )
+    action = "Would update" if result["dry_run"] else "Updated"
+    print(f"{action} {result['chapters_changed']} chapter(s).")
+    print(f"  Figures checked: {result['figures_checked']}")
+    print(f"  Caption updates: {result['caption_updates']}")
+    print(f"  Discussion heading updates: {result['discussion_updates']}")
+    print(f"  Prose reference updates: {result['reference_updates']}")
+    print(f"  Duplicate italic captions removed: {result['duplicate_captions_removed']}")
+    for changed in result["changed"]:
+        print(
+            f"  {changed['chapter']}: captions={changed['caption_updates']}, "
+            f"discussions={changed['discussion_updates']}, "
+            f"references={changed['reference_updates']}, "
+            f"duplicates={changed['duplicate_captions_removed']}"
+        )
 
 
 def cmd_book_coverage_audit(args):
@@ -2628,6 +2655,13 @@ Examples:
     p_bapply.add_argument("--dry-run", action="store_true",
                           help="Report insertions without editing chapters")
 
+    # book-normalize-figures — ensure figures are numbered, referenced, and discussed
+    p_bnormfig = subparsers.add_parser("book-normalize-figures",
+                                        help="Normalize figure numbers and discussion references")
+    p_bnormfig.add_argument("book_dir", help="Book directory")
+    p_bnormfig.add_argument("--dry-run", action="store_true",
+                            help="Report changes without editing chapters")
+
     # book-coverage-audit — source coverage vs coverage matrix
     p_bcov = subparsers.add_parser("book-coverage-audit",
                                     help="Audit source coverage against coverage_matrix.md")
@@ -2960,6 +2994,8 @@ Examples:
         cmd_book_figure_dossier(args)
     elif args.command == "book-apply-figure-context":
         cmd_book_apply_figure_context(args)
+    elif args.command == "book-normalize-figures":
+        cmd_book_normalize_figures(args)
     elif args.command == "book-coverage-audit":
         cmd_book_coverage_audit(args)
     elif args.command == "book-lecture-topic-coverage":

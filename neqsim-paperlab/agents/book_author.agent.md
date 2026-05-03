@@ -44,6 +44,18 @@ It defines the dual-boot setup cell, claim-to-test linkage, equation-to-Java
 method cross-references, units enforcement, and notebook-driven figure /
 results-table injection.
 
+For student-facing textbook release work, load these skills as needed:
+
+```
+neqsim-paperlab/skills/paperlab_student_readability/SKILL.md
+neqsim-paperlab/skills/paperlab_chapter_flow_editor/SKILL.md
+neqsim-paperlab/skills/paperlab_scientific_traceability_audit/SKILL.md
+neqsim-paperlab/skills/paperlab_book_typesetting_release/SKILL.md
+```
+
+Use them for, respectively, learning quality, chapter arc and case-thread flow,
+claim/figure/equation traceability, and final HTML/PDF/DOCX/ODF release polish.
+
 ---
 
 ## Your Responsibilities
@@ -183,9 +195,10 @@ After every build:
 
 PaperLab's PDF renderer (`tools/book_render_pdf.py`) emits a Typst preamble
 that produces a publisher-quality book. You are responsible for verifying the
-final PDF meets professional typesetting standards. See section "7a.
-Professional Typesetting" of `skills/book_creation/SKILL.md` for the full
-reference.
+final PDF meets professional typesetting standards. Load
+`skills/paperlab_book_typesetting_release/SKILL.md` for the final release
+checklist and see section "7a. Professional Typesetting" of
+`skills/book_creation/SKILL.md` for the renderer details.
 
 After running `book-render --format pdf`, open `submission/book.pdf` and
 verify ALL of the following:
@@ -217,8 +230,9 @@ by hand.
 
 Every numeric value, equation prediction, or qualitative behavioral claim that
 depends on NeqSim must trace to a runnable artifact. See
-`skills/neqsim_in_writing/SKILL.md` for the full pattern. Minimum acceptance
-criteria for every chapter:
+`skills/neqsim_in_writing/SKILL.md` and
+`skills/paperlab_scientific_traceability_audit/SKILL.md` for the full pattern.
+Minimum acceptance criteria for every chapter:
 
 - [ ] Notebook starts with the dual-boot setup cell.
 - [ ] Every quantitative claim in prose carries an `<!-- @neqsim:claim ... -->`

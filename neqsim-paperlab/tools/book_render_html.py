@@ -507,8 +507,8 @@ figure.lecture-fig {{
   margin: 1.8rem auto;
   padding: 0.9rem 1rem 0.7rem;
   background: #fafbfc;
-  border-left: 3px solid #1a5276;
-  border-radius: 0 4px 4px 0;
+    border: none;
+    border-radius: 4px;
   max-width: 92%;
   page-break-inside: avoid;
   break-inside: avoid;
@@ -539,6 +539,25 @@ figure.lecture-fig figcaption .fig-source {{
   font-size: 0.78rem;
   color: #777;
   font-style: italic;
+}}
+
+p.figure-discussion {{
+    max-width: 92%;
+    margin: 1.2rem auto 0.35rem;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    line-height: 1.65;
+}}
+p.figure-discussion strong {{
+    color: #0d3b66;
+}}
+p.figure-discussion em {{
+    color: #475569;
+}}
+
+.figure-inset {{
+    page-break-inside: avoid;
+    break-inside: avoid;
 }}
 
 /* Worked-example callout */
@@ -736,40 +755,60 @@ def _humanise_deck(name: str) -> str:
     return stem or name
 
 
-def _figure_discussion(entry, section_topic):
-    """Generate a short contextual discussion paragraph for a lecture figure.
+def _figure_summary(entry):
+    """Return a concise prose summary from slide title/body metadata.
 
-    When the manifest carries the slide's own title and bullet text (extracted
-    from the PPTX/PDF), use them so the caption reflects what the lecturer
-    actually wrote on the slide. Falls back to a deck-level reference when
-    slide text is unavailable.
+    When the manifest carries the slide's own title and bullet text, use it so
+    the book figure reflects the actual engineering content of the source
+    slide rather than only its file name.
     """
-    deck = _humanise_deck(entry.get("source", ""))
-    page = entry.get("page")
-    where = f"slide {page}" if page else "the slide deck"
     slide_title = (entry.get("slide_title") or "").strip()
     slide_body = (entry.get("slide_body") or "").strip()
-
-    parts = []
-    # Use slide bullets/body as the discussion. Skip the slide *title*
-    # because lecturers often write it in ALL CAPS as a divider banner
-    # ("IDENTIFICATION OF BUSINESS CASE - TASKS") which reads poorly inline.
     if slide_body:
         # Convert bullet-separator into commas for prose flow.
         prose = slide_body.replace(" \u2022 ", "; ")
-        parts.append(_esc(prose))
-    elif slide_title:
-        # No body text but we have a title — use it as a short caption,
-        # title-cased so it doesn't shout.
+        prose = re.sub(r"\bB\s*\?\?", "B", prose)
+        prose = re.sub(r"\?{2,}|!{2,}", "", prose)
+        prose = re.sub(r"(-?\d+(?:\.\d+)?)\s*;\s*o\s*;\s*C\b", r"\1 °C", prose)
+        prose = re.sub(r"\s+([,.;:])", r"\1", prose)
+        prose = re.sub(r"\s*;\s*", "; ", prose)
+        prose = re.sub(r"\s+", " ", prose).strip()
+        return prose.rstrip(".") + "."
+    if slide_title:
         title = slide_title
         if title.isupper():
             title = title.title()
-        parts.append(_esc(title) + ".")
-    parts.append(
-        f"<span class=\"fig-source\">Source: <em>{_esc(deck)}</em>, "
-        f"{where}.</span>"
-    )
-    return " ".join(parts)
+        return title.rstrip(".") + "."
+    return ""
+
+
+def _figure_discussion(entry, section_topic):
+    """Generate a short contextual caption for a lecture-derived figure."""
+    summary = _figure_summary(entry)
+    if summary:
+        return _esc(summary)
+    return "Visual evidence used in the course material."
+
+
+def _figure_text_reference(entry, section_topic, n_label):
+    """Return an in-text reference paragraph for an inserted figure."""
+    topic = re.sub(r"<[^>]+>", "", section_topic or "").strip()
+    summary = _figure_summary(entry)
+    if topic:
+        first = (f"<strong>Figure {n_label}</strong> connects this section on "
+                 f"<em>{_esc(topic)}</em> to the visual evidence used in the "
+                 "course material.")
+    else:
+        first = (f"<strong>Figure {n_label}</strong> provides a visual anchor "
+                 "for the field-development discussion in this chapter.")
+    if summary:
+        second = f" It highlights this point: {_esc(summary)}"
+    else:
+        second = " It should be read as supporting evidence for the surrounding engineering argument."
+    third = (" The field-development question is which uncertainty, interface, "
+             "bottleneck, or value driver the figure makes visible, and how that "
+             "should affect concept selection or operation.")
+    return f'<p class="figure-discussion">{first}{second}{third}</p>'
 
 
 def _render_inline_figure(entry, section_topic, n_label):
@@ -777,14 +816,17 @@ def _render_inline_figure(entry, section_topic, n_label):
     rel = "../" + entry["file"]
     deck = _humanise_deck(entry.get("source", ""))
     return (
+        '<div class="figure-inset">' +
+        _figure_text_reference(entry, section_topic, n_label) +
         '<figure class="lecture-fig">'
         f'<img src="{_esc(rel)}" loading="lazy" '
-        f'alt="Lecture figure {n_label} from {_esc(deck)}"/>'
+        f'alt="Figure {n_label} from {_esc(deck)}"/>'
         '<figcaption>'
-        f'<strong>Lecture figure {n_label}.</strong> '
+        f'<strong>Figure {n_label}.</strong> '
         f'{_figure_discussion(entry, section_topic)}'
         '</figcaption>'
         '</figure>'
+        '</div>'
     )
 
 
@@ -1037,12 +1079,10 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
         scores.sort(reverse=True)
         best_score, _, best_idx = scores[0]
         if best_score <= 0:
-            # No keyword hit anywhere — pick the least-loaded non-admin section.
-            non_admin = [i for i in range(n_sec) if not _is_admin(spans[i][2])]
-            if non_admin:
-                best_idx = min(non_admin, key=lambda i: len(alloc[i]))
-            else:
-                best_idx = min(range(n_sec), key=lambda i: len(alloc[i]))
+            # No keyword hit anywhere — do not force the figure into an
+            # arbitrary section. It is better to omit an uncertain figure than
+            # to place it where the surrounding text cannot discuss it.
+            continue
         alloc[best_idx].append(e)
 
     # Walk md_text and rebuild with figures inserted at the END of each
@@ -1660,15 +1700,20 @@ def render_book_html(book_dir, chapter_filter=None):
     # Collect all cited keys across chapters (global numbering)
     all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
 
-    # Cross-chapter de-dup state for lecture-figure injection.
+    # Cross-chapter de-dup state for optional lecture-figure injection.
     _seen_lecture_files: set = set()
     _seen_lecture_hashes: set = set()
+    inject_lecture_figures = bool(
+        cfg.get("settings", {}).get("inject_lecture_figures", False))
 
-    # Load lecture-figure manifest (if produced by extract_lecture_figures.py).
+    # Load lecture-figure manifest only when explicitly enabled. Auto-extracted
+    # slide images can contain OCR artifacts, decorative placeholders, or stale
+    # numbering, so production books should rely on curated chapter figures by
+    # default.
     lecture_manifest_path = (book_dir / "figures" / "lectures" / "auto"
                              / "manifest.json")
     lecture_entries_by_chapter: dict = {}
-    if lecture_manifest_path.exists():
+    if inject_lecture_figures and lecture_manifest_path.exists():
         try:
             import json as _json
             mf = _json.loads(
@@ -1823,9 +1868,10 @@ def render_book_html(book_dir, chapter_filter=None):
             # Strip empty "## References" sections (will be rendered at end)
             text = re.sub(
                 r'##\s+References\s*\n?(?:\s*\n)*', '', text)
-            # Inject auto-extracted lecture figures inline between sections,
-            # each wrapped in a <figure> with a discussion caption tied to
-            # the surrounding heading.
+            # Optionally inject auto-extracted lecture figures inline between
+            # sections, each wrapped in a <figure> with a discussion caption
+            # tied to the surrounding heading. This is off by default for
+            # release builds; enable with settings.inject_lecture_figures.
             inline_entries = lecture_entries_by_chapter.get(ch["dir"], [])
             if inline_entries:
                 text = _inject_lecture_figures(
