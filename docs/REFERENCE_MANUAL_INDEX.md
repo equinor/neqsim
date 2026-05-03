@@ -537,6 +537,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Serialization   | [docs/simulation/process_serialization.md](simulation/process_serialization)                   | Save/load process models                                             |
 | Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
 | Process Automation API  | [docs/simulation/process_automation.md](simulation/process_automation)                         | String-addressable API for reading/writing simulation variables       |
+| ProcessAutomation Foundations | [docs/simulation/automation/automation_foundations.md](simulation/automation/automation_foundations) | Address resolution, variable catalogs, unit handling, and safe-access schema |
+| ProcessAutomation Integration Patterns | [docs/simulation/automation/automation_integrations.md](simulation/automation/automation_integrations) | Multi-area addressing plus optimizer/digital-twin integration workflows |
+| ProcessAutomation Operations and Troubleshooting | [docs/simulation/automation/automation_operations.md](simulation/automation/automation_operations) | Diagnostics playbook, bounds validation, and troubleshooting checklist |
 
 ---
 

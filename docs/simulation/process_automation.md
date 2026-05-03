@@ -191,6 +191,33 @@ The automation API covers 20+ equipment types:
 | `Splitter` | splitFactor_0, splitFactor_1, ... (INPUT) + split streams |
 | Generic `TwoPortEquipment` | Fallback with outletStream port |
 
+
+## Additional Discovery Helpers
+
+Beyond `getUnitList()` and `getVariableList(unit)`, `ProcessAutomation` also provides
+helpers that are useful when building generic tooling:
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+boolean multiArea = auto.isMultiArea();
+String equipmentType = auto.getEquipmentType("HP Sep");
+
+List<SimulationVariable> inputVars =
+    auto.getVariableList("Compressor", SimulationVariable.VariableType.INPUT);
+List<SimulationVariable> outputVars =
+    auto.getVariableList("Compressor", SimulationVariable.VariableType.OUTPUT);
+```
+
+- `isMultiArea()` tells whether the facade is bound to a `ProcessModel` (multi-area) or a
+  single `ProcessSystem`.
+- `getEquipmentType(unitName)` returns a normalized equipment class label (for example
+  `"Separator"`, `"Compressor"`, `"HeatExchanger"`) that can drive UI widgets and validation.
+- `getVariableList(unitName, type)` lets you filter to only writable inputs or read-only outputs.
+
+For multi-area models, pass area-qualified names where needed (for example
+`"Compression::Compressor"`).
+
 ## Unit Conversion
 
 The API handles unit conversion for common properties:
@@ -208,6 +235,57 @@ double pBara = auto.getVariableValue("Compressor.outletStream.pressure", "bara")
 double massFlow = auto.getVariableValue("feed.flowRate", "kg/hr");
 double molarFlow = auto.getVariableValue("feed.molarFlowRate", "mole/sec");
 ```
+
+
+## Self-Healing Safe Accessors
+
+For agentic workflows where variable addresses may contain typos or formatting drift,
+use the safe accessors. They return JSON payloads with diagnostics instead of throwing
+immediately.
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+String getJson = auto.getVariableValueSafe("hp separator.temperature", "C");
+String setJson = auto.setVariableValueSafe("compressor outlet pressure", 120.0, "bara");
+System.out.println(getJson);
+System.out.println(setJson);
+```
+
+Typical successful payload:
+
+```json
+{
+  "status": "auto_corrected",
+  "originalAddress": "hp separator.temperature",
+  "correctedAddress": "HP Sep.temperature",
+  "value": 25.0,
+  "unit": "C"
+}
+```
+
+If recovery fails, payload contains diagnostics (`errorCategory`, `message`, and suggestions)
+that can be fed back into the next call.
+
+### Built-in Recovery Behaviors
+
+- Case-insensitive and whitespace-tolerant matching.
+- Typo correction (small edit distance).
+- Partial-name recovery for unit and property names.
+- Physical bounds checking before write operations.
+
+### Diagnostics and Learning Report
+
+Use `AutomationDiagnostics` to inspect error patterns and learned corrections:
+
+```java
+AutomationDiagnostics diagnostics = auto.getDiagnostics();
+String report = diagnostics.getLearningReport();
+System.out.println(report);
+```
+
+This is useful when building autonomous optimizers or digital-twin agents that repeatedly
+read/write process variables.
 
 ## Error Handling
 
