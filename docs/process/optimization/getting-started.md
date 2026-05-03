@@ -30,7 +30,6 @@ Always run the base case before optimization.
 ## 3) Throughput optimization with `ProcessOptimizationEngine`
 
 ```java
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessOptimizationEngine;
 import neqsim.process.util.optimizer.ProcessOptimizationEngine.OptimizationResult;
 
@@ -44,9 +43,36 @@ OptimizationResult result = engine.findMaximumThroughput(
 );
 
 System.out.println("Max flow: " + result.getOptimalValue() + " kg/hr");
+System.out.println("Bottleneck: " + result.getBottleneck());
 ```
 
-## 4) Custom optimization with `ProductionOptimizer`
+## 4) Check utilization for all equipment types (core optimization signal)
+
+NeqSim optimization is constraint-driven. Utilization is the shared metric across equipment strategies (compressors, separators, pumps, valves, heat exchangers, reactors, distillation, tanks, expanders, ejectors, subsea equipment, and more).
+
+```java
+import java.util.Map;
+
+// Process-level utilization summary: equipment name -> utilization percentage
+Map<String, Double> util = process.getCapacityUtilizationSummary();
+for (Map.Entry<String, Double> e : util.entrySet()) {
+  System.out.printf("%s: %.1f%%%n", e.getKey(), e.getValue());
+}
+
+System.out.println("Bottleneck unit: " + process.findBottleneck().getEquipmentName());
+System.out.println("Any overloaded? " + process.isAnyEquipmentOverloaded());
+```
+
+This is directly connected to optimization because `ProcessOptimizationEngine` and `ProductionOptimizer` accept/reject candidates using these utilization constraints.
+
+You can also inspect full reports from the optimization engine:
+
+```java
+ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();
+System.out.println("Overall utilization: " + report.getOverallUtilization() * 100.0 + "%");
+```
+
+## 5) Custom optimization with `ProductionOptimizer`
 
 ```java
 import java.util.Arrays;
@@ -77,9 +103,9 @@ OptimizationResult result = optimizer.optimize(process, feed, config, objectives
 System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 ```
 
-## 5) ProcessModel and automation loop
+## 6) ProcessModel and automation loop
 
-Use `ProcessAutomation` for robust, string-addressed optimization loops.
+Use `ProcessAutomation` for robust, string-addressed optimization loops in both `ProcessSystem` and multi-area `ProcessModel`.
 
 ```java
 import neqsim.process.automation.ProcessAutomation;
@@ -90,18 +116,28 @@ process.run();
 double powerMW = auto.getVariableValue("Compressor.power", "MW");
 ```
 
-## 6) Common workflow (recommended)
+```java
+// Multi-area ProcessModel
+ProcessAutomation plantAuto = plant.getAutomation();
+double tC = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bara");
+plant.run();
+```
 
-1. Run: `process.run()`.
+## 7) Recommended workflow
+
+1. Run base case: `process.run()`.
 2. (Optional) auto-size equipment.
 3. Run again after sizing.
 4. Optimize.
-5. Validate constraints and bottlenecks.
+5. Review utilization report and bottlenecks.
+6. Apply operational constraints and re-run.
 
-## 7) Next reading
+## 8) Next reading
 
 - [Optimization Overview](OPTIMIZATION_OVERVIEW)
 - [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS)
 - [Constraint Framework](constraint-framework)
 - [Multi-Objective Optimization](multi-objective-optimization)
 - [SQP Optimizer](sqp_optimizer)
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK)
