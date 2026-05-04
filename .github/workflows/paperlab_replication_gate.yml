@@ -39,7 +39,7 @@ jobs:
       slugs: ${{ steps.set-slugs.outputs.slugs }}
       any: ${{ steps.set-slugs.outputs.any }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -75,7 +75,7 @@ jobs:
         slug: ${{ fromJSON(needs.detect-changed-papers.outputs.slugs) }}
     steps:
       - name: Checkout (clean)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
