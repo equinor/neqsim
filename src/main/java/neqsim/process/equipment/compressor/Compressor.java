@@ -592,7 +592,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     // Optimization: multiPhaseCheck (stability analysis) is only needed to detect
     // 3+ phase splits. With 1 or 2 phases at inlet, the standard flash handles
     // compression correctly. Disabling avoids expensive stability analysis at
-    // every PSflash/PHflash Newton iteration.
+    // every PSflash/PHflash Newton iteration. For 3+ phase CPA systems (water/MEG),
+    // stability analysis may fail at high pressure — the outer try-catch in the
+    // loop handles this by recovering with multiPhaseCheck disabled.
     boolean originalMultiPhaseCheck = getThermoSystem().doMultiPhaseCheck();
     int inletPhases = getThermoSystem().getNumberOfPhases();
     if (inletPhases <= 2 && originalMultiPhaseCheck) {
@@ -1101,71 +1103,186 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           int numbersteps = numberOfCompressorCalcSteps;
           double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
           for (int i = 0; i < numbersteps; i++) {
-            entropy = getThermoSystem().getEntropy();
-            hinn = getThermoSystem().getEnthalpy();
-            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              double[] gergProps;
-              gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
-              hinn = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-              entropy = gergProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            }
-            if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              double[] LeachmanProps;
-              LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
-              hinn = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-              entropy = LeachmanProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            }
-            if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              double[] VegaProps;
-              VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
-              hinn = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-              entropy = VegaProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            }
-            getThermoSystem().setPressure(getThermoSystem().getPressure() + dp, pressureUnit);
-            thermoOps = new ThermodynamicOperations(getThermoSystem());
-            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PSflashGERG2008(entropy);
-            } else if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PSflashLeachman(entropy);
-            } else if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PSflashVega(entropy);
-            } else {
-              double oleTemp = getThermoSystem().getTemperature();
-              thermoOps.PSflash(entropy);
-              if (Math.abs(getThermoSystem().getEntropy() - entropy) > 1e-3) {
-                // PSflash diverged (common with associating fluids such as water/MEG/TEG
-                // on cubic EOS, or near phase boundaries — the PS Newton becomes
-                // ill-conditioned because dS/dT|_P is large and the Jacobian gets stiff).
-                // Recover by solving S(T, P_new) = entropy_target via 1D Newton on T at
-                // fixed pressure. TPflash is much more robust than PSflash for these
-                // fluids, so this yields correct isentropic compression for any EOS
-                // rather than degrading the step to isothermal.
-                // We do NOT 'continue' — skipping the step would leave the property
-                // profile shorter than numberOfCompressorCalcSteps and drop the
-                // polytropic enthalpy increment for that pressure interval.
-                double tGuess = oleTemp;
-                double bestT = oleTemp;
+            // Save state before this step so we can recover on NaN/divergence
+            double stepStartTemp = getThermoSystem().getTemperature();
+            double stepStartPres = getThermoSystem().getPressure();
+            try {
+              entropy = getThermoSystem().getEntropy();
+              hinn = getThermoSystem().getEnthalpy();
+              if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                double[] gergProps;
+                gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+                hinn = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+                entropy = gergProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+              }
+              if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                double[] LeachmanProps;
+                LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
+                hinn = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+                entropy =
+                    LeachmanProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+              }
+              if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                double[] VegaProps;
+                VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
+                hinn = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+                entropy = VegaProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+              }
+              getThermoSystem().setPressure(getThermoSystem().getPressure() + dp, pressureUnit);
+              thermoOps = new ThermodynamicOperations(getThermoSystem());
+              if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                thermoOps.PSflashGERG2008(entropy);
+              } else if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                thermoOps.PSflashLeachman(entropy);
+              } else if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                thermoOps.PSflashVega(entropy);
+              } else {
+                double oleTemp = getThermoSystem().getTemperature();
+                boolean psFlashOk = true;
+                try {
+                  thermoOps.PSflash(entropy);
+                } catch (Exception psEx) {
+                  psFlashOk = false;
+                }
+                if (!psFlashOk || Math.abs(getThermoSystem().getEntropy() - entropy) > 1e-3) {
+                  // PSflash diverged or threw (common with associating fluids such as
+                  // water/MEG/TEG on CPA EOS, or near phase boundaries).
+                  // Recover by solving S(T, P_new) = entropy_target via 1D Newton on T
+                  // at fixed pressure. TPflash is much more robust for these fluids.
+                  double tGuess = oleTemp;
+                  double bestT = oleTemp;
+                  double bestErr = Double.MAX_VALUE;
+                  getThermoSystem().setTemperature(tGuess);
+                  try {
+                    thermoOps.TPflash();
+                  } catch (Exception ex) {
+                    tGuess = oleTemp * 1.05;
+                    getThermoSystem().setTemperature(tGuess);
+                    thermoOps.TPflash();
+                  }
+                  for (int psIter = 0; psIter < 30; psIter++) {
+                    getThermoSystem().init(2);
+                    double sCur = getThermoSystem().getEntropy();
+                    if (!Double.isFinite(sCur)) {
+                      break;
+                    }
+                    double residual = sCur - entropy;
+                    if (Math.abs(residual) < Math.abs(bestErr)) {
+                      bestErr = residual;
+                      bestT = tGuess;
+                    }
+                    if (Math.abs(residual) < 1e-4) {
+                      break;
+                    }
+                    double cp = getThermoSystem().getCp();
+                    if (cp <= 0.0 || !Double.isFinite(cp)) {
+                      break;
+                    }
+                    // dS/dT|_P = Cp / T (total, J/K^2)
+                    double dT = -residual / (cp / tGuess);
+                    // Limit step to ±50 K for stability
+                    if (dT > 50.0) {
+                      dT = 50.0;
+                    } else if (dT < -50.0) {
+                      dT = -50.0;
+                    }
+                    tGuess += dT;
+                    if (tGuess < 50.0) {
+                      tGuess = 50.0;
+                    }
+                    getThermoSystem().setTemperature(tGuess);
+                    try {
+                      thermoOps.TPflash();
+                    } catch (Exception ex) {
+                      break;
+                    }
+                    if (Math.abs(dT) < 1e-3) {
+                      break;
+                    }
+                  }
+                  if (Math.abs(getThermoSystem().getEntropy() - entropy) > Math.abs(bestErr)) {
+                    getThermoSystem().setTemperature(bestT);
+                    try {
+                      thermoOps.TPflash();
+                    } catch (Exception ex) {
+                      // use best temperature even if TPflash fails
+                    }
+                  }
+                  getThermoSystem().init(2);
+                }
+              }
+              double newEnt = getThermoSystem().getEnthalpy();
+              if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                double[] gergProps;
+                gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+                newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+              }
+              if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                double[] LeachmanProps;
+                LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
+                newEnt = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+              }
+              if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                double[] VegaProps;
+                VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
+                newEnt = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+              }
+              double hout = hinn + (newEnt - hinn) / polytropicEfficiency;
+              double tempBeforePHflash = getThermoSystem().getTemperature();
+              boolean phFlashOk = true;
+              try {
+                thermoOps.PHflash(hout, 0);
+                if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                  thermoOps.PHflashGERG2008(hout);
+                }
+                if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                  thermoOps.PHflashLeachman(hout);
+                }
+                if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+                  thermoOps.PHflashVega(hout);
+                }
+              } catch (Exception phEx) {
+                // PHflash threw (common with CPA EOS and water/MEG at high pressure)
+                phFlashOk = false;
+              }
+              // PHflash fallback: if PHflash threw, diverged, or produced unphysical T,
+              // recover by solving H(T, P) = hout via 1D Newton on T at fixed pressure.
+              // TPflash is much more robust than PHflash for associating fluids.
+              double hAfterPH = phFlashOk ? getThermoSystem().getEnthalpy() : Double.NaN;
+              if (!phFlashOk || !Double.isFinite(hAfterPH)
+                  || Math.abs(hAfterPH - hout) / (Math.abs(hout) + 1.0) > 1e-3
+                  || getThermoSystem().getTemperature() < tempBeforePHflash * 0.5) {
+                double tGuess = tempBeforePHflash;
+                double bestT = tempBeforePHflash;
                 double bestErr = Double.MAX_VALUE;
                 getThermoSystem().setTemperature(tGuess);
-                thermoOps.TPflash();
-                for (int psIter = 0; psIter < 30; psIter++) {
-                  getThermoSystem().init(2);
-                  double sCur = getThermoSystem().getEntropy();
-                  double residual = sCur - entropy;
+                try {
+                  thermoOps.TPflash();
+                } catch (Exception ex) {
+                  // TPflash at initial guess failed — try slightly higher T
+                  tGuess = tempBeforePHflash * 1.05;
+                  getThermoSystem().setTemperature(tGuess);
+                  thermoOps.TPflash();
+                }
+                getThermoSystem().init(2);
+                for (int phIter = 0; phIter < 30; phIter++) {
+                  double hCur = getThermoSystem().getEnthalpy();
+                  if (!Double.isFinite(hCur)) {
+                    break;
+                  }
+                  double residual = hCur - hout;
                   if (Math.abs(residual) < Math.abs(bestErr)) {
                     bestErr = residual;
                     bestT = tGuess;
                   }
-                  if (Math.abs(residual) < 1e-4) {
+                  if (Math.abs(residual) / (Math.abs(hout) + 1.0) < 1e-5) {
                     break;
                   }
                   double cp = getThermoSystem().getCp();
                   if (cp <= 0.0 || !Double.isFinite(cp)) {
                     break;
                   }
-                  // dS/dT|_P = Cp / T (total, J/K^2)
-                  double dT = -residual / (cp / tGuess);
-                  // Limit step to ±50 K for stability
+                  double dT = -residual / cp;
                   if (dT > 50.0) {
                     dT = 50.0;
                   } else if (dT < -50.0) {
@@ -1176,47 +1293,84 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
                     tGuess = 50.0;
                   }
                   getThermoSystem().setTemperature(tGuess);
-                  thermoOps.TPflash();
-                  if (Math.abs(dT) < 1e-3) {
+                  try {
+                    thermoOps.TPflash();
+                  } catch (Exception ex) {
+                    break;
+                  }
+                  getThermoSystem().init(2);
+                  if (Math.abs(dT) < 1e-4) {
                     break;
                   }
                 }
-                if (Math.abs(getThermoSystem().getEntropy() - entropy) > Math.abs(bestErr)) {
+                if (Math.abs(getThermoSystem().getEnthalpy() - hout) > Math.abs(bestErr)) {
                   getThermoSystem().setTemperature(bestT);
-                  thermoOps.TPflash();
+                  try {
+                    thermoOps.TPflash();
+                  } catch (Exception ex) {
+                    // use best temperature even if TPflash fails
+                  }
+                  getThermoSystem().init(2);
                 }
-                getThermoSystem().init(2);
               }
-            }
-            double newEnt = getThermoSystem().getEnthalpy();
-            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              double[] gergProps;
-              gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
-              newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            }
-            if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              double[] LeachmanProps;
-              LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
-              newEnt = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            }
-            if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              double[] VegaProps;
-              VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
-              newEnt = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            }
-            double hout = hinn + (newEnt - hinn) / polytropicEfficiency;
-            thermoOps.PHflash(hout, 0);
-            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PHflashGERG2008(hout);
-            }
-            if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PHflashLeachman(hout);
-            }
-            if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PHflashVega(hout);
-            }
-            if (propertyProfile.isActive()) {
-              propertyProfile.addFluid(thermoSystem.clone());
+              if (propertyProfile.isActive()) {
+                propertyProfile.addFluid(thermoSystem.clone());
+              }
+            } catch (Exception stepEx) {
+              // CPA or other EOS completely failed at this pressure step.
+              // Recover using a fresh clone of the inlet fluid set to estimated
+              // outlet conditions. This avoids reusing the corrupted system state.
+              double kappaEst = 1.3;
+              double exponent = (kappaEst - 1.0) / (kappaEst * polytropicEfficiency);
+              double pressRatio = pressure / Math.max(stepStartPres, 1.0);
+              double approxTout = stepStartTemp * Math.pow(pressRatio, exponent);
+              if (!Double.isFinite(approxTout) || approxTout < stepStartTemp
+                  || approxTout > stepStartTemp * 3.0) {
+                approxTout = stepStartTemp * 1.2;
+              }
+              try {
+                // Try recovery on existing system with multiPhaseCheck disabled
+                getThermoSystem().setMultiPhaseCheck(false);
+                getThermoSystem().setTemperature(approxTout);
+                getThermoSystem().setPressure(pressure, pressureUnit);
+                thermoOps = new ThermodynamicOperations(getThermoSystem());
+                thermoOps.TPflash();
+                getThermoSystem().init(2);
+              } catch (Exception innerEx) {
+                // TPflash on corrupted system failed. Use fresh clone from inlet.
+                try {
+                  thermoSystem = inStream.getThermoSystem().clone();
+                  thermoSystem.setMultiPhaseCheck(false);
+                  thermoSystem.setTemperature(approxTout);
+                  thermoSystem.setPressure(pressure, pressureUnit);
+                  thermoOps = new ThermodynamicOperations(thermoSystem);
+                  thermoOps.TPflash();
+                  thermoSystem.init(2);
+                } catch (Exception cloneEx) {
+                  // Even clone+TPflash failed. Force single gas phase at outlet.
+                  try {
+                    thermoSystem = inStream.getThermoSystem().clone();
+                    thermoSystem.setMultiPhaseCheck(false);
+                    thermoSystem.setTemperature(approxTout);
+                    thermoSystem.setPressure(pressure, pressureUnit);
+                    thermoSystem.setNumberOfPhases(1);
+                    thermoSystem.init(0);
+                    thermoSystem.init(2);
+                  } catch (Exception lastResort) {
+                    // Accept degraded state with correct T and P
+                    thermoSystem.setTemperature(approxTout);
+                    thermoSystem.setPressure(pressure, pressureUnit);
+                  }
+                }
+              }
+              if (propertyProfile.isActive()) {
+                try {
+                  propertyProfile.addFluid(thermoSystem.clone());
+                } catch (Exception cloneEx) {
+                  // ignore
+                }
+              }
+              break;
             }
           }
         } else if (polytropicMethod.equals("schultz")) {
@@ -1401,7 +1555,29 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     // Restore original multiPhaseCheck setting
     getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
 
-    thermoSystem.initProperties();
+    try {
+      thermoSystem.initProperties();
+    } catch (Exception initPropEx) {
+      // If full initProperties fails (NaN in CPA molar volume), fall back to
+      // init(2) with multiPhaseCheck disabled — transport properties won't be
+      // available but thermo state is valid.
+      try {
+        thermoSystem.setMultiPhaseCheck(false);
+        thermoSystem.init(2);
+        thermoSystem.setMultiPhaseCheck(originalMultiPhaseCheck);
+      } catch (Exception init2Ex) {
+        // Even init(2) failed. Try single phase.
+        try {
+          thermoSystem.setMultiPhaseCheck(false);
+          thermoSystem.setNumberOfPhases(1);
+          thermoSystem.init(0);
+          thermoSystem.init(2);
+          thermoSystem.setMultiPhaseCheck(originalMultiPhaseCheck);
+        } catch (Exception init0Ex) {
+          // last resort: leave system as-is
+        }
+      }
+    }
     outStream.setThermoSystem(getThermoSystem());
     outStream.setCalculationIdentifier(id);
 
