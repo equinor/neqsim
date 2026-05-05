@@ -4,13 +4,25 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.concept.WellsInput;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.economics.NorwegianTaxModel;
+import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
+import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
+import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator;
+import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator.PipelineResult;
+import neqsim.process.fielddevelopment.network.TiebackRouteNetwork;
+import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
+import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Analyzes tie-back options for connecting satellite fields to host facilities.
@@ -118,6 +130,9 @@ public class TiebackAnalyzer implements Serializable {
   /** Seabed temperature for flow assurance in Celsius. */
   private double seabedTemperatureC = 4.0;
 
+  /** Flow assurance screener using NeqSim thermodynamics. */
+  private final FlowAssuranceScreener flowAssuranceScreener = new FlowAssuranceScreener();
+
   // ============================================================================
   // TAX MODEL
   // ============================================================================
@@ -155,11 +170,29 @@ public class TiebackAnalyzer implements Serializable {
    */
   public TiebackReport analyze(FieldConcept discovery, List<HostFacility> hosts,
       double discoveryLatitude, double discoveryLongitude) {
+    return analyze(discovery, hosts, null, discoveryLatitude, discoveryLongitude);
+  }
+
+  /**
+   * Analyzes tieback options with optional route networks per host.
+   *
+   * @param discovery the satellite field concept
+   * @param hosts list of potential host facilities
+   * @param routeNetworksByHost optional map from host name to route network
+   * @param discoveryLatitude discovery latitude in degrees
+   * @param discoveryLongitude discovery longitude in degrees
+   * @return comprehensive tieback report with ranked options
+   */
+  public TiebackReport analyze(FieldConcept discovery, List<HostFacility> hosts,
+      Map<String, TiebackRouteNetwork> routeNetworksByHost, double discoveryLatitude,
+      double discoveryLongitude) {
     List<TiebackOption> options = new ArrayList<TiebackOption>();
 
     for (HostFacility host : hosts) {
-      TiebackOption option =
-          evaluateSingleTieback(discovery, host, discoveryLatitude, discoveryLongitude);
+      TiebackRouteNetwork routeNetwork =
+          routeNetworksByHost == null ? null : routeNetworksByHost.get(host.getName());
+      TiebackOption option = evaluateSingleTieback(discovery, host, routeNetwork, discoveryLatitude,
+          discoveryLongitude);
       options.add(option);
     }
 
@@ -205,11 +238,28 @@ public class TiebackAnalyzer implements Serializable {
    */
   public TiebackOption evaluateSingleTieback(FieldConcept discovery, HostFacility host,
       double discoveryLatitude, double discoveryLongitude) {
+    return evaluateSingleTieback(discovery, host, null, discoveryLatitude, discoveryLongitude);
+  }
+
+  /**
+   * Evaluates a single tieback option using an optional multi-segment route network.
+   *
+   * @param discovery the satellite field concept
+   * @param host the host facility
+   * @param routeNetwork route network to use, or null for scalar route-length screening
+   * @param discoveryLatitude discovery latitude
+   * @param discoveryLongitude discovery longitude
+   * @return evaluated tieback option
+   */
+  public TiebackOption evaluateSingleTieback(FieldConcept discovery, HostFacility host,
+      TiebackRouteNetwork routeNetwork, double discoveryLatitude, double discoveryLongitude) {
     TiebackOption option = new TiebackOption(discovery.getName(), host.getName());
 
-    // Calculate distance
-    double distance = host.distanceToKm(discoveryLatitude, discoveryLongitude);
+    // Calculate routed distance, preferring explicit concept route length when available.
+    double distance =
+        resolveRouteLengthKm(discovery, host, discoveryLatitude, discoveryLongitude, routeNetwork);
     option.setDistanceKm(distance);
+    applyRouteNetworkSummary(option, routeNetwork);
 
     // Get discovery parameters
     ReservoirInput reservoir = discovery.getReservoir();
@@ -246,10 +296,15 @@ public class TiebackAnalyzer implements Serializable {
         requiredRateMSm3d = totalRate / 1.0e6; // Assume Sm3/d
       }
 
-      if (!host.canAcceptGasRate(requiredRateMSm3d)) {
+      double producedWaterRateM3d = estimateProducedWaterRate(reservoir, requiredRateBopd);
+      HostFacility.HostCapacityReport capacityReport =
+          host.assessCapacity(requiredRateMSm3d, requiredRateBopd, producedWaterRateM3d,
+              estimateTotalLiquidRateM3d(requiredRateBopd, producedWaterRateM3d));
+      option.setHostCapacitySummary(capacityReport.getSummary());
+
+      if (!capacityReport.isCapacityAvailable()) {
         option.setFeasible(false);
-        option.setInfeasibilityReason("Insufficient host gas capacity (need " + requiredRateMSm3d
-            + " MSm3/d, spare " + host.getSpareGasCapacity() + " MSm3/d)");
+        option.setInfeasibilityReason("Insufficient host capacity: " + capacityReport.getSummary());
         return option;
       }
 
@@ -263,9 +318,15 @@ public class TiebackAnalyzer implements Serializable {
         requiredRateBopd = totalRate / 0.159; // Convert m3 to bbl
       }
 
-      if (!host.canAcceptOilRate(requiredRateBopd)) {
+      double producedWaterRateM3d = estimateProducedWaterRate(reservoir, requiredRateBopd);
+      HostFacility.HostCapacityReport capacityReport =
+          host.assessCapacity(requiredRateMSm3d, requiredRateBopd, producedWaterRateM3d,
+              estimateTotalLiquidRateM3d(requiredRateBopd, producedWaterRateM3d));
+      option.setHostCapacitySummary(capacityReport.getSummary());
+
+      if (!capacityReport.isCapacityAvailable()) {
         option.setFeasible(false);
-        option.setInfeasibilityReason("Insufficient host oil capacity");
+        option.setInfeasibilityReason("Insufficient host capacity: " + capacityReport.getSummary());
         return option;
       }
 
@@ -274,10 +335,17 @@ public class TiebackAnalyzer implements Serializable {
     }
 
     // Set water depth
-    option.setMaxWaterDepthM(Math.max(host.getWaterDepthM(), 100.0));
+    option.setMaxWaterDepthM(Math.max(resolveWaterDepthM(discovery, host, routeNetwork), 100.0));
 
-    // Flow assurance screening (simplified)
-    screenFlowAssurance(option, reservoir, distance);
+    // Pipeline diameter for both hydraulic screening and cost estimate.
+    double routeDiameterInches =
+        routeNetwork == null ? 0.0 : routeNetwork.getEquivalentDiameterInches();
+    option.setPipelineDiameterInches(routeDiameterInches > 0.0 ? routeDiameterInches
+        : estimatePipelineDiameterInches(wellCount, totalRate, rateUnit, isGasField));
+
+    // Flow assurance screening with NeqSim hydraulics and thermodynamics.
+    screenFlowAssurance(option, discovery, host, reservoir, wells, isGasField, totalRate, rateUnit,
+        routeNetwork);
 
     // Estimate CAPEX
     estimateCapex(option, wellCount, distance, host);
@@ -292,69 +360,131 @@ public class TiebackAnalyzer implements Serializable {
   // PRIVATE SCREENING METHODS
   // ============================================================================
 
-  private void screenFlowAssurance(TiebackOption option, ReservoirInput reservoir,
-      double distanceKm) {
-    // Simplified flow assurance screening
-    // In a full implementation, this would use NeqSim thermodynamics
-
-    double co2Percent = reservoir != null ? reservoir.getCo2Percent() : 2.0;
-    double h2sPercent = reservoir != null ? reservoir.getH2sPercent() : 0.0;
-    double waterCut = reservoir != null ? reservoir.getWaterCut() : 0.0;
-
-    // Hydrate screening (simplified)
-    // Longer distances = more cooling = higher hydrate risk
-    double hydrateMargin = 10.0 - (distanceKm / 20.0); // Simplified
-    option.setHydrateMarginC(hydrateMargin);
-
-    if (hydrateMargin < 0) {
-      option.setHydrateResult(FlowAssuranceResult.FAIL);
-    } else if (hydrateMargin < minHydrateMarginC) {
-      option.setHydrateResult(FlowAssuranceResult.MARGINAL);
-    } else {
-      option.setHydrateResult(FlowAssuranceResult.PASS);
-    }
-
-    // Wax screening (oil fields only, simplified)
-    if (reservoir != null && (reservoir.getFluidType() == ReservoirInput.FluidType.BLACK_OIL
-        || reservoir.getFluidType() == ReservoirInput.FluidType.HEAVY_OIL)) {
-      double watMargin = 15.0 - (distanceKm / 15.0);
-      option.setWatMarginC(watMargin);
-
-      if (watMargin < 0) {
-        option.setWaxResult(FlowAssuranceResult.FAIL);
-      } else if (watMargin < 10.0) {
-        option.setWaxResult(FlowAssuranceResult.MARGINAL);
-      } else {
-        option.setWaxResult(FlowAssuranceResult.PASS);
+  /**
+   * Screens the tieback route using pipeline hydraulics and thermodynamic flow-assurance checks.
+   *
+   * @param option tieback option to update
+   * @param discovery discovery concept
+   * @param host receiving host facility
+   * @param reservoir reservoir input, or null for defaults
+   * @param wells well input, or null for defaults
+   * @param isGasField true when gas-rate economics and capacity should be used
+   * @param totalRate total wellhead rate in the supplied rate unit
+   * @param rateUnit total rate unit
+   */
+  private void screenFlowAssurance(TiebackOption option, FieldConcept discovery, HostFacility host,
+      ReservoirInput reservoir, WellsInput wells, boolean isGasField, double totalRate,
+      String rateUnit, TiebackRouteNetwork routeNetwork) {
+    InfrastructureInput infrastructure = discovery.getInfrastructure();
+    double routeSeabedTemperatureC =
+        infrastructure != null ? infrastructure.getEstimatedSeabedTemperature()
+            : seabedTemperatureC;
+    double heatTransferCoefficient = estimateFlowlineHeatTransferCoefficient(infrastructure);
+    if (routeNetwork != null) {
+      routeSeabedTemperatureC = routeNetwork.getEquivalentSeabedTemperatureC();
+      if (routeNetwork.getEquivalentHeatTransferCoefficientWm2K() > 0.0) {
+        heatTransferCoefficient = routeNetwork.getEquivalentHeatTransferCoefficientWm2K();
       }
     }
+    option.setPipelineHeatTransferCoefficientWm2K(heatTransferCoefficient);
 
-    // Corrosion screening
-    if (h2sPercent > 0.01) { // > 100 ppm
-      option.setCorrosionResult(FlowAssuranceResult.FAIL);
-      option.setFlowAssuranceNotes("Sour service - full NACE MR0175 compliance required");
-    } else if (co2Percent > 3.0) {
-      option.setCorrosionResult(FlowAssuranceResult.MARGINAL);
-      option.setFlowAssuranceNotes("High CO2 - CRA materials or continuous inhibition required");
-    } else if (co2Percent > 1.0) {
-      option.setCorrosionResult(FlowAssuranceResult.MARGINAL);
-      option.setFlowAssuranceNotes("Moderate CO2 - corrosion inhibition recommended");
+    double inletPressureBara = wells != null ? wells.getTubeheadPressure() : 100.0;
+    double inletTemperatureC = reservoir != null ? reservoir.getReservoirTemperature() : 70.0;
+    Stream stream = createRepresentativeWellheadStream(reservoir, inletPressureBara,
+        inletTemperatureC, isGasField, totalRate, rateUnit);
+
+    PipelineResult hydraulicResult = null;
+    try {
+      MultiphaseFlowIntegrator integrator = new MultiphaseFlowIntegrator();
+      integrator.setPipelineLength(option.getDistanceKm());
+      integrator.setPipelineDiameter(option.getPipelineDiameterInches() * 0.0254);
+      integrator.setSeabedTemperature(routeSeabedTemperatureC);
+      integrator.setOverallHeatTransferCoeff(heatTransferCoefficient);
+      if (routeNetwork != null) {
+        integrator.setElevationChange(routeNetwork.getNetElevationChangeM());
+      }
+      integrator.setMinArrivalPressure(host.getMinTieInPressureBara());
+      hydraulicResult = integrator.calculateHydraulics(stream, host.getMinTieInPressureBara());
+      applyHydraulicResult(option, hydraulicResult, host);
+    } catch (Exception e) {
+      option.setHydraulicFeasible(false);
+      option.setHydraulicInfeasibilityReason("Hydraulic screening failed: " + e.getMessage());
+      option.setArrivalPressureBara(
+          Math.max(host.getMinTieInPressureBara(), inletPressureBara - 10.0));
+      option.setArrivalTemperatureC(estimateArrivalTemperatureC(inletTemperatureC,
+          routeSeabedTemperatureC, option.getDistanceKm(), infrastructure));
     }
+
+    double flowAssuranceTemperatureC =
+        option.getArrivalTemperatureC() != 0.0 ? option.getArrivalTemperatureC()
+            : routeSeabedTemperatureC;
+    double flowAssurancePressureBara =
+        option.getArrivalPressureBara() > 0.0 ? option.getArrivalPressureBara()
+            : Math.max(host.getMinTieInPressureBara(), 30.0);
+    FlowAssuranceReport report = flowAssuranceScreener.screen(discovery, flowAssuranceTemperatureC,
+        flowAssurancePressureBara);
+    applyFlowAssuranceReport(option, report);
+
+    option.setShutdownCooldownTimeToHydrateHours(estimateShutdownCooldownHours(option,
+        inletTemperatureC, routeSeabedTemperatureC, infrastructure));
+    option.setShutdownCooldownRiskScore(estimateShutdownCooldownRisk(option, infrastructure));
+    option.setFlowAssuranceNotes(
+        buildFlowAssuranceNotes(option, report, hydraulicResult, routeSeabedTemperatureC));
+  }
+
+  /**
+   * Applies hydraulic result values to the tieback option.
+   *
+   * @param option tieback option to update
+   * @param result pipeline hydraulic result
+   * @param host receiving host facility
+   */
+  private void applyHydraulicResult(TiebackOption option, PipelineResult result,
+      HostFacility host) {
+    option.setArrivalPressureBara(result.getArrivalPressureBar());
+    option.setArrivalTemperatureC(result.getArrivalTemperatureC());
+    option.setHydraulicFeasible(result.isFeasible());
+    option.setHydraulicInfeasibilityReason(result.getInfeasibilityReason());
+    option.setErosionalVelocityRatio(result.getErosionalVelocityRatio());
+    option
+        .setFlowRegime(result.getFlowRegime() != null ? result.getFlowRegime().name() : "UNKNOWN");
+    if (!result.isFeasible() && result.getArrivalPressureBar() < host.getMinTieInPressureBara()) {
+      option.setFeasible(false);
+      option.setInfeasibilityReason(
+          "Hydraulic tie-in pressure below host minimum: " + result.getInfeasibilityReason());
+    }
+  }
+
+  /**
+   * Applies thermodynamic flow-assurance results to the tieback option.
+   *
+   * @param option tieback option to update
+   * @param report flow assurance report
+   */
+  private void applyFlowAssuranceReport(TiebackOption option, FlowAssuranceReport report) {
+    option.setHydrateResult(report.getHydrateResult());
+    option.setWaxResult(report.getWaxResult());
+    option.setCorrosionResult(report.getCorrosionResult());
+    option.setHydrateMarginC(report.getHydrateMarginC());
+    option.setWatMarginC(report.getWaxMarginC());
+    option.setHydrateFormationTemperatureC(report.getHydrateFormationTempC());
   }
 
   private void estimateCapex(TiebackOption option, int wellCount, double distanceKm,
       HostFacility host) {
+    double installedRouteLengthKm =
+        option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm() : distanceKm;
     // Subsea equipment
     double subseaCost = wellCount * subseaTreeCostMusd + manifoldBaseCostMusd;
     option.setSubseaCapexMusd(subseaCost);
 
     // Pipeline (adjust cost for water depth)
     double depthFactor = 1.0 + (host.getWaterDepthM() / 1000.0);
-    double pipelineCost = distanceKm * pipelineCostPerKmMusd * depthFactor;
+    double pipelineCost = installedRouteLengthKm * pipelineCostPerKmMusd * depthFactor;
     option.setPipelineCapexMusd(pipelineCost);
 
     // Umbilical
-    double umbilicalCost = distanceKm * umbilicalCostPerKmMusd;
+    double umbilicalCost = installedRouteLengthKm * umbilicalCostPerKmMusd;
     option.setUmbilicalCapexMusd(umbilicalCost);
 
     // Drilling
@@ -368,9 +498,9 @@ public class TiebackAnalyzer implements Serializable {
     // Total
     option.calculateTotalCapex();
 
-    // Pipeline diameter (simplified sizing)
-    double diameter = 8.0 + (wellCount * 2.0); // Inches
-    option.setPipelineDiameterInches(Math.min(diameter, 24.0));
+    if (option.getPipelineDiameterInches() <= 0.0) {
+      option.setPipelineDiameterInches(Math.min(8.0 + (wellCount * 2.0), 24.0));
+    }
   }
 
   private void calculateEconomics(TiebackOption option, boolean isGasField, int wellCount,
@@ -385,23 +515,19 @@ public class TiebackAnalyzer implements Serializable {
     // Set CAPEX (year before first production)
     engine.setCapex(option.getTotalCapexMusd(), 2025);
 
-    // Estimate reserves and field life
-    double fieldLife = 15.0; // Default 15 years
-    option.setFieldLifeYears(fieldLife);
+    ProductionProfileGenerator profileGenerator = new ProductionProfileGenerator();
+    double peakRatePerDay = isGasField ? gasRateMSm3d * 1.0e6 : oilRateBopd;
+    Map<Integer, Double> profile =
+        profileGenerator.generateFullProfile(peakRatePerDay, 2, 5, isGasField ? 0.12 : 0.15, 0.5,
+            isGasField ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, 2026, 25,
+            peakRatePerDay * 0.05);
+    option.setFieldLifeYears(profile.size());
 
-    // Production profile (plateau then decline)
-    int plateauYears = 5;
-    for (int year = 2026; year <= 2026 + (int) fieldLife; year++) {
-      int productionYear = year - 2026;
-      double declineFactor =
-          productionYear < plateauYears ? 1.0 : Math.exp(-0.15 * (productionYear - plateauYears));
-
+    for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
       if (isGasField) {
-        double annualGasSm3 = gasRateMSm3d * 1.0e6 * 365.25 * declineFactor;
-        engine.addAnnualProduction(year, 0, annualGasSm3, 0);
+        engine.addAnnualProduction(entry.getKey(), 0, entry.getValue(), 0);
       } else {
-        double annualOilBbl = oilRateBopd * 365.25 * declineFactor;
-        engine.addAnnualProduction(year, annualOilBbl, 0, 0);
+        engine.addAnnualProduction(entry.getKey(), entry.getValue(), 0, 0);
       }
     }
 
@@ -419,19 +545,7 @@ public class TiebackAnalyzer implements Serializable {
       option.setBreakevenPrice(engine.calculateBreakevenOilPrice(discountRate));
     }
 
-    // Estimate reserves
-    double cumulativeProduction = 0;
-    for (int year = 2026; year <= 2026 + (int) fieldLife; year++) {
-      int productionYear = year - 2026;
-      double declineFactor =
-          productionYear < plateauYears ? 1.0 : Math.exp(-0.15 * (productionYear - plateauYears));
-
-      if (isGasField) {
-        cumulativeProduction += gasRateMSm3d * 1.0e6 * 365.25 * declineFactor;
-      } else {
-        cumulativeProduction += oilRateBopd * 365.25 * declineFactor;
-      }
-    }
+    double cumulativeProduction = ProductionProfileGenerator.calculateCumulativeProduction(profile);
 
     if (isGasField) {
       option.setRecoverableReserves(cumulativeProduction / 1.0e9); // GSm3
@@ -440,6 +554,363 @@ public class TiebackAnalyzer implements Serializable {
       option.setRecoverableReserves(cumulativeProduction / 1.0e6); // MMbbl
       option.setReservesUnit("MMbbl");
     }
+  }
+
+  /**
+   * Resolves the route length used for screening.
+   *
+   * @param discovery discovery concept
+   * @param host host facility
+   * @param discoveryLatitude discovery latitude in degrees
+   * @param discoveryLongitude discovery longitude in degrees
+   * @param routeNetwork optional route network
+   * @return route length in km
+   */
+  private double resolveRouteLengthKm(FieldConcept discovery, HostFacility host,
+      double discoveryLatitude, double discoveryLongitude, TiebackRouteNetwork routeNetwork) {
+    if (routeNetwork != null && routeNetwork.getScreeningLengthKm() > 0.0) {
+      return routeNetwork.getScreeningLengthKm();
+    }
+    InfrastructureInput infrastructure = discovery.getInfrastructure();
+    if (infrastructure != null && infrastructure.getTiebackLength() > 0.0) {
+      return infrastructure.getTiebackLength();
+    }
+    return host.distanceToKm(discoveryLatitude, discoveryLongitude);
+  }
+
+  /**
+   * Resolves water depth from concept infrastructure and host data.
+   *
+   * @param discovery discovery concept
+   * @param host host facility
+   * @param routeNetwork optional route network
+   * @return maximum route water depth in meters
+   */
+  private double resolveWaterDepthM(FieldConcept discovery, HostFacility host,
+      TiebackRouteNetwork routeNetwork) {
+    InfrastructureInput infrastructure = discovery.getInfrastructure();
+    double conceptDepth = infrastructure != null ? infrastructure.getWaterDepth() : 0.0;
+    double routeDepth = routeNetwork != null ? routeNetwork.getMaxWaterDepthM() : 0.0;
+    return Math.max(Math.max(host.getWaterDepthM(), conceptDepth), routeDepth);
+  }
+
+  /**
+   * Applies route-network metadata to a tieback option.
+   *
+   * @param option tieback option to update
+   * @param routeNetwork optional route network
+   */
+  private void applyRouteNetworkSummary(TiebackOption option, TiebackRouteNetwork routeNetwork) {
+    if (routeNetwork == null) {
+      return;
+    }
+    option.setRouteNetworkName(routeNetwork.getName());
+    option.setRouteSummary(routeNetwork.getSummary());
+    option.setRouteInstalledLengthKm(routeNetwork.getInstalledLengthKm());
+    option.setRouteSharedCorridorLengthKm(routeNetwork.getSharedCorridorLengthKm());
+    option.setRouteBranchCount(routeNetwork.getBranchCount());
+    option.setRouteRiserCount(routeNetwork.getRiserCount());
+  }
+
+  /**
+   * Estimates produced-water rate from water cut and oil rate.
+   *
+   * @param reservoir reservoir input, or null
+   * @param oilRateBopd oil rate in bbl/d
+   * @return produced-water rate in m3/d
+   */
+  private double estimateProducedWaterRate(ReservoirInput reservoir, double oilRateBopd) {
+    if (reservoir == null || oilRateBopd <= 0.0) {
+      return 0.0;
+    }
+    double waterCut = reservoir.getWaterCut();
+    if (waterCut <= 0.0 || waterCut >= 0.99) {
+      return 0.0;
+    }
+    double oilRateM3d = oilRateBopd * 0.158987;
+    return oilRateM3d * waterCut / (1.0 - waterCut);
+  }
+
+  /**
+   * Estimates total liquid rate.
+   *
+   * @param oilRateBopd oil rate in bbl/d
+   * @param waterRateM3d water rate in m3/d
+   * @return total liquid rate in m3/d
+   */
+  private double estimateTotalLiquidRateM3d(double oilRateBopd, double waterRateM3d) {
+    return oilRateBopd * 0.158987 + waterRateM3d;
+  }
+
+  /**
+   * Estimates a screening pipeline diameter.
+   *
+   * @param wellCount number of producing wells
+   * @param totalRate total production rate
+   * @param rateUnit total production rate unit
+   * @param isGasField true for gas field concepts
+   * @return pipeline diameter in inches
+   */
+  private double estimatePipelineDiameterInches(int wellCount, double totalRate, String rateUnit,
+      boolean isGasField) {
+    if (isGasField) {
+      double rateMSm3d = totalRate / 1.0e6;
+      if (rateUnit != null && rateUnit.toLowerCase().contains("msm3")) {
+        rateMSm3d = totalRate;
+      }
+      if (rateMSm3d <= 1.0) {
+        return 8.0;
+      } else if (rateMSm3d <= 3.0) {
+        return 10.0;
+      } else if (rateMSm3d <= 6.0) {
+        return 12.0;
+      }
+      return 16.0;
+    }
+    double oilRateBopd = totalRate;
+    if (rateUnit != null
+        && !(rateUnit.toLowerCase().contains("bbl") || rateUnit.toLowerCase().contains("bopd"))) {
+      oilRateBopd = totalRate / 0.158987;
+    }
+    if (oilRateBopd <= 10000.0) {
+      return Math.max(8.0, 6.0 + wellCount);
+    } else if (oilRateBopd <= 30000.0) {
+      return 12.0;
+    }
+    return 16.0;
+  }
+
+  /**
+   * Estimates a representative flowline heat transfer coefficient.
+   *
+   * @param infrastructure infrastructure input, or null
+   * @return overall heat transfer coefficient in W/m2K
+   */
+  private double estimateFlowlineHeatTransferCoefficient(InfrastructureInput infrastructure) {
+    if (infrastructure == null) {
+      return 6.0;
+    }
+    if (infrastructure.hasElectricHeating()) {
+      return 1.5;
+    }
+    return infrastructure.isInsulatedFlowline() ? 2.0 : 8.0;
+  }
+
+  /**
+   * Creates a representative wellhead stream for hydraulic screening.
+   *
+   * @param reservoir reservoir input, or null for defaults
+   * @param pressureBara wellhead pressure in bara
+   * @param temperatureC wellhead temperature in Celsius
+   * @param isGasField true for gas field concepts
+   * @param totalRate total production rate
+   * @param rateUnit total production rate unit
+   * @return representative stream with total mass flow set
+   */
+  private Stream createRepresentativeWellheadStream(ReservoirInput reservoir, double pressureBara,
+      double temperatureC, boolean isGasField, double totalRate, String rateUnit) {
+    SystemInterface fluid = createRepresentativeFluid(reservoir, temperatureC, pressureBara);
+    Stream stream = new Stream("Tieback wellhead", fluid);
+    stream.setFlowRate(estimateMassFlowKgHr(isGasField, totalRate, rateUnit), "kg/hr");
+    stream.run();
+    return stream;
+  }
+
+  /**
+   * Creates a representative fluid for hydraulic screening.
+   *
+   * @param reservoir reservoir input, or null for defaults
+   * @param temperatureC temperature in Celsius
+   * @param pressureBara pressure in bara
+   * @return initialized thermodynamic system
+   */
+  private SystemInterface createRepresentativeFluid(ReservoirInput reservoir, double temperatureC,
+      double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(temperatureC + 273.15, pressureBara);
+    ReservoirInput.FluidType fluidType =
+        reservoir != null ? reservoir.getFluidType() : ReservoirInput.FluidType.RICH_GAS;
+    switch (fluidType) {
+      case LEAN_GAS:
+        fluid.addComponent("methane", 0.90);
+        fluid.addComponent("ethane", 0.06);
+        fluid.addComponent("propane", 0.02);
+        break;
+      case BLACK_OIL:
+      case HEAVY_OIL:
+      case VOLATILE_OIL:
+        fluid.addComponent("methane", 0.25);
+        fluid.addComponent("ethane", 0.05);
+        fluid.addComponent("propane", 0.05);
+        fluid.addComponent("n-butane", 0.05);
+        fluid.addComponent("n-hexane", 0.10);
+        fluid.addComponent("n-heptane", 0.20);
+        fluid.addComponent("nC10", 0.25);
+        break;
+      case GAS_CONDENSATE:
+        fluid.addComponent("methane", 0.72);
+        fluid.addComponent("ethane", 0.08);
+        fluid.addComponent("propane", 0.06);
+        fluid.addComponent("n-butane", 0.04);
+        fluid.addComponent("n-hexane", 0.04);
+        fluid.addComponent("n-heptane", 0.03);
+        break;
+      default:
+        fluid.addComponent("methane", 0.82);
+        fluid.addComponent("ethane", 0.08);
+        fluid.addComponent("propane", 0.05);
+        fluid.addComponent("n-butane", 0.02);
+        break;
+    }
+    if (reservoir != null && reservoir.getCo2Percent() > 0.1) {
+      fluid.addComponent("CO2", reservoir.getCo2Percent() / 100.0);
+    }
+    if (reservoir != null && reservoir.getH2SPercent() > 0.001) {
+      fluid.addComponent("H2S", reservoir.getH2SPercent() / 100.0);
+    }
+    fluid.setMixingRule("classic");
+    fluid.createDatabase(true);
+    try {
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      operations.TPflash();
+      fluid.initProperties();
+    } catch (Exception e) {
+      fluid.init(0);
+    }
+    return fluid;
+  }
+
+  /**
+   * Estimates total mass flow for hydraulic screening.
+   *
+   * @param isGasField true for gas field concepts
+   * @param totalRate total rate
+   * @param rateUnit rate unit
+   * @return mass flow in kg/hr
+   */
+  private double estimateMassFlowKgHr(boolean isGasField, double totalRate, String rateUnit) {
+    if (isGasField) {
+      double gasRateSm3d = totalRate;
+      if (rateUnit != null && rateUnit.toLowerCase().contains("msm3")) {
+        gasRateSm3d = totalRate * 1.0e6;
+      }
+      return gasRateSm3d * 0.85 / 24.0;
+    }
+    if (rateUnit != null
+        && (rateUnit.toLowerCase().contains("bbl") || rateUnit.toLowerCase().contains("bopd"))) {
+      return totalRate * 0.158987 * 850.0 / 24.0;
+    }
+    return totalRate * 850.0 / 24.0;
+  }
+
+  /**
+   * Estimates arrival temperature if the hydraulic model cannot run.
+   *
+   * @param inletTemperatureC inlet temperature in Celsius
+   * @param seabedTemperatureC seabed temperature in Celsius
+   * @param distanceKm route length in km
+   * @param infrastructure infrastructure input, or null
+   * @return estimated arrival temperature in Celsius
+   */
+  private double estimateArrivalTemperatureC(double inletTemperatureC, double seabedTemperatureC,
+      double distanceKm, InfrastructureInput infrastructure) {
+    double coolingFactor =
+        infrastructure != null && infrastructure.isInsulatedFlowline() ? 0.010 : 0.035;
+    if (infrastructure != null && infrastructure.hasElectricHeating()) {
+      coolingFactor = 0.005;
+    }
+    double approach = Math.exp(-coolingFactor * distanceKm);
+    return seabedTemperatureC + (inletTemperatureC - seabedTemperatureC) * approach;
+  }
+
+  /**
+   * Estimates shutdown cooldown time to hydrate risk.
+   *
+   * @param option tieback option with hydrate results
+   * @param inletTemperatureC inlet temperature in Celsius
+   * @param seabedTemperatureC seabed temperature in Celsius
+   * @param infrastructure infrastructure input, or null
+   * @return cooldown time in hours
+   */
+  private double estimateShutdownCooldownHours(TiebackOption option, double inletTemperatureC,
+      double seabedTemperatureC, InfrastructureInput infrastructure) {
+    double hydrateTemperatureC = option.getHydrateFormationTemperatureC();
+    if (Double.isNaN(hydrateTemperatureC) || hydrateTemperatureC <= seabedTemperatureC) {
+      return Double.POSITIVE_INFINITY;
+    }
+    double initialTemperatureC = Math.max(option.getArrivalTemperatureC(), inletTemperatureC);
+    if (initialTemperatureC <= hydrateTemperatureC) {
+      return 0.0;
+    }
+    double thermalTimeConstantHours =
+        infrastructure != null && infrastructure.isInsulatedFlowline() ? 24.0 : 8.0;
+    if (infrastructure != null && infrastructure.hasElectricHeating()) {
+      thermalTimeConstantHours = 48.0;
+    }
+    double numerator = initialTemperatureC - seabedTemperatureC;
+    double denominator = hydrateTemperatureC - seabedTemperatureC;
+    return thermalTimeConstantHours * Math.log(numerator / denominator);
+  }
+
+  /**
+   * Estimates shutdown cooldown risk score.
+   *
+   * @param option tieback option with cooldown results
+   * @param infrastructure infrastructure input, or null
+   * @return risk score from 0 to 1
+   */
+  private double estimateShutdownCooldownRisk(TiebackOption option,
+      InfrastructureInput infrastructure) {
+    if (infrastructure != null && infrastructure.hasElectricHeating()) {
+      return 0.10;
+    }
+    double hours = option.getShutdownCooldownTimeToHydrateHours();
+    if (Double.isInfinite(hours)) {
+      return 0.0;
+    }
+    if (hours <= 0.0) {
+      return 1.0;
+    }
+    if (hours < 6.0) {
+      return 0.85;
+    }
+    if (hours < 24.0) {
+      return 0.55;
+    }
+    return 0.25;
+  }
+
+  /**
+   * Builds human-readable flow-assurance notes.
+   *
+   * @param option tieback option
+   * @param report flow assurance report
+   * @param hydraulicResult hydraulic result, or null if hydraulic screening failed
+   * @param seabedTemperatureC seabed temperature in Celsius
+   * @return notes string
+   */
+  private String buildFlowAssuranceNotes(TiebackOption option, FlowAssuranceReport report,
+      PipelineResult hydraulicResult, double seabedTemperatureC) {
+    StringBuilder notes = new StringBuilder();
+    notes.append(String.format("Hydraulics: route %.1f km, seabed %.1f C, U %.1f W/m2K. ",
+        option.getDistanceKm(), seabedTemperatureC,
+        option.getPipelineHeatTransferCoefficientWm2K()));
+    if (hydraulicResult != null) {
+      notes.append(String.format("Arrival %.1f bara / %.1f C, regime %s, erosional ratio %.2f. ",
+          option.getArrivalPressureBara(), option.getArrivalTemperatureC(), option.getFlowRegime(),
+          option.getErosionalVelocityRatio()));
+    }
+    notes.append(String.format("Hydrate formation %.1f C, margin %.1f C. ",
+        option.getHydrateFormationTemperatureC(), option.getHydrateMarginC()));
+    notes.append(String.format("Shutdown cooldown risk %.0f%%, time to hydrate %.1f h. ",
+        option.getShutdownCooldownRiskScore() * 100.0,
+        option.getShutdownCooldownTimeToHydrateHours()));
+    for (String recommendation : report.getRecommendations().values()) {
+      notes.append(recommendation).append(" ");
+    }
+    if (!option.isHydraulicFeasible() && option.getHydraulicInfeasibilityReason() != null) {
+      notes.append(option.getHydraulicInfeasibilityReason());
+    }
+    return notes.toString().trim();
   }
 
   // ============================================================================

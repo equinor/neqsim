@@ -46,11 +46,56 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
   /** Maximum water depth along route in meters. */
   private double maxWaterDepthM;
 
+  /** Optional route-network name for multi-segment routes. */
+  private String routeNetworkName = "";
+
+  /** Route summary with branches, risers, shared corridor, and host hub information. */
+  private String routeSummary = "";
+
+  /** Total installed route length including branch segments in kilometres. */
+  private double routeInstalledLengthKm;
+
+  /** Shared corridor length in kilometres. */
+  private double routeSharedCorridorLengthKm;
+
+  /** Number of branch segments in the route network. */
+  private int routeBranchCount;
+
+  /** Number of riser segments in the route network. */
+  private int routeRiserCount;
+
   /** Estimated arrival pressure at host in bara. */
   private double arrivalPressureBara;
 
   /** Estimated arrival temperature at host in Celsius. */
   private double arrivalTemperatureC;
+
+  /** Pipeline heat transfer coefficient used in hydraulic screening in W/m2K. */
+  private double pipelineHeatTransferCoefficientWm2K;
+
+  /** Whether the hydraulic screening case meets pressure and velocity constraints. */
+  private boolean hydraulicFeasible = true;
+
+  /** Reason for hydraulic infeasibility if hydraulic screening fails. */
+  private String hydraulicInfeasibilityReason;
+
+  /** Flow regime identified for the tieback route. */
+  private String flowRegime;
+
+  /** Mixture velocity divided by erosional velocity limit. */
+  private double erosionalVelocityRatio;
+
+  /** Hydrate formation temperature calculated for route arrival pressure in Celsius. */
+  private double hydrateFormationTemperatureC;
+
+  /** Screening score for shutdown cooldown risk from 0 (low) to 1 (high). */
+  private double shutdownCooldownRiskScore;
+
+  /** Estimated cooldown time to hydrate risk during shutdown in hours. */
+  private double shutdownCooldownTimeToHydrateHours;
+
+  /** Host capacity summary from nameplate and optional process-model screening. */
+  private String hostCapacitySummary;
 
   /** Number of subsea wells. */
   private int wellCount;
@@ -270,11 +315,16 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Tieback Option: ").append(optionId).append(" ===\n");
     sb.append(String.format("Distance: %.1f km, Depth: %.0f m\n", distanceKm, maxWaterDepthM));
+    if (routeSummary != null && !routeSummary.isEmpty()) {
+      sb.append("Route: ").append(routeSummary).append("\n");
+    }
     sb.append(String.format("Production: %.2f %s, Field life: %.1f years\n", maxProductionRate,
         rateUnit, fieldLifeYears));
     sb.append(String.format("CAPEX: %.0f MUSD (%.1f MUSD/km)\n", totalCapexMusd, getCapexPerKm()));
     sb.append(String.format("NPV: %.0f MUSD, IRR: %.1f%%, Payback: %.1f years\n", npvMusd,
         irr * 100, paybackYears));
+    sb.append(String.format("Arrival: %.1f bara, %.1f C, hydraulic=%s\n", arrivalPressureBara,
+        arrivalTemperatureC, hydraulicFeasible ? "PASS" : "CHECK"));
     sb.append(String.format("Flow Assurance: Hydrate=%s, Wax=%s, Corrosion=%s\n", hydrateResult,
         waxResult, corrosionResult));
     sb.append(String.format("Feasible: %s", feasible ? "YES" : "NO - " + infeasibilityReason));
@@ -373,6 +423,114 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
   }
 
   /**
+   * Gets the route-network name.
+   *
+   * @return route-network name, or an empty string for scalar-distance screening
+   */
+  public String getRouteNetworkName() {
+    return routeNetworkName;
+  }
+
+  /**
+   * Sets the route-network name.
+   *
+   * @param routeNetworkName route-network name
+   */
+  public void setRouteNetworkName(String routeNetworkName) {
+    this.routeNetworkName = routeNetworkName == null ? "" : routeNetworkName;
+  }
+
+  /**
+   * Gets the route-network summary.
+   *
+   * @return route-network summary text
+   */
+  public String getRouteSummary() {
+    return routeSummary;
+  }
+
+  /**
+   * Sets the route-network summary.
+   *
+   * @param routeSummary route-network summary text
+   */
+  public void setRouteSummary(String routeSummary) {
+    this.routeSummary = routeSummary == null ? "" : routeSummary;
+  }
+
+  /**
+   * Gets installed route length.
+   *
+   * @return installed route length in kilometres
+   */
+  public double getRouteInstalledLengthKm() {
+    return routeInstalledLengthKm;
+  }
+
+  /**
+   * Sets installed route length.
+   *
+   * @param routeInstalledLengthKm installed route length in kilometres
+   */
+  public void setRouteInstalledLengthKm(double routeInstalledLengthKm) {
+    this.routeInstalledLengthKm = routeInstalledLengthKm;
+  }
+
+  /**
+   * Gets shared corridor length.
+   *
+   * @return shared corridor length in kilometres
+   */
+  public double getRouteSharedCorridorLengthKm() {
+    return routeSharedCorridorLengthKm;
+  }
+
+  /**
+   * Sets shared corridor length.
+   *
+   * @param routeSharedCorridorLengthKm shared corridor length in kilometres
+   */
+  public void setRouteSharedCorridorLengthKm(double routeSharedCorridorLengthKm) {
+    this.routeSharedCorridorLengthKm = routeSharedCorridorLengthKm;
+  }
+
+  /**
+   * Gets branch count.
+   *
+   * @return number of branch segments
+   */
+  public int getRouteBranchCount() {
+    return routeBranchCount;
+  }
+
+  /**
+   * Sets branch count.
+   *
+   * @param routeBranchCount number of branch segments
+   */
+  public void setRouteBranchCount(int routeBranchCount) {
+    this.routeBranchCount = routeBranchCount;
+  }
+
+  /**
+   * Gets riser count.
+   *
+   * @return number of riser segments
+   */
+  public int getRouteRiserCount() {
+    return routeRiserCount;
+  }
+
+  /**
+   * Sets riser count.
+   *
+   * @param routeRiserCount number of riser segments
+   */
+  public void setRouteRiserCount(int routeRiserCount) {
+    this.routeRiserCount = routeRiserCount;
+  }
+
+  /**
    * Gets the arrival pressure.
    *
    * @return arrival pressure in bara
@@ -406,6 +564,96 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public void setArrivalTemperatureC(double arrivalTemperatureC) {
     this.arrivalTemperatureC = arrivalTemperatureC;
+  }
+
+  /**
+   * Gets the pipeline heat transfer coefficient used in hydraulic screening.
+   *
+   * @return pipeline heat transfer coefficient in W/m2K
+   */
+  public double getPipelineHeatTransferCoefficientWm2K() {
+    return pipelineHeatTransferCoefficientWm2K;
+  }
+
+  /**
+   * Sets the pipeline heat transfer coefficient used in hydraulic screening.
+   *
+   * @param pipelineHeatTransferCoefficientWm2K heat transfer coefficient in W/m2K
+   */
+  public void setPipelineHeatTransferCoefficientWm2K(double pipelineHeatTransferCoefficientWm2K) {
+    this.pipelineHeatTransferCoefficientWm2K = pipelineHeatTransferCoefficientWm2K;
+  }
+
+  /**
+   * Checks whether hydraulic screening passed.
+   *
+   * @return true if hydraulic screening passed
+   */
+  public boolean isHydraulicFeasible() {
+    return hydraulicFeasible;
+  }
+
+  /**
+   * Sets whether hydraulic screening passed.
+   *
+   * @param hydraulicFeasible true if hydraulic screening passed
+   */
+  public void setHydraulicFeasible(boolean hydraulicFeasible) {
+    this.hydraulicFeasible = hydraulicFeasible;
+  }
+
+  /**
+   * Gets the hydraulic infeasibility reason.
+   *
+   * @return hydraulic infeasibility reason, or null if hydraulic screening passed
+   */
+  public String getHydraulicInfeasibilityReason() {
+    return hydraulicInfeasibilityReason;
+  }
+
+  /**
+   * Sets the hydraulic infeasibility reason.
+   *
+   * @param hydraulicInfeasibilityReason hydraulic infeasibility reason
+   */
+  public void setHydraulicInfeasibilityReason(String hydraulicInfeasibilityReason) {
+    this.hydraulicInfeasibilityReason = hydraulicInfeasibilityReason;
+  }
+
+  /**
+   * Gets the flow regime identified for the route.
+   *
+   * @return flow regime description
+   */
+  public String getFlowRegime() {
+    return flowRegime;
+  }
+
+  /**
+   * Sets the flow regime identified for the route.
+   *
+   * @param flowRegime flow regime description
+   */
+  public void setFlowRegime(String flowRegime) {
+    this.flowRegime = flowRegime;
+  }
+
+  /**
+   * Gets the erosional velocity ratio.
+   *
+   * @return mixture velocity divided by erosional velocity limit
+   */
+  public double getErosionalVelocityRatio() {
+    return erosionalVelocityRatio;
+  }
+
+  /**
+   * Sets the erosional velocity ratio.
+   *
+   * @param erosionalVelocityRatio mixture velocity divided by erosional velocity limit
+   */
+  public void setErosionalVelocityRatio(double erosionalVelocityRatio) {
+    this.erosionalVelocityRatio = erosionalVelocityRatio;
   }
 
   /**
@@ -766,6 +1014,78 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public void setHydrateMarginC(double hydrateMarginC) {
     this.hydrateMarginC = hydrateMarginC;
+  }
+
+  /**
+   * Gets the hydrate formation temperature.
+   *
+   * @return hydrate formation temperature in Celsius
+   */
+  public double getHydrateFormationTemperatureC() {
+    return hydrateFormationTemperatureC;
+  }
+
+  /**
+   * Sets the hydrate formation temperature.
+   *
+   * @param hydrateFormationTemperatureC hydrate formation temperature in Celsius
+   */
+  public void setHydrateFormationTemperatureC(double hydrateFormationTemperatureC) {
+    this.hydrateFormationTemperatureC = hydrateFormationTemperatureC;
+  }
+
+  /**
+   * Gets the shutdown cooldown risk score.
+   *
+   * @return risk score from 0 (low) to 1 (high)
+   */
+  public double getShutdownCooldownRiskScore() {
+    return shutdownCooldownRiskScore;
+  }
+
+  /**
+   * Sets the shutdown cooldown risk score.
+   *
+   * @param shutdownCooldownRiskScore risk score from 0 (low) to 1 (high)
+   */
+  public void setShutdownCooldownRiskScore(double shutdownCooldownRiskScore) {
+    this.shutdownCooldownRiskScore = shutdownCooldownRiskScore;
+  }
+
+  /**
+   * Gets the estimated shutdown cooldown time to hydrate risk.
+   *
+   * @return cooldown time in hours
+   */
+  public double getShutdownCooldownTimeToHydrateHours() {
+    return shutdownCooldownTimeToHydrateHours;
+  }
+
+  /**
+   * Sets the estimated shutdown cooldown time to hydrate risk.
+   *
+   * @param shutdownCooldownTimeToHydrateHours cooldown time in hours
+   */
+  public void setShutdownCooldownTimeToHydrateHours(double shutdownCooldownTimeToHydrateHours) {
+    this.shutdownCooldownTimeToHydrateHours = shutdownCooldownTimeToHydrateHours;
+  }
+
+  /**
+   * Gets the host capacity summary.
+   *
+   * @return host capacity summary text
+   */
+  public String getHostCapacitySummary() {
+    return hostCapacitySummary;
+  }
+
+  /**
+   * Sets the host capacity summary.
+   *
+   * @param hostCapacitySummary host capacity summary text
+   */
+  public void setHostCapacitySummary(String hostCapacitySummary) {
+    this.hostCapacitySummary = hostCapacitySummary;
   }
 
   /**

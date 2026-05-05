@@ -147,7 +147,7 @@ Correlation coefficients close to $\pm 1$ indicate that the two parameters are n
 | $\varepsilon/R$ | | | | 1.00 | $-0.78$ |
 | $\beta$ | | | | | 1.00 |
 
-*Table 6.5: Approximate parameter correlation matrix for water CPA parameters (4C scheme).*
+*Table 6.1: Approximate parameter correlation matrix for water CPA parameters (4C scheme).*
 
 The strong correlation between ($a_0$, $c_1$) and between ($\varepsilon/R$, $\beta$) is clearly visible. The $\varepsilon$–$\beta$ anticorrelation means that increasing the bond strength while decreasing the bonding probability produces similar thermodynamic effects — a fundamental degeneracy in the association model.
 
@@ -163,7 +163,7 @@ If vapor pressure residuals show a systematic trend with temperature (e.g., posi
 
 ## 6.4 Physical Interpretation of Parameters
 
-### 6.3.1 Association Energy ($\varepsilon/R$)
+### 6.4.1 Association Energy ($\varepsilon/R$)
 
 The association energy represents the depth of the hydrogen-bond potential well. Typical values:
 
@@ -175,11 +175,11 @@ The association energy represents the depth of the hydrogen-bond potential well.
 | Amines | 1000–2000 | N–H···N weaker than O–H···O |
 | Carboxylic acids | 3000–5000 | Very strong O–H···O=C bonds (dimerization) |
 
-*Table 6.1: Typical association energy values for different molecule classes.*
+*Table 6.2: Typical association energy values for different molecule classes.*
 
 The association energy can be compared with experimental hydrogen-bond enthalpies from spectroscopy \cite{Jeffrey1997}. For water, the O–H···O bond energy is approximately 20 kJ/mol ($\approx 2400$ K in $\varepsilon/k_B$), consistent with CPA parameter values.
 
-### 6.3.2 Association Volume ($\beta$)
+### 6.4.2 Association Volume ($\beta$)
 
 The association volume is a dimensionless parameter related to the geometric probability of forming a hydrogen bond when two molecules are at contact distance. It reflects:
 
@@ -189,7 +189,7 @@ The association volume is a dimensionless parameter related to the geometric pro
 
 Smaller $\beta$ values mean that bonding is geometrically less probable (stricter orientational requirements). Water has a relatively large $\beta$ because its tetrahedral structure allows hydrogen bonds over a wide angular range.
 
-### 6.3.3 The Cubic Parameters in CPA
+### 6.4.3 The Cubic Parameters in CPA
 
 The cubic parameters ($a_0$, $b$, $c_1$) in CPA differ from their SRK counterparts because they must work in concert with the association term:
 
@@ -197,9 +197,9 @@ The cubic parameters ($a_0$, $b$, $c_1$) in CPA differ from their SRK counterpar
 - **$b$ in CPA is similar** to SRK values, as the molecular size is largely independent of association
 - **$c_1$ in CPA differs** from the Soave $m(\omega)$ value because the temperature dependence of the cubic term must complement the temperature dependence of the association term
 
-## 6.4 Parameter Tables for Common Components
+## 6.5 Parameter Tables for Common Components
 
-### 6.4.1 Water
+### 6.5.1 Water
 
 Water is the most important associating component in process engineering. The recommended CPA parameters for water (4C scheme) in the NeqSim/Equinor set are:
 
@@ -211,7 +211,7 @@ Water is the most important associating component in process engineering. The re
 | $\varepsilon/R$ | 2003.25 | K |
 | $\beta$ | 0.0692 | — |
 
-*Table 6.2: CPA parameters for water (4C scheme, Equinor/NeqSim set).*
+*Table 6.3: CPA parameters for water (4C scheme, Equinor/NeqSim set).*
 
 These parameters reproduce:
 - Vapor pressure: average absolute deviation (AAD) < 1% over 280–620 K
@@ -221,8 +221,8 @@ A cross-validation study \cite{Solbraa2026} verified the NeqSim parameter set ag
 
 | Compound | Parameter | NeqSim | Igben et al. | Match |
 |----------|-----------|:---:|:---:|:---:|
-| Water | $a_0$ (bar·L$^2$/mol$^2$) | 1.2277 | 0.12277† | Yes |
-| Water | $b$ (L/mol) | 0.14515 | 0.014515 | Yes |
+| Water | $a_0$ (bar·L$^2$/mol$^2$) | 1.2277 | 1.2277 | Yes |
+| Water | $b$ (L/mol) | 0.014515 | 0.014515 | Yes |
 | Water | $c_1$ | 0.67359 | 0.6736 | Yes |
 | Water | $\varepsilon$ (bar·L/mol) | 166.55 | 166.55 | Yes |
 | Water | $\beta \times 10^3$ | 69.2 | 69.2 | Yes |
@@ -234,11 +234,11 @@ A cross-validation study \cite{Solbraa2026} verified the NeqSim parameter set ag
 | Acetic acid | $\varepsilon$ (bar·L/mol) | 375.58 | 375.6 | Yes |
 | Acetic acid | $\beta \times 10^3$ | 71.5 | 71.5 | Yes |
 
-*Table 6.3: Cross-validation of NeqSim CPA parameters against Igben et al. \cite{Solbraa2026}. †Factor-of-10 difference is a unit convention (Pa·m$^6$ vs. bar·L$^2$).*
+*Table 6.4: Cross-validation of NeqSim CPA parameters against the tabulated literature values summarized by \cite{Solbraa2026}. The NeqSim component database stores $a_0$ and $b$ in scaled internal units; this table reports them in bar·L$^2$/mol$^2$ and L/mol for comparison. The association energy 166.55 bar·L/mol corresponds to 16.655 kJ/mol, or $\varepsilon/R = 2003.1$ K.*
 
 The only discrepancy is the $\beta$ parameter for methanol and ethanol, which arises from the different association scheme used: NeqSim uses 2B while Igben et al. used 3B. The 3B scheme distributes the association volume over one additional site, giving $\beta_{3B} \approx 2\beta_{2B}$.
 
-### 6.4.2 The Effect of Scheme Choice: 4C vs. 2B for Water
+### 6.5.2 The Effect of Scheme Choice: 4C vs. 2B for Water
 
 Water is most commonly modeled with the 4C scheme (four sites), but it can also be represented with the simpler 2B scheme (two sites). Both can fit pure-component data equally well, but the parameters differ systematically:
 
@@ -250,7 +250,7 @@ Water is most commonly modeled with the 4C scheme (four sites), but it can also 
 | $\varepsilon/R$ (K) | 2003.2 | 2660.5 | Different |
 | $\beta \times 10^3$ | 69.2 | 188.6 | $\beta_{2B} \approx 2.73 \beta_{4C}$ |
 
-*Table 6.3a: Comparison of 4C and 2B CPA parameters for water \cite{Solbraa2026}.*
+*Table 6.5: Comparison of 4C and 2B CPA parameters for water \cite{Solbraa2026}.*
 
 The key observations are:
 
@@ -260,34 +260,33 @@ The key observations are:
 
 For **pure water**, both schemes give comparable results. The difference becomes important for **mixtures**: the 4C scheme correctly captures the cross-association geometry with alcohols (2B) and glycols (4C), while the 2B scheme for water may give incorrect cross-association strengths when combined with partners that have different site architectures.
 
-### 6.4.3 Alcohols
+### 6.5.3 Alcohols
 
 | Component | Scheme | $a_0$ | $b \times 10^5$ | $c_1$ | $\varepsilon/R$ (K) | $\beta$ |
 |-----------|--------|-------|-----------------|-------|---------------------|---------|
-| Methanol | 2B | 0.4053 | 3.098 | 0.4310 | 2957.78 | 0.0163 |
-| Ethanol | 2B | 0.6878 | 4.908 | 0.7369 | 2589.85 | 0.0080 |
-| 1-Propanol | 2B | 1.0780 | 6.453 | 0.9171 | 2525.86 | 0.0084 |
-| 1-Butanol | 2B | 1.5221 | 7.979 | 1.0770 | 2525.86 | 0.0047 |
+| Methanol | 2B | 0.4053 | 3.098 | 0.4310 | 2957.62 | 0.0161 |
+| Ethanol | 2B | 0.8672 | 4.908 | 0.7369 | 2589.71 | 0.0080 |
+| 1-Propanol | 2B | 1.1910 | 6.411 | 0.9171 | 2525.72 | 0.0081 |
 
-*Table 6.4: CPA parameters for primary alcohols (2B scheme).*
+*Table 6.6: CPA parameters for primary alcohols present in the current NeqSim component database (2B scheme).*
 
 A clear trend is visible: the cubic parameters ($a_0$, $b$) increase with molecular size while the association energy remains roughly constant along the homologous series, reflecting that the OH group is the same in all cases.
 
-### 6.4.4 Glycols
+### 6.5.4 Glycols
 
-| Component | Scheme | $\varepsilon/R$ (K) | $\beta$ | Vapor Pressure AAD (%) | Density AAD (%) |
-|-----------|--------|---------------------|---------|----------------------|-----------------|
-| MEG | 4C | 2375.00 | 0.0141 | 1.2 | 0.8 |
-| DEG | 4C | 2568.00 | 0.0045 | 1.5 | 1.0 |
-| TEG | 4C | 2637.00 | 0.0018 | 1.8 | 1.2 |
+| Component | Scheme | $\varepsilon/R$ (K) | $\beta$ | Database note |
+|-----------|--------|---------------------|---------|---------------|
+| MEG | 4C | 2375.62 | 0.0141 | NeqSim component row |
+| DEG | 4C | 2367.44 | 0.0064 | NeqSim component row |
+| TEG | 4C | 1724.34 | 0.0188 | NeqSim component row |
 
-*Table 6.5: CPA association parameters and fitting quality for glycols.*
+*Table 6.7: CPA association parameters for glycols in the current NeqSim component database.*
 
-The decreasing $\beta$ along the glycol series reflects the increasing molecular size — the OH groups become a smaller fraction of the total molecular volume, reducing the geometric probability of hydrogen bonding.
+The glycol parameters are regression parameters, not direct bond enthalpies. Trends can differ between parameter sets because $\varepsilon/R$ and $\beta$ compensate each other and are fitted together with the cubic parameters.
 
-## 6.5 Parameter Sensitivity Analysis
+## 6.6 Parameter Sensitivity Analysis
 
-### 6.5.1 Sensitivity of Vapor Pressure
+### 6.6.1 Sensitivity of Vapor Pressure
 
 The sensitivity of calculated vapor pressure to each parameter can be quantified by:
 
@@ -303,7 +302,7 @@ where $\theta_j$ is the $j$-th parameter. For water at 373 K:
 
 The vapor pressure is most sensitive to $a_0$ and $c_1$, consistent with the SRK origin of these parameters.
 
-### 6.5.2 Sensitivity of Liquid Density
+### 6.6.2 Sensitivity of Liquid Density
 
 For liquid density at 373 K:
 
@@ -315,7 +314,7 @@ For liquid density at 373 K:
 
 The liquid density is primarily controlled by $b$, with secondary contributions from the association parameters.
 
-### 6.5.3 Parameter Correlation
+### 6.6.3 Parameter Correlation
 
 A correlation analysis reveals strong correlations between parameter pairs:
 
@@ -341,11 +340,11 @@ print(f"Predicted boiling pressure: {fluid.getPressure('bara'):.4f} bara")
 print(f"Experimental (1 atm): 1.0132 bara")
 ```
 
-## 6.6 Transferability and Generalization
+## 6.7 Transferability and Generalization
 
-### 6.6.1 Parameter Trends Across Homologous Series
+### 6.7.1 Parameter Trends Across Homologous Series
 
-One of the most powerful checks on the physical consistency of CPA parameters is their behavior across a homologous series. For the 1-alcohol series (methanol through 1-octanol), clear trends emerge:
+One of the most powerful checks on the physical consistency of CPA parameters is their behavior across a homologous series. Literature parameter sets for the 1-alcohol series (methanol through 1-octanol) often show the following qualitative trends. These values should not be mixed directly with the NeqSim database values in Table 6.6 unless the regression source, association scheme, and unit convention are the same:
 
 | Alcohol | $b$ (L/mol) | $a_0/(Rb)$ (K) | $c_1$ | $\varepsilon/R$ (K) | $\beta$ ($\times 10^3$) |
 |---------|-------------|-----------------|-------|---------------------|------------------------|
@@ -356,7 +355,7 @@ One of the most powerful checks on the physical consistency of CPA parameters is
 | 1-Pentanol | 0.0955 | 1338 | 1.39 | 2490 | 2.3 |
 | 1-Hexanol | 0.112 | 1330 | 1.62 | 2475 | 1.8 |
 
-*Table 6.7: CPA parameter trends for the 1-alcohol series (2B scheme).*
+*Table 6.8: CPA parameter trends for the 1-alcohol series (2B scheme).*
 
 Several physically meaningful trends are evident:
 
@@ -368,14 +367,14 @@ Several physically meaningful trends are evident:
 
 The near-constancy of $\varepsilon/R$ across the series (within 6%) validates the physical interpretation: the hydrogen bond strength is determined by the local chemistry of the OH group, not by the rest of the molecule.
 
-### 6.6.2 Group Contribution Approaches
+### 6.7.2 Group Contribution Approaches
 
 For components without experimental data for parameter fitting, group contribution methods can provide estimates:
 
 - **GC-CPA**: Predicts CPA parameters from molecular group contributions. The cubic parameters ($a_0$, $b$, $c_1$) are estimated from group increments (CH$_3$, CH$_2$, OH, NH$_2$, etc.), while the association parameters are assigned based on the functional group type
 - **Analogy-based**: Uses parameters from similar molecules with adjusted $a_0$ and $b$ to match the target molecular weight and critical properties
 
-### 6.6.3 Pseudo-Component Treatment
+### 6.7.3 Pseudo-Component Treatment
 
 For petroleum fractions (C7+ characterization), associating and non-associating contributions must be separated. The recommended approach is:
 
@@ -385,7 +384,7 @@ For petroleum fractions (C7+ characterization), associating and non-associating 
 
 This is the approach implemented in NeqSim for reservoir fluid characterization.
 
-### 6.6.4 Parameter Quality Assessment
+### 6.7.4 Parameter Quality Assessment
 
 Before using CPA parameters in process design, it is important to assess their quality. Key indicators include:
 
@@ -397,15 +396,15 @@ Before using CPA parameters in process design, it is important to assess their q
 | $\beta$ within expected order of magnitude | Yes | Within factor 2 | No |
 | Parameter set predicts $H^{\text{vap}}$ correctly | Within 5% | Within 10% | > 10% |
 
-*Table 6.8: Guidelines for assessing CPA parameter quality.*
+*Table 6.9: Guidelines for assessing CPA parameter quality.*
 
 A particularly useful check is to compute the enthalpy of vaporization $\Delta H^{\text{vap}}$, which is not used in the regression but is sensitive to the balance between the cubic and association contributions. If $\Delta H^{\text{vap}}$ is well-predicted, it confirms that the parameter set correctly partitions the intermolecular energy between dispersion (cubic) and association.
 
-## 6.7 Worked Example: Parameter Estimation for Ethanol
+## 6.8 Worked Example: Parameter Estimation for Ethanol
 
 To illustrate the regression procedure, let us trace the fitting of CPA parameters for ethanol using the 2B association scheme.
 
-### 6.7.1 Experimental Data
+### 6.8.1 Experimental Data
 
 For ethanol, the key experimental data used in the regression are:
 
@@ -419,9 +418,9 @@ For ethanol, the key experimental data used in the regression are:
 | 200 | 39.76 | 556.0 | NIST |
 | 241.6 | 63.0 | Critical | NIST |
 
-*Table 6.6: Experimental data for ethanol parameter regression.*
+*Table 6.10: Experimental data for ethanol parameter regression.*
 
-### 6.7.2 Initial Estimates
+### 6.8.2 Initial Estimates
 
 For the 2B scheme with ethanol:
 
@@ -435,7 +434,7 @@ $$c_1^{\text{initial}} = 0.480 + 1.574(0.644) - 0.176(0.644)^2 = 1.421$$
 
 **Association parameters from analogy**: using methanol as a reference molecule and scaling by molecular size, initial estimates are $\varepsilon/R \approx 2500$ K and $\beta \approx 0.02$.
 
-### 6.7.3 Regression Result
+### 6.8.3 Regression Result
 
 After Levenberg–Marquardt optimization minimizing the combined vapor pressure and density objective:
 
@@ -447,19 +446,19 @@ After Levenberg–Marquardt optimization minimizing the combined vapor pressure 
 | $\varepsilon/R$ | 2500 | 2589.8 | K |
 | $\beta$ | 0.020 | 0.0081 | — |
 
-*Table 6.7: CPA parameter regression results for ethanol (2B scheme).*
+*Table 6.11: CPA parameter regression results for ethanol (2B scheme).*
 
 The most significant changes from the initial SRK-based estimates are in $c_1$ (reduced by 48%) and $b$ (reduced by 15%). This reflects the fact that the association term now handles a significant portion of the attractive interactions that $c_1$ and $b$ had to capture alone in SRK.
 
-### 6.7.4 Fit Quality
+### 6.8.4 Fit Quality
 
 With the fitted parameters, the AAD in vapor pressure is 0.8% and the AAD in liquid density is 0.6% over the temperature range 25–241°C. The SRK model (without association) gives 2.1% AAD in vapor pressure and 8.5% in liquid density over the same range.
 
-## 6.8 Parameter Sensitivity and Physical Meaning
+## 6.9 Parameter Sensitivity and Physical Meaning
 
 Understanding how each parameter affects predictions is essential for robust fitting and for interpreting results.
 
-### 6.8.1 Sensitivity Analysis
+### 6.9.1 Sensitivity Analysis
 
 | Parameter | Increases → Effect on $P^{\text{sat}}$ | Effect on $\rho^L$ | Physical meaning |
 |-----------|---------------------------------------|--------------------|----|
@@ -469,9 +468,9 @@ Understanding how each parameter affects predictions is essential for robust fit
 | $\varepsilon$ ↑ | Decrease (more bonding stabilizes liquid) | Increase | Hydrogen bond strength |
 | $\beta$ ↑ | Decrease | Increase | Bonding probability/accessibility |
 
-*Table 6.8: Parameter sensitivity for CPA.*
+*Table 6.12: Parameter sensitivity for CPA.*
 
-### 6.8.2 The Compensation Effect
+### 6.9.2 The Compensation Effect
 
 The most important practical insight for parameter fitting is the **compensation effect** between $\varepsilon$ and $\beta$: increasing $\varepsilon$ (stronger bonds) while decreasing $\beta$ (fewer bonds) can give a similar total association energy. This creates a valley in the objective function where many parameter combinations give acceptable fits.
 
@@ -494,7 +493,7 @@ Key points from this chapter:
 
 ## Exercises
 
-1. **Exercise 6.1:** Using the CPA parameters for water from Table 6.2, compute the vapor pressure from 280 K to 620 K and compare with NIST data. Calculate the AAD.
+1. **Exercise 6.1:** Using the CPA parameters for water from Table 6.3, compute the vapor pressure from 280 K to 620 K and compare with NIST data. Calculate the AAD.
 
 2. **Exercise 6.2:** Perform a parameter sensitivity analysis for methanol: vary each of the five parameters by $\pm 5$% and compute the effect on vapor pressure at 337.7 K (normal boiling point). Rank the parameters by sensitivity.
 

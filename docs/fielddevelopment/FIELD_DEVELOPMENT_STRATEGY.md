@@ -11,6 +11,48 @@ This document outlines a comprehensive plan to transform NeqSim into a premier t
 
 ---
 
+## Book-Focused Roadmap Update (May 2026)
+
+The TPG4230 field-development book now has direct NeqSim API support for the core examples it discusses: tieback screening, greenfield option comparison, host capacity checks, forecast uncertainty, and concept economics. The first implementation step focused on making existing NeqSim functionality easier to compose instead of adding a parallel study framework.
+
+### Implemented Support
+
+| Book workflow | NeqSim API support | Status |
+|---------------|--------------------|--------|
+| Tieback hydraulics and flow assurance | `TiebackAnalyzer` now configures `MultiphaseFlowIntegrator` and `FlowAssuranceScreener`, storing arrival pressure, arrival temperature, flow regime, hydrate formation temperature, hydrate margin, and shutdown cooldown risk on `TiebackOption`. | Implemented |
+| Host capacity for brownfield tiebacks | `HostFacility.assessCapacity(...)` returns a `HostCapacityReport` covering gas, oil, water, liquid spare capacity and optional `ProcessSystem` bottleneck screening through `BottleneckAnalyzer`. | Implemented |
+| Production forecasts for concept KPIs | `ConceptEvaluator` now derives field life and recovery from `ProductionProfileGenerator` and `ReservoirInput` resource/recovery assumptions instead of fixed placeholders. | Implemented |
+| Sensitivity and Monte Carlo economics | `CashFlowEngine.copy()` preserves production profiles, CAPEX timing, tariffs, prices, OPEX, and tax configuration; `SensitivityAnalyzer` uses that copy for tornado, scenario, and Monte Carlo cases. | Implemented |
+| Greenfield and tieback templates | `GreenfieldConceptFactory` creates comparable `DevelopmentCaseTemplate` objects for subsea tieback, standalone FPSO, fixed platform, subsea-to-shore, onshore terminal, and phased brownfield expansion. | Implemented |
+| Book-ready examples | `docs/fielddevelopment/README.md` uses current APIs and includes a template comparison example verified by `DocExamplesCompilationTest`. | Implemented |
+| Multi-segment route networks | `TiebackRouteNetwork` represents flowlines, branches, risers, shared corridors, and host hubs. `TiebackAnalyzer` accepts route networks and stores installed length, shared corridor length, branch/riser counts, and route summaries on `TiebackOption`. | Implemented |
+| Probabilistic template assumptions | `DevelopmentCaseTemplate` now carries `DevelopmentCaseUncertainty` with P10/P50/P90 resource, CAPEX, schedule, price, and production-factor ranges. `ReservoirInput` supports resource uncertainty directly. | Implemented |
+| Lifecycle emissions | `EmissionsTracker.estimateLifecycle(...)` generates year-by-year emissions tied to production decline, compression load, power source, flaring, fugitives, and vented CO2; templates carry a `LifecycleEmissionsProfile`. | Implemented |
+| Reservoir/profile coupling | `ProductionProfileGenerator` now creates resource-capped profiles from `ReservoirInput` and `SimpleReservoir`, fits exponential decline from production history, and exports VFP-ready annual rate tables. | Implemented |
+| Book/report tables | `FieldDevelopmentReportExporter` generates standard markdown comparison tables and figure-ready NPV data from tieback reports, templates, tornado results, and concept KPIs. | Implemented |
+
+### Teaching Workflow Status
+
+The TPG4230 book improvement has packaged NeqSim as three executable teaching workflows:
+
+| Workflow | What the notebook should demonstrate | Primary APIs |
+|----------|--------------------------------------|--------------|
+| Tieback Screening Notebook | Define a satellite discovery, candidate hosts, route length/depth, representative fluid, hydraulics, flow assurance, host capacity, NPV, and feasibility ranking. | `TiebackAnalyzer`, `TiebackReport`, `HostFacility`, `MultiphaseFlowIntegrator`, `FlowAssuranceScreener` |
+| Tieback vs Standalone Notebook | Compare host tieback, standalone FPSO, and fixed-platform alternatives using one production profile, CAPEX class, power/emissions basis, and tax model. | `GreenfieldConceptFactory`, `DevelopmentCaseTemplate`, `EconomicsEstimator`, `EmissionsTracker`, `CashFlowEngine` |
+| Probabilistic Concept Selection Notebook | Run P10/P50/P90 NPV, tornado sensitivity, breakeven price, and a compact risk register for selected alternatives. | `SensitivityAnalyzer`, `ProductionProfileGenerator`, `CashFlowEngine`, `ConceptEvaluator` |
+
+These notebooks should live in the TPG4230 book Chapter 24 notebook folder and feed results back
+into Chapters 11, 13, 17, 18, and 28. Each notebook should have a `plan.json`, `results.json`, and
+`claims_manifest.json` entry so the PaperLab replication gate can rebuild the calculations from a
+clean checkout.
+
+The next book-facing work is to use the decision-engine objects in Chapter 24 and the related
+field-development chapters: replace notebook-local tables with `FieldDevelopmentReportExporter`,
+add one route-network example with shared corridor economics, and include lifecycle-emissions plots
+beside the existing NPV and sensitivity figures.
+
+---
+
 ## Current State Analysis
 
 ### Existing Building Blocks ✅
@@ -41,488 +83,79 @@ NeqSim already has substantial infrastructure for field development:
 | `process.util.fielddevelopment` | `FieldProductionScheduler` | Production scheduling | 🔄 New (basic) |
 | `process.util.optimization` | `ProductionOptimizer` | Production optimization | ✅ Stable |
 
-### Gaps Identified 🔴
+### Gap Closure Status
 
-1. **Tie-back Analysis Engine** - No dedicated tie-back screening tool
-2. **Multi-Field Portfolio** - No portfolio optimization across fields
-3. **Norwegian Petroleum Economics** - No tax model (22% corp + 56% special)
-4. **Facilities Integration** - Limited connection between concept and process
-5. **Time-Series Export** - No E300/ECLIPSE integration for reservoir coupling
-6. **Decision Support** - No ranking/scoring for development options
-7. **Pipeline Hydraulics Integration** - Loose coupling with multiphase flow
+The original gap list has now moved from architecture planning into implemented API coverage:
+
+| Original gap | Current NeqSim support | Verification |
+|--------------|------------------------|--------------|
+| Tie-back analysis engine | `TiebackAnalyzer`, `TiebackOption`, `TiebackReport`, `HostFacility`, and `TiebackRouteNetwork` screen hosts, route networks, hydraulics, flow assurance, capacity, CAPEX, and NPV. | `TiebackTest` |
+| Multi-field portfolio | `PortfolioOptimizer` ranks field, tieback, IOR, exploration, and infrastructure projects under total and annual capital constraints. | `PortfolioOptimizerTest` |
+| Norwegian petroleum economics | `NorwegianTaxModel`, `TaxModelRegistry`, `FiscalParameters`, and `CashFlowEngine` cover the 22% corporate plus 56% petroleum-tax model and generic fiscal alternatives. | `EconomicsTest`, `TaxModelTest`, `FieldDevelopmentNPVTest` |
+| Facilities integration | `ConceptToProcessLinker` generates screening-to-concept process systems from `FieldConcept` definitions and exposes utility summaries from the generated `ProcessSystem`. | `FieldDevelopmentIntegrationUtilitiesTest` |
+| Time-series export | `ReservoirCouplingExporter` generates VFP production/injection tables, schedule keywords, group/well controls, separator efficiency tables, and CSV production forecasts for reservoir coupling. | `FieldDevelopmentIntegrationUtilitiesTest` |
+| Decision support | `DevelopmentOptionRanker`, `ConceptEvaluator`, and `BatchConceptRunner` provide multi-criteria ranking, concept KPI scoring, and batch comparison. | `DevelopmentOptionRankerTest`, `FieldDevelopmentEngineTest` |
+| Pipeline hydraulics integration | `MultiphaseFlowIntegrator`, `TiebackRouteNetwork`, `NetworkSolver`, and `NetworkResult` connect tieback screening to multiphase pipeline and gathering-network calculations. | `TiebackTest`, `FieldDevelopmentIntegrationUtilitiesTest` |
 
 ---
 
 ## Strategic Architecture
 
-### Proposed Module Structure
+### Implemented Module Structure
 
-```
-neqsim.process.fielddevelopment
-├── concept/                     # EXISTING - Concept definition
-│   ├── FieldConcept.java
-│   ├── ReservoirInput.java
-│   ├── WellsInput.java
-│   └── InfrastructureInput.java
-│
-├── evaluation/                  # EXISTING - Concept evaluation
-│   ├── ConceptEvaluator.java
-│   ├── ConceptKPIs.java
-│   └── BatchConceptRunner.java
-│
-├── screening/                   # EXISTING - Screening tools
-│   ├── FlowAssuranceScreener.java
-│   ├── EconomicsEstimator.java
-│   ├── SafetyScreener.java
-│   └── EmissionsTracker.java
-│
-├── facility/                    # EXISTING - Facility blocks
-│   ├── FacilityBuilder.java
-│   ├── FacilityConfig.java
-│   ├── BlockType.java
-│   └── BlockConfig.java
-│
-├── tieback/                     # NEW - Tie-back analysis
-│   ├── TiebackAnalyzer.java
-│   ├── TiebackOption.java
-│   ├── TiebackReport.java
-│   └── HostFacility.java
-│
-├── portfolio/                   # NEW - Multi-field portfolio
-│   ├── PortfolioOptimizer.java
-│   ├── FieldAsset.java
-│   ├── InvestmentSchedule.java
-│   └── PortfolioReport.java
-│
-├── economics/                   # NEW - Advanced economics
-│   ├── NorwegianTaxModel.java
-│   ├── CashFlowEngine.java
-│   ├── NPVCalculator.java
-│   ├── BreakevenAnalyzer.java
-│   └── TariffModel.java
-│
-└── scheduling/                  # NEW - Production scheduling
-    ├── FieldScheduler.java
-    ├── ProductionForecast.java
-    ├── DrillSchedule.java
-    └── FacilitiesSchedule.java
-```
+The field-development engine now uses an implemented package layout rather than a proposed one:
 
-### Proposed Utility Location
+| Package | Implemented role |
+|---------|------------------|
+| `concept/` | Field concepts, reservoir/well/infrastructure inputs, standardized templates, and P10/P50/P90 uncertainty bundles. |
+| `evaluation/` | Concept KPI evaluation, batch comparisons, Monte Carlo support, and multi-criteria option ranking. |
+| `screening/` | Flow assurance, safety, emissions, lifecycle emissions, artificial lift, and cost screening. |
+| `facility/` | Facility block configuration and `ConceptToProcessLinker` for generating `ProcessSystem` models from concepts. |
+| `tieback/` | Host-facility modelling, tieback option analysis, feasibility reports, and route-aware ranking. |
+| `network/` | Route-network metadata, multiphase pipeline screening, gathering-network solving, and network result reporting. |
+| `economics/` | Cash-flow engine, Norwegian and generic fiscal models, sensitivity/Monte Carlo economics, production profiles, and portfolio optimization. |
+| `reservoir/` | Transient well models, injection strategy support, and ECLIPSE/E300 coupling exports. |
+| `reporting/` | Book/report-ready markdown tables and figure data for comparisons, KPIs, sensitivities, and tieback cases. |
+| `workflow/` | Unified workflow orchestration across screening, conceptual, and detailed study phases. |
 
-```
-neqsim.process.util.fielddevelopment
-├── ProductionProfile.java       # EXISTING
-├── WellScheduler.java           # EXISTING
-├── FacilityCapacity.java        # EXISTING
-├── SensitivityAnalysis.java     # EXISTING
-├── FieldProductionScheduler.java # EXISTING - Enhance
-└── PipelineNetwork.java         # NEW - Multi-segment pipeline
-```
+### Integration Shape
+
+The decision engine is intentionally layered:
+
+1. `FieldConcept` captures the field-development assumptions.
+2. Screening classes calculate flow-assurance, emissions, safety, and economic indicators.
+3. `TiebackAnalyzer`, `GreenfieldConceptFactory`, `PortfolioOptimizer`, and `DevelopmentOptionRanker` compare alternatives.
+4. `ConceptToProcessLinker`, `NetworkSolver`, and `ReservoirCouplingExporter` bridge the screening models to detailed process, network, and reservoir workflows.
+5. `FieldDevelopmentReportExporter` packages outputs for notebooks, reports, and the TPG4230 book.
 
 ---
 
-## Implementation Plan
+## Implementation Status and Remaining Maturation
 
-### Phase 1: Core Economics (Priority: HIGH) 🎯
-
-**Goal**: Enable accurate NPV and decision-support calculations
-
-#### 1.1 Norwegian Petroleum Tax Model
-
-```java
-package neqsim.process.fielddevelopment.economics;
-
-/**
- * Norwegian Continental Shelf petroleum tax model.
- *
- * Implements:
- * - 22% corporate tax
- * - 56% special petroleum tax
- * - Uplift deductions
- * - Loss carry-forward
- */
-public class NorwegianTaxModel {
-    private static final double CORPORATE_TAX_RATE = 0.22;
-    private static final double PETROLEUM_TAX_RATE = 0.56;
-    private static final double TOTAL_MARGINAL_RATE = 0.78;
-
-    private double upliftRate = 0.055; // 5.5% per year for 4 years
-    private int upliftYears = 4;
-
-    public TaxResult calculateTax(double grossRevenue, double opex,
-                                   double depreciation, double uplift) {
-        // Corporate tax base
-        double corporateTaxBase = grossRevenue - opex - depreciation;
-        double corporateTax = Math.max(0, corporateTaxBase * CORPORATE_TAX_RATE);
-
-        // Special petroleum tax base (with uplift)
-        double specialTaxBase = grossRevenue - opex - depreciation - uplift;
-        double specialTax = Math.max(0, specialTaxBase * PETROLEUM_TAX_RATE);
-
-        return new TaxResult(corporateTax, specialTax,
-                            corporateTax + specialTax);
-    }
-}
-```
-
-#### 1.2 Cash Flow Engine
-
-```java
-package neqsim.process.fielddevelopment.economics;
-
-/**
- * Full-lifecycle cash flow engine for field development.
- */
-public class CashFlowEngine {
-    private NorwegianTaxModel taxModel;
-    private TariffModel tariffModel;
-
-    public CashFlowResult generateCashFlow(
-        ProductionForecast production,
-        CapexSchedule capex,
-        OpexProfile opex,
-        PriceScenario prices,
-        int forecastYears
-    ) {
-        // Year-by-year cash flow with tax
-    }
-
-    public double calculateNPV(CashFlowResult cashFlow, double discountRate);
-    public double calculateIRR(CashFlowResult cashFlow);
-    public double calculateBreakevenPrice(CashFlowResult cashFlow,
-                                          double targetNPV);
-    public double calculatePaybackPeriod(CashFlowResult cashFlow);
-}
-```
-
-### Phase 2: Tie-back Analysis Engine (Priority: HIGH) 🎯
-
-**Goal**: Screen and compare tie-back options to existing infrastructure
-
-#### 2.1 Tie-back Analyzer
-
-```java
-package neqsim.process.fielddevelopment.tieback;
-
-/**
- * Analyzes tie-back options for marginal field development.
- *
- * Considers:
- * - Distance to host
- * - Host spare capacity (gas, oil, water handling)
- * - Pipeline hydraulics (pressure drop, flow assurance)
- * - Cost comparison
- */
-public class TiebackAnalyzer {
-
-    public TiebackReport analyze(FieldConcept discovery,
-                                  List<HostFacility> hosts) {
-        List<TiebackOption> options = new ArrayList<>();
-
-        for (HostFacility host : hosts) {
-            TiebackOption option = evaluateTieback(discovery, host);
-            if (option.isFeasible()) {
-                options.add(option);
-            }
-        }
-
-        // Rank by NPV
-        options.sort(Comparator.comparing(TiebackOption::getNpv).reversed());
-
-        return new TiebackReport(discovery, options);
-    }
-
-    private TiebackOption evaluateTieback(FieldConcept discovery,
-                                           HostFacility host) {
-        // 1. Check distance and water depth
-        // 2. Screen flow assurance (hydrate, wax in flowline)
-        // 3. Check host capacity constraints
-        // 4. Estimate CAPEX (pipeline, umbilical, subsea)
-        // 5. Calculate production profile (constrained by host)
-        // 6. Calculate NPV
-    }
-}
-```
-
-#### 2.2 Host Facility Model
-
-```java
-package neqsim.process.fielddevelopment.tieback;
-
-/**
- * Represents an existing host facility with spare capacity.
- */
-public class HostFacility {
-    private String name;
-    private double latitude;
-    private double longitude;
-    private double waterDepth;
-
-    // Capacity constraints
-    private double gasCapacityMSm3d;
-    private double oilCapacityBopd;
-    private double waterCapacityM3d;
-    private double liquidCapacityM3d;
-
-    // Current utilization
-    private double gasUtilization;
-    private double oilUtilization;
-    private double waterUtilization;
-
-    // Tie-in points
-    private double minTieInPressureBara;
-    private double maxTieInPressureBara;
-
-    // Associated process system (optional)
-    private ProcessSystem facility;
-
-    public double getSpareGasCapacity() {
-        return gasCapacityMSm3d * (1.0 - gasUtilization);
-    }
-
-    public boolean canAccept(FieldConcept discovery) {
-        // Check if host has capacity for new tieback
-    }
-}
-```
-
-### Phase 3: Enhanced FieldProductionScheduler (Priority: HIGH) 🎯
-
-**Goal**: Transform into full-featured production scheduler
-
-#### 3.1 Enhance Existing FieldProductionScheduler
-
-Add to [FieldProductionScheduler.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/fielddevelopment/FieldProductionScheduler.java):
-
-```java
-// Norwegian Tax Integration
-private NorwegianTaxModel taxModel = new NorwegianTaxModel();
-private TariffModel tariffModel;
-private double corporateTaxRate = 0.22;
-private double petroleumTaxRate = 0.56;
-
-// Enhanced Economics
-public void setTariffModel(TariffModel tariff);
-public void setTaxModel(NorwegianTaxModel taxModel);
-public double calculateAfterTaxNPV(double discountRate);
-public double calculateBreakevenOilPrice();
-public double calculateBreakevenGasPrice();
-
-// Transient Sub-stepping (from notebook patterns)
-public void setTransientSubSteps(int subSteps); // e.g., 10 per time step
-private void runReservoirTransient(double timestepDays, int subSteps);
-
-// Pipeline Pressure Constraints
-public void setPipelinePressureConstraint(double minPressureBara);
-public void useAdjusterForRateOptimization(boolean enable);
-
-// Drilling Schedule Integration
-public void setDrillSchedule(DrillSchedule schedule);
-public void addWellOnlineDate(String wellName, LocalDate date);
-
-// Enhanced Reporting
-public CashFlowResult getCashFlow();
-public Map<String, Double> getSensitivityToOilPrice(double[] prices);
-public String exportToExcel();
-```
-
-### Phase 4: Portfolio Optimization (Priority: MEDIUM)
-
-**Goal**: Optimize investment across multiple fields/opportunities
-
-#### 4.1 Portfolio Optimizer
-
-```java
-package neqsim.process.fielddevelopment.portfolio;
-
-/**
- * Optimizes capital allocation across a portfolio of opportunities.
- *
- * Considers:
- * - Capital budget constraints
- * - Risk diversification
- * - Synergies (shared infrastructure)
- * - Phasing and timing
- */
-public class PortfolioOptimizer {
-    private List<FieldAsset> assets;
-    private double annualCapexBudget;
-    private double maxPortfolioRisk;
-
-    public InvestmentSchedule optimize(int planningHorizon) {
-        // Mixed-integer programming for optimal phasing
-    }
-
-    public PortfolioReport analyze() {
-        // Risk-return analysis
-        // Efficient frontier
-        // Sensitivity analysis
-    }
-}
-```
-
-### Phase 5: Pipeline Network (Priority: MEDIUM)
-
-**Goal**: Multi-segment pipeline network for complex tie-backs
-
-```java
-package neqsim.process.util.fielddevelopment;
-
-/**
- * Multi-segment pipeline network for tie-back analysis.
- */
-public class PipelineNetwork {
-    private List<PipelineSegment> segments;
-    private List<Node> nodes;
-
-    public void addSegment(String from, String to,
-                           double lengthKm, double diameterInches,
-                           double roughness, boolean insulated);
-
-    public void addNode(String name, NodeType type);
-
-    public NetworkResult solve(Map<String, Double> sourceRates,
-                               Map<String, Double> sinkPressures);
-
-    public FlowAssuranceReport screenFlowAssurance(double seabedTempC);
-}
-```
+| Capability | Status | Next maturation step |
+|------------|--------|----------------------|
+| Core economics and Norwegian tax | Implemented in `CashFlowEngine`, `NorwegianTaxModel`, and `TaxModelRegistry`. | Calibrate fiscal examples against public NCS case studies and add a concise tutorial. |
+| Tieback screening | Implemented in `TiebackAnalyzer` with host capacity, hydraulics, flow assurance, economics, and route-network metadata. | Add more public benchmark cases for long, cold, and shared-corridor tiebacks. |
+| Production forecasting | Implemented through `ProductionProfileGenerator` and `ReservoirInput` resource/recovery assumptions. | Connect additional history-matching examples to public production data. |
+| Portfolio optimization | Implemented in `PortfolioOptimizer`. | Add efficient-frontier plotting helpers and infrastructure-synergy examples. |
+| Pipeline and gathering networks | Implemented in `TiebackRouteNetwork`, `MultiphaseFlowIntegrator`, `NetworkSolver`, and `NetworkResult`. | Replace selected screening correlations with higher-fidelity `PipeBeggsAndBrills` cases where runtime allows. |
+| Reservoir coupling export | Implemented in `ReservoirCouplingExporter` and VFP-ready profile export helpers. | Add round-trip examples that feed generated schedule/VFP snippets into reservoir-simulator workflows. |
+| Decision support and reporting | Implemented in `DevelopmentOptionRanker`, `BatchConceptRunner`, `ConceptEvaluator`, and `FieldDevelopmentReportExporter`. | Use the exporter consistently in Chapter 24 notebooks and field-development documentation. |
 
 ---
 
 ## Use Case Workflows
 
-### Use Case 1: Gas Tie-back Screening
+The implemented APIs now support three reusable workflow families for teaching, screening, and
+early concept selection.
 
-```java
-// 1. Define discovery
-FieldConcept discovery = FieldConcept.builder("Marginal Gas Discovery")
-    .reservoir(ReservoirInput.leanGas()
-        .gor(15000)
-        .co2Percent(2.5)
-        .reservoirPressure(350)
-        .reservoirTemperature(95)
-        .build())
-    .wells(WellsInput.builder()
-        .producerCount(2)
-        .tubeheadPressure(120)
-        .ratePerWell(0.8e6, "Sm3/d")
-        .build())
-    .build();
-
-// 2. Define potential hosts
-List<HostFacility> hosts = Arrays.asList(
-    HostFacility.builder("Platform A")
-        .location(61.5, 2.3)
-        .waterDepth(110)
-        .spareGasCapacity(3.0, "MSm3/d")
-        .minTieInPressure(80)
-        .build(),
-    HostFacility.builder("FPSO B")
-        .location(61.8, 2.1)
-        .waterDepth(350)
-        .spareGasCapacity(5.0, "MSm3/d")
-        .build()
-);
-
-// 3. Analyze options
-TiebackAnalyzer analyzer = new TiebackAnalyzer();
-TiebackReport report = analyzer.analyze(discovery, hosts);
-
-// 4. Review results
-System.out.println(report.getSummary());
-TiebackOption best = report.getBestOption();
-System.out.println("Best option: " + best.getHostName() +
-                   ", NPV: " + best.getNpvMUSD() + " MUSD");
-```
-
-### Use Case 2: Field Development with NPV
-
-```java
-// 1. Create reservoir model
-SystemInterface gasFluid = new SystemSrkEos(273.15 + 90, 300);
-gasFluid.addComponent("methane", 0.85);
-gasFluid.addComponent("ethane", 0.08);
-gasFluid.addComponent("propane", 0.04);
-gasFluid.addComponent("CO2", 0.03);
-gasFluid.setMixingRule("classic");
-
-SimpleReservoir reservoir = new SimpleReservoir("Gas Field");
-reservoir.setReservoirFluid(gasFluid, 5.0e9, 1.0, 1.0e8);
-reservoir.addGasProducer("GP-1");
-reservoir.addGasProducer("GP-2");
-
-// 2. Create scheduler with economics
-FieldProductionScheduler scheduler = new FieldProductionScheduler("Offshore Gas");
-scheduler.addReservoir(reservoir);
-
-// 3. Set production parameters
-scheduler.setPlateauRate(10.0, "MSm3/day");
-scheduler.setPlateauDuration(5, "years");
-scheduler.setMinimumRate(1.0, "MSm3/day");
-
-// 4. Set economics
-scheduler.setGasPrice(0.25, "USD/Sm3");
-scheduler.setDiscountRate(0.08);
-scheduler.setCapex(800, "MUSD");
-scheduler.setOpexRate(0.04); // 4% of CAPEX per year
-scheduler.setTaxModel(new NorwegianTaxModel());
-
-// 5. Generate schedule
-ProductionSchedule schedule = scheduler.generateSchedule(
-    LocalDate.of(2026, 1, 1),
-    20.0,  // years
-    365.0  // annual steps
-);
-
-// 6. Results
-System.out.println("Cumulative Gas: " + schedule.getCumulativeGas("GSm3") + " GSm3");
-System.out.println("Pre-tax NPV: " + schedule.getPreTaxNPV("MUSD") + " MUSD");
-System.out.println("After-tax NPV: " + schedule.getAfterTaxNPV("MUSD") + " MUSD");
-System.out.println("Breakeven gas price: " +
-    scheduler.calculateBreakevenGasPrice() + " USD/Sm3");
-```
-
-### Use Case 3: Portfolio Investment Planning
-
-```java
-// 1. Define portfolio
-PortfolioOptimizer optimizer = new PortfolioOptimizer();
-
-optimizer.addAsset(FieldAsset.builder("Gas Field A")
-    .npv(500)
-    .capex(800)
-    .firstProduction(2026)
-    .reserves(15, "GSm3")
-    .build());
-
-optimizer.addAsset(FieldAsset.builder("Oil Development B")
-    .npv(300)
-    .capex(1200)
-    .firstProduction(2027)
-    .reserves(50, "MMbbl")
-    .build());
-
-optimizer.addAsset(FieldAsset.builder("Tieback C")
-    .npv(150)
-    .capex(200)
-    .firstProduction(2025)
-    .reserves(3, "GSm3")
-    .build());
-
-// 2. Set constraints
-optimizer.setAnnualCapexBudget(500, "MUSD");
-optimizer.setPlanningHorizon(10); // years
-
-// 3. Optimize
-InvestmentSchedule schedule = optimizer.optimize();
-
-// 4. Results
-System.out.println(schedule.getGanttChart());
-System.out.println("Portfolio NPV: " + schedule.getTotalNPV());
-System.out.println("Capital efficiency: " + schedule.getCapitalEfficiency());
-```
+| Use case | Workflow | Primary outputs |
+|----------|----------|-----------------|
+| Gas tieback screening | Define a discovery, candidate hosts, optional route networks, representative fluid, and host constraints; run `TiebackAnalyzer`. | Feasible hosts, hydraulic margins, flow-assurance risks, host-capacity bottlenecks, CAPEX, NPV, and route summaries. |
+| Field development with NPV | Build `DevelopmentCaseTemplate` objects or `FieldConcept` inputs; evaluate production, emissions, and fiscal economics using `GreenfieldConceptFactory`, `ConceptEvaluator`, and `CashFlowEngine`. | Production profile, lifecycle emissions, after-tax cash flow, NPV, breakeven price, and uncertainty ranges. |
+| Portfolio investment planning | Add candidate projects to `PortfolioOptimizer`, set total or annual budget constraints, then compare optimization strategies. | Selected/deferred projects, budget use by year, portfolio NPV, EMV, and capital efficiency. |
+| Reservoir/process coupling | Generate process systems with `ConceptToProcessLinker` and export VFP/schedule data with `ReservoirCouplingExporter`. | Process utility summaries, VFPPROD/VFPINJ tables, group/well controls, and production-forecast CSV data. |
+| Decision support | Score alternatives with `DevelopmentOptionRanker` and publish tables with `FieldDevelopmentReportExporter`. | Ranked concept list, weighted MCDA scores, tornado tables, KPI comparison tables, and figure-ready data. |
 
 ---
 
@@ -532,83 +165,59 @@ System.out.println("Capital efficiency: " + schedule.getCapitalEfficiency());
 
 | Component | Integration |
 |-----------|-------------|
-| `SystemInterface` | Fluid PVT for reservoir/flow assurance |
-| `SimpleReservoir` | Material balance depletion |
-| `WellFlow` / `WellSystem` | IPR/VLP for well modeling |
-| `ProcessSystem` | Facility simulation |
-| `AdiabaticTwoPhasePipe` | Pipeline hydraulics |
-| `Adjuster` | Rate optimization to constraints |
+| `SystemInterface` | Fluid PVT for reservoir, process, and flow-assurance calculations. |
+| `SimpleReservoir` | Material-balance depletion and resource-capped production profiles. |
+| `WellFlow` / `WellSystem` | IPR/VLP well models feeding network and reservoir-coupling workflows. |
+| `ProcessSystem` | Generated facility models and optional host-facility bottleneck screening. |
+| `PipeBeggsAndBrills` and pipeline equipment | Higher-fidelity hydraulic checks behind screening-level route and network abstractions. |
+| `CashFlowEngine` and tax models | Country-specific after-tax economics and copy-safe scenario/sensitivity analysis. |
 
 ### With External Tools
 
 | Tool | Integration Method |
 |------|-------------------|
-| ECLIPSE/E300 | Export SCHEDULE section |
-| Excel | Export time series / reports |
-| Python/Jupyter | neqsim-python bindings |
-| Power BI | CSV/JSON export |
-| Spotfire | Data export APIs |
+| ECLIPSE/E300 | VFP tables and SCHEDULE keyword snippets from `ReservoirCouplingExporter`. |
+| Excel / CSV tools | Production forecast, portfolio, and comparison table exports. |
+| Python/Jupyter | neqsim-python bindings plus book notebooks using the workspace Java classes. |
+| Power BI / Spotfire | CSV/JSON-ready outputs from report and export helpers. |
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests
+Implemented coverage now includes:
 
-```
-src/test/java/neqsim/process/fielddevelopment/
-├── economics/
-│   ├── NorwegianTaxModelTest.java
-│   ├── CashFlowEngineTest.java
-│   └── NPVCalculatorTest.java
-├── tieback/
-│   ├── TiebackAnalyzerTest.java
-│   └── HostFacilityTest.java
-├── portfolio/
-│   └── PortfolioOptimizerTest.java
-└── scheduling/
-    └── FieldSchedulerTest.java
-```
+| Test area | Current tests |
+|-----------|---------------|
+| Tieback, host capacity, hydraulics, route networks | `TiebackTest` |
+| Field concepts, templates, lifecycle emissions, report exporter | `FieldDevelopmentEngineTest` |
+| Norwegian tax, cash flow, sensitivity, production profiles | `EconomicsTest`, `TaxModelTest`, `FieldDevelopmentNPVTest` |
+| Portfolio optimization | `PortfolioOptimizerTest` |
+| Decision ranking | `DevelopmentOptionRankerTest` |
+| Process linking, reservoir export, network solver | `FieldDevelopmentIntegrationUtilitiesTest` |
 
-### Integration Tests
-
-- Volve field case study (public data)
-- Synthetic gas tie-back scenarios
-- Multi-reservoir commingled production
-
----
-
-## Implementation Priority
-
-| Phase | Component | Priority | Effort | Value |
-|-------|-----------|----------|--------|-------|
-| 1.1 | NorwegianTaxModel | HIGH | 2 days | HIGH |
-| 1.2 | CashFlowEngine | HIGH | 3 days | HIGH |
-| 2.1 | TiebackAnalyzer | HIGH | 5 days | VERY HIGH |
-| 2.2 | HostFacility | HIGH | 2 days | HIGH |
-| 3.1 | FieldProductionScheduler enhancements | HIGH | 3 days | HIGH |
-| 4.1 | PortfolioOptimizer | MEDIUM | 5 days | MEDIUM |
-| 5.1 | PipelineNetwork | MEDIUM | 4 days | MEDIUM |
+Remaining test growth should focus on public benchmark studies, round-trip reservoir coupling,
+and higher-fidelity multiphase hydraulics comparisons.
 
 ---
 
 ## Success Metrics
 
-1. **Screening Speed**: Evaluate tie-back option in < 5 seconds
-2. **Accuracy**: NPV within ±20% of detailed engineering
-3. **Usability**: Simple API for common workflows
-4. **Integration**: Seamless connection to existing NeqSim
-5. **Documentation**: Complete JavaDoc and examples
+1. **Screening speed**: Evaluate a tieback option in less than 5 seconds for teaching-scale cases.
+2. **Accuracy**: Keep screening NPV within about 20% of detailed engineering once public calibration cases are available.
+3. **Usability**: Maintain simple APIs for common workflows while preserving detailed NeqSim escape hatches.
+4. **Integration**: Keep direct paths from concept screening to process, network, reservoir, economics, and reporting tools.
+5. **Documentation**: Keep the strategy, README examples, tests, and TPG4230 notebooks synchronized with current APIs.
 
 ---
 
 ## Next Steps
 
-1. **Immediate**: Implement NorwegianTaxModel and CashFlowEngine
-2. **Week 1**: Enhance FieldProductionScheduler with tax integration
-3. **Week 2**: Implement TiebackAnalyzer and HostFacility
-4. **Week 3**: Create integration tests with Volve data
-5. **Week 4**: Portfolio optimizer (if time permits)
+1. Move Chapter 24 notebooks fully onto `FieldDevelopmentReportExporter` outputs.
+2. Add one route-network teaching example with branches, a riser, and shared-corridor economics.
+3. Add lifecycle-emissions plots next to existing NPV and sensitivity figures.
+4. Add public benchmark/calibration cases for Norwegian fiscal economics, tieback hydraulics, and reservoir coupling exports.
+5. Mature portfolio optimization with infrastructure synergy and efficient-frontier visualizations.
 
 ---
 

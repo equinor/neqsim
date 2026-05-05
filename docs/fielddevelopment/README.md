@@ -16,6 +16,7 @@ This folder contains comprehensive documentation for NeqSim's field development 
 | [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
 | [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
 | [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
+| [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
 
 ---
 
@@ -92,6 +93,8 @@ ConceptKPIs kpis = evaluator.evaluate(concept);
 ```
 neqsim.process.fielddevelopment/
 ├── concept/           # Core data structures (FieldConcept, ReservoirInput, etc.)
+│   ├── GreenfieldConceptFactory
+│   └── DevelopmentCaseTemplate
 ├── economics/         # NPV, tax, portfolio optimization
 │   ├── CashFlowEngine
 │   ├── NorwegianTaxModel
@@ -129,14 +132,26 @@ neqsim.process.fielddevelopment/
 import neqsim.process.fielddevelopment.concept.*;
 import neqsim.process.fielddevelopment.evaluation.*;
 
-FieldConcept concept = FieldConcept.oilDevelopment("My Field", 100.0, 8, 5000.0);
+FieldConcept concept = FieldConcept.oilDevelopment("My Field", 8, 5000.0, 0.20);
 ConceptEvaluator evaluator = new ConceptEvaluator();
-evaluator.setOilPrice(75.0);
 ConceptKPIs kpis = evaluator.evaluate(concept);
 
-System.out.println("NPV: " + kpis.getNpv() + " MUSD");
-System.out.println("IRR: " + kpis.getIrr() * 100 + "%");
-System.out.println("CO2 Intensity: " + kpis.getCo2Intensity() + " kg/boe");
+System.out.println("CAPEX: " + kpis.getTotalCapexMUSD() + " MUSD");
+System.out.println("Field life: " + kpis.getFieldLifeYears() + " years");
+System.out.println("Recovery: " + kpis.getEstimatedRecoveryPercent() + "%");
+System.out.println("CO2 Intensity: " + kpis.getCo2IntensityKgPerBoe() + " kg/boe");
+```
+
+### Compare Standard Development Templates
+```java
+import neqsim.process.fielddevelopment.concept.*;
+
+DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
+DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
+
+System.out.println(tieback.getSummary());
+System.out.println(fpso.getSummary());
+System.out.println("Tieback process blocks: " + tieback.getFacilityConfig().getBlocks().size());
 ```
 
 ### Compare Development Options
@@ -227,7 +242,19 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
 | Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) |
+| Decision Engine Workflows | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) |
 | **Multi-Scenario Production Optimization** | [MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](MULTI_SCENARIO_PRODUCTION_OPTIMIZATION) |
+
+---
+
+## Executable Notebook Examples
+
+The following developer notebooks import NeqSim Java classes from the workspace through `devtools/neqsim_dev_setup.py`, making them suitable for unreleased field-development APIs:
+
+| Notebook | Description |
+|----------|-------------|
+| [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
+| [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
 
 ---
 

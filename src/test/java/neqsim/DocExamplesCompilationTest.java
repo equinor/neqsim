@@ -16,6 +16,11 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFrictio
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
+import neqsim.process.fielddevelopment.concept.FieldConcept;
+import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
+import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
+import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
 import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
@@ -89,6 +94,35 @@ public class DocExamplesCompilationTest {
     assertNotNull(FluidBuilder.dryExportGas(298.15, 70.0));
     assertNotNull(FluidBuilder.co2Rich(298.15, 80.0));
     assertNotNull(FluidBuilder.acidGas(298.15, 50.0));
+  }
+
+  /**
+   * Field-development quick start example from docs/fielddevelopment/README.md.
+   */
+  @Test
+  public void testFieldDevelopmentReadmeQuickStart() {
+    FieldConcept concept = FieldConcept.oilDevelopment("My Field", 8, 5000.0, 0.20);
+    ConceptEvaluator evaluator = new ConceptEvaluator();
+    ConceptKPIs kpis = evaluator.evaluate(concept);
+
+    assertTrue(kpis.getTotalCapexMUSD() > 0.0);
+    assertTrue(kpis.getFieldLifeYears() > 0.0);
+    assertTrue(kpis.getEstimatedRecoveryPercent() > 0.0);
+    assertTrue(Double.isFinite(kpis.getCo2IntensityKgPerBoe()));
+  }
+
+  /**
+   * Field-development template comparison example from docs/fielddevelopment/README.md.
+   */
+  @Test
+  public void testFieldDevelopmentReadmeTemplateComparison() {
+    DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
+    DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
+
+    assertNotNull(tieback.getSummary());
+    assertNotNull(fpso.getSummary());
+    assertTrue(tieback.getFacilityConfig().getBlocks().size() > 0);
+    assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
   }
 
   /**

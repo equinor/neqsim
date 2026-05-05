@@ -182,7 +182,7 @@ A critical specification for CCS pipelines is the water content of the CO$_2$ st
 
 $$\text{CO}_2 + \text{H}_2\text{O} \rightleftharpoons \text{H}_2\text{CO}_3 \rightleftharpoons \text{H}^+ + \text{HCO}_3^-$$
 
-Corrosion rates can exceed 10 mm/year for wet CO$_2$ on carbon steel \cite{deWaard1975}, compared to < 0.1 mm/year for dry CO$_2$. The industry typically specifies water content below 50–500 ppm(mol), depending on operating conditions and material selection.
+Wet CO$_2$ can be highly corrosive to carbon steel because free water forms carbonic acid. Sweet-CO$_2$ corrosion rates depend strongly on temperature, pH, flow regime, protective FeCO$_3$ scale, and impurities; dry CO$_2$ is typically specified to keep corrosion negligible. Rates above 10 mm/year are associated with severe wet/sour or otherwise aggressive conditions rather than being a generic value for every wet CO$_2$ pipeline \cite{deWaard1975}. The industry typically specifies water content below 50–500 ppm(mol), depending on operating conditions and material selection.
 
 CPA predicts the water saturation point of CO$_2$ at pipeline conditions:
 

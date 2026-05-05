@@ -13,6 +13,7 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.concept.WellsInput;
+import neqsim.process.fielddevelopment.network.TiebackRouteNetwork;
 
 /**
  * Unit tests for the tieback analysis package.
@@ -88,6 +89,21 @@ class TiebackTest {
     assertFalse(host.canAcceptGasRate(6.0));
     assertTrue(host.canAcceptOilRate(15000));
     assertFalse(host.canAcceptOilRate(25000));
+  }
+
+  @Test
+  void testHostFacilityCapacityReport() {
+    HostFacility host = HostFacility.builder("Test").spareGasCapacity(5.0).spareOilCapacity(20000.0)
+        .waterCapacity(10000.0).liquidCapacity(25000.0).build();
+
+    HostFacility.HostCapacityReport report = host.assessCapacity(4.0, 15000.0, 5000.0, 20000.0);
+
+    assertTrue(report.isCapacityAvailable());
+    assertTrue(report.isGasCapacityAvailable());
+    assertTrue(report.isOilCapacityAvailable());
+    assertTrue(report.isWaterCapacityAvailable());
+    assertTrue(report.isLiquidCapacityAvailable());
+    assertTrue(report.getSummary().toLowerCase().contains("capacity"));
   }
 
   @Test
@@ -177,6 +193,43 @@ class TiebackTest {
     assertEquals("Platform A", option.getHostName());
     assertTrue(option.getDistanceKm() > 0);
     assertTrue(option.getTotalCapexMusd() > 0);
+  }
+
+  @Test
+  void testSingleTiebackIncludesHydraulicsAndFlowAssurance() {
+    TiebackOption option = analyzer.evaluateSingleTieback(gasTieback, hosts.get(0), 61.6, 2.4);
+
+    assertTrue(option.getPipelineDiameterInches() > 0.0);
+    assertTrue(option.getPipelineHeatTransferCoefficientWm2K() > 0.0);
+    assertTrue(Double.isFinite(option.getArrivalPressureBara()));
+    assertTrue(Double.isFinite(option.getArrivalTemperatureC()));
+    assertNotNull(option.getFlowRegime());
+    assertTrue(Double.isFinite(option.getHydrateFormationTemperatureC()));
+    assertTrue(Double.isFinite(option.getShutdownCooldownRiskScore()));
+    assertTrue(Double.isFinite(option.getShutdownCooldownTimeToHydrateHours()));
+    assertNotNull(option.getHostCapacitySummary());
+    assertTrue(option.getFlowAssuranceNotes().toLowerCase().contains("hydraulics"));
+  }
+
+  @Test
+  void testSingleTiebackUsesRouteNetworkSummary() {
+    TiebackRouteNetwork route = TiebackRouteNetwork.builder("Shared corridor to Platform A")
+        .hostHub("Platform A hub").addSharedCorridor("Common corridor", 20.0, 12.0, 300.0)
+        .addFlowline("Discovery flowline", 10.0, 10.0, 350.0)
+        .addBranch("Future branch", 5.0, 8.0, 350.0)
+        .addRiser("Steel catenary riser", 1.0, 10.0, 300.0).build();
+
+    TiebackOption option =
+        analyzer.evaluateSingleTieback(gasTieback, hosts.get(0), route, 61.6, 2.4);
+
+    assertEquals("Shared corridor to Platform A", option.getRouteNetworkName());
+    assertEquals(31.0, option.getDistanceKm(), 0.001);
+    assertEquals(36.0, option.getRouteInstalledLengthKm(), 0.001);
+    assertEquals(20.0, option.getRouteSharedCorridorLengthKm(), 0.001);
+    assertEquals(1, option.getRouteBranchCount());
+    assertEquals(1, option.getRouteRiserCount());
+    assertTrue(option.getRouteSummary().contains("shared"));
+    assertTrue(option.getPipelineCapexMusd() > option.getDistanceKm());
   }
 
   @Test
