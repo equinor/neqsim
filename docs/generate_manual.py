@@ -882,7 +882,6 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 46: Chemical Reactions": [
             ("Chemical Reactions", "chemicalreactions/README.md"),
-            ("Deep Review", "chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md"),
         ],
         "Chapter 47: Statistics & Fitting": [
             ("Statistics Overview", "statistics/README.md"),

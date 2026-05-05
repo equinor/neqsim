@@ -38,7 +38,6 @@ This folder contains documentation for:
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
 | [LESSONS_LEARNED.md](LESSONS_LEARNED) | Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas) |
-| [WORKFLOW_REVIEW.md](WORKFLOW_REVIEW) | Comparative review of the task solver vs commercial tools and AI frameworks |
 
 Start with `CONTEXT.md` in the repo root for a 60-second orientation.
 

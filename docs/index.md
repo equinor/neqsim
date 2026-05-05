@@ -76,8 +76,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #3f51b5; color: #24292e; font-size: 1.25rem;">🤖 AI-Assisted Engineering</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="tutorials/solve-engineering-task.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Solve an Engineering Task</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From problem statement to validated report — no coding required</span></li>
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="development/TASK_SOLVING_GUIDE.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Task Solving Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Multi-agent workflow with validation and report generation</span></li>
-<li style="padding: 0.5rem 0;"><a href="development/WORKFLOW_REVIEW.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>How It Compares</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">NeqSim vs commercial tools and AI frameworks</span></li>
+<li style="padding: 0.5rem 0;"><a href="development/TASK_SOLVING_GUIDE.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Task Solving Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Multi-agent workflow with validation and report generation</span></li>
 </ul>
 </div>
 

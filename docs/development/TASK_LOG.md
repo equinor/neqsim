@@ -446,7 +446,7 @@ requirement`, or `confidential compressor route`.
 **Keywords:** electrical design, separator, heater, cooler, pipeline, heat tracing, cathodic protection, system electrical design, load list, transformer sizing, emergency generator
 **Solution:** `src/main/java/neqsim/process/electricaldesign/separator/SeparatorElectricalDesign.java`, `heatexchanger/HeatExchangerElectricalDesign.java`, `pipeline/PipelineElectricalDesign.java`, `system/SystemElectricalDesign.java`
 **Notes:**
-- Implemented Phases 2-3 of ELECTRICAL_DESIGN_PROPOSAL.md
+- Implemented electrical design phases 2-3.
 - SeparatorElectricalDesign: models control valves, instrumentation, lighting, optional heat tracing (no shaft power)
 - HeatExchangerElectricalDesign: auto-detects type (ELECTRIC_HEATER / AIR_COOLER / SHELL_AND_TUBE) from equipment class
 - PipelineElectricalDesign: heat tracing (W/m × length), cathodic protection, instrumentation

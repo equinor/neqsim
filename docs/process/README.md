@@ -61,7 +61,6 @@ This documentation is organized into the following sections:
 | Document | Description |
 |----------|-------------|
 | [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) | **Automated equipment sizing and optimization framework** |
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Implementation status and roadmap |
 
 **Key Features:**
 - `AutoSizeable` interface - Equipment auto-sizing from flow requirements
@@ -165,7 +164,7 @@ This documentation is organized into the following sections:
 | Streams | [streams.md](equipment/streams) | Stream, EnergyStream, VirtualStream |
 | Separators | [separators.md](equipment/separators) | Separator, ThreePhaseSeparator, GasScrubber |
 | Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers) | Heater, Cooler, HeatExchanger |
-| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart |
+| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart, CompressorWashing |
 | Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |

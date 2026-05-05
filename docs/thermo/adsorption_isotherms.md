@@ -646,6 +646,5 @@ double condensate = ccModel.getCondensateAmount("CO2");
 
 - [Adsorption Bed Process Equipment](../process/equipment/adsorption_bed.md) — Transient bed simulation, PSA/TSA cycles
 - [Adsorption Cookbook](../cookbook/adsorption-recipes.md) — Quick-start recipes and common workflows
-- [Adsorption Review](../physical_properties/adsorption_review.md) — Original enhancement proposal
 - [Physical Properties Overview](../physical_properties/) — Other property models (viscosity, density, etc.)
 - [Thermodynamic Models](thermodynamic_models.md) — Equations of state used in DRA calculations

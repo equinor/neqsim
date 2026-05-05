@@ -250,4 +250,3 @@ The notebook covers:
 ## Related Documentation
 
 - [Chemical Reactions Module](README.md)
-- [Chemical Reaction Deep Review](CHEMICAL_REACTION_DEEP_REVIEW.md)

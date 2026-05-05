@@ -1,7 +1,7 @@
 ---
 title: Compressor Equipment
 description: Documentation for compression equipment in NeqSim process simulation.
-keywords: "compressor, compression, polytropic, isentropic, compressor curve, anti-surge, surge, centrifugal, reciprocating, power, head, efficiency"
+keywords: "compressor, compression, polytropic, isentropic, compressor curve, anti-surge, surge, centrifugal, reciprocating, power, head, efficiency, fouling, washing"
 ---
 
 # Compressor Equipment
@@ -14,6 +14,7 @@ Documentation for compression equipment in NeqSim process simulation.
 - [Calculation Methods](#calculation-methods)
 - [Performance Curves](#performance-curves)
 - [Surge and Stone Wall](#surge-and-stone-wall)
+- [Compressor Fouling and Washing](#compressor-fouling-and-washing)
 - [Compressor Driver](#compressor-driver) ⭐ NEW
 - [Mechanical Losses and Seal Gas](#mechanical-losses-and-seal-gas)
 - [Usage Examples](#usage-examples)
@@ -32,6 +33,7 @@ Documentation for compression equipment in NeqSim process simulation.
 - `Compressor` - General compressor
 - `CompressorInterface` - Compressor interface
 - `CompressorChartInterface` - Performance map interface
+- `CompressorWashing` - Fouling, washing, and performance recovery model
 
 ---
 
@@ -375,6 +377,48 @@ comp.run();
 
 > **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves#automatic-curve-generation)
 > for complete API reference, advanced corrections, and examples.
+
+---
+
+## Compressor Fouling and Washing
+
+NeqSim includes `CompressorWashing` for tracking compressor fouling, estimating performance loss, and recording online or offline washing events. The model is in `neqsim.process.equipment.compressor` and is covered by `CompressorWashingTest`.
+
+The class tracks accumulated `currentFoulingFactor` on a 0 to 1 scale, `hoursSinceLastWash`, `totalOperatingHours`, and a wash-event history. The default `maxAllowableFouling` is 0.15; washing is recommended above half of that threshold and critical above the full threshold. The model also accounts for `environmentalSeverity` and `inletFilterEfficiency` when `updateFouling(double operatingHours)` is called.
+
+Supported fouling mechanisms are represented by `CompressorWashing.FoulingType`:
+
+| Fouling Type | Relative Behavior |
+|--------------|-------------------|
+| `SALT` | Highest built-in fouling rate; high washability |
+| `HYDROCARBON` | Oil mist and heavy hydrocarbon deposits |
+| `PARTICULATE` | Dust and airborne solids |
+| `CORROSION` | Lower fouling rate but lower washability |
+| `BIOLOGICAL` | Low-rate growth under wet conditions |
+
+Supported washing methods are represented by `CompressorWashing.WashingMethod`:
+
+| Method | Recovery Effectiveness | Downtime | Online |
+|--------|------------------------|----------|--------|
+| `ONLINE_WET` | 40% of washable fouling | 0 h | Yes |
+| `OFFLINE_SOAK` | 85% of washable fouling | 4 h | No |
+| `CRANK_WASH` | 95% of washable fouling | 12 h | No |
+| `CHEMICAL_CLEAN` | 98% of washable fouling | 24 h | No |
+| `DRY_ICE_BLAST` | 92% of washable fouling | 8 h | No |
+
+Performance impact is exposed through deterministic correction methods:
+
+| Method | Meaning |
+|--------|---------|
+| `getHeadLossFactor()` | Returns `currentFoulingFactor^2 * 0.20`, capped by the 0 to 1 fouling state |
+| `getEfficiencyDegradation()` | Returns `currentFoulingFactor * 0.10` |
+| `getCorrectedHead(cleanHead)` | Applies the head-loss factor to clean polytropic head |
+| `getCorrectedEfficiency(cleanEfficiency)` | Applies the efficiency degradation factor |
+| `estimateWashInterval(maxHeadLoss)` | Estimates operating hours to a target head-loss limit |
+| `estimateWaterConsumption(method)` | Estimates wash-water demand by washing method |
+| `estimateAnnualProductionLoss(rate, fouling, hours)` | Estimates production impact from average fouling |
+
+`Compressor` itself also has `setFoulingFactor(double)` and `getFoulingFactor()` for applying a direct head reduction in compressor calculations. Use `CompressorWashing` when the task needs fouling growth, wash-event tracking, recovery effectiveness, wash intervals, or washing consumables; use the compressor fouling factor when the task only needs a direct performance derate.
 
 ---
 

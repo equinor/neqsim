@@ -65,7 +65,6 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | --------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
 | Overview              | [docs/README.md](README)                                                                   | Package overview and quick start                                        |
 | Modules               | [docs/modules.md](modules)                                                                 | Architecture and module structure                                       |
-| **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW) | **Comprehensive capability review for oil & gas design and operations** |
 
 ### Chapter 2: Quickstart Guides (NEW!)
 
@@ -207,7 +206,6 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Interfacial Props               | [docs/physical_properties/interfacial_properties.md](physical_properties/interfacial_properties)           | Interfacial tension, etc.                                                                         |
 | Scale Potential                 | [docs/physical_properties/scale_potential.md](physical_properties/scale_potential)                         | Scale potential calculations                                                                      |
 | **Adsorption Isotherm Models**  | [docs/thermo/adsorption_isotherms.md](thermo/adsorption_isotherms)                                         | **Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation**                 |
-| Adsorption Review               | [docs/physical_properties/adsorption_review.md](physical_properties/adsorption_review)                     | Adsorption modeling review and enhancement proposal                                               |
 | Steam Tables                    | [docs/wiki/steam_tables_if97.md](wiki/steam_tables_if97)                                                   | IF97 steam table implementation                                                                   |
 | Thermodynamic Workflows         | [docs/thermo/thermodynamic_workflows.md](thermo/thermodynamic_workflows)                                   | Common thermodynamic workflows                                                                    |
 | Interaction Tables              | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide)                                               | Binary interaction parameters                                                                     |  |
@@ -239,7 +237,6 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Logical Operations   | [docs/wiki/logical_unit_operations.md](wiki/logical_unit_operations)                           | Logical unit operations                   |
 | Process Design       | [docs/process/process_design_guide.md](process/process_design_guide)                           | Process design guide                      |
 | Design Framework     | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK)                                   | Automated design & optimization framework |
-| Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Optimization implementation status        |
 | Pipeline Network Optimization | [docs/process/pipeline_network_optimization.md](process/pipeline_network_optimization) | NLP optimizer, sparse solver, Pareto, benchmarks |
 
 ### Chapter 12: Process Systems & Models
@@ -946,7 +943,6 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Code Patterns**                  | [docs/development/CODE_PATTERNS.md](development/CODE_PATTERNS)                                   | **Copy-paste starters for common coding tasks**                                       |
 | **Task Log**                       | [docs/development/TASK_LOG.md](development/TASK_LOG)                                             | **Searchable log of all solved tasks**                                                |
 | **Lessons Learned**                | [docs/development/LESSONS_LEARNED.md](development/LESSONS_LEARNED)                               | **Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas)**           |
-| **Workflow Review**                | [docs/development/WORKFLOW_REVIEW.md](development/WORKFLOW_REVIEW)                               | **Comparative review: NeqSim task solver vs commercial tools and AI frameworks**      |
 | Build Guide                        | [docs/development/BUILD.md](development/BUILD)                                                   | Build system, Maven profiles, packaging                                               |
 | Getting Started (Developer)        | [docs/development/GETTING_STARTED_DEVELOPER.md](development/GETTING_STARTED_DEVELOPER)           | Quick-start guide for new contributors                                                |
 | Project Structure Recommendations  | [docs/development/PROJECT_STRUCTURE_RECOMMENDATIONS.md](development/PROJECT_STRUCTURE_RECOMMENDATIONS) | Recommended package layout and module boundaries                                 |
@@ -1010,7 +1006,6 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Document                   | Path                                                                                                       | Description                                                 |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Chemical Reactions         | [docs/chemicalreactions/README.md](chemicalreactions/)                                                     | Chemical reactions module                                   |
-| Deep Review                | [docs/chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md](chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW) | Chemical reaction deep review                               |
 | Sulfur Deposition Analysis | [docs/chemicalreactions/sulfur_deposition_analysis.md](chemicalreactions/sulfur_deposition_analysis)       | Sulfur formation, solubility, deposition, and FeS corrosion |
 
 ### Appendix B: Statistics
