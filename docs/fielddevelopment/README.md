@@ -17,6 +17,7 @@ This folder contains comprehensive documentation for NeqSim's field development 
 | [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
 | [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
 | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
+| [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
 
 ---
 
@@ -120,7 +121,11 @@ neqsim.process.fielddevelopment/
 │   └── SubseaProductionSystem
 └── tieback/           # Tieback analysis
     ├── TiebackAnalyzer
-    └── HostFacility
+    ├── HostFacility
+    └── capacity/      # Host tie-in capacity and holdback planning
+        ├── TieInCapacityPlanner
+        ├── ProductionProfileSeries
+        └── HostTieInPoint
 ```
 
 ---
@@ -171,6 +176,30 @@ tieback.setScore(Criterion.CO2_INTENSITY, 7.0);
 ranker.setWeightProfile("balanced");
 RankingResult result = ranker.rank();
 System.out.println("Recommended: " + result.getRankedOptions().get(0).getName());
+```
+
+### Check Host Tie-In Capacity and Holdback
+```java
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.capacity.*;
+
+HostFacility host = HostFacility.builder("Brownfield Host")
+    .gasCapacity(10.0)
+    .build();
+
+ProductionProfileSeries base = new ProductionProfileSeries("base")
+    .addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
+ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
+    .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+
+TieInCapacityResult capacity = new TieInCapacityPlanner(host)
+    .setHostProductionProfile(base)
+    .setSatelliteProductionProfile(satellite)
+    .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
+    .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS)
+    .run();
+
+System.out.println(capacity.toMarkdownTable());
 ```
 
 ### Generate Process Model from Concept

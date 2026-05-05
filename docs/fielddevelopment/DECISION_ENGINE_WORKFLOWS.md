@@ -15,11 +15,12 @@ This page explains how the new APIs fit together and where to find executable no
 |------|-------------------|--------------|---------|
 | 1. Define concept basis | What reservoir, well, and infrastructure assumptions define the case? | `FieldConcept`, `ReservoirInput`, `WellsInput`, `InfrastructureInput`, `GreenfieldConceptFactory` | Comparable concept objects, production profiles, CAPEX assumptions, uncertainty ranges |
 | 2. Screen tieback routes | Which host and route are technically and economically feasible? | `TiebackAnalyzer`, `HostFacility`, `TiebackRouteNetwork`, `MultiphaseFlowIntegrator` | Host capacity status, route length, arrival pressure and temperature, hydrate margin, CAPEX, NPV |
-| 3. Rank alternatives | Which concept is preferred when economics, CO2, risk, and strategic fit are weighted together? | `DevelopmentOptionRanker`, `ConceptEvaluator`, `BatchConceptRunner` | Weighted MCDA ranking, normalized criteria, best option, sensitivity-ready scores |
-| 4. Optimize portfolio | Which projects should be selected under budget and risk constraints? | `PortfolioOptimizer`, `CashFlowEngine`, `NorwegianTaxModel`, `TaxModelRegistry` | Selected and deferred projects, capital use by year, EMV, NPV, capital efficiency |
-| 5. Bridge to facilities | What process model and utility load follows from the concept? | `ConceptToProcessLinker`, `FacilityBuilder`, `FacilityConfig` | Generated `ProcessSystem`, power demand, heating duty, cooling duty, emissions estimate |
-| 6. Bridge to reservoir models | What data should be exported to ECLIPSE/E300 workflows? | `ReservoirCouplingExporter` | VFPPROD/VFPINJ tables, schedule keywords, group and well controls, forecast CSV |
-| 7. Publish results | How are book and report tables kept consistent? | `FieldDevelopmentReportExporter` | Markdown tables and figure-ready data for notebooks, reports, and book chapters |
+| 3. Check host capacity | Can the base host and satellite profiles pass through the host without holdback? | `TieInCapacityPlanner`, `ProductionProfileSeries`, `HostTieInPoint`, `ProcessSystem.findBottleneck()` | Accepted production, held-back production, process bottleneck, deferred value, debottleneck decision |
+| 4. Rank alternatives | Which concept is preferred when economics, CO2, risk, and strategic fit are weighted together? | `DevelopmentOptionRanker`, `ConceptEvaluator`, `BatchConceptRunner` | Weighted MCDA ranking, normalized criteria, best option, sensitivity-ready scores |
+| 5. Optimize portfolio | Which projects should be selected under budget and risk constraints? | `PortfolioOptimizer`, `CashFlowEngine`, `NorwegianTaxModel`, `TaxModelRegistry` | Selected and deferred projects, capital use by year, EMV, NPV, capital efficiency |
+| 6. Bridge to facilities | What process model and utility load follows from the concept? | `ConceptToProcessLinker`, `FacilityBuilder`, `FacilityConfig` | Generated `ProcessSystem`, power demand, heating duty, cooling duty, emissions estimate |
+| 7. Bridge to reservoir models | What data should be exported to ECLIPSE/E300 workflows? | `ReservoirCouplingExporter` | VFPPROD/VFPINJ tables, schedule keywords, group and well controls, forecast CSV |
+| 8. Publish results | How are book and report tables kept consistent? | `FieldDevelopmentReportExporter` | Markdown tables and figure-ready data for notebooks, reports, and book chapters |
 
 ## New Example Notebooks
 
@@ -27,6 +28,7 @@ This page explains how the new APIs fit together and where to find executable no
 |----------|-------|----------------------|
 | [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Concept comparison, MCDA, portfolio optimization | `GreenfieldConceptFactory`, lifecycle emissions, `FieldDevelopmentReportExporter`, `DevelopmentOptionRanker`, `PortfolioOptimizer` |
 | [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, facility generation, reservoir exports | `TiebackRouteNetwork`, `TiebackAnalyzer`, `NetworkSolver`, `ConceptToProcessLinker`, `ReservoirCouplingExporter` |
+| [host_tie_in_capacity_and_holdback.ipynb](../../examples/notebooks/host_tie_in_capacity_and_holdback.ipynb) | Host capacity, holdback, and debottlenecking | `TieInCapacityPlanner`, `ProductionProfileSeries`, `HostTieInPoint`, process-equipment capacity constraints |
 
 Both notebooks are local developer examples. They load Java classes from the workspace through the devtools setup cell so newly added field-development APIs can be exercised before a release package is published.
 
@@ -59,6 +61,20 @@ Use these templates when a notebook or book chapter needs repeatable assumptions
 | Shared corridor length | Identifies infrastructure that may support future tiebacks or phased development |
 | Branch and riser counts | Captures extra complexity for reports and early risk discussion |
 | Equivalent diameter and heat transfer | Feeds the route-aware hydraulic and thermal screening calculation |
+
+### Host Tie-In Capacity and Holdback
+
+`TieInCapacityPlanner` evaluates whether base-host and satellite production profiles fit through the selected host over time. It starts with host nameplate capacities on `HostFacility`, then optionally injects the accepted operating point into an attached `ProcessSystem` and reads equipment capacity utilization through `findBottleneck()`.
+
+| Capacity output | Why it matters |
+|-----------------|----------------|
+| Accepted satellite production | Production that can pass through the host in the period |
+| Held-back satellite production | Volumes curtailed or deferred because host capacity is unavailable |
+| Primary bottleneck | Capacity category or process equipment that controls the tie-in |
+| Deferred value | Economic value of constrained production, discounted by planning period |
+| Debottleneck decision | First-pass investment screen for increasing capacity or removing the bottleneck |
+
+Use `CapacityAllocationPolicy.BASE_FIRST` for normal brownfield host preservation, `PRO_RATA` for shared commercial allocation, and `VALUE_WEIGHTED` when high-value production should be prioritized. See [Host Tie-In Capacity and Holdback Planning](HOST_TIE_IN_CAPACITY.md) for the full Java example.
 
 ### Decision Ranking
 
