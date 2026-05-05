@@ -16,6 +16,7 @@ This folder contains comprehensive documentation for NeqSim's field development 
 | [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
 | [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
 | [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
+| [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
 
 ---
 
@@ -241,7 +242,19 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
 | Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) |
+| Decision Engine Workflows | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) |
 | **Multi-Scenario Production Optimization** | [MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](MULTI_SCENARIO_PRODUCTION_OPTIMIZATION) |
+
+---
+
+## Executable Notebook Examples
+
+The following developer notebooks import NeqSim Java classes from the workspace through `devtools/neqsim_dev_setup.py`, making them suitable for unreleased field-development APIs:
+
+| Notebook | Description |
+|----------|-------------|
+| [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
+| [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
 
 ---
 
