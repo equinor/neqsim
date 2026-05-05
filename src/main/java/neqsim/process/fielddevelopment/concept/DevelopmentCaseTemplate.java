@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
+import neqsim.process.fielddevelopment.screening.LifecycleEmissionsProfile;
 
 /**
  * Standardized field-development case template for concept comparison.
@@ -33,6 +34,8 @@ public final class DevelopmentCaseTemplate implements Serializable {
   private final int developmentDurationMonths;
   private final CashFlowEngine.CashFlowResult economics;
   private final String assumptionsSummary;
+  private final DevelopmentCaseUncertainty uncertainty;
+  private final LifecycleEmissionsProfile lifecycleEmissionsProfile;
 
   /**
    * Creates a development case template.
@@ -56,6 +59,37 @@ public final class DevelopmentCaseTemplate implements Serializable {
       Map<Integer, Double> productionProfile, double annualOpexMusd, double powerMw,
       double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
       CashFlowEngine.CashFlowResult economics, String assumptionsSummary) {
+    this(name, caseType, concept, facilityConfig, capexBreakdownMusd, productionProfile,
+        annualOpexMusd, powerMw, annualEmissionsTonnes, firstProductionYear,
+        developmentDurationMonths, economics, assumptionsSummary,
+        DevelopmentCaseUncertainty.empty(), LifecycleEmissionsProfile.empty());
+  }
+
+  /**
+   * Creates a development case template with uncertainty and lifecycle emissions.
+   *
+   * @param name case name
+   * @param caseType case type label
+   * @param concept field concept
+   * @param facilityConfig facility configuration or null if not generated
+   * @param capexBreakdownMusd CAPEX breakdown in MUSD
+   * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
+   * @param annualOpexMusd annual OPEX in MUSD/year
+   * @param powerMw estimated power demand in MW
+   * @param annualEmissionsTonnes annual emissions in tonnes CO2e/year
+   * @param firstProductionYear first production year
+   * @param developmentDurationMonths development duration in months
+   * @param economics cash-flow result
+   * @param assumptionsSummary concise assumptions summary
+   * @param uncertainty probabilistic assumption bundle
+   * @param lifecycleEmissionsProfile lifecycle emissions time series
+   */
+  public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept,
+      FacilityConfig facilityConfig, Map<String, Double> capexBreakdownMusd,
+      Map<Integer, Double> productionProfile, double annualOpexMusd, double powerMw,
+      double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
+      CashFlowEngine.CashFlowResult economics, String assumptionsSummary,
+      DevelopmentCaseUncertainty uncertainty, LifecycleEmissionsProfile lifecycleEmissionsProfile) {
     this.name = name;
     this.caseType = caseType;
     this.concept = concept;
@@ -69,6 +103,10 @@ public final class DevelopmentCaseTemplate implements Serializable {
     this.developmentDurationMonths = developmentDurationMonths;
     this.economics = economics;
     this.assumptionsSummary = assumptionsSummary;
+    this.uncertainty = uncertainty == null ? DevelopmentCaseUncertainty.empty() : uncertainty;
+    this.lifecycleEmissionsProfile =
+        lifecycleEmissionsProfile == null ? LifecycleEmissionsProfile.empty()
+            : lifecycleEmissionsProfile;
   }
 
   /**
@@ -77,6 +115,15 @@ public final class DevelopmentCaseTemplate implements Serializable {
    * @return case name
    */
   public String getName() {
+    return name;
+  }
+
+  /**
+   * Gets the case name.
+   *
+   * @return case name
+   */
+  public String getCaseName() {
     return name;
   }
 
@@ -199,6 +246,24 @@ public final class DevelopmentCaseTemplate implements Serializable {
    */
   public String getAssumptionsSummary() {
     return assumptionsSummary;
+  }
+
+  /**
+   * Gets the probabilistic assumptions attached to this template.
+   *
+   * @return uncertainty bundle
+   */
+  public DevelopmentCaseUncertainty getUncertainty() {
+    return uncertainty;
+  }
+
+  /**
+   * Gets the lifecycle emissions profile.
+   *
+   * @return lifecycle emissions profile
+   */
+  public LifecycleEmissionsProfile getLifecycleEmissionsProfile() {
+    return lifecycleEmissionsProfile;
   }
 
   /**

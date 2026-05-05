@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
 import neqsim.process.fielddevelopment.screening.SafetyReport;
 import neqsim.process.fielddevelopment.screening.SafetyScreener;
+import neqsim.process.fielddevelopment.reporting.FieldDevelopmentReportExporter;
 
 /**
  * Tests for the Field Development Engine.
@@ -84,13 +86,26 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("ReservoirInput stores recoverable resource assumptions")
   void testReservoirInputResourceEstimate() {
-    ReservoirInput reservoir = ReservoirInput.richGas().resourceEstimate(10.0, "GSm3")
-        .recoveryFactor(0.65).build();
+    ReservoirInput reservoir =
+        ReservoirInput.richGas().resourceEstimate(10.0, "GSm3").recoveryFactor(0.65).build();
 
     assertEquals(10.0, reservoir.getResourceEstimate(), 0.001);
     assertEquals("GSm3", reservoir.getResourceUnit());
     assertEquals(0.65, reservoir.getRecoveryFactor(), 0.001);
     assertEquals(6.5, reservoir.getRecoverableResourceEstimate(), 0.001);
+  }
+
+  @Test
+  @DisplayName("ReservoirInput stores resource uncertainty assumptions")
+  void testReservoirInputResourceUncertainty() {
+    ReservoirInput reservoir = ReservoirInput.richGas().resourceUncertainty(8.0, 10.0, 14.0, "GSm3")
+        .recoveryFactor(0.70).build();
+
+    assertTrue(reservoir.hasResourceUncertainty());
+    assertEquals(10.0, reservoir.getResourceEstimate(), 0.001);
+    assertEquals(8.0, reservoir.getResourceP10(), 0.001);
+    assertEquals(14.0, reservoir.getResourceP90(), 0.001);
+    assertEquals(7.0, reservoir.getRecoverableResourceP50(), 0.001);
   }
 
   @Test
@@ -241,7 +256,8 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
     DevelopmentCaseTemplate fixedPlatform = GreenfieldConceptFactory.fixedPlatform("Book Platform");
     DevelopmentCaseTemplate subseaToShore = GreenfieldConceptFactory.subseaToShore("Book Shore");
-    DevelopmentCaseTemplate onshoreTerminal = GreenfieldConceptFactory.onshoreTerminal("Book Terminal");
+    DevelopmentCaseTemplate onshoreTerminal =
+        GreenfieldConceptFactory.onshoreTerminal("Book Terminal");
     DevelopmentCaseTemplate brownfield =
         GreenfieldConceptFactory.phasedBrownfieldExpansion("Book Brownfield");
 
@@ -255,6 +271,11 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     assertEquals("Subsea tieback", tieback.getCaseType());
     assertEquals("Standalone FPSO", fpso.getCaseType());
     assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
+
+    FieldDevelopmentReportExporter exporter = new FieldDevelopmentReportExporter();
+    String table = exporter.exportTemplateComparisonMarkdown(Arrays.asList(tieback, fpso));
+    assertTrue(table.contains("Lifecycle CO2"));
+    assertTrue(table.contains("P50 resource"));
   }
 
   /**
@@ -270,6 +291,9 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     assertTrue(template.getAnnualOpexMusd() > 0.0);
     assertTrue(template.getPowerMw() > 0.0);
     assertTrue(template.getAnnualEmissionsTonnes() >= 0.0);
+    assertTrue(template.getUncertainty().getCapex().getP90() >= template.getUncertainty().getCapex()
+        .getP50());
+    assertTrue(template.getLifecycleEmissionsProfile().hasData());
     assertFalse(template.getProductionProfile().isEmpty());
     assertFalse(template.getCapexBreakdownMusd().isEmpty());
     assertTrue(template.getAssumptionsSummary().contains(template.getCaseType()));

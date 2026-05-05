@@ -3,13 +3,13 @@ package neqsim.process.fielddevelopment.concept;
 import java.util.Map;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
-import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
 import neqsim.process.fielddevelopment.facility.FacilityBuilder;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator.EconomicsReport;
 import neqsim.process.fielddevelopment.screening.EmissionsTracker;
 import neqsim.process.fielddevelopment.screening.EmissionsTracker.EmissionsReport;
+import neqsim.process.fielddevelopment.screening.LifecycleEmissionsProfile;
 
 /**
  * Factory for standardized field-development concept templates.
@@ -202,10 +202,48 @@ public final class GreenfieldConceptFactory {
         caseType, firstProductionYear, developmentDurationMonths,
         facilityConfig.getBlocks().size());
 
+    DevelopmentCaseUncertainty uncertainty = createDefaultUncertainty(concept, gasConcept,
+        economicsReport.getTotalCapexMUSD(), developmentDurationMonths);
+    LifecycleEmissionsProfile lifecycleEmissions =
+        emissionsTracker.estimateLifecycle(concept, facilityConfig, productionProfile);
+
     return new DevelopmentCaseTemplate(concept.getName(), caseType, concept, facilityConfig,
         economicsReport.getCapexBreakdown(), productionProfile, economicsReport.getAnnualOpexMUSD(),
         emissionsReport.getTotalPowerMW(), emissionsReport.getTotalEmissionsTonnesPerYear(),
-        firstProductionYear, developmentDurationMonths, economics, assumptions);
+        firstProductionYear, developmentDurationMonths, economics, assumptions, uncertainty,
+        lifecycleEmissions);
+  }
+
+  /**
+   * Creates default probabilistic assumptions for a template.
+   *
+   * @param concept field concept
+   * @param gasConcept true for gas concepts
+   * @param totalCapexMusd total CAPEX in MUSD
+   * @param developmentDurationMonths development duration in months
+   * @return uncertainty bundle
+   */
+  private static DevelopmentCaseUncertainty createDefaultUncertainty(FieldConcept concept,
+      boolean gasConcept, double totalCapexMusd, int developmentDurationMonths) {
+    ReservoirInput reservoir = concept.getReservoir();
+    double resourceP50 = reservoir.getResourceEstimate();
+    String resourceUnit = reservoir.getResourceUnit();
+    UncertaintyRange resource = reservoir.hasResourceUncertainty()
+        ? new UncertaintyRange("Resource", resourceUnit, reservoir.getResourceP10(),
+            reservoir.getResourceP50(), reservoir.getResourceP90())
+        : new UncertaintyRange("Resource", resourceUnit, resourceP50 * 0.75, resourceP50,
+            resourceP50 * 1.25);
+    UncertaintyRange capex = new UncertaintyRange("CAPEX", "MUSD", totalCapexMusd * 0.85,
+        totalCapexMusd, totalCapexMusd * 1.30);
+    UncertaintyRange schedule =
+        new UncertaintyRange("Schedule", "months", developmentDurationMonths * 0.85,
+            developmentDurationMonths, developmentDurationMonths * 1.25);
+    UncertaintyRange price =
+        gasConcept ? new UncertaintyRange("Gas price", "USD/Sm3", 0.15, 0.25, 0.40)
+            : new UncertaintyRange("Oil price", "USD/bbl", 55.0, 75.0, 100.0);
+    UncertaintyRange production = new UncertaintyRange("Production factor", "-", 0.85, 1.0, 1.15);
+    return DevelopmentCaseUncertainty.builder().resource(resource).capex(capex)
+        .scheduleMonths(schedule).price(price).productionFactor(production).build();
   }
 
   /**
@@ -248,9 +286,8 @@ public final class GreenfieldConceptFactory {
         gasConcept ? concept.getWells().getRatePerWellSm3d() * concept.getWells().getProducerCount()
             : getOilRateBopd(concept);
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
-    return generator.generateFullProfile(peakRatePerDay, 2, 5, gasConcept ? 0.12 : 0.15, 0.5,
-        gasConcept ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, firstProductionYear, 30,
-        peakRatePerDay * 0.05);
+    return generator.generateFromReservoirInput(concept.getReservoir(), peakRatePerDay, gasConcept,
+        firstProductionYear, 30);
   }
 
   /**

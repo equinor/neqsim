@@ -2,8 +2,11 @@ package neqsim.process.fielddevelopment.economics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import neqsim.process.fielddevelopment.economics.TaxModel.TaxResult;
 
@@ -312,6 +315,40 @@ class EconomicsTest {
 
     assertEquals(20, monteCarlo.getIterations());
     assertTrue(Double.isFinite(monteCarlo.getNpvP50()));
+  }
+
+  @Test
+  void testReservoirCoupledProfileIsResourceCappedAndExportable() {
+    ReservoirInput reservoir = ReservoirInput.leanGas().resourceUncertainty(8.0, 10.0, 12.0, "GSm3")
+        .recoveryFactor(0.50).build();
+    ProductionProfileGenerator generator = new ProductionProfileGenerator();
+
+    Map<Integer, Double> profile =
+        generator.generateFromReservoirInput(reservoir, 3.0e6, true, 2026, 30);
+
+    assertTrue(ProductionProfileGenerator.calculateCumulativeProduction(profile) <= 5.0e9 + 1.0);
+    String csv = ProductionProfileGenerator.toVfpRateTableCsv(profile, "Sm3/d", 120.0);
+    assertTrue(csv.contains("average_rate_per_day"));
+    assertTrue(csv.contains("120.000"));
+  }
+
+  @Test
+  void testHistoryMatchedDeclineForecast() {
+    Map<Integer, Double> history = new LinkedHashMap<Integer, Double>();
+    history.put(2020, 4.0e9);
+    history.put(2021, 3.5e9);
+    history.put(2022, 3.1e9);
+    history.put(2023, 2.7e9);
+    ProductionProfileGenerator generator = new ProductionProfileGenerator();
+
+    ProductionProfileGenerator.HistoryMatchedDeclineCase declineCase =
+        generator.fitHistoryMatchedDecline(history);
+    Map<Integer, Double> forecast =
+        generator.generateHistoryMatchedProfile(declineCase, 2024, 5, 0.1e9 / 365.25);
+
+    assertTrue(declineCase.getAnnualDeclineRate() > 0.0);
+    assertTrue(declineCase.getFitQuality() > 0.90);
+    assertEquals(5, forecast.size());
   }
 
   @Test

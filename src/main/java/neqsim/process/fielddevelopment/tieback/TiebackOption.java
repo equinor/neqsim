@@ -46,6 +46,24 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
   /** Maximum water depth along route in meters. */
   private double maxWaterDepthM;
 
+  /** Optional route-network name for multi-segment routes. */
+  private String routeNetworkName = "";
+
+  /** Route summary with branches, risers, shared corridor, and host hub information. */
+  private String routeSummary = "";
+
+  /** Total installed route length including branch segments in kilometres. */
+  private double routeInstalledLengthKm;
+
+  /** Shared corridor length in kilometres. */
+  private double routeSharedCorridorLengthKm;
+
+  /** Number of branch segments in the route network. */
+  private int routeBranchCount;
+
+  /** Number of riser segments in the route network. */
+  private int routeRiserCount;
+
   /** Estimated arrival pressure at host in bara. */
   private double arrivalPressureBara;
 
@@ -297,6 +315,9 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Tieback Option: ").append(optionId).append(" ===\n");
     sb.append(String.format("Distance: %.1f km, Depth: %.0f m\n", distanceKm, maxWaterDepthM));
+    if (routeSummary != null && !routeSummary.isEmpty()) {
+      sb.append("Route: ").append(routeSummary).append("\n");
+    }
     sb.append(String.format("Production: %.2f %s, Field life: %.1f years\n", maxProductionRate,
         rateUnit, fieldLifeYears));
     sb.append(String.format("CAPEX: %.0f MUSD (%.1f MUSD/km)\n", totalCapexMusd, getCapexPerKm()));
@@ -399,6 +420,114 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public void setMaxWaterDepthM(double maxWaterDepthM) {
     this.maxWaterDepthM = maxWaterDepthM;
+  }
+
+  /**
+   * Gets the route-network name.
+   *
+   * @return route-network name, or an empty string for scalar-distance screening
+   */
+  public String getRouteNetworkName() {
+    return routeNetworkName;
+  }
+
+  /**
+   * Sets the route-network name.
+   *
+   * @param routeNetworkName route-network name
+   */
+  public void setRouteNetworkName(String routeNetworkName) {
+    this.routeNetworkName = routeNetworkName == null ? "" : routeNetworkName;
+  }
+
+  /**
+   * Gets the route-network summary.
+   *
+   * @return route-network summary text
+   */
+  public String getRouteSummary() {
+    return routeSummary;
+  }
+
+  /**
+   * Sets the route-network summary.
+   *
+   * @param routeSummary route-network summary text
+   */
+  public void setRouteSummary(String routeSummary) {
+    this.routeSummary = routeSummary == null ? "" : routeSummary;
+  }
+
+  /**
+   * Gets installed route length.
+   *
+   * @return installed route length in kilometres
+   */
+  public double getRouteInstalledLengthKm() {
+    return routeInstalledLengthKm;
+  }
+
+  /**
+   * Sets installed route length.
+   *
+   * @param routeInstalledLengthKm installed route length in kilometres
+   */
+  public void setRouteInstalledLengthKm(double routeInstalledLengthKm) {
+    this.routeInstalledLengthKm = routeInstalledLengthKm;
+  }
+
+  /**
+   * Gets shared corridor length.
+   *
+   * @return shared corridor length in kilometres
+   */
+  public double getRouteSharedCorridorLengthKm() {
+    return routeSharedCorridorLengthKm;
+  }
+
+  /**
+   * Sets shared corridor length.
+   *
+   * @param routeSharedCorridorLengthKm shared corridor length in kilometres
+   */
+  public void setRouteSharedCorridorLengthKm(double routeSharedCorridorLengthKm) {
+    this.routeSharedCorridorLengthKm = routeSharedCorridorLengthKm;
+  }
+
+  /**
+   * Gets branch count.
+   *
+   * @return number of branch segments
+   */
+  public int getRouteBranchCount() {
+    return routeBranchCount;
+  }
+
+  /**
+   * Sets branch count.
+   *
+   * @param routeBranchCount number of branch segments
+   */
+  public void setRouteBranchCount(int routeBranchCount) {
+    this.routeBranchCount = routeBranchCount;
+  }
+
+  /**
+   * Gets riser count.
+   *
+   * @return number of riser segments
+   */
+  public int getRouteRiserCount() {
+    return routeRiserCount;
+  }
+
+  /**
+   * Sets riser count.
+   *
+   * @param routeRiserCount number of riser segments
+   */
+  public void setRouteRiserCount(int routeRiserCount) {
+    this.routeRiserCount = routeRiserCount;
   }
 
   /**

@@ -15,6 +15,7 @@ import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
 import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator;
 import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator.PipelineResult;
+import neqsim.process.fielddevelopment.network.TiebackRouteNetwork;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
@@ -169,11 +170,29 @@ public class TiebackAnalyzer implements Serializable {
    */
   public TiebackReport analyze(FieldConcept discovery, List<HostFacility> hosts,
       double discoveryLatitude, double discoveryLongitude) {
+    return analyze(discovery, hosts, null, discoveryLatitude, discoveryLongitude);
+  }
+
+  /**
+   * Analyzes tieback options with optional route networks per host.
+   *
+   * @param discovery the satellite field concept
+   * @param hosts list of potential host facilities
+   * @param routeNetworksByHost optional map from host name to route network
+   * @param discoveryLatitude discovery latitude in degrees
+   * @param discoveryLongitude discovery longitude in degrees
+   * @return comprehensive tieback report with ranked options
+   */
+  public TiebackReport analyze(FieldConcept discovery, List<HostFacility> hosts,
+      Map<String, TiebackRouteNetwork> routeNetworksByHost, double discoveryLatitude,
+      double discoveryLongitude) {
     List<TiebackOption> options = new ArrayList<TiebackOption>();
 
     for (HostFacility host : hosts) {
-      TiebackOption option =
-          evaluateSingleTieback(discovery, host, discoveryLatitude, discoveryLongitude);
+      TiebackRouteNetwork routeNetwork =
+          routeNetworksByHost == null ? null : routeNetworksByHost.get(host.getName());
+      TiebackOption option = evaluateSingleTieback(discovery, host, routeNetwork, discoveryLatitude,
+          discoveryLongitude);
       options.add(option);
     }
 
@@ -219,11 +238,28 @@ public class TiebackAnalyzer implements Serializable {
    */
   public TiebackOption evaluateSingleTieback(FieldConcept discovery, HostFacility host,
       double discoveryLatitude, double discoveryLongitude) {
+    return evaluateSingleTieback(discovery, host, null, discoveryLatitude, discoveryLongitude);
+  }
+
+  /**
+   * Evaluates a single tieback option using an optional multi-segment route network.
+   *
+   * @param discovery the satellite field concept
+   * @param host the host facility
+   * @param routeNetwork route network to use, or null for scalar route-length screening
+   * @param discoveryLatitude discovery latitude
+   * @param discoveryLongitude discovery longitude
+   * @return evaluated tieback option
+   */
+  public TiebackOption evaluateSingleTieback(FieldConcept discovery, HostFacility host,
+      TiebackRouteNetwork routeNetwork, double discoveryLatitude, double discoveryLongitude) {
     TiebackOption option = new TiebackOption(discovery.getName(), host.getName());
 
     // Calculate routed distance, preferring explicit concept route length when available.
-    double distance = resolveRouteLengthKm(discovery, host, discoveryLatitude, discoveryLongitude);
+    double distance =
+        resolveRouteLengthKm(discovery, host, discoveryLatitude, discoveryLongitude, routeNetwork);
     option.setDistanceKm(distance);
+    applyRouteNetworkSummary(option, routeNetwork);
 
     // Get discovery parameters
     ReservoirInput reservoir = discovery.getReservoir();
@@ -299,14 +335,17 @@ public class TiebackAnalyzer implements Serializable {
     }
 
     // Set water depth
-    option.setMaxWaterDepthM(Math.max(resolveWaterDepthM(discovery, host), 100.0));
+    option.setMaxWaterDepthM(Math.max(resolveWaterDepthM(discovery, host, routeNetwork), 100.0));
 
     // Pipeline diameter for both hydraulic screening and cost estimate.
-    option.setPipelineDiameterInches(
-        estimatePipelineDiameterInches(wellCount, totalRate, rateUnit, isGasField));
+    double routeDiameterInches =
+        routeNetwork == null ? 0.0 : routeNetwork.getEquivalentDiameterInches();
+    option.setPipelineDiameterInches(routeDiameterInches > 0.0 ? routeDiameterInches
+        : estimatePipelineDiameterInches(wellCount, totalRate, rateUnit, isGasField));
 
     // Flow assurance screening with NeqSim hydraulics and thermodynamics.
-    screenFlowAssurance(option, discovery, host, reservoir, wells, isGasField, totalRate, rateUnit);
+    screenFlowAssurance(option, discovery, host, reservoir, wells, isGasField, totalRate, rateUnit,
+        routeNetwork);
 
     // Estimate CAPEX
     estimateCapex(option, wellCount, distance, host);
@@ -335,12 +374,18 @@ public class TiebackAnalyzer implements Serializable {
    */
   private void screenFlowAssurance(TiebackOption option, FieldConcept discovery, HostFacility host,
       ReservoirInput reservoir, WellsInput wells, boolean isGasField, double totalRate,
-      String rateUnit) {
+      String rateUnit, TiebackRouteNetwork routeNetwork) {
     InfrastructureInput infrastructure = discovery.getInfrastructure();
     double routeSeabedTemperatureC =
         infrastructure != null ? infrastructure.getEstimatedSeabedTemperature()
             : seabedTemperatureC;
     double heatTransferCoefficient = estimateFlowlineHeatTransferCoefficient(infrastructure);
+    if (routeNetwork != null) {
+      routeSeabedTemperatureC = routeNetwork.getEquivalentSeabedTemperatureC();
+      if (routeNetwork.getEquivalentHeatTransferCoefficientWm2K() > 0.0) {
+        heatTransferCoefficient = routeNetwork.getEquivalentHeatTransferCoefficientWm2K();
+      }
+    }
     option.setPipelineHeatTransferCoefficientWm2K(heatTransferCoefficient);
 
     double inletPressureBara = wells != null ? wells.getTubeheadPressure() : 100.0;
@@ -355,6 +400,9 @@ public class TiebackAnalyzer implements Serializable {
       integrator.setPipelineDiameter(option.getPipelineDiameterInches() * 0.0254);
       integrator.setSeabedTemperature(routeSeabedTemperatureC);
       integrator.setOverallHeatTransferCoeff(heatTransferCoefficient);
+      if (routeNetwork != null) {
+        integrator.setElevationChange(routeNetwork.getNetElevationChangeM());
+      }
       integrator.setMinArrivalPressure(host.getMinTieInPressureBara());
       hydraulicResult = integrator.calculateHydraulics(stream, host.getMinTieInPressureBara());
       applyHydraulicResult(option, hydraulicResult, host);
@@ -424,17 +472,19 @@ public class TiebackAnalyzer implements Serializable {
 
   private void estimateCapex(TiebackOption option, int wellCount, double distanceKm,
       HostFacility host) {
+    double installedRouteLengthKm =
+        option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm() : distanceKm;
     // Subsea equipment
     double subseaCost = wellCount * subseaTreeCostMusd + manifoldBaseCostMusd;
     option.setSubseaCapexMusd(subseaCost);
 
     // Pipeline (adjust cost for water depth)
     double depthFactor = 1.0 + (host.getWaterDepthM() / 1000.0);
-    double pipelineCost = distanceKm * pipelineCostPerKmMusd * depthFactor;
+    double pipelineCost = installedRouteLengthKm * pipelineCostPerKmMusd * depthFactor;
     option.setPipelineCapexMusd(pipelineCost);
 
     // Umbilical
-    double umbilicalCost = distanceKm * umbilicalCostPerKmMusd;
+    double umbilicalCost = installedRouteLengthKm * umbilicalCostPerKmMusd;
     option.setUmbilicalCapexMusd(umbilicalCost);
 
     // Drilling
@@ -513,10 +563,14 @@ public class TiebackAnalyzer implements Serializable {
    * @param host host facility
    * @param discoveryLatitude discovery latitude in degrees
    * @param discoveryLongitude discovery longitude in degrees
+   * @param routeNetwork optional route network
    * @return route length in km
    */
   private double resolveRouteLengthKm(FieldConcept discovery, HostFacility host,
-      double discoveryLatitude, double discoveryLongitude) {
+      double discoveryLatitude, double discoveryLongitude, TiebackRouteNetwork routeNetwork) {
+    if (routeNetwork != null && routeNetwork.getScreeningLengthKm() > 0.0) {
+      return routeNetwork.getScreeningLengthKm();
+    }
     InfrastructureInput infrastructure = discovery.getInfrastructure();
     if (infrastructure != null && infrastructure.getTiebackLength() > 0.0) {
       return infrastructure.getTiebackLength();
@@ -529,12 +583,33 @@ public class TiebackAnalyzer implements Serializable {
    *
    * @param discovery discovery concept
    * @param host host facility
+   * @param routeNetwork optional route network
    * @return maximum route water depth in meters
    */
-  private double resolveWaterDepthM(FieldConcept discovery, HostFacility host) {
+  private double resolveWaterDepthM(FieldConcept discovery, HostFacility host,
+      TiebackRouteNetwork routeNetwork) {
     InfrastructureInput infrastructure = discovery.getInfrastructure();
     double conceptDepth = infrastructure != null ? infrastructure.getWaterDepth() : 0.0;
-    return Math.max(host.getWaterDepthM(), conceptDepth);
+    double routeDepth = routeNetwork != null ? routeNetwork.getMaxWaterDepthM() : 0.0;
+    return Math.max(Math.max(host.getWaterDepthM(), conceptDepth), routeDepth);
+  }
+
+  /**
+   * Applies route-network metadata to a tieback option.
+   *
+   * @param option tieback option to update
+   * @param routeNetwork optional route network
+   */
+  private void applyRouteNetworkSummary(TiebackOption option, TiebackRouteNetwork routeNetwork) {
+    if (routeNetwork == null) {
+      return;
+    }
+    option.setRouteNetworkName(routeNetwork.getName());
+    option.setRouteSummary(routeNetwork.getSummary());
+    option.setRouteInstalledLengthKm(routeNetwork.getInstalledLengthKm());
+    option.setRouteSharedCorridorLengthKm(routeNetwork.getSharedCorridorLengthKm());
+    option.setRouteBranchCount(routeNetwork.getBranchCount());
+    option.setRouteRiserCount(routeNetwork.getRiserCount());
   }
 
   /**
@@ -816,9 +891,9 @@ public class TiebackAnalyzer implements Serializable {
   private String buildFlowAssuranceNotes(TiebackOption option, FlowAssuranceReport report,
       PipelineResult hydraulicResult, double seabedTemperatureC) {
     StringBuilder notes = new StringBuilder();
-    notes.append(
-      String.format("Hydraulics: route %.1f km, seabed %.1f C, U %.1f W/m2K. ", option.getDistanceKm(),
-            seabedTemperatureC, option.getPipelineHeatTransferCoefficientWm2K()));
+    notes.append(String.format("Hydraulics: route %.1f km, seabed %.1f C, U %.1f W/m2K. ",
+        option.getDistanceKm(), seabedTemperatureC,
+        option.getPipelineHeatTransferCoefficientWm2K()));
     if (hydraulicResult != null) {
       notes.append(String.format("Arrival %.1f bara / %.1f C, regime %s, erosional ratio %.2f. ",
           option.getArrivalPressureBara(), option.getArrivalTemperatureC(), option.getFlowRegime(),

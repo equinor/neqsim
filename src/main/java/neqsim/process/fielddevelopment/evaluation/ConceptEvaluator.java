@@ -6,7 +6,6 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.facility.FacilityBuilder;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
-import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator.EconomicsReport;
 import neqsim.process.fielddevelopment.screening.EmissionsTracker;
@@ -293,9 +292,7 @@ public class ConceptEvaluator {
 
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
     Map<Integer, Double> profile =
-        generator.generateFullProfile(peakRatePerDay, 2, 5, gasConcept ? 0.12 : 0.15, 0.5,
-            gasConcept ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, 2026, 30,
-            peakRatePerDay * 0.05);
+        generator.generateFromReservoirInput(reservoir, peakRatePerDay, gasConcept, 2026, 30);
 
     double targetRecoverable = reservoir != null ? reservoir.getRecoverableResourceEstimate() : 0.0;
     String resourceUnit = reservoir != null ? reservoir.getResourceUnit() : "";
