@@ -28,6 +28,19 @@ The TPG4230 field-development book now has direct NeqSim API support for the cor
 
 ### Remaining Roadmap for the Book
 
+The next TPG4230 book improvement should package NeqSim as three executable teaching workflows:
+
+| Workflow | What the notebook should demonstrate | Primary APIs |
+|----------|--------------------------------------|--------------|
+| Tieback Screening Notebook | Define a satellite discovery, candidate hosts, route length/depth, representative fluid, hydraulics, flow assurance, host capacity, NPV, and feasibility ranking. | `TiebackAnalyzer`, `TiebackReport`, `HostFacility`, `MultiphaseFlowIntegrator`, `FlowAssuranceScreener` |
+| Tieback vs Standalone Notebook | Compare host tieback, standalone FPSO, and fixed-platform alternatives using one production profile, CAPEX class, power/emissions basis, and tax model. | `GreenfieldConceptFactory`, `DevelopmentCaseTemplate`, `EconomicsEstimator`, `EmissionsTracker`, `CashFlowEngine` |
+| Probabilistic Concept Selection Notebook | Run P10/P50/P90 NPV, tornado sensitivity, breakeven price, and a compact risk register for selected alternatives. | `SensitivityAnalyzer`, `ProductionProfileGenerator`, `CashFlowEngine`, `ConceptEvaluator` |
+
+These notebooks should live in the TPG4230 book Chapter 24 notebook folder and feed results back
+into Chapters 11, 13, 17, 18, and 28. Each notebook should have a `plan.json`, `results.json`, and
+`claims_manifest.json` entry so the PaperLab replication gate can rebuild the calculations from a
+clean checkout.
+
 1. **Route networks:** Extend the single-route tieback screening into multi-segment networks with branches, risers, and shared host corridors so book examples can show hub-and-spoke developments.
 2. **Reservoir coupling:** Connect `ReservoirInput` resource assumptions to `SimpleReservoir`, VFP export, and decline-profile history matching for chapter examples that bridge reservoir and facilities models.
 3. **Probabilistic templates:** Add P10/P50/P90 resource, CAPEX, price, and schedule distributions directly to `DevelopmentCaseTemplate` so the book's tornado and probabilistic NPV figures can be generated from one object.
