@@ -12,6 +12,8 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
@@ -21,6 +23,12 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
 import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
 import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
+import neqsim.process.fielddevelopment.tieback.capacity.HostTieInPoint;
+import neqsim.process.fielddevelopment.tieback.capacity.ProductionProfileSeries;
+import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner;
+import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityResult;
 import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
@@ -123,6 +131,50 @@ public class DocExamplesCompilationTest {
     assertNotNull(fpso.getSummary());
     assertTrue(tieback.getFacilityConfig().getBlocks().size() > 0);
     assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
+  }
+
+  /**
+   * Host tie-in capacity example from docs/fielddevelopment/HOST_TIE_IN_CAPACITY.md.
+   */
+  @Test
+  public void testHostTieInCapacityDocExample() {
+    final Stream hostFeed = createDocHostFeed();
+    hostFeed
+        .addCapacityConstraint(new CapacityConstraint("hostFeedFlow", "kg/hr", ConstraintType.HARD)
+            .setDesignValue(2500.0).setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
+    ProcessSystem hostProcess = new ProcessSystem("host process");
+    hostProcess.add(hostFeed);
+
+    HostFacility host =
+        HostFacility.builder("Example Host").gasCapacity(10.0).processSystem(hostProcess).build();
+    ProductionProfileSeries base =
+        new ProductionProfileSeries("base host").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite =
+        new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    HostTieInPoint tieInPoint =
+        new HostTieInPoint("Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
+
+    TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
+        .setSatelliteProductionProfile(satellite)
+        .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST).setTieInPoint(tieInPoint).run();
+
+    assertTrue(result.hasHoldback());
+    assertNotNull(result.toMarkdownTable());
+    assertTrue(result.getPeriodResults().get(0).isProcessModelUsed());
+  }
+
+  /**
+   * Creates a simple host feed stream for the host tie-in capacity documentation example.
+   *
+   * @return configured host feed stream
+   */
+  private Stream createDocHostFeed() {
+    SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(288.15, 60.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule("classic");
+    Stream hostFeed = new Stream("Host Feed", gas);
+    hostFeed.setFlowRate(1000.0, "kg/hr");
+    return hostFeed;
   }
 
   /**

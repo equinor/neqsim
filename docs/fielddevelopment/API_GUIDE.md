@@ -18,8 +18,9 @@ This guide provides detailed usage examples for all components added in the fiel
 5. [Facility Design](#5-facility-design)
 6. [Network & Hydraulics](#6-network--hydraulics)
 7. [Tieback Analysis](#7-tieback-analysis)
-8. [Screening Tools](#8-screening-tools)
-9. [SURF Equipment and Cost Estimation](#9-surf-equipment-and-cost-estimation)
+8. [Host Tie-In Capacity](#8-host-tie-in-capacity)
+9. [Screening Tools](#9-screening-tools)
+10. [SURF Equipment and Cost Estimation](#10-surf-equipment-and-cost-estimation)
 
 ---
 
@@ -133,18 +134,18 @@ import neqsim.process.fielddevelopment.economics.*;
 PortfolioOptimizer optimizer = new PortfolioOptimizer();
 
 // Add candidate projects with: name, CAPEX, NPV, type, probability of success
-Project projectA = optimizer.addProject("Field Alpha", 800.0, 1400.0, 
+Project projectA = optimizer.addProject("Field Alpha", 800.0, 1400.0,
     ProjectType.DEVELOPMENT, 0.85);
 projectA.setStartYear(2026);
 
-Project projectB = optimizer.addProject("Beta IOR", 120.0, 220.0, 
+Project projectB = optimizer.addProject("Beta IOR", 120.0, 220.0,
     ProjectType.IOR, 0.95);
 projectB.setMandatory(true);  // Must be included if budget allows
 
-Project projectC = optimizer.addProject("Gamma Exploration", 250.0, 900.0, 
+Project projectC = optimizer.addProject("Gamma Exploration", 250.0, 900.0,
     ProjectType.EXPLORATION, 0.30);
 
-Project projectD = optimizer.addProject("Delta Tieback", 350.0, 480.0, 
+Project projectD = optimizer.addProject("Delta Tieback", 350.0, 480.0,
     ProjectType.TIEBACK, 0.88);
 
 // Set budget constraints
@@ -238,7 +239,7 @@ SensitivityResults results = sensitivity.runTornado();
 // Get sorted impact on NPV
 List<ParameterImpact> impacts = results.getSortedImpacts("npv");
 for (ParameterImpact impact : impacts) {
-    System.out.printf("%s: %.1f to %.1f MUSD swing%n", 
+    System.out.printf("%s: %.1f to %.1f MUSD swing%n",
         impact.getParameter(), impact.getLowValue(), impact.getHighValue());
 }
 
@@ -304,7 +305,7 @@ RankingResult result = ranker.rank();
 List<DevelopmentOption> ranked = result.getRankedOptions();
 for (int i = 0; i < ranked.size(); i++) {
     DevelopmentOption opt = ranked.get(i);
-    System.out.printf("%d. %s (Score: %.3f)%n", 
+    System.out.printf("%d. %s (Score: %.3f)%n",
         i+1, opt.getName(), result.getWeightedScore(opt));
 }
 
@@ -338,7 +339,7 @@ mc.setEvaluationFunction((params) -> {
     FieldConcept concept = createConceptWithParams(params);
     ConceptEvaluator evaluator = new ConceptEvaluator();
     ConceptKPIs kpis = evaluator.evaluate(concept);
-    
+
     Map<String, Double> results = new HashMap<>();
     results.put("npv", kpis.getNpv());
     results.put("irr", kpis.getIrr());
@@ -468,7 +469,7 @@ exporter.setRateValues(new double[]{1000, 2000, 4000, 6000, 8000, 10000, 12000})
 // Generate production well VFP
 VfpTable vfpProd = exporter.generateVfpProd(1, "PROD-A1");
 
-// Generate injection well VFP  
+// Generate injection well VFP
 exporter.setInjectionType(InjectionType.WATER);
 VfpTable vfpInj = exporter.generateVfpInj(2, "INJ-A1");
 
@@ -570,7 +571,7 @@ linker.setCompressionEfficiency(0.78);   // polytropic
 
 // Generate process model from concept
 ProcessSystem process = linker.generateProcessSystem(
-    concept, 
+    concept,
     FidelityLevel.PRE_FEED
 );
 
@@ -761,7 +762,7 @@ analyzer.addHost(host2);
 // Quick screening of all hosts
 List<TiebackScreeningResult> screenings = analyzer.screenAllHosts();
 for (TiebackScreeningResult result : screenings) {
-    System.out.printf("%s: %s - %s%n", 
+    System.out.printf("%s: %s - %s%n",
         result.getHostName(),
         result.isPassed() ? "FEASIBLE" : "NOT FEASIBLE",
         result.isPassed() ? "" : result.getFailureReason());
@@ -786,7 +787,42 @@ List<TiebackOption> options = analyzer.rankOptions();
 
 ---
 
-## 8. Screening Tools
+## 8. Host Tie-In Capacity
+
+Use `TieInCapacityPlanner` when the tieback question includes base-host production, satellite holdback, host process equipment, and debottleneck value.
+
+```java
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.capacity.*;
+
+HostFacility host = HostFacility.builder("Brownfield Host")
+    .gasCapacity(10.0)
+    .build();
+
+ProductionProfileSeries base = new ProductionProfileSeries("base host")
+    .addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
+ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
+    .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+
+TieInCapacityResult result = new TieInCapacityPlanner(host)
+    .setHostProductionProfile(base)
+    .setSatelliteProductionProfile(satellite)
+    .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
+    .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS)
+    .run();
+
+System.out.println(result.toMarkdownTable());
+System.out.println("Primary bottleneck: " + result.getPrimaryBottleneck());
+System.out.println("Deferred value: " + result.getTotalDeferredValueNpvMusd() + " MUSD");
+```
+
+For process-model capacity checks, attach a `ProcessSystem` to the `HostFacility`, configure equipment capacity constraints, and map production rates to a stream with `HostTieInPoint`.
+
+See [Host Tie-In Capacity and Holdback Planning](HOST_TIE_IN_CAPACITY.md) for the full process-equipment example.
+
+---
+
+## 9. Screening Tools
 
 ### FlowAssuranceScreener
 
@@ -845,9 +881,9 @@ lift.setH2sPresent(false);
 List<MethodResult> results = lift.screenAllMethods();
 
 for (MethodResult method : results) {
-    System.out.printf("%s: %s%n", 
+    System.out.printf("%s: %s%n",
         method.getMethod().name(),
-        method.isFeasible() ? 
+        method.isFeasible() ?
             String.format("Feasible (Score: %.0f/100)", method.getScore()) :
             "Not feasible - " + method.getRationale());
 }
@@ -888,7 +924,7 @@ System.out.println("CO2 Intensity: " + report.getCo2Intensity() + " kg/boe");
 
 ---
 
-## 9. SURF Equipment and Cost Estimation
+## 10. SURF Equipment and Cost Estimation
 
 ### SURF Equipment Classes
 
@@ -996,7 +1032,7 @@ riser.initMechanicalDesign();
 umbilical.initMechanicalDesign();
 
 // === Subsea Tree Design ===
-SubseaTreeMechanicalDesign treeDesign = 
+SubseaTreeMechanicalDesign treeDesign =
     (SubseaTreeMechanicalDesign) tree.getMechanicalDesign();
 treeDesign.setMaxOperationPressure(690.0);
 treeDesign.setDesignStandardCode("API-17D");
@@ -1008,7 +1044,7 @@ System.out.println("Frame Weight: " + treeDesign.getFrameWeight() + " tonnes");
 System.out.println("Total Weight: " + treeDesign.getDryWeight() + " tonnes");
 
 // === PLET Design ===
-PLETMechanicalDesign pletDesign = 
+PLETMechanicalDesign pletDesign =
     (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
 pletDesign.setMaxOperationPressure(200.0);
 pletDesign.setMaterialGrade("X65");
@@ -1020,7 +1056,7 @@ System.out.println("Hub Wall Thickness: " + pletDesign.getHubWallThickness() + "
 System.out.println("Mudmat Area: " + pletDesign.getRequiredMudmatArea() + " m²");
 
 // === Manifold Design ===
-SubseaManifoldMechanicalDesign manifoldDesign = 
+SubseaManifoldMechanicalDesign manifoldDesign =
     (SubseaManifoldMechanicalDesign) manifold.getMechanicalDesign();
 manifoldDesign.setMaxOperationPressure(250.0);
 manifoldDesign.setDesignStandardCode("DNV-ST-F101");
@@ -1129,9 +1165,9 @@ System.out.println("\n=== Regional Cost Comparison (6-slot Manifold) ===");
 for (SubseaCostEstimator.Region region : SubseaCostEstimator.Region.values()) {
     SubseaCostEstimator regional = new SubseaCostEstimator(region);
     regional.calculateManifoldCost(6, 80.0, 380.0, true);
-    
-    System.out.printf("%s (%.2fx): $%,.0f%n", 
-        region.name(), 
+
+    System.out.printf("%s (%.2fx): $%,.0f%n",
+        region.name(),
         region.getFactor(),
         regional.getTotalCost());
 }
