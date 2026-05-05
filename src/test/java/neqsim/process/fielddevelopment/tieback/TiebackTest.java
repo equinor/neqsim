@@ -91,6 +91,21 @@ class TiebackTest {
   }
 
   @Test
+  void testHostFacilityCapacityReport() {
+    HostFacility host = HostFacility.builder("Test").spareGasCapacity(5.0)
+        .spareOilCapacity(20000.0).waterCapacity(10000.0).liquidCapacity(25000.0).build();
+
+    HostFacility.HostCapacityReport report = host.assessCapacity(4.0, 15000.0, 5000.0, 20000.0);
+
+    assertTrue(report.isCapacityAvailable());
+    assertTrue(report.isGasCapacityAvailable());
+    assertTrue(report.isOilCapacityAvailable());
+    assertTrue(report.isWaterCapacityAvailable());
+    assertTrue(report.isLiquidCapacityAvailable());
+    assertTrue(report.getSummary().toLowerCase().contains("capacity"));
+  }
+
+  @Test
   void testDistanceCalculation() {
     HostFacility host = HostFacility.builder("North Sea Platform").location(61.5, 2.3).build();
 
@@ -177,6 +192,22 @@ class TiebackTest {
     assertEquals("Platform A", option.getHostName());
     assertTrue(option.getDistanceKm() > 0);
     assertTrue(option.getTotalCapexMusd() > 0);
+  }
+
+  @Test
+  void testSingleTiebackIncludesHydraulicsAndFlowAssurance() {
+    TiebackOption option = analyzer.evaluateSingleTieback(gasTieback, hosts.get(0), 61.6, 2.4);
+
+    assertTrue(option.getPipelineDiameterInches() > 0.0);
+    assertTrue(option.getPipelineHeatTransferCoefficientWm2K() > 0.0);
+    assertTrue(Double.isFinite(option.getArrivalPressureBara()));
+    assertTrue(Double.isFinite(option.getArrivalTemperatureC()));
+    assertNotNull(option.getFlowRegime());
+    assertTrue(Double.isFinite(option.getHydrateFormationTemperatureC()));
+    assertTrue(Double.isFinite(option.getShutdownCooldownRiskScore()));
+    assertTrue(Double.isFinite(option.getShutdownCooldownTimeToHydrateHours()));
+    assertNotNull(option.getHostCapacitySummary());
+    assertTrue(option.getFlowAssuranceNotes().toLowerCase().contains("hydraulics"));
   }
 
   @Test

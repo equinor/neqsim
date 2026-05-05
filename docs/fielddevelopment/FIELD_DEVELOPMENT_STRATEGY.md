@@ -11,6 +11,31 @@ This document outlines a comprehensive plan to transform NeqSim into a premier t
 
 ---
 
+## Book-Focused Roadmap Update (May 2026)
+
+The TPG4230 field-development book now has direct NeqSim API support for the core examples it discusses: tieback screening, greenfield option comparison, host capacity checks, forecast uncertainty, and concept economics. The first implementation step focused on making existing NeqSim functionality easier to compose instead of adding a parallel study framework.
+
+### Implemented Support
+
+| Book workflow | NeqSim API support | Status |
+|---------------|--------------------|--------|
+| Tieback hydraulics and flow assurance | `TiebackAnalyzer` now configures `MultiphaseFlowIntegrator` and `FlowAssuranceScreener`, storing arrival pressure, arrival temperature, flow regime, hydrate formation temperature, hydrate margin, and shutdown cooldown risk on `TiebackOption`. | Implemented |
+| Host capacity for brownfield tiebacks | `HostFacility.assessCapacity(...)` returns a `HostCapacityReport` covering gas, oil, water, liquid spare capacity and optional `ProcessSystem` bottleneck screening through `BottleneckAnalyzer`. | Implemented |
+| Production forecasts for concept KPIs | `ConceptEvaluator` now derives field life and recovery from `ProductionProfileGenerator` and `ReservoirInput` resource/recovery assumptions instead of fixed placeholders. | Implemented |
+| Sensitivity and Monte Carlo economics | `CashFlowEngine.copy()` preserves production profiles, CAPEX timing, tariffs, prices, OPEX, and tax configuration; `SensitivityAnalyzer` uses that copy for tornado, scenario, and Monte Carlo cases. | Implemented |
+| Greenfield and tieback templates | `GreenfieldConceptFactory` creates comparable `DevelopmentCaseTemplate` objects for subsea tieback, standalone FPSO, fixed platform, subsea-to-shore, onshore terminal, and phased brownfield expansion. | Implemented |
+| Book-ready examples | `docs/fielddevelopment/README.md` uses current APIs and includes a template comparison example verified by `DocExamplesCompilationTest`. | Implemented |
+
+### Remaining Roadmap for the Book
+
+1. **Route networks:** Extend the single-route tieback screening into multi-segment networks with branches, risers, and shared host corridors so book examples can show hub-and-spoke developments.
+2. **Reservoir coupling:** Connect `ReservoirInput` resource assumptions to `SimpleReservoir`, VFP export, and decline-profile history matching for chapter examples that bridge reservoir and facilities models.
+3. **Probabilistic templates:** Add P10/P50/P90 resource, CAPEX, price, and schedule distributions directly to `DevelopmentCaseTemplate` so the book's tornado and probabilistic NPV figures can be generated from one object.
+4. **Lifecycle emissions:** Expand template emissions from annual screening values to time-series emissions tied to production decline, power source, compression load, flaring, and CO2 removal choices.
+5. **Report generation:** Add a book-oriented exporter that turns a set of templates into standardized comparison tables, figures, and assumptions text for teaching material and early-phase study reports.
+
+---
+
 ## Current State Analysis
 
 ### Existing Building Blocks ✅

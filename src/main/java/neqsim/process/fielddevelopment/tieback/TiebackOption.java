@@ -52,6 +52,33 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
   /** Estimated arrival temperature at host in Celsius. */
   private double arrivalTemperatureC;
 
+  /** Pipeline heat transfer coefficient used in hydraulic screening in W/m2K. */
+  private double pipelineHeatTransferCoefficientWm2K;
+
+  /** Whether the hydraulic screening case meets pressure and velocity constraints. */
+  private boolean hydraulicFeasible = true;
+
+  /** Reason for hydraulic infeasibility if hydraulic screening fails. */
+  private String hydraulicInfeasibilityReason;
+
+  /** Flow regime identified for the tieback route. */
+  private String flowRegime;
+
+  /** Mixture velocity divided by erosional velocity limit. */
+  private double erosionalVelocityRatio;
+
+  /** Hydrate formation temperature calculated for route arrival pressure in Celsius. */
+  private double hydrateFormationTemperatureC;
+
+  /** Screening score for shutdown cooldown risk from 0 (low) to 1 (high). */
+  private double shutdownCooldownRiskScore;
+
+  /** Estimated cooldown time to hydrate risk during shutdown in hours. */
+  private double shutdownCooldownTimeToHydrateHours;
+
+  /** Host capacity summary from nameplate and optional process-model screening. */
+  private String hostCapacitySummary;
+
   /** Number of subsea wells. */
   private int wellCount;
 
@@ -275,6 +302,8 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
     sb.append(String.format("CAPEX: %.0f MUSD (%.1f MUSD/km)\n", totalCapexMusd, getCapexPerKm()));
     sb.append(String.format("NPV: %.0f MUSD, IRR: %.1f%%, Payback: %.1f years\n", npvMusd,
         irr * 100, paybackYears));
+    sb.append(String.format("Arrival: %.1f bara, %.1f C, hydraulic=%s\n", arrivalPressureBara,
+        arrivalTemperatureC, hydraulicFeasible ? "PASS" : "CHECK"));
     sb.append(String.format("Flow Assurance: Hydrate=%s, Wax=%s, Corrosion=%s\n", hydrateResult,
         waxResult, corrosionResult));
     sb.append(String.format("Feasible: %s", feasible ? "YES" : "NO - " + infeasibilityReason));
@@ -406,6 +435,96 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public void setArrivalTemperatureC(double arrivalTemperatureC) {
     this.arrivalTemperatureC = arrivalTemperatureC;
+  }
+
+  /**
+   * Gets the pipeline heat transfer coefficient used in hydraulic screening.
+   *
+   * @return pipeline heat transfer coefficient in W/m2K
+   */
+  public double getPipelineHeatTransferCoefficientWm2K() {
+    return pipelineHeatTransferCoefficientWm2K;
+  }
+
+  /**
+   * Sets the pipeline heat transfer coefficient used in hydraulic screening.
+   *
+   * @param pipelineHeatTransferCoefficientWm2K heat transfer coefficient in W/m2K
+   */
+  public void setPipelineHeatTransferCoefficientWm2K(double pipelineHeatTransferCoefficientWm2K) {
+    this.pipelineHeatTransferCoefficientWm2K = pipelineHeatTransferCoefficientWm2K;
+  }
+
+  /**
+   * Checks whether hydraulic screening passed.
+   *
+   * @return true if hydraulic screening passed
+   */
+  public boolean isHydraulicFeasible() {
+    return hydraulicFeasible;
+  }
+
+  /**
+   * Sets whether hydraulic screening passed.
+   *
+   * @param hydraulicFeasible true if hydraulic screening passed
+   */
+  public void setHydraulicFeasible(boolean hydraulicFeasible) {
+    this.hydraulicFeasible = hydraulicFeasible;
+  }
+
+  /**
+   * Gets the hydraulic infeasibility reason.
+   *
+   * @return hydraulic infeasibility reason, or null if hydraulic screening passed
+   */
+  public String getHydraulicInfeasibilityReason() {
+    return hydraulicInfeasibilityReason;
+  }
+
+  /**
+   * Sets the hydraulic infeasibility reason.
+   *
+   * @param hydraulicInfeasibilityReason hydraulic infeasibility reason
+   */
+  public void setHydraulicInfeasibilityReason(String hydraulicInfeasibilityReason) {
+    this.hydraulicInfeasibilityReason = hydraulicInfeasibilityReason;
+  }
+
+  /**
+   * Gets the flow regime identified for the route.
+   *
+   * @return flow regime description
+   */
+  public String getFlowRegime() {
+    return flowRegime;
+  }
+
+  /**
+   * Sets the flow regime identified for the route.
+   *
+   * @param flowRegime flow regime description
+   */
+  public void setFlowRegime(String flowRegime) {
+    this.flowRegime = flowRegime;
+  }
+
+  /**
+   * Gets the erosional velocity ratio.
+   *
+   * @return mixture velocity divided by erosional velocity limit
+   */
+  public double getErosionalVelocityRatio() {
+    return erosionalVelocityRatio;
+  }
+
+  /**
+   * Sets the erosional velocity ratio.
+   *
+   * @param erosionalVelocityRatio mixture velocity divided by erosional velocity limit
+   */
+  public void setErosionalVelocityRatio(double erosionalVelocityRatio) {
+    this.erosionalVelocityRatio = erosionalVelocityRatio;
   }
 
   /**
@@ -766,6 +885,78 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public void setHydrateMarginC(double hydrateMarginC) {
     this.hydrateMarginC = hydrateMarginC;
+  }
+
+  /**
+   * Gets the hydrate formation temperature.
+   *
+   * @return hydrate formation temperature in Celsius
+   */
+  public double getHydrateFormationTemperatureC() {
+    return hydrateFormationTemperatureC;
+  }
+
+  /**
+   * Sets the hydrate formation temperature.
+   *
+   * @param hydrateFormationTemperatureC hydrate formation temperature in Celsius
+   */
+  public void setHydrateFormationTemperatureC(double hydrateFormationTemperatureC) {
+    this.hydrateFormationTemperatureC = hydrateFormationTemperatureC;
+  }
+
+  /**
+   * Gets the shutdown cooldown risk score.
+   *
+   * @return risk score from 0 (low) to 1 (high)
+   */
+  public double getShutdownCooldownRiskScore() {
+    return shutdownCooldownRiskScore;
+  }
+
+  /**
+   * Sets the shutdown cooldown risk score.
+   *
+   * @param shutdownCooldownRiskScore risk score from 0 (low) to 1 (high)
+   */
+  public void setShutdownCooldownRiskScore(double shutdownCooldownRiskScore) {
+    this.shutdownCooldownRiskScore = shutdownCooldownRiskScore;
+  }
+
+  /**
+   * Gets the estimated shutdown cooldown time to hydrate risk.
+   *
+   * @return cooldown time in hours
+   */
+  public double getShutdownCooldownTimeToHydrateHours() {
+    return shutdownCooldownTimeToHydrateHours;
+  }
+
+  /**
+   * Sets the estimated shutdown cooldown time to hydrate risk.
+   *
+   * @param shutdownCooldownTimeToHydrateHours cooldown time in hours
+   */
+  public void setShutdownCooldownTimeToHydrateHours(double shutdownCooldownTimeToHydrateHours) {
+    this.shutdownCooldownTimeToHydrateHours = shutdownCooldownTimeToHydrateHours;
+  }
+
+  /**
+   * Gets the host capacity summary.
+   *
+   * @return host capacity summary text
+   */
+  public String getHostCapacitySummary() {
+    return hostCapacitySummary;
+  }
+
+  /**
+   * Sets the host capacity summary.
+   *
+   * @param hostCapacitySummary host capacity summary text
+   */
+  public void setHostCapacitySummary(String hostCapacitySummary) {
+    this.hostCapacitySummary = hostCapacitySummary;
   }
 
   /**

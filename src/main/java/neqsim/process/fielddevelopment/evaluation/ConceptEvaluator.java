@@ -1,8 +1,12 @@
 package neqsim.process.fielddevelopment.evaluation;
 
+import java.util.Map;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
+import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.facility.FacilityBuilder;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
+import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
+import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator.EconomicsReport;
 import neqsim.process.fielddevelopment.screening.EmissionsTracker;
@@ -266,17 +270,200 @@ public class ConceptEvaluator {
     return builder.build();
   }
 
+  /**
+   * Calculates production KPIs from a ramp-up, plateau, and Arps decline forecast.
+   *
+   * @param builder KPI builder to update
+   * @param concept concept to evaluate
+   */
   private void calculateProductionKPIs(ConceptKPIs.Builder builder, FieldConcept concept) {
-    if (concept.getWells() != null) {
-      double ratePerWell = concept.getWells().getRatePerWellSm3d();
-      int wellCount = concept.getWells().getProducerCount();
-      double plateauRate = ratePerWell * wellCount / 1e6; // MSm3/d
-      builder.plateauRate(plateauRate);
+    ReservoirInput reservoir = concept.getReservoir();
+    boolean gasConcept = isGasConcept(reservoir);
+    double peakRatePerDay = getPeakRatePerDay(concept, gasConcept);
+    if (peakRatePerDay <= 0.0) {
+      builder.fieldLife(0.0);
+      builder.estimatedRecovery(0.0);
+      builder.addWarning("production", "No producer rate specified for production forecast");
+      return;
     }
 
-    // Default field life
-    builder.fieldLife(20.0);
-    builder.estimatedRecovery(60.0); // Placeholder
+    double plateauRateMsm3d =
+        gasConcept ? peakRatePerDay / 1.0e6 : peakRatePerDay * 0.158987 / 1.0e6;
+    builder.plateauRate(plateauRateMsm3d);
+
+    ProductionProfileGenerator generator = new ProductionProfileGenerator();
+    Map<Integer, Double> profile =
+        generator.generateFullProfile(peakRatePerDay, 2, 5, gasConcept ? 0.12 : 0.15, 0.5,
+            gasConcept ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, 2026, 30,
+            peakRatePerDay * 0.05);
+
+    double targetRecoverable = reservoir != null ? reservoir.getRecoverableResourceEstimate() : 0.0;
+    String resourceUnit = reservoir != null ? reservoir.getResourceUnit() : "";
+    double cumulativeInResourceUnit =
+        calculateCumulativeInResourceUnit(profile, gasConcept, resourceUnit, targetRecoverable);
+    double resourceEstimate = reservoir != null ? reservoir.getResourceEstimate() : 0.0;
+    double recoveryPercent = resourceEstimate > 0.0
+        ? Math.min(cumulativeInResourceUnit / resourceEstimate * 100.0, 100.0)
+        : defaultRecoveryFactor(reservoir) * 100.0;
+
+    builder.fieldLife(estimateFieldLifeYears(profile, gasConcept, resourceUnit, targetRecoverable));
+    builder.estimatedRecovery(recoveryPercent);
+    builder.addNote("production_forecast",
+        String.format("Arps forecast with 2-year ramp-up, 5-year plateau, %.0f%% recovery target",
+            recoveryPercent));
+  }
+
+  /**
+   * Checks whether a concept should be treated as gas-dominated.
+   *
+   * @param reservoir reservoir input, or null
+   * @return true if the concept is gas-dominated
+   */
+  private boolean isGasConcept(ReservoirInput reservoir) {
+    if (reservoir == null) {
+      return true;
+    }
+    return reservoir.getFluidType() == ReservoirInput.FluidType.LEAN_GAS
+        || reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
+        || reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE;
+  }
+
+  /**
+   * Gets the peak production rate in profile units.
+   *
+   * @param concept field concept
+   * @param gasConcept true for gas concepts
+   * @return gas rate in Sm3/d or oil rate in bbl/d
+   */
+  private double getPeakRatePerDay(FieldConcept concept, boolean gasConcept) {
+    if (concept.getWells() == null) {
+      return 0.0;
+    }
+    double ratePerWell = concept.getWells().getRatePerWell();
+    String unit = concept.getWells().getRateUnit();
+    double totalRate = ratePerWell * concept.getWells().getProducerCount();
+    if (gasConcept) {
+      if (unit != null && unit.toLowerCase().contains("msm3")) {
+        return totalRate * 1.0e6;
+      }
+      return concept.getWells().getRatePerWellSm3d() * concept.getWells().getProducerCount();
+    }
+    if (unit != null
+        && (unit.toLowerCase().contains("bbl") || unit.toLowerCase().contains("bopd"))) {
+      return totalRate;
+    }
+    return totalRate / 0.158987;
+  }
+
+  /**
+   * Calculates cumulative production in the resource unit.
+   *
+   * @param profile annual production profile
+   * @param gasConcept true for gas concepts
+   * @param resourceUnit resource unit
+   * @param targetRecoverable target recoverable resource in the resource unit
+   * @return cumulative production in the resource unit
+   */
+  private double calculateCumulativeInResourceUnit(Map<Integer, Double> profile, boolean gasConcept,
+      String resourceUnit, double targetRecoverable) {
+    double cumulative = 0.0;
+    for (Double annualVolume : profile.values()) {
+      cumulative += convertAnnualVolumeToResourceUnit(annualVolume, gasConcept, resourceUnit);
+      if (targetRecoverable > 0.0 && cumulative >= targetRecoverable) {
+        return targetRecoverable;
+      }
+    }
+    return cumulative;
+  }
+
+  /**
+   * Estimates field life from the profile and recoverable-resource target.
+   *
+   * @param profile annual production profile
+   * @param gasConcept true for gas concepts
+   * @param resourceUnit resource unit
+   * @param targetRecoverable target recoverable resource in the resource unit
+   * @return field life in years
+   */
+  private double estimateFieldLifeYears(Map<Integer, Double> profile, boolean gasConcept,
+      String resourceUnit, double targetRecoverable) {
+    if (targetRecoverable <= 0.0) {
+      return profile.size();
+    }
+    double cumulative = 0.0;
+    int years = 0;
+    for (Double annualVolume : profile.values()) {
+      cumulative += convertAnnualVolumeToResourceUnit(annualVolume, gasConcept, resourceUnit);
+      years++;
+      if (cumulative >= targetRecoverable) {
+        return years;
+      }
+    }
+    return years;
+  }
+
+  /**
+   * Converts an annual profile volume to the reservoir resource unit.
+   *
+   * @param annualVolume annual volume in Sm3 for gas or bbl for oil
+   * @param gasConcept true for gas concepts
+   * @param resourceUnit resource unit
+   * @return annual volume in the resource unit
+   */
+  private double convertAnnualVolumeToResourceUnit(double annualVolume, boolean gasConcept,
+      String resourceUnit) {
+    if (resourceUnit == null) {
+      return annualVolume;
+    }
+    String normalizedUnit = resourceUnit.toLowerCase();
+    if (gasConcept) {
+      if (normalizedUnit.contains("gsm3")) {
+        return annualVolume / 1.0e9;
+      }
+      if (normalizedUnit.contains("msm3")) {
+        return annualVolume / 1.0e6;
+      }
+      if (normalizedUnit.contains("mmboe")) {
+        return annualVolume / 1000.0 / 1.0e6;
+      }
+      return annualVolume;
+    }
+    if (normalizedUnit.contains("mmbbl")) {
+      return annualVolume / 1.0e6;
+    }
+    if (normalizedUnit.contains("mmboe")) {
+      return annualVolume / 1.0e6;
+    }
+    if (normalizedUnit.contains("sm3") || normalizedUnit.contains("m3")) {
+      return annualVolume * 0.158987;
+    }
+    return annualVolume;
+  }
+
+  /**
+   * Gets a default recovery factor when no explicit resource estimate exists.
+   *
+   * @param reservoir reservoir input, or null
+   * @return default recovery factor as a fraction from 0 to 1
+   */
+  private double defaultRecoveryFactor(ReservoirInput reservoir) {
+    if (reservoir == null) {
+      return 0.60;
+    }
+    switch (reservoir.getFluidType()) {
+      case LEAN_GAS:
+      case RICH_GAS:
+        return 0.75;
+      case GAS_CONDENSATE:
+        return 0.65;
+      case BLACK_OIL:
+      case VOLATILE_OIL:
+        return 0.45;
+      case HEAVY_OIL:
+        return 0.25;
+      default:
+        return 0.55;
+    }
   }
 
   private void calculateScores(ConceptKPIs.Builder builder, FlowAssuranceReport faReport,

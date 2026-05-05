@@ -92,6 +92,8 @@ ConceptKPIs kpis = evaluator.evaluate(concept);
 ```
 neqsim.process.fielddevelopment/
 ├── concept/           # Core data structures (FieldConcept, ReservoirInput, etc.)
+│   ├── GreenfieldConceptFactory
+│   └── DevelopmentCaseTemplate
 ├── economics/         # NPV, tax, portfolio optimization
 │   ├── CashFlowEngine
 │   ├── NorwegianTaxModel
@@ -129,14 +131,26 @@ neqsim.process.fielddevelopment/
 import neqsim.process.fielddevelopment.concept.*;
 import neqsim.process.fielddevelopment.evaluation.*;
 
-FieldConcept concept = FieldConcept.oilDevelopment("My Field", 100.0, 8, 5000.0);
+FieldConcept concept = FieldConcept.oilDevelopment("My Field", 8, 5000.0, 0.20);
 ConceptEvaluator evaluator = new ConceptEvaluator();
-evaluator.setOilPrice(75.0);
 ConceptKPIs kpis = evaluator.evaluate(concept);
 
-System.out.println("NPV: " + kpis.getNpv() + " MUSD");
-System.out.println("IRR: " + kpis.getIrr() * 100 + "%");
-System.out.println("CO2 Intensity: " + kpis.getCo2Intensity() + " kg/boe");
+System.out.println("CAPEX: " + kpis.getTotalCapexMUSD() + " MUSD");
+System.out.println("Field life: " + kpis.getFieldLifeYears() + " years");
+System.out.println("Recovery: " + kpis.getEstimatedRecoveryPercent() + "%");
+System.out.println("CO2 Intensity: " + kpis.getCo2IntensityKgPerBoe() + " kg/boe");
+```
+
+### Compare Standard Development Templates
+```java
+import neqsim.process.fielddevelopment.concept.*;
+
+DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
+DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
+
+System.out.println(tieback.getSummary());
+System.out.println(fpso.getSummary());
+System.out.println("Tieback process blocks: " + tieback.getFacilityConfig().getBlocks().size());
 ```
 
 ### Compare Development Options

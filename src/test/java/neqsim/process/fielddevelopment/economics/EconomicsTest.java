@@ -271,6 +271,50 @@ class EconomicsTest {
   }
 
   @Test
+  void testCashFlowCopyPreservesSchedulesAndProfiles() {
+    engine.addCapex(300.0, 2024);
+    engine.addCapex(400.0, 2025);
+    engine.setGasPrice(0.25);
+    engine.setGasTariff(0.02);
+    engine.setOpexPercentOfCapex(0.04);
+    engine.addAnnualProduction(2026, 0.0, 5.0e9, 0.0);
+    engine.addAnnualProduction(2027, 0.0, 4.0e9, 0.0);
+
+    CashFlowEngine copy = engine.copy();
+
+    assertEquals(engine.getCapexSchedule(), copy.getCapexSchedule());
+    assertEquals(engine.getGasProductionProfile(), copy.getGasProductionProfile());
+    assertEquals(engine.getGasPrice(), copy.getGasPrice(), 0.001);
+    assertEquals(engine.getGasTariff(), copy.getGasTariff(), 0.001);
+    assertEquals(engine.calculateNPV(0.08), copy.calculateNPV(0.08), 0.001);
+  }
+
+  @Test
+  void testSensitivityAnalyzerUsesCopiedSchedulesAndProfiles() {
+    engine.addCapex(300.0, 2024);
+    engine.addCapex(500.0, 2025);
+    engine.setGasPrice(0.25);
+    engine.setOpexPercentOfCapex(0.04);
+    engine.addAnnualProduction(2026, 0.0, 5.0e9, 0.0);
+    engine.addAnnualProduction(2027, 0.0, 4.0e9, 0.0);
+
+    SensitivityAnalyzer analyzer = new SensitivityAnalyzer(engine, 0.08);
+    SensitivityAnalyzer.TornadoResult tornado = analyzer.tornadoAnalysis(0.20);
+
+    assertTrue(Double.isFinite(tornado.getBaseCaseNpv()));
+    assertEquals(4, tornado.getItems().size());
+    assertTrue(tornado.getMostSensitiveParameter().getSwing() >= 0.0);
+
+    analyzer.setRandomSeed(7L);
+    analyzer.setCapexDistribution(700.0, 900.0);
+    analyzer.setProductionFactorDistribution(0.9, 1.1);
+    SensitivityAnalyzer.MonteCarloResult monteCarlo = analyzer.monteCarloAnalysis(20);
+
+    assertEquals(20, monteCarlo.getIterations());
+    assertTrue(Double.isFinite(monteCarlo.getNpvP50()));
+  }
+
+  @Test
   void testCustomTaxModel() {
     // Use lower tax rates (international scenario)
     NorwegianTaxModel customTax = new NorwegianTaxModel(0.25, 0.0); // 25% corporate, no petroleum

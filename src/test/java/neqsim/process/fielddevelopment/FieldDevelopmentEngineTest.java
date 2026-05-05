@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
+import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
+import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.concept.WellsInput;
@@ -77,6 +79,18 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
 
     ReservoirInput blackOil = ReservoirInput.blackOil().build();
     assertEquals(ReservoirInput.FluidType.BLACK_OIL, blackOil.getFluidType());
+  }
+
+  @Test
+  @DisplayName("ReservoirInput stores recoverable resource assumptions")
+  void testReservoirInputResourceEstimate() {
+    ReservoirInput reservoir = ReservoirInput.richGas().resourceEstimate(10.0, "GSm3")
+        .recoveryFactor(0.65).build();
+
+    assertEquals(10.0, reservoir.getResourceEstimate(), 0.001);
+    assertEquals("GSm3", reservoir.getResourceUnit());
+    assertEquals(0.65, reservoir.getRecoveryFactor(), 0.001);
+    assertEquals(6.5, reservoir.getRecoverableResourceEstimate(), 0.001);
   }
 
   @Test
@@ -215,6 +229,50 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     assertNotNull(kpis.getFlowAssuranceReport());
     assertNotNull(kpis.getEmissionsReport());
     assertNotNull(kpis.getEconomicsReport());
+    assertTrue(kpis.getFieldLifeYears() > 0.0);
+    assertTrue(kpis.getEstimatedRecoveryPercent() > 0.0);
+    assertTrue(kpis.getNotes().containsKey("production_forecast"));
+  }
+
+  @Test
+  @DisplayName("GreenfieldConceptFactory creates comparable standard templates")
+  void testGreenfieldConceptFactoryTemplates() {
+    DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
+    DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
+    DevelopmentCaseTemplate fixedPlatform = GreenfieldConceptFactory.fixedPlatform("Book Platform");
+    DevelopmentCaseTemplate subseaToShore = GreenfieldConceptFactory.subseaToShore("Book Shore");
+    DevelopmentCaseTemplate onshoreTerminal = GreenfieldConceptFactory.onshoreTerminal("Book Terminal");
+    DevelopmentCaseTemplate brownfield =
+        GreenfieldConceptFactory.phasedBrownfieldExpansion("Book Brownfield");
+
+    assertTemplateIsComplete(tieback);
+    assertTemplateIsComplete(fpso);
+    assertTemplateIsComplete(fixedPlatform);
+    assertTemplateIsComplete(subseaToShore);
+    assertTemplateIsComplete(onshoreTerminal);
+    assertTemplateIsComplete(brownfield);
+
+    assertEquals("Subsea tieback", tieback.getCaseType());
+    assertEquals("Standalone FPSO", fpso.getCaseType());
+    assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
+  }
+
+  /**
+   * Asserts that a template includes all comparable screening outputs.
+   *
+   * @param template development case template
+   */
+  private void assertTemplateIsComplete(DevelopmentCaseTemplate template) {
+    assertNotNull(template.getConcept());
+    assertNotNull(template.getFacilityConfig());
+    assertNotNull(template.getEconomics());
+    assertTrue(template.getTotalCapexMusd() > 0.0);
+    assertTrue(template.getAnnualOpexMusd() > 0.0);
+    assertTrue(template.getPowerMw() > 0.0);
+    assertTrue(template.getAnnualEmissionsTonnes() >= 0.0);
+    assertFalse(template.getProductionProfile().isEmpty());
+    assertFalse(template.getCapexBreakdownMusd().isEmpty());
+    assertTrue(template.getAssumptionsSummary().contains(template.getCaseType()));
   }
 
   @Test
