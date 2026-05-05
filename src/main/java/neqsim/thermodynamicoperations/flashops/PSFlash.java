@@ -64,6 +64,7 @@ public class PSFlash extends QfuncFlash {
     double error = 1.0;
     double errorOld = 10.0e10;
     double factor = 0.8;
+    double entropyTolerance = Math.max(1e-8, Math.abs(Sspec) * 1e-10);
 
     boolean correctFactor = true;
     double newCorr = 1.0;
@@ -113,7 +114,7 @@ public class PSFlash extends QfuncFlash {
       // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
       // " error "+ error + " correction " + newCorr + " factor "+ factor);
       // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
-    } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((error + errorOld) > entropyTolerance || iterations < 3) && iterations < 200);
     return nyTemp;
   }
 
