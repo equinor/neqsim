@@ -2351,6 +2351,23 @@ class TestBookRenderHTML:
 class TestBookRenderPDFPreprocess:
     """Tests for PDF preprocessing helpers."""
 
+    def test_typst_ordered_list_items_stay_in_one_list(self):
+        """blank lines between ordered-list items do not restart numbering."""
+        from book_render_pdf import _keep_typst_ordered_lists_continuous
+
+        typst = (
+            "Intro paragraph.\n\n"
+            "+ #strong[One.] First item.\n\n"
+            "+ #strong[Two.] Second item.\n\n"
+            "Closing paragraph.\n\n"
+            "+ A separate list starts here.\n"
+        )
+
+        fixed = _keep_typst_ordered_lists_continuous(typst)
+
+        assert "+ #strong[One.] First item.\n+ #strong[Two.] Second item." in fixed
+        assert "Closing paragraph.\n\n+ A separate list starts here." in fixed
+
     def test_external_lecture_figure_is_copied_into_submission(self, tmp_path):
         """external lecture figures are rewritten inside the Typst sandbox."""
         from book_render_pdf import _preprocess_chapter

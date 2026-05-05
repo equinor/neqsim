@@ -1468,6 +1468,18 @@ def _md_to_html(md_text):
             i += 1
             continue
 
+        # Blockquotes
+        if stripped.startswith(">"):
+            close_list()
+            quote_lines = []
+            while i < len(lines) and lines[i].strip().startswith(">"):
+                quote_lines.append(re.sub(r"^>\s?", "", lines[i].strip()))
+                i += 1
+            html_parts.append(
+                f"<blockquote><p>{_inline_fmt(' '.join(quote_lines).strip())}</p></blockquote>"
+            )
+            continue
+
         # Headings
         hm = re.match(r"^(#{1,4})\s+(.+)", line)
         if hm:
@@ -1600,6 +1612,7 @@ def _md_to_html(md_text):
                 and not lines[i].strip().startswith("#") \
                 and not lines[i].strip().startswith("```") \
                 and not re.match(r"^!\[", lines[i].strip()) \
+                and not lines[i].strip().startswith(">") \
                 and not lines[i].strip().startswith("- ") \
                 and not lines[i].strip().startswith("* ") \
                 and not re.match(r"^\d+\.\s", lines[i].strip()) \
@@ -1653,7 +1666,7 @@ def _render_table(lines):
 # Sidebar generation
 # ---------------------------------------------------------------------------
 
-def _build_sidebar(cfg):
+def _build_sidebar(cfg, include_references=False):
     """Build sidebar navigation HTML from book config."""
     items = []
     items.append(f'<h2>{_esc(cfg.get("title", "Book"))}</h2>')
@@ -1672,6 +1685,9 @@ def _build_sidebar(cfg):
     for bm in cfg.get("backmatter", []):
         label = bm.replace("_", " ").title()
         items.append(f'<li><a href="#{bm}">{_esc(label)}</a></li>')
+
+    if include_references:
+        items.append('<li><a href="#references">References</a></li>')
 
     items.append("</ul>")
     return "\n".join(items)
@@ -1707,6 +1723,7 @@ def render_book_html(book_dir, chapter_filter=None):
 
     # Collect all cited keys across chapters (global numbering)
     all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
+    include_references = bool(all_cited_keys and bib_entries)
 
     # Cross-chapter de-dup state for optional lecture-figure injection.
     _seen_lecture_files: set = set()
@@ -1750,7 +1767,7 @@ def render_book_html(book_dir, chapter_filter=None):
     # Sidebar
     if not chapter_filter:
         parts.append('<nav class="sidebar">')
-        parts.append(_build_sidebar(cfg))
+        parts.append(_build_sidebar(cfg, include_references=include_references))
         parts.append("</nav>")
 
     parts.append("<main>")

@@ -614,6 +614,45 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None,
     return text
 
 
+def _keep_typst_ordered_lists_continuous(text):
+    """Keep consecutive Typst ordered-list items in one list block.
+
+    Pandoc preserves blank lines between loose Markdown list items. Typst treats
+    those blank lines as list terminators, so each following ``+`` item starts a
+    new list at 1. This removes only the separator blanks between consecutive
+    top-level ordered-list items.
+    """
+    lines = text.splitlines()
+    fixed = []
+    index = 0
+    in_ordered_list = False
+
+    while index < len(lines):
+        line = lines[index]
+
+        if line.strip() == "":
+            next_index = index + 1
+            while next_index < len(lines) and lines[next_index].strip() == "":
+                next_index += 1
+
+            if (in_ordered_list and next_index < len(lines)
+                    and lines[next_index].startswith("+ ")):
+                index = next_index
+                continue
+
+            fixed.append(line)
+            in_ordered_list = False
+            index += 1
+            continue
+
+        fixed.append(line)
+        if line.startswith("+ "):
+            in_ordered_list = True
+        index += 1
+
+    return "\n".join(fixed) + ("\n" if text.endswith("\n") else "")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -714,6 +753,7 @@ def render_book_pdf(book_dir, chapter_filter=None):
                 if result.returncode == 0 and typ_frag.exists():
                     frag_text = typ_frag.read_text(encoding="utf-8")
                     frag_text = postprocess_typst(frag_text)
+                    frag_text = _keep_typst_ordered_lists_continuous(frag_text)
                     # Wrap in a scope that disables heading numbering
                     frag_text = (
                         '#set heading(numbering: none)\n'
@@ -796,6 +836,7 @@ def render_book_pdf(book_dir, chapter_filter=None):
         if typ_fragment.exists():
             frag_text = typ_fragment.read_text(encoding="utf-8")
             frag_text = postprocess_typst(frag_text)
+            frag_text = _keep_typst_ordered_lists_continuous(frag_text)
             chapter_fragments.append(frag_text)
 
         # Cleanup temp
@@ -842,6 +883,7 @@ def render_book_pdf(book_dir, chapter_filter=None):
     # Final postprocessing on the assembled document (catches bibliography
     # fragments and any cross-fragment issues missed by per-chapter passes).
     full_typst = postprocess_typst(full_typst)
+    full_typst = _keep_typst_ordered_lists_continuous(full_typst)
 
     # Write master file
     master_typ = submission_dir / "book.typ"
