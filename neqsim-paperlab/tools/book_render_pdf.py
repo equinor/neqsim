@@ -566,6 +566,10 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None,
     # Resolve citations
     if key_to_num:
         text = resolve_citations_numbered_plain(text, key_to_num)
+    # Some generated chapters already contain HTML-style bibliography anchors,
+    # for example [[1](#ref-1)]. Pandoc converts those to Typst label links,
+    # which fail when the labels are not emitted in the PDF bibliography.
+    text = re.sub(r"\[([0-9]+)\]\(#ref-[^)]+\)", r"\1", text)
     # Strip empty "## References" placeholder
     text = re.sub(r'##\s+References\s*\n?(?:\s*\n)*', '', text)
 
@@ -690,6 +694,16 @@ def render_book_pdf(book_dir, chapter_filter=None):
 
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
+    frontmatter_figures = book_dir / "frontmatter" / "figures"
+    if frontmatter_figures.is_dir():
+        figures_dir = submission_dir / "figures"
+        figures_dir.mkdir(parents=True, exist_ok=True)
+        for img_file in frontmatter_figures.rglob("*"):
+            if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"):
+                rel_img = img_file.relative_to(frontmatter_figures)
+                dest = figures_dir / rel_img
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(img_file, dest)
 
     # Load bibliography and build citation numbering
     bib_path = book_dir / "refs.bib"
