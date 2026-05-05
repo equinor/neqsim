@@ -589,13 +589,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     getThermoSystem().init(3);
     getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-    // Optimization: multiPhaseCheck (stability analysis) is only needed to detect
-    // 3+ phase splits. With 1 or 2 phases at inlet, the standard flash handles
-    // compression correctly. Disabling avoids expensive stability analysis at
-    // every PSflash/PHflash Newton iteration.
+    // Optimization: disable stability analysis for single-phase inlet gas, where no
+    // additional phase can appear during compression. For multi-phase inlets (e.g.
+    // gas + aqueous), stability analysis must remain active to maintain the correct
+    // phase structure as pressure increases.
     boolean originalMultiPhaseCheck = getThermoSystem().doMultiPhaseCheck();
     int inletPhases = getThermoSystem().getNumberOfPhases();
-    if (inletPhases <= 2 && originalMultiPhaseCheck) {
+    if (inletPhases <= 1 && originalMultiPhaseCheck) {
       getThermoSystem().setMultiPhaseCheck(false);
     }
 
