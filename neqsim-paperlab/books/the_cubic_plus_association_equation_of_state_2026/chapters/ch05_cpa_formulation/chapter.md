@@ -82,7 +82,7 @@ Note that for CPA, the Soave correlation $m = f(\omega)$ is **not** used. Instea
 
 Two parameters describe the hydrogen bonding:
 
-4. **$\varepsilon^{AB}$**: the association energy (in J/mol or K). This determines the temperature at which hydrogen bonds begin to break. Typical values range from 1000 to 3000 K (in $\varepsilon/k_B$).
+4. **$\varepsilon^{AB}$**: the molar association energy (J/mol). It is often reported as $\varepsilon^{AB}/R$ in K, which determines the temperature scale at which hydrogen bonds begin to break. Typical fitted CPA values for common alcohols, glycols, and water are about 1700–3000 K when reported as $\varepsilon/R$.
 
 5. **$\beta^{AB}$**: the association volume (dimensionless). This determines the probability that two molecules at contact distance will be in the correct orientation for bonding. Typical values range from 0.001 to 0.1.
 
@@ -295,12 +295,12 @@ The CPA implementation in NeqSim follows a layered architecture with System, Pha
 **Component level** (`neqsim.thermo.component`):
 - `ComponentSrkCPA` — fugacity coefficient, association parameters
 
-### 5.7.2 Parameter Database
+### 5.8.2 Parameter Database
 
 NeqSim stores CPA parameters in its component database. For each associating component, the database contains:
 
 - Cubic parameters: $T_c$, $P_c$, $\omega$, and the CPA-specific $a_0$, $b$, $c_1$
-- Association parameters: $\varepsilon/R$ (in K), $\beta$ (dimensionless)
+- Association parameters: `associationenergy` in J/mol, often reported as $\varepsilon/R$ in K, and $\beta$ (dimensionless)
 - Association scheme: specified as site counts
 
 When a CPA system is created, NeqSim automatically loads the appropriate parameters:
@@ -318,7 +318,7 @@ fluid.setMixingRule(10)  # CPA mixing rule with cross-association
 # methane gets standard SRK parameters
 ```
 
-### 5.7.3 Mixing Rule 10
+### 5.8.3 Mixing Rule 10
 
 The mixing rule index 10 in NeqSim activates the CPA mixing rules with automatic handling of cross-association. This rule:
 
@@ -375,7 +375,7 @@ In practice, this derivative is computed numerically in NeqSim via the chain rul
 
 $$P^{\text{CPA}} = P^{\text{SRK}} + P^{\text{assoc}}$$
 
-The association term is always **positive** for the pressure (it increases the total pressure relative to SRK alone) because the association reduces the Helmholtz energy, and $P = -(\partial A/\partial V)_T$.
+The association pressure contribution is generally **negative** at liquid-like densities because association is attractive and lowers the Helmholtz energy more strongly as density increases. The total pressure is still the sum of the SRK and association terms, but the association term normally pulls the pressure below the SRK-only value for a fixed molar volume.
 
 ## 5.10 The Simplified CPA (sCPA)
 
