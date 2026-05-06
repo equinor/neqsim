@@ -3877,6 +3877,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Calculates the relative mass imbalance between external feed streams and public product
+   * streams.
+   *
+   * @return relative external mass imbalance based on kg/hr flow rates
+   */
+  private double getExternalMassBalanceError() {
+    double totalFeedMass = 0.0;
+    for (List<StreamInterface> feedList : feedStreams.values()) {
+      for (StreamInterface feed : feedList) {
+        totalFeedMass += Math.abs(feed.getThermoSystem().getFlowRate("kg/hr"));
+      }
+    }
+    double externalMassBalance = Math.abs(getMassBalance("kg/hr"));
+    return totalFeedMass > 1.0e-12 ? externalMassBalance / totalFeedMass : externalMassBalance;
+  }
+
+  /**
    * Calculates the relative enthalpy imbalance across all trays.
    *
    * @return maximum of tray-wise and overall relative enthalpy imbalance
@@ -4098,6 +4115,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     liquidOutStream.setCalculationIdentifier(id);
 
+    if (hasRefluxedTotalCondenser()) {
+      updateTotalCondenserProductsFromExternalComponentBalance(id);
+      lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
+    }
+
     boolean anyFeedMultiPhase = false;
     for (List<StreamInterface> feeds : feedStreams.values()) {
       for (StreamInterface feed : feeds) {
@@ -4119,6 +4141,123 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).setCalculationIdentifier(id);
     }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Updates total-condenser products so the exposed streams close the external component balance.
+   *
+   * @param id calculation identifier to assign to the updated stream
+   */
+  private void updateTotalCondenserProductsFromExternalComponentBalance(UUID id) {
+    if (!hasRefluxedTotalCondenser() || feedStreams.isEmpty() || gasOutStream == null
+        || liquidOutStream == null) {
+      return;
+    }
+
+    double[] feedComponentMoles = getFeedComponentMoles();
+    double[] topProductComponentMoles = getComponentMoles(gasOutStream.getThermoSystem());
+    if (feedComponentMoles.length != topProductComponentMoles.length) {
+      return;
+    }
+
+    double[] balancedTopProductComponentMoles = new double[feedComponentMoles.length];
+    double[] bottomProductComponentMoles = new double[feedComponentMoles.length];
+    double topTotalMoles = 0.0;
+    double bottomTotalMoles = 0.0;
+    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+      balancedTopProductComponentMoles[componentIndex] = Math.max(0.0,
+          Math.min(topProductComponentMoles[componentIndex], feedComponentMoles[componentIndex]));
+      double remainingMoles =
+          feedComponentMoles[componentIndex] - balancedTopProductComponentMoles[componentIndex];
+      bottomProductComponentMoles[componentIndex] = Math.max(0.0, remainingMoles);
+      topTotalMoles += balancedTopProductComponentMoles[componentIndex];
+      bottomTotalMoles += bottomProductComponentMoles[componentIndex];
+    }
+
+    if (topTotalMoles <= 1.0e-20 || bottomTotalMoles <= 1.0e-20) {
+      return;
+    }
+
+    updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
+    updateProductStreamFromComponentMoles(liquidOutStream, bottomProductComponentMoles, id);
+  }
+
+  /**
+   * Replaces a product stream fluid with the same thermodynamic model at the current stream
+   * temperature and pressure but with specified component mole amounts.
+   *
+   * @param productStream stream to update
+   * @param componentMoles component mole amounts on the stream-flow basis
+   * @param id calculation identifier to assign after the update
+   */
+  private void updateProductStreamFromComponentMoles(StreamInterface productStream,
+      double[] componentMoles, UUID id) {
+    SystemInterface balancedSystem = productStream.getThermoSystem().clone();
+    double productTemperature = productStream.getTemperature("K");
+    double productPressure = productStream.getPressure("bara");
+    balancedSystem.setMolarFlowRates(componentMoles);
+    balancedSystem.setTemperature(productTemperature);
+    balancedSystem.setPressure(productPressure, "bara");
+    balancedSystem.init(0);
+    balancedSystem.init(3);
+    productStream.setThermoSystem(balancedSystem);
+    productStream.setCalculationIdentifier(id);
+  }
+
+  /**
+   * Calculates total component mole amounts entering the column through all external feeds.
+   *
+   * @return component mole amounts on the stream-flow basis used by NeqSim streams
+   */
+  private double[] getFeedComponentMoles() {
+    double[] feedComponentMoles = new double[getNumberOfComponentsFromFeeds()];
+    for (List<StreamInterface> feedList : feedStreams.values()) {
+      for (StreamInterface feed : feedList) {
+        double[] componentMoles = getComponentMoles(feed.getThermoSystem());
+        for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+          feedComponentMoles[componentIndex] += componentMoles[componentIndex];
+        }
+      }
+    }
+    return feedComponentMoles;
+  }
+
+  /**
+   * Gets the number of components from the first available feed stream.
+   *
+   * @return number of components, or zero when no feeds are connected
+   */
+  private int getNumberOfComponentsFromFeeds() {
+    for (List<StreamInterface> feedList : feedStreams.values()) {
+      for (StreamInterface feed : feedList) {
+        return feed.getThermoSystem().getNumberOfComponents();
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Calculates component mole amounts from the system-level phase zero inventory.
+   *
+   * @param system thermodynamic system to inspect
+   * @return component mole amounts on the system-flow basis
+   */
+  private double[] getComponentMoles(SystemInterface system) {
+    double[] componentMoles = new double[system.getNumberOfComponents()];
+    for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+      componentMoles[componentIndex] =
+          system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+    }
+    return componentMoles;
+  }
+
+  /**
+   * Checks whether the top tray is a total condenser with an explicit reflux ratio split.
+   *
+   * @return {@code true} when a refluxed total condenser is configured
+   */
+  private boolean hasRefluxedTotalCondenser() {
+    return hasCondenser && getCondenser().totalCondenser && getCondenser().refluxIsSet;
   }
 
   /** Reset cached solve metrics when no calculation is performed. */
