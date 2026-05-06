@@ -94,6 +94,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | GitHub Setup    | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github) | NeqSim and GitHub setup       |
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                                 | Development environment setup |
 | Productization Roadmap | [docs/development/PRODUCTIZATION_ROADMAP.md](development/PRODUCTIZATION_ROADMAP)              | Adoption, trust, contributor scaling plan |
+| Image Tools, Agents, and Skills | [docs/development/image_tools_agents_skills.md](development/image_tools_agents_skills)        | Engineering-image workflow for P&IDs, drawings, scanned PDFs, maps, screenshots, and related agents/skills |
 | Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index)                                                    | Validation against NIST and published data |
 | Consolidated Benchmarks | [docs/benchmarks/consolidated_benchmarks.md](benchmarks/consolidated_benchmarks)          | All benchmark results from task-solving studies |
 

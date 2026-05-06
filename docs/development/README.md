@@ -38,6 +38,7 @@ This folder contains documentation for:
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
 | [LESSONS_LEARNED.md](LESSONS_LEARNED) | Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas) |
+| [image_tools_agents_skills.md](image_tools_agents_skills) | Inventory of image-related tools, agents, and skills for P&IDs, drawings, scanned PDFs, maps, and screenshots |
 
 Start with `CONTEXT.md` in the repo root for a 60-second orientation.
 

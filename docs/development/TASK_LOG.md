@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-05-06 — Confidential separator carry-over cooler scaling screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** separator carry-over, cooler scaling, anti-surge recycle, STID, tagreader, NaCl source term, compressor calibration, plate heat exchanger
+**Solution:** `private task folder (redacted)`
+**Notes:** Built a NeqSim gas-path screening model from separator gas outlet through a suction cooler, scrubber, and recompressor with measured fixed anti-surge recycle. STID and tagreader manifests were kept in the private task folder. Reusable pattern: model anti-surge recycle as a measured stream when compressor maps are unavailable, then evaluate NaCl risk first as a water carry-over source term and halite saturation threshold before claiming a deposition/fouling rate.
+
 ### 2026-04-29 — Route-level piping hydraulic builder for STID line lists
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** PipingRouteBuilder, STID, E3D, line list, piping route, pressure drop, PipeBeggsAndBrills, fittings, K-value, equivalent length
