@@ -21,6 +21,7 @@ This page is the landing page for NeqSim process optimization. Use it to find th
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Core constraint definition and bottleneck detection |
 | [Getting Started](getting-started) | Step-by-step workflow for first optimization run |
 | [Batch Studies](batch-studies) | Sensitivity analysis with parameter sweeps |
+| [Process Researcher](process-researcher) | Generate, simulate, optimize, and rank candidate flowsheets from feed and product targets |
 | [Multi-Objective Optimization](multi-objective-optimization) | Pareto optimization for conflicting objectives |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curves |
 | [Constraint Framework](constraint-framework) | Unified ProcessConstraint interface for all optimizer layers |

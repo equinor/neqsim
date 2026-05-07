@@ -75,6 +75,7 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
 | [optimization/OPTIMIZATION_OVERVIEW.md](optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [optimization/process-researcher.md](optimization/process-researcher) | **Process researcher** - generate and rank candidate flowsheets from feed/product targets, including reaction routes |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment capacity limits and utilization tracking |
 
 **Key Features:**

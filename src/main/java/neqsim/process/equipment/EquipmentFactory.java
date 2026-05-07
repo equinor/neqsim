@@ -22,6 +22,9 @@ import neqsim.process.equipment.powergeneration.OffshoreEnergySystem;
 import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
+import neqsim.process.equipment.reactor.GibbsReactor;
+import neqsim.process.equipment.reactor.PlugFlowReactor;
+import neqsim.process.equipment.reactor.StirredTankReactor;
 import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -99,6 +102,16 @@ public final class EquipmentFactory {
       case "ammoniasynthesisreactor":
       case "haberbosch":
         return createEquipment(name, EquipmentEnum.AmmoniaSynthesisReactor);
+      case "gibbsreactor":
+      case "equilibriumreactor":
+      case "reactor":
+        return createEquipment(name, EquipmentEnum.GibbsReactor);
+      case "plugflowreactor":
+      case "pfr":
+        return createEquipment(name, EquipmentEnum.PlugFlowReactor);
+      case "stirredtankreactor":
+      case "cstr":
+        return createEquipment(name, EquipmentEnum.StirredTankReactor);
       case "subseapowercable":
       case "powercable":
         return createEquipment(name, EquipmentEnum.SubseaPowerCable);
@@ -161,6 +174,13 @@ public final class EquipmentFactory {
         return new Mixer(name);
       case Splitter:
         return new Splitter(name);
+      case Reactor:
+      case GibbsReactor:
+        return new GibbsReactor(name);
+      case PlugFlowReactor:
+        return new PlugFlowReactor(name);
+      case StirredTankReactor:
+        return new StirredTankReactor(name);
       case Cooler:
         return new Cooler(name);
       case Heater:
