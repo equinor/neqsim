@@ -276,6 +276,22 @@ public class Separator extends ProcessEquipmentBaseClass
   private boolean useDetailedEntrainmentCalculation = false;
 
   /**
+   * Whether to compute the outlet pressure drop from the mechanical design (inlet expansion,
+   * internals, outlet contraction) on each {@code run()}. When {@code true} and a mechanical
+   * design is initialised, the static {@link #pressureDrop} field is overwritten before the flash.
+   * Off by default to preserve backward compatibility.
+   */
+  private boolean enhancedPressureDropCalculation = false;
+
+  /**
+   * Last computed pressure-drop breakdown — populated by {@code run()} when
+   * {@link #enhancedPressureDropCalculation} is enabled, otherwise {@code null}. Marked
+   * transient because {@link neqsim.process.mechanicaldesign.separator.pressuredrop.PressureDropBreakdown}
+   * is serialisable but the field is reproducible from the next run.
+   */
+  private transient neqsim.process.mechanicaldesign.separator.pressuredrop.PressureDropBreakdown lastPressureDropBreakdown;
+
+  /**
    * Constructor for Separator.
    *
    * @param name Name of separator
@@ -624,7 +640,34 @@ public class Separator extends ProcessEquipmentBaseClass
     lastFlowRate = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     lastPressure = inletStreamMixer.getOutletStream().getPressure();
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
-    thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
+
+    // Optional: replace the static pressureDrop with a physics-based estimate
+    // computed from the mechanical design and the inlet thermodynamic state.
+    // The thermoSystem2 still holds the inlet state at this point, which is the
+    // correct reference for nozzle velocities and densities.
+    double effectivePressureDrop = pressureDrop;
+    if (enhancedPressureDropCalculation && separatorMechanicalDesign != null) {
+      try {
+        thermoSystem2.initPhysicalProperties();
+        // Temporarily expose the inlet state via getThermoSystem() so the
+        // calculator sees gas density and flow at the correct reference.
+        SystemInterface savedThermo = thermoSystem;
+        thermoSystem = thermoSystem2;
+        try {
+          neqsim.process.mechanicaldesign.separator.pressuredrop.PressureDropBreakdown bd =
+              neqsim.process.mechanicaldesign.separator.pressuredrop.SeparatorPressureDropCalculator
+                  .compute(this);
+          lastPressureDropBreakdown = bd;
+          effectivePressureDrop = bd.getTotalBar();
+        } finally {
+          thermoSystem = savedThermo;
+        }
+      } catch (RuntimeException e) {
+        // Fall back to the static pressureDrop on any calculator failure
+        // (e.g. missing geometry); leave lastPressureDropBreakdown untouched.
+      }
+    }
+    thermoSystem2.setPressure(thermoSystem2.getPressure() - effectivePressureDrop);
 
     // Handle heat input for steady-state operations
     if (setHeatInput && heatInput != 0.0) {
@@ -637,7 +680,7 @@ public class Separator extends ProcessEquipmentBaseClass
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
       ops.PHflash(newEnthalpy, 0); // Second parameter is typically 0
       thermoSystem2.initProperties();
-    } else if (Math.abs(pressureDrop) > 1e-6) {
+    } else if (Math.abs(effectivePressureDrop) > 1e-6) {
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
       ops.TPflash();
       thermoSystem2.initProperties();
@@ -1201,6 +1244,45 @@ public class Separator extends ProcessEquipmentBaseClass
   public boolean isEnhancedEntrainmentCalculation() {
     return useDetailedEntrainmentCalculation && performanceCalculator != null
         && performanceCalculator.isUseEnhancedCalculation();
+  }
+
+  /**
+   * Enables physics-based outlet pressure-drop calculation. When {@code true}, each call to
+   * {@code run()} computes the gas-side dp from the current mechanical design (inlet expansion,
+   * inlet device, mist eliminator, demisting cyclones, outlet contraction) and uses that value
+   * in place of any user-set static {@link #setPressureDrop(double)} value.
+   *
+   * <p>
+   * The breakdown of contributions is available via {@link #getLastPressureDropBreakdown()} after
+   * each {@code run()}. Setting this back to {@code false} restores the user-set static dp
+   * behaviour. A subsequent manual call to {@link #setPressureDrop(double)} after enabling will
+   * be overwritten on the next run while this flag is true.
+   * </p>
+   *
+   * @param enabled true to enable the calculation
+   */
+  public void setEnhancedPressureDropCalculation(boolean enabled) {
+    this.enhancedPressureDropCalculation = enabled;
+  }
+
+  /**
+   * Returns whether physics-based outlet pressure drop is enabled.
+   *
+   * @return true when enabled
+   */
+  public boolean isEnhancedPressureDropCalculation() {
+    return enhancedPressureDropCalculation;
+  }
+
+  /**
+   * Returns the most recent pressure-drop breakdown computed during {@code run()} when the
+   * enhanced pressure-drop calculation is enabled.
+   *
+   * @return the breakdown, or {@code null} if {@code run()} has not produced one (e.g. the
+   *         feature is disabled or the very first call has not happened yet)
+   */
+  public neqsim.process.mechanicaldesign.separator.pressuredrop.PressureDropBreakdown getLastPressureDropBreakdown() {
+    return lastPressureDropBreakdown;
   }
 
   /**
