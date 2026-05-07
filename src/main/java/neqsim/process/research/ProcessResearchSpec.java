@@ -42,12 +42,14 @@ public class ProcessResearchSpec {
   private int maxSynthesisDepth = 4;
   private boolean evaluateCandidates = true;
   private boolean enableFeasibilityPruning = true;
+  private boolean includeSynthesisLibrary = false;
   private boolean includeHeatIntegration = false;
   private boolean includeCostEstimate = false;
   private boolean includeEmissionEstimate = false;
   private double heatIntegrationDeltaTMinC = 10.0;
   private Objective objective = Objective.MAXIMIZE_PRODUCT;
   private ScoringWeights scoringWeights = new ScoringWeights();
+  private SynthesisConstraints synthesisConstraints = new SynthesisConstraints();
   private EconomicAssumptions economicAssumptions = new EconomicAssumptions();
   private final Map<String, Double> feedComponents = new LinkedHashMap<>();
   private final List<MaterialNode> materialNodes = new ArrayList<>();
@@ -190,6 +192,15 @@ public class ProcessResearchSpec {
   }
 
   /**
+   * Returns whether the built-in synthesis operation library is included.
+   *
+   * @return true if the generator should add curated synthesis operations
+   */
+  public boolean isIncludeSynthesisLibrary() {
+    return includeSynthesisLibrary;
+  }
+
+  /**
    * Returns whether heat-integration metrics are included.
    *
    * @return true if pinch-analysis metrics are included
@@ -241,6 +252,15 @@ public class ProcessResearchSpec {
    */
   public ScoringWeights getScoringWeights() {
     return scoringWeights;
+  }
+
+  /**
+   * Gets hard synthesis acceptance constraints.
+   *
+   * @return synthesis constraints
+   */
+  public SynthesisConstraints getSynthesisConstraints() {
+    return synthesisConstraints;
   }
 
   /**
@@ -813,6 +833,165 @@ public class ProcessResearchSpec {
   }
 
   /**
+   * Hard acceptance constraints for generated synthesis candidates.
+   */
+  public static class SynthesisConstraints {
+    private double maxEquipmentCount = Double.POSITIVE_INFINITY;
+    private double maxTotalPowerKW = Double.POSITIVE_INFINITY;
+    private double maxHotUtilityKW = Double.POSITIVE_INFINITY;
+    private double maxColdUtilityKW = Double.POSITIVE_INFINITY;
+    private double maxCapitalCostProxyUSD = Double.POSITIVE_INFINITY;
+    private double maxEmissionsKgCO2ePerHr = Double.POSITIVE_INFINITY;
+    private double maxAnnualOperatingCostProxyUSDPerYr = Double.POSITIVE_INFINITY;
+
+    /**
+     * Creates unconstrained synthesis acceptance criteria.
+     */
+    public SynthesisConstraints() {}
+
+    /**
+     * Sets the maximum equipment count.
+     *
+     * @param maxEquipmentCount maximum number of process units
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxEquipmentCount(double maxEquipmentCount) {
+      this.maxEquipmentCount = maxEquipmentCount;
+      return this;
+    }
+
+    /**
+     * Sets the maximum total electric power.
+     *
+     * @param maxTotalPowerKW maximum total power in kW
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxTotalPowerKW(double maxTotalPowerKW) {
+      this.maxTotalPowerKW = maxTotalPowerKW;
+      return this;
+    }
+
+    /**
+     * Sets the maximum hot utility demand.
+     *
+     * @param maxHotUtilityKW maximum hot utility demand in kW
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxHotUtilityKW(double maxHotUtilityKW) {
+      this.maxHotUtilityKW = maxHotUtilityKW;
+      return this;
+    }
+
+    /**
+     * Sets the maximum cold utility demand.
+     *
+     * @param maxColdUtilityKW maximum cold utility demand in kW
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxColdUtilityKW(double maxColdUtilityKW) {
+      this.maxColdUtilityKW = maxColdUtilityKW;
+      return this;
+    }
+
+    /**
+     * Sets the maximum capital-cost proxy.
+     *
+     * @param maxCapitalCostProxyUSD maximum capital-cost proxy in USD
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxCapitalCostProxyUSD(double maxCapitalCostProxyUSD) {
+      this.maxCapitalCostProxyUSD = maxCapitalCostProxyUSD;
+      return this;
+    }
+
+    /**
+     * Sets the maximum emissions estimate.
+     *
+     * @param maxEmissionsKgCO2ePerHr maximum emissions in kg CO2-equivalent per hour
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxEmissionsKgCO2ePerHr(double maxEmissionsKgCO2ePerHr) {
+      this.maxEmissionsKgCO2ePerHr = maxEmissionsKgCO2ePerHr;
+      return this;
+    }
+
+    /**
+     * Sets the maximum annual operating-cost proxy.
+     *
+     * @param maxAnnualOperatingCostProxyUSDPerYr maximum annual operating-cost proxy in USD/yr
+     * @return this constraints object
+     */
+    public SynthesisConstraints setMaxAnnualOperatingCostProxyUSDPerYr(
+        double maxAnnualOperatingCostProxyUSDPerYr) {
+      this.maxAnnualOperatingCostProxyUSDPerYr = maxAnnualOperatingCostProxyUSDPerYr;
+      return this;
+    }
+
+    /**
+     * Gets the maximum equipment count.
+     *
+     * @return maximum equipment count
+     */
+    public double getMaxEquipmentCount() {
+      return maxEquipmentCount;
+    }
+
+    /**
+     * Gets the maximum total power.
+     *
+     * @return maximum total power in kW
+     */
+    public double getMaxTotalPowerKW() {
+      return maxTotalPowerKW;
+    }
+
+    /**
+     * Gets the maximum hot utility demand.
+     *
+     * @return maximum hot utility demand in kW
+     */
+    public double getMaxHotUtilityKW() {
+      return maxHotUtilityKW;
+    }
+
+    /**
+     * Gets the maximum cold utility demand.
+     *
+     * @return maximum cold utility demand in kW
+     */
+    public double getMaxColdUtilityKW() {
+      return maxColdUtilityKW;
+    }
+
+    /**
+     * Gets the maximum capital-cost proxy.
+     *
+     * @return maximum capital-cost proxy in USD
+     */
+    public double getMaxCapitalCostProxyUSD() {
+      return maxCapitalCostProxyUSD;
+    }
+
+    /**
+     * Gets the maximum emissions estimate.
+     *
+     * @return maximum emissions in kg CO2-equivalent per hour
+     */
+    public double getMaxEmissionsKgCO2ePerHr() {
+      return maxEmissionsKgCO2ePerHr;
+    }
+
+    /**
+     * Gets the maximum annual operating-cost proxy.
+     *
+     * @return maximum annual operating-cost proxy in USD/yr
+     */
+    public double getMaxAnnualOperatingCostProxyUSDPerYr() {
+      return maxAnnualOperatingCostProxyUSDPerYr;
+    }
+  }
+
+  /**
    * Economic and emissions assumptions for synthesis ranking.
    */
   public static class EconomicAssumptions {
@@ -1315,6 +1494,17 @@ public class ProcessResearchSpec {
     }
 
     /**
+     * Sets whether the built-in synthesis operation library should be included.
+     *
+     * @param includeSynthesisLibrary true to add curated synthesis operations
+     * @return this builder
+     */
+    public Builder setIncludeSynthesisLibrary(boolean includeSynthesisLibrary) {
+      spec.includeSynthesisLibrary = includeSynthesisLibrary;
+      return this;
+    }
+
+    /**
      * Sets whether heat-integration metrics are included.
      *
      * @param includeHeatIntegration true to run pinch analysis after candidate simulation
@@ -1377,6 +1567,18 @@ public class ProcessResearchSpec {
      */
     public Builder setScoringWeights(ScoringWeights scoringWeights) {
       spec.scoringWeights = scoringWeights == null ? new ScoringWeights() : scoringWeights;
+      return this;
+    }
+
+    /**
+     * Sets hard synthesis acceptance constraints.
+     *
+     * @param synthesisConstraints hard acceptance constraints
+     * @return this builder
+     */
+    public Builder setSynthesisConstraints(SynthesisConstraints synthesisConstraints) {
+      spec.synthesisConstraints =
+          synthesisConstraints == null ? new SynthesisConstraints() : synthesisConstraints;
       return this;
     }
 

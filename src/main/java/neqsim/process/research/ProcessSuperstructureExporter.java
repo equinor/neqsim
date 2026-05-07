@@ -4,6 +4,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 
 /**
@@ -37,11 +38,16 @@ public class ProcessSuperstructureExporter {
     JsonObject root = new JsonObject();
     root.addProperty("name", spec.getName());
     root.addProperty("feedMaterial", spec.getFeedMaterialName());
+    root.add("feedComponents", feedComponentsToJson(spec));
+    root.add("productTargets", productTargetsToJson(spec));
     root.add("materials", materialsToJson(spec));
     root.add("operations", operationsToJson(spec));
     root.add("reactions", reactionsToJson(spec));
     root.add("decisionVariables", decisionVariablesToJson(spec));
     root.add("scoringWeights", scoringWeightsToJson(spec.getScoringWeights()));
+    root.add("synthesisConstraints", constraintsToJson(spec.getSynthesisConstraints()));
+    root.add("economicAssumptions", economicAssumptionsToJson(spec.getEconomicAssumptions()));
+    root.add("robustnessScenarios", robustnessScenariosToJson(spec));
     root.addProperty("recommendedSolverClass", "GDP/MINLP with NeqSim as rigorous evaluator");
     return gson.toJson(root);
   }
@@ -60,6 +66,17 @@ public class ProcessSuperstructureExporter {
     builder.append("from pyomo.environ import ConcreteModel, Var, Binary, Objective, maximize\n");
     builder.append("from pyomo.gdp import Disjunct, Disjunction\n\n");
     builder.append("m = ConcreteModel()\n");
+    builder.append("m.materials = [\n");
+    builder.append("    '").append(escape(spec.getFeedMaterialName())).append("',\n");
+    for (MaterialNode node : spec.getMaterialNodes()) {
+      builder.append("    '").append(escape(node.getName())).append("',\n");
+    }
+    for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
+      if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()) {
+        builder.append("    '").append(escape(target.getMaterialName())).append("',\n");
+      }
+    }
+    builder.append("]\n");
     builder.append("m.use_operation = Var([\n");
     for (OperationOption option : spec.getOperationOptions()) {
       builder.append("    '").append(escape(option.getName())).append("',\n");
@@ -72,6 +89,49 @@ public class ProcessSuperstructureExporter {
     builder.append("m.objective = Objective(expr=sum(m.use_operation[i] ");
     builder.append("for i in m.use_operation), sense=maximize)\n");
     return builder.toString();
+  }
+
+  /**
+   * Converts feed components to JSON.
+   *
+   * @param spec process research specification
+   * @return feed component object
+   */
+  private JsonObject feedComponentsToJson(ProcessResearchSpec spec) {
+    JsonObject object = new JsonObject();
+    for (Map.Entry<String, Double> entry : spec.getFeedComponents().entrySet()) {
+      object.addProperty(entry.getKey(), entry.getValue());
+    }
+    return object;
+  }
+
+  /**
+   * Converts product targets to JSON.
+   *
+   * @param spec process research specification
+   * @return product target array
+   */
+  private JsonArray productTargetsToJson(ProcessResearchSpec spec) {
+    JsonArray array = new JsonArray();
+    for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
+      JsonObject object = new JsonObject();
+      object.addProperty("name", target.getName());
+      if (target.getComponentName() != null) {
+        object.addProperty("componentName", target.getComponentName());
+      }
+      if (target.getMaterialName() != null) {
+        object.addProperty("materialName", target.getMaterialName());
+      }
+      object.addProperty("streamRole", target.getStreamRole());
+      if (target.getStreamReference() != null) {
+        object.addProperty("streamReference", target.getStreamReference());
+      }
+      object.addProperty("minPurity", target.getMinPurity());
+      object.addProperty("minFlowRate_kg_hr", target.getMinFlowRate());
+      object.addProperty("weight", target.getWeight());
+      array.add(object);
+    }
+    return array;
   }
 
   /**
@@ -178,6 +238,78 @@ public class ProcessSuperstructureExporter {
     object.addProperty("complexityPenalty", weights.getComplexityPenalty());
     object.addProperty("robustnessWeight", weights.getRobustnessWeight());
     return object;
+  }
+
+  /**
+   * Converts hard synthesis constraints to JSON.
+   *
+   * @param constraints hard synthesis constraints
+   * @return constraint object
+   */
+  private JsonObject constraintsToJson(ProcessResearchSpec.SynthesisConstraints constraints) {
+    JsonObject object = new JsonObject();
+    addFiniteOrNull(object, "maxEquipmentCount", constraints.getMaxEquipmentCount());
+    addFiniteOrNull(object, "maxTotalPower_kW", constraints.getMaxTotalPowerKW());
+    addFiniteOrNull(object, "maxHotUtility_kW", constraints.getMaxHotUtilityKW());
+    addFiniteOrNull(object, "maxColdUtility_kW", constraints.getMaxColdUtilityKW());
+    addFiniteOrNull(object, "maxCapitalCostProxy_USD", constraints.getMaxCapitalCostProxyUSD());
+    addFiniteOrNull(object, "maxEmissions_kgCO2e_per_hr", constraints.getMaxEmissionsKgCO2ePerHr());
+    addFiniteOrNull(object, "maxAnnualOperatingCostProxy_USD_per_yr",
+        constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
+    return object;
+  }
+
+  /**
+   * Adds a finite JSON number or JSON null for an unbounded value.
+   *
+   * @param object JSON object to update
+   * @param property property name
+   * @param value numeric value
+   */
+  private void addFiniteOrNull(JsonObject object, String property, double value) {
+    if (Double.isInfinite(value) || Double.isNaN(value)) {
+      object.add(property, JsonNull.INSTANCE);
+    } else {
+      object.addProperty(property, value);
+    }
+  }
+
+  /**
+   * Converts economic assumptions to JSON.
+   *
+   * @param assumptions economic assumptions
+   * @return economic assumption object
+   */
+  private JsonObject economicAssumptionsToJson(
+      ProcessResearchSpec.EconomicAssumptions assumptions) {
+    JsonObject object = new JsonObject();
+    object.addProperty("operatingHoursPerYear", assumptions.getOperatingHoursPerYear());
+    object.addProperty("electricityCost_USD_per_kWh", assumptions.getElectricityCostUsdPerKWh());
+    object.addProperty("hotUtilityCost_USD_per_kWh", assumptions.getHotUtilityCostUsdPerKWh());
+    object.addProperty("coldUtilityCost_USD_per_kWh", assumptions.getColdUtilityCostUsdPerKWh());
+    object.addProperty("electricityEmissionFactor_kgCO2e_per_kWh",
+        assumptions.getElectricityEmissionFactorKgCO2PerKWh());
+    object.addProperty("carbonPrice_USD_per_tonne", assumptions.getCarbonPriceUsdPerTonne());
+    return object;
+  }
+
+  /**
+   * Converts robustness scenarios to JSON.
+   *
+   * @param spec process research specification
+   * @return robustness scenario array
+   */
+  private JsonArray robustnessScenariosToJson(ProcessResearchSpec spec) {
+    JsonArray array = new JsonArray();
+    for (ProcessResearchSpec.RobustnessScenario scenario : spec.getRobustnessScenarios()) {
+      JsonObject object = new JsonObject();
+      object.addProperty("name", scenario.getName());
+      object.addProperty("feedFlowMultiplier", scenario.getFeedFlowMultiplier());
+      object.addProperty("feedTemperatureOffset_K", scenario.getFeedTemperatureOffsetK());
+      object.addProperty("feedPressureMultiplier", scenario.getFeedPressureMultiplier());
+      array.add(object);
+    }
+    return array;
   }
 
   /**

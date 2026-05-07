@@ -228,6 +228,18 @@ public class ProcessCandidateEvaluator {
       }
     }
     score = applyProcessPenalties(score, metrics, spec);
+    List<String> violations = findConstraintViolations(metrics, spec);
+    if (!violations.isEmpty()) {
+      if (recordMetrics) {
+        for (String violation : violations) {
+          candidate.addError("Hard synthesis constraint violated: " + violation);
+        }
+        metrics.set("constraintViolationCount", violations.size());
+        metrics.set("compositeScore", Double.NEGATIVE_INFINITY);
+        recordMetrics(candidate, metrics);
+      }
+      return Double.NEGATIVE_INFINITY;
+    }
     if (spec.getObjective() == ProcessResearchSpec.Objective.MINIMIZE_ENERGY) {
       score -= metrics.get("totalPower_kW", 0.0) + metrics.get("hotUtility_kW", 0.0)
           + metrics.get("coldUtility_kW", 0.0);
@@ -237,12 +249,22 @@ public class ProcessCandidateEvaluator {
       metrics.set("robustnessDelta", robustnessDelta);
       score += spec.getScoringWeights().getRobustnessWeight() * robustnessDelta;
       metrics.set("compositeScore", score);
-      candidate.setMetrics(metrics);
-      for (Map.Entry<String, Double> entry : metrics.asMap().entrySet()) {
-        candidate.addObjectiveValue(entry.getKey(), entry.getValue());
-      }
+      recordMetrics(candidate, metrics);
     }
     return score;
+  }
+
+  /**
+   * Records structured metrics on a candidate.
+   *
+   * @param candidate candidate to update
+   * @param metrics metrics to record
+   */
+  private void recordMetrics(ProcessCandidate candidate, ProcessResearchMetrics metrics) {
+    candidate.setMetrics(metrics);
+    for (Map.Entry<String, Double> entry : metrics.asMap().entrySet()) {
+      candidate.addObjectiveValue(entry.getKey(), entry.getValue());
+    }
   }
 
   /**
@@ -290,10 +312,11 @@ public class ProcessCandidateEvaluator {
     metrics.set("totalPower_kW", totalPower);
     metrics.set("heatingDuty_kW", heatingDuty);
     metrics.set("coolingDuty_kW", coolingDuty);
-    if (spec.isIncludeCostEstimate()) {
+    ProcessResearchSpec.SynthesisConstraints constraints = spec.getSynthesisConstraints();
+    if (spec.isIncludeCostEstimate() || isFinite(constraints.getMaxCapitalCostProxyUSD())) {
       metrics.set("capitalCostProxy_USD", capitalCostProxy);
     }
-    if (spec.isIncludeEmissionEstimate()) {
+    if (spec.isIncludeEmissionEstimate() || isFinite(constraints.getMaxEmissionsKgCO2ePerHr())) {
       double emissions =
           totalPower * spec.getEconomicAssumptions().getElectricityEmissionFactorKgCO2PerKWh();
       metrics.set("emissions_kgCO2e_per_hr", emissions);
@@ -379,6 +402,62 @@ public class ProcessCandidateEvaluator {
     adjusted -= weights.getEmissionsPenalty() * metrics.get("emissions_kgCO2e_per_hr", 0.0);
     adjusted -= weights.getComplexityPenalty() * metrics.get("equipmentCount", 0.0);
     return adjusted;
+  }
+
+  /**
+   * Finds hard synthesis constraint violations.
+   *
+   * @param metrics process metrics
+   * @param spec process research specification
+   * @return violation descriptions
+   */
+  private List<String> findConstraintViolations(ProcessResearchMetrics metrics,
+      ProcessResearchSpec spec) {
+    List<String> violations = new ArrayList<String>();
+    ProcessResearchSpec.SynthesisConstraints constraints = spec.getSynthesisConstraints();
+    addViolation(violations, "equipmentCount", metrics.get("equipmentCount", 0.0),
+        constraints.getMaxEquipmentCount());
+    addViolation(violations, "totalPower_kW", metrics.get("totalPower_kW", 0.0),
+        constraints.getMaxTotalPowerKW());
+    addViolation(violations, "hotUtility_kW",
+        metrics.get("hotUtility_kW", metrics.get("heatingDuty_kW", 0.0)),
+        constraints.getMaxHotUtilityKW());
+    addViolation(violations, "coldUtility_kW",
+        metrics.get("coldUtility_kW", metrics.get("coolingDuty_kW", 0.0)),
+        constraints.getMaxColdUtilityKW());
+    addViolation(violations, "capitalCostProxy_USD", metrics.get("capitalCostProxy_USD", 0.0),
+        constraints.getMaxCapitalCostProxyUSD());
+    addViolation(violations, "emissions_kgCO2e_per_hr", metrics.get("emissions_kgCO2e_per_hr", 0.0),
+        constraints.getMaxEmissionsKgCO2ePerHr());
+    addViolation(violations, "annualOperatingCostProxy_USD_per_yr",
+        metrics.get("annualOperatingCostProxy_USD_per_yr", 0.0),
+        constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
+    return violations;
+  }
+
+  /**
+   * Adds a violation when a metric exceeds a finite limit.
+   *
+   * @param violations violation list to update
+   * @param metricName metric name
+   * @param value metric value
+   * @param limit finite maximum limit or infinity
+   */
+  private void addViolation(List<String> violations, String metricName, double value,
+      double limit) {
+    if (isFinite(limit) && value > limit) {
+      violations.add(metricName + " = " + value + " exceeds limit " + limit);
+    }
+  }
+
+  /**
+   * Checks whether a value is finite.
+   *
+   * @param value value to inspect
+   * @return true when value is neither infinite nor NaN
+   */
+  private boolean isFinite(double value) {
+    return !Double.isInfinite(value) && !Double.isNaN(value);
   }
 
   /**

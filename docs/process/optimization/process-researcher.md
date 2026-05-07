@@ -26,10 +26,12 @@ combines several layers:
 |-------|-------------------------------|
 | Process-network representation | Uses `MaterialNode`, `OperationOption`, `ReactionOption`, and `ProcessSynthesisGraph` for P-graph-style material-operation paths |
 | Feasibility pruning | Applies `ProcessSynthesisFeasibilityPruner` before rigorous simulation to reject missing reactants, invalid targets, and impossible graph paths |
+| Curated synthesis library | Uses `ProcessSynthesisTemplateLibrary` to add common conditioning trains such as compression, aftercooling, separation, heating, cooling, and pressure letdown |
 | Rigorous validation | Converts every surviving candidate to NeqSim JSON and runs `ProcessSystem.fromJsonAndRun` |
 | Continuous variable screening | Uses `ProcessSimulationEvaluator` for bounded grid screening of decision variables |
 | Multi-objective ranking | Uses `ProcessResearchMetrics` with product flow, purity, power, hot/cold utility, cost proxy, emissions, complexity, and robustness terms |
 | Heat integration | Optionally runs `PinchAnalysis.fromProcessSystem` to estimate minimum hot/cold utility and heat recovery |
+| Acceptance constraints | Rejects simulated candidates that exceed hard limits for equipment count, power, utilities, cost proxy, emissions, or operating cost |
 | External superstructure optimization | Exports reduced JSON and a Pyomo/GDP starter through `ProcessSuperstructureExporter` for MINLP/GDP workflows |
 | Decision transparency | Keeps assumptions, warnings, failed candidates, synthesis paths, metrics, and dominance flags in `ProcessCandidate` |
 
@@ -64,9 +66,10 @@ blocks:
 |-------|---------|------|
 | Specification | `ProcessResearchSpec`, `ProductTarget`, `DecisionVariable` | Feed, product, allowed units, objective, search bounds |
 | Candidate generation | `ProcessCandidateGenerator`, `ProcessSynthesisGraph`, `OperationOption`, `ReactionOption` | Build template and graph-enumerated NeqSim JSON definitions |
-| Feasibility pruning | `ProcessSynthesisFeasibilityPruner` | Reject invalid specs, graph paths, and reaction routes before simulation |
+| Template library | `ProcessSynthesisTemplateLibrary` | Add curated conditioning operations when the study asks for automatic topology expansion |
+| Feasibility pruning | `ProcessSynthesisFeasibilityPruner` | Reject invalid specs, broken graph paths, and reaction routes before simulation |
 | Simulation and ranking | `ProcessCandidateEvaluator`, `ProcessResearcher` | Run `ProcessSystem.fromJsonAndRun`, score, mark dominated candidates, and sort |
-| Metrics | `ProcessResearchMetrics`, `ScoringWeights`, `EconomicAssumptions` | Product, energy, heat integration, cost proxy, emissions, complexity, robustness |
+| Metrics and constraints | `ProcessResearchMetrics`, `ScoringWeights`, `SynthesisConstraints`, `EconomicAssumptions` | Product, energy, heat integration, cost proxy, emissions, complexity, robustness, hard acceptance limits |
 | External optimization | `ProcessSuperstructureExporter` | JSON and Pyomo/GDP skeleton for external superstructure optimization |
 | Results | `ProcessCandidate`, `ProcessResearchResult` | JSON, process system, score, warnings, errors, metrics, dominance flags |
 
@@ -141,6 +144,35 @@ ProcessResearchSpec spec = ProcessResearchSpec.builder()
 The graph layer enumerates bounded paths such as feed gas to compressed gas to
 sales gas. The resulting candidate still runs as a normal NeqSim `ProcessSystem`.
 
+## Curated Synthesis Library
+
+For broader early screening, enable the built-in template library. It adds common
+conditioning operations to the graph search without requiring every operation to
+be written by hand.
+
+```java
+ProcessResearchSpec spec = ProcessResearchSpec.builder()
+  .setName("template library screen")
+  .setFeedMaterialName("raw gas")
+  .setFeedTemperature(310.0)
+  .setFeedPressure(25.0)
+  .addFeedComponent("methane", 0.85)
+  .addFeedComponent("n-heptane", 0.15)
+  .addProductTarget(new ProcessResearchSpec.ProductTarget("sales gas")
+    .setMaterialName("sales gas")
+    .setStreamRole("gas")
+    .setComponentName("methane"))
+  .addAllowedUnitType("Compressor")
+  .addAllowedUnitType("Cooler")
+  .addAllowedUnitType("Separator")
+  .setIncludeSynthesisLibrary(true)
+  .build();
+```
+
+With those allowed units, the library contributes a compression, aftercooling,
+and polishing-separator train. The generated graph paths are still checked for
+serial material continuity before simulation.
+
 ## Multi-Objective Ranking
 
 The default score remains product-focused for backwards compatibility. For
@@ -170,6 +202,30 @@ ProcessResearchSpec spec = ProcessResearchSpec.builder()
 
 Candidate metrics are available from `best.getMetrics().asMap()` and are also
 mirrored into `best.getObjectiveValues()` for notebook and agent workflows.
+
+## Hard Acceptance Constraints
+
+Ranking penalties are useful when a candidate is merely unattractive. Hard
+constraints are used when a candidate should be rejected from the feasible set.
+
+```java
+ProcessResearchSpec.SynthesisConstraints constraints =
+    new ProcessResearchSpec.SynthesisConstraints()
+        .setMaxEquipmentCount(5.0)
+        .setMaxTotalPowerKW(2000.0)
+        .setMaxEmissionsKgCO2ePerHr(800.0);
+
+ProcessResearchSpec spec = ProcessResearchSpec.builder()
+  .addFeedComponent("methane", 1.0)
+  .addProductTarget(new ProcessResearchSpec.ProductTarget("gas")
+    .setStreamRole("gas")
+    .setComponentName("methane"))
+  .setSynthesisConstraints(constraints)
+  .build();
+```
+
+Candidates exceeding a hard limit are marked infeasible and retain an error
+message identifying the violated metric.
 
 ## Reaction-Route Candidates
 
@@ -260,7 +316,9 @@ Implemented now:
 
 - feed/product specification,
 - graph-based material-operation candidate generation,
+- curated synthesis template library,
 - pre-simulation feasibility pruning,
+- material-continuity checks for graph paths,
 - built-in separator and gas-compression candidates,
 - explicit operation-option candidates,
 - reaction-route candidates,
@@ -270,6 +328,7 @@ Implemented now:
 - structured multi-objective metrics,
 - optional pinch-analysis heat-integration metrics,
 - cost and emissions screening proxies,
+- hard synthesis acceptance constraints,
 - robustness scenario hooks,
 - dominated-candidate marking,
 - external superstructure JSON and Pyomo/GDP skeleton export,

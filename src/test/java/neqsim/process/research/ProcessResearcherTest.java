@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.reactor.GibbsReactor;
@@ -197,15 +198,98 @@ class ProcessResearcherTest {
   void superstructureExporterCreatesJsonAndPyomoSkeleton() {
     OperationOption separation = new OperationOption("separator option", "Separator")
         .addInputMaterial("feed").addOutputMaterial("gas product");
+    ProcessResearchSpec.SynthesisConstraints constraints =
+        new ProcessResearchSpec.SynthesisConstraints().setMaxEquipmentCount(5.0);
     ProcessResearchSpec spec = ProcessResearchSpec.builder().setName("external optimizer handoff")
         .addFeedComponent("methane", 0.9).addFeedComponent("ethane", 0.1)
         .addProductTarget(new ProcessResearchSpec.ProductTarget("gas product")
             .setMaterialName("gas product").setComponentName("methane"))
-        .addOperationOption(separation).build();
+        .addOperationOption(separation).setSynthesisConstraints(constraints)
+        .addRobustnessScenario(
+            new ProcessResearchSpec.RobustnessScenario("high feed").setFeedFlowMultiplier(1.1))
+        .build();
 
     ProcessSuperstructureExporter exporter = new ProcessSuperstructureExporter();
+    String json = exporter.toJson(spec);
 
-    assertTrue(exporter.toJson(spec).contains("recommendedSolverClass"));
+    assertTrue(json.contains("recommendedSolverClass"));
+    assertTrue(json.contains("synthesisConstraints"));
+    assertTrue(json.contains("robustnessScenarios"));
+    assertTrue(json.contains("maxEquipmentCount"));
     assertTrue(exporter.toPyomoSkeleton(spec).contains("Disjunct"));
+  }
+
+  /**
+   * Verifies the curated synthesis library can generate a compression-cooling-separation train.
+   */
+  @Test
+  void synthesisTemplateLibraryGeneratesConditioningTrain() {
+    ProcessResearchSpec spec = ProcessResearchSpec.builder().setName("template library screen")
+        .setFeedMaterialName("raw gas").setFeedTemperature(310.0).setFeedPressure(25.0)
+        .setFeedFlowRate(1200.0, "kg/hr").addFeedComponent("methane", 0.85)
+        .addFeedComponent("n-heptane", 0.15)
+        .addProductTarget(new ProcessResearchSpec.ProductTarget("sales gas")
+            .setMaterialName("sales gas").setStreamRole("gas").setComponentName("methane"))
+        .addAllowedUnitType("Compressor").addAllowedUnitType("Cooler")
+        .addAllowedUnitType("Separator").setIncludeSynthesisLibrary(true)
+        .setEvaluateCandidates(false).build();
+
+    List<ProcessCandidate> candidates = new ProcessCandidateGenerator().generate(spec);
+    boolean foundConditioningTrain = false;
+    for (ProcessCandidate candidate : candidates) {
+      if ("process-network-graph".equals(candidate.getGenerationMethod())
+          && candidate.getSynthesisPath().size() == 3
+          && candidate.getSynthesisPath().toString().contains("library aftercooler")) {
+        foundConditioningTrain = true;
+        assertTrue(candidate.getJsonDefinition().contains("library polishing separator"));
+      }
+    }
+
+    assertTrue(foundConditioningTrain);
+  }
+
+  /**
+   * Verifies hard synthesis constraints can reject simulated candidates.
+   */
+  @Test
+  void hardSynthesisConstraintRejectsCandidate() {
+    OperationOption heater =
+        new OperationOption("feed heater", "Heater").setProperty("outletTemperature", 330.0, "K");
+    ProcessResearchSpec.SynthesisConstraints constraints =
+        new ProcessResearchSpec.SynthesisConstraints().setMaxEquipmentCount(0.0);
+    ProcessResearchSpec spec =
+        ProcessResearchSpec.builder().setName("hard constraint screen").setFeedTemperature(300.0)
+            .setFeedPressure(10.0).setFeedFlowRate(500.0, "kg/hr").addFeedComponent("methane", 1.0)
+            .addProductTarget(new ProcessResearchSpec.ProductTarget("heated gas")
+                .setStreamReference("feed heater.outlet").setComponentName("methane"))
+            .addAllowedUnitType("Heater").addOperationOption(heater)
+            .setSynthesisConstraints(constraints).build();
+
+    ProcessResearchResult result = new ProcessResearcher().research(spec);
+
+    assertNull(result.getBestCandidate());
+    assertEquals(1, result.getCandidates().size());
+    assertFalse(result.getCandidates().get(0).getErrors().isEmpty());
+    assertTrue(result.getCandidates().get(0).getErrors().toString().contains("equipmentCount"));
+  }
+
+  /**
+   * Verifies operation-path pruning detects broken material continuity.
+   */
+  @Test
+  void operationPathPrunerDetectsBrokenMaterialContinuity() {
+    ProcessResearchSpec spec = ProcessResearchSpec.builder().setName("broken path")
+        .setFeedMaterialName("feed").addFeedComponent("methane", 1.0)
+        .addProductTarget(new ProcessResearchSpec.ProductTarget("treated gas")
+            .setMaterialName("treated gas").setComponentName("methane"))
+        .build();
+    OperationOption brokenStep = new OperationOption("unreachable cooler", "Cooler")
+        .addInputMaterial("missing intermediate").addOutputMaterial("treated gas");
+
+    ProcessSynthesisFeasibilityPruner.FeasibilityResult result =
+        new ProcessSynthesisFeasibilityPruner().checkOperationPath(Arrays.asList(brokenStep), spec);
+
+    assertFalse(result.isFeasible());
+    assertTrue(result.getIssues().toString().contains("not available"));
   }
 }

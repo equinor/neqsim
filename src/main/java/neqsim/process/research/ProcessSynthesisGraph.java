@@ -110,7 +110,8 @@ public class ProcessSynthesisGraph {
     initialMaterials.add(normalize(feedMaterialName));
     Set<String> normalizedTargets = normalizeAll(targetMaterials);
     enumerateRecursive(initialMaterials, normalizedTargets, new ArrayList<OperationOption>(),
-        new LinkedHashSet<OperationOption>(), Math.max(1, maxDepth), Math.max(1, maxPaths), paths);
+        new LinkedHashSet<OperationOption>(), initialMaterials, Math.max(1, maxDepth),
+        Math.max(1, maxPaths), paths);
     return paths;
   }
 
@@ -121,13 +122,15 @@ public class ProcessSynthesisGraph {
    * @param targetMaterials normalized target material names
    * @param currentPath current operation path
    * @param usedOperations operations already used in this path
+   * @param terminalMaterials materials produced by the previous path step
    * @param maxDepth maximum path depth
    * @param maxPaths maximum path count
    * @param paths accumulated paths
    */
   private void enumerateRecursive(Set<String> availableMaterials, Set<String> targetMaterials,
-      List<OperationOption> currentPath, Set<OperationOption> usedOperations, int maxDepth,
-      int maxPaths, List<List<OperationOption>> paths) {
+      List<OperationOption> currentPath, Set<OperationOption> usedOperations,
+      Set<String> terminalMaterials, int maxDepth, int maxPaths,
+      List<List<OperationOption>> paths) {
     if (paths.size() >= maxPaths) {
       return;
     }
@@ -139,20 +142,45 @@ public class ProcessSynthesisGraph {
       return;
     }
     for (OperationOption operation : operations) {
-      if (usedOperations.contains(operation) || !inputsAvailable(operation, availableMaterials)) {
+      if (usedOperations.contains(operation) || !inputsAvailable(operation, availableMaterials)
+          || !continuesSerialPath(operation, currentPath, terminalMaterials)) {
         continue;
       }
       Set<String> nextMaterials = new LinkedHashSet<String>(availableMaterials);
+      Set<String> nextTerminalMaterials = new LinkedHashSet<String>();
       for (String output : operation.getOutputMaterials()) {
-        nextMaterials.add(normalize(output));
+        String normalizedOutput = normalize(output);
+        nextMaterials.add(normalizedOutput);
+        nextTerminalMaterials.add(normalizedOutput);
       }
       currentPath.add(operation);
       usedOperations.add(operation);
-      enumerateRecursive(nextMaterials, targetMaterials, currentPath, usedOperations, maxDepth,
-          maxPaths, paths);
+      enumerateRecursive(nextMaterials, targetMaterials, currentPath, usedOperations,
+          nextTerminalMaterials, maxDepth, maxPaths, paths);
       usedOperations.remove(operation);
       currentPath.remove(currentPath.size() - 1);
     }
+  }
+
+  /**
+   * Checks whether an operation continues the serial path represented by generated JSON.
+   *
+   * @param operation operation to inspect
+   * @param currentPath current operation path
+   * @param terminalMaterials materials produced by the previous step
+   * @return true if operation consumes the previous terminal material or starts the path
+   */
+  private boolean continuesSerialPath(OperationOption operation, List<OperationOption> currentPath,
+      Set<String> terminalMaterials) {
+    if (currentPath.isEmpty()) {
+      return true;
+    }
+    for (String input : operation.getInputMaterials()) {
+      if (terminalMaterials.contains(normalize(input))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

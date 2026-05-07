@@ -1,8 +1,10 @@
 package neqsim.process.research;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Fast pre-simulation feasibility checks for process synthesis candidates.
@@ -56,6 +58,12 @@ public class ProcessSynthesisFeasibilityPruner {
       if (target.getMinFlowRate() < 0.0) {
         messages.add("Product target flow must be non-negative: " + target.getName());
       }
+      if (target.getComponentName() != null && !target.getComponentName().trim().isEmpty()
+          && !spec.getFeedComponents().containsKey(target.getComponentName())
+          && !reactionProducesComponent(target.getComponentName(), spec)) {
+        messages.add("Product target component is absent from feed and reaction products: "
+            + target.getComponentName());
+      }
     }
     return messages;
   }
@@ -77,6 +85,13 @@ public class ProcessSynthesisFeasibilityPruner {
           && !spec.getFeedComponents().containsKey(entry.getKey())) {
         result.addIssue("Reaction reactant is not present in feed: " + entry.getKey());
       }
+    }
+    if (reaction.getExpectedProductComponent() != null
+        && !reaction.getExpectedProductComponent().trim().isEmpty()
+        && !spec.getFeedComponents().containsKey(reaction.getExpectedProductComponent())
+        && !reaction.getStoichiometry().containsKey(reaction.getExpectedProductComponent())) {
+      result.addIssue("Expected reaction product is not in feed or stoichiometry: "
+          + reaction.getExpectedProductComponent());
     }
     if (!Double.isNaN(reaction.getReactorTemperatureK())
         && reaction.getReactorTemperatureK() <= 0.0) {
@@ -103,6 +118,8 @@ public class ProcessSynthesisFeasibilityPruner {
       result.addIssue("Operation path is empty");
       return result;
     }
+    Set<String> availableMaterials = new LinkedHashSet<String>();
+    availableMaterials.add(normalize(spec.getFeedMaterialName()));
     for (OperationOption option : path) {
       if (!spec.allowsUnitType(option.getEquipmentType())) {
         result.addIssue("Operation uses a disallowed equipment type: " + option.getEquipmentType());
@@ -110,11 +127,54 @@ public class ProcessSynthesisFeasibilityPruner {
       if (option.getInputMaterials().isEmpty()) {
         result.addIssue("Operation has no declared input material: " + option.getName());
       }
+      for (String input : option.getInputMaterials()) {
+        if (!availableMaterials.contains(normalize(input))) {
+          result.addIssue("Operation input material is not available before " + option.getName()
+              + ": " + input);
+        }
+      }
       if (option.getOutputMaterials().isEmpty()) {
         result.addIssue("Operation has no declared output material: " + option.getName());
       }
+      for (String output : option.getOutputMaterials()) {
+        availableMaterials.add(normalize(output));
+      }
+    }
+    for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
+      if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()
+          && !availableMaterials.contains(normalize(target.getMaterialName()))) {
+        result.addIssue(
+            "Operation path does not produce target material: " + target.getMaterialName());
+      }
     }
     return result;
+  }
+
+  /**
+   * Checks if any reaction option produces a component.
+   *
+   * @param componentName component name to find
+   * @param spec process research specification
+   * @return true if a reaction produces the component
+   */
+  private boolean reactionProducesComponent(String componentName, ProcessResearchSpec spec) {
+    for (ReactionOption reaction : spec.getReactionOptions()) {
+      Double coefficient = reaction.getStoichiometry().get(componentName);
+      if (coefficient != null && coefficient.doubleValue() > 0.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Normalizes material names for graph-continuity checks.
+   *
+   * @param value material name
+   * @return normalized material name
+   */
+  private String normalize(String value) {
+    return value == null ? "" : value.trim().toLowerCase();
   }
 
   /**

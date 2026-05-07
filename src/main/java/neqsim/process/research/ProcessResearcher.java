@@ -120,11 +120,48 @@ public class ProcessResearcher {
     if (left.getScore() < right.getScore()) {
       return false;
     }
-    double leftCount = left.getMetrics().get("equipmentCount", Double.MAX_VALUE);
-    double rightCount = right.getMetrics().get("equipmentCount", Double.MAX_VALUE);
-    double leftPower = left.getMetrics().get("totalPower_kW", Double.MAX_VALUE);
-    double rightPower = right.getMetrics().get("totalPower_kW", Double.MAX_VALUE);
-    return leftCount <= rightCount && leftPower <= rightPower
-        && (left.getScore() > right.getScore() || leftCount < rightCount || leftPower < rightPower);
+    boolean noWorse = metricValue(left, "equipmentCount") <= metricValue(right, "equipmentCount")
+        && metricValue(left, "totalPower_kW") <= metricValue(right, "totalPower_kW")
+        && utilityValue(left, "hotUtility_kW", "heatingDuty_kW") <= utilityValue(right,
+            "hotUtility_kW", "heatingDuty_kW")
+        && utilityValue(left, "coldUtility_kW", "coolingDuty_kW") <= utilityValue(right,
+            "coldUtility_kW", "coolingDuty_kW")
+        && metricValue(left, "annualOperatingCostProxy_USD_per_yr") <= metricValue(right,
+            "annualOperatingCostProxy_USD_per_yr")
+        && metricValue(left, "emissions_kgCO2e_per_hr") <= metricValue(right,
+            "emissions_kgCO2e_per_hr");
+    boolean strictlyBetter = left.getScore() > right.getScore()
+        || metricValue(left, "equipmentCount") < metricValue(right, "equipmentCount")
+        || metricValue(left, "totalPower_kW") < metricValue(right, "totalPower_kW")
+        || metricValue(left, "annualOperatingCostProxy_USD_per_yr") < metricValue(right,
+            "annualOperatingCostProxy_USD_per_yr")
+        || metricValue(left, "emissions_kgCO2e_per_hr") < metricValue(right,
+            "emissions_kgCO2e_per_hr");
+    return noWorse && strictlyBetter;
+  }
+
+  /**
+   * Gets a minimization metric value, treating absent values as zero burden.
+   *
+   * @param candidate candidate to inspect
+   * @param metricName metric name
+   * @return metric value
+   */
+  private double metricValue(ProcessCandidate candidate, String metricName) {
+    return candidate.getMetrics().get(metricName, 0.0);
+  }
+
+  /**
+   * Gets a utility metric value with a fallback raw duty metric.
+   *
+   * @param candidate candidate to inspect
+   * @param primaryMetric primary utility metric name
+   * @param fallbackMetric fallback duty metric name
+   * @return utility burden in kW
+   */
+  private double utilityValue(ProcessCandidate candidate, String primaryMetric,
+      String fallbackMetric) {
+    return candidate.getMetrics().get(primaryMetric,
+        candidate.getMetrics().get(fallbackMetric, 0.0));
   }
 }
