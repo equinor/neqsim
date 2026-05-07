@@ -2088,6 +2088,78 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     return 0.0;
   }
 
+  // ============================================================================
+  // Pressure-drop loss coefficients (used by SeparatorPressureDropCalculator)
+  // ============================================================================
+
+  /**
+   * User-overridable inlet expansion loss coefficient. {@code NaN} means "auto" — Borda–Carnot
+   * sudden expansion when there is no inlet device, otherwise the inlet device's own coefficient.
+   */
+  private double inletExpansionLossCoefficient = Double.NaN;
+
+  /**
+   * Outlet contraction loss coefficient (sharp-edged default 0.5). {@code NaN} means "default".
+   */
+  private double outletContractionLossCoefficient = Double.NaN;
+
+  /**
+   * Sets the loss coefficient for the sudden expansion at the inlet nozzle. Use {@code Double.NaN}
+   * to restore the automatic behaviour (Borda–Carnot when no inlet device is fitted, otherwise the
+   * device's own coefficient).
+   *
+   * @param k loss coefficient (dimensionless), or {@code Double.NaN} for auto
+   */
+  public void setInletExpansionLossCoefficient(double k) {
+    this.inletExpansionLossCoefficient = k;
+  }
+
+  /**
+   * Gets the user-overridden inlet expansion loss coefficient.
+   *
+   * @return the coefficient, or {@code Double.NaN} when auto behaviour is in effect
+   */
+  public double getInletExpansionLossCoefficient() {
+    return inletExpansionLossCoefficient;
+  }
+
+  /**
+   * Sets the loss coefficient for the sudden contraction into the gas outlet nozzle. Default when
+   * left as {@code Double.NaN} is 0.5 (sharp-edged round contraction).
+   *
+   * @param k loss coefficient (dimensionless), or {@code Double.NaN} for the 0.5 default
+   */
+  public void setOutletContractionLossCoefficient(double k) {
+    this.outletContractionLossCoefficient = k;
+  }
+
+  /**
+   * Gets the outlet contraction loss coefficient.
+   *
+   * @return the coefficient, or {@code Double.NaN} when the default is in effect
+   */
+  public double getOutletContractionLossCoefficient() {
+    return outletContractionLossCoefficient;
+  }
+
+  /**
+   * Computes the gas-side pressure-drop breakdown for the attached separator using the current
+   * mechanical design and thermo state. Delegates to
+   * {@link neqsim.process.mechanicaldesign.separator.pressuredrop.SeparatorPressureDropCalculator}.
+   *
+   * @return the breakdown
+   * @throws IllegalStateException when the equipment is not a {@link Separator} or has no thermo
+   *                               system
+   */
+  public neqsim.process.mechanicaldesign.separator.pressuredrop.PressureDropBreakdown computePressureDrop() {
+    if (!(getProcessEquipment() instanceof Separator)) {
+      throw new IllegalStateException(
+          "computePressureDrop requires the equipment to be a Separator");
+    }
+    return neqsim.process.mechanicaldesign.separator.pressuredrop.SeparatorPressureDropCalculator
+        .compute((Separator) getProcessEquipment());
+  }
+
   /**
    * Sets the mist eliminator thickness on the separator for dynamic simulation.
    * Accepts thickness
