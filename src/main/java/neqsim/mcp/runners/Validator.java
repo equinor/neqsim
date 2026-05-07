@@ -75,24 +75,38 @@ public class Validator {
   static {
     Set<String> types = new HashSet<String>();
     types.add("Stream");
+    types.add("VirtualStream");
     types.add("Separator");
     types.add("ThreePhaseSeparator");
+    types.add("GasScrubber");
     types.add("Compressor");
+    types.add("Pump");
+    types.add("Expander");
     types.add("Heater");
     types.add("Cooler");
     types.add("HeatExchanger");
     types.add("Mixer");
     types.add("Splitter");
+    types.add("ComponentSplitter");
     types.add("Valve");
     types.add("ThrottlingValve");
-    types.add("Pump");
     types.add("Recycle");
     types.add("SetPoint");
-    types.add("GORfitter");
     types.add("Adjuster");
-    types.add("Expander");
+    types.add("FlowRateAdjuster");
+    types.add("Calculator");
+    types.add("SpreadsheetBlock");
+    types.add("UnisimCalculator");
     types.add("DistillationColumn");
     types.add("Column");
+    types.add("SimpleTEGAbsorber");
+    types.add("Tank");
+    types.add("SimpleReservoir");
+    types.add("Manifold");
+    types.add("Flare");
+    types.add("FlareStack");
+    types.add("FuelCell");
+    types.add("Electrolyzer");
     types.add("AdiabaticPipe");
     types.add("Pipe");
     types.add("Pipeline");
@@ -100,7 +114,10 @@ public class Validator {
     types.add("StreamSaturatorUtil");
     types.add("Saturator");
     types.add("Separator_3phase");
+    types.add("Separator3phase");
+    types.add("Gas_Scrubber");
     types.add("CO2Electrolyzer");
+    types.add("CO2Electrolyser");
     types.add("WindTurbine");
     types.add("BatteryStorage");
     types.add("SolarPanel");
@@ -140,10 +157,14 @@ public class Validator {
       return buildResponse(issues);
     }
 
-    // Detect input type: "process" array → process definition, otherwise flash
+    // Detect input type: "areas" object -> ProcessModel, "process" array -> ProcessSystem,
+    // otherwise flash.
+    boolean isProcessModel = root.has("areas");
     boolean isProcess = root.has("process");
 
-    if (isProcess) {
+    if (isProcessModel) {
+      validateProcessModelDefinition(root, issues);
+    } else if (isProcess) {
       validateProcessDefinition(root, issues);
     } else {
       validateFlashDefinition(root, issues);
@@ -219,7 +240,8 @@ public class Validator {
       validateFluidBlock(root.getAsJsonObject("fluid"), issues);
     } else if (!root.has("fluids")) {
       issues.add(Issue.warning("NO_FLUID", "No 'fluid' or 'fluids' block defined",
-          "Most process definitions need a fluid. Add a 'fluid' block with model, components, etc."));
+          "Most process definitions need a fluid. Add a 'fluid' block with model, "
+              + "components, etc."));
     }
 
     // Process array
@@ -247,6 +269,41 @@ public class Validator {
     for (int i = 0; i < processArray.size(); i++) {
       JsonObject unit = processArray.get(i).getAsJsonObject();
       validateProcessUnit(unit, i, definedNames, issues);
+    }
+  }
+
+  /**
+   * Validates a multi-area ProcessModel JSON definition.
+   *
+   * @param root the parsed root JSON object
+   * @param issues the issue list to populate
+   */
+  private static void validateProcessModelDefinition(JsonObject root, List<Issue> issues) {
+    if (!root.get("areas").isJsonObject()) {
+      issues.add(Issue.error("INVALID_AREAS", "'areas' must be a JSON object",
+          "Use {\"areas\": {\"areaName\": {\"fluid\": {...}, \"process\": [...]}}}"));
+      return;
+    }
+
+    JsonObject areas = root.getAsJsonObject("areas");
+    if (areas.entrySet().isEmpty()) {
+      issues.add(Issue.error("EMPTY_AREAS", "ProcessModel contains no process areas",
+          "Add at least one named process area under the 'areas' object"));
+      return;
+    }
+
+    for (Map.Entry<String, JsonElement> entry : areas.entrySet()) {
+      String areaName = entry.getKey();
+      if (!entry.getValue().isJsonObject()) {
+        issues.add(Issue.error("INVALID_AREA", "Area '" + areaName + "' must be a JSON object",
+            "Provide each area as a standard process JSON object"));
+        continue;
+      }
+      List<Issue> areaIssues = new ArrayList<Issue>();
+      validateProcessDefinition(entry.getValue().getAsJsonObject(), areaIssues);
+      for (Issue issue : areaIssues) {
+        issues.add(issue.withPrefix("Area '" + areaName + "': "));
+      }
     }
   }
 
@@ -292,10 +349,11 @@ public class Validator {
 
     String type = unit.get("type").getAsString();
 
-    // Check if type is known (case-insensitive check)
+    // Check if type is known (case-insensitive with separator-insensitive aliases)
     boolean typeKnown = false;
     for (String known : KNOWN_EQUIPMENT_TYPES) {
-      if (known.equalsIgnoreCase(type)) {
+      if (known.equalsIgnoreCase(type)
+          || normalizeEquipmentType(known).equalsIgnoreCase(normalizeEquipmentType(type))) {
         typeKnown = true;
         break;
       }
@@ -304,7 +362,8 @@ public class Validator {
       issues.add(Issue.warning("UNKNOWN_EQUIPMENT_TYPE",
           "Unknown equipment type '" + type + "' at index " + index,
           "Known types include: Stream, Separator, Compressor, Heater, Cooler, Mixer, "
-              + "Splitter, Valve, Pump, Recycle, HeatExchanger, DistillationColumn, Pipe"));
+              + "Splitter, Valve, Pump, Recycle, HeatExchanger, DistillationColumn, Pipe, "
+              + "Expander, Tank, Flare, SimpleReservoir, and power equipment"));
     }
 
     // Name uniqueness
@@ -325,6 +384,16 @@ public class Validator {
                 "Provide a valid inlet reference (equipment name or name.portName)"));
       }
     }
+  }
+
+  /**
+   * Normalizes an equipment type for alias matching.
+   *
+   * @param equipmentType the raw equipment type
+   * @return the normalized equipment type with whitespace, underscore, and hyphen removed
+   */
+  private static String normalizeEquipmentType(String equipmentType) {
+    return equipmentType == null ? "" : equipmentType.replaceAll("[\\s_-]", "");
   }
 
   /**
@@ -499,6 +568,16 @@ public class Validator {
      */
     static Issue warning(String code, String message, String remediation) {
       return new Issue("warning", code, message, remediation);
+    }
+
+    /**
+     * Creates a copy of this issue with a prefixed message.
+     *
+     * @param prefix text to prepend to the message
+     * @return the prefixed issue
+     */
+    Issue withPrefix(String prefix) {
+      return new Issue(severity, code, prefix + message, remediation);
     }
 
     /**

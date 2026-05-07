@@ -1,5 +1,6 @@
 package neqsim.mcp.catalog;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -180,7 +181,10 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "ProcessInput");
-    schema.put("description", "Input for a process simulation (run_process tool)");
+    schema.put("description",
+        "Input for a process simulation (run_process tool). Accepts either a single "
+            + "ProcessSystem with 'fluid' and 'process', or a multi-area ProcessModel with "
+            + "top-level 'areas'.");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
@@ -196,7 +200,8 @@ public final class SchemaCatalog {
     Map<String, Object> process = new LinkedHashMap<String, Object>();
     process.put("type", "array");
     process.put("description",
-        "Ordered list of equipment units. Each unit has 'type', 'name', 'inlet', and 'properties'.");
+        "Ordered list of equipment units. Each unit has 'type', 'name', 'inlet', "
+            + "and 'properties'.");
     Map<String, Object> processItems = new LinkedHashMap<String, Object>();
     processItems.put("type", "object");
     Map<String, Object> unitProps = new LinkedHashMap<String, Object>();
@@ -213,8 +218,22 @@ public final class SchemaCatalog {
     process.put("items", processItems);
     properties.put("process", process);
 
+    Map<String, Object> areas = new LinkedHashMap<String, Object>();
+    areas.put("type", "object");
+    areas.put("description",
+        "Named ProcessModel areas. Each property value is a standard process JSON object "
+            + "with 'fluid' and 'process'.");
+    properties.put("areas", areas);
+
     schema.put("properties", properties);
-    schema.put("required", Arrays.asList("fluid", "process"));
+    List<Map<String, Object>> alternatives = new ArrayList<Map<String, Object>>();
+    Map<String, Object> processSystemRequired = new LinkedHashMap<String, Object>();
+    processSystemRequired.put("required", Arrays.asList("fluid", "process"));
+    alternatives.add(processSystemRequired);
+    Map<String, Object> processModelRequired = new LinkedHashMap<String, Object>();
+    processModelRequired.put("required", Collections.singletonList("areas"));
+    alternatives.add(processModelRequired);
+    schema.put("anyOf", alternatives);
 
     return GSON.toJson(schema);
   }
@@ -234,6 +253,17 @@ public final class SchemaCatalog {
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
     properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
     properties.put("processSystemName", stringProp("Name of the built process system"));
+    properties.put("processModelName", stringProp("Name of the built process model"));
+    Map<String, Object> areaCount = new LinkedHashMap<String, Object>();
+    areaCount.put("type", "integer");
+    areaCount.put("description", "Number of areas in a process model response");
+    properties.put("areaCount", areaCount);
+
+    Map<String, Object> areas = new LinkedHashMap<String, Object>();
+    areas.put("type", "array");
+    areas.put("items", stringProp("Process area name"));
+    areas.put("description", "ProcessModel area names when the input used top-level 'areas'");
+    properties.put("areas", areas);
 
     Map<String, Object> report = new LinkedHashMap<String, Object>();
     report.put("type", "object");
@@ -1234,6 +1264,154 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  // ========== HAZOP Study Schemas ==========
+
+  /**
+   * Returns the JSON Schema for simulation-backed HAZOP study input.
+   *
+   * @return JSON Schema string
+   */
+  public static String hazopInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "HAZOPStudyInput");
+    schema.put("description",
+        "Input for run_hazop: process JSON plus optional STID/P&ID-extracted nodes, "
+            + "failure modes, and barrier register");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("studyId", stringProp("Stable HAZOP study identifier"));
+    properties.put("processDefinition", objectProp("Standard run_process JSON definition"));
+    properties.put("processJson", stringProp("Alternative string form of the process JSON"));
+    properties.put("nodes", typedArraySchema(
+        "HAZOP nodes with nodeId, designIntent, equipment, safeguards, and evidenceRefs"));
+    properties.put("failureModes", typedArraySchema(
+        "AutomaticScenarioGenerator failure modes such as COOLING_LOSS or VALVE_STUCK_CLOSED"));
+    properties.put("enableAllFailureModes", boolProp("Enable every supported failure mode"));
+    properties.put("runSimulations", boolProp("Run generated scenarios against copied processes"));
+    properties.put("barrierRegister",
+        objectProp("Optional register block accepted by run_barrier_register"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("processDefinition"),
+        requiredSchema("processJson"), requiredSchema("fluid", "process")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for simulation-backed HAZOP study output.
+   *
+   * @return JSON Schema string
+   */
+  public static String hazopOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "HAZOPStudyOutput");
+    schema.put("description",
+        "Output from run_hazop with worksheet rows, scenario results, and report markdown");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("studyId", stringProp("HAZOP study identifier"));
+    properties.put("summary", objectProp("Node, row, failure-mode, and simulation counts"));
+    properties.put("process", objectProp("Baseline process simulation summary"));
+    properties.put("nodes", typedArraySchema("Node-level text reports"));
+    properties.put("hazopRows", typedArraySchema("Generated IEC 61882 worksheet rows"));
+    properties.put("scenarioResults", typedArraySchema("Per-scenario simulation result values"));
+    properties.put("qualityGates", objectProp("Human-review and evidence quality gates"));
+    properties.put("barrierRegisterHandoff", objectProp("Optional barrier-register analysis"));
+    properties.put("reportMarkdown", stringProp("Markdown report suitable for task reports"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  // ========== Safety Barrier Register Schemas ==========
+
+  /**
+   * Returns the JSON Schema for barrier-register input.
+   *
+   * @return JSON Schema string
+   */
+  public static String barrierRegisterInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "BarrierRegisterInput");
+    schema.put("description",
+        "Evidence-linked safety barrier register input for run_barrier_register");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("action", enumProp("Operation to perform",
+        Arrays.asList("validate", "summary", "audit", "lopaInput", "bowTieInput")));
+
+    Map<String, Object> register = new LinkedHashMap<String, Object>();
+    register.put("type", "object");
+    register.put("description",
+        "Barrier register with evidence, performanceStandards, barriers, and SCEs");
+    Map<String, Object> registerProps = new LinkedHashMap<String, Object>();
+    registerProps.put("registerId", stringProp("Stable barrier register identifier"));
+    registerProps.put("name", stringProp("Register display name"));
+
+    Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+    evidence.put("type", "array");
+    evidence.put("description", "Document evidence extracted from technical documents");
+    Map<String, Object> evidenceItem = new LinkedHashMap<String, Object>();
+    evidenceItem.put("type", "object");
+    Map<String, Object> evidenceProps = new LinkedHashMap<String, Object>();
+    evidenceProps.put("evidenceId", stringProp("Evidence identifier"));
+    evidenceProps.put("documentId", stringProp("Document number or tag"));
+    evidenceProps.put("sourceReference", stringProp("Page, table, drawing coordinate, or tag"));
+    evidenceProps.put("excerpt", stringProp("Quoted source text supporting the claim"));
+    evidenceProps.put("confidence", numberProp("Extraction confidence from 0 to 1"));
+    evidenceItem.put("properties", evidenceProps);
+    evidence.put("items", evidenceItem);
+    registerProps.put("evidence", evidence);
+
+    registerProps.put("performanceStandards",
+        typedArraySchema("Performance standards for PSFs, SIFs, or SCE functions"));
+    registerProps.put("barriers", typedArraySchema("Barrier or protection-layer records"));
+    registerProps.put("safetyCriticalElements", typedArraySchema("SCE records with barrierRefs"));
+    register.put("properties", registerProps);
+    register.put("required", Arrays.asList("registerId", "barriers"));
+    properties.put("register", register);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("register"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for barrier-register output.
+   *
+   * @return JSON Schema string
+   */
+  public static String barrierRegisterOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "BarrierRegisterOutput");
+    schema.put("description",
+        "Output from run_barrier_register with validation and safety-analysis handoffs");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("summary", objectProp("Counts of SCEs, barriers, evidence, and impairments"));
+    properties.put("validation", objectProp("Validation findings and remediation hints"));
+    properties.put("impairedBarriers",
+        typedArraySchema("Impaired, bypassed, or unavailable barriers"));
+    properties.put("equipmentBarrierMap", objectProp("Equipment tag to barrier mapping"));
+    properties.put("lopaHandoff", objectProp("LOPA-compatible protection layer handoff"));
+    properties.put("silHandoff", objectProp("SIL verification handoff candidates"));
+    properties.put("bowTieHandoff", objectProp("Bow-tie barrier handoff"));
+    properties.put("qraHandoff", objectProp("QRA screening multipliers by hazard"));
+    properties.put("registerExport", objectProp("Full normalized BarrierRegister export"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -1246,7 +1424,7 @@ public final class SchemaCatalog {
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
         "run_reservoir", "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
-        "compare_processes", "manage_session", "visualize"));
+        "compare_processes", "manage_session", "visualize", "run_hazop", "run_barrier_register"));
   }
 
   /**
@@ -1298,6 +1476,11 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? sessionInputSchema() : null;
     } else if ("visualize".equals(toolName)) {
       return "input".equals(schemaType) ? visualizationInputSchema() : null;
+    } else if ("run_hazop".equals(toolName)) {
+      return "input".equals(schemaType) ? hazopInputSchema() : hazopOutputSchema();
+    } else if ("run_barrier_register".equals(toolName)) {
+      return "input".equals(schemaType) ? barrierRegisterInputSchema()
+          : barrierRegisterOutputSchema();
     }
     return null;
   }
@@ -1402,6 +1585,19 @@ public final class SchemaCatalog {
   }
 
   /**
+   * Creates a simple boolean property schema.
+   *
+   * @param description the property description
+   * @return the schema map
+   */
+  private static Map<String, Object> boolProp(String description) {
+    Map<String, Object> prop = new LinkedHashMap<String, Object>();
+    prop.put("type", "boolean");
+    prop.put("description", description);
+    return prop;
+  }
+
+  /**
    * Creates an enum string property schema.
    *
    * @param description the property description
@@ -1414,5 +1610,46 @@ public final class SchemaCatalog {
     prop.put("description", description);
     prop.put("enum", values);
     return prop;
+  }
+
+  /**
+   * Creates a generic object property schema.
+   *
+   * @param description the property description
+   * @return the schema map
+   */
+  private static Map<String, Object> objectProp(String description) {
+    Map<String, Object> prop = new LinkedHashMap<String, Object>();
+    prop.put("type", "object");
+    prop.put("description", description);
+    return prop;
+  }
+
+  /**
+   * Creates a generic array of object schema.
+   *
+   * @param description the array description
+   * @return the schema map
+   */
+  private static Map<String, Object> typedArraySchema(String description) {
+    Map<String, Object> array = new LinkedHashMap<String, Object>();
+    array.put("type", "array");
+    array.put("description", description);
+    Map<String, Object> item = new LinkedHashMap<String, Object>();
+    item.put("type", "object");
+    array.put("items", item);
+    return array;
+  }
+
+  /**
+   * Creates a minimal JSON Schema required-field alternative.
+   *
+   * @param fields field names that must be present
+   * @return the schema map
+   */
+  private static Map<String, Object> requiredSchema(String... fields) {
+    Map<String, Object> required = new LinkedHashMap<String, Object>();
+    required.put("required", Arrays.asList(fields));
+    return required;
   }
 }

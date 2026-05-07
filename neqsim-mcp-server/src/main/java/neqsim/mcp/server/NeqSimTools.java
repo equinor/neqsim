@@ -20,6 +20,7 @@ import neqsim.mcp.runners.ReservoirRunner;
 import neqsim.mcp.runners.StandardsRunner;
 import neqsim.mcp.runners.Validator;
 import neqsim.mcp.runners.AutomationRunner;
+import neqsim.mcp.runners.BarrierRegisterRunner;
 import neqsim.mcp.runners.BatchRunner;
 import neqsim.mcp.runners.CapabilitiesRunner;
 import neqsim.mcp.runners.CrossValidationRunner;
@@ -42,38 +43,37 @@ import neqsim.mcp.runners.BenchmarkTrust;
 import neqsim.mcp.runners.CompositionRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
 import neqsim.mcp.runners.EquipmentSizingRunner;
+import neqsim.mcp.runners.FlareRadiationRunner;
+import neqsim.mcp.runners.HAZOPStudyRunner;
 import neqsim.mcp.runners.IndustrialProfile;
+import neqsim.mcp.runners.LOPARunner;
 import neqsim.mcp.runners.ProcessComparisonRunner;
+import neqsim.mcp.runners.ReliefRunner;
+import neqsim.mcp.runners.RiskMatrixRunner;
+import neqsim.mcp.runners.SILRunner;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
  *
  * <p>
- * Each method annotated with {@code @Tool} is exposed as an MCP tool that LLM
- * clients can discover
- * and invoke via the Model Context Protocol. The tools delegate to the
- * stateless runner layer in
+ * Each method annotated with {@code @Tool} is exposed as an MCP tool that LLM clients can discover
+ * and invoke via the Model Context Protocol. The tools delegate to the stateless runner layer in
  * {@code neqsim.mcp.runners}.
  * </p>
  *
  * <p>
- * Tools are classified into four categories by the {@link IndustrialProfile}
- * system:
+ * Tools are classified into four categories by the {@link IndustrialProfile} system:
  * </p>
  * <ul>
- * <li><b>ADVISORY</b> — read-only discovery and validation (always
- * allowed)</li>
+ * <li><b>ADVISORY</b> — read-only discovery and validation (always allowed)</li>
  * <li><b>CALCULATION</b> — stateless engineering calculations</li>
  * <li><b>EXECUTION</b> — state-modifying operations (may require approval)</li>
- * <li><b>PLATFORM</b> — security, persistence, multi-server (restricted in
- * production)</li>
+ * <li><b>PLATFORM</b> — security, persistence, multi-server (restricted in production)</li>
  * </ul>
  *
  * <p>
- * When auto-validation is enabled (default), every CALCULATION tool
- * automatically runs
- * {@link EngineeringValidator#validate(String, String)} on its output and
- * appends a
+ * When auto-validation is enabled (default), every CALCULATION tool automatically runs
+ * {@link EngineeringValidator#validate(String, String)} on its output and appends a
  * {@code "validation"} block to the response.
  * </p>
  */
@@ -83,13 +83,13 @@ public class NeqSimTools {
   /**
    * Run a thermodynamic flash calculation on a fluid mixture.
    *
-   * @param components      fluid composition as JSON object
-   * @param temperature     temperature value
+   * @param components fluid composition as JSON object
+   * @param temperature temperature value
    * @param temperatureUnit temperature unit
-   * @param pressure        pressure value
-   * @param pressureUnit    pressure unit
-   * @param eos             equation of state model
-   * @param flashType       type of flash calculation
+   * @param pressure pressure value
+   * @param pressureUnit pressure unit
+   * @param eos equation of state model
+   * @param flashType type of flash calculation
    * @return JSON string with phase equilibrium results
    */
   @Tool(description = "Run a thermodynamic flash calculation on a fluid mixture. "
@@ -103,7 +103,8 @@ public class NeqSimTools {
       @ToolArg(description = "Temperature value (number)") double temperature,
       @ToolArg(description = "Temperature unit: C, K, or F") String temperatureUnit,
       @ToolArg(description = "Pressure value (number)") double pressure,
-      @ToolArg(description = "Pressure unit: bara, barg, Pa, kPa, MPa, psi, or atm") String pressureUnit,
+      @ToolArg(
+          description = "Pressure unit: bara, barg, Pa, kPa, MPa, psi, or atm") String pressureUnit,
       @ToolArg(description = "Equation of state: SRK (Soave-Redlich-Kwong, general purpose), "
           + "PR (Peng-Robinson), CPA (CPA-SRK for associating fluids like water/methanol/glycol), "
           + "GERG2008 (high-accuracy natural gas), PCSAFT (PC-SAFT), "
@@ -144,11 +145,14 @@ public class NeqSimTools {
    */
   @Tool(description = "Run a process simulation from a JSON definition. "
       + "Build flowsheets with streams, separators, compressors, heat exchangers, "
-      + "valves, mixers, splitters, distillation columns, and pipelines. "
+      + "valves, mixers, splitters, distillation columns, pipelines, and other "
+      + "factory-backed process equipment. Also accepts ProcessModel JSON with "
+      + "top-level 'areas' for multi-area plants. "
       + "Use getExample with category 'process' for templates.")
   public String runProcess(
       @ToolArg(description = "Complete process definition as JSON string. Must include "
-          + "'fluid' with components and model, and 'equipment' array with process units. "
+          + "either 'fluid' with components and model plus a 'process' array, or "
+          + "top-level 'areas' containing named process-area JSON objects. "
           + "Use getExample(category='process', name='simple-separation') for a template.") String processJson) {
     try {
       return withAutoValidation(ProcessRunner.run(processJson), "process");
@@ -200,7 +204,7 @@ public class NeqSimTools {
    * Get an example JSON template.
    *
    * @param category the example category
-   * @param name     the example name
+   * @param name the example name
    * @return JSON example string
    */
   @Tool(description = "Get an example JSON template for NeqSim tools. "
@@ -208,32 +212,35 @@ public class NeqSimTools {
       + "bubble-point-p, cpa-with-water), process (simple-separation, "
       + "compression-with-cooling), validation (error-flash), "
       + "batch (temperature-sweep, pressure-sweep), "
-      + "property-table (temperature-sweep, pressure-sweep), " + "phase-envelope (natural-gas).")
-  public String getExample(
-      @ToolArg(description = "Example category: flash, process, or validation") String category,
-      @ToolArg(description = "Example name, e.g. 'tp-simple-gas' or 'simple-separation'") String name) {
+      + "property-table (temperature-sweep, pressure-sweep), "
+      + "phase-envelope (natural-gas), safety (barrier-register, hazop-study).")
+  public String getExample(@ToolArg(
+      description = "Example category: flash, process, validation, safety, etc.") String category,
+      @ToolArg(
+          description = "Example name, e.g. 'tp-simple-gas', 'simple-separation', or 'hazop-study'") String name) {
     String example = ExampleCatalog.getExample(category, name);
     if (example != null) {
       return example;
     }
     return errorJson("Example not found: " + category + "/" + name
-        + ". Use categories: flash, process, validation");
+        + ". Use getExample with a listed category such as flash, process, validation, or safety");
   }
 
   /**
    * Get a JSON schema for a tool's input or output.
    *
-   * @param toolName   the tool name
+   * @param toolName the tool name
    * @param schemaType input or output
    * @return JSON schema string
    */
   @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. "
       + "Tools: run_flash, run_process, validate_input, list_components, "
-      + "run_batch, get_property_table, get_phase_envelope, get_capabilities. "
-      + "Types: input, output.")
+      + "run_batch, get_property_table, get_phase_envelope, get_capabilities, "
+      + "run_hazop, run_barrier_register. " + "Types: input, output.")
   public String getSchema(
       @ToolArg(description = "Tool name: run_flash, run_process, validate_input, list_components, "
-          + "run_batch, get_property_table, get_phase_envelope, or get_capabilities") String toolName,
+          + "run_batch, get_property_table, get_phase_envelope, get_capabilities, run_hazop, "
+          + "or run_barrier_register") String toolName,
       @ToolArg(description = "Schema type: input or output") String schemaType) {
     String schema = SchemaCatalog.getSchema(toolName, schemaType);
     if (schema != null) {
@@ -265,7 +272,7 @@ public class NeqSimTools {
    * List all readable/writable variables for a specific equipment unit.
    *
    * @param processJson complete process definition as JSON
-   * @param unitName    the equipment unit name to query
+   * @param unitName the equipment unit name to query
    * @return JSON string with list of variables and their metadata
    */
   @Tool(description = "Run a process simulation and list all variables for a specific "
@@ -288,8 +295,8 @@ public class NeqSimTools {
    * Read a specific simulation variable value by dot-notation address.
    *
    * @param processJson complete process definition as JSON
-   * @param address     dot-notation variable address
-   * @param unit        desired unit of measurement
+   * @param address dot-notation variable address
+   * @param unit desired unit of measurement
    * @return JSON string with the variable value
    */
   @Tool(description = "Run a process simulation and read a specific variable value "
@@ -315,9 +322,9 @@ public class NeqSimTools {
    * Modify a simulation variable and re-run the process.
    *
    * @param processJson complete process definition as JSON
-   * @param address     dot-notation variable address to modify
-   * @param value       new value to set
-   * @param unit        unit of the value
+   * @param address dot-notation variable address to modify
+   * @param value new value to set
+   * @param unit unit of the value
    * @return JSON string with updated simulation results
    */
   @Tool(description = "Run a process, modify an INPUT variable, re-run, and return "
@@ -341,8 +348,8 @@ public class NeqSimTools {
   /**
    * Save a process simulation state as a lifecycle snapshot.
    *
-   * @param processJson  complete process definition as JSON
-   * @param stateName    name for the snapshot
+   * @param processJson complete process definition as JSON
+   * @param stateName name for the snapshot
    * @param stateVersion version string
    * @return JSON string with the serialized state
    */
@@ -372,9 +379,10 @@ public class NeqSimTools {
   @Tool(description = "Compare two simulation state snapshots and return the differences. "
       + "Shows modified parameters, added/removed equipment, and changed stream conditions. "
       + "Use after saveSimulationState to track design changes between iterations.")
-  public String compareSimulationStates(
-      @ToolArg(description = "First state JSON (from saveSimulationState 'state' field)") String stateJson1,
-      @ToolArg(description = "Second state JSON (from saveSimulationState 'state' field)") String stateJson2) {
+  public String compareSimulationStates(@ToolArg(
+      description = "First state JSON (from saveSimulationState 'state' field)") String stateJson1,
+      @ToolArg(
+          description = "Second state JSON (from saveSimulationState 'state' field)") String stateJson2) {
     try {
       return AutomationRunner.compareStates(stateJson1, stateJson2);
     } catch (Exception e) {
@@ -383,15 +391,13 @@ public class NeqSimTools {
   }
 
   /**
-   * Diagnose a failed automation operation and get suggestions for fixing it.
-   * Call this when
-   * getSimulationVariable or setSimulationVariable returns an error to get
-   * actionable remediation
+   * Diagnose a failed automation operation and get suggestions for fixing it. Call this when
+   * getSimulationVariable or setSimulationVariable returns an error to get actionable remediation
    * hints including fuzzy name matches and auto-corrections.
    *
-   * @param processJson   process definition as JSON
+   * @param processJson process definition as JSON
    * @param failedAddress the address that failed
-   * @param operation     the operation that failed
+   * @param operation the operation that failed
    * @return JSON diagnostic result with suggestions
    */
   @Tool(description = "Diagnose a failed automation operation and get suggestions for fixing it. "
@@ -400,8 +406,10 @@ public class NeqSimTools {
       + "Use this tool to self-correct and retry with the corrected address.")
   public String diagnoseAutomation(
       @ToolArg(description = "Process definition as JSON string") String processJson,
-      @ToolArg(description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
-      @ToolArg(description = "The operation that failed: 'get', 'set', or 'list'") String operation) {
+      @ToolArg(
+          description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
+      @ToolArg(
+          description = "The operation that failed: 'get', 'set', or 'list'") String operation) {
     try {
       return AutomationRunner.diagnose(processJson, failedAddress, operation);
     } catch (Exception e) {
@@ -410,8 +418,7 @@ public class NeqSimTools {
   }
 
   /**
-   * Get the automation learning report showing operation history, success rates,
-   * error patterns,
+   * Get the automation learning report showing operation history, success rates, error patterns,
    * and learned corrections.
    *
    * @param processJson process definition as JSON
@@ -436,16 +443,16 @@ public class NeqSimTools {
   /**
    * Calculate a property table by sweeping temperature or pressure.
    *
-   * @param components    fluid composition as JSON
-   * @param sweep         sweep variable (temperature or pressure)
-   * @param sweepFrom     start value
+   * @param components fluid composition as JSON
+   * @param sweep sweep variable (temperature or pressure)
+   * @param sweepFrom start value
    * @param sweepFromUnit unit for start value
-   * @param sweepTo       end value
-   * @param sweepToUnit   unit for end value
-   * @param fixedValue    the fixed condition value
-   * @param fixedUnit     the fixed condition unit
-   * @param points        number of data points
-   * @param eos           equation of state
+   * @param sweepTo end value
+   * @param sweepToUnit unit for end value
+   * @param fixedValue the fixed condition value
+   * @param fixedUnit the fixed condition unit
+   * @param points number of data points
+   * @param eos equation of state
    * @return JSON property table
    */
   @Tool(description = "Calculate a table of thermodynamic properties by sweeping temperature "
@@ -509,7 +516,7 @@ public class NeqSimTools {
    * Calculate the PT phase envelope for a fluid mixture.
    *
    * @param components fluid composition as JSON
-   * @param eos        equation of state
+   * @param eos equation of state
    * @return JSON with phase envelope data
    */
   @Tool(description = "Calculate the PT phase envelope (bubble/dew point curves) for a "
@@ -532,8 +539,7 @@ public class NeqSimTools {
   }
 
   /**
-   * Discover NeqSim capabilities, supported models, equipment types, and
-   * calculation modes.
+   * Discover NeqSim capabilities, supported models, equipment types, and calculation modes.
    *
    * @return JSON capabilities manifest
    */
@@ -554,9 +560,9 @@ public class NeqSimTools {
    * Run a batch of flash calculations in a single call.
    *
    * @param components base fluid composition as JSON
-   * @param eos        equation of state
-   * @param flashType  flash type for all cases (can be overridden per case)
-   * @param cases      JSON array of case specifications
+   * @param eos equation of state
+   * @param flashType flash type for all cases (can be overridden per case)
+   * @param cases JSON array of case specifications
    * @return JSON string with batch results
    */
   @Tool(description = "Run multiple flash calculations in a single call for sensitivity "
@@ -611,8 +617,7 @@ public class NeqSimTools {
   /**
    * Cross-validate a process model across multiple thermodynamic models.
    *
-   * @param crossValidationJson JSON specification with baseProcess, models, and
-   *                            compareVariables
+   * @param crossValidationJson JSON specification with baseProcess, models, and compareVariables
    * @return JSON with per-model results, deviations, and risk flags
    */
   @Tool(description = "Cross-validate a process model by running it under multiple equations "
@@ -768,8 +773,7 @@ public class NeqSimTools {
   /**
    * Simulate multiphase pipeline flow using Beggs and Brill correlation.
    *
-   * @param pipelineJson JSON specification with fluid, pipe geometry, and flow
-   *                     conditions
+   * @param pipelineJson JSON specification with fluid, pipe geometry, and flow conditions
    * @return JSON with pressure drop, temperature profile, and flow regime
    */
   @Tool(description = "Simulate multiphase pipeline flow using the Beggs & Brill "
@@ -799,8 +803,7 @@ public class NeqSimTools {
   /**
    * Simulate a reservoir using material balance (tank model).
    *
-   * @param reservoirJson JSON specification with fluid, reservoir volumes, and
-   *                      producers
+   * @param reservoirJson JSON specification with fluid, reservoir volumes, and producers
    * @return JSON with reservoir pressure decline and production data
    */
   @Tool(description = "Simulate a reservoir using material balance (tank model). "
@@ -832,8 +835,7 @@ public class NeqSimTools {
   /**
    * Run field development economics (NPV, IRR, cash flow analysis).
    *
-   * @param economicsJson JSON specification with CAPEX, OPEX, production, prices,
-   *                      and fiscal regime
+   * @param economicsJson JSON specification with CAPEX, OPEX, production, prices, and fiscal regime
    * @return JSON with NPV, IRR, payback, and annual cash flows
    */
   @Tool(description = "Run field development economics analysis. Calculates NPV, IRR, "
@@ -869,8 +871,7 @@ public class NeqSimTools {
   /**
    * Run a dynamic (transient) process simulation with controllers.
    *
-   * @param dynamicJson JSON specification with process, duration, and optional
-   *                    tuning
+   * @param dynamicJson JSON specification with process, duration, and optional tuning
    * @return JSON with time-series results from all transmitters
    */
   @Tool(description = "Run a dynamic (transient) process simulation. Takes a standard "
@@ -938,8 +939,7 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Manage a persistent simulation session for incremental flowsheet
-   * construction.
+   * Manage a persistent simulation session for incremental flowsheet construction.
    *
    * @param sessionJson JSON with action and session parameters
    * @return JSON with session state or results
@@ -1033,11 +1033,10 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Validate simulation results against engineering design rules and industry
-   * standards.
+   * Validate simulation results against engineering design rules and industry standards.
    *
    * @param resultsJson JSON with simulation results
-   * @param context     the validation context
+   * @param context the validation context
    * @return JSON with validation findings
    */
   @Tool(description = "Validate simulation results against engineering design rules. "
@@ -1385,8 +1384,7 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Browse the NeqSim data catalog — components, EOS models, materials,
-   * standards.
+   * Browse the NeqSim data catalog — components, EOS models, materials, standards.
    *
    * @param catalogJson JSON with catalog query
    * @return JSON with catalog data
@@ -1463,6 +1461,206 @@ public class NeqSimTools {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // Process safety tools (API 520/521, IEC 61508/61511, ISO 31000)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Size a Pressure Safety Valve (PSV) per API 520 / API 521.
+   *
+   * @param reliefJson JSON spec with relief case and inputs
+   * @return JSON string with sizing result
+   */
+  @Tool(description = "Size a Pressure Safety Valve (PSV) per API 520 / API 521. "
+      + "Supports four cases: 'gas' (vapour service), 'liquid' (liquid relief), "
+      + "'twoPhase' (Leung omega method, Appendix D), and 'fireHeatInput' (API 521 "
+      + "wetted-area fire heat absorption). Returns required orifice area, recommended "
+      + "API standard orifice letter (D-T), correction factors (Kd/Kb/Kc/Kw/Kv), and "
+      + "validation warnings.")
+  public String runRelief(
+      @ToolArg(description = "JSON with: 'case' (gas|liquid|twoPhase|fireHeatInput). "
+          + "For gas: 'massFlowRate_kg_s', 'setPressure_bara', 'temperature_K', "
+          + "'molecularWeight_kg_mol', optional 'overpressureFraction' (default 0.21), "
+          + "'backPressure_bara', 'compressibility', 'specificHeatRatio', "
+          + "'balancedBellows', 'ruptureDisk'. "
+          + "For liquid: 'volumeFlowRate_m3_s', 'liquidDensity_kg_m3', 'setPressure_bara', "
+          + "optional 'viscosity_Pa_s'. "
+          + "For twoPhase: 'massFlowRate_kg_s', 'gasMassFraction', 'gasDensity_kg_m3', "
+          + "'liquidDensity_kg_m3', 'latentHeat_J_kg', 'liquidCp_J_kgK', 'temperature_K'. "
+          + "For fireHeatInput: 'wettedArea_m2', 'hasDrainage', 'hasFireFighting'.") String reliefJson) {
+    String blocked = IndustrialProfile.enforceAccess("runRelief");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return ReliefRunner.run(reliefJson);
+    } catch (Exception e) {
+      return errorJson("Relief sizing failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a Layer of Protection Analysis (LOPA) per IEC 61511 / CCPS LOPA.
+   *
+   * @param lopaJson JSON spec with scenario, frequencies, and layers
+   * @return JSON string with LOPA result and gap analysis
+   */
+  @Tool(description = "Run a Layer of Protection Analysis (LOPA) per IEC 61511 / CCPS LOPA. "
+      + "Computes the mitigated event frequency by stacking PFDs of independent "
+      + "protection layers (BPCS, alarms, relief valves, SIFs), compares against a target, "
+      + "and reports the gap, total RRF, and required additional SIL/PFD if the target "
+      + "is not met.")
+  public String runLOPA(
+      @ToolArg(description = "JSON with: 'scenario' (name), 'initiatingEventFrequency_per_year', "
+          + "'targetFrequency_per_year', and 'layers' array. Each layer has 'name' and 'pfd' "
+          + "(probability of failure on demand, 0-1). Example: "
+          + "{\"scenario\":\"HP separator overpressure\",\"initiatingEventFrequency_per_year\":0.1,"
+          + "\"targetFrequency_per_year\":1e-5,\"layers\":[{\"name\":\"BPCS\",\"pfd\":0.1},"
+          + "{\"name\":\"PSV\",\"pfd\":0.01}]}") String lopaJson) {
+    String blocked = IndustrialProfile.enforceAccess("runLOPA");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return LOPARunner.run(lopaJson);
+    } catch (Exception e) {
+      return errorJson("LOPA calculation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Verify a Safety Instrumented Function (SIF) against its claimed SIL per IEC 61508/61511.
+   *
+   * @param silJson JSON spec with SIF metadata and component reliability data
+   * @return JSON string with SIL verification result
+   */
+  @Tool(description = "Verify a Safety Instrumented Function (SIF) against its claimed SIL "
+      + "per IEC 61508 / IEC 61511. Computes PFDavg from component-level failure rates "
+      + "(sensors, logic solver, final elements) using simplified architecture formulae "
+      + "(1oo1, 1oo2, 2oo3), determines achieved SIL, hardware fault tolerance, and "
+      + "verification issues.")
+  public String runSIL(
+      @ToolArg(description = "JSON with: 'name', 'claimedSIL' (1-4), 'architecture' "
+          + "(1oo1|1oo2|2oo3), 'proofTestInterval_hours', and EITHER 'pfdAvg' (direct) OR "
+          + "'components' array with each component having 'name', 'type' (sensor|logic|finalElement), "
+          + "and either 'pfd' or 'lambdaDU_per_hr' (dangerous undetected failure rate).") String silJson) {
+    String blocked = IndustrialProfile.enforceAccess("runSIL");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return SILRunner.run(silJson);
+    } catch (Exception e) {
+      return errorJson("SIL verification failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Score risk events on a 5x5 matrix per ISO 31000 / NORSOK Z-013.
+   *
+   * @param riskJson JSON spec with risk events
+   * @return JSON string with scored matrix
+   */
+  @Tool(description = "Score risk events on a 5x5 matrix per ISO 31000 / NORSOK Z-013. "
+      + "Each event is categorised by probability (1-5) and consequence (1-5), either "
+      + "directly or from frequency (failures/year) and production loss (%). "
+      + "Returns risk score, level (LOW/MEDIUM/HIGH/CRITICAL) and colour for each event "
+      + "plus the overall worst-case.")
+  public String runRiskMatrix(
+      @ToolArg(description = "JSON with: 'events' array. Each event has 'name' and EITHER "
+          + "('probabilityLevel' 1-5 + 'consequenceLevel' 1-5) OR "
+          + "('failuresPerYear' + 'productionLossPercent'), plus optional 'mitigation'.") String riskJson) {
+    String blocked = IndustrialProfile.enforceAccess("runRiskMatrix");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return RiskMatrixRunner.run(riskJson);
+    } catch (Exception e) {
+      return errorJson("Risk matrix scoring failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Compute flare-tip thermal radiation per API 521 §6 / API 537.
+   *
+   * @param flareJson JSON spec with heat duty and radiation parameters
+   * @return JSON string with radiation profile and safe-distance contour
+   */
+  @Tool(description = "Compute flare-tip thermal radiation per API 521 §6 / API 537. "
+      + "Calculates the radiant heat flux at user-specified ground distances and the "
+      + "safe ground distance to API 521 thresholds (1.58, 4.73, 6.31, 9.46 kW/m²) "
+      + "used for personnel exposure and equipment limits.")
+  public String runFlareNetwork(
+      @ToolArg(description = "JSON with: 'heatDuty_MW' (or 'heatDuty_W'), optional "
+          + "'flameHeight_m' (default 30), 'radiantFraction' (default 0.18), and "
+          + "'distances_m' array (default 15-200 m grid).") String flareJson) {
+    String blocked = IndustrialProfile.enforceAccess("runFlareNetwork");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return FlareRadiationRunner.run(flareJson);
+    } catch (Exception e) {
+      return errorJson("Flare radiation calculation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Generate a simulation-backed HAZOP worksheet from a process definition and optional document
+   * extraction context.
+   *
+   * @param hazopJson JSON spec with process definition, nodes, failure modes, and optional barrier
+   *        register
+   * @return JSON string with HAZOP rows, scenario simulations, and report markdown
+   */
+  @Tool(description = "Generate a simulation-backed HAZOP worksheet from a NeqSim process "
+      + "definition. Accepts STID/P&ID-extracted nodes, safeguards, evidence references, "
+      + "failure modes, and an optional barrier register. Runs generated safety scenarios "
+      + "against copied ProcessSystem models and returns IEC 61882 rows, simulation evidence, "
+      + "quality gates, barrier handoff, and report markdown.")
+  public String runHAZOP(
+      @ToolArg(description = "JSON with 'processDefinition' (standard runProcess JSON), optional "
+          + "'nodes' array with nodeId/designIntent/equipment/safeguards/evidenceRefs, optional "
+          + "'failureModes' array (e.g. COOLING_LOSS, VALVE_STUCK_CLOSED), optional "
+          + "'barrierRegister', and 'runSimulations' boolean. Use getExample with category "
+          + "'safety' and name 'hazop-study' for a template.") String hazopJson) {
+    String blocked = IndustrialProfile.enforceAccess("runHAZOP");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return HAZOPStudyRunner.run(hazopJson);
+    } catch (Exception e) {
+      return errorJson("HAZOP study generation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Validate and transform an evidence-linked barrier register.
+   *
+   * @param barrierJson JSON spec with evidence, performance standards, barriers, and SCEs
+   * @return JSON string with validation findings and safety-analysis handoffs
+   */
+  @Tool(description = "Validate and transform an evidence-linked safety barrier register. "
+      + "Accepts extracted document evidence, performance standards, safety barriers, "
+      + "and safety critical elements (SCEs). Returns validation findings plus handoff "
+      + "blocks for LOPA, SIL verification, bow-tie analysis, and QRA screening.")
+  public String runBarrierRegister(
+      @ToolArg(description = "JSON with 'register' containing registerId, evidence, "
+          + "performanceStandards, barriers, and safetyCriticalElements. Use getExample "
+          + "with category 'safety' and name 'barrier-register' for a template.") String barrierJson) {
+    String blocked = IndustrialProfile.enforceAccess("runBarrierRegister");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return BarrierRegisterRunner.run(barrierJson);
+    } catch (Exception e) {
+      return errorJson("Barrier register analysis failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Industrial governance & trust tools
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1470,10 +1668,8 @@ public class NeqSimTools {
    * List deployment profiles and manage the active industrial mode.
    *
    * <p>
-   * The industrial profile system controls which tools are exposed, whether
-   * human-approval gates
-   * are required, and which validation level is enforced. Four profiles cover the
-   * range from
+   * The industrial profile system controls which tools are exposed, whether human-approval gates
+   * are required, and which validation level is enforced. Four profiles cover the range from
    * full-access desktop engineering to restricted enterprise deployment.
    * </p>
    *
@@ -1507,7 +1703,8 @@ public class NeqSimTools {
         case "setActive": {
           String modeName = input.has("mode") ? input.get("mode").getAsString() : "";
           try {
-            IndustrialProfile.DeploymentMode mode = IndustrialProfile.DeploymentMode.valueOf(modeName);
+            IndustrialProfile.DeploymentMode mode =
+                IndustrialProfile.DeploymentMode.valueOf(modeName);
             IndustrialProfile.setActiveMode(mode);
             JsonObject result = new JsonObject();
             result.addProperty("status", "success");
@@ -1543,13 +1740,11 @@ public class NeqSimTools {
   }
 
   /**
-   * Get benchmark trust metadata for tools — validation cases, accuracy bounds,
-   * known limitations,
+   * Get benchmark trust metadata for tools — validation cases, accuracy bounds, known limitations,
    * and maturity levels.
    *
    * <p>
-   * Industrial users should review this before relying on results for design
-   * decisions or
+   * Industrial users should review this before relying on results for design decisions or
    * safety-critical applications.
    * </p>
    *
@@ -1579,8 +1774,7 @@ public class NeqSimTools {
   }
 
   /**
-   * Check whether the current deployment profile allows a tool and whether it
-   * requires human
+   * Check whether the current deployment profile allows a tool and whether it requires human
    * approval. Use this before invoking tools in governed deployments.
    *
    * @param toolName the tool name to check
@@ -1632,22 +1826,17 @@ public class NeqSimTools {
       .setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
-   * Wraps a calculation result with automatic engineering validation when
-   * enabled.
+   * Wraps a calculation result with automatic engineering validation when enabled.
    *
    * <p>
-   * If {@link IndustrialProfile#isAutoValidationEnabled()} is true, this method
-   * appends a
-   * {@code "validation"} block to the result JSON. This enforces the review's
-   * requirement that
+   * If {@link IndustrialProfile#isAutoValidationEnabled()} is true, this method appends a
+   * {@code "validation"} block to the result JSON. This enforces the review's requirement that
    * validation be unavoidable, not optional.
    * </p>
    *
    * @param resultJson the raw calculation result JSON
-   * @param context    the validation context (process, compressor, pipeline,
-   *                   etc.)
-   * @return the original JSON with validation appended, or unchanged if
-   *         validation is off
+   * @param context the validation context (process, compressor, pipeline, etc.)
+   * @return the original JSON with validation appended, or unchanged if validation is off
    */
   static String withAutoValidation(String resultJson, String context) {
     if (!IndustrialProfile.isAutoValidationEnabled()) {

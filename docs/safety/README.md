@@ -41,6 +41,9 @@ This folder contains guides for implementing safety systems in process simulatio
 | [sis_logic_implementation.md](sis_logic_implementation) | Safety Instrumented Systems (SIS) logic |
 | [integration_safety_chain_tests.md](integration_safety_chain_tests) | Safety chain integration testing |
 | [SAFETY_SIMULATION_ROADMAP.md](SAFETY_SIMULATION_ROADMAP) | Safety simulation development roadmap |
+| [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md) | End-to-end STID/P&ID, plant data, NeqSim simulation, HAZOP, barrier, and report workflow |
+
+| [Barrier Management and SCE Traceability](barrier_management.md) | Evidence-linked PSFs, SCEs, performance standards, and safety-analysis handoffs |
 
 ### Fire and Thermal Protection
 

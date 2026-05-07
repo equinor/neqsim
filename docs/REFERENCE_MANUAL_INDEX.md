@@ -651,6 +651,19 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Choke Protection    | [docs/wiki/choke_collapse_psd_protection.md](wiki/choke_collapse_psd_protection)       | Choke collapse protection     |
 | Safety Chain Tests  | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests) | Safety chain tests            |
 | Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation)       | Automatic scenario generation |
+| Barrier Management  | [docs/safety/barrier_management.md](safety/barrier_management)                         | Evidence-linked PSF/SCE barrier register and safety-analysis handoffs |
+| Automated HAZOP     | [docs/safety/automated_hazop_from_stid.md](safety/automated_hazop_from_stid)           | STID/P&ID, plant data, NeqSim process simulation, HAZOP worksheet, barrier handoff, and report workflow |
+
+### Chapter 34b: Consequence Analysis & QRA
+
+| Document                   | Path                                                                                | Description                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Depressurization (API 521) | [docs/safety/depressurization_per_API_521.md](safety/depressurization_per_API_521) | Transient blowdown via VU-flash, BDV sizing, fire heat input                      |
+| MDMT Assessment            | [docs/safety/mdmt_assessment.md](safety/mdmt_assessment)                           | UCS-66 / API 579 / EN 13445 minimum design metal temperature                      |
+| Dispersion & Consequence   | [docs/safety/dispersion_and_consequence.md](safety/dispersion_and_consequence)     | Gaussian/heavy-gas dispersion, jet/pool/VCE/BLEVE, probit, IRPA roll-up           |
+| HAZOP Worksheet            | [docs/safety/HAZOP.md](safety/HAZOP)                                               | IEC 61882 guidewords, process parameters, deviation rows, and text reports        |
+| FMEA / FMECA               | [docs/safety/FMEA.md](safety/FMEA)                                                 | IEC 60812 RPN = S·O·D, criticality threshold filtering                            |
+| Event & Fault Trees        | [docs/safety/event_fault_trees.md](safety/event_fault_trees)                       | IEC 61025 / 62502 ETA + FTA with β-factor common-cause and k-of-N voting gates    |
 
 ### Chapter 35: Risk Simulation Framework
 
