@@ -189,7 +189,8 @@ public class Condenser extends SimpleTray {
       // mixedStream.getThermoSystem().prettyPrint();
 
       mixedStreamSplitter = new Splitter("splitter", mixedStream, 2);
-      mixedStreamSplitter.setSplitFactors(new double[] {refluxRatio, 1.0 - refluxRatio});
+      double refluxFraction = refluxRatio <= 0.0 ? 0.0 : refluxRatio / (1.0 + refluxRatio);
+      mixedStreamSplitter.setSplitFactors(new double[] {refluxFraction, 1.0 - refluxFraction});
       mixedStreamSplitter.run();
     } else if (!refluxIsSet) {
       UUID oldID = getCalculationIdentifier();
