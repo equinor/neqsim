@@ -40,7 +40,7 @@ public class MDMTCalculator implements Serializable {
     B,
     /** Curve C — normalized carbon steels (e.g., SA-516 Gr 70 normalized). */
     C,
-    /** Curve D — quenched & tempered or fine-grain steels. */
+    /** Curve D — quenched and tempered or fine-grain steels. */
     D
   }
 

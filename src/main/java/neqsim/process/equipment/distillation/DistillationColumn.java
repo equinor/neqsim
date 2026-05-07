@@ -612,6 +612,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Solve the column using the currently selected inner solver.
    *
    * @param id calculation identifier
+   * @return result from the selected column solver
    */
   private ColumnSolveResult solveSelectedSolver(UUID id) {
     return ColumnSolverFactory.create(solverType).solve(this, id);
