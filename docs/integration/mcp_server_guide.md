@@ -34,7 +34,7 @@ neqsim-mcp-server/                         # Separate Maven project (Java 17+)
 ├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.12.0
 ├── test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                    # 48 @Tool MCP tools
+    ├── NeqSimTools.java                    # 56 @Tool MCP tools
     ├── NeqSimResources.java                # 6 @Resource + 5 @ResourceTemplate
     └── NeqSimPrompts.java                  # 9 @Prompt guided workflows
 

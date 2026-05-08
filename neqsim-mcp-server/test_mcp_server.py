@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 47 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 56 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (21 tools):
@@ -16,7 +16,7 @@ Tier 1 — Trusted Core (21 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (13 tools):
+Tier 2 — Engineering Advanced (21 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)
@@ -30,8 +30,9 @@ Tier 2 — Engineering Advanced (13 tools):
   - Engineering validation
   - Cross-model validation
   - Parametric studies
+    - Relief, LOPA, SIL, risk matrix, flare, HAZOP, barrier register, safety performance
 
-Tier 3 — Experimental (13 tools):
+Tier 3 — Experimental (14 tools):
   - Session management
   - Task solver, workflow composition
   - Report generation, visualization
@@ -202,7 +203,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("48 tools registered", len(tools) == 48, f"got {len(tools)}: {tool_names}")
+    check("56 tools registered", len(tools) == 56, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -215,11 +216,14 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (13 tools)
+    # Tier 2 — Engineering Advanced (21 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
              "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
-             "sizeEquipment", "compareProcesses", "validateResults"]
+             "sizeEquipment", "compareProcesses", "validateResults",
+             "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
+             "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+             "runSafetySystemPerformance"]
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
