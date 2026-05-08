@@ -30,7 +30,7 @@ The system is designed to support controlled engineering use through:
   convergence status, assumptions, limitations, warnings).
 
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
-(STDIO + HTTP/SSE transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
+(STDIO + Streamable HTTP transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
 See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
 
@@ -227,8 +227,8 @@ Pick **jar** or **Docker** — both are first-class paths.
 **1. Download the jar + checksum**
 
 ```bash
-# Replace VERSION with the latest release (e.g. 3.7.0)
-VERSION=3.7.0
+# Replace VERSION with the latest release (e.g. 3.9.1)
+VERSION=3.9.1
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
 ```
@@ -242,7 +242,7 @@ sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
 **3. Connect to your LLM** (see config snippets below)
 
 ```
-java -jar neqsim-mcp-server-3.7.0-runner.jar
+java -jar neqsim-mcp-server-${VERSION}-runner.jar
 ```
 
 </td><td>
@@ -252,7 +252,7 @@ java -jar neqsim-mcp-server-3.7.0-runner.jar
 ```bash
 docker pull ghcr.io/equinor/neqsim-mcp-server:latest
 # or pin a version:
-docker pull ghcr.io/equinor/neqsim-mcp-server:3.7.0
+docker pull ghcr.io/equinor/neqsim-mcp-server:${VERSION}
 ```
 
 **2. Smoke-test**
@@ -455,15 +455,16 @@ java -jar /path/to/neqsim-mcp-server-3.7.0-runner.jar          # jar
 docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 ```
 
-### HTTP/SSE Transport
+### Streamable HTTP Transport
 
-The server also supports HTTP/SSE transport for web-based clients and remote
-access. By default, the SSE endpoint is available at `http://localhost:8080/mcp`
-when the server starts. CORS is configured for local development frontends
-(`localhost:3000`, `localhost:5173`).
+The server also supports Streamable HTTP transport for web-based clients and
+remote access. By default, the current MCP HTTP endpoint is available at
+`http://localhost:8080/mcp` when the server starts. The legacy HTTP/SSE endpoint
+remains available at `http://localhost:8080/mcp/sse` for older clients. CORS is
+configured for local development frontends (`localhost:3000`, `localhost:5173`).
 
-To use HTTP/SSE with an MCP client that supports it, configure the server URL
-instead of stdin/stdout command:
+To use Streamable HTTP with an MCP client that supports it, configure the server
+URL instead of stdin/stdout command:
 
 ```json
 {
@@ -658,7 +659,7 @@ If you want to build from source (for development or to use the latest unrelease
 |---|---|---|
 | JDK | 17+ | Quarkus requires Java 17. NeqSim core still compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
-| NeqSim core | 3.6.1 | Must be installed to local Maven repo first (see below) |
+| NeqSim core | 3.9.1 | Must be installed to local Maven repo first (see below) |
 
 ### Build steps
 
@@ -699,11 +700,11 @@ This produces: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
 **3. Verify the server works:**
 
 ```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
   | java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
 ```
 
-**4. Run the comprehensive test suite** (111 checks):
+**4. Run the comprehensive test suite:**
 
 ```bash
 python test_mcp_server.py
@@ -793,7 +794,7 @@ runFlash({
 
 ```
 neqsim-mcp-server/                        # Separate Maven project (Java 17+)
-├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.11.0
+├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
     ├── NeqSimTools.java                   # 48 @Tool-annotated MCP tools
@@ -917,7 +918,7 @@ python test_mcp_server.py
 
 ## Troubleshooting
 
-### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.6.1"
+### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.9.1"
 
 The neqsim core library must be installed first:
 

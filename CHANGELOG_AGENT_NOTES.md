@@ -9,6 +9,24 @@
 
 ---
 
+## 2026-05-08 — MCP Server Quarkiverse Transport Refresh
+
+### Summary
+
+The standalone MCP server now follows the current Quarkiverse MCP Server docs:
+Quarkus `3.33.1`, Quarkiverse MCP Server `1.12.0`, STDIO for local clients, and
+`quarkus-mcp-server-http` for Streamable HTTP.
+
+### Migration notes
+
+- Replace the deprecated `quarkus-mcp-server-sse` artifact with
+  `quarkus-mcp-server-http`.
+- Use `http://localhost:8080/mcp` for Streamable HTTP clients.
+- Older HTTP/SSE clients can still use `http://localhost:8080/mcp/sse`.
+- MCP initialize examples now use protocol version `2025-11-25`.
+
+---
+
 ## 2026-05-07 — Simulation-backed HAZOP MCP Workflow
 
 ### Summary

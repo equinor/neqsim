@@ -46,7 +46,7 @@ requirement`, or `confidential compressor route`.
 **Type:** F (Design) / G (Workflow)
 **Keywords:** barrier verification, technical safety, closed flare, recompressor, HAZOP, FMEA, LOPA, bow-tie, risk matrix, STID, tagreader
 **Solution:** `private task folder (redacted)`
-**Notes:** Completed a separate barrier and technical-safety screening study using prior NeqSim source-term results and STID/tagreader evidence requirements. Reusable lesson: current barrier credit should be withheld until status, effectiveness, independence, proof-test/SRS evidence, event replay, and material/MDMT records are verified; conditional IPL credit can close most scenarios, while low-temperature material verification remains a distinct close-out.
+**Notes:** Completed a separate barrier and technical-safety screening study using prior NeqSim source-term results and a real STID retrieval package curated into a barrier-linked evidence inventory. Reusable lesson: broad document retrieval should be converted into a small traceable evidence map, and current barrier credit should still be withheld until status, effectiveness, independence, proof-test/SRS evidence, event replay, and material/MDMT records are verified.
 
 ### 2026-05-08 — Closed-flare recompressor blowdown verification screen
 **Type:** F (Design) / G (Workflow)

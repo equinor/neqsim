@@ -71,7 +71,7 @@ def start_server():
             "id": next_id(),
             "method": "initialize",
             "params": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": "2025-11-25",
                 "capabilities": {},
                 "clientInfo": {"name": "neqsim-test", "version": "1.0"},
             },

@@ -8,7 +8,7 @@ description: "Complete guide to the NeqSim MCP Server — a Quarkus-based Model 
 The NeqSim MCP Server is a [Model Context Protocol](https://modelcontextprotocol.io/) server
 that gives any LLM the ability to run rigorous thermodynamic calculations and process
 simulations through NeqSim. It ships as a single uber-jar (~55 MB) and communicates
-via STDIO transport — no extra services, databases, or network ports needed.
+via STDIO transport for local clients or Streamable HTTP for web-based clients.
 
 ## What Can an LLM Do With This?
 
@@ -31,19 +31,20 @@ thermodynamic models.
 
 ```
 neqsim-mcp-server/                         # Separate Maven project (Java 17+)
-├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.11.0
-├── test_mcp_server.py                      # 111-check integration test suite
+├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.12.0
+├── test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                    # 6 @Tool MCP tools
-    └── NeqSimResources.java                # 2 @Resource + 2 @ResourceTemplate
+    ├── NeqSimTools.java                    # 48 @Tool MCP tools
+    ├── NeqSimResources.java                # 6 @Resource + 5 @ResourceTemplate
+    └── NeqSimPrompts.java                  # 9 @Prompt guided workflows
 
 Delegates to the framework-agnostic core layer in neqsim (neqsim.mcp.*):
 ├── runners/   → FlashRunner, ProcessRunner, Validator, ComponentQuery
 ├── model/     → ApiEnvelope, FlashRequest, FlashResult, ValueWithUnit, DiagnosticIssue
-└── catalog/   → ExampleCatalog (8 examples), SchemaCatalog (4 tools × in/out)
+└── catalog/   → ExampleCatalog and SchemaCatalog for examples and JSON schemas
 ```
 
-The MCP server is a **thin Quarkus wrapper** (~200 lines) around a framework-agnostic
+The MCP server is a **thin Quarkus wrapper** around a framework-agnostic
 runner layer in neqsim core. This means:
 
 - **Stability** — Runners are tested with 139+ JUnit tests in the neqsim project
@@ -58,7 +59,7 @@ runner layer in neqsim core. This means:
 |---|---|---|
 | JDK | 17+ | Quarkus requires Java 17. NeqSim core compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw`/`mvnw.cmd`) from the parent project |
-| NeqSim core | 3.6.1+ | Must be installed to local Maven repo first |
+| NeqSim core | 3.9.1+ | Must be installed to local Maven repo first |
 
 ---
 
@@ -76,7 +77,7 @@ From the **parent neqsim directory**:
 .\mvnw.cmd install -DskipTests "-Dmaven.javadoc.skip=true"
 ```
 
-This installs `com.equinor.neqsim:neqsim:3.6.1` to your local `~/.m2/repository`.
+This installs `com.equinor.neqsim:neqsim:3.9.1` to your local `~/.m2/repository`.
 
 ### Step 2: Build the MCP Server
 
@@ -97,7 +98,7 @@ Output: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB uber-jar)
 **Quick STDIO test** — send an MCP initialize request:
 
 ```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
   | java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
 ```
 
@@ -127,6 +128,12 @@ Add to `.vscode/mcp.json` in your workspace:
 ```
 
 Restart VS Code. Copilot will discover the NeqSim tools automatically.
+
+### Streamable HTTP Clients
+
+For web-based MCP clients, start the server normally and connect to
+`http://localhost:8080/mcp`. The Quarkiverse HTTP transport also exposes the
+legacy HTTP/SSE endpoint at `http://localhost:8080/mcp/sse` for older clients.
 
 ### Claude Desktop
 
@@ -617,7 +624,8 @@ The LLM uses `eos: "CPA"` which is the correct choice for associating fluids:
 ### Integration Test Suite
 
 The `test_mcp_server.py` script launches the server as a subprocess, communicates
-over STDIO, and validates 111 checks:
+over STDIO, and validates protocol behavior, catalogs, core calculations,
+advanced tools, governance, and error handling:
 
 | Category | Checks | Description |
 |---|---|---|
@@ -651,7 +659,7 @@ The runner layer in neqsim core has 139+ JUnit 5 tests:
 
 ## Troubleshooting
 
-### "Could not find artifact com.equinor.neqsim:neqsim:3.6.1"
+### "Could not find artifact com.equinor.neqsim:neqsim:3.9.1"
 
 Install NeqSim core first:
 

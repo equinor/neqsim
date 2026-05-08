@@ -237,7 +237,7 @@ jobs:
             }
             ```
 
-            See the [MCP Server README](https://github.com/equinor/neqsim/tree/master/neqsim-mcp-server#readme) for VS Code Copilot, Cursor, Docker, HTTP/SSE, and deployment-profile configuration.
+            See the [MCP Server README](https://github.com/equinor/neqsim/tree/master/neqsim-mcp-server#readme) for VS Code Copilot, Cursor, Docker, Streamable HTTP, and deployment-profile configuration.
 
             ## Use the core Java library
 
