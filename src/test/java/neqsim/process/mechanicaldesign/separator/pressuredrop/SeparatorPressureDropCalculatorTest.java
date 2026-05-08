@@ -140,7 +140,7 @@ public class SeparatorPressureDropCalculatorTest {
     md.setMeshPad(md.getInnerDiameter() > 0
         ? Math.PI * md.getInnerDiameter() * md.getInnerDiameter() / 4.0 : 1.0, 150.0);
     md.setMistEliminatorDpCoeff(0.5);
-    md.setDemistingCyclones(50, 0.05);
+    md.setDemistingCyclones(50, 0.05, 1.0);
     sc.setEnhancedPressureDropCalculation(true);
     sc.run();
     PressureDropBreakdown bd = sc.getLastPressureDropBreakdown();
