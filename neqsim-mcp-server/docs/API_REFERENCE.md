@@ -105,9 +105,13 @@ and compositions.
 
 ## `runProcess` — Process Simulation
 
-Builds and runs a flowsheet from a JSON definition. Supports streams, separators,
-compressors, coolers, heaters, valves, mixers, splitters, heat exchangers, distillation
-columns, and pipelines.
+Builds and runs a flowsheet from a JSON definition. Supports single-area
+`ProcessSystem` JSON (`fluid` + `process`) and multi-area `ProcessModel` JSON
+with top-level `areas`. The stable core supports streams, separators,
+compressors, coolers, heaters, valves, mixers, splitters, heat exchangers,
+distillation columns, and pipelines; the builder also accepts additional
+factory-backed equipment types where their constructor and stream wiring fit the
+generic JSON pattern.
 
 **Parameters:**
 
@@ -178,6 +182,76 @@ columns, and pipelines.
 }
 ```
 
+**Multi-area process models** — use top-level `"areas"` with one standard
+process JSON object per area:
+
+```json
+{
+  "areas": {
+    "separation": {
+      "fluid": { "model": "SRK", "temperature": 298.15, "pressure": 50.0,
+        "components": { "methane": 0.9, "ethane": 0.1 } },
+      "process": [
+        { "type": "Stream", "name": "feed", "properties": { "flowRate": [10000.0, "kg/hr"] } },
+        { "type": "Separator", "name": "Sep", "inlet": "feed" }
+      ]
+    },
+    "compression": {
+      "fluid": { "model": "SRK", "temperature": 298.15, "pressure": 50.0,
+        "components": { "methane": 0.9, "ethane": 0.1 } },
+      "process": [
+        { "type": "Stream", "name": "compFeed", "properties": { "flowRate": [10000.0, "kg/hr"] } },
+        { "type": "Compressor", "name": "Comp", "inlet": "compFeed",
+          "properties": { "outletPressure": [80.0, "bara"] } }
+      ]
+    }
+  }
+}
+```
+
+**Extended factory-backed equipment:** `Pump`, `Expander`, `Tank`,
+`ComponentSplitter`, `Recycle`, `Adjuster`, `GasScrubber`,
+`ThreePhaseSeparator`, `SimpleReservoir`, `Flare`, `FlareStack`, `FuelCell`,
+`Electrolyzer`, `CO2Electrolyzer`, `WindTurbine`, `WindFarm`,
+`BatteryStorage`, `SolarPanel`, `OffshoreEnergySystem`,
+`AmmoniaSynthesisReactor`, and `SubseaPowerCable` are recognized by validation
+and routed through `EquipmentFactory`. Equipment that needs non-generic
+construction or custom multi-port semantics may still require a dedicated MCP
+runner or builder extension.
+
+---
+
+## `runHAZOP` — Simulation-backed HAZOP Study
+
+Generates a first-pass IEC 61882 HAZOP worksheet from a NeqSim process
+definition, optional STID/P&ID-extracted nodes, selected failure modes, and an
+optional barrier register. The tool runs the baseline process, generates
+equipment-failure scenarios, executes those scenarios against copied process
+models, and returns HAZOP rows with simulation evidence.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `hazopJson` | JSON string | HAZOP study input with `processDefinition`, optional `nodes`, `failureModes`, `barrierRegister`, and `runSimulations` |
+
+**Input highlights:**
+
+- `processDefinition` uses the same JSON format as `runProcess`.
+- `nodes[]` may include `nodeId`, `designIntent`, `equipment`, `safeguards`, and `evidenceRefs`.
+- `failureModes[]` may include `COOLING_LOSS`, `VALVE_STUCK_CLOSED`, `COMPRESSOR_TRIP`, `PUMP_TRIP`, or `BLOCKED_OUTLET`.
+- `barrierRegister` is passed to `runBarrierRegister` and returned as a handoff block.
+
+**Output highlights:**
+
+- `hazopRows` with node, guideword, parameter, cause, consequence, safeguards, recommendation, and evidence references.
+- `scenarioResults` with per-scenario status, execution time, and captured KPI values.
+- `qualityGates` showing human review, document evidence, and generated-row checks.
+- `reportMarkdown` for engineering report generation.
+
+Use `getExample` with category `safety` and name `hazop-study` for a complete
+template. Use `getSchema` with tool name `run_hazop` for JSON Schema.
+
 ---
 
 ## `validateInput` — Pre-flight Validation
@@ -244,6 +318,8 @@ then modifies them based on the user's requirements.
 | `process` | `simple-separation` | Stream → Separator |
 | `process` | `compression-with-cooling` | Stream → Compressor → Cooler |
 | `validation` | `error-flash` | A deliberately invalid flash input |
+| `safety` | `hazop-study` | Simulation-backed HAZOP from process scenarios and document evidence |
+| `safety` | `barrier-register` | Evidence-linked PSF/SCE barrier register |
 
 ---
 
@@ -257,6 +333,8 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|---|
 | `run_flash` | `input`, `output` | Flash calculation JSON format |
 | `run_process` | `input`, `output` | Process simulation JSON format |
+| `run_hazop` | `input`, `output` | Simulation-backed HAZOP study JSON format |
+| `run_barrier_register` | `input`, `output` | Barrier register JSON format |
 | `validate_input` | `input`, `output` | Validator JSON format |
 | `search_components` | `input`, `output` | Component search JSON format |
 

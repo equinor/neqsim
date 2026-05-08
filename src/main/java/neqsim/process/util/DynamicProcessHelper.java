@@ -193,8 +193,15 @@ public class DynamicProcessHelper {
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Separator) {
         Separator sep = (Separator) unit;
-        StreamInterface gasOut = sep.getGasOutStream();
-        StreamInterface liqOut = sep.getLiquidOutStream();
+        StreamInterface gasOut;
+        StreamInterface liqOut;
+        try {
+          gasOut = sep.getGasOutStream();
+          liqOut = sep.getLiquidOutStream();
+        } catch (Exception ex) {
+          // Separator has no inlet wired (e.g. orphan vessel in JSON build) — skip pairing.
+          continue;
+        }
         StreamInterface waterOut = null;
         if (sep instanceof ThreePhaseSeparator) {
           waterOut = ((ThreePhaseSeparator) sep).getWaterOutStream();
@@ -249,8 +256,18 @@ public class DynamicProcessHelper {
 
     String tag = sep.getName();
 
+    StreamInterface sepGasOut;
+    try {
+      sepGasOut = sep.getGasOutStream();
+    } catch (Exception ex) {
+      // Separator was built without an inlet (e.g. orphan vessel in JSON build). Skip
+      // dynamic instrumentation rather than NPE — the dynamic step itself will surface
+      // a clear IllegalStateException with remediation if/when this separator is run.
+      return;
+    }
+
     // Pressure transmitter on gas outlet
-    PressureTransmitter pt = new PressureTransmitter("PT-" + tag, sep.getGasOutStream());
+    PressureTransmitter pt = new PressureTransmitter("PT-" + tag, sepGasOut);
     pt.setUnit("bara");
     addTransmitter("PT-" + tag, pt);
 
@@ -259,14 +276,14 @@ public class DynamicProcessHelper {
     addTransmitter("LT-" + tag, lt);
 
     // Temperature transmitter on gas outlet
-    TemperatureTransmitter tt = new TemperatureTransmitter("TT-" + tag, sep.getGasOutStream());
+    TemperatureTransmitter tt = new TemperatureTransmitter("TT-" + tag, sepGasOut);
     tt.setUnit("C");
     addTransmitter("TT-" + tag, tt);
 
     // Pressure controller on gas valve
     ThrottlingValve gasValve = gasValves.get(tag);
     if (gasValve != null && !gasValve.hasController) {
-      double setpoint = sep.getGasOutStream().getPressure("bara");
+      double setpoint = sepGasOut.getPressure("bara");
       ControllerDeviceInterface pc =
           createPIDController("PC-" + tag, pt, setpoint, pressureKp, pressureTi, 0.0, true);
       gasValve.setController(pc);

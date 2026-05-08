@@ -1,10 +1,10 @@
 ---
 name: neqsim-process-safety
 version: "1.0.0"
-description: "Process safety methodology — HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring. USE WHEN: a task requires hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, or quantitative risk evaluation. Anchors on neqsim.process.safety.risk classes (LOPAResult, SafetyInstrumentedFunction, SILVerificationResult, RiskMatrix, BowTieModel, BowTieAnalyzer)."
-last_verified: "2026-04-26"
+description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier and neqsim.process.safety.risk classes."
+last_verified: "2026-05-07"
 requires:
-  java_packages: [neqsim.process.safety.risk]
+  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk]
 ---
 
 # NeqSim Process Safety Skill
@@ -17,12 +17,35 @@ sizing (`neqsim-relief-flare-network`).
 ## When to Use
 
 - HAZOP / HAZID node walkdown with deviation guidewords
+- Barrier management for PSFs/SCEs with document evidence and performance standards
 - LOPA for a specific scenario — calculate residual frequency and required RRF
 - SIL determination for an SIF — IEC 61508 / IEC 61511 verification
 - Bow-tie analysis (top event with threats + barriers + consequences)
 - ALARP / risk-matrix scoring (5×5)
 
 Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 754**, **NORSOK Z-013**.
+
+## Method 0 — Evidence-Linked Barrier Register
+
+Use `BarrierRegister`, `SafetyCriticalElement`, `SafetyBarrier`, `PerformanceStandard`,
+and `DocumentEvidence` when agents read technical documentation and need a traceable
+handoff into LOPA, SIL, bow-tie, or QRA.
+
+Recommended sequence:
+
+1. Extract `DocumentEvidence` from P&IDs, C&E charts, SRS, SIL verification reports,
+   inspection reports, vendor datasheets, and operating procedures.
+2. Build `PerformanceStandard` objects for each PSF/SIF/SCE function with target PFD,
+   availability, proof-test interval, response time, and acceptance criteria.
+3. Build `SafetyBarrier` objects with type, status, PFD/effectiveness, equipment tags,
+   hazard ids, owner, evidence, and performance-standard links.
+4. Group barriers under `SafetyCriticalElement` records using process equipment tags.
+5. Run MCP `runBarrierRegister` to get validation findings plus `lopaHandoff`,
+   `silHandoff`, `bowTieHandoff`, and `qraHandoff` blocks.
+
+Credit rule: do not claim LOPA credit unless the barrier is `AVAILABLE`, has a valid
+PFD, has a linked performance standard, and has traceable evidence. Missing evidence
+must remain visible as a validation finding.
 
 ## Method 1 — HAZOP Guidewords
 
@@ -39,6 +62,14 @@ Apply the 7 standard guidewords to each design intent at every node:
 | OTHER THAN | Maintenance with line live               | Procedural / isolation failure      |
 
 Output as a HAZOP worksheet table; each row → candidate LOPA scenario.
+
+For automated studies from STID/P&ID documents and NeqSim process simulations,
+use MCP `runHAZOP`. It accepts a standard `runProcess` JSON model plus optional
+document-extracted nodes, safeguards, evidence references, selected failure
+modes, and a `barrierRegister`. The runner executes generated safety scenarios
+on copied `ProcessSystem` models and returns IEC 61882 rows, simulation evidence,
+quality gates, barrier-register handoff, and report markdown. See
+`docs/safety/automated_hazop_from_stid.md`.
 
 ## Method 2 — LOPA Worksheet
 

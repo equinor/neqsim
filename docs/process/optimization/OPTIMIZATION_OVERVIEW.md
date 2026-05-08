@@ -30,6 +30,7 @@ This document provides a high-level introduction to the process optimization cap
 | Optimize arbitrary objectives with constraints | `ProductionOptimizer` | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) |
 | Do multi-objective Pareto optimization | `ProductionOptimizer.optimizePareto()` | [Multi-Objective Optimization](multi-objective-optimization) |
 | Run batch parameter studies | `BatchStudy` | [Batch Studies](batch-studies) |
+| Generate and rank candidate flowsheets from feed/product targets | `ProcessResearcher` | [Process Researcher](process-researcher) |
 | Calculate flow rates for pressure boundaries | `FlowRateOptimizer` | [Flow Rate Optimization](flow-rate-optimization) |
 | Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
@@ -64,6 +65,7 @@ This sequence covers base-run requirements, optimizer selection, and safe variab
 | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | Equipment capacity strategies, ProcessOptimizationEngine API, VFP export |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Complete examples for ProductionOptimizer with Java/Python |
 | [Practical Examples](PRACTICAL_EXAMPLES) | Code samples for common optimization tasks |
+| [Process Researcher](process-researcher) | Candidate flowsheet generation and ranking from feed/product specifications |
 | [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts, weighted-sum, epsilon-constraint methods |
 | [Batch Studies](batch-studies) | Parallel parameter sweeps and sensitivity analysis |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curve tables |

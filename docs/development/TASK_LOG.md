@@ -36,6 +36,18 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-05-07 — Confidential gas precompression inlet velocity screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, tagreader, P&ID, pressure drop, gas velocity, scrubber, compressor suction, Word report, PipeBeggsAndBrills
+**Solution:** `private task folder (redacted)`
+**Notes:** Retrieved route P&IDs and equipment design documents from STID, extracted line/nozzle diameters, read 24-hour historian averages with tagreader, used NeqSim gas properties plus a PipeBeggsAndBrills straight-pipe check, and generated a Word report. Reusable lesson: reject inconsistent historian unit metadata, document the adopted flow-unit interpretation, and separate measured route pressure loss from straight-pipe friction and local equipment/minor losses.
+
+### 2026-05-07 — Confidential STID UniSim power extraction
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, UniSim, HYSYS, process simulation, total power, compressor duty, document retrieval
+**Solution:** `private task folder (redacted)`
+**Notes:** Searched multiple installation scopes for the newest runnable `.usc` case, inspected zip attachments before selecting the latest case file, ran the selected UniSim case through COM, and reported total mechanical power as compressor plus pump duty. Reusable pattern: keep STID identifiers and asset-specific power values private, while recording the selection and power-accounting method publicly.
+
 ### 2026-05-06 — Confidential separator carry-over cooler scaling screen
 **Type:** B (Process) / G (Workflow)
 **Keywords:** separator carry-over, cooler scaling, anti-surge recycle, STID, tagreader, NaCl source term, compressor calibration, plate heat exchanger

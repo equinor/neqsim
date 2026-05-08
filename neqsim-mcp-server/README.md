@@ -88,7 +88,7 @@ Each tool has documented accuracy bounds and clear error behavior.
 | Tool | Category | Description |
 |------|----------|-------------|
 | `runFlash` | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
-| `runProcess` | CALCULATION | Process simulation from JSON definition |
+| `runProcess` | CALCULATION | ProcessSystem or ProcessModel simulation from JSON definition |
 | `calculateStandard` | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN) |
 | `getPropertyTable` | CALCULATION | Property table across T or P range |
 | `getPhaseEnvelope` | CALCULATION | Full PT phase envelope |
@@ -129,7 +129,7 @@ limitations, and unsupported conditions.
 
 ---
 
-## Tier 2 — Engineering Advanced (11 tools)
+## Tier 2 — Engineering Advanced (18 tools)
 
 Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
@@ -148,6 +148,13 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `generateReport` | Structured engineering report generation |
 | `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
 | `queryDataCatalog` | Browse component, standards, material, and EOS databases |
+| `runRelief` | PSV sizing per API 520/521 |
+| `runLOPA` | Layer of Protection Analysis per IEC 61511 / CCPS |
+| `runSIL` | SIL verification per IEC 61508 / IEC 61511 |
+| `runRiskMatrix` | 5x5 risk matrix scoring per ISO 31000 / NORSOK Z-013 |
+| `runFlareNetwork` | Flare radiation and safe-distance contours |
+| `runHAZOP` | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios |
+| `runBarrierRegister` | Evidence-linked PSF/SCE barrier register handoffs |
 
 ---
 

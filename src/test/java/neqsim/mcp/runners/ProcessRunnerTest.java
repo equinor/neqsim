@@ -100,4 +100,56 @@ class ProcessRunnerTest {
 
     assertEquals("success", root.get("status").getAsString());
   }
+
+  @Test
+  void testRun_processModelAreas() {
+    String result = ProcessRunner.run(processModelJson());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertEquals("json-process-model", root.get("processModelName").getAsString());
+    assertEquals(2, root.get("areaCount").getAsInt());
+    assertTrue(root.has("areas"));
+    assertTrue(root.has("report"));
+  }
+
+  @Test
+  void testValidateAndRun_processModelAreas() {
+    String result = ProcessRunner.validateAndRun(processModelJson());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertEquals(2, root.get("areaCount").getAsInt());
+  }
+
+  @Test
+  void testValidateAndRun_processWithExpander() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 60.0," + "  \"components\": {\"methane\": 1.0}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [5000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Expander\", \"name\": \"Expander-1\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"outletPressure\": [20.0, \"bara\"]}}" + "]" + "}";
+
+    String result = ProcessRunner.validateAndRun(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+  }
+
+  private static String processModelJson() {
+    String fluid = "\"fluid\": {" + "\"model\": \"SRK\"," + "\"temperature\": 298.15,"
+        + "\"pressure\": 50.0," + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
+    String separation =
+        "{" + fluid + "," + "\"process\": [" + "{\"type\": \"Stream\", \"name\": \"feed\","
+            + "\"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+            + "{\"type\": \"Separator\", \"name\": \"Sep\", \"inlet\": \"feed\"}" + "]}";
+    String compression =
+        "{" + fluid + "," + "\"process\": [" + "{\"type\": \"Stream\", \"name\": \"compFeed\","
+            + "\"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+            + "{\"type\": \"Compressor\", \"name\": \"Comp\", \"inlet\": \"compFeed\","
+            + "\"properties\": {\"outletPressure\": [80.0, \"bara\"]}}" + "]}";
+    return "{\"areas\": {\"separation\": " + separation + ", \"compression\": " + compression
+        + "}}";
+  }
 }

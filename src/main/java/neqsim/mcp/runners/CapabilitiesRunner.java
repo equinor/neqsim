@@ -94,6 +94,8 @@ public class CapabilitiesRunner {
             "Splitter — Stream splitting by fraction",
             "ComponentSplitter — Component-level separation (e.g., TEG dehydration)",
             "DistillationColumn — Multi-stage distillation (standard, damped, inside-out solvers)",
+            "Pump, Expander, Tank, Manifold, Flare, FlareStack, and SimpleReservoir",
+            "FuelCell, Electrolyzer, CO2Electrolyzer, wind/solar/battery power equipment",
             "AdiabaticPipe — Adiabatic pipeline flow",
             "PipeBeggsAndBrills — Beggs & Brill multiphase flow correlation",
             "Recycle — Convergence of recycle loops",
@@ -127,6 +129,8 @@ public class CapabilitiesRunner {
         "runFieldEconomics — NPV/IRR with fiscal regimes (Norwegian NCS, UK, Brazil, US-GOM) + decline curves",
         "runDynamic — Dynamic transient simulation with auto-instrumented PID controllers",
         "runBioprocess — Bioprocessing reactors (anaerobic digester, fermentation, gasification, pyrolysis)",
+        "runHAZOP — Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios",
+        "runBarrierRegister — Evidence-linked SCE/barrier register validation and safety handoff",
         "searchComponents — Component database search",
         "validateInput — Pre-flight input validation",
         "crossValidateModels — Run process under multiple EOS to quantify model risk",
@@ -154,7 +158,7 @@ public class CapabilitiesRunner {
         "Dynamic/transient simulation (PID control, startup/shutdown, controller tuning)",
         "Bioprocessing (anaerobic digestion, fermentation, gasification, pyrolysis)",
         "Mechanical design (pipelines, vessels, wells per ASME/API/DNV/NORSOK)",
-        "Safety (depressurization, PSV sizing, source terms)",
+        "Safety (HAZOP, barrier management, SCE traceability, LOPA, SIL, bow-tie, QRA, PSV sizing)",
         "Power generation (gas turbines, steam cycles, HRSG, combined cycle)",
         "Heat integration (pinch analysis)")));
     root.add("engineeringDomains", domains);

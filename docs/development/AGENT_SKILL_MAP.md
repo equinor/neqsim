@@ -10,6 +10,7 @@ Each row lists the skills an agent declares via a
 |------------|--------------|---------------|
 | `capability.scout.agent.md` | scout neqsim capabilities | _(none declared)_ |
 | `ccs.hydrogen.agent.md` | analyze CCS and hydrogen systems | _(none declared)_ |
+| `consequence.analysis.agent.md` | analyze consequences and dispersion | _(none declared)_ |
 | `control.system.agent.md` | design control systems | _(none declared)_ |
 | `documentation.agent.md` | write neqsim documentation | _(none declared)_ |
 | `emissions.environmental.agent.md` | calculate emissions and environmental impact | _(none declared)_ |

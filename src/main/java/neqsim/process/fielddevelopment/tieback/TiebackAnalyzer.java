@@ -371,6 +371,7 @@ public class TiebackAnalyzer implements Serializable {
    * @param isGasField true when gas-rate economics and capacity should be used
    * @param totalRate total wellhead rate in the supplied rate unit
    * @param rateUnit total rate unit
+   * @param routeNetwork route network model, or null to use tieback-level route defaults
    */
   private void screenFlowAssurance(TiebackOption option, FieldConcept discovery, HostFacility host,
       ReservoirInput reservoir, WellsInput wells, boolean isGasField, double totalRate,

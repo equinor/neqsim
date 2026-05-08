@@ -32,7 +32,7 @@ benchmark trust metadata.
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlash` | CALCULATION | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
-| `runProcess` | CALCULATION | v1.0 | Process simulation from JSON definition |
+| `runProcess` | CALCULATION | v1.0 | ProcessSystem or ProcessModel simulation from JSON definition |
 | `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
 | `runPipeline` | CALCULATION | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
 | `calculateStandard` | CALCULATION | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
@@ -87,6 +87,13 @@ industrial validation.
 | `generateReport` | ADVISORY | v1.1 | Generate structured engineering reports |
 | `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
+| `runRelief` | CALCULATION | v1.3 | PSV sizing per API 520 (gas/liquid/two-phase) and API 521 fire heat input |
+| `runLOPA` | CALCULATION | v1.3 | Layer of Protection Analysis per IEC 61511 / CCPS, with required-SIL gap analysis |
+| `runSIL` | CALCULATION | v1.3 | SIL verification per IEC 61508 / 61511 (1oo1, 1oo2, 2oo3 architectures) |
+| `runRiskMatrix` | CALCULATION | v1.3 | 5×5 risk matrix scoring per ISO 31000 / NORSOK Z-013 |
+| `runFlareNetwork` | CALCULATION | v1.3 | Flare radiation profile and API 521 safe-distance contour |
+| `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |
+| `runBarrierRegister` | CALCULATION | v1.4 | Evidence-linked PSF/SCE barrier register validation with LOPA/SIL/bow-tie/QRA handoffs |
 
 ## Experimental Tools
 

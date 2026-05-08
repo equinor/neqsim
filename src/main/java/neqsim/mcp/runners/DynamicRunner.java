@@ -188,8 +188,17 @@ public class DynamicRunner {
 
       return GSON.toJson(response);
     } catch (Exception e) {
-      return errorJson("DYNAMIC_ERROR", "Dynamic simulation failed: " + e.getMessage(),
-          "Ensure process is valid and converges in steady-state first");
+      String hint = "Ensure process is valid and converges in steady-state first";
+      String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+      if (msg != null && (msg.contains("gasOutStream") || msg.contains("liquidOutStream")
+          || msg.contains("no inlet stream"))) {
+        hint = "A separator has no inlet stream wired — dynamic mode cannot initialize its gas/"
+            + "liquid outlet streams. Add an 'inlet' field on every separator in the process JSON"
+            + " (e.g. {\"type\":\"separator\",\"name\":\"sep\",\"inlet\":\"feed\"}). For pure"
+            + " depressurization, use a low-flow feed stream to seed the separator inventory and"
+            + " route the gas outlet to a throttling/blowdown valve.";
+      }
+      return errorJson("DYNAMIC_ERROR", "Dynamic simulation failed: " + msg, hint);
     }
   }
 

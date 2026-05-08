@@ -9,6 +9,85 @@
 
 ---
 
+## 2026-05-07 — Simulation-backed HAZOP MCP Workflow
+
+### Summary
+
+New `HAZOPStudyRunner` connects STID/P&ID-extracted HAZOP nodes to NeqSim
+`ProcessSystem` simulations. MCP `runHAZOP` builds the baseline process, uses
+`AutomaticScenarioGenerator` to create equipment-failure scenarios, runs copied
+process models, maps failures to IEC 61882 guidewords/parameters, and returns
+HAZOP rows, scenario evidence, quality gates, optional barrier-register handoff,
+and report markdown.
+
+### Agent Guidance
+
+- Use `getExample("safety", "hazop-study")` for a complete input template.
+- Use `getSchema("run_hazop", "input")` and `getSchema("run_hazop", "output")`
+  for the contract.
+- Treat generated rows as screening output. A chaired HAZOP team must verify
+  nodes, causes, consequences, safeguards, barrier credit, and action ownership.
+- Use `docs/safety/automated_hazop_from_stid.md` for the end-to-end STID/data/
+  simulation/report workflow.
+
+---
+
+## 2026-05-XX — Process Safety Consequence Analysis & QRA Package
+
+### Summary
+
+New package `neqsim.process.safety` adds quantitative consequence analysis and
+risk-quantification primitives covering API 521 / API 752 / NORSOK Z-013 /
+CCPS QRA Guidelines / IEC 61025 / IEC 61882 / IEC 60812 / ASME UCS-66.
+
+### New classes
+
+| Subpackage | Classes |
+|------------|---------|
+| `depressurization` | `DepressurizationSimulator` (VU-flash transient blowdown, fire heat input, BDV sizing) |
+| `mdmt` | `MDMTCalculator` (UCS-66 Curves A/B/C/D, UCS-66.1 stress reduction, API 579) |
+| `dispersion` | `GaussianPlume`, `HeavyGasDispersion`, `ProbitModel`, `ToxicLibrary` |
+| `fire` | `JetFireModel`, `PoolFireModel`, `VCEModel` (TNO multi-energy), `BLEVECalculator` |
+| `risk.eta` | `EventTreeAnalyzer` (forward outcome frequencies, IEC 62502) |
+| `risk.fta` | `FaultTreeAnalyzer`, `FaultTreeNode` (AND/OR/k-of-N + β-factor CCF, IEC 61025) |
+| `hazid` | `HAZOPTemplate` (IEC 61882), `FMEAWorksheet` (IEC 60812, RPN=S·O·D) |
+| `escalation` | `EscalationGraphAnalyzer` (domino/escalation screening) |
+| `qra` | `ConsequenceAnalysisEngine` (IRPA roll-up, source-term JSON export) |
+| `inherent` | `InherentSafetyEvaluator` (Substitute/Minimize/Moderate/Simplify) |
+| `alarp` | `ALARPAuditReport` (ICAF vs VSL·GDF gross-disproportion) |
+| `compliance` | `StandardsComplianceReport` (API 14C / NORSOK S-001 / IEC 61511) |
+
+### β-factor semantics (FaultTreeAnalyzer)
+
+`P_top_with_CCF = (1-β)·P_indep + β·max(P_basic_i)` — convex combination per
+IEC 61508 Part 6. Note the directional effect differs by gate type: AND gates
+see *increased* probability (CCF defeats redundancy), OR gates see *decreased*
+probability (replaces independent disjunction with correlated single-event).
+
+### New skills
+
+- `neqsim-consequence-analysis`
+- `neqsim-hazid-fmea-eta-fta`
+- `neqsim-depressurization-mdmt`
+
+### New agent
+
+- `@analyze consequences and dispersion` — orchestrates the three skills above.
+
+### New documentation
+
+- `docs/safety/depressurization_per_API_521.md`
+- `docs/safety/mdmt_assessment.md`
+- `docs/safety/dispersion_and_consequence.md`
+- `docs/safety/HAZOP.md`
+- `docs/safety/FMEA.md`
+- `docs/safety/event_fault_trees.md`
+
+All classes are `Serializable` with `serialVersionUID`. 30 JUnit 5 tests under
+`src/test/java/neqsim/process/safety/` pass.
+
+---
+
 ## 2026-04-30 — Distillation Column MESH Residual Diagnostics
 
 ### Summary

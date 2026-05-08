@@ -511,6 +511,128 @@ public final class ExampleCatalog {
         + "      ]\n" + "    }\n" + "  ]\n" + "}";
   }
 
+  // ========== Safety Examples ==========
+
+  /**
+   * Returns an evidence-linked barrier register example for HP separator overpressure.
+   *
+   * @return JSON string for BarrierRegisterRunner.run()
+   */
+  public static String safetyBarrierRegister() {
+    return "{\n" + "  \"action\": \"audit\",\n" + "  \"register\": {\n"
+        + "    \"registerId\": \"BR-HP-SEP-001\",\n"
+        + "    \"name\": \"HP separator overpressure barrier register\",\n"
+        + "    \"evidence\": [\n" + "      {\n" + "        \"evidenceId\": \"EV-PID-001\",\n"
+        + "        \"documentId\": \"PID-001\",\n"
+        + "        \"documentTitle\": \"HP separator P&ID\",\n" + "        \"revision\": \"B\",\n"
+        + "        \"section\": \"ESD valves\",\n" + "        \"page\": 3,\n"
+        + "        \"sourceReference\": \"V-101 / ESDV-101 inlet isolation\",\n"
+        + "        \"excerpt\": \"HIPPS closes ESDV-101 on high-high pressure.\",\n"
+        + "        \"confidence\": 0.92\n" + "      },\n" + "      {\n"
+        + "        \"evidenceId\": \"EV-SRS-001\",\n" + "        \"documentId\": \"SRS-HP-101\",\n"
+        + "        \"documentTitle\": \"HIPPS safety requirements specification\",\n"
+        + "        \"revision\": \"1\",\n" + "        \"section\": \"Performance requirements\",\n"
+        + "        \"page\": 12,\n" + "        \"sourceReference\": \"SIF-HIPPS-101 table\",\n"
+        + "        \"excerpt\": \"SIF-HIPPS-101 shall achieve PFDavg <= 1E-3.\",\n"
+        + "        \"confidence\": 0.95\n" + "      }\n" + "    ],\n"
+        + "    \"performanceStandards\": [\n" + "      {\n" + "        \"id\": \"PS-HIPPS-101\",\n"
+        + "        \"title\": \"HIPPS overpressure protection\",\n"
+        + "        \"safetyFunction\": \"Prevent HP separator overpressure from blocked outlet\",\n"
+        + "        \"demandMode\": \"LOW_DEMAND\",\n" + "        \"targetPfd\": 0.001,\n"
+        + "        \"requiredAvailability\": 0.99,\n"
+        + "        \"proofTestIntervalHours\": 8760,\n" + "        \"responseTimeSeconds\": 2.0,\n"
+        + "        \"acceptanceCriteria\": [\n"
+        + "          \"Close inlet ESD valve before separator MAWP is exceeded\",\n"
+        + "          \"Proof-test interval not longer than 12 months\"\n" + "        ],\n"
+        + "        \"evidenceRefs\": [\"EV-SRS-001\"]\n" + "      },\n" + "      {\n"
+        + "        \"id\": \"PS-PSV-101\",\n" + "        \"title\": \"PSV relief to flare\",\n"
+        + "        \"safetyFunction\": \"Relieve overpressure to flare header\",\n"
+        + "        \"demandMode\": \"LOW_DEMAND\",\n" + "        \"targetPfd\": 0.01,\n"
+        + "        \"requiredAvailability\": 0.98,\n" + "        \"acceptanceCriteria\": [\n"
+        + "          \"PSV set pressure shall protect separator MAWP\",\n"
+        + "          \"Relief path to flare shall be open during operation\"\n" + "        ],\n"
+        + "        \"evidenceRefs\": [\"EV-PID-001\"]\n" + "      }\n" + "    ],\n"
+        + "    \"barriers\": [\n" + "      {\n" + "        \"id\": \"B-HIPPS-101\",\n"
+        + "        \"name\": \"HIPPS inlet shutdown\",\n"
+        + "        \"description\": \"Independent high-pressure trip closes inlet ESD valve\",\n"
+        + "        \"type\": \"PREVENTION\",\n" + "        \"status\": \"AVAILABLE\",\n"
+        + "        \"safetyFunction\": \"Prevent LOC from separator overpressure\",\n"
+        + "        \"owner\": \"Technical safety\",\n" + "        \"pfd\": 0.001,\n"
+        + "        \"performanceStandardId\": \"PS-HIPPS-101\",\n"
+        + "        \"equipmentTags\": [\"V-101\", \"ESDV-101\"],\n"
+        + "        \"hazardIds\": [\"HAZ-OP-001\"],\n"
+        + "        \"evidenceRefs\": [\"EV-PID-001\", \"EV-SRS-001\"]\n" + "      },\n"
+        + "      {\n" + "        \"id\": \"B-PSV-101\",\n" + "        \"name\": \"PSV to flare\",\n"
+        + "        \"description\": \"Relief valve protects separator against overpressure\",\n"
+        + "        \"type\": \"MITIGATION\",\n" + "        \"status\": \"AVAILABLE\",\n"
+        + "        \"owner\": \"Process\",\n" + "        \"pfd\": 0.01,\n"
+        + "        \"performanceStandardId\": \"PS-PSV-101\",\n"
+        + "        \"effectiveness\": 0.90,\n"
+        + "        \"equipmentTags\": [\"V-101\", \"PSV-101\"],\n"
+        + "        \"hazardIds\": [\"HAZ-OP-001\"],\n"
+        + "        \"evidenceRefs\": [\"EV-PID-001\"]\n" + "      }\n" + "    ],\n"
+        + "    \"safetyCriticalElements\": [\n" + "      {\n" + "        \"id\": \"SCE-V-101\",\n"
+        + "        \"tag\": \"V-101\",\n"
+        + "        \"name\": \"HP separator pressure protection\",\n"
+        + "        \"type\": \"PROCESS_EQUIPMENT\",\n" + "        \"owner\": \"Operations\",\n"
+        + "        \"equipmentTags\": [\"V-101\"],\n"
+        + "        \"barrierRefs\": [\"B-HIPPS-101\", \"B-PSV-101\"],\n"
+        + "        \"evidenceRefs\": [\"EV-PID-001\"]\n" + "      }\n" + "    ]\n" + "  }\n" + "}";
+  }
+
+  /**
+   * Returns a simulation-backed HAZOP study example for a compression train.
+   *
+   * @return JSON string for HAZOPStudyRunner.run()
+   */
+  public static String safetyHazopStudy() {
+    return "{\n" + "  \"studyId\": \"HAZOP-COMP-001\",\n" + "  \"runSimulations\": true,\n"
+        + "  \"failureModes\": [\"COOLING_LOSS\", \"COMPRESSOR_TRIP\"],\n"
+        + "  \"processDefinition\": {\n" + "    \"fluid\": {\n" + "      \"model\": \"SRK\",\n"
+        + "      \"temperature\": 298.15,\n" + "      \"pressure\": 10.0,\n"
+        + "      \"mixingRule\": \"classic\",\n" + "      \"components\": {\n"
+        + "        \"methane\": 0.90,\n" + "        \"ethane\": 0.07,\n"
+        + "        \"propane\": 0.03\n" + "      }\n" + "    },\n" + "    \"process\": [\n"
+        + "      {\n" + "        \"type\": \"Stream\",\n" + "        \"name\": \"feed\",\n"
+        + "        \"properties\": {\"flowRate\": [5000.0, \"kg/hr\"]}\n" + "      },\n"
+        + "      {\n" + "        \"type\": \"Compressor\",\n" + "        \"name\": \"1st Stage\",\n"
+        + "        \"inlet\": \"feed\",\n"
+        + "        \"properties\": {\"outletPressure\": [30.0, \"bara\"]}\n" + "      },\n"
+        + "      {\n" + "        \"type\": \"Cooler\",\n" + "        \"name\": \"Intercooler\",\n"
+        + "        \"inlet\": \"1st Stage\",\n"
+        + "        \"properties\": {\"outTemperature\": [303.15, \"K\"]}\n" + "      },\n"
+        + "      {\n" + "        \"type\": \"Compressor\",\n" + "        \"name\": \"2nd Stage\",\n"
+        + "        \"inlet\": \"Intercooler\",\n"
+        + "        \"properties\": {\"outletPressure\": [80.0, \"bara\"]}\n" + "      }\n"
+        + "    ]\n" + "  },\n" + "  \"nodes\": [\n" + "    {\n"
+        + "      \"nodeId\": \"Node-01 Intercooler\",\n"
+        + "      \"designIntent\": \"Cool first-stage discharge before second-stage compression\",\n"
+        + "      \"equipment\": [\"Intercooler\"],\n"
+        + "      \"safeguards\": [\"High temperature alarm\", \"Compressor high-high temperature trip\"],\n"
+        + "      \"evidenceRefs\": [\"EV-PID-101\"]\n" + "    },\n" + "    {\n"
+        + "      \"nodeId\": \"Node-02 Second-stage compressor\",\n"
+        + "      \"designIntent\": \"Compress cooled gas to export pressure\",\n"
+        + "      \"equipment\": [\"2nd Stage\"],\n"
+        + "      \"safeguards\": [\"Anti-surge control\", \"Discharge pressure trip\"],\n"
+        + "      \"evidenceRefs\": [\"EV-COMP-201\"]\n" + "    }\n" + "  ],\n"
+        + "  \"barrierRegister\": {\n" + "    \"registerId\": \"BR-COMP-001\",\n"
+        + "    \"name\": \"Compression HAZOP safeguard register\",\n" + "    \"evidence\": [\n"
+        + "      {\n" + "        \"evidenceId\": \"EV-PID-101\",\n"
+        + "        \"documentId\": \"PID-101\",\n"
+        + "        \"documentTitle\": \"Compression P&ID\",\n" + "        \"revision\": \"A\",\n"
+        + "        \"section\": \"Temperature protection\",\n" + "        \"page\": 4,\n"
+        + "        \"sourceReference\": \"TT-101 / TSHH-101\",\n"
+        + "        \"excerpt\": \"TSHH-101 trips compressor train on high-high discharge temperature.\",\n"
+        + "        \"confidence\": 0.90\n" + "      }\n" + "    ],\n" + "    \"barriers\": [\n"
+        + "      {\n" + "        \"id\": \"B-TSHH-101\",\n"
+        + "        \"name\": \"High-high temperature trip\",\n"
+        + "        \"type\": \"PREVENTION\",\n" + "        \"status\": \"AVAILABLE\",\n"
+        + "        \"pfd\": 0.01,\n"
+        + "        \"equipmentTags\": [\"Intercooler\", \"2nd Stage\"],\n"
+        + "        \"hazardIds\": [\"HAZOP-COMP-001\"],\n"
+        + "        \"evidenceRefs\": [\"EV-PID-101\"]\n" + "      }\n" + "    ]\n" + "  }\n" + "}";
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -522,7 +644,7 @@ public final class ExampleCatalog {
     return Collections.unmodifiableList(
         Arrays.asList("flash", "process", "validation", "batch", "property-table", "phase-envelope",
             "pvt", "flow-assurance", "standards", "pipeline", "reservoir", "economics",
-            "bioprocess", "session", "visualization", "equipment-sizing", "comparison"));
+            "bioprocess", "session", "visualization", "equipment-sizing", "comparison", "safety"));
   }
 
   /**
@@ -567,6 +689,8 @@ public final class ExampleCatalog {
       return Arrays.asList("separator", "compressor");
     } else if ("comparison".equals(category)) {
       return Arrays.asList("two-cases");
+    } else if ("safety".equals(category)) {
+      return Arrays.asList("barrier-register", "hazop-study");
     }
     return Collections.emptyList();
   }
@@ -689,6 +813,13 @@ public final class ExampleCatalog {
       if ("two-cases".equals(name)) {
         return comparisonTwoCases();
       }
+    } else if ("safety".equals(category)) {
+      if ("barrier-register".equals(name)) {
+        return safetyBarrierRegister();
+      }
+      if ("hazop-study".equals(name)) {
+        return safetyHazopStudy();
+      }
     }
     return null;
   }
@@ -807,6 +938,14 @@ public final class ExampleCatalog {
     Map<String, String> compExamples = new LinkedHashMap<String, String>();
     compExamples.put("two-cases", "Compare separation at 30 bara vs 80 bara side by side");
     catalog.put("comparison", compExamples);
+
+    // Safety examples
+    Map<String, String> safetyExamples = new LinkedHashMap<String, String>();
+    safetyExamples.put("barrier-register",
+        "Evidence-linked SCE/barrier register with LOPA, SIL, bow-tie, and QRA handoffs");
+    safetyExamples.put("hazop-study",
+        "Simulation-backed IEC 61882 HAZOP worksheet from process scenarios and STID evidence");
+    catalog.put("safety", safetyExamples);
 
     return GSON.toJson(catalog);
   }

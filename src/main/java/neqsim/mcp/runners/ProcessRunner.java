@@ -5,9 +5,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ProcessResult;
 import neqsim.mcp.model.ResultProvenance;
+import neqsim.process.processmodel.JsonProcessBuilder;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 
@@ -16,8 +21,9 @@ import neqsim.process.processmodel.SimulationResult;
  *
  * <p>
  * Accepts a JSON process definition, optionally pre-validates it using {@link Validator}, then
- * builds and runs the process using {@link ProcessSystem#fromJsonAndRun(String)}. Returns the
- * simulation result as a JSON string in the standard envelope format.
+ * builds and runs either a {@link ProcessSystem} using {@link ProcessSystem#fromJsonAndRun(String)}
+ * or a multi-area {@link ProcessModel} when the JSON contains a top-level {@code areas} object.
+ * Returns the simulation result as a JSON string in the standard envelope format.
  * </p>
  *
  * <h2>Input JSON Format:</h2>
@@ -60,27 +66,10 @@ public class ProcessRunner {
     long startTime = System.currentTimeMillis();
     try {
       String normalizedJson = normalizeProcessJson(json);
-      SimulationResult result = ProcessSystem.fromJsonAndRun(normalizedJson);
-      String simJson = result.toJson();
-
-      // Inject provenance into the response
-      String model = extractModel(normalizedJson);
-      String mixingRule = extractMixingRule(normalizedJson);
-      int equipCount = extractEquipmentCount(normalizedJson);
-      ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
-      provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
-      provenance.setConverged(!result.isError());
-
-      if (!result.isError()) {
-        provenance.addValidationPassed("Process simulation completed");
+      if (isProcessModelJson(normalizedJson)) {
+        return runProcessModel(normalizedJson, startTime, false, null);
       }
-      for (String warning : result.getWarnings()) {
-        provenance.addLimitation("Warning: " + warning);
-      }
-
-      JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
-      simObj.add("provenance", GSON.toJsonTree(provenance));
-      return GSON.toJson(simObj);
+      return runProcessSystem(normalizedJson, startTime, false, null);
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
           "Check the JSON definition. Use Validator.validate() first to catch common issues.");
@@ -123,36 +112,11 @@ public class ProcessRunner {
 
     // Run simulation
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(normalizedJson);
-      String simJson = simResult.toJson();
-
-      // Inject provenance
-      String model = extractModel(normalizedJson);
-      String mixingRule = extractMixingRule(normalizedJson);
-      int equipCount = extractEquipmentCount(normalizedJson);
-      ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
-      provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
-      provenance.setConverged(!simResult.isError());
-      provenance.addValidationPassed("Pre-flight validation passed");
-
-      if (!simResult.isError()) {
-        provenance.addValidationPassed("Process simulation completed");
-      }
-
-      JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
-      simObj.add("provenance", GSON.toJsonTree(provenance));
-
-      // If there were validation warnings, merge them
       JsonArray valIssues = validation.getAsJsonArray("issues");
-      if (valIssues != null && valIssues.size() > 0) {
-        simObj.add("validationIssues", valIssues);
-        for (int i = 0; i < valIssues.size(); i++) {
-          provenance.addLimitation(
-              "Validation warning: " + valIssues.get(i).getAsJsonObject().get("message"));
-        }
+      if (isProcessModelJson(normalizedJson)) {
+        return runProcessModel(normalizedJson, startTime, true, valIssues);
       }
-
-      return GSON.toJson(simObj);
+      return runProcessSystem(normalizedJson, startTime, true, valIssues);
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
           "Check the JSON definition. Validation passed but simulation threw an exception.");
@@ -178,7 +142,12 @@ public class ProcessRunner {
     }
 
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(normalizeProcessJson(json));
+      String normalizedJson = normalizeProcessJson(json);
+      if (isProcessModelJson(normalizedJson)) {
+        return runTypedProcessModel(normalizedJson);
+      }
+
+      SimulationResult simResult = ProcessSystem.fromJsonAndRun(normalizedJson);
 
       if (simResult.isError()) {
         java.util.List<neqsim.mcp.model.DiagnosticIssue> issues =
@@ -209,6 +178,209 @@ public class ProcessRunner {
   }
 
   /**
+   * Runs a normalized single-area process-system JSON definition.
+   *
+   * @param normalizedJson the normalized JSON process definition
+   * @param startTime the wall-clock start time in milliseconds
+   * @param preValidationPassed true if {@link Validator} was already run successfully
+   * @param validationIssues optional validation issues to include in the response
+   * @return JSON response containing simulation status, report, warnings, and provenance
+   */
+  private static String runProcessSystem(String normalizedJson, long startTime,
+      boolean preValidationPassed, JsonArray validationIssues) {
+    SimulationResult result = ProcessSystem.fromJsonAndRun(normalizedJson);
+    String simJson = result.toJson();
+
+    String model = extractModel(normalizedJson);
+    String mixingRule = extractMixingRule(normalizedJson);
+    int equipCount = extractEquipmentCount(normalizedJson);
+    ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
+    provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+    provenance.setConverged(!result.isError());
+
+    if (preValidationPassed) {
+      provenance.addValidationPassed("Pre-flight validation passed");
+    }
+    if (!result.isError()) {
+      provenance.addValidationPassed("Process simulation completed");
+    }
+    for (String warning : result.getWarnings()) {
+      provenance.addLimitation("Warning: " + warning);
+    }
+    addValidationIssueLimitations(provenance, validationIssues);
+
+    JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
+    addValidationIssues(simObj, validationIssues);
+    simObj.add("provenance", GSON.toJsonTree(provenance));
+    return GSON.toJson(simObj);
+  }
+
+  /**
+   * Runs a normalized multi-area process-model JSON definition.
+   *
+   * @param normalizedJson the normalized JSON containing a top-level {@code areas} object
+   * @param startTime the wall-clock start time in milliseconds
+   * @param preValidationPassed true if {@link Validator} was already run successfully
+   * @param validationIssues optional validation issues to include in the response
+   * @return JSON response containing model status, area metadata, report, warnings, and provenance
+   */
+  private static String runProcessModel(String normalizedJson, long startTime,
+      boolean preValidationPassed, JsonArray validationIssues) {
+    ProcessModelBuildResult buildResult = buildProcessModel(normalizedJson);
+    if (!buildResult.errors.isEmpty()) {
+      return errorJson(buildResult.errors, buildResult.warnings);
+    }
+
+    try {
+      buildResult.model.run();
+    } catch (Exception e) {
+      return errorJson("SIMULATION_ERROR", "Process model simulation failed: " + e.getMessage(),
+          "Check area wiring, recycle settings, and equipment parameters in the 'areas' object.");
+    }
+
+    JsonObject result = new JsonObject();
+    result.addProperty("status", "success");
+    result.addProperty("processModelName", "json-process-model");
+    result.addProperty("areaCount", buildResult.model.size());
+    result.add("areas", toJsonArray(buildResult.model.getProcessSystemNames()));
+
+    if (!buildResult.warnings.isEmpty()) {
+      JsonArray warnings = new JsonArray();
+      for (String warning : buildResult.warnings) {
+        warnings.add(warning);
+      }
+      result.add("warnings", warnings);
+    }
+
+    String reportJson = null;
+    try {
+      reportJson = buildResult.model.getReport_json();
+    } catch (Exception e) {
+      buildResult.warnings.add("ProcessModel report generation failed: " + e.getMessage());
+    }
+    if (reportJson != null) {
+      try {
+        result.add("report", JsonParser.parseString(reportJson));
+      } catch (Exception e) {
+        result.addProperty("report", reportJson);
+      }
+    }
+
+    ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
+        extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
+    provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+    provenance.setConverged(buildResult.model.isModelConverged() || buildResult.model.size() <= 1);
+    provenance.addAssumption("Multi-area ProcessModel executed from top-level JSON areas");
+    provenance.addLimitation("ProcessModel contains " + buildResult.model.size()
+        + " areas - verify inter-area stream references and convergence summary");
+    if (preValidationPassed) {
+      provenance.addValidationPassed("Pre-flight validation passed");
+    }
+    provenance.addValidationPassed("ProcessModel simulation completed");
+    for (String warning : buildResult.warnings) {
+      provenance.addLimitation("Warning: " + warning);
+    }
+    addValidationIssueLimitations(provenance, validationIssues);
+    addValidationIssues(result, validationIssues);
+    result.add("provenance", GSON.toJsonTree(provenance));
+
+    return GSON.toJson(result);
+  }
+
+  /**
+   * Runs a normalized process-model JSON definition and returns a typed MCP envelope.
+   *
+   * @param normalizedJson the normalized JSON containing a top-level {@code areas} object
+   * @return typed process result containing the built {@link ProcessModel}, or errors on failure
+   */
+  private static ApiEnvelope<ProcessResult> runTypedProcessModel(String normalizedJson) {
+    ProcessModelBuildResult buildResult = buildProcessModel(normalizedJson);
+    if (!buildResult.errors.isEmpty()) {
+      java.util.List<neqsim.mcp.model.DiagnosticIssue> issues =
+          new java.util.ArrayList<neqsim.mcp.model.DiagnosticIssue>();
+      for (SimulationResult.ErrorDetail err : buildResult.errors) {
+        issues.add(neqsim.mcp.model.DiagnosticIssue.error(err.getCode(), err.getMessage(),
+            err.getRemediation()));
+      }
+      return ApiEnvelope.errors(issues);
+    }
+
+    try {
+      buildResult.model.run();
+      ProcessResult result = new ProcessResult("json-process-model", buildResult.model,
+          buildResult.model.getReport_json(), buildResult.model.getProcessSystemNames());
+      ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result);
+      for (String warning : buildResult.warnings) {
+        envelope.addWarning(warning);
+      }
+      return envelope;
+    } catch (Exception e) {
+      return ApiEnvelope.error("SIMULATION_ERROR",
+          "Process model simulation failed: " + e.getMessage(),
+          "Check area wiring, recycle settings, and equipment parameters in the 'areas' object.");
+    }
+  }
+
+  /**
+   * Builds a {@link ProcessModel} from top-level {@code areas} JSON while preserving area-level
+   * build errors for MCP responses.
+   *
+   * @param normalizedJson normalized JSON containing named process areas
+   * @return build result containing the model, errors, and warnings
+   */
+  private static ProcessModelBuildResult buildProcessModel(String normalizedJson) {
+    ProcessModelBuildResult result = new ProcessModelBuildResult();
+    try {
+      JsonObject root = JsonParser.parseString(normalizedJson).getAsJsonObject();
+      if (!root.has("areas") || !root.get("areas").isJsonObject()) {
+        result.errors.add(new SimulationResult.ErrorDetail("MISSING_AREAS",
+            "ProcessModel JSON must contain an 'areas' object", null,
+            "Use {\"areas\": {\"areaName\": {\"fluid\": {...}, \"process\": [...]}}}"));
+        return result;
+      }
+
+      JsonObject areas = root.getAsJsonObject("areas");
+      if (areas.entrySet().isEmpty()) {
+        result.errors.add(new SimulationResult.ErrorDetail("EMPTY_AREAS",
+            "ProcessModel JSON contains no process areas", null,
+            "Add at least one named area under the 'areas' object"));
+        return result;
+      }
+
+      for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
+        String areaName = entry.getKey();
+        if (!entry.getValue().isJsonObject()) {
+          result.errors.add(new SimulationResult.ErrorDetail("INVALID_AREA",
+              "Area '" + areaName + "' must be a JSON object", areaName,
+              "Provide each area as a standard ProcessSystem JSON object"));
+          continue;
+        }
+        SimulationResult areaResult = new JsonProcessBuilder().build(entry.getValue().toString());
+        if (areaResult.isSuccess() && areaResult.getProcessSystem() != null) {
+          result.model.add(areaName, areaResult.getProcessSystem());
+          for (String warning : areaResult.getWarnings()) {
+            result.warnings.add("Area '" + areaName + "': " + warning);
+          }
+        } else {
+          for (SimulationResult.ErrorDetail error : areaResult.getErrors()) {
+            result.errors.add(new SimulationResult.ErrorDetail(error.getCode(),
+                "Area '" + areaName + "': " + error.getMessage(), areaName,
+                error.getRemediation()));
+          }
+          for (String warning : areaResult.getWarnings()) {
+            result.warnings.add("Area '" + areaName + "': " + warning);
+          }
+        }
+      }
+    } catch (Exception e) {
+      result.errors.add(new SimulationResult.ErrorDetail("PROCESS_MODEL_PARSE_ERROR",
+          "Failed to parse ProcessModel JSON: " + e.getMessage(), null,
+          "Ensure the JSON has a top-level 'areas' object with valid area definitions"));
+    }
+    return result;
+  }
+
+  /**
    * Extracts the EOS model name from the input JSON.
    *
    * @param json the input JSON string
@@ -217,6 +389,9 @@ public class ProcessRunner {
   private static String extractModel(String json) {
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("areas") && root.get("areas").isJsonObject()) {
+        return extractAreaSummary(root.getAsJsonObject("areas"), "model", "SRK");
+      }
       if (root.has("fluid") && root.getAsJsonObject("fluid").has("model")) {
         return root.getAsJsonObject("fluid").get("model").getAsString();
       }
@@ -234,6 +409,9 @@ public class ProcessRunner {
   private static String extractMixingRule(String json) {
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("areas") && root.get("areas").isJsonObject()) {
+        return extractAreaSummary(root.getAsJsonObject("areas"), "mixingRule", "classic");
+      }
       if (root.has("fluid") && root.getAsJsonObject("fluid").has("mixingRule")) {
         return root.getAsJsonObject("fluid").get("mixingRule").getAsString();
       }
@@ -251,6 +429,14 @@ public class ProcessRunner {
   private static int extractEquipmentCount(String json) {
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      if (root.has("areas") && root.get("areas").isJsonObject()) {
+        int count = 0;
+        for (Map.Entry<String, com.google.gson.JsonElement> entry : root.getAsJsonObject("areas")
+            .entrySet()) {
+          count += extractEquipmentCount(entry.getValue().toString());
+        }
+        return count;
+      }
       if (root.has("process") && root.get("process").isJsonArray()) {
         return root.getAsJsonArray("process").size();
       }
@@ -277,6 +463,21 @@ public class ProcessRunner {
   private static String normalizeProcessJson(String json) {
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+      if (root.has("areas") && root.get("areas").isJsonObject()) {
+        JsonObject areas = root.getAsJsonObject("areas");
+        JsonObject normalizedAreas = new JsonObject();
+        for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
+          if (entry.getValue().isJsonObject()) {
+            normalizedAreas.add(entry.getKey(), JsonParser
+                .parseString(normalizeProcessJson(entry.getValue().toString())).getAsJsonObject());
+          } else {
+            normalizedAreas.add(entry.getKey(), entry.getValue());
+          }
+        }
+        root.add("areas", normalizedAreas);
+        return GSON.toJson(root);
+      }
 
       if (root.has("fluid") && root.get("fluid").isJsonObject()) {
         JsonObject fluid = root.getAsJsonObject("fluid");
@@ -327,6 +528,115 @@ public class ProcessRunner {
   }
 
   /**
+   * Checks whether a JSON string represents a multi-area ProcessModel.
+   *
+   * @param json the JSON string to inspect
+   * @return true if the root object has a JSON object named {@code areas}
+   */
+  private static boolean isProcessModelJson(String json) {
+    try {
+      JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      return root.has("areas") && root.get("areas").isJsonObject();
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  /**
+   * Extracts a comma-separated summary of a fluid field across all process-model areas.
+   *
+   * @param areas the areas object from a ProcessModel JSON document
+   * @param fluidField the field to extract from each area's fluid block
+   * @param defaultValue fallback value when an area omits the field
+   * @return one value, or comma-separated values when areas differ
+   */
+  private static String extractAreaSummary(JsonObject areas, String fluidField,
+      String defaultValue) {
+    List<String> values = new ArrayList<String>();
+    for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
+      if (!entry.getValue().isJsonObject()) {
+        continue;
+      }
+      JsonObject area = entry.getValue().getAsJsonObject();
+      String value = defaultValue;
+      if (area.has("fluid") && area.get("fluid").isJsonObject()
+          && area.getAsJsonObject("fluid").has(fluidField)) {
+        value = area.getAsJsonObject("fluid").get(fluidField).getAsString();
+      }
+      if (!values.contains(value)) {
+        values.add(value);
+      }
+    }
+    if (values.isEmpty()) {
+      return defaultValue;
+    }
+    return join(values, ", ");
+  }
+
+  /**
+   * Adds validation warnings to a response object.
+   *
+   * @param response the response object to mutate
+   * @param validationIssues validation issues returned by {@link Validator}
+   */
+  private static void addValidationIssues(JsonObject response, JsonArray validationIssues) {
+    if (validationIssues != null && validationIssues.size() > 0) {
+      response.add("validationIssues", validationIssues);
+    }
+  }
+
+  /**
+   * Adds validation warnings to provenance limitations.
+   *
+   * @param provenance the provenance object to mutate
+   * @param validationIssues validation issues returned by {@link Validator}
+   */
+  private static void addValidationIssueLimitations(ResultProvenance provenance,
+      JsonArray validationIssues) {
+    if (validationIssues == null) {
+      return;
+    }
+    for (int i = 0; i < validationIssues.size(); i++) {
+      JsonObject issue = validationIssues.get(i).getAsJsonObject();
+      if (issue.has("message")) {
+        provenance.addLimitation("Validation warning: " + issue.get("message").getAsString());
+      }
+    }
+  }
+
+  /**
+   * Converts a string list to a JSON array.
+   *
+   * @param values values to convert
+   * @return JSON array containing the string values
+   */
+  private static JsonArray toJsonArray(List<String> values) {
+    JsonArray array = new JsonArray();
+    for (String value : values) {
+      array.add(value);
+    }
+    return array;
+  }
+
+  /**
+   * Joins string values with a delimiter.
+   *
+   * @param values values to join
+   * @param delimiter delimiter between values
+   * @return joined string
+   */
+  private static String join(List<String> values, String delimiter) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < values.size(); i++) {
+      if (i > 0) {
+        builder.append(delimiter);
+      }
+      builder.append(values.get(i));
+    }
+    return builder.toString();
+  }
+
+  /**
    * Converts legacy {value, unit} property objects to [value, unit] arrays expected by the
    * JsonProcessBuilder reflection setter logic.
    *
@@ -370,5 +680,47 @@ public class ProcessRunner {
     result.add("errors", errors);
 
     return GSON.toJson(result);
+  }
+
+  /**
+   * Creates a standard error JSON response from detailed simulation errors.
+   *
+   * @param errors simulation errors to expose
+   * @param warnings non-fatal warnings to expose
+   * @return JSON error string
+   */
+  private static String errorJson(List<SimulationResult.ErrorDetail> errors,
+      List<String> warnings) {
+    JsonObject result = new JsonObject();
+    result.addProperty("status", "error");
+
+    JsonArray errorArray = new JsonArray();
+    for (SimulationResult.ErrorDetail error : errors) {
+      errorArray.add(error.toJsonObject());
+    }
+    result.add("errors", errorArray);
+
+    if (warnings != null && !warnings.isEmpty()) {
+      JsonArray warningArray = new JsonArray();
+      for (String warning : warnings) {
+        warningArray.add(warning);
+      }
+      result.add("warnings", warningArray);
+    }
+
+    return GSON.toJson(result);
+  }
+
+  /**
+   * Mutable container for ProcessModel build results.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class ProcessModelBuildResult {
+    private final ProcessModel model = new ProcessModel();
+    private final List<SimulationResult.ErrorDetail> errors =
+        new ArrayList<SimulationResult.ErrorDetail>();
+    private final List<String> warnings = new ArrayList<String>();
   }
 }
