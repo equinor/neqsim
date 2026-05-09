@@ -338,6 +338,19 @@ public class H2SScavengerPerformance implements Serializable {
     out.put("breakthroughDays", breakthroughDays);
     map.put("outputs", out);
     map.put("warnings", warnings);
+    map.put("standardsApplied", getStandardsApplied());
     return map;
+  }
+
+  /**
+   * Returns the industry standards applied by this H2S-scavenger model.
+   *
+   * @return list of standards (each as an ordered map)
+   */
+  public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
+    return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
+        neqsim.process.chemistry.util.StandardsRegistry.GPSA_DB,
+        neqsim.process.chemistry.util.StandardsRegistry.ISO_13443,
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
   }
 }

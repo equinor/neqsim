@@ -407,6 +407,18 @@ public class AcidTreatmentSimulator implements Serializable {
     out.put("residualAcidWtPct", residualAcidWtPct);
     map.put("outputs", out);
     map.put("warnings", warnings);
+    map.put("standardsApplied", getStandardsApplied());
     return map;
+  }
+
+  /**
+   * Returns the industry standards applied by this acid-treatment model.
+   *
+   * @return list of standards (each as an ordered map)
+   */
+  public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
+    return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
+        neqsim.process.chemistry.util.StandardsRegistry.API_RP87,
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
   }
 }

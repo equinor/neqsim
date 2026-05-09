@@ -426,6 +426,17 @@ public class ScaleInhibitorPerformance implements Serializable {
     outputs.put("adequate", adequate);
     map.put("outputs", outputs);
     map.put("warnings", warnings);
+    map.put("standardsApplied", getStandardsApplied());
     return map;
+  }
+
+  /**
+   * Returns the industry standards applied by this scale-inhibitor model.
+   *
+   * @return list of standards (each as an ordered map)
+   */
+  public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
+    return neqsim.process.chemistry.util.StandardsRegistry
+        .toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
   }
 }

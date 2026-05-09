@@ -111,6 +111,27 @@ public class ChemicalCompatibilityAssessor implements Serializable {
    */
   public ChemicalCompatibilityAssessor() {}
 
+  /**
+   * Convenience factory: builds an assessor and seeds operating conditions and aqueous-phase
+   * concentrations from any NeqSim {@link neqsim.process.equipment.stream.StreamInterface} via
+   * {@link neqsim.process.chemistry.util.StreamChemistryAdapter}.
+   *
+   * @param stream produced fluid stream
+   * @return assessor pre-loaded with T, P, Ca, Fe, HCO3
+   */
+  public static ChemicalCompatibilityAssessor fromStream(
+      neqsim.process.equipment.stream.StreamInterface stream) {
+    ChemicalCompatibilityAssessor a = new ChemicalCompatibilityAssessor();
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad =
+        new neqsim.process.chemistry.util.StreamChemistryAdapter(stream);
+    a.setTemperatureCelsius(ad.getTemperatureCelsius());
+    a.setPressureBara(ad.getPressureBara());
+    a.setCalciumMgL(ad.getCalciumMgL());
+    a.setIronMgL(ad.getIronMgL());
+    a.setBicarbonateMgL(ad.getBicarbonateMgL());
+    return a;
+  }
+
   // ─── Configuration ──────────────────────────────────────
 
   /**
@@ -443,7 +464,19 @@ public class ChemicalCompatibilityAssessor implements Serializable {
     map.put("thermalStability", thermalStability);
     map.put("interactionMatrix", matrix);
     map.put("issues", issues);
+    map.put("standardsApplied", getStandardsApplied());
     return map;
+  }
+
+  /**
+   * Returns the industry standards applied by the compatibility assessor.
+   *
+   * @return list of standards (each as an ordered map)
+   */
+  public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
+    return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175,
+        neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M001);
   }
 
   /**

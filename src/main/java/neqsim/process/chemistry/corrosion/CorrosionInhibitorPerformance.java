@@ -162,6 +162,41 @@ public class CorrosionInhibitorPerformance implements Serializable {
     this.acidicService = acidicService;
   }
 
+  /**
+   * Pulls the uninhibited corrosion rate from a physics-based De Waard&ndash;Milliams calculator.
+   * Calls
+   * {@link neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion#calculateBaselineRate()} so
+   * the calculator does not need to be pre-evaluated.
+   *
+   * @param baseline configured De Waard&ndash;Milliams calculator
+   */
+  public void setFromDeWaardMilliams(
+      neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion baseline) {
+    setBaseCorrosionRateMmYr(baseline.calculateBaselineRate());
+  }
+
+  /**
+   * Convenience factory: builds a CorrosionInhibitorPerformance with operating conditions seeded
+   * from a stream and a Pa-level wall shear estimate from the bulk velocity (caller still picks
+   * inhibitor chemistry and dose).
+   *
+   * @param stream produced fluid stream
+   * @param pipeIdMeters pipe inside diameter in meters (for wall-shear estimate)
+   * @param velocityMps bulk flow velocity in m/s (for wall-shear estimate)
+   * @return configured (but not evaluated) performance model
+   */
+  public static CorrosionInhibitorPerformance fromStream(
+      neqsim.process.equipment.stream.StreamInterface stream, double pipeIdMeters,
+      double velocityMps) {
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad =
+        new neqsim.process.chemistry.util.StreamChemistryAdapter(stream);
+    CorrosionInhibitorPerformance p = new CorrosionInhibitorPerformance();
+    p.setTemperatureCelsius(ad.getTemperatureCelsius());
+    p.setH2SPartialPressureBar(ad.getPartialPressureBara("H2S"));
+    p.setWallShearStressPa(ad.estimateWallShearStressPa(pipeIdMeters, velocityMps));
+    return p;
+  }
+
   // ─── Evaluation ─────────────────────────────────────────
 
   /**
@@ -428,6 +463,20 @@ public class CorrosionInhibitorPerformance implements Serializable {
     out.put("minimumEffectiveDoseMgL", minimumEffectiveDoseMgL);
     map.put("outputs", out);
     map.put("warnings", warnings);
+    map.put("standardsApplied", getStandardsApplied());
     return map;
+  }
+
+  /**
+   * Returns the industry standards applied by this corrosion-inhibitor model.
+   *
+   * @return list of standards (each as an ordered map)
+   */
+  public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
+    return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0169,
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_SP0775,
+        neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M506,
+        neqsim.process.chemistry.util.StandardsRegistry.ASTM_G31);
   }
 }

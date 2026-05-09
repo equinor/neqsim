@@ -57,6 +57,32 @@ public class ScaleControlAssessor implements Serializable {
   }
 
   /**
+   * Convenience factory: builds a ScalePredictionCalculator pre-loaded with operating conditions
+   * and aqueous-phase concentrations from the given stream, then wraps it in a fresh
+   * ScaleControlAssessor.
+   *
+   * @param stream produced fluid stream
+   * @return assessor with predictor initialised from the stream
+   */
+  public static ScaleControlAssessor fromStream(
+      neqsim.process.equipment.stream.StreamInterface stream) {
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad =
+        new neqsim.process.chemistry.util.StreamChemistryAdapter(stream);
+    ScalePredictionCalculator p = new ScalePredictionCalculator();
+    p.setTemperatureCelsius(ad.getTemperatureCelsius());
+    p.setPressureBara(ad.getPressureBara());
+    p.setCalciumConcentration(ad.getCalciumMgL());
+    p.setBariumConcentration(ad.getBariumMgL());
+    p.setIronConcentration(ad.getIronMgL());
+    p.setSodiumConcentration(ad.getSodiumMgL());
+    p.setBicarbonateConcentration(ad.getBicarbonateMgL());
+    p.setSulphateConcentration(ad.getSulphateMgL());
+    p.setTotalDissolvedSolids(ad.getTdsMgL());
+    p.setCO2PartialPressure(ad.getPartialPressureBara("CO2"));
+    return new ScaleControlAssessor(p);
+  }
+
+  /**
    * Registers an inhibitor for a specific scale type.
    *
    * @param scaleType target scale
@@ -175,6 +201,17 @@ public class ScaleControlAssessor implements Serializable {
     map.put("inhibitors", inh);
     map.put("worstResidualSI", getWorstResidualSI());
     map.put("controlledAt0p5", isControlled(0.5));
+    map.put("standardsApplied", getStandardsApplied());
     return map;
+  }
+
+  /**
+   * Returns the industry standards applied by the scale-control assessor.
+   *
+   * @return list of standards (each as an ordered map)
+   */
+  public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
+    return neqsim.process.chemistry.util.StandardsRegistry
+        .toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
   }
 }

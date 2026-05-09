@@ -67,6 +67,7 @@ public class RootCauseAnalyser implements Serializable {
 
   private final List<RootCauseCandidate> candidates = new ArrayList<RootCauseCandidate>();
   private final List<String> dataGaps = new ArrayList<String>();
+  private final Map<String, Double> bayesianPosteriors = new LinkedHashMap<String, Double>();
   private boolean evaluated = false;
 
   // ─── Setters ────────────────────────────────────────────
@@ -560,7 +561,90 @@ public class RootCauseAnalyser implements Serializable {
     map.put("candidates", cList);
     map.put("primary", getPrimary() != null ? getPrimary().toMap() : null);
     map.put("dataGaps", dataGaps);
+    if (!bayesianPosteriors.isEmpty()) {
+      map.put("bayesianPosteriors", new LinkedHashMap<String, Double>(bayesianPosteriors));
+    }
     return map;
+  }
+
+  /**
+   * Adds a piece of independent evidence and updates the Bayesian posterior over root-cause
+   * candidates by code, using prior &prop; existing posterior (or
+   * {@link RootCauseCandidate#getScore()} on first call) and
+   * {@code posterior_i &prop; prior_i &middot; likelihood_i}. Posteriors are normalised to sum to
+   * 1.0 across all known candidate codes. Codes not in {@code likelihoods} are treated with
+   * likelihood 1.0 (no information).
+   *
+   * <p>
+   * This complements the deterministic rule-based ranking with a probabilistic update suitable for
+   * sparse, noisy field evidence (lab assays, sensor diagnostics, operator observations).
+   *
+   * @param likelihoods map of candidate code to likelihood P(evidence | code), values &gt;= 0
+   */
+  public void addEvidence(Map<String, Double> likelihoods) {
+    if (likelihoods == null || likelihoods.isEmpty()) {
+      return;
+    }
+    if (bayesianPosteriors.isEmpty()) {
+      // Initialise from existing candidate scores; if none, use uniform prior over evidence keys.
+      if (candidates.isEmpty()) {
+        double uniform = 1.0 / likelihoods.size();
+        for (String code : likelihoods.keySet()) {
+          bayesianPosteriors.put(code, uniform);
+        }
+      } else {
+        for (RootCauseCandidate c : candidates) {
+          bayesianPosteriors.put(c.getCode(), Math.max(c.getScore(), 1.0e-6));
+        }
+        // Ensure all evidence codes are represented (with a small prior)
+        for (String code : likelihoods.keySet()) {
+          if (!bayesianPosteriors.containsKey(code)) {
+            bayesianPosteriors.put(code, 1.0e-3);
+          }
+        }
+      }
+    } else {
+      // Add any new candidate codes from the evidence with a small prior
+      for (String code : likelihoods.keySet()) {
+        if (!bayesianPosteriors.containsKey(code)) {
+          bayesianPosteriors.put(code, 1.0e-3);
+        }
+      }
+    }
+    // Multiply by likelihood (default 1.0 for codes without supplied evidence)
+    double sum = 0.0;
+    for (Map.Entry<String, Double> e : bayesianPosteriors.entrySet()) {
+      double l = likelihoods.containsKey(e.getKey()) ? likelihoods.get(e.getKey()) : 1.0;
+      double v = Math.max(0.0, e.getValue() * l);
+      e.setValue(v);
+      sum += v;
+    }
+    if (sum > 0.0) {
+      for (Map.Entry<String, Double> e : bayesianPosteriors.entrySet()) {
+        e.setValue(e.getValue() / sum);
+      }
+    }
+  }
+
+  /**
+   * Convenience overload: adds a single piece of evidence for one candidate code.
+   *
+   * @param code candidate code (e.g. "CO2_CORROSION")
+   * @param likelihood P(evidence | this code) &gt;= 0
+   */
+  public void addEvidence(String code, double likelihood) {
+    Map<String, Double> m = new LinkedHashMap<String, Double>();
+    m.put(code, likelihood);
+    addEvidence(m);
+  }
+
+  /**
+   * Returns the current Bayesian posterior over candidate codes (defensive copy).
+   *
+   * @return code -&gt; posterior probability (sums to 1.0 if at least one update has been applied)
+   */
+  public Map<String, Double> getBayesianPosteriors() {
+    return new LinkedHashMap<String, Double>(bayesianPosteriors);
   }
 
   /**
