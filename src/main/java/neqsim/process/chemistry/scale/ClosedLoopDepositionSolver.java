@@ -12,27 +12,31 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 /**
  * Closed-loop deposition-flow solver.
  *
- * <p>Iteratively couples a {@link ScaleDepositionAccumulator} with the host
- * {@link PipeBeggsAndBrills} pipe so that the wall thickness build-up shrinks the effective
- * internal diameter, raises the local velocity and shear, and feeds back into the next deposition
- * pass. The loop terminates when the maximum thickness change between successive iterations
- * falls below a tolerance, or after a maximum number of iterations.
+ * <p>
+ * Iteratively couples a {@link ScaleDepositionAccumulator} with the host {@link PipeBeggsAndBrills}
+ * pipe so that the wall thickness build-up shrinks the effective internal diameter, raises the
+ * local velocity and shear, and feeds back into the next deposition pass. The loop terminates when
+ * the maximum thickness change between successive iterations falls below a tolerance, or after a
+ * maximum number of iterations.
  *
- * <p>This captures one of the most important physical effects missing from screening-level scale
+ * <p>
+ * This captures one of the most important physical effects missing from screening-level scale
  * predictors: the run-away condition where a thin deposit accelerates further deposition through
  * higher local mass-transfer rates and ultimately blocks the line.
  *
- * <p>Algorithm per iteration k:
+ * <p>
+ * Algorithm per iteration k:
  * <ol>
- *   <li>Run pipe hydraulics with current effective diameter {@code d_k}.</li>
- *   <li>Run {@link ScaleDepositionAccumulator#evaluate()} → max thickness {@code th_k}.</li>
- *   <li>Update effective diameter {@code d_(k+1) = d_0 - 2 * th_k / 1000}.</li>
- *   <li>Stop when {@code |d_(k+1) - d_k| < tol_m} or {@code k >= maxIter} or
- *       {@code d_(k+1) <= 0}.</li>
+ * <li>Run pipe hydraulics with current effective diameter {@code d_k}.</li>
+ * <li>Run {@link ScaleDepositionAccumulator#evaluate()} → max thickness {@code th_k}.</li>
+ * <li>Update effective diameter {@code d_(k+1) = d_0 - 2 * th_k / 1000}.</li>
+ * <li>Stop when {@code |d_(k+1) - d_k| < tol_m} or {@code k >= maxIter} or
+ * {@code d_(k+1) <= 0}.</li>
  * </ol>
  *
- * <p>The original pipe diameter is restored after the solve so that the host
- * {@code ProcessSystem} state is unchanged.
+ * <p>
+ * The original pipe diameter is restored after the solve so that the host {@code ProcessSystem}
+ * state is unchanged.
  *
  * @author ESOL
  * @version 1.0
@@ -121,7 +125,7 @@ public class ClosedLoopDepositionSolver implements Serializable {
 
         double avgVelocity = 0.0;
         try {
-            List<Double> vProfile = pipe.getMixtureSuperficialVelocityProfile();
+          List<Double> vProfile = pipe.getMixtureSuperficialVelocityProfile();
           if (vProfile != null && !vProfile.isEmpty()) {
             double sum = 0.0;
             for (Double v : vProfile) {

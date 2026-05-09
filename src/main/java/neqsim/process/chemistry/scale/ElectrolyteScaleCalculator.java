@@ -12,33 +12,36 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  * Activity-coefficient-corrected scale prediction calculator that bridges electrolyte
  * thermodynamics into the saturation index calculation.
  *
- * <p>Computes ionic strength rigorously from the brine composition,
- * {@code I = 0.5 * sum(c_i * z_i^2)} in mol/kgw, then applies the Davies extension of
- * Debye-Hueckel theory to obtain activity coefficients for each ion:
+ * <p>
+ * Computes ionic strength rigorously from the brine composition, {@code I = 0.5 * sum(c_i * z_i^2)}
+ * in mol/kgw, then applies the Davies extension of Debye-Hueckel theory to obtain activity
+ * coefficients for each ion:
  *
  * <pre>
- * log10(gamma_i) = -A * z_i^2 * ( sqrt(I) / (1 + sqrt(I)) - 0.3 * I )
+ * log10(gamma_i) = -A * z_i ^ 2 * (sqrt(I) / (1 + sqrt(I)) - 0.3 * I)
  * </pre>
  *
- * where {@code A} is the Debye-Hueckel constant for water at the operating temperature
- * (computed from the Helgeson-Kirkham-Flowers correlation, A = 0.5092 + 8.5e-4*(T-298.15)
- * for 0..100 C). The activity-corrected saturation index for a 1:1 mineral
- * {@code MX(s) <-> M^z+(aq) + X^-z(aq)} is then
+ * where {@code A} is the Debye-Hueckel constant for water at the operating temperature (computed
+ * from the Helgeson-Kirkham-Flowers correlation, A = 0.5092 + 8.5e-4*(T-298.15) for 0..100 C). The
+ * activity-corrected saturation index for a 1:1 mineral {@code MX(s) <-> M^z+(aq) + X^-z(aq)} is
+ * then
  *
  * <pre>
- * SI_activity = log10( (gamma_M * c_M) * (gamma_X * c_X) / Ksp(T) )
+ * SI_activity = log10((gamma_M * c_M) * (gamma_X * c_X) / Ksp(T))
  * </pre>
  *
- * <p>Temperature-corrected solubility products (Ksp(T)) follow Plummer-Busenberg (1982) for
- * calcite, Templeton (1960) extrapolations for barite/celestite, and Marshall-Slusher (1966)
- * for gypsum.
+ * <p>
+ * Temperature-corrected solubility products (Ksp(T)) follow Plummer-Busenberg (1982) for calcite,
+ * Templeton (1960) extrapolations for barite/celestite, and Marshall-Slusher (1966) for gypsum.
  *
- * <p>Outputs replace, but are also benchmarked against, the empirical Oddo-Tomson approach used
- * by {@link neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator}. The bridge therefore
- * gives the user a rigorous EOS-consistent number while preserving the legacy code path.
+ * <p>
+ * Outputs replace, but are also benchmarked against, the empirical Oddo-Tomson approach used by
+ * {@link neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator}. The bridge therefore gives
+ * the user a rigorous EOS-consistent number while preserving the legacy code path.
  *
- * <p>Standards informational: NACE TM0374 (CaSO4 stability), NORSOK M-001 (mineral scale),
- * Plummer & Busenberg (1982) "The solubilities of calcite, aragonite and vaterite in CO2-H2O".
+ * <p>
+ * Standards informational: NACE TM0374 (CaSO4 stability), NORSOK M-001 (mineral scale), Plummer &
+ * Busenberg (1982) "The solubilities of calcite, aragonite and vaterite in CO2-H2O".
  *
  * @author ESOL
  * @version 1.0
@@ -204,9 +207,8 @@ public class ElectrolyteScaleCalculator implements Serializable {
     double mCO3 = carbonateMgL / MM_CO3 / 1000.0;
 
     // Ionic strength I = 0.5 * sum(m_i * z_i^2)
-    ionicStrengthMolKg = 0.5
-        * (mCa * 4 + mBa * 4 + mSr * 4 + mMg * 4 + mNa * 1 + mK * 1 + mFe * 4 + mCl * 1 + mSO4 * 4
-            + mHCO3 * 1 + mCO3 * 4);
+    ionicStrengthMolKg = 0.5 * (mCa * 4 + mBa * 4 + mSr * 4 + mMg * 4 + mNa * 1 + mK * 1 + mFe * 4
+        + mCl * 1 + mSO4 * 4 + mHCO3 * 1 + mCO3 * 4);
 
     // Debye-Hueckel constant A(T) — linear approximation 0..100 C
     debyeHueckelA = 0.5092 + 8.5e-4 * (temperatureC - 25.0);
@@ -244,8 +246,8 @@ public class ElectrolyteScaleCalculator implements Serializable {
     double pKspSrSO4 = ksPSrSO4(tK);
 
     // SI = log10( (γ_M * m_M) * (γ_X * m_X) / Ksp )
-    caco3SaturationIndex = saturationIndex(g2 * Math.max(mCa, 1e-15),
-        g2 * Math.max(mCO3Eff + mCO3, 1e-15), pKspCaCO3);
+    caco3SaturationIndex =
+        saturationIndex(g2 * Math.max(mCa, 1e-15), g2 * Math.max(mCO3Eff + mCO3, 1e-15), pKspCaCO3);
     baso4SaturationIndex =
         saturationIndex(g2 * Math.max(mBa, 1e-15), g2 * Math.max(mSO4, 1e-15), pKspBaSO4);
     caso4SaturationIndex =

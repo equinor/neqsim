@@ -17,23 +17,25 @@ import neqsim.process.chemistry.scavenger.PackedBedScavengerReactor;
 /**
  * Stateless chemistry-and-integrity runner for MCP integration.
  *
- * <p>Exposes the open standards-traceable chemistry stack — electrolyte scale prediction,
- * mechanistic corrosion (NORSOK M-506 + Nesic mass transfer + Langmuir inhibitor), Langmuir
- * inhibitor isotherm dosing, and packed-bed H2S scavenger breakthrough — as JSON-driven analyses
- * usable by AI agents over the Model Context Protocol.
+ * <p>
+ * Exposes the open standards-traceable chemistry stack — electrolyte scale prediction, mechanistic
+ * corrosion (NORSOK M-506 + Nesic mass transfer + Langmuir inhibitor), Langmuir inhibitor isotherm
+ * dosing, and packed-bed H2S scavenger breakthrough — as JSON-driven analyses usable by AI agents
+ * over the Model Context Protocol.
  *
- * <p>All analyses follow the same pattern: agents pass an {@code analysis} field naming the
- * routine and a flat object with the required parameters; the runner returns
- * {@code {status, analysis, data, provenance}} on success or a structured error object with
- * a remediation hint on failure.
+ * <p>
+ * All analyses follow the same pattern: agents pass an {@code analysis} field naming the routine
+ * and a flat object with the required parameters; the runner returns
+ * {@code {status, analysis, data, provenance}} on success or a structured error object with a
+ * remediation hint on failure.
  *
  * @author ESOL
  * @version 1.0
  */
 public class ChemistryRunner {
 
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-      .serializeNulls().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls()
+      .serializeSpecialFloatingPointValues().create();
 
   private static final List<String> SUPPORTED_ANALYSES =
       Collections.unmodifiableList(Arrays.asList("electrolyteScale", "mechanisticCorrosion",
@@ -118,46 +120,44 @@ public class ChemistryRunner {
   // ─── Analyses ──────────────────────────────────────────
 
   private static JsonObject runElectrolyteScale(JsonObject input) {
-    ElectrolyteScaleCalculator calc = new ElectrolyteScaleCalculator()
-        .setTemperatureCelsius(d(input, "temperature_C", 60.0))
-        .setPressureBara(d(input, "pressure_bara", 50.0))
-        .setPH(d(input, "pH", 6.5))
-        .setCO2PartialPressureBar(d(input, "pCO2_bar", 1.0))
-        .setCations(d(input, "ca_mgL", 0.0), d(input, "ba_mgL", 0.0), d(input, "sr_mgL", 0.0),
-            d(input, "mg_mgL", 0.0), d(input, "na_mgL", 0.0), d(input, "k_mgL", 0.0),
-            d(input, "fe_mgL", 0.0))
-        .setAnions(d(input, "cl_mgL", 0.0), d(input, "so4_mgL", 0.0),
-            d(input, "hco3_mgL", 0.0), d(input, "co3_mgL", 0.0))
-        .calculate();
+    ElectrolyteScaleCalculator calc =
+        new ElectrolyteScaleCalculator().setTemperatureCelsius(d(input, "temperature_C", 60.0))
+            .setPressureBara(d(input, "pressure_bara", 50.0)).setPH(d(input, "pH", 6.5))
+            .setCO2PartialPressureBar(d(input, "pCO2_bar", 1.0))
+            .setCations(d(input, "ca_mgL", 0.0), d(input, "ba_mgL", 0.0), d(input, "sr_mgL", 0.0),
+                d(input, "mg_mgL", 0.0), d(input, "na_mgL", 0.0), d(input, "k_mgL", 0.0),
+                d(input, "fe_mgL", 0.0))
+            .setAnions(d(input, "cl_mgL", 0.0), d(input, "so4_mgL", 0.0), d(input, "hco3_mgL", 0.0),
+                d(input, "co3_mgL", 0.0))
+            .calculate();
     return JsonParser.parseString(calc.toJson()).getAsJsonObject();
   }
 
   private static JsonObject runMechanisticCorrosion(JsonObject input) {
     LangmuirInhibitorIsotherm iso = new LangmuirInhibitorIsotherm();
     if (input.has("kAdsRef")) {
-      iso = new LangmuirInhibitorIsotherm(
-          d(input, "kAdsRef", 5000.0), d(input, "dHads_kJmol", -35.0),
-          d(input, "thetaMax", 0.95), d(input, "molarMass_gmol", 350.0));
+      iso =
+          new LangmuirInhibitorIsotherm(d(input, "kAdsRef", 5000.0), d(input, "dHads_kJmol", -35.0),
+              d(input, "thetaMax", 0.95), d(input, "molarMass_gmol", 350.0));
     }
-    MechanisticCorrosionModel model = new MechanisticCorrosionModel()
-        .setTemperatureCelsius(d(input, "temperature_C", 60.0))
-        .setTotalPressureBara(d(input, "pressure_bara", 80.0))
-        .setGasComposition(d(input, "co2_mol", 0.05), d(input, "h2s_mol", 0.0))
-        .setWaterChemistry(d(input, "pH", 5.5), d(input, "bicarb_mgL", 100.0),
-            d(input, "ionicStrength_molL", 0.5))
-        .setFlow(d(input, "velocity_ms", 2.0), d(input, "diameter_m", 0.15),
-            d(input, "density_kgm3", 1000.0), d(input, "viscosity_pas", 1.0e-3))
-        .setInhibitor(iso, d(input, "dose_mgL", 0.0))
-        .evaluate();
+    MechanisticCorrosionModel model =
+        new MechanisticCorrosionModel().setTemperatureCelsius(d(input, "temperature_C", 60.0))
+            .setTotalPressureBara(d(input, "pressure_bara", 80.0))
+            .setGasComposition(d(input, "co2_mol", 0.05), d(input, "h2s_mol", 0.0))
+            .setWaterChemistry(d(input, "pH", 5.5), d(input, "bicarb_mgL", 100.0),
+                d(input, "ionicStrength_molL", 0.5))
+            .setFlow(d(input, "velocity_ms", 2.0), d(input, "diameter_m", 0.15),
+                d(input, "density_kgm3", 1000.0), d(input, "viscosity_pas", 1.0e-3))
+            .setInhibitor(iso, d(input, "dose_mgL", 0.0)).evaluate();
     return JsonParser.parseString(model.toJson()).getAsJsonObject();
   }
 
   private static JsonObject runLangmuirInhibitor(JsonObject input) {
     LangmuirInhibitorIsotherm iso;
     if (input.has("kAdsRef")) {
-      iso = new LangmuirInhibitorIsotherm(d(input, "kAdsRef", 5000.0),
-          d(input, "dHads_kJmol", -35.0), d(input, "thetaMax", 0.95),
-          d(input, "molarMass_gmol", 350.0));
+      iso =
+          new LangmuirInhibitorIsotherm(d(input, "kAdsRef", 5000.0), d(input, "dHads_kJmol", -35.0),
+              d(input, "thetaMax", 0.95), d(input, "molarMass_gmol", 350.0));
     } else {
       iso = new LangmuirInhibitorIsotherm();
     }

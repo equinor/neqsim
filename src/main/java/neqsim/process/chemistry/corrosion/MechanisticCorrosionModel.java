@@ -10,35 +10,39 @@ import neqsim.process.chemistry.util.StandardsRegistry;
 import neqsim.process.corrosion.NorsokM506CorrosionRate;
 
 /**
- * Mechanistic CO2 corrosion model that combines a kinetic NORSOK M-506 baseline with
- * Nesic-style mass-transfer limitation and a Langmuir adsorption inhibitor isotherm.
+ * Mechanistic CO2 corrosion model that combines a kinetic NORSOK M-506 baseline with Nesic-style
+ * mass-transfer limitation and a Langmuir adsorption inhibitor isotherm.
  *
- * <p>Three serial resistances control the observed corrosion rate of carbon steel under sweet
- * (CO2) service:
+ * <p>
+ * Three serial resistances control the observed corrosion rate of carbon steel under sweet (CO2)
+ * service:
  *
  * <ol>
- *   <li><b>Charge-transfer kinetics</b> — captured by the NORSOK M-506 (2005/2017) baseline rate
- *       {@code CR_kinetic} which already accounts for fugacity, pH, scaling temperature and
- *       wall shear.</li>
- *   <li><b>Boundary-layer mass transfer</b> — described by the Berger-Hau correlation for
- *       Sherwood number in turbulent pipe flow,
- *       {@code Sh = 0.0165 * Re^0.86 * Sc^0.33}, giving a mass-transfer coefficient
- *       {@code k_m = Sh * D_CO2 / d}.  The mass-transfer-limited rate is
- *       {@code CR_MT = k_m * c_CO2 * 11.6 mm/yr per mol/L} (Nesic 2007).</li>
- *   <li><b>Inhibitor surface coverage</b> — governed by a Langmuir adsorption isotherm
- *       (see {@link LangmuirInhibitorIsotherm}).</li>
+ * <li><b>Charge-transfer kinetics</b> — captured by the NORSOK M-506 (2005/2017) baseline rate
+ * {@code CR_kinetic} which already accounts for fugacity, pH, scaling temperature and wall
+ * shear.</li>
+ * <li><b>Boundary-layer mass transfer</b> — described by the Berger-Hau correlation for Sherwood
+ * number in turbulent pipe flow, {@code Sh = 0.0165 * Re^0.86 * Sc^0.33}, giving a mass-transfer
+ * coefficient {@code k_m = Sh * D_CO2 / d}. The mass-transfer-limited rate is
+ * {@code CR_MT = k_m * c_CO2 * 11.6 mm/yr per mol/L} (Nesic 2007).</li>
+ * <li><b>Inhibitor surface coverage</b> — governed by a Langmuir adsorption isotherm (see
+ * {@link LangmuirInhibitorIsotherm}).</li>
  * </ol>
  *
  * The mixed-control rate before inhibition is
+ * 
  * <pre>
  * 1 / CR_mixed = 1 / CR_kinetic + 1 / CR_MT
  * </pre>
+ * 
  * and after inhibitor coverage theta:
+ * 
  * <pre>
  * CR_inhibited = CR_mixed * (1 - theta_max * theta)
  * </pre>
  *
- * <p>Standards: NORSOK M-506 (2017), NACE SP0775 (corrosion coupon practice).
+ * <p>
+ * Standards: NORSOK M-506 (2017), NACE SP0775 (corrosion coupon practice).
  *
  * @author ESOL
  * @version 1.0
@@ -176,8 +180,8 @@ public class MechanisticCorrosionModel implements Serializable {
   // ─── Calculation ────────────────────────────────────────
 
   /**
-   * Runs the full mechanistic calculation:
-   * NORSOK kinetic baseline → mass-transfer-limited rate → mixed control → Langmuir inhibition.
+   * Runs the full mechanistic calculation: NORSOK kinetic baseline → mass-transfer-limited rate →
+   * mixed control → Langmuir inhibition.
    *
    * @return this for chaining
    */
@@ -207,8 +211,7 @@ public class MechanisticCorrosionModel implements Serializable {
     reynoldsNumber = liquidDensityKgM3 * velocityMs * pipeDiameterM / liquidViscosityPas;
     schmidtNumber = liquidViscosityPas / (liquidDensityKgM3 * dCo2);
     if (reynoldsNumber > 4000.0) {
-      sherwoodNumber =
-          0.0165 * Math.pow(reynoldsNumber, 0.86) * Math.pow(schmidtNumber, 0.33);
+      sherwoodNumber = 0.0165 * Math.pow(reynoldsNumber, 0.86) * Math.pow(schmidtNumber, 0.33);
     } else {
       // Laminar fully developed Sh = 3.66
       sherwoodNumber = 3.66;
@@ -216,8 +219,7 @@ public class MechanisticCorrosionModel implements Serializable {
     double kM = sherwoodNumber * dCo2 / pipeDiameterM; // m/s
     double pco2 = co2MoleFraction * totalPressureBara;
     double cco2BulkMolL = pco2 / H_CO2_REF; // simple Henry
-    massTransferLimitedRateMmYr =
-        kM * cco2BulkMolL * 1000.0 * FE_DISSOLUTION_MM_YR; // mm/yr
+    massTransferLimitedRateMmYr = kM * cco2BulkMolL * 1000.0 * FE_DISSOLUTION_MM_YR; // mm/yr
 
     // 3. Mixed control (serial resistances)
     if (kineticRateMmYr <= 0.0) {
@@ -225,8 +227,7 @@ public class MechanisticCorrosionModel implements Serializable {
     } else if (massTransferLimitedRateMmYr <= 0.0) {
       mixedControlRateMmYr = kineticRateMmYr;
     } else {
-      mixedControlRateMmYr =
-          1.0 / (1.0 / kineticRateMmYr + 1.0 / massTransferLimitedRateMmYr);
+      mixedControlRateMmYr = 1.0 / (1.0 / kineticRateMmYr + 1.0 / massTransferLimitedRateMmYr);
     }
 
     // 4. Langmuir inhibition

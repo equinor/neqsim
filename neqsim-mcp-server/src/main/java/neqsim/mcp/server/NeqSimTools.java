@@ -750,10 +750,9 @@ public class NeqSimTools {
       + "+ Langmuir inhibitor), langmuirInhibitor (adsorption isotherm and dose-for-efficiency), "
       + "and packedBedScavenger (1D plug-flow H2S scavenger breakthrough curve). "
       + "Designed for chemical-integrity digital twins and inhibitor selection.")
-  public String runChemistry(
-      @ToolArg(description = "JSON specification with 'analysis' field "
-          + "(one of: electrolyteScale, mechanisticCorrosion, langmuirInhibitor, "
-          + "packedBedScavenger) and analysis-specific parameters.") String chemistryJson) {
+  public String runChemistry(@ToolArg(description = "JSON specification with 'analysis' field "
+      + "(one of: electrolyteScale, mechanisticCorrosion, langmuirInhibitor, "
+      + "packedBedScavenger) and analysis-specific parameters.") String chemistryJson) {
     String blocked = IndustrialProfile.enforceAccess("runChemistry");
     if (blocked != null) {
       return blocked;

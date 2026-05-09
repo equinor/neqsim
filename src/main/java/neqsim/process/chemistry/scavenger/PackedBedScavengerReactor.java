@@ -12,24 +12,30 @@ import neqsim.process.chemistry.util.StandardsRegistry;
 /**
  * One-dimensional plug-flow packed-bed model for liquid H2S scavenger contactors.
  *
- * <p>Models a vertical packed bed loaded with a solid scavenger (typically iron-oxide pellets or
+ * <p>
+ * Models a vertical packed bed loaded with a solid scavenger (typically iron-oxide pellets or
  * triazine-impregnated alumina) that progressively saturates as the H2S-laden hydrocarbon stream
  * passes through it. The bed is discretised axially into {@code N} cells; each cell tracks the
  * remaining active scavenger inventory and depletes proportionally to local H2S consumption.
  *
- * <p>Governing equations (per cell):
+ * <p>
+ * Governing equations (per cell):
+ * 
  * <pre>
  * dC/dz = - k_eff * (q/q0) * C       (steady-state plug flow; q = remaining capacity)
  * dq/dt = - r * Q * C / V_cell        (scavenger depletion)
  * </pre>
+ * 
  * with stoichiometric ratio {@code r} (mol H2S per mol active sites, typical 1.0 for triazine,
  * 0.5-0.7 for Fe2O3) and volumetric rate constant {@code k_eff} fitted to bed geometry.
  *
- * <p>Outputs the breakthrough curve C(t)/C_in at the bed outlet, the total H2S removed up to
+ * <p>
+ * Outputs the breakthrough curve C(t)/C_in at the bed outlet, the total H2S removed up to
  * breakthrough, and the cumulative bed utilisation. Breakthrough is defined as the time at which
  * outlet concentration first exceeds {@code breakthroughFraction * C_in}.
  *
- * <p>Standards informational: NACE TM0284 (sour service), API RP 945 (amine systems).
+ * <p>
+ * Standards informational: NACE TM0284 (sour service), API RP 945 (amine systems).
  *
  * @author ESOL
  * @version 1.0
@@ -225,9 +231,8 @@ public class PackedBedScavengerReactor implements Serializable {
     }
 
     totalH2sRemovedKg = totalRemovedMol * MM_H2S / 1000.0;
-    finalBedUtilisation =
-        bedUtilisationProfile.isEmpty() ? 0.0
-            : bedUtilisationProfile.get(bedUtilisationProfile.size() - 1);
+    finalBedUtilisation = bedUtilisationProfile.isEmpty() ? 0.0
+        : bedUtilisationProfile.get(bedUtilisationProfile.size() - 1);
     evaluated = true;
     return this;
   }

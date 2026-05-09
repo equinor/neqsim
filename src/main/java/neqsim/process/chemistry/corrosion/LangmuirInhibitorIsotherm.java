@@ -9,27 +9,29 @@ import com.google.gson.GsonBuilder;
 /**
  * Langmuir adsorption isotherm for film-forming corrosion inhibitors.
  *
- * <p>The fractional surface coverage by inhibitor molecules is
+ * <p>
+ * The fractional surface coverage by inhibitor molecules is
  *
  * <pre>
  * theta = (K_ads * C) / (1 + K_ads * C)
  * </pre>
  *
  * where {@code C} is the inhibitor concentration in the bulk aqueous phase (mol/L) and
- * {@code K_ads} is the adsorption equilibrium constant. The temperature dependence of
- * {@code K_ads} follows the van 't Hoff equation
+ * {@code K_ads} is the adsorption equilibrium constant. The temperature dependence of {@code K_ads}
+ * follows the van 't Hoff equation
  *
  * <pre>
- * K_ads(T) = K_ads_ref * exp( -dHads/R * (1/T - 1/T_ref) )
+ * K_ads(T) = K_ads_ref * exp(-dHads / R * (1 / T - 1 / T_ref))
  * </pre>
  *
- * with adsorption enthalpy {@code dHads} typically in the range -20 to -60 kJ/mol for
- * physisorption of imidazoline / quaternary-ammonium inhibitors on carbon steel
- * (Bentiss et al., 2002; Khaled, 2008).
+ * with adsorption enthalpy {@code dHads} typically in the range -20 to -60 kJ/mol for physisorption
+ * of imidazoline / quaternary-ammonium inhibitors on carbon steel (Bentiss et al., 2002; Khaled,
+ * 2008).
  *
- * <p>The inhibition efficiency is taken proportional to coverage:
- * {@code eta = theta_max * theta} where {@code theta_max} caps the maximum achievable
- * efficiency (typical 0.90 - 0.99 for high-performing imidazoline blends).
+ * <p>
+ * The inhibition efficiency is taken proportional to coverage: {@code eta = theta_max * theta}
+ * where {@code theta_max} caps the maximum achievable efficiency (typical 0.90 - 0.99 for
+ * high-performing imidazoline blends).
  *
  * @author ESOL
  * @version 1.0
