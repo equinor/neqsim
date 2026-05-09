@@ -120,12 +120,13 @@ public final class IndustrialProfile {
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
    * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED = Collections.unmodifiableSet(new HashSet<>(
-      Arrays.asList("runPVT", "runPipeline", "runFlowAssurance", "crossValidateModels",
-          "runParametricStudy", "runBatch", "sizeEquipment", "compareProcesses", "generateReport",
-          "generateVisualization", "queryDataCatalog", "setSimulationVariable",
-          "saveSimulationState", "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
-          "runFlareNetwork", "runHAZOP", "runBarrierRegister", "runSafetySystemPerformance")));
+  private static final Set<String> ENGINEERING_ADVANCED =
+      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
+          "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
+          "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
+          "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
+          "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP",
+          "runBarrierRegister", "runSafetySystemPerformance")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
@@ -172,6 +173,7 @@ public final class IndustrialProfile {
     map.put("runFlowAssurance", ToolCategory.CALCULATION);
     map.put("calculateStandard", ToolCategory.CALCULATION);
     map.put("runPipeline", ToolCategory.CALCULATION);
+    map.put("runMaterialsReview", ToolCategory.CALCULATION);
     map.put("runReservoir", ToolCategory.CALCULATION);
     map.put("runFieldEconomics", ToolCategory.CALCULATION);
     map.put("runDynamic", ToolCategory.CALCULATION);

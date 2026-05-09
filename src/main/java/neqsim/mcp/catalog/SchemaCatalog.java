@@ -1474,6 +1474,68 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  /**
+   * Returns the JSON Schema for materials review input.
+   *
+   * @return JSON Schema string
+   */
+  public static String materialsReviewInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "MaterialsReviewInput");
+    schema.put("description",
+        "Input for run_materials_review. Accepts processJson plus normalized STID/materials-register items.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("projectName", stringProp("Project, asset, or review name"));
+    properties.put("designLifeYears", numberProp("Default design life in years"));
+    properties.put("processJson", objectProp("Optional runProcess-style process definition"));
+    properties.put("materialsRegister", typedArraySchema(
+        "Review items with tag, equipmentType, existingMaterial, sourceReferences, and service envelope"));
+    properties.put("items", typedArraySchema("Alias for materialsRegister"));
+    properties.put("stidData", objectProp(
+        "Normalized STID/technical database extract with lineList, equipment, materialsRegister, inspectionData, or materialCertificates arrays"));
+    properties.put("includeMechanisms", typedArraySchema(
+        "Optional mechanism names to document intended scope; engine auto-detects mechanisms from data"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("processJson"),
+        requiredSchema("materialsRegister"), requiredSchema("items"), requiredSchema("stidData")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for materials review output.
+   *
+   * @return JSON Schema string
+   */
+  public static String materialsReviewOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "MaterialsReviewOutput");
+    schema.put("description",
+        "Output from run_materials_review with item verdicts, mechanisms, material recommendations, and integrity life screening.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("reviewType", stringProp("materials_integrity_review"));
+    properties.put("overallVerdict",
+        enumProp("Overall verdict", Arrays.asList("PASS", "PASS_WITH_WARNINGS", "FAIL")));
+    properties.put("itemCount", intProp("Number of reviewed items"));
+    properties.put("failedItems", intProp("Number of failed items"));
+    properties.put("warningItems", intProp("Number of items with warnings"));
+    properties.put("items", typedArraySchema(
+        "Item results with damageMechanisms, recommendation, integrityLife, confidence, and standardsApplied"));
+    properties.put("standardsApplied",
+        typedArraySchema("Standards and recommended practices used"));
+    properties.put("limitations", typedArraySchema("Limitations and assumptions"));
+    properties.put("provenance", objectProp("MCP result provenance"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -1485,9 +1547,9 @@ public final class SchemaCatalog {
     return Collections.unmodifiableList(Arrays.asList("run_flash", "run_process", "validate_input",
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
-        "run_reservoir", "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
-        "compare_processes", "manage_session", "visualize", "run_hazop", "run_barrier_register",
-        "run_safety_system_performance"));
+        "run_materials_review", "run_reservoir", "run_field_economics", "run_dynamic",
+        "run_bioprocess", "size_equipment", "compare_processes", "manage_session", "visualize",
+        "run_hazop", "run_barrier_register", "run_safety_system_performance"));
   }
 
   /**
@@ -1522,6 +1584,9 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? standardsInputSchema() : null;
     } else if ("run_pipeline".equals(toolName)) {
       return "input".equals(schemaType) ? pipelineInputSchema() : null;
+    } else if ("run_materials_review".equals(toolName)) {
+      return "input".equals(schemaType) ? materialsReviewInputSchema()
+          : materialsReviewOutputSchema();
     } else if ("run_reservoir".equals(toolName)) {
       return "input".equals(schemaType) ? reservoirInputSchema() : null;
     } else if ("run_field_economics".equals(toolName)) {

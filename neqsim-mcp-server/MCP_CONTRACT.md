@@ -79,6 +79,7 @@ industrial validation.
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlowAssurance` | CALCULATION | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
+| `runMaterialsReview` | CALCULATION | v1.5 | Process-wide material selection, degradation, CUI, remaining-life, and STID-backed integrity review |
 | `crossValidateModels` | CALCULATION | v1.1 | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | CALCULATION | v1.1 | Multi-variable parametric sweep |
 | `runBatch` | CALCULATION | v1.0 | Multi-point sensitivity sweep |
@@ -288,7 +289,7 @@ requirements.
 | Category | Description | Examples |
 |----------|-------------|---------|
 | `ADVISORY` | Read-only discovery and validation; always allowed | `getCapabilities`, `getExample`, `getSchema`, `validateInput`, `searchComponents` |
-| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `calculateStandard` |
+| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `runMaterialsReview`, `calculateStandard` |
 | `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `manageSession`, `solveTask` |
 | `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
 
@@ -312,7 +313,7 @@ compareSimulationStates, diagnoseAutomation, getAutomationLearningReport,
 getProgress
 ```
 
-Tools such as `runFlowAssurance`, `crossValidateModels`, `runParametricStudy`,
+Tools such as `runFlowAssurance`, `runMaterialsReview`, `crossValidateModels`, `runParametricStudy`,
 `runBatch`, `sizeEquipment`, `compareProcesses`, and `generateReport` are
 available as **Advanced** tools and may be promoted to the core as formal
 qualification evidence is added.
@@ -357,7 +358,7 @@ Validation results include:
 ```
 
 Auto-validated tools: `runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
-`calculateStandard`, `runPipeline`.
+`runMaterialsReview`, `calculateStandard`, `runPipeline`.
 
 ### Benchmark Trust Metadata
 

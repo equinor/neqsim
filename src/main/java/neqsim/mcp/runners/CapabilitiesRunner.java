@@ -123,6 +123,7 @@ public class CapabilitiesRunner {
         "getPhaseEnvelope — Calculate PT phase envelope",
         "runPVT — PVT laboratory experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity)",
         "runFlowAssurance — Flow assurance analysis (hydrate, wax, asphaltene, corrosion, erosion, cooldown)",
+        "runMaterialsReview — Process-wide material selection, degradation, CUI, and remaining-life review",
         "calculateStandard — Gas/oil quality per 22 industry standards (ISO, AGA, GPA, EN, ASTM)",
         "runPipeline — Multiphase pipeline flow simulation (Beggs & Brill)",
         "runReservoir — Material balance reservoir simulation (tank model, depletion)",
