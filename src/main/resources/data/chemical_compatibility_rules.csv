@@ -1,0 +1,32 @@
+chemical1Type,chemical1Ingredient,chemical2Type,chemical2Ingredient,condition,severity,mechanism,mitigation
+CORROSION_INHIBITOR,imidazoline,SCALE_INHIBITOR,phosphonate,co_injection,HIGH,Cationic CI reacts with anionic SI forming insoluble salts; loss of both treatments and possible plugging,Inject at separate points or use compatible non-ionic SI; bench test before deployment
+CORROSION_INHIBITOR,quaternary,SCALE_INHIBITOR,polymaleate,co_injection,HIGH,Cationic quaternary precipitates anionic polymer SI,Use separate injection points or anionic CI
+CORROSION_INHIBITOR,imidazoline,DEMULSIFIER,nonionic,co_injection,MEDIUM,Strong cationic CI can disrupt demulsifier action and stabilise emulsions,Bench test compatibility; consider lower CI dose
+CORROSION_INHIBITOR,*,ACID,*,co_injection,MEDIUM,Most film-forming CIs require pH > 3 to remain in solution; degrade in strong acid,Use acid-resistant CI (acid corrosion inhibitor) during stimulation
+SCALE_INHIBITOR,phosphonate,ACID,HCl,co_injection,HIGH,Phosphonate hydrolyses in concentrated HCl above 60 C; loss of inhibition,Squeeze SI before acid stimulation; use acid-stable polymeric SI
+SCALE_INHIBITOR,phosphonate,water_high_calcium,Ca>2000mgL,produced_water,MEDIUM,Phosphonate forms Ca-phosphonate precipitate above critical Ca concentration,Switch to polyacrylate or polymaleate SI
+SCALE_INHIBITOR,*,water_high_iron,Fe>10mgL,produced_water,MEDIUM,Iron interferes with phosphonate and polymer SI; can form Fe-SI complexes,Add iron control (chelant or reducing agent) upstream of SI
+H2S_SCAVENGER,MEA-triazine,water_high_temperature,T>80C,produced_water,HIGH,Triazine decomposes above 80 C releasing amines and reducing scavenging capacity,Use iron-based scavenger or inject downstream of cooling
+H2S_SCAVENGER,MEA-triazine,SCALE_INHIBITOR,phosphonate,co_injection,LOW,High pH triazine raises local pH causing CaCO3 precipitation,Inject scavenger and SI at separate points
+H2S_SCAVENGER,MEA-triazine,water_high_calcium,Ca>500mgL,produced_water,MEDIUM,Spent triazine forms dithiazine which can deposit; high Ca aggravates,Monitor for dithiazine deposits; reduce overdose
+OXYGEN_SCAVENGER,bisulphite,BIOCIDE,oxidiser,co_injection,HIGH,Oxidising biocide consumed by reducing scavenger; both treatments lost,Use non-oxidising biocide (glutaraldehyde) or separate injection
+BIOCIDE,glutaraldehyde,H2S_SCAVENGER,MEA-triazine,co_injection,MEDIUM,Glutaraldehyde reacts with primary amines in triazine,Stagger injection in time
+DEMULSIFIER,*,SCALE_INHIBITOR,*,produced_water,LOW,Some SIs stabilise water-in-oil emulsions and antagonise demulsifiers,Confirm with bottle test
+WAX_INHIBITOR,*,ASPHALTENE_INHIBITOR,*,co_injection,LOW,Solvent carrier may dissolve antagonistic to other,Confirm solvent compatibility
+THERMODYNAMIC_HHI,MEG,SCALE_INHIBITOR,phosphonate,produced_water_high_calcium,MEDIUM,High MEG concentration reduces water activity and accelerates Ca-phosphonate precipitation,Use polymeric SI in MEG service
+THERMODYNAMIC_HHI,methanol,CORROSION_INHIBITOR,imidazoline,co_injection,LOW,Methanol can wash off CI film; may need higher dose,Increase CI dose by 25-50% or use stronger filming agent
+ACID,HCl,water_high_carbonate,HCO3>200mgL,produced_water,INFO,Acid will react with carbonate forming CO2; expected reaction during stimulation,Design acid volume for stoichiometry; monitor effluent pH
+ACID,HCl,material_carbon_steel,T>60C,operating,HIGH,HCl above 5wt% causes severe corrosion of carbon steel above 60 C without inhibitor,Always co-inject acid corrosion inhibitor (propargyl alcohol-based)
+ACID,HF,material_carbon_steel,*,operating,HIGH,HF causes severe corrosion and forms iron fluoride scale,Use mud acid only with proper inhibitor; consider CRA tubulars
+CHELANT,EDTA,SCALE_INHIBITOR,phosphonate,co_injection,LOW,EDTA can sequester Ca and reduce phosphonate-Ca synergy,Use sub-stoichiometric chelant
+PH_ADJUSTER,caustic,water_high_calcium,Ca>200mgL,produced_water,HIGH,Caustic raises pH causing CaCO3 and Mg(OH)2 scale,Avoid caustic in calcium-rich water; use buffer instead
+PH_ADJUSTER,acid,SCALE_INHIBITOR,phosphonate,co_injection,LOW,Low pH protonates phosphonate reducing Ca complexation efficiency,Maintain pH 4-6 for phosphonate
+ANTIFOAM,silicone,DEMULSIFIER,nonionic,co_injection,MEDIUM,Silicone antifoam can stabilise oil-in-water emulsions and foul demulsifier,Use polyglycol antifoam or minimise dose
+DRAG_REDUCER,polymer,DEMULSIFIER,*,co_injection,LOW,Drag reducer can interfere with separator performance,Inject downstream of separation
+HYDRATE_INHIBITOR_LDHI,KHI,THERMODYNAMIC_HHI,methanol,co_injection,LOW,Methanol can salt out KHI polymer at high concentration,Limit MeOH below 10 wt% in KHI service
+HYDRATE_INHIBITOR_LDHI,AA,DEMULSIFIER,nonionic,co_injection,MEDIUM,AA chemistry stabilises emulsions; antagonises demulsifier,Increase demulsifier dose; bottle test
+CORROSION_INHIBITOR,*,material_carbon_steel,T>150C,operating,MEDIUM,Most film-forming CIs degrade above 150 C losing protection,Use high temperature CI (phosphate ester) or CRA upgrade
+SCALE_INHIBITOR,*,material_carbon_steel,T>175C,operating,MEDIUM,Phosphonate SI thermally degrades above 175 C,Use polymeric SI or alternative chemistry
+H2S_SCAVENGER,iron-based,SCALE_INHIBITOR,phosphonate,co_injection,MEDIUM,Iron from scavenger interferes with phosphonate SI,Stagger injection or use chelant pretreatment
+OXYGEN_SCAVENGER,bisulphite,water_high_temperature,T>80C,produced_water,LOW,Bisulphite catalysed decomposition above 80 C,Use catalysed bisulphite for higher temperature
+BIOCIDE,THPS,H2S_SCAVENGER,MEA-triazine,co_injection,LOW,THPS can react with amines reducing biocide and scavenger,Stagger or use glutaraldehyde
