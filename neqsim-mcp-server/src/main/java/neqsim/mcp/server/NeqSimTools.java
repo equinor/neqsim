@@ -13,6 +13,7 @@ import neqsim.mcp.runners.DynamicRunner;
 import neqsim.mcp.runners.FieldDevelopmentRunner;
 import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.FlowAssuranceRunner;
+import neqsim.mcp.runners.ChemistryRunner;
 import neqsim.mcp.runners.PVTRunner;
 import neqsim.mcp.runners.PipelineRunner;
 import neqsim.mcp.runners.ProcessRunner;
@@ -734,6 +735,33 @@ public class NeqSimTools {
       return withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline");
     } catch (Exception e) {
       return errorJson("Flow assurance analysis failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run an open standards-traceable chemistry / integrity analysis.
+   *
+   * @param chemistryJson JSON specification with analysis type and parameters
+   * @return JSON with chemistry analysis results
+   */
+  @Tool(description = "Run an open, standards-traceable chemistry/integrity analysis. "
+      + "Supports: electrolyteScale (Davies activity-coefficient saturation indices for "
+      + "CaCO3/BaSO4/CaSO4/SrSO4), mechanisticCorrosion (NORSOK M-506 + Nesic mass-transfer "
+      + "+ Langmuir inhibitor), langmuirInhibitor (adsorption isotherm and dose-for-efficiency), "
+      + "and packedBedScavenger (1D plug-flow H2S scavenger breakthrough curve). "
+      + "Designed for chemical-integrity digital twins and inhibitor selection.")
+  public String runChemistry(
+      @ToolArg(description = "JSON specification with 'analysis' field "
+          + "(one of: electrolyteScale, mechanisticCorrosion, langmuirInhibitor, "
+          + "packedBedScavenger) and analysis-specific parameters.") String chemistryJson) {
+    String blocked = IndustrialProfile.enforceAccess("runChemistry");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return ChemistryRunner.run(chemistryJson);
+    } catch (Exception e) {
+      return errorJson("Chemistry analysis failed: " + e.getMessage());
     }
   }
 
