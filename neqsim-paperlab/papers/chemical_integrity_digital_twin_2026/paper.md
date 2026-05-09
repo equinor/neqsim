@@ -14,7 +14,7 @@
 
 ## Abstract
 
-Chemical-integrity management — predicting and mitigating mineral scale, CO$_2$ corrosion, H$_2$S contamination, hydrate / wax / asphaltene deposition, and the interactions between them — is a critical workflow for oil and gas, CO$_2$ transport and storage (CCS), and hydrogen value chains. Today the workflow is fragmented across closed-source commercial tools (OLI ScaleChem, MultiFlash + Infochem, Predict, Multiscale, OLGA), each addressing a subset of the threats and none exposing a machine-readable, agent-driven interface. We present an integrated, open-source digital twin built on the NeqSim thermodynamic engine that combines: (i) a Davies activity-coefficient electrolyte model for the four dominant scale minerals (CaCO$_3$, BaSO$_4$, CaSO$_4$, SrSO$_4$); (ii) a mechanistic CO$_2$ corrosion model coupling NORSOK M-506 base rates with a Nesic Sherwood mass-transfer correlation and a temperature-dependent Langmuir inhibitor isotherm; (iii) a closed-loop deposition solver coupling pipe hydraulics (Beggs-and-Brills) with deposition kinetics; (iv) a 1-D plug-flow packed-bed H$_2$S scavenger reactor; and (v) a Bayesian root-cause analyser. Every routine carries an explicit list of source standards (NORSOK, NACE, ISO, API, ASTM). The full stack is exposed over the Model Context Protocol (MCP) so that AI agents can drive entire integrity workflows in JSON-in / JSON-out style. We demonstrate the framework on an anonymised subsea tieback case, validate it against 47 regression tests, and discuss extension to plant historian (PI, IP.21) and OSDU subsurface data.
+Chemical-integrity management — predicting and mitigating mineral scale, CO$_2$ corrosion, H$_2$S contamination, hydrate / wax / asphaltene deposition, and the interactions between them — is a critical workflow for oil and gas, CO$_2$ transport and storage (CCS), and hydrogen value chains. Today the workflow is typically fragmented across closed-source point tools, each addressing a subset of the threats and none exposing a machine-readable, agent-driven interface. We present an integrated, open-source digital twin built on the NeqSim thermodynamic engine that combines: (i) a Davies activity-coefficient electrolyte model for the four dominant scale minerals (CaCO$_3$, BaSO$_4$, CaSO$_4$, SrSO$_4$); (ii) a mechanistic CO$_2$ corrosion model coupling NORSOK M-506 base rates with a Nesic Sherwood mass-transfer correlation and a temperature-dependent Langmuir inhibitor isotherm; (iii) a closed-loop deposition solver coupling pipe hydraulics (Beggs-and-Brills) with deposition kinetics; (iv) a 1-D plug-flow packed-bed H$_2$S scavenger reactor; and (v) a Bayesian root-cause analyser. Every routine carries an explicit list of source standards (NORSOK, NACE, ISO, API, ASTM). The full stack is exposed over the Model Context Protocol (MCP) so that AI agents can drive entire integrity workflows in JSON-in / JSON-out style. We demonstrate the framework on an anonymised subsea tieback case, validate it against 47 regression tests, and discuss extension to plant historian (PI, IP.21) and OSDU subsurface data.
 
 ## Keywords
 
@@ -26,20 +26,18 @@ chemical integrity; digital twin; electrolyte thermodynamics; CO$_2$ corrosion; 
 
 Chemical-integrity threats — scale, corrosion, sour service, deposition — drive a large fraction of unplanned shutdowns and lost-time incidents in offshore oil and gas. The same threats are now critical in CCS (where dense-phase CO$_2$ with water and SO$_x$ impurities is a known corrosion driver) and in hydrogen networks (where embrittlement, blistering and low-temperature integrity dominate). A predictive digital twin that captures the coupled chemistry–hydraulics behaviour of these systems is therefore valuable across three industries.
 
-Existing tools address pieces of this problem (Section 2), but none combine the four dominant threats in a single open framework, and none expose a machine-readable interface that would let an AI agent run the analysis end-to-end. The contribution of this work is an open, standards-traceable, agent-ready chemical-integrity digital twin.
+Existing tools address pieces of this problem (Section 2), but, to the best of the authors' knowledge, no openly available framework combines the four dominant threats with an agent-ready, machine-readable interface. The contribution of this work is an open, standards-traceable, agent-ready chemical-integrity digital twin.
 
 ## 2. Related Work and Gap Analysis
 
-| Tool | Scale | Corrosion | Scavenger | Deposition coupling | Open | AI / MCP |
-|------|-------|-----------|-----------|---------------------|------|----------|
-| OLI ScaleChem | Yes (proprietary MSE-SRK) | No | No | No | No | No |
-| MultiFlash + Infochem | Hydrate / wax / asphaltene | No | No | No | No | No |
-| Predict (Honeywell / Intetech) | No | NORSOK M-506 + de Waard | No | No | No | No |
-| Multiscale (Equinor) | Yes | No | No | No | No | No |
-| OLGA (SLB) | No | No | No | Yes (steady, integrated) | No | No |
-| **This work (NeqSim)** | **Yes (Davies)** | **Yes (NORSOK + Nesic + Langmuir)** | **Yes (1-D PFR)** | **Yes (closed-loop)** | **Yes (Apache 2.0)** | **Yes (MCP)** |
+The published and openly documented literature on chemical-integrity prediction can be grouped into four broad capability areas:
 
-The gap is clear: no single open framework covers all four threats with explicit standards traceability and a machine-readable interface.
+- **Scale prediction.** Activity-coefficient and Pitzer-type electrolyte models are well established for the four dominant oilfield minerals (CaCO$_3$, BaSO$_4$, CaSO$_4$, SrSO$_4$); most implementations are point tools without an open programmatic interface.
+- **CO$_2$ corrosion with inhibition.** Empirical NORSOK M-506 and de Waard-style correlations, augmented with mass-transfer and inhibitor-efficiency models (e.g. Nesic-type Sherwood correlations and Langmuir-type isotherms), are widely used. Implementations are usually closed and rarely expose the underlying mechanistic split (kinetic vs mass-transfer vs inhibited rate).
+- **H$_2$S scavenger sizing.** Vendor-supplied lookup tables and 0-D mass-balance spreadsheets are common; transient 1-D plug-flow PDE models with capacity tracking and breakthrough prediction are not generally available as reusable libraries.
+- **Deposition coupled with hydraulics.** Multiphase pipeline simulators predict pressure drop and temperature profiles, and offline scale/wax solvers predict deposition. Closed-loop coupling of the two — where deposition reduces effective ID and feeds back into the hydraulic solution — is rarely exposed in published, open frameworks.
+
+The gap is therefore not a single missing model, but the absence of an open, standards-traceable framework that covers all four capability areas behind a single machine-readable interface. This is the gap addressed by the present work.
 
 ## 3. Framework Architecture
 
@@ -146,7 +144,7 @@ Both adapters are out of scope for this paper but are direct architectural exten
 
 ## 14. Conclusions
 
-We have shown that a single open-source, standards-traceable framework can cover the four dominant chemical-integrity threats (mineral scale, CO$_2$ corrosion with inhibition, H$_2$S scavenger breakthrough, deposition coupled with hydraulics) plus Bayesian root-cause inference, with full reproducibility (47 JUnit tests) and a machine-readable interface (Model Context Protocol). The framework is production-ready for oil and gas, CCS and hydrogen workflows, and is directly extensible to plant historian and OSDU data platforms. By replacing a fragmented stack of proprietary point tools with one transparent open framework, we lower the barrier to adoption for operators, regulators and academic researchers, and we make AI-agent-driven integrity management practical.
+We have shown that a single open-source, standards-traceable framework can cover the four dominant chemical-integrity threats (mineral scale, CO$_2$ corrosion with inhibition, H$_2$S scavenger breakthrough, deposition coupled with hydraulics) plus Bayesian root-cause inference, with full reproducibility (47 JUnit tests) and a machine-readable interface (Model Context Protocol). The framework is production-ready for oil and gas, CCS and hydrogen workflows, and is directly extensible to plant historian and OSDU data platforms. By providing one transparent open framework that spans the full integrity workflow, we lower the barrier to adoption for operators, regulators and academic researchers, and we make AI-agent-driven integrity management practical.
 
 ## Acknowledgements
 

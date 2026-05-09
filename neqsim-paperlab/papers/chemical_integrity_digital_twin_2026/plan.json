@@ -4,7 +4,7 @@
   "paper_type": "application_with_methodology",
   "created": "2026-05-09T11:07:51.937490",
   "status": "drafting",
-  "novelty_statement": "We present the first open-source, standards-traceable digital twin for chemical integrity management that couples (a) Davies activity-coefficient electrolyte scale prediction, (b) mechanistic CO2 corrosion combining NORSOK M-506 with a Nesic Sherwood mass-transfer correlation and a temperature-dependent Langmuir inhibitor isotherm, (c) closed-loop deposition coupling with Beggs-and-Brills hydraulics, (d) 1-D plug-flow H2S scavenger breakthrough, and (e) Bayesian root-cause inference, all exposed via the Model Context Protocol so that AI agents can drive integrity workflows. Existing tools (OLI ScaleChem, MultiFlash+Infochem, OLGA, Predict, Multiscale) are commercial black boxes that provide one or two of these capabilities and lack agent-driven, machine-readable interfaces; our framework is open, traceable to source standards, fully reproducible (47 JUnit regression tests), and extensible to plant historian data (PI, IP.21) and the OSDU subsurface data platform.",
+  "novelty_statement": "We present an open-source, standards-traceable digital twin for chemical integrity management that couples (a) Davies activity-coefficient electrolyte scale prediction, (b) mechanistic CO2 corrosion combining NORSOK M-506 with a Nesic Sherwood mass-transfer correlation and a temperature-dependent Langmuir inhibitor isotherm, (c) closed-loop deposition coupling with Beggs-and-Brills hydraulics, (d) 1-D plug-flow H2S scavenger breakthrough, and (e) Bayesian root-cause inference, all exposed via the Model Context Protocol so that AI agents can drive integrity workflows. Openly available frameworks typically address only a subset of these capability areas and rarely expose an agent-ready, machine-readable interface; the present framework is open, traceable to source standards, fully reproducible (47 JUnit regression tests), and extensible to plant historian data (PI, IP.21) and the OSDU subsurface data platform.",
   "research_questions": [
     {
       "id": "RQ1",
@@ -66,7 +66,7 @@
       "F6: AI-agent-driven integrity workflow over MCP"
     ],
     "key_tables": [
-      "T1: Capability matrix vs commercial tools",
+      "T1: Capability-area coverage and standards traceability",
       "T2: Standards traceability per routine",
       "T3: 47-test regression summary",
       "T4: MCP runChemistry JSON schema"
