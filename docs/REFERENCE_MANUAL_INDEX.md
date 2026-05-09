@@ -1025,6 +1025,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | -------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Chemical Reactions         | [docs/chemicalreactions/README.md](chemicalreactions/)                                                     | Chemical reactions module                                   |
 | Sulfur Deposition Analysis | [docs/chemicalreactions/sulfur_deposition_analysis.md](chemicalreactions/sulfur_deposition_analysis)       | Sulfur formation, solubility, deposition, and FeS corrosion |
+| Chemistry & Integrity      | [docs/chemistry/index.md](chemistry/)                                                                      | Open standards-traceable chemical integrity stack (scale, corrosion, scavengers, RCA, MCP) |
+| MCP `runChemistry` tool    | [docs/chemistry/mcp.md](chemistry/mcp)                                                                     | JSON schema for the chemistry MCP tool                      |
 
 ### Appendix B: Statistics
 
