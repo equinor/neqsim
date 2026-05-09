@@ -88,6 +88,20 @@ Every routine is covered by JUnit tests in
 `src/test/java/neqsim/mcp/runners/ChemistryRunnerTest.java`. As of the latest
 release, 47 chemistry tests pass and serve as the regression baseline.
 
+## Deep-dive references
+
+- [Electrolyte scale prediction (Davies)](electrolyte_scale.md) — ion table conventions, SI math, worked North-Sea mixing example.
+- [Mechanistic CO2 corrosion](mechanistic_corrosion.md) — NORSOK + Nesic mass-transfer + Langmuir inhibitor with worked export-line example.
+- [Closed-loop deposition coupling](closed_loop_deposition.md) — how `ClosedLoopDepositionSolver` iterates `PipeBeggsAndBrills` against `ScaleDepositionAccumulator`.
+- [Packed-bed scavenger reactor](packed_bed_scavenger.md) — 1D PFR PDE, breakthrough, sizing workflow.
+- [Chemical compatibility & RCA guide](chemical_compatibility_guide.md) — the original toolkit overview.
+
+## Worked example notebooks
+
+- [Chemical integrity digital twin](../../examples/notebooks/chemical_integrity_digital_twin.ipynb) — end-to-end subsea-tieback case study (scale + corrosion + deposition + scavenger).
+- [Scale prediction workflow](../../examples/notebooks/chemistry_scale_prediction_workflow.ipynb) — Davies SI sweeps over temperature, pH and seawater mixing fraction.
+- [Corrosion inhibitor design](../../examples/notebooks/chemistry_corrosion_inhibitor_design.ipynb) — Langmuir + Nesic dose-response and minimum-dose optimization.
+
 ## Related documentation
 
 - [Chemical compatibility quickstart](../chemicalreactions/index.md)
