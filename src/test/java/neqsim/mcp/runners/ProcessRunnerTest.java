@@ -116,6 +116,22 @@ class ProcessRunnerTest {
   }
 
   @Test
+  void testRun_processModelHonorsExecutionSettings() {
+    String json = processModelJson().replace("{\"areas\":",
+        "{\"runStep\": true,"
+            + "\"maxIterations\": 7,\"flowTolerance\": 0.02,\"temperatureTolerance\": 0.03,"
+            + "\"pressureTolerance\": 0.04,\"areas\":");
+
+    String result = ProcessRunner.run(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertTrue(root.getAsJsonObject("provenance").get("converged").getAsBoolean());
+    assertTrue(root.get("convergenceSummary").getAsString().contains("Iterations: 1 / 7"));
+    assertTrue(root.get("convergenceSummary").getAsString().contains("Flow rate:    0.00e+00"));
+  }
+
+  @Test
   void testValidateAndRun_processModelAreas() {
     String result = ProcessRunner.validateAndRun(processModelJson());
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();

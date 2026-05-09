@@ -17,9 +17,12 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.component.ComponentEos;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -436,6 +439,43 @@ class JsonProcessExporterTest {
   }
 
   @Test
+  void testFluidRoundTripPreservesBinaryInteractionParameters() {
+    SystemInterface fluid = new SystemPrEos(273.15 + 31.0, 7.55);
+    fluid.addComponent("methane", 0.60);
+    fluid.addComponent("ethane", 0.25);
+    fluid.addComponent("propane", 0.15);
+    fluid.setMixingRule("classic");
+    fluid.setBinaryInteractionParameter("methane", "ethane", 0.031);
+    fluid.setBinaryInteractionParameter("methane", "propane", -0.012);
+
+    Stream feed = new Stream("gas feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+
+    String json = process.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    JsonArray bics = root.getAsJsonObject("fluid").getAsJsonArray("binaryInteractionParameters");
+    assertNotNull(bics, "Fluid JSON should include non-zero binary interaction parameters");
+    assertTrue(bics.size() >= 2, "Fluid JSON should include the configured BIP values");
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Process should rebuild: " + result.toJson());
+
+    Stream rebuiltFeed = (Stream) result.getProcessSystem().getUnit("gas feed");
+    EosMixingRulesInterface rebuiltMixingRule =
+        (EosMixingRulesInterface) rebuiltFeed.getFluid().getPhase(0).getMixingRule();
+    int methaneIndex = rebuiltFeed.getFluid().getComponent("methane").getComponentNumber();
+    int ethaneIndex = rebuiltFeed.getFluid().getComponent("ethane").getComponentNumber();
+    int propaneIndex = rebuiltFeed.getFluid().getComponent("propane").getComponentNumber();
+    assertEquals(0.031, rebuiltMixingRule.getBinaryInteractionParameter(methaneIndex, ethaneIndex),
+        1.0e-12);
+    assertEquals(-0.012,
+        rebuiltMixingRule.getBinaryInteractionParameter(methaneIndex, propaneIndex), 1.0e-12);
+  }
+
+  @Test
   void testSplitterRoundTripPreservesFlowRates() {
     SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
     fluid.addComponent("methane", 0.90);
@@ -468,6 +508,59 @@ class JsonProcessExporterTest {
     assertEquals(9000.0, rebuilt.getSplitStream(1).getFlowRate("kg/hr"), 1.0e-6);
     assertEquals(-1.0, rebuilt.getFlowRates()[1], 1.0e-12);
     assertEquals("kg/hr", rebuilt.getFlowUnit());
+  }
+
+  @Test
+  void testRecycleRoundTripPreservesConvergenceSettings() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Recycle recycle = new Recycle("test recycle");
+    recycle.addStream(feed);
+    recycle.setFlowTolerance(0.11);
+    recycle.setCompositionTolerance(0.22);
+    recycle.setTemperatureTolerance(0.33);
+    recycle.setPressureTolerance(0.44);
+    recycle.setPriority(12);
+    recycle.setMaxIterations(24);
+    recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
+    recycle.setWegsteinQMin(-3.0);
+    recycle.setWegsteinQMax(0.25);
+    recycle.setWegsteinDelayIterations(4);
+    recycle.setDownstreamProperty("flow rate");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(recycle);
+
+    String json = process.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    JsonObject props =
+        root.getAsJsonArray("process").get(1).getAsJsonObject().getAsJsonObject("properties");
+    assertEquals(0.11, props.get("flowTolerance").getAsDouble(), 1.0e-12);
+    assertEquals(0.44, props.get("pressureTolerance").getAsDouble(), 1.0e-12);
+    assertEquals("WEGSTEIN", props.get("accelerationMethod").getAsString());
+    assertEquals("flow rate", props.getAsJsonArray("downstreamProperty").get(0).getAsString());
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Recycle process should rebuild: " + result.toJson());
+
+    Recycle rebuilt = (Recycle) result.getProcessSystem().getUnit("test recycle");
+    assertEquals(0.11, rebuilt.getFlowTolerance(), 1.0e-12);
+    assertEquals(0.22, rebuilt.getCompositionTolerance(), 1.0e-12);
+    assertEquals(0.33, rebuilt.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(0.44, rebuilt.getPressureTolerance(), 1.0e-12);
+    assertEquals(12, rebuilt.getPriority());
+    assertEquals(24, rebuilt.getMaxIterations());
+    assertEquals(AccelerationMethod.WEGSTEIN, rebuilt.getAccelerationMethod());
+    assertEquals(-3.0, rebuilt.getWegsteinQMin(), 1.0e-12);
+    assertEquals(0.25, rebuilt.getWegsteinQMax(), 1.0e-12);
+    assertEquals(4, rebuilt.getWegsteinDelayIterations());
+    assertEquals("flow rate", rebuilt.getDownstreamProperty().get(0));
   }
 
   @Test
@@ -608,6 +701,10 @@ class JsonProcessExporterTest {
     model.add("separation", separation);
     model.add("compression", compression);
     model.setRunStep(true);
+    model.setMaxIterations(7);
+    model.setFlowTolerance(2.0e-3);
+    model.setTemperatureTolerance(3.0e-3);
+    model.setPressureTolerance(4.0e-3);
 
     // Export
     String json = model.toJson();
@@ -615,6 +712,10 @@ class JsonProcessExporterTest {
     JsonObject root = JsonParser.parseString(json).getAsJsonObject();
     assertTrue(root.has("areas"));
     assertTrue(root.get("runStep").getAsBoolean());
+    assertEquals(7, root.get("maxIterations").getAsInt());
+    assertEquals(2.0e-3, root.get("flowTolerance").getAsDouble(), 1.0e-12);
+    assertEquals(3.0e-3, root.get("temperatureTolerance").getAsDouble(), 1.0e-12);
+    assertEquals(4.0e-3, root.get("pressureTolerance").getAsDouble(), 1.0e-12);
     assertTrue(root.getAsJsonObject("areas").has("separation"));
     assertTrue(root.getAsJsonObject("areas").has("compression"));
 
@@ -622,6 +723,10 @@ class JsonProcessExporterTest {
     ProcessModel rebuilt = ProcessModel.fromJson(json);
     assertNotNull(rebuilt);
     assertTrue(rebuilt.isRunStep(), "ProcessModel runStep should survive JSON round-trip");
+    assertEquals(7, rebuilt.getMaxIterations());
+    assertEquals(2.0e-3, rebuilt.getFlowTolerance(), 1.0e-12);
+    assertEquals(3.0e-3, rebuilt.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(4.0e-3, rebuilt.getPressureTolerance(), 1.0e-12);
     assertNotNull(rebuilt.get("separation"), "separation area should exist after round-trip");
     assertNotNull(rebuilt.get("compression"), "compression area should exist after round-trip");
 

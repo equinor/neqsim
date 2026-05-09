@@ -764,6 +764,14 @@ public class ProcessModel implements Runnable, Serializable {
     }
 
     if (runStep) {
+      lastIterationCount = 1;
+      modelConverged = true;
+      lastMaxFlowError = 0.0;
+      lastMaxTemperatureError = 0.0;
+      lastMaxPressureError = 0.0;
+      lastAllProcessesSolved = true;
+      lastBoundaryValuesConverged = true;
+      lastBoundaryStreamCount = collectBoundaryStreams().size();
       // Step mode: just run each process once in step mode
       int areaIdx = 0;
       for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
@@ -1839,6 +1847,10 @@ public class ProcessModel implements Runnable, Serializable {
     }
     root.add("areas", areas);
     root.addProperty("runStep", isRunStep());
+    root.addProperty("maxIterations", getMaxIterations());
+    root.addProperty("flowTolerance", getFlowTolerance());
+    root.addProperty("temperatureTolerance", getTemperatureTolerance());
+    root.addProperty("pressureTolerance", getPressureTolerance());
 
     JsonArray interAreaLinks = exportInterAreaLinks(producedStreamReferences);
     if (interAreaLinks.size() > 0) {
@@ -1969,6 +1981,18 @@ public class ProcessModel implements Runnable, Serializable {
     ProcessModel model = new ProcessModel();
     if (root.has("runStep")) {
       model.setRunStep(root.get("runStep").getAsBoolean());
+    }
+    if (root.has("maxIterations")) {
+      model.setMaxIterations(root.get("maxIterations").getAsInt());
+    }
+    if (root.has("flowTolerance")) {
+      model.setFlowTolerance(root.get("flowTolerance").getAsDouble());
+    }
+    if (root.has("temperatureTolerance")) {
+      model.setTemperatureTolerance(root.get("temperatureTolerance").getAsDouble());
+    }
+    if (root.has("pressureTolerance")) {
+      model.setPressureTolerance(root.get("pressureTolerance").getAsDouble());
     }
     com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
 

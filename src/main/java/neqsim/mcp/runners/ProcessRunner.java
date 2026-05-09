@@ -348,6 +348,8 @@ public class ProcessRunner {
         return result;
       }
 
+      applyProcessModelExecutionSettings(root, result.model);
+
       for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
         String areaName = entry.getKey();
         if (!entry.getValue().isJsonObject()) {
@@ -384,6 +386,30 @@ public class ProcessRunner {
           "Ensure the JSON has a top-level 'areas' object with valid area definitions"));
     }
     return result;
+  }
+
+  /**
+   * Applies top-level execution controls from ProcessModel JSON.
+   *
+   * @param root root JSON object containing optional execution settings
+   * @param model process model to configure before running
+   */
+  private static void applyProcessModelExecutionSettings(JsonObject root, ProcessModel model) {
+    if (root.has("runStep")) {
+      model.setRunStep(root.get("runStep").getAsBoolean());
+    }
+    if (root.has("maxIterations")) {
+      model.setMaxIterations(root.get("maxIterations").getAsInt());
+    }
+    if (root.has("flowTolerance")) {
+      model.setFlowTolerance(root.get("flowTolerance").getAsDouble());
+    }
+    if (root.has("temperatureTolerance")) {
+      model.setTemperatureTolerance(root.get("temperatureTolerance").getAsDouble());
+    }
+    if (root.has("pressureTolerance")) {
+      model.setPressureTolerance(root.get("pressureTolerance").getAsDouble());
+    }
   }
 
   /**

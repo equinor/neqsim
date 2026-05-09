@@ -249,6 +249,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | ProcessSystem         | [docs/process/processmodel/process_system.md](process/processmodel/process_system)                                         | ProcessSystem class (connections, stream introspection, named controllers, unified elements) |
 | ProcessModel          | [docs/process/processmodel/process_model.md](process/processmodel/process_model)                                           | Multi-process models      |
 | ProcessModule         | [docs/process/processmodel/process_module.md](process/processmodel/process_module)                                         | Modular process units     |
+| Process JSON Export   | [docs/process/process_json_export_and_e300_fluids.md](process/process_json_export_and_e300_fluids)                         | Export ProcessSystem and ProcessModel JSON for MCP, including E300-equivalent component properties, volume correction, stream-specific fluids, recycle settings, and convergence checks |
 | Graph Simulation      | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation)                                     | Graph-based simulation    |
 | Diagram Export        | [docs/process/processmodel/diagram_export.md](process/processmodel/diagram_export)                                         | PFD diagram export        |
 | DEXPI Architecture    | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | DEXPI integration         |

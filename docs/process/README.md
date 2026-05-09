@@ -43,6 +43,7 @@ This documentation is organized into the following sections:
 | [mercury_removal.md](mercury_removal) | **Mercury removal guard beds** — chemisorption (PuraSpec), bed loading, breakthrough, degradation, mechanical design, cost |
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |

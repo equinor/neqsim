@@ -8,6 +8,10 @@ description: Accurate reference for NeqSim JSON process builder input, validatio
 This page documents the **actual JSON format** consumed by `ProcessSystem.fromJson(...)` and
 `ProcessSystem.fromJsonAndRun(...)`.
 
+For exporting a live `ProcessSystem` or `ProcessModel` to portable JSON, including
+E300-characterized fluids, stream-specific fluids, recycle settings, and MCP checks, see
+[Process JSON Export and E300 Fluid Characterization](process_json_export_and_e300_fluids.md).
+
 ## Quick answer: is there a JSON verifier?
 
 Yes:

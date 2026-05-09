@@ -28,6 +28,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
@@ -1106,6 +1107,28 @@ public class JsonProcessExporter {
           factorsArr.add(f);
         }
         props.add("splitFactors", factorsArr);
+      }
+    } else if (unit instanceof Recycle) {
+      Recycle recycle = (Recycle) unit;
+      props.addProperty("flowTolerance", recycle.getFlowTolerance());
+      props.addProperty("compositionTolerance", recycle.getCompositionTolerance());
+      props.addProperty("temperatureTolerance", recycle.getTemperatureTolerance());
+      props.addProperty("pressureTolerance", recycle.getPressureTolerance());
+      props.addProperty("priority", recycle.getPriority());
+      props.addProperty("maxIterations", recycle.getMaxIterations());
+      AccelerationMethod accelerationMethod = recycle.getAccelerationMethod();
+      if (accelerationMethod != null) {
+        props.addProperty("accelerationMethod", accelerationMethod.name());
+      }
+      props.addProperty("wegsteinQMin", recycle.getWegsteinQMin());
+      props.addProperty("wegsteinQMax", recycle.getWegsteinQMax());
+      props.addProperty("wegsteinDelayIterations", recycle.getWegsteinDelayIterations());
+      if (recycle.getDownstreamProperty() != null && !recycle.getDownstreamProperty().isEmpty()) {
+        JsonArray downstreamProperties = new JsonArray();
+        for (String property : recycle.getDownstreamProperty()) {
+          downstreamProperties.add(property);
+        }
+        props.add("downstreamProperty", downstreamProperties);
       }
     } else if (unit instanceof PipeLineInterface) {
       PipeLineInterface pipe = (PipeLineInterface) unit;

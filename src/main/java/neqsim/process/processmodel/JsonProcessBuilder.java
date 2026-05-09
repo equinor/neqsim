@@ -27,6 +27,7 @@ import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
@@ -1180,7 +1181,10 @@ public class JsonProcessBuilder {
         new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit",
             "adjustedEquipment", "adjustedVariable", "targetEquipment", "targetVariable",
             "targetValue", "stepSize", "compressorChart", "antiSurge", "calculatorInputs",
-            "calculatorOutput", "calculationType"));
+            "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty"));
+    if (equipment instanceof Recycle) {
+      applyRecycleProperties((Recycle) equipment, properties);
+    }
     if (equipment instanceof Compressor && properties.has("compressorChart")
         && properties.get("compressorChart").isJsonObject()) {
       applyCompressorChart((Compressor) equipment, properties.getAsJsonObject("compressorChart"));
@@ -1205,6 +1209,30 @@ public class JsonProcessBuilder {
       }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
+    }
+  }
+
+  /**
+   * Applies recycle-specific convergence settings from JSON.
+   *
+   * @param recycle the recycle to configure
+   * @param props recycle property definitions
+   */
+  private void applyRecycleProperties(Recycle recycle, JsonObject props) {
+    if (props.has("accelerationMethod")) {
+      try {
+        recycle.setAccelerationMethod(
+            AccelerationMethod.valueOf(props.get("accelerationMethod").getAsString()));
+      } catch (IllegalArgumentException exception) {
+        warnings.add("Unknown recycle accelerationMethod on " + recycle.getName() + ": "
+            + props.get("accelerationMethod").getAsString());
+      }
+    }
+    if (props.has("downstreamProperty") && props.get("downstreamProperty").isJsonArray()) {
+      JsonArray downstreamProperties = props.getAsJsonArray("downstreamProperty");
+      for (int i = 0; i < downstreamProperties.size(); i++) {
+        recycle.setDownstreamProperty(downstreamProperties.get(i).getAsString());
+      }
     }
   }
 
