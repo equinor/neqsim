@@ -69,6 +69,7 @@ public final class BenchmarkTrust {
     tools.add("runFlowAssurance", buildFlowAssuranceTrust());
     tools.add("calculateStandard", buildStandardsTrust());
     tools.add("runPipeline", buildPipelineTrust());
+    tools.add("runMaterialsReview", buildMaterialsReviewTrust());
     tools.add("runReservoir", buildReservoirTrust());
     tools.add("runFieldEconomics", buildEconomicsTrust());
     tools.add("runDynamic", buildDynamicTrust());
@@ -112,6 +113,9 @@ public final class BenchmarkTrust {
         break;
       case "runPipeline":
         root.add("trust", buildPipelineTrust());
+        break;
+      case "runMaterialsReview":
+        root.add("trust", buildMaterialsReviewTrust());
         break;
       case "runReservoir":
         root.add("trust", buildReservoirTrust());
@@ -306,6 +310,40 @@ public final class BenchmarkTrust {
     limitations.add("Slug flow prediction is approximate");
     limitations.add("Not suitable for very high GVF (>0.99) or very low GVF (<0.01)");
     limitations.add("Does not model terrain effects (slug catcher sizing)");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for the materials review tool.
+   *
+   * @return JSON object with trust metadata
+   */
+  private static JsonObject buildMaterialsReviewTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Process-wide materials review orchestrating tested NeqSim corrosion calculators "
+            + "(NORSOK M-506, NORSOK M-001, ISO 15156/NACE MR0175, chloride SCC, "
+            + "oxygen corrosion, dense CO2, hydrogen, ammonia, CUI, and remaining-life screening). "
+            + "Suitable for screening, challenge/support work, and STID-backed review packages.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Wet CO2/H2S line material review", "SRK/process register",
+        "Identifies CO2 corrosion, sour service, material recommendation, and corrosion allowance",
+        "NORSOK M-001/M-506 regression tests"));
+    cases.add(validationCase("Insulated chloride service", "STID register",
+        "Identifies chloride SCC, oxygen corrosion, CUI risk, and inspection interval",
+        "API 581/API 583 and corrosion unit tests"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations
+        .add("Screening-level; final materials selection requires discipline engineer approval");
+    limitations.add("Quality depends on normalized STID/materials-register completeness");
+    limitations.add("API 579/API 581 quantitative RBI is not fully implemented in this runner");
+    limitations.add("Document retrieval and OCR are handled outside the Java runner");
     trust.add("knownLimitations", limitations);
 
     return trust;

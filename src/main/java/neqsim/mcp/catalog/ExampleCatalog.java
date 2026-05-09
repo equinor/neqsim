@@ -313,6 +313,38 @@ public final class ExampleCatalog {
         + "    \"numberOfIncrements\": 20\n" + "  }\n" + "}";
   }
 
+  // ========== Materials Review Examples ==========
+
+  /**
+   * Returns a materials review example based on normalized STID/material-register records.
+   *
+   * @return JSON string for MaterialsReviewRunner.run()
+   */
+  public static String materialsReviewStidRegister() {
+    return "{\n" + "  \"projectName\": \"Synthetic materials review\",\n"
+        + "  \"designLifeYears\": 25,\n" + "  \"materialsRegister\": [\n" + "    {\n"
+        + "      \"tag\": \"DEMO-LINE-001\",\n" + "      \"equipmentType\": \"Pipeline\",\n"
+        + "      \"existingMaterial\": \"Carbon Steel API 5L X65\",\n"
+        + "      \"sourceReferences\": [\"synthetic STID line-list row 1\"],\n"
+        + "      \"service\": {\n" + "        \"temperature_C\": 85.0,\n"
+        + "        \"pressure_bara\": 95.0,\n" + "        \"co2_mole_fraction\": 0.04,\n"
+        + "        \"h2s_mole_fraction\": 0.0008,\n" + "        \"free_water\": true,\n"
+        + "        \"chloride_mg_per_l\": 55000.0,\n" + "        \"pH\": 5.2,\n"
+        + "        \"flow_velocity_m_per_s\": 7.5,\n"
+        + "        \"nominal_wall_thickness_mm\": 18.0,\n"
+        + "        \"current_wall_thickness_mm\": 15.2,\n"
+        + "        \"minimum_required_thickness_mm\": 11.0\n" + "      }\n" + "    },\n" + "    {\n"
+        + "      \"tag\": \"DEMO-PIPING-002\",\n" + "      \"equipmentType\": \"Topside piping\",\n"
+        + "      \"existingMaterial\": \"316L stainless steel\",\n"
+        + "      \"sourceReferences\": [\"synthetic piping-class extract\"],\n"
+        + "      \"service\": {\n" + "        \"temperature_C\": 95.0,\n"
+        + "        \"pressure_bara\": 25.0,\n" + "        \"free_water\": true,\n"
+        + "        \"chloride_mg_per_l\": 120000.0,\n" + "        \"dissolved_o2_ppb\": 80.0,\n"
+        + "        \"insulated\": true,\n" + "        \"insulation_type\": \"mineral wool\",\n"
+        + "        \"coating_age_years\": 14.0,\n" + "        \"marine_environment\": true\n"
+        + "      }\n" + "    }\n" + "  ]\n" + "}";
+  }
+
   // ========== Reservoir Examples ==========
 
   /**
@@ -692,10 +724,10 @@ public final class ExampleCatalog {
    * @return unmodifiable list of category names
    */
   public static List<String> getCategories() {
-    return Collections.unmodifiableList(
-        Arrays.asList("flash", "process", "validation", "batch", "property-table", "phase-envelope",
-            "pvt", "flow-assurance", "standards", "pipeline", "reservoir", "economics",
-            "bioprocess", "session", "visualization", "equipment-sizing", "comparison", "safety"));
+    return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation", "batch",
+        "property-table", "phase-envelope", "pvt", "flow-assurance", "standards", "pipeline",
+        "reservoir", "economics", "materials-review", "bioprocess", "session", "visualization",
+        "equipment-sizing", "comparison", "safety"));
   }
 
   /**
@@ -726,6 +758,8 @@ public final class ExampleCatalog {
       return Arrays.asList("iso6976-gas");
     } else if ("pipeline".equals(category)) {
       return Arrays.asList("multiphase-flow");
+    } else if ("materials-review".equals(category)) {
+      return Arrays.asList("stid-register");
     } else if ("reservoir".equals(category)) {
       return Arrays.asList("gas-depletion");
     } else if ("economics".equals(category)) {
@@ -817,6 +851,10 @@ public final class ExampleCatalog {
     } else if ("pipeline".equals(category)) {
       if ("multiphase-flow".equals(name)) {
         return pipelineMultiphase();
+      }
+    } else if ("materials-review".equals(category)) {
+      if ("stid-register".equals(name)) {
+        return materialsReviewStidRegister();
       }
     } else if ("reservoir".equals(category)) {
       if ("gas-depletion".equals(name)) {
@@ -949,6 +987,12 @@ public final class ExampleCatalog {
     pipeExamples.put("multiphase-flow",
         "Beggs & Brill multiphase pipeline flow for 50 km gas line");
     catalog.put("pipeline", pipeExamples);
+
+    // Materials review examples
+    Map<String, String> materialsExamples = new LinkedHashMap<String, String>();
+    materialsExamples.put("stid-register",
+        "Materials selection, degradation, CUI, and remaining-life review from normalized STID records");
+    catalog.put("materials-review", materialsExamples);
 
     // Reservoir examples
     Map<String, String> resExamples = new LinkedHashMap<String, String>();

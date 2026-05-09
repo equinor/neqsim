@@ -104,8 +104,8 @@ Each tool has documented accuracy bounds and clear error behavior.
 
 ### Auto-Validation
 
-Six calculation tools (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
-`calculateStandard`, and `runFlowAssurance`) automatically validate their
+Seven calculation tools (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
+`calculateStandard`, `runFlowAssurance`, and `runMaterialsReview`) automatically validate their
 output against engineering design rules. In governed deployment profiles,
 validation is automatically applied and cannot be disabled.
 
@@ -129,7 +129,7 @@ limitations, and unsupported conditions.
 
 ---
 
-## Tier 2 — Engineering Advanced (21 tools)
+## Tier 2 — Engineering Advanced (22 tools)
 
 Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
@@ -140,6 +140,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `runPVT` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
 | `runPipeline` | Multiphase pipeline flow (Beggs & Brill) |
 | `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
+| `runMaterialsReview` | Process-wide material selection, degradation, CUI, and remaining-life review from process/STID data |
 | `crossValidateModels` | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | Multi-variable parametric sweep |
 | `runBatch` | Multi-point sensitivity sweep |
@@ -290,7 +291,7 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 56 tools organized into three tiers plus platform tools,
+The server exposes 57 tools organized into three tiers plus platform tools,
 9 guided-workflow prompts, and 11 browsable resources.
 
 ## Complete Tool Inventory
@@ -745,7 +746,7 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 48 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 57 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
    `neqsim://components` and `neqsim://models` to discover available data.
@@ -757,7 +758,7 @@ response schemas for all tools and browsable resources, see
    calls `validateInput` to catch typos and missing fields.
 
 4. **Computation** — The LLM calls `runFlash`, `runProcess`, `runPVT`,
-   `runFlowAssurance`, `runPipeline`, `runFieldEconomics`, or any domain tool
+  `runFlowAssurance`, `runPipeline`, `runMaterialsReview`, `runFieldEconomics`, or any domain tool
    and gets physical results.
 
 5. **Iteration** — Using `manageSession`, the LLM can incrementally build and
@@ -797,7 +798,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 56 @Tool-annotated MCP tools
+    ├── NeqSimTools.java                   # 57 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 6 @Resource + 5 @ResourceTemplate (11 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -878,11 +879,11 @@ The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 56 tools across all three tiers:
+and validates all 57 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (56 tools, 6 resources, 5 templates) |
+| Protocol | 9 | Tool/resource/template registration (57 tools, 6 resources, 5 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
@@ -890,7 +891,7 @@ and validates all 56 tools across all three tiers:
 | Process simulation | 13 | Separator, compressor, cooler, heater, valve, multi-unit trains |
 | Validation | 22 | Valid input, unknown components, bad models, missing specs |
 | Error handling | 2 | Graceful failure on bad input |
-| Tier 2 tools | 14 | PVT, pipeline, flow assurance, standards, reservoir, economics, dynamic, sizing, comparison |
+| Tier 2 tools | 15 | PVT, pipeline, flow assurance, materials review, standards, reservoir, economics, dynamic, sizing, comparison |
 | Tier 3 tools | 17 | Sessions, task solver, workflow, reports, plugins, streaming, visualization, state, security |
 | Governance tools | 6 | Industrial profile, benchmark trust, tool access |
 | Catalog round-trip | 10 | All examples run end-to-end through the server |
@@ -906,7 +907,7 @@ and validates all 56 tools across all three tiers:
 | Natural gas dew point | Physical range | \[-80, 20\] °C |
 | Separator mass balance | Closure | < 0.1% |
 | ISO 6976 methane GCV | 37.706 MJ/Sm³ | ±0.5% |
-| Trust report completeness | 15 tools | All present |
+| Trust report completeness | 16 tools | All present |
 | Trust page structure | Required fields | Non-null |
 
 ```bash

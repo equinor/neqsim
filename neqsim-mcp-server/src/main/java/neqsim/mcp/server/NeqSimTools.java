@@ -48,6 +48,7 @@ import neqsim.mcp.runners.FlareRadiationRunner;
 import neqsim.mcp.runners.HAZOPStudyRunner;
 import neqsim.mcp.runners.IndustrialProfile;
 import neqsim.mcp.runners.LOPARunner;
+import neqsim.mcp.runners.MaterialsReviewRunner;
 import neqsim.mcp.runners.ProcessComparisonRunner;
 import neqsim.mcp.runners.ReliefRunner;
 import neqsim.mcp.runners.RiskMatrixRunner;
@@ -754,6 +755,22 @@ public class NeqSimTools {
       + "(one of: electrolyteScale, mechanisticCorrosion, langmuirInhibitor, "
       + "packedBedScavenger) and analysis-specific parameters.") String chemistryJson) {
     String blocked = IndustrialProfile.enforceAccess("runChemistry");
+   * Run a process-wide materials, degradation, and integrity review.
+   *
+   * @param materialsReviewJson JSON specification with optional process JSON and material register
+   * @return JSON with materials review recommendations and integrity findings
+   */
+  @Tool(description = "Run a process-wide materials selection, corrosion/degradation, "
+      + "and integrity lifetime review. Consumes optional runProcess-style processJson plus "
+      + "materialsRegister/items or normalized stidData from technical databases. Evaluates "
+      + "CO2 corrosion, sour service, chloride SCC, oxygen corrosion, dense CO2, hydrogen "
+      + "service, ammonia compatibility, CUI, erosion-corrosion, MIC, galvanic corrosion, "
+      + "fatigue/vibration, remaining life, and material recommendations.")
+  public String runMaterialsReview(
+      @ToolArg(description = "JSON with optional 'processJson' (same format as runProcess), "
+          + "'materialsRegister' or 'items' array, optional 'stidData' normalized extract, "
+          + "and optional 'projectName' and 'designLifeYears'.") String materialsReviewJson) {
+    String blocked = IndustrialProfile.enforceAccess("runMaterialsReview");
     if (blocked != null) {
       return blocked;
     }
