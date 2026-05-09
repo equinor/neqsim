@@ -106,6 +106,9 @@ src/main/**/*.gif
 # Gemini Agent
 .gemini/
 
+# Local agent workspace
+.agents/
+
 output/
 *.dot
 

@@ -265,6 +265,7 @@ public class ProcessRunner {
         result.addProperty("report", reportJson);
       }
     }
+    result.addProperty("convergenceSummary", buildResult.model.getConvergenceSummary());
 
     ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
         extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
@@ -371,6 +372,11 @@ public class ProcessRunner {
             result.warnings.add("Area '" + areaName + "': " + warning);
           }
         }
+      }
+      if (result.errors.isEmpty() && root.has("interAreaLinks")
+          && root.get("interAreaLinks").isJsonArray()) {
+        result.warnings
+            .addAll(result.model.applyInterAreaLinks(root.getAsJsonArray("interAreaLinks")));
       }
     } catch (Exception e) {
       result.errors.add(new SimulationResult.ErrorDetail("PROCESS_MODEL_PARSE_ERROR",

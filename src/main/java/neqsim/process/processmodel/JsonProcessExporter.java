@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
@@ -47,6 +49,10 @@ public class JsonProcessExporter {
 
   /** Map from stream identity to the reference string that reaches it. */
   private final IdentityHashMap<StreamInterface, String> streamRefMap =
+      new IdentityHashMap<StreamInterface, String>();
+
+  /** Map from materialized boundary stream identity to named fluid reference. */
+  private final IdentityHashMap<StreamInterface, String> boundaryFluidRefMap =
       new IdentityHashMap<StreamInterface, String>();
 
   /** Map from equipment name to processed flag. */
@@ -89,12 +95,16 @@ public class JsonProcessExporter {
    */
   public JsonObject toJsonObject(ProcessSystem process) {
     streamRefMap.clear();
+    boundaryFluidRefMap.clear();
     processed.clear();
 
     List<ProcessEquipmentInterface> units = process.getUnitOperations();
 
     // Phase 1: Build stream reference map (stream identity -> "equipmentName.port")
     buildStreamRefMap(units);
+
+    // Phase 1b: Materialize inlet streams owned by other ProcessSystems.
+    List<StreamInterface> boundaryStreams = registerExternalInletStreams(units);
 
     // Phase 2: Extract fluid definition from the first feed stream
     SystemInterface fluid = findFeedFluid(units);
@@ -107,8 +117,19 @@ public class JsonProcessExporter {
       root.add("fluid", exportFluid(fluid));
     }
 
+    JsonObject namedFluids = exportBoundaryFluids(boundaryStreams);
+    if (namedFluids.size() > 0) {
+      root.add("fluids", namedFluids);
+    }
+
     // Process section — ordered array of units
     JsonArray processArray = new JsonArray();
+    for (StreamInterface boundaryStream : boundaryStreams) {
+      JsonObject boundaryJson = exportBoundaryStream(boundaryStream);
+      if (boundaryJson != null) {
+        processArray.add(boundaryJson);
+      }
+    }
     for (ProcessEquipmentInterface unit : units) {
       JsonObject unitJson = exportUnit(unit);
       if (unitJson != null) {
@@ -135,6 +156,170 @@ public class JsonProcessExporter {
         mapOutletStreams(unit);
       }
     }
+  }
+
+  /**
+   * Registers inlet streams that are not produced by, or explicitly added to, the exported process.
+   *
+   * <p>
+   * Multi-area {@link ProcessModel}s often share stream objects between {@link ProcessSystem}
+   * instances. When an area is exported independently, those shared input streams have no local
+   * producer and would otherwise become blank or unresolved inlet references in JSON. This method
+   * assigns each external stream a synthetic boundary stream name and stores it in
+   * {@link #streamRefMap}, allowing downstream equipment to wire to an explicit feed stream after
+   * JSON import.
+   * </p>
+   *
+   * @param units process units being exported
+   * @return external inlet streams in deterministic export order
+   */
+  private List<StreamInterface> registerExternalInletStreams(
+      List<ProcessEquipmentInterface> units) {
+    List<StreamInterface> boundaryStreams = new ArrayList<StreamInterface>();
+    IdentityHashMap<StreamInterface, Boolean> seen =
+        new IdentityHashMap<StreamInterface, Boolean>();
+    Map<String, Boolean> usedNames = new LinkedHashMap<String, Boolean>();
+
+    for (ProcessEquipmentInterface unit : units) {
+      usedNames.put(unit.getName(), Boolean.TRUE);
+    }
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof StreamInterface) {
+        continue;
+      }
+      for (StreamInterface inlet : getInletStreams(unit)) {
+        if (inlet == null || streamRefMap.containsKey(inlet) || seen.containsKey(inlet)) {
+          continue;
+        }
+        if (inlet.getFluid() == null) {
+          continue;
+        }
+        String boundaryName = uniqueBoundaryStreamName(inlet, usedNames);
+        String fluidRef = boundaryName + "_fluid";
+        streamRefMap.put(inlet, boundaryName);
+        boundaryFluidRefMap.put(inlet, fluidRef);
+        boundaryStreams.add(inlet);
+        seen.put(inlet, Boolean.TRUE);
+        usedNames.put(boundaryName, Boolean.TRUE);
+      }
+    }
+    return boundaryStreams;
+  }
+
+  /**
+   * Gets the inlet streams for an equipment unit with a reflection fallback for legacy equipment.
+   *
+   * @param unit equipment unit to inspect
+   * @return list of non-null inlet streams, possibly empty
+   */
+  private List<StreamInterface> getInletStreams(ProcessEquipmentInterface unit) {
+    List<StreamInterface> inlets = new ArrayList<StreamInterface>();
+    try {
+      List<StreamInterface> listedInlets = unit.getInletStreams();
+      if (listedInlets != null) {
+        for (StreamInterface inlet : listedInlets) {
+          if (inlet != null) {
+            inlets.add(inlet);
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Fall back below for legacy equipment without a robust getInletStreams implementation.
+    }
+    if (inlets.isEmpty()) {
+      try {
+        StreamInterface inlet =
+            (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
+        if (inlet != null) {
+          inlets.add(inlet);
+        }
+      } catch (Exception e) {
+        // No single inlet accessor available.
+      }
+    }
+    return inlets;
+  }
+
+  /**
+   * Creates a unique synthetic boundary stream name for an external inlet stream.
+   *
+   * @param stream external inlet stream
+   * @param usedNames names already used in the exported process
+   * @return unique boundary stream name safe for dot-notation references
+   */
+  private String uniqueBoundaryStreamName(StreamInterface stream, Map<String, Boolean> usedNames) {
+    String originalName = stream.getName();
+    String baseName = originalName == null ? "stream" : originalName.trim();
+    if (baseName.isEmpty()) {
+      baseName = "stream";
+    }
+    baseName = "boundary_" + baseName.replaceAll("[^A-Za-z0-9_]+", "_");
+    if (baseName.endsWith("_")) {
+      baseName = baseName.substring(0, baseName.length() - 1);
+    }
+    if (baseName.isEmpty()) {
+      baseName = "boundary_stream";
+    }
+
+    String candidate = baseName;
+    int suffix = 2;
+    while (usedNames.containsKey(candidate)) {
+      candidate = baseName + "_" + suffix;
+      suffix++;
+    }
+    return candidate;
+  }
+
+  /**
+   * Exports named fluids for all materialized boundary streams.
+   *
+   * @param boundaryStreams external inlet streams to export
+   * @return JSON object containing one named fluid per boundary stream
+   */
+  private JsonObject exportBoundaryFluids(List<StreamInterface> boundaryStreams) {
+    JsonObject fluids = new JsonObject();
+    for (StreamInterface boundaryStream : boundaryStreams) {
+      String fluidRef = boundaryFluidRefMap.get(boundaryStream);
+      if (fluidRef != null && boundaryStream.getFluid() != null) {
+        fluids.add(fluidRef, exportFluid(boundaryStream.getFluid()));
+      }
+    }
+    return fluids;
+  }
+
+  /**
+   * Exports a materialized boundary stream unit for an external inlet stream.
+   *
+   * @param boundaryStream external inlet stream to export as a local stream
+   * @return stream JSON definition, or null if the stream was not registered
+   */
+  private JsonObject exportBoundaryStream(StreamInterface boundaryStream) {
+    String streamName = streamRefMap.get(boundaryStream);
+    if (streamName == null) {
+      return null;
+    }
+
+    JsonObject json = new JsonObject();
+    json.addProperty("type", "Stream");
+    json.addProperty("name", streamName);
+    String fluidRef = boundaryFluidRefMap.get(boundaryStream);
+    if (fluidRef != null) {
+      json.addProperty("fluidRef", fluidRef);
+    }
+    exportStreamProperties(json, boundaryStream, true);
+    return json;
+  }
+
+  /**
+   * Gets the JSON stream reference assigned to a stream during the most recent export.
+   *
+   * @param stream stream object to look up
+   * @return JSON reference such as {@code feed}, {@code HP Sep.gasOut}, or {@code null} when the
+   *         stream was not part of the most recent export
+   */
+  public String getStreamReference(StreamInterface stream) {
+    return streamRefMap.get(stream);
   }
 
   /**
@@ -179,6 +364,16 @@ public class JsonProcessExporter {
     } else if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
       List<StreamInterface> outlets = splitter.getOutletStreams();
+      if (outlets != null) {
+        for (int i = 0; i < outlets.size(); i++) {
+          if (outlets.get(i) != null) {
+            streamRefMap.put(outlets.get(i), name + ".split" + i);
+          }
+        }
+      }
+    } else if (unit instanceof Manifold) {
+      Manifold manifold = (Manifold) unit;
+      List<StreamInterface> outlets = manifold.getOutletStreams();
       if (outlets != null) {
         for (int i = 0; i < outlets.size(); i++) {
           if (outlets.get(i) != null) {
@@ -316,9 +511,9 @@ public class JsonProcessExporter {
   }
 
   /**
-   * Exports binary interaction parameters (kij) from the fluid's mixing rule. Only exports
-   * non-zero BICs to keep the JSON compact. The builder uses these to override the default
-   * database BICs when reconstructing the fluid.
+   * Exports binary interaction parameters (kij) from the fluid's mixing rule. Only exports non-zero
+   * BICs to keep the JSON compact. The builder uses these to override the default database BICs
+   * when reconstructing the fluid.
    *
    * @param fluidJson the fluid JSON object to add BICs to
    * @param fluid the fluid system
@@ -405,8 +600,9 @@ public class JsonProcessExporter {
       exportStreamProperties(json, (StreamInterface) unit);
     } else if (unit instanceof Mixer) {
       exportMixerInlets(json, (Mixer) unit);
-    } else if (unit instanceof HeatExchanger && !(unit instanceof Heater)
-        && !(unit instanceof Cooler)) {
+    } else if (unit instanceof Manifold) {
+      exportManifoldInlets(json, (Manifold) unit);
+    } else if (unit instanceof HeatExchanger) {
       exportHeatExchangerInlets(json, (HeatExchanger) unit);
     } else {
       // Single-inlet equipment — resolve inlet stream reference
@@ -468,14 +664,17 @@ public class JsonProcessExporter {
     if (unit instanceof Cooler) {
       return "Cooler";
     }
-    if (unit instanceof Heater) {
-      return "Heater";
-    }
     if (unit instanceof HeatExchanger) {
       return "HeatExchanger";
     }
+    if (unit instanceof Heater) {
+      return "Heater";
+    }
     if (unit instanceof Mixer) {
       return "Mixer";
+    }
+    if (unit instanceof Manifold) {
+      return "Manifold";
     }
     if (unit instanceof ComponentSplitter) {
       return "ComponentSplitter";
@@ -506,10 +705,22 @@ public class JsonProcessExporter {
    * @param stream the stream to export
    */
   private void exportStreamProperties(JsonObject json, StreamInterface stream) {
+    exportStreamProperties(json, stream, false);
+  }
+
+  /**
+   * Exports Stream-specific properties: flowRate, temperature, pressure.
+   *
+   * @param json the unit JSON object to populate
+   * @param stream the stream to export
+   * @param includeZeroValues true to include zero-valued state fields for boundary streams
+   */
+  private void exportStreamProperties(JsonObject json, StreamInterface stream,
+      boolean includeZeroValues) {
     JsonObject props = new JsonObject();
 
     double flowRate = stream.getFlowRate("kg/hr");
-    if (flowRate > 0) {
+    if (flowRate > 0 || includeZeroValues) {
       JsonArray flowArr = new JsonArray();
       flowArr.add(flowRate);
       flowArr.add("kg/hr");
@@ -517,7 +728,7 @@ public class JsonProcessExporter {
     }
 
     double temperature = stream.getTemperature("C");
-    if (temperature != 0) {
+    if (temperature != 0 || includeZeroValues) {
       JsonArray tempArr = new JsonArray();
       tempArr.add(temperature);
       tempArr.add("C");
@@ -525,7 +736,7 @@ public class JsonProcessExporter {
     }
 
     double pressure = stream.getPressure("bara");
-    if (pressure > 0) {
+    if (pressure > 0 || includeZeroValues) {
       JsonArray pressArr = new JsonArray();
       pressArr.add(pressure);
       pressArr.add("bara");
@@ -545,6 +756,28 @@ public class JsonProcessExporter {
    */
   private void exportMixerInlets(JsonObject json, Mixer mixer) {
     List<StreamInterface> inlets = mixer.getInletStreams();
+    if (inlets != null && !inlets.isEmpty()) {
+      JsonArray inletsArr = new JsonArray();
+      for (StreamInterface inlet : inlets) {
+        String ref = streamRefMap.get(inlet);
+        if (ref != null) {
+          inletsArr.add(ref);
+        }
+      }
+      if (inletsArr.size() > 0) {
+        json.add("inlets", inletsArr);
+      }
+    }
+  }
+
+  /**
+   * Exports Manifold inlets as an "inlets" array.
+   *
+   * @param json the unit JSON object
+   * @param manifold the manifold
+   */
+  private void exportManifoldInlets(JsonObject json, Manifold manifold) {
+    List<StreamInterface> inlets = manifold.getInletStreams();
     if (inlets != null && !inlets.isEmpty()) {
       JsonArray inletsArr = new JsonArray();
       for (StreamInterface inlet : inlets) {
@@ -643,6 +876,16 @@ public class JsonProcessExporter {
     } else if (unit instanceof ComponentSplitter) {
       ComponentSplitter compSplitter = (ComponentSplitter) unit;
       double[] factors = compSplitter.getSplitFactors();
+      if (factors != null && factors.length > 0) {
+        JsonArray factorsArr = new JsonArray();
+        for (double f : factors) {
+          factorsArr.add(f);
+        }
+        props.add("splitFactors", factorsArr);
+      }
+    } else if (unit instanceof Manifold) {
+      Manifold manifold = (Manifold) unit;
+      double[] factors = manifold.getSplitFactors();
       if (factors != null && factors.length > 0) {
         JsonArray factorsArr = new JsonArray();
         for (double f : factors) {

@@ -4,13 +4,19 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.event.ProcessEvent;
 import neqsim.process.util.event.ProcessEventBus;
@@ -35,6 +41,34 @@ public class ProcessModel implements Runnable, Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+
+  /** Metadata key used for JSON round-trip inter-area stream rewiring. */
+  private static final String INTER_AREA_LINKS_KEY = "interAreaLinks";
+
+  /**
+   * Internal JSON reference to a stream produced inside one process area.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class AreaStreamReference {
+    /** Name of the process area that produces the stream. */
+    private final String areaName;
+
+    /** Stream reference within the producing area's JSON schema. */
+    private final String streamReference;
+
+    /**
+     * Creates a stream reference descriptor.
+     *
+     * @param areaName name of the producing process area
+     * @param streamReference stream reference inside the producing area
+     */
+    private AreaStreamReference(String areaName, String streamReference) {
+      this.areaName = areaName;
+      this.streamReference = streamReference;
+    }
+  }
 
   private boolean runStep = false;
   private int maxIterations = 50;
@@ -182,6 +216,9 @@ public class ProcessModel implements Runnable, Serializable {
   private double lastMaxTemperatureError = Double.MAX_VALUE;
   private double lastMaxPressureError = Double.MAX_VALUE;
   private boolean modelConverged = false;
+  private boolean lastAllProcessesSolved = false;
+  private boolean lastBoundaryValuesConverged = false;
+  private int lastBoundaryStreamCount = 0;
 
   /**
    * Checks if the model is running in step mode.
@@ -759,12 +796,16 @@ public class ProcessModel implements Runnable, Serializable {
       lastMaxFlowError = Double.MAX_VALUE;
       lastMaxTemperatureError = Double.MAX_VALUE;
       lastMaxPressureError = Double.MAX_VALUE;
+      lastAllProcessesSolved = false;
+      lastBoundaryValuesConverged = false;
+      lastBoundaryStreamCount = 0;
 
       // Capture initial stream states for convergence tracking. Restrict to
       // streams that cross area boundaries - these are the only streams whose
       // values change between outer iterations. For a 500-stream plant with
       // 10 boundary streams this cuts capture cost by ~50x.
       java.util.Set<Object> boundaryStreams = collectBoundaryStreams();
+      lastBoundaryStreamCount = boundaryStreams.size();
       Map<String, double[]> previousStreamStates = captureStreamStates(boundaryStreams);
 
       int iterations = 0;
@@ -788,6 +829,8 @@ public class ProcessModel implements Runnable, Serializable {
         boolean valuesConverged =
             lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
                 && lastMaxPressureError < pressureTolerance;
+        lastAllProcessesSolved = allProcessesSolved;
+        lastBoundaryValuesConverged = valuesConverged;
 
         if (logger.isDebugEnabled()) {
           logger.debug("Iteration " + iterations + ": flowErr=" + lastMaxFlowError + ", tempErr="
@@ -798,7 +841,9 @@ public class ProcessModel implements Runnable, Serializable {
         double maxError = getError();
 
         // Notify iteration complete
-        boolean iterConverged = allProcessesSolved && valuesConverged && iterations > 1;
+        boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
+        boolean iterConverged =
+            valuesConverged && iterations > 1 && (allProcessesSolved || boundaryDrivenModel);
         notifyIterationComplete(iterations, iterConverged, maxError);
 
         // Converged if all processes solved AND values are not changing
@@ -1212,6 +1257,24 @@ public class ProcessModel implements Runnable, Serializable {
   private Map<String, double[]> captureStreamStates(java.util.Set<Object> boundaryStreams) {
     Map<String, double[]> states = new LinkedHashMap<>();
     boolean filter = boundaryStreams != null && !boundaryStreams.isEmpty();
+    if (filter) {
+      for (Object boundaryObject : boundaryStreams) {
+        if (!(boundaryObject instanceof StreamInterface)) {
+          continue;
+        }
+        StreamInterface stream = (StreamInterface) boundaryObject;
+        try {
+          double flow = stream.getFlowRate("kg/hr");
+          double temp = stream.getTemperature("K");
+          double press = stream.getPressure("bara");
+          String key = "boundary." + System.identityHashCode(stream);
+          states.put(key, new double[] {flow, temp, press});
+        } catch (Exception exception) {
+          // Skip streams that can't be read
+        }
+      }
+      return states;
+    }
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       String processName = entry.getKey();
       ProcessSystem process = entry.getValue();
@@ -1250,7 +1313,7 @@ public class ProcessModel implements Runnable, Serializable {
     if (processes.size() < 2) {
       return boundary;
     }
-    // For each stream object count how many processes contain it as a unit.
+    // For each stream object count how many processes contain, consume, or produce it.
     java.util.Map<Object, Integer> counts = new java.util.IdentityHashMap<>();
     for (ProcessSystem process : processes.values()) {
       java.util.Set<Object> seen =
@@ -1258,6 +1321,11 @@ public class ProcessModel implements Runnable, Serializable {
       for (Object unit : process.getUnitOperations()) {
         if (unit instanceof StreamInterface && seen.add(unit)) {
           counts.merge(unit, 1, Integer::sum);
+        }
+        if (unit instanceof ProcessEquipmentInterface) {
+          ProcessEquipmentInterface equipment = (ProcessEquipmentInterface) unit;
+          countStreamsForBoundaryDetection(equipment.getInletStreams(), seen, counts);
+          countStreamsForBoundaryDetection(equipment.getOutletStreams(), seen, counts);
         }
       }
     }
@@ -1267,6 +1335,25 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     return boundary;
+  }
+
+  /**
+   * Adds streams from one equipment stream list to the boundary occurrence counter.
+   *
+   * @param streams streams to count
+   * @param seen streams already counted for the current process area
+   * @param counts identity-based stream occurrence counts across process areas
+   */
+  private void countStreamsForBoundaryDetection(List<StreamInterface> streams,
+      java.util.Set<Object> seen, java.util.Map<Object, Integer> counts) {
+    if (streams == null) {
+      return;
+    }
+    for (StreamInterface stream : streams) {
+      if (stream != null && seen.add(stream)) {
+        counts.merge(stream, 1, Integer::sum);
+      }
+    }
   }
 
   /**
@@ -1318,6 +1405,11 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("Converged: ").append(modelConverged ? "YES" : "NO").append("\n");
     sb.append("Iterations: ").append(lastIterationCount).append(" / ").append(maxIterations)
         .append("\n");
+    sb.append("Boundary streams tracked: ").append(lastBoundaryStreamCount).append("\n");
+    sb.append("Boundary values converged: ").append(lastBoundaryValuesConverged ? "YES" : "NO")
+        .append("\n");
+    sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO")
+        .append("\n");
     sb.append("\nFinal Errors (relative):\n");
     sb.append(String.format("  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError,
         flowTolerance, lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
@@ -1329,10 +1421,56 @@ public class ProcessModel implements Runnable, Serializable {
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      sb.append(String.format("  %-30s: %s\n", entry.getKey(),
-          entry.getValue().solved() ? "SOLVED" : "NOT SOLVED"));
+      boolean processSolved = entry.getValue().solved();
+      sb.append(
+          String.format("  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
+      if (!processSolved) {
+        List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
+        if (!unsolvedUnits.isEmpty()) {
+          sb.append("    Unsolved units: ").append(formatUnitNameList(unsolvedUnits, 12))
+              .append("\n");
+        }
+      }
     }
     return sb.toString();
+  }
+
+  /**
+   * Gets names of unit operations that currently report unsolved status.
+   *
+   * @param process process system to inspect
+   * @return list of unsolved unit names in process execution order
+   */
+  private List<String> getUnsolvedUnitNames(ProcessSystem process) {
+    List<String> names = new ArrayList<>();
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!unit.solved()) {
+        names.add(unit.getName());
+      }
+    }
+    return names;
+  }
+
+  /**
+   * Formats a unit-name list for compact convergence diagnostics.
+   *
+   * @param unitNames names to format
+   * @param maxNames maximum number of names to include before truncating
+   * @return comma-separated unit list with truncation count when needed
+   */
+  private String formatUnitNameList(List<String> unitNames, int maxNames) {
+    StringBuilder names = new StringBuilder();
+    int includedNames = Math.min(unitNames.size(), maxNames);
+    for (int unitIndex = 0; unitIndex < includedNames; unitIndex++) {
+      if (unitIndex > 0) {
+        names.append(", ");
+      }
+      names.append(unitNames.get(unitIndex));
+    }
+    if (unitNames.size() > maxNames) {
+      names.append(", ... (").append(unitNames.size() - maxNames).append(" more)");
+    }
+    return names.toString();
   }
 
   /**
@@ -1682,15 +1820,29 @@ public class ProcessModel implements Runnable, Serializable {
    * @return JSON string representing all process areas
    */
   public String toJson(boolean prettyPrint) {
-    JsonProcessExporter exporter = new JsonProcessExporter();
-    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
-    com.google.gson.JsonObject areas = new com.google.gson.JsonObject();
+    JsonObject root = new JsonObject();
+    JsonObject areas = new JsonObject();
+    IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences =
+        new IdentityHashMap<>();
+    Map<String, JsonObject> exportedAreas = new LinkedHashMap<>();
 
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      com.google.gson.JsonObject areaJson = exporter.toJsonObject(entry.getValue());
-      areas.add(entry.getKey(), areaJson);
+      JsonProcessExporter exporter = new JsonProcessExporter();
+      JsonObject areaJson = exporter.toJsonObject(entry.getValue());
+      exportedAreas.put(entry.getKey(), areaJson);
+      collectProducedStreamReferences(entry.getKey(), entry.getValue(), exporter,
+          producedStreamReferences);
+    }
+
+    for (Map.Entry<String, JsonObject> entry : exportedAreas.entrySet()) {
+      areas.add(entry.getKey(), entry.getValue());
     }
     root.add("areas", areas);
+
+    JsonArray interAreaLinks = exportInterAreaLinks(producedStreamReferences);
+    if (interAreaLinks.size() > 0) {
+      root.add(INTER_AREA_LINKS_KEY, interAreaLinks);
+    }
 
     com.google.gson.Gson gson;
     if (prettyPrint) {
@@ -1700,6 +1852,87 @@ public class ProcessModel implements Runnable, Serializable {
       gson = new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create();
     }
     return gson.toJson(root);
+  }
+
+  /**
+   * Collects stream references that are locally produced by one process area.
+   *
+   * @param areaName name of the process area being exported
+   * @param process process area being exported
+   * @param exporter exporter used for this area
+   * @param producedStreamReferences identity map to populate with produced stream references
+   */
+  private void collectProducedStreamReferences(String areaName, ProcessSystem process,
+      JsonProcessExporter exporter,
+      IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof StreamInterface) {
+        addProducedStreamReference(areaName, (StreamInterface) unit, exporter,
+            producedStreamReferences);
+      }
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets != null) {
+        for (StreamInterface outlet : outlets) {
+          addProducedStreamReference(areaName, outlet, exporter, producedStreamReferences);
+        }
+      }
+    }
+  }
+
+  /**
+   * Adds one locally produced stream reference to the identity map.
+   *
+   * @param areaName name of the producing process area
+   * @param stream produced stream object
+   * @param exporter exporter used for this area
+   * @param producedStreamReferences identity map to populate with produced stream references
+   */
+  private void addProducedStreamReference(String areaName, StreamInterface stream,
+      JsonProcessExporter exporter,
+      IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
+    if (stream == null || producedStreamReferences.containsKey(stream)) {
+      return;
+    }
+    String streamReference = exporter.getStreamReference(stream);
+    if (streamReference != null) {
+      producedStreamReferences.put(stream, new AreaStreamReference(areaName, streamReference));
+    }
+  }
+
+  /**
+   * Exports live inter-area stream links for model-level JSON round-tripping.
+   *
+   * @param producedStreamReferences identity map from produced streams to source references
+   * @return JSON array of inter-area link definitions
+   */
+  private JsonArray exportInterAreaLinks(
+      IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
+    JsonArray links = new JsonArray();
+    for (Map.Entry<String, ProcessSystem> areaEntry : processes.entrySet()) {
+      String targetAreaName = areaEntry.getKey();
+      ProcessSystem targetProcess = areaEntry.getValue();
+      for (ProcessEquipmentInterface unit : targetProcess.getUnitOperations()) {
+        if (unit instanceof StreamInterface) {
+          continue;
+        }
+        List<StreamInterface> inlets = getEquipmentInletStreams(unit);
+        for (int inletIndex = 0; inletIndex < inlets.size(); inletIndex++) {
+          StreamInterface inlet = inlets.get(inletIndex);
+          AreaStreamReference source = producedStreamReferences.get(inlet);
+          if (source == null || source.areaName.equals(targetAreaName)) {
+            continue;
+          }
+          JsonObject link = new JsonObject();
+          link.addProperty("sourceArea", source.areaName);
+          link.addProperty("source", source.streamReference);
+          link.addProperty("targetArea", targetAreaName);
+          link.addProperty("targetUnit", unit.getName());
+          link.addProperty("targetInletIndex", inletIndex);
+          links.add(link);
+        }
+      }
+    }
+    return links;
   }
 
   /**
@@ -1745,7 +1978,293 @@ public class ProcessModel implements Runnable, Serializable {
         logger.warn("Failed to build area '{}': {}", areaName, result);
       }
     }
+    if (root.has(INTER_AREA_LINKS_KEY) && root.get(INTER_AREA_LINKS_KEY).isJsonArray()) {
+      List<String> warnings = model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY));
+      for (String warning : warnings) {
+        logger.warn(warning);
+      }
+    }
     return model;
+  }
+
+  /**
+   * Applies model-level inter-area stream links after all process areas have been built.
+   *
+   * @param interAreaLinks JSON array with sourceArea, source, targetArea, targetUnit, and
+   *        targetInletIndex fields
+   * @return warnings for links that could not be applied
+   */
+  public List<String> applyInterAreaLinks(JsonArray interAreaLinks) {
+    List<String> warnings = new ArrayList<>();
+    if (interAreaLinks == null) {
+      return warnings;
+    }
+    for (JsonElement linkElement : interAreaLinks) {
+      if (!linkElement.isJsonObject()) {
+        warnings.add("Skipping interAreaLinks entry because it is not a JSON object");
+        continue;
+      }
+      applyInterAreaLink(linkElement.getAsJsonObject(), warnings);
+    }
+    return warnings;
+  }
+
+  /**
+   * Applies one inter-area stream link.
+   *
+   * @param link JSON link definition
+   * @param warnings mutable warning list to append to
+   */
+  private void applyInterAreaLink(JsonObject link, List<String> warnings) {
+    String sourceArea = getString(link, "sourceArea");
+    String sourceReference = getString(link, "source");
+    String targetArea = getString(link, "targetArea");
+    String targetUnitName = getString(link, "targetUnit");
+    int targetInletIndex =
+        link.has("targetInletIndex") ? link.get("targetInletIndex").getAsInt() : 0;
+
+    ProcessSystem sourceProcess = processes.get(sourceArea);
+    ProcessSystem targetProcess = processes.get(targetArea);
+    if (sourceProcess == null) {
+      warnings.add("Inter-area link source area not found: " + sourceArea);
+      return;
+    }
+    if (targetProcess == null) {
+      warnings.add("Inter-area link target area not found: " + targetArea);
+      return;
+    }
+
+    StreamInterface sourceStream = resolveAreaStreamReference(sourceProcess, sourceReference);
+    if (sourceStream == null) {
+      warnings
+          .add("Inter-area link source stream not found: " + sourceArea + "::" + sourceReference);
+      return;
+    }
+
+    ProcessEquipmentInterface targetUnit = targetProcess.getUnit(targetUnitName);
+    if (targetUnit == null) {
+      warnings.add("Inter-area link target unit not found: " + targetArea + "::" + targetUnitName);
+      return;
+    }
+    if (!replaceInletReference(targetUnit, targetInletIndex, sourceStream)) {
+      warnings.add("Could not apply inter-area link to " + targetArea + "::" + targetUnitName
+          + " inlet " + targetInletIndex);
+    }
+  }
+
+  /**
+   * Gets a string field from a JSON object.
+   *
+   * @param object JSON object to inspect
+   * @param field field name
+   * @return field value, or an empty string when absent
+   */
+  private String getString(JsonObject object, String field) {
+    if (object.has(field) && !object.get(field).isJsonNull()) {
+      return object.get(field).getAsString();
+    }
+    return "";
+  }
+
+  /**
+   * Resolves a stream reference inside one process area.
+   *
+   * @param process process area containing the referenced unit
+   * @param reference stream reference such as {@code feed}, {@code Sep.gasOut}, or
+   *        {@code Tee.split0}
+   * @return resolved stream, or {@code null} when no stream matches the reference
+   */
+  private StreamInterface resolveAreaStreamReference(ProcessSystem process, String reference) {
+    if (reference == null || reference.trim().isEmpty()) {
+      return null;
+    }
+    String unitName = reference;
+    String port = "outlet";
+    if (reference.contains(".")) {
+      String[] parts = reference.split("\\.", 2);
+      unitName = parts[0];
+      port = parts[1].toLowerCase();
+    }
+    ProcessEquipmentInterface unit = process.getUnit(unitName);
+    if (unit == null) {
+      return null;
+    }
+    if (unit instanceof StreamInterface) {
+      return (StreamInterface) unit;
+    }
+    return resolveEquipmentOutlet(unit, port);
+  }
+
+  /**
+   * Resolves a port name on an equipment unit to an outlet stream.
+   *
+   * @param unit equipment unit producing the stream
+   * @param port outlet port name
+   * @return outlet stream, or {@code null} when no matching port exists
+   */
+  private StreamInterface resolveEquipmentOutlet(ProcessEquipmentInterface unit, String port) {
+    try {
+      if ("gasout".equals(port) || "gas".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+      }
+      if ("liquidout".equals(port) || "liquid".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+      }
+      if ("oilout".equals(port) || "oil".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+      }
+      if ("waterout".equals(port) || "water".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+      }
+      int splitIndex = parseNumericSuffix(port, "split");
+      if (splitIndex >= 0) {
+        return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit,
+            splitIndex);
+      }
+      int outletIndex = parseNumericSuffix(port, "outlet");
+      if (outletIndex >= 0 && unit instanceof HeatExchanger) {
+        return ((HeatExchanger) unit).getOutStream(outletIndex);
+      }
+      int heatExchangerIndex = parseNumericSuffix(port, "hx");
+      if (heatExchangerIndex >= 0 && unit instanceof HeatExchanger) {
+        return ((HeatExchanger) unit).getOutStream(heatExchangerIndex);
+      }
+      if (unit instanceof HeatExchanger) {
+        return ((HeatExchanger) unit).getOutStream(0);
+      }
+      return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+    } catch (Exception exception) {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets != null && !outlets.isEmpty()) {
+        return outlets.get(0);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Parses a non-negative integer suffix from a port name.
+   *
+   * @param value port name to parse
+   * @param prefix expected prefix before the number
+   * @return parsed suffix, or {@code -1} when the value does not match
+   */
+  private int parseNumericSuffix(String value, String prefix) {
+    if (value == null || !value.startsWith(prefix) || value.length() <= prefix.length()) {
+      return -1;
+    }
+    try {
+      return Integer.parseInt(value.substring(prefix.length()));
+    } catch (NumberFormatException exception) {
+      return -1;
+    }
+  }
+
+  /**
+   * Replaces one inlet reference on an equipment unit with a live inter-area stream.
+   *
+   * @param targetUnit equipment whose inlet should be replaced
+   * @param targetInletIndex zero-based inlet index
+   * @param sourceStream replacement source stream
+   * @return true if the inlet was replaced
+   */
+  private boolean replaceInletReference(ProcessEquipmentInterface targetUnit, int targetInletIndex,
+      StreamInterface sourceStream) {
+    if (targetUnit instanceof HeatExchanger) {
+      try {
+        ((HeatExchanger) targetUnit).setFeedStream(targetInletIndex, sourceStream);
+        return true;
+      } catch (Exception exception) {
+        return false;
+      }
+    }
+    if (invokeIndexedStreamReplacement(targetUnit, targetInletIndex, sourceStream)) {
+      return true;
+    }
+    if (targetInletIndex == 0 && invokeSingleInletSetter(targetUnit, sourceStream)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Invokes a {@code replaceStream(int, StreamInterface)} style method when available.
+   *
+   * @param targetUnit equipment whose inlet should be replaced
+   * @param targetInletIndex zero-based inlet index
+   * @param sourceStream replacement source stream
+   * @return true if a replacement method existed and completed
+   */
+  private boolean invokeIndexedStreamReplacement(ProcessEquipmentInterface targetUnit,
+      int targetInletIndex, StreamInterface sourceStream) {
+    try {
+      java.lang.reflect.Method replaceStream =
+          targetUnit.getClass().getMethod("replaceStream", int.class, StreamInterface.class);
+      replaceStream.invoke(targetUnit, targetInletIndex, sourceStream);
+      return true;
+    } catch (Exception exception) {
+      return false;
+    }
+  }
+
+  /**
+   * Invokes a single-inlet setter on equipment with one inlet.
+   *
+   * @param targetUnit equipment whose inlet should be replaced
+   * @param sourceStream replacement source stream
+   * @return true if a setter existed and completed
+   */
+  private boolean invokeSingleInletSetter(ProcessEquipmentInterface targetUnit,
+      StreamInterface sourceStream) {
+    try {
+      java.lang.reflect.Method setInletStream =
+          targetUnit.getClass().getMethod("setInletStream", StreamInterface.class);
+      setInletStream.invoke(targetUnit, sourceStream);
+      return true;
+    } catch (Exception firstException) {
+      try {
+        java.lang.reflect.Method setFeedStream =
+            targetUnit.getClass().getMethod("setFeedStream", StreamInterface.class);
+        setFeedStream.invoke(targetUnit, sourceStream);
+        return true;
+      } catch (Exception secondException) {
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Gets inlet streams from equipment with a reflection fallback for legacy unit operations.
+   *
+   * @param unit equipment unit to inspect
+   * @return list of current inlet streams, possibly empty
+   */
+  private List<StreamInterface> getEquipmentInletStreams(ProcessEquipmentInterface unit) {
+    List<StreamInterface> inlets = new ArrayList<>();
+    try {
+      List<StreamInterface> listedInlets = unit.getInletStreams();
+      if (listedInlets != null) {
+        for (StreamInterface inlet : listedInlets) {
+          if (inlet != null) {
+            inlets.add(inlet);
+          }
+        }
+      }
+    } catch (Exception exception) {
+      // Fall back below for equipment without robust getInletStreams support.
+    }
+    if (inlets.isEmpty()) {
+      try {
+        StreamInterface inlet =
+            (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
+        if (inlet != null) {
+          inlets.add(inlet);
+        }
+      } catch (Exception exception) {
+        // No single inlet accessor available.
+      }
+    }
+    return inlets;
   }
 
   /**

@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
@@ -97,16 +100,16 @@ class JsonProcessExporterTest {
     JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 
     int processSize = root.getAsJsonArray("process").size();
-    assertTrue(processSize == 4, "Should have 4 units (feed + sep + comp + valve), got: "
-        + processSize);
+    assertTrue(processSize == 4,
+        "Should have 4 units (feed + sep + comp + valve), got: " + processSize);
 
     // Check types in order
-    String type0 = root.getAsJsonArray("process").get(0).getAsJsonObject().get("type")
-        .getAsString();
+    String type0 =
+        root.getAsJsonArray("process").get(0).getAsJsonObject().get("type").getAsString();
     assertTrue("Stream".equals(type0), "First unit should be Stream, got: " + type0);
 
-    String type1 = root.getAsJsonArray("process").get(1).getAsJsonObject().get("type")
-        .getAsString();
+    String type1 =
+        root.getAsJsonArray("process").get(1).getAsJsonObject().get("type").getAsString();
     assertTrue("Separator".equals(type1), "Second unit should be Separator, got: " + type1);
   }
 
@@ -158,8 +161,7 @@ class JsonProcessExporterTest {
 
     // Rebuild from JSON
     SimulationResult result = ProcessSystem.fromJsonAndRun(json);
-    assertTrue(result.isSuccess(),
-        "Round-trip build should succeed: " + result);
+    assertTrue(result.isSuccess(), "Round-trip build should succeed: " + result);
 
     ProcessSystem rebuilt = result.getProcessSystem();
     assertNotNull(rebuilt, "Rebuilt process should not be null");
@@ -281,5 +283,145 @@ class JsonProcessExporterTest {
         "separation area should have at least feed + separator");
     assertTrue(rebuilt.get("compression").getUnitOperations().size() >= 2,
         "compression area should have at least feed + compressor");
+  }
+
+  @Test
+  void testProcessModelExportMaterializesExternalAreaInlet() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 80.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(40000.0, "kg/hr");
+    Separator separator = new Separator("HP Sep", feed);
+
+    ProcessSystem separation = new ProcessSystem();
+    separation.add(feed);
+    separation.add(separator);
+    separation.run();
+
+    Cooler downstreamCooler = new Cooler("Downstream Cooler", separator.getGasOutStream());
+    downstreamCooler.setOutletTemperature(273.15 + 25.0);
+
+    ProcessSystem downstream = new ProcessSystem();
+    downstream.add(downstreamCooler);
+    downstream.run();
+
+    ProcessModel model = new ProcessModel();
+    model.add("separation", separation);
+    model.add("downstream", downstream);
+
+    String json = model.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.has("interAreaLinks"), "Model export should include live inter-area links");
+    assertEquals(1, root.getAsJsonArray("interAreaLinks").size());
+    JsonObject link = root.getAsJsonArray("interAreaLinks").get(0).getAsJsonObject();
+    assertEquals("separation", link.get("sourceArea").getAsString());
+    assertEquals("HP Sep.gasOut", link.get("source").getAsString());
+    assertEquals("downstream", link.get("targetArea").getAsString());
+    assertEquals("Downstream Cooler", link.get("targetUnit").getAsString());
+
+    JsonObject downstreamJson = root.getAsJsonObject("areas").getAsJsonObject("downstream");
+    assertTrue(downstreamJson.has("fluids"), "External inlet fluid should be exported by name");
+
+    JsonObject boundaryStream = downstreamJson.getAsJsonArray("process").get(0).getAsJsonObject();
+    assertEquals("Stream", boundaryStream.get("type").getAsString());
+    assertTrue(boundaryStream.get("name").getAsString().startsWith("boundary_"));
+    assertTrue(boundaryStream.has("fluidRef"));
+
+    JsonObject coolerJson = downstreamJson.getAsJsonArray("process").get(1).getAsJsonObject();
+    assertEquals(boundaryStream.get("name").getAsString(), coolerJson.get("inlet").getAsString());
+
+    SimulationResult result = new JsonProcessBuilder().build(downstreamJson.toString());
+    assertTrue(result.isSuccess(), "Downstream area should rebuild: " + result.toJson());
+    assertTrue(result.getWarnings().isEmpty(),
+        "Materialized boundary stream should avoid unresolved inlet warnings: "
+            + result.getWarnings());
+
+    ProcessModel rebuilt = ProcessModel.fromJson(json);
+    Separator rebuiltSeparator = (Separator) rebuilt.get("separation").getUnit("HP Sep");
+    Cooler rebuiltCooler = (Cooler) rebuilt.get("downstream").getUnit("Downstream Cooler");
+    assertTrue(rebuiltCooler.getInletStreams().get(0) == rebuiltSeparator.getGasOutStream(),
+        "Whole-model import should restore the live shared stream, not only the boundary copy");
+  }
+
+  @Test
+  void testManifoldRoundTripPreservesInletsAndSplitFactors() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 20.0, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feedA = new Stream("feed A", fluid.clone());
+    feedA.setFlowRate(100.0, "kg/hr");
+    Stream feedB = new Stream("feed B", fluid.clone());
+    feedB.setFlowRate(300.0, "kg/hr");
+
+    Manifold manifold = new Manifold("test manifold");
+    manifold.addStream(feedA);
+    manifold.addStream(feedB);
+    manifold.setSplitFactors(new double[] {0.25, 0.75});
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feedA);
+    process.add(feedB);
+    process.add(manifold);
+    process.run();
+
+    String json = process.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    JsonObject manifoldJson = root.getAsJsonArray("process").get(2).getAsJsonObject();
+    assertEquals("Manifold", manifoldJson.get("type").getAsString());
+    assertEquals(2, manifoldJson.getAsJsonArray("inlets").size());
+    assertEquals(2,
+        manifoldJson.getAsJsonObject("properties").getAsJsonArray("splitFactors").size());
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertTrue(result.isSuccess(), "Manifold process should rebuild: " + result.toJson());
+    assertTrue(result.getWarnings().isEmpty(),
+        "Manifold round-trip should not produce warnings: " + result.getWarnings());
+
+    Manifold rebuilt = (Manifold) result.getProcessSystem().getUnit("test manifold");
+    assertEquals(2, rebuilt.getInletStreams().size());
+    assertEquals(2, rebuilt.getOutletStreams().size());
+    assertEquals(100.0, rebuilt.getSplitStream(0).getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(300.0, rebuilt.getSplitStream(1).getFlowRate("kg/hr"), 1.0e-6);
+  }
+
+  @Test
+  void testHeatExchangerRoundTripPreservesTwoInlets() {
+    SystemInterface hotFluid = new SystemSrkEos(273.15 + 80.0, 30.0);
+    hotFluid.addComponent("methane", 1.0);
+    hotFluid.setMixingRule("classic");
+    SystemInterface coldFluid = new SystemSrkEos(273.15 + 20.0, 30.0);
+    coldFluid.addComponent("methane", 1.0);
+    coldFluid.setMixingRule("classic");
+
+    Stream hotFeed = new Stream("hot feed", hotFluid);
+    hotFeed.setFlowRate(100.0, "kg/hr");
+    Stream coldFeed = new Stream("cold feed", coldFluid);
+    coldFeed.setFlowRate(100.0, "kg/hr");
+
+    HeatExchanger heatExchanger = new HeatExchanger("test heat exchanger", hotFeed);
+    heatExchanger.setFeedStream(1, coldFeed);
+    heatExchanger.setUAvalue(1000.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(hotFeed);
+    process.add(coldFeed);
+    process.add(heatExchanger);
+    process.run();
+
+    String json = process.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    JsonObject heatExchangerJson = root.getAsJsonArray("process").get(2).getAsJsonObject();
+    assertEquals("HeatExchanger", heatExchangerJson.get("type").getAsString());
+    assertEquals(2, heatExchangerJson.getAsJsonArray("inlets").size());
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertTrue(result.isSuccess(), "Heat exchanger process should rebuild: " + result.toJson());
+    assertTrue(result.getWarnings().isEmpty(),
+        "Heat exchanger round-trip should not produce warnings: " + result.getWarnings());
   }
 }

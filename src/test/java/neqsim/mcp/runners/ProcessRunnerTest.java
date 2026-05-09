@@ -111,6 +111,8 @@ class ProcessRunnerTest {
     assertEquals(2, root.get("areaCount").getAsInt());
     assertTrue(root.has("areas"));
     assertTrue(root.has("report"));
+    assertTrue(root.has("convergenceSummary"));
+    assertTrue(root.get("convergenceSummary").getAsString().contains("ProcessModel"));
   }
 
   @Test
@@ -149,7 +151,10 @@ class ProcessRunnerTest {
             + "\"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
             + "{\"type\": \"Compressor\", \"name\": \"Comp\", \"inlet\": \"compFeed\","
             + "\"properties\": {\"outletPressure\": [80.0, \"bara\"]}}" + "]}";
-    return "{\"areas\": {\"separation\": " + separation + ", \"compression\": " + compression
-        + "}}";
+    String interAreaLinks = "\"interAreaLinks\": [{\"sourceArea\": \"separation\","
+        + "\"source\": \"Sep.gasOut\", \"targetArea\": \"compression\","
+        + "\"targetUnit\": \"Comp\", \"targetInletIndex\": 0}]";
+    return "{\"areas\": {\"separation\": " + separation + ", \"compression\": " + compression + "},"
+        + interAreaLinks + "}";
   }
 }

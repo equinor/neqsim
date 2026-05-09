@@ -15,6 +15,7 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
@@ -274,15 +275,18 @@ public class JsonProcessBuilder {
             warnings.add("Skipping connections[" + i + "] - requires non-empty 'from' and 'to'");
             continue;
           }
-          String sourcePort = conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
-          String targetPort = conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
+          String sourcePort =
+              conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
+          String targetPort =
+              conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
           ProcessConnection.ConnectionType type = ProcessConnection.ConnectionType.MATERIAL;
           if (conn.has("type")) {
             try {
-              type = ProcessConnection.ConnectionType.valueOf(conn.get("type").getAsString().toUpperCase());
+              type = ProcessConnection.ConnectionType
+                  .valueOf(conn.get("type").getAsString().toUpperCase());
             } catch (Exception ex) {
-              warnings.add("connections[" + i + "] has unknown type '" + conn.get("type").getAsString()
-                  + "' - defaulting to MATERIAL");
+              warnings.add("connections[" + i + "] has unknown type '"
+                  + conn.get("type").getAsString() + "' - defaulting to MATERIAL");
             }
           }
           process.connect(from, sourcePort, to, targetPort, type);
@@ -681,14 +685,14 @@ public class JsonProcessBuilder {
           resolved.add(stream);
         }
       }
-      // For Mixer: wire whatever inlets we have (partial is OK)
+      // For Mixer/Manifold: wire whatever inlets we have (partial is OK)
       // For HeatExchanger: need both sides
-      if (equipment instanceof Mixer && !resolved.isEmpty()) {
+      if ((equipment instanceof Mixer || equipment instanceof Manifold) && !resolved.isEmpty()) {
         for (StreamInterface stream : resolved) {
           wireInletStream(equipment, stream);
         }
         if (!allResolved) {
-          warnings.add("Mixer '" + name + "' wired with " + resolved.size() + " of "
+          warnings.add("Mixer/manifold '" + name + "' wired with " + resolved.size() + " of "
               + inletsArr.size() + " inlets (some not found)");
         }
       } else if (equipment instanceof HeatExchanger && resolved.size() == 2) {
@@ -728,6 +732,14 @@ public class JsonProcessBuilder {
           splitFact[i] = factors.get(i).getAsDouble();
         }
         ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+      }
+      if (equipment instanceof Manifold && props.has("splitFactors")) {
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((Manifold) equipment).setSplitFactors(splitFact);
       }
       // Handle Adjuster: wire adjusted/target variables by equipment reference
       if (equipment instanceof Adjuster
@@ -921,6 +933,18 @@ public class JsonProcessBuilder {
               // fall through to default outlet
             }
           }
+          // Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
+          // "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
+          if (port.startsWith("outlet") && port.length() > 6) {
+            try {
+              int idx = Integer.parseInt(port.substring(6));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           // Handle HeatExchanger which uses getOutStream(int) instead of
           // getOutletStream()
           if (unit instanceof HeatExchanger) {
@@ -1025,7 +1049,8 @@ public class JsonProcessBuilder {
     }
   }
 
-  private void applyMechanicalDesignProperties(ProcessEquipmentInterface equipment, JsonObject mdProps) {
+  private void applyMechanicalDesignProperties(ProcessEquipmentInterface equipment,
+      JsonObject mdProps) {
     try {
       equipment.initMechanicalDesign();
       Object design = equipment.getMechanicalDesign();
@@ -1035,19 +1060,22 @@ public class JsonProcessBuilder {
       }
       for (Map.Entry<String, JsonElement> entry : mdProps.entrySet()) {
         String key = entry.getKey();
-        if ("calcDesign".equalsIgnoreCase(key) || "readDesignSpecifications".equalsIgnoreCase(key)) {
+        if ("calcDesign".equalsIgnoreCase(key)
+            || "readDesignSpecifications".equalsIgnoreCase(key)) {
           continue;
         }
         applyPropertyObject(design, equipment.getName(), key, entry.getValue());
       }
-      if (mdProps.has("readDesignSpecifications") && mdProps.get("readDesignSpecifications").getAsBoolean()) {
+      if (mdProps.has("readDesignSpecifications")
+          && mdProps.get("readDesignSpecifications").getAsBoolean()) {
         invokeNoArg(design, equipment.getName(), "readDesignSpecifications");
       }
       if (mdProps.has("calcDesign") && mdProps.get("calcDesign").getAsBoolean()) {
         invokeNoArg(design, equipment.getName(), "calcDesign");
       }
     } catch (Exception e) {
-      warnings.add("Error applying mechanicalDesign on " + equipment.getName() + ": " + e.getMessage());
+      warnings
+          .add("Error applying mechanicalDesign on " + equipment.getName() + ": " + e.getMessage());
     }
   }
 
@@ -1183,8 +1211,7 @@ public class JsonProcessBuilder {
         if (value.getAsJsonPrimitive().isNumber()) {
           // Try double setter first
           try {
-            java.lang.reflect.Method method =
-                target.getClass().getMethod(setterName, double.class);
+            java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class);
             method.invoke(target, value.getAsDouble());
           } catch (NoSuchMethodException e) {
             // Try int setter
@@ -1192,18 +1219,16 @@ public class JsonProcessBuilder {
             method.invoke(target, value.getAsInt());
           }
         } else if (value.getAsJsonPrimitive().isBoolean()) {
-          java.lang.reflect.Method method =
-              target.getClass().getMethod(setterName, boolean.class);
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, boolean.class);
           method.invoke(target, value.getAsBoolean());
         } else if (value.getAsJsonPrimitive().isString()) {
-          java.lang.reflect.Method method =
-              target.getClass().getMethod(setterName, String.class);
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, String.class);
           method.invoke(target, value.getAsString());
         }
       }
     } catch (NoSuchMethodException e) {
-      warnings.add("Property '" + propName + "' not found on " + targetName + " (tried "
-          + setterName + ")");
+      warnings.add(
+          "Property '" + propName + "' not found on " + targetName + " (tried " + setterName + ")");
     } catch (Exception e) {
       warnings.add("Error setting '" + propName + "' on " + targetName + ": " + e.getMessage());
     }

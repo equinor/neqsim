@@ -2,6 +2,7 @@ package neqsim.process.equipment.manifold;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -99,6 +100,18 @@ public class Manifold extends ProcessEquipmentBaseClass
    */
   public void addStream(StreamInterface newStream) {
     localmixer.addStream(newStream);
+    refreshLocalSplitter();
+  }
+
+  /**
+   * Replaces one inlet stream in the manifold mixer and refreshes the local splitter.
+   *
+   * @param index zero-based inlet stream index
+   * @param newStream replacement inlet stream
+   */
+  public void replaceStream(int index, StreamInterface newStream) {
+    localmixer.replaceStream(index, newStream);
+    refreshLocalSplitter();
   }
 
   /**
@@ -110,8 +123,16 @@ public class Manifold extends ProcessEquipmentBaseClass
    */
   public void setSplitFactors(double[] splitFact) {
     splitFactors = splitFact;
-    localsplitter.setInletStream(localmixer.getOutletStream());
-    localsplitter.setSplitFactors(splitFactors);
+    refreshLocalSplitter();
+  }
+
+  /**
+   * Gets the manifold outlet split factors.
+   *
+   * @return split factor array
+   */
+  public double[] getSplitFactors() {
+    return splitFactors;
   }
 
   /**
@@ -123,7 +144,12 @@ public class Manifold extends ProcessEquipmentBaseClass
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getSplitStream(int i) {
-    return localsplitter.getSplitStream(i);
+    refreshLocalSplitter();
+    List<StreamInterface> outletStreams = localsplitter.getOutletStreams();
+    if (i < 0 || i >= outletStreams.size()) {
+      return null;
+    }
+    return outletStreams.get(i);
   }
 
   /**
@@ -139,10 +165,35 @@ public class Manifold extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public List<StreamInterface> getInletStreams() {
+    return localmixer.getInletStreams();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    refreshLocalSplitter();
+    return localsplitter.getOutletStreams();
+  }
+
+  /**
+   * Reconnects the local splitter to the current mixer outlet when the mixer has at least one feed.
+   */
+  private void refreshLocalSplitter() {
+    StreamInterface mixedStream = localmixer.getOutletStream();
+    if (mixedStream == null || splitFactors == null || splitFactors.length == 0) {
+      return;
+    }
+    localsplitter.setInletStream(mixedStream);
+    localsplitter.setSplitFactors(splitFactors);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     localmixer.run(id);
-    localsplitter.setInletStream(localmixer.getOutletStream());
-    localsplitter.run();
+    refreshLocalSplitter();
+    localsplitter.run(id);
   }
 
   /** {@inheritDoc} */
@@ -159,7 +210,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * @return number of split streams
    */
   public int getNumberOfOutputStreams() {
-    return localsplitter.getSplitFactors().length;
+    return splitFactors.length;
   }
 
   // ============================================================================
