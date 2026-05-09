@@ -13,6 +13,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.AntiSurge;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.compressor.SafeSplineStoneWallCurve;
+import neqsim.process.equipment.compressor.SafeSplineSurgeCurve;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.manifold.Manifold;
@@ -23,7 +28,10 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.thermo.component.ComponentEos;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -189,6 +197,10 @@ public class JsonProcessBuilder {
           if (eq instanceof Adjuster
               && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
             wireAdjuster((Adjuster) eq, props);
+          }
+          if (eq instanceof Calculator
+              && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
+            wireCalculator((Calculator) eq, props);
           }
           applyProperties(eq, props);
         }
@@ -371,26 +383,24 @@ public class JsonProcessBuilder {
           double omega = cc.get("acentricFactor").getAsDouble();
           boolean isPlusFraction =
               cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
+          int compIdx;
           if (isPlusFraction) {
             fluid.addPlusFraction(compName, moleFraction, molarMass, density);
-            int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
-            fluid.getPhase(0).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(0).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
-            fluid.getPhase(1).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(1).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(1).getComponent(compIdx).setAcentricFactor(omega);
+            compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            applyComponentPropertiesToIndex(fluid, compIdx, cc);
           } else {
             fluid.addTBPfraction(compName, moleFraction, molarMass, density);
-            int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
-            fluid.getPhase(0).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(0).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
-            fluid.getPhase(1).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(1).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(1).getComponent(compIdx).setAcentricFactor(omega);
+            compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            applyComponentPropertiesToIndex(fluid, compIdx, cc);
           }
+          fluid.getPhase(0).getComponent(compIdx).setTC(tc);
+          fluid.getPhase(0).getComponent(compIdx).setPC(pc);
+          fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
         }
+      }
+
+      if (!fluidDef.has("e300FilePath") && fluidDef.has("componentProperties")) {
+        applyComponentProperties(fluid, fluidDef.getAsJsonArray("componentProperties"));
       }
 
       // Set mixing rule
@@ -400,19 +410,15 @@ public class JsonProcessBuilder {
         fluid.setMixingRule(mixingRule);
       }
 
+      if (fluidDef.has("useVolumeCorrection")) {
+        fluid.useVolumeCorrection(fluidDef.get("useVolumeCorrection").getAsBoolean());
+      }
+
       // Apply binary interaction parameters (BICs)
       if (!fluidDef.has("e300FilePath") && fluidDef.has("binaryInteractionParameters")) {
         // Build a mapping from exported names to actual system names
         // addTBPfraction appends "_PC" to component names
-        Map<String, String> nameMap = new HashMap<>();
-        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-          String sysName = fluid.getPhase(0).getComponent(i).getComponentName();
-          nameMap.put(sysName, sysName);
-          // Also map the name without _PC suffix
-          if (sysName.endsWith("_PC")) {
-            nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
-          }
-        }
+        Map<String, String> nameMap = createComponentNameMap(fluid);
 
         JsonArray bics = fluidDef.getAsJsonArray("binaryInteractionParameters");
         for (int i = 0; i < bics.size(); i++) {
@@ -446,6 +452,134 @@ public class JsonProcessBuilder {
           "Failed to create fluid: " + e.getMessage(), null,
           "Check component names and fluid parameters"));
       return null;
+    }
+  }
+
+  /**
+   * Applies component property overrides to all matching components in a fluid.
+   *
+   * @param fluid the fluid to update
+   * @param componentProperties component property definitions from JSON
+   */
+  private void applyComponentProperties(SystemInterface fluid, JsonArray componentProperties) {
+    Map<String, String> nameMap = createComponentNameMap(fluid);
+    for (int i = 0; i < componentProperties.size(); i++) {
+      JsonObject props = componentProperties.get(i).getAsJsonObject();
+      if (!props.has("name")) {
+        continue;
+      }
+      String mappedName = nameMap.get(props.get("name").getAsString());
+      if (mappedName != null) {
+        applyComponentPropertiesToName(fluid, mappedName, props);
+      }
+    }
+  }
+
+  /**
+   * Creates a map from exported component names to actual names used in the rebuilt fluid.
+   *
+   * @param fluid the rebuilt fluid
+   * @return a component-name lookup map
+   */
+  private Map<String, String> createComponentNameMap(SystemInterface fluid) {
+    Map<String, String> nameMap = new HashMap<String, String>();
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      String sysName = fluid.getPhase(0).getComponent(i).getComponentName();
+      nameMap.put(sysName, sysName);
+      if (sysName.endsWith("_PC")) {
+        nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
+      }
+    }
+    return nameMap;
+  }
+
+  /**
+   * Applies component property overrides to a component selected by component index.
+   *
+   * @param fluid the fluid to update
+   * @param componentIndex the component index in each phase
+   * @param props the property definitions to apply
+   */
+  private void applyComponentPropertiesToIndex(SystemInterface fluid, int componentIndex,
+      JsonObject props) {
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      try {
+        applyComponentProperties(fluid.getPhase(phase).getComponent(componentIndex), props);
+      } catch (Exception ex) {
+        logger.debug("Could not apply component properties to phase {} component index {}", phase,
+            componentIndex, ex);
+      }
+    }
+  }
+
+  /**
+   * Applies component property overrides to a component selected by component name.
+   *
+   * @param fluid the fluid to update
+   * @param componentName the component name used in the rebuilt fluid
+   * @param props the property definitions to apply
+   */
+  private void applyComponentPropertiesToName(SystemInterface fluid, String componentName,
+      JsonObject props) {
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      try {
+        applyComponentProperties(fluid.getPhase(phase).getComponent(componentName), props);
+      } catch (Exception ex) {
+        logger.debug("Could not apply component properties to phase {} component {}", phase,
+            componentName, ex);
+      }
+    }
+  }
+
+  /**
+   * Applies scalar component property overrides to a component.
+   *
+   * @param component the component to update
+   * @param props the property definitions to apply
+   */
+  private void applyComponentProperties(ComponentInterface component, JsonObject props) {
+    if (props.has("molarMass")) {
+      component.setMolarMass(props.get("molarMass").getAsDouble());
+    }
+    if (props.has("density")) {
+      component.setNormalLiquidDensity(props.get("density").getAsDouble());
+    } else if (props.has("normalLiquidDensity")) {
+      component.setNormalLiquidDensity(props.get("normalLiquidDensity").getAsDouble());
+    }
+    if (props.has("Tc")) {
+      component.setTC(props.get("Tc").getAsDouble());
+    } else if (props.has("criticalTemperature")) {
+      component.setTC(props.get("criticalTemperature").getAsDouble());
+    }
+    if (props.has("Pc")) {
+      component.setPC(props.get("Pc").getAsDouble());
+    } else if (props.has("criticalPressure")) {
+      component.setPC(props.get("criticalPressure").getAsDouble());
+    }
+    if (props.has("acentricFactor")) {
+      component.setAcentricFactor(props.get("acentricFactor").getAsDouble());
+    }
+    if (props.has("normalBoilingPoint")) {
+      component.setNormalBoilingPoint(props.get("normalBoilingPoint").getAsDouble());
+    }
+    if (props.has("criticalVolume")) {
+      component.setCriticalVolume(props.get("criticalVolume").getAsDouble());
+    }
+    if (props.has("parachor")) {
+      component.setParachorParameter(props.get("parachor").getAsDouble());
+    } else if (props.has("parachorParameter")) {
+      component.setParachorParameter(props.get("parachorParameter").getAsDouble());
+    }
+    if (props.has("racketZ")) {
+      component.setRacketZ(props.get("racketZ").getAsDouble());
+    }
+    if (props.has("volumeCorrection")) {
+      component.setVolumeCorrectionConst(props.get("volumeCorrection").getAsDouble());
+    } else if (props.has("volumeShift")) {
+      component.setVolumeCorrectionConst(props.get("volumeShift").getAsDouble());
+    }
+    if (props.has("omegaA") && component instanceof ComponentEos) {
+      ((ComponentEos) component).setOmegaA(props.get("omegaA").getAsDouble());
     }
   }
 
@@ -517,7 +651,10 @@ public class JsonProcessBuilder {
         // so that setInletStream creates the right number of split streams
         if (equipment instanceof Splitter && unitDef.has("properties")) {
           JsonObject props = unitDef.getAsJsonObject("properties");
-          if (props.has("splitFactors")) {
+          if (props.has("flowRates")) {
+            int nSplits = props.getAsJsonArray("flowRates").size();
+            ((Splitter) equipment).setSplitNumber(nSplits);
+          } else if (props.has("splitFactors")) {
             int nSplits = props.getAsJsonArray("splitFactors").size();
             ((Splitter) equipment).setSplitNumber(nSplits);
           }
@@ -717,7 +854,15 @@ public class JsonProcessBuilder {
     if (unitDef.has("properties")) {
       JsonObject props = unitDef.getAsJsonObject("properties");
       // Handle split factors specially (Splitter needs inlet stream first)
-      if (equipment instanceof Splitter && props.has("splitFactors")) {
+      if (equipment instanceof Splitter && props.has("flowRates")) {
+        JsonArray flowRates = props.getAsJsonArray("flowRates");
+        double[] splitFlowRates = new double[flowRates.size()];
+        for (int i = 0; i < flowRates.size(); i++) {
+          splitFlowRates[i] = flowRates.get(i).getAsDouble();
+        }
+        String flowUnit = props.has("flowUnit") ? props.get("flowUnit").getAsString() : "mole/sec";
+        ((Splitter) equipment).setFlowRates(splitFlowRates, flowUnit);
+      } else if (equipment instanceof Splitter && props.has("splitFactors")) {
         JsonArray factors = props.getAsJsonArray("splitFactors");
         double[] splitFact = new double[factors.size()];
         for (int i = 0; i < factors.size(); i++) {
@@ -745,6 +890,10 @@ public class JsonProcessBuilder {
       if (equipment instanceof Adjuster
           && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
         wireAdjuster((Adjuster) equipment, props);
+      }
+      if (equipment instanceof Calculator
+          && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
+        wireCalculator((Calculator) equipment, props);
       }
       applyProperties(equipment, props);
     }
@@ -1028,8 +1177,18 @@ public class JsonProcessBuilder {
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
     // Properties that are handled by dedicated logic (not generic reflection)
     java.util.Set<String> handledProps =
-        new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "adjustedEquipment",
-            "adjustedVariable", "targetEquipment", "targetVariable", "targetValue", "stepSize"));
+        new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit",
+            "adjustedEquipment", "adjustedVariable", "targetEquipment", "targetVariable",
+            "targetValue", "stepSize", "compressorChart", "antiSurge", "calculatorInputs",
+            "calculatorOutput", "calculationType"));
+    if (equipment instanceof Compressor && properties.has("compressorChart")
+        && properties.get("compressorChart").isJsonObject()) {
+      applyCompressorChart((Compressor) equipment, properties.getAsJsonObject("compressorChart"));
+    }
+    if (equipment instanceof Compressor && properties.has("antiSurge")
+        && properties.get("antiSurge").isJsonObject()) {
+      applyAntiSurge((Compressor) equipment, properties.getAsJsonObject("antiSurge"));
+    }
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
       if (handledProps.contains(propName)) {
@@ -1047,6 +1206,228 @@ public class JsonProcessBuilder {
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
     }
+  }
+
+  /**
+   * Applies compressor chart data from JSON to a compressor.
+   *
+   * @param compressor the compressor to configure
+   * @param chartJson chart JSON object
+   */
+  private void applyCompressorChart(Compressor compressor, JsonObject chartJson) {
+    try {
+      if (chartJson.has("chartType")) {
+        compressor.setCompressorChartType(chartJson.get("chartType").getAsString());
+      }
+      CompressorChartInterface chart = compressor.getCompressorChart();
+      if (chartJson.has("headUnit")) {
+        chart.setHeadUnit(chartJson.get("headUnit").getAsString());
+      }
+      if (chartJson.has("useRealKappa")) {
+        chart.setUseRealKappa(chartJson.get("useRealKappa").getAsBoolean());
+      }
+      if (chartJson.has("speeds") && chartJson.has("flows") && chartJson.has("heads")
+          && chartJson.has("polytropicEfficiencies")) {
+        double[] chartConditions = chartJson.has("chartConditions")
+            ? readDoubleArray(chartJson.getAsJsonArray("chartConditions"))
+            : new double[0];
+        double[] speeds = readDoubleArray(chartJson.getAsJsonArray("speeds"));
+        double[][] flows = readDoubleMatrix(chartJson.getAsJsonArray("flows"));
+        double[][] heads = readDoubleMatrix(chartJson.getAsJsonArray("heads"));
+        double[][] efficiencies =
+            readDoubleMatrix(chartJson.getAsJsonArray("polytropicEfficiencies"));
+        if (speeds.length > 0) {
+          chart.setCurves(chartConditions, speeds, flows, heads, efficiencies);
+        }
+      }
+      if (chartJson.has("surgeCurve") && chartJson.get("surgeCurve").isJsonObject()) {
+        applySurgeCurve(chart, chartJson.getAsJsonObject("surgeCurve"));
+      }
+      if (chartJson.has("stoneWallCurve") && chartJson.get("stoneWallCurve").isJsonObject()) {
+        applyStoneWallCurve(chart, chartJson.getAsJsonObject("stoneWallCurve"));
+      }
+      if (chartJson.has("useCompressorChart")) {
+        chart.setUseCompressorChart(chartJson.get("useCompressorChart").getAsBoolean());
+      }
+    } catch (Exception exception) {
+      warnings.add("Error applying compressorChart on " + compressor.getName() + ": "
+          + exception.getMessage());
+    }
+  }
+
+  /**
+   * Applies an anti-surge controller configuration from JSON.
+   *
+   * @param compressor compressor owning the controller
+   * @param antiSurgeJson anti-surge JSON object
+   */
+  private void applyAntiSurge(Compressor compressor, JsonObject antiSurgeJson) {
+    AntiSurge antiSurge = compressor.getAntiSurge();
+    if (antiSurgeJson.has("active")) {
+      antiSurge.setActive(antiSurgeJson.get("active").getAsBoolean());
+    }
+    if (antiSurgeJson.has("surge")) {
+      antiSurge.setSurge(antiSurgeJson.get("surge").getAsBoolean());
+    }
+    if (antiSurgeJson.has("surgeControlFactor")) {
+      antiSurge.setSurgeControlFactor(antiSurgeJson.get("surgeControlFactor").getAsDouble());
+    }
+    if (antiSurgeJson.has("currentSurgeFraction")) {
+      antiSurge.setCurrentSurgeFraction(antiSurgeJson.get("currentSurgeFraction").getAsDouble());
+    }
+    if (antiSurgeJson.has("controlStrategy")) {
+      try {
+        antiSurge.setControlStrategy(
+            AntiSurge.ControlStrategy.valueOf(antiSurgeJson.get("controlStrategy").getAsString()));
+      } catch (IllegalArgumentException exception) {
+        warnings.add("Unknown antiSurge controlStrategy on " + compressor.getName() + ": "
+            + antiSurgeJson.get("controlStrategy").getAsString());
+      }
+    }
+    if (antiSurgeJson.has("minimumRecycleFlow")) {
+      antiSurge.setMinimumRecycleFlow(antiSurgeJson.get("minimumRecycleFlow").getAsDouble());
+    }
+    if (antiSurgeJson.has("maximumRecycleFlow")) {
+      antiSurge.setMaximumRecycleFlow(antiSurgeJson.get("maximumRecycleFlow").getAsDouble());
+    }
+    if (antiSurgeJson.has("valvePosition")) {
+      antiSurge.setValvePosition(antiSurgeJson.get("valvePosition").getAsDouble());
+    }
+    if (antiSurgeJson.has("valveResponseTime")) {
+      antiSurge.setValveResponseTime(antiSurgeJson.get("valveResponseTime").getAsDouble());
+    }
+    if (antiSurgeJson.has("valveRateLimit")) {
+      antiSurge.setValveRateLimit(antiSurgeJson.get("valveRateLimit").getAsDouble());
+    }
+    if (antiSurgeJson.has("targetValvePosition")) {
+      antiSurge.setTargetValvePosition(antiSurgeJson.get("targetValvePosition").getAsDouble());
+    }
+    if (antiSurgeJson.has("surgeControlLineOffset")) {
+      antiSurge
+          .setSurgeControlLineOffset(antiSurgeJson.get("surgeControlLineOffset").getAsDouble());
+    }
+    if (antiSurgeJson.has("useHotGasBypass")) {
+      antiSurge.setUseHotGasBypass(antiSurgeJson.get("useHotGasBypass").getAsBoolean());
+    }
+    if (antiSurgeJson.has("hotGasBypassFlow")) {
+      antiSurge.setHotGasBypassFlow(antiSurgeJson.get("hotGasBypassFlow").getAsDouble());
+    }
+    if (antiSurgeJson.has("surgeWarningMargin")) {
+      antiSurge.setSurgeWarningMargin(antiSurgeJson.get("surgeWarningMargin").getAsDouble());
+    }
+    if (antiSurgeJson.has("predictiveHorizon")) {
+      antiSurge.setPredictiveHorizon(antiSurgeJson.get("predictiveHorizon").getAsDouble());
+    }
+  }
+
+  /**
+   * Applies a surge curve to a compressor chart.
+   *
+   * @param chart compressor chart to update
+   * @param curveJson JSON curve definition
+   */
+  private void applySurgeCurve(CompressorChartInterface chart, JsonObject curveJson) {
+    boolean active = curveJson.has("active") && curveJson.get("active").getAsBoolean();
+    if (curveJson.has("flow") && curveJson.has("head")) {
+      SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve(
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
+      surgeCurve.setActive(active);
+      chart.setSurgeCurve(surgeCurve);
+    } else {
+      chart.getSurgeCurve().setActive(active);
+    }
+  }
+
+  /**
+   * Applies a stone wall curve to a compressor chart.
+   *
+   * @param chart compressor chart to update
+   * @param curveJson JSON curve definition
+   */
+  private void applyStoneWallCurve(CompressorChartInterface chart, JsonObject curveJson) {
+    boolean active = curveJson.has("active") && curveJson.get("active").getAsBoolean();
+    if (curveJson.has("flow") && curveJson.has("head")) {
+      SafeSplineStoneWallCurve stoneWallCurve = new SafeSplineStoneWallCurve(
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
+      stoneWallCurve.setActive(active);
+      chart.setStoneWallCurve(stoneWallCurve);
+    } else {
+      chart.getStoneWallCurve().setActive(active);
+    }
+  }
+
+  /**
+   * Wires calculator input and output equipment references from JSON.
+   *
+   * @param calculator the calculator to configure
+   * @param props calculator properties
+   */
+  private void wireCalculator(Calculator calculator, JsonObject props) {
+    if (props.has("calculatorInputs") && calculator.getInputVariable().isEmpty()) {
+      JsonArray inputs = props.getAsJsonArray("calculatorInputs");
+      for (JsonElement inputElement : inputs) {
+        ProcessEquipmentInterface input = namedEquipment.get(inputElement.getAsString());
+        if (input != null) {
+          calculator.addInputVariable(input);
+        } else {
+          warnings.add("Calculator '" + calculator.getName() + "' input equipment '"
+              + inputElement.getAsString() + "' not found");
+        }
+      }
+    }
+    if (props.has("calculatorOutput") && calculator.getOutputVariable() == null) {
+      String outputName = props.get("calculatorOutput").getAsString();
+      ProcessEquipmentInterface output = namedEquipment.get(outputName);
+      if (output != null) {
+        calculator.setOutputVariable(output);
+      } else {
+        warnings.add("Calculator '" + calculator.getName() + "' output equipment '" + outputName
+            + "' not found");
+      }
+    }
+  }
+
+  /**
+   * Reads a JSON array of numbers into a double array.
+   *
+   * @param array JSON array to read
+   * @return double array with the same numeric values
+   */
+  private double[] readDoubleArray(JsonArray array) {
+    double[] values = new double[array.size()];
+    for (int i = 0; i < array.size(); i++) {
+      values[i] = array.get(i).getAsDouble();
+    }
+    return values;
+  }
+
+  /**
+   * Ensures a boundary curve has a point count supported by safe spline curves.
+   *
+   * @param values original boundary curve values
+   * @return original values, or a three-point array with a midpoint inserted for two-point curves
+   */
+  private double[] ensureSplineBoundaryPointCount(double[] values) {
+    if (values.length != 2) {
+      return values;
+    }
+    return new double[] {values[0], 0.5 * (values[0] + values[1]), values[1]};
+  }
+
+  /**
+   * Reads a JSON matrix of numbers into a double matrix.
+   *
+   * @param matrix JSON array of numeric arrays
+   * @return double matrix with the same numeric values
+   */
+  private double[][] readDoubleMatrix(JsonArray matrix) {
+    double[][] values = new double[matrix.size()][];
+    for (int i = 0; i < matrix.size(); i++) {
+      values[i] = readDoubleArray(matrix.get(i).getAsJsonArray());
+    }
+    return values;
   }
 
   private void applyMechanicalDesignProperties(ProcessEquipmentInterface equipment,

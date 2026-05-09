@@ -265,6 +265,34 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   }
 
   /**
+   * Checks whether an explicit outlet-pressure specification has been set.
+   *
+   * @return true if the heater applies a specified outlet pressure during {@link #run(UUID)}
+   */
+  public boolean hasOutletPressureSpecification() {
+    return setOutPressure;
+  }
+
+  /**
+   * Gets the specified outlet pressure value.
+   *
+   * @return specified outlet pressure in {@link #getSpecifiedOutletPressureUnit()}, or 0.0 if not
+   *         specified
+   */
+  public double getSpecifiedOutletPressure() {
+    return pressureOut;
+  }
+
+  /**
+   * Gets the unit used for the specified outlet pressure.
+   *
+   * @return pressure unit string used by {@link #setOutletPressure(double, String)}
+   */
+  public String getSpecifiedOutletPressureUnit() {
+    return pressureUnit;
+  }
+
+  /**
    * <p>
    * Set the outlet temperature of the heater.
    * </p>

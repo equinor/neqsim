@@ -2695,19 +2695,25 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /** {@inheritDoc} */
   @Override
   public double getLength() {
-    return cumulativeLength;
+    return totalLength;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getElevation() {
-    return cumulativeElevation;
+    return totalElevation;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getDiameter() {
     return insideDiameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPipeWallRoughness() {
+    return pipeWallRoughness;
   }
 
   /**

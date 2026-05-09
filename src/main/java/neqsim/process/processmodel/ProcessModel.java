@@ -1838,6 +1838,7 @@ public class ProcessModel implements Runnable, Serializable {
       areas.add(entry.getKey(), entry.getValue());
     }
     root.add("areas", areas);
+    root.addProperty("runStep", isRunStep());
 
     JsonArray interAreaLinks = exportInterAreaLinks(producedStreamReferences);
     if (interAreaLinks.size() > 0) {
@@ -1966,6 +1967,9 @@ public class ProcessModel implements Runnable, Serializable {
     }
 
     ProcessModel model = new ProcessModel();
+    if (root.has("runStep")) {
+      model.setRunStep(root.get("runStep").getAsBoolean());
+    }
     com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
 
     for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {

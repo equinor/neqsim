@@ -185,6 +185,24 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Gets the configured outlet flow rates used to calculate split factors.
+   *
+   * @return a copy of the configured flow rates, or null if the splitter uses fixed split factors
+   */
+  public double[] getFlowRates() {
+    return flowRates == null ? null : Arrays.copyOf(flowRates, flowRates.length);
+  }
+
+  /**
+   * Gets the unit used for configured outlet flow rates.
+   *
+   * @return the flow-rate unit string used by {@link #setFlowRates(double[], String)}
+   */
+  public String getFlowUnit() {
+    return flowUnit;
+  }
+
+  /**
    * <p>
    * calcSplitFactors.
    * </p>
