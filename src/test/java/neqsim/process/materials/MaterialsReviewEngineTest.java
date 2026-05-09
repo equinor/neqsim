@@ -32,7 +32,7 @@ class MaterialsReviewEngineTest {
         .set("current_wall_thickness_mm", 15.2).set("minimum_required_thickness_mm", 11.0);
     input.addItem(new MaterialReviewItem().setTag("DEMO-LINE-001").setEquipmentType("Pipeline")
         .setExistingMaterial("Carbon Steel API 5L X65").setServiceEnvelope(service)
-      .addSourceReference("synthetic STID line-list row 1"));
+        .addSourceReference("synthetic STID line-list row 1"));
 
     MaterialsReviewReport report = new MaterialsReviewEngine().evaluate(input);
     JsonObject json = JsonParser.parseString(report.toJson()).getAsJsonObject();
@@ -71,7 +71,7 @@ class MaterialsReviewEngineTest {
   @Test
   void testStidSourceMergesMaterialAndInspectionRecordsByTag() {
     String stidJson = "{\n" + "  \"projectName\": \"Synthetic STID merge test\",\n"
-      + "  \"materialsRegister\": [{\n" + "    \"tag\": \"DEMO-PIPING-010\",\n"
+        + "  \"materialsRegister\": [{\n" + "    \"tag\": \"DEMO-PIPING-010\",\n"
         + "    \"equipmentType\": \"Piping\",\n" + "    \"material\": \"316L\",\n"
         + "    \"service\": {\"temperature_C\": 95.0, \"pressure_bara\": 20.0, "
         + "\"free_water\": true, \"chloride_mg_per_l\": 120000.0}\n" + "  }],\n"
@@ -93,7 +93,7 @@ class MaterialsReviewEngineTest {
   @Test
   void testTopLevelPayloadMergesStidData() {
     String json = "{\n" + "  \"projectName\": \"Synthetic STID payload\",\n" + "  \"stidData\": {\n"
-      + "    \"lineList\": [{\n" + "      \"tag\": \"DEMO-LINE-020\",\n"
+        + "    \"lineList\": [{\n" + "      \"tag\": \"DEMO-LINE-020\",\n"
         + "      \"equipmentType\": \"Piping\",\n" + "      \"material\": \"Carbon Steel\",\n"
         + "      \"service\": {\"temperature_C\": 70.0, \"pressure_bara\": 60.0, "
         + "\"free_water\": true, \"co2_mole_fraction\": 0.03}\n" + "    }]\n" + "  }\n" + "}";
