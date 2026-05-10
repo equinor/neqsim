@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 58 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 59 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (21 tools):
@@ -204,7 +204,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("58 tools registered", len(tools) == 58, f"got {len(tools)}: {tool_names}")
+    check("59 tools registered", len(tools) == 59, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",

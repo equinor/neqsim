@@ -292,7 +292,7 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 58 tools organized into three tiers plus platform tools,
+The server exposes 59 tools organized into three tiers plus platform tools,
 9 guided-workflow prompts, and 11 browsable resources.
 
 ## Complete Tool Inventory
@@ -747,7 +747,7 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 57 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 59 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
    `neqsim://components` and `neqsim://models` to discover available data.
@@ -799,7 +799,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 57 @Tool-annotated MCP tools
+    ├── NeqSimTools.java                   # 59 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 6 @Resource + 5 @ResourceTemplate (11 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -880,11 +880,11 @@ The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 58 tools across all three tiers:
+and validates all 59 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (58 tools, 6 resources, 5 templates) |
+| Protocol | 9 | Tool/resource/template registration (59 tools, 6 resources, 5 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
