@@ -144,6 +144,7 @@ public class CapacityConstraint implements Serializable {
    *
    * <p>
    * Typical values:
+   * </p>
    * <ul>
    * <li>"equipment" — set directly on the equipment object via API</li>
    * <li>"designCapacities" — supplied via JSON designCapacities input</li>
@@ -151,7 +152,6 @@ public class CapacityConstraint implements Serializable {
    * <li>"default" — a strategy-level default (not from actual equipment data)</li>
    * <li>"not_set" — no design value has been provided</li>
    * </ul>
-   * </p>
    */
   private String dataSource = "not_set";
 
@@ -557,8 +557,8 @@ public class CapacityConstraint implements Serializable {
    *
    * <p>
    * The data source indicates where the design/limit value came from, helping operators and agents
-   * understand the basis of utilization calculations. Common values: "equipment", "designCapacities",
-   * "mechanicalDesign", "default", "not_set".
+   * understand the basis of utilization calculations. Common values: "equipment",
+   * "designCapacities", "mechanicalDesign", "default", "not_set".
    * </p>
    *
    * @return the data source string

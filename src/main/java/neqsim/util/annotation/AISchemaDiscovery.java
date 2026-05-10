@@ -174,6 +174,16 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Constructor.
+     *
+     * @param name the parameter name
+     * @param type the Java type or schema type name
+     * @param description human-readable parameter description
+     * @param unit engineering unit, or an empty string when unitless
+     * @param minValue minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
+     * @param maxValue maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
+     * @param defaultValue default value represented as text, or an empty string when absent
+     * @param required whether the parameter is required by the exposed method
+     * @param options allowed option values, or an empty array when unrestricted
      */
     public ParameterSchema(String name, String type, String description, String unit,
         double minValue, double maxValue, String defaultValue, boolean required, String[] options) {
@@ -188,16 +198,28 @@ public class AISchemaDiscovery implements Serializable {
       this.options = options;
     }
 
+    /**
+     * Gets the parameter name.
+     *
+     * @return parameter name
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * Gets the parameter type.
+     *
+     * @return parameter type name
+     */
     public String getType() {
       return type;
     }
 
     /**
      * Convert to structured text for AI consumption.
+     *
+     * @return prompt-friendly parameter schema text
      */
     public String toPromptText() {
       StringBuilder sb = new StringBuilder();

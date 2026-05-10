@@ -340,6 +340,8 @@ public class PVTRegression {
 
   /**
    * Create the regression function with initial parameters.
+   *
+   * @return regression function initialized with current parameter guesses and bounds
    */
   private PVTRegressionFunction createRegressionFunction() {
     double[] initialGuess = new double[regressionParameters.size()];
@@ -362,6 +364,9 @@ public class PVTRegression {
 
   /**
    * Add CCE samples to the sample list.
+   *
+   * @param sampleList the list to add constant composition expansion samples to
+   * @param function the PVT regression function to clone for each sample
    */
   private void addCCESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CCE, 1.0);
@@ -379,6 +384,9 @@ public class PVTRegression {
 
   /**
    * Add CVD samples to the sample list.
+   *
+   * @param sampleList the list to add constant volume depletion samples to
+   * @param function the PVT regression function to clone for each sample
    */
   private void addCVDSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CVD, 1.0);
@@ -480,6 +488,8 @@ public class PVTRegression {
 
   /**
    * Apply optimized parameters to the tuned fluid.
+   *
+   * @param optimizedParams the optimized parameter values in regression parameter order
    */
   private void applyOptimizedParameters(double[] optimizedParams) {
     tunedFluid = baseFluid.clone();
@@ -496,6 +506,8 @@ public class PVTRegression {
 
   /**
    * Calculate objective function values for each experiment type.
+   *
+   * @return map of objective function values keyed by experiment type
    */
   private Map<ExperimentType, Double> calculateObjectiveValues() {
     Map<ExperimentType, Double> objectives = new HashMap<>();
