@@ -1,7 +1,7 @@
 ---
 name: neqsim-pid-process-operations
 version: "1.0.0"
-description: "P&ID-to-NeqSim operational workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim process simulations, linking equipment and instrument tags to plant historian data via tagreader, or evaluating the steady-state and dynamic effect of valve or equipment changes."
+description: "P&ID-to-NeqSim operational workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim process simulations, linking equipment and instrument tags to plant historian data via tagreader, evaluating steady-state and dynamic valve/equipment changes, or preparing water-hammer valve-closure handoffs."
 last_verified: "2026-05-10"
 requires:
   python_packages: [pandas]
@@ -33,6 +33,8 @@ private prompt file or local private skill.
   outlets, bypasses, recycles, drains, or alternate routing.
 - Evaluating dynamic effects of valve actions using `runTransient`, controllers,
   measurement devices, or dedicated blowdown/depressurization models.
+- Preparing `WaterHammerStudy` or MCP `runWaterHammer` inputs for fast liquid-line
+  valve closure, pump trip, or check-valve slam.
 
 ## Required Skill Stack
 
@@ -44,6 +46,7 @@ Use this skill with:
 - `neqsim-controllability-operability` for steady-state operating envelopes and
   control valve checks,
 - `neqsim-dynamic-simulation` for transient valve-action studies,
+- `neqsim-water-hammer` for hydraulic surge screening from fast liquid-line events,
 - `neqsim-depressurization-mdmt` for blowdown and minimum-temperature cases,
 - `neqsim-professional-reporting` for evidence traceability and report outputs.
 

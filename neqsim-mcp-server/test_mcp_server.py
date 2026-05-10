@@ -204,7 +204,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("59 tools registered", len(tools) == 59, f"got {len(tools)}: {tool_names}")
+    check("60 tools registered", len(tools) == 60, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -224,7 +224,8 @@ def test_protocol():
              "sizeEquipment", "compareProcesses", "validateResults",
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
              "runFlareNetwork", "runHAZOP", "runBarrierRegister",
-             "runSafetySystemPerformance", "runOperationalStudy"]
+             "runSafetySystemPerformance", "runOperationalStudy",
+             "runRootCauseAnalysis"]
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 

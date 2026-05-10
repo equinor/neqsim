@@ -3,8 +3,6 @@ title: "NeqSim MCP Server: LLM-Powered Thermodynamics"
 description: "Complete guide to the NeqSim MCP Server — a Quarkus-based Model Context Protocol server that gives any LLM (VS Code Copilot, Claude Desktop, Cursor) the ability to run rigorous thermodynamic flash calculations and process simulations through NeqSim. Covers installation, configuration, tools, resources, example conversations, testing, and troubleshooting."
 ---
 
-# NeqSim MCP Server: LLM-Powered Thermodynamics
-
 The NeqSim MCP Server is a [Model Context Protocol](https://modelcontextprotocol.io/) server
 that gives any LLM the ability to run rigorous thermodynamic calculations and process
 simulations through NeqSim. It ships as a single uber-jar (~55 MB) and communicates
@@ -18,6 +16,7 @@ via STDIO transport for local clients or Streamable HTTP for web-based clients.
 | **Phase equilibrium** | "How many phases exist for this rich gas at 0 °C and 100 bara?" |
 | **Physical properties** | "Get the density, viscosity, and thermal conductivity of natural gas at 25 °C, 80 bara" |
 | **Process simulation** | "Simulate gas going through a separator then a compressor to 120 bara" |
+| **Water hammer screening** | "Screen a water line for a 0.15 s ESD valve closure using STID route geometry and tagreader flow data" |
 | **Input validation** | "Check if my process JSON is valid before running it" |
 | **Component lookup** | "What components does NeqSim have that contain 'butane'?" |
 
@@ -34,12 +33,12 @@ neqsim-mcp-server/                         # Separate Maven project (Java 17+)
 ├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.12.0
 ├── test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                    # 56 @Tool MCP tools
+    ├── NeqSimTools.java                    # 50+ @Tool MCP tools
     ├── NeqSimResources.java                # 6 @Resource + 5 @ResourceTemplate
     └── NeqSimPrompts.java                  # 9 @Prompt guided workflows
 
 Delegates to the framework-agnostic core layer in neqsim (neqsim.mcp.*):
-├── runners/   → FlashRunner, ProcessRunner, Validator, ComponentQuery
+├── runners/   → FlashRunner, ProcessRunner, WaterHammerRunner, Validator, ComponentQuery
 ├── model/     → ApiEnvelope, FlashRequest, FlashResult, ValueWithUnit, DiagnosticIssue
 └── catalog/   → ExampleCatalog and SchemaCatalog for examples and JSON schemas
 ```
@@ -177,7 +176,9 @@ npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNA
 
 ## MCP Tools Reference
 
-The server exposes 6 tools via the Model Context Protocol.
+The server exposes the stable core tools plus advanced engineering tools via the
+Model Context Protocol. The sections below show the common entry points; use
+`getCapabilities`, `getExample`, and `getSchema` to discover the full tool set.
 
 ### 1. `runFlash` — Thermodynamic Flash Calculation
 
@@ -414,6 +415,33 @@ The LLM calls `runFlash` behind the scenes:
   "eos": "SRK", "flashType": "TP"
 }
 ```
+
+### Advanced: `runWaterHammer` — Water/Liquid Hammer Screening
+
+Screens hydraulic surge from fast valve closure, pump trip, check-valve slam, or
+other rapid liquid-flow changes. The tool accepts either a compact `pipe` object
+or STID/E3D-style `stidRoute.segments`, plus optional tagreader-style `fieldData`
+and an `eventSchedule`.
+
+Key outputs include maximum/minimum pressure envelopes, Joukowsky surge estimate,
+wave speed, acoustic round-trip time, Courant-limited timestep, and design-pressure
+validation flags.
+
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "runWaterHammer",
+    "arguments": {
+      "waterHammerJson": "{\"studyName\":\"ESD closure\",\"components\":{\"water\":1.0},\"temperature_C\":20.0,\"pressure_bara\":45.0,\"flowRate\":{\"value\":120000.0,\"unit\":\"kg/hr\"},\"designPressure_bara\":95.0,\"pipe\":{\"length_m\":1200.0,\"diameter_m\":0.2032,\"wallThickness_m\":0.0127,\"roughness_m\":0.000046,\"numberOfNodes\":80},\"eventSchedule\":[{\"type\":\"VALVE_CLOSURE\",\"startTime_s\":0.1,\"duration_s\":0.15,\"startOpening\":1.0,\"endOpening\":0.0}]}"
+    }
+  }
+}
+```
+
+For workflow-style agents, the same runner can be reached through `runPipeline`
+when the payload sets `mode`, `analysis`, or `studyType` to `waterHammer`,
+`liquidHammer`, or `hydraulicTransient`.
 
 > **Assistant:** The gas density is **62.3 kg/m3** at 80 bara and 35 °C.
 >

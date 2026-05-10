@@ -79,6 +79,7 @@ industrial validation.
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlowAssurance` | CALCULATION | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
+| `runWaterHammer` | CALCULATION | v1.5 | Water/liquid hammer screening for fast valve closures, pump trips, STID routes, tagreader event windows, and pressure envelopes |
 | `runMaterialsReview` | CALCULATION | v1.5 | Process-wide material selection, degradation, CUI, remaining-life, and STID-backed integrity review |
 | `crossValidateModels` | CALCULATION | v1.1 | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | CALCULATION | v1.1 | Multi-variable parametric sweep |
@@ -97,6 +98,7 @@ industrial validation.
 | `runBarrierRegister` | CALCULATION | v1.4 | Evidence-linked PSF/SCE barrier register validation with LOPA/SIL/bow-tie/QRA handoffs |
 | `runSafetySystemPerformance` | CALCULATION | v1.4 | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
 | `runOperationalStudy` | EXECUTION | v1.5 | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on local simulation copies |
+| `runRootCauseAnalysis` | CALCULATION | v1.6 | Bayesian root cause analysis integrating OREDA, historian, STID, and simulation for ranked failure hypotheses |
 
 ## Experimental Tools
 
@@ -150,6 +152,7 @@ and must not be used for engineering decisions without independent validation.
 | `design_gas_processing` | Step-by-step gas processing design |
 | `pvt_study` | Complete PVT study workflow |
 | `flow_assurance_screening` | Pipeline flow assurance screening |
+| `water_hammer_screening` | Fast valve-closure and pump-trip hydraulic surge screening |
 | `field_development_screening` | Field development concept screening |
 | `co2_ccs_chain` | CO2 CCS chain analysis |
 | `teg_dehydration_design` | TEG dehydration unit design |
@@ -228,6 +231,7 @@ of the server version.
 | 1.0 | 1.0.0+ | Initial stable release |
 | 1.1 | 1.1.0+ | Extended domain, session, workflow tools |
 | 1.2 | 1.2.0+ | Platform tools, industrial governance, benchmark trust |
+| 1.5 | 1.5.0+ | Operational evidence packages, materials review, and water-hammer screening |
 
 ---
 
@@ -290,7 +294,7 @@ requirements.
 | Category | Description | Examples |
 |----------|-------------|---------|
 | `ADVISORY` | Read-only discovery and validation; always allowed | `getCapabilities`, `getExample`, `getSchema`, `validateInput`, `searchComponents` |
-| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `runMaterialsReview`, `calculateStandard` |
+| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `runWaterHammer`, `runMaterialsReview`, `calculateStandard` |
 | `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `runOperationalStudy`, `manageSession`, `solveTask` |
 | `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
 
@@ -314,7 +318,7 @@ compareSimulationStates, diagnoseAutomation, getAutomationLearningReport,
 getProgress
 ```
 
-Tools such as `runFlowAssurance`, `runMaterialsReview`, `crossValidateModels`, `runParametricStudy`,
+Tools such as `runFlowAssurance`, `runWaterHammer`, `runMaterialsReview`, `crossValidateModels`, `runParametricStudy`,
 `runBatch`, `sizeEquipment`, `compareProcesses`, and `generateReport` are
 available as **Advanced** tools and may be promoted to the core as formal
 qualification evidence is added.
@@ -332,7 +336,7 @@ and deployment configuration.
 
 ### Auto-Validation Pipeline
 
-When auto-validation is enabled (default in all modes), the following six
+When auto-validation is enabled (default in all modes), selected
 CALCULATION tools automatically append an `"autoValidation"` block to the
 response:
 
@@ -359,7 +363,7 @@ Validation results include:
 ```
 
 Auto-validated tools: `runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
-`runMaterialsReview`, `calculateStandard`, `runPipeline`.
+`runWaterHammer`, `runMaterialsReview`, `calculateStandard`, `runPipeline`.
 
 ### Benchmark Trust Metadata
 

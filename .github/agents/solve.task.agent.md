@@ -327,7 +327,7 @@ checks before writing Step 1 content:
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.
 
-Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations
+Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
 
 For operational plant tasks involving P&ID symbols, valve actions, live plant
 data, active train state, isolation, evacuation, or dynamic response, load
@@ -339,6 +339,9 @@ source names, tag maps, operator procedures, and company requirements.
 Use `neqsim.process.operations` for Java deliverables and MCP `runOperationalStudy`
 for tool-based tag-map validation, field-data application, valve scenarios, and
 controller-response metrics.
+For fast liquid-hammer cases, route the extracted STID geometry, tagreader event
+window, and valve closure schedule through `neqsim-water-hammer` and MCP
+`runWaterHammer` before deciding whether a detailed surge study is required.
 
 ---
 

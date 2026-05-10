@@ -1,6 +1,6 @@
 ---
 name: neqsim-plant-data
-description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, or integrating NeqSim models with operational data. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, and model-vs-plant comparison workflows."
+description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, integrating NeqSim models with operational data, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, model-vs-plant comparison workflows, and valve/pump transient snapshots."
 last_verified: "2026-07-04"
 ---
 
@@ -12,6 +12,11 @@ OSIsoft PI and Aspen IP.21 historians using the tagreader package.
 For P&ID-driven operational studies, also load `neqsim-pid-process-operations`
 to map instrument bubbles and valve symbols to logical tag names, infer active
 state, and drive steady-state or dynamic NeqSim scenarios.
+
+For water-hammer or liquid-hammer screening, also load `neqsim-water-hammer` and
+extract short event windows with inlet pressure, temperature, flow rate, valve
+position, pump speed/status, and observed closure/trip timing for MCP
+`runWaterHammer`.
 
 ## Installation
 

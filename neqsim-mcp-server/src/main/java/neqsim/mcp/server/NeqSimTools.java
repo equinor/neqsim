@@ -54,6 +54,7 @@ import neqsim.mcp.runners.MaterialsReviewRunner;
 import neqsim.mcp.runners.ProcessComparisonRunner;
 import neqsim.mcp.runners.ReliefRunner;
 import neqsim.mcp.runners.RiskMatrixRunner;
+import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.SafetySystemPerformanceRunner;
 import neqsim.mcp.runners.SILRunner;
 
@@ -1801,6 +1802,41 @@ public class NeqSimTools {
       return SafetySystemPerformanceRunner.run(safetySystemJson);
     } catch (Exception e) {
       return errorJson("Safety-system performance analysis failed: " + e.getMessage());
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Root cause analysis tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run root cause analysis on process equipment using Bayesian-inspired diagnosis.
+   *
+   * @param rcaJson JSON with process definition, equipment name, symptom, and optional evidence
+   * @return JSON with ranked failure hypotheses, evidence, and recommended actions
+   */
+  @Tool(description = "Run root cause analysis on process equipment integrating OREDA failure "
+      + "data, plant historian time-series, STID design conditions, and NeqSim process "
+      + "simulation. Returns ranked failure hypotheses with Bayesian confidence scoring. "
+      + "Supports compressors, pumps, separators, heat exchangers, and valves.")
+  public String runRootCauseAnalysis(
+      @ToolArg(description = "JSON with: 'processJson' (standard process definition), "
+          + "'equipmentName' (name of equipment to diagnose), "
+          + "'symptom' (TRIP, HIGH_VIBRATION, SEAL_FAILURE, HIGH_TEMPERATURE, "
+          + "LOW_EFFICIENCY, PRESSURE_DEVIATION, FLOW_DEVIATION, HIGH_POWER, "
+          + "SURGE_EVENT, FOULING, ABNORMAL_NOISE, LIQUID_CARRYOVER), "
+          + "optional 'historianCsv' (CSV with timestamp,param1,param2,...), "
+          + "optional 'designLimits' ({param: [min, max]}), "
+          + "optional 'stidData' ({param: value}), "
+          + "optional 'simulationEnabled' (true/false, default true).") String rcaJson) {
+    String blocked = IndustrialProfile.enforceAccess("runRootCauseAnalysis");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return RootCauseRunner.run(rcaJson);
+    } catch (Exception e) {
+      return errorJson("Root cause analysis failed: " + e.getMessage());
     }
   }
 

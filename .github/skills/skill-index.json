@@ -9,6 +9,7 @@
   ],
   "closing a valve": [
     "neqsim-pid-process-operations",
+    "neqsim-water-hammer",
     "neqsim-controllability-operability",
     "neqsim-dynamic-simulation"
   ],
@@ -338,6 +339,9 @@
   "neqsim-unisim-reader": [
     "neqsim-unisim-reader"
   ],
+  "neqsim-water-hammer": [
+    "neqsim-water-hammer"
+  ],
   "norsok": [
     "neqsim-standards-lookup"
   ],
@@ -546,7 +550,8 @@
     "neqsim-technical-document-reading"
   ],
   "pipeline hydraulics": [
-    "neqsim-flow-assurance"
+    "neqsim-flow-assurance",
+    "neqsim-water-hammer"
   ],
   "planning implementations": [
     "neqsim-capability-map"
@@ -814,6 +819,17 @@
   "utility duty": ["neqsim-utilities-specification"],
   "norsok u-001": ["neqsim-utilities-specification"],
   "results.json": ["neqsim-professional-reporting"],
+  "water hammer": ["neqsim-water-hammer"],
+  "liquid hammer": ["neqsim-water-hammer"],
+  "hydraulic surge": ["neqsim-water-hammer"],
+  "hydraulic transient": ["neqsim-water-hammer"],
+  "pump trip": ["neqsim-water-hammer", "neqsim-dynamic-simulation"],
+  "check valve slam": ["neqsim-water-hammer"],
+  "esd valve closure": ["neqsim-water-hammer", "neqsim-pid-process-operations"],
+  "fast valve closure": ["neqsim-water-hammer", "neqsim-pid-process-operations"],
+  "runwaterhammer": ["neqsim-water-hammer"],
+  "waterhammerpipe": ["neqsim-water-hammer"],
+  "waterhammerstudy": ["neqsim-water-hammer"],
   "report schema": ["neqsim-professional-reporting"],
   "professional report": ["neqsim-professional-reporting"],
   "executive summary": ["neqsim-professional-reporting"],

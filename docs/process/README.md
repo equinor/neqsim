@@ -48,7 +48,8 @@ This documentation is organized into the following sections:
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
-| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models |
+| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
+| [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
 | [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 
@@ -182,6 +183,7 @@ This documentation is organized into the following sections:
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
+| **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
 | **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |

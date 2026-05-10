@@ -19,7 +19,7 @@ mechanical design, and engineering analysis tools.
 
 ## MANDATORY: Load Skill First
 
-Loaded skills: neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations
+Loaded skills: neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
 
 Before doing ANY document reading work, load the technical document reading skill:
 
@@ -37,6 +37,12 @@ edges, valve functions, control links, instrument tags, drains, vents, and
 scenario actions instead of only listing visible tags. Structure those outputs
 so they can become `OperationalTagBinding` entries, `OperationalAction` events,
 or MCP `runOperationalStudy` inputs.
+
+When the downstream task asks for water hammer, liquid hammer, hydraulic surge,
+pump trip, check-valve slam, or fast valve closure, also load `neqsim-water-hammer`.
+Extract route geometry, wall thickness, roughness/piping class, fittings, valve
+closure timing, design pressure, and tagreader event-window references for MCP
+`runWaterHammer`.
 
 When the downstream task asks for trapped liquid, blocked-in liquid, fire rupture,
 PFP demand, flange failure, pipe rupture, or no pressure relief, also load

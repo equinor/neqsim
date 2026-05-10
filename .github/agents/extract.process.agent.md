@@ -20,7 +20,7 @@ running NeqSim simulations via a **three-step pipeline**: Free Text → JSON →
 
 ## MANDATORY: Load Skill First
 
-Loaded skills: neqsim-process-extraction, neqsim-pid-process-operations
+Loaded skills: neqsim-process-extraction, neqsim-pid-process-operations, neqsim-water-hammer
 
 Before doing ANY extraction work, load the `neqsim-process-extraction` skill:
 
@@ -38,6 +38,8 @@ partly closing a control valve, opening a bypass, or opening a drain/vent.
 When the output will feed Java or MCP, include logical tag bindings and scenario
 actions compatible with `OperationalTagMap`, `OperationalScenarioRunner`, and
 MCP `runOperationalStudy`. For operational studies that combine document
+extraction with fast liquid-line closure or pump-trip effects, also emit
+`runWaterHammer`-ready route geometry, field-data overrides, and event schedules.
 evidence, tagreader values, scenario actions, and bottleneck detection, emit a
 `runEvidencePackage` payload with `tagBindings`, `fieldData`, `scenarios`,
 `evidenceReferences`, `assumptions`, and `benchmarkToleranceFraction`.

@@ -1,6 +1,6 @@
 ---
 name: neqsim-technical-document-reading
-description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV) and engineering images/drawings (P&IDs, vendor datasheets, mechanical arrangements, performance maps). USE WHEN: a user provides engineering documents or images — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards, vendor drawings, compressor maps, phase envelopes, material certificates, or trapped-liquid fire rupture evidence packs — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, image/figure analysis with view_image, unit normalization, data quality scoring, and output formats."
+description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV) and engineering images/drawings (P&IDs, vendor datasheets, mechanical arrangements, performance maps). USE WHEN: a user provides engineering documents or images — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards, vendor drawings, compressor maps, phase envelopes, material certificates, trapped-liquid fire rupture evidence packs, or water-hammer route/event evidence — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, image/figure analysis with view_image, unit normalization, data quality scoring, and output formats."
 last_verified: "2026-07-04"
 ---
 
@@ -23,6 +23,11 @@ For P&ID-driven operational studies, also load `neqsim-pid-process-operations`.
 That skill converts symbols into a process graph, classifies valve functions,
 maps instrument bubbles to historian tags, and defines steady-state or dynamic
 NeqSim scenario actions.
+
+For water-hammer or liquid-hammer screening, also load `neqsim-water-hammer`.
+Extract route geometry, wall thickness, roughness/piping class, fittings, valve
+closure timing, design pressure, and tagreader event references so the output can
+feed `WaterHammerStudy` or MCP `runWaterHammer`.
 
 For trapped-liquid fire rupture studies, also load
 `neqsim-trapped-liquid-fire-rupture`. Extract segment boundaries, line numbers,
@@ -48,6 +53,7 @@ When a document is provided, classify it first:
 | **P&ID / PFD Description** | Equipment tags, line numbers, instrument tags, connectivity | Topology, instrumentation, control philosophy |
 | **Piping Specification** | Material classes, pressure ratings, wall schedules | Pipe sizes, materials, ratings, corrosion allowance |
 | **Line List / Piping Route Table** | Tabular line numbers, NPS, schedule, from/to nodes, straight length, fittings, valves, elevations | Route segments for `PipingRouteBuilder`: segment id, nodes, internal diameter, wall thickness, length, elevation, K values, source refs |
+| **Water-Hammer Evidence Pack** | STID/P&ID route, valve data sheet, pump trip log, tagreader pressure/flow/valve-position event window | Route segments, design pressure, event schedule, closure/trip timing, field-data overrides for `runWaterHammer` |
 | **Trapped Liquid Fire Rupture Evidence Pack** | Combination of P&IDs/STIDs, line lists, piping specs, material certificates, flange/gasket data, fire/PFP documents, and relief basis | Segment id, isolation boundary, trapped volume inputs, material grade, flange class, fire exposure, PFP endurance, relief availability, acceptance criteria, evidence gaps |
 | **Inspection Report** | Thickness measurements, corrosion rates, anomaly locations | Wall thickness, corrosion rate, remaining life |
 | **Material Certificate** | Heat numbers, SMYS/SMTS, chemical composition, Charpy values | Mechanical properties, chemical analysis, grade |

@@ -115,9 +115,34 @@ The bottleneck block reports:
 5. Use `qualityGates.acceptableForOperationScreening` only as a screening flag; engineering review
    is still required before changing plant operation.
 
+## Hydraulic Surge Handoff
+
+Operational evidence packages can identify the initiating action for a water-hammer
+or liquid-hammer study, but the high-speed acoustic transient is calculated with
+`WaterHammerStudy` or MCP `runWaterHammer`.
+
+Use this handoff when the scenario closes a liquid-line valve quickly, trips a pump,
+or creates check-valve slam risk:
+
+1. Use P&ID/STID evidence to define the affected line, isolation valve, pump, and
+  route source references.
+2. Use tagreader field data for the event window: pressure, temperature, flow,
+  valve position, pump speed/status, and observed closure time.
+3. Run `runOperationalStudy` if the process model needs a steady-state or
+  tag-map quality check before the event.
+4. Pass the same `fieldData`, `evidenceReferences`, route geometry, and
+  `eventSchedule` to `runWaterHammer`.
+5. Include the water-hammer pressure envelope and design-pressure margin in the
+  evidence package assumptions, risk register, or follow-up action list.
+
+The two tools are complementary: `runOperationalStudy` validates the operating
+snapshot and scenario context, while `runWaterHammer` screens the surge envelope
+on the affected route.
+
 ## Related Documentation
 
 - [Plant Data & Tagreader](plant-data-tagreader.md)
 - [STID/E3D Route Builder](piping_route_builder.md)
+- [Water Hammer Simulation](../wiki/water_hammer_implementation.md)
 - [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
 - [Bottleneck Analysis](../wiki/bottleneck_analysis.md)

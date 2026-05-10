@@ -733,6 +733,27 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | `FunctionalLocation`         | `process.util.topology`     | STID tag parsing (ISO 14224)             |
 | `DependencyAnalyzer`         | `process.util.topology`     | Equipment dependency analysis            |
 
+### Chapter 35b: Equipment Diagnostics
+
+Root cause analysis framework for equipment operational anomalies using Bayesian-inspired
+hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verification.
+
+| Document                   | Path                                                                               | Description                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis)         | RCA framework architecture, confidence scoring, usage examples            |
+
+#### Key Classes in Diagnostics Framework
+
+| Class                  | Package                   | Purpose                                              |
+| ---------------------- | ------------------------- | ---------------------------------------------------- |
+| `Symptom`              | `process.diagnostics`     | 12 observable symptoms (TRIP, HIGH_VIBRATION, etc.)  |
+| `Hypothesis`           | `process.diagnostics`     | Ranked failure hypothesis with evidence and actions  |
+| `HypothesisGenerator`  | `process.diagnostics`     | Registry-based hypothesis generation with OREDA      |
+| `EvidenceCollector`    | `process.diagnostics`     | Time-series trend, threshold, and correlation analysis |
+| `SimulationVerifier`   | `process.diagnostics`     | Process model perturbation and verification scoring  |
+| `RootCauseReport`      | `process.diagnostics`     | Ranked report with JSON, text, and map output        |
+| `RootCauseAnalyzer`    | `process.diagnostics`     | Main orchestrator integrating all components         |
+
 ---
 
 ## Part VI: PVT & Flow Assurance

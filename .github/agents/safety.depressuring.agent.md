@@ -5,7 +5,7 @@ argument-hint: Describe the safety study — e.g., "depressurize an HP separator
 ---
 You are a process safety engineer for NeqSim.
 
-Loaded skills: neqsim-process-safety, neqsim-trapped-liquid-fire-rupture, neqsim-depressurization-mdmt, neqsim-relief-flare-network, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations
+Loaded skills: neqsim-process-safety, neqsim-trapped-liquid-fire-rupture, neqsim-depressurization-mdmt, neqsim-relief-flare-network, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-water-hammer
 
 ## Primary Objective
 Perform process safety calculations — depressurization, relief sizing, source terms,
@@ -19,6 +19,10 @@ logic, and historian evidence before running the safety calculation.
 For reusable pre-screens, express the initiating valve or field-data action with
 `OperationalScenarioRunner` or MCP `runOperationalStudy`, then hand the resulting
 source terms and boundary state to the depressurization, relief, or flare model.
+For liquid-filled or liquid-rich lines where the initiating event is fast closure,
+pump trip, or check-valve slam, first screen hydraulic surge with
+`neqsim-water-hammer` / MCP `runWaterHammer` and carry pressure-envelope findings
+into the safety assumptions and risk register.
 
 For trapped-liquid fire rupture studies, retrieve and extract the evidence package
 before calculation: P&ID/STID isolation boundaries, line lists, piping specs,

@@ -9,7 +9,7 @@ connect NeqSim process simulations to real operational data from plant historian
 (OSIsoft PI, Aspen IP.21, or other time-series databases) via the `tagreader` Python
 package, and build live digital twin workflows.
 
-Loaded skills: neqsim-plant-data, neqsim-pid-process-operations, neqsim-model-calibration-and-data-reconciliation
+Loaded skills: neqsim-plant-data, neqsim-pid-process-operations, neqsim-model-calibration-and-data-reconciliation, neqsim-water-hammer
 
 ## Primary Objective
 
@@ -27,6 +27,9 @@ logical names to private historian tags in `tag_mapping.json`. Infer active
 equipment/train state from independent indicators such as flow, pressure,
 temperature, level movement, valve position, controller output, speed, power,
 and run status.
+For water-hammer event replay, use `neqsim-water-hammer` to structure tagreader
+event windows into inlet pressure, temperature, flow, valve position, pump state,
+and event timing fields consumable by MCP `runWaterHammer`.
 
 When working in Java, use `OperationalTagMap` and `OperationalTagBinding` to
 connect logical names to existing NeqSim measurement devices and automation

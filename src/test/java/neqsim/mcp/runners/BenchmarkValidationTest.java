@@ -204,9 +204,9 @@ class BenchmarkValidationTest {
     JsonObject tools = root.getAsJsonObject("tools");
     // Verify all claimed tools are present
     String[] expectedTools = {"runFlash", "runProcess", "runPVT", "runFlowAssurance",
-        "calculateStandard", "runPipeline", "runReservoir", "runFieldEconomics", "runDynamic",
-        "runBioprocess", "crossValidateModels", "runParametricStudy", "getPhaseEnvelope",
-        "getPropertyTable", "sizeEquipment"};
+      "calculateStandard", "runPipeline", "runWaterHammer", "runReservoir",
+      "runFieldEconomics", "runDynamic", "runBioprocess", "crossValidateModels",
+      "runParametricStudy", "getPhaseEnvelope", "getPropertyTable", "sizeEquipment"};
 
     for (String tool : expectedTools) {
       assertTrue(tools.has(tool), "Trust report must include entry for " + tool);

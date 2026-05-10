@@ -1,6 +1,6 @@
 ---
 name: neqsim-stid-retriever
-description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs, material certificates, fire/PFP documents, piping specs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, trapped-liquid fire rupture evidence, or as-built documentation for process equipment."
+description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs, material certificates, fire/PFP documents, piping specs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, water-hammer route/event evidence, trapped-liquid fire rupture evidence, or as-built documentation for process equipment."
 last_verified: "2026-07-04"
 ---
 
@@ -8,6 +8,11 @@ last_verified: "2026-07-04"
 
 Retrieve engineering documents (compressor curves, mechanical drawings, data
 sheets, vendor reports) for use in NeqSim task-solving workflows.
+
+For water-hammer/liquid-hammer tasks, retrieve STID/P&ID route drawings, line
+lists, stress isometrics, piping specifications, valve data sheets with closure
+time, pump curves or trip logs, design-pressure basis, and relevant tagreader
+event exports into the task references folder.
 
 ## ⚠️ CRITICAL: All documents go INSIDE the task folder
 

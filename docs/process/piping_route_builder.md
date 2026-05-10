@@ -1,6 +1,6 @@
 ---
 title: Route-Level Piping Hydraulic Builder
-description: Build route-level pipe hydraulic models from STID, E3D, P&ID, or stress-isometric line-list tables using PipingRouteBuilder and PipeBeggsAndBrills.
+description: Build route-level pipe hydraulic models from STID, E3D, P&ID, or stress-isometric line-list tables using PipingRouteBuilder, PipeBeggsAndBrills, and water-hammer screening handoffs.
 ---
 
 Use `PipingRouteBuilder` when a source document describes a piping route as a
@@ -187,6 +187,65 @@ specific drawing rows.
 Then convert each row with `addSegment(...)`, `setSegmentWallThickness(...)`,
 `setSegmentElevationChange(...)`, and `addMinorLoss(...)`.
 
+## Water-Hammer Screening Handoff
+
+The same extracted route can also feed fast hydraulic-surge screening with
+`WaterHammerStudy` or MCP `runWaterHammer`. Use this handoff when the route is
+liquid-filled or liquid-rich and the initiating event is a fast ESD closure, pump
+trip, check-valve slam, or sudden flow change.
+
+`PipingRouteBuilder` remains the steady or slow-transient hydraulic model. The
+water-hammer runner aggregates the route into an equivalent single line, adds
+screening equivalent length for `minorLosses`, and reports a warning when segment
+diameters vary.
+
+```json
+{
+  "studyName": "generic ESD closure screening",
+  "components": {"water": 1.0},
+  "temperature_C": 20.0,
+  "pressure_bara": 45.0,
+  "flowRate": {"value": 120000.0, "unit": "kg/hr"},
+  "designPressure_bara": 95.0,
+  "stidRoute": {
+    "segments": [
+      {
+        "segmentId": "ROUTE-001-S1",
+        "length_m": 120.0,
+        "diameter_m": 0.2032,
+        "wallThickness_m": 0.0127,
+        "roughness_m": 4.6e-5,
+        "elevationChange_m": 1.0,
+        "minorLosses": [
+          {"type": "gate valve", "kValue": 0.15},
+          {"type": "long-radius bend", "kValue": 0.20}
+        ],
+        "sourceRef": "generic stress-isometric row S1"
+      }
+    ]
+  },
+  "fieldData": {
+    "inletPressure_bara": 46.0,
+    "inletTemperature_C": 19.0,
+    "flowRate_kg_hr": 118000.0,
+    "valveOpening": 1.0
+  },
+  "eventSchedule": [
+    {
+      "type": "VALVE_CLOSURE",
+      "startTime_s": 0.10,
+      "duration_s": 0.15,
+      "startOpening": 1.0,
+      "endOpening": 0.0
+    }
+  ]
+}
+```
+
+Report both the steady pressure-drop result and the surge-screening result when
+available. That pairing gives reviewers a quick check of normal hydraulic duty,
+transient pressure envelope, and the evidence trail back to STID/tagreader inputs.
+
 ## STID Workflow Checklist
 
 - Save all source PDFs, Excel files, and extracted PNG pages in the task folder
@@ -203,6 +262,9 @@ Then convert each row with `addSegment(...)`, `setSegmentWallThickness(...)`,
   returned outlet stream to the downstream equipment.
 - Run the resulting `ProcessSystem` against a plant snapshot when available.
   Report simulated pressure drop, measured pressure drop, and the deviation.
+- For fast valve closure or pump-trip cases, send the same route and field-data
+  snapshot to `WaterHammerStudy` or MCP `runWaterHammer` and report the pressure
+  envelope and design-pressure margin.
 - Export `route.toJson()` into the task results or appendix so later agents can
   reuse the same route geometry.
 
@@ -224,4 +286,5 @@ Then convert each row with `addSegment(...)`, `setSegmentWallThickness(...)`,
 - [Pipe Fittings and Equivalent Length](PIPE_FITTINGS_EQUIVALENT_LENGTH.md)
 - [Topside Piping Design](topside_piping_design.md)
 - [Looped Pipeline Networks](equipment/looped_networks.md)
+- [Water Hammer Simulation](../wiki/water_hammer_implementation.md)
 - [Process Extraction Skill Guide](../integration/skills_guide.md)

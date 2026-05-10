@@ -41,8 +41,8 @@ class IndustrialProfileTest {
   void tierSizes_matchContract() {
     assertEquals(21, IndustrialProfile.getIndustrialCore().size(),
         "Tier 1 (TRUSTED_CORE) should have 21 tools");
-    assertEquals(23, IndustrialProfile.getEngineeringAdvanced().size(),
-      "Tier 2 (ENGINEERING_ADVANCED) should have 23 tools");
+    assertEquals(24, IndustrialProfile.getEngineeringAdvanced().size(),
+      "Tier 2 (ENGINEERING_ADVANCED) should have 24 tools");
     assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
         "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
@@ -77,6 +77,7 @@ class IndustrialProfileTest {
   void getToolTier_advancedTools_returnEngineeringAdvanced() {
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runPVT"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runPipeline"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runWaterHammer"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runFlowAssurance"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED,
         IndustrialProfile.getToolTier("runMaterialsReview"));
@@ -147,6 +148,7 @@ class IndustrialProfileTest {
     IndustrialProfile.setActiveMode(DeploymentMode.STUDY_TEAM);
     assertTrue(IndustrialProfile.isToolAllowed("runPVT"));
     assertTrue(IndustrialProfile.isToolAllowed("runPipeline"));
+    assertTrue(IndustrialProfile.isToolAllowed("runWaterHammer"));
     assertTrue(IndustrialProfile.isToolAllowed("runFlowAssurance"));
     assertTrue(IndustrialProfile.isToolAllowed("sizeEquipment"));
   }
@@ -396,7 +398,7 @@ class IndustrialProfileTest {
     assertTrue(root.has("tier3_experimental"), "Must include tier3_experimental");
 
     assertEquals(21, root.getAsJsonArray("tier1_trustedCore").size());
-    assertEquals(23, root.getAsJsonArray("tier2_engineeringAdvanced").size());
+    assertEquals(24, root.getAsJsonArray("tier2_engineeringAdvanced").size());
     assertEquals(14, root.getAsJsonArray("tier3_experimental").size());
   }
 
