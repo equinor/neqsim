@@ -100,13 +100,19 @@ public class GaussianPlume implements Serializable {
   private double[] briggsY() {
     boolean rural = terrain == Terrain.RURAL;
     switch (stability) {
-      case A: return rural ? new double[] {0.22, 0.0001} : new double[] {0.32, 0.0004};
-      case B: return rural ? new double[] {0.16, 0.0001} : new double[] {0.32, 0.0004};
-      case C: return rural ? new double[] {0.11, 0.0001} : new double[] {0.22, 0.0004};
-      case D: return rural ? new double[] {0.08, 0.0001} : new double[] {0.16, 0.0004};
-      case E: return rural ? new double[] {0.06, 0.0001} : new double[] {0.11, 0.0004};
+      case A:
+        return rural ? new double[] {0.22, 0.0001} : new double[] {0.32, 0.0004};
+      case B:
+        return rural ? new double[] {0.16, 0.0001} : new double[] {0.32, 0.0004};
+      case C:
+        return rural ? new double[] {0.11, 0.0001} : new double[] {0.22, 0.0004};
+      case D:
+        return rural ? new double[] {0.08, 0.0001} : new double[] {0.16, 0.0004};
+      case E:
+        return rural ? new double[] {0.06, 0.0001} : new double[] {0.11, 0.0004};
       case F:
-      default: return rural ? new double[] {0.04, 0.0001} : new double[] {0.11, 0.0004};
+      default:
+        return rural ? new double[] {0.04, 0.0001} : new double[] {0.11, 0.0004};
     }
   }
 
@@ -114,13 +120,19 @@ public class GaussianPlume implements Serializable {
     boolean rural = terrain == Terrain.RURAL;
     // {a, b, exponent}
     switch (stability) {
-      case A: return rural ? new double[] {0.20, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
-      case B: return rural ? new double[] {0.12, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
-      case C: return rural ? new double[] {0.08, 0.0002, 0.5} : new double[] {0.20, 0.0, 1.0};
-      case D: return rural ? new double[] {0.06, 0.0015, 0.5} : new double[] {0.14, 0.0003, 0.5};
-      case E: return rural ? new double[] {0.03, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
+      case A:
+        return rural ? new double[] {0.20, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
+      case B:
+        return rural ? new double[] {0.12, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
+      case C:
+        return rural ? new double[] {0.08, 0.0002, 0.5} : new double[] {0.20, 0.0, 1.0};
+      case D:
+        return rural ? new double[] {0.06, 0.0015, 0.5} : new double[] {0.14, 0.0003, 0.5};
+      case E:
+        return rural ? new double[] {0.03, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
       case F:
-      default: return rural ? new double[] {0.016, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
+      default:
+        return rural ? new double[] {0.016, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
     }
   }
 
@@ -164,15 +176,40 @@ public class GaussianPlume implements Serializable {
    * @return downwind distance in m, or {@link Double#NaN} if never reached
    */
   public double distanceToConcentration(double thresholdKgPerM3) {
-    // Bisection over 1 m … 100 km
-    double lo = 1.0;
-    double hi = 100000.0;
-    if (centerlineGroundConcentration(lo) < thresholdKgPerM3) {
+    if (thresholdKgPerM3 <= 0.0) {
       return Double.NaN;
     }
-    if (centerlineGroundConcentration(hi) > thresholdKgPerM3) {
-      return hi;
+
+    double minDistance = 1.0;
+    double maxDistance = 100000.0;
+    double previousDistance = minDistance;
+    double previousConcentration = centerlineGroundConcentration(previousDistance);
+    double aboveDistance =
+        previousConcentration >= thresholdKgPerM3 ? previousDistance : Double.NaN;
+    double belowDistance = Double.NaN;
+
+    for (int i = 1; i <= 200; i++) {
+      double fraction = i / 200.0;
+      double distance = minDistance * Math.pow(maxDistance / minDistance, fraction);
+      double concentration = centerlineGroundConcentration(distance);
+      if (concentration >= thresholdKgPerM3) {
+        aboveDistance = distance;
+      } else if (previousConcentration >= thresholdKgPerM3) {
+        aboveDistance = previousDistance;
+        belowDistance = distance;
+      }
+      previousDistance = distance;
+      previousConcentration = concentration;
     }
+
+    if (!Double.isFinite(aboveDistance)) {
+      return Double.NaN;
+    }
+    if (!Double.isFinite(belowDistance)) {
+      return maxDistance;
+    }
+    double lo = aboveDistance;
+    double hi = belowDistance;
     for (int i = 0; i < 60; i++) {
       double mid = 0.5 * (lo + hi);
       double c = centerlineGroundConcentration(mid);
