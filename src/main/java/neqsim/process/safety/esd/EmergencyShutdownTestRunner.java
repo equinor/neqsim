@@ -41,8 +41,8 @@ public final class EmergencyShutdownTestRunner {
    */
   public static EmergencyShutdownTestResult run(ProcessSystem process,
       EmergencyShutdownTestPlan plan, ProcessLogic... logicSequences) {
-    List<ProcessLogic> logicList = logicSequences == null ? new ArrayList<ProcessLogic>()
-        : Arrays.asList(logicSequences);
+    List<ProcessLogic> logicList =
+        logicSequences == null ? new ArrayList<ProcessLogic>() : Arrays.asList(logicSequences);
     return run(process, plan, logicList);
   }
 
@@ -66,7 +66,8 @@ public final class EmergencyShutdownTestRunner {
     EmergencyShutdownTestResult result = new EmergencyShutdownTestResult(plan);
     List<ProcessLogic> availableLogic = logicSequences == null ? new ArrayList<ProcessLogic>()
         : new ArrayList<ProcessLogic>(logicSequences);
-    List<ProcessLogic> enabledLogic = selectLogic(availableLogic, plan.getEnabledLogicNames(), result);
+    List<ProcessLogic> enabledLogic =
+        selectLogic(availableLogic, plan.getEnabledLogicNames(), result);
     List<ProcessLogic> triggerLogic = selectTriggerLogic(enabledLogic, plan, result);
 
     applyFieldData(process, plan, result);
@@ -271,7 +272,8 @@ public final class EmergencyShutdownTestRunner {
       ProcessSystem process, EmergencyShutdownTestPlan plan, EmergencyShutdownTestResult result) {
     Map<String, Double> values = new LinkedHashMap<String, Double>();
     for (String tag : plan.getMonitoredLogicalTags()) {
-      Double value = readMonitorValue(process, plan.getTagMap(), tag, plan.getMonitoredUnits(), result);
+      Double value =
+          readMonitorValue(process, plan.getTagMap(), tag, plan.getMonitoredUnits(), result);
       if (value != null) {
         values.put(tag, value);
       }
@@ -292,8 +294,10 @@ public final class EmergencyShutdownTestRunner {
   private static Double readMonitorValue(ProcessSystem process, OperationalTagMap tagMap,
       String tag, Map<String, String> units, EmergencyShutdownTestResult result) {
     OperationalTagBinding binding = tagMap.getBinding(tag);
-    String address = binding != null && binding.hasAutomationAddress() ? binding.getAutomationAddress() : tag;
-    String unit = units.containsKey(tag) ? units.get(tag) : binding == null ? "" : binding.getUnit();
+    String address =
+        binding != null && binding.hasAutomationAddress() ? binding.getAutomationAddress() : tag;
+    String unit =
+        units.containsKey(tag) ? units.get(tag) : binding == null ? "" : binding.getUnit();
     try {
       return Double.valueOf(process.getAutomation().getVariableValue(address, unit));
     } catch (RuntimeException ex) {
@@ -335,8 +339,10 @@ public final class EmergencyShutdownTestRunner {
       EmergencyShutdownTestResult result) {
     for (OperationalTagBinding binding : plan.getTagMap().getBindings()) {
       Double fieldValue = findFieldValue(binding, plan.getFieldData());
-      EmergencyShutdownTestResult.SignalStats stats = result.getSignalStats().get(binding.getLogicalTag());
-      Double modelValue = stats == null || !stats.hasSamples() ? null : Double.valueOf(stats.getFinalValue());
+      EmergencyShutdownTestResult.SignalStats stats =
+          result.getSignalStats().get(binding.getLogicalTag());
+      Double modelValue =
+          stats == null || !stats.hasSamples() ? null : Double.valueOf(stats.getFinalValue());
       if (fieldValue != null || modelValue != null) {
         result.addFieldComparison(new EmergencyShutdownTestResult.FieldComparison(
             binding.getLogicalTag(), binding.getHistorianTag(), binding.getUnit(), fieldValue,
@@ -352,7 +358,8 @@ public final class EmergencyShutdownTestRunner {
    * @param fieldData field-data map
    * @return field value, or null
    */
-  private static Double findFieldValue(OperationalTagBinding binding, Map<String, Double> fieldData) {
+  private static Double findFieldValue(OperationalTagBinding binding,
+      Map<String, Double> fieldData) {
     if (fieldData.containsKey(binding.getLogicalTag())) {
       return fieldData.get(binding.getLogicalTag());
     }

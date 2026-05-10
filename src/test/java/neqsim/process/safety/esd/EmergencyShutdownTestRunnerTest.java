@@ -36,12 +36,13 @@ class EmergencyShutdownTestRunnerTest {
     EmergencyShutdownTestPlan plan = EmergencyShutdownTestPlan.builder("ESD1 isolation closure")
         .duration(8.0).timeStep(1.0).tagMap(tagMap).enableLogic("ESD Level 1")
         .triggerLogic("ESD Level 1").fieldData("xv_opening", 0.0)
-        .criterion(EmergencyShutdownTestCriterion.finalAtMost("ESD-XV-CLOSED", "xv_opening",
-            5.0, "%").withClause("NORSOK S-001 Clause 11"))
-        .criterion(EmergencyShutdownTestCriterion.logicCompleted("ESD-LOGIC-COMPLETE",
-            "ESD Level 1"))
-        .criterion(EmergencyShutdownTestCriterion.fieldAbsoluteDeviationAtMost(
-            "ESD-FIELD-MATCH", "xv_opening", 5.0, "%"))
+        .criterion(
+            EmergencyShutdownTestCriterion.finalAtMost("ESD-XV-CLOSED", "xv_opening", 5.0, "%")
+                .withClause("NORSOK S-001 Clause 11"))
+        .criterion(
+            EmergencyShutdownTestCriterion.logicCompleted("ESD-LOGIC-COMPLETE", "ESD Level 1"))
+        .criterion(EmergencyShutdownTestCriterion.fieldAbsoluteDeviationAtMost("ESD-FIELD-MATCH",
+            "xv_opening", 5.0, "%"))
         .criterion(EmergencyShutdownTestCriterion.noSimulationErrors("ESD-NO-SIM-ERRORS"))
         .standardReference("NORSOK S-001 Clause 11 emergency shutdown testing")
         .evidenceReference("Cause and effect matrix row ESD-001").build();
@@ -63,12 +64,12 @@ class EmergencyShutdownTestRunnerTest {
     ProcessSystem process = createProcess();
     ESDLogic esdLogic = createEsdLogic(process);
 
-    EmergencyShutdownTestPlan plan = EmergencyShutdownTestPlan.builder("ESD field mismatch")
-        .duration(8.0).timeStep(1.0).tagMap(createTagMap()).enableLogic("ESD Level 1")
-        .triggerLogic("ESD Level 1").fieldData("xv_opening", 100.0)
-        .criterion(EmergencyShutdownTestCriterion.fieldAbsoluteDeviationAtMost(
-            "ESD-FIELD-MATCH", "xv_opening", 5.0, "%"))
-        .build();
+    EmergencyShutdownTestPlan plan =
+        EmergencyShutdownTestPlan.builder("ESD field mismatch").duration(8.0).timeStep(1.0)
+            .tagMap(createTagMap()).enableLogic("ESD Level 1").triggerLogic("ESD Level 1")
+            .fieldData("xv_opening", 100.0).criterion(EmergencyShutdownTestCriterion
+                .fieldAbsoluteDeviationAtMost("ESD-FIELD-MATCH", "xv_opening", 5.0, "%"))
+            .build();
 
     EmergencyShutdownTestResult result = EmergencyShutdownTestRunner.run(process, plan, esdLogic);
 
@@ -129,14 +130,12 @@ class EmergencyShutdownTestRunnerTest {
    */
   private OperationalTagMap createTagMap() {
     return new OperationalTagMap()
-        .addBinding(OperationalTagBinding.builder("xv_opening")
-            .historianTag("PRIVATE-XV-001-ZSO")
+        .addBinding(OperationalTagBinding.builder("xv_opening").historianTag("PRIVATE-XV-001-ZSO")
             .pidReference("P&ID-ESD-001/XV-001")
             .automationAddress("ESD Inlet Isolation.percentValveOpening").unit("%")
             .role(InstrumentTagRole.BENCHMARK).build())
         .addBinding(OperationalTagBinding.builder("separator_pressure")
-            .historianTag("PRIVATE-PT-001")
-            .pidReference("P&ID-ESD-001/PT-001")
+            .historianTag("PRIVATE-PT-001").pidReference("P&ID-ESD-001/PT-001")
             .automationAddress("HP Separator.gasOutStream.pressure").unit("bara")
             .role(InstrumentTagRole.BENCHMARK).build());
   }

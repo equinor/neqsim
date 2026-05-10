@@ -40,7 +40,9 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     INCREASE_GREATER_OR_EQUAL,
     /** Absolute model-to-field deviation must be less than or equal to the target value. */
     FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL,
-    /** Relative model-to-field deviation fraction must be less than or equal to the target value. */
+    /**
+     * Relative model-to-field deviation fraction must be less than or equal to the target value.
+     */
     FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL,
     /** Named process logic must complete during the scenario. */
     LOGIC_COMPLETED,
@@ -130,8 +132,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    * @param unit engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion maxAtMost(String id, String logicalTag,
-      double limit, String unit) {
+  public static EmergencyShutdownTestCriterion maxAtMost(String id, String logicalTag, double limit,
+      String unit) {
     return signal(id, CriterionType.MAX_LESS_OR_EQUAL, logicalTag, limit, unit,
         "Maximum value must be at or below the specified limit.");
   }
@@ -160,8 +162,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    * @param unit engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion minAtMost(String id, String logicalTag,
-      double limit, String unit) {
+  public static EmergencyShutdownTestCriterion minAtMost(String id, String logicalTag, double limit,
+      String unit) {
     return signal(id, CriterionType.MIN_LESS_OR_EQUAL, logicalTag, limit, unit,
         "Minimum value must be at or below the specified limit.");
   }
@@ -237,7 +239,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   public static EmergencyShutdownTestCriterion fieldRelativeDeviationAtMost(String id,
       String logicalTag, double maximumDeviationFraction) {
     return signal(id, CriterionType.FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL, logicalTag,
-        maximumDeviationFraction, "", "Model-to-field relative deviation must be within tolerance.");
+        maximumDeviationFraction, "",
+        "Model-to-field relative deviation must be within tolerance.");
   }
 
   /**
@@ -433,7 +436,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   private static EmergencyShutdownTestCriterion signal(String id, CriterionType type,
       String logicalTag, double targetValue, String unit, String description) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, "", targetValue, unit, "",
-        "HIGH", description, "Review ESD action sequence, final element response, and model input data.");
+        "HIGH", description,
+        "Review ESD action sequence, final element response, and model input data.");
   }
 
   /**
@@ -464,7 +468,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     String state = logicStates.get(logicName);
     boolean passed = "COMPLETED".equals(state);
     return new Result(this, passed, passed ? 1.0 : 0.0, 1.0,
-        state == null ? "Logic sequence was not present in the test." : "Final logic state: " + state);
+        state == null ? "Logic sequence was not present in the test."
+            : "Final logic state: " + state);
   }
 
   /**
@@ -481,7 +486,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
           "No complete model-to-field comparison was available for " + logicalTag + ".");
     }
     double value = type == CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL
-        ? comparison.getAbsoluteDeviation() : comparison.getRelativeDeviationFraction();
+        ? comparison.getAbsoluteDeviation()
+        : comparison.getRelativeDeviationFraction();
     boolean passed = value <= targetValue;
     return new Result(this, passed, value, targetValue,
         passed ? "Model-to-field deviation is within tolerance."

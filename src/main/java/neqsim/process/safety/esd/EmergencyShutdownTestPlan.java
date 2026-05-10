@@ -17,9 +17,9 @@ import neqsim.process.safety.ProcessSafetyScenario;
  *
  * <p>
  * A plan combines the process disturbance, enabled and triggered logic sequences, monitored
- * tagreader or automation signals, document references, and acceptance criteria. It is intentionally
- * plant-agnostic so public NeqSim models can use logical tags while private historian tag names stay
- * in the {@link OperationalTagMap} supplied by the caller.
+ * tagreader or automation signals, document references, and acceptance criteria. It is
+ * intentionally plant-agnostic so public NeqSim models can use logical tags while private historian
+ * tag names stay in the {@link OperationalTagMap} supplied by the caller.
  * </p>
  *
  * @author NeqSim contributors
@@ -59,16 +59,20 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     initializeSteadyState = builder.initializeSteadyState;
     tagMap = builder.tagMap == null ? new OperationalTagMap() : builder.tagMap;
     fieldData = Collections.unmodifiableMap(new LinkedHashMap<String, Double>(builder.fieldData));
-    criteria = Collections.unmodifiableList(
-        new ArrayList<EmergencyShutdownTestCriterion>(builder.criteria));
-    enabledLogicNames = Collections.unmodifiableList(new ArrayList<String>(builder.enabledLogicNames));
-    triggerLogicNames = Collections.unmodifiableList(new ArrayList<String>(builder.triggerLogicNames));
+    criteria = Collections
+        .unmodifiableList(new ArrayList<EmergencyShutdownTestCriterion>(builder.criteria));
+    enabledLogicNames =
+        Collections.unmodifiableList(new ArrayList<String>(builder.enabledLogicNames));
+    triggerLogicNames =
+        Collections.unmodifiableList(new ArrayList<String>(builder.triggerLogicNames));
     monitoredLogicalTags = Collections.unmodifiableSet(collectMonitoredTags(builder));
     monitoredUnits = Collections.unmodifiableMap(collectMonitorUnits(builder));
-    evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
-    standardReferences = Collections.unmodifiableList(new ArrayList<String>(builder.standardReferences));
-    defaultFieldComparisonToleranceFraction = Math.max(0.0,
-        builder.defaultFieldComparisonToleranceFraction);
+    evidenceReferences =
+        Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
+    standardReferences =
+        Collections.unmodifiableList(new ArrayList<String>(builder.standardReferences));
+    defaultFieldComparisonToleranceFraction =
+        Math.max(0.0, builder.defaultFieldComparisonToleranceFraction);
   }
 
   /**
