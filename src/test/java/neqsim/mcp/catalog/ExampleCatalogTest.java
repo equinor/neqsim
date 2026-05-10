@@ -10,6 +10,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import neqsim.mcp.runners.FlashRunner;
+import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
+import neqsim.mcp.runners.OpenDrainReviewRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.Validator;
@@ -104,6 +106,8 @@ class ExampleCatalogTest {
     assertTrue(categories.contains("property-table"));
     assertTrue(categories.contains("phase-envelope"));
     assertTrue(categories.contains("root-cause"));
+    assertTrue(categories.contains("open-drain-review"));
+    assertTrue(categories.contains("process-safety-review"));
   }
 
   @Test
@@ -115,6 +119,9 @@ class ExampleCatalogTest {
     List<String> processExamples = ExampleCatalog.getExampleNames("process");
     assertEquals(2, processExamples.size());
     assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
+    assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
+    assertTrue(ExampleCatalog.getExampleNames("process-safety-review")
+      .contains("norsok-s001-clause10"));
 
     List<String> unknown = ExampleCatalog.getExampleNames("unknown");
     assertTrue(unknown.isEmpty());
@@ -241,5 +248,31 @@ class ExampleCatalogTest {
     assertTrue(names.contains("compressor-high-vibration"));
     assertTrue(names.contains("separator-liquid-carryover"));
     assertTrue(names.contains("hx-fouling"));
+  }
+
+  @Test
+  void testOpenDrainReviewExample_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("open-drain-review", "norsok-s001-stid");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(input.has("stidData"));
+
+    String result = OpenDrainReviewRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertEquals("open_drain_review", output.get("reviewType").getAsString());
+  }
+
+  @Test
+  void testNorsokS001Clause10ReviewExample_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("process-safety-review", "norsok-s001-clause10");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(input.has("stidData"));
+
+    String result = NorsokS001Clause10ReviewRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertEquals("norsok_s001_clause10_review", output.get("reviewType").getAsString());
   }
 }

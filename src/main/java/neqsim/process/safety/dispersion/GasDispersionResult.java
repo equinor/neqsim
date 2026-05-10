@@ -27,6 +27,8 @@ public class GasDispersionResult implements Serializable {
   private final double fuelMoleFraction;
   private final double fuelMassFraction;
   private final double lowerFlammableLimitVolumeFraction;
+  private final double flammableEndpointFractionOfLfl;
+  private final double distanceToFlammableEndpointM;
   private final double distanceToHalfLflM;
   private final double distanceToLflM;
   private final double flammableCloudVolumeM3;
@@ -39,6 +41,60 @@ public class GasDispersionResult implements Serializable {
 
   /**
    * Creates a gas dispersion result.
+   *
+   * @param scenarioName scenario identifier
+   * @param selectedModel selected dispersion model name
+   * @param massReleaseRateKgPerS total released gas mass rate in kg/s
+   * @param flammableMassReleaseRateKgPerS released flammable mass rate in kg/s
+   * @param sourceDensityKgPerM3 expanded source gas density in kg/m3
+   * @param airDensityKgPerM3 ambient air density in kg/m3
+   * @param fuelMoleFraction fuel mole fraction in the released gas
+   * @param fuelMassFraction fuel mass fraction in the released gas
+   * @param lowerFlammableLimitVolumeFraction lower flammable limit as volume fraction in air
+  * @param flammableEndpointFractionOfLfl endpoint concentration fraction of LFL
+  * @param distanceToFlammableEndpointM distance to configured endpoint in m
+   * @param distanceToHalfLflM distance to 50 percent LFL in m
+   * @param distanceToLflM distance to 100 percent LFL in m
+   * @param flammableCloudVolumeM3 estimated flammable cloud volume in m3
+   * @param toxicComponentName toxic component name, or empty string when not evaluated
+   * @param toxicThresholdPpm toxic endpoint threshold in ppm
+   * @param toxicDistanceM distance to the toxic endpoint in m
+   * @param windSpeedMPerS wind speed used in m/s
+   * @param stabilityClass Pasquill stability class A to F
+   * @param screeningBasis text describing the screening method basis
+   */
+  public GasDispersionResult(String scenarioName, String selectedModel,
+      double massReleaseRateKgPerS, double flammableMassReleaseRateKgPerS,
+      double sourceDensityKgPerM3, double airDensityKgPerM3, double fuelMoleFraction,
+      double fuelMassFraction, double lowerFlammableLimitVolumeFraction,
+      double flammableEndpointFractionOfLfl, double distanceToFlammableEndpointM,
+      double distanceToHalfLflM, double distanceToLflM, double flammableCloudVolumeM3,
+      String toxicComponentName, double toxicThresholdPpm, double toxicDistanceM,
+      double windSpeedMPerS, char stabilityClass, String screeningBasis) {
+    this.scenarioName = scenarioName;
+    this.selectedModel = selectedModel;
+    this.massReleaseRateKgPerS = massReleaseRateKgPerS;
+    this.flammableMassReleaseRateKgPerS = flammableMassReleaseRateKgPerS;
+    this.sourceDensityKgPerM3 = sourceDensityKgPerM3;
+    this.airDensityKgPerM3 = airDensityKgPerM3;
+    this.fuelMoleFraction = fuelMoleFraction;
+    this.fuelMassFraction = fuelMassFraction;
+    this.lowerFlammableLimitVolumeFraction = lowerFlammableLimitVolumeFraction;
+    this.flammableEndpointFractionOfLfl = flammableEndpointFractionOfLfl;
+    this.distanceToFlammableEndpointM = distanceToFlammableEndpointM;
+    this.distanceToHalfLflM = distanceToHalfLflM;
+    this.distanceToLflM = distanceToLflM;
+    this.flammableCloudVolumeM3 = flammableCloudVolumeM3;
+    this.toxicComponentName = toxicComponentName == null ? "" : toxicComponentName;
+    this.toxicThresholdPpm = toxicThresholdPpm;
+    this.toxicDistanceM = toxicDistanceM;
+    this.windSpeedMPerS = windSpeedMPerS;
+    this.stabilityClass = stabilityClass;
+    this.screeningBasis = screeningBasis == null ? "" : screeningBasis;
+  }
+
+  /**
+   * Creates a gas dispersion result using 50 percent LFL as the configured endpoint.
    *
    * @param scenarioName scenario identifier
    * @param selectedModel selected dispersion model name
@@ -66,24 +122,11 @@ public class GasDispersionResult implements Serializable {
       double distanceToLflM, double flammableCloudVolumeM3, String toxicComponentName,
       double toxicThresholdPpm, double toxicDistanceM, double windSpeedMPerS, char stabilityClass,
       String screeningBasis) {
-    this.scenarioName = scenarioName;
-    this.selectedModel = selectedModel;
-    this.massReleaseRateKgPerS = massReleaseRateKgPerS;
-    this.flammableMassReleaseRateKgPerS = flammableMassReleaseRateKgPerS;
-    this.sourceDensityKgPerM3 = sourceDensityKgPerM3;
-    this.airDensityKgPerM3 = airDensityKgPerM3;
-    this.fuelMoleFraction = fuelMoleFraction;
-    this.fuelMassFraction = fuelMassFraction;
-    this.lowerFlammableLimitVolumeFraction = lowerFlammableLimitVolumeFraction;
-    this.distanceToHalfLflM = distanceToHalfLflM;
-    this.distanceToLflM = distanceToLflM;
-    this.flammableCloudVolumeM3 = flammableCloudVolumeM3;
-    this.toxicComponentName = toxicComponentName == null ? "" : toxicComponentName;
-    this.toxicThresholdPpm = toxicThresholdPpm;
-    this.toxicDistanceM = toxicDistanceM;
-    this.windSpeedMPerS = windSpeedMPerS;
-    this.stabilityClass = stabilityClass;
-    this.screeningBasis = screeningBasis == null ? "" : screeningBasis;
+    this(scenarioName, selectedModel, massReleaseRateKgPerS, flammableMassReleaseRateKgPerS,
+        sourceDensityKgPerM3, airDensityKgPerM3, fuelMoleFraction, fuelMassFraction,
+        lowerFlammableLimitVolumeFraction, 0.5, distanceToHalfLflM, distanceToHalfLflM,
+        distanceToLflM, flammableCloudVolumeM3, toxicComponentName, toxicThresholdPpm,
+        toxicDistanceM, windSpeedMPerS, stabilityClass, screeningBasis);
   }
 
   /**
@@ -165,6 +208,24 @@ public class GasDispersionResult implements Serializable {
    */
   public double getLowerFlammableLimitVolumeFraction() {
     return lowerFlammableLimitVolumeFraction;
+  }
+
+  /**
+   * Gets the configured flammable endpoint fraction of LFL.
+   *
+   * @return endpoint fraction of LFL, for example 0.20 or 0.50
+   */
+  public double getFlammableEndpointFractionOfLfl() {
+    return flammableEndpointFractionOfLfl;
+  }
+
+  /**
+   * Gets the distance to the configured flammable endpoint.
+   *
+   * @return distance to configured endpoint in m, or NaN if not reached
+   */
+  public double getDistanceToFlammableEndpointM() {
+    return distanceToFlammableEndpointM;
   }
 
   /**
@@ -284,6 +345,8 @@ public class GasDispersionResult implements Serializable {
     appendNumber(json, "fuelMassFraction", fuelMassFraction, true);
     appendNumber(json, "lowerFlammableLimit_volumeFraction", lowerFlammableLimitVolumeFraction,
         true);
+    appendNumber(json, "flammableEndpointFractionOfLFL", flammableEndpointFractionOfLfl, true);
+    appendNumber(json, "distanceToFlammableEndpoint_m", distanceToFlammableEndpointM, true);
     appendNumber(json, "distanceToHalfLFL_m", distanceToHalfLflM, true);
     appendNumber(json, "distanceToLFL_m", distanceToLflM, true);
     appendNumber(json, "flammableCloudVolume_m3", flammableCloudVolumeM3, true);

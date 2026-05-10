@@ -113,6 +113,8 @@ class SchemaCatalogTest {
     assertTrue(tools.contains("get_phase_envelope"));
     assertTrue(tools.contains("get_capabilities"));
     assertTrue(tools.contains("run_root_cause_analysis"));
+    assertTrue(tools.contains("run_open_drain_review"));
+    assertTrue(tools.contains("run_norsok_s001_clause10_review"));
   }
 
   @Test
@@ -179,6 +181,8 @@ class SchemaCatalogTest {
     assertTrue(flash.get("inputSchemaUri").getAsString().contains("run_flash"));
     assertTrue(flash.get("outputSchemaUri").getAsString().contains("run_flash"));
     assertTrue(root.has("run_root_cause_analysis"));
+    assertTrue(root.has("run_open_drain_review"));
+    assertTrue(root.has("run_norsok_s001_clause10_review"));
   }
 
   @Test
@@ -220,5 +224,31 @@ class SchemaCatalogTest {
     String output = SchemaCatalog.getSchema("get_capabilities", "output");
     assertNotNull(output);
     assertTrue(output.contains("CapabilitiesOutput"));
+  }
+
+  @Test
+  void testOpenDrainReviewSchemas() {
+    String input = SchemaCatalog.getSchema("run_open_drain_review", "input");
+    assertNotNull(input);
+    JsonObject inputRoot = JsonParser.parseString(input).getAsJsonObject();
+    assertEquals("OpenDrainReviewInput", inputRoot.get("title").getAsString());
+
+    String output = SchemaCatalog.getSchema("run_open_drain_review", "output");
+    assertNotNull(output);
+    JsonObject outputRoot = JsonParser.parseString(output).getAsJsonObject();
+    assertEquals("OpenDrainReviewOutput", outputRoot.get("title").getAsString());
+  }
+
+  @Test
+  void testNorsokS001Clause10ReviewSchemas() {
+    String input = SchemaCatalog.getSchema("run_norsok_s001_clause10_review", "input");
+    assertNotNull(input);
+    JsonObject inputRoot = JsonParser.parseString(input).getAsJsonObject();
+    assertEquals("NorsokS001Clause10ReviewInput", inputRoot.get("title").getAsString());
+
+    String output = SchemaCatalog.getSchema("run_norsok_s001_clause10_review", "output");
+    assertNotNull(output);
+    JsonObject outputRoot = JsonParser.parseString(output).getAsJsonObject();
+    assertEquals("NorsokS001Clause10ReviewOutput", outputRoot.get("title").getAsString());
   }
 }

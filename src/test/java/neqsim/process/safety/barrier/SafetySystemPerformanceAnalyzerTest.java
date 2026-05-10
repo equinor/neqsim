@@ -140,6 +140,22 @@ class SafetySystemPerformanceAnalyzerTest {
     assertTrue(json.contains("pfdAverage"));
   }
 
+    /**
+     * Verifies that process shutdown text is classified as PSD instead of generic ESD/blowdown.
+     */
+    @Test
+    void testProcessShutdownBarrierClassifiesAsPsd() {
+        BarrierRegister register = new BarrierRegister("BR-PSD-001").setName("PSD review");
+        SafetyBarrier psdBarrier = createBarrier("B-PSD-101", "PSD valve",
+            "Process shutdown closes shutdown valve SDV-101", SafetySystemCategory.UNKNOWN)
+                        .setPfd(8.0e-4);
+        register.addBarrier(psdBarrier);
+
+        SafetySystemPerformanceReport report = new SafetySystemPerformanceAnalyzer(register).analyze();
+
+        assertTrue(report.toJson().contains("PSD"));
+    }
+
   /**
    * Creates a reusable barrier with a matching performance standard and evidence.
    *

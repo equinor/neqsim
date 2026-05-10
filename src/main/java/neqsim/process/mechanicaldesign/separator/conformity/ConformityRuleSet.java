@@ -49,8 +49,8 @@ public abstract class ConformityRuleSet implements Serializable {
   /**
    * Creates a rule set for the named standard.
    *
-   * @param standardName the standard identifier: "TR3500", "API-12J",
-   *                     "Shell-DEP", "NORSOK-P002"
+  * @param standardName the standard identifier: "TR3500", "TR1965", "API-12J",
+  *        "Shell-DEP", "NORSOK-P002"
    * @return a ConformityRuleSet for the named standard
    * @throws IllegalArgumentException if the standard is not recognized
    */
@@ -62,8 +62,11 @@ public abstract class ConformityRuleSet implements Serializable {
     if (normalized.equals("TR3500") || normalized.equals("EQUINORTR3500")) {
       return new TR3500RuleSet();
     }
+    if (normalized.equals("TR1965") || normalized.equals("EQUINORTR1965")) {
+      return new TR1965RuleSet();
+    }
     throw new IllegalArgumentException("Unknown conformity standard: " + standardName
-        + ". Supported: TR3500");
+        + ". Supported: TR3500, TR1965");
   }
 
   /**
@@ -270,6 +273,288 @@ public abstract class ConformityRuleSet implements Serializable {
         names.add("inletMomentum");
       }
       return names;
+    }
+  }
+
+  // =====================================================================
+  // TR1965 Implementation
+  // =====================================================================
+
+  /**
+   * Equinor TR1965 gas scrubber conformity rules.
+   *
+   * <p>
+   * The rule set covers gas-load K-factor limits by scrubber internals type, documented outlet
+   * liquid entrainment, documented liquid design margin, and geometric distance checks when the
+   * project has configured the relevant elevations on {@link GasScrubberMechanicalDesign}.
+   * </p>
+   */
+  private static class TR1965RuleSet extends ConformityRuleSet {
+    private static final long serialVersionUID = 1000L;
+
+    /** Maximum K-factor for conventional mesh scrubbers [m/s]. */
+    private static final double MESH_K_LIMIT = 0.11;
+
+    /** Maximum K-factor for mesh plus axial-flow cyclone or vane pack scrubbers [m/s]. */
+    private static final double MESH_WITH_AFC_OR_VANE_K_LIMIT = 0.15;
+
+    /** Maximum K-factor for compact axial-flow cyclone scrubbers [m/s]. */
+    private static final double COMPACT_CYCLONE_K_LIMIT = 0.90;
+
+    /** Maximum liquid entrainment to gas outlet [litre/MSm3]. */
+    private static final double MAX_LIQUID_ENTRAINMENT_LITRE_PER_MSM3 = 20.0;
+
+    /** Minimum gas design margin fraction. */
+    private static final double MIN_GAS_MARGIN_FRACTION = 0.10;
+
+    /** Minimum liquid design margin fraction. */
+    private static final double MIN_LIQUID_MARGIN_FRACTION = 0.20;
+
+    /** Minimum HHLL to inlet device distance [m]. */
+    private static final double MIN_HHLL_TO_INLET_M = 0.50;
+
+    /** Minimum inlet device to mesh pad distance [m]. */
+    private static final double MIN_INLET_TO_MESH_M = 0.90;
+
+    /** Surface tension reference below which K-factor derating is applied [mN/m]. */
+    private static final double SURFACE_TENSION_DERATING_REFERENCE_MN_PER_M = 10.0;
+
+    /**
+     * Constructs a TR1965RuleSet.
+     */
+    TR1965RuleSet() {
+      super("TR1965");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ConformityReport evaluate(GasScrubberMechanicalDesign design) {
+      Separator separator = (Separator) design.getProcessEquipment();
+      ConformityReport report = new ConformityReport(separator.getName(), getName());
+      neqsim.thermo.system.SystemInterface fluid = separator.getThermoSystem();
+      if (fluid == null) {
+        return report;
+      }
+      fluid.initPhysicalProperties();
+
+      double gasDensity = getGasDensity(fluid);
+      double liquidDensity = getLiquidDensity(fluid);
+      double gasFlowM3s = getGasFlowRateM3s(fluid);
+      double kFactor = calculateKFactor(design.getInnerDiameter(), gasFlowM3s, gasDensity,
+          liquidDensity);
+      double surfaceTensionMNPerM = getSurfaceTensionMNPerM(fluid);
+      double deratingFactor = getSurfaceTensionDeratingFactor(surfaceTensionMNPerM);
+      double kFactorLimit = selectKFactorLimit(design) * deratingFactor;
+
+      report.addResult(new ConformityResult("tr1965-k-factor", getName(), "gas-load",
+          kFactor, kFactorLimit, "m/s", ConformityResult.LimitDirection.MAXIMUM,
+          "TR1965 gas-load K-factor limit including low-surface-tension derating"));
+
+      if (Double.isFinite(kFactor) && kFactor > 0.0) {
+        double gasMargin = kFactorLimit / kFactor - 1.0;
+        report.addResult(new ConformityResult("tr1965-gas-design-margin", getName(),
+            "gas-load", gasMargin, MIN_GAS_MARGIN_FRACTION, "fraction",
+            ConformityResult.LimitDirection.MINIMUM,
+            "Gas design margin between effective TR1965 limit and operating K-factor"));
+      } else {
+        report.addResult(ConformityResult.notApplicable("tr1965-gas-design-margin", getName(),
+            "K-factor could not be calculated from the current fluid and vessel geometry"));
+      }
+
+      if (Double.isFinite(design.getLiquidEntrainmentLitresPerMSm3())) {
+        report.addResult(new ConformityResult("tr1965-liquid-entrainment", getName(),
+            "gas-outlet", design.getLiquidEntrainmentLitresPerMSm3(),
+            MAX_LIQUID_ENTRAINMENT_LITRE_PER_MSM3, "litre/MSm3",
+            ConformityResult.LimitDirection.MAXIMUM,
+            "Documented liquid entrainment to gas outlet"));
+      } else {
+        report.addResult(ConformityResult.notApplicable("tr1965-liquid-entrainment", getName(),
+            "Liquid entrainment value has not been configured on the mechanical design"));
+      }
+
+      if (Double.isFinite(design.getLiquidDesignMarginFraction())) {
+        report.addResult(new ConformityResult("tr1965-liquid-design-margin", getName(),
+            "liquid-handling", design.getLiquidDesignMarginFraction(), MIN_LIQUID_MARGIN_FRACTION,
+            "fraction", ConformityResult.LimitDirection.MINIMUM,
+            "Documented liquid handling design margin"));
+      } else {
+        report.addResult(ConformityResult.notApplicable("tr1965-liquid-design-margin", getName(),
+            "Liquid design margin has not been configured on the mechanical design"));
+      }
+
+      addDistanceChecks(design, report);
+      return report;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<String> getConstraintNames(GasScrubberMechanicalDesign design) {
+      List<String> names = new ArrayList<String>();
+      names.add("gasLoadFactor");
+      names.add("kValue");
+      if (design.hasInletCyclones() || design.getInletNozzleID() > 0) {
+        names.add("inletMomentum");
+      }
+      return names;
+    }
+
+    /**
+     * Selects the base TR1965 K-factor limit for the configured internals.
+     *
+     * @param design scrubber mechanical design
+     * @return base K-factor limit in m/s before surface-tension derating
+     */
+    private double selectKFactorLimit(GasScrubberMechanicalDesign design) {
+      if (design.hasDemistingCyclones() && !design.hasMeshPad()) {
+        return COMPACT_CYCLONE_K_LIMIT;
+      }
+      if ((design.hasDemistingCyclones() || design.hasVanePack()) && design.hasMeshPad()) {
+        return MESH_WITH_AFC_OR_VANE_K_LIMIT;
+      }
+      if (design.hasVanePack()) {
+        return MESH_WITH_AFC_OR_VANE_K_LIMIT;
+      }
+      return MESH_K_LIMIT;
+    }
+
+    /**
+     * Adds TR1965 vessel-internal distance checks to a report.
+     *
+     * @param design scrubber mechanical design
+     * @param report report receiving the conformity results
+     */
+    private void addDistanceChecks(GasScrubberMechanicalDesign design, ConformityReport report) {
+      double laHH = design.getLaHHElevationM();
+      double inletElevation = design.getInletDeviceElevationM();
+      if (laHH > 0.0 && inletElevation > 0.0) {
+        double distance = inletElevation - laHH;
+        report.addResult(new ConformityResult("tr1965-hhll-to-inlet-distance", getName(),
+            "layout", distance, MIN_HHLL_TO_INLET_M, "m",
+            ConformityResult.LimitDirection.MINIMUM,
+            "Distance from LA(HH) to inlet device centerline"));
+      } else {
+        report.addResult(ConformityResult.notApplicable("tr1965-hhll-to-inlet-distance",
+            getName(), "LA(HH) and inlet device elevations are required for this check"));
+      }
+
+      double meshElevation = design.getMeshPadElevationM();
+      if (inletElevation > 0.0 && meshElevation > 0.0) {
+        double distance = meshElevation - inletElevation;
+        report.addResult(new ConformityResult("tr1965-inlet-to-mesh-distance", getName(),
+            "layout", distance, MIN_INLET_TO_MESH_M, "m",
+            ConformityResult.LimitDirection.MINIMUM,
+            "Distance from inlet device centerline to mesh pad centerline"));
+      } else if (design.hasMeshPad()) {
+        report.addResult(ConformityResult.notApplicable("tr1965-inlet-to-mesh-distance",
+            getName(), "Inlet device and mesh pad elevations are required for this check"));
+      }
+    }
+
+    /**
+     * Calculates the gas-load K-factor.
+     *
+     * @param diameterM vessel internal diameter in m
+     * @param gasFlowM3s gas volumetric flow rate in m3/s
+     * @param gasDensity gas density in kg/m3
+     * @param liquidDensity liquid density in kg/m3
+     * @return Souders-Brown K-factor in m/s, or NaN when the inputs are invalid
+     */
+    private double calculateKFactor(double diameterM, double gasFlowM3s, double gasDensity,
+        double liquidDensity) {
+      double vesselArea = Math.PI * Math.pow(diameterM / 2.0, 2.0);
+      if (vesselArea <= 0.0 || gasFlowM3s <= 0.0 || gasDensity <= 0.0
+          || liquidDensity <= gasDensity) {
+        return Double.NaN;
+      }
+      double gasVelocity = gasFlowM3s / vesselArea;
+      return gasVelocity * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
+    }
+
+    /**
+     * Gets the gas density from a fluid.
+     *
+     * @param fluid thermodynamic fluid
+     * @return gas density in kg/m3, or NaN when unavailable
+     */
+    private double getGasDensity(neqsim.thermo.system.SystemInterface fluid) {
+      try {
+        if (fluid.hasPhaseType("gas")) {
+          return fluid.getPhase("gas").getPhysicalProperties().getDensity();
+        }
+        return fluid.getPhase(0).getPhysicalProperties().getDensity();
+      } catch (RuntimeException ex) {
+        return Double.NaN;
+      }
+    }
+
+    /**
+     * Gets the liquid density used in the K-factor denominator.
+     *
+     * @param fluid thermodynamic fluid
+     * @return liquid density in kg/m3, or 1000 kg/m3 for dry gas screening
+     */
+    private double getLiquidDensity(neqsim.thermo.system.SystemInterface fluid) {
+      try {
+        if (fluid.hasPhaseType("oil")) {
+          return fluid.getPhase("oil").getPhysicalProperties().getDensity();
+        }
+        if (fluid.hasPhaseType("aqueous")) {
+          return fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+        }
+      } catch (RuntimeException ex) {
+        return 1000.0;
+      }
+      return 1000.0;
+    }
+
+    /**
+     * Gets gas volumetric flow from a fluid.
+     *
+     * @param fluid thermodynamic fluid
+     * @return gas volumetric flow rate in m3/s, or zero when unavailable
+     */
+    private double getGasFlowRateM3s(neqsim.thermo.system.SystemInterface fluid) {
+      try {
+        if (fluid.hasPhaseType("gas")) {
+          return fluid.getPhase("gas").getFlowRate("m3/sec");
+        }
+        return fluid.getPhase(0).getFlowRate("m3/sec");
+      } catch (RuntimeException ex) {
+        return 0.0;
+      }
+    }
+
+    /**
+     * Gets gas-liquid surface tension when a liquid phase exists.
+     *
+     * @param fluid thermodynamic fluid
+     * @return surface tension in mN/m, or NaN when unavailable
+     */
+    private double getSurfaceTensionMNPerM(neqsim.thermo.system.SystemInterface fluid) {
+      if (fluid.getNumberOfPhases() < 2) {
+        return Double.NaN;
+      }
+      try {
+        return fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
+      } catch (RuntimeException ex) {
+        return Double.NaN;
+      }
+    }
+
+    /**
+     * Calculates the screening derating factor for low surface tension fluids.
+     *
+     * @param surfaceTensionMNPerM gas-liquid surface tension in mN/m
+     * @return K-factor multiplier in the range 0.0 to 1.0
+     */
+    private double getSurfaceTensionDeratingFactor(double surfaceTensionMNPerM) {
+      if (!Double.isFinite(surfaceTensionMNPerM)
+          || surfaceTensionMNPerM >= SURFACE_TENSION_DERATING_REFERENCE_MN_PER_M) {
+        return 1.0;
+      }
+      double ratio = Math.max(0.0, surfaceTensionMNPerM)
+          / SURFACE_TENSION_DERATING_REFERENCE_MN_PER_M;
+      return Math.pow(ratio, 0.25);
     }
   }
 }

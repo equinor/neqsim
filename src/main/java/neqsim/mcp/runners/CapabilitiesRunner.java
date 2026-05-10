@@ -125,6 +125,8 @@ public class CapabilitiesRunner {
         "runPVT — PVT laboratory experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity)",
         "runFlowAssurance — Flow assurance analysis (hydrate, wax, asphaltene, corrosion, erosion, cooldown)",
         "runMaterialsReview — Process-wide material selection, degradation, CUI, and remaining-life review",
+        "runOpenDrainReview — NORSOK S-001 Clause 9 open-drain review from normalized STID/P&ID and optional tagreader evidence",
+        "runNorsokS001Clause10Review — NORSOK S-001 Clause 10 process safety system review from normalized C&E, SRS, PSV, instrument, tagreader, and optional dynamic simulation evidence",
         "calculateStandard — Gas/oil quality per 22 industry standards (ISO, AGA, GPA, EN, ASTM)",
         "runPipeline — Multiphase pipeline flow simulation (Beggs & Brill)",
         "runReservoir — Material balance reservoir simulation (tank model, depletion)",

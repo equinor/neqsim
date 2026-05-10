@@ -118,6 +118,19 @@ class BarrierRegisterTest {
   }
 
   /**
+   * Verifies that the TR2237 template creates starter performance standards and mappings.
+   */
+  @Test
+  void testTR2237OnshoreTemplateLoadsPerformanceStandards() {
+    BarrierRegister register = TR2237Templates.createOnshoreTemplate();
+
+    assertTrue(register.getPerformanceStandards().size() >= 10);
+    assertNotNull(register.getPerformanceStandard("PS-05"));
+    assertTrue(TR2237Templates.createNorsokS001Mapping().containsKey("PS-05"));
+    assertTrue(register.toJson().contains("TR2237 onshore"));
+  }
+
+  /**
    * Creates reusable traceable evidence for tests.
    *
    * @return document evidence

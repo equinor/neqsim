@@ -21,6 +21,7 @@ This folder contains guides for implementing safety systems in process simulatio
 
 | Document | Description |
 |----------|-------------|
+| [ESD Dynamic Testing Workflow](esd_testing_workflow.md) | Dynamic ESD testing with process logic, OperationalTagMap/tagreader evidence, and JSON criteria reports |
 | [ESD_BLOWDOWN_SYSTEM.md](ESD_BLOWDOWN_SYSTEM) | Complete ESD and blowdown system guide |
 | [PRESSURE_MONITORING_ESD.md](PRESSURE_MONITORING_ESD) | Pressure monitoring for ESD |
 
@@ -42,6 +43,7 @@ This folder contains guides for implementing safety systems in process simulatio
 | [integration_safety_chain_tests.md](integration_safety_chain_tests) | Safety chain integration testing |
 | [SAFETY_SIMULATION_ROADMAP.md](SAFETY_SIMULATION_ROADMAP) | Safety simulation development roadmap |
 | [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md) | End-to-end STID/P&ID, plant data, NeqSim simulation, HAZOP, barrier, and report workflow |
+| [Open Drain Review with NeqSim Evidence](open_drain_review.md) | NORSOK S-001 Clause 9 review using NeqSim-calculated liquid leak rate, firewater load, density, pressure, and drain capacity plus STID/tagreader evidence |
 
 | [Barrier Management and SCE Traceability](barrier_management.md) | Evidence-linked PSFs, SCEs, performance standards, and safety-analysis handoffs |
 

@@ -28,6 +28,18 @@ class GasDispersionAnalyzerTest {
   }
 
   @Test
+  void sts0131IntegralEndpointUsesTwentyPercentLfl() {
+    GasDispersionResult result =
+        GasDispersionAnalyzer.builder().scenarioName("Methane integral endpoint")
+            .fluid(methaneFluid(20.0)).massReleaseRate(1.0).boundaryConditions(standardWeather())
+            .sts0131IntegralEndpoint().build().analyze();
+
+    assertEquals(0.20, result.getFlammableEndpointFractionOfLfl(), 1.0e-12);
+    assertTrue(result.getDistanceToFlammableEndpointM() > result.getDistanceToHalfLflM());
+    assertTrue(result.toJson().contains("distanceToFlammableEndpoint_m"));
+  }
+
+  @Test
   void carbonDioxideReleaseSelectsDenseGasAndNoFlammableCloud() {
     GasDispersionResult result =
         GasDispersionAnalyzer.builder().scenarioName("CO2 leak").fluid(carbonDioxideFluid())

@@ -23,7 +23,10 @@ public enum SafetySystemCategory {
   /** Passive fire protection on equipment, structures, supports, and walls. */
   PASSIVE_FIRE_PROTECTION("Passive fire protection"),
 
-  /** Emergency shutdown and process shutdown functions. */
+  /** Process shutdown functions and PSD valves. */
+  PSD("Process shutdown"),
+
+  /** Emergency shutdown and blowdown functions. */
   ESD_BLOWDOWN("Emergency shutdown and blowdown"),
 
   /** Relief, flare, vent, and pressure-relief functions. */

@@ -329,6 +329,20 @@ public class DepressurizationSimulator implements Serializable {
     }
 
     /**
+     * Evaluate this depressurization result against STS0131 fire escalation acceptance criteria.
+     *
+     * @param criteria configured STS0131 acceptance criteria
+     * @return acceptance result with pass or fail flags and interpolated values
+     * @throws IllegalArgumentException if {@code criteria} is null
+     */
+    public STS0131AcceptanceResult evaluateSTS0131(STS0131AcceptanceCriteria criteria) {
+      if (criteria == null) {
+        throw new IllegalArgumentException("criteria must not be null");
+      }
+      return criteria.evaluate(this);
+    }
+
+    /**
      * Build a brief human-readable summary of the API 521 acceptance results.
      *
      * @return summary string

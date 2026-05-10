@@ -23,6 +23,7 @@ Analyze the request and match it to one or more agents:
 | Water hammer, liquid hammer, hydraulic surge, fast valve closure, pump trip, check-valve slam | `@flow.assurance` | `@plant.data` for tagreader event windows; `@safety.depressuring` if risk register or safety case needed |
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA, H2 blending gas quality | `@gas.quality` | `@process.model` for upstream conditions |
 | Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions |
+| Standards compliance, TR1965, STS0131, TR2237, NORSOK P-002, NORSOK S-001, technical requirements review | `@standards.review` | `@technical.reader` for document extraction; `@process.model` for calculated evidence |
 | Blowdown, depressurization, PSV, relief valve, fire case, source term, HAZOP, SIL | `@safety.depressuring` | `@process.model` for steady-state base |
 | Root cause, failure analysis, trip diagnosis, vibration diagnosis, equipment anomaly, RCA | `@root.cause` | `@plant.data` for historian data; `@process.model` for simulation base |
 | Emissions, CO2 tax, flaring, venting, carbon intensity, GHG, EU ETS | `@emissions.environmental` | `@process.model` for process conditions |

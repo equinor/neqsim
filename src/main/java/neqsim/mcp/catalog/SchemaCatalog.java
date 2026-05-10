@@ -1690,6 +1690,145 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  /**
+   * Returns the JSON Schema for open-drain review input.
+   *
+   * @return JSON Schema string
+   */
+  public static String openDrainReviewInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "OpenDrainReviewInput");
+    schema.put("description",
+        "Input for run_open_drain_review. Accepts normalized STID/P&ID evidence and optional tagreader summaries for NORSOK S-001 Clause 9 review.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("projectName", stringProp("Project, asset, or review name"));
+    properties.put("defaultLiquidLeakRateKgPerS",
+        numberProp("Default worst credible process fire leak rate in kg/s, commonly 5 kg/s"));
+    properties.put("items", typedArraySchema(
+        "Review items with areaId, areaType, drainSystemType, sourceReferences, and evidence values"));
+    properties.put("openDrainAreas", typedArraySchema("Alias for open-drain area review items"));
+    properties.put("drainAreas", typedArraySchema("Alias for drain area review items"));
+    properties.put("stidData", objectProp(
+        "Normalized STID/P&ID extract with openDrainAreas, drainAreas, areaDrains, drainSystems, helideckDrains, temporaryStorageAreas, lineList, or equipment arrays"));
+    properties.put("tagreaderData", objectProp(
+        "Optional tagreader summary with sump level, backpressure, pump status, valve status, and backflow evidence"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("items"), requiredSchema("openDrainAreas"),
+        requiredSchema("drainAreas"), requiredSchema("stidData")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for open-drain review output.
+   *
+   * @return JSON Schema string
+   */
+  public static String openDrainReviewOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "OpenDrainReviewOutput");
+    schema.put("description",
+        "Output from run_open_drain_review with item verdicts, NORSOK S-001 Clause 9 assessments, evidence values, and provenance.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("reviewType", stringProp("open_drain_review"));
+    properties.put("overallVerdict",
+        enumProp("Overall verdict", Arrays.asList("PASS", "PASS_WITH_WARNINGS", "FAIL")));
+    properties.put("itemCount", intProp("Number of reviewed drain areas or systems"));
+    properties.put("failedItems", intProp("Number of failed items"));
+    properties.put("warningItems", intProp("Number of items with warnings"));
+    properties.put("results", typedArraySchema(
+        "Item results with areaId, verdict, confidence, evidenceValues, sourceReferences, and assessments"));
+    properties.put("standardsApplied", typedArraySchema("Standards and clauses used"));
+    properties.put("limitations", typedArraySchema("Limitations and assumptions"));
+    properties.put("provenance", objectProp("MCP result provenance"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for NORSOK S-001 Clause 10 process safety review input.
+   *
+   * @return JSON Schema string
+   */
+  public static String norsokS001Clause10ReviewInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "NorsokS001Clause10ReviewInput");
+    schema.put("description",
+        "Input for run_norsok_s001_clause10_review. Accepts normalized C&E, SRS, PSV, STID/P&ID, instrument-data, and tagreader evidence for NORSOK S-001 Clause 10 process safety system review.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("projectName", stringProp("Project, asset, or review name"));
+    properties.put("items", typedArraySchema(
+        "Review items with functionId, functionType, equipmentTag, sourceReferences, lifecycle evidence, and Clause 10 evidence values"));
+    properties.put("processSafetyFunctions", typedArraySchema("Process safety function records"));
+    properties.put("psdValves", typedArraySchema("PSD/shutdown valve and final-element evidence"));
+    properties.put("psvs", typedArraySchema("PSV and relief protection evidence"));
+    properties.put("alarms", typedArraySchema("Alarm and operator action evidence"));
+    properties.put("sifs", typedArraySchema("SIF, logic solver, and SRS evidence"));
+    properties.put("secondaryPressureProtection",
+        typedArraySchema("Instrumented secondary pressure protection evidence"));
+    properties.put("stidData", objectProp(
+        "Normalized STID/P&ID/C&E/SRS/PSV extract with processSafetyFunctions, psdValves, psvs, alarms, sifs, secondaryPressureProtection, utilityDependencies, survivabilityItems, instrumentData, or tagreaderEvidence arrays"));
+    properties.put("tagreaderData", objectProp(
+        "Optional tagreader or instrument-data summary with bypass, override, proof-test, demand-failure, and response-time evidence"));
+    properties.put("lifecycleEvidence", objectProp(
+        "Optional HAZID/HAZOP/LOPA to SRS to SIS/ESD/FGS implementation to verification/testing/operation traceability summary"));
+    properties.put("safetySystemPerformanceInput", objectProp(
+        "Optional input passed to run_safety_system_performance and embedded in the result"));
+    properties.put("operationalStudyInput",
+        objectProp("Optional input passed to runOperationalStudy and embedded in the result"));
+    properties.put("dynamicSimulationInput", objectProp(
+        "Optional input passed to run_dynamic and embedded as transient process evidence. Use for dynamic SIS/ESD/FGS/PSD scenario evidence when the ProcessSystem model implements the safety logic or valve actions."));
+    schema.put("properties", properties);
+    schema.put("anyOf",
+        Arrays.asList(requiredSchema("items"), requiredSchema("processSafetyFunctions"),
+            requiredSchema("stidData"), requiredSchema("tagreaderData"),
+            requiredSchema("lifecycleEvidence")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for NORSOK S-001 Clause 10 process safety review output.
+   *
+   * @return JSON Schema string
+   */
+  public static String norsokS001Clause10ReviewOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "NorsokS001Clause10ReviewOutput");
+    schema.put("description",
+        "Output from run_norsok_s001_clause10_review with Clause 10 item verdicts, requirement assessments, evidence values, optional embedded analysis outputs, and provenance.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("reviewType", stringProp("norsok_s001_clause10_review"));
+    properties.put("overallVerdict",
+        enumProp("Overall verdict", Arrays.asList("PASS", "PASS_WITH_WARNINGS", "FAIL")));
+    properties.put("itemCount", intProp("Number of reviewed functions and coverage records"));
+    properties.put("failedItems", intProp("Number of failed review items"));
+    properties.put("warningItems", intProp("Number of review items with warnings"));
+    properties.put("results", typedArraySchema(
+        "Item results with functionId, functionType, verdict, confidence, sourceReferences, evidenceValues, and assessments"));
+    properties.put("embeddedAnalyses", objectProp(
+        "Optional safetySystemPerformance, operationalStudy, and dynamicSimulation outputs embedded by the runner"));
+    properties.put("extractionTemplates",
+        typedArraySchema("Recommended document and instrument extraction templates"));
+    properties.put("provenance", objectProp("MCP result provenance"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -1701,7 +1840,8 @@ public final class SchemaCatalog {
     return Collections.unmodifiableList(Arrays.asList("run_flash", "run_process", "validate_input",
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
-        "run_water_hammer", "run_root_cause_analysis", "run_materials_review", "run_reservoir",
+        "run_water_hammer", "run_root_cause_analysis", "run_materials_review",
+        "run_open_drain_review", "run_norsok_s001_clause10_review", "run_reservoir",
         "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
         "compare_processes", "manage_session", "visualize", "run_hazop", "run_barrier_register",
         "run_safety_system_performance"));
@@ -1746,6 +1886,12 @@ public final class SchemaCatalog {
     } else if ("run_materials_review".equals(toolName)) {
       return "input".equals(schemaType) ? materialsReviewInputSchema()
           : materialsReviewOutputSchema();
+    } else if ("run_open_drain_review".equals(toolName)) {
+      return "input".equals(schemaType) ? openDrainReviewInputSchema()
+          : openDrainReviewOutputSchema();
+    } else if ("run_norsok_s001_clause10_review".equals(toolName)) {
+      return "input".equals(schemaType) ? norsokS001Clause10ReviewInputSchema()
+          : norsokS001Clause10ReviewOutputSchema();
     } else if ("run_reservoir".equals(toolName)) {
       return "input".equals(schemaType) ? reservoirInputSchema() : null;
     } else if ("run_field_economics".equals(toolName)) {

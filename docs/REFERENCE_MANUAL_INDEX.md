@@ -643,6 +643,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document            | Path                                                                                     | Description                |
 | ------------------- | ---------------------------------------------------------------------------------------- | -------------------------- |
+| ESD Dynamic Testing | [docs/safety/esd_testing_workflow.md](safety/esd_testing_workflow)                       | ESD dynamic testing with process logic, tagreader evidence, and criteria reports |
 | ESD Blowdown        | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM)                         | ESD blowdown system        |
 | Pressure Monitoring | [docs/safety/PRESSURE_MONITORING_ESD.md](safety/PRESSURE_MONITORING_ESD)                 | Pressure monitoring ESD    |
 | Fire Heat Transfer  | [docs/safety/fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements) | Fire heat transfer         |
@@ -660,6 +661,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Release Dispersion Scenarios | [docs/process/safety/release-dispersion-scenarios.md](process/safety/release-dispersion-scenarios) | Automatic leak source terms, gas dispersion screening, scenario taxonomy, trapped inventory, CFD source-term handoff cases, and industrial-readiness guidance from ProcessSystem streams |
 | Barrier Management  | [docs/safety/barrier_management.md](safety/barrier_management)                         | Evidence-linked PSF/SCE barrier register and safety-analysis handoffs |
 | Automated HAZOP     | [docs/safety/automated_hazop_from_stid.md](safety/automated_hazop_from_stid)           | STID/P&ID, plant data, NeqSim process simulation, HAZOP worksheet, barrier handoff, and report workflow |
+| Open Drain Review   | [docs/safety/open_drain_review.md](safety/open_drain_review)                           | NORSOK S-001 Clause 9 open-drain review using NeqSim-calculated liquid leak rate, firewater load, liquid density, pressure, and drain hydraulic capacity plus STID/tagreader evidence |
 
 ### Chapter 34b: Consequence Analysis & QRA
 

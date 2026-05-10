@@ -3,6 +3,7 @@ package neqsim.process.safety.compliance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.processmodel.ProcessSystem;
 
 class StandardsComplianceReportTest {
 
@@ -45,5 +46,60 @@ class StandardsComplianceReportTest {
     assertTrue(norsok > 0);
     assertTrue(iec > 0);
     assertEquals(api + norsok + iec, r.getRequirements().size());
+  }
+
+  @Test
+  void trAndNorsokIntegrationChecklistsLoad() {
+    StandardsComplianceReport r = new StandardsComplianceReport("TR review")
+        .loadSTS0131().loadTR1965().loadNORSOKP002().loadTR2237();
+    int sts0131 = 0;
+    int tr1965 = 0;
+    int p002 = 0;
+    int tr2237 = 0;
+    for (StandardsComplianceReport.Requirement q : r.getRequirements()) {
+      if (q.standard.equals("STS0131")) {
+        sts0131++;
+      }
+      if (q.standard.equals("TR1965")) {
+        tr1965++;
+      }
+      if (q.standard.equals("NORSOK P-002")) {
+        p002++;
+      }
+      if (q.standard.equals("TR2237")) {
+        tr2237++;
+      }
+    }
+    assertTrue(sts0131 > 0);
+    assertTrue(tr1965 > 0);
+    assertTrue(p002 > 0);
+    assertTrue(tr2237 > 0);
+  }
+
+  @Test
+  void norsokS001Clause10ChecklistLoadsWithProcessSafetyDescription() {
+    StandardsComplianceReport r = new StandardsComplianceReport("Clause 10")
+        .loadNORSOKS001().loadNORSOKS001Clause10();
+    int clause10 = 0;
+    boolean hasProcessSafetyClause = false;
+    for (StandardsComplianceReport.Requirement q : r.getRequirements()) {
+      if (q.standard.equals("NORSOK S-001") && q.clause.startsWith("10")) {
+        clause10++;
+      }
+      if (q.standard.equals("NORSOK S-001") && q.clause.equals("10")
+          && q.description.contains("Process safety system")) {
+        hasProcessSafetyClause = true;
+      }
+    }
+    assertTrue(hasProcessSafetyClause);
+    assertTrue(clause10 >= 10);
+  }
+
+  @Test
+  void standardsDesignReviewCreatesCombinedChecklist() {
+    StandardsComplianceReport report = new StandardsDesignReview().review(new ProcessSystem());
+
+    assertTrue(report.getRequirements().size() > 0);
+    assertTrue(report.report().contains("Standards compliance"));
   }
 }

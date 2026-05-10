@@ -51,6 +51,8 @@ import neqsim.mcp.runners.HAZOPStudyRunner;
 import neqsim.mcp.runners.IndustrialProfile;
 import neqsim.mcp.runners.LOPARunner;
 import neqsim.mcp.runners.MaterialsReviewRunner;
+import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
+import neqsim.mcp.runners.OpenDrainReviewRunner;
 import neqsim.mcp.runners.ProcessComparisonRunner;
 import neqsim.mcp.runners.ReliefRunner;
 import neqsim.mcp.runners.RiskMatrixRunner;
@@ -827,6 +829,65 @@ public class NeqSimTools {
       return withAutoValidation(MaterialsReviewRunner.run(materialsReviewJson), "general");
     } catch (Exception e) {
       return errorJson("Materials review failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a NORSOK S-001 open-drain review from normalized STID and optional tagreader evidence.
+   *
+   * @param openDrainReviewJson JSON specification with open-drain areas or normalized STID data
+   * @return JSON with open-drain review findings and provenance
+   */
+  @Tool(description = "Run an open-drain review against NORSOK S-001 Clause 9. "
+      + "Consumes normalized STID/P&ID evidence such as openDrainAreas, drainAreas, "
+      + "drainSystems, helideckDrains, temporaryStorageAreas, or stidData. Optional "
+      + "tagreader/historian evidence can document observed sump levels, backpressure, "
+      + "backflow events, pump status, and valve status, but the Java tool does not connect "
+      + "directly to STID or tagreader.")
+  public String runOpenDrainReview(@ToolArg(description = "JSON with 'items', 'openDrainAreas', "
+      + "'drainAreas', or 'stidData'. Key fields include areaId, areaType, drainSystemType, "
+      + "standards, drainageCapacityKgPerS, fireWaterCapacityKgPerS, liquidLeakRateKgPerS, "
+      + "backflowPrevented, closedOpenDrainInteractionPrevented, hazardous/non-hazardous "
+      + "segregation, seal/vent evidence, and optional tagreader evidence.") String openDrainReviewJson) {
+    String blocked = IndustrialProfile.enforceAccess("runOpenDrainReview");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return withAutoValidation(OpenDrainReviewRunner.run(openDrainReviewJson), "general");
+    } catch (Exception e) {
+      return errorJson("Open-drain review failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a NORSOK S-001 Clause 10 process safety system review.
+   *
+   * @param clause10ReviewJson JSON specification with normalized C&amp;E, SRS, PSV, STID/P&amp;ID,
+   *        instrument, and tagreader evidence
+   * @return JSON with Clause 10 review findings and provenance
+   */
+  @Tool(description = "Run a NORSOK S-001 Clause 10 process safety system review. "
+      + "Consumes normalized C&E, SRS, PSV list, STID/P&ID, instrument-data, and tagreader "
+      + "evidence for PSD valves, PSVs, alarms/actions, response time, logic solver, "
+      + "instrumented secondary pressure protection, utilities, PSD principles, and survivability. "
+      + "Optional safetySystemPerformanceInput, operationalStudyInput, and dynamicSimulationInput "
+      + "are embedded as calculated and transient simulation evidence.")
+  public String runNorsokS001Clause10Review(
+      @ToolArg(description = "JSON with 'items', 'processSafetyFunctions', 'stidData', or "
+          + "'tagreaderData'. Key fields include functionId, functionType, equipmentTag, "
+          + "sourceReferences, design/response/logic/utility/survivability booleans, "
+          + "PSV capacity fields, secondary pressure protection pressures/frequencies, and "
+          + "instrument data such as bypassActive, overrideActive, proofTestOverdue, or "
+          + "tripDemandFailures.") String clause10ReviewJson) {
+    String blocked = IndustrialProfile.enforceAccess("runNorsokS001Clause10Review");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return withAutoValidation(NorsokS001Clause10ReviewRunner.run(clause10ReviewJson), "general");
+    } catch (Exception e) {
+      return errorJson("NORSOK S-001 Clause 10 review failed: " + e.getMessage());
     }
   }
 

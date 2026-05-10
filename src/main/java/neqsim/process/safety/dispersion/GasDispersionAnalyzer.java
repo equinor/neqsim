@@ -54,6 +54,7 @@ public class GasDispersionAnalyzer implements Serializable {
   private final double releaseHeightM;
   private final ModelSelection modelSelection;
   private final double manualLowerFlammableLimitVolumeFraction;
+  private final double flammableEndpointFractionOfLfl;
   private final String toxicComponentName;
   private final double toxicThresholdPpm;
 
@@ -70,6 +71,7 @@ public class GasDispersionAnalyzer implements Serializable {
     this.releaseHeightM = builder.releaseHeightM;
     this.modelSelection = builder.modelSelection;
     this.manualLowerFlammableLimitVolumeFraction = builder.lowerFlammableLimitVolumeFraction;
+    this.flammableEndpointFractionOfLfl = builder.flammableEndpointFractionOfLfl;
     this.toxicComponentName = builder.toxicComponentName;
     this.toxicThresholdPpm = builder.toxicThresholdPpm;
   }
@@ -158,7 +160,8 @@ public class GasDispersionAnalyzer implements Serializable {
     return new GasDispersionResult(scenarioName, selectedModel.name(), massReleaseRateKgPerS,
         massReleaseRateKgPerS * fuelData.fuelMassFraction, sourceDensity, airDensity,
         fuelData.fuelMoleFraction, fuelData.fuelMassFraction,
-        fuelData.lowerFlammableLimitVolumeFraction, flammableEndpoint.distanceToHalfLflM,
+        fuelData.lowerFlammableLimitVolumeFraction, flammableEndpoint.endpointFractionOfLfl,
+        flammableEndpoint.distanceToEndpointM, flammableEndpoint.distanceToHalfLflM,
         flammableEndpoint.distanceToLflM, flammableEndpoint.cloudVolumeM3,
         toxicEndpoint.componentName, toxicEndpoint.thresholdPpm, toxicEndpoint.distanceM,
         boundaryConditions.getWindSpeed(), boundaryConditions.getPasquillStabilityClass(), basis);
@@ -192,16 +195,20 @@ public class GasDispersionAnalyzer implements Serializable {
   private FlammableEndpoint calculateFlammableEndpoint(ModelSelection selectedModel,
       double sourceDensity, double airDensity, FuelData fuelData) {
     if (!fuelData.hasFuel()) {
-      return new FlammableEndpoint(Double.NaN, Double.NaN, 0.0);
+        return new FlammableEndpoint(flammableEndpointFractionOfLfl, Double.NaN, Double.NaN,
+            Double.NaN, 0.0);
     }
     if (selectedModel == ModelSelection.HEAVY_GAS) {
       HeavyGasDispersion denseGas = createHeavyGasModel(sourceDensity, airDensity);
       double lflRatio = fuelData.lowerFlammableLimitVolumeFraction / fuelData.fuelMoleFraction;
       double halfLflRatio = 0.5 * lflRatio;
+      double endpointRatio = flammableEndpointFractionOfLfl * lflRatio;
       double distanceLfl = distanceToDenseGasRatio(denseGas, lflRatio);
       double distanceHalfLfl = distanceToDenseGasRatio(denseGas, halfLflRatio);
+      double distanceEndpoint = distanceToDenseGasRatio(denseGas, endpointRatio);
       double cloudVolume = estimateHeavyGasCloudVolume(distanceLfl);
-      return new FlammableEndpoint(distanceHalfLfl, distanceLfl, cloudVolume);
+      return new FlammableEndpoint(flammableEndpointFractionOfLfl, distanceEndpoint,
+          distanceHalfLfl, distanceLfl, cloudVolume);
     }
 
     double fuelRate = massReleaseRateKgPerS * fuelData.fuelMassFraction;
@@ -210,8 +217,11 @@ public class GasDispersionAnalyzer implements Serializable {
         fuelData.fuelMolarMassKgPerMol);
     double distanceLfl = plume.distanceToConcentration(lflKgPerM3);
     double distanceHalfLfl = plume.distanceToConcentration(0.5 * lflKgPerM3);
+    double distanceEndpoint = plume.distanceToConcentration(flammableEndpointFractionOfLfl
+      * lflKgPerM3);
     double cloudVolume = estimateGaussianCloudVolume(plume, lflKgPerM3, distanceLfl);
-    return new FlammableEndpoint(distanceHalfLfl, distanceLfl, cloudVolume);
+    return new FlammableEndpoint(flammableEndpointFractionOfLfl, distanceEndpoint,
+      distanceHalfLfl, distanceLfl, cloudVolume);
   }
 
   /**
@@ -610,6 +620,7 @@ public class GasDispersionAnalyzer implements Serializable {
     private double releaseHeightM = DEFAULT_RELEASE_HEIGHT_M;
     private ModelSelection modelSelection = ModelSelection.AUTO;
     private double lowerFlammableLimitVolumeFraction = Double.NaN;
+    private double flammableEndpointFractionOfLfl = 0.5;
     private String toxicComponentName;
     private double toxicThresholdPpm = Double.NaN;
 
@@ -703,6 +714,39 @@ public class GasDispersionAnalyzer implements Serializable {
     public Builder lowerFlammableLimit(double lowerFlammableLimitVolumeFraction) {
       this.lowerFlammableLimitVolumeFraction = lowerFlammableLimitVolumeFraction;
       return this;
+    }
+
+    /**
+     * Set the flammable endpoint fraction of the lower flammable limit.
+     *
+     * @param fractionOfLfl endpoint fraction of LFL in the interval (0, 1]
+     * @return this builder
+     * @throws IllegalArgumentException if the fraction is outside (0, 1]
+     */
+    public Builder flammableEndpointFraction(double fractionOfLfl) {
+      if (!Double.isFinite(fractionOfLfl) || fractionOfLfl <= 0.0 || fractionOfLfl > 1.0) {
+        throw new IllegalArgumentException("Flammable endpoint fraction must be in (0, 1]");
+      }
+      this.flammableEndpointFractionOfLfl = fractionOfLfl;
+      return this;
+    }
+
+    /**
+     * Use the STS0131 integral-tool flammable endpoint policy, 20 percent LFL.
+     *
+     * @return this builder
+     */
+    public Builder sts0131IntegralEndpoint() {
+      return flammableEndpointFraction(0.20);
+    }
+
+    /**
+     * Use the STS0131 CFD flammable endpoint policy, 50 percent LFL.
+     *
+     * @return this builder
+     */
+    public Builder sts0131CfdEndpoint() {
+      return flammableEndpointFraction(0.50);
     }
 
     /**
@@ -814,6 +858,8 @@ public class GasDispersionAnalyzer implements Serializable {
   /** Flammable endpoint holder. */
   private static final class FlammableEndpoint implements Serializable {
     private static final long serialVersionUID = 1000L;
+    private final double endpointFractionOfLfl;
+    private final double distanceToEndpointM;
     private final double distanceToHalfLflM;
     private final double distanceToLflM;
     private final double cloudVolumeM3;
@@ -821,12 +867,16 @@ public class GasDispersionAnalyzer implements Serializable {
     /**
      * Creates a flammable endpoint holder.
      *
+     * @param endpointFractionOfLfl configured endpoint fraction of LFL
+     * @param distanceToEndpointM distance to the configured endpoint in m
      * @param distanceToHalfLflM distance to 50 percent LFL in m
      * @param distanceToLflM distance to 100 percent LFL in m
      * @param cloudVolumeM3 estimated cloud volume in m3
      */
-    private FlammableEndpoint(double distanceToHalfLflM, double distanceToLflM,
-        double cloudVolumeM3) {
+    private FlammableEndpoint(double endpointFractionOfLfl, double distanceToEndpointM,
+        double distanceToHalfLflM, double distanceToLflM, double cloudVolumeM3) {
+      this.endpointFractionOfLfl = endpointFractionOfLfl;
+      this.distanceToEndpointM = distanceToEndpointM;
       this.distanceToHalfLflM = distanceToHalfLflM;
       this.distanceToLflM = distanceToLflM;
       this.cloudVolumeM3 = cloudVolumeM3;

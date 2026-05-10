@@ -15,6 +15,7 @@ Documentation for safety systems modeling in NeqSim.
 - [Pressure Safety Valves](#pressure-safety-valves)
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
 - [CFD Source-Term Handoff](release-dispersion-scenarios.md#cfd-source-term-handoff)
+- [Open Drain Review](../../safety/open_drain_review.md)
 - [HIPPS](#hipps)
 
 ---
@@ -29,6 +30,7 @@ NeqSim provides equipment and logic for modeling process safety systems:
 - Emergency Shutdown (ESD) systems
 - Blowdown and depressuring systems
 - High Integrity Pressure Protection Systems (HIPPS)
+- NORSOK S-001 Clause 9 open-drain review from NeqSim-calculated liquid and hydraulic evidence
 - Automatic release source terms and gas dispersion screening from process streams
 - Formal CFD source-term JSON handoff cases for OpenFOAM, FLACS, KFX, PHAST, and Safeti workflows
 
@@ -66,23 +68,20 @@ disk.setDiameter(150.0, "mm");
 
 ## Emergency Shutdown (ESD)
 
-### ESD Logic
+### ESD Logic and Dynamic Evidence
 
 ```java
-import neqsim.process.safety.ESDController;
+ESDValve inletValve = new ESDValve("ESD Inlet Isolation", feed);
+inletValve.setStrokeTime(4.0);
+inletValve.setCv(500.0);
 
-ESDController esd = new ESDController("ESD-1");
-
-// Add trip conditions
-esd.addHighPressureTrip(separator, 100.0, "barg");
-esd.addLowPressureTrip(separator, 5.0, "barg");
-esd.addHighLevelTrip(separator, 0.9);
-esd.addLowLevelTrip(separator, 0.1);
-
-// Add shutdown actions
-esd.addShutdownValve(inletValve);
-esd.addShutdownValve(outletValve);
+ESDLogic esdLogic = new ESDLogic("ESD Level 1");
+esdLogic.addAction(new TripValveAction(inletValve), 0.0);
 ```
+
+Use `neqsim.process.safety.esd.EmergencyShutdownTestRunner` when the ESD sequence needs a
+structured dynamic evidence report with monitored time series, tagreader comparisons, standards
+references, and acceptance criteria.
 
 ### ESD Levels
 
@@ -187,53 +186,29 @@ hipps.setVotingLogic("2oo3");  // 2 out of 3
 
 ---
 
-## Example: Complete Safety System
+## Example: ESD Dynamic Test Evidence
 
 ```java
-ProcessSystem process = new ProcessSystem();
+OperationalTagMap tagMap = new OperationalTagMap()
+    .addBinding(OperationalTagBinding.builder("xv_opening")
+        .automationAddress("ESD Inlet Isolation.percentValveOpening")
+        .unit("%")
+        .role(InstrumentTagRole.BENCHMARK)
+        .build());
 
-// Process equipment
-Stream feed = new Stream("Feed", feedFluid);
-process.add(feed);
+EmergencyShutdownTestPlan plan = EmergencyShutdownTestPlan.builder("ESD1 isolation closure")
+    .duration(8.0)
+    .timeStep(1.0)
+    .tagMap(tagMap)
+    .enableLogic("ESD Level 1")
+    .triggerLogic("ESD Level 1")
+    .criterion(EmergencyShutdownTestCriterion.finalAtMost(
+        "ESD-XV-CLOSED", "xv_opening", 5.0, "%"))
+    .criterion(EmergencyShutdownTestCriterion.logicCompleted(
+        "ESD-LOGIC-COMPLETE", "ESD Level 1"))
+    .build();
 
-Separator separator = new Separator("V-100", feed);
-separator.setVolume(10.0, "m3");
-process.add(separator);
-
-// PSV on separator
-SafetyValve psv = new SafetyValve("PSV-100", separator);
-psv.setOpeningPressure(100.0, "barg");
-psv.setDischargeStream(flareStream);
-process.add(psv);
-
-// Blowdown valve
-BlowdownValve bdv = new BlowdownValve("BDV-100", separator);
-bdv.setDownstreamPressure(1.0, "barg");
-process.add(bdv);
-
-// ESD controller
-ESDController esd = new ESDController("ESD");
-esd.addHighPressureTrip(separator, 95.0, "barg");
-esd.addShutdownAction(() -> {
-    inletValve.close();
-    bdv.open();
-});
-process.add(esd);
-
-// Run simulation
-process.run();
-
-// Simulate fire scenario
-separator.setHeatInput(500.0, "kW");
-
-for (double t = 0; t < 3600; t += 1.0) {
-    process.runTransient();
-
-    // Check ESD status
-    if (esd.isTripped()) {
-        System.out.println("ESD activated at " + t + " s");
-    }
-}
+EmergencyShutdownTestResult report = EmergencyShutdownTestRunner.run(process, plan, esdLogic);
 ```
 
 ---
@@ -242,6 +217,8 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 - [Process Package](../) - Process simulation overview
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md) - Automatic source-term and cloud endpoint screening from ProcessSystem streams
+- [Open Drain Review](../../safety/open_drain_review.md) - NORSOK S-001 Clause 9 review with NeqSim stream evidence and normalized STID/tagreader inputs
+- [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow.md) - ESD transient testing with process logic, tagreader evidence, and criteria reports
 - [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
 - [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
 - [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example

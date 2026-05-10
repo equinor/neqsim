@@ -17,6 +17,10 @@ import java.util.Map;
  * <li>API RP 14C — Safety analysis of surface safety systems for offshore production</li>
  * <li>NORSOK S-001 — Technical safety</li>
  * <li>IEC 61511 — Functional safety: SIS for the process industry</li>
+ * <li>STS0131 — Technical safety requirements</li>
+ * <li>TR1965 — Gas scrubber/separator requirements</li>
+ * <li>NORSOK P-002 — Process system line sizing</li>
+ * <li>TR2237 — Performance standard structure</li>
  * </ul>
  *
  * @author ESOL
@@ -192,11 +196,36 @@ public class StandardsComplianceReport implements Serializable {
         new String[] {"7.1", "ESD philosophy and ESD levels"},
         new String[] {"7.2", "PSD philosophy and PSD levels"},
         new String[] {"8", "Fire and gas detection — coverage analysis"},
-        new String[] {"9", "Active fire protection (deluge, foam, gas suppression)"},
-        new String[] {"10", "Passive fire protection (PFP) per heat-flux contour"},
-        new String[] {"11", "Blast walls and overpressure resistance"},
-        new String[] {"12", "Escape, evacuation and rescue (EER)"},
-        new String[] {"13", "Toxic and asphyxiant gas accumulation analysis"})) {
+        new String[] {"9", "Open drain systems and spill drainage"},
+        new String[] {"10", "Process safety system: PSD, PSV, SIF, alarms, utilities, survivability"},
+        new String[] {"11", "Active and passive fire protection evidence"},
+        new String[] {"12", "Blast walls and overpressure resistance"},
+        new String[] {"13", "Escape, evacuation and rescue (EER)"})) {
+      requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
+    }
+    return this;
+  }
+
+  /**
+   * Pre-populate the report with a NORSOK S-001 Clause 10 process safety system checklist.
+   *
+   * @return this report for chaining
+   */
+  public StandardsComplianceReport loadNORSOKS001Clause10() {
+    String std = "NORSOK S-001";
+    for (String[] r : Arrays.asList(
+        new String[] {"10.1", "Process safety system role and interfaces documented"},
+        new String[] {"10.3", "Means of protection and scenario design basis documented"},
+        new String[] {"10.4.1", "Process safety principles, safe state, and bypass controls documented"},
+        new String[] {"10.4.2", "PSD valves and shutdown actions documented and fail safe"},
+        new String[] {"10.4.3", "PSV protection and relief sizing basis documented"},
+        new String[] {"10.4.4", "Alarms and operator actions have setpoints and response basis"},
+        new String[] {"10.4.5", "Actual response time does not exceed required response time"},
+        new String[] {"10.4.6", "Logic solver suitability, independence, and C&E testing documented"},
+        new String[] {"10.4.7", "Instrumented secondary pressure protection pressure, frequency, leakage, and proof-test basis documented"},
+        new String[] {"10.4.8", "Required utility dependencies and loss-of-utility safe states documented"},
+        new String[] {"10.4.9", "PSD independence and manual initiation principles documented"},
+        new String[] {"10.4.10", "Process safety system survivability requirements documented"})) {
       requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
     }
     return this;
@@ -219,6 +248,76 @@ public class StandardsComplianceReport implements Serializable {
         new String[] {"15", "Proof testing strategy and intervals"},
         new String[] {"16", "Operations and maintenance procedures"},
         new String[] {"17", "Modification management of change"})) {
+      requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
+    }
+    return this;
+  }
+
+  /**
+   * Pre-populate the report with an STS0131 technical safety checklist skeleton.
+   *
+   * @return this report for chaining
+   */
+  public StandardsComplianceReport loadSTS0131() {
+    String std = "STS0131";
+    for (String[] r : Arrays.asList(
+        new String[] {"Req-11199", "Flammable gas endpoints use 50% LEL for CFD and 20% LEL for integral tools"},
+        new String[] {"Overpressure", "LOPA target frequency selected from pressure severity bands"},
+        new String[] {"Blowdown", "Depressurization acceptance covers escape time, rupture pressure, inventory, and fire rate"},
+        new String[] {"Detection", "Leak detection sensitivity is documented for mass-balance or field-data methods"},
+        new String[] {"Barriers", "Safety barriers are linked to performance standards and verification evidence"})) {
+      requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
+    }
+    return this;
+  }
+
+  /**
+   * Pre-populate the report with a TR1965 gas scrubber checklist skeleton.
+   *
+   * @return this report for chaining
+   */
+  public StandardsComplianceReport loadTR1965() {
+    String std = "TR1965";
+    for (String[] r : Arrays.asList(
+        new String[] {"K-factor", "Gas-load K-factor within internals-specific TR1965 limit"},
+        new String[] {"Entrainment", "Liquid entrainment to gas outlet is documented and within limit"},
+        new String[] {"Gas margin", "Gas design margin is documented and at least 10%"},
+        new String[] {"Liquid margin", "Liquid design margin is documented and at least 20%"},
+        new String[] {"Layout", "HHLL-to-inlet and inlet-to-demister distances are documented"})) {
+      requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
+    }
+    return this;
+  }
+
+  /**
+   * Pre-populate the report with a NORSOK P-002 line sizing checklist skeleton.
+   *
+   * @return this report for chaining
+   */
+  public StandardsComplianceReport loadNORSOKP002() {
+    String std = "NORSOK P-002";
+    for (String[] r : Arrays.asList(
+        new String[] {"Velocity", "Line velocity is within service-specific screening limits"},
+        new String[] {"Pressure gradient", "Pressure gradient is within project screening limit"},
+        new String[] {"Erosion", "Two-phase velocity is below the selected erosional velocity fraction"},
+        new String[] {"Service", "Line service is classified from fluid phase behavior and design basis"})) {
+      requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
+    }
+    return this;
+  }
+
+  /**
+   * Pre-populate the report with a TR2237 performance-standard checklist skeleton.
+   *
+   * @return this report for chaining
+   */
+  public StandardsComplianceReport loadTR2237() {
+    String std = "TR2237";
+    for (String[] r : Arrays.asList(
+        new String[] {"Register", "Barrier register contains safety critical elements and barriers"},
+        new String[] {"Performance standards", "Each credited barrier has a performance standard"},
+        new String[] {"Evidence", "Each performance standard has traceable evidence"},
+        new String[] {"Verification", "Impairments, bypasses, tests, and verification intervals are tracked"})) {
       requirements.add(new Requirement(std, r[0], r[1], Status.NOT_ASSESSED, null));
     }
     return this;

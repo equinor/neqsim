@@ -551,7 +551,10 @@ public class SafetySystemPerformanceAnalyzer {
     if (containsAny(text, "pfp", "passive fire", "fire proof", "fireproof", "coating")) {
       return SafetySystemCategory.PASSIVE_FIRE_PROTECTION;
     }
-    if (containsAny(text, "blowdown", "esd", "emergency shutdown", "shutdown")) {
+    if (containsAny(text, "psd", "process shutdown", "shutdown valve", "process trip")) {
+      return SafetySystemCategory.PSD;
+    }
+    if (containsAny(text, "blowdown", "esd", "emergency shutdown")) {
       return SafetySystemCategory.ESD_BLOWDOWN;
     }
     if (containsAny(text, "psv", "relief", "flare", "vent")) {
