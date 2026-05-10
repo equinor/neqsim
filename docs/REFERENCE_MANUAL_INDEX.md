@@ -656,6 +656,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Choke Protection    | [docs/wiki/choke_collapse_psd_protection.md](wiki/choke_collapse_psd_protection)       | Choke collapse protection     |
 | Safety Chain Tests  | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests) | Safety chain tests            |
 | Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation)       | Automatic scenario generation |
+| Release Dispersion Scenarios | [docs/process/safety/release-dispersion-scenarios.md](process/safety/release-dispersion-scenarios) | Automatic leak source terms, gas dispersion screening, scenario taxonomy, trapped inventory, CFD source-term handoff cases, and industrial-readiness guidance from ProcessSystem streams |
 | Barrier Management  | [docs/safety/barrier_management.md](safety/barrier_management)                         | Evidence-linked PSF/SCE barrier register and safety-analysis handoffs |
 | Automated HAZOP     | [docs/safety/automated_hazop_from_stid.md](safety/automated_hazop_from_stid)           | STID/P&ID, plant data, NeqSim process simulation, HAZOP worksheet, barrier handoff, and report workflow |
 

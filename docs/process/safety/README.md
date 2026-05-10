@@ -13,6 +13,8 @@ Documentation for safety systems modeling in NeqSim.
 - [Emergency Shutdown (ESD)](#emergency-shutdown-esd)
 - [Blowdown Systems](#blowdown-systems)
 - [Pressure Safety Valves](#pressure-safety-valves)
+- [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
+- [CFD Source-Term Handoff](release-dispersion-scenarios.md#cfd-source-term-handoff)
 - [HIPPS](#hipps)
 
 ---
@@ -27,6 +29,13 @@ NeqSim provides equipment and logic for modeling process safety systems:
 - Emergency Shutdown (ESD) systems
 - Blowdown and depressuring systems
 - High Integrity Pressure Protection Systems (HIPPS)
+- Automatic release source terms and gas dispersion screening from process streams
+- Formal CFD source-term JSON handoff cases for OpenFOAM, FLACS, KFX, PHAST, and Safeti workflows
+
+The release, dispersion, and CFD handoff workflow is intended for screening, case generation,
+and auditable source-term transfer. Final facility layout, regulatory QRA, and CFD conclusions
+still require project-specific validation, site geometry, leak-frequency data, and approved
+consequence-analysis methods.
 
 ---
 
@@ -100,10 +109,10 @@ blowdown.setOrificeSize(100.0, "mm");
 // Run depressuring transient
 for (double t = 0; t < 900; t += 1.0) {
     blowdown.runTransient();
-    
+
     double P = vessel.getPressure("barg");
     double T = vessel.getTemperature("C");
-    
+
     if (P < 7.0) {  // 15 minute rule target
         System.out.println("Reached target at " + t + " seconds");
         break;
@@ -219,7 +228,7 @@ separator.setHeatInput(500.0, "kW");
 
 for (double t = 0; t < 3600; t += 1.0) {
     process.runTransient();
-    
+
     // Check ESD status
     if (esd.isTripped()) {
         System.out.println("ESD activated at " + t + " s");
@@ -232,6 +241,7 @@ for (double t = 0; t < 3600; t += 1.0) {
 ## Related Documentation
 
 - [Process Package](../) - Process simulation overview
+- [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md) - Automatic source-term and cloud endpoint screening from ProcessSystem streams
 - [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
 - [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
 - [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example
