@@ -207,8 +207,8 @@ public class RootCauseReport implements Serializable {
           .append(",\n");
       sb.append("      \"priorProbability\": ")
           .append(String.format("%.4f", h.getPriorProbability())).append(",\n");
-      sb.append("      \"likelihoodScore\": ")
-          .append(String.format("%.4f", h.getLikelihoodScore())).append(",\n");
+      sb.append("      \"likelihoodScore\": ").append(String.format("%.4f", h.getLikelihoodScore()))
+          .append(",\n");
       sb.append("      \"verificationScore\": ")
           .append(String.format("%.4f", h.getVerificationScore())).append(",\n");
 
@@ -279,8 +279,8 @@ public class RootCauseReport implements Serializable {
 
     sb.append("Equipment:    ").append(equipmentName).append("\n");
     sb.append("Type:         ").append(equipmentType).append("\n");
-    sb.append("Symptom:      ").append(symptom.name()).append(" - ").append(symptom.getDescription())
-        .append("\n");
+    sb.append("Symptom:      ").append(symptom.name()).append(" - ")
+        .append(symptom.getDescription()).append("\n");
     sb.append("Timestamp:    ")
         .append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(analysisTimestamp)))
         .append("\n");
@@ -374,7 +374,7 @@ public class RootCauseReport implements Serializable {
     if (s == null) {
       return "";
     }
-    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-        .replace("\r", "\\r").replace("\t", "\\t");
+    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
+        .replace("\t", "\\t");
   }
 }

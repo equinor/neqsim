@@ -295,8 +295,7 @@ public class SimulationVerifier implements Serializable {
    * @param modified modified KPI values after perturbation
    * @return match score in range 0 to 1
    */
-  private double compareToHistorian(Map<String, Double> baseline,
-      Map<String, Double> modified) {
+  private double compareToHistorian(Map<String, Double> baseline, Map<String, Double> modified) {
     if (historianData.isEmpty() || baseline.isEmpty() || modified.isEmpty()) {
       return 0.5; // Neutral when no comparison data
     }

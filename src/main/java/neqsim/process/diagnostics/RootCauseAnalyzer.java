@@ -254,13 +254,10 @@ public class RootCauseAnalyzer implements Serializable {
     Hypothesis top = report.getTopHypothesis();
     String summary;
     if (top != null) {
-      summary = String.format(
-          "Most likely root cause: %s (%.1f%% confidence, category: %s). "
-              + "Analyzed %d parameters with %d data points. "
-              + "%d hypotheses above 50%% confidence.",
+      summary = String.format("Most likely root cause: %s (%.1f%% confidence, category: %s). "
+          + "Analyzed %d parameters with %d data points. " + "%d hypotheses above 50%% confidence.",
           top.getName(), top.getConfidenceScore() * 100, top.getCategory().name(),
-          historianData.size(), totalDataPoints,
-          report.getHypothesesAboveThreshold(0.5).size());
+          historianData.size(), totalDataPoints, report.getHypothesesAboveThreshold(0.5).size());
     } else {
       summary = "No hypotheses could be generated for the given symptom and equipment.";
     }
