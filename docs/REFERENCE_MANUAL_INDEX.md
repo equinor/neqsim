@@ -690,7 +690,7 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Dependency Analysis**        | [docs/risk/dependency-analysis.md](risk/dependency-analysis)                       | DependencyAnalyzer, cascade failure trees, cross-installation effects                     |
 | **Mathematical Reference**     | [docs/risk/mathematical-reference.md](risk/mathematical-reference)                 | Complete formulas: reliability, system availability, Monte Carlo, risk calculations       |
 | **API Reference**              | [docs/risk/api-reference.md](risk/api-reference)                                   | Full API documentation for all risk simulation classes                                    |
-| **Reliability Data Guide**     | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE)                 | OREDA-based reliability data, failure rate sources, equipment categories                  |
+| **Reliability Data Guide**     | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE)                 | Multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), CSV format  |
 | **Physics-Based Integration**  | [docs/risk/PHYSICS_BASED_RISK_INTEGRATION.md](risk/PHYSICS_BASED_RISK_INTEGRATION) | **Integration of physics-based models with risk simulation for dynamic failure analysis** |
 
 ### Chapter 35a: Advanced Risk Framework (**NEW**)
@@ -723,8 +723,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Class                        | Package                     | Purpose                                  |
 | ---------------------------- | --------------------------- | ---------------------------------------- |
-| `EquipmentFailureMode`       | `process.equipment.failure` | Failure mode definitions with OREDA data |
-| `ReliabilityDataSource`      | `process.equipment.failure` | OREDA-based reliability data access      |
+| `EquipmentFailureMode`       | `process.equipment.failure` | Failure mode definitions with reliability data |
+| `ReliabilityDataSource`      | `process.equipment.failure` | Multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) |
 | `ProductionImpactAnalyzer`   | `process.safety.risk`       | Production loss analysis                 |
 | `DegradedOperationOptimizer` | `process.safety.risk`       | Degraded mode optimization               |
 | `OperationalRiskSimulator`   | `process.safety.risk`       | Monte Carlo simulation engine            |
@@ -732,6 +732,11 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | `ProcessTopologyAnalyzer`    | `process.util.topology`     | Process graph extraction                 |
 | `FunctionalLocation`         | `process.util.topology`     | STID tag parsing (ISO 14224)             |
 | `DependencyAnalyzer`         | `process.util.topology`     | Equipment dependency analysis            |
+| `RootCauseAnalyzer`          | `process.diagnostics`       | Bayesian-inspired equipment RCA          |
+| `HypothesisGenerator`        | `process.diagnostics`       | Equipment-specific hypothesis libraries  |
+| `EvidenceCollector`          | `process.diagnostics`       | Time-series evidence scoring             |
+| `SimulationVerifier`         | `process.diagnostics`       | Clone-perturb-compare verification       |
+| `RootCauseReport`            | `process.diagnostics`       | Ranked diagnosis with JSON/text output   |
 
 ### Chapter 35b: Equipment Diagnostics
 

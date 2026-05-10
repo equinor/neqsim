@@ -462,6 +462,24 @@ transport properties (viscosity, thermal conductivity, density).
 
 ---
 
+## I-ter. Equipment Diagnostics & Reliability
+
+| Capability | Implementation | Notes |
+|-----------|---------------|-------|
+| Root cause analysis | `RootCauseAnalyzer` | Bayesian-inspired RCA with multi-source reliability priors |
+| Symptom-based diagnosis | `Symptom` enum (12 symptoms) | TRIP, HIGH_VIBRATION, SURGE, FOULING, etc. |
+| Hypothesis generation | `HypothesisGenerator` | Built-in libraries for compressor, pump, separator, HX, valve |
+| Time-series evidence | `EvidenceCollector` | Trend, threshold, rate-of-change, correlation, multi-parameter pattern |
+| Simulation verification | `SimulationVerifier` | Clone-perturb-compare with graduated severity |
+| Reliability data | `ReliabilityDataSource` | IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA (9 sources, 4 CSVs) |
+| Equipment failure modes | `EquipmentFailureMode` | MTBF/MTTR/failure rate calculations |
+| Diagnostic reporting | `RootCauseReport` | JSON, text, ranked hypotheses with confidence scores |
+| Custom hypothesis registry | `HypothesisGenerator.register()` | Domain-specific hypothesis extension |
+
+**Package:** `neqsim.process.diagnostics`, `neqsim.process.equipment.failure`
+
+---
+
 ## J. Known Gaps and Limitations
 
 ### Major Gaps (commonly requested but missing or incomplete)

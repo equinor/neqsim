@@ -1,8 +1,8 @@
 ---
 name: neqsim-root-cause-analysis
-version: "1.0.0"
-description: "Root cause analysis (RCA) framework for process equipment — Bayesian-inspired diagnosis integrating OREDA failure data (prior), plant historian evidence (likelihood), and NeqSim simulation verification. USE WHEN: diagnosing compressor trips, high vibration, efficiency loss, separator carryover, heat exchanger fouling, or any operational anomaly. Anchors on neqsim.process.diagnostics classes."
-last_verified: "2026-06-15"
+version: "1.1.0"
+description: "Root cause analysis (RCA) framework for process equipment — Bayesian-inspired diagnosis integrating multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) as prior, plant historian evidence (likelihood), and NeqSim simulation verification. USE WHEN: diagnosing compressor trips, high vibration, efficiency loss, separator carryover, heat exchanger fouling, or any operational anomaly. Anchors on neqsim.process.diagnostics classes."
+last_verified: "2026-05-10"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]
 ---
@@ -10,7 +10,7 @@ requires:
 # NeqSim Root Cause Analysis Skill
 
 Systematic equipment-level root cause analysis integrating process simulation,
-OREDA reliability data, plant historian time-series, and STID design conditions.
+multi-source reliability data, plant historian time-series, and STID design conditions.
 
 ## When to Use
 
@@ -27,8 +27,21 @@ OREDA reliability data, plant historian time-series, and STID design conditions.
 The RCA framework uses a Bayesian-inspired three-stage methodology:
 
 ```
-Prior (OREDA) × Likelihood (Historian) × Verification (Simulation) = Confidence
+Prior (Reliability Data) × Likelihood (Historian) × Verification (Simulation) = Confidence
 ```
+
+### Reliability Data Sources
+
+`ReliabilityDataSource` loads from multiple public databases automatically:
+
+- **IOGP Report 434 / SINTEF** — offshore O&G equipment (free)
+- **CCPS 1989** — process vessels, piping, valves (published handbook)
+- **IEEE 493-2007** — industrial electrical equipment (purchasable standard)
+- **Lees' Loss Prevention 2012** — generic process industry rates (textbook)
+- **SINTEF PDS** — safety-instrumented systems (purchasable)
+- **OREDA** — offshore equipment (optional, commercial)
+
+No commercial license is required for the default data.
 
 ### Core Classes
 
@@ -37,7 +50,7 @@ Prior (OREDA) × Likelihood (Historian) × Verification (Simulation) = Confidenc
 | `RootCauseAnalyzer` | Main orchestrator — takes ProcessSystem + equipment name, runs full analysis |
 | `Symptom` | Enum of 12 equipment symptoms (TRIP, HIGH_VIBRATION, etc.) |
 | `Hypothesis` | Candidate root cause with expected signal fingerprints, evidence, prior/likelihood/verification scores |
-| `HypothesisGenerator` | Generates candidate hypotheses from built-in libraries and OREDA-adjusted priors per equipment type |
+| `HypothesisGenerator` | Generates candidate hypotheses from built-in libraries and reliability-data-adjusted priors per equipment type |
 | `EvidenceCollector` | Analyzes historian/STID data and attaches only hypothesis-relevant supporting or contradictory evidence |
 | `SimulationVerifier` | Clones process, applies physical perturbation, compares simulated vs observed KPI directions |
 | `RootCauseReport` | Ranked output with JSON and text report generation |

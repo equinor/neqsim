@@ -1,6 +1,6 @@
 ---
 title: Root Cause Analysis Framework
-description: "Equipment diagnostics using Bayesian-inspired hypothesis scoring with OREDA reliability data, plant historian time-series, STID design conditions, and NeqSim process simulation verification."
+description: "Equipment diagnostics using Bayesian-inspired hypothesis scoring with multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), plant historian time-series, STID design conditions, and NeqSim process simulation verification."
 ---
 
 # Root Cause Analysis Framework
@@ -9,7 +9,7 @@ The `neqsim.process.diagnostics` package provides a structured root cause analys
 framework for diagnosing equipment operational anomalies. It integrates four evidence
 sources via Bayesian-inspired confidence scoring:
 
-1. **OREDA** — Prior probabilities from offshore reliability data
+1. **Reliability Data** — Prior probabilities from public reliability databases (IOGP/SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012, SINTEF PDS) with optional OREDA overlay
 2. **Historian** — Likelihood scoring from time-series trend, threshold, and correlation analysis
 3. **STID** — Cross-reference against design conditions
 4. **Simulation** — Verification scoring from NeqSim process model perturbation
@@ -21,7 +21,8 @@ Symptom (enum)
     │
     ├── HypothesisGenerator  →  Generate candidate hypotheses
     │       │
-    │       └── OREDA priors (ReliabilityDataSource)
+    │       └── Reliability priors (ReliabilityDataSource)
+    │           Sources: IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA
     │
     ├── EvidenceCollector     →  Analyze historian + STID data against expected signals
     │       │
@@ -51,9 +52,27 @@ $$
 $$
 
 Where:
-- $P_{\text{prior}}$ — Prior probability from OREDA failure mode frequency
+- $P_{\text{prior}}$ — Prior probability from reliability data (IOGP/SINTEF, CCPS, IEEE 493, etc.)
 - $L_{\text{historian}}$ — Likelihood score from time-series evidence
 - $V_{\text{simulation}}$ — Verification score from simulation direction-of-change matching
+
+## Data Sources
+
+`ReliabilityDataSource` loads failure rates and repair times from multiple public databases,
+requiring no commercial license:
+
+| Source | Coverage | Access |
+|--------|----------|--------|
+| IOGP Report 434 / SINTEF | Offshore O&G equipment, safety systems | Free |
+| CCPS Process Equipment Reliability Data (1989) | Vessels, piping, instruments, valves | Published handbook |
+| IEEE 493-2007 (Gold Book) | Industrial power and electrical equipment | Purchasable standard |
+| Lees' Loss Prevention (2012) | Generic process industry failure rates | Textbook |
+| SINTEF PDS Data Handbook | Safety-instrumented system failure rates | Purchasable |
+| API 689 | Rotating and process equipment reliability | Purchasable standard |
+| OREDA (optional) | Offshore equipment (consortium license) | Commercial |
+
+Supplementary CSVs are loaded automatically. Primary data takes precedence over supplementary
+entries, so users can override any value by editing `equipment_reliability.csv`.
 
 ## Supported Equipment Types
 
