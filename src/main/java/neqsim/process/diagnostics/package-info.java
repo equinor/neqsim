@@ -27,20 +27,20 @@
  * System.out.println(report.toTextReport());
  * </pre>
  *
- * <h3>Post-Trip Analysis</h3>
+ * <h2>Post-Trip Analysis</h2>
  *
  * <p>
  * For automated post-trip workflows, this package also provides:
  * </p>
  * <ul>
- * <li>{@link neqsim.process.diagnostics.TripEvent} — immutable data class representing a
- * detected trip</li>
- * <li>{@link neqsim.process.diagnostics.TripEventDetector} — monitors process equipment
- * parameters and detects trip conditions</li>
- * <li>{@link neqsim.process.diagnostics.FailurePropagationTracer} — traces how a failure
- * cascades through the process</li>
- * <li>{@link neqsim.process.diagnostics.restart.RestartSequenceGenerator} — generates
- * optimised restart sequences after a trip</li>
+ * <li>{@link neqsim.process.diagnostics.TripEvent} — immutable data class representing a detected
+ * trip</li>
+ * <li>{@link neqsim.process.diagnostics.TripEventDetector} — monitors process equipment parameters
+ * and detects trip conditions</li>
+ * <li>{@link neqsim.process.diagnostics.FailurePropagationTracer} — traces how a failure cascades
+ * through the process</li>
+ * <li>{@link neqsim.process.diagnostics.restart.RestartSequenceGenerator} — generates optimised
+ * restart sequences after a trip</li>
  * </ul>
  *
  * @author NeqSim Development Team
