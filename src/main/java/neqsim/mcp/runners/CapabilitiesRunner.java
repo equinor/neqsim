@@ -138,7 +138,8 @@ public class CapabilitiesRunner {
         "validateInput — Pre-flight input validation",
         "crossValidateModels — Run process under multiple EOS to quantify model risk",
         "runParametricStudy — Sweep inputs and record outputs (sensitivity/optimization)",
-        "runOperationalStudy — P&ID/tag-driven valve scenarios and controller response metrics",
+        "runOperationalStudy — P&ID/tag-driven valve scenarios, controller metrics, "
+            + "and operating-envelope margin/trip screening",
         "getCapabilities — This tool (discovery)")));
     modes.addProperty("quickCalculation",
         "Use runFlash or getPropertyTable for single-query answers. "

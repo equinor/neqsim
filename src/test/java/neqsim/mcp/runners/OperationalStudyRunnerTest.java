@@ -234,6 +234,34 @@ class OperationalStudyRunnerTest {
   }
 
   /**
+   * Verifies that the operating-envelope action applies field data and returns margin evidence.
+   */
+  @Test
+  void evaluateOperatingEnvelopeReturnsMarginsAndPredictions() {
+    String json = "{" + "\"action\":\"evaluateOperatingEnvelope\"," + processJsonField() + ","
+        + "\"tagBindings\":[{" + "\"logicalTag\":\"outlet_valve_position\","
+        + "\"automationAddress\":\"Outlet Valve.percentValveOpening\","
+        + "\"unit\":\"%\",\"role\":\"INPUT\"}],"
+        + "\"fieldData\":{\"outlet_valve_position\":72.0},"
+        + "\"predictionHorizonSeconds\":1800.0,"
+        + "\"marginHistory\":["
+        + "{\"key\":\"Outlet Valve.valveOpening\",\"timestampSeconds\":0.0,"
+        + "\"marginPercent\":35.0},"
+        + "{\"key\":\"Outlet Valve.valveOpening\",\"timestampSeconds\":60.0,"
+        + "\"marginPercent\":25.0},"
+        + "{\"key\":\"Outlet Valve.valveOpening\",\"timestampSeconds\":120.0,"
+        + "\"marginPercent\":15.0}]}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    assertTrue(result.has("operatingEnvelope"), result.toString());
+    JsonObject envelope = result.getAsJsonObject("operatingEnvelope");
+    assertTrue(envelope.getAsJsonArray("rankedMargins").size() > 0, envelope.toString());
+    assertTrue(envelope.getAsJsonArray("mitigationSuggestions").size() > 0, envelope.toString());
+    assertTrue(envelope.getAsJsonArray("tripPredictions").size() > 0, envelope.toString());
+  }
+
+  /**
    * Creates the process JSON field used by the tests.
    *
    * @return a JSON fragment with the processJson field

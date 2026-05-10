@@ -219,6 +219,14 @@ For controller tuning screens based on simulated or historian time series, use
 error, IAE, ISE, overshoot, settling time, output saturation fraction, and a
 short tuning recommendation without replacing NeqSim's controller classes.
 
+For operating-envelope screening on the same P&ID/tagreader snapshot, use
+`OperationalEnvelopeEvaluator` or MCP `runOperationalStudy` with
+`action="evaluateOperatingEnvelope"`. Provide `designCapacities` from STID,
+line lists, datasheets, or vendor curves when available; provide `fieldData`
+through `OperationalTagMap`; provide `marginHistory` when a tagreader trend is
+available. The output ranks margins, reports simple trip predictions, and returns
+advisory mitigation suggestions without writing to plant systems.
+
 ### MCP Access
 
 MCP clients can use `runOperationalStudy` for the same plant-agnostic workflow.

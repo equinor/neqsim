@@ -97,7 +97,7 @@ industrial validation.
 | `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |
 | `runBarrierRegister` | CALCULATION | v1.4 | Evidence-linked PSF/SCE barrier register validation with LOPA/SIL/bow-tie/QRA handoffs |
 | `runSafetySystemPerformance` | CALCULATION | v1.4 | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
-| `runOperationalStudy` | EXECUTION | v1.5 | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on local simulation copies |
+| `runOperationalStudy` | EXECUTION | v1.5 | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, evidence-package bottleneck reports, and operating-envelope margin/trip screening on local simulation copies |
 | `runRootCauseAnalysis` | CALCULATION | v1.6 | Bayesian root cause analysis integrating OREDA, historian, STID, and simulation for ranked failure hypotheses |
 
 ## Experimental Tools

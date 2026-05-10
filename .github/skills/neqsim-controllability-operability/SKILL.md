@@ -29,6 +29,14 @@ For P&ID-driven operational changes, load `neqsim-pid-process-operations` first
 to classify symbols, define the topology, bind plant tags, and turn each action
 into a NeqSim model delta.
 
+For MCP or Java workflows that already have a `ProcessSystem`, use
+`neqsim.process.operations.envelope.OperationalEnvelopeEvaluator` or MCP
+`runOperationalStudy` with `action="evaluateOperatingEnvelope"`. The evaluator
+does not duplicate equipment physics; it ranks margins from
+`EquipmentCapacityStrategyRegistry`, uses optional tagreader field data through
+`OperationalTagMap`, and can turn margin history into simple time-to-limit
+screening.
+
 Standards: **ISA-75.01 / IEC 60534-2-1**, **API 685** (control valves), **NORSOK P-002** (operability).
 
 ## Pattern 1 — Operating Envelope Map

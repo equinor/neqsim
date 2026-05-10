@@ -29,6 +29,7 @@ configuration.
 | Process model | `ProcessSystem.fromJsonAndRun(...)` | Build the local simulation copy from MCP `runProcess` JSON |
 | Scenario execution | `OperationalScenarioRunner` | Execute valve, variable, field-input, steady-state, and transient actions |
 | Bottleneck detection | [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md) | Report bottleneck equipment, constraint, utilization, margin, and near-limit equipment |
+| Operating envelope | `OperationalEnvelopeEvaluator` | Rank capacity margins, estimate simple time-to-limit trends, and suggest advisory mitigations |
 
 ## MCP Action
 
@@ -86,6 +87,49 @@ The response includes:
 | `evidencePackage.scenarioStudies` | Scenario execution log and post-scenario capacity report |
 | `evidencePackage.qualityGates` | Screening gates for benchmark agreement, hard limits, design capacity, and scenario success |
 
+## Operating Envelope Screening
+
+Use `runOperationalStudy` with `action = "evaluateOperatingEnvelope"` when the question is
+which equipment margin is closest to an operating trip or constraint limit. The action builds the
+process from `processJson`, optionally applies STID/datasheet limits from `designCapacities`,
+optionally applies tagreader field values through `tagBindings`, and then ranks margins from the
+registered equipment capacity strategies.
+
+```json
+{
+  "action": "evaluateOperatingEnvelope",
+  "processJson": { "fluid": {}, "process": [] },
+  "tagBindings": [
+    {
+      "logicalTag": "outlet_valve_position",
+      "automationAddress": "Outlet Valve.percentValveOpening",
+      "unit": "%",
+      "role": "INPUT"
+    }
+  ],
+  "fieldData": {
+    "outlet_valve_position": 72.0
+  },
+  "designCapacities": {
+    "Outlet Valve": { "maximumValveOpening": 100.0 }
+  },
+  "marginHistory": [
+    { "key": "Outlet Valve.valveOpening", "timestampSeconds": 0.0, "marginPercent": 35.0 },
+    { "key": "Outlet Valve.valveOpening", "timestampSeconds": 60.0, "marginPercent": 25.0 }
+  ],
+  "predictionHorizonSeconds": 3600.0,
+  "evidenceReferences": [
+    { "id": "PID-001", "type": "P&ID", "description": "Source drawing reference" },
+    { "id": "PI-001", "type": "tagreader", "description": "Saved plant-data snapshot" }
+  ]
+}
+```
+
+The response includes `operatingEnvelope.overallStatus`, `rankedMargins`,
+`tripPredictions`, and `mitigationSuggestions`. These outputs are advisory screening results: use
+them to focus operator or engineering review, then validate any action against the P&ID, STID
+source evidence, historian data quality, and relevant equipment procedures.
+
 ## Bottleneck Detection
 
 `baseCapacity.bottleneck` first uses `ProcessSystem.findBottleneck()`. If the process has no
@@ -112,7 +156,9 @@ The bottleneck block reports:
 2. Bind logical tags to NeqSim automation addresses and, in private configuration, historian tags.
 3. Run `validateTagMap` first when building a new model.
 4. Run `runEvidencePackage` for each operating snapshot or scenario set.
-5. Use `qualityGates.acceptableForOperationScreening` only as a screening flag; engineering review
+5. Run `evaluateOperatingEnvelope` when margin ranking, trip prediction, or advisory mitigation is
+  needed for the same snapshot.
+6. Use `qualityGates.acceptableForOperationScreening` only as a screening flag; engineering review
    is still required before changing plant operation.
 
 ## Hydraulic Surge Handoff

@@ -22,6 +22,9 @@ import neqsim.process.operations.OperationalScenarioRunner;
 import neqsim.process.operations.OperationalTagBinding;
 import neqsim.process.operations.OperationalTagMap;
 import neqsim.process.operations.PipeSectionAnalyzer;
+import neqsim.process.operations.envelope.MarginTrendTracker;
+import neqsim.process.operations.envelope.OperationalEnvelopeEvaluator;
+import neqsim.process.operations.envelope.OperationalEnvelopeReport;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 import neqsim.util.validation.ValidationResult;
@@ -85,10 +88,12 @@ public final class OperationalStudyRunner {
         return evaluateControllerResponse(input);
       } else if ("analyzePipeSections".equalsIgnoreCase(action)) {
         return analyzePipeSections(input);
+      } else if ("evaluateOperatingEnvelope".equalsIgnoreCase(action)) {
+        return evaluateOperatingEnvelope(input);
       }
       return errorJson("UNKNOWN_ACTION", "Unknown operational study action: " + action,
           "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, "
-              + "evaluateControllerResponse, or analyzePipeSections.");
+              + "evaluateControllerResponse, analyzePipeSections, or evaluateOperatingEnvelope.");
     } catch (RuntimeException ex) {
       return errorJson("OPERATIONAL_STUDY_ERROR", "Operational study failed: " + ex.getMessage(),
           "Check the processJson, tagBindings, fieldData, action list, and units.");
@@ -116,6 +121,7 @@ public final class OperationalStudyRunner {
     actions.add("runEvidencePackage");
     actions.add("evaluateControllerResponse");
     actions.add("analyzePipeSections");
+    actions.add("evaluateOperatingEnvelope");
     root.add("actions", actions);
 
     JsonObject binding = new JsonObject();
@@ -164,6 +170,8 @@ public final class OperationalStudyRunner {
     scenario.add("actions", exampleActions);
     exampleScenarios.add(scenario);
     example.add("scenarios", exampleScenarios);
+    example.addProperty("envelopeAction", "evaluateOperatingEnvelope");
+    example.addProperty("predictionHorizonSeconds", 3600.0);
     root.add("example", example);
 
     return GSON.toJson(root);
@@ -195,23 +203,7 @@ public final class OperationalStudyRunner {
   private static String runEvidencePackage(JsonObject input) {
     ProcessSystem process = buildProcess(input);
 
-    // Apply design capacities from JSON input if provided
-    JsonObject designCapacitiesReport = null;
-    if (input.has("designCapacities") && input.get("designCapacities").isJsonObject()) {
-      JsonObject designCapacities = input.getAsJsonObject("designCapacities");
-      Map<String, EquipmentDesignData.ApplyResult> designResults =
-          EquipmentDesignData.apply(process, designCapacities);
-      // Re-run process after applying design data so constraints pick up new values
-      process.run();
-
-      designCapacitiesReport = new JsonObject();
-      for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : designResults.entrySet()) {
-        designCapacitiesReport.add(entry.getKey(), entry.getValue().toJson());
-      }
-    } else {
-      // Tag constraints with default data sources even when no designCapacities provided
-      EquipmentDesignData.tagConstraintDataSources(process, null);
-    }
+    JsonObject designCapacitiesReport = applyDesignCapacitiesIfProvided(input, process);
 
     OperationalTagMap tagMap = hasTagBindings(input) ? buildTagMap(input) : new OperationalTagMap();
     ValidationResult validation = tagMap.validate(process);
@@ -351,6 +343,119 @@ public final class OperationalStudyRunner {
    */
   private static String analyzePipeSections(JsonObject input) {
     return PipeSectionAnalyzer.run(GSON.toJson(input));
+  }
+
+  /**
+   * Evaluates process operating margins, simple margin trends, and advisory mitigations.
+   *
+   * <p>
+   * This action reuses {@link OperationalTagMap} for optional plant-data application and
+   * {@link EquipmentDesignData} for optional STID or datasheet capacity values before delegating to
+   * {@link OperationalEnvelopeEvaluator}.
+   * </p>
+   *
+   * @param input operational study input
+   * @return JSON result with operating envelope report
+   */
+  private static String evaluateOperatingEnvelope(JsonObject input) {
+    ProcessSystem process = buildProcess(input);
+    JsonObject result = new JsonObject();
+    result.addProperty("status", "success");
+
+    JsonObject designCapacitiesReport = applyDesignCapacitiesIfProvided(input, process);
+    if (designCapacitiesReport != null) {
+      result.add("designCapacitiesApplied", designCapacitiesReport);
+    }
+
+    if (hasTagBindings(input)) {
+      OperationalTagMap tagMap = buildTagMap(input);
+      ValidationResult validation = tagMap.validate(process);
+      if (!validation.isValid()) {
+        return validationErrorJson(validation);
+      }
+      result.add("validation", validationToJson(validation));
+      if (input.has("fieldData")) {
+        Map<String, Double> fieldData = parseFieldData(input);
+        Map<String, Double> applied = tagMap.applyFieldData(process, fieldData);
+        process.run();
+        result.add("applied", mapToJson(applied));
+        result.add("modelValues", mapToJson(tagMap.readValues(process)));
+      }
+    }
+
+    Map<String, MarginTrendTracker> history = parseMarginHistory(input);
+    double horizon = getDouble(input, "predictionHorizonSeconds",
+        OperationalEnvelopeEvaluator.DEFAULT_PREDICTION_HORIZON_SECONDS);
+    boolean includeMitigations = getBoolean(input, "includeMitigations", true);
+    OperationalEnvelopeReport report = OperationalEnvelopeEvaluator.evaluate(process, history,
+        horizon, includeMitigations);
+    result.add("operatingEnvelope", report.toJsonObject());
+    addOptionalPassThrough(input, result, "evidenceReferences", "evidenceReferences");
+    addOptionalPassThrough(input, result, "evidenceRefs", "evidenceReferences");
+    addOptionalPassThrough(input, result, "assumptions", "assumptions");
+    addOptionalPassThrough(input, result, "pidOperationalModel", "pidOperationalModel");
+    addProcessReport(process, result);
+    return GSON.toJson(result);
+  }
+
+  /**
+   * Applies design capacities when supplied and tags default data sources otherwise.
+   *
+   * @param input operational study input
+   * @param process process system to update
+   * @return report of applied design capacities, or null when no design capacities were supplied
+   */
+  private static JsonObject applyDesignCapacitiesIfProvided(JsonObject input,
+      ProcessSystem process) {
+    if (input.has("designCapacities") && input.get("designCapacities").isJsonObject()) {
+      JsonObject designCapacities = input.getAsJsonObject("designCapacities");
+      Map<String, EquipmentDesignData.ApplyResult> designResults =
+          EquipmentDesignData.apply(process, designCapacities);
+      process.run();
+      JsonObject designCapacitiesReport = new JsonObject();
+      for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : designResults.entrySet()) {
+        designCapacitiesReport.add(entry.getKey(), entry.getValue().toJson());
+      }
+      return designCapacitiesReport;
+    }
+    EquipmentDesignData.tagConstraintDataSources(process, null);
+    return null;
+  }
+
+  /**
+   * Parses optional margin history from {@code marginHistory} or {@code history}.
+   *
+   * @param input operational study input
+   * @return trackers keyed by margin key
+   */
+  private static Map<String, MarginTrendTracker> parseMarginHistory(JsonObject input) {
+    Map<String, MarginTrendTracker> trackers = new LinkedHashMap<String, MarginTrendTracker>();
+    JsonArray history = null;
+    if (input.has("marginHistory") && input.get("marginHistory").isJsonArray()) {
+      history = input.getAsJsonArray("marginHistory");
+    } else if (input.has("history") && input.get("history").isJsonArray()) {
+      history = input.getAsJsonArray("history");
+    }
+    if (history == null) {
+      return trackers;
+    }
+    for (JsonElement element : history) {
+      JsonObject sample = element.getAsJsonObject();
+      String key = getString(sample, "key", getString(sample, "marginKey", ""));
+      if (key.trim().isEmpty()) {
+        continue;
+      }
+      MarginTrendTracker tracker = trackers.get(key);
+      if (tracker == null) {
+        tracker = new MarginTrendTracker(key);
+        trackers.put(key, tracker);
+      }
+      double timestamp = getDouble(sample, "timestampSeconds",
+          getDouble(sample, "timeSeconds", getDouble(sample, "time", 0.0)));
+      double marginPercent = getDouble(sample, "marginPercent", 0.0);
+      tracker.addSample(timestamp, marginPercent);
+    }
+    return trackers;
   }
 
   /**
