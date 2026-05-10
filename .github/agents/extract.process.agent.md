@@ -35,6 +35,9 @@ For P&ID-driven operational tasks, also load `neqsim-pid-process-operations`.
 Convert symbols into a directed process graph, classify valves by function, and
 emit explicit model deltas for actions such as closing an isolation valve,
 partly closing a control valve, opening a bypass, or opening a drain/vent.
+When the output will feed Java or MCP, include logical tag bindings and scenario
+actions compatible with `OperationalTagMap`, `OperationalScenarioRunner`, and
+MCP `runOperationalStudy`.
 
 ---
 

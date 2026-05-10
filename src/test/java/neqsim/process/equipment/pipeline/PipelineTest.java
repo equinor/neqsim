@@ -3,8 +3,34 @@ package neqsim.process.equipment.pipeline;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 public class PipelineTest {
+  /**
+   * Creates and initializes a feed stream for the pipeline regression cases.
+   *
+   * @param name stream name
+   * @param flow flow rate in MSm3/day
+   * @param temperature temperature in degrees Celsius
+   * @param pressure pressure in bara
+   * @return initialized feed stream
+   */
+  private Stream createFeedStream(String name, double flow, double temperature, double pressure) {
+    SystemInterface testSystem = new SystemSrkEos(273.15 + temperature, pressure);
+    testSystem.addComponent("methane", 0.9);
+    testSystem.addComponent("ethane", 0.1);
+    testSystem.setMixingRule("classic");
+
+    Stream stream = new Stream(name, testSystem);
+    stream.setFlowRate(flow, "MSm3/day");
+    stream.setTemperature(temperature, "C");
+    stream.setPressure(pressure, "bara");
+    stream.run();
+    return stream;
+  }
+
   @Test
   public void testMain() {
     double flow = 60.0;
@@ -16,19 +42,12 @@ public class PipelineTest {
     double elevation = 0;
     double wallroughness = 5e-6;
 
-    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + temperature),
-        pressure);
-    testSystem.addComponent("methane", 0.9);
-    testSystem.addComponent("ethane", 0.1);
-    testSystem.setMixingRule("classic");
+    Stream pipelineFeed = createFeedStream("pipeline feed", flow, temperature, pressure);
+    Stream simplePipelineFeed =
+      createFeedStream("simple pipeline feed", flow, temperature, pressure);
+    Stream beggsBrillsFeed = createFeedStream("beggs brills feed", flow, temperature, pressure);
 
-    Stream stream_1 = new Stream("Stream1", testSystem);
-    stream_1.setFlowRate(flow, "MSm3/day");
-    stream_1.setTemperature(temperature, "C");
-    stream_1.setPressure(pressure, "bara");
-
-    stream_1.run();
-    OnePhasePipeLine pipeline = new OnePhasePipeLine("pipeline", stream_1);
+    OnePhasePipeLine pipeline = new OnePhasePipeLine("pipeline", pipelineFeed);
     pipeline.setNumberOfLegs(1);
     pipeline.setPipeDiameters(new double[] { diameter, diameter });
     pipeline.setLegPositions(new double[] { 0, length });
@@ -38,38 +57,32 @@ public class PipelineTest {
     pipeline.setPipeOuterHeatTransferCoefficients(new double[] { 15.0, 15.0 });
     pipeline.setPipeWallHeatTransferCoefficients(new double[] { 15.0, 15.0 });
 
-    AdiabaticPipe simplePipeline = new AdiabaticPipe("simplePipeline", stream_1);
+    AdiabaticPipe simplePipeline = new AdiabaticPipe("simplePipeline", simplePipelineFeed);
     simplePipeline.setDiameter(diameter);
     simplePipeline.setLength(length);
     simplePipeline.setPipeWallRoughness(wallroughness);
     simplePipeline.setInletElevation(0);
     simplePipeline.setOutletElevation(elevation);
 
-    PipeBeggsAndBrills beggsBrilsPipe = new PipeBeggsAndBrills("simplePipeline 2", stream_1);
+    PipeBeggsAndBrills beggsBrilsPipe =
+      new PipeBeggsAndBrills("simplePipeline 2", beggsBrillsFeed);
     beggsBrilsPipe.setPipeWallRoughness(wallroughness);
     beggsBrilsPipe.setLength(length);
     beggsBrilsPipe.setElevation(elevation);
     beggsBrilsPipe.setDiameter(diameter);
     beggsBrilsPipe.setRunIsothermal(false);
 
-    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
-    operations.add(stream_1);
+    ProcessSystem operations = new ProcessSystem();
+    operations.add(pipelineFeed);
+    operations.add(simplePipelineFeed);
+    operations.add(beggsBrillsFeed);
     operations.add(pipeline);
     operations.add(simplePipeline);
     operations.add(beggsBrilsPipe);
     operations.run();
 
-    // pipeline.run();
-
-    System.out.println(beggsBrilsPipe.getOutletStream().getTemperature());
-
     Assertions.assertEquals(123.876927, pipeline.getOutletPressure("bara"), 0.1);
     Assertions.assertEquals(120.711887695240, simplePipeline.getOutletPressure(), 0.1);
-    // Tolerance relaxed from 0.2 to 0.5 bara. All three pipes share stream_1
-    // as inlet; graph-based parallel execution (step #5 grouping) runs them
-    // concurrently rather than sequentially, producing ~0.3% FP noise on
-    // PipeBeggsAndBrills outlet pressure. Still well within engineering
-    // precision for a 128 bara / 700 km pipeline calculation.
-    Assertions.assertEquals(128.376, beggsBrilsPipe.getOutletPressure(), 0.5);
+    Assertions.assertEquals(128.376, beggsBrilsPipe.getOutletPressure(), 0.2);
   }
 }

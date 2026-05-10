@@ -34,7 +34,9 @@ When the document is a P&ID or the downstream task asks for valve actions,
 active train state, isolation, or operational changes, also load
 `neqsim-pid-process-operations`. Extract symbol semantics, directed process
 edges, valve functions, control links, instrument tags, drains, vents, and
-scenario actions instead of only listing visible tags.
+scenario actions instead of only listing visible tags. Structure those outputs
+so they can become `OperationalTagBinding` entries, `OperationalAction` events,
+or MCP `runOperationalStudy` inputs.
 
 ---
 

@@ -221,6 +221,51 @@ runner or builder extension.
 
 ---
 
+## `runOperationalStudy` — P&ID and Plant-Data Operational Studies
+
+Runs plant-agnostic operational studies using the `neqsim.process.operations`
+helpers. The tool works on a local simulation copy only; it does not write to
+plant historians, control systems, or field devices.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `operationalJson` | JSON string | Operational study input. Use `{"action":"getSchema"}` for the full input guide. |
+
+**Actions:**
+
+| Action | Purpose |
+|---|---|
+| `getSchema` | Return supported actions, binding fields, and action types |
+| `validateTagMap` | Validate logical tag bindings against a `runProcess`-style model |
+| `applyFieldData` | Apply logical or historian-keyed values through automation addresses and measurement field inputs |
+| `runScenario` | Execute ordered operational actions such as valve opening changes, variable writes, steady-state runs, or transient steps |
+| `evaluateControllerResponse` | Calculate controller-response metrics from time, process-value, and controller-output arrays |
+
+**Scenario action types:** `SET_VARIABLE`, `SET_VALVE_OPENING`,
+`APPLY_FIELD_INPUTS`, `RUN_STEADY_STATE`, and `RUN_TRANSIENT`.
+
+**Example:**
+
+```json
+{
+  "action": "runScenario",
+  "processJson": { "fluid": {}, "process": [] },
+  "actions": [
+    { "type": "SET_VALVE_OPENING", "target": "Outlet Valve", "value": 15.0 },
+    { "type": "SET_VARIABLE", "target": "Outlet Valve.outletPressure", "value": 45.0, "unit": "bara" },
+    { "type": "RUN_STEADY_STATE" }
+  ]
+}
+```
+
+For P&ID-driven studies, keep public inputs limited to logical names and
+automation addresses. Store private historian tag names in task-local or private
+configuration files.
+
+---
+
 ## `runHAZOP` — Simulation-backed HAZOP Study
 
 Generates a first-pass IEC 61882 HAZOP worksheet from a NeqSim process

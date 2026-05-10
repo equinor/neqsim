@@ -336,6 +336,9 @@ data, active train state, isolation, evacuation, or dynamic response, load
 and `neqsim-dynamic-simulation`. Keep public outputs plant-agnostic; use private
 prompt files or private skills for site-specific document sources, historian
 source names, tag maps, operator procedures, and company requirements.
+Use `neqsim.process.operations` for Java deliverables and MCP `runOperationalStudy`
+for tool-based tag-map validation, field-data application, valve scenarios, and
+controller-response metrics.
 
 ---
 

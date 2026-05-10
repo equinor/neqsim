@@ -108,6 +108,7 @@ public class CapabilitiesRunner {
             "Automatic stream connection and naming",
             "ProcessModel for multi-area plant composition",
             "String-addressable automation API (ProcessAutomation)",
+            "Operational tag maps and P&ID-derived scenario runners (neqsim.process.operations)",
             "JSON-based process definition (ProcessSystem.fromJsonAndRun)",
             "State save/restore/compare for version tracking",
             "Simulation quality gate (mass/energy balance validation)")));
@@ -137,6 +138,7 @@ public class CapabilitiesRunner {
         "validateInput — Pre-flight input validation",
         "crossValidateModels — Run process under multiple EOS to quantify model risk",
         "runParametricStudy — Sweep inputs and record outputs (sensitivity/optimization)",
+        "runOperationalStudy — P&ID/tag-driven valve scenarios and controller response metrics",
         "getCapabilities — This tool (discovery)")));
     modes.addProperty("quickCalculation",
         "Use runFlash or getPropertyTable for single-query answers. "
@@ -158,6 +160,7 @@ public class CapabilitiesRunner {
         "Reservoir simulation (material balance, depletion, production forecasting)",
         "Field economics (NPV, IRR, cash flow, Norwegian/UK/Brazilian fiscal regimes, decline curves)",
         "Dynamic/transient simulation (PID control, startup/shutdown, controller tuning)",
+        "P&ID operations (tag binding, valve-action scenarios, active-state evidence, control response)",
         "Bioprocessing (anaerobic digestion, fermentation, gasification, pyrolysis)",
         "Mechanical design (pipelines, vessels, wells per ASME/API/DNV/NORSOK)",
         "Safety (HAZOP, barrier management, SCE traceability, LOPA, SIL, bow-tie, QRA, PSV sizing)",
@@ -193,6 +196,10 @@ public class CapabilitiesRunner {
             "Post-calculation quality gate (mass/energy balance, physical bounds)",
             "Self-healing address resolution (fuzzy matching for variable names)",
             "Physical bounds checking before setting variable values")));
+    trust.addProperty("operationalStudyGovernance",
+        "P&ID-derived operational studies run on local simulation copies only. MCP does not write "
+            + "to plant historians or control systems; governed profiles block state-modifying "
+            + "scenario tools unless explicitly allowed.");
     trust.addProperty("disclaimer",
         "All outputs are computed by the NeqSim thermodynamic engine. "
             + "Results are engineering estimates requiring professional review "

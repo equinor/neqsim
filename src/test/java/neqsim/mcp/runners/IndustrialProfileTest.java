@@ -41,8 +41,8 @@ class IndustrialProfileTest {
   void tierSizes_matchContract() {
     assertEquals(21, IndustrialProfile.getIndustrialCore().size(),
         "Tier 1 (TRUSTED_CORE) should have 21 tools");
-    assertEquals(22, IndustrialProfile.getEngineeringAdvanced().size(),
-        "Tier 2 (ENGINEERING_ADVANCED) should have 22 tools");
+    assertEquals(23, IndustrialProfile.getEngineeringAdvanced().size(),
+      "Tier 2 (ENGINEERING_ADVANCED) should have 23 tools");
     assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
         "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
@@ -87,6 +87,8 @@ class IndustrialProfileTest {
         IndustrialProfile.getToolTier("saveSimulationState"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED,
         IndustrialProfile.getToolTier("runSafetySystemPerformance"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED,
+      IndustrialProfile.getToolTier("runOperationalStudy"));
   }
 
   @Test
@@ -216,6 +218,7 @@ class IndustrialProfileTest {
     assertFalse(IndustrialProfile.isToolAllowed("sizeEquipment"));
     assertFalse(IndustrialProfile.isToolAllowed("setSimulationVariable"));
     assertFalse(IndustrialProfile.isToolAllowed("saveSimulationState"));
+    assertFalse(IndustrialProfile.isToolAllowed("runOperationalStudy"));
   }
 
   @Test
@@ -321,6 +324,7 @@ class IndustrialProfileTest {
     assertTrue(IndustrialProfile.requiresApproval("manageSession"));
     assertTrue(IndustrialProfile.requiresApproval("setSimulationVariable"));
     assertTrue(IndustrialProfile.requiresApproval("saveSimulationState"));
+    assertTrue(IndustrialProfile.requiresApproval("runOperationalStudy"));
   }
 
   @Test
@@ -392,7 +396,7 @@ class IndustrialProfileTest {
     assertTrue(root.has("tier3_experimental"), "Must include tier3_experimental");
 
     assertEquals(21, root.getAsJsonArray("tier1_trustedCore").size());
-    assertEquals(22, root.getAsJsonArray("tier2_engineeringAdvanced").size());
+    assertEquals(23, root.getAsJsonArray("tier2_engineeringAdvanced").size());
     assertEquals(14, root.getAsJsonArray("tier3_experimental").size());
   }
 

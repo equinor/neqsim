@@ -16,6 +16,9 @@ When a safety case starts from a P&ID action such as closing a valve, opening a
 vent, isolating a section, or blowing down to flare, use
 `neqsim-pid-process-operations` to define the boundary, valve action, control
 logic, and historian evidence before running the safety calculation.
+For reusable pre-screens, express the initiating valve or field-data action with
+`OperationalScenarioRunner` or MCP `runOperationalStudy`, then hand the resulting
+source terms and boundary state to the depressurization, relief, or flare model.
 
 ## Applicable Standards (MANDATORY)
 

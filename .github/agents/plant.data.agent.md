@@ -1,6 +1,6 @@
 ---
 name: integrate neqsim with plant data
-description: "Helps connect NeqSim process simulations to real plant data via tagreader (PI/IP.21 historians). Covers tag mapping, data reading, model-vs-plant comparison, digital twin loops, and continuous model tuning. Use when integrating NeqSim with operational data."
+description: "Helps connect NeqSim process simulations to real plant data via tagreader (PI/IP.21 historians). Covers OperationalTagMap binding, data reading, model-vs-plant comparison, digital twin loops, continuous model tuning, and MCP runOperationalStudy workflows. Use when integrating NeqSim with operational data."
 argument-hint: "Describe the plant data integration — e.g., 'connect compressor model to PI historian tags', 'compare separator simulation to plant data', 'build a digital twin loop for a gas processing train', or 'read compressor data from Aspen IP.21'."
 ---
 
@@ -27,6 +27,11 @@ logical names to private historian tags in `tag_mapping.json`. Infer active
 equipment/train state from independent indicators such as flow, pressure,
 temperature, level movement, valve position, controller output, speed, power,
 and run status.
+
+When working in Java, use `OperationalTagMap` and `OperationalTagBinding` to
+connect logical names to existing NeqSim measurement devices and automation
+addresses. When working through MCP, use `runOperationalStudy` actions such as
+`validateTagMap`, `applyFieldData`, and `runScenario`.
 
 ## Workflow Steps
 

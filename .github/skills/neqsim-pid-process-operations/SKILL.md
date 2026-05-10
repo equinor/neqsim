@@ -133,6 +133,34 @@ tags in a private skill or task-local `tag_mapping.json`:
 }
 ```
 
+In Java workflows, use the plant-agnostic helpers in
+`neqsim.process.operations` so private historian names can stay outside public
+models while NeqSim still uses its existing measurement devices and automation
+API:
+
+```java
+OperationalTagMap tagMap = new OperationalTagMap()
+  .addBinding(OperationalTagBinding.builder("separator_pressure")
+    .historianTag("PRIVATE_HISTORIAN_TAG")
+    .unit("bara")
+    .role(InstrumentTagRole.INPUT)
+    .build())
+  .addBinding(OperationalTagBinding.builder("outlet_valve_position")
+    .historianTag("PRIVATE_HISTORIAN_TAG")
+    .automationAddress("Outlet Valve.percentValveOpening")
+    .unit("%")
+    .role(InstrumentTagRole.INPUT)
+    .build());
+
+ValidationResult validation = tagMap.validate(process);
+Map<String, Double> applied = tagMap.applyFieldData(process, fieldData);
+Map<String, Double> modelValues = tagMap.readValues(process);
+```
+
+This is a bridge only. Keep using `MeasurementDeviceInterface` tags, tag roles,
+`ProcessSystem.setFieldData`, `ProcessSystem.applyFieldInputs`, and
+`ProcessAutomation` for the actual model interaction.
+
 For active-state inference, use at least two independent indicators: flow,
 pressure, temperature, level movement, valve position, controller output, run
 status, speed, power, or trip status. Save raw historian data as CSV inside the
@@ -166,6 +194,35 @@ Define every action as a model delta:
 
 Always state whether the action is physically possible from the P&ID and whether
 additional hidden paths, non-return valves, or interlocks may change the result.
+
+For generic Java studies, represent simple action sequences with
+`OperationalScenario` and run them with `OperationalScenarioRunner`. The runner
+delegates valve opening changes to existing `SetValveOpeningAction`, variable
+writes to `ProcessAutomation`, steady-state calculations to `process.run()`, and
+dynamic calculations to `process.runTransient(dt, id)`:
+
+```java
+OperationalScenario scenario = OperationalScenario.builder("partly close outlet")
+  .addAction(OperationalAction.setValveOpening("Outlet Valve", 15.0))
+  .addAction(OperationalAction.setVariable("Outlet Valve.outletPressure", 45.0, "bara"))
+  .addAction(OperationalAction.runSteadyState())
+  .build();
+
+OperationalScenarioResult result = OperationalScenarioRunner.run(process, scenario);
+```
+
+For controller tuning screens based on simulated or historian time series, use
+`ControllerTuningStudy.evaluateStepResponse(...)`. It computes mean and maximum
+error, IAE, ISE, overshoot, settling time, output saturation fraction, and a
+short tuning recommendation without replacing NeqSim's controller classes.
+
+### MCP Access
+
+MCP clients can use `runOperationalStudy` for the same plant-agnostic workflow.
+Supported actions are `getSchema`, `validateTagMap`, `applyFieldData`,
+`runScenario`, and `evaluateControllerResponse`. The tool operates on local
+simulation copies and does not write to plant historians or control systems.
+Governed MCP profiles block it in read-only digital-twin and enterprise modes.
 
 ## Steady-State Evaluation Pattern
 

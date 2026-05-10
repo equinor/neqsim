@@ -129,7 +129,7 @@ limitations, and unsupported conditions.
 
 ---
 
-## Tier 2 — Engineering Advanced (22 tools)
+## Tier 2 — Engineering Advanced (23 tools)
 
 Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
@@ -151,6 +151,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `queryDataCatalog` | Browse component, standards, material, and EOS databases |
 | `setSimulationVariable` | Set an input variable and re-run a simulation |
 | `saveSimulationState` | Save process state as a JSON snapshot |
+| `runOperationalStudy` | P&ID/tag-driven valve scenarios, field-data binding, and controller response metrics on a local simulation copy |
 | `runRelief` | PSV sizing per API 520/521 |
 | `runLOPA` | Layer of Protection Analysis per IEC 61511 / CCPS |
 | `runSIL` | SIL verification per IEC 61508 / IEC 61511 |
@@ -291,7 +292,7 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 57 tools organized into three tiers plus platform tools,
+The server exposes 58 tools organized into three tiers plus platform tools,
 9 guided-workflow prompts, and 11 browsable resources.
 
 ## Complete Tool Inventory
@@ -879,11 +880,11 @@ The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 57 tools across all three tiers:
+and validates all 58 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (57 tools, 6 resources, 5 templates) |
+| Protocol | 9 | Tool/resource/template registration (58 tools, 6 resources, 5 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
@@ -891,7 +892,7 @@ and validates all 57 tools across all three tiers:
 | Process simulation | 13 | Separator, compressor, cooler, heater, valve, multi-unit trains |
 | Validation | 22 | Valid input, unknown components, bad models, missing specs |
 | Error handling | 2 | Graceful failure on bad input |
-| Tier 2 tools | 15 | PVT, pipeline, flow assurance, materials review, standards, reservoir, economics, dynamic, sizing, comparison |
+| Tier 2 tools | 16 | PVT, pipeline, flow assurance, materials review, standards, reservoir, economics, dynamic, sizing, comparison, operational studies |
 | Tier 3 tools | 17 | Sessions, task solver, workflow, reports, plugins, streaming, visualization, state, security |
 | Governance tools | 6 | Industrial profile, benchmark trust, tool access |
 | Catalog round-trip | 10 | All examples run end-to-end through the server |

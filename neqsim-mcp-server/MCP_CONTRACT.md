@@ -96,6 +96,7 @@ industrial validation.
 | `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |
 | `runBarrierRegister` | CALCULATION | v1.4 | Evidence-linked PSF/SCE barrier register validation with LOPA/SIL/bow-tie/QRA handoffs |
 | `runSafetySystemPerformance` | CALCULATION | v1.4 | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
+| `runOperationalStudy` | EXECUTION | v1.5 | P&ID/tag-driven valve scenarios, field-data binding, and controller response metrics on local simulation copies |
 
 ## Experimental Tools
 
@@ -290,7 +291,7 @@ requirements.
 |----------|-------------|---------|
 | `ADVISORY` | Read-only discovery and validation; always allowed | `getCapabilities`, `getExample`, `getSchema`, `validateInput`, `searchComponents` |
 | `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `runMaterialsReview`, `calculateStandard` |
-| `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `manageSession`, `solveTask` |
+| `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `runOperationalStudy`, `manageSession`, `solveTask` |
 | `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
 
 ### Industrial Core Toolset
