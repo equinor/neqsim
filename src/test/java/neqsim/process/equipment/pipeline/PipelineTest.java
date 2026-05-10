@@ -44,18 +44,18 @@ public class PipelineTest {
 
     Stream pipelineFeed = createFeedStream("pipeline feed", flow, temperature, pressure);
     Stream simplePipelineFeed =
-      createFeedStream("simple pipeline feed", flow, temperature, pressure);
+        createFeedStream("simple pipeline feed", flow, temperature, pressure);
     Stream beggsBrillsFeed = createFeedStream("beggs brills feed", flow, temperature, pressure);
 
     OnePhasePipeLine pipeline = new OnePhasePipeLine("pipeline", pipelineFeed);
     pipeline.setNumberOfLegs(1);
-    pipeline.setPipeDiameters(new double[] { diameter, diameter });
-    pipeline.setLegPositions(new double[] { 0, length });
-    pipeline.setHeightProfile(new double[] { 0, elevation });
-    pipeline.setPipeWallRoughness(new double[] { wallroughness, wallroughness });
-    pipeline.setOuterTemperatures(new double[] { temperature + 273.15, temperature + 273.15 });
-    pipeline.setPipeOuterHeatTransferCoefficients(new double[] { 15.0, 15.0 });
-    pipeline.setPipeWallHeatTransferCoefficients(new double[] { 15.0, 15.0 });
+    pipeline.setPipeDiameters(new double[] {diameter, diameter});
+    pipeline.setLegPositions(new double[] {0, length});
+    pipeline.setHeightProfile(new double[] {0, elevation});
+    pipeline.setPipeWallRoughness(new double[] {wallroughness, wallroughness});
+    pipeline.setOuterTemperatures(new double[] {temperature + 273.15, temperature + 273.15});
+    pipeline.setPipeOuterHeatTransferCoefficients(new double[] {15.0, 15.0});
+    pipeline.setPipeWallHeatTransferCoefficients(new double[] {15.0, 15.0});
 
     AdiabaticPipe simplePipeline = new AdiabaticPipe("simplePipeline", simplePipelineFeed);
     simplePipeline.setDiameter(diameter);
@@ -64,8 +64,7 @@ public class PipelineTest {
     simplePipeline.setInletElevation(0);
     simplePipeline.setOutletElevation(elevation);
 
-    PipeBeggsAndBrills beggsBrilsPipe =
-      new PipeBeggsAndBrills("simplePipeline 2", beggsBrillsFeed);
+    PipeBeggsAndBrills beggsBrilsPipe = new PipeBeggsAndBrills("simplePipeline 2", beggsBrillsFeed);
     beggsBrilsPipe.setPipeWallRoughness(wallroughness);
     beggsBrilsPipe.setLength(length);
     beggsBrilsPipe.setElevation(elevation);
