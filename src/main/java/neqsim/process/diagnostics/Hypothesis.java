@@ -66,6 +66,91 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   }
 
   /**
+   * Expected direction or event type for a diagnostic signal.
+   */
+  public enum ExpectedBehavior {
+    /** The relevant historian value is expected to increase. */
+    INCREASE,
+    /** The relevant historian value is expected to decrease. */
+    DECREASE,
+    /** The value is expected to exceed a high design or alarm limit. */
+    HIGH_LIMIT,
+    /** The value is expected to fall below a low design or alarm limit. */
+    LOW_LIMIT,
+    /** A sudden step or discontinuity is expected. */
+    STEP_CHANGE,
+    /** Correlated movement with another tag is expected. */
+    CORRELATION,
+    /** Any abnormal change in the value supports the hypothesis. */
+    ANY_CHANGE
+  }
+
+  /**
+   * Expected historian, STID, or simulation signal for a hypothesis.
+   */
+  public static class ExpectedSignal implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private final String parameterPattern;
+    private final ExpectedBehavior expectedBehavior;
+    private final double weight;
+    private final String rationale;
+
+    /**
+     * Creates an expected signal fingerprint.
+     *
+     * @param parameterPattern parameter alias or pipe-separated aliases to match
+     * @param expectedBehavior expected signal behavior
+     * @param weight relative importance, normally 0.1 to 5.0
+     * @param rationale engineering reason for expecting this signal
+     */
+    public ExpectedSignal(String parameterPattern, ExpectedBehavior expectedBehavior, double weight,
+        String rationale) {
+      this.parameterPattern = parameterPattern == null ? "" : parameterPattern;
+      this.expectedBehavior =
+          expectedBehavior == null ? ExpectedBehavior.ANY_CHANGE : expectedBehavior;
+      this.weight = Math.max(0.1, weight);
+      this.rationale = rationale == null ? "" : rationale;
+    }
+
+    /**
+     * Gets the parameter matching pattern.
+     *
+     * @return parameter pattern or aliases
+     */
+    public String getParameterPattern() {
+      return parameterPattern;
+    }
+
+    /**
+     * Gets the expected behavior.
+     *
+     * @return expected behavior
+     */
+    public ExpectedBehavior getExpectedBehavior() {
+      return expectedBehavior;
+    }
+
+    /**
+     * Gets the relative signal weight.
+     *
+     * @return signal weight
+     */
+    public double getWeight() {
+      return weight;
+    }
+
+    /**
+     * Gets the engineering rationale.
+     *
+     * @return rationale text
+     */
+    public String getRationale() {
+      return rationale;
+    }
+  }
+
+  /**
    * A single piece of evidence for or against a hypothesis.
    */
   public static class Evidence implements Serializable {
@@ -75,6 +160,9 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     private final String observation;
     private final EvidenceStrength strength;
     private final String source;
+    private final boolean supporting;
+    private final double weight;
+    private final String sourceReference;
 
     /**
      * Creates an evidence item.
@@ -86,10 +174,30 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      */
     public Evidence(String parameter, String observation, EvidenceStrength strength,
         String source) {
+      this(parameter, observation, strength, source, strength != EvidenceStrength.CONTRADICTORY,
+          1.0, "");
+    }
+
+    /**
+     * Creates an evidence item with explicit support direction and weight.
+     *
+     * @param parameter parameter name, tag alias, or design key
+     * @param observation what was observed
+     * @param strength strength of the evidence
+     * @param source data source or analysis method
+     * @param supporting true if the evidence supports the hypothesis, false if contradictory
+     * @param weight relative weight, normally 0.1 to 5.0
+     * @param sourceReference optional document, tag, or data-window reference
+     */
+    public Evidence(String parameter, String observation, EvidenceStrength strength, String source,
+        boolean supporting, double weight, String sourceReference) {
       this.parameter = parameter;
       this.observation = observation;
       this.strength = strength;
       this.source = source;
+      this.supporting = supporting;
+      this.weight = Math.max(0.1, weight);
+      this.sourceReference = sourceReference == null ? "" : sourceReference;
     }
 
     /**
@@ -128,6 +236,33 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
       return source;
     }
 
+    /**
+     * Checks if the evidence supports the hypothesis.
+     *
+     * @return true when supporting, false when contradictory
+     */
+    public boolean isSupporting() {
+      return supporting;
+    }
+
+    /**
+     * Gets the relative evidence weight.
+     *
+     * @return evidence weight
+     */
+    public double getWeight() {
+      return weight;
+    }
+
+    /**
+     * Gets the source reference.
+     *
+     * @return document, tag, or time-window reference, or an empty string
+     */
+    public String getSourceReference() {
+      return sourceReference;
+    }
+
     @Override
     public String toString() {
       return String.format("[%s] %s: %s (%s)", strength, parameter, observation, source);
@@ -144,6 +279,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   private double verificationScore;
   private double confidenceScore;
   private final List<Evidence> evidenceList;
+  private final List<ExpectedSignal> expectedSignals;
   private final List<String> recommendedActions;
   private String simulationSummary;
 
@@ -157,6 +293,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     this.verificationScore = 0.0;
     this.confidenceScore = builder.priorProbability;
     this.evidenceList = new ArrayList<>(builder.evidenceList);
+    this.expectedSignals = new ArrayList<>(builder.expectedSignals);
     this.recommendedActions = new ArrayList<>(builder.recommendedActions);
     this.simulationSummary = "";
   }
@@ -245,6 +382,15 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   }
 
   /**
+   * Gets the expected diagnostic signal fingerprints.
+   *
+   * @return unmodifiable list of expected signals
+   */
+  public List<ExpectedSignal> getExpectedSignals() {
+    return Collections.unmodifiableList(expectedSignals);
+  }
+
+  /**
    * Gets the recommended corrective actions.
    *
    * @return unmodifiable list of action descriptions
@@ -271,6 +417,16 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
    */
   public void addEvidence(Evidence evidence) {
     evidenceList.add(evidence);
+  }
+
+  /**
+   * Updates the prior probability after reliability-data lookup.
+   *
+   * @param prior probability in range 0 to 1
+   */
+  public void setPriorProbability(double prior) {
+    this.priorProbability = Math.max(0.0, Math.min(1.0, prior));
+    updateConfidence();
   }
 
   /**
@@ -323,6 +479,16 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   }
 
   /**
+   * Sets the final confidence score directly. Used during Bayesian normalization across all
+   * hypotheses.
+   *
+   * @param score normalized confidence score in range 0 to 1
+   */
+  void setConfidenceScore(double score) {
+    this.confidenceScore = Math.max(0.0, Math.min(1.0, score));
+  }
+
+  /**
    * Compares hypotheses by confidence score (descending).
    *
    * @param other hypothesis to compare to
@@ -358,6 +524,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     private String failureMode = "";
     private double priorProbability = 0.1;
     private List<Evidence> evidenceList = new ArrayList<>();
+    private List<ExpectedSignal> expectedSignals = new ArrayList<>();
     private List<String> recommendedActions = new ArrayList<>();
 
     /**
@@ -432,6 +599,21 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     }
 
     /**
+     * Adds an expected diagnostic signal.
+     *
+     * @param parameterPattern parameter alias or pipe-separated aliases to match
+     * @param behavior expected behavior for the matched parameter
+     * @param weight relative importance, normally 0.1 to 5.0
+     * @param rationale engineering rationale for the signal
+     * @return this builder
+     */
+    public Builder addExpectedSignal(String parameterPattern, ExpectedBehavior behavior,
+        double weight, String rationale) {
+      this.expectedSignals.add(new ExpectedSignal(parameterPattern, behavior, weight, rationale));
+      return this;
+    }
+
+    /**
      * Adds a recommended action.
      *
      * @param action corrective action
@@ -440,6 +622,24 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     public Builder addAction(String action) {
       this.recommendedActions.add(action);
       return this;
+    }
+
+    /**
+     * Creates a deep copy of this builder, so the original template remains unmodified.
+     *
+     * @return a new builder with copied state
+     */
+    public Builder copy() {
+      Builder clone = new Builder();
+      clone.name = this.name;
+      clone.description = this.description;
+      clone.category = this.category;
+      clone.failureMode = this.failureMode;
+      clone.priorProbability = this.priorProbability;
+      clone.evidenceList = new ArrayList<>(this.evidenceList);
+      clone.expectedSignals = new ArrayList<>(this.expectedSignals);
+      clone.recommendedActions = new ArrayList<>(this.recommendedActions);
+      return clone;
     }
 
     /**

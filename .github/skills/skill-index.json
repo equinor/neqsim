@@ -26,6 +26,18 @@
     "neqsim-pid-process-operations",
     "neqsim-plant-data"
   ],
+  "root cause analysis": [
+    "neqsim-root-cause-analysis"
+  ],
+  "equipment anomaly diagnosis": [
+    "neqsim-root-cause-analysis"
+  ],
+  "compressor high vibration": [
+    "neqsim-root-cause-analysis"
+  ],
+  "separator carryover diagnosis": [
+    "neqsim-root-cause-analysis"
+  ],
   "a simulation fails to converge": [
     "neqsim-troubleshooting"
   ],

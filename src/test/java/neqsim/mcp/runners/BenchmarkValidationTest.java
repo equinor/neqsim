@@ -204,7 +204,7 @@ class BenchmarkValidationTest {
     JsonObject tools = root.getAsJsonObject("tools");
     // Verify all claimed tools are present
     String[] expectedTools = {"runFlash", "runProcess", "runPVT", "runFlowAssurance",
-      "calculateStandard", "runPipeline", "runWaterHammer", "runReservoir",
+      "calculateStandard", "runPipeline", "runWaterHammer", "runRootCauseAnalysis", "runReservoir",
       "runFieldEconomics", "runDynamic", "runBioprocess", "crossValidateModels",
       "runParametricStudy", "getPhaseEnvelope", "getPropertyTable", "sizeEquipment"};
 

@@ -122,7 +122,7 @@ public final class IndustrialProfile {
    */
   private static final Set<String> ENGINEERING_ADVANCED =
       Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
-        "runWaterHammer",
+          "runWaterHammer", "runRootCauseAnalysis",
           "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
           "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
           "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
@@ -175,6 +175,7 @@ public final class IndustrialProfile {
     map.put("calculateStandard", ToolCategory.CALCULATION);
     map.put("runPipeline", ToolCategory.CALCULATION);
     map.put("runWaterHammer", ToolCategory.CALCULATION);
+    map.put("runRootCauseAnalysis", ToolCategory.CALCULATION);
     map.put("runMaterialsReview", ToolCategory.CALCULATION);
     map.put("runReservoir", ToolCategory.CALCULATION);
     map.put("runFieldEconomics", ToolCategory.CALCULATION);

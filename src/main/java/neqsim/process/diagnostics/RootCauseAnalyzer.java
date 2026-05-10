@@ -201,12 +201,6 @@ public class RootCauseAnalyzer implements Serializable {
     List<Hypothesis> hypotheses = generator.generate(equipment, symptom);
     logger.info("Generated {} candidate hypotheses", hypotheses.size());
 
-    // Step 3: Adjust priors from OREDA
-    if (equipment != null) {
-      String eqTypeForOreda = generator.classifyEquipment(equipment);
-      generator.adjustPriorsFromOreda(hypotheses, eqTypeForOreda);
-    }
-
     // Step 4 & 5: Collect evidence and update likelihood
     EvidenceCollector collector = new EvidenceCollector();
     collector.setHistorianData(historianData, timestamps);
@@ -243,7 +237,10 @@ public class RootCauseAnalyzer implements Serializable {
       }
     }
 
-    // Step 7 & 8: Build report
+    // Step 7: Bayesian normalization — normalize confidence scores to sum to 1.0
+    normalizeConfidenceScores(hypotheses);
+
+    // Step 8: Build report
     String eqType = equipment != null ? generator.classifyEquipment(equipment) : "unknown";
     RootCauseReport report = new RootCauseReport(equipmentName, eqType, symptom);
     report.setHypotheses(hypotheses);
@@ -267,6 +264,39 @@ public class RootCauseAnalyzer implements Serializable {
         top != null ? top.getName() : "none");
 
     return report;
+  }
+
+  /**
+   * Normalizes confidence scores across all hypotheses using Bayesian posterior normalization.
+   *
+   * <p>
+   * Each hypothesis's raw score (prior x likelihood x verification) is divided by the sum of all
+   * raw scores, producing posterior probabilities that sum to 1.0. This prevents hypotheses from
+   * having inflated or deflated absolute confidence scores.
+   * </p>
+   *
+   * @param hypotheses list of hypotheses to normalize
+   */
+  private void normalizeConfidenceScores(List<Hypothesis> hypotheses) {
+    if (hypotheses.isEmpty()) {
+      return;
+    }
+
+    // Ensure all confidence scores are up to date
+    for (Hypothesis h : hypotheses) {
+      h.updateConfidence();
+    }
+
+    double totalScore = 0.0;
+    for (Hypothesis h : hypotheses) {
+      totalScore += h.getConfidenceScore();
+    }
+
+    if (totalScore > 1e-12) {
+      for (Hypothesis h : hypotheses) {
+        h.setConfidenceScore(h.getConfidenceScore() / totalScore);
+      }
+    }
   }
 
   /**

@@ -987,6 +987,79 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  // ========== Root-Cause Analysis Schemas ==========
+
+  /**
+   * Returns the JSON Schema for root-cause analysis input.
+   *
+   * @return JSON Schema string
+   */
+  public static String rootCauseInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RootCauseAnalysisInput");
+    schema.put("description",
+        "Input for equipment root-cause analysis (run_root_cause_analysis tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("equipmentName", stringProp("Name of the equipment to diagnose"));
+    properties.put("symptom", enumProp("Observed symptom",
+        Arrays.asList("TRIP", "HIGH_VIBRATION", "SEAL_FAILURE", "HIGH_TEMPERATURE",
+            "LOW_EFFICIENCY", "PRESSURE_DEVIATION", "FLOW_DEVIATION", "HIGH_POWER",
+            "SURGE_EVENT", "FOULING", "ABNORMAL_NOISE", "LIQUID_CARRYOVER")));
+    properties.put("processJson",
+        stringProp("ProcessSystem JSON definition accepted by ProcessSystem.fromJsonAndRun"));
+    properties.put("simulationEnabled",
+        boolProp("Whether to run conservative NeqSim perturbation verification"));
+    properties.put("historianCsv", stringProp(
+        "CSV text with header row time,<tag1>,<tag2>... from tagreader or historian export"));
+
+    Map<String, Object> designLimits = new LinkedHashMap<String, Object>();
+    designLimits.put("type", "object");
+    designLimits.put("description",
+        "Map of tag/parameter to [low, high] limits, for example {\"vibration\": [0, 8]}.");
+    properties.put("designLimits", designLimits);
+
+    Map<String, Object> stidData = new LinkedHashMap<String, Object>();
+    stidData.put("type", "object");
+    stidData.put("description",
+        "STID/design data map such as design point, rated speed, normal operating value, "
+          + "or datasheet references");
+    properties.put("stidData", stidData);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("equipmentName", "symptom", "processJson"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for root-cause analysis output.
+   *
+   * @return JSON Schema string
+   */
+  public static String rootCauseOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RootCauseAnalysisOutput");
+    schema.put("description", "Output from root-cause analysis with ranked hypotheses");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("equipment", stringProp("Diagnosed equipment name"));
+    properties.put("equipmentType", stringProp("Classified equipment type"));
+    properties.put("symptom", stringProp("Analyzed symptom"));
+    properties.put("dataPointsAnalyzed", intProp("Number of historian data points analyzed"));
+    properties.put("parametersAnalyzed", intProp("Number of historian parameters analyzed"));
+    properties.put("hypotheses", typedArraySchema(
+        "Ranked hypotheses with confidenceScore, priorProbability, likelihoodScore, "
+            + "verificationScore, evidence, recommendedActions, and simulationSummary"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Reservoir Schemas ==========
 
   /**
@@ -1627,7 +1700,8 @@ public final class SchemaCatalog {
     return Collections.unmodifiableList(Arrays.asList("run_flash", "run_process", "validate_input",
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
-        "run_water_hammer", "run_materials_review", "run_reservoir", "run_field_economics", "run_dynamic",
+        "run_water_hammer", "run_root_cause_analysis", "run_materials_review", "run_reservoir",
+        "run_field_economics", "run_dynamic",
         "run_bioprocess", "size_equipment", "compare_processes", "manage_session", "visualize",
         "run_hazop", "run_barrier_register", "run_safety_system_performance"));
   }
@@ -1666,6 +1740,8 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? pipelineInputSchema() : null;
     } else if ("run_water_hammer".equals(toolName)) {
       return "input".equals(schemaType) ? waterHammerInputSchema() : null;
+    } else if ("run_root_cause_analysis".equals(toolName)) {
+      return "input".equals(schemaType) ? rootCauseInputSchema() : rootCauseOutputSchema();
     } else if ("run_materials_review".equals(toolName)) {
       return "input".equals(schemaType) ? materialsReviewInputSchema()
           : materialsReviewOutputSchema();

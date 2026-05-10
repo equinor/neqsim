@@ -112,6 +112,7 @@ class SchemaCatalogTest {
     assertTrue(tools.contains("get_property_table"));
     assertTrue(tools.contains("get_phase_envelope"));
     assertTrue(tools.contains("get_capabilities"));
+    assertTrue(tools.contains("run_root_cause_analysis"));
   }
 
   @Test
@@ -141,6 +142,25 @@ class SchemaCatalogTest {
   }
 
   @Test
+  void testRootCauseSchemas() {
+    String input = SchemaCatalog.getSchema("run_root_cause_analysis", "input");
+    assertNotNull(input);
+    JsonObject inputRoot = JsonParser.parseString(input).getAsJsonObject();
+    assertEquals("RootCauseAnalysisInput", inputRoot.get("title").getAsString());
+    JsonObject props = inputRoot.getAsJsonObject("properties");
+    assertTrue(props.has("equipmentName"));
+    assertTrue(props.has("symptom"));
+    assertTrue(props.has("processJson"));
+    assertTrue(props.has("historianCsv"));
+
+    String output = SchemaCatalog.getSchema("run_root_cause_analysis", "output");
+    assertNotNull(output);
+    JsonObject outputRoot = JsonParser.parseString(output).getAsJsonObject();
+    assertEquals("RootCauseAnalysisOutput", outputRoot.get("title").getAsString());
+    assertTrue(outputRoot.getAsJsonObject("properties").has("hypotheses"));
+  }
+
+  @Test
   void testGetCatalogJson() {
     String json = SchemaCatalog.getCatalogJson();
     JsonObject root = JsonParser.parseString(json).getAsJsonObject();
@@ -158,6 +178,7 @@ class SchemaCatalogTest {
     JsonObject flash = root.getAsJsonObject("run_flash");
     assertTrue(flash.get("inputSchemaUri").getAsString().contains("run_flash"));
     assertTrue(flash.get("outputSchemaUri").getAsString().contains("run_flash"));
+    assertTrue(root.has("run_root_cause_analysis"));
   }
 
   @Test

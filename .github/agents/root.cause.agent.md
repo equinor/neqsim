@@ -23,8 +23,8 @@ ALWAYS read these skills before proceeding:
 2. **Gather data**: Collect historian time-series, STID design docs, OREDA data
 3. **Build or load process model**: Need a running ProcessSystem for simulation verification
 4. **Run RCA**: Use RootCauseAnalyzer orchestrator
-5. **Interpret results**: Explain top hypotheses with evidence to the user
-6. **Recommend actions**: Provide prioritized corrective action list
+5. **Interpret results**: Separate supporting evidence, contradictory evidence, and neutral simulation limitations
+6. **Recommend actions**: Provide prioritized corrective action list with immediate safe-operation checks
 
 ## Workflow
 
@@ -93,6 +93,11 @@ Present the report to the user with:
 4. **Alternative hypotheses**: Other possibilities ranked by confidence
 5. **Recommended actions**: Prioritized list from the top hypothesis
 
+Evidence is not generic trend harvesting. The RCA library attaches historian and
+STID observations only when they match a hypothesis' expected signal
+fingerprint. Call out contradictory evidence explicitly because it is often the
+fastest way to rule out attractive but wrong explanations.
+
 ### Step 6: Follow-up Actions
 
 Based on the diagnosis:
@@ -114,6 +119,8 @@ Always provide:
 Use the `runRootCauseAnalysis` MCP tool for automated diagnosis:
 - Accepts process JSON, equipment name, symptom, historian CSV
 - Returns JSON report with ranked hypotheses
+- Use the schema catalog entry `run_root_cause_analysis` and the example
+   `root-cause/compressor-high-vibration` when constructing tool calls
 
 ## Common Pitfalls
 
@@ -122,3 +129,4 @@ Use the `runRootCauseAnalysis` MCP tool for automated diagnosis:
 - **Missing design limits**: Without design limits, threshold analysis cannot run
 - **Simulation without calibration**: Process model must match current operating conditions
 - **Ignoring correlations**: Parameter correlations often point to the root cause faster than individual trends
+- **Over-reading simulation verification**: A neutral score means the current process model could not test that hypothesis; it is not a pass/fail verdict

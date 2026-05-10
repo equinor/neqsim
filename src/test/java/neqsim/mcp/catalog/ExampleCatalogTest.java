@@ -11,6 +11,7 @@ import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.ProcessRunner;
+import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.Validator;
 
 /**
@@ -102,6 +103,7 @@ class ExampleCatalogTest {
     assertTrue(categories.contains("batch"));
     assertTrue(categories.contains("property-table"));
     assertTrue(categories.contains("phase-envelope"));
+    assertTrue(categories.contains("root-cause"));
   }
 
   @Test
@@ -112,6 +114,7 @@ class ExampleCatalogTest {
 
     List<String> processExamples = ExampleCatalog.getExampleNames("process");
     assertEquals(2, processExamples.size());
+    assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
 
     List<String> unknown = ExampleCatalog.getExampleNames("unknown");
     assertTrue(unknown.isEmpty());
@@ -179,5 +182,22 @@ class ExampleCatalogTest {
     assertNotNull(example);
     JsonObject root = JsonParser.parseString(example).getAsJsonObject();
     assertTrue(root.has("components"));
+  }
+
+  @Test
+  void testRootCauseExample_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("root-cause", "compressor-high-vibration");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertEquals("HIGH_VIBRATION", input.get("symptom").getAsString());
+    assertTrue(input.has("processJson"));
+    JsonObject processJson = JsonParser.parseString(input.get("processJson").getAsString())
+        .getAsJsonObject();
+    assertTrue(processJson.has("process"));
+
+    String result = RootCauseRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertTrue(output.has("hypotheses"));
   }
 }

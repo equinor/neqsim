@@ -36,10 +36,10 @@ Prior (OREDA) × Likelihood (Historian) × Verification (Simulation) = Confidenc
 |-------|---------|
 | `RootCauseAnalyzer` | Main orchestrator — takes ProcessSystem + equipment name, runs full analysis |
 | `Symptom` | Enum of 12 equipment symptoms (TRIP, HIGH_VIBRATION, etc.) |
-| `Hypothesis` | Candidate root cause with evidence, prior/likelihood/verification scores |
-| `HypothesisGenerator` | Generates candidate hypotheses from built-in libraries per equipment type |
-| `EvidenceCollector` | Analyzes historian data: trends, correlations, thresholds, rate-of-change |
-| `SimulationVerifier` | Clones process, applies perturbation, compares simulated vs observed KPIs |
+| `Hypothesis` | Candidate root cause with expected signal fingerprints, evidence, prior/likelihood/verification scores |
+| `HypothesisGenerator` | Generates candidate hypotheses from built-in libraries and OREDA-adjusted priors per equipment type |
+| `EvidenceCollector` | Analyzes historian/STID data and attaches only hypothesis-relevant supporting or contradictory evidence |
+| `SimulationVerifier` | Clones process, applies physical perturbation, compares simulated vs observed KPI directions |
 | `RootCauseReport` | Ranked output with JSON and text report generation |
 
 ### Package Location
@@ -154,6 +154,19 @@ print(str(report.toTextReport()))
 
 ## Evidence Analysis Methods
 
+Evidence is hypothesis-specific. Built-in hypotheses define expected signal
+fingerprints such as `vibration|bearing` increasing, `lubeOilPressure` below
+limit, `demisterDp` increasing, or `antiSurgeValve` not opening. Historian and
+STID observations are matched by alias pattern. Matching observations become
+supporting evidence; opposite observations become contradictory evidence;
+unrelated trends are ignored instead of inflating all hypotheses.
+
+Each evidence item includes:
+
+- `supporting`: whether the observation supports or contradicts the hypothesis
+- `weight`: the importance of the expected signal in the hypothesis fingerprint
+- `sourceReference`: optional source/tag/document reference for traceability
+
 ### Trend Analysis
 Linear regression on time-series data. Reports slope, R-squared, and percent change.
 - **STRONG**: R-squared > 0.7 and > 10% change
@@ -185,6 +198,10 @@ Compares current (latest) values to STID design values.
 The verifier clones the process system, applies a perturbation matching each
 hypothesis, runs the modified process, and compares the direction of KPI changes
 to the historian data pattern.
+
+Unsupported hypotheses or equipment types return a neutral verification score
+(`0.5`) with an explicit simulation limitation. Treat this as "not verified by
+the current process model", not as evidence for or against the hypothesis.
 
 ### Perturbation Examples
 
@@ -251,12 +268,20 @@ Use `runRootCauseAnalysis` MCP tool for programmatic access:
       "name": "Bearing wear",
       "category": "MECHANICAL",
       "confidence": 0.7230,
+      "confidenceScore": 0.7230,
       "priorProbability": 0.3000,
       "likelihoodScore": 0.8500,
       "verificationScore": 0.8500,
       "evidence": [
-        {"parameter": "vibration_mm_s", "observation": "increasing trend...", "strength": "STRONG", "source": "historian-trend"},
-        {"parameter": "vibration_mm_s", "observation": "Design limit exceeded...", "strength": "MODERATE", "source": "historian-threshold"}
+        {
+          "parameter": "vibration_mm_s",
+          "observation": "increasing trend...",
+          "strength": "STRONG",
+          "source": "historian-trend",
+          "supporting": true,
+          "weight": 3.0,
+          "sourceReference": "PI:COMP-100-VIB"
+        }
       ],
       "recommendedActions": ["Inspect bearings", "Check lubrication system", "Review vibration spectrum"]
     }
@@ -273,12 +298,19 @@ HypothesisGenerator gen = new HypothesisGenerator();
 
 // Register custom hypotheses for a specific equipment type and symptom
 gen.register("compressor", Symptom.HIGH_VIBRATION,
-    new Hypothesis.Builder("liquid_ingestion", "Liquid ingestion")
+    new Hypothesis.Builder()
+        .name("liquid_ingestion")
         .description("Liquid droplets entering compressor causing vibration")
         .category(Hypothesis.Category.PROCESS)
         .priorProbability(0.1)
-        .addRecommendedAction("Check scrubber level")
-        .addRecommendedAction("Inspect inlet piping for liquid accumulation"));
+        .addExpectedSignal("scrubberLevel|separatorLevel|level",
+            Hypothesis.ExpectedBehavior.HIGH_LIMIT, 3.0,
+            "High upstream scrubber level supports liquid ingestion")
+        .addExpectedSignal("vibration|flowInstability", Hypothesis.ExpectedBehavior.STEP_CHANGE,
+            2.5, "Liquid ingestion normally creates a sudden vibration/flow disturbance")
+        .addAction("Check scrubber level")
+        .addAction("Inspect inlet piping for liquid accumulation")
+        .build());
 
 RootCauseAnalyzer rca = new RootCauseAnalyzer(process, "Compressor-1");
 rca.setHypothesisGenerator(gen);

@@ -23,7 +23,7 @@ Symptom (enum)
     │       │
     │       └── OREDA priors (ReliabilityDataSource)
     │
-    ├── EvidenceCollector     →  Analyze historian + STID data
+    ├── EvidenceCollector     →  Analyze historian + STID data against expected signals
     │       │
     │       ├── Trend analysis (linear regression R²)
     │       ├── Threshold exceedance
@@ -34,6 +34,13 @@ Symptom (enum)
     │
     └── RootCauseReport       →  Ranked hypotheses with confidence scores
 ```
+
+Each built-in hypothesis carries expected signal fingerprints. For example,
+compressor bearing degradation expects increasing vibration and bearing
+temperature, while liquid ingestion expects a step change in vibration and high
+upstream separator or scrubber level. Evidence that matches the fingerprint is
+marked as supporting; opposite behavior is marked as contradictory; unrelated
+trends are ignored.
 
 ## Confidence Scoring
 
@@ -112,14 +119,17 @@ The `runRootCauseAnalysis` MCP tool exposes this framework to LLM agents:
 
 ```json
 {
-  "processJson": { "fluid": {...}, "process": [...] },
-  "equipmentName": "Export Compressor",
-  "symptom": "HIGH_VIBRATION",
-  "historianCsv": "timestamp,vibration,bearing_temp\n0,2.1,65\n1,2.3,67\n2,2.8,72",
-  "designLimits": { "vibration": [0, 4.5] },
-  "simulationEnabled": true
+    "processJson": "{\"fluid\": {...}, \"process\": [...]}",
+    "equipmentName": "Export Compressor",
+    "symptom": "HIGH_VIBRATION",
+    "historianCsv": "timestamp,vibration,bearing_temp\n0,2.1,65\n1,2.3,67\n2,2.8,72",
+    "designLimits": { "vibration": [0, 4.5] },
+    "simulationEnabled": true
 }
 ```
+
+`processJson` is passed as a JSON string to the MCP runner. The schema catalog
+entry `run_root_cause_analysis` shows the exact input fields and output shape.
 
 ## Custom Hypotheses
 
@@ -128,12 +138,15 @@ Register domain-specific hypotheses for specialized equipment:
 ```java
 HypothesisGenerator generator = new HypothesisGenerator();
 generator.register("compressor", Symptom.HIGH_VIBRATION,
-    new Hypothesis.Builder("Coupling misalignment")
+    new Hypothesis.Builder()
+        .name("Coupling misalignment")
         .description("Flexible coupling misalignment causing 1x/2x vibration")
         .category(Hypothesis.Category.MECHANICAL)
         .priorProbability(0.15)
-        .addRecommendedAction("Laser alignment check")
-);
+        .addExpectedSignal("vibration|2x|axialVibration", Hypothesis.ExpectedBehavior.INCREASE,
+            2.5, "Misalignment normally increases axial and 2x vibration")
+        .addAction("Laser alignment check")
+        .build());
 
 RootCauseAnalyzer rca = new RootCauseAnalyzer(process, "Compressor");
 rca.setHypothesisGenerator(generator);

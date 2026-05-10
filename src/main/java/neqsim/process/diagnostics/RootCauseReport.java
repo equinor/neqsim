@@ -83,12 +83,30 @@ public class RootCauseReport implements Serializable {
   }
 
   /**
+   * Returns the count of historian data points analyzed.
+   *
+   * @return number of data points
+   */
+  public int getDataPointsAnalyzed() {
+    return dataPointsAnalyzed;
+  }
+
+  /**
    * Sets the count of historian data points analyzed.
    *
    * @param count number of data points
    */
   public void setDataPointsAnalyzed(int count) {
     this.dataPointsAnalyzed = count;
+  }
+
+  /**
+   * Returns the count of parameters analyzed.
+   *
+   * @return number of parameters
+   */
+  public int getParametersAnalyzed() {
+    return parametersAnalyzed;
   }
 
   /**
@@ -205,6 +223,8 @@ public class RootCauseReport implements Serializable {
       sb.append("      \"category\": \"").append(h.getCategory().name()).append("\",\n");
       sb.append("      \"confidence\": ").append(String.format("%.4f", h.getConfidenceScore()))
           .append(",\n");
+      sb.append("      \"confidenceScore\": ").append(String.format("%.4f", h.getConfidenceScore()))
+          .append(",\n");
       sb.append("      \"priorProbability\": ")
           .append(String.format("%.4f", h.getPriorProbability())).append(",\n");
       sb.append("      \"likelihoodScore\": ").append(String.format("%.4f", h.getLikelihoodScore()))
@@ -231,7 +251,11 @@ public class RootCauseReport implements Serializable {
         sb.append("\"parameter\": \"").append(escapeJson(e.getParameter())).append("\", ");
         sb.append("\"observation\": \"").append(escapeJson(e.getObservation())).append("\", ");
         sb.append("\"strength\": \"").append(e.getStrength().name()).append("\", ");
-        sb.append("\"source\": \"").append(escapeJson(e.getSource())).append("\"");
+        sb.append("\"source\": \"").append(escapeJson(e.getSource())).append("\", ");
+        sb.append("\"supporting\": ").append(e.isSupporting()).append(", ");
+        sb.append("\"weight\": ").append(String.format("%.3f", e.getWeight())).append(", ");
+        sb.append("\"sourceReference\": \"").append(escapeJson(e.getSourceReference()))
+            .append("\"");
         sb.append("}");
         if (j < evList.size() - 1) {
           sb.append(",");
@@ -311,8 +335,9 @@ public class RootCauseReport implements Serializable {
       if (!evList.isEmpty()) {
         sb.append("    Evidence:\n");
         for (Hypothesis.Evidence e : evList) {
-          sb.append(String.format("      [%s] %s: %s (%s)\n", e.getStrength().name(),
-              e.getParameter(), e.getObservation(), e.getSource()));
+          String direction = e.isSupporting() ? "supports" : "contradicts";
+          sb.append(String.format("      [%s/%s w=%.1f] %s: %s (%s)\n", e.getStrength().name(),
+              direction, e.getWeight(), e.getParameter(), e.getObservation(), e.getSource()));
         }
       }
 
@@ -354,7 +379,9 @@ public class RootCauseReport implements Serializable {
       topResult.put("name", top.getName());
       topResult.put("category", top.getCategory().name());
       topResult.put("confidence", top.getConfidenceScore());
+      topResult.put("confidenceScore", top.getConfidenceScore());
       topResult.put("evidenceCount", top.getEvidenceList().size());
+      topResult.put("contradictoryEvidenceCount", countContradictoryEvidence(top));
       result.put("topHypothesis", topResult);
     }
 
@@ -362,6 +389,23 @@ public class RootCauseReport implements Serializable {
     result.put("hypothesesAbove50pct", getHypothesesAboveThreshold(0.5).size());
 
     return result;
+  }
+
+  /**
+   * Counts contradictory evidence for a hypothesis.
+   *
+   * @param hypothesis hypothesis to inspect
+   * @return number of contradictory evidence items
+   */
+  private int countContradictoryEvidence(Hypothesis hypothesis) {
+    int count = 0;
+    for (Hypothesis.Evidence evidence : hypothesis.getEvidenceList()) {
+      if (!evidence.isSupporting()
+          || evidence.getStrength() == Hypothesis.EvidenceStrength.CONTRADICTORY) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /**
