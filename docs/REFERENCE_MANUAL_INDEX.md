@@ -626,6 +626,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | PSV Dynamic Sizing Wiki     | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example)           | PSV dynamic sizing                                                                    |
 | PSV Dynamic Sizing          | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example)       | PSV sizing example                                                                    |
 | Trapped Inventory Calculator | [docs/safety/trapped_inventory_calculator.md](safety/trapped_inventory_calculator) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
+| Trapped Liquid Fire Rupture | [docs/safety/trapped_liquid_fire_rupture.md](safety/trapped_liquid_fire_rupture) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
 | **Relief Valve Sizing API** | [docs/safety/relief_valve_sizing_api.md](safety/relief_valve_sizing_api)             | **API 520/521 PSV sizing for gas, liquid, and two-phase relief with fire heat input** |
 | PSD Valve Trip              | [docs/wiki/psd_valve_hihi_trip.md](wiki/psd_valve_hihi_trip)                         | PSD valve HIHI trip                                                                   |
 | Rupture Disks               | [docs/safety/rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior) | Rupture disk behavior                                                                 |

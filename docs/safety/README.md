@@ -51,12 +51,14 @@ This folder contains guides for implementing safety systems in process simulatio
 |----------|-------------|
 | [fire_blowdown_capabilities.md](fire_blowdown_capabilities) | Fire case blowdown simulation |
 | [fire_heat_transfer_enhancements.md](fire_heat_transfer_enhancements) | Fire heat transfer modeling |
+| [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
 
 ### Relief Systems
 
 | Document | Description |
 |----------|-------------|
 | [Trapped Inventory Calculator](trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
+| [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Fire exposure, thermal expansion, pipe/flange failure screening, PFP demand, and source-term handoff |
 | [psv_dynamic_sizing_example.md](psv_dynamic_sizing_example) | Pressure Safety Valve dynamic sizing |
 | [rupture_disk_dynamic_behavior.md](rupture_disk_dynamic_behavior) | Rupture disk dynamic behavior |
 

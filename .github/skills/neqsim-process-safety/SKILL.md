@@ -1,10 +1,10 @@
 ---
 name: neqsim-process-safety
 version: "1.0.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier and neqsim.process.safety.risk classes."
+description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, and neqsim.process.safety.rupture classes."
 last_verified: "2026-05-07"
 requires:
-  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk]
+  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.rupture]
 ---
 
 # NeqSim Process Safety Skill
@@ -22,8 +22,34 @@ sizing (`neqsim-relief-flare-network`).
 - SIL determination for an SIF — IEC 61508 / IEC 61511 verification
 - Bow-tie analysis (top event with threats + barriers + consequences)
 - ALARP / risk-matrix scoring (5×5)
+- Trapped-liquid fire rupture screening for blocked-in liquid-filled segments,
+  including PFP demand and source-term handoff
 
-Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 754**, **NORSOK Z-013**.
+Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+
+## Method 0b — Trapped-Liquid Fire Rupture Screening
+
+Load `neqsim-trapped-liquid-fire-rupture` when a safety study concerns a
+blocked-in liquid-filled pipe segment exposed to fire, no pressure relief, PFP
+endurance, flange/pipe rupture, or a Word/HTML study report based on P&IDs/STID,
+line lists, material certificates, and fire documents.
+
+Recommended sequence:
+
+1. Retrieve the evidence package with `neqsim-stid-retriever`: P&ID/STID,
+   line list, piping spec, material certificate, flange/bolt/gasket data,
+   fire-zone/PFP documents, relief basis, and design basis.
+2. Extract a structured segment list with `neqsim-technical-document-reading`:
+   isolation boundary, line numbers, fluid, P/T, ID, wall thickness, length,
+   material grade, flange class, fire basis, PFP endurance, relief availability,
+   acceptance criteria, and evidence gaps.
+3. Use `TrappedInventoryCalculator` to calculate trapped mass and volume.
+4. Use `FireExposureScenario`, `MaterialStrengthCurve`, and
+   `TrappedLiquidFireRuptureStudy` to calculate event times and limiting mode.
+5. Convert outputs to `SafetySystemDemand` for PFP checks and to
+   `SourceTermResult` for consequence handoff if rupture is predicted.
+6. Report all screening defaults as assumptions. Missing project data must stay
+   visible in an evidence/gaps register.
 
 ## Method 0 — Evidence-Linked Barrier Register
 
@@ -185,5 +211,6 @@ Frequencies × Consequence categories → ALARP / intolerable / broadly acceptab
 ## Related Skills
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
+- [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization & blowdown
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — IEC 61508/61511, NORSOK Z-013, API 754

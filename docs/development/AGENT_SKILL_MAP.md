@@ -19,7 +19,7 @@ Each row lists the skills an agent declares via a
 | `field.development.agent.md` | develop oil and gas field | _(none declared)_ |
 | `flow.assurance.agent.md` | run neqsim flow assurance analysis | _(none declared)_ |
 | `gas.quality.agent.md` | calculate gas quality and standards | _(none declared)_ |
-| `literature.scout.agent.md` | scout literature and databases | _(none declared)_ |
+| `literature.scout.agent.md` | scout literature and databases | `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pdf-ocr`, `neqsim-standards-lookup`, `neqsim-trapped-liquid-fire-rupture` |
 | `mechanical.design.agent.md` | run neqsim mechanical design | _(none declared)_ |
 | `neqsim.test.agent.md` | write neqsim unit tests | _(none declared)_ |
 | `notebook.example.agent.md` | create a neqsim jupyter notebook | _(none declared)_ |
@@ -30,9 +30,9 @@ Each row lists the skills an agent declares via a
 | `reaction.engineering.agent.md` | design reaction engineering systems | _(none declared)_ |
 | `review.agent.md` | review task deliverables | `neqsim-professional-reporting`, `neqsim-agent-handoff` |
 | `router.agent.md` | neqsim help | _(none declared)_ |
-| `safety.depressuring.agent.md` | run neqsim safety and depressuring simulation | `neqsim-process-safety`, `neqsim-depressurization-mdmt`, `neqsim-relief-flare-network`, `neqsim-pid-process-operations` |
+| `safety.depressuring.agent.md` | run neqsim safety and depressuring simulation | `neqsim-process-safety`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-depressurization-mdmt`, `neqsim-relief-flare-network`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pid-process-operations` |
 | `solve.process.agent.md` | solve process simulation task | _(none declared)_ |
-| `solve.task.agent.md` | solve engineering task | `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-troubleshooting`, `neqsim-input-validation`, `neqsim-capability-map`, `neqsim-platform-modeling`, `neqsim-pid-process-operations` |
-| `technical.reader.agent.md` | read technical documents | `neqsim-technical-document-reading`, `neqsim-pid-process-operations` |
+| `solve.task.agent.md` | solve engineering task | `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-troubleshooting`, `neqsim-input-validation`, `neqsim-capability-map`, `neqsim-platform-modeling`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations` |
+| `technical.reader.agent.md` | read technical documents | `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations` |
 | `thermo.fluid.agent.md` | create a neqsim thermodynamic fluid | _(none declared)_ |
 | `unisim.reader.agent.md` | read unisim to neqsim | _(none declared)_ |

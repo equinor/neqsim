@@ -329,6 +329,9 @@
   "neqsim-technical-document-reading": [
     "neqsim-technical-document-reading"
   ],
+  "neqsim-trapped-liquid-fire-rupture": [
+    "neqsim-trapped-liquid-fire-rupture"
+  ],
   "neqsim-troubleshooting": [
     "neqsim-troubleshooting"
   ],
@@ -778,6 +781,17 @@
   "flare network": ["neqsim-relief-flare-network"],
   "fire case": ["neqsim-relief-flare-network"],
   "relief load": ["neqsim-relief-flare-network"],
+  "trapped liquid fire rupture": ["neqsim-trapped-liquid-fire-rupture"],
+  "blocked-in liquid": ["neqsim-trapped-liquid-fire-rupture"],
+  "blocked liquid": ["neqsim-trapped-liquid-fire-rupture"],
+  "thermal expansion rupture": ["neqsim-trapped-liquid-fire-rupture"],
+  "no pressure relief": ["neqsim-trapped-liquid-fire-rupture"],
+  "pfp demand": ["neqsim-trapped-liquid-fire-rupture"],
+  "passive fire protection demand": ["neqsim-trapped-liquid-fire-rupture"],
+  "flange fire failure": ["neqsim-trapped-liquid-fire-rupture"],
+  "pipe fire rupture": ["neqsim-trapped-liquid-fire-rupture"],
+  "fire rupture study": ["neqsim-trapped-liquid-fire-rupture"],
+  "trapped inventory fire": ["neqsim-trapped-liquid-fire-rupture"],
   "operating envelope": ["neqsim-controllability-operability"],
   "operability": ["neqsim-controllability-operability"],
   "turndown": ["neqsim-controllability-operability"],

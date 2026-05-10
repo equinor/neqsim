@@ -327,7 +327,7 @@ checks before writing Step 1 content:
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.
 
-Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-pid-process-operations
+Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations
 
 For operational plant tasks involving P&ID symbols, valve actions, live plant
 data, active train state, isolation, evacuation, or dynamic response, load
@@ -687,6 +687,11 @@ notebooks:
       Comprehensive and the missing documents would materially change the method,
       constraints, or recommendation. For Quick tasks, proceed with documented
       assumptions unless the calculation is invalid without the document.
+      For trapped-liquid fire rupture studies, load `neqsim-trapped-liquid-fire-rupture`
+      and retrieve the full evidence pack before calculation: P&ID/STID isolation
+      boundaries, line lists, piping specs, material certificates, flange/bolt/gasket
+      data, fire-zone/PFP documents, relief/thermal relief basis, and acceptance
+      criteria. Missing evidence must be written to `results.json` as assumptions/gaps.
    - **Extract figures from reference PDFs** placed in `step1_scope_and_research/references/`:
      ```bash
      python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
