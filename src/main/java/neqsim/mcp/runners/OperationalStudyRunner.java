@@ -6,12 +6,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import neqsim.process.measurementdevice.InstrumentTagRole;
 import neqsim.process.operations.ControllerTuningResult;
 import neqsim.process.operations.ControllerTuningStudy;
 import neqsim.process.operations.OperationalAction;
+import neqsim.process.operations.OperationalEvidencePackage;
 import neqsim.process.operations.OperationalScenario;
 import neqsim.process.operations.OperationalScenarioResult;
 import neqsim.process.operations.OperationalScenarioRunner;
@@ -26,8 +29,8 @@ import neqsim.util.validation.ValidationResult.ValidationIssue;
  * MCP runner for P&amp;ID-derived operational studies.
  *
  * <p>
- * The runner exposes the {@code neqsim.process.operations} orchestration helpers to MCP clients.
- * It intentionally delegates model interaction to existing NeqSim features: JSON process building,
+ * The runner exposes the {@code neqsim.process.operations} orchestration helpers to MCP clients. It
+ * intentionally delegates model interaction to existing NeqSim features: JSON process building,
  * {@link neqsim.process.automation.ProcessAutomation}, measurement-device field inputs, existing
  * valve logic actions, steady-state runs, and transient process execution.
  * </p>
@@ -74,11 +77,13 @@ public final class OperationalStudyRunner {
         return applyFieldData(input);
       } else if ("runScenario".equalsIgnoreCase(action)) {
         return runScenario(input);
+      } else if ("runEvidencePackage".equalsIgnoreCase(action)) {
+        return runEvidencePackage(input);
       } else if ("evaluateControllerResponse".equalsIgnoreCase(action)) {
         return evaluateControllerResponse(input);
       }
       return errorJson("UNKNOWN_ACTION", "Unknown operational study action: " + action,
-          "Use getSchema, validateTagMap, applyFieldData, runScenario, or "
+          "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, or "
               + "evaluateControllerResponse.");
     } catch (RuntimeException ex) {
       return errorJson("OPERATIONAL_STUDY_ERROR", "Operational study failed: " + ex.getMessage(),
@@ -104,6 +109,7 @@ public final class OperationalStudyRunner {
     actions.add("validateTagMap");
     actions.add("applyFieldData");
     actions.add("runScenario");
+    actions.add("runEvidencePackage");
     actions.add("evaluateControllerResponse");
     root.add("actions", actions);
 
@@ -111,7 +117,7 @@ public final class OperationalStudyRunner {
     binding.addProperty("logicalTag", "stable public tag name, e.g. separator_pressure");
     binding.addProperty("historianTag", "optional private historian tag name");
     binding.addProperty("automationAddress",
-      "optional NeqSim address such as Valve.percentValveOpening");
+        "optional NeqSim address such as Valve.percentValveOpening");
     binding.addProperty("unit", "engineering unit such as bara, C, kg/hr, or %");
     binding.addProperty("role", "INPUT, BENCHMARK, or VIRTUAL");
     root.add("tagBindingFields", binding);
@@ -125,8 +131,10 @@ public final class OperationalStudyRunner {
     root.add("scenarioActionTypes", scenarioAction);
 
     JsonObject example = new JsonObject();
-    example.addProperty("action", "runScenario");
+    example.addProperty("action", "runEvidencePackage");
+    example.addProperty("studyName", "private operating case screening");
     example.addProperty("processJson", "{... standard runProcess JSON ...}");
+    example.addProperty("benchmarkToleranceFraction", 0.05);
     JsonArray exampleActions = new JsonArray();
     JsonObject valveAction = new JsonObject();
     valveAction.addProperty("type", "SET_VALVE_OPENING");
@@ -136,7 +144,12 @@ public final class OperationalStudyRunner {
     JsonObject runAction = new JsonObject();
     runAction.addProperty("type", "RUN_STEADY_STATE");
     exampleActions.add(runAction);
-    example.add("actions", exampleActions);
+    JsonArray exampleScenarios = new JsonArray();
+    JsonObject scenario = new JsonObject();
+    scenario.addProperty("scenarioName", "partly close outlet");
+    scenario.add("actions", exampleActions);
+    exampleScenarios.add(scenario);
+    example.add("scenarios", exampleScenarios);
     root.add("example", example);
 
     return GSON.toJson(root);
@@ -156,6 +169,41 @@ public final class OperationalStudyRunner {
     JsonObject result = new JsonObject();
     result.addProperty("status", "success");
     result.add("validation", validationToJson(validation));
+    return GSON.toJson(result);
+  }
+
+  /**
+   * Builds a combined evidence package with field-data reconciliation, bottlenecks, and scenarios.
+   *
+   * @param input operational study input
+   * @return JSON evidence package result
+   */
+  private static String runEvidencePackage(JsonObject input) {
+    ProcessSystem process = buildProcess(input);
+    OperationalTagMap tagMap = hasTagBindings(input) ? buildTagMap(input) : new OperationalTagMap();
+    ValidationResult validation = tagMap.validate(process);
+    if (!validation.isValid()) {
+      return validationErrorJson(validation);
+    }
+
+    Map<String, Double> fieldData =
+        input.has("fieldData") ? parseFieldData(input) : new LinkedHashMap<String, Double>();
+    List<OperationalScenario> scenarios = buildScenarioList(input);
+    double tolerance = parseBenchmarkTolerance(input);
+
+    JsonObject packageReport = OperationalEvidencePackage.buildReport(
+        getString(input, "studyName", "operational evidence package"), process, tagMap, fieldData,
+        scenarios, tolerance);
+
+    JsonObject result = new JsonObject();
+    result.addProperty("status", "success");
+    result.add("validation", validationToJson(validation));
+    result.add("evidencePackage", packageReport);
+    addOptionalPassThrough(input, result, "evidenceReferences", "evidenceReferences");
+    addOptionalPassThrough(input, result, "evidenceRefs", "evidenceReferences");
+    addOptionalPassThrough(input, result, "assumptions", "assumptions");
+    addOptionalPassThrough(input, result, "pidOperationalModel", "pidOperationalModel");
+    addProcessReport(process, result);
     return GSON.toJson(result);
   }
 
@@ -233,9 +281,9 @@ public final class OperationalStudyRunner {
     double[] processValue = parseDoubleArray(input, "processValue");
     double[] controllerOutput = parseDoubleArray(input, "controllerOutput");
 
-    ControllerTuningResult tuning = ControllerTuningStudy.evaluateStepResponse(
-        getString(input, "controllerName", ""), setPoint, timeSeconds, processValue,
-        controllerOutput, outputMin, outputMax, settlingTolerance);
+    ControllerTuningResult tuning =
+        ControllerTuningStudy.evaluateStepResponse(getString(input, "controllerName", ""), setPoint,
+            timeSeconds, processValue, controllerOutput, outputMin, outputMax, settlingTolerance);
 
     JsonObject result = new JsonObject();
     result.addProperty("status", "success");
@@ -255,8 +303,8 @@ public final class OperationalStudyRunner {
       throw new IllegalArgumentException("Missing required field 'processJson'");
     }
     JsonElement processElement = input.get("processJson");
-    String processJson = processElement.isJsonObject() ? GSON.toJson(processElement)
-        : processElement.getAsString();
+    String processJson =
+        processElement.isJsonObject() ? GSON.toJson(processElement) : processElement.getAsString();
     SimulationResult simulationResult = ProcessSystem.fromJsonAndRun(processJson);
     if (simulationResult.isError()) {
       throw new IllegalArgumentException("Process failed: " + simulationResult.getErrors());
@@ -281,8 +329,7 @@ public final class OperationalStudyRunner {
           .historianTag(getString(binding, "historianTag", ""))
           .pidReference(getString(binding, "pidReference", ""))
           .automationAddress(getString(binding, "automationAddress", ""))
-          .unit(getString(binding, "unit", ""))
-          .description(getString(binding, "description", ""));
+          .unit(getString(binding, "unit", "")).description(getString(binding, "description", ""));
       builder.role(parseRole(getString(binding, "role", "VIRTUAL")));
       tagMap.addBinding(builder.build());
     }
@@ -315,13 +362,77 @@ public final class OperationalStudyRunner {
    * @throws IllegalArgumentException if no actions are configured
    */
   private static OperationalScenario buildScenario(JsonObject input) {
+    return buildScenarioFromObject(input, getString(input, "scenarioName", "operational scenario"));
+  }
+
+  /**
+   * Builds all scenarios configured for an evidence package.
+   *
+   * @param input operational study input
+   * @return list of configured scenarios
+   */
+  private static List<OperationalScenario> buildScenarioList(JsonObject input) {
+    List<OperationalScenario> scenarios = new ArrayList<OperationalScenario>();
+    if (input.has("scenarios") && input.get("scenarios").isJsonArray()) {
+      JsonArray scenarioArray = input.getAsJsonArray("scenarios");
+      for (int i = 0; i < scenarioArray.size(); i++) {
+        JsonObject scenarioObject = scenarioArray.get(i).getAsJsonObject();
+        scenarios.add(buildScenarioFromObject(scenarioObject, "scenario " + (i + 1)));
+      }
+      return scenarios;
+    }
+    if (input.has("actions") || input.has("scenarioActions")) {
+      scenarios.add(buildScenario(input));
+    }
+    return scenarios;
+  }
+
+  /**
+   * Builds one operational scenario from a JSON object.
+   *
+   * @param input scenario JSON object containing actions
+   * @param defaultName default scenario name
+   * @return operational scenario
+   */
+  private static OperationalScenario buildScenarioFromObject(JsonObject input, String defaultName) {
     JsonArray actions = getArray(input, "actions", "scenarioActions");
-    OperationalScenario.Builder builder = OperationalScenario.builder(getString(input,
-        "scenarioName", "operational scenario"));
+    OperationalScenario.Builder builder =
+        OperationalScenario.builder(getString(input, "scenarioName", defaultName));
     for (JsonElement element : actions) {
       builder.addAction(parseAction(element.getAsJsonObject()));
     }
     return builder.build();
+  }
+
+  /**
+   * Parses benchmark tolerance from fraction or percentage fields.
+   *
+   * @param input operational study input
+   * @return benchmark tolerance as fraction
+   */
+  private static double parseBenchmarkTolerance(JsonObject input) {
+    if (input.has("benchmarkToleranceFraction")) {
+      return input.get("benchmarkToleranceFraction").getAsDouble();
+    }
+    if (input.has("benchmarkTolerancePercent")) {
+      return input.get("benchmarkTolerancePercent").getAsDouble() / 100.0;
+    }
+    return OperationalEvidencePackage.DEFAULT_BENCHMARK_TOLERANCE_FRACTION;
+  }
+
+  /**
+   * Passes an optional JSON field through to the output.
+   *
+   * @param input source JSON object
+   * @param result target JSON object
+   * @param inputName source field name
+   * @param outputName target field name
+   */
+  private static void addOptionalPassThrough(JsonObject input, JsonObject result, String inputName,
+      String outputName) {
+    if (input.has(inputName) && !result.has(outputName)) {
+      result.add(outputName, input.get(inputName));
+    }
   }
 
   /**
@@ -334,8 +445,8 @@ public final class OperationalStudyRunner {
   private static OperationalAction parseAction(JsonObject action) {
     String type = getString(action, "type", "");
     if ("SET_VARIABLE".equalsIgnoreCase(type) || "setVariable".equalsIgnoreCase(type)) {
-      return OperationalAction.setVariable(getString(action, "target", ""), getRequiredDouble(
-          action, "value"), getString(action, "unit", ""));
+      return OperationalAction.setVariable(getString(action, "target", ""),
+          getRequiredDouble(action, "value"), getString(action, "unit", ""));
     } else if ("SET_VALVE_OPENING".equalsIgnoreCase(type)
         || "setValveOpening".equalsIgnoreCase(type)) {
       return OperationalAction.setValveOpening(getString(action, "target", ""),
@@ -347,10 +458,10 @@ public final class OperationalStudyRunner {
         || "runSteadyState".equalsIgnoreCase(type)) {
       return OperationalAction.runSteadyState();
     } else if ("RUN_TRANSIENT".equalsIgnoreCase(type) || "runTransient".equalsIgnoreCase(type)) {
-      double duration = getDouble(action, "durationSeconds", getDouble(action, "duration_seconds",
-          0.0));
-      double step = getDouble(action, "timeStepSeconds", getDouble(action, "timeStep_seconds",
-          0.0));
+      double duration =
+          getDouble(action, "durationSeconds", getDouble(action, "duration_seconds", 0.0));
+      double step =
+          getDouble(action, "timeStepSeconds", getDouble(action, "timeStep_seconds", 0.0));
       return OperationalAction.runTransient(duration, step);
     }
     throw new IllegalArgumentException("Unknown scenario action type: " + type);

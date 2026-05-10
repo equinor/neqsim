@@ -37,7 +37,10 @@ emit explicit model deltas for actions such as closing an isolation valve,
 partly closing a control valve, opening a bypass, or opening a drain/vent.
 When the output will feed Java or MCP, include logical tag bindings and scenario
 actions compatible with `OperationalTagMap`, `OperationalScenarioRunner`, and
-MCP `runOperationalStudy`.
+MCP `runOperationalStudy`. For operational studies that combine document
+evidence, tagreader values, scenario actions, and bottleneck detection, emit a
+`runEvidencePackage` payload with `tagBindings`, `fieldData`, `scenarios`,
+`evidenceReferences`, `assumptions`, and `benchmarkToleranceFraction`.
 
 ---
 

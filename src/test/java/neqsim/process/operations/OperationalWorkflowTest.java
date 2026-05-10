@@ -3,6 +3,8 @@ package neqsim.process.operations;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.google.gson.JsonObject;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -31,19 +33,19 @@ class OperationalWorkflowTest {
   @Test
   void tagMapAppliesLogicalAndHistorianValues() {
     ProcessSystem process = createProcess();
-    PressureTransmitter pressure = new PressureTransmitter("Feed PT", (Stream) process.getUnit(
-        "feed"));
+    PressureTransmitter pressure =
+        new PressureTransmitter("Feed PT", (Stream) process.getUnit("feed"));
     pressure.setUnit("bara");
     pressure.setTag("PRIVATE-PT-001");
     pressure.setTagRole(InstrumentTagRole.INPUT);
     process.add(pressure);
 
     OperationalTagMap tagMap = new OperationalTagMap()
-        .addBinding(OperationalTagBinding.builder("feed_pressure").historianTag(
-            "PRIVATE-PT-001").unit("bara").role(InstrumentTagRole.INPUT).build())
-        .addBinding(OperationalTagBinding.builder("outlet_valve_position").historianTag(
-            "PRIVATE-PV-001").automationAddress("Outlet Valve.percentValveOpening").unit("%")
-            .role(InstrumentTagRole.INPUT).build());
+        .addBinding(OperationalTagBinding.builder("feed_pressure").historianTag("PRIVATE-PT-001")
+            .unit("bara").role(InstrumentTagRole.INPUT).build())
+        .addBinding(OperationalTagBinding.builder("outlet_valve_position")
+            .historianTag("PRIVATE-PV-001").automationAddress("Outlet Valve.percentValveOpening")
+            .unit("%").role(InstrumentTagRole.INPUT).build());
 
     ValidationResult validation = tagMap.validate(process);
     assertTrue(validation.isValid(), validation.getReport());
@@ -55,8 +57,8 @@ class OperationalWorkflowTest {
     Map<String, Double> applied = tagMap.applyFieldData(process, fieldData);
     assertEquals(2, applied.size());
     assertEquals(75.0, ((Stream) process.getUnit("feed")).getPressure(), 0.1);
-    assertEquals(35.0, ((ThrottlingValve) process.getUnit("Outlet Valve"))
-        .getPercentValveOpening(), 1.0e-10);
+    assertEquals(35.0, ((ThrottlingValve) process.getUnit("Outlet Valve")).getPercentValveOpening(),
+        1.0e-10);
 
     Map<String, Double> values = tagMap.readValues(process);
     assertEquals(35.0, values.get("outlet_valve_position"), 1.0e-10);
@@ -77,8 +79,8 @@ class OperationalWorkflowTest {
     OperationalScenarioResult result = OperationalScenarioRunner.run(process, scenario);
     assertTrue(result.isSuccessful(), result.getErrors().toString());
     assertFalse(result.getActionLog().isEmpty());
-    assertEquals(15.0, ((ThrottlingValve) process.getUnit("Outlet Valve"))
-        .getPercentValveOpening(), 1.0e-10);
+    assertEquals(15.0, ((ThrottlingValve) process.getUnit("Outlet Valve")).getPercentValveOpening(),
+        1.0e-10);
     assertEquals(45.0, ((ThrottlingValve) process.getUnit("Outlet Valve")).getOutletPressure(),
         0.5);
     assertTrue(result.getBeforeValues().containsKey("Outlet Valve.percentValveOpening"));
@@ -94,8 +96,8 @@ class OperationalWorkflowTest {
     double[] processValue = new double[] {0.0, 0.55, 0.82, 0.95, 0.99, 1.0};
     double[] output = new double[] {40.0, 55.0, 58.0, 53.0, 50.0, 50.0};
 
-    ControllerTuningResult good = ControllerTuningStudy.evaluateStepResponse("LC-001", 1.0,
-        time, processValue, output, 0.0, 100.0, 0.05);
+    ControllerTuningResult good = ControllerTuningStudy.evaluateStepResponse("LC-001", 1.0, time,
+        processValue, output, 0.0, 100.0, 0.05);
     assertTrue(good.isStableAtEnd());
     assertEquals("ACCEPTABLE_SCREENING_RESULT", good.getRecommendation());
     assertTrue(good.getIntegralAbsoluteError() > 0.0);
@@ -104,6 +106,41 @@ class OperationalWorkflowTest {
     ControllerTuningResult saturated = ControllerTuningStudy.evaluateStepResponse("LC-002", 1.0,
         time, processValue, saturatedOutput, 0.0, 100.0, 0.05);
     assertEquals("CHECK_ACTUATOR_LIMITS_OR_PROCESS_CAPACITY", saturated.getRecommendation());
+  }
+
+  /**
+   * Verifies that an operational evidence package combines tag reconciliation, scenarios, and
+   * capacity bottleneck reporting.
+   */
+  @Test
+  void evidencePackageReportsBenchmarkAndBottleneck() {
+    ProcessSystem process = createProcess();
+    OperationalTagMap tagMap = new OperationalTagMap()
+        .addBinding(OperationalTagBinding.builder("outlet_valve_position")
+            .automationAddress("Outlet Valve.percentValveOpening").unit("%")
+            .role(InstrumentTagRole.INPUT).build())
+        .addBinding(OperationalTagBinding.builder("outlet_pressure")
+            .automationAddress("Outlet Valve.outletPressure").unit("bara")
+            .role(InstrumentTagRole.BENCHMARK).build());
+
+    Map<String, Double> fieldData = new HashMap<String, Double>();
+    fieldData.put("outlet_valve_position", 70.0);
+    fieldData.put("outlet_pressure", 49.0);
+
+    OperationalScenario scenario = OperationalScenario.builder("raise valve loading")
+        .addAction(OperationalAction.setValveOpening("Outlet Valve", 90.0))
+        .addAction(OperationalAction.runSteadyState()).build();
+    JsonObject report = OperationalEvidencePackage.buildReport("operations screen", process, tagMap,
+        fieldData, Collections.singletonList(scenario), 0.05);
+
+    assertTrue(
+        report.getAsJsonObject("benchmarkComparison").get("allWithinTolerance").getAsBoolean(),
+        report.toString());
+    assertTrue(report.getAsJsonObject("baseCapacity").getAsJsonObject("bottleneck")
+        .get("hasBottleneck").getAsBoolean(), report.toString());
+    assertEquals(1, report.getAsJsonArray("scenarioStudies").size());
+    assertTrue(report.getAsJsonArray("scenarioStudies").get(0).getAsJsonObject().get("successful")
+        .getAsBoolean(), report.toString());
   }
 
   /**

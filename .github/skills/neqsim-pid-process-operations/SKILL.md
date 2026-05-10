@@ -220,9 +220,13 @@ short tuning recommendation without replacing NeqSim's controller classes.
 
 MCP clients can use `runOperationalStudy` for the same plant-agnostic workflow.
 Supported actions are `getSchema`, `validateTagMap`, `applyFieldData`,
-`runScenario`, and `evaluateControllerResponse`. The tool operates on local
-simulation copies and does not write to plant historians or control systems.
-Governed MCP profiles block it in read-only digital-twin and enterprise modes.
+`runScenario`, `runEvidencePackage`, and `evaluateControllerResponse`. Use
+`runEvidencePackage` when the task needs one auditable output containing field
+data application, BENCHMARK tag comparison, base-case bottleneck detection,
+scenario bottleneck reports, document evidence references, assumptions, and
+quality gates. The tool operates on local simulation copies and does not write
+to plant historians or control systems. Governed MCP profiles block it in
+read-only digital-twin and enterprise modes.
 
 ## Steady-State Evaluation Pattern
 

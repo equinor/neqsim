@@ -19,11 +19,11 @@ class OperationalStudyRunnerTest {
    */
   @Test
   void getSchemaReturnsOperationalActions() {
-    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(
-      "{\"action\":\"getSchema\"}")).getAsJsonObject();
+    JsonObject result = JsonParser
+        .parseString(OperationalStudyRunner.run("{\"action\":\"getSchema\"}")).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     assertEquals("runOperationalStudy", result.get("tool").getAsString());
-    assertTrue(result.getAsJsonArray("actions").size() >= 5);
+    assertTrue(result.getAsJsonArray("actions").size() >= 6);
   }
 
   /**
@@ -32,17 +32,17 @@ class OperationalStudyRunnerTest {
   @Test
   void applyFieldDataWritesAutomationBinding() {
     String json = "{" + "\"action\":\"applyFieldData\"," + processJsonField() + ","
-      + "\"tagBindings\":[{" + "\"logicalTag\":\"outlet_valve_position\","
-      + "\"automationAddress\":\"Outlet Valve.percentValveOpening\","
-      + "\"unit\":\"%\",\"role\":\"INPUT\"}],"
+        + "\"tagBindings\":[{" + "\"logicalTag\":\"outlet_valve_position\","
+        + "\"automationAddress\":\"Outlet Valve.percentValveOpening\","
+        + "\"unit\":\"%\",\"role\":\"INPUT\"}],"
         + "\"fieldData\":{\"outlet_valve_position\":35.0}}";
 
     JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString(), result.toString());
-    assertEquals(35.0, result.getAsJsonObject("applied").get("outlet_valve_position")
-        .getAsDouble(), 1.0e-10);
-    assertEquals(35.0, result.getAsJsonObject("modelValues").get("outlet_valve_position")
-        .getAsDouble(), 1.0e-10);
+    assertEquals(35.0, result.getAsJsonObject("applied").get("outlet_valve_position").getAsDouble(),
+        1.0e-10);
+    assertEquals(35.0,
+        result.getAsJsonObject("modelValues").get("outlet_valve_position").getAsDouble(), 1.0e-10);
   }
 
   /**
@@ -50,13 +50,11 @@ class OperationalStudyRunnerTest {
    */
   @Test
   void runScenarioExecutesValveAndAutomationActions() {
-    String json = "{" + "\"action\":\"runScenario\","
-        + "\"scenarioName\":\"partly close outlet\"," + processJsonField() + ","
-        + "\"actions\":["
+    String json = "{" + "\"action\":\"runScenario\"," + "\"scenarioName\":\"partly close outlet\","
+        + processJsonField() + "," + "\"actions\":["
         + "{\"type\":\"SET_VALVE_OPENING\",\"target\":\"Outlet Valve\",\"value\":15.0},"
         + "{\"type\":\"SET_VARIABLE\",\"target\":\"Outlet Valve.outletPressure\","
-        + "\"value\":45.0,\"unit\":\"bara\"},"
-        + "{\"type\":\"RUN_STEADY_STATE\"}]}";
+        + "\"value\":45.0,\"unit\":\"bara\"}," + "{\"type\":\"RUN_STEADY_STATE\"}]}";
 
     JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString(), result.toString());
@@ -85,20 +83,44 @@ class OperationalStudyRunnerTest {
   }
 
   /**
+   * Verifies that the evidence-package action returns benchmark and bottleneck evidence.
+   */
+  @Test
+  void runEvidencePackageReturnsBottleneckReport() {
+    String json = "{" + "\"action\":\"runEvidencePackage\"," + processJsonField() + ","
+        + "\"studyName\":\"operations screen\"," + "\"benchmarkToleranceFraction\":0.05,"
+        + "\"tagBindings\":[" + "{\"logicalTag\":\"outlet_valve_position\","
+        + "\"automationAddress\":\"Outlet Valve.percentValveOpening\","
+        + "\"unit\":\"%\",\"role\":\"INPUT\"}," + "{\"logicalTag\":\"outlet_pressure\","
+        + "\"automationAddress\":\"Outlet Valve.outletPressure\","
+        + "\"unit\":\"bara\",\"role\":\"BENCHMARK\"}],"
+        + "\"fieldData\":{\"outlet_valve_position\":70.0,\"outlet_pressure\":49.0},"
+        + "\"scenarios\":[{\"scenarioName\":\"raise valve loading\","
+        + "\"actions\":[{\"type\":\"SET_VALVE_OPENING\",\"target\":\"Outlet Valve\","
+        + "\"value\":90.0},{\"type\":\"RUN_STEADY_STATE\"}]}]}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    JsonObject evidencePackage = result.getAsJsonObject("evidencePackage");
+    assertTrue(evidencePackage.getAsJsonObject("benchmarkComparison").get("allWithinTolerance")
+        .getAsBoolean(), result.toString());
+    assertTrue(evidencePackage.getAsJsonObject("baseCapacity").getAsJsonObject("bottleneck")
+        .get("hasBottleneck").getAsBoolean(), result.toString());
+    assertEquals(1, evidencePackage.getAsJsonArray("scenarioStudies").size());
+  }
+
+  /**
    * Creates the process JSON field used by the tests.
    *
    * @return a JSON fragment with the processJson field
    */
   private String processJsonField() {
-    return "\"processJson\":{" + "\"fluid\":{" + "\"model\":\"SRK\","
-        + "\"temperature\":298.15," + "\"pressure\":70.0,"
-        + "\"mixingRule\":\"classic\"," + "\"components\":{\"methane\":0.90,"
-        + "\"ethane\":0.10}}," + "\"process\":["
-        + "{\"type\":\"Stream\",\"name\":\"feed\","
+    return "\"processJson\":{" + "\"fluid\":{" + "\"model\":\"SRK\"," + "\"temperature\":298.15,"
+        + "\"pressure\":70.0," + "\"mixingRule\":\"classic\"," + "\"components\":{\"methane\":0.90,"
+        + "\"ethane\":0.10}}," + "\"process\":[" + "{\"type\":\"Stream\",\"name\":\"feed\","
         + "\"properties\":{\"flowRate\":[10000.0,\"kg/hr\"]}},"
         + "{\"type\":\"Separator\",\"name\":\"Separator\",\"inlet\":\"feed\"},"
-        + "{\"type\":\"valve\",\"name\":\"Outlet Valve\","
-        + "\"inlet\":\"Separator.gasOut\","
+        + "{\"type\":\"valve\",\"name\":\"Outlet Valve\"," + "\"inlet\":\"Separator.gasOut\","
         + "\"properties\":{\"outletPressure\":50.0}}]}";
   }
 }

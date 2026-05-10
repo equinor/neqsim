@@ -450,17 +450,18 @@ public class NeqSimTools {
   @Tool(description = "Run plant-agnostic operational studies from P&ID semantics, plant-data "
       + "tag bindings, NeqSim automation addresses, valve actions, and controller time series. "
       + "Actions: getSchema, validateTagMap, applyFieldData, runScenario, "
-      + "evaluateControllerResponse. Use this for questions like what happens if a valve closes, "
-      + "how to bind private historian tags to logical model variables, or whether a level/pressure "
-      + "controller response is stable. This operates on a local simulation copy only and does not "
-      + "write to plant systems.")
+      + "runEvidencePackage, evaluateControllerResponse. Use this for questions like what happens "
+      + "if a valve closes, how to bind private historian tags to logical model variables, or "
+      + "whether a level/pressure controller response is stable. This operates on a local "
+      + "simulation copy only and does not write to plant systems.")
   public String runOperationalStudy(
       @ToolArg(description = "JSON with 'action'. For validateTagMap/applyFieldData/runScenario: "
           + "include 'processJson' plus optional 'tagBindings' and 'fieldData'. Scenario actions "
           + "support SET_VARIABLE, SET_VALVE_OPENING, APPLY_FIELD_INPUTS, RUN_STEADY_STATE, and "
-          + "RUN_TRANSIENT. For controller response: include setPoint, timeSeconds, processValue, "
-          + "controllerOutput, outputMin, outputMax, and settlingTolerance. Use action=getSchema "
-          + "for the full input guide.") String operationalJson) {
+          + "RUN_TRANSIENT. For runEvidencePackage, include optional scenarios, evidenceReferences, "
+          + "assumptions, and benchmarkToleranceFraction. For controller response: include setPoint, "
+          + "timeSeconds, processValue, controllerOutput, outputMin, outputMax, and "
+          + "settlingTolerance. Use action=getSchema for the full input guide.") String operationalJson) {
     String blocked = IndustrialProfile.enforceAccess("runOperationalStudy");
     if (blocked != null) {
       return blocked;

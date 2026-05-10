@@ -819,6 +819,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ------------ | ---------------------------------------------------------------------------- | ------------------------ |
 | Digital Twin | [docs/process/digital-twin-integration.md](process/digital-twin-integration) | Digital twin integration |
 | Plant Data & Tagreader | [docs/process/plant-data-tagreader.md](process/plant-data-tagreader) | Connecting NeqSim to plant historians (PI/IP.21) via tagreader |
+| Operational Evidence Package | [docs/process/operational_evidence_package.md](process/operational_evidence_package) | Combine P&ID/STID references, tagreader values, NeqSim scenario actions, and bottleneck detection into one operational study |
 | Lifecycle    | [docs/process/lifecycle/README.md](process/lifecycle/)                       | Lifecycle management     |
 
 ### Chapter 42: AI/ML Integration

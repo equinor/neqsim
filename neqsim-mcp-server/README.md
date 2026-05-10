@@ -151,7 +151,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `queryDataCatalog` | Browse component, standards, material, and EOS databases |
 | `setSimulationVariable` | Set an input variable and re-run a simulation |
 | `saveSimulationState` | Save process state as a JSON snapshot |
-| `runOperationalStudy` | P&ID/tag-driven valve scenarios, field-data binding, and controller response metrics on a local simulation copy |
+| `runOperationalStudy` | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on a local simulation copy |
 | `runRelief` | PSV sizing per API 520/521 |
 | `runLOPA` | Layer of Protection Analysis per IEC 61511 / CCPS |
 | `runSIL` | SIL verification per IEC 61508 / IEC 61511 |

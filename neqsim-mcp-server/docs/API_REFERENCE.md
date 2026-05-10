@@ -241,6 +241,7 @@ plant historians, control systems, or field devices.
 | `validateTagMap` | Validate logical tag bindings against a `runProcess`-style model |
 | `applyFieldData` | Apply logical or historian-keyed values through automation addresses and measurement field inputs |
 | `runScenario` | Execute ordered operational actions such as valve opening changes, variable writes, steady-state runs, or transient steps |
+| `runEvidencePackage` | Apply field data, compare BENCHMARK tags, run scenarios, and return base/scenario bottleneck reports |
 | `evaluateControllerResponse` | Calculate controller-response metrics from time, process-value, and controller-output arrays |
 
 **Scenario action types:** `SET_VARIABLE`, `SET_VALVE_OPENING`,
@@ -263,6 +264,52 @@ plant historians, control systems, or field devices.
 For P&ID-driven studies, keep public inputs limited to logical names and
 automation addresses. Store private historian tag names in task-local or private
 configuration files.
+
+**Evidence package example:**
+
+```json
+{
+  "action": "runEvidencePackage",
+  "studyName": "operations screen",
+  "processJson": { "fluid": {}, "process": [] },
+  "tagBindings": [
+    {
+      "logicalTag": "outlet_valve_position",
+      "automationAddress": "Outlet Valve.percentValveOpening",
+      "unit": "%",
+      "role": "INPUT"
+    },
+    {
+      "logicalTag": "outlet_pressure",
+      "automationAddress": "Outlet Valve.outletPressure",
+      "unit": "bara",
+      "role": "BENCHMARK"
+    }
+  ],
+  "fieldData": {
+    "outlet_valve_position": 70.0,
+    "outlet_pressure": 49.0
+  },
+  "benchmarkToleranceFraction": 0.05,
+  "scenarios": [
+    {
+      "scenarioName": "raise valve loading",
+      "actions": [
+        { "type": "SET_VALVE_OPENING", "target": "Outlet Valve", "value": 90.0 },
+        { "type": "RUN_STEADY_STATE" }
+      ]
+    }
+  ]
+}
+```
+
+The response contains `evidencePackage.baseCapacity.bottleneck` and one
+`evidencePackage.scenarioStudies[].capacity.bottleneck` per scenario. Bottleneck
+fields include `equipmentName`, `constraintName`, `utilizationPercent`,
+`marginPercent`, `exceeded`, `nearLimit`, and detailed constraint metadata. The
+base bottleneck first uses `ProcessSystem.findBottleneck()` and then falls back
+to the registered equipment capacity strategies when equipment-specific
+constraints are not attached directly to the process units.
 
 ---
 
