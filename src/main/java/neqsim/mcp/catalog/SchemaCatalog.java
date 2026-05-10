@@ -907,6 +907,86 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  /**
+   * Returns the JSON Schema for water-hammer screening input.
+   *
+   * @return JSON Schema string
+   */
+  public static String waterHammerInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "WaterHammerInput");
+    schema.put("description",
+        "Input for water/liquid hammer screening (run_water_hammer tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("studyName", stringProp("Study name or scenario identifier"));
+    properties.put("model", enumProp("Thermodynamic model", Arrays.asList("SRK", "PR")));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Component-to-mole-fraction map, defaults to water if omitted");
+    Map<String, Object> addProps = new LinkedHashMap<String, Object>();
+    addProps.put("type", "number");
+    components.put("additionalProperties", addProps);
+    properties.put("components", components);
+
+    properties.put("temperature_C", numberProp("Inlet temperature in Celsius"));
+    properties.put("pressure_bara", numberProp("Inlet pressure in bara"));
+    properties.put("designPressure_bara", numberProp("Pipe design pressure or MAOP in bara"));
+    properties.put("simulationTime_s", numberProp("Simulation duration in seconds"));
+    properties.put("timeStep_s", numberProp("Requested transient time step in seconds"));
+    properties.put("closureTime_s", numberProp("Default valve closure duration in seconds"));
+
+    Map<String, Object> flowRate = new LinkedHashMap<String, Object>();
+    flowRate.put("type", "object");
+    Map<String, Object> frProps = new LinkedHashMap<String, Object>();
+    frProps.put("value", numberProp("Numeric flow-rate value"));
+    frProps.put("unit", stringProp("Flow-rate unit, for example kg/hr"));
+    flowRate.put("properties", frProps);
+    properties.put("flowRate", flowRate);
+
+    Map<String, Object> pipe = new LinkedHashMap<String, Object>();
+    pipe.put("type", "object");
+    pipe.put("description", "Equivalent pipe geometry for single-line screening");
+    Map<String, Object> pipeProps = new LinkedHashMap<String, Object>();
+    pipeProps.put("length_m", numberProp("Pipe length in metres"));
+    pipeProps.put("diameter_m", numberProp("Pipe internal diameter in metres"));
+    pipeProps.put("wallThickness_m", numberProp("Pipe wall thickness in metres"));
+    pipeProps.put("roughness_m", numberProp("Pipe roughness in metres"));
+    pipeProps.put("elevation_m", numberProp("Elevation change from inlet to outlet in metres"));
+    pipeProps.put("numberOfNodes", intProp("Transient computational node count"));
+    pipeProps.put("waveSpeed_m_s", numberProp("Optional acoustic wave-speed override"));
+    pipe.put("properties", pipeProps);
+    properties.put("pipe", pipe);
+
+    Map<String, Object> route = new LinkedHashMap<String, Object>();
+    route.put("type", "object");
+    route.put("description",
+        "Optional STID/E3D route with segments containing length, diameter, elevation, "
+            + "wall thickness, roughness, and minorLosses");
+    properties.put("stidRoute", route);
+
+    Map<String, Object> fieldData = new LinkedHashMap<String, Object>();
+    fieldData.put("type", "object");
+    fieldData.put("description",
+        "Optional tagreader overrides such as inletPressure_bara, inletTemperature_C, "
+            + "flowRate_kg_hr, and valveOpening");
+    properties.put("fieldData", fieldData);
+
+    Map<String, Object> events = new LinkedHashMap<String, Object>();
+    events.put("type", "array");
+    events.put("description",
+        "Valve event schedule with type, startTime_s, duration_s, startOpening, endOpening");
+    events.put("items", objectProp("Valve closure or opening event"));
+    properties.put("eventSchedule", events);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("flowRate", "pipe"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Reservoir Schemas ==========
 
   /**
@@ -1547,7 +1627,7 @@ public final class SchemaCatalog {
     return Collections.unmodifiableList(Arrays.asList("run_flash", "run_process", "validate_input",
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
-        "run_materials_review", "run_reservoir", "run_field_economics", "run_dynamic",
+        "run_water_hammer", "run_materials_review", "run_reservoir", "run_field_economics", "run_dynamic",
         "run_bioprocess", "size_equipment", "compare_processes", "manage_session", "visualize",
         "run_hazop", "run_barrier_register", "run_safety_system_performance"));
   }
@@ -1584,6 +1664,8 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? standardsInputSchema() : null;
     } else if ("run_pipeline".equals(toolName)) {
       return "input".equals(schemaType) ? pipelineInputSchema() : null;
+    } else if ("run_water_hammer".equals(toolName)) {
+      return "input".equals(schemaType) ? waterHammerInputSchema() : null;
     } else if ("run_materials_review".equals(toolName)) {
       return "input".equals(schemaType) ? materialsReviewInputSchema()
           : materialsReviewOutputSchema();

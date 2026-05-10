@@ -60,6 +60,12 @@ public class PipelineRunner {
           "Ensure the JSON is well-formed");
     }
 
+    String analysis = getString(input, "analysis", getString(input, "mode", "beggsAndBrill"));
+    if ("waterHammer".equalsIgnoreCase(analysis) || "liquidHammer".equalsIgnoreCase(analysis)
+        || "hydraulicTransient".equalsIgnoreCase(analysis)) {
+      return WaterHammerRunner.run(json);
+    }
+
     long startTime = System.currentTimeMillis();
 
     // --- Create fluid ---
@@ -249,6 +255,21 @@ public class PipelineRunner {
       default:
         return value;
     }
+  }
+
+  /**
+   * Gets a string field from a JSON object with a fallback value.
+   *
+   * @param input source JSON object
+   * @param name field name
+   * @param defaultValue fallback value when the field is missing
+   * @return string field value or fallback value
+   */
+  private static String getString(JsonObject input, String name, String defaultValue) {
+    if (input != null && input.has(name) && !input.get(name).isJsonNull()) {
+      return input.get(name).getAsString();
+    }
+    return defaultValue;
   }
 
   /**

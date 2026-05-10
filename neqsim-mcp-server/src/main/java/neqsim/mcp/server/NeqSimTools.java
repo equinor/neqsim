@@ -41,6 +41,7 @@ import neqsim.mcp.runners.TaskSolverRunner;
 import neqsim.mcp.runners.TaskWorkflowBridge;
 import neqsim.mcp.runners.ValidationProfileRunner;
 import neqsim.mcp.runners.VisualizationRunner;
+import neqsim.mcp.runners.WaterHammerRunner;
 import neqsim.mcp.runners.BenchmarkTrust;
 import neqsim.mcp.runners.CompositionRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
@@ -882,6 +883,35 @@ public class NeqSimTools {
       return withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline");
     } catch (Exception e) {
       return errorJson("Pipeline simulation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a water-hammer or liquid-hammer transient screening study.
+   *
+   * @param waterHammerJson JSON specification with fluid, pipe or STID route, tag data, and events
+   * @return JSON with surge metrics, pressure envelopes, time series, warnings, and evidence
+   */
+  @Tool(description = "Run a water-hammer / liquid-hammer screening study for fast valve closure, "
+      + "pump trip, or check-valve slam scenarios. Accepts NeqSim fluid composition, pipe geometry, "
+      + "STID/E3D route segments, tagreader field data, design pressure, and valve event schedule. "
+      + "Returns wave speed, Joukowsky estimate, pressure envelopes, peak/minimum pressure, "
+      + "design-pressure margin, sampled time series, source references, and screening limitations.")
+  public String runWaterHammer(
+      @ToolArg(description = "JSON specification with: 'components' or 'composition', 'model' "
+          + "(SRK/PR), 'temperature_C', 'pressure_bara', 'flowRate' ({value, unit}), "
+          + "'pipe' ({length_m, diameter_m, wallThickness_m, roughness_m, elevation_m}), "
+          + "optional 'stidRoute' ({segments:[...]}), 'fieldData' tagreader overrides, "
+          + "'eventSchedule' valve events, 'simulationTime_s', 'timeStep_s', and "
+          + "'designPressure_bara'.") String waterHammerJson) {
+    String blocked = IndustrialProfile.enforceAccess("runWaterHammer");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return withAutoValidation(WaterHammerRunner.run(waterHammerJson), "pipeline");
+    } catch (Exception e) {
+      return errorJson("Water-hammer study failed: " + e.getMessage());
     }
   }
 

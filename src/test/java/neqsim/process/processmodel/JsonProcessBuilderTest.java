@@ -13,6 +13,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.SpreadsheetBlock;
 import neqsim.process.equipment.util.UnisimCalculator;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -51,6 +52,30 @@ class JsonProcessBuilderTest {
     ProcessSystem process = result.getProcessSystem();
     assertNotNull(process.getUnit("feed"));
     assertNotNull(process.getUnit("HP Sep"));
+  }
+
+  @Test
+  void testBuildAndRunWithWaterHammerPipe() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 10.0," + "  \"components\": {\"water\": 1.0}" + "},"
+        + "\"autoRun\": true," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [100.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"WaterHammerPipe\", \"name\": \"Surge Line\","
+        + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"length\": 500.0, \"diameter\": 0.15,"
+        + "     \"wallThickness\": 0.01, \"pipeWallRoughness\": 4.6e-5,"
+        + "     \"numberOfNodes\": 30, \"downstreamBoundary\": \"VALVE\","
+        + "     \"valveOpening\": 0.75}}" + "]" + "}";
+
+    SimulationResult result = JsonProcessBuilder.buildAndRun(json);
+
+    assertTrue(result.isSuccess(), "Build and run should succeed: " + result);
+    assertTrue(result.getProcessSystem().getUnit("Surge Line") instanceof WaterHammerPipe);
+    WaterHammerPipe hammer = (WaterHammerPipe) result.getProcessSystem().getUnit("Surge Line");
+    assertEquals(0.75, hammer.getValveOpening(), 1.0e-12);
+    assertEquals("VALVE", hammer.getDownstreamBoundaryName());
+    assertTrue(hammer.getWaveSpeed() > 0.0);
   }
 
   @Test

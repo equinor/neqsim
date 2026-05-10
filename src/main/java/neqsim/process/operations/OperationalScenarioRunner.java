@@ -3,6 +3,7 @@ package neqsim.process.operations;
 import java.util.UUID;
 import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.logic.action.SetValveOpeningAction;
 import neqsim.process.processmodel.ProcessSystem;
@@ -99,6 +100,8 @@ public final class OperationalScenarioRunner {
       SetValveOpeningAction valveAction = new SetValveOpeningAction((ThrottlingValve) unit,
           action.getValue());
       valveAction.execute();
+    } else if (unit instanceof WaterHammerPipe) {
+      ((WaterHammerPipe) unit).setValveOpeningPercent(action.getValue());
     } else {
       process.getAutomation().setVariableValue(action.getTarget() + ".percentValveOpening",
           action.getValue(), "%");

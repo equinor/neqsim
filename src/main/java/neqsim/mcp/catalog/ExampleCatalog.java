@@ -313,6 +313,30 @@ public final class ExampleCatalog {
         + "    \"numberOfIncrements\": 20\n" + "  }\n" + "}";
   }
 
+        /**
+         * Returns a water-hammer valve-closure example using route and tagreader-style fields.
+         *
+         * @return JSON string for WaterHammerRunner.run()
+         */
+        public static String waterHammerValveClosure() {
+          return "{\n" + "  \"studyName\": \"Synthetic ESD valve closure screening\",\n"
+          + "  \"model\": \"SRK\",\n" + "  \"temperature_C\": 20.0,\n"
+          + "  \"pressure_bara\": 45.0,\n" + "  \"components\": {\"water\": 1.0},\n"
+          + "  \"flowRate\": {\"value\": 120000.0, \"unit\": \"kg/hr\"},\n"
+          + "  \"designPressure_bara\": 95.0,\n" + "  \"pipe\": {\n"
+          + "    \"length_m\": 1200.0,\n" + "    \"diameter_m\": 0.2032,\n"
+          + "    \"wallThickness_m\": 0.0127,\n" + "    \"roughness_m\": 4.6e-5,\n"
+          + "    \"elevation_m\": 8.0,\n" + "    \"numberOfNodes\": 80\n" + "  },\n"
+          + "  \"fieldData\": {\n" + "    \"inletPressure_bara\": 46.0,\n"
+          + "    \"inletTemperature_C\": 19.0,\n" + "    \"flowRate_kg_hr\": 118000.0,\n"
+          + "    \"valveOpening\": 1.0\n" + "  },\n" + "  \"eventSchedule\": [\n"
+          + "    {\"type\": \"VALVE_CLOSURE\", \"startTime_s\": 0.10, "
+          + "\"duration_s\": 0.15, \"startOpening\": 1.0, \"endOpening\": 0.0}\n"
+          + "  ],\n" + "  \"simulationTime_s\": 4.0,\n"
+          + "  \"sourceReferences\": [\"synthetic STID line-list row\", "
+          + "\"synthetic tagreader event window\"]\n" + "}";
+        }
+
   // ========== Materials Review Examples ==========
 
   /**
@@ -726,6 +750,7 @@ public final class ExampleCatalog {
   public static List<String> getCategories() {
     return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation", "batch",
         "property-table", "phase-envelope", "pvt", "flow-assurance", "standards", "pipeline",
+        "water-hammer",
         "reservoir", "economics", "materials-review", "bioprocess", "session", "visualization",
         "equipment-sizing", "comparison", "safety"));
   }
@@ -758,6 +783,8 @@ public final class ExampleCatalog {
       return Arrays.asList("iso6976-gas");
     } else if ("pipeline".equals(category)) {
       return Arrays.asList("multiphase-flow");
+    } else if ("water-hammer".equals(category)) {
+      return Arrays.asList("valve-closure");
     } else if ("materials-review".equals(category)) {
       return Arrays.asList("stid-register");
     } else if ("reservoir".equals(category)) {
@@ -851,6 +878,10 @@ public final class ExampleCatalog {
     } else if ("pipeline".equals(category)) {
       if ("multiphase-flow".equals(name)) {
         return pipelineMultiphase();
+      }
+    } else if ("water-hammer".equals(category)) {
+      if ("valve-closure".equals(name)) {
+        return waterHammerValveClosure();
       }
     } else if ("materials-review".equals(category)) {
       if ("stid-register".equals(name)) {
@@ -987,6 +1018,12 @@ public final class ExampleCatalog {
     pipeExamples.put("multiphase-flow",
         "Beggs & Brill multiphase pipeline flow for 50 km gas line");
     catalog.put("pipeline", pipeExamples);
+
+    // Water-hammer examples
+    Map<String, String> hammerExamples = new LinkedHashMap<String, String>();
+    hammerExamples.put("valve-closure",
+      "Water-hammer screening for fast ESD valve closure with STID/tagreader-style inputs");
+    catalog.put("water-hammer", hammerExamples);
 
     // Materials review examples
     Map<String, String> materialsExamples = new LinkedHashMap<String, String>();

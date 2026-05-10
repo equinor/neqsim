@@ -69,6 +69,7 @@ public final class BenchmarkTrust {
     tools.add("runFlowAssurance", buildFlowAssuranceTrust());
     tools.add("calculateStandard", buildStandardsTrust());
     tools.add("runPipeline", buildPipelineTrust());
+    tools.add("runWaterHammer", buildWaterHammerTrust());
     tools.add("runMaterialsReview", buildMaterialsReviewTrust());
     tools.add("runReservoir", buildReservoirTrust());
     tools.add("runFieldEconomics", buildEconomicsTrust());
@@ -113,6 +114,9 @@ public final class BenchmarkTrust {
         break;
       case "runPipeline":
         root.add("trust", buildPipelineTrust());
+        break;
+      case "runWaterHammer":
+        root.add("trust", buildWaterHammerTrust());
         break;
       case "runMaterialsReview":
         root.add("trust", buildMaterialsReviewTrust());
@@ -310,6 +314,37 @@ public final class BenchmarkTrust {
     limitations.add("Slug flow prediction is approximate");
     limitations.add("Not suitable for very high GVF (>0.99) or very low GVF (<0.01)");
     limitations.add("Does not model terrain effects (slug catcher sizing)");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for the water-hammer screening tool.
+   *
+   * @return JSON object with trust metadata
+   */
+  private static JsonObject buildWaterHammerTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description", "Water-hammer / liquid-hammer screening using a "
+        + "single-line Method of Characteristics transient model. Suitable for fast ranking "
+        + "of valve closure and pump-trip scenarios before a detailed surge study.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Joukowsky pressure rise for instantaneous closure", "SRK",
+        "Peak pressure envelope consistent with rho*a*deltaV estimate",
+        "Classic water-hammer theory"));
+    cases.add(validationCase("Courant-limited transient stability", "MOC",
+        "Stable time step follows dx/a condition", "NeqSim JUnit test suite"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations.add("Equivalent single-line model; split varying-diameter routes into sections");
+    limitations.add("Valve closure curves are linear unless event schedule provides alternatives");
+    limitations.add("Support loads, pipe stress, vapor cavity collapse, and detailed pump curves "
+        + "require specialist surge software or vendor data");
+    limitations.add("Use as a screening and evidence-pack tool, not as final design approval");
     trust.add("knownLimitations", limitations);
 
     return trust;

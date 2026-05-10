@@ -111,6 +111,10 @@ public class Validator {
     types.add("Pipe");
     types.add("Pipeline");
     types.add("PipeBeggsAndBrills");
+    types.add("WaterHammerPipe");
+    types.add("WaterHammer");
+    types.add("LiquidHammer");
+    types.add("HydraulicTransientPipe");
     types.add("StreamSaturatorUtil");
     types.add("Saturator");
     types.add("Separator_3phase");

@@ -28,6 +28,7 @@ import neqsim.process.equipment.reactor.StirredTankReactor;
 import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
@@ -122,6 +123,11 @@ public final class EquipmentFactory {
       case "pipebeggsandbrills":
       case "beggsandbrills":
         return createEquipment(name, EquipmentEnum.PipeBeggsAndBrills);
+      case "waterhammerpipe":
+      case "waterhammer":
+      case "liquidhammer":
+      case "hydraulictransientpipe":
+        return createEquipment(name, EquipmentEnum.WaterHammerPipe);
       case "streamsaturatorutil":
       case "saturator":
         return createEquipment(name, EquipmentEnum.StreamSaturatorUtil);
@@ -258,6 +264,8 @@ public final class EquipmentFactory {
         return new AdiabaticPipe(name);
       case PipeBeggsAndBrills:
         return new PipeBeggsAndBrills(name);
+      case WaterHammerPipe:
+        return new WaterHammerPipe(name);
       case StreamSaturatorUtil:
         return new StreamSaturatorUtil(name);
       case DistillationColumn:
