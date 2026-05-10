@@ -14,9 +14,39 @@ QRA tools. Use it to identify credible leak cases, rank streams by consequence p
 generate source terms, create auditable scenario matrices, and prepare handoffs to
 detailed tools such as PHAST, FLACS, KFX, Safeti, or OpenFOAM.
 
+## Functional Review and Industrial Readiness
+
+The current functionality is ready for structured screening studies and source-term handoff
+generation. It is not, by itself, a final industrial dispersion, layout, or QRA validation
+package. The generated CFD cases deliberately carry provenance, limitations, quality warnings,
+and `notForFinalLayoutWithoutValidation = true` so downstream tools and reviewers can see the
+engineering status of the case.
+
+| Capability | Current status | Industrial-use interpretation |
+|------------|----------------|-------------------------------|
+| Process integration | Scans `ProcessSystem` streams and equipment outlet streams, then uses stream pressure, temperature, flow, and composition. | Suitable for early safety screening from steady-state or dynamic NeqSim models. Validate that the scanned stream list matches the intended isolation envelope. |
+| Source terms | Uses `LeakModel` to produce time-series mass flow, temperature, pressure, vapor fraction, jet velocity, momentum, and droplet SMD. | Suitable for first-pass release packages. Benchmark against project release-basis methods for final QRA or CFD. |
+| Gas dispersion screening | Uses Gaussian plume or dense-gas screening with flammable LFL and optional toxic endpoints. | Suitable for ranking, weather sensitivity, and identifying cases needing detailed tools. Not a replacement for validated PHAST, FLACS, KFX, Safeti, OpenFOAM, or wind-tunnel/literature-backed studies. |
+| Inventory basis | Accepts either a representative volume or an evidence-linked `TrappedInventoryCalculator.InventoryResult`. | Use trapped inventory for auditable studies. A manually entered volume is a screening assumption and is flagged in generated CFD cases. |
+| Scenario taxonomy | Generates configured leaks or the default 5 mm, 10 mm, 25 mm, 50 mm, full-bore, flange, instrument, and dropped-object cases. | Useful as a complete screening matrix. Replace generic release frequencies with site- and equipment-specific leak-frequency data before QRA claims. |
+| Weather envelope | Generates D/F stability, low/high wind, winter/summer, and wind-sector cases. | Useful for sensitivity screening. Replace or extend with site metocean data for industrial deliverables. |
+| Consequence branching | Carries immediate ignition, delayed ignition, jet fire, VCE, toxic-only, and no-ignition branch metadata. | Useful for QRA handoff structure. Branch probabilities are screening defaults unless overwritten. |
+| CFD handoff | Writes neutral JSON, multi-case manifests, and an OpenFOAM-oriented source-term skeleton. | Useful as a fast and traceable input package. Mesh, geometry, congestion, turbulence, species transport, boundaries, and ignition modelling remain study-specific. |
+| Validation | Focused tests cover schema/exporter behavior and broad reference envelopes for methane, CO2, propane, and H2S cases. | Good regression protection. Final industrial use still needs project-specific validation against accepted tools, experiments, or published benchmark cases. |
+
+Before using results in an issued safety deliverable, confirm at least the following:
+
+1. The process state comes from a validated steady-state or dynamic NeqSim model.
+2. The isolated inventory is evidence-linked to P&IDs, line lists, equipment datasheets, or plant data.
+3. The release case set and leak frequencies match the applicable QRA basis.
+4. Weather cases are based on site metocean data and agreed stability assumptions.
+5. CFD source coordinates, direction, geometry, congestion, and ventilation are added by the CFD engineer.
+6. Screening endpoints are benchmarked against an accepted method for the project fluid and release class.
+7. The final report states assumptions, limitations, validation basis, and residual uncertainty.
+
 ## Workflow
 
-`ReleaseDispersionScenarioGenerator` scans a process flowsheet and performs four steps:
+`ReleaseDispersionScenarioGenerator` scans a process flowsheet and performs five steps:
 
 1. Discover standalone streams and equipment outlet streams using the common stream
    introspection API.
@@ -162,6 +192,10 @@ InventoryResult inventory = new TrappedInventoryCalculator()
 If `inventoryVolume(double)` is used instead, generated CFD cases include a warning that the
 volume is a screening assumption.
 
+The trapped-inventory result is applied to all generated cases from the configured generator. For
+multi-area plants, create one generator per isolation envelope or provide area-specific inventory
+results so each release case carries the correct blocked-in volume and evidence basis.
+
 ## CFD Source-Term Handoff
 
 `CfdSourceTermCase` is a neutral, versioned JSON schema for passing NeqSim source terms to
@@ -207,6 +241,11 @@ The OpenFOAM skeleton contains `case.json`, `constant/releaseSourceProperties`, 
 `constant/sourceTimeSeries` files for mass flow, temperature, and jet momentum. It still requires
 study-specific mesh, geometry, turbulence model, species transport setup, boundary conditions,
 and ignition logic.
+
+The built-in `validate()` method checks required schema sections and key positive source-term
+fields. It is a handoff-schema check, not a physics validation. A valid schema can still represent
+a screening case with uncertain inventory, generic release frequency, or missing site coordinates;
+those assumptions appear in `qualityWarnings` and `provenance.limitations`.
 
 ## Result Data
 
@@ -259,6 +298,14 @@ CO2 dense-gas toxic endpoints, propane heavy-gas flammable endpoints, and H2S to
 These tests verify the screening model behavior stays within broad benchmark envelopes; they
 do not replace project-specific validation against PHAST, FLACS, KFX, Safeti, OpenFOAM, or
 wind-tunnel/literature data for final design.
+
+Recommended next validation steps for industrial qualification are:
+
+- Add tool-to-tool comparison cases against the project-standard consequence tool.
+- Add published benchmark data for neutral and stable atmospheric dispersion.
+- Add dense-gas validation cases for CO2, propane, and LNG-like releases.
+- Add toxic plume checks for H2S, CO2, and other project-specific toxic components.
+- Add CFD round-trip tests that confirm the exported time series is read correctly by the selected CFD workflow.
 
 For final layout, escalation, or regulatory studies, validate screening results with a
 detailed consequence-analysis method and site-specific assumptions.

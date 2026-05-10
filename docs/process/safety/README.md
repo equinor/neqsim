@@ -32,6 +32,11 @@ NeqSim provides equipment and logic for modeling process safety systems:
 - Automatic release source terms and gas dispersion screening from process streams
 - Formal CFD source-term JSON handoff cases for OpenFOAM, FLACS, KFX, PHAST, and Safeti workflows
 
+The release, dispersion, and CFD handoff workflow is intended for screening, case generation,
+and auditable source-term transfer. Final facility layout, regulatory QRA, and CFD conclusions
+still require project-specific validation, site geometry, leak-frequency data, and approved
+consequence-analysis methods.
+
 ---
 
 ## Safety Equipment
