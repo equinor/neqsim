@@ -24,7 +24,7 @@ import java.util.Map;
 public final class EmergencyShutdownTestResult implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+      new GsonBuilder().setPrettyPrinting().create();
 
   /** Overall verdict for the ESD dynamic test. */
   public enum Verdict {
@@ -399,10 +399,10 @@ public final class EmergencyShutdownTestResult implements Serializable {
       map.put("logicalTag", logicalTag);
       map.put("unit", unit);
       map.put("sampleCount", sampleCount);
-      map.put("initialValue", initialValue);
-      map.put("finalValue", finalValue);
-      map.put("minValue", minValue);
-      map.put("maxValue", maxValue);
+      map.put("initialValue", jsonNumber(initialValue));
+      map.put("finalValue", jsonNumber(finalValue));
+      map.put("minValue", jsonNumber(minValue));
+      map.put("maxValue", jsonNumber(maxValue));
       return map;
     }
   }
@@ -552,11 +552,21 @@ public final class EmergencyShutdownTestResult implements Serializable {
       map.put("unit", unit);
       map.put("fieldValue", fieldValue);
       map.put("modelValue", modelValue);
-      map.put("signedDeviation", signedDeviation);
-      map.put("absoluteDeviation", absoluteDeviation);
-      map.put("relativeDeviationFraction", relativeDeviationFraction);
+      map.put("signedDeviation", jsonNumber(signedDeviation));
+      map.put("absoluteDeviation", jsonNumber(absoluteDeviation));
+      map.put("relativeDeviationFraction", jsonNumber(relativeDeviationFraction));
       map.put("withinTolerance", withinTolerance);
       return map;
     }
+  }
+
+  /**
+   * Converts finite doubles to JSON numbers and non-finite doubles to null.
+   *
+   * @param value numeric value
+   * @return boxed finite value or null
+   */
+  private static Double jsonNumber(double value) {
+    return Double.isNaN(value) || Double.isInfinite(value) ? null : Double.valueOf(value);
   }
 }

@@ -637,14 +637,24 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
       map.put("criterionId", criterionId);
       map.put("type", type.name());
       map.put("passed", passed);
-      map.put("observedValue", observedValue);
-      map.put("targetValue", targetValue);
+      map.put("observedValue", jsonNumber(observedValue));
+      map.put("targetValue", jsonNumber(targetValue));
       map.put("unit", unit);
       map.put("clause", clause);
       map.put("severity", severity);
       map.put("message", message);
       map.put("recommendation", recommendation);
       return map;
+    }
+
+    /**
+     * Converts finite doubles to JSON numbers and non-finite doubles to null.
+     *
+     * @param value numeric value
+     * @return boxed finite value or null
+     */
+    private static Double jsonNumber(double value) {
+      return Double.isNaN(value) || Double.isInfinite(value) ? null : Double.valueOf(value);
     }
   }
 }
