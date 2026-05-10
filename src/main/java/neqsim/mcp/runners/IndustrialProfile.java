@@ -120,9 +120,8 @@ public final class IndustrialProfile {
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
    * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
-          "runWaterHammer", "runRootCauseAnalysis",
+  private static final Set<String> ENGINEERING_ADVANCED = Collections.unmodifiableSet(
+      new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis",
           "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
           "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
           "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",

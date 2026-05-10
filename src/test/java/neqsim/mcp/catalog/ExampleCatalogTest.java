@@ -191,8 +191,8 @@ class ExampleCatalogTest {
     JsonObject input = JsonParser.parseString(example).getAsJsonObject();
     assertEquals("HIGH_VIBRATION", input.get("symptom").getAsString());
     assertTrue(input.has("processJson"));
-    JsonObject processJson = JsonParser.parseString(input.get("processJson").getAsString())
-        .getAsJsonObject();
+    JsonObject processJson =
+        JsonParser.parseString(input.get("processJson").getAsString()).getAsJsonObject();
     assertTrue(processJson.has("process"));
 
     String result = RootCauseRunner.run(example);

@@ -916,8 +916,7 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "WaterHammerInput");
-    schema.put("description",
-        "Input for water/liquid hammer screening (run_water_hammer tool)");
+    schema.put("description", "Input for water/liquid hammer screening (run_water_hammer tool)");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
@@ -1004,10 +1003,11 @@ public final class SchemaCatalog {
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
     properties.put("equipmentName", stringProp("Name of the equipment to diagnose"));
-    properties.put("symptom", enumProp("Observed symptom",
-        Arrays.asList("TRIP", "HIGH_VIBRATION", "SEAL_FAILURE", "HIGH_TEMPERATURE",
-            "LOW_EFFICIENCY", "PRESSURE_DEVIATION", "FLOW_DEVIATION", "HIGH_POWER",
-            "SURGE_EVENT", "FOULING", "ABNORMAL_NOISE", "LIQUID_CARRYOVER")));
+    properties.put("symptom",
+        enumProp("Observed symptom",
+            Arrays.asList("TRIP", "HIGH_VIBRATION", "SEAL_FAILURE", "HIGH_TEMPERATURE",
+                "LOW_EFFICIENCY", "PRESSURE_DEVIATION", "FLOW_DEVIATION", "HIGH_POWER",
+                "SURGE_EVENT", "FOULING", "ABNORMAL_NOISE", "LIQUID_CARRYOVER")));
     properties.put("processJson",
         stringProp("ProcessSystem JSON definition accepted by ProcessSystem.fromJsonAndRun"));
     properties.put("simulationEnabled",
@@ -1025,7 +1025,7 @@ public final class SchemaCatalog {
     stidData.put("type", "object");
     stidData.put("description",
         "STID/design data map such as design point, rated speed, normal operating value, "
-          + "or datasheet references");
+            + "or datasheet references");
     properties.put("stidData", stidData);
 
     schema.put("properties", properties);
@@ -1052,9 +1052,10 @@ public final class SchemaCatalog {
     properties.put("symptom", stringProp("Analyzed symptom"));
     properties.put("dataPointsAnalyzed", intProp("Number of historian data points analyzed"));
     properties.put("parametersAnalyzed", intProp("Number of historian parameters analyzed"));
-    properties.put("hypotheses", typedArraySchema(
-        "Ranked hypotheses with confidenceScore, priorProbability, likelihoodScore, "
-            + "verificationScore, evidence, recommendedActions, and simulationSummary"));
+    properties.put("hypotheses",
+        typedArraySchema(
+            "Ranked hypotheses with confidenceScore, priorProbability, likelihoodScore, "
+                + "verificationScore, evidence, recommendedActions, and simulationSummary"));
     schema.put("properties", properties);
     schema.put("required", Collections.singletonList("status"));
     return GSON.toJson(schema);
@@ -1701,9 +1702,9 @@ public final class SchemaCatalog {
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
         "run_water_hammer", "run_root_cause_analysis", "run_materials_review", "run_reservoir",
-        "run_field_economics", "run_dynamic",
-        "run_bioprocess", "size_equipment", "compare_processes", "manage_session", "visualize",
-        "run_hazop", "run_barrier_register", "run_safety_system_performance"));
+        "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
+        "compare_processes", "manage_session", "visualize", "run_hazop", "run_barrier_register",
+        "run_safety_system_performance"));
   }
 
   /**

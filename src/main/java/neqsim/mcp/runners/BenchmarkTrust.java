@@ -331,9 +331,10 @@ public final class BenchmarkTrust {
   private static JsonObject buildWaterHammerTrust() {
     JsonObject trust = new JsonObject();
     trust.addProperty("maturityLevel", "TESTED");
-    trust.addProperty("description", "Water-hammer / liquid-hammer screening using a "
-        + "single-line Method of Characteristics transient model. Suitable for fast ranking "
-        + "of valve closure and pump-trip scenarios before a detailed surge study.");
+    trust.addProperty("description",
+        "Water-hammer / liquid-hammer screening using a "
+            + "single-line Method of Characteristics transient model. Suitable for fast ranking "
+            + "of valve closure and pump-trip scenarios before a detailed surge study.");
 
     JsonArray cases = new JsonArray();
     cases.add(validationCase("Joukowsky pressure rise for instantaneous closure", "SRK",
@@ -415,8 +416,8 @@ public final class BenchmarkTrust {
     trust.add("validationCases", cases);
 
     JsonArray limitations = new JsonArray();
-    limitations.add("Confidence scores are Bayesian-inspired rankings, not calibrated "
-        + "probabilities");
+    limitations
+        .add("Confidence scores are Bayesian-inspired rankings, not calibrated " + "probabilities");
     limitations.add("Quality depends on historian tag mapping, data quality, and STID/design-limit "
         + "completeness");
     limitations.add("Simulation verification is limited to supported perturbations and reports "

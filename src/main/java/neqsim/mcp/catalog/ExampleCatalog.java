@@ -323,16 +323,15 @@ public final class ExampleCatalog {
         + "  \"model\": \"SRK\",\n" + "  \"temperature_C\": 20.0,\n"
         + "  \"pressure_bara\": 45.0,\n" + "  \"components\": {\"water\": 1.0},\n"
         + "  \"flowRate\": {\"value\": 120000.0, \"unit\": \"kg/hr\"},\n"
-        + "  \"designPressure_bara\": 95.0,\n" + "  \"pipe\": {\n"
-        + "    \"length_m\": 1200.0,\n" + "    \"diameter_m\": 0.2032,\n"
-        + "    \"wallThickness_m\": 0.0127,\n" + "    \"roughness_m\": 4.6e-5,\n"
-        + "    \"elevation_m\": 8.0,\n" + "    \"numberOfNodes\": 80\n" + "  },\n"
-        + "  \"fieldData\": {\n" + "    \"inletPressure_bara\": 46.0,\n"
-        + "    \"inletTemperature_C\": 19.0,\n" + "    \"flowRate_kg_hr\": 118000.0,\n"
-        + "    \"valveOpening\": 1.0\n" + "  },\n" + "  \"eventSchedule\": [\n"
-        + "    {\"type\": \"VALVE_CLOSURE\", \"startTime_s\": 0.10, "
-        + "\"duration_s\": 0.15, \"startOpening\": 1.0, \"endOpening\": 0.0}\n"
-        + "  ],\n" + "  \"simulationTime_s\": 4.0,\n"
+        + "  \"designPressure_bara\": 95.0,\n" + "  \"pipe\": {\n" + "    \"length_m\": 1200.0,\n"
+        + "    \"diameter_m\": 0.2032,\n" + "    \"wallThickness_m\": 0.0127,\n"
+        + "    \"roughness_m\": 4.6e-5,\n" + "    \"elevation_m\": 8.0,\n"
+        + "    \"numberOfNodes\": 80\n" + "  },\n" + "  \"fieldData\": {\n"
+        + "    \"inletPressure_bara\": 46.0,\n" + "    \"inletTemperature_C\": 19.0,\n"
+        + "    \"flowRate_kg_hr\": 118000.0,\n" + "    \"valveOpening\": 1.0\n" + "  },\n"
+        + "  \"eventSchedule\": [\n" + "    {\"type\": \"VALVE_CLOSURE\", \"startTime_s\": 0.10, "
+        + "\"duration_s\": 0.15, \"startOpening\": 1.0, \"endOpening\": 0.0}\n" + "  ],\n"
+        + "  \"simulationTime_s\": 4.0,\n"
         + "  \"sourceReferences\": [\"synthetic STID line-list row\", "
         + "\"synthetic tagreader event window\"]\n" + "}";
   }
@@ -345,23 +344,16 @@ public final class ExampleCatalog {
    * @return JSON string for RootCauseRunner.run()
    */
   public static String rootCauseCompressorHighVibration() {
-    String processJson = processCompressionWithCooling().replace("\\", "\\\\")
-        .replace("\"", "\\\"").replace("\n", "\\n");
-    return "{\n" + "  \"equipmentName\": \"1st Stage\",\n"
-        + "  \"symptom\": \"HIGH_VIBRATION\",\n"
-        + "  \"processJson\": \"" + processJson + "\",\n"
-        + "  \"simulationEnabled\": true,\n"
+    String processJson = processCompressionWithCooling().replace("\\", "\\\\").replace("\"", "\\\"")
+        .replace("\n", "\\n");
+    return "{\n" + "  \"equipmentName\": \"1st Stage\",\n" + "  \"symptom\": \"HIGH_VIBRATION\",\n"
+        + "  \"processJson\": \"" + processJson + "\",\n" + "  \"simulationEnabled\": true,\n"
         + "  \"historianCsv\": \"time,vibration,bearingTemperature,lubeOilPressure,"
         + "scrubberLevel\\n0,2.1,68.0,4.6,42.0\\n10,3.0,71.0,4.2,55.0\\n"
-        + "20,5.6,79.0,3.4,82.0\",\n"
-        + "  \"designLimits\": {\n"
-        + "    \"vibration\": [0.0, 4.5],\n"
-        + "    \"bearingTemperature\": [0.0, 90.0],\n"
-        + "    \"lubeOilPressure\": [3.5, 8.0],\n"
-        + "    \"scrubberLevel\": [15.0, 75.0]\n"
-        + "  },\n"
-        + "  \"stidData\": {\n"
-        + "    \"vibrationDesignLimit\": \"4.5\",\n"
+        + "20,5.6,79.0,3.4,82.0\",\n" + "  \"designLimits\": {\n"
+        + "    \"vibration\": [0.0, 4.5],\n" + "    \"bearingTemperature\": [0.0, 90.0],\n"
+        + "    \"lubeOilPressure\": [3.5, 8.0],\n" + "    \"scrubberLevel\": [15.0, 75.0]\n"
+        + "  },\n" + "  \"stidData\": {\n" + "    \"vibrationDesignLimit\": \"4.5\",\n"
         + "    \"normalBearingTemperature\": \"70.0\",\n"
         + "    \"sourceReference\": \"synthetic compressor datasheet and tagreader trend\"\n"
         + "  }\n" + "}";
@@ -780,8 +772,8 @@ public final class ExampleCatalog {
   public static List<String> getCategories() {
     return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation", "batch",
         "property-table", "phase-envelope", "pvt", "flow-assurance", "standards", "pipeline",
-        "water-hammer", "root-cause", "reservoir", "economics", "materials-review",
-        "bioprocess", "session", "visualization", "equipment-sizing", "comparison", "safety"));
+        "water-hammer", "root-cause", "reservoir", "economics", "materials-review", "bioprocess",
+        "session", "visualization", "equipment-sizing", "comparison", "safety"));
   }
 
   /**
@@ -1057,7 +1049,7 @@ public final class ExampleCatalog {
     // Water-hammer examples
     Map<String, String> hammerExamples = new LinkedHashMap<String, String>();
     hammerExamples.put("valve-closure",
-      "Water-hammer screening for fast ESD valve closure with STID/tagreader-style inputs");
+        "Water-hammer screening for fast ESD valve closure with STID/tagreader-style inputs");
     catalog.put("water-hammer", hammerExamples);
 
     // Root-cause analysis examples
