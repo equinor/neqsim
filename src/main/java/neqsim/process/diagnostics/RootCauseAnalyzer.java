@@ -14,9 +14,9 @@ import org.apache.logging.log4j.Logger;
  * Main orchestrator for root cause analysis of equipment issues.
  *
  * <p>
- * Integrates process simulation, OREDA failure data, historian time-series, and STID design
- * conditions to produce a ranked list of failure hypotheses. The analysis follows a Bayesian-
- * inspired methodology:
+ * Integrates process simulation, multi-source reliability data, historian time-series, and STID
+ * design conditions to produce a ranked list of failure hypotheses. The analysis follows a
+ * Bayesian- inspired methodology:
  * </p>
  *
  * <ol>
@@ -172,7 +172,7 @@ public class RootCauseAnalyzer implements Serializable {
    * <ol>
    * <li>Identify equipment and classify type</li>
    * <li>Generate candidate hypotheses based on symptom and equipment type</li>
-   * <li>Adjust priors from OREDA failure data</li>
+   * <li>Adjust priors from reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, etc.)</li>
    * <li>Collect evidence from historian and STID data</li>
    * <li>Update likelihood scores from evidence</li>
    * <li>Verify top hypotheses via process simulation (if enabled)</li>

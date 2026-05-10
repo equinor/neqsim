@@ -2,8 +2,9 @@
  * Equipment-level operational diagnostics and root cause analysis.
  *
  * <p>
- * This package integrates process simulation, OREDA failure data, plant historian time-series,
- * and STID design conditions to diagnose equipment issues using a Bayesian-inspired methodology:
+ * This package integrates process simulation, multi-source reliability data, plant historian
+ * time-series, and STID design conditions to diagnose equipment issues using a Bayesian-inspired
+ * methodology:
  * </p>
  *
  * <ol>

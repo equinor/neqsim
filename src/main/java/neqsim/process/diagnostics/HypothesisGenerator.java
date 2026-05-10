@@ -22,7 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Generates ranked root-cause hypotheses from equipment type, symptom, and OREDA failure data.
+ * Generates ranked root-cause hypotheses from equipment type, symptom, and reliability data.
  *
  * <p>
  * The generator maintains a built-in library of symptom-to-hypothesis mappings for common equipment
@@ -188,9 +188,9 @@ public class HypothesisGenerator implements Serializable {
    * Finds a fuzzy OREDA mode probability when exact naming differs from the hypothesis library.
    *
    * <p>
-   * Uses a three-tier matching strategy: (1) substring containment, (2) token overlap with at
-   * least 50% match, (3) Levenshtein edit distance within 3 characters. Returns the first
-   * confident match found.
+   * Uses a three-tier matching strategy: (1) substring containment, (2) token overlap with at least
+   * 50% match, (3) Levenshtein edit distance within 3 characters. Returns the first confident match
+   * found.
    * </p>
    *
    * @param modeProbabilities normalized failure mode probability map

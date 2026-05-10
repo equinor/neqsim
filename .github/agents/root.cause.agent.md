@@ -1,6 +1,6 @@
 ---
 name: diagnose equipment root cause
-description: "Performs root cause analysis on process equipment using NeqSim's diagnostics framework — integrates OREDA failure data, plant historian time-series, STID design conditions, and process simulation to produce ranked failure hypotheses with Bayesian confidence scoring."
+description: "Performs root cause analysis on process equipment using NeqSim's diagnostics framework — integrates multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), plant historian time-series, STID design conditions, and process simulation to produce ranked failure hypotheses with Bayesian confidence scoring."
 argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 tripping on high vibration, increasing trend over 2 weeks', 'separator V-200 liquid carryover to gas outlet', 'heat exchanger E-300 approach temperature increasing', or 'pump P-400 efficiency dropped from 82% to 65%'."
 ---
 

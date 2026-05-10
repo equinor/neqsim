@@ -9,6 +9,49 @@
 
 ---
 
+## 2026-05-10 — Root Cause Analysis Framework & Public Reliability Data
+
+### Summary
+
+New `neqsim.process.diagnostics` package provides Bayesian-inspired root cause
+analysis for process equipment (compressors, pumps, separators, heat exchangers,
+valves). `ReliabilityDataSource` now loads from multiple **public** databases
+by default — no commercial OREDA license required.
+
+### New classes
+
+- `RootCauseAnalyzer` — orchestrator: symptom → hypotheses → evidence → verification → ranked report
+- `Symptom` — enum of 12 equipment symptoms (TRIP, HIGH_VIBRATION, SURGE, etc.)
+- `Hypothesis` — ranked hypothesis with Builder pattern, expected signals, evidence
+- `HypothesisGenerator` — built-in libraries for 5 equipment types + custom registry
+- `EvidenceCollector` — time-series trend, threshold, rate-of-change, correlation analysis
+- `SimulationVerifier` — clone ProcessSystem, apply graduated perturbations, compare KPIs
+- `RootCauseReport` — JSON and text output with ranked hypotheses
+
+### Reliability data sources (loaded automatically)
+
+| CSV | Source | Access |
+|-----|--------|--------|
+| `equipment_reliability.csv` | IOGP Report 434 / SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012 | Free / published |
+| `process_industry_data.csv` | CCPS, AIChE, API RP 689, HSE UK | Free / published |
+| `offshore_specific_data.csv` | IOGP / SINTEF, OGP 434, DNV-RP-G101, NORSOK Z-016 | Free / purchasable |
+| `generic_literature.csv` | Lees, MIL-HDBK-217F, DNV-RP-G101 | Free / purchasable |
+
+### Agent/skill updates
+
+- Skill `neqsim-root-cause-analysis` updated to reference multi-source data
+- Agent `diagnose equipment root cause` description updated
+- Capability map now includes "I-ter. Equipment Diagnostics & Reliability" section
+
+### Migration notes
+
+- Replace any `"OREDA"` references in documentation with "reliability data" or
+  "multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees)"
+- `ReliabilityDataSource.getDataSources()` returns the list of loaded sources
+- `ReliabilityDataSource.getEntryCount()` returns total loaded records
+
+---
+
 ## 2026-05-08 — MCP Server Quarkiverse Transport Refresh
 
 ### Summary
