@@ -19,6 +19,8 @@ mechanical design, and engineering analysis tools.
 
 ## MANDATORY: Load Skill First
 
+Loaded skills: neqsim-technical-document-reading, neqsim-pid-process-operations
+
 Before doing ANY document reading work, load the technical document reading skill:
 
 ```
@@ -27,6 +29,12 @@ read_file: .github/skills/neqsim-technical-document-reading/SKILL.md
 
 This skill contains extraction patterns for every document type, unit conversion
 functions, component name mapping, validation rules, and output schemas.
+
+When the document is a P&ID or the downstream task asks for valve actions,
+active train state, isolation, or operational changes, also load
+`neqsim-pid-process-operations`. Extract symbol semantics, directed process
+edges, valve functions, control links, instrument tags, drains, vents, and
+scenario actions instead of only listing visible tags.
 
 ---
 

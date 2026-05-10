@@ -1,4 +1,30 @@
 {
+  "pid symbols": [
+    "neqsim-pid-process-operations",
+    "neqsim-technical-document-reading"
+  ],
+  "p&id symbols": [
+    "neqsim-pid-process-operations",
+    "neqsim-technical-document-reading"
+  ],
+  "closing a valve": [
+    "neqsim-pid-process-operations",
+    "neqsim-controllability-operability",
+    "neqsim-dynamic-simulation"
+  ],
+  "valve action": [
+    "neqsim-pid-process-operations",
+    "neqsim-controllability-operability",
+    "neqsim-dynamic-simulation"
+  ],
+  "connect pid to plant data": [
+    "neqsim-pid-process-operations",
+    "neqsim-plant-data"
+  ],
+  "active train from pid and tags": [
+    "neqsim-pid-process-operations",
+    "neqsim-plant-data"
+  ],
   "a simulation fails to converge": [
     "neqsim-troubleshooting"
   ],

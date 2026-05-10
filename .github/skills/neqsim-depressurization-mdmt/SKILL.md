@@ -95,8 +95,7 @@ correlations can be used upstream.
 
 Typical workflow:
 
-1. Start from a target — 50 % of design pressure in 15 min (API 521) or 7 bar
-   in some operator standards (Equinor TR1011, Shell DEP).
+1. Start from a target such as 50 % of design pressure in 15 min (API 521), 7 bar in 15 min, or the relevant company/project criterion from the private basis.
 2. Guess BDV `Cd · A`, run `sim.run(...)`, read `sim.timeToPressure(target)`.
 3. Iterate area until target is met without choking the flare header.
 4. Verify the *minimum* T(t) is above the vessel MDMT.
@@ -135,8 +134,9 @@ if (!acceptable) {
 }
 ```
 
-Operator practice (NORSOK M-001 / Equinor TR1244) typically adds a 5–10 °C
-margin between blowdown end-temperature and MDMT.
+Many company practices add a 5-10 °C margin between blowdown end-temperature
+and MDMT. Record the actual project or operator margin in the private task
+basis instead of hard-coding it in public guidance.
 
 ## Method 4 — Source Term to Flare Network
 

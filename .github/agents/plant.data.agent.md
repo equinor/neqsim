@@ -9,6 +9,8 @@ connect NeqSim process simulations to real operational data from plant historian
 (OSIsoft PI, Aspen IP.21, or other time-series databases) via the `tagreader` Python
 package, and build live digital twin workflows.
 
+Loaded skills: neqsim-plant-data, neqsim-pid-process-operations, neqsim-model-calibration-and-data-reconciliation
+
 ## Primary Objective
 
 Guide users through the **NeqSimLive development workflow**:
@@ -18,6 +20,13 @@ Guide users through the **NeqSimLive development workflow**:
 3. **Compare the model to process data** and tune the model
 4. **Run a continuous digital twin loop** (model tracks plant in real-time)
 5. **Deploy via NeqSimAPI** for cloud/online operation (guidance only)
+
+For P&ID-based operational studies, use `neqsim-pid-process-operations` to map
+instrument bubbles and valve symbols to logical tag names, then bind those
+logical names to private historian tags in `tag_mapping.json`. Infer active
+equipment/train state from independent indicators such as flow, pressure,
+temperature, level movement, valve position, controller output, speed, power,
+and run status.
 
 ## Workflow Steps
 
@@ -269,8 +278,8 @@ After validating locally (Steps 1-4), the model can be deployed:
 Local Development (this agent)
   │
   ▼
-NeqSimAPI (Cloud REST API)    — Deploy model as API endpoint
-  │                              https://neqsimapi.app.radix.equinor.com/docs
+NeqSimAPI or another deployment target
+-> Deploy model as API endpoint in user environment
   ▼
 Sigma / IOC CalcEngine        — Connect live PI/Aspen tags to the API
   │                              Reads input tags → calls NeqSimAPI → writes result tags
@@ -300,5 +309,5 @@ Live Digital Twin             — Continuous self-tuning model
 - [NeqSim API Patterns](../.github/skills/neqsim-api-patterns/SKILL.md)
 - [Plant Data Skill](../.github/skills/neqsim-plant-data/SKILL.md) — Tagreader API reference and patterns
 - [Model Calibration & Data Reconciliation Skill](../.github/skills/neqsim-model-calibration-and-data-reconciliation/SKILL.md) — Bounded parameter tuning, residual diagnostics, train/validation reporting
-- [tagreader-python](https://github.com/equinor/tagreader-python)
-- [NeqSimAPI](https://neqsimapi.app.radix.equinor.com/docs)
+- tagreader Python package
+- NeqSimAPI or the user's selected deployment target

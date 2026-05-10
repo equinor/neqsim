@@ -20,6 +20,8 @@ running NeqSim simulations via a **three-step pipeline**: Free Text → JSON →
 
 ## MANDATORY: Load Skill First
 
+Loaded skills: neqsim-process-extraction, neqsim-pid-process-operations
+
 Before doing ANY extraction work, load the `neqsim-process-extraction` skill:
 
 ```
@@ -28,6 +30,11 @@ read_file: .github/skills/neqsim-process-extraction/SKILL.md
 
 This skill contains the complete equipment mapping, stream wiring rules, unit conversions,
 component name mapping, confidence scoring, templates, and worked examples. Follow it exactly.
+
+For P&ID-driven operational tasks, also load `neqsim-pid-process-operations`.
+Convert symbols into a directed process graph, classify valves by function, and
+emit explicit model deltas for actions such as closing an isolation valve,
+partly closing a control valve, opening a bypass, or opening a drain/vent.
 
 ---
 

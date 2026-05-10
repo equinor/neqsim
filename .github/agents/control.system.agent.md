@@ -6,11 +6,14 @@ argument-hint: "Describe the control requirement — e.g., 'design level control
 
 ## Skills to Load
 
+Loaded skills: neqsim-dynamic-simulation, neqsim-controllability-operability, neqsim-api-patterns, neqsim-standards-lookup, neqsim-pid-process-operations
+
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-dynamic-simulation/SKILL.md` — Dynamic sim, controllers, transmitters
 - `.github/skills/neqsim-controllability-operability/SKILL.md` — Control valve sizing (ISA-75), turndown, operability
 - `.github/skills/neqsim-api-patterns/SKILL.md` — Process equipment patterns
 - `.github/skills/neqsim-standards-lookup/SKILL.md` — IEC 61511, ISA standards
+- `.github/skills/neqsim-pid-process-operations/SKILL.md` — P&ID symbols, valve actions, tag mapping, and steady/dynamic scenario deltas
 
 ## Operating Principles
 

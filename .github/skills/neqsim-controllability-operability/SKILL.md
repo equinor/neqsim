@@ -22,6 +22,12 @@ which solves the transient response.
 - Startup / shutdown sequence definition
 - Recycle stability / loop interaction screening
 - Identifying hidden constraints (compressor surge, tray weeping, HX pinch)
+- Evaluating P&ID-derived valve changes such as closing an isolation valve,
+  partly closing a control valve, opening a bypass, or changing controller mode
+
+For P&ID-driven operational changes, load `neqsim-pid-process-operations` first
+to classify symbols, define the topology, bind plant tags, and turn each action
+into a NeqSim model delta.
 
 Standards: **ISA-75.01 / IEC 60534-2-1**, **API 685** (control valves), **NORSOK P-002** (operability).
 

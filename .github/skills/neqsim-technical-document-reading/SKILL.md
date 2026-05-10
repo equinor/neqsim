@@ -19,6 +19,11 @@ formats usable by process simulation, mechanical design, and engineering analysi
 > 4. Validate extracted data against physical bounds and completeness checks
 > 5. Output structured JSON/dict for downstream consumption
 
+For P&ID-driven operational studies, also load `neqsim-pid-process-operations`.
+That skill converts symbols into a process graph, classifies valve functions,
+maps instrument bubbles to historian tags, and defines steady-state or dynamic
+NeqSim scenario actions.
+
 ---
 
 ## 1. Document Type Classification
@@ -786,6 +791,12 @@ PID_EXTRACTION = {
 For route pressure-drop work, pass `route_segments` to
 `neqsim.process.equipment.pipeline.routing.PipingRouteBuilder` and save
 `route.toJson()` with the task results.
+
+For operational studies, also create a `pid_operational_model` block as defined
+in `neqsim-pid-process-operations`. Include symbol semantics, valve normal and
+fail positions when stated, control links, drains, vents, bypasses, check valves,
+and logical tag names for plant data binding. Flag uncertain symbol readings;
+do not infer live valve state from drawing normal position alone.
 
 #### 3.7.4 Vendor API Datasheet Image Extraction
 
