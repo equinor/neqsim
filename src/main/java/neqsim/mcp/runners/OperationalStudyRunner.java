@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.equipment.capacity.EquipmentDesignData;
 import neqsim.process.measurementdevice.InstrumentTagRole;
 import neqsim.process.operations.ControllerTuningResult;
 import neqsim.process.operations.ControllerTuningStudy;
@@ -20,6 +21,7 @@ import neqsim.process.operations.OperationalScenarioResult;
 import neqsim.process.operations.OperationalScenarioRunner;
 import neqsim.process.operations.OperationalTagBinding;
 import neqsim.process.operations.OperationalTagMap;
+import neqsim.process.operations.PipeSectionAnalyzer;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 import neqsim.util.validation.ValidationResult;
@@ -81,10 +83,12 @@ public final class OperationalStudyRunner {
         return runEvidencePackage(input);
       } else if ("evaluateControllerResponse".equalsIgnoreCase(action)) {
         return evaluateControllerResponse(input);
+      } else if ("analyzePipeSections".equalsIgnoreCase(action)) {
+        return analyzePipeSections(input);
       }
       return errorJson("UNKNOWN_ACTION", "Unknown operational study action: " + action,
-          "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, or "
-              + "evaluateControllerResponse.");
+          "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, "
+              + "evaluateControllerResponse, or analyzePipeSections.");
     } catch (RuntimeException ex) {
       return errorJson("OPERATIONAL_STUDY_ERROR", "Operational study failed: " + ex.getMessage(),
           "Check the processJson, tagBindings, fieldData, action list, and units.");
@@ -111,6 +115,7 @@ public final class OperationalStudyRunner {
     actions.add("runScenario");
     actions.add("runEvidencePackage");
     actions.add("evaluateControllerResponse");
+    actions.add("analyzePipeSections");
     root.add("actions", actions);
 
     JsonObject binding = new JsonObject();
@@ -135,6 +140,15 @@ public final class OperationalStudyRunner {
     example.addProperty("studyName", "private operating case screening");
     example.addProperty("processJson", "{... standard runProcess JSON ...}");
     example.addProperty("benchmarkToleranceFraction", 0.05);
+    JsonObject exDesignCapacities = new JsonObject();
+    JsonObject sepDesign = new JsonObject();
+    sepDesign.addProperty("internalDiameter", 2.0);
+    sepDesign.addProperty("separatorLength", 6.0);
+    exDesignCapacities.add("HP Separator", sepDesign);
+    JsonObject compDesign = new JsonObject();
+    compDesign.addProperty("ratedPower", 5000);
+    exDesignCapacities.add("Compressor", compDesign);
+    example.add("designCapacities", exDesignCapacities);
     JsonArray exampleActions = new JsonArray();
     JsonObject valveAction = new JsonObject();
     valveAction.addProperty("type", "SET_VALVE_OPENING");
@@ -180,6 +194,25 @@ public final class OperationalStudyRunner {
    */
   private static String runEvidencePackage(JsonObject input) {
     ProcessSystem process = buildProcess(input);
+
+    // Apply design capacities from JSON input if provided
+    JsonObject designCapacitiesReport = null;
+    if (input.has("designCapacities") && input.get("designCapacities").isJsonObject()) {
+      JsonObject designCapacities = input.getAsJsonObject("designCapacities");
+      Map<String, EquipmentDesignData.ApplyResult> designResults =
+          EquipmentDesignData.apply(process, designCapacities);
+      // Re-run process after applying design data so constraints pick up new values
+      process.run();
+
+      designCapacitiesReport = new JsonObject();
+      for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : designResults.entrySet()) {
+        designCapacitiesReport.add(entry.getKey(), entry.getValue().toJson());
+      }
+    } else {
+      // Tag constraints with default data sources even when no designCapacities provided
+      EquipmentDesignData.tagConstraintDataSources(process, null);
+    }
+
     OperationalTagMap tagMap = hasTagBindings(input) ? buildTagMap(input) : new OperationalTagMap();
     ValidationResult validation = tagMap.validate(process);
     if (!validation.isValid()) {
@@ -198,7 +231,17 @@ public final class OperationalStudyRunner {
     JsonObject result = new JsonObject();
     result.addProperty("status", "success");
     result.add("validation", validationToJson(validation));
+    if (designCapacitiesReport != null) {
+      result.add("designCapacitiesApplied", designCapacitiesReport);
+    }
     result.add("evidencePackage", packageReport);
+
+    if (input.has("pipeSections") && input.get("pipeSections").isJsonArray()
+        && input.getAsJsonArray("pipeSections").size() > 0) {
+      String pipeResult = PipeSectionAnalyzer.run(GSON.toJson(input));
+      result.add("pipeSectionAnalysis", JsonParser.parseString(pipeResult));
+    }
+
     addOptionalPassThrough(input, result, "evidenceReferences", "evidenceReferences");
     addOptionalPassThrough(input, result, "evidenceRefs", "evidenceReferences");
     addOptionalPassThrough(input, result, "assumptions", "assumptions");
@@ -289,6 +332,25 @@ public final class OperationalStudyRunner {
     result.addProperty("status", "success");
     result.add("controllerTuning", JsonParser.parseString(tuning.toJson()));
     return GSON.toJson(result);
+  }
+
+  /**
+   * Analyzes pipe sections that are not part of the main process model.
+   *
+   * <p>
+   * This action does not require {@code processJson}. It takes a fluid definition and a
+   * {@code pipeSections} array describing pipe geometry and operating conditions (which may come
+   * from P&amp;ID data and tagreader field data), runs a Beggs &amp; Brill hydraulic calculation
+   * for each section, and returns velocity, pressure drop, flow regime, and utilization against a
+   * design limit.
+   * </p>
+   *
+   * @param input study input containing fluid, pipeSections, optional fieldData and
+   *        sectionTagBindings
+   * @return JSON result with per-section analysis and summary
+   */
+  private static String analyzePipeSections(JsonObject input) {
+    return PipeSectionAnalyzer.run(GSON.toJson(input));
   }
 
   /**

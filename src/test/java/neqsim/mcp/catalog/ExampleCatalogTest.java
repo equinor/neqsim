@@ -200,4 +200,46 @@ class ExampleCatalogTest {
     assertEquals("success", output.get("status").getAsString());
     assertTrue(output.has("hypotheses"));
   }
+
+  @Test
+  void testRootCauseSeparatorLiquidCarryover_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("root-cause", "separator-liquid-carryover");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertEquals("LIQUID_CARRYOVER", input.get("symptom").getAsString());
+    assertTrue(input.has("historianCsv"));
+    assertTrue(input.has("stidData"));
+    assertTrue(input.getAsJsonObject("stidData").has("tagreaderSource"));
+
+    String result = RootCauseRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertTrue(output.has("hypotheses"));
+  }
+
+  @Test
+  void testRootCauseHeatExchangerFouling_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("root-cause", "hx-fouling");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertEquals("FOULING", input.get("symptom").getAsString());
+    assertTrue(input.has("historianCsv"));
+    assertTrue(input.has("stidData"));
+    assertTrue(input.getAsJsonObject("stidData").has("tagreaderSource"));
+    assertTrue(input.getAsJsonObject("stidData").has("designUA_W_K"));
+
+    String result = RootCauseRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertTrue(output.has("hypotheses"));
+  }
+
+  @Test
+  void testRootCauseExampleNames() {
+    List<String> names = ExampleCatalog.getExampleNames("root-cause");
+    assertEquals(3, names.size());
+    assertTrue(names.contains("compressor-high-vibration"));
+    assertTrue(names.contains("separator-liquid-carryover"));
+    assertTrue(names.contains("hx-fouling"));
+  }
 }

@@ -770,3 +770,70 @@ folder and anyone can reproduce the analysis.
 | Timezone confusion | Specify `tz` parameter in `IMSClient` constructor |
 | Java type errors when passing plant values to NeqSim | Always use `float(value)` — Python numpy types don't auto-convert |
 | Model diverges with noisy plant data | Filter outliers and validate inputs before each `process.run()` |
+
+## Root Cause Analysis Integration
+
+Tagreader data feeds directly into the `neqsim.process.diagnostics.RootCauseAnalyzer`
+for automated equipment diagnosis. See `neqsim-root-cause-analysis` skill for
+the full framework.
+
+### Tagreader to RCA Workflow
+
+```python
+import tagreader
+import pandas as pd
+import json
+
+# 1. Tag mapping from P&ID / STID (parameter name → historian tag)
+tag_map = {
+    "VT-101.PV": "vibration_mm_s",
+    "TT-101.PV": "discharge_temp_C",
+    "PT-101.PV": "suction_pressure_bara",
+    "FT-101.PV": "mass_flow_kg_hr",
+    "JI-101.PV": "power_kW",
+}
+
+# 2. Pull data from historian
+c = tagreader.IMSClient("plant-server", "piwebapi")
+df = c.read(list(tag_map.keys()), "2025-06-01", "2025-06-15")
+df = df.rename(columns=tag_map)
+
+# 3. Save to task folder for reproducibility
+csv_path = TASK_DIR / "step1_scope_and_research" / "references" / "historian_export.csv"
+df.to_csv(str(csv_path), index=True)
+
+# 4. Convert to CSV string for RCA input
+historian_csv = df.reset_index().to_csv(index=False)
+
+# 5. Build RCA input JSON
+rca_input = {
+    "processJson": json.dumps(process_json),
+    "equipmentName": "Compressor-1",
+    "symptom": "HIGH_VIBRATION",
+    "historianCsv": historian_csv,
+    "simulationEnabled": True,
+    "designLimits": {
+        "vibration_mm_s": [None, 7.1],
+        "discharge_temp_C": [None, 180.0],
+    },
+    "stidData": {
+        "tagreaderSource": "PI Web API: " + ", ".join(tag_map.keys()),
+        "sourceReference": "DS-K-101 rev.C",
+    },
+}
+
+# 6. Run RCA
+RootCauseRunner = ns.JClass("neqsim.mcp.runners.RootCauseRunner")
+result = json.loads(str(RootCauseRunner.run(json.dumps(rca_input))))
+```
+
+### Key Points
+
+- **Tag mapping** links plant tags to the parameter names used in hypothesis
+  fingerprints (e.g., `vibration`, `bearingTemperature`, `lubeOilPressure`)
+- **CSV format**: first column is timestamp (seconds or datetime), remaining
+  columns are parameter names — this is what `EvidenceCollector.loadFromCsv()` expects
+- **Source traceability**: include `tagreaderSource` in `stidData` so the RCA
+  report links each evidence item to the original historian tag
+- **Reproducibility**: always save the historian export CSV to
+  `step1_scope_and_research/references/` so the analysis can be rerun offline

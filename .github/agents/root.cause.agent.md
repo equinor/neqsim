@@ -122,6 +122,47 @@ Use the `runRootCauseAnalysis` MCP tool for automated diagnosis:
 - Use the schema catalog entry `run_root_cause_analysis` and the example
    `root-cause/compressor-high-vibration` when constructing tool calls
 
+### Pre-built Examples (MCP Example Catalog)
+
+Three integration examples are available, each combining NeqSim process
+simulation, historian data (tagreader format), and STID design data:
+
+| MCP URI | Equipment | Symptom | Data Sources |
+|---------|-----------|---------|-------------|
+| `neqsim://examples/root-cause/compressor-high-vibration` | Compressor | HIGH_VIBRATION | PI historian (vibration, bearing temp, lube oil), STID datasheet |
+| `neqsim://examples/root-cause/separator-liquid-carryover` | Separator | LIQUID_CARRYOVER | PI historian (demister dP, liquid level, feed flow), STID datasheet |
+| `neqsim://examples/root-cause/hx-fouling` | Heat Exchanger | FOULING | IP.21 historian (outlet temp, shell dP, coolant flow), vendor datasheet |
+
+Use these as templates when constructing RCA inputs for real equipment.
+
+### Data Flow: Tagreader + STID + Simulation
+
+```
+Plant Historian (PI/IP.21)         STID / Vendor Docs
+         │                                  │
+    tagreader API                 neqsim-stid-retriever
+         │                                  │
+    CSV / DataFrame              design limits, specs
+         │                                  │
+         └────────────┬─────────────────────┘
+                      │
+              RootCauseAnalyzer
+                      │
+          ┌───────────┼───────────┐
+          │           │           │
+     HypothesisGen  Evidence   SimVerifier
+     (OREDA priors) (historian) (NeqSim clone)
+          │           │           │
+          └───────────┼───────────┘
+                      │
+              RootCauseReport
+              (ranked hypotheses
+               with source traceability)
+```
+
+Each evidence item carries a `sourceReference` linking to the original
+historian tag or STID document, making the diagnosis fully auditable.
+
 ## Common Pitfalls
 
 - **Insufficient data**: Need at least 50 data points for meaningful trend analysis
@@ -130,3 +171,40 @@ Use the `runRootCauseAnalysis` MCP tool for automated diagnosis:
 - **Simulation without calibration**: Process model must match current operating conditions
 - **Ignoring correlations**: Parameter correlations often point to the root cause faster than individual trends
 - **Over-reading simulation verification**: A neutral score means the current process model could not test that hypothesis; it is not a pass/fail verdict
+
+## Post-Trip Analysis: Detect → Trace → Restart
+
+After diagnosing the root cause, extend the analysis with the post-trip classes
+to answer: *what tripped?*, *how did the failure propagate?*, and *how do we
+restart safely?*
+
+### Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `TripEventDetector` | `neqsim.process.diagnostics` | Monitors parameters against thresholds, detects trips |
+| `FailurePropagationTracer` | `neqsim.process.diagnostics` | BFS-traces failure cascade through process topology |
+| `RestartSequenceGenerator` | `neqsim.process.diagnostics.restart` | Generates topological restart plan with safety steps |
+
+### Workflow Extension
+
+After `RootCauseReport` identifies the root cause, continue with:
+
+```java
+// 1. Set up trip detection for the failed parameter
+TripEventDetector detector = new TripEventDetector(processSystem);
+detector.addTripCondition(equipmentName, "pressure", 150.0, true,
+    TripEvent.Severity.HIGH);
+List<TripEvent> trips = detector.check(simulationTime);
+
+// 2. Trace how the failure propagated
+FailurePropagationTracer tracer = new FailurePropagationTracer(processSystem);
+FailurePropagationTracer.PropagationResult propagation = tracer.trace(trips.get(0));
+
+// 3. Generate restart sequence
+RestartSequenceGenerator generator = new RestartSequenceGenerator(processSystem);
+RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
+System.out.println(plan.toTextReport());
+```
+
+See the `neqsim-root-cause-analysis` skill for full API reference.

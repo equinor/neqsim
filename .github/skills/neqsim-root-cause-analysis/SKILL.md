@@ -336,3 +336,192 @@ EvidenceCollector collector = new EvidenceCollector();
 collector.loadFromCsv("path/to/historian_export.csv");
 // CSV format: timestamp, param1, param2, ...
 ```
+
+## Integrated Workflow: Tagreader + STID + NeqSim Simulation
+
+The RCA framework is designed to consume data from three sources simultaneously.
+Below is the canonical workflow combining all three.
+
+### Step 1: Retrieve Historian Data via Tagreader
+
+Use the `neqsim-plant-data` skill to pull time-series from the plant historian
+(OSIsoft PI or Aspen IP.21) and convert to the CSV format RCA expects.
+
+```python
+# Python — pull tagreader data and format for RCA
+import pandas as pd
+
+# Tag mapping from STID/P&ID documentation
+tag_map = {
+    "VT-101.PV": "vibration_mm_s",
+    "TT-101.PV": "discharge_temp_C",
+    "PT-101.PV": "suction_pressure_bara",
+    "FT-101.PV": "mass_flow_kg_hr",
+    "JI-101.PV": "power_kW",
+}
+
+# Read from historian (tagreader API or CSV export)
+df = pd.read_csv("historian_export.csv")
+df = df.rename(columns=tag_map)
+
+# Convert to CSV string for RCA input
+historian_csv = df.to_csv(index=False)
+```
+
+### Step 2: Extract STID Design Data
+
+Use the `neqsim-stid-retriever` and `neqsim-technical-document-reading` skills
+to extract design limits and reference values from STID datasheets.
+
+```python
+# STID data extracted from datasheet DS-K-101 rev.C
+stid_data = {
+    "designFlow_kg_hr": "50000",
+    "designEfficiency_pct": "82",
+    "designDischargePressure_bara": "45.0",
+    "maxVibration_mm_s": "7.1",
+    "maxDischargeTemp_C": "180",
+    "bearingType": "tilting_pad",
+    "lastInspectionDate": "2024-06-15",
+    "tagreaderSource": "PI Web API: VT-101, TT-101, PT-101, FT-101, JI-101",
+    "sourceReference": "STID DS-K-101 rev.C and PI trend 2025-06-01 to 2025-06-15",
+}
+```
+
+### Step 3: Build Process Model and Run RCA
+
+```python
+import json
+
+RootCauseRunner = ns.JClass("neqsim.mcp.runners.RootCauseRunner")
+
+rca_input = {
+    "processJson": json.dumps(process_json),
+    "equipmentName": "Compressor-1",
+    "symptom": "HIGH_VIBRATION",
+    "historianCsv": historian_csv,
+    "simulationEnabled": True,
+    "designLimits": {
+        "vibration_mm_s": [None, 7.1],
+        "discharge_temp_C": [None, 180.0],
+        "mass_flow_kg_hr": [40000, 60000],
+    },
+    "stidData": stid_data,
+}
+
+result = json.loads(str(RootCauseRunner.run(json.dumps(rca_input))))
+print(f"Top cause: {result['hypotheses'][0]['name']} "
+      f"({result['hypotheses'][0]['confidence']:.1%})")
+```
+
+### Step 4: Trace Evidence Back to Source
+
+Every evidence item in the RCA output carries a `sourceReference` field
+linking to the original tagreader tag or STID document. This enables
+auditable traceability from diagnosis to plant data:
+
+```
+hypothesis.evidence[0].sourceReference → "PI:VT-101.PV trend analysis"
+hypothesis.evidence[1].sourceReference → "STID DS-K-101: design vibration limit 7.1 mm/s"
+```
+
+## MCP Example Catalog
+
+Three pre-built examples demonstrate the integration:
+
+| Example | Equipment | Symptom | Data Sources |
+|---------|-----------|---------|-------------|
+| `compressor-high-vibration` | Compressor | HIGH_VIBRATION | PI historian, STID datasheet |
+| `separator-liquid-carryover` | Separator | LIQUID_CARRYOVER | PI historian (demister dP, level), STID datasheet |
+| `hx-fouling` | Heat Exchanger | FOULING | IP.21 historian (outlet temp, shell dP), vendor datasheet |
+
+Access via MCP: `neqsim://examples/root-cause/separator-liquid-carryover`
+
+## Post-Trip Analysis: Detect → Trace → Restart
+
+After the RCA framework identifies *what* went wrong, the post-trip analysis
+classes answer three follow-up questions:
+
+1. **What tripped?** — `TripEventDetector` monitors process parameters against thresholds
+2. **How did the failure propagate?** — `FailurePropagationTracer` traces cascade through topology
+3. **How do we restart?** — `RestartSequenceGenerator` produces an optimised restart plan
+
+### Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `TripEvent` | `neqsim.process.diagnostics` | Immutable data record for a detected trip (equipment, parameter, threshold, actual, severity) |
+| `TripEventDetector` | `neqsim.process.diagnostics` | Monitors equipment parameters and fires `TripEvent` when thresholds are breached; supports high/low trips, deadband, first-trip-only mode |
+| `FailurePropagationTracer` | `neqsim.process.diagnostics` | Uses `ProcessTopologyAnalyzer` + `DependencyAnalyzer` to BFS-trace how a failure cascades downstream/upstream; produces `PropagationResult` with `PropagationStep` list |
+| `RestartStep` | `neqsim.process.diagnostics.restart` | Single step in a restart sequence (equipment, action, precondition, delay, priority) |
+| `RestartSequenceGenerator` | `neqsim.process.diagnostics.restart` | Generates topologically-ordered restart plans with safety checks, root-cause verification, utility confirmation, equipment-specific ramp-up actions, and system verification |
+
+### Java Quick Start
+
+```java
+// ── Step 1: Detect trip ──
+TripEventDetector detector = new TripEventDetector(processSystem);
+detector.addTripCondition("Compressor-1", "pressure", 150.0, true,
+    TripEvent.Severity.HIGH);
+List<TripEvent> trips = detector.check(simulationTime);
+
+// ── Step 2: Trace propagation ──
+FailurePropagationTracer tracer = new FailurePropagationTracer(processSystem);
+FailurePropagationTracer.PropagationResult propagation = tracer.trace(trips.get(0));
+System.out.println(propagation.toTextSummary());
+
+// ── Step 3: Generate restart plan ──
+RestartSequenceGenerator generator = new RestartSequenceGenerator(processSystem);
+generator.setCustomRampUpTime("Compressor-1", 300.0);  // 5 min ramp-up
+RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
+System.out.println(plan.toTextReport());
+String json = plan.toJson();
+```
+
+### Python (Jupyter)
+
+```python
+TripEventDetector = ns.JClass("neqsim.process.diagnostics.TripEventDetector")
+TripEvent = ns.JClass("neqsim.process.diagnostics.TripEvent")
+FailurePropagationTracer = ns.JClass("neqsim.process.diagnostics.FailurePropagationTracer")
+RestartSequenceGenerator = ns.JClass("neqsim.process.diagnostics.restart.RestartSequenceGenerator")
+
+detector = TripEventDetector(process)
+detector.addTripCondition("Compressor-1", "pressure", 150.0, True, TripEvent.Severity.HIGH)
+trips = detector.check(0.0)
+
+tracer = FailurePropagationTracer(process)
+propagation = tracer.trace(trips[0])
+print(str(propagation.toTextSummary()))
+
+generator = RestartSequenceGenerator(process)
+plan = generator.generate(propagation)
+print(str(plan.toTextReport()))
+```
+
+### TripEventDetector Features
+
+- **High/low trips**: `addTripCondition(equip, param, threshold, isHigh, severity)`
+- **Deadband**: `setDeadbandFraction(0.02)` — 2% of threshold to avoid chatter
+- **First-trip-only**: `setFirstTripOnly(true)` — fire once per condition
+- **Parameter types**: `"pressure"`, `"temperature"`, `"flowRate"` (reads from equipment outlet)
+- **JSON output**: `detector.toJson()` — lists all detected trips
+
+### FailurePropagationTracer Features
+
+- **Trace by name**: `tracer.trace("Compressor-1")`
+- **Trace by trip event**: `tracer.trace(tripEvent)`
+- **Max cascade depth**: `tracer.setMaxCascadeDepth(3)`
+- **Impact levels**: DIRECT, INDIRECT, POTENTIAL per cascade depth
+- **Output**: `PropagationResult` with `toJson()`, `toTextSummary()`
+
+### RestartSequenceGenerator Features
+
+- **From propagation**: `generator.generate(propagationResult)`
+- **From equipment list**: `generator.generate(Arrays.asList("Comp-1", "Cooler-1"))`
+- **Custom ramp-up**: `generator.setCustomRampUpTime("Comp-1", 300.0)`
+- **Custom preconditions**: `generator.setCustomPrecondition("Comp-1", "Verify lube oil pressure > 2 bara")`
+- **Equipment-specific actions**: auto-selects restart actions by equipment type (compressor, separator, pump, HX, valve, column, pipe)
+- **Output**: `RestartPlan` with `toJson()`, `toTextReport()`
+- **Plan structure**: Safety check → Root cause verification → Utilities → Equipment (upstream-first) → System verification
+

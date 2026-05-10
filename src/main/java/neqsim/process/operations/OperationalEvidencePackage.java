@@ -431,6 +431,7 @@ public final class OperationalEvidencePackage {
     object.addProperty("nearLimit", constraint.isNearLimit());
     object.addProperty("minimumConstraint", constraint.isMinimumConstraint());
     object.addProperty("description", constraint.getDescription());
+    object.addProperty("dataSource", constraint.getDataSource());
     return object;
   }
 

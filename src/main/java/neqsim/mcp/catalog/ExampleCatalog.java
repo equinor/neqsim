@@ -359,6 +359,82 @@ public final class ExampleCatalog {
         + "  }\n" + "}";
   }
 
+  /**
+   * Returns a separator liquid-carryover root-cause analysis example with rich tagreader historian
+   * data showing the complete integration between process simulation, STID design data, and
+   * historian time-series from plant data systems (e.g. OSIsoft PI / Aspen IP.21).
+   *
+   * @return JSON string for RootCauseRunner.run()
+   */
+  public static String rootCauseSeparatorLiquidCarryover() {
+    String processJson = processSimpleSeparation().replace("\\", "\\\\").replace("\"", "\\\"")
+        .replace("\n", "\\n");
+    return "{\n" + "  \"equipmentName\": \"HP Sep\",\n"
+        + "  \"symptom\": \"LIQUID_CARRYOVER\",\n" + "  \"processJson\": \"" + processJson
+        + "\",\n" + "  \"simulationEnabled\": true,\n"
+        + "  \"historianCsv\": \"time,demisterDp,liquidLevel,gasOutFlow,"
+        + "feedFlow,inletTemperature\\n"
+        + "0,0.8,52.0,9200.0,10000.0,25.0\\n"
+        + "3600,1.2,58.0,9100.0,10500.0,25.5\\n"
+        + "7200,1.8,63.0,8800.0,11200.0,26.0\\n"
+        + "10800,2.5,68.0,8500.0,12000.0,26.5\\n"
+        + "14400,3.2,72.0,8200.0,12500.0,27.0\",\n"
+        + "  \"designLimits\": {\n"
+        + "    \"demisterDp\": [0.0, 2.5],\n"
+        + "    \"liquidLevel\": [20.0, 70.0],\n"
+        + "    \"gasOutFlow\": [0.0, 12000.0],\n"
+        + "    \"feedFlow\": [0.0, 11000.0]\n" + "  },\n"
+        + "  \"stidData\": {\n"
+        + "    \"designFeedRate_kg_hr\": \"10000\",\n"
+        + "    \"designLiquidLevel_pct\": \"50\",\n"
+        + "    \"demisterType\": \"wire_mesh\",\n"
+        + "    \"demisterMaxDp_mbar\": \"2.5\",\n"
+        + "    \"lastInspectionDate\": \"2024-03-15\",\n"
+        + "    \"tagreaderSource\": \"PI Web API tag mapping: "
+        + "LT-2001.PV, PDT-2001.PV, FT-2002.PV, FT-2001.PV, TT-2001.PV\",\n"
+        + "    \"sourceReference\": \"STID datasheet DS-V-2001 rev.C "
+        + "and tagreader trend 01.06.2025-01.06.2025\"\n" + "  }\n" + "}";
+  }
+
+  /**
+   * Returns a heat exchanger fouling root-cause analysis example integrating process simulation,
+   * tagreader historian trend, design limits from STID datasheet, and equipment design data from
+   * vendor technical documents.
+   *
+   * @return JSON string for RootCauseRunner.run()
+   */
+  public static String rootCauseHeatExchangerFouling() {
+    return "{\n" + "  \"equipmentName\": \"Intercooler\",\n" + "  \"symptom\": \"FOULING\",\n"
+        + "  \"processJson\": \""
+        + processCompressionWithCooling().replace("\\", "\\\\").replace("\"", "\\\"")
+            .replace("\n", "\\n")
+        + "\",\n" + "  \"simulationEnabled\": true,\n"
+        + "  \"historianCsv\": \"time,outletTemp,inletTemp,coolantFlow,"
+        + "shellDp,tubeOutTemp\\n"
+        + "0,35.0,120.0,80000.0,0.35,32.0\\n"
+        + "86400,37.0,120.5,80000.0,0.40,33.0\\n"
+        + "172800,39.5,121.0,79500.0,0.48,34.5\\n"
+        + "259200,42.0,120.0,79000.0,0.55,36.0\\n"
+        + "345600,45.0,120.5,78500.0,0.63,38.0\\n"
+        + "432000,48.5,121.0,78000.0,0.72,40.0\",\n"
+        + "  \"designLimits\": {\n"
+        + "    \"outletTemp\": [0.0, 40.0],\n"
+        + "    \"shellDp\": [0.0, 0.5],\n"
+        + "    \"coolantFlow\": [70000.0, 90000.0]\n" + "  },\n"
+        + "  \"stidData\": {\n"
+        + "    \"designDuty_kW\": \"2500\",\n"
+        + "    \"designUA_W_K\": \"45000\",\n"
+        + "    \"designOutletTemp_C\": \"35\",\n"
+        + "    \"hxType\": \"shell-and-tube\",\n"
+        + "    \"temaClass\": \"R\",\n"
+        + "    \"lastCleaningDate\": \"2024-01-20\",\n"
+        + "    \"designFoulingResistance_m2K_W\": \"0.00035\",\n"
+        + "    \"tagreaderSource\": \"Aspen IP.21 tag mapping: "
+        + "TT-3501.PV, TT-3502.PV, FT-3501.PV, PDT-3501.PV, TT-3503.PV\",\n"
+        + "    \"sourceReference\": \"STID datasheet DS-E-3501 rev.B "
+        + "and vendor technical document VD-E-3501\"\n" + "  }\n" + "}";
+  }
+
   // ========== Materials Review Examples ==========
 
   /**
@@ -807,7 +883,8 @@ public final class ExampleCatalog {
     } else if ("water-hammer".equals(category)) {
       return Arrays.asList("valve-closure");
     } else if ("root-cause".equals(category)) {
-      return Arrays.asList("compressor-high-vibration");
+      return Arrays.asList("compressor-high-vibration", "separator-liquid-carryover",
+          "hx-fouling");
     } else if ("materials-review".equals(category)) {
       return Arrays.asList("stid-register");
     } else if ("reservoir".equals(category)) {
@@ -909,6 +986,12 @@ public final class ExampleCatalog {
     } else if ("root-cause".equals(category)) {
       if ("compressor-high-vibration".equals(name)) {
         return rootCauseCompressorHighVibration();
+      }
+      if ("separator-liquid-carryover".equals(name)) {
+        return rootCauseSeparatorLiquidCarryover();
+      }
+      if ("hx-fouling".equals(name)) {
+        return rootCauseHeatExchangerFouling();
       }
     } else if ("materials-review".equals(category)) {
       if ("stid-register".equals(name)) {
@@ -1056,6 +1139,10 @@ public final class ExampleCatalog {
     Map<String, String> rcaExamples = new LinkedHashMap<String, String>();
     rcaExamples.put("compressor-high-vibration",
         "Compressor RCA combining process JSON, historian trend, design limits, and STID data");
+    rcaExamples.put("separator-liquid-carryover",
+        "Separator RCA with tagreader historian (PI), STID datasheet, and demister dP trend");
+    rcaExamples.put("hx-fouling",
+        "Heat exchanger fouling RCA with IP.21 historian, vendor data, and UA degradation");
     catalog.put("root-cause", rcaExamples);
 
     // Materials review examples

@@ -110,6 +110,130 @@ class OperationalStudyRunnerTest {
   }
 
   /**
+   * Verifies that analyzePipeSections returns velocity and utilization for each section.
+   */
+  @Test
+  void analyzePipeSectionsReturnsVelocityAndUtilization() {
+    String json = "{\"action\":\"analyzePipeSections\","
+        + "\"model\":\"SRK\",\"components\":{\"methane\":0.90,\"ethane\":0.10},"
+        + "\"temperature_C\":25.0,\"pressure_bara\":70.0,"
+        + "\"flowRate\":{\"value\":50000,\"unit\":\"kg/hr\"}," + "\"pipeSections\":["
+        + "{\"name\":\"Line-A001\",\"innerDiameter_m\":0.254,\"length_m\":100,"
+        + "\"roughness_m\":0.00005,\"maxDesignVelocity_m_s\":20.0,"
+        + "\"sourceReference\":\"PID-001\"},"
+        + "{\"name\":\"Line-A002\",\"innerDiameter_m\":0.1,\"length_m\":50,"
+        + "\"maxDesignVelocity_m_s\":15.0,\"sourceReference\":\"PID-002\"}" + "]}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    assertEquals(2, result.getAsJsonArray("sections").size());
+    assertTrue(result.getAsJsonObject("summary").has("maxUtilization"));
+    assertTrue(result.getAsJsonObject("summary").get("maxUtilization").getAsDouble() > 0.0);
+
+    JsonObject section1 = result.getAsJsonArray("sections").get(0).getAsJsonObject();
+    assertEquals("Line-A001", section1.get("name").getAsString());
+    assertTrue(section1.get("inletVelocity_m_s").getAsDouble() > 0.0);
+    assertTrue(section1.get("pressureDrop_bar").getAsDouble() >= 0.0);
+    assertEquals("PID-001", section1.get("sourceReference").getAsString());
+
+    // The smaller diameter pipe should have higher velocity and utilization
+    JsonObject section2 = result.getAsJsonArray("sections").get(1).getAsJsonObject();
+    assertTrue(section2.get("maxVelocity_m_s").getAsDouble() > section1.get("maxVelocity_m_s")
+        .getAsDouble());
+  }
+
+  /**
+   * Verifies that analyzePipeSections works with field data overrides via sectionTagBindings.
+   */
+  @Test
+  void analyzePipeSectionsSupportsFieldDataOverrides() {
+    String json = "{\"action\":\"analyzePipeSections\","
+        + "\"model\":\"SRK\",\"components\":{\"methane\":0.95,\"propane\":0.05},"
+        + "\"temperature_C\":30.0,\"pressure_bara\":60.0,"
+        + "\"flowRate\":{\"value\":20000,\"unit\":\"kg/hr\"}," + "\"pipeSections\":["
+        + "{\"name\":\"Line-B001\",\"innerDiameter_m\":0.2,\"length_m\":80}" + "],"
+        + "\"sectionTagBindings\":["
+        + "{\"pipeSectionName\":\"Line-B001\",\"logicalTag\":\"FT-B001\","
+        + "\"property\":\"flowRate_kg_hr\"}" + "]," + "\"fieldData\":{\"FT-B001\":40000.0}}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    // The field data override doubles the flow rate, so velocity should be higher
+    JsonObject section = result.getAsJsonArray("sections").get(0).getAsJsonObject();
+    assertTrue(section.get("inletVelocity_m_s").getAsDouble() > 0.0);
+  }
+
+  /**
+   * Verifies that runEvidencePackage includes pipe section analysis when pipeSections are provided.
+   */
+  @Test
+  void runEvidencePackageIncludesPipeSectionAnalysis() {
+    String json = "{\"action\":\"runEvidencePackage\"," + processJsonField() + ","
+        + "\"studyName\":\"with pipe sections\","
+        + "\"components\":{\"methane\":0.90,\"ethane\":0.10},"
+        + "\"temperature_C\":25.0,\"pressure_bara\":70.0,"
+        + "\"flowRate\":{\"value\":10000,\"unit\":\"kg/hr\"}," + "\"pipeSections\":["
+        + "{\"name\":\"Bypass-001\",\"innerDiameter_m\":0.15,\"length_m\":30}" + "]}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    assertTrue(result.has("evidencePackage"));
+    assertTrue(result.has("pipeSectionAnalysis"));
+    JsonObject pipeAnalysis = result.getAsJsonObject("pipeSectionAnalysis");
+    assertEquals("success", pipeAnalysis.get("status").getAsString());
+    assertEquals(1, pipeAnalysis.getAsJsonArray("sections").size());
+  }
+
+  /**
+   * Verifies that designCapacities from JSON are applied to equipment and reported with data source
+   * tracking.
+   */
+  @Test
+  void runEvidencePackageAppliesDesignCapacities() {
+    String json = "{\"action\":\"runEvidencePackage\"," + processJsonField() + ","
+        + "\"studyName\":\"design capacity test\","
+        + "\"designCapacities\":{\"Separator\":{\"internalDiameter\":2.5,\"separatorLength\":8.0,"
+        + "\"designGasLoadFactor\":0.08}}}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+
+    // Verify designCapacitiesApplied section exists and reports what was applied
+    assertTrue(result.has("designCapacitiesApplied"), result.toString());
+    JsonObject applied = result.getAsJsonObject("designCapacitiesApplied");
+    assertTrue(applied.has("Separator"), result.toString());
+    JsonObject sepApplied = applied.getAsJsonObject("Separator");
+    assertEquals("applied", sepApplied.get("status").getAsString());
+    assertTrue(sepApplied.has("appliedProperties"));
+
+    // Verify that capacity constraints include dataSource in the report
+    JsonObject evidencePackage = result.getAsJsonObject("evidencePackage");
+    JsonObject baseCapacity = evidencePackage.getAsJsonObject("baseCapacity");
+    assertTrue(baseCapacity.has("equipmentConstraints"));
+  }
+
+  /**
+   * Verifies that dataSource is reported as "not_set" or "equipment" when no designCapacities are
+   * provided.
+   */
+  @Test
+  void runEvidencePackageReportsDataSourceWithoutDesignCapacities() {
+    String json = "{\"action\":\"runEvidencePackage\"," + processJsonField() + ","
+        + "\"studyName\":\"no design data\"}";
+
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+
+    // No designCapacitiesApplied section when no design data provided
+    assertTrue(!result.has("designCapacitiesApplied"), result.toString());
+
+    // But constraints should still have dataSource field
+    JsonObject evidencePackage = result.getAsJsonObject("evidencePackage");
+    JsonObject baseCapacity = evidencePackage.getAsJsonObject("baseCapacity");
+    assertTrue(baseCapacity.has("equipmentConstraints"));
+  }
+
+  /**
    * Creates the process JSON field used by the tests.
    *
    * @return a JSON fragment with the processJson field

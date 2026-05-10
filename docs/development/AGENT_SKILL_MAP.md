@@ -29,6 +29,7 @@ Each row lists the skills an agent declares via a
 | `pvt.simulation.agent.md` | run a neqsim PVT simulation | _(none declared)_ |
 | `reaction.engineering.agent.md` | design reaction engineering systems | _(none declared)_ |
 | `review.agent.md` | review task deliverables | `neqsim-professional-reporting`, `neqsim-agent-handoff` |
+| `root.cause.agent.md` | diagnose equipment root cause | `neqsim-root-cause-analysis`, `neqsim-plant-data`, `neqsim-process-safety`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pid-process-operations`, `neqsim-troubleshooting` |
 | `router.agent.md` | neqsim help | _(none declared)_ |
 | `safety.depressuring.agent.md` | run neqsim safety and depressuring simulation | `neqsim-process-safety`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-depressurization-mdmt`, `neqsim-relief-flare-network`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
 | `solve.process.agent.md` | solve process simulation task | _(none declared)_ |
