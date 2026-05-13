@@ -54,8 +54,7 @@ public class PVTRunner {
           "saturationTemperature", "separatorTest", "swellingTest", "GOR", "viscosity"));
 
   private static final List<String> SUPPORTED_MODELS = Collections
-      .unmodifiableList(Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT",
-          "UMRPRU"));
+      .unmodifiableList(Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU"));
 
   /**
    * Private constructor — all methods are static.

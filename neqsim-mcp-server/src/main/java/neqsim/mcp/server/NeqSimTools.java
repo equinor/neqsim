@@ -166,9 +166,8 @@ public class NeqSimTools {
   @Tool(description = "Run a thermodynamic flash calculation using an Eclipse E300 fluid file. "
       + "The EOS, composition, pseudo-components, volume shifts, and BIPs are loaded from the "
       + "file; temperature and pressure are applied from the tool arguments.")
-  public String runFlashFromE300(
-      @ToolArg(description = "Path to an Eclipse E300 fluid file, e.g. C:/models/fluid.e300")
-      String e300FilePath,
+  public String runFlashFromE300(@ToolArg(
+      description = "Path to an Eclipse E300 fluid file, e.g. C:/models/fluid.e300") String e300FilePath,
       @ToolArg(description = "Temperature value (number)") double temperature,
       @ToolArg(description = "Temperature unit: C, K, or F") String temperatureUnit,
       @ToolArg(description = "Pressure value (number)") double pressure,

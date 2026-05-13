@@ -873,8 +873,7 @@ public class FlashRunner {
    * @param waterKij binary interaction parameter to use for added water
    * @return the populated fluid system
    */
-  static SystemInterface readE300Fluid(String e300FilePath, boolean addWater,
-      double waterKij) {
+  static SystemInterface readE300Fluid(String e300FilePath, boolean addWater, double waterKij) {
     if (isBlank(e300FilePath)) {
       throw new IllegalArgumentException("E300 file path is empty");
     }

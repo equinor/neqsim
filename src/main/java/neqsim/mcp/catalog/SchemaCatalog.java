@@ -730,8 +730,7 @@ public final class SchemaCatalog {
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
     properties.put("model", enumProp("Thermodynamic model",
-        Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU",
-            "AUTO")));
+        Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU", "AUTO")));
     properties.put("experiment",
         enumProp("PVT experiment",
             Arrays.asList("CME", "CVD", "differentialLiberation", "saturationPressure",
@@ -752,8 +751,8 @@ public final class SchemaCatalog {
     properties.put("waterKij",
         numberProp("Binary interaction parameter to use for water added from addWater"));
 
-    properties.put("temperature", valueWithUnitSchema("Reservoir temperature",
-        "Temperature unit", Arrays.asList("K", "C", "F"), "K"));
+    properties.put("temperature", valueWithUnitSchema("Reservoir temperature", "Temperature unit",
+        Arrays.asList("K", "C", "F"), "K"));
     properties.put("pressure", valueWithUnitSchema("Reservoir pressure", "Pressure unit",
         Arrays.asList("bara", "barg", "Pa", "kPa", "MPa", "psi", "atm"), "bara"));
 
