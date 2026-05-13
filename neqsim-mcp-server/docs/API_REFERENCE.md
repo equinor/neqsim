@@ -16,12 +16,12 @@ and compositions.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `components` | JSON string | Component-to-mole-fraction map, e.g. `{"methane": 0.85, "ethane": 0.15}` |
+| `components` | JSON string | Component-to-mole-fraction map, e.g. `{"methane": 0.85, "ethane": 0.15}`. Also accepts an E300 source object such as `{"e300FilePath": "C:\\models\\fluid.e300"}` or a direct `.e300` path string. |
 | `temperature` | number | Temperature value |
 | `temperatureUnit` | string | `C`, `K`, or `F` |
 | `pressure` | number | Pressure value |
 | `pressureUnit` | string | `bara`, `barg`, `Pa`, `kPa`, `MPa`, `psi`, or `atm` |
-| `eos` | string | Equation of state (see table below) |
+| `eos` | string | Equation of state (see table below). Use `AUTO` with E300 input to use the EOS declared in the file. |
 | `flashType` | string | Flash algorithm (see table below) |
 
 **Supported Equations of State:**
@@ -30,10 +30,12 @@ and compositions.
 |---|---|---|
 | `SRK` | Soave-Redlich-Kwong | General hydrocarbon systems (default) |
 | `PR` | Peng-Robinson | General purpose, slightly different liquid densities |
+| `PR_LK` | Peng-Robinson Lee-Kesler | Matching commercial simulator PR-LK fluid packages |
 | `CPA` | CPA-SRK | Systems with water, methanol, MEG, or other associating fluids |
 | `GERG2008` | GERG-2008 | High-accuracy natural gas (reference-quality) |
 | `PCSAFT` | PC-SAFT | Polymers, associating fluids |
 | `UMRPRU` | UMR-PRU with Mathias-Copeman | Advanced mixing rules |
+| `AUTO` | E300 file EOS | Use only with E300 input; loads EOS from the file |
 
 **Supported Flash Types:**
 
@@ -68,6 +70,31 @@ and compositions.
   }
 }
 ```
+
+**Example E300 call:**
+
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "runFlash",
+    "arguments": {
+      "components": "{\"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\"}",
+      "temperature": 25.0,
+      "temperatureUnit": "C",
+      "pressure": 50.0,
+      "pressureUnit": "bara",
+      "eos": "AUTO",
+      "flashType": "TP"
+    }
+  }
+}
+```
+
+The dedicated `runFlashFromE300` tool provides the same calculation with an
+explicit `e300FilePath` argument. In both forms, NeqSim reads composition, EOS
+parameters, volume shifts, and binary interaction parameters from the E300 file,
+then applies the requested temperature and pressure before flashing.
 
 **Example response (abbreviated):**
 
@@ -218,6 +245,37 @@ process JSON object per area:
 and routed through `EquipmentFactory`. Equipment that needs non-generic
 construction or custom multi-port semantics may still require a dedicated MCP
 runner or builder extension.
+
+---
+
+## `runPVT` - PVT Laboratory Simulation
+
+Runs laboratory-style PVT experiments on a reservoir fluid. Supported
+experiments include `CME`, `CVD`, `differentialLiberation`,
+`saturationPressure`, `saturationTemperature`, `separatorTest`,
+`swellingTest`, `GOR`, and `viscosity`.
+
+**Input fluid sources:**
+
+- `components`: component-to-mole-fraction map.
+- `e300FilePath`: Eclipse E300 fluid file path. Use `model: "AUTO"` to load
+  the EOS, pseudo-components, volume shifts, and BIPs from the file.
+
+**Example E300 PVT call:**
+
+```json
+{
+  "model": "AUTO",
+  "e300FilePath": "src/test/java/neqsim/thermo/util/readwrite/fluid1.e300",
+  "temperature_C": 100.0,
+  "pressure_bara": 200.0,
+  "experiment": "saturationPressure"
+}
+```
+
+For pressure-grid experiments such as `CME`, `CVD`, and `viscosity`, supply
+pressure steps either as top-level `pressures` / `pressures_bara` or inside
+`experimentConfig.pressures_bara`.
 
 ---
 

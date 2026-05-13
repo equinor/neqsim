@@ -109,8 +109,8 @@ public final class IndustrialProfile {
    * clear error behavior. This is the smallest credible surface for enterprise adoption.
    */
   private static final Set<String> INDUSTRIAL_CORE =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess",
-          "validateInput", "validateResults", "calculateStandard", "searchComponents",
+      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runFlashFromE300",
+          "runProcess", "validateInput", "validateResults", "calculateStandard", "searchComponents",
           "getCapabilities", "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
           "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
           "listUnitVariables", "getSimulationVariable", "compareSimulationStates",
@@ -125,9 +125,9 @@ public final class IndustrialProfile {
           "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
           "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
           "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
-          "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy",
-          "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork",
-          "runHAZOP", "runBarrierRegister", "runSafetySystemPerformance")));
+          "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
+          "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+          "runSafetySystemPerformance")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
@@ -166,6 +166,7 @@ public final class IndustrialProfile {
 
     // Calculation tools — compute results, no persistent state changes
     map.put("runFlash", ToolCategory.CALCULATION);
+    map.put("runFlashFromE300", ToolCategory.CALCULATION);
     map.put("runBatch", ToolCategory.CALCULATION);
     map.put("getPropertyTable", ToolCategory.CALCULATION);
     map.put("getPhaseEnvelope", ToolCategory.CALCULATION);

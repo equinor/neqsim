@@ -1,5 +1,8 @@
 package neqsim.mcp.server;
 
+import java.util.Locale;
+import java.util.Map;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.quarkiverse.mcp.server.Tool;
@@ -91,7 +94,7 @@ public class NeqSimTools {
   /**
    * Run a thermodynamic flash calculation on a fluid mixture.
    *
-   * @param components fluid composition as JSON object
+   * @param components fluid composition as JSON object, E300 path, or E300 source object
    * @param temperature temperature value
    * @param temperatureUnit temperature unit
    * @param pressure pressure value
@@ -103,11 +106,14 @@ public class NeqSimTools {
   @Tool(description = "Run a thermodynamic flash calculation on a fluid mixture. "
       + "Computes phase equilibrium, densities, viscosities, heat capacities, "
       + "and component compositions for each phase present. "
-      + "Supports multiple equations of state and flash types.")
+      + "Supports multiple equations of state and flash types. "
+      + "The components argument can also be an E300 fluid source, for example "
+      + "{\"e300FilePath\": \"path/to/fluid.e300\"} or a direct .e300 path string.")
   public String runFlash(
       @ToolArg(description = "Fluid composition as JSON object mapping component names "
           + "to mole fractions, e.g. {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}. "
-          + "Use searchComponents tool to find valid names.") String components,
+          + "Alternatively provide {\"e300FilePath\": \"path/to/fluid.e300\"} or a direct .e300 "
+          + "path string. Use searchComponents tool to find valid names.") String components,
       @ToolArg(description = "Temperature value (number)") double temperature,
       @ToolArg(description = "Temperature unit: C, K, or F") String temperatureUnit,
       @ToolArg(description = "Pressure value (number)") double pressure,
@@ -115,8 +121,9 @@ public class NeqSimTools {
           description = "Pressure unit: bara, barg, Pa, kPa, MPa, psi, or atm") String pressureUnit,
       @ToolArg(description = "Equation of state: SRK (Soave-Redlich-Kwong, general purpose), "
           + "PR (Peng-Robinson), CPA (CPA-SRK for associating fluids like water/methanol/glycol), "
-          + "GERG2008 (high-accuracy natural gas), PCSAFT (PC-SAFT), "
-          + "UMRPRU (UMR-PRU with Mathias-Copeman)") String eos,
+          + "PR_LK (Peng-Robinson Lee-Kesler), GERG2008 (high-accuracy natural gas), "
+          + "PCSAFT (PC-SAFT), UMRPRU (UMR-PRU with Mathias-Copeman), or AUTO when the "
+          + "components argument is an E300 source") String eos,
       @ToolArg(description = "Flash type: TP (temperature-pressure, most common), "
           + "PH (pressure-enthalpy), PS (pressure-entropy), " + "TV (temperature-volume), "
           + "dewPointT (dew point T at given P), dewPointP (dew point P at given T), "
@@ -124,7 +131,7 @@ public class NeqSimTools {
           + "hydrateTP (hydrate equilibrium T at given P)") String flashType) {
     try {
       JsonObject json = new JsonObject();
-      json.add("components", JsonParser.parseString(components));
+      addFlashFluidSource(json, components);
 
       JsonObject temp = new JsonObject();
       temp.addProperty("value", temperature);
@@ -142,6 +149,56 @@ public class NeqSimTools {
       return withAutoValidation(FlashRunner.run(json.toString()), "flash");
     } catch (Exception e) {
       return errorJson("Flash calculation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a thermodynamic flash calculation using an Eclipse E300 fluid file as input.
+   *
+   * @param e300FilePath path to the Eclipse E300 fluid file
+   * @param temperature temperature value
+   * @param temperatureUnit temperature unit
+   * @param pressure pressure value
+   * @param pressureUnit pressure unit
+   * @param flashType type of flash calculation
+   * @return JSON string with phase equilibrium results
+   */
+  @Tool(description = "Run a thermodynamic flash calculation using an Eclipse E300 fluid file. "
+      + "The EOS, composition, pseudo-components, volume shifts, and BIPs are loaded from the "
+      + "file; temperature and pressure are applied from the tool arguments.")
+  public String runFlashFromE300(
+      @ToolArg(description = "Path to an Eclipse E300 fluid file, e.g. C:/models/fluid.e300")
+      String e300FilePath,
+      @ToolArg(description = "Temperature value (number)") double temperature,
+      @ToolArg(description = "Temperature unit: C, K, or F") String temperatureUnit,
+      @ToolArg(description = "Pressure value (number)") double pressure,
+      @ToolArg(
+          description = "Pressure unit: bara, barg, Pa, kPa, MPa, psi, or atm") String pressureUnit,
+      @ToolArg(description = "Flash type: TP (temperature-pressure, most common), "
+          + "PH (pressure-enthalpy), PS (pressure-entropy), TV (temperature-volume), "
+          + "dewPointT (dew point T at given P), dewPointP (dew point P at given T), "
+          + "bubblePointT (bubble point T at given P), bubblePointP (bubble point P at given T), "
+          + "hydrateTP (hydrate equilibrium T at given P)") String flashType) {
+    try {
+      JsonObject json = new JsonObject();
+      json.addProperty("e300FilePath", e300FilePath);
+
+      JsonObject temp = new JsonObject();
+      temp.addProperty("value", temperature);
+      temp.addProperty("unit", temperatureUnit);
+      json.add("temperature", temp);
+
+      JsonObject press = new JsonObject();
+      press.addProperty("value", pressure);
+      press.addProperty("unit", pressureUnit);
+      json.add("pressure", press);
+
+      json.addProperty("model", "AUTO");
+      json.addProperty("flashType", flashType);
+
+      return withAutoValidation(FlashRunner.run(json.toString()), "flash");
+    } catch (Exception e) {
+      return errorJson("E300 flash calculation failed: " + e.getMessage());
     }
   }
 
@@ -217,7 +274,7 @@ public class NeqSimTools {
    */
   @Tool(description = "Get an example JSON template for NeqSim tools. "
       + "Categories: flash (tp-simple-gas, tp-two-phase, dew-point-t, "
-      + "bubble-point-p, cpa-with-water), process (simple-separation, "
+      + "bubble-point-p, cpa-with-water, e300-file), process (simple-separation, "
       + "compression-with-cooling), validation (error-flash), "
       + "batch (temperature-sweep, pressure-sweep), "
       + "property-table (temperature-sweep, pressure-sweep), "
@@ -646,6 +703,67 @@ public class NeqSimTools {
     }
   }
 
+  /**
+   * Adds the fluid source represented by the runFlash components argument to a flash JSON object.
+   *
+   * @param json flash input object being built
+   * @param componentsOrSource component map JSON, E300 source JSON, or direct E300 file path
+   */
+  private static void addFlashFluidSource(JsonObject json, String componentsOrSource) {
+    String source = componentsOrSource == null ? "" : componentsOrSource.trim();
+    if (looksLikeE300Path(source)) {
+      json.addProperty("e300FilePath", source);
+      return;
+    }
+
+    JsonElement parsed = JsonParser.parseString(source);
+    if (parsed.isJsonPrimitive() && parsed.getAsJsonPrimitive().isString()
+        && looksLikeE300Path(parsed.getAsString())) {
+      json.addProperty("e300FilePath", parsed.getAsString());
+      return;
+    }
+
+    if (parsed.isJsonObject() && hasE300SourceKey(parsed.getAsJsonObject())) {
+      copyFlashSourceObject(json, parsed.getAsJsonObject());
+      return;
+    }
+
+    json.add("components", parsed);
+  }
+
+  /**
+   * Copies accepted top-level E300 source fields into a flash request object.
+   *
+   * @param target target flash input object
+   * @param source source object parsed from the components argument
+   */
+  private static void copyFlashSourceObject(JsonObject target, JsonObject source) {
+    for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+      target.add(entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
+   * Checks whether a JSON object has one of the supported E300 source keys.
+   *
+   * @param object JSON object to inspect
+   * @return true if the object contains an E300 file source key
+   */
+  private static boolean hasE300SourceKey(JsonObject object) {
+    return object.has("e300FilePath") || object.has("e300File") || object.has("fluidFilePath")
+        || object.has("fluidFile");
+  }
+
+  /**
+   * Checks whether a string looks like a direct Eclipse E300 file path.
+   *
+   * @param value text to inspect
+   * @return true if the value is a non-empty string ending in .e300
+   */
+  private static boolean looksLikeE300Path(String value) {
+    return value != null && value.trim().toLowerCase(Locale.ROOT).endsWith(".e300");
+  }
+
   private static String errorJson(String message) {
     JsonObject error = new JsonObject();
     error.addProperty("status", "error");
@@ -727,10 +845,12 @@ public class NeqSimTools {
       + "Supports: CME (constant mass expansion), CVD (constant volume depletion), "
       + "differentialLiberation, saturationPressure, saturationTemperature, "
       + "separatorTest, swellingTest, GOR (gas-oil ratio), and viscosity measurements. "
-      + "Requires fluid composition, experiment type, and conditions.")
+      + "Requires experiment type and conditions, plus either a component composition or "
+      + "an Eclipse E300 fluid file path.")
   public String runPVT(
-      @ToolArg(description = "JSON specification with: 'components' (composition map), "
-          + "'model' (SRK/PR/CPA), 'temperature_C' and 'pressure_bara' for the reservoir "
+      @ToolArg(description = "JSON specification with either 'components' (composition map) "
+          + "or 'e300FilePath' (Eclipse E300 fluid file), 'model' (SRK/PR/CPA or AUTO "
+          + "with E300), 'temperature_C' and 'pressure_bara' for the reservoir "
           + "conditions, 'experiment' (CME, CVD, differentialLiberation, saturationPressure, "
           + "saturationTemperature, separatorTest, swellingTest, GOR, viscosity), and "
           + "'experimentConfig' with experiment-specific parameters like 'pressures_bara' "

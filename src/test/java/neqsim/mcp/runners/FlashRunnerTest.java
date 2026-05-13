@@ -73,6 +73,37 @@ class FlashRunnerTest {
   }
 
   @Test
+  void testTPFlash_e300FilePath() {
+    String json = "{" + "\"model\": \"AUTO\"," + "\"flashType\": \"TP\","
+        + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+        + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
+        + "\"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\"" + "}";
+
+    String result = FlashRunner.run(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    JsonObject flash = root.getAsJsonObject("flash");
+    assertEquals("e300File", flash.get("fluidSource").getAsString());
+    assertFalse("AUTO".equals(flash.get("model").getAsString()));
+    assertTrue(flash.get("numberOfPhases").getAsInt() >= 1);
+  }
+
+  @Test
+  void testTPFlash_e300FilePathWithComponentsIgnoresComponents() {
+    String json = "{" + "\"model\": \"AUTO\"," + "\"flashType\": \"TP\","
+        + "\"temperature\": 298.15," + "\"pressure\": 50.0,"
+        + "\"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\","
+        + "\"components\": {\"metane\": 1.0}" + "}";
+
+    String result = FlashRunner.run(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertTrue(root.has("warnings"));
+  }
+
+  @Test
   void testTPFlash_twoPhase() {
     // Low pressure, near bubble - CH4/C3 should split into two phases at 10 bara, -20C
     String json =
@@ -255,6 +286,18 @@ class FlashRunnerTest {
   @Test
   void testUnknownModel() {
     String json = "{" + "\"model\": \"NONEXISTENT\"," + "\"components\": {\"methane\": 1.0}" + "}";
+
+    String result = FlashRunner.run(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("error", root.get("status").getAsString());
+    assertEquals("UNKNOWN_MODEL",
+        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+  }
+
+  @Test
+  void testAutoModelWithoutE300Fails() {
+    String json = "{" + "\"model\": \"AUTO\"," + "\"components\": {\"methane\": 1.0}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();

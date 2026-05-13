@@ -104,6 +104,19 @@ public final class ExampleCatalog {
         + "    \"water\": 0.15\n" + "  },\n" + "  \"mixingRule\": \"10\"\n" + "}";
   }
 
+  /**
+   * Returns a TP flash example that loads the fluid from an Eclipse E300 file.
+   *
+   * @return JSON string for FlashRunner.run()
+   */
+  public static String flashE300File() {
+    return "{\n" + "  \"model\": \"AUTO\",\n"
+        + "  \"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\",\n"
+        + "  \"temperature\": {\"value\": 25.0, \"unit\": \"C\"},\n"
+        + "  \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},\n" + "  \"flashType\": \"TP\"\n"
+        + "}";
+  }
+
   // ========== Process Examples ==========
 
   /**
@@ -268,6 +281,18 @@ public final class ExampleCatalog {
         + "  },\n" + "  \"experiment\": \"saturationPressure\"\n" + "}";
   }
 
+  /**
+   * Returns a saturation pressure experiment example using an Eclipse E300 fluid file.
+   *
+   * @return JSON string for PVTRunner.run()
+   */
+  public static String pvtE300SaturationPressure() {
+    return "{\n" + "  \"model\": \"AUTO\",\n"
+        + "  \"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\",\n"
+        + "  \"temperature_C\": 100.0,\n" + "  \"pressure_bara\": 200.0,\n"
+        + "  \"experiment\": \"saturationPressure\"\n" + "}";
+  }
+
   // ========== Flow Assurance Examples ==========
 
   /**
@@ -367,28 +392,19 @@ public final class ExampleCatalog {
    * @return JSON string for RootCauseRunner.run()
    */
   public static String rootCauseSeparatorLiquidCarryover() {
-    String processJson = processSimpleSeparation().replace("\\", "\\\\").replace("\"", "\\\"")
-        .replace("\n", "\\n");
-    return "{\n" + "  \"equipmentName\": \"HP Sep\",\n"
-        + "  \"symptom\": \"LIQUID_CARRYOVER\",\n" + "  \"processJson\": \"" + processJson
-        + "\",\n" + "  \"simulationEnabled\": true,\n"
+    String processJson =
+        processSimpleSeparation().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+    return "{\n" + "  \"equipmentName\": \"HP Sep\",\n" + "  \"symptom\": \"LIQUID_CARRYOVER\",\n"
+        + "  \"processJson\": \"" + processJson + "\",\n" + "  \"simulationEnabled\": true,\n"
         + "  \"historianCsv\": \"time,demisterDp,liquidLevel,gasOutFlow,"
-        + "feedFlow,inletTemperature\\n"
-        + "0,0.8,52.0,9200.0,10000.0,25.0\\n"
-        + "3600,1.2,58.0,9100.0,10500.0,25.5\\n"
-        + "7200,1.8,63.0,8800.0,11200.0,26.0\\n"
-        + "10800,2.5,68.0,8500.0,12000.0,26.5\\n"
-        + "14400,3.2,72.0,8200.0,12500.0,27.0\",\n"
-        + "  \"designLimits\": {\n"
-        + "    \"demisterDp\": [0.0, 2.5],\n"
-        + "    \"liquidLevel\": [20.0, 70.0],\n"
-        + "    \"gasOutFlow\": [0.0, 12000.0],\n"
-        + "    \"feedFlow\": [0.0, 11000.0]\n" + "  },\n"
-        + "  \"stidData\": {\n"
-        + "    \"designFeedRate_kg_hr\": \"10000\",\n"
-        + "    \"designLiquidLevel_pct\": \"50\",\n"
-        + "    \"demisterType\": \"wire_mesh\",\n"
-        + "    \"demisterMaxDp_mbar\": \"2.5\",\n"
+        + "feedFlow,inletTemperature\\n" + "0,0.8,52.0,9200.0,10000.0,25.0\\n"
+        + "3600,1.2,58.0,9100.0,10500.0,25.5\\n" + "7200,1.8,63.0,8800.0,11200.0,26.0\\n"
+        + "10800,2.5,68.0,8500.0,12000.0,26.5\\n" + "14400,3.2,72.0,8200.0,12500.0,27.0\",\n"
+        + "  \"designLimits\": {\n" + "    \"demisterDp\": [0.0, 2.5],\n"
+        + "    \"liquidLevel\": [20.0, 70.0],\n" + "    \"gasOutFlow\": [0.0, 12000.0],\n"
+        + "    \"feedFlow\": [0.0, 11000.0]\n" + "  },\n" + "  \"stidData\": {\n"
+        + "    \"designFeedRate_kg_hr\": \"10000\",\n" + "    \"designLiquidLevel_pct\": \"50\",\n"
+        + "    \"demisterType\": \"wire_mesh\",\n" + "    \"demisterMaxDp_mbar\": \"2.5\",\n"
         + "    \"lastInspectionDate\": \"2024-03-15\",\n"
         + "    \"tagreaderSource\": \"PI Web API tag mapping: "
         + "LT-2001.PV, PDT-2001.PV, FT-2002.PV, FT-2001.PV, TT-2001.PV\",\n"
@@ -406,27 +422,18 @@ public final class ExampleCatalog {
   public static String rootCauseHeatExchangerFouling() {
     return "{\n" + "  \"equipmentName\": \"Intercooler\",\n" + "  \"symptom\": \"FOULING\",\n"
         + "  \"processJson\": \""
-        + processCompressionWithCooling().replace("\\", "\\\\").replace("\"", "\\\"")
-            .replace("\n", "\\n")
+        + processCompressionWithCooling().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n",
+            "\\n")
         + "\",\n" + "  \"simulationEnabled\": true,\n"
-        + "  \"historianCsv\": \"time,outletTemp,inletTemp,coolantFlow,"
-        + "shellDp,tubeOutTemp\\n"
-        + "0,35.0,120.0,80000.0,0.35,32.0\\n"
-        + "86400,37.0,120.5,80000.0,0.40,33.0\\n"
-        + "172800,39.5,121.0,79500.0,0.48,34.5\\n"
-        + "259200,42.0,120.0,79000.0,0.55,36.0\\n"
-        + "345600,45.0,120.5,78500.0,0.63,38.0\\n"
-        + "432000,48.5,121.0,78000.0,0.72,40.0\",\n"
-        + "  \"designLimits\": {\n"
-        + "    \"outletTemp\": [0.0, 40.0],\n"
-        + "    \"shellDp\": [0.0, 0.5],\n"
-        + "    \"coolantFlow\": [70000.0, 90000.0]\n" + "  },\n"
-        + "  \"stidData\": {\n"
-        + "    \"designDuty_kW\": \"2500\",\n"
-        + "    \"designUA_W_K\": \"45000\",\n"
-        + "    \"designOutletTemp_C\": \"35\",\n"
-        + "    \"hxType\": \"shell-and-tube\",\n"
-        + "    \"temaClass\": \"R\",\n"
+        + "  \"historianCsv\": \"time,outletTemp,inletTemp,coolantFlow," + "shellDp,tubeOutTemp\\n"
+        + "0,35.0,120.0,80000.0,0.35,32.0\\n" + "86400,37.0,120.5,80000.0,0.40,33.0\\n"
+        + "172800,39.5,121.0,79500.0,0.48,34.5\\n" + "259200,42.0,120.0,79000.0,0.55,36.0\\n"
+        + "345600,45.0,120.5,78500.0,0.63,38.0\\n" + "432000,48.5,121.0,78000.0,0.72,40.0\",\n"
+        + "  \"designLimits\": {\n" + "    \"outletTemp\": [0.0, 40.0],\n"
+        + "    \"shellDp\": [0.0, 0.5],\n" + "    \"coolantFlow\": [70000.0, 90000.0]\n" + "  },\n"
+        + "  \"stidData\": {\n" + "    \"designDuty_kW\": \"2500\",\n"
+        + "    \"designUA_W_K\": \"45000\",\n" + "    \"designOutletTemp_C\": \"35\",\n"
+        + "    \"hxType\": \"shell-and-tube\",\n" + "    \"temaClass\": \"R\",\n"
         + "    \"lastCleaningDate\": \"2024-01-20\",\n"
         + "    \"designFoulingResistance_m2K_W\": \"0.00035\",\n"
         + "    \"tagreaderSource\": \"Aspen IP.21 tag mapping: "
@@ -467,52 +474,45 @@ public final class ExampleCatalog {
         + "      }\n" + "    }\n" + "  ]\n" + "}";
   }
 
-        // ========== Open Drain Review Examples ==========
+  // ========== Open Drain Review Examples ==========
 
-        /**
-         * Returns an open-drain review example based on normalized STID and tagreader evidence.
-         *
-         * @return JSON string for OpenDrainReviewRunner.run()
-         */
-        public static String openDrainReviewNorsokS001Stid() {
-          return "{\n" + "  \"projectName\": \"Synthetic open drain review\",\n"
-          + "  \"defaultLiquidLeakRateKgPerS\": 5.0,\n" + "  \"stidData\": {\n"
-          + "    \"openDrainAreas\": [\n" + "      {\n"
-          + "        \"areaId\": \"OD-PROCESS-001\",\n"
-          + "        \"areaType\": \"process hazardous area\",\n"
-          + "        \"drainSystemType\": \"hazardous open drain\",\n"
-          + "        \"sourceReferences\": [\"synthetic STID OD-001 rev.A\"],\n"
-          + "        \"standards\": [\"NORSOK S-001\", \"NORSOK P-002\", \"ISO 13702\"],\n"
-          + "        \"sourceHasFlammableOrHazardousLiquid\": true,\n"
-          + "        \"hasOpenDrainMeasures\": true,\n"
-          + "        \"drainageCapacityKgPerS\": 14.0,\n"
-          + "        \"fireWaterCapacityKgPerS\": 8.0,\n"
-          + "        \"liquidLeakRateKgPerS\": 5.0,\n"
-          + "        \"backflowPrevented\": true,\n"
-          + "        \"closedOpenDrainInteractionPrevented\": true,\n"
-          + "        \"hazardousNonHazardousPhysicallySeparated\": true,\n"
-          + "        \"sealDesignedForMaxBackpressure\": true,\n"
-          + "        \"ventTerminatedSafe\": true,\n"
-          + "        \"openDrainDependsOnUtility\": false,\n"
-          + "        \"tagreaderSource\": \"PI export: LS-OD-001.PV, PT-OD-001.PV\",\n"
-          + "        \"sumpHighLevelEvents\": 0.0,\n"
-          + "        \"observedBackflowEvents\": 0.0\n" + "      }\n" + "    ],\n"
-          + "    \"helideckDrains\": [\n" + "      {\n"
-          + "        \"areaId\": \"OD-HELIDECK\",\n"
-          + "        \"areaType\": \"helideck\",\n"
-          + "        \"dedicatedPipeDrainage\": true,\n"
-          + "        \"sourceHasFlammableOrHazardousLiquid\": true,\n"
-          + "        \"hasOpenDrainMeasures\": true,\n"
-          + "        \"drainageCapacityKgPerS\": 6.0,\n"
-          + "        \"fireWaterCapacityKgPerS\": 1.0,\n"
-          + "        \"liquidLeakRateKgPerS\": 0.5,\n"
-          + "        \"backflowPrevented\": true,\n"
-          + "        \"closedOpenDrainInteractionPrevented\": true,\n"
-          + "        \"hazardousNonHazardousPhysicallySeparated\": true,\n"
-          + "        \"sealDesignedForMaxBackpressure\": true,\n"
-          + "        \"ventTerminatedSafe\": true\n" + "      }\n" + "    ]\n" + "  }\n"
-          + "}";
-        }
+  /**
+   * Returns an open-drain review example based on normalized STID and tagreader evidence.
+   *
+   * @return JSON string for OpenDrainReviewRunner.run()
+   */
+  public static String openDrainReviewNorsokS001Stid() {
+    return "{\n" + "  \"projectName\": \"Synthetic open drain review\",\n"
+        + "  \"defaultLiquidLeakRateKgPerS\": 5.0,\n" + "  \"stidData\": {\n"
+        + "    \"openDrainAreas\": [\n" + "      {\n" + "        \"areaId\": \"OD-PROCESS-001\",\n"
+        + "        \"areaType\": \"process hazardous area\",\n"
+        + "        \"drainSystemType\": \"hazardous open drain\",\n"
+        + "        \"sourceReferences\": [\"synthetic STID OD-001 rev.A\"],\n"
+        + "        \"standards\": [\"NORSOK S-001\", \"NORSOK P-002\", \"ISO 13702\"],\n"
+        + "        \"sourceHasFlammableOrHazardousLiquid\": true,\n"
+        + "        \"hasOpenDrainMeasures\": true,\n"
+        + "        \"drainageCapacityKgPerS\": 14.0,\n"
+        + "        \"fireWaterCapacityKgPerS\": 8.0,\n" + "        \"liquidLeakRateKgPerS\": 5.0,\n"
+        + "        \"backflowPrevented\": true,\n"
+        + "        \"closedOpenDrainInteractionPrevented\": true,\n"
+        + "        \"hazardousNonHazardousPhysicallySeparated\": true,\n"
+        + "        \"sealDesignedForMaxBackpressure\": true,\n"
+        + "        \"ventTerminatedSafe\": true,\n"
+        + "        \"openDrainDependsOnUtility\": false,\n"
+        + "        \"tagreaderSource\": \"PI export: LS-OD-001.PV, PT-OD-001.PV\",\n"
+        + "        \"sumpHighLevelEvents\": 0.0,\n" + "        \"observedBackflowEvents\": 0.0\n"
+        + "      }\n" + "    ],\n" + "    \"helideckDrains\": [\n" + "      {\n"
+        + "        \"areaId\": \"OD-HELIDECK\",\n" + "        \"areaType\": \"helideck\",\n"
+        + "        \"dedicatedPipeDrainage\": true,\n"
+        + "        \"sourceHasFlammableOrHazardousLiquid\": true,\n"
+        + "        \"hasOpenDrainMeasures\": true,\n" + "        \"drainageCapacityKgPerS\": 6.0,\n"
+        + "        \"fireWaterCapacityKgPerS\": 1.0,\n" + "        \"liquidLeakRateKgPerS\": 0.5,\n"
+        + "        \"backflowPrevented\": true,\n"
+        + "        \"closedOpenDrainInteractionPrevented\": true,\n"
+        + "        \"hazardousNonHazardousPhysicallySeparated\": true,\n"
+        + "        \"sealDesignedForMaxBackpressure\": true,\n"
+        + "        \"ventTerminatedSafe\": true\n" + "      }\n" + "    ]\n" + "  }\n" + "}";
+  }
 
   // ========== NORSOK S-001 Clause 10 Review Examples ==========
 
@@ -523,20 +523,13 @@ public final class ExampleCatalog {
    * @return JSON string for NorsokS001Clause10ReviewRunner.run()
    */
   public static String norsokS001Clause10ProcessSafetySystem() {
-    return "{\n"
-        + "  \"projectName\": \"Synthetic NORSOK S-001 Clause 10 review\",\n"
-        + "  \"stidData\": {\n"
-        + "    \"processSafetyFunctions\": [\n"
-        + commonClause10Item("PSD-1001", "PSD", "V-100", true)
-        + ",\n"
-        + commonClause10Item("PSV-1001", "PSV", "V-100", false)
-        + ",\n"
-        + commonClause10Item("PAHH-1001", "ALARM", "V-100", false)
-        + ",\n"
+    return "{\n" + "  \"projectName\": \"Synthetic NORSOK S-001 Clause 10 review\",\n"
+        + "  \"stidData\": {\n" + "    \"processSafetyFunctions\": [\n"
+        + commonClause10Item("PSD-1001", "PSD", "V-100", true) + ",\n"
+        + commonClause10Item("PSV-1001", "PSV", "V-100", false) + ",\n"
+        + commonClause10Item("PAHH-1001", "ALARM", "V-100", false) + ",\n"
         + commonClause10Item("SIF-1001", "SECONDARY_PRESSURE_PROTECTION", "V-100", true)
-        + "\n    ]\n"
-        + "  }\n"
-        + "}";
+        + "\n    ]\n" + "  }\n" + "}";
   }
 
   /**
@@ -555,7 +548,8 @@ public final class ExampleCatalog {
     json.append("        \"functionId\": \"").append(functionId).append("\",\n");
     json.append("        \"functionType\": \"").append(functionType).append("\",\n");
     json.append("        \"equipmentTag\": \"").append(equipmentTag).append("\",\n");
-    json.append("        \"sourceReferences\": [\"synthetic C&E rev.A\", \"synthetic SRS rev.B\"],\n");
+    json.append(
+        "        \"sourceReferences\": [\"synthetic C&E rev.A\", \"synthetic SRS rev.B\"],\n");
     json.append("        \"hazidHazopLopaCompleted\": true,\n");
     json.append("        \"srsDefinesRequiredFunctions\": true,\n");
     json.append("        \"sisEsdFgsDesignImplemented\": true,\n");
@@ -1016,7 +1010,7 @@ public final class ExampleCatalog {
   public static List<String> getExampleNames(String category) {
     if ("flash".equals(category)) {
       return Arrays.asList("tp-simple-gas", "tp-two-phase", "dew-point-t", "bubble-point-p",
-          "cpa-with-water");
+          "cpa-with-water", "e300-file");
     } else if ("process".equals(category)) {
       return Arrays.asList("simple-separation", "compression-with-cooling");
     } else if ("validation".equals(category)) {
@@ -1028,7 +1022,7 @@ public final class ExampleCatalog {
     } else if ("phase-envelope".equals(category)) {
       return Arrays.asList("natural-gas");
     } else if ("pvt".equals(category)) {
-      return Arrays.asList("cme-oil", "saturation-pressure");
+      return Arrays.asList("cme-oil", "saturation-pressure", "e300-saturation-pressure");
     } else if ("flow-assurance".equals(category)) {
       return Arrays.asList("hydrate-risk");
     } else if ("standards".equals(category)) {
@@ -1038,8 +1032,7 @@ public final class ExampleCatalog {
     } else if ("water-hammer".equals(category)) {
       return Arrays.asList("valve-closure");
     } else if ("root-cause".equals(category)) {
-      return Arrays.asList("compressor-high-vibration", "separator-liquid-carryover",
-          "hx-fouling");
+      return Arrays.asList("compressor-high-vibration", "separator-liquid-carryover", "hx-fouling");
     } else if ("materials-review".equals(category)) {
       return Arrays.asList("stid-register");
     } else if ("open-drain-review".equals(category)) {
@@ -1090,6 +1083,9 @@ public final class ExampleCatalog {
       if ("cpa-with-water".equals(name)) {
         return flashCPAWithWater();
       }
+      if ("e300-file".equals(name)) {
+        return flashE300File();
+      }
     } else if ("process".equals(category)) {
       if ("simple-separation".equals(name)) {
         return processSimpleSeparation();
@@ -1125,6 +1121,9 @@ public final class ExampleCatalog {
       }
       if ("saturation-pressure".equals(name)) {
         return pvtSaturationPressure();
+      }
+      if ("e300-saturation-pressure".equals(name)) {
+        return pvtE300SaturationPressure();
       }
     } else if ("flow-assurance".equals(category)) {
       if ("hydrate-risk".equals(name)) {
@@ -1239,6 +1238,7 @@ public final class ExampleCatalog {
     flashExamples.put("dew-point-t", "Dew point temperature calculation for a 5-component gas");
     flashExamples.put("bubble-point-p", "Bubble point pressure for a CH4/n-C7 mixture using PR");
     flashExamples.put("cpa-with-water", "CPA model flash with water for hydrate-forming systems");
+    flashExamples.put("e300-file", "TP flash using an Eclipse E300 fluid file as input");
     catalog.put("flash", flashExamples);
 
     // Process examples
@@ -1278,6 +1278,8 @@ public final class ExampleCatalog {
     Map<String, String> pvtExamples = new LinkedHashMap<String, String>();
     pvtExamples.put("cme-oil", "Constant Mass Expansion on a 4-component oil at 100C");
     pvtExamples.put("saturation-pressure", "Saturation pressure calculation using PR EOS");
+    pvtExamples.put("e300-saturation-pressure",
+        "Saturation pressure calculation using an Eclipse E300 fluid file");
     catalog.put("pvt", pvtExamples);
 
     // Flow assurance examples
@@ -1321,7 +1323,7 @@ public final class ExampleCatalog {
     // Open-drain review examples
     Map<String, String> openDrainExamples = new LinkedHashMap<String, String>();
     openDrainExamples.put("norsok-s001-stid",
-      "NORSOK S-001 Clause 9 open-drain review from normalized STID and tagreader evidence");
+        "NORSOK S-001 Clause 9 open-drain review from normalized STID and tagreader evidence");
     catalog.put("open-drain-review", openDrainExamples);
 
     // Process safety system review examples

@@ -67,6 +67,31 @@ class ValidatorTest {
   }
 
   @Test
+  void testValidFlashWithE300FilePath() {
+    String json = "{" + "\"model\": \"AUTO\"," + "\"flashType\": \"TP\","
+        + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+        + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
+        + "\"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\"" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean());
+    assertFalse(hasIssueCode(root, "MISSING_COMPONENTS"));
+  }
+
+  @Test
+  void testAutoModelWithoutE300FilePathInvalid() {
+    String json = "{" + "\"model\": \"AUTO\"," + "\"components\": {\"methane\": 1.0}" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertFalse(root.get("valid").getAsBoolean());
+    assertTrue(hasIssueCode(root, "UNKNOWN_MODEL"));
+  }
+
+  @Test
   void testUnknownComponent_withSuggestion() {
     String json = "{\"components\": {\"metane\": 1.0}}";
 
@@ -174,6 +199,19 @@ class ValidatorTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertTrue(root.get("valid").getAsBoolean());
+  }
+
+  @Test
+  void testValidProcessWithE300FluidPath() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"AUTO\","
+        + "  \"e300FilePath\": \"src/test/java/neqsim/thermo/util/readwrite/fluid1.e300\"" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean());
+    assertFalse(hasIssueCode(root, "MISSING_COMPONENTS"));
   }
 
   @Test

@@ -61,6 +61,21 @@ class FlashRunnerTypedTest {
   }
 
   @Test
+  void testRunTyped_e300FilePath() {
+    FlashRequest request =
+        new FlashRequest().setModel("AUTO").setTemperature(new ValueWithUnit(25.0, "C"))
+            .setPressure(new ValueWithUnit(50.0, "bara")).setFlashType("TP")
+            .setE300FilePath("src/test/java/neqsim/thermo/util/readwrite/fluid1.e300");
+
+    ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
+
+    assertTrue(result.isSuccess());
+    assertNotNull(result.getData());
+    assertFalse("AUTO".equals(result.getData().getModel()));
+    assertTrue(result.getData().getNumberOfPhases() >= 1);
+  }
+
+  @Test
   void testRunTyped_unknownModel() {
     FlashRequest request = new FlashRequest().setModel("INVALID").addComponent("methane", 1.0);
 
@@ -89,6 +104,16 @@ class FlashRunnerTypedTest {
 
     assertFalse(result.isSuccess());
     assertEquals("MISSING_COMPONENTS", result.getErrors().get(0).getCode());
+  }
+
+  @Test
+  void testRunTyped_autoModelWithoutE300Fails() {
+    FlashRequest request = new FlashRequest().setModel("AUTO").addComponent("methane", 1.0);
+
+    ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
+
+    assertFalse(result.isSuccess());
+    assertEquals("UNKNOWN_MODEL", result.getErrors().get(0).getCode());
   }
 
   @Test

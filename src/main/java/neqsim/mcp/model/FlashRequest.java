@@ -8,15 +8,22 @@ import com.google.gson.JsonObject;
 /**
  * Typed request model for flash calculations.
  *
- * <p> Represents the input for a flash calculation with all parameters as typed fields. Supports
+ * <p>
+ * Represents the input for a flash calculation with all parameters as typed fields. Supports
  * deserialization from JSON via the {@link #fromJson(JsonObject)} factory, or direct construction
- * via the builder pattern. </p>
+ * via the builder pattern.
+ * </p>
  *
  * <h2>JSON format:</h2>
  *
  * <pre>{@code { "model": "SRK", "temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value":
  * 50.0, "unit": "bara"}, "flashType": "TP", "components": {"methane": 0.85, "ethane": 0.10,
  * "propane": 0.05}, "mixingRule": "classic" } }</pre>
+ *
+ * <p>
+ * Alternatively, use {@code e300FilePath} to load fluid composition and EOS parameters from an
+ * Eclipse E300 file.
+ * </p>
  *
  * @author Even Solbraa @version 1.0
  */
@@ -31,6 +38,9 @@ public class FlashRequest {
   private ValueWithUnit enthalpy;
   private ValueWithUnit entropy;
   private ValueWithUnit volume;
+  private String e300FilePath;
+  private boolean addWater;
+  private double waterKij;
 
   /**
    * Default constructor. Creates a request with default values (SRK, TP, 15C, 1 atm, classic).
@@ -42,6 +52,8 @@ public class FlashRequest {
     this.pressure = new ValueWithUnit(1.01325, "bara");
     this.mixingRule = "classic";
     this.components = new LinkedHashMap<String, Double>();
+    this.addWater = false;
+    this.waterKij = 0.5;
   }
 
   /**
@@ -84,6 +96,23 @@ public class FlashRequest {
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
         req.components.put(entry.getKey(), entry.getValue().getAsDouble());
       }
+    }
+
+    if (root.has("e300FilePath")) {
+      req.e300FilePath = root.get("e300FilePath").getAsString();
+    } else if (root.has("e300File")) {
+      req.e300FilePath = root.get("e300File").getAsString();
+    } else if (root.has("fluidFilePath")) {
+      req.e300FilePath = root.get("fluidFilePath").getAsString();
+    } else if (root.has("fluidFile")) {
+      req.e300FilePath = root.get("fluidFile").getAsString();
+    }
+
+    if (root.has("addWater")) {
+      req.addWater = root.get("addWater").getAsBoolean();
+    }
+    if (root.has("waterKij")) {
+      req.waterKij = root.get("waterKij").getAsDouble();
     }
 
     if (root.has("enthalpy")) {
@@ -288,6 +317,66 @@ public class FlashRequest {
    */
   public FlashRequest setVolume(ValueWithUnit volume) {
     this.volume = volume;
+    return this;
+  }
+
+  /**
+   * Gets the Eclipse E300 file path used as an alternate fluid source.
+   *
+   * @return the E300 file path, or null if components define the fluid
+   */
+  public String getE300FilePath() {
+    return e300FilePath;
+  }
+
+  /**
+   * Sets the Eclipse E300 file path used as an alternate fluid source.
+   *
+   * @param e300FilePath path to the E300 file
+   * @return this request for chaining
+   */
+  public FlashRequest setE300FilePath(String e300FilePath) {
+    this.e300FilePath = e300FilePath;
+    return this;
+  }
+
+  /**
+   * Gets whether a zero-fraction water component should be added to E300 fluids when absent.
+   *
+   * @return true if water should be added when absent
+   */
+  public boolean isAddWater() {
+    return addWater;
+  }
+
+  /**
+   * Sets whether a zero-fraction water component should be added to E300 fluids when absent.
+   *
+   * @param addWater true to add water when absent
+   * @return this request for chaining
+   */
+  public FlashRequest setAddWater(boolean addWater) {
+    this.addWater = addWater;
+    return this;
+  }
+
+  /**
+   * Gets the binary interaction parameter used when adding water to an E300 fluid.
+   *
+   * @return the water binary interaction parameter
+   */
+  public double getWaterKij() {
+    return waterKij;
+  }
+
+  /**
+   * Sets the binary interaction parameter used when adding water to an E300 fluid.
+   *
+   * @param waterKij binary interaction parameter for water against all existing components
+   * @return this request for chaining
+   */
+  public FlashRequest setWaterKij(double waterKij) {
+    this.waterKij = waterKij;
     return this;
   }
 }

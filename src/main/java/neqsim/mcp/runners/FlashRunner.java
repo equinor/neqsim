@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,9 +23,11 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemPrLeeKeslerEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
+import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -33,7 +36,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * Accepts a JSON string describing a fluid and flash specification, performs the flash calculation,
  * and returns a JSON string with the results including per-phase properties, compositions, and
- * conditions. Uses the same standard response envelope as the process simulation pipeline.
+ * conditions. Fluids can be specified either as a component map or as an Eclipse E300 file via
+ * {@code e300FilePath}. Uses the same standard response envelope as the process simulation
+ * pipeline.
  * </p>
  *
  * <h2>Supported Flash Types:</h2>
@@ -58,6 +63,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * "entropy": {"value": 100.0, "unit": "J/molK"}, "volume": {"value": 0.001, "unit": "m3/mol"} }
  * }</pre>
  *
+ * <p>
+ * E300 input format:
+ * </p>
+ *
+ * <pre>{@code { "e300FilePath": "path/to/fluid.e300", "temperature": {"value": 25.0,
+ * "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}, "flashType": "TP" } }</pre>
+ *
  * @author Even Solbraa @version 1.0
  */
 public class FlashRunner {
@@ -71,7 +83,10 @@ public class FlashRunner {
           "bubblePointTemperature", "bubblePointPressure"));
 
   private static final List<String> SUPPORTED_MODELS = Collections
-      .unmodifiableList(Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU"));
+      .unmodifiableList(Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU"));
+
+  private static final List<String> E300_SOURCE_KEYS = Collections
+      .unmodifiableList(Arrays.asList("e300FilePath", "e300File", "fluidFilePath", "fluidFile"));
 
   /**
    * Private constructor — all methods are static.
@@ -101,14 +116,21 @@ public class FlashRunner {
     long startTime = System.currentTimeMillis();
     List<String> warnings = new ArrayList<>();
 
-    // --- Parse model ---
-    String model = "SRK";
+    // --- Parse fluid source and model ---
+    String e300FilePath = getE300FilePath(input);
+    boolean e300Source = e300FilePath != null;
+
+    String model = e300Source ? "AUTO" : "SRK";
     if (input.has("model")) {
-      model = input.get("model").getAsString().toUpperCase();
+      model = normalizeModel(input.get("model").getAsString());
     }
-    if (!SUPPORTED_MODELS.contains(model)) {
+    if (!"AUTO".equals(model) && !SUPPORTED_MODELS.contains(model)) {
       return errorJson("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model,
-          "Use one of: " + SUPPORTED_MODELS);
+          "Use one of: " + SUPPORTED_MODELS + ", or AUTO with e300FilePath");
+    }
+    if ("AUTO".equals(model) && !e300Source) {
+      return errorJson("UNKNOWN_MODEL", "AUTO model can only be used with e300FilePath",
+          "Use a concrete model such as SRK or PR, or provide an E300 file path");
     }
 
     // --- Parse temperature ---
@@ -142,33 +164,42 @@ public class FlashRunner {
     }
     flashType = normalizeFlashType(flashType);
 
-    // --- Parse components ---
-    if (!input.has("components")) {
-      return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
-    }
-    JsonObject componentsJson = input.getAsJsonObject("components");
+    // --- Parse components unless an E300 file supplies the fluid ---
     Map<String, Double> components = new HashMap<>();
-    for (Map.Entry<String, JsonElement> entry : componentsJson.entrySet()) {
-      String name = entry.getKey();
-      if (!ComponentQuery.isValid(name)) {
-        String suggestion = ComponentQuery.closestMatch(name);
-        return errorJson("UNKNOWN_COMPONENT",
-            "Unknown component: '" + name + "'"
-                + (suggestion != null ? ". Did you mean '" + suggestion + "'?" : ""),
-            "Use ComponentQuery.search() to find valid component names");
-      }
-      components.put(name, entry.getValue().getAsDouble());
+    if (!e300Source && !input.has("components")) {
+      return errorJson("MISSING_COMPONENTS", "No 'components' specified",
+          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}, "
+              + "or provide e300FilePath");
     }
-    if (components.isEmpty()) {
+    if (!e300Source) {
+      JsonObject componentsJson = input.getAsJsonObject("components");
+      for (Map.Entry<String, JsonElement> entry : componentsJson.entrySet()) {
+        String name = entry.getKey();
+        if (!ComponentQuery.isValid(name)) {
+          String suggestion = ComponentQuery.closestMatch(name);
+          return errorJson("UNKNOWN_COMPONENT",
+              "Unknown component: '" + name + "'"
+                  + (suggestion != null ? ". Did you mean '" + suggestion + "'?" : ""),
+              "Use ComponentQuery.search() to find valid component names");
+        }
+        components.put(name, entry.getValue().getAsDouble());
+      }
+    } else if (input.has("components")) {
+      warnings.add("Ignoring components because e300FilePath supplies the fluid composition");
+    }
+    if (!e300Source && components.isEmpty()) {
       return errorJson("MISSING_COMPONENTS", "Components map is empty",
           "Provide at least one component");
     }
 
     // --- Parse mixing rule ---
-    String mixingRule = "classic";
+    String mixingRule = e300Source ? "E300" : "classic";
     if (input.has("mixingRule")) {
-      mixingRule = input.get("mixingRule").getAsString();
+      if (e300Source) {
+        warnings.add("Ignoring mixingRule because E300 files include mixing rules and BIPs");
+      } else {
+        mixingRule = input.get("mixingRule").getAsString();
+      }
     }
 
     // --- Parse optional flash specs ---
@@ -220,14 +251,22 @@ public class FlashRunner {
     // --- Create fluid ---
     SystemInterface fluid;
     try {
-      fluid = createFluid(model, temperatureK, pressureBara);
-      for (Map.Entry<String, Double> comp : components.entrySet()) {
-        fluid.addComponent(comp.getKey(), comp.getValue());
+      if (e300Source) {
+        fluid = readE300Fluid(e300FilePath, input);
+        fluid.setTemperature(temperatureK, "K");
+        fluid.setPressure(pressureBara, "bara");
+        model = inferModelName(fluid);
+      } else {
+        fluid = createFluid(model, temperatureK, pressureBara);
+        for (Map.Entry<String, Double> comp : components.entrySet()) {
+          fluid.addComponent(comp.getKey(), comp.getValue());
+        }
+        fluid.setMixingRule(mixingRule);
       }
-      fluid.setMixingRule(mixingRule);
     } catch (Exception e) {
       return errorJson("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
-          "Check component names and fluid parameters");
+          e300Source ? "Check that the E300 file path exists and can be read"
+              : "Check component names and fluid parameters");
     }
 
     // --- Run flash ---
@@ -301,6 +340,10 @@ public class FlashRunner {
       JsonObject meta = new JsonObject();
       meta.addProperty("model", model);
       meta.addProperty("flashType", flashType);
+      meta.addProperty("fluidSource", e300Source ? "e300File" : "components");
+      if (e300Source) {
+        meta.addProperty("e300FilePath", e300FilePath);
+      }
       meta.addProperty("numberOfPhases", fluid.getNumberOfPhases());
       JsonArray phaseNames = new JsonArray();
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
@@ -317,7 +360,7 @@ public class FlashRunner {
       // Provenance (trust metadata)
       ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
-      provenance.addValidationPassed("component_names_verified");
+      provenance.addValidationPassed(e300Source ? "e300_file_loaded" : "component_names_verified");
       provenance.addValidationPassed("flash_converged");
       result.add("provenance", GSON.toJsonTree(provenance));
 
@@ -513,6 +556,8 @@ public class FlashRunner {
         return new SystemSrkEos(temperatureK, pressureBara);
       case "PR":
         return new SystemPrEos(temperatureK, pressureBara);
+      case "PR_LK":
+        return new SystemPrLeeKeslerEos(temperatureK, pressureBara);
       case "CPA":
         return new SystemSrkCPAstatoil(temperatureK, pressureBara);
       case "GERG2008":
@@ -546,11 +591,19 @@ public class FlashRunner {
 
     List<String> warnings = new ArrayList<>();
 
-    // --- Validate model ---
-    String model = request.getModel() != null ? request.getModel().toUpperCase() : "SRK";
-    if (!SUPPORTED_MODELS.contains(model)) {
+    // --- Validate fluid source and model ---
+    String e300FilePath = request.getE300FilePath();
+    boolean e300Source = !isBlank(e300FilePath);
+
+    String model = request.getModel() != null ? normalizeModel(request.getModel())
+        : (e300Source ? "AUTO" : "SRK");
+    if (!"AUTO".equals(model) && !SUPPORTED_MODELS.contains(model)) {
       return ApiEnvelope.error("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model,
-          "Use one of: " + SUPPORTED_MODELS);
+          "Use one of: " + SUPPORTED_MODELS + ", or AUTO with e300FilePath");
+    }
+    if ("AUTO".equals(model) && !e300Source) {
+      return ApiEnvelope.error("UNKNOWN_MODEL", "AUTO model can only be used with e300FilePath",
+          "Use a concrete model such as SRK or PR, or provide an E300 file path");
     }
 
     // --- Convert temperature to Kelvin ---
@@ -574,24 +627,31 @@ public class FlashRunner {
           "Use one of: " + SUPPORTED_FLASH_TYPES);
     }
 
-    // --- Validate components ---
+    // --- Validate components unless an E300 file supplies the fluid ---
     Map<String, Double> components = request.getComponents();
-    if (components == null || components.isEmpty()) {
+    if (!e300Source && (components == null || components.isEmpty())) {
       return ApiEnvelope.error("MISSING_COMPONENTS", "No components specified",
-          "Add at least one component via addComponent()");
+          "Add at least one component via addComponent(), or set e300FilePath");
     }
-    for (Map.Entry<String, Double> entry : components.entrySet()) {
-      if (!ComponentQuery.isValid(entry.getKey())) {
-        String suggestion = ComponentQuery.closestMatch(entry.getKey());
-        return ApiEnvelope.error("UNKNOWN_COMPONENT",
-            "Unknown component: '" + entry.getKey() + "'"
-                + (suggestion != null ? ". Did you mean '" + suggestion + "'?" : ""),
-            "Use ComponentQuery.search() to find valid component names");
+    if (!e300Source) {
+      for (Map.Entry<String, Double> entry : components.entrySet()) {
+        if (!ComponentQuery.isValid(entry.getKey())) {
+          String suggestion = ComponentQuery.closestMatch(entry.getKey());
+          return ApiEnvelope.error("UNKNOWN_COMPONENT",
+              "Unknown component: '" + entry.getKey() + "'"
+                  + (suggestion != null ? ". Did you mean '" + suggestion + "'?" : ""),
+              "Use ComponentQuery.search() to find valid component names");
+        }
       }
+    } else if (components != null && !components.isEmpty()) {
+      warnings.add("Ignoring components because e300FilePath supplies the fluid composition");
     }
 
     // --- Parse mixing rule ---
     String mixingRule = request.getMixingRule() != null ? request.getMixingRule() : "classic";
+    if (e300Source) {
+      mixingRule = "E300";
+    }
 
     // --- Validate flash specs ---
     ValueWithUnit enthalpySpec = request.getEnthalpy();
@@ -601,14 +661,22 @@ public class FlashRunner {
     // --- Create fluid ---
     SystemInterface fluid;
     try {
-      fluid = createFluid(model, temperatureK, pressureBara);
-      for (Map.Entry<String, Double> comp : components.entrySet()) {
-        fluid.addComponent(comp.getKey(), comp.getValue());
+      if (e300Source) {
+        fluid = readE300Fluid(e300FilePath, request.isAddWater(), request.getWaterKij());
+        fluid.setTemperature(temperatureK, "K");
+        fluid.setPressure(pressureBara, "bara");
+        model = inferModelName(fluid);
+      } else {
+        fluid = createFluid(model, temperatureK, pressureBara);
+        for (Map.Entry<String, Double> comp : components.entrySet()) {
+          fluid.addComponent(comp.getKey(), comp.getValue());
+        }
+        fluid.setMixingRule(mixingRule);
       }
-      fluid.setMixingRule(mixingRule);
     } catch (Exception e) {
       return ApiEnvelope.error("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
-          "Check component names and fluid parameters");
+          e300Source ? "Check that the E300 file path exists and can be read"
+              : "Check component names and fluid parameters");
     }
 
     // --- Run flash ---
@@ -744,6 +812,121 @@ public class FlashRunner {
       default:
         return Double.NaN;
     }
+  }
+
+  /**
+   * Extracts an E300 fluid source path from a flash input object.
+   *
+   * @param input the parsed flash input JSON object
+   * @return the E300 file path, or null when no E300 source is present
+   */
+  static String getE300FilePath(JsonObject input) {
+    if (input == null) {
+      return null;
+    }
+    for (String key : E300_SOURCE_KEYS) {
+      if (input.has(key) && input.get(key).isJsonPrimitive()) {
+        String value = input.get(key).getAsString();
+        if (!isBlank(value)) {
+          return value.trim();
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Normalizes accepted model aliases to the internal model key.
+   *
+   * @param model the model string supplied by a caller
+   * @return normalized model key
+   */
+  static String normalizeModel(String model) {
+    if (model == null) {
+      return "SRK";
+    }
+    String normalized = model.trim().toUpperCase(Locale.ROOT);
+    if ("PR-LK".equals(normalized) || "PRLK".equals(normalized)) {
+      return "PR_LK";
+    }
+    return normalized;
+  }
+
+  /**
+   * Reads an E300 file according to optional JSON settings.
+   *
+   * @param e300FilePath path to the E300 file
+   * @param input the parsed flash input JSON object
+   * @return the populated fluid system
+   */
+  static SystemInterface readE300Fluid(String e300FilePath, JsonObject input) {
+    boolean addWater = input.has("addWater") && input.get("addWater").getAsBoolean();
+    double waterKij = input.has("waterKij") ? input.get("waterKij").getAsDouble() : 0.5;
+    return readE300Fluid(e300FilePath, addWater, waterKij);
+  }
+
+  /**
+   * Reads an E300 file into a NeqSim fluid system.
+   *
+   * @param e300FilePath path to the E300 file
+   * @param addWater whether to add a zero-fraction water component when absent
+   * @param waterKij binary interaction parameter to use for added water
+   * @return the populated fluid system
+   */
+  static SystemInterface readE300Fluid(String e300FilePath, boolean addWater,
+      double waterKij) {
+    if (isBlank(e300FilePath)) {
+      throw new IllegalArgumentException("E300 file path is empty");
+    }
+    if (addWater) {
+      return EclipseFluidReadWrite.read(e300FilePath.trim(), true, waterKij);
+    }
+    return EclipseFluidReadWrite.read(e300FilePath.trim());
+  }
+
+  /**
+   * Infers the user-facing model name from a NeqSim fluid implementation.
+   *
+   * @param fluid the fluid system
+   * @return model name suitable for MCP responses
+   */
+  static String inferModelName(SystemInterface fluid) {
+    if (fluid == null) {
+      return "UNKNOWN";
+    }
+    String className = fluid.getClass().getSimpleName().toLowerCase(Locale.ROOT);
+    if (className.contains("gerg")) {
+      return "GERG2008";
+    }
+    if (className.contains("pcsaft")) {
+      return "PCSAFT";
+    }
+    if (className.contains("umrpru")) {
+      return "UMRPRU";
+    }
+    if (className.contains("cpa")) {
+      return "CPA";
+    }
+    if (className.contains("leekes") || className.contains("leekesler")) {
+      return "PR_LK";
+    }
+    if (className.contains("pr")) {
+      return "PR";
+    }
+    if (className.contains("srk")) {
+      return "SRK";
+    }
+    return fluid.getClass().getSimpleName();
+  }
+
+  /**
+   * Checks whether a string is null or empty after trimming.
+   *
+   * @param value the value to check
+   * @return true if the value is null or trim-empty
+   */
+  private static boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty();
   }
 
   /**

@@ -60,8 +60,8 @@ public class Validator {
   /** Composition sum tolerance for warnings. */
   private static final double COMP_SUM_TOLERANCE = 0.01;
 
-  private static final Set<String> KNOWN_MODELS = Collections.unmodifiableSet(
-      new HashSet<String>(Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU")));
+  private static final Set<String> KNOWN_MODELS = Collections.unmodifiableSet(new HashSet<String>(
+      Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU")));
 
   private static final Set<String> KNOWN_FLASH_TYPES =
       Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("TP", "PH", "PS", "TV",
@@ -184,14 +184,25 @@ public class Validator {
    * @param issues the issue list to populate
    */
   private static void validateFlashDefinition(JsonObject root, List<Issue> issues) {
+    String e300FilePath = FlashRunner.getE300FilePath(root);
+    boolean hasE300File = e300FilePath != null;
+
     // Model
     if (root.has("model")) {
-      String model = root.get("model").getAsString().toUpperCase();
-      if (!KNOWN_MODELS.contains(model)) {
+      String model = FlashRunner.normalizeModel(root.get("model").getAsString());
+      if ("AUTO".equals(model) && !hasE300File) {
+        issues.add(Issue.error("UNKNOWN_MODEL", "AUTO model can only be used with e300FilePath",
+            "Use a concrete model such as SRK or PR, or provide an E300 file path"));
+      } else if (!"AUTO".equals(model) && !KNOWN_MODELS.contains(model)) {
         issues.add(Issue.error("UNKNOWN_MODEL",
             "Unknown thermodynamic model: " + root.get("model").getAsString(),
-            "Use one of: " + KNOWN_MODELS));
+            "Use one of: " + KNOWN_MODELS + ", or AUTO with e300FilePath"));
       }
+    }
+
+    if (hasE300File && e300FilePath.trim().isEmpty()) {
+      issues.add(Issue.error("INVALID_E300_FILE", "E300 file path is empty",
+          "Provide a non-empty e300FilePath value"));
     }
 
     // Flash type
@@ -223,12 +234,21 @@ public class Validator {
     // Pressure
     validatePressure(root, issues);
 
-    // Components (required for flash)
-    if (!root.has("components")) {
+    // Components (required unless an E300 file supplies the fluid)
+    if (!hasE300File && !root.has("components")) {
       issues.add(Issue.error("MISSING_COMPONENTS", "No 'components' specified",
-          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}"));
+          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}, "
+              + "or provide e300FilePath"));
     } else {
-      validateComponents(root.getAsJsonObject("components"), issues);
+      if (root.has("components")) {
+        if (hasE300File) {
+          issues.add(
+              Issue.warning("COMPONENTS_IGNORED", "Both components and e300FilePath are present",
+                  "The E300 file composition will be used for the flash calculation"));
+        } else {
+          validateComponents(root.getAsJsonObject("components"), issues);
+        }
+      }
     }
   }
 
@@ -318,20 +338,31 @@ public class Validator {
    * @param issues the issue list to populate
    */
   private static void validateFluidBlock(JsonObject fluidDef, List<Issue> issues) {
+    boolean hasE300File = FlashRunner.getE300FilePath(fluidDef) != null;
+
     if (fluidDef.has("model")) {
-      String model = fluidDef.get("model").getAsString().toUpperCase();
-      if (!KNOWN_MODELS.contains(model)) {
+      String model = FlashRunner.normalizeModel(fluidDef.get("model").getAsString());
+      if ("AUTO".equals(model) && !hasE300File) {
+        issues.add(Issue.error("UNKNOWN_MODEL", "AUTO model can only be used with e300FilePath",
+            "Use a concrete model such as SRK or PR, or provide an E300 file path"));
+      } else if (!"AUTO".equals(model) && !KNOWN_MODELS.contains(model)) {
         issues.add(Issue.error("UNKNOWN_MODEL",
             "Unknown thermodynamic model in fluid: " + fluidDef.get("model").getAsString(),
-            "Use one of: " + KNOWN_MODELS));
+            "Use one of: " + KNOWN_MODELS + ", or AUTO with e300FilePath"));
       }
     }
 
     if (fluidDef.has("components")) {
-      validateComponents(fluidDef.getAsJsonObject("components"), issues);
-    } else {
+      if (hasE300File) {
+        issues.add(
+            Issue.warning("COMPONENTS_IGNORED", "Fluid block has both components and e300FilePath",
+                "The E300 file composition will be used for the process fluid"));
+      } else {
+        validateComponents(fluidDef.getAsJsonObject("components"), issues);
+      }
+    } else if (!hasE300File) {
       issues.add(Issue.error("MISSING_COMPONENTS", "Fluid block has no 'components'",
-          "Add a components map to the fluid definition"));
+          "Add a components map to the fluid definition, or provide e300FilePath"));
     }
   }
 

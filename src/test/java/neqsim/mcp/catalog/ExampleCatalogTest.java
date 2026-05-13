@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
 import neqsim.mcp.runners.OpenDrainReviewRunner;
+import neqsim.mcp.runners.PVTRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.Validator;
@@ -70,6 +71,24 @@ class ExampleCatalogTest {
   }
 
   @Test
+  void testFlashE300File_runsSuccessfully() {
+    String result = FlashRunner.run(ExampleCatalog.flashE300File());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertEquals("e300File", root.getAsJsonObject("flash").get("fluidSource").getAsString());
+  }
+
+  @Test
+  void testPvtE300File_runsSuccessfully() {
+    String result = PVTRunner.run(ExampleCatalog.pvtE300SaturationPressure());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertEquals("e300File", root.get("fluidSource").getAsString());
+  }
+
+  @Test
   void testProcessSimpleSeparation_runsSuccessfully() {
     String result = ProcessRunner.run(ExampleCatalog.processSimpleSeparation());
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -113,15 +132,20 @@ class ExampleCatalogTest {
   @Test
   void testGetExampleNames() {
     List<String> flashExamples = ExampleCatalog.getExampleNames("flash");
-    assertEquals(5, flashExamples.size());
+    assertEquals(6, flashExamples.size());
     assertTrue(flashExamples.contains("tp-simple-gas"));
+    assertTrue(flashExamples.contains("e300-file"));
+
+    List<String> pvtExamples = ExampleCatalog.getExampleNames("pvt");
+    assertEquals(3, pvtExamples.size());
+    assertTrue(pvtExamples.contains("e300-saturation-pressure"));
 
     List<String> processExamples = ExampleCatalog.getExampleNames("process");
     assertEquals(2, processExamples.size());
     assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
     assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
-    assertTrue(ExampleCatalog.getExampleNames("process-safety-review")
-      .contains("norsok-s001-clause10"));
+    assertTrue(
+        ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));
 
     List<String> unknown = ExampleCatalog.getExampleNames("unknown");
     assertTrue(unknown.isEmpty());

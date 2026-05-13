@@ -32,7 +32,11 @@ class SchemaCatalogTest {
     assertTrue(props.has("pressure"));
     assertTrue(props.has("flashType"));
     assertTrue(props.has("components"));
+    assertTrue(props.has("e300FilePath"));
+    assertTrue(props.has("addWater"));
+    assertTrue(props.has("waterKij"));
     assertTrue(props.has("mixingRule"));
+    assertTrue(root.has("anyOf"));
   }
 
   @Test
@@ -46,6 +50,20 @@ class SchemaCatalogTest {
     assertTrue(props.has("status"));
     assertTrue(props.has("flash"));
     assertTrue(props.has("fluid"));
+  }
+
+  @Test
+  void testPvtInputSchema_acceptsE300FilePath() {
+    String schema = SchemaCatalog.pvtInputSchema();
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+
+    assertEquals("PVTInput", root.get("title").getAsString());
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("components"));
+    assertTrue(props.has("e300FilePath"));
+    assertTrue(props.has("addWater"));
+    assertTrue(props.has("waterKij"));
+    assertTrue(root.has("anyOf"));
   }
 
   @Test

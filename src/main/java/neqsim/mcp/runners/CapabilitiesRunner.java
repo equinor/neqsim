@@ -62,6 +62,7 @@ public class CapabilitiesRunner {
         toJsonArray(
             Arrays.asList("SRK — Soave-Redlich-Kwong (general purpose, hydrocarbons + inorganics)",
                 "PR — Peng-Robinson (general purpose, slightly better liquid density)",
+                "PR_LK — Peng-Robinson with Lee-Kesler alpha for commercial-simulator matching",
                 "CPA — CPA-SRK for associating fluids (water, methanol, glycols, MEG)",
                 "GERG2008 — High-accuracy reference EOS for natural gas (ISO 20765)",
                 "PCSAFT — PC-SAFT for polymers and complex molecules",
@@ -75,6 +76,8 @@ public class CapabilitiesRunner {
             "bubblePointP — Bubble point pressure at given temperature",
             "hydrateTP — Hydrate equilibrium temperature at given pressure")));
     thermo.addProperty("componentCount", "150+ pure components in database");
+    thermo.addProperty("fluidFileInput",
+        "runFlash, runPVT, and runProcess can load Eclipse E300 fluid files via e300FilePath");
     thermo.add("specialSystems",
         toJsonArray(Arrays.asList("Hydrate prediction (sI, sII, sH structures)",
             "Wax appearance temperature (WAT)", "Asphaltene onset pressure",
@@ -117,12 +120,13 @@ public class CapabilitiesRunner {
     // --- Calculation Modes ---
     JsonObject modes = new JsonObject();
     modes.add("available", toJsonArray(Arrays.asList(
-        "runFlash — Single flash calculation (9 flash types x 6 EOS)",
+        "runFlash — Single flash calculation (9 flash types, component maps or E300 files)",
+        "runFlashFromE300 — Flash calculation using an Eclipse E300 fluid file",
         "runBatch — Multiple flash calculations in one call (sensitivity studies)",
         "runProcess — Full process simulation from JSON",
         "getPropertyTable — Sweep T or P and get property table",
         "getPhaseEnvelope — Calculate PT phase envelope",
-        "runPVT — PVT laboratory experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity)",
+        "runPVT — PVT laboratory experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity; component maps or E300 files)",
         "runFlowAssurance — Flow assurance analysis (hydrate, wax, asphaltene, corrosion, erosion, cooldown)",
         "runMaterialsReview — Process-wide material selection, degradation, CUI, and remaining-life review",
         "runOpenDrainReview — NORSOK S-001 Clause 9 open-drain review from normalized STID/P&ID and optional tagreader evidence",
@@ -157,7 +161,7 @@ public class CapabilitiesRunner {
         "Oil processing (separation, stabilization)", "CO2 capture, transport, and storage (CCS)",
         "Hydrogen systems (blending, electrolysis, transport)",
         "Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, pipeline hydraulics)",
-        "PVT analysis (CME, CVD, differential liberation, separator test, swelling, GOR, viscosity)",
+        "PVT analysis (CME, CVD, differential liberation, separator test, swelling, GOR, viscosity; component maps or E300 files)",
         "Gas/oil quality standards (ISO 6976, AGA 3, GPA 2145, EN 16726, ASTM tests)",
         "Pipeline design (multiphase flow, pressure drop, flow regime, liquid holdup)",
         "Reservoir simulation (material balance, depletion, production forecasting)",

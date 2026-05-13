@@ -64,6 +64,7 @@ public final class BenchmarkTrust {
 
     JsonObject tools = new JsonObject();
     tools.add("runFlash", buildFlashTrust());
+    tools.add("runFlashFromE300", buildFlashTrust());
     tools.add("runProcess", buildProcessTrust());
     tools.add("runPVT", buildPVTTrust());
     tools.add("runFlowAssurance", buildFlowAssuranceTrust());
@@ -99,6 +100,7 @@ public final class BenchmarkTrust {
 
     switch (toolName) {
       case "runFlash":
+      case "runFlashFromE300":
         root.add("trust", buildFlashTrust());
         break;
       case "runProcess":

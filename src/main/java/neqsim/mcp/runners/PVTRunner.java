@@ -1,9 +1,11 @@
 package neqsim.mcp.runners;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,6 +27,7 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemPrLeeKeslerEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
@@ -50,6 +53,10 @@ public class PVTRunner {
       .unmodifiableList(Arrays.asList("CME", "CVD", "differentialLiberation", "saturationPressure",
           "saturationTemperature", "separatorTest", "swellingTest", "GOR", "viscosity"));
 
+  private static final List<String> SUPPORTED_MODELS = Collections
+      .unmodifiableList(Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT",
+          "UMRPRU"));
+
   /**
    * Private constructor — all methods are static.
    */
@@ -73,7 +80,8 @@ public class PVTRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a valid JSON PVT specification with 'experiment', 'components', etc.");
+          "Provide a valid JSON PVT specification with 'experiment' and either 'components' "
+              + "or 'e300FilePath'.");
     }
 
     JsonObject input;
@@ -85,6 +93,7 @@ public class PVTRunner {
     }
 
     long startTime = System.currentTimeMillis();
+    List<String> warnings = new ArrayList<String>();
 
     // --- Parse experiment type ---
     if (!input.has("experiment")) {
@@ -97,63 +106,94 @@ public class PVTRunner {
           "Use one of: " + SUPPORTED_EXPERIMENTS);
     }
 
-    // --- Parse model ---
-    String model = input.has("model") ? input.get("model").getAsString().toUpperCase() : "SRK";
+    // --- Parse fluid source and model ---
+    String e300FilePath = FlashRunner.getE300FilePath(input);
+    boolean e300Source = e300FilePath != null;
+
+    String model = e300Source ? "AUTO" : "SRK";
+    if (input.has("model")) {
+      model = FlashRunner.normalizeModel(input.get("model").getAsString());
+    }
+    if (!"AUTO".equals(model) && !SUPPORTED_MODELS.contains(model)) {
+      return errorJson("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model,
+          "Use one of: " + SUPPORTED_MODELS + ", or AUTO with e300FilePath");
+    }
+    if ("AUTO".equals(model) && !e300Source) {
+      return errorJson("UNKNOWN_MODEL", "AUTO model can only be used with e300FilePath",
+          "Use a concrete model such as SRK or PR, or provide an E300 file path");
+    }
 
     // --- Parse temperature ---
-    double temperatureK = 373.15;
-    if (input.has("temperature")) {
-      temperatureK = parseTemperature(input.get("temperature"));
-    }
+    double temperatureK = parseTemperatureFromInput(input, 373.15);
 
     // --- Parse pressure ---
-    double pressureBara = 100.0;
-    if (input.has("pressure")) {
-      pressureBara = parsePressure(input.get("pressure"));
+    double pressureBara = parsePressureFromInput(input, 100.0);
+
+    // --- Parse components unless an E300 file supplies the fluid ---
+    Map<String, Double> components = new HashMap<String, Double>();
+    if (!e300Source && !input.has("components")) {
+      return errorJson("MISSING_COMPONENTS", "No 'components' specified",
+          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}, "
+              + "or provide e300FilePath");
+    }
+    if (!e300Source) {
+      JsonObject componentsJson = input.getAsJsonObject("components");
+      for (Map.Entry<String, JsonElement> entry : componentsJson.entrySet()) {
+        components.put(entry.getKey(), entry.getValue().getAsDouble());
+      }
+    } else if (input.has("components")) {
+      warnings.add("Ignoring components because e300FilePath supplies the fluid composition");
+    }
+    if (!e300Source && components.isEmpty()) {
+      return errorJson("MISSING_COMPONENTS", "Components map is empty",
+          "Provide at least one component");
     }
 
-    // --- Parse components ---
-    if (!input.has("components")) {
-      return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
-    }
-    JsonObject componentsJson = input.getAsJsonObject("components");
-    Map<String, Double> components = new HashMap<>();
-    for (Map.Entry<String, JsonElement> entry : componentsJson.entrySet()) {
-      components.put(entry.getKey(), entry.getValue().getAsDouble());
+    // --- Parse mixing rule ---
+    String mixingRule = e300Source ? "E300" : "classic";
+    if (input.has("mixingRule")) {
+      if (e300Source) {
+        warnings.add("Ignoring mixingRule because E300 files include mixing rules and BIPs");
+      } else {
+        mixingRule = input.get("mixingRule").getAsString();
+      }
     }
 
     // --- Create fluid ---
     SystemInterface fluid;
     try {
-      fluid = createFluid(model, temperatureK, pressureBara);
-      for (Map.Entry<String, Double> comp : components.entrySet()) {
-        fluid.addComponent(comp.getKey(), comp.getValue());
+      if (e300Source) {
+        fluid = FlashRunner.readE300Fluid(e300FilePath, input);
+        fluid.setTemperature(temperatureK, "K");
+        fluid.setPressure(pressureBara, "bara");
+        model = FlashRunner.inferModelName(fluid);
+      } else {
+        fluid = createFluid(model, temperatureK, pressureBara);
+        for (Map.Entry<String, Double> comp : components.entrySet()) {
+          fluid.addComponent(comp.getKey(), comp.getValue());
+        }
+        fluid.setMixingRule(mixingRule);
       }
-      String mixingRule =
-          input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
-      fluid.setMixingRule(mixingRule);
       fluid.setMultiPhaseCheck(true);
     } catch (Exception e) {
       return errorJson("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
-          "Check component names and compositions");
+          e300Source ? "Check that the E300 file path exists and can be read"
+              : "Check component names and compositions");
     }
 
     // --- Parse pressures array ---
-    double[] pressures = null;
-    if (input.has("pressures")) {
-      JsonArray pArr = input.getAsJsonArray("pressures");
-      pressures = new double[pArr.size()];
-      for (int i = 0; i < pArr.size(); i++) {
-        pressures[i] = pArr.get(i).getAsDouble();
-      }
-    }
+    double[] pressures = parsePressures(input);
 
     // --- Run experiment ---
     try {
       JsonObject result = new JsonObject();
       result.addProperty("status", "success");
       result.addProperty("experiment", experiment);
+      result.addProperty("model", model);
+      result.addProperty("fluidSource", e300Source ? "e300File" : "components");
+      if (e300Source) {
+        result.addProperty("e300FilePath", e300FilePath);
+      }
 
       JsonObject data;
       switch (experiment) {
@@ -193,10 +233,20 @@ public class PVTRunner {
       // Provenance
       ResultProvenance provenance = new ResultProvenance();
       provenance.setThermodynamicModel(model);
+      provenance.setMixingRule(mixingRule);
       provenance.setCalculationType("PVT " + experiment);
       provenance.setConverged(true);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      provenance.addValidationPassed(e300Source ? "e300_file_loaded" : "component_map_loaded");
       result.add("provenance", GSON.toJsonTree(provenance));
+
+      if (!warnings.isEmpty()) {
+        JsonArray warnArray = new JsonArray();
+        for (String warning : warnings) {
+          warnArray.add(warning);
+        }
+        result.add("warnings", warnArray);
+      }
 
       return GSON.toJson(result);
     } catch (Exception e) {
@@ -465,9 +515,11 @@ public class PVTRunner {
    * @return the fluid system
    */
   private static SystemInterface createFluid(String model, double tempK, double pBara) {
-    switch (model.toUpperCase()) {
+    switch (model.toUpperCase(Locale.ROOT)) {
       case "PR":
         return new SystemPrEos(tempK, pBara);
+      case "PR_LK":
+        return new SystemPrLeeKeslerEos(tempK, pBara);
       case "CPA":
         return new SystemSrkCPAstatoil(tempK, pBara);
       case "GERG2008":
@@ -505,6 +557,26 @@ public class PVTRunner {
   }
 
   /**
+   * Parses the reservoir temperature from supported PVT input fields.
+   *
+   * @param input the parsed PVT input object
+   * @param defaultTemperatureK default temperature in Kelvin
+   * @return temperature in Kelvin
+   */
+  private static double parseTemperatureFromInput(JsonObject input, double defaultTemperatureK) {
+    if (input.has("temperature")) {
+      return parseTemperature(input.get("temperature"));
+    }
+    if (input.has("temperature_C")) {
+      return input.get("temperature_C").getAsDouble() + 273.15;
+    }
+    if (input.has("temperature_K")) {
+      return input.get("temperature_K").getAsDouble();
+    }
+    return defaultTemperatureK;
+  }
+
+  /**
    * Parses a pressure specification from JSON.
    *
    * @param element the JSON element (number in bara or object with value/unit)
@@ -533,6 +605,60 @@ public class PVTRunner {
       default:
         return value;
     }
+  }
+
+  /**
+   * Parses the reservoir pressure from supported PVT input fields.
+   *
+   * @param input the parsed PVT input object
+   * @param defaultPressureBara default pressure in bara
+   * @return pressure in bara
+   */
+  private static double parsePressureFromInput(JsonObject input, double defaultPressureBara) {
+    if (input.has("pressure")) {
+      return parsePressure(input.get("pressure"));
+    }
+    if (input.has("pressure_bara")) {
+      return input.get("pressure_bara").getAsDouble();
+    }
+    return defaultPressureBara;
+  }
+
+  /**
+   * Parses pressure steps from top-level fields or experimentConfig.
+   *
+   * @param input the parsed PVT input object
+   * @return pressure steps in bara, or null when not supplied
+   */
+  private static double[] parsePressures(JsonObject input) {
+    JsonArray pressureArray = null;
+    if (input.has("pressures")) {
+      pressureArray = input.getAsJsonArray("pressures");
+    } else if (input.has("pressures_bara")) {
+      pressureArray = input.getAsJsonArray("pressures_bara");
+    } else if (input.has("experimentConfig") && input.get("experimentConfig").isJsonObject()) {
+      JsonObject config = input.getAsJsonObject("experimentConfig");
+      if (config.has("pressures_bara")) {
+        pressureArray = config.getAsJsonArray("pressures_bara");
+      } else if (config.has("pressures")) {
+        pressureArray = config.getAsJsonArray("pressures");
+      }
+    }
+    return pressureArray == null ? null : toDoubleArray(pressureArray);
+  }
+
+  /**
+   * Converts a JSON array to a primitive double array.
+   *
+   * @param values JSON array with numeric values
+   * @return primitive double array with the same values
+   */
+  private static double[] toDoubleArray(JsonArray values) {
+    double[] array = new double[values.size()];
+    for (int i = 0; i < values.size(); i++) {
+      array[i] = values.get(i).getAsDouble();
+    }
+    return array;
   }
 
   /**

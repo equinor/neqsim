@@ -32,8 +32,9 @@ benchmark trust metadata.
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlash` | CALCULATION | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
+| `runFlashFromE300` | CALCULATION | v1.5 | Flash calculation using an Eclipse E300 fluid file |
 | `runProcess` | CALCULATION | v1.0 | ProcessSystem or ProcessModel simulation from JSON definition |
-| `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
+| `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity; component maps or E300 files) |
 | `runPipeline` | CALCULATION | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
 | `calculateStandard` | CALCULATION | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
 | `getPropertyTable` | CALCULATION | v1.0 | Property table across T or P range |
@@ -248,7 +249,7 @@ on tool availability, validation behavior, and execution permissions.
 | `DESKTOP_ENGINEER` | Full access for individual engineering work | Core + Advanced + Experimental (all tiers, labeled) | On by default |
 | `STUDY_TEAM` | Collaborative team environment | Core + Advanced (no PLATFORM) | Enforced |
 | `DIGITAL_TWIN` | Advisory-only for live operations | ADVISORY + CALCULATION only; no plant control, no write-back, no autonomous execution | Enforced |
-| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (21 tools) | Enforced, approval gates on EXECUTION |
+| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (22 tools) | Enforced, approval gates on EXECUTION |
 
 **ENTERPRISE** constraints:
 
@@ -300,7 +301,7 @@ requirements.
 
 ### Industrial Core Toolset
 
-These 21 tools form the approved industrial subset for governed deployments.
+These 22 tools form the approved industrial subset for governed deployments.
 The industrial core toolset represents tools intended for controlled engineering use.
 These tools vary in validation maturity and should be interpreted according to their
 benchmark trust metadata.
@@ -309,7 +310,7 @@ Each has documented validation basis, known accuracy bounds, and clear
 error/warning behavior:
 
 ```
-runFlash, runProcess, runPVT, runPipeline, calculateStandard,
+runFlash, runFlashFromE300, runProcess, runPVT, runPipeline, calculateStandard,
 getPropertyTable, getPhaseEnvelope, validateInput, validateResults,
 searchComponents, getCapabilities, getExample, getSchema,
 getBenchmarkTrust, checkToolAccess, manageIndustrialProfile,

@@ -54,8 +54,10 @@ public final class SchemaCatalog {
     // model
     Map<String, Object> model = new LinkedHashMap<String, Object>();
     model.put("type", "string");
-    model.put("description", "Thermodynamic model to use");
-    model.put("enum", Arrays.asList("SRK", "PR", "CPA", "GERG2008", "PCSAFT", "UMRPRU"));
+    model.put("description",
+        "Thermodynamic model to use. Use AUTO with e300FilePath to use the EOS in the file.");
+    model.put("enum",
+        Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU", "AUTO"));
     model.put("default", "SRK");
     properties.put("model", model);
 
@@ -89,6 +91,13 @@ public final class SchemaCatalog {
     components.put("additionalProperties", addProps);
     properties.put("components", components);
 
+    properties.put("e300FilePath",
+        stringProp("Path to an Eclipse E300 fluid file. Alternative to components."));
+    properties.put("addWater",
+        boolProp("When using e300FilePath, add zero-fraction water if absent."));
+    properties.put("waterKij",
+        numberProp("Binary interaction parameter to use when addWater is true."));
+
     // mixingRule
     Map<String, Object> mixingRule = new LinkedHashMap<String, Object>();
     mixingRule.put("type", "string");
@@ -105,7 +114,8 @@ public final class SchemaCatalog {
         Arrays.asList("m3/mol", "m3", "L"), "m3/mol"));
 
     schema.put("properties", properties);
-    schema.put("required", Arrays.asList("components"));
+    schema.put("anyOf",
+        Arrays.asList(requiredSchema("components"), requiredSchema("e300FilePath")));
 
     return GSON.toJson(schema);
   }
@@ -714,12 +724,14 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "PVTInput");
-    schema.put("description", "Input for PVT experiment simulation (run_pvt tool)");
+    schema.put("description", "Input for PVT experiment simulation (run_pvt tool). "
+        + "Provide either a components map or an Eclipse E300 fluid file.");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
-    properties.put("model",
-        enumProp("Thermodynamic model", Arrays.asList("SRK", "PR", "CPA", "PCSAFT")));
+    properties.put("model", enumProp("Thermodynamic model",
+        Arrays.asList("SRK", "PR", "PR_LK", "CPA", "GERG2008", "PCSAFT", "UMRPRU",
+            "AUTO")));
     properties.put("experiment",
         enumProp("PVT experiment",
             Arrays.asList("CME", "CVD", "differentialLiberation", "saturationPressure",
@@ -733,6 +745,18 @@ public final class SchemaCatalog {
     components.put("additionalProperties", addProps);
     properties.put("components", components);
 
+    properties.put("e300FilePath",
+        stringProp("Path to an Eclipse E300 fluid file. Use model=AUTO to load the file EOS."));
+    properties.put("addWater",
+        boolProp("Add a zero-fraction water component when absent in the E300 file"));
+    properties.put("waterKij",
+        numberProp("Binary interaction parameter to use for water added from addWater"));
+
+    properties.put("temperature", valueWithUnitSchema("Reservoir temperature",
+        "Temperature unit", Arrays.asList("K", "C", "F"), "K"));
+    properties.put("pressure", valueWithUnitSchema("Reservoir pressure", "Pressure unit",
+        Arrays.asList("bara", "barg", "Pa", "kPa", "MPa", "psi", "atm"), "bara"));
+
     properties.put("temperature_C", numberProp("Temperature in Celsius"));
     properties.put("pressure_bara", numberProp("Pressure in bara"));
 
@@ -742,7 +766,16 @@ public final class SchemaCatalog {
     properties.put("experimentConfig", config);
 
     schema.put("properties", properties);
-    schema.put("required", Arrays.asList("components", "experiment"));
+    schema.put("required", Collections.singletonList("experiment"));
+
+    List<Object> anyOf = new ArrayList<Object>();
+    Map<String, Object> requireComponents = new LinkedHashMap<String, Object>();
+    requireComponents.put("required", Collections.singletonList("components"));
+    anyOf.add(requireComponents);
+    Map<String, Object> requireE300 = new LinkedHashMap<String, Object>();
+    requireE300.put("required", Collections.singletonList("e300FilePath"));
+    anyOf.add(requireE300);
+    schema.put("anyOf", anyOf);
 
     return GSON.toJson(schema);
   }
