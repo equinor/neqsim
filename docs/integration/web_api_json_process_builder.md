@@ -20,8 +20,14 @@ features are designed for web services and Python-based applications that call N
 | `ProcessSystem.fromJson()` | Convenience entry points on `ProcessSystem` for JSON build and run |
 | `ProcessSystem.resolveStreamReference()` | Resolves dot-notation stream references (e.g., `"HP Sep.gasOut"`) |
 | `ProcessSystem.wireStream()` | Connects equipment by name using the wiring API |
+| `ProcessDiagramExporter` | Exports built processes to Graphviz DOT, SVG, PNG, or PDF visuals |
+| `DexpiXmlWriter` | Exports built processes to DEXPI XML with P&ID layout data |
 
 All classes are in the `neqsim.process.processmodel` package.
+
+For the full schema reference, supported port aliases, advanced `equipmentDesign` metadata, and
+`ProcessModel` area JSON, see
+[JSON Format for ProcessSystem and ProcessModel](../process/json_process_models_and_systems.md).
 
 ---
 
@@ -36,6 +42,9 @@ A JSON process definition has three top-level sections:
   "fluid": { ... },
   "fluids": { ... },
   "process": [ ... ],
+  "designCapacities": { ... },
+  "equipmentDesign": { ... },
+  "dataConnections": { ... },
   "autoRun": false
 }
 ```
@@ -45,6 +54,9 @@ A JSON process definition has three top-level sections:
 - **`fluid`** (optional) — A single default fluid definition used by all streams unless overridden.
 - **`fluids`** (optional) — A named map of fluid definitions for multi-fluid processes.
 - **`process`** (required) — An ordered array of equipment definitions. Units are created and wired in order.
+- **`designCapacities`** (optional) — Normalized capacity data applied to supported equipment.
+- **`equipmentDesign`** (optional) — Advanced grouped sizing metadata; deterministic fields are applied and all fields are preserved in result metadata.
+- **`dataConnections`** (optional) — Historian/API/tag mappings preserved in result metadata for downstream automation.
 - **`autoRun`** (optional, default `false`) — If `true`, the process is run immediately after building.
 
 ### Fluid Definition
@@ -125,6 +137,7 @@ Each entry in the `process` array defines one equipment unit:
 |-------|------|----------|-------------|
 | `type` | string | Yes | Equipment type name (matches `EquipmentFactory` types) |
 | `name` | string | No | Unique name (auto-generated if omitted) |
+| `tagName` | string | No | Process or instrument tag name preserved by JSON export/import |
 | `inlet` | string | No | Stream reference for inlet (see Stream Wiring below) |
 | `fluidRef` | string | No | Named fluid reference for Stream-type units |
 | `properties` | object | No | Property setters applied via reflection |
@@ -158,6 +171,63 @@ Properties are applied via reflection using setter methods. Two formats are supp
 }
 ```
 
+### Compressor Driver Limits
+
+Compressor `properties` may include a nested `driver` object. It is imported into
+`CompressorDriver` and exported back from `ProcessSystem.toJson()`, so web clients can preserve
+driver capacity constraints and speed-dependent maximum power curves.
+
+```json
+"properties": {
+  "outletPressure": [120.0, "bara"],
+  "speed": 6000.0,
+  "driver": {
+    "type": "GAS_TURBINE",
+    "ratedPower": 40500.0,
+    "ratedSpeed": 7383.0,
+    "maxPowerSpeedCurve": {
+      "speeds": [4922.0, 6000.0, 7383.0],
+      "powers": [21.8, 32.0, 44.4],
+      "powerUnit": "MW"
+    }
+  }
+}
+```
+
+For polynomial curves, use `maxPowerCurveCoefficients` with three coefficients `[a, b, c]`.
+Power is stored internally in kW; tabular input accepts `kW`, `MW`, or `W`.
+
+### Visualization and DEXPI Export
+
+The JSON builder creates the simulation model; visualization is done from the resulting
+`ProcessSystem`. The same JSON can be rendered as Graphviz/PFD output or exported as DEXPI XML for
+P&ID-oriented tools.
+
+```java
+SimulationResult result = ProcessSystem.fromJsonAndRun(jsonString);
+if (!result.isSuccess()) {
+  throw new IllegalStateException(result.toJson());
+}
+
+ProcessSystem process = result.getProcessSystem();
+
+// Lightweight topology/PFD visualization as Graphviz DOT text.
+String dot = process.toDOT();
+
+// DEXPI XML suitable for DEXPI/P&ID viewers or downstream exchange.
+ByteArrayOutputStream dexpiXml = new ByteArrayOutputStream();
+DexpiXmlWriter.write(process, dexpiXml);
+String dexpi = new String(dexpiXml.toByteArray(), StandardCharsets.UTF_8);
+```
+
+For file outputs, use `process.createDiagramExporter().exportDOT(...)`, `exportSVG(...)`,
+`exportPNG(...)`, or `exportPDF(...)`. SVG, PNG, and PDF export require Graphviz `dot` on the
+server path. DEXPI export uses NeqSim's built-in layout engine and does not require Graphviz.
+
+See [Process Flow Diagram Export](../process/processmodel/diagram_export.md) for diagram styling
+options and [DEXPI P&ID Import, Export and Visualization](dexpi-reader.md) for DEXPI import/export
+details.
+
 ---
 
 ## 2. Stream Wiring API
@@ -176,6 +246,9 @@ The `inlet` field on each equipment definition uses dot-notation to specify whic
 | `"Comp.outlet"` | `Comp.getOutletStream()` |
 
 Port aliases are case-insensitive: `gasOut`, `gas`, `liquidOut`, `liquid`, `oilOut`, `oil`, `waterOut`, `water`, `outlet`.
+Additional aliases accepted by the builder include `out`, `outStream`, `gasOutStream`,
+`liquidOutStream`, `split0`, `split1`, `splitStream_0`, `splitStream_1`, `outlet0`, `outlet1`,
+`hx0`, and `hx1`.
 
 ### Programmatic Wiring on ProcessSystem
 
@@ -212,11 +285,19 @@ All build and run operations return a `SimulationResult` with a well-defined JSO
   "status": "success",
   "processSystemName": "json-process",
   "report": { ... },
+  "metadata": {
+    "equipmentDesign": { ... },
+    "dataConnections": { ... },
+    "designDataApplied": { ... }
+  },
   "warnings": [
     "Property outletPressure not found on Stream (tried setOutletPressure)"
   ]
 }
 ```
+
+`metadata` is present only when the request included advisory sections such as `equipmentDesign`,
+`dataConnections`, `designCapacities`, or caller-supplied `metadata`.
 
 ### Error Response
 
@@ -260,6 +341,7 @@ All build and run operations return a `SimulationResult` with a well-defined JSO
 SimulationResult result = ProcessSystem.fromJson(jsonString);
 if (result.isSuccess()) {
     ProcessSystem process = result.getProcessSystem();
+    com.google.gson.JsonObject buildMetadata = result.getMetadata();
 }
 
 // Build and run
@@ -522,7 +604,7 @@ if result.isSuccess():
 
 ## Related Documentation
 
-- [AI Validation Framework](ai_validation_framework) — Structured validation with remediation hints
-- [External Optimizer Integration](EXTERNAL_OPTIMIZER_INTEGRATION) — Python/SciPy optimization with NeqSim
-- [Python Extension Patterns](../development/python_extension_patterns) — JPype integration patterns
+- [AI Validation Framework](ai_validation_framework.md) — Structured validation with remediation hints
+- [External Optimizer Integration](EXTERNAL_OPTIMIZER_INTEGRATION.md) — Python/SciPy optimization with NeqSim
+- [Python Extension Patterns](../development/python_extension_patterns.md) — JPype integration patterns
 - [Process Simulation](../simulation/) — Advanced simulation techniques

@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,8 @@ import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.SimulationResult;
+import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
 import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
 import neqsim.process.util.optimizer.DebottleneckAnalyzer;
@@ -175,6 +180,38 @@ public class DocExamplesCompilationTest {
     Stream hostFeed = new Stream("Host Feed", gas);
     hostFeed.setFlowRate(1000.0, "kg/hr");
     return hostFeed;
+  }
+
+  /**
+   * JSON visualization example from docs/integration/web_api_json_process_builder.md.
+   *
+   * @throws IOException if DEXPI export fails
+   */
+  @Test
+  public void testWebApiJsonVisualizationDocExample() throws IOException {
+    String jsonString =
+        "{" + "\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,"
+            + "\"mixingRule\":\"classic\",\"components\":{\"methane\":0.9,\"ethane\":0.1}},"
+            + "\"process\":[" + "{\"type\":\"Stream\",\"name\":\"feed\","
+            + "\"properties\":{\"flowRate\":[1000.0,\"kg/hr\"]}},"
+            + "{\"type\":\"Separator\",\"name\":\"HP Sep\",\"inlet\":\"feed\"},"
+            + "{\"type\":\"Compressor\",\"name\":\"Export Compressor\","
+            + "\"inlet\":\"HP Sep.gasOut\","
+            + "\"properties\":{\"outletPressure\":[80.0,\"bara\"]}}]," + "\"autoRun\":true}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(jsonString);
+    assertTrue(result.isSuccess(), result.toJson());
+    ProcessSystem process = result.getProcessSystem();
+
+    String dot = process.toDOT();
+    assertTrue(dot.contains("digraph"));
+    assertTrue(dot.contains("Export Compressor"));
+
+    ByteArrayOutputStream dexpiXml = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, dexpiXml);
+    String dexpi = new String(dexpiXml.toByteArray(), StandardCharsets.UTF_8);
+    assertTrue(dexpi.contains("PlantModel"));
+    assertTrue(dexpi.contains("CentrifugalCompressor"));
   }
 
   /**

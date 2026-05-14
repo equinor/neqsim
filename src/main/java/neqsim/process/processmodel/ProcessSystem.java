@@ -5057,9 +5057,11 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       switch (port) {
         case "gasout":
+        case "gasoutstream":
         case "gas":
           return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
         case "liquidout":
+        case "liquidoutstream":
         case "liquid":
           return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
         case "oilout":
@@ -5068,14 +5070,49 @@ public class ProcessSystem extends SimulationBaseClass {
         case "waterout":
         case "water":
           return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        case "out":
+        case "outstream":
         case "outlet":
         default:
+          // Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
+          if (port.startsWith("splitstream_") && port.length() > 12) {
+            try {
+              int idx = Integer.parseInt(port.substring(12));
+              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
+                  .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           // Handle indexed split streams: "split0", "split1", etc.
           if (port.startsWith("split") && port.length() > 5) {
             try {
               int idx = Integer.parseInt(port.substring(5));
               return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
                   .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
+          // Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
+          // "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
+          if (port.startsWith("outlet") && port.length() > 6) {
+            try {
+              int idx = Integer.parseInt(port.substring(6));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
+          // Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
+          if (port.startsWith("hx") && port.length() > 2) {
+            try {
+              int idx = Integer.parseInt(port.substring(2));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
             } catch (NumberFormatException nfe) {
               // fall through to default outlet
             }

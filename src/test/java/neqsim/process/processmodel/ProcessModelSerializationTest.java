@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -252,6 +254,45 @@ public class ProcessModelSerializationTest {
     assertEquals("Unit test model", loaded.getDescription());
     assertEquals("test-user", loaded.getCreatedBy());
     assertEquals("Test Project", loaded.getCustomProperties().get("project"));
+  }
+
+  @Test
+  public void testProcessSystemBuilderJsonRoundTrip() {
+    ProcessSystem upstream = createUpstreamProcess();
+    upstream.run();
+
+    String json = upstream.toJson();
+    ProcessJsonValidator.ValidationReport validation = ProcessSystem.validateJson(json);
+    assertTrue(validation.isValid(), "Exported process JSON should be valid");
+
+    SimulationResult rebuiltResult = ProcessSystem.fromJsonAndRun(json);
+    assertTrue(rebuiltResult.isSuccess(),
+        "Exported ProcessSystem should rebuild from JSON: " + rebuiltResult.toJson());
+    ProcessSystem rebuilt = rebuiltResult.getProcessSystem();
+
+    assertNotNull(rebuilt.getUnit("upstream-feed"));
+    assertNotNull(rebuilt.getUnit("upstream-valve"));
+    assertNotNull(rebuilt.getUnit("upstream-separator"));
+    assertNotNull(rebuilt.resolveStreamReference("upstream-valve.outlet"));
+  }
+
+  @Test
+  public void testProcessModelBuilderJsonRoundTrip() {
+    String json = testModel.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.has("areas"), "ProcessModel builder JSON should contain areas");
+    ProcessJsonValidator.ValidationReport validation = ProcessJsonValidator.validate(json);
+    assertTrue(validation.isValid(), "Exported ProcessModel JSON should be valid");
+
+    ProcessModel rebuilt = ProcessModel.fromJsonAndRun(json);
+
+    assertEquals(2, rebuilt.getAllProcesses().size(), "Round-tripped model should keep areas");
+    assertNotNull(rebuilt.get("upstream"));
+    assertNotNull(rebuilt.get("downstream"));
+    assertNotNull(rebuilt.get("upstream").getUnit("upstream-valve"));
+    assertNotNull(rebuilt.get("downstream").getUnit("downstream-valve"));
+    assertEquals(25, rebuilt.getMaxIterations(), "Max iterations should round-trip");
+    assertEquals(1e-5, rebuilt.getFlowTolerance(), 1e-10, "Flow tolerance should round-trip");
   }
 
   @Test
