@@ -2,6 +2,8 @@ package neqsim.process.processmodel;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
@@ -1608,6 +1610,64 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public Collection<ProcessSystem> getAllProcesses() {
     return processes.values();
+  }
+
+  /**
+   * Creates a Graphviz exporter for common plant-wide and per-area DOT diagrams.
+   *
+   * @return a new {@link ProcessModelGraphvizExporter} for this model
+   */
+  public ProcessModelGraphvizExporter createGraphvizExporter() {
+    return new ProcessModelGraphvizExporter(this);
+  }
+
+  /**
+   * Generates a common Graphviz DOT diagram for the full process model.
+   *
+   * <p>
+   * The common diagram uses one Graphviz cluster per process area and draws cross-area stream links
+   * when areas share live stream objects.
+   * </p>
+   *
+   * @return DOT-format string for the full process model
+   */
+  public String toDOT() {
+    return createGraphvizExporter().toDot();
+  }
+
+  /**
+   * Exports a common Graphviz DOT diagram for the full process model.
+   *
+   * @param filename destination file name for the common DOT graph
+   */
+  public void exportToGraphviz(String filename) {
+    try {
+      createGraphvizExporter().exportDOT(Paths.get(filename));
+    } catch (IOException exception) {
+      logger.error("Error exporting ProcessModel to Graphviz", exception);
+    }
+  }
+
+  /**
+   * Exports one Graphviz DOT file per process area.
+   *
+   * @param outputDirectory directory where area DOT files are written
+   * @return map from area name to written DOT file path
+   * @throws IOException if the directory cannot be created or a file cannot be written
+   */
+  public Map<String, Path> exportAreaDOT(Path outputDirectory) throws IOException {
+    return createGraphvizExporter().exportAreaDOT(outputDirectory);
+  }
+
+  /**
+   * Exports one Graphviz DOT file per process area.
+   *
+   * @param outputDirectory directory where area DOT files are written
+   * @return map from area name to written DOT file path
+   * @throws IOException if the directory cannot be created or a file cannot be written
+   */
+  public Map<String, Path> exportAreaDOT(String outputDirectory) throws IOException {
+    return exportAreaDOT(Paths.get(outputDirectory));
   }
 
   /**

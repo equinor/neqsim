@@ -224,6 +224,23 @@ For file outputs, use `process.createDiagramExporter().exportDOT(...)`, `exportS
 `exportPNG(...)`, or `exportPDF(...)`. SVG, PNG, and PDF export require Graphviz `dot` on the
 server path. DEXPI export uses NeqSim's built-in layout engine and does not require Graphviz.
 
+For a multi-area `ProcessModel`, you can plot either a single common DOT graph or one DOT file per
+contained `ProcessSystem` area. The common DOT uses Graphviz clusters for the areas and draws
+cross-area edges when the areas share live stream objects. JSON round-trips preserve those links
+through `interAreaLinks`, so a rebuilt `ProcessModel` can still show the process-system boundary
+connections in the common DOT.
+
+```java
+ProcessModel plant = ProcessModel.fromJsonAndRun(modelJsonString);
+
+// One common plant-wide DOT graph.
+String commonDot = plant.toDOT();
+plant.exportToGraphviz("plant.dot");
+
+// One detailed DOT file per area: separation.dot, compression.dot, etc.
+Map<String, Path> areaDotFiles = plant.exportAreaDOT(Paths.get("plant-diagrams"));
+```
+
 See [Process Flow Diagram Export](../process/processmodel/diagram_export.md) for diagram styling
 options and [DEXPI P&ID Import, Export and Visualization](dexpi-reader.md) for DEXPI import/export
 details.

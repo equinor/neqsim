@@ -383,6 +383,12 @@ Use `ProcessModel.fromJson(json)` or `ProcessModel.fromJsonAndRun(json)` for the
 The same `ProcessJsonValidator.validate(...)` preflight accepts both single `process` roots and
 model-level `areas` roots.
 
+After building a multi-area model, use `model.toDOT()` or `model.exportToGraphviz("plant.dot")` to
+create one common Graphviz DOT graph with each area shown as a cluster. Use
+`model.exportAreaDOT(Paths.get("plant-diagrams"))` when you want one DOT file per contained
+`ProcessSystem` area. Cross-area DOT edges are drawn for shared live streams, including streams
+recreated from `interAreaLinks` during JSON import.
+
 ## 8.1 Lifecycle JSON
 
 For lifecycle snapshots/versioning of full `ProcessModel` and `ProcessSystem` states,

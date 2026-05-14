@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -293,6 +295,60 @@ public class ProcessModelSerializationTest {
     assertNotNull(rebuilt.get("downstream").getUnit("downstream-valve"));
     assertEquals(25, rebuilt.getMaxIterations(), "Max iterations should round-trip");
     assertEquals(1e-5, rebuilt.getFlowTolerance(), 1e-10, "Flow tolerance should round-trip");
+  }
+
+  @Test
+  public void testProcessModelGraphvizCommonAndAreaDotExport() throws Exception {
+    String commonDot = testModel.toDOT();
+
+    assertTrue(commonDot.contains("digraph"), "Common DOT should be a Graphviz graph");
+    assertTrue(commonDot.contains("subgraph cluster_0"), "Common DOT should use area clusters");
+    assertTrue(commonDot.contains("upstream"), "Common DOT should include upstream area");
+    assertTrue(commonDot.contains("downstream"), "Common DOT should include downstream area");
+    assertTrue(commonDot.contains("upstream-valve"), "Common DOT should include upstream units");
+    assertTrue(commonDot.contains("downstream-valve"),
+        "Common DOT should include downstream units");
+
+    Path commonDotFile = tempDir.resolve("plant.dot");
+    testModel.exportToGraphviz(commonDotFile.toString());
+    assertTrue(Files.exists(commonDotFile), "Common DOT file should be written");
+
+    Path areaDirectory = tempDir.resolve("area-dots");
+    Map<String, Path> areaFiles = testModel.exportAreaDOT(areaDirectory);
+
+    assertEquals(2, areaFiles.size(), "One DOT file should be written per area");
+    assertTrue(Files.exists(areaFiles.get("upstream")), "Upstream area DOT should exist");
+    assertTrue(Files.exists(areaFiles.get("downstream")), "Downstream area DOT should exist");
+    assertTrue(new String(Files.readAllBytes(areaFiles.get("upstream")), StandardCharsets.UTF_8)
+        .contains("upstream-valve"), "Upstream DOT should contain upstream equipment");
+    assertTrue(new String(Files.readAllBytes(areaFiles.get("downstream")), StandardCharsets.UTF_8)
+        .contains("downstream-valve"), "Downstream DOT should contain downstream equipment");
+  }
+
+  @Test
+  public void testProcessModelCommonDotConnectsSharedInterAreaStream() {
+    ProcessSystem upstream = createUpstreamProcess();
+    upstream.run();
+    Separator upstreamSeparator = (Separator) upstream.getUnit("upstream-separator");
+
+    ThrottlingValve downstreamValve =
+        new ThrottlingValve("downstream-inlet-valve", upstreamSeparator.getGasOutStream());
+    downstreamValve.setOutletPressure(20.0, "bara");
+    ProcessSystem downstream = new ProcessSystem("downstream");
+    downstream.add(downstreamValve);
+
+    ProcessModel linkedModel = new ProcessModel();
+    linkedModel.add("separation", upstream);
+    linkedModel.add("compression", downstream);
+
+    String commonDot = linkedModel.toDOT();
+
+    assertTrue(
+        commonDot.contains(
+            "\"separation::upstream-separator\" -> " + "\"compression::downstream-inlet-valve\""),
+        "Common DOT should connect shared streams across ProcessSystem areas");
+    assertTrue(commonDot.contains("penwidth=2.0"),
+        "Cross-area stream edges should be highlighted in the common DOT");
   }
 
   @Test
