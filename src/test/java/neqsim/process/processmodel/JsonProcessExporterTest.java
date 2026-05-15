@@ -9,6 +9,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.compressor.CompressorDriver;
+import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -245,6 +247,57 @@ class JsonProcessExporterTest {
         (Calculator) result.getProcessSystem().getUnit("anti surge calculator test");
     assertEquals(1, rebuiltCalculator.getInputVariable().size());
     assertEquals("anti surge splitter", rebuiltCalculator.getOutputVariable().getName());
+  }
+
+  @Test
+  void testCompressorDriverPowerCurveRoundTrip() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(50.0, "bara");
+
+    Compressor compressor = new Compressor("driver curve compressor", feed);
+    compressor.setOutletPressure(80.0, "bara");
+    compressor.setSpeed(6000.0);
+    CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE, 40500.0);
+    driver.setRatedSpeed(7383.0);
+    driver.setMinSpeed(4922.0);
+    driver.setMaxSpeed(7383.0);
+    driver.setAmbientTemperature(288.15);
+    driver.setMaxPowerSpeedCurve(new double[] {4922.0, 6000.0, 7383.0},
+        new double[] {21.8, 32.0, 44.4}, "MW");
+    compressor.setDriver(driver);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(compressor);
+    process.run();
+
+    String json = process.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    JsonObject props =
+        root.getAsJsonArray("process").get(1).getAsJsonObject().getAsJsonObject("properties");
+    JsonObject driverJson = props.getAsJsonObject("driver");
+    assertEquals("GAS_TURBINE", driverJson.get("type").getAsString());
+    assertTrue(driverJson.has("maxPowerSpeedCurve"));
+    assertEquals("kW",
+        driverJson.getAsJsonObject("maxPowerSpeedCurve").get("powerUnit").getAsString());
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+
+    assertTrue(result.isSuccess(), "Compressor driver process should rebuild: " + result.toJson());
+    Compressor rebuiltCompressor =
+        (Compressor) result.getProcessSystem().getUnit("driver curve compressor");
+    CompressorDriver rebuiltDriver = rebuiltCompressor.getDriver();
+    assertNotNull(rebuiltDriver);
+    assertEquals(DriverType.GAS_TURBINE, rebuiltDriver.getDriverType());
+    assertTrue(rebuiltDriver.isMaxPowerCurveTableEnabled());
+    assertEquals(32000.0, rebuiltDriver.getMaxAvailablePowerAtSpeed(6000.0), 1.0e-12);
+    assertEquals(32000.0e3, rebuiltCompressor.getCapacityMax(), 1.0e-6);
   }
 
   @Test

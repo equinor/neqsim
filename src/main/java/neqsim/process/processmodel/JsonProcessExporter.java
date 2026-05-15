@@ -14,6 +14,7 @@ import neqsim.process.equipment.compressor.AntiSurge;
 import neqsim.process.equipment.compressor.BoundaryCurve;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -766,6 +767,9 @@ public class JsonProcessExporter {
     String typeName = getTypeName(unit);
     json.addProperty("type", typeName);
     json.addProperty("name", unit.getName());
+    if (unit.getTagName() != null && !unit.getTagName().trim().isEmpty()) {
+      json.addProperty("tagName", unit.getTagName());
+    }
 
     if (unit instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) unit;
@@ -1025,6 +1029,10 @@ public class JsonProcessExporter {
       if (compressorChart != null && compressorChart.size() > 0) {
         props.add("compressorChart", compressorChart);
       }
+      JsonObject driver = exportCompressorDriver(comp.getDriver());
+      if (driver != null && driver.size() > 0) {
+        props.add("driver", driver);
+      }
       JsonObject antiSurge = exportAntiSurge(comp.getAntiSurge());
       if (antiSurge != null && antiSurge.size() > 0) {
         props.add("antiSurge", antiSurge);
@@ -1199,6 +1207,55 @@ public class JsonProcessExporter {
       chartJson.add("stoneWallCurve", stoneWallCurve);
     }
     return chartJson;
+  }
+
+  /**
+   * Exports compressor driver settings and max-power curves.
+   *
+   * @param driver the compressor driver to export
+   * @return JSON object with driver settings, or an empty object when no driver is configured
+   */
+  private JsonObject exportCompressorDriver(CompressorDriver driver) {
+    JsonObject driverJson = new JsonObject();
+    if (driver == null) {
+      return driverJson;
+    }
+    driverJson.addProperty("type", driver.getDriverType().name());
+    driverJson.addProperty("ratedPower", driver.getRatedPower());
+    driverJson.addProperty("maxPower", driver.getMaxPower());
+    driverJson.addProperty("minPower", driver.getMinPower());
+    driverJson.addProperty("driverEfficiency", driver.getDriverEfficiency());
+    driverJson.addProperty("responseTime", driver.getResponseTime());
+    driverJson.addProperty("inertia", driver.getInertia());
+    driverJson.addProperty("maxAcceleration", driver.getMaxAcceleration());
+    driverJson.addProperty("maxDeceleration", driver.getMaxDeceleration());
+    driverJson.addProperty("ambientTemperature", driver.getAmbientTemperature());
+    driverJson.addProperty("ambientPressure", driver.getAmbientPressure());
+    driverJson.addProperty("overloadProtectionEnabled", driver.isOverloadProtectionEnabled());
+    driverJson.addProperty("overloadTripDelay", driver.getOverloadTripDelay());
+    driverJson.addProperty("minSpeed", driver.getMinSpeed());
+    driverJson.addProperty("maxSpeed", driver.getMaxSpeed());
+    driverJson.addProperty("ratedSpeed", driver.getRatedSpeed());
+    driverJson.addProperty("temperatureDerateFactor", driver.getTemperatureDerateFactor());
+    driverJson.add("vfdEfficiencyCoefficients", toJsonArray(driver.getVfdEfficiencyCoefficients()));
+
+    double[] maxPowerCoefficients = driver.getMaxPowerCurveCoefficients();
+    if (maxPowerCoefficients != null) {
+      driverJson.add("maxPowerCurveCoefficients", toJsonArray(maxPowerCoefficients));
+      driverJson.addProperty("maxPowerCurveEnabled", driver.isMaxPowerCurveEnabled());
+    }
+    if (driver.isMaxPowerCurveTableEnabled()) {
+      double[] speeds = driver.getMaxPowerCurveSpeeds();
+      double[] powers = driver.getMaxPowerCurvePowers();
+      if (speeds != null && powers != null) {
+        JsonObject curve = new JsonObject();
+        curve.add("speeds", toJsonArray(speeds));
+        curve.add("powers", toJsonArray(powers));
+        curve.addProperty("powerUnit", "kW");
+        driverJson.add("maxPowerSpeedCurve", curve);
+      }
+    }
+    return driverJson;
   }
 
   /**
