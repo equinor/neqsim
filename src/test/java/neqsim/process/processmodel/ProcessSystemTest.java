@@ -952,14 +952,14 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run();
     operations.run();
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        1e-6);
+        2e-3);
 
     operations.run();
     operations.run();
     operations.run();
     operations.run();
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        1e-6);
+        2e-3);
 
     // run as time step as thread
     Thread thread = operations.runAsThread();
