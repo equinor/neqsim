@@ -70,6 +70,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   @Override
   public void setHeatInput(double heatinp) {
     this.heatInput = heatinp;
+    invalidateOutStreamCache();
   }
 
   /**
@@ -118,6 +119,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * </p>
    */
   public void run2() {
+    invalidateOutStreamCache();
     super.run();
     temperature = mixedStream.getTemperature();
   }
@@ -136,6 +138,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public void setUseReactiveFlash(boolean useReactiveFlash) {
     this.useReactiveFlash = useReactiveFlash;
+    invalidateOutStreamCache();
   }
 
   /**
@@ -281,7 +284,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public StreamInterface getGasOutStream() {
     if (cachedGasOutStream == null) {
-      cachedGasOutStream = new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+      cachedGasOutStream = createPhaseOutStream("gas");
     }
     return cachedGasOutStream;
   }
@@ -295,9 +298,156 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public StreamInterface getLiquidOutStream() {
     if (cachedLiquidOutStream == null) {
-      cachedLiquidOutStream = new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+      cachedLiquidOutStream = createLiquidOutStream();
     }
     return cachedLiquidOutStream;
+  }
+
+  /**
+   * Create the tray gas outlet from the requested phase type and normalize its inventory.
+   *
+   * @param phaseTypeName phase type name to prefer
+   * @return stream containing the selected normalized phase
+   */
+  private StreamInterface createPhaseOutStream(String phaseTypeName) {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int phaseIndex = findPhaseIndex(phaseTypeName);
+    if (phaseIndex < 0) {
+      return createZeroOutStream(traySystem);
+    }
+    SystemInterface phaseSystem = createPhaseSystemSafely(traySystem, phaseIndex);
+    if (phaseSystem == null) {
+      return createZeroOutStream(traySystem);
+    }
+    return new Stream("", phaseSystem);
+  }
+
+  /**
+   * Create the tray liquid outlet from the liquid or oil phase and normalize its inventory.
+   *
+   * @return stream containing the selected normalized liquid phase
+   */
+  private StreamInterface createLiquidOutStream() {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int phaseIndex = findLiquidPhaseIndex();
+    if (phaseIndex < 0) {
+      return createZeroOutStream(traySystem);
+    }
+    SystemInterface phaseSystem = createPhaseSystemSafely(traySystem, phaseIndex);
+    if (phaseSystem == null) {
+      return createZeroOutStream(traySystem);
+    }
+    return new Stream("", phaseSystem);
+  }
+
+  /**
+   * Create a zero-flow outlet stream when the requested phase is absent on the tray.
+   *
+   * @param traySystem tray thermodynamic system used as a composition template
+   * @return stream with zero total moles and zero flow
+   */
+  private StreamInterface createZeroOutStream(SystemInterface traySystem) {
+    SystemInterface zeroSystem = traySystem.clone();
+    zeroSystem.setNumberOfPhases(1);
+    scalePhaseSystemToNormalizedMoles(zeroSystem, 0.0);
+    return new Stream("", zeroSystem);
+  }
+
+  /**
+   * Create a phase system without allowing invalid phase roots to escape the tray solve.
+   *
+   * @param traySystem tray thermodynamic system
+   * @param phaseIndex phase index to extract
+   * @return extracted phase system, or {@code null} if phase extraction fails
+   */
+  private SystemInterface createPhaseSystemSafely(SystemInterface traySystem, int phaseIndex) {
+    try {
+      return traySystem.phaseToSystem(phaseIndex);
+    } catch (RuntimeException ex) {
+      logger.debug("Phase extraction failed for tray {} phase {}", getName(), phaseIndex, ex);
+      return null;
+    }
+  }
+
+  /**
+   * Find the phase index with the requested type.
+   *
+   * @param phaseTypeName phase type name to find
+   * @return phase index within the tray system, or {@code -1} when absent
+   */
+  private int findPhaseIndex(String phaseTypeName) {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int numberOfPhases = Math.max(1, traySystem.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      if (phaseTypeName.equals(traySystem.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Find the liquid phase index, accepting both liquid and oil phase names.
+   *
+   * @return liquid phase index within the tray system, or {@code -1} when absent
+   */
+  private int findLiquidPhaseIndex() {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int numberOfPhases = Math.max(1, traySystem.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      String phaseTypeName = traySystem.getPhase(phaseIndex).getPhaseTypeName();
+      if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName)) {
+        return phaseIndex;
+      }
+    }
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      if (!"gas".equals(traySystem.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Scale a single-phase outlet system to the target number of moles.
+   *
+   * @param phaseSystem single-phase outlet system to scale
+   * @param targetMoles target total moles for the outlet system
+   */
+  private void scalePhaseSystemToNormalizedMoles(SystemInterface phaseSystem, double targetMoles) {
+    double currentMoles = phaseSystem.getTotalNumberOfMoles();
+    if (!Double.isFinite(currentMoles) || currentMoles <= 0.0 || !Double.isFinite(targetMoles)) {
+      phaseSystem.setTotalNumberOfMoles(0.0);
+      return;
+    }
+    if (targetMoles <= 0.0) {
+      for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
+        for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
+            .getNumberOfComponents(); componentIndex++) {
+          phaseSystem.getPhase(phaseIndex).getComponent(componentIndex)
+              .setNumberOfMolesInPhase(0.0);
+          phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(0.0);
+        }
+      }
+      phaseSystem.setTotalNumberOfMoles(0.0);
+      phaseSystem.init(0);
+      return;
+    }
+    double scaleFactor = Math.max(0.0, targetMoles) / currentMoles;
+    for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
+      for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double moles =
+            phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
+                * scaleFactor;
+        phaseSystem.getPhase(phaseIndex).getComponent(componentIndex)
+            .setNumberOfMolesInPhase(moles);
+        phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(moles);
+      }
+    }
+    phaseSystem.setTotalNumberOfMoles(Math.max(0.0, targetMoles));
+    phaseSystem.init(0);
+    phaseSystem.init(1);
   }
 
   /** {@inheritDoc} */
@@ -310,12 +460,14 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   @Override
   public void setPressure(double pres) {
     trayPressure = pres;
+    invalidateOutStreamCache();
   }
 
   /** {@inheritDoc} */
   @Override
   public void setTemperature(double temperature) {
     this.temperature = temperature;
+    invalidateOutStreamCache();
   }
 
   /** {@inheritDoc} */

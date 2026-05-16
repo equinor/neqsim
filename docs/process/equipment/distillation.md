@@ -1,7 +1,7 @@
 ---
 title: Distillation Equipment
 description: Documentation for distillation column equipment in NeqSim process simulation.
-keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, fractionation, NGL, inside-out solver, MESH residual, convergence diagnostics"
+keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, fractionation, NGL, inside-out solver, Naphtali-Sandholm, MESH residual, convergence diagnostics"
 ---
 
 # Distillation Equipment
@@ -309,7 +309,8 @@ flow rate), NeqSim wraps the inner solver in a secant-method outer loop that:
 | `WEGSTEIN` | Accelerated successive substitution after a warm-up phase. | Well-conditioned columns where faster convergence is useful. |
 | `SUM_RATES` | Flow-corrected tearing method using sum-rate style updates. | Absorbers, strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature correction accelerator with finite-difference Jacobian and line search. | Difficult temperature convergence cases. This is not a full simultaneous MESH Newton solver. |
-| `MESH_RESIDUAL` | Runs inside-out initialization with Newton polishing and records full MESH residual diagnostics. | Auditing material, equilibrium, summation, energy, and specification residuals before future rigorous solver work. |
+| `NAPHTALI_SANDHOLM` | Warm-starts from inside-out and applies guarded simultaneous Newton corrections to liquid component flows, tray temperatures, and vapor flows. | Rigorous MESH residual convergence checks for well-conditioned hydrocarbon columns. |
+| `MESH_RESIDUAL` | Runs inside-out initialization and records full MESH residual diagnostics. | Auditing material, equilibrium, summation, energy, product-draw, and specification residuals. |
 
 ### Convergence Settings
 
@@ -322,7 +323,8 @@ flow rate), NeqSim wraps the inner solver in a secant-method outer loop that:
 | `setEnforceEnergyBalanceTolerance(boolean)` | Require the energy residual to pass before `solved()` returns true. Disabled by default for backward compatibility. |
 | `setRelaxationFactor(double)` | Set the starting relaxation factor for `DAMPED_SUBSTITUTION`. |
 | `setMeshResidualTolerance(double)` | Set the scaled MESH residual norm tolerance used by the optional MESH convergence gate. |
-| `setEnforceMeshResidualTolerance(boolean)` | Require the latest MESH residual vector to pass before `solved()` returns true. Disabled by default. |
+| `setMeshProductDrawResidualTolerance(double)` | Set the scaled terminal product-draw residual tolerance used when MESH residual gating is enabled. |
+| `setEnforceMeshResidualTolerance(boolean)` | Require the latest MESH residual vector to pass before `solved()` returns true. This gate is effective by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`. |
 
 ### Initialization
 
@@ -337,7 +339,7 @@ and reboiler temperatures or duties remain the main practical way to influence t
 
 Every `DistillationColumn.run()` records scalar convergence metrics and a scaled MESH residual
 vector for the final column state. The residual vector groups equations into material,
-equilibrium, summation, energy, and active specification residuals.
+equilibrium, summation, energy, terminal product-draw, and active specification residuals.
 
 | Getter | Description |
 |--------|-------------|
@@ -351,11 +353,15 @@ equilibrium, summation, energy, and active specification residuals.
 | `getLastMeshEquilibriumResidualNorm()` | Infinity norm of fugacity-equilibrium residuals. |
 | `getLastMeshSummationResidualNorm()` | Infinity norm of vapor/liquid mole-fraction summation residuals. |
 | `getLastMeshEnergyResidualNorm()` | Infinity norm of tray energy residuals. |
+| `getLastMeshProductDrawResidualNorm()` | Infinity norm of terminal product-draw residuals between exposed products and tray traffic. |
 | `getLastMeshSpecificationResidualNorm()` | Infinity norm of active specification residuals. |
 | `getLastMeshResidualVector()` | Copy of the full residual vector, ordered by internal equation metadata. |
 
-The optional MESH residual convergence gate is off by default. Enable it when a workflow should
-treat the full residual vector as part of the convergence contract rather than as diagnostics only.
+The MESH residual convergence gate is diagnostic-only for legacy sequential solvers by default, but
+is effective by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`. Enable it explicitly for other
+solvers when a workflow should treat the full residual vector and terminal product-draw residual as
+part of the convergence contract; disable it explicitly only when residual diagnostics should not
+affect `solved()`.
 
 ---
 

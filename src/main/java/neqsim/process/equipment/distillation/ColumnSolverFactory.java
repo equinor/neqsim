@@ -27,6 +27,8 @@ final class ColumnSolverFactory {
   private static final ColumnSolver SUM_RATES = new SumRatesSolver();
   /** Temperature Newton strategy. */
   private static final ColumnSolver NEWTON = new TemperatureNewtonSolver();
+  /** Naphtali-Sandholm simultaneous MESH strategy. */
+  private static final ColumnSolver NAPHTALI_SANDHOLM = new NaphtaliSandholmColumnSolver();
   /** MESH residual-monitored strategy. */
   private static final ColumnSolver MESH_RESIDUAL = new MeshResidualSolver();
 
@@ -51,6 +53,8 @@ final class ColumnSolverFactory {
         return SUM_RATES;
       case NEWTON:
         return NEWTON;
+      case NAPHTALI_SANDHOLM:
+        return NAPHTALI_SANDHOLM;
       case MESH_RESIDUAL:
         return MESH_RESIDUAL;
       case DIRECT_SUBSTITUTION:
@@ -144,7 +148,23 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      column.solveNewton(id);
+      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      boolean fallbackApplied = false;
+      try {
+        column.solveNewton(id);
+      } catch (RuntimeException exception) {
+        applyDampedFallback(column, fallbackCandidate, id, "Newton failed", exception);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+        applyDampedFallback(column, fallbackCandidate, id,
+            "Newton required guarded feed-flash product fallback", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && !column.solved()) {
+        applyDampedFallback(column, fallbackCandidate, id,
+            "Newton did not satisfy convergence criteria", null);
+      }
       return ColumnSolveResult.from(column, getSolverType());
     }
 
@@ -152,6 +172,67 @@ final class ColumnSolverFactory {
     @Override
     public DistillationColumn.SolverType getSolverType() {
       return DistillationColumn.SolverType.NEWTON;
+    }
+
+    /**
+     * Create a clean damped-substitution fallback candidate before Newton changes tray state.
+     *
+     * @param column column to copy
+     * @return copied column, or {@code null} if the copy fails
+     */
+    private DistillationColumn createDampedFallbackCandidate(DistillationColumn column) {
+      try {
+        return (DistillationColumn) column.copy();
+      } catch (RuntimeException exception) {
+        return null;
+      } catch (StackOverflowError error) {
+        return null;
+      }
+    }
+
+    /**
+     * Apply damped substitution from a pre-Newton candidate when available.
+     *
+     * @param column live column to update
+     * @param fallbackCandidate clean fallback candidate, or {@code null} if unavailable
+     * @param id calculation identifier
+     * @param reason rejection reason
+     * @param exception optional accelerator exception
+     */
+    private void applyDampedFallback(DistillationColumn column,
+        DistillationColumn fallbackCandidate, UUID id, String reason, RuntimeException exception) {
+      if (fallbackCandidate != null) {
+        try {
+          fallbackCandidate.setDoInitializion(true);
+          fallbackCandidate.solveDampedSubstitution(id);
+          column.acceptDampedFallbackCandidate(fallbackCandidate, reason);
+          return;
+        } catch (RuntimeException fallbackException) {
+          column.solveDampedFallbackAfterAcceleratorFailure(id, fallbackException);
+          return;
+        }
+      }
+      if (exception != null) {
+        column.solveDampedFallbackAfterAcceleratorFailure(id, exception);
+      } else {
+        column.solveDampedFallbackAfterRejectedAccelerator(id, reason);
+      }
+    }
+  }
+
+  /** Naphtali-Sandholm simultaneous MESH adapter. */
+  private static final class NaphtaliSandholmColumnSolver implements ColumnSolver {
+    /** {@inheritDoc} */
+    @Override
+    public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.solveNaphtaliSandholm(id);
+      return ColumnSolveResult.from(column, getSolverType());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public DistillationColumn.SolverType getSolverType() {
+      return DistillationColumn.SolverType.NAPHTALI_SANDHOLM;
     }
   }
 
