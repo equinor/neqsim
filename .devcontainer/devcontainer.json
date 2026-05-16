@@ -5,7 +5,7 @@
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
-			"VARIANT": "11",
+			"VARIANT": "21",
 			"INSTALL_MAVEN": "true",
 			"MAVEN_VERSION": "3.9.12"
 		}
